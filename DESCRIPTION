@@ -1,0 +1,21 @@
+Package: mcp
+Title: Bayesian Multiple Change Point Inference
+Version: 0.1
+Authors@R: 
+    person(given = "Jonas",
+           family = "Lindeløv",
+           role = c("aut", "cre"),
+           email = "jonas@lindeloev.dk",
+           comment = c(ORCID = "0000-0003-4565-0595"))
+Description: Specify segments using R formulas and let mcp identify the parameters as well as the change points. Supports hierarchical models and normal/binomial families. Posterior distributions for all parameters.
+License: GLP-2
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
+Imports:
+    parallel,
+	rjags,
+	dclone
+Suggests:
+	bayesplot,
+	tidybayes
