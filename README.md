@@ -1,10 +1,14 @@
-Infer multiple change points and the parameters of the segments in between. This package is currently in alpha, so expect changes in API and aware that it has not been thoroughly tested.
+Bayesian inference of multiple change points and the parameters of the (linear) segments in between. Under the hood, `mcp` takes an abstract representation of linear segments, turn it into JAGS code, and draw in helpful plot and inference functions to test hypotheses. 
+
+This package is currently in alpha, so expect changes in API and be aware that it has not been thoroughly tested. Please raise issues or otherwise give feedback.
+
 
 # Install
 
  * Install JAGS 4.4 or later [from here](https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/). Linux users will need to [go here](http://mcmc-jags.sourceforge.net/).
  
  * `devtools::install_github("lindeloev/mcp")`
+
 
 # Quick usage guide
 
@@ -13,7 +17,7 @@ Find the single change point between two joined slopes:
 # Define segments
 segments = list(
     response ~ 1 + year,  # intercept + slope
-	1 ~ 0 + year  # joined slope
+    1 ~ 0 + year  # joined slope
 )
 
 # Start sampling
@@ -41,12 +45,12 @@ Now generate some data from this model, to see if we can recover the parameters:
 ```r
 library(tidyverse)
 Dv = list(cp_0 = -Inf, cp_1 = 20, cp_2 = 55, cp_3 = 80,  # Change points
-		  int_1 = 20, int_4 = 20,  # Intercepts
-		  year_1 = 3,  year_2 = -2,  # Slopes
-		  sigma=12)  # standard deviation of residuals
+          int_1 = 20, int_4 = 20,  # Intercepts
+          year_1 = 3,  year_2 = -2,  # Slopes
+          sigma=12)  # standard deviation of residuals
 
 data = tibble(
-  year = seq(1, 100, by=1)
+  year = seq(1, 100, by=1)  # Our x-axis
 ) %>%
   rowwise() %>%
   mutate(
@@ -54,7 +58,7 @@ data = tibble(
       (year > Dv$cp_1) * (Dv$year_2 * (min(year, Dv$cp_2) - Dv$cp_1)) + 
       (year > Dv$cp_2) * 0 + 
       (year > Dv$cp_3) * (Dv$int_4),
-    score = rnorm(n(), score, Dv$sigma)
+    score = rnorm(n(), score, Dv$sigma)  # Add noise
   )
 ```
 
@@ -116,9 +120,12 @@ fit2$loo = loo(fit2)
 loo_compare(fit$loo, fit2$loo)
 ```
 
->        elpd_diff se_diff
-> model1   0.0       0.0  
-> model2 -76.1       8.0  
+Result:
+```
+       elpd_diff se_diff
+model1   0.0       0.0  
+model2 -76.1       8.0  
+```
 
 Aha, the first model in `loo_compare` (`fit`) was preferred (higher Estimated Log-Predictive Density). The important thing here is the `elp_diff`/`se_diff` ratio. This is almost like a z-score, though [it has been adviced] to only take it seriously if it exceeds 5 where 1.96 is a classical "magical" threshold.
 
@@ -154,3 +161,5 @@ This is basically just two-three days work. I plan to:
  * Better and more efficient plotting functions.
  
  * Make it work for other likelihoods: binomial (and thereby Bernoulli), Cauchy, etc. I have a hard-coded model working with binomial so it is very doable.
+ 
+ * Specify parameters as *relative* or *absolute*. E.g. relative parameters represent *changes* from the former segment: `rel(1) ~ rel(1) + rel(x)`. Absolute parameters, on the other hand, would just "stand alone": `fix(1) ~ fix(1) + fix(x)`.
