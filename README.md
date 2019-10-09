@@ -1,6 +1,7 @@
 Bayesian inference of multiple change points and the parameters of the (linear) segments in between. Under the hood, `mcp` takes an abstract representation of linear segments, turn it into JAGS code. The rest of the package ensures seamless compatibility with your favourite Bayesian packages, including `tidybayes`, `bayesplot`, and `loo`.
 
-This package is currently in alpha, so expect changes in the API. Also be aware that it has not been thoroughly tested. I would be very excited about any feedback, positive or negative or constructive. Please raise issues or contact me otherwise.
+You can see the roadmap for the immediate future under [issues](https://github.com/lindeloev/mcp/issues). Expect breaking changes in the API until version 1.0. Also be aware that it has not been thoroughly tested. I would be very excited about any feedback, positive or negative or constructive. Please raise issues or contact me elsewhere, e.g., [@jonaslindeloev](https://twitter.com/jonaslindeloev) on Twitter or firstname at lindeloev.dk.
+
 
 
 # Install
@@ -13,7 +14,7 @@ This package is currently in alpha, so expect changes in the API. Also be aware 
 # Quick usage guide
 
 Find the single change point between two joined slopes:
-```
+```r
 # Define segments
 segments = list(
     y ~ 1 + x,  # intercept + slope
@@ -145,18 +146,3 @@ library(tidybayes)
 spread_draws(fit$samples, cp_1, cp_2, int_1, year_1, year_2) %>%
  # tidybayes stuff here
 ```
-
-
-# Plans for the immediate future
-
-This is basically just two-three days work. I plan to:
-
- * Include random effects. For example, if we want to let a change point vary between participants, we could do `segments = list(score ~ 1 + year, (1|id) ~ 0 + year)`
- 
- * A proper `summary` method
- 
- * Better and more efficient plotting functions.
- 
- * Make it work for other likelihoods: binomial (and thereby Bernoulli), Cauchy, etc. I have a hard-coded model working with binomial so it is very doable.
- 
- * Specify parameters as *relative* or *absolute*. E.g. relative parameters represent *changes* from the former segment: `rel(1) ~ rel(1) + rel(x)`. I imagine that absolute parameters will be the standard if `rel` is not used. Intercepts are currently relative while slopes are absolute. This will be useful for interpretability and for setting priors when *changes* are more meaningful.
