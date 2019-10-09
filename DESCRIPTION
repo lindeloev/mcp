@@ -8,14 +8,16 @@ Authors@R:
            email = "jonas@lindeloev.dk",
            comment = c(ORCID = "0000-0003-4565-0595"))
 Description: Specify segments using R formulas and let mcp identify the parameters as well as the change points. Supports hierarchical models and normal/binomial families. Posterior distributions for all parameters.
-License: GLP-2
+License: GPL-2
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
 Imports:
     parallel,
 	rjags,
-	dclone
+	dclone,
+	dplyr,
+	loo
 Suggests:
 	bayesplot,
 	tidybayes
