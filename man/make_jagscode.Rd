@@ -2,7 +2,7 @@
 % Please edit documentation in R/make_jagscode.R
 \name{make_jagscode}
 \alias{make_jagscode}
-\title{Build multiple change point JAGS model}
+\title{Make JAGS code for Multiple Change Point model}
 \usage{
 make_jagscode(data, segments, prior)
 }
@@ -14,7 +14,7 @@ make_jagscode(data, segments, prior)
 \item{prior}{A named list with parameter names as names and a JAGS distribution as value, e.g., `list(int_1 = "dunif(10, 30)")`.}
 }
 \description{
-Build multiple change point JAGS model
+Make JAGS code for Multiple Change Point model
 }
 \examples{
 

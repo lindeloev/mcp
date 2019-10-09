@@ -4,7 +4,7 @@
 \alias{mcp}
 \title{Fit Multiple Linear Segments And Their Change Points}
 \usage{
-mcp(data, segments, prior, ...)
+mcp(data, segments, prior = list(), ...)
 }
 \arguments{
 \item{data}{A data.frame or tibble containing the variables expressed in `model` in long format.}

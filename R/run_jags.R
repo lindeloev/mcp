@@ -1,5 +1,3 @@
-library(dclone)
-
 #' Run parallel MCMC sampling using JAGS.
 #'
 #' @param data A data.frame or tibble containing the variables expressed in `model` in long format.
@@ -8,32 +6,35 @@ library(dclone)
 #' @param ... Parameters for `jags.parfit` which channels them to `jags.fit`.
 #' @keywords mcmc, jags, mct
 #' @export
+#' @import dclone
+#' @import parallel
 #' @examples
 #' run_jags(data, model, params)
+#'
 run_jags = function(data,
                     model,
                     params,
                     model_file = "tmp_jags_model.txt",
-                    
+
                     # JAGS arguments
                     n.chains = parallel::detectCores() - 1,  # Use all cores but one
-                    n.iter = 2000,  # This model has a high number of effective samples
-                    n.adapt = 2000,  # This model is quick to adapt
-                    n.update = 2000,  # This model is quick to adapt
+                    n.iter = 3000,  # Number of iterations post-warmup.
+                    n.adapt = 2000,  # Takes some time to adapt
+                    n.update = 2000,  # Same as n.adapt
                     ...  # Otherwise run with default JAGS settings
 ) {
-  
+
   # Write model to disk
   sink(model_file)
   cat(model)
   sink()  # stops sinking :-)
-  
+
   # Start parallel cluster and timer
-  cl = makePSOCKcluster(n.chains)
+  cl = parallel::makePSOCKcluster(n.chains)
   timer = proc.time()
-  
+
   # Do the sampling. Yield mcmc.list
-  samples = jags.parfit(
+  samples = dclone::jags.parfit(
     cl = cl,
     data = data,
     params = params,
@@ -44,13 +45,12 @@ run_jags = function(data,
     n.update = n.update,
     ...
   )
-  mcmc = as.mcmc.list(samples)
-  
+
   # Stop the cluster, delete the file, and show time
-  stopCluster(cl)
+  parallel::stopCluster(cl)
   file.remove(model_file)
   print(proc.time() - timer)  # Print time
-  
+
   # Return
-  mcmc
+  samples
 }

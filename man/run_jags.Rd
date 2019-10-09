@@ -5,7 +5,7 @@
 \title{Run parallel MCMC sampling using JAGS.}
 \usage{
 run_jags(data, model, params, model_file = "tmp_jags_model.txt",
-  n.chains = parallel::detectCores() - 1, n.iter = 2000,
+  n.chains = parallel::detectCores() - 1, n.iter = 3000,
   n.adapt = 2000, n.update = 2000, ...)
 }
 \arguments{
@@ -22,6 +22,7 @@ Run parallel MCMC sampling using JAGS.
 }
 \examples{
 run_jags(data, model, params)
+
 }
 \keyword{jags,}
 \keyword{mcmc,}
