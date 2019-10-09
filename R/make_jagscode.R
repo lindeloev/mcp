@@ -19,6 +19,9 @@ make_jagscode = function(data, segments, prior, param_x = NULL) {
 
   # Figure out the name of the y-axis an the x-axis
   param_name_y = as.character(segments[[1]][[2]])
+  if(param_name_y == "1") {
+    stop("response cannot be '1'. Must be a column in data.")
+  }
 
   all_slopes = c()
   for(i in 1:nsegments) {
