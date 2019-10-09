@@ -213,6 +213,12 @@ make_jagscode = function(data, segments, prior, param_x = NULL) {
     }
   }")
 
+  # RETURN IT ALL
+  # Convert all_pars to a simple vector of parameter names
+  all_pars = unlist(all_pars)
+  names(all_pars) = NULL
+
+
   return(list(
     model = mm,
     all_pars = all_pars,

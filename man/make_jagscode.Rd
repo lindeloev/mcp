@@ -13,7 +13,7 @@ make_jagscode(data, segments, prior, param_x = NULL)
 
 \item{prior}{A named list with parameter names as names and a JAGS distribution as value, e.g., `list(int_1 = "dunif(10, 30)")`.}
 
-\item{param_x}{A string. If no segments contains slope (no hint at what x is), set this, e.g., param_x = "time".}
+\item{param_x}{A string. Only relevant if no segments contains slope (no hint at what x is). Set this, e.g., param_x = "time".}
 }
 \description{
 Make JAGS code for Multiple Change Point model

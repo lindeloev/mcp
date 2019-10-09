@@ -13,12 +13,15 @@ mcp(data, segments, prior = list(), param_x = NULL, ...)
 
 \item{prior}{A named list of parameters and associated priors in JAGS code. Uninformative default priors are used where priors are not specified.}
 
+\item{param_x}{A string. Only relevant if no segments contains slope (no hint at what x is). Set this, e.g., param_x = "time".}
+
 \item{...}{Parameters for `jags.parfit` which channels them to `jags.fit`.}
 }
 \description{
 Change points are forced to be ordered using truncation.
 }
 \examples{
+# Define the segments that are separated by change points
 segments = list(
   score ~ 1 + year,  # intercept + slope
    1 ~ 0 + year,  # joined slope
@@ -26,20 +29,27 @@ segments = list(
    1 ~ 1  # disjoined plateau
 )
 
+# Set priors.
+# cp_i are change points.
+# int_i are intercepts.
+# x_i are slopes.
+# i is the segment number (change points are to the right of the segment)
 prior = list(
   int_1 = "dunif(10, 30)",  # intercept of segment 1
   cp_2 = "dunif(cp_1, 40),  # change point between segment 1 and 2. Must be greater than cp_1. Order restriction is applied automatically for everything but dunif (a JAGS limitation).
   year_2 = "dnorm(0, 1/5^2)  # slope of segment 1. Mean = 0, SD = 5.
 )
 
+# Start sampling
 fit = mcp(data, segments, prior)
 
-# See results
+# Visual inspection of the results
 plot(fit)
 plot(fit, "combo")
 
-# Compare models predictive performance
-fit2 = ...  # fit another model here
+# Compare to an one-intercept-only model (no change points) with default prior
+segments2 = list(1 ~ 1)
+fit2 = mcp(data, segments2)  # fit another model here
 fit$loo = loo(fit)
 fit2$loo = loo(fit)
 loo_compare(fit, fit2)
@@ -47,10 +57,14 @@ loo_compare(fit, fit2)
 # Show all priors (not just those specified manually)
 fit$prior
 
+# Do stuff with the parameter estimates
+fit$pars$model  # check out which parameters are inferred.
+library(tidybayes)
+spread_draws(fit$samples, cp_1, cp_2, int_1, year_1, year_2) \%>\%
+   # tidybayes stuff here
+
 # Show JAGS model
 cat(fit$model_jags)
-
-
 }
 \keyword{jags,}
 \keyword{mcmc,}
