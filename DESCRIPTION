@@ -18,7 +18,9 @@ Imports:
 	dclone,
 	dplyr,
 	loo,
-	stringr
+	stringr,
+	bayesplot,
+	tidybayes
 Suggests:
 	bayesplot,
 	tidybayes
