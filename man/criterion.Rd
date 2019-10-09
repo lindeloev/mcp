@@ -16,19 +16,17 @@ Takes a `mcpfit`` as input and computes information criteria using loo or
 WAIC. Interpret directly or use `loo::loo_compare` to compare models.
 }
 \examples{
-
 # Compute loos
 fit1$loo = loo(fit1)
 fit2$loo = loo(fit2)
-fit1$loo  # view one loo
-
+fit2$waic = waic(fit2)  # Just for fun
+fit1$loo  # view it
 
 # Compare loos. Top is best. Should be several SDs better than others.
-loo::loo_compare(loo1, loo2)
+loo::loo_compare(fit1$loo, fit2$loo)
 
-# Compute model weights. Higher weight is best, but read more in the
-# docs.
-loo::loo_model_weights(list(loo1, loo2))
+# Compute model weights. Higher weight is best. See help for details..
+loo::loo_model_weights(list(fit1$loo, fit2$loo))
 
 }
 \keyword{information,}

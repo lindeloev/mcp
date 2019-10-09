@@ -3,7 +3,7 @@
 #' @param data A data.frame or tibble containing the variables expressed in `segments` in long format.
 #' @param segments A vector of formulas - one for each segment. The left-hand side specifies the form of the change point (on x). The right-hand side specifices the form of intercepts and slopes. See `mcp` examples for details.
 #' @param prior A named list with parameter names as names and a JAGS distribution as value, e.g., `list(int_1 = "dunif(10, 30)")`.
-#' @param param_x A string. If no segments contains slope (no hint at what x is), set this, e.g., param_x = "time".
+#' @param param_x A string. Only relevant if no segments contains slope (no hint at what x is). Set this, e.g., param_x = "time".
 #' @keywords jags, model
 #' @export
 #' @examples

@@ -8,6 +8,7 @@ source("R/run_jags.R")
 #' @param data A data.frame or tibble in long format.
 #' @param segments A list of formulas. Break points are estimated in between. The left-hand side specifies the chainge points and the right-hand side specifies the linear formula.
 #' @param prior A named list of parameters and associated priors in JAGS code. Uninformative default priors are used where priors are not specified.
+#' @param param_x A string. Only relevant if no segments contains slope (no hint at what x is). Set this, e.g., param_x = "time".
 #' @param ... Parameters for `jags.parfit` which channels them to `jags.fit`.
 #' @keywords mcmc, jags, mct
 #' @import stringr
@@ -67,10 +68,10 @@ mcp = function(data, segments, prior = list(), param_x = NULL, ...) {
   model_obj = make_jagscode(data, segments, prior, param_x = param_x)
 
   # Sample it
-  samples_list = run_jags(
+  samples = run_jags(
     data = data,
     model = model_obj$model,
-    params = c(unlist(model_obj$all_pars), model_obj$par_name_x, "y_", "sigma", "loglik_"),
+    params = c(unlist(model_obj$all_pars), model_obj$param_name_x, "y_", "sigma", "loglik_"),
     ...
   )
 
@@ -92,8 +93,8 @@ mcp = function(data, segments, prior = list(), param_x = NULL, ...) {
 
     pars = list(
       model = model_obj$all_pars,
-      x = model_obj$par_name_x,
-      y = model_obj$par_name_y
+      x = model_obj$param_name_x,
+      y = model_obj$param_name_y
     ),
 
     segments = segments,

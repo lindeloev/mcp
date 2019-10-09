@@ -4,7 +4,7 @@
 \alias{make_jagscode}
 \title{Make JAGS code for Multiple Change Point model}
 \usage{
-make_jagscode(data, segments, prior)
+make_jagscode(data, segments, prior, param_x = NULL)
 }
 \arguments{
 \item{data}{A data.frame or tibble containing the variables expressed in `segments` in long format.}
@@ -12,6 +12,8 @@ make_jagscode(data, segments, prior)
 \item{segments}{A vector of formulas - one for each segment. The left-hand side specifies the form of the change point (on x). The right-hand side specifices the form of intercepts and slopes. See `mcp` examples for details.}
 
 \item{prior}{A named list with parameter names as names and a JAGS distribution as value, e.g., `list(int_1 = "dunif(10, 30)")`.}
+
+\item{param_x}{A string. If no segments contains slope (no hint at what x is), set this, e.g., param_x = "time".}
 }
 \description{
 Make JAGS code for Multiple Change Point model

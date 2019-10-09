@@ -4,18 +4,52 @@
 \alias{mcp}
 \title{Fit Multiple Linear Segments And Their Change Points}
 \usage{
-mcp(data, segments, prior = list(), ...)
+mcp(data, segments, prior = list(), param_x = NULL, ...)
 }
 \arguments{
-\item{data}{A data.frame or tibble containing the variables expressed in `model` in long format.}
+\item{data}{A data.frame or tibble in long format.}
+
+\item{segments}{A list of formulas. Break points are estimated in between. The left-hand side specifies the chainge points and the right-hand side specifies the linear formula.}
+
+\item{prior}{A named list of parameters and associated priors in JAGS code. Uninformative default priors are used where priors are not specified.}
 
 \item{...}{Parameters for `jags.parfit` which channels them to `jags.fit`.}
 }
 \description{
-Fit Multiple Linear Segments And Their Change Points
+Change points are forced to be ordered using truncation.
 }
 \examples{
-run_jags(data, model, params)
+segments = list(
+  score ~ 1 + year,  # intercept + slope
+   1 ~ 0 + year,  # joined slope
+   1 ~ 0,  # joined plateau
+   1 ~ 1  # disjoined plateau
+)
+
+prior = list(
+  int_1 = "dunif(10, 30)",  # intercept of segment 1
+  cp_2 = "dunif(cp_1, 40),  # change point between segment 1 and 2. Must be greater than cp_1. Order restriction is applied automatically for everything but dunif (a JAGS limitation).
+  year_2 = "dnorm(0, 1/5^2)  # slope of segment 1. Mean = 0, SD = 5.
+)
+
+fit = mcp(data, segments, prior)
+
+# See results
+plot(fit)
+plot(fit, "combo")
+
+# Compare models predictive performance
+fit2 = ...  # fit another model here
+fit$loo = loo(fit)
+fit2$loo = loo(fit)
+loo_compare(fit, fit2)
+
+# Show all priors (not just those specified manually)
+fit$prior
+
+# Show JAGS model
+cat(fit$model_jags)
+
 
 }
 \keyword{jags,}

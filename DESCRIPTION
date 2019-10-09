@@ -17,7 +17,8 @@ Imports:
 	rjags,
 	dclone,
 	dplyr,
-	loo
+	loo,
+	stringr
 Suggests:
 	bayesplot,
 	tidybayes

@@ -31,7 +31,7 @@ criterion = function(fit, criterion = "loo") {
   }
 
   # Log-likelihood MCMC samples as matrix
-  loglik = as.matrix(do.call(rbind.data.frame, fit$loglik_list))
+  loglik = as.matrix(do.call(rbind.data.frame, fit$loglik))
 
   # Add LOO
   if(any(criterion == "loo")) {
