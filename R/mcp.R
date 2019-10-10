@@ -7,15 +7,24 @@ source("R/unpack_segments.R")
 #' See examples. Change points are forced to be ordered using truncation.
 #'
 #' @param data Data.frame or tibble in long format.
-#' @param segments List of formulas. Break points are estimated in between. The left-hand side specifies the chainge points and the right-hand side specifies the linear formula.
-#' @param prior Named list of parameters and associated priors in JAGS code. Uninformative default priors are used where priors are not specified. `mct` uses SD for dnorm, dt, dlogis, etc, and converts it into precision (`1/SD^2`) under the hood for JAGS using the `sd_to_prec()` function. So fit$prior show SD but fit$jags_code show precision.
-#' @param param_x String (default: NULL). Only relevant if no segments contains slope (no hint at what x is). Set this, e.g., param_x = "time".
-#' @param sample Boolean (default: TRUE). Set to FALSE if you only want to check priors, the JAGS model, etc.
-#' @param ... Parameters for `jags.parfit` which channels them to `jags.fit`.
+#' @param segments List of formulas. Break points are estimated in between.
+#'   The left-hand side specifies the chainge points and the right-hand side
+#'   specifies the linear formula.
+#' @param prior Named list of parameters and associated priors in JAGS code.
+#'   Uninformative default priors are used where priors are not specified.
+#'   \code{mct} uses SD for dnorm, dt, dlogis, etc, and converts it into precision
+#'   (\code{1/SD^2}) under the hood for JAGS using the \code{sd_to_prec()} function. So
+#'   fit$prior show SD but fit$jags_code show precision.
+#' @param param_x String (default: NULL). Only relevant if no segments contains
+#'   slope (no hint at what x is). Set this, e.g., param_x = "time".
+#' @param sample Boolean (default: TRUE). Set to FALSE if you only want to check
+#'   priors, the JAGS model, etc.
+#' @param ... Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.
 #' @keywords mcmc, jags, mct
-#' @return An `mcpfit` object.
+#' @return An \code{mcpfit} object.
 #' @export
 #' @examples
+#' \dontrun{
 #' # Define the segments that are separated by change points
 #' segments = list(
 #'   score ~ 1 + year,  # intercept + slope
@@ -60,6 +69,7 @@ source("R/unpack_segments.R")
 #'
 #' # Show JAGS model
 #' cat(fit$jags_code)
+#' }
 
 
 mcp = function(segments, data, prior = list(), param_x = NULL, sample = TRUE, ...) {
