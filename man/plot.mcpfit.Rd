@@ -21,5 +21,3 @@ plot(fit)  # defaults to the below
 plot(fit, type="overlay", draws=50)
 plot(fit, "combo")
 }
-\keyword{mcmcfit,}
-\keyword{plot}
