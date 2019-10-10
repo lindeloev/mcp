@@ -4,16 +4,21 @@
 \alias{plot.mcpfit}
 \title{Plot mcpfit}
 \usage{
-\method{plot}{mcpfit}(fit, type = "overlay", draws = 50)
+\method{plot}{mcpfit}(fit, type = "overlay", draws = 25)
 }
 \arguments{
 \item{fit}{An mcpfit object}
+
+\item{type}{String. One of "overlay" (default) or "combo".}
+
+\item{draws}{Integer. Number of posterior draws to use when type = "overlay".}
 }
 \description{
 Plot mcpfit
 }
 \examples{
-plot(fit)  # defaults to plot(fit, type="overlay", draws=50)
+plot(fit)  # defaults to the below
+plot(fit, type="overlay", draws=50)
 plot(fit, "combo")
 }
 \keyword{mcmcfit,}

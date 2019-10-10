@@ -20,7 +20,5 @@ Imports:
 	loo,
 	stringr,
 	bayesplot,
-	tidybayes
-Suggests:
-	bayesplot,
-	tidybayes
+	tidybayes,
+	purrr

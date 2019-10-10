@@ -4,22 +4,22 @@
 \alias{make_jagscode}
 \title{Make JAGS code for Multiple Change Point model}
 \usage{
-make_jagscode(data, segments, prior, param_x = NULL)
+make_jagscode(data, prior, formula_jags, nsegments, sample, param_x,
+  param_y)
 }
 \arguments{
-\item{data}{A data.frame or tibble containing the variables expressed in `segments` in long format.}
+\item{data}{data.frame or tibble containing the variables expressed in `segments` in long format.}
 
-\item{segments}{A vector of formulas - one for each segment. The left-hand side specifies the form of the change point (on x). The right-hand side specifices the form of intercepts and slopes. See `mcp` examples for details.}
+\item{prior}{Named list with parameter names as names and a JAGS distribution as value, e.g., `list(int_1 = "dunif(10, 30)")`.}
 
-\item{prior}{A named list with parameter names as names and a JAGS distribution as value, e.g., `list(int_1 = "dunif(10, 30)")`.}
+\item{formula_jags}{String. The formula for computing param_y given param_x and all predictors. Returned by `unpack_segments()`}
 
-\item{param_x}{A string. Only relevant if no segments contains slope (no hint at what x is). Set this, e.g., param_x = "time".}
+\item{param_x}{string}
+
+\item{param_y}{String}
 }
 \description{
 Make JAGS code for Multiple Change Point model
-}
-\examples{
-
 }
 \keyword{jags,}
 \keyword{model}
