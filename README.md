@@ -11,7 +11,7 @@ You can see the roadmap for the immediate future under [issues](https://github.c
  2. Install `mcp` by running this in R: `devtools::install_github("lindeloev/mcp")`. If you don't have `devtools`, install it first using `install.packages("devtools")`.
 
 
-# Quick guide
+# Quick example
 
 Find the single change point between two joined slopes:
 ```r
@@ -27,6 +27,8 @@ fit = mcp(segments, my_data)
 # Plot fit
 plot(fit)
 ```
+
+![](docs/plot_overlay_simple.png)
 
 
 # Extended guide
@@ -90,11 +92,13 @@ prior = list(
 )
 ```
 
-`mct` has a few tricks up the sleeve for setting priors. Order restriction is automatically applied to `cp_*` parameters using truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the x-axis UNLESS you do it yourself. The one exception is for `dunif` distributions where you have to do it as above. In addition to the model parameters, `MINX` (minimum x-value), `MAXX` (maximum x-value), `SDX` (etc...), `MINY`, `MAXY`, and `SDY` are also available when you set priors. They are used to set uninformative default priors.
+`mct` has a few tricks up the sleeve for setting priors. 
 
-If you know JAGS, you may know that it uses precision rather than SD for dnorm, 
-dt, dlogis, etc. Use SD when you specify priors. `mct` converts it to precision under
-the hood via the `sd_to_prec()` function.
+* Order restriction is automatically applied to `cp_*` parameters using truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the x-axis UNLESS you do it yourself. The one exception is for `dunif` distributions where you have to do it as above. 
+
+* In addition to the model parameters, `MINX` (minimum x-value), `MAXX` (maximum x-value), `SDX` (etc...), `MINY`, `MAXY`, and `SDY` are also available when you set priors. They are used to set uninformative default priors.
+
+* Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision but `mct` converts to precision under the hood via the `sd_to_prec()` function.
 
 
 ## Fit the model
