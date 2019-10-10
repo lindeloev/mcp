@@ -7,11 +7,16 @@
 unpack_segments(segments, prior = list(), param_x = NULL)
 }
 \arguments{
-\item{segments}{A vector of formulas - one for each segment. The left-hand side specifies the form of the change point (on x). The right-hand side specifices the form of intercepts and slopes. See `mcp` examples for details.}
+\item{segments}{A vector of formulas - one for each segment. The left-hand
+side specifies the form of the change point (on x). The right-hand side
+specifices the form of intercepts and slopes. See \code{mcp} examples for
+details.}
 
-\item{prior}{A named list with parameter names as names and a JAGS distribution as value, e.g., `list(int_1 = "dunif(10, 30)")`.}
+\item{prior}{A named list with parameter names as names and a JAGS
+distribution as value, e.g., \code{list(int_1 = "dunif(10, 30)")}.}
 
-\item{param_x}{A string. Only relevant if no segments contains slope (no hint at what x is). Set this, e.g., param_x = "time".}
+\item{param_x}{A string. Only relevant if no segments contains slope (no hint
+at what x is). Set this, e.g., param_x = "time".}
 }
 \description{
 Understand the list of segments

@@ -8,25 +8,34 @@ mcp(segments, data, prior = list(), param_x = NULL, sample = TRUE,
   ...)
 }
 \arguments{
-\item{segments}{List of formulas. Break points are estimated in between. The left-hand side specifies the chainge points and the right-hand side specifies the linear formula.}
+\item{segments}{List of formulas. Break points are estimated in between.
+The left-hand side specifies the chainge points and the right-hand side
+specifies the linear formula.}
 
 \item{data}{Data.frame or tibble in long format.}
 
-\item{prior}{Named list of parameters and associated priors in JAGS code. Uninformative default priors are used where priors are not specified. `mct` uses SD for dnorm, dt, dlogis, etc, and converts it into precision (`1/SD^2`) under the hood for JAGS using the `sd_to_prec()` function. So fit$prior show SD but fit$jags_code show precision.}
+\item{prior}{Named list of parameters and associated priors in JAGS code.
+Uninformative default priors are used where priors are not specified.
+\code{mct} uses SD for dnorm, dt, dlogis, etc, and converts it into precision
+(\code{1/SD^2}) under the hood for JAGS using the \code{sd_to_prec()} function. So
+fit$prior show SD but fit$jags_code show precision.}
 
-\item{param_x}{String (default: NULL). Only relevant if no segments contains slope (no hint at what x is). Set this, e.g., param_x = "time".}
+\item{param_x}{String (default: NULL). Only relevant if no segments contains
+slope (no hint at what x is). Set this, e.g., param_x = "time".}
 
-\item{sample}{Boolean (default: TRUE). Set to FALSE if you only want to check priors, the JAGS model, etc.}
+\item{sample}{Boolean (default: TRUE). Set to FALSE if you only want to check
+priors, the JAGS model, etc.}
 
-\item{...}{Parameters for `jags.parfit` which channels them to `jags.fit`.}
+\item{...}{Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.}
 }
 \value{
-An `mcpfit` object.
+An \code{mcpfit} object.
 }
 \description{
 See examples. Change points are forced to be ordered using truncation.
 }
 \examples{
+\dontrun{
 # Define the segments that are separated by change points
 segments = list(
   score ~ 1 + year,  # intercept + slope
@@ -71,6 +80,7 @@ spread_draws(fit$samples, cp_1, cp_2, int_1, year_1, year_2) \%>\%
 
 # Show JAGS model
 cat(fit$jags_code)
+}
 }
 \keyword{jags,}
 \keyword{mcmc,}
