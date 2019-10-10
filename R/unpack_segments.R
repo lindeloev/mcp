@@ -31,6 +31,10 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
     stop("At least one segment is needed")
   }
 
+  if(any(stringr::str_detect(as.character(segments[[1]]), "rel\\("))) {
+    stop("`rel` cannot be used in first segment. Nothing to be relative to.")
+  }
+
   if(is.null(param_x)) {
     stop("This is a plateau-only model, but `param_x` is missing in `mcp`")
   }
