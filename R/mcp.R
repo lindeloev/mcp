@@ -1,17 +1,18 @@
 source("R/make_jagscode.R")
 source("R/run_jags.R")
+source("R/unpack_segments.R")
 
 #' Fit Multiple Linear Segments And Their Change Points
 #'
 #' Change points are forced to be ordered using truncation.
 #'
-#' @param data A data.frame or tibble in long format.
-#' @param segments A list of formulas. Break points are estimated in between. The left-hand side specifies the chainge points and the right-hand side specifies the linear formula.
-#' @param prior A named list of parameters and associated priors in JAGS code. Uninformative default priors are used where priors are not specified.
-#' @param param_x A string. Only relevant if no segments contains slope (no hint at what x is). Set this, e.g., param_x = "time".
+#' @param data Data.frame or tibble in long format.
+#' @param segments List of formulas. Break points are estimated in between. The left-hand side specifies the chainge points and the right-hand side specifies the linear formula.
+#' @param prior Named list of parameters and associated priors in JAGS code. Uninformative default priors are used where priors are not specified.
+#' @param param_x String (default: NULL). Only relevant if no segments contains slope (no hint at what x is). Set this, e.g., param_x = "time".
+#' @param sample Boolean (default: TRUE). Set to FALSE if you only want to check priors, the JAGS model, etc.
 #' @param ... Parameters for `jags.parfit` which channels them to `jags.fit`.
 #' @keywords mcmc, jags, mct
-#' @import stringr
 #' @export
 #' @examples
 #' # Define the segments that are separated by change points
@@ -34,7 +35,7 @@ source("R/run_jags.R")
 #' )
 #'
 #' # Start sampling
-#' fit = mcp(data, segments, prior)
+#' fit = mcp(segments, data, prior)
 #'
 #' # Visual inspection of the results
 #' plot(fit)
@@ -42,7 +43,7 @@ source("R/run_jags.R")
 #'
 #' # Compare to an one-intercept-only model (no change points) with default prior
 #' segments2 = list(1 ~ 1)
-#' fit2 = mcp(data, segments2)  # fit another model here
+#' fit2 = mcp(segments2, data)  # fit another model here
 #' fit$loo = loo(fit)
 #' fit2$loo = loo(fit)
 #' loo_compare(fit, fit2)
@@ -57,15 +58,17 @@ source("R/run_jags.R")
 #'    # tidybayes stuff here
 #'
 #' # Show JAGS model
-#' cat(fit$model_jags)
+#' cat(fit$jags_code)
 
 
-mcp = function(data, segments, prior = list(), param_x = NULL, ...) {
+mcp = function(segments, data, prior = list(), param_x = NULL, sample = TRUE, ...) {
 
   # Check input values
-  if(!is.data.frame(data) & !is.tibble(data)) {
-    stop("`data` must be a data.frame or a tibble.")
-  }
+  if(sample) {
+    if(!is.data.frame(data) & !tibble::is_tibble(data)) {
+      stop("`data` must be a data.frame or a tibble.")
+    }
+  } else data = NULL  # define variable but nothing more
   if(!is.list(segments)) {
     stop("`segments` must be a list")
   }
@@ -75,22 +78,46 @@ mcp = function(data, segments, prior = list(), param_x = NULL, ...) {
   if(!is.list(prior)) {
     stop("`prior` must be a named list.")
   }
+  if(!is.null(param_x) & !is.character(param_x)) {
+    stop("`param_x` must be NULL or a string.")
+  }
+  if(!is.logical(sample)) {
+    stop("`sample` must be TRUE or FALSE")
+  }
+
+  # Get prior, func_y, formula_jags, and param_x/param_y
+  unpacked = unpack_segments(segments, prior, param_x)
+  prior = unpacked$prior
+
 
   # Build model
-  model_obj = make_jagscode(data, segments, prior, param_x = param_x)
-
-  # Sample it
-  samples = run_jags(
+  jags_code = make_jagscode(
     data = data,
-    model = model_obj$model,
-    params = c(unlist(model_obj$all_pars), model_obj$param_name_x, "y_", "sigma", "loglik_"),
-    ...
-  )
+    prior = prior,
+    formula_jags = unpacked$formula_jags,
+    nsegments = length(segments),
+    sample = sample,
+    param_x = unpacked$param_x,
+    param_y = unpacked$param_y)
 
-  # Split loglik columns way
-  loglik_cols = str_starts(colnames(samples[[1]]), 'loglik_')  # detect loglik cols
-  loglik = lapply(samples, function(x) x[, loglik_cols])
-  samples = lapply(samples, function(x) x[, !loglik_cols])
+  # If samples should drawn. If not, just do everything else.
+  if(sample) {
+    # Sample it
+    samples = run_jags(
+      data = data,
+      model = jags_code,
+      params = c(names(prior), "loglik_"),
+      ...
+    )
+
+    # Move loglik columns out to it's own list, keeping parameters and loglik apart
+    loglik_cols = stringr::str_starts(colnames(samples[[1]]), 'loglik_')  # detect loglik cols
+    loglik = lapply(samples, function(x) x[, loglik_cols])
+    samples = lapply(samples, function(x) x[, !loglik_cols])
+  } else {
+    samples = NULL
+    loglik = NULL
+  }
 
   # Make mrpfit object
   mcpfit = list(
@@ -104,13 +131,14 @@ mcp = function(data, segments, prior = list(), param_x = NULL, ...) {
     prior = prior,
 
     pars = list(
-      model = model_obj$all_pars,
-      x = model_obj$param_name_x,
-      y = model_obj$param_name_y
+      model = names(prior),
+      x = unpacked$param_x,
+      y = unpacked$param_y
     ),
 
     segments = segments,
-    model_jags = model_obj$model
+    jags_code = jags_code,
+    func_y = unpacked$func_y
   )
   class(mcpfit) = "mcpfit"
 

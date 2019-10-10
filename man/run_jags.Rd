@@ -4,7 +4,7 @@
 \alias{run_jags}
 \title{Run parallel MCMC sampling using JAGS.}
 \usage{
-run_jags(data, model, params, model_file = "tmp_jags_model.txt",
+run_jags(data, model, params, model_file = "tmp_jags_code.txt",
   n.chains = parallel::detectCores() - 1, n.iter = 3000,
   n.adapt = 2000, n.update = 2000, ...)
 }

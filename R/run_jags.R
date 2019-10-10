@@ -5,7 +5,6 @@
 #' @param model_file A temporary file. Makes parallel sampling possible
 #' @param ... Parameters for `jags.parfit` which channels them to `jags.fit`.
 #' @keywords mcmc, jags, mct
-#' @export
 #' @import dclone
 #' @import parallel
 #' @examples
@@ -14,7 +13,7 @@
 run_jags = function(data,
                     model,
                     params,
-                    model_file = "tmp_jags_model.txt",
+                    model_file = "tmp_jags_code.txt",
 
                     # JAGS arguments
                     n.chains = parallel::detectCores() - 1,  # Use all cores but one
