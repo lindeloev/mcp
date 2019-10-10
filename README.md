@@ -106,7 +106,7 @@ This is the easiest step!
 
 ```r
 fit = mcp(segments, data, prior)
-fit
+fit 
 ```
 
 ```
