@@ -9,20 +9,22 @@ run_jags(data, model, params, model_file = "tmp_jags_code.txt",
   n.adapt = 2000, n.update = 2000, ...)
 }
 \arguments{
-\item{data}{A data.frame or tibble containing the variables expressed in `model` in long format.}
+\item{data}{A data.frame or tibble containing the variables expressed in
+\code{model} in long format.}
 
-\item{model}{A JAGS model, usually returned by `make_jagscode()`.}
+\item{model}{A JAGS model, usually returned by \code{make_jagscode()}.}
 
 \item{model_file}{A temporary file. Makes parallel sampling possible}
 
-\item{...}{Parameters for `jags.parfit` which channels them to `jags.fit`.}
+\item{...}{Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.}
 }
 \description{
 Run parallel MCMC sampling using JAGS.
 }
 \examples{
+\dontrun{
 run_jags(data, model, params)
-
+}
 }
 \keyword{jags,}
 \keyword{mcmc,}

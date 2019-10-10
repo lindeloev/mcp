@@ -2,6 +2,8 @@
 
 S3method(loo,mcpfit)
 S3method(plot,mcpfit)
+S3method(print,mcpfit)
+S3method(summary,mcpfit)
 S3method(waic,mcpfit)
 export(criterion)
 export(mcp)

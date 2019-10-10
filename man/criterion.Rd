@@ -12,10 +12,11 @@ criterion(fit, criterion = "loo")
 \item{criterion}{One of "loo" (calls loo::loo) or "waic" (calls loo:waic).}
 }
 \description{
-Takes a `mcpfit`` as input and computes information criteria using loo or
-WAIC. Interpret directly or use `loo::loo_compare` to compare models.
+Takes a \code{mcpfit} as input and computes information criteria using loo or
+WAIC. Interpret directly or use \code{loo::loo_compare} to compare models.
 }
 \examples{
+\dontrun{
 # Compute loos
 fit1$loo = loo(fit1)
 fit2$loo = loo(fit2)
@@ -27,7 +28,7 @@ loo::loo_compare(fit1$loo, fit2$loo)
 
 # Compute model weights. Higher weight is best. See help for details..
 loo::loo_model_weights(list(fit1$loo, fit2$loo))
-
+}
 }
 \keyword{information,}
 \keyword{loo,}
