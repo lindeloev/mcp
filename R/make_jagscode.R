@@ -1,11 +1,13 @@
 #' Make JAGS code for Multiple Change Point model
 #'
-#' @param data data.frame or tibble containing the variables expressed in `segments` in long format.
-#' @param prior Named list with parameter names as names and a JAGS distribution as value, e.g., `list(int_1 = "dunif(10, 30)")`.
-#' @param formula_jags String. The formula for computing param_y given param_x and all predictors. Returned by `unpack_segments()`
+#' @param data data.frame or tibble containing the variables expressed in
+#'   \code{segments} in long format.
+#' @param prior Named list with parameter names as names and a JAGS distribution
+#'   as value, e.g., \code{list(int_1 = "dunif(10, 30)")}.
+#' @param formula_jags String. The formula for computing param_y given param_x
+#'   and all predictors. Returned by \code{unpack_segments()}
 #' @param param_x string
 #' @param param_y String
-#' @keywords jags, model
 #'
 make_jagscode = function(data, prior, formula_jags, nsegments, sample, param_x, param_y) {
   # Transform priors from SD to precision
