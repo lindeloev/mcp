@@ -4,15 +4,16 @@ source("R/unpack_segments.R")
 
 #' Fit Multiple Linear Segments And Their Change Points
 #'
-#' Change points are forced to be ordered using truncation.
+#' See examples. Change points are forced to be ordered using truncation.
 #'
 #' @param data Data.frame or tibble in long format.
 #' @param segments List of formulas. Break points are estimated in between. The left-hand side specifies the chainge points and the right-hand side specifies the linear formula.
-#' @param prior Named list of parameters and associated priors in JAGS code. Uninformative default priors are used where priors are not specified.
+#' @param prior Named list of parameters and associated priors in JAGS code. Uninformative default priors are used where priors are not specified. `mct` uses SD for dnorm, dt, dlogis, etc, and converts it into precision (`1/SD^2`) under the hood for JAGS using the `sd_to_prec()` function. So fit$prior show SD but fit$jags_code show precision.
 #' @param param_x String (default: NULL). Only relevant if no segments contains slope (no hint at what x is). Set this, e.g., param_x = "time".
 #' @param sample Boolean (default: TRUE). Set to FALSE if you only want to check priors, the JAGS model, etc.
 #' @param ... Parameters for `jags.parfit` which channels them to `jags.fit`.
 #' @keywords mcmc, jags, mct
+#' @return An `mcpfit` object.
 #' @export
 #' @examples
 #' # Define the segments that are separated by change points
@@ -31,7 +32,7 @@ source("R/unpack_segments.R")
 #' prior = list(
 #'   int_1 = "dunif(10, 30)",  # intercept of segment 1
 #'   cp_2 = "dunif(cp_1, 40),  # change point between segment 1 and 2. Must be greater than cp_1. Order restriction is applied automatically for everything but dunif (a JAGS limitation).
-#'   year_2 = "dnorm(0, 1/5^2)  # slope of segment 1. Mean = 0, SD = 5.
+#'   year_2 = "dnorm(0, 5)  # slope of segment 1. Mean = 0, SD = 5.
 #' )
 #'
 #' # Start sampling

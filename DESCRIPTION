@@ -16,9 +16,12 @@ Imports:
     parallel,
 	rjags,
 	dclone,
-	dplyr,
 	loo,
-	stringr,
 	bayesplot,
 	tidybayes,
-	purrr
+	dplyr,
+	tidyr,
+	purrr,
+	tibble,
+	stringr,
+	ggplot2
