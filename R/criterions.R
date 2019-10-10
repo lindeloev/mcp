@@ -6,8 +6,8 @@
 #' @param fit An mcmc.list with log-density column(s)
 #' @param criterion One of "loo" (calls loo::loo) or "waic" (calls loo:waic).
 #' @keywords information, loo, waic, mcmc
-#' @export
 #' @import loo
+#' @export
 #' @examples
 #' # Compute loos
 #' fit1$loo = loo(fit1)
@@ -49,9 +49,20 @@ criterion = function(fit, criterion = "loo") {
   }
 }
 
+
+
+#' Computes loo on mcpfit objects
+#' @export
+#' @examples
+#' fit$loo = loo(fit)
 loo.mcpfit = function(fit) {
   criterion(fit, "loo")
 }
+
+#' Computes WAIC loo on mcpfit objects
+#' @export
+#' @examples
+#' fit$waic = waic(fit)
 waic.mcpfit = function(fit) {
   criterion(fit, "waic")
 }

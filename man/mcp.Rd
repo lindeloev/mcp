@@ -4,16 +4,19 @@
 \alias{mcp}
 \title{Fit Multiple Linear Segments And Their Change Points}
 \usage{
-mcp(data, segments, prior = list(), param_x = NULL, ...)
+mcp(segments, data, prior = list(), param_x = NULL, sample = TRUE,
+  ...)
 }
 \arguments{
-\item{data}{A data.frame or tibble in long format.}
+\item{segments}{List of formulas. Break points are estimated in between. The left-hand side specifies the chainge points and the right-hand side specifies the linear formula.}
 
-\item{segments}{A list of formulas. Break points are estimated in between. The left-hand side specifies the chainge points and the right-hand side specifies the linear formula.}
+\item{data}{Data.frame or tibble in long format.}
 
-\item{prior}{A named list of parameters and associated priors in JAGS code. Uninformative default priors are used where priors are not specified.}
+\item{prior}{Named list of parameters and associated priors in JAGS code. Uninformative default priors are used where priors are not specified.}
 
-\item{param_x}{A string. Only relevant if no segments contains slope (no hint at what x is). Set this, e.g., param_x = "time".}
+\item{param_x}{String (default: NULL). Only relevant if no segments contains slope (no hint at what x is). Set this, e.g., param_x = "time".}
+
+\item{sample}{Boolean (default: TRUE). Set to FALSE if you only want to check priors, the JAGS model, etc.}
 
 \item{...}{Parameters for `jags.parfit` which channels them to `jags.fit`.}
 }
@@ -41,7 +44,7 @@ prior = list(
 )
 
 # Start sampling
-fit = mcp(data, segments, prior)
+fit = mcp(segments, data, prior)
 
 # Visual inspection of the results
 plot(fit)
@@ -49,7 +52,7 @@ plot(fit, "combo")
 
 # Compare to an one-intercept-only model (no change points) with default prior
 segments2 = list(1 ~ 1)
-fit2 = mcp(data, segments2)  # fit another model here
+fit2 = mcp(segments2, data)  # fit another model here
 fit$loo = loo(fit)
 fit2$loo = loo(fit)
 loo_compare(fit, fit2)
@@ -64,7 +67,7 @@ spread_draws(fit$samples, cp_1, cp_2, int_1, year_1, year_2) \%>\%
    # tidybayes stuff here
 
 # Show JAGS model
-cat(fit$model_jags)
+cat(fit$jags_code)
 }
 \keyword{jags,}
 \keyword{mcmc,}
