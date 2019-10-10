@@ -106,7 +106,25 @@ This is the easiest step!
 
 ```r
 fit = mcp(segments, data, prior)
+fit
 ```
+
+```
+# A tibble: 8 x 4
+  name    mean .lower .upper
+  <chr>  <dbl>  <dbl>  <dbl>
+1 cp_1   18.5   15.9   20.7 
+2 cp_2   56.7   42.2   67.7 
+3 cp_3   68.6   46.0   96.0 
+4 int_1  11.3    1.17  21.7 
+5 int_4  16.4   11.0   22.2 
+6 sigma  11.7   10.0   13.4 
+7 year_1  3.72   2.76   4.74
+8 year_2 -5.54  -6.65  -4.45
+```
+
+(This summary is very preliminary and will be updated)
+
 
 ## Plots
 Let us inspect it visually:
