@@ -47,3 +47,31 @@ plot.mcpfit = function(fit, type="overlay", draws=25) {
     bayesplot::mcmc_combo(fit$samples, regex_pars=pars)
   }
 }
+
+
+#' Plot mcpfit
+#'
+#' A simple summary of mcpfit objects. It will be updated later.
+#'
+#' @param fit \code{mcpfit} object.
+#' @param width The width of the Higest Density Interval.
+#' @export
+#' @example summary(fit)
+
+summary.mcpfit = function(fit, width = 0.95) {
+  fit$samples %>%
+    tidy_draws() %>%
+    pivot_longer(-starts_with(".")) %>%
+    group_by(name) %>%
+    mean_hdci(value, .width = width) %>%
+    rename(mean = value) %>%
+    select(-.point, -.width, -.interval)
+}
+
+#' Print mcpfit
+#'
+#' @param fit \code{mcpfit} object.
+#' @export
+print.mcpfit = function(fit) {
+  print(summary(fit))
+}
