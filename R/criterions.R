@@ -1,7 +1,7 @@
 #' Compute information criteria for model comparison
 #'
-#' Takes a `mcpfit`` as input and computes information criteria using loo or
-#' WAIC. Interpret directly or use `loo::loo_compare` to compare models.
+#' Takes a \code{mcpfit} as input and computes information criteria using loo or
+#' WAIC. Interpret directly or use \code{loo::loo_compare} to compare models.
 #'
 #' @param fit An mcmc.list with log-density column(s)
 #' @param criterion One of "loo" (calls loo::loo) or "waic" (calls loo:waic).
@@ -9,6 +9,7 @@
 #' @import loo
 #' @export
 #' @examples
+#' \dontrun{
 #' # Compute loos
 #' fit1$loo = loo(fit1)
 #' fit2$loo = loo(fit2)
@@ -20,7 +21,7 @@
 #'
 #' # Compute model weights. Higher weight is best. See help for details..
 #' loo::loo_model_weights(list(fit1$loo, fit2$loo))
-#'
+#'}
 
 criterion = function(fit, criterion = "loo") {
   if(!class(fit) == "mcpfit") {

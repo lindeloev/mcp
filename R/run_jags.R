@@ -1,15 +1,18 @@
 #' Run parallel MCMC sampling using JAGS.
 #'
-#' @param data A data.frame or tibble containing the variables expressed in `model` in long format.
-#' @param model A JAGS model, usually returned by `make_jagscode()`.
+#' @param data A data.frame or tibble containing the variables expressed in
+#'   \code{model} in long format.
+#' @param model A JAGS model, usually returned by \code{make_jagscode()}.
 #' @param model_file A temporary file. Makes parallel sampling possible
-#' @param ... Parameters for `jags.parfit` which channels them to `jags.fit`.
+#' @param ... Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.
 #' @keywords mcmc, jags, mct
 #' @import dclone
 #' @import parallel
 #' @examples
+#' \dontrun{
 #' run_jags(data, model, params)
-#'
+#'}
+
 run_jags = function(data,
                     model,
                     params,
