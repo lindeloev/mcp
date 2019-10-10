@@ -31,6 +31,10 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
     stop("At least one segment is needed")
   }
 
+  if(any(stringr::str_detect(as.character(segments[[1]]), "rel\\("))) {
+    stop("`rel` cannot be used in first segment. Nothing to be relative to.")
+  }
+
   if(is.null(param_x)) {
     stop("This is a plateau-only model, but `param_x` is missing in `mcp`")
   }
@@ -42,12 +46,12 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
     stop("Response cannot be 0 or 1. Must be a column in data.")
   }
 
-  default_prior_slope = "dt(0, 1 / (SDY / (MAXX - MINX) * 3)^2, 1)"
-  default_prior_int = "dt(0, 1 / (SDY * 3)^2, 1)"
+  default_prior_slope = "dt(0, SDY / (MAXX - MINX) * 3, 1)"
+  default_prior_int = "dt(0, SDY * 3, 1)"
 
 
   # Build list of priors and a formula
-  default_prior = list(sigma = "dnorm(0, 1 / SDY^2) T(0, )")
+  default_prior = list(sigma = "dnorm(0, SDY) T(0, )")
   formula_str = ""
 
   for(i in 1:length(segments)) {

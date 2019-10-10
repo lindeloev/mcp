@@ -3,15 +3,12 @@
 #' @param fit An mcpfit object
 #' @param type String. One of "overlay" (default) or "combo".
 #' @param draws Integer. Number of posterior draws to use when type = "overlay".
-#' @keywords mcmcfit, plot
-#' @import dplyr
-#' @import tidybayes
+#' @import tidyr dplyr ggplot2
 #' @export
 #' @examples
 #' plot(fit)  # defaults to the below
 #' plot(fit, type="overlay", draws=50)
 #' plot(fit, "combo")
-
 
 plot.mcpfit = function(fit, type="overlay", draws=25) {
   # Plot function on top
@@ -22,10 +19,10 @@ plot.mcpfit = function(fit, type="overlay", draws=25) {
 
     # First, let's get all the predictors in shape for func_y
     Q = fit$samples %>%
-      tidy_draws() %>%
+      tidybayes::tidy_draws() %>%
       sample_n(draws) %>%
       select(-starts_with(".")) %>%
-      expand_grid(!!fit$pars$x := eval_at) %>%  # correct name of x-var
+      tidyr::expand_grid(!!fit$pars$x := eval_at) %>%  # correct name of x-var
       mutate(type = "fitted") %>%
 
       # Now we make a nested table for each row and apply them as args to func_y

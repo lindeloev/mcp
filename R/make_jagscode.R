@@ -8,10 +8,15 @@
 #' @keywords jags, model
 #'
 make_jagscode = function(data, prior, formula_jags, nsegments, sample, param_x, param_y) {
+  # Transform priors from SD to precision
+  for(i in 1:length(prior)) {
+    if(stringr::str_detect(prior[[i]], "dnorm|dt|dcauchy|ddexp|dlogis|dlnorm")) {
+      prior[[i]] = sd_to_prec(prior[[i]])
+    }
+  }
+
   # Begin model. `mm` is short for "mcp model".
   # Add fixed variables.
-
-
   mm = paste0("
   data {
     # X values
@@ -28,7 +33,8 @@ make_jagscode = function(data, prior, formula_jags, nsegments, sample, param_x, 
   }
 
   model {
-    # Priors\n")
+    # Priors
+    ")
 
   # Add all priors
   prior_vector = unlist(prior)
