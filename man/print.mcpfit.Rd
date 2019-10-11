@@ -2,12 +2,15 @@
 % Please edit documentation in R/plot.R
 \name{print.mcpfit}
 \alias{print.mcpfit}
+\alias{print}
 \title{Print mcpfit}
 \usage{
-\method{print}{mcpfit}(fit)
+\method{print}{mcpfit}(x, ...)
 }
 \arguments{
-\item{fit}{\code{mcpfit} object.}
+\item{x}{\code{mcpfit} object.}
+
+\item{...}{Currently ignored.}
 }
 \description{
 Print mcpfit

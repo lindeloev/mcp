@@ -7,19 +7,29 @@
 unpack_segments(segments, prior = list(), param_x = NULL)
 }
 \arguments{
-\item{segments}{A vector of formulas - one for each segment. The left-hand
-side specifies the form of the change point (on x). The right-hand side
-specifices the form of intercepts and slopes. See \code{mcp} examples for
-details.}
+\item{segments}{A list of formulas - one for each segment. The right-hand
+side specifices the form of intercepts and slopes. For the first segment,
+the left-hand side is the response variable. In the following segments, the
+left-hand side is the change point (on x). See examples for more details.}
 
-\item{prior}{A named list with parameter names as names and a JAGS
-distribution as value, e.g., \code{list(int_1 = "dunif(10, 30)")}.}
+\item{prior}{Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
+sigma) and the values are the associated priors in JAGS code. Uninformative
+default priors are used where priors are not specified.
+\code{mct} uses SD (not precision) for dnorm, dt, dlogis, etc. See details.
+Change points are forced to be ordered through the priors using truncation,
+\code{dnorm(0, 1) T(cp_1, )}, except for uniform priors where the lower
+bound should be greater than the previous change point, \code{dunif(cp_1, )}.}
 
-\item{param_x}{A string. Only relevant if no segments contains slope (no hint
-at what x is). Set this, e.g., param_x = "time".}
+\item{param_x}{String (default: NULL). Only relevant if no segments contains
+slope (no hint at what x is). Set this, e.g., param_x = "time".}
+}
+\value{
+A list with prior (list), formula_jags (string), func_y (function),
+  param_x (string), param_y(string).
 }
 \description{
 Understand the list of segments
 }
-\keyword{jags,}
-\keyword{model}
+\author{
+Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
+}

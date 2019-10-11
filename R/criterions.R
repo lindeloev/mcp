@@ -1,12 +1,14 @@
 #' Compute information criteria for model comparison
 #'
 #' Takes a \code{mcpfit} as input and computes information criteria using loo or
-#' WAIC. Interpret directly or use \code{loo::loo_compare} to compare models.
+#' WAIC. Compare models using \code{\link[loo]{loo_compare}} and \code{\link[loo]{loo_model_weights}}.
+#' more in \code{\link[loo]{loo}}.
 #'
-#' @param fit An mcmc.list with log-density column(s)
+#' @aliases criterion
+#' @param fit An mcpfit object.
 #' @param criterion One of "loo" (calls loo::loo) or "waic" (calls loo:waic).
-#' @keywords information, loo, waic, mcmc
-#' @import loo
+#' @return a \code{loo} or \code{psis_loo} object. See more in \code{\link[loo]{loo}}.
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
 #' \dontrun{
@@ -19,7 +21,7 @@
 #' # Compare loos. Top is best. Should be several SDs better than others.
 #' loo::loo_compare(fit1$loo, fit2$loo)
 #'
-#' # Compute model weights. Higher weight is best. See help for details..
+#' # Compute model weights. Higher weight is better. See help for details..
 #' loo::loo_model_weights(list(fit1$loo, fit2$loo))
 #'}
 
@@ -52,18 +54,16 @@ criterion = function(fit, criterion = "loo") {
 
 
 
-#' Computes loo on mcpfit objects
+#' @aliases loo
+#' @describeIn criterion Computes loo on mcpfit objects
 #' @export
-#' @examples
-#' fit$loo = loo(fit)
 loo.mcpfit = function(fit) {
   criterion(fit, "loo")
 }
 
-#' Computes WAIC loo on mcpfit objects
+#' @aliases waic
+#' @describeIn criterion Computes WAIC on mcpfit objects
 #' @export
-#' @examples
-#' fit$waic = waic(fit)
 waic.mcpfit = function(fit) {
   criterion(fit, "waic")
 }

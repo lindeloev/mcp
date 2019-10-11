@@ -21,3 +21,6 @@ following distributions: dnorm|dt|dcauchy|ddexp|dlogis|dlnorm. In all of
 these,
 tau/sd is the second parameter.
 }
+\author{
+Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
+}

@@ -2,14 +2,17 @@
 % Please edit documentation in R/plot.R
 \name{summary.mcpfit}
 \alias{summary.mcpfit}
+\alias{summary}
 \title{Plot mcpfit}
 \usage{
-\method{summary}{mcpfit}(fit, width = 0.95)
+\method{summary}{mcpfit}(object, width = 0.95, ...)
 }
 \arguments{
-\item{fit}{\code{mcpfit} object.}
+\item{object}{\code{mcpfit} object.}
 
 \item{width}{The width of the Higest Density Interval.}
+
+\item{...}{Currently ignored.}
 }
 \description{
 A simple summary of mcpfit objects. It will be updated later.

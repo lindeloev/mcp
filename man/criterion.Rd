@@ -2,19 +2,38 @@
 % Please edit documentation in R/criterions.R
 \name{criterion}
 \alias{criterion}
+\alias{loo.mcpfit}
+\alias{loo}
+\alias{waic.mcpfit}
+\alias{waic}
 \title{Compute information criteria for model comparison}
 \usage{
 criterion(fit, criterion = "loo")
+
+loo.mcpfit(fit)
+
+waic.mcpfit(fit)
 }
 \arguments{
-\item{fit}{An mcmc.list with log-density column(s)}
+\item{fit}{An mcpfit object.}
 
 \item{criterion}{One of "loo" (calls loo::loo) or "waic" (calls loo:waic).}
 }
+\value{
+a \code{loo} or \code{psis_loo} object. See more in \code{\link[loo]{loo}}.
+}
 \description{
 Takes a \code{mcpfit} as input and computes information criteria using loo or
-WAIC. Interpret directly or use \code{loo::loo_compare} to compare models.
+WAIC. Compare models using \code{\link[loo]{loo_compare}} and \code{\link[loo]{loo_model_weights}}.
+more in \code{\link[loo]{loo}}.
 }
+\section{Functions}{
+\itemize{
+\item \code{loo.mcpfit}: Computes loo on mcpfit objects
+
+\item \code{waic.mcpfit}: Computes WAIC on mcpfit objects
+}}
+
 \examples{
 \dontrun{
 # Compute loos
@@ -26,11 +45,10 @@ fit1$loo  # view it
 # Compare loos. Top is best. Should be several SDs better than others.
 loo::loo_compare(fit1$loo, fit2$loo)
 
-# Compute model weights. Higher weight is best. See help for details..
+# Compute model weights. Higher weight is better. See help for details..
 loo::loo_model_weights(list(fit1$loo, fit2$loo))
 }
 }
-\keyword{information,}
-\keyword{loo,}
-\keyword{mcmc}
-\keyword{waic,}
+\author{
+Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
+}
