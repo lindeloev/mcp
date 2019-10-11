@@ -4,19 +4,41 @@
 \alias{run_jags}
 \title{Run parallel MCMC sampling using JAGS.}
 \usage{
-run_jags(data, model, params, model_file = "tmp_jags_code.txt",
+run_jags(data, jags_code, params, model_file = "tmp_jags_code.txt",
   n.chains = parallel::detectCores() - 1, n.iter = 3000,
-  n.adapt = 2000, n.update = 2000, ...)
+  n.adapt = 1500, n.update = 1500, ...)
 }
 \arguments{
-\item{data}{A data.frame or tibble containing the variables expressed in
-\code{model} in long format.}
+\item{data}{
+A named list or environment containing the data. 
+If an environment, \code{data}
+is coerced into a list.
+}
 
-\item{model}{A JAGS model, usually returned by \code{make_jagscode()}.}
+\item{jags_code}{A string. JAGS model, usually returned by \code{make_jagscode()}.}
+
+\item{params}{
+Character vector of parameters to be sampled.
+}
 
 \item{model_file}{A temporary file. Makes parallel sampling possible}
 
+\item{n.chains}{Number of chains to run. Defaults to all-but-one cores.}
+
+\item{n.iter}{Number of post-warmup samples to draw.}
+
+\item{n.adapt}{Number of iterations to adapt sampler values.}
+
+\item{n.update}{
+Number of updates before iterations. 
+It is usually a bad idea to use \code{n.update=0} if 
+\code{n.adapt>0}, so a warning is issued in such cases.
+}
+
 \item{...}{Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.}
+}
+\value{
+\code{mcmc.list}
 }
 \description{
 Run parallel MCMC sampling using JAGS.
@@ -26,6 +48,6 @@ Run parallel MCMC sampling using JAGS.
 run_jags(data, model, params)
 }
 }
-\keyword{jags,}
-\keyword{mcmc,}
-\keyword{mct}
+\author{
+Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
+}

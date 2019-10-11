@@ -7,9 +7,11 @@
 #' these,
 #' tau/sd is the second parameter.
 #'
+#'@aliases sd_to_prec
 #'@param prior_str String. A JAGS prior. Can be truncated, e.g.
 #'  \code{dt(3, 2, 1) T(my_var, )}.
 #'@return A string
+#'@author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'@export
 #'
 

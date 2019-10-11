@@ -15,6 +15,8 @@ You can see the roadmap for the immediate future under [issues](https://github.c
 
 Find the single change point between two joined slopes:
 ```r
+library(mcp)
+
 # Define segments
 segments = list(
     y ~ 1 + x,  # intercept + slope
@@ -53,7 +55,7 @@ This is what we will end up with. We simulate some raw data from this model (the
 This model has the following parameters:
 
  * `cp_1`, `cp_2`, and `cp_3`: change points on the x-axis (here `year`). One between each adjacent segment.
- * `int_1` and `int_4`: intercept *changes* on y (here `score`). Only specified in the first and the last segment.
+ * `int_1` and `int_4`: absolute (`1`) and relative (`rel(1)`) intercepts respectively (here `score`) from the first and the last segment.
  * `year_1`, `year_2`: slopes in segments 1 and 2. Takes name after the x-axis predictor.
  * `sigma`: standard deviation of residuals.
 
@@ -65,7 +67,7 @@ We can use the latter to simulate data. This is always a great way to get acquai
 
 ```r
 # Get an mcpfit object without samples
-fit_empty = fit(segments, sample=FALSE)
+fit_empty = mcp(segments, sample=FALSE)
 
 # Now use fit_empty$func_y() to generate data from this model.
 # Set some parameter values to your liking:
@@ -76,7 +78,7 @@ data = data.frame(
     sigma = 12,  # standard deviation
     cp_1 = 20, cp_2 = 55, cp_3 = 80,  # change points 
     int_1 = 20, int_4 = 20,  # intercepts
-    year_1 = 3, year_2 = -5  # slopes
+    year_1 = 3, year_2 = -2  # slopes
   )
 )
 ```
@@ -86,19 +88,19 @@ Quite uninformative priors are set using data by default. You can see them in `f
 
 ```r
 prior = list(
-  int_1 = "dunif(10, 30)",  # intercept of segment 1
-  cp_2 = "dunif(cp_1, 40)",  # change point between segment 1 and 2 is before 40.
+  int_1 = "dt(10, 30, 1) T(0, )",  # t-distributed prior. Truncated to be positive.
+  cp_2 = "dunif(cp_1, 80)",  # second change point is after the first but before 80.
   year_2 = "dnorm(0, 5)"  # slope of segment 1.
 )
 ```
 
-`mct` has a few tricks up the sleeve for setting priors. 
+`mcp` has a few tricks up the sleeve for setting priors. 
 
 * Order restriction is automatically applied to `cp_*` parameters using truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the x-axis UNLESS you do it yourself. The one exception is for `dunif` distributions where you have to do it as above. 
 
 * In addition to the model parameters, `MINX` (minimum x-value), `MAXX` (maximum x-value), `SDX` (etc...), `MINY`, `MAXY`, and `SDY` are also available when you set priors. They are used to set uninformative default priors.
 
-* Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision but `mct` converts to precision under the hood via the `sd_to_prec()` function.
+* Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision but `mcp` converts to precision under the hood via the `sd_to_prec()` function.
 
 
 ## Fit the model
