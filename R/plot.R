@@ -67,13 +67,18 @@ plot.mcpfit = function(x, type="overlay", draws=25, ...) {
 #' @example summary(fit)
 
 summary.mcpfit = function(object, width = 0.95, ...) {
-  x$samples %>%
-    tidybayes::tidy_draws() %>%
-    tidyr::pivot_longer(-starts_with(".")) %>%
-    group_by(name) %>%
-    tidybayes::mean_hdci(value, .width = width) %>%
-    rename(mean = value) %>%
-    select(-.point, -.width, -.interval)
+  if(!is.null(object$samples)) {
+    object$samples %>%
+      tidybayes::tidy_draws() %>%
+      tidyr::pivot_longer(-starts_with(".")) %>%
+      group_by(name) %>%
+      tidybayes::mean_hdci(value, .width = width) %>%
+      rename(mean = value) %>%
+      select(-.point, -.width, -.interval)
+  }
+  else {
+    message("No samples. Nothing to summarise.")
+  }
 }
 
 #' Print mcpfit
@@ -83,5 +88,10 @@ summary.mcpfit = function(object, width = 0.95, ...) {
 #' @param ... Currently ignored.
 #' @export
 print.mcpfit = function(x, ...) {
-  print(summary(x))
+  if(!is.null(x$samples)) {
+    print(summary(x))
+  }
+  else {
+    message("No samples. Nothing to summarise.")
+  }
 }
