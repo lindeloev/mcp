@@ -96,9 +96,13 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
       min_val = ifelse(i > 2, paste0("cp_", i-2), "MINX")
       default_prior[[cp_name]] = paste0("dunif(", min_val, ", MAXX)")
 
-      # If there is a user-supplied prior that is not dunif nor truncated, add truncation
+      # If there is a user-supplied prior that is not dunif, truncated, or fixed
+      # add truncation
       if(cp_name %in% names(prior)) {
-        if(!stringr::str_detect(prior[[cp_name]], "dunif|T\\(")) {
+        is_dunif = stringr::str_detect(prior[[cp_name]], "dunif")
+        is_trunced = stringr::str_detect(prior[[cp_name]], "|T\\(")
+        is_fixed = is.numeric(prior[[cp_name]])
+        if(!is_dunif & !is_trunced & !is_fixed) {
           prior[[cp_name]] = paste0(prior[[cp_name]], " T(cp_", i-2, ", )")
         }
       }
