@@ -34,14 +34,15 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
   ##########
   # CHECKS #
   ##########
+  # Segments
   if(length(segments) == 0) {
     stop("At least one segment is needed")
   }
-
   if(any(stringr::str_detect(as.character(segments[[1]]), "rel\\("))) {
     stop("`rel` cannot be used in first segment. Nothing to be relative to.")
   }
 
+  # Predictor(s)
   if(is.null(param_x)) {
     stop("This is a plateau-only model, but `param_x` is missing in `mcp`")
   }
@@ -52,10 +53,19 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
     stop(paste0("More than one slope variable in segment formulas: ", paste0(param_x, collapse=",")))
   }
 
+  # Response
+  test_form = function(x) length(as.character(x)) == 3  # TRUE: 1 ~ 1, FALSE: ~ 1
+  if(!all(unlist(lapply(segments, test_form)))) {
+    stop("One or more segments miss a response variable.")
+  }
   if(param_y %in% c("0", "1")) {
     stop("Response cannot be 0 or 1. Must be a column in data.")
   }
 
+
+  ###############
+  # BUILD MODEL #
+  ###############
   default_prior_slope = "dt(0, SDY / (MAXX - MINX) * 3, 1)"
   default_prior_int = "dt(0, SDY * 3, 1)"
 
@@ -65,6 +75,7 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
   formula_str = ""
 
   for(i in 1:length(segments)) {
+
     # RHS as list of chars. Used to detect intercepts and slopes
     RHS = stringr::str_trim(unlist(strsplit(as.character(segments[[i]])[[3]], "\\+")))
     LHS = stringr::str_trim(unlist(strsplit(as.character(segments[[i]])[[2]], "\\+")))
@@ -78,6 +89,10 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
 
     # Prepare change point
     if(i > 1) {
+      if(as.character(segments[[i]])[2] != "1") {
+        stop("Change point can currently only be 1.")
+      }
+
       cp_name = paste0("cp_", i-1)
       min_val = ifelse(i > 2, paste0("cp_", i-2), "MINX")
       default_prior[[cp_name]] = paste0("dunif(", min_val, ", MAXX)")
