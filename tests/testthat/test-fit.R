@@ -1,6 +1,8 @@
 ########################################################################
 # TEST THAT TRUE PARAMETERS ARE WITHIN 50% HDI OF ESTIMATED PARAMETERS #
 ########################################################################
+library(dplyr)
+
 # All relevant segments expressions
 segments = list(
   y ~ 1 + x,
@@ -44,7 +46,7 @@ data = data.frame(
 # and small MCMC error
 fit = mcp(segments, data, n.adapt=2500, n.update=2500, n.iter=3000)
 
-# Check: expect all estimates to be within 50% HDI
+# Check: expect all estimates to be within 98% HDI
 X = summary(fit, width = 0.98) %>%
   left_join(df, by="name") %>%
   mutate(score = theory > .lower & theory < .upper)
