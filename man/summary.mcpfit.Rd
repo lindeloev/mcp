@@ -3,7 +3,7 @@
 \name{summary.mcpfit}
 \alias{summary.mcpfit}
 \alias{summary}
-\title{Plot mcpfit}
+\title{Summarise mcpfit}
 \usage{
 \method{summary}{mcpfit}(object, width = 0.95, ...)
 }
@@ -16,4 +16,7 @@
 }
 \description{
 A simple summary of mcpfit objects. It will be updated later.
+}
+\examples{
+summary(fit)
 }

@@ -4,20 +4,30 @@
 \alias{criterion}
 \alias{loo.mcpfit}
 \alias{loo}
+\alias{LOO}
 \alias{waic.mcpfit}
 \alias{waic}
+\alias{WAIC}
 \title{Compute information criteria for model comparison}
 \usage{
 criterion(fit, criterion = "loo")
 
-loo.mcpfit(fit)
+\method{loo}{mcpfit}(x, ...)
 
-waic.mcpfit(fit)
+\method{waic}{mcpfit}(x, ...)
 }
 \arguments{
 \item{fit}{An mcpfit object.}
 
 \item{criterion}{One of "loo" (calls loo::loo) or "waic" (calls loo:waic).}
+
+\item{x}{\code{mcpfit} object.}
+
+\item{...}{Currently ignored}
+
+\item{x}{\code{mcpfit} object.}
+
+\item{...}{Currently ignored}
 }
 \value{
 a \code{loo} or \code{psis_loo} object. See more in \code{\link[loo]{loo}}.
@@ -27,11 +37,11 @@ Takes a \code{mcpfit} as input and computes information criteria using loo or
 WAIC. Compare models using \code{\link[loo]{loo_compare}} and \code{\link[loo]{loo_model_weights}}.
 more in \code{\link[loo]{loo}}.
 }
-\section{Functions}{
+\section{Methods (by generic)}{
 \itemize{
-\item \code{loo.mcpfit}: Computes loo on mcpfit objects
+\item \code{loo}: Computes loo on mcpfit objects
 
-\item \code{waic.mcpfit}: Computes WAIC on mcpfit objects
+\item \code{waic}: Computes WAIC on mcpfit objects
 }}
 
 \examples{

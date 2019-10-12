@@ -6,7 +6,7 @@
 #'
 #' @aliases criterion
 #' @param fit An mcpfit object.
-#' @param criterion One of "loo" (calls loo::loo) or "waic" (calls loo:waic).
+#' @param criterion One of "loo" (calls loo::loo) or "waic" (calls loo::waic).
 #' @return a \code{loo} or \code{psis_loo} object. See more in \code{\link[loo]{loo}}.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
@@ -54,16 +54,24 @@ criterion = function(fit, criterion = "loo") {
 
 
 
-#' @aliases loo
+#' @aliases loo LOO loo.mcpfit
 #' @describeIn criterion Computes loo on mcpfit objects
+#' @param x \code{mcpfit} object.
+#' @param ... Currently ignored
+#' @importFrom loo loo
+#' @export loo
 #' @export
-loo.mcpfit = function(fit) {
-  criterion(fit, "loo")
+loo.mcpfit = function(x, ...) {
+  criterion(x, "loo")
 }
 
-#' @aliases waic
+#' @aliases waic WAIC waic.mcpfit
 #' @describeIn criterion Computes WAIC on mcpfit objects
+#' @param x \code{mcpfit} object.
+#' @param ... Currently ignored
+#' @importFrom loo waic
+#' @export waic
 #' @export
-waic.mcpfit = function(fit) {
-  criterion(fit, "waic")
+waic.mcpfit = function(x, ...) {
+  criterion(x, "waic")
 }

@@ -1,4 +1,4 @@
 library(testthat)
 library(mcp)
 
-test_check("segments")
+test_check("mcp")

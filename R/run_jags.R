@@ -8,7 +8,6 @@
 #' @param n.chains Number of chains to run. Defaults to all-but-one cores.
 #' @param n.iter Number of post-warmup samples to draw.
 #' @param n.adapt Number of iterations to adapt sampler values.
-#' @param
 #' @param ... Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.
 #' @return \code{mcmc.list}
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}

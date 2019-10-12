@@ -1,6 +1,6 @@
 #' Plot mcpfit
 #'
-#' @aliases plot
+#' @aliases plot plot.mcpfit
 #' @param x An mcpfit object
 #' @param type String. One of "overlay" (default) or "combo".
 #' @param draws Integer. Number of posterior draws to use when type = "overlay".
@@ -12,9 +12,11 @@
 #' @importFrom grDevices rgb
 #' @export
 #' @examples
+#' \dontrun{
 #' plot(fit)  # defaults to the below
 #' plot(fit, type="overlay", draws=50) + ggtitle("Great fit!")
 #' plot(fit, "combo")
+#' }
 
 plot.mcpfit = function(x, type="overlay", draws=25, ...) {
   # Plot function on top
@@ -55,16 +57,17 @@ plot.mcpfit = function(x, type="overlay", draws=25, ...) {
 }
 
 
-#' Plot mcpfit
+#' Summarise mcpfit
 #'
 #' A simple summary of mcpfit objects. It will be updated later.
 #'
-#' @aliases summary
+#' @aliases summary summary.mcpfit
 #' @param object \code{mcpfit} object.
 #' @param width The width of the Higest Density Interval.
 #' @param ... Currently ignored.
 #' @export
-#' @example summary(fit)
+#' @examples
+#' summary(fit)
 
 summary.mcpfit = function(object, width = 0.95, ...) {
   if(!is.null(object$samples)) {
@@ -83,7 +86,7 @@ summary.mcpfit = function(object, width = 0.95, ...) {
 
 #' Print mcpfit
 #'
-#' @aliases print
+#' @aliases print print.mcpfit
 #' @param x \code{mcpfit} object.
 #' @param ... Currently ignored.
 #' @export
@@ -94,32 +97,4 @@ print.mcpfit = function(x, ...) {
   else {
     message("No samples. Nothing to summarise.")
   }
-}
-
-
-#' Plot mcpfit
-#'
-#' A simple summary of mcpfit objects. It will be updated later.
-#'
-#' @param fit \code{mcpfit} object.
-#' @param width The width of the Higest Density Interval.
-#' @export
-#' @example summary(fit)
-
-summary.mcpfit = function(fit, width = 0.95) {
-  fit$samples %>%
-    tidy_draws() %>%
-    pivot_longer(-starts_with(".")) %>%
-    group_by(name) %>%
-    mean_hdci(value, .width = width) %>%
-    rename(mean = value) %>%
-    select(-.point, -.width, -.interval)
-}
-
-#' Print mcpfit
-#'
-#' @param fit \code{mcpfit} object.
-#' @export
-print.mcpfit = function(fit) {
-  print(summary(fit))
 }

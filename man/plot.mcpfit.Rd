@@ -23,9 +23,11 @@ A \code{ggplot2} object.
 Plot mcpfit
 }
 \examples{
+\dontrun{
 plot(fit)  # defaults to the below
 plot(fit, type="overlay", draws=50) + ggtitle("Great fit!")
 plot(fit, "combo")
+}
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
