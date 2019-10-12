@@ -90,7 +90,8 @@ Quite uninformative priors are set using data by default. You can see them in `f
 prior = list(
   int_1 = "dt(10, 30, 1) T(0, )",  # t-distributed prior. Truncated to be positive.
   cp_2 = "dunif(cp_1, 80)",  # second change point is after the first but before 80.
-  year_2 = "dnorm(0, 5)"  # slope of segment 1.
+  year_2 = "dnorm(0, 5)",  # slope of segment 1.
+  cp_3 = 80  # Fixed value
 )
 ```
 
@@ -101,6 +102,10 @@ prior = list(
 * In addition to the model parameters, `MINX` (minimum x-value), `MAXX` (maximum x-value), `SDX` (etc...), `MINY`, `MAXY`, and `SDY` are also available when you set priors. They are used to set uninformative default priors.
 
 * Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision but `mcp` converts to precision under the hood via the `sd_to_prec()` function.
+
+* You can fix a parameter to a specific value. Simply set it to a numerical value
+(as `cp_3` above). This is not a hack. A fixed value is a 100% prior belief that
+it is true.
 
 
 ## Fit the model
