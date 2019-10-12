@@ -18,7 +18,7 @@ left-hand side is the change point (on x). See examples for more details.}
 \item{prior}{Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
 sigma) and the values are the associated priors in JAGS code. Uninformative
 default priors are used where priors are not specified.
-\code{mct} uses SD (not precision) for dnorm, dt, dlogis, etc. See details.
+\code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See details.
 Change points are forced to be ordered through the priors using truncation,
 \code{dnorm(0, 1) T(cp_1, )}, except for uniform priors where the lower
 bound should be greater than the previous change point, \code{dunif(cp_1, )}.}
@@ -56,9 +56,9 @@ Noites on priors:
     are also available when you set priors. They are used to set uninformative
     default priors.
   * Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision
-    but mct converts to precision under the hood via the sd_to_prec()
+    but \code{mcp} converts to precision under the hood via the sd_to_prec()
     function. So you will see SDs in \code{fit$prior} but precision ($1/SD^2)
-    in \code{fit$jags_model}
+    in \code{fit$jags_code}
 }
 \examples{
 \dontrun{

@@ -15,7 +15,7 @@ left-hand side is the change point (on x). See examples for more details.}
 \item{prior}{Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
 sigma) and the values are the associated priors in JAGS code. Uninformative
 default priors are used where priors are not specified.
-\code{mct} uses SD (not precision) for dnorm, dt, dlogis, etc. See details.
+\code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See details.
 Change points are forced to be ordered through the priors using truncation,
 \code{dnorm(0, 1) T(cp_1, )}, except for uniform priors where the lower
 bound should be greater than the previous change point, \code{dunif(cp_1, )}.}
