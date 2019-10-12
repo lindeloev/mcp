@@ -1,34 +1,38 @@
 #' Run parallel MCMC sampling using JAGS.
 #'
-#' @param data A data.frame or tibble containing the variables expressed in
-#'   \code{model} in long format.
-#' @param model A JAGS model, usually returned by \code{make_jagscode()}.
+#'
+#' @aliases run_jags
+#' @inheritParams dclone::jags.fit
+#' @param jags_code A string. JAGS model, usually returned by \code{make_jagscode()}.
 #' @param model_file A temporary file. Makes parallel sampling possible
+#' @param n.chains Number of chains to run. Defaults to all-but-one cores.
+#' @param n.iter Number of post-warmup samples to draw.
+#' @param n.adapt Number of iterations to adapt sampler values.
+#' @param
 #' @param ... Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.
-#' @keywords mcmc, jags, mct
-#' @import dclone
-#' @import parallel
+#' @return \code{mcmc.list}
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @examples
 #' \dontrun{
 #' run_jags(data, model, params)
 #'}
 
 run_jags = function(data,
-                    model,
+                    jags_code,
                     params,
                     model_file = "tmp_jags_code.txt",
 
                     # JAGS arguments
                     n.chains = parallel::detectCores() - 1,  # Use all cores but one
                     n.iter = 3000,  # Number of iterations post-warmup.
-                    n.adapt = 2000,  # Takes some time to adapt
-                    n.update = 2000,  # Same as n.adapt
+                    n.adapt = 1500,  # Takes some time to adapt
+                    n.update = 1500,  # Same as n.adapt
                     ...  # Otherwise run with default JAGS settings
 ) {
 
   # Write model to disk
   sink(model_file)
-  cat(model)
+  cat(jags_code)
   sink()  # stops sinking :-)
 
   # Start parallel cluster and timer

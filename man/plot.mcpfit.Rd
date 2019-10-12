@@ -2,22 +2,31 @@
 % Please edit documentation in R/plot.R
 \name{plot.mcpfit}
 \alias{plot.mcpfit}
+\alias{plot}
 \title{Plot mcpfit}
 \usage{
-\method{plot}{mcpfit}(fit, type = "overlay", draws = 25)
+\method{plot}{mcpfit}(x, type = "overlay", draws = 25, ...)
 }
 \arguments{
-\item{fit}{An mcpfit object}
+\item{x}{An mcpfit object}
 
 \item{type}{String. One of "overlay" (default) or "combo".}
 
 \item{draws}{Integer. Number of posterior draws to use when type = "overlay".}
+
+\item{...}{Currently ignored.}
+}
+\value{
+A \code{ggplot2} object.
 }
 \description{
 Plot mcpfit
 }
 \examples{
 plot(fit)  # defaults to the below
-plot(fit, type="overlay", draws=50)
+plot(fit, type="overlay", draws=50) + ggtitle("Great fit!")
 plot(fit, "combo")
+}
+\author{
+Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
 }

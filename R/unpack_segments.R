@@ -1,15 +1,12 @@
 #' Understand the list of segments
 #'
-#' @param segments A vector of formulas - one for each segment. The left-hand
-#'   side specifies the form of the change point (on x). The right-hand side
-#'   specifices the form of intercepts and slopes. See \code{mcp} examples for
-#'   details.
-#' @param prior A named list with parameter names as names and a JAGS
-#'   distribution as value, e.g., \code{list(int_1 = "dunif(10, 30)")}.
-#' @param param_x A string. Only relevant if no segments contains slope (no hint
-#'   at what x is). Set this, e.g., param_x = "time".
-#' @keywords jags, model
-#'
+#' @aliases unpack_segments
+#' @inheritParams mcp
+#' @importFrom stats terms
+#' @importFrom utils modifyList
+#' @return A list with prior (list), formula_jags (string), func_y (function),
+#'   param_x (string), param_y(string).
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 
 
 unpack_segments = function(segments, prior = list(), param_x = NULL) {
@@ -22,6 +19,11 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
     param_xs = param_xs[!param_xs %in% c("rel(1)", "rel(0)")]  # intercepts are not param_x
     # Reduce to only one: remove replicated. c(x, rel(x), rel(1), rel(0)) becomes "x"
     param_x = unique(gsub("rel\\(|\\)", "", unlist(param_xs)))
+  }
+
+  # param_x was not found in formulas...
+  if(identical(param_x, character(0))) {
+    param_x = NULL
   }
 
   # Detect param_y
@@ -42,6 +44,9 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
 
   if(is.null(param_x)) {
     stop("This is a plateau-only model, but `param_x` is missing in `mcp`")
+  }
+  if("0" %in% param_x) {
+    stop("rel(0) is not supported in segment formulas.")
   }
   if(length(param_x) > 1) {
     stop(paste0("More than one slope variable in segment formulas: ", paste0(param_x, collapse=",")))
@@ -124,12 +129,13 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
       formula_str = paste0(formula_str, ind_this, "(", slope_str, " * (min(PARAM_X, cp_", i, ")", subract_cp, ")) + \n")
     }
 
+    if(!has_intercept & !has_slope) {
+      formula_str = paste0(formula_str, "0 + \n")
+    }
+
     # Finish up formula_str
     if(i == length(segments)) {
       formula_str = substr(formula_str, 1, nchar(formula_str) - 3)
-    }
-    if(!has_intercept & !has_slope) {
-      formula_str = paste0(formula_str, "0 + \n")
     }
   }
 
@@ -146,8 +152,8 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
   formula_func = gsub("PARAM_X", param_x, formula_str)  # Proper param_x name
   formula_func = gsub("min\\(", "pmin\\(", formula_func)  # vectorized mean for function
 
-  func_str = paste0(
-  "function(", param_x, ", ", paste0(names(default_prior), collapse=", "), ", type=\"predict\") {
+  func_str = paste0("
+  function(", param_x, ", ", paste0(names(default_prior), collapse=", "), ", type=\"predict\") {
     # Helpers to simplify making the code for this function
     cp_0 = -Inf
     cp_", length(segments), " = Inf

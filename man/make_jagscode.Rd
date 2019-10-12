@@ -8,18 +8,35 @@ make_jagscode(data, prior, formula_jags, nsegments, sample, param_x,
   param_y)
 }
 \arguments{
-\item{data}{data.frame or tibble containing the variables expressed in `segments` in long format.}
+\item{data}{Data.frame or tibble in long format.}
 
-\item{prior}{Named list with parameter names as names and a JAGS distribution as value, e.g., `list(int_1 = "dunif(10, 30)")`.}
+\item{prior}{Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
+sigma) and the values are the associated priors in JAGS code. Uninformative
+default priors are used where priors are not specified.
+\code{mct} uses SD (not precision) for dnorm, dt, dlogis, etc. See details.
+Change points are forced to be ordered through the priors using truncation,
+\code{dnorm(0, 1) T(cp_1, )}, except for uniform priors where the lower
+bound should be greater than the previous change point, \code{dunif(cp_1, )}.}
 
-\item{formula_jags}{String. The formula for computing param_y given param_x and all predictors. Returned by `unpack_segments()`}
+\item{formula_jags}{String. The formula for computing param_y given param_x
+and all predictors. Returned by \code{unpack_segments()}}
 
-\item{param_x}{string}
+\item{nsegments}{Number of segments}
 
-\item{param_y}{String}
+\item{sample}{Boolean (default: TRUE). Set to FALSE if you only want to check
+priors, the JAGS model, etc.}
+
+\item{param_x}{String (default: NULL). Only relevant if no segments contains
+slope (no hint at what x is). Set this, e.g., param_x = "time".}
+
+\item{param_y}{String. Name of response parameter.}
+}
+\value{
+String. A JAGS model.
 }
 \description{
 Make JAGS code for Multiple Change Point model
 }
-\keyword{jags,}
-\keyword{model}
+\author{
+Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
+}
