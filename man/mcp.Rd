@@ -4,29 +4,64 @@
 \alias{mcp}
 \title{Fit Multiple Linear Segments And Their Change Points}
 \usage{
-mcp(segments, data, prior = list(), param_x = NULL, sample = TRUE,
-  ...)
+mcp(segments, data = NULL, prior = list(), family = "gaussian",
+  param_x = NULL, sample = TRUE, ...)
 }
 \arguments{
-\item{segments}{List of formulas. Break points are estimated in between. The left-hand side specifies the chainge points and the right-hand side specifies the linear formula.}
+\item{segments}{A list of formulas - one for each segment. The right-hand
+side specifices the form of intercepts and slopes. For the first segment,
+the left-hand side is the response variable. In the following segments, the
+left-hand side is the change point (on x). See examples for more details.}
 
 \item{data}{Data.frame or tibble in long format.}
 
-\item{prior}{Named list of parameters and associated priors in JAGS code. Uninformative default priors are used where priors are not specified. `mct` uses SD for dnorm, dt, dlogis, etc, and converts it into precision (`1/SD^2`) under the hood for JAGS using the `sd_to_prec()` function. So fit$prior show SD but fit$jags_code show precision.}
+\item{prior}{Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
+sigma) and the values are the associated priors in JAGS code. Uninformative
+default priors are used where priors are not specified.
+\code{mct} uses SD (not precision) for dnorm, dt, dlogis, etc. See details.
+Change points are forced to be ordered through the priors using truncation,
+\code{dnorm(0, 1) T(cp_1, )}, except for uniform priors where the lower
+bound should be greater than the previous change point, \code{dunif(cp_1, )}.}
 
-\item{param_x}{String (default: NULL). Only relevant if no segments contains slope (no hint at what x is). Set this, e.g., param_x = "time".}
+\item{family}{WORK IN PROGRESS. One of "gauss" (default), "binomial"}
 
-\item{sample}{Boolean (default: TRUE). Set to FALSE if you only want to check priors, the JAGS model, etc.}
+\item{param_x}{String (default: NULL). Only relevant if no segments contains
+slope (no hint at what x is). Set this, e.g., param_x = "time".}
 
-\item{...}{Parameters for `jags.parfit` which channels them to `jags.fit`.}
+\item{sample}{Boolean (default: TRUE). Set to FALSE if you only want to check
+priors, the JAGS model, etc.}
+
+\item{...}{Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.}
 }
 \value{
-An `mcpfit` object.
+An \code{mcpfit} object.
 }
 \description{
-See examples. Change points are forced to be ordered using truncation.
+Given a list of linear segments, \code{mcp} infers the posterior
+distributions of the parameters of each segment as well as the change points
+between segments. All segments must regress on the same x-axis. Change points
+are forced to be ordered using truncation of the priors. You can run
+\code{fit = mcp(segments, sample=FALSE)} to avoid sampling and the need for
+data if you just want to get the priors (\code{fit$prior}), the JAGS code
+\code{fit$jags_code}, or the R function to simulate data (\code{fit$func_y}).
+}
+\details{
+Noites on priors:
+  * Order restriction is automatically applied to cp_\* parameters using
+    truncation (e.g., T(cp_1, )) so that they are in the correct order on the
+    x-axis UNLESS you do it yourself. The one exception is for dunif
+    distributions where you have to do it as above.
+  * In addition to the model parameters, \code{MINX} (minimum x-value), \code{MAXX}
+    (maximum x-value), \code{SDX} (etc...), \code{MINY}, \code{MAXY}, and \code{SDY}
+    are also available when you set priors. They are used to set uninformative
+    default priors.
+  * Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision
+    but mct converts to precision under the hood via the sd_to_prec()
+    function. So you will see SDs in \code{fit$prior} but precision ($1/SD^2)
+    in \code{fit$jags_model}
 }
 \examples{
+\dontrun{
 # Define the segments that are separated by change points
 segments = list(
   score ~ 1 + year,  # intercept + slope
@@ -41,8 +76,8 @@ segments = list(
 # x_i are slopes.
 # i is the segment number (change points are to the right of the segment)
 prior = list(
-  int_1 = "dunif(10, 30)",  # intercept of segment 1
-  cp_2 = "dunif(cp_1, 40),  # change point between segment 1 and 2. Must be greater than cp_1. Order restriction is applied automatically for everything but dunif (a JAGS limitation).
+  int_1 = "dt(10, 30) T(0, )",  # t-dist intercept. Truncated to > 0
+  cp_2 = "dunif(cp_1, 40),  # change point to segment 2 > cp_1.
   year_2 = "dnorm(0, 5)  # slope of segment 1. Mean = 0, SD = 5.
 )
 
@@ -53,7 +88,7 @@ fit = mcp(segments, data, prior)
 plot(fit)
 plot(fit, "combo")
 
-# Compare to an one-intercept-only model (no change points) with default prior
+# Compare to a one-intercept-only model (no change points) with default prior
 segments2 = list(1 ~ 1)
 fit2 = mcp(segments2, data)  # fit another model here
 fit$loo = loo(fit)
@@ -72,6 +107,7 @@ spread_draws(fit$samples, cp_1, cp_2, int_1, year_1, year_2) \%>\%
 # Show JAGS model
 cat(fit$jags_code)
 }
-\keyword{jags,}
-\keyword{mcmc,}
-\keyword{mct}
+}
+\author{
+Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
+}
