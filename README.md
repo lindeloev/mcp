@@ -38,6 +38,8 @@ plot(fit)
 Let us specify a fairly complicated model with four segments, i.e., three change points:
 
 ```r
+library(mcp)
+
 # Define the segments that are separated by change points
 segments = list(
   score ~ 1 + year,  # intercept + slope
@@ -88,10 +90,10 @@ Quite uninformative priors are set using data by default. You can see them in `f
 
 ```r
 prior = list(
+  year_1 = "dnorm(0, 5)",  # Slope of segment 1
   int_1 = "dt(10, 30, 1) T(0, )",  # t-distributed prior. Truncated to be positive.
   cp_2 = "dunif(cp_1, 80)",  # second change point is after the first but before 80.
-  year_2 = "dnorm(0, 5)",  # slope of segment 1.
-  cp_3 = 80  # Fixed value
+  year_2 = -2  # Fixed slope of segment 2.
 )
 ```
 
@@ -103,9 +105,8 @@ prior = list(
 
 * Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision but `mcp` converts to precision under the hood via the `sd_to_prec()` function.
 
-* You can fix a parameter to a specific value. Simply set it to a numerical value
-(as `cp_3` above). This is not a hack. A fixed value is a 100% prior belief that
-it is true.
+* You can fix any parameter to a specific value. Simply set it to a numerical value
+(as `year_2` above). A fixed value is a 100% prior belief in that value.
 
 
 ## Fit the model
@@ -113,24 +114,24 @@ This is the easiest step!
 
 ```r
 fit = mcp(segments, data, prior)
-fit 
+fit
 ```
 
 ```
 # A tibble: 8 x 4
   name    mean .lower .upper
   <chr>  <dbl>  <dbl>  <dbl>
-1 cp_1   18.5   15.9   20.7 
-2 cp_2   56.7   42.2   67.7 
-3 cp_3   68.6   46.0   96.0 
-4 int_1  11.3    1.17  21.7 
-5 int_4  16.4   11.0   22.2 
-6 sigma  11.7   10.0   13.4 
-7 year_1  3.72   2.76   4.74
-8 year_2 -5.54  -6.65  -4.45
+1 cp_1   18.9   16.2   21.4 
+2 cp_2   52.4   48.9   55.8 
+3 cp_3   80.7   75.0   88.0 
+4 int_1  14.7    2.50  25.9 
+5 int_4  16.3    8.46  24.3 
+6 sigma  12.8   11.0   14.7 
+7 year_1  3.60   2.52   4.78
+8 year_2 -2     -2     -2   
 ```
 
-(This summary is very preliminary and will be updated)
+(This summary is very limited and will be updated)
 
 
 ## Plots
@@ -144,6 +145,8 @@ plot(fit)
 
 
 By default this draws lines given 25 posterior samples, but change it using `plot(fit, draws=50)`. Of particular interest is how similar the lines are (good precision) and how well they fit to the data. `plot.mcpfit` returns a `ggplot2` object, so you can easily add, e.g., a title: `plot(fit, "combo") + ggtitle("Posteriors and convergence")`.
+
+Notice that the fixed prior on the slope in segment 2 causes parallel lines. The rest of the model adapts.
 
 We may also want to inspect the posterior distributions directly:
 

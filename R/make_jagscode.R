@@ -41,14 +41,18 @@ make_jagscode = function(data, prior, formula_jags, nsegments, sample, param_x, 
   # Add all priors
   # First as vector and code whether it's fixed or not
   prior_vector = unlist(prior)
-  is_fixed = stringr::str_detect(prior_vector, "^[0-9.]+$")
+  is_fixed = stringr::str_detect(prior_vector, "^[-0-9.]+$")
 
   # Distributed for non-fixed. Equal sign for fixed.
-  prior_str_dist = paste0(names(prior_vector[!is_fixed]), " ~ ", prior_vector[!is_fixed], collapse="\n    ")
-  prior_str_fix = paste0(names(prior_vector[is_fixed]), " = ", prior_vector[is_fixed], collapse="  # Fixed\n    ")
+  if(sum(!is_fixed) > 0) {
+    prior_str_dist = paste0(names(prior_vector[!is_fixed]), " ~ ", prior_vector[!is_fixed], collapse="\n    ")
+  } else prior_str_dist = ""
+  if(sum(is_fixed) > 0) {
+    prior_str_fix = paste0(names(prior_vector[is_fixed]), " = ", prior_vector[is_fixed], collapse="  # Fixed\n    ")
+  } else prior_str_fix = ""
 
   # Now add them in!
-  mm = paste0(mm, prior_str_dist, prior_str_fix)
+  mm = paste0(mm, prior_str_dist, "\n    ", prior_str_fix)
   mm = paste0(mm, "
     cp_0 = -10^100  # mcp helper value; minus infinity
     cp_", nsegments, " = 10^100  # mcp helper value; plus infinity\n
