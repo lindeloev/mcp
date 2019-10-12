@@ -3,7 +3,8 @@
 ###############################
 
 # TO DO: CHECK VALUES TOO
-check_empty = function(fit) {
+check_empty = function(fit, segments) {
+  # Correct types
   is.null(fit$samples) &
     is.null(fit$loglik) &
     is.null(fit$loo) &
@@ -13,7 +14,8 @@ check_empty = function(fit) {
     is.list(fit$segments) &
     is.list(fit$pars) &
     is.character(fit$jags_code) &
-    is.function(fit$func_y)
+    is.function(fit$func_y) &
+    all.equal(fit$segments, segments)
 }
 
 
@@ -23,7 +25,8 @@ test_that("bad intercepts", {
     list(y ~ rel(0)),
     list(y ~ rel(1)),
     list( ~ 1),
-    list(y ~ 2)
+    list(y ~ 2),
+    list(y ~ 1, 1 ~ rel(0))  # Not (yet) supported
   )
 
   for(segments in bad_intercepts) {
@@ -68,7 +71,7 @@ test_that("good intercepts", {
       sample = FALSE
     )
     expect_true(
-      check_empty(fit),
+      check_empty(fit, segments),
       info = paste0("segments: ", segments)
     )
   }
@@ -87,8 +90,10 @@ test_that("good slopes", {
       sample = FALSE
     )
     expect_true(
-      check_empty(fit),
+      check_empty(fit, segments),
       info = paste0("segments: ", segments)
     )
   }
 })
+
+

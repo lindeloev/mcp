@@ -4,6 +4,7 @@
 #' @inheritParams mcp
 #' @importFrom stats terms
 #' @importFrom utils modifyList
+#' @import dplyr
 #' @return A list with prior (list), formula_jags (string), func_y (function),
 #'   param_x (string), param_y(string).
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -13,17 +14,18 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
   ##############
   # PREPROCESS #
   ##############
-  # Detect param_x
-  if(is.null(param_x)) {
-    param_xs = lapply(segments, function(x) attr(terms(x), "term.labels"))
-    param_xs = param_xs[!param_xs %in% c("rel(1)", "rel(0)")]  # intercepts are not param_x
-    # Reduce to only one: remove replicated. c(x, rel(x), rel(1), rel(0)) becomes "x"
-    param_x = unique(gsub("rel\\(|\\)", "", unlist(param_xs)))
-  }
+  all_terms = unlist(lapply(segments, function(x) attr(terms(x), "term.labels")))
 
-  # param_x was not found in formulas...
-  if(identical(param_x, character(0))) {
-    param_x = NULL
+  # Try extracting param_x from segments.
+  if(is.null(param_x)) {
+    param_x = all_terms[!all_terms %in% c("rel(0)", "rel(1)")]
+    param_x = gsub("rel\\(|\\)", "", param_x)
+    param_x = unique(param_x)
+
+    # Convert from character(0) to NULL if param_x was not found in formulas...
+    if(identical(param_x, character(0))) {
+      param_x = NULL
+    }
   }
 
   # Detect param_y
@@ -46,7 +48,7 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
   if(is.null(param_x)) {
     stop("This is a plateau-only model, but `param_x` is missing in `mcp`")
   }
-  if("0" %in% param_x) {
+  if("rel(0)" %in% all_terms) {
     stop("rel(0) is not supported in segment formulas.")
   }
   if(length(param_x) > 1) {
@@ -57,9 +59,6 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
   test_form = function(x) length(as.character(x)) == 3  # TRUE: 1 ~ 1, FALSE: ~ 1
   if(!all(unlist(lapply(segments, test_form)))) {
     stop("One or more segments miss a response variable.")
-  }
-  if(param_y %in% c("0", "1")) {
-    stop("Response cannot be 0 or 1. Must be a column in data.")
   }
 
 
