@@ -20,7 +20,8 @@ source("R/unpack_segments.R")
 #'   left-hand side is the change point (on x). See examples for more details.
 #' @param prior Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
 #'   sigma) and the values are the associated priors in JAGS code. Uninformative
-#'   default priors are used where priors are not specified.
+#'   default priors are used where priors are not specified. The parameter can
+#'   be fixed to a numerical value by setting it as such (\code{int_1 = 7.3}).
 #'   \code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See details.
 #'   Change points are forced to be ordered through the priors using truncation,
 #'   \code{dnorm(0, 1) T(cp_1, )}, except for uniform priors where the lower
@@ -65,7 +66,8 @@ source("R/unpack_segments.R")
 #' prior = list(
 #'   int_1 = "dt(10, 30) T(0, )",  # t-dist intercept. Truncated to > 0
 #'   cp_2 = "dunif(cp_1, 40),  # change point to segment 2 > cp_1.
-#'   year_2 = "dnorm(0, 5)  # slope of segment 1. Mean = 0, SD = 5.
+#'   year_2 = "dnorm(0, 5),  # slope of segment 1. Mean = 0, SD = 5.
+#'   int_3 = 15  # Fixed intercept of segment 3
 #' )
 #'
 #' # Start sampling
