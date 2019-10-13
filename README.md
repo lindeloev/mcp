@@ -44,7 +44,7 @@ library(mcp)
 segments = list(
   score ~ 1 + year,  # intercept + slope
   1 ~ 0 + year,  # joined slope
-  1 ~ 0,  # joined plateau
+  rel(1) ~ 0,  # joined plateau starting at relative change point
   1 ~ rel(1)  # disjoined plateau with relative intercept parameterization
 )
 ```
@@ -56,7 +56,7 @@ This is what we will end up with. We simulate some raw data from this model (the
 
 This model has the following parameters:
 
- * `cp_1`, `cp_2`, and `cp_3`: change points on the x-axis (here `year`). One between each adjacent segment.
+ * `cp_1`, `cp_2`, and `cp_3`: change points on the x-axis (here `year`). One between each adjacent segment. `cp_2` is relative to `cp_1`, i.e., it's value is the (positive) *difference* between `cp_1` and `cp_2`.
  * `int_1` and `int_4`: absolute (`1`) and relative (`rel(1)`) intercepts respectively (here `score`) from the first and the last segment.
  * `year_1`, `year_2`: slopes in segments 1 and 2. Takes name after the x-axis predictor.
  * `sigma`: standard deviation of residuals.
@@ -78,7 +78,7 @@ data = data.frame(
   score = fit_empty$func_y(
     year = 1:100,  # x
     sigma = 12,  # standard deviation
-    cp_1 = 20, cp_2 = 55, cp_3 = 80,  # change points 
+    cp_1 = 20, cp_2 = 35, cp_3 = 80,  # change points 
     int_1 = 20, int_4 = 20,  # intercepts
     year_1 = 3, year_2 = -2  # slopes
   )
@@ -92,7 +92,7 @@ Quite uninformative priors are set using data by default. You can see them in `f
 prior = list(
   year_1 = "dnorm(0, 5)",  # Slope of segment 1
   int_1 = "dt(10, 30, 1) T(0, )",  # t-distributed prior. Truncated to be positive.
-  cp_2 = "dunif(cp_1, 80)",  # second change point is after the first but before 80.
+  cp_2 = "dunif(0, 60)",  # Change point is after the first, but within 60 years.
   year_2 = -2  # Fixed slope of segment 2.
 )
 ```
