@@ -86,15 +86,28 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
     has_slope = any(c(param_x, rel_param_x) %in% RHS)
     formula_str = paste0(formula_str, "\n# Segment ", i, ": ~ ", paste0(RHS, collapse = " + "), "\n")
 
-    # Prepare change point
+    # Prepare change point. Only relvant for segment 2+
     if(i > 1) {
-      if(as.character(segments[[i]])[2] != "1") {
-        stop("Change point can currently only be 1.")
+      if(!LHS %in% c("1", "rel(1)")) {
+        stop("Change point can currently only be 1 or rel(1).")
+      }
+      if(i == 2 & LHS == "rel(1)") {
+        stop("Relative change points (rel(1)) only alowed in segment 3+ (cp_2+)")
       }
 
       cp_name = paste0("cp_", i-1)
-      min_val = ifelse(i > 2, paste0("cp_", i-2), "MINX")
-      default_prior[[cp_name]] = paste0("dunif(", min_val, ", MAXX)")
+
+      # For relative change points: dunif(0, MAXX - cp_i-3)
+      if(cp_rel(i)) {
+        default_prior[[cp_name]] = paste0("dunif(0, MAXX - cp_", i-2, ")")
+      }
+      # For absolute change points: dunif(MINX or cp_i-3, MAXX)
+      else {
+        # Look to the former change point: was is it relative to the former-former?
+        cp_former = ifelse(cp_rel(i-1), paste0("cp_", i-2, " + cp_", i-3), paste0("cp_", i-2))
+        min_val = ifelse(i > 2, cp_former, "MINX")
+        default_prior[[cp_name]] = paste0("dunif(", min_val, ", MAXX)")
+      }
 
       # If there is a user-supplied prior that is not dunif, truncated, or fixed
       # add truncation
@@ -102,18 +115,30 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
         is_dunif = stringr::str_detect(prior[[cp_name]], "dunif")
         is_trunced = stringr::str_detect(prior[[cp_name]], "|T\\(")
         is_fixed = is.numeric(prior[[cp_name]])
+
+        # OK, we need to add truncation ourselves.
         if(!is_dunif & !is_trunced & !is_fixed) {
-          prior[[cp_name]] = paste0(prior[[cp_name]], " T(cp_", i-2, ", )")
+          if(cp_rel(i)) {
+            # Relative: just be positive
+            prior[[cp_name]] = paste0(prior[[cp_name]], " T(0, )")
+          }
+          else {
+            # Absolute: be greater than the former change point
+            prior[[cp_name]] = paste0(prior[[cp_name]], " T(cp_", i-2, ", )")
+          }
         }
       }
     }
 
-    # Prepare indicators. ind_abs = absolute, ind_rel = relative
+    # Prepare indicators.
+    # What is the changepoint (cp)? Absolute: cp_i-1. Relative: cp_i-1 + cp_i-2.
+    cp_this = ifelse(cp_rel(i),      yes = paste0("(cp_", i-1, " + cp_", i-2, ")"), no = paste0("cp_", i - 1))
+    cp_next = ifelse(cp_rel(i+1),    yes = paste0("(cp_", i,   " + cp_", i-1, ")"), no = paste0("cp_", i ))
+
     # PARAM_X will be replaced by the real name. FUTURE_REL will sometimes be
     # replaced by a less-than indicator (ind_past).
-
-    ind_this = paste0("(PARAM_X >= cp_", i - 1 , ") * FUTURE_REL")
-    ind_past = paste0("(PARAM_X < cp_", i - 1, ") * ")
+    ind_this = paste0("(PARAM_X >= ", cp_this, ") * FUTURE_REL")
+    ind_past = paste0("(PARAM_X < ", cp_this, ") * ")
 
     # Add intercept
     if(has_intercept) {
@@ -143,8 +168,8 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
       }
 
       #formula_str = paste0(formula_str, indicator, "((min(", slope_name, ", cp_", i, ") - cp_", i-1, ") + \n")
-      subract_cp = ifelse(i == 1, "",  paste0("- cp_", i-1))
-      formula_str = paste0(formula_str, ind_this, "(", slope_str, " * (min(PARAM_X, cp_", i, ")", subract_cp, ")) + \n")
+      subract_cp = ifelse(i == 1, "",  paste0(" - cp_", i-1))
+      formula_str = paste0(formula_str, ind_this, "(", slope_str, " * (min(PARAM_X, ", cp_next, ")", subract_cp, ")) + \n")
     }
 
     if(!has_intercept & !has_slope) {
@@ -195,4 +220,12 @@ unpack_segments = function(segments, prior = list(), param_x = NULL) {
     param_x = param_x,
     param_y = param_y
   ))
+}
+
+
+#' Helper function
+#'
+cp_rel = function(segment) {
+  LHS = stringr::str_trim(unlist(strsplit(as.character(segments[[min(segment, length(segments))]])[[2]], "\\+")))
+  LHS == "rel(1)"
 }
