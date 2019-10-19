@@ -22,23 +22,23 @@ get_jagscode = function(data, prior, formula_str, nsegments, param_x, param_y) {
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
   mm = paste0("
-  data {
-    # X values
-    MINX = ", ifelse(!is.null(data), min(data[, param_x]), "[requires data]"), "
-    MAXX = ", ifelse(!is.null(data), max(data[, param_x]), "[requires data]"), "
-    MEANX = ", ifelse(!is.null(data), mean(unlist(data[, param_x])), "[requires data]"), "
-    SDX = ", ifelse(!is.null(data), sd(unlist(data[, param_x])), "[requires data]"), "
+data {
+  # X values
+  MINX = ", ifelse(!is.null(data), min(data[, param_x]), "[requires data]"), "
+  MAXX = ", ifelse(!is.null(data), max(data[, param_x]), "[requires data]"), "
+  MEANX = ", ifelse(!is.null(data), mean(unlist(data[, param_x])), "[requires data]"), "
+  SDX = ", ifelse(!is.null(data), sd(unlist(data[, param_x])), "[requires data]"), "
 
-    # Y values
-    MINY = ", ifelse(!is.null(data), min(data[, param_y]), "[requires data]"), "
-    MAXY = ", ifelse(!is.null(data), max(data[, param_y]), "[requires data]"), "
-    MEANY = ", ifelse(!is.null(data), mean(unlist(data[, param_y])), "[requires data]"), "
-    SDY = ", ifelse(!is.null(data), sd(unlist(data[, param_y])), "[requires data]"), "
-  }
+  # Y values
+  MINY = ", ifelse(!is.null(data), min(data[, param_y]), "[requires data]"), "
+  MAXY = ", ifelse(!is.null(data), max(data[, param_y]), "[requires data]"), "
+  MEANY = ", ifelse(!is.null(data), mean(unlist(data[, param_y])), "[requires data]"), "
+  SDY = ", ifelse(!is.null(data), sd(unlist(data[, param_y])), "[requires data]"), "
+}
 
-  model {
-    # Priors
-    ")
+model {
+  # Priors
+  ")
 
   # Add all priors
   # First as vector and code whether it's fixed or not
@@ -56,8 +56,8 @@ get_jagscode = function(data, prior, formula_str, nsegments, param_x, param_y) {
   # Now add them in!
   mm = paste0(mm, prior_str_dist, "\n    ", prior_str_fix)
   mm = paste0(mm, "
-    cp_0 = -10^100  # mcp helper value; minus infinity
-    cp_", nsegments, " = 10^100  # mcp helper value; plus infinity\n
+  cp_0 = -10^100  # mcp helper value; minus infinity
+  cp_", nsegments, " = 10^100  # mcp helper value; plus infinity\n
     ")
 
 
@@ -73,17 +73,17 @@ get_jagscode = function(data, prior, formula_str, nsegments, param_x, param_y) {
   mm = paste0(mm, gsub("\n", "\n      ", formula_jags))
 
   # Finally the likelihood
-  mm = paste0(mm, "\n\n      # Likelihood
-      ", param_y, "[i_] ~ dnorm(y_[i_], 1 / sigma^2)")
+  mm = paste0(mm, "\n\n    # Likelihood
+    ", param_y, "[i_] ~ dnorm(y_[i_], 1 / sigma^2)")
 
   # Log-density.
-  mm = paste0(mm, "\n\n      # Log-density for LOO/WAIC computation
-      loglik_[i_] = logdensity.norm(", param_y, "[i_], y_[i_], 1 / sigma^2)")
+  mm = paste0(mm, "\n\n    # Log-density for LOO/WAIC computation
+    loglik_[i_] = logdensity.norm(", param_y, "[i_], y_[i_], 1 / sigma^2)")
 
   # Finish up
   mm = paste0(mm, "
-    }
-  }")
+  }
+}")
 
   # Return the model
   mm
