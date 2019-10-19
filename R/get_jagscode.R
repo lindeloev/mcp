@@ -1,15 +1,14 @@
 #' Make JAGS code for Multiple Change Point model
 #'
-#' @aliases make_jagscode
+#' @aliases get_jagscode
 #' @inheritParams mcp
-#' @param formula_jags String. The formula for computing param_y given param_x
-#'   and all predictors. Returned by \code{unpack_segments()}
+#' @param formula_str String. The formula string returned by \code{build_formula_str}.
 #' @param nsegments Number of segments
 #' @param param_y String. Name of response parameter.
 #' @return String. A JAGS model.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-make_jagscode = function(data, prior, formula_jags, nsegments, sample, param_x, param_y) {
+get_jagscode = function(data, prior, formula_str, nsegments, param_x, param_y) {
   # Transform priors from SD to precision
   for(i in 1:length(prior)) {
     if(stringr::str_detect(prior[[i]], "dnorm|dt|dcauchy|ddexp|dlogis|dlnorm")) {
@@ -17,21 +16,24 @@ make_jagscode = function(data, prior, formula_jags, nsegments, sample, param_x, 
     }
   }
 
-  # Begin model. `mm` is short for "mcp model".
+  # Transform formula_str into JAGS format
+  formula_jags = gsub("PARAM_X", paste0(param_x, "[i_]"), formula_str)
+
+  # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
   mm = paste0("
   data {
     # X values
-    MINX = ", ifelse(sample, min(data[, param_x]), "[requires data]"), "
-    MAXX = ", ifelse(sample, max(data[, param_x]), "[requires data]"), "
-    MEANX = ", ifelse(sample, mean(unlist(data[, param_x])), "[requires data]"), "
-    SDX = ", ifelse(sample, sd(unlist(data[, param_x])), "[requires data]"), "
+    MINX = ", ifelse(!is.null(data), min(data[, param_x]), "[requires data]"), "
+    MAXX = ", ifelse(!is.null(data), max(data[, param_x]), "[requires data]"), "
+    MEANX = ", ifelse(!is.null(data), mean(unlist(data[, param_x])), "[requires data]"), "
+    SDX = ", ifelse(!is.null(data), sd(unlist(data[, param_x])), "[requires data]"), "
 
     # Y values
-    MINY = ", ifelse(sample, min(data[, param_y]), "[requires data]"), "
-    MAXY = ", ifelse(sample, max(data[, param_y]), "[requires data]"), "
-    MEANY = ", ifelse(sample, mean(unlist(data[, param_y])), "[requires data]"), "
-    SDY = ", ifelse(sample, sd(unlist(data[, param_y])), "[requires data]"), "
+    MINY = ", ifelse(!is.null(data), min(data[, param_y]), "[requires data]"), "
+    MAXY = ", ifelse(!is.null(data), max(data[, param_y]), "[requires data]"), "
+    MEANY = ", ifelse(!is.null(data), mean(unlist(data[, param_y])), "[requires data]"), "
+    SDY = ", ifelse(!is.null(data), sd(unlist(data[, param_y])), "[requires data]"), "
   }
 
   model {
@@ -67,7 +69,7 @@ make_jagscode = function(data, prior, formula_jags, nsegments, sample, param_x, 
     # Fitted value
     y_[i_] = \n")
 
-  # Add JAGS code from `unpack_segments` and indent it
+  # Add JAGS code for fitted values and indent it
   mm = paste0(mm, gsub("\n", "\n      ", formula_jags))
 
   # Finally the likelihood

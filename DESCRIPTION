@@ -24,6 +24,8 @@ Imports:
 	purrr,
 	tibble,
 	stringr,
-	ggplot2
+	ggplot2,
+	methods,
+	stats
 Suggests: 
     testthat (>= 2.1.0)

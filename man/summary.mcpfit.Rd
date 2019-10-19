@@ -18,5 +18,7 @@
 A simple summary of mcpfit objects. It will be updated later.
 }
 \examples{
+\dontrun{
 summary(fit)
+}
 }
