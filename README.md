@@ -121,14 +121,14 @@ fit
 # A tibble: 8 x 4
   name    mean .lower .upper
   <chr>  <dbl>  <dbl>  <dbl>
-1 cp_1   18.9   16.2   21.4 
-2 cp_2   52.4   48.9   55.8 
-3 cp_3   80.7   75.0   88.0 
-4 int_1  14.7    2.50  25.9 
-5 int_4  16.3    8.46  24.3 
-6 sigma  12.8   11.0   14.7 
-7 year_1  3.60   2.52   4.78
-8 year_2 -2     -2     -2   
+1 cp_1   19.5   17.4   21.6 
+2 cp_2   37.2   33.6   40.5 
+3 cp_3   78.9   73.0   83.0 
+4 int_1  16.9    6.70  27.5 
+5 int_4  20.9   15.7   26.2 
+6 sigma  11.4    9.84  13.1 
+7 year_1  3.40   2.48   4.34
+8 year_2 -2     -2     -2
 ```
 
 (This summary is very limited and will be updated)
@@ -178,14 +178,14 @@ We can use the cross-validation from the `loo` package to compare the predictive
 ```r
 fit$loo = loo(fit)
 fit2$loo = loo(fit2)
-loo_compare(fit$loo, fit2$loo)
+loo::loo_compare(fit$loo, fit2$loo)
 ```
 
 Result:
 ```
        elpd_diff se_diff
 model1   0.0       0.0  
-model2 -47.0      10.0 
+model2 -81.4       7.6
 ```
 
 Aha, the first model in `loo_compare` (`fit`) was preferred (higher Estimated Log-Predictive Density). The important thing here is the `elpd_diff`/`se_diff` ratio. This is almost like a z-score, i.e., a ratio of 1.96 corresponds to 95% probability that `fit` has superior predictive accuracy. BUT, the `loo` developers have adviced that it is probably too optimistic in practice, so that one should only begin taking it seriously if this ratio exceeds 5 [Citation needed].

@@ -3,13 +3,14 @@
 #' @aliases plot plot.mcpfit
 #' @param x An mcpfit object
 #' @param type String. One of "overlay" (default) or "combo".
-#' @param draws Integer. Number of posterior draws to use when type = "overlay".
+#' @param draws Positive integer. Number of posterior draws to use when type = "overlay".
 #' @param ... Currently ignored.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @return A \code{ggplot2} object.
 #' @import dplyr ggplot2
 #' @importFrom stats sd
 #' @importFrom grDevices rgb
+#' @importFrom purrr invoke
 #' @export
 #' @examples
 #' \dontrun{
@@ -19,8 +20,19 @@
 #' }
 
 plot.mcpfit = function(x, type="overlay", draws=25, ...) {
+  # Check arguments
+  if(class(x) != "mcpfit")
+    stop("Can only plot mcpfit objects. x was class: ", class(x))
+  if(! type %in% c("overlay", "combo"))
+    stop("Type has to be one of 'overlay' or 'combo'. Was: ", type)
+  if(draws < 1)
+    stop("Draws has to be a positive integer.")
+
+
   # Plot function on top
   if(type == "overlay") {
+    func_y = x$func_y
+
     eval_at = seq(min(x$data[, x$pars$x]),
                   max(x$data[, x$pars$x]),
                   length.out = 100)
@@ -29,24 +41,18 @@ plot.mcpfit = function(x, type="overlay", draws=25, ...) {
     Q = x$samples %>%
       tidybayes::tidy_draws() %>%
       sample_n(draws) %>%
-      select(-starts_with(".")) %>%
+      select(-starts_with(".")) %>%  # Not arguments for func_y so delete
       tidyr::expand_grid(!!x$pars$x := eval_at) %>%  # correct name of x-var
-      mutate(type = "fitted") %>%
 
-      # Now we make a nested table for each row and apply them as args to func_y
-      rowwise() %>%
-      do(args = as.data.frame(.)) %>%
-      mutate(
-        !!x$pars$y := purrr::pmap(args, x$func_y),  # correct name of y-var
-      ) %>%
+      # Add fitted draws (vectorized)
+      mutate(!!x$pars$y := purrr::invoke(func_y, ., type="fitted")) %>%
 
-      # Now finish up: add group (for ggplot) and unnest it all
-      ungroup() %>%
-      mutate(group = rep(1:draws, each=length(eval_at))) %>%
-      tidyr::unnest(c(args, !!x$pars$y))
+      # Add group
+      mutate(line = rep(1:draws, each=length(eval_at)))
 
+    # Plot it
     ggplot(x$data, aes_string(x = x$pars$x, y = x$pars$y)) +
-      geom_line(aes(group = group), data = Q, color=rgb(0.5, 0.5, 0.5, 0.4)) +
+      geom_line(aes(group = line), data = Q, color=rgb(0.5, 0.5, 0.5, 0.4)) +
       geom_point()
   }
 
@@ -67,7 +73,9 @@ plot.mcpfit = function(x, type="overlay", draws=25, ...) {
 #' @param ... Currently ignored.
 #' @export
 #' @examples
+#' \dontrun{
 #' summary(fit)
+#' }
 
 summary.mcpfit = function(object, width = 0.95, ...) {
   if(!is.null(object$samples)) {

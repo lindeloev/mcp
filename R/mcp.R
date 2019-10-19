@@ -1,6 +1,8 @@
-source("R/make_jagscode.R")
+source("R/get_segment_table.R")
+source("R/get_prior.R")
+source("R/get_jagscode.R")
+source("R/get_formula.R")
 source("R/run_jags.R")
-source("R/unpack_segments.R")
 
 #' Fit Multiple Linear Segments And Their Change Points
 #'
@@ -101,56 +103,48 @@ source("R/unpack_segments.R")
 mcp = function(segments, data = NULL, prior = list(), family = "gaussian", param_x = NULL, sample = TRUE, ...) {
 
   # Check input values
-  if(is.null(data) & sample == TRUE) {
+  if(is.null(data) & sample == TRUE)
     stop("Cannot sample without data.")
-  }
+
   if(sample == TRUE) {
-    if(!is.data.frame(data) & !tibble::is_tibble(data)) {
+    if(!is.data.frame(data) & !tibble::is_tibble(data))
       stop("`data` must be a data.frame or a tibble.")
-    }
   } else {
     data = NULL  # define variable but nothing more
   }
-  if(!is.list(segments)) {
+
+  if(!is.list(segments))
     stop("`segments` must be a list")
-  }
+
+  if(length(segments) == 0)
+    stop("At least one segment is needed")
+
   for(segment in segments) {
-    if(!inherits(segment, "formula")) stop("all segments must be formulas.")
+    if(!inherits(segment, "formula"))
+      stop("all segments must be formulas.")
   }
-  if(!is.list(prior)) {
+
+  if(!is.list(prior))
     stop("`prior` must be a named list.")
-  }
-  if(!is.null(param_x) & !is.character(param_x)) {
+
+  if(!is.null(param_x) & !is.character(param_x))
     stop("`param_x` must be NULL or a string.")
-  }
-  if(!is.logical(sample)) {
+
+  if(!is.logical(sample))
     stop("`sample` must be TRUE or FALSE")
-  }
-
-  # Get prior, func_y, formula_jags, and param_x/param_y
-  unpacked = unpack_segments(segments, prior, param_x)
-  prior = unpacked$prior
-
-  # Check variables in data
-  if(sample == TRUE) {
-    if(!unpacked$param_x %in% colnames(data)) {
-      stop(paste0("The slope variable ", unpacked$param_x, " is not a column in data."))
-    }
-    if(!unpacked$param_y %in% colnames(data)) {
-      stop(paste0("The response variable", unpacked$param_y, " is not a column in data."))
-    }
-  }
 
 
-  # Build model
-  jags_code = make_jagscode(
-    data = data,
-    prior = prior,
-    formula_jags = unpacked$formula_jags,
-    nsegments = length(segments),
-    sample = sample,
-    param_x = unpacked$param_x,
-    param_y = unpacked$param_y)
+  # Get an abstract segment table ("ST")prior, func_y, formula_jags, and param_x/param_y
+  ST = get_segment_table(segments, data, param_x)
+  param_x = unique(ST$x)
+  param_y = unique(ST$y)
+
+  # Get stuff from sourced mcp functions
+  prior = get_prior(ST, prior)
+  formula_str = get_formula_str(ST)
+  jags_code = get_jagscode(data, prior, formula_str, nrow(ST), param_x, param_y)
+  func_y = get_func_y(formula_str, param_x, names(prior), nrow(ST))
+
 
   # If samples should drawn. If not, just do everything else.
   if(sample) {
@@ -184,13 +178,13 @@ mcp = function(segments, data = NULL, prior = list(), family = "gaussian", param
 
     pars = list(
       model = names(prior),
-      x = unpacked$param_x,
-      y = unpacked$param_y
+      x = param_x,
+      y = param_y
     ),
 
     segments = segments,
     jags_code = jags_code,
-    func_y = unpacked$func_y
+    func_y = func_y
   )
   class(mcpfit) = "mcpfit"
 

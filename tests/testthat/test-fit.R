@@ -7,8 +7,8 @@ library(dplyr)
 segments = list(
   y ~ 1 + x,
   1 ~ rel(1) + rel(x),
-  1 ~ 0,
-  1 ~ x
+  rel(1) ~ rel(1) + rel(x),
+  rel(1) ~ 0
 )
 
 # Simulation parameters
@@ -17,13 +17,14 @@ func_args = list(
   x = sim_x,
   sigma = 5,
   int_1 = 10,
-  x_1 = -2,
   int_2 = 20,
-  x_2 = 1,
-  x_4 = 3,
+  int_3 = -40,
+  x_1 = -2,
+  x_2 = 3,
+  x_3 = -2,
   cp_1 = 30,
-  cp_2 = 50,
-  cp_3 = 80
+  cp_2 = 20,
+  cp_3 = 30
 )
 
 # Make it a data.frame to use for joining with summary.mcpfit
@@ -37,6 +38,7 @@ df$name = as.character(df$name)
 
 # Simulate data
 fit_empty = mcp(segments, sample=F)
+set.seed(42)
 data = data.frame(
   x = sim_x,
   y = do.call(fit_empty$func_y, func_args)
@@ -47,12 +49,12 @@ data = data.frame(
 fit = mcp(segments, data, n.adapt=2500, n.update=2500, n.iter=3000)
 
 # Check: expect all estimates to be within 98% HDI
-X = summary(fit, width = 0.98) %>%
+results_table = summary(fit, width = 0.95) %>%
   left_join(df, by="name") %>%
-  mutate(score = theory > .lower & theory < .upper)
+  mutate(score = theory > .lower & theory < .upper) %>
 
 test_that("fit approximate default priors", {
   expect_true(
-    all(X$score),
-    info = round(X, 3))
+    all(results_table$score),
+    info = mutate_if(results_table, is.numeric, round, digits=1))
 })
