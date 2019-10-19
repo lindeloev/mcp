@@ -41,11 +41,12 @@ test_that("bad intercepts", {
 
 test_that("bad slopes", {
   bad_slopes = list(
-    list(y ~ rel(x)),
-    list(y ~ x + y),
-    list(y ~ x, 1 ~ y),
-    list(y ~ x, 0 ~ 1),
-    list(y ~ x, q ~ 1)
+    list(y ~ rel(x)),  # nothing to be relative to
+    list(y ~ x + y),  # two slopes
+    list(y ~ x, 1 ~ y),  # Two slopes
+    list(y ~ x, 0 ~ 1),  # Needs changepoint stuff
+    list(y ~ x, q ~ 1),  # slope not allowed for changepoint
+    list(y ~ 1, 1 ~ rel(x))  # relative slope after no slope
   )
 
   for(segments in bad_slopes) {
@@ -61,7 +62,8 @@ test_that("good intercepts", {
   good_intercepts = list(
     list(y ~ 0),
     list(x ~ 1),
-    list(stuff ~ 0, 1 ~ 1, 1 ~ 0, 1 ~ 1)
+    list(stuff ~ 0, 1 ~ 1, 1 ~ 0, 1 ~ 1),
+    list(y ~ 1, 1 ~ rel(1), 1 ~ rel(1))  # chained relative intercepts
   )
 
   for(segments in good_intercepts) {
@@ -80,8 +82,9 @@ test_that("good intercepts", {
 
 test_that("good slopes", {
   good_slopes = list(
-    list(y ~ x),
-    list(stuff ~ goat, 1 ~ 0, 1 ~ 1 + goat)
+    list(y ~ 0 + x),
+    list(stuff ~ 0 + goat, 1 ~ 0, 1 ~ 1 + goat),
+    list(y ~ x, 1 ~ 0 + rel(x), 1 ~ rel(x))  # chained relative slopes
   )
 
   for(segments in good_slopes) {
