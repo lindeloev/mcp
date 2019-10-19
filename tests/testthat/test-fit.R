@@ -51,7 +51,7 @@ fit = mcp(segments, data, n.adapt=2500, n.update=2500, n.iter=3000)
 # Check: expect all estimates to be within 98% HDI
 results_table = summary(fit, width = 0.95) %>%
   left_join(df, by="name") %>%
-  mutate(score = theory > .lower & theory < .upper) %>
+  mutate(score = theory > .lower & theory < .upper)
 
 test_that("fit approximate default priors", {
   expect_true(
