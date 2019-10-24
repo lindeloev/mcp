@@ -1,7 +1,7 @@
 source("R/get_segment_table.R")
 source("R/get_prior.R")
-source("R/get_jagscode.R")
 source("R/get_formula.R")
+source("R/get_jagscode.R")
 source("R/run_jags.R")
 
 #' Fit Multiple Linear Segments And Their Change Points
@@ -28,11 +28,13 @@ source("R/run_jags.R")
 #'   Change points are forced to be ordered through the priors using truncation,
 #'   \code{dnorm(0, 1) T(cp_1, )}, except for uniform priors where the lower
 #'   bound should be greater than the previous change point, \code{dunif(cp_1, )}.
-#' @param param_x String (default: NULL). Only relevant if no segments contains
-#'   slope (no hint at what x is). Set this, e.g., param_x = "time".
+#' @param par_x String (default: NULL). Only relevant if no segments contains
+#'   slope (no hint at what x is). Set this, e.g., par_x = "time".
 #' @param sample Boolean (default: TRUE). Set to FALSE if you only want to check
 #'   priors, the JAGS model, etc.
 #' @param family WORK IN PROGRESS. One of "gauss" (default), "binomial"
+#' @param jags_explicit Pass JAGS code to \code{mcp} to use directly. Useful if
+#'   you want to make small tweaks, but mostly used for the development of mcp.
 #' @param ... Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.
 #' @details Noites on priors:
 #'   * Order restriction is automatically applied to cp_\* parameters using
@@ -100,59 +102,66 @@ source("R/run_jags.R")
 #' }
 
 
-mcp = function(segments, data = NULL, prior = list(), family = "gaussian", param_x = NULL, sample = TRUE, ...) {
+mcp = function(segments, data = NULL, prior = list(), family = "gaussian", par_x = NULL, sample = TRUE, jags_explicit = NULL, ...) {
 
   # Check input values
-  if(is.null(data) & sample == TRUE)
+  if (is.null(data) & sample == TRUE)
     stop("Cannot sample without data.")
 
-  if(sample == TRUE) {
-    if(!is.data.frame(data) & !tibble::is_tibble(data))
+  if (sample == TRUE) {
+    if (!is.data.frame(data) & !tibble::is_tibble(data))
       stop("`data` must be a data.frame or a tibble.")
   } else {
     data = NULL  # define variable but nothing more
   }
 
-  if(!is.list(segments))
+  if (!is.list(segments))
     stop("`segments` must be a list")
 
-  if(length(segments) == 0)
+  if (length(segments) == 0)
     stop("At least one segment is needed")
 
-  for(segment in segments) {
-    if(!inherits(segment, "formula"))
+  for (segment in segments) {
+    if (!inherits(segment, "formula"))
       stop("all segments must be formulas.")
   }
 
-  if(!is.list(prior))
+  if (!is.list(prior))
     stop("`prior` must be a named list.")
 
-  if(!is.null(param_x) & !is.character(param_x))
-    stop("`param_x` must be NULL or a string.")
+  if (!is.null(par_x) & !is.character(par_x))
+    stop("`par_x` must be NULL or a string.")
 
-  if(!is.logical(sample))
+  if (!is.logical(sample))
     stop("`sample` must be TRUE or FALSE")
 
 
-  # Get an abstract segment table ("ST")prior, func_y, formula_jags, and param_x/param_y
-  ST = get_segment_table(segments, data, param_x)
-  param_x = unique(ST$x)
+  # Get an abstract segment table ("ST")prior, func_y, formula_jags, and par_x/param_y
+  ST = get_segment_table(segments, data, par_x)
+  par_x = unique(ST$x)
   param_y = unique(ST$y)
 
-  # Get stuff from sourced mcp functions
+  # Get prior and lists of parameters
   prior = get_prior(ST, prior)
+  params_population = names(prior)
+  params_varying = logical0_to_null(c(na.omit(ST$cp_group)))
+
+  # Make formula_str and func_y
   formula_str = get_formula_str(ST)
-  jags_code = get_jagscode(data, prior, formula_str, nrow(ST), param_x, param_y)
-  func_y = get_func_y(formula_str, param_x, names(prior), nrow(ST))
 
+  params_funcy = params_population[!params_population %in% ST$cp_sd]
+  func_y = get_func_y(formula_str, par_x, params_funcy, params_varying, nrow(ST))
 
-  # If samples should drawn. If not, just do everything else.
-  if(sample) {
+  # Make jags code and sample if sample==TRUE. If not, just skip it.
+  jags_code = get_jagscode(data, prior, ST, formula_str)
+
+  if (sample) {
     # Sample it
     samples = run_jags(
       data = data,
-      jags_code = jags_code,
-      params = c(names(prior), "loglik_"),
+      jags_code = ifelse(is.null(jags_explicit), jags_code, jags_explicit),
+      params = c(params_population, params_varying, "loglik_"),  # population-level, varying, and loglik for loo/waic
+      ST = ST,
       ...
     )
 
@@ -177,17 +186,38 @@ mcp = function(segments, data = NULL, prior = list(), family = "gaussian", param
     prior = prior,
 
     pars = list(
-      model = names(prior),
-      x = param_x,
+      population = params_population,
+      varying = params_varying,
+      x = par_x,
       y = param_y
     ),
 
     segments = segments,
     jags_code = jags_code,
-    func_y = func_y
+    func_y = func_y,
+
+    # Not really meant to be used by the end user.
+    # But useful to handle the class.
+    .other = list(
+      ST = ST
+    )
   )
   class(mcpfit) = "mcpfit"
 
   # Return it
   mcpfit
+}
+
+
+#' Converts logical(0) to null. Returns x otherwise
+#'
+#'@aliases logical0_to_null
+#'@param x Anything
+#'@return NULL or x
+
+
+logical0_to_null = function(x) {
+  if (length(x) > 0)
+    return(x)
+  else return(NULL)
 }

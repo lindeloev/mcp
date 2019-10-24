@@ -7,9 +7,10 @@ dp_n = list(
   cp_1 = "dunif(MINX, MAXX)",
   cp = "dunif(%s, MAXX)",
   cp_rel = "dunif(0, MAXX - %s)",
-  slope = "dt(0, SDY / (MAXX - MINX) * 3, 1)",
-  int = "dt(0, SDY * 3, 1)",
-  sigma = "dnorm(0, SDY) T(0, )"
+  slope = "dnorm(0, SDY / (MAXX - MINX) * 3)",
+  int = "dnorm(0, SDY * 3)",
+  sigma = "dnorm(0, SDY * 3) T(0, )",
+  sd = "dnorm(0, SDY * 3) T(0, )"
 )
 
 # Default priors for BERNOULLI (dp_b)
@@ -23,22 +24,21 @@ dp_b = list(
 ######################
 # GET DEFAULT PRIORS #
 ######################
-
 get_default_prior_cp = function(ST, i) {
-  if(i < 2)
+  if (i < 2)
     stop("Only i >= 2 allowed.")
 
   # First change point
-  if(i == 2)
+  if (i == 2)
     return(dp_n$cp_1)
 
   # A relative change point intercept
-  if(i > 2 & ST$cp_int_rel[i] != 0)
-    return(sprintf(dp_n$cp_rel, ST$cp_code[i - 1]))
+  if (i > 2 & ST$cp_int_rel[i] != 0)
+    return(sprintf(dp_n$cp_rel, ST$cp_code_prior[i - 1]))
 
   # An absolute change point intercept
-  if(i > 2 & ST$cp_int_rel[i] == 0)
-    return(sprintf(dp_n$cp, ST$cp_code[i - 1]))
+  if (i > 2 & ST$cp_int_rel[i] == 0)
+    return(sprintf(dp_n$cp, ST$cp_code_prior[i - 1]))
 }
 
 
@@ -56,14 +56,14 @@ truncate_prior_cp = function(ST, i, prior_str) {
   is_fixed = is.numeric(prior_str)
 
   # OK, we need to add truncation ourselves.
-  if(!is_dunif & !is_truncated & !is_fixed) {
-    if(S$cp_int_rel != 0) {
+  if (!is_dunif & !is_truncated & !is_fixed) {
+    if (S$cp_int_rel != 0) {
       # Relative: be positive (greater than former cp) and within observed range
-      return(paste0(prior_str, " T(0, MAXX - ", ST$cp_code[i-1], ")"))
+      return(paste0(prior_str, " T(0, MAXX - ", ST$cp_code_prior[i - 1], ")"))
     }
     else {
       # Absolute: be greater than the former change point and within observed range
-      return(paste0(prior_str, " T(", ST$cp_code[i-1], ", MAXX)"))
+      return(paste0(prior_str, " T(", ST$cp_code_prior[i - 1], ", MAXX)"))
     }
   } else {
     # Return unaltered
@@ -81,34 +81,40 @@ truncate_prior_cp = function(ST, i, prior_str) {
 #'
 #' Inserts default priors where none are specified by the user.
 #'
-#' @alias get_prior
+#' @aliases get_prior
 #' @param ST Tibble. A segment table returned by \code{get_segment_table}.
+#' @param prior A list of user-defined priors. Will overwrite the relevant
+#'   default priors.
 #' @inheritParams mcp
 #' @importFrom utils modifyList
 #'
 # Extracts default priors for model and replace them with user-priors when provided
 
-get_prior = function(ST, prior) {
+get_prior = function(ST, prior = list()) {
   # Get default priors
   default_prior = list(sigma = dp_n$sigma)  # Populate this list
-  for(i in 1:nrow(ST)) {
+  for (i in seq_len(nrow(ST))) {
     # Helper: Current segment.
     S = ST[i, ]
 
     # Intercept
-    if(!is.na(S$int_name))
+    if (!is.na(S$int_name))
       default_prior[[S$int_name]] = dp_n$int
 
     # Slope
-    if(!is.na(S$slope_name))
+    if (!is.na(S$slope_name))
       default_prior[[S$slope_name]] = dp_n$slope
 
     # Change point
-    if(i > 1)
+    if (i > 1)
       default_prior[[S$cp_name]] = get_default_prior_cp(ST, i)
 
+    # Change point varying effect
+    if (!is.na(S$cp_sd))
+      default_prior[[S$cp_sd]] = dp_n$sd
+
     # Truncate change point prior if supplied by user
-    if(i > 1 & ST$cp_name[i] %in% names(prior)) {
+    if (i > 1 & ST$cp_name[i] %in% names(prior)) {
       prior[[S$cp_name]] = truncate_prior_cp(ST, i, prior[[S$cp_name]])
     }
   }

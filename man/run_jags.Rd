@@ -4,7 +4,7 @@
 \alias{run_jags}
 \title{Run parallel MCMC sampling using JAGS.}
 \usage{
-run_jags(data, jags_code, params, model_file = "tmp_jags_code.txt",
+run_jags(data, jags_code, params, ST, model_file = "tmp_jags_code.txt",
   n.chains = parallel::detectCores() - 1, n.iter = 3000,
   n.adapt = 1500, n.update = 1500, ...)
 }
@@ -20,6 +20,9 @@ is coerced into a list.
 \item{params}{
 Character vector of parameters to be sampled.
 }
+
+\item{ST}{A segment table (tibble), returned by \code{get_segment_table}.
+Only really used when the model contains varying effects.}
 
 \item{model_file}{A temporary file. Makes parallel sampling possible}
 
