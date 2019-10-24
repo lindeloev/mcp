@@ -1,4 +1,5 @@
 .Rproj.user
 .Rhistory
 tests/testthat/tmp_jags_code.txt
+tmp_jags_code.txt
 old

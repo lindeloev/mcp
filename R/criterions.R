@@ -26,10 +26,10 @@
 #'}
 
 criterion = function(fit, criterion = "loo") {
-  if(!class(fit) == "mcpfit") {
+  if (!class(fit) == "mcpfit") {
     stop("class(fit) must be 'mcpfit'")
   }
-  if(!criterion %in% c("loo", "waic")) {
+  if (!criterion %in% c("loo", "waic")) {
     stop("criterion must be one of 'loo' or 'waic'")
   }
 
@@ -37,9 +37,9 @@ criterion = function(fit, criterion = "loo") {
   loglik = as.matrix(do.call(rbind.data.frame, fit$loglik))
 
   # Add LOO
-  if(any(criterion == "loo")) {
+  if (any(criterion == "loo")) {
     # Compute relative effective sample size (for each loglik col)
-    chain_id = rep(1:length(fit$samples), each = nrow(fit$samples[[1]]))
+    chain_id = rep(seq_len(length(fit$samples)), each = nrow(fit$samples[[1]]))
     r_eff = loo::relative_eff(exp(loglik), chain_id)  # Likelihood = exp(log-likelihood)
 
     # Add LOO
@@ -47,7 +47,7 @@ criterion = function(fit, criterion = "loo") {
   }
 
   # Add WAIC
-  if(any(criterion == 'waic')) {
+  if (any(criterion == "waic")) {
     return(loo::waic(loglik))
   }
 }

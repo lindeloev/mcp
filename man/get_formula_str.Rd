@@ -10,6 +10,6 @@ get_formula_str(ST)
 \item{ST}{Tibble. Returned by \code{get_segment_table}.}
 }
 \description{
-You will need to replace PARAM_X for whatever your x-axis observation column
+You will need to replace PAR_X for whatever your x-axis observation column
 is called. In JAGS typicaly `x[i_]`. In R just `x`.
 }
