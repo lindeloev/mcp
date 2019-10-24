@@ -1,16 +1,23 @@
 #' Plot mcpfit
 #'
+#' plot(fit, "combo") calls bayesplot::mcmc_combo(fit$samples). Use it directly
+#' for finer control.
+#'
 #' @aliases plot plot.mcpfit
 #' @param x An mcpfit object
 #' @param type String. One of "overlay" (default) or "combo".
 #' @param draws Positive integer. Number of posterior draws to use when type = "overlay".
+#' @param pars Vector of parameter names to plot or "population" (default) or
+#'   "all" or "varying". Only relevant for type = "combo".
+#' @param facet_by String. Name of a varying group. Only relevant for
+#'   type = "overlay"
 #' @param ... Currently ignored.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @return A \code{ggplot2} object.
-#' @import dplyr ggplot2
+#' @importFrom ggplot2 ggplot aes aes_string geom_line geom_point
+#' @importFrom magrittr %>%
+#' @importFrom rlang !! :=
 #' @importFrom stats sd
-#' @importFrom grDevices rgb
-#' @importFrom purrr invoke
 #' @export
 #' @examples
 #' \dontrun{
@@ -19,48 +26,95 @@
 #' plot(fit, "combo")
 #' }
 
-plot.mcpfit = function(x, type="overlay", draws=25, ...) {
+plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by = NULL, ...) {
   # Check arguments
-  if(class(x) != "mcpfit")
+  if (class(x) != "mcpfit")
     stop("Can only plot mcpfit objects. x was class: ", class(x))
-  if(! type %in% c("overlay", "combo"))
+  if (! type %in% c("overlay", "combo"))
     stop("Type has to be one of 'overlay' or 'combo'. Was: ", type)
-  if(draws < 1)
+  if (draws < 1)
     stop("Draws has to be a positive integer.")
+  if (!is.null(pars)) {
+    if(pars != "population" & !all(pars %in% c(x$pars$population, x$pars$varying)))
+      stop("Not all these pars are in the model: '", paste0(pars, collapse="' and '"))
+  }
 
+  # TEMPORARY: Include test of whether this is a random/nested effect
+  varying_groups = logical0_to_null(unique(na.omit(x$.other$ST$cp_group_col)))
+  if (!is.null(facet_by)) {
+    if (!facet_by %in% varying_groups)
+      stop("facet_by is not a data column used as varying grouping.")
+  }
 
   # Plot function on top
-  if(type == "overlay") {
-    func_y = x$func_y
+  if (type == "overlay") {
 
+    # We'll need these vars during data-processing-before-ggplot
+    func_y = x$func_y
     eval_at = seq(min(x$data[, x$pars$x]),
                   max(x$data[, x$pars$x]),
                   length.out = 100)
+    pars_population_regex = paste0(x$pars$population, collapse="|")
+
+    # No faceting
+    if (is.null(facet_by)) {
+      Q = x$samples %>%
+        tidybayes::spread_draws(!!sym(pars_population_regex), regex = TRUE, n = draws)
+
+    } else {
+      # Prepare for faceting
+      # Read more about this weird syntax at https://github.com/mjskay/tidybayes/issues/38
+      varying_by_facet = na.omit(x$.other$ST$cp_group[stringr::str_detect(x$.other$ST$cp_group, paste0("_", facet_by))])
+      varying_by_facet = paste0(varying_by_facet, collapse="|")
+
+      Q = x$samples %>%
+        tidybayes::spread_draws(!!sym(pars_population_regex),
+                     (!!sym(varying_by_facet))[!!sym(facet_by)],
+                     regex = TRUE,
+                     n = draws)
+    }
 
     # First, let's get all the predictors in shape for func_y
-    Q = x$samples %>%
-      tidybayes::tidy_draws() %>%
-      sample_n(draws) %>%
-      select(-starts_with(".")) %>%  # Not arguments for func_y so delete
+    Q = Q %>%
       tidyr::expand_grid(!!x$pars$x := eval_at) %>%  # correct name of x-var
 
       # Add fitted draws (vectorized)
-      mutate(!!x$pars$y := purrr::invoke(func_y, ., type="fitted")) %>%
+      dplyr::mutate(!!x$pars$y := purrr::invoke(func_y, ., type = "fitted")) %>%
 
-      # Add group
-      mutate(line = rep(1:draws, each=length(eval_at)))
+      # Add line ID to separate lines. Mark a new line when "eval_at" repeats.
+      dplyr::mutate(
+        line = x == min(eval_at),
+        line = cumsum(line)
+      )
 
-    # Plot it
-    ggplot(x$data, aes_string(x = x$pars$x, y = x$pars$y)) +
-      geom_line(aes(group = line), data = Q, color=rgb(0.5, 0.5, 0.5, 0.4)) +
-      geom_point()
+    if (is.null(facet_by)) {
+      # Return plot without faceting
+      return(ggplot(x$data, aes_string(x = x$pars$x, y = x$pars$y)) +
+        geom_line(aes(group = line), data = Q, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4)) +
+        geom_point())
+    } else {
+      # Return plot with faceting
+      return(ggplot(x$data, aes_string(x = x$pars$x, y = x$pars$y)) +
+        geom_line(aes(group = line), data = Q, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4)) +
+        geom_point() +
+        facet_wrap(paste0("~", facet_by)))
+    }
   }
 
-  else if(type == "combo") {
-    pars = paste0("^int_|^cp_|^", x$pars$x, "_|sigma")
-    bayesplot::mcmc_combo(x$samples, regex_pars=pars)
+  if (type == "combo") {
+    # Use population parameters by default
+    if (pars == "population") {
+      pars = x$pars$population
+    }
+    if (length(pars) > 1) {
+      #pars = paste0(paste0("^", pars, "$"), collapse="|")
+      return(bayesplot::mcmc_combo(x$samples, pars = pars))
+    } else {
+      return(bayesplot::mcmc_combo(x$samples, regex_pars = pars))
+    }
   }
 }
+
 
 
 #' Summarise mcpfit
@@ -78,14 +132,14 @@ plot.mcpfit = function(x, type="overlay", draws=25, ...) {
 #' }
 
 summary.mcpfit = function(object, width = 0.95, ...) {
-  if(!is.null(object$samples)) {
+  if (!is.null(object$samples)) {
     object$samples %>%
       tidybayes::tidy_draws() %>%
       tidyr::pivot_longer(-starts_with(".")) %>%
-      group_by(name) %>%
+      dplyr::group_by(name) %>%
       tidybayes::mean_hdci(value, .width = width) %>%
-      rename(mean = value) %>%
-      select(-.point, -.width, -.interval)
+      dplyr::rename(mean = value) %>%
+      dplyr::select(-.point, -.width, -.interval)
   }
   else {
     message("No samples. Nothing to summarise.")
@@ -99,7 +153,7 @@ summary.mcpfit = function(object, width = 0.95, ...) {
 #' @param ... Currently ignored.
 #' @export
 print.mcpfit = function(x, ...) {
-  if(!is.null(x$samples)) {
+  if (!is.null(x$samples)) {
     print(summary(x))
   }
   else {

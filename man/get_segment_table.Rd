@@ -4,7 +4,7 @@
 \alias{get_segment_table}
 \title{Build a table describing a list of segments}
 \usage{
-get_segment_table(segments, data, param_x)
+get_segment_table(segments, data = NULL, par_x = NULL)
 }
 \arguments{
 \item{segments}{A list of formulas - one for each segment. The right-hand
@@ -14,8 +14,8 @@ left-hand side is the change point (on x). See examples for more details.}
 
 \item{data}{Data.frame or tibble in long format.}
 
-\item{param_x}{String (default: NULL). Only relevant if no segments contains
-slope (no hint at what x is). Set this, e.g., param_x = "time".}
+\item{par_x}{String (default: NULL). Only relevant if no segments contains
+slope (no hint at what x is). Set this, e.g., par_x = "time".}
 }
 \value{
 A tibble.
@@ -24,12 +24,13 @@ A tibble.
 Used internally for most mcp functions.
 }
 \examples{
+\dontrun{
 segments = list(
   y ~ 1 + x,
   1 ~ 1
 )
-data = data.frame(y = 1:5, x=1:5)
-get_segment_table(segments, data, NULL)
+get_segment_table(segments)
+}
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

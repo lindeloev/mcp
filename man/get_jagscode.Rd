@@ -4,7 +4,7 @@
 \alias{get_jagscode}
 \title{Make JAGS code for Multiple Change Point model}
 \usage{
-get_jagscode(data, prior, formula_str, nsegments, param_x, param_y)
+get_jagscode(data, prior, ST, formula_str)
 }
 \arguments{
 \item{data}{Data.frame or tibble in long format.}
@@ -18,14 +18,9 @@ Change points are forced to be ordered through the priors using truncation,
 \code{dnorm(0, 1) T(cp_1, )}, except for uniform priors where the lower
 bound should be greater than the previous change point, \code{dunif(cp_1, )}.}
 
+\item{ST}{Segment table. Returned by \code{get_segment_table()}.}
+
 \item{formula_str}{String. The formula string returned by \code{build_formula_str}.}
-
-\item{nsegments}{Number of segments}
-
-\item{param_x}{String (default: NULL). Only relevant if no segments contains
-slope (no hint at what x is). Set this, e.g., param_x = "time".}
-
-\item{param_y}{String. Name of response parameter.}
 }
 \value{
 String. A JAGS model.
