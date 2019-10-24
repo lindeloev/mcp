@@ -12,7 +12,7 @@ segments = list(
 )
 
 # Simulation parameters
-sim_x = runif(200, 0, 100)
+sim_x = runif(300, 0, 100)
 func_args = list(
   x = sim_x,
   sigma = 5,
@@ -37,7 +37,7 @@ df = data.frame(
 df$name = as.character(df$name)
 
 # Simulate data
-fit_empty = mcp(segments, sample=F)
+fit_empty = mcp(segments, sample = F)
 set.seed(42)
 data = data.frame(
   x = sim_x,
@@ -46,15 +46,15 @@ data = data.frame(
 
 # Fit model to simulated data. A pretty long run to ensure convergence
 # and small MCMC error
-fit = mcp(segments, data, n.adapt=2500, n.update=2500, n.iter=3000)
+fit = mcp(segments, data, n.adapt = 2500, n.update = 2500, n.iter = 3000)
 
 # Check: expect all estimates to be within 98% HDI
 results_table = summary(fit, width = 0.95) %>%
-  left_join(df, by="name") %>%
+  left_join(df, by = "name") %>%
   mutate(score = theory > .lower & theory < .upper)
 
 test_that("fit approximate default priors", {
   expect_true(
     all(results_table$score),
-    info = mutate_if(results_table, is.numeric, round, digits=1))
+    info = mutate_if(results_table, is.numeric, round, digits = 1))
 })

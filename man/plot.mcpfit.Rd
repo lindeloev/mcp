@@ -5,14 +5,21 @@
 \alias{plot}
 \title{Plot mcpfit}
 \usage{
-\method{plot}{mcpfit}(x, type = "overlay", draws = 25, ...)
+\method{plot}{mcpfit}(x, type = "overlay", draws = 25,
+  pars = "population", facet_by = NULL, ...)
 }
 \arguments{
 \item{x}{An mcpfit object}
 
 \item{type}{String. One of "overlay" (default) or "combo".}
 
-\item{draws}{Integer. Number of posterior draws to use when type = "overlay".}
+\item{draws}{Positive integer. Number of posterior draws to use when type = "overlay".}
+
+\item{pars}{Vector of parameter names to plot or "population" (default) or
+"all" or "varying". Only relevant for type = "combo".}
+
+\item{facet_by}{String. Name of a varying group. Only relevant for
+type = "overlay"}
 
 \item{...}{Currently ignored.}
 }
@@ -20,7 +27,8 @@
 A \code{ggplot2} object.
 }
 \description{
-Plot mcpfit
+plot(fit, "combo") calls bayesplot::mcmc_combo(fit$samples). Use it directly
+for finer control.
 }
 \examples{
 \dontrun{

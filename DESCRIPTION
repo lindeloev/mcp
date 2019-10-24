@@ -20,12 +20,14 @@ Imports:
 	bayesplot,
 	tidybayes,
 	dplyr,
+	magrittr,
 	tidyr,
 	purrr,
 	tibble,
 	stringr,
 	ggplot2,
 	methods,
-	stats
+	stats,
+	rlang
 Suggests: 
     testthat (>= 2.1.0)

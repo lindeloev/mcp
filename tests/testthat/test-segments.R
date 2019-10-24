@@ -24,15 +24,15 @@ test_that("bad intercepts", {
   bad_intercepts = list(
     list(y ~ rel(0)),
     list(y ~ rel(1)),
-    list( ~ 1),
+    list(  ~ 1),
     list(y ~ 2),
     list(y ~ 1, 1 ~ rel(0))  # Not (yet) supported
   )
 
-  for(segments in bad_intercepts) {
+  for (segments in bad_intercepts) {
     expect_error(mcp(
       segments = segments,
-      param_x = "x",
+      par_x = "x",
       sample = FALSE
     ), info = paste0("segments: ", segments))
   }
@@ -49,7 +49,7 @@ test_that("bad slopes", {
     list(y ~ 1, 1 ~ rel(x))  # relative slope after no slope
   )
 
-  for(segments in bad_slopes) {
+  for (segments in bad_slopes) {
     expect_error(mcp(
       segments = segments,
       sample = FALSE
@@ -66,10 +66,10 @@ test_that("good intercepts", {
     list(y ~ 1, 1 ~ rel(1), 1 ~ rel(1))  # chained relative intercepts
   )
 
-  for(segments in good_intercepts) {
+  for (segments in good_intercepts) {
     fit = mcp(
       segments = segments,
-      param_x = "horse",
+      par_x = "horse",
       sample = FALSE
     )
     expect_true(
@@ -87,7 +87,7 @@ test_that("good slopes", {
     list(y ~ x, 1 ~ 0 + rel(x), 1 ~ rel(x))  # chained relative slopes
   )
 
-  for(segments in good_slopes) {
+  for (segments in good_slopes) {
     fit = mcp(
       segments = segments,
       sample = FALSE
@@ -98,5 +98,3 @@ test_that("good slopes", {
     )
   }
 })
-
-

@@ -5,7 +5,7 @@
 \title{Fit Multiple Linear Segments And Their Change Points}
 \usage{
 mcp(segments, data = NULL, prior = list(), family = "gaussian",
-  param_x = NULL, sample = TRUE, ...)
+  par_x = NULL, sample = TRUE, jags_explicit = NULL, ...)
 }
 \arguments{
 \item{segments}{A list of formulas - one for each segment. The right-hand
@@ -26,11 +26,14 @@ bound should be greater than the previous change point, \code{dunif(cp_1, )}.}
 
 \item{family}{WORK IN PROGRESS. One of "gauss" (default), "binomial"}
 
-\item{param_x}{String (default: NULL). Only relevant if no segments contains
-slope (no hint at what x is). Set this, e.g., param_x = "time".}
+\item{par_x}{String (default: NULL). Only relevant if no segments contains
+slope (no hint at what x is). Set this, e.g., par_x = "time".}
 
 \item{sample}{Boolean (default: TRUE). Set to FALSE if you only want to check
 priors, the JAGS model, etc.}
+
+\item{jags_explicit}{Pass JAGS code to \code{mcp} to use directly. Useful if
+you want to make small tweaks, but mostly used for the development of mcp.}
 
 \item{...}{Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.}
 }

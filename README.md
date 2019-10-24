@@ -11,16 +11,17 @@ You can see the roadmap for the immediate future under [issues](https://github.c
  2. Install `mcp` by running this in R: `devtools::install_github("lindeloev/mcp")`. If you don't have `devtools`, install it first using `install.packages("devtools")`.
 
 
-# Quick example
+# Quick examples
 
-Find the single change point between two joined slopes:
+Find the single change point between two plateaus:
+
 ```r
 library(mcp)
 
 # Define segments
 segments = list(
-    y ~ 1 + x,  # intercept + slope
-    1 ~ 0 + x  # joined slope
+    y ~ 1,  # Intercept
+    1 ~ 1  # Intercept
 )
 
 # Start sampling
@@ -30,7 +31,71 @@ fit = mcp(segments, my_data)
 plot(fit)
 ```
 
-![](docs/plot_overlay_simple.png)
+![](doc/ex_plateaus.png)
+
+To see the posteriors, use `summary()` or `plot(fit, "combo")`. This model infers the change point (`cp_1`) on `x`, the intercept for segment 1 (`int_1`), and the intercept for segment 2 (`int_2`). Also the standard deviation of the residuals (`sigma`).
+
+```r
+summary(fit)  # or plot(fit, "combo")
+```
+
+```r
+# A tibble: 4 x 4
+  name   mean .lower .upper
+  <chr> <dbl>  <dbl>  <dbl>
+1 cp_1   39.8   38.0   42.8
+2 int_1  52.1   45.7   58.6
+3 int_2  19.0   13.8   24.0
+4 sigma  20.3   17.5   23.2
+```
+
+
+Find the single change point between two joined slopes:
+```r
+segments = list(
+    y ~ 1 + x,  # intercept + slope
+    1 ~ 0 + x  # joined slope
+)
+fit = mcp(segments, my_data)
+plot(fit)
+```
+
+![](doc/ex_slopes.png)
+
+
+Find the single change point between two joined slopes. While the slopes are shared by all participants, their change point varies:
+
+```r
+segments = list(
+    y ~ 1 + x,  # intercept + slope
+    1 + (1|id) ~ 0 + x  # joined slope
+)
+fit = mcp(segments, my_data)
+plot(fit, facet_by = "id")
+```
+
+![](doc/ex_slopes_varying.png)
+
+Here we find the two change points between three segments. The slope and intercept of segment 2 are parameterized relative to segment 1. So too with the second change point. Some of the default priors are overwritten; the first slope (`x_1`) is forced to be -3.
+
+```r
+segments = list(
+  y ~ 1 + x,
+  1 ~ rel(1) + rel(x),
+  rel(1) ~ 0
+)
+prior = list(
+  int_1 = "dnorm(0, 20)",
+  x_1 = -3,
+  cp_1 = "dunif(20, 50)"
+)
+fit = mcp(segments, my_data, prior)
+plot(fit)
+```
+
+![](doc/ex_fix_rel.png)
+
+
 
 
 # Extended guide
@@ -51,7 +116,7 @@ segments = list(
 
 This is what we will end up with. We simulate some raw data from this model (the points) and infer the parameter of the linear segments as well as the change points (lines are draws from the posterior distribution).
 
-![](docs/plot_overlay.png)
+![](doc/plot_overlay.png)
 
 
 This model has the following parameters:
@@ -141,7 +206,7 @@ Let us inspect it visually:
 plot(fit)
 ```
 
-![](docs/plot_overlay.png)
+![](doc/plot_overlay.png)
 
 
 By default this draws lines given 25 posterior samples, but change it using `plot(fit, draws=50)`. Of particular interest is how similar the lines are (good precision) and how well they fit to the data. `plot.mcpfit` returns a `ggplot2` object, so you can easily add, e.g., a title: `plot(fit, "combo") + ggtitle("Posteriors and convergence")`.
@@ -154,7 +219,7 @@ We may also want to inspect the posterior distributions directly:
 plot(fit, "combo")
 ```
 
-![](docs/plot_combo.png)
+![](doc/plot_combo.png)
 
 This is a classical Bayesian plot to better see parameter estimates and to check convergence between chains. Compare the inferred values to the one we used to generate the data. Change point models do a remarkably good job of recovering the change points on other parameters, including sigma.
 
@@ -169,7 +234,7 @@ Now it's time for some model comparison. We will compare to an intercept-only mo
 
 ```r
 segments2 = list(score ~ 1)
-fit2 = mcp(segments2, data, param_x = "year")
+fit2 = mcp(segments2, data, par_x = "year")
 ```
 
 

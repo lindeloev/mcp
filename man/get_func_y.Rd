@@ -4,17 +4,19 @@
 \alias{get_func_y}
 \title{Turn formula_str into a proper R function}
 \usage{
-get_func_y(formula_str, param_x, pars, nsegments)
+get_func_y(formula_str, par_x, pars, pars_varying, nsegments)
 }
 \arguments{
 \item{formula_str}{A string. Returned by \code{get_formula}.}
 
+\item{par_x}{A string. Same as for \link{mcp}.}
+
+\item{pars}{List of parameters in the model which are not related to .}
+
+\item{pars_varying}{List of parameters related to varying effects. They will
+be set to zero as default.}
+
 \item{nsegments}{Positive integer. Number of segments, typically \code{nrow(ST)}.}
-
-\item{param_x.}{A string. Same as for \link{mcp}.}
-
-\item{pars.}{List of parameters in the model. Easy way to get it is
-\code{names(prior)} or \code{na.omit(c(ST$cp_name, ST$int_name, ST$slope_name))}}
 }
 \description{
 Turn formula_str into a proper R function
