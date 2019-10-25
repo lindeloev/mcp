@@ -296,22 +296,22 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
     ) %>%
 
     # Add "cumulative" cp_code_form for concecutive relative intercepts
-    group_by(cumsum(!cp_int_rel)) %>%
-    mutate(
+    dplyr::group_by(cumsum(!cp_int_rel)) %>%
+    dplyr::mutate(
       cp_code_prior = cumpaste(cp_name, " + "),
       cp_code_form = ifelse(!is.na(cp_group), yes = paste0(cp_code_prior, " + ", cp_group, "CP_", segment, "_INDEX"), no = cp_code_prior),
       cp_code_form = format_code(cp_code_form, na_col = cp_name),
       cp_code_prior = format_code(cp_code_prior, na_col = cp_name)
     ) %>%
-    ungroup() %>%
+    dplyr::ungroup() %>%
 
     # Same for slope_code
-    group_by(cumsum(!slope_rel)) %>%
-    mutate(
+    dplyr::group_by(cumsum(!slope_rel)) %>%
+    dplyr::mutate(
       slope_code = cumpaste(slope_name, " + "),
       slope_code = format_code(slope_code, na_col = slope_name)
     ) %>%
-    ungroup()
+    dplyr::ungroup()
 
   # Return
   ST
