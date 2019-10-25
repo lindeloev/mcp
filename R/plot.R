@@ -59,7 +59,7 @@ plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by 
     # No faceting
     if (is.null(facet_by)) {
       Q = x$samples %>%
-        tidybayes::spread_draws(!!sym(pars_population_regex), regex = TRUE, n = draws)
+        tidybayes::spread_draws(!!rlang::sym(pars_population_regex), regex = TRUE, n = draws)
 
     } else {
       # Prepare for faceting
@@ -68,8 +68,8 @@ plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by 
       varying_by_facet = paste0(varying_by_facet, collapse="|")
 
       Q = x$samples %>%
-        tidybayes::spread_draws(!!sym(pars_population_regex),
-                     (!!sym(varying_by_facet))[!!sym(facet_by)],
+        tidybayes::spread_draws(!!rlang::sym(pars_population_regex),
+                     (!!rlang::sym(varying_by_facet))[!!rlang::sym(facet_by)],
                      regex = TRUE,
                      n = draws)
     }
@@ -135,7 +135,7 @@ summary.mcpfit = function(object, width = 0.95, ...) {
   if (!is.null(object$samples)) {
     object$samples %>%
       tidybayes::tidy_draws() %>%
-      tidyr::pivot_longer(-starts_with(".")) %>%
+      tidyr::pivot_longer(-tidyselect::starts_with(".")) %>%
       dplyr::group_by(name) %>%
       tidybayes::mean_hdci(value, .width = width) %>%
       dplyr::rename(mean = value) %>%

@@ -121,7 +121,7 @@ recover_levels = function(samples, data, mcmc_col, data_col) {
   # Recode column names on each list (chain) using lapply
   names(to) = from
   lapply(samples, function(x) {
-    colnames(x) = recode(colnames(x), !!!to)
+    colnames(x) = dplyr::recode(colnames(x), !!!to)
     x
   })
 }
