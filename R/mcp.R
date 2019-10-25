@@ -1,8 +1,8 @@
-source("R/get_segment_table.R")
-source("R/get_prior.R")
-source("R/get_formula.R")
-source("R/get_jagscode.R")
-source("R/run_jags.R")
+# source("R/get_segment_table.R")
+# source("R/get_prior.R")
+# source("R/get_formula.R")
+# source("R/get_jagscode.R")
+# source("R/run_jags.R")
 
 #' Fit Multiple Linear Segments And Their Change Points
 #'
