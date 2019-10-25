@@ -11,7 +11,7 @@ You can see the roadmap for the immediate future under [issues](https://github.c
  2. Install `mcp` by running this in R: `devtools::install_github("lindeloev/mcp")`. If you don't have `devtools`, install it first using `install.packages("devtools")`.
 
 
-# Quick examples
+# Quick examples of various change point models
 
 Find the single change point between two plateaus:
 
