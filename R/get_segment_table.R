@@ -28,6 +28,8 @@ unpack_tildes = function(segment, i) {
 
   if (length(chunks) == 2) {
     # Only one tilde. This is the first segment or y is implicit from earlier segment(s)
+    if(i == 1 & stringr::str_detect(chunks[1], "^[-0-9.]+"))
+      stop("y must be a variable.")
     return(tibble::tibble(
       form = form_str,
       form_y = ifelse(i == 1, chunks[1], NA),
@@ -58,7 +60,7 @@ check_terms_in_data = function(form, data, i) {
 # Unpacks y variable name
 unpack_y = function(form_y, i) {
   if (!is.na(form_y)) {
-    if (!grepl("^[A-Za-z0-9]+$", form_y))
+    if (!grepl("^[A-Za-z._0-9]+$", form_y))
       stop("Error in segment ", i, ": Invalid format for response variable. Only a single column name is (currently) allowed")
   }
   tibble::tibble(y = form_y)
@@ -89,7 +91,7 @@ unpack_cp = function(form_cp, i) {
     if (!varying_parts[2] %in% "1")
       stop("Error in segment ", i, " (change point): Only plain intercepts are allowed in varying effects, e.g., (1|id).", i)
 
-    if (!grepl("^[A-Za-z0-9]+$", varying_parts[2]))
+    if (!grepl("^[A-Za-z._0-9]+$", varying_parts[2]))
       stop("Error in segment ", i, " (change point): Grouping variable in varying effects.")
   }
 
@@ -137,7 +139,7 @@ unpack_rhs = function(form_rhs, i) {
       parts = as.character(term)
 
       # Check that there is just one grouping term
-      if (!grepl("^[A-Za-z0-9]+$", parts[3]))
+      if (!grepl("^[A-Za-z._0-9]+$", parts[3]))
         stop("Error in segment ", i, " (linear): Grouping variable in varying effects for change points.")
 
       # Check that nothing is relative
@@ -283,6 +285,32 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
   derived_y = unique(stats::na.omit(ST$y))
   if (length(derived_y) != 1)
     stop("There should be exactly one response variable. Found '", paste0(derived_y, collapse="' and '", "'."))
+
+  # Varying effects
+  derived_varying = unique(stats::na.omit(ST$cp_group_col))
+
+  # Check data types
+  if (!is.null(data)) {
+    # Convert to data.frame. Makes it easier to test column types.
+    # Tibble will still be used in the rest of mcp
+    if (tibble::is_tibble(data))
+      data = data.frame(data)
+    if (!is.numeric(data[, ST$x[1]]))
+      stop("Data column \"", ST$x[1], "\" has to be numeric.")
+    if(!is.numeric(data[, ST$y[1]]))
+      stop("Data column \"", ST$y[1], "\" has to be numeric.")
+    if (length(derived_varying) > 0) {
+      for (varying_col in derived_varying) {
+        data_varying = data[, varying_col]
+        if (is.numeric(data_varying) &
+           !is.character(data_varying) &
+           !is.factor(data_varying))
+          if (!all(data_varying == floor(data_varying)))  # FALSE if all are integers (OK)
+            stop("Varying group \"", varying_col, "\" has to be integer, character, or factor.")
+      }
+    }
+
+  }
 
   # Recode relative columns so 0 = not relative. N > 0 is the number of consecutive "relatives"
   ST = ST %>%
