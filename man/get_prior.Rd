@@ -13,5 +13,7 @@ get_prior(ST, prior = list())
 default priors.}
 }
 \description{
-Inserts default priors where none are specified by the user.
+Starts by finding all default priors. Then replace them with user priors.
+User priors for change points are truncated appropriately using
+\code{truncate_prior_cp}, if not done manually by the user already.
 }

@@ -1,7 +1,8 @@
 ########################################################################
 # TEST THAT TRUE PARAMETERS ARE WITHIN 50% HDI OF ESTIMATED PARAMETERS #
 ########################################################################
-library(dplyr)
+`%>%` = magrittr::`%>%`
+library(mcp)
 
 # All relevant segments expressions
 segments = list(
@@ -50,11 +51,11 @@ fit = mcp(segments, data, n.adapt = 2500, n.update = 2500, n.iter = 3000)
 
 # Check: expect all estimates to be within 98% HDI
 results_table = summary(fit, width = 0.95) %>%
-  left_join(df, by = "name") %>%
-  mutate(score = theory > .lower & theory < .upper)
+  dplyr::left_join(df, by = "name") %>%
+  dplyr::mutate(score = theory > .lower & theory < .upper)
 
 test_that("fit approximate default priors", {
-  expect_true(
+  testthat::expect_true(
     all(results_table$score),
-    info = mutate_if(results_table, is.numeric, round, digits = 1))
+    info = dplyr::mutate_if(results_table, is.numeric, round, digits = 1))
 })
