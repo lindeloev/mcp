@@ -76,7 +76,7 @@ get_func_y = function(formula_str, par_x, pars, pars_varying, nsegments) {
   # First some substitutions
   formula_func = gsub("PAR_X", par_x, formula_str)  # Proper par_x name
   formula_func = gsub("min\\(", "pmin\\(", formula_func)  # vectorized mean for function
-  for(i in seq_len(nsegments)) {
+  for (i in seq_len(nsegments)) {
     formula_func = gsub(paste0("CP_", i, "_INDEX"), "", formula_func)  # Use vector of data
   }
 

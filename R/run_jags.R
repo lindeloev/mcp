@@ -60,7 +60,7 @@ run_jags = function(data,
   print(proc.time() - timer)  # Print time
 
   # Recover the levels of varying effects
-  for(i in seq_len(nrow(ST))) {
+  for (i in seq_len(nrow(ST))) {
     S = ST[i, ]
     if (!is.na(S$cp_group_col)) {
       samples = recover_levels(samples, data, S$cp_group, S$cp_group_col)
@@ -81,16 +81,16 @@ run_jags = function(data,
 #' @param ST A segment table (tibble), returned by \code{get_segment_table}.
 
 get_jags_data = function(data, ST) {
-  cols_varying = unique(na.omit(ST$cp_group_col))
+  cols_varying = unique(stats::na.omit(ST$cp_group_col))
 
   # Start with "raw" data
-  cols_data = unique(na.omit(c(ST$y, ST$x)))
+  cols_data = unique(stats::na.omit(c(ST$y, ST$x)))
   jags_data = as.list(data[, c(cols_varying, cols_data)])
 
-  for(col in cols_varying) {
+  for (col in cols_varying) {
     # Add meta-data (now many varying group levels)
-    tmp = paste0("n_unique_", cols_varying)
-    jags_data[[tmp]] = length(unique(dplyr::pull(data, cols_varying)))
+    tmp = paste0("n_unique_", col)
+    jags_data[[tmp]] = length(unique(dplyr::pull(data, col)))
 
     # Make varying columns numeic in order of appearance
     # They will be recovered using the recover_levels()

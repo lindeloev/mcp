@@ -24,6 +24,7 @@ dp_b = list(
 ######################
 # GET DEFAULT PRIORS #
 ######################
+# Change point
 get_default_prior_cp = function(ST, i) {
   if (i < 2)
     stop("Only i >= 2 allowed.")
@@ -39,6 +40,17 @@ get_default_prior_cp = function(ST, i) {
   # An absolute change point intercept
   if (i > 2 & ST$cp_int_rel[i] == 0)
     return(sprintf(dp_n$cp, ST$cp_code_prior[i - 1]))
+}
+
+
+# Varying-by-group change point
+get_default_prior_cp_group = function(ST, i) {
+  if (i < 2)
+    stop("Only i >= 2 allowed.")
+
+  S = ST[i, ]
+  trunc = paste0("T(", ifelse(i == 2, "MINX", ST$cp_code_prior[i-1]), ", ", ifelse(i == nrow(ST), "MAXX", ST$cp_code_prior[i+1]), ")")
+  return(paste0("dnorm(0, ", S$cp_sd, ") ", trunc))
 }
 
 
@@ -79,16 +91,16 @@ truncate_prior_cp = function(ST, i, prior_str) {
 
 #' Get priors for all parameters in a segment table.
 #'
-#' Inserts default priors where none are specified by the user.
+#' Starts by finding all default priors. Then replace them with user priors.
+#' User priors for change points are truncated appropriately using
+#' \code{truncate_prior_cp}, if not done manually by the user already.
 #'
 #' @aliases get_prior
 #' @param ST Tibble. A segment table returned by \code{get_segment_table}.
 #' @param prior A list of user-defined priors. Will overwrite the relevant
 #'   default priors.
 #' @inheritParams mcp
-#' @importFrom utils modifyList
 #'
-# Extracts default priors for model and replace them with user-priors when provided
 
 get_prior = function(ST, prior = list()) {
   # Get default priors
@@ -109,9 +121,11 @@ get_prior = function(ST, prior = list()) {
     if (i > 1)
       default_prior[[S$cp_name]] = get_default_prior_cp(ST, i)
 
-    # Change point varying effect
-    if (!is.na(S$cp_sd))
+    # Change point varying effects
+    if (!is.na(S$cp_sd)) {
       default_prior[[S$cp_sd]] = dp_n$sd
+      default_prior[[S$cp_group]] = get_default_prior_cp_group(ST, i)
+    }
 
     # Truncate change point prior if supplied by user
     if (i > 1 & ST$cp_name[i] %in% names(prior)) {
@@ -120,5 +134,5 @@ get_prior = function(ST, prior = list()) {
   }
 
   # Replace default priors with user prior and return
-  modifyList(default_prior, prior)
+  utils::modifyList(default_prior, prior)
 }

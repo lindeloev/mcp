@@ -11,6 +11,12 @@ You can see the roadmap for the immediate future under [issues](https://github.c
  2. Install `mcp` by running this in R: `devtools::install_github("lindeloev/mcp")`. If you don't have `devtools`, install it first using `install.packages("devtools")`.
 
 
+
+# How it works
+
+The workhorse of the `mcp` package is the `mcp` function. It takes 
+
+
 # Quick examples of various change point models
 
 Find the single change point between two plateaus:
@@ -56,7 +62,7 @@ segments = list(
     y ~ 1 + x,  # intercept + slope
     1 ~ 0 + x  # joined slope
 )
-fit = mcp(segments, my_data)
+fit = mcp(segments, my_data, par_x = "x")
 plot(fit)
 ```
 
@@ -68,7 +74,7 @@ Find the single change point between two joined slopes. While the slopes are sha
 ```r
 segments = list(
     y ~ 1 + x,  # intercept + slope
-    1 + (1|id) ~ 0 + x  # joined slope
+    1 + (1|id) ~ 0 + x  # joined slope. cp varies by id
 )
 fit = mcp(segments, my_data)
 plot(fit, facet_by = "id")
@@ -134,13 +140,13 @@ We can use the latter to simulate data. This is always a great way to get acquai
 
 ```r
 # Get an mcpfit object without samples
-fit_empty = mcp(segments, sample=FALSE)
+empty = mcp(segments, sample=FALSE)
 
-# Now use fit_empty$func_y() to generate data from this model.
+# Now use empty$func_y() to generate data from this model.
 # Set some parameter values to your liking:
 data = data.frame(
   year = 1:100,  # Evaluate func_y for each of these
-  score = fit_empty$func_y(
+  score = empty$func_y(
     year = 1:100,  # x
     sigma = 12,  # standard deviation
     cp_1 = 20, cp_2 = 35, cp_3 = 80,  # change points 
