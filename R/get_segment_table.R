@@ -9,11 +9,11 @@ unpack_tildes = function(segment, i) {
   has_LHS = attributes(stats::terms(segment))$response == 1
   if (!has_LHS & i == 1) {
     stop("No response variable in segment 1.")
-  } else if(!has_LHS & i > 1) {
+  } else if (!has_LHS & i > 1) {
     # If no LHS, add a change point "intercept"
     form_str = as.character(segment)
     form_str = paste("1 ", form_str[1], form_str[2])
-  } else if(has_LHS) {
+  } else if (has_LHS) {
     # Make regular formula into string
     form_str = as.character(segment)
     form_str = paste(form_str[2], form_str[1], form_str[3])
@@ -28,7 +28,7 @@ unpack_tildes = function(segment, i) {
 
   if (length(chunks) == 2) {
     # Only one tilde. This is the first segment or y is implicit from earlier segment(s)
-    if(i == 1 & stringr::str_detect(chunks[1], "^[-0-9.]+"))
+    if (i == 1 & stringr::str_detect(chunks[1], "^[-0-9.]+"))
       stop("y must be a variable.")
     return(tibble::tibble(
       form = form_str,
@@ -297,7 +297,7 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
       data = data.frame(data)
     if (!is.numeric(data[, ST$x[1]]))
       stop("Data column \"", ST$x[1], "\" has to be numeric.")
-    if(!is.numeric(data[, ST$y[1]]))
+    if (!is.numeric(data[, ST$y[1]]))
       stop("Data column \"", ST$y[1], "\" has to be numeric.")
     if (length(derived_varying) > 0) {
       for (varying_col in derived_varying) {
