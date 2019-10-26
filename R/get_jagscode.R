@@ -26,59 +26,42 @@ data {
 }
 
 model {
-  # Priors
-  ")
-  ###########################
-  # POPULATION-LEVEL PRIORS #
-  ###########################
+  # Priors for population-level effects\n")
+  ##########
+  # PRIORS #
+  ##########
   # Transform priors from SD to precision
+  all_dprec = "dnorm|dt|dcauchy|ddexp|dlogis|dlnorm"  # JAGS precision dists
   for (i in seq_len(length(prior))) {
-    if (stringr::str_detect(prior[[i]], "dnorm|dt|dcauchy|ddexp|dlogis|dlnorm")) {
+    if (stringr::str_detect(prior[[i]], all_dprec)) {
       prior[[i]] = sd_to_prec(prior[[i]])
     }
   }
 
-  # Add all priors
-  # First as vector and code whether it's fixed or not
-  prior_vector = unlist(prior)
-  is_fixed = stringr::str_detect(prior_vector, "^[-0-9.]+$")
+  # Split up priors into population and varying
+  prior_pop = prior[!names(prior) %in% ST$cp_group]
+  prior_varying = prior[names(prior) %in% ST$cp_group]
 
-  # Distributed for non-fixed. Equal sign for fixed.
-  if (sum(!is_fixed) > 0) {
-    prior_str_dist = paste0(names(prior_vector[!is_fixed]), " ~ ", prior_vector[!is_fixed], collapse = "\n    ")
-  } else prior_str_dist = ""
-  if (sum(is_fixed) > 0) {
-    prior_str_fix = paste0(names(prior_vector[is_fixed]), " = ", prior_vector[is_fixed], collapse = "  # Fixed\n    ")
-  } else prior_str_fix = ""
-
-  # Now add them in!
-  mm = paste0(mm, prior_str_dist, "\n  ", prior_str_fix)
-  mm = paste0(mm, "
-  cp_0 = -10^100  # mcp helper value; minus infinity
-  cp_", nrow(ST), " = 10^100  # mcp helper value; plus infinity\n
-    ")
-
-
-  ##################
-  # VARYING PRIORS #
-  ##################
-  for (i in seq_len(nrow(ST))) {
-    S = ST[i, ]
-
-    # Varying change points (intercepts)
-    if (S$cp_ran_int == TRUE & !is.na(S$cp_group)) {
-      # Special truncate for first and last change point to stay within MINX-MAXX
-      trunc = paste0("T(", ifelse(i == 2, "MINX", ST$cp_code_prior[i-1]), ", ", ifelse(i == nrow(ST), "MAXX", ST$cp_code_prior[i+1]), ")")
-      mm = paste0(mm, "
-  # Zero-centered varying change point for segment ", i, "
-  for (", S$cp_group_col, "_ in 1:n_unique_", S$cp_group_col, ") {
-    ", S$cp_group, "_uncentered[", S$cp_group_col, "_] ~ dnorm(0, 1/", S$cp_sd, "^2) ", trunc, "
+  # Use get_prior_str() to add population-level priors
+  for(i in 1:length(prior_pop)) {
+    mm = paste0(mm, get_prior_str(prior_pop, i))
   }
-  ", S$cp_group, " = ", S$cp_group, "_uncentered - mean(", S$cp_group, "_uncentered)  # vectorized zero-centering
-  ")
+
+  # Helpers for change points:
+  mm = paste0(mm, "  cp_0 = -10^100  # mcp helper value; minus infinity")
+  mm = paste0(mm, "cp_", nrow(ST), " = 10^100  # mcp helper value; plus infinity\n")
+
+  # Use get_prior_str() to add varying priors
+  mm = paste0(mm, "\n  # Priors for varying effects\n")
+  if(length(prior_varying) > 0) {
+    for(i in 1:length(prior_varying)) {
+      mm = paste0(mm, get_prior_str(
+        prior = prior_varying,
+        i = i,
+        varying_group = na.omit(ST$cp_group_col[ST$cp_group == names(prior_varying[i])])
+      ))
     }
   }
-
 
 
   ###########
@@ -91,7 +74,7 @@ model {
   }
 
   # Insert formula_jags
-  mm = paste0(mm, "\n
+  mm = paste0(mm, "
 
   # Model and likelihood
   for (i_ in 1:length(", ST$x[1], ")) {
@@ -122,6 +105,49 @@ model {
 
   # Return the model
   mm
+}
+
+
+#' Get JAGS code for a prior
+#'
+#' @aliases get_prior_str
+#' @inheritParams mcp
+#' @param i The index in \code{prior} to get code for
+#' @param varying_group String or NULL (default). Null indicates a population-
+#'   level prior. String indicates a varying-effects prior (one for each group
+#'   level).
+#' @return A string
+#'
+get_prior_str = function(prior, i, varying_group = NULL) {
+  # Helpers
+  value = prior[i]
+  name = names(prior[i])
+
+  # Is this fixed?
+  all_d = "dunif|dbern|dbeta|dbin|dchisqr|ddexp|dexp|df|dgamma|dgen.gamma|dhyper|dlogis|dlnorm|dnegbin|dnchisqr|dnorm|dpar|dpois|dt|dweib"  # All JAGS distributions
+  is_fixed = stringr::str_detect(value, "^[-0-9.]+$") |
+    value %in% names(prior)
+
+  # If not either number or known parameter, it should be a known distribution.
+  if (!is_fixed & !stringr::str_detect(value, all_d))
+    stop("The prior \"", name, " = ", value, "\" is not a known distribution, a number, nor a model parameter.")
+
+  # If it is a known distribution
+  if (!is_fixed) {
+    # ... and this is a population-level effect
+    if (is.null(varying_group)) {
+      return(paste0("  ", name, " ~ ", value, "\n"))
+    } else {
+      # It is a varying effect!
+      return(paste0("  for (", varying_group, "_ in 1:n_unique_", varying_group, ") {
+    ", name, "_uncentered[", varying_group, "_] ~ ", value, "
+  }
+  ", name, " = ", name, "_uncentered - mean(", name, "_uncentered)  # vectorized zero-centering\n"))
+    }
+  } else {
+    # Fixed value. Just equate name and value
+    return(paste0("  ", name, " = ", value, "  # Fixed\n"))
+  }
 }
 
 

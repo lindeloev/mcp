@@ -14,7 +14,7 @@
 #' @param ... Currently ignored.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @return A \code{ggplot2} object.
-#' @importFrom ggplot2 ggplot aes aes_string geom_line geom_point
+#' @importFrom ggplot2 ggplot aes aes_string geom_line geom_point facet_wrap
 #' @importFrom magrittr %>%
 #' @importFrom rlang !! :=
 #' @importFrom stats sd
@@ -40,7 +40,7 @@ plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by 
   }
 
   # TEMPORARY: Include test of whether this is a random/nested effect
-  varying_groups = logical0_to_null(unique(na.omit(x$.other$ST$cp_group_col)))
+  varying_groups = logical0_to_null(unique(stats::na.omit(x$.other$ST$cp_group_col)))
   if (!is.null(facet_by)) {
     if (!facet_by %in% varying_groups)
       stop("facet_by is not a data column used as varying grouping.")
@@ -64,7 +64,7 @@ plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by 
     } else {
       # Prepare for faceting
       # Read more about this weird syntax at https://github.com/mjskay/tidybayes/issues/38
-      varying_by_facet = na.omit(x$.other$ST$cp_group[stringr::str_detect(x$.other$ST$cp_group, paste0("_", facet_by))])
+      varying_by_facet = stats::na.omit(x$.other$ST$cp_group[stringr::str_detect(x$.other$ST$cp_group, paste0("_", facet_by))])
       varying_by_facet = paste0(varying_by_facet, collapse="|")
 
       Q = x$samples %>%

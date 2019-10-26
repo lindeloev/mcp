@@ -6,22 +6,28 @@ source("R/lme4_utils.R")
 
 # Takes a formula and returns a string representation of y, cp, and rhs
 unpack_tildes = function(segment, i) {
-  if (attributes(terms(segment))$response == 0)
-    stop("Empty left-hand side in segment ", i, ": ", segment)
-
-  # Get it as one string
-  form_str = as.character(segment)
-  form_str = paste(form_str[2], form_str[1], form_str[3])
+  has_LHS = attributes(stats::terms(segment))$response == 1
+  if (!has_LHS & i == 1) {
+    stop("No response variable in segment 1.")
+  } else if(!has_LHS & i > 1) {
+    # If no LHS, add a change point "intercept"
+    form_str = as.character(segment)
+    form_str = paste("1 ", form_str[1], form_str[2])
+  } else if(has_LHS) {
+    # Make regular formula into string
+    form_str = as.character(segment)
+    form_str = paste(form_str[2], form_str[1], form_str[3])
+  }
 
   # Check for rel(0)
-  if ("rel(0)" %in% attributes(terms(segment))$term.labels)
+  if ("rel(0)" %in% attributes(stats::terms(segment))$term.labels)
     stop("rel(0) is not (currently) supported in segment formulas.")
 
   # List of strings for each section
   chunks = stringr::str_trim(strsplit(form_str, "~")[[1]])
 
   if (length(chunks) == 2) {
-    # Only one tild. This is the first segment or y is implicit from earlier segment(s)
+    # Only one tilde. This is the first segment or y is implicit from earlier segment(s)
     return(tibble::tibble(
       form = form_str,
       form_y = ifelse(i == 1, chunks[1], NA),
@@ -88,7 +94,7 @@ unpack_cp = function(form_cp, i) {
   }
 
   # Fixed effects
-  population = attributes(terms(nobars(form_cp)))
+  population = attributes(stats::terms(nobars(form_cp)))
   is_int_rel = population$term.labels == "rel(1)"
   if (any(is_int_rel))
     population$term.labels = population$term.labels[-is_int_rel]  # code as no term
@@ -157,7 +163,7 @@ unpack_rhs = function(form_rhs, i) {
   } else V = NA
 
   # Population-level intercepts
-  population = attributes(terms(nobars(form_rhs)))
+  population = attributes(stats::terms(nobars(form_rhs)))
   int_rel = population$term.labels == "rel(1)"
   population$term.labels = population$term.labels[!population$term.labels %in% "rel(1)"]  # code as no term
   if (any(int_rel))
@@ -195,8 +201,6 @@ unpack_rhs = function(form_rhs, i) {
 #'
 #' @aliases get_segment_table
 #' @inheritParams mcp
-#' @importFrom stats terms
-#' @importFrom utils modifyList
 #' @importFrom magrittr %>%
 #' @return A tibble.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -218,12 +222,11 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
   for (i in seq_len(length(segments))) {
     # Get ready...
     segment = segments[[i]]
-    row = tibble::tibble(segment = i)
-
     if (!is.null(data))
       check_terms_in_data(segment, data, i)
 
     # Go! Unpack this segment
+    row = tibble::tibble(segment = i)
     row = dplyr::bind_cols(row, unpack_tildes(segment, i))
     row = dplyr::bind_cols(row, unpack_y(row$form_y, i))
     row = dplyr::bind_cols(row, unpack_cp(row$form_cp, i))
@@ -247,7 +250,7 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
     stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
 
   # rel() in segment 2+
-  rel_slope_after_plateau = lag(is.na(ST$slope), 1) & ST$slope_rel != 0
+  rel_slope_after_plateau = dplyr::lag(is.na(ST$slope), 1) & ST$slope_rel != 0
   if (any(rel_slope_after_plateau))
     stop("rel(slope) is not meaningful after a plateau segment (without a slope). Use absolute slope to get the same behavior. Found in segment ", which(rel_slope_after_plateau))
   if (nrow(ST) > 1) {
@@ -257,7 +260,7 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
 
 
   # Set ST$x (what is the x-axis dimension?)
-  derived_x = unique(na.omit(ST$slope))
+  derived_x = unique(stats::na.omit(ST$slope))
   if (length(derived_x) == 1) {
     # One x derived from segments
     if (is.null(par_x))  # par_x not provided. Rely on derived
@@ -274,10 +277,10 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
       stop("This is a plateau-only model so no x-axis variable could be derived from the segment formulas. Use argument 'par_x' to set it explicitly")
   } else if (length(derived_x) > 1)
     # More than one...
-    stop("More than one predictor found: '", paste0(unique(na.omit(ST$slope)), collapse = "' and '"), "'")
+    stop("More than one predictor found: '", paste0(unique(stats::na.omit(ST$slope)), collapse = "' and '"), "'")
 
   # Only one response variable allowed
-  derived_y = unique(na.omit(ST$y))
+  derived_y = unique(stats::na.omit(ST$y))
   if (length(derived_y) != 1)
     stop("There should be exactly one response variable. Found '", paste0(derived_y, collapse="' and '", "'."))
 

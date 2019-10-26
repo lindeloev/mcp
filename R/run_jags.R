@@ -81,10 +81,10 @@ run_jags = function(data,
 #' @param ST A segment table (tibble), returned by \code{get_segment_table}.
 
 get_jags_data = function(data, ST) {
-  cols_varying = unique(na.omit(ST$cp_group_col))
+  cols_varying = unique(stats::na.omit(ST$cp_group_col))
 
   # Start with "raw" data
-  cols_data = unique(na.omit(c(ST$y, ST$x)))
+  cols_data = unique(stats::na.omit(c(ST$y, ST$x)))
   jags_data = as.list(data[, c(cols_varying, cols_data)])
 
   for(col in cols_varying) {
