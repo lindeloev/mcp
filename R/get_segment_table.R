@@ -6,22 +6,30 @@ source("R/lme4_utils.R")
 
 # Takes a formula and returns a string representation of y, cp, and rhs
 unpack_tildes = function(segment, i) {
-  if (attributes(terms(segment))$response == 0)
-    stop("Empty left-hand side in segment ", i, ": ", segment)
-
-  # Get it as one string
-  form_str = as.character(segment)
-  form_str = paste(form_str[2], form_str[1], form_str[3])
+  has_LHS = attributes(stats::terms(segment))$response == 1
+  if (!has_LHS & i == 1) {
+    stop("No response variable in segment 1.")
+  } else if (!has_LHS & i > 1) {
+    # If no LHS, add a change point "intercept"
+    form_str = as.character(segment)
+    form_str = paste("1 ", form_str[1], form_str[2])
+  } else if (has_LHS) {
+    # Make regular formula into string
+    form_str = as.character(segment)
+    form_str = paste(form_str[2], form_str[1], form_str[3])
+  }
 
   # Check for rel(0)
-  if ("rel(0)" %in% attributes(terms(segment))$term.labels)
+  if ("rel(0)" %in% attributes(stats::terms(segment))$term.labels)
     stop("rel(0) is not (currently) supported in segment formulas.")
 
   # List of strings for each section
   chunks = stringr::str_trim(strsplit(form_str, "~")[[1]])
 
   if (length(chunks) == 2) {
-    # Only one tild. This is the first segment or y is implicit from earlier segment(s)
+    # Only one tilde. This is the first segment or y is implicit from earlier segment(s)
+    if (i == 1 & stringr::str_detect(chunks[1], "^[-0-9.]+"))
+      stop("y must be a variable.")
     return(tibble::tibble(
       form = form_str,
       form_y = ifelse(i == 1, chunks[1], NA),
@@ -52,7 +60,7 @@ check_terms_in_data = function(form, data, i) {
 # Unpacks y variable name
 unpack_y = function(form_y, i) {
   if (!is.na(form_y)) {
-    if (!grepl("^[A-Za-z0-9]+$", form_y))
+    if (!grepl("^[A-Za-z._0-9]+$", form_y))
       stop("Error in segment ", i, ": Invalid format for response variable. Only a single column name is (currently) allowed")
   }
   tibble::tibble(y = form_y)
@@ -83,12 +91,12 @@ unpack_cp = function(form_cp, i) {
     if (!varying_parts[2] %in% "1")
       stop("Error in segment ", i, " (change point): Only plain intercepts are allowed in varying effects, e.g., (1|id).", i)
 
-    if (!grepl("^[A-Za-z0-9]+$", varying_parts[2]))
+    if (!grepl("^[A-Za-z._0-9]+$", varying_parts[2]))
       stop("Error in segment ", i, " (change point): Grouping variable in varying effects.")
   }
 
   # Fixed effects
-  population = attributes(terms(nobars(form_cp)))
+  population = attributes(stats::terms(nobars(form_cp)))
   is_int_rel = population$term.labels == "rel(1)"
   if (any(is_int_rel))
     population$term.labels = population$term.labels[-is_int_rel]  # code as no term
@@ -131,7 +139,7 @@ unpack_rhs = function(form_rhs, i) {
       parts = as.character(term)
 
       # Check that there is just one grouping term
-      if (!grepl("^[A-Za-z0-9]+$", parts[3]))
+      if (!grepl("^[A-Za-z._0-9]+$", parts[3]))
         stop("Error in segment ", i, " (linear): Grouping variable in varying effects for change points.")
 
       # Check that nothing is relative
@@ -157,7 +165,7 @@ unpack_rhs = function(form_rhs, i) {
   } else V = NA
 
   # Population-level intercepts
-  population = attributes(terms(nobars(form_rhs)))
+  population = attributes(stats::terms(nobars(form_rhs)))
   int_rel = population$term.labels == "rel(1)"
   population$term.labels = population$term.labels[!population$term.labels %in% "rel(1)"]  # code as no term
   if (any(int_rel))
@@ -195,8 +203,6 @@ unpack_rhs = function(form_rhs, i) {
 #'
 #' @aliases get_segment_table
 #' @inheritParams mcp
-#' @importFrom stats terms
-#' @importFrom utils modifyList
 #' @importFrom magrittr %>%
 #' @return A tibble.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -218,12 +224,11 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
   for (i in seq_len(length(segments))) {
     # Get ready...
     segment = segments[[i]]
-    row = tibble::tibble(segment = i)
-
     if (!is.null(data))
       check_terms_in_data(segment, data, i)
 
     # Go! Unpack this segment
+    row = tibble::tibble(segment = i)
     row = dplyr::bind_cols(row, unpack_tildes(segment, i))
     row = dplyr::bind_cols(row, unpack_y(row$form_y, i))
     row = dplyr::bind_cols(row, unpack_cp(row$form_cp, i))
@@ -247,7 +252,7 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
     stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
 
   # rel() in segment 2+
-  rel_slope_after_plateau = lag(is.na(ST$slope), 1) & ST$slope_rel != 0
+  rel_slope_after_plateau = dplyr::lag(is.na(ST$slope), 1) & ST$slope_rel != 0
   if (any(rel_slope_after_plateau))
     stop("rel(slope) is not meaningful after a plateau segment (without a slope). Use absolute slope to get the same behavior. Found in segment ", which(rel_slope_after_plateau))
   if (nrow(ST) > 1) {
@@ -257,7 +262,7 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
 
 
   # Set ST$x (what is the x-axis dimension?)
-  derived_x = unique(na.omit(ST$slope))
+  derived_x = unique(stats::na.omit(ST$slope))
   if (length(derived_x) == 1) {
     # One x derived from segments
     if (is.null(par_x))  # par_x not provided. Rely on derived
@@ -274,12 +279,38 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
       stop("This is a plateau-only model so no x-axis variable could be derived from the segment formulas. Use argument 'par_x' to set it explicitly")
   } else if (length(derived_x) > 1)
     # More than one...
-    stop("More than one predictor found: '", paste0(unique(na.omit(ST$slope)), collapse = "' and '"), "'")
+    stop("More than one predictor found: '", paste0(unique(stats::na.omit(ST$slope)), collapse = "' and '"), "'")
 
   # Only one response variable allowed
-  derived_y = unique(na.omit(ST$y))
+  derived_y = unique(stats::na.omit(ST$y))
   if (length(derived_y) != 1)
     stop("There should be exactly one response variable. Found '", paste0(derived_y, collapse="' and '", "'."))
+
+  # Varying effects
+  derived_varying = unique(stats::na.omit(ST$cp_group_col))
+
+  # Check data types
+  if (!is.null(data)) {
+    # Convert to data.frame. Makes it easier to test column types.
+    # Tibble will still be used in the rest of mcp
+    if (tibble::is_tibble(data))
+      data = data.frame(data)
+    if (!is.numeric(data[, ST$x[1]]))
+      stop("Data column \"", ST$x[1], "\" has to be numeric.")
+    if (!is.numeric(data[, ST$y[1]]))
+      stop("Data column \"", ST$y[1], "\" has to be numeric.")
+    if (length(derived_varying) > 0) {
+      for (varying_col in derived_varying) {
+        data_varying = data[, varying_col]
+        if (is.numeric(data_varying) &
+           !is.character(data_varying) &
+           !is.factor(data_varying))
+          if (!all(data_varying == floor(data_varying)))  # FALSE if all are integers (OK)
+            stop("Varying group \"", varying_col, "\" has to be integer, character, or factor.")
+      }
+    }
+
+  }
 
   # Recode relative columns so 0 = not relative. N > 0 is the number of consecutive "relatives"
   ST = ST %>%

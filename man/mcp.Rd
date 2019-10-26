@@ -16,13 +16,20 @@ left-hand side is the change point (on x). See examples for more details.}
 \item{data}{Data.frame or tibble in long format.}
 
 \item{prior}{Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
-sigma) and the values are the associated priors in JAGS code. Uninformative
-default priors are used where priors are not specified. The parameter can
-be fixed to a numerical value by setting it as such (\code{int_1 = 7.3}).
-\code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See details.
-Change points are forced to be ordered through the priors using truncation,
-\code{dnorm(0, 1) T(cp_1, )}, except for uniform priors where the lower
-bound should be greater than the previous change point, \code{dunif(cp_1, )}.}
+  sigma) and the values are either
+
+   * A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
+     conventional prior distribution. Uninformative priors based on data
+     propertiesare used where priors are not specified. This ensures good
+     parameter estimations, but it is a questionable for hypothesis testing.
+     \code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
+     details. Change points are forced to be ordered through the priors using
+     truncation, except for uniform priors where the lower bound should be
+     greater than the previous change point, \code{dunif(cp_1, MAXX)}.
+   * A numerical value (e.g., \code{int_1 = -2.1}) indicating a fixed value.
+   * A model parameter name (e.g., \code{int_2 = "int_1"}), indicating that this parameter is shared -
+     typically between segments. If two varying effects are shared this way,
+     they will need to have the same grouping variable.}
 
 \item{family}{WORK IN PROGRESS. One of "gauss" (default), "binomial"}
 
@@ -63,55 +70,6 @@ Noites on priors:
     but \code{mcp} converts to precision under the hood via the sd_to_prec()
     function. So you will see SDs in \code{fit$prior} but precision ($1/SD^2)
     in \code{fit$jags_code}
-}
-\examples{
-\dontrun{
-# Define the segments that are separated by change points
-segments = list(
-  score ~ 1 + year,  # intercept + slope
-   1 ~ 0 + year,  # joined slope
-   1 ~ 0,  # joined plateau
-   1 ~ 1  # disjoined plateau
-)
-
-# Set priors.
-# cp_i are change points.
-# int_i are intercepts.
-# x_i are slopes.
-# i is the segment number (change points are to the right of the segment)
-prior = list(
-  int_1 = "dt(10, 30) T(0, )",  # t-dist intercept. Truncated to > 0
-  cp_2 = "dunif(cp_1, 40),  # change point to segment 2 > cp_1.
-  year_2 = "dnorm(0, 5),  # slope of segment 1. Mean = 0, SD = 5.
-  int_3 = 15  # Fixed intercept of segment 3
-)
-
-# Start sampling
-fit = mcp(segments, data, prior)
-
-# Visual inspection of the results
-plot(fit)
-plot(fit, "combo")
-
-# Compare to a one-intercept-only model (no change points) with default prior
-segments2 = list(1 ~ 1)
-fit2 = mcp(segments2, data)  # fit another model here
-fit$loo = loo(fit)
-fit2$loo = loo(fit)
-loo_compare(fit, fit2)
-
-# Show all priors (not just those specified manually)
-fit$prior
-
-# Do stuff with the parameter estimates
-fit$pars$model  # check out which parameters are inferred.
-library(tidybayes)
-spread_draws(fit$samples, cp_1, cp_2, int_1, year_1, year_2) \%>\%
-   # tidybayes stuff here
-
-# Show JAGS model
-cat(fit$jags_code)
-}
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

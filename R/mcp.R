@@ -21,13 +21,20 @@
 #'   the left-hand side is the response variable. In the following segments, the
 #'   left-hand side is the change point (on x). See examples for more details.
 #' @param prior Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
-#'   sigma) and the values are the associated priors in JAGS code. Uninformative
-#'   default priors are used where priors are not specified. The parameter can
-#'   be fixed to a numerical value by setting it as such (\code{int_1 = 7.3}).
-#'   \code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See details.
-#'   Change points are forced to be ordered through the priors using truncation,
-#'   \code{dnorm(0, 1) T(cp_1, )}, except for uniform priors where the lower
-#'   bound should be greater than the previous change point, \code{dunif(cp_1, )}.
+#'   sigma) and the values are either
+#'
+#'    * A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
+#'      conventional prior distribution. Uninformative priors based on data
+#'      propertiesare used where priors are not specified. This ensures good
+#'      parameter estimations, but it is a questionable for hypothesis testing.
+#'      \code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
+#'      details. Change points are forced to be ordered through the priors using
+#'      truncation, except for uniform priors where the lower bound should be
+#'      greater than the previous change point, \code{dunif(cp_1, MAXX)}.
+#'    * A numerical value (e.g., \code{int_1 = -2.1}) indicating a fixed value.
+#'    * A model parameter name (e.g., \code{int_2 = "int_1"}), indicating that this parameter is shared -
+#'      typically between segments. If two varying effects are shared this way,
+#'      they will need to have the same grouping variable.
 #' @param par_x String (default: NULL). Only relevant if no segments contains
 #'   slope (no hint at what x is). Set this, e.g., par_x = "time".
 #' @param sample Boolean (default: TRUE). Set to FALSE if you only want to check
@@ -62,20 +69,8 @@
 #'    1 ~ 1  # disjoined plateau
 #' )
 #'
-#' # Set priors.
-#' # cp_i are change points.
-#' # int_i are intercepts.
-#' # x_i are slopes.
-#' # i is the segment number (change points are to the right of the segment)
-#' prior = list(
-#'   int_1 = "dt(10, 30) T(0, )",  # t-dist intercept. Truncated to > 0
-#'   cp_2 = "dunif(cp_1, 40),  # change point to segment 2 > cp_1.
-#'   year_2 = "dnorm(0, 5),  # slope of segment 1. Mean = 0, SD = 5.
-#'   int_3 = 15  # Fixed intercept of segment 3
-#' )
-#'
 #' # Start sampling
-#' fit = mcp(segments, data, prior)
+#' fit = mcp(segments, data)
 #'
 #' # Visual inspection of the results
 #' plot(fit)
@@ -90,6 +85,20 @@
 #'
 #' # Show all priors (not just those specified manually)
 #' fit$prior
+#'
+#' # Set priors and re-run
+#' # cp_i are change points.
+#' # int_i are intercepts.
+#' # x_i are slopes.
+#' # i is the segment number (change points are to the right of the segment)
+#' prior = list(
+#'   int_1 = "dt(10, 30) T(0, )",  # t-dist intercept. Truncated to > 0
+#'   year_1 = "dnorm(0, 5)",  # slope of segment 1. Mean = 0, SD = 5.
+#'   cp_2 = "dunif(cp_1, 40),  # change point to segment 2 > cp_1.
+#'   year_2 = "year_1",  # Shared slope between segment 2 and 1
+#'   int_3 = 15  # Fixed intercept of segment 3
+#' )
+#' fit3 = mcp(segments, data, prior)
 #'
 #' # Do stuff with the parameter estimates
 #' fit$pars$model  # check out which parameters are inferred.
@@ -108,11 +117,9 @@ mcp = function(segments, data = NULL, prior = list(), family = "gaussian", par_x
   if (is.null(data) & sample == TRUE)
     stop("Cannot sample without data.")
 
-  if (sample == TRUE) {
+  if (!is.null(data)) {
     if (!is.data.frame(data) & !tibble::is_tibble(data))
       stop("`data` must be a data.frame or a tibble.")
-  } else {
-    data = NULL  # define variable but nothing more
   }
 
   if (!is.list(segments))
@@ -129,6 +136,9 @@ mcp = function(segments, data = NULL, prior = list(), family = "gaussian", par_x
   if (!is.list(prior))
     stop("`prior` must be a named list.")
 
+  if (any(duplicated(names(prior))))
+    stop("`prior` has duplicated entries for the same parameter.")
+
   if (!is.null(par_x) & !is.character(par_x))
     stop("`par_x` must be NULL or a string.")
 
@@ -143,8 +153,9 @@ mcp = function(segments, data = NULL, prior = list(), family = "gaussian", par_x
 
   # Get prior and lists of parameters
   prior = get_prior(ST, prior)
-  params_population = names(prior)
-  params_varying = logical0_to_null(c(na.omit(ST$cp_group)))
+  #params_population = names(prior)
+  params_population = stats::na.omit(unique(c("sigma", ST$int_name, ST$slope_name, ST$cp_name[-1], ST$cp_sd)))
+  params_varying = logical0_to_null(c(stats::na.omit(ST$cp_group)))
 
   # Make formula_str and func_y
   formula_str = get_formula_str(ST)
