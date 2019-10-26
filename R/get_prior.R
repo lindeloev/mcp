@@ -45,7 +45,7 @@ get_default_prior_cp = function(ST, i) {
 
 # Varying-by-group change point
 get_default_prior_cp_group = function(ST, i) {
-  if(i < 2)
+  if (i < 2)
     stop("Only i >= 2 allowed.")
 
   S = ST[i, ]

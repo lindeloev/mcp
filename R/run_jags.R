@@ -60,7 +60,7 @@ run_jags = function(data,
   print(proc.time() - timer)  # Print time
 
   # Recover the levels of varying effects
-  for(i in seq_len(nrow(ST))) {
+  for (i in seq_len(nrow(ST))) {
     S = ST[i, ]
     if (!is.na(S$cp_group_col)) {
       samples = recover_levels(samples, data, S$cp_group, S$cp_group_col)
@@ -87,7 +87,7 @@ get_jags_data = function(data, ST) {
   cols_data = unique(stats::na.omit(c(ST$y, ST$x)))
   jags_data = as.list(data[, c(cols_varying, cols_data)])
 
-  for(col in cols_varying) {
+  for (col in cols_varying) {
     # Add meta-data (now many varying group levels)
     tmp = paste0("n_unique_", cols_varying)
     jags_data[[tmp]] = length(unique(dplyr::pull(data, cols_varying)))

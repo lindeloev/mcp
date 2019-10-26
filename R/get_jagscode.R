@@ -43,7 +43,7 @@ model {
   prior_varying = prior[names(prior) %in% ST$cp_group]
 
   # Use get_prior_str() to add population-level priors
-  for(i in 1:length(prior_pop)) {
+  for (i in 1:length(prior_pop)) {
     mm = paste0(mm, get_prior_str(prior_pop, i))
   }
 
@@ -53,8 +53,8 @@ model {
 
   # Use get_prior_str() to add varying priors
   mm = paste0(mm, "\n  # Priors for varying effects\n")
-  if(length(prior_varying) > 0) {
-    for(i in 1:length(prior_varying)) {
+  if (length(prior_varying) > 0) {
+    for (i in 1:length(prior_varying)) {
       mm = paste0(mm, get_prior_str(
         prior = prior_varying,
         i = i,
@@ -69,7 +69,7 @@ model {
   ###########
   # Transform formula_str into JAGS format. Insert par_x and varying indices
   formula_jags = gsub("PAR_X", paste0(ST$x[1], "[i_]"), formula_str)
-  for(i in seq_len(nrow(ST))) {
+  for (i in seq_len(nrow(ST))) {
     formula_jags = gsub(paste0("CP_", i, "_INDEX"), paste0("[", ST$cp_group_col[i], "[i_]]"), formula_jags)
   }
 

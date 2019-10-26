@@ -35,7 +35,7 @@ plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by 
   if (draws < 1)
     stop("Draws has to be a positive integer.")
   if (!is.null(pars)) {
-    if(pars != "population" & !all(pars %in% c(x$pars$population, x$pars$varying)))
+    if (pars != "population" & !all(pars %in% c(x$pars$population, x$pars$varying)))
       stop("Not all these pars are in the model: '", paste0(pars, collapse="' and '"))
   }
 
