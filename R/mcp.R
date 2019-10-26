@@ -117,11 +117,9 @@ mcp = function(segments, data = NULL, prior = list(), family = "gaussian", par_x
   if (is.null(data) & sample == TRUE)
     stop("Cannot sample without data.")
 
-  if (sample == TRUE) {
+  if (!is.null(data)) {
     if (!is.data.frame(data) & !tibble::is_tibble(data))
       stop("`data` must be a data.frame or a tibble.")
-  } else {
-    data = NULL  # define variable but nothing more
   }
 
   if (!is.list(segments))
