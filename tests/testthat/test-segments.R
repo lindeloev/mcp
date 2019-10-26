@@ -250,9 +250,9 @@ test_that("good change points", {
     list(y ~ 1,
          (1|id) ~ 0),  # Intercept is implicit. I don't like it, but OK.
     list(y ~ 1,
-         1 + (1|ok_id_integer) ~ 1),  # alternative group
-    list(y ~ 1,
-         1 + (1|ok_id_factor) ~ 1)  # alternative group
+         1 + (1|id) ~ 1,
+         1 + (1|ok_id_integer) ~ 1,  # multiple groups and alternative data
+         1 + (1|ok_id_factor) ~ 1)  # alternative group data
   )
 
   for (segments in good_cps) {

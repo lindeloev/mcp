@@ -89,8 +89,8 @@ get_jags_data = function(data, ST) {
 
   for (col in cols_varying) {
     # Add meta-data (now many varying group levels)
-    tmp = paste0("n_unique_", cols_varying)
-    jags_data[[tmp]] = length(unique(dplyr::pull(data, cols_varying)))
+    tmp = paste0("n_unique_", col)
+    jags_data[[tmp]] = length(unique(dplyr::pull(data, col)))
 
     # Make varying columns numeic in order of appearance
     # They will be recovered using the recover_levels()
