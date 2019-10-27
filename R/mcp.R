@@ -40,22 +40,37 @@
 #' @param sample Boolean (default: TRUE). Set to FALSE if you only want to check
 #'   priors, the JAGS model, etc.
 #' @param family WORK IN PROGRESS. One of "gauss" (default), "binomial"
+#' @param cores Positive integer or "all". Number of cores.
+#'   \itemize{
+#'     \item 1: serial sampling
+#'     \item >1: parallel sampling on this number of cores. Ideally set \code{chains}
+#'     to the same value.
+#'     \item "all": use all cores but one.
+#'   }
+#' @param chains Positive integer. Number of chains to run.
+#' @param iter Positive integer. Number of post-warmup samples to draw.
+#' @param adapt Positive integer. Number of iterations to find sampler settings.
+#' @param update Positive integer. Also sometimes called "burnin", this is the
+#'   number of regular samples before anything is recorded. Use to reach
+#'   convergence.
 #' @param jags_explicit Pass JAGS code to \code{mcp} to use directly. Useful if
 #'   you want to make small tweaks, but mostly used for the development of mcp.
-#' @param ... Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.
+#' @param ... Further parameters for \code{\link[dclone]{jags.fit}}.
 #' @details Noites on priors:
-#'   * Order restriction is automatically applied to cp_\* parameters using
-#'     truncation (e.g., T(cp_1, )) so that they are in the correct order on the
-#'     x-axis UNLESS you do it yourself. The one exception is for dunif
-#'     distributions where you have to do it as above.
-#'   * In addition to the model parameters, \code{MINX} (minimum x-value), \code{MAXX}
-#'     (maximum x-value), \code{SDX} (etc...), \code{MINY}, \code{MAXY}, and \code{SDY}
-#'     are also available when you set priors. They are used to set uninformative
-#'     default priors.
-#'   * Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision
-#'     but \code{mcp} converts to precision under the hood via the sd_to_prec()
-#'     function. So you will see SDs in \code{fit$prior} but precision ($1/SD^2)
-#'     in \code{fit$jags_code}
+#'   \itemize{
+#'     \item Order restriction is automatically applied to cp_\* parameters using
+#'       truncation (e.g., \code{T(cp_1, )}) so that they are in the correct order on the
+#'       x-axis UNLESS you do it yourself. The one exception is for dunif
+#'       distributions where you have to do it as above.
+#'     \item In addition to the model parameters, \code{MINX} (minimum x-value), \code{MAXX}
+#'       (maximum x-value), \code{SDX} (etc...), \code{MINY}, \code{MAXY}, and \code{SDY}
+#'       are also available when you set priors. They are used to set uninformative
+#'       default priors.
+#'     \item Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision
+#'       but \code{mcp} converts to precision under the hood via the sd_to_prec()
+#'       function. So you will see SDs in \code{fit$prior} but precision ($1/SD^2)
+#'       in \code{fit$jags_code}
+#'   }
 #' @return An \code{mcpfit} object.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
@@ -94,7 +109,7 @@
 #' prior = list(
 #'   int_1 = "dt(10, 30) T(0, )",  # t-dist intercept. Truncated to > 0
 #'   year_1 = "dnorm(0, 5)",  # slope of segment 1. Mean = 0, SD = 5.
-#'   cp_2 = "dunif(cp_1, 40),  # change point to segment 2 > cp_1.
+#'   cp_2 = "dunif(cp_1, 40)",  # change point to segment 2 > cp_1.
 #'   year_2 = "year_1",  # Shared slope between segment 2 and 1
 #'   int_3 = 15  # Fixed intercept of segment 3
 #' )
@@ -111,7 +126,19 @@
 #' }
 
 
-mcp = function(segments, data = NULL, prior = list(), family = "gaussian", par_x = NULL, sample = TRUE, jags_explicit = NULL, ...) {
+mcp = function(segments,
+               data = NULL,
+               prior = list(),
+               family = "gaussian",
+               par_x = NULL,
+               sample = TRUE,
+               cores = 1,
+               chains = 3,
+               iter = 3000,
+               adapt = 1500,
+               update = 1500,
+               jags_explicit = NULL,
+               ...) {
 
   # Check input values
   if (is.null(data) & sample == TRUE)
@@ -173,6 +200,11 @@ mcp = function(segments, data = NULL, prior = list(), family = "gaussian", par_x
       jags_code = ifelse(is.null(jags_explicit), jags_code, jags_explicit),
       params = c(params_population, params_varying, "loglik_"),  # population-level, varying, and loglik for loo/waic
       ST = ST,
+      cores = cores,
+      n.chains = chains,
+      n.iter = iter,
+      n.adapt = adapt,
+      n.update = update,
       ...
     )
 
