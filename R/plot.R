@@ -86,7 +86,7 @@ plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by 
 
       # Add line ID to separate lines. Mark a new line when "eval_at" repeats.
       dplyr::mutate(
-        line = x == min(eval_at),
+        line = !!dplyr::sym(x$pars$x) == min(eval_at),
         line = cumsum(line)
       )
 
