@@ -2,6 +2,7 @@
 #'
 #'
 #' @aliases run_jags
+#' @inheritParams mcp
 #' @inheritParams dclone::jags.fit
 #' @param jags_code A string. JAGS model, usually returned by \code{make_jagscode()}.
 #' @param ST A segment table (tibble), returned by \code{get_segment_table}.
@@ -20,7 +21,7 @@ run_jags = function(data,
                     jags_code,
                     params,
                     ST,
-                    n.cores,
+                    cores,
                     model_file = "tmp_jags_code.txt",
                     # n.cores = 1,
                     #
@@ -36,9 +37,9 @@ run_jags = function(data,
   timer = proc.time()
 
 
-  if (n.cores < 1) {
+  if (cores < 1) {
     stop("n.cores has to be 1 or greater (parallel sampling).")
-  } else if (n.cores == 1) {
+  } else if (cores == 1) {
     # SERIAL
     samples = dclone::jags.fit(
       data = get_jags_data(data, ST),
@@ -50,7 +51,7 @@ run_jags = function(data,
       # n.update = n.update,
       ...
     )
-  } else if(n.cores == "all" | n.cores > 1) {
+  } else if(cores == "all" | cores > 1) {
     # PARALLEL
     # Write model to disk
     sink(model_file)
@@ -58,7 +59,7 @@ run_jags = function(data,
     sink()  # stops sinking :-)
 
     # Start parallel cluster
-    if(n.cores == "all") {
+    if(cores == "all") {
       n.cores = parallel::detectCores() - 1
     }
     cl = parallel::makePSOCKcluster(n.cores)
