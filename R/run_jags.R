@@ -7,9 +7,7 @@
 #' @param ST A segment table (tibble), returned by \code{get_segment_table}.
 #'   Only really used when the model contains varying effects.
 #' @param model_file A temporary file. Makes parallel sampling possible
-#' @param n.chains Number of chains to run. Defaults to all-but-one cores.
-#' @param n.iter Number of post-warmup samples to draw.
-#' @param n.adapt Number of iterations to adapt sampler values.
+#'   samples that are discarded between n.adapt and n.iter (to improve convergence)..
 #' @param ... Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.
 #' @return \code{mcmc.list}
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -22,42 +20,66 @@ run_jags = function(data,
                     jags_code,
                     params,
                     ST,
+                    n.cores,
                     model_file = "tmp_jags_code.txt",
-
-                    # JAGS arguments
-                    n.chains = parallel::detectCores() - 1,  # Use all cores but one
-                    n.iter = 3000,  # Number of iterations post-warmup.
-                    n.adapt = 1500,  # Takes some time to adapt
-                    n.update = 1500,  # Same as n.adapt
+                    # n.cores = 1,
+                    #
+                    # # JAGS arguments
+                    # n.chains = 3,
+                    # n.iter = 3000,  # Number of iterations post-warmup.
+                    # n.adapt = 1500,  # Takes some time to adapt
+                    # n.update = 1500,  # Same as n.adapt
                     ...  # Otherwise run with default JAGS settings
 ) {
 
-  # Write model to disk
-  sink(model_file)
-  cat(jags_code)
-  sink()  # stops sinking :-)
-
-  # Start parallel cluster and timer
-  cl = parallel::makePSOCKcluster(n.chains)
+  # Start timer
   timer = proc.time()
 
-  # Do the sampling. Yield mcmc.list
-  samples = dclone::jags.parfit(
-    cl = cl,
-    data = get_jags_data(data, ST),
-    params = params,
-    model = model_file,
-    n.chains = n.chains,
-    n.iter = n.iter,
-    n.adapt = n.adapt,
-    n.update = n.update,
-    ...
-  )
 
-  # Stop the cluster, delete the file, and show time
-  parallel::stopCluster(cl)
-  file.remove(model_file)
-  print(proc.time() - timer)  # Print time
+  if (n.cores < 1) {
+    stop("n.cores has to be 1 or greater (parallel sampling).")
+  } else if (n.cores == 1) {
+    # SERIAL
+    samples = dclone::jags.fit(
+      data = get_jags_data(data, ST),
+      params = params,
+      model = textConnection(jags_code),
+      # n.chains = n.chains,
+      # n.iter = n.iter,
+      # n.adapt = n.adapt,
+      # n.update = n.update,
+      ...
+    )
+  } else if(n.cores == "all" | n.cores > 1) {
+    # PARALLEL
+    # Write model to disk
+    sink(model_file)
+    cat(jags_code)
+    sink()  # stops sinking :-)
+
+    # Start parallel cluster
+    if(n.cores == "all") {
+      n.cores = parallel::detectCores() - 1
+    }
+    cl = parallel::makePSOCKcluster(n.cores)
+
+    # Do the sampling. Yield mcmc.list
+    samples = dclone::jags.parfit(
+      cl = cl,
+      data = get_jags_data(data, ST),
+      params = params,
+      model = model_file,
+      # n.chains = n.chains,
+      # n.iter = n.iter,
+      # n.adapt = n.adapt,
+      # n.update = n.update,
+      ...
+    )
+
+    # Stop the cluster, delete the file
+    parallel::stopCluster(cl)
+    file.remove(model_file)
+  }
 
   # Recover the levels of varying effects
   for (i in seq_len(nrow(ST))) {
@@ -68,6 +90,7 @@ run_jags = function(data,
   }
 
   # Return
+  print(proc.time() - timer)  # Print time
   samples
 }
 

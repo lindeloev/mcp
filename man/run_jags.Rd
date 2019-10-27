@@ -4,9 +4,8 @@
 \alias{run_jags}
 \title{Run parallel MCMC sampling using JAGS.}
 \usage{
-run_jags(data, jags_code, params, ST, model_file = "tmp_jags_code.txt",
-  n.chains = parallel::detectCores() - 1, n.iter = 3000,
-  n.adapt = 1500, n.update = 1500, ...)
+run_jags(data, jags_code, params, ST, n.cores,
+  model_file = "tmp_jags_code.txt", ...)
 }
 \arguments{
 \item{data}{
@@ -24,19 +23,8 @@ Character vector of parameters to be sampled.
 \item{ST}{A segment table (tibble), returned by \code{get_segment_table}.
 Only really used when the model contains varying effects.}
 
-\item{model_file}{A temporary file. Makes parallel sampling possible}
-
-\item{n.chains}{Number of chains to run. Defaults to all-but-one cores.}
-
-\item{n.iter}{Number of post-warmup samples to draw.}
-
-\item{n.adapt}{Number of iterations to adapt sampler values.}
-
-\item{n.update}{
-Number of updates before iterations. 
-It is usually a bad idea to use \code{n.update=0} if 
-\code{n.adapt>0}, so a warning is issued in such cases.
-}
+\item{model_file}{A temporary file. Makes parallel sampling possible
+samples that are discarded between n.adapt and n.iter (to improve convergence)..}
 
 \item{...}{Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.}
 }

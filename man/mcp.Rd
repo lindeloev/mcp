@@ -5,7 +5,9 @@
 \title{Fit Multiple Linear Segments And Their Change Points}
 \usage{
 mcp(segments, data = NULL, prior = list(), family = "gaussian",
-  par_x = NULL, sample = TRUE, jags_explicit = NULL, ...)
+  par_x = NULL, sample = TRUE, cores = 1, chains = 3,
+  iter = 3000, adapt = 1500, update = 1500, jags_explicit = NULL,
+  ...)
 }
 \arguments{
 \item{segments}{A list of formulas - one for each segment. The right-hand
@@ -39,10 +41,28 @@ slope (no hint at what x is). Set this, e.g., par_x = "time".}
 \item{sample}{Boolean (default: TRUE). Set to FALSE if you only want to check
 priors, the JAGS model, etc.}
 
+\item{cores}{Positive integer or "all". Number of cores.
+\itemize{
+  \item 1: serial sampling
+  \item >1: parallel sampling on this number of cores. Ideally set \code{chains}
+  to the same value.
+  \item "all": use all cores but one.
+}}
+
+\item{chains}{Positive integer. Number of chains to run.}
+
+\item{iter}{Positive integer. Number of post-warmup samples to draw.}
+
+\item{adapt}{Positive integer. Number of iterations to find sampler settings.}
+
+\item{update}{Positive integer. Also sometimes called "burnin", this is the
+number of regular samples before anything is recorded. Use to reach
+convergence.}
+
 \item{jags_explicit}{Pass JAGS code to \code{mcp} to use directly. Useful if
 you want to make small tweaks, but mostly used for the development of mcp.}
 
-\item{...}{Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.}
+\item{...}{Further parameters for \code{\link[dclone]{jags.fit}}.}
 }
 \value{
 An \code{mcpfit} object.
@@ -58,18 +78,71 @@ data if you just want to get the priors (\code{fit$prior}), the JAGS code
 }
 \details{
 Noites on priors:
-  * Order restriction is automatically applied to cp_\* parameters using
-    truncation (e.g., T(cp_1, )) so that they are in the correct order on the
-    x-axis UNLESS you do it yourself. The one exception is for dunif
-    distributions where you have to do it as above.
-  * In addition to the model parameters, \code{MINX} (minimum x-value), \code{MAXX}
-    (maximum x-value), \code{SDX} (etc...), \code{MINY}, \code{MAXY}, and \code{SDY}
-    are also available when you set priors. They are used to set uninformative
-    default priors.
-  * Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision
-    but \code{mcp} converts to precision under the hood via the sd_to_prec()
-    function. So you will see SDs in \code{fit$prior} but precision ($1/SD^2)
-    in \code{fit$jags_code}
+  \itemize{
+    \item Order restriction is automatically applied to cp_\* parameters using
+      truncation (e.g., \code{T(cp_1, )}) so that they are in the correct order on the
+      x-axis UNLESS you do it yourself. The one exception is for dunif
+      distributions where you have to do it as above.
+    \item In addition to the model parameters, \code{MINX} (minimum x-value), \code{MAXX}
+      (maximum x-value), \code{SDX} (etc...), \code{MINY}, \code{MAXY}, and \code{SDY}
+      are also available when you set priors. They are used to set uninformative
+      default priors.
+    \item Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision
+      but \code{mcp} converts to precision under the hood via the sd_to_prec()
+      function. So you will see SDs in \code{fit$prior} but precision ($1/SD^2)
+      in \code{fit$jags_code}
+  }
+}
+\examples{
+\dontrun{
+# Define the segments that are separated by change points
+segments = list(
+  score ~ 1 + year,  # intercept + slope
+   1 ~ 0 + year,  # joined slope
+   1 ~ 0,  # joined plateau
+   1 ~ 1  # disjoined plateau
+)
+
+# Start sampling
+fit = mcp(segments, data)
+
+# Visual inspection of the results
+plot(fit)
+plot(fit, "combo")
+
+# Compare to a one-intercept-only model (no change points) with default prior
+segments2 = list(1 ~ 1)
+fit2 = mcp(segments2, data)  # fit another model here
+fit$loo = loo(fit)
+fit2$loo = loo(fit)
+loo_compare(fit, fit2)
+
+# Show all priors (not just those specified manually)
+fit$prior
+
+# Set priors and re-run
+# cp_i are change points.
+# int_i are intercepts.
+# x_i are slopes.
+# i is the segment number (change points are to the right of the segment)
+prior = list(
+  int_1 = "dt(10, 30) T(0, )",  # t-dist intercept. Truncated to > 0
+  year_1 = "dnorm(0, 5)",  # slope of segment 1. Mean = 0, SD = 5.
+  cp_2 = "dunif(cp_1, 40)",  # change point to segment 2 > cp_1.
+  year_2 = "year_1",  # Shared slope between segment 2 and 1
+  int_3 = 15  # Fixed intercept of segment 3
+)
+fit3 = mcp(segments, data, prior)
+
+# Do stuff with the parameter estimates
+fit$pars$model  # check out which parameters are inferred.
+library(tidybayes)
+spread_draws(fit$samples, cp_1, cp_2, int_1, year_1, year_2) \%>\%
+   # tidybayes stuff here
+
+# Show JAGS model
+cat(fit$jags_code)
+}
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
