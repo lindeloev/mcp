@@ -48,8 +48,8 @@ model {
   }
 
   # Helpers for change points:
-  mm = paste0(mm, "  cp_0 = -10^100  # mcp helper value; minus infinity")
-  mm = paste0(mm, "cp_", nrow(ST), " = 10^100  # mcp helper value; plus infinity\n")
+  mm = paste0(mm, "  cp_0 = -10^100  # mcp helper value; minus infinity\n")
+  mm = paste0(mm, "  cp_", nrow(ST), " = 10^100  # mcp helper value; plus infinity\n")
 
   # Use get_prior_str() to add varying priors
   mm = paste0(mm, "\n  # Priors for varying effects\n")
