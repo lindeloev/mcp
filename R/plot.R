@@ -59,7 +59,9 @@ plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by 
     # No faceting
     if (is.null(facet_by)) {
       Q = x$samples %>%
-        tidybayes::spread_draws(!!rlang::sym(pars_population_regex), regex = TRUE, n = draws)
+        tidybayes::spread_draws(!!rlang::sym(pars_population_regex), regex = TRUE) %>%
+        # TO DO: use spread_draws(n = draws) when tidybayes 1.2 is out
+        tidybayes::sample_draws(draws)
 
     } else {
       # Prepare for faceting
@@ -70,8 +72,9 @@ plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by 
       Q = x$samples %>%
         tidybayes::spread_draws(!!rlang::sym(pars_population_regex),
                      (!!rlang::sym(varying_by_facet))[!!rlang::sym(facet_by)],
-                     regex = TRUE,
-                     n = draws)
+                     regex = TRUE) %>%
+        # TO DO: use spread_draws(n = draws) when tidybayes 1.2 is out
+        tidybayes::sample_draws(draws)
     }
 
     # First, let's get all the predictors in shape for func_y
@@ -133,13 +136,16 @@ plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by 
 
 summary.mcpfit = function(object, width = 0.95, ...) {
   if (!is.null(object$samples)) {
-    object$samples %>%
-      tidybayes::tidy_draws() %>%
-      tidyr::pivot_longer(-tidyselect::starts_with(".")) %>%
-      dplyr::group_by(name) %>%
-      tidybayes::mean_hdci(value, .width = width) %>%
-      dplyr::rename(mean = value) %>%
-      dplyr::select(-.point, -.width, -.interval)
+    # TO DO: Temporarily suppress warnings about tidyr1.0::unnest() until tidybayes 1.2 is out.
+    suppressWarnings(
+      object$samples %>%
+        tidybayes::tidy_draws() %>%
+        tidyr::pivot_longer(-tidyselect::starts_with(".")) %>%
+        dplyr::group_by(name) %>%
+        tidybayes::mean_hdci(value, .width = width) %>%
+        dplyr::rename(mean = value) %>%
+        dplyr::select(-.point, -.width, -.interval)
+    )
   }
   else {
     message("No samples. Nothing to summarise.")
