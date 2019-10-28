@@ -23,13 +23,6 @@ run_jags = function(data,
                     ST,
                     cores,
                     model_file = "tmp_jags_code.txt",
-                    # n.cores = 1,
-                    #
-                    # # JAGS arguments
-                    # n.chains = 3,
-                    # n.iter = 3000,  # Number of iterations post-warmup.
-                    # n.adapt = 1500,  # Takes some time to adapt
-                    # n.update = 1500,  # Same as n.adapt
                     ...  # Otherwise run with default JAGS settings
 ) {
 
@@ -38,7 +31,7 @@ run_jags = function(data,
 
 
   if (cores < 1) {
-    stop("n.cores has to be 1 or greater (parallel sampling).")
+    stop("cores has to be 1 or greater (parallel sampling).")
   } else if (cores == 1) {
     # SERIAL
     samples = dclone::jags.fit(
@@ -60,9 +53,9 @@ run_jags = function(data,
 
     # Start parallel cluster
     if(cores == "all") {
-      n.cores = parallel::detectCores() - 1
+      cores = parallel::detectCores() - 1
     }
-    cl = parallel::makePSOCKcluster(n.cores)
+    cl = parallel::makePSOCKcluster(cores)
 
     # Do the sampling. Yield mcmc.list
     samples = dclone::jags.parfit(
