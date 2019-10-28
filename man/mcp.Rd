@@ -64,8 +64,6 @@ convergence.}
 you want to make small tweaks, but mostly used for the development of mcp.}
 
 \item{...}{Further parameters for \code{\link[dclone]{jags.fit}}.}
-
-\item{family}{WORK IN PROGRESS. One of "gauss" (default), "binomial"}
 }
 \value{
 An \code{mcpfit} object.

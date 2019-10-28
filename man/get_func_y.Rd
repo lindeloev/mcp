@@ -8,9 +8,11 @@ get_func_y(formula_str, par_x, par_trials = NA, pars_pop, pars_varying,
   nsegments, family)
 }
 \arguments{
-\item{formula_str}{A string. Returned by \code{get_formula}.}
+\item{formula_str}{string. Returned by \code{get_formula}.}
 
-\item{par_x}{A string. Same as for \link{mcp}.}
+\item{par_x}{string. Same as for \link{mcp}.}
+
+\item{par_trials}{String. For binomial models: name of trials column.}
 
 \item{pars_pop}{List of population parameters which the user must provide.}
 
@@ -18,6 +20,9 @@ get_func_y(formula_str, par_x, par_trials = NA, pars_pop, pars_varying,
 (optional for the user).}
 
 \item{nsegments}{Positive integer. Number of segments, typically \code{nrow(ST)}.}
+
+\item{family}{One of gaussian() or binomial(). Only default link functions
+are currently supported.}
 }
 \description{
 Turn formula_str into a proper R function

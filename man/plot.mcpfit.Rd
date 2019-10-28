@@ -35,7 +35,7 @@ Defaults to \code{plot(fit, "overlay")}, plotting posterior draws on top of
 data to inspect model fit. It uses \code{fit$func_y} with \code{draws}
 posterior samples. These represent the joint posterior distribution of
 parameter values. If you see a few erratic lines, this is a sign that you may
-want to increase arguments 'adapt', 'update', and 'iter' in \code{\link{mcp()}}
+want to increase arguments 'adapt', 'update', and 'iter' in \code{\link{mcp}}
 }
 \details{
 \code{plot(fit, "combo")} calls \code{bayesplot::mcmc_combo(fit$samples)}. Use that directly
