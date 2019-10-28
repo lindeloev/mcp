@@ -343,8 +343,8 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
 
     # Check y and trials if binomial
     if (family == "binomial") {
-      check_integer(data[, ST$y[1]], ST$y[1], lower = 1)
-      check_integer(data[, ST$trials[1]], ST$trials[1], lower = 0)
+      check_integer(data[, ST$y[1]], ST$y[1], lower = 0)
+      check_integer(data[, ST$trials[1]], ST$trials[1], lower = 1)
     }
   }
 
