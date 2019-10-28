@@ -4,7 +4,7 @@
 \alias{mcp}
 \title{Fit Multiple Linear Segments And Their Change Points}
 \usage{
-mcp(segments, data = NULL, prior = list(), family = "gaussian",
+mcp(segments, data = NULL, prior = list(), family = gaussian(),
   par_x = NULL, sample = TRUE, cores = 1, chains = 3,
   iter = 3000, adapt = 1500, update = 1500, jags_explicit = NULL,
   ...)
@@ -33,7 +33,8 @@ left-hand side is the change point (on x). See examples for more details.}
      typically between segments. If two varying effects are shared this way,
      they will need to have the same grouping variable.}
 
-\item{family}{WORK IN PROGRESS. One of "gauss" (default), "binomial"}
+\item{family}{One of gaussian() or binomial(). Only default link functions
+are currently supported.}
 
 \item{par_x}{String (default: NULL). Only relevant if no segments contains
 slope (no hint at what x is). Set this, e.g., par_x = "time".}
@@ -63,6 +64,8 @@ convergence.}
 you want to make small tweaks, but mostly used for the development of mcp.}
 
 \item{...}{Further parameters for \code{\link[dclone]{jags.fit}}.}
+
+\item{family}{WORK IN PROGRESS. One of "gauss" (default), "binomial"}
 }
 \value{
 An \code{mcpfit} object.

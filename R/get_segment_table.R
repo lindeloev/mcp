@@ -28,7 +28,7 @@ unpack_tildes = function(segment, i) {
 
   if (length(chunks) == 2) {
     # Only one tilde. This is the first segment or y is implicit from earlier segment(s)
-    if (i == 1 & stringr::str_detect(chunks[1], "^[-0-9.]+"))
+    if (i == 1 & stringr::str_detect(chunks[1], "^[-0-9.]+"))  # check illigal terms
       stop("y must be a variable.")
     return(tibble::tibble(
       form = form_str,
@@ -58,12 +58,42 @@ check_terms_in_data = function(form, data, i) {
 
 
 # Unpacks y variable name
-unpack_y = function(form_y, i) {
-  if (!is.na(form_y)) {
-    if (!grepl("^[A-Za-z._0-9]+$", form_y))
-      stop("Error in segment ", i, ": Invalid format for response variable. Only a single column name is (currently) allowed")
+unpack_y = function(form_y, i, family) {
+  # Segment 1 must have y specified
+  if (i == 1) {
+    if (is.na(form_y))
+      stop("No response defined in segment 1.")
+
+    if (family == "binomial" & !stringr::str_detect(gsub(" ", "", form_y), "\\|trials\\("))
+      stop("Error in response of segment 1: need a valid trials() specification, e.g., 'y | trials(N) ~ 1 + x'")
   }
-  tibble::tibble(y = form_y)
+
+  if (!is.na(form_y)) {
+    form_y = gsub(" ", "", form_y)  # remove whitespace
+
+    # If binomial, get trials
+    chunks = gsub(")", "", strsplit(gsub(" ", "", form_y), "\\|trials\\(")[[1]])
+
+    if (!all(grepl("^[A-Za-z._0-9]+$", chunks)))
+      stop("Error in segment ", i, ": Invalid format for response variable. Only single column names are allowed.")
+
+    if (length(chunks) == 1) {
+      return(tibble::tibble(
+        y = chunks[1],
+        trials = NA))
+    } else if (length(chunks) == 2) {
+      return(tibble::tibble(
+        y = chunks[1],
+        trials = chunks[2]))
+    } else {
+      stop("Invalid value '", form_y, "' for response. More than one pipe?")
+    }
+  } else {
+    return(tibble::tibble(
+      y = NA,
+      trials = NA
+    ))
+  }
 }
 
 
@@ -216,10 +246,10 @@ unpack_rhs = function(form_rhs, i) {
 #' get_segment_table(segments)
 #' }
 
-get_segment_table = function(segments, data = NULL, par_x = NULL) {
-  #############################################################
-  # PART 1: BUILD "SEGMENT TABLE (ST)" FROM ISOLATED SEGMENTS #
-  #############################################################
+get_segment_table = function(segments, data = NULL, family = gaussian(), par_x = NULL) {
+  #####################################################
+  # BUILD "SEGMENT TABLE (ST)" FROM ISOLATED SEGMENTS #
+  #####################################################
   ST = tibble::tibble()
   for (i in seq_len(length(segments))) {
     # Get ready...
@@ -230,7 +260,7 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
     # Go! Unpack this segment
     row = tibble::tibble(segment = i)
     row = dplyr::bind_cols(row, unpack_tildes(segment, i))
-    row = dplyr::bind_cols(row, unpack_y(row$form_y, i))
+    row = dplyr::bind_cols(row, unpack_y(row$form_y, i, family = family))
     row = dplyr::bind_cols(row, unpack_cp(row$form_cp, i))
     row = dplyr::bind_cols(row, unpack_rhs(row$form_rhs, i))
 
@@ -241,9 +271,9 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
   ST = dplyr::select(ST, -form_y, -form_cp, -form_rhs)
 
 
-  ################################
-  # PART 2: LOOK ACROSS SEGMENTS #
-  ################################
+  ###########################
+  # CHECK SEGMENTS AND DATA #
+  ###########################
 
   # Check segment 1: rel() not possible here.
   if (any(ST[1, c("cp_int", "cp_int_rel", "cp_ran_int", "cp_group_col")] != FALSE, na.rm = T))
@@ -251,7 +281,7 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
   if (any(ST[1, c("int_rel", "slope_rel")] != FALSE, na.rm = T))
     stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
 
-  # rel() in segment 2+
+  # Check rel() in segment 2+
   rel_slope_after_plateau = dplyr::lag(is.na(ST$slope), 1) & ST$slope_rel != 0
   if (any(rel_slope_after_plateau))
     stop("rel(slope) is not meaningful after a plateau segment (without a slope). Use absolute slope to get the same behavior. Found in segment ", which(rel_slope_after_plateau))
@@ -259,7 +289,6 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
     if (ST$cp_int_rel[2] == TRUE)
       stop("rel() cannot be used for change points in segment 2. There are no earlier change points to be relative to. Relative changepoints work from segment 3 and on.")
   }
-
 
   # Set ST$x (what is the x-axis dimension?)
   derived_x = unique(stats::na.omit(ST$slope))
@@ -295,26 +324,38 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
     # Tibble will still be used in the rest of mcp
     if (tibble::is_tibble(data))
       data = data.frame(data)
+
+    # Check x and y
     if (!is.numeric(data[, ST$x[1]]))
-      stop("Data column \"", ST$x[1], "\" has to be numeric.")
+      stop("Data column '", ST$x[1], "' has to be numeric.")
     if (!is.numeric(data[, ST$y[1]]))
-      stop("Data column \"", ST$y[1], "\" has to be numeric.")
+      stop("Data column '", ST$y[1], "' has to be numeric.")
+
+    # Check varying
     if (length(derived_varying) > 0) {
       for (varying_col in derived_varying) {
         data_varying = data[, varying_col]
-        if (is.numeric(data_varying) &
-           !is.character(data_varying) &
-           !is.factor(data_varying))
-          if (!all(data_varying == floor(data_varying)))  # FALSE if all are integers (OK)
-            stop("Varying group \"", varying_col, "\" has to be integer, character, or factor.")
+        if (!is.character(data_varying) & !is.factor(data_varying) & is.numeric(data_varying))
+          if (!all(data_varying == floor(data_varying)))
+            stop("Varying group '", varying_col, "' has to be integer, character, or factor.")
       }
     }
 
+    # Check trials if binomial
+    if (family == "binomial") {
+      data_trials = data[, ST$trials[1]]
+      check_natural(data_trials, ST$trials[1])
+    }
   }
+
+
+  ###################################
+  # MUTATE ST WITH NEW HANDY VALUES #
+  ###################################
 
   # Recode relative columns so 0 = not relative. N > 0 is the number of consecutive "relatives"
   ST = ST %>%
-    tidyr::fill(y) %>%
+    tidyr::fill(y, trials) %>%  # Usually only provided in segment 1
 
     # Add variable names
     dplyr::mutate(
@@ -367,3 +408,11 @@ format_code = function(col, na_col) {
   col
 }
 
+
+# Throws an error if a number/vector contains non-numeric, decimal, or negative
+check_natural = function(x, name) {
+  if (!is.numeric(x))
+    stop("Only positive integers allowed in column '", name, "'")
+  if (!all(x == floor(x)) | !all(x > 0))  # any decimals or negative
+    stop("Only positive integers allowed in column '", name, "'")
+}

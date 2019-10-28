@@ -4,15 +4,11 @@
 \alias{run_jags}
 \title{Run parallel MCMC sampling using JAGS.}
 \usage{
-run_jags(data, jags_code, params, ST, n.cores,
+run_jags(data, jags_code, params, ST, cores,
   model_file = "tmp_jags_code.txt", ...)
 }
 \arguments{
-\item{data}{
-A named list or environment containing the data. 
-If an environment, \code{data}
-is coerced into a list.
-}
+\item{data}{Data.frame or tibble in long format.}
 
 \item{jags_code}{A string. JAGS model, usually returned by \code{make_jagscode()}.}
 
@@ -22,6 +18,14 @@ Character vector of parameters to be sampled.
 
 \item{ST}{A segment table (tibble), returned by \code{get_segment_table}.
 Only really used when the model contains varying effects.}
+
+\item{cores}{Positive integer or "all". Number of cores.
+\itemize{
+  \item 1: serial sampling
+  \item >1: parallel sampling on this number of cores. Ideally set \code{chains}
+  to the same value.
+  \item "all": use all cores but one.
+}}
 
 \item{model_file}{A temporary file. Makes parallel sampling possible
 samples that are discarded between n.adapt and n.iter (to improve convergence)..}

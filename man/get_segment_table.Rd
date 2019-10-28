@@ -4,7 +4,8 @@
 \alias{get_segment_table}
 \title{Build a table describing a list of segments}
 \usage{
-get_segment_table(segments, data = NULL, par_x = NULL)
+get_segment_table(segments, data = NULL, family = gaussian(),
+  par_x = NULL)
 }
 \arguments{
 \item{segments}{A list of formulas - one for each segment. The right-hand
@@ -13,6 +14,9 @@ the left-hand side is the response variable. In the following segments, the
 left-hand side is the change point (on x). See examples for more details.}
 
 \item{data}{Data.frame or tibble in long format.}
+
+\item{family}{One of gaussian() or binomial(). Only default link functions
+are currently supported.}
 
 \item{par_x}{String (default: NULL). Only relevant if no segments contains
 slope (no hint at what x is). Set this, e.g., par_x = "time".}

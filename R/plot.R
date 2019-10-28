@@ -1,6 +1,12 @@
 #' Plot mcpfit
 #'
-#' plot(fit, "combo") calls bayesplot::mcmc_combo(fit$samples). Use it directly
+#' Defaults to \code{plot(fit, "overlay")}, plotting posterior draws on top of
+#' data to inspect model fit. It uses \code{fit$func_y} with \code{draws}
+#' posterior samples. These represent the joint posterior distribution of
+#' parameter values. If you see a few erratic lines, this is a sign that you may
+#' want to increase arguments 'adapt', 'update', and 'iter' in \code{\link{mcp}}
+#'
+#' \code{plot(fit, "combo")} calls \code{bayesplot::mcmc_combo(fit$samples)}. Use that directly
 #' for finer control.
 #'
 #' @aliases plot plot.mcpfit
@@ -11,6 +17,9 @@
 #'   "all" or "varying". Only relevant for type = "combo".
 #' @param facet_by String. Name of a varying group. Only relevant for
 #'   type = "overlay"
+#' @param rate Boolean. For binomial models, plot on raw data (\code{rate = FALSE}) or
+#'   response divided by number of trials (\code{rate = TRUE}). If FALSE, linear
+#'   interpolation on trial number is used to infer trials at a particular x.
 #' @param ... Currently ignored.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @return A \code{ggplot2} object.
@@ -26,9 +35,14 @@
 #' plot(fit, "combo")
 #' }
 
-plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by = NULL, ...) {
+plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by = NULL, rate = TRUE, ...) {
   # Stick to more conventional mcp terms. De-confuses "fit" and "x-axis".
   fit = x
+  X_RESOLUTION = 100  # number of points to evaluate at x
+
+  ###################
+  # CHECK ARGUMENTS #
+  ###################
 
   # Check arguments
   if (class(fit) != "mcpfit")
@@ -42,21 +56,25 @@ plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by 
       stop("Not all these pars are in the model: '", paste0(pars, collapse="' and '"))
   }
 
-  # TEMPORARY: Include test of whether this is a random/nested effect
+  # Include test of whether this is a random/nested effect
   varying_groups = logical0_to_null(unique(stats::na.omit(fit$.other$ST$cp_group_col)))
   if (!is.null(facet_by)) {
     if (!facet_by %in% varying_groups)
       stop("facet_by is not a data column used as varying grouping.")
   }
 
-  # Plot function on top
+
   if (type == "overlay") {
+
+    #################
+    # GET PLOT DATA #
+    #################
 
     # We'll need these vars during data-processing-before-ggplot
     func_y = fit$func_y
     eval_at = seq(min(fit$data[, fit$pars$x]),
                   max(fit$data[, fit$pars$x]),
-                  length.out = 100)
+                  length.out = X_RESOLUTION)
     pars_population_regex = paste0(fit$pars$population, collapse="|")
     cp_vars = paste0("cp_", seq_len(length(fit$segments) - 1))  # change point columns
 
@@ -82,11 +100,24 @@ plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by 
     }
 
     # First, let's get all the predictors in shape for func_y
-    Q = Q %>%
-      tidyr::expand_grid(!!fit$pars$x := eval_at) %>%  # correct name of x-var
+    if(fit$family$family == "gaussian") {
+      Q = Q %>%
+        tidyr::expand_grid(!!fit$pars$x := eval_at)  # correct name of x-var
+    } else {
+      if (!is.null(facet_by))
+        stop("Plot with rate = TRUE not implemented for varying effects (yet).")
 
+      # Interpolate trials for binomial at the values in "eval_at"
+      interpolated_trials = round(stats::approx(fit$data[, fit$pars$trials], n = X_RESOLUTION)$y)
+      Q = Q %>%
+        tidyr::expand_grid(!!fit$pars$x := eval_at) %>%  # correct name of x-var
+        dplyr::mutate(!!fit$pars$trials := rep(interpolated_trials, draws))
+    }
+
+    # Predict y from model
+    Q = Q %>%
       # Add fitted draws (vectorized)
-      dplyr::mutate(!!fit$pars$y := purrr::invoke(func_y, ., type = "fitted")) %>%
+      dplyr::mutate(!!fit$pars$y := purrr::invoke(func_y, ., type = "fitted", rate = rate)) %>%
 
       # Add line ID to separate lines. Mark a new line when "eval_at" repeats
       dplyr::mutate(
@@ -94,19 +125,36 @@ plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by 
         line = cumsum(line)
       )
 
+
+    ###########
+    # PLOT IT #
+    ###########
+    # If this is a binomial rate, divide by the number of trials
+    if(fit$family$family == "binomial" & rate == TRUE) {
+      fit$data[, fit$pars$y] = fit$data[, fit$pars$y] / fit$data[, fit$pars$trials]
+    }
+
     if (is.null(facet_by)) {
       # Return plot without faceting
-      return(ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y)) +
+      gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y)) +
         geom_point() +
-        geom_line(aes(group = line), data = Q, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4)))
+        geom_line(aes(group = line), data = Q, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4))
     } else {
       # Return plot with faceting
-      return(ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y)) +
+      gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y / divide_rate)) +
         geom_point() +
         geom_line(aes(group = line), data = Q, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4)) +
-        facet_wrap(paste0("~", facet_by)))
+        facet_wrap(paste0("~", facet_by))
+    }
+
+    if(rate == TRUE) {
+      return(gg + ggplot2::labs(y = paste0("Probability of success for ", fit$pars$y)))
+    } else {
+      return(gg)
     }
   }
+
+
 
   if (type == "combo") {
     # Use population parameters by default
