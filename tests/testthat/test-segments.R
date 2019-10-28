@@ -4,7 +4,7 @@
 
 # Samples and checks data structure.
 # Meant to be used with testthat::expect_true()
-test_data = data.frame(
+data_gauss = data.frame(
   # y should be continuous
   y = 1:5,
   ok_y = rnorm(5),  # test underscore and decimals
@@ -17,7 +17,7 @@ test_data = data.frame(
   bad_x_char = c("a", "b", "c", "d", "e"),
   bad_x_factor = factor(1:5),
 
-  # change point should be categorical-ish
+  # varying effects should be categorical-ish
   id = c("a", "b", "c", "d", "e"),
   ok_id_factor = factor(c(-3, 0, 5, 9, 1.233243)),
   ok_id_integer = -2:2,  # interval
@@ -28,7 +28,7 @@ check_empty = function(segments, par_x = NULL) {
   # Sample
   fit = mcp(
     segments = segments,
-    data = test_data,
+    data = data_gauss,
     par_x = par_x,
     sample = FALSE
   )
@@ -36,7 +36,7 @@ check_empty = function(segments, par_x = NULL) {
   # Do it again, but this time on a tibble
   fit = mcp(
     segments = segments,
-    data = tibble::as_tibble(test_data),
+    data = tibble::as_tibble(data_gauss),
     par_x = par_x,
     sample = FALSE
   )
@@ -64,7 +64,7 @@ check_empty = function(segments, par_x = NULL) {
 check_error = function(segments) {
   mcp(
     segments = segments,
-    data = test_data,
+    data = data_gauss,
     par_x = "x",
     sample = FALSE
   )
@@ -262,3 +262,4 @@ test_that("good change points", {
     )
   }
 })
+

@@ -6,7 +6,7 @@
 \title{Plot mcpfit}
 \usage{
 \method{plot}{mcpfit}(x, type = "overlay", draws = 25,
-  pars = "population", facet_by = NULL, ...)
+  pars = "population", facet_by = NULL, rate = TRUE, ...)
 }
 \arguments{
 \item{x}{An mcpfit object}
@@ -21,13 +21,24 @@
 \item{facet_by}{String. Name of a varying group. Only relevant for
 type = "overlay"}
 
+\item{rate}{Boolean. For binomial models, plot on raw data (\code{rate = FALSE}) or
+response divided by number of trials (\code{rate = TRUE}). If FALSE, linear
+interpolation on trial number is used to infer trials at a particular x.}
+
 \item{...}{Currently ignored.}
 }
 \value{
 A \code{ggplot2} object.
 }
 \description{
-plot(fit, "combo") calls bayesplot::mcmc_combo(fit$samples). Use it directly
+Defaults to \code{plot(fit, "overlay")}, plotting posterior draws on top of
+data to inspect model fit. It uses \code{fit$func_y} with \code{draws}
+posterior samples. These represent the joint posterior distribution of
+parameter values. If you see a few erratic lines, this is a sign that you may
+want to increase arguments 'adapt', 'update', and 'iter' in \code{\link{mcp()}}
+}
+\details{
+\code{plot(fit, "combo")} calls \code{bayesplot::mcmc_combo(fit$samples)}. Use that directly
 for finer control.
 }
 \examples{

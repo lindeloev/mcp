@@ -4,7 +4,7 @@
 \alias{get_jagscode}
 \title{Make JAGS code for Multiple Change Point model}
 \usage{
-get_jagscode(data, prior, ST, formula_str)
+get_jagscode(data, prior, ST, formula_str, family)
 }
 \arguments{
 \item{data}{Data.frame or tibble in long format.}
@@ -28,6 +28,9 @@ get_jagscode(data, prior, ST, formula_str)
 \item{ST}{Segment table. Returned by \code{get_segment_table()}.}
 
 \item{formula_str}{String. The formula string returned by \code{build_formula_str}.}
+
+\item{family}{One of gaussian() or binomial(). Only default link functions
+are currently supported.}
 }
 \value{
 String. A JAGS model.
