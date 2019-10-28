@@ -233,9 +233,10 @@ unpack_rhs = function(form_rhs, i) {
 #'
 #' @aliases get_segment_table
 #' @inheritParams mcp
-#' @importFrom magrittr %>%
 #' @return A tibble.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @importFrom magrittr %>%
+#' @importFrom stats gaussian binomial
 #' @export
 #' @examples
 #' \dontrun{
@@ -268,7 +269,7 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
   }
 
   # Return the cols we need
-  ST = dplyr::select(ST, -form_y, -form_cp, -form_rhs)
+  ST = dplyr::select(ST, -.data$form_y, -.data$form_cp, -.data$form_rhs)
 
 
   ###########################
@@ -355,33 +356,33 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
 
   # Recode relative columns so 0 = not relative. N > 0 is the number of consecutive "relatives"
   ST = ST %>%
-    tidyr::fill(y, trials) %>%  # Usually only provided in segment 1
+    tidyr::fill(.data$y, trials) %>%  # Usually only provided in segment 1
 
     # Add variable names
     dplyr::mutate(
-      int_name = ifelse(int, yes = paste0("int_", segment), no = NA),
-      slope_name = ifelse(!is.na(slope), yes = paste0(slope, "_", segment), no = NA),
-      slope_code = slope_name,  # Will be modified in next step
-      cp_name = paste0("cp_", segment - 1),
-      cp_sd = ifelse(cp_ran_int == TRUE, paste0(cp_name, "_sd"), NA),
-      cp_group = ifelse(cp_ran_int == TRUE, paste0(cp_name, "_", cp_group_col), NA)
+      int_name = ifelse(.data$int, yes = paste0("int_", .data$segment), no = NA),
+      slope_name = ifelse(!is.na(.data$slope), yes = paste0(.data$slope, "_", .data$segment), no = NA),
+      slope_code = .data$slope_name,  # Will be modified in next step
+      cp_name = paste0("cp_", .data$segment - 1),
+      cp_sd = ifelse(.data$cp_ran_int == TRUE, paste0(.data$cp_name, "_sd"), NA),
+      cp_group = ifelse(.data$cp_ran_int == TRUE, paste0(.data$cp_name, "_", .data$cp_group_col), NA)
     ) %>%
 
     # Add "cumulative" cp_code_form for concecutive relative intercepts
-    dplyr::group_by(cumsum(!cp_int_rel)) %>%
+    dplyr::group_by(cumsum(!.data$cp_int_rel)) %>%
     dplyr::mutate(
-      cp_code_prior = cumpaste(cp_name, " + "),
-      cp_code_form = ifelse(!is.na(cp_group), yes = paste0(cp_code_prior, " + ", cp_group, "CP_", segment, "_INDEX"), no = cp_code_prior),
-      cp_code_form = format_code(cp_code_form, na_col = cp_name),
-      cp_code_prior = format_code(cp_code_prior, na_col = cp_name)
+      cp_code_prior = cumpaste(.data$cp_name, " + "),
+      cp_code_form = ifelse(!is.na(.data$cp_group), yes = paste0(.data$cp_code_prior, " + ", .data$cp_group, "CP_", .data$segment, "_INDEX"), no = .data$cp_code_prior),
+      cp_code_form = format_code(.data$cp_code_form, na_col = .data$cp_name),
+      cp_code_prior = format_code(.data$cp_code_prior, na_col = .data$cp_name)
     ) %>%
     dplyr::ungroup() %>%
 
     # Same for slope_code
-    dplyr::group_by(cumsum(!slope_rel)) %>%
+    dplyr::group_by(cumsum(!.data$slope_rel)) %>%
     dplyr::mutate(
-      slope_code = cumpaste(slope_name, " + "),
-      slope_code = format_code(slope_code, na_col = slope_name)
+      slope_code = cumpaste(.data$slope_name, " + "),
+      slope_code = format_code(.data$slope_code, na_col = .data$slope_name)
     ) %>%
     dplyr::ungroup()
 

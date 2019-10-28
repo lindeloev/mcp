@@ -74,6 +74,7 @@
 #'   }
 #' @return An \code{mcpfit} object.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @importFrom stats gaussian binomial
 #' @export
 #' @examples
 #' \dontrun{

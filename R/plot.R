@@ -27,6 +27,7 @@
 #' @importFrom magrittr %>%
 #' @importFrom rlang !! :=
 #' @importFrom stats sd
+#' @importFrom dplyr .data
 #' @export
 #' @examples
 #' \dontrun{
@@ -122,7 +123,7 @@ plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by 
       # Add line ID to separate lines. Mark a new line when "eval_at" repeats
       dplyr::mutate(
         line = !!dplyr::sym(fit$pars$x) == min(eval_at),
-        line = cumsum(line)
+        line = cumsum(.data$line)
       )
 
 
@@ -141,7 +142,7 @@ plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by 
         geom_line(aes(group = line), data = Q, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4))
     } else {
       # Return plot with faceting
-      gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y / divide_rate)) +
+      gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y)) +
         geom_point() +
         geom_line(aes(group = line), data = Q, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4)) +
         facet_wrap(paste0("~", facet_by))
@@ -193,8 +194,8 @@ summary.mcpfit = function(object, width = 0.95, ...) {
       object$samples %>%
         tidybayes::tidy_draws() %>%
         tidyr::pivot_longer(-tidyselect::starts_with(".")) %>%
-        dplyr::group_by(name) %>%
-        tidybayes::mean_hdci(value, .width = width) %>%
+        dplyr::group_by(.data$name) %>%
+        tidybayes::mean_hdci(.data$value, .width = width) %>%
         dplyr::rename(mean = value) %>%
         dplyr::select(-.point, -.width, -.interval)
     )
