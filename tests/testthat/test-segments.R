@@ -24,11 +24,31 @@ data_gauss = data.frame(
   bad_id = rnorm(5)  # decimal numbers
 )
 
-check_empty = function(segments, par_x = NULL) {
+# Only needs to test binomial-specific stuff
+data_binomial = data.frame(
+  # y should be a natural number > 0
+  y = c(1, 5, 100),
+  y_bad_numeric = c(-1, 5.1, 10),  # negative, decimal,
+
+  # trials should be a natural number 0 <= N <= y
+  N = c(1, 0, 50),
+  N_bad_numeric = c(2, 3.4, -1),  # greater than y, decimal, negative
+  N_bad_factor = factor(c(1, 0, 50)),
+  N_bad_char = c("1", "0", "50"),
+
+  # x
+  x = 1:3,
+
+  # Varying effects
+  id = c("a", "b", "c")
+)
+
+check_empty = function(segments, data = data_gauss, family = gaussian(), par_x = "x") {
   # Sample
   fit = mcp(
     segments = segments,
-    data = data_gauss,
+    data = data,
+    family = family,
     par_x = par_x,
     sample = FALSE
   )
@@ -36,7 +56,8 @@ check_empty = function(segments, par_x = NULL) {
   # Do it again, but this time on a tibble
   fit = mcp(
     segments = segments,
-    data = tibble::as_tibble(data_gauss),
+    data = tibble::as_tibble(data),
+    family = family,
     par_x = par_x,
     sample = FALSE
   )
@@ -61,10 +82,11 @@ check_empty = function(segments, par_x = NULL) {
 }
 
 # Samples a model. Meant to be used with testthat::expect_error()
-check_error = function(segments) {
+check_error = function(segments, data = data_gauss, family = gaussian()) {
   mcp(
     segments = segments,
-    data = data_gauss,
+    data = data,
+    family = family,
     par_x = "x",
     sample = FALSE
   )
@@ -75,7 +97,7 @@ check_error = function(segments) {
 # TEST Y #
 ##########
 
-test_that("Bad y", {
+testthat::test_that("Bad y", {
   bad_y = list(
     list(  ~ 1),  # No y
     list((1|id) ~ 1),  # y cannot be varying
@@ -89,14 +111,14 @@ test_that("Bad y", {
   )
 
   for (segments in bad_y) {
-    expect_error(
+    testthat::expect_error(
       check_error(segments),
       info = paste0("segments: ", segments)
     )
   }
 })
 
-test_that("Good y", {
+testthat::test_that("Good y", {
   bad_y = list(
     list(y ~ 1),  # Regular
     list(y ~ 1,  # Explicit and implicit y
@@ -107,8 +129,8 @@ test_that("Good y", {
   )
 
   for (segments in bad_y) {
-    expect_true(
-      check_empty(segments, par_x = "x"),
+    testthat::expect_true(
+      check_empty(segments),
       info = paste0("segments: ", segments)
     )
   }
@@ -119,7 +141,7 @@ test_that("Good y", {
 # TEST INTERCEPTS #
 ###################
 
-test_that("bad intercepts", {
+testthat::test_that("bad intercepts", {
   bad_intercepts = list(
     list(y ~ rel(0)),  # rel(0) not supported
     list(y ~ rel(1)),  # Nothing to be relative to here
@@ -129,14 +151,14 @@ test_that("bad intercepts", {
   )
 
   for (segments in bad_intercepts) {
-    expect_error(
+    testthat::expect_error(
       check_error(segments),
       info = paste0("segments: ", segments)
     )
   }
 })
 
-test_that("good intercepts", {
+testthat::test_that("good intercepts", {
   good_intercepts = list(
     list(y ~ 0),
     list(ok_y ~ 1),  # y can be called whatever
@@ -150,8 +172,8 @@ test_that("good intercepts", {
   )
 
   for (segments in good_intercepts) {
-    expect_true(
-      check_empty(segments, par_x = "x"),
+    testthat::expect_true(
+      check_empty(segments),
       info = paste0("segments: ", segments)
     )
   }
@@ -163,7 +185,7 @@ test_that("good intercepts", {
 # TEST SLOPES #
 ###############
 
-test_that("bad slopes", {
+testthat::test_that("bad slopes", {
   bad_slopes = list(
     list(y ~ rel(x)),  # Nothing to be relative to
     list(y ~ x + y),  # Two slopes
@@ -176,14 +198,14 @@ test_that("bad slopes", {
   )
 
   for (segments in bad_slopes) {
-    expect_error(
+    testthat::expect_error(
       check_error(segments),
       info = paste0("segments: ", segments)
     )
   }
 })
 
-test_that("good slopes", {
+testthat::test_that("good slopes", {
   good_slopes = list(
     list(y ~ 0 + x),  # Regular
     list(y ~ 0 + x,  # Multiple on/off
@@ -196,8 +218,8 @@ test_that("good slopes", {
   )
 
   for (segments in good_slopes) {
-    expect_true(
-      check_empty(segments),
+    testthat::expect_true(
+      check_empty(segments, par_x = NULL),
       info = paste0("segments: ", segments)
     )
   }
@@ -209,7 +231,7 @@ test_that("good slopes", {
 # TEST CHANGE POINTS #
 ######################
 
-test_that("bad change points", {
+testthat::test_that("bad change points", {
   bad_cps = list(
     list(y ~ x,
          0 ~ 1),  # Needs changepoint stuff
@@ -226,14 +248,14 @@ test_that("bad change points", {
   )
 
   for (segments in bad_cps) {
-    expect_error(
+    testthat::expect_error(
       check_error(segments),
       info = paste0("segments: ", segments)
     )
   }
 })
 
-test_that("good change points", {
+testthat::test_that("good change points", {
   good_cps = list(
     list(y ~ 0 + x,  # Regular cp
          1 ~ 1),
@@ -256,10 +278,64 @@ test_that("good change points", {
   )
 
   for (segments in good_cps) {
-    expect_true(
-      check_empty(segments, par_x = "x"),
+    testthat::expect_true(
+      check_empty(segments),
       info = paste0("segments: ", segments)
     )
   }
 })
 
+
+
+#################
+# TEST BINOMIAL #
+#################
+
+testthat::test_that("bad binomial", {
+  bad_bin = list(
+    # Misspecification of y and trials
+    list(y ~ 1),  # no trials
+    list(y | N ~ 1),  # wrong format
+    list(trials(N) | y ~ 1),  # Wrong order
+    list(y | trials() ~ 1),  # trials missing
+    list(trials(N) ~ 1),  # no y
+    list(y | trials(N) ~ 1 + x,
+         y | N ~ 1 ~ 1),  # misspecification in later segment (won't test all)
+
+    # Bad data
+    list(bad_y_numeric | trials(N) ~ 1),
+    list(y | trials(N_bad_numeric) ~ 1),
+    list(y | trials(N_bad_factor) ~ 1),
+    list(y | trials(N_bad_char) ~ 1)
+  )
+
+  for (segments in bad_bin) {
+    testthat::expect_error(
+      check_error(segments,
+                  data = data_binomial,
+                  family = binomial()),
+      info = paste0("segments: ", segments)
+    )
+  }
+})
+
+
+testthat::test_that("good binomial", {
+  good_bin = list(
+    list(y | trials(N) ~ 1),  # one segment
+    list(y | trials(N) ~ 1 + x,  # specified multiple times and with rel()
+         y | trials(N) ~ 1 ~ rel(1) + rel(x),
+         rel(1) ~ 0),
+    list(y | trials(N) ~ 1,  # With varying
+         1 + (1|id) ~ 1)
+  )
+
+  for (segments in good_bin) {
+    testthat::expect_true(
+      check_empty(segments,
+                  data = data_binomial,
+                  family = binomial()),
+      info = paste0("segments: ", segments)
+    )
+  }
+})
