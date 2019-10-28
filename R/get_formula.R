@@ -65,7 +65,7 @@ get_formula_str = function(ST) {
 #' Turn formula_str into a proper R function
 #'
 #' @aliases get_func_y
-#' @inheritParams mcp  # currently only family
+#' @inheritParams mcp
 #' @param formula_str string. Returned by \code{get_formula}.
 #' @param par_x string. Same as for \link{mcp}.
 #' @param par_trials String. For binomial models: name of trials column.
