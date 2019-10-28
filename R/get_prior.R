@@ -2,22 +2,37 @@
 # LIST OF DEFAULT PRIORS #
 ##########################
 
-# Default priors for NORMAL (dp_n)
-dp_n = list(
+# Generic default priors
+common_prior = list(
   cp_1 = "dunif(MINX, MAXX)",
   cp = "dunif(%s, MAXX)",
-  cp_rel = "dunif(0, MAXX - %s)",
-  slope = "dnorm(0, SDY / (MAXX - MINX) * 3)",
-  int = "dnorm(0, SDY * 3)",
-  sigma = "dnorm(0, SDY * 3) T(0, )",
-  sd = "dnorm(0, SDY * 3) T(0, )"
+  cp_rel = "dunif(0, MAXX - %s)"
 )
 
-# Default priors for BERNOULLI (dp_b)
-# PLACEHOLDER. NOT IN USE YET
-dp_b = list(
-  # empty
+# Per-family priors
+priors = list(
+  gaussian = c(common_prior, list(
+    slope = "dnorm(0, 3 * SDY / (MAXX - MINX))",
+    int = "dnorm(0, 3 * SDY)",
+    sigma = "dnorm(0, 3 * SDY) T(0, )",
+    sd = "dnorm(0, 3 * SDY) T(0, )"
+  )),
+
+  binomial = c(common_prior, list(
+    # a logit of +/- 10 is quite extreme
+    slope = "dnorm(0, 10 / (MAXX - MINX))",
+    int = "dnorm(0, 10)",
+    sd = "dnorm(0, 10) T(0, )"
+  ))
 )
+
+# # Default priors for NORMAL (prior_gaussian)
+# prior_gaussian = c(prior_common, list(
+#   slope = "dnorm(0, SDY / (MAXX - MINX) * 3)",
+#   int = "dnorm(0, SDY * 3)",
+#   sigma = "dnorm(0, SDY * 3) T(0, )",
+#   sd = "dnorm(0, SDY * 3) T(0, )"
+# ))
 
 
 
@@ -25,21 +40,21 @@ dp_b = list(
 # GET DEFAULT PRIORS #
 ######################
 # Change point
-get_default_prior_cp = function(ST, i) {
+get_default_prior_cp = function(ST, i, family) {
   if (i < 2)
     stop("Only i >= 2 allowed.")
 
   # First change point
   if (i == 2)
-    return(dp_n$cp_1)
+    return(priors[[family]]$cp_1)
 
   # A relative change point intercept
   if (i > 2 & ST$cp_int_rel[i] != 0)
-    return(sprintf(dp_n$cp_rel, ST$cp_code_prior[i - 1]))
+    return(sprintf(priors[[family]]$cp_rel, ST$cp_code_prior[i - 1]))
 
   # An absolute change point intercept
   if (i > 2 & ST$cp_int_rel[i] == 0)
-    return(sprintf(dp_n$cp, ST$cp_code_prior[i - 1]))
+    return(sprintf(priors[[family]]$cp, ST$cp_code_prior[i - 1]))
 }
 
 
@@ -102,28 +117,34 @@ truncate_prior_cp = function(ST, i, prior_str) {
 #' @inheritParams mcp
 #'
 
-get_prior = function(ST, prior = list()) {
-  # Get default priors
-  default_prior = list(sigma = dp_n$sigma)  # Populate this list
+get_prior = function(ST, family, prior = list()) {
+  # Populate this list
+  default_prior = list()
+
+  # Add model-agnostic parameters
+  if (family == "gaussian")
+    default_prior[["sigma"]] = priors[[family]]$sigma
+
+  # Add model-specific paramters
   for (i in seq_len(nrow(ST))) {
     # Helper: Current segment.
     S = ST[i, ]
 
     # Intercept
     if (!is.na(S$int_name))
-      default_prior[[S$int_name]] = dp_n$int
+      default_prior[[S$int_name]] = priors[[family]]$int
 
     # Slope
     if (!is.na(S$slope_name))
-      default_prior[[S$slope_name]] = dp_n$slope
+      default_prior[[S$slope_name]] = priors[[family]]$slope
 
     # Change point
     if (i > 1)
-      default_prior[[S$cp_name]] = get_default_prior_cp(ST, i)
+      default_prior[[S$cp_name]] = get_default_prior_cp(ST, i, family)
 
     # Change point varying effects
     if (!is.na(S$cp_sd)) {
-      default_prior[[S$cp_sd]] = dp_n$sd
+      default_prior[[S$cp_sd]] = priors[[family]]$sd
       default_prior[[S$cp_group]] = get_default_prior_cp_group(ST, i)
     }
 

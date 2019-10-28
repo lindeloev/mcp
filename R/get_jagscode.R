@@ -7,7 +7,7 @@
 #' @return String. A JAGS model.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-get_jagscode = function(data, prior, ST, formula_str) {
+get_jagscode = function(data, prior, ST, formula_str, family) {
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
   mm = paste0("
@@ -58,7 +58,7 @@ model {
       mm = paste0(mm, get_prior_str(
         prior = prior_varying,
         i = i,
-        varying_group = na.omit(ST$cp_group_col[ST$cp_group == names(prior_varying[i])])
+        varying_group = stats::na.omit(ST$cp_group_col[ST$cp_group == names(prior_varying[i])])
       ))
     }
   }
@@ -86,17 +86,22 @@ model {
   mm = paste0(mm, gsub("\n", "\n      ", formula_jags))
 
   # Finally the likelihood
-  mm = paste0(mm, "\n\n    # Likelihood
-    ", ST$y[1], "[i_] ~ dnorm(y_[i_], 1 / sigma^2)")
+  mm = paste0(mm, "\n\n    # Likelihood and log-density for family = ", family, "()
+    ", ST$y[1], "[i_] ~ ")
+
+  if (family == "gaussian") {
+    mm = paste0(mm, "dnorm(y_[i_], 1 / sigma^2)
+    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], y_[i_], 1 / sigma^2)")
+
+  } else if (family == "binomial") {
+    mm = paste0(mm, "dbin(ilogit(y_[i_]), ", ST$trials[1], "[i_])
+    loglik_[i_] = logdensity.bin(", ST$y[1], "[i_], ilogit(y_[i_]), ", ST$trials[1], "[i_])")
+  }
 
 
   ###############
   # OTHER STUFF #
   ###############
-
-  # Log-density.
-  mm = paste0(mm, "\n\n    # Log-density for LOO/WAIC computation
-    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], y_[i_], 1 / sigma^2)")
 
   # Finish up
   mm = paste0(mm, "
@@ -130,7 +135,7 @@ get_prior_str = function(prior, i, varying_group = NULL) {
 
   # If not either number or known parameter, it should be a known distribution.
   if (!is_fixed & !stringr::str_detect(value, all_d))
-    stop("The prior \"", name, " = ", value, "\" is not a known distribution, a number, nor a model parameter.")
+    stop("The prior '", name, " = ", value, "' is not a known distribution, a number, nor a model parameter.")
 
   # If it is a known distribution
   if (!is_fixed) {

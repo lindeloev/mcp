@@ -4,10 +4,13 @@
 \alias{get_prior}
 \title{Get priors for all parameters in a segment table.}
 \usage{
-get_prior(ST, prior = list())
+get_prior(ST, family, prior = list())
 }
 \arguments{
 \item{ST}{Tibble. A segment table returned by \code{get_segment_table}.}
+
+\item{family}{One of gaussian() or binomial(). Only default link functions
+are currently supported.}
 
 \item{prior}{A list of user-defined priors. Will overwrite the relevant
 default priors.}

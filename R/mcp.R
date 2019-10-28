@@ -35,11 +35,12 @@
 #'    * A model parameter name (e.g., \code{int_2 = "int_1"}), indicating that this parameter is shared -
 #'      typically between segments. If two varying effects are shared this way,
 #'      they will need to have the same grouping variable.
+#' @param family One of gaussian() or binomial(). Only default link functions
+#'   are currently supported.
 #' @param par_x String (default: NULL). Only relevant if no segments contains
 #'   slope (no hint at what x is). Set this, e.g., par_x = "time".
 #' @param sample Boolean (default: TRUE). Set to FALSE if you only want to check
 #'   priors, the JAGS model, etc.
-#' @param family WORK IN PROGRESS. One of "gauss" (default), "binomial"
 #' @param cores Positive integer or "all". Number of cores.
 #'   \itemize{
 #'     \item 1: serial sampling
@@ -73,6 +74,7 @@
 #'   }
 #' @return An \code{mcpfit} object.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @importFrom stats gaussian binomial
 #' @export
 #' @examples
 #' \dontrun{
@@ -129,7 +131,7 @@
 mcp = function(segments,
                data = NULL,
                prior = list(),
-               family = "gaussian",
+               family = gaussian(),
                par_x = NULL,
                sample = TRUE,
                cores = 1,
@@ -140,7 +142,7 @@ mcp = function(segments,
                jags_explicit = NULL,
                ...) {
 
-  # Check input values
+  # Check data
   if (is.null(data) & sample == TRUE)
     stop("Cannot sample without data.")
 
@@ -149,6 +151,7 @@ mcp = function(segments,
       stop("`data` must be a data.frame or a tibble.")
   }
 
+  # Check segments
   if (!is.list(segments))
     stop("`segments` must be a list")
 
@@ -160,12 +163,27 @@ mcp = function(segments,
       stop("all segments must be formulas.")
   }
 
+  # Check prior
   if (!is.list(prior))
     stop("`prior` must be a named list.")
 
   if (any(duplicated(names(prior))))
     stop("`prior` has duplicated entries for the same parameter.")
 
+  # Check family
+  if (class(family) != "family")
+    stop("`family` must be one of gaussian() or binomial()")
+
+  if (!family$family %in% c("gaussian", "binomial"))
+    stop("`family` must be one of gaussian() or binomial()")
+
+  if (family$family == "gaussian" & family$link != "identity")
+    stop("Only 'identity' is currently supported link function for gaussian().")
+
+  if(family$family == "binomial" & family$link != "logit")
+    stop("Only 'logit' is currently supported link function for binomial().")
+
+  # Check other stuff
   if (!is.null(par_x) & !is.character(par_x))
     stop("`par_x` must be NULL or a string.")
 
@@ -173,25 +191,27 @@ mcp = function(segments,
     stop("`sample` must be TRUE or FALSE")
 
 
-  # Get an abstract segment table ("ST")prior, func_y, formula_jags, and par_x/param_y
-  ST = get_segment_table(segments, data, par_x)
+  # Get an abstract segment table ("ST")
+  ST = get_segment_table(segments, data, family$family, par_x)
   par_x = unique(ST$x)
-  param_y = unique(ST$y)
+  par_y = unique(ST$y)
+  par_trials = unique(ST$trials)
 
   # Get prior and lists of parameters
-  prior = get_prior(ST, prior)
-  #params_population = names(prior)
-  params_population = stats::na.omit(unique(c("sigma", ST$int_name, ST$slope_name, ST$cp_name[-1], ST$cp_sd)))
+  prior = get_prior(ST, family$family, prior)
   params_varying = logical0_to_null(c(stats::na.omit(ST$cp_group)))
+  params_population = stats::na.omit(unique(c(ST$int_name, ST$slope_name, ST$cp_name[-1], ST$cp_sd)))
+  if (family$family == "gaussian")
+    params_population = c("sigma", params_population)
 
   # Make formula_str and func_y
   formula_str = get_formula_str(ST)
 
   params_funcy = params_population[!params_population %in% ST$cp_sd]
-  func_y = get_func_y(formula_str, par_x, params_funcy, params_varying, nrow(ST))
+  func_y = get_func_y(formula_str, par_x, par_trials, params_funcy, params_varying, nrow(ST), family$family)
 
   # Make jags code and sample if sample==TRUE. If not, just skip it.
-  jags_code = get_jagscode(data, prior, ST, formula_str)
+  jags_code = get_jagscode(data, prior, ST, formula_str, family$family)
 
   if (sample) {
     # Sample it
@@ -219,28 +239,32 @@ mcp = function(segments,
 
   # Make mrpfit object
   mcpfit = list(
+    # By user (same order as mcp argument)
+    segments = segments,
+    data = data,
+    prior = prior,
+    family = family,
+
+    # Results
     samples = samples,
     loglik = loglik,
-
     loo = NULL,
     waic = NULL,
 
-    data = data,
-    prior = prior,
-
+    # Extracted model
     pars = list(
       population = params_population,
       varying = params_varying,
       x = par_x,
-      y = param_y
+      y = par_y,
+      trials = par_trials
     ),
 
-    segments = segments,
     jags_code = jags_code,
     func_y = func_y,
 
-    # Not really meant to be used by the end user.
-    # But useful to handle the class.
+    # Pass info to *.mcpfit() functions.
+    # Not meant to be used by the end user.
     .other = list(
       ST = ST
     )

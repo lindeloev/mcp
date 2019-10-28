@@ -65,14 +65,16 @@ get_formula_str = function(ST) {
 #' Turn formula_str into a proper R function
 #'
 #' @aliases get_func_y
-#' @param formula_str A string. Returned by \code{get_formula}.
-#' @param par_x A string. Same as for \link{mcp}.
-#' @param pars List of parameters in the model which are not related to .
-#' @param pars_varying List of parameters related to varying effects. They will
-#'   be set to zero as default.
+#' @inheritParams mcp
+#' @param formula_str string. Returned by \code{get_formula}.
+#' @param par_x string. Same as for \link{mcp}.
+#' @param par_trials String. For binomial models: name of trials column.
+#' @param pars_pop List of population parameters which the user must provide.
+#' @param pars_varying List varying parameters. They will default to zero
+#'   (optional for the user).
 #' @param nsegments Positive integer. Number of segments, typically \code{nrow(ST)}.
 #'
-get_func_y = function(formula_str, par_x, pars, pars_varying, nsegments) {
+get_func_y = function(formula_str, par_x, par_trials = NA, pars_pop, pars_varying, nsegments, family) {
   # First some substitutions
   formula_func = gsub("PAR_X", par_x, formula_str)  # Proper par_x name
   formula_func = gsub("min\\(", "pmin\\(", formula_func)  # vectorized mean for function
@@ -84,9 +86,10 @@ get_func_y = function(formula_str, par_x, pars, pars_varying, nsegments) {
   func_str = paste0("
   function(",
     par_x, ", ",
-    paste0(pars, collapse = ", "), ", ",
+    ifelse(!is.na(par_trials), yes = paste0(par_trials, ", "), no = ""),
+    paste0(pars_pop, collapse = ", "), ", ",
     paste0(pars_varying, collapse = " = 0, "), ifelse(length(pars_varying) > 0, " = 0, ", ""),
-    "type = \"predict\", ...) {
+    "type = 'predict', rate = FALSE, ...) {
     # Helpers to simplify making the code for this function
     cp_0 = -Inf
     cp_", nsegments, " = Inf
@@ -94,13 +97,32 @@ get_func_y = function(formula_str, par_x, pars, pars_varying, nsegments) {
     # Fitted value
     y = ", formula_func, "
 
+
     # Return predictions or fitted values?
+    if (!type %in% c('predict', 'fitted'))
+      stop(\"'`type` must be one of 'predict' or 'fitted'\")
+    ")
+
+  # Return depends on family
+  if (family == "gaussian") {
+    func_str = paste0(func_str, "
     if (type == 'predict') return(rnorm(length(", par_x, "), y, sigma))
-    if (type == 'fitted') return(y)
-    if (!type %in% c('predict', 'fitted')) stop(\"`type` must be one of 'predict' or 'fitted'\")
+    if (type == 'fitted') return(y)")
+  } else if (family == "binomial") {
+    func_str = paste0(func_str, "
+    inverse_logit = function(x) exp(x) / (1 + exp(x))
+    if (type == 'predict') {
+      if (rate == FALSE) return(rbinom(length(", par_x, "), ", par_trials, ", inverse_logit(y)))
+      if (rate == TRUE)  return(rbinom(length(", par_x, "), ", par_trials, ", inverse_logit(y)) / ", par_trials, ")
+    }
+    if (type == 'fitted')
+      if (rate == FALSE) return(", par_trials, " * inverse_logit(y))
+      if (rate == TRUE)  return(inverse_logit(y))")
+  }
+
+  func_str = paste0(func_str, "
   }")
 
   # Return function
   eval(parse(text = func_str))
 }
-
