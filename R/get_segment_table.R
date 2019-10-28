@@ -28,7 +28,7 @@ unpack_tildes = function(segment, i) {
 
   if (length(chunks) == 2) {
     # Only one tilde. This is the first segment or y is implicit from earlier segment(s)
-    if (i == 1 & stringr::str_detect(chunks[1], "^[-0-9.]+"))
+    if (i == 1 & stringr::str_detect(chunks[1], "^[-0-9.]+"))  # check illigal terms
       stop("y must be a variable.")
     return(tibble::tibble(
       form = form_str,
@@ -58,12 +58,42 @@ check_terms_in_data = function(form, data, i) {
 
 
 # Unpacks y variable name
-unpack_y = function(form_y, i) {
-  if (!is.na(form_y)) {
-    if (!grepl("^[A-Za-z._0-9]+$", form_y))
-      stop("Error in segment ", i, ": Invalid format for response variable. Only a single column name is (currently) allowed")
+unpack_y = function(form_y, i, family) {
+  # Segment 1 must have y specified
+  if (i == 1) {
+    if (is.na(form_y))
+      stop("No response defined in segment 1.")
+
+    if (family == "binomial" & !stringr::str_detect(gsub(" ", "", form_y), "\\|trials\\("))
+      stop("Error in response of segment 1: need a valid trials() specification, e.g., 'y | trials(N) ~ 1 + x'")
   }
-  tibble::tibble(y = form_y)
+
+  if (!is.na(form_y)) {
+    form_y = gsub(" ", "", form_y)  # remove whitespace
+
+    # If binomial, get trials
+    chunks = gsub(")", "", strsplit(gsub(" ", "", form_y), "\\|trials\\(")[[1]])
+
+    if (!all(grepl("^[A-Za-z._0-9]+$", chunks)))
+      stop("Error in segment ", i, ": Invalid format for response variable. Only single column names are allowed.")
+
+    if (length(chunks) == 1) {
+      return(tibble::tibble(
+        y = chunks[1],
+        trials = NA))
+    } else if (length(chunks) == 2) {
+      return(tibble::tibble(
+        y = chunks[1],
+        trials = chunks[2]))
+    } else {
+      stop("Invalid value '", form_y, "' for response. More than one pipe?")
+    }
+  } else {
+    return(tibble::tibble(
+      y = NA,
+      trials = NA
+    ))
+  }
 }
 
 
@@ -203,9 +233,10 @@ unpack_rhs = function(form_rhs, i) {
 #'
 #' @aliases get_segment_table
 #' @inheritParams mcp
-#' @importFrom magrittr %>%
 #' @return A tibble.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @importFrom magrittr %>%
+#' @importFrom stats gaussian binomial
 #' @export
 #' @examples
 #' \dontrun{
@@ -216,10 +247,10 @@ unpack_rhs = function(form_rhs, i) {
 #' get_segment_table(segments)
 #' }
 
-get_segment_table = function(segments, data = NULL, par_x = NULL) {
-  #############################################################
-  # PART 1: BUILD "SEGMENT TABLE (ST)" FROM ISOLATED SEGMENTS #
-  #############################################################
+get_segment_table = function(segments, data = NULL, family = gaussian(), par_x = NULL) {
+  #####################################################
+  # BUILD "SEGMENT TABLE (ST)" FROM ISOLATED SEGMENTS #
+  #####################################################
   ST = tibble::tibble()
   for (i in seq_len(length(segments))) {
     # Get ready...
@@ -230,7 +261,7 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
     # Go! Unpack this segment
     row = tibble::tibble(segment = i)
     row = dplyr::bind_cols(row, unpack_tildes(segment, i))
-    row = dplyr::bind_cols(row, unpack_y(row$form_y, i))
+    row = dplyr::bind_cols(row, unpack_y(row$form_y, i, family = family))
     row = dplyr::bind_cols(row, unpack_cp(row$form_cp, i))
     row = dplyr::bind_cols(row, unpack_rhs(row$form_rhs, i))
 
@@ -238,12 +269,12 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
   }
 
   # Return the cols we need
-  ST = dplyr::select(ST, -form_y, -form_cp, -form_rhs)
+  ST = dplyr::select(ST, -.data$form_y, -.data$form_cp, -.data$form_rhs)
 
 
-  ################################
-  # PART 2: LOOK ACROSS SEGMENTS #
-  ################################
+  ###########################
+  # CHECK SEGMENTS AND DATA #
+  ###########################
 
   # Check segment 1: rel() not possible here.
   if (any(ST[1, c("cp_int", "cp_int_rel", "cp_ran_int", "cp_group_col")] != FALSE, na.rm = T))
@@ -251,7 +282,7 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
   if (any(ST[1, c("int_rel", "slope_rel")] != FALSE, na.rm = T))
     stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
 
-  # rel() in segment 2+
+  # Check rel() in segment 2+
   rel_slope_after_plateau = dplyr::lag(is.na(ST$slope), 1) & ST$slope_rel != 0
   if (any(rel_slope_after_plateau))
     stop("rel(slope) is not meaningful after a plateau segment (without a slope). Use absolute slope to get the same behavior. Found in segment ", which(rel_slope_after_plateau))
@@ -259,7 +290,6 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
     if (ST$cp_int_rel[2] == TRUE)
       stop("rel() cannot be used for change points in segment 2. There are no earlier change points to be relative to. Relative changepoints work from segment 3 and on.")
   }
-
 
   # Set ST$x (what is the x-axis dimension?)
   derived_x = unique(stats::na.omit(ST$slope))
@@ -269,8 +299,8 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
       ST$x = derived_x
     else if (par_x == derived_x)  # par_x provided and matches devided.
       ST$x = derived_x
-    else  # no x info or contradicting info
-      stop("par_x provided but it does not match the predictor found in segment RHS.")
+    else  # contradicting derived and provided x
+      stop("par_x provided but it does not match the predictor found in segment right-hand side")
   } else if (length(derived_x) == 0) {
     # Zero x derived from segments. Rely on par_x?
     if (all(is.na(ST$slope) & is.character(par_x)))
@@ -295,52 +325,64 @@ get_segment_table = function(segments, data = NULL, par_x = NULL) {
     # Tibble will still be used in the rest of mcp
     if (tibble::is_tibble(data))
       data = data.frame(data)
+
+    # Check x and y
     if (!is.numeric(data[, ST$x[1]]))
-      stop("Data column \"", ST$x[1], "\" has to be numeric.")
+      stop("Data column '", ST$x[1], "' has to be numeric.")
     if (!is.numeric(data[, ST$y[1]]))
-      stop("Data column \"", ST$y[1], "\" has to be numeric.")
+      stop("Data column '", ST$y[1], "' has to be numeric.")
+
+    # Check varying
     if (length(derived_varying) > 0) {
       for (varying_col in derived_varying) {
         data_varying = data[, varying_col]
-        if (is.numeric(data_varying) &
-           !is.character(data_varying) &
-           !is.factor(data_varying))
-          if (!all(data_varying == floor(data_varying)))  # FALSE if all are integers (OK)
-            stop("Varying group \"", varying_col, "\" has to be integer, character, or factor.")
+        if (!is.character(data_varying) & !is.factor(data_varying))
+          if (!all(data_varying == floor(data_varying)))
+            stop("Varying group '", varying_col, "' has to be integer, character, or factor.")
       }
     }
 
+    # Check y and trials if binomial
+    if (family == "binomial") {
+      check_integer(data[, ST$y[1]], ST$y[1], lower = 0)
+      check_integer(data[, ST$trials[1]], ST$trials[1], lower = 1)
+    }
   }
+
+
+  ###################################
+  # MUTATE ST WITH NEW HANDY VALUES #
+  ###################################
 
   # Recode relative columns so 0 = not relative. N > 0 is the number of consecutive "relatives"
   ST = ST %>%
-    tidyr::fill(y) %>%
+    tidyr::fill(.data$y, trials) %>%  # Usually only provided in segment 1
 
     # Add variable names
     dplyr::mutate(
-      int_name = ifelse(int, yes = paste0("int_", segment), no = NA),
-      slope_name = ifelse(!is.na(slope), yes = paste0(slope, "_", segment), no = NA),
-      slope_code = slope_name,  # Will be modified in next step
-      cp_name = paste0("cp_", segment - 1),
-      cp_sd = ifelse(cp_ran_int == TRUE, paste0(cp_name, "_sd"), NA),
-      cp_group = ifelse(cp_ran_int == TRUE, paste0(cp_name, "_", cp_group_col), NA)
+      int_name = ifelse(.data$int, yes = paste0("int_", .data$segment), no = NA),
+      slope_name = ifelse(!is.na(.data$slope), yes = paste0(.data$slope, "_", .data$segment), no = NA),
+      slope_code = .data$slope_name,  # Will be modified in next step
+      cp_name = paste0("cp_", .data$segment - 1),
+      cp_sd = ifelse(.data$cp_ran_int == TRUE, paste0(.data$cp_name, "_sd"), NA),
+      cp_group = ifelse(.data$cp_ran_int == TRUE, paste0(.data$cp_name, "_", .data$cp_group_col), NA)
     ) %>%
 
     # Add "cumulative" cp_code_form for concecutive relative intercepts
-    dplyr::group_by(cumsum(!cp_int_rel)) %>%
+    dplyr::group_by(cumsum(!.data$cp_int_rel)) %>%
     dplyr::mutate(
-      cp_code_prior = cumpaste(cp_name, " + "),
-      cp_code_form = ifelse(!is.na(cp_group), yes = paste0(cp_code_prior, " + ", cp_group, "CP_", segment, "_INDEX"), no = cp_code_prior),
-      cp_code_form = format_code(cp_code_form, na_col = cp_name),
-      cp_code_prior = format_code(cp_code_prior, na_col = cp_name)
+      cp_code_prior = cumpaste(.data$cp_name, " + "),
+      cp_code_form = ifelse(!is.na(.data$cp_group), yes = paste0(.data$cp_code_prior, " + ", .data$cp_group, "CP_", .data$segment, "_INDEX"), no = .data$cp_code_prior),
+      cp_code_form = format_code(.data$cp_code_form, na_col = .data$cp_name),
+      cp_code_prior = format_code(.data$cp_code_prior, na_col = .data$cp_name)
     ) %>%
     dplyr::ungroup() %>%
 
     # Same for slope_code
-    dplyr::group_by(cumsum(!slope_rel)) %>%
+    dplyr::group_by(cumsum(!.data$slope_rel)) %>%
     dplyr::mutate(
-      slope_code = cumpaste(slope_name, " + "),
-      slope_code = format_code(slope_code, na_col = slope_name)
+      slope_code = cumpaste(.data$slope_name, " + "),
+      slope_code = format_code(.data$slope_code, na_col = .data$slope_name)
     ) %>%
     dplyr::ungroup()
 
@@ -367,3 +409,13 @@ format_code = function(col, na_col) {
   col
 }
 
+
+# Throws an error if a number/vector contains non-numeric, decimal, or negative
+check_integer = function(x, name, lower = 0) {
+  if (!is.numeric(x))
+    stop("Only positive integers allowed in column '", name, "'")
+  if (!all(x == floor(x)) | !all(x >= lower))  # any decimals or negative
+    stop("Only positive integers allowed in column '", name, "'")
+
+  TRUE
+}

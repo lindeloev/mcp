@@ -38,13 +38,9 @@ run_jags = function(data,
       data = get_jags_data(data, ST),
       params = params,
       model = textConnection(jags_code),
-      # n.chains = n.chains,
-      # n.iter = n.iter,
-      # n.adapt = n.adapt,
-      # n.update = n.update,
       ...
     )
-  } else if(cores == "all" | cores > 1) {
+  } else if (cores == "all" | cores > 1) {
     # PARALLEL
     # Write model to disk
     sink(model_file)
@@ -52,7 +48,7 @@ run_jags = function(data,
     sink()  # stops sinking :-)
 
     # Start parallel cluster
-    if(cores == "all") {
+    if (cores == "all") {
       cores = parallel::detectCores() - 1
     }
     cl = parallel::makePSOCKcluster(cores)
@@ -63,10 +59,6 @@ run_jags = function(data,
       data = get_jags_data(data, ST),
       params = params,
       model = model_file,
-      # n.chains = n.chains,
-      # n.iter = n.iter,
-      # n.adapt = n.adapt,
-      # n.update = n.update,
       ...
     )
 
@@ -101,7 +93,7 @@ get_jags_data = function(data, ST) {
   cols_varying = unique(stats::na.omit(ST$cp_group_col))
 
   # Start with "raw" data
-  cols_data = unique(stats::na.omit(c(ST$y, ST$x)))
+  cols_data = unique(stats::na.omit(c(ST$y, ST$x, ST$trials)))
   jags_data = as.list(data[, c(cols_varying, cols_data)])
 
   for (col in cols_varying) {
