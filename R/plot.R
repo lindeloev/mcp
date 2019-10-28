@@ -93,13 +93,13 @@ plot.mcpfit = function(x, type="overlay", draws=25, pars="population", facet_by 
     if (is.null(facet_by)) {
       # Return plot without faceting
       return(ggplot(x$data, aes_string(x = x$pars$x, y = x$pars$y)) +
-        geom_line(aes(group = line), data = Q, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4)) +
-        geom_point())
+        geom_point() +
+        geom_line(aes(group = line), data = Q, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4)))
     } else {
       # Return plot with faceting
       return(ggplot(x$data, aes_string(x = x$pars$x, y = x$pars$y)) +
-        geom_line(aes(group = line), data = Q, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4)) +
         geom_point() +
+        geom_line(aes(group = line), data = Q, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4)) +
         facet_wrap(paste0("~", facet_by)))
     }
   }
