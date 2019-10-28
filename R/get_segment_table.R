@@ -298,8 +298,8 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
       ST$x = derived_x
     else if (par_x == derived_x)  # par_x provided and matches devided.
       ST$x = derived_x
-    else  # no x info or contradicting info
-      stop("par_x provided but it does not match the predictor found in segment RHS.")
+    else  # contradicting derived and provided x
+      stop("par_x provided but it does not match the predictor found in segment right-hand side")
   } else if (length(derived_x) == 0) {
     # Zero x derived from segments. Rely on par_x?
     if (all(is.na(ST$slope) & is.character(par_x)))
@@ -335,16 +335,16 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
     if (length(derived_varying) > 0) {
       for (varying_col in derived_varying) {
         data_varying = data[, varying_col]
-        if (!is.character(data_varying) & !is.factor(data_varying) & is.numeric(data_varying))
+        if (!is.character(data_varying) & !is.factor(data_varying))
           if (!all(data_varying == floor(data_varying)))
             stop("Varying group '", varying_col, "' has to be integer, character, or factor.")
       }
     }
 
-    # Check trials if binomial
+    # Check y and trials if binomial
     if (family == "binomial") {
-      data_trials = data[, ST$trials[1]]
-      check_natural(data_trials, ST$trials[1])
+      check_integer(data[, ST$y[1]], ST$y[1], lower = 1)
+      check_integer(data[, ST$trials[1]], ST$trials[1], lower = 0)
     }
   }
 
@@ -410,9 +410,11 @@ format_code = function(col, na_col) {
 
 
 # Throws an error if a number/vector contains non-numeric, decimal, or negative
-check_natural = function(x, name) {
+check_integer = function(x, name, lower = 0) {
   if (!is.numeric(x))
     stop("Only positive integers allowed in column '", name, "'")
-  if (!all(x == floor(x)) | !all(x > 0))  # any decimals or negative
+  if (!all(x == floor(x)) | !all(x >= lower))  # any decimals or negative
     stop("Only positive integers allowed in column '", name, "'")
+
+  TRUE
 }
