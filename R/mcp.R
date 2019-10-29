@@ -190,6 +190,14 @@ mcp = function(segments,
   if (!is.logical(sample))
     stop("`sample` must be TRUE or FALSE")
 
+  # Parallel fails on R version 3.6.0 and lower (sometimes at least).
+  # Throw a warning
+  major = as.numeric(R.Version()$major)
+  minor = as.numeric(R.Version()$minor)
+  fails_parallel = (major < 3 | (major == 3 & minor < 6.1))
+  if(cores > 1 & fails_parallel == TRUE)
+    warning("Parallel sampling (cores > 1) has been shown to err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
+
 
   # Get an abstract segment table ("ST")
   ST = get_segment_table(segments, data, family$family, par_x)
