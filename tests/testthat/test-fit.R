@@ -45,17 +45,17 @@ data = data.frame(
   y = do.call(fit_empty$func_y, func_args)
 )
 
-# Fit model to simulated data. A pretty long run to ensure convergence
-# and small MCMC error
-fit = mcp(segments, data, adapt = 2500, update = 2500, iter = 3000)
-
-# Check: expect all estimates to be within 98% HDI
-results_table = summary(fit, width = 0.95) %>%
-  dplyr::left_join(df, by = "name") %>%
-  dplyr::mutate(score = theory > .lower & theory < .upper)
-
-test_that("fit approximate default priors", {
-  testthat::expect_true(
-    all(results_table$score),
-    info = dplyr::mutate_if(results_table, is.numeric, round, digits = 1))
-})
+# # Fit model to simulated data. A pretty long run to ensure convergence
+# # and small MCMC error
+# fit = mcp(segments, data, adapt = 2500, update = 2500, iter = 3000)
+#
+# # Check: expect all estimates to be within 98% HDI
+# results_table = summary(fit, width = 0.95) %>%
+#   dplyr::left_join(df, by = "name") %>%
+#   dplyr::mutate(score = theory > .lower & theory < .upper)
+#
+# test_that("fit approximate default priors", {
+#   testthat::expect_true(
+#     all(results_table$score),
+#     info = dplyr::mutate_if(results_table, is.numeric, round, digits = 1))
+# })
