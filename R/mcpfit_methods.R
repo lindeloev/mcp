@@ -42,9 +42,14 @@ get_summary = function(fit, width, varying = FALSE) {
   )
 
   # Diagnostics
+  rhat = try(coda::gelman.diag(samples)$psrf[, 1], TRUE)
+  if(!is.numeric(rhat)) {
+    warning(rhat)
+    rhat = rep(NA, nrow(estimates))
+  }
   diagnostics = data.frame(
-    rhat = coda::gelman.diag(samples)$psrf[, 1],  # Gelman-Rubin
-    eff = coda::effectiveSize(samples),  # Effective sample size
+    rhat = rhat,  # Gelman-Rubin
+    eff = round(coda::effectiveSize(samples)),  # Effective sample size
     ts_se = lapply(samples, coda::spectrum0.ar) %>%  # Time-series SE
       data.frame() %>%
       dplyr::select(tidyselect::starts_with("spec")) %>%
@@ -136,7 +141,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, ...) {
 #' @aliases fixef fixef.mcpfit fixed.effects
 #' @inheritParams summary.mcpfit
 #' @export
-fixef.mcpfit = function(object, width = 0.95, ...) {
+fixef = function(object, width = 0.95, ...) {
   get_summary(object, width, varying = FALSE)
 }
 
@@ -145,7 +150,7 @@ fixef.mcpfit = function(object, width = 0.95, ...) {
 #' @aliases ranef ranef.mcpfit random.effects
 #' @inheritParams summary.mcpfit
 #' @export
-ranef.mcpfit = function(object, width = 0.95, ...) {
+ranef = function(object, width = 0.95, ...) {
   get_summary(object, width, varying = TRUE)
 }
 

@@ -8,20 +8,21 @@ get_prior_str(prior, i, varying_group = NULL)
 }
 \arguments{
 \item{prior}{Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
-  sigma) and the values are either
-
-   * A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
-     conventional prior distribution. Uninformative priors based on data
-     propertiesare used where priors are not specified. This ensures good
-     parameter estimations, but it is a questionable for hypothesis testing.
-     \code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
-     details. Change points are forced to be ordered through the priors using
-     truncation, except for uniform priors where the lower bound should be
-     greater than the previous change point, \code{dunif(cp_1, MAXX)}.
-   * A numerical value (e.g., \code{int_1 = -2.1}) indicating a fixed value.
-   * A model parameter name (e.g., \code{int_2 = "int_1"}), indicating that this parameter is shared -
-     typically between segments. If two varying effects are shared this way,
-     they will need to have the same grouping variable.}
+sigma) and the values are either
+\itemize{
+  \item A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
+    conventional prior distribution. Uninformative priors based on data
+    propertiesare used where priors are not specified. This ensures good
+    parameter estimations, but it is a questionable for hypothesis testing.
+    \code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
+    details. Change points are forced to be ordered through the priors using
+    truncation, except for uniform priors where the lower bound should be
+    greater than the previous change point, \code{dunif(cp_1, MAXX)}.
+  \item A numerical value (e.g., \code{int_1 = -2.1}) indicating a fixed value.
+  \item A model parameter name (e.g., \code{int_2 = "int_1"}), indicating that this parameter is shared -
+    typically between segments. If two varying effects are shared this way,
+    they will need to have the same grouping variable.
+}}
 
 \item{i}{The index in \code{prior} to get code for}
 

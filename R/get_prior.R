@@ -6,23 +6,33 @@
 common_prior = list(
   cp_1 = "dunif(MINX, MAXX)",
   cp = "dunif(%s, MAXX)",
-  cp_rel = "dunif(0, MAXX - %s)"
+  cp_rel = "dunif(0, MAXX - %s)",
+  sd = "dnorm(0, MAXX) T(0, )"
 )
 
 # Per-family priors
 priors = list(
   gaussian = c(common_prior, list(
-    slope = "dnorm(0, 3 * SDY / (MAXX - MINX))",
+    slope = "dnorm(0, SDY / (MAXX - MINX))",
     int = "dnorm(0, 3 * SDY)",
-    sigma = "dnorm(0, 3 * SDY) T(0, )",
-    sd = "dnorm(0, 3 * SDY) T(0, )"
+    sigma = "dnorm(0, SDY) T(0, )"
   )),
 
+  # Identical priors for binomial and bernoulli.
+  # A logit of +/- 5 is quite extreme. Very compatible with 3
   binomial = c(common_prior, list(
-    # a logit of +/- 10 is quite extreme
-    slope = "dnorm(0, 10 / (MAXX - MINX))",
-    int = "dnorm(0, 10)",
-    sd = "dnorm(0, 10) T(0, )"
+    slope = "dnorm(0, 3 / (MAXX - MINX))",
+    int = "dnorm(0, 3)"
+  )),
+
+  bernoulli = c(common_prior, list(
+    slope = "dnorm(0, 3 / (MAXX - MINX))",
+    int = "dnorm(0, 3)"
+  )),
+
+  poisson = c(common_prior, list(
+    slope = "dnorm(0, 10)",
+    int = "dnorm(0, 10)"
   ))
 )
 

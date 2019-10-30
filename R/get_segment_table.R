@@ -267,7 +267,8 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
   }
 
   # Return the cols we need
-  ST = dplyr::select(ST, -.data$form_y, -.data$form_cp, -.data$form_rhs)
+  ST = dplyr::select(ST, -.data$form_y, -.data$form_cp, -.data$form_rhs) %>%
+    tidyr::fill(.data$y, .data$trials, .direction="downup")  # Usually only provided in segment 1
 
 
   ###########################
@@ -309,10 +310,13 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
     # More than one...
     stop("More than one predictor found: '", paste0(unique(stats::na.omit(ST$slope)), collapse = "' and '"), "'")
 
-  # Only one response variable allowed
+  # Response variables
   derived_y = unique(stats::na.omit(ST$y))
   if (length(derived_y) != 1)
     stop("There should be exactly one response variable. Found '", paste0(derived_y, collapse="' and '", "'."))
+
+  if(!is.na(ST$trials[1]) & family != "binomial")
+    stop("response format `y | trials(N)` only meaningful for family = binomial(); not for ", family, "()")
 
   # Varying effects
   derived_varying = unique(stats::na.omit(ST$cp_group_col))
@@ -344,6 +348,11 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
     if (family == "binomial") {
       check_integer(data[, ST$y[1]], ST$y[1], lower = 0)
       check_integer(data[, ST$trials[1]], ST$trials[1], lower = 1)
+    } else if (family == "bernoulli") {
+      if (any(!data[, ST$y[1]] %in% c(0, 1)))
+        stop("Only responses 0 and 1 are allowed for family = bernoulli() in column '", ST$y[1], "'")
+    } else if (family == "poisson") {
+      check_integer(data[, ST$y[1]], ST$y[1], lower = 0)
     }
   }
 
@@ -354,7 +363,6 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
 
   # Recode relative columns so 0 = not relative. N > 0 is the number of consecutive "relatives"
   ST = ST %>%
-    tidyr::fill(.data$y, trials) %>%  # Usually only provided in segment 1
 
     # Add variable names
     dplyr::mutate(
