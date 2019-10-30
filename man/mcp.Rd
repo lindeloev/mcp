@@ -18,23 +18,24 @@ left-hand side is the change point (on x). See examples for more details.}
 \item{data}{Data.frame or tibble in long format.}
 
 \item{prior}{Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
-  sigma) and the values are either
+sigma) and the values are either
+\itemize{
+  \item A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
+    conventional prior distribution. Uninformative priors based on data
+    propertiesare used where priors are not specified. This ensures good
+    parameter estimations, but it is a questionable for hypothesis testing.
+    \code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
+    details. Change points are forced to be ordered through the priors using
+    truncation, except for uniform priors where the lower bound should be
+    greater than the previous change point, \code{dunif(cp_1, MAXX)}.
+  \item A numerical value (e.g., \code{int_1 = -2.1}) indicating a fixed value.
+  \item A model parameter name (e.g., \code{int_2 = "int_1"}), indicating that this parameter is shared -
+    typically between segments. If two varying effects are shared this way,
+    they will need to have the same grouping variable.
+}}
 
-   * A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
-     conventional prior distribution. Uninformative priors based on data
-     propertiesare used where priors are not specified. This ensures good
-     parameter estimations, but it is a questionable for hypothesis testing.
-     \code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
-     details. Change points are forced to be ordered through the priors using
-     truncation, except for uniform priors where the lower bound should be
-     greater than the previous change point, \code{dunif(cp_1, MAXX)}.
-   * A numerical value (e.g., \code{int_1 = -2.1}) indicating a fixed value.
-   * A model parameter name (e.g., \code{int_2 = "int_1"}), indicating that this parameter is shared -
-     typically between segments. If two varying effects are shared this way,
-     they will need to have the same grouping variable.}
-
-\item{family}{One of gaussian() or binomial(). Only default link functions
-are currently supported.}
+\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}.
+Only default link functions are currently supported.}
 
 \item{par_x}{String (default: NULL). Only relevant if no segments contains
 slope (no hint at what x is). Set this, e.g., par_x = "time".}
@@ -144,6 +145,9 @@ spread_draws(fit$samples, cp_1, cp_2, int_1, year_1, year_2) \%>\%
 # Show JAGS model
 cat(fit$jags_code)
 }
+}
+\seealso{
+\link{get_segment_table}
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

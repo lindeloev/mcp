@@ -162,12 +162,12 @@ plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
   }
 
   # First, let's get all the predictors in shape for func_y
-  if(fit$family$family == "gaussian") {
+  if(!fit$family$family == "binomial") {
     Q = Q %>%
       tidyr::expand_grid(!!fit$pars$x := eval_at)  # correct name of x-var
-  } else {
-    if (!is.null(facet_by))
-      stop("Plot with rate = TRUE not implemented for varying effects (yet).")
+  } else if (fit$family$family == "binomial") {
+    if (!is.null(facet_by) & rate == FALSE)
+      stop("Plot with rate = FALSE not implemented for varying effects (yet).")
 
     # Interpolate trials for binomial at the values in "eval_at"
     interpolated_trials = round(stats::approx(fit$data[, fit$pars$trials], n = X_RESOLUTION)$y)
@@ -232,18 +232,22 @@ plot_bayesplot = function(fit, type, pars = "population", regex_pars = character
   if (!is.character(pars) | !is.character(regex_pars))
     stop("pars and regex_pars has to be string/character.")
 
+  if (any(c("population", "varying") %in% pars) & length(pars )> 1)
+    stop("pars cannot be a vector that contains multiple elements AND 'population' or 'varying'.")
+
   if (any(c("hex", "scatter") %in% type) & (length(pars) != 2 | length(regex_pars) > 0))
       stop("`type` = 'hex' or 'scatter' takes exactly two parameters which must be provided via the `pars` argument")
 
+
   # Handle special codes
-  if (pars == "population") {
+  if ("population" %in% pars) {
     if (length(regex_pars) == 0) {
       pars = fit$pars$population
     } else {
       # This probably means that the user left pars as default.
       pars = character(0)
     }
-  } else if (pars == "varying") {
+  } else if ("varying" %in% pars) {
     # Regex search for varying effects
     regex_pars = paste0("^", fit$pars$varying)
     pars = character(0)

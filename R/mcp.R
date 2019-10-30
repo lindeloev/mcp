@@ -21,9 +21,9 @@
 #'   the left-hand side is the response variable. In the following segments, the
 #'   left-hand side is the change point (on x). See examples for more details.
 #' @param prior Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
-#'   sigma) and the values are either
-#'
-#'    * A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
+#'  sigma) and the values are either
+#'  \itemize{
+#'    \item A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
 #'      conventional prior distribution. Uninformative priors based on data
 #'      propertiesare used where priors are not specified. This ensures good
 #'      parameter estimations, but it is a questionable for hypothesis testing.
@@ -31,12 +31,13 @@
 #'      details. Change points are forced to be ordered through the priors using
 #'      truncation, except for uniform priors where the lower bound should be
 #'      greater than the previous change point, \code{dunif(cp_1, MAXX)}.
-#'    * A numerical value (e.g., \code{int_1 = -2.1}) indicating a fixed value.
-#'    * A model parameter name (e.g., \code{int_2 = "int_1"}), indicating that this parameter is shared -
+#'    \item A numerical value (e.g., \code{int_1 = -2.1}) indicating a fixed value.
+#'    \item A model parameter name (e.g., \code{int_2 = "int_1"}), indicating that this parameter is shared -
 #'      typically between segments. If two varying effects are shared this way,
 #'      they will need to have the same grouping variable.
-#' @param family One of gaussian() or binomial(). Only default link functions
-#'   are currently supported.
+#'  }
+#' @param family One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}.
+#'   Only default link functions are currently supported.
 #' @param par_x String (default: NULL). Only relevant if no segments contains
 #'   slope (no hint at what x is). Set this, e.g., par_x = "time".
 #' @param sample Boolean (default: TRUE). Set to FALSE if you only want to check
@@ -73,6 +74,7 @@
 #'       in \code{fit$jags_code}
 #'   }
 #' @return An \code{mcpfit} object.
+#' @seealso \link{get_segment_table}
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @importFrom stats gaussian binomial
 #' @export
@@ -174,14 +176,17 @@ mcp = function(segments,
   if (class(family) != "family")
     stop("`family` must be one of gaussian() or binomial()")
 
-  if (!family$family %in% c("gaussian", "binomial"))
-    stop("`family` must be one of gaussian() or binomial()")
+  if (!family$family %in% c("gaussian", "binomial", "bernoulli", "poisson"))
+    stop("`family` must be one of gaussian(), binomial(), or bernoulli()")
 
-  if (family$family == "gaussian" & family$link != "identity")
-    stop("Only 'identity' is currently supported link function for gaussian().")
+  if (family$family == "gaussian" & !family$link %in% c("identity"))
+    stop("'identity' is currently the only supported link function for gaussian().")
 
-  if(family$family == "binomial" & family$link != "logit")
-    stop("Only 'logit' is currently supported link function for binomial().")
+  if(family$family %in% c("binomial", "bernoulli") & !family$link %in% c("logit"))
+    stop("'logit' is currently the only supported link function for binomial() and bernoulli().")
+
+  if(family$family == "poisson" & !family$link %in% c("log"))
+    stop("'log' is currently the only supported link function for poisson().")
 
   # Check other stuff
   if (!is.null(par_x) & !is.character(par_x))

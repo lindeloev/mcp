@@ -118,6 +118,15 @@ get_func_y = function(formula_str, par_x, par_trials = NA, pars_pop, pars_varyin
     if (type == 'fitted')
       if (rate == FALSE) return(", par_trials, " * inverse_logit(y))
       if (rate == TRUE)  return(inverse_logit(y))")
+  } else if (family == "bernoulli") {
+    func_str = paste0(func_str, "
+    inverse_logit = function(x) exp(x) / (1 + exp(x))
+    if (type == 'predict') return(rbinom(length(", par_x, "), 1, inverse_logit(y)))
+    if (type == 'fitted') return(inverse_logit(y))")
+  } else if (family == "poisson") {
+    func_str = paste0(func_str, "
+    if (type == 'predict') return(rpois(length(", par_x, "), exp(y)))
+    if (type == 'fitted') return(exp(y))")
   }
 
   func_str = paste0(func_str, "
