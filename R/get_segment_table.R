@@ -11,12 +11,10 @@ unpack_tildes = function(segment, i) {
     stop("No response variable in segment 1.")
   } else if (!has_LHS & i > 1) {
     # If no LHS, add a change point "intercept"
-    form_str = as.character(segment)
-    form_str = paste("1 ", form_str[1], form_str[2])
+    form_str = paste("1 ", format(segment))
   } else if (has_LHS) {
     # Make regular formula into string
-    form_str = as.character(segment)
-    form_str = paste(form_str[2], form_str[1], form_str[3])
+    form_str = format(segment)
   }
 
   # Check for rel(0)
@@ -410,12 +408,20 @@ format_code = function(col, na_col) {
 }
 
 
-# Throws an error if a number/vector contains non-numeric, decimal, or negative
-check_integer = function(x, name, lower = 0) {
+#' Throws an error if a number/vector contains non-numeric, decimal, or less-than-lower
+#'
+#' The expected behavior of is.integer, with informative error messages.
+#'
+#' @aliases check_integer
+#' @param x Numeric value or vector
+#' @param name Name to show in error message.
+#' @param lower the smallest allowed value. lower = 1 checks for positive integers.
+#'
+check_integer = function(x, name, lower = -Inf) {
   if (!is.numeric(x))
-    stop("Only positive integers allowed in column '", name, "'")
+    stop("Only integers >= ", lower, " allowed for '", name, "'")
   if (!all(x == floor(x)) | !all(x >= lower))  # any decimals or negative
-    stop("Only positive integers allowed in column '", name, "'")
+    stop("Only integers >= ", lower, " allowed for '", name, "'")
 
   TRUE
 }

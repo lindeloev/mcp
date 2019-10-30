@@ -5,25 +5,45 @@
 \alias{plot}
 \title{Plot mcpfit}
 \usage{
-\method{plot}{mcpfit}(x, type = "overlay", draws = 25,
-  pars = "population", facet_by = NULL, rate = TRUE, ...)
+\method{plot}{mcpfit}(x, type = "segments", draws = 25,
+  pars = "population", regex_pars = character(0), facet_by = NULL,
+  rate = TRUE, ncol = 1, ...)
 }
 \arguments{
 \item{x}{An mcpfit object}
 
-\item{type}{String. One of "overlay" (default) or "combo".}
+\item{type}{String or vector of strings. Calls \code{bayesplot::mcmc_*type*()}.
+Common calls are "combo", "trace", and "dens_overlay". Current options include
+'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
+'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
+'trace_highlight', and 'violin".}
 
-\item{draws}{Positive integer. Number of posterior draws to use when type = "overlay".}
+\item{draws}{Positive integer. Number of posterior draws to use when type = "segments".}
 
-\item{pars}{Vector of parameter names to plot or "population" (default) or
-"all" or "varying". Only relevant for type = "combo".}
+\item{pars}{Character vector. One of:
+\itemize{
+  \item Vector of parameter names.
+  \item "population" (default) plots all population parameters.
+  \item "varying" plots all varying effects. To plot a particular varying
+    effect, use \code{regex_pars = "^name"}.
+}}
 
-\item{facet_by}{String. Name of a varying group. Only relevant for
-type = "overlay"}
+\item{regex_pars}{Vector of regular expressions. This will typically just be
+the beginning of the parameter name(s), i.e., "^cp_" plots all change
+points, "^my_varying" plots all levels of a particular varying effect, and
+"^cp_|^my_varying" plots both.}
+
+\item{facet_by}{String. Name of a varying group.
+\code{facet_by} only applies for \code{type = "segments"}}
 
 \item{rate}{Boolean. For binomial models, plot on raw data (\code{rate = FALSE}) or
 response divided by number of trials (\code{rate = TRUE}). If FALSE, linear
-interpolation on trial number is used to infer trials at a particular x.}
+interpolation on trial number is used to infer trials at a particular x.
+\code{rate} only applies for \code{type = "segments"}}
+
+\item{ncol}{Number of columns in plot. This is useful when you have many
+parameters and only one plot \code{type}.
+\code{ncol} only when \code{type != "segments"}}
 
 \item{...}{Currently ignored.}
 }
@@ -31,21 +51,48 @@ interpolation on trial number is used to infer trials at a particular x.}
 A \code{ggplot2} object.
 }
 \description{
-Defaults to \code{plot(fit, "overlay")}, plotting posterior draws on top of
-data to inspect model fit. It uses \code{fit$func_y} with \code{draws}
-posterior samples. These represent the joint posterior distribution of
-parameter values. If you see a few erratic lines, this is a sign that you may
-want to increase arguments 'adapt', 'update', and 'iter' in \code{\link{mcp}}
+Plotting posterior fitted lines on top of data (\code{plot(fit)}) or many
+types of plots of parameter estimates (typically \code{plot(fit, "combo")}).
+See examples for typical use cases.
 }
 \details{
-\code{plot(fit, "combo")} calls \code{bayesplot::mcmc_combo(fit$samples)}. Use that directly
-for finer control.
+For \code{type = "segments"}, it uses \code{fit$func_y} with \code{draws}
+  posterior samples. These represent the joint posterior distribution of
+  parameter values.
+
+  For other \code{type}, it calls \code{bayesplot::mcmc_*type*()}. Use these
+  directly on \code{fit$samples} if you want finer control of plotting, e.g.,
+  \code{bayesplot::mcmc_dens(fit$samples)}
+
+  In any case, if you see a few erratic lines or parameter estimates, this is
+  a sign that you may want to increase arguments 'adapt', 'update', and
+  'iter' in \code{\link{mcp}}.
 }
 \examples{
 \dontrun{
-plot(fit)  # defaults to the below
-plot(fit, type="overlay", draws=50) + ggtitle("Great fit!")
+# Plots segments (default)
+plot(fit)
+plot(fit, draws = 50, rate = FALSE)  # more draws. for binomial.
+plot(fit, facet_by = "my_varying")  # varying effects
+
+# Plot parameter estimates
 plot(fit, "combo")
+plot(fit, "combo", pars = "varying", ncol = 3)  # plot all varying effects
+plot(fit, "combo", regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying
+
+# More options for parameter estimates
+plot(fit, "combo", pars = c("var1", "var2", "var3"), regex_pars = "^my_varying")
+plot(fit, c("areas", "intervals"))
+
+# Some plots only take pairs
+plot(fit, "hex", pars = c("var1", "var2"))
+
+
+# Customize one-column plots using regular ggplot2
+plot(fit) + theme_bw(15) + ggtitle("Great plot!")
+
+# Customize two-column plots using the "patchwork" package.
+plot(fit, c("trace", "dens_overlay")) * theme_bw(10)
 }
 }
 \author{

@@ -208,9 +208,9 @@ mcp = function(segments,
   # Get prior and lists of parameters
   prior = get_prior(ST, family$family, prior)
   params_varying = logical0_to_null(c(stats::na.omit(ST$cp_group)))
-  params_population = stats::na.omit(unique(c(ST$int_name, ST$slope_name, ST$cp_name[-1], ST$cp_sd)))
+  params_population = c(stats::na.omit(unique(c(ST$int_name, ST$slope_name, ST$cp_name[-1], ST$cp_sd))))
   if (family$family == "gaussian")
-    params_population = c("sigma", params_population)
+    params_population = c(params_population, "sigma")
 
   # Make formula_str and func_y
   formula_str = get_formula_str(ST)
