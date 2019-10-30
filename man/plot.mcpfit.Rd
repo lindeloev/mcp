@@ -5,9 +5,9 @@
 \alias{plot}
 \title{Plot mcpfit}
 \usage{
-\method{plot}{mcpfit}(x, type = "segments", draws = 25,
-  pars = "population", regex_pars = character(0), facet_by = NULL,
-  rate = TRUE, ncol = 1, ...)
+\method{plot}{mcpfit}(x, type = "segments", pars = "population",
+  regex_pars = character(0), facet_by = NULL, rate = TRUE,
+  draws = 25, ncol = 1, ...)
 }
 \arguments{
 \item{x}{An mcpfit object}
@@ -17,8 +17,6 @@ Common calls are "combo", "trace", and "dens_overlay". Current options include
 'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
 'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
 'trace_highlight', and 'violin".}
-
-\item{draws}{Positive integer. Number of posterior draws to use when type = "segments".}
 
 \item{pars}{Character vector. One of:
 \itemize{
@@ -41,6 +39,8 @@ response divided by number of trials (\code{rate = TRUE}). If FALSE, linear
 interpolation on trial number is used to infer trials at a particular x.
 \code{rate} only applies for \code{type = "segments"}}
 
+\item{draws}{Positive integer. Number of posterior draws to use when type = "segments".}
+
 \item{ncol}{Number of columns in plot. This is useful when you have many
 parameters and only one plot \code{type}.
 \code{ncol} only when \code{type != "segments"}}
@@ -62,7 +62,9 @@ For \code{type = "segments"}, it uses \code{fit$func_y} with \code{draws}
 
   For other \code{type}, it calls \code{bayesplot::mcmc_*type*()}. Use these
   directly on \code{fit$samples} if you want finer control of plotting, e.g.,
-  \code{bayesplot::mcmc_dens(fit$samples)}
+  \code{bayesplot::mcmc_dens(fit$samples)}. There are also a number of useful
+  plots in the \link{coda} package, i.e., \code{coda::gelman.plot(fit$samples)}
+  and \code{coda::crosscorr.plot(fit$samples)}
 
   In any case, if you see a few erratic lines or parameter estimates, this is
   a sign that you may want to increase arguments 'adapt', 'update', and
