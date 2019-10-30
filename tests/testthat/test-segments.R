@@ -140,7 +140,7 @@ testthat::test_that("Bad y", {
 testthat::test_that("Good y", {
   bad_y = list(
     list(y ~ 1),  # Regular
-    list(y ~ 1,  # Explicit and implicit y
+    list(y ~ 1,  # Explicit and implicit y and cp
          y ~ 1 ~ 1,
          rel(1) + (1|id) ~ rel(1) + x,
          ~ 1),
