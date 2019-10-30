@@ -31,6 +31,8 @@ data_binomial = data.frame(
   y = c(1, 0, 100, 3, 5),
   y_bad_numeric = c(-1, 5.1, 10, 3, 5),  # negative, decimal,
 
+  y_bern = c(0, 1, 0, 1, 1),
+
   # trials should be a natural number 0 <= N <= y
   N = c(1, 1, 100, 6, 10),
   N_bad_numeric = c(-1, 1.1, 99, 6, 10),  # smaller than y, decimal, negative
@@ -319,10 +321,10 @@ testthat::test_that("bad binomial", {
     list(y | trials() ~ 1),  # trials missing
     list(trials(N) ~ 1),  # no y
     list(y | trials(N) ~ 1 + x,
-         y | N ~ 1 ~ 1),  # misspecification in later segment (won't test all)
+         y | N ~ 1 ~ 1),  # misspecification in later segment
 
     # Bad data
-    list(bad_y_numeric | trials(N) ~ 1),
+    list(y_bad_numeric | trials(N) ~ 1),
     list(y | trials(N_bad_numeric) ~ 1),
     list(y | trials(N_bad_factor) ~ 1),
     list(y | trials(N_bad_char) ~ 1)
@@ -355,6 +357,106 @@ testthat::test_that("good binomial", {
       test_mcp(segments,
                   data = data_binomial,
                   family = binomial()),
+      info = paste0("segments: ", segments)
+    )
+  }
+})
+
+
+
+##################
+# TEST BERNOULLI #
+##################
+# This is rather short since most is tested via binomial
+
+testthat::test_that("bad bernoulli", {
+  bad_bin = list(
+    # Misspecification of y and trials
+    list(y_bern | trials(N) ~ 1),  # trials
+    list(y_bern ~ 1 + x,
+         y_bern | trials(N) ~ 1 ~ 1),  # misspecification in later segment
+
+    # Bad data
+    list(y_bad_numeric ~ 1),
+    list(y ~ 1)  # binomial response
+  )
+
+  for (segments in bad_bin) {
+    testthat::expect_error(
+      test_mcp(segments,
+               data = data_binomial,
+               family = bernoulli(),
+               sample = FALSE),  # should err before sampling
+      info = paste0("segments: ", segments)
+    )
+  }
+})
+
+
+testthat::test_that("good bernoulli", {
+  good_bin = list(
+    list(y_bern ~ 1 + x),  # one segment
+    list(y_bern ~ 1 + x,  # specified multiple times and with rel()
+         y_bern ~ 1 ~ rel(1) + rel(x),
+         rel(1) ~ 0),
+    list(y_bern ~ 1,  # With varying
+         1 + (1|id) ~ 1)
+  )
+
+  for (segments in good_bin) {
+    testthat::expect_true(
+      test_mcp(segments,
+               data = data_binomial,
+               family = bernoulli()),
+      info = paste0("segments: ", segments)
+    )
+  }
+})
+
+
+################
+# TEST POISSON #
+################
+# Like binomial, but without the trials()
+
+testthat::test_that("bad poisson", {
+  bad_bin = list(
+    # Misspecification of y and trials
+    list(y | trials(N) ~ 1),  # bad response format
+    list(y ~ 1 + x,
+         y | trials(N) ~ 1 ~ 1),  # misspecification in later segment
+
+    # Bad data
+    list(y_bad_numeric ~ 1)
+  )
+
+  for (segments in bad_bin) {
+    testthat::expect_error(
+      test_mcp(segments,
+               data = data_binomial,
+               family = poisson(),
+               sample = FALSE),  # should err before sampling
+      info = paste0("segments: ", segments)
+    )
+  }
+})
+
+
+testthat::test_that("good poisson", {
+  good_bin = list(
+    list(y ~ 1 + x),  # one segment
+    list(y ~ 1 + x,  # specified multiple times and with rel()
+         y  ~ 1 ~ rel(1) + rel(x),
+         rel(1) ~ 0),
+    list(y ~ 1,  # With varying
+         1 + (1|id) ~ 1)
+  )
+
+  for (segments in good_bin) {
+    testthat::expect_true(
+      test_mcp(segments,
+               data = data_binomial,
+               family = poisson()),
       info = paste0("segments: ", segments)
     )
   }
