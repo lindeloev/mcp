@@ -59,6 +59,13 @@ loo::loo_compare(fit1$loo, fit2$loo)
 loo::loo_model_weights(list(fit1$loo, fit2$loo))
 }
 }
+\seealso{
+\link[mcp]{loo}, \link[mcp]{waic}
+
+\link[mcp]{waic}, \link{criterion}
+
+\link[mcp]{loo}, \link{criterion}
+}
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
 }

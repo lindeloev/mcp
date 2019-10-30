@@ -21,8 +21,8 @@ get_func_y(formula_str, par_x, par_trials = NA, pars_pop, pars_varying,
 
 \item{nsegments}{Positive integer. Number of segments, typically \code{nrow(ST)}.}
 
-\item{family}{One of gaussian() or binomial(). Only default link functions
-are currently supported.}
+\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}.
+Only default link functions are currently supported.}
 }
 \description{
 Turn formula_str into a proper R function
