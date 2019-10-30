@@ -28,6 +28,12 @@ Imports:
 	ggplot2,
 	methods,
 	stats,
-	rlang
+	rlang,
+	patchwork
+Remotes: 
+    thomasp85/patchwork
 Suggests: 
-    testthat (>= 2.1.0)
+    testthat (>= 2.1.0),
+	knitr, 
+	rmarkdown
+VignetteBuilder: knitr
