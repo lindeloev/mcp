@@ -1,0 +1,39 @@
+# Define R releases
+language: r
+r:
+#  - oldrel
+  - release
+#  - devel
+
+# Do not rebuild packages from source on every commit.
+# Perhaps later look at this: https://pjs-web.de/post/using-ccache-to-speed-up-r-package-checks-on-travis-ci/
+cache: packages
+r_binary_packages:
+ - dplyr
+ - stringi
+ - rstan
+ - StanHeaders
+ - curl
+ - openssl
+
+r_build_args: "--no-build-vignettes"
+r_check_args: "--no-build-vignettes --as-cran"
+warnings_are_errors: false
+
+# Test on linux and osx and install JAGS on both
+os:
+  - linux
+  - osx
+
+addons:
+  apt:
+    packages: jags
+  homebrew:
+    packages: jags
+
+# Test coverage:
+r_github_packages:
+  - r-lib/covr
+
+after_success:
+  - Rscript -e 'covr::codecov()'

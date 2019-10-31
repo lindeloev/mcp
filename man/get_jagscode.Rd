@@ -14,7 +14,7 @@ sigma) and the values are either
 \itemize{
   \item A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
     conventional prior distribution. Uninformative priors based on data
-    propertiesare used where priors are not specified. This ensures good
+    properties are used where priors are not specified. This ensures good
     parameter estimations, but it is a questionable for hypothesis testing.
     \code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
     details. Change points are forced to be ordered through the priors using

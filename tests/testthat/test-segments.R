@@ -92,9 +92,9 @@ test_mcp = function(segments,
       data = tibble::as_tibble(data),
       family = family,
       par_x = par_x,
-      adapt = 3,
-      update = 3,
-      iter = 3,
+      adapt = 5,
+      update = 5,
+      iter = 20,  # loo fails if this is too low
       chains = 2,
       cores = 1 + rbinom(1, 1, 0.5)  # serial or parallel
     ))
@@ -386,6 +386,8 @@ testthat::test_that("good binomial", {
          rel(1) ~ 0),
     list(y | trials(N) ~ 1,  # With varying
          1 + (1|id) ~ 1)
+    #list(y | trials(N) ~ 1,
+    #     1 ~ N)  # N can be both trials and slope. Fails in this test because par_x = "x"
   )
 
   for (segments in good_bin) {
