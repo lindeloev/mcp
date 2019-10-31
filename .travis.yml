@@ -1,1 +1,4 @@
 language: r
+
+before_install:
+  - sudo apt-get -y install jags
