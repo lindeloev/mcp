@@ -1,6 +1,12 @@
-Bayesian inference of multiple change points and the parameters of the (linear) segments in between. Under the hood, `mcp` takes an abstract representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. The rest of the package ensures seamless compatibility with your favourite Bayesian packages, including `tidybayes`, `bayesplot`, and `loo`.
+# mcp: Bayesian Inference of Multiple Change Points
 
-You can see the roadmap for the immediate future under [issues](https://github.com/lindeloev/mcp/issues). Expect breaking changes in the API until version 1.0. Also be aware that it has not been thoroughly tested. I would be very excited about any feedback, positive or negative or constructive. Please raise issues or contact me elsewhere, e.g., [@jonaslindeloev](https://twitter.com/jonaslindeloev) on Twitter or firstname at lindeloev.dk.
+[![Travis-CI status](https://img.shields.io/travis/lindeloev/mcp.svg)](https://travis-ci.org/lindeloev/mcp)
+[![Coveralls status](https://img.shields.io/coveralls/lindeloev/mcp.svg)](https://coveralls.io/r/lindeloev/mcp)
+
+
+Hierarchical Bayesian inference of Multiple Change Points (MCP) between Generalized Linear Segments - and the parameters in those segments. Under the hood, `mcp` takes an abstract representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. The rest of the package ensures seamless compatibility with your favourite Bayesian packages, including `tidybayes`, `bayesplot`, `coda`, and `loo`.
+
+You can see the roadmap for the immediate future under [issues](https://github.com/lindeloev/mcp/issues). Expect breaking changes in the API until version 1.0. Abt feedback is welcome, positive or negative or constructive. Please raise issues here or contact me elsewhere, e.g., [@jonaslindeloev](https://twitter.com/jonaslindeloev) on Twitter or via mail at firstname at lindeloev.dk.
 
 
 
@@ -10,11 +16,6 @@ You can see the roadmap for the immediate future under [issues](https://github.c
  
  2. Install `mcp` by running this in R: `devtools::install_github("lindeloev/mcp")`. If you don't have `devtools`, install it first using `install.packages("devtools")`.
 
-
-
-# How it works
-
-The workhorse of the `mcp` package is the `mcp` function. It takes 
 
 
 # Quick examples of various change point models
@@ -31,18 +32,19 @@ segments = list(
 )
 
 # Start sampling
-fit = mcp(segments, my_data)
+fit = mcp(segments, my_data, par_x = "x")
 
 # Plot fit
 plot(fit)
 ```
 
-![](doc/ex_plateaus.png)
+![](man/images/ex_plateaus.png)
 
-To see the posteriors, use `summary()` or `plot(fit, "combo")`. This model infers the change point (`cp_1`) on `x`, the intercept for segment 1 (`int_1`), and the intercept for segment 2 (`int_2`). Also the standard deviation of the residuals (`sigma`).
+To see the posteriors, use `summary()` or `plot(fit, "combo")`.
 
 ```r
-summary(fit)  # or plot(fit, "combo")
+summary(fit)  
+# plot(fit, "combo")
 ```
 
 ```r
@@ -55,6 +57,8 @@ summary(fit)  # or plot(fit, "combo")
 4 sigma  20.3   17.5   23.2
 ```
 
+This model infers the change point (`cp_1`) on `x`, the intercept for segment 1 (`int_1`), and the intercept for segment 2 (`int_2`). Also the standard deviation of the residuals (`sigma`).
+
 
 Find the single change point between two joined slopes:
 ```r
@@ -62,11 +66,11 @@ segments = list(
     y ~ 1 + x,  # intercept + slope
     1 ~ 0 + x  # joined slope
 )
-fit = mcp(segments, my_data, par_x = "x")
+fit = mcp(segments, my_data)
 plot(fit)
 ```
 
-![](doc/ex_slopes.png)
+![](man/images/ex_slopes.png)
 
 
 Find the single change point between two joined slopes. While the slopes are shared by all participants, their change point varies:
@@ -80,7 +84,26 @@ fit = mcp(segments, my_data)
 plot(fit, facet_by = "id")
 ```
 
-![](doc/ex_slopes_varying.png)
+![](man/images/ex_slopes_varying.png)
+
+
+`mcp` supports Generalized Linear Modeling. Here is a binomial change point model with three segments:
+
+```r
+segments = list(
+  y | trials(N) ~ 1,  # constant rate
+  1 ~ 0 + x,  # joined changing rate
+  1 ~ 1 + x  # disjoined changing rate
+)
+fit = mcp(segments, my_data, family = binomial())
+plot(fit)
+```
+
+![](man/images/ex_binomial.png)
+
+Use `plot(fit, rate = FALSE)` if you want the points and fit lines on the original scale of `y` rather than divided by `N`.
+
+
 
 Here we find the two change points between three segments. The slope and intercept of segment 2 are parameterized relative to segment 1. So too with the second change point. Some of the default priors are overwritten; the first slope (`x_1`) is forced to be -3.
 
@@ -99,7 +122,7 @@ fit = mcp(segments, my_data, prior)
 plot(fit)
 ```
 
-![](doc/ex_fix_rel.png)
+![](man/images/ex_fix_rel.png)
 
 
 
@@ -122,7 +145,7 @@ segments = list(
 
 This is what we will end up with. We simulate some raw data from this model (the points) and infer the parameter of the linear segments as well as the change points (lines are draws from the posterior distribution).
 
-![](doc/plot_overlay.png)
+![](man/images/plot_overlay.png)
 
 
 This model has the following parameters:
@@ -148,10 +171,10 @@ data = data.frame(
   year = 1:100,  # Evaluate func_y for each of these
   score = empty$func_y(
     year = 1:100,  # x
-    sigma = 12,  # standard deviation
     cp_1 = 20, cp_2 = 35, cp_3 = 80,  # change points 
     int_1 = 20, int_4 = 20,  # intercepts
-    year_1 = 3, year_2 = -2  # slopes
+    year_1 = 3, year_2 = -2,  # slopes
+    sigma = 12  # standard deviation of residuals
   )
 )
 ```
@@ -212,7 +235,7 @@ Let us inspect it visually:
 plot(fit)
 ```
 
-![](doc/plot_overlay.png)
+![](man/images/plot_overlay.png)
 
 
 By default this draws lines given 25 posterior samples, but change it using `plot(fit, draws=50)`. Of particular interest is how similar the lines are (good precision) and how well they fit to the data. `plot.mcpfit` returns a `ggplot2` object, so you can easily add, e.g., a title: `plot(fit, "combo") + ggtitle("Posteriors and convergence")`.
@@ -225,7 +248,7 @@ We may also want to inspect the posterior distributions directly:
 plot(fit, "combo")
 ```
 
-![](doc/plot_combo.png)
+![](man/images/plot_combo.png)
 
 This is a classical Bayesian plot to better see parameter estimates and to check convergence between chains. Compare the inferred values to the one we used to generate the data. Change point models do a remarkably good job of recovering the change points on other parameters, including sigma.
 
