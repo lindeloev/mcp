@@ -6,9 +6,8 @@
 #'
 #' @aliases criterion
 #' @param fit An mcpfit object.
-#' @param criterion One of "loo" (calls loo::loo) or "waic" (calls loo::waic).
-#' @return a \code{loo} or \code{psis_loo} object. See more in \code{\link[loo]{loo}}.
-#' @seealso \link[mcp]{loo}, \link[mcp]{waic}
+#' @param criterion One of "loo" (calls \code{\link[loo]{loo}}) or "waic" (calls \code{\link[loo]{waic}}).
+#' @return a \code{loo} or \code{psis_loo} object.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
@@ -38,7 +37,7 @@ criterion = function(fit, criterion = "loo") {
   loglik = as.matrix(do.call(rbind.data.frame, fit$loglik))
 
   # Add LOO
-  if (any(criterion == "loo")) {
+  if (criterion == "loo") {
     # Compute relative effective sample size (for each loglik col)
     chain_id = rep(seq_len(length(fit$samples)), each = nrow(fit$samples[[1]]))
     r_eff = loo::relative_eff(exp(loglik), chain_id)  # Likelihood = exp(log-likelihood)
@@ -48,7 +47,7 @@ criterion = function(fit, criterion = "loo") {
   }
 
   # Add WAIC
-  if (any(criterion == "waic")) {
+  if (criterion == "waic") {
     return(loo::waic(loglik))
   }
 }
@@ -59,7 +58,7 @@ criterion = function(fit, criterion = "loo") {
 #' @describeIn criterion Computes loo on mcpfit objects
 #' @param x \code{mcpfit} object.
 #' @param ... Currently ignored
-#' @seealso \link[mcp]{waic}, \link{criterion}
+#' @seealso \link{criterion}
 #' @importFrom loo loo
 #' @export loo
 #' @export
@@ -72,7 +71,7 @@ loo.mcpfit = function(x, ...) {
 #' @param x \code{mcpfit} object.
 #' @param ... Currently ignored
 #' @importFrom loo waic
-#' @seealso \link[mcp]{loo}, \link{criterion}
+#' @seealso \link{criterion}
 #' @export waic
 #' @export
 waic.mcpfit = function(x, ...) {

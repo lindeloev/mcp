@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "jonas@lindeloev.dk",
            comment = c(ORCID = "0000-0003-4565-0595"))
-Description: Specify segments using R formulas and let mcp identify the parameters as well as the change points. Supports hierarchical models and normal/binomial families. Posterior distributions for all parameters.
+Description: Specify segments using R formulas and let mcp infer the parameters as well as the change points - or simulate data from given values. Supports hierarchical generalized linear models. mcp interfaces well to other packages in the Bayesian R ecosystem.
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
@@ -16,24 +16,27 @@ Imports:
 	parallel,
 	rjags,
 	dclone,
-	loo,
+	coda,
+	loo (>= 2.1.0),
 	bayesplot,
-	tidybayes,
+	tidybayes (>= 1.1.0),
 	dplyr,
 	magrittr,
 	tidyr,
+	tidyselect,
 	purrr,
 	tibble,
 	stringr,
 	ggplot2,
+	patchwork,
 	methods,
 	stats,
-	rlang,
-	patchwork
+	rlang
 Remotes: 
     thomasp85/patchwork
 Suggests: 
     testthat (>= 2.1.0),
 	knitr, 
-	rmarkdown
+	rmarkdown,
+	boot
 VignetteBuilder: knitr

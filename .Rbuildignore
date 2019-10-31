@@ -1,2 +1,4 @@
 ^mcp\.Rproj$
 ^\.Rproj\.user$
+.travis.yml
+docs

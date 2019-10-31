@@ -19,7 +19,7 @@ criterion(fit, criterion = "loo")
 \arguments{
 \item{fit}{An mcpfit object.}
 
-\item{criterion}{One of "loo" (calls loo::loo) or "waic" (calls loo::waic).}
+\item{criterion}{One of "loo" (calls \code{\link[loo]{loo}}) or "waic" (calls \code{\link[loo]{waic}}).}
 
 \item{x}{\code{mcpfit} object.}
 
@@ -30,7 +30,7 @@ criterion(fit, criterion = "loo")
 \item{...}{Currently ignored}
 }
 \value{
-a \code{loo} or \code{psis_loo} object. See more in \code{\link[loo]{loo}}.
+a \code{loo} or \code{psis_loo} object.
 }
 \description{
 Takes a \code{mcpfit} as input and computes information criteria using loo or
@@ -60,11 +60,9 @@ loo::loo_model_weights(list(fit1$loo, fit2$loo))
 }
 }
 \seealso{
-\link[mcp]{loo}, \link[mcp]{waic}
+\link{criterion}
 
-\link[mcp]{waic}, \link{criterion}
-
-\link[mcp]{loo}, \link{criterion}
+\link{criterion}
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
