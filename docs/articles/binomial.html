@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Binomial change point detection with mcp • mcp</title>
+<title>Binomial change point analysis with mcp • mcp</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Binomial change point detection with mcp">
+<script src="../pkgdown.js"></script><meta property="og:title" content="Binomial change point analysis with mcp">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
@@ -54,7 +54,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/binomial.html">Binomial change point detection with mcp</a>
+      <a href="../articles/binomial.html">Binomial change point analysis with mcp</a>
+    </li>
+    <li>
+      <a href="../articles/poisson.html">Poisson change point analysis with mcp</a>
     </li>
   </ul>
 </li>
@@ -72,10 +75,10 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1>Binomial change point detection with mcp</h1>
+      <h1>Binomial change point analysis with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-10-30</h4>
+            <h4 class="date">2019-10-31</h4>
       
       
       <div class="hidden name"><code>binomial.Rmd</code></div>
@@ -134,16 +137,16 @@ Add links to other vignettes
 <pre><code>## # A tibble: 100 x 3
 ##     year     N     y
 ##    &lt;int&gt; &lt;int&gt; &lt;int&gt;
-##  1  1901    14    10
-##  2  1902    14    14
-##  3  1903    18    17
-##  4  1904    17    17
-##  5  1905    17    14
-##  6  1906    18    16
-##  7  1907    18    16
-##  8  1908    16    16
-##  9  1909    17    15
-## 10  1910    13    13
+##  1  1901    13    12
+##  2  1902    17    16
+##  3  1903    13    12
+##  4  1904    10     9
+##  5  1905    11    11
+##  6  1906    13    11
+##  7  1907    17    15
+##  8  1908    20    17
+##  9  1909    14    12
+## 10  1910    18    18
 ## # ... with 90 more rows</code></pre>
 <p>Visually:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(data<span class="op">$</span>year, data<span class="op">$</span>y)</a></code></pre></div>
@@ -170,11 +173,11 @@ Add links to other vignettes
 ## Initializing model
 ## 
 ##    user  system elapsed 
-##   19.41    0.14   19.75</code></pre>
+##   18.89    0.16   19.14</code></pre>
 <p>We can use <code>summary</code> to see that it recovered the parameters to a pretty good precision. Again, recall that intercepts and slopes are on a <code>logit</code> scale.</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1"><span class="kw"><a href="../reference/summary.mcpfit.html">summary</a></span>(fit)</a></code></pre></div>
 <pre><code>## Family: binomial(link = 'logit')
-## Iterations: 9000 in 3 chains.
+## Iterations: 9000 from 3 chains.
 ## Model:
 ##    y | trials(N) ~ 1 
 ##    1 ~ 0 + year 
@@ -182,13 +185,13 @@ Add links to other vignettes
 ## 
 ## Population-level parameters:
 ##    name      mean      X2.5     X97.5 rhat  eff    ts_se
-##    cp_1 1922.1949 1918.3516 1925.7783    1  434 7.98e+01
-##    cp_2 1964.4952 1964.0056 1964.9551    1 5252 1.45e-01
-##   int_1    2.1996    1.8456    2.6055    1  641 4.94e-01
-##   int_3    0.0232   -0.3266    0.3731    1 1147 2.51e-01
-##  year_2   -0.1694   -0.1976   -0.1458    1  784 2.07e-03
-##  year_3    0.0548    0.0366    0.0727    1 1164 6.66e-04</code></pre>
-<p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have varying effects, use <code><a href="../reference/ranef.mcpfit.html">ranef(fit)</a></code> to see them.</p>
+##    cp_1 1921.8747 1917.2123 1925.9206 1.03  308 1.70e+02
+##    cp_2 1964.4970 1964.0085 1964.9519 1.00 5166 1.45e-01
+##   int_1    2.0480    1.6538    2.4685 1.02  380 8.76e-01
+##   int_3    0.1635   -0.1785    0.4864 1.01  986 2.58e-01
+##  year_2   -0.1606   -0.1881   -0.1345 1.01  542 2.90e-03
+##  year_3    0.0444    0.0272    0.0623 1.00  946 7.51e-04</code></pre>
+<p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have varying effects, use <code><a href="../reference/ranef.html">ranef(fit)</a></code> to see them.</p>
 <p>Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>

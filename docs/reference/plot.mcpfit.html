@@ -94,7 +94,10 @@ See examples for typical use cases." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/binomial.html">Binomial change point detection with mcp</a>
+      <a href="../articles/binomial.html">Binomial change point analysis with mcp</a>
+    </li>
+    <li>
+      <a href="../articles/poisson.html">Poisson change point analysis with mcp</a>
     </li>
   </ul>
 </li>
@@ -126,9 +129,9 @@ See examples for typical use cases.</p>
     </div>
 
     <pre class="usage"><span class='co'># S3 method for mcpfit</span>
-<span class='fu'>plot</span>(<span class='no'>x</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='st'>"segments"</span>, <span class='kw'>draws</span> <span class='kw'>=</span> <span class='fl'>25</span>,
-  <span class='kw'>pars</span> <span class='kw'>=</span> <span class='st'>"population"</span>, <span class='kw'>regex_pars</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span>(<span class='fl'>0</span>), <span class='kw'>facet_by</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>rate</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='no'>...</span>)</pre>
+<span class='fu'>plot</span>(<span class='no'>x</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='st'>"segments"</span>, <span class='kw'>pars</span> <span class='kw'>=</span> <span class='st'>"population"</span>,
+  <span class='kw'>regex_pars</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span>(<span class='fl'>0</span>), <span class='kw'>facet_by</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>rate</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>draws</span> <span class='kw'>=</span> <span class='fl'>25</span>, <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='no'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -144,10 +147,6 @@ Common calls are "combo", "trace", and "dens_overlay". Current options include
 'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
 'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
 'trace_highlight', and 'violin".</p></td>
-    </tr>
-    <tr>
-      <th>draws</th>
-      <td><p>Positive integer. Number of posterior draws to use when type = "segments".</p></td>
     </tr>
     <tr>
       <th>pars</th>
@@ -176,6 +175,10 @@ points, "^my_varying" plots all levels of a particular varying effect, and
 response divided by number of trials (<code>rate = TRUE</code>). If FALSE, linear
 interpolation on trial number is used to infer trials at a particular x.
 <code>rate</code> only applies for <code>type = "segments"</code></p></td>
+    </tr>
+    <tr>
+      <th>draws</th>
+      <td><p>Positive integer. Number of posterior draws to use when type = "segments".</p></td>
     </tr>
     <tr>
       <th>ncol</th>

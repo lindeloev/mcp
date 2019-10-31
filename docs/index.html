@@ -54,7 +54,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="articles/binomial.html">Binomial change point detection with mcp</a>
+      <a href="articles/binomial.html">Binomial change point analysis with mcp</a>
+    </li>
+    <li>
+      <a href="articles/poisson.html">Poisson change point analysis with mcp</a>
     </li>
   </ul>
 </li>
@@ -72,20 +75,20 @@
       </header><div class="row">
   <div class="contents col-md-9">
 
-<p>Bayesian inference of multiple change points and the parameters of the (linear) segments in between. Under the hood, <code>mcp</code> takes an abstract representation of linear segments and turns it into <a href="https://sourceforge.net/projects/mcmc-jags/">JAGS</a> code. The rest of the package ensures seamless compatibility with your favourite Bayesian packages, including <code>tidybayes</code>, <code>bayesplot</code>, and <code>loo</code>.</p>
-<p>You can see the roadmap for the immediate future under <a href="https://github.com/lindeloev/mcp/issues">issues</a>. Expect breaking changes in the API until version 1.0. Also be aware that it has not been thoroughly tested. I would be very excited about any feedback, positive or negative or constructive. Please raise issues or contact me elsewhere, e.g., <a href="https://twitter.com/jonaslindeloev">@jonaslindeloev</a> on Twitter or firstname at lindeloev.dk.</p>
-<div id="install" class="section level1">
+<div id="mcp-bayesian-inference-of-multiple-change-points" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
-<a href="#install" class="anchor"></a>Install</h1></div>
+<a href="#mcp-bayesian-inference-of-multiple-change-points" class="anchor"></a>mcp: Bayesian Inference of Multiple Change Points</h1></div>
+
+<p>Hierarchical Bayesian inference of Multiple Change Points (MCP) between Generalized Linear Segments - and the parameters in those segments. Under the hood, <code>mcp</code> takes an abstract representation of linear segments and turns it into <a href="https://sourceforge.net/projects/mcmc-jags/">JAGS</a> code. The rest of the package ensures seamless compatibility with your favourite Bayesian packages, including <code>tidybayes</code>, <code>bayesplot</code>, <code>coda</code>, and <code>loo</code>.</p>
+<p>You can see the roadmap for the immediate future under <a href="https://github.com/lindeloev/mcp/issues">issues</a>. Expect breaking changes in the API until version 1.0. Abt feedback is welcome, positive or negative or constructive. Please raise issues here or contact me elsewhere, e.g., <a href="https://twitter.com/jonaslindeloev">@jonaslindeloev</a> on Twitter or via mail at firstname at lindeloev.dk.</p>
+</div>
+<div id="install" class="section level1">
+<h1 class="hasAnchor">
+<a href="#install" class="anchor"></a>Install</h1>
 <ol>
 <li><p><a href="https://sourceforge.net/projects/mcmc-jags/">Install the latest version of JAGS</a>. Linux users can fetch binaries <a href="http://mcmc-jags.sourceforge.net/">here</a>.</p></li>
 <li><p>Install <code>mcp</code> by running this in R: <code><a href="https://rdrr.io/pkg/devtools/man/remote-reexports.html">devtools::install_github("lindeloev/mcp")</a></code>. If you don’t have <code>devtools</code>, install it first using <code><a href="https://rdrr.io/r/utils/install.packages.html">install.packages("devtools")</a></code>.</p></li>
 </ol>
-</div>
-<div id="how-it-works" class="section level1">
-<h1 class="hasAnchor">
-<a href="#how-it-works" class="anchor"></a>How it works</h1>
-<p>The workhorse of the <code>mcp</code> package is the <code>mcp</code> function. It takes</p>
 </div>
 <div id="quick-examples-of-various-change-point-models" class="section level1">
 <h1 class="hasAnchor">
@@ -306,7 +309,14 @@ model2 -81.4       7.6</code></pre>
 </ul>
 </div>
 
-  </div>
+  <div class="dev-status">
+<h2>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://travis-ci.org/lindeloev/mcp"><img src="https://img.shields.io/travis/lindeloev/mcp.svg" alt="Travis-CI status"></a></li>
+<li><a href="https://coveralls.io/r/lindeloev/mcp"><img src="https://img.shields.io/coveralls/lindeloev/mcp.svg" alt="Coveralls status"></a></li>
+</ul>
+</div>
+</div>
 </div>
 
 
