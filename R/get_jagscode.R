@@ -52,8 +52,8 @@ model {
   mm = paste0(mm, "  cp_", nrow(ST), " = 10^100  # mcp helper value; plus infinity\n")
 
   # Use get_prior_str() to add varying priors
-  mm = paste0(mm, "\n  # Priors for varying effects\n")
   if (length(prior_varying) > 0) {
+    mm = paste0(mm, "\n  # Priors for varying effects\n")
     for (i in 1:length(prior_varying)) {
       mm = paste0(mm, get_prior_str(
         prior = prior_varying,
@@ -94,8 +94,16 @@ model {
     loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], y_[i_], 1 / sigma^2)")
 
   } else if (family == "binomial") {
+    # ilogit = inverse logit
     mm = paste0(mm, "dbin(ilogit(y_[i_]), ", ST$trials[1], "[i_])
     loglik_[i_] = logdensity.bin(", ST$y[1], "[i_], ilogit(y_[i_]), ", ST$trials[1], "[i_])")
+  } else if (family == "bernoulli") {
+    mm = paste0(mm, "dbern(ilogit(y_[i_]))
+    loglik_[i_] = logdensity.bern(", ST$y[1], "[i_], ilogit(y_[i_]))")
+  } else if (family == "poisson") {
+    # exp is inverse of log
+    mm = paste0(mm, "dpois(exp(y_[i_]))
+    loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], exp(y_[i_]))")
   }
 
 
