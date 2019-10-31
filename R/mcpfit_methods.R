@@ -6,6 +6,7 @@
 #' @param fit An mcpfit object.
 #' @param varying Boolean. Get results for varying (TRUE) or population (FALSE)?
 #' @importFrom magrittr %>%
+#' @importFrom dplyr .data
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_summary = function(fit, width, varying = FALSE) {
   # Select only varying or only population-level columns in data
@@ -21,6 +22,11 @@ get_summary = function(fit, width, varying = FALSE) {
   all_cols = colnames(fit$samples[[1]])
   get_cols = all_cols[stringr::str_detect(all_cols, regex_pars)]
   samples = lapply(fit$samples, function(x) x[, get_cols])
+  # HACK: If there is just one parameter, add two in to make the code run.
+  if (!stringr::str_detect(regex_pars, "\\|")) {
+    samples_org = samples
+    samples = lapply(fit$samples, function(x) x[, c(get_cols, "cp_0", "cp_1")])
+  }
 
   # Get parameter estimates
   # TO DO: Temporarily suppress warnings about tidyr1.0::unnest() until tidybayes 1.2 is out.
@@ -33,18 +39,24 @@ get_summary = function(fit, width, varying = FALSE) {
 
       # Compute mean and HDI intervals and name appropriately
       tidybayes::mean_hdci(.data$value, .width = width) %>%
-      dplyr::rename(mean = value) %>%
-      dplyr::rename(!!as.character(100*(1 - width) / 2) := .lower,
-                    !!as.character(100*(width + (1 - width)/2)) := .upper) %>%
+      dplyr::rename(mean = .data$value) %>%
+      dplyr::rename(!!as.character(100*(1 - width) / 2) := .data$.lower,
+                    !!as.character(100*(width + (1 - width)/2)) := .data$.upper) %>%
 
       # Remove unneeded stuf
       dplyr::select(-tidyselect::starts_with("."))
   )
 
+  # Revert HACK and continue
+  if (!stringr::str_detect(regex_pars, "\\|")) {
+    estimates = dplyr::filter(estimates, !.data$name %in% c("cp_0", "cp_1"))
+    samples = samples_org
+  }
+
   # Diagnostics
   rhat = try(coda::gelman.diag(samples)$psrf[, 1], TRUE)
-  if(!is.numeric(rhat)) {
-    warning(rhat)
+  if (!is.numeric(rhat)) {
+    warning("rhat computation failed: ", rhat)
     rhat = rep(NA, nrow(estimates))
   }
   diagnostics = data.frame(
@@ -108,7 +120,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, ...) {
   # Model info
   cat("Family: ", fit$family$family, "(link = '", fit$family$link, "')\n", sep = "")
   if (!is.null(fit$samples))
-    cat("Iterations: ", nrow(fit$samples[[1]]) * length(fit$samples), " in ", length(fit$samples), " chains.\n", sep="")
+    cat("Iterations: ", nrow(fit$samples[[1]]) * length(fit$samples), " from ", length(fit$samples), " chains.\n", sep="")
   cat("Model:\n")
   for (segment in fit$segments) {
     cat("  ", format(segment), "\n")
