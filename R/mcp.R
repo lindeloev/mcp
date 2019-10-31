@@ -182,10 +182,10 @@ mcp = function(segments,
   if (family$family == "gaussian" & !family$link %in% c("identity"))
     stop("'identity' is currently the only supported link function for gaussian().")
 
-  if(family$family %in% c("binomial", "bernoulli") & !family$link %in% c("logit"))
+  if (family$family %in% c("binomial", "bernoulli") & !family$link %in% c("logit"))
     stop("'logit' is currently the only supported link function for binomial() and bernoulli().")
 
-  if(family$family == "poisson" & !family$link %in% c("log"))
+  if (family$family == "poisson" & !family$link %in% c("log"))
     stop("'log' is currently the only supported link function for poisson().")
 
   # Check other stuff
@@ -200,7 +200,7 @@ mcp = function(segments,
   major = as.numeric(R.Version()$major)
   minor = as.numeric(R.Version()$minor)
   fails_parallel = (major < 3 | (major == 3 & minor < 6.1))
-  if(cores > 1 & fails_parallel == TRUE)
+  if (cores > 1 & fails_parallel == TRUE)
     warning("Parallel sampling (cores > 1) has been shown to err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
 
 
