@@ -1,7 +1,7 @@
 #' Build an R formula (as string) given a segment table (ST)
 #'
 #' You will need to replace PAR_X for whatever your x-axis observation column
-#' is called. In JAGS typicaly `x[i_]`. In R just `x`.
+#' is called. In JAGS typically `x[i_]`. In R just `x`.
 #'
 #' @aliases get_formula_str
 #' @param ST Tibble. Returned by \code{get_segment_table}.
@@ -83,10 +83,11 @@ get_func_y = function(formula_str, par_x, par_trials = NA, pars_pop, pars_varyin
   }
 
   # Now build the function R code
+  #x_and_trials handles the special case that binomial "trials" is also used as a predictor.
+  x_and_trials = ifelse(is.na(par_trials), par_x, no = paste0(unique(c(par_x, par_trials)), collapse = ", "))
   func_str = paste0("
   function(",
-    par_x, ", ",
-    ifelse(!is.na(par_trials), yes = paste0(par_trials, ", "), no = ""),
+    x_and_trials, ", ",
     paste0(pars_pop, collapse = ", "), ", ",
     paste0(pars_varying, collapse = " = 0, "), ifelse(length(pars_varying) > 0, " = 0, ", ""),
     "type = 'predict', rate = FALSE, ...) {

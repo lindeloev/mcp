@@ -41,7 +41,7 @@
 #'   For other \code{type}, it calls \code{bayesplot::mcmc_*type*()}. Use these
 #'   directly on \code{fit$samples} if you want finer control of plotting, e.g.,
 #'   \code{bayesplot::mcmc_dens(fit$samples)}. There are also a number of useful
-#'   plots in the \link{coda} package, i.e., \code{coda::gelman.plot(fit$samples)}
+#'   plots in the \pkg{coda} package, i.e., \code{coda::gelman.plot(fit$samples)}
 #'   and \code{coda::crosscorr.plot(fit$samples)}
 #'
 #'   In any case, if you see a few erratic lines or parameter estimates, this is
@@ -77,7 +77,7 @@
 #' plot(fit, c("trace", "dens_overlay")) * theme_bw(10)
 #' }
 
-plot.mcpfit = function(x, type="segments", draws=25, pars="population", regex_pars = character(0), facet_by = NULL, rate = TRUE, ncol = 1, ...) {
+plot.mcpfit = function(x, type="segments", pars="population", regex_pars = character(0), facet_by = NULL, rate = TRUE, draws=25, ncol = 1, ...) {
   # Check arguments
   if (class(x) != "mcpfit")
     stop("Can only plot mcpfit objects. x was class: ", class(x))
@@ -87,6 +87,30 @@ plot.mcpfit = function(x, type="segments", draws=25, pars="population", regex_pa
 
   if (length(type) > 1 & "segments" %in% type)
     stop("type = 'segments' can only be plotted alone - not in in combination with others.")
+
+  if (!check_integer(draws, "draws", lower = 1))
+    stop("`draws` has to be a positive integer.")
+
+  if (!is.logical(rate))
+    stop("`rate` has to be TRUE or FALSE")
+
+  # Include test of whether this is a random/nested effect
+  varying_groups = logical0_to_null(unique(stats::na.omit(x$.other$ST$cp_group_col)))
+  if (!is.null(facet_by)) {
+    if (!facet_by %in% varying_groups)
+      stop("facet_by is not a data column used as varying grouping.")
+  }
+
+  if (!is.character(pars) | !is.character(regex_pars))
+    stop("pars and regex_pars has to be string/character.")
+
+  if (any(c("population", "varying") %in% pars) & length(pars )> 1)
+    stop("pars cannot be a vector that contains multiple elements AND 'population' or 'varying'.")
+
+
+  if (any(c("hex", "scatter") %in% type) & (length(pars) != 2 | length(regex_pars) > 0))
+    stop("`type` = 'hex' or 'scatter' takes exactly two parameters which must be provided via the `pars` argument")
+
 
   # Call underlying plot functions
   if ("segments" %in% type) {
@@ -114,20 +138,6 @@ plot.mcpfit = function(x, type="segments", draws=25, pars="population", regex_pa
 plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
   X_RESOLUTION = 100  # number of points to evaluate at x
 
-  # Check input
-  if (!check_integer(draws, "draws", lower = 1))
-    stop("Draws has to be a positive integer.")
-
-  if (!is.logical(rate))
-    stop("rate has to be TRUE or FALSE")
-
-  # Include test of whether this is a random/nested effect
-  varying_groups = logical0_to_null(unique(stats::na.omit(fit$.other$ST$cp_group_col)))
-  if (!is.null(facet_by)) {
-    if (!facet_by %in% varying_groups)
-      stop("facet_by is not a data column used as varying grouping.")
-  }
-
   #################
   # GET PLOT DATA #
   #################
@@ -142,7 +152,7 @@ plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
 
   # No faceting
   if (is.null(facet_by)) {
-    Q = fit$samples %>%
+    samples = fit$samples %>%
       tidybayes::spread_draws(!!rlang::sym(regex_pars_pop), regex = TRUE) %>%
       # TO DO: use spread_draws(n = draws) when tidybayes 1.2 is out
       tidybayes::sample_draws(draws)
@@ -153,7 +163,7 @@ plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
     varying_by_facet = stats::na.omit(fit$.other$ST$cp_group[stringr::str_detect(fit$.other$ST$cp_group, paste0("_", facet_by))])
     varying_by_facet = paste0(varying_by_facet, collapse="|")
 
-    Q = fit$samples %>%
+    samples = fit$samples %>%
       tidybayes::spread_draws(!!rlang::sym(regex_pars_pop),
                               (!!rlang::sym(varying_by_facet))[!!rlang::sym(facet_by)],
                               regex = TRUE) %>%
@@ -162,8 +172,8 @@ plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
   }
 
   # First, let's get all the predictors in shape for func_y
-  if(!fit$family$family == "binomial") {
-    Q = Q %>%
+  if (fit$family$family != "binomial") {
+    samples = samples %>%
       tidyr::expand_grid(!!fit$pars$x := eval_at)  # correct name of x-var
   } else if (fit$family$family == "binomial") {
     if (!is.null(facet_by) & rate == FALSE)
@@ -171,13 +181,13 @@ plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
 
     # Interpolate trials for binomial at the values in "eval_at"
     interpolated_trials = round(stats::approx(fit$data[, fit$pars$trials], n = X_RESOLUTION)$y)
-    Q = Q %>%
+    samples = samples %>%
       tidyr::expand_grid(!!fit$pars$x := eval_at) %>%  # correct name of x-var
-      dplyr::mutate(!!fit$pars$trials := rep(interpolated_trials, draws))
+      dplyr::mutate(!!fit$pars$trials := rep(interpolated_trials, nrow(samples)))
   }
 
   # Predict y from model
-  Q = Q %>%
+  samples = samples %>%
     # Add fitted draws (vectorized)
     dplyr::mutate(!!fit$pars$y := purrr::invoke(func_y, ., type = "fitted", rate = rate)) %>%
 
@@ -200,12 +210,12 @@ plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
     # Return plot without faceting
     gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y)) +
       geom_point() +
-      geom_line(aes(group = line), data = Q, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4))
+      geom_line(aes(group = .data$line), data = samples, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4))
   } else {
     # Return plot with faceting
     gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y)) +
       geom_point() +
-      geom_line(aes(group = line), data = Q, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4)) +
+      geom_line(aes(group = .data$line), data = samples, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4)) +
       facet_wrap(paste0("~", facet_by))
   }
 
@@ -228,17 +238,6 @@ plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
 #' @import patchwork
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 plot_bayesplot = function(fit, type, pars = "population", regex_pars = character(0), ncol = 1) {
-  # Check inputs
-  if (!is.character(pars) | !is.character(regex_pars))
-    stop("pars and regex_pars has to be string/character.")
-
-  if (any(c("population", "varying") %in% pars) & length(pars )> 1)
-    stop("pars cannot be a vector that contains multiple elements AND 'population' or 'varying'.")
-
-  if (any(c("hex", "scatter") %in% type) & (length(pars) != 2 | length(regex_pars) > 0))
-      stop("`type` = 'hex' or 'scatter' takes exactly two parameters which must be provided via the `pars` argument")
-
-
   # Handle special codes
   if ("population" %in% pars) {
     if (length(regex_pars) == 0) {
@@ -267,7 +266,7 @@ plot_bayesplot = function(fit, type, pars = "population", regex_pars = character
   }
 
   # Select which to plot
-  if(length(type) == 1) {
+  if (length(type) == 1) {
     return_plot = eval(parse(text = paste0("plot_", type)))
     return_plot = return_plot + ggplot2::theme(legend.position = "none")  # remove legend
     return(return_plot)

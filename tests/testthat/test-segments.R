@@ -48,6 +48,7 @@ data_binomial = data.frame(
 
 test_mcp = function(segments,
                     data = data_gauss,
+                    prior = list(),
                     family = gaussian(),
                     par_x = "x",
                     sample = TRUE) {
@@ -56,6 +57,7 @@ test_mcp = function(segments,
   empty = mcp(
     segments = segments,
     data = data,
+    prior = prior,
     family = family,
     par_x = par_x,
     sample = FALSE
@@ -90,10 +92,11 @@ test_mcp = function(segments,
       data = tibble::as_tibble(data),
       family = family,
       par_x = par_x,
-      adapt = 3,
-      update = 3,
-      iter = 3,
-      chains = 2
+      adapt = 5,
+      update = 5,
+      iter = 20,  # loo fails if this is too low
+      chains = 2,
+      cores = 1 + rbinom(1, 1, 0.5)  # serial or parallel
     ))
 
     # Check that samples are the correct format
@@ -109,8 +112,41 @@ test_mcp = function(segments,
 
     # Data should not be manipulated, just by working with it
     testthat::expect_true(all.equal(fit$data, data), segments)
+
+    # Should be able to summarise'
+    invisible(capture.output(summary(fit)))
   }
+
+  # Success if we got here!
+  TRUE
 }
+
+
+###############
+# TEST PRIORS #
+###############
+
+testthat::test_that("Good priors", {
+  segments = list(
+    y ~ 1 + x,
+    1 + (1|id) ~ rel(1) + rel(x),
+    rel(1) ~ 0
+  )
+  priors = list(
+    list(
+      int_2 = "int_1",
+      cp_1 = "dnorm(3, 10)",
+      x_2 = "-0.5"
+    )
+  )
+
+  for (prior in priors) {
+    testthat::expect_true(
+      test_mcp(segments, prior = prior),
+      info = paste0("segments: ", segments)
+    )
+  }
+})
 
 
 
@@ -140,7 +176,7 @@ testthat::test_that("Bad y", {
 })
 
 testthat::test_that("Good y", {
-  bad_y = list(
+  good_y = list(
     list(y ~ 1),  # Regular
     list(y ~ 1,  # Explicit and implicit y and cp
          y ~ 1 ~ 1,
@@ -149,7 +185,7 @@ testthat::test_that("Good y", {
     list(ok_y ~ 1)  # decimal y
   )
 
-  for (segments in bad_y) {
+  for (segments in good_y) {
     testthat::expect_true(
       test_mcp(segments),
       info = paste0("segments: ", segments)
@@ -344,12 +380,14 @@ testthat::test_that("bad binomial", {
 
 testthat::test_that("good binomial", {
   good_bin = list(
-    list(y | trials(N) ~ 1 + x),  # one segment
+    list(y | trials(N) ~ 1),  # one segment
     list(y | trials(N) ~ 1 + x,  # specified multiple times and with rel()
          y | trials(N) ~ 1 ~ rel(1) + rel(x),
          rel(1) ~ 0),
     list(y | trials(N) ~ 1,  # With varying
          1 + (1|id) ~ 1)
+    #list(y | trials(N) ~ 1,
+    #     1 ~ N)  # N can be both trials and slope. Fails in this test because par_x = "x"
   )
 
   for (segments in good_bin) {
@@ -395,7 +433,7 @@ testthat::test_that("bad bernoulli", {
 
 testthat::test_that("good bernoulli", {
   good_bin = list(
-    list(y_bern ~ 1 + x),  # one segment
+    list(y_bern ~ 1),  # one segment
     list(y_bern ~ 1 + x,  # specified multiple times and with rel()
          y_bern ~ 1 ~ rel(1) + rel(x),
          rel(1) ~ 0),
@@ -444,7 +482,7 @@ testthat::test_that("bad poisson", {
 
 testthat::test_that("good poisson", {
   good_bin = list(
-    list(y ~ 1 + x),  # one segment
+    list(y ~ 1),  # one segment
     list(y ~ 1 + x,  # specified multiple times and with rel()
          y  ~ 1 ~ rel(1) + rel(x),
          rel(1) ~ 0),

@@ -26,6 +26,12 @@ run_jags = function(data,
                     ...  # Otherwise run with default JAGS settings
 ) {
 
+  # Prevent failure of all mcp methods when length(params) <= 2 (one parameter +
+  # loglik_).This always happens when there is only one segment, so we just save samples
+  # from the dummy change points.
+  if (length(params) <= 2)
+    params = c(params, "cp_0", "cp_1")
+
   # Start timer
   timer = proc.time()
 

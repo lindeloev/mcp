@@ -95,7 +95,7 @@ unpack_y = function(form_y, i, family) {
 }
 
 
-#' Takes a cp formula (as astring) and returns its properties
+#' Takes a cp formula (as a string) and returns its properties
 #' @param form_cp Segment formula as string.
 #' @param i Positive integer. Segment number.
 unpack_cp = function(form_cp, i) {
@@ -315,7 +315,7 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
   if (length(derived_y) != 1)
     stop("There should be exactly one response variable. Found '", paste0(derived_y, collapse="' and '", "'."))
 
-  if(!is.na(ST$trials[1]) & family != "binomial")
+  if (!is.na(ST$trials[1]) & family != "binomial")
     stop("response format `y | trials(N)` only meaningful for family = binomial(); not for ", family, "()")
 
   # Varying effects

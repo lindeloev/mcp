@@ -25,7 +25,7 @@
 #'  \itemize{
 #'    \item A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
 #'      conventional prior distribution. Uninformative priors based on data
-#'      propertiesare used where priors are not specified. This ensures good
+#'      properties are used where priors are not specified. This ensures good
 #'      parameter estimations, but it is a questionable for hypothesis testing.
 #'      \code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
 #'      details. Change points are forced to be ordered through the priors using
@@ -58,7 +58,7 @@
 #' @param jags_explicit Pass JAGS code to \code{mcp} to use directly. Useful if
 #'   you want to make small tweaks, but mostly used for the development of mcp.
 #' @param ... Further parameters for \code{\link[dclone]{jags.fit}}.
-#' @details Noites on priors:
+#' @details Notes on priors:
 #'   \itemize{
 #'     \item Order restriction is automatically applied to cp_\* parameters using
 #'       truncation (e.g., \code{T(cp_1, )}) so that they are in the correct order on the
@@ -182,10 +182,10 @@ mcp = function(segments,
   if (family$family == "gaussian" & !family$link %in% c("identity"))
     stop("'identity' is currently the only supported link function for gaussian().")
 
-  if(family$family %in% c("binomial", "bernoulli") & !family$link %in% c("logit"))
+  if (family$family %in% c("binomial", "bernoulli") & !family$link %in% c("logit"))
     stop("'logit' is currently the only supported link function for binomial() and bernoulli().")
 
-  if(family$family == "poisson" & !family$link %in% c("log"))
+  if (family$family == "poisson" & !family$link %in% c("log"))
     stop("'log' is currently the only supported link function for poisson().")
 
   # Check other stuff
@@ -200,7 +200,7 @@ mcp = function(segments,
   major = as.numeric(R.Version()$major)
   minor = as.numeric(R.Version()$minor)
   fails_parallel = (major < 3 | (major == 3 & minor < 6.1))
-  if(cores > 1 & fails_parallel == TRUE)
+  if (cores > 1 & fails_parallel == TRUE)
     warning("Parallel sampling (cores > 1) has been shown to err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
 
 
