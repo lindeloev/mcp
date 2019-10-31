@@ -15,8 +15,8 @@ left-hand side is the change point (on x). See examples for more details.}
 
 \item{data}{Data.frame or tibble in long format.}
 
-\item{family}{One of gaussian() or binomial(). Only default link functions
-are currently supported.}
+\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}.
+Only default link functions are currently supported.}
 
 \item{par_x}{String (default: NULL). Only relevant if no segments contains
 slope (no hint at what x is). Set this, e.g., par_x = "time".}

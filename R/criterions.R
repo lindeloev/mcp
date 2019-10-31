@@ -8,6 +8,7 @@
 #' @param fit An mcpfit object.
 #' @param criterion One of "loo" (calls loo::loo) or "waic" (calls loo::waic).
 #' @return a \code{loo} or \code{psis_loo} object. See more in \code{\link[loo]{loo}}.
+#' @seealso \link[mcp]{loo}, \link[mcp]{waic}
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
@@ -58,6 +59,7 @@ criterion = function(fit, criterion = "loo") {
 #' @describeIn criterion Computes loo on mcpfit objects
 #' @param x \code{mcpfit} object.
 #' @param ... Currently ignored
+#' @seealso \link[mcp]{waic}, \link{criterion}
 #' @importFrom loo loo
 #' @export loo
 #' @export
@@ -70,6 +72,7 @@ loo.mcpfit = function(x, ...) {
 #' @param x \code{mcpfit} object.
 #' @param ... Currently ignored
 #' @importFrom loo waic
+#' @seealso \link[mcp]{loo}, \link{criterion}
 #' @export waic
 #' @export
 waic.mcpfit = function(x, ...) {

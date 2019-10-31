@@ -9,8 +9,8 @@ get_prior(ST, family, prior = list())
 \arguments{
 \item{ST}{Tibble. A segment table returned by \code{get_segment_table}.}
 
-\item{family}{One of gaussian() or binomial(). Only default link functions
-are currently supported.}
+\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}.
+Only default link functions are currently supported.}
 
 \item{prior}{A list of user-defined priors. Will overwrite the relevant
 default priors.}
