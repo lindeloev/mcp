@@ -23,7 +23,7 @@ get_summary = function(fit, width, varying = FALSE) {
   get_cols = all_cols[stringr::str_detect(all_cols, regex_pars)]
   samples = lapply(fit$samples, function(x) x[, get_cols])
   # HACK: If there is just one parameter, add two in to make the code run.
-  if (!stringr::str_detect(regex_pars, "\\|")) {
+  if (!stringr::str_detect(regex_pars, "\\|") & varying == FALSE) {
     samples_org = samples
     samples = lapply(fit$samples, function(x) x[, c(get_cols, "cp_0", "cp_1")])
   }
@@ -48,7 +48,7 @@ get_summary = function(fit, width, varying = FALSE) {
   )
 
   # Revert HACK and continue
-  if (!stringr::str_detect(regex_pars, "\\|")) {
+  if (!stringr::str_detect(regex_pars, "\\|") & varying == FALSE) {
     estimates = dplyr::filter(estimates, !.data$name %in% c("cp_0", "cp_1"))
     samples = samples_org
   }

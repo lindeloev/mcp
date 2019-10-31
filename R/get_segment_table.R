@@ -95,7 +95,7 @@ unpack_y = function(form_y, i, family) {
 }
 
 
-#' Takes a cp formula (as astring) and returns its properties
+#' Takes a cp formula (as a string) and returns its properties
 #' @param form_cp Segment formula as string.
 #' @param i Positive integer. Segment number.
 unpack_cp = function(form_cp, i) {

@@ -22,7 +22,7 @@ sigma) and the values are either
 \itemize{
   \item A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
     conventional prior distribution. Uninformative priors based on data
-    propertiesare used where priors are not specified. This ensures good
+    properties are used where priors are not specified. This ensures good
     parameter estimations, but it is a questionable for hypothesis testing.
     \code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
     details. Change points are forced to be ordered through the priors using
@@ -79,7 +79,7 @@ data if you just want to get the priors (\code{fit$prior}), the JAGS code
 \code{fit$jags_code}, or the R function to simulate data (\code{fit$func_y}).
 }
 \details{
-Noites on priors:
+Notes on priors:
   \itemize{
     \item Order restriction is automatically applied to cp_\* parameters using
       truncation (e.g., \code{T(cp_1, )}) so that they are in the correct order on the

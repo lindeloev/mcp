@@ -1,0 +1,72 @@
+---
+title: "Poisson change point analysis with mcp"
+author: "Jonas Kristoffer Lindeløv"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Poisson change point analysis with mcp}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+# Finding change points in Poisson models using mcp
+The Poisson distribution models the number of events within similar-sized time frames. 
+
+# Coal mining disasters
+A dataset if coal mining disasters has grown very popular in the change point literature (available in `boot::coal`). It contains a timestamp of each coal mining disaster from 1851 to 1962. By binning the number of events within each year (fixed time frame), we have something very Poisson-friendly:
+
+```{r}
+library(dplyr)
+data = round(boot::coal) %>% 
+  group_by(date) %>% 
+  count()
+```
+
+
+The number of events (`n`) as a function of year (`date`) is typically modeled as a change between two intercepts. This is very simple to do in `mcp`:
+```{r}
+library(mcp)
+segments = list(
+  n ~ 1,
+  1 ~ 1
+)
+
+fit = mcp(segments, data, family = poisson(), par_x = "date")
+```
+
+Let us see the two intercepts (lambda in log-units) and the change point (in years):
+
+```{r}
+summary(fit)
+```
+
+We can see that the model ran well with good convergence and a large number of effective samples. At a first glance, the change point is estimated to lie between the years 1880 and 1895.
+
+Let us take a more direct look, using the default `mcp` plot:
+
+```{r}
+plot(fit)
+```
+
+It seems to fit the data well, but we can see that the change point probability "lumps" around particular data points. Years with a very low number of disasters abruptly increase the probability that the change to a lower disaster rate has taken place. The posterior distributions of change points regularly take these "weird" forms, i.e., not well-described by our toolbox of parameterized distributions.
+
+We can see this more clearly if plotting the posteriors. We include a traceplot too, just to check convergence visually.
+
+```{r}
+plot(fit, "combo")
+```
+
+A question rarely asked is what the evidence is that there is a change point at all. Let us fit an intercept-only model and use approximate leave-one-out cross-validation to see how the predictive performance of the two models compare:
+
+```{r}
+# Fit an intercept-only model
+segments_null = list(n ~ 1)
+fit_null = mcp(segments_null, data, family=poisson(), par_x = "date")
+
+# Compute and compare loos
+fit_null$loo = loo(fit_null)
+fit$loo = loo(fit)
+loo::loo_compare(fit_null$loo, fit$loo)
+```
+
+

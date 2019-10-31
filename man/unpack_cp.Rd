@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_segment_table.R
 \name{unpack_cp}
 \alias{unpack_cp}
-\title{Takes a cp formula (as astring) and returns its properties}
+\title{Takes a cp formula (as a string) and returns its properties}
 \usage{
 unpack_cp(form_cp, i)
 }
@@ -12,5 +12,5 @@ unpack_cp(form_cp, i)
 \item{i}{Positive integer. Segment number.}
 }
 \description{
-Takes a cp formula (as astring) and returns its properties
+Takes a cp formula (as a string) and returns its properties
 }

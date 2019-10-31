@@ -63,7 +63,7 @@ For \code{type = "segments"}, it uses \code{fit$func_y} with \code{draws}
   For other \code{type}, it calls \code{bayesplot::mcmc_*type*()}. Use these
   directly on \code{fit$samples} if you want finer control of plotting, e.g.,
   \code{bayesplot::mcmc_dens(fit$samples)}. There are also a number of useful
-  plots in the \link{coda} package, i.e., \code{coda::gelman.plot(fit$samples)}
+  plots in the \pkg{coda} package, i.e., \code{coda::gelman.plot(fit$samples)}
   and \code{coda::crosscorr.plot(fit$samples)}
 
   In any case, if you see a few erratic lines or parameter estimates, this is
