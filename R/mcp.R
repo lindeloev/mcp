@@ -227,7 +227,7 @@ mcp = function(segments,
   func_y = get_func_y(formula_str, par_x, par_trials, params_funcy, params_varying, nrow(ST), family$family)
 
   # Make jags code and sample if sample==TRUE. If not, just skip it.
-  jags_code = get_jagscode(data, prior, ST, formula_str, family$family)
+  jags_code = get_jagscode(prior, ST, formula_str, family$family)
 
   if (sample) {
     # Sample it
