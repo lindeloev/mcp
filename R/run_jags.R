@@ -41,7 +41,7 @@ run_jags = function(data,
   } else if (cores == 1) {
     # SERIAL
     samples = dclone::jags.fit(
-      data = get_jags_data(data, ST),
+      data = get_jags_data(data, ST, jags_code),
       params = params,
       model = textConnection(jags_code),
       ...
@@ -95,7 +95,7 @@ run_jags = function(data,
 #' @param data A tibble
 #' @param ST A segment table (tibble), returned by \code{get_segment_table}.
 
-get_jags_data = function(data, ST) {
+get_jags_data = function(data, ST, jags_code) {
   cols_varying = unique(stats::na.omit(ST$cp_group_col))
 
   # Start with "raw" data
@@ -110,6 +110,27 @@ get_jags_data = function(data, ST) {
     # Make varying columns numeic in order of appearance
     # They will be recovered using the recover_levels()
     jags_data[[col]] = as.numeric(factor(jags_data[[col]], levels = unique(jags_data[[col]])))
+  }
+
+
+  # Add e.g. MINX = min(data$x) for all variables where they are used.
+  # Searches whether it is in jags_code, and parse those to jags that are
+  # TO DO: there must be a prettier way to do this.
+  funcs = c("min", "max", "sd", "mean")
+  for (func in funcs) {
+    constant_name = toupper(paste0(func, ST$x[1]))
+    if (stringr::str_detect(jags_code, constant_name)) {
+      func_eval = eval(parse(text = func))  # as real function
+      jags_data[[constant_name]] = func_eval(dplyr::pull(data, ST$x[1]))
+    }
+
+    if(ST$y[1] != "prior_predictive") {
+      constant_name = toupper(paste0(func, ST$y[1]))
+      if (stringr::str_detect(jags_code, constant_name)) {
+        func_eval = eval(parse(text = func))  # as real function
+        jags_data[[constant_name]] = func_eval(dplyr::pull(data, ST$y[1]))
+      }
+    }
   }
 
   # Return

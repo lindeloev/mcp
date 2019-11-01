@@ -7,24 +7,10 @@
 #' @return String. A JAGS model.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-get_jagscode = function(data, prior, ST, formula_str, family) {
+get_jagscode = function(prior, ST, formula_str, family) {
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
   mm = paste0("
-data {
-  # X values
-  MINX = ", ifelse(!is.null(data), paste0("min(", ST$x[1], ")"), "[requires data]"), "
-  MAXX = ", ifelse(!is.null(data), paste0("max(", ST$x[1], ")"), "[requires data]"), "
-  MEANX = ", ifelse(!is.null(data), paste0("mean(", ST$x[1], ")"), "[requires data]"), "
-  SDX = ", ifelse(!is.null(data), paste0("sd(", ST$x[1], ")"), "[requires data]"), "
-
-  # Y values
-  MINY = ", ifelse(!is.null(data), paste0("min(", ST$y[1], ")"), "[requires data]"), "
-  MAXY = ", ifelse(!is.null(data), paste0("max(", ST$y[1], ")"), "[requires data]"), "
-  MEANY = ", ifelse(!is.null(data), paste0("mean(", ST$y[1], ")"), "[requires data]"), "
-  SDY = ", ifelse(!is.null(data), paste0("sd(", ST$y[1], ")"), "[requires data]"), "
-}
-
 model {
   # Priors for population-level effects\n")
   ##########
