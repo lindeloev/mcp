@@ -16,10 +16,13 @@
 #'
 #' @aliases mcp
 #' @param data Data.frame or tibble in long format.
-#' @param segments A list of formulas - one for each segment. The right-hand
-#'   side specifices the form of intercepts and slopes. For the first segment,
-#'   the left-hand side is the response variable. In the following segments, the
-#'   left-hand side is the change point (on x). See examples for more details.
+#' @param segments A list of formulas - one for each segment. The first formula
+#'   has the format \code{response ~ predictors} while the following formulas
+#'   have the format \code{response ~ changepoint ~ predictors}. The response
+#'   and change points can be omitted (\code{changepoint ~ predictors} assumes same
+#'   response. \code{~ predictors} assumes an intercept-only change point).
+#'
+#'   See examples for more details.
 #' @param prior Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
 #'  sigma) and the values are either
 #'  \itemize{
@@ -253,7 +256,7 @@ mcp = function(segments,
   # Make mrpfit object
   mcpfit = list(
     # By user (same order as mcp argument)
-    segments = segments,
+    segments = lapply(ST$form, as.formula, env=globalenv()),  # with explicit response and cp
     data = data,
     prior = prior,
     family = family,

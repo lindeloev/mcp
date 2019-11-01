@@ -266,9 +266,14 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
     ST = dplyr::bind_rows(ST, row)
   }
 
-  # Return the cols we need
-  ST = dplyr::select(ST, -.data$form_y, -.data$form_cp, -.data$form_rhs) %>%
-    tidyr::fill(.data$y, .data$trials, .direction="downup")  # Usually only provided in segment 1
+  # Fill y and trials, where not explicit.
+  # Build "full" formula and insert instead of the old
+  ST = ST %>%
+    tidyr::fill(.data$y, .data$trials, .direction="downup") %>%  # Usually only provided in segment 1
+    dplyr::mutate(form = paste0(.data$y, ifelse(!is.na(.data$form_cp), .data$form_cp, ""), .data$form_rhs)) %>%
+    dplyr::select(-.data$form_y, -.data$form_cp, -.data$form_rhs)  # Not needed anymore
+
+
 
 
   ###########################
@@ -390,7 +395,8 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
       slope_code = cumpaste(.data$slope_name, " + "),
       slope_code = format_code(.data$slope_code, na_col = .data$slope_name)
     ) %>%
-    dplyr::ungroup()
+    dplyr::ungroup() %>%
+    dplyr::select(-dplyr::starts_with("cumsum"))
 
   # Return
   ST
