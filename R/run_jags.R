@@ -22,6 +22,7 @@ run_jags = function(data,
                     params,
                     ST,
                     cores,
+                    sample = sample,
                     model_file = "tmp_jags_code.txt",
                     ...  # Otherwise run with default JAGS settings
 ) {
@@ -35,17 +36,14 @@ run_jags = function(data,
   # Start timer
   timer = proc.time()
 
-
-  if (cores < 1) {
-    stop("cores has to be 1 or greater (parallel sampling).")
-  } else if (cores == 1) {
+  if (cores == 1) {
     # SERIAL
-    samples = dclone::jags.fit(
-      data = get_jags_data(data, ST, jags_code),
+    samples = try(dclone::jags.fit(
+      data = get_jags_data(data, ST, jags_code, sample),
       params = params,
       model = textConnection(jags_code),
       ...
-    )
+    ))
   } else if (cores == "all" | cores > 1) {
     # PARALLEL
     # Write model to disk
@@ -60,30 +58,34 @@ run_jags = function(data,
     cl = parallel::makePSOCKcluster(cores)
 
     # Do the sampling. Yield mcmc.list
-    samples = dclone::jags.parfit(
+    samples = try(dclone::jags.parfit(
       cl = cl,
-      data = get_jags_data(data, ST),
+      data = get_jags_data(data, ST, jags_code, sample),
       params = params,
       model = model_file,
       ...
-    )
+    ))
 
     # Stop the cluster, delete the file
     parallel::stopCluster(cl)
     file.remove(model_file)
   }
 
-  # Recover the levels of varying effects
-  for (i in seq_len(nrow(ST))) {
-    S = ST[i, ]
-    if (!is.na(S$cp_group_col)) {
-      samples = recover_levels(samples, data, S$cp_group, S$cp_group_col)
+  if(coda::is.mcmc.list(samples)) {  # If sampling succeeded
+    # Recover the levels of varying effects
+    for (i in seq_len(nrow(ST))) {
+      S = ST[i, ]
+      if (!is.na(S$cp_group_col)) {
+        samples = recover_levels(samples, data, S$cp_group, S$cp_group_col)
+      }
     }
+    # Return
+    print(proc.time() - timer)  # Return time
+    return(samples)
+  } else {
+    warning("--------------\nJAGS failed with the above error. This is often caused by priors which allow for impossible values, such as negative standard deviations, probabilities outside [0, 1], etc.\n\nAnother class of error is directed cycles: when using a parameter to set a prior for another parameter, it may end up ultimately predicting itself.\n\nReturning an `mcpfit` without samples. Inspect fit$prior and fit$jags_code to identify the problem.")
+    return(NULL)
   }
-
-  # Return
-  print(proc.time() - timer)  # Print time
-  samples
 }
 
 
@@ -95,7 +97,7 @@ run_jags = function(data,
 #' @param data A tibble
 #' @param ST A segment table (tibble), returned by \code{get_segment_table}.
 
-get_jags_data = function(data, ST, jags_code) {
+get_jags_data = function(data, ST, jags_code, sample) {
   cols_varying = unique(stats::na.omit(ST$cp_group_col))
 
   # Start with "raw" data
@@ -114,24 +116,23 @@ get_jags_data = function(data, ST, jags_code) {
 
 
   # Add e.g. MINX = min(data$x) for all variables where they are used.
-  # Searches whether it is in jags_code, and parse those to jags that are
+  # Searches whether it is in jags_code. If yes, add to jags_data
   # TO DO: there must be a prettier way to do this.
   funcs = c("min", "max", "sd", "mean")
+  xy_vars = c("x", "y")
   for (func in funcs) {
-    constant_name = toupper(paste0(func, ST$x[1]))
-    if (stringr::str_detect(jags_code, constant_name)) {
-      func_eval = eval(parse(text = func))  # as real function
-      jags_data[[constant_name]] = func_eval(dplyr::pull(data, ST$x[1]))
-    }
-
-    if(ST$y[1] != "prior_predictive") {
-      constant_name = toupper(paste0(func, ST$y[1]))
+    for(xy_var in xy_vars) {
+      constant_name = toupper(paste0(func, xy_var))
       if (stringr::str_detect(jags_code, constant_name)) {
         func_eval = eval(parse(text = func))  # as real function
-        jags_data[[constant_name]] = func_eval(dplyr::pull(data, ST$y[1]))
+        jags_data[[constant_name]] = func_eval(dplyr::pull(data, ST[, xy_var][[1]][1]))
       }
     }
   }
+
+  # Set response = NA if we only sample prior
+  if(sample == "prior")
+    jags_data[[ST$y[1]]] = rep(NA, nrow(data))
 
   # Return
   jags_data
