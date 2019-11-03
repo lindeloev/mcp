@@ -1,9 +1,3 @@
-# source("R/get_segment_table.R")
-# source("R/get_prior.R")
-# source("R/get_formula.R")
-# source("R/get_jagscode.R")
-# source("R/run_jags.R")
-
 #' Fit Multiple Linear Segments And Their Change Points
 #'
 #' Given a list of linear segments, \code{mcp} infers the posterior
@@ -43,8 +37,10 @@
 #'   Only default link functions are currently supported.
 #' @param par_x String (default: NULL). Only relevant if no segments contains
 #'   slope (no hint at what x is). Set this, e.g., par_x = "time".
-#' @param sample Boolean (default: TRUE). Set to FALSE if you only want to check
-#'   priors, the JAGS model, etc.
+#' @param sample One of TRUE, FALSE, or "prior". Set to FALSE to get an mcpfit
+#'   object without samples. This is useful if you only want to check
+#'   priors, the JAGS model, etc. Set to "prior" if you want to do a prior
+#'   predictive check.
 #' @param cores Positive integer or "all". Number of cores.
 #'   \itemize{
 #'     \item 1: serial sampling
@@ -145,6 +141,7 @@ mcp = function(segments,
                adapt = 1500,
                update = 1500,
                jags_explicit = NULL,
+               sample_prior = TRUE,
                ...) {
 
   # Check data
@@ -195,8 +192,18 @@ mcp = function(segments,
   if (!is.null(par_x) & !is.character(par_x))
     stop("`par_x` must be NULL or a string.")
 
-  if (!is.logical(sample))
-    stop("`sample` must be TRUE or FALSE")
+  # Sampler settings
+  if (sample != "prior" & !is.logical(sample))
+    stop("`sample` must be TRUE, FALSE, or 'prior'")
+
+  if (cores < 1 | !check_integer(cores, "cores"))
+    stop("`cores` has to be 1 or greater (parallel sampling).")
+
+  if (chains < 1 | !check_integer(chains, "chains"))
+    stop("`chains` has to be 1 or greater.")
+
+  if (cores > chains)
+    message("`cores` is greater than `chains`. Not all cores will be used.")
 
   # Parallel fails on R version 3.6.0 and lower (sometimes at least).
   # Throw a warning
@@ -226,10 +233,10 @@ mcp = function(segments,
   params_funcy = params_population[!params_population %in% ST$cp_sd]
   func_y = get_func_y(formula_str, par_x, par_trials, params_funcy, params_varying, nrow(ST), family$family)
 
-  # Make jags code and sample if sample==TRUE. If not, just skip it.
+  # Make jags code and sample it.
   jags_code = get_jagscode(prior, ST, formula_str, family$family)
 
-  if (sample) {
+  if (sample %in% c(TRUE, "prior")) {
     # Sample it
     samples = run_jags(
       data = data,
@@ -237,6 +244,7 @@ mcp = function(segments,
       params = c(params_population, params_varying, "loglik_"),  # population-level, varying, and loglik for loo/waic
       ST = ST,
       cores = cores,
+      sample = sample,
       n.chains = chains,
       n.iter = iter,
       n.adapt = adapt,
