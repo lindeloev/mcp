@@ -432,10 +432,11 @@ format_code = function(col, na_col) {
 #' @param lower the smallest allowed value. lower = 1 checks for positive integers.
 #'
 check_integer = function(x, name, lower = -Inf) {
+  greater_than = ifelse(lower == -Inf, " ", paste0(" >= ", lower, " "))
   if (!is.numeric(x))
-    stop("Only integers >= ", lower, " allowed for '", name, "'")
-  if (!all(x == floor(x)) | !all(x >= lower))  # any decimals or negative
-    stop("Only integers >= ", lower, " allowed for '", name, "'")
+    stop("Only integers", greater_than, "allowed for '", name, "'")
+  if (!all(x == floor(x)) | !all(x >= lower))
+    stop("Only integers", greater_than, "allowed for '", name, "'")
 
   TRUE
 }
