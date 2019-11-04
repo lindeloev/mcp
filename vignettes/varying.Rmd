@@ -1,0 +1,145 @@
+---
+title: "Varying change points with mcp"
+author: "Jonas Kristoffer Lindeløv"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Varying change points with mcp}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+A unique feature of `mcp` is modeling change points as varying effects (sometimes called "random effects"). This has the advantage that you can let the change point vary by a factor while keeping other parameters common across varying factor levels.
+
+This article in brief:
+
+ * How to simulate varying change points
+ * Get posteriors using `ranef(fit)`
+ * Plot using `plot(fit, facet_by="my_group")` and `plot(fit, "dens_overlay", pars = "varying", ncol = 3)`.
+ * Default priors restrict them to lie within the current segment, i.e., between the two adjecent change points.
+
+
+
+# Specifying varying change points
+
+You specify varying effects using the classical `lmer` syntax `(1|group)`. Currently (v. 0.1) `mcp` only support varying intercepts. For example, here we model a varying change point between a plateau and a joined slope:
+
+```{r}
+segments = list(
+  y ~ 1,  # int_1
+  1 + (1|id) ~ 0 + x  # cp_1, cp_1_sd, cp_1_id[i]
+)
+```
+
+You can have multiple varying change points with multiple groupings:
+
+```{r}
+segments = list(
+  y ~ 1,  # int_1
+  1 + (1|id) ~ 0 + x,  # cp_1, cp_1_sd, cp_1_id[i]
+  1 + (1|species) ~ 0,  # cp_2, cp_2_sd, cp_2_species[i]
+  (1|id) ~ 1  # cp_3 (implicit), cp_3_sd, cp_3_id[i]
+)
+```
+
+Here are some properties of the change point varying effects:
+
+**Zero centered:** The varying effects are zero-centered around the associated group-level change point. In other words, the sum of all varying effects are exactly zero. This constraint is necessary for the parameters to be identifiable. 
+
+**Hierarchical:** Consider the first change point, `cp_1`, and it's associated varying effects, `cp_1_id`. By default, it is modeled as sampled from (nested within) the group-level change point, `cp_1`, as well as a spread, `cp_1_sd`.
+
+**Constraints:** The varying effects are constrained to lie (1) in the observed range of the x-axis, and/or (2) between the two adjecent change points. That is, all `cp_1_id` are between `min(x)` and `cp_2`. All `cp_2_species` are between `cp_1` and `cp_3` and all `cp_3_id` are between `cp_2` and `max(x)`. These constraints are enforced through truncation of the default prior (`fit$prior`) and you can override them by specifying a manual prior (see vignette("priors")).
+
+
+
+# Simulating varying effects
+Let us do a worked example, simulating the varying change point between a plateau and a slope: 
+
+```{r}
+segments = list(
+  y ~ 1,  # int_1
+  1 + (1|id) ~ 0 + x  # cp_1, cp_1_sd, cp_1_id[i]
+)
+```
+
+It is quite similar to simulating non-varying data, except that we need to simulate some varying offsets before passing all parameters to `empty$func_y`:
+
+```{r, message=FALSE, warning=FALSE}
+library(mcp)
+empty = mcp(segments, sample = FALSE)
+
+library(dplyr)
+varying = c("Clark", "Louis", "Batman", "Batgirl", "Spiderman", "Jane")
+data = tibble(
+  x = runif(length(varying) * 30, 0, 100),  # 30 data points for each
+  id = rep(varying, each = 30),  # the group names
+  id_numeric = as.numeric(as.factor(id)),  # to positive integers
+  y = empty$func_y(x,
+    # Population-level:
+    int_1 = 20, x_2 = 0.5, cp_1 = 50, sigma = 2,
+    
+    # Varying: zero-centered and 10 between each level
+    cp_1_id = 10 * (id_numeric - mean(id_numeric))
+  )
+)
+
+data
+```
+
+Here, we "translated" the `id` to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around `cp_1`. The result:
+
+```{r}
+library(ggplot2)
+ggplot(data, aes(x=x, y=y)) + 
+  geom_point() +
+  facet_wrap(~id)
+```
+
+
+# Summarise and plot varying effects.
+Fitting the model is simple:
+
+```{r, cache = TRUE, message = FALSE, warning=FALSE, results=FALSE}
+fit = mcp(segments, data)
+```
+
+If we just use `plot(fit)`, we would see all points in one plot. We want to facet by `id`, so:
+
+```{r}
+plot(fit, facet_by="id", cores = 3)
+```
+
+It seems that `mcp` did a good job of recovering the change points. There is a lot of information in this data, since the intercept and the slope on each side of the (varying) change point is shared between participants here.
+
+If you use `summary(fit)` (or `fixef(fit)`) you will get the posteriors for the population-level effects. To get the random effects, do:
+
+```{r}
+ranef(fit)
+```
+
+Notice how well they are estimated to be 10 apart, indicating good recovery.
+
+Good convergence is not always as obvious as in this example. While `plot(fit, "combo")` show population-level parameters only, you can do this to get varying effects only:
+
+```{r}
+plot(fit, "trace", pars = "varying", ncol=3)
+```
+
+Notice the use of the `ncol` argument to set the number of columns. You will often have *many* levels on your varying effect, so this is useful to get a good view of all of them. Naturally, you can do this for almost all kinds of plots.
+
+Using `pars = "varying"` will plot all varying effects. This may be too much if you have multiple varying effects. To select just one, use regular expression in `regex_pars`. Two very handy operators are "^" (begins with) and "$" (ends with). Just to show that this "faceting" works for almost all of the many plot types, we now do two columns of `"dens_overlay`:
+
+```{r}
+plot(fit, "dens_overlay", regex_pars = "^cp_1_id", ncol = 2)
+```
+
+
+
+
+# Priors for varying effects
+TO DO
+
+```{r}
+cbind(fit$prior)
+```
+

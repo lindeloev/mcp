@@ -1,7 +1,7 @@
 # mcp: Bayesian Inference of Multiple Change Points
 
 [![Travis-CI status](https://img.shields.io/travis/lindeloev/mcp.svg)](https://travis-ci.org/lindeloev/mcp)
-[![Coveralls status](https://img.shields.io/coveralls/lindeloev/mcp.svg)](https://coveralls.io/r/lindeloev/mcp)
+[![Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/r/lindeloev/mcp)
 
 
 Hierarchical Bayesian inference of Multiple Change Points (MCP) between Generalized Linear Segments - and the parameters in those segments. Under the hood, `mcp` takes an abstract representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. The rest of the package ensures seamless compatibility with your favorite Bayesian packages, including `tidybayes`, `bayesplot`, `coda`, and `loo`.

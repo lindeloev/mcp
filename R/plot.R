@@ -220,7 +220,7 @@ plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
   }
 
   # Add better y-label for the rate plot
-  if (rate == TRUE)
+  if (fit$family$family == "bernoulli" | (fit$family$family == "binomial" & rate == TRUE))
     gg = gg + ggplot2::labs(y = paste0("Probability of success for ", fit$pars$y))
 
   return(gg)
