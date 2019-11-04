@@ -1,6 +1,6 @@
-#########
-# SETUP #
-#########
+############
+# DATASETS #
+############
 library(mcp)
 
 # Samples and checks data structure.
@@ -46,6 +46,11 @@ data_binomial = data.frame(
   id = c("a", "b", "c", "d", "e")
 )
 
+
+##################
+# TEST FUNCTIONS #
+##################
+
 test_mcp = function(segments,
                     data = data_gauss,
                     prior = list(),
@@ -69,7 +74,6 @@ test_mcp = function(segments,
     # If sample = FALSE, it should pass/fail with the above. If TRUE,
     # check for correct types in data structure
     testthat::expect_true(is.list(empty$segments), segments)
-    testthat::expect_true(all.equal(empty$segments, segments), segments)
     testthat::expect_true(all.equal(empty$data, data), segments)
     testthat::expect_true(is.list(empty$prior), segments)
     testthat::expect_true(all.equal(empty$family, family), segments)
@@ -87,15 +91,15 @@ test_mcp = function(segments,
     testthat::expect_true(is.list(empty$.other), segments)
 
     # capture.output suppresses the dclone output.
-    capture.output(fit <- mcp(
+    capture.output(fit <<- mcp(
       segments = segments,
       data = tibble::as_tibble(data),
       family = family,
       par_x = par_x,
-      adapt = 5,
-      update = 5,
-      iter = 20,  # loo fails if this is too low
-      chains = 2,
+      adapt = 6,
+      update = 3,
+      iter = 15,  # loo fails if this is too low. TO DO: require next version of loo when it is out.
+      chains = 2,  # 1 or 2
       cores = 1 + rbinom(1, 1, 0.5)  # serial or parallel
     ))
 
@@ -113,128 +117,165 @@ test_mcp = function(segments,
     # Data should not be manipulated, just by working with it
     testthat::expect_true(all.equal(fit$data, data), segments)
 
-    # Should be able to summarise'
-    invisible(capture.output(summary(fit)))
+    # Test mcpfit functions
+    varying_cols = na.omit(fit$.other$ST$cp_group_col)
+    test_summary(fit, varying_cols)
+    test_plot(fit, varying_cols)  # default plot
+    test_bayesplot(fit)  # bayesplot call
   }
-
-  # Success if we got here!
-  TRUE
 }
+
+
+# Tests if summary(fit) and ranef(fit) work as expected
+test_summary = function(fit, varying_cols) {
+  result = invisible(capture.output(summary(fit)))
+  result = paste0(result, collapse = "\n")
+  testthat::expect_match(result, "rhat")  # made results table
+
+  # If there are varying effects
+  if (length(varying_cols) > 0) {
+    testthat::expect_match(result, "ranef\\(")  # noticed about varying effects
+    varying = ranef(fit)
+    testthat::expect_true(is.character(varying$name))
+    testthat::expect_true(is.numeric(varying$mean))
+
+    group_level_counts = lapply(varying_cols, function(col) length(dplyr::pull(fit$data, col)))
+    #n_unique_data = length(unique(dplyr::pull(fit$data, varying_cols)))
+    n_unique_data = sum(unlist(group_level_counts))
+    testthat::expect_true(nrow(varying) == n_unique_data)  # TO DO: should fail if there are multiple groups
+  }
+}
+
+# Test the regular plot, including faceting
+test_plot = function(fit, varying_cols) {
+  # To facet or not to facet
+  if (length(varying_cols) > 0) {
+    gg = plot(fit, facet_by = varying_cols[1])  # just take the first
+  } else {
+    gg = plot(fit)
+  }
+  testthat::expect_s3_class(gg, c("gg", "ggplot"))
+}
+
+# Test plot() calls to bayesplot
+test_bayesplot = function(fit) {
+  gg = plot(fit, "dens_overlay")
+  testthat::expect_s3_class(gg, c("gg", "ggplot"))
+}
+
+
+
+# Ruitine for testing a list of erroneous segments
+test_bad = function(segments_list, title, ...) {
+  for (segments in segments_list) {
+    test_name = paste0(title, ":
+    ", paste0(segments, collapse=", "))
+
+    testthat::test_that(test_name, {
+      testthat::expect_error(test_mcp(segments, sample = FALSE, ...))  # should err before sampling
+    })
+  }
+}
+
+
+# Routine for testing a list of good segments
+test_good = function(segments_list, title, ...) {
+  for (segments in segments_list) {
+    test_name = paste0(title, ":
+    ", paste0(segments, collapse=", "))
+
+    testthat::test_that(test_name, {
+      test_mcp(segments, ...)
+    })
+  }
+}
+
 
 
 ###############
 # TEST PRIORS #
 ###############
-
-testthat::test_that("Good priors", {
-  segments = list(
-    y ~ 1 + x,
-    1 + (1|id) ~ rel(1) + rel(x),
-    rel(1) ~ 0
+good_prior_segments = list(
+  y ~ 1 + x,
+  1 + (1|id) ~ rel(1) + rel(x),
+  rel(1) ~ 0
+)
+good_prior = list(
+  list(
+    int_2 = "int_1",
+    cp_1 = "dnorm(3, 10)",
+    x_2 = "-0.5"
   )
-  priors = list(
-    list(
-      int_2 = "int_1",
-      cp_1 = "dnorm(3, 10)",
-      x_2 = "-0.5"
-    )
-  )
+)
 
-  for (prior in priors) {
-    testthat::expect_true(
-      test_mcp(segments, prior = prior),
-      info = paste0("segments: ", segments)
-    )
-  }
-})
+for (prior in good_prior) {
+  test_name = paste0("Good priors: ", paste0(prior, collapse=", "))
+  testthat::test_that(test_name, {
+    test_mcp(good_prior_segments, prior = prior)
+  })
+}
 
 
 
 ##########
 # TEST Y #
 ##########
+bad_y = list(
+  list( ~ 1),  # No y
+  list((1|id) ~ 1),  # y cannot be varying
+  list(1 ~ 1),  # 1 is not y
+  list(y ~ 1,  # Two y
+       a ~ 1 ~ 1),
+  list(y ~ 1,  # Intercept y
+       1 ~ 1 ~ 1),
+  list(bad_y_char ~ 1),  # Character y
+  list(bad_y_factor ~ 1)  # Factor y
+)
 
-testthat::test_that("Bad y", {
-  bad_y = list(
-    list( ~ 1),  # No y
-    list((1|id) ~ 1),  # y cannot be varying
-    list(1 ~ 1),  # 1 is not y
-    list(y ~ 1,  # Two y
-         a ~ 1 ~ 1),
-    list(y ~ 1,  # Intercept y
-         1 ~ 1 ~ 1),
-    list(bad_y_char ~ 1),  # Character y
-    list(bad_y_factor ~ 1)  # Factor y
-  )
+test_bad(bad_y, "Bad y")
 
-  for (segments in bad_y) {
-    testthat::expect_error(
-      test_mcp(segments, sample = FALSE),  # should err before sampling
-      info = paste0("segments: ", segments)
-    )
-  }
-})
 
-testthat::test_that("Good y", {
-  good_y = list(
-    list(y ~ 1),  # Regular
-    list(y ~ 1,  # Explicit and implicit y and cp
-         y ~ 1 ~ 1,
-         rel(1) + (1|id) ~ rel(1) + x,
-         ~ 1),
-    list(ok_y ~ 1)  # decimal y
-  )
+good_y = list(
+  list(y ~ 1),  # Regular
+  list(y ~ 1,  # Explicit and implicit y and cp
+       y ~ 1 ~ 1,
+       rel(1) + (1|id) ~ rel(1) + x,
+       ~ 1),
+  list(ok_y ~ 1)  # decimal y
+)
 
-  for (segments in good_y) {
-    testthat::expect_true(
-      test_mcp(segments),
-      info = paste0("segments: ", segments)
-    )
-  }
-})
+test_good(good_y, "Good y")
+
 
 
 ###################
 # TEST INTERCEPTS #
 ###################
+bad_intercepts = list(
+  list(y ~ rel(0)),  # rel(0) not supported
+  list(y ~ rel(1)),  # Nothing to be relative to here
+  list(y ~ 2),  # 2 not supported
+  list(y ~ 1,
+       1 ~ rel(0))  # rel(0) not supported
+)
 
-testthat::test_that("bad intercepts", {
-  bad_intercepts = list(
-    list(y ~ rel(0)),  # rel(0) not supported
-    list(y ~ rel(1)),  # Nothing to be relative to here
-    list(y ~ 2),  # 2 not supported
-    list(y ~ 1,
-         1 ~ rel(0))  # rel(0) not supported
-  )
+test_bad(bad_intercepts, "Bad intercepts")
 
-  for (segments in bad_intercepts) {
-    testthat::expect_error(
-      test_mcp(segments, sample = FALSE),  # should err before sampling
-      info = paste0("segments: ", segments)
-    )
-  }
-})
 
-testthat::test_that("good intercepts", {
-  good_intercepts = list(
-    #list(y ~ 0),  # would be nice if it worked, but mcmc.list does not behave well with just one variable
-    list(ok_y ~ 1),  # y can be called whatever
-    list(y ~ 0,  # Multiple segments
-         1 ~ 1,
-         1 ~ 0,
-         1 ~ 1),
-    list(y ~ 1,  # Chained relative intercepts
-         1 ~ rel(1),
-         1 ~ rel(1))
-  )
+good_intercepts = list(
+  #list(y ~ 0),  # would be nice if it worked, but mcmc.list does not behave well with just one variable
+  list(ok_y ~ 1),  # y can be called whatever
+  list(y ~ 0,  # Multiple segments
+       1 ~ 1,
+       1 ~ 0,
+       1 ~ 1),
+  list(y ~ 1,  # Chained relative intercepts
+       1 ~ rel(1),
+       1 ~ rel(1))
+)
 
-  for (segments in good_intercepts) {
-    testthat::expect_true(
-      test_mcp(segments),
-      info = paste0("segments: ", segments)
-    )
-  }
-})
+test_good(good_intercepts, "Good intercepts")
+
 
 
 
@@ -242,45 +283,33 @@ testthat::test_that("good intercepts", {
 # TEST SLOPES #
 ###############
 
-testthat::test_that("bad slopes", {
-  bad_slopes = list(
-    list(y ~ rel(x)),  # Nothing to be relative to
-    list(y ~ x + y),  # Two slopes
-    list(y ~ x,  # Two slopes
-         1 ~ y),
-    list(y ~ 1,  # Relative slope after no slope
-         1 ~ rel(x)),
-    list(y ~ bad_x_char),  # not numeric x
-    list(y ~ bad_x_factor)  # not numeric x
-  )
+bad_slopes = list(
+  list(y ~ rel(x)),  # Nothing to be relative to
+  list(y ~ x + y),  # Two slopes
+  list(y ~ x,  # Two slopes
+       1 ~ y),
+  list(y ~ 1,  # Relative slope after no slope
+       1 ~ rel(x)),
+  list(y ~ bad_x_char),  # not numeric x
+  list(y ~ bad_x_factor)  # not numeric x
+)
 
-  for (segments in bad_slopes) {
-    testthat::expect_error(
-      test_mcp(segments, sample = FALSE),  # should err before sampling
-      info = paste0("segments: ", segments)
-    )
-  }
-})
+test_bad(bad_slopes, "Bad slopes")
 
-testthat::test_that("good slopes", {
-  good_slopes = list(
-    list(y ~ 0 + x),  # Regular
-    list(y ~ 0 + x,  # Multiple on/off
-         1 ~ 0,
-         1 ~ 1 + x),
-    list(y ~ x,  # Chained relative slopes
-         1 ~ 0 + rel(x),
-         1 ~ rel(x)),
-    list(y ~ ok_x)  # alternative x
-  )
 
-  for (segments in good_slopes) {
-    testthat::expect_true(
-      test_mcp(segments, par_x = NULL),
-      info = paste0("segments: ", segments)
-    )
-  }
-})
+
+good_slopes = list(
+  list(y ~ 0 + x),  # Regular
+  list(y ~ 0 + x,  # Multiple on/off
+       1 ~ 0,
+       1 ~ 1 + x),
+  list(y ~ x,  # Chained relative slopes
+       1 ~ 0 + rel(x),
+       1 ~ rel(x)),
+  list(y ~ ok_x)  # alternative x
+)
+
+test_good(good_slopes, "Good slopes", par_x = NULL)
 
 
 
@@ -288,59 +317,46 @@ testthat::test_that("good slopes", {
 # TEST CHANGE POINTS #
 ######################
 
-testthat::test_that("bad change points", {
-  bad_cps = list(
-    list(y ~ x,
-         0 ~ 1),  # Needs changepoint stuff
-    list(y ~ x,
-         q ~ 1),  # Slope not allowed for changepoint
-    list(y ~ 1,
-         (goat|id) ~ 1),  # No varying slope allowed
-    list(y ~ 1,
-         y ~ ~ 1),  # Needs to be explicit if y is defined
-    list(y ~ 1,
-         rel(1) ~ 1),  # Nothing to be relative to yet
-    list(y ~ 1,
-         1 + (1|bad_id) ~ 1)  # decimal group
-  )
+bad_cps = list(
+  list(y ~ x,
+       0 ~ 1),  # Needs changepoint stuff
+  list(y ~ x,
+       q ~ 1),  # Slope not allowed for changepoint
+  list(y ~ 1,
+       (goat|id) ~ 1),  # No varying slope allowed
+  list(y ~ 1,
+       y ~ ~ 1),  # Needs to be explicit if y is defined
+  list(y ~ 1,
+       rel(1) ~ 1),  # Nothing to be relative to yet
+  list(y ~ 1,
+       1 + (1|bad_id) ~ 1)  # decimal group
+)
 
-  for (segments in bad_cps) {
-    testthat::expect_error(
-      test_mcp(segments, sample = FALSE),  # should err before sampling
-      info = paste0("segments: ", segments)
-    )
-  }
-})
+test_bad(bad_cps, "Bad change points")
 
-testthat::test_that("good change points", {
-  good_cps = list(
-    list(y ~ 0 + x,  # Regular cp
-         1 ~ 1),
-    list(y ~ 1,  # Implicit cp
-         ~ 1,
-         ~ 0),
-    list(y ~ 0,  # Varying
-         1 + (1|id) ~ 1),
-    list(y ~ 0,  # Chained varying and relative cp
-         y ~ 1 ~ 1,
-         rel(1) + (1|id) ~ 0,
-         rel(1) + (1|id) ~ 0,
-         ~ x),
-    list(y ~ 1,
-         (1|id) ~ 0),  # Intercept is implicit. I don't like it, but OK.
-    list(y ~ 1,
-         1 + (1|id) ~ 1,
-         1 + (1|ok_id_integer) ~ 1,  # multiple groups and alternative data
-         1 + (1|ok_id_factor) ~ 1)  # alternative group data
-  )
 
-  for (segments in good_cps) {
-    testthat::expect_true(
-      test_mcp(segments),
-      info = paste0("segments: ", segments)
-    )
-  }
-})
+good_cps = list(
+  list(y ~ 0 + x,  # Regular cp
+       1 ~ 1),
+  list(y ~ 1,  # Implicit cp
+       ~ 1,
+       ~ 0),
+  list(y ~ 0,  # Varying
+       1 + (1|id) ~ 1),
+  list(y ~ 0,  # Chained varying and relative cp
+       y ~ 1 ~ 1,
+       rel(1) + (1|id) ~ 0,
+       rel(1) + (1|id) ~ 0,
+       ~ x),
+  list(y ~ 1,
+       (1|id) ~ 0),  # Intercept is implicit. I don't like it, but OK.
+  list(y ~ 1,
+       1 + (1|id) ~ 1,
+       1 + (1|ok_id_integer) ~ 1,  # multiple groups and alternative data
+       1 + (1|ok_id_factor) ~ 1)  # alternative group data
+)
+
+test_good(good_cps, "Good change points")
 
 
 
@@ -348,57 +364,43 @@ testthat::test_that("good change points", {
 # TEST BINOMIAL #
 #################
 
-testthat::test_that("bad binomial", {
-  bad_bin = list(
-    # Misspecification of y and trials
-    list(y ~ 1),  # no trials
-    list(y | N ~ 1),  # wrong format
-    list(trials(N) | y ~ 1),  # Wrong order
-    list(y | trials() ~ 1),  # trials missing
-    list(trials(N) ~ 1),  # no y
-    list(y | trials(N) ~ 1 + x,
-         y | N ~ 1 ~ 1),  # misspecification in later segment
+bad_binomial = list(
+  # Misspecification of y and trials
+  list(y ~ 1),  # no trials
+  list(y | N ~ 1),  # wrong format
+  list(trials(N) | y ~ 1),  # Wrong order
+  list(y | trials() ~ 1),  # trials missing
+  list(trials(N) ~ 1),  # no y
+  list(y | trials(N) ~ 1 + x,
+       y | N ~ 1 ~ 1),  # misspecification in later segment
 
-    # Bad data
-    list(y_bad_numeric | trials(N) ~ 1),
-    list(y | trials(N_bad_numeric) ~ 1),
-    list(y | trials(N_bad_factor) ~ 1),
-    list(y | trials(N_bad_char) ~ 1)
-  )
+  # Bad data
+  list(y_bad_numeric | trials(N) ~ 1),
+  list(y | trials(N_bad_numeric) ~ 1),
+  list(y | trials(N_bad_factor) ~ 1),
+  list(y | trials(N_bad_char) ~ 1)
+)
 
-  for (segments in bad_bin) {
-    testthat::expect_error(
-      test_mcp(segments,
-                  data = data_binomial,
-                  family = binomial(),
-                  sample = FALSE),  # should err before sampling
-      info = paste0("segments: ", segments)
-    )
-  }
-})
+test_bad(bad_binomial, "Bad binomial",
+         data = data_binomial,
+         family = binomial())
 
 
-testthat::test_that("good binomial", {
-  good_bin = list(
-    list(y | trials(N) ~ 1),  # one segment
-    list(y | trials(N) ~ 1 + x,  # specified multiple times and with rel()
-         y | trials(N) ~ 1 ~ rel(1) + rel(x),
-         rel(1) ~ 0),
-    list(y | trials(N) ~ 1,  # With varying
-         1 + (1|id) ~ 1)
-    #list(y | trials(N) ~ 1,
-    #     1 ~ N)  # N can be both trials and slope. Fails in this test because par_x = "x"
-  )
+good_binomial = list(
+  list(y | trials(N) ~ 1),  # one segment
+  list(y | trials(N) ~ 1 + x,  # specified multiple times and with rel()
+       y | trials(N) ~ 1 ~ rel(1) + rel(x),
+       rel(1) ~ 0),
+  list(y | trials(N) ~ 1,  # With varying
+       1 + (1|id) ~ 1)
+  #list(y | trials(N) ~ 1,
+  #     1 ~ N)  # N can be both trials and slope. TO DO: Fails in this test because par_x = "x"
+)
 
-  for (segments in good_bin) {
-    testthat::expect_true(
-      test_mcp(segments,
-                  data = data_binomial,
-                  family = binomial()),
-      info = paste0("segments: ", segments)
-    )
-  }
-})
+test_good(good_binomial, "Good binomial",
+          data = data_binomial,
+          family = binomial())
+
 
 
 
@@ -406,50 +408,35 @@ testthat::test_that("good binomial", {
 # TEST BERNOULLI #
 ##################
 # This is rather short since most is tested via binomial
+bad_bernoulli = list(
+  # Misspecification of y and trials
+  list(y_bern | trials(N) ~ 1),  # trials
+  list(y_bern ~ 1 + x,
+       y_bern | trials(N) ~ 1 ~ 1),  # misspecification in later segment
 
-testthat::test_that("bad bernoulli", {
-  bad_bin = list(
-    # Misspecification of y and trials
-    list(y_bern | trials(N) ~ 1),  # trials
-    list(y_bern ~ 1 + x,
-         y_bern | trials(N) ~ 1 ~ 1),  # misspecification in later segment
+  # Bad data
+  list(y_bad_numeric ~ 1),
+  list(y ~ 1)  # binomial response
+)
 
-    # Bad data
-    list(y_bad_numeric ~ 1),
-    list(y ~ 1)  # binomial response
-  )
-
-  for (segments in bad_bin) {
-    testthat::expect_error(
-      test_mcp(segments,
-               data = data_binomial,
-               family = bernoulli(),
-               sample = FALSE),  # should err before sampling
-      info = paste0("segments: ", segments)
-    )
-  }
-})
+test_bad(bad_bernoulli, "Bad Bernoulli",
+         data = data_binomial,
+         family = bernoulli())
 
 
-testthat::test_that("good bernoulli", {
-  good_bin = list(
-    list(y_bern ~ 1),  # one segment
-    list(y_bern ~ 1 + x,  # specified multiple times and with rel()
-         y_bern ~ 1 ~ rel(1) + rel(x),
-         rel(1) ~ 0),
-    list(y_bern ~ 1,  # With varying
-         1 + (1|id) ~ 1)
-  )
+good_bernoulli = list(
+  list(y_bern ~ 1),  # one segment
+  list(y_bern ~ 1 + x,  # specified multiple times and with rel()
+       y_bern ~ 1 ~ rel(1) + rel(x),
+       rel(1) ~ 0),
+  list(y_bern ~ 1,  # With varying
+       1 + (1|id) ~ 1)
+)
 
-  for (segments in good_bin) {
-    testthat::expect_true(
-      test_mcp(segments,
-               data = data_binomial,
-               family = bernoulli()),
-      info = paste0("segments: ", segments)
-    )
-  }
-})
+test_good(good_bernoulli, "Good Bernoulli",
+          data = data_binomial,
+          family = bernoulli())
+
 
 
 ################
@@ -457,45 +444,30 @@ testthat::test_that("good bernoulli", {
 ################
 # Like binomial, but without the trials()
 
-testthat::test_that("bad poisson", {
-  bad_bin = list(
-    # Misspecification of y and trials
-    list(y | trials(N) ~ 1),  # bad response format
-    list(y ~ 1 + x,
-         y | trials(N) ~ 1 ~ 1),  # misspecification in later segment
+bad_poisson = list(
+  # Misspecification of y and trials
+  list(y | trials(N) ~ 1),  # bad response format
+  list(y ~ 1 + x,
+       y | trials(N) ~ 1 ~ 1),  # misspecification in later segment
 
-    # Bad data
-    list(y_bad_numeric ~ 1)
-  )
+  # Bad data
+  list(y_bad_numeric ~ 1)
+)
 
-  for (segments in bad_bin) {
-    testthat::expect_error(
-      test_mcp(segments,
-               data = data_binomial,
-               family = poisson(),
-               sample = FALSE),  # should err before sampling
-      info = paste0("segments: ", segments)
-    )
-  }
-})
+test_bad(bad_poisson, "Bad Poisson",
+         data = data_binomial,
+         family = poisson())
 
 
-testthat::test_that("good poisson", {
-  good_bin = list(
-    list(y ~ 1),  # one segment
-    list(y ~ 1 + x,  # specified multiple times and with rel()
-         y  ~ 1 ~ rel(1) + rel(x),
-         rel(1) ~ 0),
-    list(y ~ 1,  # With varying
-         1 + (1|id) ~ 1)
-  )
+good_poisson = list(
+  list(y ~ 1),  # one segment
+  list(y ~ 1 + x,  # specified multiple times and with rel()
+       y  ~ 1 ~ rel(1) + rel(x),
+       rel(1) ~ 0),
+  list(y ~ 1,  # With varying
+       1 + (1|id) ~ 1)
+)
 
-  for (segments in good_bin) {
-    testthat::expect_true(
-      test_mcp(segments,
-               data = data_binomial,
-               family = poisson()),
-      info = paste0("segments: ", segments)
-    )
-  }
-})
+test_good(good_poisson, "Good Poisson",
+          data = data_binomial,
+          family = poisson())

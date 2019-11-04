@@ -1,4 +1,10 @@
 ^mcp\.Rproj$
 ^\.Rproj\.user$
 .travis.yml
+_pkgdown.yml
+.covrignore
 docs
+vignettes/binomial_cache
+vignettes/poisson_cache
+vignettes/priors_cache
+vignettes/varying_cache

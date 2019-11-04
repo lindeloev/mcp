@@ -7,14 +7,14 @@ common_prior = list(
   cp_1 = "dunif(MINX, MAXX)",
   cp = "dunif(%s, MAXX)",
   cp_rel = "dunif(0, MAXX - %s)",
-  sd = "dnorm(0, MAXX) T(0, )"
+  sd = "dnorm(0, (MAXX - MINX) / 2) T(0, )"
 )
 
 # Per-family priors
 priors = list(
   gaussian = c(common_prior, list(
-    slope = "dnorm(0, SDY / (MAXX - MINX))",
-    int = "dnorm(0, 3 * SDY)",
+    slope = "dt(0, SDY / (MAXX - MINX), 3)",
+    int = "dt(0, 3 * SDY, 3)",
     sigma = "dnorm(0, SDY) T(0, )"
   )),
 
@@ -73,9 +73,19 @@ get_default_prior_cp_group = function(ST, i) {
   if (i < 2)
     stop("Only i >= 2 allowed.")
 
-  S = ST[i, ]
-  trunc = paste0("T(", ifelse(i == 2, "MINX", ST$cp_code_prior[i-1]), ", ", ifelse(i == nrow(ST), "MAXX", ST$cp_code_prior[i+1]), ")")
-  return(paste0("dnorm(0, ", S$cp_sd, ") ", trunc))
+  # Truncate between last change point and next change point, including their
+  # varying effects, but keep in the observed range (MINX, MAXX).
+  if (i == 2)
+    trunc_from = paste0("MINX - ", ST$cp_code_prior[i])
+  if (i > 2)
+    trunc_from = paste0(ST$cp_code_prior[i-1], " - ", ST$cp_code_prior[i])
+  if (i == nrow(ST))
+    trunc_to = paste0("MAXX - ", ST$cp_code_prior[i])
+  if (i < nrow(ST))
+    trunc_to = paste0(ST$cp_code_prior[i + 1], " - ", ST$cp_code_prior[i])
+  #trunc = paste0("T(", ifelse(i == 2, "MINX", ST$cp_code_prior[i-1]), ", ", ifelse(i == nrow(ST), "MAXX", ST$cp_code_prior[i+1]), ")")
+  trunc = paste0("T(", trunc_from, ", ", trunc_to, ")")
+  return(paste0("dnorm(0, ", ST$cp_sd[i], ") ", trunc))
 }
 
 

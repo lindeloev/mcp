@@ -121,7 +121,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, ...) {
   cat("Family: ", fit$family$family, "(link = '", fit$family$link, "')\n", sep = "")
   if (!is.null(fit$samples))
     cat("Iterations: ", nrow(fit$samples[[1]]) * length(fit$samples), " from ", length(fit$samples), " chains.\n", sep="")
-  cat("Model:\n")
+  cat("Segments:\n")
   for (segment in fit$segments) {
     cat("  ", format(segment), "\n")
   }

@@ -8,10 +8,13 @@ get_segment_table(segments, data = NULL, family = gaussian(),
   par_x = NULL)
 }
 \arguments{
-\item{segments}{A list of formulas - one for each segment. The right-hand
-side specifices the form of intercepts and slopes. For the first segment,
-the left-hand side is the response variable. In the following segments, the
-left-hand side is the change point (on x). See examples for more details.}
+\item{segments}{A list of formulas - one for each segment. The first formula
+  has the format \code{response ~ predictors} while the following formulas
+  have the format \code{response ~ changepoint ~ predictors}. The response
+  and change points can be omitted (\code{changepoint ~ predictors} assumes same
+  response. \code{~ predictors} assumes an intercept-only change point).
+
+  See examples for more details.}
 
 \item{data}{Data.frame or tibble in long format.}
 

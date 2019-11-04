@@ -38,5 +38,7 @@ Suggests:
     testthat (>= 2.1.0),
 	knitr, 
 	rmarkdown,
-	boot
+	boot,
+	covr,
+	gridExtra
 VignetteBuilder: knitr

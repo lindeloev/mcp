@@ -1,6 +1,3 @@
-# TO DO:
-# * Nest cp varying effects too?
-
 source("R/lme4_utils.R")
 
 
@@ -266,9 +263,14 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
     ST = dplyr::bind_rows(ST, row)
   }
 
-  # Return the cols we need
-  ST = dplyr::select(ST, -.data$form_y, -.data$form_cp, -.data$form_rhs) %>%
-    tidyr::fill(.data$y, .data$trials, .direction="downup")  # Usually only provided in segment 1
+  # Fill y and trials, where not explicit.
+  # Build "full" formula and insert instead of the old
+  ST = ST %>%
+    tidyr::fill(.data$y, .data$trials, .direction="downup") %>%  # Usually only provided in segment 1
+    dplyr::mutate(form = paste0(.data$y, ifelse(!is.na(.data$form_cp), .data$form_cp, ""), .data$form_rhs)) %>%
+    dplyr::select(-.data$form_y, -.data$form_cp, -.data$form_rhs)  # Not needed anymore
+
+
 
 
   ###########################
@@ -390,7 +392,8 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
       slope_code = cumpaste(.data$slope_name, " + "),
       slope_code = format_code(.data$slope_code, na_col = .data$slope_name)
     ) %>%
-    dplyr::ungroup()
+    dplyr::ungroup() %>%
+    dplyr::select(-dplyr::starts_with("cumsum"))
 
   # Return
   ST
@@ -426,10 +429,11 @@ format_code = function(col, na_col) {
 #' @param lower the smallest allowed value. lower = 1 checks for positive integers.
 #'
 check_integer = function(x, name, lower = -Inf) {
+  greater_than = ifelse(lower == -Inf, " ", paste0(" >= ", lower, " "))
   if (!is.numeric(x))
-    stop("Only integers >= ", lower, " allowed for '", name, "'")
-  if (!all(x == floor(x)) | !all(x >= lower))  # any decimals or negative
-    stop("Only integers >= ", lower, " allowed for '", name, "'")
+    stop("Only integers", greater_than, "allowed for '", name, "'")
+  if (!all(x == floor(x)) | !all(x >= lower))
+    stop("Only integers", greater_than, "allowed for '", name, "'")
 
   TRUE
 }

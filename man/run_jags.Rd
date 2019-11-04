@@ -4,7 +4,7 @@
 \alias{run_jags}
 \title{Run parallel MCMC sampling using JAGS.}
 \usage{
-run_jags(data, jags_code, params, ST, cores,
+run_jags(data, jags_code, params, ST, cores, sample = sample,
   model_file = "tmp_jags_code.txt", ...)
 }
 \arguments{
@@ -26,6 +26,11 @@ Only really used when the model contains varying effects.}
   to the same value.
   \item "all": use all cores but one.
 }}
+
+\item{sample}{One of TRUE, FALSE, or "prior". Set to FALSE to get an mcpfit
+object without samples. This is useful if you only want to check
+priors, the JAGS model, etc. Set to "prior" if you want to do a prior
+predictive check.}
 
 \item{model_file}{A temporary file. Makes parallel sampling possible
 samples that are discarded between n.adapt and n.iter (to improve convergence)..}
