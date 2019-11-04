@@ -39,5 +39,6 @@ Suggests:
 	knitr, 
 	rmarkdown,
 	boot,
-	covr
+	covr,
+	gridExtra
 VignetteBuilder: knitr

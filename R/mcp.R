@@ -141,7 +141,6 @@ mcp = function(segments,
                adapt = 1500,
                update = 1500,
                jags_explicit = NULL,
-               sample_prior = TRUE,
                ...) {
 
   # Check data

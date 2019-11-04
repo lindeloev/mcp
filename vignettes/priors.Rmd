@@ -1,0 +1,149 @@
+---
+title: "Working with priors in mcp"
+author: "Jonas Kristoffer Lindeløv"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Working with priors in mcp}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+
+# TO DO:
+ * Links to simulation vignette
+ * Link to varying effects vignette
+
+
+# Introduction to priors
+`mcp` is serious about priors. This document covers the following functionality:
+
+ * Set priors using `mcp(segments, data, prior = list(cp_1 = "dnorm(0, 1)", cp_1 = "dunif(0, 45)`)
+ * Fix parameters to specific values using `cp_1 = 45`
+ * Share parameters between segments using `slope_1 = "slope_2"`
+ * Allows for truncated priors using `T(lower, upper)`, e.g., `int_1 = "dnorm(0, 1) T(0, )"`. `mcp` applies this automatically to change point priors to enforce order restriction.
+ * Defaults to uninformative priors for all families, often weakly informed by data so as to remain uninformative across many orders of magnitude.
+ * Sample priors for prior predictive checks using `mcp(segments, data, sample="prior")`.
+ * See the article on varying change points with `mcp` <!-- insert link here --> for priors of varying change points.
+
+
+# Setting a prior
+`mcp` takes priors in the form of a named list. The names are the parameter names, and the values are JAGS code. For example, you may do something like this:
+
+```{r}
+segments = list(
+  y ~ 1 + x,  # int_1 + x_1
+  1 ~ 1 + x,  # cp_1, int_2, and x_2
+  1 ~ 1 + x  # cp_2
+)
+
+prior = list(
+  int_1 = "dnorm(0, 5) T(, 10)",  # Intercept; less than 15
+  x_1 = "dbeta(2, 5)",  # slope: beta with right skew
+  cp_1 = "dunif(MINX, cp_2)",  # change point between smallest x and cp_2
+  x_2 = "dt(0, 1, 3) T(x_1, )",  # slope 2 > slope 1 and t-distributed
+  cp_2 = 80,  # fixed to this value
+  x_3 = "x_2"  # continue same slope
+  # int_2 and int_3 not specified. Use default.
+)
+```
+
+The values are JAGS code, so all JAGS distributions are allowed. These also include `gamma`, `dt`, `cauchy`, and many others. See the [JAGS user manual](https://web.sgh.waw.pl/~atoroj/ekonometria_bayesowska/jags_user_manual.pdf) for more details. The parameterizaiton of the distributions are identical to standard R. Use SD when you specify priors for `dnorm`, `dt`, `dlogis`, etc. JAGS uses precision but `mcp` converts to precision under the hood via the `sd_to_prec()` function. You can see this conversion by inspecting the difference between `fit$prior` (using SD) and `fit$jags_code` (using precision).
+
+Other notes:
+
+* Order restriction is automatically applied to change points (`cp_*` parameters) using truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the x-axis. You can override this behavior by defining `T()` or `dunif` yourself (`dunif` cannot be truncated), in which case `mcp` won't do further.
+
+* In addition to the model parameters, `MINX` (minimum x-value), `MAXX` (maximum x-value), `SDX`, `MEANX`, `MINY`, `MAXY`, `MEANY`, and `SDY` are also available when you set priors. They are used to set uninformative default priors. Strictly speaking, this is "illegal", but it does ensure that estimation works reasonably across many orders of magnitude.
+
+* You can fix any parameter to a specific value. Simply set it to a numerical value
+(as `cp_2` above). A fixed value is a 100% prior belief in that value, and it will therefore not be estimated.
+
+* You can also equate one variable with another (`x_3 = "x_2"` above). You would usually do this to share parameters across segments, but you can be creative and do something like `x_3 = "x_2 + 5 - cp_1/10"` if you want. In any case, it will lead to one less parameter being estimated, i.e., one less free parameter.
+
+Let us see the priors after running them through `mcp` and compare to the default priors:
+
+```{r}
+library(mcp)
+empty_prior = mcp(segments, prior = prior, sample = FALSE)
+empty_default = mcp(segments, sample = FALSE)
+
+# Look at fit$prior and show them side-by-side
+cbind(prior = empty_prior$prior, default = empty_default$prior)
+```
+
+Now, let's simulate some data that from the model specified by `segments`. The following data "violates" the manual priors so as to show their effect.
+
+```{r, echo = FALSE}
+data = tibble::tibble(
+  x = runif(200, 0, 100),  # 200 datapoints
+  y = empty_default$func_y(x, 
+    int_1 = 20, int_2 = 30, int_3 = 30,  # intercepts
+    x_1 = -0.5, x_2 = 0.5, x_3 = 0,  # slopes
+    cp_1 = 35, cp_2 = 70,  # change points
+    sigma = 5)
+)
+```
+
+
+Sample and plot the fits:
+
+```{r, cache = TRUE, message=FALSE, warning=FALSE, results=FALSE}
+fit_prior = mcp(segments, data, prior, cores = 3)
+fit_default = mcp(segments, data, cores = 3)
+```
+```{r}
+library(ggplot2)
+plot_default = plot(fit_default) + ggtitle("Default priors")
+plot_prior = plot(fit_prior) + ggtitle("Manual priors")
+gridExtra::grid.arrange(plot_default, plot_prior, ncol=2)
+```
+
+We see the effects of the priors.
+
+ * The intercept `int_1` was truncated to be below 10.
+ * The slope `x_1` is bound to be non-negative (because `dbeta`).
+ * The slopes `x_2` and `x_3` were forced to be identical.
+ * The change point `cp_2` was fixed, so there is no uncertainty there.
+
+Of course, it will usually be the other way around: setting manual priors will often serve to sample the "correct" posterior. Actually, this particular 
+
+
+# Default priors on change points
+Change points have to be ordered from left (`cp_1`) to right (`cp_2+`). This order restriction is enforced through the priors. The first change point defaults to `cp_1 = dunif(MINX, MAXX)`. In other words, the change point has to happen in the observed range of x, but it is equally probable across this range. The second change point defaults to `cp_2 = dunif(cp_1, MAXX)`, i.e., it has to occur in the observed range AND be greater than `cp_1`, and so forth for `cp_3` (greater than `cp_2`), etc.
+
+One side effect is that later change points have greater prior probability density towards the right side of the x-axis. You can see this if you sample the priors without data (`fit = mcp(segments, data, sample = "prior")`) and summarise the estimates (`summary(fit)`). In practice, this "bias" is so weak that it takes a combination of many data points and few data for it to impact the posterior in any noticable way.
+
+If you want more informed priors on the change point location, i.e., `cp_2 = "dnorm(40, 10)`, `mcp` adds this order restriction by adding `cp_2 = "dnorm(40, 10) T(cp_1, MAXX)`. You can avoid this behavior by explicitly doing an "empty" truncation yourself, e.g., `cp_2 = "dnorm(40, 10) T(,)`. However, the model may fail to sample the correct posterior in samples where order restriction is not kept.
+
+
+# Default priors on linear predictors
+*OBS: These priors are very likely to change in versions beyond mcp 0.1.*
+You can see the default priors for the `gaussian()` family above. They are similar to the `brms` default priors which are similarly t-distributed, mean = 0, and with a standard deviation that scales with the data.
+
+This means that there will be some "shrinkage" towards a mean and SD of zero for all parameters, especially for parameters with a large mean and a small SD.
+
+The slopes are scaled as if it was one SD in height through the entire x-axis. This too will be insufficient for very steep slopes, i.e., if there are many change points on `x`.
+
+See the family-specific articles for more information about the priors for other families:
+
+ * vignette("binomial")
+ * Bernoulli
+ * vignette("poisson")
+
+
+# Prior predictive checks
+Prior predicive checks is a great way to ensure that the priors are meaningful. Simply set `sample = "prior"`. Let us do it for the two sets of priors defined previously in this article, to see their differnet prior predictive space.
+
+```{r, cache = TRUE, message=FALSE, warning=FALSE}
+# Sample priors 
+fit_pp_prior = mcp(segments, data, prior, sample = "prior", cores = 3)
+fit_pp_default = mcp(segments, data, sample = "prior", cores = 3)
+
+# Plot it
+plot_pp_prior = plot(fit_pp_prior, draws=100) + ylim(c(-400, 400)) + ggtitle("Manual prior")
+plot_pp_default = plot(fit_pp_default, draws=100) + ylim(c(-400, 400)) + ggtitle("Default prior")
+gridExtra::grid.arrange(plot_pp_prior, plot_pp_default, ncol=2)
+```
+
+You can see how the manual priors are more dense to the left, and the "concerted" change at x = 80.

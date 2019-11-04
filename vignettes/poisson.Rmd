@@ -15,20 +15,24 @@ The Poisson distribution models the number of events within similar-sized time f
 # Coal mining disasters
 A dataset if coal mining disasters has grown very popular in the change point literature (available in `boot::coal`). It contains a timestamp of each coal mining disaster from 1851 to 1962. By binning the number of events within each year (fixed time frame), we have something very Poisson-friendly:
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
+# Number of disasters by year
 library(dplyr)
 data = round(boot::coal) %>% 
   group_by(date) %>% 
   count()
+
+# See it
+data
 ```
 
 
 The number of events (`n`) as a function of year (`date`) is typically modeled as a change between two intercepts. This is very simple to do in `mcp`:
-```{r}
+```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
 library(mcp)
 segments = list(
-  n ~ 1,
-  1 ~ 1
+  n ~ 1,  # intercept-only
+  1 ~ 1  # intercept-only
 )
 
 fit = mcp(segments, data, family = poisson(), par_x = "date")
@@ -37,10 +41,10 @@ fit = mcp(segments, data, family = poisson(), par_x = "date")
 Let us see the two intercepts (lambda in log-units) and the change point (in years):
 
 ```{r}
-summary(fit)
+result = summary(fit)
 ```
 
-We can see that the model ran well with good convergence and a large number of effective samples. At a first glance, the change point is estimated to lie between the years 1880 and 1895.
+We can see that the model ran well with good convergence and a large number of effective samples. At a first glance, the change point is estimated to lie between the years 1880 and 1895 (approximately).
 
 Let us take a more direct look, using the default `mcp` plot:
 
@@ -56,17 +60,64 @@ We can see this more clearly if plotting the posteriors. We include a traceplot 
 plot(fit, "combo")
 ```
 
-A question rarely asked is what the evidence is that there is a change point at all. Let us fit an intercept-only model and use approximate leave-one-out cross-validation to see how the predictive performance of the two models compare:
+
+# Priors
+`poisson()` defaults to `link = 'log'`, meaning that we have to exponentiate the estimates to get the "raw" poisson parameter $\lambda$. $\lambda$ has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is `exp(result$mean[2])` (`r exp(result$mean[2])`) and it is `exp(result$mean[3])` (`r exp(result$mean[3])`) for segment 2.
+
+Default priors were used. They are normals with a standard deviation of 10. I.e. with 95% probability mass between `exp(10) = 22026` and `exp(-10) = 1 / 22026`:
 
 ```{r}
-# Fit an intercept-only model
-segments_null = list(n ~ 1)
-fit_null = mcp(segments_null, data, family=poisson(), par_x = "date")
+fit$prior
+```
 
-# Compute and compare loos
-fit_null$loo = loo(fit_null)
-fit$loo = loo(fit)
-loo::loo_compare(fit_null$loo, fit$loo)
+As always, the prior on the change point forces it to occur in the observed range. These priors are very vague, so update with more informed priors for your particular case, e.g.:
+
+```{r, eval=FALSE}
+prior = list(
+  cp_1 = "dnorm(1900, 30) T(MINX, 1925)"
+)
+fit_with_prior = mcp(segments, data, prior, poisson(), par_x = "date")
 ```
 
 
+# Model comparison
+
+Despite the popularity of this dataset, a question rarely asked is what the evidence is that there is a change point at all. Let us fit two no-changepoint models and use approximate leave-one-out cross-validation to see how the predictive performance of the two models compare. First a flat model:
+
+```{r, cache = TRUE, echo = FALSE}
+# Fit an intercept-only model
+fit_flat = mcp(list(n ~ 1), data, family=poisson(), par_x = "date")
+plot(fit_flat)
+```
+
+
+Then a one-decay model:
+
+```{r, cache = TRUE, echo = FALSE}
+fit_decay = mcp(list(n ~ 1 + date), data, family = poisson())
+plot(fit_decay)
+```
+
+
+Not we compute and compare the LOO ELPDs:
+
+```{r, results=FALSE, warning=FALSE, message=FALSE}
+fit$loo = loo(fit)
+fit_flat$loo = loo(fit_flat)
+fit_decay$loo = loo(fit_decay)
+```
+```{r}
+loo::loo_compare(fit$loo, fit_flat$loo, fit_decay$loo)
+```
+
+
+
+
+The change point model seems to be preferred with a ratio of around 1.7 over the decay model and 2.5 over the flat model. Another approach is to look at the model weights:
+
+```{r}
+loo_list = list(fit$loo, fit_flat$loo, fit_decay$loo)
+loo::loo_model_weights(loo_list, method="pseudobma")
+```
+
+Again, unsurprisingly, the change point model is preferred and they show the same ranking as implied by `loo_compare`.

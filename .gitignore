@@ -1,3 +1,6 @@
 .Rproj.user
 .Rhistory
-tests/testthat/tmp_jags_code.txt
+vignettes/binomial_cache
+vignettes/poisson_cache
+vignettes/priors_cache
+vignettes/varying_cache
