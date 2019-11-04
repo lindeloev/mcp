@@ -1,6 +1,3 @@
-# TO DO:
-# * Nest cp varying effects too?
-
 source("R/lme4_utils.R")
 
 

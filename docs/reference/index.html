@@ -12,8 +12,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/simplex/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
 
@@ -49,6 +49,16 @@
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-1026978-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-1026978-2');
+</script>
 
 
   </head>
@@ -95,7 +105,16 @@
     <li>
       <a href="../articles/poisson.html">Poisson change point analysis with mcp</a>
     </li>
+    <li>
+      <a href="../articles/priors.html">Working with priors in mcp</a>
+    </li>
+    <li>
+      <a href="../articles/varying.html">Varying change points with mcp</a>
+    </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -127,112 +146,16 @@
     <tbody>
       <tr>
         <th colspan="2">
-          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
-          <p class="section-desc"></p>
+          <h2 id="section-using-mcp" class="hasAnchor"><a href="#section-using-mcp" class="anchor"></a>Using mcp</h2>
+          <p class="section-desc"><p>Functions for everyday use of mcp.</p></p>
         </th>
       </tr>
       <tr>
         
         <td>
-          <p><code><a href="bernoulli.html">bernoulli()</a></code> </p>
-        </td>
-        <td><p>Bernoulli family for mcp</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="check_integer.html">check_integer()</a></code> </p>
-        </td>
-        <td><p>Throws an error if a number/vector contains non-numeric, decimal, or less-than-lower</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="criterion.html">criterion()</a></code> <code><a href="criterion.html">loo(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="criterion.html">waic(<i>&lt;mcpfit&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Compute information criteria for model comparison</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="expandDoubleVerts.html">expandDoubleVerts()</a></code> </p>
-        </td>
-        <td><p>Expand terms with <code>'||'</code> notation into separate <code>'|'</code> terms</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="findbars.html">findbars()</a></code> </p>
-        </td>
-        <td><p>Determine random-effects expressions from a formula</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="fixef.html">fixef()</a></code> </p>
-        </td>
-        <td><p>Get population-level ("fixed") effects of mcpfit.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="get_formula_str.html">get_formula_str()</a></code> </p>
-        </td>
-        <td><p>Build an R formula (as string) given a segment table (ST)</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="get_func_y.html">get_func_y()</a></code> </p>
-        </td>
-        <td><p>Turn formula_str into a proper R function</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="get_jagscode.html">get_jagscode()</a></code> </p>
-        </td>
-        <td><p>Make JAGS code for Multiple Change Point model</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="get_jags_data.html">get_jags_data()</a></code> </p>
-        </td>
-        <td><p>Adds helper variables for use in <code>run_jags</code></p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="get_prior.html">get_prior()</a></code> </p>
-        </td>
-        <td><p>Get priors for all parameters in a segment table.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="get_prior_str.html">get_prior_str()</a></code> </p>
-        </td>
-        <td><p>Get JAGS code for a prior</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="get_segment_table.html">get_segment_table()</a></code> </p>
-        </td>
-        <td><p>Build a table describing a list of segments</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="get_summary.html">get_summary()</a></code> </p>
-        </td>
-        <td><p>Internal function for summary.mcpfit, fixef.mcpfit, and ranef.mcpfit</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="logical0_to_null.html">logical0_to_null()</a></code> </p>
-        </td>
-        <td><p>Converts logical(0) to null. Returns x otherwise</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="mcp.html">mcp()</a></code> </p>
         </td>
         <td><p>Fit Multiple Linear Segments And Their Change Points</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="nobars.html">nobars()</a></code> </p>
-        </td>
-        <td><p>Omit terms separated by vertical bars in a formula</p></td>
       </tr><tr>
         
         <td>
@@ -242,21 +165,9 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="plot_bayesplot.html">plot_bayesplot()</a></code> </p>
+          <p><code><a href="summary.mcpfit.html">summary(<i>&lt;mcpfit&gt;</i>)</a></code> </p>
         </td>
-        <td><p>Plot mcpfit objects with bayesplot</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot_segments.html">plot_segments()</a></code> </p>
-        </td>
-        <td><p>Plot posterior draws of segments on top of data</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="print.mcpfit.html">print(<i>&lt;mcpfit&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Print mcpfit</p></td>
+        <td><p>Summarise mcpfit objects</p></td>
       </tr><tr>
         
         <td>
@@ -266,33 +177,29 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="recover_levels.html">recover_levels()</a></code> </p>
+          <p><code><a href="fixef.html">fixef()</a></code> </p>
         </td>
-        <td><p>Recover the levels of varying effects in mcmc.list</p></td>
+        <td><p>Get population-level ("fixed") effects of mcpfit.</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="run_jags.html">run_jags()</a></code> </p>
+          <p><code><a href="criterion.html">criterion()</a></code> <code><a href="criterion.html">loo(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="criterion.html">waic(<i>&lt;mcpfit&gt;</i>)</a></code> </p>
         </td>
-        <td><p>Run parallel MCMC sampling using JAGS.</p></td>
-      </tr><tr>
+        <td><p>Compute information criteria for model comparison</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-some-auxillary-functions" class="hasAnchor"><a href="#section-some-auxillary-functions" class="anchor"></a>Some auxillary functions</h2>
+          <p class="section-desc"><p>These are used internally by mcp, but are exposed here since they may be useful for other purposes. Most other useful internal functions deliver the result already in <code><a href="../reference/mcp.html">mcp(segments, sample = FALSE)</a></code>, so this will be their API.</p></p>
+        </th>
+      </tr>
+      <tr>
         
         <td>
           <p><code><a href="sd_to_prec.html">sd_to_prec()</a></code> </p>
         </td>
         <td><p>¨Transform a prior from SD to precision.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="summary.mcpfit.html">summary(<i>&lt;mcpfit&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Summarise mcpfit objects</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="unpack_cp.html">unpack_cp()</a></code> </p>
-        </td>
-        <td><p>Takes a cp formula (as astring) and returns its properties</p></td>
       </tr>
     </tbody>
     </table>
@@ -301,7 +208,8 @@
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      <li><a href="#section-all-functions">All functions</a></li>
+      <li><a href="#section-using-mcp">Using mcp</a></li>
+      <li><a href="#section-some-auxillary-functions">Some auxillary functions</a></li>
     </ul>
   </div>
 </div>

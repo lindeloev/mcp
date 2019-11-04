@@ -4,12 +4,19 @@
 \alias{get_jags_data}
 \title{Adds helper variables for use in \code{run_jags}}
 \usage{
-get_jags_data(data, ST)
+get_jags_data(data, ST, jags_code, sample)
 }
 \arguments{
 \item{data}{A tibble}
 
 \item{ST}{A segment table (tibble), returned by \code{get_segment_table}.}
+
+\item{jags_code}{A string. JAGS model, usually returned by \code{make_jagscode()}.}
+
+\item{sample}{One of TRUE, FALSE, or "prior". Set to FALSE to get an mcpfit
+object without samples. This is useful if you only want to check
+priors, the JAGS model, etc. Set to "prior" if you want to do a prior
+predictive check.}
 }
 \description{
 Returns the relevant data columns as a list and add elements with unique

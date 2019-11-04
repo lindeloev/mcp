@@ -4,11 +4,9 @@
 \alias{get_jagscode}
 \title{Make JAGS code for Multiple Change Point model}
 \usage{
-get_jagscode(data, prior, ST, formula_str, family)
+get_jagscode(prior, ST, formula_str, family)
 }
 \arguments{
-\item{data}{Data.frame or tibble in long format.}
-
 \item{prior}{Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
 sigma) and the values are either
 \itemize{

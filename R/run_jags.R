@@ -94,6 +94,7 @@ run_jags = function(data,
 #' Returns the relevant data columns as a list and add elements with unique
 #' varying group levels.
 #'
+#' @inheritParams run_jags
 #' @param data A tibble
 #' @param ST A segment table (tibble), returned by \code{get_segment_table}.
 

@@ -4,4 +4,6 @@ pkgdown_sha: ~
 articles:
   binomial: binomial.html
   poisson: poisson.html
+  priors: priors.html
+  varying: varying.html
 
