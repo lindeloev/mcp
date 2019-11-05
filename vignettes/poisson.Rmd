@@ -6,7 +6,7 @@ output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Poisson change point analysis with mcp}
   %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+  %\VignetteEncoding{UTF-8}
 ---
 
 # Finding change points in Poisson models using mcp
@@ -28,7 +28,7 @@ data
 
 
 The number of events (`n`) as a function of year (`date`) is typically modeled as a change between two intercepts. This is very simple to do in `mcp`:
-```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
+```{r, results= FALSE, message=FALSE, warning=FALSE}
 library(mcp)
 segments = list(
   n ~ 1,  # intercept-only
@@ -84,7 +84,7 @@ fit_with_prior = mcp(segments, data, prior, poisson(), par_x = "date")
 
 Despite the popularity of this dataset, a question rarely asked is what the evidence is that there is a change point at all. Let us fit two no-changepoint models and use approximate leave-one-out cross-validation to see how the predictive performance of the two models compare. First a flat model:
 
-```{r, cache = TRUE, echo = FALSE}
+```{r, results= FALSE, message=FALSE, warning=FALSE}
 # Fit an intercept-only model
 fit_flat = mcp(list(n ~ 1), data, family=poisson(), par_x = "date")
 plot(fit_flat)
@@ -93,7 +93,7 @@ plot(fit_flat)
 
 Then a one-decay model:
 
-```{r, cache = TRUE, echo = FALSE}
+```{r, results= FALSE, message=FALSE, warning=FALSE}
 fit_decay = mcp(list(n ~ 1 + date), data, family = poisson())
 plot(fit_decay)
 ```

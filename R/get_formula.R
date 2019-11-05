@@ -26,7 +26,7 @@ get_formula_str = function(ST) {
     if (S$int == TRUE) {
       # For absolute intercepts, "remove" earlier stuff affecting the intercept
       # Multiply it with zero from this change point and on
-      if (S$cp_int_rel == FALSE) {
+      if (S$int_rel == FALSE) {
         formula_str = gsub("FUTURE_REL", ind_past, formula_str)
       }
 

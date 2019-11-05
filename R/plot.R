@@ -136,7 +136,7 @@ plot.mcpfit = function(x, type="segments", pars="population", regex_pars = chara
 #' @importFrom dplyr .data
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
-  X_RESOLUTION = 100  # number of points to evaluate at x
+  X_RESOLUTION = 400  # number of points to evaluate at x
 
   #################
   # GET PLOT DATA #

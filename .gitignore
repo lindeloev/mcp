@@ -1,6 +1,3 @@
 .Rproj.user
 .Rhistory
-vignettes/binomial_cache
-vignettes/poisson_cache
-vignettes/priors_cache
-vignettes/varying_cache
+inst/doc

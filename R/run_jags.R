@@ -33,6 +33,10 @@ run_jags = function(data,
   if (length(params) <= 2)
     params = c(params, "cp_0", "cp_1")
 
+  opts = options()
+  if (is.numeric(opts$mcp_cores))
+    cores = opts$mcp_cores
+
   # Start timer
   timer = proc.time()
 

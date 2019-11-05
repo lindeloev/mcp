@@ -6,7 +6,7 @@ output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Working with priors in mcp}
   %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+  %\VignetteEncoding{UTF-8}
 ---
 
 
@@ -65,11 +65,11 @@ Let us see the priors after running them through `mcp` and compare to the defaul
 
 ```{r}
 library(mcp)
-empty_prior = mcp(segments, prior = prior, sample = FALSE)
+empty_manual = mcp(segments, prior = prior, sample = FALSE)
 empty_default = mcp(segments, sample = FALSE)
 
 # Look at fit$prior and show them side-by-side
-cbind(prior = empty_prior$prior, default = empty_default$prior)
+cbind(prior = empty_manual$prior, default = empty_default$prior)
 ```
 
 Now, let's simulate some data that from the model specified by `segments`. The following data "violates" the manual priors so as to show their effect.
@@ -89,14 +89,14 @@ data = tibble::tibble(
 Sample and plot the fits:
 
 ```{r, cache = TRUE, message=FALSE, warning=FALSE, results=FALSE}
-fit_prior = mcp(segments, data, prior, cores = 3)
+fit_manual = mcp(segments, data, prior, cores = 3)
 fit_default = mcp(segments, data, cores = 3)
 ```
 ```{r}
 library(ggplot2)
 plot_default = plot(fit_default) + ggtitle("Default priors")
-plot_prior = plot(fit_prior) + ggtitle("Manual priors")
-gridExtra::grid.arrange(plot_default, plot_prior, ncol=2)
+plot_manual = plot(fit_manual) + ggtitle("Manual priors")
+gridExtra::grid.arrange(plot_default, plot_manual, ncol=2)
 ```
 
 We see the effects of the priors.
@@ -135,15 +135,15 @@ See the family-specific articles for more information about the priors for other
 # Prior predictive checks
 Prior predicive checks is a great way to ensure that the priors are meaningful. Simply set `sample = "prior"`. Let us do it for the two sets of priors defined previously in this article, to see their differnet prior predictive space.
 
-```{r, cache = TRUE, message=FALSE, warning=FALSE}
+```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
 # Sample priors 
-fit_pp_prior = mcp(segments, data, prior, sample = "prior", cores = 3)
+fit_pp_manual = mcp(segments, data, prior, sample = "prior", cores = 3)
 fit_pp_default = mcp(segments, data, sample = "prior", cores = 3)
 
 # Plot it
-plot_pp_prior = plot(fit_pp_prior, draws=100) + ylim(c(-400, 400)) + ggtitle("Manual prior")
+plot_pp_manual = plot(fit_pp_manual, draws=100) + ylim(c(-400, 400)) + ggtitle("Manual prior")
 plot_pp_default = plot(fit_pp_default, draws=100) + ylim(c(-400, 400)) + ggtitle("Default prior")
-gridExtra::grid.arrange(plot_pp_prior, plot_pp_default, ncol=2)
+gridExtra::grid.arrange(plot_pp_manual, plot_pp_default, ncol=2)
 ```
 
 You can see how the manual priors are more dense to the left, and the "concerted" change at x = 80.
