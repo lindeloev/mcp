@@ -4,10 +4,7 @@
 [![Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/r/lindeloev/mcp)
 
 
-Hierarchical Bayesian inference of Multiple Change Points (MCP) between Generalized Linear Segments - and the parameters in those segments. Under the hood, `mcp` takes an abstract representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. The rest of the package ensures seamless compatibility with your favorite Bayesian packages, including `tidybayes`, `bayesplot`, `coda`, and `loo`.
-
-You can see the roadmap for the immediate future under [issues](https://github.com/lindeloev/mcp/issues). Expect breaking changes in the API until version 1.0. All feedback is welcome, positive or negative or constructive. Please raise issues here or contact me elsewhere, e.g., [@jonaslindeloev](https://twitter.com/jonaslindeloev) on Twitter or via mail at firstname at lindeloev.dk.
-
+Bayesian inference of Multiple Change Points (MCP) between Generalized Linear Segments - and the parameters within those segments. Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. The rest of the package leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
 
 
 # Install
@@ -21,10 +18,10 @@ You can see the roadmap for the immediate future under [issues](https://github.c
 
 
 # Brief example
-This model infers the change point (`cp_1`) on `time`, the intercept for segment 1 (`int_1`), and the intercept for segment 2 (`int_2`). Also the standard deviation of the residuals (`sigma`).
+`mcp` takes a list of formulas for `y` as a function of `x`. It infers at what `x` there is change from one formula to the next. The first formula is just `response ~ predictors` and the following formulas typically take the form `changepoint ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
+The following model infers the two change points between three segments.
 
-Find the two change points between three segments (three formulas):
 ```r
 library(mcp)
 segments = list(
@@ -32,10 +29,17 @@ segments = list(
   1 ~ 0 + time,  # joined slope (time_2) at cp_1
   1 ~ 1 + time  # disjoined slope (int_1, time_2) at cp_2
 )
+
 fit = mcp(segments, data = ex_demo)  # dataset included in mcp
 ```
 
-Use `summary` to see the estimates. They were simulated to lie at `cp_1 = 30` and `cp_2 = 70` ([see how `ex_demo` was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R)) and these values are well recovered, as are the other simulation parameters:
+Plot lines drawn randomly from the posterior on top of data to inspect the fit:
+```r
+plot(fit)
+```
+![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo.png)
+
+Use `summary` to summarise the posterior distribution as well as sampling diagnostics. They were simulated to lie at `cp_1 = 30` and `cp_2 = 70` and these values are well recovered, as are the other simulation parameters ([see how `ex_demo` was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R)). 
 
 ```r
 summary(fit)
@@ -59,20 +63,17 @@ Population-level parameters:
  time_3 -0.223 -0.404 -0.0493 1.01  714   0.104
 ```
 
-Plot lines drawn randomly from the posterior on top of data to inspect the fit:
-```r
-plot(fit)
-```
-![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo.png)
+`rhat` is the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag), `eff` is the [effective sample size](https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html), and `ts_se` is the time-series standard error. 
 
-Inspect the posteriors and convergence of the change points:
+`plot(fit, "combo")` can be used to inspect the posteriors and convergence of the change points. See the documentation of `plot.mcpfit` for many other plotting options.
 
 ```r
 plot(fit, "combo", regex_pars = "cp_")
 ```
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo_combo.png)
 
-Fit a null model with just one change point, consisting of two disjoined slopes:
+
+For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation. Our null model consists of just two disjoined slopes separated by one change point, omitting the first plateau of the full model:
 
 ```r
 # Fit the model
@@ -83,7 +84,7 @@ segments_null = list(
 fit_null = mcp(segments_null, ex_demo)
 ```
 
-Using leave-one-out cross-validation, we see that the two-change-points model is preferred (it is on top), but not very strongly. See more about this in the `loo` package.
+Leveraging the power of `loo::loo`, we see that the two-change-points model is preferred (it is on top), but not very strongly. See the documentation of the `loo` package and associated papers for more details.
 
 ```r
 # Compare loos:
@@ -100,24 +101,26 @@ model2 -7.8       4.7
 
 
 # Highlights from in-depth guides
-The article on [understanding mcp formulas and models](https://lindeloev.github.io/mcp/articles/formulas.html):
+The articles in the web site's menu reveal the greater functionality of `mcp`. Here is an executive summary, to give you a sense.
+
+[About mcp formulas and models](https://lindeloev.github.io/mcp/articles/formulas.html):
  * Parameter names `int_i` (intercepts), `cp_i` (change points), `x_i` (slopes).
  * The change point model is basically an `ifelse` model.
  * Use `rel()` to specify that parameters are relative to those in the previous  segments.
 
-The article on [using priors in mcp](https://lindeloev.github.io/mcp/articles/priors.html) include:
- * See priors in `fit$prior`
- * Set priors using `mcp(segments, data, prior = list(cp_1 = "dnorm(0, 1)", cp_1 = "dunif(0, 45)`)
- * Fix parameters to specific values using `cp_1 = 45`
- * Share parameters between segments using `slope_1 = "slope_2"`
+[Using priors in mcp](https://lindeloev.github.io/mcp/articles/priors.html) include:
+ * See priors in `fit$prior`.
+ * Set priors using `mcp(segments, data, prior = list(cp_1 = "dnorm(0, 1)", cp_1 = "dunif(0, 45))`.
+ * Fix parameters to specific values using `cp_1 = 45`.
+ * Share parameters between segments using `slope_1 = "slope_2"`.
  * Allows for truncated priors using `T(lower, upper)`, e.g., `int_1 = "dnorm(0, 1) T(0, )"`. `mcp` applies this automatically to change point priors to enforce order restriction. This is true for [varying change points](https://lindeloev.github.io/mcp/articles/varying.html) too.
  * Sample priors for prior predictive checks using `mcp(segments, data, sample="prior")`.
 
-The article on [varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html) include:
+[varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html) include:
  * How to simulate varying change points using `fit$func_y()`.
- * Get posteriors using `ranef(fit)`
+ * Get posteriors using `ranef(fit)`.
  * Plot using `plot(fit, facet_by="my_group")` and `plot(fit, "dens_overlay", pars = "varying", ncol = 3)`.
- * The default priors restrict varying change points to lie between the two adjecent change points.
+ * The default priors restrict varying change points to lie between the two adjacent change points.
 
 `mcp` currently supports the following GLM:
  * `gaussian(link = "identity")`. See worked example below.
@@ -126,11 +129,13 @@ The article on [varying change points in mcp](https://lindeloev.github.io/mcp/ar
  * `poisson(link = "log")`. See [Poisson change points in mcp](https://lindeloev.github.io/mcp/articles/poisson.html).
 
 
-# More examples
+
+# Some examples
+`mcp` aims to support a wide variety of models. Here are some example models for inspiration.
 
 
 ## Two plateaus
-Find the single change point between two plateaus ([see how `ex_plateaus` was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R))
+Find the single change point between two plateaus ([see how this data was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R))
 
 ```r
 segments = list(
@@ -145,9 +150,9 @@ plot(fit)
 
 ## Varying change points
 
-Here, we find the single change point between two joined slopes. While the slopes are shared by all participants (they are population-level), their change point varies.
+Here, we find the single change point between two joined slopes. While the slopes are shared by all participants, the change point varies by `id`.
 
-Read more about [varying change points](https://lindeloev.github.io/mcp/articles/varying.html) and [see how ex_varying was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R).
+Read more about [varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html) and [see how this data was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R).
 
 ```r
 segments = list(
@@ -178,7 +183,7 @@ ranef(fit)
 
 
 ## Generalized linear models
-`mcp` supports Generalized Linear Modeling. See extended examples using [`binomial()`](https://lindeloev.github.io/mcp/articles/binomial.html) and [`poisson()`](https://lindeloev.github.io/mcp/articles/poisson.html). [See how `ex_binomial` was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_binomial.R).
+`mcp` supports Generalized Linear Modeling. See extended examples using [`binomial()`](https://lindeloev.github.io/mcp/articles/binomial.html) and [`poisson()`](https://lindeloev.github.io/mcp/articles/poisson.html). [See how this data was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_binomial.R).
 
 Here is a binomial change point model with three segments:
 
@@ -198,7 +203,7 @@ Use `plot(fit, rate = FALSE)` if you want the points and fit lines on the origin
 
 
 ## Using `rel()` and priors
-Read more about [formula options](https://lindeloev.github.io/mcp/articles/formulas.html) and [priors](https://lindeloev.github.io/mcp/articles/priors.html) and [see how `ex_rel_prior` was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_rel_prior.R).
+Read more about [formula options](https://lindeloev.github.io/mcp/articles/formulas.html) and [priors](https://lindeloev.github.io/mcp/articles/priors.html) and [see how this data was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_rel_prior.R).
 
 Here we find the two change points between three segments. The slope and intercept of segment 2 are parameterized relative to segment 1, i.e., modeling the *change* in intercept and slope since segment 1. So too with the second change point (`cp_2`) which is now the *distance* from `cp_1`. 
 
@@ -256,7 +261,7 @@ Population-level parameters:
 # Diagnosing problems
 **Convergence:** A common problem when using MCMC is lacking convergence between chains. This will show up as large `rhat` values (> 1.1 is a common criterion) and non-converging lines in `plot(fit, "trace")`. The first thing to try is always to make the model warm up longer to see if it reaches convergence later: `mcp(fit, data, adapt = 4000, update = 4000)`. It can be a sign of a deeper non-identifiability in the model. This will show up as strong correlations between parameters in the joint distribution of the implicated parameters: `plot(fit, "hex", pars = c("int_1", "int_2))`.
 
-**Speed:** A lot of data will slow down fitting. You can try combinations of lowerering the warmup period and running the chains in parallel: `mcp(fit, data, chains = 4, cores = 4, adapt=300, update = 200)`. Convergence issues will also slow down sampling.
+**Speed:** A lot of data will slow down fitting. You can try combinations of lowering the warmup period and running the chains in parallel: `mcp(fit, data, chains = 4, cores = 4, adapt=300, update = 200)`. Convergence issues will also slow down sampling.
 
 If you encounter other problems, don't hesitate to [raise a Github Issue](https://github.com/lindeloev/mcp/issues), asking for help or posting a bug report.
 
