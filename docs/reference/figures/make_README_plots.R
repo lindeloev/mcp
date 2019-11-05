@@ -45,9 +45,6 @@ fit_null$loo = loo(fit_null)
 loo::loo_compare(fit$loo, fit_null$loo)
 
 
-
-
-
 ################
 # Two plateaus #
 ################

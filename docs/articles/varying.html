@@ -166,16 +166,16 @@
 <pre><code>## # A tibble: 180 x 4
 ##        x id    id_numeric     y
 ##    &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt;
-##  1  6.97 Clark          3  20.0
-##  2 23.4  Clark          3  22.6
-##  3 96.7  Clark          3  49.0
-##  4 39.5  Clark          3  18.6
-##  5 21.1  Clark          3  21.0
-##  6 84.0  Clark          3  39.4
-##  7 15.5  Clark          3  20.7
-##  8  2.34 Clark          3  18.8
-##  9 66.2  Clark          3  32.9
-## 10 20.2  Clark          3  19.8
+##  1  54.5 Clark          3  26.3
+##  2  68.6 Clark          3  35.7
+##  3  60.8 Clark          3  26.9
+##  4  23.0 Clark          3  21.7
+##  5  58.0 Clark          3  25.0
+##  6  59.6 Clark          3  28.9
+##  7  38.5 Clark          3  18.7
+##  8  47.4 Clark          3  21.0
+##  9  16.2 Clark          3  21.2
+## 10  64.7 Clark          3  24.9
 ## # ... with 170 more rows</code></pre>
 <p>Here, we “translated” the <code>id</code> to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around <code>cp_1</code>. The result:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</a>
@@ -195,29 +195,34 @@
 <p>It seems that <code>mcp</code> did a good job of recovering the change points. There is a lot of information in this data, since the intercept and the slope on each side of the (varying) change point is shared between participants here.</p>
 <p>If you use <code><a href="../reference/summary.mcpfit.html">summary(fit)</a></code> (or <code><a href="../reference/fixef.html">fixef(fit)</a></code>) you will get the posteriors for the population-level effects. To get the random effects, do:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="kw"><a href="../reference/ranef.html">ranef</a></span>(fit)</a></code></pre></div>
-<pre><code>## Warning in get_summary(object, width, varying = TRUE): rhat computation failed: Error in chol.default(W) : 
-##   the leading minor of order 6 is not positive definite</code></pre>
-<pre><code>##                 name       mean       X2.5      X97.5 rhat  eff    ts_se
-## 1   cp_1_id[Batgirl] -26.308167 -28.463652 -24.296068   NA 6356 1.449176
-## 2    cp_1_id[Batman] -15.520126 -17.369522 -13.557199   NA 5070 3.281750
-## 3     cp_1_id[Clark]  -5.094319  -6.998496  -3.092620   NA 3986 2.068239
-## 4      cp_1_id[Jane]   6.172545   4.023994   8.126911   NA 1640 6.233288
-## 5     cp_1_id[Louis]  16.523141  13.837418  19.140166   NA 2204 7.484230
-## 6 cp_1_id[Spiderman]  24.226926  21.635278  26.944278   NA 4926 1.950724</code></pre>
+<pre><code>##                 name       mean       X2.5      X97.5     rhat  eff
+## 1   cp_1_id[Batgirl] -25.815389 -27.750030 -23.781802 1.001769 4341
+## 2    cp_1_id[Batman] -16.556264 -18.741182 -14.491308 1.000634 5377
+## 3     cp_1_id[Clark]  -4.963474  -7.018969  -2.967965 1.003246 2239
+## 4      cp_1_id[Jane]   5.115991   2.969742   7.267010 1.003991 2439
+## 5     cp_1_id[Louis]  13.603049  11.069819  16.141992 1.004651 3184
+## 6 cp_1_id[Spiderman]  28.616088  25.205039  32.142653 1.002413 2806
+##      ts_se
+## 1 1.950188
+## 2 2.826611
+## 3 4.580724
+## 4 3.704599
+## 5 7.887090
+## 6 3.272758</code></pre>
 <p>Notice how well they are estimated to be 10 apart, indicating good recovery.</p>
 <p>Good convergence is not always as obvious as in this example. While <code><a href="../reference/plot.mcpfit.html">plot(fit, "combo")</a></code> show population-level parameters only, you can do this to get varying effects only:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"trace"</span>, <span class="dt">pars =</span> <span class="st">"varying"</span>, <span class="dt">ncol=</span><span class="dv">3</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"trace"</span>, <span class="dt">pars =</span> <span class="st">"varying"</span>, <span class="dt">ncol=</span><span class="dv">3</span>)</a></code></pre></div>
 <p><img src="varying_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
 <p>Notice the use of the <code>ncol</code> argument to set the number of columns. You will often have <em>many</em> levels on your varying effect, so this is useful to get a good view of all of them. Naturally, you can do this for almost all kinds of plots.</p>
 <p>Using <code>pars = "varying"</code> will plot all varying effects. This may be too much if you have multiple varying effects. To select just one, use regular expression in <code>regex_pars</code>. Two very handy operators are “^” (begins with) and “$” (ends with). Just to show that this “faceting” works for almost all of the many plot types, we now do two columns of <code>"dens_overlay</code>:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"dens_overlay"</span>, <span class="dt">regex_pars =</span> <span class="st">"^cp_1_id"</span>, <span class="dt">ncol =</span> <span class="dv">2</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"dens_overlay"</span>, <span class="dt">regex_pars =</span> <span class="st">"^cp_1_id"</span>, <span class="dt">ncol =</span> <span class="dv">2</span>)</a></code></pre></div>
 <p><img src="varying_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
 </div>
 <div id="priors-for-varying-effects" class="section level1">
 <h1 class="hasAnchor">
 <a href="#priors-for-varying-effects" class="anchor"></a>Priors for varying effects</h1>
 <p>TO DO</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(fit<span class="op">$</span>prior)</a></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(fit<span class="op">$</span>prior)</a></code></pre></div>
 <pre><code>##         [,1]                                           
 ## sigma   "dnorm(0, SDY) T(0, )"                         
 ## int_1   "dt(0, 3 * SDY, 3)"                            
