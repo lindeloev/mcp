@@ -4,7 +4,7 @@
 \alias{get_segment_table}
 \title{Build a table describing a list of segments}
 \usage{
-get_segment_table(segments, data = NULL, family = gaussian(),
+get_segment_table(segments, data = NULL, family = gaussian()$family,
   par_x = NULL)
 }
 \arguments{
