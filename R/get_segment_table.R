@@ -331,9 +331,9 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
       data = data.frame(data)
 
     # Check x and y
-    if (!is.numeric(data[, ST$x[1]]))
+    if (!is.numeric(dplyr::pull(data, ST$x[1])))
       stop("Data column '", ST$x[1], "' has to be numeric.")
-    if (!is.numeric(data[, ST$y[1]]))
+    if (!is.numeric(dplyr::pull(data, ST$y[1])))
       stop("Data column '", ST$y[1], "' has to be numeric.")
 
     # Check varying
