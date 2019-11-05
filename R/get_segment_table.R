@@ -242,7 +242,7 @@ unpack_rhs = function(form_rhs, i) {
 #' get_segment_table(segments)
 #' }
 
-get_segment_table = function(segments, data = NULL, family = gaussian(), par_x = NULL) {
+get_segment_table = function(segments, data = NULL, family = gaussian()$family, par_x = NULL) {
   #####################################################
   # BUILD "SEGMENT TABLE (ST)" FROM ISOLATED SEGMENTS #
   #####################################################
@@ -370,7 +370,7 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
     dplyr::mutate(
       int_name = ifelse(.data$int, yes = paste0("int_", .data$segment), no = NA),
       slope_name = ifelse(!is.na(.data$slope), yes = paste0(.data$slope, "_", .data$segment), no = NA),
-      slope_code = .data$slope_name,  # Will be modified in next step
+      slope_code = .data$slope_name,  # Will be modified later
       cp_name = paste0("cp_", .data$segment - 1),
       cp_sd = ifelse(.data$cp_ran_int == TRUE, paste0(.data$cp_name, "_sd"), NA),
       cp_group = ifelse(.data$cp_ran_int == TRUE, paste0(.data$cp_name, "_", .data$cp_group_col), NA)
@@ -393,6 +393,8 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
       slope_code = format_code(.data$slope_code, na_col = .data$slope_name)
     ) %>%
     dplyr::ungroup() %>%
+
+    # Finish up
     dplyr::select(-dplyr::starts_with("cumsum"))
 
   # Return
