@@ -1,0 +1,107 @@
+`%>%` = magrittr::`%>%`
+
+theme_it = function(x, title) {
+  x +
+    ggplot2::ggtitle(title) +
+    ggplot2::theme_gray(13) # +
+    # theme(axis.title = element_blank(),
+    #       axis.text = element_blank(),
+    #       axis.ticks = element_blank())
+}
+
+save_it = function(filename) {
+  ggplot2::ggsave(paste0("./man/figures/", filename), width=6, height=3, dpi = 100)
+}
+
+
+
+#############
+# Example 1 #
+#############
+library(mcp)
+segments = list(
+  response ~ 1,  # plateau (int_1)
+  1 ~ 0 + time,  # joined slope (time_2) at cp_1
+  1 ~ 1 + time  # disjoined slope (int_1, time_2) at cp_2
+)
+fit = mcp(segments, data = ex_demo)  # dataset included in mcp
+theme_it(plot(fit), "")
+save_it("ex_demo.png")
+
+plot(fit, "combo", regex_pars = "cp_")
+save_it("ex_demo_combo.png")
+
+# LOO
+# Fit the model
+segments_null = list(
+  response ~ 1 + time,
+  1 ~ 1 + time
+)
+fit_null = mcp(segments_null, ex_demo)
+
+# Compare loos:
+fit$loo = loo(fit)
+fit_null$loo = loo(fit_null)
+loo::loo_compare(fit$loo, fit_null$loo)
+
+
+
+
+
+################
+# Two plateaus #
+################
+segments = list(
+  y ~ 1,  # plateau (int_1)
+  1 ~ 1  # plateau (int_2)
+)
+fit = mcp::mcp(segments, ex_plateaus, par_x = "x")
+theme_it(plot(fit, draws=25), "Two plateaus")
+save_it("ex_plateaus.png")
+
+
+
+########################
+# VARYING SLOPE CHANGE #
+########################
+
+segments = list(
+  y ~ 1 + x,  # intercept + slope
+  1 + (1|id) ~ 0 + x  # joined slope, varying by id
+)
+fit = mcp::mcp(segments, ex_varying)
+theme_it(plot(fit, facet_by = "id"), "Varying slope change")
+save_it("ex_varying.png")
+
+
+############
+# BINOMIAL #
+############
+segments = list(
+  y | trials(N) ~ 1,  # constant rate
+  1 ~ 0 + x,  # joined changing rate
+  1 ~ 1 + x  # disjoined changing rate
+)
+fit = mcp::mcp(segments, ex_binomial, family = binomial())
+theme_it(plot(fit), "Binomial")
+save_it("ex_binomial.png")
+
+
+##########################
+# FIXED, RELATIVE, PRIOR #
+##########################
+segments = list(
+  y ~ 1 + x,
+  1 ~ rel(1) + rel(x),
+  rel(1) ~ 0
+)
+prior = list(
+  int_1 = 10,  # fixed value
+  x_3 = "x_1",  # shared slope in segment 1 and 3
+  int_2 = "dnorm(0, 20)",
+  cp_1 = "dunif(20, 50)"  # has to occur in this interval
+)
+
+fit = mcp::mcp(segments, ex_rel_prior, prior)
+theme_it(plot(fit), "rel() and prior")
+save_it("ex_fix_rel.png")

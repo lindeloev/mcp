@@ -6,7 +6,7 @@ output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Binomial change point analysis with mcp}
   %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+  %\VignetteEncoding{UTF-8}
 ---
 
 <!--
@@ -69,7 +69,7 @@ plot(data$year, data$y)
 # Check parameter recovery
 The next sections go into more detail, but let us quickly see if we can recover the parameters used to simulate the data.
 
-```{r, cache = TRUE}
+```{r, results= FALSE, message=FALSE, warning=FALSE}
 fit = mcp(segments, data, family = binomial())
 ```
 

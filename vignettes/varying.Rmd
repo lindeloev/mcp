@@ -6,7 +6,7 @@ output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Varying change points with mcp}
   %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+  %\VignetteEncoding{UTF-8}
 ---
 
 A unique feature of `mcp` is modeling change points as varying effects (sometimes called "random effects"). This has the advantage that you can let the change point vary by a factor while keeping other parameters common across varying factor levels.
@@ -16,13 +16,13 @@ This article in brief:
  * How to simulate varying change points
  * Get posteriors using `ranef(fit)`
  * Plot using `plot(fit, facet_by="my_group")` and `plot(fit, "dens_overlay", pars = "varying", ncol = 3)`.
- * Default priors restrict them to lie within the current segment, i.e., between the two adjecent change points.
+ * The default priors restrict varying change points to lie between the two adjecent change points.
 
 
 
 # Specifying varying change points
 
-You specify varying effects using the classical `lmer` syntax `(1|group)`. Currently (v. 0.1) `mcp` only support varying intercepts. For example, here we model a varying change point between a plateau and a joined slope:
+You specify varying effects using the classical [`lmer`](https://www.rdocumentation.org/packages/lme4/versions/1.1-21/topics/lmer) syntax `(1|group)`. Currently (v. 0.1) `mcp` only support varying intercepts. For example, here we model a varying change point between a plateau and a joined slope:
 
 ```{r}
 segments = list(

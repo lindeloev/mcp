@@ -3,7 +3,11 @@ pkgdown: 1.4.1
 pkgdown_sha: ~
 articles:
   binomial: binomial.html
+  formulas: formulas.html
   poisson: poisson.html
   priors: priors.html
   varying: varying.html
+urls:
+  reference: https://lindeloev.github.io/mcp/reference
+  article: https://lindeloev.github.io/mcp/articles
 
