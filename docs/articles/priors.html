@@ -97,7 +97,7 @@
       <h1>Working with priors in mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-11-05</h4>
+            <h4 class="date">2019-11-06</h4>
       
       
       <div class="hidden name"><code>priors.Rmd</code></div>
@@ -106,14 +106,6 @@
 
     
     
-<div id="to-do" class="section level1">
-<h1 class="hasAnchor">
-<a href="#to-do" class="anchor"></a>TO DO:</h1>
-<ul>
-<li>Links to simulation vignette</li>
-<li>Link to varying effects vignette</li>
-</ul>
-</div>
 <div id="introduction-to-priors" class="section level1">
 <h1 class="hasAnchor">
 <a href="#introduction-to-priors" class="anchor"></a>Introduction to priors</h1>
@@ -149,7 +141,7 @@
 <a class="sourceLine" id="cb1-13" title="13">  <span class="dt">x_3 =</span> <span class="st">"x_2"</span>  <span class="co"># continue same slope</span></a>
 <a class="sourceLine" id="cb1-14" title="14">  <span class="co"># int_2 and int_3 not specified. Use default.</span></a>
 <a class="sourceLine" id="cb1-15" title="15">)</a></code></pre></div>
-<p>The values are JAGS code, so all JAGS distributions are allowed. These also include <code>gamma</code>, <code>dt</code>, <code>cauchy</code>, and many others. See the <a href="https://web.sgh.waw.pl/~atoroj/ekonometria_bayesowska/jags_user_manual.pdf">JAGS user manual</a> for more details. The parameterizaiton of the distributions are identical to standard R. Use SD when you specify priors for <code>dnorm</code>, <code>dt</code>, <code>dlogis</code>, etc. JAGS uses precision but <code>mcp</code> converts to precision under the hood via the <code><a href="../reference/sd_to_prec.html">sd_to_prec()</a></code> function. You can see this conversion by inspecting the difference between <code>fit$prior</code> (using SD) and <code>fit$jags_code</code> (using precision).</p>
+<p>The values are JAGS code, so all JAGS distributions are allowed. These also include <code>gamma</code>, <code>dt</code>, <code>cauchy</code>, and many others. See the <a href="https://web.sgh.waw.pl/~atoroj/ekonometria_bayesowska/jags_user_manual.pdf">JAGS user manual</a> for more details. The parameterization of the distributions are identical to standard R. Use SD when you specify priors for <code>dnorm</code>, <code>dt</code>, <code>dlogis</code>, etc. JAGS uses precision but <code>mcp</code> converts to precision under the hood via the <code><a href="../reference/sd_to_prec.html">sd_to_prec()</a></code> function. You can see this conversion by inspecting the difference between <code>fit$prior</code> (using SD) and <code>fit$jags_code</code> (using precision).</p>
 <p>Other notes:</p>
 <ul>
 <li><p>Order restriction is automatically applied to change points (<code>cp_*</code> parameters) using truncation (e.g., <code><a href="https://rdrr.io/r/base/logical.html">T(cp_1, )</a></code>) so that they are in the correct order on the x-axis. You can override this behavior by defining <code><a href="https://rdrr.io/r/base/logical.html">T()</a></code> or <code>dunif</code> yourself (<code>dunif</code> cannot be truncated), in which case <code>mcp</code> won’t do further.</p></li>
@@ -196,7 +188,7 @@
 <h1 class="hasAnchor">
 <a href="#default-priors-on-change-points" class="anchor"></a>Default priors on change points</h1>
 <p>Change points have to be ordered from left (<code>cp_1</code>) to right (<code>cp_2+</code>). This order restriction is enforced through the priors. The first change point defaults to <code>cp_1 = dunif(MINX, MAXX)</code>. In other words, the change point has to happen in the observed range of x, but it is equally probable across this range. The second change point defaults to <code>cp_2 = dunif(cp_1, MAXX)</code>, i.e., it has to occur in the observed range AND be greater than <code>cp_1</code>, and so forth for <code>cp_3</code> (greater than <code>cp_2</code>), etc.</p>
-<p>One side effect is that later change points have greater prior probability density towards the right side of the x-axis. You can see this if you sample the priors without data (<code>fit = mcp(segments, data, sample = "prior")</code>) and summarise the estimates (<code><a href="../reference/summary.mcpfit.html">summary(fit)</a></code>). In practice, this “bias” is so weak that it takes a combination of many data points and few data for it to impact the posterior in any noticable way.</p>
+<p>One side effect is that later change points have greater prior probability density towards the right side of the x-axis. You can see this if you sample the priors without data (<code>fit = mcp(segments, data, sample = "prior")</code>) and summarise the estimates (<code><a href="../reference/summary.mcpfit.html">summary(fit)</a></code>). In practice, this “bias” is so weak that it takes a combination of many data points and few data for it to impact the posterior in any noticeable way.</p>
 <p>If you want more informed priors on the change point location, i.e., <code>cp_2 = "dnorm(40, 10)</code>, <code>mcp</code> adds this order restriction by adding <code>cp_2 = "dnorm(40, 10) T(cp_1, MAXX)</code>. You can avoid this behavior by explicitly doing an “empty” truncation yourself, e.g., <code>cp_2 = "dnorm(40, 10) T(,)</code>. However, the model may fail to sample the correct posterior in samples where order restriction is not kept.</p>
 </div>
 <div id="default-priors-on-linear-predictors" class="section level1">
@@ -207,15 +199,16 @@
 <p>The slopes are scaled as if it was one SD in height through the entire x-axis. This too will be insufficient for very steep slopes, i.e., if there are many change points on <code>x</code>.</p>
 <p>See the family-specific articles for more information about the priors for other families:</p>
 <ul>
-<li>vignette(“binomial”)</li>
-<li>Bernoulli</li>
-<li>vignette(“poisson”)</li>
+<li>
+<code><a href="../articles/binomial.html">vignette("binomial")</a></code> - also relevant for <code>bernoulli</code>
+</li>
+<li><code><a href="../articles/poisson.html">vignette("poisson")</a></code></li>
 </ul>
 </div>
 <div id="prior-predictive-checks" class="section level1">
 <h1 class="hasAnchor">
 <a href="#prior-predictive-checks" class="anchor"></a>Prior predictive checks</h1>
-<p>Prior predicive checks is a great way to ensure that the priors are meaningful. Simply set <code>sample = "prior"</code>. Let us do it for the two sets of priors defined previously in this article, to see their differnet prior predictive space.</p>
+<p>Prior predictive checks is a great way to ensure that the priors are meaningful. Simply set <code>sample = "prior"</code>. Let us do it for the two sets of priors defined previously in this article, to see their different prior predictive space.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="co"># Sample priors </span></a>
 <a class="sourceLine" id="cb6-2" title="2">fit_pp_manual =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, prior, <span class="dt">sample =</span> <span class="st">"prior"</span>, <span class="dt">cores =</span> <span class="dv">3</span>)</a>
 <a class="sourceLine" id="cb6-3" title="3">fit_pp_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, <span class="dt">sample =</span> <span class="st">"prior"</span>, <span class="dt">cores =</span> <span class="dv">3</span>)</a>
@@ -227,6 +220,51 @@
 <p><img src="priors_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
 <p>You can see how the manual priors are more dense to the left, and the “concerted” change at x = 80.</p>
 </div>
+<div id="jags-code" class="section level1">
+<h1 class="hasAnchor">
+<a href="#jags-code" class="anchor"></a>JAGS code</h1>
+<p>Here is the JAGS code for <code>fit_manual</code>:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(fit_manual<span class="op">$</span>jags_code)</a></code></pre></div>
+<pre><code>## 
+## model {
+##   # Priors for population-level effects
+##   sigma ~ dnorm(0, 1/(SDY)^2) T(0, )
+##   int_1 ~ dnorm(0, 1/(5)^2) T(, 10)
+##   x_1 ~ dbeta(2, 5)
+##   int_2 ~ dt(0, 1/(3*SDY)^2, 3) 
+##   x_2 ~ dt(0, 1/(1)^2, 3) T(x_1, )
+##   cp_1 ~ dunif(MINX, cp_2)
+##   int_3 ~ dt(0, 1/(3*SDY)^2, 3) 
+##   x_3 = x_2  # Fixed
+##   cp_2 = 80  # Fixed
+##   cp_0 = -10^100  # mcp helper value; minus infinity
+##   cp_3 = 10^100  # mcp helper value; plus infinity
+## 
+## 
+##   # Model and likelihood
+##   for (i_ in 1:length(x)) {
+## 
+##     # Fitted value
+##     y_[i_] = 
+## 
+##       # Segment 1: y ~ 1 + x
+##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * int_1 + 
+##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * (x_1 * (min(x[i_], cp_1))) + 
+##       
+##       # Segment 2: y ~ 1 ~ 1 + x
+##       (x[i_] &gt;= cp_1) * (x[i_] &lt; cp_2) * int_2 + 
+##       (x[i_] &gt;= cp_1) * (x[i_] &lt; cp_2) * (x_2 * (min(x[i_], cp_2) - (cp_1))) + 
+##       
+##       # Segment 3: y ~ 1 ~ 1 + x
+##       (x[i_] &gt;= cp_2) * int_3 + 
+##       (x[i_] &gt;= cp_2) * (x_3 * (min(x[i_], cp_3) - (cp_2))) 
+## 
+##     # Likelihood and log-density for family = gaussian()
+##     y[i_] ~ dnorm(y_[i_], 1 / sigma^2)
+##     loglik_[i_] = logdensity.norm(y[i_], y_[i_], 1 / sigma^2)
+##   }
+## }</code></pre>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -235,12 +273,12 @@
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li><a href="#to-do">TO DO:</a></li>
-      <li><a href="#introduction-to-priors">Introduction to priors</a></li>
+<li><a href="#introduction-to-priors">Introduction to priors</a></li>
       <li><a href="#setting-a-prior">Setting a prior</a></li>
       <li><a href="#default-priors-on-change-points">Default priors on change points</a></li>
       <li><a href="#default-priors-on-linear-predictors">Default priors on linear predictors</a></li>
       <li><a href="#prior-predictive-checks">Prior predictive checks</a></li>
+      <li><a href="#jags-code">JAGS code</a></li>
       </ul>
 </div>
       </div>

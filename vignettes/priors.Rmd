@@ -146,6 +146,6 @@ You can see how the manual priors are more dense to the left, and the "concerted
 Here is the JAGS code for `fit_manual`:
 
 ```{r}
-cat(fit_manual)
+cat(fit_manual$jags_code)
 ```
 

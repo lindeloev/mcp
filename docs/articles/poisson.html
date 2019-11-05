@@ -97,7 +97,7 @@
       <h1>Poisson change point analysis with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-11-05</h4>
+            <h4 class="date">2019-11-06</h4>
       
       
       <div class="hidden name"><code>poisson.Rmd</code></div>
@@ -106,11 +106,7 @@
 
     
     
-<div id="finding-change-points-in-poisson-models-using-mcp" class="section level1">
-<h1 class="hasAnchor">
-<a href="#finding-change-points-in-poisson-models-using-mcp" class="anchor"></a>Finding change points in Poisson models using mcp</h1>
 <p>The Poisson distribution models the number of events within similar-sized time frames.</p>
-</div>
 <div id="coal-mining-disasters" class="section level1">
 <h1 class="hasAnchor">
 <a href="#coal-mining-disasters" class="anchor"></a>Coal mining disasters</h1>
@@ -156,9 +152,9 @@
 ## 
 ## Population-level parameters:
 ##   name     mean     X2.5    X97.5 rhat  eff    ts_se
-##   cp_1 1887.927 1881.006 1897.450 1.04  398 382.7935
-##  int_1    1.173    0.972    1.367 1.02 2877   0.0335
-##  int_2    0.482    0.230    0.725 1.00 2731   0.0544</code></pre>
+##   cp_1 1888.309 1881.173 1898.589    1 1149 124.3365
+##  int_1    1.173    0.983    1.362    1 4247   0.0199
+##  int_2    0.478    0.233    0.719    1 3822   0.0347</code></pre>
 <p>We can see that the model ran well with good convergence and a large number of effective samples. At a first glance, the change point is estimated to lie between the years 1880 and 1895 (approximately).</p>
 <p>Let us take a more direct look, using the default <code>mcp</code> plot:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
@@ -171,7 +167,7 @@
 <div id="priors" class="section level1">
 <h1 class="hasAnchor">
 <a href="#priors" class="anchor"></a>Priors</h1>
-<p><code><a href="https://rdrr.io/r/stats/family.html">poisson()</a></code> defaults to <code>link = 'log'</code>, meaning that we have to exponentiate the estimates to get the “raw” poisson parameter <span class="math inline">\(\lambda\)</span>. <span class="math inline">\(\lambda\)</span> has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[2])</a></code> (3.2327428) and it is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[3])</a></code> (1.6191362) for segment 2.</p>
+<p><code><a href="https://rdrr.io/r/stats/family.html">poisson()</a></code> defaults to <code>link = 'log'</code>, meaning that we have to exponentiate the estimates to get the “raw” poisson parameter <span class="math inline">\(\lambda\)</span>. <span class="math inline">\(\lambda\)</span> has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[2])</a></code> (3.2305173) and it is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[3])</a></code> (1.6126375) for segment 2.</p>
 <p>Default priors were used. They are normals with a standard deviation of 10. I.e. with 95% probability mass between <code>exp(10) = 22026</code> and <code>exp(-10) = 1 / 22026</code>:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">fit<span class="op">$</span>prior</a></code></pre></div>
 <pre><code>## $int_1
@@ -207,18 +203,51 @@
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit<span class="op">$</span>loo, fit_flat<span class="op">$</span>loo, fit_decay<span class="op">$</span>loo)</a></code></pre></div>
 <pre><code>##        elpd_diff se_diff
 ## model1  0.0       0.0   
-## model3 -3.4       2.0   
-## model2 -9.1       3.8</code></pre>
+## model3 -3.7       2.2   
+## model2 -9.2       3.8</code></pre>
 <p>The change point model seems to be preferred with a ratio of around 1.7 over the decay model and 2.5 over the flat model. Another approach is to look at the model weights:</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">loo_list =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(fit<span class="op">$</span>loo, fit_flat<span class="op">$</span>loo, fit_decay<span class="op">$</span>loo)</a>
 <a class="sourceLine" id="cb16-2" title="2">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_model_weights.html">loo_model_weights</a></span>(loo_list, <span class="dt">method=</span><span class="st">"pseudobma"</span>)</a></code></pre></div>
 <pre><code>## Method: pseudo-BMA+ with Bayesian bootstrap
 ## ------
 ##        weight
-## model1 0.899 
-## model2 0.010 
-## model3 0.091</code></pre>
+## model1 0.908 
+## model2 0.006 
+## model3 0.086</code></pre>
 <p>Again, unsurprisingly, the change point model is preferred and they show the same ranking as implied by <code>loo_compare</code>.</p>
+</div>
+<div id="jags-code" class="section level1">
+<h1 class="hasAnchor">
+<a href="#jags-code" class="anchor"></a>JAGS code</h1>
+<p>Here is the JAGS code for the full model above.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(fit<span class="op">$</span>jags_code)</a></code></pre></div>
+<pre><code>## 
+## model {
+##   # Priors for population-level effects
+##   int_1 ~ dnorm(0, 1/(10)^2) 
+##   int_2 ~ dnorm(0, 1/(10)^2) 
+##   cp_1 ~ dunif(MINX, MAXX)
+##   cp_0 = -10^100  # mcp helper value; minus infinity
+##   cp_2 = 10^100  # mcp helper value; plus infinity
+## 
+## 
+##   # Model and likelihood
+##   for (i_ in 1:length(date)) {
+## 
+##     # Fitted value
+##     y_[i_] = 
+## 
+##       # Segment 1: n ~ 1
+##       (date[i_] &gt;= cp_0) * (date[i_] &lt; cp_1) * int_1 + 
+##       
+##       # Segment 2: n ~ 1 ~ 1
+##       (date[i_] &gt;= cp_1) * int_2 
+## 
+##     # Likelihood and log-density for family = poisson()
+##     n[i_] ~ dpois(exp(y_[i_]))
+##     loglik_[i_] = logdensity.pois(n[i_], exp(y_[i_]))
+##   }
+## }</code></pre>
 </div>
   </div>
 
@@ -228,10 +257,10 @@
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li><a href="#finding-change-points-in-poisson-models-using-mcp">Finding change points in Poisson models using mcp</a></li>
-      <li><a href="#coal-mining-disasters">Coal mining disasters</a></li>
+<li><a href="#coal-mining-disasters">Coal mining disasters</a></li>
       <li><a href="#priors">Priors</a></li>
       <li><a href="#model-comparison">Model comparison</a></li>
+      <li><a href="#jags-code">JAGS code</a></li>
       </ul>
 </div>
       </div>
