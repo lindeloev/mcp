@@ -168,8 +168,9 @@ mcp = function(segments,
   if (!is.list(prior))
     stop("`prior` must be a named list.")
 
-  if (any(duplicated(names(prior))))
-    stop("`prior` has duplicated entries for the same parameter.")
+  which_duplicated = duplicated(names(prior))
+  if (any(which_duplicated))
+    stop("`prior` has duplicated entries for the same parameter: ", paste0(names(prior)[which_duplicated]), collapse = ", ")
 
   # Check family
   if (class(family) != "family")

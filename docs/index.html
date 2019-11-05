@@ -6,22 +6,23 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bayesian Multiple Change Point Inference • mcp</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/simplex/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/cerulean/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
-<script src="pkgdown.js"></script><meta property="og:title" content="Bayesian Multiple Change Point Inference">
+<script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
+<meta property="og:title" content="Bayesian Multiple Change Point Inference">
 <meta property="og:description" content="Specify segments using R formulas and let mcp infer the parameters as well as the change points - or simulate data from given values. Supports hierarchical generalized linear models. mcp interfaces well to other packages in the Bayesian R ecosystem.">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]--><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=UA-1026978-2"></script><script>
+<![endif]--><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=UA-1026978-3"></script><script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
 
-  gtag('config', 'UA-1026978-2');
+  gtag('config', 'UA-1026978-3');
 </script>
 </head>
 <body>
@@ -61,6 +62,9 @@
   <ul class="dropdown-menu" role="menu">
 <li>
       <a href="articles/binomial.html">Binomial change point analysis with mcp</a>
+    </li>
+    <li>
+      <a href="articles/formulas.html">About mcp formulas and models</a>
     </li>
     <li>
       <a href="articles/poisson.html">Poisson change point analysis with mcp</a>
@@ -105,213 +109,234 @@
 <li><p>Install <code>mcp</code> by running this in R: <code><a href="https://rdrr.io/pkg/devtools/man/remote-reexports.html">devtools::install_github("lindeloev/mcp")</a></code>. If you don’t have <code>devtools</code>, install it first using <code><a href="https://rdrr.io/r/utils/install.packages.html">install.packages("devtools")</a></code>.</p></li>
 </ol>
 </div>
-<div id="quick-examples-of-various-change-point-models" class="section level1">
+<div id="brief-example" class="section level1">
 <h1 class="hasAnchor">
-<a href="#quick-examples-of-various-change-point-models" class="anchor"></a>Quick examples of various change point models</h1>
-<p>Find the single change point between two plateaus:</p>
+<a href="#brief-example" class="anchor"></a>Brief example</h1>
+<p>This model infers the change point (<code>cp_1</code>) on <code>time</code>, the intercept for segment 1 (<code>int_1</code>), and the intercept for segment 2 (<code>int_2</code>). Also the standard deviation of the residuals (<code>sigma</code>).</p>
+<p>Find the two change points between three segments (three formulas):</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(mcp)</a>
-<a class="sourceLine" id="cb1-2" title="2"></a>
-<a class="sourceLine" id="cb1-3" title="3"><span class="co"># Define segments</span></a>
-<a class="sourceLine" id="cb1-4" title="4">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb1-5" title="5">    y <span class="op">~</span><span class="st"> </span><span class="dv">1</span>,  <span class="co"># Intercept</span></a>
-<a class="sourceLine" id="cb1-6" title="6">    <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">1</span>  <span class="co"># Intercept</span></a>
-<a class="sourceLine" id="cb1-7" title="7">)</a>
-<a class="sourceLine" id="cb1-8" title="8"></a>
-<a class="sourceLine" id="cb1-9" title="9"><span class="co"># Start sampling</span></a>
-<a class="sourceLine" id="cb1-10" title="10">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, my_data, <span class="dt">par_x =</span> <span class="st">"x"</span>)</a>
-<a class="sourceLine" id="cb1-11" title="11"></a>
-<a class="sourceLine" id="cb1-12" title="12"><span class="co"># Plot fit</span></a>
-<a class="sourceLine" id="cb1-13" title="13"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
-<p><img src="man/images/ex_plateaus.png"></p>
-<p>To see the posteriors, use <code><a href="reference/summary.mcpfit.html">summary()</a></code> or <code><a href="reference/plot.mcpfit.html">plot(fit, "combo")</a></code>.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw"><a href="reference/summary.mcpfit.html">summary</a></span>(fit)  </a>
-<a class="sourceLine" id="cb2-2" title="2"><span class="co"># plot(fit, "combo")</span></a></code></pre></div>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="co"># A tibble: 4 x 4</span></a>
-<a class="sourceLine" id="cb3-2" title="2">  name   mean .lower .upper</a>
-<a class="sourceLine" id="cb3-3" title="3">  <span class="op">&lt;</span>chr<span class="op">&gt;</span><span class="st"> </span><span class="er">&lt;</span>dbl<span class="op">&gt;</span><span class="st">  </span><span class="er">&lt;</span>dbl<span class="op">&gt;</span><span class="st">  </span><span class="er">&lt;</span>dbl<span class="op">&gt;</span></a>
-<a class="sourceLine" id="cb3-4" title="4"><span class="dv">1</span> cp_<span class="dv">1</span>   <span class="fl">39.8</span>   <span class="fl">38.0</span>   <span class="fl">42.8</span></a>
-<a class="sourceLine" id="cb3-5" title="5"><span class="dv">2</span> int_<span class="dv">1</span>  <span class="fl">52.1</span>   <span class="fl">45.7</span>   <span class="fl">58.6</span></a>
-<a class="sourceLine" id="cb3-6" title="6"><span class="dv">3</span> int_<span class="dv">2</span>  <span class="fl">19.0</span>   <span class="fl">13.8</span>   <span class="fl">24.0</span></a>
-<a class="sourceLine" id="cb3-7" title="7"><span class="dv">4</span> sigma  <span class="fl">20.3</span>   <span class="fl">17.5</span>   <span class="fl">23.2</span></a></code></pre></div>
-<p>This model infers the change point (<code>cp_1</code>) on <code>x</code>, the intercept for segment 1 (<code>int_1</code>), and the intercept for segment 2 (<code>int_2</code>). Also the standard deviation of the residuals (<code>sigma</code>).</p>
-<p>Find the single change point between two joined slopes:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb4-2" title="2">    y <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x,  <span class="co"># intercept + slope</span></a>
-<a class="sourceLine" id="cb4-3" title="3">    <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>x  <span class="co"># joined slope</span></a>
-<a class="sourceLine" id="cb4-4" title="4">)</a>
-<a class="sourceLine" id="cb4-5" title="5">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, my_data)</a>
-<a class="sourceLine" id="cb4-6" title="6"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
-<p><img src="man/images/ex_slopes.png"></p>
-<p>Find the single change point between two joined slopes. While the slopes are shared by all participants, their change point varies:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb5-2" title="2">    y <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x,  <span class="co"># intercept + slope</span></a>
-<a class="sourceLine" id="cb5-3" title="3">    <span class="dv">1</span> <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span><span class="op">|</span>id) <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>x  <span class="co"># joined slope. cp varies by id</span></a>
-<a class="sourceLine" id="cb5-4" title="4">)</a>
-<a class="sourceLine" id="cb5-5" title="5">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, my_data)</a>
-<a class="sourceLine" id="cb5-6" title="6"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">facet_by =</span> <span class="st">"id"</span>)</a></code></pre></div>
-<p><img src="man/images/ex_slopes_varying.png"></p>
-<p><code>mcp</code> supports Generalized Linear Modeling. Here is a binomial change point model with three segments:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb6-2" title="2">  y <span class="op">|</span><span class="st"> </span><span class="kw">trials</span>(N) <span class="op">~</span><span class="st"> </span><span class="dv">1</span>,  <span class="co"># constant rate</span></a>
-<a class="sourceLine" id="cb6-3" title="3">  <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>x,  <span class="co"># joined changing rate</span></a>
-<a class="sourceLine" id="cb6-4" title="4">  <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x  <span class="co"># disjoined changing rate</span></a>
+<a class="sourceLine" id="cb1-2" title="2">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
+<a class="sourceLine" id="cb1-3" title="3">  response <span class="op">~</span><span class="st"> </span><span class="dv">1</span>,  <span class="co"># plateau (int_1)</span></a>
+<a class="sourceLine" id="cb1-4" title="4">  <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>time,  <span class="co"># joined slope (time_2) at cp_1</span></a>
+<a class="sourceLine" id="cb1-5" title="5">  <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>time  <span class="co"># disjoined slope (int_1, time_2) at cp_2</span></a>
+<a class="sourceLine" id="cb1-6" title="6">)</a>
+<a class="sourceLine" id="cb1-7" title="7">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, <span class="dt">data =</span> ex_demo)  <span class="co"># dataset included in mcp</span></a></code></pre></div>
+<p>Use <code>summary</code> to see the estimates. They were simulated to lie at <code>cp_1 = 30</code> and <code>cp_2 = 70</code> (<a href="https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R">see how <code>ex_demo</code> was generated</a>) and these values are well recovered, as are the other simulation parameters:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw"><a href="reference/summary.mcpfit.html">summary</a></span>(fit)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">Family<span class="op">:</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/family.html">gaussian</a></span>(<span class="dt">link =</span> <span class="st">'identity'</span>)</a>
+<a class="sourceLine" id="cb3-2" title="2">Iterations<span class="op">:</span><span class="st"> </span><span class="dv">9000</span> from <span class="dv">3</span> chains.</a>
+<a class="sourceLine" id="cb3-3" title="3">Segments<span class="op">:</span></a>
+<a class="sourceLine" id="cb3-4" title="4"><span class="st">   </span>response <span class="op">~</span><span class="st"> </span><span class="dv">1</span> </a>
+<a class="sourceLine" id="cb3-5" title="5">   response <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>time </a>
+<a class="sourceLine" id="cb3-6" title="6">   response <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>time </a>
+<a class="sourceLine" id="cb3-7" title="7"></a>
+<a class="sourceLine" id="cb3-8" title="8">Population<span class="op">-</span>level parameters<span class="op">:</span></a>
+<a class="sourceLine" id="cb3-9" title="9"><span class="st">   </span>name   mean   X2<span class="fl">.5</span>   X97<span class="fl">.5</span> rhat  eff   ts_se</a>
+<a class="sourceLine" id="cb3-10" title="10">   cp_<span class="dv">1</span> <span class="fl">30.973</span> <span class="fl">23.054</span> <span class="fl">38.5818</span> <span class="fl">1.01</span>  <span class="dv">396</span> <span class="fl">316.789</span></a>
+<a class="sourceLine" id="cb3-11" title="11">   cp_<span class="dv">2</span> <span class="fl">69.783</span> <span class="fl">69.272</span> <span class="fl">70.2324</span> <span class="fl">1.00</span> <span class="dv">5859</span>   <span class="fl">0.129</span></a>
+<a class="sourceLine" id="cb3-12" title="12">  int_<span class="dv">1</span> <span class="fl">10.317</span>  <span class="fl">8.913</span> <span class="fl">11.7922</span> <span class="fl">1.01</span> <span class="dv">1683</span>   <span class="fl">2.939</span></a>
+<a class="sourceLine" id="cb3-13" title="13">  int_<span class="dv">3</span>  <span class="fl">0.579</span> <span class="fl">-2.483</span>  <span class="fl">3.5711</span> <span class="fl">1.00</span>  <span class="dv">712</span>  <span class="fl">29.767</span></a>
+<a class="sourceLine" id="cb3-14" title="14">  sigma  <span class="fl">4.003</span>  <span class="fl">3.462</span>  <span class="fl">4.6293</span> <span class="fl">1.00</span> <span class="dv">4224</span>   <span class="fl">0.187</span></a>
+<a class="sourceLine" id="cb3-15" title="15"> time_<span class="dv">2</span>  <span class="fl">0.543</span>  <span class="fl">0.412</span>  <span class="fl">0.6775</span> <span class="fl">1.01</span>  <span class="dv">413</span>   <span class="fl">0.103</span></a>
+<a class="sourceLine" id="cb3-16" title="16"> time_<span class="dv">3</span> <span class="fl">-0.223</span> <span class="fl">-0.404</span> <span class="fl">-0.0493</span> <span class="fl">1.01</span>  <span class="dv">714</span>   <span class="fl">0.104</span></a></code></pre></div>
+<p>Plot lines drawn randomly from the posterior on top of data to inspect the fit:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
+<p><img src="https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo.png"></p>
+<p>Inspect the posteriors and convergence of the change points:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"combo"</span>, <span class="dt">regex_pars =</span> <span class="st">"cp_"</span>)</a></code></pre></div>
+<p><img src="https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo_combo.png"></p>
+<p>Fit a null model with just one change point, consisting of two disjoined slopes:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="co"># Fit the model</span></a>
+<a class="sourceLine" id="cb6-2" title="2">segments_null =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
+<a class="sourceLine" id="cb6-3" title="3">  response <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>time,  <span class="co"># intercept (int_1) and slope (time_1)</span></a>
+<a class="sourceLine" id="cb6-4" title="4">  <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>time  <span class="co"># disjoined slope (int_2, time_1)</span></a>
 <a class="sourceLine" id="cb6-5" title="5">)</a>
-<a class="sourceLine" id="cb6-6" title="6">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, my_data, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>())</a>
-<a class="sourceLine" id="cb6-7" title="7"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
-<p><img src="man/images/ex_binomial.png"></p>
-<p>Use <code><a href="reference/plot.mcpfit.html">plot(fit, rate = FALSE)</a></code> if you want the points and fit lines on the original scale of <code>y</code> rather than divided by <code>N</code>.</p>
-<p>Here we find the two change points between three segments. The slope and intercept of segment 2 are parameterized relative to segment 1. So too with the second change point. Some of the default priors are overwritten; the first slope (<code>x_1</code>) is forced to be -3.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb7-2" title="2">  y <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x,</a>
-<a class="sourceLine" id="cb7-3" title="3">  <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="kw">rel</span>(<span class="dv">1</span>) <span class="op">+</span><span class="st"> </span><span class="kw">rel</span>(x),</a>
-<a class="sourceLine" id="cb7-4" title="4">  <span class="kw">rel</span>(<span class="dv">1</span>) <span class="op">~</span><span class="st"> </span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb7-5" title="5">)</a>
-<a class="sourceLine" id="cb7-6" title="6">prior =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb7-7" title="7">  <span class="dt">int_1 =</span> <span class="st">"dnorm(0, 20)"</span>,</a>
-<a class="sourceLine" id="cb7-8" title="8">  <span class="dt">x_1 =</span> <span class="dv">-3</span>,</a>
-<a class="sourceLine" id="cb7-9" title="9">  <span class="dt">cp_1 =</span> <span class="st">"dunif(20, 50)"</span></a>
-<a class="sourceLine" id="cb7-10" title="10">)</a>
-<a class="sourceLine" id="cb7-11" title="11">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, my_data, prior)</a>
-<a class="sourceLine" id="cb7-12" title="12"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
-<p><img src="man/images/ex_fix_rel.png"></p>
-</div>
-<div id="extended-guide" class="section level1">
-<h1 class="hasAnchor">
-<a href="#extended-guide" class="anchor"></a>Extended guide</h1>
-<p>Let us specify a fairly complicated model with four segments, i.e., three change points:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(mcp)</a>
-<a class="sourceLine" id="cb8-2" title="2"></a>
-<a class="sourceLine" id="cb8-3" title="3"><span class="co"># Define the segments that are separated by change points</span></a>
-<a class="sourceLine" id="cb8-4" title="4">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb8-5" title="5">  score <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>year,  <span class="co"># intercept + slope</span></a>
-<a class="sourceLine" id="cb8-6" title="6">  <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>year,  <span class="co"># joined slope</span></a>
-<a class="sourceLine" id="cb8-7" title="7">  <span class="kw">rel</span>(<span class="dv">1</span>) <span class="op">~</span><span class="st"> </span><span class="dv">0</span>,  <span class="co"># joined plateau starting at relative change point</span></a>
-<a class="sourceLine" id="cb8-8" title="8">  <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="kw">rel</span>(<span class="dv">1</span>)  <span class="co"># disjoined plateau with relative intercept parameterization</span></a>
-<a class="sourceLine" id="cb8-9" title="9">)</a></code></pre></div>
-<p>This is what we will end up with. We simulate some raw data from this model (the points) and infer the parameter of the linear segments as well as the change points (lines are draws from the posterior distribution).</p>
-<p><img src="man/images/plot_overlay.png"></p>
-<p>This model has the following parameters:</p>
-<ul>
-<li>
-<code>cp_1</code>, <code>cp_2</code>, and <code>cp_3</code>: change points on the x-axis (here <code>year</code>). One between each adjacent segment. <code>cp_2</code> is relative to <code>cp_1</code>, i.e., it’s value is the (positive) <em>difference</em> between <code>cp_1</code> and <code>cp_2</code>.</li>
-<li>
-<code>int_1</code> and <code>int_4</code>: absolute (<code>1</code>) and relative (<code>rel(1)</code>) intercepts respectively (here <code>score</code>) from the first and the last segment.</li>
-<li>
-<code>year_1</code>, <code>year_2</code>: slopes in segments 1 and 2. Takes name after the x-axis predictor.</li>
-<li>
-<code>sigma</code>: standard deviation of residuals.</li>
-</ul>
-<div id="simulate-data-using-fitfunc_y" class="section level2">
-<h2 class="hasAnchor">
-<a href="#simulate-data-using-fitfunc_y" class="anchor"></a>Simulate data using <code>fit$func_y()</code>
-</h2>
-<p>It will usually be a good idea to run <code>mcp</code> without sampling first, in which case it returns a full <code>mcpfit</code> object without samples. This contains a list of priors (<code>mcp$prior</code>), JAGS code (<code>fit$jags_code</code>), and an R function of the model (<code>mcp$func_y()</code>).</p>
-<p>We can use the latter to simulate data. This is always a great way to get acquainted with new models and functions, and ensure that they can recover the parameters.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="co"># Get an mcpfit object without samples</span></a>
-<a class="sourceLine" id="cb9-2" title="2">empty =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, <span class="dt">sample=</span><span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb9-3" title="3"></a>
-<a class="sourceLine" id="cb9-4" title="4"><span class="co"># Now use empty$func_y() to generate data from this model.</span></a>
-<a class="sourceLine" id="cb9-5" title="5"><span class="co"># Set some parameter values to your liking:</span></a>
-<a class="sourceLine" id="cb9-6" title="6">data =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(</a>
-<a class="sourceLine" id="cb9-7" title="7">  <span class="dt">year =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">100</span>,  <span class="co"># Evaluate func_y for each of these</span></a>
-<a class="sourceLine" id="cb9-8" title="8">  <span class="dt">score =</span> empty<span class="op">$</span><span class="kw">func_y</span>(</a>
-<a class="sourceLine" id="cb9-9" title="9">    <span class="dt">year =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">100</span>,  <span class="co"># x</span></a>
-<a class="sourceLine" id="cb9-10" title="10">    <span class="dt">cp_1 =</span> <span class="dv">20</span>, <span class="dt">cp_2 =</span> <span class="dv">35</span>, <span class="dt">cp_3 =</span> <span class="dv">80</span>,  <span class="co"># change points </span></a>
-<a class="sourceLine" id="cb9-11" title="11">    <span class="dt">int_1 =</span> <span class="dv">20</span>, <span class="dt">int_4 =</span> <span class="dv">20</span>,  <span class="co"># intercepts</span></a>
-<a class="sourceLine" id="cb9-12" title="12">    <span class="dt">year_1 =</span> <span class="dv">3</span>, <span class="dt">year_2 =</span> <span class="dv">-2</span>,  <span class="co"># slopes</span></a>
-<a class="sourceLine" id="cb9-13" title="13">    <span class="dt">sigma =</span> <span class="dv">12</span>  <span class="co"># standard deviation of residuals</span></a>
-<a class="sourceLine" id="cb9-14" title="14">  )</a>
-<a class="sourceLine" id="cb9-15" title="15">)</a></code></pre></div>
-</div>
-<div id="set-priors" class="section level2">
-<h2 class="hasAnchor">
-<a href="#set-priors" class="anchor"></a>Set priors</h2>
-<p>Quite uninformative priors are set using data by default. You can see them in <code>fit$prior</code>. We can override some or all of these by providing JAGS code.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1">prior =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb10-2" title="2">  <span class="dt">year_1 =</span> <span class="st">"dnorm(0, 5)"</span>,  <span class="co"># Slope of segment 1</span></a>
-<a class="sourceLine" id="cb10-3" title="3">  <span class="dt">int_1 =</span> <span class="st">"dt(10, 30, 1) T(0, )"</span>,  <span class="co"># t-distributed prior. Truncated to be positive.</span></a>
-<a class="sourceLine" id="cb10-4" title="4">  <span class="dt">cp_2 =</span> <span class="st">"dunif(0, 60)"</span>,  <span class="co"># Change point is after the first, but within 60 years.</span></a>
-<a class="sourceLine" id="cb10-5" title="5">  <span class="dt">year_2 =</span> <span class="dv">-2</span>  <span class="co"># Fixed slope of segment 2.</span></a>
-<a class="sourceLine" id="cb10-6" title="6">)</a></code></pre></div>
-<p><code>mcp</code> has a few tricks up the sleeve for setting priors.</p>
-<ul>
-<li><p>Order restriction is automatically applied to <code>cp_*</code> parameters using truncation (e.g., <code><a href="https://rdrr.io/r/base/logical.html">T(cp_1, )</a></code>) so that they are in the correct order on the x-axis UNLESS you do it yourself. The one exception is for <code>dunif</code> distributions where you have to do it as above.</p></li>
-<li><p>In addition to the model parameters, <code>MINX</code> (minimum x-value), <code>MAXX</code> (maximum x-value), <code>SDX</code> (etc…), <code>MINY</code>, <code>MAXY</code>, and <code>SDY</code> are also available when you set priors. They are used to set uninformative default priors.</p></li>
-<li><p>Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision but <code>mcp</code> converts to precision under the hood via the <code><a href="reference/sd_to_prec.html">sd_to_prec()</a></code> function.</p></li>
-<li><p>You can fix any parameter to a specific value. Simply set it to a numerical value (as <code>year_2</code> above). A fixed value is a 100% prior belief in that value.</p></li>
-</ul>
-</div>
-<div id="fit-the-model" class="section level2">
-<h2 class="hasAnchor">
-<a href="#fit-the-model" class="anchor"></a>Fit the model</h2>
-<p>This is the easiest step!</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, data, prior)</a>
-<a class="sourceLine" id="cb11-2" title="2">fit</a></code></pre></div>
-<pre><code># A tibble: 8 x 4
-  name    mean .lower .upper
-  &lt;chr&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
-1 cp_1   19.5   17.4   21.6 
-2 cp_2   37.2   33.6   40.5 
-3 cp_3   78.9   73.0   83.0 
-4 int_1  16.9    6.70  27.5 
-5 int_4  20.9   15.7   26.2 
-6 sigma  11.4    9.84  13.1 
-7 year_1  3.40   2.48   4.34
-8 year_2 -2     -2     -2</code></pre>
-<p>(This summary is very limited and will be updated)</p>
-</div>
-<div id="plots" class="section level2">
-<h2 class="hasAnchor">
-<a href="#plots" class="anchor"></a>Plots</h2>
-<p>Let us inspect it visually:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
-<p><img src="man/images/plot_overlay.png"></p>
-<p>By default this draws lines given 25 posterior samples, but change it using <code><a href="reference/plot.mcpfit.html">plot(fit, draws=50)</a></code>. Of particular interest is how similar the lines are (good precision) and how well they fit to the data. <code>plot.mcpfit</code> returns a <code>ggplot2</code> object, so you can easily add, e.g., a title: <code>plot(fit, "combo") + ggtitle("Posteriors and convergence")</code>.</p>
-<p>Notice that the fixed prior on the slope in segment 2 causes parallel lines. The rest of the model adapts.</p>
-<p>We may also want to inspect the posterior distributions directly:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"combo"</span>)</a></code></pre></div>
-<p><img src="man/images/plot_combo.png"></p>
-<p>This is a classical Bayesian plot to better see parameter estimates and to check convergence between chains. Compare the inferred values to the one we used to generate the data. Change point models do a remarkably good job of recovering the change points on other parameters, including sigma.</p>
-<p>Notice that <code>int_4</code> was modeled as relative (<code>rel(1)</code>) so it is the <em>difference</em> from the change point. It would have had a different value if it was modeled as absolute (<code>1</code>).</p>
-<p>If you need to increase the warmup or number of post-warmup iterations, <code><a href="reference/mcp.html">mcp(...)</a></code> are channeled directly to <code>jags.fit</code>, so you can do <code><a href="reference/mcp.html">mcp(segments, data, n.adapt = 3000, n.update = 3000, n.iter = 5000)</a></code>.</p>
-</div>
-<div id="model-comparison" class="section level2">
-<h2 class="hasAnchor">
-<a href="#model-comparison" class="anchor"></a>Model comparison</h2>
-<p>Now it’s time for some model comparison. We will compare to an intercept-only model with default priors. This one has no change points because there is only one segment, i.e., it is a classical linear regression model. Because the x-axis cannot be read out from the segments when there are no slopes, we need to give it explicitly:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1">segments2 =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(score <span class="op">~</span><span class="st"> </span><span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb15-2" title="2">fit2 =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments2, data, <span class="dt">par_x =</span> <span class="st">"year"</span>)</a></code></pre></div>
-<p>We can use the cross-validation from the <code>loo</code> package to compare the predictive performance of various models. We compute loo for each model and then compare them. the <code>mcpfit</code> objects have placeholders for <code>loo</code> and <code>waic</code> fits. You need not use them, but it’s nice to keep things together:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">fit<span class="op">$</span>loo =<span class="st"> </span><span class="kw"><a href="reference/criterion.html">loo</a></span>(fit)</a>
-<a class="sourceLine" id="cb16-2" title="2">fit2<span class="op">$</span>loo =<span class="st"> </span><span class="kw"><a href="reference/criterion.html">loo</a></span>(fit2)</a>
-<a class="sourceLine" id="cb16-3" title="3">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit<span class="op">$</span>loo, fit2<span class="op">$</span>loo)</a></code></pre></div>
-<p>Result:</p>
+<a class="sourceLine" id="cb6-6" title="6">fit_null =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments_null, ex_demo)</a></code></pre></div>
+<p>Using leave-one-out cross-validation, we see that the two-change-points model is preferred (it is on top), but not very strongly. See more about this in the <code>loo</code> package.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="co"># Compare loos:</span></a>
+<a class="sourceLine" id="cb7-2" title="2">fit<span class="op">$</span>loo =<span class="st"> </span><span class="kw"><a href="reference/criterion.html">loo</a></span>(fit)</a>
+<a class="sourceLine" id="cb7-3" title="3">fit_null<span class="op">$</span>loo =<span class="st"> </span><span class="kw"><a href="reference/criterion.html">loo</a></span>(fit_null)</a>
+<a class="sourceLine" id="cb7-4" title="4">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit<span class="op">$</span>loo, fit_null<span class="op">$</span>loo)</a></code></pre></div>
 <pre><code>       elpd_diff se_diff
-model1   0.0       0.0  
-model2 -81.4       7.6</code></pre>
-<p>Aha, the first model in <code>loo_compare</code> (<code>fit</code>) was preferred (higher Estimated Log-Predictive Density). The important thing here is the <code>elpd_diff</code>/<code>se_diff</code> ratio. This is almost like a z-score, i.e., a ratio of 1.96 corresponds to 95% probability that <code>fit</code> has superior predictive accuracy. BUT, the <code>loo</code> developers have advised that it is probably too optimistic in practice, so that one should only begin taking it seriously if this ratio exceeds 5 [Citation needed].</p>
+model1  0.0       0.0   
+model2 -7.8       4.7   </code></pre>
 </div>
-<div id="-and-more" class="section level2">
+<div id="highlights-from-in-depth-guides" class="section level1">
+<h1 class="hasAnchor">
+<a href="#highlights-from-in-depth-guides" class="anchor"></a>Highlights from in-depth guides</h1>
+<p>The article on <a href="https://lindeloev.github.io/mcp/articles/formulas.html">understanding mcp formulas and models</a>:</p>
+<ul>
+<li>Parameter names <code>int_i</code> (intercepts), <code>cp_i</code> (change points), <code>x_i</code> (slopes).</li>
+<li>The change point model is basically an <code>ifelse</code> model.</li>
+<li>Use <code>rel()</code> to specify that parameters are relative to those in the previous segments.</li>
+</ul>
+<p>The article on <a href="https://lindeloev.github.io/mcp/articles/priors.html">using priors in mcp</a> include:</p>
+<ul>
+<li>See priors in <code>fit$prior</code>
+</li>
+<li>Set priors using <code>mcp(segments, data, prior = list(cp_1 = "dnorm(0, 1)", cp_1 = "dunif(0, 45)</code>)</li>
+<li>Fix parameters to specific values using <code>cp_1 = 45</code>
+</li>
+<li>Share parameters between segments using <code>slope_1 = "slope_2"</code>
+</li>
+<li>Allows for truncated priors using <code><a href="https://rdrr.io/r/base/logical.html">T(lower, upper)</a></code>, e.g., <code>int_1 = "dnorm(0, 1) T(0, )"</code>. <code>mcp</code> applies this automatically to change point priors to enforce order restriction. This is true for <a href="https://lindeloev.github.io/mcp/articles/varying.html">varying change points</a> too.</li>
+<li>Sample priors for prior predictive checks using <code><a href="reference/mcp.html">mcp(segments, data, sample="prior")</a></code>.</li>
+</ul>
+<p>The article on <a href="https://lindeloev.github.io/mcp/articles/varying.html">varying change points in mcp</a> include:</p>
+<ul>
+<li>How to simulate varying change points using <code>fit$func_y()</code>.</li>
+<li>Get posteriors using <code><a href="reference/ranef.html">ranef(fit)</a></code>
+</li>
+<li>Plot using <code><a href="reference/plot.mcpfit.html">plot(fit, facet_by="my_group")</a></code> and <code><a href="reference/plot.mcpfit.html">plot(fit, "dens_overlay", pars = "varying", ncol = 3)</a></code>.</li>
+<li>The default priors restrict varying change points to lie between the two adjecent change points.</li>
+</ul>
+<p><code>mcp</code> currently supports the following GLM:</p>
+<ul>
+<li>
+<code><a href="https://rdrr.io/r/stats/family.html">gaussian(link = "identity")</a></code>. See worked example below.</li>
+<li>
+<code><a href="https://rdrr.io/r/stats/family.html">binomial(link = "logit")</a></code>. See <a href="https://lindeloev.github.io/mcp/articles/binomial.html">binomial change points in mcp</a>.</li>
+<li>
+<code><a href="reference/bernoulli.html">bernoulli(link = "logit")</a></code>. See <a href="https://lindeloev.github.io/mcp/articles/binomial.html">binomial change points in mcp</a>.</li>
+<li>
+<code><a href="https://rdrr.io/r/stats/family.html">poisson(link = "log")</a></code>. See <a href="https://lindeloev.github.io/mcp/articles/poisson.html">Poisson change points in mcp</a>.</li>
+</ul>
+</div>
+<div id="more-examples" class="section level1">
+<h1 class="hasAnchor">
+<a href="#more-examples" class="anchor"></a>More examples</h1>
+<div id="two-plateaus" class="section level2">
 <h2 class="hasAnchor">
-<a href="#-and-more" class="anchor"></a>… and more</h2>
-<p>Lastly, don’t be constrained by these simple <code>mcp</code> functions. You can work with the MCMC samples just as you would with <code>brms</code>, <code>stan_glm</code>, <code>jags</code>, or other samplers using the always excellent <code>tidybayes</code>:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(tidybayes)</a>
-<a class="sourceLine" id="cb18-2" title="2"></a>
-<a class="sourceLine" id="cb18-3" title="3"><span class="co"># Extract all parameters:</span></a>
-<a class="sourceLine" id="cb18-4" title="4"><span class="kw">tidy_draws</span>(fit<span class="op">$</span>samples) <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb18-5" title="5"><span class="st">  </span><span class="co"># tidybayes stuff here</span></a>
-<a class="sourceLine" id="cb18-6" title="6"></a>
-<a class="sourceLine" id="cb18-7" title="7"><span class="co"># Extract some parameters:</span></a>
-<a class="sourceLine" id="cb18-8" title="8">fit<span class="op">$</span>pars<span class="op">$</span>model  <span class="co"># check out which parameters are inferred.</span></a>
-<a class="sourceLine" id="cb18-9" title="9"><span class="kw">spread_draws</span>(fit<span class="op">$</span>samples, cp_<span class="dv">1</span>, cp_<span class="dv">2</span>, int_<span class="dv">1</span>, year_<span class="dv">1</span>) <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb18-10" title="10"><span class="st"> </span><span class="co"># tidybayes stuff here</span></a></code></pre></div>
+<a href="#two-plateaus" class="anchor"></a>Two plateaus</h2>
+<p>Find the single change point between two plateaus (<a href="https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R">see how <code>ex_plateaus</code> was generated</a>)</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
+<a class="sourceLine" id="cb9-2" title="2">    y <span class="op">~</span><span class="st"> </span><span class="dv">1</span>,  <span class="co"># plateau (int_1)</span></a>
+<a class="sourceLine" id="cb9-3" title="3">    <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">1</span>  <span class="co"># plateau (int_2)</span></a>
+<a class="sourceLine" id="cb9-4" title="4">)</a>
+<a class="sourceLine" id="cb9-5" title="5">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, ex_plateaus, <span class="dt">par_x =</span> <span class="st">"x"</span>)</a>
+<a class="sourceLine" id="cb9-6" title="6"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
+<p><img src="https://github.com/lindeloev/mcp/raw/master/man/figures/ex_plateaus.png"></p>
 </div>
+<div id="varying-change-points" class="section level2">
+<h2 class="hasAnchor">
+<a href="#varying-change-points" class="anchor"></a>Varying change points</h2>
+<p>Here, we find the single change point between two joined slopes. While the slopes are shared by all participants (they are population-level), their change point varies.</p>
+<p>Read more about <a href="https://lindeloev.github.io/mcp/articles/varying.html">varying change points</a> and <a href="https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R">see how ex_varying was generated</a>.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
+<a class="sourceLine" id="cb10-2" title="2">  y <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x,  <span class="co"># intercept + slope</span></a>
+<a class="sourceLine" id="cb10-3" title="3">  <span class="dv">1</span> <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span><span class="op">|</span>id) <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>x  <span class="co"># joined slope, varying by id</span></a>
+<a class="sourceLine" id="cb10-4" title="4">)</a>
+<a class="sourceLine" id="cb10-5" title="5">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, ex_varying)</a>
+<a class="sourceLine" id="cb10-6" title="6"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">facet_by =</span> <span class="st">"id"</span>)</a></code></pre></div>
+<p><img src="https://github.com/lindeloev/mcp/raw/master/man/figures/ex_varying.png"></p>
+<p>Summarise the individual change points using <code><a href="reference/ranef.html">ranef()</a></code> or plot them using <code><a href="reference/plot.mcpfit.html">plot(fit, "combo", "varying")</a></code>:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="reference/ranef.html">ranef</a></span>(fit)</a></code></pre></div>
+<pre><code>            name       mean       X2.5      X97.5     rhat  eff     ts_se
+1 cp_1_id[Benny] -18.970413 -21.746111 -16.255543 1.000108 3131  5.317845
+2  cp_1_id[Bill] -10.959035 -13.530281  -8.430385 1.002649  733 21.986801
+3  cp_1_id[Cath]  -3.894166  -6.327470  -1.576214 1.000920 1156 21.315220
+4  cp_1_id[Erin]   6.303391   3.462568   8.951041 1.000212 5684  2.104787
+5  cp_1_id[John]   9.767637   7.223594  12.412474 1.000726 2089  7.184478
+6  cp_1_id[Rose]  17.752586  14.684662  21.315577 1.001246 2704  4.979728</code></pre>
+</div>
+<div id="generalized-linear-models" class="section level2">
+<h2 class="hasAnchor">
+<a href="#generalized-linear-models" class="anchor"></a>Generalized linear models</h2>
+<p><code>mcp</code> supports Generalized Linear Modeling. See extended examples using <a href="https://lindeloev.github.io/mcp/articles/binomial.html"><code><a href="https://rdrr.io/r/stats/family.html">binomial()</a></code></a> and <a href="https://lindeloev.github.io/mcp/articles/poisson.html"><code><a href="https://rdrr.io/r/stats/family.html">poisson()</a></code></a>. <a href="https://github.com/lindeloev/mcp/tree/master/data-raw/ex_binomial.R">See how <code>ex_binomial</code> was generated</a>.</p>
+<p>Here is a binomial change point model with three segments:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
+<a class="sourceLine" id="cb13-2" title="2">  y <span class="op">|</span><span class="st"> </span><span class="kw">trials</span>(N) <span class="op">~</span><span class="st"> </span><span class="dv">1</span>,  <span class="co"># constant rate</span></a>
+<a class="sourceLine" id="cb13-3" title="3">  <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>x,  <span class="co"># joined changing rate</span></a>
+<a class="sourceLine" id="cb13-4" title="4">  <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x  <span class="co"># disjoined changing rate</span></a>
+<a class="sourceLine" id="cb13-5" title="5">)</a>
+<a class="sourceLine" id="cb13-6" title="6">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, ex_binomial, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>())</a>
+<a class="sourceLine" id="cb13-7" title="7"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
+<p><img src="https://github.com/lindeloev/mcp/raw/master/man/figures/ex_binomial.png"></p>
+<p>Use <code><a href="reference/plot.mcpfit.html">plot(fit, rate = FALSE)</a></code> if you want the points and fit lines on the original scale of <code>y</code> rather than divided by <code>N</code>.</p>
+</div>
+<div id="using-rel-and-priors" class="section level2">
+<h2 class="hasAnchor">
+<a href="#using-rel-and-priors" class="anchor"></a>Using <code>rel()</code> and priors</h2>
+<p>Read more about <a href="https://lindeloev.github.io/mcp/articles/formulas.html">formula options</a> and <a href="https://lindeloev.github.io/mcp/articles/priors.html">priors</a> and <a href="https://github.com/lindeloev/mcp/tree/master/data-raw/ex_rel_prior.R">see how <code>ex_rel_prior</code> was generated</a>.</p>
+<p>Here we find the two change points between three segments. The slope and intercept of segment 2 are parameterized relative to segment 1, i.e., modeling the <em>change</em> in intercept and slope since segment 1. So too with the second change point (<code>cp_2</code>) which is now the <em>distance</em> from <code>cp_1</code>.</p>
+<p>Some of the default priors are overwritten. The first intercept (<code>int_1</code>) is forced to be 10, the slopes are in segment 1 and 3 is shared. It is easy to see these effects in the <code>ex_rel_prior</code> dataset because they violate it somewhat. The first change point has to be at <code>x = 20</code> or later.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
+<a class="sourceLine" id="cb14-2" title="2">  y <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x,</a>
+<a class="sourceLine" id="cb14-3" title="3">  <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="kw">rel</span>(<span class="dv">1</span>) <span class="op">+</span><span class="st"> </span><span class="kw">rel</span>(x),</a>
+<a class="sourceLine" id="cb14-4" title="4">  <span class="kw">rel</span>(<span class="dv">1</span>) <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>x</a>
+<a class="sourceLine" id="cb14-5" title="5">)</a>
+<a class="sourceLine" id="cb14-6" title="6"></a>
+<a class="sourceLine" id="cb14-7" title="7">prior =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
+<a class="sourceLine" id="cb14-8" title="8">  <span class="dt">int_1 =</span> <span class="dv">10</span>,  <span class="co"># fixed value</span></a>
+<a class="sourceLine" id="cb14-9" title="9">  <span class="dt">x_3 =</span> <span class="st">"x_1"</span>,  <span class="co"># shared slope in segment 1 and 3</span></a>
+<a class="sourceLine" id="cb14-10" title="10">  <span class="dt">int_2 =</span> <span class="st">"dnorm(0, 20)"</span>,</a>
+<a class="sourceLine" id="cb14-11" title="11">  <span class="dt">cp_1 =</span> <span class="st">"dunif(20, 50)"</span>  <span class="co"># has to occur in this interval</span></a>
+<a class="sourceLine" id="cb14-12" title="12">)</a>
+<a class="sourceLine" id="cb14-13" title="13">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, ex_rel_prior, prior)</a>
+<a class="sourceLine" id="cb14-14" title="14"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
+<p><img src="https://github.com/lindeloev/mcp/raw/master/man/figures/ex_fix_rel.png"></p>
+<p>Looking at the summary, we can see that <code>int_2</code> and <code>x_2</code> are relative values:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1"><span class="kw"><a href="reference/summary.mcpfit.html">summary</a></span>(fit)</a></code></pre></div>
+<pre><code>Family: gaussian(link = 'identity')
+Iterations: 9000 from 3 chains.
+Segments:
+   y ~ 1 + x 
+   y ~ 1 ~ rel(1) + rel(x) 
+   y ~ rel(1) ~ 0 + x 
+
+Population-level parameters:
+  name  mean  X2.5 X97.5 rhat  eff    ts_se
+  cp_1 29.52 29.05 30.00   NA 2115    0.373
+  cp_2 49.33 45.81 52.51   NA  350   69.387
+ int_1 10.00 10.00 10.00   NA    0    0.000
+ int_2 33.91 24.56 43.75   NA  131 1066.654
+ sigma  9.67  8.33 11.13   NA 4538    1.019
+   x_1  1.64  1.42  1.87   NA   78    1.580
+   x_2 -3.43 -3.73 -3.14   NA  172    1.308
+   x_3  1.64  1.42  1.87   NA   78    1.580</code></pre>
+<p>(rhat cannot be estimated when the model contains fixed-to-value parameters in <code>mcp 0.1</code>. This will be fixed.)</p>
+</div>
+</div>
+<div id="diagnosing-problems" class="section level1">
+<h1 class="hasAnchor">
+<a href="#diagnosing-problems" class="anchor"></a>Diagnosing problems</h1>
+<p><strong>Convergence:</strong> A common problem when using MCMC is lacking convergence between chains. This will show up as drifting or non-stationary lines in <code><a href="reference/plot.mcpfit.html">plot(fit, "trace")</a></code>. The first thing to try is always to make the model warm up longer: <code><a href="reference/mcp.html">mcp(fit, data, adapt = 4000, update = 4000)</a></code>.</p>
+<p><strong>Speed:</strong> A lot of data will slow down fitting. You can try combinations of lowerering the warmup period and running the chains in parallel: <code><a href="reference/mcp.html">mcp(fit, data, chains = 4, cores = 4, adapt=300, update = 200)</a></code>.</p>
+<p>If you encounter other problems, don’t hesitate to <a href="https://github.com/lindeloev/mcp/issues">raise a Github Issue</a>, asking for help or posting a bug report.</p>
+</div>
+<div id="notes-on-model-comparison" class="section level1">
+<h1 class="hasAnchor">
+<a href="#notes-on-model-comparison" class="anchor"></a>Notes on model comparison</h1>
+<p>We can use the cross-validation from the <code>loo</code> package to compare the predictive performance of various models. We compute loo for each model and then compare them. the <code>mcpfit</code> objects have placeholders at <code>fit$loo</code> and <code>fit$waic</code>. You need not use them, but it’s nice to keep things together.</p>
+<p><code><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo::loo_compare</a></code>: The important thing is the <code>elpd_diff</code>/<code>se_diff</code> ratio. This is almost like a z-score, i.e., a ratio of 1.96 corresponds to 95% probability that <code>model1</code> (the first <code>loo</code> pass to <code>loo_compare</code>) has superior predictive accuracy. BUT, the <code>loo</code> developers have advised that it is probably too optimistic in practice, so that one should only begin taking it seriously if this ratio exceeds 5 [Citation needed].</p>
+</div>
+<div id="do-much-more" class="section level1">
+<h1 class="hasAnchor">
+<a href="#do-much-more" class="anchor"></a>Do much more</h1>
+<p>Don’t be constrained by these simple <code>mcp</code> functions. <code>fit$samples</code> is a regular <code>mcmc.list</code> object and all methods apply. You can work with the MCMC samples just as you would with <code>brms</code>, <code>stan_glm</code>, <code>jags</code>, or other samplers using the always excellent <code>tidybayes</code>:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(tidybayes)</a>
+<a class="sourceLine" id="cb17-2" title="2"></a>
+<a class="sourceLine" id="cb17-3" title="3"><span class="co"># Extract all parameters:</span></a>
+<a class="sourceLine" id="cb17-4" title="4"><span class="kw">tidy_draws</span>(fit<span class="op">$</span>samples) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb17-5" title="5"><span class="st">  </span><span class="co"># tidybayes stuff here</span></a>
+<a class="sourceLine" id="cb17-6" title="6"></a>
+<a class="sourceLine" id="cb17-7" title="7"><span class="co"># Extract some parameters:</span></a>
+<a class="sourceLine" id="cb17-8" title="8">fit<span class="op">$</span>pars<span class="op">$</span>model  <span class="co"># check out which parameters are inferred.</span></a>
+<a class="sourceLine" id="cb17-9" title="9"><span class="kw">spread_draws</span>(fit<span class="op">$</span>samples, cp_<span class="dv">1</span>, cp_<span class="dv">2</span>, int_<span class="dv">1</span>, year_<span class="dv">1</span>) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb17-10" title="10"><span class="st"> </span><span class="co"># tidybayes stuff here</span></a></code></pre></div>
 </div>
 
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-    <div class="license">
+    <div class="links">
+<h2>Links</h2>
+<ul class="list-unstyled">
+<li>Report a bug at <br><a href="https://github.com/lindeloev/mcp/issues">https://​github.com/​lindeloev/​mcp/​issues</a>
+</li>
+</ul>
+</div>
+<div class="license">
 <h2>License</h2>
 <ul class="list-unstyled">
 <li><a href="https://www.r-project.org/Licenses/GPL-2">GPL-2</a></li>
