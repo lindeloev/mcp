@@ -1,7 +1,10 @@
 template:
   params:
-    bootswatch: simplex  # Theme
-    ganalytics: UA-1026978-2  # Google Analytics
+    bootswatch: cerulean  # Theme
+    ganalytics: UA-1026978-3  # Google Analytics
+
+# Writes sitemap etc.
+url: https://lindeloev.github.io/mcp
 
 authors:
   Jonas Kristoffer Lindeløv:
