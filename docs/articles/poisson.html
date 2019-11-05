@@ -155,10 +155,10 @@
 ##    n ~ 1 ~ 1 
 ## 
 ## Population-level parameters:
-##   name     mean     X2.5    X97.5 rhat  eff   ts_se
-##   cp_1 1888.232 1879.423 1894.806    1 1437 89.1799
-##  int_1    1.174    0.986    1.373    1 4330  0.0195
-##  int_2    0.478    0.231    0.718    1 4350  0.0325</code></pre>
+##   name     mean     X2.5    X97.5 rhat  eff    ts_se
+##   cp_1 1887.927 1881.006 1897.450 1.04  398 382.7935
+##  int_1    1.173    0.972    1.367 1.02 2877   0.0335
+##  int_2    0.482    0.230    0.725 1.00 2731   0.0544</code></pre>
 <p>We can see that the model ran well with good convergence and a large number of effective samples. At a first glance, the change point is estimated to lie between the years 1880 and 1895 (approximately).</p>
 <p>Let us take a more direct look, using the default <code>mcp</code> plot:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
@@ -171,7 +171,7 @@
 <div id="priors" class="section level1">
 <h1 class="hasAnchor">
 <a href="#priors" class="anchor"></a>Priors</h1>
-<p><code><a href="https://rdrr.io/r/stats/family.html">poisson()</a></code> defaults to <code>link = 'log'</code>, meaning that we have to exponentiate the estimates to get the “raw” poisson parameter <span class="math inline">\(\lambda\)</span>. <span class="math inline">\(\lambda\)</span> has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[2])</a></code> (3.2358646) and it is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[3])</a></code> (1.6123192) for segment 2.</p>
+<p><code><a href="https://rdrr.io/r/stats/family.html">poisson()</a></code> defaults to <code>link = 'log'</code>, meaning that we have to exponentiate the estimates to get the “raw” poisson parameter <span class="math inline">\(\lambda\)</span>. <span class="math inline">\(\lambda\)</span> has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[2])</a></code> (3.2327428) and it is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[3])</a></code> (1.6191362) for segment 2.</p>
 <p>Default priors were used. They are normals with a standard deviation of 10. I.e. with 95% probability mass between <code>exp(10) = 22026</code> and <code>exp(-10) = 1 / 22026</code>:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">fit<span class="op">$</span>prior</a></code></pre></div>
 <pre><code>## $int_1
@@ -207,17 +207,17 @@
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit<span class="op">$</span>loo, fit_flat<span class="op">$</span>loo, fit_decay<span class="op">$</span>loo)</a></code></pre></div>
 <pre><code>##        elpd_diff se_diff
 ## model1  0.0       0.0   
-## model3 -4.9       2.5   
-## model2 -9.3       3.8</code></pre>
+## model3 -3.4       2.0   
+## model2 -9.1       3.8</code></pre>
 <p>The change point model seems to be preferred with a ratio of around 1.7 over the decay model and 2.5 over the flat model. Another approach is to look at the model weights:</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">loo_list =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(fit<span class="op">$</span>loo, fit_flat<span class="op">$</span>loo, fit_decay<span class="op">$</span>loo)</a>
 <a class="sourceLine" id="cb16-2" title="2">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_model_weights.html">loo_model_weights</a></span>(loo_list, <span class="dt">method=</span><span class="st">"pseudobma"</span>)</a></code></pre></div>
 <pre><code>## Method: pseudo-BMA+ with Bayesian bootstrap
 ## ------
 ##        weight
-## model1 0.940 
-## model2 0.008 
-## model3 0.053</code></pre>
+## model1 0.899 
+## model2 0.010 
+## model3 0.091</code></pre>
 <p>Again, unsurprisingly, the change point model is preferred and they show the same ranking as implied by <code>loo_compare</code>.</p>
 </div>
   </div>

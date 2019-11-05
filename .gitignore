@@ -1,3 +1,5 @@
 .Rproj.user
 .Rhistory
 inst/doc
+vignettes/priors_cache
+vignettes/varying_cache
