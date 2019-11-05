@@ -156,16 +156,16 @@ Add links to other vignettes
 <pre><code>## # A tibble: 100 x 3
 ##     year     N     y
 ##    &lt;int&gt; &lt;int&gt; &lt;int&gt;
-##  1  1901    17    11
-##  2  1902    18    17
-##  3  1903    16    14
-##  4  1904    13    11
-##  5  1905    14    12
-##  6  1906    13    12
-##  7  1907    11    10
-##  8  1908    12    11
-##  9  1909    11     9
-## 10  1910    20    19
+##  1  1901    12     9
+##  2  1902    10     9
+##  3  1903    17    16
+##  4  1904    10    10
+##  5  1905    14    11
+##  6  1906    12    11
+##  7  1907    16    14
+##  8  1908    19    17
+##  9  1909    15    14
+## 10  1910    13    10
 ## # ... with 90 more rows</code></pre>
 <p>Visually:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(data<span class="op">$</span>year, data<span class="op">$</span>y)</a></code></pre></div>
@@ -187,12 +187,12 @@ Add links to other vignettes
 ## 
 ## Population-level parameters:
 ##    name      mean      X2.5     X97.5 rhat  eff    ts_se
-##    cp_1 1921.4206 1918.2715 1924.4805    1  748 3.30e+01
-##    cp_2 1964.4956 1964.0031 1964.9535    1 5287 1.44e-01
-##   int_1    1.9239    1.6108    2.2442    1 1150 2.05e-01
-##   int_3    0.0748   -0.2490    0.4194    1 1010 2.61e-01
-##  year_2   -0.1590   -0.1821   -0.1377    1 1147 9.95e-04
-##  year_3    0.0428    0.0252    0.0595    1 1040 6.50e-04</code></pre>
+##    cp_1 1920.6938 1917.0756 1924.0616 1.01  519 5.61e+01
+##    cp_2 1964.4988 1964.0397 1964.9825 1.00 5617 1.33e-01
+##   int_1    2.1778    1.8062    2.5462 1.01  813 4.07e-01
+##   int_3    0.1521   -0.1996    0.4941 1.00  961 2.91e-01
+##  year_2   -0.1626   -0.1840   -0.1401 1.00  966 1.14e-03
+##  year_3    0.0322    0.0153    0.0505 1.00  978 7.41e-04</code></pre>
 <p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have varying effects, use <code><a href="../reference/ranef.html">ranef(fit)</a></code> to see them.</p>
 <p>Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>

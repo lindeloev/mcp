@@ -4,4 +4,6 @@
 _pkgdown.yml
 .covrignore
 docs
+vignettes/priors_cache
+vignettes/varying_cache
 ^data-raw$

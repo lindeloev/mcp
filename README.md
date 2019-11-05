@@ -254,9 +254,9 @@ Population-level parameters:
 
 
 # Diagnosing problems
-**Convergence:** A common problem when using MCMC is lacking convergence between chains. This will show up as drifting or non-stationary lines in `plot(fit, "trace")`. The first thing to try is always to make the model warm up longer: `mcp(fit, data, adapt = 4000, update = 4000)`.
+**Convergence:** A common problem when using MCMC is lacking convergence between chains. This will show up as large `rhat` values (> 1.1 is a common criterion) and non-converging lines in `plot(fit, "trace")`. The first thing to try is always to make the model warm up longer to see if it reaches convergence later: `mcp(fit, data, adapt = 4000, update = 4000)`. It can be a sign of a deeper non-identifiability in the model. This will show up as strong correlations between parameters in the joint distribution of the implicated parameters: `plot(fit, "hex", pars = c("int_1", "int_2))`.
 
-**Speed:** A lot of data will slow down fitting. You can try combinations of lowerering the warmup period and running the chains in parallel: `mcp(fit, data, chains = 4, cores = 4, adapt=300, update = 200)`.
+**Speed:** A lot of data will slow down fitting. You can try combinations of lowerering the warmup period and running the chains in parallel: `mcp(fit, data, chains = 4, cores = 4, adapt=300, update = 200)`. Convergence issues will also slow down sampling.
 
 If you encounter other problems, don't hesitate to [raise a Github Issue](https://github.com/lindeloev/mcp/issues), asking for help or posting a bug report.
 
