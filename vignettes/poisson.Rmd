@@ -9,7 +9,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-# Finding change points in Poisson models using mcp
 The Poisson distribution models the number of events within similar-sized time frames. 
 
 # Coal mining disasters
@@ -121,3 +120,12 @@ loo::loo_model_weights(loo_list, method="pseudobma")
 ```
 
 Again, unsurprisingly, the change point model is preferred and they show the same ranking as implied by `loo_compare`.
+
+
+# JAGS code
+Here is the JAGS code for the full model above.
+
+```{r}
+cat(fit$jags_code)
+```
+

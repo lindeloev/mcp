@@ -9,12 +9,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-
-# TO DO:
- * Links to simulation vignette
- * Link to varying effects vignette
-
-
 # Introduction to priors
 `mcp` is serious about priors. This document covers the following functionality:
 
@@ -48,7 +42,7 @@ prior = list(
 )
 ```
 
-The values are JAGS code, so all JAGS distributions are allowed. These also include `gamma`, `dt`, `cauchy`, and many others. See the [JAGS user manual](https://web.sgh.waw.pl/~atoroj/ekonometria_bayesowska/jags_user_manual.pdf) for more details. The parameterizaiton of the distributions are identical to standard R. Use SD when you specify priors for `dnorm`, `dt`, `dlogis`, etc. JAGS uses precision but `mcp` converts to precision under the hood via the `sd_to_prec()` function. You can see this conversion by inspecting the difference between `fit$prior` (using SD) and `fit$jags_code` (using precision).
+The values are JAGS code, so all JAGS distributions are allowed. These also include `gamma`, `dt`, `cauchy`, and many others. See the [JAGS user manual](https://web.sgh.waw.pl/~atoroj/ekonometria_bayesowska/jags_user_manual.pdf) for more details. The parameterization of the distributions are identical to standard R. Use SD when you specify priors for `dnorm`, `dt`, `dlogis`, etc. JAGS uses precision but `mcp` converts to precision under the hood via the `sd_to_prec()` function. You can see this conversion by inspecting the difference between `fit$prior` (using SD) and `fit$jags_code` (using precision).
 
 Other notes:
 
@@ -112,7 +106,7 @@ Of course, it will usually be the other way around: setting manual priors will o
 # Default priors on change points
 Change points have to be ordered from left (`cp_1`) to right (`cp_2+`). This order restriction is enforced through the priors. The first change point defaults to `cp_1 = dunif(MINX, MAXX)`. In other words, the change point has to happen in the observed range of x, but it is equally probable across this range. The second change point defaults to `cp_2 = dunif(cp_1, MAXX)`, i.e., it has to occur in the observed range AND be greater than `cp_1`, and so forth for `cp_3` (greater than `cp_2`), etc.
 
-One side effect is that later change points have greater prior probability density towards the right side of the x-axis. You can see this if you sample the priors without data (`fit = mcp(segments, data, sample = "prior")`) and summarise the estimates (`summary(fit)`). In practice, this "bias" is so weak that it takes a combination of many data points and few data for it to impact the posterior in any noticable way.
+One side effect is that later change points have greater prior probability density towards the right side of the x-axis. You can see this if you sample the priors without data (`fit = mcp(segments, data, sample = "prior")`) and summarise the estimates (`summary(fit)`). In practice, this "bias" is so weak that it takes a combination of many data points and few data for it to impact the posterior in any noticeable way.
 
 If you want more informed priors on the change point location, i.e., `cp_2 = "dnorm(40, 10)`, `mcp` adds this order restriction by adding `cp_2 = "dnorm(40, 10) T(cp_1, MAXX)`. You can avoid this behavior by explicitly doing an "empty" truncation yourself, e.g., `cp_2 = "dnorm(40, 10) T(,)`. However, the model may fail to sample the correct posterior in samples where order restriction is not kept.
 
@@ -127,13 +121,12 @@ The slopes are scaled as if it was one SD in height through the entire x-axis. T
 
 See the family-specific articles for more information about the priors for other families:
 
- * vignette("binomial")
- * Bernoulli
- * vignette("poisson")
+ * `vignette("binomial")` - also relevant for `bernoulli`
+ * `vignette("poisson")`
 
 
 # Prior predictive checks
-Prior predicive checks is a great way to ensure that the priors are meaningful. Simply set `sample = "prior"`. Let us do it for the two sets of priors defined previously in this article, to see their differnet prior predictive space.
+Prior predictive checks is a great way to ensure that the priors are meaningful. Simply set `sample = "prior"`. Let us do it for the two sets of priors defined previously in this article, to see their different prior predictive space.
 
 ```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
 # Sample priors 
@@ -147,3 +140,12 @@ gridExtra::grid.arrange(plot_pp_manual, plot_pp_default, ncol=2)
 ```
 
 You can see how the manual priors are more dense to the left, and the "concerted" change at x = 80.
+
+
+# JAGS code
+Here is the JAGS code for `fit_manual`:
+
+```{r}
+cat(fit_manual$jags_code)
+```
+

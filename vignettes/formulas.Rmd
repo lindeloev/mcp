@@ -102,7 +102,7 @@ fit = mcp(segments, sample=FALSE, par_x = "x")
 cat(fit$jags_code)
 ```
 
-Look at the section called `# Fitted value` and you should recognize it. Some unneccessary stuff is added to segment 1 just because it makes the code easier to generate. (`x[i_] >= cp_0` when `cp_0 = -10^100` is a way of writing `x >= -Inf` in JAGS and this is, of course, always true).
+Look at the section called `# Fitted value` and you should recognize it. Some unnecessary stuff is added to segment 1 just because it makes the code easier to generate. (`x[i_] >= cp_0` when `cp_0 = -10^100` is a way of writing `x >= -Inf` in JAGS and this is, of course, always true).
 
 
 # Modeling slope change points

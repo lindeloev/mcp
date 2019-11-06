@@ -4,18 +4,18 @@ Version: 0.1
 URL: http://lindeloev.github.io/mcp/
 BugReports: https://github.com/lindeloev/mcp/issues
 Authors@R: 
-    person(given = "Jonas",
+    person(given = "Jonas Kristoffer",
            family = "Lindeløv",
            role = c("aut", "cre"),
            email = "jonas@lindeloev.dk",
            comment = c(ORCID = "0000-0003-4565-0595"))
-Description: Specify segments using R formulas and let mcp infer the parameters as well as the change points - or simulate data from given values. Supports hierarchical generalized linear models. mcp interfaces well to other packages in the Bayesian R ecosystem.
+Description: Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generalized Linear Segments - and the parameters in those segments.
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
 Imports:
-	parallel (>= 3.6.1),
+	parallel,
 	rjags (>= 4.9),
 	dclone (>= 2.3.0),
 	coda (>= 0.19.3),
@@ -31,8 +31,8 @@ Imports:
 	stringr (>= 1.4.0),
 	ggplot2 (>= 3.2.1),
 	patchwork (>= 0.0.1),
-	methods (>= 3.6.1),
-	stats (>= 3.6.1),
+	methods,
+	stats,
 	rlang (>= 0.4.1)
 Remotes: 
     thomasp85/patchwork
