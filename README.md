@@ -11,9 +11,12 @@ Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generali
 
  1. [Install the latest version of JAGS](https://sourceforge.net/projects/mcmc-jags/). Linux users can fetch binaries [here](http://mcmc-jags.sourceforge.net/).
  
- 2. Install `mcp` by running this in R: `devtools::install_github("lindeloev/mcp")`. If you don't have `devtools`, install it first using `install.packages("devtools")`.
-
-
+ 2. Install `mcp` by running this in R:
+ 
+    ```r
+    if (!requireNamespace("remotes")) install.packages("remotes")
+    remotes::install_github("lindeloev/mcp")
+    ```
 
 
 
@@ -24,13 +27,16 @@ The following model infers the two change points between three segments.
 
 ```r
 library(mcp)
+
+# Define the model
 segments = list(
   response ~ 1,  # plateau (int_1)
   1 ~ 0 + time,  # joined slope (time_2) at cp_1
   1 ~ 1 + time  # disjoined slope (int_1, time_2) at cp_2
 )
 
-fit = mcp(segments, data = ex_demo)  # dataset included in mcp
+# Fit it. The `ex_demo` dataset is included in mcp
+fit = mcp(segments, data = ex_demo)
 ```
 
 Plot lines drawn randomly from the posterior on top of data to inspect the fit:
@@ -63,9 +69,9 @@ Population-level parameters:
  time_3 -0.223 -0.404 -0.0493 1.01  714   0.104
 ```
 
-`rhat` is the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag), `eff` is the [effective sample size](https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html), and `ts_se` is the time-series standard error. 
+`rhat` is the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag), `eff` is the [effective sample size](https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html), and `ts_se` is the time-series standard error.
 
-`plot(fit, "combo")` can be used to inspect the posteriors and convergence of the change points. See the documentation of `plot.mcpfit` for many other plotting options.
+`plot(fit, "combo")` can be used to inspect the posteriors and convergence of all parameters. See the documentation of `plot.mcpfit` for many other plotting options. Here we plot just the (population-level) change points. They often have "strange" posterior distributions, highlighting the need for a computational approach:
 
 ```r
 plot(fit, "combo", regex_pars = "cp_")
@@ -73,7 +79,7 @@ plot(fit, "combo", regex_pars = "cp_")
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo_combo.png)
 
 
-For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation. Our null model consists of just two disjoined slopes separated by one change point, omitting the first plateau of the full model:
+For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation. Our null model omits the first plateau and change point, essentially testing the credence of that change point:
 
 ```r
 # Fit the model
@@ -84,7 +90,7 @@ segments_null = list(
 fit_null = mcp(segments_null, ex_demo)
 ```
 
-Leveraging the power of `loo::loo`, we see that the two-change-points model is preferred (it is on top), but not very strongly. See the documentation of the `loo` package and associated papers for more details.
+Leveraging the power of `loo::loo`, we see that the two-change-points model is preferred (it is on top), but not very strongly (`elpd_diff / se_diff` ratio). See the documentation of the `loo` package and associated papers for more details, or scroll down for more notes on model comparison using `mcp`.
 
 ```r
 # Compare loos:
@@ -101,12 +107,13 @@ model2 -7.8       4.7
 
 
 # Highlights from in-depth guides
-The articles in the web site's menu reveal the greater functionality of `mcp`. Here is an executive summary, to give you a sense.
+The articles in the web site's menu go in-depth with the functionality of `mcp`. Here is an executive summary, to give you a sense.
 
 [About mcp formulas and models](https://lindeloev.github.io/mcp/articles/formulas.html):
  * Parameter names `int_i` (intercepts), `cp_i` (change points), `x_i` (slopes).
  * The change point model is basically an `ifelse` model.
  * Use `rel()` to specify that parameters are relative to those in the previous  segments.
+ * Generate data using `fit$func_y`.
 
 [Using priors in mcp](https://lindeloev.github.io/mcp/articles/priors.html) include:
  * See priors in `fit$prior`.
@@ -114,16 +121,16 @@ The articles in the web site's menu reveal the greater functionality of `mcp`. H
  * Fix parameters to specific values using `cp_1 = 45`.
  * Share parameters between segments using `slope_1 = "slope_2"`.
  * Allows for truncated priors using `T(lower, upper)`, e.g., `int_1 = "dnorm(0, 1) T(0, )"`. `mcp` applies this automatically to change point priors to enforce order restriction. This is true for [varying change points](https://lindeloev.github.io/mcp/articles/varying.html) too.
- * Sample priors for prior predictive checks using `mcp(segments, data, sample="prior")`.
+ * Do prior predictive checks using `mcp(segments, data, sample="prior")`.
 
 [varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html) include:
- * How to simulate varying change points using `fit$func_y()`.
+ * Simulate varying change points using `fit$func_y()`.
  * Get posteriors using `ranef(fit)`.
  * Plot using `plot(fit, facet_by="my_group")` and `plot(fit, "dens_overlay", pars = "varying", ncol = 3)`.
  * The default priors restrict varying change points to lie between the two adjacent change points.
 
 `mcp` currently supports the following GLM:
- * `gaussian(link = "identity")`. See worked example below.
+ * `gaussian(link = "identity")` (default). See examples above and below.
  * `binomial(link = "logit")`. See [binomial change points in mcp](https://lindeloev.github.io/mcp/articles/binomial.html).
  * `bernoulli(link = "logit")`. See [binomial change points in mcp](https://lindeloev.github.io/mcp/articles/binomial.html).
  * `poisson(link = "log")`. See [Poisson change points in mcp](https://lindeloev.github.io/mcp/articles/poisson.html).
@@ -152,7 +159,7 @@ plot(fit)
 
 Here, we find the single change point between two joined slopes. While the slopes are shared by all participants, the change point varies by `id`.
 
-Read more about [varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html) and [see how this data was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R).
+Read more about [varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html) and [see how this data was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_varying.R).
 
 ```r
 segments = list(
@@ -171,7 +178,7 @@ Summarise the individual change points using `ranef()` or plot them using `plot(
 ranef(fit)
 ```
 
-```
+```r
             name       mean       X2.5      X97.5     rhat  eff     ts_se
 1 cp_1_id[Benny] -18.970413 -21.746111 -16.255543 1.000108 3131  5.317845
 2  cp_1_id[Bill] -10.959035 -13.530281  -8.430385 1.002649  733 21.986801
@@ -233,7 +240,7 @@ Looking at the summary, we can see that `int_2` and `x_2` are relative values:
 summary(fit)
 ```
 
-```
+```r
 Family: gaussian(link = 'identity')
 Iterations: 9000 from 3 chains.
 Segments:
@@ -259,11 +266,29 @@ Population-level parameters:
 
 
 # Diagnosing problems
-**Convergence:** A common problem when using MCMC is lacking convergence between chains. This will show up as large `rhat` values (> 1.1 is a common criterion) and non-converging lines in `plot(fit, "trace")`. The first thing to try is always to make the model warm up longer to see if it reaches convergence later: `mcp(fit, data, adapt = 4000, update = 4000)`. It can be a sign of a deeper non-identifiability in the model. This will show up as strong correlations between parameters in the joint distribution of the implicated parameters: `plot(fit, "hex", pars = c("int_1", "int_2))`.
+**Convergence:** A common problem when using MCMC is lacking convergence between chains. This will show up as large `rhat` values (> 1.1 is a common criterion) and non-converging lines in `plot(fit, "trace")`. 
 
-**Speed:** A lot of data will slow down fitting. You can try combinations of lowering the warmup period and running the chains in parallel: `mcp(fit, data, chains = 4, cores = 4, adapt=300, update = 200)`. Convergence issues will also slow down sampling.
+ * The first thing to try is always to make the model warm up longer to see if it reaches convergence later: `mcp(fit, data, adapt = 4000, update = 4000)`. 
+ 
+ * It can be a sign of a deeper non-identifiability in the model. This will show up as strong correlations between parameters in the joint distribution of the implicated parameters: `plot(fit, "hex", pars = c("int_1", "int_2))`. This may give you ideas how to change the model.
+ 
+ * You can set the initial values for the JAGS sampler using, e.g., `mcp(..., inits = list(cp_1 = 20, int_2 = -20, etc.))`. This will be passed to `jags.fit` and you can see more documentation there.
 
-If you encounter other problems, don't hesitate to [raise a Github Issue](https://github.com/lindeloev/mcp/issues), asking for help or posting a bug report.
+
+**Speed:** A lot of data and complicated models will slow down fitting. 
+
+ * Run the chains in parallel using, e.g., `mcp(..., chains=4, cores=4)`.
+
+ * More data usually means better identifiability and faster convergence. Lower the warmup period using, e.g., `mcp(..., adapt=300, update = 200)`.
+
+**Won't run:** Most of these problems should stem from inappropriate priors and such problems may be exacerbated by fragile link functions (e.g., `binomial(link = "identity")`. The article on [priors in mcp](https://lindeloev.github.io/mcp/articles/priors.html) may be helpful, but in particular:
+
+ * Errors on "directed cycle" usually stems from using parameters in priors. For example, if you set `prior = list(int_1 = "dnorm(int_2, 1)"", int_2 = "dnorm(int_1, 1)")` this is an infinite regress.
+ 
+ * Errors on "incompatible with parent nodes" usually stem from impossible values. For example, if you set `prior = list(sigma = "dnorm(0, 1)"")`, this allows for a negative standard deviation, which is impossible. Think about changing the prior distributions and perhaps truncate them using `T(lower, upper)`.
+
+
+If you encounter these or other problems, don't hesitate to [raise a Github Issue](https://github.com/lindeloev/mcp/issues), asking for help or posting a bug report.
 
 
 
