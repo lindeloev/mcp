@@ -21,7 +21,7 @@ segments = list(
 )
 
 prior = list(
-  int_1 = "dnorm(0, 5) T(, 10)",  # Intercept; less than 15
+  int_1 = "dnorm(0, 5) T(, 10)",  # Intercept; less than 10
   x_1 = "dbeta(2, 5)",  # slope: beta with right skew
   cp_1 = "dunif(MINX, cp_2)",  # change point between smallest x and cp_2
   x_2 = "dt(0, 1, 3) T(x_1, )",  # slope 2 > slope 1 and t-distributed
