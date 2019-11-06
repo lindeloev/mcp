@@ -4,7 +4,7 @@
 [![Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/r/lindeloev/mcp)
 
 
-Bayesian inference of Multiple Change Points (MCP) between Generalized Linear Segments - and the parameters within those segments. Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. The rest of the package leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
+Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generalized Linear Segments - and the parameters in those segments. Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. The rest of the package leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
 
 
 # Install
@@ -18,7 +18,7 @@ Bayesian inference of Multiple Change Points (MCP) between Generalized Linear Se
 
 
 # Brief example
-`mcp` takes a list of formulas for `y` as a function of `x`. It infers at what `x` there is change from one formula to the next. The first formula is just `response ~ predictors` and the following formulas typically take the form `changepoint ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
+`mcp` takes a list of formulas for `y` as a function of `x`. The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the following formulas typically take the form `changepoint ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
 The following model infers the two change points between three segments.
 
