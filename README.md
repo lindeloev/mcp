@@ -11,9 +11,12 @@ Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generali
 
  1. [Install the latest version of JAGS](https://sourceforge.net/projects/mcmc-jags/). Linux users can fetch binaries [here](http://mcmc-jags.sourceforge.net/).
  
- 2. Install `mcp` by running this in R: `devtools::install_github("lindeloev/mcp")`. If you don't have `devtools`, install it first using `install.packages("devtools")`.
-
-
+ 2. Install `mcp` by running this in R:
+ 
+    ```r
+    if (!requireNamespace("remotes")) install.packages("remotes")
+    remotes::install_github("lindeloev/mcp")
+    ```
 
 
 
@@ -127,7 +130,7 @@ The articles in the web site's menu go in-depth with the functionality of `mcp`.
  * The default priors restrict varying change points to lie between the two adjacent change points.
 
 `mcp` currently supports the following GLM:
- * `gaussian(link = "identity")`. See worked example below.
+ * `gaussian(link = "identity")` (default). See examples above and below.
  * `binomial(link = "logit")`. See [binomial change points in mcp](https://lindeloev.github.io/mcp/articles/binomial.html).
  * `bernoulli(link = "logit")`. See [binomial change points in mcp](https://lindeloev.github.io/mcp/articles/binomial.html).
  * `poisson(link = "log")`. See [Poisson change points in mcp](https://lindeloev.github.io/mcp/articles/poisson.html).
