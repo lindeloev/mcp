@@ -16,7 +16,7 @@ This article in brief:
  * How to simulate varying change points
  * Get posteriors using `ranef(fit)`
  * Plot using `plot(fit, facet_by="my_group")` and `plot(fit, "dens_overlay", pars = "varying", ncol = 3)`.
- * The default priors restrict varying change points to lie between the two adjecent change points.
+ * The default priors restrict varying change points to lie between the two adjacent change points.
 
 
 
@@ -137,9 +137,19 @@ plot(fit, "dens_overlay", regex_pars = "^cp_1_id", ncol = 2)
 
 
 # Priors for varying effects
-TO DO
+You can see the priors of the model like this:
 
 ```{r}
 cbind(fit$prior)
+```
+
+The priors `cp_1_sd` is the population-level standard deviation of `cp_1_id`, the latter of which is applied to all levels of `id`. This is also apparent if you inspect the JAGS code for this model. The truncation of varying effects is quite contrieved, but just keeps them between the two adjecent (population-level) change points.
+
+
+# JAGS code
+Here is the JAGS code for the model used in this article:
+
+```{r}
+cat(fit$jags_code)
 ```
 

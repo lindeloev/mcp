@@ -97,7 +97,7 @@
       <h1>Varying change points with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-11-05</h4>
+            <h4 class="date">2019-11-06</h4>
       
       
       <div class="hidden name"><code>varying.Rmd</code></div>
@@ -113,7 +113,7 @@
 <li>Get posteriors using <code><a href="../reference/ranef.html">ranef(fit)</a></code>
 </li>
 <li>Plot using <code><a href="../reference/plot.mcpfit.html">plot(fit, facet_by="my_group")</a></code> and <code><a href="../reference/plot.mcpfit.html">plot(fit, "dens_overlay", pars = "varying", ncol = 3)</a></code>.</li>
-<li>The default priors restrict varying change points to lie between the two adjecent change points.</li>
+<li>The default priors restrict varying change points to lie between the two adjacent change points.</li>
 </ul>
 <div id="specifying-varying-change-points" class="section level1">
 <h1 class="hasAnchor">
@@ -166,16 +166,16 @@
 <pre><code>## # A tibble: 180 x 4
 ##        x id    id_numeric     y
 ##    &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt;
-##  1 78.9  Clark          3  38.5
-##  2 31.5  Clark          3  22.9
-##  3  5.61 Clark          3  24.1
-##  4 17.5  Clark          3  18.3
-##  5 52.7  Clark          3  25.1
-##  6 13.1  Clark          3  18.6
-##  7 57.8  Clark          3  30.3
-##  8 82.0  Clark          3  38.6
-##  9 59.3  Clark          3  25.0
-## 10 21.3  Clark          3  21.3
+##  1  31.0 Clark          3  21.9
+##  2  78.4 Clark          3  39.5
+##  3  98.5 Clark          3  47.1
+##  4  66.6 Clark          3  31.6
+##  5  22.7 Clark          3  17.5
+##  6  84.6 Clark          3  44.4
+##  7  60.2 Clark          3  27.0
+##  8  66.4 Clark          3  31.8
+##  9  38.8 Clark          3  20.8
+## 10  72.7 Clark          3  34.7
 ## # ... with 170 more rows</code></pre>
 <p>Here, we “translated” the <code>id</code> to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around <code>cp_1</code>. The result:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</a>
@@ -221,7 +221,7 @@
 <div id="priors-for-varying-effects" class="section level1">
 <h1 class="hasAnchor">
 <a href="#priors-for-varying-effects" class="anchor"></a>Priors for varying effects</h1>
-<p>TO DO</p>
+<p>You can see the priors of the model like this:</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(fit<span class="op">$</span>prior)</a></code></pre></div>
 <pre><code>##         [,1]                                           
 ## sigma   "dnorm(0, SDY) T(0, )"                         
@@ -230,6 +230,48 @@
 ## cp_1    "dunif(MINX, MAXX)"                            
 ## cp_1_sd "dnorm(0, (MAXX - MINX) / 2) T(0, )"           
 ## cp_1_id "dnorm(0, cp_1_sd) T(MINX - cp_1, MAXX - cp_1)"</code></pre>
+<p>The priors <code>cp_1_sd</code> is the population-level standard deviation of <code>cp_1_id</code>, the latter of which is applied to all levels of <code>id</code>. This is also apparent if you inspect the JAGS code for this model. The truncation of varying effects is quite contrieved, but just keeps them between the two adjecent (population-level) change points.</p>
+</div>
+<div id="jags-code" class="section level1">
+<h1 class="hasAnchor">
+<a href="#jags-code" class="anchor"></a>JAGS code</h1>
+<p>Here is the JAGS code for the model used in this article:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(fit<span class="op">$</span>jags_code)</a></code></pre></div>
+<pre><code>## 
+## model {
+##   # Priors for population-level effects
+##   sigma ~ dnorm(0, 1/(SDY)^2) T(0, )
+##   int_1 ~ dt(0, 1/(3*SDY)^2, 3) 
+##   x_2 ~ dt(0, 1/(SDY/(MAXX-MINX))^2, 3) 
+##   cp_1 ~ dunif(MINX, MAXX)
+##   cp_1_sd ~ dnorm(0, 1/((MAXX-MINX)/2)^2) T(0, )
+##   cp_0 = -10^100  # mcp helper value; minus infinity
+##   cp_2 = 10^100  # mcp helper value; plus infinity
+## 
+##   # Priors for varying effects
+##   for (id_ in 1:n_unique_id) {
+##     cp_1_id_uncentered[id_] ~ dnorm(0, 1/(cp_1_sd)^2) T(MINX - cp_1, MAXX - cp_1)
+##   }
+##   cp_1_id = cp_1_id_uncentered - mean(cp_1_id_uncentered)  # vectorized zero-centering
+## 
+## 
+##   # Model and likelihood
+##   for (i_ in 1:length(x)) {
+## 
+##     # Fitted value
+##     y_[i_] = 
+## 
+##       # Segment 1: y ~ 1
+##       (x[i_] &gt;= cp_0) * int_1 + 
+##       
+##       # Segment 2: y ~ 1 + (1 | id) ~ 0 + x
+##       (x[i_] &gt;= (cp_1 + cp_1_id[id[i_]])) * (x_2 * (min(x[i_], cp_2) - ((cp_1 + cp_1_id[id[i_]])))) 
+## 
+##     # Likelihood and log-density for family = gaussian()
+##     y[i_] ~ dnorm(y_[i_], 1 / sigma^2)
+##     loglik_[i_] = logdensity.norm(y[i_], y_[i_], 1 / sigma^2)
+##   }
+## }</code></pre>
 </div>
   </div>
 
@@ -243,6 +285,7 @@
       <li><a href="#simulating-varying-effects">Simulating varying effects</a></li>
       <li><a href="#summarise-and-plot-varying-effects-">Summarise and plot varying effects.</a></li>
       <li><a href="#priors-for-varying-effects">Priors for varying effects</a></li>
+      <li><a href="#jags-code">JAGS code</a></li>
       </ul>
 </div>
       </div>

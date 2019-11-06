@@ -97,7 +97,7 @@
       <h1>About mcp formulas and models</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-11-05</h4>
+            <h4 class="date">2019-11-06</h4>
       
       
       <div class="hidden name"><code>formulas.Rmd</code></div>
@@ -239,7 +239,7 @@
 ##     loglik_[i_] = logdensity.norm(y[i_], y_[i_], 1 / sigma^2)
 ##   }
 ## }</code></pre>
-<p>Look at the section called <code># Fitted value</code> and you should recognize it. Some unneccessary stuff is added to segment 1 just because it makes the code easier to generate. (<code>x[i_] &gt;= cp_0</code> when <code>cp_0 = -10^100</code> is a way of writing <code>x &gt;= -Inf</code> in JAGS and this is, of course, always true).</p>
+<p>Look at the section called <code># Fitted value</code> and you should recognize it. Some unnecessary stuff is added to segment 1 just because it makes the code easier to generate. (<code>x[i_] &gt;= cp_0</code> when <code>cp_0 = -10^100</code> is a way of writing <code>x &gt;= -Inf</code> in JAGS and this is, of course, always true).</p>
 </div>
 <div id="modeling-slope-change-points" class="section level1">
 <h1 class="hasAnchor">
@@ -316,7 +316,7 @@
 ##     if (type == "fitted") 
 ##         return(y)
 ## }
-## &lt;environment: 0x000000001984d798&gt;</code></pre>
+## &lt;environment: 0x00000000199e21c0&gt;</code></pre>
 </div>
 <div id="modeling-relative-slopes-and-intercepts" class="section level1">
 <h1 class="hasAnchor">
