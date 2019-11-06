@@ -9,17 +9,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-# Introduction to priors
-`mcp` is serious about priors. This document covers the following functionality:
-
- * Set priors using `mcp(segments, data, prior = list(cp_1 = "dnorm(0, 1)", cp_1 = "dunif(0, 45)`)
- * Fix parameters to specific values using `cp_1 = 45`
- * Share parameters between segments using `slope_1 = "slope_2"`
- * Allows for truncated priors using `T(lower, upper)`, e.g., `int_1 = "dnorm(0, 1) T(0, )"`. `mcp` applies this automatically to change point priors to enforce order restriction.
- * Defaults to uninformative priors for all families, often weakly informed by data so as to remain uninformative across many orders of magnitude.
- * Sample priors for prior predictive checks using `mcp(segments, data, sample="prior")`.
- * See the article on varying change points with `mcp` <!-- insert link here --> for priors of varying change points.
-
 
 # Setting a prior
 `mcp` takes priors in the form of a named list. The names are the parameter names, and the values are JAGS code. For example, you may do something like this:
@@ -32,7 +21,7 @@ segments = list(
 )
 
 prior = list(
-  int_1 = "dnorm(0, 5) T(, 10)",  # Intercept; less than 15
+  int_1 = "dnorm(0, 5) T(, 10)",  # Intercept; less than 10
   x_1 = "dbeta(2, 5)",  # slope: beta with right skew
   cp_1 = "dunif(MINX, cp_2)",  # change point between smallest x and cp_2
   x_2 = "dt(0, 1, 3) T(x_1, )",  # slope 2 > slope 1 and t-distributed
@@ -124,6 +113,9 @@ See the family-specific articles for more information about the priors for other
  * `vignette("binomial")` - also relevant for `bernoulli`
  * `vignette("poisson")`
 
+
+# Default priors on varying effects
+See [varying change points with mcp](https://lindeloev.github.io/mcp/articles/varying.html).
 
 # Prior predictive checks
 Prior predictive checks is a great way to ensure that the priors are meaningful. Simply set `sample = "prior"`. Let us do it for the two sets of priors defined previously in this article, to see their different prior predictive space.
