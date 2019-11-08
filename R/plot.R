@@ -66,7 +66,7 @@
 #' \dontrun{
 #' # Plots segments (default)
 #' plot(fit)
-#' plot(fit, draws = 50, rate = FALSE)  # more draws. for binomial.
+#' plot(fit, lines = 50, rate = FALSE)  # more lines, for binomial.
 #' plot(fit, facet_by = "my_varying")  # varying effects
 #'
 #' # Plot parameter estimates
@@ -169,7 +169,7 @@ plot.mcpfit = function(x,
 #' @aliases plot_segments
 #' @inheritParams plot.mcpfit
 #' @param fit An mcpfit object.
-#' @importFrom ggplot2 ggplot aes aes_string geom_line geom_point facet_wrap labs
+#' @importFrom ggplot2 ggplot aes aes_string geom_line geom_point facet_wrap
 #' @importFrom magrittr %>%
 #' @importFrom rlang !! :=
 #' @importFrom stats sd
@@ -207,7 +207,7 @@ plot_segments = function(fit,
   } else {
     # Prepare for faceting
     # Read more about this weird syntax at https://github.com/mjskay/tidybayes/issues/38
-    varying_by_facet = stats::na.omit(fit$.other$ST$cp_group[stringr::str_detect(fit$.other$ST$cp_group, paste0("_", facet_by))])
+    varying_by_facet = stats::na.omit(fit$.other$ST$cp_group[stringr::str_detect(fit$.other$ST$cp_group, paste0("_", facet_by, "$"))])
     varying_by_facet = paste0(varying_by_facet, collapse="|")
 
     samples = fit$samples %>%
@@ -276,7 +276,7 @@ plot_segments = function(fit,
     # For each quantile and each x, add quantile of !!yvar
     data_quantiles = samples %>%
       tidyr::expand_grid(quant = quantiles) %>%
-      dplyr::group_by(!!xvar, quant)
+      dplyr::group_by(!!xvar, .data$quant)
 
     # (... and for each group, if requested)
     if (!is.null(facet_by)) {
@@ -292,7 +292,7 @@ plot_segments = function(fit,
 
     # Add quantiles to plot
     gg = gg +
-      geom_line(aes(y = y, group = .data$quant), data = data_quantiles, lty = 2, lwd = 0.7, color = "red")
+      geom_line(aes(y = .data$y, group = .data$quant), data = data_quantiles, lty = 2, lwd = 0.7, color = "red")
   }
 
   # Add faceting?
@@ -302,7 +302,7 @@ plot_segments = function(fit,
 
   # Add better y-label for the rate plot
   if (fit$family$family == "bernoulli" | (fit$family$family == "binomial" & rate == TRUE))
-    gg = gg + labs(y = paste0("Probability of success for ", fit$pars$y))
+    gg = gg + ggplot2::labs(y = paste0("Probability of success for ", fit$pars$y))
 
   return(gg)
 }
@@ -377,7 +377,7 @@ plot_bayesplot = function(fit,
 #' but finer resolution at change points.
 #'
 #' @aliases get_eval_at
-#' @param fit An mcpfit object
+#' @inheritParams plot.mcpfit
 get_eval_at = function(fit, facet_by) {
   # Set resolutions in general and for change points
   X_RESOLUTION_ALL = 100  # Number of points to evaluate at x
