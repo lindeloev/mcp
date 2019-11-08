@@ -20,7 +20,7 @@ data_gauss = data.frame(
 
   # varying effects should be categorical-ish
   id = c("a", "b", "c", "d", "e"),
-  ok_id_factor = factor(c(-3, 0, 5, 9, 1.233243)),
+  ok_id_factor = factor(c(-3, 0, 5, 9, 1.233243)),  # It's a factor, so decimals are OK
   ok_id_integer = -2:2,  # interval
   bad_id = rnorm(5)  # decimal numbers
 )
@@ -148,11 +148,12 @@ test_summary = function(fit, varying_cols) {
 
 # Test the regular plot, including faceting
 test_plot = function(fit, varying_cols) {
+  quantiles = rbinom(1, 1, 0.5) == 1  # sometimes try adding quantiles
   # To facet or not to facet
   if (length(varying_cols) > 0) {
-    gg = plot(fit, facet_by = varying_cols[1])  # just take the first
+    gg = plot(fit, facet_by = varying_cols[1], quantiles = quantiles)  # just take the first
   } else {
-    gg = plot(fit)
+    gg = plot(fit, quantiles = quantiles)
   }
   testthat::expect_s3_class(gg, c("gg", "ggplot"))
 }
