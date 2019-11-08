@@ -185,7 +185,7 @@ plot_segments = function(fit,
   # General settings
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)
-  X_RESOLUTION = 400  # Number of points to evaluate at x
+  func_y = fit$func_y
   if (all(quantiles == FALSE) & is.numeric(lines)) {
     HDI_SAMPLES = lines
   } else {
@@ -197,14 +197,7 @@ plot_segments = function(fit,
   #################
   # GET PLOT DATA #
   #################
-
-  # We'll need these vars during data-processing-before-ggplot
-  func_y = fit$func_y
-  eval_at = seq(min(fit$data[, fit$pars$x]),
-                max(fit$data[, fit$pars$x]),
-                length.out = X_RESOLUTION)
   regex_pars_pop = paste0(fit$pars$population, collapse="|")
-  #cp_vars = paste0("cp_", seq_len(length(fit$segments) - 1))  # change point columns
 
   # No faceting
   if (is.null(facet_by)) {
@@ -226,6 +219,9 @@ plot_segments = function(fit,
   # Remove some samples
   samples = tidybayes::sample_draws(samples, n = HDI_SAMPLES)  # TO DO: use spread_draws(n = draws) when tidybayes 1.2 is out
 
+  # Get x-coordinates to evaluate func_y (etc.) at
+  eval_at = get_eval_at(fit, facet_by)
+
   # First, let's get all the predictors in shape for func_y
   if (fit$family$family != "binomial") {
     samples = samples %>%
@@ -235,7 +231,7 @@ plot_segments = function(fit,
       stop("Plot with rate = FALSE not implemented for varying effects (yet).")
 
     # Interpolate trials for binomial at the values in "eval_at"
-    interpolated_trials = round(stats::approx(fit$data[, fit$pars$trials], n = X_RESOLUTION)$y)
+    interpolated_trials = round(stats::approx(fit$data[, fit$pars$trials], xout = eval_at)$y)
     samples = samples %>%
       tidyr::expand_grid(!!xvar := eval_at) %>%  # correct name of x-var
       dplyr::mutate(!!fit$pars$trials := rep(interpolated_trials, nrow(samples)))
@@ -366,4 +362,49 @@ plot_bayesplot = function(fit,
     return_plot = return_plot * ggplot2::theme(legend.position = "none")  # remove legend
     return(return_plot)
   }
+}
+
+
+
+#' Get a list of x-coordinates to evaluate fit$func_y at
+#'
+#' Solves two problems: if setting the number of points too high, the
+#' function becomes slow. If setting it too low, the posterior at large intercept-
+#' changes at chnage points look discrete, because they are evaluated at very
+#' few x in that interval.
+#'
+#' This function makes a vector of x-values with large spacing in general,
+#' but finer resolution at change points.
+#'
+#' @aliases get_eval_at
+#' @param fit An mcpfit object
+get_eval_at = function(fit, facet_by) {
+  # Set resolutions in general and for change points
+  X_RESOLUTION_ALL = 100  # Number of points to evaluate at x
+  X_RESOLUTION_CP = 600
+  X_RESOLUTION_FACET = 400
+  CP_INTERVAL = 0.9  # HDI interval width
+  xmin = min(fit$data[, fit$pars$x])  # smallest observed X
+  xmax = max(fit$data[, fit$pars$x])
+
+  # Just give up for faceting and return a reasonable resolution
+  if (!is.null(facet_by)) {
+    eval_at = seq(xmin, xmax, length.out = X_RESOLUTION_FACET)
+    return(eval_at)
+  }
+
+  # Make the coarse resolution
+  eval_at = seq(xmin, xmax, length.out = X_RESOLUTION_ALL)
+
+  # Add the finer resolution for each change point
+  cp_vars = paste0("cp_", seq_len(length(fit$segments) - 1))  # change point columns
+  cp_hdis = fixef(fit, width = CP_INTERVAL)  # get the intervals
+  cp_hdis = cp_hdis[cp_hdis$name %in% cp_vars, ]  # select change points
+  for (i in seq_len(nrow(cp_hdis))) {
+    x_proportion = (cp_hdis$X95[i] - cp_hdis$X5[i]) / (xmax - xmin)  # how big a section of x is this CP's HDI?
+    length.out = ceiling(X_RESOLUTION_CP * x_proportion)  # number of x-points to add
+    eval_at = c(eval_at, seq(from = cp_hdis$X5[i], to = cp_hdis$X95[i], length.out = length.out))
+  }
+
+  return(eval_at)
 }
