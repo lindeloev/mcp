@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Turn formula_str into a proper R function — get_func_y • mcp</title>
+<title>Get a list of x-coordinates to evaluate fit$func_y at — get_eval_at • mcp</title>
 
 
 <!-- jquery -->
@@ -37,8 +37,11 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Turn formula_str into a proper R function — get_func_y" />
-<meta property="og:description" content="Turn formula_str into a proper R function" />
+<meta property="og:title" content="Get a list of x-coordinates to evaluate fit$func_y at — get_eval_at" />
+<meta property="og:description" content="Solves two problems: if setting the number of points too high, the
+function becomes slow. If setting it too low, the posterior at large intercept-
+changes at chnage points look discrete, because they are evaluated at very
+few x in that interval." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -139,59 +142,41 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Turn formula_str into a proper R function</h1>
+    <h1>Get a list of x-coordinates to evaluate fit$func_y at</h1>
     
-    <div class="hidden name"><code>get_func_y.Rd</code></div>
+    <div class="hidden name"><code>get_eval_at.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Turn formula_str into a proper R function</p>
+    <p>Solves two problems: if setting the number of points too high, the
+function becomes slow. If setting it too low, the posterior at large intercept-
+changes at chnage points look discrete, because they are evaluated at very
+few x in that interval.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>get_func_y</span>(<span class='no'>formula_str</span>, <span class='no'>par_x</span>, <span class='kw'>par_trials</span> <span class='kw'>=</span> <span class='fl'>NA</span>, <span class='no'>pars_pop</span>, <span class='no'>pars_varying</span>,
-  <span class='no'>nsegments</span>, <span class='no'>family</span>)</pre>
+    <pre class="usage"><span class='fu'>get_eval_at</span>(<span class='no'>fit</span>, <span class='no'>facet_by</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>formula_str</th>
-      <td><p>string. Returned by <code>get_formula</code>.</p></td>
-    </tr>
-    <tr>
-      <th>par_x</th>
-      <td><p>string. Same as for <a href='mcp.html'>mcp</a>.</p></td>
-    </tr>
-    <tr>
-      <th>par_trials</th>
-      <td><p>String. For binomial models: name of trials column.</p></td>
-    </tr>
-    <tr>
-      <th>pars_pop</th>
-      <td><p>List of population parameters which the user must provide.</p></td>
-    </tr>
-    <tr>
-      <th>pars_varying</th>
-      <td><p>List varying parameters. They will default to zero
-(optional for the user).</p></td>
-    </tr>
-    <tr>
-      <th>nsegments</th>
-      <td><p>Positive integer. Number of segments, typically <code><a href='https://rdrr.io/r/base/nrow.html'>nrow(ST)</a></code>.</p></td>
-    </tr>
-    <tr>
-      <th>family</th>
-      <td><p>One of <code><a href='https://rdrr.io/r/stats/family.html'>gaussian()</a></code>, <code><a href='https://rdrr.io/r/stats/family.html'>binomial()</a></code>, <code><a href='bernoulli.html'>bernoulli()</a></code>, or <code>poission()</code>.
-Only default link functions are currently supported.</p></td>
+      <th>facet_by</th>
+      <td><p>String. Name of a varying group.
+<code>facet_by</code> only applies for <code>type = "segments"</code></p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>This function makes a vector of x-values with large spacing in general,
+but finer resolution at change points.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
+      <li><a href="#details">Details</a></li>
     </ul>
 
   </div>

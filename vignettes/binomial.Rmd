@@ -84,7 +84,7 @@ Plotting the fit confirms good fit to the data, and we see the discontinuities a
 plot(fit)
 ```
 
-These lines are just `fit$func_y` applied to a random draw of the posterior samples. In other words, they represent the joint distribution of the parameters. You can change the number of draws (lines) using `plot(fit, draws = 50)`.
+These lines are just `fit$func_y` applied to a random draw of the posterior samples. In other words, they represent the joint distribution of the parameters. You can change the number of draws (lines) using `plot(fit, lines = 50)`.
 
 Notice for binomial models it defaults to plot the *rate* (`y / N`) as a function of x. The reason why is obvious when we plot on "raw" data by toggling `rate`:
 

@@ -148,7 +148,8 @@
     <p>Call if from <code><a href='plot.mcpfit.html'>plot.mcpfit</a></code> and see more details there</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plot_segments</span>(<span class='no'>fit</span>, <span class='kw'>draws</span> <span class='kw'>=</span> <span class='fl'>25</span>, <span class='kw'>facet_by</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>rate</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>plot_segments</span>(<span class='no'>fit</span>, <span class='kw'>facet_by</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>rate</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>25</span>,
+  <span class='kw'>quantiles</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -156,10 +157,6 @@
     <tr>
       <th>fit</th>
       <td><p>An mcpfit object.</p></td>
-    </tr>
-    <tr>
-      <th>draws</th>
-      <td><p>Positive integer. Number of posterior draws to use when type = "segments".</p></td>
     </tr>
     <tr>
       <th>facet_by</th>
@@ -172,6 +169,23 @@
 response divided by number of trials (<code>rate = TRUE</code>). If FALSE, linear
 interpolation on trial number is used to infer trials at a particular x.
 <code>rate</code> only applies for <code>type = "segments"</code></p></td>
+    </tr>
+    <tr>
+      <th>lines</th>
+      <td><p>Positive integer or <code>FALSE</code>. Number of lines (posterior
+draws) to use when <code>type = "segments"</code>. FALSE (or <code>lines = 0</code>)
+plots no lines.</p></td>
+    </tr>
+    <tr>
+      <th>quantiles</th>
+      <td><p>Whether to plot quantiles.
+ 
+   **TRUE:** Add 2.5<!-- % and 97.5% quantiles. Corresponds to -->
+    <code>quantiles = c(0.025, 0.975)</code>.
+   **FALSE** (default): No quantiles
+   A vector of quantiles. For example, <code>quantiles = 0.5</code>
+    plots the median and <code>quantiles = c(0.2, 0.8)</code> plots the 20<!-- % and 80% -->
+    quantiles.</p></td>
     </tr>
     <tr>
       <th>...</th>
@@ -195,7 +209,7 @@ interpolation on trial number is used to infer trials at a particular x.
 
       <footer>
       <div class="copyright">
-  <p>Developed by Jonas Lindeløv.</p>
+  <p>Developed by <a href='http://lindeloev.net'>Jonas Kristoffer Lindeløv</a>.</p>
 </div>
 
 <div class="pkgdown">
