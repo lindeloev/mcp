@@ -11,12 +11,12 @@
 #'   'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
 #'   'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
 #'   'trace_highlight', and 'violin".
-#' @param draws Positive integer. Number of posterior draws to use when type = "segments".
+#'
 #' @param pars Character vector. One of:
 #'   \itemize{
 #'     \item Vector of parameter names.
-#'     \item "population" (default) plots all population parameters.
-#'     \item "varying" plots all varying effects. To plot a particular varying
+#'     \item **"population"** (default): plots all population parameters.
+#'     \item **"varying"**: plots all varying effects. To plot a particular varying
 #'       effect, use \code{regex_pars = "^name"}.
 #'   }
 #' @param regex_pars Vector of regular expressions. This will typically just be
@@ -32,6 +32,18 @@
 #' @param ncol Number of columns in plot. This is useful when you have many
 #'   parameters and only one plot \code{type}.
 #'   \code{ncol} only when \code{type != "segments"}
+#' @param lines Positive integer or \code{FALSE}. Number of lines (posterior
+#'   draws) to use when \code{type = "segments"}. FALSE (or \code{lines = 0})
+#'   plots no lines.
+#' @param quantiles Whether to plot quantiles.
+#'   \itemize {
+#'     \item **TRUE:** Add 2.5% and 97.5% quantiles. Corresponds to
+#'       \code{quantiles = c(0.025, 0.975)}.
+#'     \item **FALSE** (default): No quantiles
+#'     \item A vector of quantiles. For example, \code{quantiles = 0.5}
+#'       plots the median and \code{quantiles = c(0.2, 0.8)} plots the 20% and 80%
+#'       quantiles.
+#'   }
 #' @param ... Currently ignored.
 #' @details
 #'   For \code{type = "segments"}, it uses \code{fit$func_y} with \code{draws}
@@ -77,7 +89,21 @@
 #' plot(fit, c("trace", "dens_overlay")) * theme_bw(10)
 #' }
 
-plot.mcpfit = function(x, type="segments", pars="population", regex_pars = character(0), facet_by = NULL, rate = TRUE, draws=25, ncol = 1, ...) {
+plot.mcpfit = function(x,
+                       type = "segments",
+
+                       # Arguments for bayesplot
+                       pars = "population",
+                       regex_pars = character(0),
+                       ncol = 1,
+
+                       # Arguments for "segments"
+                       facet_by = NULL,
+                       rate = TRUE,
+                       lines = 25,
+                       quantiles = FALSE,
+                       ...) {
+
   # Check arguments
   if (class(x) != "mcpfit")
     stop("Can only plot mcpfit objects. x was class: ", class(x))
@@ -88,11 +114,25 @@ plot.mcpfit = function(x, type="segments", pars="population", regex_pars = chara
   if (length(type) > 1 & "segments" %in% type)
     stop("type = 'segments' can only be plotted alone - not in in combination with others.")
 
-  if (!check_integer(draws, "draws", lower = 1))
-    stop("`draws` has to be a positive integer.")
+  if (lines != FALSE)
+    check_integer(lines, "lines", lower = 1)
+
+  if (lines > 1000) {
+    lines = 1000
+    warning("Setting `lines` to 1000 (maximum).")
+  }
+
+  if (all(quantiles == TRUE))
+    quantiles = c(0.025, 0.975)
+
+  if (!is.logical(quantiles) & !is.numeric(quantiles))
+    stop("`quantiles` has to be TRUE, FALSE, or a vector of numbers.")
+
+  if (is.numeric(quantiles) & (any(quantiles > 1) | any(quantiles < 0)))
+      stop ("all `quantiles` have to be between 0 (0%) and 1 (100%).")
 
   if (!is.logical(rate))
-    stop("`rate` has to be TRUE or FALSE")
+    stop("`rate` has to be TRUE or FALSE.")
 
   # Include test of whether this is a random/nested effect
   varying_groups = logical0_to_null(unique(stats::na.omit(x$.other$ST$cp_group_col)))
@@ -114,9 +154,9 @@ plot.mcpfit = function(x, type="segments", pars="population", regex_pars = chara
 
   # Call underlying plot functions
   if ("segments" %in% type) {
-    plot_segments(x, draws, facet_by, rate)
+    plot_segments(x, facet_by, rate, lines, quantiles, ...)
   } else {
-    plot_bayesplot(x, type, pars, regex_pars, ncol)
+    plot_bayesplot(x, type, pars, regex_pars, ncol, ...)
   }
 }
 
@@ -129,14 +169,30 @@ plot.mcpfit = function(x, type="segments", pars="population", regex_pars = chara
 #' @aliases plot_segments
 #' @inheritParams plot.mcpfit
 #' @param fit An mcpfit object.
-#' @importFrom ggplot2 ggplot aes aes_string geom_line geom_point facet_wrap
+#' @importFrom ggplot2 ggplot aes aes_string geom_line geom_point facet_wrap labs
 #' @importFrom magrittr %>%
 #' @importFrom rlang !! :=
 #' @importFrom stats sd
 #' @importFrom dplyr .data
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
-  X_RESOLUTION = 400  # number of points to evaluate at x
+plot_segments = function(fit,
+                         facet_by = NULL,
+                         rate = TRUE,
+                         lines = 25,
+                         quantiles = FALSE,
+                         ...) {
+
+  # General settings
+  xvar = rlang::sym(fit$pars$x)
+  yvar = rlang::sym(fit$pars$y)
+  X_RESOLUTION = 400  # Number of points to evaluate at x
+  if (all(quantiles == FALSE) & is.numeric(lines)) {
+    HDI_SAMPLES = lines
+  } else {
+    HDI_SAMPLES = 1000 # Maximum number of draws to use for computing HDI
+    HDI_SAMPLES = min(HDI_SAMPLES, length(fit$samples) * nrow(fit$samples[[1]]))
+  }
+
 
   #################
   # GET PLOT DATA #
@@ -148,14 +204,12 @@ plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
                 max(fit$data[, fit$pars$x]),
                 length.out = X_RESOLUTION)
   regex_pars_pop = paste0(fit$pars$population, collapse="|")
-  cp_vars = paste0("cp_", seq_len(length(fit$segments) - 1))  # change point columns
+  #cp_vars = paste0("cp_", seq_len(length(fit$segments) - 1))  # change point columns
 
   # No faceting
   if (is.null(facet_by)) {
     samples = fit$samples %>%
-      tidybayes::spread_draws(!!rlang::sym(regex_pars_pop), regex = TRUE) %>%
-      # TO DO: use spread_draws(n = draws) when tidybayes 1.2 is out
-      tidybayes::sample_draws(draws)
+      tidybayes::spread_draws(!!rlang::sym(regex_pars_pop), regex = TRUE)
 
   } else {
     # Prepare for faceting
@@ -166,15 +220,16 @@ plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
     samples = fit$samples %>%
       tidybayes::spread_draws(!!rlang::sym(regex_pars_pop),
                               (!!rlang::sym(varying_by_facet))[!!rlang::sym(facet_by)],
-                              regex = TRUE) %>%
-      # TO DO: use spread_draws(n = draws) when tidybayes 1.2 is out
-      tidybayes::sample_draws(draws)
+                              regex = TRUE)
   }
+
+  # Remove some samples
+  samples = tidybayes::sample_draws(samples, n = HDI_SAMPLES)  # TO DO: use spread_draws(n = draws) when tidybayes 1.2 is out
 
   # First, let's get all the predictors in shape for func_y
   if (fit$family$family != "binomial") {
     samples = samples %>%
-      tidyr::expand_grid(!!fit$pars$x := eval_at)  # correct name of x-var
+      tidyr::expand_grid(!!xvar := eval_at)  # correct name of x-var
   } else if (fit$family$family == "binomial") {
     if (!is.null(facet_by) & rate == FALSE)
       stop("Plot with rate = FALSE not implemented for varying effects (yet).")
@@ -182,20 +237,15 @@ plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
     # Interpolate trials for binomial at the values in "eval_at"
     interpolated_trials = round(stats::approx(fit$data[, fit$pars$trials], n = X_RESOLUTION)$y)
     samples = samples %>%
-      tidyr::expand_grid(!!fit$pars$x := eval_at) %>%  # correct name of x-var
+      tidyr::expand_grid(!!xvar := eval_at) %>%  # correct name of x-var
       dplyr::mutate(!!fit$pars$trials := rep(interpolated_trials, nrow(samples)))
   }
 
   # Predict y from model
   samples = samples %>%
     # Add fitted draws (vectorized)
-    dplyr::mutate(!!fit$pars$y := purrr::invoke(func_y, ., type = "fitted", rate = rate)) %>%
+    dplyr::mutate(!!yvar := purrr::invoke(func_y, ., type = "fitted", rate = rate))
 
-    # Add line ID to separate lines. Mark a new line when "eval_at" repeats
-    dplyr::mutate(
-      line = !!dplyr::sym(fit$pars$x) == min(eval_at),
-      line = cumsum(.data$line)
-    )
 
 
   ###########
@@ -206,22 +256,57 @@ plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
     fit$data[, fit$pars$y] = fit$data[, fit$pars$y] / fit$data[, fit$pars$trials]
   }
 
-  if (is.null(facet_by)) {
-    # Return plot without faceting
-    gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y)) +
-      geom_point() +
-      geom_line(aes(group = .data$line), data = samples, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4))
-  } else {
-    # Return plot with faceting
-    gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y)) +
-      geom_point() +
-      geom_line(aes(group = .data$line), data = samples, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4)) +
-      facet_wrap(paste0("~", facet_by))
+  # Initiate plot
+  gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y)) +
+    geom_point()
+
+  # Add lines?
+  if (lines != FALSE) {
+    # Sample the desired number of lines
+    data_lines = samples %>%
+      tidybayes::sample_draws(lines) %>%
+      dplyr::mutate(
+        # Add line ID to separate lines in the plot.
+        line = !!xvar == min(!!xvar),
+        line = cumsum(.data$line)
+      )
+
+    # Plot it
+    gg = gg + geom_line(aes(group = .data$line), data = data_lines, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4))
+  }
+
+  # Add quantiles?
+  if (is.numeric(quantiles)) {
+    # For each quantile and each x, add quantile of !!yvar
+    data_quantiles = samples %>%
+      tidyr::expand_grid(quant = quantiles) %>%
+      dplyr::group_by(!!xvar, quant)
+
+    # (... and for each group, if requested)
+    if (!is.null(facet_by)) {
+     data_quantiles = data_quantiles %>%
+       dplyr::group_by(!!rlang::sym(facet_by), add = TRUE)
+    }
+
+    # Continue...
+    data_quantiles = data_quantiles %>%
+      dplyr::summarise(
+        y = stats::quantile(!!yvar, probs = .data$quant[1])
+      )
+
+    # Add quantiles to plot
+    gg = gg +
+      geom_line(aes(y = y, group = .data$quant), data = data_quantiles, lty = 2, lwd = 0.7, color = "red")
+  }
+
+  # Add faceting?
+  if (!is.null(facet_by)) {
+    gg = gg + facet_wrap(paste0("~", facet_by))
   }
 
   # Add better y-label for the rate plot
   if (fit$family$family == "bernoulli" | (fit$family$family == "binomial" & rate == TRUE))
-    gg = gg + ggplot2::labs(y = paste0("Probability of success for ", fit$pars$y))
+    gg = gg + labs(y = paste0("Probability of success for ", fit$pars$y))
 
   return(gg)
 }
@@ -237,7 +322,12 @@ plot_segments = function(fit, draws = 25, facet_by = NULL, rate = TRUE, ...) {
 #' @param fit An mcpfit object.
 #' @import patchwork
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-plot_bayesplot = function(fit, type, pars = "population", regex_pars = character(0), ncol = 1) {
+plot_bayesplot = function(fit,
+                          type,
+                          pars = "population",
+                          regex_pars = character(0),
+                          ncol = 1) {
+
   # Handle special codes
   if ("population" %in% pars) {
     if (length(regex_pars) == 0) {
