@@ -19,8 +19,8 @@ Common calls are "combo", "trace", and "dens_overlay". Current options include
 \item{pars}{Character vector. One of:
 \itemize{
   \item Vector of parameter names.
-  \item "population" (default) plots all population parameters.
-  \item "varying" plots all varying effects. To plot a particular varying
+  \item **"population"** (default): plots all population parameters.
+  \item **"varying"**: plots all varying effects. To plot a particular varying
     effect, use \code{regex_pars = "^name"}.
 }}
 

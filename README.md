@@ -4,7 +4,7 @@
 [![Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/r/lindeloev/mcp)
 
 
-Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generalized Linear Segments - and the parameters in those segments. Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. The rest of the package leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
+Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generalized Linear Segments - and the coefficients in those segments. Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. The rest of the package leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
 
 
 # Install
@@ -45,7 +45,7 @@ plot(fit)
 ```
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo.png)
 
-Use `summary` to summarise the posterior distribution as well as sampling diagnostics. They were simulated to lie at `cp_1 = 30` and `cp_2 = 70` and these values are well recovered, as are the other simulation parameters ([see how `ex_demo` was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R)). 
+Use `summary` to summarise the posterior distribution as well as sampling diagnostics. They were simulated to lie at `cp_1 = 30` and `cp_2 = 70` and these values are well recovered, as are the other coefficients ([see how `ex_demo` was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R)). 
 
 ```r
 summary(fit)
@@ -82,20 +82,22 @@ plot(fit, "combo", regex_pars = "cp_")
 For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation. Our null model omits the first plateau and change point, essentially testing the credence of that change point:
 
 ```r
-# Fit the model
+# Define the model
 segments_null = list(
   response ~ 1 + time,  # intercept (int_1) and slope (time_1)
   1 ~ 1 + time  # disjoined slope (int_2, time_1)
 )
+
+# Fit it
 fit_null = mcp(segments_null, ex_demo)
 ```
 
 Leveraging the power of `loo::loo`, we see that the two-change-points model is preferred (it is on top), but not very strongly (`elpd_diff / se_diff` ratio). See the documentation of the `loo` package and associated papers for more details, or scroll down for more notes on model comparison using `mcp`.
 
 ```r
-# Compare loos:
 fit$loo = loo(fit)
 fit_null$loo = loo(fit_null)
+
 loo::loo_compare(fit$loo, fit_null$loo)
 ```
 ```
@@ -192,7 +194,7 @@ ranef(fit)
 ## Generalized linear models
 `mcp` supports Generalized Linear Modeling. See extended examples using [`binomial()`](https://lindeloev.github.io/mcp/articles/binomial.html) and [`poisson()`](https://lindeloev.github.io/mcp/articles/poisson.html). [See how this data was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_binomial.R).
 
-Here is a binomial change point model with three segments:
+Here is a binomial change point model with three segments. We plot the 95% HDI too:
 
 ```r
 segments = list(
@@ -201,7 +203,7 @@ segments = list(
   1 ~ 1 + x  # disjoined changing rate
 )
 fit = mcp(segments, ex_binomial, family = binomial())
-plot(fit)
+plot(fit, quantiles = TRUE)
 ```
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_binomial.png)
@@ -224,7 +226,7 @@ segments = list(
 )
 
 prior = list(
-  int_1 = 10,  # fixed value
+  int_1 = 10,  # Constant, not estimated
   x_3 = "x_1",  # shared slope in segment 1 and 3
   int_2 = "dnorm(0, 20)",
   cp_1 = "dunif(20, 50)"  # has to occur in this interval
@@ -260,7 +262,7 @@ Population-level parameters:
    x_3  1.64  1.42  1.87   NA   78    1.580
 ```
 
-(rhat cannot be estimated when the model contains fixed-to-value parameters in `mcp 0.1`. This will be fixed.)
+(rhat cannot be estimated when the model contains constant coefficients in `mcp 0.1`. This will be fixed.)
 
 
 
@@ -270,7 +272,7 @@ Population-level parameters:
 
  * The first thing to try is always to make the model warm up longer to see if it reaches convergence later: `mcp(fit, data, adapt = 4000, update = 4000)`. 
  
- * It can be a sign of a deeper non-identifiability in the model. This will show up as strong correlations between parameters in the joint distribution of the implicated parameters: `plot(fit, "hex", pars = c("int_1", "int_2))`. This may give you ideas how to change the model.
+ * It can be a sign of a deeper non-identifiability in the model. This will show up as strong correlations in the joint distribution of any pair of implicated parameters: `plot(fit, "hex", pars = c("int_1", "int_2))`. This may give you ideas how to change the model.
  
  * You can set the initial values for the JAGS sampler using, e.g., `mcp(..., inits = list(cp_1 = 20, int_2 = -20, etc.))`. This will be passed to `jags.fit` and you can see more documentation there.
 
