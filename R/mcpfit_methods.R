@@ -9,6 +9,9 @@
 #' @importFrom dplyr .data
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_summary = function(fit, width, varying = FALSE) {
+  # Get posterior/prior samples
+  samples = get_samples(fit)
+
   # Select only varying or only population-level columns in data
   if (varying == FALSE) {
     regex_pars = paste0(paste0("^", fit$pars$population, "$"), collapse = "|")
@@ -18,14 +21,13 @@ get_summary = function(fit, width, varying = FALSE) {
       stop("There were no matching parameters in the model.")
   }
 
-
-  all_cols = colnames(fit$samples[[1]])
-  get_cols = all_cols[stringr::str_detect(all_cols, regex_pars)]
-  samples = lapply(fit$samples, function(x) x[, get_cols])
   # HACK: If there is just one parameter, add two in to make the code run.
+  all_cols = colnames(samples[[1]])
+  get_cols = all_cols[stringr::str_detect(all_cols, regex_pars)]
   if (!stringr::str_detect(regex_pars, "\\|") & varying == FALSE) {
-    samples_org = samples
-    samples = lapply(fit$samples, function(x) x[, c(get_cols, "cp_0", "cp_1")])
+    samples = lapply(samples, function(x) x[, c(get_cols, "cp_0", "cp_1")])
+  } else {
+    samples = lapply(samples, function(x) x[, get_cols])
   }
 
   # Get parameter estimates
@@ -50,7 +52,7 @@ get_summary = function(fit, width, varying = FALSE) {
   # Revert HACK and continue
   if (!stringr::str_detect(regex_pars, "\\|") & varying == FALSE) {
     estimates = dplyr::filter(estimates, !.data$name %in% c("cp_0", "cp_1"))
-    samples = samples_org
+    samples = lapply(samples, function(x) x[, get_cols])
   }
 
   # Diagnostics
@@ -106,6 +108,7 @@ get_summary = function(fit, width, varying = FALSE) {
 summary.mcpfit = function(object, width = 0.95, digits = 2, ...) {
   # Standard name in mcp
   fit = object
+  samples = get_samples(fit)
 
   if (class(object) != "mcpfit")
     stop("`object`` must be an mcpfit object.")
@@ -119,15 +122,15 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, ...) {
 
   # Model info
   cat("Family: ", fit$family$family, "(link = '", fit$family$link, "')\n", sep = "")
-  if (!is.null(fit$samples))
-    cat("Iterations: ", nrow(fit$samples[[1]]) * length(fit$samples), " from ", length(fit$samples), " chains.\n", sep="")
+  if (!is.null(samples))
+    cat("Iterations: ", nrow(samples[[1]]) * length(samples), " from ", length(samples), " chains.\n", sep="")
   cat("Segments:\n")
   for (i in 1:length(fit$segments)) {
     cat("  ", i, ": ", format(fit$segments[i]), "\n", sep = "")
   }
 
   # Data
-  if (!is.null(fit$samples)) {
+  if (!is.null(samples)) {
     # Print and return invisibly
     cat("\nPopulation-level parameters:\n")
     result = get_summary(fit, width, varying = FALSE)
@@ -177,4 +180,23 @@ ranef = function(object, width = 0.95, ...) {
 #' @export
 print.mcpfit = function(x, ...) {
   summary(x)
+}
+
+
+#' Internal function to get samples.
+#'
+#' Returns posterior samples, if available. If not, then prior samples. If not,
+#' then throw an informative error. This is useful for summary and plotting, that
+#' works on both.
+#'
+#' @aliases get_samples
+#' @inheritParams mcp
+get_samples = function(fit) {
+  if (coda::is.mcmc.list(fit$mcmc_post)) {
+    return(fit$mcmc_post)
+  } else if (coda::is.mcmc.list(fit$mcmc_prior)) {
+    return(fit$mcmc_prior)
+  } else {
+    stop("This mcpfit contains no posterior or prior samples.")
+  }
 }
