@@ -22,7 +22,7 @@ run_jags = function(data,
                     params,
                     ST,
                     cores,
-                    sample = sample,
+                    sample,
                     model_file = "tmp_jags_code.txt",
                     ...  # Otherwise run with default JAGS settings
 ) {
@@ -130,7 +130,7 @@ get_jags_data = function(data, ST, jags_code, sample) {
       constant_name = toupper(paste0(func, xy_var))
       if (stringr::str_detect(jags_code, constant_name)) {
         func_eval = eval(parse(text = func))  # as real function
-        jags_data[[constant_name]] = func_eval(dplyr::pull(data, ST[, xy_var][[1]][1]))
+        jags_data[[constant_name]] = func_eval(dplyr::pull(data, ST[, xy_var][[1]][1]), na.rm = TRUE)
       }
     }
   }

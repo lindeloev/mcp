@@ -6,7 +6,7 @@
 #'
 #' @aliases plot plot.mcpfit
 #' @param x An mcpfit object
-#' @param type String or vector of strings. Calls \code{bayesplot::mcmc_*type*()}.
+#' @param type String or vector of strings. Calls \code{bayesplot::mcmc_type()}.
 #'   Common calls are "combo", "trace", and "dens_overlay". Current options include
 #'   'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
 #'   'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
@@ -15,8 +15,8 @@
 #' @param pars Character vector. One of:
 #'   \itemize{
 #'     \item Vector of parameter names.
-#'     \item **"population"** (default): plots all population parameters.
-#'     \item **"varying"**: plots all varying effects. To plot a particular varying
+#'     \item \strong{"population" (default):} plots all population parameters.
+#'     \item \strong{"varying":} plots all varying effects. To plot a particular varying
 #'       effect, use \code{regex_pars = "^name"}.
 #'   }
 #' @param regex_pars Vector of regular expressions. This will typically just be
@@ -37,9 +37,9 @@
 #'   plots no lines.
 #' @param quantiles Whether to plot quantiles.
 #'   \itemize {
-#'     \item **TRUE:** Add 2.5% and 97.5% quantiles. Corresponds to
+#'     \item \strong{TRUE:} Add 2.5% and 97.5% quantiles. Corresponds to
 #'       \code{quantiles = c(0.025, 0.975)}.
-#'     \item **FALSE** (default): No quantiles
+#'     \item \strong{FALSE (default):} No quantiles
 #'     \item A vector of quantiles. For example, \code{quantiles = 0.5}
 #'       plots the median and \code{quantiles = c(0.2, 0.8)} plots the 20% and 80%
 #'       quantiles.
@@ -50,11 +50,11 @@
 #'   posterior samples. These represent the joint posterior distribution of
 #'   parameter values.
 #'
-#'   For other \code{type}, it calls \code{bayesplot::mcmc_*type*()}. Use these
-#'   directly on \code{fit$samples} if you want finer control of plotting, e.g.,
-#'   \code{bayesplot::mcmc_dens(fit$samples)}. There are also a number of useful
-#'   plots in the \pkg{coda} package, i.e., \code{coda::gelman.plot(fit$samples)}
-#'   and \code{coda::crosscorr.plot(fit$samples)}
+#'   For other \code{type}, it calls \code{bayesplot::mcmc_type()}. Use these
+#'   directly on \code{fit$mcmc_post} or \code{fit$mcmc_prior} if you want finer
+#'   control of plotting, e.g., \code{bayesplot::mcmc_dens(fit$mcmc_post)}. There
+#'   are also a number of useful plots in the \pkg{coda} package, i.e.,
+#'   \code{coda::gelman.plot(fit$mcmc_post)} and \code{coda::crosscorr.plot(fit$mcmc_post)}
 #'
 #'   In any case, if you see a few erratic lines or parameter estimates, this is
 #'   a sign that you may want to increase arguments 'adapt', 'update', and
@@ -134,6 +134,9 @@ plot.mcpfit = function(x,
   if (!is.logical(rate))
     stop("`rate` has to be TRUE or FALSE.")
 
+  if (!coda::is.mcmc.list(x$mcmc_post) & !coda::is.mcmc.list(x$mcmc_prior))
+    stop("Cannot plot an mcpfit without prior or posterior samples.")
+
   # Include test of whether this is a random/nested effect
   varying_groups = logical0_to_null(unique(stats::na.omit(x$.other$ST$cp_group_col)))
   if (!is.null(facet_by)) {
@@ -182,6 +185,9 @@ plot_segments = function(fit,
                          quantiles = FALSE,
                          ...) {
 
+  # Select posterior/prior samples
+  samples = get_samples(fit)
+
   # General settings
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)
@@ -190,7 +196,7 @@ plot_segments = function(fit,
     HDI_SAMPLES = lines
   } else {
     HDI_SAMPLES = 1000 # Maximum number of draws to use for computing HDI
-    HDI_SAMPLES = min(HDI_SAMPLES, length(fit$samples) * nrow(fit$samples[[1]]))
+    HDI_SAMPLES = min(HDI_SAMPLES, length(samples) * nrow(samples[[1]]))
   }
 
 
@@ -201,7 +207,7 @@ plot_segments = function(fit,
 
   # No faceting
   if (is.null(facet_by)) {
-    samples = fit$samples %>%
+    samples = samples %>%
       tidybayes::spread_draws(!!rlang::sym(regex_pars_pop), regex = TRUE)
 
   } else {
@@ -210,7 +216,7 @@ plot_segments = function(fit,
     varying_by_facet = stats::na.omit(fit$.other$ST$cp_group[stringr::str_detect(fit$.other$ST$cp_group, paste0("_", facet_by, "$"))])
     varying_by_facet = paste0(varying_by_facet, collapse="|")
 
-    samples = fit$samples %>%
+    samples = samples %>%
       tidybayes::spread_draws(!!rlang::sym(regex_pars_pop),
                               (!!rlang::sym(varying_by_facet))[!!rlang::sym(facet_by)],
                               regex = TRUE)
@@ -324,6 +330,9 @@ plot_bayesplot = function(fit,
                           regex_pars = character(0),
                           ncol = 1) {
 
+  # Get posterior/prior samples
+  samples = get_samples(fit)
+
   # Handle special codes
   if ("population" %in% pars) {
     if (length(regex_pars) == 0) {
@@ -347,7 +356,7 @@ plot_bayesplot = function(fit,
   takes_facet = c("areas", "dens", "dens_overlay", "trace", "hist", "intervals", "rank_hist", "rank_overlay", "trace", "trace_highlight", "violin")
   for (this_type in type) {
     this_facet = ifelse(this_type %in% takes_facet, paste0(", facet_args = list(ncol = ", ncol, ")"), "")
-    command = paste0("plot_", this_type, " = bayesplot::mcmc_", this_type, "(fit$samples, pars = pars, regex_pars = regex_pars", this_facet, ")")
+    command = paste0("plot_", this_type, " = bayesplot::mcmc_", this_type, "(samples, pars = pars, regex_pars = regex_pars", this_facet, ")")
     eval(parse(text = command))
   }
 
@@ -382,13 +391,13 @@ get_eval_at = function(fit, facet_by) {
   # Set resolutions in general and for change points
   X_RESOLUTION_ALL = 100  # Number of points to evaluate at x
   X_RESOLUTION_CP = 600
-  X_RESOLUTION_FACET = 400
+  X_RESOLUTION_FACET = 300
   CP_INTERVAL = 0.9  # HDI interval width
   xmin = min(fit$data[, fit$pars$x])  # smallest observed X
   xmax = max(fit$data[, fit$pars$x])
 
   # Just give up for faceting and return a reasonable resolution
-  if (!is.null(facet_by)) {
+  if (!is.null(facet_by) | is.null(fit$mcmc_post)) {
     eval_at = seq(xmin, xmax, length.out = X_RESOLUTION_FACET)
     return(eval_at)
   }

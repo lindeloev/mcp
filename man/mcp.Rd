@@ -5,7 +5,7 @@
 \title{Fit Multiple Linear Segments And Their Change Points}
 \usage{
 mcp(segments, data = NULL, prior = list(), family = gaussian(),
-  par_x = NULL, sample = TRUE, cores = 1, chains = 3,
+  par_x = NULL, sample = "post", cores = 1, chains = 3,
   iter = 3000, adapt = 1500, update = 1500, jags_explicit = NULL,
   ...)
 }
@@ -43,10 +43,18 @@ Only default link functions are currently supported.}
 \item{par_x}{String (default: NULL). Only relevant if no segments contains
 slope (no hint at what x is). Set this, e.g., par_x = "time".}
 
-\item{sample}{One of TRUE, FALSE, or "prior". Set to FALSE to get an mcpfit
-object without samples. This is useful if you only want to check
-priors, the JAGS model, etc. Set to "prior" if you want to do a prior
-predictive check.}
+\item{sample}{One of
+\itemize{
+  \item \code{"post"} (default): Sample the posterior.
+  \item \code{"prior"}: Sample only the prior. Plots, summaries, etc. will
+    use the prior. This is useful for prior predictive checks.
+  \item \code{"both"}: Sample both prior and posterior. Plots, summaries, etc.
+    will default to using the posterior. The prior only has effect when doing
+    Savage-Dickey density ratios in \code{\link{hypothesis}}.
+  \item \code{"none"} or \code{FALSE}: Do not sample. Returns an mcpfit
+    object without sample. This is useful if you only want to check
+    prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
+}}
 
 \item{cores}{Positive integer or "all". Number of cores.
 \itemize{
