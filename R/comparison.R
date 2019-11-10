@@ -102,7 +102,7 @@ waic.mcpfit = function(x, ...) {
 #'     \item \code{"x_2 - x_1 <= 3"}: the difference between slope 1 and 2 is less than 3.
 #'     \item \code{"int_1 > 20 & int_1 < 30"}: int_1 is between 20 and 30
 #'     \item \code{"cp_1^2 < 30 | (log(x_1) + log(x_2)) > 5"}: many options.
-#'     \item \code{"`cp_1_id[1]` > `cp_1_id[2]``}: id1 is greater than id2, as estimated
+#'     \item \code{"`cp_1_id[1]` > `cp_1_id[2]`"}: id1 is greater than id2, as estimated
 #'       through the varying-by-"id" change point in segment 1. Note that \code{``}
 #'       required for varying effects.
 #'   }
