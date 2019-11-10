@@ -24,9 +24,9 @@ plots no lines.}
 
 \item{quantiles}{Whether to plot quantiles.
 \itemize {
-  \item **TRUE:** Add 2.5% and 97.5% quantiles. Corresponds to
+  \item \strong{TRUE:} Add 2.5% and 97.5% quantiles. Corresponds to
     \code{quantiles = c(0.025, 0.975)}.
-  \item **FALSE** (default): No quantiles
+  \item \strong{FALSE (default):} No quantiles
   \item A vector of quantiles. For example, \code{quantiles = 0.5}
     plots the median and \code{quantiles = c(0.2, 0.8)} plots the 20% and 80%
     quantiles.

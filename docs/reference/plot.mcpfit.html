@@ -176,8 +176,8 @@ Common calls are "combo", "trace", and "dens_overlay". Current options include
       <th>pars</th>
       <td><p>Character vector. One of:</p><ul>
 <li><p>Vector of parameter names.</p></li>
-<li><p>**"population"** (default): plots all population parameters.</p></li>
-<li><p>**"varying"**: plots all varying effects. To plot a particular varying
+<li><p><strong>"population" (default):</strong> plots all population parameters.</p></li>
+<li><p><strong>"varying":</strong> plots all varying effects. To plot a particular varying
     effect, use <code>regex_pars = "^name"</code>.</p></li>
 </ul></td>
     </tr>
@@ -216,9 +216,9 @@ plots no lines.</p></td>
       <th>quantiles</th>
       <td><p>Whether to plot quantiles.
  
-   **TRUE:** Add 2.5<!-- % and 97.5% quantiles. Corresponds to -->
+   <strong>TRUE:</strong> Add 2.5<!-- % and 97.5% quantiles. Corresponds to -->
     <code>quantiles = c(0.025, 0.975)</code>.
-   **FALSE** (default): No quantiles
+   <strong>FALSE (default):</strong> No quantiles
    A vector of quantiles. For example, <code>quantiles = 0.5</code>
     plots the median and <code>quantiles = c(0.2, 0.8)</code> plots the 20<!-- % and 80% -->
     quantiles.</p></td>
@@ -237,7 +237,7 @@ plots no lines.</p></td>
     <p>For <code>type = "segments"</code>, it uses <code>fit$func_y</code> with <code>draws</code>
   posterior samples. These represent the joint posterior distribution of
   parameter values.</p>
-<p>For other <code>type</code>, it calls <code>bayesplot::mcmc_*type*()</code>. Use these
+<p>For other <code>type</code>, it calls <code>bayesplot::mcmc_type()</code>. Use these
   directly on <code>fit$samples</code> if you want finer control of plotting, e.g.,
   <code><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>bayesplot::mcmc_dens(fit$samples)</a></code>. There are also a number of useful
   plots in the <span class="pkg">coda</span> package, i.e., <code><a href='https://rdrr.io/pkg/coda/man/gelman.plot.html'>coda::gelman.plot(fit$samples)</a></code>
