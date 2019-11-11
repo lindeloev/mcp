@@ -1,66 +1,62 @@
 #' Plot mcpfit
 #'
-#' Plotting posterior fitted lines on top of data (\code{plot(fit)}) or many
-#' types of plots of parameter estimates (typically \code{plot(fit, "combo")}).
+#' Plotting posterior fitted lines on top of data (`plot(fit)`) or many
+#' types of plots of parameter estimates (typically `plot(fit, "combo")`).
 #' See examples for typical use cases.
 #'
 #' @aliases plot plot.mcpfit
 #' @param x An mcpfit object
-#' @param type String or vector of strings. Calls \code{bayesplot::mcmc_type()}.
+#' @param type String or vector of strings. Calls `bayesplot::mcmc_type()`.
 #'   Common calls are "combo", "trace", and "dens_overlay". Current options include
 #'   'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
 #'   'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
 #'   'trace_highlight', and 'violin".
 #'
 #' @param pars Character vector. One of:
-#'   \itemize{
-#'     \item Vector of parameter names.
-#'     \item \strong{"population" (default):} plots all population parameters.
-#'     \item \strong{"varying":} plots all varying effects. To plot a particular varying
-#'       effect, use \code{regex_pars = "^name"}.
-#'   }
+#'   * Vector of parameter names.
+#'   * \emph{"population" (default):} plots all population parameters.
+#'   * \emph{"varying":} plots all varying effects. To plot a particular varying
+#'       effect, use `regex_pars = "^name"`.
 #' @param regex_pars Vector of regular expressions. This will typically just be
 #'   the beginning of the parameter name(s), i.e., "^cp_" plots all change
 #'   points, "^my_varying" plots all levels of a particular varying effect, and
 #'   "^cp_|^my_varying" plots both.
 #' @param facet_by String. Name of a varying group.
-#'   \code{facet_by} only applies for \code{type = "segments"}
-#' @param rate Boolean. For binomial models, plot on raw data (\code{rate = FALSE}) or
-#'   response divided by number of trials (\code{rate = TRUE}). If FALSE, linear
+#'   `facet_by` only applies for `type = "segments"`
+#' @param rate Boolean. For binomial models, plot on raw data (`rate = FALSE`) or
+#'   response divided by number of trials (`rate = TRUE`). If FALSE, linear
 #'   interpolation on trial number is used to infer trials at a particular x.
-#'   \code{rate} only applies for \code{type = "segments"}
+#'   `rate` only applies for `type = "segments"`
 #' @param ncol Number of columns in plot. This is useful when you have many
-#'   parameters and only one plot \code{type}.
-#'   \code{ncol} only when \code{type != "segments"}
-#' @param lines Positive integer or \code{FALSE}. Number of lines (posterior
-#'   draws) to use when \code{type = "segments"}. FALSE (or \code{lines = 0})
+#'   parameters and only one plot `type`.
+#'   `ncol` only when `type != "segments"`
+#' @param lines Positive integer or `FALSE`. Number of lines (posterior
+#'   draws) to use when `type = "segments"`. FALSE (or `lines = 0`)
 #'   plots no lines.
 #' @param quantiles Whether to plot quantiles.
-#'   \itemize {
-#'     \item \strong{TRUE:} Add 2.5% and 97.5% quantiles. Corresponds to
-#'       \code{quantiles = c(0.025, 0.975)}.
-#'     \item \strong{FALSE (default):} No quantiles
-#'     \item A vector of quantiles. For example, \code{quantiles = 0.5}
-#'       plots the median and \code{quantiles = c(0.2, 0.8)} plots the 20% and 80%
+#'   * \strong{TRUE:} Add 2.5% and 97.5% quantiles. Corresponds to
+#'       `quantiles = c(0.025, 0.975)`.
+#'   * \strong{FALSE (default):} No quantiles
+#'   * A vector of quantiles. For example, `quantiles = 0.5`
+#'       plots the median and `quantiles = c(0.2, 0.8)` plots the 20% and 80%
 #'       quantiles.
-#'   }
 #' @param ... Currently ignored.
 #' @details
-#'   For \code{type = "segments"}, it uses \code{fit$func_y} with \code{draws}
+#'   For `type = "segments"`, it uses `fit$func_y` with `draws`
 #'   posterior samples. These represent the joint posterior distribution of
 #'   parameter values.
 #'
-#'   For other \code{type}, it calls \code{bayesplot::mcmc_type()}. Use these
-#'   directly on \code{fit$mcmc_post} or \code{fit$mcmc_prior} if you want finer
-#'   control of plotting, e.g., \code{bayesplot::mcmc_dens(fit$mcmc_post)}. There
+#'   For other `type`, it calls `bayesplot::mcmc_type()`. Use these
+#'   directly on `fit$mcmc_post` or `fit$mcmc_prior` if you want finer
+#'   control of plotting, e.g., `bayesplot::mcmc_dens(fit$mcmc_post)`. There
 #'   are also a number of useful plots in the \pkg{coda} package, i.e.,
-#'   \code{coda::gelman.plot(fit$mcmc_post)} and \code{coda::crosscorr.plot(fit$mcmc_post)}
+#'   `coda::gelman.plot(fit$mcmc_post)` and `coda::crosscorr.plot(fit$mcmc_post)`
 #'
 #'   In any case, if you see a few erratic lines or parameter estimates, this is
 #'   a sign that you may want to increase arguments 'adapt', 'update', and
 #'   'iter' in \code{\link{mcp}}.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @return A \code{ggplot2} object.
+#' @return A \pkg{ggplot2} object.
 #' @export
 #' @examples
 #' \dontrun{

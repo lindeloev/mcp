@@ -19,13 +19,13 @@
 }
 \value{
 Posterior means and HDI intervals. \code{rhat} is the Gelman-Rubin
-  convergence diagnostic which is often taken to be acceptable if < 1.1. It
-  is computed using \code{\link[coda]{gelman.diag}}.
-  \code{eff} is the effective sample size computed using
-  \code{\link[coda]{effectiveSize}}. Low effective sample sizes are
-  also obvious as poor mixing in trace plots (see \code{plot(fit, "combo")}).
-  \code{ts_err} is the time-series error, taking autoregressive correlation
-  into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
+convergence diagnostic which is often taken to be acceptable if < 1.1. It
+is computed using \code{\link[coda]{gelman.diag}}.
+\code{eff} is the effective sample size computed using
+\code{\link[coda]{effectiveSize}}. Low effective sample sizes are
+also obvious as poor mixing in trace plots (see \code{plot(fit, "combo")}).
+\code{ts_err} is the time-series error, taking autoregressive correlation
+into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
 }
 \description{
 Computes posterior means and highest density intervals, and model

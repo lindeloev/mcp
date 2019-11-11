@@ -75,7 +75,7 @@ run_jags = function(data,
     file.remove(model_file)
   }
 
-  if(coda::is.mcmc.list(samples)) {  # If sampling succeeded
+  if (coda::is.mcmc.list(samples)) {  # If sampling succeeded
     # Recover the levels of varying effects
     for (i in seq_len(nrow(ST))) {
       S = ST[i, ]
@@ -136,7 +136,7 @@ get_jags_data = function(data, ST, jags_code, sample) {
   }
 
   # Set response = NA if we only sample prior
-  if(sample == "prior")
+  if (sample == "prior")
     jags_data[[ST$y[1]]] = rep(NA, nrow(data))
 
   # Return

@@ -18,10 +18,10 @@ Common calls are "combo", "trace", and "dens_overlay". Current options include
 
 \item{pars}{Character vector. One of:
 \itemize{
-  \item Vector of parameter names.
-  \item \strong{"population" (default):} plots all population parameters.
-  \item \strong{"varying":} plots all varying effects. To plot a particular varying
-    effect, use \code{regex_pars = "^name"}.
+\item Vector of parameter names.
+\item \emph{"population" (default):} plots all population parameters.
+\item \emph{"varying":} plots all varying effects. To plot a particular varying
+effect, use \code{regex_pars = "^name"}.
 }}
 
 \item{regex_pars}{Vector of regular expressions. This will typically just be

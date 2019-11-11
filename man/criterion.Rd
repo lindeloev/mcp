@@ -19,7 +19,7 @@ criterion(fit, criterion = "loo")
 \arguments{
 \item{fit}{An mcpfit object.}
 
-\item{criterion}{One of "loo" (calls \code{\link[loo]{loo}}) or "waic" (calls \code{\link[loo]{waic}}).}
+\item{criterion}{One of \code{"loo"} (calls \code{\link[loo]{loo}}) or \code{"waic"} (calls \code{\link[loo]{waic}}).}
 
 \item{x}{\code{mcpfit} object.}
 
