@@ -406,9 +406,9 @@ get_eval_at = function(fit, facet_by) {
   cp_hdis = fixef(fit, width = CP_INTERVAL)  # get the intervals
   cp_hdis = cp_hdis[cp_hdis$name %in% cp_vars, ]  # select change points
   for (i in seq_len(nrow(cp_hdis))) {
-    x_proportion = (cp_hdis$X95[i] - cp_hdis$X5[i]) / (xmax - xmin)  # how big a section of x is this CP's HDI?
+    x_proportion = (cp_hdis$upper[i] - cp_hdis$lower[i]) / (xmax - xmin)  # how big a section of x is this CP's HDI?
     length.out = ceiling(X_RESOLUTION_CP * x_proportion)  # number of x-points to add
-    eval_at = c(eval_at, seq(from = cp_hdis$X5[i], to = cp_hdis$X95[i], length.out = length.out))
+    eval_at = c(eval_at, seq(from = cp_hdis$lower[i], to = cp_hdis$upper[i], length.out = length.out))
   }
 
   return(eval_at)

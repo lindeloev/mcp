@@ -91,7 +91,7 @@ test_mcp = function(segments,
     testthat::expect_true(is.list(empty$.other), segments)
 
     # capture.output suppresses the dclone output.
-    capture.output(fit <<- mcp(
+    capture.output(fit <<- mcp(  # Global useful for debugging
       segments = segments,
       data = tibble::as_tibble(data),
       family = family,
@@ -101,13 +101,13 @@ test_mcp = function(segments,
       update = 3,
       iter = 18,  # loo fails if this is too low. TO DO: require next version of loo when it is out.
       chains = 2,  # 1 or 2
-      cores = 1 + rbinom(1, 1, 0.5)  # serial or parallel
+      cores = 1  # run serial. Parallel can be trused to just work.
     ))
 
     # Test criterions. Will warn about very few samples
     if (!is.null(fit$mcmc_post)) {
-      suppressWarnings(fit$loo <- loo(fit))  # OMG, i had use for the <- assignment!
-      suppressWarnings(fit$waic <- waic(fit))
+      fit$loo = suppressWarnings(loo(fit))
+      fit$waic = suppressWarnings(waic(fit))
       testthat::expect_true(loo::is.psis_loo(fit$loo))
       testthat::expect_true(loo::is.waic(fit$waic))
     }
@@ -182,24 +182,23 @@ test_bayesplot = function(fit) {
 test_hypothesis = function(fit) {
   # Function to test both directional and point hypotheses
   run_test_hypothesis = function(fit, base) {
-    # Directional
-    result = hypothesis(fit, paste0(base, " > 1"))
-    testthat::expect_true(is.data.frame(result) & nrow(result) == 1)
-
-    # Point
-    result = hypothesis(fit, paste0(base, " = -1"))
-    testthat::expect_true(is.data.frame(result) & nrow(result) == 1)
+    hypotheses = c(
+      paste0(base, " > 1"),  # Directional
+      paste0(base, " = -1")  # Savage-Dickey (point)
+    )
+    result = hypothesis(fit, hypotheses)
+    testthat::expect_true(is.data.frame(result) & nrow(result) == 2)
   }
 
   # Test single pop effect
   run_test_hypothesis(fit, fit$pars$population[1])
 
   # Test multiple pop effect
-  if(length(fit$pars$population) > 1)
+  if (length(fit$pars$population) > 1)
     run_test_hypothesis(fit, paste0(fit$pars$population[1] , " + ", fit$pars$population[2]))
 
   # Varying
-  if(!is.null(fit$pars$varying)) {
+  if (!is.null(fit$pars$varying)) {
     mcmc_vars = colnames(get_samples(fit)[[1]])
     varying_starts = paste0("^", fit$pars$varying[1])
     varying_col_ids = stringr::str_detect(mcmc_vars, varying_starts)
@@ -209,7 +208,7 @@ test_hypothesis = function(fit) {
     run_test_hypothesis(fit, varying_cols[1])
 
     # Test multiple varying effects
-    if(length(varying_cols) > 1)
+    if (length(varying_cols) > 1)
       run_test_hypothesis(fit, paste0(varying_cols[1], " + ", varying_cols[2]))
   }
 }
