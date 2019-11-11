@@ -125,7 +125,7 @@ plot.mcpfit = function(x,
     stop("`quantiles` has to be TRUE, FALSE, or a vector of numbers.")
 
   if (is.numeric(quantiles) & (any(quantiles > 1) | any(quantiles < 0)))
-      stop ("all `quantiles` have to be between 0 (0%) and 1 (100%).")
+    stop ("all `quantiles` have to be between 0 (0%) and 1 (100%).")
 
   if (!is.logical(rate))
     stop("`rate` has to be TRUE or FALSE.")

@@ -191,10 +191,11 @@ print.mcpfit = function(x, ...) {
 #'
 #' @aliases get_samples
 #' @inheritParams mcp
-get_samples = function(fit) {
+get_samples = function(fit, message = TRUE) {
   if (coda::is.mcmc.list(fit$mcmc_post)) {
     return(fit$mcmc_post)
   } else if (coda::is.mcmc.list(fit$mcmc_prior)) {
+    message("Posterior was not sampled. Using prior samples.")
     return(fit$mcmc_prior)
   } else {
     stop("This mcpfit contains no posterior or prior samples.")

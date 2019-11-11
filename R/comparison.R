@@ -39,7 +39,7 @@ criterion = function(fit, criterion = "loo") {
   # Add LOO
   if (criterion == "loo") {
     # Compute relative effective sample size (for each loglik col)
-    chain_id = rep(seq_len(length(fit$mcmc_post)), each = nrow(fit$mcmc_post[[1]]))
+    chain_id = rep(seq_along(fit$mcmc_post), each = nrow(fit$mcmc_post[[1]]))
     r_eff = loo::relative_eff(exp(loglik), chain_id)  # Likelihood = exp(log-likelihood)
 
     # Add LOO
@@ -173,10 +173,10 @@ hypothesis = function(fit, hypotheses, width = 0.95) {
       this_comparator = comparators[which_comparator]
 
       # Re-arrange to LHS [comparator] 0.
-      sides_split = strsplit(expression, "<|<=|>|>=|(?<!(<|>))=", perl=T)[[1]]
+      sides_split = strsplit(expression, "<|<=|>|>=|(?<!(<|>))=", perl = TRUE)[[1]]
       sides_split = stringr::str_trim(sides_split)
       if (stringr::str_detect(sides_split[2], "\\+|\\-"))
-          sides_split[2] = paste0("(", sides_split[2], ")")
+        sides_split[2] = paste0("(", sides_split[2], ")")
       LHS = paste0(sides_split[1], " - ", sides_split[2])
       expression = paste0(LHS, " ", this_comparator, " 0")
 

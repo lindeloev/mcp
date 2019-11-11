@@ -18,7 +18,7 @@ model {
   ##########
   # Transform priors from SD to precision
   all_dprec = "dnorm|dt|dcauchy|ddexp|dlogis|dlnorm"  # JAGS precision dists
-  for (i in seq_len(length(prior))) {
+  for (i in seq_along(prior)) {
     if (stringr::str_detect(prior[[i]], all_dprec)) {
       prior[[i]] = sd_to_prec(prior[[i]])
     }
