@@ -154,7 +154,7 @@ fit3 = mcp(segments, data, prior)
 # Do stuff with the parameter estimates
 fit$pars$model  # check out which parameters are inferred.
 library(tidybayes)
-spread_draws(fit$samples, cp_1, cp_2, int_1, year_1, year_2) \%>\%
+spread_draws(fit$mcmc_post, cp_1, cp_2, int_1, year_1, year_2) \%>\%
    # tidybayes stuff here
 
 # Show JAGS model

@@ -247,7 +247,7 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
   # BUILD "SEGMENT TABLE (ST)" FROM ISOLATED SEGMENTS #
   #####################################################
   ST = tibble::tibble()
-  for (i in seq_len(length(segments))) {
+  for (i in seq_along(segments)) {
     # Get ready...
     segment = segments[[i]]
     if (!is.null(data))
