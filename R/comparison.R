@@ -179,7 +179,6 @@ hypothesis = function(fit, hypotheses, width = 0.95) {
           sides_split[2] = paste0("(", sides_split[2], ")")
       LHS = paste0(sides_split[1], " - ", sides_split[2])
       expression = paste0(LHS, " ", this_comparator, " 0")
-      print(expression)
 
       # Get effect estimate
       samples = get_samples(fit) %>%
