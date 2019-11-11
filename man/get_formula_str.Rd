@@ -11,5 +11,5 @@ get_formula_str(ST)
 }
 \description{
 You will need to replace PAR_X for whatever your x-axis observation column
-is called. In JAGS typically `x[i_]`. In R just `x`.
+is called. In JAGS typically \code{x[i_]}. In R just \code{x}.
 }

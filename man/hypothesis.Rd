@@ -5,53 +5,72 @@
 \alias{hypothesis.mcpfit}
 \title{Test hypotheses on mcp objects.}
 \usage{
-hypothesis(fit, hypothesis)
+hypothesis(fit, hypotheses, width = 0.95)
 }
 \arguments{
 \item{fit}{An mcpfit object}
 
-\item{hypothesis}{String representation of a logical test involving model parameters.
-  Takes R code that evaluates to TRUE or FALSE in a vectorized way.
+\item{hypotheses}{String representation of a logical test involving model parameters.
+Takes R code that evaluates to TRUE or FALSE in a vectorized way.
 
-  Directional hypotheses are specified using <, >, <=, or >=. \code{hypothesis}
-  returns the posterior probability and odds in favor of the stated hypothesis.
-  The odds can be interpreted as a Bayes Factor. For example:
+Directional hypotheses are specified using <, >, <=, or >=. \code{hypothesis}
+returns the posterior probability and odds in favor of the stated hypothesis.
+The odds can be interpreted as a Bayes Factor. For example:
+\itemize{
+\item \code{"cp_1 > 30"}:  the first change point is above 30.
+\item \code{"int_1 > int_2"}: the intercept is greater in segment 1 than 2.
+\item \code{"x_2 - x_1 <= 3"}: the difference between slope 1 and 2 is less
+than or equal to 3.
+\item \code{"int_1 > -2 & int_1 < 2"}: int_1 is between -2 and 2 (an interval hypothesis). This can be useful as a Region Of Practical Equivalence test (ROPE).
+\item \code{"cp_1^2 < 30 | (log(x_1) + log(x_2)) > 5"}: be creative.
+\item \code{"`cp_1_id[1]` > `cp_1_id[2]`"}: id1 is greater than id2, as estimated
+through the varying-by-"id" change point in segment 1. Note that \code{``}
+required for varying effects.
+}
 
-  \itemize{
-    \item \code{"cp_1 > 30"}:  the first change point is above 30.
-    \item \code{"int_1 > int_2"}: the intercept is greater in segment 1 than 2.
-    \item \code{"x_2 - x_1 <= 3"}: the difference between slope 1 and 2 is less than 3.
-    \item \code{"int_1 > 20 & int_1 < 30"}: int_1 is between 20 and 30
-    \item \code{"cp_1^2 < 30 | (log(x_1) + log(x_2)) > 5"}: many options.
-    \item \code{"`cp_1_id[1]` > `cp_1_id[2]`"}: id1 is greater than id2, as estimated
-      through the varying-by-"id" change point in segment 1. Note that \code{``}
-      required for varying effects.
-  }
-  Hypotheses can also test equality using the equal sign (=). This runs a
-  Savage-Dickey test, i.e., the proportion by which the probability density
-  has increased from the prior to the posterior at a given value. Therefore,
-  it requires \code{mcp(sample = "both")}. There are two requirements:
-  First, there can only be one equal sign, so don't use and (&) or or (|).
-  Second, the point to test has to be on the right, and the variables on the left.
-  .
-  \itemize{
-    \item \code{"cp_1 = 30"}: is the first change point at 30? Or to be more precise:
-      by what factor has the credence in cp_1 = 30 risen/fallen when
-      conditioning on the data, relative to the prior credence?
-    \item \code{"int_1 + int_2 = 0"}: Is the sum of two intercepts zero?
-    \item \code{"`cp_1_id[John]`/`cp_1_id[Erin]` = 2"}: is the varying change
-      point for John (which is relative to \code{cp_1}) double that of Erin?
-  }}
+Hypotheses can also test equality using the equal sign (=). This runs a
+Savage-Dickey test, i.e., the proportion by which the probability density
+has increased from the prior to the posterior at a given value. Therefore,
+it requires \code{mcp(sample = "both")}. There are two requirements:
+First, there can only be one equal sign, so don't use and (&) or or (|).
+Second, the point to test has to be on the right, and the variables on the left.
+\itemize{
+\item \code{"cp_1 = 30"}: is the first change point at 30? Or to be more precise:
+by what factor has the credence in cp_1 = 30 risen/fallen when
+conditioning on the data, relative to the prior credence?
+\item \code{"int_1 + int_2 = 0"}: Is the sum of two intercepts zero?
+\item \code{"`cp_1_id[John]`/`cp_1_id[Erin]` = 2"}: is the varying change
+point for John (which is relative to `cp_1``) double that of Erin?
+}}
+
+\item{width}{Between 0 and 1. Width of the highest density interval.}
 }
 \value{
-A data.frame with a row per hypothesis
+A data.frame with a row per hypothesis and the following columns:
+\itemize{
+\item \code{hypothesis} is the hypothesis; often re-arranged to test against zero.
+\item \code{mean} is the posterior mean of the left-hand side of the hypothesis.
+\item \code{lower} is the lower bound of the (two-sided) highest-density interval of width \code{width}.
+\item \code{upper} is the upper bound of ditto.
+\item \code{p} Posterior probability.
+For "=" (Savage-Dickey), it is the BF converted to p.
+For directional hypotheses, it is the proportion of samples that returns TRUE.
+\item \code{BF} Bayes Factor in favor  of the hypothesis.
+For "=" it is the Savage-Dickey density ratio.
+For directional hypotheses, it is p converted to odds.
+}
 }
 \description{
-This function is highly inspired by \code{\link[brms]{hypothesis}}. For
-directional hypotheses, \code{hypothesis} executes the hypothesis string in
-a \code{tidybayes} environment and summerises the proportion of samples where
+This function is highly inspired by \code{\link[brms]{hypothesis}}. It returns
+posterior probabilities and Bayes Factors for flexible hypotheses involving
+model parameters. See the parameter `hypotheses`` for examples of how to
+specify hypotheses.
+}
+\details{
+For directional hypotheses, \code{hypothesis`` executes the hypothesis string in a }tidybayes`` environment and summerises the proportion of samples where
 the expression evaluates to TRUE. For equals-hypothesis, a Savage-Dickey
-ratio is computed.
+ratio is computed. Savage-Dickey requires a prior too, so remember
+\code{mcp(..., sample = "both")}.
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

@@ -9,12 +9,12 @@ get_segment_table(segments, data = NULL, family = gaussian()$family,
 }
 \arguments{
 \item{segments}{A list of formulas - one for each segment. The first formula
-  has the format \code{response ~ predictors} while the following formulas
-  have the format \code{response ~ changepoint ~ predictors}. The response
-  and change points can be omitted (\code{changepoint ~ predictors} assumes same
-  response. \code{~ predictors} assumes an intercept-only change point).
+has the format \code{response ~ predictors} while the following formulas
+have the format \code{response ~ changepoint ~ predictors}. The response
+and change points can be omitted (\code{changepoint ~ predictors} assumes same
+response. \code{~ predictors} assumes an intercept-only change point).
 
-  See examples for more details.}
+See examples for more details.}
 
 \item{data}{Data.frame or tibble in long format.}
 

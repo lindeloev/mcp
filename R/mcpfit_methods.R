@@ -41,9 +41,9 @@ get_summary = function(fit, width, varying = FALSE) {
 
       # Compute mean and HDI intervals and name appropriately
       tidybayes::mean_hdci(.data$value, .width = width) %>%
-      dplyr::rename(mean = .data$value) %>%
-      dplyr::rename(!!as.character(100*(1 - width) / 2) := .data$.lower,
-                    !!as.character(100*(width + (1 - width)/2)) := .data$.upper) %>%
+      dplyr::rename(mean = .data$value,
+                    lower = .data$.lower,
+                    upper = .data$.upper) %>%
 
       # Remove unneeded stuf
       dplyr::select(-tidyselect::starts_with("."))
@@ -56,7 +56,7 @@ get_summary = function(fit, width, varying = FALSE) {
   }
 
   # Diagnostics
-  rhat = try(coda::gelman.diag(samples)$psrf[, 1], TRUE)
+  rhat = try(coda::gelman.diag(samples, multivariate = FALSE)$psrf[, 1], TRUE)
   if (!is.numeric(rhat)) {
     warning("rhat computation failed: ", rhat)
     rhat = rep(NA, nrow(estimates))

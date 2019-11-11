@@ -20,10 +20,10 @@ Common calls are "combo", "trace", and "dens_overlay". Current options include
 
 \item{pars}{Character vector. One of:
 \itemize{
-  \item Vector of parameter names.
-  \item \strong{"population" (default):} plots all population parameters.
-  \item \strong{"varying":} plots all varying effects. To plot a particular varying
-    effect, use \code{regex_pars = "^name"}.
+\item Vector of parameter names.
+\item \emph{"population" (default):} plots all population parameters.
+\item \emph{"varying":} plots all varying effects. To plot a particular varying
+effect, use \code{regex_pars = "^name"}.
 }}
 
 \item{regex_pars}{Vector of regular expressions. This will typically just be
@@ -48,19 +48,19 @@ draws) to use when \code{type = "segments"}. FALSE (or \code{lines = 0})
 plots no lines.}
 
 \item{quantiles}{Whether to plot quantiles.
-\itemize {
-  \item \strong{TRUE:} Add 2.5% and 97.5% quantiles. Corresponds to
-    \code{quantiles = c(0.025, 0.975)}.
-  \item \strong{FALSE (default):} No quantiles
-  \item A vector of quantiles. For example, \code{quantiles = 0.5}
-    plots the median and \code{quantiles = c(0.2, 0.8)} plots the 20% and 80%
-    quantiles.
+\itemize{
+\item \strong{TRUE:} Add 2.5% and 97.5% quantiles. Corresponds to
+\code{quantiles = c(0.025, 0.975)}.
+\item \strong{FALSE (default):} No quantiles
+\item A vector of quantiles. For example, \code{quantiles = 0.5}
+plots the median and \code{quantiles = c(0.2, 0.8)} plots the 20% and 80%
+quantiles.
 }}
 
 \item{...}{Currently ignored.}
 }
 \value{
-A \code{ggplot2} object.
+A \pkg{ggplot2} object.
 }
 \description{
 Plotting posterior fitted lines on top of data (\code{plot(fit)}) or many
@@ -69,18 +69,18 @@ See examples for typical use cases.
 }
 \details{
 For \code{type = "segments"}, it uses \code{fit$func_y} with \code{draws}
-  posterior samples. These represent the joint posterior distribution of
-  parameter values.
+posterior samples. These represent the joint posterior distribution of
+parameter values.
 
-  For other \code{type}, it calls \code{bayesplot::mcmc_type()}. Use these
-  directly on \code{fit$mcmc_post} or \code{fit$mcmc_prior} if you want finer
-  control of plotting, e.g., \code{bayesplot::mcmc_dens(fit$mcmc_post)}. There
-  are also a number of useful plots in the \pkg{coda} package, i.e.,
-  \code{coda::gelman.plot(fit$mcmc_post)} and \code{coda::crosscorr.plot(fit$mcmc_post)}
+For other \code{type}, it calls \code{bayesplot::mcmc_type()}. Use these
+directly on \code{fit$mcmc_post} or \code{fit$mcmc_prior} if you want finer
+control of plotting, e.g., \code{bayesplot::mcmc_dens(fit$mcmc_post)}. There
+are also a number of useful plots in the \pkg{coda} package, i.e.,
+\code{coda::gelman.plot(fit$mcmc_post)} and \code{coda::crosscorr.plot(fit$mcmc_post)}
 
-  In any case, if you see a few erratic lines or parameter estimates, this is
-  a sign that you may want to increase arguments 'adapt', 'update', and
-  'iter' in \code{\link{mcp}}.
+In any case, if you see a few erratic lines or parameter estimates, this is
+a sign that you may want to increase arguments 'adapt', 'update', and
+'iter' in \code{\link{mcp}}.
 }
 \examples{
 \dontrun{
