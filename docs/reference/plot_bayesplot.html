@@ -107,7 +107,13 @@
       <a href="../articles/binomial.html">Binomial change point analysis with mcp</a>
     </li>
     <li>
+      <a href="../articles/comparison.html">Change point model comparison with mcp</a>
+    </li>
+    <li>
       <a href="../articles/formulas.html">About mcp formulas and models</a>
+    </li>
+    <li>
+      <a href="../articles/packages.html">mcp and other change point packages</a>
     </li>
     <li>
       <a href="../articles/poisson.html">Poisson change point analysis with mcp</a>
@@ -160,7 +166,7 @@
     </tr>
     <tr>
       <th>type</th>
-      <td><p>String or vector of strings. Calls <code>bayesplot::mcmc_*type*()</code>.
+      <td><p>String or vector of strings. Calls <code>bayesplot::mcmc_type()</code>.
 Common calls are "combo", "trace", and "dens_overlay". Current options include
 'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
 'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
@@ -170,9 +176,9 @@ Common calls are "combo", "trace", and "dens_overlay". Current options include
       <th>pars</th>
       <td><p>Character vector. One of:</p><ul>
 <li><p>Vector of parameter names.</p></li>
-<li><p><strong>"population" (default):</strong> plots all population parameters.</p></li>
-<li><p><strong>"varying":</strong> plots all varying effects. To plot a particular varying
-    effect, use <code>regex_pars = "^name"</code>.</p></li>
+<li><p><em>"population" (default):</em> plots all population parameters.</p></li>
+<li><p><em>"varying":</em> plots all varying effects. To plot a particular varying
+effect, use <code>regex_pars = "^name"</code>.</p></li>
 </ul></td>
     </tr>
     <tr>

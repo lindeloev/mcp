@@ -11,7 +11,7 @@ vignette: >
 
 
 # Setting a prior
-`mcp` takes priors in the form of a named list. The names are the parameter names, and the values are JAGS code. For example, you may do something like this:
+`mcp` takes priors in the form of a named list. The names are the parameter names, and the values are JAGS code. Here is a fairly complicated example, just to get enough priors to demonstrate the various ways priors can be used:
 
 ```{r}
 segments = list(
@@ -31,7 +31,7 @@ prior = list(
 )
 ```
 
-The values are JAGS code, so all JAGS distributions are allowed. These also include `gamma`, `dt`, `cauchy`, and many others. See the [JAGS user manual](https://web.sgh.waw.pl/~atoroj/ekonometria_bayesowska/jags_user_manual.pdf) for more details. The parameterization of the distributions are identical to standard R. Use SD when you specify priors for `dnorm`, `dt`, `dlogis`, etc. JAGS uses precision but `mcp` converts to precision under the hood via the `sd_to_prec()` function. You can see this conversion by inspecting the difference between `fit$prior` (using SD) and `fit$jags_code` (using precision).
+The values are JAGS code, so all JAGS distributions are allowed. These also include `gamma`, `dt`, `cauchy`, and many others. See the [JAGS user manual](https://web.sgh.waw.pl/~atoroj/ekonometria_bayesowska/jags_user_manual.pdf) for more details. The parameterization of the distributions are identical to standard R. Use SD when you specify priors for `dnorm`, `dt`, `dlogis`, etc. `mcp` converts to precision for JAGS under the hood via the `sd_to_prec()` function (`prec = 1 / sd^2`), so you don't have to worry about it. You can see the effects of this conversion by inspecting the difference between `fit$prior` (using SD) and `fit$jags_code` (using precision).
 
 Other notes:
 
@@ -56,9 +56,9 @@ cbind(manual = empty_manual$prior, default = empty_default$prior)
 
 Now, let's simulate some data that from the model specified by `segments`. The following data "violates" the manual priors so as to show their effect.
 
-```{r, echo = FALSE}
+```{r}
 data = tibble::tibble(
-  x = runif(200, 0, 100),  # 200 datapoints
+  x = runif(200, 0, 100),  # 200 datapoints between 0 and 100
   y = empty_default$func_y(x, 
     int_1 = 20, int_2 = 30, int_3 = 30,  # intercepts
     x_1 = -0.5, x_2 = 0.5, x_3 = 0,  # slopes

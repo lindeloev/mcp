@@ -4,7 +4,7 @@
 [![Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/r/lindeloev/mcp)
 
 
-Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generalized Linear Segments - and the coefficients in those segments. Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. The rest of the package leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
+Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generalized Linear Segments - and the coefficients in those segments. Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. `mcp` leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful. See [how `mcp` compares to other packages](https://lindeloev.github.io/mcp/articles/packages.html).
 
 
 # Install
@@ -54,19 +54,19 @@ summary(fit)
 Family: gaussian(link = 'identity')
 Iterations: 9000 from 3 chains.
 Segments:
-   response ~ 1 
-   response ~ 1 ~ 0 + time 
-   response ~ 1 ~ 1 + time 
+  1: response ~ 1
+  2: response ~ 1 ~ 0 + time
+  3: response ~ 1 ~ 1 + time
 
 Population-level parameters:
-   name   mean   X2.5   X97.5 rhat  eff   ts_se
-   cp_1 30.973 23.054 38.5818 1.01  396 316.789
-   cp_2 69.783 69.272 70.2324 1.00 5859   0.129
-  int_1 10.317  8.913 11.7922 1.01 1683   2.939
-  int_3  0.579 -2.483  3.5711 1.00  712  29.767
-  sigma  4.003  3.462  4.6293 1.00 4224   0.187
- time_2  0.543  0.412  0.6775 1.01  413   0.103
- time_3 -0.223 -0.404 -0.0493 1.01  714   0.104
+   name   mean  lower   upper rhat  eff   ts_se
+   cp_1 30.510 22.832 38.6869 1.01  366 378.575
+   cp_2 69.776 69.273 70.2350 1.00 5868   0.131
+  int_1 10.279  8.839 11.6956 1.00  952   4.274
+  int_3  0.576 -2.454  3.6310 1.00  711  31.702
+  sigma  4.008  3.464  4.6100 1.00 4495   0.168
+ time_2  0.536  0.403  0.6702 1.01  421   0.106
+ time_3 -0.223 -0.403 -0.0494 1.00  725   0.105
 ```
 
 `rhat` is the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag), `eff` is the [effective sample size](https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html), and `ts_se` is the time-series standard error.
@@ -125,7 +125,7 @@ The articles in the web site's menu go in-depth with the functionality of `mcp`.
  * Allows for truncated priors using `T(lower, upper)`, e.g., `int_1 = "dnorm(0, 1) T(0, )"`. `mcp` applies this automatically to change point priors to enforce order restriction. This is true for [varying change points](https://lindeloev.github.io/mcp/articles/varying.html) too.
  * Do prior predictive checks using `mcp(segments, data, sample="prior")`.
 
-[varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html) include:
+[Varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html) include:
  * Simulate varying change points using `fit$func_y()`.
  * Get posteriors using `ranef(fit)`.
  * Plot using `plot(fit, facet_by="my_group")` and `plot(fit, "dens_overlay", pars = "varying", ncol = 3)`.
@@ -136,6 +136,11 @@ The articles in the web site's menu go in-depth with the functionality of `mcp`.
  * `binomial(link = "logit")`. See [binomial change points in mcp](https://lindeloev.github.io/mcp/articles/binomial.html).
  * `bernoulli(link = "logit")`. See [binomial change points in mcp](https://lindeloev.github.io/mcp/articles/binomial.html).
  * `poisson(link = "log")`. See [Poisson change points in mcp](https://lindeloev.github.io/mcp/articles/poisson.html).
+
+[Model comparison and hypothesis testing in mcp](https://lindeloev.github.io/mcp/articles/comparison.html):
+ * Do Leave-One-Out Cross-Validation using `loo(fit)` and `loo::loo_compare(fit1$loo, fit2$loo)`.
+ * Compute Savage-Dickey density rations using `hypothesis(fit, "cp_1 = 40")`.
+ * Leverage directional and conditional tests to assess interval hypotheses (`hypothesis(fit, "cp_1 > 30 & cp_1 < 50")`), combined hypotheses (`hypothesis(fit, "cp_1 > 30 & int_1 > int_2")`), etc.
 
 
 
@@ -181,13 +186,13 @@ ranef(fit)
 ```
 
 ```r
-            name       mean       X2.5      X97.5     rhat  eff     ts_se
-1 cp_1_id[Benny] -18.970413 -21.746111 -16.255543 1.000108 3131  5.317845
-2  cp_1_id[Bill] -10.959035 -13.530281  -8.430385 1.002649  733 21.986801
-3  cp_1_id[Cath]  -3.894166  -6.327470  -1.576214 1.000920 1156 21.315220
-4  cp_1_id[Erin]   6.303391   3.462568   8.951041 1.000212 5684  2.104787
-5  cp_1_id[John]   9.767637   7.223594  12.412474 1.000726 2089  7.184478
-6  cp_1_id[Rose]  17.752586  14.684662  21.315577 1.001246 2704  4.979728
+            name       mean      lower      upper     rhat  eff     ts_se
+1 cp_1_id[Benny] -18.939028 -21.662758 -16.178849 1.000739 2539  4.801090
+2  cp_1_id[Bill] -10.932586 -13.570255  -8.355125 1.001008  709 22.656037
+3  cp_1_id[Cath]  -3.868473  -6.161151  -1.534219 1.000035  996 24.755440
+4  cp_1_id[Erin]   6.298535   3.689802   9.089925 1.000215 5308  2.047966
+5  cp_1_id[John]   9.742310   7.184306  12.258944 1.000451 1854  7.511643
+6  cp_1_id[Rose]  17.699242  14.393830  21.048751 1.000152 4019  4.435384
 ```
 
 
@@ -246,20 +251,20 @@ summary(fit)
 Family: gaussian(link = 'identity')
 Iterations: 9000 from 3 chains.
 Segments:
-   y ~ 1 + x 
-   y ~ 1 ~ rel(1) + rel(x) 
-   y ~ rel(1) ~ 0 + x 
+  1: y ~ 1 + x
+  2: y ~ 1 ~ rel(1) + rel(x)
+  3: y ~ rel(1) ~ 0 + x
 
 Population-level parameters:
-  name  mean  X2.5 X97.5 rhat  eff    ts_se
-  cp_1 29.52 29.05 30.00   NA 2115    0.373
-  cp_2 49.33 45.81 52.51   NA  350   69.387
- int_1 10.00 10.00 10.00   NA    0    0.000
- int_2 33.91 24.56 43.75   NA  131 1066.654
- sigma  9.67  8.33 11.13   NA 4538    1.019
-   x_1  1.64  1.42  1.87   NA   78    1.580
-   x_2 -3.43 -3.73 -3.14   NA  172    1.308
-   x_3  1.64  1.42  1.87   NA   78    1.580
+  name  mean lower upper rhat  eff    ts_se
+  cp_1 22.46 20.00 26.59 1.21   21 1.68e+03
+  cp_2 46.55 41.60 49.80 1.21   29 1.22e+03
+ int_1 10.00 10.00 10.00  NaN    0 0.00e+00
+ int_2  6.42 -8.84 18.37 1.13   36 1.10e+04
+ sigma  7.09  6.15  8.14 1.00 2943 8.49e-01
+   x_1  1.85  1.66  2.04 1.03   57 1.37e+00
+   x_2 -3.94 -4.17 -3.70 1.01  117 1.16e+00
+   x_3  1.85  1.66  2.04 1.03   57 1.37e+00
 ```
 
 (rhat cannot be estimated when the model contains constant coefficients in `mcp 0.1`. This will be fixed.)
@@ -293,11 +298,6 @@ Population-level parameters:
 If you encounter these or other problems, don't hesitate to [raise a Github Issue](https://github.com/lindeloev/mcp/issues), asking for help or posting a bug report.
 
 
-
-# Notes on model comparison
-We can use the cross-validation from the `loo` package to compare the predictive performance of various models. We compute loo for each model and then compare them. the `mcpfit` objects have placeholders at `fit$loo` and `fit$waic`. You need not use them, but it's nice to keep things together.
-
-`loo::loo_compare`: The important thing is the `elpd_diff`/`se_diff` ratio. This is almost like a z-score, i.e., a ratio of 1.96 corresponds to 95% probability that `model1` (the first `loo` pass to `loo_compare`) has superior predictive accuracy. BUT, the `loo` developers have advised that it is probably too optimistic in practice, so that one should only begin taking it seriously if this ratio exceeds 5 [Citation needed].
 
 
 # Do much more

@@ -113,7 +113,13 @@ fit$jags_code, or the R function to simulate data (fit$func_y)." />
       <a href="../articles/binomial.html">Binomial change point analysis with mcp</a>
     </li>
     <li>
+      <a href="../articles/comparison.html">Change point model comparison with mcp</a>
+    </li>
+    <li>
       <a href="../articles/formulas.html">About mcp formulas and models</a>
+    </li>
+    <li>
+      <a href="../articles/packages.html">mcp and other change point packages</a>
     </li>
     <li>
       <a href="../articles/poisson.html">Poisson change point analysis with mcp</a>
@@ -161,7 +167,7 @@ data if you just want to get the priors (<code>fit$prior</code>), the JAGS code
     </div>
 
     <pre class="usage"><span class='fu'>mcp</span>(<span class='no'>segments</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(), <span class='kw'>family</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/family.html'>gaussian</a></span>(),
-  <span class='kw'>par_x</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>sample</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>3</span>,
+  <span class='kw'>par_x</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>sample</span> <span class='kw'>=</span> <span class='st'>"post"</span>, <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>3</span>,
   <span class='kw'>iter</span> <span class='kw'>=</span> <span class='fl'>3000</span>, <span class='kw'>adapt</span> <span class='kw'>=</span> <span class='fl'>1500</span>, <span class='kw'>update</span> <span class='kw'>=</span> <span class='fl'>1500</span>, <span class='kw'>jags_explicit</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='no'>...</span>)</pre>
 
@@ -171,10 +177,10 @@ data if you just want to get the priors (<code>fit$prior</code>), the JAGS code
     <tr>
       <th>segments</th>
       <td><p>A list of formulas - one for each segment. The first formula
-  has the format <code>response ~ predictors</code> while the following formulas
-  have the format <code>response ~ changepoint ~ predictors</code>. The response
-  and change points can be omitted (<code>changepoint ~ predictors</code> assumes same
-  response. <code>~ predictors</code> assumes an intercept-only change point).</p>
+has the format <code>response ~ predictors</code> while the following formulas
+have the format <code>response ~ changepoint ~ predictors</code>. The response
+and change points can be omitted (<code>changepoint ~ predictors</code> assumes same
+response. <code>~ predictors</code> assumes an intercept-only change point).</p>
 <p>See examples for more details.</p></td>
     </tr>
     <tr>
@@ -183,20 +189,20 @@ data if you just want to get the priors (<code>fit$prior</code>), the JAGS code
     </tr>
     <tr>
       <th>prior</th>
-      <td><p>Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
+      <td><p>Named list. Names are parameter names (cp_i, int_i, x_var_i,
 sigma) and the values are either</p><ul>
 <li><p>A JAGS distribution (e.g., <code>int_1 = "dnorm(0, 1) T(0,)"</code>) indicating a
-    conventional prior distribution. Uninformative priors based on data
-    properties are used where priors are not specified. This ensures good
-    parameter estimations, but it is a questionable for hypothesis testing.
-    <code>mcp</code> uses SD (not precision) for dnorm, dt, dlogis, etc. See
-    details. Change points are forced to be ordered through the priors using
-    truncation, except for uniform priors where the lower bound should be
-    greater than the previous change point, <code><a href='https://rdrr.io/r/stats/Uniform.html'>dunif(cp_1, MAXX)</a></code>.</p></li>
+conventional prior distribution. Uninformative priors based on data
+properties are used where priors are not specified. This ensures good
+parameter estimations, but it is a questionable for hypothesis testing.
+<code>mcp</code> uses SD (not precision) for dnorm, dt, dlogis, etc. See
+details. Change points are forced to be ordered through the priors using
+truncation, except for uniform priors where the lower bound should be
+greater than the previous change point, <code><a href='https://rdrr.io/r/stats/Uniform.html'>dunif(cp_1, MAXX)</a></code>.</p></li>
 <li><p>A numerical value (e.g., <code>int_1 = -2.1</code>) indicating a fixed value.</p></li>
 <li><p>A model parameter name (e.g., <code>int_2 = "int_1"</code>), indicating that this parameter is shared -
-    typically between segments. If two varying effects are shared this way,
-    they will need to have the same grouping variable.</p></li>
+typically between segments. If two varying effects are shared this way,
+they will need to have the same grouping variable.</p></li>
 </ul></td>
     </tr>
     <tr>
@@ -211,17 +217,25 @@ slope (no hint at what x is). Set this, e.g., par_x = "time".</p></td>
     </tr>
     <tr>
       <th>sample</th>
-      <td><p>One of TRUE, FALSE, or "prior". Set to FALSE to get an mcpfit
-object without samples. This is useful if you only want to check
-priors, the JAGS model, etc. Set to "prior" if you want to do a prior
-predictive check.</p></td>
+      <td><p>One of</p><ul>
+<li><p><code>"post"</code> (default): Sample the posterior.</p></li>
+<li><p><code>"prior"</code>: Sample only the prior. Plots, summaries, etc. will
+use the prior. This is useful for prior predictive checks.</p></li>
+<li><p><code>"both"</code>: Sample both prior and posterior. Plots, summaries, etc.
+will default to using the posterior. The prior only has effect when doing
+Savage-Dickey density ratios in <code><a href='hypothesis.html'>hypothesis</a></code>.</p></li>
+<li><p><code>"none"</code> or <code>FALSE</code>: Do not sample. Returns an mcpfit
+object without sample. This is useful if you only want to check
+prior strings (fit$prior), the JAGS model (fit$jags_code), etc.</p></li>
+</ul></td>
     </tr>
     <tr>
       <th>cores</th>
       <td><p>Positive integer or "all". Number of cores.</p><ul>
 <li><p>1: serial sampling</p></li>
-<li><p>&gt;1: parallel sampling on this number of cores. Ideally set <code>chains</code>
-  to the same value.</p></li>
+<li><p></p>
+<p>1: parallel sampling on this number of cores. Ideally set <code>chains</code>
+to the same value.</p></li>
 <li><p>"all": use all cores but one.</p></li>
 </ul></td>
     </tr>
@@ -260,18 +274,18 @@ you want to make small tweaks, but mostly used for the development of mcp.</p></
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Notes on priors:</p><ul>
-<li><p>Order restriction is automatically applied to cp_\* parameters using
-      truncation (e.g., <code><a href='https://rdrr.io/r/base/logical.html'>T(cp_1, )</a></code>) so that they are in the correct order on the
-      x-axis UNLESS you do it yourself. The one exception is for dunif
-      distributions where you have to do it as above.</p></li>
+<li><p>Order restriction is automatically applied to cp_* parameters using
+truncation (e.g., <code><a href='https://rdrr.io/r/base/logical.html'>T(cp_1, )</a></code>) so that they are in the correct order on the
+x-axis UNLESS you do it yourself. The one exception is for dunif
+distributions where you have to do it as above.</p></li>
 <li><p>In addition to the model parameters, <code>MINX</code> (minimum x-value), <code>MAXX</code>
-      (maximum x-value), <code>SDX</code> (etc...), <code>MINY</code>, <code>MAXY</code>, and <code>SDY</code>
-      are also available when you set priors. They are used to set uninformative
-      default priors.</p></li>
+(maximum x-value), <code>SDX</code> (etc...), <code>MINY</code>, <code>MAXY</code>, and <code>SDY</code>
+are also available when you set priors. They are used to set uninformative
+default priors.</p></li>
 <li><p>Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision
-      but <code>mcp</code> converts to precision under the hood via the sd_to_prec()
-      function. So you will see SDs in <code>fit$prior</code> but precision ($1/SD^2)
-      in <code>fit$jags_code</code></p></li>
+but <code>mcp</code> converts to precision under the hood via the sd_to_prec()
+function. So you will see SDs in <code>fit$prior</code> but precision ($1/SD^2)
+in <code>fit$jags_code</code></p></li>
 </ul>
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
@@ -322,7 +336,7 @@ you want to make small tweaks, but mostly used for the development of mcp.</p></
 <span class='co'># Do stuff with the parameter estimates</span>
 <span class='no'>fit</span>$<span class='no'>pars</span>$<span class='no'>model</span>  <span class='co'># check out which parameters are inferred.</span>
 <span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>tidybayes</span>)
-<span class='fu'><a href='http://mjskay.github.io/tidybayes/reference/spread_draws.html'>spread_draws</a></span>(<span class='no'>fit</span>$<span class='no'>samples</span>, <span class='no'>cp_1</span>, <span class='no'>cp_2</span>, <span class='no'>int_1</span>, <span class='no'>year_1</span>, <span class='no'>year_2</span>) <span class='kw'>%&gt;%</span>
+<span class='fu'><a href='http://mjskay.github.io/tidybayes/reference/spread_draws.html'>spread_draws</a></span>(<span class='no'>fit</span>$<span class='no'>mcmc_post</span>, <span class='no'>cp_1</span>, <span class='no'>cp_2</span>, <span class='no'>int_1</span>, <span class='no'>year_1</span>, <span class='no'>year_2</span>) <span class='kw'>%&gt;%</span>
    <span class='co'># tidybayes stuff here</span>
 
 <span class='co'># Show JAGS model</span>

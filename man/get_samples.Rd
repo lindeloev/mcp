@@ -4,7 +4,7 @@
 \alias{get_samples}
 \title{Internal function to get samples.}
 \usage{
-get_samples(fit, message = TRUE)
+get_samples(fit, message = TRUE, error = TRUE)
 }
 \description{
 Returns posterior samples, if available. If not, then prior samples. If not,
