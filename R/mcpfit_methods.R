@@ -108,7 +108,7 @@ get_summary = function(fit, width, varying = FALSE) {
 summary.mcpfit = function(object, width = 0.95, digits = 2, ...) {
   # Standard name in mcp
   fit = object
-  samples = get_samples(fit)
+  samples = get_samples(fit, error = FALSE)
 
   if (class(object) != "mcpfit")
     stop("`object`` must be an mcpfit object.")
@@ -191,13 +191,13 @@ print.mcpfit = function(x, ...) {
 #'
 #' @aliases get_samples
 #' @inheritParams mcp
-get_samples = function(fit, message = TRUE) {
+get_samples = function(fit, message = TRUE, error = TRUE) {
   if (coda::is.mcmc.list(fit$mcmc_post)) {
     return(fit$mcmc_post)
   } else if (coda::is.mcmc.list(fit$mcmc_prior)) {
     message("Posterior was not sampled. Using prior samples.")
     return(fit$mcmc_prior)
-  } else {
+  } else if (error == TRUE) {
     stop("This mcpfit contains no posterior or prior samples.")
   }
 }
