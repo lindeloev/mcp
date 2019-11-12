@@ -233,7 +233,8 @@ plot_segments = function(fit,
       stop("Plot with rate = FALSE not implemented for varying effects (yet).")
 
     # Interpolate trials for binomial at the values in "eval_at"
-    interpolated_trials = round(stats::approx(fit$data[, fit$pars$trials], xout = eval_at)$y)
+    # to make sure that there are actually values to plot
+    interpolated_trials = suppressWarnings(stats::approx(x = dplyr::pull(fit$data, fit$pars$trials), y = dplyr::pull(fit$data, fit$pars$trials), xout = eval_at)$y)
     samples = samples %>%
       tidyr::expand_grid(!!xvar := eval_at) %>%  # correct name of x-var
       dplyr::mutate(!!fit$pars$trials := rep(interpolated_trials, nrow(samples)))
@@ -265,7 +266,7 @@ plot_segments = function(fit,
       tidybayes::sample_draws(lines) %>%
       dplyr::mutate(
         # Add line ID to separate lines in the plot.
-        line = !!xvar == min(!!xvar),
+        line = !!xvar == min(!!xvar) & !!xvar == lag(!!xvar, 1),
         line = cumsum(.data$line)
       )
 
@@ -392,7 +393,8 @@ get_eval_at = function(fit, facet_by) {
   xmin = min(fit$data[, fit$pars$x])  # smallest observed X
   xmax = max(fit$data[, fit$pars$x])
 
-  # Just give up for faceting and return a reasonable resolution
+  # Just give up for faceting and prior-plots (usually very distributed change points)
+  # and return a reasonable resolution
   if (!is.null(facet_by) | is.null(fit$mcmc_post)) {
     eval_at = seq(xmin, xmax, length.out = X_RESOLUTION_FACET)
     return(eval_at)
@@ -411,5 +413,5 @@ get_eval_at = function(fit, facet_by) {
     eval_at = c(eval_at, seq(from = cp_hdis$lower[i], to = cp_hdis$upper[i], length.out = length.out))
   }
 
-  return(eval_at)
+  return(sort(eval_at))
 }
