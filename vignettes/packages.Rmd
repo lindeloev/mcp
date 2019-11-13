@@ -102,7 +102,7 @@ summary(fit_envcpt)  # Show log-likelihoods
 ```
 
 
-This can be used to maximize the log-likelihood. Of interest here is `meancpt`. The documentation says that it calls `changepoint::cpt.meanvar`, modeling a simultanous change in mean and variance. Curiously, `changepoint::cpt.meanvar(data$y)` only finds one change point when called directly (see below), but the output matches `changepoint.np::cpt.np(data$y)@cpts`, so I suspect that this function is used instead. `EnvCpt`  has a nice plot of all the models:
+This can be used to maximize the log-likelihood. Of interest here is `meancpt`. The documentation says that it calls `changepoint::cpt.meanvar`, modeling a simultaneous change in mean and variance. Curiously, `changepoint::cpt.meanvar(data$y)` only finds one change point when called directly (see below), but the output matches `changepoint.np::cpt.np(data$y)@cpts`, so I suspect that this function is used instead. `EnvCpt`  has a nice plot of all the models:
 
 ```{r}
 plot(fit_envcpt)
@@ -119,9 +119,9 @@ I think the change point at `x = 100` should just be ignored. We see that it app
 
 
 # segmented
-`segmented` has a very shallow learning curve combined with great modeling flexibility. You simply specify your model in `lm`, `glm`, `Arima`, and also work for e.g. `coxph` (Cox proportional Hazard). Supply it to `segmented` which then segment your data along the x-axis and applie the linear model in each segment. The trick is identifying the locations where this split works the best. The positive consequence is that you get great modeling flexibility with GLM, AR(1) models, etc. 
+`segmented` has a very shallow learning curve combined with great modeling flexibility. You simply specify your model in `lm`, `glm`, `Arima`, and also work for e.g. `coxph` (Cox proportional Hazard). Supply it to `segmented` which then segment your data along the x-axis and applies the linear model in each segment. The trick is identifying the locations where this split works the best. The positive consequence is that you get great modeling flexibility with GLM, AR(1) models, etc. 
 
-The downside is that you kan only have one *kind* of segments and (for some reason) *it ignores the intercepts on anything but the first segment*. Only (joined) slopes are supported in segment 2+. Unfortunately, this means that `segmented` fails for the present changing-intercept data. `segmented` is otherwise well developed with prediction functions, (frequentist) intervals, plots, etc. so if you have large datasets with impermissible long run times in `mcp` and it matches what `segmented` can model, it is a good option.
+The downside is that you can only have one *kind* of segments and (for some reason) *it ignores the intercepts on anything but the first segment*. Only (joined) slopes are supported in segment 2+. Unfortunately, this means that `segmented` fails for the present changing-intercept data. `segmented` is otherwise well developed with prediction functions, (frequentist) intervals, plots, etc. so if you have large datasets with impermissible long run times in `mcp` and it matches what `segmented` can model, it is a good option.
 
 Enough talk:
 
@@ -189,7 +189,7 @@ It detects two change points, which is good. No intervals are returned and no pl
 
 
 # changepoint and changepoint.np
-`changepoint` is focused on intercept-only changes. It can estimate changes in means (`cpt.mean`), variance (`cpt.var`), or both (`cpt.meanvar`). It is semi-automatic in that you can set the numer of change points using parameter `Q` and this defaults to five. It can recover ML estimates of the intercepts. It does not estiamte uncertainty, nor model checking. It only takes a response variable, so the change point is the data *index*, not the point on an x-axis. Make sure that your data is ordered. In our case it is ordered and we have 1 data point at each `x`, so it is optimal for `changepoint`.
+`changepoint` is focused on intercept-only changes. It can estimate changes in means (`cpt.mean`), variance (`cpt.var`), or both (`cpt.meanvar`). It is semi-automatic in that you can set the nubmer of change points using parameter `Q` and this defaults to five. It can recover ML estimates of the intercepts. It does not estimate uncertainty, nor model checking. It only takes a response variable, so the change point is the data *index*, not the point on an x-axis. Make sure that your data is ordered. In our case it is ordered and we have 1 data point at each `x`, so it is optimal for `changepoint`.
 
 It detects the first change point, but not the second.
 
@@ -253,7 +253,7 @@ str(list(
 
 
 # strucchange::Fstats
-Contains the function `Fstats` which can detect a single change point. The functionality is limited and way superseeded by `changepoint`. I won't go into further details. It finds the change point at `x = 30`, but not the second change point at `x = 70`:
+Contains the function `Fstats` which can detect a single change point. The functionality is limited and way superseded by `changepoint`. I won't go into further details. It finds the change point at `x = 30`, but not the second change point at `x = 70`:
 
 ```{r}
 fit_struc = strucchange::Fstats(y ~ 1, data = data)
@@ -263,7 +263,7 @@ print(fit_struc$breakpoint)
 
 
 # TSMCP
-Short for "Time-Series Multiple Change Point". It too is very limited, outputting a single number (!). For the problem at hand, changing `method` makes no difference. For many other `c` (`c = 0.3`, `c = 4`), it fails to find any change points. There is also `TSMCP::cpvnts()` to model AR(N), but I have faild to make it find any change points in the present data set.
+Short for "Time-Series Multiple Change Point". It too is very limited, outputting a single number (!). For the problem at hand, changing `method` makes no difference. For many other `c` (`c = 0.3`, `c = 4`), it fails to find any change points. There is also `TSMCP::cpvnts()` to model AR(N), but I have failed to make it find any change points in the present data set.
 
 It finds the change point at `x = 30`, but not the second change point at `x = 70`.
 
