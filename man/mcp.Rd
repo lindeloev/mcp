@@ -20,8 +20,8 @@ See examples for more details.}
 
 \item{data}{Data.frame or tibble in long format.}
 
-\item{prior}{Named list. Names are parameter names (cp_i, int_i, \link{x_var}_i,
-sigma) and the values are either
+\item{prior}{Named list. Names are parameter names (\code{cp_i}, \code{int_i}, \code{xvar_i},
+`sigma``) and the values are either
 \itemize{
 \item A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
 conventional prior distribution. Uninformative priors based on data

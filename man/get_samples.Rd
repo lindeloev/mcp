@@ -6,6 +6,13 @@
 \usage{
 get_samples(fit, message = TRUE, error = TRUE)
 }
+\arguments{
+\item{fit}{An mcpfit object}
+
+\item{message}{TRUE: gives a message if returning prior samples. FALSE = no message}
+
+\item{error}{TRUE: err if there are no samples. FALSE: return NULL}
+}
 \description{
 Returns posterior samples, if available. If not, then prior samples. If not,
 then throw an informative error. This is useful for summary and plotting, that

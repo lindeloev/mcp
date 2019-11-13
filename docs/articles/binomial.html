@@ -70,7 +70,7 @@
       <a href="../articles/formulas.html">About mcp formulas and models</a>
     </li>
     <li>
-      <a href="../articles/packages.html">mcp and other change point packages</a>
+      <a href="../articles/packages.html">An overview of change point packages in R</a>
     </li>
     <li>
       <a href="../articles/poisson.html">Poisson change point analysis with mcp</a>
@@ -103,7 +103,7 @@
       <h1>Binomial change point analysis with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-11-12</h4>
+            <h4 class="date">2019-11-13</h4>
       
       
       <div class="hidden name"><code>binomial.Rmd</code></div>
@@ -159,16 +159,16 @@
 <pre><code>## # A tibble: 100 x 3
 ##     year     N     y
 ##    &lt;int&gt; &lt;int&gt; &lt;int&gt;
-##  1  1901    14    10
-##  2  1902    20    19
-##  3  1903    12    11
-##  4  1904    14    11
-##  5  1905    11    11
-##  6  1906    11     9
-##  7  1907    14    12
-##  8  1908    16    14
-##  9  1909    12     8
-## 10  1910    14    11
+##  1  1901    10     9
+##  2  1902    14    10
+##  3  1903    19    18
+##  4  1904    18    15
+##  5  1905    17    14
+##  6  1906    14     9
+##  7  1907    19    16
+##  8  1908    14    14
+##  9  1909    18    17
+## 10  1910    18    18
 ## # ... with 90 more rows</code></pre>
 <p>Visually:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(data<span class="op">$</span>year, data<span class="op">$</span>y)</a></code></pre></div>
@@ -189,13 +189,13 @@
 ##   3: y ~ 1 ~ 1 + year
 ## 
 ## Population-level parameters:
-##    name      mean     lower     upper rhat  eff    ts_se
-##    cp_1 1923.2539 1920.2606 1925.7996    1  789 2.30e+01
-##    cp_2 1964.4952 1964.0009 1964.9471    1 5744 1.33e-01
-##   int_1    1.8455    1.5531    2.1486    1 1239 1.49e-01
-##   int_3    0.2542   -0.0773    0.5948    1 1015 2.72e-01
-##  year_2   -0.1685   -0.1929   -0.1442    1 1140 1.21e-03
-##  year_3    0.0362    0.0196    0.0536    1  970 6.76e-04</code></pre>
+##    name      mean     lower    upper rhat  eff    ts_se
+##    cp_1 1921.1896 1918.0361 1924.729 1.01  618 46.35960
+##    cp_2 1964.4976 1964.0289 1964.981 1.00 4721  0.16202
+##   int_1    2.1581    1.7919    2.513 1.00  998  0.29364
+##   int_3    0.0258   -0.3282    0.370 1.00  920  0.29320
+##  year_2   -0.1692   -0.1947   -0.145 1.00  905  0.00159
+##  year_3    0.0509    0.0329    0.069 1.00  970  0.00079</code></pre>
 <p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have <a href="../docs/articles/varying.html">varying effects</a>, use <code><a href="../reference/ranef.html">ranef(fit)</a></code> to see them.</p>
 <p>Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
@@ -203,7 +203,7 @@
 <p>These lines are just <code>fit$func_y</code> applied to a random draw of the posterior samples. In other words, they represent the joint distribution of the parameters. You can change the number of draws (lines) using <code><a href="../reference/plot.mcpfit.html">plot(fit, lines = 50)</a></code>.</p>
 <p>Notice for binomial models it defaults to plot the <em>rate</em> (<code>y / N</code>) as a function of x. The reason why is obvious when we plot on “raw” data by toggling <code>rate</code>:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">rate =</span> <span class="ot">FALSE</span>)</a></code></pre></div>
-<pre><code>## Warning: Removed 3375 rows containing missing values (geom_path).</code></pre>
+<pre><code>## Warning: Removed 3525 rows containing missing values (geom_path).</code></pre>
 <p><img src="binomial_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
 <p>These lines are jagged because <code>N</code> varies from year to year. Although there is close too 100% success rate in the years 1900 - 1920, the number of trials varies, as you can see in the raw data. However, using <code>rate = FALSE</code> will be great when the number of trials is constant for extended periods of time, as <code>y</code> is more interpretable then.</p>
 <p>Of course, these plots work with <a href="../docs/articles/varying.html">varying effects</a> as well.</p>

@@ -4,14 +4,14 @@
 \alias{get_density}
 \title{Compute the density at a specific point.}
 \usage{
-get_density(samples, eval_this, value)
+get_density(samples, LHS, value)
 }
 \arguments{
 \item{samples}{An mcmc.list}
 
-\item{value}{What value to evaluate the density at}
+\item{LHS}{Expression to compute posterior}
 
-\item{par_name}{Name of a column in the list}
+\item{value}{What value to evaluate the density at}
 }
 \value{
 A float

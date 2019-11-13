@@ -113,7 +113,7 @@
       <a href="../articles/formulas.html">About mcp formulas and models</a>
     </li>
     <li>
-      <a href="../articles/packages.html">mcp and other change point packages</a>
+      <a href="../articles/packages.html">An overview of change point packages in R</a>
     </li>
     <li>
       <a href="../articles/poisson.html">Poisson change point analysis with mcp</a>
@@ -154,7 +154,7 @@
     <p>Used in <a href='hypothesis.html'>hypothesis</a></p>
     </div>
 
-    <pre class="usage"><span class='fu'>get_density</span>(<span class='no'>samples</span>, <span class='no'>eval_this</span>, <span class='no'>value</span>)</pre>
+    <pre class="usage"><span class='fu'>get_density</span>(<span class='no'>samples</span>, <span class='no'>LHS</span>, <span class='no'>value</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -164,12 +164,12 @@
       <td><p>An mcmc.list</p></td>
     </tr>
     <tr>
-      <th>value</th>
-      <td><p>What value to evaluate the density at</p></td>
+      <th>LHS</th>
+      <td><p>Expression to compute posterior</p></td>
     </tr>
     <tr>
-      <th>par_name</th>
-      <td><p>Name of a column in the list</p></td>
+      <th>value</th>
+      <td><p>What value to evaluate the density at</p></td>
     </tr>
     </table>
 
