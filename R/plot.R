@@ -266,7 +266,7 @@ plot_segments = function(fit,
       tidybayes::sample_draws(lines) %>%
       dplyr::mutate(
         # Add line ID to separate lines in the plot.
-        line = !!xvar == min(!!xvar) & !!xvar == lag(!!xvar, 1),
+        line = !!xvar == min(!!xvar) & !!xvar == dplyr::lag(!!xvar, 1),
         line = cumsum(.data$line)
       )
 
@@ -384,6 +384,7 @@ plot_bayesplot = function(fit,
 #'
 #' @aliases get_eval_at
 #' @inheritParams plot.mcpfit
+#' @param fit An mcpfit object.
 get_eval_at = function(fit, facet_by) {
   # Set resolutions in general and for change points
   X_RESOLUTION_ALL = 100  # Number of points to evaluate at x

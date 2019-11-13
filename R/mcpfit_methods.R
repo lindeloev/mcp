@@ -190,7 +190,9 @@ print.mcpfit = function(x, ...) {
 #' works on both.
 #'
 #' @aliases get_samples
-#' @inheritParams mcp
+#' @param fit An mcpfit object
+#' @param message TRUE: gives a message if returning prior samples. FALSE = no message
+#' @param error TRUE: err if there are no samples. FALSE: return NULL
 get_samples = function(fit, message = TRUE, error = TRUE) {
   if (coda::is.mcmc.list(fit$mcmc_post)) {
     return(fit$mcmc_post)
@@ -200,4 +202,6 @@ get_samples = function(fit, message = TRUE, error = TRUE) {
   } else if (error == TRUE) {
     stop("This mcpfit contains no posterior or prior samples.")
   }
+
+  return(NULL)
 }
