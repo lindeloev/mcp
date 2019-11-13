@@ -108,7 +108,7 @@ gridExtra::grid.arrange(plot(fit_mcp),
 
 ```{r, message = FALSE, results = FALSE}
 fit_envcpt = EnvCpt::envcpt(data$y)  # Fit all models at once
-summary(fit_envcpt)  # Show log-likelihoods
+fit_envcpt$summary  # Show log-likelihoods
 ```
 ```{r, echo = FALSE}
 summary(fit_envcpt)  # Show log-likelihoods
