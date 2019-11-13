@@ -6,7 +6,7 @@
 
 Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generalized Linear Segments - and the coefficients in those segments. Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. `mcp` leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful. 
 
-Read how `mcp` [other packages](https://lindeloev.github.io/mcp/articles/packages.html).
+See how `mcp` compares to [other packages](https://lindeloev.github.io/mcp/articles/packages.html).
 
 
 # Install
