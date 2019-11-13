@@ -17,8 +17,8 @@
 #'   response. `~ predictors` assumes an intercept-only change point).
 #'
 #'   See examples for more details.
-#' @param prior Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
-#'  sigma) and the values are either
+#' @param prior Named list. Names are parameter names (`cp_i`, `int_i`, `xvar_i`,
+#'  `sigma``) and the values are either
 #'
 #'  * A JAGS distribution (e.g., `int_1 = "dnorm(0, 1) T(0,)"`) indicating a
 #'      conventional prior distribution. Uninformative priors based on data
