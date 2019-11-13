@@ -119,7 +119,7 @@ fit$jags_code, or the R function to simulate data (fit$func_y)." />
       <a href="../articles/formulas.html">About mcp formulas and models</a>
     </li>
     <li>
-      <a href="../articles/packages.html">mcp and other change point packages</a>
+      <a href="../articles/packages.html">An overview of change point packages in R</a>
     </li>
     <li>
       <a href="../articles/poisson.html">Poisson change point analysis with mcp</a>
@@ -189,8 +189,8 @@ response. <code>~ predictors</code> assumes an intercept-only change point).</p>
     </tr>
     <tr>
       <th>prior</th>
-      <td><p>Named list. Names are parameter names (cp_i, int_i, x_var_i,
-sigma) and the values are either</p><ul>
+      <td><p>Named list. Names are parameter names (<code>cp_i</code>, <code>int_i</code>, <code>xvar_i</code>,
+`sigma``) and the values are either</p><ul>
 <li><p>A JAGS distribution (e.g., <code>int_1 = "dnorm(0, 1) T(0,)"</code>) indicating a
 conventional prior distribution. Uninformative priors based on data
 properties are used where priors are not specified. This ensures good

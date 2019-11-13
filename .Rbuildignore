@@ -1,7 +1,6 @@
 ^mcp\.Rproj$
 ^\.Rproj\.user$
 .travis.yml
-_pkgdown.yml
 .covrignore
 docs
 vignettes/comparison_cache
@@ -9,5 +8,6 @@ vignettes/packages_cache
 vignettes/poisson_cache
 vignettes/priors_cache
 vignettes/varying_cache
+pkgdown
 ^data-raw$
 ^revdep$
