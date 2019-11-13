@@ -48,7 +48,7 @@ Here are some properties of the change point varying effects:
 
 **Hierarchical:** Consider the first change point, `cp_1`, and it's associated varying effects, `cp_1_id`. By default, it is modeled as sampled from (nested within) the group-level change point, `cp_1`, as well as a spread, `cp_1_sd`.
 
-**Constraints:** The varying effects are constrained to lie (1) in the observed range of the x-axis, and/or (2) between the two adjecent change points. That is, all `cp_1_id` are between `min(x)` and `cp_2`. All `cp_2_species` are between `cp_1` and `cp_3` and all `cp_3_id` are between `cp_2` and `max(x)`. These constraints are enforced through truncation of the default prior (`fit$prior`) and you can override them by specifying a manual prior (see vignette("priors")).
+**Constraints:** The varying effects are constrained to lie (1) in the observed range of the x-axis, and/or (2) between the two adjacent change points. That is, all `cp_1_id` are between `min(x)` and `cp_2`. All `cp_2_species` are between `cp_1` and `cp_3` and all `cp_3_id` are between `cp_2` and `max(x)`. These constraints are enforced through truncation of the default prior (`fit$prior`) and you can override them by specifying a manual prior (see vignette("priors")).
 
 
 
@@ -143,7 +143,7 @@ You can see the priors of the model like this:
 cbind(fit$prior)
 ```
 
-The priors `cp_1_sd` is the population-level standard deviation of `cp_1_id`, the latter of which is applied to all levels of `id`. This is also apparent if you inspect the JAGS code for this model. The truncation of varying effects is quite contrieved, but just keeps them between the two adjecent (population-level) change points.
+The priors `cp_1_sd` is the population-level standard deviation of `cp_1_id`, the latter of which is applied to all levels of `id`. This is also apparent if you inspect the JAGS code for this model. The truncation of varying effects is quite contrived, but just keeps them between the two adjecent (population-level) change points.
 
 
 # JAGS code

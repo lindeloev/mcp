@@ -136,6 +136,7 @@ waic.mcpfit = function(x, ...) {
 #'   * `BF` Bayes Factor in favor  of the hypothesis.
 #'       For "=" it is the Savage-Dickey density ratio.
 #'       For directional hypotheses, it is p converted to odds.
+#' @importFrom dplyr .data
 #' @export
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
@@ -218,7 +219,7 @@ hypothesis = function(fit, hypotheses, width = 0.95) {
       prob = samples %>%
         dplyr::mutate(result = eval(parse(text = expression))) %>%  # this is where the magic happens
         dplyr::summarise(
-          prob = sum(result == TRUE) / dplyr::n()
+          prob = sum(.data$result == TRUE) / dplyr::n()
         )
 
       p = prob$prob
@@ -249,14 +250,14 @@ hypothesis = function(fit, hypotheses, width = 0.95) {
 #'
 #' @aliases get_density
 #' @param samples An mcmc.list
-#' @param par_name Name of a column in the list
+#' @param LHS Expression to compute posterior
 #' @param value What value to evaluate the density at
 #' @return A float
 #'
-get_density = function(samples, eval_this, value) {
+get_density = function(samples, LHS, value) {
   samples = tidybayes::tidy_draws(samples) %>%
-    dplyr::mutate(result = eval(parse(text = eval_this)))
-  dens = density(dplyr::pull(samples, "result"))
-  dens_point = spline(dens$x, dens$y, xout = value)$y
+    dplyr::mutate(result = eval(parse(text = LHS)))
+  dens = stats::density(dplyr::pull(samples, "result"))
+  dens_point = stats::spline(dens$x, dens$y, xout = value)$y
   return(dens_point)
 }

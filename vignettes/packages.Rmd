@@ -1,10 +1,10 @@
 ---
-title: "mcp and other change point packages"
+title: "An overview of change point packages in R"
 author: "Jonas Kristoffer Lindeløv"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{mcp and other change point packages}
+  %\VignetteIndexEntry{An overview of change point packages in R}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,31 +16,35 @@ TO DO:
  * Do worked examples comparing them.
 -->
 
-There are a lot of change point packages out there already, so why `mcp`? Here are my (probably biased) thoughts about this. I compiled a table about change point packages. I will demonstrate each of these packages below.
+There are a lot of change point packages out there already, so why `mcp`? Here are my (probably biased) thoughts about this. I compiled some tables, summarising change point packages ([.xlsx file here](../packages_tables.xlsx)). I will demonstrate each of these packages in an applied example below to discuss their merits and shortcomings. 
 
-![](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_table.png)
+![](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_table1.png)
+![](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_table2.png)
+![](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_table3.png)
 
 
 # Unique features of mcp
- * Manually specify the segment structure.
- * Posterior distributions on change points. This matters since they rarely conform to known distributions.
- * *varying change points*: To my knowledge, no other package implements this. See more about [varying change points in mcp](../docs/articles/varying.html).
- * *Fixing parameters* to values and other parameters as discussed under [priors](../docs/articles/priors.html)
- * *Explicit priors*: `bcp` is the only other Bayesian change point package I know of. It contains a few high-level prior parameters, but not for specific parameters such as *where* change points are expected to occur etc. See [priors](../docs/articles/priors.html) for more.
- * *Prior and posterior predictive checks*. In general, most other packages have limited or no model checking functionality.
- * Flexible hypothesis testing using `loo` and `hypothesis`, including testing the existence of a change point. Most other packages stop at estimation, though some provide p-values.
+
+ * Manually specify the segment structure. Other packages allow for specifying segment structure, but it has to be shared for all segments. Read more about [the formula syntax](../docs/articles/formulas.html) in `mcp`.
+ * Posterior distribution for each change point. This matters since they rarely conform to known distributions.
+ * *varying change points*: To my knowledge, no other package implements varying change points, i.e., allowing by-group differences in change points while sharing all other parameters. Read more about [varying change points](../docs/articles/varying.html) in `mcp`.
+ * *Sharing and fixing parameters* to values and other parameters as discussed under [priors in mcp](../docs/articles/priors.html).
+ * *Explicit priors*: `bcp` is the only other Bayesian change point package I know of. It contains a few high-level prior parameters, but not for specific parameters such as *where* change points are expected to occur etc. Read more about [priors in mcp](../docs/articles/priors.html) for more.
+ * *Prior and posterior predictive checks*. In general, most other packages have limited or no model checking functionality. The default `plot.mcpfit` is inherently a visual predictive check and can be applied to priors (`mcp(..., sample = "prior")` and posteriors. Of course inspecting Gelman-Rubin statistics and effective sample sizes in `summary.mcpfit`, as well as trace plots (`plot(fit, "trace")`), also go a long way.
+ * Flexible hypothesis testing using `loo` and `hypothesis`, including testing the existence of a change point. Most other packages stop at estimation, though some provide p-values. Read more about [hypothesis testing and model comparison](../docs/articles/comparison.html) using `mcp`.
 
 
 # Where mcp is inferior
 `mcp` is inferior with respect to:
- * *speed*: mcmc sampling is slow compared to analytical and specialized solutions. For datasets > 20.000 points, this may be impermissibly long.
- * *automatic detection of change points*: most packages out there does automatic change point detection. This is not a space that `mcp` tries to fill so use the other packages here. Though given the intercept-only example below, I would worry about their ability to recover change points.
- * *no support for autoregressive models*: As change point models are big in time-series analyses, I'd much like to implement at least AR(1). This is on planned, but not implemented yet.
- * *not multivariate* and *no variance change point*: These are planned but not implemented.
+
+ * *speed*: mcmc sampling is slow compared to analytical and specialized solutions. For datasets > 20.000 points, it may take hours to fit `mcp`. Running in parallel and lowering the iterations helps (`mcp(..., cores = 4, iter = 1000, adapt = 300, update = 300`), but remember to check convergences.
+ * *automatic detection of change points*: most packages out there does automatic change point detection. This is not a space that `mcp` tries to fill so use the other packages here. Though given the intercept-only example below, I would worry about many package's ability to recover change points.
+ * *no support for autoregressive models*: As change point models are big in time-series analyses, I'd much like to implement at least AR(1). This is on planned, but not implemented yet in version 0.1.
+ * *not multivariate* and *no variance change point*: These are planned but not implemented yet in version 0.1.
 
 
 
-# Comparison of packages
+# A simple dataset to compare packages
 As a simple example, we simulate some intercept-only data with change points at 30 (from mean=2 to mean=0) and 70 (to mean=1) and a residual of 1 SD.
 
 ```{r}
@@ -56,16 +60,20 @@ plot(data)
 abline(v = c(30, 70), col="red")
 ```
 
-## `mcp`
+# mcp
 `mcp` needs no further introduction. We fit the three-plateaus model with default priors:.
 
-```{r, cache = TRUE, message = FALSE}
+```{r, cache = TRUE, message = FALSE, results=FALSE}
 library(mcp)
 segments = list(y~1, 1~1, 1~1)  # three intercept-only segments
 fit_mcp = mcp(segments, data, par_x = "x")
 
 summary(fit_mcp)
 ```
+```{r, echo = FALSE}
+summary(fit_mcp)
+```
+
 
 The summary shows good parameter recovery, though the second change point is detected a bit early. This is understandable if you look at the data, and the true change point is still within the highest density interval. 
 
@@ -77,14 +85,47 @@ gridExtra::grid.arrange(plot(fit_mcp),
                         ncol = 2)
 ```
 
-## `segmented`
-`segmented` has a very shallow learning curve combined with great modeling flexibility. You simply specify your model in `lm`, `glm`, `Arima`, and also work for e.g. `coxph` (Cox proportional Hazard). Supply it to `segmented` which then segment your data along the x-axis and applie the linear model in each segment. The trick is identifying the locations where this split works the best. The positive consequence is that you get great modeling flexibility with GLM, AR(1) models, etc. 
+`mcp` takes around 10 seconds to fit this example, which is the slowest of all the packages considered here. You can bring that down to 4 seconds by running in parallel, using `mcp(..., cores = 3)`.
 
-The downside is that you kan only have one *kind* of segments and (for some reason) *you can not model intercepts on anything but the first segment*. Only (joined) slopes are supported in segment 2+. Unfortunately, this means that `segmented` fails for the present changing-intercept data. `segmented` is otherwise well developed with prediction functions, (frequentist) intervals, plots, etc. so if you have large datasets with impermissible long run times in `mcp` and it matches what `segmented` can model, it is a good option.
+
+
+
+# EnvCpt
+`EnvCpt` can detect change points in mean and variance (not separately), slopes ("trends"), and AR(1)/AR(2), as well as conveniently fitting various models without change points. It automatically infers the number of change points. Unless otherwise instructed (through `models` argument), `EnvCpt` fits all models to the data, allowing you to pick one. It allows 
+
+```{r, message = FALSE, results = FALSE}
+fit_envcpt = EnvCpt::envcpt(data$y)  # Fit all models at once
+summary(fit_envcpt)  # Show log-likelihoods
+```
+```{r, echo = FALSE}
+summary(fit_envcpt)  # Show log-likelihoods
+```
+
+
+This can be used to maximize the log-likelihood. Of interest here is `meancpt`. The documentation says that it calls `changepoint::cpt.meanvar`, modeling a simultaneous change in mean and variance. Curiously, `changepoint::cpt.meanvar(data$y)` only finds one change point when called directly (see below), but the output matches `changepoint.np::cpt.np(data$y)@cpts`, so I suspect that this function is used instead. `EnvCpt`  has a nice plot of all the models:
+
+```{r}
+plot(fit_envcpt)
+```
+
+Digging into the `meancpt`, we get maximum-likelihood estimates of the change points and the parameters of each segment.
+```{r}
+fit_envcpt$meancpt@cpts
+fit_envcpt$meancpt@param.est
+```
+
+I think the change point at `x = 100` should just be ignored. We see that it approximately identifies the change points, though without intervals.
+
+
+
+# segmented
+`segmented` has a very shallow learning curve combined with great modeling flexibility. You simply specify your model in `lm`, `glm`, `Arima`, and also work for e.g. `coxph` (Cox proportional Hazard). Supply it to `segmented` which then segment your data along the x-axis and applies the linear model in each segment. The trick is identifying the locations where this split works the best. The positive consequence is that you get great modeling flexibility with GLM, AR(1) models, etc. 
+
+The downside is that you can only have one *kind* of segments and (for some reason) *it ignores the intercepts on anything but the first segment*. Only (joined) slopes are supported in segment 2+. Unfortunately, this means that `segmented` fails for the present changing-intercept data. `segmented` is otherwise well developed with prediction functions, (frequentist) intervals, plots, etc. so if you have large datasets with impermissible long run times in `mcp` and it matches what `segmented` can model, it is a good option.
 
 Enough talk:
 
-```{r}
+```{r, warning=FALSE}
 library(segmented)
 fit_lm = glm(y ~ 1 + x, data, family = gaussian())  # intercept-only model
 fit_segmented = segmented(fit_lm, seg.Z = ~x, npsi = 2)  # Two change points along x
@@ -102,22 +143,63 @@ lines.segmented(fit_segmented)
 points.segmented(fit_segmented)
 ```
 
+Because the fitted objects returned by `segmented` contains `aic`, `deviance`, etc. it is in principle possible to do model comparison. Here is a BIC-based Bayes Factor testing whether there is one or two change points in the data:
+
+```{r}
+fit_segmented_1 = segmented(fit_lm, seg.Z = ~x, npsi = 1)
+BF = exp((BIC(fit_segmented) - BIC(fit_segmented_1))/2)  # From Wagenmakers (2007)
+BF
+```
+
+We can do the same using `mcp`:
+```{r, cache = TRUE, message = FALSE, results=FALSE, warning=FALSE}
+segments_1 = list(y~1, 1~1)
+fit_mcp_1 = mcp(segments_1, data, par_x = "x")
+fit_mcp_1$loo = loo(fit_mcp_1)
+fit_mcp$loo = loo(fit_mcp)
+loo::loo_compare(fit_mcp$loo, fit_mcp_1$loo)
+```
+```{r, echo = FALSE}
+loo::loo_compare(fit_mcp$loo, fit_mcp_1$loo)
+```
 
 
-## `changepoint`
-`changepoint` is focused on intercept-only changes. It can estimate changes in means (`cpt.mean`), variance (`cpt.var`), or both (`cpt.meanvar`). It is semi-automatic in that you can set the numer of change points using parameter `Q` and this defaults to five. It can recover ML estimates of the intercepts. It does not estiamte uncertainty, nor model checking. It only takes a response variable, so the change point is the data *index*, not the point on an x-axis. Make sure that your data is ordered. In our case it is ordered and we have 1 data point at each `x`, so it is optimal for `changepoint`.
+While `segmented` prefers the one-change-point model, `mcp` prefers the (true) two-change-point model.
+
+
+
+
+# cpm
+`cpm` is an intercept-only (in mean and variance) package, so it cannot model slopes. It can detect single change points via `detectChangePoint` and multiple change points via `processStream`. `processStream` is an automatic change point detection, using a p-value threshold to determine if a candidate should be marked as a hit. Multiple ways of computing p-values (`cpmType`) are available. In my limited testing, they return similar change points, though not identical.
+
+```{r}
+library(cpm)
+#fit_cpm = detectChangePoint(data$y, cpmType = "Student")  # a single change point
+#fit_cpm = processStream(data$y, cpmType = "Mann-Whitney")  # Detects three
+fit_cpm = processStream(data$y, cpmType = "Student")  # Multiple change points
+fit_cpm$changePoints
+```
+
+It detects two change points, which is good. No intervals are returned and no plot functions are provided. The second change point is estimated a bit further away from the true value than `mcp`.
+
+
+
+
+
+
+
+# changepoint and changepoint.np
+`changepoint` is focused on intercept-only changes. It can estimate changes in means (`cpt.mean`), variance (`cpt.var`), or both (`cpt.meanvar`). It is semi-automatic in that you can set the nubmer of change points using parameter `Q` and this defaults to five. It can recover ML estimates of the intercepts. It does not estimate uncertainty, nor model checking. It only takes a response variable, so the change point is the data *index*, not the point on an x-axis. Make sure that your data is ordered. In our case it is ordered and we have 1 data point at each `x`, so it is optimal for `changepoint`.
 
 It detects the first change point, but not the second.
 
-```{r}
+```{r, message=FALSE}
 library(changepoint)
 fit_changepoint = cpt.mean(data$y)
 
 # Return estimates
-list(
-  ints = param.est(fit_changepoint)$mean,
-  cp = cpts(fit_changepoint)
-)
+c(ints = param.est(fit_changepoint)$mean,
+  cp = cpts(fit_changepoint))
 ```
 
 Plot:
@@ -125,24 +207,30 @@ Plot:
 plot(fit_changepoint)
 ```
 
-
-
-
-
-## `bcp`
-`bcp` is the only other Bayesian package in the game. It automatically detects change points and segment types, though you can use the parameter `d` to increase the prior probability of intercept-only models. It provides estimates of means and probability of change point *at each x-coordinate*. It has little additional functionality. The summary method conveys the same as the plot, so let's stick to the plot. 
-
-We see that it captures the change point at 30, omits the one at 70, and has some false alarms elsewhere.
+The package `changepoint.np` extends `changepoint` by providing a non-parametric version. It is unclear which of the `changepoint` functions are extended, but it manages to find both change points to a good precision. As with many other packages, no intervals are provided. As mentioned earlier, I suspect that `EnvCpt` uses this function under the hood.
 
 ```{r}
+changepoint.np::cpt.np(data$y)@cpts
+```
+
+
+
+
+
+# bcp
+`bcp` is the only other Bayesian package in the game. It automatically detects change points and segment types, though you can use the parameter `d` to increase the prior probability of intercept-only models. It provides estimates of means and probability of change point *at each x-coordinate*. It has little additional functionality. The summary method conveys the same as the plot, so let's stick to the plot. 
+
+We see that it vaguely captures the change point at `x = 30`, and has some smeared-out probability around `x = 60` (`mcp` detected a single change point at `x = 64` here). `bcp` has some "false alarms" at `x < 20`.
+
+```{r, message = FALSE}
 library(bcp)
 fit_bcp = bcp(data$y, d = 1000)
 plot(fit_bcp)
 ```
 
 
-## `ecp`
-`ecp` contains six functions to detect change points. It is clearly built for multivariate cases, but is I have not managed to get `e.agglo` working for the present example, but here I run the other five. The resulting information is quite limited with no intervals, no plots, etc. It detects the first change point, but not the one at 70.
+# ecp
+`ecp` contains six functions to detect change points. It is clearly built for multivariate cases, but is I have not managed to get `e.agglo` working for the present example, but here I run the other five. The resulting information is quite limited with no intervals, no plots, etc. It detects one of the change points, but not both (with the exception of `e.divisive`, which returns four),
 
 ```{r}
 data_ecp = as.matrix(data$y)
@@ -164,8 +252,8 @@ str(list(
 
 
 
-## `strucchange`
-Contains the function `Fstats` which can detect a single change point. The functionality is limited and way superseeded by `changepoint`. I won't go into further details. It finds the change point at 30:
+# strucchange::Fstats
+Contains the function `Fstats` which can detect a single change point. The functionality is limited and way superseded by `changepoint`. I won't go into further details. It finds the change point at `x = 30`, but not the second change point at `x = 70`:
 
 ```{r}
 fit_struc = strucchange::Fstats(y ~ 1, data = data)
@@ -174,15 +262,26 @@ print(fit_struc$breakpoint)
 
 
 
-## `TSMCP`
-Short for "Time-Series Multiple Change Point". It too is very limited, outputting a single number (!). For the problem at hand, changing `method` makes no difference but for many other `c`, it fails to find anything. There is also `TSMCP::cpvnts()` to model AR(N), but I have faild to make it find any change points in the present data set.
+# TSMCP
+Short for "Time-Series Multiple Change Point". It too is very limited, outputting a single number (!). For the problem at hand, changing `method` makes no difference. For many other `c` (`c = 0.3`, `c = 4`), it fails to find any change points. There is also `TSMCP::cpvnts()` to model AR(N), but I have failed to make it find any change points in the present data set.
 
-It finds the change point at 30, but not at 70:
+It finds the change point at `x = 30`, but not the second change point at `x = 70`.
 
 ```{r}
 TSMCP::tsmcplm(data$y, X = NULL, method = "adapt", c = 1)
 ```
 
 
-## `robts::changerob`
-`robts` is about robust regression in time-series. It is not on CRAN, so it has to be installed using `install.packages("robts", repos="http://R-Forge.R-project.org")`. I fail to install the dependencies, and development of the package seems to have stopped around 2014. It won't be covered further here.
+
+# wbsts
+The `wbsts` package is focused at time-series data. I must admit that I do not understand the underlying model(s), so I am in a poor position to evaluate whether I am using it correctly. It returns no change points for the present data set using default settings:
+
+```{r}
+wbsts::wbs.lsw(data$y)
+```
+
+
+
+
+# robts::changerob
+`robts` is about robust time-series regression. It is not on CRAN, so it has to be installed using `install.packages("robts", repos="http://R-Forge.R-project.org")`. I fail to install the dependencies, and development of the package seems to have stopped around 2014. It won't be covered further here.
