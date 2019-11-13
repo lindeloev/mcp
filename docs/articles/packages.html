@@ -208,7 +208,7 @@
 <a href="#envcpt" class="anchor"></a>EnvCpt</h1>
 <p><code>EnvCpt</code> can detect change points in mean and variance (not separately), slopes (“trends”), and AR(1)/AR(2), as well as conveniently fitting various models without change points. It automatically infers the number of change points. Unless otherwise instructed (through <code>models</code> argument), <code>EnvCpt</code> fits all models to the data, allowing you to pick one. It allows</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">fit_envcpt =<span class="st"> </span>EnvCpt<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/EnvCpt/man/envcpt.html">envcpt</a></span>(data<span class="op">$</span>y)  <span class="co"># Fit all models at once</span></a>
-<a class="sourceLine" id="cb5-2" title="2"><span class="kw"><a href="../reference/summary.mcpfit.html">summary</a></span>(fit_envcpt)  <span class="co"># Show log-likelihoods</span></a></code></pre></div>
+<a class="sourceLine" id="cb5-2" title="2">fit_envcpt<span class="op">$</span>summary  <span class="co"># Show log-likelihoods</span></a></code></pre></div>
 <pre><code>##             Length Class    Mode   
 ## summary     24     -none-   numeric
 ## mean         5     fitdistr list   
