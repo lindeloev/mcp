@@ -2,9 +2,12 @@ template:
   params:
     bootswatch: cerulean  # Theme
     ganalytics: UA-1026978-3  # Google Analytics
+  opengraph:
+    img: https://github.com/lindeloev/mcp/raw/master/man/figures/ex_binomial.png  # For Twitter card
+
 
 # Writes sitemap etc.
-url: https://lindeloev.github.io/mcp
+url: https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp
 
 authors:
   Jonas Kristoffer Lindeløv:
@@ -29,18 +32,30 @@ reference:
     contents:
       - sd_to_prec
 
-# Order of vignettes in menu
-articles:
-  - title: General usage
-    contents:
-    - formulas
-    - priors
-    - comparison
-    - varying
-  - title: GLM
-    contents:
-    - binomial
-    - poisson
-  - title: Other
-    contents:
-    - packages
+navbar:
+  components:
+    articles:
+      text: Learn more
+      menu:
+      - text: General usage
+      - text: Formulas
+        href: articles/formulas.html
+      - text: Priors
+        href: articles/priors.html
+      - text: Hypotheses and model comparison
+        href: articles/comparison.html
+      - text: Random/varying effects
+        href: articles/varying.html
+      - text: ----------
+      - text: GLM
+      - text: Poisson
+        href: articles/poisson.html
+      - text: Binomial and Bernoulli
+        href: articles/binomial.html
+      - text: ----------
+      - text: Other
+      - text: Comparison to other packages
+        href: articles/packages.html
+    twitter:
+     icon: "fab fa-twitter fa-lg"
+     href: https://twitter.com/jonaslindeloev
