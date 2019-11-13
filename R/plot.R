@@ -376,7 +376,7 @@ plot_bayesplot = function(fit,
 #'
 #' Solves two problems: if setting the number of points too high, the
 #' function becomes slow. If setting it too low, the posterior at large intercept-
-#' changes at chnage points look discrete, because they are evaluated at very
+#' changes at change points look discrete, because they are evaluated at very
 #' few x in that interval.
 #'
 #' This function makes a vector of x-values with large spacing in general,

@@ -16,7 +16,7 @@ There are three main ways of doing model comparison in `mcp`:
 
 
 # Some models to play with
-We know quite a bit about human short term memory. Namely, the average human has almost perfect recall when presented with 1-4 items (we remember them all), and then errors begins introding when presented with more items [(Cowan, 2001)](https://www.ncbi.nlm.nih.gov/pubmed/11515286). We also know that memory is not infinite, so as $N \rightarrow \infty$, it has to plateau.
+We know quite a bit about human short term memory. Namely, the average human has almost perfect recall when presented with 1-4 items (we remember them all), and then errors begins intruding when presented with more items [(Cowan, 2001)](https://www.ncbi.nlm.nih.gov/pubmed/11515286). We also know that memory is not infinite, so as $N \rightarrow \infty$, it has to plateau.
 
 In other words, on "easy" trials with $N <= capacity$ items to be recalled, we expect a constant high binomial rate. When $N > capacity$, the rate declines. We specify a prior reflecting our a priori knowledge.
 
@@ -99,7 +99,7 @@ hypothesis(fit_info, "cp_1 = 4")
 Maybe we just want to test a few directional hypothesis. For example:
  * Does recall begin to deteriorate when $cp_1 > 3$?
  * Is the change point in the interval $cp_1 > 3.5 & cp_1 < 4.5$?
- * Only constaint is imagination. How about all hypotheses we may have at once? $cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & int_1 > 2.5$ against it's inverse $(cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & int_1 < 2.5$
+ * The only constraint is your imagination. How about all hypotheses we may have at once? $cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & int_1 > 2.5$ against it's inverse $(cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & int_1 < 2.5$
 
 ```{r}
 hypothesis(fit_info, c(
