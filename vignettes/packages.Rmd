@@ -1,10 +1,10 @@
 ---
-title: "mcp and other change point packages"
+title: "An overview of change point packages in R"
 author: "Jonas Kristoffer Lindeløv"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{mcp and other change point packages}
+  %\VignetteIndexEntry{An overview of change point packages in R}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,7 +16,7 @@ TO DO:
  * Do worked examples comparing them.
 -->
 
-There are a lot of change point packages out there already, so why `mcp`? Here are my (probably biased) thoughts about this. I compiled some tables, summarising change point packages ([.xlsx file here](../vignettes/packages_tables.xlsx)). I will demonstrate each of these packages in an applied example below to discuss their merits and shortcomings. 
+There are a lot of change point packages out there already, so why `mcp`? Here are my (probably biased) thoughts about this. I compiled some tables, summarising change point packages ([.xlsx file here](../packages_tables.xlsx)). I will demonstrate each of these packages in an applied example below to discuss their merits and shortcomings. 
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_table1.png)
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_table2.png)
@@ -93,10 +93,14 @@ gridExtra::grid.arrange(plot(fit_mcp),
 # EnvCpt
 `EnvCpt` can detect change points in mean and variance (not separately), slopes ("trends"), and AR(1)/AR(2), as well as conveniently fitting various models without change points. It automatically infers the number of change points. Unless otherwise instructed (through `models` argument), `EnvCpt` fits all models to the data, allowing you to pick one. It allows 
 
-```{r, message = FALSE}
+```{r, message = FALSE, results = FALSE}
 fit_envcpt = EnvCpt::envcpt(data$y)  # Fit all models at once
 summary(fit_envcpt)  # Show log-likelihoods
 ```
+```{r, echo = FALSE}
+summary(fit_envcpt)  # Show log-likelihoods
+```
+
 
 This can be used to maximize the log-likelihood. Of interest here is `meancpt`. The documentation says that it calls `changepoint::cpt.meanvar`, modeling a simultanous change in mean and variance. Curiously, `changepoint::cpt.meanvar(data$y)` only finds one change point when called directly (see below), but the output matches `changepoint.np::cpt.np(data$y)@cpts`, so I suspect that this function is used instead. `EnvCpt`  has a nice plot of all the models:
 
@@ -148,7 +152,7 @@ BF
 ```
 
 We can do the same using `mcp`:
-```{r, cache = TRUE, message = FALSE, result = FALSE, warning=FALSE}
+```{r, cache = TRUE, message = FALSE, results=FALSE, warning=FALSE}
 segments_1 = list(y~1, 1~1)
 fit_mcp_1 = mcp(segments_1, data, par_x = "x")
 fit_mcp_1$loo = loo(fit_mcp_1)
