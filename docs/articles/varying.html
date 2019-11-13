@@ -55,39 +55,57 @@
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Articles
+    Learn more
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
-<li>
-      <a href="../articles/binomial.html">Binomial change point analysis with mcp</a>
+<li class="dropdown-header">General usage</li>
+    <li>
+      <a href="../articles/formulas.html">Formulas</a>
     </li>
     <li>
-      <a href="../articles/comparison.html">Change point model comparison with mcp</a>
+      <a href="../articles/priors.html">Priors</a>
     </li>
     <li>
-      <a href="../articles/formulas.html">About mcp formulas and models</a>
+      <a href="../articles/comparison.html">Hypotheses and model comparison</a>
     </li>
     <li>
-      <a href="../articles/packages.html">An overview of change point packages in R</a>
+      <a href="../articles/varying.html">Random/varying effects</a>
+    </li>
+    <li class="divider">
+    <li class="dropdown-header">GLM</li>
+    <li>
+      <a href="../articles/poisson.html">Poisson</a>
     </li>
     <li>
-      <a href="../articles/poisson.html">Poisson change point analysis with mcp</a>
+      <a href="../articles/binomial.html">Binomial and Bernoulli</a>
     </li>
+    <li class="divider">
+    <li class="dropdown-header">Other</li>
     <li>
-      <a href="../articles/priors.html">Working with priors in mcp</a>
-    </li>
-    <li>
-      <a href="../articles/varying.html">Varying change points with mcp</a>
+      <a href="../articles/packages.html">Comparison to other packages</a>
     </li>
   </ul>
 </li>
 <li>
   <a href="../news/index.html">Changelog</a>
 </li>
+<li>
+  <a href="https://twitter.com/jonaslindeloev">
+    <span class="fab fa fab fa-twitter fa-lg"></span>
+     
+  </a>
+</li>
       </ul>
-<ul class="nav navbar-nav navbar-right"></ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="https://github.com/lindeloev/mcp">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 <!--/.nav-collapse -->
   </div>
@@ -105,7 +123,7 @@
             
             <h4 class="date">2019-11-13</h4>
       
-      
+      <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/varying.Rmd"><code>vignettes/varying.Rmd</code></a></small>
       <div class="hidden name"><code>varying.Rmd</code></div>
 
     </div>
@@ -172,16 +190,16 @@
 <pre><code>## # A tibble: 180 x 4
 ##        x id    id_numeric     y
 ##    &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt;
-##  1 18.2  Clark          3  22.0
-##  2 58.3  Clark          3  24.5
-##  3 47.6  Clark          3  19.4
-##  4 77.5  Clark          3  39.0
-##  5 93.1  Clark          3  43.9
-##  6 74.6  Clark          3  35.9
-##  7 41.9  Clark          3  18.8
-##  8 65.7  Clark          3  31.2
-##  9 41.1  Clark          3  17.7
-## 10  4.40 Clark          3  21.7
+##  1 37.4  Clark          3  19.9
+##  2 76.7  Clark          3  35.5
+##  3 21.2  Clark          3  20.8
+##  4 56.7  Clark          3  26.9
+##  5 13.0  Clark          3  22.3
+##  6 56.9  Clark          3  23.5
+##  7 31.9  Clark          3  18.6
+##  8 89.5  Clark          3  44.9
+##  9  1.20 Clark          3  19.6
+## 10 72.7  Clark          3  32.0
 ## # ... with 170 more rows</code></pre>
 <p>Here, we “translated” the <code>id</code> to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around <code>cp_1</code>. The result:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</a>

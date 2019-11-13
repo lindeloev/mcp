@@ -55,39 +55,57 @@
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Articles
+    Learn more
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
-<li>
-      <a href="../articles/binomial.html">Binomial change point analysis with mcp</a>
+<li class="dropdown-header">General usage</li>
+    <li>
+      <a href="../articles/formulas.html">Formulas</a>
     </li>
     <li>
-      <a href="../articles/comparison.html">Change point model comparison with mcp</a>
+      <a href="../articles/priors.html">Priors</a>
     </li>
     <li>
-      <a href="../articles/formulas.html">About mcp formulas and models</a>
+      <a href="../articles/comparison.html">Hypotheses and model comparison</a>
     </li>
     <li>
-      <a href="../articles/packages.html">An overview of change point packages in R</a>
+      <a href="../articles/varying.html">Random/varying effects</a>
+    </li>
+    <li class="divider">
+    <li class="dropdown-header">GLM</li>
+    <li>
+      <a href="../articles/poisson.html">Poisson</a>
     </li>
     <li>
-      <a href="../articles/poisson.html">Poisson change point analysis with mcp</a>
+      <a href="../articles/binomial.html">Binomial and Bernoulli</a>
     </li>
+    <li class="divider">
+    <li class="dropdown-header">Other</li>
     <li>
-      <a href="../articles/priors.html">Working with priors in mcp</a>
-    </li>
-    <li>
-      <a href="../articles/varying.html">Varying change points with mcp</a>
+      <a href="../articles/packages.html">Comparison to other packages</a>
     </li>
   </ul>
 </li>
 <li>
   <a href="../news/index.html">Changelog</a>
 </li>
+<li>
+  <a href="https://twitter.com/jonaslindeloev">
+    <span class="fab fa fab fa-twitter fa-lg"></span>
+     
+  </a>
+</li>
       </ul>
-<ul class="nav navbar-nav navbar-right"></ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="https://github.com/lindeloev/mcp">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 <!--/.nav-collapse -->
   </div>
@@ -105,14 +123,19 @@
             
             <h4 class="date">2019-11-13</h4>
       
-      
+      <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/comparison.Rmd"><code>vignettes/comparison.Rmd</code></a></small>
       <div class="hidden name"><code>comparison.Rmd</code></div>
 
     </div>
 
     
     
-<p>There are three main ways of doing model comparison in <code>mcp</code>: * Compare any N <code>mcp</code> models using leave-One-Out cross validation (LOO-CV). Check out <code><a href="../reference/criterion.html">loo(fit)</a></code>, <code><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo::loo_compare(fit1$loo, fit2$loo, ...)</a></code>, and <code><a href="https://mc-stan.org/loo/reference/loo_model_weights.html">loo::loo_model_weights(fit1$loo, fit2$loo, ...)</a></code>. * Flexible directional tests using <code><a href="../reference/hypothesis.html">hypothesis(fit, cp_1 &gt; 40)</a></code> or <code><a href="../reference/hypothesis.html">hypothesis(fit, cp_1 &gt; 40 &amp; x_2 &gt; x_1)</a></code>. * Point Bayes Factors tests using the Savage-Dickey density ratio, e.g., <code><a href="../reference/hypothesis.html">hypothesis(fit, cp_1 = 50)</a></code> or <code><a href="../reference/hypothesis.html">hypothesis(fit, x_2 = x_1)</a></code>.</p>
+<p>There are three main ways of doing model comparison in <code>mcp</code>:</p>
+<ul>
+<li>Compare any N <code>mcp</code> models using leave-One-Out cross validation (LOO-CV). Check out <code><a href="../reference/criterion.html">loo(fit)</a></code>, <code><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo::loo_compare(fit1$loo, fit2$loo, ...)</a></code>, and <code><a href="https://mc-stan.org/loo/reference/loo_model_weights.html">loo::loo_model_weights(fit1$loo, fit2$loo, ...)</a></code>.</li>
+<li>Flexible directional tests using <code><a href="../reference/hypothesis.html">hypothesis(fit, cp_1 &gt; 40)</a></code> or <code><a href="../reference/hypothesis.html">hypothesis(fit, cp_1 &gt; 40 &amp; x_2 &gt; x_1)</a></code>.</li>
+<li>Point Bayes Factors tests using the Savage-Dickey density ratio, e.g., <code><a href="../reference/hypothesis.html">hypothesis(fit, cp_1 = 50)</a></code> or <code><a href="../reference/hypothesis.html">hypothesis(fit, x_2 = x_1)</a></code>.</li>
+</ul>
 <div id="some-models-to-play-with" class="section level1">
 <h1 class="hasAnchor">
 <a href="#some-models-to-play-with" class="anchor"></a>Some models to play with</h1>
@@ -202,7 +225,13 @@
 <div id="directional-and-combinatoric-tests" class="section level1">
 <h1 class="hasAnchor">
 <a href="#directional-and-combinatoric-tests" class="anchor"></a>Directional and combinatoric tests</h1>
-<p>Maybe we just want to test a few directional hypothesis. For example: * Does recall begin to deteriorate when <span class="math inline">\(cp_1 &gt; 3\)</span>? * Is the change point in the interval <span class="math inline">\(cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5\)</span>? * The only constraint is your imagination. How about all hypotheses we may have at once? <span class="math inline">\(cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5 &amp; items_2 &lt; -0.4 &amp; int_1 &gt; 2.5\)</span> against it’s inverse <span class="math inline">\((cp_1 &lt; 3.5 | cp_1 &gt; 4.5) &amp; items_2 &gt; -0.4 &amp; int_1 &lt; 2.5\)</span></p>
+<p>Maybe we just want to test a few directional hypothesis. For example:</p>
+<ul>
+<li>Does recall begin to deteriorate when <code>cp_1 &gt; 3</code>?</li>
+<li>Is the change point in the interval <code>cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5</code>?</li>
+<li>The only constraint is your imagination. How about all hypotheses we may have at once? <code>cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5 &amp; items_2 &lt; -0.4 &amp; int_1 &gt; 2.5</code> against it’s inverse <code>(cp_1 &lt; 3.5 | cp_1 &gt; 4.5) &amp; items_2 &gt; -0.4 &amp; int_1 &lt; 2.5</code>
+</li>
+</ul>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1"><span class="kw"><a href="../reference/hypothesis.html">hypothesis</a></span>(fit_info, <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(</a>
 <a class="sourceLine" id="cb14-2" title="2">  <span class="st">"cp_1 &gt; 3"</span>,</a>
 <a class="sourceLine" id="cb14-3" title="3">  <span class="st">"cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5"</span>,</a>
@@ -252,8 +281,8 @@
 <li>Computes the posterior density at the left-out data point (out-of-sample data), i.e., what probability the model assigned to it occurring. For example, if the posterior is a normal distribution, a data point near the mean of the posterior has higher density (it is less “surprising”) than if it is at <span class="math inline">\(z = -3\)</span>. Better predictions means higher densities, i.e., less surprisal.</li>
 <li>Repeats step 2 for all observed data and multiplies these densities to get the combined predictive densities at unobserved data. Multiplying is the same as summing in log-space, and the latter has the advantage of being computationally much more feasible. I hope that the name “Estimated Log Predictive Density” (ELPD) makes sense now. The higher the ELPD, the better.</li>
 </ol>
-<p>And as with Bayes Factors, you can obtain positive evidence for null models. The reason simpler models can be preferred in Bayes is that each new parameter increases the prior predictive space, and thereby comes with a greater “risk” of making way-off predictions. If the parameter does too little to “make up” for this by increasing the likelihood, it is a net negative for predictive accuracy, and the simpler model will be preferred. So <em>narrower priors are simpler models</em>.</p>
-<p>Also, if the data is reasonably informative (it almost always is), LOO-CV is much less influenced by priors. For LOO, the priors can more be thought of as a regularization (a way to ensure that sampling is efficient) than as the point of departure which all our inferences are relative to (Bayes Factors).</p>
+<p>As with Bayes Factors, you can obtain positive evidence for null models. The reason simpler models can be preferred in Bayes is that each new parameter increases the prior predictive space, and thereby comes with a greater “risk” of making way-off predictions. If the parameter does too little to “make up” for this by increasing the likelihood (making a difference), it is a net negative for predictive accuracy, and the simpler model will be preferred. So <em>narrower priors are simpler models</em>.</p>
+<p>Also, if the data is reasonably informative (it almost always is), LOO-CV is much less influenced by priors than Bayes factors. For LOO, the priors can more be thought of as a regularization (a way to ensure that sampling is efficient) than as the point of departure which all our inferences are relative to (Bayes Factors).</p>
 </div>
 <div id="applied-example" class="section level2">
 <h2 class="hasAnchor">

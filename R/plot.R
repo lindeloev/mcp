@@ -266,7 +266,7 @@ plot_segments = function(fit,
       tidybayes::sample_draws(lines) %>%
       dplyr::mutate(
         # Add line ID to separate lines in the plot.
-        line = !!xvar == min(!!xvar) & !!xvar == dplyr::lag(!!xvar, 1),
+        line = !!xvar == min(!!xvar),
         line = cumsum(.data$line)
       )
 

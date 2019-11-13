@@ -1,7 +1,7 @@
 Package: mcp
 Title: Bayesian Multiple Change Point Inference
 Version: 0.1
-URL: http://lindeloev.github.io/mcp/
+URL: http://lindeloev.github.io/mcp/, https://github.com/lindeloev/mcp
 BugReports: https://github.com/lindeloev/mcp/issues
 Authors@R: 
     person(given = "Jonas Kristoffer",
