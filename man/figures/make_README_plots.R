@@ -53,7 +53,7 @@ segments = list(
   1 ~ 1  # plateau (int_2)
 )
 fit = mcp::mcp(segments, ex_plateaus, par_x = "x")
-theme_it(plot(fit, draws=25), "Two plateaus")
+theme_it(plot(fit, lines = 25), "Two plateaus")
 save_it("ex_plateaus.png")
 
 

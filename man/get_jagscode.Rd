@@ -4,24 +4,24 @@
 \alias{get_jagscode}
 \title{Make JAGS code for Multiple Change Point model}
 \usage{
-get_jagscode(prior, ST, formula_str, family)
+get_jagscode(prior, ST, formula_str, family, sample)
 }
 \arguments{
-\item{prior}{Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
+\item{prior}{Named list. Names are parameter names (cp_i, int_i, \link{x_var}_i,
 sigma) and the values are either
 \itemize{
-  \item A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
-    conventional prior distribution. Uninformative priors based on data
-    properties are used where priors are not specified. This ensures good
-    parameter estimations, but it is a questionable for hypothesis testing.
-    \code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
-    details. Change points are forced to be ordered through the priors using
-    truncation, except for uniform priors where the lower bound should be
-    greater than the previous change point, \code{dunif(cp_1, MAXX)}.
-  \item A numerical value (e.g., \code{int_1 = -2.1}) indicating a fixed value.
-  \item A model parameter name (e.g., \code{int_2 = "int_1"}), indicating that this parameter is shared -
-    typically between segments. If two varying effects are shared this way,
-    they will need to have the same grouping variable.
+\item A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
+conventional prior distribution. Uninformative priors based on data
+properties are used where priors are not specified. This ensures good
+parameter estimations, but it is a questionable for hypothesis testing.
+\code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
+details. Change points are forced to be ordered through the priors using
+truncation, except for uniform priors where the lower bound should be
+greater than the previous change point, \code{dunif(cp_1, MAXX)}.
+\item A numerical value (e.g., \code{int_1 = -2.1}) indicating a fixed value.
+\item A model parameter name (e.g., \code{int_2 = "int_1"}), indicating that this parameter is shared -
+typically between segments. If two varying effects are shared this way,
+they will need to have the same grouping variable.
 }}
 
 \item{ST}{Segment table. Returned by \code{get_segment_table()}.}
@@ -30,6 +30,19 @@ sigma) and the values are either
 
 \item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}.
 Only default link functions are currently supported.}
+
+\item{sample}{One of
+\itemize{
+\item \code{"post"} (default): Sample the posterior.
+\item \code{"prior"}: Sample only the prior. Plots, summaries, etc. will
+use the prior. This is useful for prior predictive checks.
+\item \code{"both"}: Sample both prior and posterior. Plots, summaries, etc.
+will default to using the posterior. The prior only has effect when doing
+Savage-Dickey density ratios in \code{\link{hypothesis}}.
+\item \code{"none"} or \code{FALSE}: Do not sample. Returns an mcpfit
+object without sample. This is useful if you only want to check
+prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
+}}
 }
 \value{
 String. A JAGS model.

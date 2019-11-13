@@ -22,7 +22,7 @@ run_jags = function(data,
                     params,
                     ST,
                     cores,
-                    sample = sample,
+                    sample,
                     model_file = "tmp_jags_code.txt",
                     ...  # Otherwise run with default JAGS settings
 ) {
@@ -75,7 +75,7 @@ run_jags = function(data,
     file.remove(model_file)
   }
 
-  if(coda::is.mcmc.list(samples)) {  # If sampling succeeded
+  if (coda::is.mcmc.list(samples)) {  # If sampling succeeded
     # Recover the levels of varying effects
     for (i in seq_len(nrow(ST))) {
       S = ST[i, ]
@@ -87,7 +87,7 @@ run_jags = function(data,
     print(proc.time() - timer)  # Return time
     return(samples)
   } else {
-    warning("--------------\nJAGS failed with the above error. This is often caused by priors which allow for impossible values, such as negative standard deviations, probabilities outside [0, 1], etc.\n\nAnother class of error is directed cycles: when using a parameter to set a prior for another parameter, it may end up ultimately predicting itself.\n\nReturning an `mcpfit` without samples. Inspect fit$prior and fit$jags_code to identify the problem.")
+    warning("--------------\nJAGS failed with the above error. This is often caused by priors which allow for impossible values, such as negative standard deviations, probabilities outside [0, 1], etc.\n\nAnother class of error is directed cycles: when using a parameter to set a prior for another parameter, it may end up ultimately predicting itself.\n\nReturning an `mcpfit` without samples. Inspect fit$prior and cat(fit$jags_code) to identify the problem.")
     return(NULL)
   }
 }
@@ -130,13 +130,13 @@ get_jags_data = function(data, ST, jags_code, sample) {
       constant_name = toupper(paste0(func, xy_var))
       if (stringr::str_detect(jags_code, constant_name)) {
         func_eval = eval(parse(text = func))  # as real function
-        jags_data[[constant_name]] = func_eval(dplyr::pull(data, ST[, xy_var][[1]][1]))
+        jags_data[[constant_name]] = func_eval(dplyr::pull(data, ST[, xy_var][[1]][1]), na.rm = TRUE)
       }
     }
   }
 
   # Set response = NA if we only sample prior
-  if(sample == "prior")
+  if (sample == "prior")
     jags_data[[ST$y[1]]] = rep(NA, nrow(data))
 
   # Return

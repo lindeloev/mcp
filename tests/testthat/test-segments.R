@@ -20,7 +20,7 @@ data_gauss = data.frame(
 
   # varying effects should be categorical-ish
   id = c("a", "b", "c", "d", "e"),
-  ok_id_factor = factor(c(-3, 0, 5, 9, 1.233243)),
+  ok_id_factor = factor(c(-3, 0, 5, 9, 1.233243)),  # It's a factor, so decimals are OK
   ok_id_integer = -2:2,  # interval
   bad_id = rnorm(5)  # decimal numbers
 )
@@ -91,37 +91,50 @@ test_mcp = function(segments,
     testthat::expect_true(is.list(empty$.other), segments)
 
     # capture.output suppresses the dclone output.
-    capture.output(fit <<- mcp(
+    capture.output(fit <<- mcp(  # Global useful for debugging
       segments = segments,
       data = tibble::as_tibble(data),
       family = family,
+      sample = "both",  # prior and posterior to check hypotheses
       par_x = par_x,
       adapt = 6,
       update = 3,
       iter = 18,  # loo fails if this is too low. TO DO: require next version of loo when it is out.
       chains = 2,  # 1 or 2
-      cores = 1 + rbinom(1, 1, 0.5)  # serial or parallel
+      cores = 1  # run serial. Parallel can be trused to just work.
     ))
 
-    # Check that samples are the correct format
-    testthat::expect_true(is.list(fit$samples), segments)
-    testthat::expect_true(coda::is.mcmc(fit$samples[[1]]), segments)
-    testthat::expect_true(all(fit$pars$population %in% colnames(fit$samples[[1]])))
-
     # Test criterions. Will warn about very few samples
-    suppressWarnings(fit$loo <- loo(fit))  # OMG, i had use for the <- assignment!
-    suppressWarnings(fit$waic <- waic(fit))
-    testthat::expect_true(loo::is.psis_loo(fit$loo))
-    testthat::expect_true(loo::is.waic(fit$waic))
+    if (!is.null(fit$mcmc_post)) {
+      fit$loo = suppressWarnings(loo(fit))
+      fit$waic = suppressWarnings(waic(fit))
+      testthat::expect_true(loo::is.psis_loo(fit$loo))
+      testthat::expect_true(loo::is.waic(fit$waic))
+    }
+
+    # Test hypothesis
+    test_hypothesis(fit)
+
+    for(col in c("mcmc_post", "mcmc_prior")) {
+      # To test the prior, try setting mcmc_post = NULL to force use of prior
+      # (get_samples checks for NULL)
+      if (col == "mcmc_prior")
+        fit$mcmc_post = NULL
+
+      # Check that samples are the correct format
+      testthat::expect_true(is.list(fit[[col]]), segments)
+      testthat::expect_true(coda::is.mcmc(fit[[col]][[1]]), segments)
+      testthat::expect_true(all(fit$pars$population %in% colnames(fit[[col]][[1]])))
+
+      # Test mcpfit functions
+      varying_cols = na.omit(fit$.other$ST$cp_group_col)
+      test_summary(fit, varying_cols)
+      test_plot(fit, varying_cols)  # default plot
+      test_bayesplot(fit)  # bayesplot call
+    }
 
     # Data should not be manipulated, just by working with it
     testthat::expect_true(all.equal(fit$data, data), segments)
-
-    # Test mcpfit functions
-    varying_cols = na.omit(fit$.other$ST$cp_group_col)
-    test_summary(fit, varying_cols)
-    test_plot(fit, varying_cols)  # default plot
-    test_bayesplot(fit)  # bayesplot call
   }
 }
 
@@ -148,11 +161,12 @@ test_summary = function(fit, varying_cols) {
 
 # Test the regular plot, including faceting
 test_plot = function(fit, varying_cols) {
+  quantiles = rbinom(1, 1, 0.5) == 1  # sometimes try adding quantiles
   # To facet or not to facet
   if (length(varying_cols) > 0) {
-    gg = plot(fit, facet_by = varying_cols[1])  # just take the first
+    gg = plot(fit, facet_by = varying_cols[1], quantiles = quantiles)  # just take the first
   } else {
-    gg = plot(fit)
+    gg = plot(fit, quantiles = quantiles)
   }
   testthat::expect_s3_class(gg, c("gg", "ggplot"))
 }
@@ -161,6 +175,42 @@ test_plot = function(fit, varying_cols) {
 test_bayesplot = function(fit) {
   gg = plot(fit, "dens_overlay")
   testthat::expect_s3_class(gg, c("gg", "ggplot"))
+}
+
+
+
+test_hypothesis = function(fit) {
+  # Function to test both directional and point hypotheses
+  run_test_hypothesis = function(fit, base) {
+    hypotheses = c(
+      paste0(base, " > 1"),  # Directional
+      paste0(base, " = -1")  # Savage-Dickey (point)
+    )
+    result = hypothesis(fit, hypotheses)
+    testthat::expect_true(is.data.frame(result) & nrow(result) == 2)
+  }
+
+  # Test single pop effect
+  run_test_hypothesis(fit, fit$pars$population[1])
+
+  # Test multiple pop effect
+  if (length(fit$pars$population) > 1)
+    run_test_hypothesis(fit, paste0(fit$pars$population[1] , " + ", fit$pars$population[2]))
+
+  # Varying
+  if (!is.null(fit$pars$varying)) {
+    mcmc_vars = colnames(get_samples(fit)[[1]])
+    varying_starts = paste0("^", fit$pars$varying[1])
+    varying_col_ids = stringr::str_detect(mcmc_vars, varying_starts)
+    varying_cols = paste0("`", mcmc_vars[varying_col_ids], "`")  # Add these for varying
+
+    # Test single varying effect
+    run_test_hypothesis(fit, varying_cols[1])
+
+    # Test multiple varying effects
+    if (length(varying_cols) > 1)
+      run_test_hypothesis(fit, paste0(varying_cols[1], " + ", varying_cols[2]))
+  }
 }
 
 

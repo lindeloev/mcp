@@ -1,9 +1,21 @@
-# Define R releases
 language: r
-r:
-  #- oldrel  # fails installing patchwork
-  - release
-  #- devel
+
+# Which OSes and R releases to test on
+matrix:
+  include:
+    # Patchwork fails to install on oldrel, so this is not tested atm.
+    # Only do code coverage on this one (fails on os:osx + r:devel)
+    - os: linux
+      r: release
+      r_github_packages: r-lib/covr
+      env: R_CODECOV=cover-this-build-only
+    - os: linux
+      r: devel
+    - os: osx
+      r: release
+    # Fails because https://cloud.r-project.org/bin/macosx/el-capitan/contrib/4.0/PACKAGES does not exist
+    #- os: osx
+    #  r: devel
 
 # Do not rebuild packages from source on every commit.
 # Perhaps later look at this: https://pjs-web.de/post/using-ccache-to-speed-up-r-package-checks-on-travis-ci/
@@ -20,20 +32,13 @@ r_build_args: "--no-build-vignettes"
 r_check_args: "--no-build-vignettes --as-cran"
 warnings_are_errors: false
 
-# Test on linux and osx and install JAGS on both
-os:
-  - linux
-  - osx
-
+# Install JAGS
 addons:
   apt:
     packages: jags
   homebrew:
     packages: jags
 
-# Test coverage:
-r_github_packages:
-  - r-lib/covr
-
+# Get code coverage
 after_success:
-  - Rscript -e 'covr::coveralls()'
+  - test $R_CODECOV && Rscript -e "covr::coveralls()"

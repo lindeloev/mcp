@@ -10,7 +10,7 @@ plot_bayesplot(fit, type, pars = "population",
 \arguments{
 \item{fit}{An mcpfit object.}
 
-\item{type}{String or vector of strings. Calls \code{bayesplot::mcmc_*type*()}.
+\item{type}{String or vector of strings. Calls \code{bayesplot::mcmc_type()}.
 Common calls are "combo", "trace", and "dens_overlay". Current options include
 'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
 'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
@@ -18,10 +18,10 @@ Common calls are "combo", "trace", and "dens_overlay". Current options include
 
 \item{pars}{Character vector. One of:
 \itemize{
-  \item Vector of parameter names.
-  \item "population" (default) plots all population parameters.
-  \item "varying" plots all varying effects. To plot a particular varying
-    effect, use \code{regex_pars = "^name"}.
+\item Vector of parameter names.
+\item \emph{"population" (default):} plots all population parameters.
+\item \emph{"varying":} plots all varying effects. To plot a particular varying
+effect, use \code{regex_pars = "^name"}.
 }}
 
 \item{regex_pars}{Vector of regular expressions. This will typically just be
