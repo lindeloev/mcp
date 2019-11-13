@@ -15,7 +15,7 @@ get_eval_at(fit, facet_by)
 \description{
 Solves two problems: if setting the number of points too high, the
 function becomes slow. If setting it too low, the posterior at large intercept-
-changes at chnage points look discrete, because they are evaluated at very
+changes at change points look discrete, because they are evaluated at very
 few x in that interval.
 }
 \details{

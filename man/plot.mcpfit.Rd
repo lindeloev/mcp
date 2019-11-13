@@ -5,7 +5,7 @@
 \alias{plot}
 \title{Plot mcpfit}
 \usage{
-plot.mcpfit(x, type = "segments", pars = "population",
+\method{plot}{mcpfit}(x, type = "segments", pars = "population",
   regex_pars = character(0), ncol = 1, facet_by = NULL,
   rate = TRUE, lines = 25, quantiles = FALSE, ...)
 }
