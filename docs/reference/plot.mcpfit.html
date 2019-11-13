@@ -109,7 +109,13 @@ See examples for typical use cases." />
       <a href="../articles/binomial.html">Binomial change point analysis with mcp</a>
     </li>
     <li>
+      <a href="../articles/comparison.html">Change point model comparison with mcp</a>
+    </li>
+    <li>
       <a href="../articles/formulas.html">About mcp formulas and models</a>
+    </li>
+    <li>
+      <a href="../articles/packages.html">mcp and other change point packages</a>
     </li>
     <li>
       <a href="../articles/poisson.html">Poisson change point analysis with mcp</a>
@@ -154,8 +160,8 @@ See examples for typical use cases.</p>
 
     <pre class="usage"><span class='co'># S3 method for mcpfit</span>
 <span class='fu'>plot</span>(<span class='no'>x</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='st'>"segments"</span>, <span class='kw'>pars</span> <span class='kw'>=</span> <span class='st'>"population"</span>,
-  <span class='kw'>regex_pars</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span>(<span class='fl'>0</span>), <span class='kw'>facet_by</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>rate</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>draws</span> <span class='kw'>=</span> <span class='fl'>25</span>, <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='no'>...</span>)</pre>
+  <span class='kw'>regex_pars</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span>(<span class='fl'>0</span>), <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>facet_by</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>rate</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>25</span>, <span class='kw'>quantiles</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -166,7 +172,7 @@ See examples for typical use cases.</p>
     </tr>
     <tr>
       <th>type</th>
-      <td><p>String or vector of strings. Calls <code>bayesplot::mcmc_*type*()</code>.
+      <td><p>String or vector of strings. Calls <code>bayesplot::mcmc_type()</code>.
 Common calls are "combo", "trace", and "dens_overlay". Current options include
 'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
 'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
@@ -176,9 +182,9 @@ Common calls are "combo", "trace", and "dens_overlay". Current options include
       <th>pars</th>
       <td><p>Character vector. One of:</p><ul>
 <li><p>Vector of parameter names.</p></li>
-<li><p>"population" (default) plots all population parameters.</p></li>
-<li><p>"varying" plots all varying effects. To plot a particular varying
-    effect, use <code>regex_pars = "^name"</code>.</p></li>
+<li><p><em>"population" (default):</em> plots all population parameters.</p></li>
+<li><p><em>"varying":</em> plots all varying effects. To plot a particular varying
+effect, use <code>regex_pars = "^name"</code>.</p></li>
 </ul></td>
     </tr>
     <tr>
@@ -187,6 +193,12 @@ Common calls are "combo", "trace", and "dens_overlay". Current options include
 the beginning of the parameter name(s), i.e., "^cp_" plots all change
 points, "^my_varying" plots all levels of a particular varying effect, and
 "^cp_|^my_varying" plots both.</p></td>
+    </tr>
+    <tr>
+      <th>ncol</th>
+      <td><p>Number of columns in plot. This is useful when you have many
+parameters and only one plot <code>type</code>.
+<code>ncol</code> only when <code>type != "segments"</code></p></td>
     </tr>
     <tr>
       <th>facet_by</th>
@@ -201,14 +213,21 @@ interpolation on trial number is used to infer trials at a particular x.
 <code>rate</code> only applies for <code>type = "segments"</code></p></td>
     </tr>
     <tr>
-      <th>draws</th>
-      <td><p>Positive integer. Number of posterior draws to use when type = "segments".</p></td>
+      <th>lines</th>
+      <td><p>Positive integer or <code>FALSE</code>. Number of lines (posterior
+draws) to use when <code>type = "segments"</code>. FALSE (or <code>lines = 0</code>)
+plots no lines.</p></td>
     </tr>
     <tr>
-      <th>ncol</th>
-      <td><p>Number of columns in plot. This is useful when you have many
-parameters and only one plot <code>type</code>.
-<code>ncol</code> only when <code>type != "segments"</code></p></td>
+      <th>quantiles</th>
+      <td><p>Whether to plot quantiles.</p><ul>
+<li><p><strong>TRUE:</strong> Add 2.5<!-- % and 97.5% quantiles. Corresponds to -->
+<code>quantiles = c(0.025, 0.975)</code>.</p></li>
+<li><p><strong>FALSE (default):</strong> No quantiles</p></li>
+<li><p>A vector of quantiles. For example, <code>quantiles = 0.5</code>
+plots the median and <code>quantiles = c(0.2, 0.8)</code> plots the 20<!-- % and 80% -->
+quantiles.</p></li>
+</ul></td>
     </tr>
     <tr>
       <th>...</th>
@@ -218,26 +237,26 @@ parameters and only one plot <code>type</code>.
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A <code>ggplot2</code> object.</p>
+    <p>A <span class="pkg">ggplot2</span> object.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>For <code>type = "segments"</code>, it uses <code>fit$func_y</code> with <code>draws</code>
-  posterior samples. These represent the joint posterior distribution of
-  parameter values.</p>
-<p>For other <code>type</code>, it calls <code>bayesplot::mcmc_*type*()</code>. Use these
-  directly on <code>fit$samples</code> if you want finer control of plotting, e.g.,
-  <code><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>bayesplot::mcmc_dens(fit$samples)</a></code>. There are also a number of useful
-  plots in the <span class="pkg">coda</span> package, i.e., <code><a href='https://rdrr.io/pkg/coda/man/gelman.plot.html'>coda::gelman.plot(fit$samples)</a></code>
-  and <code><a href='https://rdrr.io/pkg/coda/man/crosscorr.plot.html'>coda::crosscorr.plot(fit$samples)</a></code></p>
+posterior samples. These represent the joint posterior distribution of
+parameter values.</p>
+<p>For other <code>type</code>, it calls <code>bayesplot::mcmc_type()</code>. Use these
+directly on <code>fit$mcmc_post</code> or <code>fit$mcmc_prior</code> if you want finer
+control of plotting, e.g., <code><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>bayesplot::mcmc_dens(fit$mcmc_post)</a></code>. There
+are also a number of useful plots in the <span class="pkg">coda</span> package, i.e.,
+<code><a href='https://rdrr.io/pkg/coda/man/gelman.plot.html'>coda::gelman.plot(fit$mcmc_post)</a></code> and <code><a href='https://rdrr.io/pkg/coda/man/crosscorr.plot.html'>coda::crosscorr.plot(fit$mcmc_post)</a></code></p>
 <p>In any case, if you see a few erratic lines or parameter estimates, this is
-  a sign that you may want to increase arguments 'adapt', 'update', and
-  'iter' in <code><a href='mcp.html'>mcp</a></code>.</p>
+a sign that you may want to increase arguments 'adapt', 'update', and
+'iter' in <code><a href='mcp.html'>mcp</a></code>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
 <span class='co'># Plots segments (default)</span>
 <span class='fu'>plot</span>(<span class='no'>fit</span>)
-<span class='fu'>plot</span>(<span class='no'>fit</span>, <span class='kw'>draws</span> <span class='kw'>=</span> <span class='fl'>50</span>, <span class='kw'>rate</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)  <span class='co'># more draws. for binomial.</span>
+<span class='fu'>plot</span>(<span class='no'>fit</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>50</span>, <span class='kw'>rate</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)  <span class='co'># more lines, for binomial.</span>
 <span class='fu'>plot</span>(<span class='no'>fit</span>, <span class='kw'>facet_by</span> <span class='kw'>=</span> <span class='st'>"my_varying"</span>)  <span class='co'># varying effects</span>
 
 <span class='co'># Plot parameter estimates</span>
@@ -277,7 +296,7 @@ parameters and only one plot <code>type</code>.
 
       <footer>
       <div class="copyright">
-  <p>Developed by Jonas Lindeløv.</p>
+  <p>Developed by <a href='http://lindeloev.net'>Jonas Kristoffer Lindeløv</a>.</p>
 </div>
 
 <div class="pkgdown">

@@ -64,7 +64,13 @@
       <a href="../articles/binomial.html">Binomial change point analysis with mcp</a>
     </li>
     <li>
+      <a href="../articles/comparison.html">Change point model comparison with mcp</a>
+    </li>
+    <li>
       <a href="../articles/formulas.html">About mcp formulas and models</a>
+    </li>
+    <li>
+      <a href="../articles/packages.html">mcp and other change point packages</a>
     </li>
     <li>
       <a href="../articles/poisson.html">Poisson change point analysis with mcp</a>
@@ -97,7 +103,7 @@
       <h1>Varying change points with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-11-06</h4>
+            <h4 class="date">2019-11-12</h4>
       
       
       <div class="hidden name"><code>varying.Rmd</code></div>
@@ -164,18 +170,18 @@
 <a class="sourceLine" id="cb4-18" title="18"></a>
 <a class="sourceLine" id="cb4-19" title="19">data</a></code></pre></div>
 <pre><code>## # A tibble: 180 x 4
-##        x id    id_numeric     y
-##    &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt;
-##  1  31.0 Clark          3  21.9
-##  2  78.4 Clark          3  39.5
-##  3  98.5 Clark          3  47.1
-##  4  66.6 Clark          3  31.6
-##  5  22.7 Clark          3  17.5
-##  6  84.6 Clark          3  44.4
-##  7  60.2 Clark          3  27.0
-##  8  66.4 Clark          3  31.8
-##  9  38.8 Clark          3  20.8
-## 10  72.7 Clark          3  34.7
+##         x id    id_numeric     y
+##     &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt;
+##  1 36.6   Clark          3  20.9
+##  2 52.2   Clark          3  23.4
+##  3 10.8   Clark          3  20.3
+##  4 98.6   Clark          3  47.6
+##  5 91.8   Clark          3  44.2
+##  6 90.4   Clark          3  45.7
+##  7  8.60  Clark          3  19.3
+##  8  0.844 Clark          3  19.7
+##  9  0.804 Clark          3  20.6
+## 10 64.6   Clark          3  26.8
 ## # ... with 170 more rows</code></pre>
 <p>Here, we “translated” the <code>id</code> to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around <code>cp_1</code>. The result:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</a>
@@ -195,20 +201,20 @@
 <p>It seems that <code>mcp</code> did a good job of recovering the change points. There is a lot of information in this data, since the intercept and the slope on each side of the (varying) change point is shared between participants here.</p>
 <p>If you use <code><a href="../reference/summary.mcpfit.html">summary(fit)</a></code> (or <code><a href="../reference/fixef.html">fixef(fit)</a></code>) you will get the posteriors for the population-level effects. To get the random effects, do:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="kw"><a href="../reference/ranef.html">ranef</a></span>(fit)</a></code></pre></div>
-<pre><code>##                 name       mean       X2.5      X97.5     rhat  eff
-## 1   cp_1_id[Batgirl] -25.815389 -27.750030 -23.781802 1.001769 4341
-## 2    cp_1_id[Batman] -16.556264 -18.741182 -14.491308 1.000634 5377
-## 3     cp_1_id[Clark]  -4.963474  -7.018969  -2.967965 1.003246 2239
-## 4      cp_1_id[Jane]   5.115991   2.969742   7.267010 1.003991 2439
-## 5     cp_1_id[Louis]  13.603049  11.069819  16.141992 1.004651 3184
-## 6 cp_1_id[Spiderman]  28.616088  25.205039  32.142653 1.002413 2806
-##      ts_se
-## 1 1.950188
-## 2 2.826611
-## 3 4.580724
-## 4 3.704599
-## 5 7.887090
-## 6 3.272758</code></pre>
+<pre><code>##                 name       mean      lower      upper      rhat  eff
+## 1   cp_1_id[Batgirl] -24.944608 -26.885370 -22.931889 1.0003874 5295
+## 2    cp_1_id[Batman] -14.310574 -16.391584 -12.453100 0.9998857 6092
+## 3     cp_1_id[Clark]  -5.039144  -7.222454  -2.765238 1.0013769 5094
+## 4      cp_1_id[Jane]   5.248733   2.798096   7.632579 0.9999025 3729
+## 5     cp_1_id[Louis]  14.484738  12.172473  16.705511 1.0017682 2847
+## 6 cp_1_id[Spiderman]  24.560854  20.964997  28.534468 1.0003928 5372
+##       ts_se
+## 1  2.212468
+## 2  2.016097
+## 3  1.804351
+## 4  2.459058
+## 5 10.482997
+## 6  2.729247</code></pre>
 <p>Notice how well they are estimated to be 10 apart, indicating good recovery.</p>
 <p>Good convergence is not always as obvious as in this example. While <code><a href="../reference/plot.mcpfit.html">plot(fit, "combo")</a></code> show population-level parameters only, you can do this to get varying effects only:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"trace"</span>, <span class="dt">pars =</span> <span class="st">"varying"</span>, <span class="dt">ncol=</span><span class="dv">3</span>)</a></code></pre></div>
@@ -295,7 +301,7 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Jonas Lindeløv.</p>
+  <p>Developed by <a href="http://lindeloev.net">Jonas Kristoffer Lindeløv</a>.</p>
 </div>
 
 <div class="pkgdown">

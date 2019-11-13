@@ -3,7 +3,9 @@ pkgdown: 1.4.1
 pkgdown_sha: ~
 articles:
   binomial: binomial.html
+  comparison: comparison.html
   formulas: formulas.html
+  packages: packages.html
   poisson: poisson.html
   priors: priors.html
   varying: varying.html

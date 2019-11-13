@@ -7,7 +7,7 @@
 #' @return String. A JAGS model.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-get_jagscode = function(prior, ST, formula_str, family) {
+get_jagscode = function(prior, ST, formula_str, family, sample) {
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
   mm = paste0("
@@ -18,7 +18,7 @@ model {
   ##########
   # Transform priors from SD to precision
   all_dprec = "dnorm|dt|dcauchy|ddexp|dlogis|dlnorm"  # JAGS precision dists
-  for (i in seq_len(length(prior))) {
+  for (i in seq_along(prior)) {
     if (stringr::str_detect(prior[[i]], all_dprec)) {
       prior[[i]] = sd_to_prec(prior[[i]])
     }
@@ -91,6 +91,10 @@ model {
     mm = paste0(mm, "dpois(exp(y_[i_]))
     loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], exp(y_[i_]))")
   }
+
+  # If only the prior is sampled, remove the loglik_[i_] line
+  if (sample == "prior")
+    mm = gsub("loglik.*?$","", mm)
 
 
   ###############

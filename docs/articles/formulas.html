@@ -64,7 +64,13 @@
       <a href="../articles/binomial.html">Binomial change point analysis with mcp</a>
     </li>
     <li>
+      <a href="../articles/comparison.html">Change point model comparison with mcp</a>
+    </li>
+    <li>
       <a href="../articles/formulas.html">About mcp formulas and models</a>
+    </li>
+    <li>
+      <a href="../articles/packages.html">mcp and other change point packages</a>
     </li>
     <li>
       <a href="../articles/poisson.html">Poisson change point analysis with mcp</a>
@@ -97,7 +103,7 @@
       <h1>About mcp formulas and models</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-11-06</h4>
+            <h4 class="date">2019-11-12</h4>
       
       
       <div class="hidden name"><code>formulas.Rmd</code></div>
@@ -129,9 +135,9 @@
 <a class="sourceLine" id="cb1-10" title="10"><span class="kw"><a href="../reference/summary.mcpfit.html">summary</a></span>(fit)</a></code></pre></div>
 <pre><code>## Family: gaussian(link = 'identity')
 ## Segments:
-##    score ~ 1 
-##    score ~ 1 ~ 0 + time 
-##    score ~ 1 ~ time 
+##   1: score ~ 1
+##   2: score ~ 1 ~ 0 + time
+##   3: score ~ 1 ~ time
 ## 
 ## No samples. Nothing to summarise.</code></pre>
 <p>Notice how it added the response and the change point to the last segment?</p>
@@ -316,7 +322,7 @@
 ##     if (type == "fitted") 
 ##         return(y)
 ## }
-## &lt;environment: 0x00000000199e21c0&gt;</code></pre>
+## &lt;environment: 0x0000000019e941d0&gt;</code></pre>
 </div>
 <div id="modeling-relative-slopes-and-intercepts" class="section level1">
 <h1 class="hasAnchor">
@@ -359,7 +365,7 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Jonas Lindeløv.</p>
+  <p>Developed by <a href="http://lindeloev.net">Jonas Kristoffer Lindeløv</a>.</p>
 </div>
 
 <div class="pkgdown">

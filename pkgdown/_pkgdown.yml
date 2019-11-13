@@ -22,6 +22,7 @@ reference:
       - fixef
       - loo
       - waic
+      - hypothesis
   
   - title: Some auxillary functions
     desc: These are used internally by mcp, but are exposed here since they may be useful for other purposes. Most other useful internal functions deliver the result already in `mcp(segments, sample = FALSE)`, so this will be their API.

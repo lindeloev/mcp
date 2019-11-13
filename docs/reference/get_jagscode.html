@@ -107,7 +107,13 @@
       <a href="../articles/binomial.html">Binomial change point analysis with mcp</a>
     </li>
     <li>
+      <a href="../articles/comparison.html">Change point model comparison with mcp</a>
+    </li>
+    <li>
       <a href="../articles/formulas.html">About mcp formulas and models</a>
+    </li>
+    <li>
+      <a href="../articles/packages.html">mcp and other change point packages</a>
     </li>
     <li>
       <a href="../articles/poisson.html">Poisson change point analysis with mcp</a>
@@ -148,27 +154,27 @@
     <p>Make JAGS code for Multiple Change Point model</p>
     </div>
 
-    <pre class="usage"><span class='fu'>get_jagscode</span>(<span class='no'>prior</span>, <span class='no'>ST</span>, <span class='no'>formula_str</span>, <span class='no'>family</span>)</pre>
+    <pre class="usage"><span class='fu'>get_jagscode</span>(<span class='no'>prior</span>, <span class='no'>ST</span>, <span class='no'>formula_str</span>, <span class='no'>family</span>, <span class='no'>sample</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>prior</th>
-      <td><p>Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
+      <td><p>Named list. Names are parameter names (cp_i, int_i, x_var_i,
 sigma) and the values are either</p><ul>
 <li><p>A JAGS distribution (e.g., <code>int_1 = "dnorm(0, 1) T(0,)"</code>) indicating a
-    conventional prior distribution. Uninformative priors based on data
-    properties are used where priors are not specified. This ensures good
-    parameter estimations, but it is a questionable for hypothesis testing.
-    <code>mcp</code> uses SD (not precision) for dnorm, dt, dlogis, etc. See
-    details. Change points are forced to be ordered through the priors using
-    truncation, except for uniform priors where the lower bound should be
-    greater than the previous change point, <code><a href='https://rdrr.io/r/stats/Uniform.html'>dunif(cp_1, MAXX)</a></code>.</p></li>
+conventional prior distribution. Uninformative priors based on data
+properties are used where priors are not specified. This ensures good
+parameter estimations, but it is a questionable for hypothesis testing.
+<code>mcp</code> uses SD (not precision) for dnorm, dt, dlogis, etc. See
+details. Change points are forced to be ordered through the priors using
+truncation, except for uniform priors where the lower bound should be
+greater than the previous change point, <code><a href='https://rdrr.io/r/stats/Uniform.html'>dunif(cp_1, MAXX)</a></code>.</p></li>
 <li><p>A numerical value (e.g., <code>int_1 = -2.1</code>) indicating a fixed value.</p></li>
 <li><p>A model parameter name (e.g., <code>int_2 = "int_1"</code>), indicating that this parameter is shared -
-    typically between segments. If two varying effects are shared this way,
-    they will need to have the same grouping variable.</p></li>
+typically between segments. If two varying effects are shared this way,
+they will need to have the same grouping variable.</p></li>
 </ul></td>
     </tr>
     <tr>
@@ -183,6 +189,20 @@ sigma) and the values are either</p><ul>
       <th>family</th>
       <td><p>One of <code><a href='https://rdrr.io/r/stats/family.html'>gaussian()</a></code>, <code><a href='https://rdrr.io/r/stats/family.html'>binomial()</a></code>, <code><a href='bernoulli.html'>bernoulli()</a></code>, or <code>poission()</code>.
 Only default link functions are currently supported.</p></td>
+    </tr>
+    <tr>
+      <th>sample</th>
+      <td><p>One of</p><ul>
+<li><p><code>"post"</code> (default): Sample the posterior.</p></li>
+<li><p><code>"prior"</code>: Sample only the prior. Plots, summaries, etc. will
+use the prior. This is useful for prior predictive checks.</p></li>
+<li><p><code>"both"</code>: Sample both prior and posterior. Plots, summaries, etc.
+will default to using the posterior. The prior only has effect when doing
+Savage-Dickey density ratios in <code><a href='hypothesis.html'>hypothesis</a></code>.</p></li>
+<li><p><code>"none"</code> or <code>FALSE</code>: Do not sample. Returns an mcpfit
+object without sample. This is useful if you only want to check
+prior strings (fit$prior), the JAGS model (fit$jags_code), etc.</p></li>
+</ul></td>
     </tr>
     </table>
 
@@ -206,7 +226,7 @@ Only default link functions are currently supported.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Jonas Lindeløv.</p>
+  <p>Developed by <a href='http://lindeloev.net'>Jonas Kristoffer Lindeløv</a>.</p>
 </div>
 
 <div class="pkgdown">

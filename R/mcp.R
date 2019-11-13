@@ -1,78 +1,79 @@
 #' Fit Multiple Linear Segments And Their Change Points
 #'
-#' Given a list of linear segments, \code{mcp} infers the posterior
+#' Given a list of linear segments, `mcp` infers the posterior
 #' distributions of the parameters of each segment as well as the change points
 #' between segments. All segments must regress on the same x-axis. Change points
 #' are forced to be ordered using truncation of the priors. You can run
-#' \code{fit = mcp(segments, sample=FALSE)} to avoid sampling and the need for
-#' data if you just want to get the priors (\code{fit$prior}), the JAGS code
-#' \code{fit$jags_code}, or the R function to simulate data (\code{fit$func_y}).
+#' `fit = mcp(segments, sample=FALSE)` to avoid sampling and the need for
+#' data if you just want to get the priors (`fit$prior`), the JAGS code
+#' `fit$jags_code`, or the R function to simulate data (`fit$func_y`).
 #'
 #' @aliases mcp
 #' @param data Data.frame or tibble in long format.
 #' @param segments A list of formulas - one for each segment. The first formula
-#'   has the format \code{response ~ predictors} while the following formulas
-#'   have the format \code{response ~ changepoint ~ predictors}. The response
-#'   and change points can be omitted (\code{changepoint ~ predictors} assumes same
-#'   response. \code{~ predictors} assumes an intercept-only change point).
+#'   has the format `response ~ predictors` while the following formulas
+#'   have the format `response ~ changepoint ~ predictors`. The response
+#'   and change points can be omitted (`changepoint ~ predictors` assumes same
+#'   response. `~ predictors` assumes an intercept-only change point).
 #'
 #'   See examples for more details.
 #' @param prior Named list. Names are parameter names (cp_i, int_i, [x_var]_i,
 #'  sigma) and the values are either
-#'  \itemize{
-#'    \item A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
+#'
+#'  * A JAGS distribution (e.g., `int_1 = "dnorm(0, 1) T(0,)"`) indicating a
 #'      conventional prior distribution. Uninformative priors based on data
 #'      properties are used where priors are not specified. This ensures good
 #'      parameter estimations, but it is a questionable for hypothesis testing.
-#'      \code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
+#'      `mcp` uses SD (not precision) for dnorm, dt, dlogis, etc. See
 #'      details. Change points are forced to be ordered through the priors using
 #'      truncation, except for uniform priors where the lower bound should be
-#'      greater than the previous change point, \code{dunif(cp_1, MAXX)}.
-#'    \item A numerical value (e.g., \code{int_1 = -2.1}) indicating a fixed value.
-#'    \item A model parameter name (e.g., \code{int_2 = "int_1"}), indicating that this parameter is shared -
+#'      greater than the previous change point, `dunif(cp_1, MAXX)`.
+#'  * A numerical value (e.g., `int_1 = -2.1`) indicating a fixed value.
+#'  * A model parameter name (e.g., `int_2 = "int_1"`), indicating that this parameter is shared -
 #'      typically between segments. If two varying effects are shared this way,
 #'      they will need to have the same grouping variable.
-#'  }
-#' @param family One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}.
+#' @param family One of `gaussian()`, `binomial()`, `bernoulli()`, or `poission()`.
 #'   Only default link functions are currently supported.
 #' @param par_x String (default: NULL). Only relevant if no segments contains
 #'   slope (no hint at what x is). Set this, e.g., par_x = "time".
-#' @param sample One of TRUE, FALSE, or "prior". Set to FALSE to get an mcpfit
-#'   object without samples. This is useful if you only want to check
-#'   priors, the JAGS model, etc. Set to "prior" if you want to do a prior
-#'   predictive check.
+#' @param sample One of
+#'   * `"post"` (default): Sample the posterior.
+#'   * `"prior"`: Sample only the prior. Plots, summaries, etc. will
+#'       use the prior. This is useful for prior predictive checks.
+#'   * `"both"`: Sample both prior and posterior. Plots, summaries, etc.
+#'       will default to using the posterior. The prior only has effect when doing
+#'       Savage-Dickey density ratios in \code{\link{hypothesis}}.
+#'   * `"none"` or `FALSE`: Do not sample. Returns an mcpfit
+#'       object without sample. This is useful if you only want to check
+#'       prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
 #' @param cores Positive integer or "all". Number of cores.
-#'   \itemize{
-#'     \item 1: serial sampling
-#'     \item >1: parallel sampling on this number of cores. Ideally set \code{chains}
+#'   * 1: serial sampling
+#'   * >1: parallel sampling on this number of cores. Ideally set `chains`
 #'     to the same value.
-#'     \item "all": use all cores but one.
-#'   }
+#'   * "all": use all cores but one.
 #' @param chains Positive integer. Number of chains to run.
 #' @param iter Positive integer. Number of post-warmup samples to draw.
 #' @param adapt Positive integer. Number of iterations to find sampler settings.
 #' @param update Positive integer. Also sometimes called "burnin", this is the
 #'   number of regular samples before anything is recorded. Use to reach
 #'   convergence.
-#' @param jags_explicit Pass JAGS code to \code{mcp} to use directly. Useful if
+#' @param jags_explicit Pass JAGS code to `mcp` to use directly. Useful if
 #'   you want to make small tweaks, but mostly used for the development of mcp.
 #' @param ... Further parameters for \code{\link[dclone]{jags.fit}}.
 #' @details Notes on priors:
-#'   \itemize{
-#'     \item Order restriction is automatically applied to cp_\* parameters using
-#'       truncation (e.g., \code{T(cp_1, )}) so that they are in the correct order on the
+#'   * Order restriction is automatically applied to cp_\* parameters using
+#'       truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the
 #'       x-axis UNLESS you do it yourself. The one exception is for dunif
 #'       distributions where you have to do it as above.
-#'     \item In addition to the model parameters, \code{MINX} (minimum x-value), \code{MAXX}
-#'       (maximum x-value), \code{SDX} (etc...), \code{MINY}, \code{MAXY}, and \code{SDY}
+#'   * In addition to the model parameters, `MINX` (minimum x-value), `MAXX`
+#'       (maximum x-value), `SDX` (etc...), `MINY`, `MAXY`, and `SDY`
 #'       are also available when you set priors. They are used to set uninformative
 #'       default priors.
-#'     \item Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision
-#'       but \code{mcp} converts to precision under the hood via the sd_to_prec()
-#'       function. So you will see SDs in \code{fit$prior} but precision ($1/SD^2)
-#'       in \code{fit$jags_code}
-#'   }
-#' @return An \code{mcpfit} object.
+#'   * Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision
+#'       but `mcp` converts to precision under the hood via the sd_to_prec()
+#'       function. So you will see SDs in `fit$prior` but precision ($1/SD^2)
+#'       in `fit$jags_code`
+#' @return An `mcpfit` object.
 #' @seealso \link{get_segment_table}
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @importFrom stats gaussian binomial
@@ -121,7 +122,7 @@
 #' # Do stuff with the parameter estimates
 #' fit$pars$model  # check out which parameters are inferred.
 #' library(tidybayes)
-#' spread_draws(fit$samples, cp_1, cp_2, int_1, year_1, year_2) %>%
+#' spread_draws(fit$mcmc_post, cp_1, cp_2, int_1, year_1, year_2) %>%
 #'    # tidybayes stuff here
 #'
 #' # Show JAGS model
@@ -134,7 +135,7 @@ mcp = function(segments,
                prior = list(),
                family = gaussian(),
                par_x = NULL,
-               sample = TRUE,
+               sample = "post",
                cores = 1,
                chains = 3,
                iter = 3000,
@@ -193,8 +194,8 @@ mcp = function(segments,
     stop("`par_x` must be NULL or a string.")
 
   # Sampler settings
-  if (sample != "prior" & !is.logical(sample))
-    stop("`sample` must be TRUE, FALSE, or 'prior'")
+  if (!sample %in% c("post", "prior", "both") & !is.logical(sample))
+    stop("`sample` must be 'post', 'prior', 'both', or 'none'/FALSE")
 
   if (cores < 1 | !check_integer(cores, "cores"))
     stop("`cores` has to be 1 or greater (parallel sampling).")
@@ -234,17 +235,17 @@ mcp = function(segments,
   func_y = get_func_y(formula_str, par_x, par_trials, params_funcy, params_varying, nrow(ST), family$family)
 
   # Make jags code and sample it.
-  jags_code = get_jagscode(prior, ST, formula_str, family$family)
+  jags_code = get_jagscode(prior, ST, formula_str, family$family, sample)
 
-  if (sample %in% c(TRUE, "prior")) {
-    # Sample it
+  # Sample posterior
+  if (sample %in% c("post", "both")) {
     samples = run_jags(
       data = data,
       jags_code = ifelse(is.null(jags_explicit), jags_code, jags_explicit),
       params = c(params_population, params_varying, "loglik_"),  # population-level, varying, and loglik for loo/waic
       ST = ST,
       cores = cores,
-      sample = sample,
+      sample = "post",
       n.chains = chains,
       n.iter = iter,
       n.adapt = adapt,
@@ -254,12 +255,39 @@ mcp = function(segments,
 
     # Move loglik columns out to it's own list, keeping parameters and loglik apart
     loglik_cols = stringr::str_starts(colnames(samples[[1]]), 'loglik_')  # detect loglik cols
-    loglik = lapply(samples, function(x) x[, loglik_cols])
-    samples = lapply(samples, function(x) x[, !loglik_cols])
-  } else {
-    samples = NULL
-    loglik = NULL
+    mcmc_loglik = lapply(samples, function(x) x[, loglik_cols])
+    mcmc_post = lapply(samples, function(x) x[, !loglik_cols])
+
   }
+
+  # Sample prior
+  if (sample %in% c("prior", "both")) {
+    samples = run_jags(
+      data = data,
+      jags_code = ifelse(is.null(jags_explicit), jags_code, jags_explicit),
+      params = c(params_population, params_varying),  # population-level, varying, but NOT loglik
+      ST = ST,
+      cores = cores,
+      sample = "prior",
+      n.chains = chains,
+      n.iter = iter,
+      n.adapt = adapt,
+      n.update = update,
+      ...
+    )
+
+    # Move loglik columns out to it's own list, keeping parameters and loglik apart
+    loglik_cols = stringr::str_starts(colnames(samples[[1]]), 'loglik_')  # detect loglik cols
+    mcmc_prior = lapply(samples, function(x) x[, !loglik_cols])
+  }
+
+  # Fill in the missing samples
+  if (exists("mcmc_post")) class(mcmc_post) = "mcmc.list"
+  if (exists("mcmc_prior")) class(mcmc_prior) = "mcmc.list"
+  if (exists("mcmc_loglik")) class(mcmc_loglik) = "mcmc.list"
+  if (!exists("mcmc_post")) mcmc_post = NULL
+  if (!exists("mcmc_prior")) mcmc_prior = NULL
+  if (!exists("mcmc_loglik")) mcmc_loglik = NULL
 
   # Make mrpfit object
   mcpfit = list(
@@ -270,8 +298,9 @@ mcp = function(segments,
     family = family,
 
     # Results
-    samples = samples,
-    loglik = loglik,
+    mcmc_post = mcmc_post,
+    mcmc_prior = mcmc_prior,
+    mcmc_loglik = mcmc_loglik,
     loo = NULL,
     waic = NULL,
 

@@ -13,10 +13,18 @@ get_jags_data(data, ST, jags_code, sample)
 
 \item{jags_code}{A string. JAGS model, usually returned by \code{make_jagscode()}.}
 
-\item{sample}{One of TRUE, FALSE, or "prior". Set to FALSE to get an mcpfit
-object without samples. This is useful if you only want to check
-priors, the JAGS model, etc. Set to "prior" if you want to do a prior
-predictive check.}
+\item{sample}{One of
+\itemize{
+\item \code{"post"} (default): Sample the posterior.
+\item \code{"prior"}: Sample only the prior. Plots, summaries, etc. will
+use the prior. This is useful for prior predictive checks.
+\item \code{"both"}: Sample both prior and posterior. Plots, summaries, etc.
+will default to using the posterior. The prior only has effect when doing
+Savage-Dickey density ratios in \code{\link{hypothesis}}.
+\item \code{"none"} or \code{FALSE}: Do not sample. Returns an mcpfit
+object without sample. This is useful if you only want to check
+prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
+}}
 }
 \description{
 Returns the relevant data columns as a list and add elements with unique

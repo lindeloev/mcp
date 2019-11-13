@@ -4,7 +4,7 @@
 \alias{run_jags}
 \title{Run parallel MCMC sampling using JAGS.}
 \usage{
-run_jags(data, jags_code, params, ST, cores, sample = sample,
+run_jags(data, jags_code, params, ST, cores, sample,
   model_file = "tmp_jags_code.txt", ...)
 }
 \arguments{
@@ -21,16 +21,26 @@ Only really used when the model contains varying effects.}
 
 \item{cores}{Positive integer or "all". Number of cores.
 \itemize{
-  \item 1: serial sampling
-  \item >1: parallel sampling on this number of cores. Ideally set \code{chains}
-  to the same value.
-  \item "all": use all cores but one.
+\item 1: serial sampling
+\item 
+
+1: parallel sampling on this number of cores. Ideally set \code{chains}
+to the same value.
+\item "all": use all cores but one.
 }}
 
-\item{sample}{One of TRUE, FALSE, or "prior". Set to FALSE to get an mcpfit
-object without samples. This is useful if you only want to check
-priors, the JAGS model, etc. Set to "prior" if you want to do a prior
-predictive check.}
+\item{sample}{One of
+\itemize{
+\item \code{"post"} (default): Sample the posterior.
+\item \code{"prior"}: Sample only the prior. Plots, summaries, etc. will
+use the prior. This is useful for prior predictive checks.
+\item \code{"both"}: Sample both prior and posterior. Plots, summaries, etc.
+will default to using the posterior. The prior only has effect when doing
+Savage-Dickey density ratios in \code{\link{hypothesis}}.
+\item \code{"none"} or \code{FALSE}: Do not sample. Returns an mcpfit
+object without sample. This is useful if you only want to check
+prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
+}}
 
 \item{model_file}{A temporary file. Makes parallel sampling possible
 samples that are discarded between n.adapt and n.iter (to improve convergence)..}

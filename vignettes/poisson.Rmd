@@ -27,7 +27,7 @@ data
 
 
 The number of events (`n`) as a function of year (`date`) is typically modeled as a change between two intercepts. This is very simple to do in `mcp`:
-```{r, results= FALSE, message=FALSE, warning=FALSE}
+```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
 library(mcp)
 segments = list(
   n ~ 1,  # intercept-only
@@ -71,7 +71,7 @@ fit$prior
 
 As always, the prior on the change point forces it to occur in the observed range. These priors are very vague, so update with more informed priors for your particular case, e.g.:
 
-```{r, eval=FALSE}
+```{r, cache = TRUE, eval=FALSE}
 prior = list(
   cp_1 = "dnorm(1900, 30) T(MINX, 1925)"
 )
@@ -81,26 +81,23 @@ fit_with_prior = mcp(segments, data, prior, poisson(), par_x = "date")
 
 # Model comparison
 
-Despite the popularity of this dataset, a question rarely asked is what the evidence is that there is a change point at all. Let us fit two no-changepoint models and use approximate leave-one-out cross-validation to see how the predictive performance of the two models compare. First a flat model:
+Despite the popularity of this dataset, a question rarely asked is what the evidence is that there is a change point at all. Let us fit two no-changepoint models and use approximate leave-one-out cross-validation to see how the predictive performance of the two models compare. 
 
-```{r, results= FALSE, message=FALSE, warning=FALSE}
+A flat model and a one-decay model:
+
+```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
 # Fit an intercept-only model
 fit_flat = mcp(list(n ~ 1), data, family=poisson(), par_x = "date")
-plot(fit_flat)
-```
-
-
-Then a one-decay model:
-
-```{r, results= FALSE, message=FALSE, warning=FALSE}
 fit_decay = mcp(list(n ~ 1 + date), data, family = poisson())
-plot(fit_decay)
+
+
+plot(fit_flat) + plot(fit_decay)
 ```
 
 
 Not we compute and compare the LOO ELPDs:
 
-```{r, results=FALSE, warning=FALSE, message=FALSE}
+```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
 fit$loo = loo(fit)
 fit_flat$loo = loo(fit_flat)
 fit_decay$loo = loo(fit_decay)
@@ -108,8 +105,6 @@ fit_decay$loo = loo(fit_decay)
 ```{r}
 loo::loo_compare(fit$loo, fit_flat$loo, fit_decay$loo)
 ```
-
-
 
 
 The change point model seems to be preferred with a ratio of around 1.7 over the decay model and 2.5 over the flat model. Another approach is to look at the model weights:

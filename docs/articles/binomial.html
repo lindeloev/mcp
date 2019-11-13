@@ -64,7 +64,13 @@
       <a href="../articles/binomial.html">Binomial change point analysis with mcp</a>
     </li>
     <li>
+      <a href="../articles/comparison.html">Change point model comparison with mcp</a>
+    </li>
+    <li>
       <a href="../articles/formulas.html">About mcp formulas and models</a>
+    </li>
+    <li>
+      <a href="../articles/packages.html">mcp and other change point packages</a>
     </li>
     <li>
       <a href="../articles/poisson.html">Poisson change point analysis with mcp</a>
@@ -97,7 +103,7 @@
       <h1>Binomial change point analysis with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-11-06</h4>
+            <h4 class="date">2019-11-12</h4>
       
       
       <div class="hidden name"><code>binomial.Rmd</code></div>
@@ -153,16 +159,16 @@
 <pre><code>## # A tibble: 100 x 3
 ##     year     N     y
 ##    &lt;int&gt; &lt;int&gt; &lt;int&gt;
-##  1  1901    10     9
-##  2  1902    15    12
-##  3  1903    15    10
-##  4  1904    15    13
-##  5  1905    12    11
-##  6  1906    12    10
-##  7  1907    10     9
-##  8  1908    18    18
-##  9  1909    17    15
-## 10  1910    15    13
+##  1  1901    14    10
+##  2  1902    20    19
+##  3  1903    12    11
+##  4  1904    14    11
+##  5  1905    11    11
+##  6  1906    11     9
+##  7  1907    14    12
+##  8  1908    16    14
+##  9  1909    12     8
+## 10  1910    14    11
 ## # ... with 90 more rows</code></pre>
 <p>Visually:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(data<span class="op">$</span>year, data<span class="op">$</span>y)</a></code></pre></div>
@@ -178,25 +184,26 @@
 <pre><code>## Family: binomial(link = 'logit')
 ## Iterations: 9000 from 3 chains.
 ## Segments:
-##    y ~ 1 
-##    y ~ 1 ~ 0 + year 
-##    y ~ 1 ~ 1 + year 
+##   1: y ~ 1
+##   2: y ~ 1 ~ 0 + year
+##   3: y ~ 1 ~ 1 + year
 ## 
 ## Population-level parameters:
-##    name      mean      X2.5     X97.5 rhat  eff    ts_se
-##    cp_1 1923.2044 1919.9423 1926.4638    1  579 4.27e+01
-##    cp_2 1964.5021 1964.0429 1964.9899    1 6340 1.19e-01
-##   int_1    1.9275    1.6016    2.2710    1 1037 2.37e-01
-##   int_3    0.3964    0.0534    0.7488    1  801 3.34e-01
-##  year_2   -0.1684   -0.1927   -0.1435    1 1030 1.52e-03
-##  year_3    0.0269    0.0093    0.0443    1  817 8.43e-04</code></pre>
+##    name      mean     lower     upper rhat  eff    ts_se
+##    cp_1 1923.2539 1920.2606 1925.7996    1  789 2.30e+01
+##    cp_2 1964.4952 1964.0009 1964.9471    1 5744 1.33e-01
+##   int_1    1.8455    1.5531    2.1486    1 1239 1.49e-01
+##   int_3    0.2542   -0.0773    0.5948    1 1015 2.72e-01
+##  year_2   -0.1685   -0.1929   -0.1442    1 1140 1.21e-03
+##  year_3    0.0362    0.0196    0.0536    1  970 6.76e-04</code></pre>
 <p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have <a href="../docs/articles/varying.html">varying effects</a>, use <code><a href="../reference/ranef.html">ranef(fit)</a></code> to see them.</p>
 <p>Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
-<p>These lines are just <code>fit$func_y</code> applied to a random draw of the posterior samples. In other words, they represent the joint distribution of the parameters. You can change the number of draws (lines) using <code><a href="../reference/plot.mcpfit.html">plot(fit, draws = 50)</a></code>.</p>
+<p>These lines are just <code>fit$func_y</code> applied to a random draw of the posterior samples. In other words, they represent the joint distribution of the parameters. You can change the number of draws (lines) using <code><a href="../reference/plot.mcpfit.html">plot(fit, lines = 50)</a></code>.</p>
 <p>Notice for binomial models it defaults to plot the <em>rate</em> (<code>y / N</code>) as a function of x. The reason why is obvious when we plot on “raw” data by toggling <code>rate</code>:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">rate =</span> <span class="ot">FALSE</span>)</a></code></pre></div>
+<pre><code>## Warning: Removed 3375 rows containing missing values (geom_path).</code></pre>
 <p><img src="binomial_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
 <p>These lines are jagged because <code>N</code> varies from year to year. Although there is close too 100% success rate in the years 1900 - 1920, the number of trials varies, as you can see in the raw data. However, using <code>rate = FALSE</code> will be great when the number of trials is constant for extended periods of time, as <code>y</code> is more interpretable then.</p>
 <p>Of course, these plots work with <a href="../docs/articles/varying.html">varying effects</a> as well.</p>
@@ -205,7 +212,7 @@
 <h1 class="hasAnchor">
 <a href="#model-diagnostics-and-sampling-options" class="anchor"></a>Model diagnostics and sampling options</h1>
 <p>Already in the default <code>plot</code> as used above, it will be obvious if there was poor convergence. A more direct assessment is to look at the posterior distributions and trace plots:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"combo"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"combo"</span>)</a></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-10-1.png" width="576"></p>
 <p>Convergence is perfect here as evidenced by the overlapping trace plots that look like fat caterpillars (Bayesians love fat caterpillars). Notice that the posterior distribution of change points can be quite non-normal and sometimes even bimodal. Therefore, one should be careful not to interpret the HDI as if it was normal.</p>
 <p><code><a href="../reference/plot.mcpfit.html">plot()</a></code> can do a lot more than this, so check out it’s documentation.</p>
@@ -215,7 +222,7 @@
 <a href="#priors-for-binomial-models" class="anchor"></a>Priors for binomial models</h1>
 <p><code>mcp</code> uses priors to achieve a lot of it’s functionality. See <a href="../docs/articles/priors.html">how to set priors</a>, including how to share parameters between segments and how to fix values. Here, I post a few notes about the binomial-specific default priors.</p>
 <p>The default priors in <code>mcp</code> are set so that they are reasonably broad to cover most scenarios, though also specific enough to sample effectively. They are not “default” as in “canonical”. Rather, they are “default” as in “what happens if you do nothing else”. All priors are stored in <code>fit$prior</code> (also <code>empty$prior</code>). We did not specify <code>prior</code> above, so it ran with default priors:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">fit<span class="op">$</span>prior</a></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1">fit<span class="op">$</span>prior</a></code></pre></div>
 <pre><code>## $int_1
 ## [1] "dnorm(0, 3)"
 ## 
@@ -234,19 +241,19 @@
 ## $cp_2
 ## [1] "dunif(cp_1, MAXX)"</code></pre>
 <p>The priors on change points are discussed extensively in the prior vignette. The priors on slopes and intercepts are normals with standard deviation of “3” logits. This corresponds to quite extreme binomial probabilities, yet not so extreme as to be totally flat. Here are visualization of priors <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm(0, 1)</a></code> (red), <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm(0, 2)</a></code> (black, mcp default), and a <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm(0, 5)</a></code> (blue) prior, and the correspondence between logits and probabilities:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">inverse_logit =<span class="st"> </span><span class="cf">function</span>(x) <span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(x) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(x))</a>
-<a class="sourceLine" id="cb16-2" title="2"></a>
-<a class="sourceLine" id="cb16-3" title="3"><span class="co"># Start the plot</span></a>
-<a class="sourceLine" id="cb16-4" title="4"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</a>
-<a class="sourceLine" id="cb16-5" title="5"><span class="kw">ggplot</span>(<span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="dt">logits =</span> <span class="dv">0</span>), <span class="kw">aes</span>(<span class="dt">x =</span> logits)) <span class="op">+</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb16-6" title="6"><span class="st">  </span></a>
-<a class="sourceLine" id="cb16-7" title="7"><span class="st">  </span><span class="co"># Plot normal prior. Set parameters in "args"</span></a>
-<a class="sourceLine" id="cb16-8" title="8"><span class="st">  </span><span class="kw">stat_function</span>(<span class="dt">fun=</span>dnorm, <span class="dt">args =</span> <span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="dt">mean=</span><span class="dv">0</span>, <span class="dt">sd =</span> <span class="dv">1</span>), <span class="dt">lwd=</span><span class="dv">2</span>, <span class="dt">col=</span><span class="st">"red"</span>) <span class="op">+</span></a>
-<a class="sourceLine" id="cb16-9" title="9"><span class="st">  </span><span class="kw">stat_function</span>(<span class="dt">fun=</span>dnorm, <span class="dt">args =</span> <span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="dt">mean=</span><span class="dv">0</span>, <span class="dt">sd =</span> <span class="dv">3</span>), <span class="dt">lwd=</span><span class="dv">2</span>, <span class="dt">col=</span><span class="st">"black"</span>) <span class="op">+</span></a>
-<a class="sourceLine" id="cb16-10" title="10"><span class="st">  </span><span class="kw">stat_function</span>(<span class="dt">fun=</span>dnorm, <span class="dt">args =</span> <span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="dt">mean=</span><span class="dv">0</span>, <span class="dt">sd =</span> <span class="dv">5</span>), <span class="dt">lwd=</span><span class="dv">2</span>, <span class="dt">col=</span><span class="st">"blue"</span>) <span class="op">+</span></a>
-<a class="sourceLine" id="cb16-11" title="11"><span class="st">  </span></a>
-<a class="sourceLine" id="cb16-12" title="12"><span class="st">  </span><span class="co"># Set the secondary axis</span></a>
-<a class="sourceLine" id="cb16-13" title="13"><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">breaks =</span> <span class="dv">-7</span><span class="op">:</span><span class="dv">7</span>,<span class="dt">limits =</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="op">-</span><span class="dv">7</span>, <span class="dv">7</span>), <span class="dt">sec.axis =</span> <span class="kw">sec_axis</span>(<span class="op">~</span><span class="st"> </span><span class="kw">inverse_logit</span>(.), <span class="dt">name =</span> <span class="st">"Probability"</span>, <span class="dt">breaks =</span> <span class="kw"><a href="https://rdrr.io/r/base/Round.html">round</a></span>(<span class="kw">inverse_logit</span>(<span class="kw"><a href="https://rdrr.io/r/base/seq.html">seq</a></span>(<span class="op">-</span><span class="dv">7</span>, <span class="dv">7</span>, <span class="dt">by =</span> <span class="dv">2</span>)), <span class="dv">3</span>)))</a></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1">inverse_logit =<span class="st"> </span><span class="cf">function</span>(x) <span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(x) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(x))</a>
+<a class="sourceLine" id="cb17-2" title="2"></a>
+<a class="sourceLine" id="cb17-3" title="3"><span class="co"># Start the plot</span></a>
+<a class="sourceLine" id="cb17-4" title="4"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</a>
+<a class="sourceLine" id="cb17-5" title="5"><span class="kw">ggplot</span>(<span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="dt">logits =</span> <span class="dv">0</span>), <span class="kw">aes</span>(<span class="dt">x =</span> logits)) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb17-6" title="6"><span class="st">  </span></a>
+<a class="sourceLine" id="cb17-7" title="7"><span class="st">  </span><span class="co"># Plot normal prior. Set parameters in "args"</span></a>
+<a class="sourceLine" id="cb17-8" title="8"><span class="st">  </span><span class="kw">stat_function</span>(<span class="dt">fun=</span>dnorm, <span class="dt">args =</span> <span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="dt">mean=</span><span class="dv">0</span>, <span class="dt">sd =</span> <span class="dv">1</span>), <span class="dt">lwd=</span><span class="dv">2</span>, <span class="dt">col=</span><span class="st">"red"</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb17-9" title="9"><span class="st">  </span><span class="kw">stat_function</span>(<span class="dt">fun=</span>dnorm, <span class="dt">args =</span> <span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="dt">mean=</span><span class="dv">0</span>, <span class="dt">sd =</span> <span class="dv">3</span>), <span class="dt">lwd=</span><span class="dv">2</span>, <span class="dt">col=</span><span class="st">"black"</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb17-10" title="10"><span class="st">  </span><span class="kw">stat_function</span>(<span class="dt">fun=</span>dnorm, <span class="dt">args =</span> <span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="dt">mean=</span><span class="dv">0</span>, <span class="dt">sd =</span> <span class="dv">5</span>), <span class="dt">lwd=</span><span class="dv">2</span>, <span class="dt">col=</span><span class="st">"blue"</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb17-11" title="11"><span class="st">  </span></a>
+<a class="sourceLine" id="cb17-12" title="12"><span class="st">  </span><span class="co"># Set the secondary axis</span></a>
+<a class="sourceLine" id="cb17-13" title="13"><span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">breaks =</span> <span class="dv">-7</span><span class="op">:</span><span class="dv">7</span>,<span class="dt">limits =</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="op">-</span><span class="dv">7</span>, <span class="dv">7</span>), <span class="dt">sec.axis =</span> <span class="kw">sec_axis</span>(<span class="op">~</span><span class="st"> </span><span class="kw">inverse_logit</span>(.), <span class="dt">name =</span> <span class="st">"Probability"</span>, <span class="dt">breaks =</span> <span class="kw"><a href="https://rdrr.io/r/base/Round.html">round</a></span>(<span class="kw">inverse_logit</span>(<span class="kw"><a href="https://rdrr.io/r/base/seq.html">seq</a></span>(<span class="op">-</span><span class="dv">7</span>, <span class="dv">7</span>, <span class="dt">by =</span> <span class="dv">2</span>)), <span class="dv">3</span>)))</a></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
 <p>Please keep in mind that when these priors combine through the model, the joint probability may be quite different.</p>
 <p>Returning to the priors, the <code>3 / (MAXX - MINX)</code> on slopes mean that this change in probability occurs over the course of the observed X.</p>
@@ -255,7 +262,7 @@
 <h1 class="hasAnchor">
 <a href="#jags-code" class="anchor"></a>JAGS code</h1>
 <p>Here is the JAGS code for the model used in this article.</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(fit<span class="op">$</span>jags_code)</a></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(fit<span class="op">$</span>jags_code)</a></code></pre></div>
 <pre><code>## 
 ## model {
 ##   # Priors for population-level effects
@@ -313,7 +320,7 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Jonas Lindeløv.</p>
+  <p>Developed by <a href="http://lindeloev.net">Jonas Kristoffer Lindeløv</a>.</p>
 </div>
 
 <div class="pkgdown">

@@ -4,12 +4,11 @@
 \alias{plot_segments}
 \title{Plot posterior draws of segments on top of data}
 \usage{
-plot_segments(fit, draws = 25, facet_by = NULL, rate = TRUE, ...)
+plot_segments(fit, facet_by = NULL, rate = TRUE, lines = 25,
+  quantiles = FALSE, ...)
 }
 \arguments{
 \item{fit}{An mcpfit object.}
-
-\item{draws}{Positive integer. Number of posterior draws to use when type = "segments".}
 
 \item{facet_by}{String. Name of a varying group.
 \code{facet_by} only applies for \code{type = "segments"}}
@@ -18,6 +17,20 @@ plot_segments(fit, draws = 25, facet_by = NULL, rate = TRUE, ...)
 response divided by number of trials (\code{rate = TRUE}). If FALSE, linear
 interpolation on trial number is used to infer trials at a particular x.
 \code{rate} only applies for \code{type = "segments"}}
+
+\item{lines}{Positive integer or \code{FALSE}. Number of lines (posterior
+draws) to use when \code{type = "segments"}. FALSE (or \code{lines = 0})
+plots no lines.}
+
+\item{quantiles}{Whether to plot quantiles.
+\itemize{
+\item \strong{TRUE:} Add 2.5% and 97.5% quantiles. Corresponds to
+\code{quantiles = c(0.025, 0.975)}.
+\item \strong{FALSE (default):} No quantiles
+\item A vector of quantiles. For example, \code{quantiles = 0.5}
+plots the median and \code{quantiles = c(0.2, 0.8)} plots the 20% and 80%
+quantiles.
+}}
 
 \item{...}{Currently ignored.}
 }

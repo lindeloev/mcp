@@ -22,6 +22,12 @@
     <loc>https://lindeloev.github.io/mcp/reference/fixef.html</loc>
   </url>
   <url>
+    <loc>https://lindeloev.github.io/mcp/reference/get_density.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/reference/get_eval_at.html</loc>
+  </url>
+  <url>
     <loc>https://lindeloev.github.io/mcp/reference/get_formula_str.html</loc>
   </url>
   <url>
@@ -40,10 +46,16 @@
     <loc>https://lindeloev.github.io/mcp/reference/get_prior_str.html</loc>
   </url>
   <url>
+    <loc>https://lindeloev.github.io/mcp/reference/get_samples.html</loc>
+  </url>
+  <url>
     <loc>https://lindeloev.github.io/mcp/reference/get_segment_table.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp/reference/get_summary.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/reference/hypothesis.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp/reference/logical0_to_null.html</loc>
@@ -88,7 +100,13 @@
     <loc>https://lindeloev.github.io/mcp/articles/binomial.html</loc>
   </url>
   <url>
+    <loc>https://lindeloev.github.io/mcp/articles/comparison.html</loc>
+  </url>
+  <url>
     <loc>https://lindeloev.github.io/mcp/articles/formulas.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/articles/packages.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp/articles/poisson.html</loc>
