@@ -2,8 +2,11 @@ template:
   params:
     bootswatch: cerulean  # Theme
     ganalytics: UA-1026978-3  # Google Analytics
+    docsearch:
+      api_key: 702ab134d40a7310606c29f341fc5014
+      index_name: lindeloev_mcp
   opengraph:
-    img: https://github.com/lindeloev/mcp/raw/master/man/figures/ex_binomial.png  # For Twitter card
+    img: https://github.com/lindeloev/mcp/raw/master/logo.png  # For Twitter card
 
 
 # Writes sitemap etc.
