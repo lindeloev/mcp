@@ -234,7 +234,7 @@ plot_segments = function(fit,
 
     # Interpolate trials for binomial at the values in "eval_at"
     # to make sure that there are actually values to plot
-    interpolated_trials = suppressWarnings(stats::approx(x = dplyr::pull(fit$data, fit$pars$trials), y = dplyr::pull(fit$data, fit$pars$trials), xout = eval_at)$y)
+    interpolated_trials = suppressWarnings(stats::approx(x = dplyr::pull(fit$data, fit$pars$x), y = dplyr::pull(fit$data, fit$pars$trials), xout = eval_at)$y)
     samples = samples %>%
       tidyr::expand_grid(!!xvar := eval_at) %>%  # correct name of x-var
       dplyr::mutate(!!fit$pars$trials := rep(interpolated_trials, nrow(samples)))
