@@ -129,12 +129,13 @@ segments_bin = list(
   1 + (1 | id) ~ 0 + difficulty  # joined slope
 )
 empty_bin = mcp(segments_bin, family = binomial(), sample = FALSE)
-ex_tweet_bin = tibble::tibble(id = 1:5) %>%
+ex_tweet_bin = tibble::tibble(id = 1:6) %>%
   tidyr::expand_grid(difficulty = rep(1:10, each = 3)) %>%
   dplyr::mutate(
     N = 10,
     score = empty_bin$func_y(difficulty, N, int_1 = 2, difficulty_2 = -0.8, cp_1 = 5, cp_1_id = 1 * (id - mean(id)))
   )
 fit_bin = mcp(segments_bin, ex_tweet_bin, family = binomial())
-#plot(fit_bin, facet_by="id")
-hypothesis(fit_bin, "`cp_1_id[1]` < `cp_1_id[2]`")
+plot(fit_bin, facet_by="id", quantiles = TRUE)
+hypothesis(fit_bin, "`cp_1_id[1]` < `cp_1_id[2]`") %>%
+  mutate_if(is.numeric, round, digits = 2)
