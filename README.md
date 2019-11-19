@@ -26,6 +26,7 @@ Under the hood, `mcp` takes a formula-representation of linear segments and turn
 # Brief example
 `mcp` takes a list of formulas for `y` as a function of `x`. The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the following formulas typically take the form `changepoint ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
+## Fit a model
 The following model infers the two change points between three segments.
 
 ```r
@@ -41,6 +42,8 @@ segments = list(
 # Fit it. The `ex_demo` dataset is included in mcp
 fit = mcp(segments, data = ex_demo)
 ```
+
+## See results
 
 Plot lines drawn randomly from the posterior on top of data to inspect the fit:
 ```r
@@ -81,6 +84,8 @@ plot(fit, "combo", regex_pars = "cp_")
 ```
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo_combo.png)
 
+
+## Tests and model comparison
 
 We can test (joint) probabilities in the model using `hypothesis` ([see more here]https://lindeloev.github.io/mcp/articles/comparison.html)). For example, what is the evidence (given priors) that the first change point is later than 25 against it being less than 25?
 
@@ -157,7 +162,7 @@ The articles in the web site's menu go in-depth with the functionality of `mcp`.
  * Leverage directional and conditional tests to assess interval hypotheses (`hypothesis(fit, "cp_1 > 30 & cp_1 < 50")`), combined hypotheses (`hypothesis(fit, "cp_1 > 30 & int_1 > int_2")`), etc.
  
 [Tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/debug.html)
- * Speed up fitting using `mcp(..., cores = 3)` or `mcp(..., adapt = 500, update = 500)`.
+ * Speed up fitting using `mcp(..., cores = 3)` / `options(mcp_cores = 3)`, and/or `mcp(..., adapt = 500, update = 500)`.
  * Help convergence along using `mcp(..., inits = list(cp_1 = 20, int_2 = -3))`.
  * Most errors will be caused by circularly defined priors.
 
