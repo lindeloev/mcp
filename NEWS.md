@@ -1,9 +1,9 @@
-# mcp 0.2
+# mcp 0.1.0.9000
 
  * Quadratic and other terms using `I(x^2)`, `I(x^3.24)`, `sin(x)`, `sqrt(x)`, etc.
  
 
-# mcp 0.1
+# mcp 0.1.0
 First public release.
 
  * Varying change points
