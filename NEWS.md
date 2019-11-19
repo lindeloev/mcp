@@ -1,4 +1,7 @@
-You can always get an impression of the road map by looking at the [open GitHub issues](https://github.com/lindeloev/mcp/issues). Please help improving `mcp` by sending all impressions, ideas, and issues there.
+# mcp 0.2
+
+ * Quadratic and other terms using `I(x^2)`, `I(x^3.24)`, `sin(x)`, `sqrt(x)`, etc.
+ 
 
 # mcp 0.1
 First public release.
