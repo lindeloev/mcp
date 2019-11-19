@@ -95,6 +95,9 @@
     <li>
       <a href="../articles/packages.html">Comparison to other packages</a>
     </li>
+    <li>
+      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -136,7 +139,7 @@
       <h1>An overview of change point packages in R</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-11-14</h4>
+            <h4 class="date">2019-11-19</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/packages.Rmd"><code>vignettes/packages.Rmd</code></a></small>
       <div class="hidden name"><code>packages.Rmd</code></div>
@@ -234,12 +237,12 @@
 ## 
 ## Population-level parameters:
 ##   name    mean  lower  upper rhat  eff    ts_se
-##   cp_1 30.6677 27.031 33.999 1.00 1791  16.5991
-##   cp_2 64.9368 46.992 76.640 1.01 1057 379.1715
-##  int_1  2.0406  1.638  2.443 1.00 4222   0.0844
-##  int_2 -0.0527 -0.489  0.377 1.00 2031   0.2366
-##  int_3  0.9294  0.552  1.338 1.00 2811   0.1200
-##  sigma  1.0634  0.913  1.216 1.00 4432   0.0114</code></pre>
+##   cp_1 30.7356 27.171 33.999 1.00 1542 1.74e+01
+##   cp_2 63.7095 45.185 75.988 1.01  465 1.05e+03
+##  int_1  2.0442  1.655  2.449 1.00 4873 7.61e-02
+##  int_2 -0.0812 -0.545  0.421 1.01  844 7.16e-01
+##  int_3  0.9102  0.509  1.316 1.00 1325 2.60e-01
+##  sigma  1.0631  0.920  1.223 1.00 4231 1.35e-02</code></pre>
 <p>The summary shows good parameter recovery, though the second change point is detected a bit early. This is understandable if you look at the data, and the true change point is still within the highest density interval.</p>
 <p>Plotting the posterior distributions of the change points reveal that they are not well represented by a Gaussian or other known distributions. Therefore, confidence intervals are likely to be meaningless for this problem.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">gridExtra<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/gridExtra/man/arrangeGrob.html">grid.arrange</a></span>(<span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_mcp), </a>
@@ -285,7 +288,7 @@
 <div id="segmented" class="section level1">
 <h1 class="hasAnchor">
 <a href="#segmented" class="anchor"></a>segmented</h1>
-<p><code>segmented</code> has a very shallow learning curve combined with great modeling flexibility. You simply specify your model in <code>lm</code>, <code>glm</code>, <code>Arima</code>, and also work for e.g. <code>coxph</code> (Cox proportional Hazard). Supply it to <code>segmented</code> which then segment your data along the x-axis and applies the linear model in each segment. The trick is identifying the locations where this split works the best. The positive consequence is that you get great modeling flexibility with GLM, AR(1) models, etc.</p>
+<p><code>segmented</code> seems to be the most popular package for change point analysis. It has a very shallow learning curve combined with great modeling flexibility. You simply specify your model in <code>lm</code>, <code>glm</code>, <code>Arima</code>, and also work for e.g. <code>coxph</code> (Cox proportional Hazard). Supply it to <code>segmented</code> which then segment your data along the x-axis and applies the linear model in each segment. The trick is identifying the locations where this split works the best. The positive consequence is that you get great modeling flexibility with GLM, AR(1) models, etc.</p>
 <p>The downside is that you can only have one <em>kind</em> of segments and (for some reason) <em>it ignores the intercepts on anything but the first segment</em>. Only (joined) slopes are supported in segment 2+. Unfortunately, this means that <code>segmented</code> fails for the present changing-intercept data. <code>segmented</code> is otherwise well developed with prediction functions, (frequentist) intervals, plots, etc. so if you have large datasets with impermissible long run times in <code>mcp</code> and it matches what <code>segmented</code> can model, it is a good option.</p>
 <p>Enough talk:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(segmented)</a>
@@ -336,7 +339,7 @@
 <a class="sourceLine" id="cb17-5" title="5">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit_mcp<span class="op">$</span>loo, fit_mcp_<span class="dv">1</span><span class="op">$</span>loo)</a></code></pre></div>
 <pre><code>##        elpd_diff se_diff
 ## model1  0.0       0.0   
-## model2 -5.7       2.7</code></pre>
+## model2 -6.2       2.8</code></pre>
 <p>While <code>segmented</code> prefers the one-change-point model, <code>mcp</code> prefers the (true) two-change-point model. Again, the models compared here are <em>very</em> different since <code>segmented</code> does inference on a slope-only model.</p>
 </div>
 <div id="cpm" class="section level1">
@@ -407,27 +410,19 @@
 ##  $ ks.cp30      : int 31
 ##  $ ks.cp3o_delta: int 31</code></pre>
 </div>
-<div id="strucchangefstats" class="section level1">
-<h1 class="hasAnchor">
-<a href="#strucchangefstats" class="anchor"></a>strucchange::Fstats</h1>
-<p>Contains the function <code>Fstats</code> which can detect a single change point. It finds the change point at <code>x = 30</code>, but not the second change point at <code>x = 70</code>:</p>
-<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb29-1" title="1">fit_struc =<span class="st"> </span>strucchange<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/strucchange/man/Fstats.html">Fstats</a></span>(y <span class="op">~</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> data)</a>
-<a class="sourceLine" id="cb29-2" title="2"><span class="kw"><a href="../reference/print.mcpfit.html">print</a></span>(fit_struc<span class="op">$</span>breakpoint)</a></code></pre></div>
-<pre><code>## [1] 30</code></pre>
-</div>
 <div id="tsmcp" class="section level1">
 <h1 class="hasAnchor">
 <a href="#tsmcp" class="anchor"></a>TSMCP</h1>
 <p>Short for “Time-Series Multiple Change Point”. The output is a single number (!). For the problem at hand, changing <code>method</code> makes no difference. For many other <code>c</code> (<code>c = 0.3</code>, <code>c = 4</code>), it fails to find any change points at all. There is also <code><a href="https://rdrr.io/pkg/TSMCP/man/cpvnts.html">TSMCP::cpvnts()</a></code> to model AR(N), but I have failed to make it find any change points in the present data set.</p>
 <p>It finds the change point at <code>x = 30</code>, but not the second change point at <code>x = 70</code>.</p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb31-1" title="1">TSMCP<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/TSMCP/man/tsmcplm.html">tsmcplm</a></span>(data<span class="op">$</span>y, <span class="dt">X =</span> <span class="ot">NULL</span>, <span class="dt">method =</span> <span class="st">"adapt"</span>, <span class="dt">c =</span> <span class="dv">1</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb29-1" title="1">TSMCP<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/TSMCP/man/tsmcplm.html">tsmcplm</a></span>(data<span class="op">$</span>y, <span class="dt">X =</span> <span class="ot">NULL</span>, <span class="dt">method =</span> <span class="st">"adapt"</span>, <span class="dt">c =</span> <span class="dv">1</span>)</a></code></pre></div>
 <pre><code>## [1] 30</code></pre>
 </div>
 <div id="wbsts" class="section level1">
 <h1 class="hasAnchor">
 <a href="#wbsts" class="anchor"></a>wbsts</h1>
-<p>The <code>wbsts</code> package is focused at time-series data. I must admit that I do not understand the underlying model(s), so I am in a poor position to evaluate whether I am using it correctly. It returns no change points for the present data set using default settings:</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb33-1" title="1">wbsts<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/wbsts/man/wbs.lsw.html">wbs.lsw</a></span>(data<span class="op">$</span>y)</a></code></pre></div>
+<p>The <code>wbsts</code> package is focused at time-series data. I must admit that I have not taken the time to understand the underlying model(s) or inference methods, so I am in a poor position to evaluate whether I am using it correctly. It returns no change points for the present data set using default settings:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb31-1" title="1">wbsts<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/wbsts/man/wbs.lsw.html">wbs.lsw</a></span>(data<span class="op">$</span>y)</a></code></pre></div>
 <pre><code>## $cp.bef
 ## NULL
 ## 
@@ -438,6 +433,41 @@
 <h1 class="hasAnchor">
 <a href="#robtschangerob" class="anchor"></a>robts::changerob</h1>
 <p><code>robts</code> is about robust time-series regression. It is not on CRAN, so it has to be installed using <code><a href="https://rdrr.io/r/utils/install.packages.html">install.packages("robts", repos="http://R-Forge.R-project.org")</a></code>. I fail to install the dependencies, and development of the package seems to have stopped around 2014. It won’t be covered further here.</p>
+</div>
+<div id="packages-doing-only-one-change-point" class="section level1">
+<h1 class="hasAnchor">
+<a href="#packages-doing-only-one-change-point" class="anchor"></a>Packages doing only one change point</h1>
+<ul>
+<li>
+<code><a href="https://rdrr.io/pkg/strucchange/man/Fstats.html">strucchange::Fstats</a></code>: Returns the estimated change point (one number), and nothing else. <code><a href="https://rdrr.io/pkg/strucchange/man/Fstats.html">strucchange::Fstats(y ~ 1, data = data)</a></code> find the change point at 30 in the present data.</li>
+<li>
+<code><a href="https://rdrr.io/pkg/SiZer/man/piecewise.linear.html">SiZer::piecewise.linear</a></code>: Returns a change point and parameter estimates, optionally with an interval. Call like <code>piecewise.linear(data$x, data$y, CI = TRUE)</code>. Only joined slopes are supported which makes it misestimate the change point in the present data 39 [36.5, 47], but it is consistent with <code>segmented</code> which uses a similar model.</li>
+<li>
+<code><a href="https://rdrr.io/pkg/easyreg/man/bl.html">easyreg::bl</a></code>.</li>
+<li>
+<code><a href="https://rdrr.io/pkg/lm.br/man/lm.br.html">lm.br::lm.br</a></code>. Choose between line-line, line-plateau, or plateau-line. Yields confidence intervals. All of these are non-suitable for the present plateau-only model. <code>lm.br</code> stands out with the following features: (1) it can take multiple predictors, and it uniquely only models change point over just one of them, keeping the others constant. In comparison, <code>segmented</code> models changes in everything, as far as I understand it. (2) It can take known variance. (3) It can take data weights.</li>
+</ul>
+</div>
+<div id="packages-doing-only-fixed-change-points" class="section level1">
+<h1 class="hasAnchor">
+<a href="#packages-doing-only-fixed-change-points" class="anchor"></a>Packages doing only fixed change points</h1>
+<p>As explained in [../docs/articles/formulas.html], fixed change points can be implemented in almost all regression functions. You simply have an indicator variable saying whether there has been as shift at the corresponding x-value and use it like <code><a href="https://rdrr.io/r/stats/lm.html">lm(y ~ 1 + x * I(x &gt; 30), data)</a></code>. Or if you don’t want a carry-over effect from the first segment, do <code><a href="https://rdrr.io/r/stats/lm.html">lm(y ~ 1 * I(x &lt; 30) + x * I(x &gt;= 30), data)</a></code>. This will work for most regression packages in R, including <code>survival</code> and <code>lme4</code>.</p>
+<p>Some packages include this in a way where you don’t have to code your indicators yourself, including:</p>
+<ul>
+<li>
+<code><a href="https://rdrr.io/pkg/scan/man/plm.html">scan::plm</a></code> and <code><a href="https://rdrr.io/pkg/scan/man/hplm.html">scan::hplm</a></code>. To get started here, make sure to transform your data to a <code><a href="https://rdrr.io/pkg/scan/man/scdf.html">scan::scdf</a></code> object.</li>
+</ul>
+</div>
+<div id="others" class="section level1">
+<h1 class="hasAnchor">
+<a href="#others" class="anchor"></a>Others</h1>
+<p>I have yet to test these:</p>
+<ul>
+<li>
+<code>TSIS</code> may be coersed to do change point analysis, though it is mean for much more complicated switch point models in gene expression analysis. It’s primary interface is a Shiny App.</li>
+<li>
+<code>plrs::plrs</code>. Piecewise Linear Regression, targeted at DNA and gene expression. May also be coerced into simpler problems.</li>
+</ul>
 </div>
   </div>
 
@@ -460,10 +490,12 @@
       <li><a href="#changepoint-and-changepoint-np">changepoint and changepoint.np</a></li>
       <li><a href="#bcp">bcp</a></li>
       <li><a href="#ecp">ecp</a></li>
-      <li><a href="#strucchangefstats">strucchange::Fstats</a></li>
       <li><a href="#tsmcp">TSMCP</a></li>
       <li><a href="#wbsts">wbsts</a></li>
       <li><a href="#robtschangerob">robts::changerob</a></li>
+      <li><a href="#packages-doing-only-one-change-point">Packages doing only one change point</a></li>
+      <li><a href="#packages-doing-only-fixed-change-points">Packages doing only fixed change points</a></li>
+      <li><a href="#others">Others</a></li>
       </ul>
 </div>
       </div>

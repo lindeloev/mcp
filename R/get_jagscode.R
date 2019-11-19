@@ -66,7 +66,7 @@ model {
   for (i_ in 1:length(", ST$x[1], ")) {
 
     # Fitted value
-    y_[i_] = \n")
+    ")
 
   # Add JAGS code for fitted values and indent it
   mm = paste0(mm, gsub("\n", "\n      ", formula_jags))

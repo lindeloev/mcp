@@ -4,10 +4,11 @@
 [![Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/r/lindeloev/mcp)
 
 
-Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generalized Linear Segments - and the coefficients in those segments. Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. `mcp` leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful. 
+Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generalized Linear Segments - and the coefficients in those segments. 
 
-See how `mcp` compares to [other packages](https://lindeloev.github.io/mcp/articles/packages.html).
+Change points are also sometimes called **switch points**, **break points**, **broken-line** models, **bilinear** models, (performance) **discontinuity** models, **piecewise linear regression**, and **local linear regression**. `mcp` aims to be be useful for all of them. See how `mcp` compares to [other packages](https://lindeloev.github.io/mcp/articles/packages.html).
 
+Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. `mcp` leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
 
 # Install
 
@@ -25,6 +26,7 @@ See how `mcp` compares to [other packages](https://lindeloev.github.io/mcp/artic
 # Brief example
 `mcp` takes a list of formulas for `y` as a function of `x`. The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the following formulas typically take the form `changepoint ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
+## Fit a model
 The following model infers the two change points between three segments.
 
 ```r
@@ -40,6 +42,8 @@ segments = list(
 # Fit it. The `ex_demo` dataset is included in mcp
 fit = mcp(segments, data = ex_demo)
 ```
+
+## See results
 
 Plot lines drawn randomly from the posterior on top of data to inspect the fit:
 ```r
@@ -73,7 +77,7 @@ Population-level parameters:
 
 `rhat` is the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag), `eff` is the [effective sample size](https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html), and `ts_se` is the time-series standard error.
 
-`plot(fit, "combo")` can be used to inspect the posteriors and convergence of all parameters. See the documentation of `plot.mcpfit` for many other plotting options. Here we plot just the (population-level) change points. They often have "strange" posterior distributions, highlighting the need for a computational approach:
+`plot(fit, "combo")` can be used to inspect the posteriors and convergence of all parameters. See the documentation of `plot.mcpfit` for many other plotting options. Here, we plot just the (population-level) change points. They often have "strange" posterior distributions, highlighting the need for a computational approach:
 
 ```r
 plot(fit, "combo", regex_pars = "cp_")
@@ -81,7 +85,20 @@ plot(fit, "combo", regex_pars = "cp_")
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo_combo.png)
 
 
-For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation. Our null model omits the first plateau and change point, essentially testing the credence of that change point:
+## Tests and model comparison
+
+We can test (joint) probabilities in the model using `hypothesis` ([see more here]https://lindeloev.github.io/mcp/articles/comparison.html)). For example, what is the evidence (given priors) that the first change point is later than 25 against it being less than 25?
+
+```r
+hypothesis(fit, "cp_1 > 25")
+```
+```r
+     hypothesis    mean     lower    upper         p       BF
+1 cp_1 - 25 > 0 6.06081 -1.510267 14.01157 0.9442222 16.92829
+```
+
+
+For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation ([see more here]https://lindeloev.github.io/mcp/articles/comparison.html)). Our null model omits the first plateau and change point, essentially testing the credence of that change point:
 
 ```r
 # Define the model
@@ -143,6 +160,11 @@ The articles in the web site's menu go in-depth with the functionality of `mcp`.
  * Do Leave-One-Out Cross-Validation using `loo(fit)` and `loo::loo_compare(fit1$loo, fit2$loo)`.
  * Compute Savage-Dickey density rations using `hypothesis(fit, "cp_1 = 40")`.
  * Leverage directional and conditional tests to assess interval hypotheses (`hypothesis(fit, "cp_1 > 30 & cp_1 < 50")`), combined hypotheses (`hypothesis(fit, "cp_1 > 30 & int_1 > int_2")`), etc.
+ 
+[Tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/debug.html)
+ * Speed up fitting using `mcp(..., cores = 3)` / `options(mcp_cores = 3)`, and/or `mcp(..., adapt = 500, update = 500)`.
+ * Help convergence along using `mcp(..., inits = list(cp_1 = 20, int_2 = -3))`.
+ * Most errors will be caused by circularly defined priors.
 
 
 
@@ -272,33 +294,35 @@ Population-level parameters:
 (rhat cannot be estimated when the model contains constant coefficients in `mcp 0.1`. This will be fixed.)
 
 
+## Quadratic
+Write exponents as `I(x^N)`. E.g., quadratic `I(x^2)`, cubic `I(x^3)`, or something else `I(x^1.5)`. The example below detects the onset of linear + quadratic growth. This is often called the BLQ model (Broken Line Quadratic) in nuitrition research.
+
+```r
+segments = list(
+  y ~ 1,
+  1 ~ 0 + x + I(x^2)
+)
+fit = mcp(segments, ex_quadratic)
+plot(fit)
+```
+
+![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_quadratic.png)
 
 
-# Diagnosing problems
-**Convergence:** A common problem when using MCMC is lacking convergence between chains. This will show up as large `rhat` values (> 1.1 is a common criterion) and non-converging lines in `plot(fit, "trace")`. 
+## Trigonometric and other 
+You can use `sin(x)`, `cos(x)`, and `tan(x)` to do trigonometry. You can also do `exp(x)`, `abs(x)`, `log(x)`, and `sqrt(x)`, but beware that the two latter will fail in segment 2+ because from the "perspective" of that segment, earlier `x` values are negative.
 
- * The first thing to try is always to make the model warm up longer to see if it reaches convergence later: `mcp(fit, data, adapt = 4000, update = 4000)`. 
- 
- * It can be a sign of a deeper non-identifiability in the model. This will show up as strong correlations in the joint distribution of any pair of implicated parameters: `plot(fit, "hex", pars = c("int_1", "int_2))`. This may give you ideas how to change the model.
- 
- * You can set the initial values for the JAGS sampler using, e.g., `mcp(..., inits = list(cp_1 = 20, int_2 = -20, etc.))`. This will be passed to `jags.fit` and you can see more documentation there.
+```r
+segments = list(
+  y ~ 1 + sin(x),
+  1 ~ 0 + cos(x) + x
+)
 
+fit = mcp(segments, ex_trig)
+plot(fit)
+```
 
-**Speed:** A lot of data and complicated models will slow down fitting. 
-
- * Run the chains in parallel using, e.g., `mcp(..., chains=4, cores=4)`.
-
- * More data usually means better identifiability and faster convergence. Lower the warmup period using, e.g., `mcp(..., adapt=300, update = 200)`.
-
-**Won't run:** Most of these problems should stem from inappropriate priors and such problems may be exacerbated by fragile link functions (e.g., `binomial(link = "identity")`. The article on [priors in mcp](https://lindeloev.github.io/mcp/articles/priors.html) may be helpful, but in particular:
-
- * Errors on "directed cycle" usually stems from using parameters in priors. For example, if you set `prior = list(int_1 = "dnorm(int_2, 1)"", int_2 = "dnorm(int_1, 1)")` this is an infinite regress.
- 
- * Errors on "incompatible with parent nodes" usually stem from impossible values. For example, if you set `prior = list(sigma = "dnorm(0, 1)"")`, this allows for a negative standard deviation, which is impossible. Think about changing the prior distributions and perhaps truncate them using `T(lower, upper)`.
-
-
-If you encounter these or other problems, don't hesitate to [raise a Github Issue](https://github.com/lindeloev/mcp/issues), asking for help or posting a bug report.
-
+![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_trig.png)
 
 
 

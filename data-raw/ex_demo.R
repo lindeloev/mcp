@@ -10,7 +10,10 @@ empty = mcp::mcp(segments, sample = FALSE)
 set.seed(40)
 ex_demo = tibble::tibble(
   time = runif(100, 0, 100),
-  response = empty$func_y(time, 10, 0, 0.5, - 0.2, 30, 70, 4)
+  response = empty$func_y(time, cp_1 = 30, cp_2 = 70,
+                          int_1 = 10, int_3 = 0,
+                          sigma = 4,
+                          time_2 = 0.5, time_3 = -0.2)
 )
 
 # Save it to package

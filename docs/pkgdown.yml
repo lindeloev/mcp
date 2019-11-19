@@ -4,6 +4,7 @@ pkgdown_sha: ~
 articles:
   binomial: binomial.html
   comparison: comparison.html
+  debug: debug.html
   formulas: formulas.html
   packages: packages.html
   poisson: poisson.html

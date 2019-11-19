@@ -55,7 +55,7 @@ data = tibble::tibble(
 
 Now fit it with and without the informative prior. We set `iter` fairly high because this model is not sampled effectively. Running in parallel (`cores = 3`) speeds it up. We will also add `sample = "both"` to sample *both* prior and posterior. We will need both to compute point Bayes Factors using `hypothesis()` later.
 
-```{r, cache = TRUE, message = FALSE, warning = FALSE}
+```{r, cache = TRUE, message = FALSE, warning = FALSE, results=FALSE}
 fit_default = mcp(segments, data, family = binomial(), sample = "both", iter = 10000, cores = 3)
 fit_info = mcp(segments, data, prior, family = binomial(), sample = "both", iter = 10000, cores = 3)
 fit_simple = mcp(segments_simple, data, family = binomial(), sample = "both", iter = 10000, cores = 3)
@@ -84,6 +84,7 @@ hypothesis(fit_default, "cp_1 = 4")
 ```
 
 Let's unpack:
+
  * `hypothesis`: For internal convenience, `hypothesis` always re-arranges to test against zero. 
  * `mean`: When subtracting $4$, the posterior distribution is very close, but somewhat dispersed. 
  * `lower` and `uppwer`: The interval width defaults to 95% highest density interval, but you can change it using `hypothesis(..., width = 0.8)`. It is two-sided, so if you want the bound for a one-sided 5% test, just do `width = 0.975`.

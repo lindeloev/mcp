@@ -69,6 +69,9 @@ fit$pars
 ```
 
 
+# 
+
+
 # Modeling intercept change points
 A change point is simply like an `ifelse` statement or multiplying with indicators (0s and 1s):
 
@@ -150,7 +153,7 @@ print(fit$func_y)
 
 
 # Modeling relative slopes and intercepts
-`mcp` allows for specifying relative intercepts and change points through `rel()`. Relative slopes are easy: just replace `x_2` with `x_1 + x_2`. You could do the same if all segments are intercept-only. However, if the previous segment had a slope, we want the intercept to be relative to where that "ended". The `mcp` solution is to only "turn off" (using an indicator) the "hanging intercept" from that slope's ending (`pmin(x, cp_i)`) when the model encounters an absolute intercept.
+`mcp` allows for specifying relative intercepts and change points through `rel()`. Relative slopes are easy: just replace `x_2` with `x_1 + x_2`. You could do the same if all segments are intercept-only. However, if the previous segment had a slope, we want the intercept to be relative to where that "ended". The `mcp` solution is to only "turn off" the "hanging intercept" from that slope's ending (`pmin(x, cp_i)`) when the model encounters an absolute intercept. An indicator does this.
 
 ```{r}
 # Model parameters

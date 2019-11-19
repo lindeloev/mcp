@@ -49,7 +49,10 @@ library(tibble)
 data = tibble(
   year = 1901:2000,  # evaluate for each of these
   N = sample(10:20, size = 100, replace = TRUE),  # number of trials
-  y = empty$func_y(year, N, 2, 0, -0.2, 0.05, 1925, 1965)
+  y = empty$func_y(year, N, 
+                   cp_1 = 1925, cp_2 = 1965, 
+                   int_1 = 2, int_3 = 0, 
+                   year_2 = -0.2, year_3 = 0.05)
 )
 
 data
@@ -65,7 +68,7 @@ plot(data$year, data$y)
 # Check parameter recovery
 The next sections go into more detail, but let us quickly see if we can recover the parameters used to simulate the data.
 
-```{r, results= FALSE, message=FALSE, warning=FALSE}
+```{r, results=FALSE, message=FALSE, warning=FALSE}
 fit = mcp(segments, data, family = binomial())
 ```
 
