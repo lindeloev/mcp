@@ -373,10 +373,12 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
   }
 
   # Fill y and trials, where not explicit.
-  # Build "full" formula and insert instead of the old
+  # Build "full" formula (with explicit intercepts) and insert instead of the old
   ST = ST %>%
-    tidyr::fill(.data$y, .data$trials, .direction = "downup") %>%  # Usually only provided in segment 1
-    dplyr::mutate(form = paste0(.data$y, ifelse(!is.na(.data$form_cp), .data$form_cp, ""), .data$form_rhs)) %>%
+    tidyr::fill(.data$y, .data$trials, .direction="downup") %>%  # Usually only provided in segment 1
+    dplyr::mutate(
+      form_rhs = ifelse(.data$int & !stringr::str_detect(.data$form_rhs, "1"), gsub("~", "~ 1 +", .data$form_rhs), .data$form_rhs),  # add explicit intercepts
+      form = paste0(.data$y, ifelse(!is.na(.data$form_cp), .data$form_cp, ""), .data$form_rhs)) %>%  # build full formula
     dplyr::select(-.data$form_y, -.data$form_cp, -.data$form_rhs)  # Not needed anymore
 
 

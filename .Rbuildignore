@@ -3,11 +3,13 @@
 .travis.yml
 .covrignore
 docs
+man/figures
 vignettes/comparison_cache
 vignettes/packages_cache
 vignettes/poisson_cache
 vignettes/priors_cache
 vignettes/varying_cache
 pkgdown
+logo.png
 ^data-raw$
 ^revdep$

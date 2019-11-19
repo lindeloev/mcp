@@ -10,6 +10,7 @@ vignette: >
 ---
 
 There are three main ways of doing model comparison in `mcp`:
+
  * Compare any N `mcp` models using leave-One-Out cross validation (LOO-CV). Check out `loo(fit)`, `loo::loo_compare(fit1$loo, fit2$loo, ...)`, and `loo::loo_model_weights(fit1$loo, fit2$loo, ...)`.
  * Flexible directional tests using `hypothesis(fit, cp_1 > 40)` or `hypothesis(fit, cp_1 > 40 & x_2 > x_1)`.
  * Point Bayes Factors tests using the Savage-Dickey density ratio, e.g., `hypothesis(fit, cp_1 = 50)` or `hypothesis(fit, x_2 = x_1)`.
@@ -97,9 +98,10 @@ hypothesis(fit_info, "cp_1 = 4")
 
 # Directional and combinatoric tests
 Maybe we just want to test a few directional hypothesis. For example:
- * Does recall begin to deteriorate when $cp_1 > 3$?
- * Is the change point in the interval $cp_1 > 3.5 & cp_1 < 4.5$?
- * The only constraint is your imagination. How about all hypotheses we may have at once? $cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & int_1 > 2.5$ against it's inverse $(cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & int_1 < 2.5$
+
+ * Does recall begin to deteriorate when `cp_1 > 3`?
+ * Is the change point in the interval `cp_1 > 3.5 & cp_1 < 4.5`?
+ * The only constraint is your imagination. How about all hypotheses we may have at once? `cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & int_1 > 2.5` against it's inverse `(cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & int_1 < 2.5`
 
 ```{r}
 hypothesis(fit_info, c(
@@ -148,9 +150,9 @@ You can read more about Leave-One-Out Cross Validation elsewhere, but briefly, i
  2. Computes the posterior density at the left-out data point (out-of-sample data), i.e., what probability the model assigned to it occurring. For example, if the posterior is a normal distribution, a data point near the mean of the posterior has higher density (it is less "surprising") than if it is at $z = -3$. Better predictions means higher densities, i.e., less surprisal.
  3. Repeats step 2 for all observed data and multiplies these densities to get the combined predictive densities at unobserved data. Multiplying is the same as summing in log-space, and the latter has the advantage of being computationally much more feasible. I hope that the name "Estimated Log Predictive Density" (ELPD) makes sense now. The higher the ELPD, the better.
 
-And as with Bayes Factors, you can obtain positive evidence for null models. The reason simpler models can be preferred in Bayes is that each new parameter increases the prior predictive space, and thereby comes with a greater "risk" of making way-off predictions. If the parameter does too little to "make up" for this by increasing the likelihood, it is a net negative for predictive accuracy, and the simpler model will be preferred. So *narrower priors are simpler models*.
+As with Bayes Factors, you can obtain positive evidence for null models. The reason simpler models can be preferred in Bayes is that each new parameter increases the prior predictive space, and thereby comes with a greater "risk" of making way-off predictions. If the parameter does too little to "make up" for this by increasing the likelihood (making a difference), it is a net negative for predictive accuracy, and the simpler model will be preferred. So *narrower priors are simpler models*.
 
-Also, if the data is reasonably informative (it almost always is), LOO-CV is much less influenced by priors. For LOO, the priors can more be thought of as a regularization (a way to ensure that sampling is efficient) than as the point of departure which all our inferences are relative to (Bayes Factors).
+Also, if the data is reasonably informative (it almost always is), LOO-CV is much less influenced by priors than Bayes factors. For LOO, the priors can more be thought of as a regularization (a way to ensure that sampling is efficient) than as the point of departure which all our inferences are relative to (Bayes Factors).
 
 
 ## Applied example

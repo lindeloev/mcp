@@ -4,10 +4,11 @@
 [![Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/r/lindeloev/mcp)
 
 
-Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generalized Linear Segments - and the coefficients in those segments. Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. `mcp` leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
+Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generalized Linear Segments - and the coefficients in those segments. 
 
-Change points also go by the name of switch points, break points, broken-line models, bilinear models, performance discontinuity, piecewise linear regression, local linear regression. `mcp` aims to be useful for all of these purposes. See how `mcp` compares to [other packages](https://lindeloev.github.io/mcp/articles/packages.html).
+Change points are also sometimes called **switch points**, **break points**, **broken-line** models, **bilinear** models, (performance) **discontinuity** models, **piecewise linear regression**, and **local linear regression**. `mcp` aims to be be useful for all of them. See how `mcp` compares to [other packages](https://lindeloev.github.io/mcp/articles/packages.html).
 
+Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. `mcp` leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
 
 # Install
 
