@@ -21,10 +21,9 @@ unpack_tildes = function(segment, i) {
   # List of strings for each section
   chunks = stringr::str_trim(strsplit(form_str, "~")[[1]])
 
+
   if (length(chunks) == 2) {
     # Only one tilde. This is the first segment or y is implicit from earlier segment(s)
-    if (i == 1 & stringr::str_detect(chunks[1], "^[-0-9.]+"))  # check illigal terms
-      stop("y must be a variable.")
     return(tibble::tibble(
       form = form_str,
       form_y = ifelse(i == 1, chunks[1], NA),
@@ -32,6 +31,9 @@ unpack_tildes = function(segment, i) {
       form_rhs = paste0(" ~ ", chunks[2])
     ))
   } else if (length(chunks) == 3) {
+    if (i == 1)
+      stop("The first segment must have exactly one tilde. Got two.")
+
     return(tibble::tibble(
       form = form_str,
       form_y = chunks[1],
@@ -39,7 +41,7 @@ unpack_tildes = function(segment, i) {
       form_rhs = paste0(" ~ ", chunks[3])
     ))
   } else {
-    stop("Error in segment ", i, ": None or more than two tildes in a segment formula.")
+    stop("Error in segment ", i, ": Got none or more than two tildes in a segment formula.")
   }
 }
 
@@ -53,41 +55,66 @@ check_terms_in_data = function(form, data, i) {
 
 # Unpacks y variable name
 unpack_y = function(form_y, i, family) {
-  # Segment 1 must have y specified
-  if (i == 1) {
-    if (is.na(form_y))
-      stop("No response defined in segment 1.")
+  # If NA and not segment 1, just return empty
+  if (is.na(form_y)) {
+    if ( i == 1)
+      stop("A response must be defined in segment 1, e.g., 'y ~ 1'")
 
-    if (family == "binomial" & !stringr::str_detect(gsub(" ", "", form_y), "\\|trials\\("))
-      stop("Error in response of segment 1: need a valid trials() specification, e.g., 'y | trials(N) ~ 1 + x'")
-  }
-
-  if (!is.na(form_y)) {
-    form_y = gsub(" ", "", form_y)  # remove whitespace
-
-    # If binomial, get trials
-    chunks = gsub(")", "", strsplit(gsub(" ", "", form_y), "\\|trials\\(")[[1]])
-
-    if (!all(grepl("^[A-Za-z._0-9]+$", chunks)))
-      stop("Error in segment ", i, ": Invalid format for response variable. Only single column names are allowed.")
-
-    if (length(chunks) == 1) {
-      return(tibble::tibble(
-        y = chunks[1],
-        trials = NA))
-    } else if (length(chunks) == 2) {
-      return(tibble::tibble(
-        y = chunks[1],
-        trials = chunks[2]))
-    } else {
-      stop("Invalid value '", form_y, "' for response. More than one pipe?")
-    }
-  } else {
     return(tibble::tibble(
       y = NA,
+      sigma = NA,
       trials = NA
     ))
   }
+
+  # Codings for binomial and variance-change
+  form_y = gsub(" ", "", form_y)  # remove whitespace
+  got_trials = stringr::str_detect(form_y, "\\|trials\\(")
+  got_sigma = "sigma" %in% all.vars(as.formula(paste0("~", form_y))) & stringr::str_detect(form_y, "\\+")
+
+  # Segment 1 must have y specified (and correctly so)
+  if (i == 1) {
+    if (family == "binomial" & !got_trials)
+      stop("Error in response of segment 1: need a valid trials() specification, e.g., 'y | trials(N) ~ 1 + x'")
+
+    if (family != "binomial" & got_trials)
+      stop("y | trials(N) not meaningful for non-binomial models.")
+
+    if (got_sigma)
+      stop("mcp can only model variance change from segment 2+.")
+  }
+
+
+  # Split the response into its constituents, if there are any
+  if (got_trials) {
+    # If binomial, split into y (chunks[1]) and trials (chunks[2])
+    chunks = gsub(")", "", strsplit(form_y, "\\|trials\\(")[[1]])
+  } else if (got_sigma) {
+    # If varying change point, split into y (chunks [1]) and sigma (chunks[2])
+    if (family != "gaussian")
+      stop("sigma (variance change) is only meaningful for family = gaussian().")
+    chunks = strsplit(form_y, "\\+")[[1]]
+    if (length(chunks) != 2)
+      stop("sigma detected in response (variance change), but not in the required form 'y + sigma ~ cp ~ predictors'.")
+    if (chunks[2] != "sigma")
+      stop("Wrong specification of sigma. Must be like 'y + sigma ~ cp ~ predictors'")
+  } else {
+    # This is just a normal y. Return as is
+    chunks = form_y
+  }
+
+  # Check that the constituents have valid names
+  if (!all(grepl("^[A-Za-z._0-9]+$|\\+|\\-|\\/|\\*", chunks)))
+    stop("Error in segment ", i, ": Invalid format for response variable.")
+
+  # Return!
+  return(
+    tibble::tibble(
+      y = chunks[1],  # Char
+      sigma = got_sigma,  # TRUE / FALSE
+      trials = ifelse(got_trials == TRUE, chunks[2], NA)  # Char or NA
+    )
+  )
 }
 
 

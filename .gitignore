@@ -6,3 +6,4 @@ vignettes/packages_cache
 vignettes/poisson_cache
 vignettes/priors_cache
 vignettes/varying_cache
+tests/testthat/tmp_jags_code.txt
