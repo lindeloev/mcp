@@ -9,18 +9,34 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-<!--
-TO DO:
- * Write comments to each package
- * Make an overview
- * Do worked examples comparing them.
--->
 
-There are a lot of change point packages out there already, so why `mcp`? Here are my (probably biased) thoughts about this. I compiled some tables, summarising change point packages ([.xlsx file here](../packages_tables.xlsx)). I will demonstrate each of these packages in an applied example below to discuss their merits and shortcomings. 
+There are a lot of change point packages out there already, so why `mcp`? Here are my (probably biased) thoughts about this. I compiled some tables, summarising change point packages ([.xlsx file here](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_tables.xlsx)). I will demonstrate each of these packages in an applied example below to discuss their merits and shortcomings. 
+
+I think `mcp`, `segmented`, and `EnvCpt` stand out as more general-purpose packages, depending on the purpose. As the author of `mcp`, I am of course biased. You can see the immediate roadmap for `mcp` at the [GitHub issues tracker](https://github.com/lindeloev/mcp/issues), including plans to address it's current shortcomings.
+
+## Modeling options
+How much flexibility does the package allow for modeling the system, you're studying? A clear difference here is between packages that allow you to specify the number of change points, and pacakges which infer the number of change points automatically (using some criteria), captured in the `N CP` column below.
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_table1.png)
+
+<br /><br />
+
+
+## Inference 
+What can you learn, once the model has fitted? While all packages return the estimated Change Points, few return an index of uncertainty around that estimate (`CP CI`: confidence intervals, highest-density intervals, or posterior densities). Sometimes, it may not even be the change point that is of interest, but rather the parameters of the segments in between (`params`, `params CI`). Finally, you may want to compare models, e.g., testing whether a change point is present or not, or testing the nature of the segments between change points (`hypothesis tests`).
+
+Note that `EnvCpt` returns one log-likelihood per model, which one then could do testing on. `segmented` returns AIC and deviance, so ditto here. However, this is something you would have to do yourself. `mcp` explicitly supports and recommends workflows for detailed model comparisons.
+
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_table2.png)
+
+<br /><br />
+
+
+## Other conveniences
+This is a list of other functions, which I find useful on other statistics packages, including simulating data, getting fitted and predicted values given the model, and an assessment of speed. The option to include prior knowledge could be important in some situations.
+
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_table3.png)
+
 
 
 # Unique features of mcp
@@ -34,7 +50,7 @@ There are a lot of change point packages out there already, so why `mcp`? Here a
  * Flexible hypothesis testing using `loo` and `hypothesis`, including testing the existence of a change point. Most other packages stop at estimation, though some provide p-values. Read more about [hypothesis testing and model comparison](../docs/articles/comparison.html) using `mcp`.
 
 
-# Where mcp is inferior
+# Where mcp is (currently) inferior
 `mcp` is inferior with respect to:
 
  * *speed*: mcmc sampling is slow compared to analytical and specialized solutions. For datasets > 20.000 points, it may take hours to fit `mcp`. Running in parallel and lowering the iterations helps (`mcp(..., cores = 4, iter = 1000, adapt = 300, update = 300`), but remember to check convergences.
@@ -95,7 +111,7 @@ gridExtra::grid.arrange(plot(fit_mcp),
 
 ```{r, message = FALSE, results = FALSE}
 fit_envcpt = EnvCpt::envcpt(data$y)  # Fit all models at once
-summary(fit_envcpt)  # Show log-likelihoods
+fit_envcpt$summary  # Show log-likelihoods
 ```
 ```{r, echo = FALSE}
 summary(fit_envcpt)  # Show log-likelihoods
@@ -127,7 +143,7 @@ Enough talk:
 
 ```{r, warning=FALSE}
 library(segmented)
-fit_lm = glm(y ~ 1 + x, data, family = gaussian())  # intercept-only model
+fit_lm = lm(y ~ 1 + x, data)  # intercept-only model
 fit_segmented = segmented(fit_lm, seg.Z = ~x, npsi = 2)  # Two change points along x
 
 summary(fit_segmented)
@@ -164,7 +180,7 @@ loo::loo_compare(fit_mcp$loo, fit_mcp_1$loo)
 ```
 
 
-While `segmented` prefers the one-change-point model, `mcp` prefers the (true) two-change-point model.
+While `segmented` prefers the one-change-point model, `mcp` prefers the (true) two-change-point model. Again, the models compared here are *very* different since `segmented` does inference on a slope-only model.
 
 
 
@@ -229,7 +245,7 @@ plot(fit_bcp)
 
 
 # ecp
-`ecp` contains six functions to detect change points. It is clearly built for multivariate cases, but is I have not managed to get `e.agglo` working for the present example, but here I run the other five. The resulting information is quite limited with no intervals, no plots, etc. It detects one of the change points, but not both (with the exception of `e.divisive`, which returns four),
+`ecp` contains six functions to detect change points. It is clearly built for multivariate data, but can take univariate too. Of the six functions, I have not managed to get `e.agglo` working for `data`, but here I demonstrate the other five. The resulting information is sparse. It detects one of the two change points, but not both (with the exception of `e.divisive`, which returns four),
 
 ```{r}
 data_ecp = as.matrix(data$y)
@@ -250,9 +266,8 @@ str(list(
 ```
 
 
-
 # TSMCP
-Short for "Time-Series Multiple Change Point". It too is very limited, outputting a single number (!). For the problem at hand, changing `method` makes no difference. For many other `c` (`c = 0.3`, `c = 4`), it fails to find any change points. There is also `TSMCP::cpvnts()` to model AR(N), but I have failed to make it find any change points in the present data set.
+Short for "Time-Series Multiple Change Point". The output is a single number (!). For the problem at hand, changing `method` makes no difference. For many other `c` (`c = 0.3`, `c = 4`), it fails to find any change points at all. There is also `TSMCP::cpvnts()` to model AR(N), but I have failed to make it find any change points in the present data set.
 
 It finds the change point at `x = 30`, but not the second change point at `x = 70`.
 
