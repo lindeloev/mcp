@@ -95,6 +95,9 @@
     <li>
       <a href="../articles/packages.html">Comparison to other packages</a>
     </li>
+    <li>
+      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -136,7 +139,7 @@
       <h1>Binomial change point analysis with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-11-14</h4>
+            <h4 class="date">2019-11-19</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/binomial.Rmd"><code>vignettes/binomial.Rmd</code></a></small>
       <div class="hidden name"><code>binomial.Rmd</code></div>
@@ -162,7 +165,7 @@
 <p>Now we can simulate. First, let us see the model parameters.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">empty<span class="op">$</span>pars</a></code></pre></div>
 <pre><code>## $population
-## [1] "int_1"  "int_3"  "year_2" "year_3" "cp_1"   "cp_2"  
+## [1] "cp_1"   "cp_2"   "int_1"  "int_3"  "year_2" "year_3"
 ## 
 ## $varying
 ## NULL
@@ -185,23 +188,26 @@
 <a class="sourceLine" id="cb5-2" title="2">data =<span class="st"> </span><span class="kw">tibble</span>(</a>
 <a class="sourceLine" id="cb5-3" title="3">  <span class="dt">year =</span> <span class="dv">1901</span><span class="op">:</span><span class="dv">2000</span>,  <span class="co"># evaluate for each of these</span></a>
 <a class="sourceLine" id="cb5-4" title="4">  <span class="dt">N =</span> <span class="kw"><a href="https://rdrr.io/r/base/sample.html">sample</a></span>(<span class="dv">10</span><span class="op">:</span><span class="dv">20</span>, <span class="dt">size =</span> <span class="dv">100</span>, <span class="dt">replace =</span> <span class="ot">TRUE</span>),  <span class="co"># number of trials</span></a>
-<a class="sourceLine" id="cb5-5" title="5">  <span class="dt">y =</span> empty<span class="op">$</span><span class="kw">func_y</span>(year, N, <span class="dv">2</span>, <span class="dv">0</span>, <span class="fl">-0.2</span>, <span class="fl">0.05</span>, <span class="dv">1925</span>, <span class="dv">1965</span>)</a>
-<a class="sourceLine" id="cb5-6" title="6">)</a>
-<a class="sourceLine" id="cb5-7" title="7"></a>
-<a class="sourceLine" id="cb5-8" title="8">data</a></code></pre></div>
+<a class="sourceLine" id="cb5-5" title="5">  <span class="dt">y =</span> empty<span class="op">$</span><span class="kw">func_y</span>(year, N, </a>
+<a class="sourceLine" id="cb5-6" title="6">                   <span class="dt">cp_1 =</span> <span class="dv">1925</span>, <span class="dt">cp_2 =</span> <span class="dv">1965</span>, </a>
+<a class="sourceLine" id="cb5-7" title="7">                   <span class="dt">int_1 =</span> <span class="dv">2</span>, <span class="dt">int_3 =</span> <span class="dv">0</span>, </a>
+<a class="sourceLine" id="cb5-8" title="8">                   <span class="dt">year_2 =</span> <span class="fl">-0.2</span>, <span class="dt">year_3 =</span> <span class="fl">0.05</span>)</a>
+<a class="sourceLine" id="cb5-9" title="9">)</a>
+<a class="sourceLine" id="cb5-10" title="10"></a>
+<a class="sourceLine" id="cb5-11" title="11">data</a></code></pre></div>
 <pre><code>## # A tibble: 100 x 3
 ##     year     N     y
 ##    &lt;int&gt; &lt;int&gt; &lt;int&gt;
-##  1  1901    19    16
-##  2  1902    13    13
-##  3  1903    16    15
-##  4  1904    20    19
-##  5  1905    18    14
-##  6  1906    11    10
-##  7  1907    11    11
-##  8  1908    12    11
-##  9  1909    20    17
-## 10  1910    10     9
+##  1  1901    17    14
+##  2  1902    11     9
+##  3  1903    10    10
+##  4  1904    12    12
+##  5  1905    13    11
+##  6  1906    14    11
+##  7  1907    11     9
+##  8  1908    12    12
+##  9  1909    13    10
+## 10  1910    20    19
 ## # ... with 90 more rows</code></pre>
 <p>Visually:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(data<span class="op">$</span>year, data<span class="op">$</span>y)</a></code></pre></div>
@@ -217,18 +223,18 @@
 <pre><code>## Family: binomial(link = 'logit')
 ## Iterations: 9000 from 3 chains.
 ## Segments:
-##   1: y ~ 1
-##   2: y ~ 1 ~ 0 + year
-##   3: y ~ 1 ~ 1 + year
+##   1: y | trials(N) ~ 1
+##   2: NA ~ 1 ~ 0 + year
+##   3: NA ~ 1 ~ 1 + year
 ## 
 ## Population-level parameters:
-##    name      mean    lower     upper rhat  eff    ts_se
-##    cp_1 1921.1893 1917.829 1924.7411    1  536 5.37e+01
-##    cp_2 1964.5011 1964.007 1964.9571    1 5076 1.64e-01
-##   int_1    2.0793    1.722    2.4350    1  833 3.71e-01
-##   int_3    0.0805   -0.281    0.4287    1 1046 2.73e-01
-##  year_2   -0.1604   -0.183   -0.1378    1  996 1.15e-03
-##  year_3    0.0425    0.024    0.0605    1 1037 7.49e-04</code></pre>
+##    name      mean     lower     upper rhat  eff    ts_se
+##    cp_1 1923.0810 1919.7056 1926.2664    1  579 46.59412
+##    cp_2 1964.5001 1964.0057 1964.9551    1 5292  0.14198
+##   int_1    1.9360    1.6190    2.2853    1 1063  0.24633
+##   int_3    0.0278   -0.2950    0.3443    1 1102  0.22896
+##  year_2   -0.1644   -0.1883   -0.1391    1 1005  0.00149
+##  year_3    0.0449    0.0286    0.0616    1 1128  0.00057</code></pre>
 <p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have <a href="../docs/articles/varying.html">varying effects</a>, use <code><a href="../reference/ranef.html">ranef(fit)</a></code> to see them.</p>
 <p>Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
@@ -255,23 +261,23 @@
 <p><code>mcp</code> uses priors to achieve a lot of it’s functionality. See <a href="../docs/articles/priors.html">how to set priors</a>, including how to share parameters between segments and how to fix values. Here, I post a few notes about the binomial-specific default priors.</p>
 <p>The default priors in <code>mcp</code> are set so that they are reasonably broad to cover most scenarios, though also specific enough to sample effectively. They are not “default” as in “canonical”. Rather, they are “default” as in “what happens if you do nothing else”. All priors are stored in <code>fit$prior</code> (also <code>empty$prior</code>). We did not specify <code>prior</code> above, so it ran with default priors:</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">fit<span class="op">$</span>prior</a></code></pre></div>
-<pre><code>## $int_1
+<pre><code>## $cp_1
+## [1] "dunif(MINX, MAXX)"
+## 
+## $cp_2
+## [1] "dunif(cp_1, MAXX)"
+## 
+## $int_1
+## [1] "dnorm(0, 3)"
+## 
+## $int_3
 ## [1] "dnorm(0, 3)"
 ## 
 ## $year_2
 ## [1] "dnorm(0, 3 / (MAXX - MINX))"
 ## 
-## $cp_1
-## [1] "dunif(MINX, MAXX)"
-## 
-## $int_3
-## [1] "dnorm(0, 3)"
-## 
 ## $year_3
-## [1] "dnorm(0, 3 / (MAXX - MINX))"
-## 
-## $cp_2
-## [1] "dunif(cp_1, MAXX)"</code></pre>
+## [1] "dnorm(0, 3 / (MAXX - MINX))"</code></pre>
 <p>The priors on change points are discussed extensively in the prior vignette. The priors on slopes and intercepts are normals with standard deviation of “3” logits. This corresponds to quite extreme binomial probabilities, yet not so extreme as to be totally flat. Here are visualization of priors <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm(0, 1)</a></code> (red), <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm(0, 2)</a></code> (black, mcp default), and a <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm(0, 5)</a></code> (blue) prior, and the correspondence between logits and probabilities:</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">inverse_logit =<span class="st"> </span><span class="cf">function</span>(x) <span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(x) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(x))</a>
 <a class="sourceLine" id="cb16-2" title="2"></a>
@@ -298,12 +304,12 @@
 <pre><code>## 
 ## model {
 ##   # Priors for population-level effects
-##   int_1 ~ dnorm(0, 1/(3)^2) 
-##   year_2 ~ dnorm(0, 1/(3/(MAXX-MINX))^2) 
 ##   cp_1 ~ dunif(MINX, MAXX)
-##   int_3 ~ dnorm(0, 1/(3)^2) 
-##   year_3 ~ dnorm(0, 1/(3/(MAXX-MINX))^2) 
 ##   cp_2 ~ dunif(cp_1, MAXX)
+##   int_1 ~ dnorm(0, 1/(3)^2) 
+##   int_3 ~ dnorm(0, 1/(3)^2) 
+##   year_2 ~ dnorm(0, 1/(3/(MAXX-MINX))^2) 
+##   year_3 ~ dnorm(0, 1/(3/(MAXX-MINX))^2) 
 ##   cp_0 = -10^100  # mcp helper value; minus infinity
 ##   cp_3 = 10^100  # mcp helper value; plus infinity
 ## 
@@ -312,17 +318,20 @@
 ##   for (i_ in 1:length(year)) {
 ## 
 ##     # Fitted value
-##     y_[i_] = 
-## 
-##       # Segment 1: y ~ 1
+##     X_2_[i_] = min(year[i_], cp_2) - cp_1
+##       X_3_[i_] = min(year[i_], cp_3) - cp_2
+##       
+##       y_[i_] = 
+##       
+##       # Segment 1: y | trials(N) ~ 1
 ##       (year[i_] &gt;= cp_0) * (year[i_] &lt; cp_2) * int_1 + 
 ##       
-##       # Segment 2: y ~ 1 ~ 0 + year
-##       (year[i_] &gt;= cp_1) * (year[i_] &lt; cp_2) * (year_2 * (min(year[i_], cp_2) - (cp_1))) + 
+##       # Segment 2: NA ~ 1 ~ 0 + year
+##       (year[i_] &gt;= cp_1) * (year[i_] &lt; cp_2) * year_2 * X_2_[i_] + 
 ##       
-##       # Segment 3: y ~ 1 ~ 1 + year
+##       # Segment 3: NA ~ 1 ~ 1 + year
 ##       (year[i_] &gt;= cp_2) * int_3 + 
-##       (year[i_] &gt;= cp_2) * (year_3 * (min(year[i_], cp_3) - (cp_2))) 
+##       (year[i_] &gt;= cp_2) * year_3 * X_3_[i_] 
 ## 
 ##     # Likelihood and log-density for family = binomial()
 ##     y[i_] ~ dbin(ilogit(y_[i_]), N[i_])
