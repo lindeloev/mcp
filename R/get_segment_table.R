@@ -45,10 +45,9 @@ unpack_tildes = function(segment, i) {
 
 # Checks if all terms are in the data
 check_terms_in_data = function(form, data, i) {
-  form_terms = all.vars(form)
-  found = form_terms %in% colnames(data)
+  found = all.vars(form) %in% colnames(data)
   if (!all(found))
-    stop("Error in segment ", i, ": Term '", paste0(form_terms[!found], collapse="' and '"), "' found in formula but not in data.")
+    stop("Error in segment ", i, ": Term '", paste0(all.vars(form)[!found], collapse="' and '"), "' found in formula but not in data.")
 }
 
 
@@ -152,74 +151,184 @@ unpack_cp = function(form_cp, i) {
   }
 }
 
-unpack_rhs = function(form_rhs, i) {
+
+
+unpack_rhs = function(form_rhs, i, data, last_segment) {
   form_rhs = formula(form_rhs)
-
-  # Varying effects
-  varying = findbars(form_rhs)
-  if (!is.null(varying)) {
-    # For each varying effect...
-    V = tibble::tibble()
-    for (term in varying) {
-      parts = as.character(term)
-
-      # Check that there is just one grouping term
-      if (!grepl("^[A-Za-z._0-9]+$", parts[3]))
-        stop("Error in segment ", i, " (linear): Grouping variable in varying effects for change points.")
-
-      # Check that nothing is relative
-      if (any(stringr::str_detect(parts, "rel\\(")))
-        stop("Error in segment ", i, " (linear): rel() not supported in varying effects.")
-
-      # LHS: Split intercepts and variable
-      preds = strsplit(gsub(" ", "", parts[2]), "\\+")[[1]]
-      slope = preds[!preds %in% c("0", "1")]
-      if (length(slope) > 1)
-        stop("Error in segment ", i, " (linear): More than one variable in LHS of varying effect.")
-      else if (length(slope) == 0)
-        # If not slope
-        slope = NA
-
-      # Return
-      new_row = tibble::tibble(
-        int = !"0" %in% preds | parts[2] == "",  # bool. Is intercept present?
-        slope = slope,
-        group = parts[3])
-      V = dplyr::bind_rows(V, new_row)
-    }
-  } else V = NA
+  population = attributes(stats::terms(nobars(form_rhs)))
 
   # Population-level intercepts
-  population = attributes(stats::terms(nobars(form_rhs)))
   int_rel = population$term.labels == "rel(1)"
-  population$term.labels = population$term.labels[!population$term.labels %in% "rel(1)"]  # code as no term
-  if (any(int_rel))
+  if (any(int_rel)) {
+    # Code as intercept instead of term
+    population$term.labels = population$term.labels[!population$term.labels %in% "rel(1)"]
     population$intercept = 1
+
+    if (i == 1) {
+      stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
+    }
+  }
 
 
   # Population-level slopes
-  n_slopes = length(population$term.labels)
-  if (n_slopes > 1) {
-    stop("Error in segment ", i, " (linear): Only one slope allowed in population-level effects but found: '", paste0(population$term.labels, collapse="' and '"), "'")
-  } else if (n_slopes == 1) {
-    # One slope. Code as slope_rel = TRUE/FALSE and x = str
-    slope_rel = stringr::str_detect(population$term.labels, "rel\\(")
-    population$term.labels = gsub("rel\\(|\\)", "", population$term.labels)
-    slope = population$term.labels
-  } else if (n_slopes == 0) {
+  if (length(population$term.labels) > 0) {
+    slope = lapply(
+      population$term.labels,
+      FUN = unpack_slope_term,
+      i = i,
+      data = data,
+      last_segment = last_segment) %>%
+      dplyr::bind_rows()  # Make it a proper table-like tibble
+
+    # Checks
+    par_x = unique(slope$par_x)  # What is the data predictor?
+    if (length(par_x) > 1)
+      stop("Found more than one x-variable in segment ", i, ": '", paste(slope$par_x, collapse ="', '"), "'")
+
+    # Build code. Add parentheses if there are more slopes
+    slope_code = paste(slope$code, collapse = " + ")
+    if (stringr::str_detect(slope_code, "\\+|-"))
+      slope_code = paste0("(", slope_code, ")")
+
+  } else {
     slope = NA
-    slope_rel = FALSE
+    par_x = NA
+    slope_code = NA
   }
+
+
+  # Varying effects
+  varying_terms = as.character(findbars(form_rhs))
+  if (length(varying_terms) > 0) {
+    V = lapply(varying_terms, unpack_varying_term, i = i) %>%
+      dplyr::bind_rows()
+  } else {
+    V = NA
+  }
+
 
   # Return as list.
   return(tibble::tibble(
     int = population$intercept == 1,
     int_rel = any(int_rel),
-    slope = slope,
-    slope_rel = slope_rel,
+    slope = list(slope),
+    slope_code = slope_code,
+    x = par_x,
     varying = list(V)
   ))
 }
+
+
+unpack_slope_term = function(term, i, data, last_segment) {
+  # Remove the "rel()" and "I()" in that order.
+  if (stringr::str_starts(term, "rel\\(")) {
+    term = gsub("^rel\\(|\\)$", "", term)
+    rel = TRUE
+  } else {
+    rel = FALSE
+  }
+  if (stringr::str_starts(term, "I\\("))
+    term = gsub("^I\\(|\\)$", "", term)
+
+  # Do some checks on rel()
+  if (rel == TRUE) {
+    # Check if the relative slope is legit
+    if (i == 1)
+      stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
+    if(is.na(last_segment$slope))
+      stop("rel(", term, ") in segment ", i, " but no slopes in the previous segment.")
+    if(!term %in% last_segment$slope[[1]]$term) {
+      stop("rel(", term, ") in segment ", i, " does not have a corresponding term to be relative to in the previous segment.")
+    }
+  }
+  if(stringr::str_detect(term, "^log\\(|^sqrt\\(") & i > 1)
+    stop("log() or sqrt() detected in segment 2+. This would fail because mcp models earlier segments as negative x values, and sqrt()/log() cannot take negative values.")
+
+  # Regular expressions. Only recognize stuff that is identical in JAGS and base R
+  func_list = c("abs", "cos", "exp", "log", "sin", "sqrt", "tan")
+  funcs_regex = paste0("^", func_list, "\\(", collapse = "|")  # ^func1(|^func2(|...
+  exponent_regex = "\\^[0-9.]+$"  # something^[number]
+  end_regex = "\\)$"
+
+  # Find par_x by removing everything associated with accepted functions
+  par_x = gsub(paste0(c(funcs_regex, exponent_regex, end_regex), collapse = "|"), "", term)
+
+  # Quick check: is par_x in data?
+  if (!is.null(data)) {
+    if (!par_x %in% colnames(data)) {
+      stop("mcp inferred the variable '", par_x, "' from the term '", term, "' but did not find this column in the data. Perhaps mcp does not support this kind of term (currently).")
+    }
+  }
+
+  # Give exponents a valid variable name
+  rel_x_code = paste0("X_", i, "_[i_]")  # x relative to segment start. Must match that inserted in get_formula()
+  if (stringr::str_detect(term, exponent_regex)) {
+    # Exponential
+    slope_base = gsub("\\^", "E", term)
+    term_recode = gsub(paste0("^", par_x, "\\^"), paste0(rel_x_code, "\\^"), term)
+  } else if (stringr::str_detect(term, funcs_regex)) {
+    # A simple function
+    slope_base = gsub("\\(", "_", term)  # Replace first parenthesis with underscore
+    slope_base = gsub("\\)$", "", slope_base)  # Remove second (last) parenthesis
+    term_recode = gsub(paste0("\\(", par_x), paste0("(", rel_x_code), term)
+  } else if (term == par_x) {
+    # No function; just vanilla :-)
+    slope_base = par_x
+    term_recode = rel_x_code
+  } else {
+    stop("mcp failed for term ", term, ". If there is no obvious reason why, please raise an issue at GitHub.")
+  }
+
+  # Add last segment if this slope is relative
+  name = paste0(slope_base, "_", i)
+  if (rel == FALSE) {
+    name_cumul = name
+    code = paste0(name, " * ", term_recode)
+  } else if (rel == TRUE) {
+    last_name_cumul =last_segment$slope[[1]]$name_cumul[which(last_segment$slope[[1]]$term == term)]
+    name_cumul = paste0(last_name_cumul, " + ", name)
+    code = paste0("(", name_cumul, ") * ", term_recode)
+    #last_code = last_segment$slope[[1]]$code[which(last_segment$slope[[1]]$term == term)]
+    #code = paste0(last_code, " + ", code)
+  }
+
+  return(list(term = term,
+              par_x = par_x,
+              name = name,
+              name_cumul = name_cumul,
+              rel = rel,
+              code = code))
+}
+
+
+
+unpack_varying_term = function(term, i) {
+  parts = stringr::str_trim(strsplit(term, "\\|")[[1]])  # as c("lhs", "group")
+
+  # Check that there is just one grouping term
+  if (!grepl("^[A-Za-z._0-9]+$", parts[2]))
+    stop("Error in segment ", i, " (linear): Grouping variable in varying effects for change points.")
+
+  # Check that nothing is relative
+  if (any(stringr::str_detect(parts, "rel\\(")))
+    stop("Error in segment ", i, " (linear): rel() not supported in varying effects.")
+
+  # LHS: Split intercepts and variable
+  preds = strsplit(gsub(" ", "", parts[1]), "\\+")[[1]]
+  slope = preds[!preds %in% c("0", "1")]
+  if (length(slope) > 1)
+    stop("Error in segment ", i, " (linear): More than one variable in LHS of varying effect.")
+  else if (length(slope) == 0)
+    # If not slope
+    slope = NA
+
+  # Return
+  return(list(
+    int = !"0" %in% preds,  # bool. Is intercept present?
+    slope = slope,
+    group = parts[2]))
+}
+
 
 
 #' Build a table describing a list of segments
@@ -258,7 +367,7 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
     row = dplyr::bind_cols(row, unpack_tildes(segment, i))
     row = dplyr::bind_cols(row, unpack_y(row$form_y, i, family = family))
     row = dplyr::bind_cols(row, unpack_cp(row$form_cp, i))
-    row = dplyr::bind_cols(row, unpack_rhs(row$form_rhs, i))
+    row = dplyr::bind_cols(row, unpack_rhs(row$form_rhs, i, data, ST[i-1,]))
 
     ST = dplyr::bind_rows(ST, row)
   }
@@ -266,7 +375,7 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
   # Fill y and trials, where not explicit.
   # Build "full" formula and insert instead of the old
   ST = ST %>%
-    tidyr::fill(.data$y, .data$trials, .direction="downup") %>%  # Usually only provided in segment 1
+    tidyr::fill(.data$y, .data$trials, .direction = "downup") %>%  # Usually only provided in segment 1
     dplyr::mutate(form = paste0(.data$y, ifelse(!is.na(.data$form_cp), .data$form_cp, ""), .data$form_rhs)) %>%
     dplyr::select(-.data$form_y, -.data$form_cp, -.data$form_rhs)  # Not needed anymore
 
@@ -280,20 +389,20 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
   # Check segment 1: rel() not possible here.
   if (any(ST[1, c("cp_int", "cp_int_rel", "cp_ran_int", "cp_group_col")] != FALSE, na.rm = T))
     stop("Change point defined in first segment. This should not be possible. Submit bug report in the GitHub repo.")
-  if (any(ST[1, c("int_rel", "slope_rel")] != FALSE, na.rm = T))
-    stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
+  #if (any(ST[1, c("int_rel", "slope_rel")] != FALSE, na.rm = T))
+  #  stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
 
   # Check rel() in segment 2+
-  rel_slope_after_plateau = dplyr::lag(is.na(ST$slope), 1) & ST$slope_rel != 0
-  if (any(rel_slope_after_plateau))
-    stop("rel(slope) is not meaningful after a plateau segment (without a slope). Use absolute slope to get the same behavior. Found in segment ", which(rel_slope_after_plateau))
+  #rel_slope_after_plateau = dplyr::lag(is.na(ST$slope), 1) & ST$slope_rel != 0
+  #if (any(rel_slope_after_plateau))
+  #  stop("rel(slope) is not meaningful after a plateau segment (without a slope). Use absolute slope to get the same behavior. Found in segment ", which(rel_slope_after_plateau))
   if (nrow(ST) > 1) {
     if (ST$cp_int_rel[2] == TRUE)
       stop("rel() cannot be used for change points in segment 2. There are no earlier change points to be relative to. Relative changepoints work from segment 3 and on.")
   }
 
   # Set ST$x (what is the x-axis dimension?)
-  derived_x = unique(stats::na.omit(ST$slope))
+  derived_x = unique(stats::na.omit(ST$x))
   if (length(derived_x) == 1) {
     # One x derived from segments
     if (is.null(par_x))  # par_x not provided. Rely on derived
@@ -304,13 +413,13 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
       stop("par_x provided but it does not match the predictor found in segment right-hand side")
   } else if (length(derived_x) == 0) {
     # Zero x derived from segments. Rely on par_x?
-    if (all(is.na(ST$slope) & is.character(par_x)))
+    if (all(is.na(ST$x) & is.character(par_x)))
       ST$x = par_x
     else
       stop("This is a plateau-only model so no x-axis variable could be derived from the segment formulas. Use argument 'par_x' to set it explicitly")
   } else if (length(derived_x) > 1)
     # More than one...
-    stop("More than one predictor found: '", paste0(unique(stats::na.omit(ST$slope)), collapse = "' and '"), "'")
+    stop("More than one predictor found: '", paste0(unique(stats::na.omit(ST$x)), collapse = "' and '"), "'")
 
   # Response variables
   derived_y = unique(stats::na.omit(ST$y))
@@ -369,8 +478,8 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
     # Add variable names
     dplyr::mutate(
       int_name = ifelse(.data$int, yes = paste0("int_", .data$segment), no = NA),
-      slope_name = ifelse(!is.na(.data$slope), yes = paste0(.data$slope, "_", .data$segment), no = NA),
-      slope_code = .data$slope_name,  # Will be modified later
+      #slope_name = ifelse(!is.na(.data$slope), yes = paste0(.data$slope, "_", .data$segment), no = NA),
+      #slope_code = .data$slope_name,  # Will be modified later
       cp_name = paste0("cp_", .data$segment - 1),
       cp_sd = ifelse(.data$cp_ran_int == TRUE, paste0(.data$cp_name, "_sd"), NA),
       cp_group = ifelse(.data$cp_ran_int == TRUE, paste0(.data$cp_name, "_", .data$cp_group_col), NA)
@@ -387,12 +496,12 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
     dplyr::ungroup() %>%
 
     # Same for slope_code
-    dplyr::group_by(cumsum(!.data$slope_rel)) %>%
-    dplyr::mutate(
-      slope_code = cumpaste(.data$slope_name, " + "),
-      slope_code = format_code(.data$slope_code, na_col = .data$slope_name)
-    ) %>%
-    dplyr::ungroup() %>%
+    # dplyr::group_by(cumsum(!.data$slope_rel)) %>%
+    # dplyr::mutate(
+    #   slope_code = cumpaste(.data$slope_name, " + "),
+    #   slope_code = format_code(.data$slope_code, na_col = .data$slope_name)
+    # ) %>%
+    # dplyr::ungroup() %>%
 
     # Finish up
     dplyr::select(-dplyr::starts_with("cumsum"))

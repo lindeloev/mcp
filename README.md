@@ -272,6 +272,36 @@ Population-level parameters:
 (rhat cannot be estimated when the model contains constant coefficients in `mcp 0.1`. This will be fixed.)
 
 
+## Quadratic
+Write exponents as `I(x^N)`. E.g., `I(x^2)`, `I(x^1.5)`, `I(x^3)`. The following detects the onset of linear + quadratic growth. In nuitrition, this is often called the BLQ model (Broken Line Quadratic).
+
+```r
+segments = list(
+  y ~ 1,
+  1 ~ 0 + x + I(x^2)
+)
+fit = mcp(segments, ex_quadratic)
+plot(fit)
+```
+
+![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_quadratic.png)
+
+
+## Trigonometric and other 
+You can use `sin(x)`, `cos(x)`, and `tan(x)` to do trigonometry. You can also do `exp(x)`, `abs(x)`, `log(x)`, and `sqrt(x)`, but beware that the two latter will fail in segment 2+ because from the "perspective" of that segment, earlier `x` values are negative.
+
+```r
+segments = list(
+  y ~ 1 + sin(x),
+  1 ~ 0 + cos(x) + x
+)
+
+fit = mcp(segments, ex_trig)
+plot(fit)
+```
+
+![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_trig.png)
+
 
 
 # Diagnosing problems

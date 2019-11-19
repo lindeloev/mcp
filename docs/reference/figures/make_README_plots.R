@@ -19,16 +19,16 @@ save_it = function(filename) {
 # Example 1 #
 #############
 library(mcp)
-segments = list(
+segments_demo = list(
   response ~ 1,  # plateau (int_1)
   1 ~ 0 + time,  # joined slope (time_2) at cp_1
   1 ~ 1 + time  # disjoined slope (int_1, time_2) at cp_2
 )
-fit = mcp(segments, data = ex_demo)  # dataset included in mcp
-theme_it(plot(fit), "")
+fit_demo = mcp(segments_demo, data = ex_demo)  # dataset included in mcp
+theme_it(plot(fit_demo), "")
 save_it("ex_demo.png")
 
-plot(fit, "combo", regex_pars = "cp_")
+plot(fit_demo, "combo", regex_pars = "cp_")
 save_it("ex_demo_combo.png")
 
 # LOO
@@ -48,12 +48,12 @@ loo::loo_compare(fit$loo, fit_null$loo)
 ################
 # Two plateaus #
 ################
-segments = list(
+segments_plateaus = list(
   y ~ 1,  # plateau (int_1)
   1 ~ 1  # plateau (int_2)
 )
-fit = mcp::mcp(segments, ex_plateaus, par_x = "x")
-theme_it(plot(fit, lines = 25), "Two plateaus")
+fit_plateaus = mcp(segments_plateaus, ex_plateaus, par_x = "x")
+theme_it(plot(fit_plateaus, lines = 25), "Two plateaus")
 save_it("ex_plateaus.png")
 
 
@@ -62,43 +62,71 @@ save_it("ex_plateaus.png")
 # VARYING SLOPE CHANGE #
 ########################
 
-segments = list(
+segments_varying = list(
   y ~ 1 + x,  # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope, varying by id
 )
-fit = mcp::mcp(segments, ex_varying)
-theme_it(plot(fit, facet_by = "id"), "Varying slope change")
+fit_varying = mcp(segments_varying, ex_varying)
+theme_it(plot(fit_varying, facet_by = "id"), "Varying slope change")
 save_it("ex_varying.png")
 
 
 ############
 # BINOMIAL #
 ############
-segments = list(
+segments_binomial = list(
   y | trials(N) ~ 1,  # constant rate
   1 ~ 0 + x,  # joined changing rate
   1 ~ 1 + x  # disjoined changing rate
 )
-fit = mcp::mcp(segments, ex_binomial, family = binomial())
-theme_it(plot(fit), "Binomial")
+fit_binomial = mcp(segments_binomial, ex_binomial, family = binomial())
+theme_it(plot(fit_binomial), "Binomial")
 save_it("ex_binomial.png")
 
 
 ##########################
 # FIXED, RELATIVE, PRIOR #
 ##########################
-segments = list(
+segments_rel_prior = list(
   y ~ 1 + x,
   1 ~ rel(1) + rel(x),
   rel(1) ~ 0
 )
-prior = list(
+prior_rel_prior = list(
   int_1 = 10,  # fixed value
   x_3 = "x_1",  # shared slope in segment 1 and 3
   int_2 = "dnorm(0, 20)",
   cp_1 = "dunif(20, 50)"  # has to occur in this interval
 )
 
-fit = mcp::mcp(segments, ex_rel_prior, prior)
-theme_it(plot(fit), "rel() and prior")
+fit_rel_prior = mcp(segments_rel_prior, ex_rel_prior, prior_rel_prior)
+theme_it(plot(fit_rel_prior), "rel() and prior")
 save_it("ex_fix_rel.png")
+
+
+
+#############
+# QUADRATIC #
+#############
+segments_quadratic = list(
+  y ~ 1,
+  1 ~ 0 + x + I(x^2)
+)
+
+fit_quadratic = mcp(segments_quadratic, ex_quadratic, cores = 4, chains = 4)
+theme_it(plot(fit_quadratic), "Quadratic")
+save_it("ex_quadratic.png")
+
+
+
+#################
+# TRIGONOMETRIC #
+#################
+segments_trig = list(
+  y ~ 1 + sin(x),
+  1 ~ 0 + cos(x) + x
+)
+
+fit_trig = mcp(segments_trig, ex_trig)
+theme_it(plot(fit_trig), "Trigonometric")
+save_it("ex_trig.png")

@@ -5,9 +5,24 @@
 #'
 #' @aliases get_formula_str
 #' @param ST Tibble. Returned by \code{get_segment_table}.
-get_formula_str = function(ST) {
+get_formula_str = function(ST, par_x) {
 
   formula_str = ""
+
+  # Insert X helpers
+  for (i in seq_len(nrow(ST))) {
+    S = ST[i, ]
+    if (!is.na(S$slope)) {
+      # What is the start of this segment? Used to subtract so that slope is computed form segment start.
+      subract_cp = ifelse(i > 1, yes = paste0(" - ", S$cp_code_form, ""), no = "")
+      next_cp = ifelse(i < nrow(ST), yes = paste0(ST$cp_code_form[i + 1], ""), no = paste0("cp_", i))  # infinite if last segment.
+
+      formula_str = paste0(formula_str, "X_", i, "_[i_] = min(", par_x, "[i_], ", next_cp, ")", subract_cp, "\n")
+    }
+  }
+
+  formula_str = paste0(formula_str, "\ny_[i_] = \n")
+
   for (i in seq_len(nrow(ST))) {
     # Helper: Current segment.
     S = ST[i, ]
@@ -15,8 +30,8 @@ get_formula_str = function(ST) {
     # PAR_X will be replaced by the real name. FUTURE_REL will sometimes be
     # replaced by a less-than indicator (ind_past).
     # cp_code_form includes varying effects
-    ind_this = paste0("(PAR_X >= ", S$cp_code_form, ") * FUTURE_REL")
-    ind_past = paste0("(PAR_X < ", S$cp_code_form, ") * ")
+    ind_this = paste0("(", par_x, "[i_] >= ", S$cp_code_form, ") * FUTURE_REL")
+    ind_past = paste0("(", par_x, "[i_] < ", S$cp_code_form, ") * ")
 
     # Begin building formula
     formula_str = paste0(formula_str, "\n# Segment ", i, ": ", S$form, "\n")
@@ -36,11 +51,7 @@ get_formula_str = function(ST) {
 
     # Add slope
     if (!is.na(S$slope)) {
-      # What is the start of this segment? Used to subtract so that slope is computed form segment start.
-      subract_cp = ifelse(i > 1, yes = paste0(" - (", S$cp_code_form, ")"), no = "")
-      next_cp = ifelse(i < nrow(ST), yes = paste0(ST$cp_code_form[i + 1], ""), no = paste0("cp_", i))  # infinite if last segment.
-
-      formula_str = paste0(formula_str, ind_this, "(", S$slope_code, " * (min(PAR_X, ", next_cp, ")", subract_cp, ")) + \n")
+      formula_str = paste0(formula_str, ind_this, S$slope_code, " + \n")
     }
 
     # If this is just a plateau (~ 0), i.e., the absence of intercept, slope, and varying effects
@@ -76,7 +87,8 @@ get_formula_str = function(ST) {
 #'
 get_func_y = function(formula_str, par_x, par_trials = NA, pars_pop, pars_varying, nsegments, family) {
   # First some substitutions
-  formula_func = gsub("PAR_X", par_x, formula_str)  # Proper par_x name
+  formula_func = gsub("\\[i_\\]", "", formula_str)  # No explicit indexing needed for R function
+  #formula_func = gsub("PAR_X", par_x, formula_str)  # Proper par_x name
   formula_func = gsub("min\\(", "pmin\\(", formula_func)  # vectorized mean for function
   for (i in seq_len(nsegments)) {
     formula_func = gsub(paste0("CP_", i, "_INDEX"), "", formula_func)  # Use vector of data
@@ -96,7 +108,7 @@ get_func_y = function(formula_str, par_x, par_trials = NA, pars_pop, pars_varyin
     cp_", nsegments, " = Inf
 
     # Fitted value
-    y = ", formula_func, "
+    ", formula_func, "
 
 
     # Return predictions or fitted values?
@@ -107,27 +119,27 @@ get_func_y = function(formula_str, par_x, par_trials = NA, pars_pop, pars_varyin
   # Return depends on family
   if (family == "gaussian") {
     func_str = paste0(func_str, "
-    if (type == 'predict') return(rnorm(length(", par_x, "), y, sigma))
-    if (type == 'fitted') return(y)")
+    if (type == 'predict') return(rnorm(length(", par_x, "), y_, sigma))
+    if (type == 'fitted') return(y_)")
   } else if (family == "binomial") {
     func_str = paste0(func_str, "
     inverse_logit = function(x) exp(x) / (1 + exp(x))
     if (type == 'predict') {
-      if (rate == FALSE) return(rbinom(length(", par_x, "), ", par_trials, ", inverse_logit(y)))
-      if (rate == TRUE)  return(rbinom(length(", par_x, "), ", par_trials, ", inverse_logit(y)) / ", par_trials, ")
+      if (rate == FALSE) return(rbinom(length(", par_x, "), ", par_trials, ", inverse_logit(y_)))
+      if (rate == TRUE)  return(rbinom(length(", par_x, "), ", par_trials, ", inverse_logit(y_)) / ", par_trials, ")
     }
     if (type == 'fitted')
-      if (rate == FALSE) return(", par_trials, " * inverse_logit(y))
-      if (rate == TRUE)  return(inverse_logit(y))")
+      if (rate == FALSE) return(", par_trials, " * inverse_logit(y_))
+      if (rate == TRUE)  return(inverse_logit(y_))")
   } else if (family == "bernoulli") {
     func_str = paste0(func_str, "
     inverse_logit = function(x) exp(x) / (1 + exp(x))
-    if (type == 'predict') return(rbinom(length(", par_x, "), 1, inverse_logit(y)))
-    if (type == 'fitted') return(inverse_logit(y))")
+    if (type == 'predict') return(rbinom(length(", par_x, "), 1, inverse_logit(y_)))
+    if (type == 'fitted') return(inverse_logit(y_))")
   } else if (family == "poisson") {
     func_str = paste0(func_str, "
-    if (type == 'predict') return(rpois(length(", par_x, "), exp(y)))
-    if (type == 'fitted') return(exp(y))")
+    if (type == 'predict') return(rpois(length(", par_x, "), exp(y_)))
+    if (type == 'fitted') return(exp(y_))")
   }
 
   func_str = paste0(func_str, "
