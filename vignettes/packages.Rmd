@@ -135,7 +135,7 @@ I think the change point at `x = 100` should just be ignored. We see that it app
 
 
 # segmented
-`segmented` has a very shallow learning curve combined with great modeling flexibility. You simply specify your model in `lm`, `glm`, `Arima`, and also work for e.g. `coxph` (Cox proportional Hazard). Supply it to `segmented` which then segment your data along the x-axis and applies the linear model in each segment. The trick is identifying the locations where this split works the best. The positive consequence is that you get great modeling flexibility with GLM, AR(1) models, etc. 
+`segmented` seems to be the most popular package for change point analysis. It has a very shallow learning curve combined with great modeling flexibility. You simply specify your model in `lm`, `glm`, `Arima`, and also work for e.g. `coxph` (Cox proportional Hazard). Supply it to `segmented` which then segment your data along the x-axis and applies the linear model in each segment. The trick is identifying the locations where this split works the best. The positive consequence is that you get great modeling flexibility with GLM, AR(1) models, etc. 
 
 The downside is that you can only have one *kind* of segments and (for some reason) *it ignores the intercepts on anything but the first segment*. Only (joined) slopes are supported in segment 2+. Unfortunately, this means that `segmented` fails for the present changing-intercept data. `segmented` is otherwise well developed with prediction functions, (frequentist) intervals, plots, etc. so if you have large datasets with impermissible long run times in `mcp` and it matches what `segmented` can model, it is a good option.
 
@@ -181,7 +181,6 @@ loo::loo_compare(fit_mcp$loo, fit_mcp_1$loo)
 
 
 While `segmented` prefers the one-change-point model, `mcp` prefers the (true) two-change-point model. Again, the models compared here are *very* different since `segmented` does inference on a slope-only model.
-
 
 
 
@@ -267,17 +266,6 @@ str(list(
 ```
 
 
-
-# strucchange::Fstats
-Contains the function `Fstats` which can detect a single change point. It finds the change point at `x = 30`, but not the second change point at `x = 70`:
-
-```{r}
-fit_struc = strucchange::Fstats(y ~ 1, data = data)
-print(fit_struc$breakpoint)
-```
-
-
-
 # TSMCP
 Short for "Time-Series Multiple Change Point". The output is a single number (!). For the problem at hand, changing `method` makes no difference. For many other `c` (`c = 0.3`, `c = 4`), it fails to find any change points at all. There is also `TSMCP::cpvnts()` to model AR(N), but I have failed to make it find any change points in the present data set.
 
@@ -290,7 +278,7 @@ TSMCP::tsmcplm(data$y, X = NULL, method = "adapt", c = 1)
 
 
 # wbsts
-The `wbsts` package is focused at time-series data. I must admit that I do not understand the underlying model(s), so I am in a poor position to evaluate whether I am using it correctly. It returns no change points for the present data set using default settings:
+The `wbsts` package is focused at time-series data. I must admit that I have not taken the time to understand the underlying model(s) or inference methods, so I am in a poor position to evaluate whether I am using it correctly. It returns no change points for the present data set using default settings:
 
 ```{r}
 wbsts::wbs.lsw(data$y)
@@ -301,3 +289,27 @@ wbsts::wbs.lsw(data$y)
 
 # robts::changerob
 `robts` is about robust time-series regression. It is not on CRAN, so it has to be installed using `install.packages("robts", repos="http://R-Forge.R-project.org")`. I fail to install the dependencies, and development of the package seems to have stopped around 2014. It won't be covered further here.
+
+
+
+# Packages doing only one change point
+
+ * `strucchange::Fstats`: Returns the estimated change point (one number), and nothing else. `strucchange::Fstats(y ~ 1, data = data)` find the change point at 30 in the present data.
+ * `SiZer::piecewise.linear`: Returns a change point and parameter estimates, optionally with an interval. Call like `piecewise.linear(data$x, data$y, CI = TRUE)`. Only joined slopes are supported which makes it misestimate the change point in the present data 39 [36.5, 47], but it is consistent with `segmented` which uses a similar model.
+ * `easyreg::bl`.
+ * `lm.br::lm.br`. Choose between line-line, line-plateau, or plateau-line. Yields confidence intervals. All of these are non-suitable for the present plateau-only model. `lm.br` stands out with the following features: (1) it can take multiple predictors, and it uniquely only models change point over just one of them, keeping the others constant. In comparison, `segmented` models changes in everything, as far as I understand it. (2) It can take known variance. (3) It can take data weights.
+
+
+# Packages doing only fixed change points
+As explained in [../docs/articles/formulas.html], fixed change points can be implemented in almost all regression functions. You simply have an indicator variable saying whether there has been as shift at the corresponding x-value and use it like `lm(y ~ 1 + x * I(x > 30), data)`. Or if you don't want a carry-over effect from the first segment, do `lm(y ~ 1 * I(x < 30) + x * I(x >= 30), data)`. This will work for most regression packages in R, including `survival` and `lme4`.
+
+Some packages include this in a way where you don't have to code your indicators yourself, including:
+
+* `scan::plm` and `scan::hplm`. To get started here, make sure to transform your data to a `scan::scdf` object.
+
+
+# Others
+I have yet to test these: 
+ 
+ * `TSIS` may be coersed to do change point analysis, though it is mean for much more complicated switch point models in gene expression analysis. It's primary interface is a Shiny App.
+ * `plrs::plrs`. Piecewise Linear Regression, targeted at DNA and gene expression. May also be coerced into simpler problems.

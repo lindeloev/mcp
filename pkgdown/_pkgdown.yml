@@ -59,6 +59,8 @@ navbar:
       - text: Other
       - text: Comparison to other packages
         href: articles/packages.html
+      - text: Tips, tricks, and debugging
+        href: articles/debug.html
     twitter:
      icon: "fab fa-twitter fa-lg"
      href: https://twitter.com/jonaslindeloev

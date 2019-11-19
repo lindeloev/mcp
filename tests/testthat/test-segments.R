@@ -13,7 +13,7 @@ data_gauss = data.frame(
   bad_y_factor = factor(1:5),
 
   # x should be continuous
-  x = 1:5,
+  x = -1:3,
   ok_x = rnorm(5),  # test underscore and decimals
   bad_x_char = c("a", "b", "c", "d", "e"),
   bad_x_factor = factor(1:5),
@@ -40,7 +40,7 @@ data_binomial = data.frame(
   N_bad_char = c("1", "1", "100", "6", "10"),
 
   # x
-  x = 1:5,
+  x = -1:3,
 
   # Varying effects
   id = c("a", "b", "c", "d", "e")
@@ -341,7 +341,11 @@ bad_slopes = list(
   list(y ~ 1,  # Relative slope after no slope
        1 ~ rel(x)),
   list(y ~ bad_x_char),  # not numeric x
-  list(y ~ bad_x_factor)  # not numeric x
+  list(y ~ bad_x_factor),  # not numeric x
+  list(y ~ 1,
+       1 ~ log(x)),  # should fail explicitly because negative x
+  list(y ~ 1,
+       1 ~ sqrt(x))  # should fail explicitly because negative x
 )
 
 test_bad(bad_slopes, "Bad slopes")
@@ -356,6 +360,9 @@ good_slopes = list(
   list(y ~ x,  # Chained relative slopes
        1 ~ 0 + rel(x),
        1 ~ rel(x)),
+  list(y ~ 0 + x + I(x^2) + I(x^3),  # Test "non-linear" x
+       1 ~ 0 + exp(x) + abs(x),
+       1 ~ 0 + sin(x) + cos(x) + tan(x)),
   list(y ~ ok_x)  # alternative x
 )
 
