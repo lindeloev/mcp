@@ -178,5 +178,8 @@ get_prior = function(ST, family, prior = list()) {
   }
 
   # Replace default priors with user prior and return
-  utils::modifyList(default_prior, prior)
+  prior = utils::modifyList(default_prior, prior)
+
+  # Sort by name and return
+  prior[order(names(prior))]
 }

@@ -9,7 +9,7 @@ empty = mcp::mcp(segments, sample = FALSE, par_x = "x")
 set.seed(40)
 ex_plateaus = tibble::tibble(
   x = runif(100, 0, 100),
-  y = empty$func_y(x, 10, 20, 50, 8)
+  y = empty$func_y(x, cp_1 = 50, int_1 = 10, int_2 = 20, sigma = 8)
 )
 
 # Save to mcp
