@@ -4,7 +4,7 @@
 \alias{get_formula_str}
 \title{Build an R formula (as string) given a segment table (ST)}
 \usage{
-get_formula_str(ST)
+get_formula_str(ST, par_x)
 }
 \arguments{
 \item{ST}{Tibble. Returned by \code{get_segment_table}.}

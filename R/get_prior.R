@@ -154,9 +154,12 @@ get_prior = function(ST, family, prior = list()) {
     if (!is.na(S$int_name))
       default_prior[[S$int_name]] = priors[[family]]$int
 
-    # Slope
-    if (!is.na(S$slope_name))
-      default_prior[[S$slope_name]] = priors[[family]]$slope
+    # Each slope
+    if (!is.na(S$slope)) {
+      for (name in S$slope[[1]]$name) {
+        default_prior[[name]] = priors[[family]]$slope
+      }
+    }
 
     # Change point
     if (i > 1)
