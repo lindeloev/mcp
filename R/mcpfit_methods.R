@@ -56,14 +56,14 @@ get_summary = function(fit, width, varying = FALSE) {
   }
 
   # Diagnostics
-  rhat = try(coda::gelman.diag(samples, multivariate = FALSE)$psrf[, 1], TRUE)
-  if (!is.numeric(rhat)) {
-    warning("rhat computation failed: ", rhat)
-    rhat = rep(NA, nrow(estimates))
+  Rhat = try(coda::gelman.diag(samples, multivariate = FALSE)$psrf[, 1], TRUE)
+  if (!is.numeric(Rhat)) {
+    warning("Rhat computation failed: ", Rhat)
+    Rhat = rep(NA, nrow(estimates))
   }
   diagnostics = data.frame(
-    rhat = rhat,  # Gelman-Rubin
-    eff = round(coda::effectiveSize(samples)),  # Effective sample size
+    Rhat = Rhat,  # Gelman-Rubin
+    n.eff = round(coda::effectiveSize(samples)),  # Effective sample size
     ts_se = lapply(samples, coda::spectrum0.ar) %>%  # Time-series SE
       data.frame() %>%
       dplyr::select(tidyselect::starts_with("spec")) %>%
@@ -90,10 +90,10 @@ get_summary = function(fit, width, varying = FALSE) {
 #' @param digits Positive integer. Number of digits to print
 #' @param ... Currently ignored
 #'
-#' @return Posterior means and HDI intervals. \code{rhat} is the Gelman-Rubin
+#' @return Posterior means and HDI intervals. \code{Rhat} is the Gelman-Rubin
 #'   convergence diagnostic which is often taken to be acceptable if < 1.1. It
 #'   is computed using \code{\link[coda]{gelman.diag}}.
-#'   \code{eff} is the effective sample size computed using
+#'   \code{n.eff} is the effective sample size computed using
 #'   \code{\link[coda]{effectiveSize}}. Low effective sample sizes are
 #'   also obvious as poor mixing in trace plots (see \code{plot(fit, "combo")}).
 #'   \code{ts_err} is the time-series error, taking autoregressive correlation
