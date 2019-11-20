@@ -1,18 +1,19 @@
-# mcp: Bayesian Inference of Multiple Change Points
+# mcp: Multiple Change Point regression
 
 [![Travis-CI status](https://img.shields.io/travis/lindeloev/mcp.svg)](https://travis-ci.org/lindeloev/mcp)
 [![Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/r/lindeloev/mcp)
 
 
-Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generalized Linear Segments - and the coefficients in those segments. 
+Infer multiple Change Points (MCP) between Generalized Linear Segments using Bayesian hierarchical regression. 
 
-Change points are also sometimes called **switch points**, **break points**, **broken-line** models, **bilinear** models, (performance) **discontinuity** models, **piecewise linear regression**, and **local linear regression**. `mcp` aims to be be useful for all of them. See how `mcp` compares to [other packages](https://lindeloev.github.io/mcp/articles/packages.html).
+Change points are also sometimes called **switch points**, **break points**, **broken line** regression, **broken stick** regression, **bilinear** regression, **piecewise linear regression**, **local linear regression**, **segmented regression**, and (performance) **discontinuity** models. `mcp` aims to be be useful for all of them. See how `mcp` compares to [other packages](https://lindeloev.github.io/mcp/articles/packages.html).
 
 Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. `mcp` leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
 
+
 # Install
 
- 1. [Install the latest version of JAGS](https://sourceforge.net/projects/mcmc-jags/). Linux users can fetch binaries [here](http://mcmc-jags.sourceforge.net/).
+ 1. <a href="https://sourceforge.net/projects/mcmc-jags/" target="_blank">Install the latest version of JAGS</a>. Linux users can fetch binaries <a href="http://mcmc-jags.sourceforge.net/" target="_blank">here</a>.
  
  2. Install `mcp` by running this in R:
  
@@ -24,7 +25,7 @@ Under the hood, `mcp` takes a formula-representation of linear segments and turn
 
 
 # Brief example
-`mcp` takes a list of formulas for `y` as a function of `x`. The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the following formulas typically take the form `changepoint ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
+`mcp` takes a list of formulas for `y` as a function of `x`. The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the most common use case for the following formulas is ` ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
 ## Fit a model
 The following model infers the two change points between three segments.
@@ -35,8 +36,8 @@ library(mcp)
 # Define the model
 segments = list(
   response ~ 1,  # plateau (int_1)
-  1 ~ 0 + time,  # joined slope (time_2) at cp_1
-  1 ~ 1 + time  # disjoined slope (int_1, time_2) at cp_2
+  ~ 0 + time,  # joined slope (time_2) at cp_1
+  ~ 1 + time  # disjoined slope (int_3, time_3) at cp_2
 )
 
 # Fit it. The `ex_demo` dataset is included in mcp
@@ -104,7 +105,7 @@ For model comparisons, we can fit a null model and compare the predictive perfor
 # Define the model
 segments_null = list(
   response ~ 1 + time,  # intercept (int_1) and slope (time_1)
-  1 ~ 1 + time  # disjoined slope (int_2, time_1)
+  ~ 1 + time  # disjoined slope (int_2, time_1)
 )
 
 # Fit it
@@ -178,7 +179,7 @@ Find the single change point between two plateaus ([see how this data was genera
 ```r
 segments = list(
     y ~ 1,  # plateau (int_1)
-    1 ~ 1  # plateau (int_2)
+    ~ 1  # plateau (int_2)
 )
 fit = mcp(segments, ex_plateaus, par_x = "x")
 plot(fit)
@@ -228,8 +229,8 @@ Here is a binomial change point model with three segments. We plot the 95% HDI t
 ```r
 segments = list(
   y | trials(N) ~ 1,  # constant rate
-  1 ~ 0 + x,  # joined changing rate
-  1 ~ 1 + x  # disjoined changing rate
+  ~ 0 + x,  # joined changing rate
+  ~ 1 + x  # disjoined changing rate
 )
 fit = mcp(segments, ex_binomial, family = binomial())
 plot(fit, quantiles = TRUE)
@@ -250,7 +251,7 @@ Some of the default priors are overwritten. The first intercept (`int_1`) is for
 ```r
 segments = list(
   y ~ 1 + x,
-  1 ~ rel(1) + rel(x),
+  ~ rel(1) + rel(x),
   rel(1) ~ 0 + x
 )
 
@@ -294,13 +295,13 @@ Population-level parameters:
 (rhat cannot be estimated when the model contains constant coefficients in `mcp 0.1`. This will be fixed.)
 
 
-## Quadratic
-Write exponents as `I(x^N)`. E.g., quadratic `I(x^2)`, cubic `I(x^3)`, or something else `I(x^1.5)`. The example below detects the onset of linear + quadratic growth. This is often called the BLQ model (Broken Line Quadratic) in nuitrition research.
+## Quadratic and other exponentiations
+Write exponents as `I(x^N)`. E.g., quadratic `I(x^2)`, cubic `I(x^3)`, or some other power function `I(x^1.5)`. The example below detects the onset of linear + quadratic growth. This is often called the BLQ model (Broken Line Quadratic) in nuitrition research.
 
 ```r
 segments = list(
   y ~ 1,
-  1 ~ 0 + x + I(x^2)
+  ~ 0 + x + I(x^2)
 )
 fit = mcp(segments, ex_quadratic)
 plot(fit)
@@ -309,13 +310,13 @@ plot(fit)
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_quadratic.png)
 
 
-## Trigonometric and other 
-You can use `sin(x)`, `cos(x)`, and `tan(x)` to do trigonometry. You can also do `exp(x)`, `abs(x)`, `log(x)`, and `sqrt(x)`, but beware that the two latter will fail in segment 2+ because from the "perspective" of that segment, earlier `x` values are negative.
+## Trigonometric and others
+You can use `sin(x)`, `cos(x)`, and `tan(x)` to do trigonometry. This can be useful for seasonal trends and other periodic data. You can also do `exp(x)`, `abs(x)`, `log(x)`, and `sqrt(x)`, but beware that the two latter will currently fail in segment 2+. Raise an issue if you need this.
 
 ```r
 segments = list(
   y ~ 1 + sin(x),
-  1 ~ 0 + cos(x) + x
+  ~ 0 + cos(x) + x
 )
 
 fit = mcp(segments, ex_trig)

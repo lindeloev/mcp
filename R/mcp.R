@@ -83,9 +83,9 @@
 #' # Define the segments that are separated by change points
 #' segments = list(
 #'   score ~ 1 + year,  # intercept + slope
-#'    1 ~ 0 + year,  # joined slope
-#'    1 ~ 0,  # joined plateau
-#'    1 ~ 1  # disjoined plateau
+#'    ~ 0 + year,  # joined slope
+#'    ~ 0,  # joined plateau
+#'    ~ 1  # disjoined plateau
 #' )
 #'
 #' # Start sampling
@@ -96,7 +96,7 @@
 #' plot(fit, "combo")
 #'
 #' # Compare to a one-intercept-only model (no change points) with default prior
-#' segments2 = list(1 ~ 1)
+#' segments2 = list(score ~ 1)
 #' fit2 = mcp(segments2, data)  # fit another model here
 #' fit$loo = loo(fit)
 #' fit2$loo = loo(fit)
@@ -217,6 +217,7 @@ mcp = function(segments,
 
   # Get an abstract segment table ("ST")
   ST = get_segment_table(segments, data, family$family, par_x)
+
   par_x = unique(ST$x)
   par_y = unique(ST$y)
   par_trials = unique(ST$trials)
@@ -226,11 +227,13 @@ mcp = function(segments,
   params_varying = logical0_to_null(c(stats::na.omit(ST$cp_group)))
   params_population = names(prior)[!names(prior) %in% params_varying]
   #params_population = c(stats::na.omit(unique(c(ST$int_name, ST$slope_name, ST$cp_name[-1], ST$cp_sd))))
-  # if (family$family == "gaussian")
-  #   params_population = c(params_population, "sigma")
 
   # Make formula_str and func_y
   formula_str = get_formula_str(ST, par_x)
+  if (family$family == "gaussian") {
+    formula_str_sigma = get_formula_str(ST, par_x, sigma = TRUE)
+    formula_str = paste0(formula_str, "\n\n", formula_str_sigma)
+  }
 
   params_funcy = params_population[!params_population %in% ST$cp_sd]
   func_y = get_func_y(formula_str, par_x, par_trials, params_funcy, params_varying, nrow(ST), family$family)
