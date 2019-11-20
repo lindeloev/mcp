@@ -9,6 +9,7 @@ vignettes/packages_cache
 vignettes/poisson_cache
 vignettes/priors_cache
 vignettes/varying_cache
+vignettes/variance_cache
 pkgdown
 logo.png
 ^data-raw$
