@@ -1,8 +1,8 @@
 # Define the model
 segments = list(
   y | trials(N) ~ 1,  # constant rate
-  1 ~ 0 + x,  # joined changing rate
-  1 ~ 1 + x  # disjoined changing rate
+  ~ 0 + x,  # joined changing rate
+  ~ 1 + x  # disjoined changing rate
 )
 
 # Simulate data

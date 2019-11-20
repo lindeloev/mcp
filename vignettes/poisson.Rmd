@@ -31,7 +31,7 @@ The number of events (`n`) as a function of year (`date`) is typically modeled a
 library(mcp)
 segments = list(
   n ~ 1,  # intercept-only
-  1 ~ 1  # intercept-only
+  ~ 1  # intercept-only
 )
 
 fit = mcp(segments, data, family = poisson(), par_x = "date")

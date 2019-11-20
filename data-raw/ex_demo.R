@@ -1,8 +1,8 @@
 # Define model
 segments = list(
   response ~ 1,
-  1 ~ 0 + time,
-  1 ~ 1 + time
+  ~ 0 + time,
+  ~ 1 + time
 )
 empty = mcp::mcp(segments, sample = FALSE)
 

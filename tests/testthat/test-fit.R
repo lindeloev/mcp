@@ -7,7 +7,7 @@ library(mcp)
 # All relevant segments expressions
 segments = list(
   y ~ 1 + x,
-  1 ~ rel(1) + rel(x),
+  ~ rel(1) + rel(x),
   rel(1) ~ rel(1) + rel(x),
   rel(1) ~ 0
 )
