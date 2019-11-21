@@ -17,6 +17,7 @@ This article in brief:
  * Get posteriors using `ranef(fit)`
  * Plot using `plot(fit, facet_by="my_group")` and `plot(fit, "dens_overlay", pars = "varying", ncol = 3)`.
  * The default priors restrict varying change points to lie between the two adjacent change points.
+ * The article on modeling variance via `sigma()` contains [an example on varying change points](../articles/variance.html) as well.
 
 
 

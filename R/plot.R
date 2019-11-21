@@ -32,7 +32,8 @@
 #'   `ncol` only when `type != "segments"`
 #' @param lines Positive integer or `FALSE`. Number of lines (posterior
 #'   draws) to use when `type = "segments"`. FALSE (or `lines = 0`)
-#'   plots no lines.
+#'   plots no lines. Note that lines always plot fitted values. For prediction
+#'   intervals, see `quantiles_type` argument.
 #' @param quantiles Whether to plot quantiles.
 #'   * \strong{TRUE:} Add 2.5% and 97.5% quantiles. Corresponds to
 #'       `quantiles = c(0.025, 0.975)`.
@@ -40,6 +41,8 @@
 #'   * A vector of quantiles. For example, `quantiles = 0.5`
 #'       plots the median and `quantiles = c(0.2, 0.8)` plots the 20% and 80%
 #'       quantiles.
+#' @param quantiles_type One of 'fitted' or 'predict. Only applies if `quantile = TRUE`.
+#' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
 #' @param ... Currently ignored.
 #' @details
 #'   For `type = "segments"`, it uses `fit$func_y` with `draws`
@@ -98,6 +101,10 @@ plot.mcpfit = function(x,
                        rate = TRUE,
                        lines = 25,
                        quantiles = FALSE,
+                       quantiles_type = "fitted",
+
+                       # Other parameters
+                       prior = FALSE,
                        ...) {
 
   # Check arguments
@@ -125,7 +132,10 @@ plot.mcpfit = function(x,
     stop("`quantiles` has to be TRUE, FALSE, or a vector of numbers.")
 
   if (is.numeric(quantiles) & (any(quantiles > 1) | any(quantiles < 0)))
-    stop ("all `quantiles` have to be between 0 (0%) and 1 (100%).")
+    stop ("All `quantiles` have to be between 0 (0%) and 1 (100%).")
+
+  if (!quantiles_type %in% c("predict", "fitted"))
+    stop("`quantiles_type` has to be one of 'predict' or 'fitted'")
 
   if (!is.logical(rate))
     stop("`rate` has to be TRUE or FALSE.")
@@ -137,25 +147,27 @@ plot.mcpfit = function(x,
   varying_groups = logical0_to_null(unique(stats::na.omit(x$.other$ST$cp_group_col)))
   if (!is.null(facet_by)) {
     if (!facet_by %in% varying_groups)
-      stop("facet_by is not a data column used as varying grouping.")
+      stop("`facet_by` is not a data column used as varying grouping.")
   }
 
   if (!is.character(pars) | !is.character(regex_pars))
-    stop("pars and regex_pars has to be string/character.")
+    stop("`pars` and `regex_pars` has to be string/character.")
 
   if (any(c("population", "varying") %in% pars) & length(pars )> 1)
-    stop("pars cannot be a vector that contains multiple elements AND 'population' or 'varying'.")
+    stop("`pars` cannot be a vector that contains multiple elements AND 'population' or 'varying'.")
 
 
   if (any(c("hex", "scatter") %in% type) & (length(pars) != 2 | length(regex_pars) > 0))
     stop("`type` = 'hex' or 'scatter' takes exactly two parameters which must be provided via the `pars` argument")
 
+  if (!is.logical(prior))
+    stop("`prior` must be either TRUE or FALSE.")
 
   # Call underlying plot functions
   if ("segments" %in% type) {
-    plot_segments(x, facet_by, rate, lines, quantiles, ...)
+    plot_segments(x, facet_by, rate, lines, quantiles, quantiles_type, prior, ...)
   } else {
-    plot_bayesplot(x, type, pars, regex_pars, ncol, ...)
+    plot_bayesplot(x, type, pars, regex_pars, ncol, prior, ...)
   }
 }
 
@@ -179,10 +191,12 @@ plot_segments = function(fit,
                          rate = TRUE,
                          lines = 25,
                          quantiles = FALSE,
+                         quantiles_type = "fitted",
+                         prior = FALSE,
                          ...) {
 
   # Select posterior/prior samples
-  samples = get_samples(fit)
+  samples = get_samples(fit, prior = prior)
 
   # General settings
   xvar = rlang::sym(fit$pars$x)
@@ -241,9 +255,15 @@ plot_segments = function(fit,
   }
 
   # Predict y from model
-  samples = samples %>%
-    # Add fitted draws (vectorized)
-    dplyr::mutate(!!yvar := purrr::invoke(func_y, ., type = "fitted", rate = rate))
+  if (lines > 0 | (any(quantiles != FALSE) & quantiles_type == "fitted")) {
+    samples = samples %>%
+      # Add fitted draws (vectorized)
+      dplyr::mutate(!!yvar := purrr::invoke(func_y, ., type = "fitted", rate = rate))
+  }
+  if (quantiles_type == "predict") {
+    samples = samples %>%
+      dplyr::mutate(predicted_ = purrr::invoke(func_y, ., type = "predict", rate = rate))
+  }
 
 
 
@@ -260,7 +280,7 @@ plot_segments = function(fit,
     geom_point()
 
   # Add lines?
-  if (lines != FALSE) {
+  if (lines > 0) {
     # Sample the desired number of lines
     data_lines = samples %>%
       tidybayes::sample_draws(lines) %>%
@@ -276,6 +296,10 @@ plot_segments = function(fit,
 
   # Add quantiles?
   if (is.numeric(quantiles)) {
+    # Select what data to do quantiles on
+    if (quantiles_type == "fitted") samples = dplyr::mutate(samples, y_quant = !!yvar)
+    if (quantiles_type == "predict") samples = dplyr::mutate(samples, y_quant = .data$predicted_)
+
     # For each quantile and each x, add quantile of !!yvar
     data_quantiles = samples %>%
       tidyr::expand_grid(quant = quantiles) %>%
@@ -290,7 +314,7 @@ plot_segments = function(fit,
     # Continue...
     data_quantiles = data_quantiles %>%
       dplyr::summarise(
-        y = stats::quantile(!!yvar, probs = .data$quant[1])
+        y = stats::quantile(.data$y_quant, probs = .data$quant[1])
       )
 
     # Add quantiles to plot
@@ -325,10 +349,11 @@ plot_bayesplot = function(fit,
                           type,
                           pars = "population",
                           regex_pars = character(0),
-                          ncol = 1) {
+                          ncol = 1,
+                          prior = FALSE) {
 
   # Get posterior/prior samples
-  samples = get_samples(fit)
+  samples = get_samples(fit, prior = prior)
 
   # Handle special codes
   if ("population" %in% pars) {

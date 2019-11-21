@@ -143,7 +143,7 @@ test_mcp = function(segments,
 test_summary = function(fit, varying_cols) {
   result = invisible(capture.output(summary(fit)))
   result = paste0(result, collapse = "\n")
-  testthat::expect_match(result, "rhat")  # made results table
+  testthat::expect_match(result, "Rhat")  # made results table
 
   # If there are varying effects
   if (length(varying_cols) > 0) {
@@ -417,6 +417,32 @@ test_good(good_cps, "Good change points")
 
 
 
+
+#################
+# TEST VARIANCE #
+#################
+bad_variance = list(
+  list(y ~ 1 + sigma(rel(1))),  # no sigma to be relative to
+  list(y ~ 1,
+       y ~ 1 + sigma(rel(x))),  # no sigma slope to be relative to
+  list(y ~ 1 + sigma(q))  # variable does not exist
+)
+
+test_bad(bad_variance, "Bad variance")
+
+
+good_variance = list(
+  list(y ~ 1 + sigma(1)),
+  list(y ~ 1 + sigma(x + I(x^2))),
+  list(y ~ 1 + sigma(1 + sin(x))),
+  list(y ~ 1,
+       ~ 0 + sigma(rel(1)),  # test relative intercept
+       ~ x + sigma(x),
+       ~ 0 + sigma(rel(x)))  # test relative slope
+)
+
+test_good(good_variance, "Good variance")
+
 #################
 # TEST BINOMIAL #
 #################
@@ -435,7 +461,10 @@ bad_binomial = list(
   list(y_bad_numeric | trials(N) ~ 1),
   list(y | trials(N_bad_numeric) ~ 1),
   list(y | trials(N_bad_factor) ~ 1),
-  list(y | trials(N_bad_char) ~ 1)
+  list(y | trials(N_bad_char) ~ 1),
+
+  # Does not work with sigma
+  list(y | trials(N) ~ 1 + sigma(1))
 )
 
 test_bad(bad_binomial, "Bad binomial",
@@ -473,7 +502,10 @@ bad_bernoulli = list(
 
   # Bad data
   list(y_bad_numeric ~ 1),
-  list(y ~ 1)  # binomial response
+  list(y ~ 1),  # binomial response
+
+  # Does not work with sigma
+  list(y_bern ~ 1 + sigma(1))
 )
 
 test_bad(bad_bernoulli, "Bad Bernoulli",
@@ -508,7 +540,10 @@ bad_poisson = list(
        y | trials(N) ~ 1 ~ 1),  # misspecification in later segment
 
   # Bad data
-  list(y_bad_numeric ~ 1)
+  list(y_bad_numeric ~ 1),
+
+  # Does not work with sigma
+  list(y ~ 1 + sigma(1))
 )
 
 test_bad(bad_poisson, "Bad Poisson",

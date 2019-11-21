@@ -4,49 +4,72 @@
 #' is called. In JAGS typically `x[i_]`. In R just `x`.
 #'
 #' @aliases get_formula_str
+#' @inheritParams mcp  # get par_x
 #' @param ST Tibble. Returned by \code{get_segment_table}.
-get_formula_str = function(ST, par_x) {
-
+#' @param sigma If TRUE, build code for sigma instead
+get_formula_str = function(ST, par_x, sigma = FALSE) {
+  # Build this! Start empty...
   formula_str = ""
 
-  # Insert X helpers
-  for (i in seq_len(nrow(ST))) {
-    S = ST[i, ]
-    if (!is.na(S$slope)) {
-      # What is the start of this segment? Used to subtract so that slope is computed form segment start.
-      subract_cp = ifelse(i > 1, yes = paste0(" - ", S$cp_code_form, ""), no = "")
-      next_cp = ifelse(i < nrow(ST), yes = paste0(ST$cp_code_form[i + 1], ""), no = paste0("cp_", i))  # infinite if last segment.
+  if (sigma == FALSE) {
+    # Insert X helpers
+    for (i in seq_len(nrow(ST))) {
+      # S is this segment...
+      # and hack: if sigma == TRUE, piggyback on the code below, just build it for sigma..
+      S = ST[i, ]
+      if (sigma == TRUE) {
+        S$slope = S$sigma_slope
+        S$slope_code = S$sigma_code
+        S$int = S$sigma_int
+      }
 
-      formula_str = paste0(formula_str, "X_", i, "_[i_] = min(", par_x, "[i_], ", next_cp, ")", subract_cp, "\n")
+      if (!is.na(S$slope) | !is.na(S$sigma_slope)) {
+        # What is the start of this segment? Used to subtract so that slope is computed form segment start.
+        subract_cp = ifelse(i > 1, yes = paste0(" - ", S$cp_code_form, ""), no = "")
+        next_cp = ifelse(i < nrow(ST), yes = paste0(ST$cp_code_form[i + 1], ""), no = paste0("cp_", i))  # infinite if last segment.
+
+        formula_str = paste0(formula_str, "\nX_", i, "_[i_] = min(", par_x, "[i_], ", next_cp, ")", subract_cp)
+      }
     }
+
+    # Start formula string for the mean
+    formula_str = paste0(formula_str, "\n\n# Fitted value\ny_[i_] = \n")
+  } else if (sigma == TRUE) {
+    # Start formula string for sigma
+    formula_str = paste0(formula_str, "# Fitted standard deviation\nsigma_[i_] = \n")
   }
 
-  formula_str = paste0(formula_str, "\ny_[i_] = \n")
-
   for (i in seq_len(nrow(ST))) {
-    # Helper: Current segment.
+    # S is this segment...
+    # and hack: if sigma == TRUE, piggyback on the code below, just build it for sigma..
     S = ST[i, ]
+    if (sigma == TRUE) {
+      S$slope = S$sigma_slope
+      S$slope_code = S$sigma_code
+      S$int = S$sigma_int
+    }
 
-    # PAR_X will be replaced by the real name. FUTURE_REL will sometimes be
-    # replaced by a less-than indicator (ind_past).
+    # FUTURE_REL will sometimes be replaced by a less-than indicator (ind_past).
     # cp_code_form includes varying effects
-    ind_this = paste0("(", par_x, "[i_] >= ", S$cp_code_form, ") * FUTURE_REL")
+    ind_this = paste0("  (", par_x, "[i_] >= ", S$cp_code_form, ") * FUTURE_REL")
     ind_past = paste0("(", par_x, "[i_] < ", S$cp_code_form, ") * ")
 
     # Begin building formula
-    formula_str = paste0(formula_str, "\n# Segment ", i, ": ", S$form, "\n")
+    if (sigma == FALSE) {  # Verbose for mean formula. Not for sigma
+      formula_str = paste0(formula_str, "\n  # Segment ", i, ": ", S$form, "\n")
+    }
 
 
     # Add intercept
-    if (S$int == TRUE) {
+    if (!is.na(S$int)) {
       # For absolute intercepts, "remove" earlier stuff affecting the intercept
       # Multiply it with zero from this change point and on
-      if (S$int_rel == FALSE) {
+      if (S$int[[1]]$rel == FALSE) {
         formula_str = gsub("FUTURE_REL", ind_past, formula_str)
       }
 
       # Add intercept with indicator
-      formula_str = paste0(formula_str, ind_this, S$int_name, " + \n")
+      formula_str = paste0(formula_str, ind_this, S$int[[1]]$name, " + \n")
     }
 
     # Add slope
@@ -55,8 +78,10 @@ get_formula_str = function(ST, par_x) {
     }
 
     # If this is just a plateau (~ 0), i.e., the absence of intercept, slope, and varying effects
-    if (!S$int & is.na(S$slope) & !tibble::is_tibble(S$varying[[1]])) {
-      formula_str = paste0(formula_str, "0 + \n")
+    if (sigma == FALSE) {  # Verbose for mean formula. Not for sigma.
+      if (is.na(S$int) & is.na(S$slope) & !tibble::is_tibble(S$varying[[1]])) {
+        formula_str = paste0(formula_str, "  0 + \n")
+      }
     }
 
     # Finish up formula_str for the last segment
@@ -78,7 +103,6 @@ get_formula_str = function(ST, par_x) {
 #' @aliases get_func_y
 #' @inheritParams mcp
 #' @param formula_str string. Returned by \code{get_formula}.
-#' @param par_x string. Same as for \link{mcp}.
 #' @param par_trials String. For binomial models: name of trials column.
 #' @param pars_pop List of population parameters which the user must provide.
 #' @param pars_varying List varying parameters. They will default to zero
@@ -102,12 +126,11 @@ get_func_y = function(formula_str, par_x, par_trials = NA, pars_pop, pars_varyin
     x_and_trials, ", ",
     paste0(pars_pop, collapse = ", "), ", ",
     paste0(pars_varying, collapse = " = 0, "), ifelse(length(pars_varying) > 0, " = 0, ", ""),
-    "type = 'predict', rate = FALSE, ...) {
+    "type = 'predict', quantiles = FALSE, rate = FALSE, ...) {
     # Helpers to simplify making the code for this function
     cp_0 = -Inf
     cp_", nsegments, " = Inf
 
-    # Fitted value
     ", formula_func, "
 
 
@@ -119,8 +142,18 @@ get_func_y = function(formula_str, par_x, par_trials = NA, pars_pop, pars_varyin
   # Return depends on family
   if (family == "gaussian") {
     func_str = paste0(func_str, "
-    if (type == 'predict') return(rnorm(length(", par_x, "), y_, sigma))
-    if (type == 'fitted') return(y_)")
+    if (type == 'fitted') return(y_)
+    if (type == 'predict') {
+      if(quantiles == TRUE)
+        quantiles = c(0.025, 0.975)
+      if(is.numeric(quantiles)) {
+        return(qnorm(quantiles, y_, sigma_))
+      } else if (quantiles == FALSE) {
+        return(rnorm(length(", par_x, "), y_, sigma_))
+      } else {
+        stop('Invalid quantiles argument to func_y()')
+      }
+    }")
   } else if (family == "binomial") {
     func_str = paste0(func_str, "
     inverse_logit = function(x) exp(x) / (1 + exp(x))

@@ -7,6 +7,7 @@
 #' @aliases criterion
 #' @param fit An mcpfit object.
 #' @param criterion One of `"loo"` (calls \code{\link[loo]{loo}}) or `"waic"` (calls \code{\link[loo]{waic}}).
+#' @param ... Further arguments passed to \code{\link[loo]{loo}}, e.g., `cores` or `save_psis`.
 #' @return a `loo` or `psis_loo` object.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
@@ -25,7 +26,7 @@
 #' loo::loo_model_weights(list(fit1$loo, fit2$loo))
 #'}
 
-criterion = function(fit, criterion = "loo") {
+criterion = function(fit, criterion = "loo", ...) {
   if (!class(fit) == "mcpfit") {
     stop("class(fit) must be 'mcpfit'")
   }
@@ -43,7 +44,7 @@ criterion = function(fit, criterion = "loo") {
     r_eff = loo::relative_eff(exp(loglik), chain_id)  # Likelihood = exp(log-likelihood)
 
     # Add LOO
-    return(loo::loo(loglik, r_eff = r_eff))
+    return(loo::loo(loglik, r_eff = r_eff, ...))
   }
 
   # Add WAIC
@@ -57,13 +58,12 @@ criterion = function(fit, criterion = "loo") {
 #' @aliases loo LOO loo.mcpfit
 #' @describeIn criterion Computes loo on mcpfit objects
 #' @param x `mcpfit` object.
-#' @param ... Currently ignored
 #' @seealso \link{criterion}
 #' @importFrom loo loo
 #' @export loo
 #' @export
 loo.mcpfit = function(x, ...) {
-  criterion(x, "loo")
+  criterion(x, "loo", ...)
 }
 
 #' @aliases waic WAIC waic.mcpfit
@@ -83,9 +83,8 @@ waic.mcpfit = function(x, ...) {
 #'
 #' This function is highly inspired by \code{\link[brms]{hypothesis}}. It returns
 #' posterior probabilities and Bayes Factors for flexible hypotheses involving
-#' model parameters. See the parameter `hypotheses`` for examples of how to
-#' specify hypotheses.
-#'
+#' model parameters. See the documentation below for the parameter `hypotheses`
+#' for examples of how to specify hypotheses, and [read worked examples on the mcp website](https://lindeloev.github.io/mcp/articles/comparison.html).
 #' For directional hypotheses, `hypothesis`` executes the hypothesis string in
 #' a `tidybayes`` environment and summerises the proportion of samples where
 #' the expression evaluates to TRUE. For equals-hypothesis, a Savage-Dickey

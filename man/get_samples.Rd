@@ -4,7 +4,7 @@
 \alias{get_samples}
 \title{Internal function to get samples.}
 \usage{
-get_samples(fit, message = TRUE, error = TRUE)
+get_samples(fit, prior = FALSE, message = TRUE, error = TRUE)
 }
 \arguments{
 \item{fit}{An mcpfit object}

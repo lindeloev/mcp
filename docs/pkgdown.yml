@@ -9,6 +9,7 @@ articles:
   packages: packages.html
   poisson: poisson.html
   priors: priors.html
+  variance: variance.html
   varying: varying.html
 urls:
   reference: https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference

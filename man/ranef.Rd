@@ -6,13 +6,15 @@
 \alias{random.effects}
 \title{Get varying ("random") effects of mcpfit.}
 \usage{
-ranef(object, width = 0.95, ...)
+ranef(object, width = 0.95, prior = FALSE, ...)
 }
 \arguments{
 \item{object}{An \code{mcpfit} object returned by \code{\link{mcp}}.}
 
 \item{width}{Float. The width of the highest posterior density interval
 (between 0 and 1).}
+
+\item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
 
 \item{...}{Currently ignored}
 }

@@ -24,7 +24,7 @@ In other words, on "easy" trials with $N <= capacity$ items to be recalled, we e
 ```{r}
 segments = list(
   recalled | trials(items) ~ 1,
-  1 ~ 0 + items
+  ~ 0 + items
 )
 prior = list(
   int_1 = "dnorm(2, 1)",  # high recall for easy trials
