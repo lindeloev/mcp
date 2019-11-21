@@ -282,7 +282,7 @@ plot(fit)
 
 
 
-## Variance and prediction intervals
+## Variance change and prediction intervals
 You can model variance by adding a `sigma()` term to the formula. The inside `sigma()` can take everything that the formulas outside do. Read more in [the article on variance](https://lindeloev.github.io/mcp/articles/variance.html). The example below models two change points. The first is variance-only: variance abruptly increases and then declines linearly with `x`. The second change point is the stop of the variance-decline and the onset of a slope on the mean.
 
 Effects on variance is best visualized using *prediction intervals*. See more in the documentation for `plot.mcpfit`.
@@ -294,7 +294,7 @@ segments = list(
   ~ 0 + x
 )
 fit = mcp(segments, ex_variance, cores = 3, adapt = 5000, updaet = 5000, iter = 5000)
-plot(fit, quantiles = TRUE, predict = "predict", lines = 0)
+plot(fit, quantiles = TRUE, quantiles_type = "predict")
 ```
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_variance.png)

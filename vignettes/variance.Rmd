@@ -39,12 +39,13 @@ data = tibble::tibble(
 Now we fit the model to the simulated data.
 
 ```{r, cache = TRUE, results=FALSE}
-fit = mcp(segments, data, par_x = "x")
+#fit = mcp(segments, data, par_x = "x")
+fit = mcp(segments, data, par_x = "x", cores =3)
 ```
 We plot the results with the prediction interval to show the effect of the variance, since it won't be immediately obvious on the default plot of the fitted mean predictions:
 
 ```{r}
-plot(fit, quantiles = TRUE, predict = "predict", lines = 0)
+plot(fit, quantiles = TRUE, quantiles_type = "predict")
 ```
 
 
@@ -119,7 +120,7 @@ fit = mcp(segments, data, prior, cores = 3)
 Plotting the prediction interval is the easiest way to to see how the variance is estimated:
 
 ```{r}
-plot(fit, quantiles = c(0.025, 0.5, 0.075), predict = "predict", lines = 0)
+plot(fit, quantiles = c(0.025, 0.5, 0.075), quantiles_type = "predict")
 ```
 
 The parameters are well recovered. The last change point is estimated with greater uncertainty than the others. This is expected, given that the only "signal" of this change point is a stop in variance growth.
@@ -173,7 +174,7 @@ fit = mcp(segments, data, cores = 3)
 
 Plot it with prediction intervals:
 ```{r}
-plot(fit, facet_by = "id", quantiles = c(0.025, 0.5, 0.975), lines = 0, predict = "predict")
+plot(fit, facet_by = "id", quantiles = c(0.025, 0.5, 0.975), quantiles_type = "predict")
 ```
 
 

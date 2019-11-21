@@ -141,7 +141,7 @@ segments_variance = list(
 )
 
 fit_variance = mcp(segments_variance, ex_variance, cores = 3, adapt = 5000, update = 5000, iter = 5000)
-theme_it(plot(fit_variance, quantiles = TRUE, predict = "predict", lines = 0), "Variance and prediction intervals")
+theme_it(plot(fit_variance, quantiles = TRUE, quantiles_type = "predict"), "Variance and prediction intervals")
 save_it("ex_variance.png")
 
 
