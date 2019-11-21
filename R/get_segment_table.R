@@ -165,7 +165,7 @@ unpack_cp = function(form_cp, i) {
 
 
 
-unpack_rhs = function(form_rhs, i, data, last_segment) {
+unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   form_rhs = formula(form_rhs)
   population = attributes(stats::terms(nobars(form_rhs)))
 
@@ -232,7 +232,6 @@ unpack_rhs = function(form_rhs, i, data, last_segment) {
         sigma_terms,
         FUN = unpack_slope_term,
         i = i,
-        data = data,
         last_slope = last_segment$sigma_slope,
         prefix = "sigma_") %>%
         dplyr::bind_rows()  # Make it a proper table-like tibble
@@ -244,19 +243,18 @@ unpack_rhs = function(form_rhs, i, data, last_segment) {
     }
   }
 
-  # The known unknown :-)
-  if(!exists("sigma_int")) {
-    # Sigma was not detected in form_rhs. But it is implicitly started in segment 1.
-    if (i == 1) {
-      sigma_int = tibble::tibble(
-        name = "sigma_1",
-        code = "sigma_1",
-        rel = FALSE
-      )
-    } else {
-      sigma_int = NA
-    }
+  # Sigma was not detected in form_rhs. But it is implicitly started in segment 1.
+  if(i == 1 & family == "gaussian") {
+    sigma_int = tibble::tibble(
+      name = "sigma_1",
+      code = "sigma_1",
+      rel = FALSE
+    )
   }
+
+  # The known unknown :-)
+  if(!exists("sigma_int"))
+    sigma_int = NA
   if(!exists("sigma_slope"))
     sigma_slope = NA
   if(!exists("sigma_code"))
@@ -273,7 +271,6 @@ unpack_rhs = function(form_rhs, i, data, last_segment) {
       population$term.labels,
       FUN = unpack_slope_term,
       i = i,
-      data = data,
       last_slope = last_segment$slope) %>%
       dplyr::bind_rows()  # Make it a proper table-like tibble
 
@@ -293,7 +290,9 @@ unpack_rhs = function(form_rhs, i, data, last_segment) {
   }
 
 
-  # Extract par_x from regular and sigma() slopes and check it
+  #################
+  # EXTRACT PAR_X #
+  #################
   par_x = na.omit(unique(c(
     ifelse(!is.na(slope), slope$par_x, NA),
     ifelse(!is.na(sigma_slope), sigma_slope$par_x, NA)
@@ -334,7 +333,7 @@ unpack_rhs = function(form_rhs, i, data, last_segment) {
 }
 
 
-unpack_slope_term = function(term, i, data, last_slope, prefix = "") {
+unpack_slope_term = function(term, i, last_slope, prefix = "") {
   # Remove the "rel()" and "I()" in that order.
   if (stringr::str_starts(term, "rel\\(")) {
     term = gsub("^rel\\(|\\)$", "", term)
@@ -367,13 +366,6 @@ unpack_slope_term = function(term, i, data, last_slope, prefix = "") {
 
   # Find par_x by removing everything associated with accepted functions
   par_x = gsub(paste0(c(funcs_regex, exponent_regex, end_regex), collapse = "|"), "", term)
-
-  # Quick check: is par_x in data?
-  if (!is.null(data)) {
-    if (!par_x %in% colnames(data)) {
-      stop("mcp inferred the variable '", par_x, "' from the term '", term, "' but did not find this column in the data. Perhaps mcp does not support this kind of term (currently).")
-    }
-  }
 
   # Give exponents a valid variable name
   rel_x_code = paste0("X_", i, "_[i_]")  # x relative to segment start. Must match that inserted in get_formula()
@@ -478,9 +470,9 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
     # Go! Unpack this segment
     row = tibble::tibble(segment = i)
     row = dplyr::bind_cols(row, unpack_tildes(segment, i))
-    row = dplyr::bind_cols(row, unpack_y(row$form_y, i, family = family))
+    row = dplyr::bind_cols(row, unpack_y(row$form_y, i, family))
     row = dplyr::bind_cols(row, unpack_cp(row$form_cp, i))
-    row = dplyr::bind_cols(row, unpack_rhs(row$form_rhs, i, data, ST[i-1,]))
+    row = dplyr::bind_cols(row, unpack_rhs(row$form_rhs, i, family, data, ST[i-1,]))
 
     ST = dplyr::bind_rows(ST, row)
   }

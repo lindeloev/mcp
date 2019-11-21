@@ -60,16 +60,17 @@ We can model changes in `sigma` alone or in combination with changes in the mean
 
 ```{r}
 segments = list(
-  # Increasing variance,
+  # Increasing variance.
   y ~ 1 + sigma(1 + x),
   
-  # Abrupt change in mean and variance (relative to last segment)
+  # Abrupt change in mean and variance.
   ~ 1 + sigma(1),
   
-  # Joined slope on mean. variance changes quadratically
+  # Joined slope on mean. variance changes as 2nd order poly.
   ~ 0 + x + sigma(0 + x + I(x^2)),
   
-  ~ 0 + x  # Continue slope, but plateau variance
+  # Continue slope on mean, but plateau variance (no sigma() tern).
+  ~ 0 + x
 )
 
 # The slope in segment 4 is just a continuation of 
@@ -81,14 +82,15 @@ prior = list(
 
 Notice a few things here:
 
- * I changed the variance on a mean-slope. You can do this using priors to define that the slope is shared between segment 3 and 4, effectively cancelling the change point on the mean (more about using priors in mcp [here](../articles/priors.html)). 
- * By not specifying `sigma()`, segment 4 (and later segments) just inherits the variance from the state it was left in in the previous segment. 
- * There is an exponential growth of variance in segment 3, and at the change point to segment 4, this just stops and plateaus for the remainder of segment 4. If we had specified a different variance in segment 4, this would, of course, override it, just like specifying an intercept on the mean would.
+ * Segment 3 and 4: I changed the variance on a continuous slope. You can do this using priors to define that the slope is shared between segment 3 and 4, effectively cancelling the change point on the mean (more about using priors in mcp [here](../articles/priors.html)).
+ * Segment 4: By not specifying `sigma()`, segment 4 (and later segments) just inherits the variance from the state it was left in in the previous segment. 
 
 In general, the variance parameters are named `sigma_[normalname]`, where "normalname" is the usual parameter names in mcp (see more [here](../articles/formulas.html)). For example, the variance slope on `x` in segment 3 is `sigma_x_3`. However, `sigma_int_i` is just too verbose, so variance intercepts are simply called `sigma_i`, where i is the segment number.
 
+
+
 ## Simulate data
-We simulate some data, setting all parameters:
+We simulate some data from this model, setting all parameters. As always, we can fit an empty model to get `fit$func_y`, which is useful for simulation and predictions from this model.
 
 ```{r}
 empty = mcp(segments, sample = FALSE)
@@ -114,22 +116,69 @@ Fit it in parallel, to speed things up:
 fit = mcp(segments, data, prior, cores = 3)
 ```
 
-Again, it is easiest to see the effect of variance changes by plotting the prediction intervals:
+Plotting the prediction interval is the easiest way to to see how the variance is estimated:
 
 ```{r}
-plot(fit, quantiles = TRUE, predict = "predict", lines = 0)
+plot(fit, quantiles = c(0.025, 0.5, 0.075), predict = "predict", lines = 0)
 ```
 
-The parameters are well recovered. There is some uncertainty about the last change point, but this is expected, given that the only "sigmal" that a change happened is that variance stopped growing.
+The parameters are well recovered. The last change point is estimated with greater uncertainty than the others. This is expected, given that the only "signal" of this change point is a stop in variance growth.
 
 ```{r}
 summary(fit)
 ```
 
-The effective sample size (`n.eff`) is fairly low for some of the parameters. Let us take a look at the posteriors and trace plots for a more intuitive inspection whether there is a convergence problem. For now, we just look at the sigmas:
+The effective sample size (`n.eff`) is fairly low, indicating poor mixing for these parameters. `Rhat` is acceptable at < 1.1, indicating good convergence between chains. Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:
 
 ```{r, fig.height=7, fig.width = 6}
 plot(fit, "combo", regex_pars = "sigma_")
 ```
 
-This confirms that sampling is ineffective (low `n.eff` = poor mixing) but that convergence is good (`Rhat` < 1.1). Setting `mcp(..., iter = 10000)` would be advisable to increase the effective sample size. Read more about [tips, tricks, and debugging](../articles/debug.html).
+This confirms the impression from `Rhat` and `n.eff`. Setting `mcp(..., iter = 10000)` would be advisable to increase the effective sample size. Read more about [tips, tricks, and debugging](../articles/debug.html).
+
+
+
+
+# Varying change points and variance
+The variance model applies to varying change points as well. For example, here we do a spin on the example in [the article on varying change points](../articles/varying.html), and add a by-person change in `sigma`. We model two joined slopes, varying by `id`. The second slope is also characterized by a different variance. This means that the model has more information about when the change point occurs, so it should be easier to estimate (require fewer data).
+
+```{r}
+segments = list(
+  # intercept + slope
+  y ~ 1 + x,
+  
+  # joined slope and increase in variance, varying by id.
+  1 + (1|id) ~ 0 + x + sigma(1)
+)
+```
+
+Simulate data:
+```{r}
+empty = mcp(segments, sample = FALSE)
+set.seed(40)
+data = tibble::tibble(
+    x = 1:180,
+    id = rep(1:6, times = 30),
+    y = empty$func_y(x, 
+          cp_1 = 70, cp_1_id = 15 * (id - mean(id)),
+          int_1 = 20, x_1 = 1, x_2 = -0.5,
+          sigma_1 = 10, sigma_2 = 25)
+)
+```
+
+Fit it:
+```{r, cache = TRUE, results=FALSE}
+fit = mcp(segments, data, cores = 3)
+```
+
+Plot it with prediction intervals:
+```{r}
+plot(fit, facet_by = "id", quantiles = c(0.025, 0.5, 0.975), lines = 0, predict = "predict")
+```
+
+
+As usual, we can get the individual change points:
+```{r}
+ranef(fit)
+```
+
