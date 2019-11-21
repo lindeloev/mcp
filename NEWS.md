@@ -2,6 +2,7 @@
 
  * Quadratic and other terms using `I(x^2)`, `I(x^3.24)`, `sin(x)`, `sqrt(x)`, etc.
  * Model variance for family = gaussian() using ~ sigma([formula here])
+ * Plot prediction intervals.
 
 # mcp 0.1.0
 First public release.
