@@ -5,7 +5,7 @@
 \title{Plot posterior draws of segments on top of data}
 \usage{
 plot_segments(fit, facet_by = NULL, rate = TRUE, lines = 25,
-  quantiles = FALSE, ...)
+  quantiles = FALSE, quantiles_type = "fitted", prior = FALSE, ...)
 }
 \arguments{
 \item{fit}{An mcpfit object.}
@@ -20,7 +20,8 @@ interpolation on trial number is used to infer trials at a particular x.
 
 \item{lines}{Positive integer or \code{FALSE}. Number of lines (posterior
 draws) to use when \code{type = "segments"}. FALSE (or \code{lines = 0})
-plots no lines.}
+plots no lines. Note that lines always plot fitted values. For prediction
+intervals, see \code{quantiles_type} argument.}
 
 \item{quantiles}{Whether to plot quantiles.
 \itemize{
@@ -31,6 +32,10 @@ plots no lines.}
 plots the median and \code{quantiles = c(0.2, 0.8)} plots the 20% and 80%
 quantiles.
 }}
+
+\item{quantiles_type}{One of 'fitted' or 'predict. Only applies if \code{quantile = TRUE}.}
+
+\item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
 
 \item{...}{Currently ignored.}
 }

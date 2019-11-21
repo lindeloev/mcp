@@ -10,7 +10,7 @@
 \alias{WAIC}
 \title{Compute information criteria for model comparison}
 \usage{
-criterion(fit, criterion = "loo")
+criterion(fit, criterion = "loo", ...)
 
 \method{loo}{mcpfit}(x, ...)
 
@@ -21,9 +21,9 @@ criterion(fit, criterion = "loo")
 
 \item{criterion}{One of \code{"loo"} (calls \code{\link[loo]{loo}}) or \code{"waic"} (calls \code{\link[loo]{waic}}).}
 
-\item{x}{\code{mcpfit} object.}
+\item{...}{Further arguments passed to \code{\link[loo]{loo}}, e.g., \code{cores} or \code{save_psis}.}
 
-\item{...}{Currently ignored}
+\item{x}{\code{mcpfit} object.}
 
 \item{x}{\code{mcpfit} object.}
 

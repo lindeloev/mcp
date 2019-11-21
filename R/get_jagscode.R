@@ -63,21 +63,18 @@ model {
   mm = paste0(mm, "
 
   # Model and likelihood
-  for (i_ in 1:length(", ST$x[1], ")) {
-
-    # Fitted value
-    ")
+  for (i_ in 1:length(", ST$x[1], ")) {")
 
   # Add JAGS code for fitted values and indent it
-  mm = paste0(mm, gsub("\n", "\n      ", formula_jags))
+  mm = paste0(mm, gsub("\n", "\n    ", formula_jags))
 
   # Finally the likelihood
   mm = paste0(mm, "\n\n    # Likelihood and log-density for family = ", family, "()
     ", ST$y[1], "[i_] ~ ")
 
   if (family == "gaussian") {
-    mm = paste0(mm, "dnorm(y_[i_], 1 / sigma^2)
-    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], y_[i_], 1 / sigma^2)")
+    mm = paste0(mm, "dnorm(y_[i_], 1 / sigma_[i_]^2)
+    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], y_[i_], 1 / sigma_[i_]^2)")
 
   } else if (family == "binomial") {
     # ilogit = inverse logit

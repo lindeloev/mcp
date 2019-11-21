@@ -1,18 +1,19 @@
-# mcp: Bayesian Inference of Multiple Change Points
+# mcp: Multiple Change Point regression
 
-[![Travis-CI status](https://img.shields.io/travis/lindeloev/mcp.svg)](https://travis-ci.org/lindeloev/mcp)
+[![Travis-CI status](https://travis-ci.org/lindeloev/mcp.svg?branch=master)](https://travis-ci.org/lindeloev/mcp)
 [![Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/r/lindeloev/mcp)
 
 
-Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generalized Linear Segments - and the coefficients in those segments. 
+Infer multiple Change Points (MCP) between Generalized Linear Segments using Bayesian hierarchical regression. 
 
-Change points are also sometimes called **switch points**, **break points**, **broken-line** models, **bilinear** models, (performance) **discontinuity** models, **piecewise linear regression**, and **local linear regression**. `mcp` aims to be be useful for all of them. See how `mcp` compares to [other packages](https://lindeloev.github.io/mcp/articles/packages.html).
+Change points are also sometimes called **switch points**, **break points**, **broken line** regression, **broken stick** regression, **bilinear** regression, **piecewise linear regression**, **local linear regression**, **segmented regression**, and (performance) **discontinuity** models. `mcp` aims to be be useful for all of them. See how `mcp` compares to [other packages](https://lindeloev.github.io/mcp/articles/packages.html).
 
 Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. `mcp` leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
 
+
 # Install
 
- 1. [Install the latest version of JAGS](https://sourceforge.net/projects/mcmc-jags/). Linux users can fetch binaries [here](http://mcmc-jags.sourceforge.net/).
+ 1. <a href="https://sourceforge.net/projects/mcmc-jags/" target="_blank">Install the latest version of JAGS</a>. Linux users can fetch binaries <a href="http://mcmc-jags.sourceforge.net/" target="_blank">here</a>.
  
  2. Install `mcp` by running this in R:
  
@@ -24,7 +25,7 @@ Under the hood, `mcp` takes a formula-representation of linear segments and turn
 
 
 # Brief example
-`mcp` takes a list of formulas for `y` as a function of `x`. The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the following formulas typically take the form `changepoint ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
+`mcp` takes a list of formulas for `y` as a function of `x`. The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the most common use case for the following formulas is ` ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
 ## Fit a model
 The following model infers the two change points between three segments.
@@ -35,8 +36,8 @@ library(mcp)
 # Define the model
 segments = list(
   response ~ 1,  # plateau (int_1)
-  1 ~ 0 + time,  # joined slope (time_2) at cp_1
-  1 ~ 1 + time  # disjoined slope (int_1, time_2) at cp_2
+  ~ 0 + time,  # joined slope (time_2) at cp_1
+  ~ 1 + time  # disjoined slope (int_3, time_3) at cp_2
 )
 
 # Fit it. The `ex_demo` dataset is included in mcp
@@ -65,14 +66,14 @@ Segments:
   3: response ~ 1 ~ 1 + time
 
 Population-level parameters:
-   name   mean  lower   upper rhat  eff   ts_se
-   cp_1 30.510 22.832 38.6869 1.01  366 378.575
-   cp_2 69.776 69.273 70.2350 1.00 5868   0.131
-  int_1 10.279  8.839 11.6956 1.00  952   4.274
-  int_3  0.576 -2.454  3.6310 1.00  711  31.702
-  sigma  4.008  3.464  4.6100 1.00 4495   0.168
- time_2  0.536  0.403  0.6702 1.01  421   0.106
- time_3 -0.223 -0.403 -0.0494 1.00  725   0.105
+    name   mean  lower   upper Rhat n.eff    ts_se
+    cp_1 31.167 23.620 39.7257 1.01   342 407.6290
+    cp_2 69.772 69.305 70.2656 1.00  5801   0.1389
+   int_1 10.333  8.895 11.6919 1.00  1063   3.8640
+   int_3  0.534 -2.499  3.5264 1.01   735  31.7620
+ sigma_1  4.013  3.441  4.6238 1.00  4655   0.1849
+  time_2  0.547  0.407  0.6961 1.01   366   0.1369
+  time_3 -0.220 -0.393 -0.0443 1.01   740   0.0992
 ```
 
 `rhat` is the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag), `eff` is the [effective sample size](https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html), and `ts_se` is the time-series standard error.
@@ -98,13 +99,13 @@ hypothesis(fit, "cp_1 > 25")
 ```
 
 
-For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation ([see more here]https://lindeloev.github.io/mcp/articles/comparison.html)). Our null model omits the first plateau and change point, essentially testing the credence of that change point:
+For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation ([see more here](https://lindeloev.github.io/mcp/articles/comparison.html)). Our null model omits the first plateau and change point, essentially testing the credence of that change point:
 
 ```r
 # Define the model
 segments_null = list(
   response ~ 1 + time,  # intercept (int_1) and slope (time_1)
-  1 ~ 1 + time  # disjoined slope (int_2, time_1)
+  ~ 1 + time  # disjoined slope (int_2, time_1)
 )
 
 # Fit it
@@ -136,7 +137,7 @@ The articles in the web site's menu go in-depth with the functionality of `mcp`.
  * Use `rel()` to specify that parameters are relative to those in the previous  segments.
  * Generate data using `fit$func_y`.
 
-[Using priors in mcp](https://lindeloev.github.io/mcp/articles/priors.html) include:
+[Using priors in mcp](https://lindeloev.github.io/mcp/articles/priors.html):
  * See priors in `fit$prior`.
  * Set priors using `mcp(segments, data, prior = list(cp_1 = "dnorm(0, 1)", cp_1 = "dunif(0, 45))`.
  * Fix parameters to specific values using `cp_1 = 45`.
@@ -144,7 +145,7 @@ The articles in the web site's menu go in-depth with the functionality of `mcp`.
  * Allows for truncated priors using `T(lower, upper)`, e.g., `int_1 = "dnorm(0, 1) T(0, )"`. `mcp` applies this automatically to change point priors to enforce order restriction. This is true for [varying change points](https://lindeloev.github.io/mcp/articles/varying.html) too.
  * Do prior predictive checks using `mcp(segments, data, sample="prior")`.
 
-[Varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html) include:
+[Varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html):
  * Simulate varying change points using `fit$func_y()`.
  * Get posteriors using `ranef(fit)`.
  * Plot using `plot(fit, facet_by="my_group")` and `plot(fit, "dens_overlay", pars = "varying", ncol = 3)`.
@@ -160,7 +161,12 @@ The articles in the web site's menu go in-depth with the functionality of `mcp`.
  * Do Leave-One-Out Cross-Validation using `loo(fit)` and `loo::loo_compare(fit1$loo, fit2$loo)`.
  * Compute Savage-Dickey density rations using `hypothesis(fit, "cp_1 = 40")`.
  * Leverage directional and conditional tests to assess interval hypotheses (`hypothesis(fit, "cp_1 > 30 & cp_1 < 50")`), combined hypotheses (`hypothesis(fit, "cp_1 > 30 & int_1 > int_2")`), etc.
- 
+
+[Modeling variance in mcp](https://lindeloev.github.io/mcp/articles/variance.html):
+ * `~ sigma(1)` models an intercept change in variance. `~ sigma(0 + x)` models increasing/decreasing variance.
+ * You can model anything for `sigma()`. For example, `~ x + sigma(1 + x + I(x^2))` models polynomial variance on top of a slope.
+ * Variance applies to varying change points too.
+
 [Tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/debug.html)
  * Speed up fitting using `mcp(..., cores = 3)` / `options(mcp_cores = 3)`, and/or `mcp(..., adapt = 500, update = 500)`.
  * Help convergence along using `mcp(..., inits = list(cp_1 = 20, int_2 = -3))`.
@@ -178,7 +184,7 @@ Find the single change point between two plateaus ([see how this data was genera
 ```r
 segments = list(
     y ~ 1,  # plateau (int_1)
-    1 ~ 1  # plateau (int_2)
+    ~ 1  # plateau (int_2)
 )
 fit = mcp(segments, ex_plateaus, par_x = "x")
 plot(fit)
@@ -228,8 +234,8 @@ Here is a binomial change point model with three segments. We plot the 95% HDI t
 ```r
 segments = list(
   y | trials(N) ~ 1,  # constant rate
-  1 ~ 0 + x,  # joined changing rate
-  1 ~ 1 + x  # disjoined changing rate
+  ~ 0 + x,  # joined changing rate
+  ~ 1 + x  # disjoined changing rate
 )
 fit = mcp(segments, ex_binomial, family = binomial())
 plot(fit, quantiles = TRUE)
@@ -238,6 +244,63 @@ plot(fit, quantiles = TRUE)
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_binomial.png)
 
 Use `plot(fit, rate = FALSE)` if you want the points and fit lines on the original scale of `y` rather than divided by `N`.
+
+
+
+
+## Quadratic and other exponentiations
+Write exponents as `I(x^N)`. E.g., quadratic `I(x^2)`, cubic `I(x^3)`, or some other power function `I(x^1.5)`. The example below detects the onset of linear + quadratic growth. This is often called the BLQ model (Broken Line Quadratic) in nuitrition research.
+
+```r
+segments = list(
+  y ~ 1,
+  ~ 0 + x + I(x^2)
+)
+fit = mcp(segments, ex_quadratic)
+plot(fit)
+```
+
+![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_quadratic.png)
+
+
+
+
+## Trigonometric and others
+You can use `sin(x)`, `cos(x)`, and `tan(x)` to do trigonometry. This can be useful for seasonal trends and other periodic data. You can also do `exp(x)`, `abs(x)`, `log(x)`, and `sqrt(x)`, but beware that the two latter will currently fail in segment 2+. Raise an issue if you need this.
+
+```r
+segments = list(
+  y ~ 1 + sin(x),
+  ~ 0 + cos(x) + x
+)
+
+fit = mcp(segments, ex_trig)
+plot(fit)
+```
+
+![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_trig.png)
+
+
+
+## Variance change and prediction intervals
+You can model variance by adding a `sigma()` term to the formula. The inside `sigma()` can take everything that the formulas outside do. Read more in [the article on variance](https://lindeloev.github.io/mcp/articles/variance.html). The example below models two change points. The first is variance-only: variance abruptly increases and then declines linearly with `x`. The second change point is the stop of the variance-decline and the onset of a slope on the mean.
+
+Effects on variance is best visualized using *prediction intervals*. See more in the documentation for `plot.mcpfit`.
+
+```r
+segments = list(
+  y ~ 1,
+  ~ 0 + sigma(1 + x),
+  ~ 0 + x
+)
+fit = mcp(segments, ex_variance, cores = 3, adapt = 5000, updaet = 5000, iter = 5000)
+plot(fit, quantiles = TRUE, quantiles_type = "predict")
+```
+
+![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_variance.png)
+
+
+
 
 
 ## Using `rel()` and priors
@@ -250,7 +313,7 @@ Some of the default priors are overwritten. The first intercept (`int_1`) is for
 ```r
 segments = list(
   y ~ 1 + x,
-  1 ~ rel(1) + rel(x),
+  ~ rel(1) + rel(x),
   rel(1) ~ 0 + x
 )
 
@@ -266,7 +329,7 @@ plot(fit)
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_fix_rel.png)
 
-Looking at the summary, we can see that `int_2` and `x_2` are relative values:
+Comparing the summary to the fitted lines in the plot, we can see that `int_2` and `x_2` are relative values:
 ```r
 summary(fit)
 ```
@@ -280,49 +343,17 @@ Segments:
   3: y ~ rel(1) ~ 0 + x
 
 Population-level parameters:
-  name  mean lower upper rhat  eff    ts_se
-  cp_1 22.46 20.00 26.59 1.21   21 1.68e+03
-  cp_2 46.55 41.60 49.80 1.21   29 1.22e+03
- int_1 10.00 10.00 10.00  NaN    0 0.00e+00
- int_2  6.42 -8.84 18.37 1.13   36 1.10e+04
- sigma  7.09  6.15  8.14 1.00 2943 8.49e-01
-   x_1  1.85  1.66  2.04 1.03   57 1.37e+00
-   x_2 -3.94 -4.17 -3.70 1.01  117 1.16e+00
-   x_3  1.85  1.66  2.04 1.03   57 1.37e+00
+    name  mean  lower upper Rhat n.eff    ts_se
+    cp_1 25.65  22.66 30.71 1.05    64   566.79
+    cp_2 48.68  42.77 54.13 1.01   158   435.56
+   int_1 10.00  10.00 10.00  NaN     0     0.00
+   int_2  9.05 -14.75 25.64 1.08    52 17563.26
+ sigma_1 11.01   9.52 12.69 1.00  2620     1.83
+     x_1  1.56   1.22  1.88 1.11    49     4.60
+     x_2 -3.29  -3.67 -2.90 1.10   118     2.43
+     x_3  1.56   1.22  1.88 1.11    49     4.60
 ```
 
-(rhat cannot be estimated when the model contains constant coefficients in `mcp 0.1`. This will be fixed.)
-
-
-## Quadratic
-Write exponents as `I(x^N)`. E.g., quadratic `I(x^2)`, cubic `I(x^3)`, or something else `I(x^1.5)`. The example below detects the onset of linear + quadratic growth. This is often called the BLQ model (Broken Line Quadratic) in nuitrition research.
-
-```r
-segments = list(
-  y ~ 1,
-  1 ~ 0 + x + I(x^2)
-)
-fit = mcp(segments, ex_quadratic)
-plot(fit)
-```
-
-![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_quadratic.png)
-
-
-## Trigonometric and other 
-You can use `sin(x)`, `cos(x)`, and `tan(x)` to do trigonometry. You can also do `exp(x)`, `abs(x)`, `log(x)`, and `sqrt(x)`, but beware that the two latter will fail in segment 2+ because from the "perspective" of that segment, earlier `x` values are negative.
-
-```r
-segments = list(
-  y ~ 1 + sin(x),
-  1 ~ 0 + cos(x) + x
-)
-
-fit = mcp(segments, ex_trig)
-plot(fit)
-```
-
-![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_trig.png)
 
 
 

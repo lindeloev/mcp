@@ -4,7 +4,7 @@ author: "Jonas Kristoffer Lindeløv"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Binomial change point analysis with mcp}
+  %\VignetteIndexEntry{Diagnosing and fixing problems in mcp}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

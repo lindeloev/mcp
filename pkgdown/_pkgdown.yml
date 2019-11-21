@@ -36,11 +36,9 @@ reference:
       - sd_to_prec
 
 navbar:
-  components:
-    articles:
-      text: Learn more
+  left: 
+    - text: General usage
       menu:
-      - text: General usage
       - text: Formulas
         href: articles/formulas.html
       - text: Priors
@@ -49,18 +47,23 @@ navbar:
         href: articles/comparison.html
       - text: Random/varying effects
         href: articles/varying.html
-      - text: ----------
-      - text: GLM
+      - text: Modeling variance
+        href: articles/variance.html
+    - text: GLM
+      menu:
       - text: Poisson
         href: articles/poisson.html
       - text: Binomial and Bernoulli
         href: articles/binomial.html
-      - text: ----------
-      - text: Other
+    - text: Other
+      menu:
       - text: Comparison to other packages
         href: articles/packages.html
       - text: Tips, tricks, and debugging
         href: articles/debug.html
-    twitter:
-     icon: "fab fa-twitter fa-lg"
-     href: https://twitter.com/jonaslindeloev
+    - text: News
+      href: news/index.html
+    - icon: fa-twitter
+      href: https://twitter.com/jonaslindeloev
+    - icon: fa-github
+      href: https://github.com/lindeloev/mcp

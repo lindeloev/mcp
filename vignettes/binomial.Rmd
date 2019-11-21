@@ -16,8 +16,8 @@ First, let us specify a toy model with three segments:
 ```{r}
 segments = list(
   y | trials(N) ~ 1,  # constant rate
-  1 ~ 0 + year,  # joined changing rate
-  1 ~ 1 + year  # disjoined changing rate
+  ~ 0 + year,  # joined changing rate
+  ~ 1 + year  # disjoined changing rate
 )
 ```
 

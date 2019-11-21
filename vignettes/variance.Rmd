@@ -1,0 +1,185 @@
+---
+title: "Modeling variance and variance changes in mcp"
+author: "Jonas Kristoffer Lindeløv"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Modeling variance and variance changes in mcp}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+For GLM families with a variance parameter (`sigma`), you can model this explicitly. For example, if you want a flat mean (a plateau) with increasing variance, you can do `y ~ 1 + sigma(1 + x)`. In general, all formula syntax that is allowed outside of `sigma()` (where it applies to the mean) also works inside it (applying to the variance). For example, if you go all-out, you can do `~ 1 + sigma(rel(1) + sin(x) + I(x^2))`. Read more about mcp formulas [here](../articles/formulas.html). 
+
+
+# Simple example: a change in variance
+Let us model a simple change in variance on a plateau model. First, we specify the model:
+
+```{r}
+segments = list(
+  y ~ 1,  # sigma(1) is implicit in the first segment
+  ~ 0 + sigma(1)  # a new intercept on sigma, but not on the mean
+)
+```
+
+We can simulate some data, starting with low variance and an abrupt change to a high variance at $x = 50$:
+
+```{r}
+library(mcp)
+empty = mcp(segments, sample = FALSE, par_x = "x")
+set.seed(40)
+data = tibble::tibble(
+  x = 1:100,
+  y = empty$func_y(x, cp_1 = 50, int_1 = 20, 
+                   sigma_1 = 5, sigma_2 = 20)
+)
+```
+
+
+Now we fit the model to the simulated data.
+
+```{r, cache = TRUE, results=FALSE}
+#fit = mcp(segments, data, par_x = "x")
+fit = mcp(segments, data, par_x = "x", cores = 3)
+```
+We plot the results with the prediction interval to show the effect of the variance, since it won't be immediately obvious on the default plot of the fitted mean predictions:
+
+```{r}
+plot(fit, quantiles = TRUE, quantiles_type = "predict")
+```
+
+
+We can see all parameters are well recovered. Like the other parameters, the `sigma`s are named after the segment where they were instantiated. There will always be a `sigma_1`.
+
+```{r}
+summary(fit)
+```
+
+
+# Advanced example
+We can model changes in `sigma` alone or in combination with changes in the mean. In the following, I define a needlessly complex model, just to demonstrate the flexibility of modeling variance:
+
+```{r}
+segments = list(
+  # Increasing variance.
+  y ~ 1 + sigma(1 + x),
+  
+  # Abrupt change in mean and variance.
+  ~ 1 + sigma(1),
+  
+  # Joined slope on mean. variance changes as 2nd order poly.
+  ~ 0 + x + sigma(0 + x + I(x^2)),
+  
+  # Continue slope on mean, but plateau variance (no sigma() tern).
+  ~ 0 + x
+)
+
+# The slope in segment 4 is just a continuation of 
+# the slope in segment 3, as if there was no change point.
+prior = list(
+  x_4 = "x_3"
+)
+```
+
+Notice a few things here:
+
+ * Segment 3 and 4: I changed the variance on a continuous slope. You can do this using priors to define that the slope is shared between segment 3 and 4, effectively cancelling the change point on the mean (more about using priors in mcp [here](../articles/priors.html)).
+ * Segment 4: By not specifying `sigma()`, segment 4 (and later segments) just inherits the variance from the state it was left in in the previous segment. 
+
+In general, the variance parameters are named `sigma_[normalname]`, where "normalname" is the usual parameter names in mcp (see more [here](../articles/formulas.html)). For example, the variance slope on `x` in segment 3 is `sigma_x_3`. However, `sigma_int_i` is just too verbose, so variance intercepts are simply called `sigma_i`, where i is the segment number.
+
+
+
+## Simulate data
+We simulate some data from this model, setting all parameters. As always, we can fit an empty model to get `fit$func_y`, which is useful for simulation and predictions from this model.
+
+```{r}
+empty = mcp(segments, sample = FALSE)
+set.seed(40)
+data = tibble::tibble(
+  x = 1:200,
+  y = empty$func_y(x,
+    cp_1 = 50, cp_2 = 100, cp_3 = 150,
+    int_1 = -20, int_2 = 0,
+    sigma_1 = 3, sigma_x_1 = 0.5,
+    sigma_2 = 10, 
+    sigma_x_3 = -0.5,
+    sigma_xE2_3 = 0.02,
+    x_3 = 1, x_4 = 1)
+)
+```
+
+
+## Fit it and inspect results
+Fit it in parallel, to speed things up:
+
+```{r, cache = TRUE, results = FALSE}
+fit = mcp(segments, data, prior, cores = 3)
+```
+
+Plotting the prediction interval is the easiest way to to see how the variance is estimated:
+
+```{r}
+plot(fit, quantiles = TRUE, quantiles_type = "predict")
+```
+
+The parameters are well recovered. The last change point is estimated with greater uncertainty than the others. This is expected, given that the only "signal" of this change point is a stop in variance growth.
+
+```{r}
+summary(fit)
+```
+
+The effective sample size (`n.eff`) is fairly low, indicating poor mixing for these parameters. `Rhat` is acceptable at < 1.1, indicating good convergence between chains. Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:
+
+```{r, fig.height=7, fig.width = 6}
+plot(fit, "combo", regex_pars = "sigma_")
+```
+
+This confirms the impression from `Rhat` and `n.eff`. Setting `mcp(..., iter = 10000)` would be advisable to increase the effective sample size. Read more about [tips, tricks, and debugging](../articles/debug.html).
+
+
+
+
+# Varying change points and variance
+The variance model applies to varying change points as well. For example, here we do a spin on the example in [the article on varying change points](../articles/varying.html), and add a by-person change in `sigma`. We model two joined slopes, varying by `id`. The second slope is also characterized by a different variance. This means that the model has more information about when the change point occurs, so it should be easier to estimate (require fewer data).
+
+```{r}
+segments = list(
+  # intercept + slope
+  y ~ 1 + x,
+  
+  # joined slope and increase in variance, varying by id.
+  1 + (1|id) ~ 0 + x + sigma(1)
+)
+```
+
+Simulate data:
+```{r}
+empty = mcp(segments, sample = FALSE)
+set.seed(40)
+data = tibble::tibble(
+    x = 1:180,
+    id = rep(1:6, times = 30),
+    y = empty$func_y(x, 
+          cp_1 = 70, cp_1_id = 15 * (id - mean(id)),
+          int_1 = 20, x_1 = 1, x_2 = -0.5,
+          sigma_1 = 10, sigma_2 = 25)
+)
+```
+
+Fit it:
+```{r, cache = TRUE, results=FALSE}
+fit = mcp(segments, data, cores = 3)
+```
+
+Plot it with 80% prediction intervals:
+```{r}
+plot(fit, facet_by = "id", quantiles = c(0.1, 0.9), quantiles_type = "predict")
+```
+
+
+As usual, we can get the individual change points:
+```{r}
+ranef(fit)
+```
+

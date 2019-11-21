@@ -1,7 +1,7 @@
 # Define model
 segments = list(
   y ~ 1,
-  1 ~ 1
+  ~ 1
 )
 empty = mcp::mcp(segments, sample = FALSE, par_x = "x")
 

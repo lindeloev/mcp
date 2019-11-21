@@ -87,8 +87,9 @@ An \code{mcpfit} object.
 \description{
 Given a list of linear segments, \code{mcp} infers the posterior
 distributions of the parameters of each segment as well as the change points
-between segments. All segments must regress on the same x-axis. Change points
-are forced to be ordered using truncation of the priors. You can run
+between segments. \href{https://lindeloev.github.io/mcp/}{See more details and worked examples on the mcp website}.
+All segments must regress on the same x-variable. Change
+points are forced to be ordered using truncation of the priors. You can run
 \code{fit = mcp(segments, sample=FALSE)} to avoid sampling and the need for
 data if you just want to get the priors (\code{fit$prior}), the JAGS code
 \code{fit$jags_code}, or the R function to simulate data (\code{fit$func_y}).
@@ -115,26 +116,35 @@ in \code{fit$jags_code}
 # Define the segments that are separated by change points
 segments = list(
   score ~ 1 + year,  # intercept + slope
-   1 ~ 0 + year,  # joined slope
-   1 ~ 0,  # joined plateau
-   1 ~ 1  # disjoined plateau
+   ~ 0 + year,  # joined slope
+   ~ 0,  # joined plateau
+   ~ 1  # disjoined plateau
 )
 
-# Start sampling
+# Sample and see results
 fit = mcp(segments, data)
+summary(fit)
 
 # Visual inspection of the results
 plot(fit)
 plot(fit, "combo")
 
+# Test a hypothesis
+hypothesis(fit, "cp_1 > 10")
+
 # Compare to a one-intercept-only model (no change points) with default prior
-segments2 = list(1 ~ 1)
+segments2 = list(score ~ 1)
 fit2 = mcp(segments2, data)  # fit another model here
 fit$loo = loo(fit)
 fit2$loo = loo(fit)
 loo_compare(fit, fit2)
 
-# Show all priors (not just those specified manually)
+# Sample the prior and inspect it using all the usual methods (prior predictive checks)
+fit_prior = mcp(segments, data, sample = "prior")
+summary(fit_prior)
+plot(fit_prior)
+
+# Show all priors. Default priors are added where you don't provide any
 fit$prior
 
 # Set priors and re-run
@@ -150,12 +160,6 @@ prior = list(
   int_3 = 15  # Fixed intercept of segment 3
 )
 fit3 = mcp(segments, data, prior)
-
-# Do stuff with the parameter estimates
-fit$pars$model  # check out which parameters are inferred.
-library(tidybayes)
-spread_draws(fit$mcmc_post, cp_1, cp_2, int_1, year_1, year_2) \%>\%
-   # tidybayes stuff here
 
 # Show JAGS model
 cat(fit$jags_code)

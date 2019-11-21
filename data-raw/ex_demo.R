@@ -1,12 +1,13 @@
 # Define model
 segments = list(
   response ~ 1,
-  1 ~ 0 + time,
-  1 ~ 1 + time
+  ~ 0 + time,
+  ~ 1 + time
 )
-empty = mcp::mcp(segments, sample = FALSE)
 
 # Simulate data
+empty = mcp::mcp(segments, sample = FALSE)
+
 set.seed(40)
 ex_demo = tibble::tibble(
   time = runif(100, 0, 100),

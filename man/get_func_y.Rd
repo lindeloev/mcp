@@ -10,7 +10,8 @@ get_func_y(formula_str, par_x, par_trials = NA, pars_pop, pars_varying,
 \arguments{
 \item{formula_str}{string. Returned by \code{get_formula}.}
 
-\item{par_x}{string. Same as for \link{mcp}.}
+\item{par_x}{String (default: NULL). Only relevant if no segments contains
+slope (no hint at what x is). Set this, e.g., par_x = "time".}
 
 \item{par_trials}{String. For binomial models: name of trials column.}
 
