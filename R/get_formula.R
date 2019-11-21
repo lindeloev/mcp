@@ -4,6 +4,7 @@
 #' is called. In JAGS typically `x[i_]`. In R just `x`.
 #'
 #' @aliases get_formula_str
+#' @inheritParams mcp  # get par_x
 #' @param ST Tibble. Returned by \code{get_segment_table}.
 #' @param sigma If TRUE, build code for sigma instead
 get_formula_str = function(ST, par_x, sigma = FALSE) {
@@ -102,7 +103,6 @@ get_formula_str = function(ST, par_x, sigma = FALSE) {
 #' @aliases get_func_y
 #' @inheritParams mcp
 #' @param formula_str string. Returned by \code{get_formula}.
-#' @param par_x string. Same as for \link{mcp}.
 #' @param par_trials String. For binomial models: name of trials column.
 #' @param pars_pop List of population parameters which the user must provide.
 #' @param pars_varying List varying parameters. They will default to zero

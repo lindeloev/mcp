@@ -110,13 +110,10 @@ gridExtra::grid.arrange(plot(fit_mcp),
 `EnvCpt` can detect change points in mean and variance (not separately), slopes ("trends"), and AR(1)/AR(2), as well as conveniently fitting various models without change points. It automatically infers the number of change points. Unless otherwise instructed (through `models` argument), `EnvCpt` fits all models to the data, allowing you to pick one. It allows 
 
 ```{r, message = FALSE, results = FALSE}
-fit_envcpt = EnvCpt::envcpt(data$y)  # Fit all models at once
+library(EnvCpt)
+fit_envcpt = envcpt(data$y)  # Fit all models at once
 fit_envcpt$summary  # Show log-likelihoods
 ```
-```{r, echo = FALSE}
-summary(fit_envcpt)  # Show log-likelihoods
-```
-
 
 This can be used to maximize the log-likelihood. Of interest here is `meancpt`. The documentation says that it calls `changepoint::cpt.meanvar`, modeling a simultaneous change in mean and variance. Curiously, `changepoint::cpt.meanvar(data$y)` only finds one change point when called directly (see below), but the output matches `changepoint.np::cpt.np(data$y)@cpts`, so I suspect that this function is used instead. `EnvCpt`  has a nice plot of all the models:
 

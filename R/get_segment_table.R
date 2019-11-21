@@ -293,7 +293,7 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   #################
   # EXTRACT PAR_X #
   #################
-  par_x = na.omit(unique(c(
+  par_x = stats::na.omit(unique(c(
     ifelse(!is.na(slope), slope$par_x, NA),
     ifelse(!is.na(sigma_slope), sigma_slope$par_x, NA)
   )))

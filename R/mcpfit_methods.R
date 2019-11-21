@@ -8,9 +8,9 @@
 #' @importFrom magrittr %>%
 #' @importFrom dplyr .data
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_summary = function(fit, width, varying = FALSE) {
+get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   # Get posterior/prior samples
-  samples = get_samples(fit)
+  samples = get_samples(fit, prior = prior)
 
   # Select only varying or only population-level columns in data
   if (varying == FALSE) {
@@ -88,6 +88,7 @@ get_summary = function(fit, width, varying = FALSE) {
 #' @param width Float. The width of the highest posterior density interval
 #'   (between 0 and 1).
 #' @param digits Positive integer. Number of digits to print
+#' @param prior TRUE/FALSE. Summarise prior instead of posterior?
 #' @param ... Currently ignored
 #'
 #' @return Posterior means and HDI intervals. \code{Rhat} is the Gelman-Rubin
@@ -105,10 +106,10 @@ get_summary = function(fit, width, varying = FALSE) {
 #' result = summary(fit, width = 0.8, digits = 4)
 #' ranef(fit)  # varying (random) effects
 #' }
-summary.mcpfit = function(object, width = 0.95, digits = 2, ...) {
+summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) {
   # Standard name in mcp
   fit = object
-  samples = get_samples(fit, error = FALSE)
+  samples = get_samples(fit, prior = prior, error = FALSE)
 
   if (class(object) != "mcpfit")
     stop("`object`` must be an mcpfit object.")
@@ -133,7 +134,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, ...) {
   if (!is.null(samples)) {
     # Print and return invisibly
     cat("\nPopulation-level parameters:\n")
-    result = get_summary(fit, width, varying = FALSE)
+    result = get_summary(fit, width, varying = FALSE, prior = prior)
     print(data.frame(result), digits = digits + 1, row.names = FALSE)
 
     if (!is.null(fit$pars$varying))
@@ -156,8 +157,8 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, ...) {
 #' @aliases fixef fixef.mcpfit fixed.effects
 #' @inheritParams summary.mcpfit
 #' @export
-fixef = function(object, width = 0.95, ...) {
-  get_summary(object, width, varying = FALSE)
+fixef = function(object, width = 0.95, prior = FALSE, ...) {
+  get_summary(object, width, varying = FALSE, prior = prior)
 }
 
 #' Get varying ("random") effects of mcpfit.
@@ -165,8 +166,8 @@ fixef = function(object, width = 0.95, ...) {
 #' @aliases ranef ranef.mcpfit random.effects
 #' @inheritParams summary.mcpfit
 #' @export
-ranef = function(object, width = 0.95, ...) {
-  get_summary(object, width, varying = TRUE)
+ranef = function(object, width = 0.95, prior = FALSE, ...) {
+  get_summary(object, width, varying = TRUE, prior = prior)
 }
 
 
@@ -190,10 +191,18 @@ print.mcpfit = function(x, ...) {
 #' works on both.
 #'
 #' @aliases get_samples
+#' @inheritParams summary.mcpfit  # prior
 #' @param fit An mcpfit object
 #' @param message TRUE: gives a message if returning prior samples. FALSE = no message
 #' @param error TRUE: err if there are no samples. FALSE: return NULL
-get_samples = function(fit, message = TRUE, error = TRUE) {
+get_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
+  if (prior == TRUE) {
+    if(coda::is.mcmc.list(fit$mcmc_prior)) {
+      return(fit$mcmc_prior)
+    } else {
+      stop("Prior requested but the prior was not sampled.")
+    }
+  }
   if (coda::is.mcmc.list(fit$mcmc_post)) {
     return(fit$mcmc_post)
   } else if (coda::is.mcmc.list(fit$mcmc_prior)) {

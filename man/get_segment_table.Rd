@@ -34,7 +34,7 @@ Used internally for most mcp functions.
 \dontrun{
 segments = list(
   y ~ 1 + x,
-  1 ~ 1
+  ~ 1
 )
 get_segment_table(segments)
 }

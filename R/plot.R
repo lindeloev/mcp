@@ -42,6 +42,7 @@
 #'       plots the median and `quantiles = c(0.2, 0.8)` plots the 20% and 80%
 #'       quantiles.
 #' @param quantiles_type One of 'fitted' or 'predict. Only applies if `quantile = TRUE`.
+#' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
 #' @param ... Currently ignored.
 #' @details
 #'   For `type = "segments"`, it uses `fit$func_y` with `draws`
@@ -257,7 +258,7 @@ plot_segments = function(fit,
   if (lines > 0 | (any(quantiles != FALSE) & quantiles_type == "fitted")) {
     samples = samples %>%
       # Add fitted draws (vectorized)
-      dplyr::mutate(!!yvar := purrr::invoke(func_y, ., type = "fitted", rate = rate))
+      dplyr::mutate(!!yvar := purrr::invoke(func_y, .data$., type = "fitted", rate = rate))
   }
   if (quantiles_type == "predict") {
     samples = samples %>%
@@ -313,7 +314,7 @@ plot_segments = function(fit,
     # Continue...
     data_quantiles = data_quantiles %>%
       dplyr::summarise(
-        y = stats::quantile(y_quant, probs = .data$quant[1])
+        y = stats::quantile(.data$y_quant, probs = .data$quant[1])
       )
 
     # Add quantiles to plot
