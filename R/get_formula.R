@@ -126,7 +126,7 @@ get_func_y = function(formula_str, par_x, par_trials = NA, pars_pop, pars_varyin
     x_and_trials, ", ",
     paste0(pars_pop, collapse = ", "), ", ",
     paste0(pars_varying, collapse = " = 0, "), ifelse(length(pars_varying) > 0, " = 0, ", ""),
-    "type = 'predict', rate = FALSE, ...) {
+    "type = 'predict', quantiles = FALSE, rate = FALSE, ...) {
     # Helpers to simplify making the code for this function
     cp_0 = -Inf
     cp_", nsegments, " = Inf
@@ -142,8 +142,18 @@ get_func_y = function(formula_str, par_x, par_trials = NA, pars_pop, pars_varyin
   # Return depends on family
   if (family == "gaussian") {
     func_str = paste0(func_str, "
-    if (type == 'predict') return(rnorm(length(", par_x, "), y_, sigma_))
-    if (type == 'fitted') return(y_)")
+    if (type == 'fitted') return(y_)
+    if (type == 'predict') {
+      if(quantiles == TRUE)
+        quantiles = c(0.025, 0.975)
+      if(is.numeric(quantiles)) {
+        return(qnorm(quantiles, y_, sigma_))
+      } else if (quantiles == FALSE) {
+        return(rnorm(length(", par_x, "), y_, sigma_))
+      } else {
+        stop('Invalid quantiles argument to func_y()')
+      }
+    }")
   } else if (family == "binomial") {
     func_str = paste0(func_str, "
     inverse_logit = function(x) exp(x) / (1 + exp(x))
