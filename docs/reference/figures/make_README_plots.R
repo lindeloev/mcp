@@ -19,23 +19,23 @@ save_it = function(filename) {
 # Example 1 #
 #############
 library(mcp)
-segments = list(
+segments_demo = list(
   response ~ 1,  # plateau (int_1)
-  1 ~ 0 + time,  # joined slope (time_2) at cp_1
-  1 ~ 1 + time  # disjoined slope (int_1, time_2) at cp_2
+  ~ 0 + time,  # joined slope (time_2) at cp_1
+  ~ 1 + time  # disjoined slope (int_1, time_2) at cp_2
 )
-fit = mcp(segments, data = ex_demo)  # dataset included in mcp
-theme_it(plot(fit), "")
+fit_demo = mcp(segments_demo, data = ex_demo)  # dataset included in mcp
+theme_it(plot(fit_demo), "")
 save_it("ex_demo.png")
 
-plot(fit, "combo", regex_pars = "cp_")
+plot(fit_demo, "combo", regex_pars = "cp_")
 save_it("ex_demo_combo.png")
 
 # LOO
 # Fit the model
 segments_null = list(
   response ~ 1 + time,
-  1 ~ 1 + time
+  ~ 1 + time
 )
 fit_null = mcp(segments_null, ex_demo)
 
@@ -48,12 +48,12 @@ loo::loo_compare(fit$loo, fit_null$loo)
 ################
 # Two plateaus #
 ################
-segments = list(
+segments_plateaus = list(
   y ~ 1,  # plateau (int_1)
-  1 ~ 1  # plateau (int_2)
+  ~ 1  # plateau (int_2)
 )
-fit = mcp::mcp(segments, ex_plateaus, par_x = "x")
-theme_it(plot(fit, lines = 25), "Two plateaus")
+fit_plateaus = mcp::mcp(segments_plateaus, ex_plateaus, par_x = "x")
+theme_it(plot(fit_plateaus, lines = 25), "Two plateaus")
 save_it("ex_plateaus.png")
 
 
@@ -62,25 +62,25 @@ save_it("ex_plateaus.png")
 # VARYING SLOPE CHANGE #
 ########################
 
-segments = list(
+segments_varying = list(
   y ~ 1 + x,  # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope, varying by id
 )
-fit = mcp::mcp(segments, ex_varying)
-theme_it(plot(fit, facet_by = "id"), "Varying slope change")
+fit_varying = mcp::mcp(segments_varying, ex_varying)
+theme_it(plot(fit_varying, facet_by = "id"), "Varying slope change")
 save_it("ex_varying.png")
 
 
 ############
 # BINOMIAL #
 ############
-segments = list(
+segments_binomial = list(
   y | trials(N) ~ 1,  # constant rate
-  1 ~ 0 + x,  # joined changing rate
-  1 ~ 1 + x  # disjoined changing rate
+  ~ 0 + x,  # joined changing rate
+  ~ 1 + x  # disjoined changing rate
 )
-fit = mcp::mcp(segments, ex_binomial, family = binomial())
-theme_it(plot(fit), "Binomial")
+fit_binomial = mcp::mcp(segments_binomial, ex_binomial, family = binomial())
+theme_it(plot(fit_binomial), "Binomial")
 save_it("ex_binomial.png")
 
 
@@ -89,7 +89,7 @@ save_it("ex_binomial.png")
 ##########################
 segments = list(
   y ~ 1 + x,
-  1 ~ rel(1) + rel(x),
+  ~ rel(1) + rel(x),
   rel(1) ~ 0
 )
 prior = list(
@@ -113,7 +113,7 @@ library(mcp)
 library(ggplot2)
 segments = list(
   y ~ 1 + x,
-  1 ~ 0 + x
+  ~ 0 + x
 )
 empty = mcp(segments, sample = FALSE)
 ex_tweet = tibble::tibble(
