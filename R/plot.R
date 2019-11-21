@@ -258,7 +258,7 @@ plot_segments = function(fit,
   if (lines > 0 | (any(quantiles != FALSE) & quantiles_type == "fitted")) {
     samples = samples %>%
       # Add fitted draws (vectorized)
-      dplyr::mutate(!!yvar := purrr::invoke(func_y, .data$., type = "fitted", rate = rate))
+      dplyr::mutate(!!yvar := purrr::invoke(func_y, ., type = "fitted", rate = rate))
   }
   if (quantiles_type == "predict") {
     samples = samples %>%

@@ -40,9 +40,9 @@ segments_null = list(
 fit_null = mcp(segments_null, ex_demo, cores = 3)
 
 # Compare loos:
-fit$loo = loo(fit, cores = 3)
-fit_null$loo = loo(fit_null, cores = 3)
-loo::loo_compare(fit$loo, fit_null$loo)
+fit_demo$loo = loo(fit_demo)
+fit_null$loo = loo(fit_null)
+loo::loo_compare(fit_demo$loo, fit_null$loo)
 
 
 ################
@@ -80,7 +80,7 @@ segments_binomial = list(
   ~ 1 + x  # disjoined changing rate
 )
 fit_binomial = mcp(segments_binomial, ex_binomial, family = binomial(), cores = 3)
-theme_it(plot(fit_binomial), "Binomial")
+theme_it(plot(fit_binomial, quantiles = TRUE), "Binomial")
 save_it("ex_binomial.png")
 
 
