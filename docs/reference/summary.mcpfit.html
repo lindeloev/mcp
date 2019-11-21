@@ -96,29 +96,19 @@ diagnostics. Get them in a data frame by doing result = summary(fit)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0.9000</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-        <li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
-  <a href="../reference/index.html">Reference</a>
-</li>
-<li class="dropdown">
+        <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Learn more
+    General usage
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
-    <li class="dropdown-header">General usage</li>
     <li>
       <a href="../articles/formulas.html">Formulas</a>
     </li>
@@ -131,16 +121,33 @@ diagnostics. Get them in a data frame by doing result = summary(fit)." />
     <li>
       <a href="../articles/varying.html">Random/varying effects</a>
     </li>
-    <li class="divider"></li>
-    <li class="dropdown-header">GLM</li>
+    <li>
+      <a href="../articles/variance.html">Modeling variance</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    GLM
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
     <li>
       <a href="../articles/poisson.html">Poisson</a>
     </li>
     <li>
       <a href="../articles/binomial.html">Binomial and Bernoulli</a>
     </li>
-    <li class="divider"></li>
-    <li class="dropdown-header">Other</li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Other
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
     <li>
       <a href="../articles/packages.html">Comparison to other packages</a>
     </li>
@@ -150,11 +157,17 @@ diagnostics. Get them in a data frame by doing result = summary(fit)." />
   </ul>
 </li>
 <li>
-  <a href="../news/index.html">Changelog</a>
+  <a href="../news/index.html">News</a>
 </li>
 <li>
   <a href="https://twitter.com/jonaslindeloev">
-    <span class="fab fa fab fa-twitter fa-lg"></span>
+    <span class="fa fa-twitter"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://github.com/lindeloev/mcp">
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
@@ -196,7 +209,8 @@ diagnostics. Get them in a data frame by doing result = summary(fit).</p>
     </div>
 
     <pre class="usage"><span class='co'># S3 method for mcpfit</span>
-<span class='fu'>summary</span>(<span class='no'>object</span>, <span class='kw'>width</span> <span class='kw'>=</span> <span class='fl'>0.95</span>, <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='no'>...</span>)</pre>
+<span class='fu'>summary</span>(<span class='no'>object</span>, <span class='kw'>width</span> <span class='kw'>=</span> <span class='fl'>0.95</span>, <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>2</span>,
+  <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -215,6 +229,10 @@ diagnostics. Get them in a data frame by doing result = summary(fit).</p>
       <td><p>Positive integer. Number of digits to print</p></td>
     </tr>
     <tr>
+      <th>prior</th>
+      <td><p>TRUE/FALSE. Summarise prior instead of posterior?</p></td>
+    </tr>
+    <tr>
       <th>...</th>
       <td><p>Currently ignored</p></td>
     </tr>
@@ -222,10 +240,10 @@ diagnostics. Get them in a data frame by doing result = summary(fit).</p>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Posterior means and HDI intervals. <code>rhat</code> is the Gelman-Rubin
+    <p>Posterior means and HDI intervals. <code>Rhat</code> is the Gelman-Rubin
 convergence diagnostic which is often taken to be acceptable if &lt; 1.1. It
 is computed using <code><a href='https://rdrr.io/pkg/coda/man/gelman.diag.html'>gelman.diag</a></code>.
-<code>eff</code> is the effective sample size computed using
+<code>n.eff</code> is the effective sample size computed using
 <code><a href='https://rdrr.io/pkg/coda/man/effectiveSize.html'>effectiveSize</a></code>. Low effective sample sizes are
 also obvious as poor mixing in trace plots (see <code><a href='plot.mcpfit.html'>plot(fit, "combo")</a></code>).
 <code>ts_err</code> is the time-series error, taking autoregressive correlation

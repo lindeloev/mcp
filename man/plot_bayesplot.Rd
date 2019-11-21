@@ -5,7 +5,7 @@
 \title{Plot mcpfit objects with bayesplot}
 \usage{
 plot_bayesplot(fit, type, pars = "population",
-  regex_pars = character(0), ncol = 1)
+  regex_pars = character(0), ncol = 1, prior = FALSE)
 }
 \arguments{
 \item{fit}{An mcpfit object.}
@@ -32,6 +32,8 @@ points, "^my_varying" plots all levels of a particular varying effect, and
 \item{ncol}{Number of columns in plot. This is useful when you have many
 parameters and only one plot \code{type}.
 \code{ncol} only when \code{type != "segments"}}
+
+\item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
 }
 \description{
 Call if from \code{\link{plot.mcpfit}} and see more details there

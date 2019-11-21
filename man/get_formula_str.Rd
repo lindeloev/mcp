@@ -4,10 +4,12 @@
 \alias{get_formula_str}
 \title{Build an R formula (as string) given a segment table (ST)}
 \usage{
-get_formula_str(ST, par_x)
+get_formula_str(ST, par_x, sigma = FALSE)
 }
 \arguments{
 \item{ST}{Tibble. Returned by \code{get_segment_table}.}
+
+\item{sigma}{If TRUE, build code for sigma instead}
 }
 \description{
 You will need to replace PAR_X for whatever your x-axis observation column

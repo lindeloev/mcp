@@ -133,7 +133,6 @@
 #' cat(fit$jags_code)
 #' }
 
-
 mcp = function(segments,
                data = NULL,
                prior = list(),
@@ -342,7 +341,6 @@ mcp = function(segments,
 #'@aliases logical0_to_null
 #'@param x Anything
 #'@return NULL or x
-
 
 logical0_to_null = function(x) {
   if (length(x) > 0)

@@ -53,8 +53,9 @@
 <meta property="og:title" content="Fit Multiple Linear Segments And Their Change Points — mcp" />
 <meta property="og:description" content="Given a list of linear segments, mcp infers the posterior
 distributions of the parameters of each segment as well as the change points
-between segments. All segments must regress on the same x-axis. Change points
-are forced to be ordered using truncation of the priors. You can run
+between segments. See more details and worked examples on the mcp website.
+All segments must regress on the same x-variable. Change
+points are forced to be ordered using truncation of the priors. You can run
 fit = mcp(segments, sample=FALSE) to avoid sampling and the need for
 data if you just want to get the priors (fit$prior), the JAGS code
 fit$jags_code, or the R function to simulate data (fit$func_y)." />
@@ -101,29 +102,19 @@ fit$jags_code, or the R function to simulate data (fit$func_y)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0.9000</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-        <li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
-  <a href="../reference/index.html">Reference</a>
-</li>
-<li class="dropdown">
+        <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Learn more
+    General usage
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
-    <li class="dropdown-header">General usage</li>
     <li>
       <a href="../articles/formulas.html">Formulas</a>
     </li>
@@ -136,16 +127,33 @@ fit$jags_code, or the R function to simulate data (fit$func_y)." />
     <li>
       <a href="../articles/varying.html">Random/varying effects</a>
     </li>
-    <li class="divider"></li>
-    <li class="dropdown-header">GLM</li>
+    <li>
+      <a href="../articles/variance.html">Modeling variance</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    GLM
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
     <li>
       <a href="../articles/poisson.html">Poisson</a>
     </li>
     <li>
       <a href="../articles/binomial.html">Binomial and Bernoulli</a>
     </li>
-    <li class="divider"></li>
-    <li class="dropdown-header">Other</li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Other
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
     <li>
       <a href="../articles/packages.html">Comparison to other packages</a>
     </li>
@@ -155,11 +163,17 @@ fit$jags_code, or the R function to simulate data (fit$func_y)." />
   </ul>
 </li>
 <li>
-  <a href="../news/index.html">Changelog</a>
+  <a href="../news/index.html">News</a>
 </li>
 <li>
   <a href="https://twitter.com/jonaslindeloev">
-    <span class="fab fa fab fa-twitter fa-lg"></span>
+    <span class="fa fa-twitter"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://github.com/lindeloev/mcp">
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
@@ -198,8 +212,9 @@ fit$jags_code, or the R function to simulate data (fit$func_y)." />
     <div class="ref-description">
     <p>Given a list of linear segments, <code>mcp</code> infers the posterior
 distributions of the parameters of each segment as well as the change points
-between segments. All segments must regress on the same x-axis. Change points
-are forced to be ordered using truncation of the priors. You can run
+between segments. <a href='https://lindeloev.github.io/mcp/'>See more details and worked examples on the mcp website</a>.
+All segments must regress on the same x-variable. Change
+points are forced to be ordered using truncation of the priors. You can run
 <code>fit = mcp(segments, sample=FALSE)</code> to avoid sampling and the need for
 data if you just want to get the priors (<code>fit$prior</code>), the JAGS code
 <code>fit$jags_code</code>, or the R function to simulate data (<code>fit$func_y</code>).</p>
@@ -336,26 +351,35 @@ in <code>fit$jags_code</code></p></li>
 <span class='co'># Define the segments that are separated by change points</span>
 <span class='no'>segments</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
   <span class='no'>score</span> ~ <span class='fl'>1</span> + <span class='no'>year</span>,  <span class='co'># intercept + slope</span>
-   <span class='fl'>1</span> ~ <span class='fl'>0</span> + <span class='no'>year</span>,  <span class='co'># joined slope</span>
-   <span class='fl'>1</span> ~ <span class='fl'>0</span>,  <span class='co'># joined plateau</span>
-   <span class='fl'>1</span> ~ <span class='fl'>1</span>  <span class='co'># disjoined plateau</span>
+   ~ <span class='fl'>0</span> + <span class='no'>year</span>,  <span class='co'># joined slope</span>
+   ~ <span class='fl'>0</span>,  <span class='co'># joined plateau</span>
+   ~ <span class='fl'>1</span>  <span class='co'># disjoined plateau</span>
 )
 
-<span class='co'># Start sampling</span>
+<span class='co'># Sample and see results</span>
 <span class='no'>fit</span> <span class='kw'>=</span> <span class='fu'>mcp</span>(<span class='no'>segments</span>, <span class='no'>data</span>)
+<span class='fu'><a href='summary.mcpfit.html'>summary</a></span>(<span class='no'>fit</span>)
 
 <span class='co'># Visual inspection of the results</span>
 <span class='fu'><a href='plot.mcpfit.html'>plot</a></span>(<span class='no'>fit</span>)
 <span class='fu'><a href='plot.mcpfit.html'>plot</a></span>(<span class='no'>fit</span>, <span class='st'>"combo"</span>)
 
+<span class='co'># Test a hypothesis</span>
+<span class='fu'><a href='hypothesis.html'>hypothesis</a></span>(<span class='no'>fit</span>, <span class='st'>"cp_1 &gt; 10"</span>)
+
 <span class='co'># Compare to a one-intercept-only model (no change points) with default prior</span>
-<span class='no'>segments2</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='fl'>1</span> ~ <span class='fl'>1</span>)
+<span class='no'>segments2</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>score</span> ~ <span class='fl'>1</span>)
 <span class='no'>fit2</span> <span class='kw'>=</span> <span class='fu'>mcp</span>(<span class='no'>segments2</span>, <span class='no'>data</span>)  <span class='co'># fit another model here</span>
 <span class='no'>fit</span>$<span class='no'>loo</span> <span class='kw'>=</span> <span class='fu'><a href='criterion.html'>loo</a></span>(<span class='no'>fit</span>)
 <span class='no'>fit2</span>$<span class='no'>loo</span> <span class='kw'>=</span> <span class='fu'><a href='criterion.html'>loo</a></span>(<span class='no'>fit</span>)
 <span class='fu'>loo_compare</span>(<span class='no'>fit</span>, <span class='no'>fit2</span>)
 
-<span class='co'># Show all priors (not just those specified manually)</span>
+<span class='co'># Sample the prior and inspect it using all the usual methods (prior predictive checks)</span>
+<span class='no'>fit_prior</span> <span class='kw'>=</span> <span class='fu'>mcp</span>(<span class='no'>segments</span>, <span class='no'>data</span>, <span class='kw'>sample</span> <span class='kw'>=</span> <span class='st'>"prior"</span>)
+<span class='fu'><a href='summary.mcpfit.html'>summary</a></span>(<span class='no'>fit_prior</span>)
+<span class='fu'><a href='plot.mcpfit.html'>plot</a></span>(<span class='no'>fit_prior</span>)
+
+<span class='co'># Show all priors. Default priors are added where you don't provide any</span>
 <span class='no'>fit</span>$<span class='no'>prior</span>
 
 <span class='co'># Set priors and re-run</span>
@@ -371,12 +395,6 @@ in <code>fit$jags_code</code></p></li>
   <span class='kw'>int_3</span> <span class='kw'>=</span> <span class='fl'>15</span>  <span class='co'># Fixed intercept of segment 3</span>
 )
 <span class='no'>fit3</span> <span class='kw'>=</span> <span class='fu'>mcp</span>(<span class='no'>segments</span>, <span class='no'>data</span>, <span class='no'>prior</span>)
-
-<span class='co'># Do stuff with the parameter estimates</span>
-<span class='no'>fit</span>$<span class='no'>pars</span>$<span class='no'>model</span>  <span class='co'># check out which parameters are inferred.</span>
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>tidybayes</span>)
-<span class='fu'><a href='http://mjskay.github.io/tidybayes/reference/spread_draws.html'>spread_draws</a></span>(<span class='no'>fit</span>$<span class='no'>mcmc_post</span>, <span class='no'>cp_1</span>, <span class='no'>cp_2</span>, <span class='no'>int_1</span>, <span class='no'>year_1</span>, <span class='no'>year_2</span>) <span class='kw'>%&gt;%</span>
-   <span class='co'># tidybayes stuff here</span>
 
 <span class='co'># Show JAGS model</span>
 <span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span>(<span class='no'>fit</span>$<span class='no'>jags_code</span>)
