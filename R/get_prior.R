@@ -7,7 +7,8 @@ common_prior = list(
   cp_1 = "dunif(MINX, MAXX)",
   cp = "dunif(%s, MAXX)",
   cp_rel = "dunif(0, MAXX - %s)",
-  sd = "dnorm(0, (MAXX - MINX) / 2) T(0, )"
+  sd = "dnorm(0, (MAXX - MINX) / 2) T(0, )",
+  phi = "dunif(-1, 1)"
 )
 
 # Per-family priors
@@ -130,9 +131,16 @@ truncate_prior_cp = function(ST, i, prior_str) {
 #' @inheritParams mcp
 #'
 
-get_prior = function(ST, family, prior = list()) {
+get_prior = function(ST, family, prior = list(), ar_order) {
   # Populate this list
   default_prior = list()
+
+  # Add autocorrelation priors
+  if (is.numeric(ar_order)) {
+    for(i in seq_len(ar_order)) {
+      default_prior[[paste0("phi_", i)]] = priors[[family]]$phi
+    }
+  }
 
   # Add sigma (may be deleted if specific variance change points are detected below)
   #if (family == "gaussian")

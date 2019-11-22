@@ -44,7 +44,7 @@ run_jags = function(data,
     # SERIAL
     samples = try(dclone::jags.fit(
       data = get_jags_data(data, ST, jags_code, sample),
-      pars = pars,
+      params = pars,
       model = textConnection(jags_code),
       ...
     ))
@@ -65,7 +65,7 @@ run_jags = function(data,
     samples = try(dclone::jags.parfit(
       cl = cl,
       data = get_jags_data(data, ST, jags_code, sample),
-      pars = pars,
+      params = pars,
       model = model_file,
       ...
     ))

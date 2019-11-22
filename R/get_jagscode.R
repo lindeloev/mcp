@@ -4,10 +4,11 @@
 #' @inheritParams mcp
 #' @param formula_str String. The formula string returned by `build_formula_str`.
 #' @param ST Segment table. Returned by `get_segment_table()`.
+#' @param ar_order Positive integer. The autoregressive order.
 #' @return String. A JAGS model.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-get_jagscode = function(prior, ST, formula_str, family, sample) {
+get_jagscode = function(prior, ST, formula_str, family, ar_order, sample) {
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
   mm = paste0("
@@ -16,14 +17,6 @@ model {
   ##########
   # PRIORS #
   ##########
-  # Transform priors from SD to precision
-  all_dprec = "dnorm|dt|dcauchy|ddexp|dlogis|dlnorm"  # JAGS precision dists
-  for (i in seq_along(prior)) {
-    if (stringr::str_detect(prior[[i]], all_dprec)) {
-      prior[[i]] = sd_to_prec(prior[[i]])
-    }
-  }
-
   # Split up priors into population and varying
   prior_pop = prior[!names(prior) %in% ST$cp_group]
   prior_varying = prior[names(prior) %in% ST$cp_group]
@@ -49,6 +42,27 @@ model {
     }
   }
 
+  # Autocorrelation
+  if (!is.null(ar_order)) {
+    # if (is.null(prior[["phi"]]))
+    #   stop("Internal error: got ar_order but no prior is defined for phi. Please report this on GitHub.")
+
+  #   mm = paste0(mm, "
+  # # Population-level autocorrelation coefficients for AR(", ar_order, ")
+  # for(i in 1:", ar_order, ") {
+  #   phi[i] ~ ", prior[["phi"]], "
+  # }")
+
+    # Add computation of autocorrelated residuals
+    mm = paste0(mm, ar_code(ar_order, xvar = ST$x[1], yvar = ST$y[1]))
+
+    y_code = ifelse(is.null(ar_order), "", "y_[i_] + sum(resid_[i_, ])")
+  } else {
+    y_code = "y_[i_]"
+  }
+
+
+
 
   ###########
   # FORMULA #
@@ -73,20 +87,20 @@ model {
     ", ST$y[1], "[i_] ~ ")
 
   if (family == "gaussian") {
-    mm = paste0(mm, "dnorm(y_[i_], 1 / sigma_[i_]^2)
-    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], y_[i_], 1 / sigma_[i_]^2)")
+    mm = paste0(mm, "dnorm(", y_code, ", 1 / sigma_[i_]^2)
+    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], ", y_code, ", 1 / sigma_[i_]^2)")
 
   } else if (family == "binomial") {
     # ilogit = inverse logit
-    mm = paste0(mm, "dbin(ilogit(y_[i_]), ", ST$trials[1], "[i_])
-    loglik_[i_] = logdensity.bin(", ST$y[1], "[i_], ilogit(y_[i_]), ", ST$trials[1], "[i_])")
+    mm = paste0(mm, "dbin(ilogit(", y_code, "), ", ST$trials[1], "[i_])
+    loglik_[i_] = logdensity.bin(", ST$y[1], "[i_], ilogit(", y_code, "), ", ST$trials[1], "[i_])")
   } else if (family == "bernoulli") {
-    mm = paste0(mm, "dbern(ilogit(y_[i_]))
-    loglik_[i_] = logdensity.bern(", ST$y[1], "[i_], ilogit(y_[i_]))")
+    mm = paste0(mm, "dbern(ilogit(y_[i_]", y_code, "))
+    loglik_[i_] = logdensity.bern(", ST$y[1], "[i_], ilogit(", y_code, "))")
   } else if (family == "poisson") {
     # exp is inverse of log
-    mm = paste0(mm, "dpois(exp(y_[i_]))
-    loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], exp(y_[i_]))")
+    mm = paste0(mm, "dpois(exp(", y_code, "))
+    loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], exp(", y_code, "))")
   }
 
   # If only the prior is sampled, remove the loglik_[i_] line
@@ -120,7 +134,7 @@ model {
 #'
 get_prior_str = function(prior, i, varying_group = NULL) {
   # Helpers
-  value = prior[i]
+  value = prior[[i]]
   name = names(prior[i])
 
   # Is this fixed?
@@ -134,6 +148,9 @@ get_prior_str = function(prior, i, varying_group = NULL) {
 
   # If it is a known distribution
   if (!is_fixed) {
+    # Convert to precision
+    value = sd_to_prec(value)
+
     # ... and this is a population-level effect
     if (is.null(varying_group)) {
       return(paste0("  ", name, " ~ ", value, "\n"))
@@ -152,7 +169,7 @@ get_prior_str = function(prior, i, varying_group = NULL) {
 
 
 
-#'¨Transform a prior from SD to precision.
+#' Transform a prior from SD to precision.
 #'
 #' JAGS uses precision rather than SD. This function converts
 #' `dnorm(4.2, 1.3)` into `dnorm(4.2, 1/1.3^2)`. It allows users to specify
@@ -196,4 +213,22 @@ sd_to_prec = function(prior_str) {
     return(new_prior)
   }
   else return(prior_str)
+}
+
+
+
+#' Get JAGS code for residuals for each AR-order
+#'
+#' @aliases ar_code
+#' @inheritParams get_jagscode
+ar_code = function(ar_order, xvar, yvar) {
+  code = ""
+  for(i in seq_len(ar_order)) {
+    code = paste0(code, "
+
+  # AR(", i, ") residuals:
+  resid_[1:", i, ", ", i, "] = c(", paste0(rep("0", i), collapse = ","), ")
+  for(i_ in ", i + 1, ":length(", xvar, ")) {resid_[i_, ", i, "] = phi_", i, " * (y_[i_-", i, "] - ", yvar, "[i_ - ", i, "])}")
+  }
+  return(code)
 }
