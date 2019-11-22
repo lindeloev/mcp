@@ -215,7 +215,7 @@ mcp = function(segments,
   minor = as.numeric(R.Version()$minor)
   fails_parallel = (major < 3 | (major == 3 & minor < 6.1))
   if (cores > 1 & fails_parallel == TRUE)
-    warning("Parallel sampling (cores > 1) has been shown to err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
+    warning("Parallel sampling (`cores` > 1) has been shown to err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
 
 
   # Get an abstract segment table ("ST")
@@ -226,10 +226,9 @@ mcp = function(segments,
   par_trials = unique(ST$trials)
 
   # Get prior and lists of parameters
-  prior = get_prior(ST, family$family, prior)
-  params_varying = logical0_to_null(c(stats::na.omit(ST$cp_group)))
-  params_population = names(prior)[!names(prior) %in% params_varying]
-  #params_population = c(stats::na.omit(unique(c(ST$int_name, ST$slope_name, ST$cp_name[-1], ST$cp_sd))))
+  prior = get_prior(ST, family$family, prior, ar_order)
+  pars_varying = logical0_to_null(c(stats::na.omit(ST$cp_group)))
+  pars_population = names(prior)[!names(prior) %in% pars_varying]  # Simply the absence of varying pars
 
   # Make formula_str and func_y
   formula_str = get_formula_str(ST, par_x)
@@ -238,8 +237,8 @@ mcp = function(segments,
     formula_str = paste0(formula_str, "\n\n", formula_str_sigma)
   }
 
-  params_funcy = params_population[!params_population %in% ST$cp_sd]
-  func_y = get_func_y(formula_str, par_x, par_trials, params_funcy, params_varying, nrow(ST), family$family)
+  pars_funcy = pars_population[!pars_population %in% ST$cp_sd]
+  func_y = get_func_y(formula_str, par_x, par_trials, pars_funcy, pars_varying, nrow(ST), family$family)
 
   # Make jags code and sample it.
   jags_code = get_jagscode(prior, ST, formula_str, family$family, sample)
@@ -249,7 +248,7 @@ mcp = function(segments,
     samples = run_jags(
       data = data,
       jags_code = ifelse(is.null(jags_explicit), jags_code, jags_explicit),
-      params = c(params_population, params_varying, "loglik_"),  # population-level, varying, and loglik for loo/waic
+      pars = c(pars_population, pars_varying, "loglik_"),  # population-level, varying, and loglik for loo/waic
       ST = ST,
       cores = cores,
       sample = "post",
@@ -272,7 +271,7 @@ mcp = function(segments,
     samples = run_jags(
       data = data,
       jags_code = ifelse(is.null(jags_explicit), jags_code, jags_explicit),
-      params = c(params_population, params_varying),  # population-level, varying, but NOT loglik
+      pars = c(pars_population, pars_varying),  # population-level, varying, but NOT loglik
       ST = ST,
       cores = cores,
       sample = "prior",
@@ -313,8 +312,8 @@ mcp = function(segments,
 
     # Extracted model
     pars = list(
-      population = params_population,
-      varying = params_varying,
+      population = pars_population,
+      varying = pars_varying,
       x = par_x,
       y = par_y,
       trials = par_trials
