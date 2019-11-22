@@ -19,7 +19,7 @@
 
 run_jags = function(data,
                     jags_code,
-                    params,
+                    pars,
                     ST,
                     cores,
                     sample,
@@ -27,11 +27,11 @@ run_jags = function(data,
                     ...  # Otherwise run with default JAGS settings
 ) {
 
-  # Prevent failure of all mcp methods when length(params) <= 2 (one parameter +
+  # Prevent failure of all mcp methods when length(pars) <= 2 (one parameter +
   # loglik_).This always happens when there is only one segment, so we just save samples
   # from the dummy change points.
-  if (length(params) <= 2)
-    params = c(params, "cp_0", "cp_1")
+  if (length(pars) <= 2)
+    pars = c(pars, "cp_0", "cp_1")
 
   opts = options()
   if (is.numeric(opts$mcp_cores))
@@ -44,7 +44,7 @@ run_jags = function(data,
     # SERIAL
     samples = try(dclone::jags.fit(
       data = get_jags_data(data, ST, jags_code, sample),
-      params = params,
+      pars = pars,
       model = textConnection(jags_code),
       ...
     ))
@@ -65,7 +65,7 @@ run_jags = function(data,
     samples = try(dclone::jags.parfit(
       cl = cl,
       data = get_jags_data(data, ST, jags_code, sample),
-      params = params,
+      pars = pars,
       model = model_file,
       ...
     ))
