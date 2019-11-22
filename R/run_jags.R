@@ -4,13 +4,13 @@
 #' @aliases run_jags
 #' @inheritParams mcp
 #' @inheritParams dclone::jags.fit
-#' @param jags_code A string. JAGS model, usually returned by \code{make_jagscode()}.
-#' @param ST A segment table (tibble), returned by \code{get_segment_table}.
+#' @param jags_code A string. JAGS model, usually returned by `make_jagscode()`.
+#' @param ST A segment table (tibble), returned by `get_segment_table`.
 #'   Only really used when the model contains varying effects.
 #' @param model_file A temporary file. Makes parallel sampling possible
 #'   samples that are discarded between n.adapt and n.iter (to improve convergence)..
-#' @param ... Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.
-#' @return \code{mcmc.list}
+#' @param ... Parameters for `jags.parfit` which channels them to `jags.fit`.
+#' @return `mcmc.list``
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @examples
 #' \dontrun{
@@ -93,14 +93,14 @@ run_jags = function(data,
 }
 
 
-#' Adds helper variables for use in \code{run_jags}
+#' Adds helper variables for use in `{run_jags}
 #'
 #' Returns the relevant data columns as a list and add elements with unique
 #' varying group levels.
 #'
 #' @inheritParams run_jags
 #' @param data A tibble
-#' @param ST A segment table (tibble), returned by \code{get_segment_table}.
+#' @param ST A segment table (tibble), returned by `get_segment_table`.
 
 get_jags_data = function(data, ST, jags_code, sample) {
   cols_varying = unique(stats::na.omit(ST$cp_group_col))
@@ -150,10 +150,10 @@ get_jags_data = function(data, ST, jags_code, sample) {
 #' Jags uses 1, 2, 3, ..., etc. for indexing of varying effects.
 #' This function adds back the original levels, whether numeric or string
 #'
-#' @param samples An mcmc.list with varying columns starting in \code{mcmc_col}.
-#' @param data A tibble or data.frame with the cols in \code{data_col}.
+#' @param samples An mcmc.list with varying columns starting in `mcmc_col`.
+#' @param data A tibble or data.frame with the cols in `data_col`.
 #' @param mcmc_col A vector of strings.
-#' @param data_col A vector of strings. Has to be same length as \code{mcmc_col}
+#' @param data_col A vector of strings. Has to be same length as `mcmc_col`.`
 #'
 recover_levels = function(samples, data, mcmc_col, data_col) {
   # Get vectors of old ("from") and replacement column names in samples

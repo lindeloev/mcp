@@ -48,7 +48,7 @@ samples that are discarded between n.adapt and n.iter (to improve convergence)..
 \item{...}{Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.}
 }
 \value{
-\code{mcmc.list}
+`mcmc.list``
 }
 \description{
 Run parallel MCMC sampling using JAGS.
