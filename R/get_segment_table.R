@@ -271,11 +271,6 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
       last_slope = last_segment$slope) %>%
       dplyr::bind_rows()  # Make it a proper table-like tibble
 
-    # # Checks
-    # par_x = unique(slope$par_x)  # What is the data predictor?
-    # if (length(par_x) > 1)
-    #   stop("Found more than one x-variable in segment ", i, ": '", paste(slope$par_x, collapse ="', '"), "'")
-
     # Build code. Add parentheses if there are more slopes
     slope_code = paste(slope$code, collapse = " + ")
     if (stringr::str_detect(slope_code, "\\+"))
@@ -491,13 +486,7 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
   # Check segment 1: rel() not possible here.
   if (any(ST[1, c("cp_int", "cp_int_rel", "cp_ran_int", "cp_group_col")] != FALSE, na.rm = T))
     stop("Change point defined in first segment. This should not be possible. Submit bug report in the GitHub repo.")
-  #if (any(ST[1, c("int_rel", "slope_rel")] != FALSE, na.rm = T))
-  #  stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
 
-  # Check rel() in segment 2+
-  #rel_slope_after_plateau = dplyr::lag(is.na(ST$slope), 1) & ST$slope_rel != 0
-  #if (any(rel_slope_after_plateau))
-  #  stop("rel(slope) is not meaningful after a plateau segment (without a slope). Use absolute slope to get the same behavior. Found in segment ", which(rel_slope_after_plateau))
   if (nrow(ST) > 1) {
     if (ST$cp_int_rel[2] == TRUE)
       stop("rel() cannot be used for change points in segment 2. There are no earlier change points to be relative to. Relative changepoints work from segment 3 and on.")
@@ -583,9 +572,6 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
 
     # Add variable names
     dplyr::mutate(
-      #int_name = ifelse(.data$int, yes = paste0("int_", .data$segment), no = NA),
-      #slope_name = ifelse(!is.na(.data$slope), yes = paste0(.data$slope, "_", .data$segment), no = NA),
-      #slope_code = .data$slope_name,  # Will be modified later
       cp_name = paste0("cp_", .data$segment - 1),
       cp_sd = ifelse(.data$cp_ran_int == TRUE, paste0(.data$cp_name, "_sd"), NA),
       cp_group = ifelse(.data$cp_ran_int == TRUE, paste0(.data$cp_name, "_", .data$cp_group_col), NA)
@@ -600,14 +586,6 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
       cp_code_prior = format_code(.data$cp_code_prior, na_col = .data$cp_name)
     ) %>%
     dplyr::ungroup() %>%
-
-    # Same for slope_code
-    # dplyr::group_by(cumsum(!.data$slope_rel)) %>%
-    # dplyr::mutate(
-    #   slope_code = cumpaste(.data$slope_name, " + "),
-    #   slope_code = format_code(.data$slope_code, na_col = .data$slope_name)
-    # ) %>%
-    # dplyr::ungroup() %>%
 
     # Finish up
     dplyr::select(-dplyr::starts_with("cumsum"))
