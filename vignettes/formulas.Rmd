@@ -14,11 +14,13 @@ vignette: >
 The formulas are called "segments" because they divide the (observed) x-axis into `N` segments.
 
 # Formula format for segments
-The format of each segment is generally `response ~ changepoint ~ linear_predictors`, except for the first segment where there is no change point (`response ~ linear_predictors`). 
+The format of each segment is generally `response ~ changepoint ~ predictors + sigma(variance_predictors)`, except for the first segment where there is no change point (`response ~ predictors + sigma(variance_predictors)`). Here is a simple and a complex formula
+
 
  * **The response** is just the name of a column in your data.
  * **The change point** can be `1` for a population-level change point or `1 + (1|group)` [varying change points](articles/varying.html) sampled around the population-level change point.
- * **The linear predictors** can be `0` (no change in intercept), `1` (change in intercept), and any column in your data which you want to model a slope on.
+ * **The predictors** can be `0` (no change in intercept), `1` (change in intercept), and any column in your data which you want to model a slope on.
+ * **The variance predictors** has [it's own article](../articles/variance.html), but they follow the same rules as the **predictors**.
 
 For convenience, you can omit the response and the change point in segment 2+, in which case the former response and an intercept-only (as opposed to random/varying) change point is assumed. When you call `summary(fit)`, it will show the explicit representation. Let us see this in action for this model where we predict `score` as a function of `time` in three segments, i.e., with two change points:
 
