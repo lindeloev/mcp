@@ -1,6 +1,6 @@
 template:
   params:
-    bootswatch: cerulean  # Theme
+    bootswatch: flatly  # Theme
     ganalytics: UA-1026978-3  # Google Analytics
     docsearch:
       api_key: 702ab134d40a7310606c29f341fc5014
