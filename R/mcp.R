@@ -35,6 +35,11 @@
 #'      they will need to have the same grouping variable.
 #' @param family One of `gaussian()`, `binomial()`, `bernoulli()`, or `poission()`.
 #'   Only default link functions are currently supported.
+#' @param autocor String. `"AR(N)"` where N is the autoregressive order. AR applies
+#'   to the residuals, as is common. For example `"AR(1)` is an order-1 autoregressive
+#'   model and `phi` is inferred like this: `resid[i] = phi * (obs[i-1] - pred[i-1])`.
+#'   One `phi` is estimated for each `N`. The default is `autocor = NULL`, i.e.,
+#'   no autocorrelation is modeled.
 #' @param par_x String (default: NULL). Only relevant if no segments contains
 #'   slope (no hint at what x is). Set this, e.g., par_x = "time".
 #' @param sample One of
@@ -137,6 +142,7 @@ mcp = function(segments,
                data = NULL,
                prior = list(),
                family = gaussian(),
+               autocor = NULL,
                par_x = NULL,
                sample = "post",
                cores = 1,
@@ -196,6 +202,18 @@ mcp = function(segments,
   if (!is.null(par_x) & !is.character(par_x))
     stop("`par_x` must be NULL or a string.")
 
+
+  # Check and recode autocor --> ar_order
+  if (!is.null(autocor)) {
+    if(stringr::str_detect(autocor, "AR\\([0-9]+\\)")) {
+      ar_order = as.numeric(gsub("AR\\(|\\)", "", autocor))
+    } else {
+      stop("`autocor` can currently only by NULL or 'AR(N)' where N is a positive integer. ")
+    }
+  } else {
+    ar_order = NULL
+  }
+
   # Sampler settings
   if (!sample %in% c("post", "prior", "both") & !is.logical(sample))
     stop("`sample` must be 'post', 'prior', 'both', or 'none'/FALSE")
@@ -241,7 +259,7 @@ mcp = function(segments,
   func_y = get_func_y(formula_str, par_x, par_trials, pars_funcy, pars_varying, nrow(ST), family$family)
 
   # Make jags code and sample it.
-  jags_code = get_jagscode(prior, ST, formula_str, family$family, sample)
+  jags_code = get_jagscode(prior, ST, formula_str, family$family, ar_order, sample)
 
   # Sample posterior
   if (sample %in% c("post", "both")) {
