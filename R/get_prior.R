@@ -121,10 +121,10 @@ truncate_prior_cp = function(ST, i, prior_str) {
 #'
 #' Starts by finding all default priors. Then replace them with user priors.
 #' User priors for change points are truncated appropriately using
-#' \code{truncate_prior_cp}, if not done manually by the user already.
+#' `truncate_prior_cp``, if not done manually by the user already.
 #'
 #' @aliases get_prior
-#' @param ST Tibble. A segment table returned by \code{get_segment_table}.
+#' @param ST Tibble. A segment table returned by `get_segment_table`.
 #' @param prior A list of user-defined priors. Will overwrite the relevant
 #'   default priors.
 #' @inheritParams mcp

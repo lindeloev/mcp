@@ -1,6 +1,3 @@
-source("R/lme4_utils.R")
-
-
 # Takes a formula and returns a string representation of y, cp, and rhs
 unpack_tildes = function(segment, i) {
   has_LHS = attributes(stats::terms(segment))$response == 1

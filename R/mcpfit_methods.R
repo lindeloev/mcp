@@ -81,23 +81,23 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #' Summarise mcpfit objects
 #'
 #' Computes posterior means and highest density intervals, and model
-#' diagnostics. Get them in a data frame by doing result = summary(fit).
+#' diagnostics. Get them in a data frame by doing `result = summary(fit)`.
 #'
 #' @aliases summary summary.mcpfit
-#' @param object An \code{mcpfit} object returned by \code{\link{mcp}}.
+#' @param object An `mcpfit` object returned by \code{\link{mcp}}.
 #' @param width Float. The width of the highest posterior density interval
 #'   (between 0 and 1).
 #' @param digits Positive integer. Number of digits to print
 #' @param prior TRUE/FALSE. Summarise prior instead of posterior?
 #' @param ... Currently ignored
 #'
-#' @return Posterior means and HDI intervals. \code{Rhat} is the Gelman-Rubin
+#' @return Posterior means and HDI intervals. `Rhat` is the Gelman-Rubin
 #'   convergence diagnostic which is often taken to be acceptable if < 1.1. It
 #'   is computed using \code{\link[coda]{gelman.diag}}.
-#'   \code{n.eff} is the effective sample size computed using
+#'   `n.eff` is the effective sample size computed using
 #'   \code{\link[coda]{effectiveSize}}. Low effective sample sizes are
-#'   also obvious as poor mixing in trace plots (see \code{plot(fit, "combo")}).
-#'   \code{ts_err} is the time-series error, taking autoregressive correlation
+#'   also obvious as poor mixing in trace plots (see `plot(fit, "combo")`).
+#'   `ts_err` is the time-series error, taking autoregressive correlation
 #'   into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
@@ -152,7 +152,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
 
 #' Get population-level ("fixed") effects of mcpfit.
 #'
-#' This is identical to what \code{summary(object)} does.
+#' This is identical to what `summary(object)` does.
 #'
 #' @aliases fixef fixef.mcpfit fixed.effects
 #' @inheritParams summary.mcpfit
@@ -176,7 +176,7 @@ ranef = function(object, width = 0.95, prior = FALSE, ...) {
 #' Use \code{\link{summary.mcpfit}} for greater control.
 #'
 #' @aliases print print.mcpfit
-#' @param x \code{mcpfit} object.
+#' @param x `mcpfit` object.
 #' @param ... Currently ignored.
 #' @export
 print.mcpfit = function(x, ...) {

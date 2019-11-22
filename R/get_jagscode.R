@@ -2,8 +2,8 @@
 #'
 #' @aliases get_jagscode
 #' @inheritParams mcp
-#' @param formula_str String. The formula string returned by \code{build_formula_str}.
-#' @param ST Segment table. Returned by \code{get_segment_table()}.
+#' @param formula_str String. The formula string returned by `build_formula_str`.
+#' @param ST Segment table. Returned by `get_segment_table()`.
 #' @return String. A JAGS model.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
@@ -112,7 +112,7 @@ model {
 #'
 #' @aliases get_prior_str
 #' @inheritParams mcp
-#' @param i The index in \code{prior} to get code for
+#' @param i The index in `prior` to get code for
 #' @param varying_group String or NULL (default). Null indicates a population-
 #'   level prior. String indicates a varying-effects prior (one for each group
 #'   level).
@@ -155,7 +155,7 @@ get_prior_str = function(prior, i, varying_group = NULL) {
 #'¨Transform a prior from SD to precision.
 #'
 #' JAGS uses precision rather than SD. This function converts
-#' \code{dnorm(4.2, 1.3)} into \code{dnorm(4.2, 1/1.3^2)}. It allows users to specify
+#' `dnorm(4.2, 1.3)` into `dnorm(4.2, 1/1.3^2)`. It allows users to specify
 #' priors using SD and then it's transformed for the JAGS code. It works for the
 #' following distributions: dnorm|dt|dcauchy|ddexp|dlogis|dlnorm. In all of
 #' these,
@@ -163,7 +163,7 @@ get_prior_str = function(prior, i, varying_group = NULL) {
 #'
 #'@aliases sd_to_prec
 #'@param prior_str String. A JAGS prior. Can be truncated, e.g.
-#'  \code{dt(3, 2, 1) T(my_var, )}.
+#'  `dt(3, 2, 1) T(my_var, )`.
 #'@return A string
 #'@author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'@export

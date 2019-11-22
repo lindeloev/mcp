@@ -27,12 +27,11 @@
 #'}
 
 criterion = function(fit, criterion = "loo", ...) {
-  if (!class(fit) == "mcpfit") {
+  if (!class(fit) == "mcpfit")
     stop("class(fit) must be 'mcpfit'")
-  }
-  if (!criterion %in% c("loo", "waic")) {
+
+  if (!criterion %in% c("loo", "waic"))
     stop("criterion must be one of 'loo' or 'waic'")
-  }
 
   # Log-likelihood MCMC samples as matrix
   loglik = as.matrix(do.call(rbind.data.frame, fit$mcmc_loglik))
@@ -156,9 +155,8 @@ hypothesis = function(fit, hypotheses, width = 0.95) {
     if (n_equals == 1 & n_directional > 0)
       stop("Equals cannot be combined with directional tests: ", expression)
 
-    if (n_equals + n_directional == 0) {
+    if (n_equals + n_directional == 0)
       stop("At least one operator must be present: <, >, =, <=, or >=: ", expression)
-    }
 
     if (stringr::str_detect(expression, "\\[|\\]") & !stringr::str_detect(expression, "`"))
       stop("Needs `` around varying effects, e.g., `cp_1_id[2]`. Got this: ", expression)
