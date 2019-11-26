@@ -203,7 +203,7 @@ get_prior = function(ST, family, prior = list()) {
 
       # Slope
       if (!all(is.na(S$ma_slope[[1]][[order]]) == TRUE)) {  # If this slope exists...
-        for (name in S$ma_slope[[1]][[order]][["slope"]]$name) {
+        for (name in S$ma_slope[[1]][[order]]$name) {
           default_prior[[name]] = priors[[family$family]]$arma_slope
         }
       }
@@ -222,7 +222,7 @@ get_prior = function(ST, family, prior = list()) {
 
       # Slope
       if (!all(is.na(S$ar_slope[[1]][[order]]) == TRUE)) {  # If this slope exists...
-        for (name in S$ar_slope[[1]][[order]][["slope"]]$name) {
+        for (name in S$ar_slope[[1]][[order]]$name) {
           default_prior[[name]] = priors[[family$family]]$arma_slope
         }
       }

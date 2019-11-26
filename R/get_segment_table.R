@@ -211,8 +211,10 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   ar_stuff = unpack_arma(ar_term)  # $order and $form_str
   ar_form = get_term_content(ar_stuff$form_str)
 
+  # Populate each of these for each order of AR
   ar_int = list()  # Populate this with intercepts for each order
   ar_slope = list()  # Populate this with slopes for each order
+  ar_code = list()
   if (!is.na(ar_stuff$order)) {
     for (order in seq_len(ar_stuff$order)) {
       # Set last_segment = NA if the AR order was lower order in the last segment, thus not defined...
@@ -221,17 +223,20 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
       } else if (order > length(last_segment$ar_slope[[1]])) {
         this_last = NA
       } else {
-        this_last = last_segment$ar_slope[[1]][[order]][["slope"]]
+        this_last = last_segment$ar_slope[[1]][[order]]
       }
 
       # Get intercept and slope like we're used to
       ar_par_name = paste0("ar", order)  # ar1, ar2, ...
       ar_int[[order]] = unpack_int(ar_form, i, ar_par_name)
-      ar_slope[[order]] = unpack_slope(ar_form, i, ar_par_name, this_last)
+      tmp = unpack_slope(ar_form, i, ar_par_name, this_last)
+      ar_slope[[order]] = tmp$slope
+      ar_code[[order]] = tmp$code
     }
   } else {
     ar_int[[1]] = NA
-    ar_slope[[1]] = list(slope = NA, code = NA)
+    ar_slope[[1]] = NA
+    ar_code[[1]] = NA
   }
   term.labels = term.labels[!ar_term_index]  # Remove from list of all terms
 
@@ -245,8 +250,11 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   ma_stuff = unpack_arma(ma_term)  # $order and $form_str
   ma_form = get_term_content(ma_stuff$form_str)
 
+  # Populate each of these for each order of MA
   ma_int = list()  # Populate this with intercepts for each order
   ma_slope = list()  # Populate this with slopes for each order
+  ma_code = list()
+
   if (!is.na(ma_stuff$order)) {
     for (order in seq_len(ma_stuff$order)) {
       # Set last_segment = NA if the MA order was lower order in the last segment, thus not defined...
@@ -255,17 +263,20 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
       } else if (order > length(last_segment$ma_slope[[1]])) {
         this_last = NA
       } else {
-        this_last = last_segment$ma_slope[[1]][[order]][["slope"]]
+        this_last = last_segment$ma_slope[[1]][[order]]
       }
 
       # Get intercept and slope like we're used to
       ma_par_name = paste0("ma", order)  # ma1, ma2, ...
       ma_int[[order]] = unpack_int(ma_form, i, ma_par_name)
-      ma_slope[[order]] = unpack_slope(ma_form, i, ma_par_name, this_last)
+      tmp = unpack_slope(ma_form, i, ma_par_name, this_last)
+      ma_slope[[order]] = tmp$slope
+      ma_code[[order]] = tmp$code
     }
   } else {
     ma_int[[1]] = NA
-    ma_slope[[1]] = list(slope = NA, code = NA)
+    ma_slope[[1]] = NA
+    ma_code[[1]] = NA
   }
   term.labels = term.labels[!ma_term_index]  # Remove from list of all terms
 
@@ -305,8 +316,8 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   #################
   par_x = stats::na.omit(unique(c(
     ifelse(!is.na(sigma_slope$slope), sigma_slope$slope$par_x, NA),
-    ifelse(!is.na(ar_slope[[1]][['slope']]), ar_slope[[1]][['slope']]$par_x, NA),  # if it's in order 2+, it's also in order1
-    ifelse(!is.na(ma_slope[[1]][['slope']]), ma_slope[[1]][['slope']]$par_x, NA),  # if it's in order 2+, it's also in order1
+    ifelse(!is.na(ar_slope[[1]]), ar_slope[[1]]$par_x, NA),  # if it's in order 2+, it's also in order1
+    ifelse(!is.na(ma_slope[[1]]), ma_slope[[1]]$par_x, NA),  # if it's in order 2+, it's also in order1
     ifelse(!is.na(ct_slope$slope), ct_slope$slope$par_x, NA)
   )))
   if (length(par_x) > 1) {
@@ -336,10 +347,12 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
     # AR stuff
     ar_int = list(ar_int),
     ar_slope = list(ar_slope),
+    ar_code = list(ar_code),
 
     # MA stuff
     ma_int = list(ma_int),
-    ma_slope = list(ma_slope)
+    ma_slope = list(ma_slope),
+    ma_code = list(ma_code)
   ))
 }
 
