@@ -301,13 +301,13 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   ###################
   # VARYING EFFECTS #
   ###################
-  ct_varying_terms = as.character(findbars(form_rhs))
-  if (length(ct_varying_terms) > 0) {
-    ct_varying = lapply(ct_varying_terms, unpack_varying_term, i = i) %>%
-      dplyr::bind_rows()
-  } else {
-    ct_varying = NA
-  }
+  # ct_varying_terms = as.character(findbars(form_rhs))
+  # if (length(ct_varying_terms) > 0) {
+  #   ct_varying = lapply(ct_varying_terms, unpack_varying_term, i = i) %>%
+  #     dplyr::bind_rows()
+  # } else {
+  #   ct_varying = NA
+  # }
 
 
 
@@ -337,7 +337,7 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
     ct_int = list(ct_int),
     ct_code = ct_slope$code,  # must be before ct_slope is defined locally below
     ct_slope = list(ct_slope$slope),
-    ct_varying = list(ct_varying),
+    #ct_varying = list(ct_varying),
 
     # Sigma stuff
     sigma_int = list(sigma_int),
