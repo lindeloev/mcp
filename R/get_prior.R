@@ -237,6 +237,14 @@ get_prior = function(ST, family, prior = list()) {
   # Replace default priors with user prior and return
   prior = utils::modifyList(default_prior, prior)
 
-  # Sort by name and return
-  prior[order(names(prior))]
+  # Sort according to type
+  i_cp = stringr::str_starts(names(prior), "cp_")
+  i_ints = stringr::str_starts(names(prior), "int_")
+  i_slopes = stringr::str_starts(names(prior), paste0(ST$x[1], "_"))
+  i_sigma = stringr::str_starts(names(prior), "sigma_")
+  i_ar = stringr::str_starts(names(prior), "ar[0-9]+")
+  i_ma = stringr::str_starts(names(prior), "ma[0-9]+")
+
+  prior = c(prior[i_cp], prior[i_ints], prior[i_slopes], prior[i_sigma], prior[i_ar], prior[i_ma])
+  return(prior)
 }
