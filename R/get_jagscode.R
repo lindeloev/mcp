@@ -44,22 +44,18 @@ model {
 
   # Autocorrelation
   if (!is.null(ar_order)) {
-    # if (is.null(prior[["phi"]]))
-    #   stop("Internal error: got ar_order but no prior is defined for phi. Please report this on GitHub.")
-
-  #   mm = paste0(mm, "
-  # # Population-level autocorrelation coefficients for AR(", ar_order, ")
-  # for(i in 1:", ar_order, ") {
-  #   phi[i] ~ ", prior[["phi"]], "
-  # }")
-
     # Add computation of autocorrelated residuals
-    mm = paste0(mm, ar_code(ar_order, xvar = ST$x[1], yvar = ST$y[1]))
+    mm = paste0(mm, ar_code(ar_order, ST, family))
 
+    # Inverse link and (sometimes) correlated residual
     y_code = ifelse(is.null(ar_order), "", "y_[i_] + sum(resid_[i_, ])")
   } else {
     y_code = "y_[i_]"
   }
+
+  # Add inverse link function to back-transform to observed metric
+  if (family$link != "")  # not identity
+    y_code = paste0(family$linkinv_jags, "(", y_code, ")")
 
 
 
@@ -83,24 +79,22 @@ model {
   mm = paste0(mm, gsub("\n", "\n    ", formula_jags))
 
   # Finally the likelihood
-  mm = paste0(mm, "\n\n    # Likelihood and log-density for family = ", family, "()
-    ", ST$y[1], "[i_] ~ ")
+  mm = paste0(mm, "\n\n    # Likelihood and log-density for family = ", family$family, "()
+    ")
 
-  if (family == "gaussian") {
-    mm = paste0(mm, "dnorm(", y_code, ", 1 / sigma_[i_]^2)
+  if (family$family == "gaussian") {
+    mm = paste0(mm, ST$y[1], "[i_] ~ dnorm(", y_code, ", 1 / sigma_[i_]^2)
     loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], ", y_code, ", 1 / sigma_[i_]^2)")
 
-  } else if (family == "binomial") {
-    # ilogit = inverse logit
-    mm = paste0(mm, "dbin(ilogit(", y_code, "), ", ST$trials[1], "[i_])
-    loglik_[i_] = logdensity.bin(", ST$y[1], "[i_], ilogit(", y_code, "), ", ST$trials[1], "[i_])")
-  } else if (family == "bernoulli") {
-    mm = paste0(mm, "dbern(ilogit(y_[i_]", y_code, "))
-    loglik_[i_] = logdensity.bern(", ST$y[1], "[i_], ilogit(", y_code, "))")
-  } else if (family == "poisson") {
-    # exp is inverse of log
-    mm = paste0(mm, "dpois(exp(", y_code, "))
-    loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], exp(", y_code, "))")
+  } else if (family$family == "binomial") {
+    mm = paste0(mm, ST$y[1], "[i_] ~ dbin(", y_code, ", ", ST$trials[1], "[i_])
+    loglik_[i_] = logdensity.bin(", ST$y[1], "[i_], ", y_code, ", ", ST$trials[1], "[i_])")
+  } else if (family$family == "bernoulli") {
+    mm = paste0(mm, ST$y[1], "[i_] ~ dbern(", y_code, ")
+    loglik_[i_] = logdensity.bern(", ST$y[1], "[i_], ", y_code, ")")
+  } else if (family$family == "poisson") {
+    mm = paste0(mm, ST$y[1], "[i_] ~ dpois(", y_code, ")
+    loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], ", y_code, ")")
   }
 
   # If only the prior is sampled, remove the loglik_[i_] line
@@ -221,14 +215,21 @@ sd_to_prec = function(prior_str) {
 #'
 #' @aliases ar_code
 #' @inheritParams get_jagscode
-ar_code = function(ar_order, xvar, yvar) {
+ar_code = function(ar_order, ST, family) {
   code = ""
   for(i in seq_len(ar_order)) {
+    # Get code for link(y[i - order])
+    if (family$family != "binomial") {
+      y_obs = paste0(family$link_jags, "(", ST$y[1], "[i_ - ", i, "])")
+    } else {
+      y_obs = paste0(family$link_jags, "(", ST$y[1], "[i_ - ", i, "] / ", ST$trials[1], "[i_ - ", i, "])")
+    }
+
     code = paste0(code, "
 
   # AR(", i, ") residuals:
   resid_[1:", i, ", ", i, "] = c(", paste0(rep("0", i), collapse = ","), ")
-  for(i_ in ", i + 1, ":length(", xvar, ")) {resid_[i_, ", i, "] = phi_", i, " * (y_[i_-", i, "] - ", yvar, "[i_ - ", i, "])}")
+  for(i_ in ", i + 1, ":length(", ST$x[1], ")) {resid_[i_, ", i, "] = phi", i, " * (y_[i_-", i, "] - ", y_obs, ")}")
   }
   return(code)
 }
