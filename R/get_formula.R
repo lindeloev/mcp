@@ -1,3 +1,23 @@
+get_all_formulas = function(ST, prior, par_x) {
+  # Initiate with central tendency
+  formula_str = get_formula_str(ST, par_x, ytype = "ct", init = TRUE)
+
+  # Add sigma
+  if(any(stringr::str_starts(names(prior), "sigma_"))) {
+    formula_str = paste0(formula_str, "\n\n",
+                         get_formula_str(ST, par_x, ytype = "sigma"))
+  }
+
+  # Add arma
+  all_arma = names(prior)[stringr::str_starts(names(prior), "(^ar|^ma)[0-9]")]  # All priors starting with ar[number] or ma[number]
+  arma_bases = unique(sub("*([0-9]+)_.*$", "\\1", all_arma))  # extract these starts
+  for(arma_base in arma_bases) {
+    formula_str = paste0(formula_str, "\n\n",
+                         get_formula_str(ST, par_x, ytype = arma_base))
+  }
+}
+
+
 #' Build an R formula (as string) given a segment table (ST)
 #'
 #' You will need to replace PAR_X for whatever your x-axis observation column
@@ -12,6 +32,10 @@
 get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
   # Build this! Start empty...
   formula_str = ""
+
+  ############
+  # Initiate #
+  ############
 
   # Optionally add X-helpers which code the X relative to the start of each segment.
   # Used to compute slopes so that they start in the beginning of each segment.
@@ -37,6 +61,9 @@ get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
   }
 
   for (i in seq_len(nrow(ST))) {
+    #######################
+    # GET MODEL FOR YTYPE #
+    #######################
     # Define int, slope_table, and slope_code given ytype.
     # This is possible since the code below does the same for all of them
     # The code below is quite verbose/hard-coded, but using eval(parse(text = "S$", ytype, "_slope....")) got too convoluted
@@ -94,6 +121,11 @@ get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
     } else {
       stop("Got wrong argument for ytype: ", ytype, ". Report an issue on GitHub if you see this.")
     }
+
+
+    ########################
+    # BUILD FORMULA STRING #
+    ########################
 
     # FUTURE_REL will sometimes be replaced by a less-than indicator (ind_past).
     # cp_code_form includes varying effects

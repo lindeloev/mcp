@@ -255,13 +255,9 @@ mcp = function(segments,
   pars_population = names(prior)[!names(prior) %in% pars_varying]  # Simply the absence of varying pars
 
   # Make formula_str and func_y
-  formula_str = get_formula_str(ST, par_x)
-  if (family$family == "gaussian") {
-    formula_str_sigma = get_formula_str(ST, par_x, sigma = TRUE)
-    formula_str = paste0(formula_str, "\n\n", formula_str_sigma)
-  }
+  formula_str = get_all_formulas(ST, par_x)
 
-  pars_funcy = pars_population[!pars_population %in% ST$cp_sd]
+  pars_funcy = pars_population[!pars_population %in% ST$cp_sd]  # This isn't used for simulation
   func_y = get_func_y(formula_str, par_x, par_trials, pars_funcy, pars_varying, nrow(ST), family)
 
   # Make jags code and sample it.
