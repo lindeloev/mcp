@@ -142,7 +142,7 @@ mcp = function(segments,
                data = NULL,
                prior = list(),
                family = gaussian(),
-               autocor = NULL,
+               #autocor = NULL,
                par_x = NULL,
                sample = "post",
                cores = 1,
@@ -182,7 +182,7 @@ mcp = function(segments,
   if (any(which_duplicated))
     stop("`prior` has duplicated entries for the same parameter: ", paste0(names(prior)[which_duplicated]), collapse = ", ")
 
-  # Check family
+  # Check and recode family
   if (class(family) != "family")
     stop("`family` must be one of gaussian() or binomial()")
 
@@ -198,21 +198,27 @@ mcp = function(segments,
   if (family$family == "poisson" & !family$link %in% c("log"))
     stop("'log' is currently the only supported link function for poisson().")
 
+  # if (family$family %in% c("bernoulli", "binomial") & !is.null(autocor))
+  #   stop("`autocor` is not yet supported for Bernoulli and binomial families.")
+
+  family = get_family(family$family, family$link)  # convert to mcp family
+
+
   # Check other stuff
   if (!is.null(par_x) & !is.character(par_x))
     stop("`par_x` must be NULL or a string.")
 
 
-  # Check and recode autocor --> ar_order
-  if (!is.null(autocor)) {
-    if(stringr::str_detect(autocor, "AR\\([0-9]+\\)")) {
-      ar_order = as.numeric(gsub("AR\\(|\\)", "", autocor))
-    } else {
-      stop("`autocor` can currently only by NULL or 'AR(N)' where N is a positive integer. ")
-    }
-  } else {
-    ar_order = NULL
-  }
+  # # Check and recode autocor --> ar_order
+  # if (!is.null(autocor)) {
+  #   if(stringr::str_detect(autocor, "AR\\([0-9]+\\)")) {
+  #     ar_order = as.numeric(gsub("AR\\(|\\)", "", autocor))
+  #   } else {
+  #     stop("`autocor` can currently only by NULL or 'AR(N)' where N is a positive integer. ")
+  #   }
+  # } else {
+  #   ar_order = NULL
+  # }
 
   # Sampler settings
   if (!sample %in% c("post", "prior", "both") & !is.logical(sample))
@@ -237,14 +243,14 @@ mcp = function(segments,
 
 
   # Get an abstract segment table ("ST")
-  ST = get_segment_table(segments, data, family$family, par_x)
+  ST = get_segment_table(segments, data, family, par_x)
 
   par_x = unique(ST$x)
   par_y = unique(ST$y)
   par_trials = unique(ST$trials)
 
   # Get prior and lists of parameters
-  prior = get_prior(ST, family$family, prior, ar_order)
+  prior = get_prior(ST, family, prior)
   pars_varying = logical0_to_null(c(stats::na.omit(ST$cp_group)))
   pars_population = names(prior)[!names(prior) %in% pars_varying]  # Simply the absence of varying pars
 
@@ -256,10 +262,10 @@ mcp = function(segments,
   }
 
   pars_funcy = pars_population[!pars_population %in% ST$cp_sd]
-  func_y = get_func_y(formula_str, par_x, par_trials, pars_funcy, pars_varying, nrow(ST), family$family)
+  func_y = get_func_y(formula_str, par_x, par_trials, pars_funcy, pars_varying, nrow(ST), family)
 
   # Make jags code and sample it.
-  jags_code = get_jagscode(prior, ST, formula_str, family$family, ar_order, sample)
+  jags_code = get_jagscode(prior, ST, formula_str, family, ar_order, sample)
 
   # Sample posterior
   if (sample %in% c("post", "both")) {
