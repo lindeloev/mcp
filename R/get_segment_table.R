@@ -486,23 +486,25 @@ unpack_slope_term = function(term, i, last_slope, ttype = "") {
   rel_x_code = paste0("X_", i, "_[i_]")  # x relative to segment start. Must match that inserted in get_formula()
   if (stringr::str_detect(term, exponent_regex)) {
     # Exponential
-    slope_base = gsub("\\^", "E", term)
+    exponent = sub(".*\\^([1-9.]+)$", "\\1", term)
+    name = paste0(par_x, "_", i, "_E", exponent)  # e.g., x_i_E2
     term_recode = gsub(paste0("^", par_x, "\\^"), paste0(rel_x_code, "\\^"), term)
   } else if (stringr::str_detect(term, funcs_regex)) {
     # A simple function
-    slope_base = gsub("\\(", "_", term)  # Replace first parenthesis with underscore
-    slope_base = gsub("\\)$", "", slope_base)  # Remove second (last) parenthesis
+    name = paste0(par_x, "_", i, "_", sub("\\(.*", "\\2", term))  # e.g., x_i_log
     term_recode = gsub(paste0("\\(", par_x), paste0("(", rel_x_code), term)
   } else if (term == par_x) {
     # No function; just vanilla :-)
-    slope_base = par_x
+    name = paste0(par_x, "_", i)
     term_recode = rel_x_code
   } else {
     stop("mcp failed for term ", term, ". If there is no obvious reason why, please raise an issue at GitHub.")
   }
 
+  # Add sigma_name, ma_name, or ar_name
+  name = paste0(ttype, name)
+
   # Add the corresponding term from the last segment if this slope is relative
-  name = paste0(ttype, slope_base, "_", i)
   if (rel == FALSE) {
     name_cumul = name
     code = paste0(name, " * ", term_recode)
