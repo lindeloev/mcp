@@ -17,7 +17,7 @@ sigma_prior = list(
 
 arma_prior = list(
   arma_int = "dunif(-1, 1)",
-  arma_slope = "dnorm(0, 1)"
+  arma_slope = "dnorm(0, 1 / (MAXX - MINX))"  # 68% of changing 1 over the observed x values
 )
 
 
@@ -30,12 +30,12 @@ priors = list(
 
   # Identical priors for binomial and bernoulli.
   # A logit of +/- 5 is quite extreme. Very compatible with 3
-  binomial = c(cp_prior, list(
+  binomial = c(cp_prior, arma_prior, list(
     ct_slope = "dnorm(0, 3 / (MAXX - MINX))",
     ct_int = "dnorm(0, 3)"
   )),
 
-  bernoulli = c(cp_prior, list(
+  bernoulli = c(cp_prior, arma_prior, list(
     ct_slope = "dnorm(0, 3 / (MAXX - MINX))",
     ct_int = "dnorm(0, 3)"
   )),
@@ -183,18 +183,17 @@ get_prior = function(ST, family, prior = list()) {
       }
     }
 
-    # MA
-    # We know that S$ma_int and S$ma_slope have the same order
-    n_ma = sum(!is.na(S$ma_int[[1]]))  # Number of ma intercepts
-    for (order in seq_len(n_ma)) {
-      # Intercept
-      if (!all(is.na(S$ma_int[[1]][[order]]) == TRUE)) {  # If this intercept exists...
+    # MA intercept
+    for (order in seq_len(sum(!is.na(S$ma_int[[1]])))) {  # Number of entries in int
+      #if (!all(is.na(S$ma_int[[1]][[order]]) == TRUE)) {  # If this intercept exists...
         for (name in S$ma_int[[1]][[order]]$name) {
           default_prior[[name]] = priors[[family$family]]$arma_int
         }
-      }
+      #}
+    }
 
-      # Slope
+    # MA slope
+    for (order in seq_len(length(S$ma_slope[[1]]))) {  # Number of entries in slope
       if (!all(is.na(S$ma_slope[[1]][[order]]) == TRUE)) {  # If this slope exists...
         for (name in S$ma_slope[[1]][[order]]$name) {
           default_prior[[name]] = priors[[family$family]]$arma_slope
@@ -202,18 +201,17 @@ get_prior = function(ST, family, prior = list()) {
       }
     }
 
-    # AR
-    # We know that S$ar_int and S$ar_slope have the same order
-    n_ar = sum(!is.na(S$ar_int[[1]]))  # Number of ma intercepts
-    for (order in seq_len(n_ar)) {
-      # Intercept
-      if (!all(is.na(S$ar_int[[1]][[order]]) == TRUE)) {  # If this intercept exists...
+    # AR intercept
+    for (order in seq_len(sum(!is.na(S$ar_int[[1]])))) {  # Number of entries in int
+      #if (!all(is.na(S$ar_int[[1]][[order]]) == TRUE)) {  # If this intercept exists...
         for (name in S$ar_int[[1]][[order]]$name) {
           default_prior[[name]] = priors[[family$family]]$arma_int
         }
-      }
+      #}
+    }
 
-      # Slope
+    # AR slope
+    for (order in seq_len(length(S$ar_slope[[1]]))) {  # Number of entries in slope
       if (!all(is.na(S$ar_slope[[1]][[order]]) == TRUE)) {  # If this slope exists...
         for (name in S$ar_slope[[1]][[order]]$name) {
           default_prior[[name]] = priors[[family$family]]$arma_slope

@@ -358,18 +358,18 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
 
 
 get_term_content = function(form_str_in) {
-  # Get formula inside wrapper
-  content_start = stringr::str_locate(form_str_in, "\\(") + 1  # Location of first character in contents
-  content_end = stringr::str_length(form_str_in) - 1  # Location of last character in contents
-  content = substr(form_str_in, content_start, content_end)
-
   # Handle cases of no input or several inputs
   if (length(form_str_in) == 0) {
     return(NA)
   } else if (length(form_str_in) > 1) {
-    term_type = paste0(substr(form_str_in, 0, content_start), ")")
-    stop("Only one ", term_type, " allowed in each formula.")
+    #term_type = paste0(substr(form_str_in, 0, content_start), ")")
+    stop("Only one ", form_str_in, " allowed in each formula.")
   } else if (length(form_str_in) == 1) {
+    # Get formula inside wrapper
+    content_start = stringr::str_locate(form_str_in, "\\(") + 1  # Location of first character in contents
+    content_end = stringr::str_length(form_str_in) - 1  # Location of last character in contents
+    content = substr(form_str_in, content_start, content_end)
+
     form = as.formula(paste0("~", content), env = globalenv())
     return(form)
   }
@@ -476,7 +476,7 @@ unpack_slope_term = function(term, i, last_slope, ttype = "") {
   # Regular expressions. Only recognize stuff that is identical between JAGS and base R
   func_list = c("abs", "cos", "exp", "log", "sin", "sqrt", "tan")
   funcs_regex = paste0("^", func_list, "\\(", collapse = "|")  # ^abs(|^cos(|...
-  exponent_regex = "\\^[0-9.]+$"  # something^[number]
+  exponent_regex = "\\^\\(?([0-9.-]+)\\)?$"  # something^[number] where [number] can be e.g., "(-1.5)
   end_regex = "\\)$"
 
   # Find par_x by removing everything associated with accepted functions
@@ -486,8 +486,9 @@ unpack_slope_term = function(term, i, last_slope, ttype = "") {
   rel_x_code = paste0("X_", i, "_[i_]")  # x relative to segment start. Must match that inserted in get_formula()
   if (stringr::str_detect(term, exponent_regex)) {
     # Exponential
-    exponent = sub(".*\\^([1-9.]+)$", "\\1", term)
-    name = paste0(par_x, "_", i, "_E", exponent)  # e.g., x_i_E2
+    exponent = sub(".*\\^\\(?([0-9.-]+)\\)?$", "\\1", term)
+    check_integer(as.numeric(exponent), term, lower = 0)  # JAGS does not allow for negative or decimal exponents. (TO DO: check if implementing stan version)
+    name = paste0(par_x, "_", i, "_E", sub("-", "m", exponent))  # e.g., x_i_E2
     term_recode = gsub(paste0("^", par_x, "\\^"), paste0(rel_x_code, "\\^"), term)
   } else if (stringr::str_detect(term, funcs_regex)) {
     # A simple function
@@ -532,6 +533,8 @@ unpack_arma = function(form_str_in) {
       order = NA,
       form_str = NA
     ))
+  } else if (length(form_str_in) > 1) {
+    stop("Only one of these allowed per segment: ", form_str_in)
   }
 
   # GET ORDER
@@ -539,11 +542,13 @@ unpack_arma = function(form_str_in) {
   order_end = stringr::str_locate(form_str_in, ",") - 1  # Where is comma? If no comma, this returns NA, NA
   has_formula = !all(is.na(order_end))  # Is there a formula (a comma?)
   if (!has_formula)
-    order_end = stringr::str_length(form_str_in) - 1
+    order_end = stringr::str_length(form_str_in) - 1  # No formula; just remove the end parenthesis
+  order = suppressWarnings(as.numeric(substr(form_str_in, order_start, order_end)))
 
-  order = as.numeric(substr(form_str_in, order_start, order_end))
+  # Check the order
   if (is.na(order))
-    stop("Wrong specification of order in '", form_str_in, "'. Must be ar(order) or ar(order, formula).")
+    stop("Wrong specification of order in '", form_str_in, "'. Must be ar(order) or ar(order, formula) where order is a positive integer.")
+  check_integer(order, form_str_in, lower = 1)
 
   # GET FORMULA
   if (has_formula) {
@@ -775,24 +780,4 @@ format_code = function(col, na_col) {
   # Add parenthesis if this is an equation
   col = ifelse(stringr::str_detect(col, "\\+"), paste0("(", col, ")"), col)
   col
-}
-
-
-#' Throws an error if a number/vector contains non-numeric, decimal, or less-than-lower
-#'
-#' The expected behavior of is.integer, with informative error messages.
-#'
-#' @aliases check_integer
-#' @param x Numeric value or vector
-#' @param name Name to show in error message.
-#' @param lower the smallest allowed value. lower = 1 checks for positive integers.
-#'
-check_integer = function(x, name, lower = -Inf) {
-  greater_than = ifelse(lower == -Inf, " ", paste0(" >= ", lower, " "))
-  if (!is.numeric(x))
-    stop("Only integers", greater_than, "allowed for '", name, "'")
-  if (!all(x == floor(x)) | !all(x >= lower))
-    stop("Only integers", greater_than, "allowed for '", name, "'")
-
-  TRUE
 }
