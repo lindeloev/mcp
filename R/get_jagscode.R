@@ -8,7 +8,7 @@
 #' @return String. A JAGS model.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-get_jagscode = function(prior, ST, formula_str, family, ar_order, sample) {
+get_jagscode = function(prior, ST, formula_str, arma_order, family, sample) {
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
   mm = paste0("
@@ -42,15 +42,13 @@ model {
     }
   }
 
-  # Autocorrelation
-  if (!is.null(ar_order)) {
+  # Autocorrelation: detect if there is an intercept or slope on AR
+  y_code = "y_[i_]"
+  has_ar = !all(is.na(unlist(ST$ar_code))) | !all(is.na(unlist(ST$ar_int)))
+  if (has_ar) {
     # Add computation of autocorrelated residuals
-    mm = paste0(mm, ar_code(ar_order, ST, family))
-
-    # Inverse link and (sometimes) correlated residual
-    y_code = ifelse(is.null(ar_order), "", "y_[i_] + sum(resid_[i_, ])")
-  } else {
-    y_code = "y_[i_]"
+    mm = paste0(mm, ar_code(arma_order, ST, family))
+    y_code = paste0(y_code, " + sum(ar__[i_, ])")
   }
 
   # Add inverse link function to back-transform to observed metric
@@ -227,9 +225,9 @@ ar_code = function(ar_order, ST, family) {
 
     code = paste0(code, "
 
-  # AR(", i, ") residuals:
-  resid_[1:", i, ", ", i, "] = c(", paste0(rep("0", i), collapse = ","), ")
-  for(i_ in ", i + 1, ":length(", ST$x[1], ")) {resid_[i_, ", i, "] = phi", i, " * (y_[i_-", i, "] - ", y_obs, ")}")
+  # AR(", i, ") on residuals:
+  ar__[1:", i, ", ", i, "] = c(", paste0(rep("0", i), collapse = ","), ")
+  for(i_ in ", i + 1, ":length(", ST$x[1], ")) {ar__[i_, ", i, "] = ar", i, "_[i_] * (", y_obs, " - y_[i_-", i, "])}")
   }
   return(code)
 }
