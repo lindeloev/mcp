@@ -143,13 +143,6 @@ get_prior = function(ST, family, prior = list()) {
   # Populate this list
   default_prior = list()
 
-  # # Add MA priors
-  # if (is.numeric(ar_order)) {
-  #   for(i in seq_len(ar_order)) {
-  #     default_prior[[paste0("phi", i)]] = priors[[family$family]]$phi
-  #   }
-  # }
-
   # Add model-specific paramters
   for (i in seq_len(nrow(ST))) {
     # Helper: Current segment.

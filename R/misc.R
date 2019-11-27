@@ -87,13 +87,18 @@ logical0_to_null = function(x) {
 
 #' Extracts the order from ARMA parameter name(s)
 #'
-#' If several names are provided (vector), it returns the maximum.
+#' If several names are provided (vector), it returns the maximum. If `pars_arma`
+#' is an empty string, it returns `0`.
 #'
 #' @aliases get_arma_order
 #' @param pars_arma Character vector
 #' @return integer
 get_arma_order = function(pars_arma) {
-  order_str = sub("(ma|ar)([0-9]+).*", "\\2", pars_arma)
-  order_max = max(as.numeric(order_str))
-  return(order_max)
+  if (length(pars_arma) > 0) {
+    order_str = sub("(ma|ar)([0-9]+).*", "\\2", pars_arma)
+    order_max = max(as.numeric(order_str))
+    return(order_max)
+  } else {
+    return(0)
+  }
 }

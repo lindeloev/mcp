@@ -15,9 +15,17 @@
 #'   has the format `response ~ predictors` while the following formulas
 #'   have the format `response ~ changepoint ~ predictors`. The response
 #'   and change points can be omitted (`changepoint ~ predictors` assumes same
-#'   response. `~ predictors` assumes an intercept-only change point).
+#'   response. `~ predictors` assumes an intercept-only change point). Segments
+#'   can model
 #'
-#'   See examples for more details.
+#'   * *Regular formulas:* e.g., `~ 0 + x + I(x^2) + exp(x)`). [Read more here](https://lindeloev.github.io/mcp/articles/formulas.html).
+#'
+#'   * *Variance:* e.g., `~sigma(1)` for a simple variance change or
+#'     `~sigma(rel(1) + I(x^2))`) for more advanced variance structures. [Read more here](https://lindeloev.github.io/mcp/articles/variance.html)
+#'
+#'   * *Aautoregression:* e.g., `~ar(1)` for a simple onset/change in AR(1) or
+#'     `ar(2, 0 + x`) for an AR(2) with parameter(s) increasing by `x`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html)
+#'
 #' @param prior Named list. Names are parameter names (`cp_i`, `int_i`, `xvar_i`,
 #'  `sigma``) and the values are either
 #'
@@ -35,11 +43,6 @@
 #'      they will need to have the same grouping variable.
 #' @param family One of `gaussian()`, `binomial()`, `bernoulli()`, or `poission()`.
 #'   Only default link functions are currently supported.
-#' @param autocor String. `"AR(N)"` where N is the autoregressive order. AR applies
-#'   to the residuals, as is common. For example `"AR(1)` is an order-1 autoregressive
-#'   model and `phi` is inferred like this: `resid[i] = phi * (obs[i-1] - pred[i-1])`.
-#'   One `phi` is estimated for each `N`. The default is `autocor = NULL`, i.e.,
-#'   no autocorrelation is modeled.
 #' @param par_x String (default: NULL). Only relevant if no segments contains
 #'   slope (no hint at what x is). Set this, e.g., par_x = "time".
 #' @param sample One of
@@ -142,7 +145,6 @@ mcp = function(segments,
                data = NULL,
                prior = list(),
                family = gaussian(),
-               #autocor = NULL,
                par_x = NULL,
                sample = "post",
                cores = 1,
@@ -212,18 +214,6 @@ mcp = function(segments,
   if (!is.null(par_x) & !is.character(par_x))
     stop("`par_x` must be NULL or a string.")
 
-
-  # # Check and recode autocor --> ar_order
-  # if (!is.null(autocor)) {
-  #   if(stringr::str_detect(autocor, "AR\\([0-9]+\\)")) {
-  #     ar_order = as.numeric(gsub("AR\\(|\\)", "", autocor))
-  #   } else {
-  #     stop("`autocor` can currently only by NULL or 'AR(N)' where N is a positive integer. ")
-  #   }
-  # } else {
-  #   ar_order = NULL
-  # }
-
   # Sampler settings
   if (!sample %in% c("post", "prior", "both") & !is.logical(sample))
     stop("`sample` must be 'post', 'prior', 'both', or 'none'/FALSE")
@@ -265,7 +255,6 @@ mcp = function(segments,
   pars_varying = logical0_to_null(c(stats::na.omit(ST$cp_group)))
   pars_sigma = all_pars[stringr::str_detect(all_pars, "^sigma_")]
   pars_arma = all_pars[stringr::str_detect(all_pars, "(^ar|^ma)[0-9]")]
-  #pars_population = names(prior)[!names(prior) %in% pars_varying]  # Simply the absence of varying pars
   pars_reg = all_pars[!all_pars %in% c(pars_varying, pars_sigma, pars_arma)]  # Everything that's left!
 
   # Make formula_str and func_y
@@ -379,5 +368,3 @@ mcp = function(segments,
   # Return it
   mcpfit
 }
-
-
