@@ -87,7 +87,7 @@ run_jags = function(data,
     print(proc.time() - timer)  # Return time
     return(samples)
   } else {
-    warning("--------------\nJAGS failed with the above error. This is often caused by priors which allow for impossible values, such as negative standard deviations, probabilities outside [0, 1], etc.\n\nAnother class of error is directed cycles: when using a parameter to set a prior for another parameter, it may end up ultimately predicting itself.\n\nReturning an `mcpfit` without samples. Inspect fit$prior and cat(fit$jags_code) to identify the problem.")
+    warning("--------------\nJAGS failed with the above error. Returning an `mcpfit` without samples. Inspect fit$prior and cat(fit$jags_code) to identify the problem.\n\nRead about typical causes and fixes here: https://lindeloev.github.io/mcp/articles/debug.html.")
     return(NULL)
   }
 }
