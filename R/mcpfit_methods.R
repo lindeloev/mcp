@@ -183,6 +183,16 @@ print.mcpfit = function(x, ...) {
   summary(x)
 }
 
+#' Print mcpprior
+#'
+#' The mcpprior is just a list, but it can be displayed in a more condensed
+#' way using cbind.
+print.mcpprior = function(x, ...) {
+  to_print = cbind(x)
+  colnames(to_print) = "prior"
+  print(to_print)
+}
+
 
 #' Internal function to get samples.
 #'
@@ -191,7 +201,7 @@ print.mcpfit = function(x, ...) {
 #' works on both.
 #'
 #' @aliases get_samples
-#' @inheritParams summary.mcpfit  # prior
+#' @inheritParams summary.mcpfit
 #' @param fit An mcpfit object
 #' @param message TRUE: gives a message if returning prior samples. FALSE = no message
 #' @param error TRUE: err if there are no samples. FALSE: return NULL

@@ -246,5 +246,6 @@ get_prior = function(ST, family, prior = list()) {
   i_ma = stringr::str_starts(names(prior), "ma[0-9]+")
 
   prior = c(prior[i_cp], prior[i_ints], prior[i_slopes], prior[i_sigma], prior[i_ar], prior[i_ma])
+  class(prior) = "mcpprior"
   return(prior)
 }
