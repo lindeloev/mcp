@@ -153,6 +153,10 @@ mcp = function(segments,
                jags_explicit = NULL,
                ...) {
 
+  ################
+  # CHECK INPUTS #
+  ################
+
   # Check data
   if (is.null(data) & sample == TRUE)
     stop("Cannot sample without data.")
@@ -242,33 +246,49 @@ mcp = function(segments,
     warning("Parallel sampling (`cores` > 1) has been shown to err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
 
 
-  # Get an abstract segment table ("ST")
+  ##################
+  # MODEL BUILDING #
+  ##################
+  # Make an abstract table representing the segments and their relations.
+  # ("ST" for "segment table").
   ST = get_segment_table(segments, data, family, par_x)
 
   par_x = unique(ST$x)
   par_y = unique(ST$y)
   par_trials = unique(ST$trials)
 
-  # Get prior and lists of parameters
+  # Make prior
   prior = get_prior(ST, family, prior)
+
+  # Make lists of parameters
+  all_pars = names(prior)  # There is a prior for every parameter
   pars_varying = logical0_to_null(c(stats::na.omit(ST$cp_group)))
-  pars_population = names(prior)[!names(prior) %in% pars_varying]  # Simply the absence of varying pars
+  pars_sigma = all_pars[stringr::str_detect(all_pars, "^sigma_")]
+  pars_arma = all_pars[stringr::str_detect(all_pars, "(^ar|^ma)[0-9]")]
+  #pars_population = names(prior)[!names(prior) %in% pars_varying]  # Simply the absence of varying pars
+  pars_reg = all_pars[!all_pars %in% c(pars_varying, pars_sigma, pars_arma)]  # Everything that's left!
 
   # Make formula_str and func_y
-  formula_str = get_all_formulas(ST, par_x)
+  formula_str_funcy = get_all_formulas(ST, prior, par_x, ytypes = c("ct", "sigma"))  # Without ARMA
+  pars_funcy = c(pars_reg[!pars_reg %in% ST$cp_sd], pars_sigma)  # arma and varying SD is not used for simulation
+  func_y = get_func_y(formula_str_funcy, par_x, par_trials, pars_funcy, pars_varying, nrow(ST), family)
 
-  pars_funcy = pars_population[!pars_population %in% ST$cp_sd]  # This isn't used for simulation
-  func_y = get_func_y(formula_str, par_x, par_trials, pars_funcy, pars_varying, nrow(ST), family)
+  # Make jags code
+  max_arma_order = get_arma_order(pars_arma)
+  formula_str_jags = get_all_formulas(ST, prior, par_x)
+  jags_code = get_jagscode(prior, ST, formula_str_jags, max_arma_order, family, sample)
 
-  # Make jags code and sample it.
-  jags_code = get_jagscode(prior, ST, formula_str, family, ar_order, sample)
 
+
+  ##########
+  # SAMPLE #
+  ##########
   # Sample posterior
   if (sample %in% c("post", "both")) {
     samples = run_jags(
       data = data,
       jags_code = ifelse(is.null(jags_explicit), jags_code, jags_explicit),
-      pars = c(pars_population, pars_varying, "loglik_"),  # population-level, varying, and loglik for loo/waic
+      pars = c(all_pars, "loglik_"),  # Monitor log-likelihood for loo/waic
       ST = ST,
       cores = cores,
       sample = "post",
@@ -283,7 +303,6 @@ mcp = function(segments,
     loglik_cols = stringr::str_starts(colnames(samples[[1]]), 'loglik_')  # detect loglik cols
     mcmc_loglik = lapply(samples, function(x) x[, loglik_cols])
     mcmc_post = lapply(samples, function(x) x[, !loglik_cols])
-
   }
 
   # Sample prior
@@ -291,7 +310,7 @@ mcp = function(segments,
     samples = run_jags(
       data = data,
       jags_code = ifelse(is.null(jags_explicit), jags_code, jags_explicit),
-      pars = c(pars_population, pars_varying),  # population-level, varying, but NOT loglik
+      pars = all_pars,  # Not loglik
       ST = ST,
       cores = cores,
       sample = "prior",
@@ -307,6 +326,10 @@ mcp = function(segments,
     mcmc_prior = lapply(samples, function(x) x[, !loglik_cols])
   }
 
+
+  ##########
+  # RETURN #
+  ##########
   # Fill in the missing samples
   if (exists("mcmc_post")) class(mcmc_post) = "mcmc.list"
   if (exists("mcmc_prior")) class(mcmc_prior) = "mcmc.list"
@@ -332,11 +355,14 @@ mcp = function(segments,
 
     # Extracted model
     pars = list(
-      population = pars_population,
-      varying = pars_varying,
       x = par_x,
       y = par_y,
-      trials = par_trials
+      trials = par_trials,
+      reg = pars_reg,
+      varying = pars_varying,
+      sigma = pars_sigma,
+      arma = pars_arma,
+      population = c(pars_reg, pars_sigma, pars_arma)
     ),
 
     jags_code = jags_code,
@@ -355,14 +381,3 @@ mcp = function(segments,
 }
 
 
-#' Converts logical(0) to null. Returns x otherwise
-#'
-#'@aliases logical0_to_null
-#'@param x Anything
-#'@return NULL or x
-
-logical0_to_null = function(x) {
-  if (length(x) > 0)
-    return(x)
-  else return(NULL)
-}

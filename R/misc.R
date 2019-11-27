@@ -59,9 +59,6 @@ get_family = function(name, link) {
 }
 
 
-
-
-
 #' Inverse logit function
 #'
 #' @aliases ilogit
@@ -73,3 +70,30 @@ ilogit = stats::binomial(link = "logit")$linkinv
 #' @aliases logit
 #' @param x A vector of probabilities (0-1)
 logit = stats::binomial(link = "logit")$linkfun
+
+
+
+#' Converts logical(0) to null. Returns x otherwise
+#'
+#'@aliases logical0_to_null
+#'@param x Anything
+#'@return NULL or x
+
+logical0_to_null = function(x) {
+  if (length(x) > 0)
+    return(x)
+  else return(NULL)
+}
+
+#' Extracts the order from ARMA parameter name(s)
+#'
+#' If several names are provided (vector), it returns the maximum.
+#'
+#' @aliases get_arma_order
+#' @param pars_arma Character vector
+#' @return integer
+get_arma_order = function(pars_arma) {
+  order_str = sub("(ma|ar)([0-9]+).*", "\\2", pars_arma)
+  order_max = max(as.numeric(order_str))
+  return(order_max)
+}
