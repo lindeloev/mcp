@@ -76,7 +76,7 @@ test_mcp = function(segments,
     testthat::expect_true(is.list(empty$segments), segments)
     testthat::expect_true(all.equal(empty$data, data), segments)
     testthat::expect_true(is.list(empty$prior), segments)
-    testthat::expect_true(all.equal(empty$family, family), segments)
+    testthat::expect_true(class(empty$family) == "family", segments)
     testthat::expect_true(is.null(empty$samples), segments)
     testthat::expect_true(is.null(empty$loglik), segments)
     testthat::expect_true(is.null(empty$loo), segments)
@@ -90,10 +90,15 @@ test_mcp = function(segments,
     testthat::expect_true(is.function(empty$func_y), segments)
     testthat::expect_true(is.list(empty$.other), segments)
 
+    # Should work for tibbles as well. So do this sometimes
+    if (rbinom(1, 1, 0.5) == 1)
+      data = tibble::as_tibble(data)
+
     # capture.output suppresses the dclone output.
-    capture.output(fit <<- mcp(  # Global useful for debugging
+    #msg = capture_warning(capture.output(fit <<- mcp(  # Global useful for debugging
+    quiet_out = purrr::quietly(mcp)(  # Global useful for debugging
       segments = segments,
-      data = tibble::as_tibble(data),
+      data = data,
       family = family,
       sample = "both",  # prior and posterior to check hypotheses
       par_x = par_x,
@@ -102,7 +107,16 @@ test_mcp = function(segments,
       iter = 18,  # loo fails if this is too low. TO DO: require next version of loo when it is out.
       chains = 2,  # 1 or 2
       cores = 1  # run serial. Parallel can be trused to just work.
-    ))
+    )
+
+    # Allow for "adaptation incomplete" messages due to very small data
+    if (length(quiet_out$warnings) == 1) {
+     testthat::expect_true(quiet_out$warnings == "Adaptation incomplete")
+    } else if (length(quiet_out$warnings > 1)) {
+      testthat::fail("More than one warning from mcp: ", quiet_out$warnings)
+    }
+
+    fit <<- quiet_out$result
 
     # Test criterions. Will warn about very few samples
     if (!is.null(fit$mcmc_post)) {
@@ -438,10 +452,57 @@ good_variance = list(
   list(y ~ 1,
        ~ 0 + sigma(rel(1)),  # test relative intercept
        ~ x + sigma(x),
-       ~ 0 + sigma(rel(x)))  # test relative slope
+       ~ 0 + sigma(rel(x))),  # test relative slope
+  list(y ~ 1,
+      1 + (1|id) ~ rel(1) + I(x^2) + sigma(rel(1) + x))  # Test with varying change point and more mcp stuff
 )
 
 test_good(good_variance, "Good variance")
+
+
+
+
+#############
+# TEST ARMA #
+#############
+# We can assume that it will fail for the same mis-specifications on the formula
+# ar(order, [formula]), since the formula runs through the exact same code as
+# sigma and ct.
+bad_arma = list(
+  list(y ~ ar(0)),  # currently not implemented
+  list(y ~ ar(-1)),  # must be positive
+  list(y ~ ar(1.5)),  # Cannot be decimal
+  list(y ~ ar(1) + ar(2)),  # Only one per segment
+  list(y ~ ar("1")),  # Should not take strings
+  list(y ~ ar(1 + x)),  # must have order
+  list(y ~ ar(x))  # must have order
+)
+
+test_bad(bad_arma, "Bad ARMA")
+
+
+good_arma = list(
+  list(y ~ ar(1)),  # simple
+  list(y ~ ar(11)),  # two decimals
+  list(y ~ ar(1, 1 + x + I(x^2) + exp(x))),  # complicated regression
+  list(y ~ ar(1),
+       ~ ar(2, 0 + x)),  # change in ar
+  list(y ~ 1,
+       ~ 0 + ar(2)),  # onset of AR
+  list(y ~ 1,
+       1 + (1|id) ~ rel(1) + I(x^2) + ar(2, rel(1) + x)),  # varying change point
+  list(y ~ ar(1) + sigma(1 + x),
+       ~ ar(2, 1 + I(x^2)) + sigma(1)),  # With sigma
+  list(y ~ ar(1),
+       ~ ar(2, rel(1)))  # Relative to no variance. Perhaps alter this behavior so it becomes illegal?
+)
+
+test_good(good_arma, "Good ARMA")
+
+
+
+
+
 
 #################
 # TEST BINOMIAL #
@@ -478,7 +539,8 @@ good_binomial = list(
        y | trials(N) ~ 1 ~ rel(1) + rel(x),
        rel(1) ~ 0),
   list(y | trials(N) ~ 1,  # With varying
-       1 + (1|id) ~ 1)
+       1 + (1|id) ~ 1),
+  list(y | trials(N) ~ 1 + ar(1))  # Simple AR(1)
   #list(y | trials(N) ~ 1,
   #     1 ~ N)  # N can be both trials and slope. TO DO: Fails in this test because par_x = "x"
 )
@@ -557,7 +619,9 @@ good_poisson = list(
        y  ~ 1 ~ rel(1) + rel(x),
        rel(1) ~ 0),
   list(y ~ 1,  # With varying
-       1 + (1|id) ~ 1)
+       1 + (1|id) ~ 1),
+  list(y ~ 1 + ar(1),
+       ~ 1 + x + ar(2, 1 + x + I(x^3)))
 )
 
 test_good(good_poisson, "Good Poisson",

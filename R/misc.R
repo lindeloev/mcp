@@ -102,3 +102,24 @@ get_arma_order = function(pars_arma) {
     return(0)
   }
 }
+
+#' Throws an error if a number/vector contains non-numeric, decimal, or less-than-lower
+#'
+#' The expected behavior of is.integer, with informative error messages.
+#'
+#' @aliases check_integer
+#' @param x Numeric value or vector
+#' @param name Name to show in error message.
+#' @param lower the smallest allowed value. lower = 1 checks for positive integers.
+#'
+check_integer = function(x, name, lower = -Inf) {
+  greater_than = ifelse(lower == -Inf, " ", paste0(" >= ", lower, " "))
+  if (!is.numeric(x))
+    stop("Only integers", greater_than, "allowed for '", name, "'")
+
+  if (!all(x == floor(x)) | !all(x >= lower))
+    stop("Only integers", greater_than, "allowed for '", name, "'")
+
+  TRUE
+}
+

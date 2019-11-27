@@ -47,8 +47,8 @@ model {
   has_ar = !all(is.na(unlist(ST$ar_code))) | !all(is.na(unlist(ST$ar_int)))
   if (has_ar) {
     # Add computation of autocorrelated residuals
-    mm = paste0(mm, ar_code(arma_order, ST, family))
-    y_code = paste0(y_code, " + sum(ar__[i_, ])")
+    mm = paste0(mm, get_ar_code(arma_order, ST, family))
+    y_code = paste0(y_code, " + sum(ar_[i_, ])")
   }
 
   # Add inverse link function to back-transform to observed metric
@@ -213,7 +213,7 @@ sd_to_prec = function(prior_str) {
 #'
 #' @aliases ar_code
 #' @inheritParams get_jagscode
-ar_code = function(ar_order, ST, family) {
+get_ar_code = function(ar_order, ST, family) {
   code = ""
   for(i in seq_len(ar_order)) {
     # Get code for link(y[i - order])
@@ -226,8 +226,8 @@ ar_code = function(ar_order, ST, family) {
     code = paste0(code, "
 
   # AR(", i, ") on residuals:
-  ar__[1:", i, ", ", i, "] = c(", paste0(rep("0", i), collapse = ","), ")
-  for(i_ in ", i + 1, ":length(", ST$x[1], ")) {ar__[i_, ", i, "] = ar", i, "_[i_] * (", y_obs, " - y_[i_-", i, "])}")
+  ar_[1:", i, ", ", i, "] = c(", paste0(rep("0", i), collapse = ","), ")
+  for(i_ in ", i + 1, ":length(", ST$x[1], ")) {ar_[i_, ", i, "] = ar", i, "_[i_] * (", y_obs, " - y_[i_-", i, "])}")
   }
   return(code)
 }
