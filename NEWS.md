@@ -1,4 +1,4 @@
-# mcp 0.1.0.9000 (currently in development)
+# mcp 0.1.0.9000 (in development)
 
 ## New features: 
 
@@ -6,12 +6,14 @@
  * Model variance for `family = gaussian()` using `~ sigma([formula here])`.
  * Do order-N autoregressive models (AR(N)) using e.g.,`~ ar([order here])`. Useful for time series.
  * Plot prediction intervals using `plot(fit, quantiles = TRUE, quantiles_type = "predict")`.
- * Many smaller internal changes to prep for 
+ * Now respects `options(mc.cores = 3)`. All guides have been updated to recommend this as a default.
 
-## Smaller changes:
+## Other changes:
 
  * `fit$func_y` has been renamed to `fit$simulate`.
- * Now respects `options(mc.cores = 3)`.
+ * The argument `update` has been discarded from `mcp()` (it's all on `adapt` now) and `inits` has been added.
+ * Many internal changes to prepare for upcoming features. The biggest internal change is that `rjags` and `future` replace the `dclone` package. This gives faster and cleaner installations, and avoids the need for a temporary file on the disk when sampling in parallel.
+ * Much updated documentation.
  
 
 # mcp 0.1.0

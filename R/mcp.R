@@ -56,16 +56,21 @@
 #'       object without sample. This is useful if you only want to check
 #'       prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
 #' @param cores Positive integer or "all". Number of cores.
-#'   * 1: serial sampling
-#'   * >1: parallel sampling on this number of cores. Ideally set `chains`
-#'     to the same value.
-#'   * "all": use all cores but one.
+#'
+#'   * `1`: serial sampling
+#'   * `>1`: parallel sampling on this number of cores. Ideally set `chains`
+#'     to the same value. Note: `cores > 1` takes a few extra seconds the first
+#'     time it's called but subsequent calls will start sampling immediately.
+#'   * `"all"`: use all cores but one and sets `chains` to the same value. This is
+#'     a convenient way to maximally use your computer's power.
 #' @param chains Positive integer. Number of chains to run.
 #' @param iter Positive integer. Number of post-warmup samples to draw.
 #' @param adapt Positive integer. Number of iterations to find sampler settings.
 #' @param update Positive integer. Also sometimes called "burnin", this is the
 #'   number of regular samples before anything is recorded. Use to reach
 #'   convergence.
+#' @param inits A list if initial values for the parameters. This can be useful
+#'   if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
 #' @param jags_explicit Pass JAGS code to `mcp` to use directly. Useful if
 #'   you want to make small tweaks, but mostly used for the development of mcp.
 #' @param ... Further parameters for \code{\link[dclone]{jags.fit}}.
@@ -150,8 +155,8 @@ mcp = function(segments,
                cores = 1,
                chains = 3,
                iter = 3000,
-               adapt = 1500,
-               update = 1500,
+               adapt = 1000,
+               inits = list(),
                jags_explicit = NULL,
                ...) {
 
@@ -258,10 +263,10 @@ mcp = function(segments,
   pars_reg = all_pars[!all_pars %in% c(pars_varying, pars_sigma, pars_arma)]  # Everything that's left!
 
   if (length(pars_arma) > 0 & family$link %in% c("logit", "probit"))
-    warning("The current implementation of autoregression can be fragile for link='logit'. If fitting succeeds, do a proper assessment of model convergence.")
+    message("The current implementation of autoregression can be fragile for link='logit'. If fitting succeeds, do a proper assessment of model convergence.")
 
   if (length(pars_arma) > 0 & length(pars_sigma) > 1)
-    warning("Autoregression currently assumes homoskedasticity (equal variance at all x). Using together with sigma() breaks this assumption. The estimated ar* parameters may not be meaningful.")
+    message("Autoregression currently assumes homoskedasticity (equal variance at all x). Using together with sigma() breaks this assumption. The estimated ar* parameters may not be meaningful.")
 
   # Make formula_str and simulate
   formula_str_funcy = get_all_formulas(ST, prior, par_x, ytypes = c("ct", "sigma"))  # Without ARMA
@@ -290,7 +295,7 @@ mcp = function(segments,
       n.chains = chains,
       n.iter = iter,
       n.adapt = adapt,
-      n.update = update,
+      inits = inits,
       ...
     )
 
@@ -312,7 +317,7 @@ mcp = function(segments,
       n.chains = chains,
       n.iter = iter,
       n.adapt = adapt,
-      n.update = update,
+      inits = inits,
       ...
     )
 
