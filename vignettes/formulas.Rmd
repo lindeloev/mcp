@@ -50,6 +50,8 @@ Notice how it added the response and the change point to the last segment?
  * `cp_i` is the ith change point. Notice that `cp_i` is specified in segment `i + 1`. `cp_1` occurs when there are two segments, and `cp_2` when there are three segments, etc. *OBS: future versions may start at cp_2.*.
  * `cp_i_group` is the varying *deviations* from `cp_i`. See [varying change points in mcp](articles/varying.html).
  * `cp_i_sd` is the population-level standard deviation of the varying effects.
+ * `sigma_*` are variance parameters about which you can [read more here](../articles/variance.html)). Note that for `family = gaussian()` and other families with an SD residual, there will always be an `sigma_1`, i.e., the common sigma initiated in the first segment.
+ * `phi_j` are autocorrelation coefficients ([read more here](../articles/autocorrelation.html)). There is one per autoregressive order, i.e., `phi_1` and `phi_2` for `mcp(..., autocor = "AR(2)")`.
 
 
 These parameter names are saved in `fit$pars`. Let us specify a somewhat complex model to show off some parameter names:
@@ -146,10 +148,10 @@ cat(fit$jags_code)
 
 Again, look at the `#Fitted value` to see the indicator-version in action. And again, `mcp` adds something about `cp_0 = -Inf` and `cp_2 = Inf`, just for internal convenience.
 
-This exact code is also used in `fit$func_y`. See under `"Fitted value`:
+This exact code is also used in `fit$simulate`. See under `"Fitted value`:
 
 ```{r}
-print(fit$func_y)
+print(fit$simulate)
 ```
 
 
@@ -172,4 +174,4 @@ y_indicator = (x > cp_0) * int_1 +  # Note: no (x < cp_1)
 plot(x, y_indicator, main = "Relative intercept")
 ```
 
-You can look at `cat(fit$jags_code)` and `fit$func_y` to see this in action.
+You can look at `cat(fit$jags_code)` and `fit$simulate` to see this in action.

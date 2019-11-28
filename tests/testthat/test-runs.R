@@ -105,7 +105,7 @@ test_mcp = function(segments,
       update = 3,
       iter = 18,  # loo fails if this is too low. TO DO: require next version of loo when it is out.
       chains = 2,  # 1 or 2
-      cores = 1  # run serial. Parallel can be trused to just work.
+      cores = 1  # run serial for faster init. Parallel can be trused to just work.
     )
 
     # Allow for known messages and wornings that does not signify errors

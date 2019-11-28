@@ -63,7 +63,7 @@ segments = list(
 )
 ```
 
-It is quite similar to simulating non-varying data, except that we need to simulate some varying offsets before passing all parameters to `empty$func_y`:
+It is quite similar to simulating non-varying data, except that we need to simulate some varying offsets before passing all parameters to `empty$simulate`:
 
 ```{r, message=FALSE, warning=FALSE}
 library(mcp)
@@ -75,7 +75,7 @@ data = tibble(
   x = runif(length(varying) * 30, 0, 100),  # 30 data points for each
   id = rep(varying, each = 30),  # the group names
   id_numeric = as.numeric(as.factor(id)),  # to positive integers
-  y = empty$func_y(x,
+  y = empty$simulate(x,
     # Population-level:
     int_1 = 20, x_2 = 0.5, cp_1 = 50, sigma = 2,
     
@@ -107,7 +107,7 @@ fit = mcp(segments, data)
 If we just use `plot(fit)`, we would see all points in one plot. We want to facet by `id`, so:
 
 ```{r}
-plot(fit, facet_by="id", cores = 3)
+plot(fit, facet_by="id", ncol = 3)
 ```
 
 It seems that `mcp` did a good job of recovering the change points. There is a lot of information in this data, since the intercept and the slope on each side of the (varying) change point is shared between participants here.
@@ -141,7 +141,7 @@ plot(fit, "dens_overlay", regex_pars = "^cp_1_id", ncol = 2)
 You can see the priors of the model like this:
 
 ```{r}
-cbind(fit$prior)
+fit$prior
 ```
 
 The priors `cp_1_sd` is the population-level standard deviation of `cp_1_id`, the latter of which is applied to all levels of `id`. This is also apparent if you inspect the JAGS code for this model. The truncation of varying effects is quite contrived, but just keeps them between the two adjecent (population-level) change points.
