@@ -45,7 +45,7 @@
 #' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
 #' @param ... Currently ignored.
 #' @details
-#'   For `type = "segments"`, it uses `fit$func_y` with `draws`
+#'   For `type = "segments"`, it uses `fit$simulate` with `draws`
 #'   posterior samples. These represent the joint posterior distribution of
 #'   parameter values.
 #'
@@ -201,7 +201,7 @@ plot_segments = function(fit,
   # General settings
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)
-  func_y = fit$func_y
+  simulate = fit$simulate
   if (all(quantiles == FALSE) & is.numeric(lines)) {
     HDI_SAMPLES = lines
   } else {
@@ -235,10 +235,10 @@ plot_segments = function(fit,
   # Remove some samples
   samples = tidybayes::sample_draws(samples, n = HDI_SAMPLES)  # TO DO: use spread_draws(n = draws) when tidybayes 1.2 is out
 
-  # Get x-coordinates to evaluate func_y (etc.) at
+  # Get x-coordinates to evaluate simulate (etc.) at
   eval_at = get_eval_at(fit, facet_by)
 
-  # First, let's get all the predictors in shape for func_y
+  # First, let's get all the predictors in shape for simulate
   if (fit$family$family != "binomial") {
     samples = samples %>%
       tidyr::expand_grid(!!xvar := eval_at)  # correct name of x-var
@@ -258,11 +258,11 @@ plot_segments = function(fit,
   if (lines > 0 | (any(quantiles != FALSE) & quantiles_type == "fitted")) {
     samples = samples %>%
       # Add fitted draws (vectorized)
-      dplyr::mutate(!!yvar := purrr::invoke(func_y, ., type = "fitted", rate = rate))
+      dplyr::mutate(!!yvar := purrr::invoke(simulate, ., type = "fitted", rate = rate))
   }
   if (quantiles_type == "predict") {
     samples = samples %>%
-      dplyr::mutate(predicted_ = purrr::invoke(func_y, ., type = "predict", rate = rate))
+      dplyr::mutate(predicted_ = purrr::invoke(simulate, ., type = "predict", rate = rate))
   }
 
 
@@ -397,7 +397,7 @@ plot_bayesplot = function(fit,
 
 
 
-#' Get a list of x-coordinates to evaluate fit$func_y at
+#' Get a list of x-coordinates to evaluate fit$simulate at
 #'
 #' Solves two problems: if setting the number of points too high, the
 #' function becomes slow. If setting it too low, the posterior at large intercept-

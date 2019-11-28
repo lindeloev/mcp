@@ -46,7 +46,7 @@ get_family = function(name, link) {
   if (link == "identity") {
     out = list(
       family = name,
-      link = "",
+      link = "identity",
       link_jags = "",
       link_r = "",
       linkinv_jags = "",

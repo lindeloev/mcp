@@ -11,7 +11,7 @@ empty = mcp::mcp(segments, sample = FALSE)
 set.seed(40)
 ex_demo = tibble::tibble(
   time = runif(100, 0, 100),
-  response = empty$func_y(time, cp_1 = 30, cp_2 = 70,
+  response = empty$simulate(time, cp_1 = 30, cp_2 = 70,
                           int_1 = 10, int_3 = 0,
                           sigma = 4,
                           time_2 = 0.5, time_3 = -0.2)

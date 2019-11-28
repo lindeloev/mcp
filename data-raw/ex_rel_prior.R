@@ -9,7 +9,7 @@ segments = list(
 empty = mcp::mcp(segments, sample = FALSE)
 ex_rel_prior = tibble::tibble(
   x = 1:100,
-  y = empty$func_y(x, cp_1 = 25, cp_2 = 40, int_1 = 25, int_2 = 15, sigma = 7,  x_1 = 1, x_2 = -3, x_3 = 0.5)
+  y = empty$simulate(x, cp_1 = 25, cp_2 = 40, int_1 = 25, int_2 = 15, sigma = 7,  x_1 = 1, x_2 = -3, x_3 = 0.5)
 )
 
 # Save to mcp

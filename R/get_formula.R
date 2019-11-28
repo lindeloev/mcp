@@ -1,7 +1,7 @@
 #' Call `get_formula_str` for multiple ytypes and paste strings
 #'
 #' Currently used to differentiate between the JAGS model (use all) and the
-#' fit$func_y model (do not include arma).
+#' fit$simulate model (do not include arma).
 #'
 #' @inheritParams get_formula_str
 #' @param ytypes A character vector of ytypes to including in model building
@@ -196,7 +196,7 @@ get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
 
 #' Turn formula_str into a proper R function
 #'
-#' @aliases get_func_y
+#' @aliases get_simulate
 #' @inheritParams mcp
 #' @param formula_str string. Returned by `get_formula`.
 #' @param par_trials String. For binomial models: name of trials column.
@@ -205,7 +205,7 @@ get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
 #'   (optional for the user).
 #' @param nsegments Positive integer. Number of segments, typically `nrow(ST)`.
 #'
-get_func_y = function(formula_str, par_x, par_trials = NA, pars_pop, pars_varying, nsegments, family) {
+get_simulate = function(formula_str, par_x, par_trials = NA, pars_pop, pars_varying, nsegments, family) {
   # First some substitutions
   formula_func = gsub("\\[i_\\]", "", formula_str)  # No explicit indexing needed for R function
   #formula_func = gsub("PAR_X", par_x, formula_str)  # Proper par_x name
@@ -247,7 +247,7 @@ get_func_y = function(formula_str, par_x, par_trials = NA, pars_pop, pars_varyin
       } else if (quantiles == FALSE) {
         return(rnorm(length(", par_x, "), y_, sigma_))
       } else {
-        stop('Invalid quantiles argument to func_y()')
+        stop('Invalid quantiles argument to simulate()')
       }
     }")
   } else if (family$family == "binomial") {

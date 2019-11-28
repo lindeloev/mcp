@@ -52,7 +52,7 @@ model {
   }
 
   # Add inverse link function to back-transform to observed metric
-  if (family$link != "")  # not identity
+  if (family$link != "identity")  # not identity
     y_code = paste0(family$linkinv_jags, "(", y_code, ")")
 
 
