@@ -87,15 +87,14 @@ test_mcp = function(segments,
     testthat::expect_true(is.character(empty$pars$x), segments)
     testthat::expect_true(is.character(empty$pars$y), segments)
     testthat::expect_true(is.character(empty$jags_code), segments)
-    testthat::expect_true(is.function(empty$func_y), segments)
+    testthat::expect_true(is.function(empty$simulate), segments)
     testthat::expect_true(is.list(empty$.other), segments)
 
     # Should work for tibbles as well. So do this sometimes
     if (rbinom(1, 1, 0.5) == 1)
       data = tibble::as_tibble(data)
 
-    # capture.output suppresses the dclone output.
-    #msg = capture_warning(capture.output(fit <<- mcp(  # Global useful for debugging
+    # Capture (expected) warning capture.output suppresses the dclone output.
     quiet_out = purrr::quietly(mcp)(  # Global useful for debugging
       segments = segments,
       data = data,
@@ -109,13 +108,25 @@ test_mcp = function(segments,
       cores = 1  # run serial. Parallel can be trused to just work.
     )
 
-    # Allow for "adaptation incomplete" messages due to very small data
-    if (length(quiet_out$warnings) == 1) {
-     testthat::expect_true(quiet_out$warnings == "Adaptation incomplete")
-    } else if (length(quiet_out$warnings > 1)) {
-      testthat::fail("More than one warning from mcp: ", quiet_out$warnings)
+    # Allow for known messages and wornings that does not signify errors
+    if (length(quiet_out$warnings) > 0) {
+      accepted_warnings = c("Adaptation incomplete")  # due to very small test datasets
+      accepted_messages = c("The current implementation of autoregression can be fragile",
+                            "Autoregression currently assumes homoskedasticity")
+
+      for (warn in quiet_out$warnings) {
+        if (!any(stringr::str_starts(warn, accepted_warnings))) {
+          testthat::fail("Got an unknown warning: ", warn)
+        }
+      }
+      for (msg in quiet_out$messages) {
+        if (!any(stringr::str_starts(msg, accepted_messages))) {
+          testthat::fail("Got an unknown message: ", msg)
+        }
+      }
     }
 
+    # Assign globally so errors can be inspected upon hard fail
     fit <<- quiet_out$result
 
     # Test criterions. Will warn about very few samples
