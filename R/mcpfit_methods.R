@@ -207,7 +207,7 @@ print.mcpprior = function(x, ...) {
 #' @param error TRUE: err if there are no samples. FALSE: return NULL
 get_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
   if (prior == TRUE) {
-    if(coda::is.mcmc.list(fit$mcmc_prior)) {
+    if (coda::is.mcmc.list(fit$mcmc_prior)) {
       return(fit$mcmc_prior)
     } else {
       stop("Prior requested but the prior was not sampled.")

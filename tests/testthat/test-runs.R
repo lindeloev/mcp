@@ -140,7 +140,7 @@ test_mcp = function(segments,
     # Test hypothesis
     test_hypothesis(fit)
 
-    for(col in c("mcmc_post", "mcmc_prior")) {
+    for (col in c("mcmc_post", "mcmc_prior")) {
       # To test the prior, try setting mcmc_post = NULL to force use of prior
       # (get_samples checks for NULL)
       if (col == "mcmc_prior")
