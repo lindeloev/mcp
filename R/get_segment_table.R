@@ -464,13 +464,13 @@ unpack_slope_term = function(term, i, last_slope, ttype = "") {
     # Check if the relative slope is legit
     if (i == 1)
       stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
-    if(all(is.na(last_slope)) == TRUE)
+    if (all(is.na(last_slope)) == TRUE)
       stop("Found rel(", term, ") in segment ", i, " but there are no corresponding slopes in segment ", i-1)
-    if(!term %in% last_slope$term) {
+    if (!term %in% last_slope$term) {
       stop("Found rel(", term, ") in segment ", i, " does not have a corresponding term to be relative to in segment ", i-1)
     }
   }
-  if(stringr::str_detect(term, "^log\\(|^sqrt\\(") & i > 1)
+  if (stringr::str_detect(term, "^log\\(|^sqrt\\(") & i > 1)
     stop("log() or sqrt() detected in segment 2+. This would fail because mcp models earlier segments as negative x values, and sqrt()/log() cannot take negative values.")
 
   # Regular expressions. Only recognize stuff that is identical between JAGS and base R

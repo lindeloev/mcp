@@ -215,7 +215,7 @@ sd_to_prec = function(prior_str) {
 #' @inheritParams get_jagscode
 get_ar_code = function(ar_order, ST, family) {
   code = ""
-  for(i in seq_len(ar_order)) {
+  for (i in seq_len(ar_order)) {
     # Get code for link(y[i - order])
     if (family$family != "binomial") {
       y_obs = paste0(family$link_jags, "(", ST$y[1], "[i_ - ", i, "])")
@@ -227,7 +227,7 @@ get_ar_code = function(ar_order, ST, family) {
 
   # AR(", i, ") on residuals:
   ar_[1:", i, ", ", i, "] = c(", paste0(rep("0", i), collapse = ","), ")
-  for(i_ in ", i + 1, ":length(", ST$x[1], ")) {ar_[i_, ", i, "] = ar", i, "_[i_] * (", y_obs, " - y_[i_-", i, "])}")
+  for (i_ in ", i + 1, ":length(", ST$x[1], ")) {ar_[i_, ", i, "] = ar", i, "_[i_] * (", y_obs, " - y_[i_-", i, "])}")
   }
   return(code)
 }

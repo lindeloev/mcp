@@ -240,9 +240,9 @@ get_simulate = function(formula_str, par_x, par_trials = NA, pars_pop, pars_vary
     func_str = paste0(func_str, "
     if (type == 'fitted') return(y_)
     if (type == 'predict') {
-      if(quantiles == TRUE)
+      if (quantiles == TRUE)
         quantiles = c(0.025, 0.975)
-      if(is.numeric(quantiles)) {
+      if (is.numeric(quantiles)) {
         return(qnorm(quantiles, y_, sigma_))
       } else if (quantiles == FALSE) {
         return(rnorm(length(", par_x, "), y_, sigma_))

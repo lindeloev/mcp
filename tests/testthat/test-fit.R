@@ -42,7 +42,7 @@ fit_empty = mcp(segments, sample = F)
 set.seed(42)
 data = data.frame(
   x = sim_x,
-  y = do.call(fit_empty$func_y, func_args)
+  y = do.call(fit_empty$simulate, func_args)
 )
 
 # # Fit model to simulated data. A pretty long run to ensure convergence
