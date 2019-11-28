@@ -23,7 +23,7 @@ A common problem when using MCMC is lacking convergence between chains. This wil
 # Speed
 A lot of data and complicated models will slow down fitting.
 
-* Run the chains in parallel using, e.g., `mcp(..., chains=4, cores=4)`. The only reason this is not enabled by default is because parallel sampling fails on some systems. Turn it on for the whole session using `options(mcp_cores = 3)` which will override `cores` (which defaults to 1).
+* Run the chains in parallel using, e.g., `mcp(..., chains=4, cores=4)`. The only reason this is not enabled by default is because parallel sampling fails on some systems. Turn it on for the whole session using `options(mc.cores = 3)` which will override `cores` (which defaults to 1).
 
 * More data usually means better identifiability and faster convergence. Lower the warmup period using, e.g., `mcp(..., adapt=300, update = 200)`.
 
