@@ -146,8 +146,8 @@ hypothesis = function(fit, hypotheses, width = 0.95) {
     # PREPARE FOR TEST #
     ####################
     # Check input
-    n_equals = stringi::stri_count(expression, regex="(?<!(<|>))=")
-    n_directional = stringi::stri_count(expression, regex="<|<=|>|>=")
+    n_equals = stringr::str_count(expression, "(?<!(<|>))=")
+    n_directional = stringr::str_count(expression, "<|<=|>|>=")
 
     if (n_equals > 1)
       stop("Only one equals-test (Savage-Dickey ratio) allowed in each hypothesis: ", expression)
@@ -166,12 +166,11 @@ hypothesis = function(fit, hypotheses, width = 0.95) {
     # the test value by putting everything on the LHS and zero on the RHS.
     if (!stringr::str_detect(expression, "\\||&")) {
       # Determine which comparator is used here
-      comparators = c("=", "<", ">"," <=", ">=")
-      which_comparator = stringr::str_detect(expression, comparators)
-      this_comparator = comparators[which_comparator]
+      #comparators = c("=", "<", ">"," <=", ">=")
+      this_comparator = stringr::str_extract(expression, "<=|>=|<|>|=")
 
       # Re-arrange to LHS [comparator] 0.
-      sides_split = strsplit(expression, "<|<=|>|>=|(?<!(<|>))=", perl = TRUE)[[1]]
+      sides_split = strsplit(expression, "<=|>=|<|>|=", perl = TRUE)[[1]]
       sides_split = stringr::str_trim(sides_split)
       if (stringr::str_detect(sides_split[2], "\\+|\\-"))
         sides_split[2] = paste0("(", sides_split[2], ")")

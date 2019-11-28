@@ -71,6 +71,7 @@
 #'   convergence.
 #' @param inits A list if initial values for the parameters. This can be useful
 #'   if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
+#'   Defaults to `NULL`, i.e., no inits.
 #' @param jags_explicit Pass JAGS code to `mcp` to use directly. Useful if
 #'   you want to make small tweaks, but mostly used for the development of mcp.
 #' @param ... Further parameters for \code{\link[dclone]{jags.fit}}.
@@ -156,7 +157,7 @@ mcp = function(segments,
                chains = 3,
                iter = 3000,
                adapt = 1000,
-               inits = list(),
+               inits = NULL,
                jags_explicit = NULL,
                ...) {
 
