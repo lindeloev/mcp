@@ -7,7 +7,7 @@
 #' points are forced to be ordered using truncation of the priors. You can run
 #' `fit = mcp(segments, sample=FALSE)` to avoid sampling and the need for
 #' data if you just want to get the priors (`fit$prior`), the JAGS code
-#' `fit$jags_code`, or the R function to simulate data (`fit$func_y`).
+#' `fit$jags_code`, or the R function to simulate data (`fit$simulate`).
 #'
 #' @aliases mcp
 #' @param data Data.frame or tibble in long format.
@@ -257,10 +257,16 @@ mcp = function(segments,
   pars_arma = all_pars[stringr::str_detect(all_pars, "(^ar|^ma)[0-9]")]
   pars_reg = all_pars[!all_pars %in% c(pars_varying, pars_sigma, pars_arma)]  # Everything that's left!
 
-  # Make formula_str and func_y
+  if (length(pars_arma) > 0 & family$link %in% c("logit", "probit"))
+    warning("The current implementation of autoregression can be fragile for link='logit'. If fitting succeeds, do a proper assessment of model convergence.")
+
+  if (length(pars_arma) > 0 & length(pars_sigma) > 1)
+    warning("Autoregression currently assumes homoskedasticity (equal variance at all x). Using together with sigma() breaks this assumption. The estimated ar* parameters may not be meaningful.")
+
+  # Make formula_str and simulate
   formula_str_funcy = get_all_formulas(ST, prior, par_x, ytypes = c("ct", "sigma"))  # Without ARMA
   pars_funcy = c(pars_reg[!pars_reg %in% ST$cp_sd], pars_sigma)  # arma and varying SD is not used for simulation
-  func_y = get_func_y(formula_str_funcy, par_x, par_trials, pars_funcy, pars_varying, nrow(ST), family)
+  simulate = get_simulate(formula_str_funcy, par_x, par_trials, pars_funcy, pars_varying, nrow(ST), family)
 
   # Make jags code
   max_arma_order = get_arma_order(pars_arma)
@@ -355,7 +361,7 @@ mcp = function(segments,
     ),
 
     jags_code = jags_code,
-    func_y = func_y,
+    simulate = simulate,
 
     # Pass info to *.mcpfit() functions.
     # Not meant to be used by the end user.

@@ -87,7 +87,7 @@ run_jags = function(data,
     print(proc.time() - timer)  # Return time
     return(samples)
   } else {
-    warning("--------------\nJAGS failed with the above error. Returning an `mcpfit` without samples. Inspect fit$prior and cat(fit$jags_code) to identify the problem.\n\nRead about typical causes and fixes here: https://lindeloev.github.io/mcp/articles/debug.html.")
+    warning("--------------\nJAGS failed with the above error. Returning an `mcpfit` without samples. Inspect fit$prior and cat(fit$jags_code) to identify the problem.\n\nRead about typical causes and fixes here: https://lindeloev.github.io/mcp/articles/tips.html.")
     return(NULL)
   }
 }
