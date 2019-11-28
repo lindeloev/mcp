@@ -13,12 +13,11 @@ Description: Bayesian inference of Hierarchical Multiple Change Points (MCP) bet
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.1
 Roxygen: list(markdown = TRUE)
 Imports:
 	parallel,
 	rjags (>= 4.9),
-	dclone (>= 2.3.0),
 	coda (>= 0.19.3),
 	loo (>= 2.1.0),
 	bayesplot (>= 1.7.0),

@@ -23,70 +23,98 @@ run_jags = function(data,
                     ST,
                     cores,
                     sample,
-                    model_file = "tmp_jags_code.txt",
+                    n.chains,
+                    n.iter,
+                    n.adapt,
+                    inits,
+
                     ...  # Otherwise run with default JAGS settings
 ) {
 
   # Prevent failure of all mcp methods when length(pars) <= 2 (one parameter +
-  # loglik_).This always happens when there is only one segment, so we just save samples
-  # from the dummy change points.
+  # loglik_).This always happens when there is only one parameter, so we just
+  # save samples from the dummy change points.
   if (length(pars) <= 2)
     pars = c(pars, "cp_0", "cp_1")
 
+  # Set number of cores from "all" or mc.cores
   opts = options()
   if (is.numeric(opts$mc.cores))
     cores = opts$mc.cores
+  if (cores == "all") {
+    cores = parallel::detectCores() - 1
+    n.chains = cores
+  }
+
+  # Get data ready...
+  jags_data = get_jags_data(data, ST, jags_code, sample)
 
   # Start timer
   timer = proc.time()
 
-  if (cores == 1) {
-    # SERIAL
-    samples = try(dclone::jags.fit(
-      data = get_jags_data(data, ST, jags_code, sample),
-      params = pars,
-      model = textConnection(jags_code),
-      ...
-    ))
-  } else if (cores == "all" | cores > 1) {
-    # PARALLEL
-    # Write model to disk
-    sink(model_file)
-    cat(jags_code)
-    sink()  # stops sinking :-)
 
-    # Start parallel cluster
-    if (cores == "all") {
-      cores = parallel::detectCores() - 1
-    }
-    cl = parallel::makePSOCKcluster(cores)
+  # Define the sampling function in this environment.
+  # Can be used sequentially or in parallel
+  do_sampling = function(n.chains, quiet, ...) {
+    jm = rjags::jags.model(
+      file = textConnection(jags_code),
+      data = jags_data,
+      inits = inits,
+      n.chains = n.chains,
+      n.adapt = n.adapt,
+      quiet = quiet
+    )
 
-    # Do the sampling. Yield mcmc.list
-    samples = try(dclone::jags.parfit(
-      cl = cl,
-      data = get_jags_data(data, ST, jags_code, sample),
-      params = pars,
-      model = model_file,
-      ...
-    ))
-
-    # Stop the cluster, delete the file
-    parallel::stopCluster(cl)
-    file.remove(model_file)
+    # Sample and return
+    rjags::coda.samples(
+      model = jm,
+      variable.names = pars,
+      n.iter = n.iter,
+      quiet = quiet
+    )
   }
 
-  if (coda::is.mcmc.list(samples)) {  # If sampling succeeded
-    # Recover the levels of varying effects
+  # Time for sampling!
+  if (cores == 1) {
+    # # SERIAL
+    samples = try(do_sampling(
+      n.chains = n.chains,
+      quiet = FALSE
+    ))
+
+  } else if (cores == "all" | cores > 1) {
+    # PARALLEL using the future package and one chain per worker
+    cat("Parallel sampling in progress...\n")
+    future::plan(future::multiprocess, .skip = TRUE)
+    samples = future.apply::future_lapply(
+      1:n.chains,
+      FUN = do_sampling,
+      n.chains = 1,
+      quiet = TRUE,
+      future.seed = TRUE
+    )
+
+    # Get result as mcmc.list
+    samples = unlist(samples, recursive = FALSE)
+    class(samples) = "mcmc.list"
+  }
+
+  # Sampling finished. # Recover the levels of varying effects if it succeeded
+  if (coda::is.mcmc.list(samples)) {
     for (i in seq_len(nrow(ST))) {
       S = ST[i, ]
       if (!is.na(S$cp_group_col)) {
         samples = recover_levels(samples, data, S$cp_group, S$cp_group_col)
       }
     }
+
     # Return
-    print(proc.time() - timer)  # Return time
+    passed = proc.time() - timer
+    cat("Sampling took", passed["elapsed"], "seconds\n")
     return(samples)
+
   } else {
+    # If it didn't succeed, quit gracefully.
     warning("--------------\nJAGS failed with the above error. Returning an `mcpfit` without samples. Inspect fit$prior and cat(fit$jags_code) to identify the problem.\n\nRead about typical causes and fixes here: https://lindeloev.github.io/mcp/articles/tips.html.")
     return(NULL)
   }
@@ -126,7 +154,7 @@ get_jags_data = function(data, ST, jags_code, sample) {
   funcs = c("min", "max", "sd", "mean")
   xy_vars = c("x", "y")
   for (func in funcs) {
-    for(xy_var in xy_vars) {
+    for (xy_var in xy_vars) {
       constant_name = toupper(paste0(func, xy_var))
       if (stringr::str_detect(jags_code, constant_name)) {
         func_eval = eval(parse(text = func))  # as real function
