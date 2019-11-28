@@ -23,6 +23,8 @@ Let's try and model the `ex_ar` dataset. Take at look at [how it was simulated](
 
 ```{r}
 library(mcp)
+options(mc.cores = 3)  # Speed up sampling!
+
 plot(ex_ar, type="l", main = "Change point with AR(2) residuals")
 ```
 
@@ -114,7 +116,7 @@ abline(v = 40)
 
 ```{r, cache = TRUE, results=FALSE}
 prior = list(x_2 = "x_1")  # Set the two slopes equal
-fit = mcp(segments, data, prior, iter = 6000, cores = 3)
+fit = mcp(segments, data, prior, iter = 6000)
 
 # Show results
 summary(fit)

@@ -42,14 +42,14 @@ empty$pars
  * It takes two slopes (`year_*`), for segment 2 and 3.
  * It takes two change points (`cp_*`) - one between each segment. 
 
-`empty$func_y` is now a function that can predict data given these parameters. If you are in a reasonable R editor, type `empty$func_y(` and press TAB to see the required arguments. I came up with some values below, including change points at $year = 25$ and $year = 65$. Notice that because `binomial()` defaults to the link function `link = "logit"`, the intercept and slopes are on a [logit scale](https://en.wikipedia.org/wiki/Logit). Briefly, this extends the narrow range of binomial rates (0-1) to an infinite logit scale from minus infinity to plus infinity. This will be important later when we set priors.
+`empty$simulate` is now a function that can predict data given these parameters. If you are in a reasonable R editor, type `empty$simulate(` and press TAB to see the required arguments. I came up with some values below, including change points at $year = 25$ and $year = 65$. Notice that because `binomial()` defaults to the link function `link = "logit"`, the intercept and slopes are on a [logit scale](https://en.wikipedia.org/wiki/Logit). Briefly, this extends the narrow range of binomial rates (0-1) to an infinite logit scale from minus infinity to plus infinity. This will be important later when we set priors.
 
 ```{r}
 library(tibble)
 data = tibble(
   year = 1901:2000,  # evaluate for each of these
   N = sample(10:20, size = 100, replace = TRUE),  # number of trials
-  y = empty$func_y(year, N, 
+  y = empty$simulate(year, N, 
                    cp_1 = 1925, cp_2 = 1965, 
                    int_1 = 2, int_3 = 0, 
                    year_2 = -0.2, year_3 = 0.05)
@@ -87,7 +87,7 @@ Plotting the fit confirms good fit to the data, and we see the discontinuities a
 plot(fit)
 ```
 
-These lines are just `fit$func_y` applied to a random draw of the posterior samples. In other words, they represent the joint distribution of the parameters. You can change the number of draws (lines) using `plot(fit, lines = 50)`.
+These lines are just `fit$simulate` applied to a random draw of the posterior samples. In other words, they represent the joint distribution of the parameters. You can change the number of draws (lines) using `plot(fit, lines = 50)`.
 
 Notice for binomial models it defaults to plot the *rate* (`y / N`) as a function of x. The reason why is obvious when we plot on "raw" data by toggling `rate`:
 

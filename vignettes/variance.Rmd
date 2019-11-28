@@ -26,11 +26,13 @@ We can simulate some data, starting with low variance and an abrupt change to a 
 
 ```{r}
 library(mcp)
+options(mc.cores = 3)  # Speed up sampling!
+
 empty = mcp(segments, sample = FALSE, par_x = "x")
 set.seed(40)
 data = tibble::tibble(
   x = 1:100,
-  y = empty$func_y(x, cp_1 = 50, int_1 = 20, 
+  y = empty$simulate(x, cp_1 = 50, int_1 = 20, 
                    sigma_1 = 5, sigma_2 = 20)
 )
 ```
@@ -39,8 +41,7 @@ data = tibble::tibble(
 Now we fit the model to the simulated data.
 
 ```{r, cache = TRUE, results=FALSE}
-#fit = mcp(segments, data, par_x = "x")
-fit = mcp(segments, data, par_x = "x", cores = 3)
+fit = mcp(segments, data, par_x = "x")
 ```
 We plot the results with the prediction interval to show the effect of the variance, since it won't be immediately obvious on the default plot of the fitted mean predictions:
 
@@ -91,20 +92,20 @@ In general, the variance parameters are named `sigma_[normalname]`, where "norma
 
 
 ## Simulate data
-We simulate some data from this model, setting all parameters. As always, we can fit an empty model to get `fit$func_y`, which is useful for simulation and predictions from this model.
+We simulate some data from this model, setting all parameters. As always, we can fit an empty model to get `fit$simulate`, which is useful for simulation and predictions from this model.
 
 ```{r}
 empty = mcp(segments, sample = FALSE)
 set.seed(40)
 data = tibble::tibble(
   x = 1:200,
-  y = empty$func_y(x,
+  y = empty$simulate(x,
     cp_1 = 50, cp_2 = 100, cp_3 = 150,
     int_1 = -20, int_2 = 0,
     sigma_1 = 3, sigma_x_1 = 0.5,
     sigma_2 = 10, 
     sigma_x_3 = -0.5,
-    sigma_xE2_3 = 0.02,
+    sigma_x_3_E2 = 0.02,
     x_3 = 1, x_4 = 1)
 )
 ```
@@ -114,7 +115,7 @@ data = tibble::tibble(
 Fit it in parallel, to speed things up:
 
 ```{r, cache = TRUE, results = FALSE}
-fit = mcp(segments, data, prior, cores = 3)
+fit = mcp(segments, data, prior)
 ```
 
 Plotting the prediction interval is the easiest way to to see how the variance is estimated:
@@ -135,7 +136,7 @@ The effective sample size (`n.eff`) is fairly low, indicating poor mixing for th
 plot(fit, "combo", regex_pars = "sigma_")
 ```
 
-This confirms the impression from `Rhat` and `n.eff`. Setting `mcp(..., iter = 10000)` would be advisable to increase the effective sample size. Read more about [tips, tricks, and debugging](../articles/debug.html).
+This confirms the impression from `Rhat` and `n.eff`. Setting `mcp(..., iter = 10000)` would be advisable to increase the effective sample size. Read more about [tips, tricks, and debugging](../articles/tips.html).
 
 
 
@@ -160,7 +161,7 @@ set.seed(40)
 data = tibble::tibble(
     x = 1:180,
     id = rep(1:6, times = 30),
-    y = empty$func_y(x, 
+    y = empty$simulate(x, 
           cp_1 = 70, cp_1_id = 15 * (id - mean(id)),
           int_1 = 20, x_1 = 1, x_2 = -0.5,
           sigma_1 = 10, sigma_2 = 25)
@@ -169,7 +170,7 @@ data = tibble::tibble(
 
 Fit it:
 ```{r, cache = TRUE, results=FALSE}
-fit = mcp(segments, data, cores = 3)
+fit = mcp(segments, data)
 ```
 
 Plot it with 80% prediction intervals:
