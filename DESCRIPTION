@@ -12,6 +12,7 @@ Authors@R:
 Description: Flexible inference of Multiple Change Points (MCP) between Hierarchical Generalized Linear Time-Series Segments - and the parameters in those segments.
 License: GPL-2
 Encoding: UTF-8
+Language: en-US
 LazyData: true
 RoxygenNote: 7.0.1
 Roxygen: list(markdown = TRUE)
