@@ -235,8 +235,7 @@ data if you just want to get the priors (<code>fit$prior</code>), the JAGS code
   <span class='kw'>iter</span> <span class='kw'>=</span> <span class='fl'>3000</span>,
   <span class='kw'>adapt</span> <span class='kw'>=</span> <span class='fl'>1000</span>,
   <span class='kw'>inits</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>jags_explicit</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>...</span>
+  <span class='kw'>jags_code</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -335,13 +334,10 @@ if a model fails to converge. Read more in <code><a href='https://rdrr.io/pkg/rj
 Defaults to <code>NULL</code>, i.e., no inits.</p></td>
     </tr>
     <tr>
-      <th>jags_explicit</th>
-      <td><p>Pass JAGS code to <code>mcp</code> to use directly. Useful if
-you want to make small tweaks, but mostly used for the development of mcp.</p></td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td><p>Further parameters for <code><a href='https://rdrr.io/pkg/dclone/man/jags.fit.html'>jags.fit</a></code>.</p></td>
+      <th>jags_code</th>
+      <td><p>Pass JAGS code to <code>mcp</code> to use directly. This is useful if
+you want to tweak the code in <code>fit$jags_code</code> and run it within the <code>mcp</code>
+framework.</p></td>
     </tr>
     </table>
 

@@ -223,15 +223,15 @@
 <pre><code>## # A tibble: 100 x 3
 ##     year     N     y
 ##    &lt;int&gt; &lt;int&gt; &lt;int&gt;
-##  1  1901    14    14
-##  2  1902    14     9
-##  3  1903    13    10
-##  4  1904    12    11
-##  5  1905    19    16
-##  6  1906    16    15
-##  7  1907    19    19
-##  8  1908    11    10
-##  9  1909    16    14
+##  1  1901    15    13
+##  2  1902    11    10
+##  3  1903    19    17
+##  4  1904    16    15
+##  5  1905    17    16
+##  6  1906    19    16
+##  7  1907    15    14
+##  8  1908    14    13
+##  9  1909    13    13
 ## 10  1910    19    17
 ## # ... with 90 more rows</code></pre>
 <p>Visually:</p>
@@ -253,13 +253,13 @@
 ##   3: y | trials(N) ~ 1 ~ 1 + year
 ## 
 ## Population-level parameters:
-##    name      mean     lower     upper Rhat n.eff    ts_se
-##    cp_1 1922.9441 1919.7785 1925.9199 1.01   566 4.03e+01
-##    cp_2 1964.4994 1964.0058 1964.9538 1.00  5135 1.43e-01
-##   int_1    1.8027    1.4913    2.1276 1.00  1167 2.03e-01
-##   int_3   -0.0729   -0.4102    0.2465 1.00  1036 2.54e-01
-##  year_2   -0.1744   -0.2014   -0.1482 1.01   956 1.71e-03
-##  year_3    0.0481    0.0309    0.0649 1.00  1050 7.14e-04</code></pre>
+##    name      mean     lower    upper Rhat n.eff    ts_se
+##    cp_1 1919.5935 1915.7397 1923.181 1.00   434 7.82e+01
+##    cp_2 1964.4976 1964.0156 1964.965 1.00  4753 1.68e-01
+##   int_1    2.2730    1.8483    2.697 1.00   603 7.00e-01
+##   int_3    0.0532   -0.3095    0.405 1.00  1041 2.89e-01
+##  year_2   -0.1583   -0.1807   -0.137 1.00   835 1.37e-03
+##  year_3    0.0478    0.0298    0.066 1.01  1014 7.74e-04</code></pre>
 <p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have <a href="../docs/articles/varying.html">varying effects</a>, use <code><a href="../reference/ranef.html">ranef(fit)</a></code> to see them.</p>
 <p>Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
