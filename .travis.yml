@@ -23,8 +23,6 @@ cache: packages
 r_binary_packages:
  - dplyr
  - stringi
- - rstan
- - StanHeaders
  - curl
  - openssl
 
@@ -39,6 +37,6 @@ addons:
   homebrew:
     packages: jags
 
-# Get code coverage
+# Get code coverage (for envs where $R_CODECOV is set)
 after_success:
   - test $R_CODECOV && Rscript -e "covr::coveralls()"
