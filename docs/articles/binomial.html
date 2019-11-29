@@ -47,7 +47,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
@@ -223,16 +223,16 @@
 <pre><code>## # A tibble: 100 x 3
 ##     year     N     y
 ##    &lt;int&gt; &lt;int&gt; &lt;int&gt;
-##  1  1901    20    17
-##  2  1902    17    15
-##  3  1903    17    13
-##  4  1904    18    12
-##  5  1905    12    12
-##  6  1906    15    13
-##  7  1907    12     8
-##  8  1908    11    11
-##  9  1909    19    17
-## 10  1910    18    17
+##  1  1901    14    14
+##  2  1902    14     9
+##  3  1903    13    10
+##  4  1904    12    11
+##  5  1905    19    16
+##  6  1906    16    15
+##  7  1907    19    19
+##  8  1908    11    10
+##  9  1909    16    14
+## 10  1910    19    17
 ## # ... with 90 more rows</code></pre>
 <p>Visually:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(data<span class="op">$</span>year, data<span class="op">$</span>y)</a></code></pre></div>
@@ -254,12 +254,12 @@
 ## 
 ## Population-level parameters:
 ##    name      mean     lower     upper Rhat n.eff    ts_se
-##    cp_1 1922.9238 1919.7232 1925.8528    1   634 3.34e+01
-##    cp_2 1964.4979 1964.0043 1964.9526    1  5663 1.40e-01
-##   int_1    1.9303    1.6081    2.2469    1  1143 1.97e-01
-##   int_3    0.3436   -0.0265    0.7024    1   916 3.31e-01
-##  year_2   -0.1674   -0.1929   -0.1452    1  1064 1.21e-03
-##  year_3    0.0364    0.0184    0.0548    1   929 8.34e-04</code></pre>
+##    cp_1 1922.9441 1919.7785 1925.9199 1.01   566 4.03e+01
+##    cp_2 1964.4994 1964.0058 1964.9538 1.00  5135 1.43e-01
+##   int_1    1.8027    1.4913    2.1276 1.00  1167 2.03e-01
+##   int_3   -0.0729   -0.4102    0.2465 1.00  1036 2.54e-01
+##  year_2   -0.1744   -0.2014   -0.1482 1.01   956 1.71e-03
+##  year_3    0.0481    0.0309    0.0649 1.00  1050 7.14e-04</code></pre>
 <p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have <a href="../docs/articles/varying.html">varying effects</a>, use <code><a href="../reference/ranef.html">ranef(fit)</a></code> to see them.</p>
 <p>Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
@@ -285,27 +285,14 @@
 <a href="#priors-for-binomial-models" class="anchor"></a>Priors for binomial models</h1>
 <p><code>mcp</code> uses priors to achieve a lot of it’s functionality. See <a href="../docs/articles/priors.html">how to set priors</a>, including how to share parameters between segments and how to fix values. Here, I post a few notes about the binomial-specific default priors.</p>
 <p>The default priors in <code>mcp</code> are set so that they are reasonably broad to cover most scenarios, though also specific enough to sample effectively. They are not “default” as in “canonical”. Rather, they are “default” as in “what happens if you do nothing else”. All priors are stored in <code>fit$prior</code> (also <code>empty$prior</code>). We did not specify <code>prior</code> above, so it ran with default priors:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">fit<span class="op">$</span>prior</a></code></pre></div>
-<pre><code>## $cp_1
-## [1] "dunif(MINX, MAXX)"
-## 
-## $cp_2
-## [1] "dunif(cp_1, MAXX)"
-## 
-## $int_1
-## [1] "dnorm(0, 3)"
-## 
-## $int_3
-## [1] "dnorm(0, 3)"
-## 
-## $year_2
-## [1] "dnorm(0, 3 / (MAXX - MINX))"
-## 
-## $year_3
-## [1] "dnorm(0, 3 / (MAXX - MINX))"
-## 
-## attr(,"class")
-## [1] "mcpprior"</code></pre>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(fit<span class="op">$</span>prior)</a></code></pre></div>
+<pre><code>##        [,1]                         
+## cp_1   "dunif(MINX, MAXX)"          
+## cp_2   "dunif(cp_1, MAXX)"          
+## int_1  "dnorm(0, 3)"                
+## int_3  "dnorm(0, 3)"                
+## year_2 "dnorm(0, 3 / (MAXX - MINX))"
+## year_3 "dnorm(0, 3 / (MAXX - MINX))"</code></pre>
 <p>The priors on change points are discussed extensively in the prior vignette. The priors on slopes and intercepts are normals with standard deviation of “3” logits. This corresponds to quite extreme binomial probabilities, yet not so extreme as to be totally flat. Here are visualization of priors <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm(0, 1)</a></code> (red), <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm(0, 2)</a></code> (black, mcp default), and a <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm(0, 5)</a></code> (blue) prior, and the correspondence between logits and probabilities:</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">inverse_logit =<span class="st"> </span><span class="cf">function</span>(x) <span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(x) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(x))</a>
 <a class="sourceLine" id="cb16-2" title="2"></a>
