@@ -165,11 +165,11 @@
     
     
 <p>There are a lot of change point packages out there already, so why <code>mcp</code>? Here are my (probably biased) thoughts about this. I compiled some tables, summarising change point packages (<a href="https://github.com/lindeloev/mcp/raw/master/man/figures/packages_tables.xlsx">.xlsx file here</a>). I will demonstrate each of these packages in an applied example below to discuss their merits and shortcomings.</p>
-<p>I think <code>mcp</code>, <code>segmented</code>, and <code>EnvCpt</code> stand out as more general-purpose packages, depending on the purpose. As the author of <code>mcp</code>, I am of course biased. You can see the immediate roadmap for <code>mcp</code> at the <a href="https://github.com/lindeloev/mcp/issues">GitHub issues tracker</a>, including plans to address it’s current shortcomings.</p>
+<p>I think <code>mcp</code>, <code>segmented</code>, and <code>EnvCpt</code> stand out as good general-purpose packages, depending on the purpose. As the author of <code>mcp</code>, You can see the immediate roadmap for <code>mcp</code> at the <a href="https://github.com/lindeloev/mcp/issues">GitHub issues tracker</a>.</p>
 <div id="modeling-options" class="section level2">
 <h2 class="hasAnchor">
 <a href="#modeling-options" class="anchor"></a>Modeling options</h2>
-<p>How much flexibility does the package allow for modeling the system, you’re studying? A clear difference here is between packages that allow you to specify the number of change points, and packages which infer the number of change points automatically (using some criteria), captured in the <code>N CP</code> column below.</p>
+<p>How much flexibility does the package allow for modeling the system, you’re studying? A clear difference here is between packages that allow you to <em>specify</em> the number of change points, and packages which infer the number of change points <em>automatically</em> (using some criteria), captured in the <code>N</code> column below.</p>
 <p><img src="https://github.com/lindeloev/mcp/raw/master/man/figures/packages_table1.png"></p>
 <p><br><br></p>
 </div>
@@ -198,6 +198,8 @@
 <li>
 <em>Sharing and fixing parameters</em> to values and other parameters as discussed under <a href="../docs/articles/priors.html">priors in mcp</a>.</li>
 <li>
+<em>Per-segment regression on variance and autocorrelation</em> via the <code><a href="https://rdrr.io/r/stats/sigma.html">sigma()</a></code> (<a href="../articles/variance.html">read more here</a>) and <code><a href="https://rdrr.io/r/stats/ar.html">ar()</a></code> (<a href="../articles/arma.html">read more here</a>) terms, also allowing for more advanced change points involving, e.g., a change in autocorrelation strength.</li>
+<li>
 <em>Explicit priors</em>: <code>bcp</code> is the only other Bayesian change point package I know of. It contains a few high-level prior parameters, but not for specific parameters such as <em>where</em> change points are expected to occur etc. Read more about <a href="../docs/articles/priors.html">priors in mcp</a> for more.</li>
 <li>
 <em>Prior and posterior predictive checks</em>. In general, most other packages have limited or no model checking functionality. The default <code>plot.mcpfit</code> is inherently a visual predictive check and can be applied to priors (<code><a href="../reference/mcp.html">mcp(..., sample = "prior")</a></code> and posteriors. Of course inspecting Gelman-Rubin statistics and effective sample sizes in <code>summary.mcpfit</code>, as well as trace plots (<code><a href="../reference/plot.mcpfit.html">plot(fit, "trace")</a></code>), also go a long way.</li>
@@ -210,13 +212,11 @@
 <p><code>mcp</code> is inferior with respect to:</p>
 <ul>
 <li>
-<em>speed</em>: mcmc sampling is slow compared to analytical and specialized solutions. For datasets &gt; 20.000 points, it may take hours to fit <code>mcp</code>. Running in parallel and lowering the iterations helps (<code>mcp(..., cores = 4, iter = 1000, adapt = 400</code>), but remember to check convergences.</li>
+<em>Speed</em>: While <code>mcp</code> is reasonably fast for typical problems, mcmc sampling is slower than analytical and specialized solutions. For datasets &gt; 20.000 points and a complicated model, it may take <code>mcp</code> hours (but not days) to fit. See <a href="../articles/tips.html">tips and tricks</a> how to speed up <code>mcp</code>. Briefly, run in parallel and lower the number of iterations: (<code>mcp(..., cores = 4, iter = 1000, adapt = 400</code>).</li>
 <li>
-<em>automatic detection of change points</em>: most packages out there does automatic change point detection. This is not a space that <code>mcp</code> tries to fill so use the other packages here. Though given the intercept-only example below, I would worry about many package’s ability to recover change points.</li>
+<em>Automatic detection of change points</em>: most packages does automatic change point detection. This is not a space that <code>mcp</code> tries to fill so use the other packages here. Though given the worked examples below, I would worry about many package’s ability to recover change points.</li>
 <li>
-<em>no support for autoregressive models</em>: As change point models are big in time-series analyses, I’d much like to implement at least AR(1). This is on planned, but not implemented yet in version 0.1.</li>
-<li>
-<em>not multivariate</em> and <em>no variance change point</em>: These are planned but not implemented yet in version 0.1.</li>
+<em>Multivariate</em>: <code>mcp</code> only does univariate regression, both for <span class="math inline">\(y\)</span> and <span class="math inline">\(x\)</span>. This will be implemented if there is a popular request for it. Don’t hesitate to raise an issue on GitHub.</li>
 </ul>
 </div>
 <div id="a-simple-dataset-to-compare-packages" class="section level1">
