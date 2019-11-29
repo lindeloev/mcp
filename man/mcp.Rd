@@ -16,8 +16,7 @@ mcp(
   iter = 3000,
   adapt = 1000,
   inits = NULL,
-  jags_explicit = NULL,
-  ...
+  jags_code = NULL
 )
 }
 \arguments{
@@ -95,10 +94,9 @@ Set higher if the chains haven't converged yet or look at \href{https://lindeloe
 if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
 Defaults to \code{NULL}, i.e., no inits.}
 
-\item{jags_explicit}{Pass JAGS code to \code{mcp} to use directly. Useful if
-you want to make small tweaks, but mostly used for the development of mcp.}
-
-\item{...}{Further parameters for \code{\link[dclone]{jags.fit}}.}
+\item{jags_code}{Pass JAGS code to \code{mcp} to use directly. This is useful if
+you want to tweak the code in \code{fit$jags_code} and run it within the \code{mcp}
+framework.}
 }
 \value{
 An \code{mcpfit} object.

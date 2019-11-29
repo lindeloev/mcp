@@ -94,7 +94,7 @@ test_mcp = function(segments,
     if (rbinom(1, 1, 0.5) == 1)
       data = tibble::as_tibble(data)
 
-    # Capture (expected) warning capture.output suppresses the dclone output.
+    # Capture (expected) messages and warnings
     quiet_out = purrr::quietly(mcp)(  # Global useful for debugging
       segments = segments,
       data = data,
