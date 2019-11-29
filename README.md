@@ -7,7 +7,7 @@
 
 `mcp` does regression with one or Multiple Change Points (MCP) between Generalized and hierarchical Linear Segments using Bayesian inference. `mcp` aims to provide maximum flexibility for analyses with a priori knowledge about the number of change points and the form of the segments in between.
 
-Change points are also called **switch points**, **break points**, **broken line** regression, **broken stick** regression, **bilinear** regression, **piecewise linear regression**, **local linear regression**, **segmented regression**, and (performance) **discontinuity** models. `mcp` aims to be be useful for all of them. See how `mcp` compares to [other R packages](https://lindeloev.github.io/mcp/articles/packages.html).
+Change points are also called **switch points**, **break points**, **broken line** regression, **broken stick** regression, **bilinear** regression, **piecewise linear** regression, **local linear** regression, **segmented** regression, and (performance) **discontinuity** models. `mcp` aims to be be useful for all of them. See how `mcp` compares to [other R packages](https://lindeloev.github.io/mcp/articles/packages.html).
 
 Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. `mcp` leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
 
@@ -79,10 +79,10 @@ Population-level parameters:
 
 `rhat` is the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag), `eff` is the [effective sample size](https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html), and `ts_se` is the time-series standard error.
 
-`plot(fit, "combo")` can be used to inspect the posteriors and convergence of all parameters. See the documentation of `plot()` for many other plotting options. Here, we plot just the (population-level) change points. They often have "strange" posterior distributions, highlighting the need for a computational approach:
+`plot_pars(fit)` can be used to inspect the posteriors and convergence of all parameters. See the documentation of `plot_pars()` for many other plotting options. Here, we plot just the (population-level) change points. They often have "strange" posterior distributions, highlighting the need for a computational approach:
 
 ```r
-plot(fit, "combo", regex_pars = "cp_")
+plot_pars(fit, regex_pars = "cp_")
 ```
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo_combo.png)
 
@@ -135,7 +135,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp) go in-depth w
  * Parameter names are `int_i` (intercepts), `cp_i` (change points), `x_i` (slopes), `phi_i` (autocorrelation), and `sigma_*` (variance).
  * The change point model is basically an `ifelse` model.
  * Use `rel()` to specify that parameters are relative to those corresponding in the previous segments.
- * Generate data using `fit$func_y`.
+ * Generate data using `fit$simulate()`.
 
 [Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
  * See priors in `fit$prior`.
@@ -146,9 +146,9 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp) go in-depth w
  * Do prior predictive checks using `mcp(segments, data, sample="prior")`.
 
 [Varying change points](https://lindeloev.github.io/mcp/articles/varying.html):
- * Simulate varying change points using `fit$func_y()`.
+ * Simulate varying change points using `fit$simulate()`.
  * Get posteriors using `ranef(fit)`.
- * Plot using `plot(fit, facet_by="my_group")` and `plot(fit, "dens_overlay", pars = "varying", ncol = 3)`.
+ * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "varying", type = "dens_overlay", ncol = 3)`.
  * The default priors restrict varying change points to lie between the two adjacent change points.
 
 `mcp` currently supports the following GLM:
@@ -210,7 +210,7 @@ plot(fit, facet_by = "id")
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_varying.png)
 
-Summarise the individual change points using `ranef()` or plot them using `plot(fit, "combo", "varying")`:
+Summarise the varying change points using `ranef()` or plot them using `plot_pars(fit, "varying")`:
 
 ```r
 ranef(fit)
