@@ -118,7 +118,7 @@ Convergence is perfect here as evidenced by the overlapping trace plots that loo
 The default priors in `mcp` are set so that they are reasonably broad to cover most scenarios, though also specific enough to sample effectively. They are not "default" as in "canonical". Rather, they are "default" as in "what happens if you do nothing else". All priors are stored in `fit$prior` (also `empty$prior`). We did not specify `prior` above, so it ran with default priors:
 
 ```{r}
-fit$prior
+cbind(fit$prior)
 ```
 
 The priors on change points are discussed extensively in the prior vignette. The priors on slopes and intercepts are normals with standard deviation of "3" logits. This corresponds to quite extreme binomial probabilities, yet not so extreme as to be totally flat. Here are visualization of priors `dnorm(0, 1)` (red), `dnorm(0, 2)` (black, mcp default), and a `dnorm(0, 5)` (blue) prior, and the correspondence between logits and probabilities:
