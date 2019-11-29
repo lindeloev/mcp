@@ -157,7 +157,7 @@ segments_ar = list(
 )
 
 fit_ar = mcp(segments_ar, ex_ar)
-plot_ar = plot(fit_ar) + geom_line()
+plot_ar = plot(fit_ar) + ggplot2::geom_line()
 plot_ar$layers[[1]] = NULL  # Remove poiints
 theme_it(plot_ar, "Time series with autoregressive residuals")
 save_it("ex_ar.png")

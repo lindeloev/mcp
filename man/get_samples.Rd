@@ -9,6 +9,8 @@ get_samples(fit, prior = FALSE, message = TRUE, error = TRUE)
 \arguments{
 \item{fit}{An mcpfit object}
 
+\item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
+
 \item{message}{TRUE: gives a message if returning prior samples. FALSE = no message}
 
 \item{error}{TRUE: err if there are no samples. FALSE: return NULL}

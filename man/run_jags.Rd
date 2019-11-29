@@ -4,29 +4,37 @@
 \alias{run_jags}
 \title{Run parallel MCMC sampling using JAGS.}
 \usage{
-run_jags(data, jags_code, params, ST, cores, sample,
-  model_file = "tmp_jags_code.txt", ...)
+run_jags(
+  data,
+  jags_code,
+  pars,
+  ST,
+  cores,
+  sample,
+  n.chains,
+  n.iter,
+  n.adapt,
+  inits
+)
 }
 \arguments{
 \item{data}{Data.frame or tibble in long format.}
 
 \item{jags_code}{A string. JAGS model, usually returned by \code{make_jagscode()}.}
 
-\item{params}{
-Character vector of parameters to be sampled.
-}
+\item{pars}{Character vector of parameters to save/monitor.}
 
 \item{ST}{A segment table (tibble), returned by \code{get_segment_table}.
 Only really used when the model contains varying effects.}
 
 \item{cores}{Positive integer or "all". Number of cores.
 \itemize{
-\item 1: serial sampling
-\item 
-
-1: parallel sampling on this number of cores. Ideally set \code{chains}
-to the same value.
-\item "all": use all cores but one.
+\item \code{1}: serial sampling
+\item \verb{>1}: parallel sampling on this number of cores. Ideally set \code{chains}
+to the same value. Note: \code{cores > 1} takes a few extra seconds the first
+time it's called but subsequent calls will start sampling immediately.
+\item \code{"all"}: use all cores but one and sets \code{chains} to the same value. This is
+a convenient way to maximally use your computer's power.
 }}
 
 \item{sample}{One of
@@ -42,10 +50,17 @@ object without sample. This is useful if you only want to check
 prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
 }}
 
-\item{model_file}{A temporary file. Makes parallel sampling possible
-samples that are discarded between n.adapt and n.iter (to improve convergence)..}
+\item{n.chains}{the number of parallel chains for the model}
 
-\item{...}{Parameters for \code{jags.parfit} which channels them to \code{jags.fit}.}
+\item{n.iter}{number of iterations to monitor}
+
+\item{n.adapt}{the number of iterations for adaptation. See 
+    \code{\link[rjags]{adapt}} for details. If \code{n.adapt = 0} then no 
+    adaptation takes place.}
+
+\item{inits}{A list if initial values for the parameters. This can be useful
+if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
+Defaults to \code{NULL}, i.e., no inits.}
 }
 \value{
 `mcmc.list``

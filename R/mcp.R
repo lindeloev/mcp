@@ -268,7 +268,7 @@ mcp = function(segments,
     message("The current implementation of autoregression can be fragile for link='logit'. If fitting succeeds, do a proper assessment of model convergence.")
 
   if (length(pars_arma) > 0 & length(pars_sigma) > 1)
-    message("Autoregression currently assumes homoskedasticity (equal variance at all x). Using together with sigma() breaks this assumption. The estimated ar* parameters may not be meaningful.")
+    message("Autoregression currently assumes homoskedasticity (equal variance at all x). Using together with sigma() breaks this assumption except when doing just `~ [formula] + sigma(1) + ar(N)`, so that `ar` changes with a sigma intercept. If not, the estimated ar* parameters may not be meaningful.")
 
   # Make formula_str and simulate
   formula_str_funcy = get_all_formulas(ST, prior, par_x, ytypes = c("ct", "sigma"))  # Without ARMA

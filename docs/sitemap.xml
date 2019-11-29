@@ -16,10 +16,46 @@
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/expandDoubleVerts.html</loc>
   </url>
   <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_ar.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_binomial.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_demo.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_plateaus.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_quadratic.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_rel_prior.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_trig.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_variance.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_varying.html</loc>
+  </url>
+  <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/findbars.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/fixef.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_all_formulas.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_arma_order.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_ar_code.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_density.html</loc>
@@ -28,10 +64,10 @@
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_eval_at.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_formula_str.html</loc>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_family.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_func_y.html</loc>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_formula_str.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_jagscode.html</loc>
@@ -52,13 +88,22 @@
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_segment_table.html</loc>
   </url>
   <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_simulate.html</loc>
+  </url>
+  <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_summary.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/hypothesis.html</loc>
   </url>
   <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ilogit.html</loc>
+  </url>
+  <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/logical0_to_null.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/logit.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/mcp.html</loc>
@@ -79,6 +124,9 @@
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/print.mcpfit.html</loc>
   </url>
   <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/print.mcpprior.html</loc>
+  </url>
+  <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ranef.html</loc>
   </url>
   <url>
@@ -97,13 +145,13 @@
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_cp.html</loc>
   </url>
   <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/arma.html</loc>
+  </url>
+  <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/binomial.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/comparison.html</loc>
-  </url>
-  <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/debug.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/formulas.html</loc>
@@ -116,6 +164,9 @@
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/priors.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/tips.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/variance.html</loc>

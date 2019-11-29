@@ -19,7 +19,7 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/cerulean/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
@@ -94,7 +94,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
@@ -121,6 +121,9 @@
     </li>
     <li>
       <a href="../articles/variance.html">Modeling variance</a>
+    </li>
+    <li>
+      <a href="../articles/arma.html">Time series and autocorrelation</a>
     </li>
   </ul>
 </li>
@@ -200,13 +203,32 @@
       <small>Source: <a href='https://github.com/lindeloev/mcp/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="mcp-0109000-currently-in-development" class="section level1">
+    <div id="mcp-02" class="section level1">
 <h1 class="page-header">
-<a href="#mcp-0109000-currently-in-development" class="anchor"></a>mcp 0.1.0.9000 (currently in development)</h1>
+<a href="#mcp-02" class="anchor"></a>mcp 0.2</h1>
+<p>The API and internal structure should be stable now.</p>
+<div id="new-features" class="section level2">
+<h2 class="hasAnchor">
+<a href="#new-features" class="anchor"></a>New features:</h2>
 <ul>
 <li>Quadratic and other terms using <code><a href="https://rdrr.io/r/base/AsIs.html">I(x^2)</a></code>, <code><a href="https://rdrr.io/r/base/AsIs.html">I(x^3.24)</a></code>, <code><a href="https://rdrr.io/r/base/Trig.html">sin(x)</a></code>, <code><a href="https://rdrr.io/r/base/MathFun.html">sqrt(x)</a></code>, etc.</li>
-<li>Model variance for family = gaussian() using ~ sigma([formula here])</li>
+<li>Model variance for <code>family = gaussian()</code> using <code>~ sigma([formula here])</code>.</li>
+<li>Do order-N autoregressive models (AR(N)) using e.g.,<code>~ ar([order here])</code>. Useful for time series.</li>
+<li>Plot prediction intervals using <code><a href="../reference/plot.mcpfit.html">plot(fit, quantiles = TRUE, quantiles_type = "predict")</a></code>.</li>
+<li>Now respects <code><a href="https://rdrr.io/r/base/options.html">options(mc.cores = 3)</a></code>. All guides have been updated to recommend this as a default.</li>
 </ul>
+</div>
+<div id="other-changes" class="section level2">
+<h2 class="hasAnchor">
+<a href="#other-changes" class="anchor"></a>Other changes:</h2>
+<ul>
+<li>
+<code>fit$func_y</code> has been renamed to <code>fit$simulate</code>.</li>
+<li>The argument <code>update</code> has been discarded from <code><a href="../reference/mcp.html">mcp()</a></code> (it’s all on <code>adapt</code> now) and <code>inits</code> has been added.</li>
+<li>Many internal changes to prepare for upcoming features. The biggest internal change is that <code>rjags</code> and <code>future</code> replace the <code>dclone</code> package. This gives faster and cleaner installations, is more future-proof, and avoids the need for a temporary file on the disk when sampling in parallel.</li>
+<li>Updated documentation and website.</li>
+</ul>
+</div>
 </div>
     <div id="mcp-010" class="section level1">
 <h1 class="page-header">
@@ -228,7 +250,7 @@
     <div id="tocnav">
       <h2>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-        <li><a href="#mcp-0109000-currently-in-development">0.1.0.9000</a></li>
+        <li><a href="#mcp-02">0.2</a></li>
         <li><a href="#mcp-010">0.1.0</a></li>
       </ul>
     </div>
