@@ -62,13 +62,13 @@ get_family = function(name, link) {
 #' Inverse logit function
 #'
 #' @aliases ilogit
-#' @param x A vector of logits
+#' @param eta A vector of logits
 ilogit = stats::binomial(link = "logit")$linkinv
 
 #' Logit function
 #'
 #' @aliases logit
-#' @param x A vector of probabilities (0-1)
+#' @param mu A vector of probabilities (0-1)
 logit = stats::binomial(link = "logit")$linkfun
 
 

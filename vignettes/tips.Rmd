@@ -13,7 +13,7 @@ vignette: >
 # Convergence
 A common problem when using MCMC is lacking convergence between chains. This will show up as large `rhat` values (> 1.1 is a common criterion) and non-converging lines in `plot(fit, "trace")`.
 
-* The first thing to try is always to make the model warm up longer to see if it reaches convergence later: `mcp(fit, data, adapt = 4000, update = 4000)`.
+* The first thing to try is always to make the model warm up longer to see if it reaches convergence later: `mcp(fit, data, adapt = 10000)`.
 
 * It can be a sign of a deeper non-identifiability in the model. This will show up as strong correlations in the joint distribution of any pair of implicated parameters: `plot(fit, "hex", pars = c("int_1", "int_2))`. This may give you ideas how to change the model.
 
@@ -25,7 +25,7 @@ A lot of data and complicated models will slow down fitting.
 
 * Run the chains in parallel using, e.g., `mcp(..., chains=4, cores=4)`. The only reason this is not enabled by default is because parallel sampling fails on some systems. Turn it on for the whole session using `options(mc.cores = 3)` which will override `cores` (which defaults to 1).
 
-* More data usually means better identifiability and faster convergence. Lower the warmup period using, e.g., `mcp(..., adapt=300, update = 200)`.
+* More data usually means better identifiability and faster convergence. Lower the adaption period period using, e.g., `mcp(..., adapt = 300)`. This is also sometimes called "burnin".
 
 
 

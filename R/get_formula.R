@@ -4,6 +4,7 @@
 #' fit$simulate model (do not include arma).
 #'
 #' @inheritParams get_formula_str
+#' @inheritParams mcp
 #' @param ytypes A character vector of ytypes to including in model building
 #'
 get_all_formulas = function(ST, prior, par_x, ytypes = c("ct", "sigma", "arma")) {
