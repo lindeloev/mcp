@@ -1,11 +1,11 @@
-# mcp: Multiple Change Point regression
+# mcp: Regression with Multiple Change Points
 
 [![Travis-CI status](https://travis-ci.org/lindeloev/mcp.svg?branch=master)](https://travis-ci.org/lindeloev/mcp)
 [![Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/r/lindeloev/mcp)
 [![CRAN status](https://www.r-pkg.org/badges/version/mcp)](https://CRAN.R-project.org/package=mcp)
 
 
-Infer Multiple Change Points (MCP) between Generalized Linear Segments using Bayesian hierarchical regression. `mcp` aims to provide maximum flexibility for analyses with a priori knowledge about the number of change points and the form of the segments in between.
+`mcp` does regression with one or Multiple Change Points (MCP) between Generalized and hierarchical Linear Segments using Bayesian inference. `mcp` aims to provide maximum flexibility for analyses with a priori knowledge about the number of change points and the form of the segments in between.
 
 Change points are also called **switch points**, **break points**, **broken line** regression, **broken stick** regression, **bilinear** regression, **piecewise linear regression**, **local linear regression**, **segmented regression**, and (performance) **discontinuity** models. `mcp` aims to be be useful for all of them. See how `mcp` compares to [other R packages](https://lindeloev.github.io/mcp/articles/packages.html).
 

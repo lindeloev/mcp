@@ -1,5 +1,5 @@
 Package: mcp
-Title: Bayesian Multiple Change Point Inference
+Title: mcp: Regression with Multiple Change Points
 Version: 0.2.0
 URL: http://lindeloev.github.io/mcp/, https://github.com/lindeloev/mcp
 BugReports: https://github.com/lindeloev/mcp/issues
@@ -9,7 +9,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "jonas@lindeloev.dk",
            comment = c(ORCID = "0000-0003-4565-0595"))
-Description: Flexible inference of Multiple Change Points (MCP) between Hierarchical Generalized Linear Time-Series Segments - and the parameters in those segments.
+Description: Flexible and informed regression with Multiple Change Points (MCP) between Hierarchical Generalized Linear Time-Series Segments.
 License: GPL-2
 Encoding: UTF-8
 Language: en-US

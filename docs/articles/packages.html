@@ -209,7 +209,6 @@
 <div id="where-mcp-is-currently-inferior" class="section level1">
 <h1 class="hasAnchor">
 <a href="#where-mcp-is-currently-inferior" class="anchor"></a>Where mcp is (currently) inferior</h1>
-<p><code>mcp</code> is inferior with respect to:</p>
 <ul>
 <li>
 <em>Speed</em>: While <code>mcp</code> is reasonably fast for typical problems, mcmc sampling is slower than analytical and specialized solutions. For datasets &gt; 20.000 points and a complicated model, it may take <code>mcp</code> hours (but not days) to fit. See <a href="../articles/tips.html">tips and tricks</a> how to speed up <code>mcp</code>. Briefly, run in parallel and lower the number of iterations: (<code>mcp(..., cores = 4, iter = 1000, adapt = 400</code>).</li>
@@ -265,7 +264,7 @@
 <a class="sourceLine" id="cb4-2" title="2">                        <span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_mcp, <span class="st">"dens_overlay"</span>, <span class="dt">pars =</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"cp_1"</span>, <span class="st">"cp_2"</span>)), </a>
 <a class="sourceLine" id="cb4-3" title="3">                        <span class="dt">ncol =</span> <span class="dv">2</span>)</a></code></pre></div>
 <p><img src="packages_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
-<p><code>mcp</code> takes around 10 seconds to fit this example, which is the slowest of all the packages considered here. You can bring that down to 4 seconds by running in parallel, using <code><a href="../reference/mcp.html">mcp(..., cores = 3)</a></code> or for the full session using <code><a href="https://rdrr.io/r/base/options.html">options(mc.cores = 3)</a></code>.</p>
+<p><code>mcp</code> takes around 6 seconds to fit this example, which is the slowest of all the packages considered here. You can bring that down to 2.5 seconds by running in parallel, using <code><a href="../reference/mcp.html">mcp(..., cores = 3)</a></code> or for the full session using <code><a href="https://rdrr.io/r/base/options.html">options(mc.cores = 3)</a></code>.</p>
 </div>
 <div id="envcpt" class="section level1">
 <h1 class="hasAnchor">
