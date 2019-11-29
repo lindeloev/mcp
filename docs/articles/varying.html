@@ -225,16 +225,16 @@
 <pre><code>## # A tibble: 180 x 4
 ##        x id    id_numeric     y
 ##    &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt;
-##  1 21.8  Clark          3  19.6
-##  2 14.4  Clark          3  18.2
-##  3 34.2  Clark          3  21.4
-##  4 46.0  Clark          3  20.2
-##  5 20.2  Clark          3  17.1
-##  6 81.9  Clark          3  40.5
-##  7 12.5  Clark          3  23.1
-##  8  4.61 Clark          3  20.1
-##  9 12.7  Clark          3  19.4
-## 10 53.5  Clark          3  25.0
+##  1  37.0 Clark          3  21.1
+##  2  89.4 Clark          3  39.7
+##  3  61.7 Clark          3  29.6
+##  4  56.9 Clark          3  26.6
+##  5  76.6 Clark          3  34.0
+##  6  16.7 Clark          3  18.3
+##  7  64.5 Clark          3  26.8
+##  8  79.3 Clark          3  34.5
+##  9  94.4 Clark          3  45.0
+## 10  17.6 Clark          3  19.7
 ## # ... with 170 more rows</code></pre>
 <p>Here, we “translated” the <code>id</code> to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around <code>cp_1</code>. The result:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</a>
@@ -274,27 +274,14 @@
 <h1 class="hasAnchor">
 <a href="#priors-for-varying-effects" class="anchor"></a>Priors for varying effects</h1>
 <p>You can see the priors of the model like this:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1">fit<span class="op">$</span>prior</a></code></pre></div>
-<pre><code>## $cp_1
-## [1] "dunif(MINX, MAXX)"
-## 
-## $cp_1_sd
-## [1] "dnorm(0, (MAXX - MINX) / 2) T(0, )"
-## 
-## $cp_1_id
-## [1] "dnorm(0, cp_1_sd) T(MINX - cp_1, MAXX - cp_1)"
-## 
-## $int_1
-## [1] "dt(0, 3 * SDY, 3)"
-## 
-## $x_2
-## [1] "dt(0, SDY / (MAXX - MINX), 3)"
-## 
-## $sigma_1
-## [1] "dnorm(0, SDY) T(0, )"
-## 
-## attr(,"class")
-## [1] "mcpprior"</code></pre>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(fit<span class="op">$</span>prior)</a></code></pre></div>
+<pre><code>##         [,1]                                           
+## cp_1    "dunif(MINX, MAXX)"                            
+## cp_1_sd "dnorm(0, (MAXX - MINX) / 2) T(0, )"           
+## cp_1_id "dnorm(0, cp_1_sd) T(MINX - cp_1, MAXX - cp_1)"
+## int_1   "dt(0, 3 * SDY, 3)"                            
+## x_2     "dt(0, SDY / (MAXX - MINX), 3)"                
+## sigma_1 "dnorm(0, SDY) T(0, )"</code></pre>
 <p>The priors <code>cp_1_sd</code> is the population-level standard deviation of <code>cp_1_id</code>, the latter of which is applied to all levels of <code>id</code>. This is also apparent if you inspect the JAGS code for this model. The truncation of varying effects is quite contrived, but just keeps them between the two adjacent (population-level) change points.</p>
 </div>
 <div id="jags-code" class="section level1">

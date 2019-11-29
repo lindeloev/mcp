@@ -47,7 +47,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
@@ -227,18 +227,11 @@
 <a href="#priors" class="anchor"></a>Priors</h1>
 <p><code><a href="https://rdrr.io/r/stats/family.html">poisson()</a></code> defaults to <code>link = 'log'</code>, meaning that we have to exponentiate the estimates to get the “raw” poisson parameter <span class="math inline">\(\lambda\)</span>. <span class="math inline">\(\lambda\)</span> has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[2])</a></code> (3.2311385) and it is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[3])</a></code> (1.6192601) for segment 2.</p>
 <p>Default priors were used. They are normals with a standard deviation of 10. I.e. with 95% probability mass between <code>exp(10) = 22026</code> and <code>exp(-10) = 1 / 22026</code>:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">fit<span class="op">$</span>prior</a></code></pre></div>
-<pre><code>## $cp_1
-## [1] "dunif(MINX, MAXX)"
-## 
-## $int_1
-## [1] "dnorm(0, 10)"
-## 
-## $int_2
-## [1] "dnorm(0, 10)"
-## 
-## attr(,"class")
-## [1] "mcpprior"</code></pre>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(fit<span class="op">$</span>prior)</a></code></pre></div>
+<pre><code>##       [,1]               
+## cp_1  "dunif(MINX, MAXX)"
+## int_1 "dnorm(0, 10)"     
+## int_2 "dnorm(0, 10)"</code></pre>
 <p>As always, the prior on the change point forces it to occur in the observed range. These priors are very vague, so update with more informed priors for your particular case, e.g.:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1">prior =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
 <a class="sourceLine" id="cb10-2" title="2">  <span class="dt">cp_1 =</span> <span class="st">"dnorm(1900, 30) T(MINX, 1925)"</span></a>

@@ -66,7 +66,7 @@ plot(fit, "combo")
 Default priors were used. They are normals with a standard deviation of 10. I.e. with 95% probability mass between `exp(10) = 22026` and `exp(-10) = 1 / 22026`:
 
 ```{r}
-fit$prior
+cbind(fit$prior)
 ```
 
 As always, the prior on the change point forces it to occur in the observed range. These priors are very vague, so update with more informed priors for your particular case, e.g.:

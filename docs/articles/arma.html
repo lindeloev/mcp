@@ -195,16 +195,16 @@
 ## 
 ## Population-level parameters:
 ##     name    mean   lower   upper Rhat n.eff    ts_se
-##    ar1_1   0.469   0.348   0.603 1.05   215 2.09e-01
-##    ar2_1   0.265   0.141   0.401 1.08   231 2.37e-01
-##     cp_1 168.397 145.130 192.567 1.28    64 5.63e+04
-##    int_1  17.629  13.883  21.465 1.28    53 8.45e+02
-##  sigma_1   4.689   4.298   5.103 1.03   822 3.67e-01
-##   time_2   0.439   0.234   0.581 1.36    26 2.33e+00</code></pre>
+##    ar1_1   0.460   0.351   0.578    1  2374   0.0123
+##    ar2_1   0.253   0.143   0.369    1  2661   0.0119
+##     cp_1 171.782 157.569 186.456    1   743 688.9403
+##    int_1  18.144  15.604  20.517    1  2565   5.5006
+##  sigma_1   4.672   4.317   5.063    1  5188   0.0582
+##   time_2   0.463   0.384   0.541    1   753   0.0164</code></pre>
 <p>Notice that <code>sigma</code> in AR models describe <em>innovations</em>, i.e., the part of the residuals that are not explained by the autoregressive coefficients. As always, it is good to assess posteriors and convergence more directly:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"combo"</span>)</a></code></pre></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-4-1.png" width="768"></p>
-<p>We can see that the change point (<code>cp_1</code>) is not well identified with this model and data. As discussed in the article on <a href="../articles/tips.html">tips, tricks, and debugging</a>, you could combine a more informative prior with more samples (<code><a href="../reference/mcp.html">mcp(..., iter = 10000)</a></code>), if this is a problem.</p>
+<p>Sometimes, the trace plot shows that the change point (<code>cp_1</code>) is not well identified with this model and data. As discussed in the article on <a href="../articles/tips.html">tips, tricks, and debugging</a>, you could combine a more informative prior with more samples (<code><a href="../reference/mcp.html">mcp(..., iter = 10000)</a></code>), if this is a problem.</p>
 <p>You can do hypothesis testing and model comparisons with autoregressive models, just as with any other model in <code>mcp</code>. <a href="../articles/comparison.html">Read more here</a> or scroll down for an applied example.</p>
 </div>
 <div id="extended-use" class="section level1">
@@ -266,96 +266,61 @@
 ## 
 ## Population-level parameters:
 ##     name   mean   lower  upper Rhat n.eff    ts_se
-##    ar1_1  0.203  0.0592  0.351 1.01  1693 7.48e-02
-##    ar1_2  0.793  0.7228  0.864 1.00 10292 2.28e-03
-##     cp_1 41.294 37.5990 42.719 1.21   134 1.23e+03
-##    int_1 20.010 18.0608 21.917 1.00  2571 6.91e+00
-##  sigma_1  7.033  6.5981  7.476 1.00 10810 8.38e-02
-##      x_1  0.985  0.9216  1.046 1.00  2458 7.35e-03
-##      x_2  0.985  0.9216  1.046 1.00  2458 7.35e-03</code></pre>
+##    ar1_1  0.216  0.0633  0.388 1.00   289 3.88e-01
+##    ar1_2  0.795  0.7227  0.871 1.00  2125 8.16e-03
+##     cp_1 42.530 38.0843 55.685 1.01    58 5.15e+03
+##    int_1 19.984 18.0916 22.084 1.00  2403 7.63e+00
+##  sigma_1  7.040  6.5909  7.478 1.00  8173 8.98e-02
+##      x_1  0.987  0.9247  1.053 1.00  1631 8.56e-03
+##      x_2  0.987  0.9247  1.053 1.00  1631 8.56e-03</code></pre>
 <p>We see that all parameters are well recovered. However, there is a dangerously low effective sample size for the change point (<code>cp_1</code>), indicating a potential problem. We can inspect this further using trace plots and posterior distributions. As is often the case, we see that the change point posterior is not well described by parameterized distribution. In this case, the change point posterior is a bit bimodal with some credence to a change point around 55 too. This is understandable if you look at the data.</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"combo"</span>, <span class="dt">regex_pars =</span> <span class="st">"cp_1|ar_*"</span>)</a></code></pre></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
 <p>As usual, we can test hypotheses and do model comparison (<a href="../articles/comparison.html">read more here</a>). For example, what is the evidence that <code>ar1_2</code> is more than 0.4 greater than <code>ar1_1</code>? Answer: It is quite compelling</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/hypothesis.html">hypothesis</a></span>(fit, <span class="st">"ar1_1 + 0.4 &lt; ar1_2"</span>)</a></code></pre></div>
-<pre><code>##                hypothesis       mean      lower       upper         p       BF
-## 1 ar1_1 + 0.4 - ar1_2 &lt; 0 -0.1896011 -0.3436835 -0.02737006 0.9886111 86.80488</code></pre>
+<pre><code>##                hypothesis       mean      lower      upper         p       BF
+## 1 ar1_1 + 0.4 - ar1_2 &lt; 0 -0.1788844 -0.3445744 -0.0103212 0.9793889 47.51752</code></pre>
 <p>Or how does this compare to a model with just the slope and no autocorrelation? Answer: quite strong with an <code>elpd_diff/se_diff</code> factor of around 6.</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1">fit_null =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(y <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x), data)</a>
-<a class="sourceLine" id="cb13-2" title="2">fit<span class="op">$</span>loo =<span class="st"> </span><span class="kw"><a href="../reference/criterion.html">loo</a></span>(fit)</a></code></pre></div>
-<pre><code>## Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.</code></pre>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1">fit_null<span class="op">$</span>loo =<span class="st"> </span><span class="kw"><a href="../reference/criterion.html">loo</a></span>(fit_null)</a>
-<a class="sourceLine" id="cb15-2" title="2"></a>
-<a class="sourceLine" id="cb15-3" title="3">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit<span class="op">$</span>loo, fit_null<span class="op">$</span>loo)</a></code></pre></div>
+<a class="sourceLine" id="cb13-2" title="2">fit<span class="op">$</span>loo =<span class="st"> </span><span class="kw"><a href="../reference/criterion.html">loo</a></span>(fit)</a>
+<a class="sourceLine" id="cb13-3" title="3">fit_null<span class="op">$</span>loo =<span class="st"> </span><span class="kw"><a href="../reference/criterion.html">loo</a></span>(fit_null)</a>
+<a class="sourceLine" id="cb13-4" title="4"></a>
+<a class="sourceLine" id="cb13-5" title="5">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit<span class="op">$</span>loo, fit_null<span class="op">$</span>loo)</a></code></pre></div>
 <pre><code>##        elpd_diff se_diff
 ## model1    0.0       0.0 
-## model2 -166.5      16.7</code></pre>
+## model2 -165.2      16.6</code></pre>
 </div>
 <div id="priors-on-autoregressive-coefficients" class="section level1">
 <h1 class="hasAnchor">
 <a href="#priors-on-autoregressive-coefficients" class="anchor"></a>Priors on autoregressive coefficients</h1>
 <p>The default prior on autoregressive intercepts is a <code><a href="https://rdrr.io/r/stats/Uniform.html">dunif(-1, 1)</a></code> to ensure a stationary series while being otherwise agnostic about the magnitude and direction of the autocorrelation. For most time series, you would expect a positive first-order autocorrelation, e.g., <code>ar1_1 = "dunif(0, 1)"</code> or even something like <code>ar1_1 = "dnorm(0.5, 0.5) T(0, 1)"</code>. <a href="../articles/priors.html">Read more about priors</a>. Similarly, you would expect a smaller-but-still-positive second-order autocorrelation, e.g., <code>ar2_1 = dunif(0, ar1_1)</code>.</p>
 <p>Here is a complete list of the (default) priors in the model above:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1">fit<span class="op">$</span>prior</a></code></pre></div>
-<pre><code>## $cp_1
-## [1] "dunif(MINX, MAXX)"
-## 
-## $int_1
-## [1] "dt(0, 3 * SDY, 3)"
-## 
-## $x_1
-## [1] "dt(0, SDY / (MAXX - MINX), 3)"
-## 
-## $x_2
-## [1] "x_1"
-## 
-## $sigma_1
-## [1] "dnorm(0, SDY) T(0, )"
-## 
-## $ar1_1
-## [1] "dunif(-1, 1)"
-## 
-## $ar1_2
-## [1] "dunif(-1, 1)"
-## 
-## attr(,"class")
-## [1] "mcpprior"</code></pre>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(fit<span class="op">$</span>prior)</a></code></pre></div>
+<pre><code>##         [,1]                           
+## cp_1    "dunif(MINX, MAXX)"            
+## int_1   "dt(0, 3 * SDY, 3)"            
+## x_1     "dt(0, SDY / (MAXX - MINX), 3)"
+## x_2     "x_1"                          
+## sigma_1 "dnorm(0, SDY) T(0, )"         
+## ar1_1   "dunif(-1, 1)"                 
+## ar1_2   "dunif(-1, 1)"</code></pre>
 <p>Let’s inspect the priors for a more advanced AR model, since you would often have to inform these:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb19-2" title="2">  y <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="dv">2</span>, <span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x),</a>
-<a class="sourceLine" id="cb19-3" title="3">  <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="dv">1</span>, <span class="kw">rel</span>(<span class="dv">1</span>) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/AsIs.html">I</a></span>(x<span class="op">^</span><span class="dv">2</span>))</a>
-<a class="sourceLine" id="cb19-4" title="4">)</a>
-<a class="sourceLine" id="cb19-5" title="5">empty =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb19-6" title="6"><span class="kw"><a href="../reference/print.mcpfit.html">print</a></span>(empty<span class="op">$</span>prior)</a></code></pre></div>
-<pre><code>## $cp_1
-## [1] "dunif(MINX, MAXX)"
-## 
-## $int_1
-## [1] "dt(0, 3 * SDY, 3)"
-## 
-## $sigma_1
-## [1] "dnorm(0, SDY) T(0, )"
-## 
-## $ar1_1
-## [1] "dunif(-1, 1)"
-## 
-## $ar2_1
-## [1] "dunif(-1, 1)"
-## 
-## $ar1_x_1
-## [1] "dnorm(0, 1 / (MAXX - MINX))"
-## 
-## $ar2_x_1
-## [1] "dnorm(0, 1 / (MAXX - MINX))"
-## 
-## $ar1_2
-## [1] "dunif(-1, 1)"
-## 
-## $ar1_x_2_E2
-## [1] "dnorm(0, 1 / (MAXX - MINX))"
-## 
-## attr(,"class")
-## [1] "mcpprior"</code></pre>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
+<a class="sourceLine" id="cb17-2" title="2">  y <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="dv">2</span>, <span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x),</a>
+<a class="sourceLine" id="cb17-3" title="3">  <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="dv">1</span>, <span class="kw">rel</span>(<span class="dv">1</span>) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/AsIs.html">I</a></span>(x<span class="op">^</span><span class="dv">2</span>))</a>
+<a class="sourceLine" id="cb17-4" title="4">)</a>
+<a class="sourceLine" id="cb17-5" title="5">empty =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb17-6" title="6"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(empty<span class="op">$</span>prior)</a></code></pre></div>
+<pre><code>##            [,1]                         
+## cp_1       "dunif(MINX, MAXX)"          
+## int_1      "dt(0, 3 * SDY, 3)"          
+## sigma_1    "dnorm(0, SDY) T(0, )"       
+## ar1_1      "dunif(-1, 1)"               
+## ar2_1      "dunif(-1, 1)"               
+## ar1_x_1    "dnorm(0, 1 / (MAXX - MINX))"
+## ar2_x_1    "dnorm(0, 1 / (MAXX - MINX))"
+## ar1_2      "dunif(-1, 1)"               
+## ar1_x_2_E2 "dnorm(0, 1 / (MAXX - MINX))"</code></pre>
 <p>As with <code>sigma</code>, the link function for the autoregressive coefficient itself is <code>"identity"</code> though the autoregressive coefficient is computed from residuals using the link function provided in <code><a href="../reference/mcp.html">mcp(..., family = func(link = "something"))</a></code>. Because stationarity is important, careful consideration of the allowed and probable values (the prior) is necessary when going beyond simple absolute intercepts to avoid <code>ar</code> values outside [-1, 1].</p>
 <p>Here are a few ways in which you may want to inform the <code>ar</code> parameters in the model above:</p>
 <ul>
