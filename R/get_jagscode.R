@@ -2,12 +2,13 @@
 #'
 #' @aliases get_jagscode
 #' @inheritParams mcp
-#' @param formula_str String. The formula string returned by \code{build_formula_str}.
-#' @param ST Segment table. Returned by \code{get_segment_table()}.
+#' @param formula_str String. The formula string returned by `build_formula_str`.
+#' @param ST Segment table. Returned by `get_segment_table()`.
+#' @param arma_order Positive integer. The autoregressive order.
 #' @return String. A JAGS model.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-get_jagscode = function(prior, ST, formula_str, family, sample) {
+get_jagscode = function(prior, ST, formula_str, arma_order, family, sample) {
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
   mm = paste0("
@@ -16,14 +17,6 @@ model {
   ##########
   # PRIORS #
   ##########
-  # Transform priors from SD to precision
-  all_dprec = "dnorm|dt|dcauchy|ddexp|dlogis|dlnorm"  # JAGS precision dists
-  for (i in seq_along(prior)) {
-    if (stringr::str_detect(prior[[i]], all_dprec)) {
-      prior[[i]] = sd_to_prec(prior[[i]])
-    }
-  }
-
   # Split up priors into population and varying
   prior_pop = prior[!names(prior) %in% ST$cp_group]
   prior_varying = prior[names(prior) %in% ST$cp_group]
@@ -49,6 +42,21 @@ model {
     }
   }
 
+  # Autocorrelation: detect if there is an intercept or slope on AR
+  y_code = "y_[i_]"
+  has_ar = !all(is.na(unlist(ST$ar_code))) | !all(is.na(unlist(ST$ar_int)))
+  if (has_ar) {
+    # Add computation of autocorrelated residuals
+    mm = paste0(mm, get_ar_code(arma_order, ST, family))
+    y_code = paste0(y_code, " + sum(ar_[i_, ])")
+  }
+
+  # Add inverse link function to back-transform to observed metric
+  if (family$link != "identity")  # not identity
+    y_code = paste0(family$linkinv_jags, "(", y_code, ")")
+
+
+
 
   ###########
   # FORMULA #
@@ -69,24 +77,22 @@ model {
   mm = paste0(mm, gsub("\n", "\n    ", formula_jags))
 
   # Finally the likelihood
-  mm = paste0(mm, "\n\n    # Likelihood and log-density for family = ", family, "()
-    ", ST$y[1], "[i_] ~ ")
+  mm = paste0(mm, "\n\n    # Likelihood and log-density for family = ", family$family, "()
+    ")
 
-  if (family == "gaussian") {
-    mm = paste0(mm, "dnorm(y_[i_], 1 / sigma_[i_]^2)
-    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], y_[i_], 1 / sigma_[i_]^2)")
+  if (family$family == "gaussian") {
+    mm = paste0(mm, ST$y[1], "[i_] ~ dnorm(", y_code, ", 1 / sigma_[i_]^2)
+    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], ", y_code, ", 1 / sigma_[i_]^2)")
 
-  } else if (family == "binomial") {
-    # ilogit = inverse logit
-    mm = paste0(mm, "dbin(ilogit(y_[i_]), ", ST$trials[1], "[i_])
-    loglik_[i_] = logdensity.bin(", ST$y[1], "[i_], ilogit(y_[i_]), ", ST$trials[1], "[i_])")
-  } else if (family == "bernoulli") {
-    mm = paste0(mm, "dbern(ilogit(y_[i_]))
-    loglik_[i_] = logdensity.bern(", ST$y[1], "[i_], ilogit(y_[i_]))")
-  } else if (family == "poisson") {
-    # exp is inverse of log
-    mm = paste0(mm, "dpois(exp(y_[i_]))
-    loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], exp(y_[i_]))")
+  } else if (family$family == "binomial") {
+    mm = paste0(mm, ST$y[1], "[i_] ~ dbin(", y_code, ", ", ST$trials[1], "[i_])
+    loglik_[i_] = logdensity.bin(", ST$y[1], "[i_], ", y_code, ", ", ST$trials[1], "[i_])")
+  } else if (family$family == "bernoulli") {
+    mm = paste0(mm, ST$y[1], "[i_] ~ dbern(", y_code, ")
+    loglik_[i_] = logdensity.bern(", ST$y[1], "[i_], ", y_code, ")")
+  } else if (family$family == "poisson") {
+    mm = paste0(mm, ST$y[1], "[i_] ~ dpois(", y_code, ")
+    loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], ", y_code, ")")
   }
 
   # If only the prior is sampled, remove the loglik_[i_] line
@@ -112,7 +118,7 @@ model {
 #'
 #' @aliases get_prior_str
 #' @inheritParams mcp
-#' @param i The index in \code{prior} to get code for
+#' @param i The index in `prior` to get code for
 #' @param varying_group String or NULL (default). Null indicates a population-
 #'   level prior. String indicates a varying-effects prior (one for each group
 #'   level).
@@ -120,7 +126,7 @@ model {
 #'
 get_prior_str = function(prior, i, varying_group = NULL) {
   # Helpers
-  value = prior[i]
+  value = prior[[i]]
   name = names(prior[i])
 
   # Is this fixed?
@@ -134,6 +140,9 @@ get_prior_str = function(prior, i, varying_group = NULL) {
 
   # If it is a known distribution
   if (!is_fixed) {
+    # Convert to precision
+    value = sd_to_prec(value)
+
     # ... and this is a population-level effect
     if (is.null(varying_group)) {
       return(paste0("  ", name, " ~ ", value, "\n"))
@@ -152,10 +161,10 @@ get_prior_str = function(prior, i, varying_group = NULL) {
 
 
 
-#'¨Transform a prior from SD to precision.
+#' Transform a prior from SD to precision.
 #'
 #' JAGS uses precision rather than SD. This function converts
-#' \code{dnorm(4.2, 1.3)} into \code{dnorm(4.2, 1/1.3^2)}. It allows users to specify
+#' `dnorm(4.2, 1.3)` into `dnorm(4.2, 1/1.3^2)`. It allows users to specify
 #' priors using SD and then it's transformed for the JAGS code. It works for the
 #' following distributions: dnorm|dt|dcauchy|ddexp|dlogis|dlnorm. In all of
 #' these,
@@ -163,7 +172,7 @@ get_prior_str = function(prior, i, varying_group = NULL) {
 #'
 #'@aliases sd_to_prec
 #'@param prior_str String. A JAGS prior. Can be truncated, e.g.
-#'  \code{dt(3, 2, 1) T(my_var, )}.
+#'  `dt(3, 2, 1) T(my_var, )`.
 #'@return A string
 #'@author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'@export
@@ -196,4 +205,30 @@ sd_to_prec = function(prior_str) {
     return(new_prior)
   }
   else return(prior_str)
+}
+
+
+
+#' Get JAGS code for residuals for each AR-order
+#'
+#' @aliases ar_code
+#' @inheritParams get_jagscode
+#' @param ar_order The order of the autoregressive component
+get_ar_code = function(ar_order, ST, family) {
+  code = ""
+  for (i in seq_len(ar_order)) {
+    # Get code for link(y[i - order])
+    if (family$family != "binomial") {
+      y_obs = paste0(family$link_jags, "(", ST$y[1], "[i_ - ", i, "])")
+    } else {
+      y_obs = paste0(family$link_jags, "(", ST$y[1], "[i_ - ", i, "] / ", ST$trials[1], "[i_ - ", i, "])")
+    }
+
+    code = paste0(code, "
+
+  # AR(", i, ") on residuals:
+  ar_[1:", i, ", ", i, "] = c(", paste0(rep("0", i), collapse = ","), ")
+  for (i_ in ", i + 1, ":length(", ST$x[1], ")) {ar_[i_, ", i, "] = ar", i, "_[i_] * (", y_obs, " - y_[i_-", i, "])}")
+  }
+  return(code)
 }

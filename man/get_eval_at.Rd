@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot.R
 \name{get_eval_at}
 \alias{get_eval_at}
-\title{Get a list of x-coordinates to evaluate fit$func_y at}
+\title{Get a list of x-coordinates to evaluate fit$simulate at}
 \usage{
 get_eval_at(fit, facet_by)
 }

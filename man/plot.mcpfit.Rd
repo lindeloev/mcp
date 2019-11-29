@@ -5,10 +5,20 @@
 \alias{plot}
 \title{Plot mcpfit}
 \usage{
-plot.mcpfit(x, type = "segments", pars = "population",
-  regex_pars = character(0), ncol = 1, facet_by = NULL,
-  rate = TRUE, lines = 25, quantiles = FALSE,
-  quantiles_type = "fitted", prior = FALSE, ...)
+\method{plot}{mcpfit}(
+  x,
+  type = "segments",
+  pars = "population",
+  regex_pars = character(0),
+  ncol = 1,
+  facet_by = NULL,
+  rate = TRUE,
+  lines = 25,
+  quantiles = FALSE,
+  quantiles_type = "fitted",
+  prior = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{An mcpfit object}
@@ -51,11 +61,11 @@ intervals, see \code{quantiles_type} argument.}
 
 \item{quantiles}{Whether to plot quantiles.
 \itemize{
-\item \strong{TRUE:} Add 2.5% and 97.5% quantiles. Corresponds to
+\item \strong{TRUE:} Add 2.5\% and 97.5\% quantiles. Corresponds to
 \code{quantiles = c(0.025, 0.975)}.
 \item \strong{FALSE (default):} No quantiles
 \item A vector of quantiles. For example, \code{quantiles = 0.5}
-plots the median and \code{quantiles = c(0.2, 0.8)} plots the 20% and 80%
+plots the median and \code{quantiles = c(0.2, 0.8)} plots the 20\% and 80\%
 quantiles.
 }}
 
@@ -74,7 +84,7 @@ types of plots of parameter estimates (typically \code{plot(fit, "combo")}).
 See examples for typical use cases.
 }
 \details{
-For \code{type = "segments"}, it uses \code{fit$func_y} with \code{draws}
+For \code{type = "segments"}, it uses \code{fit$simulate} with \code{draws}
 posterior samples. These represent the joint posterior distribution of
 parameter values.
 
@@ -85,8 +95,7 @@ are also a number of useful plots in the \pkg{coda} package, i.e.,
 \code{coda::gelman.plot(fit$mcmc_post)} and \code{coda::crosscorr.plot(fit$mcmc_post)}
 
 In any case, if you see a few erratic lines or parameter estimates, this is
-a sign that you may want to increase arguments 'adapt', 'update', and
-'iter' in \code{\link{mcp}}.
+a sign that you may want to increase argument 'adapt' and 'iter' in \code{\link{mcp}}.
 }
 \examples{
 \dontrun{

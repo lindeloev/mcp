@@ -2,13 +2,13 @@
 % Please edit documentation in R/get_jagscode.R
 \name{sd_to_prec}
 \alias{sd_to_prec}
-\title{¨Transform a prior from SD to precision.}
+\title{Transform a prior from SD to precision.}
 \usage{
 sd_to_prec(prior_str)
 }
 \arguments{
 \item{prior_str}{String. A JAGS prior. Can be truncated, e.g.
-\code{dt(3, 2, 1) T(my_var, )}.}
+\verb{dt(3, 2, 1) T(my_var, )}.}
 }
 \value{
 A string

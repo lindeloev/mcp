@@ -7,4 +7,4 @@ vignettes/poisson_cache
 vignettes/priors_cache
 vignettes/varying_cache
 vignettes/variance_cache
-tests/testthat/tmp_jags_code.txt
+vignettes/arma_cache

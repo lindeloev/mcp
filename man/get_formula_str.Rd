@@ -4,12 +4,18 @@
 \alias{get_formula_str}
 \title{Build an R formula (as string) given a segment table (ST)}
 \usage{
-get_formula_str(ST, par_x, sigma = FALSE)
+get_formula_str(ST, par_x, ytype = "ct", init = FALSE)
 }
 \arguments{
 \item{ST}{Tibble. Returned by \code{get_segment_table}.}
 
-\item{sigma}{If TRUE, build code for sigma instead}
+\item{par_x}{String (default: NULL). Only relevant if no segments contains
+slope (no hint at what x is). Set this, e.g., par_x = "time".}
+
+\item{ytype}{One of "ct" (central tendency), "sigma", "ar1" (or another order), or "ma1" (or another order)}
+
+\item{init}{TRUE/FALSE. Set to TRUE for the first call. Adds segment-relative
+X-codings and verbose commenting of one formula}
 }
 \description{
 You will need to replace PAR_X for whatever your x-axis observation column

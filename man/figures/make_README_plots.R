@@ -19,12 +19,14 @@ save_it = function(filename) {
 # Example 1 #
 #############
 library(mcp)
+options(mc.cores = 3)  # Run in parallel
+
 segments_demo = list(
   response ~ 1,  # plateau (int_1)
   ~ 0 + time,  # joined slope (time_2) at cp_1
   ~ 1 + time  # disjoined slope (int_1, time_2) at cp_2
 )
-fit_demo = mcp(segments_demo, data = ex_demo, cores = 3)  # dataset included in mcp
+fit_demo = mcp(segments_demo, data = ex_demo)  # dataset included in mcp
 theme_it(plot(fit_demo), "")
 save_it("ex_demo.png")
 
@@ -37,7 +39,7 @@ segments_null = list(
   response ~ 1 + time,
   ~ 1 + time
 )
-fit_null = mcp(segments_null, ex_demo, cores = 3)
+fit_null = mcp(segments_null, ex_demo)
 
 # Compare loos:
 fit_demo$loo = loo(fit_demo)
@@ -52,7 +54,7 @@ segments_plateaus = list(
   y ~ 1,  # plateau (int_1)
   ~ 1  # plateau (int_2)
 )
-fit_plateaus = mcp(segments_plateaus, ex_plateaus, par_x = "x", cores = 3)
+fit_plateaus = mcp(segments_plateaus, ex_plateaus, par_x = "x")
 theme_it(plot(fit_plateaus, lines = 25), "Two plateaus")
 save_it("ex_plateaus.png")
 
@@ -66,7 +68,7 @@ segments_varying = list(
   y ~ 1 + x,  # intercept + slope
   1 + (1|id) ~ 0 + x + sigma(1)  # joined slope, varying by id
 )
-fit_varying = mcp(segments_varying, ex_varying, cores = 3)
+fit_varying = mcp(segments_varying, ex_varying)
 theme_it(plot(fit_varying, facet_by = "id"), "Varying slope change")
 save_it("ex_varying.png")
 
@@ -79,7 +81,7 @@ segments_binomial = list(
   ~ 0 + x,  # joined changing rate
   ~ 1 + x  # disjoined changing rate
 )
-fit_binomial = mcp(segments_binomial, ex_binomial, family = binomial(), cores = 3)
+fit_binomial = mcp(segments_binomial, ex_binomial, family = binomial())
 theme_it(plot(fit_binomial, quantiles = TRUE), "Binomial")
 save_it("ex_binomial.png")
 
@@ -99,7 +101,7 @@ prior_rel = list(
   cp_1 = "dunif(20, 50)"  # has to occur in this interval
 )
 
-fit_rel = mcp(segments_rel, ex_rel_prior, prior_rel, cores = 3)
+fit_rel = mcp(segments_rel, ex_rel_prior, prior_rel)
 theme_it(plot(fit_rel), "rel() and prior")
 save_it("ex_fix_rel.png")
 
@@ -111,7 +113,7 @@ segments_quadratic = list(
   y ~ 1,
   1 ~ 0 + x + I(x^2)
 )
-fit_quadratic = mcp(segments_quadratic, ex_quadratic, cores = 3)
+fit_quadratic = mcp(segments_quadratic, ex_quadratic)
 theme_it(plot(fit_quadratic), "Quadratic and other exponentiations")
 save_it("ex_quadratic.png")
 
@@ -125,7 +127,7 @@ segments_trig = list(
   y ~ 1 + sin(x),
   ~ 0 + cos(x) + x
 )
-fit_trig = mcp(segments_trig, ex_trig, cores = 3)
+fit_trig = mcp(segments_trig, ex_trig)
 theme_it(plot(fit_trig), "Trigonometric for periodic trends")
 save_it("ex_trig.png")
 
@@ -140,11 +142,25 @@ segments_variance = list(
   ~ 0 + x
 )
 
-fit_variance = mcp(segments_variance, ex_variance, cores = 3, adapt = 5000, update = 5000, iter = 5000)
+fit_variance = mcp(segments_variance, ex_variance, iter = 10000, adapt = 10000)
 theme_it(plot(fit_variance, quantiles = TRUE, quantiles_type = "predict"), "Variance and prediction intervals")
 save_it("ex_variance.png")
 
 
+
+#########
+# AR(N) #
+#########
+segments_ar = list(
+  price ~ 1 + ar(2),
+  ~ 0 + time
+)
+
+fit_ar = mcp(segments_ar, ex_ar)
+plot_ar = plot(fit_ar) + ggplot2::geom_line()
+plot_ar$layers[[1]] = NULL  # Remove poiints
+theme_it(plot_ar, "Time series with autoregressive residuals")
+save_it("ex_ar.png")
 
 
 
@@ -160,9 +176,9 @@ segments = list(
 empty = mcp(segments, sample = FALSE)
 ex_tweet = tibble::tibble(
   x = 1:100,
-  y = empty$func_y(x, int_1 = 10, x_1 = 1, x_2 = -0.5, cp_1 = 30, sigma = 5)
+  y = empty$simulate(x, int_1 = 10, x_1 = 1, x_2 = -0.5, cp_1 = 30, sigma = 5)
 )
-fit = mcp(segments, ex_tweet, cores = 3)
+fit = mcp(segments, ex_tweet)
 plot(fit)
 
 # Binomial
@@ -175,8 +191,8 @@ ex_tweet_bin = tibble::tibble(id = 1:5) %>%
   tidyr::expand_grid(difficulty = rep(1:10, each = 3)) %>%
   dplyr::mutate(
     N = 10,
-    score = empty_bin$func_y(difficulty, N, int_1 = 2, difficulty_2 = -0.8, cp_1 = 5, cp_1_id = 1 * (id - mean(id)))
+    score = empty_bin$simulate(difficulty, N, int_1 = 2, difficulty_2 = -0.8, cp_1 = 5, cp_1_id = 1 * (id - mean(id)))
   )
-fit_bin = mcp(segments_bin, ex_tweet_bin, family = binomial(), cores = 3)
+fit_bin = mcp(segments_bin, ex_tweet_bin, family = binomial())
 #plot(fit_bin, facet_by="id")
 hypothesis(fit_bin, "`cp_1_id[1]` < `cp_1_id[2]`")

@@ -19,7 +19,7 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/cerulean/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
@@ -58,7 +58,7 @@ All segments must regress on the same x-variable. Change
 points are forced to be ordered using truncation of the priors. You can run
 fit = mcp(segments, sample=FALSE) to avoid sampling and the need for
 data if you just want to get the priors (fit$prior), the JAGS code
-fit$jags_code, or the R function to simulate data (fit$func_y)." />
+fit$jags_code, or the R function to simulate data (fit$simulate)." />
 <meta property="og:image" content="https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -102,7 +102,7 @@ fit$jags_code, or the R function to simulate data (fit$func_y)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
@@ -129,6 +129,9 @@ fit$jags_code, or the R function to simulate data (fit$func_y)." />
     </li>
     <li>
       <a href="../articles/variance.html">Modeling variance</a>
+    </li>
+    <li>
+      <a href="../articles/arma.html">Time series and autocorrelation</a>
     </li>
   </ul>
 </li>
@@ -217,13 +220,24 @@ All segments must regress on the same x-variable. Change
 points are forced to be ordered using truncation of the priors. You can run
 <code>fit = mcp(segments, sample=FALSE)</code> to avoid sampling and the need for
 data if you just want to get the priors (<code>fit$prior</code>), the JAGS code
-<code>fit$jags_code</code>, or the R function to simulate data (<code>fit$func_y</code>).</p>
+<code>fit$jags_code</code>, or the R function to simulate data (<code>fit$simulate</code>).</p>
     </div>
 
-    <pre class="usage"><span class='fu'>mcp</span>(<span class='no'>segments</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(), <span class='kw'>family</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/family.html'>gaussian</a></span>(),
-  <span class='kw'>par_x</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>sample</span> <span class='kw'>=</span> <span class='st'>"post"</span>, <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>3</span>,
-  <span class='kw'>iter</span> <span class='kw'>=</span> <span class='fl'>3000</span>, <span class='kw'>adapt</span> <span class='kw'>=</span> <span class='fl'>1500</span>, <span class='kw'>update</span> <span class='kw'>=</span> <span class='fl'>1500</span>, <span class='kw'>jags_explicit</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>mcp</span>(
+  <span class='no'>segments</span>,
+  <span class='kw'>data</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
+  <span class='kw'>family</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/family.html'>gaussian</a></span>(),
+  <span class='kw'>par_x</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>sample</span> <span class='kw'>=</span> <span class='st'>"post"</span>,
+  <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>3</span>,
+  <span class='kw'>iter</span> <span class='kw'>=</span> <span class='fl'>3000</span>,
+  <span class='kw'>adapt</span> <span class='kw'>=</span> <span class='fl'>1000</span>,
+  <span class='kw'>inits</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>jags_explicit</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>...</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -234,8 +248,14 @@ data if you just want to get the priors (<code>fit$prior</code>), the JAGS code
 has the format <code>response ~ predictors</code> while the following formulas
 have the format <code>response ~ changepoint ~ predictors</code>. The response
 and change points can be omitted (<code>changepoint ~ predictors</code> assumes same
-response. <code>~ predictors</code> assumes an intercept-only change point).</p>
-<p>See examples for more details.</p></td>
+response. <code>~ predictors</code> assumes an intercept-only change point). Segments
+can model</p><ul>
+<li><p><em>Regular formulas:</em> e.g., <code>~ 0 + x + I(x^2) + exp(x)</code>). <a href='https://lindeloev.github.io/mcp/articles/formulas.html'>Read more here</a>.</p></li>
+<li><p><em>Variance:</em> e.g., <code>~sigma(1)</code> for a simple variance change or
+<code>~sigma(rel(1) + I(x^2))</code>) for more advanced variance structures. <a href='https://lindeloev.github.io/mcp/articles/variance.html'>Read more here</a></p></li>
+<li><p><em>Autoregression:</em> e.g., <code>~ar(1)</code> for a simple onset/change in AR(1) or
+<code>ar(2, 0 + x</code>) for an AR(2) with parameter(s) increasing by <code>x</code>. <a href='https://lindeloev.github.io/mcp/articles/arma.html'>Read more here</a></p></li>
+</ul></td>
     </tr>
     <tr>
       <th>data</th>
@@ -286,11 +306,12 @@ prior strings (fit$prior), the JAGS model (fit$jags_code), etc.</p></li>
     <tr>
       <th>cores</th>
       <td><p>Positive integer or "all". Number of cores.</p><ul>
-<li><p>1: serial sampling</p></li>
-<li><p></p>
-<p>1: parallel sampling on this number of cores. Ideally set <code>chains</code>
-to the same value.</p></li>
-<li><p>"all": use all cores but one.</p></li>
+<li><p><code>1</code>: serial sampling</p></li>
+<li><p><code>&gt;1</code>: parallel sampling on this number of cores. Ideally set <code>chains</code>
+to the same value. Note: <code>cores &gt; 1</code> takes a few extra seconds the first
+time it's called but subsequent calls will start sampling immediately.</p></li>
+<li><p><code>"all"</code>: use all cores but one and sets <code>chains</code> to the same value. This is
+a convenient way to maximally use your computer's power.</p></li>
 </ul></td>
     </tr>
     <tr>
@@ -303,13 +324,15 @@ to the same value.</p></li>
     </tr>
     <tr>
       <th>adapt</th>
-      <td><p>Positive integer. Number of iterations to find sampler settings.</p></td>
+      <td><p>Positive integer. Also sometimes called "burnin", this is the
+number of samples used to reach convergence. Set lower for greater speed.
+Set higher if the chains haven't converged yet or look at <a href='https://lindeloev.github.io/mcp/articles/tips.html'>tips, tricks, and debugging</a>.</p></td>
     </tr>
     <tr>
-      <th>update</th>
-      <td><p>Positive integer. Also sometimes called "burnin", this is the
-number of regular samples before anything is recorded. Use to reach
-convergence.</p></td>
+      <th>inits</th>
+      <td><p>A list if initial values for the parameters. This can be useful
+if a model fails to converge. Read more in <code><a href='https://rdrr.io/pkg/rjags/man/jags.model.html'>jags.model</a></code>.
+Defaults to <code>NULL</code>, i.e., no inits.</p></td>
     </tr>
     <tr>
       <th>jags_explicit</th>
@@ -328,7 +351,7 @@ you want to make small tweaks, but mostly used for the development of mcp.</p></
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Notes on priors:</p><ul>
-<li><p>Order restriction is automatically applied to cp_* parameters using
+<li><p>Order restriction is automatically applied to cp_\* parameters using
 truncation (e.g., <code><a href='https://rdrr.io/r/base/logical.html'>T(cp_1, )</a></code>) so that they are in the correct order on the
 x-axis UNLESS you do it yourself. The one exception is for dunif
 distributions where you have to do it as above.</p></li>

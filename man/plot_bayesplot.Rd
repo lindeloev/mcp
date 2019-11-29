@@ -4,8 +4,14 @@
 \alias{plot_bayesplot}
 \title{Plot mcpfit objects with bayesplot}
 \usage{
-plot_bayesplot(fit, type, pars = "population",
-  regex_pars = character(0), ncol = 1, prior = FALSE)
+plot_bayesplot(
+  fit,
+  type,
+  pars = "population",
+  regex_pars = character(0),
+  ncol = 1,
+  prior = FALSE
+)
 }
 \arguments{
 \item{fit}{An mcpfit object.}

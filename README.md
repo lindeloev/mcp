@@ -4,9 +4,9 @@
 [![Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/r/lindeloev/mcp)
 
 
-Infer multiple Change Points (MCP) between Generalized Linear Segments using Bayesian hierarchical regression. 
+Infer Multiple Change Points (MCP) between Generalized Linear Segments using Bayesian hierarchical regression. `mcp` aims to provide maximum flexibility for analyses with a priori knowledge about the number of change points and the form of the segments in between.
 
-Change points are also sometimes called **switch points**, **break points**, **broken line** regression, **broken stick** regression, **bilinear** regression, **piecewise linear regression**, **local linear regression**, **segmented regression**, and (performance) **discontinuity** models. `mcp` aims to be be useful for all of them. See how `mcp` compares to [other packages](https://lindeloev.github.io/mcp/articles/packages.html).
+Change points are also called **switch points**, **break points**, **broken line** regression, **broken stick** regression, **bilinear** regression, **piecewise linear regression**, **local linear regression**, **segmented regression**, and (performance) **discontinuity** models. `mcp` aims to be be useful for all of them. See how `mcp` compares to [other R packages](https://lindeloev.github.io/mcp/articles/packages.html).
 
 Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. `mcp` leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
 
@@ -25,7 +25,7 @@ Under the hood, `mcp` takes a formula-representation of linear segments and turn
 
 
 # Brief example
-`mcp` takes a list of formulas for `y` as a function of `x`. The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the most common use case for the following formulas is ` ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
+`mcp` takes a list of formulas - one for each segment. The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the most common formula for segment 2+ would be ` ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
 ## Fit a model
 The following model infers the two change points between three segments.
@@ -52,7 +52,7 @@ plot(fit)
 ```
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo.png)
 
-Use `summary` to summarise the posterior distribution as well as sampling diagnostics. They were simulated to lie at `cp_1 = 30` and `cp_2 = 70` and these values are well recovered, as are the other coefficients ([see how `ex_demo` was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R)). 
+Use `summary()` to summarise the posterior distribution as well as sampling diagnostics. They were simulated to lie at `cp_1 = 30` and `cp_2 = 70` and these values are well recovered, as are the other coefficients ([see how `ex_demo` was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R)). 
 
 ```r
 summary(fit)
@@ -78,7 +78,7 @@ Population-level parameters:
 
 `rhat` is the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag), `eff` is the [effective sample size](https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html), and `ts_se` is the time-series standard error.
 
-`plot(fit, "combo")` can be used to inspect the posteriors and convergence of all parameters. See the documentation of `plot.mcpfit` for many other plotting options. Here, we plot just the (population-level) change points. They often have "strange" posterior distributions, highlighting the need for a computational approach:
+`plot(fit, "combo")` can be used to inspect the posteriors and convergence of all parameters. See the documentation of `plot()` for many other plotting options. Here, we plot just the (population-level) change points. They often have "strange" posterior distributions, highlighting the need for a computational approach:
 
 ```r
 plot(fit, "combo", regex_pars = "cp_")
@@ -88,7 +88,7 @@ plot(fit, "combo", regex_pars = "cp_")
 
 ## Tests and model comparison
 
-We can test (joint) probabilities in the model using `hypothesis` ([see more here]https://lindeloev.github.io/mcp/articles/comparison.html)). For example, what is the evidence (given priors) that the first change point is later than 25 against it being less than 25?
+We can test (joint) probabilities in the model using `hypothesis()` ([see more here](https://lindeloev.github.io/mcp/articles/comparison.html)). For example, what is the evidence (given priors) that the first change point is later than 25 against it being less than 25?
 
 ```r
 hypothesis(fit, "cp_1 > 25")
@@ -112,8 +112,7 @@ segments_null = list(
 fit_null = mcp(segments_null, ex_demo)
 ```
 
-Leveraging the power of `loo::loo`, we see that the two-change-points model is preferred (it is on top), but not very strongly (`elpd_diff / se_diff` ratio). See the documentation of the `loo` package and associated papers for more details, or scroll down for more notes on model comparison using `mcp`.
-
+Leveraging the power of `loo::loo`, we see that the two-change-points model is preferred (it is on top), but the `elpd_diff / se_diff` ratio ratio indicate that this preference is not very strong.
 ```r
 fit$loo = loo(fit)
 fit_null$loo = loo(fit_null)
@@ -129,23 +128,23 @@ model2 -7.8       4.7
 
 
 # Highlights from in-depth guides
-The articles in the web site's menu go in-depth with the functionality of `mcp`. Here is an executive summary, to give you a sense.
+The articles on the [mcp website](https://lindeloev.github.io/mcp) go in-depth with the functionality of `mcp`. Here is an executive summary, to give you a quick sense of what mcp can do.
 
 [About mcp formulas and models](https://lindeloev.github.io/mcp/articles/formulas.html):
- * Parameter names `int_i` (intercepts), `cp_i` (change points), `x_i` (slopes).
+ * Parameter names are `int_i` (intercepts), `cp_i` (change points), `x_i` (slopes), `phi_i` (autocorrelation), and `sigma_*` (variance).
  * The change point model is basically an `ifelse` model.
- * Use `rel()` to specify that parameters are relative to those in the previous  segments.
+ * Use `rel()` to specify that parameters are relative to those corresponding in the previous segments.
  * Generate data using `fit$func_y`.
 
-[Using priors in mcp](https://lindeloev.github.io/mcp/articles/priors.html):
+[Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
  * See priors in `fit$prior`.
- * Set priors using `mcp(segments, data, prior = list(cp_1 = "dnorm(0, 1)", cp_1 = "dunif(0, 45))`.
+ * Set priors using `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_1 = "dunif(0, 45)")`.
  * Fix parameters to specific values using `cp_1 = 45`.
  * Share parameters between segments using `slope_1 = "slope_2"`.
- * Allows for truncated priors using `T(lower, upper)`, e.g., `int_1 = "dnorm(0, 1) T(0, )"`. `mcp` applies this automatically to change point priors to enforce order restriction. This is true for [varying change points](https://lindeloev.github.io/mcp/articles/varying.html) too.
+ * Truncate priors using `T(lower, upper)`, e.g., `int_1 = "dnorm(0, 1) T(0, )"`. `mcp` applies this automatically to change point priors to enforce order restriction. This is true for [varying change points](https://lindeloev.github.io/mcp/articles/varying.html) too.
  * Do prior predictive checks using `mcp(segments, data, sample="prior")`.
 
-[Varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html):
+[Varying change points](https://lindeloev.github.io/mcp/articles/varying.html):
  * Simulate varying change points using `fit$func_y()`.
  * Get posteriors using `ranef(fit)`.
  * Plot using `plot(fit, facet_by="my_group")` and `plot(fit, "dens_overlay", pars = "varying", ncol = 3)`.
@@ -157,15 +156,16 @@ The articles in the web site's menu go in-depth with the functionality of `mcp`.
  * `bernoulli(link = "logit")`. See [binomial change points in mcp](https://lindeloev.github.io/mcp/articles/binomial.html).
  * `poisson(link = "log")`. See [Poisson change points in mcp](https://lindeloev.github.io/mcp/articles/poisson.html).
 
-[Model comparison and hypothesis testing in mcp](https://lindeloev.github.io/mcp/articles/comparison.html):
+[Model comparison and hypothesis testing](https://lindeloev.github.io/mcp/articles/comparison.html):
  * Do Leave-One-Out Cross-Validation using `loo(fit)` and `loo::loo_compare(fit1$loo, fit2$loo)`.
  * Compute Savage-Dickey density rations using `hypothesis(fit, "cp_1 = 40")`.
  * Leverage directional and conditional tests to assess interval hypotheses (`hypothesis(fit, "cp_1 > 30 & cp_1 < 50")`), combined hypotheses (`hypothesis(fit, "cp_1 > 30 & int_1 > int_2")`), etc.
 
-[Modeling variance in mcp](https://lindeloev.github.io/mcp/articles/variance.html):
+Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and [autoregression](https://lindeloev.github.io/mcp/articles/arma.html):
  * `~ sigma(1)` models an intercept change in variance. `~ sigma(0 + x)` models increasing/decreasing variance.
- * You can model anything for `sigma()`. For example, `~ x + sigma(1 + x + I(x^2))` models polynomial variance on top of a slope.
- * Variance applies to varying change points too.
+ * `~ ar(N)` models Nth order autoregression on residuals. `~ar(N, 0 + x)` models increasing/decreasing autocorrelation.
+ * You can model anything for `sigma()` and `ar()`. For example, `~ x + sigma(1 + x + I(x^2))` models polynomial change in variance with `x` on top of a slope on the mean.
+ * `sigma()` and `ar()` apply to varying change points too.
 
 [Tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/debug.html)
  * Speed up fitting using `mcp(..., cores = 3)` / `options(mcp_cores = 3)`, and/or `mcp(..., adapt = 500, update = 500)`.
@@ -247,9 +247,63 @@ Use `plot(fit, rate = FALSE)` if you want the points and fit lines on the origin
 
 
 
+## Time series
+`mcp` allows for flexible time series analysis with autoregressive residuals of arbitrary order. Below, we model a change from a plateau to a slope with the same AR(2) residuals in both segments. We get  However, you can specify different AR(N) structures in each segment and do regression on the AR coefficients themselves using e.g., `ar(1, 1 + x)`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html).
+
+```r
+segments = list(
+  price ~ 1 + ar(2),
+  ~ 0 + time
+)
+fit = mcp(segments, ex_ar)
+summary(fit)
+```
+
+```r
+Population-level parameters:
+    name    mean   lower   upper Rhat n.eff    ts_se
+   ar1_1   0.463   0.346   0.579 1.00  1967 1.31e-02
+   ar2_1   0.258   0.133   0.369 1.00  1772 1.84e-02
+    cp_1 170.059 151.960 186.093 1.05   231 3.70e+03
+   int_1  17.991  15.096  20.729 1.01   586 3.36e+01
+ sigma_1   4.677   4.296   5.057 1.00  5060 7.08e-02
+  time_2   0.456   0.370   0.549 1.01   485 4.13e-02
+```
+
+
+As of `mcp` v0.2, plotting does not yet visualize the autocorrelation. The autocorrelated nature of the residuals are better shown using lines than points, so let's tweak the default plot:
+
+```r
+plot_ar = plot(fit_ar) + geom_line()  # Add line
+plot_ar$layers[[1]] = NULL  # Remove dots
+plot_ar
+```
+
+![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_ar.png)
+
+
+
+## Variance change and prediction intervals
+You can model variance by adding a `sigma()` term to the formula. The inside `sigma()` can take everything that the formulas outside do. Read more in [the article on variance](https://lindeloev.github.io/mcp/articles/variance.html). The example below models two change points. The first is variance-only: variance abruptly increases and then declines linearly with `x`. The second change point is the stop of the variance-decline and the onset of a slope on the mean.
+
+Effects on variance is best visualized using *prediction intervals*. See more in the documentation for `plot.mcpfit()`.
+
+```r
+segments = list(
+  y ~ 1,
+  ~ 0 + sigma(1 + x),
+  ~ 0 + x
+)
+fit = mcp(segments, ex_variance, cores = 3, adapt = 5000, updaet = 5000, iter = 5000)
+plot(fit, quantiles = TRUE, quantiles_type = "predict")
+```
+
+![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_variance.png)
+
+
 
 ## Quadratic and other exponentiations
-Write exponents as `I(x^N)`. E.g., quadratic `I(x^2)`, cubic `I(x^3)`, or some other power function `I(x^1.5)`. The example below detects the onset of linear + quadratic growth. This is often called the BLQ model (Broken Line Quadratic) in nuitrition research.
+Write exponents as `I(x^N)`. E.g., quadratic `I(x^2)`, cubic `I(x^3)`, or some other power function `I(x^1.5)`. The example below detects the onset of linear + quadratic growth. This is often called the BLQ model (Broken Line Quadratic) in nutrition research.
 
 ```r
 segments = list(
@@ -279,25 +333,6 @@ plot(fit)
 ```
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_trig.png)
-
-
-
-## Variance change and prediction intervals
-You can model variance by adding a `sigma()` term to the formula. The inside `sigma()` can take everything that the formulas outside do. Read more in [the article on variance](https://lindeloev.github.io/mcp/articles/variance.html). The example below models two change points. The first is variance-only: variance abruptly increases and then declines linearly with `x`. The second change point is the stop of the variance-decline and the onset of a slope on the mean.
-
-Effects on variance is best visualized using *prediction intervals*. See more in the documentation for `plot.mcpfit`.
-
-```r
-segments = list(
-  y ~ 1,
-  ~ 0 + sigma(1 + x),
-  ~ 0 + x
-)
-fit = mcp(segments, ex_variance, cores = 3, adapt = 5000, updaet = 5000, iter = 5000)
-plot(fit, quantiles = TRUE, quantiles_type = "predict")
-```
-
-![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_variance.png)
 
 
 
@@ -358,7 +393,7 @@ Population-level parameters:
 
 
 # Do much more
-Don't be constrained by these simple `mcp` functions. `fit$samples` is a regular `mcmc.list` object and all methods apply. You can work with the MCMC samples just as you would with `brms`, `stan_glm`, `jags`, or other samplers using the always excellent `tidybayes`:
+Don't be constrained by these simple `mcp` functions. `fit$samples` is a regular `mcmc.list` object and all methods apply. You can work with the MCMC samples just as you would with `brms`, `rstanarm`, `jags`, or other samplers using the always excellent `tidybayes`:
 
 ```r
 library(tidybayes)
