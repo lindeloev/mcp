@@ -187,6 +187,8 @@ print.mcpfit = function(x, ...) {
 #'
 #' The mcpprior is just a list, but it can be displayed in a more condensed
 #' way using cbind.
+#' @aliases print.mcpprior
+#' @inheritParams print.mcpfit
 print.mcpprior = function(x, ...) {
   to_print = cbind(x)
   colnames(to_print) = "prior"

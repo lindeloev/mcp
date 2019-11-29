@@ -53,7 +53,7 @@ This is a list of other functions, which I find useful on other statistics packa
 # Where mcp is (currently) inferior
 `mcp` is inferior with respect to:
 
- * *speed*: mcmc sampling is slow compared to analytical and specialized solutions. For datasets > 20.000 points, it may take hours to fit `mcp`. Running in parallel and lowering the iterations helps (`mcp(..., cores = 4, iter = 1000, adapt = 300, update = 300`), but remember to check convergences.
+ * *speed*: mcmc sampling is slow compared to analytical and specialized solutions. For datasets > 20.000 points, it may take hours to fit `mcp`. Running in parallel and lowering the iterations helps (`mcp(..., cores = 4, iter = 1000, adapt = 400`), but remember to check convergences.
  * *automatic detection of change points*: most packages out there does automatic change point detection. This is not a space that `mcp` tries to fill so use the other packages here. Though given the intercept-only example below, I would worry about many package's ability to recover change points.
  * *no support for autoregressive models*: As change point models are big in time-series analyses, I'd much like to implement at least AR(1). This is on planned, but not implemented yet in version 0.1.
  * *not multivariate* and *no variance change point*: These are planned but not implemented yet in version 0.1.

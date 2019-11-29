@@ -56,8 +56,7 @@
 #'   `coda::gelman.plot(fit$mcmc_post)` and `coda::crosscorr.plot(fit$mcmc_post)`
 #'
 #'   In any case, if you see a few erratic lines or parameter estimates, this is
-#'   a sign that you may want to increase arguments 'adapt', 'update', and
-#'   'iter' in \code{\link{mcp}}.
+#'   a sign that you may want to increase argument 'adapt' and 'iter' in \code{\link{mcp}}.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @return A \pkg{ggplot2} object.
 #' @export
@@ -194,6 +193,11 @@ plot_segments = function(fit,
                          quantiles_type = "fitted",
                          prior = FALSE,
                          ...) {
+
+  # R CMD Check wants a global definition of ".". The formal way of doing it is
+  # if(getRversion() >= "2.15.1") utils::globalVariables(".")
+  # but that makes the tests fail.
+  . = "ugly fix"
 
   # Select posterior/prior samples
   samples = get_samples(fit, prior = prior)

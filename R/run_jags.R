@@ -3,13 +3,12 @@
 #'
 #' @aliases run_jags
 #' @inheritParams mcp
-#' @inheritParams dclone::jags.fit
+#' @inheritParams rjags::jags.model
+#' @inheritParams rjags::coda.samples
 #' @param jags_code A string. JAGS model, usually returned by `make_jagscode()`.
+#' @param pars Character vector of parameters to save/monitor.
 #' @param ST A segment table (tibble), returned by `get_segment_table`.
 #'   Only really used when the model contains varying effects.
-#' @param model_file A temporary file. Makes parallel sampling possible
-#'   samples that are discarded between n.adapt and n.iter (to improve convergence)..
-#' @param ... Parameters for `jags.parfit` which channels them to `jags.fit`.
 #' @return `mcmc.list``
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @examples
@@ -26,9 +25,7 @@ run_jags = function(data,
                     n.chains,
                     n.iter,
                     n.adapt,
-                    inits,
-
-                    ...  # Otherwise run with default JAGS settings
+                    inits
 ) {
 
   # Prevent failure of all mcp methods when length(pars) <= 2 (one parameter +

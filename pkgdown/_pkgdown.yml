@@ -49,6 +49,8 @@ navbar:
         href: articles/varying.html
       - text: Modeling variance
         href: articles/variance.html
+      - text: Time series and autocorrelation
+        href: articles/arma.html
     - text: GLM
       menu:
       - text: Poisson

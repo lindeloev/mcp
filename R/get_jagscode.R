@@ -4,7 +4,7 @@
 #' @inheritParams mcp
 #' @param formula_str String. The formula string returned by `build_formula_str`.
 #' @param ST Segment table. Returned by `get_segment_table()`.
-#' @param ar_order Positive integer. The autoregressive order.
+#' @param arma_order Positive integer. The autoregressive order.
 #' @return String. A JAGS model.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
@@ -213,6 +213,7 @@ sd_to_prec = function(prior_str) {
 #'
 #' @aliases ar_code
 #' @inheritParams get_jagscode
+#' @param ar_order The order of the autoregressive component
 get_ar_code = function(ar_order, ST, family) {
   code = ""
   for (i in seq_len(ar_order)) {

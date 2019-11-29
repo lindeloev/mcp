@@ -23,7 +23,7 @@
 #' @format A data frame with 100 rows and 3 variables:
 #' \describe{
 #'   \item{x}{The x-axis.}
-#'   \item{x}{The y-axis.}
+#'   \item{y}{The y-axis.}
 #'   \item{N}{The number of trials for for `y`.}
 #' }
 "ex_binomial"
@@ -54,7 +54,7 @@
 #' @format A data frame with 100 rows and 2 variables:
 #' \describe{
 #'   \item{x}{The x-axis.}
-#'   \item{x}{The y-axis.}
+#'   \item{y}{The y-axis.}
 #' }
 "ex_plateaus"
 
@@ -69,7 +69,7 @@
 #' @format A data frame with 81 rows and 2 variables:
 #' \describe{
 #'   \item{x}{The x-axis.}
-#'   \item{x}{The y-axis.}
+#'   \item{y}{The y-axis.}
 #' }
 "ex_quadratic"
 
@@ -84,7 +84,7 @@
 #' @format A data frame with 100 rows and 2 variables:
 #' \describe{
 #'   \item{x}{The x-axis.}
-#'   \item{x}{The y-axis.}
+#'   \item{y}{The y-axis.}
 #' }
 "ex_rel_prior"
 
@@ -114,7 +114,7 @@
 #' @format A data frame with 100 rows and 2 variables:
 #' \describe{
 #'   \item{x}{The x-axis.}
-#'   \item{x}{The y-axis.}
+#'   \item{y}{The y-axis.}
 #' }
 "ex_variance"
 
@@ -129,7 +129,7 @@
 #' @format A data frame with 150 rows and 4 variables:
 #' \describe{
 #'   \item{x}{The x-axis.}
-#'   \item{x}{The y-axis.}
+#'   \item{y}{The y-axis.}
 #'   \item{id}{The participant id (character).}
 #'   \item{id_numeric}{The participant id (numeric).}
 #' }

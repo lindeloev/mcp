@@ -102,7 +102,6 @@ test_mcp = function(segments,
       sample = "both",  # prior and posterior to check hypotheses
       par_x = par_x,
       adapt = 6,
-      update = 3,
       iter = 18,  # loo fails if this is too low. TO DO: require next version of loo when it is out.
       chains = 2,  # 1 or 2
       cores = 1  # run serial for faster init. Parallel can be trused to just work.

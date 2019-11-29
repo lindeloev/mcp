@@ -47,7 +47,7 @@ data = data.frame(
 
 # # Fit model to simulated data. A pretty long run to ensure convergence
 # # and small MCMC error
-# fit = mcp(segments, data, adapt = 2500, update = 2500, iter = 3000)
+# fit = mcp(segments, data, adapt = 5000, iter = 3000)
 #
 # # Check: expect all estimates to be within 98% HDI
 # results_table = summary(fit, width = 0.95) %>%
