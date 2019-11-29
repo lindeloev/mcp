@@ -5,8 +5,7 @@
 \alias{summary}
 \title{Summarise mcpfit objects}
 \usage{
-\method{summary}{mcpfit}(object, width = 0.95, digits = 2,
-  prior = FALSE, ...)
+\method{summary}{mcpfit}(object, width = 0.95, digits = 2, prior = FALSE, ...)
 }
 \arguments{
 \item{object}{An \code{mcpfit} object returned by \code{\link{mcp}}.}

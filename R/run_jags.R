@@ -107,7 +107,7 @@ run_jags = function(data,
 
     # Return
     passed = proc.time() - timer
-    cat("Sampling took", passed["elapsed"], "seconds\n")
+    cat("Finished sampling in", passed["elapsed"], "seconds\n")
     return(samples)
 
   } else {
