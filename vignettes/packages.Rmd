@@ -101,7 +101,7 @@ gridExtra::grid.arrange(plot(fit_mcp),
                         ncol = 2)
 ```
 
-`mcp` takes around 10 seconds to fit this example, which is the slowest of all the packages considered here. You can bring that down to 4 seconds by running in parallel, using `mcp(..., cores = 3)` or for the full session using `options(mc.cores = 3)`.
+`mcp` takes around 6 seconds to fit this example, which is the slowest of all the packages considered here. You can bring that down to 2.5 seconds by running in parallel, using `mcp(..., cores = 3)` or for the full session using `options(mc.cores = 3)`.
 
 
 
