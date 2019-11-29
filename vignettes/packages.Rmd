@@ -12,10 +12,11 @@ vignette: >
 
 There are a lot of change point packages out there already, so why `mcp`? Here are my (probably biased) thoughts about this. I compiled some tables, summarising change point packages ([.xlsx file here](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_tables.xlsx)). I will demonstrate each of these packages in an applied example below to discuss their merits and shortcomings. 
 
-I think `mcp`, `segmented`, and `EnvCpt` stand out as more general-purpose packages, depending on the purpose. As the author of `mcp`, I am of course biased. You can see the immediate roadmap for `mcp` at the [GitHub issues tracker](https://github.com/lindeloev/mcp/issues), including plans to address it's current shortcomings.
+I think `mcp`, `segmented`, and `EnvCpt` stand out as good general-purpose packages, depending on the purpose. As the author of `mcp`, You can see the immediate roadmap for `mcp` at the [GitHub issues tracker](https://github.com/lindeloev/mcp/issues).
+
 
 ## Modeling options
-How much flexibility does the package allow for modeling the system, you're studying? A clear difference here is between packages that allow you to specify the number of change points, and packages which infer the number of change points automatically (using some criteria), captured in the `N CP` column below.
+How much flexibility does the package allow for modeling the system, you're studying? A clear difference here is between packages that allow you to *specify* the number of change points, and packages which infer the number of change points *automatically* (using some criteria), captured in the `N` column below.
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_table1.png)
 
@@ -45,18 +46,17 @@ This is a list of other functions, which I find useful on other statistics packa
  * Posterior distribution for each change point. This matters since they rarely conform to known distributions.
  * *varying change points*: To my knowledge, no other package implements varying change points, i.e., allowing by-group differences in change points while sharing all other parameters. Read more about [varying change points](../docs/articles/varying.html) in `mcp`.
  * *Sharing and fixing parameters* to values and other parameters as discussed under [priors in mcp](../docs/articles/priors.html).
+ * *Per-segment regression on variance and autocorrelation* via the `sigma()` ([read more here](../articles/variance.html)) and `ar()` ([read more here](../articles/arma.html)) terms, also allowing for more advanced change points involving, e.g., a change in autocorrelation strength.
  * *Explicit priors*: `bcp` is the only other Bayesian change point package I know of. It contains a few high-level prior parameters, but not for specific parameters such as *where* change points are expected to occur etc. Read more about [priors in mcp](../docs/articles/priors.html) for more.
  * *Prior and posterior predictive checks*. In general, most other packages have limited or no model checking functionality. The default `plot.mcpfit` is inherently a visual predictive check and can be applied to priors (`mcp(..., sample = "prior")` and posteriors. Of course inspecting Gelman-Rubin statistics and effective sample sizes in `summary.mcpfit`, as well as trace plots (`plot(fit, "trace")`), also go a long way.
  * Flexible hypothesis testing using `loo` and `hypothesis`, including testing the existence of a change point. Most other packages stop at estimation, though some provide p-values. Read more about [hypothesis testing and model comparison](../docs/articles/comparison.html) using `mcp`.
 
 
 # Where mcp is (currently) inferior
-`mcp` is inferior with respect to:
 
- * *speed*: mcmc sampling is slow compared to analytical and specialized solutions. For datasets > 20.000 points, it may take hours to fit `mcp`. Running in parallel and lowering the iterations helps (`mcp(..., cores = 4, iter = 1000, adapt = 400`), but remember to check convergences.
- * *automatic detection of change points*: most packages out there does automatic change point detection. This is not a space that `mcp` tries to fill so use the other packages here. Though given the intercept-only example below, I would worry about many package's ability to recover change points.
- * *no support for autoregressive models*: As change point models are big in time-series analyses, I'd much like to implement at least AR(1). This is on planned, but not implemented yet in version 0.1.
- * *not multivariate* and *no variance change point*: These are planned but not implemented yet in version 0.1.
+ * *Speed*: While `mcp` is reasonably fast for typical problems, mcmc sampling is slower than analytical and specialized solutions. For datasets > 20.000 points and a complicated model, it may take `mcp` hours (but not days) to fit. See [tips and tricks](../articles/tips.html) how to speed up `mcp`. Briefly, run in parallel and lower the number of iterations: (`mcp(..., cores = 4, iter = 1000, adapt = 400`).
+ * *Automatic detection of change points*: most packages does automatic change point detection. This is not a space that `mcp` tries to fill so use the other packages here. Though given the worked examples below, I would worry about many package's ability to recover change points.
+ * *Multivariate*: `mcp` only does univariate regression, both for $y$ and $x$. This will be implemented if there is a popular request for it. Don't hesitate to raise an issue on GitHub.
 
 
 
