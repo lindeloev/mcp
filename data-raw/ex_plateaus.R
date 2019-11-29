@@ -9,8 +9,14 @@ empty = mcp::mcp(segments, sample = FALSE, par_x = "x")
 set.seed(40)
 ex_plateaus = tibble::tibble(
   x = runif(100, 0, 100),
-  y = empty$simulate(x, cp_1 = 50, int_1 = 10, int_2 = 20, sigma = 8)
+  y = empty$simulate(
+    x,
+    cp_1 = 50,
+    int_1 = 10,
+    int_2 = 20,
+    sigma = 8)
 )
 
 # Save to mcp
+ex_plateaus = data.frame(ex_plateaus)
 usethis::use_data(ex_plateaus, overwrite = TRUE)
