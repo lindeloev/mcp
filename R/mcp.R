@@ -23,7 +23,7 @@
 #'   * *Variance:* e.g., `~sigma(1)` for a simple variance change or
 #'     `~sigma(rel(1) + I(x^2))`) for more advanced variance structures. [Read more here](https://lindeloev.github.io/mcp/articles/variance.html)
 #'
-#'   * *Aautoregression:* e.g., `~ar(1)` for a simple onset/change in AR(1) or
+#'   * *Autoregression:* e.g., `~ar(1)` for a simple onset/change in AR(1) or
 #'     `ar(2, 0 + x`) for an AR(2) with parameter(s) increasing by `x`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html)
 #'
 #' @param prior Named list. Names are parameter names (`cp_i`, `int_i`, `xvar_i`,

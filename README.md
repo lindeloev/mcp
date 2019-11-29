@@ -112,7 +112,7 @@ segments_null = list(
 fit_null = mcp(segments_null, ex_demo)
 ```
 
-Leveraging the power of `loo::loo`, we see that the two-change-points model is preferred (it is on top), but the `elpd_diff / se_diff` ratio ratio indicate that this prefernce is not very strong.
+Leveraging the power of `loo::loo`, we see that the two-change-points model is preferred (it is on top), but the `elpd_diff / se_diff` ratio ratio indicate that this preference is not very strong.
 ```r
 fit$loo = loo(fit)
 fit_null$loo = loo(fit_null)
@@ -302,7 +302,7 @@ plot(fit, quantiles = TRUE, quantiles_type = "predict")
 
 
 ## Quadratic and other exponentiations
-Write exponents as `I(x^N)`. E.g., quadratic `I(x^2)`, cubic `I(x^3)`, or some other power function `I(x^1.5)`. The example below detects the onset of linear + quadratic growth. This is often called the BLQ model (Broken Line Quadratic) in nuitrition research.
+Write exponents as `I(x^N)`. E.g., quadratic `I(x^2)`, cubic `I(x^3)`, or some other power function `I(x^1.5)`. The example below detects the onset of linear + quadratic growth. This is often called the BLQ model (Broken Line Quadratic) in nutrition research.
 
 ```r
 segments = list(

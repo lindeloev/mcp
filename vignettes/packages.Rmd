@@ -15,7 +15,7 @@ There are a lot of change point packages out there already, so why `mcp`? Here a
 I think `mcp`, `segmented`, and `EnvCpt` stand out as more general-purpose packages, depending on the purpose. As the author of `mcp`, I am of course biased. You can see the immediate roadmap for `mcp` at the [GitHub issues tracker](https://github.com/lindeloev/mcp/issues), including plans to address it's current shortcomings.
 
 ## Modeling options
-How much flexibility does the package allow for modeling the system, you're studying? A clear difference here is between packages that allow you to specify the number of change points, and pacakges which infer the number of change points automatically (using some criteria), captured in the `N CP` column below.
+How much flexibility does the package allow for modeling the system, you're studying? A clear difference here is between packages that allow you to specify the number of change points, and packages which infer the number of change points automatically (using some criteria), captured in the `N CP` column below.
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_table1.png)
 
@@ -201,7 +201,7 @@ It detects two change points, which is good. No intervals are returned and no pl
 
 
 # changepoint and changepoint.np
-`changepoint` is focused on intercept-only changes. It can estimate changes in means (`cpt.mean`), variance (`cpt.var`), or both (`cpt.meanvar`). It is semi-automatic in that you can set the nubmer of change points using parameter `Q` and this defaults to five. It can recover ML estimates of the intercepts. It does not estimate uncertainty, nor model checking. It only takes a response variable, so the change point is the data *index*, not the point on an x-axis. Make sure that your data is ordered. In our case it is ordered and we have 1 data point at each `x`, so it is optimal for `changepoint`.
+`changepoint` is focused on intercept-only changes. It can estimate changes in means (`cpt.mean`), variance (`cpt.var`), or both (`cpt.meanvar`). It is semi-automatic in that you can set the number of change points using parameter `Q` and this defaults to five. It can recover ML estimates of the intercepts. It does not estimate uncertainty, nor model checking. It only takes a response variable, so the change point is the data *index*, not the point on an x-axis. Make sure that your data is ordered. In our case it is ordered and we have 1 data point at each `x`, so it is optimal for `changepoint`.
 
 It detects the first change point, but not the second.
 
@@ -308,5 +308,5 @@ Some packages include this in a way where you don't have to code your indicators
 # Others
 I have yet to test these: 
  
- * `TSIS` may be coersed to do change point analysis, though it is mean for much more complicated switch point models in gene expression analysis. It's primary interface is a Shiny App.
+ * `TSIS` may be coerced to do change point analysis, though it is mean for much more complicated switch point models in gene expression analysis. It's primary interface is a Shiny App.
  * `plrs::plrs`. Piecewise Linear Regression, targeted at DNA and gene expression. May also be coerced into simpler problems.
