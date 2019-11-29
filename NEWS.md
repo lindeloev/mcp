@@ -1,4 +1,5 @@
-# mcp 0.1.0.9000 (in development)
+# mcp 0.2
+The API and internal structure should be stable now.
 
 ## New features: 
 
@@ -12,8 +13,8 @@
 
  * `fit$func_y` has been renamed to `fit$simulate`.
  * The argument `update` has been discarded from `mcp()` (it's all on `adapt` now) and `inits` has been added.
- * Many internal changes to prepare for upcoming features. The biggest internal change is that `rjags` and `future` replace the `dclone` package. This gives faster and cleaner installations, and avoids the need for a temporary file on the disk when sampling in parallel.
- * Much updated documentation.
+ * Many internal changes to prepare for upcoming features. The biggest internal change is that `rjags` and `future` replace the `dclone` package. This gives faster and cleaner installations, is more future-proof, and avoids the need for a temporary file on the disk when sampling in parallel.
+ * Updated documentation and website.
  
 
 # mcp 0.1.0
