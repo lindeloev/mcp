@@ -71,9 +71,9 @@
 #' @param inits A list if initial values for the parameters. This can be useful
 #'   if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
 #'   Defaults to `NULL`, i.e., no inits.
-#' @param jags_explicit Pass JAGS code to `mcp` to use directly. Useful if
-#'   you want to make small tweaks, but mostly used for the development of mcp.
-#' @param ... Further parameters for \code{\link[dclone]{jags.fit}}.
+#' @param jags_code Pass JAGS code to `mcp` to use directly. This is useful if
+#'   you want to tweak the code in `fit$jags_code` and run it within the `mcp`
+#'   framework.
 #' @details Notes on priors:
 #'   * Order restriction is automatically applied to cp_\* parameters using
 #'       truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the
@@ -157,8 +157,7 @@ mcp = function(segments,
                iter = 3000,
                adapt = 1000,
                inits = NULL,
-               jags_explicit = NULL,
-               ...) {
+               jags_code = NULL) {
 
   ################
   # CHECK INPUTS #
@@ -233,12 +232,6 @@ mcp = function(segments,
     message("`cores` is greater than `chains`. Not all cores will be used.")
 
   # Parallel fails on R version 3.6.0 and lower (sometimes at least).
-
-  # Throw a warning
-
-  major = as.numeric(R.Version()$major)
-  minor = as.numeric(R.Version()$minor)
-  fails_parallel = (major < 3 | (major == 3 & minor < 6.1))
   if (cores > 1 & getRversion() < "3.6.1")
     message("Parallel sampling (`cores` > 1) has been shown to err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
 
@@ -278,8 +271,8 @@ mcp = function(segments,
   # Make jags code
   max_arma_order = get_arma_order(pars_arma)
   formula_str_jags = get_all_formulas(ST, prior, par_x)
-  jags_code = get_jagscode(prior, ST, formula_str_jags, max_arma_order, family, sample)
-
+  jags_code_generated = get_jagscode(prior, ST, formula_str_jags, max_arma_order, family, sample)
+  jags_code = ifelse(is.null(jags_code), yes = jags_code_generated, no = jags_code)  # Get from user?
 
 
   ##########
@@ -289,7 +282,7 @@ mcp = function(segments,
   if (sample %in% c("post", "both")) {
     samples = run_jags(
       data = data,
-      jags_code = ifelse(is.null(jags_explicit), jags_code, jags_explicit),
+      jags_code = jags_code,
       pars = c(all_pars, "loglik_"),  # Monitor log-likelihood for loo/waic
       ST = ST,
       cores = cores,
@@ -297,8 +290,7 @@ mcp = function(segments,
       n.chains = chains,
       n.iter = iter,
       n.adapt = adapt,
-      inits = inits,
-      ...
+      inits = inits
     )
 
     # Move loglik columns out to it's own list, keeping parameters and loglik apart
@@ -311,7 +303,7 @@ mcp = function(segments,
   if (sample %in% c("prior", "both")) {
     samples = run_jags(
       data = data,
-      jags_code = ifelse(is.null(jags_explicit), jags_code, jags_explicit),
+      jags_code = jags_code,
       pars = all_pars,  # Not loglik
       ST = ST,
       cores = cores,
@@ -319,8 +311,7 @@ mcp = function(segments,
       n.chains = chains,
       n.iter = iter,
       n.adapt = adapt,
-      inits = inits,
-      ...
+      inits = inits
     )
 
     # Move loglik columns out to it's own list, keeping parameters and loglik apart
