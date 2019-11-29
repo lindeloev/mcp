@@ -21,13 +21,9 @@ criterion(fit, criterion = "loo", ...)
 
 \item{criterion}{One of \code{"loo"} (calls \code{\link[loo]{loo}}) or \code{"waic"} (calls \code{\link[loo]{waic}}).}
 
-\item{...}{Further arguments passed to \code{\link[loo]{loo}}, e.g., \code{cores} or \code{save_psis}.}
-
-\item{x}{\code{mcpfit} object.}
-
-\item{x}{\code{mcpfit} object.}
-
 \item{...}{Currently ignored}
+
+\item{x}{\code{mcpfit} object.}
 }
 \value{
 a \code{loo} or \code{psis_loo} object.

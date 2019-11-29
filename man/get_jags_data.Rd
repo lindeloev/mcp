@@ -2,7 +2,7 @@
 % Please edit documentation in R/run_jags.R
 \name{get_jags_data}
 \alias{get_jags_data}
-\title{Adds helper variables for use in \code{run_jags}}
+\title{Adds helper variables for use in `{run_jags}}
 \usage{
 get_jags_data(data, ST, jags_code, sample)
 }

@@ -1,6 +1,3 @@
-source("R/lme4_utils.R")
-
-
 # Takes a formula and returns a string representation of y, cp, and rhs
 unpack_tildes = function(segment, i) {
   has_LHS = attributes(stats::terms(segment))$response == 1
@@ -15,8 +12,8 @@ unpack_tildes = function(segment, i) {
   }
 
   # Check for rel(0)
-  if ("rel(0)" %in% attributes(stats::terms(segment))$term.labels)
-    stop("rel(0) is not (currently) supported in segment formulas.")
+  if (stringr::str_detect(form_str, "rel\\(0\\)"))
+    stop("rel(0) in segment ", i, " is not meaningful. Just write 0 if you want a plateau starting where the earlier segment ended.")
 
   # List of strings for each section
   chunks = stringr::str_trim(strsplit(form_str, "~")[[1]])
@@ -73,10 +70,10 @@ unpack_y = function(form_y, i, family) {
 
   # Segment 1 must have y specified (and correctly so)
   if (i == 1) {
-    if (family == "binomial" & !got_trials)
+    if (family$family == "binomial" & !got_trials)
       stop("Error in response of segment 1: need a valid trials() specification, e.g., 'y | trials(N) ~ 1 + x'")
 
-    if (family != "binomial" & got_trials)
+    if (family$family != "binomial" & got_trials)
       stop("y | trials(N) not meaningful for non-binomial models.")
   }
 
@@ -132,22 +129,22 @@ unpack_cp = function(form_cp, i) {
   }
 
   # Fixed effects
-  population = attributes(stats::terms(nobars(form_cp)))
-  is_int_rel = population$term.labels == "rel(1)"
+  attrs = attributes(stats::terms(nobars(form_cp)))
+  is_int_rel = attrs$term.labels == "rel(1)"
   if (any(is_int_rel))
-    population$term.labels = population$term.labels[-is_int_rel]  # code as no term
+    attrs$term.labels = attrs$term.labels[-is_int_rel]  # code as no term
 
-  if (length(population$term.labels) > 0)
+  if (length(attrs$term.labels) > 0)
     stop("Error in segment ", i, " (change point): Only intercepts (1 or rel(1)) are allowed in population-level effects.")
 
-  if (is.null(varying) & population$intercept == 0)
+  if (is.null(varying) & attrs$intercept == 0)
     stop("Error in segment ", i, " (change point): no intercept or varying effect. You can do e.g., ~ 1 or ~ (1 |id).")
 
   # Return as list.
   if (!is.null(varying)) {
     # If there is a varying effect
     return(tibble::tibble(
-      cp_int = population$intercept == 1,
+      cp_int = attrs$intercept == 1,
       cp_int_rel = any(is_int_rel),  # the intercept is relative
       cp_ran_int = ifelse(varying_parts[2] == "1", TRUE, NA),  # placeholder for later
       cp_group_col = varying_parts[3]
@@ -155,7 +152,7 @@ unpack_cp = function(form_cp, i) {
   } else {
     # If there is no varying effect
     return(tibble::tibble(
-      cp_int = population$intercept == 1,
+      cp_int = attrs$intercept == 1,
       cp_int_rel = any(is_int_rel),
       cp_ran_int = FALSE,
       cp_group_col = NA
@@ -165,137 +162,163 @@ unpack_cp = function(form_cp, i) {
 
 
 
+
+# This is a pretty big function. A lot goes on here
 unpack_rhs = function(form_rhs, i, family, data, last_segment) {
+  # Get general format
   form_rhs = formula(form_rhs)
-  population = attributes(stats::terms(nobars(form_rhs)))
-
-  #############
-  # INTERCEPT #
-  #############
-  int_rel = population$term.labels == "rel(1)"
-  if (any(int_rel) == TRUE) {
-    # Not a term. Remove
-    population$term.labels = population$term.labels[!int_rel]
-
-    if (i == 1)
-      stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
-  }
-
-  if (population$intercept == TRUE | any(int_rel)) {
-    int = tibble::tibble(
-      name = paste0("int_", i),
-      rel = any(int_rel)
-    )
-  } else {
-    int = NA
-  }
+  attrs = attributes(stats::terms(nobars(form_rhs)))
+  term.labels = attrs$term.labels
 
 
   #########
   # SIGMA #
   #########
-  # The sigma code is before the "slope" code, because sigma terms must be
-  # removed so as to not be coded as slopes on the mean.
-  sigma_terms_index = stringr::str_detect(population$term.labels, "sigma\\(")  # Which terms are sigma?
-  sigma_terms_str = population$term.labels[sigma_terms_index]  # Extract sigma terms
-  population$term.labels = population$term.labels[!sigma_terms_index]  # Remove sigma from terms
+  # Extract sigma terms
+  sigma_term_index = stringr::str_detect(term.labels, "sigma\\(")  # Which terms?
+  sigma_term = term.labels[sigma_term_index]  # Extract terms
+  sigma_form = get_term_content(sigma_term)
+  sigma_int = unpack_int(sigma_form, i, "sigma")
+  sigma_slope = unpack_slope(sigma_form, i, "sigma", last_segment$sigma_slope[[1]])
+  term.labels = term.labels[!sigma_term_index]  # Remove from list of all terms
 
-  if (length(sigma_terms_str) > 0) {
-    # Extract the contents of (several) sigma(x) into one formula and get it's attributes
-    sigma_formula_str = paste0(gsub("^sigma\\(|\\)$", "", sigma_terms_str), collapse = "+")
-    sigma_formula = as.formula(paste0("~", sigma_formula_str))
-    sigma_attributes = attributes(terms(sigma_formula))
-    sigma_terms = sigma_attributes$term.labels
-
-    # INTERCEPT
-    # Sigma intercept (this is basically copy-paste of intercept code above)
-    sigma_int_rel = sigma_terms == "rel(1)"
-    if (any(sigma_int_rel) == TRUE) {
-      # Not a term. Remove
-      sigma_terms = sigma_terms[!sigma_int_rel]
-      if (i == 1)
-        stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
-    }
-
-    # Got an intercept!
-    if (sigma_attributes$intercept == TRUE | any(sigma_int_rel)) {
-      sigma_int = tibble::tibble(
-        name = paste0("sigma_", i),
-        rel = any(sigma_int_rel)
-      )
-    }
-
-    # SLOPE
-    # Sigma slope (this is basically copy-paste of slope code below)
-    if (length(sigma_terms) > 0) {
-      sigma_slope = lapply(
-        sigma_terms,
-        FUN = unpack_slope_term,
-        i = i,
-        last_slope = last_segment$sigma_slope,
-        prefix = "sigma_") %>%
-        dplyr::bind_rows()  # Make it a proper table-like tibble
-
-      # Build code. Add parentheses if there are more slopes
-      sigma_code = paste(sigma_slope$code, collapse = " + ")
-      if (stringr::str_detect(sigma_code, "\\+"))
-        sigma_code = paste0("(", sigma_code, ")")
-    }
-  }
-
-  # Sigma was not detected in form_rhs. But it is implicitly started in segment 1.
-  if(i == 1 & family == "gaussian") {
+  # If not specified, sigma_1 is implicit in segment 1.
+  if (all(is.na(sigma_int)) == TRUE & all(is.na(sigma_slope)) == TRUE & i == 1 & family$family == "gaussian") {
     sigma_int = tibble::tibble(
       name = "sigma_1",
-      code = "sigma_1",
       rel = FALSE
     )
   }
 
-  # The known unknown :-)
-  if(!exists("sigma_int"))
-    sigma_int = NA
-  if(!exists("sigma_slope"))
-    sigma_slope = NA
-  if(!exists("sigma_code"))
-    sigma_code = NA
+  #############################
+  # CONVERT ARMA TO AR AND MA #
+  #############################
+
+  # Split arma into ma and ar for later handling
+  arma_term_index = stringr::str_detect(term.labels, "arma\\(")  # Which terms?
+  arma_term = term.labels[arma_term_index]  # Extract terms
+  term.labels = term.labels[!arma_term_index]  # Remove from list of all terms
+  term.labels = c(term.labels,
+                  gsub("arma\\(", "ar\\(", arma_term),
+                  gsub("arma\\(", "ma\\(", arma_term))
 
 
+  ######
+  # AR #
+  ######
+  ar_term_index = stringr::str_detect(term.labels, "ar\\(")  # Which terms?
+  ar_term = term.labels[ar_term_index]  # Extract terms
+  ar_stuff = unpack_arma(ar_term)  # $order and $form_str
+  ar_form = get_term_content(ar_stuff$form_str)
 
-  ############
-  # SLOPE(S) #
-  ############
-  # Population-level slopes
-  if (length(population$term.labels) > 0) {
-    slope = lapply(
-      population$term.labels,
-      FUN = unpack_slope_term,
-      i = i,
-      last_slope = last_segment$slope) %>%
-      dplyr::bind_rows()  # Make it a proper table-like tibble
+  # Populate each of these for each order of AR
+  ar_int = list()  # Populate this with intercepts for each order
+  ar_slope = list()  # Populate this with slopes for each order
+  ar_code = list()
+  if (!is.na(ar_stuff$order)) {
+    for (order in seq_len(ar_stuff$order)) {
+      # Set last_segment = NA if the AR order was lower order in the last segment, thus not defined...
+      if (i == 1) {
+        this_last = NA
+      } else if (order > length(last_segment$ar_slope[[1]])) {
+        this_last = NA
+      } else {
+        this_last = last_segment$ar_slope[[1]][[order]]
+      }
 
-    # # Checks
-    # par_x = unique(slope$par_x)  # What is the data predictor?
-    # if (length(par_x) > 1)
-    #   stop("Found more than one x-variable in segment ", i, ": '", paste(slope$par_x, collapse ="', '"), "'")
-
-    # Build code. Add parentheses if there are more slopes
-    slope_code = paste(slope$code, collapse = " + ")
-    if (stringr::str_detect(slope_code, "\\+"))
-      slope_code = paste0("(", slope_code, ")")
-
+      # Get intercept and slope like we're used to
+      ar_par_name = paste0("ar", order)  # ar1, ar2, ...
+      ar_int[[order]] = unpack_int(ar_form, i, ar_par_name)
+      tmp = unpack_slope(ar_form, i, ar_par_name, this_last)
+      ar_slope[[order]] = tmp$slope
+      ar_code[[order]] = tmp$code
+    }
   } else {
-    slope = NA
-    slope_code = NA
+    ar_int[[1]] = NA
+    ar_slope[[1]] = NA
+    ar_code[[1]] = NA
   }
+  term.labels = term.labels[!ar_term_index]  # Remove from list of all terms
+
+
+  ######
+  # MA #
+  ######
+  # Same strategy as for AR
+  ma_term_index = stringr::str_detect(term.labels, "ma\\(")  # Which terms?
+  ma_term = term.labels[ma_term_index]  # Extract terms
+  ma_stuff = unpack_arma(ma_term)  # $order and $form_str
+  ma_form = get_term_content(ma_stuff$form_str)
+
+  # Populate each of these for each order of MA
+  ma_int = list()  # Populate this with intercepts for each order
+  ma_slope = list()  # Populate this with slopes for each order
+  ma_code = list()
+
+  if (!is.na(ma_stuff$order)) {
+    for (order in seq_len(ma_stuff$order)) {
+      # Set last_segment = NA if the MA order was lower order in the last segment, thus not defined...
+      if (i == 1) {
+        this_last = NA
+      } else if (order > length(last_segment$ma_slope[[1]])) {
+        this_last = NA
+      } else {
+        this_last = last_segment$ma_slope[[1]][[order]]
+      }
+
+      # Get intercept and slope like we're used to
+      ma_par_name = paste0("ma", order)  # ma1, ma2, ...
+      ma_int[[order]] = unpack_int(ma_form, i, ma_par_name)
+      tmp = unpack_slope(ma_form, i, ma_par_name, this_last)
+      ma_slope[[order]] = tmp$slope
+      ma_code[[order]] = tmp$code
+    }
+  } else {
+    ma_int[[1]] = NA
+    ma_slope[[1]] = NA
+    ma_code[[1]] = NA
+  }
+  term.labels = term.labels[!ma_term_index]  # Remove from list of all terms
+
+
+  #############################
+  # CENTRAL TENDENCIES (MEAN) #
+  #############################
+  # Start by building it as a string: "ce(1 + x + ...)" to bring it into a compatible format
+  if (length(term.labels > 0)) {
+    term.labels[1] = paste0(attrs$intercept, " + ", term.labels[1])
+    ct_terms = paste0(term.labels, collapse = " + ")  # for use in fit$segments and in summary()
+    ct_terms = paste0("ct(", ct_terms, ")")  # Get it in "standard" format
+  } else {
+    ct_terms = paste0("ct(", attrs$intercept, ")")  # Plateau model: "ct(0)" or "ct(1)"
+  }
+  ct_form = get_term_content(ct_terms)
+  ct_int = unpack_int(ct_form, i, "ct")
+  ct_slope = unpack_slope(ct_form, i, "ct", last_segment$ct_slope[[1]])
+
+
+
+  ###################
+  # VARYING EFFECTS #
+  ###################
+  # ct_varying_terms = as.character(findbars(form_rhs))
+  # if (length(ct_varying_terms) > 0) {
+  #   ct_varying = lapply(ct_varying_terms, unpack_varying_term, i = i) %>%
+  #     dplyr::bind_rows()
+  # } else {
+  #   ct_varying = NA
+  # }
+
 
 
   #################
   # EXTRACT PAR_X #
   #################
   par_x = stats::na.omit(unique(c(
-    ifelse(!is.na(slope), slope$par_x, NA),
-    ifelse(!is.na(sigma_slope), sigma_slope$par_x, NA)
+    ifelse(!is.na(sigma_slope$slope), sigma_slope$slope$par_x, NA),
+    ifelse(!is.na(ar_slope[[1]]), ar_slope[[1]]$par_x, NA),  # if it's in order 2+, it's also in order1
+    ifelse(!is.na(ma_slope[[1]]), ma_slope[[1]]$par_x, NA),  # if it's in order 2+, it's also in order1
+    ifelse(!is.na(ct_slope$slope), ct_slope$slope$par_x, NA)
   )))
   if (length(par_x) > 1) {
     stop("Found more than one x-variable in segment ", i, ": '", paste(par_x, collapse ="', '"), "'")
@@ -304,37 +327,129 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   }
 
 
-  ###########
-  # VARYING #
-  ###########
-  varying_terms = as.character(findbars(form_rhs))
-  if (length(varying_terms) > 0) {
-    V = lapply(varying_terms, unpack_varying_term, i = i) %>%
-      dplyr::bind_rows()
-  } else {
-    V = NA
-  }
-
-
-  # Return as list.
+  ##########
+  # RETURN #
+  ##########
   return(tibble::tibble(
-    int = list(int),
-
-    slope = list(slope),
-    slope_code = slope_code,
-
-    sigma_int = list(sigma_int),
-    sigma_slope = list(sigma_slope),
-    sigma_code = sigma_code,
-
     x = par_x,
-    varying = list(V)
+
+    # Central tendency stuff
+    ct_int = list(ct_int),
+    ct_code = ct_slope$code,  # must be before ct_slope is defined locally below
+    ct_slope = list(ct_slope$slope),
+    #ct_varying = list(ct_varying),
+
+    # Sigma stuff
+    sigma_int = list(sigma_int),
+    sigma_code = sigma_slope$code,  # must be before sigma_slope is defined locally below
+    sigma_slope = list(sigma_slope$slope),
+
+    # AR stuff
+    ar_int = list(ar_int),
+    ar_slope = list(ar_slope),
+    ar_code = list(ar_code),
+
+    # MA stuff
+    ma_int = list(ma_int),
+    ma_slope = list(ma_slope),
+    ma_code = list(ma_code)
   ))
 }
 
 
-unpack_slope_term = function(term, i, last_slope, prefix = "") {
-  # Remove the "rel()" and "I()" in that order.
+get_term_content = function(form_str_in) {
+  # Handle cases of no input or several inputs
+  if (length(form_str_in) == 0) {
+    return(NA)
+  } else if (length(form_str_in) > 1) {
+    #term_type = paste0(substr(form_str_in, 0, content_start), ")")
+    stop("Only one ", form_str_in, " allowed in each formula.")
+  } else if (length(form_str_in) == 1) {
+    # Get formula inside wrapper
+    content_start = stringr::str_locate(form_str_in, "\\(") + 1  # Location of first character in contents
+    content_end = stringr::str_length(form_str_in) - 1  # Location of last character in contents
+    content = substr(form_str_in, content_start, content_end)
+
+    form = as.formula(paste0("~", content), env = globalenv())
+    return(form)
+  }
+}
+
+
+unpack_int = function(form, i, ttype) {
+  # It there is no formula for this, return NA and don't go further
+  if (!rlang::is_formula(form)) {
+    return(NA)
+  }
+
+  # Got a formula... continue
+  attrs = attributes(stats::terms(nobars(form)))
+  int_rel = attrs$term.labels == "rel(1)"
+
+  if (any(int_rel) == TRUE & i == 1)
+    stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
+
+  if (any(int_rel) | attrs$intercept == TRUE) {
+    # Different naming schemes for central tendency (int_i) and others (e.g., sigma_1; ma_1)
+    name = ifelse(ttype == "ct", yes = paste0("int_", i), no = paste0(ttype, "_", i))
+    int = tibble::tibble(
+      name = paste0(name),
+      rel = any(int_rel)
+    )
+  } else {
+    int = NA
+  }
+
+  return(int)
+}
+
+
+# Makes a list of terms and applies unpack_slope_term() to each of them.
+# Then builds the code for this segment's slope
+unpack_slope = function(form, i, ttype, last_slope) {
+  # If there is no formula information, return NA
+  if (!rlang::is_formula(form)) {
+    return(list(
+      slope = NA,
+      code = NA
+    ))
+  }
+
+  # Get a list of terms as strings
+  attrs = attributes(stats::terms(nobars(form)))
+  term.labels = attrs$term.labels[attrs$term.labels != "rel(1)"]
+
+  # Population-level slopes
+  if (length(term.labels) > 0) {
+    slope = lapply(
+      term.labels,
+      FUN = unpack_slope_term,
+      i = i,
+      last_slope = last_slope,
+      ttype = ifelse(ttype == "ct", "", paste0(ttype, "_"))  # No prefix for ce ("x_1"). Others are "sigma_x_1"
+    ) %>%
+      dplyr::bind_rows()  # Make it a proper table-like tibble
+
+    # Build code. Add parentheses if there are more slopes
+    code = paste(slope$code, collapse = " + ")
+    if (stringr::str_detect(code, "\\+"))
+      code = paste0("(", code, ")")
+
+  } else {
+    slope = NA
+    code = NA
+  }
+
+  return(list(
+    slope = slope,
+    code = code
+  ))
+}
+
+
+
+unpack_slope_term = function(term, i, last_slope, ttype = "") {
+  # Remove the "rel()" and "I()" in that order. Must be done before checking starts.
   if (stringr::str_starts(term, "rel\\(")) {
     term = gsub("^rel\\(|\\)$", "", term)
     rel = TRUE
@@ -349,50 +464,53 @@ unpack_slope_term = function(term, i, last_slope, prefix = "") {
     # Check if the relative slope is legit
     if (i == 1)
       stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
-    if(is.null(last_slope))
-      stop("rel(", term, ") in segment ", i, " but no slopes in the previous segment.")
-    if(!term %in% last_slope[[1]]$term) {
-      stop("rel(", term, ") in segment ", i, " does not have a corresponding term to be relative to in the previous segment.")
+    if (all(is.na(last_slope)) == TRUE)
+      stop("Found rel(", term, ") in segment ", i, " but there are no corresponding slopes in segment ", i-1)
+    if (!term %in% last_slope$term) {
+      stop("Found rel(", term, ") in segment ", i, " does not have a corresponding term to be relative to in segment ", i-1)
     }
   }
-  if(stringr::str_detect(term, "^log\\(|^sqrt\\(") & i > 1)
+  if (stringr::str_detect(term, "^log\\(|^sqrt\\(") & i > 1)
     stop("log() or sqrt() detected in segment 2+. This would fail because mcp models earlier segments as negative x values, and sqrt()/log() cannot take negative values.")
 
   # Regular expressions. Only recognize stuff that is identical between JAGS and base R
   func_list = c("abs", "cos", "exp", "log", "sin", "sqrt", "tan")
-  funcs_regex = paste0("^", func_list, "\\(", collapse = "|")  # ^func1(|^func2(|...
-  exponent_regex = "\\^[0-9.]+$"  # something^[number]
+  funcs_regex = paste0("^", func_list, "\\(", collapse = "|")  # ^abs(|^cos(|...
+  exponent_regex = "\\^\\(?([0-9.-]+)\\)?$"  # something^[number] where [number] can be e.g., "(-1.5)
   end_regex = "\\)$"
 
   # Find par_x by removing everything associated with accepted functions
   par_x = gsub(paste0(c(funcs_regex, exponent_regex, end_regex), collapse = "|"), "", term)
 
-  # Give exponents a valid variable name
+  # Give the term a valid variable name
   rel_x_code = paste0("X_", i, "_[i_]")  # x relative to segment start. Must match that inserted in get_formula()
   if (stringr::str_detect(term, exponent_regex)) {
     # Exponential
-    slope_base = gsub("\\^", "E", term)
+    exponent = sub(".*\\^\\(?([0-9.-]+)\\)?$", "\\1", term)
+    check_integer(as.numeric(exponent), term, lower = 0)  # JAGS does not allow for negative or decimal exponents. (TO DO: check if implementing stan version)
+    name = paste0(par_x, "_", i, "_E", sub("-", "m", exponent))  # e.g., x_i_E2
     term_recode = gsub(paste0("^", par_x, "\\^"), paste0(rel_x_code, "\\^"), term)
   } else if (stringr::str_detect(term, funcs_regex)) {
     # A simple function
-    slope_base = gsub("\\(", "_", term)  # Replace first parenthesis with underscore
-    slope_base = gsub("\\)$", "", slope_base)  # Remove second (last) parenthesis
+    name = paste0(par_x, "_", i, "_", sub("\\(.*", "\\2", term))  # e.g., x_i_log
     term_recode = gsub(paste0("\\(", par_x), paste0("(", rel_x_code), term)
   } else if (term == par_x) {
     # No function; just vanilla :-)
-    slope_base = par_x
+    name = paste0(par_x, "_", i)
     term_recode = rel_x_code
   } else {
     stop("mcp failed for term ", term, ". If there is no obvious reason why, please raise an issue at GitHub.")
   }
 
-  # Add last segment if this slope is relative
-  name = paste0(prefix, slope_base, "_", i)
+  # Add sigma_name, ma_name, or ar_name
+  name = paste0(ttype, name)
+
+  # Add the corresponding term from the last segment if this slope is relative
   if (rel == FALSE) {
     name_cumul = name
     code = paste0(name, " * ", term_recode)
   } else if (rel == TRUE) {
-    last_name_cumul =last_slope[[1]]$name_cumul[which(last_slope[[1]]$term == term)]
+    last_name_cumul = last_slope$name_cumul[which(last_slope$term == term)]
     name_cumul = paste0(last_name_cumul, " + ", name)
     code = paste0("(", name_cumul, ") * ", term_recode)
   }
@@ -403,6 +521,49 @@ unpack_slope_term = function(term, i, last_slope, prefix = "") {
               name_cumul = name_cumul,
               rel = rel,
               code = code))
+}
+
+
+
+# Check ARMA. These are allowed: ar([number]) or ar([number], [formula])
+# Return order and ar(formula) separately. The formula is ar(1) or ma(1) if no formula is given
+unpack_arma = function(form_str_in) {
+  if (length(form_str_in) == 0) {
+    return(list(
+      order = NA,
+      form_str = NA
+    ))
+  } else if (length(form_str_in) > 1) {
+    stop("Only one of these allowed per segment: ", form_str_in)
+  }
+
+  # GET ORDER
+  order_start = stringr::str_locate(form_str_in, "\\(") + 1  # Location of first character in contents
+  order_end = stringr::str_locate(form_str_in, ",") - 1  # Where is comma? If no comma, this returns NA, NA
+  has_formula = !all(is.na(order_end))  # Is there a formula (a comma?)
+  if (!has_formula)
+    order_end = stringr::str_length(form_str_in) - 1  # No formula; just remove the end parenthesis
+  order = suppressWarnings(as.numeric(substr(form_str_in, order_start, order_end)))
+
+  # Check the order
+  if (is.na(order))
+    stop("Wrong specification of order in '", form_str_in, "'. Must be ar(order) or ar(order, formula) where order is a positive integer.")
+  check_integer(order, form_str_in, lower = 1)
+
+  # GET FORMULA
+  if (has_formula) {
+    # If there is a formula, remove the order
+    form_str = gsub(paste0(order, ", "), "", form_str_in)
+  } else {
+    # If there is no formula, return "ar(1)" or "ma(1)"
+    term_type = substr(form_str_in, 1, order_start - 2)  # "ar" or "ma"
+    form_str = paste0(term_type, "(1)")
+  }
+
+  return(list(
+    order = order,
+    form_str = form_str
+  ))
 }
 
 
@@ -456,7 +617,7 @@ unpack_varying_term = function(term, i) {
 #' get_segment_table(segments)
 #' }
 
-get_segment_table = function(segments, data = NULL, family = gaussian()$family, par_x = NULL) {
+get_segment_table = function(segments, data = NULL, family = gaussian(), par_x = NULL) {
   #####################################################
   # BUILD "SEGMENT TABLE (ST)" FROM ISOLATED SEGMENTS #
   #####################################################
@@ -494,13 +655,7 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
   # Check segment 1: rel() not possible here.
   if (any(ST[1, c("cp_int", "cp_int_rel", "cp_ran_int", "cp_group_col")] != FALSE, na.rm = T))
     stop("Change point defined in first segment. This should not be possible. Submit bug report in the GitHub repo.")
-  #if (any(ST[1, c("int_rel", "slope_rel")] != FALSE, na.rm = T))
-  #  stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
 
-  # Check rel() in segment 2+
-  #rel_slope_after_plateau = dplyr::lag(is.na(ST$slope), 1) & ST$slope_rel != 0
-  #if (any(rel_slope_after_plateau))
-  #  stop("rel(slope) is not meaningful after a plateau segment (without a slope). Use absolute slope to get the same behavior. Found in segment ", which(rel_slope_after_plateau))
   if (nrow(ST) > 1) {
     if (ST$cp_int_rel[2] == TRUE)
       stop("rel() cannot be used for change points in segment 2. There are no earlier change points to be relative to. Relative changepoints work from segment 3 and on.")
@@ -531,14 +686,14 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
   if (length(derived_y) != 1)
     stop("There should be exactly one response variable. Found '", paste0(derived_y, collapse="' and '", "'."))
 
-  if (!is.na(ST$trials[1]) & family != "binomial")
-    stop("Response format `y | trials(N)` only meaningful for family = binomial(); not for ", family, "()")
+  if (!is.na(ST$trials[1]) & family$family != "binomial")
+    stop("Response format `y | trials(N)` only meaningful for family = binomial(); not for ", family$family, "()")
 
   # Varying effects
   derived_varying = unique(stats::na.omit(ST$cp_group_col))
 
   # Sigma
-  if (any(c(!is.na(ST$sigma_int)), !is.na(ST$sigma_slope)) & family != "gaussian")
+  if (any(c(!is.na(ST$sigma_int)), !is.na(ST$sigma_slope)) & family$family != "gaussian")
     stop("sigma() is only meaningful for family = gaussian()")
 
   # Check data types
@@ -565,13 +720,13 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
     }
 
     # Check y and trials if binomial
-    if (family == "binomial") {
+    if (family$family == "binomial") {
       check_integer(data[, ST$y[1]], ST$y[1], lower = 0)
       check_integer(data[, ST$trials[1]], ST$trials[1], lower = 1)
-    } else if (family == "bernoulli") {
+    } else if (family$family == "bernoulli") {
       if (any(!data[, ST$y[1]] %in% c(0, 1)))
         stop("Only responses 0 and 1 are allowed for family = bernoulli() in column '", ST$y[1], "'")
-    } else if (family == "poisson") {
+    } else if (family$family == "poisson") {
       check_integer(data[, ST$y[1]], ST$y[1], lower = 0)
     }
   }
@@ -586,9 +741,6 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
 
     # Add variable names
     dplyr::mutate(
-      #int_name = ifelse(.data$int, yes = paste0("int_", .data$segment), no = NA),
-      #slope_name = ifelse(!is.na(.data$slope), yes = paste0(.data$slope, "_", .data$segment), no = NA),
-      #slope_code = .data$slope_name,  # Will be modified later
       cp_name = paste0("cp_", .data$segment - 1),
       cp_sd = ifelse(.data$cp_ran_int == TRUE, paste0(.data$cp_name, "_sd"), NA),
       cp_group = ifelse(.data$cp_ran_int == TRUE, paste0(.data$cp_name, "_", .data$cp_group_col), NA)
@@ -603,14 +755,6 @@ get_segment_table = function(segments, data = NULL, family = gaussian()$family, 
       cp_code_prior = format_code(.data$cp_code_prior, na_col = .data$cp_name)
     ) %>%
     dplyr::ungroup() %>%
-
-    # Same for slope_code
-    # dplyr::group_by(cumsum(!.data$slope_rel)) %>%
-    # dplyr::mutate(
-    #   slope_code = cumpaste(.data$slope_name, " + "),
-    #   slope_code = format_code(.data$slope_code, na_col = .data$slope_name)
-    # ) %>%
-    # dplyr::ungroup() %>%
 
     # Finish up
     dplyr::select(-dplyr::starts_with("cumsum"))
@@ -636,24 +780,4 @@ format_code = function(col, na_col) {
   # Add parenthesis if this is an equation
   col = ifelse(stringr::str_detect(col, "\\+"), paste0("(", col, ")"), col)
   col
-}
-
-
-#' Throws an error if a number/vector contains non-numeric, decimal, or less-than-lower
-#'
-#' The expected behavior of is.integer, with informative error messages.
-#'
-#' @aliases check_integer
-#' @param x Numeric value or vector
-#' @param name Name to show in error message.
-#' @param lower the smallest allowed value. lower = 1 checks for positive integers.
-#'
-check_integer = function(x, name, lower = -Inf) {
-  greater_than = ifelse(lower == -Inf, " ", paste0(" >= ", lower, " "))
-  if (!is.numeric(x))
-    stop("Only integers", greater_than, "allowed for '", name, "'")
-  if (!all(x == floor(x)) | !all(x >= lower))
-    stop("Only integers", greater_than, "allowed for '", name, "'")
-
-  TRUE
 }

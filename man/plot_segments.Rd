@@ -4,8 +4,16 @@
 \alias{plot_segments}
 \title{Plot posterior draws of segments on top of data}
 \usage{
-plot_segments(fit, facet_by = NULL, rate = TRUE, lines = 25,
-  quantiles = FALSE, quantiles_type = "fitted", prior = FALSE, ...)
+plot_segments(
+  fit,
+  facet_by = NULL,
+  rate = TRUE,
+  lines = 25,
+  quantiles = FALSE,
+  quantiles_type = "fitted",
+  prior = FALSE,
+  ...
+)
 }
 \arguments{
 \item{fit}{An mcpfit object.}
@@ -25,11 +33,11 @@ intervals, see \code{quantiles_type} argument.}
 
 \item{quantiles}{Whether to plot quantiles.
 \itemize{
-\item \strong{TRUE:} Add 2.5% and 97.5% quantiles. Corresponds to
+\item \strong{TRUE:} Add 2.5\% and 97.5\% quantiles. Corresponds to
 \code{quantiles = c(0.025, 0.975)}.
 \item \strong{FALSE (default):} No quantiles
 \item A vector of quantiles. For example, \code{quantiles = 0.5}
-plots the median and \code{quantiles = c(0.2, 0.8)} plots the 20% and 80%
+plots the median and \code{quantiles = c(0.2, 0.8)} plots the 20\% and 80\%
 quantiles.
 }}
 

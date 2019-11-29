@@ -13,7 +13,7 @@ recover_levels(samples, data, mcmc_col, data_col)
 
 \item{mcmc_col}{A vector of strings.}
 
-\item{data_col}{A vector of strings. Has to be same length as \code{mcmc_col}}
+\item{data_col}{A vector of strings. Has to be same length as \code{mcmc_col}.`}
 }
 \description{
 Jags uses 1, 2, 3, ..., etc. for indexing of varying effects.

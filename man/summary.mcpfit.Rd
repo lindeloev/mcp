@@ -5,8 +5,7 @@
 \alias{summary}
 \title{Summarise mcpfit objects}
 \usage{
-\method{summary}{mcpfit}(object, width = 0.95, digits = 2,
-  prior = FALSE, ...)
+\method{summary}{mcpfit}(object, width = 0.95, digits = 2, prior = FALSE, ...)
 }
 \arguments{
 \item{object}{An \code{mcpfit} object returned by \code{\link{mcp}}.}
@@ -32,7 +31,7 @@ into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
 }
 \description{
 Computes posterior means and highest density intervals, and model
-diagnostics. Get them in a data frame by doing result = summary(fit).
+diagnostics. Get them in a data frame by doing \code{result = summary(fit)}.
 }
 \examples{
 \dontrun{
