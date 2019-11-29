@@ -12,7 +12,7 @@ vignette: >
 
 There are a lot of change point packages out there already, so why `mcp`? Here are my (probably biased) thoughts about this. I compiled some tables, summarising change point packages ([.xlsx file here](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_tables.xlsx)). I will demonstrate each of these packages in an applied example below to discuss their merits and shortcomings. 
 
-I think `mcp`, `segmented`, and `EnvCpt` stand out as good general-purpose packages, depending on the purpose. As the author of `mcp`, You can see the immediate roadmap for `mcp` at the [GitHub issues tracker](https://github.com/lindeloev/mcp/issues).
+I think `segmented`, and `EnvCpt` are good if the data fits what they can model, and `mcp` is a more capable and general-purpose package at the cost of speed. You can see the immediate roadmap for `mcp` at the [GitHub issues tracker](https://github.com/lindeloev/mcp/issues).
 
 
 ## Modeling options
@@ -42,20 +42,25 @@ This is a list of other functions, which I find useful on other statistics packa
 
 # Unique features of mcp
 
+```{r, echo = FALSE}
+# So that calls to mcp stuff does not elicit errors
+library(mcp)
+```
+
  * Manually specify the segment structure. Other packages allow for specifying segment structure, but it has to be shared for all segments. Read more about [the formula syntax](../docs/articles/formulas.html) in `mcp`.
- * Posterior distribution for each change point. This matters since they rarely conform to known distributions.
+ * Posterior distribution for each change point. This matters since they rarely conform to known distributions so confidence intervals can be misleading.
  * *varying change points*: To my knowledge, no other package implements varying change points, i.e., allowing by-group differences in change points while sharing all other parameters. Read more about [varying change points](../docs/articles/varying.html) in `mcp`.
  * *Sharing and fixing parameters* to values and other parameters as discussed under [priors in mcp](../docs/articles/priors.html).
  * *Per-segment regression on variance and autocorrelation* via the `sigma()` ([read more here](../articles/variance.html)) and `ar()` ([read more here](../articles/arma.html)) terms, also allowing for more advanced change points involving, e.g., a change in autocorrelation strength.
  * *Explicit priors*: `bcp` is the only other Bayesian change point package I know of. It contains a few high-level prior parameters, but not for specific parameters such as *where* change points are expected to occur etc. Read more about [priors in mcp](../docs/articles/priors.html) for more.
- * *Prior and posterior predictive checks*. In general, most other packages have limited or no model checking functionality. The default `plot.mcpfit` is inherently a visual predictive check and can be applied to priors (`mcp(..., sample = "prior")` and posteriors. Of course inspecting Gelman-Rubin statistics and effective sample sizes in `summary.mcpfit`, as well as trace plots (`plot(fit, "trace")`), also go a long way.
+ * *Prior and posterior predictive checks*. In general, most other packages have limited or no model checking functionality. The default `plot.mcpfit` is inherently a visual predictive check and can be applied to priors (`mcp(..., sample = "prior")` and posteriors. Of course inspecting Gelman-Rubin statistics and effective sample sizes in `summary.mcpfit`, as well as trace plots (`plot_pars(fit, type = "trace")`), also go a long way.
  * Flexible hypothesis testing using `loo` and `hypothesis`, including testing the existence of a change point. Most other packages stop at estimation, though some provide p-values. Read more about [hypothesis testing and model comparison](../docs/articles/comparison.html) using `mcp`.
 
 
 # Where mcp is (currently) inferior
 
  * *Speed*: While `mcp` is reasonably fast for typical problems, mcmc sampling is slower than analytical and specialized solutions. For datasets > 20.000 points and a complicated model, it may take `mcp` hours (but not days) to fit. See [tips and tricks](../articles/tips.html) how to speed up `mcp`. Briefly, run in parallel and lower the number of iterations: (`mcp(..., cores = 4, iter = 1000, adapt = 400`).
- * *Automatic detection of change points*: most packages does automatic change point detection. This is not a space that `mcp` tries to fill so use the other packages here. Though given the worked examples below, I would worry about many package's ability to recover change points.
+ * *Automatic detection of change points*: most packages does automatic change point detection. This is not a space that `mcp` tries to fill so use the other packages here. But beware that many of the automatic procedures did not capture a change point in the worked examples below.
  * *Multivariate*: `mcp` only does univariate regression, both for $y$ and $x$. This will be implemented if there is a popular request for it. Don't hesitate to raise an issue on GitHub.
 
 
@@ -97,7 +102,7 @@ Plotting the posterior distributions of the change points reveal that they are n
 
 ```{r}
 gridExtra::grid.arrange(plot(fit_mcp), 
-                        plot(fit_mcp, "dens_overlay", pars = c("cp_1", "cp_2")), 
+                        plot_pars(fit_mcp, pars = c("cp_1", "cp_2"), type = "dens_overlay"),
                         ncol = 2)
 ```
 
@@ -134,7 +139,9 @@ I think the change point at `x = 100` should just be ignored. We see that it app
 # segmented
 `segmented` seems to be the most popular package for change point analysis. It has a very shallow learning curve combined with great modeling flexibility. You simply specify your model in `lm`, `glm`, `Arima`, and also work for e.g. `coxph` (Cox proportional Hazard). Supply it to `segmented` which then segment your data along the x-axis and applies the linear model in each segment. The trick is identifying the locations where this split works the best. The positive consequence is that you get great modeling flexibility with GLM, AR(1) models, etc. 
 
-The downside is that you can only have one *kind* of segments and (for some reason) *it ignores the intercepts on anything but the first segment*. Only (joined) slopes are supported in segment 2+. Unfortunately, this means that `segmented` fails for the present changing-intercept data. `segmented` is otherwise well developed with prediction functions, (frequentist) intervals, plots, etc. so if you have large datasets with impermissible long run times in `mcp` and it matches what `segmented` can model, it is a good option.
+The downside is that you can only have one *kind* of segments and (for some reason) *it ignores the intercepts on anything but the first segment*. Only (joined) slopes are supported in segment 2+. Unfortunately, this means that `segmented` fails for the present changing-intercept data. In my limited testing, it also ignores quadratic and other terms, so even though the design philosophy is excellent, you have to carefully double-check whether it actually models what you asked it to. 
+
+`segmented` is otherwise well developed with prediction functions, (frequentist) intervals, plots, etc. so if you have large datasets with impermissible long run times in `mcp` and it matches what `segmented` can model, it is a good option.
 
 Enough talk:
 

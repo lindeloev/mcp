@@ -133,7 +133,7 @@ summary(fit)
 The effective sample size (`n.eff`) is fairly low, indicating poor mixing for these parameters. `Rhat` is acceptable at < 1.1, indicating good convergence between chains. Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:
 
 ```{r, fig.height=7, fig.width = 6}
-plot(fit, "combo", regex_pars = "sigma_")
+plot_pars(fit, regex_pars = "sigma_")
 ```
 
 This confirms the impression from `Rhat` and `n.eff`. Setting `mcp(..., iter = 10000)` would be advisable to increase the effective sample size. Read more about [tips, tricks, and debugging](../articles/tips.html).

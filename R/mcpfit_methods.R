@@ -96,7 +96,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #'   is computed using \code{\link[coda]{gelman.diag}}.
 #'   `n.eff` is the effective sample size computed using
 #'   \code{\link[coda]{effectiveSize}}. Low effective sample sizes are
-#'   also obvious as poor mixing in trace plots (see `plot(fit, "combo")`).
+#'   also obvious as poor mixing in trace plots (see `plot_pars(fit)`).
 #'   `ts_err` is the time-series error, taking autoregressive correlation
 #'   into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}

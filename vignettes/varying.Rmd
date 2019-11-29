@@ -15,7 +15,7 @@ This article in brief:
 
  * How to simulate varying change points
  * Get posteriors using `ranef(fit)`
- * Plot using `plot(fit, facet_by="my_group")` and `plot(fit, "dens_overlay", pars = "varying", ncol = 3)`.
+ * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "varying", type = "dens_overlay", ncol = 3)`.
  * The default priors restrict varying change points to lie between the two adjacent change points.
  * The article on modeling variance via `sigma()` contains [an example on varying change points](../articles/variance.html) as well.
 
@@ -120,10 +120,10 @@ ranef(fit)
 
 Notice how well they are estimated to be 10 apart, indicating good recovery.
 
-Good convergence is not always as obvious as in this example. While `plot(fit, "combo")` show population-level parameters only, you can do this to get varying effects only:
+Good convergence is not always as obvious as in this example. While `plot_pars(fit)` show population-level parameters only, you can do this to get varying effects only:
 
 ```{r}
-plot(fit, "trace", pars = "varying", ncol=3)
+plot_pars(fit, pars = "varying", type = "trace", ncol=3)
 ```
 
 Notice the use of the `ncol` argument to set the number of columns. You will often have *many* levels on your varying effect, so this is useful to get a good view of all of them. Naturally, you can do this for almost all kinds of plots.
@@ -131,7 +131,7 @@ Notice the use of the `ncol` argument to set the number of columns. You will oft
 Using `pars = "varying"` will plot all varying effects. This may be too much if you have multiple varying effects. To select just one, use regular expression in `regex_pars`. Two very handy operators are "^" (begins with) and "$" (ends with). Just to show that this "faceting" works for almost all of the many plot types, we now do two columns of `"dens_overlay`:
 
 ```{r}
-plot(fit, "dens_overlay", regex_pars = "^cp_1_id", ncol = 2)
+plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2)
 ```
 
 
