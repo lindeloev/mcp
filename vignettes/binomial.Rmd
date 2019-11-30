@@ -104,12 +104,12 @@ Of course, these plots work with [varying effects](../docs/articles/varying.html
 Already in the default `plot` as used above, it will be obvious if there was poor convergence. A more direct assessment is to look at the posterior distributions and trace plots:
 
 ```{r, fig.height = 10, fig.width = 6}
-plot(fit, "combo")
+plot_pars(fit)
 ```
 
 Convergence is perfect here as evidenced by the overlapping trace plots that look like fat caterpillars (Bayesians love fat caterpillars). Notice that the posterior distribution of change points can be quite non-normal and sometimes even bimodal. Therefore, one should be careful not to interpret the HDI as if it was normal.
 
-`plot()` can do a lot more than this, so check out it's documentation.
+`plot()` and `plot_pars()` can do a lot more than this, so check out their documentation.
 
 
 # Priors for binomial models

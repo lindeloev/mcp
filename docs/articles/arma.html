@@ -202,7 +202,7 @@
 ##  sigma_1   4.672   4.317   5.063    1  5188   0.0582
 ##   time_2   0.463   0.384   0.541    1   753   0.0164</code></pre>
 <p>Notice that <code>sigma</code> in AR models describe <em>innovations</em>, i.e., the part of the residuals that are not explained by the autoregressive coefficients. As always, it is good to assess posteriors and convergence more directly:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"combo"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit)</a></code></pre></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-4-1.png" width="768"></p>
 <p>Sometimes, the trace plot shows that the change point (<code>cp_1</code>) is not well identified with this model and data. As discussed in the article on <a href="../articles/tips.html">tips, tricks, and debugging</a>, you could combine a more informative prior with more samples (<code><a href="../reference/mcp.html">mcp(..., iter = 10000)</a></code>), if this is a problem.</p>
 <p>You can do hypothesis testing and model comparisons with autoregressive models, just as with any other model in <code>mcp</code>. <a href="../articles/comparison.html">Read more here</a> or scroll down for an applied example.</p>
@@ -274,7 +274,7 @@
 ##      x_1  0.987  0.9247  1.053 1.00  1631 8.56e-03
 ##      x_2  0.987  0.9247  1.053 1.00  1631 8.56e-03</code></pre>
 <p>We see that all parameters are well recovered. However, there is a dangerously low effective sample size for the change point (<code>cp_1</code>), indicating a potential problem. We can inspect this further using trace plots and posterior distributions. As is often the case, we see that the change point posterior is not well described by parameterized distribution. In this case, the change point posterior is a bit bimodal with some credence to a change point around 55 too. This is understandable if you look at the data.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"combo"</span>, <span class="dt">regex_pars =</span> <span class="st">"cp_1|ar_*"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit, <span class="dt">regex_pars =</span> <span class="st">"cp_1|ar_*"</span>)</a></code></pre></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
 <p>As usual, we can test hypotheses and do model comparison (<a href="../articles/comparison.html">read more here</a>). For example, what is the evidence that <code>ar1_2</code> is more than 0.4 greater than <code>ar1_1</code>? Answer: It is quite compelling</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/hypothesis.html">hypothesis</a></span>(fit, <span class="st">"ar1_1 + 0.4 &lt; ar1_2"</span>)</a></code></pre></div>

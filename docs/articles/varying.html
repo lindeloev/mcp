@@ -170,7 +170,7 @@
 <li>How to simulate varying change points</li>
 <li>Get posteriors using <code><a href="../reference/ranef.html">ranef(fit)</a></code>
 </li>
-<li>Plot using <code><a href="../reference/plot.mcpfit.html">plot(fit, facet_by="my_group")</a></code> and <code><a href="../reference/plot.mcpfit.html">plot(fit, "dens_overlay", pars = "varying", ncol = 3)</a></code>.</li>
+<li>Plot using <code><a href="../reference/plot.mcpfit.html">plot(fit, facet_by="my_group")</a></code> and <code><a href="../reference/plot_pars.html">plot_pars(fit, pars = "varying", type = "dens_overlay", ncol = 3)</a></code>.</li>
 <li>The default priors restrict varying change points to lie between the two adjacent change points.</li>
 <li>The article on modeling variance via <code><a href="https://rdrr.io/r/stats/sigma.html">sigma()</a></code> contains <a href="../articles/variance.html">an example on varying change points</a> as well.</li>
 </ul>
@@ -225,16 +225,16 @@
 <pre><code>## # A tibble: 180 x 4
 ##        x id    id_numeric     y
 ##    &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt;
-##  1  31.0 Clark          3  18.3
-##  2  44.4 Clark          3  20.3
-##  3  46.9 Clark          3  24.2
-##  4  87.0 Clark          3  39.7
-##  5  96.6 Clark          3  47.7
-##  6  63.9 Clark          3  29.2
-##  7  12.7 Clark          3  16.6
-##  8  69.1 Clark          3  34.7
-##  9  97.7 Clark          3  47.1
-## 10  56.8 Clark          3  24.8
+##  1  91.4 Clark          3  44.0
+##  2  13.6 Clark          3  17.9
+##  3  50.5 Clark          3  21.2
+##  4  78.9 Clark          3  38.1
+##  5  40.6 Clark          3  21.0
+##  6  37.3 Clark          3  22.4
+##  7  54.7 Clark          3  22.3
+##  8  81.2 Clark          3  39.4
+##  9  37.2 Clark          3  15.7
+## 10  72.7 Clark          3  32.7
 ## # ... with 170 more rows</code></pre>
 <p>Here, we “translated” the <code>id</code> to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around <code>cp_1</code>. The result:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</a>
@@ -262,12 +262,12 @@
 ## 5     cp_1_id[Louis]  14.769255  12.196447  17.367174 1.000561  4261 4.163237
 ## 6 cp_1_id[Spiderman]  23.735061  21.052410  26.520950 1.002949  4378 2.398067</code></pre>
 <p>Notice how well they are estimated to be 10 apart, indicating good recovery.</p>
-<p>Good convergence is not always as obvious as in this example. While <code><a href="../reference/plot.mcpfit.html">plot(fit, "combo")</a></code> show population-level parameters only, you can do this to get varying effects only:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"trace"</span>, <span class="dt">pars =</span> <span class="st">"varying"</span>, <span class="dt">ncol=</span><span class="dv">3</span>)</a></code></pre></div>
+<p>Good convergence is not always as obvious as in this example. While <code><a href="../reference/plot_pars.html">plot_pars(fit)</a></code> show population-level parameters only, you can do this to get varying effects only:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit, <span class="dt">pars =</span> <span class="st">"varying"</span>, <span class="dt">type =</span> <span class="st">"trace"</span>, <span class="dt">ncol=</span><span class="dv">3</span>)</a></code></pre></div>
 <p><img src="varying_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
 <p>Notice the use of the <code>ncol</code> argument to set the number of columns. You will often have <em>many</em> levels on your varying effect, so this is useful to get a good view of all of them. Naturally, you can do this for almost all kinds of plots.</p>
 <p>Using <code>pars = "varying"</code> will plot all varying effects. This may be too much if you have multiple varying effects. To select just one, use regular expression in <code>regex_pars</code>. Two very handy operators are “^” (begins with) and “$” (ends with). Just to show that this “faceting” works for almost all of the many plot types, we now do two columns of <code>"dens_overlay</code>:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"dens_overlay"</span>, <span class="dt">regex_pars =</span> <span class="st">"^cp_1_id"</span>, <span class="dt">ncol =</span> <span class="dv">2</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit, <span class="dt">regex_pars =</span> <span class="st">"^cp_1_id"</span>, <span class="dt">type =</span> <span class="st">"dens_overlay"</span>, <span class="dt">ncol =</span> <span class="dv">2</span>)</a></code></pre></div>
 <p><img src="varying_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
 </div>
 <div id="priors-for-varying-effects" class="section level1">

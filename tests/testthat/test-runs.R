@@ -154,7 +154,7 @@ test_mcp = function(segments,
       varying_cols = na.omit(fit$.other$ST$cp_group_col)
       test_summary(fit, varying_cols)
       test_plot(fit, varying_cols)  # default plot
-      test_bayesplot(fit)  # bayesplot call
+      test_plot_pars(fit)  # bayesplot call
     }
 
     # Data should not be manipulated, just by working with it
@@ -196,8 +196,8 @@ test_plot = function(fit, varying_cols) {
 }
 
 # Test plot() calls to bayesplot
-test_bayesplot = function(fit) {
-  gg = plot(fit, "dens_overlay")
+test_plot_pars = function(fit) {
+  gg = plot_pars(fit, type = "dens_overlay")
   testthat::expect_s3_class(gg, c("gg", "ggplot"))
 }
 

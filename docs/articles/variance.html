@@ -284,7 +284,7 @@
 ##           x_3   0.9339   0.77564   1.1037    1  1103 5.06e-02
 ##           x_4   0.9339   0.77564   1.1037    1  1103 5.06e-02</code></pre>
 <p>The effective sample size (<code>n.eff</code>) is fairly low, indicating poor mixing for these parameters. <code>Rhat</code> is acceptable at &lt; 1.1, indicating good convergence between chains. Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"combo"</span>, <span class="dt">regex_pars =</span> <span class="st">"sigma_"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit, <span class="dt">regex_pars =</span> <span class="st">"sigma_"</span>)</a></code></pre></div>
 <p><img src="variance_files/figure-html/unnamed-chunk-11-1.png" width="576"></p>
 <p>This confirms the impression from <code>Rhat</code> and <code>n.eff</code>. Setting <code><a href="../reference/mcp.html">mcp(..., iter = 10000)</a></code> would be advisable to increase the effective sample size. Read more about <a href="../articles/tips.html">tips, tricks, and debugging</a>.</p>
 </div>

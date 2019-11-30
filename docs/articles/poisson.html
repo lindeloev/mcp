@@ -194,14 +194,15 @@
 ## # ... with 71 more rows</code></pre>
 <p>The number of events (<code>n</code>) as a function of year (<code>date</code>) is typically modeled as a change between two intercepts. This is very simple to do in <code>mcp</code>:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(mcp)</a>
-<a class="sourceLine" id="cb3-2" title="2">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb3-3" title="3">  n <span class="op">~</span><span class="st"> </span><span class="dv">1</span>,  <span class="co"># intercept-only</span></a>
-<a class="sourceLine" id="cb3-4" title="4">  <span class="op">~</span><span class="st"> </span><span class="dv">1</span>  <span class="co"># intercept-only</span></a>
-<a class="sourceLine" id="cb3-5" title="5">)</a>
-<a class="sourceLine" id="cb3-6" title="6"></a>
-<a class="sourceLine" id="cb3-7" title="7">fit =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">poisson</a></span>(), <span class="dt">par_x =</span> <span class="st">"date"</span>)</a></code></pre></div>
+<a class="sourceLine" id="cb3-2" title="2"><span class="kw"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="dt">mc.cores =</span> <span class="dv">3</span>)  <span class="co"># Speed up sampling!</span></a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
+<a class="sourceLine" id="cb4-2" title="2">  n <span class="op">~</span><span class="st"> </span><span class="dv">1</span>,  <span class="co"># intercept-only</span></a>
+<a class="sourceLine" id="cb4-3" title="3">  <span class="op">~</span><span class="st"> </span><span class="dv">1</span>  <span class="co"># intercept-only</span></a>
+<a class="sourceLine" id="cb4-4" title="4">)</a>
+<a class="sourceLine" id="cb4-5" title="5"></a>
+<a class="sourceLine" id="cb4-6" title="6">fit =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">poisson</a></span>(), <span class="dt">par_x =</span> <span class="st">"date"</span>)</a></code></pre></div>
 <p>Let us see the two intercepts (lambda in log-units) and the change point (in years):</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">result =<span class="st"> </span><span class="kw"><a href="../reference/summary.mcpfit.html">summary</a></span>(fit)</a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">result =<span class="st"> </span><span class="kw"><a href="../reference/summary.mcpfit.html">summary</a></span>(fit)</a></code></pre></div>
 <pre><code>## Family: poisson(link = 'log')
 ## Iterations: 9000 from 3 chains.
 ## Segments:
@@ -210,71 +211,71 @@
 ## 
 ## Population-level parameters:
 ##   name     mean    lower    upper Rhat n.eff   ts_se
-##   cp_1 1888.163 1879.281 1895.033    1  1405 90.6930
-##  int_1    1.173    0.971    1.352    1  3782  0.0200
-##  int_2    0.482    0.244    0.729    1  3973  0.0366</code></pre>
+##   cp_1 1888.345 1881.075 1897.490    1  1699 79.1544
+##  int_1    1.173    0.981    1.371    1  4301  0.0215
+##  int_2    0.481    0.231    0.704    1  4623  0.0293</code></pre>
 <p>We can see that the model ran well with good convergence and a large number of effective samples. At a first glance, the change point is estimated to lie between the years 1880 and 1895 (approximately).</p>
 <p>Let us take a more direct look, using the default <code>mcp</code> plot:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
-<p><img src="poisson_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
+<p><img src="poisson_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
 <p>It seems to fit the data well, but we can see that the change point probability “lumps” around particular data points. Years with a very low number of disasters abruptly increase the probability that the change to a lower disaster rate has taken place. The posterior distributions of change points regularly take these “weird” forms, i.e., not well-described by our toolbox of parameterized distributions.</p>
 <p>We can see this more clearly if plotting the posteriors. We include a traceplot too, just to check convergence visually.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"combo"</span>)</a></code></pre></div>
-<p><img src="poisson_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit)</a></code></pre></div>
+<p><img src="poisson_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
 </div>
 <div id="priors" class="section level1">
 <h1 class="hasAnchor">
 <a href="#priors" class="anchor"></a>Priors</h1>
-<p><code><a href="https://rdrr.io/r/stats/family.html">poisson()</a></code> defaults to <code>link = 'log'</code>, meaning that we have to exponentiate the estimates to get the “raw” poisson parameter <span class="math inline">\(\lambda\)</span>. <span class="math inline">\(\lambda\)</span> has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[2])</a></code> (3.2311385) and it is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[3])</a></code> (1.6192601) for segment 2.</p>
+<p><code><a href="https://rdrr.io/r/stats/family.html">poisson()</a></code> defaults to <code>link = 'log'</code>, meaning that we have to exponentiate the estimates to get the “raw” poisson parameter <span class="math inline">\(\lambda\)</span>. <span class="math inline">\(\lambda\)</span> has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[2])</a></code> (3.230494) and it is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[3])</a></code> (1.617367) for segment 2.</p>
 <p>Default priors were used. They are normals with a standard deviation of 10. I.e. with 95% probability mass between <code>exp(10) = 22026</code> and <code>exp(-10) = 1 / 22026</code>:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(fit<span class="op">$</span>prior)</a></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(fit<span class="op">$</span>prior)</a></code></pre></div>
 <pre><code>##       [,1]               
 ## cp_1  "dunif(MINX, MAXX)"
 ## int_1 "dnorm(0, 10)"     
 ## int_2 "dnorm(0, 10)"</code></pre>
 <p>As always, the prior on the change point forces it to occur in the observed range. These priors are very vague, so update with more informed priors for your particular case, e.g.:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1">prior =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb10-2" title="2">  <span class="dt">cp_1 =</span> <span class="st">"dnorm(1900, 30) T(MINX, 1925)"</span></a>
-<a class="sourceLine" id="cb10-3" title="3">)</a>
-<a class="sourceLine" id="cb10-4" title="4">fit_with_prior =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, prior, <span class="kw"><a href="https://rdrr.io/r/stats/family.html">poisson</a></span>(), <span class="dt">par_x =</span> <span class="st">"date"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1">prior =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
+<a class="sourceLine" id="cb11-2" title="2">  <span class="dt">cp_1 =</span> <span class="st">"dnorm(1900, 30) T(MINX, 1925)"</span></a>
+<a class="sourceLine" id="cb11-3" title="3">)</a>
+<a class="sourceLine" id="cb11-4" title="4">fit_with_prior =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, prior, <span class="kw"><a href="https://rdrr.io/r/stats/family.html">poisson</a></span>(), <span class="dt">par_x =</span> <span class="st">"date"</span>)</a></code></pre></div>
 </div>
 <div id="model-comparison" class="section level1">
 <h1 class="hasAnchor">
 <a href="#model-comparison" class="anchor"></a>Model comparison</h1>
 <p>Despite the popularity of this dataset, a question rarely asked is what the evidence is that there is a change point at all. Let us fit two no-changepoint models and use approximate leave-one-out cross-validation to see how the predictive performance of the two models compare.</p>
 <p>A flat model and a one-decay model:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="co"># Fit an intercept-only model</span></a>
-<a class="sourceLine" id="cb11-2" title="2">fit_flat =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(n <span class="op">~</span><span class="st"> </span><span class="dv">1</span>), data, <span class="dt">family=</span><span class="kw"><a href="https://rdrr.io/r/stats/family.html">poisson</a></span>(), <span class="dt">par_x =</span> <span class="st">"date"</span>)</a>
-<a class="sourceLine" id="cb11-3" title="3">fit_decay =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(n <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>date), data, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">poisson</a></span>())</a>
-<a class="sourceLine" id="cb11-4" title="4"></a>
-<a class="sourceLine" id="cb11-5" title="5"></a>
-<a class="sourceLine" id="cb11-6" title="6"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_flat) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_decay)</a></code></pre></div>
-<p><img src="poisson_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="co"># Fit an intercept-only model</span></a>
+<a class="sourceLine" id="cb12-2" title="2">fit_flat =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(n <span class="op">~</span><span class="st"> </span><span class="dv">1</span>), data, <span class="dt">family=</span><span class="kw"><a href="https://rdrr.io/r/stats/family.html">poisson</a></span>(), <span class="dt">par_x =</span> <span class="st">"date"</span>)</a>
+<a class="sourceLine" id="cb12-3" title="3">fit_decay =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(n <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>date), data, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">poisson</a></span>())</a>
+<a class="sourceLine" id="cb12-4" title="4"></a>
+<a class="sourceLine" id="cb12-5" title="5"></a>
+<a class="sourceLine" id="cb12-6" title="6"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_flat) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_decay)</a></code></pre></div>
+<p><img src="poisson_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
 <p>Not we compute and compare the LOO ELPDs:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1">fit<span class="op">$</span>loo =<span class="st"> </span><span class="kw"><a href="../reference/criterion.html">loo</a></span>(fit)</a>
-<a class="sourceLine" id="cb12-2" title="2">fit_flat<span class="op">$</span>loo =<span class="st"> </span><span class="kw"><a href="../reference/criterion.html">loo</a></span>(fit_flat)</a>
-<a class="sourceLine" id="cb12-3" title="3">fit_decay<span class="op">$</span>loo =<span class="st"> </span><span class="kw"><a href="../reference/criterion.html">loo</a></span>(fit_decay)</a></code></pre></div>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit<span class="op">$</span>loo, fit_flat<span class="op">$</span>loo, fit_decay<span class="op">$</span>loo)</a></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1">fit<span class="op">$</span>loo =<span class="st"> </span><span class="kw"><a href="../reference/criterion.html">loo</a></span>(fit)</a>
+<a class="sourceLine" id="cb13-2" title="2">fit_flat<span class="op">$</span>loo =<span class="st"> </span><span class="kw"><a href="../reference/criterion.html">loo</a></span>(fit_flat)</a>
+<a class="sourceLine" id="cb13-3" title="3">fit_decay<span class="op">$</span>loo =<span class="st"> </span><span class="kw"><a href="../reference/criterion.html">loo</a></span>(fit_decay)</a></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit<span class="op">$</span>loo, fit_flat<span class="op">$</span>loo, fit_decay<span class="op">$</span>loo)</a></code></pre></div>
 <pre><code>##        elpd_diff se_diff
 ## model1  0.0       0.0   
-## model3 -6.7       3.1   
-## model2 -9.3       3.8</code></pre>
+## model3 -6.1       3.0   
+## model2 -9.2       3.8</code></pre>
 <p>The change point model seems to be preferred with a ratio of around 1.7 over the decay model and 2.5 over the flat model. Another approach is to look at the model weights:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1">loo_list =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(fit<span class="op">$</span>loo, fit_flat<span class="op">$</span>loo, fit_decay<span class="op">$</span>loo)</a>
-<a class="sourceLine" id="cb15-2" title="2">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_model_weights.html">loo_model_weights</a></span>(loo_list, <span class="dt">method=</span><span class="st">"pseudobma"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">loo_list =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(fit<span class="op">$</span>loo, fit_flat<span class="op">$</span>loo, fit_decay<span class="op">$</span>loo)</a>
+<a class="sourceLine" id="cb16-2" title="2">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_model_weights.html">loo_model_weights</a></span>(loo_list, <span class="dt">method=</span><span class="st">"pseudobma"</span>)</a></code></pre></div>
 <pre><code>## Method: pseudo-BMA+ with Bayesian bootstrap
 ## ------
 ##        weight
-## model1 0.967 
-## model2 0.007 
-## model3 0.026</code></pre>
+## model1 0.958 
+## model2 0.008 
+## model3 0.034</code></pre>
 <p>Again, unsurprisingly, the change point model is preferred and they show the same ranking as implied by <code>loo_compare</code>.</p>
 </div>
 <div id="jags-code" class="section level1">
 <h1 class="hasAnchor">
 <a href="#jags-code" class="anchor"></a>JAGS code</h1>
 <p>Here is the JAGS code for the full model above.</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(fit<span class="op">$</span>jags_code)</a></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(fit<span class="op">$</span>jags_code)</a></code></pre></div>
 <pre><code>## 
 ## model {
 ##   # Priors for population-level effects

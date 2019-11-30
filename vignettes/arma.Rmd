@@ -49,7 +49,7 @@ summary(fit)
 Notice that `sigma` in AR models describe *innovations*, i.e., the part of the residuals that are not explained by the autoregressive coefficients. As always, it is good to assess posteriors and convergence more directly:
 
 ```{r, fig.height=8, fig.width=8}
-plot(fit, "combo")
+plot_pars(fit)
 ```
 
 Sometimes, the trace plot shows that the change point (`cp_1`) is not well identified with this model and data. As discussed in the article on [tips, tricks, and debugging](../articles/tips.html), you could combine a more informative prior with more samples (`mcp(..., iter = 10000)`), if this is a problem.
@@ -131,7 +131,7 @@ summary(fit)
 We see that all parameters are well recovered. However, there is a dangerously low effective sample size for the change point (`cp_1`), indicating a potential problem. We can inspect this further using trace plots and posterior distributions. As is often the case, we see that the change point posterior is not well described by parameterized distribution. In this case, the change point posterior is a bit bimodal with some credence to a change point around 55 too. This is understandable if you look at the data.
 
 ```{r}
-plot(fit, "combo", regex_pars = "cp_1|ar_*")
+plot_pars(fit, regex_pars = "cp_1|ar_*")
 ```
 
 As usual, we can test hypotheses and do model comparison ([read more here](../articles/comparison.html)). For example, what is the evidence that `ar1_2` is more than 0.4 greater than `ar1_1`? Answer: It is quite compelling

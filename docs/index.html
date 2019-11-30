@@ -157,7 +157,7 @@
 <a href="#mcp-regression-with-multiple-change-points" class="anchor"></a>mcp: Regression with Multiple Change Points</h1></div>
 
 <p><code>mcp</code> does regression with one or Multiple Change Points (MCP) between Generalized and hierarchical Linear Segments using Bayesian inference. <code>mcp</code> aims to provide maximum flexibility for analyses with a priori knowledge about the number of change points and the form of the segments in between.</p>
-<p>Change points are also called <strong>switch points</strong>, <strong>break points</strong>, <strong>broken line</strong> regression, <strong>broken stick</strong> regression, <strong>bilinear</strong> regression, <strong>piecewise linear regression</strong>, <strong>local linear regression</strong>, <strong>segmented regression</strong>, and (performance) <strong>discontinuity</strong> models. <code>mcp</code> aims to be be useful for all of them. See how <code>mcp</code> compares to <a href="https://lindeloev.github.io/mcp/articles/packages.html">other R packages</a>.</p>
+<p>Change points are also called <strong>switch points</strong>, <strong>break points</strong>, <strong>broken line</strong> regression, <strong>broken stick</strong> regression, <strong>bilinear</strong> regression, <strong>piecewise linear</strong> regression, <strong>local linear</strong> regression, <strong>segmented</strong> regression, and (performance) <strong>discontinuity</strong> models. <code>mcp</code> aims to be be useful for all of them. See how <code>mcp</code> compares to <a href="https://lindeloev.github.io/mcp/articles/packages.html">other R packages</a>.</p>
 <p>Under the hood, <code>mcp</code> takes a formula-representation of linear segments and turns it into <a href="https://sourceforge.net/projects/mcmc-jags/">JAGS</a> code. <code>mcp</code> leverages the power of <code>tidybayes</code>, <code>bayesplot</code>, <code>coda</code>, and <code>loo</code> to make change point analysis easy and powerful.</p>
 </div>
 <div id="install" class="section level1">
@@ -217,8 +217,8 @@
 <a class="sourceLine" id="cb5-15" title="15">  time_<span class="dv">2</span>  <span class="fl">0.547</span>  <span class="fl">0.407</span>  <span class="fl">0.6961</span> <span class="fl">1.01</span>   <span class="dv">366</span>   <span class="fl">0.1369</span></a>
 <a class="sourceLine" id="cb5-16" title="16">  time_<span class="dv">3</span> <span class="fl">-0.220</span> <span class="fl">-0.393</span> <span class="fl">-0.0443</span> <span class="fl">1.01</span>   <span class="dv">740</span>   <span class="fl">0.0992</span></a></code></pre></div>
 <p><code>rhat</code> is the <a href="https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag">Gelman-Rubin convergence diagnostic</a>, <code>eff</code> is the <a href="https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html">effective sample size</a>, and <code>ts_se</code> is the time-series standard error.</p>
-<p><code><a href="reference/plot.mcpfit.html">plot(fit, "combo")</a></code> can be used to inspect the posteriors and convergence of all parameters. See the documentation of <code><a href="reference/plot.mcpfit.html">plot()</a></code> for many other plotting options. Here, we plot just the (population-level) change points. They often have “strange” posterior distributions, highlighting the need for a computational approach:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"combo"</span>, <span class="dt">regex_pars =</span> <span class="st">"cp_"</span>)</a></code></pre></div>
+<p><code><a href="reference/plot_pars.html">plot_pars(fit)</a></code> can be used to inspect the posteriors and convergence of all parameters. See the documentation of <code><a href="reference/plot_pars.html">plot_pars()</a></code> for many other plotting options. Here, we plot just the (population-level) change points. They often have “strange” posterior distributions, highlighting the need for a computational approach:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="reference/plot_pars.html">plot_pars</a></span>(fit, <span class="dt">regex_pars =</span> <span class="st">"cp_"</span>)</a></code></pre></div>
 <p><img src="https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo_combo.png"></p>
 </div>
 <div id="tests-and-model-comparison" class="section level2">
@@ -256,7 +256,7 @@ model2 -7.8       4.7   </code></pre>
 <li>Parameter names are <code>int_i</code> (intercepts), <code>cp_i</code> (change points), <code>x_i</code> (slopes), <code>phi_i</code> (autocorrelation), and <code>sigma_*</code> (variance).</li>
 <li>The change point model is basically an <code>ifelse</code> model.</li>
 <li>Use <code>rel()</code> to specify that parameters are relative to those corresponding in the previous segments.</li>
-<li>Generate data using <code>fit$func_y</code>.</li>
+<li>Generate data using <code>fit$simulate()</code>.</li>
 </ul>
 <p><a href="https://lindeloev.github.io/mcp/articles/priors.html">Using priors</a>:</p>
 <ul>
@@ -269,9 +269,9 @@ model2 -7.8       4.7   </code></pre>
 </ul>
 <p><a href="https://lindeloev.github.io/mcp/articles/varying.html">Varying change points</a>:</p>
 <ul>
-<li>Simulate varying change points using <code>fit$func_y()</code>.</li>
+<li>Simulate varying change points using <code>fit$simulate()</code>.</li>
 <li>Get posteriors using <code><a href="reference/ranef.html">ranef(fit)</a></code>.</li>
-<li>Plot using <code><a href="reference/plot.mcpfit.html">plot(fit, facet_by="my_group")</a></code> and <code><a href="reference/plot.mcpfit.html">plot(fit, "dens_overlay", pars = "varying", ncol = 3)</a></code>.</li>
+<li>Plot using <code><a href="reference/plot.mcpfit.html">plot(fit, facet_by="my_group")</a></code> and <code><a href="reference/plot_pars.html">plot_pars(fit, pars = "varying", type = "dens_overlay", ncol = 3)</a></code>.</li>
 <li>The default priors restrict varying change points to lie between the two adjacent change points.</li>
 </ul>
 <p><code>mcp</code> currently supports the following GLM:</p>
@@ -336,7 +336,7 @@ model2 -7.8       4.7   </code></pre>
 <a class="sourceLine" id="cb13-5" title="5">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, ex_varying)</a>
 <a class="sourceLine" id="cb13-6" title="6"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">facet_by =</span> <span class="st">"id"</span>)</a></code></pre></div>
 <p><img src="https://github.com/lindeloev/mcp/raw/master/man/figures/ex_varying.png"></p>
-<p>Summarise the individual change points using <code><a href="reference/ranef.html">ranef()</a></code> or plot them using <code><a href="reference/plot.mcpfit.html">plot(fit, "combo", "varying")</a></code>:</p>
+<p>Summarise the varying change points using <code><a href="reference/ranef.html">ranef()</a></code> or plot them using <code><a href="reference/plot_pars.html">plot_pars(fit, "varying")</a></code>:</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1"><span class="kw"><a href="reference/ranef.html">ranef</a></span>(fit)</a></code></pre></div>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1">            name       mean      lower      upper     rhat  eff     ts_se</a>
 <a class="sourceLine" id="cb15-2" title="2"><span class="dv">1</span> cp_<span class="dv">1</span>_id[Benny] <span class="fl">-18.939028</span> <span class="fl">-21.662758</span> <span class="fl">-16.178849</span> <span class="fl">1.000739</span> <span class="dv">2539</span>  <span class="fl">4.801090</span></a>
