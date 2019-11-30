@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Plot fits with data — plot.mcpfit • mcp</title>
+<title>Plot mcpfit objects with <code>bayesplot</code> — plot_pars • mcp</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -50,8 +50,9 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Plot fits with data — plot.mcpfit" />
-<meta property="og:description" content="Plot prior or posterior draws of segments on top of data." />
+<meta property="og:title" content="Plot mcpfit objects with <code>bayesplot</code> — plot_pars" />
+<meta property="og:description" content="Plot many types of plots of parameter estimates. See examples for typical use
+cases." />
 <meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -200,74 +201,65 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Plot fits with data</h1>
+    <h1>Plot mcpfit objects with <code>bayesplot</code></h1>
     <small class="dont-index">Source: <a href='https://github.com/lindeloev/mcp/blob/master/R/plot.R'><code>R/plot.R</code></a></small>
-    <div class="hidden name"><code>plot.mcpfit.Rd</code></div>
+    <div class="hidden name"><code>plot_pars.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Plot prior or posterior draws of segments on top of data.</p>
+    <p>Plot many types of plots of parameter estimates. See examples for typical use
+cases.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plot.mcpfit</span>(
-  <span class='no'>x</span>,
-  <span class='kw'>facet_by</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>25</span>,
-  <span class='kw'>quantiles</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>quantiles_type</span> <span class='kw'>=</span> <span class='st'>"fitted"</span>,
-  <span class='kw'>rate</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='no'>...</span>
+    <pre class="usage"><span class='fu'>plot_pars</span>(
+  <span class='no'>fit</span>,
+  <span class='kw'>pars</span> <span class='kw'>=</span> <span class='st'>"population"</span>,
+  <span class='kw'>regex_pars</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span>(<span class='fl'>0</span>),
+  <span class='kw'>type</span> <span class='kw'>=</span> <span class='st'>"combo"</span>,
+  <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>x</th>
+      <th>fit</th>
       <td><p>An mcpfit object</p></td>
     </tr>
     <tr>
-      <th>facet_by</th>
-      <td><p>String. Name of a varying group.
-<code>facet_by</code> only applies for <code>type = "segments"</code></p></td>
-    </tr>
-    <tr>
-      <th>lines</th>
-      <td><p>Positive integer or <code>FALSE</code>. Number of lines (posterior
-draws) to use when <code>type = "segments"</code>. FALSE (or <code>lines = 0</code>)
-plots no lines. Note that lines always plot fitted values. For prediction
-intervals, see <code>quantiles_type</code> argument.</p></td>
-    </tr>
-    <tr>
-      <th>quantiles</th>
-      <td><p>Whether to plot quantiles.</p><ul>
-<li><p><strong>TRUE:</strong> Add 2.5% and 97.5% quantiles. Corresponds to
-<code>quantiles = c(0.025, 0.975)</code>.</p></li>
-<li><p><strong>FALSE (default):</strong> No quantiles</p></li>
-<li><p>A vector of quantiles. For example, <code>quantiles = 0.5</code>
-plots the median and <code>quantiles = c(0.2, 0.8)</code> plots the 20% and 80%
-quantiles.</p></li>
+      <th>pars</th>
+      <td><p>Character vector. One of:</p><ul>
+<li><p>Vector of parameter names.</p></li>
+<li><p><em>"population" (default):</em> plots all population parameters.</p></li>
+<li><p><em>"varying":</em> plots all varying effects. To plot a particular varying
+effect, use <code>regex_pars = "^name"</code>.</p></li>
 </ul></td>
     </tr>
     <tr>
-      <th>quantiles_type</th>
-      <td><p>One of 'fitted' or 'predict. Only applies if <code>quantile = TRUE</code>.</p></td>
+      <th>regex_pars</th>
+      <td><p>Vector of regular expressions. This will typically just be
+the beginning of the parameter name(s), i.e., "^cp_" plots all change
+points, "^my_varying" plots all levels of a particular varying effect, and
+"^cp_|^my_varying" plots both.</p></td>
     </tr>
     <tr>
-      <th>rate</th>
-      <td><p>Boolean. For binomial models, plot on raw data (<code>rate = FALSE</code>) or
-response divided by number of trials (<code>rate = TRUE</code>). If FALSE, linear
-interpolation on trial number is used to infer trials at a particular x.
-<code>rate</code> only applies for <code>type = "segments"</code></p></td>
+      <th>type</th>
+      <td><p>String or vector of strings. Calls <code>bayesplot::mcmc_&gt;&gt;type&lt;&lt;()</code>.
+Common calls are "combo", "trace", and "dens_overlay". Current options include
+'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
+'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
+'trace_highlight', and 'violin".</p></td>
+    </tr>
+    <tr>
+      <th>ncol</th>
+      <td><p>Number of columns in plot. This is useful when you have many
+parameters and only one plot <code>type</code>.
+<code>ncol</code> only when <code>type != "segments"</code></p></td>
     </tr>
     <tr>
       <th>prior</th>
       <td><p>TRUE/FALSE. Plot using prior samples? Useful for <code><a href='mcp.html'>mcp(..., sample = "both")</a></code></p></td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td><p>Currently ignored.</p></td>
     </tr>
     </table>
 
@@ -276,18 +268,29 @@ interpolation on trial number is used to infer trials at a particular x.
     <p>A <span class="pkg">ggplot2</span> object.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>For <code>type = "segments"</code>, it uses <code>fit$simulate</code> with <code>draws</code>
-posterior samples. These represent the joint posterior distribution of
-parameter values.</p>
+    <p>For other <code>type</code>, it calls <code>bayesplot::mcmc_type()</code>. Use these
+directly on <code>fit$mcmc_post</code> or <code>fit$mcmc_prior</code> if you want finer
+control of plotting, e.g., <code><a href='https://mc-stan.org/bayesplot/reference/MCMC-distributions.html'>bayesplot::mcmc_dens(fit$mcmc_post)</a></code>. There
+are also a number of useful plots in the <span class="pkg">coda</span> package, i.e.,
+<code><a href='https://rdrr.io/pkg/coda/man/gelman.plot.html'>coda::gelman.plot(fit$mcmc_post)</a></code> and <code><a href='https://rdrr.io/pkg/coda/man/crosscorr.plot.html'>coda::crosscorr.plot(fit$mcmc_post)</a></code></p>
+<p>In any case, if you see a few erratic lines or parameter estimates, this is
+a sign that you may want to increase argument 'adapt' and 'iter' in <code><a href='mcp.html'>mcp</a></code>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'>plot</span>(<span class='no'>fit</span>)
-<span class='fu'>plot</span>(<span class='no'>fit</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>50</span>, <span class='kw'>rate</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)  <span class='co'># more lines, for binomial.</span>
-<span class='fu'>plot</span>(<span class='no'>fit</span>, <span class='kw'>facet_by</span> <span class='kw'>=</span> <span class='st'>"my_varying"</span>)  <span class='co'># varying effects</span>
+<span class='fu'>plot_pars</span>(<span class='no'>fit</span>)
+<span class='fu'>plot_pars</span>(<span class='no'>fit</span>, <span class='kw'>pars</span> <span class='kw'>=</span> <span class='st'>"varying"</span>, <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='fl'>3</span>)  <span class='co'># plot all varying effects</span>
+<span class='fu'>plot_pars</span>(<span class='no'>fit</span>, <span class='kw'>regex_pars</span> <span class='kw'>=</span> <span class='st'>"my_varying"</span>, <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='fl'>3</span>)  <span class='co'># plot all levels of a particular varying</span>
 
-<span class='co'># Customize one-column plots using regular ggplot2</span>
-<span class='fu'>plot</span>(<span class='no'>fit</span>) + <span class='fu'>theme_bw</span>(<span class='fl'>15</span>) + <span class='fu'>ggtitle</span>(<span class='st'>"Great plot!"</span>)
+<span class='co'># More options for parameter estimates</span>
+<span class='fu'>plot_pars</span>(<span class='no'>fit</span>, <span class='kw'>pars</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"var1"</span>, <span class='st'>"var2"</span>, <span class='st'>"var3"</span>), <span class='kw'>regex_pars</span> <span class='kw'>=</span> <span class='st'>"^my_varying"</span>)
+<span class='fu'>plot_pars</span>(<span class='no'>fit</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"areas"</span>, <span class='st'>"intervals"</span>))
+
+<span class='co'># Some plots only take pairs</span>
+<span class='fu'>plot_pars</span>(<span class='no'>fit</span>, <span class='kw'>pars</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"var1"</span>, <span class='st'>"var2"</span>))
+
+<span class='co'># Customize two-column plots using the patchwork package.</span>
+<span class='fu'>plot_pars</span>(<span class='no'>fit</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"trace"</span>, <span class='st'>"dens_overlay"</span>)) * <span class='fu'>theme_bw</span>(<span class='fl'>10</span>)
 }</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -301,6 +304,7 @@ parameter values.</p>
 
     <h2>Author</h2>
     <p>Jonas Kristoffer Lindeløv <a href='mailto:jonas@lindeloev.dk'>jonas@lindeloev.dk</a></p>
+<p>Jonas Kristoffer Lindeløv <a href='mailto:jonas@lindeloev.dk'>jonas@lindeloev.dk</a></p>
   </div>
 </div>
 

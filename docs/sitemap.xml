@@ -115,10 +115,7 @@
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/plot.mcpfit.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/plot_bayesplot.html</loc>
-  </url>
-  <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/plot_segments.html</loc>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/plot_pars.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/print.mcpfit.html</loc>

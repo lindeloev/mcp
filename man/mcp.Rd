@@ -144,7 +144,7 @@ summary(fit)
 
 # Visual inspection of the results
 plot(fit)
-plot(fit, "combo")
+plot_pars(fit)
 
 # Test a hypothesis
 hypothesis(fit, "cp_1 > 10")

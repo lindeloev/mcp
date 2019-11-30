@@ -223,16 +223,16 @@
 <pre><code>## # A tibble: 100 x 3
 ##     year     N     y
 ##    &lt;int&gt; &lt;int&gt; &lt;int&gt;
-##  1  1901    15    13
-##  2  1902    11    10
-##  3  1903    19    17
-##  4  1904    16    15
-##  5  1905    17    16
-##  6  1906    19    16
-##  7  1907    15    14
-##  8  1908    14    13
-##  9  1909    13    13
-## 10  1910    19    17
+##  1  1901    14    11
+##  2  1902    13    11
+##  3  1903    18    16
+##  4  1904    14    11
+##  5  1905    16    14
+##  6  1906    10    10
+##  7  1907    11    11
+##  8  1908    11    11
+##  9  1909    20    14
+## 10  1910    15    15
 ## # ... with 90 more rows</code></pre>
 <p>Visually:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(data<span class="op">$</span>year, data<span class="op">$</span>y)</a></code></pre></div>
@@ -253,13 +253,13 @@
 ##   3: y | trials(N) ~ 1 ~ 1 + year
 ## 
 ## Population-level parameters:
-##    name      mean     lower    upper Rhat n.eff    ts_se
-##    cp_1 1919.5935 1915.7397 1923.181 1.00   434 7.82e+01
-##    cp_2 1964.4976 1964.0156 1964.965 1.00  4753 1.68e-01
-##   int_1    2.2730    1.8483    2.697 1.00   603 7.00e-01
-##   int_3    0.0532   -0.3095    0.405 1.00  1041 2.89e-01
-##  year_2   -0.1583   -0.1807   -0.137 1.00   835 1.37e-03
-##  year_3    0.0478    0.0298    0.066 1.01  1014 7.74e-04</code></pre>
+##    name      mean     lower     upper Rhat n.eff    ts_se
+##    cp_1 1922.4662 1919.2861 1925.4027 1.00   833 2.81e+01
+##    cp_2 1964.5029 1964.0174 1964.9631 1.00  5700 1.38e-01
+##   int_1    1.8416    1.5301    2.1437 1.00  1219 1.76e-01
+##   int_3    0.0349   -0.2975    0.3802 1.01  1035 2.61e-01
+##  year_2   -0.1437   -0.1632   -0.1240 1.00  1329 7.12e-04
+##  year_3    0.0454    0.0268    0.0627 1.01  1045 7.23e-04</code></pre>
 <p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have <a href="../docs/articles/varying.html">varying effects</a>, use <code><a href="../reference/ranef.html">ranef(fit)</a></code> to see them.</p>
 <p>Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
@@ -275,10 +275,10 @@
 <h1 class="hasAnchor">
 <a href="#model-diagnostics-and-sampling-options" class="anchor"></a>Model diagnostics and sampling options</h1>
 <p>Already in the default <code>plot</code> as used above, it will be obvious if there was poor convergence. A more direct assessment is to look at the posterior distributions and trace plots:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"combo"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit)</a></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-10-1.png" width="576"></p>
 <p>Convergence is perfect here as evidenced by the overlapping trace plots that look like fat caterpillars (Bayesians love fat caterpillars). Notice that the posterior distribution of change points can be quite non-normal and sometimes even bimodal. Therefore, one should be careful not to interpret the HDI as if it was normal.</p>
-<p><code><a href="../reference/plot.mcpfit.html">plot()</a></code> can do a lot more than this, so check out it’s documentation.</p>
+<p><code><a href="../reference/plot.mcpfit.html">plot()</a></code> and <code><a href="../reference/plot_pars.html">plot_pars()</a></code> can do a lot more than this, so check out their documentation.</p>
 </div>
 <div id="priors-for-binomial-models" class="section level1">
 <h1 class="hasAnchor">
