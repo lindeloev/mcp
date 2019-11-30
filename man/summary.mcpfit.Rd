@@ -25,7 +25,7 @@ convergence diagnostic which is often taken to be acceptable if < 1.1. It
 is computed using \code{\link[coda]{gelman.diag}}.
 \code{n.eff} is the effective sample size computed using
 \code{\link[coda]{effectiveSize}}. Low effective sample sizes are
-also obvious as poor mixing in trace plots (see \code{plot(fit, "combo")}).
+also obvious as poor mixing in trace plots (see \code{plot_pars(fit)}).
 \code{ts_err} is the time-series error, taking autoregressive correlation
 into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
 }

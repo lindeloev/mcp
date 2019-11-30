@@ -30,7 +30,7 @@ fit_demo = mcp(segments_demo, data = ex_demo)  # dataset included in mcp
 theme_it(plot(fit_demo), "")
 save_it("ex_demo.png")
 
-plot(fit_demo, "combo", regex_pars = "cp_")
+plot_pars(fit_demo, regex_pars = "cp_")
 save_it("ex_demo_combo.png")
 
 # LOO

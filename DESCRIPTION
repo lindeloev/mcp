@@ -47,4 +47,3 @@ Suggests:
 	boot,
 	covr,
 	gridExtra
-VignetteBuilder: knitr
