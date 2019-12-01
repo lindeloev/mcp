@@ -5,7 +5,7 @@ matrix:
   include:
     # oldrel not tested. linux fails installing plyr. osx fails installing jags. (Dec, 2019)
     - os: linux
-    - r: oldrel
+      r: oldrel
     - os: linux
       r: release
       r_github_packages: r-lib/covr
