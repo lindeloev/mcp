@@ -3,14 +3,16 @@ language: r
 # Which OSes and R releases to test on
 matrix:
   include:
-    # Patchwork fails to install on oldrel, so this is not tested atm.
-    # Only do code coverage on this one (fails on os:osx + r:devel)
+    - os: linux
+      r: oldrel
     - os: linux
       r: release
       r_github_packages: r-lib/covr
       env: R_CODECOV=cover-this-build-only
     - os: linux
       r: devel
+    - os: osx
+      r: oldrel
     - os: osx
       r: release
     # Fails because https://cloud.r-project.org/bin/macosx/el-capitan/contrib/4.0/PACKAGES does not exist
