@@ -5,8 +5,6 @@ matrix:
   include:
     # oldrel not tested. linux fails installing plyr. osx fails installing jags. (Dec, 2019)
     - os: linux
-      r: oldrel
-    - os: linux
       r: release
       r_github_packages: r-lib/covr
       env: R_CODECOV=cover-this-build-only
@@ -26,7 +24,6 @@ r_binary_packages:
  - stringi
  - curl
  - openssl
- - plyr  # for oldrel; attempt to fix fail
 
 r_build_args: "--no-build-vignettes"
 r_check_args: "--no-build-vignettes --as-cran"
