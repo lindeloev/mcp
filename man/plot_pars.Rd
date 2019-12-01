@@ -70,9 +70,6 @@ plot_pars(fit, type = c("areas", "intervals"))
 
 # Some plots only take pairs
 plot_pars(fit, pars = c("var1", "var2"))
-
-# Customize two-column plots using the patchwork package.
-plot_pars(fit, type = c("trace", "dens_overlay")) * theme_bw(10)
 }
 }
 \author{

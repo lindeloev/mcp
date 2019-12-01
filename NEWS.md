@@ -12,6 +12,7 @@ The API and internal structure should be stable now.
 ## Other changes:
 
  * `fit$func_y` has been renamed to `fit$simulate`.
+ * `plot()` now only visualizes the total fit while `plot_pars()` only visualize individual parameters. These functions were mixed in `plot()` before.
  * The argument `update` has been discarded from `mcp()` (it's all on `adapt` now) and `inits` has been added.
  * Many internal changes to prepare for upcoming features. The biggest internal change is that `rjags` and `future` replace the `dclone` package. This gives faster and cleaner installations, is more future-proof, and avoids the need for a temporary file on the disk when sampling in parallel.
  * Updated documentation and website.
