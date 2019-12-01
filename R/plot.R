@@ -250,11 +250,6 @@ plot.mcpfit = function(x,
 #'
 #' @aliases plot_pars
 #' @param fit An mcpfit object
-#' @param type String or vector of strings. Calls `bayesplot::mcmc_>>type<<()`.
-#'   Common calls are "combo", "trace", and "dens_overlay". Current options include
-#'   'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
-#'   'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
-#'   'trace_highlight', and 'violin".
 #' @param pars Character vector. One of:
 #'   * Vector of parameter names.
 #'   * \emph{"population" (default):} plots all population parameters.
@@ -264,6 +259,11 @@ plot.mcpfit = function(x,
 #'   the beginning of the parameter name(s), i.e., "^cp_" plots all change
 #'   points, "^my_varying" plots all levels of a particular varying effect, and
 #'   "^cp_|^my_varying" plots both.
+#' @param type String or vector of strings. Calls `bayesplot::mcmc_>>type<<()`.
+#'   Common calls are "combo", "trace", and "dens_overlay". Current options include
+#'   'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
+#'   'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
+#'   'trace_highlight', and 'violin".
 #' @param ncol Number of columns in plot. This is useful when you have many
 #'   parameters and only one plot `type`.
 #'   `ncol` only when `type != "segments"`
@@ -295,10 +295,12 @@ plot.mcpfit = function(x,
 #'
 #' # Some plots only take pairs
 #' plot_pars(fit, pars = c("var1", "var2"))
-#'
-#' # Customize two-column plots using the patchwork package.
-#' plot_pars(fit, type = c("trace", "dens_overlay")) * theme_bw(10)
 #' }
+
+# TO DO: Add this to examples when patchwork works:
+# # Customize two-column plots using the patchwork package.
+# plot_pars(fit, type = c("trace", "dens_overlay")) * theme_bw(10)
+
 plot_pars = function(fit,
                      pars = "population",
                      regex_pars = character(0),
@@ -321,6 +323,9 @@ plot_pars = function(fit,
 
   if (any(c("hex", "scatter") %in% type) & (length(pars) != 2 | length(regex_pars) > 0))
     stop("`type` = 'hex' or 'scatter' takes exactly two parameters which must be provided via the `pars` argument")
+
+  if ("combo" %in% type & length(type) > 1)
+    stop("'combo' type cannot be combined with other types. Replace 'combo' with the types you want combo\'ed")
 
   check_integer(ncol, name = "ncol", lower = 1)
 
@@ -345,7 +350,7 @@ plot_pars = function(fit,
   }
 
   # Handles combo. Returns a customizable ggplot which "combo" does not.
-  if (type == "combo")
+  if ("combo" %in% type)
     type = c("dens_overlay", "trace")
 
   # TO DO: a lot of eval(parse()) here. Is there a more built-in method?
@@ -363,9 +368,12 @@ plot_pars = function(fit,
     return_plot = return_plot + ggplot2::theme(legend.position = "none")  # remove legend
     return(return_plot)
   } else {
-    command = paste0(paste0("plot_", type), collapse = " + ")
-    return_plot = eval(parse(text = command))
-    return_plot = return_plot * ggplot2::theme(legend.position = "none")  # remove legend
+    # # Use patchwork
+    # command = paste0(paste0("plot_", type), collapse = " + ")
+    # return_plot = eval(parse(text = command))
+    # return_plot = return_plot * ggplot2::theme(legend.position = "none")  # remove legend
+    return_plot = bayesplot::mcmc_combo(samples, combo = type, gg_theme = ggplot2::theme(legend.position = "none"))
+
     return(return_plot)
   }
 }

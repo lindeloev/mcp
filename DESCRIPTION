@@ -34,12 +34,10 @@ Imports:
 	tibble (>= 2.1.3),
 	stringr (>= 1.4.0),
 	ggplot2 (>= 3.2.1),
-	patchwork (>= 0.0.1),
+	patchwork (>= 1.0.0),
 	methods,
 	stats,
 	rlang (>= 0.4.1)
-Remotes: 
-    thomasp85/patchwork
 Suggests: 
     testthat (>= 2.1.0),
 	knitr , 
