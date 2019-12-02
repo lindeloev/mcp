@@ -21,3 +21,4 @@ X-codings and verbose commenting of one formula}
 You will need to replace PAR_X for whatever your x-axis observation column
 is called. In JAGS typically \code{x[i_]}. In R just \code{x}.
 }
+\keyword{internal}
