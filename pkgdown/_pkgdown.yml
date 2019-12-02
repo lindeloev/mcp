@@ -23,6 +23,7 @@ reference:
     contents: 
       - mcp
       - plot.mcpfit
+      - plot_pars
       - summary.mcpfit
       - ranef
       - fixef

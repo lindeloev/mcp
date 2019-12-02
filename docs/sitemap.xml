@@ -10,7 +10,13 @@
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/check_integer.html</loc>
   </url>
   <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/check_terms_in_data.html</loc>
+  </url>
+  <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/criterion.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/cumpaste.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/expandDoubleVerts.html</loc>
@@ -47,6 +53,9 @@
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/fixef.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/format_code.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_all_formulas.html</loc>
@@ -94,6 +103,9 @@
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_summary.html</loc>
   </url>
   <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_term_content.html</loc>
+  </url>
+  <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/hypothesis.html</loc>
   </url>
   <url>
@@ -104,6 +116,9 @@
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/logit.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/mcp-package.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/mcp.html</loc>
@@ -130,9 +145,6 @@
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/recover_levels.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/release_questions.html</loc>
-  </url>
-  <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/run_jags.html</loc>
   </url>
   <url>
@@ -142,7 +154,31 @@
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/summary.mcpfit.html</loc>
   </url>
   <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_arma.html</loc>
+  </url>
+  <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_cp.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_int.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_rhs.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_slope.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_slope_term.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_tildes.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_varying_term.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_y.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/arma.html</loc>

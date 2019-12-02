@@ -30,3 +30,4 @@ prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
 Returns the relevant data columns as a list and add elements with unique
 varying group levels.
 }
+\keyword{internal}

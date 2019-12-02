@@ -19,3 +19,4 @@ A float
 \description{
 Used in \link{hypothesis}
 }
+\keyword{internal}

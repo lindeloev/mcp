@@ -18,3 +18,4 @@ Only default link functions are currently supported.}
 \description{
 Get JAGS code for residuals for each AR-order
 }
+\keyword{internal}
