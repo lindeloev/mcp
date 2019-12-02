@@ -359,24 +359,25 @@ plot_pars = function(fit,
   for (this_type in type) {
     this_facet = ifelse(this_type %in% takes_facet, paste0(", facet_args = list(ncol = ", ncol, ")"), "")
     command = paste0("plot_", this_type, " = bayesplot::mcmc_", this_type, "(samples, pars = pars, regex_pars = regex_pars", this_facet, ")")
-    eval(parse(text = command))
+    eval(parse(text = command)) + ggplot2::theme(strip.placement = NULL)
+
   }
 
   # Select which to plot
   if (length(type) == 1) {
     return_plot = eval(parse(text = paste0("plot_", type)))
-    return_plot = return_plot + ggplot2::theme(legend.position = "none")  # remove legend
-    return(return_plot)
+    return_plot = return_plot
   } else {
     # Use patchwork
     command = paste0(paste0("plot_", type), collapse = " + ")
-    return_plot = eval(parse(text = command)) & ggplot2::theme(
-      strip.placement = NULL,  # fixes bug: https://github.com/thomasp85/patchwork/issues/132
-      legend.position = "none"  # no legend on chains. Takes up too much space
-    )
-
-    return(return_plot)
+    return_plot = eval(parse(text = command))
   }
+
+  # Return
+  return_plot & ggplot2::theme(
+    strip.placement = NULL,  # fixes bug: https://github.com/thomasp85/patchwork/issues/132
+    legend.position = "none"  # no legend on chains. Takes up too much space
+  )
 }
 
 
