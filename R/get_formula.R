@@ -3,6 +3,8 @@
 #' Currently used to differentiate between the JAGS model (use all) and the
 #' fit$simulate model (do not include arma).
 #'
+#' @aliases get_all_formulas
+#' @keywords internal
 #' @inheritParams get_formula_str
 #' @inheritParams mcp
 #' @param ytypes A character vector of ytypes to including in model building
@@ -42,6 +44,7 @@ get_all_formulas = function(ST, prior, par_x, ytypes = c("ct", "sigma", "arma"))
 #' is called. In JAGS typically `x[i_]`. In R just `x`.
 #'
 #' @aliases get_formula_str
+#' @keywords internal
 #' @inheritParams mcp
 #' @param ST Tibble. Returned by `get_segment_table`.
 #' @param ytype One of "ct" (central tendency), "sigma", "ar1" (or another order), or "ma1" (or another order)
@@ -198,6 +201,7 @@ get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
 #' Turn formula_str into a proper R function
 #'
 #' @aliases get_simulate
+#' @keywords internal
 #' @inheritParams mcp
 #' @param formula_str string. Returned by `get_formula`.
 #' @param par_trials String. For binomial models: name of trials column.

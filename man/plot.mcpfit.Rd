@@ -5,7 +5,7 @@
 \alias{plot}
 \title{Plot fits with data}
 \usage{
-plot.mcpfit(
+\method{plot}{mcpfit}(
   x,
   facet_by = NULL,
   lines = 25,

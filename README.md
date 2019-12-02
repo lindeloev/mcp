@@ -169,7 +169,7 @@ Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and 
  * `sigma()` and `ar()` apply to varying change points too.
 
 [Tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/debug.html)
- * Speed up fitting using `mcp(..., cores = 3)` / `options(mcp_cores = 3)`, and/or `mcp(..., adapt = 500, update = 500)`.
+ * Speed up fitting using `mcp(..., cores = 3)` / `options(mcp_cores = 3)`, and/or `mcp(..., adapt = 500)`.
  * Help convergence along using `mcp(..., inits = list(cp_1 = 20, int_2 = -3))`.
  * Most errors will be caused by circularly defined priors.
 
@@ -359,7 +359,7 @@ prior = list(
   int_2 = "dnorm(0, 20)",
   cp_1 = "dunif(20, 50)"  # has to occur in this interval
 )
-fit = mcp(segments, ex_rel_prior, prior)
+fit = mcp(segments, ex_rel_prior, prior, iter = 10000)
 plot(fit)
 ```
 
@@ -372,22 +372,22 @@ summary(fit)
 
 ```r
 Family: gaussian(link = 'identity')
-Iterations: 9000 from 3 chains.
+Iterations: 30000 from 3 chains.
 Segments:
   1: y ~ 1 + x
   2: y ~ 1 ~ rel(1) + rel(x)
   3: y ~ rel(1) ~ 0 + x
 
 Population-level parameters:
-    name  mean  lower upper Rhat n.eff    ts_se
-    cp_1 25.65  22.66 30.71 1.05    64   566.79
-    cp_2 48.68  42.77 54.13 1.01   158   435.56
-   int_1 10.00  10.00 10.00  NaN     0     0.00
-   int_2  9.05 -14.75 25.64 1.08    52 17563.26
- sigma_1 11.01   9.52 12.69 1.00  2620     1.83
-     x_1  1.56   1.22  1.88 1.11    49     4.60
-     x_2 -3.29  -3.67 -2.90 1.10   118     2.43
-     x_3  1.56   1.22  1.88 1.11    49     4.60
+    name  mean  lower upper Rhat n.eff   ts_se
+    cp_1 23.26  20.00 26.11 1.00   308  256.74
+    cp_2 51.85  46.89 56.44 1.00   485  316.37
+   int_1 10.00  10.00 10.00  NaN     0    0.00
+   int_2 -7.53 -21.19  8.52 1.00   256 7346.30
+ sigma_1  9.68   8.32 11.07 1.00  7840    1.24
+     x_1  1.59   1.28  1.86 1.01   151    4.10
+     x_2 -3.29  -3.59 -2.98 1.02   299    1.79
+     x_3  1.59   1.28  1.86 1.01   151    4.10
 ```
 
 

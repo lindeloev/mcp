@@ -9,8 +9,9 @@ unpack_cp(form_cp, i)
 \arguments{
 \item{form_cp}{Segment formula as string.}
 
-\item{i}{Positive integer. Segment number.}
+\item{i}{The segment number (integer)}
 }
 \description{
 Takes a cp formula (as a string) and returns its properties
 }
+\keyword{internal}

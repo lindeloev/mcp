@@ -92,7 +92,7 @@ save_it("ex_binomial.png")
 segments_rel = list(
   y ~ 1 + x,
   ~ rel(1) + rel(x),
-  rel(1) ~ 0
+  rel(1) ~ 0 + x
 )
 prior_rel = list(
   int_1 = 10,  # fixed value
@@ -101,7 +101,7 @@ prior_rel = list(
   cp_1 = "dunif(20, 50)"  # has to occur in this interval
 )
 
-fit_rel = mcp(segments_rel, ex_rel_prior, prior_rel)
+fit_rel = mcp(segments_rel, ex_rel_prior, prior_rel, iter = 10000)
 theme_it(plot(fit_rel), "rel() and prior")
 save_it("ex_fix_rel.png")
 

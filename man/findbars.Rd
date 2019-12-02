@@ -50,5 +50,4 @@ Other utilities:
 From package \code{lme4}.
 }
 \concept{utilities}
-\keyword{models}
-\keyword{utilities}
+\keyword{internal}

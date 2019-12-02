@@ -3,8 +3,7 @@ language: r
 # Which OSes and R releases to test on
 matrix:
   include:
-    # Patchwork fails to install on oldrel, so this is not tested atm.
-    # Only do code coverage on this one (fails on os:osx + r:devel)
+    # oldrel not tested. linux fails installing plyr. osx fails installing jags. (Dec, 2019)
     - os: linux
       r: release
       r_github_packages: r-lib/covr

@@ -25,5 +25,4 @@ Other utilities:
 \code{\link{nobars}()}
 }
 \concept{utilities}
-\keyword{models}
-\keyword{utilities}
+\keyword{internal}

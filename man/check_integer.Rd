@@ -16,3 +16,4 @@ check_integer(x, name, lower = -Inf)
 \description{
 The expected behavior of is.integer, with informative error messages.
 }
+\keyword{internal}

@@ -245,6 +245,7 @@ hypothesis = function(fit, hypotheses, width = 0.95) {
 #' Used in \link{hypothesis}
 #'
 #' @aliases get_density
+#' @keywords internal
 #' @param samples An mcmc.list
 #' @param LHS Expression to compute posterior
 #' @param value What value to evaluate the density at

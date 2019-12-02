@@ -21,7 +21,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="Binomial change point analysis with mcp">
 <meta property="og:description" content="">
-<meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png">
+<meta property="og:image" content="https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/logo.png">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -155,7 +155,7 @@
       <h1>Binomial change point analysis with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-11-29</h4>
+            <h4 class="date">2019-12-02</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/binomial.Rmd"><code>vignettes/binomial.Rmd</code></a></small>
       <div class="hidden name"><code>binomial.Rmd</code></div>
@@ -223,16 +223,16 @@
 <pre><code>## # A tibble: 100 x 3
 ##     year     N     y
 ##    &lt;int&gt; &lt;int&gt; &lt;int&gt;
-##  1  1901    14    11
-##  2  1902    13    11
-##  3  1903    18    16
-##  4  1904    14    11
-##  5  1905    16    14
-##  6  1906    10    10
-##  7  1907    11    11
-##  8  1908    11    11
-##  9  1909    20    14
-## 10  1910    15    15
+##  1  1901    20    19
+##  2  1902    10     9
+##  3  1903    12    12
+##  4  1904    16    13
+##  5  1905    18    16
+##  6  1906    12    11
+##  7  1907    17    13
+##  8  1908    10     9
+##  9  1909    12    11
+## 10  1910    16    15
 ## # ... with 90 more rows</code></pre>
 <p>Visually:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(data<span class="op">$</span>year, data<span class="op">$</span>y)</a></code></pre></div>
@@ -254,12 +254,12 @@
 ## 
 ## Population-level parameters:
 ##    name      mean     lower     upper Rhat n.eff    ts_se
-##    cp_1 1922.4662 1919.2861 1925.4027 1.00   833 2.81e+01
-##    cp_2 1964.5029 1964.0174 1964.9631 1.00  5700 1.38e-01
-##   int_1    1.8416    1.5301    2.1437 1.00  1219 1.76e-01
-##   int_3    0.0349   -0.2975    0.3802 1.01  1035 2.61e-01
-##  year_2   -0.1437   -0.1632   -0.1240 1.00  1329 7.12e-04
-##  year_3    0.0454    0.0268    0.0627 1.01  1045 7.23e-04</code></pre>
+##    cp_1 1922.3880 1919.1711 1925.2779 1.01   648 3.58e+01
+##    cp_2 1964.4976 1964.0032 1964.9523 1.00  5651 1.38e-01
+##   int_1    2.1567    1.8050    2.5089 1.00  1059 2.70e-01
+##   int_3    0.1447   -0.2225    0.4883 1.00   890 3.24e-01
+##  year_2   -0.1653   -0.1883   -0.1427 1.01   958 1.24e-03
+##  year_3    0.0459    0.0276    0.0635 1.00   906 8.68e-04</code></pre>
 <p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have <a href="../docs/articles/varying.html">varying effects</a>, use <code><a href="../reference/ranef.html">ranef(fit)</a></code> to see them.</p>
 <p>Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
