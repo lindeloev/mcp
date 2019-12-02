@@ -16,3 +16,4 @@ integer
 If several names are provided (vector), it returns the maximum. If \code{pars_arma}
 is an empty string, it returns \code{0}.
 }
+\keyword{internal}

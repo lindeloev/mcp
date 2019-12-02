@@ -35,3 +35,4 @@ Only default link functions are currently supported.}
 \description{
 Turn formula_str into a proper R function
 }
+\keyword{internal}

@@ -101,9 +101,8 @@ The summary shows good parameter recovery, though the second change point is det
 Plotting the posterior distributions of the change points reveal that they are not well represented by a Gaussian or other known distributions. Therefore, confidence intervals are likely to be meaningless for this problem.
 
 ```{r}
-gridExtra::grid.arrange(plot(fit_mcp), 
-                        plot_pars(fit_mcp, pars = c("cp_1", "cp_2"), type = "dens_overlay"),
-                        ncol = 2)
+library(patchwork)
+plot(fit_mcp) + plot_pars(fit_mcp, pars = c("cp_1", "cp_2"), type = "dens_overlay")
 ```
 
 `mcp` takes around 6 seconds to fit this example, which is the slowest of all the packages considered here. You can bring that down to 2.5 seconds by running in parallel, using `mcp(..., cores = 3)` or for the full session using `options(mc.cores = 3)`.

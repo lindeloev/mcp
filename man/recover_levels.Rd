@@ -19,3 +19,4 @@ recover_levels(samples, data, mcmc_col, data_col)
 Jags uses 1, 2, 3, ..., etc. for indexing of varying effects.
 This function adds back the original levels, whether numeric or string
 }
+\keyword{internal}

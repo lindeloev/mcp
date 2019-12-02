@@ -76,3 +76,4 @@ run_jags(data, model, params)
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
 }
+\keyword{internal}

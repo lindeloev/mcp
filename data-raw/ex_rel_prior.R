@@ -7,6 +7,7 @@ segments = list(
 
 # Simulate data
 empty = mcp::mcp(segments, sample = FALSE)
+set.seed(40)
 ex_rel_prior = tibble::tibble(
   x = 1:100,
   y = empty$simulate(
@@ -14,7 +15,7 @@ ex_rel_prior = tibble::tibble(
     cp_1 = 25,
     cp_2 = 40,
     int_1 = 25,
-    int_2 = 15,
+    int_2 = -10,
     sigma = 7,
     x_1 = 1,
     x_2 = -3,

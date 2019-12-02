@@ -20,3 +20,4 @@ Returns posterior samples, if available. If not, then prior samples. If not,
 then throw an informative error. This is useful for summary and plotting, that
 works on both.
 }
+\keyword{internal}

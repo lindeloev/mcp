@@ -35,3 +35,4 @@ slope (no hint at what x is). Set this, e.g., par_x = "time".}
 Currently used to differentiate between the JAGS model (use all) and the
 fit$simulate model (do not include arma).
 }
+\keyword{internal}

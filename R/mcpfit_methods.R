@@ -2,6 +2,7 @@
 #' Internal function for summary.mcpfit, fixef.mcpfit, and ranef.mcpfit
 #'
 #' @aliases get_summary
+#' @keywords internal
 #' @inheritParams summary.mcpfit
 #' @param fit An mcpfit object.
 #' @param varying Boolean. Get results for varying (TRUE) or population (FALSE)?
@@ -203,6 +204,7 @@ print.mcpprior = function(x, ...) {
 #' works on both.
 #'
 #' @aliases get_samples
+#' @keywords internal
 #' @inheritParams summary.mcpfit
 #' @param fit An mcpfit object
 #' @param message TRUE: gives a message if returning prior samples. FALSE = no message

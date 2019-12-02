@@ -22,3 +22,4 @@ Internal function for summary.mcpfit, fixef.mcpfit, and ranef.mcpfit
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
 }
+\keyword{internal}

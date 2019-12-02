@@ -47,3 +47,4 @@ get_segment_table(segments)
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
 }
+\keyword{internal}

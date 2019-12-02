@@ -55,3 +55,4 @@ Make JAGS code for Multiple Change Point model
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
 }
+\keyword{internal}

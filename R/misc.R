@@ -15,6 +15,7 @@ bernoulli = function(link = "logit") {
 #' This will make more sense once more link functions / families are added.
 #'
 #' @aliases get_family
+#' @keywords internal
 #' @param name Name of the family
 #' @param link Link function name. Accepts "logit", "log", and "identity"
 get_family = function(name, link) {
@@ -76,6 +77,7 @@ logit = stats::binomial(link = "logit")$linkfun
 #' Converts logical(0) to null. Returns x otherwise
 #'
 #'@aliases logical0_to_null
+#'@keywords internal
 #'@param x Anything
 #'@return NULL or x
 
@@ -91,6 +93,7 @@ logical0_to_null = function(x) {
 #' is an empty string, it returns `0`.
 #'
 #' @aliases get_arma_order
+#' @keywords internal
 #' @param pars_arma Character vector
 #' @return integer
 get_arma_order = function(pars_arma) {
@@ -108,6 +111,7 @@ get_arma_order = function(pars_arma) {
 #' The expected behavior of is.integer, with informative error messages.
 #'
 #' @aliases check_integer
+#' @keywords internal
 #' @param x Numeric value or vector
 #' @param name Name to show in error message.
 #' @param lower the smallest allowed value. lower = 1 checks for positive integers.
@@ -124,7 +128,7 @@ check_integer = function(x, name, lower = -Inf) {
 }
 
 
-#' Ask reminder questions for CRAN export
+# Ask reminder questions for CRAN export
 release_questions = function() {
   c(
     "Have you run the test of fits?",

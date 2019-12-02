@@ -15,3 +15,4 @@ NULL or x
 \description{
 Converts logical(0) to null. Returns x otherwise
 }
+\keyword{internal}

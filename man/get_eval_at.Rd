@@ -22,3 +22,4 @@ few x in that interval.
 This function makes a vector of x-values with large spacing in general,
 but finer resolution at change points.
 }
+\keyword{internal}
