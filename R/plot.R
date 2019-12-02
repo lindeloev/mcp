@@ -295,11 +295,11 @@ plot.mcpfit = function(x,
 #'
 #' # Some plots only take pairs
 #' plot_pars(fit, pars = c("var1", "var2"))
+#'
+#' # Customize two-column plots using the patchwork package.
+#' plot_pars(fit, type = c("trace", "dens_overlay")) * theme_bw(10)
 #' }
 
-# TO DO: Add this to examples when patchwork works:
-# # Customize two-column plots using the patchwork package.
-# plot_pars(fit, type = c("trace", "dens_overlay")) * theme_bw(10)
 
 plot_pars = function(fit,
                      pars = "population",
@@ -355,7 +355,7 @@ plot_pars = function(fit,
 
   # TO DO: a lot of eval(parse()) here. Is there a more built-in method?
   #types = c("dens", "dens_overlay", "trace", "areas")
-  takes_facet = c("areas", "dens", "dens_overlay", "trace", "hist", "intervals", "rank_hist", "rank_overlay", "trace", "trace_highlight", "violin")
+  takes_facet = c("areas", "dens", "dens_overlay", "trace", "hist", "intervals", "trace", "trace_highlight", "violin")
   for (this_type in type) {
     this_facet = ifelse(this_type %in% takes_facet, paste0(", facet_args = list(ncol = ", ncol, ")"), "")
     command = paste0("plot_", this_type, " = bayesplot::mcmc_", this_type, "(samples, pars = pars, regex_pars = regex_pars", this_facet, ")")
@@ -368,11 +368,12 @@ plot_pars = function(fit,
     return_plot = return_plot + ggplot2::theme(legend.position = "none")  # remove legend
     return(return_plot)
   } else {
-    # # Use patchwork
-    # command = paste0(paste0("plot_", type), collapse = " + ")
-    # return_plot = eval(parse(text = command))
-    # return_plot = return_plot * ggplot2::theme(legend.position = "none")  # remove legend
-    return_plot = bayesplot::mcmc_combo(samples, combo = type, gg_theme = ggplot2::theme(legend.position = "none"))
+    # Use patchwork
+    command = paste0(paste0("plot_", type), collapse = " + ")
+    return_plot = eval(parse(text = command)) & ggplot2::theme(
+      strip.placement = NULL,  # fixes bug: https://github.com/thomasp85/patchwork/issues/132
+      legend.position = "none"  # no legend on chains. Takes up too much space
+    )
 
     return(return_plot)
   }
