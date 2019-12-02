@@ -80,7 +80,9 @@ fit_default = mcp(segments, data)
 library(ggplot2)
 plot_default = plot(fit_default) + ggtitle("Default priors")
 plot_manual = plot(fit_manual) + ggtitle("Manual priors")
-gridExtra::grid.arrange(plot_default, plot_manual, ncol=2)
+
+library(patchwork)
+plot_default + plot_manual
 ```
 
 We see the effects of the priors.
@@ -132,7 +134,7 @@ fit_pp_default = mcp(segments, data, sample = "prior")
 # Plot it
 plot_pp_manual = plot(fit_pp_manual, lines = 100) + ylim(c(-400, 400)) + ggtitle("Manual prior")
 plot_pp_default = plot(fit_pp_default, lines = 100) + ylim(c(-400, 400)) + ggtitle("Default prior")
-gridExtra::grid.arrange(plot_pp_manual, plot_pp_default, ncol=2)
+plot_pp_manual +  plot_pp_default  # using patchwork
 ```
 
 You can see how the manual priors are more dense to the left, and the "concerted" change at x = 80.
