@@ -19,7 +19,7 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/cerulean/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
@@ -53,8 +53,12 @@
 <meta property="og:title" content="Test hypotheses on mcp objects. — hypothesis" />
 <meta property="og:description" content="This function is highly inspired by hypothesis. It returns
 posterior probabilities and Bayes Factors for flexible hypotheses involving
-model parameters. See the parameter `hypotheses`` for examples of how to
-specify hypotheses." />
+model parameters. See the documentation below for the parameter hypotheses
+for examples of how to specify hypotheses, and read worked examples on the mcp website.
+For directional hypotheses, hypothesis`` executes the hypothesis string in a tidybayes`` environment and summerises the proportion of samples where
+the expression evaluates to TRUE. For equals-hypothesis, a Savage-Dickey
+ratio is computed. Savage-Dickey requires a prior too, so remember
+mcp(..., sample = &quot;both&quot;)." />
 <meta property="og:image" content="https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -98,29 +102,19 @@ specify hypotheses." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-        <li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
-  <a href="../reference/index.html">Reference</a>
-</li>
-<li class="dropdown">
+        <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Learn more
+    General usage
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
-    <li class="dropdown-header">General usage</li>
     <li>
       <a href="../articles/formulas.html">Formulas</a>
     </li>
@@ -133,27 +127,56 @@ specify hypotheses." />
     <li>
       <a href="../articles/varying.html">Random/varying effects</a>
     </li>
-    <li class="divider"></li>
-    <li class="dropdown-header">GLM</li>
+    <li>
+      <a href="../articles/variance.html">Modeling variance</a>
+    </li>
+    <li>
+      <a href="../articles/arma.html">Time series and autocorrelation</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    GLM
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
     <li>
       <a href="../articles/poisson.html">Poisson</a>
     </li>
     <li>
       <a href="../articles/binomial.html">Binomial and Bernoulli</a>
     </li>
-    <li class="divider"></li>
-    <li class="dropdown-header">Other</li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Other
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
     <li>
       <a href="../articles/packages.html">Comparison to other packages</a>
+    </li>
+    <li>
+      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
     </li>
   </ul>
 </li>
 <li>
-  <a href="../news/index.html">Changelog</a>
+  <a href="../news/index.html">News</a>
 </li>
 <li>
   <a href="https://twitter.com/jonaslindeloev">
-    <span class="fab fa fab fa-twitter fa-lg"></span>
+    <span class="fa fa-twitter"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://github.com/lindeloev/mcp">
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
@@ -192,8 +215,12 @@ specify hypotheses." />
     <div class="ref-description">
     <p>This function is highly inspired by <code><a href='https://rdrr.io/pkg/brms/man/hypothesis.html'>hypothesis</a></code>. It returns
 posterior probabilities and Bayes Factors for flexible hypotheses involving
-model parameters. See the parameter `hypotheses`` for examples of how to
-specify hypotheses.</p>
+model parameters. See the documentation below for the parameter <code>hypotheses</code>
+for examples of how to specify hypotheses, and <a href='https://lindeloev.github.io/mcp/articles/comparison.html'>read worked examples on the mcp website</a>.
+For directional hypotheses, <code>hypothesis`` executes the hypothesis string in a </code>tidybayes`` environment and summerises the proportion of samples where
+the expression evaluates to TRUE. For equals-hypothesis, a Savage-Dickey
+ratio is computed. Savage-Dickey requires a prior too, so remember
+<code><a href='mcp.html'>mcp(..., sample = "both")</a></code>.</p>
     </div>
 
     <pre class="usage"><span class='fu'>hypothesis</span>(<span class='no'>fit</span>, <span class='no'>hypotheses</span>, <span class='kw'>width</span> <span class='kw'>=</span> <span class='fl'>0.95</span>)</pre>
@@ -258,12 +285,6 @@ For "=" it is the Savage-Dickey density ratio.
 For directional hypotheses, it is p converted to odds.</p></li>
 </ul>
 
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
-
-    <p>For directional hypotheses, <code>hypothesis`` executes the hypothesis string in a </code>tidybayes`` environment and summerises the proportion of samples where
-the expression evaluates to TRUE. For equals-hypothesis, a Savage-Dickey
-ratio is computed. Savage-Dickey requires a prior too, so remember
-<code><a href='mcp.html'>mcp(..., sample = "both")</a></code>.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -271,7 +292,6 @@ ratio is computed. Savage-Dickey requires a prior too, so remember
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
       <li><a href="#value">Value</a></li>
-      <li><a href="#details">Details</a></li>
     </ul>
 
     <h2>Author</h2>

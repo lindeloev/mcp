@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Get a list of x-coordinates to evaluate fit$func_y at — get_eval_at • mcp</title>
+<title>Get a list of x-coordinates to evaluate fit$simulate at — get_eval_at • mcp</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -19,7 +19,7 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/cerulean/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
@@ -50,7 +50,7 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Get a list of x-coordinates to evaluate fit$func_y at — get_eval_at" />
+<meta property="og:title" content="Get a list of x-coordinates to evaluate fit$simulate at — get_eval_at" />
 <meta property="og:description" content="Solves two problems: if setting the number of points too high, the
 function becomes slow. If setting it too low, the posterior at large intercept-
 changes at change points look discrete, because they are evaluated at very
@@ -98,29 +98,19 @@ few x in that interval." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-        <li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
-  <a href="../reference/index.html">Reference</a>
-</li>
-<li class="dropdown">
+        <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Learn more
+    General usage
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
-    <li class="dropdown-header">General usage</li>
     <li>
       <a href="../articles/formulas.html">Formulas</a>
     </li>
@@ -133,27 +123,56 @@ few x in that interval." />
     <li>
       <a href="../articles/varying.html">Random/varying effects</a>
     </li>
-    <li class="divider"></li>
-    <li class="dropdown-header">GLM</li>
+    <li>
+      <a href="../articles/variance.html">Modeling variance</a>
+    </li>
+    <li>
+      <a href="../articles/arma.html">Time series and autocorrelation</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    GLM
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
     <li>
       <a href="../articles/poisson.html">Poisson</a>
     </li>
     <li>
       <a href="../articles/binomial.html">Binomial and Bernoulli</a>
     </li>
-    <li class="divider"></li>
-    <li class="dropdown-header">Other</li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Other
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
     <li>
       <a href="../articles/packages.html">Comparison to other packages</a>
+    </li>
+    <li>
+      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
     </li>
   </ul>
 </li>
 <li>
-  <a href="../news/index.html">Changelog</a>
+  <a href="../news/index.html">News</a>
 </li>
 <li>
   <a href="https://twitter.com/jonaslindeloev">
-    <span class="fab fa fab fa-twitter fa-lg"></span>
+    <span class="fa fa-twitter"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://github.com/lindeloev/mcp">
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
@@ -184,7 +203,7 @@ few x in that interval." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Get a list of x-coordinates to evaluate fit$func_y at</h1>
+    <h1>Get a list of x-coordinates to evaluate fit$simulate at</h1>
     <small class="dont-index">Source: <a href='https://github.com/lindeloev/mcp/blob/master/R/plot.R'><code>R/plot.R</code></a></small>
     <div class="hidden name"><code>get_eval_at.Rd</code></div>
     </div>

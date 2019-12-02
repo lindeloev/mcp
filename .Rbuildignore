@@ -1,15 +1,17 @@
+# Hidden stuff
 ^mcp\.Rproj$
 ^\.Rproj\.user$
 .travis.yml
 .covrignore
+
+# Folders
 docs
 man/figures
-vignettes/comparison_cache
-vignettes/packages_cache
-vignettes/poisson_cache
-vignettes/priors_cache
-vignettes/varying_cache
+vignettes
 pkgdown
-logo.png
 ^data-raw$
 ^revdep$
+
+# Files
+cran-comments.md
+logo.png

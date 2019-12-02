@@ -19,7 +19,7 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/cerulean/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
@@ -95,29 +95,19 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-        <li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
-  <a href="../reference/index.html">Reference</a>
-</li>
-<li class="dropdown">
+        <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Learn more
+    General usage
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
-    <li class="dropdown-header">General usage</li>
     <li>
       <a href="../articles/formulas.html">Formulas</a>
     </li>
@@ -130,27 +120,56 @@
     <li>
       <a href="../articles/varying.html">Random/varying effects</a>
     </li>
-    <li class="divider"></li>
-    <li class="dropdown-header">GLM</li>
+    <li>
+      <a href="../articles/variance.html">Modeling variance</a>
+    </li>
+    <li>
+      <a href="../articles/arma.html">Time series and autocorrelation</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    GLM
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
     <li>
       <a href="../articles/poisson.html">Poisson</a>
     </li>
     <li>
       <a href="../articles/binomial.html">Binomial and Bernoulli</a>
     </li>
-    <li class="divider"></li>
-    <li class="dropdown-header">Other</li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Other
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
     <li>
       <a href="../articles/packages.html">Comparison to other packages</a>
+    </li>
+    <li>
+      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
     </li>
   </ul>
 </li>
 <li>
-  <a href="../news/index.html">Changelog</a>
+  <a href="../news/index.html">News</a>
 </li>
 <li>
   <a href="https://twitter.com/jonaslindeloev">
-    <span class="fab fa fab fa-twitter fa-lg"></span>
+    <span class="fa fa-twitter"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://github.com/lindeloev/mcp">
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
@@ -190,8 +209,7 @@
     <p>Used internally for most mcp functions.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>get_segment_table</span>(<span class='no'>segments</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>family</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/family.html'>gaussian</a></span>()$<span class='no'>family</span>,
-  <span class='kw'>par_x</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+    <pre class="usage"><span class='fu'>get_segment_table</span>(<span class='no'>segments</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>family</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/family.html'>gaussian</a></span>(), <span class='kw'>par_x</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -202,8 +220,14 @@
 has the format <code>response ~ predictors</code> while the following formulas
 have the format <code>response ~ changepoint ~ predictors</code>. The response
 and change points can be omitted (<code>changepoint ~ predictors</code> assumes same
-response. <code>~ predictors</code> assumes an intercept-only change point).</p>
-<p>See examples for more details.</p></td>
+response. <code>~ predictors</code> assumes an intercept-only change point). Segments
+can model</p><ul>
+<li><p><em>Regular formulas:</em> e.g., <code>~ 0 + x + I(x^2) + exp(x)</code>). <a href='https://lindeloev.github.io/mcp/articles/formulas.html'>Read more here</a>.</p></li>
+<li><p><em>Variance:</em> e.g., <code>~sigma(1)</code> for a simple variance change or
+<code>~sigma(rel(1) + I(x^2))</code>) for more advanced variance structures. <a href='https://lindeloev.github.io/mcp/articles/variance.html'>Read more here</a></p></li>
+<li><p><em>Autoregression:</em> e.g., <code>~ar(1)</code> for a simple onset/change in AR(1) or
+<code>ar(2, 0 + x</code>) for an AR(2) with parameter(s) increasing by <code>x</code>. <a href='https://lindeloev.github.io/mcp/articles/arma.html'>Read more here</a></p></li>
+</ul></td>
     </tr>
     <tr>
       <th>data</th>
@@ -229,7 +253,7 @@ slope (no hint at what x is). Set this, e.g., par_x = "time".</p></td>
     <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
 <span class='no'>segments</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
   <span class='no'>y</span> ~ <span class='fl'>1</span> + <span class='no'>x</span>,
-  <span class='fl'>1</span> ~ <span class='fl'>1</span>
+  ~ <span class='fl'>1</span>
 )
 <span class='fu'>get_segment_table</span>(<span class='no'>segments</span>)
 }</div></pre>

@@ -4,7 +4,7 @@
 \alias{get_jagscode}
 \title{Make JAGS code for Multiple Change Point model}
 \usage{
-get_jagscode(prior, ST, formula_str, family, sample)
+get_jagscode(prior, ST, formula_str, arma_order, family, sample)
 }
 \arguments{
 \item{prior}{Named list. Names are parameter names (\code{cp_i}, \code{int_i}, \code{xvar_i},
@@ -27,6 +27,8 @@ they will need to have the same grouping variable.
 \item{ST}{Segment table. Returned by \code{get_segment_table()}.}
 
 \item{formula_str}{String. The formula string returned by \code{build_formula_str}.}
+
+\item{arma_order}{Positive integer. The autoregressive order.}
 
 \item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}.
 Only default link functions are currently supported.}
@@ -53,3 +55,4 @@ Make JAGS code for Multiple Change Point model
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
 }
+\keyword{internal}

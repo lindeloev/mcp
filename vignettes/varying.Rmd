@@ -15,8 +15,9 @@ This article in brief:
 
  * How to simulate varying change points
  * Get posteriors using `ranef(fit)`
- * Plot using `plot(fit, facet_by="my_group")` and `plot(fit, "dens_overlay", pars = "varying", ncol = 3)`.
+ * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "varying", type = "dens_overlay", ncol = 3)`.
  * The default priors restrict varying change points to lie between the two adjacent change points.
+ * The article on modeling variance via `sigma()` contains [an example on varying change points](../articles/variance.html) as well.
 
 
 
@@ -62,7 +63,7 @@ segments = list(
 )
 ```
 
-It is quite similar to simulating non-varying data, except that we need to simulate some varying offsets before passing all parameters to `empty$func_y`:
+It is quite similar to simulating non-varying data, except that we need to simulate some varying offsets before passing all parameters to `empty$simulate`:
 
 ```{r, message=FALSE, warning=FALSE}
 library(mcp)
@@ -74,7 +75,7 @@ data = tibble(
   x = runif(length(varying) * 30, 0, 100),  # 30 data points for each
   id = rep(varying, each = 30),  # the group names
   id_numeric = as.numeric(as.factor(id)),  # to positive integers
-  y = empty$func_y(x,
+  y = empty$simulate(x,
     # Population-level:
     int_1 = 20, x_2 = 0.5, cp_1 = 50, sigma = 2,
     
@@ -106,7 +107,7 @@ fit = mcp(segments, data)
 If we just use `plot(fit)`, we would see all points in one plot. We want to facet by `id`, so:
 
 ```{r}
-plot(fit, facet_by="id", cores = 3)
+plot(fit, facet_by="id", ncol = 3)
 ```
 
 It seems that `mcp` did a good job of recovering the change points. There is a lot of information in this data, since the intercept and the slope on each side of the (varying) change point is shared between participants here.
@@ -119,10 +120,10 @@ ranef(fit)
 
 Notice how well they are estimated to be 10 apart, indicating good recovery.
 
-Good convergence is not always as obvious as in this example. While `plot(fit, "combo")` show population-level parameters only, you can do this to get varying effects only:
+Good convergence is not always as obvious as in this example. While `plot_pars(fit)` show population-level parameters only, you can do this to get varying effects only:
 
 ```{r}
-plot(fit, "trace", pars = "varying", ncol=3)
+plot_pars(fit, pars = "varying", type = "trace", ncol=3)
 ```
 
 Notice the use of the `ncol` argument to set the number of columns. You will often have *many* levels on your varying effect, so this is useful to get a good view of all of them. Naturally, you can do this for almost all kinds of plots.
@@ -130,7 +131,7 @@ Notice the use of the `ncol` argument to set the number of columns. You will oft
 Using `pars = "varying"` will plot all varying effects. This may be too much if you have multiple varying effects. To select just one, use regular expression in `regex_pars`. Two very handy operators are "^" (begins with) and "$" (ends with). Just to show that this "faceting" works for almost all of the many plot types, we now do two columns of `"dens_overlay`:
 
 ```{r}
-plot(fit, "dens_overlay", regex_pars = "^cp_1_id", ncol = 2)
+plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2)
 ```
 
 
@@ -143,7 +144,7 @@ You can see the priors of the model like this:
 cbind(fit$prior)
 ```
 
-The priors `cp_1_sd` is the population-level standard deviation of `cp_1_id`, the latter of which is applied to all levels of `id`. This is also apparent if you inspect the JAGS code for this model. The truncation of varying effects is quite contrived, but just keeps them between the two adjecent (population-level) change points.
+The priors `cp_1_sd` is the population-level standard deviation of `cp_1_id`, the latter of which is applied to all levels of `id`. This is also apparent if you inspect the JAGS code for this model. The truncation of varying effects is quite contrived, but just keeps them between the two adjacent (population-level) change points.
 
 
 # JAGS code

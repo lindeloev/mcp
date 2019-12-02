@@ -2,11 +2,12 @@
 #'
 #' Given a list of linear segments, `mcp` infers the posterior
 #' distributions of the parameters of each segment as well as the change points
-#' between segments. All segments must regress on the same x-axis. Change points
-#' are forced to be ordered using truncation of the priors. You can run
+#' between segments. [See more details and worked examples on the mcp website](https://lindeloev.github.io/mcp/).
+#' All segments must regress on the same x-variable. Change
+#' points are forced to be ordered using truncation of the priors. You can run
 #' `fit = mcp(segments, sample=FALSE)` to avoid sampling and the need for
 #' data if you just want to get the priors (`fit$prior`), the JAGS code
-#' `fit$jags_code`, or the R function to simulate data (`fit$func_y`).
+#' `fit$jags_code`, or the R function to simulate data (`fit$simulate`).
 #'
 #' @aliases mcp
 #' @param data Data.frame or tibble in long format.
@@ -14,9 +15,17 @@
 #'   has the format `response ~ predictors` while the following formulas
 #'   have the format `response ~ changepoint ~ predictors`. The response
 #'   and change points can be omitted (`changepoint ~ predictors` assumes same
-#'   response. `~ predictors` assumes an intercept-only change point).
+#'   response. `~ predictors` assumes an intercept-only change point). Segments
+#'   can model
 #'
-#'   See examples for more details.
+#'   * *Regular formulas:* e.g., `~ 0 + x + I(x^2) + exp(x)`). [Read more here](https://lindeloev.github.io/mcp/articles/formulas.html).
+#'
+#'   * *Variance:* e.g., `~sigma(1)` for a simple variance change or
+#'     `~sigma(rel(1) + I(x^2))`) for more advanced variance structures. [Read more here](https://lindeloev.github.io/mcp/articles/variance.html)
+#'
+#'   * *Autoregression:* e.g., `~ar(1)` for a simple onset/change in AR(1) or
+#'     `ar(2, 0 + x`) for an AR(2) with parameter(s) increasing by `x`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html)
+#'
 #' @param prior Named list. Names are parameter names (`cp_i`, `int_i`, `xvar_i`,
 #'  `sigma``) and the values are either
 #'
@@ -47,19 +56,24 @@
 #'       object without sample. This is useful if you only want to check
 #'       prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
 #' @param cores Positive integer or "all". Number of cores.
-#'   * 1: serial sampling
-#'   * >1: parallel sampling on this number of cores. Ideally set `chains`
-#'     to the same value.
-#'   * "all": use all cores but one.
+#'
+#'   * `1`: serial sampling
+#'   * `>1`: parallel sampling on this number of cores. Ideally set `chains`
+#'     to the same value. Note: `cores > 1` takes a few extra seconds the first
+#'     time it's called but subsequent calls will start sampling immediately.
+#'   * `"all"`: use all cores but one and sets `chains` to the same value. This is
+#'     a convenient way to maximally use your computer's power.
 #' @param chains Positive integer. Number of chains to run.
 #' @param iter Positive integer. Number of post-warmup samples to draw.
-#' @param adapt Positive integer. Number of iterations to find sampler settings.
-#' @param update Positive integer. Also sometimes called "burnin", this is the
-#'   number of regular samples before anything is recorded. Use to reach
-#'   convergence.
-#' @param jags_explicit Pass JAGS code to `mcp` to use directly. Useful if
-#'   you want to make small tweaks, but mostly used for the development of mcp.
-#' @param ... Further parameters for \code{\link[dclone]{jags.fit}}.
+#' @param adapt Positive integer. Also sometimes called "burnin", this is the
+#'   number of samples used to reach convergence. Set lower for greater speed.
+#'   Set higher if the chains haven't converged yet or look at [tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/tips.html).
+#' @param inits A list if initial values for the parameters. This can be useful
+#'   if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
+#'   Defaults to `NULL`, i.e., no inits.
+#' @param jags_code Pass JAGS code to `mcp` to use directly. This is useful if
+#'   you want to tweak the code in `fit$jags_code` and run it within the `mcp`
+#'   framework.
 #' @details Notes on priors:
 #'   * Order restriction is automatically applied to cp_\* parameters using
 #'       truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the
@@ -83,26 +97,35 @@
 #' # Define the segments that are separated by change points
 #' segments = list(
 #'   score ~ 1 + year,  # intercept + slope
-#'    1 ~ 0 + year,  # joined slope
-#'    1 ~ 0,  # joined plateau
-#'    1 ~ 1  # disjoined plateau
+#'    ~ 0 + year,  # joined slope
+#'    ~ 0,  # joined plateau
+#'    ~ 1  # disjoined plateau
 #' )
 #'
-#' # Start sampling
+#' # Sample and see results
 #' fit = mcp(segments, data)
+#' summary(fit)
 #'
 #' # Visual inspection of the results
 #' plot(fit)
-#' plot(fit, "combo")
+#' plot_pars(fit)
+#'
+#' # Test a hypothesis
+#' hypothesis(fit, "cp_1 > 10")
 #'
 #' # Compare to a one-intercept-only model (no change points) with default prior
-#' segments2 = list(1 ~ 1)
+#' segments2 = list(score ~ 1)
 #' fit2 = mcp(segments2, data)  # fit another model here
 #' fit$loo = loo(fit)
 #' fit2$loo = loo(fit)
 #' loo_compare(fit, fit2)
 #'
-#' # Show all priors (not just those specified manually)
+#' # Sample the prior and inspect it using all the usual methods (prior predictive checks)
+#' fit_prior = mcp(segments, data, sample = "prior")
+#' summary(fit_prior)
+#' plot(fit_prior)
+#'
+#' # Show all priors. Default priors are added where you don't provide any
 #' fit$prior
 #'
 #' # Set priors and re-run
@@ -119,16 +142,9 @@
 #' )
 #' fit3 = mcp(segments, data, prior)
 #'
-#' # Do stuff with the parameter estimates
-#' fit$pars$model  # check out which parameters are inferred.
-#' library(tidybayes)
-#' spread_draws(fit$mcmc_post, cp_1, cp_2, int_1, year_1, year_2) %>%
-#'    # tidybayes stuff here
-#'
 #' # Show JAGS model
 #' cat(fit$jags_code)
 #' }
-
 
 mcp = function(segments,
                data = NULL,
@@ -139,10 +155,13 @@ mcp = function(segments,
                cores = 1,
                chains = 3,
                iter = 3000,
-               adapt = 1500,
-               update = 1500,
-               jags_explicit = NULL,
-               ...) {
+               adapt = 1000,
+               inits = NULL,
+               jags_code = NULL) {
+
+  ################
+  # CHECK INPUTS #
+  ################
 
   # Check data
   if (is.null(data) & sample == TRUE)
@@ -173,7 +192,7 @@ mcp = function(segments,
   if (any(which_duplicated))
     stop("`prior` has duplicated entries for the same parameter: ", paste0(names(prior)[which_duplicated]), collapse = ", ")
 
-  # Check family
+  # Check and recode family
   if (class(family) != "family")
     stop("`family` must be one of gaussian() or binomial()")
 
@@ -188,6 +207,12 @@ mcp = function(segments,
 
   if (family$family == "poisson" & !family$link %in% c("log"))
     stop("'log' is currently the only supported link function for poisson().")
+
+  # if (family$family %in% c("bernoulli", "binomial") & !is.null(autocor))
+  #   stop("`autocor` is not yet supported for Bernoulli and binomial families.")
+
+  family = get_family(family$family, family$link)  # convert to mcp family
+
 
   # Check other stuff
   if (!is.null(par_x) & !is.character(par_x))
@@ -207,73 +232,86 @@ mcp = function(segments,
     message("`cores` is greater than `chains`. Not all cores will be used.")
 
   # Parallel fails on R version 3.6.0 and lower (sometimes at least).
-  # Throw a warning
-  major = as.numeric(R.Version()$major)
-  minor = as.numeric(R.Version()$minor)
-  fails_parallel = (major < 3 | (major == 3 & minor < 6.1))
-  if (cores > 1 & fails_parallel == TRUE)
-    warning("Parallel sampling (cores > 1) has been shown to err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
+  if (cores > 1 & getRversion() < "3.6.1")
+    message("Parallel sampling (`cores` > 1) has been shown to err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
 
 
-  # Get an abstract segment table ("ST")
-  ST = get_segment_table(segments, data, family$family, par_x)
+  ##################
+  # MODEL BUILDING #
+  ##################
+  # Make an abstract table representing the segments and their relations.
+  # ("ST" for "segment table").
+  ST = get_segment_table(segments, data, family, par_x)
+
   par_x = unique(ST$x)
   par_y = unique(ST$y)
   par_trials = unique(ST$trials)
 
-  # Get prior and lists of parameters
-  prior = get_prior(ST, family$family, prior)
-  params_varying = logical0_to_null(c(stats::na.omit(ST$cp_group)))
-  params_population = c(stats::na.omit(unique(c(ST$int_name, ST$slope_name, ST$cp_name[-1], ST$cp_sd))))
-  if (family$family == "gaussian")
-    params_population = c(params_population, "sigma")
+  # Make prior
+  prior = get_prior(ST, family, prior)
 
-  # Make formula_str and func_y
-  formula_str = get_formula_str(ST)
+  # Make lists of parameters
+  all_pars = names(prior)  # There is a prior for every parameter
+  pars_varying = logical0_to_null(c(stats::na.omit(ST$cp_group)))
+  pars_sigma = all_pars[stringr::str_detect(all_pars, "^sigma_")]
+  pars_arma = all_pars[stringr::str_detect(all_pars, "(^ar|^ma)[0-9]")]
+  pars_reg = all_pars[!all_pars %in% c(pars_varying, pars_sigma, pars_arma)]  # Everything that's left!
 
-  params_funcy = params_population[!params_population %in% ST$cp_sd]
-  func_y = get_func_y(formula_str, par_x, par_trials, params_funcy, params_varying, nrow(ST), family$family)
+  if (length(pars_arma) > 0 & family$link %in% c("logit", "probit"))
+    message("The current implementation of autoregression can be fragile for link='logit'. If fitting succeeds, do a proper assessment of model convergence.")
 
-  # Make jags code and sample it.
-  jags_code = get_jagscode(prior, ST, formula_str, family$family, sample)
+  if (length(pars_arma) > 0 & length(pars_sigma) > 1)
+    message("Autoregression currently assumes homoskedasticity (equal variance at all x). Using together with sigma() breaks this assumption except when doing just `~ [formula] + sigma(1) + ar(N)`, so that `ar` changes with a sigma intercept. If not, the estimated ar* parameters may not be meaningful.")
 
+  # Make formula_str and simulate
+  formula_str_funcy = get_all_formulas(ST, prior, par_x, ytypes = c("ct", "sigma"))  # Without ARMA
+  pars_funcy = c(pars_reg[!pars_reg %in% ST$cp_sd], pars_sigma)  # arma and varying SD is not used for simulation
+  simulate = get_simulate(formula_str_funcy, par_x, par_trials, pars_funcy, pars_varying, nrow(ST), family)
+
+  # Make jags code
+  max_arma_order = get_arma_order(pars_arma)
+  formula_str_jags = get_all_formulas(ST, prior, par_x)
+  jags_code_generated = get_jagscode(prior, ST, formula_str_jags, max_arma_order, family, sample)
+  jags_code = ifelse(is.null(jags_code), yes = jags_code_generated, no = jags_code)  # Get from user?
+
+
+  ##########
+  # SAMPLE #
+  ##########
   # Sample posterior
   if (sample %in% c("post", "both")) {
     samples = run_jags(
       data = data,
-      jags_code = ifelse(is.null(jags_explicit), jags_code, jags_explicit),
-      params = c(params_population, params_varying, "loglik_"),  # population-level, varying, and loglik for loo/waic
+      jags_code = jags_code,
+      pars = c(all_pars, "loglik_"),  # Monitor log-likelihood for loo/waic
       ST = ST,
       cores = cores,
       sample = "post",
       n.chains = chains,
       n.iter = iter,
       n.adapt = adapt,
-      n.update = update,
-      ...
+      inits = inits
     )
 
     # Move loglik columns out to it's own list, keeping parameters and loglik apart
     loglik_cols = stringr::str_starts(colnames(samples[[1]]), 'loglik_')  # detect loglik cols
     mcmc_loglik = lapply(samples, function(x) x[, loglik_cols])
     mcmc_post = lapply(samples, function(x) x[, !loglik_cols])
-
   }
 
   # Sample prior
   if (sample %in% c("prior", "both")) {
     samples = run_jags(
       data = data,
-      jags_code = ifelse(is.null(jags_explicit), jags_code, jags_explicit),
-      params = c(params_population, params_varying),  # population-level, varying, but NOT loglik
+      jags_code = jags_code,
+      pars = all_pars,  # Not loglik
       ST = ST,
       cores = cores,
       sample = "prior",
       n.chains = chains,
       n.iter = iter,
       n.adapt = adapt,
-      n.update = update,
-      ...
+      inits = inits
     )
 
     # Move loglik columns out to it's own list, keeping parameters and loglik apart
@@ -281,6 +319,10 @@ mcp = function(segments,
     mcmc_prior = lapply(samples, function(x) x[, !loglik_cols])
   }
 
+
+  ##########
+  # RETURN #
+  ##########
   # Fill in the missing samples
   if (exists("mcmc_post")) class(mcmc_post) = "mcmc.list"
   if (exists("mcmc_prior")) class(mcmc_prior) = "mcmc.list"
@@ -306,15 +348,18 @@ mcp = function(segments,
 
     # Extracted model
     pars = list(
-      population = params_population,
-      varying = params_varying,
       x = par_x,
       y = par_y,
-      trials = par_trials
+      trials = par_trials,
+      reg = pars_reg,
+      varying = pars_varying,
+      sigma = pars_sigma,
+      arma = pars_arma,
+      population = c(pars_reg, pars_sigma, pars_arma)
     ),
 
     jags_code = jags_code,
-    func_y = func_y,
+    simulate = simulate,
 
     # Pass info to *.mcpfit() functions.
     # Not meant to be used by the end user.
@@ -326,18 +371,4 @@ mcp = function(segments,
 
   # Return it
   mcpfit
-}
-
-
-#' Converts logical(0) to null. Returns x otherwise
-#'
-#'@aliases logical0_to_null
-#'@param x Anything
-#'@return NULL or x
-
-
-logical0_to_null = function(x) {
-  if (length(x) > 0)
-    return(x)
-  else return(NULL)
 }

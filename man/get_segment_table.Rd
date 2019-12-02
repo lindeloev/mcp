@@ -4,17 +4,22 @@
 \alias{get_segment_table}
 \title{Build a table describing a list of segments}
 \usage{
-get_segment_table(segments, data = NULL, family = gaussian()$family,
-  par_x = NULL)
+get_segment_table(segments, data = NULL, family = gaussian(), par_x = NULL)
 }
 \arguments{
 \item{segments}{A list of formulas - one for each segment. The first formula
 has the format \code{response ~ predictors} while the following formulas
 have the format \code{response ~ changepoint ~ predictors}. The response
 and change points can be omitted (\code{changepoint ~ predictors} assumes same
-response. \code{~ predictors} assumes an intercept-only change point).
-
-See examples for more details.}
+response. \code{~ predictors} assumes an intercept-only change point). Segments
+can model
+\itemize{
+\item \emph{Regular formulas:} e.g., \code{~ 0 + x + I(x^2) + exp(x)}). \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more here}.
+\item \emph{Variance:} e.g., \code{~sigma(1)} for a simple variance change or
+\code{~sigma(rel(1) + I(x^2))}) for more advanced variance structures. \href{https://lindeloev.github.io/mcp/articles/variance.html}{Read more here}
+\item \emph{Autoregression:} e.g., \code{~ar(1)} for a simple onset/change in AR(1) or
+\verb{ar(2, 0 + x}) for an AR(2) with parameter(s) increasing by \code{x}. \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more here}
+}}
 
 \item{data}{Data.frame or tibble in long format.}
 
@@ -34,7 +39,7 @@ Used internally for most mcp functions.
 \dontrun{
 segments = list(
   y ~ 1 + x,
-  1 ~ 1
+  ~ 1
 )
 get_segment_table(segments)
 }
@@ -42,3 +47,4 @@ get_segment_table(segments)
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
 }
+\keyword{internal}

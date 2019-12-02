@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
 <link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/cerulean/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
@@ -47,30 +47,20 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
-  <a href="../reference/index.html">Reference</a>
-</li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Learn more
+    General usage
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
-<li class="dropdown-header">General usage</li>
-    <li>
+<li>
       <a href="../articles/formulas.html">Formulas</a>
     </li>
     <li>
@@ -82,27 +72,56 @@
     <li>
       <a href="../articles/varying.html">Random/varying effects</a>
     </li>
-    <li class="divider">
-    <li class="dropdown-header">GLM</li>
     <li>
+      <a href="../articles/variance.html">Modeling variance</a>
+    </li>
+    <li>
+      <a href="../articles/arma.html">Time series and autocorrelation</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    GLM
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
       <a href="../articles/poisson.html">Poisson</a>
     </li>
     <li>
       <a href="../articles/binomial.html">Binomial and Bernoulli</a>
     </li>
-    <li class="divider">
-    <li class="dropdown-header">Other</li>
-    <li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Other
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
       <a href="../articles/packages.html">Comparison to other packages</a>
+    </li>
+    <li>
+      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
     </li>
   </ul>
 </li>
 <li>
-  <a href="../news/index.html">Changelog</a>
+  <a href="../news/index.html">News</a>
 </li>
 <li>
   <a href="https://twitter.com/jonaslindeloev">
-    <span class="fab fa fab fa-twitter fa-lg"></span>
+    <span class="fa fa-twitter"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://github.com/lindeloev/mcp">
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
@@ -136,7 +155,7 @@
       <h1>Working with priors in mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-11-14</h4>
+            <h4 class="date">2019-12-02</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/priors.Rmd"><code>vignettes/priors.Rmd</code></a></small>
       <div class="hidden name"><code>priors.Rmd</code></div>
@@ -151,8 +170,8 @@
 <p><code>mcp</code> takes priors in the form of a named list. The names are the parameter names, and the values are JAGS code. Here is a fairly complicated example, just to get enough priors to demonstrate the various ways priors can be used:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
 <a class="sourceLine" id="cb1-2" title="2">  y <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x,  <span class="co"># int_1 + x_1</span></a>
-<a class="sourceLine" id="cb1-3" title="3">  <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x,  <span class="co"># cp_1, int_2, and x_2</span></a>
-<a class="sourceLine" id="cb1-4" title="4">  <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x  <span class="co"># cp_2</span></a>
+<a class="sourceLine" id="cb1-3" title="3">  <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x,  <span class="co"># cp_1, int_2, and x_2</span></a>
+<a class="sourceLine" id="cb1-4" title="4">  <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x  <span class="co"># cp_2</span></a>
 <a class="sourceLine" id="cb1-5" title="5">)</a>
 <a class="sourceLine" id="cb1-6" title="6"></a>
 <a class="sourceLine" id="cb1-7" title="7">prior =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
@@ -174,37 +193,41 @@
 </ul>
 <p>Let us see the priors after running them through <code>mcp</code> and compare to the default priors:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(mcp)</a>
-<a class="sourceLine" id="cb2-2" title="2">empty_manual =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, <span class="dt">prior =</span> prior, <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb2-3" title="3">empty_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb2-4" title="4"></a>
-<a class="sourceLine" id="cb2-5" title="5"><span class="co"># Look at fit$prior and show them side-by-side</span></a>
-<a class="sourceLine" id="cb2-6" title="6"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(<span class="dt">manual =</span> empty_manual<span class="op">$</span>prior, <span class="dt">default =</span> empty_default<span class="op">$</span>prior)</a></code></pre></div>
-<pre><code>##       manual                 default                        
-## sigma "dnorm(0, SDY) T(0, )" "dnorm(0, SDY) T(0, )"         
-## int_1 "dnorm(0, 5) T(, 10)"  "dt(0, 3 * SDY, 3)"            
-## x_1   "dbeta(2, 5)"          "dt(0, SDY / (MAXX - MINX), 3)"
-## int_2 "dt(0, 3 * SDY, 3)"    "dt(0, 3 * SDY, 3)"            
-## x_2   "dt(0, 1, 3) T(x_1, )" "dt(0, SDY / (MAXX - MINX), 3)"
-## cp_1  "dunif(MINX, cp_2)"    "dunif(MINX, MAXX)"            
-## int_3 "dt(0, 3 * SDY, 3)"    "dt(0, 3 * SDY, 3)"            
-## x_3   "x_2"                  "dt(0, SDY / (MAXX - MINX), 3)"
-## cp_2  80                     "dunif(cp_1, MAXX)"</code></pre>
+<a class="sourceLine" id="cb2-2" title="2"><span class="kw"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="dt">mc.cores =</span> <span class="dv">3</span>)  <span class="co"># Speed up sampling!</span></a>
+<a class="sourceLine" id="cb2-3" title="3"></a>
+<a class="sourceLine" id="cb2-4" title="4">empty_manual =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, <span class="dt">prior =</span> prior, <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb2-5" title="5">empty_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb2-6" title="6"></a>
+<a class="sourceLine" id="cb2-7" title="7"><span class="co"># Look at fit$prior and show them side-by-side</span></a>
+<a class="sourceLine" id="cb2-8" title="8"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(<span class="dt">manual =</span> empty_manual<span class="op">$</span>prior, <span class="dt">default =</span> empty_default<span class="op">$</span>prior)</a></code></pre></div>
+<pre><code>##         manual                 default                        
+## cp_1    "dunif(MINX, cp_2)"    "dunif(MINX, MAXX)"            
+## cp_2    80                     "dunif(cp_1, MAXX)"            
+## int_1   "dnorm(0, 5) T(, 10)"  "dt(0, 3 * SDY, 3)"            
+## int_2   "dt(0, 3 * SDY, 3)"    "dt(0, 3 * SDY, 3)"            
+## int_3   "dt(0, 3 * SDY, 3)"    "dt(0, 3 * SDY, 3)"            
+## x_1     "dbeta(2, 5)"          "dt(0, SDY / (MAXX - MINX), 3)"
+## x_2     "dt(0, 1, 3) T(x_1, )" "dt(0, SDY / (MAXX - MINX), 3)"
+## x_3     "x_2"                  "dt(0, SDY / (MAXX - MINX), 3)"
+## sigma_1 "dnorm(0, SDY) T(0, )" "dnorm(0, SDY) T(0, )"</code></pre>
 <p>Now, let’s simulate some data that from the model specified by <code>segments</code>. The following data “violates” the manual priors so as to show their effect.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">data =<span class="st"> </span>tibble<span class="op">::</span><span class="kw"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span>(</a>
 <a class="sourceLine" id="cb4-2" title="2">  <span class="dt">x =</span> <span class="kw"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span>(<span class="dv">200</span>, <span class="dv">0</span>, <span class="dv">100</span>),  <span class="co"># 200 datapoints between 0 and 100</span></a>
-<a class="sourceLine" id="cb4-3" title="3">  <span class="dt">y =</span> empty_default<span class="op">$</span><span class="kw">func_y</span>(x, </a>
+<a class="sourceLine" id="cb4-3" title="3">  <span class="dt">y =</span> empty_default<span class="op">$</span><span class="kw"><a href="https://rdrr.io/r/stats/simulate.html">simulate</a></span>(x, </a>
 <a class="sourceLine" id="cb4-4" title="4">    <span class="dt">int_1 =</span> <span class="dv">20</span>, <span class="dt">int_2 =</span> <span class="dv">30</span>, <span class="dt">int_3 =</span> <span class="dv">30</span>,  <span class="co"># intercepts</span></a>
 <a class="sourceLine" id="cb4-5" title="5">    <span class="dt">x_1 =</span> <span class="fl">-0.5</span>, <span class="dt">x_2 =</span> <span class="fl">0.5</span>, <span class="dt">x_3 =</span> <span class="dv">0</span>,  <span class="co"># slopes</span></a>
 <a class="sourceLine" id="cb4-6" title="6">    <span class="dt">cp_1 =</span> <span class="dv">35</span>, <span class="dt">cp_2 =</span> <span class="dv">70</span>,  <span class="co"># change points</span></a>
 <a class="sourceLine" id="cb4-7" title="7">    <span class="dt">sigma =</span> <span class="dv">5</span>)</a>
 <a class="sourceLine" id="cb4-8" title="8">)</a></code></pre></div>
 <p>Sample and plot the fits:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">fit_manual =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, prior, <span class="dt">cores =</span> <span class="dv">3</span>)</a>
-<a class="sourceLine" id="cb5-2" title="2">fit_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, <span class="dt">cores =</span> <span class="dv">3</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">fit_manual =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, prior)</a>
+<a class="sourceLine" id="cb5-2" title="2">fit_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data)</a></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</a>
 <a class="sourceLine" id="cb6-2" title="2">plot_default =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_default) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Default priors"</span>)</a>
 <a class="sourceLine" id="cb6-3" title="3">plot_manual =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_manual) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Manual priors"</span>)</a>
-<a class="sourceLine" id="cb6-4" title="4">gridExtra<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/gridExtra/man/arrangeGrob.html">grid.arrange</a></span>(plot_default, plot_manual, <span class="dt">ncol=</span><span class="dv">2</span>)</a></code></pre></div>
+<a class="sourceLine" id="cb6-4" title="4"></a>
+<a class="sourceLine" id="cb6-5" title="5"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(patchwork)</a>
+<a class="sourceLine" id="cb6-6" title="6">plot_default <span class="op">+</span><span class="st"> </span>plot_manual</a></code></pre></div>
 <p><img src="priors_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
 <p>We see the effects of the priors.</p>
 <ul>
@@ -247,13 +270,13 @@
 <a href="#prior-predictive-checks" class="anchor"></a>Prior predictive checks</h1>
 <p>Prior predictive checks is a great way to ensure that the priors are meaningful. Simply set <code>sample = "prior"</code>. Let us do it for the two sets of priors defined previously in this article, to see their different prior predictive space.</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="co"># Sample priors </span></a>
-<a class="sourceLine" id="cb7-2" title="2">fit_pp_manual =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, prior, <span class="dt">sample =</span> <span class="st">"prior"</span>, <span class="dt">cores =</span> <span class="dv">3</span>)</a>
-<a class="sourceLine" id="cb7-3" title="3">fit_pp_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, <span class="dt">sample =</span> <span class="st">"prior"</span>, <span class="dt">cores =</span> <span class="dv">3</span>)</a>
+<a class="sourceLine" id="cb7-2" title="2">fit_pp_manual =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, prior, <span class="dt">sample =</span> <span class="st">"prior"</span>)</a>
+<a class="sourceLine" id="cb7-3" title="3">fit_pp_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, <span class="dt">sample =</span> <span class="st">"prior"</span>)</a>
 <a class="sourceLine" id="cb7-4" title="4"></a>
 <a class="sourceLine" id="cb7-5" title="5"><span class="co"># Plot it</span></a>
 <a class="sourceLine" id="cb7-6" title="6">plot_pp_manual =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_pp_manual, <span class="dt">lines =</span> <span class="dv">100</span>) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/graphics/plot.window.html">ylim</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="op">-</span><span class="dv">400</span>, <span class="dv">400</span>)) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Manual prior"</span>)</a>
 <a class="sourceLine" id="cb7-7" title="7">plot_pp_default =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_pp_default, <span class="dt">lines =</span> <span class="dv">100</span>) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/graphics/plot.window.html">ylim</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="op">-</span><span class="dv">400</span>, <span class="dv">400</span>)) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Default prior"</span>)</a>
-<a class="sourceLine" id="cb7-8" title="8">gridExtra<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/gridExtra/man/arrangeGrob.html">grid.arrange</a></span>(plot_pp_manual, plot_pp_default, <span class="dt">ncol=</span><span class="dv">2</span>)</a></code></pre></div>
+<a class="sourceLine" id="cb7-8" title="8">plot_pp_manual <span class="op">+</span><span class="st">  </span>plot_pp_default  <span class="co"># using patchwork</span></a></code></pre></div>
 <p><img src="priors_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
 <p>You can see how the manual priors are more dense to the left, and the “concerted” change at x = 80.</p>
 </div>
@@ -265,40 +288,47 @@
 <pre><code>## 
 ## model {
 ##   # Priors for population-level effects
-##   sigma ~ dnorm(0, 1/(SDY)^2) T(0, )
-##   int_1 ~ dnorm(0, 1/(5)^2) T(, 10)
-##   x_1 ~ dbeta(2, 5)
-##   int_2 ~ dt(0, 1/(3*SDY)^2, 3) 
-##   x_2 ~ dt(0, 1/(1)^2, 3) T(x_1, )
 ##   cp_1 ~ dunif(MINX, cp_2)
-##   int_3 ~ dt(0, 1/(3*SDY)^2, 3) 
-##   x_3 = x_2  # Fixed
 ##   cp_2 = 80  # Fixed
+##   int_1 ~ dnorm(0, 1/(5)^2) T(, 10)
+##   int_2 ~ dt(0, 1/(3*SDY)^2, 3) 
+##   int_3 ~ dt(0, 1/(3*SDY)^2, 3) 
+##   x_1 ~ dbeta(2, 5)
+##   x_2 ~ dt(0, 1/(1)^2, 3) T(x_1, )
+##   x_3 = x_2  # Fixed
+##   sigma_1 ~ dnorm(0, 1/(SDY)^2) T(0, )
 ##   cp_0 = -10^100  # mcp helper value; minus infinity
 ##   cp_3 = 10^100  # mcp helper value; plus infinity
 ## 
 ## 
 ##   # Model and likelihood
 ##   for (i_ in 1:length(x)) {
-## 
+##     X_1_[i_] = min(x[i_], cp_1)
+##     X_2_[i_] = min(x[i_], cp_2) - cp_1
+##     X_3_[i_] = min(x[i_], cp_3) - cp_2
+##     
 ##     # Fitted value
 ##     y_[i_] = 
-## 
+##     
 ##       # Segment 1: y ~ 1 + x
 ##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * int_1 + 
-##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * (x_1 * (min(x[i_], cp_1))) + 
-##       
+##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * x_1 * X_1_[i_] + 
+##     
 ##       # Segment 2: y ~ 1 ~ 1 + x
 ##       (x[i_] &gt;= cp_1) * (x[i_] &lt; cp_2) * int_2 + 
-##       (x[i_] &gt;= cp_1) * (x[i_] &lt; cp_2) * (x_2 * (min(x[i_], cp_2) - (cp_1))) + 
-##       
+##       (x[i_] &gt;= cp_1) * (x[i_] &lt; cp_2) * x_2 * X_2_[i_] + 
+##     
 ##       # Segment 3: y ~ 1 ~ 1 + x
 ##       (x[i_] &gt;= cp_2) * int_3 + 
-##       (x[i_] &gt;= cp_2) * (x_3 * (min(x[i_], cp_3) - (cp_2))) 
+##       (x[i_] &gt;= cp_2) * x_3 * X_3_[i_] 
+##     
+##     # Fitted standard deviation
+##     sigma_[i_] = 
+##       (x[i_] &gt;= cp_0) * sigma_1 
 ## 
 ##     # Likelihood and log-density for family = gaussian()
-##     y[i_] ~ dnorm(y_[i_], 1 / sigma^2)
-##     loglik_[i_] = logdensity.norm(y[i_], y_[i_], 1 / sigma^2)
+##     y[i_] ~ dnorm(y_[i_], 1 / sigma_[i_]^2)
+##     loglik_[i_] = logdensity.norm(y[i_], y_[i_], 1 / sigma_[i_]^2)
 ##   }
 ## }</code></pre>
 </div>

@@ -4,10 +4,12 @@
 \alias{get_samples}
 \title{Internal function to get samples.}
 \usage{
-get_samples(fit, message = TRUE, error = TRUE)
+get_samples(fit, prior = FALSE, message = TRUE, error = TRUE)
 }
 \arguments{
 \item{fit}{An mcpfit object}
+
+\item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
 
 \item{message}{TRUE: gives a message if returning prior samples. FALSE = no message}
 
@@ -18,3 +20,4 @@ Returns posterior samples, if available. If not, then prior samples. If not,
 then throw an informative error. This is useful for summary and plotting, that
 works on both.
 }
+\keyword{internal}

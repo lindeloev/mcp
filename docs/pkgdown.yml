@@ -2,12 +2,15 @@ pandoc: 2.7.1
 pkgdown: 1.4.1
 pkgdown_sha: ~
 articles:
+  arma: arma.html
   binomial: binomial.html
   comparison: comparison.html
   formulas: formulas.html
   packages: packages.html
   poisson: poisson.html
   priors: priors.html
+  tips: tips.html
+  variance: variance.html
   varying: varying.html
 urls:
   reference: https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference

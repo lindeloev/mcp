@@ -63,11 +63,9 @@ For directional hypotheses, it is p converted to odds.
 \description{
 This function is highly inspired by \code{\link[brms]{hypothesis}}. It returns
 posterior probabilities and Bayes Factors for flexible hypotheses involving
-model parameters. See the parameter `hypotheses`` for examples of how to
-specify hypotheses.
-}
-\details{
-For directional hypotheses, \code{hypothesis`` executes the hypothesis string in a }tidybayes`` environment and summerises the proportion of samples where
+model parameters. See the documentation below for the parameter \code{hypotheses}
+for examples of how to specify hypotheses, and \href{https://lindeloev.github.io/mcp/articles/comparison.html}{read worked examples on the mcp website}.
+For directional hypotheses, \verb{hypothesis`` executes the hypothesis string in a }tidybayes`` environment and summerises the proportion of samples where
 the expression evaluates to TRUE. For equals-hypothesis, a Savage-Dickey
 ratio is computed. Savage-Dickey requires a prior too, so remember
 \code{mcp(..., sample = "both")}.

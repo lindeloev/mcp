@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
 <link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/cerulean/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
@@ -47,30 +47,20 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
-  <a href="../reference/index.html">Reference</a>
-</li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Learn more
+    General usage
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
-<li class="dropdown-header">General usage</li>
-    <li>
+<li>
       <a href="../articles/formulas.html">Formulas</a>
     </li>
     <li>
@@ -82,27 +72,56 @@
     <li>
       <a href="../articles/varying.html">Random/varying effects</a>
     </li>
-    <li class="divider">
-    <li class="dropdown-header">GLM</li>
     <li>
+      <a href="../articles/variance.html">Modeling variance</a>
+    </li>
+    <li>
+      <a href="../articles/arma.html">Time series and autocorrelation</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    GLM
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
       <a href="../articles/poisson.html">Poisson</a>
     </li>
     <li>
       <a href="../articles/binomial.html">Binomial and Bernoulli</a>
     </li>
-    <li class="divider">
-    <li class="dropdown-header">Other</li>
-    <li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Other
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
       <a href="../articles/packages.html">Comparison to other packages</a>
+    </li>
+    <li>
+      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
     </li>
   </ul>
 </li>
 <li>
-  <a href="../news/index.html">Changelog</a>
+  <a href="../news/index.html">News</a>
 </li>
 <li>
   <a href="https://twitter.com/jonaslindeloev">
-    <span class="fab fa fab fa-twitter fa-lg"></span>
+    <span class="fa fa-twitter"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://github.com/lindeloev/mcp">
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
@@ -136,7 +155,7 @@
       <h1>Binomial change point analysis with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-11-14</h4>
+            <h4 class="date">2019-12-02</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/binomial.Rmd"><code>vignettes/binomial.Rmd</code></a></small>
       <div class="hidden name"><code>binomial.Rmd</code></div>
@@ -149,8 +168,8 @@
 <p>First, let us specify a toy model with three segments:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
 <a class="sourceLine" id="cb1-2" title="2">  y <span class="op">|</span><span class="st"> </span><span class="kw">trials</span>(N) <span class="op">~</span><span class="st"> </span><span class="dv">1</span>,  <span class="co"># constant rate</span></a>
-<a class="sourceLine" id="cb1-3" title="3">  <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>year,  <span class="co"># joined changing rate</span></a>
-<a class="sourceLine" id="cb1-4" title="4">  <span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>year  <span class="co"># disjoined changing rate</span></a>
+<a class="sourceLine" id="cb1-3" title="3">  <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>year,  <span class="co"># joined changing rate</span></a>
+<a class="sourceLine" id="cb1-4" title="4">  <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>year  <span class="co"># disjoined changing rate</span></a>
 <a class="sourceLine" id="cb1-5" title="5">)</a></code></pre></div>
 <div id="simulate-data" class="section level1">
 <h1 class="hasAnchor">
@@ -161,47 +180,59 @@
 <a class="sourceLine" id="cb2-2" title="2">empty =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a></code></pre></div>
 <p>Now we can simulate. First, let us see the model parameters.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">empty<span class="op">$</span>pars</a></code></pre></div>
-<pre><code>## $population
-## [1] "int_1"  "int_3"  "year_2" "year_3" "cp_1"   "cp_2"  
-## 
-## $varying
-## NULL
-## 
-## $x
+<pre><code>## $x
 ## [1] "year"
 ## 
 ## $y
 ## [1] "y"
 ## 
 ## $trials
-## [1] "N"</code></pre>
+## [1] "N"
+## 
+## $reg
+## [1] "cp_1"   "cp_2"   "int_1"  "int_3"  "year_2" "year_3"
+## 
+## $varying
+## NULL
+## 
+## $sigma
+## character(0)
+## 
+## $arma
+## character(0)
+## 
+## $population
+## [1] "cp_1"   "cp_2"   "int_1"  "int_3"  "year_2" "year_3"</code></pre>
 <ul>
 <li>It takes two intercepts (<code>int_*</code>), for segments 1 and 3.</li>
 <li>It takes two slopes (<code>year_*</code>), for segment 2 and 3.</li>
 <li>It takes two change points (<code>cp_*</code>) - one between each segment.</li>
 </ul>
-<p><code>empty$func_y</code> is now a function that can predict data given these parameters. If you are in a reasonable R editor, type <code>empty$func_y(</code> and press TAB to see the required arguments. I came up with some values below, including change points at <span class="math inline">\(year = 25\)</span> and <span class="math inline">\(year = 65\)</span>. Notice that because <code><a href="https://rdrr.io/r/stats/family.html">binomial()</a></code> defaults to the link function <code>link = "logit"</code>, the intercept and slopes are on a <a href="https://en.wikipedia.org/wiki/Logit">logit scale</a>. Briefly, this extends the narrow range of binomial rates (0-1) to an infinite logit scale from minus infinity to plus infinity. This will be important later when we set priors.</p>
+<p><code>empty$simulate</code> is now a function that can predict data given these parameters. If you are in a reasonable R editor, type <code>empty$simulate(</code> and press TAB to see the required arguments. I came up with some values below, including change points at <span class="math inline">\(year = 25\)</span> and <span class="math inline">\(year = 65\)</span>. Notice that because <code><a href="https://rdrr.io/r/stats/family.html">binomial()</a></code> defaults to the link function <code>link = "logit"</code>, the intercept and slopes are on a <a href="https://en.wikipedia.org/wiki/Logit">logit scale</a>. Briefly, this extends the narrow range of binomial rates (0-1) to an infinite logit scale from minus infinity to plus infinity. This will be important later when we set priors.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(tibble)</a>
 <a class="sourceLine" id="cb5-2" title="2">data =<span class="st"> </span><span class="kw">tibble</span>(</a>
 <a class="sourceLine" id="cb5-3" title="3">  <span class="dt">year =</span> <span class="dv">1901</span><span class="op">:</span><span class="dv">2000</span>,  <span class="co"># evaluate for each of these</span></a>
 <a class="sourceLine" id="cb5-4" title="4">  <span class="dt">N =</span> <span class="kw"><a href="https://rdrr.io/r/base/sample.html">sample</a></span>(<span class="dv">10</span><span class="op">:</span><span class="dv">20</span>, <span class="dt">size =</span> <span class="dv">100</span>, <span class="dt">replace =</span> <span class="ot">TRUE</span>),  <span class="co"># number of trials</span></a>
-<a class="sourceLine" id="cb5-5" title="5">  <span class="dt">y =</span> empty<span class="op">$</span><span class="kw">func_y</span>(year, N, <span class="dv">2</span>, <span class="dv">0</span>, <span class="fl">-0.2</span>, <span class="fl">0.05</span>, <span class="dv">1925</span>, <span class="dv">1965</span>)</a>
-<a class="sourceLine" id="cb5-6" title="6">)</a>
-<a class="sourceLine" id="cb5-7" title="7"></a>
-<a class="sourceLine" id="cb5-8" title="8">data</a></code></pre></div>
+<a class="sourceLine" id="cb5-5" title="5">  <span class="dt">y =</span> empty<span class="op">$</span><span class="kw"><a href="https://rdrr.io/r/stats/simulate.html">simulate</a></span>(year, N, </a>
+<a class="sourceLine" id="cb5-6" title="6">                   <span class="dt">cp_1 =</span> <span class="dv">1925</span>, <span class="dt">cp_2 =</span> <span class="dv">1965</span>, </a>
+<a class="sourceLine" id="cb5-7" title="7">                   <span class="dt">int_1 =</span> <span class="dv">2</span>, <span class="dt">int_3 =</span> <span class="dv">0</span>, </a>
+<a class="sourceLine" id="cb5-8" title="8">                   <span class="dt">year_2 =</span> <span class="fl">-0.2</span>, <span class="dt">year_3 =</span> <span class="fl">0.05</span>)</a>
+<a class="sourceLine" id="cb5-9" title="9">)</a>
+<a class="sourceLine" id="cb5-10" title="10"></a>
+<a class="sourceLine" id="cb5-11" title="11">data</a></code></pre></div>
 <pre><code>## # A tibble: 100 x 3
 ##     year     N     y
 ##    &lt;int&gt; &lt;int&gt; &lt;int&gt;
-##  1  1901    19    16
-##  2  1902    13    13
-##  3  1903    16    15
-##  4  1904    20    19
-##  5  1905    18    14
-##  6  1906    11    10
-##  7  1907    11    11
-##  8  1908    12    11
-##  9  1909    20    17
-## 10  1910    10     9
+##  1  1901    20    19
+##  2  1902    10     9
+##  3  1903    12    12
+##  4  1904    16    13
+##  5  1905    18    16
+##  6  1906    12    11
+##  7  1907    17    13
+##  8  1908    10     9
+##  9  1909    12    11
+## 10  1910    16    15
 ## # ... with 90 more rows</code></pre>
 <p>Visually:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(data<span class="op">$</span>year, data<span class="op">$</span>y)</a></code></pre></div>
@@ -217,23 +248,23 @@
 <pre><code>## Family: binomial(link = 'logit')
 ## Iterations: 9000 from 3 chains.
 ## Segments:
-##   1: y ~ 1
-##   2: y ~ 1 ~ 0 + year
-##   3: y ~ 1 ~ 1 + year
+##   1: y | trials(N) ~ 1
+##   2: y | trials(N) ~ 1 ~ 0 + year
+##   3: y | trials(N) ~ 1 ~ 1 + year
 ## 
 ## Population-level parameters:
-##    name      mean    lower     upper rhat  eff    ts_se
-##    cp_1 1921.1893 1917.829 1924.7411    1  536 5.37e+01
-##    cp_2 1964.5011 1964.007 1964.9571    1 5076 1.64e-01
-##   int_1    2.0793    1.722    2.4350    1  833 3.71e-01
-##   int_3    0.0805   -0.281    0.4287    1 1046 2.73e-01
-##  year_2   -0.1604   -0.183   -0.1378    1  996 1.15e-03
-##  year_3    0.0425    0.024    0.0605    1 1037 7.49e-04</code></pre>
+##    name      mean     lower     upper Rhat n.eff    ts_se
+##    cp_1 1922.3880 1919.1711 1925.2779 1.01   648 3.58e+01
+##    cp_2 1964.4976 1964.0032 1964.9523 1.00  5651 1.38e-01
+##   int_1    2.1567    1.8050    2.5089 1.00  1059 2.70e-01
+##   int_3    0.1447   -0.2225    0.4883 1.00   890 3.24e-01
+##  year_2   -0.1653   -0.1883   -0.1427 1.01   958 1.24e-03
+##  year_3    0.0459    0.0276    0.0635 1.00   906 8.68e-04</code></pre>
 <p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have <a href="../docs/articles/varying.html">varying effects</a>, use <code><a href="../reference/ranef.html">ranef(fit)</a></code> to see them.</p>
 <p>Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
-<p>These lines are just <code>fit$func_y</code> applied to a random draw of the posterior samples. In other words, they represent the joint distribution of the parameters. You can change the number of draws (lines) using <code><a href="../reference/plot.mcpfit.html">plot(fit, lines = 50)</a></code>.</p>
+<p>These lines are just <code>fit$simulate</code> applied to a random draw of the posterior samples. In other words, they represent the joint distribution of the parameters. You can change the number of draws (lines) using <code><a href="../reference/plot.mcpfit.html">plot(fit, lines = 50)</a></code>.</p>
 <p>Notice for binomial models it defaults to plot the <em>rate</em> (<code>y / N</code>) as a function of x. The reason why is obvious when we plot on “raw” data by toggling <code>rate</code>:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">rate =</span> <span class="ot">FALSE</span>)</a></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
@@ -244,34 +275,24 @@
 <h1 class="hasAnchor">
 <a href="#model-diagnostics-and-sampling-options" class="anchor"></a>Model diagnostics and sampling options</h1>
 <p>Already in the default <code>plot</code> as used above, it will be obvious if there was poor convergence. A more direct assessment is to look at the posterior distributions and trace plots:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="st">"combo"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit)</a></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-10-1.png" width="576"></p>
 <p>Convergence is perfect here as evidenced by the overlapping trace plots that look like fat caterpillars (Bayesians love fat caterpillars). Notice that the posterior distribution of change points can be quite non-normal and sometimes even bimodal. Therefore, one should be careful not to interpret the HDI as if it was normal.</p>
-<p><code><a href="../reference/plot.mcpfit.html">plot()</a></code> can do a lot more than this, so check out it’s documentation.</p>
+<p><code><a href="../reference/plot.mcpfit.html">plot()</a></code> and <code><a href="../reference/plot_pars.html">plot_pars()</a></code> can do a lot more than this, so check out their documentation.</p>
 </div>
 <div id="priors-for-binomial-models" class="section level1">
 <h1 class="hasAnchor">
 <a href="#priors-for-binomial-models" class="anchor"></a>Priors for binomial models</h1>
 <p><code>mcp</code> uses priors to achieve a lot of it’s functionality. See <a href="../docs/articles/priors.html">how to set priors</a>, including how to share parameters between segments and how to fix values. Here, I post a few notes about the binomial-specific default priors.</p>
 <p>The default priors in <code>mcp</code> are set so that they are reasonably broad to cover most scenarios, though also specific enough to sample effectively. They are not “default” as in “canonical”. Rather, they are “default” as in “what happens if you do nothing else”. All priors are stored in <code>fit$prior</code> (also <code>empty$prior</code>). We did not specify <code>prior</code> above, so it ran with default priors:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">fit<span class="op">$</span>prior</a></code></pre></div>
-<pre><code>## $int_1
-## [1] "dnorm(0, 3)"
-## 
-## $year_2
-## [1] "dnorm(0, 3 / (MAXX - MINX))"
-## 
-## $cp_1
-## [1] "dunif(MINX, MAXX)"
-## 
-## $int_3
-## [1] "dnorm(0, 3)"
-## 
-## $year_3
-## [1] "dnorm(0, 3 / (MAXX - MINX))"
-## 
-## $cp_2
-## [1] "dunif(cp_1, MAXX)"</code></pre>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(fit<span class="op">$</span>prior)</a></code></pre></div>
+<pre><code>##        [,1]                         
+## cp_1   "dunif(MINX, MAXX)"          
+## cp_2   "dunif(cp_1, MAXX)"          
+## int_1  "dnorm(0, 3)"                
+## int_3  "dnorm(0, 3)"                
+## year_2 "dnorm(0, 3 / (MAXX - MINX))"
+## year_3 "dnorm(0, 3 / (MAXX - MINX))"</code></pre>
 <p>The priors on change points are discussed extensively in the prior vignette. The priors on slopes and intercepts are normals with standard deviation of “3” logits. This corresponds to quite extreme binomial probabilities, yet not so extreme as to be totally flat. Here are visualization of priors <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm(0, 1)</a></code> (red), <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm(0, 2)</a></code> (black, mcp default), and a <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm(0, 5)</a></code> (blue) prior, and the correspondence between logits and probabilities:</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">inverse_logit =<span class="st"> </span><span class="cf">function</span>(x) <span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(x) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(x))</a>
 <a class="sourceLine" id="cb16-2" title="2"></a>
@@ -298,31 +319,34 @@
 <pre><code>## 
 ## model {
 ##   # Priors for population-level effects
-##   int_1 ~ dnorm(0, 1/(3)^2) 
-##   year_2 ~ dnorm(0, 1/(3/(MAXX-MINX))^2) 
 ##   cp_1 ~ dunif(MINX, MAXX)
-##   int_3 ~ dnorm(0, 1/(3)^2) 
-##   year_3 ~ dnorm(0, 1/(3/(MAXX-MINX))^2) 
 ##   cp_2 ~ dunif(cp_1, MAXX)
+##   int_1 ~ dnorm(0, 1/(3)^2) 
+##   int_3 ~ dnorm(0, 1/(3)^2) 
+##   year_2 ~ dnorm(0, 1/(3/(MAXX-MINX))^2) 
+##   year_3 ~ dnorm(0, 1/(3/(MAXX-MINX))^2) 
 ##   cp_0 = -10^100  # mcp helper value; minus infinity
 ##   cp_3 = 10^100  # mcp helper value; plus infinity
 ## 
 ## 
 ##   # Model and likelihood
 ##   for (i_ in 1:length(year)) {
-## 
+##     X_1_[i_] = min(year[i_], cp_1)
+##     X_2_[i_] = min(year[i_], cp_2) - cp_1
+##     X_3_[i_] = min(year[i_], cp_3) - cp_2
+##     
 ##     # Fitted value
 ##     y_[i_] = 
-## 
-##       # Segment 1: y ~ 1
+##     
+##       # Segment 1: y | trials(N) ~ 1
 ##       (year[i_] &gt;= cp_0) * (year[i_] &lt; cp_2) * int_1 + 
-##       
-##       # Segment 2: y ~ 1 ~ 0 + year
-##       (year[i_] &gt;= cp_1) * (year[i_] &lt; cp_2) * (year_2 * (min(year[i_], cp_2) - (cp_1))) + 
-##       
-##       # Segment 3: y ~ 1 ~ 1 + year
+##     
+##       # Segment 2: y | trials(N) ~ 1 ~ 0 + year
+##       (year[i_] &gt;= cp_1) * (year[i_] &lt; cp_2) * year_2 * X_2_[i_] + 
+##     
+##       # Segment 3: y | trials(N) ~ 1 ~ 1 + year
 ##       (year[i_] &gt;= cp_2) * int_3 + 
-##       (year[i_] &gt;= cp_2) * (year_3 * (min(year[i_], cp_3) - (cp_2))) 
+##       (year[i_] &gt;= cp_2) * year_3 * X_3_[i_] 
 ## 
 ##     # Likelihood and log-density for family = binomial()
 ##     y[i_] ~ dbin(ilogit(y_[i_]), N[i_])

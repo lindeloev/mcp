@@ -1,6 +1,6 @@
 Package: mcp
-Title: Bayesian Multiple Change Point Inference
-Version: 0.1
+Title: Regression with Multiple Change Points
+Version: 0.2.0
 URL: http://lindeloev.github.io/mcp/, https://github.com/lindeloev/mcp
 BugReports: https://github.com/lindeloev/mcp/issues
 Authors@R: 
@@ -9,16 +9,19 @@ Authors@R:
            role = c("aut", "cre"),
            email = "jonas@lindeloev.dk",
            comment = c(ORCID = "0000-0003-4565-0595"))
-Description: Bayesian inference of Hierarchical Multiple Change Points (MCP) between Generalized Linear Segments - and the parameters in those segments.
+Description: Flexible and informed regression with Multiple Change Points (MCP). mcp can infer change points in means, variances, autocorrelation structure, and any combination of these. as well as the parameters of the segments in between. All parameters are estimated with uncertainty and prediction intervals are supported - also near the change points. mcp supports hypothesis testing via Savage-Dickey density ratio, posterior contrasts, and cross-validation.
 License: GPL-2
 Encoding: UTF-8
+Language: en-US
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.1
 Roxygen: list(markdown = TRUE)
+Depends: R (>= 3.5.0)
 Imports:
 	parallel,
+	future,
+	future.apply,
 	rjags (>= 4.9),
-	dclone (>= 2.3.0),
 	coda (>= 0.19.3),
 	loo (>= 2.1.0),
 	bayesplot (>= 1.7.0),
@@ -30,19 +33,13 @@ Imports:
 	purrr (>= 0.3.3),
 	tibble (>= 2.1.3),
 	stringr (>= 1.4.0),
-	stringi (>= 1.4.3),
 	ggplot2 (>= 3.2.1),
-	patchwork (>= 0.0.1),
+	patchwork (>= 1.0.0),
 	methods,
 	stats,
 	rlang (>= 0.4.1)
-Remotes: 
-    thomasp85/patchwork
 Suggests: 
     testthat (>= 2.1.0),
 	knitr , 
 	rmarkdown,
-	boot,
-	covr,
-	gridExtra
-VignetteBuilder: knitr
+	covr

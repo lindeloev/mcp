@@ -11,6 +11,7 @@ vignette: >
 
 The Poisson distribution models the number of events within similar-sized time frames. 
 
+
 # Coal mining disasters
 A dataset if coal mining disasters has grown very popular in the change point literature (available in `boot::coal`). It contains a timestamp of each coal mining disaster from 1851 to 1962. By binning the number of events within each year (fixed time frame), we have something very Poisson-friendly:
 
@@ -27,11 +28,16 @@ data
 
 
 The number of events (`n`) as a function of year (`date`) is typically modeled as a change between two intercepts. This is very simple to do in `mcp`:
-```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
+
+```{r}
 library(mcp)
+options(mc.cores = 3)  # Speed up sampling!
+```
+
+```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
 segments = list(
   n ~ 1,  # intercept-only
-  1 ~ 1  # intercept-only
+  ~ 1  # intercept-only
 )
 
 fit = mcp(segments, data, family = poisson(), par_x = "date")
@@ -56,7 +62,7 @@ It seems to fit the data well, but we can see that the change point probability 
 We can see this more clearly if plotting the posteriors. We include a traceplot too, just to check convergence visually.
 
 ```{r}
-plot(fit, "combo")
+plot_pars(fit)
 ```
 
 
@@ -66,7 +72,7 @@ plot(fit, "combo")
 Default priors were used. They are normals with a standard deviation of 10. I.e. with 95% probability mass between `exp(10) = 22026` and `exp(-10) = 1 / 22026`:
 
 ```{r}
-fit$prior
+cbind(fit$prior)
 ```
 
 As always, the prior on the change point forces it to occur in the observed range. These priors are very vague, so update with more informed priors for your particular case, e.g.:
