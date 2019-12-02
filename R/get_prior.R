@@ -133,6 +133,7 @@ truncate_prior_cp = function(ST, i, prior_str) {
 #' `truncate_prior_cp``, if not done manually by the user already.
 #'
 #' @aliases get_prior
+#' @keywords internal
 #' @param ST Tibble. A segment table returned by `get_segment_table`.
 #' @param prior A list of user-defined priors. Will overwrite the relevant
 #'   default priors.

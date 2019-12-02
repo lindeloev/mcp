@@ -11,8 +11,11 @@
 
 ## Test environments
 * local Windows 10, R 3.6.1
-* Ubuntu 16.04.6 LTS (on travis-ci): oldrel, release, devel
-* Mac OS X 10.13.3 (on travis-ci): oldrel, release
+* Ubuntu 16.04.6 LTS (on travis-ci): release
+* Ubuntu 16.04.6 LTS (on travis-ci): devel
+* Mac OS X 10.13.3 (on travis-ci): release
+* devtools::check_win_release()
+* devtools::check_win_devel()
 
 ## R CMD check results
 There were no ERRORs or WARNINGs.

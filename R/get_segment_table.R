@@ -1,4 +1,8 @@
-# Takes a formula and returns a string representation of y, cp, and rhs
+#' Takes a formula and returns a string representation of y, cp, and rhs
+#' @aliases unpack_tildes
+#' @keywords internal
+#' @inheritParams unpack_rhs
+#' @param segment A formula
 unpack_tildes = function(segment, i) {
   has_LHS = attributes(stats::terms(segment))$response == 1
   if (!has_LHS & i == 1) {
@@ -42,7 +46,12 @@ unpack_tildes = function(segment, i) {
   }
 }
 
-# Checks if all terms are in the data
+#' Checks if all terms are in the data
+#'
+#' @aliases check_terms_in_data
+#' @keywords internal
+#' @inheritParams unpack_rhs
+#' @param form Character representation of formula
 check_terms_in_data = function(form, data, i) {
   found = all.vars(form) %in% colnames(data)
   found = found[stringr::str_starts(found, "sigma")]  # Sigma need not be in data
@@ -51,7 +60,12 @@ check_terms_in_data = function(form, data, i) {
 }
 
 
-# Unpacks y variable name
+#' Unpacks y variable name
+#'
+#' @aliases unpack_y
+#' @keywords internal
+#' @inheritParams unpack_rhs
+#' @param form_y Character representation of formula
 unpack_y = function(form_y, i, family) {
   # If NA and not segment 1, just return empty
   if (is.na(form_y)) {
@@ -101,8 +115,11 @@ unpack_y = function(form_y, i, family) {
 
 
 #' Takes a cp formula (as a string) and returns its properties
+#'
+#' @aliases unpack_cp
+#' @keywords internal
+#' @inheritParams unpack_rhs
 #' @param form_cp Segment formula as string.
-#' @param i Positive integer. Segment number.
 unpack_cp = function(form_cp, i) {
   if (is.na(form_cp)) {
     return(tibble::tibble(
@@ -163,7 +180,17 @@ unpack_cp = function(form_cp, i) {
 
 
 
-# This is a pretty big function. A lot goes on here
+#' Unpack right-hand side
+#'
+#' This is a pretty big function. It includes unpacking sigma(), ar(), etc.
+#'
+#' @aliases unpack_rhs
+#' @keywords internal
+#' @param form_rhs A character representation of a formula
+#' @param i The segment number (integer)
+#' @param family An mcpfamily object returned by `get_family()`.
+#' @param data A data.frame or tibble
+#' @param last_segment The last row in the segment table, made in `get_segment_table()`
 unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   # Get general format
   form_rhs = formula(form_rhs)
@@ -357,18 +384,24 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
 }
 
 
-get_term_content = function(form_str_in) {
+
+#' Get formula inside a wrapper
+#'
+#' @aliases get_term_content
+#' @keywords internal
+#' @param term E.g., "ct(1 + x)", "sigma(0 + rel(x) + I(x^2))", etc.
+get_term_content = function(term) {
   # Handle cases of no input or several inputs
-  if (length(form_str_in) == 0) {
+  if (length(term) == 0) {
     return(NA)
-  } else if (length(form_str_in) > 1) {
-    #term_type = paste0(substr(form_str_in, 0, content_start), ")")
-    stop("Only one ", form_str_in, " allowed in each formula.")
-  } else if (length(form_str_in) == 1) {
+  } else if (length(term) > 1) {
+    #term_type = paste0(substr(term, 0, content_start), ")")
+    stop("Only one ", term, " allowed in each formula.")
+  } else if (length(term) == 1) {
     # Get formula inside wrapper
-    content_start = stringr::str_locate(form_str_in, "\\(") + 1  # Location of first character in contents
-    content_end = stringr::str_length(form_str_in) - 1  # Location of last character in contents
-    content = substr(form_str_in, content_start, content_end)
+    content_start = stringr::str_locate(term, "\\(") + 1  # Location of first character in contents
+    content_end = stringr::str_length(term) - 1  # Location of last character in contents
+    content = substr(term, content_start, content_end)
 
     form = as.formula(paste0("~", content), env = globalenv())
     return(form)
@@ -376,6 +409,11 @@ get_term_content = function(form_str_in) {
 }
 
 
+#' Get the intercept of a formula
+#'
+#' @aliases unpack_int
+#' @keywords internal
+#' @inheritParams unpack_slope
 unpack_int = function(form, i, ttype) {
   # It there is no formula for this, return NA and don't go further
   if (!rlang::is_formula(form)) {
@@ -404,8 +442,17 @@ unpack_int = function(form, i, ttype) {
 }
 
 
-# Makes a list of terms and applies unpack_slope_term() to each of them.
-# Then builds the code for this segment's slope
+#' Unpack the slope of a formula
+#'
+#' Makes A list of terms and applies unpack_slope_term() to each of them. Then builds the code for this segment's slope
+#' @aliases unpack_slope
+#' @keywords internal
+#' @param form A formula
+#' @param i Segment number (integer)
+#' @param ttype The term type. One of "ct" (central tendency), "sigma" (variance),
+#'   or "ar" (autoregressive)
+#' @param last_slope The element in the slope column for this ttype in the previous
+#'   segment. I.e., probably what this function returned last time it was called!
 unpack_slope = function(form, i, ttype, last_slope) {
   # If there is no formula information, return NA
   if (!rlang::is_formula(form)) {
@@ -447,7 +494,14 @@ unpack_slope = function(form, i, ttype, last_slope) {
 }
 
 
-
+#' Unpacks a single term
+#'
+#' Returns a row for `unpack_slope()`.
+#'
+#' @aliases unpack_slope_term
+#' @keywords internal
+#' @inheritParams unpack_slope
+#' @param term A character, e.g., "x", "I(x^2)", or "log(x)".
 unpack_slope_term = function(term, i, last_slope, ttype = "") {
   # Remove the "rel()" and "I()" in that order. Must be done before checking starts.
   if (stringr::str_starts(term, "rel\\(")) {
@@ -525,8 +579,12 @@ unpack_slope_term = function(term, i, last_slope, ttype = "") {
 
 
 
-# Check ARMA. These are allowed: ar([number]) or ar([number], [formula])
-# Return order and ar(formula) separately. The formula is ar(1) or ma(1) if no formula is given
+#' Unpack arma order and formula
+#'
+#' @aliases unpack_arma
+#' @keywords internal
+#' @param form_str_in A character. These are allowed: "ar(number)" or "ar(number, formula)"
+#' @return A list with $order and $form_str (e.g., "ar(formula)"). The formula is ar(1) or ma(1) if no formula is given
 unpack_arma = function(form_str_in) {
   if (length(form_str_in) == 0) {
     return(list(
@@ -568,6 +626,11 @@ unpack_arma = function(form_str_in) {
 
 
 
+#' Unpack varying effects
+#'
+#' @aliases unpack_varying_term
+#' @keywords internal
+#' @inheritParams unpack_slope_term
 unpack_varying_term = function(term, i) {
   parts = stringr::str_trim(strsplit(term, "\\|")[[1]])  # as c("lhs", "group")
 
@@ -602,6 +665,7 @@ unpack_varying_term = function(term, i) {
 #' Used internally for most mcp functions.
 #'
 #' @aliases get_segment_table
+#' @keywords internal
 #' @inheritParams mcp
 #' @return A tibble.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -764,15 +828,28 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
 }
 
 
-# Inspired by https://stackoverflow.com/questions/24862046/cumulatively-paste-concatenate-values-grouped-by-another-variable
+#' Cumulative pasting of character columns
+#'
+#' Inspired by https://stackoverflow.com/questions/24862046/cumulatively-paste-concatenate-values-grouped-by-another-variable
+#' @aliases cumpaste
+#' @keywords internal
+#' @param x A column
+#' @param .sep A character to append between pastes
 cumpaste = function(x, .sep = " ")
   Reduce(function(x1, x2) paste(x1, x2, sep = .sep), x, accumulate = TRUE)
 
 
-# Take a value like "a + b" and
-# (1) replace it with NA if na_col == NA.
-# (2) Change to "(a + b)" if there is a "+"
-# (3) Return itself otherwise, e.g., "a" --> "a".
+#' Format code with one or multiple terms
+#'
+#' Take a value like "a + b" and
+#' (1) replace it with NA if na_col == NA.
+#' (2) Change to "(a + b)" if there is a "+"
+#' (3) Return itself otherwise, e.g., "a" --> "a".
+#'
+#' @aliases format_code
+#' @keywords internal
+#' @param col A column
+#' @param na_col If this column is NA, return NA
 format_code = function(col, na_col) {
   # Replace with NA
   col = ifelse(is.na(na_col), NA, col)

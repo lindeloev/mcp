@@ -1,5 +1,5 @@
 Package: mcp
-Title: mcp: Regression with Multiple Change Points
+Title: Regression with Multiple Change Points
 Version: 0.2.0
 URL: http://lindeloev.github.io/mcp/, https://github.com/lindeloev/mcp
 BugReports: https://github.com/lindeloev/mcp/issues
@@ -9,7 +9,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "jonas@lindeloev.dk",
            comment = c(ORCID = "0000-0003-4565-0595"))
-Description: Flexible and informed regression with Multiple Change Points (MCP) between Hierarchical Generalized Linear Time-Series Segments.
+Description: Flexible and informed regression with Multiple Change Points (MCP). mcp can infer change points in means, variances, autocorrelation structure, and any combination of these. as well as the parameters of the segments in between. All parameters are estimated with uncertainty and prediction intervals are supported - also near the change points. mcp supports hypothesis testing via Savage-Dickey density ratio, posterior contrasts, and cross-validation.
 License: GPL-2
 Encoding: UTF-8
 Language: en-US
