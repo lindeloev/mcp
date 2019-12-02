@@ -6,13 +6,15 @@
 \alias{fixed.effects}
 \title{Get population-level ("fixed") effects of mcpfit.}
 \usage{
-fixef(object, width = 0.95, ...)
+fixef(object, width = 0.95, prior = FALSE, ...)
 }
 \arguments{
 \item{object}{An \code{mcpfit} object returned by \code{\link{mcp}}.}
 
 \item{width}{Float. The width of the highest posterior density interval
 (between 0 and 1).}
+
+\item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
 
 \item{...}{Currently ignored}
 }

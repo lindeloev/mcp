@@ -42,12 +42,12 @@ stopifnot(identical(findbars(f1),
 \seealso{
 \code{\link{formula}}, \code{\link{model.frame}}, \code{\link{model.matrix}}.
 
-Other utilities: \code{\link{expandDoubleVerts}},
-  \code{\link{nobars}}
+Other utilities: 
+\code{\link{expandDoubleVerts}()},
+\code{\link{nobars}()}
 }
 \author{
 From package \code{lme4}.
 }
 \concept{utilities}
-\keyword{models}
-\keyword{utilities}
+\keyword{internal}

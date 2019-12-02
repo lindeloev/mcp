@@ -36,3 +36,4 @@ A string
 \description{
 Get JAGS code for a prior
 }
+\keyword{internal}

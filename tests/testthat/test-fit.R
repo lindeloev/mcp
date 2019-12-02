@@ -7,7 +7,7 @@ library(mcp)
 # All relevant segments expressions
 segments = list(
   y ~ 1 + x,
-  1 ~ rel(1) + rel(x),
+  ~ rel(1) + rel(x),
   rel(1) ~ rel(1) + rel(x),
   rel(1) ~ 0
 )
@@ -42,12 +42,12 @@ fit_empty = mcp(segments, sample = F)
 set.seed(42)
 data = data.frame(
   x = sim_x,
-  y = do.call(fit_empty$func_y, func_args)
+  y = do.call(fit_empty$simulate, func_args)
 )
 
 # # Fit model to simulated data. A pretty long run to ensure convergence
 # # and small MCMC error
-# fit = mcp(segments, data, adapt = 2500, update = 2500, iter = 3000)
+# fit = mcp(segments, data, adapt = 5000, iter = 3000)
 #
 # # Check: expect all estimates to be within 98% HDI
 # results_table = summary(fit, width = 0.95) %>%

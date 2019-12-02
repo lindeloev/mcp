@@ -5,7 +5,7 @@
 \alias{summary}
 \title{Summarise mcpfit objects}
 \usage{
-\method{summary}{mcpfit}(object, width = 0.95, digits = 2, ...)
+\method{summary}{mcpfit}(object, width = 0.95, digits = 2, prior = FALSE, ...)
 }
 \arguments{
 \item{object}{An \code{mcpfit} object returned by \code{\link{mcp}}.}
@@ -15,21 +15,23 @@
 
 \item{digits}{Positive integer. Number of digits to print}
 
+\item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
+
 \item{...}{Currently ignored}
 }
 \value{
-Posterior means and HDI intervals. \code{rhat} is the Gelman-Rubin
+Posterior means and HDI intervals. \code{Rhat} is the Gelman-Rubin
 convergence diagnostic which is often taken to be acceptable if < 1.1. It
 is computed using \code{\link[coda]{gelman.diag}}.
-\code{eff} is the effective sample size computed using
+\code{n.eff} is the effective sample size computed using
 \code{\link[coda]{effectiveSize}}. Low effective sample sizes are
-also obvious as poor mixing in trace plots (see \code{plot(fit, "combo")}).
+also obvious as poor mixing in trace plots (see \code{plot_pars(fit)}).
 \code{ts_err} is the time-series error, taking autoregressive correlation
 into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
 }
 \description{
 Computes posterior means and highest density intervals, and model
-diagnostics. Get them in a data frame by doing result = summary(fit).
+diagnostics. Get them in a data frame by doing \code{result = summary(fit)}.
 }
 \examples{
 \dontrun{

@@ -4,7 +4,7 @@
 \alias{get_summary}
 \title{Internal function for summary.mcpfit, fixef.mcpfit, and ranef.mcpfit}
 \usage{
-get_summary(fit, width, varying = FALSE)
+get_summary(fit, width, varying = FALSE, prior = FALSE)
 }
 \arguments{
 \item{fit}{An mcpfit object.}
@@ -13,6 +13,8 @@ get_summary(fit, width, varying = FALSE)
 (between 0 and 1).}
 
 \item{varying}{Boolean. Get results for varying (TRUE) or population (FALSE)?}
+
+\item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
 }
 \description{
 Internal function for summary.mcpfit, fixef.mcpfit, and ranef.mcpfit
@@ -20,3 +22,4 @@ Internal function for summary.mcpfit, fixef.mcpfit, and ranef.mcpfit
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
 }
+\keyword{internal}

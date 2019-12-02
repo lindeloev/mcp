@@ -3,8 +3,7 @@ language: r
 # Which OSes and R releases to test on
 matrix:
   include:
-    # Patchwork fails to install on oldrel, so this is not tested atm.
-    # Only do code coverage on this one (fails on os:osx + r:devel)
+    # oldrel not tested. linux fails installing plyr. osx fails installing jags. (Dec, 2019)
     - os: linux
       r: release
       r_github_packages: r-lib/covr
@@ -23,8 +22,6 @@ cache: packages
 r_binary_packages:
  - dplyr
  - stringi
- - rstan
- - StanHeaders
  - curl
  - openssl
 
@@ -39,6 +36,6 @@ addons:
   homebrew:
     packages: jags
 
-# Get code coverage
+# Get code coverage (for envs where $R_CODECOV is set)
 after_success:
   - test $R_CODECOV && Rscript -e "covr::coveralls()"

@@ -4,19 +4,35 @@
 \alias{mcp}
 \title{Fit Multiple Linear Segments And Their Change Points}
 \usage{
-mcp(segments, data = NULL, prior = list(), family = gaussian(),
-  par_x = NULL, sample = "post", cores = 1, chains = 3,
-  iter = 3000, adapt = 1500, update = 1500, jags_explicit = NULL,
-  ...)
+mcp(
+  segments,
+  data = NULL,
+  prior = list(),
+  family = gaussian(),
+  par_x = NULL,
+  sample = "post",
+  cores = 1,
+  chains = 3,
+  iter = 3000,
+  adapt = 1000,
+  inits = NULL,
+  jags_code = NULL
+)
 }
 \arguments{
 \item{segments}{A list of formulas - one for each segment. The first formula
 has the format \code{response ~ predictors} while the following formulas
 have the format \code{response ~ changepoint ~ predictors}. The response
 and change points can be omitted (\code{changepoint ~ predictors} assumes same
-response. \code{~ predictors} assumes an intercept-only change point).
-
-See examples for more details.}
+response. \code{~ predictors} assumes an intercept-only change point). Segments
+can model
+\itemize{
+\item \emph{Regular formulas:} e.g., \code{~ 0 + x + I(x^2) + exp(x)}). \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more here}.
+\item \emph{Variance:} e.g., \code{~sigma(1)} for a simple variance change or
+\code{~sigma(rel(1) + I(x^2))}) for more advanced variance structures. \href{https://lindeloev.github.io/mcp/articles/variance.html}{Read more here}
+\item \emph{Autoregression:} e.g., \code{~ar(1)} for a simple onset/change in AR(1) or
+\verb{ar(2, 0 + x}) for an AR(2) with parameter(s) increasing by \code{x}. \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more here}
+}}
 
 \item{data}{Data.frame or tibble in long format.}
 
@@ -58,28 +74,29 @@ prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
 
 \item{cores}{Positive integer or "all". Number of cores.
 \itemize{
-\item 1: serial sampling
-\item 
-
-1: parallel sampling on this number of cores. Ideally set \code{chains}
-to the same value.
-\item "all": use all cores but one.
+\item \code{1}: serial sampling
+\item \verb{>1}: parallel sampling on this number of cores. Ideally set \code{chains}
+to the same value. Note: \code{cores > 1} takes a few extra seconds the first
+time it's called but subsequent calls will start sampling immediately.
+\item \code{"all"}: use all cores but one and sets \code{chains} to the same value. This is
+a convenient way to maximally use your computer's power.
 }}
 
 \item{chains}{Positive integer. Number of chains to run.}
 
 \item{iter}{Positive integer. Number of post-warmup samples to draw.}
 
-\item{adapt}{Positive integer. Number of iterations to find sampler settings.}
+\item{adapt}{Positive integer. Also sometimes called "burnin", this is the
+number of samples used to reach convergence. Set lower for greater speed.
+Set higher if the chains haven't converged yet or look at \href{https://lindeloev.github.io/mcp/articles/tips.html}{tips, tricks, and debugging}.}
 
-\item{update}{Positive integer. Also sometimes called "burnin", this is the
-number of regular samples before anything is recorded. Use to reach
-convergence.}
+\item{inits}{A list if initial values for the parameters. This can be useful
+if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
+Defaults to \code{NULL}, i.e., no inits.}
 
-\item{jags_explicit}{Pass JAGS code to \code{mcp} to use directly. Useful if
-you want to make small tweaks, but mostly used for the development of mcp.}
-
-\item{...}{Further parameters for \code{\link[dclone]{jags.fit}}.}
+\item{jags_code}{Pass JAGS code to \code{mcp} to use directly. This is useful if
+you want to tweak the code in \code{fit$jags_code} and run it within the \code{mcp}
+framework.}
 }
 \value{
 An \code{mcpfit} object.
@@ -87,16 +104,17 @@ An \code{mcpfit} object.
 \description{
 Given a list of linear segments, \code{mcp} infers the posterior
 distributions of the parameters of each segment as well as the change points
-between segments. All segments must regress on the same x-axis. Change points
-are forced to be ordered using truncation of the priors. You can run
+between segments. \href{https://lindeloev.github.io/mcp/}{See more details and worked examples on the mcp website}.
+All segments must regress on the same x-variable. Change
+points are forced to be ordered using truncation of the priors. You can run
 \code{fit = mcp(segments, sample=FALSE)} to avoid sampling and the need for
 data if you just want to get the priors (\code{fit$prior}), the JAGS code
-\code{fit$jags_code}, or the R function to simulate data (\code{fit$func_y}).
+\code{fit$jags_code}, or the R function to simulate data (\code{fit$simulate}).
 }
 \details{
 Notes on priors:
 \itemize{
-\item Order restriction is automatically applied to cp_* parameters using
+\item Order restriction is automatically applied to cp_\* parameters using
 truncation (e.g., \code{T(cp_1, )}) so that they are in the correct order on the
 x-axis UNLESS you do it yourself. The one exception is for dunif
 distributions where you have to do it as above.
@@ -115,26 +133,35 @@ in \code{fit$jags_code}
 # Define the segments that are separated by change points
 segments = list(
   score ~ 1 + year,  # intercept + slope
-   1 ~ 0 + year,  # joined slope
-   1 ~ 0,  # joined plateau
-   1 ~ 1  # disjoined plateau
+   ~ 0 + year,  # joined slope
+   ~ 0,  # joined plateau
+   ~ 1  # disjoined plateau
 )
 
-# Start sampling
+# Sample and see results
 fit = mcp(segments, data)
+summary(fit)
 
 # Visual inspection of the results
 plot(fit)
-plot(fit, "combo")
+plot_pars(fit)
+
+# Test a hypothesis
+hypothesis(fit, "cp_1 > 10")
 
 # Compare to a one-intercept-only model (no change points) with default prior
-segments2 = list(1 ~ 1)
+segments2 = list(score ~ 1)
 fit2 = mcp(segments2, data)  # fit another model here
 fit$loo = loo(fit)
 fit2$loo = loo(fit)
 loo_compare(fit, fit2)
 
-# Show all priors (not just those specified manually)
+# Sample the prior and inspect it using all the usual methods (prior predictive checks)
+fit_prior = mcp(segments, data, sample = "prior")
+summary(fit_prior)
+plot(fit_prior)
+
+# Show all priors. Default priors are added where you don't provide any
 fit$prior
 
 # Set priors and re-run
@@ -150,12 +177,6 @@ prior = list(
   int_3 = 15  # Fixed intercept of segment 3
 )
 fit3 = mcp(segments, data, prior)
-
-# Do stuff with the parameter estimates
-fit$pars$model  # check out which parameters are inferred.
-library(tidybayes)
-spread_draws(fit$mcmc_post, cp_1, cp_2, int_1, year_1, year_2) \%>\%
-   # tidybayes stuff here
 
 # Show JAGS model
 cat(fit$jags_code)

@@ -2,15 +2,16 @@
 #' Internal function for summary.mcpfit, fixef.mcpfit, and ranef.mcpfit
 #'
 #' @aliases get_summary
+#' @keywords internal
 #' @inheritParams summary.mcpfit
 #' @param fit An mcpfit object.
 #' @param varying Boolean. Get results for varying (TRUE) or population (FALSE)?
 #' @importFrom magrittr %>%
 #' @importFrom dplyr .data
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_summary = function(fit, width, varying = FALSE) {
+get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   # Get posterior/prior samples
-  samples = get_samples(fit)
+  samples = get_samples(fit, prior = prior)
 
   # Select only varying or only population-level columns in data
   if (varying == FALSE) {
@@ -56,14 +57,14 @@ get_summary = function(fit, width, varying = FALSE) {
   }
 
   # Diagnostics
-  rhat = try(coda::gelman.diag(samples, multivariate = FALSE)$psrf[, 1], TRUE)
-  if (!is.numeric(rhat)) {
-    warning("rhat computation failed: ", rhat)
-    rhat = rep(NA, nrow(estimates))
+  Rhat = try(coda::gelman.diag(samples, multivariate = FALSE)$psrf[, 1], TRUE)
+  if (!is.numeric(Rhat)) {
+    warning("Rhat computation failed: ", Rhat)
+    Rhat = rep(NA, nrow(estimates))
   }
   diagnostics = data.frame(
-    rhat = rhat,  # Gelman-Rubin
-    eff = round(coda::effectiveSize(samples)),  # Effective sample size
+    Rhat = Rhat,  # Gelman-Rubin
+    n.eff = round(coda::effectiveSize(samples)),  # Effective sample size
     ts_se = lapply(samples, coda::spectrum0.ar) %>%  # Time-series SE
       data.frame() %>%
       dplyr::select(tidyselect::starts_with("spec")) %>%
@@ -81,22 +82,23 @@ get_summary = function(fit, width, varying = FALSE) {
 #' Summarise mcpfit objects
 #'
 #' Computes posterior means and highest density intervals, and model
-#' diagnostics. Get them in a data frame by doing result = summary(fit).
+#' diagnostics. Get them in a data frame by doing `result = summary(fit)`.
 #'
 #' @aliases summary summary.mcpfit
-#' @param object An \code{mcpfit} object returned by \code{\link{mcp}}.
+#' @param object An `mcpfit` object returned by \code{\link{mcp}}.
 #' @param width Float. The width of the highest posterior density interval
 #'   (between 0 and 1).
 #' @param digits Positive integer. Number of digits to print
+#' @param prior TRUE/FALSE. Summarise prior instead of posterior?
 #' @param ... Currently ignored
 #'
-#' @return Posterior means and HDI intervals. \code{rhat} is the Gelman-Rubin
+#' @return Posterior means and HDI intervals. `Rhat` is the Gelman-Rubin
 #'   convergence diagnostic which is often taken to be acceptable if < 1.1. It
 #'   is computed using \code{\link[coda]{gelman.diag}}.
-#'   \code{eff} is the effective sample size computed using
+#'   `n.eff` is the effective sample size computed using
 #'   \code{\link[coda]{effectiveSize}}. Low effective sample sizes are
-#'   also obvious as poor mixing in trace plots (see \code{plot(fit, "combo")}).
-#'   \code{ts_err} is the time-series error, taking autoregressive correlation
+#'   also obvious as poor mixing in trace plots (see `plot_pars(fit)`).
+#'   `ts_err` is the time-series error, taking autoregressive correlation
 #'   into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
@@ -105,10 +107,10 @@ get_summary = function(fit, width, varying = FALSE) {
 #' result = summary(fit, width = 0.8, digits = 4)
 #' ranef(fit)  # varying (random) effects
 #' }
-summary.mcpfit = function(object, width = 0.95, digits = 2, ...) {
+summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) {
   # Standard name in mcp
   fit = object
-  samples = get_samples(fit, error = FALSE)
+  samples = get_samples(fit, prior = prior, error = FALSE)
 
   if (class(object) != "mcpfit")
     stop("`object`` must be an mcpfit object.")
@@ -133,7 +135,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, ...) {
   if (!is.null(samples)) {
     # Print and return invisibly
     cat("\nPopulation-level parameters:\n")
-    result = get_summary(fit, width, varying = FALSE)
+    result = get_summary(fit, width, varying = FALSE, prior = prior)
     print(data.frame(result), digits = digits + 1, row.names = FALSE)
 
     if (!is.null(fit$pars$varying))
@@ -151,13 +153,13 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, ...) {
 
 #' Get population-level ("fixed") effects of mcpfit.
 #'
-#' This is identical to what \code{summary(object)} does.
+#' This is identical to what `summary(object)` does.
 #'
 #' @aliases fixef fixef.mcpfit fixed.effects
 #' @inheritParams summary.mcpfit
 #' @export
-fixef = function(object, width = 0.95, ...) {
-  get_summary(object, width, varying = FALSE)
+fixef = function(object, width = 0.95, prior = FALSE, ...) {
+  get_summary(object, width, varying = FALSE, prior = prior)
 }
 
 #' Get varying ("random") effects of mcpfit.
@@ -165,8 +167,8 @@ fixef = function(object, width = 0.95, ...) {
 #' @aliases ranef ranef.mcpfit random.effects
 #' @inheritParams summary.mcpfit
 #' @export
-ranef = function(object, width = 0.95, ...) {
-  get_summary(object, width, varying = TRUE)
+ranef = function(object, width = 0.95, prior = FALSE, ...) {
+  get_summary(object, width, varying = TRUE, prior = prior)
 }
 
 
@@ -175,11 +177,23 @@ ranef = function(object, width = 0.95, ...) {
 #' Use \code{\link{summary.mcpfit}} for greater control.
 #'
 #' @aliases print print.mcpfit
-#' @param x \code{mcpfit} object.
+#' @param x `mcpfit` object.
 #' @param ... Currently ignored.
 #' @export
 print.mcpfit = function(x, ...) {
   summary(x)
+}
+
+#' Print mcpprior
+#'
+#' The mcpprior is just a list, but it can be displayed in a more condensed
+#' way using cbind.
+#' @aliases print.mcpprior
+#' @inheritParams print.mcpfit
+print.mcpprior = function(x, ...) {
+  to_print = cbind(x)
+  colnames(to_print) = "prior"
+  print(to_print)
 }
 
 
@@ -190,10 +204,19 @@ print.mcpfit = function(x, ...) {
 #' works on both.
 #'
 #' @aliases get_samples
+#' @keywords internal
+#' @inheritParams summary.mcpfit
 #' @param fit An mcpfit object
 #' @param message TRUE: gives a message if returning prior samples. FALSE = no message
 #' @param error TRUE: err if there are no samples. FALSE: return NULL
-get_samples = function(fit, message = TRUE, error = TRUE) {
+get_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
+  if (prior == TRUE) {
+    if (coda::is.mcmc.list(fit$mcmc_prior)) {
+      return(fit$mcmc_prior)
+    } else {
+      stop("Prior requested but the prior was not sampled.")
+    }
+  }
   if (coda::is.mcmc.list(fit$mcmc_post)) {
     return(fit$mcmc_post)
   } else if (coda::is.mcmc.list(fit$mcmc_prior)) {

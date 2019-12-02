@@ -6,3 +6,5 @@ vignettes/packages_cache
 vignettes/poisson_cache
 vignettes/priors_cache
 vignettes/varying_cache
+vignettes/variance_cache
+vignettes/arma_cache

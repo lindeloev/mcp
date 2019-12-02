@@ -7,6 +7,7 @@
 #' @aliases criterion
 #' @param fit An mcpfit object.
 #' @param criterion One of `"loo"` (calls \code{\link[loo]{loo}}) or `"waic"` (calls \code{\link[loo]{waic}}).
+#' @param ... Further arguments passed to \code{\link[loo]{loo}}, e.g., `cores` or `save_psis`.
 #' @return a `loo` or `psis_loo` object.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
@@ -25,13 +26,12 @@
 #' loo::loo_model_weights(list(fit1$loo, fit2$loo))
 #'}
 
-criterion = function(fit, criterion = "loo") {
-  if (!class(fit) == "mcpfit") {
+criterion = function(fit, criterion = "loo", ...) {
+  if (!class(fit) == "mcpfit")
     stop("class(fit) must be 'mcpfit'")
-  }
-  if (!criterion %in% c("loo", "waic")) {
+
+  if (!criterion %in% c("loo", "waic"))
     stop("criterion must be one of 'loo' or 'waic'")
-  }
 
   # Log-likelihood MCMC samples as matrix
   loglik = as.matrix(do.call(rbind.data.frame, fit$mcmc_loglik))
@@ -43,7 +43,7 @@ criterion = function(fit, criterion = "loo") {
     r_eff = loo::relative_eff(exp(loglik), chain_id)  # Likelihood = exp(log-likelihood)
 
     # Add LOO
-    return(loo::loo(loglik, r_eff = r_eff))
+    return(loo::loo(loglik, r_eff = r_eff, ...))
   }
 
   # Add WAIC
@@ -57,13 +57,12 @@ criterion = function(fit, criterion = "loo") {
 #' @aliases loo LOO loo.mcpfit
 #' @describeIn criterion Computes loo on mcpfit objects
 #' @param x `mcpfit` object.
-#' @param ... Currently ignored
 #' @seealso \link{criterion}
 #' @importFrom loo loo
 #' @export loo
 #' @export
 loo.mcpfit = function(x, ...) {
-  criterion(x, "loo")
+  criterion(x, "loo", ...)
 }
 
 #' @aliases waic WAIC waic.mcpfit
@@ -83,9 +82,8 @@ waic.mcpfit = function(x, ...) {
 #'
 #' This function is highly inspired by \code{\link[brms]{hypothesis}}. It returns
 #' posterior probabilities and Bayes Factors for flexible hypotheses involving
-#' model parameters. See the parameter `hypotheses`` for examples of how to
-#' specify hypotheses.
-#'
+#' model parameters. See the documentation below for the parameter `hypotheses`
+#' for examples of how to specify hypotheses, and [read worked examples on the mcp website](https://lindeloev.github.io/mcp/articles/comparison.html).
 #' For directional hypotheses, `hypothesis`` executes the hypothesis string in
 #' a `tidybayes`` environment and summerises the proportion of samples where
 #' the expression evaluates to TRUE. For equals-hypothesis, a Savage-Dickey
@@ -148,8 +146,8 @@ hypothesis = function(fit, hypotheses, width = 0.95) {
     # PREPARE FOR TEST #
     ####################
     # Check input
-    n_equals = stringi::stri_count(expression, regex="(?<!(<|>))=")
-    n_directional = stringi::stri_count(expression, regex="<|<=|>|>=")
+    n_equals = stringr::str_count(expression, "(?<!(<|>))=")
+    n_directional = stringr::str_count(expression, "<|<=|>|>=")
 
     if (n_equals > 1)
       stop("Only one equals-test (Savage-Dickey ratio) allowed in each hypothesis: ", expression)
@@ -157,9 +155,8 @@ hypothesis = function(fit, hypotheses, width = 0.95) {
     if (n_equals == 1 & n_directional > 0)
       stop("Equals cannot be combined with directional tests: ", expression)
 
-    if (n_equals + n_directional == 0) {
+    if (n_equals + n_directional == 0)
       stop("At least one operator must be present: <, >, =, <=, or >=: ", expression)
-    }
 
     if (stringr::str_detect(expression, "\\[|\\]") & !stringr::str_detect(expression, "`"))
       stop("Needs `` around varying effects, e.g., `cp_1_id[2]`. Got this: ", expression)
@@ -169,12 +166,11 @@ hypothesis = function(fit, hypotheses, width = 0.95) {
     # the test value by putting everything on the LHS and zero on the RHS.
     if (!stringr::str_detect(expression, "\\||&")) {
       # Determine which comparator is used here
-      comparators = c("=", "<", ">"," <=", ">=")
-      which_comparator = stringr::str_detect(expression, comparators)
-      this_comparator = comparators[which_comparator]
+      #comparators = c("=", "<", ">"," <=", ">=")
+      this_comparator = stringr::str_extract(expression, "<=|>=|<|>|=")
 
       # Re-arrange to LHS [comparator] 0.
-      sides_split = strsplit(expression, "<|<=|>|>=|(?<!(<|>))=", perl = TRUE)[[1]]
+      sides_split = strsplit(expression, "<=|>=|<|>|=", perl = TRUE)[[1]]
       sides_split = stringr::str_trim(sides_split)
       if (stringr::str_detect(sides_split[2], "\\+|\\-"))
         sides_split[2] = paste0("(", sides_split[2], ")")
@@ -249,6 +245,7 @@ hypothesis = function(fit, hypotheses, width = 0.95) {
 #' Used in \link{hypothesis}
 #'
 #' @aliases get_density
+#' @keywords internal
 #' @param samples An mcmc.list
 #' @param LHS Expression to compute posterior
 #' @param value What value to evaluate the density at

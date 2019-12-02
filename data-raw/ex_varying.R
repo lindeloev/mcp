@@ -10,8 +10,17 @@ ex_varying = tibble::tibble(id = c("John", "Benny", "Rose", "Cath", "Bill", "Eri
   tidyr::expand_grid(x = seq(1, 100, by=4)) %>%
   dplyr::mutate(
     id_numeric = as.numeric(as.factor(id)),
-    y = empty$func_y(x, 15, 3, -2, 40, 25, 7*(id_numeric - mean(id_numeric)))
+    y = empty$simulate(
+      x,
+      cp_1 = 40,
+      cp_1_id = 7*(id_numeric - mean(id_numeric)),
+      int_1 = 15,
+      x_1 = 3,
+      x_2 = -2,
+      sigma = 25
+    )
   )
 
 # Save to mcp
+ex_varying = data.frame(ex_varying)
 usethis::use_data(ex_varying, overwrite = TRUE)

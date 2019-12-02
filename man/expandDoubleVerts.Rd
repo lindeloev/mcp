@@ -20,9 +20,9 @@ into separate, independent random effect terms.
 \seealso{
 \code{\link{formula}}, \code{\link{model.frame}}, \code{\link{model.matrix}}.
 
-Other utilities: \code{\link{findbars}},
-  \code{\link{nobars}}
+Other utilities: 
+\code{\link{findbars}()},
+\code{\link{nobars}()}
 }
 \concept{utilities}
-\keyword{models}
-\keyword{utilities}
+\keyword{internal}

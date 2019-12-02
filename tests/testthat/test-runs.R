@@ -13,7 +13,7 @@ data_gauss = data.frame(
   bad_y_factor = factor(1:5),
 
   # x should be continuous
-  x = 1:5,
+  x = -1:3,
   ok_x = rnorm(5),  # test underscore and decimals
   bad_x_char = c("a", "b", "c", "d", "e"),
   bad_x_factor = factor(1:5),
@@ -40,7 +40,7 @@ data_binomial = data.frame(
   N_bad_char = c("1", "1", "100", "6", "10"),
 
   # x
-  x = 1:5,
+  x = -1:3,
 
   # Varying effects
   id = c("a", "b", "c", "d", "e")
@@ -76,7 +76,7 @@ test_mcp = function(segments,
     testthat::expect_true(is.list(empty$segments), segments)
     testthat::expect_true(all.equal(empty$data, data), segments)
     testthat::expect_true(is.list(empty$prior), segments)
-    testthat::expect_true(all.equal(empty$family, family), segments)
+    testthat::expect_true(class(empty$family) == "family", segments)
     testthat::expect_true(is.null(empty$samples), segments)
     testthat::expect_true(is.null(empty$loglik), segments)
     testthat::expect_true(is.null(empty$loo), segments)
@@ -87,22 +87,46 @@ test_mcp = function(segments,
     testthat::expect_true(is.character(empty$pars$x), segments)
     testthat::expect_true(is.character(empty$pars$y), segments)
     testthat::expect_true(is.character(empty$jags_code), segments)
-    testthat::expect_true(is.function(empty$func_y), segments)
+    testthat::expect_true(is.function(empty$simulate), segments)
     testthat::expect_true(is.list(empty$.other), segments)
 
-    # capture.output suppresses the dclone output.
-    capture.output(fit <<- mcp(  # Global useful for debugging
+    # Should work for tibbles as well. So do this sometimes
+    if (rbinom(1, 1, 0.5) == 1)
+      data = tibble::as_tibble(data)
+
+    # Capture (expected) messages and warnings
+    quiet_out = purrr::quietly(mcp)(  # Global useful for debugging
       segments = segments,
-      data = tibble::as_tibble(data),
+      data = data,
       family = family,
       sample = "both",  # prior and posterior to check hypotheses
       par_x = par_x,
       adapt = 6,
-      update = 3,
       iter = 18,  # loo fails if this is too low. TO DO: require next version of loo when it is out.
       chains = 2,  # 1 or 2
-      cores = 1  # run serial. Parallel can be trused to just work.
-    ))
+      cores = 1  # run serial for faster init. Parallel can be trused to just work.
+    )
+
+    # Allow for known messages and wornings that does not signify errors
+    if (length(quiet_out$warnings) > 0) {
+      accepted_warnings = c("Adaptation incomplete")  # due to very small test datasets
+      accepted_messages = c("The current implementation of autoregression can be fragile",
+                            "Autoregression currently assumes homoskedasticity")
+
+      for (warn in quiet_out$warnings) {
+        if (!any(stringr::str_starts(warn, accepted_warnings))) {
+          testthat::fail("Got an unknown warning: ", warn)
+        }
+      }
+      for (msg in quiet_out$messages) {
+        if (!any(stringr::str_starts(msg, accepted_messages))) {
+          testthat::fail("Got an unknown message: ", msg)
+        }
+      }
+    }
+
+    # Assign globally so errors can be inspected upon hard fail
+    fit <<- quiet_out$result
 
     # Test criterions. Will warn about very few samples
     if (!is.null(fit$mcmc_post)) {
@@ -115,7 +139,7 @@ test_mcp = function(segments,
     # Test hypothesis
     test_hypothesis(fit)
 
-    for(col in c("mcmc_post", "mcmc_prior")) {
+    for (col in c("mcmc_post", "mcmc_prior")) {
       # To test the prior, try setting mcmc_post = NULL to force use of prior
       # (get_samples checks for NULL)
       if (col == "mcmc_prior")
@@ -130,7 +154,7 @@ test_mcp = function(segments,
       varying_cols = na.omit(fit$.other$ST$cp_group_col)
       test_summary(fit, varying_cols)
       test_plot(fit, varying_cols)  # default plot
-      test_bayesplot(fit)  # bayesplot call
+      test_plot_pars(fit)  # bayesplot call
     }
 
     # Data should not be manipulated, just by working with it
@@ -143,7 +167,7 @@ test_mcp = function(segments,
 test_summary = function(fit, varying_cols) {
   result = invisible(capture.output(summary(fit)))
   result = paste0(result, collapse = "\n")
-  testthat::expect_match(result, "rhat")  # made results table
+  testthat::expect_match(result, "Rhat")  # made results table
 
   # If there are varying effects
   if (length(varying_cols) > 0) {
@@ -172,8 +196,8 @@ test_plot = function(fit, varying_cols) {
 }
 
 # Test plot() calls to bayesplot
-test_bayesplot = function(fit) {
-  gg = plot(fit, "dens_overlay")
+test_plot_pars = function(fit) {
+  gg = plot_pars(fit, type = "dens_overlay")
   testthat::expect_s3_class(gg, c("gg", "ggplot"))
 }
 
@@ -341,7 +365,11 @@ bad_slopes = list(
   list(y ~ 1,  # Relative slope after no slope
        1 ~ rel(x)),
   list(y ~ bad_x_char),  # not numeric x
-  list(y ~ bad_x_factor)  # not numeric x
+  list(y ~ bad_x_factor),  # not numeric x
+  list(y ~ 1,
+       1 ~ log(x)),  # should fail explicitly because negative x
+  list(y ~ 1,
+       1 ~ sqrt(x))  # should fail explicitly because negative x
 )
 
 test_bad(bad_slopes, "Bad slopes")
@@ -356,6 +384,9 @@ good_slopes = list(
   list(y ~ x,  # Chained relative slopes
        1 ~ 0 + rel(x),
        1 ~ rel(x)),
+  list(y ~ 0 + x + I(x^2) + I(x^3),  # Test "non-linear" x
+       1 ~ 0 + exp(x) + abs(x),
+       1 ~ 0 + sin(x) + cos(x) + tan(x)),
   list(y ~ ok_x)  # alternative x
 )
 
@@ -410,6 +441,79 @@ test_good(good_cps, "Good change points")
 
 
 
+
+#################
+# TEST VARIANCE #
+#################
+bad_variance = list(
+  list(y ~ 1 + sigma(rel(1))),  # no sigma to be relative to
+  list(y ~ 1,
+       y ~ 1 + sigma(rel(x))),  # no sigma slope to be relative to
+  list(y ~ 1 + sigma(q))  # variable does not exist
+)
+
+test_bad(bad_variance, "Bad variance")
+
+
+good_variance = list(
+  list(y ~ 1 + sigma(1)),
+  list(y ~ 1 + sigma(x + I(x^2))),
+  list(y ~ 1 + sigma(1 + sin(x))),
+  list(y ~ 1,
+       ~ 0 + sigma(rel(1)),  # test relative intercept
+       ~ x + sigma(x),
+       ~ 0 + sigma(rel(x))),  # test relative slope
+  list(y ~ 1,
+      1 + (1|id) ~ rel(1) + I(x^2) + sigma(rel(1) + x))  # Test with varying change point and more mcp stuff
+)
+
+test_good(good_variance, "Good variance")
+
+
+
+
+#############
+# TEST ARMA #
+#############
+# We can assume that it will fail for the same mis-specifications on the formula
+# ar(order, [formula]), since the formula runs through the exact same code as
+# sigma and ct.
+bad_arma = list(
+  list(y ~ ar(0)),  # currently not implemented
+  list(y ~ ar(-1)),  # must be positive
+  list(y ~ ar(1.5)),  # Cannot be decimal
+  list(y ~ ar(1) + ar(2)),  # Only one per segment
+  list(y ~ ar("1")),  # Should not take strings
+  list(y ~ ar(1 + x)),  # must have order
+  list(y ~ ar(x))  # must have order
+)
+
+test_bad(bad_arma, "Bad ARMA")
+
+
+good_arma = list(
+  list(y ~ ar(1)),  # simple
+  list(y ~ ar(11)),  # two decimals
+  list(y ~ ar(1, 1 + x + I(x^2) + exp(x))),  # complicated regression
+  list(y ~ ar(1),
+       ~ ar(2, 0 + x)),  # change in ar
+  list(y ~ 1,
+       ~ 0 + ar(2)),  # onset of AR
+  list(y ~ 1,
+       1 + (1|id) ~ rel(1) + I(x^2) + ar(2, rel(1) + x)),  # varying change point
+  list(y ~ ar(1) + sigma(1 + x),
+       ~ ar(2, 1 + I(x^2)) + sigma(1)),  # With sigma
+  list(y ~ ar(1),
+       ~ ar(2, rel(1)))  # Relative to no variance. Perhaps alter this behavior so it becomes illegal?
+)
+
+test_good(good_arma, "Good ARMA")
+
+
+
+
+
+
 #################
 # TEST BINOMIAL #
 #################
@@ -428,7 +532,10 @@ bad_binomial = list(
   list(y_bad_numeric | trials(N) ~ 1),
   list(y | trials(N_bad_numeric) ~ 1),
   list(y | trials(N_bad_factor) ~ 1),
-  list(y | trials(N_bad_char) ~ 1)
+  list(y | trials(N_bad_char) ~ 1),
+
+  # Does not work with sigma
+  list(y | trials(N) ~ 1 + sigma(1))
 )
 
 test_bad(bad_binomial, "Bad binomial",
@@ -442,7 +549,8 @@ good_binomial = list(
        y | trials(N) ~ 1 ~ rel(1) + rel(x),
        rel(1) ~ 0),
   list(y | trials(N) ~ 1,  # With varying
-       1 + (1|id) ~ 1)
+       1 + (1|id) ~ 1),
+  list(y | trials(N) ~ 1 + ar(1))  # Simple AR(1)
   #list(y | trials(N) ~ 1,
   #     1 ~ N)  # N can be both trials and slope. TO DO: Fails in this test because par_x = "x"
 )
@@ -466,7 +574,10 @@ bad_bernoulli = list(
 
   # Bad data
   list(y_bad_numeric ~ 1),
-  list(y ~ 1)  # binomial response
+  list(y ~ 1),  # binomial response
+
+  # Does not work with sigma
+  list(y_bern ~ 1 + sigma(1))
 )
 
 test_bad(bad_bernoulli, "Bad Bernoulli",
@@ -501,7 +612,10 @@ bad_poisson = list(
        y | trials(N) ~ 1 ~ 1),  # misspecification in later segment
 
   # Bad data
-  list(y_bad_numeric ~ 1)
+  list(y_bad_numeric ~ 1),
+
+  # Does not work with sigma
+  list(y ~ 1 + sigma(1))
 )
 
 test_bad(bad_poisson, "Bad Poisson",
@@ -515,7 +629,9 @@ good_poisson = list(
        y  ~ 1 ~ rel(1) + rel(x),
        rel(1) ~ 0),
   list(y ~ 1,  # With varying
-       1 + (1|id) ~ 1)
+       1 + (1|id) ~ 1),
+  list(y ~ 1 + ar(1),
+       ~ 1 + x + ar(2, 1 + x + I(x^3)))
 )
 
 test_good(good_poisson, "Good Poisson",

@@ -1,38 +1,19 @@
-#' Plot mcpfit
+#' Plot fits with data
 #'
-#' Plotting posterior fitted lines on top of data (`plot(fit)`) or many
-#' types of plots of parameter estimates (typically `plot(fit, "combo")`).
-#' See examples for typical use cases.
+#' Plot prior or posterior draws of segments on top of data.
 #'
 #' @aliases plot plot.mcpfit
 #' @param x An mcpfit object
-#' @param type String or vector of strings. Calls `bayesplot::mcmc_type()`.
-#'   Common calls are "combo", "trace", and "dens_overlay". Current options include
-#'   'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
-#'   'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
-#'   'trace_highlight', and 'violin".
-#'
-#' @param pars Character vector. One of:
-#'   * Vector of parameter names.
-#'   * \emph{"population" (default):} plots all population parameters.
-#'   * \emph{"varying":} plots all varying effects. To plot a particular varying
-#'       effect, use `regex_pars = "^name"`.
-#' @param regex_pars Vector of regular expressions. This will typically just be
-#'   the beginning of the parameter name(s), i.e., "^cp_" plots all change
-#'   points, "^my_varying" plots all levels of a particular varying effect, and
-#'   "^cp_|^my_varying" plots both.
 #' @param facet_by String. Name of a varying group.
 #'   `facet_by` only applies for `type = "segments"`
 #' @param rate Boolean. For binomial models, plot on raw data (`rate = FALSE`) or
 #'   response divided by number of trials (`rate = TRUE`). If FALSE, linear
 #'   interpolation on trial number is used to infer trials at a particular x.
 #'   `rate` only applies for `type = "segments"`
-#' @param ncol Number of columns in plot. This is useful when you have many
-#'   parameters and only one plot `type`.
-#'   `ncol` only when `type != "segments"`
 #' @param lines Positive integer or `FALSE`. Number of lines (posterior
 #'   draws) to use when `type = "segments"`. FALSE (or `lines = 0`)
-#'   plots no lines.
+#'   plots no lines. Note that lines always plot fitted values. For prediction
+#'   intervals, see `quantiles_type` argument.
 #' @param quantiles Whether to plot quantiles.
 #'   * \strong{TRUE:} Add 2.5% and 97.5% quantiles. Corresponds to
 #'       `quantiles = c(0.025, 0.975)`.
@@ -40,75 +21,47 @@
 #'   * A vector of quantiles. For example, `quantiles = 0.5`
 #'       plots the median and `quantiles = c(0.2, 0.8)` plots the 20% and 80%
 #'       quantiles.
+#' @param quantiles_type One of 'fitted' or 'predict. Only applies if `quantile = TRUE`.
+#' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
 #' @param ... Currently ignored.
 #' @details
-#'   For `type = "segments"`, it uses `fit$func_y` with `draws`
+#'   For `type = "segments"`, it uses `fit$simulate` with `draws`
 #'   posterior samples. These represent the joint posterior distribution of
 #'   parameter values.
-#'
-#'   For other `type`, it calls `bayesplot::mcmc_type()`. Use these
-#'   directly on `fit$mcmc_post` or `fit$mcmc_prior` if you want finer
-#'   control of plotting, e.g., `bayesplot::mcmc_dens(fit$mcmc_post)`. There
-#'   are also a number of useful plots in the \pkg{coda} package, i.e.,
-#'   `coda::gelman.plot(fit$mcmc_post)` and `coda::crosscorr.plot(fit$mcmc_post)`
-#'
-#'   In any case, if you see a few erratic lines or parameter estimates, this is
-#'   a sign that you may want to increase arguments 'adapt', 'update', and
-#'   'iter' in \code{\link{mcp}}.
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @return A \pkg{ggplot2} object.
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @importFrom ggplot2 ggplot aes aes_string geom_line geom_point facet_wrap
+#' @importFrom magrittr %>%
+#' @importFrom rlang !! :=
+#' @importFrom dplyr .data
 #' @export
 #' @examples
 #' \dontrun{
-#' # Plots segments (default)
 #' plot(fit)
 #' plot(fit, lines = 50, rate = FALSE)  # more lines, for binomial.
 #' plot(fit, facet_by = "my_varying")  # varying effects
 #'
-#' # Plot parameter estimates
-#' plot(fit, "combo")
-#' plot(fit, "combo", pars = "varying", ncol = 3)  # plot all varying effects
-#' plot(fit, "combo", regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying
-#'
-#' # More options for parameter estimates
-#' plot(fit, "combo", pars = c("var1", "var2", "var3"), regex_pars = "^my_varying")
-#' plot(fit, c("areas", "intervals"))
-#'
-#' # Some plots only take pairs
-#' plot(fit, "hex", pars = c("var1", "var2"))
-#'
-#'
 #' # Customize one-column plots using regular ggplot2
 #' plot(fit) + theme_bw(15) + ggtitle("Great plot!")
-#'
-#' # Customize two-column plots using the "patchwork" package.
-#' plot(fit, c("trace", "dens_overlay")) * theme_bw(10)
 #' }
-
 plot.mcpfit = function(x,
-                       type = "segments",
-
-                       # Arguments for bayesplot
-                       pars = "population",
-                       regex_pars = character(0),
-                       ncol = 1,
-
-                       # Arguments for "segments"
                        facet_by = NULL,
-                       rate = TRUE,
                        lines = 25,
                        quantiles = FALSE,
+                       quantiles_type = "fitted",
+                       rate = TRUE,
+                       prior = FALSE,
                        ...) {
 
+  # Just for consistent naming in mcp
+  fit = x
+
   # Check arguments
-  if (class(x) != "mcpfit")
-    stop("Can only plot mcpfit objects. x was class: ", class(x))
+  if (class(fit) != "mcpfit")
+    stop("Can only plot mcpfit objects. x was class: ", class(fit))
 
-  if (!is.character(type))
-    stop("`type` has to be string/character.")
-
-  if (length(type) > 1 & "segments" %in% type)
-    stop("type = 'segments' can only be plotted alone - not in in combination with others.")
+  if (!coda::is.mcmc.list(fit$mcmc_post) & !coda::is.mcmc.list(fit$mcmc_prior))
+    stop("Cannot plot an mcpfit without prior or posterior samples.")
 
   if (lines != FALSE)
     check_integer(lines, "lines", lower = 1)
@@ -125,69 +78,37 @@ plot.mcpfit = function(x,
     stop("`quantiles` has to be TRUE, FALSE, or a vector of numbers.")
 
   if (is.numeric(quantiles) & (any(quantiles > 1) | any(quantiles < 0)))
-    stop ("all `quantiles` have to be between 0 (0%) and 1 (100%).")
+    stop ("All `quantiles` have to be between 0 (0%) and 1 (100%).")
+
+  if (!quantiles_type %in% c("predict", "fitted"))
+    stop("`quantiles_type` has to be one of 'predict' or 'fitted'")
 
   if (!is.logical(rate))
     stop("`rate` has to be TRUE or FALSE.")
 
-  if (!coda::is.mcmc.list(x$mcmc_post) & !coda::is.mcmc.list(x$mcmc_prior))
-    stop("Cannot plot an mcpfit without prior or posterior samples.")
+  if (!is.logical(prior))
+    stop("`prior` must be either TRUE or FALSE.")
 
-  # Include test of whether this is a random/nested effect
-  varying_groups = logical0_to_null(unique(stats::na.omit(x$.other$ST$cp_group_col)))
+  # Is facet_by a random/nested effect?
+  varying_groups = logical0_to_null(unique(stats::na.omit(fit$.other$ST$cp_group_col)))
   if (!is.null(facet_by)) {
     if (!facet_by %in% varying_groups)
-      stop("facet_by is not a data column used as varying grouping.")
+      stop("`facet_by` is not a data column used as varying grouping.")
   }
 
-  if (!is.character(pars) | !is.character(regex_pars))
-    stop("pars and regex_pars has to be string/character.")
 
-  if (any(c("population", "varying") %in% pars) & length(pars )> 1)
-    stop("pars cannot be a vector that contains multiple elements AND 'population' or 'varying'.")
-
-
-  if (any(c("hex", "scatter") %in% type) & (length(pars) != 2 | length(regex_pars) > 0))
-    stop("`type` = 'hex' or 'scatter' takes exactly two parameters which must be provided via the `pars` argument")
-
-
-  # Call underlying plot functions
-  if ("segments" %in% type) {
-    plot_segments(x, facet_by, rate, lines, quantiles, ...)
-  } else {
-    plot_bayesplot(x, type, pars, regex_pars, ncol, ...)
-  }
-}
-
-
-
-#' Plot posterior draws of segments on top of data
-#'
-#' Call if from \code{\link{plot.mcpfit}} and see more details there
-#'
-#' @aliases plot_segments
-#' @inheritParams plot.mcpfit
-#' @param fit An mcpfit object.
-#' @importFrom ggplot2 ggplot aes aes_string geom_line geom_point facet_wrap
-#' @importFrom magrittr %>%
-#' @importFrom rlang !! :=
-#' @importFrom stats sd
-#' @importFrom dplyr .data
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-plot_segments = function(fit,
-                         facet_by = NULL,
-                         rate = TRUE,
-                         lines = 25,
-                         quantiles = FALSE,
-                         ...) {
+  # R CMD Check wants a global definition of ".". The formal way of doing it is
+  # if(getRversion() >= "2.15.1") utils::globalVariables(".")
+  # but that makes the tests fail.
+  . = "ugly fix to please R CMD check"
 
   # Select posterior/prior samples
-  samples = get_samples(fit)
+  samples = get_samples(fit, prior = prior)
 
   # General settings
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)
-  func_y = fit$func_y
+  simulate = fit$simulate
   if (all(quantiles == FALSE) & is.numeric(lines)) {
     HDI_SAMPLES = lines
   } else {
@@ -221,10 +142,10 @@ plot_segments = function(fit,
   # Remove some samples
   samples = tidybayes::sample_draws(samples, n = HDI_SAMPLES)  # TO DO: use spread_draws(n = draws) when tidybayes 1.2 is out
 
-  # Get x-coordinates to evaluate func_y (etc.) at
+  # Get x-coordinates to evaluate simulate (etc.) at
   eval_at = get_eval_at(fit, facet_by)
 
-  # First, let's get all the predictors in shape for func_y
+  # First, let's get all the predictors in shape for simulate
   if (fit$family$family != "binomial") {
     samples = samples %>%
       tidyr::expand_grid(!!xvar := eval_at)  # correct name of x-var
@@ -241,9 +162,15 @@ plot_segments = function(fit,
   }
 
   # Predict y from model
-  samples = samples %>%
-    # Add fitted draws (vectorized)
-    dplyr::mutate(!!yvar := purrr::invoke(func_y, ., type = "fitted", rate = rate))
+  if (lines > 0 | (any(quantiles != FALSE) & quantiles_type == "fitted")) {
+    samples = samples %>%
+      # Add fitted draws (vectorized)
+      dplyr::mutate(!!yvar := purrr::invoke(simulate, ., type = "fitted", rate = rate))
+  }
+  if (quantiles_type == "predict") {
+    samples = samples %>%
+      dplyr::mutate(predicted_ = purrr::invoke(simulate, ., type = "predict", rate = rate))
+  }
 
 
 
@@ -260,7 +187,7 @@ plot_segments = function(fit,
     geom_point()
 
   # Add lines?
-  if (lines != FALSE) {
+  if (lines > 0) {
     # Sample the desired number of lines
     data_lines = samples %>%
       tidybayes::sample_draws(lines) %>%
@@ -276,6 +203,10 @@ plot_segments = function(fit,
 
   # Add quantiles?
   if (is.numeric(quantiles)) {
+    # Select what data to do quantiles on
+    if (quantiles_type == "fitted") samples = dplyr::mutate(samples, y_quant = !!yvar)
+    if (quantiles_type == "predict") samples = dplyr::mutate(samples, y_quant = .data$predicted_)
+
     # For each quantile and each x, add quantile of !!yvar
     data_quantiles = samples %>%
       tidyr::expand_grid(quant = quantiles) %>%
@@ -290,7 +221,7 @@ plot_segments = function(fit,
     # Continue...
     data_quantiles = data_quantiles %>%
       dplyr::summarise(
-        y = stats::quantile(!!yvar, probs = .data$quant[1])
+        y = stats::quantile(.data$y_quant, probs = .data$quant[1])
       )
 
     # Add quantiles to plot
@@ -312,23 +243,97 @@ plot_segments = function(fit,
 
 
 
-#' Plot mcpfit objects with bayesplot
+#' Plot mcpfit objects with `bayesplot`
 #'
-#' Call if from \code{\link{plot.mcpfit}} and see more details there
+#' Plot many types of plots of parameter estimates. See examples for typical use
+#' cases.
 #'
-#' @aliases plot_bayesplot
-#' @inheritParams plot.mcpfit
-#' @param fit An mcpfit object.
-#' @import patchwork
+#' @aliases plot_pars
+#' @param fit An mcpfit object
+#' @param pars Character vector. One of:
+#'   * Vector of parameter names.
+#'   * \emph{"population" (default):} plots all population parameters.
+#'   * \emph{"varying":} plots all varying effects. To plot a particular varying
+#'       effect, use `regex_pars = "^name"`.
+#' @param regex_pars Vector of regular expressions. This will typically just be
+#'   the beginning of the parameter name(s), i.e., "^cp_" plots all change
+#'   points, "^my_varying" plots all levels of a particular varying effect, and
+#'   "^cp_|^my_varying" plots both.
+#' @param type String or vector of strings. Calls `bayesplot::mcmc_>>type<<()`.
+#'   Common calls are "combo", "trace", and "dens_overlay". Current options include
+#'   'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
+#'   'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
+#'   'trace_highlight', and 'violin".
+#' @param ncol Number of columns in plot. This is useful when you have many
+#'   parameters and only one plot `type`.
+#'   `ncol` only when `type != "segments"`
+#' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
+#'
+#'@details
+#'   For other `type`, it calls `bayesplot::mcmc_type()`. Use these
+#'   directly on `fit$mcmc_post` or `fit$mcmc_prior` if you want finer
+#'   control of plotting, e.g., `bayesplot::mcmc_dens(fit$mcmc_post)`. There
+#'   are also a number of useful plots in the \pkg{coda} package, i.e.,
+#'   `coda::gelman.plot(fit$mcmc_post)` and `coda::crosscorr.plot(fit$mcmc_post)`
+#'
+#'   In any case, if you see a few erratic lines or parameter estimates, this is
+#'   a sign that you may want to increase argument 'adapt' and 'iter' in \code{\link{mcp}}.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-plot_bayesplot = function(fit,
-                          type,
-                          pars = "population",
-                          regex_pars = character(0),
-                          ncol = 1) {
+#' @return A \pkg{ggplot2} object.
+#' @import patchwork
+#' @export
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @examples
+#' \dontrun{
+#' plot_pars(fit)
+#' plot_pars(fit, pars = "varying", ncol = 3)  # plot all varying effects
+#' plot_pars(fit, regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying
+#'
+#' # More options for parameter estimates
+#' plot_pars(fit, pars = c("var1", "var2", "var3"), regex_pars = "^my_varying")
+#' plot_pars(fit, type = c("areas", "intervals"))
+#'
+#' # Some plots only take pairs
+#' plot_pars(fit, pars = c("var1", "var2"))
+#'
+#' # Customize two-column plots using the patchwork package.
+#' plot_pars(fit, type = c("trace", "dens_overlay")) * theme_bw(10)
+#' }
+
+
+plot_pars = function(fit,
+                     pars = "population",
+                     regex_pars = character(0),
+                     type = "combo",
+                     ncol = 1,
+                     prior = FALSE) {
+
+  # Check arguments
+  if (class(fit) != "mcpfit")
+    stop("Can only plot mcpfit objects. x was class: ", class(fit))
+
+  if (!coda::is.mcmc.list(fit$mcmc_post) & !coda::is.mcmc.list(fit$mcmc_prior))
+    stop("Cannot plot an mcpfit without prior or posterior samples.")
+
+  if (!is.character(pars) | !is.character(regex_pars))
+    stop("`pars` and `regex_pars` has to be string/character.")
+
+  if (any(c("population", "varying") %in% pars) & length(pars )> 1)
+    stop("`pars` cannot be a vector that contains multiple elements AND 'population' or 'varying'.")
+
+  if (any(c("hex", "scatter") %in% type) & (length(pars) != 2 | length(regex_pars) > 0))
+    stop("`type` = 'hex' or 'scatter' takes exactly two parameters which must be provided via the `pars` argument")
+
+  if ("combo" %in% type & length(type) > 1)
+    stop("'combo' type cannot be combined with other types. Replace 'combo' with the types you want combo\'ed")
+
+  check_integer(ncol, name = "ncol", lower = 1)
+
+  if (!is.logical(prior))
+    stop("`prior` must be either TRUE or FALSE.")
 
   # Get posterior/prior samples
-  samples = get_samples(fit)
+  samples = get_samples(fit, prior = prior)
 
   # Handle special codes
   if ("population" %in% pars) {
@@ -345,34 +350,39 @@ plot_bayesplot = function(fit,
   }
 
   # Handles combo. Returns a customizable ggplot which "combo" does not.
-  if (type == "combo")
+  if ("combo" %in% type)
     type = c("dens_overlay", "trace")
 
   # TO DO: a lot of eval(parse()) here. Is there a more built-in method?
   #types = c("dens", "dens_overlay", "trace", "areas")
-  takes_facet = c("areas", "dens", "dens_overlay", "trace", "hist", "intervals", "rank_hist", "rank_overlay", "trace", "trace_highlight", "violin")
+  takes_facet = c("areas", "dens", "dens_overlay", "trace", "hist", "intervals", "trace", "trace_highlight", "violin")
   for (this_type in type) {
     this_facet = ifelse(this_type %in% takes_facet, paste0(", facet_args = list(ncol = ", ncol, ")"), "")
     command = paste0("plot_", this_type, " = bayesplot::mcmc_", this_type, "(samples, pars = pars, regex_pars = regex_pars", this_facet, ")")
-    eval(parse(text = command))
+    eval(parse(text = command)) + ggplot2::theme(strip.placement = NULL)
+
   }
 
   # Select which to plot
   if (length(type) == 1) {
     return_plot = eval(parse(text = paste0("plot_", type)))
-    return_plot = return_plot + ggplot2::theme(legend.position = "none")  # remove legend
-    return(return_plot)
+    return_plot = return_plot
   } else {
+    # Use patchwork
     command = paste0(paste0("plot_", type), collapse = " + ")
     return_plot = eval(parse(text = command))
-    return_plot = return_plot * ggplot2::theme(legend.position = "none")  # remove legend
-    return(return_plot)
   }
+
+  # Return
+  return_plot & ggplot2::theme(
+    strip.placement = NULL,  # fixes bug: https://github.com/thomasp85/patchwork/issues/132
+    legend.position = "none"  # no legend on chains. Takes up too much space
+  )
 }
 
 
 
-#' Get a list of x-coordinates to evaluate fit$func_y at
+#' Get a list of x-coordinates to evaluate fit$simulate at
 #'
 #' Solves two problems: if setting the number of points too high, the
 #' function becomes slow. If setting it too low, the posterior at large intercept-
@@ -383,6 +393,7 @@ plot_bayesplot = function(fit,
 #' but finer resolution at change points.
 #'
 #' @aliases get_eval_at
+#' @keywords internal
 #' @inheritParams plot.mcpfit
 #' @param fit An mcpfit object.
 get_eval_at = function(fit, facet_by) {

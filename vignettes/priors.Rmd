@@ -16,8 +16,8 @@ vignette: >
 ```{r}
 segments = list(
   y ~ 1 + x,  # int_1 + x_1
-  1 ~ 1 + x,  # cp_1, int_2, and x_2
-  1 ~ 1 + x  # cp_2
+  ~ 1 + x,  # cp_1, int_2, and x_2
+  ~ 1 + x  # cp_2
 )
 
 prior = list(
@@ -47,6 +47,8 @@ Let us see the priors after running them through `mcp` and compare to the defaul
 
 ```{r}
 library(mcp)
+options(mc.cores = 3)  # Speed up sampling!
+
 empty_manual = mcp(segments, prior = prior, sample = FALSE)
 empty_default = mcp(segments, sample = FALSE)
 
@@ -59,7 +61,7 @@ Now, let's simulate some data that from the model specified by `segments`. The f
 ```{r}
 data = tibble::tibble(
   x = runif(200, 0, 100),  # 200 datapoints between 0 and 100
-  y = empty_default$func_y(x, 
+  y = empty_default$simulate(x, 
     int_1 = 20, int_2 = 30, int_3 = 30,  # intercepts
     x_1 = -0.5, x_2 = 0.5, x_3 = 0,  # slopes
     cp_1 = 35, cp_2 = 70,  # change points
@@ -71,14 +73,16 @@ data = tibble::tibble(
 Sample and plot the fits:
 
 ```{r, cache = TRUE, message=FALSE, warning=FALSE, results=FALSE}
-fit_manual = mcp(segments, data, prior, cores = 3)
-fit_default = mcp(segments, data, cores = 3)
+fit_manual = mcp(segments, data, prior)
+fit_default = mcp(segments, data)
 ```
 ```{r}
 library(ggplot2)
 plot_default = plot(fit_default) + ggtitle("Default priors")
 plot_manual = plot(fit_manual) + ggtitle("Manual priors")
-gridExtra::grid.arrange(plot_default, plot_manual, ncol=2)
+
+library(patchwork)
+plot_default + plot_manual
 ```
 
 We see the effects of the priors.
@@ -124,13 +128,13 @@ Prior predictive checks is a great way to ensure that the priors are meaningful.
 
 ```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
 # Sample priors 
-fit_pp_manual = mcp(segments, data, prior, sample = "prior", cores = 3)
-fit_pp_default = mcp(segments, data, sample = "prior", cores = 3)
+fit_pp_manual = mcp(segments, data, prior, sample = "prior")
+fit_pp_default = mcp(segments, data, sample = "prior")
 
 # Plot it
 plot_pp_manual = plot(fit_pp_manual, lines = 100) + ylim(c(-400, 400)) + ggtitle("Manual prior")
 plot_pp_default = plot(fit_pp_default, lines = 100) + ylim(c(-400, 400)) + ggtitle("Default prior")
-gridExtra::grid.arrange(plot_pp_manual, plot_pp_default, ncol=2)
+plot_pp_manual +  plot_pp_default  # using patchwork
 ```
 
 You can see how the manual priors are more dense to the left, and the "concerted" change at x = 80.
