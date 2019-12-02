@@ -27,7 +27,7 @@
 ##'                     list(expression(Days | Subject)[[1]])))
 ##' }
 ##' @family utilities
-##' @keywords models utilities
+##' @keywords internal
 ## @export
 findbars <- function(term)
 {
@@ -99,7 +99,7 @@ findbars <- function(term)
 ##' }
 ##' @seealso \code{\link{formula}}, \code{\link{model.frame}}, \code{\link{model.matrix}}.
 ##' @family utilities
-##' @keywords models utilities
+##' @keywords internal
 ## @export
 nobars <- function(term) {
   nb <- nobars_(term)  ## call recursive version
@@ -168,7 +168,7 @@ anyBars <- function(term) {
 ##' @return the modified term
 ##' @family utilities
 ##' @importFrom stats formula terms as.formula
-##' @keywords models utilities
+##' @keywords internal
 ## @export
 expandDoubleVerts <- function(term)
 {

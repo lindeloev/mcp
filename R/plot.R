@@ -392,6 +392,7 @@ plot_pars = function(fit,
 #' but finer resolution at change points.
 #'
 #' @aliases get_eval_at
+#' @keywords internal
 #' @inheritParams plot.mcpfit
 #' @param fit An mcpfit object.
 get_eval_at = function(fit, facet_by) {

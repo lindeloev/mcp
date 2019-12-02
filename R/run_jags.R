@@ -2,6 +2,7 @@
 #'
 #'
 #' @aliases run_jags
+#' @keywords internal
 #' @inheritParams mcp
 #' @inheritParams rjags::jags.model
 #' @inheritParams rjags::coda.samples
@@ -123,6 +124,8 @@ run_jags = function(data,
 #' Returns the relevant data columns as a list and add elements with unique
 #' varying group levels.
 #'
+#' @aliases get_jags_data
+#' @keywords internal
 #' @inheritParams run_jags
 #' @param data A tibble
 #' @param ST A segment table (tibble), returned by `get_segment_table`.
@@ -175,6 +178,8 @@ get_jags_data = function(data, ST, jags_code, sample) {
 #' Jags uses 1, 2, 3, ..., etc. for indexing of varying effects.
 #' This function adds back the original levels, whether numeric or string
 #'
+#' @aliases recover_levels
+#' @keywords internal
 #' @param samples An mcmc.list with varying columns starting in `mcmc_col`.
 #' @param data A tibble or data.frame with the cols in `data_col`.
 #' @param mcmc_col A vector of strings.

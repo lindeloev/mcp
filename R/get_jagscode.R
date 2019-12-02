@@ -1,6 +1,7 @@
 #' Make JAGS code for Multiple Change Point model
 #'
 #' @aliases get_jagscode
+#' @keywords internal
 #' @inheritParams mcp
 #' @param formula_str String. The formula string returned by `build_formula_str`.
 #' @param ST Segment table. Returned by `get_segment_table()`.
@@ -117,6 +118,7 @@ model {
 #' Get JAGS code for a prior
 #'
 #' @aliases get_prior_str
+#' @keywords internal
 #' @inheritParams mcp
 #' @param i The index in `prior` to get code for
 #' @param varying_group String or NULL (default). Null indicates a population-
@@ -212,6 +214,7 @@ sd_to_prec = function(prior_str) {
 #' Get JAGS code for residuals for each AR-order
 #'
 #' @aliases ar_code
+#' @keywords internal
 #' @inheritParams get_jagscode
 #' @param ar_order The order of the autoregressive component
 get_ar_code = function(ar_order, ST, family) {
