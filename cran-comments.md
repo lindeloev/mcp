@@ -5,8 +5,9 @@
 * This is the first submission of the `mcp` package and my first CRAN submission personally. I have done my best to adhere to all standards. Extensive documentation for `mcp` is available at https://lindeloev.github.io/mcp/.
 * The package `patchwork` is a dependency which just arrived on CRAN a few days ago. It seems it has not rolled out to all test servers. Travis and devtools::check_rhub() install it just fine.
 * `mcp` uses JAGS (an external binary) for sampling through the `rjags` package. rjags will fail to install without JAGS on the system. This happens when I run `devtools::check_win_release()` and `check_win_devel()`. Travis install JAGS prior to installing packages, and all tests pass. They do too on my Windows PC. Automatic installation for Mac and OSX is set up in the .travis.yml (https://github.com/lindeloev/mcp/blob/master/.travis.yml). Windows binaries for JAGS are here: https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/
+* The test suite fails with one out of 1.500 tests once every ~10 times it is run with the `loo` error "missing value where TRUE/FALSE needed". This is nothing the end user will experience. It is caused by the randomness of the MCMC sampling combined with short run lengths in the test.
 * My email address is long-term. I have had it for 15 years and I co-own the domain.
-* `mcp` uses the GPL-2 license. The only code copied (verbatim) from other packages are R/lme4_utils.R which is GPL (>=2).
+* `mcp` uses the GPL-2 license. The only code copied (verbatim) from other packages is in R/lme4_utils.R, is GPL (>=2), and has been given proper attribution via the @authors Roxygen tag.
 * `mcp` does not make any external changes (files, options, communication, etc.)
 
 ## Test environments

@@ -37,8 +37,8 @@ library(mcp)
 # Define the model
 segments = list(
   response ~ 1,  # plateau (int_1)
-  ~ 0 + time,  # joined slope (time_2) at cp_1
-  ~ 1 + time  # disjoined slope (int_3, time_3) at cp_2
+  ~ 0 + time,    # joined slope (time_2) at cp_1
+  ~ 1 + time     # disjoined slope (int_3, time_3) at cp_2
 )
 
 # Fit it. The `ex_demo` dataset is included in mcp
@@ -106,7 +106,7 @@ For model comparisons, we can fit a null model and compare the predictive perfor
 # Define the model
 segments_null = list(
   response ~ 1 + time,  # intercept (int_1) and slope (time_1)
-  ~ 1 + time  # disjoined slope (int_2, time_1)
+  ~ 1 + time            # disjoined slope (int_2, time_1)
 )
 
 # Fit it
@@ -185,7 +185,7 @@ Find the single change point between two plateaus ([see how this data was genera
 ```r
 segments = list(
     y ~ 1,  # plateau (int_1)
-    ~ 1  # plateau (int_2)
+    ~ 1     # plateau (int_2)
 )
 fit = mcp(segments, ex_plateaus, par_x = "x")
 plot(fit)
@@ -201,7 +201,7 @@ Read more about [varying change points in mcp](https://lindeloev.github.io/mcp/a
 
 ```r
 segments = list(
-  y ~ 1 + x,  # intercept + slope
+  y ~ 1 + x,          # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope, varying by id
 )
 fit = mcp(segments, ex_varying)
@@ -235,8 +235,8 @@ Here is a binomial change point model with three segments. We plot the 95% HDI t
 ```r
 segments = list(
   y | trials(N) ~ 1,  # constant rate
-  ~ 0 + x,  # joined changing rate
-  ~ 1 + x  # disjoined changing rate
+  ~ 0 + x,            # joined changing rate
+  ~ 1 + x             # disjoined changing rate
 )
 fit = mcp(segments, ex_binomial, family = binomial())
 plot(fit, quantiles = TRUE)
@@ -295,7 +295,7 @@ segments = list(
   ~ 0 + sigma(1 + x),
   ~ 0 + x
 )
-fit = mcp(segments, ex_variance, cores = 3, adapt = 5000, updaet = 5000, iter = 5000)
+fit = mcp(segments, ex_variance, cores = 3, adapt = 5000, iter = 5000)
 plot(fit, quantiles = TRUE, quantiles_type = "predict")
 ```
 
