@@ -210,23 +210,38 @@ get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
 #'   (optional for the user).
 #' @param nsegments Positive integer. Number of segments, typically `nrow(ST)`.
 #'
-get_simulate = function(formula_str, par_x, par_trials = NA, pars_pop, pars_varying, nsegments, family) {
+get_simulate = function(formula_str, pars, nsegments, family) {
   # First some substitutions
   formula_func = gsub("\\[i_\\]", "", formula_str)  # No explicit indexing needed for R function
-  #formula_func = gsub("PAR_X", par_x, formula_str)  # Proper par_x name
   formula_func = gsub("min\\(", "pmin\\(", formula_func)  # vectorized mean for function
   for (i in seq_len(nsegments)) {
     formula_func = gsub(paste0("CP_", i, "_INDEX"), "", formula_func)  # Use vector of data
   }
 
+  # Remove hyperparameter on varying effects from pars$reg since it is not used for simulation
+  pars$reg = pars$reg[!stringr::str_ends(pars$reg, "_sd")]
+
+  # Helper to build the list of simulate() arguments. Simply comma separates correctly
+  args_if_exists = function(args, postfix = "") {
+    if(length(args) > 0) {
+      args_str = paste0(args, postfix, collapse = ", ")
+      return(paste0(args_str, ", "))
+    }
+    else {
+      return("")
+    }
+  }
+
   # Now build the function R code
-  #x_and_trials handles the special case that binomial "trials" is also used as a predictor.
-  x_and_trials = ifelse(is.na(par_trials), par_x, no = paste0(unique(c(par_x, par_trials)), collapse = ", "))
+  # x_and_trials handles the special case that binomial "trials" is also used as a predictor.
+
+  x_and_trials = ifelse(length(pars$trials) > 0, pars$x, no = paste0(unique(c(pars$x, pars$trials)), collapse = ", "))
   func_str = paste0("
   function(",
     x_and_trials, ", ",
-    paste0(pars_pop, collapse = ", "), ", ",
-    paste0(pars_varying, collapse = " = 0, "), ifelse(length(pars_varying) > 0, " = 0, ", ""),
+    args_if_exists(pars$reg),
+    args_if_exists(pars$sigma),
+    args_if_exists(pars$varying, " = 0"),
     "type = 'predict', quantiles = FALSE, rate = FALSE, ...) {
     # Helpers to simplify making the code for this function
     cp_0 = -Inf
@@ -250,7 +265,7 @@ get_simulate = function(formula_str, par_x, par_trials = NA, pars_pop, pars_vary
       if (is.numeric(quantiles)) {
         return(qnorm(quantiles, y_, sigma_))
       } else if (quantiles == FALSE) {
-        return(rnorm(length(", par_x, "), y_, sigma_))
+        return(rnorm(length(", pars$x, "), y_, sigma_))
       } else {
         stop('Invalid quantiles argument to simulate()')
       }
@@ -258,19 +273,19 @@ get_simulate = function(formula_str, par_x, par_trials = NA, pars_pop, pars_vary
   } else if (family$family == "binomial") {
     func_str = paste0(func_str, "
     if (type == 'predict') {
-      if (rate == FALSE) return(rbinom(length(", par_x, "), ", par_trials, ", ilogit(y_)))
-      if (rate == TRUE)  return(rbinom(length(", par_x, "), ", par_trials, ", ilogit(y_)) / ", par_trials, ")
+      if (rate == FALSE) return(rbinom(length(", pars$x, "), ", pars$trials, ", ilogit(y_)))
+      if (rate == TRUE)  return(rbinom(length(", pars$x, "), ", pars$trials, ", ilogit(y_)) / ", pars$trials, ")
     }
     if (type == 'fitted')
-      if (rate == FALSE) return(", par_trials, " * ilogit(y_))
+      if (rate == FALSE) return(", pars$trials, " * ilogit(y_))
       if (rate == TRUE)  return(ilogit(y_))")
   } else if (family$family == "bernoulli") {
     func_str = paste0(func_str, "
-    if (type == 'predict') return(rbinom(length(", par_x, "), 1, ilogit(y_)))
+    if (type == 'predict') return(rbinom(length(", pars$x, "), 1, ilogit(y_)))
     if (type == 'fitted') return(ilogit(y_))")
   } else if (family$family == "poisson") {
     func_str = paste0(func_str, "
-    if (type == 'predict') return(rpois(length(", par_x, "), exp(y_)))
+    if (type == 'predict') return(rpois(length(", pars$x, "), exp(y_)))
     if (type == 'fitted') return(exp(y_))")
   }
 
