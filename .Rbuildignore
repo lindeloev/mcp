@@ -15,3 +15,4 @@ pkgdown
 # Files
 cran-comments.md
 logo.png
+^CRAN-RELEASE$
