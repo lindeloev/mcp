@@ -243,34 +243,35 @@ mcp = function(segments,
   # ("ST" for "segment table").
   ST = get_segment_table(segments, data, family, par_x)
 
-  par_x = unique(ST$x)
-  par_y = unique(ST$y)
-  par_trials = unique(ST$trials)
-
   # Make prior
   prior = get_prior(ST, family, prior)
 
   # Make lists of parameters
   all_pars = names(prior)  # There is a prior for every parameter
-  pars_varying = logical0_to_null(c(stats::na.omit(ST$cp_group)))
-  pars_sigma = all_pars[stringr::str_detect(all_pars, "^sigma_")]
-  pars_arma = all_pars[stringr::str_detect(all_pars, "(^ar|^ma)[0-9]")]
-  pars_reg = all_pars[!all_pars %in% c(pars_varying, pars_sigma, pars_arma)]  # Everything that's left!
+  pars = list(
+    x = unique(ST$x),
+    y = unique(ST$y),
+    trials = unique(ST$trials),
+    varying = logical0_to_null(c(stats::na.omit(ST$cp_group))),
+    sigma = all_pars[stringr::str_detect(all_pars, "^sigma_")],
+    arma = all_pars[stringr::str_detect(all_pars, "(^ar|^ma)[0-9]")]
+  )
+  pars$reg = all_pars[!all_pars %in% c(pars$varying, pars$sigma, pars$arma)]
+  pars$population = c(pars$reg, pars$sigma, pars$arma)
 
-  if (length(pars_arma) > 0 & family$link %in% c("logit", "probit"))
+  if (length(pars$arma) > 0 & family$link %in% c("logit", "probit"))
     message("The current implementation of autoregression can be fragile for link='logit'. If fitting succeeds, do a proper assessment of model convergence.")
 
-  if (length(pars_arma) > 0 & length(pars_sigma) > 1)
+  if (length(pars$arma) > 0 & length(pars$sigma) > 1)
     message("Autoregression currently assumes homoskedasticity (equal variance at all x). Using together with sigma() breaks this assumption except when doing just `~ [formula] + sigma(1) + ar(N)`, so that `ar` changes with a sigma intercept. If not, the estimated ar* parameters may not be meaningful.")
 
   # Make formula_str and simulate
-  formula_str_funcy = get_all_formulas(ST, prior, par_x, ytypes = c("ct", "sigma"))  # Without ARMA
-  pars_funcy = c(pars_reg[!pars_reg %in% ST$cp_sd], pars_sigma)  # arma and varying SD is not used for simulation
-  simulate = get_simulate(formula_str_funcy, par_x, par_trials, pars_funcy, pars_varying, nrow(ST), family)
+  formula_str_sim = get_all_formulas(ST, prior, pars$x, ytypes = c("ct", "sigma"))  # Without ARMA
+  simulate = get_simulate(formula_str_sim, pars, nrow(ST), family)
 
   # Make jags code
-  max_arma_order = get_arma_order(pars_arma)
-  formula_str_jags = get_all_formulas(ST, prior, par_x)
+  max_arma_order = get_arma_order(pars$arma)
+  formula_str_jags = get_all_formulas(ST, prior, pars$x)
   jags_code_generated = get_jagscode(prior, ST, formula_str_jags, max_arma_order, family, sample)
   jags_code = ifelse(is.null(jags_code), yes = jags_code_generated, no = jags_code)  # Get from user?
 
@@ -347,17 +348,7 @@ mcp = function(segments,
     waic = NULL,
 
     # Extracted model
-    pars = list(
-      x = par_x,
-      y = par_y,
-      trials = par_trials,
-      reg = pars_reg,
-      varying = pars_varying,
-      sigma = pars_sigma,
-      arma = pars_arma,
-      population = c(pars_reg, pars_sigma, pars_arma)
-    ),
-
+    pars = pars,
     jags_code = jags_code,
     simulate = simulate,
 
