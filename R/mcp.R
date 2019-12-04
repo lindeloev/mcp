@@ -170,6 +170,8 @@ mcp = function(segments,
   if (!is.null(data)) {
     if (!is.data.frame(data) & !tibble::is_tibble(data))
       stop("`data` must be a data.frame or a tibble.")
+
+    data = data.frame(data)  # Force into data frame
   }
 
   # Check segments

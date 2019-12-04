@@ -140,7 +140,7 @@ get_jags_data = function(data, ST, jags_code, sample) {
   for (col in cols_varying) {
     # Add meta-data (now many varying group levels)
     tmp = paste0("n_unique_", col)
-    jags_data[[tmp]] = length(unique(dplyr::pull(data, col)))
+    jags_data[[tmp]] = length(unique(data[, col]))
 
     # Make varying columns numeic in order of appearance
     # They will be recovered using the recover_levels()
@@ -158,7 +158,8 @@ get_jags_data = function(data, ST, jags_code, sample) {
       constant_name = toupper(paste0(func, xy_var))
       if (stringr::str_detect(jags_code, constant_name)) {
         func_eval = eval(parse(text = func))  # as real function
-        jags_data[[constant_name]] = func_eval(dplyr::pull(data, ST[, xy_var][[1]][1]), na.rm = TRUE)
+        column = ST[, xy_var][[1]][1]
+        jags_data[[constant_name]] = func_eval(data[, column], na.rm = TRUE)
       }
     }
   }
@@ -188,7 +189,7 @@ get_jags_data = function(data, ST, jags_code, sample) {
 recover_levels = function(samples, data, mcmc_col, data_col) {
   # Get vectors of old ("from") and replacement column names in samples
   from = colnames(samples[[1]])[stringr::str_starts(colnames(samples[[1]]), paste0(mcmc_col, '\\['))]  # Current column names
-  to = sprintf(paste0(mcmc_col, '[%s]'), unique(dplyr::pull(data, data_col)))  # Desired column names
+  to = sprintf(paste0(mcmc_col, '[%s]'), unique(data[, data_col]))  # Desired column names
 
   # Recode column names on each list (chain) using lapply
   names(to) = from
