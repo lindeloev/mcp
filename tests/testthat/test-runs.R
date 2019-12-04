@@ -1,7 +1,6 @@
 ############
 # DATASETS #
 ############
-library(mcp)
 
 # Samples and checks data structure.
 # Meant to be used with testthat::expect_true()
@@ -111,7 +110,8 @@ test_mcp = function(segments,
     if (length(quiet_out$warnings) > 0) {
       accepted_warnings = c("Adaptation incomplete")  # due to very small test datasets
       accepted_messages = c("The current implementation of autoregression can be fragile",
-                            "Autoregression currently assumes homoskedasticity")
+                            "Autoregression currently assumes homoskedasticity",
+                            "You are using ar\\(\\) together")
 
       for (warn in quiet_out$warnings) {
         if (!any(stringr::str_starts(warn, accepted_warnings))) {

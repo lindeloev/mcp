@@ -235,7 +235,7 @@ mcp = function(segments,
 
   # Parallel fails on R version 3.6.0 and lower (sometimes at least).
   if (cores > 1 & getRversion() < "3.6.1")
-    message("Parallel sampling (`cores` > 1) has been shown to err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
+    message("Parallel sampling (`cores` > 1) sometimes err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
 
 
   ##################
@@ -262,10 +262,10 @@ mcp = function(segments,
   pars$population = c(pars$reg, pars$sigma, pars$arma)
 
   if (length(pars$arma) > 0 & family$link %in% c("logit", "probit"))
-    message("The current implementation of autoregression can be fragile for link='logit'. If fitting succeeds, do a proper assessment of model convergence.")
+    message("The current implementation of autoregression can be fragile for link='logit'. In particular, if there are any all-success trials (e.g., 10/10), the only solution is for 'ar' to be 0.00. If fitting succeeds, do a proper assessment of model convergence.")
 
   if (length(pars$arma) > 0 & length(pars$sigma) > 1)
-    message("Autoregression currently assumes homoskedasticity (equal variance at all x). Using together with sigma() breaks this assumption except when doing just `~ [formula] + sigma(1) + ar(N)`, so that `ar` changes with a sigma intercept. If not, the estimated ar* parameters may not be meaningful.")
+    message("You are using ar() together with sigma(). Autoregression usually assumes homoskedasticity (equal variance at all x). This is not a problem if if intercepts in ar() are joined by intercepts in sigma() like `~ [formula] + sigma(1) + ar(N)`. It may not be a problem for slopes on `sigma` either, but this has not been assessed thoroughly yet. So this is a note to be cautious about interpreting the sigma- and ar-parameters for now.")
 
   # Make formula_str and simulate
   formula_str_sim = get_all_formulas(ST, prior, pars$x, ytypes = c("ct", "sigma", "arma"))

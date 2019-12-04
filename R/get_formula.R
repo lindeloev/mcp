@@ -221,6 +221,9 @@ get_simulate = function(formula_str, pars, nsegments, family) {
   # Remove hyperparameter on varying effects from pars$reg since it is not used for simulation
   pars$reg = pars$reg[!stringr::str_ends(pars$reg, "_sd")]
 
+  # Helper
+  is_arma = length(pars$arma) > 0
+
   # Helper to build the list of simulate() arguments. Simply comma separates correctly
   args_if_exists = function(args, postfix = "") {
     if(length(args) > 0) {
@@ -236,15 +239,15 @@ get_simulate = function(formula_str, pars, nsegments, family) {
   # x_and_trials handles the special case that binomial "trials" is also used as a predictor.
 
   x_and_trials = ifelse(length(pars$trials) > 0, pars$x, no = paste0(unique(c(pars$x, pars$trials)), collapse = ", "))
-  func_str = paste0("
+  out = paste0("
   function(",
     x_and_trials, ", ",
     args_if_exists(pars$reg),
     args_if_exists(pars$sigma),
     args_if_exists(pars$arma),
     args_if_exists(pars$varying, " = 0"),
-    ifelse(length(pars$arma), paste0(pars$y, " = NULL, "), ""),
-    "type = 'predict',
+    ifelse(is_arma, paste0(pars$y, " = NULL, ydata = NULL, "), ""), "
+    type = 'predict',
     quantiles = FALSE,
     rate = FALSE,
     ...) {
@@ -263,8 +266,8 @@ get_simulate = function(formula_str, pars, nsegments, family) {
   # Return depends on family
   if (family$family == "gaussian") {
     # If ARMA, build resid_ and return with that
-    if (length(pars$arma) > 0) {
-      func_str = paste0(func_str, "
+    if (is_arma) {
+      out = paste0(out, "
       # Simulate AR residuals",
         get_ar_code(
           ar_order = get_arma_order(pars$arma),
@@ -278,19 +281,23 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     ")
     }
 
-    func_str = paste0(func_str, "
+    out = paste0(out, "
     # If fitted or no data (will)
     if (type == 'fitted') {")
-      if (length(pars$arma) > 0) {
-        func_str = paste0(func_str, "
-      if (is.null(", pars$y, ") & is.null(list(...)$ydata))
+      if (is_arma) {
+        out = paste0(out, "
+      if (is.null(", pars$y, ") & is.null(ydata))
         stop('fitted not meaningful for an AR(N) model without data to use for autocorrelation.')")
       }
-    func_str = paste0(func_str, "
+    out = paste0(out, "
       return(y_)
-    } else if (type == 'predict' & (is.null(list(...)$ydata) & is.null(", pars$y, "))) {
+    }")
+    if(is_arma) {
+      out = paste0(out, "else if (type == 'predict' & (is.null(ydata) & is.null(", pars$y, "))) {
       return(y_)
-    } else if (type == 'predict') {
+    }")
+    }
+    out = paste0(out, "else if (type == 'predict') {
       return(rnorm(length(", pars$x, "), y_, sigma_))
       # if (quantiles == TRUE)
       #   quantiles = c(0.025, 0.975)
@@ -303,7 +310,7 @@ get_simulate = function(formula_str, pars, nsegments, family) {
       # }
     }")
   } else if (family$family == "binomial") {
-    func_str = paste0(func_str, "
+    out = paste0(out, "
     if (type == 'predict') {
       if (rate == FALSE) return(rbinom(length(", pars$x, "), ", pars$trials, ", ilogit(y_)))
       if (rate == TRUE)  return(rbinom(length(", pars$x, "), ", pars$trials, ", ilogit(y_)) / ", pars$trials, ")
@@ -312,20 +319,20 @@ get_simulate = function(formula_str, pars, nsegments, family) {
       if (rate == FALSE) return(", pars$trials, " * ilogit(y_))
       if (rate == TRUE)  return(ilogit(y_))")
   } else if (family$family == "bernoulli") {
-    func_str = paste0(func_str, "
+    out = paste0(out, "
     if (type == 'predict') return(rbinom(length(", pars$x, "), 1, ilogit(y_)))
     if (type == 'fitted') return(ilogit(y_))")
   } else if (family$family == "poisson") {
-    func_str = paste0(func_str, "
+    out = paste0(out, "
     if (type == 'predict') return(rpois(length(", pars$x, "), exp(y_)))
     if (type == 'fitted') return(exp(y_))")
   }
 
-  func_str = paste0(func_str, "
+  out = paste0(out, "
   }")
 
   # Return function
-  eval(parse(text = func_str))
+  eval(parse(text = out))
 }
 
 
@@ -343,11 +350,14 @@ get_simulate = function(formula_str, pars, nsegments, family) {
 #' @param is_R Bool. Is this R code (TRUE) or JAGS code (FALSE)?
 get_ar_code = function(ar_order, family, is_R, xvar, yvar = NA) {
   mm = "\n"
+
+  ##################
+  # FOR SIMULATE() #
+  ##################
   if (is_R) {
     # mm is the code string to be populated below
     mm = paste0("
-      dots = list(...)
-      if(!is.null(dots$ydata)) ", yvar, " = dots$ydata  # Hack to get a consistent argument name
+      if(!is.null(ydata)) ", yvar, " = ydata  # Hack to get a consistent argument name
       ar0_ = sigma_[1:", ar_order, "] * 0 + 1
 
       # If got y. Use it to compute residuals
@@ -391,6 +401,11 @@ get_ar_code = function(ar_order, family, is_R, xvar, yvar = NA) {
     mm = paste0(mm, "\n
       }")
   } else {
+
+
+    #################
+    # FOR JAGS CODE #
+    #################
     # For data points lower than the full order
     for (i in seq_len(ar_order)) {
       mm = paste0(mm, "\n      resid_[", i, "] = 0")

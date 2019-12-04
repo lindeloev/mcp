@@ -2,7 +2,6 @@
 # TEST THAT TRUE PARAMETERS ARE WITHIN 50% HDI OF ESTIMATED PARAMETERS #
 ########################################################################
 `%>%` = magrittr::`%>%`
-library(mcp)
 
 # All relevant segments expressions
 segments = list(
