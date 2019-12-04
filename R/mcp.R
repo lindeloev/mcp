@@ -266,7 +266,7 @@ mcp = function(segments,
     message("Autoregression currently assumes homoskedasticity (equal variance at all x). Using together with sigma() breaks this assumption except when doing just `~ [formula] + sigma(1) + ar(N)`, so that `ar` changes with a sigma intercept. If not, the estimated ar* parameters may not be meaningful.")
 
   # Make formula_str and simulate
-  formula_str_sim = get_all_formulas(ST, prior, pars$x, ytypes = c("ct", "sigma"))  # Without ARMA
+  formula_str_sim = get_all_formulas(ST, prior, pars$x, ytypes = c("ct", "sigma", "arma"))
   simulate = get_simulate(formula_str_sim, pars, nrow(ST), family)
 
   # Make jags code

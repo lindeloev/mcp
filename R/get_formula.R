@@ -241,8 +241,11 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     x_and_trials, ", ",
     args_if_exists(pars$reg),
     args_if_exists(pars$sigma),
+    args_if_exists(pars$arma),
     args_if_exists(pars$varying, " = 0"),
-    "type = 'predict', quantiles = FALSE, rate = FALSE, ...) {
+    "type = 'predict',
+    quantiles = FALSE,
+    rate = FALSE, ...) {
     # Helpers to simplify making the code for this function
     cp_0 = -Inf
     cp_", nsegments, " = Inf
@@ -259,17 +262,35 @@ get_simulate = function(formula_str, pars, nsegments, family) {
   if (family$family == "gaussian") {
     func_str = paste0(func_str, "
     if (type == 'fitted') return(y_)
-    if (type == 'predict') {
-      if (quantiles == TRUE)
-        quantiles = c(0.025, 0.975)
-      if (is.numeric(quantiles)) {
-        return(qnorm(quantiles, y_, sigma_))
-      } else if (quantiles == FALSE) {
-        return(rnorm(length(", pars$x, "), y_, sigma_))
-      } else {
-        stop('Invalid quantiles argument to simulate()')
-      }
+    if (type == 'predict') {")
+
+    # If ARMA, build resid_ and return with that
+    if (length(pars$arma) > 0) {
+      func_str = paste0(func_str, "
+      # Simulate AR residuals",
+        get_ar_code2(
+          ar_order = get_arma_order(pars$arma),
+          family = family,
+          is_R = TRUE
+        ),
+        "
+      return(y_ + resid_)
+    }"
+      )
+    } else {
+      func_str = paste0(func_str, "
+      return(rnorm(length(", pars$x, "), y_, sigma_))
+      # if (quantiles == TRUE)
+      #   quantiles = c(0.025, 0.975)
+      # if (is.numeric(quantiles)) {
+      #   return(qnorm(quantiles, y_, sigma_))
+      # } else if (quantiles == FALSE) {
+      #   return(rnorm(length(", pars$x, "), y_, sigma_))
+      # } else {
+      #   stop('Invalid quantiles argument to simulate()')
+      # }
     }")
+    }
   } else if (family$family == "binomial") {
     func_str = paste0(func_str, "
     if (type == 'predict') {
@@ -294,4 +315,45 @@ get_simulate = function(formula_str, pars, nsegments, family) {
 
   # Return function
   eval(parse(text = func_str))
+}
+
+
+
+#' Gets code for ARMA terms, resulting in a "resid_"
+#'
+#' @aliases get_ar_code
+#' @keywords internal
+#' @param ar_order Positive integer. The order of ARMA
+#' @param family An mcpfamily object
+#' @param is_R Bool. Is this R code (TRUE) or JAGS code (FALSE)?
+get_ar_code2 = function(ar_order, family, is_R) {
+  # mm is the code string to be populated below
+  mm = "
+      ar0_ = numeric(length(sigma_)) + 1"
+  if (is_R) {
+    # Define residual vars
+    mm = paste0(mm, "
+      resid_sigma_ = rnorm(length(sigma_), 0, sigma_)
+      resid_ = numeric(length(sigma_))")
+  }
+
+  # For data points lower than the full order
+  for (i in seq_len(ar_order)) {
+    mm = paste0(mm, "\n      resid_[", i, "] = ",
+                paste0("ar", 0:(i-1), "_[", i, " - ", 0:(i-1), "] * resid_sigma_[", i, " - ", 0:(i-1), "]", collapse = " + "))
+    #mm = paste0(mm, "ar{0:(i-1)}_ * resid_sigma_[{i:1}]", collapse = " + ")
+  }
+
+  # For full order
+  mm = paste0(mm, "
+      for (j_ in ", ar_order + 1, ":length(sigma_)) {
+        resid_[j_] = resid_sigma_[j_]")
+
+  for (i in seq_len(ar_order)) {
+    mm = paste0(mm, " + ar", i, "_[j_] * resid_[j_ - ", i, "]")
+  }
+  mm = paste0(mm, "\n
+      }")
+
+  return(mm)
 }
