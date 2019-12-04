@@ -74,7 +74,7 @@ test_mcp = function(segments,
     # If sample = FALSE, it should pass/fail with the above. If TRUE,
     # check for correct types in data structure
     testthat::expect_true(is.list(empty$segments), segments)
-    testthat::expect_true(all.equal(empty$data, data), segments)
+    testthat::expect_true(is.data.frame(empty$data), segments)
     testthat::expect_true(is.list(empty$prior), segments)
     testthat::expect_true(class(empty$family) == "family", segments)
     testthat::expect_true(is.null(empty$samples), segments)
@@ -156,9 +156,6 @@ test_mcp = function(segments,
       test_plot(fit, varying_cols)  # default plot
       test_plot_pars(fit)  # bayesplot call
     }
-
-    # Data should not be manipulated, just by working with it
-    testthat::expect_true(all.equal(fit$data, data), segments)
   }
 }
 
@@ -176,8 +173,7 @@ test_summary = function(fit, varying_cols) {
     testthat::expect_true(is.character(varying$name))
     testthat::expect_true(is.numeric(varying$mean))
 
-    group_level_counts = lapply(varying_cols, function(col) length(dplyr::pull(fit$data, col)))
-    #n_unique_data = length(unique(dplyr::pull(fit$data, varying_cols)))
+    group_level_counts = lapply(varying_cols, function(col) length(fit$data[, col]))
     n_unique_data = sum(unlist(group_level_counts))
     testthat::expect_true(nrow(varying) == n_unique_data)  # TO DO: should fail if there are multiple groups
   }
