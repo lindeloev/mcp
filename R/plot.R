@@ -63,8 +63,11 @@ plot.mcpfit = function(x,
   if (!coda::is.mcmc.list(fit$mcmc_post) & !coda::is.mcmc.list(fit$mcmc_prior))
     stop("Cannot plot an mcpfit without prior or posterior samples.")
 
-  if (lines != FALSE)
+  if (lines != FALSE) {
     check_integer(lines, "lines", lower = 1)
+  } else {
+    lines = 0
+  }
 
   if (lines > 1000) {
     lines = 1000
@@ -109,13 +112,20 @@ plot.mcpfit = function(x,
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)
   simulate = fit$simulate
-  if (all(quantiles == FALSE) & is.numeric(lines)) {
+  if (all(quantiles == FALSE)) {
     HDI_SAMPLES = lines
   } else {
     HDI_SAMPLES = 1000 # Maximum number of draws to use for computing HDI
     HDI_SAMPLES = min(HDI_SAMPLES, length(samples) * nrow(samples[[1]]))
   }
-
+  is_arma = length(fit$pars$arma) > 0
+  if (is_arma & all(quantiles != FALSE))
+    message("Plotting ar() with quantiles != FALSE can be slow. Raise an issue at GitHub (or thumb-up existing ones) if you need this.")
+  if (!is.null(facet_by)) {
+    n_facet_levels = length(unique(fit$data[, facet_by]))
+  } else {
+    n_facet_levels = 1
+  }
 
   #################
   # GET PLOT DATA #
@@ -161,15 +171,22 @@ plot.mcpfit = function(x,
       dplyr::mutate(!!fit$pars$trials := rep(interpolated_trials, nrow(samples)))
   }
 
+  # For ARMA prediction, we need the raw data
+  # We know that eval_at is the same length as nrow(data), so we can simply add corresponding data$y for each draw
+  if (is_arma) {
+    samples = dplyr::mutate(samples, ydata = rep(fit$data[, fit$pars$y], HDI_SAMPLES * n_facet_levels))
+  }
+
   # Predict y from model
   if (lines > 0 | (any(quantiles != FALSE) & quantiles_type == "fitted")) {
     samples = samples %>%
       # Add fitted draws (vectorized)
-      dplyr::mutate(!!yvar := purrr::invoke(simulate, ., type = "fitted", rate = rate))
+      #print(head(samples))
+      dplyr::mutate(!!yvar := rlang::exec(simulate, !!!., type = "fitted", rate = rate))
   }
   if (quantiles_type == "predict") {
     samples = samples %>%
-      dplyr::mutate(predicted_ = purrr::invoke(simulate, ., type = "predict", rate = rate))
+      dplyr::mutate(predicted_ = rlang::exec(simulate, !!!., type = "predict", rate = rate))
   }
 
 
@@ -182,7 +199,7 @@ plot.mcpfit = function(x,
     fit$data[, fit$pars$y] = fit$data[, fit$pars$y] / fit$data[, fit$pars$trials]
   }
 
-  # Initiate plot
+  # Initiate plot. Lines for ARMA. Points for everything else
   gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y)) +
     geom_point()
 
@@ -397,6 +414,11 @@ plot_pars = function(fit,
 #' @inheritParams plot.mcpfit
 #' @param fit An mcpfit object.
 get_eval_at = function(fit, facet_by) {
+  # If there are ARMA terms, evaluate at the data
+  if (length(fit$pars$arma) > 0) {
+    return(c(fit$data[, fit$pars$x]))
+  }
+
   # Set resolutions in general and for change points
   X_RESOLUTION_ALL = 100  # Number of points to evaluate at x
   X_RESOLUTION_CP = 600
