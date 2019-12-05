@@ -51,6 +51,7 @@ plot.mcpfit = function(x,
                        quantiles_type = "fitted",
                        rate = TRUE,
                        prior = FALSE,
+                       which_y = "ct",
                        ...) {
 
   # Just for consistent naming in mcp
@@ -177,12 +178,10 @@ plot.mcpfit = function(x,
     samples = dplyr::mutate(samples, ydata = rep(fit$data[, fit$pars$y], HDI_SAMPLES * n_facet_levels))
   }
 
-  # Predict y from model
+  # Predict y from model by adding fitted/predicted draws (vectorized)
   if (lines > 0 | (any(quantiles != FALSE) & quantiles_type == "fitted")) {
     samples = samples %>%
-      # Add fitted draws (vectorized)
-      #print(head(samples))
-      dplyr::mutate(!!yvar := rlang::exec(simulate, !!!., type = "fitted", rate = rate))
+      dplyr::mutate(!!yvar := rlang::exec(simulate, !!!., type = "fitted", rate = rate, which_y = which_y))
   }
   if (quantiles_type == "predict") {
     samples = samples %>%
@@ -200,8 +199,9 @@ plot.mcpfit = function(x,
   }
 
   # Initiate plot. Lines for ARMA. Points for everything else
-  gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y)) +
-    geom_point()
+  gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y))
+  if (which_y == "ct")
+    gg = gg + geom_point()
 
   # Add lines?
   if (lines > 0) {
@@ -251,9 +251,11 @@ plot.mcpfit = function(x,
     gg = gg + facet_wrap(paste0("~", facet_by))
   }
 
-  # Add better y-label for the rate plot
+  # Add better y-labels
   if (fit$family$family == "bernoulli" | (fit$family$family == "binomial" & rate == TRUE))
     gg = gg + ggplot2::labs(y = paste0("Probability of success for ", fit$pars$y))
+  if (which_y != "ct")
+    gg = gg + ggplot2::labs(y = which_y)
 
   return(gg)
 }

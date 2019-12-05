@@ -160,17 +160,23 @@ data = tibble::tibble(
 ```
 
 
-... and we use a prior to equate the slopes of each segment (read more about [using priors](../articles/priors.html) to equate parameters and define constants). Now let's see if we can recover these parameters.
+... and we use a prior to equate the slopes of each segment (read more about [using priors](../articles/priors.html) to equate parameters and define constants). Now let's see if we can recover these parameters. We use `sample = "both"` because we will do a Savage-Dickey test later.
 
 ```{r, cache = TRUE, results=FALSE}
 prior = list(x_2 = "x_1")  # Set the two slopes equal
-fit = mcp(segments, data, prior)
+fit = mcp(segments, data, prior, sample = "both")
 ```
 
 First, let's get a visual to see that the posterior is reasonably narrow and consistent:
 
 ```{r}
 plot(fit)
+```
+
+You can also plot the `ar1_` parameters directly. Now the y-axis is `ar1`:
+
+```{r}
+plot(fit, which_y = "ar1", lines = 100)
 ```
 
 
@@ -188,16 +194,18 @@ plot_pars(fit, regex_pars = "cp_1|ar_*")
 ```
 
 
-As usual, we can test hypotheses and do model comparison ([read more here](../articles/comparison.html)). For example, what is the evidence that `ar1_1` is more than 0.3 greater than `ar1_2`? Answer: It is quite compelling.
+As usual, we can test hypotheses and do model comparison ([read more here](../articles/comparison.html)). We can also ask how much more likely it is (relative to the prior) that there the two autocorrelations are equal compared to them differing. Because we sampled both the prior and posterior (`mcp(..., sample = "both")`), we can do a Savage-Dickey density ratio test:
 
 ```{r}
-hypothesis(fit, "ar1_1 - 0.3 > ar1_2")
+hypothesis(fit, "ar1_1 = ar1_2")
 ```
 
-Or how does this compare to a model with just the slope and no autocorrelation? Answer: quite strong with an `elpd_diff/se_diff` factor of around 7.
+In this case, the evidence for equality is so small that it is rounded to zero. This means that not even a single MCMC sample visited a state with noticeable density at zero difference.
+
+We can assess the same hypothesis using cross-validation, only this time it is more about whether the change point increases the predictive accuracy. The change point is favored with an `elpd_diff/se_diff` factor of around 2.
 
 ```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
-fit_null = mcp(list(y ~ 1 + x), data)
+fit_null = mcp(list(y ~ 1 + x + ar(1)), data)
 fit$loo = loo(fit)
 fit_null$loo = loo(fit_null)
 
@@ -205,6 +213,12 @@ loo::loo_compare(fit$loo, fit_null$loo)
 ```
 ```{r, echo = FALSE}
 loo::loo_compare(fit$loo, fit_null$loo)
+```
+
+Of course, we can also do directional tests. For example, what is the evidence that `ar1_1` is more than 0.3 greater than `ar1_2`? Answer: around 100 to one.
+
+```{r}
+hypothesis(fit, "ar1_1 - 0.3 > ar1_2")
 ```
 
 
@@ -217,6 +231,14 @@ Here is a complete list of the (default) priors in the model above:
 ```{r}
 cbind(fit$prior)
 ```
+
+We can also visualize them because we sampled the prior. `prior = TRUE` works in most `mcp` functions, including `plot()` and `summary()`.
+
+```{r, fig.height=10, fig.width=7}
+plot_pars(fit, prior = TRUE)
+```
+
+Notice that the posteriors are smoothed at sharp cutoffs, slightly misrepresenting the true distribution.
 
 Let's inspect the priors for a more advanced AR model, since you would often have to inform these:
 

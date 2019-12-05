@@ -251,7 +251,16 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     type = 'predict',
     quantiles = FALSE,
     rate = FALSE,
+    which_y = 'ct',
     ...) {
+
+    # Use this for return to add simulation parameters to the output
+    args_call = match.call()  # Which arguments this function was called with
+    add_simulated = function(x) {
+      args_call[[1]] = NULL  # Remove function name
+      attr(x, 'simulated') = args_call
+      return(x)
+    }
 
     # Helpers to simplify making the code for this function
     cp_0 = -Inf
@@ -284,6 +293,22 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     }
 
     out = paste0(out, "
+    # Use which_y to return something else than ct.
+    # First, rename to internal parameter name
+    if (which_y == 'sigma') {
+      which_y = 'sigma_'
+    } else if (stringr::str_detect(which_y, '^ar([0-9]+)$')) {
+      which_y = paste0(which_y, '_')
+    }
+    if (which_y != 'ct') {
+      if (!exists(which_y))
+        stop(which_y, ' was not found. Try one of \\'sigma\\', \\'ar1\\', etc.')
+      if (type != 'fitted')
+        stop('`type = \\'fitted\\` is the only option when `which_y != \\'ct\\'`')
+
+      return(add_simulated(get(which_y)))
+    }
+
     # If fitted or no data (will)
     if (type == 'fitted') {")
       if (is_arma) {
@@ -292,21 +317,21 @@ get_simulate = function(formula_str, pars, nsegments, family) {
         stop('fitted not meaningful for an AR(N) model without data to use for autocorrelation.')")
       }
     out = paste0(out, "
-      return(y_)
+      add_simulated(y_)
     }")
     if(is_arma) {
       out = paste0(out, "else if (type == 'predict' & (is.null(ydata) & is.null(", pars$y, "))) {
-      return(y_)
+      add_simulated(y_)
     }")
     }
     out = paste0(out, "else if (type == 'predict') {
-      return(rnorm(length(", pars$x, "), y_, sigma_))
+      add_simulated(rnorm(length(", pars$x, "), y_, sigma_))
       # if (quantiles == TRUE)
       #   quantiles = c(0.025, 0.975)
       # if (is.numeric(quantiles)) {
-      #   return(qnorm(quantiles, y_, sigma_))
+      #   add_simulated(qnorm(quantiles, y_, sigma_))
       # } else if (quantiles == FALSE) {
-      #   return(rnorm(length(", pars$x, "), y_, sigma_))
+      #   add_simulated(rnorm(length(", pars$x, "), y_, sigma_))
       # } else {
       #   stop('Invalid quantiles argument to simulate()')
       # }
@@ -314,20 +339,20 @@ get_simulate = function(formula_str, pars, nsegments, family) {
   } else if (family$family == "binomial") {
     out = paste0(out, "
     if (type == 'predict') {
-      if (rate == FALSE) return(rbinom(length(", pars$x, "), ", pars$trials, ", ilogit(y_)))
-      if (rate == TRUE)  return(rbinom(length(", pars$x, "), ", pars$trials, ", ilogit(y_)) / ", pars$trials, ")
+      if (rate == FALSE) add_simulated(rbinom(length(", pars$x, "), ", pars$trials, ", ilogit(y_)))
+      if (rate == TRUE)  add_simulated(rbinom(length(", pars$x, "), ", pars$trials, ", ilogit(y_)) / ", pars$trials, ")
     }
     if (type == 'fitted')
-      if (rate == FALSE) return(", pars$trials, " * ilogit(y_))
-      if (rate == TRUE)  return(ilogit(y_))")
+      if (rate == FALSE) add_simulated(", pars$trials, " * ilogit(y_))
+      if (rate == TRUE)  add_simulated(ilogit(y_))")
   } else if (family$family == "bernoulli") {
     out = paste0(out, "
-    if (type == 'predict') return(rbinom(length(", pars$x, "), 1, ilogit(y_)))
-    if (type == 'fitted') return(ilogit(y_))")
+    if (type == 'predict') add_simulated(rbinom(length(", pars$x, "), 1, ilogit(y_)))
+    if (type == 'fitted') add_simulated(ilogit(y_))")
   } else if (family$family == "poisson") {
     out = paste0(out, "
-    if (type == 'predict') return(rpois(length(", pars$x, "), exp(y_)))
-    if (type == 'fitted') return(exp(y_))")
+    if (type == 'predict') add_simulated(rpois(length(", pars$x, "), exp(y_)))
+    if (type == 'fitted') add_simulated(exp(y_))")
   }
 
   out = paste0(out, "
