@@ -1,4 +1,13 @@
-# mcp 0.2
+# mcp 0.2.0.9000
+This will, in time, become `mcp` v0.3.0
+
+## New features:
+
+ * Simulate AR(N) models with `fit$simulate()`. The [article on AR(N)]() has been updated with examples. `fit$simulate()` can also get fits and predictions for known data if you pass the response variable as an argument too.
+ * The default plot (`plot(fit)`) now visualize AR(N) autocorrelation.
+
+
+# mcp 0.2.0
 The API and internal structure should be stable now.
 
 ## New features: 
