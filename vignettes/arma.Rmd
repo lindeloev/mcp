@@ -15,72 +15,130 @@ vignette: >
  * Make a demo dataset and add to README
 -->
 
-Autocorrelation is common in time series. You can specify N-order autoregressive models using `ar(N)` in the segment formulas. For most use cases, you just want to specify `ar(1)` in the first segment so that it "carries over" to other segments, just like all other intercepts in mcp. You can do regression on the autocorrelation parameters using `ar(N, formula)` and it behaves much like [`sigma` to model variance](../articles/variance.html).
+Autocorrelation is common in time series. You can specify N-order autoregressive models using `ar(N)` in the segment formulas. The most common use case is probably just to add `ar(1)` to the first segment. This will be "carried over" to later segments if nothing is done to change it - just like all other intercepts in mcp. You can do regression on the autocorrelation parameters using `ar(N, formula)` and it behaves much like [`sigma` to model variance](../articles/variance.html).
 
 
 # Simple example
-Let's try and model the `ex_ar` dataset. Take at look at [how it was simulated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_ar.R) and scroll down to see another simulation.
+Let's try and model the simulated `ex_ar` dataset. Take at look at [how it was simulated with `mcp`](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_ar.R) and scroll down to see another simulation.
 
 ```{r}
 library(mcp)
 options(mc.cores = 3)  # Speed up sampling!
-
-plot(ex_ar, type="l", main = "Change point with AR(2) residuals")
 ```
 
 
-We model this as a plateau (`1`) followed by a joined slope (`0 + time`) with (constant) second-order autoregressive residuals.
+We model this as a plateau (`1`)  with a second-order autoregressive residual (`ar(2)`) followed by a joined slope (`0 + time`) with a negative first-order autoregressive residual (`ar(1)`):
 
 
 ```{r, cache = TRUE, results = FALSE}
 segments = list(
-  price ~ 1 + ar(2),  # coefficients: int_1, ar1_1, ar2_1
-  ~ 0 + time  # time_2
+  price ~ 1 + ar(2),  # int_1, ar1_1, ar2_1
+  ~ 0 + time + ar(1)  # time_2, ar1_2
 )
 fit = mcp(segments, ex_ar)
 ```
 
-We can summarise the inferred coefficients and see that the naming syntax for autoregressive intercepts is `ar[order]_[segment]`. For example, `ar1_1` is the first-order autoregressive coefficient in segment 1. For slopes it will be `ar[order]_[normal mcp name]`. The first- and second-order AR coefficients were simulated to be 0.5 and 0.3 respectively in the `ex_ar` dataset, and these values are well recovered:
+Let's plot it (<span style="color:red">OBS: updated in `mcp` v0.3</span>) and we see that AR was strong in the first segment and weaker-but-negative in the second:
+
+```{r}
+plot(fit)
+```
+
+
+We can summarise the inferred coefficients:
 
 ```{r}
 summary(fit)
 ```
 
-Notice that `sigma` in AR models describe *innovations*, i.e., the part of the residuals that are not explained by the autoregressive coefficients. As always, it is good to assess posteriors and convergence more directly:
+Note that he naming syntax for autoregressive intercepts is `ar[order]_[segment]`. For example, `ar1_2` is the first-order autoregressive coefficient in segment 2. For slopes it will be `ar[order]_[normal mcp name]`, e.g., `ar1_x_3` for a slope on AR(1) in segment 3. In the present dataset, the AR coefficients were simulated from `ar1_1 = 0.7`, `ar2_1 = 0.2`, and `ar1_2 = -0.4`, and these values are reasonably recovered.
 
-```{r, fig.height=8, fig.width=8}
+In fact, the posterior mean is almost always exactly the same as `arima(data, order = c(N, 0, 0))` (see below) , so the non-perfect fits are due to randomness in the simulation - not in the fit.
+
+Notice that `sigma` in AR models describe *innovations*, i.e., the part of the residuals that are not explained by the autoregressive coefficients. `sd(ex_ar$price)` is always higher. In this case, it is `r sd(ex_ar$price)`. As always, it is good to assess posteriors and convergence more directly:
+
+```{r, fig.height=9, fig.width=8}
 plot_pars(fit)
 ```
 
-Sometimes, the trace plot shows that the change point (`cp_1`) is not well identified with this model and data. As discussed in the article on [tips, tricks, and debugging](../articles/tips.html), you could combine a more informative prior with more samples (`mcp(..., iter = 10000)`), if this is a problem.
+Sometimes, the trace plot shows that the change point (`cp_1`) is not well identified with this model and data. As discussed in the article on [tips, tricks, and debugging](../articles/tips.html), you could combine a more informative prior with more samples (`mcp(..., adapt = 10000, iter = 10000)`), if this is a problem.
 
-You can do hypothesis testing and model comparisons with autoregressive models, just as with any other model in `mcp`. [Read more here](../articles/comparison.html) or scroll down for an applied example.
+You can do hypothesis testing (see `hypothesis()`) and model comparisons (see `loo()`) with autoregressive models, just as with any other model in `mcp`. [Read more here](../articles/comparison.html) or scroll down for an applied example.
 
 
 
-# Extended use
-You can combine `ar` with any regression model and with [varying change points](../articles/varying.html). The autoregressive modeling applies to the *residuals* from the predicted fit as is common. These residuals are computed on a transformed scale for families with a non-identity link function (e.g., `poisson(link = "log")`). In time-series jargon, this is a dynamical regression model where the the "normal" regression parameters make up the *deterministic* structure. See further comments in the section on priors below.
+# Tips, comments, and warnings
+The autoregressive modeling applies to the *residuals* from the predicted fit as is common. These residuals are computed on a transformed scale for families with a non-identity link function (e.g., `poisson(link = "log")`). In time-series jargon, this is a *dynamical* regression model where the the "normal" regression parameters make up the *deterministic* structure. See further comments in the section on priors below.
 
-Here is a varying slope change point with AR(1) residuals in both segments (it is carried over):
+If you want to control the *direction* of the change, you simply put a positive-only prior the corresponding ar slope coefficient, e.g., `ar_x_1 = "dnorm(0, 1) T(0, )`. See recommendations in [the section on priors for AR(N)](#ar_prior).
 
-```{r, eval = FALSE}
+## Regression on AR-coefficients
+While the typical usage is `AR(N)`, you can also specify how autocorrelation *itself* changes with $x$ using `ar(N, formula)`. If you want to model a steady change in the AR(1) "strength", you can do `ar(1, 1 + time)`. Please note that the link function for this regression formula is identity, so you can easily exceed the stationary boundary [-1, 1]. See [the section on priors for AR(N)](#ar_prior) how to counter such problems. The regression on the AR coefficients is applied to all orders. Raise an issue on GitHub if you see a use case for per-order control.
+
+You have the full suite of [`mcp` formula syntax](../articles/formulas.html) available inside `ar` so you could easily do  `ar(3, rel(1) + I(x^2) + exp(x))`. Make sure to use a positive-only prior (e.g., `"dunif(0, 1)"` if using `log()` and `sqrt()` since they fail for negative values.
+
+## Combining ar() and sigma()
+You can combine `ar()` with any regression model and with [varying change points](../articles/varying.html). Combining with `sigma()` will run will be valid if they change intercepts together so that each segment has homoskedastic residuals, i.e.,
+
+```{r}
 segments = list(
-  y ~ 1 + x + ar(1),
-  1 + (1|id) ~ 0 + x + I(x^2)
+  y ~ 1 + ar(1) + sigma(1),
+  ~ 0 + x + ar(1) + sigma(1),
+  ~ 1
 )
 ```
 
-While the typical usage is `AR(N)`, you can also specify how autocorrelation *itself* changes with $x$ using `ar(N, formula)`. If you want to model a steady change in the AR(1) "strength", you can do `ar(1, 1 + time)`. If you want to control the *direction* of the change, you simply put a positive-only prior the corresponding ar slope coefficient, e.g., `ar_x_1 = "dnorm(0, 1) T(0, )`. You have the full suite of [`mcp` formula syntax](../articles/formulas.html) available inside `ar` so you could easily do  `ar(3, rel(1) + I(x^2) + exp(x))`. Make sure to use a positive-only prior (e.g., `"dunif(0, 1)"` if using `log()` and `sqrt()` since they fail for negative values.
+I have not tested whether "uncoordinated" changes will yield correct estimates as well, i.e., with slopes on `sigma()`/`ar()` or for changes in `sigma()` without a corresponding change in `ar()`. There is a good chance that they *will* be accurate because `ar()`/`sigma()` are conditional on each other and they are modeled jointly for each `x`. But this is just a hunch that needs scrutinzing.
 
-The regression on the AR coefficients is applied to all orders. Raise an issue on GitHub if you see a use case for per-order control.
 
+## Order your data
+Note that AR(N) as implemented in `mcp` (and most functions in R) applies to the *order* of the data *in the data frame* without taking into account the actual value of `x`. This has two important implications: 
+ * You probably want to sort your data according to your `x`. Just do `data = data[order(data$x), ]`.
+ * Adjacent data points that lie years apart are modeled to be just as (auto)correlated as adjacent points lying seconds apart.
 
 
 
 # Simulating autocorrelated change point data
-One side-effect of the `mcp` implementation of autocorrelation *in the formulas* is that you can infer when autocorrelation coefficients change. 
+Assessing the correctness of autocorrelation is less intuitive than seeing e.g. a mean fit. However, we can verify `mcp` up against more tested-and-tried functions such as `arima()` in base R. Let us simulate a single AR(3) segment, i.e., without change points, and see if it fits:
 
-Let's simulate a change point in autocorrelation and see if we can infer it later. With `mcp` v0.2, you can simulate data by letting `mcp` generate the fitted predictions (dashed line below) and then add autocorrelated residuals generated by `arima.sim()`:
+```{r}
+# Model
+segments = list(response ~ 1 + ar(3))
+
+# Simulate data
+empty = mcp(segments, sample = FALSE, par_x = "time")
+set.seed(42)  # For consistent "random" results
+data = tibble::tibble(
+  time = 1:200,
+  response = empty$simulate(
+    time, 
+    int_1 = 20, 
+    ar1_1 = 0.7, 
+    ar2_1 = 0.2, 
+    ar3_1 = -0.4, 
+    sigma_1 = 8)
+)
+
+# Base arima AR(3)
+arima(data$response, order = c(3, 0, 0))
+```
+OK, we can see that the `ar` coefficients and sigma ($sigma = sqrt(sigma^2)$) is simulated correctly, if taking `arima()` as ground truth. Inferring with `mcp` is straightforward:
+
+```{r, cache = TRUE, results = FALSE}
+fit = mcp(segments, data, par_x = "time")
+```
+
+The Bayesian parameter estimates are in perfect correspondence with `arima()`, even where they deviate a tiny bit from the simulation parameters (due to the inherent randomness in simulating data):
+```{r}
+fixef(fit)
+```
+
+
+
+# Inferring an autocorrelation-only change
+One "side-effect" of the `mcp` implementation of autocorrelation using `ar()` *in the formulas* is that you can infer when autocorrelation parameters and structures change. 
+
+Let's simulate a change point in autocorrelation and see if we can infer it later (<span style="color:red">OBS: this is new in `mcp` v0.3</span>):
 
 ```{r}
 # The model
@@ -91,24 +149,14 @@ segments = list(
 
 # Get fitted predictions
 empty = mcp(segments, sample = FALSE)
-data = tibble::tibble(
-  x = seq(0, 100, length.out = 500),
-  y = empty$simulate(x, cp_1 = 40,
-                   int_1 = 20, x_1 = 1, x_2 = 1,  # same slope
-                   sigma_1 = NA, type = "fitted")
-)
-
-plot(data, type ="l", lty=2, main = "Autocorrelation change point")
-
-# Add AR(1) residuals
 set.seed(42)
-ar_1 = arima.sim(list(ar = 0.2), n = 200, sd = 7)  # Weak AR first
-ar_2 = arima.sim(list(ar = 0.8), n = 300, sd = 7)  # Then stronger AR
-data$y = data$y + c(ar_1, ar_2)
-
-# Plot it
-lines(data, type = "l")
-abline(v = 40)
+data = tibble::tibble(
+  x = seq(0, 100, length.out = 200),
+  y = empty$simulate(x, cp_1 = 60,
+                   int_1 = 20, x_1 = 1, x_2 = 1,  # same slope
+                   ar1_1 = 0.8, ar1_2 = 0.2,
+                   sigma_1 = 5)
+)
 ```
 
 
@@ -116,30 +164,38 @@ abline(v = 40)
 
 ```{r, cache = TRUE, results=FALSE}
 prior = list(x_2 = "x_1")  # Set the two slopes equal
-fit = mcp(segments, data, prior, iter = 6000)
-
-# Show results
-summary(fit)
+fit = mcp(segments, data, prior)
 ```
 
-Let's see the results:
+First, let's get a visual to see that the posterior is reasonably narrow and consistent:
+
+```{r}
+plot(fit)
+```
+
+
+We recovered the parameters, including the change point:
+
 ```{r, echo = FALSE}
 summary(fit)
 ```
 
 
-We see that all parameters are well recovered. However, there is a dangerously low effective sample size for the change point (`cp_1`), indicating a potential problem. We can inspect this further using trace plots and posterior distributions. As is often the case, we see that the change point posterior is not well described by parameterized distribution. In this case, the change point posterior is a bit bimodal with some credence to a change point around 55 too. This is understandable if you look at the data.
+We can also plot some of the parameters. As usual, we see that the change point is not well defined by any known distribution. The fact that the posterior mean is around 60 does not (necessarily) mean that there is a high credence in this value. Usually, I find that any bi- or N-modality on the posterior matches well with what you would guess from looking at the raw data. As they say: Bayesian inference is common sense applied to data.
 
 ```{r}
 plot_pars(fit, regex_pars = "cp_1|ar_*")
 ```
 
-As usual, we can test hypotheses and do model comparison ([read more here](../articles/comparison.html)). For example, what is the evidence that `ar1_2` is more than 0.4 greater than `ar1_1`? Answer: It is quite compelling
+
+As usual, we can test hypotheses and do model comparison ([read more here](../articles/comparison.html)). For example, what is the evidence that `ar1_1` is more than 0.3 greater than `ar1_2`? Answer: It is quite compelling.
+
 ```{r}
-hypothesis(fit, "ar1_1 + 0.4 < ar1_2")
+hypothesis(fit, "ar1_1 - 0.3 > ar1_2")
 ```
 
-Or how does this compare to a model with just the slope and no autocorrelation? Answer: quite strong with an `elpd_diff/se_diff` factor of around 6.
+Or how does this compare to a model with just the slope and no autocorrelation? Answer: quite strong with an `elpd_diff/se_diff` factor of around 7.
+
 ```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
 fit_null = mcp(list(y ~ 1 + x), data)
 fit$loo = loo(fit)
@@ -153,7 +209,7 @@ loo::loo_compare(fit$loo, fit_null$loo)
 
 
 
-# Priors on autoregressive coefficients
+# Priors on autoregressive coefficients {#ar_prior}
 The default prior on autoregressive intercepts is a `dunif(-1, 1)` to ensure a stationary series while being otherwise agnostic about the magnitude and direction of the autocorrelation. For most time series, you would expect a positive first-order autocorrelation, e.g., `ar1_1 = "dunif(0, 1)"` or even something like `ar1_1 = "dnorm(0.5, 0.5) T(0, 1)"`. [Read more about priors](../articles/priors.html). Similarly, you would expect a smaller-but-still-positive second-order autocorrelation, e.g., `ar2_1 = dunif(0, ar1_1)`.
 
 Here is a complete list of the (default) priors in the model above:
@@ -180,3 +236,13 @@ Here are a few ways in which you may want to inform the `ar` parameters in the m
  * As mentioned above, you may want to constrain second-order autocorrelations to `ar2_1 ~ dunif(0, ar1_1)`.
  * The relative change in intercept in the second segment (`ar1_2`) can at most be -1 with the default prior. If `ar1_1` was 0.8, this means that it can at most change to -0.2 in the next segment. Use `rel()` with care.
  * Slopes can quickly make the parameter exceed the -1 and 1 boundaries, inducing non-stationarity. You would often want to constrain their magnitude to small slopes, taking into consideration the expected span of the x-axis over which this slope runs. The default prior on `ar`-slopes is a 68% change that there is a change of 1 from the first to the last observation (`"dnorm(0, 1 / (MAXX - MINX))"`) and you may want to, for example, suggest a shallow negative slope using `"dnorm(0, 0.1 / (MAXX-MINX)) T( , 0)"`
+
+
+
+# JAGS code
+Here is the JAGS code for the second simulation example, i.e., the one with a single slope going from AR(2) to AR(1). You can print `fit$simulate` and see that it runs much of the same code.
+
+```{r}
+cat(fit$jags_code)
+```
+

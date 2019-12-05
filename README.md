@@ -53,7 +53,7 @@ plot(fit)
 ```
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo.png)
 
-Use `summary()` to summarise the posterior distribution as well as sampling diagnostics. They were simulated to lie at `cp_1 = 30` and `cp_2 = 70` and these values are well recovered, as are the other coefficients ([see how `ex_demo` was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R)). 
+Use `summary()` to summarise the posterior distribution as well as sampling diagnostics. They were [simulated with mcp](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R) to lie at `cp_1 = 30` and `cp_2 = 70` and these values are well recovered, as are the other coefficients:
 
 ```r
 summary(fit)
@@ -166,7 +166,7 @@ Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and 
  * `~ sigma(1)` models an intercept change in variance. `~ sigma(0 + x)` models increasing/decreasing variance.
  * `~ ar(N)` models Nth order autoregression on residuals. `~ar(N, 0 + x)` models increasing/decreasing autocorrelation.
  * You can model anything for `sigma()` and `ar()`. For example, `~ x + sigma(1 + x + I(x^2))` models polynomial change in variance with `x` on top of a slope on the mean.
- * `sigma()` and `ar()` apply to varying change points too.
+ * Simulate effects and change points on `sigma()` and `ar()` using `fit$simulate()`
 
 [Tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/debug.html)
  * Speed up fitting using `mcp(..., cores = 3)` / `options(mcp_cores = 3)`, and/or `mcp(..., adapt = 500)`.
@@ -180,7 +180,7 @@ Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and 
 
 
 ## Two plateaus
-Find the single change point between two plateaus ([see how this data was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R))
+Find the single change point between two plateaus ([see how this data was simulated with mcp](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R))
 
 ```r
 segments = list(
@@ -197,7 +197,7 @@ plot(fit)
 
 Here, we find the single change point between two joined slopes. While the slopes are shared by all participants, the change point varies by `id`.
 
-Read more about [varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html) and [see how this data was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_varying.R).
+Read more about [varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html) and [see how this data was simulated with mcp](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_varying.R).
 
 ```r
 segments = list(
@@ -228,7 +228,7 @@ ranef(fit)
 
 
 ## Generalized linear models
-`mcp` supports Generalized Linear Modeling. See extended examples using [`binomial()`](https://lindeloev.github.io/mcp/articles/binomial.html) and [`poisson()`](https://lindeloev.github.io/mcp/articles/poisson.html). [See how this data was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_binomial.R).
+`mcp` supports Generalized Linear Modeling. See extended examples using [`binomial()`](https://lindeloev.github.io/mcp/articles/binomial.html) and [`poisson()`](https://lindeloev.github.io/mcp/articles/poisson.html). These data were simulated with `mcp` [here](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_binomial.R).
 
 Here is a binomial change point model with three segments. We plot the 95% HDI too:
 
@@ -249,35 +249,35 @@ Use `plot(fit, rate = FALSE)` if you want the points and fit lines on the origin
 
 
 ## Time series
-`mcp` allows for flexible time series analysis with autoregressive residuals of arbitrary order. Below, we model a change from a plateau to a slope with the same AR(2) residuals in both segments. We get  However, you can specify different AR(N) structures in each segment and do regression on the AR coefficients themselves using e.g., `ar(1, 1 + x)`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html).
+`mcp` allows for flexible time series analysis with autoregressive residuals of arbitrary order. Below, we model a change from a plateau with strong positive AR(2) residuals to a slope with medium AR(1) residuals. These data were simulated with mcp [here](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_ar.R). You can also do regression on the AR coefficients themselves using e.g., `ar(1, 1 + x)`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html).
 
 ```r
 segments = list(
   price ~ 1 + ar(2),
-  ~ 0 + time
+  ~ 0 + time + ar(1)
 )
 fit = mcp(segments, ex_ar)
 summary(fit)
 ```
 
+The AR(N) parameters on intercepts are named `ar[order]_[segment]`. All parameters, including the change point, are well recovered:
+
 ```r
 Population-level parameters:
-    name    mean   lower   upper Rhat n.eff    ts_se
-   ar1_1   0.463   0.346   0.579 1.00  1967 1.31e-02
-   ar2_1   0.258   0.133   0.369 1.00  1772 1.84e-02
-    cp_1 170.059 151.960 186.093 1.05   231 3.70e+03
-   int_1  17.991  15.096  20.729 1.01   586 3.36e+01
- sigma_1   4.677   4.296   5.057 1.00  5060 7.08e-02
-  time_2   0.456   0.370   0.549 1.01   485 4.13e-02
+    name    mean     lower   upper Rhat n.eff    ts_se
+   ar1_1   0.737   0.57797   0.891 1.01  1031 5.20e-02
+   ar1_2  -0.473  -0.69144  -0.260 1.00  2398 4.19e-02
+   ar2_1   0.148   0.00356   0.292 1.01  1063 4.24e-02
+    cp_1 117.769 113.09124 120.255 1.19    50 1.35e+03
+   int_1  17.946  14.91490  20.414 1.11   102 2.04e+02
+ sigma_1   4.850   4.35987   5.336 1.00  2883 1.79e-01
+  time_2   0.515   0.48165   0.549 1.01   803 3.08e-03
 ```
 
-
-As of `mcp` v0.2, plotting does not yet visualize the autocorrelation. The autocorrelated nature of the residuals are better shown using lines than points, so let's tweak the default plot:
+The fit plot shows the inferred autocorrelated nature (<span style="color:red">OBS: this is new in mcp 0.3</span>):
 
 ```r
-plot_ar = plot(fit_ar) + geom_line()  # Add line
-plot_ar$layers[[1]] = NULL  # Remove dots
-plot_ar
+plot(fit_ar)
 ```
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_ar.png)
@@ -340,7 +340,7 @@ plot(fit)
 
 
 ## Using `rel()` and priors
-Read more about [formula options](https://lindeloev.github.io/mcp/articles/formulas.html) and [priors](https://lindeloev.github.io/mcp/articles/priors.html) and [see how this data was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_rel_prior.R).
+Read more about [formula options](https://lindeloev.github.io/mcp/articles/formulas.html) and [priors](https://lindeloev.github.io/mcp/articles/priors.html) and [see how this data was simulated with `mcp`](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_rel_prior.R).
 
 Here we find the two change points between three segments. The slope and intercept of segment 2 are parameterized relative to segment 1, i.e., modeling the *change* in intercept and slope since segment 1. So too with the second change point (`cp_2`) which is now the *distance* from `cp_1`. 
 
