@@ -128,6 +128,40 @@ check_integer = function(x, name, lower = -Inf) {
 }
 
 
+
+#' Test parameter recovery for simulated data
+#'
+#' @aliases check_recovery
+#' @param fit an `mcpfit` object returned by `mcp()`. `fit$data[, fit$pars$y]`
+#'   must have the attribute `"simulated"` which is a list of expected/true
+#'   parameter values.
+#' @param width If the parameter is within this HDI interval, a success is
+#'   declared.
+
+check_recovery = function(fit, width = 0.95) {
+  # Get simulation values as data.frame
+  simulated = as.list(attr(fit$data[, fit$pars$y], "simulated"))  # Get as list
+  simulated = simulated[sapply(simulated, is.numeric)]  # Remove non-numeric
+  simulated = unlist(simulated)  # as vector
+  simulated = data.frame(
+    name = names(simulated),
+    simulated = as.numeric(simulated),  # without row names
+    stringsAsFactors = FALSE
+  )
+
+  # Get estimated values and
+  estimated = get_summary(fit, width = 0.99) %>%
+    dplyr::left_join(simulated, by = "name") %>%
+    dplyr::select(name, mean, lower, upper, simulated)
+
+  # Is the score in the interval?
+  estimated$success = estimated$lower < estimated$simulated & estimated$upper > estimated$simulated
+  return(estimated)
+}
+
+
+
+
 # Ask reminder questions for CRAN export
 release_questions = function() {
   c(
@@ -138,3 +172,6 @@ release_questions = function() {
     "Have you run the script to insert the correct logo.png in the HTML meta?"
   )
 }
+
+
+
