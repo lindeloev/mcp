@@ -261,11 +261,18 @@ mcp = function(segments,
   pars$reg = all_pars[!all_pars %in% c(pars$varying, pars$sigma, pars$arma)]
   pars$population = c(pars$reg, pars$sigma, pars$arma)
 
-  if (length(pars$arma) > 0 & family$link %in% c("logit", "probit"))
-    message("The current implementation of autoregression can be fragile for link='logit'. In particular, if there are any all-success trials (e.g., 10/10), the only solution is for 'ar' to be 0.00. If fitting succeeds, do a proper assessment of model convergence.")
+  # Check parameters
+  # ARMA models
+  if (length(pars$arma) > 0) {
+    if (family$link %in% c("logit", "probit"))
+      message("The current implementation of autoregression can be fragile for link='logit'. In particular, if there are any all-success trials (e.g., 10/10), the only solution is for 'ar' to be 0.00. If fitting succeeds, do a proper assessment of model convergence.")
 
-  if (length(pars$arma) > 0 & length(pars$sigma) > 1)
+    if (length(pars$sigma) > 1)
     message("You are using ar() together with sigma(). Autoregression usually assumes homoskedasticity (equal variance at all x). This is not a problem if if intercepts in ar() are joined by intercepts in sigma() like `~ [formula] + sigma(1) + ar(N)`. It may not be a problem for slopes on `sigma` either, but this has not been assessed thoroughly yet. So this is a note to be cautious about interpreting the sigma- and ar-parameters for now.")
+
+    if (is.unsorted(data[, pars$x]) & is.unsorted(rev(data[, pars$x])))
+      message("'", pars$x, "' is unordered. Please note that ar() applies in the order of data of the data frame - not the values.")
+  }
 
   # Make formula_str and simulate
   formula_str_sim = get_all_formulas(ST, prior, pars$x, ytypes = c("ct", "sigma", "arma"))
