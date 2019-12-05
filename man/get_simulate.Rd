@@ -4,21 +4,15 @@
 \alias{get_simulate}
 \title{Turn formula_str into a proper R function}
 \usage{
-get_simulate(
-  formula_str,
-  par_x,
-  par_trials = NA,
-  pars_pop,
-  pars_varying,
-  nsegments,
-  family
-)
+get_simulate(formula_str, pars, nsegments, family)
 }
 \arguments{
 \item{formula_str}{string. Returned by \code{get_formula}.}
 
-\item{par_x}{String (default: NULL). Only relevant if no segments contains
-slope (no hint at what x is). Set this, e.g., par_x = "time".}
+\item{nsegments}{Positive integer. Number of segments, typically \code{nrow(ST)}.}
+
+\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}.
+Only default link functions are currently supported.}
 
 \item{par_trials}{String. For binomial models: name of trials column.}
 
@@ -26,11 +20,6 @@ slope (no hint at what x is). Set this, e.g., par_x = "time".}
 
 \item{pars_varying}{List varying parameters. They will default to zero
 (optional for the user).}
-
-\item{nsegments}{Positive integer. Number of segments, typically \code{nrow(ST)}.}
-
-\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}.
-Only default link functions are currently supported.}
 }
 \description{
 Turn formula_str into a proper R function
