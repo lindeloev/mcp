@@ -1,3 +1,6 @@
+
+options(mc.cores = 1)
+
 ############
 # DATASETS #
 ############
@@ -50,7 +53,7 @@ data_binomial = data.frame(
 # TEST FUNCTIONS #
 ##################
 
-test_mcp = function(segments,
+test_runs = function(segments,
                     data = data_gauss,
                     prior = list(),
                     family = gaussian(),
@@ -242,7 +245,7 @@ test_bad = function(segments_list, title, ...) {
     ", paste0(segments, collapse=", "))
 
     testthat::test_that(test_name, {
-      testthat::expect_error(test_mcp(segments, sample = FALSE, ...))  # should err before sampling
+      testthat::expect_error(test_runs(segments, sample = FALSE, ...))  # should err before sampling
     })
   }
 }
@@ -255,7 +258,7 @@ test_good = function(segments_list, title, ...) {
     ", paste0(segments, collapse=", "))
 
     testthat::test_that(test_name, {
-      test_mcp(segments, ...)
+      test_runs(segments, ...)
     })
   }
 }
@@ -281,7 +284,7 @@ good_prior = list(
 for (prior in good_prior) {
   test_name = paste0("Good priors: ", paste0(prior, collapse=", "))
   testthat::test_that(test_name, {
-    test_mcp(good_prior_segments, prior = prior)
+    test_runs(good_prior_segments, prior = prior)
   })
 }
 
