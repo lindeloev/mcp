@@ -143,7 +143,7 @@ get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
       } else if (ytype == "sigma") {
         formula_str = paste0(formula_str, "# Fitted standard deviation\nsigma_[i_] = \n")
       } else if (stringr::str_detect(ytype, "ar[0-9]+")) {
-        formula_str = paste0(formula_str, "# Autoregressive: AR(", ar_order,")\n", ytype, "_[i_] = \n")
+        formula_str = paste0(formula_str, "# Autoregressive coefficient for all AR(", ar_order,")\n", ytype, "_[i_] = \n")
       } else if (stringr::str_detect(ytype, "ma[0-9]+")) {
         formula_str = paste0(formula_str, "# Moving Average: MA(", ma_order, ")\n", ytype, "_[i_] = \n")
       }
@@ -237,8 +237,9 @@ get_simulate = function(formula_str, pars, nsegments, family) {
 
   # Now build the function R code
   # x_and_trials handles the special case that binomial "trials" is also used as a predictor.
-
-  x_and_trials = ifelse(length(pars$trials) > 0, pars$x, no = paste0(unique(c(pars$x, pars$trials)), collapse = ", "))
+  x_and_trials = ifelse(is.null(pars$trials),
+                        yes = pars$x,  # just the x
+                        no = paste0(unique(c(pars$x, pars$trials)), collapse = ", "))  # x and N, if they differ.
   out = paste0("
   function(",
     x_and_trials, ", ",
@@ -246,11 +247,12 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     args_if_exists(pars$sigma),
     args_if_exists(pars$arma),
     args_if_exists(pars$varying, " = 0"),
-    ifelse(is_arma, paste0(pars$y, " = NULL, ydata = NULL, "), ""), "
+    ifelse(is_arma, paste0("\n    ", pars$y, " = NULL, \n    ydata = NULL, "), ""), "
     type = 'predict',
     quantiles = FALSE,
     rate = FALSE,
     ...) {
+
     # Helpers to simplify making the code for this function
     cp_0 = -Inf
     cp_", nsegments, " = Inf
@@ -339,7 +341,7 @@ get_simulate = function(formula_str, pars, nsegments, family) {
 
 #' Gets code for ARMA terms, resulting in a "resid_"
 #'
-#' Deceloper note: Ensuring that this can be used in both simulate() and JAGS
+#' Developer note: Ensuring that this can be used in both simulate() and JAGS
 #' got quite messy with a lot of if-statements. It works but some refactoring
 #' may be good in the future.
 #'
@@ -407,21 +409,29 @@ get_ar_code = function(ar_order, family, is_R, xvar, yvar = NA) {
     # FOR JAGS CODE #
     #################
     # For data points lower than the full order
-    for (i in seq_len(ar_order)) {
-      mm = paste0(mm, "\n      resid_[", i, "] = 0")
+    mm = paste0(mm, "
+  # Apply autoregression to the residuals
+  resid_[1] = 0")
+
+    # For data points lower than the full order
+    if (ar_order >= 2) {
+      for (i in 2:ar_order) {
+        mm = paste0(mm, "
+  resid_[", i, "] = ", paste0("ar", 1:(i-1), "_[", i, " - ", 1:(i-1), "] * resid_sigma_[", i, " - ", 1:(i-1), "]", collapse = " +\n              "))
+      }
     }
 
     # For full order
     mm = paste0(mm, "
-      for (i_ in ", ar_order + 1, ":length(", xvar, ")) {
-        resid_[i_] = 0")
+  for (i_ in ", ar_order + 1, ":length(", xvar, ")) {
+    resid_[i_] = 0")
     for (i in seq_len(ar_order)) {
-      mm = paste0(mm, " + \n          ar", i, "_[i_] * resid_sigma_[i_ - ", i, "]")
+      mm = paste0(mm, " + \n      ar", i, "_[i_] * resid_sigma_[i_ - ", i, "]")
     }
 
     # Finish up
     mm = paste0(mm, "
-      }")
+  }")
   }
 
   return(mm)
