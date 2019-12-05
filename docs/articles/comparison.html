@@ -21,7 +21,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="Change point model comparison with mcp">
 <meta property="og:description" content="">
-<meta property="og:image" content="https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/logo.png">
+<meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -155,7 +155,7 @@
       <h1>Change point model comparison with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-12-02</h4>
+            <h4 class="date">2019-12-05</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/comparison.Rmd"><code>vignettes/comparison.Rmd</code></a></small>
       <div class="hidden name"><code>comparison.Rmd</code></div>
@@ -223,8 +223,8 @@
 <a href="#bayes-factors-using-savage-dickey-density-ratios" class="anchor"></a>Bayes Factors using Savage-Dickey density ratios</h1>
 <p>You can compute probabilities and Bayes Factors for various hypotheses using <code><a href="../reference/hypothesis.html">hypothesis()</a></code>. For example, let’s test the idea that the change point in recall occurs at four items:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw"><a href="../reference/hypothesis.html">hypothesis</a></span>(fit_default, <span class="st">"cp_1 = 4"</span>)</a></code></pre></div>
-<pre><code>##     hypothesis       mean    lower    upper         p       BF
-## 1 cp_1 - 4 = 0 0.05956525 -1.48559 1.656949 0.7844705 3.639737</code></pre>
+<pre><code>##     hypothesis      mean     lower    upper         p       BF
+## 1 cp_1 - 4 = 0 0.1042733 -1.470057 1.556288 0.7812438 3.571299</code></pre>
 <p>Let’s unpack:</p>
 <ul>
 <li>
@@ -240,8 +240,8 @@
 </ul>
 <p>Because <code>BF</code> and <code>p</code> depends directly on the prior in Savage-Dickey test, it is as much an expression of the prior as the posterior. Computing it for the higher-prior-density-at-cp_1=4 <code>fit_info</code>, we see a substantially lower BF because we already had a substantial prior belief in <code>cp_1 = 4</code>:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/hypothesis.html">hypothesis</a></span>(fit_info, <span class="st">"cp_1 = 4"</span>)</a></code></pre></div>
-<pre><code>##     hypothesis      mean      lower    upper        p       BF
-## 1 cp_1 - 4 = 0 0.2119601 -0.9797374 1.407039 0.575336 1.354803</code></pre>
+<pre><code>##     hypothesis      mean     lower    upper         p       BF
+## 1 cp_1 - 4 = 0 0.1909042 -1.057184 1.381983 0.5690538 1.320475</code></pre>
 </div>
 <div id="directional-and-combinatoric-tests" class="section level1">
 <h1 class="hasAnchor">
@@ -259,16 +259,16 @@
 <a class="sourceLine" id="cb9-4" title="4">  <span class="st">"cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5 &amp; items_2 &lt; -0.4 &amp; int_1 &gt; 2.5"</span>,</a>
 <a class="sourceLine" id="cb9-5" title="5">  <span class="st">"(cp_1 &lt; 3.5 | cp_1 &gt; 4.5) &amp; items_2 &gt; -0.4 &amp; int_1 &lt; 2.5"</span></a>
 <a class="sourceLine" id="cb9-6" title="6">))</a></code></pre></div>
-<pre><code>##                                                 hypothesis    mean      lower
-## 1                                             cp_1 - 3 &gt; 0 1.21196 0.02026259
-## 2                                  cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5      NA         NA
-## 3   cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5 &amp; items_2 &lt; -0.4 &amp; int_1 &gt; 2.5      NA         NA
-## 4 (cp_1 &lt; 3.5 | cp_1 &gt; 4.5) &amp; items_2 &gt; -0.4 &amp; int_1 &lt; 2.5      NA         NA
+<pre><code>##                                                 hypothesis     mean       lower
+## 1                                             cp_1 - 3 &gt; 0 1.190904 -0.05718364
+## 2                                  cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5       NA          NA
+## 3   cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5 &amp; items_2 &lt; -0.4 &amp; int_1 &gt; 2.5       NA          NA
+## 4 (cp_1 &lt; 3.5 | cp_1 &gt; 4.5) &amp; items_2 &gt; -0.4 &amp; int_1 &lt; 2.5       NA          NA
 ##      upper          p          BF
-## 1 2.407039 0.96753333 29.80082136
-## 2       NA 0.53976667  1.17281089
-## 3       NA 0.29056667  0.40957572
-## 4       NA 0.03313333  0.03426877</code></pre>
+## 1 2.381983 0.96026667 24.16778523
+## 2       NA 0.51636667  1.06768213
+## 3       NA 0.27403333  0.37747371
+## 4       NA 0.03353333  0.03469683</code></pre>
 <p>Because Bayes Factors are transitive, we can divide them to get the relative evidence for two hypotheses. Here, we get approximately <span class="math inline">\(0.40 / 0.04 = 10\)</span> in favor of hypothesis 3 over hypothesis 4.</p>
 <p>There are more examples <a href="../docs/reference/hypothesis.html">in the documentation for <code>hypothesis</code></a>, including how to test varying effects.</p>
 <p><code>mcp</code> does nothing fancy for the directional tests, and you could do them yourself. Just takes the hypothesis verbatim into <code>mutate</code> and <code>summarise</code> the proportion of samples that “passes” this test. These are identical:</p>
@@ -316,7 +316,7 @@
 ##          Estimate   SE
 ## elpd_loo   -365.7 16.5
 ## p_loo         2.8  0.3
-## looic       731.3 33.1
+## looic       731.4 33.0
 ## ------
 ## Monte Carlo SE of elpd_loo is 0.0.
 ## 
@@ -331,7 +331,7 @@
 <a class="sourceLine" id="cb14-5" title="5">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit_default<span class="op">$</span>loo, fit_info<span class="op">$</span>loo, fit_simple<span class="op">$</span>loo)</a></code></pre></div>
 <pre><code>##        elpd_diff se_diff
 ## model2  0.0       0.0   
-## model1 -0.4       0.2   
+## model1 -0.3       0.1   
 ## model3 -4.1       2.8</code></pre>
 <p>Aha, so the second model (“model2”, i.e., <code>fit_info</code>) passed to <code>loo_compare()</code> was preferred as the other models had smaller ELPDs. As a first rough conclusion, we’ve learned that informed priors and a plateau improved out-of-sample predictions.</p>
 <p>Again, the absolute number (<code>elpd_diff</code>) is hard to relate to. More interpretable is the <code>elpd_diff</code>/<code>se_diff</code> ratio. This is almost like a z-score, i.e., a ratio of 1.96 corresponds to 95% probability that one model has superior predictive accuracy. This is not an <em>effect size</em> but more a measure of <em>certainty</em> that this is not compatible with equal predictive properties. Just like Bayes Factors, a nice property over frequentist p-values is that you can quantify the relative evidence for and against any pair of models without having to assume one of them as null.</p>
@@ -344,7 +344,7 @@
 <a class="sourceLine" id="cb16-5" title="5">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit_default<span class="op">$</span>waic, fit_info<span class="op">$</span>waic, fit_simple<span class="op">$</span>waic)</a></code></pre></div>
 <pre><code>##        elpd_diff se_diff
 ## model2  0.0       0.0   
-## model1 -0.4       0.2   
+## model1 -0.3       0.1   
 ## model3 -4.1       2.8</code></pre>
 </div>
 <div id="stacking" class="section level2">

@@ -51,7 +51,7 @@
   
 
 <meta property="og:title" content="Changelog" />
-<meta property="og:image" content="https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/logo.png" />
+<meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -203,13 +203,28 @@
       <small>Source: <a href='https://github.com/lindeloev/mcp/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="mcp-02" class="section level1">
+    <div id="mcp-0209000" class="section level1">
 <h1 class="page-header">
-<a href="#mcp-02" class="anchor"></a>mcp 0.2</h1>
-<p>The API and internal structure should be stable now.</p>
+<a href="#mcp-0209000" class="anchor"></a>mcp 0.2.0.9000</h1>
+<p>This will, in time, become <code>mcp</code> v0.3.0</p>
 <div id="new-features" class="section level2">
 <h2 class="hasAnchor">
 <a href="#new-features" class="anchor"></a>New features:</h2>
+<ul>
+<li>Simulate AR(N) models with <code>fit$simulate()</code>. The <a href="">article on AR(N)</a> has been updated with examples. <code>fit$simulate()</code> can also get fits and predictions for known data if you pass the response variable as an argument too.</li>
+<li>The default plot (<code><a href="../reference/plot.mcpfit.html">plot(fit)</a></code>) now visualize AR(N) autocorrelation.</li>
+<li>You can now check how well your model recovered the parameters of simulated data. Simply call <code>check_recovery(fit)</code> if <code>fit</code> was estimated with simulated data. This works because <code>y = fit$simulate(...)</code> now adds the simulation parameters to <code>y</code>. Use <code><a href="https://rdrr.io/r/base/attr.html">attr(y, "sim")</a></code> to recover them.</li>
+<li>Use <code><a href="../reference/plot.mcpfit.html">plot(fit, which_y = "sigma")</a></code> to plot the residual standard deviation on the y-axis. Works for <code>ar1</code>, <code>ar2</code>, etc. as well. This is particularly useful to visualize variance-only or autocorrelation-only change points. The vignettes on variance and autocorrelations have been updated with examples.</li>
+</ul>
+</div>
+</div>
+    <div id="mcp-020" class="section level1">
+<h1 class="page-header">
+<a href="#mcp-020" class="anchor"></a>mcp 0.2.0</h1>
+<p>The API and internal structure should be stable now.</p>
+<div id="new-features-1" class="section level2">
+<h2 class="hasAnchor">
+<a href="#new-features-1" class="anchor"></a>New features:</h2>
 <ul>
 <li>Quadratic and other terms using <code><a href="https://rdrr.io/r/base/AsIs.html">I(x^2)</a></code>, <code><a href="https://rdrr.io/r/base/AsIs.html">I(x^3.24)</a></code>, <code><a href="https://rdrr.io/r/base/Trig.html">sin(x)</a></code>, <code><a href="https://rdrr.io/r/base/MathFun.html">sqrt(x)</a></code>, etc.</li>
 <li>Model variance for <code>family = gaussian()</code> using <code>~ sigma([formula here])</code>.</li>
@@ -252,7 +267,8 @@
     <div id="tocnav">
       <h2>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-        <li><a href="#mcp-02">0.2</a></li>
+        <li><a href="#mcp-0209000">0.2.0.9000</a></li>
+        <li><a href="#mcp-020">0.2.0</a></li>
         <li><a href="#mcp-010">0.1.0</a></li>
       </ul>
     </div>
