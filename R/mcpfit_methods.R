@@ -183,7 +183,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
     # Print and return invisibly
     cat("\nPopulation-level parameters:\n")
     result = get_summary(fit, width, varying = FALSE, prior = prior)
-    print(data.frame(result), digits = digits + 1, row.names = FALSE)
+    print(data.frame(result), digits = digits, row.names = FALSE)
 
     if (!is.null(fit$pars$varying))
       cat("\nUse `ranef(object)` to summarise the varying effect(s):", paste0(fit$pars$varying, collapse = ", "))
@@ -205,8 +205,10 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
 #' @aliases fixef fixef.mcpfit fixed.effects
 #' @inheritParams summary.mcpfit
 #' @export
-fixef = function(object, width = 0.95, prior = FALSE, ...) {
-  get_summary(object, width, varying = FALSE, prior = prior)
+fixef = function(object, width = 0.95, prior = FALSE, digits = 2, ...) {
+  result = get_summary(object, width, varying = FALSE, prior = prior)
+  print(data.frame(result), digits = digits, row.names = FALSE)
+  return(invisible(result))
 }
 
 #' Get varying ("random") effects of mcpfit.
@@ -214,8 +216,10 @@ fixef = function(object, width = 0.95, prior = FALSE, ...) {
 #' @aliases ranef ranef.mcpfit random.effects
 #' @inheritParams summary.mcpfit
 #' @export
-ranef = function(object, width = 0.95, prior = FALSE, ...) {
-  get_summary(object, width, varying = TRUE, prior = prior)
+ranef = function(object, width = 0.95, prior = FALSE, digits = 2, ...) {
+  result = get_summary(object, width, varying = TRUE, prior = prior)
+  print(data.frame(result), digits = digits, row.names = FALSE)
+  return(invisible(result))
 }
 
 

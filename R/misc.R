@@ -160,8 +160,6 @@ check_recovery = function(fit, width = 0.95) {
 }
 
 
-
-
 # Ask reminder questions for CRAN export
 release_questions = function() {
   c(
