@@ -235,8 +235,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
   }
 
   # Finally return
-  print(data.frame(return_df), digits = 3)
-  return(invisible(return_df))
+  return(return_df)
 }
 
 
