@@ -97,7 +97,7 @@ test_runs = function(segments,
       data = tibble::as_tibble(data)
 
     # Capture (expected) messages and warnings
-    quiet_out = purrr::quietly(mcp)(  # Global useful for debugging
+    quiet_out = purrr::quietly(mcp)(  # Do not print to console
       segments = segments,
       data = data,
       family = family,
@@ -165,14 +165,16 @@ test_runs = function(segments,
 
 # Tests if summary(fit) and ranef(fit) work as expected
 test_summary = function(fit, varying_cols) {
-  result = invisible(capture.output(summary(fit)))
-  result = paste0(result, collapse = "\n")
-  testthat::expect_match(result, "Rhat")  # made results table
+  summary_cols = c('name','mean','lower','upper','Rhat','n.eff','ts_se')
+  result = purrr::quietly(summary)(fit)$result  # Do not print to console
+  output = purrr::quietly(summary)(fit)$output  # Do not print to console
+  testthat::expect_true(all(colnames(result) %in% summary_cols))  # All columns
+  testthat::expect_true(all(result$name %in% fit$pars$population))  # All parameters
 
   # If there are varying effects
   if (length(varying_cols) > 0) {
-    testthat::expect_match(result, "ranef\\(")  # noticed about varying effects
-    varying = ranef(fit)
+    testthat::expect_match(output, "ranef\\(")  # noticed about varying effects
+    varying = purrr::quietly(ranef)(fit)$result  # Do not print to console
     testthat::expect_true(is.character(varying$name))
     testthat::expect_true(is.numeric(varying$mean))
 
@@ -209,7 +211,7 @@ test_hypothesis = function(fit) {
       paste0(base, " > 1"),  # Directional
       paste0(base, " = -1")  # Savage-Dickey (point)
     )
-    result = hypothesis(fit, hypotheses)
+    result = purrr::quietly(hypothesis)(fit, hypotheses)$result  # Do not print to console
     testthat::expect_true(is.data.frame(result) & nrow(result) == 2)
   }
 
@@ -258,7 +260,7 @@ test_good = function(segments_list, title, ...) {
     ", paste0(segments, collapse=", "))
 
     testthat::test_that(test_name, {
-      test_runs(segments, ...)
+      purrr::quietly(test_runs)(segments, ...)
     })
   }
 }

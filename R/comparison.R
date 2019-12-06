@@ -91,7 +91,7 @@ waic.mcpfit = function(x, ...) {
 #' `mcp(..., sample = "both")`.
 #'
 #' @aliases hypothesis hypothesis.mcpfit
-#' @param fit An mcpfit object
+#' @inheritParams summary.mcpfit
 #' @param hypotheses String representation of a logical test involving model parameters.
 #'   Takes R code that evaluates to TRUE or FALSE in a vectorized way.
 #'
@@ -122,7 +122,6 @@ waic.mcpfit = function(x, ...) {
 #'   * `"int_1 + int_2 = 0"`: Is the sum of two intercepts zero?
 #'   * ````"`cp_1_id[John]`/`cp_1_id[Erin]` = 2"````: is the varying change
 #'       point for John (which is relative to `cp_1``) double that of Erin?
-#' @param width Between 0 and 1. Width of the highest density interval.
 #' @return A data.frame with a row per hypothesis and the following columns:
 #'   * `hypothesis` is the hypothesis; often re-arranged to test against zero.
 #'   * `mean` is the posterior mean of the left-hand side of the hypothesis.
@@ -138,7 +137,7 @@ waic.mcpfit = function(x, ...) {
 #' @export
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-hypothesis = function(fit, hypotheses, width = 0.95) {
+hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
   # Loop through hypotheses and populate return_df
   return_df = data.frame()
   for (expression in hypotheses) {
@@ -236,7 +235,8 @@ hypothesis = function(fit, hypotheses, width = 0.95) {
   }
 
   # Finally return
-  return(return_df)
+  print(data.frame(return_df), digits = 3)
+  return(invisible(return_df))
 }
 
 
