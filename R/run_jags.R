@@ -82,7 +82,7 @@ run_jags = function(data,
 
   } else if (cores == "all" | cores > 1) {
     # PARALLEL using the future package and one chain per worker
-    cat("Parallel sampling in progress...\n")
+    message("Parallel sampling in progress...")
     future::plan(future::multiprocess, .skip = TRUE)
     samples = future.apply::future_lapply(
       1:n.chains,
@@ -108,7 +108,7 @@ run_jags = function(data,
 
     # Return
     passed = proc.time() - timer
-    cat("Finished sampling in", passed["elapsed"], "seconds\n")
+    message("Finished sampling in ", round(passed["elapsed"], 1), " seconds\n")
     return(samples)
 
   } else {
