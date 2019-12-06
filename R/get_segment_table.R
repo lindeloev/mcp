@@ -762,15 +762,10 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
 
   # Check data types
   if (!is.null(data)) {
-    # Convert to data.frame. Makes it easier to test column types.
-    # Tibble will still be used in the rest of mcp
-    if (tibble::is_tibble(data))
-      data = data.frame(data)
-
     # Check x and y
-    if (!is.numeric(dplyr::pull(data, ST$x[1])))
+    if (!is.numeric(data[, ST$x[1]]))
       stop("Data column '", ST$x[1], "' has to be numeric.")
-    if (!is.numeric(dplyr::pull(data, ST$y[1])))
+    if (!is.numeric(data[, ST$y[1]]))
       stop("Data column '", ST$y[1], "' has to be numeric.")
 
     # Check varying

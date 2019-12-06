@@ -1,4 +1,15 @@
-# mcp 0.2
+# mcp 0.2.0.9000
+This will, in time, become `mcp` v0.3.0
+
+## New features:
+
+ * Simulate AR(N) models with `fit$simulate()`. The [article on AR(N)]() has been updated with examples. `fit$simulate()` can also get fits and predictions for known data if you pass the response variable as an argument too.
+ * The default plot (`plot(fit)`) now visualize AR(N) autocorrelation.
+ * You can now check how well your model recovered the parameters of simulated data. Simply call `check_recovery(fit)` if `fit` was estimated with simulated data. This works because `y = fit$simulate(...)` now adds the simulation parameters to `y`. Use `attr(y, "sim")` to recover them.
+ * Use `plot(fit, which_y = "sigma")` to plot the residual standard deviation on the y-axis. Works for `ar1`, `ar2`, etc. as well. This is particularly useful to visualize variance-only or autocorrelation-only change points. The vignettes on variance and autocorrelations have been updated with examples.
+
+
+# mcp 0.2.0
 The API and internal structure should be stable now.
 
 ## New features: 

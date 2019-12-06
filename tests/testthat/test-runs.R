@@ -1,7 +1,9 @@
+
+options(mc.cores = 1)
+
 ############
 # DATASETS #
 ############
-library(mcp)
 
 # Samples and checks data structure.
 # Meant to be used with testthat::expect_true()
@@ -51,7 +53,7 @@ data_binomial = data.frame(
 # TEST FUNCTIONS #
 ##################
 
-test_mcp = function(segments,
+test_runs = function(segments,
                     data = data_gauss,
                     prior = list(),
                     family = gaussian(),
@@ -74,7 +76,7 @@ test_mcp = function(segments,
     # If sample = FALSE, it should pass/fail with the above. If TRUE,
     # check for correct types in data structure
     testthat::expect_true(is.list(empty$segments), segments)
-    testthat::expect_true(all.equal(empty$data, data), segments)
+    testthat::expect_true(is.data.frame(empty$data), segments)
     testthat::expect_true(is.list(empty$prior), segments)
     testthat::expect_true(class(empty$family) == "family", segments)
     testthat::expect_true(is.null(empty$samples), segments)
@@ -95,7 +97,7 @@ test_mcp = function(segments,
       data = tibble::as_tibble(data)
 
     # Capture (expected) messages and warnings
-    quiet_out = purrr::quietly(mcp)(  # Global useful for debugging
+    quiet_out = purrr::quietly(mcp)(  # Do not print to console
       segments = segments,
       data = data,
       family = family,
@@ -111,7 +113,8 @@ test_mcp = function(segments,
     if (length(quiet_out$warnings) > 0) {
       accepted_warnings = c("Adaptation incomplete")  # due to very small test datasets
       accepted_messages = c("The current implementation of autoregression can be fragile",
-                            "Autoregression currently assumes homoskedasticity")
+                            "Autoregression currently assumes homoskedasticity",
+                            "You are using ar\\(\\) together")
 
       for (warn in quiet_out$warnings) {
         if (!any(stringr::str_starts(warn, accepted_warnings))) {
@@ -156,28 +159,26 @@ test_mcp = function(segments,
       test_plot(fit, varying_cols)  # default plot
       test_plot_pars(fit)  # bayesplot call
     }
-
-    # Data should not be manipulated, just by working with it
-    testthat::expect_true(all.equal(fit$data, data), segments)
   }
 }
 
 
 # Tests if summary(fit) and ranef(fit) work as expected
 test_summary = function(fit, varying_cols) {
-  result = invisible(capture.output(summary(fit)))
-  result = paste0(result, collapse = "\n")
-  testthat::expect_match(result, "Rhat")  # made results table
+  summary_cols = c('name','mean','lower','upper','Rhat','n.eff','ts_se')
+  result = purrr::quietly(summary)(fit)$result  # Do not print to console
+  output = purrr::quietly(summary)(fit)$output  # Do not print to console
+  testthat::expect_true(all(colnames(result) %in% summary_cols))  # All columns
+  testthat::expect_true(all(result$name %in% fit$pars$population))  # All parameters
 
   # If there are varying effects
   if (length(varying_cols) > 0) {
-    testthat::expect_match(result, "ranef\\(")  # noticed about varying effects
-    varying = ranef(fit)
+    testthat::expect_match(output, "ranef\\(")  # noticed about varying effects
+    varying = purrr::quietly(ranef)(fit)$result  # Do not print to console
     testthat::expect_true(is.character(varying$name))
     testthat::expect_true(is.numeric(varying$mean))
 
-    group_level_counts = lapply(varying_cols, function(col) length(dplyr::pull(fit$data, col)))
-    #n_unique_data = length(unique(dplyr::pull(fit$data, varying_cols)))
+    group_level_counts = lapply(varying_cols, function(col) length(fit$data[, col]))
     n_unique_data = sum(unlist(group_level_counts))
     testthat::expect_true(nrow(varying) == n_unique_data)  # TO DO: should fail if there are multiple groups
   }
@@ -210,7 +211,7 @@ test_hypothesis = function(fit) {
       paste0(base, " > 1"),  # Directional
       paste0(base, " = -1")  # Savage-Dickey (point)
     )
-    result = hypothesis(fit, hypotheses)
+    result = purrr::quietly(hypothesis)(fit, hypotheses)$result  # Do not print to console
     testthat::expect_true(is.data.frame(result) & nrow(result) == 2)
   }
 
@@ -246,7 +247,7 @@ test_bad = function(segments_list, title, ...) {
     ", paste0(segments, collapse=", "))
 
     testthat::test_that(test_name, {
-      testthat::expect_error(test_mcp(segments, sample = FALSE, ...))  # should err before sampling
+      testthat::expect_error(test_runs(segments, sample = FALSE, ...))  # should err before sampling
     })
   }
 }
@@ -259,7 +260,7 @@ test_good = function(segments_list, title, ...) {
     ", paste0(segments, collapse=", "))
 
     testthat::test_that(test_name, {
-      test_mcp(segments, ...)
+      purrr::quietly(test_runs)(segments, ...)
     })
   }
 }
@@ -285,7 +286,7 @@ good_prior = list(
 for (prior in good_prior) {
   test_name = paste0("Good priors: ", paste0(prior, collapse=", "))
   testthat::test_that(test_name, {
-    test_mcp(good_prior_segments, prior = prior)
+    test_runs(good_prior_segments, prior = prior)
   })
 }
 
@@ -493,7 +494,7 @@ test_bad(bad_arma, "Bad ARMA")
 
 good_arma = list(
   list(y ~ ar(1)),  # simple
-  list(y ~ ar(11)),  # two decimals
+  list(y ~ ar(5)),  # higher order
   list(y ~ ar(1, 1 + x + I(x^2) + exp(x))),  # complicated regression
   list(y ~ ar(1),
        ~ ar(2, 0 + x)),  # change in ar

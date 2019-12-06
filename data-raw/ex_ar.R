@@ -1,26 +1,24 @@
 # The model
 segments = list(
   price ~ 1 + ar(2),
-  ~ 0 + time
+  ~ 0 + time + ar(1)
 )
 
 # Simulate fitted data
 empty = mcp::mcp(segments, sample = FALSE)
+set.seed(42)
 ex_ar = tibble::tibble(
-  time = 1:300,
+  time = 1:200,
   price = empty$simulate(
     time,
-    cp_1 = 180,
+    cp_1 = 120,
     int_1 = 20,
     time_2 = 0.5,
-    sigma_1 = NA,
-    type = "fitted")
+    sigma_1 = 5,
+    ar1_1 = 0.7,
+    ar2_1 = 0.2,
+    ar1_2 = -0.4)
 )
-
-# Add residuals
-set.seed(42)
-residuals = stats::arima.sim(list(ar = c(0.5, 0.3)), nrow(ex_ar), sd = 5)
-ex_ar$price = ex_ar$price + c(residuals)
 
 # Save it
 ex_ar = data.frame(ex_ar)

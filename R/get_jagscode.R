@@ -48,13 +48,13 @@ model {
   has_ar = !all(is.na(unlist(ST$ar_code))) | !all(is.na(unlist(ST$ar_int)))
   if (has_ar) {
     # Add computation of autocorrelated residuals
-    mm = paste0(mm, get_ar_code(arma_order, ST, family))
-    y_code = paste0(y_code, " + sum(ar_[i_, ])")
+    mm = paste0(mm, get_ar_code(arma_order, family, is_R = FALSE, xvar = ST$x[1]))
+    y_code = paste0(y_code, " + resid_[i_]")
   }
 
   # Add inverse link function to back-transform to observed metric
-  if (family$link != "identity")  # not identity
-    y_code = paste0(family$linkinv_jags, "(", y_code, ")")
+  #if (family$link != "identity")  # not identity
+  y_code = paste0(family$linkinv_jags, "(", y_code, ")")
 
 
 
@@ -94,6 +94,15 @@ model {
   } else if (family$family == "poisson") {
     mm = paste0(mm, ST$y[1], "[i_] ~ dpois(", y_code, ")
     loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], ", y_code, ")")
+  }
+
+  # Compute residuals for AR
+  if (has_ar) {
+    if (family$family == "binomial") {
+      mm = paste0(mm, "\n    resid_sigma_[i_] = ", family$link_jags, "(", ST$y[1], "[i_] / ", ST$trials[1], "[i_]) - y_[i_]  # Residuals represented by sigma_ after ARMA")
+    } else {
+      mm = paste0(mm, "\n    resid_sigma_[i_] = ", family$link_jags, "(", ST$y[1], "[i_])  - y_[i_]  # Residuals represented by sigma_ after ARMA")
+    }
   }
 
   # If only the prior is sampled, remove the loglik_[i_] line
@@ -207,31 +216,4 @@ sd_to_prec = function(prior_str) {
     return(new_prior)
   }
   else return(prior_str)
-}
-
-
-
-#' Get JAGS code for residuals for each AR-order
-#'
-#' @aliases ar_code
-#' @keywords internal
-#' @inheritParams get_jagscode
-#' @param ar_order The order of the autoregressive component
-get_ar_code = function(ar_order, ST, family) {
-  code = ""
-  for (i in seq_len(ar_order)) {
-    # Get code for link(y[i - order])
-    if (family$family != "binomial") {
-      y_obs = paste0(family$link_jags, "(", ST$y[1], "[i_ - ", i, "])")
-    } else {
-      y_obs = paste0(family$link_jags, "(", ST$y[1], "[i_ - ", i, "] / ", ST$trials[1], "[i_ - ", i, "])")
-    }
-
-    code = paste0(code, "
-
-  # AR(", i, ") on residuals:
-  ar_[1:", i, ", ", i, "] = c(", paste0(rep("0", i), collapse = ","), ")
-  for (i_ in ", i + 1, ":length(", ST$x[1], ")) {ar_[i_, ", i, "] = ar", i, "_[i_] * (", y_obs, " - y_[i_-", i, "])}")
-  }
-  return(code)
 }
