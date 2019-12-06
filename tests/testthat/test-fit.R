@@ -1,61 +1,116 @@
-########################################################################
-# TEST THAT TRUE PARAMETERS ARE WITHIN 50% HDI OF ESTIMATED PARAMETERS #
-########################################################################
+#######################
+# SETUP AND FUNCTIONS #
+#######################
 `%>%` = magrittr::`%>%`
-library(mcp)
+options(mc.cores = 3)
 
-# All relevant segments expressions
-segments = list(
-  y ~ 1 + x,
-  ~ rel(1) + rel(x),
-  rel(1) ~ rel(1) + rel(x),
-  rel(1) ~ 0
+
+#' Test a list of segments and simulation values
+#'
+#' @aliases test_fit
+#' @keywords internal
+#' @param all_segments A list of lists. Each sub-list is an unnamed list of
+#'   formulas with one named entry called "simulated" with parameter values to
+#'   be used for simulation.
+test_fit = function(segments, simulated) {
+  # Simulate
+  empty = mcp(segments, sample = FALSE, par_x = "x")
+  data = tibble::tibble(
+    x = 1:200,  # Needs to be reasonably high to get a correct estimate
+    y = do.call(empty$simulate, c(list(x = 1:200), simulated))
+  )
+
+  # Fit
+  quiet_out = purrr::quietly(mcp)(segments, data, par_x = "x")
+  fit <<- quiet_out$result
+
+  # Check parameter recovery
+  results_table = purrr::quietly(fixef)(fit)$result
+  success = all(results_table$match == "OK")
+  if (success == FALSE) {
+    print(results_table)
+  }
+  testthat::expect_true(success, segments)
+}
+
+
+#' Apply `test_fit` to each element of this list
+#'
+#' @aliases apply_test_fit
+#' @keywords internal
+#' @param all_segments A list of lists. Each sub-list is an unnamed list of
+#'   formulas with one named entry called "simulated" with parameter values to
+#'   be used for simulation.
+apply_test_fit = function(all_segments, code) {
+  for (this in all_segments) {
+    # Split into formulas and simulation values
+    simulated = this[names(this) == "simulated"][[1]]
+    segments = this[names(this) == ""]
+
+    # Test!
+    testthat::test_that(
+      test_fit(segments, simulated),
+      code = code
+    )
+  }
+}
+
+
+
+
+#################
+# TEST GAUSSIAN #
+#################
+
+segments_gauss = list(
+  # Simple
+  list(y ~ 1,
+       ~ 1,
+       simulated = list(
+         int_1 = 10,
+         int_2 = 20,
+         sigma_1 = 5,
+         cp_1 = 100)),
+
+  # A lot of terms
+  list(y ~ 1 + x + sin(x),
+       ~ rel(1) + rel(x),
+       ~ 0,
+       simulated = list(
+         cp_1 = 70,
+         cp_2 = 140,
+         int_1 = 10,
+         x_1 = 0.5,
+         x_2 = -1,
+         x_1_sin = 5,
+         sigma_1 = 5,
+         int_2 = -50)),
+
+  # Simple AR
+  list(y ~ 1 + ar(1),
+       simulated = list(
+         int_1 = 30,
+         ar1_1 = 0.7,
+         sigma_1 = 10
+       )),
+
+  # Larger AR
+  list(y ~ 1 + ar(2),
+       ~ 0 + x + ar(1),
+       ~ 0,
+       simulated = list(
+         cp_1 = 80,
+         cp_2 = 140,
+         int_1 = -20,
+         sigma_1 = 5,
+         ar1_1 = 0.7,
+         ar2_1 = -0.4,
+         x_2 = 0.5,
+         ar1_2 = 0.5
+       ))
+
+  # Sigma here
+
 )
 
-# Simulation parameters
-sim_x = runif(300, 0, 100)
-func_args = list(
-  x = sim_x,
-  sigma = 5,
-  int_1 = 10,
-  int_2 = 20,
-  int_3 = -40,
-  x_1 = -2,
-  x_2 = 3,
-  x_3 = -2,
-  cp_1 = 30,
-  cp_2 = 20,
-  cp_3 = 30
-)
-
-# Make it a data.frame to use for joining with summary.mcpfit
-df = func_args
-df[["x"]] = NULL
-df = data.frame(
-  name = names(df),
-  theory = as.numeric(df)
-)
-df$name = as.character(df$name)
-
-# Simulate data
-fit_empty = mcp(segments, sample = F)
-set.seed(42)
-data = data.frame(
-  x = sim_x,
-  y = do.call(fit_empty$simulate, func_args)
-)
-
-# # Fit model to simulated data. A pretty long run to ensure convergence
-# # and small MCMC error
-# fit = mcp(segments, data, adapt = 5000, iter = 3000)
-#
-# # Check: expect all estimates to be within 98% HDI
-# results_table = summary(fit, width = 0.95) %>%
-#   dplyr::left_join(df, by = "name") %>%
-#   dplyr::mutate(score = theory > .lower & theory < .upper)
-#
-# test_that("fit approximate default priors", {
-#   testthat::expect_true(
-#     all(results_table$score),
-#     info = dplyr::mutate_if(results_table, is.numeric, round, digits = 1))
-# })
+apply_test_fit(segments_gauss, "Gaussian fit")

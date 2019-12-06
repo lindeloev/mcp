@@ -118,11 +118,19 @@ Fit it in parallel, to speed things up:
 fit = mcp(segments, data, prior)
 ```
 
-Plotting the prediction interval is the easiest way to to see how the variance is estimated:
+Plotting the prediction interval is an intuitive way to to see how the variance is estimated:
 
 ```{r}
 plot(fit, quantiles = TRUE, quantiles_type = "predict")
 ```
+
+
+We can also plot the `sigma_` paramters directly. Now the y-axis is `sigma`:
+
+```{r}
+plot(fit, which_y = "sigma", quantiles = TRUE)
+```
+
 
 The parameters are well recovered. The last change point is estimated with greater uncertainty than the others. This is expected, given that the only "signal" of this change point is a stop in variance growth.
 
@@ -173,9 +181,9 @@ Fit it:
 fit = mcp(segments, data)
 ```
 
-Plot it with 80% prediction intervals:
+Plot it:
 ```{r}
-plot(fit, facet_by = "id", quantiles = c(0.1, 0.9), quantiles_type = "predict")
+plot(fit, facet_by = "id")
 ```
 
 

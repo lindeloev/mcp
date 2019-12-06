@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Get JAGS code for residuals for each AR-order — get_ar_code • mcp</title>
+<title>Gets code for ARMA terms, resulting in a "resid_" — get_ar_code • mcp</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -50,9 +50,11 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Get JAGS code for residuals for each AR-order — get_ar_code" />
-<meta property="og:description" content="Get JAGS code for residuals for each AR-order" />
-<meta property="og:image" content="https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/logo.png" />
+<meta property="og:title" content="Gets code for ARMA terms, resulting in a "resid_" — get_ar_code" />
+<meta property="og:description" content="Deceloper note: Ensuring that this can be used in both simulate() and JAGS
+got quite messy with a lot of if-statements. It works but some refactoring
+may be good in the future." />
+<meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -200,32 +202,33 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Get JAGS code for residuals for each AR-order</h1>
-    <small class="dont-index">Source: <a href='https://github.com/lindeloev/mcp/blob/master/R/get_jagscode.R'><code>R/get_jagscode.R</code></a></small>
+    <h1>Gets code for ARMA terms, resulting in a "resid_"</h1>
+    <small class="dont-index">Source: <a href='https://github.com/lindeloev/mcp/blob/master/R/get_formula.R'><code>R/get_formula.R</code></a></small>
     <div class="hidden name"><code>get_ar_code.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Get JAGS code for residuals for each AR-order</p>
+    <p>Deceloper note: Ensuring that this can be used in both simulate() and JAGS
+got quite messy with a lot of if-statements. It works but some refactoring
+may be good in the future.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>get_ar_code</span>(<span class='no'>ar_order</span>, <span class='no'>ST</span>, <span class='no'>family</span>)</pre>
+    <pre class="usage"><span class='fu'>get_ar_code</span>(<span class='no'>ar_order</span>, <span class='no'>family</span>, <span class='no'>is_R</span>, <span class='no'>xvar</span>, <span class='kw'>yvar</span> <span class='kw'>=</span> <span class='fl'>NA</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>ar_order</th>
-      <td><p>The order of the autoregressive component</p></td>
-    </tr>
-    <tr>
-      <th>ST</th>
-      <td><p>Segment table. Returned by <code><a href='get_segment_table.html'>get_segment_table()</a></code>.</p></td>
+      <td><p>Positive integer. The order of ARMA</p></td>
     </tr>
     <tr>
       <th>family</th>
-      <td><p>One of <code><a href='https://rdrr.io/r/stats/family.html'>gaussian()</a></code>, <code><a href='https://rdrr.io/r/stats/family.html'>binomial()</a></code>, <code><a href='bernoulli.html'>bernoulli()</a></code>, or <code>poission()</code>.
-Only default link functions are currently supported.</p></td>
+      <td><p>An mcpfamily object</p></td>
+    </tr>
+    <tr>
+      <th>is_R</th>
+      <td><p>Bool. Is this R code (TRUE) or JAGS code (FALSE)?</p></td>
     </tr>
     </table>
 

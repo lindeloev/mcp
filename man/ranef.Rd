@@ -6,7 +6,7 @@
 \alias{random.effects}
 \title{Get varying ("random") effects of mcpfit.}
 \usage{
-ranef(object, width = 0.95, prior = FALSE, ...)
+ranef(object, width = 0.95, prior = FALSE, digits = 2, ...)
 }
 \arguments{
 \item{object}{An \code{mcpfit} object returned by \code{\link{mcp}}.}
@@ -15,6 +15,12 @@ ranef(object, width = 0.95, prior = FALSE, ...)
 (between 0 and 1).}
 
 \item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
+
+\item{digits}{a non-null value for digits specifies the minimum number of
+significant digits to be printed in values. The default, NULL, uses
+getOption("digits"). (For the interpretation for complex numbers see signif.)
+Non-integer values will be rounded down, and only values greater than or
+equal to 1 and no greater than 22 are accepted.}
 
 \item{...}{Currently ignored}
 }

@@ -187,6 +187,23 @@ While `segmented` prefers the one-change-point model, `mcp` prefers the (true) t
 
 
 
+# breakpoints
+`strucchange::breakpoints()` is a lot like `segmented`. The difference is that (1) it is limited to gaussian residuals, and (2) it actually models intercepts, quadratic terms, etc. It scans through fits with 1, 2, 3,... N break points and determine where the optimal break points between this number of segments would lie. For each model it computes the Residual Sum of Squares (RSS; monotonically smaller with increasing N) and the Bayesian Information Criterion (BIC; has a minimum) for each N. It selects the model with the smallest BIC.
+
+For an intercept-only model (`y ~ 1`) it correctly detects the two change points with estimates similar to `mcp`. As with most other packages, there are no intervals on the change points nor estimates of the parameters of the segments in between.
+
+```{r}
+library(strucchange)
+fit_bp = breakpoints(y ~ 1, data = data, breaks = 2)
+summary(fit_bp)
+```
+
+Reassuringly, for `y ~ 1 + x` it "recommends" the same single change point that `segmented` found for this model.
+
+
+
+
+
 # cpm
 `cpm` is an intercept-only (in mean and variance) package, so it cannot model slopes. It can detect single change points via `detectChangePoint` and multiple change points via `processStream`. `processStream` is an automatic change point detection, using a p-value threshold to determine if a candidate should be marked as a hit. Multiple ways of computing p-values (`cpmType`) are available. In my limited testing, they return similar change points, though not identical.
 

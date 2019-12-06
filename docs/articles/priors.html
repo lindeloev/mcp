@@ -21,7 +21,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="Working with priors in mcp">
 <meta property="og:description" content="">
-<meta property="og:image" content="https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/logo.png">
+<meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -155,7 +155,7 @@
       <h1>Working with priors in mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-12-02</h4>
+            <h4 class="date">2019-12-05</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/priors.Rmd"><code>vignettes/priors.Rmd</code></a></small>
       <div class="hidden name"><code>priors.Rmd</code></div>
@@ -327,8 +327,8 @@
 ##       (x[i_] &gt;= cp_0) * sigma_1 
 ## 
 ##     # Likelihood and log-density for family = gaussian()
-##     y[i_] ~ dnorm(y_[i_], 1 / sigma_[i_]^2)
-##     loglik_[i_] = logdensity.norm(y[i_], y_[i_], 1 / sigma_[i_]^2)
+##     y[i_] ~ dnorm((y_[i_]), 1 / sigma_[i_]^2)
+##     loglik_[i_] = logdensity.norm(y[i_], (y_[i_]), 1 / sigma_[i_]^2)
 ##   }
 ## }</code></pre>
 </div>

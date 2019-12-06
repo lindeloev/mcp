@@ -153,12 +153,11 @@ save_it("ex_variance.png")
 #########
 segments_ar = list(
   price ~ 1 + ar(2),
-  ~ 0 + time
+  ~ 0 + time + ar(1)
 )
 
 fit_ar = mcp(segments_ar, ex_ar)
-plot_ar = plot(fit_ar) + ggplot2::geom_line()
-plot_ar$layers[[1]] = NULL  # Remove poiints
+plot_ar = plot(fit_ar)
 theme_it(plot_ar, "Time series with autoregressive residuals")
 save_it("ex_ar.png")
 

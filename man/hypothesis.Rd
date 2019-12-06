@@ -5,10 +5,12 @@
 \alias{hypothesis.mcpfit}
 \title{Test hypotheses on mcp objects.}
 \usage{
-hypothesis(fit, hypotheses, width = 0.95)
+hypothesis(fit, hypotheses, width = 0.95, digits = 3)
 }
 \arguments{
-\item{fit}{An mcpfit object}
+\item{fit}{an \code{mcpfit} object returned by \code{mcp()}. \code{fit$data[, fit$pars$y]}
+must have the attribute \code{"simulated"} which is a list of expected/true
+parameter values.}
 
 \item{hypotheses}{String representation of a logical test involving model parameters.
 Takes R code that evaluates to TRUE or FALSE in a vectorized way.
@@ -43,7 +45,14 @@ conditioning on the data, relative to the prior credence?
 point for John (which is relative to `cp_1``) double that of Erin?
 }}
 
-\item{width}{Between 0 and 1. Width of the highest density interval.}
+\item{width}{Float. The width of the highest posterior density interval
+(between 0 and 1).}
+
+\item{digits}{a non-null value for digits specifies the minimum number of
+significant digits to be printed in values. The default, NULL, uses
+getOption("digits"). (For the interpretation for complex numbers see signif.)
+Non-integer values will be rounded down, and only values greater than or
+equal to 1 and no greater than 22 are accepted.}
 }
 \value{
 A data.frame with a row per hypothesis and the following columns:

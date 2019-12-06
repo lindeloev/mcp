@@ -13,6 +13,7 @@
   quantiles_type = "fitted",
   rate = TRUE,
   prior = FALSE,
+  which_y = "ct",
   ...
 )
 }
