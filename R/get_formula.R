@@ -255,10 +255,13 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     ...) {
 
     # Use this for return to add simulation parameters to the output
-    args_call = match.call()  # Which arguments this function was called with
+    args_names = as.list(match.call())  # Which arguments this function was called with
+    all_values = c(as.list(environment()), list(...))  # all vars and values in env
     add_simulated = function(x) {
-      args_call[[1]] = NULL  # Remove function name
-      attr(x, 'simulated') = args_call
+      args_values = all_values[names(all_values) %in% names(args_names)]  # Only those coming from call
+      args_values[['", pars$x ,"']] = NULL  # Remove x
+      ", ifelse(length(pars$trials) > 0, yes = paste0("args_values[['", pars$trials, "']] = NULL  # Remove trials"), no = ""), "
+      attr(x, 'simulated') = args_values  # Set as attribute
       return(x)
     }
 
@@ -317,15 +320,15 @@ get_simulate = function(formula_str, pars, nsegments, family) {
         stop('fitted not meaningful for an AR(N) model without data to use for autocorrelation.')")
       }
     out = paste0(out, "
-      add_simulated(y_)
+      return(add_simulated(y_))
     }")
     if(is_arma) {
       out = paste0(out, "else if (type == 'predict' & (is.null(ydata) & is.null(", pars$y, "))) {
-      add_simulated(y_)
+      return(add_simulated(y_))
     }")
     }
     out = paste0(out, "else if (type == 'predict') {
-      add_simulated(rnorm(length(", pars$x, "), y_, sigma_))
+      return(add_simulated(rnorm(length(", pars$x, "), y_, sigma_)))
       # if (quantiles == TRUE)
       #   quantiles = c(0.025, 0.975)
       # if (is.numeric(quantiles)) {
@@ -339,20 +342,20 @@ get_simulate = function(formula_str, pars, nsegments, family) {
   } else if (family$family == "binomial") {
     out = paste0(out, "
     if (type == 'predict') {
-      if (rate == FALSE) add_simulated(rbinom(length(", pars$x, "), ", pars$trials, ", ilogit(y_)))
-      if (rate == TRUE)  add_simulated(rbinom(length(", pars$x, "), ", pars$trials, ", ilogit(y_)) / ", pars$trials, ")
+      if (rate == FALSE) return(add_simulated(rbinom(length(", pars$x, "), ", pars$trials, ", ilogit(y_))))
+      if (rate == TRUE)  return(add_simulated(rbinom(length(", pars$x, "), ", pars$trials, ", ilogit(y_)) / ", pars$trials, "))
     }
     if (type == 'fitted')
-      if (rate == FALSE) add_simulated(", pars$trials, " * ilogit(y_))
-      if (rate == TRUE)  add_simulated(ilogit(y_))")
+      if (rate == FALSE) return(add_simulated(", pars$trials, " * ilogit(y_)))
+      if (rate == TRUE)  return(add_simulated(ilogit(y_)))")
   } else if (family$family == "bernoulli") {
     out = paste0(out, "
-    if (type == 'predict') add_simulated(rbinom(length(", pars$x, "), 1, ilogit(y_)))
-    if (type == 'fitted') add_simulated(ilogit(y_))")
+    if (type == 'predict') return(add_simulated(rbinom(length(", pars$x, "), 1, ilogit(y_))))
+    if (type == 'fitted') return(add_simulated(ilogit(y_)))")
   } else if (family$family == "poisson") {
     out = paste0(out, "
-    if (type == 'predict') add_simulated(rpois(length(", pars$x, "), exp(y_)))
-    if (type == 'fitted') add_simulated(exp(y_))")
+    if (type == 'predict') return(add_simulated(rpois(length(", pars$x, "), exp(y_))))
+    if (type == 'fitted') return(add_simulated(exp(y_)))")
   }
 
   out = paste0(out, "
