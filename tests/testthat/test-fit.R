@@ -25,7 +25,7 @@ test_fit = function(segments, simulated) {
   fit <<- quiet_out$result
 
   # Check parameter recovery
-  results_table = fixef(fit)
+  results_table = purrr::quietly(fixef)(fit)$result
   success = all(results_table$match == "OK")
   if (success == FALSE) {
     print(results_table)

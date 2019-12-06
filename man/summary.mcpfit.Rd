@@ -2,8 +2,9 @@
 % Please edit documentation in R/mcpfit_methods.R
 \name{summary.mcpfit}
 \alias{summary.mcpfit}
+\alias{check_recovery}
 \alias{summary}
-\title{Summarise mcpfit objects}
+\title{Test parameter recovery for simulated data}
 \usage{
 \method{summary}{mcpfit}(object, width = 0.95, digits = 2, prior = FALSE, ...)
 }
@@ -13,11 +14,19 @@
 \item{width}{Float. The width of the highest posterior density interval
 (between 0 and 1).}
 
-\item{digits}{Positive integer. Number of digits to print}
+\item{digits}{a non-null value for digits specifies the minimum number of
+significant digits to be printed in values. The default, NULL, uses
+getOption("digits"). (For the interpretation for complex numbers see signif.)
+Non-integer values will be rounded down, and only values greater than or
+equal to 1 and no greater than 22 are accepted.}
 
 \item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
 
 \item{...}{Currently ignored}
+
+\item{fit}{an \code{mcpfit} object returned by \code{mcp()}. \code{fit$data[, fit$pars$y]}
+must have the attribute \code{"simulated"} which is a list of expected/true
+parameter values.}
 }
 \value{
 Posterior means and HDI intervals. \code{Rhat} is the Gelman-Rubin
@@ -30,8 +39,7 @@ also obvious as poor mixing in trace plots (see \code{plot_pars(fit)}).
 into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
 }
 \description{
-Computes posterior means and highest density intervals, and model
-diagnostics. Get them in a data frame by doing \code{result = summary(fit)}.
+Test parameter recovery for simulated data
 }
 \examples{
 \dontrun{
