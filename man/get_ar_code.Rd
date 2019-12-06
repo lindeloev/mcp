@@ -14,7 +14,7 @@ get_ar_code(ar_order, family, is_R, xvar, yvar = NA)
 \item{is_R}{Bool. Is this R code (TRUE) or JAGS code (FALSE)?}
 }
 \description{
-Deceloper note: Ensuring that this can be used in both simulate() and JAGS
+Developer note: Ensuring that this can be used in both simulate() and JAGS
 got quite messy with a lot of if-statements. It works but some refactoring
 may be good in the future.
 }

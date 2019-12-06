@@ -11,7 +11,7 @@ ex_binomial = tibble::tibble(
   x = 1:100,
   N = sample(10, length(x), replace=TRUE),
   y = empty$simulate(
-    x,
+    x = x,
     N,
     cp_1 = 35,
     cp_2 = 70,
