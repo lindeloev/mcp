@@ -205,10 +205,8 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
 #' @aliases fixef fixef.mcpfit fixed.effects
 #' @inheritParams summary.mcpfit
 #' @export
-fixef = function(object, width = 0.95, prior = FALSE, digits = 2, ...) {
-  result = get_summary(object, width, varying = FALSE, prior = prior)
-  print(data.frame(result), digits = digits, row.names = FALSE)
-  return(invisible(result))
+fixef = function(object, width = 0.95, prior = FALSE, ...) {
+  get_summary(object, width, varying = FALSE, prior = prior)
 }
 
 #' Get varying ("random") effects of mcpfit.
@@ -216,10 +214,8 @@ fixef = function(object, width = 0.95, prior = FALSE, digits = 2, ...) {
 #' @aliases ranef ranef.mcpfit random.effects
 #' @inheritParams summary.mcpfit
 #' @export
-ranef = function(object, width = 0.95, prior = FALSE, digits = 2, ...) {
-  result = get_summary(object, width, varying = TRUE, prior = prior)
-  print(data.frame(result), digits = digits, row.names = FALSE)
-  return(invisible(result))
+ranef = function(object, width = 0.95, prior = FALSE, ...) {
+  get_summary(object, width, varying = TRUE, prior = prior)
 }
 
 

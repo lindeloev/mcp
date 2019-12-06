@@ -112,9 +112,12 @@ test_runs = function(segments,
     # Allow for known messages and wornings that does not signify errors
     if (length(quiet_out$warnings) > 0) {
       accepted_warnings = c("Adaptation incomplete")  # due to very small test datasets
-      accepted_messages = c("The current implementation of autoregression can be fragile",
-                            "Autoregression currently assumes homoskedasticity",
-                            "You are using ar\\(\\) together")
+      accepted_messages = c(
+        "Finished sampling in",
+        "The current implementation of autoregression can be fragile",
+        "Autoregression currently assumes homoskedasticity",
+        "You are using ar\\(\\) together"
+      )
 
       for (warn in quiet_out$warnings) {
         if (!any(stringr::str_starts(warn, accepted_warnings))) {
@@ -174,7 +177,7 @@ test_summary = function(fit, varying_cols) {
   # If there are varying effects
   if (length(varying_cols) > 0) {
     testthat::expect_match(output, "ranef\\(")  # noticed about varying effects
-    varying = purrr::quietly(ranef)(fit)$result  # Do not print to console
+    varying = ranef(fit)  # Do not print to console
     testthat::expect_true(is.character(varying$name))
     testthat::expect_true(is.numeric(varying$mean))
 
@@ -211,7 +214,7 @@ test_hypothesis = function(fit) {
       paste0(base, " > 1"),  # Directional
       paste0(base, " = -1")  # Savage-Dickey (point)
     )
-    result = purrr::quietly(hypothesis)(fit, hypotheses)$result  # Do not print to console
+    result = hypothesis(fit, hypotheses)  # Do not print to console
     testthat::expect_true(is.data.frame(result) & nrow(result) == 2)
   }
 
@@ -260,7 +263,7 @@ test_good = function(segments_list, title, ...) {
     ", paste0(segments, collapse=", "))
 
     testthat::test_that(test_name, {
-      purrr::quietly(test_runs)(segments, ...)
+      test_runs(segments, ...)
     })
   }
 }
