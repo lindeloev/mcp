@@ -25,10 +25,10 @@ test_fit = function(segments, simulated) {
   fit <<- quiet_out$result
 
   # Check parameter recovery
-  estimated = check_recovery(fit)
-  success = all(estimated$success == TRUE)
+  results_table = fixef(fit)
+  success = all(results_table$match == "OK")
   if (success == FALSE) {
-    print(estimated)
+    print(results_table)
   }
   testthat::expect_true(success, segments)
 }

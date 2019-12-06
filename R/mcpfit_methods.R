@@ -71,11 +71,54 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
       rowMeans()
   )
 
+  # Add simulation parameters if the data is simulated
+  sim_list = attr(fit$data[, fit$pars$y], "simulated")
+  if(!is.null(sim_list)) {
+    simulated = as.list(sim_list)  # Get as oroper list
+    #simulated = sapply(simulated, language_to_numeric)
+    simulated = simulated[sapply(simulated, is.numeric)]  # Remove non-numeric
+
+    # Handle varying effects. Finds the matching labels
+    for (varying in fit$pars$varying) {
+      if (!is.null(simulated[[varying]])) {
+        # Find the needed values and labels
+        value = simulated[[varying]]  # Extract simulation values
+        label_col = na.omit(fit$.other$ST$cp_group_col)[1]  # What column is the labels in data. TO DO: only works if there is just one grouping factor!
+        labs = fit$data[[label_col]]  # Find the labels. Same length as `value`
+        if (length(value) != length(labs)) {
+          warning("This is simulated data, but the labels for varying effects in data does not have the same length as the numeric params used for simulation.")
+          next
+        }
+
+        # Name like the MCMC columns and use only unique combinations (assuming identical value for each level)
+        names(value) = paste0(varying, "[", labs, "]")
+        value = value[!duplicated(value)]
+
+        # Delete the simulation vector and add the new label-value pairs to list
+        simulated[[varying]] = NULL
+        simulated = c(simulated, as.list(value))
+      }
+    }
+
+    # Now unpack the whole bunch to a left_join() friendly data.frame.
+    simulated = unlist(simulated)  # as named vector
+    simulated = data.frame(
+      name = names(simulated),
+      sim = as.numeric(simulated),  # without row names
+      stringsAsFactors = FALSE
+    )
+
+    # Add simulation to the beginning of the list
+    estimates = estimates %>%
+      dplyr::left_join(simulated, by = "name") %>%
+      dplyr::mutate(match = ifelse(.data$sim > .data$lower & .data$sim < .data$upper, yes = "OK", no = "")) %>%
+      dplyr::select(.data$name, .data$match, .data$sim, .data$mean, .data$lower, .data$upper)
+  }
+
   # Merge them and return
   result = dplyr::bind_cols(estimates, diagnostics)
   data.frame(result)
 }
-
 
 
 
@@ -88,7 +131,11 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #' @param object An `mcpfit` object returned by \code{\link{mcp}}.
 #' @param width Float. The width of the highest posterior density interval
 #'   (between 0 and 1).
-#' @param digits Positive integer. Number of digits to print
+#' @param digits a non-null value for digits specifies the minimum number of
+#'   significant digits to be printed in values. The default, NULL, uses
+#'   getOption("digits"). (For the interpretation for complex numbers see signif.)
+#'   Non-integer values will be rounded down, and only values greater than or
+#'   equal to 1 and no greater than 22 are accepted.
 #' @param prior TRUE/FALSE. Summarise prior instead of posterior?
 #' @param ... Currently ignored
 #'
