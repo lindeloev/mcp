@@ -11,7 +11,7 @@
 ##' @section Note: This function is called recursively on individual
 ##' terms in the model, which is why the argument is called \code{term} and not
 ##' a name like \code{form}, indicating a formula.
-##' @author From package \code{lme4}.
+##' @author From \pkg{lme4}.
 ##' @importFrom methods is
 ##' @examples
 ##' \dontrun{
@@ -91,7 +91,7 @@ findbars <- function(term)
 ##' @section Note: This function is called recursively on individual
 ##' terms in the model, which is why the argument is called \code{term} and not
 ##' a name like \code{form}, indicating a formula.
-##' @author From package \code{lme4}
+##' @author From \pkg{lme4}
 ##' @importFrom stats reformulate
 ##' @examples
 ##' \dontrun{
