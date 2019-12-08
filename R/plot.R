@@ -3,7 +3,7 @@
 #' Plot prior or posterior draws of segments on top of data.
 #'
 #' @aliases plot plot.mcpfit
-#' @param x An mcpfit object
+#' @param x An \code{\link{mcpfit}} object
 #' @param facet_by String. Name of a varying group.
 #'   `facet_by` only applies for `type = "segments"`
 #' @param rate Boolean. For binomial models, plot on raw data (`rate = FALSE`) or
@@ -268,7 +268,7 @@ plot.mcpfit = function(x,
 #' cases.
 #'
 #' @aliases plot_pars
-#' @param fit An mcpfit object
+#' @param fit An \code{\link{mcpfit}} object.
 #' @param pars Character vector. One of:
 #'   * Vector of parameter names.
 #'   * \emph{"population" (default):} plots all population parameters.
@@ -318,7 +318,6 @@ plot.mcpfit = function(x,
 #' # Customize two-column plots using the patchwork package.
 #' plot_pars(fit, type = c("trace", "dens_overlay")) * theme_bw(10)
 #' }
-
 
 plot_pars = function(fit,
                      pars = "population",

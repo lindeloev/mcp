@@ -87,7 +87,7 @@
 #'       but `mcp` converts to precision under the hood via the sd_to_prec()
 #'       function. So you will see SDs in `fit$prior` but precision ($1/SD^2)
 #'       in `fit$jags_code`
-#' @return An `mcpfit` object.
+#' @return An \code{\link{mcpfit}} object.
 #' @seealso \link{get_segment_table}
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @importFrom stats gaussian binomial
