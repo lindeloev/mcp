@@ -8,6 +8,8 @@
 #' @inheritParams get_formula_str
 #' @inheritParams mcp
 #' @param ytypes A character vector of ytypes to including in model building
+#' @return A string with JAGS code.
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 get_all_formulas = function(ST, prior, par_x, ytypes = c("ct", "sigma", "arma")) {
   # Initiate with central tendency
@@ -50,6 +52,9 @@ get_all_formulas = function(ST, prior, par_x, ytypes = c("ct", "sigma", "arma"))
 #' @param ytype One of "ct" (central tendency), "sigma", "ar1" (or another order), or "ma1" (or another order)
 #' @param init TRUE/FALSE. Set to TRUE for the first call. Adds segment-relative
 #'   X-codings and verbose commenting of one formula
+#' @return A string with JAGS code.
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
 get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
   # Build this! Start empty...
   formula_str = ""
@@ -209,6 +214,8 @@ get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
 #' @param pars_varying List varying parameters. They will default to zero
 #'   (optional for the user).
 #' @param nsegments Positive integer. Number of segments, typically `nrow(ST)`.
+#' @return A string with R code for the fit$simulate() function corresponding to the model.
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 get_simulate = function(formula_str, pars, nsegments, family) {
   # First some substitutions
@@ -378,6 +385,9 @@ get_simulate = function(formula_str, pars, nsegments, family) {
 #' @param ar_order Positive integer. The order of ARMA
 #' @param family An mcpfamily object
 #' @param is_R Bool. Is this R code (TRUE) or JAGS code (FALSE)?
+#' @return String with JAGS code for AR.
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
 get_ar_code = function(ar_order, family, is_R, xvar, yvar = NA) {
   mm = "\n"
 

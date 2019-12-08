@@ -1,10 +1,43 @@
+#' Class `mcpfit` of models fitted with the \pkg{mcp} package
+#'
+#' Models fitted with the \code{\link[mcp:mcp]{mcp}} function are represented as
+#' an `mcpfit` object which contains the user input (model, data, family),
+#' derived model characteristics (prior, parameter names, and jags code), and
+#' the fit (prior and/or posterior mcmc samples).
+#'
+#' @name mcpfit-class
+#' @aliases mcpfit
+#' @docType class
+#'
+#' @details
+#' See `methods(class = "mcpfit")` for an overview of available methods.
+#'
+#' User-provided information (see \code{\link{mcp}} for more details):
+#' @slot segments A list of formulas, making up the model.
+#'   Provided by user. See \code{\link{mcp}} for more details.
+#' @slot data A data frame.
+#'   Provided by user. See \code{\link{mcp}} for more details.
+#' @slot family An `mcpfamily` object.
+#'   Provided by user. See \code{\link{mcp}} for more details.
+#' @slot prior A named list.
+#'   Provided by user. See \code{\link{mcp}} for more details.
+#' @slot mcmc_post An \code{\link[coda]{mcmc.list}} object with posterior samples.
+#' @slot mcmc_prior An \code{\link[coda]{mcmc.list}} object with prior samples.
+#' @slot mcmc_loglik An \code{\link[coda]{mcmc.list}} object with samples of log-likelihood.
+#' @slot pars A list of character vectors of model parameter names.
+#' @slot jags_code A string with jags code. Use `cat(fit$jags_code)` to show it.
+#' @slot simulate A method to simulate and predict data.
+#' @slot .other Information that is used internally by mcp.
+#'
+NULL
+
 
 #' Internal function for summary.mcpfit, fixef.mcpfit, and ranef.mcpfit
 #'
 #' @aliases get_summary
 #' @keywords internal
 #' @inheritParams summary.mcpfit
-#' @param fit An mcpfit object.
+#' @param fit An \code{\link{mcpfit}}` object.
 #' @param varying Boolean. Get results for varying (TRUE) or population (FALSE)?
 #' @importFrom magrittr %>%
 #' @importFrom dplyr .data
@@ -128,7 +161,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #' diagnostics. Get them in a data frame by doing `result = summary(fit)`.
 #'
 #' @aliases summary summary.mcpfit
-#' @param object An `mcpfit` object returned by \code{\link{mcp}}.
+#' @param object An \code{\link{mcpfit}} object.
 #' @param width Float. The width of the highest posterior density interval
 #'   (between 0 and 1).
 #' @param digits a non-null value for digits specifies the minimum number of
@@ -224,7 +257,7 @@ ranef = function(object, width = 0.95, prior = FALSE, ...) {
 #' Use \code{\link{summary.mcpfit}} for greater control.
 #'
 #' @aliases print print.mcpfit
-#' @param x `mcpfit` object.
+#' @param x An \code{\link{mcpfit}} object.
 #' @param ... Currently ignored.
 #' @export
 print.mcpfit = function(x, ...) {
@@ -253,7 +286,7 @@ print.mcpprior = function(x, ...) {
 #' @aliases get_samples
 #' @keywords internal
 #' @inheritParams summary.mcpfit
-#' @param fit An mcpfit object
+#' @param fit An \code{\link{mcpfit}} object
 #' @param message TRUE: gives a message if returning prior samples. FALSE = no message
 #' @param error TRUE: err if there are no samples. FALSE: return NULL
 get_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {

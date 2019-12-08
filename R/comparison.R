@@ -1,11 +1,11 @@
 #' Compute information criteria for model comparison
 #'
-#' Takes a `mcpfit` as input and computes information criteria using loo or
+#' Takes an \code{\link{mcpfit}} as input and computes information criteria using loo or
 #' WAIC. Compare models using \code{\link[loo]{loo_compare}} and \code{\link[loo]{loo_model_weights}}.
 #' more in \code{\link[loo]{loo}}.
 #'
 #' @aliases criterion
-#' @param fit An mcpfit object.
+#' @param fit An \code{\link{mcpfit}} object.
 #' @param criterion One of `"loo"` (calls \code{\link[loo]{loo}}) or `"waic"` (calls \code{\link[loo]{waic}}).
 #' @param ... Further arguments passed to \code{\link[loo]{loo}}, e.g., `cores` or `save_psis`.
 #' @return a `loo` or `psis_loo` object.
@@ -56,7 +56,7 @@ criterion = function(fit, criterion = "loo", ...) {
 
 #' @aliases loo LOO loo.mcpfit
 #' @describeIn criterion Computes loo on mcpfit objects
-#' @param x `mcpfit` object.
+#' @param x An \code{\link{mcpfit}} object.
 #' @seealso \link{criterion}
 #' @importFrom loo loo
 #' @export loo
@@ -67,7 +67,7 @@ loo.mcpfit = function(x, ...) {
 
 #' @aliases waic WAIC waic.mcpfit
 #' @describeIn criterion Computes WAIC on mcpfit objects
-#' @param x `mcpfit` object.
+#' @param x An \code{\link{mcpfit}} object.
 #' @param ... Currently ignored
 #' @importFrom loo waic
 #' @seealso \link{criterion}
@@ -249,6 +249,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
 #' @param LHS Expression to compute posterior
 #' @param value What value to evaluate the density at
 #' @return A float
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 get_density = function(samples, LHS, value) {
   samples = tidybayes::tidy_draws(samples) %>%

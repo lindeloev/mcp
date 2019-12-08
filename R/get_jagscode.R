@@ -134,6 +134,7 @@ model {
 #'   level prior. String indicates a varying-effects prior (one for each group
 #'   level).
 #' @return A string
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 get_prior_str = function(prior, i, varying_group = NULL) {
   # Helpers
@@ -181,12 +182,12 @@ get_prior_str = function(prior, i, varying_group = NULL) {
 #' these,
 #' tau/sd is the second parameter.
 #'
-#'@aliases sd_to_prec
-#'@param prior_str String. A JAGS prior. Can be truncated, e.g.
-#'  `dt(3, 2, 1) T(my_var, )`.
-#'@return A string
-#'@author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'@export
+#' @aliases sd_to_prec
+#' @param prior_str String. A JAGS prior. Can be truncated, e.g.
+#'   `dt(3, 2, 1) T(my_var, )`.
+#' @return A string
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @export
 #'
 
 sd_to_prec = function(prior_str) {
