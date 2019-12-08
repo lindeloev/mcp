@@ -153,21 +153,23 @@ unpack_cp = function(form_cp, i) {
   form_cp = as.formula(form_cp)
 
   # Varying effects
-  varying = findbars(form_cp)
-  if (!is.null(varying)) {
-    if (length(varying) > 1)
+  form_varying = remove_terms(form_cp, "population")
+
+  if (!is.null(form_varying)) {
+    varying_terms = attr(terms(form_varying), "term.labels")
+    if (length(varying_terms) > 1)
       stop("Error in segment", i, " (change point): only one varying effect allowed. Found ", form_cp)
 
-    varying_parts = as.character(varying[[1]])
-    if (!varying_parts[2] %in% "1")
+    varying_parts = strsplit(gsub(" ", "", varying_terms), "\\|")[[1]]
+    if (!varying_parts[1] == "1")
       stop("Error in segment ", i, " (change point): Only plain intercepts are allowed in varying effects, e.g., (1|id).", i)
 
     if (!grepl("^[A-Za-z._0-9]+$", varying_parts[2]))
-      stop("Error in segment ", i, " (change point): Grouping variable in varying effects.")
+      stop("Error in segment ", i, " (change point): invalid format of grouping variable in varying effects. Got: ", varying_parts[2])
   }
 
   # Fixed effects
-  attrs = attributes(stats::terms(nobars(form_cp)))
+  attrs = attributes(stats::terms(remove_terms(form_cp, "varying")))
   is_int_rel = attrs$term.labels == "rel(1)"
   if (any(is_int_rel))
     attrs$term.labels = attrs$term.labels[-is_int_rel]  # code as no term
@@ -175,17 +177,17 @@ unpack_cp = function(form_cp, i) {
   if (length(attrs$term.labels) > 0)
     stop("Error in segment ", i, " (change point): Only intercepts (1 or rel(1)) are allowed in population-level effects.")
 
-  if (is.null(varying) & attrs$intercept == 0)
+  if (is.null(form_varying) & attrs$intercept == 0)
     stop("Error in segment ", i, " (change point): no intercept or varying effect. You can do e.g., ~ 1 or ~ (1 |id).")
 
   # Return as list.
-  if (!is.null(varying)) {
+  if (!is.null(form_varying)) {
     # If there is a varying effect
     return(tibble::tibble(
       cp_int = attrs$intercept == 1,
       cp_int_rel = any(is_int_rel),  # the intercept is relative
-      cp_ran_int = ifelse(varying_parts[2] == "1", TRUE, NA),  # placeholder for later
-      cp_group_col = varying_parts[3]
+      cp_ran_int = ifelse(varying_parts[1] == "1", TRUE, NA),  # placeholder for later
+      cp_group_col = varying_parts[2]
     ))
   } else {
     # If there is no varying effect
@@ -221,7 +223,7 @@ unpack_cp = function(form_cp, i) {
 unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   # Get general format
   form_rhs = formula(form_rhs)
-  attrs = attributes(stats::terms(nobars(form_rhs)))
+  attrs = attributes(stats::terms(remove_terms(form_rhs, "varying")))
   term.labels = attrs$term.labels
 
 
@@ -351,20 +353,6 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   ct_slope = unpack_slope(ct_form, i, "ct", last_segment$ct_slope[[1]])
 
 
-
-  ###################
-  # VARYING EFFECTS #
-  ###################
-  # ct_varying_terms = as.character(findbars(form_rhs))
-  # if (length(ct_varying_terms) > 0) {
-  #   ct_varying = lapply(ct_varying_terms, unpack_varying_term, i = i) %>%
-  #     dplyr::bind_rows()
-  # } else {
-  #   ct_varying = NA
-  # }
-
-
-
   #################
   # EXTRACT PAR_X #
   #################
@@ -453,7 +441,7 @@ unpack_int = function(form, i, ttype) {
   }
 
   # Got a formula... continue
-  attrs = attributes(stats::terms(nobars(form)))
+  attrs = attributes(stats::terms(remove_terms(form, "varying")))
   int_rel = attrs$term.labels == "rel(1)"
 
   if (any(int_rel) == TRUE & i == 1)
@@ -498,7 +486,7 @@ unpack_slope = function(form, i, ttype, last_slope) {
   }
 
   # Get a list of terms as strings
-  attrs = attributes(stats::terms(nobars(form)))
+  attrs = attributes(stats::terms(remove_terms(form, "varying")))
   term.labels = attrs$term.labels[attrs$term.labels != "rel(1)"]
 
   # Population-level slopes

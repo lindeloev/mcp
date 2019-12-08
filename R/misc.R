@@ -142,3 +142,43 @@ release_questions = function() {
 
 
 
+
+#' Remove varying or population terms from a formula
+#'
+#' WARNING: removes response side from the formula
+#'
+#' @aliases remove_terms
+#' @keywords internal
+#' @param form A formula
+#' @param remove Either "varying" or "population". These are removed.
+#' @return A formula
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
+remove_terms = function(form, remove) {
+  # Find terms with "|"
+  attrs = attributes(terms(form))
+  term.labels = attrs$term.labels
+  varying_bool = stringr::str_detect(term.labels, "\\|")
+
+  # Add parenthesis back to them
+  term.labels[varying_bool] = paste0("(", term.labels[varying_bool], ")")
+
+  # Remove non-matching types
+  if (remove == "varying") {
+    term.labels = term.labels[!varying_bool]
+    term.labels = c(attrs$intercept, term.labels)  # Add intercept indicator
+  } else if (remove == "population") {
+    term.labels = term.labels[varying_bool]
+  } else {
+    stop("`remove` can only be 'varying' or 'population'.")
+  }
+
+  # Build formula from terms and return
+  if (length(term.labels) == 0) {
+    return(NULL)
+  } else {
+    formula_terms = paste0(term.labels, collapse = " + ")
+    formula_str = paste0("~", formula_terms)
+    return(as.formula(formula_str))
+  }
+}
