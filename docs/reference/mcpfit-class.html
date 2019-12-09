@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Unpack arma order and formula — unpack_arma • mcp</title>
+<title>Class <code>mcpfit</code> of models fitted with the <span class="pkg">mcp</span> package — mcpfit-class • mcp</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -50,8 +50,11 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Unpack arma order and formula — unpack_arma" />
-<meta property="og:description" content="Unpack arma order and formula" />
+<meta property="og:title" content="Class <code>mcpfit</code> of models fitted with the <span class="pkg">mcp</span> package — mcpfit-class" />
+<meta property="og:description" content="Models fitted with the mcp function are represented as
+an mcpfit object which contains the user input (model, data, family),
+derived model characteristics (prior, parameter names, and jags code), and
+the fit (prior and/or posterior mcmc samples)." />
 <meta property="og:image" content="https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -200,40 +203,65 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Unpack arma order and formula</h1>
-    <small class="dont-index">Source: <a href='https://github.com/lindeloev/mcp/blob/master/R/get_segment_table.R'><code>R/get_segment_table.R</code></a></small>
-    <div class="hidden name"><code>unpack_arma.Rd</code></div>
+    <h1>Class <code>mcpfit</code> of models fitted with the <span class="pkg">mcp</span> package</h1>
+    <small class="dont-index">Source: <a href='https://github.com/lindeloev/mcp/blob/master/R/mcpfit_methods.R'><code>R/mcpfit_methods.R</code></a></small>
+    <div class="hidden name"><code>mcpfit-class.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Unpack arma order and formula</p>
+    <p>Models fitted with the <code><a href='mcp.html'>mcp</a></code> function are represented as
+an <code>mcpfit</code> object which contains the user input (model, data, family),
+derived model characteristics (prior, parameter names, and jags code), and
+the fit (prior and/or posterior mcmc samples).</p>
     </div>
 
-    <pre class="usage"><span class='fu'>unpack_arma</span>(<span class='no'>form_str_in</span>)</pre>
 
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>form_str_in</th>
-      <td><p>A character. These are allowed: "ar(number)" or "ar(number, formula)"</p></td>
-    </tr>
-    </table>
 
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>A list with $order and $form_str (e.g., "ar(formula)"). The formula is ar(1) or ma(1) if no formula is given</p>
+    <p>See <code><a href='https://rdrr.io/r/utils/methods.html'>methods(class = "mcpfit")</a></code> for an overview of available methods.</p>
+<p>User-provided information (see <code><a href='mcp.html'>mcp</a></code> for more details):</p>
+    <h2 class="hasAnchor" id="slots"><a class="anchor" href="#slots"></a>Slots</h2>
+
+    
+
+<dl class='dl-horizontal'>
+<dt><code>segments</code></dt><dd><p>A list of formulas, making up the model.
+Provided by user. See <code><a href='mcp.html'>mcp</a></code> for more details.</p></dd>
+
+<dt><code>data</code></dt><dd><p>A data frame.
+Provided by user. See <code><a href='mcp.html'>mcp</a></code> for more details.</p></dd>
+
+<dt><code>family</code></dt><dd><p>An <code>mcpfamily</code> object.
+Provided by user. See <code><a href='mcp.html'>mcp</a></code> for more details.</p></dd>
+
+<dt><code>prior</code></dt><dd><p>A named list.
+Provided by user. See <code><a href='mcp.html'>mcp</a></code> for more details.</p></dd>
+
+<dt><code>mcmc_post</code></dt><dd><p>An <code><a href='https://rdrr.io/pkg/coda/man/mcmc.list.html'>mcmc.list</a></code> object with posterior samples.</p></dd>
+
+<dt><code>mcmc_prior</code></dt><dd><p>An <code><a href='https://rdrr.io/pkg/coda/man/mcmc.list.html'>mcmc.list</a></code> object with prior samples.</p></dd>
+
+<dt><code>mcmc_loglik</code></dt><dd><p>An <code><a href='https://rdrr.io/pkg/coda/man/mcmc.list.html'>mcmc.list</a></code> object with samples of log-likelihood.</p></dd>
+
+<dt><code>pars</code></dt><dd><p>A list of character vectors of model parameter names.</p></dd>
+
+<dt><code>jags_code</code></dt><dd><p>A string with jags code. Use <code><a href='https://rdrr.io/r/base/cat.html'>cat(fit$jags_code)</a></code> to show it.</p></dd>
+
+<dt><code>simulate</code></dt><dd><p>A method to simulate and predict data.</p></dd>
+
+<dt><code>.other</code></dt><dd><p>Information that is used internally by mcp.</p></dd>
+
+</dl>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      <li><a href="#arguments">Arguments</a></li>
-      <li><a href="#value">Value</a></li>
+      <li><a href="#details">Details</a></li>
+      <li><a href="#slots">Slots</a></li>
     </ul>
 
-    <h2>Author</h2>
-    <p>Jonas Kristoffer Lindeløv <a href='mailto:jonas@lindeloev.dk'>jonas@lindeloev.dk</a></p>
   </div>
 </div>
 

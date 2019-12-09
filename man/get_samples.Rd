@@ -7,7 +7,7 @@
 get_samples(fit, prior = FALSE, message = TRUE, error = TRUE)
 }
 \arguments{
-\item{fit}{An mcpfit object}
+\item{fit}{An \code{\link{mcpfit}} object}
 
 \item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
 

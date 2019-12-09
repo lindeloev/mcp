@@ -59,7 +59,7 @@ For directional hypotheses, hypothesis`` executes the hypothesis string in a tid
 the expression evaluates to TRUE. For equals-hypothesis, a Savage-Dickey
 ratio is computed. Savage-Dickey requires a prior too, so remember
 mcp(..., sample = &quot;both&quot;)." />
-<meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png" />
+<meta property="og:image" content="https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/logo.png" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -223,15 +223,11 @@ ratio is computed. Savage-Dickey requires a prior too, so remember
 <code><a href='mcp.html'>mcp(..., sample = "both")</a></code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>hypothesis</span>(<span class='no'>fit</span>, <span class='no'>hypotheses</span>, <span class='kw'>width</span> <span class='kw'>=</span> <span class='fl'>0.95</span>)</pre>
+    <pre class="usage"><span class='fu'>hypothesis</span>(<span class='no'>fit</span>, <span class='no'>hypotheses</span>, <span class='kw'>width</span> <span class='kw'>=</span> <span class='fl'>0.95</span>, <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>3</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>fit</th>
-      <td><p>An mcpfit object</p></td>
-    </tr>
     <tr>
       <th>hypotheses</th>
       <td><p>String representation of a logical test involving model parameters.
@@ -266,7 +262,16 @@ point for John (which is relative to `cp_1``) double that of Erin?</p></li>
     </tr>
     <tr>
       <th>width</th>
-      <td><p>Between 0 and 1. Width of the highest density interval.</p></td>
+      <td><p>Float. The width of the highest posterior density interval
+(between 0 and 1).</p></td>
+    </tr>
+    <tr>
+      <th>digits</th>
+      <td><p>a non-null value for digits specifies the minimum number of
+significant digits to be printed in values. The default, NULL, uses
+getOption("digits"). (For the interpretation for complex numbers see signif.)
+Non-integer values will be rounded down, and only values greater than or
+equal to 1 and no greater than 22 are accepted.</p></td>
     </tr>
     </table>
 
