@@ -11,6 +11,7 @@
 #' @param ST A segment table (tibble), returned by `get_segment_table`.
 #'   Only really used when the model contains varying effects.
 #' @return `mcmc.list``
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 

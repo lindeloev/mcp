@@ -9,11 +9,13 @@
 #' @param criterion One of `"loo"` (calls \code{\link[loo]{loo}}) or `"waic"` (calls \code{\link[loo]{waic}}).
 #' @param ... Further arguments passed to \code{\link[loo]{loo}}, e.g., `cores` or `save_psis`.
 #' @return a `loo` or `psis_loo` object.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
 #' \donttest{
 #' # Define two models and sample them
+#' options(mc.cores = 3)  # Speed up sampling
 #' segments1 = list(y ~ 1 + x, ~ 1)
 #' segments2 = list(y ~ 1 + x)  # Without a change point
 #' fit1 = mcp(segments1, ex_plateaus)
@@ -137,6 +139,7 @@ waic.mcpfit = function(x, ...) {
 #'
 #' @importFrom dplyr .data
 #' @export
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
@@ -251,6 +254,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
 #' @param LHS Expression to compute posterior
 #' @param value What value to evaluate the density at
 #' @return A float
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 get_density = function(samples, LHS, value) {

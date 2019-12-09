@@ -14,7 +14,7 @@ License: GPL-2
 Encoding: UTF-8
 Language: en-US
 LazyData: true
-RoxygenNote: 7.0.1
+RoxygenNote: 7.0.2
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 3.5.0)
 Imports:
@@ -39,7 +39,8 @@ Imports:
 	stats,
 	rlang (>= 0.4.1)
 Suggests: 
+	hexbin,
     testthat (>= 2.1.0),
-	knitr , 
+	knitr, 
 	rmarkdown,
 	covr

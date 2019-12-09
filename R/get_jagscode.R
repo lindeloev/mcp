@@ -7,7 +7,9 @@
 #' @param ST Segment table. Returned by `get_segment_table()`.
 #' @param arma_order Positive integer. The autoregressive order.
 #' @return String. A JAGS model.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
 #'
 get_jagscode = function(prior, ST, formula_str, arma_order, family, sample) {
   # Begin building JAGS model. `mm` is short for "mcp model".
@@ -135,6 +137,7 @@ model {
 #'   level).
 #' @return A string
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @encoding UTF-8
 #'
 get_prior_str = function(prior, i, varying_group = NULL) {
   # Helpers
@@ -187,6 +190,7 @@ get_prior_str = function(prior, i, varying_group = NULL) {
 #'   `dt(3, 2, 1) T(my_var, )`.
 #' @return A string
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @encoding UTF-8
 #' @export
 #'
 

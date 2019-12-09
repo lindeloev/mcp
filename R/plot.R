@@ -36,6 +36,7 @@
 #'   `plot()` uses `fit$simulate()` on posterior samples. These represent the
 #'   (joint) posterior distribution.
 #' @return A \pkg{ggplot2} object.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @importFrom ggplot2 ggplot aes aes_string geom_line geom_point facet_wrap
 #' @importFrom magrittr %>%
@@ -43,12 +44,15 @@
 #' @importFrom dplyr .data
 #' @export
 #' @examples
-#' # The ex_fit is included in mcp
+#' # Typical usage. ex_fit is an mcpfit object.
 #' plot(ex_fit)
 #' plot(ex_fit, prior = TRUE)  # The prior
+#'
+#' \donttest{
 #' plot(ex_fit, lines = 0, quantiles = TRUE)  # 95% HDI without lines
 #' plot(ex_fit, quantiles = c(0.1, 0.9), quantiles_type = "predict")  # 80% prediction interval
 #' plot(ex_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
+#' }
 #'
 #' # Show a panel for each varying effect
 #' # plot(fit, facet_by = "my_column")
@@ -310,16 +314,16 @@ plot.mcpfit = function(x,
 #'
 #'   In any case, if you see a few erratic lines or parameter estimates, this is
 #'   a sign that you may want to increase argument 'adapt' and 'iter' in \code{\link{mcp}}.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @return A \pkg{ggplot2} object.
 #' @import patchwork
 #' @export
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @examples
-#' # The ex_fit object is included with mcp
+#' # Typical usage. ex_fit is an mcpfit object.
 #' plot_pars(ex_fit)
 #'
-#' # More options for parameter estimates
+#' # More options
 #' plot_pars(ex_fit, regex_pars = "^cp_")  # Plot only change points
 #' plot_pars(ex_fit, pars = c("int_3", "time_3"))  # Plot these parameters
 #' plot_pars(ex_fit, type = c("trace", "violin"))  # Combine plots
@@ -334,7 +338,8 @@ plot.mcpfit = function(x,
 #' # plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all varying effects
 #' # plot_pars(my_fit, regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying
 #'
-#' # Customize two-column plots using the patchwork package ("*" instead of "+")
+#' # Customize multi-column ggplots using "*" instead of "+" (patchwork)
+#' library(ggplot2)
 #' plot_pars(ex_fit, type = c("trace", "dens_overlay")) * theme_bw(10)
 
 plot_pars = function(fit,
