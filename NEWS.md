@@ -1,13 +1,3 @@
-# mcp 0.2.0.9000
-This will, in time, become `mcp` v0.3.0
-
-## New features:
-
- * Simulate AR(N) models with `fit$simulate()`. The [article on AR(N)]() has been updated with examples. `fit$simulate()` can also get fits and predictions for known data if you pass the response variable as an argument too.
- * The default plot (`plot(fit)`) now visualize AR(N) autocorrelation.
- * You can now check how well your model recovered the parameters of simulated data. Simply call `check_recovery(fit)` if `fit` was estimated with simulated data. This works because `y = fit$simulate(...)` now adds the simulation parameters to `y`. Use `attr(y, "sim")` to recover them.
- * Use `plot(fit, which_y = "sigma")` to plot the residual standard deviation on the y-axis. Works for `ar1`, `ar2`, etc. as well. This is particularly useful to visualize variance-only or autocorrelation-only change points. The vignettes on variance and autocorrelations have been updated with examples.
-
 
 # mcp 0.2.0
 The API and internal structure should be stable now.
@@ -16,9 +6,11 @@ The API and internal structure should be stable now.
 
  * Quadratic and other terms using `I(x^2)`, `I(x^3.24)`, `sin(x)`, `sqrt(x)`, etc.
  * Model variance for `family = gaussian()` using `~ sigma([formula here])`.
- * Do order-N autoregressive models (AR(N)) using e.g.,`~ ar([order here])`. Useful for time series.
+ * AR(N) models all around which should be useful for time series. Specify AR-structure using e.g., `~ ar(order, formula)`. `plot()` visualize posteriors for AR(N) models. Simulate AR(N) models from scratch or given known data with `fit$simulate()`. The [article on AR(N)](https://lindeloev.github.io/mcp/articles/arma.html) has more details and examples.
  * Plot prediction intervals using `plot(fit, quantiles = TRUE, quantiles_type = "predict")`.
- * Now respects `options(mc.cores = 3)`. All guides have been updated to recommend this as a default.
+ * Now respects `options(mc.cores = 3)`. All vignettes/articles have been updated to recommend this as a default.
+ * `fit$simulate()` now adds the simulation parameters as an attribute (`attr(y, "simulate")`) to the predicted variable. `summary()` now recognizes this and adds the simulated values to the results table (columns `sim` and `match`) so that one can inspect whether the values were recovered.
+ * Use `plot(fit, which_y = "sigma")` to plot the residual standard deviation on the y-axis. Works for `ar1`, `ar2`, etc. as well. This is particularly useful to visualize change points in variance and autocorrelation. The vignettes on variance and autocorrelations have been updated with worked examples.
 
 ## Other changes:
 
