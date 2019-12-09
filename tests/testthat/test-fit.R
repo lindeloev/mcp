@@ -13,6 +13,9 @@ options(mc.cores = 3)
 #'   formulas with one named entry called "simulated" with parameter values to
 #'   be used for simulation.
 test_fit = function(segments, simulated) {
+  testthat::skip_if(is.null(options("test_mcp_fits")[[1]]),
+                    "This time-consuming test is only run locally before release.")
+
   # Simulate
   empty = mcp(segments, sample = FALSE, par_x = "x")
   data = tibble::tibble(
