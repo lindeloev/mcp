@@ -1,5 +1,3 @@
-library(mcp)
-
 # Define model
 segments = list(
   y ~ 1,

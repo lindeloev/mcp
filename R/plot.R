@@ -23,11 +23,18 @@
 #'       quantiles.
 #' @param quantiles_type One of 'fitted' or 'predict. Only applies if `quantile = TRUE`.
 #' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
+#' @param which_y What to plot on the y-axis. One of
+#'
+#'   * `"ct"`: The central tendency which is often the mean after applying the
+#'     link function (default).
+#'   * `"sigma"`: The variance
+#'   * `"ar1"`, `"ar2"`, etc. depending on which order of the autoregressive
+#'     effects you want to plot.
+#'
 #' @param ... Currently ignored.
 #' @details
-#'   For `type = "segments"`, it uses `fit$simulate` with `draws`
-#'   posterior samples. These represent the joint posterior distribution of
-#'   parameter values.
+#'   `plot()` uses `fit$simulate()` on posterior samples. These represent the
+#'   (joint) posterior distribution.
 #' @return A \pkg{ggplot2} object.
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @importFrom ggplot2 ggplot aes aes_string geom_line geom_point facet_wrap
@@ -36,14 +43,20 @@
 #' @importFrom dplyr .data
 #' @export
 #' @examples
-#' \dontrun{
-#' plot(fit)
-#' plot(fit, lines = 50, rate = FALSE)  # more lines, for binomial.
-#' plot(fit, facet_by = "my_varying")  # varying effects
+#' # The ex_fit is included in mcp
+#' plot(ex_fit)
+#' plot(ex_fit, prior = TRUE)  # The prior
+#' plot(ex_fit, lines = 0, quantiles = TRUE)  # 95% HDI without lines
+#' plot(ex_fit, quantiles = c(0.1, 0.9), quantiles_type = "predict")  # 80% prediction interval
+#' plot(ex_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
 #'
-#' # Customize one-column plots using regular ggplot2
-#' plot(fit) + theme_bw(15) + ggtitle("Great plot!")
-#' }
+#' # Show a panel for each varying effect
+#' # plot(fit, facet_by = "my_column")
+#'
+#' # Customize plots using regular ggplot2
+#' library(ggplot2)
+#' plot(ex_fit) + theme_bw(15) + ggtitle("Great plot!")
+#'
 plot.mcpfit = function(x,
                        facet_by = NULL,
                        lines = 25,
@@ -303,21 +316,26 @@ plot.mcpfit = function(x,
 #' @export
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @examples
-#' \dontrun{
-#' plot_pars(fit)
-#' plot_pars(fit, pars = "varying", ncol = 3)  # plot all varying effects
-#' plot_pars(fit, regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying
+#' # The ex_fit object is included with mcp
+#' plot_pars(ex_fit)
 #'
 #' # More options for parameter estimates
-#' plot_pars(fit, pars = c("var1", "var2", "var3"), regex_pars = "^my_varying")
-#' plot_pars(fit, type = c("areas", "intervals"))
+#' plot_pars(ex_fit, regex_pars = "^cp_")  # Plot only change points
+#' plot_pars(ex_fit, pars = c("int_3", "time_3"))  # Plot these parameters
+#' plot_pars(ex_fit, type = c("trace", "violin"))  # Combine plots
 #'
-#' # Some plots only take pairs
-#' plot_pars(fit, pars = c("var1", "var2"))
+#' # Some plots only take pairs. hex is good to assess identifiability
+#' plot_pars(ex_fit, type = "hex", pars = c("cp_1", "time_2"))
 #'
-#' # Customize two-column plots using the patchwork package.
-#' plot_pars(fit, type = c("trace", "dens_overlay")) * theme_bw(10)
-#' }
+#' # Visualize the priors:
+#' plot_pars(ex_fit, prior = TRUE)
+#'
+#' # Useful for varying effects:
+#' # plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all varying effects
+#' # plot_pars(my_fit, regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying
+#'
+#' # Customize two-column plots using the patchwork package ("*" instead of "+")
+#' plot_pars(ex_fit, type = c("trace", "dens_overlay")) * theme_bw(10)
 
 plot_pars = function(fit,
                      pars = "population",

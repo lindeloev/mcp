@@ -18,13 +18,15 @@
 #'   response. `~ predictors` assumes an intercept-only change point). Segments
 #'   can model
 #'
-#'   * *Regular formulas:* e.g., `~ 0 + x + I(x^2) + exp(x)`). [Read more here](https://lindeloev.github.io/mcp/articles/formulas.html).
+#'   * *Regular formulas:* e.g., `~ 1 + x`). [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
+#'
+#'   * *Extended formulas:*, e.g., `~ I(x^2) + exp(x) + sin(x)`. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'
 #'   * *Variance:* e.g., `~sigma(1)` for a simple variance change or
-#'     `~sigma(rel(1) + I(x^2))`) for more advanced variance structures. [Read more here](https://lindeloev.github.io/mcp/articles/variance.html)
+#'     `~sigma(rel(1) + I(x^2))`) for more advanced variance structures. [Read more](https://lindeloev.github.io/mcp/articles/variance.html)
 #'
 #'   * *Autoregression:* e.g., `~ar(1)` for a simple onset/change in AR(1) or
-#'     `ar(2, 0 + x`) for an AR(2) with parameter(s) increasing by `x`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html)
+#'     `ar(2, 0 + x`) for an AR(2) increasing by `x`. [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
 #'
 #' @param prior Named list. Names are parameter names (`cp_i`, `int_i`, `xvar_i`,
 #'  `sigma``) and the values are either
@@ -93,58 +95,60 @@
 #' @importFrom stats gaussian binomial
 #' @export
 #' @examples
-#' \dontrun{
-#' # Define the segments that are separated by change points
+#' \donttest{
+#' # Define the segments using formulas. A change point is estimated between each formula.
 #' segments = list(
-#'   score ~ 1 + year,  # intercept + slope
-#'    ~ 0 + year,  # joined slope
-#'    ~ 0,  # joined plateau
-#'    ~ 1  # disjoined plateau
+#'   response ~ 1,  # Plateau in the first segment (int_1)
+#'   ~ 0 + time,    # Joined slope (time_2) at cp_1
+#'   ~ 1 + time     # Disjoined slope (int_3, time_3) at cp_2
 #' )
 #'
-#' # Sample and see results
-#' fit = mcp(segments, data)
-#' summary(fit)
+#' # Fit it. The `ex_demo` dataset is included in mcp. Sample the prior too.
+#' options(mc.cores = 3)  # Run in parallel to speed up. Disable if this fails.
+#' ex_fit = mcp(segments, data = ex_demo, sample = "both")
+#' }
+#'
+#' # See parameter estimates
+#' summary(ex_fit)
 #'
 #' # Visual inspection of the results
-#' plot(fit)
-#' plot_pars(fit)
+#' plot(ex_fit)
+#' plot_pars(ex_fit)
 #'
 #' # Test a hypothesis
-#' hypothesis(fit, "cp_1 > 10")
+#' hypothesis(ex_fit, "cp_1 > 10")
 #'
+#' \donttest{
 #' # Compare to a one-intercept-only model (no change points) with default prior
-#' segments2 = list(score ~ 1)
-#' fit2 = mcp(segments2, data)  # fit another model here
-#' fit$loo = loo(fit)
-#' fit2$loo = loo(fit)
-#' loo_compare(fit, fit2)
+#' segments_null = list(response ~ 1)
+#' fit_null = mcp(segments_null, data = ex_demo, par_x = "time")  # fit another model here
+#' ex_fit$loo = loo(ex_fit)
+#' fit_null$loo = loo(fit_null)
+#' loo::loo_compare(ex_fit$loo, fit_null$loo)
+#' }
 #'
-#' # Sample the prior and inspect it using all the usual methods (prior predictive checks)
-#' fit_prior = mcp(segments, data, sample = "prior")
-#' summary(fit_prior)
-#' plot(fit_prior)
+#' # Inspect the prior. Useful for prior predictive checks.
+#' summary(ex_fit, prior = TRUE)
+#' plot(ex_fit, prior = TRUE)
 #'
 #' # Show all priors. Default priors are added where you don't provide any
-#' fit$prior
+#' print(ex_fit$prior)
 #'
 #' # Set priors and re-run
-#' # cp_i are change points.
-#' # int_i are intercepts.
-#' # x_i are slopes.
-#' # i is the segment number (change points are to the right of the segment)
 #' prior = list(
-#'   int_1 = "dt(10, 30) T(0, )",  # t-dist intercept. Truncated to > 0
-#'   year_1 = "dnorm(0, 5)",  # slope of segment 1. Mean = 0, SD = 5.
-#'   cp_2 = "dunif(cp_1, 40)",  # change point to segment 2 > cp_1.
-#'   year_2 = "year_1",  # Shared slope between segment 2 and 1
-#'   int_3 = 15  # Fixed intercept of segment 3
+#'   int_1 = "dt(10, 5, 1) T(0, )", # t-dist intercept. Truncated to positive.
+#'   year_1 = "dnorm(0, 3)",      # slope of segment 1. Mean = 0, SD = 5.
+#'   cp_2 = "dunif(cp_1, 80)",    # change point to segment 2 > cp_1 and < 80.
+#'   year_2 = "year_1",           # Shared slope between segment 2 and 1
+#'   int_3 = 15                   # Fixed intercept of segment 3
 #' )
-#' fit3 = mcp(segments, data, prior)
 #'
-#' # Show JAGS model
-#' cat(fit$jags_code)
+#' \donttest{
+#' fit3 = mcp(segments, data = ex_demo, prior = prior)
 #' }
+#'
+#' # Show the JAGS model
+#' cat(ex_fit$jags_code)
 
 mcp = function(segments,
                data = NULL,
@@ -253,7 +257,7 @@ mcp = function(segments,
   pars = list(
     x = unique(ST$x),
     y = unique(ST$y),
-    trials = logical0_to_null(na.omit(unique(ST$trials))),
+    trials = logical0_to_null(stats::na.omit(unique(ST$trials))),
     varying = logical0_to_null(c(stats::na.omit(ST$cp_group))),
     sigma = all_pars[stringr::str_detect(all_pars, "^sigma_")],
     arma = all_pars[stringr::str_detect(all_pars, "(^ar|^ma)[0-9]")]
@@ -344,7 +348,7 @@ mcp = function(segments,
   # Make mrpfit object
   mcpfit = list(
     # By user (same order as mcp argument)
-    segments = lapply(ST$form, as.formula, env=globalenv()),  # with explicit response and cp
+    segments = lapply(ST$form, stats::as.formula, env=globalenv()),  # with explicit response and cp
     data = data,
     prior = prior,
     family = family,

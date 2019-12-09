@@ -156,7 +156,7 @@ release_questions = function() {
 #'
 remove_terms = function(form, remove) {
   # Find terms with "|"
-  attrs = attributes(terms(form))
+  attrs = attributes(stats::terms(form))
   term.labels = attrs$term.labels
   varying_bool = stringr::str_detect(term.labels, "\\|")
 
@@ -179,6 +179,6 @@ remove_terms = function(form, remove) {
   } else {
     formula_terms = paste0(term.labels, collapse = " + ")
     formula_str = paste0("~", formula_terms)
-    return(as.formula(formula_str))
+    return(stats::as.formula(formula_str, env=globalenv()))
   }
 }

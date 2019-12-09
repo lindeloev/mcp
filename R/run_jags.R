@@ -12,10 +12,7 @@
 #'   Only really used when the model contains varying effects.
 #' @return `mcmc.list``
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @examples
-#' \dontrun{
-#' run_jags(data, model, params)
-#'}
+#'
 
 run_jags = function(data,
                     jags_code,

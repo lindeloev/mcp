@@ -116,7 +116,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
       if (!is.null(simulated[[varying]])) {
         # Find the needed values and labels
         value = simulated[[varying]]  # Extract simulation values
-        label_col = na.omit(fit$.other$ST$cp_group_col)[1]  # What column is the labels in data. TO DO: only works if there is just one grouping factor!
+        label_col = stats::na.omit(fit$.other$ST$cp_group_col)[1]  # What column is the labels in data. TO DO: only works if there is just one grouping factor!
         labs = fit$data[[label_col]]  # Find the labels. Same length as `value`
         if (length(value) != length(labs)) {
           warning("This is simulated data, but the labels for varying effects in data does not have the same length as the numeric params used for simulation.")
@@ -157,8 +157,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 
 #' Summarise mcpfit objects
 #'
-#' Computes posterior means and highest density intervals, and model
-#' diagnostics. Get them in a data frame by doing `result = summary(fit)`.
+#' Summarise parameter estimates and model diagnostics.
 #'
 #' @aliases summary summary.mcpfit
 #' @param object An \code{\link{mcpfit}} object.
@@ -172,21 +171,45 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #' @param prior TRUE/FALSE. Summarise prior instead of posterior?
 #' @param ... Currently ignored
 #'
-#' @return Posterior means and HDI intervals. `Rhat` is the Gelman-Rubin
-#'   convergence diagnostic which is often taken to be acceptable if < 1.1. It
-#'   is computed using \code{\link[coda]{gelman.diag}}.
-#'   `n.eff` is the effective sample size computed using
-#'   \code{\link[coda]{effectiveSize}}. Low effective sample sizes are
-#'   also obvious as poor mixing in trace plots (see `plot_pars(fit)`).
-#'   `ts_err` is the time-series error, taking autoregressive correlation
-#'   into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
+#' @return A data frame with parameter estimates and MCMC diagnostics.
+#'   OBS: The change point distributions are often not unimodal and symmetric so
+#'   the intervals can be decieving. Plot them using `plot_pars(fit)`.
+#'
+#'   * `mean` is the posterior mean
+#'   * `lower` is the lower quantile of the highest-density interval (HDI) given in `width`.
+#'   * `upper` is the upper quantile.
+#'   * `Rhat` is the Gelman-Rubin convergence diagnostic which is often taken to
+#'     be acceptable if < 1.1. It is computed using \code{\link[coda]{gelman.diag}}.
+#'   * `n.eff` is the effective sample size computed using \code{\link[coda]{effectiveSize}}.
+#'     Low effective sample sizes are also obvious as poor mixing in trace plots
+#'     (see `plot_pars(fit)`). Read how to deal with such problems [here](https://lindeloev.github.io/mcp/articles/debug.html)
+#'   * `ts_err` is the time-series error, taking autoregressive correlation
+#'     into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
+#'
+#'  For simulated data, the summary contains two additional columns so that it
+#'  is easy to inspect whether the model can recover the parameters. Run
+#'  simulation and summary multiple times to get a sense of the robustness.
+#'
+#'   * `sim` is the value used to generate the data.
+#'   * `match` is `"OK"` if `sim` is contained in the HDI interval (`lower` to
+#'     `upper`).
+#'
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
-#' \dontrun{
-#' result = summary(fit, width = 0.8, digits = 4)
-#' ranef(fit)  # varying (random) effects
-#' }
+#' # Typical usage
+#' summary(ex_fit)
+#' summary(ex_fit, width = 0.8, digits = 4)  # Set HDI width
+#'
+#' # Get the results as a data frame
+#' results = summary(ex_fit)
+#'
+#' # Varying (random) effects
+#' # ranef(my_fit)
+#'
+#' # Summarise prior
+#' summary(ex_fit, prior = TRUE)
+#'
 summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) {
   # Standard name in mcp
   fit = object
@@ -231,37 +254,29 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
 
 
 
-#' Get population-level ("fixed") effects of mcpfit.
-#'
-#' This is identical to what `summary(object)` does.
-#'
+
 #' @aliases fixef fixef.mcpfit fixed.effects
-#' @inheritParams summary.mcpfit
+#' @describeIn summary.mcpfit Get population-level ("fixed") effects of an \code{\link{mcpfit}} object.
 #' @export
 fixef = function(object, width = 0.95, prior = FALSE, ...) {
   get_summary(object, width, varying = FALSE, prior = prior)
 }
 
-#' Get varying ("random") effects of mcpfit.
-#'
+
 #' @aliases ranef ranef.mcpfit random.effects
-#' @inheritParams summary.mcpfit
+#' @describeIn summary.mcpfit Get varying ("random") effects of an \code{\link{mcpfit}} object.
 #' @export
 ranef = function(object, width = 0.95, prior = FALSE, ...) {
   get_summary(object, width, varying = TRUE, prior = prior)
 }
 
 
-#' Print mcpfit
-#'
-#' Use \code{\link{summary.mcpfit}} for greater control.
-#'
 #' @aliases print print.mcpfit
+#' @describeIn summary.mcpfit Print the posterior summary of an \code{\link{mcpfit}} object.
 #' @param x An \code{\link{mcpfit}} object.
-#' @param ... Currently ignored.
 #' @export
 print.mcpfit = function(x, ...) {
-  summary(x)
+  summary(x, ...)
 }
 
 #' Print mcpprior
