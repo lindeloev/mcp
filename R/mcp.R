@@ -105,7 +105,7 @@
 #' )
 #'
 #' # Fit it. The `ex_demo` dataset is included in mcp. Sample the prior too.
-#' options(mc.cores = 3)  # Run in parallel to speed up. Disable if this fails.
+#' # options(mc.cores = 3)  # Run in parallel to speed up. Disable if this fails.
 #' ex_fit = mcp(segments, data = ex_demo, sample = "both")
 #' }
 #'

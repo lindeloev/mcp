@@ -15,7 +15,7 @@
 #' @examples
 #' \donttest{
 #' # Define two models and sample them
-#' options(mc.cores = 3)  # Speed up sampling
+#' # options(mc.cores = 3)  # Speed up sampling
 #' segments1 = list(y ~ 1 + x, ~ 1)
 #' segments2 = list(y ~ 1 + x)  # Without a change point
 #' fit1 = mcp(segments1, ex_plateaus)
