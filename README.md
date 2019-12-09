@@ -37,8 +37,8 @@ library(mcp)
 # Define the model
 segments = list(
   response ~ 1,  # plateau (int_1)
-  ~ 0 + time,  # joined slope (time_2) at cp_1
-  ~ 1 + time  # disjoined slope (int_3, time_3) at cp_2
+  ~ 0 + time,    # joined slope (time_2) at cp_1
+  ~ 1 + time     # disjoined slope (int_3, time_3) at cp_2
 )
 
 # Fit it. The `ex_demo` dataset is included in mcp
@@ -53,7 +53,7 @@ plot(fit)
 ```
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo.png)
 
-Use `summary()` to summarise the posterior distribution as well as sampling diagnostics. They were simulated to lie at `cp_1 = 30` and `cp_2 = 70` and these values are well recovered, as are the other coefficients ([see how `ex_demo` was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R)). 
+Use `summary()` to summarise the posterior distribution as well as sampling diagnostics. They were [simulated with mcp](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R) so the summary include the "true" values in the column `sim` and the column `match` show whether this true value is within the interval:
 
 ```r
 summary(fit)
@@ -67,14 +67,14 @@ Segments:
   3: response ~ 1 ~ 1 + time
 
 Population-level parameters:
-    name   mean  lower   upper Rhat n.eff    ts_se
-    cp_1 31.167 23.620 39.7257 1.01   342 407.6290
-    cp_2 69.772 69.305 70.2656 1.00  5801   0.1389
-   int_1 10.333  8.895 11.6919 1.00  1063   3.8640
-   int_3  0.534 -2.499  3.5264 1.01   735  31.7620
- sigma_1  4.013  3.441  4.6238 1.00  4655   0.1849
-  time_2  0.547  0.407  0.6961 1.01   366   0.1369
-  time_3 -0.220 -0.393 -0.0443 1.01   740   0.0992
+    name match  sim  mean lower  upper Rhat n.eff   ts_se
+    cp_1    OK 30.0 30.46 22.98 37.770    1   427 295.851
+    cp_2    OK 70.0 69.78 69.29 70.252    1  5279   0.133
+   int_1    OK 10.0 10.29  8.88 11.672    1  1412   3.250
+   int_3    OK  0.0  0.51 -2.35  3.374    1   802  24.608
+ sigma_1    OK  4.0  4.00  3.42  4.572    1  4243   0.178
+  time_2    OK  0.5  0.53  0.41  0.660    1   462   0.083
+  time_3    OK -0.2 -0.22 -0.39 -0.053    1   778   0.087
 ```
 
 `rhat` is the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag), `eff` is the [effective sample size](https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html), and `ts_se` is the time-series standard error.
@@ -95,8 +95,8 @@ We can test (joint) probabilities in the model using `hypothesis()` ([see more h
 hypothesis(fit, "cp_1 > 25")
 ```
 ```r
-     hypothesis    mean     lower    upper         p       BF
-1 cp_1 - 25 > 0 6.06081 -1.510267 14.01157 0.9442222 16.92829
+     hypothesis mean lower upper     p   BF
+1 cp_1 - 25 > 0 5.46 -2.02  12.8 0.926 12.4
 ```
 
 
@@ -106,7 +106,7 @@ For model comparisons, we can fit a null model and compare the predictive perfor
 # Define the model
 segments_null = list(
   response ~ 1 + time,  # intercept (int_1) and slope (time_1)
-  ~ 1 + time  # disjoined slope (int_2, time_1)
+  ~ 1 + time            # disjoined slope (int_2, time_1)
 )
 
 # Fit it
@@ -122,8 +122,8 @@ loo::loo_compare(fit$loo, fit_null$loo)
 ```
 ```
        elpd_diff se_diff
-model1  0.0       0.0   
-model2 -7.8       4.7   
+model1  0.0       0.0
+model2 -7.9       4.6
 ```
 
 
@@ -166,7 +166,7 @@ Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and 
  * `~ sigma(1)` models an intercept change in variance. `~ sigma(0 + x)` models increasing/decreasing variance.
  * `~ ar(N)` models Nth order autoregression on residuals. `~ar(N, 0 + x)` models increasing/decreasing autocorrelation.
  * You can model anything for `sigma()` and `ar()`. For example, `~ x + sigma(1 + x + I(x^2))` models polynomial change in variance with `x` on top of a slope on the mean.
- * `sigma()` and `ar()` apply to varying change points too.
+ * Simulate effects and change points on `sigma()` and `ar()` using `fit$simulate()`
 
 [Tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/debug.html)
  * Speed up fitting using `mcp(..., cores = 3)` / `options(mcp_cores = 3)`, and/or `mcp(..., adapt = 500)`.
@@ -180,12 +180,12 @@ Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and 
 
 
 ## Two plateaus
-Find the single change point between two plateaus ([see how this data was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R))
+Find the single change point between two plateaus ([see how this data was simulated with mcp](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R)).
 
 ```r
 segments = list(
     y ~ 1,  # plateau (int_1)
-    ~ 1  # plateau (int_2)
+    ~ 1     # plateau (int_2)
 )
 fit = mcp(segments, ex_plateaus, par_x = "x")
 plot(fit)
@@ -195,13 +195,11 @@ plot(fit)
 
 ## Varying change points
 
-Here, we find the single change point between two joined slopes. While the slopes are shared by all participants, the change point varies by `id`.
-
-Read more about [varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html) and [see how this data was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_varying.R).
+Here, we find the single change point between two joined slopes. While the slopes are shared by all participants, the change point varies by `id`. Read more about [varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html).
 
 ```r
 segments = list(
-  y ~ 1 + x,  # intercept + slope
+  y ~ 1 + x,          # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope, varying by id
 )
 fit = mcp(segments, ex_varying)
@@ -210,33 +208,33 @@ plot(fit, facet_by = "id")
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_varying.png)
 
-Summarise the varying change points using `ranef()` or plot them using `plot_pars(fit, "varying")`:
+Summarise the varying change points using `ranef()` or plot them using `plot_pars(fit, "varying")`. Again, [this data was simulated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_varying.R) so the columns `match` and `sim` are added to show simulation values and whether they are inside the interval. Set the `width` wider for a more lenient criterion.
 
 ```r
-ranef(fit)
+ranef(fit, width = 0.98)
 ```
 
 ```r
-            name       mean      lower      upper     rhat  eff     ts_se
-1 cp_1_id[Benny] -18.939028 -21.662758 -16.178849 1.000739 2539  4.801090
-2  cp_1_id[Bill] -10.932586 -13.570255  -8.355125 1.001008  709 22.656037
-3  cp_1_id[Cath]  -3.868473  -6.161151  -1.534219 1.000035  996 24.755440
-4  cp_1_id[Erin]   6.298535   3.689802   9.089925 1.000215 5308  2.047966
-5  cp_1_id[John]   9.742310   7.184306  12.258944 1.000451 1854  7.511643
-6  cp_1_id[Rose]  17.699242  14.393830  21.048751 1.000152 4019  4.435384
+           name match   sim  mean   lower   upper Rhat n.eff ts_se
+ cp_1_id[Benny]    OK -17.5 -18.1 -21.970 -14.877    1   895  23.2
+  cp_1_id[Bill]    OK -10.5  -7.6 -10.658  -4.451    1   420  37.5
+  cp_1_id[Cath]    OK  -3.5  -2.8  -5.634   0.027    1   888  23.7
+  cp_1_id[Erin]    OK   3.5   3.1   0.041   5.952    1  3622   3.5
+  cp_1_id[John]    OK  10.5  11.3   7.577  14.989    1  2321   5.1
+  cp_1_id[Rose]    OK  17.5  14.1  10.485  18.079    1  5150   2.6
 ```
 
 
 ## Generalized linear models
-`mcp` supports Generalized Linear Modeling. See extended examples using [`binomial()`](https://lindeloev.github.io/mcp/articles/binomial.html) and [`poisson()`](https://lindeloev.github.io/mcp/articles/poisson.html). [See how this data was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_binomial.R).
+`mcp` supports Generalized Linear Modeling. See extended examples using [`binomial()`](https://lindeloev.github.io/mcp/articles/binomial.html) and [`poisson()`](https://lindeloev.github.io/mcp/articles/poisson.html). These data were simulated with `mcp` [here](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_binomial.R).
 
 Here is a binomial change point model with three segments. We plot the 95% HDI too:
 
 ```r
 segments = list(
   y | trials(N) ~ 1,  # constant rate
-  ~ 0 + x,  # joined changing rate
-  ~ 1 + x  # disjoined changing rate
+  ~ 0 + x,            # joined changing rate
+  ~ 1 + x             # disjoined changing rate
 )
 fit = mcp(segments, ex_binomial, family = binomial())
 plot(fit, quantiles = TRUE)
@@ -249,35 +247,35 @@ Use `plot(fit, rate = FALSE)` if you want the points and fit lines on the origin
 
 
 ## Time series
-`mcp` allows for flexible time series analysis with autoregressive residuals of arbitrary order. Below, we model a change from a plateau to a slope with the same AR(2) residuals in both segments. We get  However, you can specify different AR(N) structures in each segment and do regression on the AR coefficients themselves using e.g., `ar(1, 1 + x)`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html).
+`mcp` allows for flexible time series analysis with autoregressive residuals of arbitrary order. Below, we model a change from a plateau with strong positive AR(2) residuals to a slope with medium AR(1) residuals. These data were simulated with mcp [here](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_ar.R) and the generating values are in the `sim` column. You can also do regression on the AR coefficients themselves using e.g., `ar(1, 1 + x)`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html).
 
 ```r
 segments = list(
   price ~ 1 + ar(2),
-  ~ 0 + time
+  ~ 0 + time + ar(1)
 )
 fit = mcp(segments, ex_ar)
 summary(fit)
 ```
 
+The AR(N) parameters on intercepts are named `ar[order]_[segment]`. All parameters, including the change point, are well recovered:
+
 ```r
 Population-level parameters:
-    name    mean   lower   upper Rhat n.eff    ts_se
-   ar1_1   0.463   0.346   0.579 1.00  1967 1.31e-02
-   ar2_1   0.258   0.133   0.369 1.00  1772 1.84e-02
-    cp_1 170.059 151.960 186.093 1.05   231 3.70e+03
-   int_1  17.991  15.096  20.729 1.01   586 3.36e+01
- sigma_1   4.677   4.296   5.057 1.00  5060 7.08e-02
-  time_2   0.456   0.370   0.549 1.01   485 4.13e-02
+    name match   sim    mean     lower   upper Rhat n.eff    ts_se
+   ar1_1    OK   0.7   0.741  5.86e-01   0.892 1.01   713  0.06970
+   ar1_2    OK  -0.4  -0.478 -6.88e-01  -0.255 1.00  2151  0.04722
+   ar2_1    OK   0.2   0.145 -6.56e-04   0.284 1.01   798  0.05767
+    cp_1       120.0 117.313  1.14e+02 118.963 1.05   241 80.51360
+   int_1        20.0  17.558  1.51e+01  19.831 1.02   293 36.27328
+ sigma_1    OK   5.0   4.829  4.39e+00   5.334 1.00  3750  0.10756
+  time_2    OK   0.5   0.517  4.85e-01   0.553 1.00   661  0.00405
 ```
 
-
-As of `mcp` v0.2, plotting does not yet visualize the autocorrelation. The autocorrelated nature of the residuals are better shown using lines than points, so let's tweak the default plot:
+The fit plot shows the inferred autocorrelated nature:
 
 ```r
-plot_ar = plot(fit_ar) + geom_line()  # Add line
-plot_ar$layers[[1]] = NULL  # Remove dots
-plot_ar
+plot(fit_ar)
 ```
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_ar.png)
@@ -295,7 +293,7 @@ segments = list(
   ~ 0 + sigma(1 + x),
   ~ 0 + x
 )
-fit = mcp(segments, ex_variance, cores = 3, adapt = 5000, updaet = 5000, iter = 5000)
+fit = mcp(segments, ex_variance, cores = 3, adapt = 5000, iter = 5000)
 plot(fit, quantiles = TRUE, quantiles_type = "predict")
 ```
 
@@ -340,7 +338,7 @@ plot(fit)
 
 
 ## Using `rel()` and priors
-Read more about [formula options](https://lindeloev.github.io/mcp/articles/formulas.html) and [priors](https://lindeloev.github.io/mcp/articles/priors.html) and [see how this data was generated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_rel_prior.R).
+Read more about [formula options](https://lindeloev.github.io/mcp/articles/formulas.html) and [priors](https://lindeloev.github.io/mcp/articles/priors.html).
 
 Here we find the two change points between three segments. The slope and intercept of segment 2 are parameterized relative to segment 1, i.e., modeling the *change* in intercept and slope since segment 1. So too with the second change point (`cp_2`) which is now the *distance* from `cp_1`. 
 
@@ -365,29 +363,23 @@ plot(fit)
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_fix_rel.png)
 
-Comparing the summary to the fitted lines in the plot, we can see that `int_2` and `x_2` are relative values:
+Comparing the summary to the fitted lines in the plot, we can see that `int_2` and `x_2` are relative values. We also see that the "wrong" priors made it harder to recover the parameters used [to simulate this data](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_rel_prior.R) (`match` and `sim` columns):
+
 ```r
 summary(fit)
 ```
 
 ```r
-Family: gaussian(link = 'identity')
-Iterations: 30000 from 3 chains.
-Segments:
-  1: y ~ 1 + x
-  2: y ~ 1 ~ rel(1) + rel(x)
-  3: y ~ rel(1) ~ 0 + x
-
 Population-level parameters:
-    name  mean  lower upper Rhat n.eff   ts_se
-    cp_1 23.26  20.00 26.11 1.00   308  256.74
-    cp_2 51.85  46.89 56.44 1.00   485  316.37
-   int_1 10.00  10.00 10.00  NaN     0    0.00
-   int_2 -7.53 -21.19  8.52 1.00   256 7346.30
- sigma_1  9.68   8.32 11.07 1.00  7840    1.24
-     x_1  1.59   1.28  1.86 1.01   151    4.10
-     x_2 -3.29  -3.59 -2.98 1.02   299    1.79
-     x_3  1.59   1.28  1.86 1.01   151    4.10
+    name match   sim  mean  lower upper Rhat n.eff    ts_se
+    cp_1    OK  25.0 23.15  20.00 25.81 1.00   297   240.44
+    cp_2        40.0 51.85  47.06 56.36 1.02   428   323.61
+   int_1        25.0 10.00  10.00 10.00  NaN     0     0.00
+   int_2    OK -10.0 -6.86 -21.57 11.89 1.03   190 10678.42
+ sigma_1         7.0  9.70   8.32 11.18 1.00  7516     1.56
+     x_1         1.0  1.58   1.24  1.91 1.07   120     7.90
+     x_2    OK  -3.0 -3.28  -3.61 -2.96 1.04   293     2.31
+     x_3         0.5  1.58   1.24  1.91 1.07   120     7.90
 ```
 
 

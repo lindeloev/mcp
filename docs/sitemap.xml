@@ -19,9 +19,6 @@
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/cumpaste.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/expandDoubleVerts.html</loc>
-  </url>
-  <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_ar.html</loc>
   </url>
   <url>
@@ -29,6 +26,9 @@
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_demo.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_fit.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_plateaus.html</loc>
@@ -47,12 +47,6 @@
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_varying.html</loc>
-  </url>
-  <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/findbars.html</loc>
-  </url>
-  <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/fixef.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/format_code.html</loc>
@@ -124,7 +118,7 @@
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/mcp.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/nobars.html</loc>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/mcpfit-class.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/plot.mcpfit.html</loc>
@@ -133,16 +127,13 @@
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/plot_pars.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/print.mcpfit.html</loc>
-  </url>
-  <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/print.mcpprior.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ranef.html</loc>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/recover_levels.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/recover_levels.html</loc>
+    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/remove_terms.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/run_jags.html</loc>

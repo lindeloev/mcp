@@ -7,7 +7,9 @@
 #' @param ST Segment table. Returned by `get_segment_table()`.
 #' @param arma_order Positive integer. The autoregressive order.
 #' @return String. A JAGS model.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
 #'
 get_jagscode = function(prior, ST, formula_str, arma_order, family, sample) {
   # Begin building JAGS model. `mm` is short for "mcp model".
@@ -48,13 +50,13 @@ model {
   has_ar = !all(is.na(unlist(ST$ar_code))) | !all(is.na(unlist(ST$ar_int)))
   if (has_ar) {
     # Add computation of autocorrelated residuals
-    mm = paste0(mm, get_ar_code(arma_order, ST, family))
-    y_code = paste0(y_code, " + sum(ar_[i_, ])")
+    mm = paste0(mm, get_ar_code(arma_order, family, is_R = FALSE, xvar = ST$x[1]))
+    y_code = paste0(y_code, " + resid_[i_]")
   }
 
   # Add inverse link function to back-transform to observed metric
-  if (family$link != "identity")  # not identity
-    y_code = paste0(family$linkinv_jags, "(", y_code, ")")
+  #if (family$link != "identity")  # not identity
+  y_code = paste0(family$linkinv_jags, "(", y_code, ")")
 
 
 
@@ -96,6 +98,15 @@ model {
     loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], ", y_code, ")")
   }
 
+  # Compute residuals for AR
+  if (has_ar) {
+    if (family$family == "binomial") {
+      mm = paste0(mm, "\n    resid_sigma_[i_] = ", family$link_jags, "(", ST$y[1], "[i_] / ", ST$trials[1], "[i_]) - y_[i_]  # Residuals represented by sigma_ after ARMA")
+    } else {
+      mm = paste0(mm, "\n    resid_sigma_[i_] = ", family$link_jags, "(", ST$y[1], "[i_])  - y_[i_]  # Residuals represented by sigma_ after ARMA")
+    }
+  }
+
   # If only the prior is sampled, remove the loglik_[i_] line
   if (sample == "prior")
     mm = gsub("loglik.*?$","", mm)
@@ -125,6 +136,8 @@ model {
 #'   level prior. String indicates a varying-effects prior (one for each group
 #'   level).
 #' @return A string
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @encoding UTF-8
 #'
 get_prior_str = function(prior, i, varying_group = NULL) {
   # Helpers
@@ -172,12 +185,13 @@ get_prior_str = function(prior, i, varying_group = NULL) {
 #' these,
 #' tau/sd is the second parameter.
 #'
-#'@aliases sd_to_prec
-#'@param prior_str String. A JAGS prior. Can be truncated, e.g.
-#'  `dt(3, 2, 1) T(my_var, )`.
-#'@return A string
-#'@author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'@export
+#' @aliases sd_to_prec
+#' @param prior_str String. A JAGS prior. Can be truncated, e.g.
+#'   `dt(3, 2, 1) T(my_var, )`.
+#' @return A string
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @encoding UTF-8
+#' @export
 #'
 
 sd_to_prec = function(prior_str) {
@@ -207,31 +221,4 @@ sd_to_prec = function(prior_str) {
     return(new_prior)
   }
   else return(prior_str)
-}
-
-
-
-#' Get JAGS code for residuals for each AR-order
-#'
-#' @aliases ar_code
-#' @keywords internal
-#' @inheritParams get_jagscode
-#' @param ar_order The order of the autoregressive component
-get_ar_code = function(ar_order, ST, family) {
-  code = ""
-  for (i in seq_len(ar_order)) {
-    # Get code for link(y[i - order])
-    if (family$family != "binomial") {
-      y_obs = paste0(family$link_jags, "(", ST$y[1], "[i_ - ", i, "])")
-    } else {
-      y_obs = paste0(family$link_jags, "(", ST$y[1], "[i_ - ", i, "] / ", ST$trials[1], "[i_ - ", i, "])")
-    }
-
-    code = paste0(code, "
-
-  # AR(", i, ") on residuals:
-  ar_[1:", i, ", ", i, "] = c(", paste0(rep("0", i), collapse = ","), ")
-  for (i_ in ", i + 1, ":length(", ST$x[1], ")) {ar_[i_, ", i, "] = ar", i, "_[i_] * (", y_obs, " - y_[i_-", i, "])}")
-  }
-  return(code)
 }

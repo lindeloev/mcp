@@ -155,7 +155,7 @@
       <h1>An overview of change point packages in R</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-12-02</h4>
+            <h4 class="date">2019-12-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/packages.Rmd"><code>vignettes/packages.Rmd</code></a></small>
       <div class="hidden name"><code>packages.Rmd</code></div>
@@ -206,16 +206,17 @@
 <li>Flexible hypothesis testing using <code>loo</code> and <code>hypothesis</code>, including testing the existence of a change point. Most other packages stop at estimation, though some provide p-values. Read more about <a href="../docs/articles/comparison.html">hypothesis testing and model comparison</a> using <code>mcp</code>.</li>
 </ul>
 </div>
-<div id="where-mcp-is-currently-inferior" class="section level1">
+<div id="recommendation" class="section level1">
 <h1 class="hasAnchor">
-<a href="#where-mcp-is-currently-inferior" class="anchor"></a>Where mcp is (currently) inferior</h1>
+<a href="#recommendation" class="anchor"></a>Recommendation</h1>
+<p>Let me go all-out on my ego-serving bias and say that <code>mcp</code> is the best package <em>unless:</em></p>
 <ul>
 <li>
-<em>Speed</em>: While <code>mcp</code> is reasonably fast for typical problems, mcmc sampling is slower than analytical and specialized solutions. For datasets &gt; 20.000 points and a complicated model, it may take <code>mcp</code> hours (but not days) to fit. See <a href="../articles/tips.html">tips and tricks</a> how to speed up <code>mcp</code>. Briefly, run in parallel and lower the number of iterations: (<code>mcp(..., cores = 4, iter = 1000, adapt = 400</code>).</li>
+<em>You have a lot of data and limited time</em>: While <code>mcp</code> is reasonably fast for typical problems, MCMC sampling is slower than analytical and specialized solutions. For datasets &gt; 20.000 points and a complicated model, it may take <code>mcp</code> hours (but not days) to fit. See <a href="../articles/tips.html">tips and tricks</a> how to speed up <code>mcp</code>. Briefly, run in parallel and lower the number of iterations: (<code>mcp(..., cores = 4, iter = 1000, adapt = 400</code>).</li>
 <li>
-<em>Automatic detection of change points</em>: most packages does automatic change point detection. This is not a space that <code>mcp</code> tries to fill so use the other packages here. But beware that many of the automatic procedures did not capture a change point in the worked examples below.</li>
+<em>You want to automatically detect a large number of change points</em>: Most packages does automatic change point detection. This is not a space that <code>mcp</code> tries to fill. But beware that many of the automatic procedures did not capture a change point in the worked examples below. If recommend <code>segmented</code> for the models it “understands” followed by <code>EnvCpt</code> and perhaps <code>bcp</code>.</li>
 <li>
-<em>Multivariate</em>: <code>mcp</code> only does univariate regression, both for <span class="math inline">\(y\)</span> and <span class="math inline">\(x\)</span>. This will be implemented if there is a popular request for it. Don’t hesitate to raise an issue on GitHub.</li>
+<em>Multivariate</em>: <code>mcp</code> only does univariate regression, both for <span class="math inline">\(y\)</span> and <span class="math inline">\(x\)</span>. This will be implemented if there is a popular request for it. Don’t hesitate to raise an issue on GitHub. For now, <code>bcp</code> seems like the best option to me.</li>
 </ul>
 </div>
 <div id="a-simple-dataset-to-compare-packages" class="section level1">
@@ -251,13 +252,13 @@
 ##   3: y ~ 1 ~ 1
 ## 
 ## Population-level parameters:
-##     name   mean  lower  upper Rhat n.eff    ts_se
-##     cp_1 30.635 27.031 33.979 1.01  1611  16.9474
-##     cp_2 64.587 48.746 77.260 1.00  1366 253.4988
-##    int_1  2.043  1.644  2.453 1.00  4306   0.0849
-##    int_2 -0.065 -0.517  0.367 1.00  2132   0.1987
-##    int_3  0.927  0.540  1.309 1.00  3071   0.1103
-##  sigma_1  1.062  0.913  1.221 1.00  4624   0.0121</code></pre>
+##     name   mean lower upper Rhat n.eff   ts_se
+##     cp_1 30.792 27.18 34.00    1  1620  14.802
+##     cp_2 64.291 45.33 76.03    1   723 562.890
+##    int_1  2.040  1.65  2.43    1  4785   0.076
+##    int_2 -0.069 -0.54  0.39    1  1789   0.277
+##    int_3  0.915  0.52  1.31    1  2138   0.174
+##  sigma_1  1.062  0.92  1.22    1  4231   0.013</code></pre>
 <p>The summary shows good parameter recovery, though the second change point is detected a bit early. This is understandable if you look at the data, and the true change point is still within the highest density interval.</p>
 <p>Plotting the posterior distributions of the change points reveal that they are not well represented by a Gaussian or other known distributions. Therefore, confidence intervals are likely to be meaningless for this problem.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(patchwork)</a>
@@ -341,18 +342,50 @@
 <a class="sourceLine" id="cb16-5" title="5">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit_mcp<span class="op">$</span>loo, fit_mcp_<span class="dv">1</span><span class="op">$</span>loo)</a></code></pre></div>
 <pre><code>##        elpd_diff se_diff
 ## model1  0.0       0.0   
-## model2 -6.6       2.9</code></pre>
+## model2 -5.6       2.7</code></pre>
 <p>While <code>segmented</code> prefers the one-change-point model, <code>mcp</code> prefers the (true) two-change-point model. Again, the models compared here are <em>very</em> different since <code>segmented</code> does inference on a slope-only model.</p>
+</div>
+<div id="breakpoints" class="section level1">
+<h1 class="hasAnchor">
+<a href="#breakpoints" class="anchor"></a>breakpoints</h1>
+<p><code><a href="https://rdrr.io/pkg/strucchange/man/breakpoints.html">strucchange::breakpoints()</a></code> is a lot like <code>segmented</code>. The difference is that (1) it is limited to gaussian residuals, and (2) it actually models intercepts, quadratic terms, etc. It scans through fits with 1, 2, 3,… N break points and determine where the optimal break points between this number of segments would lie. For each model it computes the Residual Sum of Squares (RSS; monotonically smaller with increasing N) and the Bayesian Information Criterion (BIC; has a minimum) for each N. It selects the model with the smallest BIC.</p>
+<p>For an intercept-only model (<code>y ~ 1</code>) it correctly detects the two change points with estimates similar to <code>mcp</code>. As with most other packages, there are no intervals on the change points nor estimates of the parameters of the segments in between.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(strucchange)</a></code></pre></div>
+<pre><code>## Loading required package: sandwich</code></pre>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb20-1" title="1">fit_bp =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/pkg/strucchange/man/breakpoints.html">breakpoints</a></span>(y <span class="op">~</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> data, <span class="dt">breaks =</span> <span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb20-2" title="2"><span class="kw"><a href="../reference/summary.mcpfit.html">summary</a></span>(fit_bp)</a></code></pre></div>
+<pre><code>## 
+##   Optimal (m+1)-segment partition: 
+## 
+## Call:
+## breakpoints.formula(formula = y ~ 1, breaks = 2, data = data)
+## 
+## Breakpoints at observation number:
+##              
+## m = 1   30   
+## m = 2   30 65
+## 
+## Corresponding to breakdates:
+##                 
+## m = 1   0.3     
+## m = 2   0.3 0.65
+## 
+## Fit:
+##                      
+## m   0     1     2    
+## RSS 177.7 122.3 103.5
+## BIC 350.5 322.4 314.8</code></pre>
+<p>Reassuringly, for <code>y ~ 1 + x</code> it “recommends” the same single change point that <code>segmented</code> found for this model.</p>
 </div>
 <div id="cpm" class="section level1">
 <h1 class="hasAnchor">
 <a href="#cpm" class="anchor"></a>cpm</h1>
 <p><code>cpm</code> is an intercept-only (in mean and variance) package, so it cannot model slopes. It can detect single change points via <code>detectChangePoint</code> and multiple change points via <code>processStream</code>. <code>processStream</code> is an automatic change point detection, using a p-value threshold to determine if a candidate should be marked as a hit. Multiple ways of computing p-values (<code>cpmType</code>) are available. In my limited testing, they return similar change points, though not identical.</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(cpm)</a>
-<a class="sourceLine" id="cb18-2" title="2"><span class="co">#fit_cpm = detectChangePoint(data$y, cpmType = "Student")  # a single change point</span></a>
-<a class="sourceLine" id="cb18-3" title="3"><span class="co">#fit_cpm = processStream(data$y, cpmType = "Mann-Whitney")  # Detects three</span></a>
-<a class="sourceLine" id="cb18-4" title="4">fit_cpm =<span class="st"> </span><span class="kw">processStream</span>(data<span class="op">$</span>y, <span class="dt">cpmType =</span> <span class="st">"Student"</span>)  <span class="co"># Multiple change points</span></a>
-<a class="sourceLine" id="cb18-5" title="5">fit_cpm<span class="op">$</span>changePoints</a></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb22-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(cpm)</a>
+<a class="sourceLine" id="cb22-2" title="2"><span class="co">#fit_cpm = detectChangePoint(data$y, cpmType = "Student")  # a single change point</span></a>
+<a class="sourceLine" id="cb22-3" title="3"><span class="co">#fit_cpm = processStream(data$y, cpmType = "Mann-Whitney")  # Detects three</span></a>
+<a class="sourceLine" id="cb22-4" title="4">fit_cpm =<span class="st"> </span><span class="kw">processStream</span>(data<span class="op">$</span>y, <span class="dt">cpmType =</span> <span class="st">"Student"</span>)  <span class="co"># Multiple change points</span></a>
+<a class="sourceLine" id="cb22-5" title="5">fit_cpm<span class="op">$</span>changePoints</a></code></pre></div>
 <pre><code>## [1] 30 62</code></pre>
 <p>It detects two change points, which is good. No intervals are returned and no plot functions are provided. The second change point is estimated a bit further away from the true value than <code>mcp</code>.</p>
 </div>
@@ -361,19 +394,19 @@
 <a href="#changepoint-and-changepoint-np" class="anchor"></a>changepoint and changepoint.np</h1>
 <p><code>changepoint</code> is focused on intercept-only changes. It can estimate changes in means (<code>cpt.mean</code>), variance (<code>cpt.var</code>), or both (<code>cpt.meanvar</code>). It is semi-automatic in that you can set the number of change points using parameter <code>Q</code> and this defaults to five. It can recover ML estimates of the intercepts. It does not estimate uncertainty, nor model checking. It only takes a response variable, so the change point is the data <em>index</em>, not the point on an x-axis. Make sure that your data is ordered. In our case it is ordered and we have 1 data point at each <code>x</code>, so it is optimal for <code>changepoint</code>.</p>
 <p>It detects the first change point, but not the second.</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb20-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(changepoint)</a>
-<a class="sourceLine" id="cb20-2" title="2">fit_changepoint =<span class="st"> </span><span class="kw">cpt.mean</span>(data<span class="op">$</span>y)</a>
-<a class="sourceLine" id="cb20-3" title="3"></a>
-<a class="sourceLine" id="cb20-4" title="4"><span class="co"># Return estimates</span></a>
-<a class="sourceLine" id="cb20-5" title="5"><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="dt">ints =</span> <span class="kw">param.est</span>(fit_changepoint)<span class="op">$</span>mean,</a>
-<a class="sourceLine" id="cb20-6" title="6">  <span class="dt">cp =</span> <span class="kw">cpts</span>(fit_changepoint))</a></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb24-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(changepoint)</a>
+<a class="sourceLine" id="cb24-2" title="2">fit_changepoint =<span class="st"> </span><span class="kw">cpt.mean</span>(data<span class="op">$</span>y)</a>
+<a class="sourceLine" id="cb24-3" title="3"></a>
+<a class="sourceLine" id="cb24-4" title="4"><span class="co"># Return estimates</span></a>
+<a class="sourceLine" id="cb24-5" title="5"><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="dt">ints =</span> <span class="kw">param.est</span>(fit_changepoint)<span class="op">$</span>mean,</a>
+<a class="sourceLine" id="cb24-6" title="6">  <span class="dt">cp =</span> <span class="kw">cpts</span>(fit_changepoint))</a></code></pre></div>
 <pre><code>##      ints1      ints2         cp 
 ##  2.0685868  0.4456268 30.0000000</code></pre>
 <p>Plot:</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb22-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_changepoint)</a></code></pre></div>
-<p><img src="packages_files/figure-html/unnamed-chunk-16-1.png" width="700"></p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb26-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_changepoint)</a></code></pre></div>
+<p><img src="packages_files/figure-html/unnamed-chunk-17-1.png" width="700"></p>
 <p>The package <code>changepoint.np</code> extends <code>changepoint</code> by providing a non-parametric version. It is unclear which of the <code>changepoint</code> functions are extended, but it manages to find both change points to a good precision. As with many other packages, no intervals are provided. As mentioned earlier, I suspect that <code>EnvCpt</code> uses this function under the hood.</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb23-1" title="1">changepoint.np<span class="op">::</span><span class="kw">cpt.np</span>(data<span class="op">$</span>y)<span class="op">@</span>cpts</a></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb27-1" title="1">changepoint.np<span class="op">::</span><span class="kw">cpt.np</span>(data<span class="op">$</span>y)<span class="op">@</span>cpts</a></code></pre></div>
 <pre><code>## [1]  29  65 100</code></pre>
 </div>
 <div id="bcp" class="section level1">
@@ -381,30 +414,30 @@
 <a href="#bcp" class="anchor"></a>bcp</h1>
 <p><code>bcp</code> is the only other Bayesian package in the game. It automatically detects change points and segment types, though you can use the parameter <code>d</code> to increase the prior probability of intercept-only models. It provides estimates of means and probability of change point <em>at each x-coordinate</em>. It has little additional functionality. The summary method conveys the same as the plot, so let’s stick to the plot.</p>
 <p>We see that it vaguely captures the change point at <code>x = 30</code>, and has some smeared-out probability around <code>x = 60</code> (<code>mcp</code> detected a single change point at <code>x = 64</code> here). <code>bcp</code> has some “false alarms” at <code>x &lt; 20</code>.</p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb25-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(bcp)</a>
-<a class="sourceLine" id="cb25-2" title="2">fit_bcp =<span class="st"> </span><span class="kw">bcp</span>(data<span class="op">$</span>y, <span class="dt">d =</span> <span class="dv">1000</span>)</a>
-<a class="sourceLine" id="cb25-3" title="3"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_bcp)</a></code></pre></div>
-<p><img src="packages_files/figure-html/unnamed-chunk-18-1.png" width="700"></p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb29-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(bcp)</a>
+<a class="sourceLine" id="cb29-2" title="2">fit_bcp =<span class="st"> </span><span class="kw">bcp</span>(data<span class="op">$</span>y, <span class="dt">d =</span> <span class="dv">1000</span>)</a>
+<a class="sourceLine" id="cb29-3" title="3"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_bcp)</a></code></pre></div>
+<p><img src="packages_files/figure-html/unnamed-chunk-19-1.png" width="700"></p>
 </div>
 <div id="ecp" class="section level1">
 <h1 class="hasAnchor">
 <a href="#ecp" class="anchor"></a>ecp</h1>
 <p><code>ecp</code> contains six functions to detect change points. It is clearly built for multivariate data, but can take univariate too. Of the six functions, I have not managed to get <code>e.agglo</code> working for <code>data</code>, but here I demonstrate the other five. The resulting information is sparse. It detects one of the two change points, but not both (with the exception of <code>e.divisive</code>, which returns four),</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb26-1" title="1">data_ecp =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/matrix.html">as.matrix</a></span>(data<span class="op">$</span>y)</a>
-<a class="sourceLine" id="cb26-2" title="2">fit_ecp1 =<span class="st"> </span>ecp<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/ecp/man/e.cp3o.html">e.cp3o</a></span>(data_ecp, <span class="dt">K =</span> <span class="dv">2</span>)  <span class="co"># maximum 2 change points</span></a>
-<a class="sourceLine" id="cb26-3" title="3">fit_ecp2 =<span class="st"> </span>ecp<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/ecp/man/e.cp3o_delta.html">e.cp3o_delta</a></span>(data_ecp, <span class="dt">K =</span> <span class="dv">2</span>)  <span class="co"># maximum 2 change points</span></a>
-<a class="sourceLine" id="cb26-4" title="4">fit_ecp3 =<span class="st"> </span>ecp<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/ecp/man/e.divisive.html">e.divisive</a></span>(data_ecp, <span class="dt">k =</span> <span class="dv">2</span>)  <span class="co"># 2 change points. Ignored???</span></a>
-<a class="sourceLine" id="cb26-5" title="5">fit_ecp4 =<span class="st"> </span>ecp<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/ecp/man/ks.cp3o.html">ks.cp3o</a></span>(data_ecp, <span class="dt">K =</span> <span class="dv">2</span>)  <span class="co"># maximum 2 change points</span></a>
-<a class="sourceLine" id="cb26-6" title="6">fit_ecp5 =<span class="st"> </span>ecp<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/ecp/man/ks.cp3o_delta.html">ks.cp3o_delta</a></span>(data_ecp, <span class="dt">K =</span> <span class="dv">2</span>)  <span class="co"># maximum 2 change points</span></a>
-<a class="sourceLine" id="cb26-7" title="7"></a>
-<a class="sourceLine" id="cb26-8" title="8"><span class="co"># Show the change point estimates</span></a>
-<a class="sourceLine" id="cb26-9" title="9"><span class="kw"><a href="https://rdrr.io/r/utils/str.html">str</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb26-10" title="10">  <span class="dt">e.cp3o =</span> fit_ecp1<span class="op">$</span>estimates,</a>
-<a class="sourceLine" id="cb26-11" title="11">  <span class="dt">e.cp3o_delta =</span> fit_ecp2<span class="op">$</span>estimates,</a>
-<a class="sourceLine" id="cb26-12" title="12">  <span class="dt">e.divisive =</span> fit_ecp3<span class="op">$</span>estimates,</a>
-<a class="sourceLine" id="cb26-13" title="13">  <span class="dt">ks.cp30 =</span> fit_ecp4<span class="op">$</span>estimates,</a>
-<a class="sourceLine" id="cb26-14" title="14">  <span class="dt">ks.cp3o_delta =</span> fit_ecp5<span class="op">$</span>estimates</a>
-<a class="sourceLine" id="cb26-15" title="15">))</a></code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb30-1" title="1">data_ecp =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/matrix.html">as.matrix</a></span>(data<span class="op">$</span>y)</a>
+<a class="sourceLine" id="cb30-2" title="2">fit_ecp1 =<span class="st"> </span>ecp<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/ecp/man/e.cp3o.html">e.cp3o</a></span>(data_ecp, <span class="dt">K =</span> <span class="dv">2</span>)  <span class="co"># maximum 2 change points</span></a>
+<a class="sourceLine" id="cb30-3" title="3">fit_ecp2 =<span class="st"> </span>ecp<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/ecp/man/e.cp3o_delta.html">e.cp3o_delta</a></span>(data_ecp, <span class="dt">K =</span> <span class="dv">2</span>)  <span class="co"># maximum 2 change points</span></a>
+<a class="sourceLine" id="cb30-4" title="4">fit_ecp3 =<span class="st"> </span>ecp<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/ecp/man/e.divisive.html">e.divisive</a></span>(data_ecp, <span class="dt">k =</span> <span class="dv">2</span>)  <span class="co"># 2 change points. Ignored???</span></a>
+<a class="sourceLine" id="cb30-5" title="5">fit_ecp4 =<span class="st"> </span>ecp<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/ecp/man/ks.cp3o.html">ks.cp3o</a></span>(data_ecp, <span class="dt">K =</span> <span class="dv">2</span>)  <span class="co"># maximum 2 change points</span></a>
+<a class="sourceLine" id="cb30-6" title="6">fit_ecp5 =<span class="st"> </span>ecp<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/ecp/man/ks.cp3o_delta.html">ks.cp3o_delta</a></span>(data_ecp, <span class="dt">K =</span> <span class="dv">2</span>)  <span class="co"># maximum 2 change points</span></a>
+<a class="sourceLine" id="cb30-7" title="7"></a>
+<a class="sourceLine" id="cb30-8" title="8"><span class="co"># Show the change point estimates</span></a>
+<a class="sourceLine" id="cb30-9" title="9"><span class="kw"><a href="https://rdrr.io/r/utils/str.html">str</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
+<a class="sourceLine" id="cb30-10" title="10">  <span class="dt">e.cp3o =</span> fit_ecp1<span class="op">$</span>estimates,</a>
+<a class="sourceLine" id="cb30-11" title="11">  <span class="dt">e.cp3o_delta =</span> fit_ecp2<span class="op">$</span>estimates,</a>
+<a class="sourceLine" id="cb30-12" title="12">  <span class="dt">e.divisive =</span> fit_ecp3<span class="op">$</span>estimates,</a>
+<a class="sourceLine" id="cb30-13" title="13">  <span class="dt">ks.cp30 =</span> fit_ecp4<span class="op">$</span>estimates,</a>
+<a class="sourceLine" id="cb30-14" title="14">  <span class="dt">ks.cp3o_delta =</span> fit_ecp5<span class="op">$</span>estimates</a>
+<a class="sourceLine" id="cb30-15" title="15">))</a></code></pre></div>
 <pre><code>## List of 5
 ##  $ e.cp3o       : int 31
 ##  $ e.cp3o_delta : int 60
@@ -417,14 +450,14 @@
 <a href="#tsmcp" class="anchor"></a>TSMCP</h1>
 <p>Short for “Time-Series Multiple Change Point”. The output is a single number (!). For the problem at hand, changing <code>method</code> makes no difference. For many other <code>c</code> (<code>c = 0.3</code>, <code>c = 4</code>), it fails to find any change points at all. There is also <code><a href="https://rdrr.io/pkg/TSMCP/man/cpvnts.html">TSMCP::cpvnts()</a></code> to model AR(N), but I have failed to make it find any change points in the present data set.</p>
 <p>It finds the change point at <code>x = 30</code>, but not the second change point at <code>x = 70</code>.</p>
-<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb28-1" title="1">TSMCP<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/TSMCP/man/tsmcplm.html">tsmcplm</a></span>(data<span class="op">$</span>y, <span class="dt">X =</span> <span class="ot">NULL</span>, <span class="dt">method =</span> <span class="st">"adapt"</span>, <span class="dt">c =</span> <span class="dv">1</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb32-1" title="1">TSMCP<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/TSMCP/man/tsmcplm.html">tsmcplm</a></span>(data<span class="op">$</span>y, <span class="dt">X =</span> <span class="ot">NULL</span>, <span class="dt">method =</span> <span class="st">"adapt"</span>, <span class="dt">c =</span> <span class="dv">1</span>)</a></code></pre></div>
 <pre><code>## [1] 30</code></pre>
 </div>
 <div id="wbsts" class="section level1">
 <h1 class="hasAnchor">
 <a href="#wbsts" class="anchor"></a>wbsts</h1>
 <p>The <code>wbsts</code> package is focused at time-series data. I must admit that I have not taken the time to understand the underlying model(s) or inference methods, so I am in a poor position to evaluate whether I am using it correctly. It returns no change points for the present data set using default settings:</p>
-<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb30-1" title="1">wbsts<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/wbsts/man/wbs.lsw.html">wbs.lsw</a></span>(data<span class="op">$</span>y)</a></code></pre></div>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb34-1" title="1">wbsts<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/wbsts/man/wbs.lsw.html">wbs.lsw</a></span>(data<span class="op">$</span>y)</a></code></pre></div>
 <pre><code>## $cp.bef
 ## NULL
 ## 
@@ -483,11 +516,12 @@
       <li><a href="#inference">Inference</a></li>
       <li><a href="#other-conveniences">Other conveniences</a></li>
       <li><a href="#unique-features-of-mcp">Unique features of mcp</a></li>
-      <li><a href="#where-mcp-is-currently-inferior">Where mcp is (currently) inferior</a></li>
+      <li><a href="#recommendation">Recommendation</a></li>
       <li><a href="#a-simple-dataset-to-compare-packages">A simple dataset to compare packages</a></li>
       <li><a href="#mcp">mcp</a></li>
       <li><a href="#envcpt">EnvCpt</a></li>
       <li><a href="#segmented">segmented</a></li>
+      <li><a href="#breakpoints">breakpoints</a></li>
       <li><a href="#cpm">cpm</a></li>
       <li><a href="#changepoint-and-changepoint-np">changepoint and changepoint.np</a></li>
       <li><a href="#bcp">bcp</a></li>

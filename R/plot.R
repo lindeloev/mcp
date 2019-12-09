@@ -3,7 +3,7 @@
 #' Plot prior or posterior draws of segments on top of data.
 #'
 #' @aliases plot plot.mcpfit
-#' @param x An mcpfit object
+#' @param x An \code{\link{mcpfit}} object
 #' @param facet_by String. Name of a varying group.
 #'   `facet_by` only applies for `type = "segments"`
 #' @param rate Boolean. For binomial models, plot on raw data (`rate = FALSE`) or
@@ -23,12 +23,20 @@
 #'       quantiles.
 #' @param quantiles_type One of 'fitted' or 'predict. Only applies if `quantile = TRUE`.
 #' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
+#' @param which_y What to plot on the y-axis. One of
+#'
+#'   * `"ct"`: The central tendency which is often the mean after applying the
+#'     link function (default).
+#'   * `"sigma"`: The variance
+#'   * `"ar1"`, `"ar2"`, etc. depending on which order of the autoregressive
+#'     effects you want to plot.
+#'
 #' @param ... Currently ignored.
 #' @details
-#'   For `type = "segments"`, it uses `fit$simulate` with `draws`
-#'   posterior samples. These represent the joint posterior distribution of
-#'   parameter values.
+#'   `plot()` uses `fit$simulate()` on posterior samples. These represent the
+#'   (joint) posterior distribution.
 #' @return A \pkg{ggplot2} object.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @importFrom ggplot2 ggplot aes aes_string geom_line geom_point facet_wrap
 #' @importFrom magrittr %>%
@@ -36,14 +44,23 @@
 #' @importFrom dplyr .data
 #' @export
 #' @examples
-#' \dontrun{
-#' plot(fit)
-#' plot(fit, lines = 50, rate = FALSE)  # more lines, for binomial.
-#' plot(fit, facet_by = "my_varying")  # varying effects
+#' # Typical usage. ex_fit is an mcpfit object.
+#' plot(ex_fit)
+#' plot(ex_fit, prior = TRUE)  # The prior
 #'
-#' # Customize one-column plots using regular ggplot2
-#' plot(fit) + theme_bw(15) + ggtitle("Great plot!")
+#' \donttest{
+#' plot(ex_fit, lines = 0, quantiles = TRUE)  # 95% HDI without lines
+#' plot(ex_fit, quantiles = c(0.1, 0.9), quantiles_type = "predict")  # 80% prediction interval
+#' plot(ex_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
 #' }
+#'
+#' # Show a panel for each varying effect
+#' # plot(fit, facet_by = "my_column")
+#'
+#' # Customize plots using regular ggplot2
+#' library(ggplot2)
+#' plot(ex_fit) + theme_bw(15) + ggtitle("Great plot!")
+#'
 plot.mcpfit = function(x,
                        facet_by = NULL,
                        lines = 25,
@@ -51,6 +68,7 @@ plot.mcpfit = function(x,
                        quantiles_type = "fitted",
                        rate = TRUE,
                        prior = FALSE,
+                       which_y = "ct",
                        ...) {
 
   # Just for consistent naming in mcp
@@ -63,8 +81,11 @@ plot.mcpfit = function(x,
   if (!coda::is.mcmc.list(fit$mcmc_post) & !coda::is.mcmc.list(fit$mcmc_prior))
     stop("Cannot plot an mcpfit without prior or posterior samples.")
 
-  if (lines != FALSE)
+  if (lines != FALSE) {
     check_integer(lines, "lines", lower = 1)
+  } else {
+    lines = 0
+  }
 
   if (lines > 1000) {
     lines = 1000
@@ -109,13 +130,20 @@ plot.mcpfit = function(x,
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)
   simulate = fit$simulate
-  if (all(quantiles == FALSE) & is.numeric(lines)) {
+  if (all(quantiles == FALSE)) {
     HDI_SAMPLES = lines
   } else {
     HDI_SAMPLES = 1000 # Maximum number of draws to use for computing HDI
     HDI_SAMPLES = min(HDI_SAMPLES, length(samples) * nrow(samples[[1]]))
   }
-
+  is_arma = length(fit$pars$arma) > 0
+  if (is_arma & all(quantiles != FALSE))
+    message("Plotting ar() with quantiles != FALSE can be slow. Raise an issue at GitHub (or thumb-up existing ones) if you need this.")
+  if (!is.null(facet_by)) {
+    n_facet_levels = length(unique(fit$data[, facet_by]))
+  } else {
+    n_facet_levels = 1
+  }
 
   #################
   # GET PLOT DATA #
@@ -155,21 +183,26 @@ plot.mcpfit = function(x,
 
     # Interpolate trials for binomial at the values in "eval_at"
     # to make sure that there are actually values to plot
-    interpolated_trials = suppressWarnings(stats::approx(x = dplyr::pull(fit$data, fit$pars$x), y = dplyr::pull(fit$data, fit$pars$trials), xout = eval_at)$y)
+    interpolated_trials = suppressWarnings(stats::approx(x = fit$data[, fit$pars$x], y = fit$data[, fit$pars$trials], xout = eval_at)$y)
     samples = samples %>%
       tidyr::expand_grid(!!xvar := eval_at) %>%  # correct name of x-var
       dplyr::mutate(!!fit$pars$trials := rep(interpolated_trials, nrow(samples)))
   }
 
-  # Predict y from model
+  # For ARMA prediction, we need the raw data
+  # We know that eval_at is the same length as nrow(data), so we can simply add corresponding data$y for each draw
+  if (is_arma) {
+    samples = dplyr::mutate(samples, ydata = rep(fit$data[, fit$pars$y], HDI_SAMPLES * n_facet_levels))
+  }
+
+  # Predict y from model by adding fitted/predicted draws (vectorized)
   if (lines > 0 | (any(quantiles != FALSE) & quantiles_type == "fitted")) {
     samples = samples %>%
-      # Add fitted draws (vectorized)
-      dplyr::mutate(!!yvar := purrr::invoke(simulate, ., type = "fitted", rate = rate))
+      dplyr::mutate(!!yvar := rlang::exec(simulate, !!!., type = "fitted", rate = rate, which_y = which_y))
   }
   if (quantiles_type == "predict") {
     samples = samples %>%
-      dplyr::mutate(predicted_ = purrr::invoke(simulate, ., type = "predict", rate = rate))
+      dplyr::mutate(predicted_ = rlang::exec(simulate, !!!., type = "predict", rate = rate))
   }
 
 
@@ -182,9 +215,10 @@ plot.mcpfit = function(x,
     fit$data[, fit$pars$y] = fit$data[, fit$pars$y] / fit$data[, fit$pars$trials]
   }
 
-  # Initiate plot
-  gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y)) +
-    geom_point()
+  # Initiate plot. Lines for ARMA. Points for everything else
+  gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y))
+  if (which_y == "ct")
+    gg = gg + geom_point()
 
   # Add lines?
   if (lines > 0) {
@@ -234,9 +268,11 @@ plot.mcpfit = function(x,
     gg = gg + facet_wrap(paste0("~", facet_by))
   }
 
-  # Add better y-label for the rate plot
+  # Add better y-labels
   if (fit$family$family == "bernoulli" | (fit$family$family == "binomial" & rate == TRUE))
     gg = gg + ggplot2::labs(y = paste0("Probability of success for ", fit$pars$y))
+  if (which_y != "ct")
+    gg = gg + ggplot2::labs(y = which_y)
 
   return(gg)
 }
@@ -249,7 +285,7 @@ plot.mcpfit = function(x,
 #' cases.
 #'
 #' @aliases plot_pars
-#' @param fit An mcpfit object
+#' @param fit An \code{\link{mcpfit}} object.
 #' @param pars Character vector. One of:
 #'   * Vector of parameter names.
 #'   * \emph{"population" (default):} plots all population parameters.
@@ -278,28 +314,35 @@ plot.mcpfit = function(x,
 #'
 #'   In any case, if you see a few erratic lines or parameter estimates, this is
 #'   a sign that you may want to increase argument 'adapt' and 'iter' in \code{\link{mcp}}.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @return A \pkg{ggplot2} object.
 #' @import patchwork
 #' @export
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @examples
+#' # Typical usage. ex_fit is an mcpfit object.
+#' plot_pars(ex_fit)
+#'
+#' # More options
+#' plot_pars(ex_fit, regex_pars = "^cp_")  # Plot only change points
+#' plot_pars(ex_fit, pars = c("int_3", "time_3"))  # Plot these parameters
+#' plot_pars(ex_fit, type = c("trace", "violin"))  # Combine plots
+#'
 #' \dontrun{
-#' plot_pars(fit)
-#' plot_pars(fit, pars = "varying", ncol = 3)  # plot all varying effects
-#' plot_pars(fit, regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying
+#' # Some plots only take pairs. hex is good to assess identifiability
+#' plot_pars(ex_fit, type = "hex", pars = c("cp_1", "time_2"))
 #'
-#' # More options for parameter estimates
-#' plot_pars(fit, pars = c("var1", "var2", "var3"), regex_pars = "^my_varying")
-#' plot_pars(fit, type = c("areas", "intervals"))
+#' # Visualize the priors:
+#' plot_pars(ex_fit, prior = TRUE)
 #'
-#' # Some plots only take pairs
-#' plot_pars(fit, pars = c("var1", "var2"))
+#' # Useful for varying effects:
+#' # plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all varying effects
+#' # plot_pars(my_fit, regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying
 #'
-#' # Customize two-column plots using the patchwork package.
-#' plot_pars(fit, type = c("trace", "dens_overlay")) * theme_bw(10)
+#' # Customize multi-column ggplots using "*" instead of "+" (patchwork)
+#' library(ggplot2)
+#' plot_pars(ex_fit, type = c("trace", "dens_overlay")) * theme_bw(10)
 #' }
-
 
 plot_pars = function(fit,
                      pars = "population",
@@ -397,6 +440,11 @@ plot_pars = function(fit,
 #' @inheritParams plot.mcpfit
 #' @param fit An mcpfit object.
 get_eval_at = function(fit, facet_by) {
+  # If there are ARMA terms, evaluate at the data
+  if (length(fit$pars$arma) > 0) {
+    return(c(fit$data[, fit$pars$x]))
+  }
+
   # Set resolutions in general and for change points
   X_RESOLUTION_ALL = 100  # Number of points to evaluate at x
   X_RESOLUTION_CP = 600

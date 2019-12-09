@@ -169,7 +169,7 @@ loo(fit_info)
 
 This is not terribly informative in and of itself. $looic = -2 * elpd_loo$ as is the corresponding SEs, so that is just a matter of scale. What ELPD tells you is that the product of the densities of all left-out data points is approximately $exp(-335.2) ~ 10 ^ {-146}$, a vanishingly small number because we multiply many small numbers. This is hard to interpret because the density at a given point is a strange thing. Furthermore, it depends on the size of the dataset (the more small densities you multiply, the smaller the ELPD).
 
-What is interesting is the *relative* differences in these predicted densities. We can compare the models using `loo::loo_compare()`.The `mcpfit` objects have placeholders at `fit$loo` and `fit$waic`. You need not use them, but it's nice to keep things together, especially if you want to `save(fit)` the objects for later use.
+What is interesting is the *relative* differences in these predicted densities. We can compare the models using `loo::loo_compare()`. We save the results in `fit$loo` to keep things together, which will also be useful if you want to `save(fit)` the objects for later use.
 
 ```{r, cache = TRUE}
 fit_default$loo = loo(fit_default)

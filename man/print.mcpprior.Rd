@@ -7,9 +7,9 @@
 \method{print}{mcpprior}(x, ...)
 }
 \arguments{
-\item{x}{\code{mcpfit} object.}
+\item{x}{An \code{\link{mcpfit}} object.}
 
-\item{...}{Currently ignored.}
+\item{...}{Currently ignored}
 }
 \description{
 The mcpprior is just a list, but it can be displayed in a more condensed

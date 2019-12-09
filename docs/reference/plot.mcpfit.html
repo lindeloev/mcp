@@ -218,6 +218,7 @@
   <span class='kw'>quantiles_type</span> <span class='kw'>=</span> <span class='st'>"fitted"</span>,
   <span class='kw'>rate</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>which_y</span> <span class='kw'>=</span> <span class='st'>"ct"</span>,
   <span class='no'>...</span>
 )</pre>
 
@@ -226,7 +227,7 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>An mcpfit object</p></td>
+      <td><p>An <code><a href='mcpfit-class.html'>mcpfit</a></code> object</p></td>
     </tr>
     <tr>
       <th>facet_by</th>
@@ -267,6 +268,16 @@ interpolation on trial number is used to infer trials at a particular x.
       <td><p>TRUE/FALSE. Plot using prior samples? Useful for <code><a href='mcp.html'>mcp(..., sample = "both")</a></code></p></td>
     </tr>
     <tr>
+      <th>which_y</th>
+      <td><p>What to plot on the y-axis. One of</p><ul>
+<li><p><code>"ct"</code>: The central tendency which is often the mean after applying the
+link function (default).</p></li>
+<li><p><code>"sigma"</code>: The variance</p></li>
+<li><p><code>"ar1"</code>, <code>"ar2"</code>, etc. depending on which order of the autoregressive
+effects you want to plot.</p></li>
+</ul></td>
+    </tr>
+    <tr>
       <th>...</th>
       <td><p>Currently ignored.</p></td>
     </tr>
@@ -277,19 +288,22 @@ interpolation on trial number is used to infer trials at a particular x.
     <p>A <span class="pkg">ggplot2</span> object.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>For <code>type = "segments"</code>, it uses <code>fit$simulate</code> with <code>draws</code>
-posterior samples. These represent the joint posterior distribution of
-parameter values.</p>
+    <p><code>plot()</code> uses <code>fit$simulate()</code> on posterior samples. These represent the
+(joint) posterior distribution.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'>plot</span>(<span class='no'>fit</span>)
-<span class='fu'>plot</span>(<span class='no'>fit</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>50</span>, <span class='kw'>rate</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)  <span class='co'># more lines, for binomial.</span>
-<span class='fu'>plot</span>(<span class='no'>fit</span>, <span class='kw'>facet_by</span> <span class='kw'>=</span> <span class='st'>"my_varying"</span>)  <span class='co'># varying effects</span>
+    <pre class="examples"><div class='input'><span class='co'># Typical usage. ex_fit is an mcpfit object.</span>
+<span class='fu'>plot</span>(<span class='no'>ex_fit</span>)</div><div class='img'><img src='plot.mcpfit-1.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)  <span class='co'># The prior</span></div><div class='img'><img src='plot.mcpfit-2.png' alt='' width='700' height='433' /></div><div class='input'>
+<span class='co'># \donttest{</span>
+<span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>quantiles</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)  <span class='co'># 95% HDI without lines</span></div><div class='img'><img src='plot.mcpfit-3.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>quantiles</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.1</span>, <span class='fl'>0.9</span>), <span class='kw'>quantiles_type</span> <span class='kw'>=</span> <span class='st'>"predict"</span>)  <span class='co'># 80% prediction interval</span></div><div class='img'><img src='plot.mcpfit-4.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>which_y</span> <span class='kw'>=</span> <span class='st'>"sigma"</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>100</span>)  <span class='co'># The variance parameter on y</span></div><div class='img'><img src='plot.mcpfit-5.png' alt='' width='700' height='433' /></div><div class='input'><span class='co'># }</span>
 
-<span class='co'># Customize one-column plots using regular ggplot2</span>
-<span class='fu'>plot</span>(<span class='no'>fit</span>) + <span class='fu'>theme_bw</span>(<span class='fl'>15</span>) + <span class='fu'>ggtitle</span>(<span class='st'>"Great plot!"</span>)
-}</div></pre>
+<span class='co'># Show a panel for each varying effect</span>
+<span class='co'># plot(fit, facet_by = "my_column")</span>
+
+<span class='co'># Customize plots using regular ggplot2</span>
+<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>ggplot2</span>)
+<span class='fu'>plot</span>(<span class='no'>ex_fit</span>) + <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_bw</a></span>(<span class='fl'>15</span>) + <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>ggtitle</a></span>(<span class='st'>"Great plot!"</span>)</div><div class='img'><img src='plot.mcpfit-6.png' alt='' width='700' height='433' /></div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

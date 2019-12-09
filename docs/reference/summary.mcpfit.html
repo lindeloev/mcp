@@ -51,8 +51,7 @@
   
 
 <meta property="og:title" content="Summarise mcpfit objects — summary.mcpfit" />
-<meta property="og:description" content="Computes posterior means and highest density intervals, and model
-diagnostics. Get them in a data frame by doing result = summary(fit)." />
+<meta property="og:description" content="Summarise parameter estimates and model diagnostics." />
 <meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -207,19 +206,25 @@ diagnostics. Get them in a data frame by doing result = summary(fit)." />
     </div>
 
     <div class="ref-description">
-    <p>Computes posterior means and highest density intervals, and model
-diagnostics. Get them in a data frame by doing <code>result = summary(fit)</code>.</p>
+    <p>Summarise parameter estimates and model diagnostics.</p>
     </div>
 
     <pre class="usage"><span class='co'># S3 method for mcpfit</span>
-<span class='fu'>summary</span>(<span class='no'>object</span>, <span class='kw'>width</span> <span class='kw'>=</span> <span class='fl'>0.95</span>, <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)</pre>
+<span class='fu'>summary</span>(<span class='no'>object</span>, <span class='kw'>width</span> <span class='kw'>=</span> <span class='fl'>0.95</span>, <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)
+
+<span class='fu'>fixef</span>(<span class='no'>object</span>, <span class='kw'>width</span> <span class='kw'>=</span> <span class='fl'>0.95</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)
+
+<span class='fu'>ranef</span>(<span class='no'>object</span>, <span class='kw'>width</span> <span class='kw'>=</span> <span class='fl'>0.95</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)
+
+<span class='co'># S3 method for mcpfit</span>
+<span class='fu'>print</span>(<span class='no'>x</span>, <span class='no'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>object</th>
-      <td><p>An <code>mcpfit</code> object returned by <code><a href='mcp.html'>mcp</a></code>.</p></td>
+      <td><p>An <code><a href='mcpfit-class.html'>mcpfit</a></code> object.</p></td>
     </tr>
     <tr>
       <th>width</th>
@@ -228,7 +233,11 @@ diagnostics. Get them in a data frame by doing <code>result = summary(fit)</code
     </tr>
     <tr>
       <th>digits</th>
-      <td><p>Positive integer. Number of digits to print</p></td>
+      <td><p>a non-null value for digits specifies the minimum number of
+significant digits to be printed in values. The default, NULL, uses
+getOption("digits"). (For the interpretation for complex numbers see signif.)
+Non-integer values will be rounded down, and only values greater than or
+equal to 1 and no greater than 22 are accepted.</p></td>
     </tr>
     <tr>
       <th>prior</th>
@@ -238,30 +247,124 @@ diagnostics. Get them in a data frame by doing <code>result = summary(fit)</code
       <th>...</th>
       <td><p>Currently ignored</p></td>
     </tr>
+    <tr>
+      <th>x</th>
+      <td><p>An <code><a href='mcpfit-class.html'>mcpfit</a></code> object.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Posterior means and HDI intervals. <code>Rhat</code> is the Gelman-Rubin
-convergence diagnostic which is often taken to be acceptable if &lt; 1.1. It
-is computed using <code><a href='https://rdrr.io/pkg/coda/man/gelman.diag.html'>gelman.diag</a></code>.
-<code>n.eff</code> is the effective sample size computed using
-<code><a href='https://rdrr.io/pkg/coda/man/effectiveSize.html'>effectiveSize</a></code>. Low effective sample sizes are
-also obvious as poor mixing in trace plots (see <code><a href='plot_pars.html'>plot_pars(fit)</a></code>).
-<code>ts_err</code> is the time-series error, taking autoregressive correlation
-into account. It is computed using <code><a href='https://rdrr.io/pkg/coda/man/spectrum0.ar.html'>spectrum0.ar</a></code>.</p>
+    <p>A data frame with parameter estimates and MCMC diagnostics.
+OBS: The change point distributions are often not unimodal and symmetric so
+the intervals can be deceiving Plot them using <code><a href='plot_pars.html'>plot_pars(fit)</a></code>.</p><ul>
+<li><p><code>mean</code> is the posterior mean</p></li>
+<li><p><code>lower</code> is the lower quantile of the highest-density interval (HDI) given in <code>width</code>.</p></li>
+<li><p><code>upper</code> is the upper quantile.</p></li>
+<li><p><code>Rhat</code> is the Gelman-Rubin convergence diagnostic which is often taken to
+be acceptable if &lt; 1.1. It is computed using <code><a href='https://rdrr.io/pkg/coda/man/gelman.diag.html'>gelman.diag</a></code>.</p></li>
+<li><p><code>n.eff</code> is the effective sample size computed using <code><a href='https://rdrr.io/pkg/coda/man/effectiveSize.html'>effectiveSize</a></code>.
+Low effective sample sizes are also obvious as poor mixing in trace plots
+(see <code><a href='plot_pars.html'>plot_pars(fit)</a></code>). Read how to deal with such problems <a href='https://lindeloev.github.io/mcp/articles/debug.html'>here</a></p></li>
+<li><p><code>ts_err</code> is the time-series error, taking autoregressive correlation
+into account. It is computed using <code><a href='https://rdrr.io/pkg/coda/man/spectrum0.ar.html'>spectrum0.ar</a></code>.</p></li>
+</ul>
+
+<p>For simulated data, the summary contains two additional columns so that it
+is easy to inspect whether the model can recover the parameters. Run
+simulation and summary multiple times to get a sense of the robustness.</p><ul>
+<li><p><code>sim</code> is the value used to generate the data.</p></li>
+<li><p><code>match</code> is <code>"OK"</code> if <code>sim</code> is contained in the HDI interval (<code>lower</code> to
+<code>upper</code>).</p></li>
+</ul>
+
+    <h2 class="hasAnchor" id="functions"><a class="anchor" href="#functions"></a>Functions</h2>
+
+    
+<ul>
+<li><p><code>fixef</code>: Get population-level ("fixed") effects of an <code><a href='mcpfit-class.html'>mcpfit</a></code> object.</p></li>
+<li><p><code>ranef</code>: Get varying ("random") effects of an <code><a href='mcpfit-class.html'>mcpfit</a></code> object.</p></li>
+<li><p><code>print.mcpfit</code>: Print the posterior summary of an <code><a href='mcpfit-class.html'>mcpfit</a></code> object.</p></li>
+</ul>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='no'>result</span> <span class='kw'>=</span> <span class='fu'>summary</span>(<span class='no'>fit</span>, <span class='kw'>width</span> <span class='kw'>=</span> <span class='fl'>0.8</span>, <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>4</span>)
-<span class='fu'><a href='ranef.html'>ranef</a></span>(<span class='no'>fit</span>)  <span class='co'># varying (random) effects</span>
-}</div></pre>
+    <pre class="examples"><div class='input'><span class='co'># Typical usage</span>
+<span class='fu'>summary</span>(<span class='no'>ex_fit</span>)</div><div class='output co'>#&gt; Family: gaussian(link = 'identity')
+#&gt; Iterations: 3000 from 3 chains.
+#&gt; Segments:
+#&gt;   1: response ~ 1
+#&gt;   2: response ~ 1 ~ 0 + time
+#&gt;   3: response ~ 1 ~ 1 + time
+#&gt; 
+#&gt; Population-level parameters:
+#&gt;     name match  sim  mean lower  upper Rhat n.eff   ts_se
+#&gt;     cp_1    OK 30.0 31.06 23.03 38.996    1   125 317.427
+#&gt;     cp_2    OK 70.0 69.78 69.32 70.287    1  1848   0.143
+#&gt;    int_1    OK 10.0 10.32  8.93 11.778    1   429   3.400
+#&gt;    int_3    OK  0.0  0.75 -1.84  3.420    1   259  24.569
+#&gt;  sigma_1    OK  4.0  4.00  3.43  4.589    1  1056   0.160
+#&gt;   time_2    OK  0.5  0.54  0.40  0.683    1   140   0.091
+#&gt;   time_3    OK -0.2 -0.23 -0.39 -0.063    1   255   0.082</div><div class='input'><span class='fu'>summary</span>(<span class='no'>ex_fit</span>, <span class='kw'>width</span> <span class='kw'>=</span> <span class='fl'>0.8</span>, <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>4</span>)  <span class='co'># Set HDI width</span></div><div class='output co'>#&gt; Family: gaussian(link = 'identity')
+#&gt; Iterations: 3000 from 3 chains.
+#&gt; Segments:
+#&gt;   1: response ~ 1
+#&gt;   2: response ~ 1 ~ 0 + time
+#&gt;   3: response ~ 1 ~ 1 + time
+#&gt; 
+#&gt; Population-level parameters:
+#&gt;     name match  sim    mean   lower   upper   Rhat n.eff     ts_se
+#&gt;     cp_1    OK 30.0 31.0598 26.2296 35.8264 1.0030   125 317.42685
+#&gt;     cp_2    OK 70.0 69.7816 69.4614 70.2747 1.0000  1848   0.14288
+#&gt;    int_1    OK 10.0 10.3207  9.5033 11.3206 1.0007   429   3.40038
+#&gt;    int_3    OK  0.0  0.7475 -1.0863  2.3992 1.0007   259  24.56869
+#&gt;  sigma_1    OK  4.0  4.0042  3.6026  4.3419 0.9996  1056   0.15986
+#&gt;   time_2    OK  0.5  0.5442  0.4611  0.6251 1.0024   140   0.09139
+#&gt;   time_3    OK -0.2 -0.2327 -0.3474 -0.1296 1.0000   255   0.08183</div><div class='input'>
+<span class='co'># Get the results as a data frame</span>
+<span class='no'>results</span> <span class='kw'>=</span> <span class='fu'>summary</span>(<span class='no'>ex_fit</span>)</div><div class='output co'>#&gt; Family: gaussian(link = 'identity')
+#&gt; Iterations: 3000 from 3 chains.
+#&gt; Segments:
+#&gt;   1: response ~ 1
+#&gt;   2: response ~ 1 ~ 0 + time
+#&gt;   3: response ~ 1 ~ 1 + time
+#&gt; 
+#&gt; Population-level parameters:
+#&gt;     name match  sim  mean lower  upper Rhat n.eff   ts_se
+#&gt;     cp_1    OK 30.0 31.06 23.03 38.996    1   125 317.427
+#&gt;     cp_2    OK 70.0 69.78 69.32 70.287    1  1848   0.143
+#&gt;    int_1    OK 10.0 10.32  8.93 11.778    1   429   3.400
+#&gt;    int_3    OK  0.0  0.75 -1.84  3.420    1   259  24.569
+#&gt;  sigma_1    OK  4.0  4.00  3.43  4.589    1  1056   0.160
+#&gt;   time_2    OK  0.5  0.54  0.40  0.683    1   140   0.091
+#&gt;   time_3    OK -0.2 -0.23 -0.39 -0.063    1   255   0.082</div><div class='input'>
+<span class='co'># Varying (random) effects</span>
+<span class='co'># ranef(my_fit)</span>
+
+<span class='co'># Summarise prior</span>
+<span class='fu'>summary</span>(<span class='no'>ex_fit</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; Family: gaussian(link = 'identity')
+#&gt; Iterations: 3000 from 3 chains.
+#&gt; Segments:
+#&gt;   1: response ~ 1
+#&gt;   2: response ~ 1 ~ 0 + time
+#&gt;   3: response ~ 1 ~ 1 + time
+#&gt; 
+#&gt; Population-level parameters:
+#&gt;     name match  sim    mean    lower  upper Rhat n.eff   ts_se
+#&gt;     cp_1    OK 30.0 50.6712  4.5e+00  93.54    1  3434 6.7e+02
+#&gt;     cp_2    OK 70.0 74.3771  3.2e+01  97.96    1  3461 4.5e+02
+#&gt;    int_1    OK 10.0  0.2158 -1.2e+02 102.31    1  2699 3.4e+03
+#&gt;    int_3    OK  0.0 -1.2566 -1.0e+02 105.00    1  3026 2.7e+03
+#&gt;  sigma_1    OK  4.0  9.8986  7.3e-03  23.52    1  3000 4.8e+01
+#&gt;   time_2        0.5  0.0023 -4.5e-01   0.39    1  3326 4.5e-02
+#&gt;   time_3    OK -0.2  0.0057 -3.7e-01   0.45    1  3000 5.1e-02</div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
       <li><a href="#value">Value</a></li>
+      <li><a href="#functions">Functions</a></li>
       <li><a href="#examples">Examples</a></li>
     </ul>
 

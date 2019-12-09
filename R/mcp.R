@@ -18,13 +18,15 @@
 #'   response. `~ predictors` assumes an intercept-only change point). Segments
 #'   can model
 #'
-#'   * *Regular formulas:* e.g., `~ 0 + x + I(x^2) + exp(x)`). [Read more here](https://lindeloev.github.io/mcp/articles/formulas.html).
+#'   * *Regular formulas:* e.g., `~ 1 + x`). [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
+#'
+#'   * *Extended formulas:*, e.g., `~ I(x^2) + exp(x) + sin(x)`. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'
 #'   * *Variance:* e.g., `~sigma(1)` for a simple variance change or
-#'     `~sigma(rel(1) + I(x^2))`) for more advanced variance structures. [Read more here](https://lindeloev.github.io/mcp/articles/variance.html)
+#'     `~sigma(rel(1) + I(x^2))`) for more advanced variance structures. [Read more](https://lindeloev.github.io/mcp/articles/variance.html)
 #'
 #'   * *Autoregression:* e.g., `~ar(1)` for a simple onset/change in AR(1) or
-#'     `ar(2, 0 + x`) for an AR(2) with parameter(s) increasing by `x`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html)
+#'     `ar(2, 0 + x`) for an AR(2) increasing by `x`. [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
 #'
 #' @param prior Named list. Names are parameter names (`cp_i`, `int_i`, `xvar_i`,
 #'  `sigma``) and the values are either
@@ -87,64 +89,67 @@
 #'       but `mcp` converts to precision under the hood via the sd_to_prec()
 #'       function. So you will see SDs in `fit$prior` but precision ($1/SD^2)
 #'       in `fit$jags_code`
-#' @return An `mcpfit` object.
+#' @return An \code{\link{mcpfit}} object.
 #' @seealso \link{get_segment_table}
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @importFrom stats gaussian binomial
 #' @export
 #' @examples
-#' \dontrun{
-#' # Define the segments that are separated by change points
+#' \donttest{
+#' # Define the segments using formulas. A change point is estimated between each formula.
 #' segments = list(
-#'   score ~ 1 + year,  # intercept + slope
-#'    ~ 0 + year,  # joined slope
-#'    ~ 0,  # joined plateau
-#'    ~ 1  # disjoined plateau
+#'   response ~ 1,  # Plateau in the first segment (int_1)
+#'   ~ 0 + time,    # Joined slope (time_2) at cp_1
+#'   ~ 1 + time     # Disjoined slope (int_3, time_3) at cp_2
 #' )
 #'
-#' # Sample and see results
-#' fit = mcp(segments, data)
-#' summary(fit)
+#' # Fit it. The `ex_demo` dataset is included in mcp. Sample the prior too.
+#' # options(mc.cores = 3)  # Run in parallel to speed up. Disable if this fails.
+#' ex_fit = mcp(segments, data = ex_demo, sample = "both")
+#' }
+#'
+#' # See parameter estimates
+#' summary(ex_fit)
 #'
 #' # Visual inspection of the results
-#' plot(fit)
-#' plot_pars(fit)
+#' plot(ex_fit)
+#' plot_pars(ex_fit)
 #'
 #' # Test a hypothesis
-#' hypothesis(fit, "cp_1 > 10")
+#' hypothesis(ex_fit, "cp_1 > 10")
 #'
+#' \donttest{
 #' # Compare to a one-intercept-only model (no change points) with default prior
-#' segments2 = list(score ~ 1)
-#' fit2 = mcp(segments2, data)  # fit another model here
-#' fit$loo = loo(fit)
-#' fit2$loo = loo(fit)
-#' loo_compare(fit, fit2)
+#' segments_null = list(response ~ 1)
+#' fit_null = mcp(segments_null, data = ex_demo, par_x = "time")  # fit another model here
+#' ex_fit$loo = loo(ex_fit)
+#' fit_null$loo = loo(fit_null)
+#' loo::loo_compare(ex_fit$loo, fit_null$loo)
+#' }
 #'
-#' # Sample the prior and inspect it using all the usual methods (prior predictive checks)
-#' fit_prior = mcp(segments, data, sample = "prior")
-#' summary(fit_prior)
-#' plot(fit_prior)
+#' # Inspect the prior. Useful for prior predictive checks.
+#' summary(ex_fit, prior = TRUE)
+#' plot(ex_fit, prior = TRUE)
 #'
 #' # Show all priors. Default priors are added where you don't provide any
-#' fit$prior
+#' print(ex_fit$prior)
 #'
 #' # Set priors and re-run
-#' # cp_i are change points.
-#' # int_i are intercepts.
-#' # x_i are slopes.
-#' # i is the segment number (change points are to the right of the segment)
 #' prior = list(
-#'   int_1 = "dt(10, 30) T(0, )",  # t-dist intercept. Truncated to > 0
-#'   year_1 = "dnorm(0, 5)",  # slope of segment 1. Mean = 0, SD = 5.
-#'   cp_2 = "dunif(cp_1, 40)",  # change point to segment 2 > cp_1.
-#'   year_2 = "year_1",  # Shared slope between segment 2 and 1
-#'   int_3 = 15  # Fixed intercept of segment 3
+#'   int_1 = "dt(10, 5, 1) T(0, )", # t-dist intercept. Truncated to positive.
+#'   year_1 = "dnorm(0, 3)",      # slope of segment 1. Mean = 0, SD = 5.
+#'   cp_2 = "dunif(cp_1, 80)",    # change point to segment 2 > cp_1 and < 80.
+#'   year_2 = "year_1",           # Shared slope between segment 2 and 1
+#'   int_3 = 15                   # Fixed intercept of segment 3
 #' )
-#' fit3 = mcp(segments, data, prior)
 #'
-#' # Show JAGS model
-#' cat(fit$jags_code)
+#' \donttest{
+#' fit3 = mcp(segments, data = ex_demo, prior = prior)
 #' }
+#'
+#' # Show the JAGS model
+#' cat(ex_fit$jags_code)
 
 mcp = function(segments,
                data = NULL,
@@ -170,6 +175,8 @@ mcp = function(segments,
   if (!is.null(data)) {
     if (!is.data.frame(data) & !tibble::is_tibble(data))
       stop("`data` must be a data.frame or a tibble.")
+
+    data = data.frame(data)  # Force into data frame
   }
 
   # Check segments
@@ -208,9 +215,6 @@ mcp = function(segments,
   if (family$family == "poisson" & !family$link %in% c("log"))
     stop("'log' is currently the only supported link function for poisson().")
 
-  # if (family$family %in% c("bernoulli", "binomial") & !is.null(autocor))
-  #   stop("`autocor` is not yet supported for Bernoulli and binomial families.")
-
   family = get_family(family$family, family$link)  # convert to mcp family
 
 
@@ -233,7 +237,7 @@ mcp = function(segments,
 
   # Parallel fails on R version 3.6.0 and lower (sometimes at least).
   if (cores > 1 & getRversion() < "3.6.1")
-    message("Parallel sampling (`cores` > 1) has been shown to err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
+    message("Parallel sampling (`cores` > 1) sometimes err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
 
 
   ##################
@@ -243,34 +247,42 @@ mcp = function(segments,
   # ("ST" for "segment table").
   ST = get_segment_table(segments, data, family, par_x)
 
-  par_x = unique(ST$x)
-  par_y = unique(ST$y)
-  par_trials = unique(ST$trials)
-
   # Make prior
   prior = get_prior(ST, family, prior)
 
   # Make lists of parameters
   all_pars = names(prior)  # There is a prior for every parameter
-  pars_varying = logical0_to_null(c(stats::na.omit(ST$cp_group)))
-  pars_sigma = all_pars[stringr::str_detect(all_pars, "^sigma_")]
-  pars_arma = all_pars[stringr::str_detect(all_pars, "(^ar|^ma)[0-9]")]
-  pars_reg = all_pars[!all_pars %in% c(pars_varying, pars_sigma, pars_arma)]  # Everything that's left!
+  pars = list(
+    x = unique(ST$x),
+    y = unique(ST$y),
+    trials = logical0_to_null(stats::na.omit(unique(ST$trials))),
+    varying = logical0_to_null(c(stats::na.omit(ST$cp_group))),
+    sigma = all_pars[stringr::str_detect(all_pars, "^sigma_")],
+    arma = all_pars[stringr::str_detect(all_pars, "(^ar|^ma)[0-9]")]
+  )
+  pars$reg = all_pars[!all_pars %in% c(pars$varying, pars$sigma, pars$arma)]
+  pars$population = c(pars$reg, pars$sigma, pars$arma)
 
-  if (length(pars_arma) > 0 & family$link %in% c("logit", "probit"))
-    message("The current implementation of autoregression can be fragile for link='logit'. If fitting succeeds, do a proper assessment of model convergence.")
+  # Check parameters
+  # ARMA models
+  if (length(pars$arma) > 0) {
+    if (family$link %in% c("logit", "probit"))
+      message("The current implementation of autoregression can be fragile for link='logit'. In particular, if there are any all-success trials (e.g., 10/10), the only solution is for 'ar' to be 0.00. If fitting succeeds, do a proper assessment of model convergence.")
 
-  if (length(pars_arma) > 0 & length(pars_sigma) > 1)
-    message("Autoregression currently assumes homoskedasticity (equal variance at all x). Using together with sigma() breaks this assumption except when doing just `~ [formula] + sigma(1) + ar(N)`, so that `ar` changes with a sigma intercept. If not, the estimated ar* parameters may not be meaningful.")
+    if (length(pars$sigma) > 1)
+    message("You are using ar() together with sigma(). Autoregression usually assumes homoskedasticity (equal variance at all x). This is not a problem if if intercepts in ar() are joined by intercepts in sigma() like `~ [formula] + sigma(1) + ar(N)`. It may not be a problem for slopes on `sigma` either, but this has not been assessed thoroughly yet. So this is a note to be cautious about interpreting the sigma- and ar-parameters for now.")
+
+    if (is.unsorted(data[, pars$x]) & is.unsorted(rev(data[, pars$x])))
+      message("'", pars$x, "' is unordered. Please note that ar() applies in the order of data of the data frame - not the values.")
+  }
 
   # Make formula_str and simulate
-  formula_str_funcy = get_all_formulas(ST, prior, par_x, ytypes = c("ct", "sigma"))  # Without ARMA
-  pars_funcy = c(pars_reg[!pars_reg %in% ST$cp_sd], pars_sigma)  # arma and varying SD is not used for simulation
-  simulate = get_simulate(formula_str_funcy, par_x, par_trials, pars_funcy, pars_varying, nrow(ST), family)
+  formula_str_sim = get_all_formulas(ST, prior, pars$x, ytypes = c("ct", "sigma", "arma"))
+  simulate = get_simulate(formula_str_sim, pars, nrow(ST), family)
 
   # Make jags code
-  max_arma_order = get_arma_order(pars_arma)
-  formula_str_jags = get_all_formulas(ST, prior, par_x)
+  max_arma_order = get_arma_order(pars$arma)
+  formula_str_jags = get_all_formulas(ST, prior, pars$x)
   jags_code_generated = get_jagscode(prior, ST, formula_str_jags, max_arma_order, family, sample)
   jags_code = ifelse(is.null(jags_code), yes = jags_code_generated, no = jags_code)  # Get from user?
 
@@ -334,7 +346,7 @@ mcp = function(segments,
   # Make mrpfit object
   mcpfit = list(
     # By user (same order as mcp argument)
-    segments = lapply(ST$form, as.formula, env=globalenv()),  # with explicit response and cp
+    segments = lapply(ST$form, stats::as.formula, env=globalenv()),  # with explicit response and cp
     data = data,
     prior = prior,
     family = family,
@@ -347,17 +359,7 @@ mcp = function(segments,
     waic = NULL,
 
     # Extracted model
-    pars = list(
-      x = par_x,
-      y = par_y,
-      trials = par_trials,
-      reg = pars_reg,
-      varying = pars_varying,
-      sigma = pars_sigma,
-      arma = pars_arma,
-      population = c(pars_reg, pars_sigma, pars_arma)
-    ),
-
+    pars = pars,
     jags_code = jags_code,
     simulate = simulate,
 

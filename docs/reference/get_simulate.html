@@ -209,15 +209,7 @@
     <p>Turn formula_str into a proper R function</p>
     </div>
 
-    <pre class="usage"><span class='fu'>get_simulate</span>(
-  <span class='no'>formula_str</span>,
-  <span class='no'>par_x</span>,
-  <span class='kw'>par_trials</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='no'>pars_pop</span>,
-  <span class='no'>pars_varying</span>,
-  <span class='no'>nsegments</span>,
-  <span class='no'>family</span>
-)</pre>
+    <pre class="usage"><span class='fu'>get_simulate</span>(<span class='no'>formula_str</span>, <span class='no'>pars</span>, <span class='no'>nsegments</span>, <span class='no'>family</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -227,9 +219,13 @@
       <td><p>string. Returned by <code>get_formula</code>.</p></td>
     </tr>
     <tr>
-      <th>par_x</th>
-      <td><p>String (default: NULL). Only relevant if no segments contains
-slope (no hint at what x is). Set this, e.g., par_x = "time".</p></td>
+      <th>nsegments</th>
+      <td><p>Positive integer. Number of segments, typically <code><a href='https://rdrr.io/r/base/nrow.html'>nrow(ST)</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>family</th>
+      <td><p>One of <code><a href='https://rdrr.io/r/stats/family.html'>gaussian()</a></code>, <code><a href='https://rdrr.io/r/stats/family.html'>binomial()</a></code>, <code><a href='bernoulli.html'>bernoulli()</a></code>, or <code>poission()</code>.
+Only default link functions are currently supported.</p></td>
     </tr>
     <tr>
       <th>par_trials</th>
@@ -244,25 +240,22 @@ slope (no hint at what x is). Set this, e.g., par_x = "time".</p></td>
       <td><p>List varying parameters. They will default to zero
 (optional for the user).</p></td>
     </tr>
-    <tr>
-      <th>nsegments</th>
-      <td><p>Positive integer. Number of segments, typically <code><a href='https://rdrr.io/r/base/nrow.html'>nrow(ST)</a></code>.</p></td>
-    </tr>
-    <tr>
-      <th>family</th>
-      <td><p>One of <code><a href='https://rdrr.io/r/stats/family.html'>gaussian()</a></code>, <code><a href='https://rdrr.io/r/stats/family.html'>binomial()</a></code>, <code><a href='bernoulli.html'>bernoulli()</a></code>, or <code>poission()</code>.
-Only default link functions are currently supported.</p></td>
-    </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>A string with R code for the fit$simulate() function corresponding to the model.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
+      <li><a href="#value">Value</a></li>
     </ul>
 
+    <h2>Author</h2>
+    <p>Jonas Kristoffer Lindeløv <a href='mailto:jonas@lindeloev.dk'>jonas@lindeloev.dk</a></p>
   </div>
 </div>
 

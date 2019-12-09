@@ -57,11 +57,13 @@ library(mcp)
  * Flexible hypothesis testing using `loo` and `hypothesis`, including testing the existence of a change point. Most other packages stop at estimation, though some provide p-values. Read more about [hypothesis testing and model comparison](../docs/articles/comparison.html) using `mcp`.
 
 
-# Where mcp is (currently) inferior
+# Recommendation
 
- * *Speed*: While `mcp` is reasonably fast for typical problems, mcmc sampling is slower than analytical and specialized solutions. For datasets > 20.000 points and a complicated model, it may take `mcp` hours (but not days) to fit. See [tips and tricks](../articles/tips.html) how to speed up `mcp`. Briefly, run in parallel and lower the number of iterations: (`mcp(..., cores = 4, iter = 1000, adapt = 400`).
- * *Automatic detection of change points*: most packages does automatic change point detection. This is not a space that `mcp` tries to fill so use the other packages here. But beware that many of the automatic procedures did not capture a change point in the worked examples below.
- * *Multivariate*: `mcp` only does univariate regression, both for $y$ and $x$. This will be implemented if there is a popular request for it. Don't hesitate to raise an issue on GitHub.
+Let me go all-out on my ego-serving bias and say that `mcp` is the best package *unless:*
+
+ * *You have a lot of data and limited time*: While `mcp` is reasonably fast for typical problems, MCMC sampling is slower than analytical and specialized solutions. For datasets > 20.000 points and a complicated model, it may take `mcp` hours (but not days) to fit. See [tips and tricks](../articles/tips.html) how to speed up `mcp`. Briefly, run in parallel and lower the number of iterations: (`mcp(..., cores = 4, iter = 1000, adapt = 400`).
+ * *You want to automatically detect a large number of change points*: Most packages does automatic change point detection. This is not a space that `mcp` tries to fill. But beware that many of the automatic procedures did not capture a change point in the worked examples below. If recommend `segmented` for the models it "understands" followed by `EnvCpt` and perhaps `bcp`.
+ * *Multivariate*: `mcp` only does univariate regression, both for $y$ and $x$. This will be implemented if there is a popular request for it. Don't hesitate to raise an issue on GitHub. For now, `bcp` seems like the best option to me.
 
 
 
@@ -184,6 +186,23 @@ loo::loo_compare(fit_mcp$loo, fit_mcp_1$loo)
 
 
 While `segmented` prefers the one-change-point model, `mcp` prefers the (true) two-change-point model. Again, the models compared here are *very* different since `segmented` does inference on a slope-only model.
+
+
+
+# breakpoints
+`strucchange::breakpoints()` is a lot like `segmented`. The difference is that (1) it is limited to gaussian residuals, and (2) it actually models intercepts, quadratic terms, etc. It scans through fits with 1, 2, 3,... N break points and determine where the optimal break points between this number of segments would lie. For each model it computes the Residual Sum of Squares (RSS; monotonically smaller with increasing N) and the Bayesian Information Criterion (BIC; has a minimum) for each N. It selects the model with the smallest BIC.
+
+For an intercept-only model (`y ~ 1`) it correctly detects the two change points with estimates similar to `mcp`. As with most other packages, there are no intervals on the change points nor estimates of the parameters of the segments in between.
+
+```{r}
+library(strucchange)
+fit_bp = breakpoints(y ~ 1, data = data, breaks = 2)
+summary(fit_bp)
+```
+
+Reassuringly, for `y ~ 1 + x` it "recommends" the same single change point that `segmented` found for this model.
+
+
 
 
 

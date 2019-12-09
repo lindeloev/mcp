@@ -134,10 +134,15 @@ truncate_prior_cp = function(ST, i, prior_str) {
 #'
 #' @aliases get_prior
 #' @keywords internal
+#' @inheritParams mcp
 #' @param ST Tibble. A segment table returned by `get_segment_table`.
 #' @param prior A list of user-defined priors. Will overwrite the relevant
 #'   default priors.
-#' @inheritParams mcp
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @return A named list of strings. The names correspond to the parameter names
+#'   and the strings are the JAGS code for the prior (before converting SD to
+#'   precision).
 #'
 
 get_prior = function(ST, family, prior = list()) {

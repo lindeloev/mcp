@@ -3,6 +3,14 @@
 #' @keywords internal
 #' @inheritParams unpack_rhs
 #' @param segment A formula
+#' @return A one-row tibble with columns:
+#'   * `form`: String. The full formula for this segment.
+#'   * `form_y`: String. The expression for y (without tilde)
+#'   * `form_cp`: String. The formula for the change point
+#'   * `form_rhs`: String. The formula for the right-hand side
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
 unpack_tildes = function(segment, i) {
   has_LHS = attributes(stats::terms(segment))$response == 1
   if (!has_LHS & i == 1) {
@@ -52,9 +60,12 @@ unpack_tildes = function(segment, i) {
 #' @keywords internal
 #' @inheritParams unpack_rhs
 #' @param form Character representation of formula
+#' @return NULL
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
 check_terms_in_data = function(form, data, i) {
   found = all.vars(form) %in% colnames(data)
-  found = found[stringr::str_starts(found, "sigma")]  # Sigma need not be in data
   if (!all(found))
     stop("Error in segment ", i, ": Term '", paste0(all.vars(form)[!found], collapse="' and '"), "' found in formula but not in data.")
 }
@@ -66,6 +77,12 @@ check_terms_in_data = function(form, data, i) {
 #' @keywords internal
 #' @inheritParams unpack_rhs
 #' @param form_y Character representation of formula
+#' @return A one-row tibble with the columns
+#'   * `y`: string. The y variable name.
+#'   * `trials`: string. The trials variable name.
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
 unpack_y = function(form_y, i, family) {
   # If NA and not segment 1, just return empty
   if (is.na(form_y)) {
@@ -120,6 +137,13 @@ unpack_y = function(form_y, i, family) {
 #' @keywords internal
 #' @inheritParams unpack_rhs
 #' @param form_cp Segment formula as string.
+#' @return A one-row tibble with columns:
+#'   * `cp_int`: bool. Whether there is an intercept change in the change point.
+#'   * `cp_in_rel`: bool. Is this intercept change relative?
+#'   * `cp_ran_int`: bool or NA. Is there a random intercept on the change point?
+#'   * `cp_group_col`: char or NA. Which column in data define the random intercept?
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 unpack_cp = function(form_cp, i) {
   if (is.na(form_cp)) {
     return(tibble::tibble(
@@ -129,24 +153,26 @@ unpack_cp = function(form_cp, i) {
       cp_group_col = NA
     ))
   }
-  form_cp = as.formula(form_cp)
+  form_cp = stats::as.formula(form_cp)
 
   # Varying effects
-  varying = findbars(form_cp)
-  if (!is.null(varying)) {
-    if (length(varying) > 1)
+  form_varying = remove_terms(form_cp, "population")
+
+  if (!is.null(form_varying)) {
+    varying_terms = attr(stats::terms(form_varying), "term.labels")
+    if (length(varying_terms) > 1)
       stop("Error in segment", i, " (change point): only one varying effect allowed. Found ", form_cp)
 
-    varying_parts = as.character(varying[[1]])
-    if (!varying_parts[2] %in% "1")
+    varying_parts = strsplit(gsub(" ", "", varying_terms), "\\|")[[1]]
+    if (!varying_parts[1] == "1")
       stop("Error in segment ", i, " (change point): Only plain intercepts are allowed in varying effects, e.g., (1|id).", i)
 
     if (!grepl("^[A-Za-z._0-9]+$", varying_parts[2]))
-      stop("Error in segment ", i, " (change point): Grouping variable in varying effects.")
+      stop("Error in segment ", i, " (change point): invalid format of grouping variable in varying effects. Got: ", varying_parts[2])
   }
 
   # Fixed effects
-  attrs = attributes(stats::terms(nobars(form_cp)))
+  attrs = attributes(stats::terms(remove_terms(form_cp, "varying")))
   is_int_rel = attrs$term.labels == "rel(1)"
   if (any(is_int_rel))
     attrs$term.labels = attrs$term.labels[-is_int_rel]  # code as no term
@@ -154,17 +180,17 @@ unpack_cp = function(form_cp, i) {
   if (length(attrs$term.labels) > 0)
     stop("Error in segment ", i, " (change point): Only intercepts (1 or rel(1)) are allowed in population-level effects.")
 
-  if (is.null(varying) & attrs$intercept == 0)
+  if (is.null(form_varying) & attrs$intercept == 0)
     stop("Error in segment ", i, " (change point): no intercept or varying effect. You can do e.g., ~ 1 or ~ (1 |id).")
 
   # Return as list.
-  if (!is.null(varying)) {
+  if (!is.null(form_varying)) {
     # If there is a varying effect
     return(tibble::tibble(
       cp_int = attrs$intercept == 1,
       cp_int_rel = any(is_int_rel),  # the intercept is relative
-      cp_ran_int = ifelse(varying_parts[2] == "1", TRUE, NA),  # placeholder for later
-      cp_group_col = varying_parts[3]
+      cp_ran_int = ifelse(varying_parts[1] == "1", TRUE, NA),  # placeholder for later
+      cp_group_col = varying_parts[2]
     ))
   } else {
     # If there is no varying effect
@@ -191,10 +217,17 @@ unpack_cp = function(form_cp, i) {
 #' @param family An mcpfamily object returned by `get_family()`.
 #' @param data A data.frame or tibble
 #' @param last_segment The last row in the segment table, made in `get_segment_table()`
+#' @return A one-row tibble with three columns for each of `ct`. `sigma`, `ar`, and `ma`:
+#'   * `_int`: NA or a one-row tibble describing the intercept.
+#'   * `_slope`: NA or a tibble with a row for each slope term.
+#'   * `_code`: NA or a char with the JAGS/R code to implement the slope.
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
 unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   # Get general format
-  form_rhs = formula(form_rhs)
-  attrs = attributes(stats::terms(nobars(form_rhs)))
+  form_rhs = stats::as.formula(form_rhs)
+  attrs = attributes(stats::terms(remove_terms(form_rhs, "varying")))
   term.labels = attrs$term.labels
 
 
@@ -324,20 +357,6 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   ct_slope = unpack_slope(ct_form, i, "ct", last_segment$ct_slope[[1]])
 
 
-
-  ###################
-  # VARYING EFFECTS #
-  ###################
-  # ct_varying_terms = as.character(findbars(form_rhs))
-  # if (length(ct_varying_terms) > 0) {
-  #   ct_varying = lapply(ct_varying_terms, unpack_varying_term, i = i) %>%
-  #     dplyr::bind_rows()
-  # } else {
-  #   ct_varying = NA
-  # }
-
-
-
   #################
   # EXTRACT PAR_X #
   #################
@@ -390,6 +409,10 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
 #' @aliases get_term_content
 #' @keywords internal
 #' @param term E.g., "ct(1 + x)", "sigma(0 + rel(x) + I(x^2))", etc.
+#' @return char formula with the content inside the brackets.
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
 get_term_content = function(term) {
   # Handle cases of no input or several inputs
   if (length(term) == 0) {
@@ -403,7 +426,7 @@ get_term_content = function(term) {
     content_end = stringr::str_length(term) - 1  # Location of last character in contents
     content = substr(term, content_start, content_end)
 
-    form = as.formula(paste0("~", content), env = globalenv())
+    form = stats::as.formula(paste0("~", content), env = globalenv())
     return(form)
   }
 }
@@ -414,6 +437,9 @@ get_term_content = function(term) {
 #' @aliases unpack_int
 #' @keywords internal
 #' @inheritParams unpack_slope
+#' @return A one-row tibble describing the intercept.
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 unpack_int = function(form, i, ttype) {
   # It there is no formula for this, return NA and don't go further
   if (!rlang::is_formula(form)) {
@@ -421,7 +447,7 @@ unpack_int = function(form, i, ttype) {
   }
 
   # Got a formula... continue
-  attrs = attributes(stats::terms(nobars(form)))
+  attrs = attributes(stats::terms(remove_terms(form, "varying")))
   int_rel = attrs$term.labels == "rel(1)"
 
   if (any(int_rel) == TRUE & i == 1)
@@ -453,6 +479,10 @@ unpack_int = function(form, i, ttype) {
 #'   or "ar" (autoregressive)
 #' @param last_slope The element in the slope column for this ttype in the previous
 #'   segment. I.e., probably what this function returned last time it was called!
+#' @return A "one-row" list with code (char) and a tibble of slopes.
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
 unpack_slope = function(form, i, ttype, last_slope) {
   # If there is no formula information, return NA
   if (!rlang::is_formula(form)) {
@@ -463,7 +493,7 @@ unpack_slope = function(form, i, ttype, last_slope) {
   }
 
   # Get a list of terms as strings
-  attrs = attributes(stats::terms(nobars(form)))
+  attrs = attributes(stats::terms(remove_terms(form, "varying")))
   term.labels = attrs$term.labels[attrs$term.labels != "rel(1)"]
 
   # Population-level slopes
@@ -502,6 +532,10 @@ unpack_slope = function(form, i, ttype, last_slope) {
 #' @keywords internal
 #' @inheritParams unpack_slope
 #' @param term A character, e.g., "x", "I(x^2)", or "log(x)".
+#' @return A "one-row" list describing a slope term.
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
 unpack_slope_term = function(term, i, last_slope, ttype = "") {
   # Remove the "rel()" and "I()" in that order. Must be done before checking starts.
   if (stringr::str_starts(term, "rel\\(")) {
@@ -585,6 +619,9 @@ unpack_slope_term = function(term, i, last_slope, ttype = "") {
 #' @keywords internal
 #' @param form_str_in A character. These are allowed: "ar(number)" or "ar(number, formula)"
 #' @return A list with $order and $form_str (e.g., "ar(formula)"). The formula is ar(1) or ma(1) if no formula is given
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
 unpack_arma = function(form_str_in) {
   if (length(form_str_in) == 0) {
     return(list(
@@ -631,6 +668,10 @@ unpack_arma = function(form_str_in) {
 #' @aliases unpack_varying_term
 #' @keywords internal
 #' @inheritParams unpack_slope_term
+#' @return A "one-row" list describing a varying intercept.
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
 unpack_varying_term = function(term, i) {
   parts = stringr::str_trim(strsplit(term, "\\|")[[1]])  # as c("lhs", "group")
 
@@ -667,19 +708,18 @@ unpack_varying_term = function(term, i) {
 #' @aliases get_segment_table
 #' @keywords internal
 #' @inheritParams mcp
-#' @return A tibble.
+#' @return A tibble with one row describing each segment and the corresponding code.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @importFrom magrittr %>%
 #' @importFrom stats gaussian binomial
 #' @export
 #' @examples
-#' \dontrun{
 #' segments = list(
 #'   y ~ 1 + x,
-#'   ~ 1
+#'   1 + (1|id) ~ 1
 #' )
 #' get_segment_table(segments)
-#' }
 
 get_segment_table = function(segments, data = NULL, family = gaussian(), par_x = NULL) {
   #####################################################
@@ -762,15 +802,10 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
 
   # Check data types
   if (!is.null(data)) {
-    # Convert to data.frame. Makes it easier to test column types.
-    # Tibble will still be used in the rest of mcp
-    if (tibble::is_tibble(data))
-      data = data.frame(data)
-
     # Check x and y
-    if (!is.numeric(dplyr::pull(data, ST$x[1])))
+    if (!is.numeric(data[, ST$x[1]]))
       stop("Data column '", ST$x[1], "' has to be numeric.")
-    if (!is.numeric(dplyr::pull(data, ST$y[1])))
+    if (!is.numeric(data[, ST$y[1]]))
       stop("Data column '", ST$y[1], "' has to be numeric.")
 
     # Check varying
@@ -830,11 +865,15 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
 
 #' Cumulative pasting of character columns
 #'
-#' Inspired by https://stackoverflow.com/questions/24862046/cumulatively-paste-concatenate-values-grouped-by-another-variable
 #' @aliases cumpaste
 #' @keywords internal
 #' @param x A column
 #' @param .sep A character to append between pastes
+#' @return string.
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk} but Inspired by
+#'   https://stackoverflow.com/questions/24862046/cumulatively-paste-concatenate-values-grouped-by-another-variable
+#'
 cumpaste = function(x, .sep = " ")
   Reduce(function(x1, x2) paste(x1, x2, sep = .sep), x, accumulate = TRUE)
 
@@ -850,6 +889,10 @@ cumpaste = function(x, .sep = " ")
 #' @keywords internal
 #' @param col A column
 #' @param na_col If this column is NA, return NA
+#' @return string
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
 format_code = function(col, na_col) {
   # Replace with NA
   col = ifelse(is.na(na_col), NA, col)

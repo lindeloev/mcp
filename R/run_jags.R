@@ -11,11 +11,9 @@
 #' @param ST A segment table (tibble), returned by `get_segment_table`.
 #'   Only really used when the model contains varying effects.
 #' @return `mcmc.list``
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @examples
-#' \dontrun{
-#' run_jags(data, model, params)
-#'}
+#'
 
 run_jags = function(data,
                     jags_code,
@@ -82,7 +80,7 @@ run_jags = function(data,
 
   } else if (cores == "all" | cores > 1) {
     # PARALLEL using the future package and one chain per worker
-    cat("Parallel sampling in progress...\n")
+    message("Parallel sampling in progress...")
     future::plan(future::multiprocess, .skip = TRUE)
     samples = future.apply::future_lapply(
       1:n.chains,
@@ -108,7 +106,7 @@ run_jags = function(data,
 
     # Return
     passed = proc.time() - timer
-    cat("Finished sampling in", passed["elapsed"], "seconds\n")
+    message("Finished sampling in ", round(passed["elapsed"], 1), " seconds\n")
     return(samples)
 
   } else {
@@ -119,7 +117,7 @@ run_jags = function(data,
 }
 
 
-#' Adds helper variables for use in `{run_jags}
+#' Adds helper variables for use in `run_jags`
 #'
 #' Returns the relevant data columns as a list and add elements with unique
 #' varying group levels.
@@ -140,7 +138,7 @@ get_jags_data = function(data, ST, jags_code, sample) {
   for (col in cols_varying) {
     # Add meta-data (now many varying group levels)
     tmp = paste0("n_unique_", col)
-    jags_data[[tmp]] = length(unique(dplyr::pull(data, col)))
+    jags_data[[tmp]] = length(unique(data[, col]))
 
     # Make varying columns numeic in order of appearance
     # They will be recovered using the recover_levels()
@@ -158,7 +156,8 @@ get_jags_data = function(data, ST, jags_code, sample) {
       constant_name = toupper(paste0(func, xy_var))
       if (stringr::str_detect(jags_code, constant_name)) {
         func_eval = eval(parse(text = func))  # as real function
-        jags_data[[constant_name]] = func_eval(dplyr::pull(data, ST[, xy_var][[1]][1]), na.rm = TRUE)
+        column = ST[, xy_var][[1]][1]
+        jags_data[[constant_name]] = func_eval(data[, column], na.rm = TRUE)
       }
     }
   }
@@ -188,7 +187,7 @@ get_jags_data = function(data, ST, jags_code, sample) {
 recover_levels = function(samples, data, mcmc_col, data_col) {
   # Get vectors of old ("from") and replacement column names in samples
   from = colnames(samples[[1]])[stringr::str_starts(colnames(samples[[1]]), paste0(mcmc_col, '\\['))]  # Current column names
-  to = sprintf(paste0(mcmc_col, '[%s]'), unique(dplyr::pull(data, data_col)))  # Desired column names
+  to = sprintf(paste0(mcmc_col, '[%s]'), unique(data[, data_col]))  # Desired column names
 
   # Recode column names on each list (chain) using lapply
   names(to) = from

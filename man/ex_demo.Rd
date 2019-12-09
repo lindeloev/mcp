@@ -18,4 +18,7 @@ See how this data was simulated
 using \code{fit$simulate()}, including which parameters were used. See an analysis
 \href{https://lindeloev.github.io/mcp/}{here}.
 }
+\details{
+The \code{ex_fit} object is fitted to this dataset.
+}
 \keyword{datasets}

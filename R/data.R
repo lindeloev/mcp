@@ -36,6 +36,8 @@
 #' using `fit$simulate()`, including which parameters were used. See an analysis
 #' [here](https://lindeloev.github.io/mcp/).
 #'
+#' The `ex_fit` object is fitted to this dataset.
+#'
 #' @format A data frame with 100 rows and 2 variables:
 #' \describe{
 #'   \item{time}{The x-axis.}
@@ -134,3 +136,10 @@
 #'   \item{id_numeric}{The participant id (numeric).}
 #' }
 "ex_varying"
+
+
+#' Example fit of the ex_demo dataset
+#'
+#' @format An \code{\link{mcpfit}} object.
+#'
+"ex_fit"

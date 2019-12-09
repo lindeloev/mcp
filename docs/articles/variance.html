@@ -155,7 +155,7 @@
       <h1>Modeling variance and variance changes in mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-12-02</h4>
+            <h4 class="date">2019-12-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/variance.Rmd"><code>vignettes/variance.Rmd</code></a></small>
       <div class="hidden name"><code>variance.Rmd</code></div>
@@ -189,7 +189,7 @@
 <p>We plot the results with the prediction interval to show the effect of the variance, since it won’t be immediately obvious on the default plot of the fitted mean predictions:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">quantiles =</span> <span class="ot">TRUE</span>, <span class="dt">quantiles_type =</span> <span class="st">"predict"</span>)</a></code></pre></div>
 <p><img src="variance_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
-<p>We can see all parameters are well recovered. Like the other parameters, the <code>sigma</code>s are named after the segment where they were instantiated. There will always be a <code>sigma_1</code>.</p>
+<p>We can see all parameters are well recovered (compare <code>sim</code> to <code>mean</code>). Like the other parameters, the <code>sigma</code>s are named after the segment where they were instantiated. There will always be a <code>sigma_1</code>.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw"><a href="../reference/summary.mcpfit.html">summary</a></span>(fit)</a></code></pre></div>
 <pre><code>## Family: gaussian(link = 'identity')
 ## Iterations: 9000 from 3 chains.
@@ -198,11 +198,11 @@
 ##   2: y ~ 1 ~ 0 + sigma(1)
 ## 
 ## Population-level parameters:
-##     name  mean lower upper Rhat n.eff  ts_se
-##     cp_1 49.80 46.05 54.48    1  1635 17.224
-##    int_1 20.36 18.92 21.92    1  4987  0.976
-##  sigma_1  5.58  4.46  6.78    1  3373  0.975
-##  sigma_2 19.04 15.55 22.73    1  4859  6.339</code></pre>
+##     name match sim mean lower upper Rhat n.eff ts_se
+##     cp_1    OK  50 49.7  46.0  54.4    1  1651 18.18
+##    int_1    OK  20 20.4  18.9  22.0    1  4662  1.03
+##  sigma_1    OK   5  5.6   4.5   6.8    1  3384  0.91
+##  sigma_2    OK  20 19.1  15.6  23.2    1  4394  7.02</code></pre>
 </div>
 <div id="advanced-example" class="section level1">
 <h1 class="hasAnchor">
@@ -256,11 +256,14 @@
 <a href="#fit-it-and-inspect-results" class="anchor"></a>Fit it and inspect results</h2>
 <p>Fit it in parallel, to speed things up:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1">fit =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, prior)</a></code></pre></div>
-<p>Plotting the prediction interval is the easiest way to to see how the variance is estimated:</p>
+<p>Plotting the prediction interval is an intuitive way to to see how the variance is estimated:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">quantiles =</span> <span class="ot">TRUE</span>, <span class="dt">quantiles_type =</span> <span class="st">"predict"</span>)</a></code></pre></div>
 <p><img src="variance_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
-<p>The parameters are well recovered. The last change point is estimated with greater uncertainty than the others. This is expected, given that the only “signal” of this change point is a stop in variance growth.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/summary.mcpfit.html">summary</a></span>(fit)</a></code></pre></div>
+<p>We can also plot the <code>sigma_</code> parameters directly. Now the y-axis is <code>sigma</code>:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">which_y =</span> <span class="st">"sigma"</span>, <span class="dt">quantiles =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
+<p><img src="variance_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
+<p><code><a href="../reference/summary.mcpfit.html">summary()</a></code> show that the parameters are well recovered (compare <code>sim</code> to <code>mean</code>). The last change point is estimated with greater uncertainty than the others. This is expected, given that the only “signal” of this change point is a stop in variance growth.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw"><a href="../reference/summary.mcpfit.html">summary</a></span>(fit)</a></code></pre></div>
 <pre><code>## Family: gaussian(link = 'identity')
 ## Iterations: 9000 from 3 chains.
 ## Segments:
@@ -270,22 +273,22 @@
 ##   4: y ~ 1 ~ 0 + x
 ## 
 ## Population-level parameters:
-##          name     mean     lower    upper Rhat n.eff    ts_se
-##          cp_1  49.8089  49.00034  51.3913    1  2214 2.54e+00
-##          cp_2 100.0181  93.88676 105.8795    1   534 1.35e+02
-##          cp_3 162.5579 143.95541 181.7464    1   203 3.25e+03
-##         int_1 -20.4126 -23.71776 -17.5019    1  4829 4.75e+00
-##         int_2   1.3673  -1.34319   4.0197    1  1233 9.61e+00
-##       sigma_1   3.4714   0.40540   7.1746    1  1067 2.45e+01
-##       sigma_2   9.6211   8.01787  11.4609    1  1498 4.87e+00
-##     sigma_x_1   0.5394   0.33699   0.7434    1  1309 6.11e-02
-##     sigma_x_3  -0.2300  -0.66328   0.1095    1   111 2.89e+00
-##  sigma_x_3_E2   0.0129   0.00346   0.0268    1    79 4.48e-03
-##           x_3   0.9339   0.77564   1.1037    1  1103 5.06e-02
-##           x_4   0.9339   0.77564   1.1037    1  1103 5.06e-02</code></pre>
+##          name match    sim    mean    lower   upper Rhat n.eff   ts_se
+##          cp_1    OK  50.00  49.823  49.0000  51.215    1  2043 2.1e+00
+##          cp_2    OK 100.00  99.549  93.5031 105.553    1   582 1.2e+02
+##          cp_3    OK 150.00 163.101 146.8970 180.661    1   425 1.5e+03
+##         int_1    OK -20.00 -20.454 -23.5188 -17.479    1  5203 3.9e+00
+##         int_2    OK   0.00   1.294  -1.3426   4.182    1  1599 1.1e+01
+##       sigma_1    OK   3.00   3.456   0.4997   7.115    1  1205 2.6e+01
+##       sigma_2    OK  10.00   9.602   7.9262  11.382    1  1968 3.5e+00
+##     sigma_x_1    OK   0.50   0.539   0.3382   0.751    1  1569 7.0e-02
+##     sigma_x_3    OK  -0.50  -0.220  -0.5608   0.090    1   246 1.0e+00
+##  sigma_x_3_E2    OK   0.02   0.012   0.0042   0.023    1   162 1.4e-03
+##           x_3    OK   1.00   0.922   0.7608   1.085    1  1176 5.2e-02
+##           x_4    OK   1.00   0.922   0.7608   1.085    1  1176 5.2e-02</code></pre>
 <p>The effective sample size (<code>n.eff</code>) is fairly low, indicating poor mixing for these parameters. <code>Rhat</code> is acceptable at &lt; 1.1, indicating good convergence between chains. Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit, <span class="dt">regex_pars =</span> <span class="st">"sigma_"</span>)</a></code></pre></div>
-<p><img src="variance_files/figure-html/unnamed-chunk-11-1.png" width="576"></p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit, <span class="dt">regex_pars =</span> <span class="st">"sigma_"</span>)</a></code></pre></div>
+<p><img src="variance_files/figure-html/unnamed-chunk-12-1.png" width="576"></p>
 <p>This confirms the impression from <code>Rhat</code> and <code>n.eff</code>. Setting <code><a href="../reference/mcp.html">mcp(..., iter = 10000)</a></code> would be advisable to increase the effective sample size. Read more about <a href="../articles/tips.html">tips, tricks, and debugging</a>.</p>
 </div>
 </div>
@@ -293,38 +296,45 @@
 <h1 class="hasAnchor">
 <a href="#varying-change-points-and-variance" class="anchor"></a>Varying change points and variance</h1>
 <p>The variance model applies to varying change points as well. For example, here we do a spin on the example in <a href="../articles/varying.html">the article on varying change points</a>, and add a by-person change in <code>sigma</code>. We model two joined slopes, varying by <code>id</code>. The second slope is also characterized by a different variance. This means that the model has more information about when the change point occurs, so it should be easier to estimate (require fewer data).</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb14-2" title="2">  <span class="co"># intercept + slope</span></a>
-<a class="sourceLine" id="cb14-3" title="3">  y <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x,</a>
-<a class="sourceLine" id="cb14-4" title="4">  </a>
-<a class="sourceLine" id="cb14-5" title="5">  <span class="co"># joined slope and increase in variance, varying by id.</span></a>
-<a class="sourceLine" id="cb14-6" title="6">  <span class="dv">1</span> <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span><span class="op">|</span>id) <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>x <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/sigma.html">sigma</a></span>(<span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb14-7" title="7">)</a></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
+<a class="sourceLine" id="cb15-2" title="2">  <span class="co"># intercept + slope</span></a>
+<a class="sourceLine" id="cb15-3" title="3">  y <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x,</a>
+<a class="sourceLine" id="cb15-4" title="4">  </a>
+<a class="sourceLine" id="cb15-5" title="5">  <span class="co"># joined slope and increase in variance, varying by id.</span></a>
+<a class="sourceLine" id="cb15-6" title="6">  <span class="dv">1</span> <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span><span class="op">|</span>id) <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>x <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/sigma.html">sigma</a></span>(<span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb15-7" title="7">)</a></code></pre></div>
 <p>Simulate data:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1">empty =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb15-2" title="2"><span class="kw"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="dv">40</span>)</a>
-<a class="sourceLine" id="cb15-3" title="3">data =<span class="st"> </span>tibble<span class="op">::</span><span class="kw"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span>(</a>
-<a class="sourceLine" id="cb15-4" title="4">    <span class="dt">x =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">180</span>,</a>
-<a class="sourceLine" id="cb15-5" title="5">    <span class="dt">id =</span> <span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">6</span>, <span class="dt">times =</span> <span class="dv">30</span>),</a>
-<a class="sourceLine" id="cb15-6" title="6">    <span class="dt">y =</span> empty<span class="op">$</span><span class="kw"><a href="https://rdrr.io/r/stats/simulate.html">simulate</a></span>(x, </a>
-<a class="sourceLine" id="cb15-7" title="7">          <span class="dt">cp_1 =</span> <span class="dv">70</span>, <span class="dt">cp_1_id =</span> <span class="dv">15</span> <span class="op">*</span><span class="st"> </span>(id <span class="op">-</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/mean.html">mean</a></span>(id)),</a>
-<a class="sourceLine" id="cb15-8" title="8">          <span class="dt">int_1 =</span> <span class="dv">20</span>, <span class="dt">x_1 =</span> <span class="dv">1</span>, <span class="dt">x_2 =</span> <span class="fl">-0.5</span>,</a>
-<a class="sourceLine" id="cb15-9" title="9">          <span class="dt">sigma_1 =</span> <span class="dv">10</span>, <span class="dt">sigma_2 =</span> <span class="dv">25</span>)</a>
-<a class="sourceLine" id="cb15-10" title="10">)</a></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">empty =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb16-2" title="2"><span class="kw"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="dv">40</span>)</a>
+<a class="sourceLine" id="cb16-3" title="3">data =<span class="st"> </span>tibble<span class="op">::</span><span class="kw"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span>(</a>
+<a class="sourceLine" id="cb16-4" title="4">    <span class="dt">x =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">180</span>,</a>
+<a class="sourceLine" id="cb16-5" title="5">    <span class="dt">id =</span> <span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">6</span>, <span class="dt">times =</span> <span class="dv">30</span>),</a>
+<a class="sourceLine" id="cb16-6" title="6">    <span class="dt">y =</span> empty<span class="op">$</span><span class="kw"><a href="https://rdrr.io/r/stats/simulate.html">simulate</a></span>(x, </a>
+<a class="sourceLine" id="cb16-7" title="7">          <span class="dt">cp_1 =</span> <span class="dv">70</span>, <span class="dt">cp_1_id =</span> <span class="dv">15</span> <span class="op">*</span><span class="st"> </span>(id <span class="op">-</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/mean.html">mean</a></span>(id)),</a>
+<a class="sourceLine" id="cb16-8" title="8">          <span class="dt">int_1 =</span> <span class="dv">20</span>, <span class="dt">x_1 =</span> <span class="dv">1</span>, <span class="dt">x_2 =</span> <span class="fl">-0.5</span>,</a>
+<a class="sourceLine" id="cb16-9" title="9">          <span class="dt">sigma_1 =</span> <span class="dv">10</span>, <span class="dt">sigma_2 =</span> <span class="dv">25</span>)</a>
+<a class="sourceLine" id="cb16-10" title="10">)</a></code></pre></div>
 <p>Fit it:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">fit =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data)</a></code></pre></div>
-<p>Plot it with 80% prediction intervals:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">facet_by =</span> <span class="st">"id"</span>, <span class="dt">quantiles =</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0.1</span>, <span class="fl">0.9</span>), <span class="dt">quantiles_type =</span> <span class="st">"predict"</span>)</a></code></pre></div>
-<p><img src="variance_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1">fit =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data)</a></code></pre></div>
+<p>Plot it:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">facet_by =</span> <span class="st">"id"</span>)</a></code></pre></div>
+<p><img src="variance_files/figure-html/unnamed-chunk-16-1.png" width="700"></p>
 <p>As usual, we can get the individual change points:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" title="1"><span class="kw"><a href="../reference/ranef.html">ranef</a></span>(fit)</a></code></pre></div>
-<pre><code>##         name       mean      lower     upper      Rhat n.eff    ts_se
-## 1 cp_1_id[1] -36.803803 -43.029507 -31.56424 1.0043381  1901 36.53680
-## 2 cp_1_id[2] -16.417854 -22.898200 -10.12980 1.0006091  4513 20.18372
-## 3 cp_1_id[3]  -9.158917 -15.247428  -2.62044 1.0014506  3463 26.47360
-## 4 cp_1_id[4]   9.013984   3.375774  14.33297 0.9998304  3429 19.99447
-## 5 cp_1_id[5]  16.733774  10.796419  23.05572 1.0010856  3957 21.58368
-## 6 cp_1_id[6]  36.632817  29.991896  43.06718 1.0064578  1853 45.55852</code></pre>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" title="1"><span class="kw"><a href="../reference/summary.mcpfit.html">ranef</a></span>(fit)</a></code></pre></div>
+<pre><code>##         name match   sim       mean      lower     upper      Rhat n.eff
+## 1 cp_1_id[1]    OK -37.5 -36.859681 -42.877148 -31.62318 0.9999872  1768
+## 2 cp_1_id[2]    OK -22.5 -16.430448 -22.923185 -10.25851 1.0002571  3273
+## 3 cp_1_id[3]    OK  -7.5  -9.312304 -15.135545  -2.58490 1.0001002  3010
+## 4 cp_1_id[4]    OK   7.5   9.016219   3.362585  14.15751 1.0000767  3759
+## 5 cp_1_id[5]    OK  22.5  16.778545  10.200669  22.96448 0.9997575  4554
+## 6 cp_1_id[6]    OK  37.5  36.807670  30.223099  43.76378 1.0008379  2024
+##      ts_se
+## 1 29.84219
+## 2 28.37686
+## 3 26.13405
+## 4 18.06959
+## 5 20.58941
+## 6 44.50944</code></pre>
 </div>
   </div>
 

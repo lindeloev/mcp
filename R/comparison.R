@@ -1,31 +1,32 @@
 #' Compute information criteria for model comparison
 #'
-#' Takes a `mcpfit` as input and computes information criteria using loo or
+#' Takes an \code{\link{mcpfit}} as input and computes information criteria using loo or
 #' WAIC. Compare models using \code{\link[loo]{loo_compare}} and \code{\link[loo]{loo_model_weights}}.
 #' more in \code{\link[loo]{loo}}.
 #'
 #' @aliases criterion
-#' @param fit An mcpfit object.
+#' @param fit An \code{\link{mcpfit}} object.
 #' @param criterion One of `"loo"` (calls \code{\link[loo]{loo}}) or `"waic"` (calls \code{\link[loo]{waic}}).
 #' @param ... Further arguments passed to \code{\link[loo]{loo}}, e.g., `cores` or `save_psis`.
 #' @return a `loo` or `psis_loo` object.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
-#' \dontrun{
-#' # Compute loos
+#' \donttest{
+#' # Define two models and sample them
+#' # options(mc.cores = 3)  # Speed up sampling
+#' segments1 = list(y ~ 1 + x, ~ 1)
+#' segments2 = list(y ~ 1 + x)  # Without a change point
+#' fit1 = mcp(segments1, ex_plateaus)
+#' fit2 = mcp(segments2, ex_plateaus)
+#'
+#' # Compute LOO for each and compare (works for waic(fit) too)
 #' fit1$loo = loo(fit1)
 #' fit2$loo = loo(fit2)
-#' fit2$waic = waic(fit2)  # Just for fun
-#' fit1$loo  # view it
-#'
-#' # Compare loos. Top is best. Should be several SDs better than others.
 #' loo::loo_compare(fit1$loo, fit2$loo)
+#' }
 #'
-#' # Compute model weights. Higher weight is better. See help for details..
-#' loo::loo_model_weights(list(fit1$loo, fit2$loo))
-#'}
-
 criterion = function(fit, criterion = "loo", ...) {
   if (!class(fit) == "mcpfit")
     stop("class(fit) must be 'mcpfit'")
@@ -41,8 +42,6 @@ criterion = function(fit, criterion = "loo", ...) {
     # Compute relative effective sample size (for each loglik col)
     chain_id = rep(seq_along(fit$mcmc_post), each = nrow(fit$mcmc_post[[1]]))
     r_eff = loo::relative_eff(exp(loglik), chain_id)  # Likelihood = exp(log-likelihood)
-
-    # Add LOO
     return(loo::loo(loglik, r_eff = r_eff, ...))
   }
 
@@ -56,23 +55,25 @@ criterion = function(fit, criterion = "loo", ...) {
 
 #' @aliases loo LOO loo.mcpfit
 #' @describeIn criterion Computes loo on mcpfit objects
-#' @param x `mcpfit` object.
+#' @param x An \code{\link{mcpfit}} object.
 #' @seealso \link{criterion}
 #' @importFrom loo loo
 #' @export loo
 #' @export
+#'
 loo.mcpfit = function(x, ...) {
   criterion(x, "loo", ...)
 }
 
 #' @aliases waic WAIC waic.mcpfit
 #' @describeIn criterion Computes WAIC on mcpfit objects
-#' @param x `mcpfit` object.
+#' @param x An \code{\link{mcpfit}} object.
 #' @param ... Currently ignored
 #' @importFrom loo waic
 #' @seealso \link{criterion}
 #' @export waic
 #' @export
+#'
 waic.mcpfit = function(x, ...) {
   criterion(x, "waic")
 }
@@ -80,7 +81,7 @@ waic.mcpfit = function(x, ...) {
 
 #' Test hypotheses on mcp objects.
 #'
-#' This function is highly inspired by \code{\link[brms]{hypothesis}}. It returns
+#' This function is highly inspired by `brms::hypothesis()`. It returns
 #' posterior probabilities and Bayes Factors for flexible hypotheses involving
 #' model parameters. See the documentation below for the parameter `hypotheses`
 #' for examples of how to specify hypotheses, and [read worked examples on the mcp website](https://lindeloev.github.io/mcp/articles/comparison.html).
@@ -91,7 +92,8 @@ waic.mcpfit = function(x, ...) {
 #' `mcp(..., sample = "both")`.
 #'
 #' @aliases hypothesis hypothesis.mcpfit
-#' @param fit An mcpfit object
+#' @inheritParams summary.mcpfit
+#' @param fit An \code{\link{mcpfit}} object.
 #' @param hypotheses String representation of a logical test involving model parameters.
 #'   Takes R code that evaluates to TRUE or FALSE in a vectorized way.
 #'
@@ -122,8 +124,8 @@ waic.mcpfit = function(x, ...) {
 #'   * `"int_1 + int_2 = 0"`: Is the sum of two intercepts zero?
 #'   * ````"`cp_1_id[John]`/`cp_1_id[Erin]` = 2"````: is the varying change
 #'       point for John (which is relative to `cp_1``) double that of Erin?
-#' @param width Between 0 and 1. Width of the highest density interval.
 #' @return A data.frame with a row per hypothesis and the following columns:
+#'
 #'   * `hypothesis` is the hypothesis; often re-arranged to test against zero.
 #'   * `mean` is the posterior mean of the left-hand side of the hypothesis.
 #'   * `lower` is the lower bound of the (two-sided) highest-density interval of width `width`.
@@ -134,11 +136,13 @@ waic.mcpfit = function(x, ...) {
 #'   * `BF` Bayes Factor in favor  of the hypothesis.
 #'       For "=" it is the Savage-Dickey density ratio.
 #'       For directional hypotheses, it is p converted to odds.
+#'
 #' @importFrom dplyr .data
 #' @export
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-hypothesis = function(fit, hypotheses, width = 0.95) {
+hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
   # Loop through hypotheses and populate return_df
   return_df = data.frame()
   for (expression in hypotheses) {
@@ -250,6 +254,8 @@ hypothesis = function(fit, hypotheses, width = 0.95) {
 #' @param LHS Expression to compute posterior
 #' @param value What value to evaluate the density at
 #' @return A float
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 get_density = function(samples, LHS, value) {
   samples = tidybayes::tidy_draws(samples) %>%
