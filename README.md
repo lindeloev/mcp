@@ -53,7 +53,7 @@ plot(fit)
 ```
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo.png)
 
-Use `summary()` to summarise the posterior distribution as well as sampling diagnostics. They were [simulated with mcp](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R). A summary of simulated data include the "true" values in the column `sim` and an assessment of whether the true value is in the interval in `match`:
+Use `summary()` to summarise the posterior distribution as well as sampling diagnostics. They were [simulated with mcp](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R) so the summary include the "true" values in the column `sim` and the column `match` show whether this true value is within the interval:
 
 ```r
 summary(fit)
@@ -180,7 +180,7 @@ Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and 
 
 
 ## Two plateaus
-Find the single change point between two plateaus ([see how this data was simulated with mcp](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R))
+Find the single change point between two plateaus ([see how this data was simulated with mcp](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R)).
 
 ```r
 segments = list(
@@ -272,7 +272,7 @@ Population-level parameters:
   time_2    OK   0.5   0.517  4.85e-01   0.553 1.00   661  0.00405
 ```
 
-The fit plot shows the inferred autocorrelated nature (<span style="color:red">OBS: this is new in mcp 0.3</span>):
+The fit plot shows the inferred autocorrelated nature:
 
 ```r
 plot(fit_ar)
@@ -363,7 +363,7 @@ plot(fit)
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_fix_rel.png)
 
-Comparing the summary to the fitted lines in the plot, we can see that `int_2` and `x_2` are relative values. We also see that the "wrong" priors made it harder to recover the parameters used [to simulate this data]([see how this data was simulated with `mcp`](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_rel_prior.R) (`match` and `sim` columns):
+Comparing the summary to the fitted lines in the plot, we can see that `int_2` and `x_2` are relative values. We also see that the "wrong" priors made it harder to recover the parameters used [to simulate this data](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_rel_prior.R) (`match` and `sim` columns):
 
 ```r
 summary(fit)

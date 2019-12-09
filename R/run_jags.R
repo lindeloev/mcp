@@ -117,7 +117,7 @@ run_jags = function(data,
 }
 
 
-#' Adds helper variables for use in `{run_jags}
+#' Adds helper variables for use in `run_jags`
 #'
 #' Returns the relevant data columns as a list and add elements with unique
 #' varying group levels.

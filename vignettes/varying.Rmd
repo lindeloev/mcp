@@ -118,7 +118,7 @@ If you use `summary(fit)` (or `fixef(fit)`) you will get the posteriors for the 
 ranef(fit)
 ```
 
-Notice how well they are estimated to be 10 apart, indicating good recovery.
+Inspecting the `sim` and `match` columns, we see that they recovered the simulation parameters well.
 
 Good convergence is not always as obvious as in this example. While `plot_pars(fit)` show population-level parameters only, you can do this to get varying effects only:
 

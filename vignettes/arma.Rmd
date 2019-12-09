@@ -30,7 +30,7 @@ options(mc.cores = 3)  # Speed up sampling!
 We model this as a plateau (`1`)  with a second-order autoregressive residual (`ar(2)`) followed by a joined slope (`0 + time`) with a negative first-order autoregressive residual (`ar(1)`):
 
 
-```{r, cache = TRUE, results = FALSE}
+```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}
 segments = list(
   price ~ 1 + ar(2),  # int_1, ar1_1, ar2_1
   ~ 0 + time + ar(1)  # time_2, ar1_2
@@ -38,7 +38,7 @@ segments = list(
 fit = mcp(segments, ex_ar)
 ```
 
-Let's plot it (<span style="color:red">OBS: updated in `mcp` v0.3</span>) and we see that AR was strong in the first segment and weaker-but-negative in the second:
+Let's plot it and we see that AR was strong in the first segment and weaker-but-negative in the second:
 
 ```{r}
 plot(fit)
@@ -51,11 +51,11 @@ We can summarise the inferred coefficients:
 summary(fit)
 ```
 
-Note that he naming syntax for autoregressive intercepts is `ar[order]_[segment]`. For example, `ar1_2` is the first-order autoregressive coefficient in segment 2. For slopes it will be `ar[order]_[normal mcp name]`, e.g., `ar1_x_3` for a slope on AR(1) in segment 3. In the present dataset, the AR coefficients were simulated from `ar1_1 = 0.7`, `ar2_1 = 0.2`, and `ar1_2 = -0.4`, and these values are reasonably recovered.
+Note that he naming syntax for autoregressive intercepts is `ar[order]_[segment]`. For example, `ar1_2` is the first-order autoregressive coefficient in segment 2. For slopes it will be `ar[order]_[normal mcp name]`, e.g., `ar1_x_3` for a slope on AR(1) in segment 3. 
 
-In fact, the posterior mean is almost always exactly the same as `arima(data, order = c(N, 0, 0))` (see below) , so the non-perfect fits are due to randomness in the simulation - not in the fit.
+Comparing the columns `mean` and `sim` we see that the AR coefficients are reasonably recovered. In fact, the posterior mean is almost always exactly the same as `arima(data, order = c(N, 0, 0))` (see below), so the non-perfect fits are due to randomness in the simulation - not in the fit.
 
-Notice that `sigma` in AR models describe *innovations*, i.e., the part of the residuals that are not explained by the autoregressive coefficients. `sd(ex_ar$price)` is always higher. In this case, it is `r sd(ex_ar$price)`. As always, it is good to assess posteriors and convergence more directly:
+Notice that `sigma` in AR models describe *innovations*, i.e., the part of the residuals that are not explained by the autoregressive coefficients. `sd(ex_ar$price)` is always higher. In this case, the SD of raw data in the plateau is `r round(sd(ex_ar$price[1:120]), 2)`. As always, it is good to assess posteriors and convergence more directly:
 
 ```{r, fig.height=9, fig.width=8}
 plot_pars(fit)
@@ -124,7 +124,7 @@ arima(data$response, order = c(3, 0, 0))
 ```
 OK, we can see that the `ar` coefficients and sigma ($sigma = sqrt(sigma^2)$) is simulated correctly, if taking `arima()` as ground truth. Inferring with `mcp` is straightforward:
 
-```{r, cache = TRUE, results = FALSE}
+```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}
 fit = mcp(segments, data, par_x = "time")
 ```
 
@@ -138,7 +138,7 @@ fixef(fit)
 # Inferring an autocorrelation-only change
 One "side-effect" of the `mcp` implementation of autocorrelation using `ar()` *in the formulas* is that you can infer when autocorrelation parameters and structures change. 
 
-Let's simulate a change point in autocorrelation and see if we can infer it later (<span style="color:red">OBS: this is new in `mcp` v0.3</span>):
+Let's simulate a change point in autocorrelation and see if we can infer it later:
 
 ```{r}
 # The model
@@ -162,7 +162,7 @@ data = tibble::tibble(
 
 ... and we use a prior to equate the slopes of each segment (read more about [using priors](../articles/priors.html) to equate parameters and define constants). Now let's see if we can recover these parameters. We use `sample = "both"` because we will do a Savage-Dickey test later.
 
-```{r, cache = TRUE, results=FALSE}
+```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
 prior = list(x_2 = "x_1")  # Set the two slopes equal
 fit = mcp(segments, data, prior, sample = "both")
 ```

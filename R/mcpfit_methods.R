@@ -174,7 +174,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #'
 #' @return A data frame with parameter estimates and MCMC diagnostics.
 #'   OBS: The change point distributions are often not unimodal and symmetric so
-#'   the intervals can be decieving. Plot them using `plot_pars(fit)`.
+#'   the intervals can be deceiving Plot them using `plot_pars(fit)`.
 #'
 #'   * `mean` is the posterior mean
 #'   * `lower` is the lower quantile of the highest-density interval (HDI) given in `width`.
