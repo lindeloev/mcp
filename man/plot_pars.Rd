@@ -68,6 +68,7 @@ plot_pars(ex_fit, regex_pars = "^cp_")  # Plot only change points
 plot_pars(ex_fit, pars = c("int_3", "time_3"))  # Plot these parameters
 plot_pars(ex_fit, type = c("trace", "violin"))  # Combine plots
 
+\dontrun{
 # Some plots only take pairs. hex is good to assess identifiability
 plot_pars(ex_fit, type = "hex", pars = c("cp_1", "time_2"))
 
@@ -81,6 +82,7 @@ plot_pars(ex_fit, prior = TRUE)
 # Customize multi-column ggplots using "*" instead of "+" (patchwork)
 library(ggplot2)
 plot_pars(ex_fit, type = c("trace", "dens_overlay")) * theme_bw(10)
+}
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
