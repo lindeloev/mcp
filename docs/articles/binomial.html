@@ -155,7 +155,7 @@
       <h1>Binomial change point analysis with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-12-05</h4>
+            <h4 class="date">2019-12-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/binomial.Rmd"><code>vignettes/binomial.Rmd</code></a></small>
       <div class="hidden name"><code>binomial.Rmd</code></div>
@@ -223,16 +223,16 @@
 <pre><code>## # A tibble: 100 x 3
 ##     year     N     y
 ##    &lt;int&gt; &lt;int&gt; &lt;int&gt;
-##  1  1901    11    10
-##  2  1902    19    18
-##  3  1903    11     9
-##  4  1904    12    12
-##  5  1905    15    15
-##  6  1906    19    17
-##  7  1907    10     9
-##  8  1908    14    12
-##  9  1909    16    15
-## 10  1910    14    11
+##  1  1901    13    12
+##  2  1902    13    13
+##  3  1903    10    10
+##  4  1904    10    10
+##  5  1905    18    17
+##  6  1906    15    13
+##  7  1907    17    16
+##  8  1908    15    15
+##  9  1909    20    20
+## 10  1910    12    10
 ## # ... with 90 more rows</code></pre>
 <p>Visually:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(data<span class="op">$</span>year, data<span class="op">$</span>y)</a></code></pre></div>
@@ -253,14 +253,14 @@
 ##   3: y | trials(N) ~ 1 ~ 1 + year
 ## 
 ## Population-level parameters:
-##    name      mean     lower     upper Rhat n.eff    ts_se
-##    cp_1 1920.6196 1916.2411 1924.4235 1.01   415 9.23e+01
-##    cp_2 1964.4979 1964.0005 1964.9490 1.00  5218 1.48e-01
-##   int_1    2.1234    1.7345    2.5374 1.00   729 5.23e-01
-##   int_3   -0.1277   -0.4687    0.2026 1.01  1115 2.32e-01
-##  year_2   -0.1555   -0.1794   -0.1336 1.01   961 1.19e-03
-##  year_3    0.0549    0.0378    0.0729 1.01  1108 7.09e-04</code></pre>
-<p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have <a href="../docs/articles/varying.html">varying effects</a>, use <code><a href="../reference/ranef.html">ranef(fit)</a></code> to see them.</p>
+##    name match     sim     mean    lower    upper Rhat n.eff   ts_se
+##    cp_1       1925.00 1917.299 1908.869 1923.669    1   128 9.3e+02
+##    cp_2       1965.00 1964.500 1964.007 1964.953    1  5223 1.5e-01
+##   int_1    OK    2.00    2.394    1.803    3.181    1   125 6.5e+00
+##   int_3    OK    0.00   -0.143   -0.502    0.182    1  1003 2.7e-01
+##  year_2         -0.20   -0.142   -0.165   -0.121    1   450 2.6e-03
+##  year_3    OK    0.05    0.054    0.037    0.072    1   972 6.9e-04</code></pre>
+<p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have <a href="../docs/articles/varying.html">varying effects</a>, use <code><a href="../reference/summary.mcpfit.html">ranef(fit)</a></code> to see them.</p>
 <p>Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>

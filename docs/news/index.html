@@ -203,34 +203,22 @@
       <small>Source: <a href='https://github.com/lindeloev/mcp/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="mcp-0209000" class="section level1">
+    <div id="mcp-020" class="section level1">
 <h1 class="page-header">
-<a href="#mcp-0209000" class="anchor"></a>mcp 0.2.0.9000</h1>
-<p>This will, in time, become <code>mcp</code> v0.3.0</p>
+<a href="#mcp-020" class="anchor"></a>mcp 0.2.0</h1>
+<p>The API and internal structure should be stable now. v0.2.0 is aimed at CRAN.</p>
 <div id="new-features" class="section level2">
 <h2 class="hasAnchor">
 <a href="#new-features" class="anchor"></a>New features:</h2>
 <ul>
-<li>Simulate AR(N) models with <code>fit$simulate()</code>. The <a href="">article on AR(N)</a> has been updated with examples. <code>fit$simulate()</code> can also get fits and predictions for known data if you pass the response variable as an argument too.</li>
-<li>The default plot (<code><a href="../reference/plot.mcpfit.html">plot(fit)</a></code>) now visualize AR(N) autocorrelation.</li>
-<li>You can now check how well your model recovered the parameters of simulated data. Simply call <code>check_recovery(fit)</code> if <code>fit</code> was estimated with simulated data. This works because <code>y = fit$simulate(...)</code> now adds the simulation parameters to <code>y</code>. Use <code><a href="https://rdrr.io/r/base/attr.html">attr(y, "sim")</a></code> to recover them.</li>
-<li>Use <code><a href="../reference/plot.mcpfit.html">plot(fit, which_y = "sigma")</a></code> to plot the residual standard deviation on the y-axis. Works for <code>ar1</code>, <code>ar2</code>, etc. as well. This is particularly useful to visualize variance-only or autocorrelation-only change points. The vignettes on variance and autocorrelations have been updated with examples.</li>
-</ul>
-</div>
-</div>
-    <div id="mcp-020" class="section level1">
-<h1 class="page-header">
-<a href="#mcp-020" class="anchor"></a>mcp 0.2.0</h1>
-<p>The API and internal structure should be stable now.</p>
-<div id="new-features-1" class="section level2">
-<h2 class="hasAnchor">
-<a href="#new-features-1" class="anchor"></a>New features:</h2>
-<ul>
-<li>Quadratic and other terms using <code><a href="https://rdrr.io/r/base/AsIs.html">I(x^2)</a></code>, <code><a href="https://rdrr.io/r/base/AsIs.html">I(x^3.24)</a></code>, <code><a href="https://rdrr.io/r/base/Trig.html">sin(x)</a></code>, <code><a href="https://rdrr.io/r/base/MathFun.html">sqrt(x)</a></code>, etc.</li>
+<li>Model quadratic and other terms using <code><a href="https://rdrr.io/r/base/AsIs.html">I(x^2)</a></code>, <code><a href="https://rdrr.io/r/base/AsIs.html">I(x^3.24)</a></code>, <code><a href="https://rdrr.io/r/base/Trig.html">sin(x)</a></code>, <code><a href="https://rdrr.io/r/base/MathFun.html">sqrt(x)</a></code>, etc.</li>
 <li>Model variance for <code>family = gaussian()</code> using <code>~ sigma([formula here])</code>.</li>
-<li>Do order-N autoregressive models (AR(N)) using e.g.,<code>~ ar([order here])</code>. Useful for time series.</li>
+<li>Model Nth order autoregressive models using <code>~ ar(order, formula)</code>, typically like <code>y ~ 1 + x + ar(2)</code> for AR(2). <code><a href="../reference/plot.mcpfit.html">plot()</a></code> visualize posteriors for AR(N) models. Simulate AR(N) models from scratch or given known data with <code>fit$simulate()</code>. The <a href="https://lindeloev.github.io/mcp/articles/arma.html">article on AR(N)</a> has more details and examples. AR(N) models are popular to detect changes in time-series.</li>
 <li>Plot prediction intervals using <code><a href="../reference/plot.mcpfit.html">plot(fit, quantiles = TRUE, quantiles_type = "predict")</a></code>.</li>
-<li>Now respects <code><a href="https://rdrr.io/r/base/options.html">options(mc.cores = 3)</a></code>. All guides have been updated to recommend this as a default.</li>
+<li>Now respects <code><a href="https://rdrr.io/r/base/options.html">options(mc.cores = 3)</a></code> for considerable speed gains. All vignettes/articles have been updated to recommend this as a default, though serial sampling is still the technical default.</li>
+<li>
+<code>fit$simulate()</code> now adds the simulation parameters as an attribute (<code><a href="https://rdrr.io/r/base/attr.html">attr(y, "simulate")</a></code>) to the predicted variable. <code><a href="../reference/summary.mcpfit.html">summary()</a></code> now recognizes this and adds the simulated values to the results table (columns <code>sim</code> and <code>match</code>) so that one can inspect whether the values were recovered.</li>
+<li>Use <code><a href="../reference/plot.mcpfit.html">plot(fit, which_y = "sigma")</a></code> to plot the residual standard deviation on the y-axis. It works for AR(N) as well (<code>which_y = "ar1"</code>, <code>which_y = "ar2"</code>, etc.). This is useful to visualize change points in variance and autocorrelation. The vignettes on variance and autocorrelations have been updated with worked examples.</li>
 </ul>
 </div>
 <div id="other-changes" class="section level2">
@@ -238,11 +226,11 @@
 <a href="#other-changes" class="anchor"></a>Other changes:</h2>
 <ul>
 <li>
-<code>fit$func_y</code> has been renamed to <code>fit$simulate</code>.</li>
+<code>fit$func_y()</code> has been renamed to <code>fit$simulate()</code>.</li>
 <li>
-<code><a href="../reference/plot.mcpfit.html">plot()</a></code> now only visualizes the total fit while <code><a href="../reference/plot_pars.html">plot_pars()</a></code> only visualize individual parameters. These functions were mixed in <code><a href="../reference/plot.mcpfit.html">plot()</a></code> before.</li>
+<code><a href="../reference/plot.mcpfit.html">plot()</a></code> now only visualizes the total fit while <code><a href="../reference/plot_pars.html">plot_pars()</a></code> only visualize individual parameters. These functions were mixed in <code><a href="../reference/plot.mcpfit.html">plot()</a></code> in v0.1.</li>
 <li>The argument <code>update</code> has been discarded from <code><a href="../reference/mcp.html">mcp()</a></code> (it’s all on <code>adapt</code> now) and <code>inits</code> has been added.</li>
-<li>Many internal changes to prepare for upcoming features. The biggest internal change is that <code>rjags</code> and <code>future</code> replace the <code>dclone</code> package. This gives faster and cleaner installations, is more future-proof, and avoids the need for a temporary file on the disk when sampling in parallel.</li>
+<li>Many internal changes to make <code>mcp</code> more future proof. The biggest internal change is that <code>rjags</code> and <code>future</code> replace the <code>dclone</code> package. Among other things, this gives faster and cleaner installations.</li>
 <li>Updated documentation and website.</li>
 </ul>
 </div>
@@ -267,7 +255,6 @@
     <div id="tocnav">
       <h2>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-        <li><a href="#mcp-0209000">0.2.0.9000</a></li>
         <li><a href="#mcp-020">0.2.0</a></li>
         <li><a href="#mcp-010">0.1.0</a></li>
       </ul>

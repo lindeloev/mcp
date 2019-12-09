@@ -70,10 +70,10 @@ data = tibble::tibble(
 ```
 
 
-Sample and plot the fits:
+Sample and plot the fits. We let the manual fit adapt for longer, since it is harder to find the right posterior under these weird prior constraints (priors will usually improve sampling efficiency).
 
 ```{r, cache = TRUE, message=FALSE, warning=FALSE, results=FALSE}
-fit_manual = mcp(segments, data, prior)
+fit_manual = mcp(segments, data, prior, adapt = 5000)
 fit_default = mcp(segments, data)
 ```
 ```{r}

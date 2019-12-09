@@ -155,7 +155,7 @@
       <h1>About mcp formulas and models</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-12-05</h4>
+            <h4 class="date">2019-12-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/formulas.Rmd"><code>vignettes/formulas.Rmd</code></a></small>
       <div class="hidden name"><code>formulas.Rmd</code></div>
@@ -219,7 +219,7 @@
 <li>
 <code>sigma_*</code> are variance parameters about which you can <a href="../articles/variance.html">read more here</a>). Note that for <code>family = gaussian()</code> and other families with an SD residual, there will always be an <code>sigma_1</code>, i.e., the common sigma initiated in the first segment.</li>
 <li>
-<code>phi_j</code> are autocorrelation coefficients (<a href="../articles/autocorrelation.html">read more here</a>). There is one per autoregressive order, i.e., <code>phi_1</code> and <code>phi_2</code> for <code><a href="../reference/mcp.html">mcp(..., autocor = "AR(2)")</a></code>.</li>
+<code>arj_i</code> are autocorrelation coefficients of order <code>j</code> for segment <code>i</code> (<a href="../articles/arma.html">read more here</a>).</li>
 </ul>
 <p>These parameter names are saved in <code>fit$pars</code>. Let us specify a somewhat complex model to show off some parameter names:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
@@ -391,46 +391,26 @@
 ##   }
 ## }</code></pre>
 <p>Again, look at the <code>#Fitted value</code> to see the indicator-version in action. And again, <code>mcp</code> adds something about <code>cp_0 = -Inf</code> and <code>cp_2 = Inf</code>, just for internal convenience.</p>
-<p>This exact code is also used in <code>fit$simulate</code>. See under <code>"Fitted value</code>:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/print.mcpfit.html">print</a></span>(fit<span class="op">$</span>simulate)</a></code></pre></div>
-<pre><code>## function (x, cp_1, x_1, x_2, sigma_1, type = "predict", quantiles = FALSE, 
-##     rate = FALSE, ...) 
-## {
-##     cp_0 = -Inf
-##     cp_2 = Inf
-##     X_1_ = pmin(x, cp_1)
-##     X_2_ = pmin(x, cp_2) - cp_1
-##     y_ = (x &gt;= cp_0) * x_1 * X_1_ + (x &gt;= cp_1) * x_2 * X_2_
-##     sigma_ = (x &gt;= cp_0) * sigma_1
-##     if (!type %in% c("predict", "fitted")) 
-##         stop("'`type` must be one of 'predict' or 'fitted'")
-##     if (type == "fitted") {
-##         return(y_)
-##     }
-##     else if (type == "predict") {
-##         return(rnorm(length(x), y_, sigma_))
-##     }
-## }
-## &lt;environment: 0x00000000196f05e0&gt;</code></pre>
+<p>You will find the exact same formula for <code>y_ = ...</code> if you do <code><a href="../reference/summary.mcpfit.html">print(fit$simulate)</a></code>, though this function contains a whole lot of other stuff too.</p>
 </div>
 <div id="modeling-relative-slopes-and-intercepts" class="section level1">
 <h1 class="hasAnchor">
 <a href="#modeling-relative-slopes-and-intercepts" class="anchor"></a>Modeling relative slopes and intercepts</h1>
 <p><code>mcp</code> allows for specifying relative intercepts and change points through <code>rel()</code>. Relative slopes are easy: just replace <code>x_2</code> with <code>x_1 + x_2</code>. You could do the same if all segments are intercept-only. However, if the previous segment had a slope, we want the intercept to be relative to where that “ended”. The <code>mcp</code> solution is to only “turn off” the “hanging intercept” from that slope’s ending (<code><a href="https://rdrr.io/r/base/Extremes.html">pmin(x, cp_i)</a></code>) when the model encounters an absolute intercept. An indicator does this.</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="co"># Model parameters</span></a>
-<a class="sourceLine" id="cb13-2" title="2">x =<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">20</span></a>
-<a class="sourceLine" id="cb13-3" title="3">cp_<span class="dv">1</span> =<span class="st"> </span><span class="dv">12</span></a>
-<a class="sourceLine" id="cb13-4" title="4">int_<span class="dv">1</span> =<span class="st"> </span><span class="dv">5</span></a>
-<a class="sourceLine" id="cb13-5" title="5">int_<span class="dv">2</span> =<span class="st"> </span><span class="dv">3</span>  <span class="co"># let's model this as relative</span></a>
-<a class="sourceLine" id="cb13-6" title="6"></a>
-<a class="sourceLine" id="cb13-7" title="7"><span class="co"># Indicator version.</span></a>
-<a class="sourceLine" id="cb13-8" title="8">cp_<span class="dv">0</span> =<span class="st"> </span><span class="op">-</span><span class="ot">Inf</span></a>
-<a class="sourceLine" id="cb13-9" title="9">y_indicator =<span class="st"> </span>(x <span class="op">&gt;</span><span class="st"> </span>cp_<span class="dv">0</span>) <span class="op">*</span><span class="st"> </span>int_<span class="dv">1</span> <span class="op">+</span><span class="st">  </span><span class="co"># Note: no (x &lt; cp_1)</span></a>
-<a class="sourceLine" id="cb13-10" title="10"><span class="st">              </span>(x <span class="op">&gt;</span><span class="st"> </span>cp_<span class="dv">1</span>) <span class="op">*</span><span class="st"> </span>(int_<span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb13-11" title="11"></a>
-<a class="sourceLine" id="cb13-12" title="12"><span class="co"># Plot it</span></a>
-<a class="sourceLine" id="cb13-13" title="13"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(x, y_indicator, <span class="dt">main =</span> <span class="st">"Relative intercept"</span>)</a></code></pre></div>
-<p><img src="formulas_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="co"># Model parameters</span></a>
+<a class="sourceLine" id="cb11-2" title="2">x =<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="dv">20</span></a>
+<a class="sourceLine" id="cb11-3" title="3">cp_<span class="dv">1</span> =<span class="st"> </span><span class="dv">12</span></a>
+<a class="sourceLine" id="cb11-4" title="4">int_<span class="dv">1</span> =<span class="st"> </span><span class="dv">5</span></a>
+<a class="sourceLine" id="cb11-5" title="5">int_<span class="dv">2</span> =<span class="st"> </span><span class="dv">3</span>  <span class="co"># let's model this as relative</span></a>
+<a class="sourceLine" id="cb11-6" title="6"></a>
+<a class="sourceLine" id="cb11-7" title="7"><span class="co"># Indicator version.</span></a>
+<a class="sourceLine" id="cb11-8" title="8">cp_<span class="dv">0</span> =<span class="st"> </span><span class="op">-</span><span class="ot">Inf</span></a>
+<a class="sourceLine" id="cb11-9" title="9">y_indicator =<span class="st"> </span>(x <span class="op">&gt;</span><span class="st"> </span>cp_<span class="dv">0</span>) <span class="op">*</span><span class="st"> </span>int_<span class="dv">1</span> <span class="op">+</span><span class="st">  </span><span class="co"># Note: no (x &lt; cp_1)</span></a>
+<a class="sourceLine" id="cb11-10" title="10"><span class="st">              </span>(x <span class="op">&gt;</span><span class="st"> </span>cp_<span class="dv">1</span>) <span class="op">*</span><span class="st"> </span>(int_<span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb11-11" title="11"></a>
+<a class="sourceLine" id="cb11-12" title="12"><span class="co"># Plot it</span></a>
+<a class="sourceLine" id="cb11-13" title="13"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(x, y_indicator, <span class="dt">main =</span> <span class="st">"Relative intercept"</span>)</a></code></pre></div>
+<p><img src="formulas_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
 <p>You can look at <code><a href="https://rdrr.io/r/base/cat.html">cat(fit$jags_code)</a></code> and <code>fit$simulate</code> to see this in action.</p>
 </div>
   </div>

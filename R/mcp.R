@@ -215,9 +215,6 @@ mcp = function(segments,
   if (family$family == "poisson" & !family$link %in% c("log"))
     stop("'log' is currently the only supported link function for poisson().")
 
-  # if (family$family %in% c("bernoulli", "binomial") & !is.null(autocor))
-  #   stop("`autocor` is not yet supported for Bernoulli and binomial families.")
-
   family = get_family(family$family, family$link)  # convert to mcp family
 
 

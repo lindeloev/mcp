@@ -53,7 +53,7 @@
 <meta property="og:title" content="Plot mcpfit objects with <code>bayesplot</code> — plot_pars" />
 <meta property="og:description" content="Plot many types of plots of parameter estimates. See examples for typical use
 cases." />
-<meta property="og:image" content="https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/logo.png" />
+<meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -225,7 +225,7 @@ cases.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>fit</th>
-      <td><p>An `mcpfit`` object.</p></td>
+      <td><p>An <code><a href='mcpfit-class.html'>mcpfit</a></code> object.</p></td>
     </tr>
     <tr>
       <th>pars</th>
@@ -277,21 +277,21 @@ are also a number of useful plots in the <span class="pkg">coda</span> package, 
 a sign that you may want to increase argument 'adapt' and 'iter' in <code><a href='mcp.html'>mcp</a></code>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'>plot_pars</span>(<span class='no'>fit</span>)
-<span class='fu'>plot_pars</span>(<span class='no'>fit</span>, <span class='kw'>pars</span> <span class='kw'>=</span> <span class='st'>"varying"</span>, <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='fl'>3</span>)  <span class='co'># plot all varying effects</span>
-<span class='fu'>plot_pars</span>(<span class='no'>fit</span>, <span class='kw'>regex_pars</span> <span class='kw'>=</span> <span class='st'>"my_varying"</span>, <span class='kw'>ncol</span> <span class='kw'>=</span> <span class='fl'>3</span>)  <span class='co'># plot all levels of a particular varying</span>
+    <pre class="examples"><div class='input'><span class='co'># Typical usage. ex_fit is an mcpfit object.</span>
+<span class='fu'>plot_pars</span>(<span class='no'>ex_fit</span>)</div><div class='img'><img src='plot_pars-1.png' alt='' width='700' height='433' /></div><div class='input'>
+<span class='co'># More options</span>
+<span class='fu'>plot_pars</span>(<span class='no'>ex_fit</span>, <span class='kw'>regex_pars</span> <span class='kw'>=</span> <span class='st'>"^cp_"</span>)  <span class='co'># Plot only change points</span></div><div class='img'><img src='plot_pars-2.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>plot_pars</span>(<span class='no'>ex_fit</span>, <span class='kw'>pars</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"int_3"</span>, <span class='st'>"time_3"</span>))  <span class='co'># Plot these parameters</span></div><div class='img'><img src='plot_pars-3.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>plot_pars</span>(<span class='no'>ex_fit</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"trace"</span>, <span class='st'>"violin"</span>))  <span class='co'># Combine plots</span></div><div class='img'><img src='plot_pars-4.png' alt='' width='700' height='433' /></div><div class='input'>
+<span class='co'># Some plots only take pairs. hex is good to assess identifiability</span>
+<span class='fu'>plot_pars</span>(<span class='no'>ex_fit</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='st'>"hex"</span>, <span class='kw'>pars</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"cp_1"</span>, <span class='st'>"time_2"</span>))</div><div class='img'><img src='plot_pars-5.png' alt='' width='700' height='433' /></div><div class='input'>
+<span class='co'># Visualize the priors:</span>
+<span class='fu'>plot_pars</span>(<span class='no'>ex_fit</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='img'><img src='plot_pars-6.png' alt='' width='700' height='433' /></div><div class='input'>
+<span class='co'># Useful for varying effects:</span>
+<span class='co'># plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all varying effects</span>
+<span class='co'># plot_pars(my_fit, regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying</span>
 
-<span class='co'># More options for parameter estimates</span>
-<span class='fu'>plot_pars</span>(<span class='no'>fit</span>, <span class='kw'>pars</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"var1"</span>, <span class='st'>"var2"</span>, <span class='st'>"var3"</span>), <span class='kw'>regex_pars</span> <span class='kw'>=</span> <span class='st'>"^my_varying"</span>)
-<span class='fu'>plot_pars</span>(<span class='no'>fit</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"areas"</span>, <span class='st'>"intervals"</span>))
-
-<span class='co'># Some plots only take pairs</span>
-<span class='fu'>plot_pars</span>(<span class='no'>fit</span>, <span class='kw'>pars</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"var1"</span>, <span class='st'>"var2"</span>))
-
-<span class='co'># Customize two-column plots using the patchwork package.</span>
-<span class='fu'>plot_pars</span>(<span class='no'>fit</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"trace"</span>, <span class='st'>"dens_overlay"</span>)) * <span class='fu'>theme_bw</span>(<span class='fl'>10</span>)
-}</div></pre>
+<span class='co'># Customize multi-column ggplots using "*" instead of "+" (patchwork)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>ggplot2</span>)
+<span class='fu'>plot_pars</span>(<span class='no'>ex_fit</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"trace"</span>, <span class='st'>"dens_overlay"</span>)) * <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_bw</a></span>(<span class='fl'>10</span>)</div><div class='img'><img src='plot_pars-7.png' alt='' width='700' height='433' /></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -304,7 +304,6 @@ a sign that you may want to increase argument 'adapt' and 'iter' in <code><a hre
 
     <h2>Author</h2>
     <p>Jonas Kristoffer Lindeløv <a href='mailto:jonas@lindeloev.dk'>jonas@lindeloev.dk</a></p>
-<p>Jonas Kristoffer Lindeløv <a href='mailto:jonas@lindeloev.dk'>jonas@lindeloev.dk</a></p>
   </div>
 </div>
 

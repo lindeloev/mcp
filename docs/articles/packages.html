@@ -155,7 +155,7 @@
       <h1>An overview of change point packages in R</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-12-05</h4>
+            <h4 class="date">2019-12-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/packages.Rmd"><code>vignettes/packages.Rmd</code></a></small>
       <div class="hidden name"><code>packages.Rmd</code></div>
@@ -206,16 +206,17 @@
 <li>Flexible hypothesis testing using <code>loo</code> and <code>hypothesis</code>, including testing the existence of a change point. Most other packages stop at estimation, though some provide p-values. Read more about <a href="../docs/articles/comparison.html">hypothesis testing and model comparison</a> using <code>mcp</code>.</li>
 </ul>
 </div>
-<div id="where-mcp-is-currently-inferior" class="section level1">
+<div id="recommendation" class="section level1">
 <h1 class="hasAnchor">
-<a href="#where-mcp-is-currently-inferior" class="anchor"></a>Where mcp is (currently) inferior</h1>
+<a href="#recommendation" class="anchor"></a>Recommendation</h1>
+<p>Let me go all-out on my ego-serving bias and say that <code>mcp</code> is the best package <em>unless:</em></p>
 <ul>
 <li>
-<em>Speed</em>: While <code>mcp</code> is reasonably fast for typical problems, mcmc sampling is slower than analytical and specialized solutions. For datasets &gt; 20.000 points and a complicated model, it may take <code>mcp</code> hours (but not days) to fit. See <a href="../articles/tips.html">tips and tricks</a> how to speed up <code>mcp</code>. Briefly, run in parallel and lower the number of iterations: (<code>mcp(..., cores = 4, iter = 1000, adapt = 400</code>).</li>
+<em>You have a lot of data and limited time</em>: While <code>mcp</code> is reasonably fast for typical problems, MCMC sampling is slower than analytical and specialized solutions. For datasets &gt; 20.000 points and a complicated model, it may take <code>mcp</code> hours (but not days) to fit. See <a href="../articles/tips.html">tips and tricks</a> how to speed up <code>mcp</code>. Briefly, run in parallel and lower the number of iterations: (<code>mcp(..., cores = 4, iter = 1000, adapt = 400</code>).</li>
 <li>
-<em>Automatic detection of change points</em>: most packages does automatic change point detection. This is not a space that <code>mcp</code> tries to fill so use the other packages here. But beware that many of the automatic procedures did not capture a change point in the worked examples below.</li>
+<em>You want to automatically detect a large number of change points</em>: Most packages does automatic change point detection. This is not a space that <code>mcp</code> tries to fill. But beware that many of the automatic procedures did not capture a change point in the worked examples below. If recommend <code>segmented</code> for the models it “understands” followed by <code>EnvCpt</code> and perhaps <code>bcp</code>.</li>
 <li>
-<em>Multivariate</em>: <code>mcp</code> only does univariate regression, both for <span class="math inline">\(y\)</span> and <span class="math inline">\(x\)</span>. This will be implemented if there is a popular request for it. Don’t hesitate to raise an issue on GitHub.</li>
+<em>Multivariate</em>: <code>mcp</code> only does univariate regression, both for <span class="math inline">\(y\)</span> and <span class="math inline">\(x\)</span>. This will be implemented if there is a popular request for it. Don’t hesitate to raise an issue on GitHub. For now, <code>bcp</code> seems like the best option to me.</li>
 </ul>
 </div>
 <div id="a-simple-dataset-to-compare-packages" class="section level1">
@@ -251,13 +252,13 @@
 ##   3: y ~ 1 ~ 1
 ## 
 ## Population-level parameters:
-##     name    mean  lower  upper Rhat n.eff    ts_se
-##     cp_1 30.7812 27.155 33.997 1.00  1482  19.2347
-##     cp_2 63.9200 45.314 76.266 1.02   674 683.4378
-##    int_1  2.0444  1.650  2.453 1.00  4249   0.0895
-##    int_2 -0.0773 -0.542  0.393 1.01  1374   0.4410
-##    int_3  0.9132  0.513  1.322 1.00  1884   0.2155
-##  sigma_1  1.0661  0.915  1.225 1.00  4173   0.0136</code></pre>
+##     name   mean lower upper Rhat n.eff   ts_se
+##     cp_1 30.792 27.18 34.00    1  1620  14.802
+##     cp_2 64.291 45.33 76.03    1   723 562.890
+##    int_1  2.040  1.65  2.43    1  4785   0.076
+##    int_2 -0.069 -0.54  0.39    1  1789   0.277
+##    int_3  0.915  0.52  1.31    1  2138   0.174
+##  sigma_1  1.062  0.92  1.22    1  4231   0.013</code></pre>
 <p>The summary shows good parameter recovery, though the second change point is detected a bit early. This is understandable if you look at the data, and the true change point is still within the highest density interval.</p>
 <p>Plotting the posterior distributions of the change points reveal that they are not well represented by a Gaussian or other known distributions. Therefore, confidence intervals are likely to be meaningless for this problem.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(patchwork)</a>
@@ -341,7 +342,7 @@
 <a class="sourceLine" id="cb16-5" title="5">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit_mcp<span class="op">$</span>loo, fit_mcp_<span class="dv">1</span><span class="op">$</span>loo)</a></code></pre></div>
 <pre><code>##        elpd_diff se_diff
 ## model1  0.0       0.0   
-## model2 -4.7       2.7</code></pre>
+## model2 -5.6       2.7</code></pre>
 <p>While <code>segmented</code> prefers the one-change-point model, <code>mcp</code> prefers the (true) two-change-point model. Again, the models compared here are <em>very</em> different since <code>segmented</code> does inference on a slope-only model.</p>
 </div>
 <div id="breakpoints" class="section level1">
@@ -515,7 +516,7 @@
       <li><a href="#inference">Inference</a></li>
       <li><a href="#other-conveniences">Other conveniences</a></li>
       <li><a href="#unique-features-of-mcp">Unique features of mcp</a></li>
-      <li><a href="#where-mcp-is-currently-inferior">Where mcp is (currently) inferior</a></li>
+      <li><a href="#recommendation">Recommendation</a></li>
       <li><a href="#a-simple-dataset-to-compare-packages">A simple dataset to compare packages</a></li>
       <li><a href="#mcp">mcp</a></li>
       <li><a href="#envcpt">EnvCpt</a></li>

@@ -51,7 +51,7 @@
   
 
 <meta property="og:title" content="Function reference" />
-<meta property="og:image" content="https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/logo.png" />
+<meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -238,21 +238,9 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="summary.mcpfit.html">summary(<i>&lt;mcpfit&gt;</i>)</a></code> </p>
+          <p><code><a href="summary.mcpfit.html">summary(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="summary.mcpfit.html">fixef()</a></code> <code><a href="summary.mcpfit.html">ranef()</a></code> <code><a href="summary.mcpfit.html">print(<i>&lt;mcpfit&gt;</i>)</a></code> </p>
         </td>
         <td><p>Summarise mcpfit objects</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="ranef.html">ranef()</a></code> </p>
-        </td>
-        <td><p>Get varying ("random") effects of mcpfit.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="fixef.html">fixef()</a></code> </p>
-        </td>
-        <td><p>Get population-level ("fixed") effects of mcpfit.</p></td>
       </tr><tr>
         
         <td>
@@ -269,8 +257,8 @@
     </tbody><tbody>
       <tr>
         <th colspan="2">
-          <h2 id="section-some-auxillary-functions" class="hasAnchor"><a href="#section-some-auxillary-functions" class="anchor"></a>Some auxillary functions</h2>
-          <p class="section-desc"><p>These are used internally by mcp, but are exposed here since they may be useful for other purposes. Most other useful internal functions deliver the result already in <code><a href="../reference/mcp.html">mcp(segments, sample = FALSE)</a></code>, so this will be their API.</p></p>
+          <h2 id="section-axillary-functions" class="hasAnchor"><a href="#section-axillary-functions" class="anchor"></a>Axillary functions</h2>
+          <p class="section-desc"><p>These are used internally by mcp, but are exposed here since they may be useful for other purposes. Most other useful internal functions deliver the result already in <code><a href="../reference/mcp.html">mcp(segments, sample = FALSE)</a></code>, so <code><a href="../reference/mcp.html">mcp()</a></code> will be their API.</p></p>
         </th>
       </tr>
       <tr>
@@ -279,6 +267,120 @@
           <p><code><a href="sd_to_prec.html">sd_to_prec()</a></code> </p>
         </td>
         <td><p>Transform a prior from SD to precision.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="logit.html">logit()</a></code> </p>
+        </td>
+        <td><p>Logit function</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="ilogit.html">ilogit()</a></code> </p>
+        </td>
+        <td><p>Inverse logit function</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-families" class="hasAnchor"><a href="#section-families" class="anchor"></a>Families</h2>
+          <p class="section-desc"><p>Distributional families that are not available in base R.</p></p>
+        </th>
+      </tr>
+      <tr>
+        
+        <td>
+          <p><code><a href="bernoulli.html">bernoulli()</a></code> </p>
+        </td>
+        <td><p>Bernoulli family for mcp</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-simulated-datasets" class="hasAnchor"><a href="#section-simulated-datasets" class="anchor"></a>Simulated datasets</h2>
+          <p class="section-desc"><p>These datasets were simulated with mcp. There are lnks to the simulation scripts in the documentation for each of them. The simulation values will also show up if you fit a model to one of these dataset and call <code><a href="../reference/summary.mcpfit.html">summary(fit)</a></code>. Analyses of most of these are demonstrated on the <a href="https://lindeloev.github.io/mcp">front page</a>.</p></p>
+        </th>
+      </tr>
+      <tr>
+        
+        <td>
+          <p><code><a href="ex_ar.html">ex_ar</a></code> </p>
+        </td>
+        <td><p>A change point in a time series</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="ex_binomial.html">ex_binomial</a></code> </p>
+        </td>
+        <td><p>Two change points between three binomial segments</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="ex_demo.html">ex_demo</a></code> </p>
+        </td>
+        <td><p>Two change points between three linear segments</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="ex_plateaus.html">ex_plateaus</a></code> </p>
+        </td>
+        <td><p>A change point between two plateaus</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="ex_quadratic.html">ex_quadratic</a></code> </p>
+        </td>
+        <td><p>A change point from plateau to quadratic</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="ex_rel_prior.html">ex_rel_prior</a></code> </p>
+        </td>
+        <td><p>Two change points between three linear segments</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="ex_trig.html">ex_trig</a></code> </p>
+        </td>
+        <td><p>A change point between two trigonometric segments</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="ex_variance.html">ex_variance</a></code> </p>
+        </td>
+        <td><p>Two change points between three heteroskedastic segments</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="ex_varying.html">ex_varying</a></code> </p>
+        </td>
+        <td><p>One change point varying by participant</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="ex_fit.html">ex_fit</a></code> </p>
+        </td>
+        <td><p>Example fit of the ex_demo dataset</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-miscellaneous" class="hasAnchor"><a href="#section-miscellaneous" class="anchor"></a>Miscellaneous</h2>
+          <p class="section-desc"><p>Stuff you would not usually consult directly.</p></p>
+        </th>
+      </tr>
+      <tr>
+        
+        <td>
+          <p><code><a href="mcpfit-class.html">mcpfit-class</a></code> </p>
+        </td>
+        <td><p>Class <code>mcpfit</code> of models fitted with the <span class="pkg">mcp</span> package</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="print.mcpprior.html">print(<i>&lt;mcpprior&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Print mcpprior</p></td>
       </tr>
     </tbody>
     </table>
@@ -288,7 +390,10 @@
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#section-using-mcp">Using mcp</a></li>
-      <li><a href="#section-some-auxillary-functions">Some auxillary functions</a></li>
+      <li><a href="#section-axillary-functions">Axillary functions</a></li>
+      <li><a href="#section-families">Families</a></li>
+      <li><a href="#section-simulated-datasets">Simulated datasets</a></li>
+      <li><a href="#section-miscellaneous">Miscellaneous</a></li>
     </ul>
   </div>
 </div>

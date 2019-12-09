@@ -40,7 +40,7 @@ data = tibble::tibble(
 
 Now we fit the model to the simulated data.
 
-```{r, cache = TRUE, results=FALSE}
+```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
 fit = mcp(segments, data, par_x = "x")
 ```
 We plot the results with the prediction interval to show the effect of the variance, since it won't be immediately obvious on the default plot of the fitted mean predictions:
@@ -50,7 +50,7 @@ plot(fit, quantiles = TRUE, quantiles_type = "predict")
 ```
 
 
-We can see all parameters are well recovered. Like the other parameters, the `sigma`s are named after the segment where they were instantiated. There will always be a `sigma_1`.
+We can see all parameters are well recovered (compare `sim` to `mean`). Like the other parameters, the `sigma`s are named after the segment where they were instantiated. There will always be a `sigma_1`.
 
 ```{r}
 summary(fit)
@@ -114,7 +114,7 @@ data = tibble::tibble(
 ## Fit it and inspect results
 Fit it in parallel, to speed things up:
 
-```{r, cache = TRUE, results = FALSE}
+```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}
 fit = mcp(segments, data, prior)
 ```
 
@@ -125,14 +125,14 @@ plot(fit, quantiles = TRUE, quantiles_type = "predict")
 ```
 
 
-We can also plot the `sigma_` paramters directly. Now the y-axis is `sigma`:
+We can also plot the `sigma_` parameters directly. Now the y-axis is `sigma`:
 
 ```{r}
 plot(fit, which_y = "sigma", quantiles = TRUE)
 ```
 
 
-The parameters are well recovered. The last change point is estimated with greater uncertainty than the others. This is expected, given that the only "signal" of this change point is a stop in variance growth.
+`summary()` show that the parameters are well recovered (compare `sim` to `mean`). The last change point is estimated with greater uncertainty than the others. This is expected, given that the only "signal" of this change point is a stop in variance growth.
 
 ```{r}
 summary(fit)
@@ -177,7 +177,7 @@ data = tibble::tibble(
 ```
 
 Fit it:
-```{r, cache = TRUE, results=FALSE}
+```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
 fit = mcp(segments, data)
 ```
 

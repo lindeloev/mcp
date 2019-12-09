@@ -43,7 +43,7 @@ equal to 1 and no greater than 22 are accepted.}
 \value{
 A data frame with parameter estimates and MCMC diagnostics.
 OBS: The change point distributions are often not unimodal and symmetric so
-the intervals can be decieving. Plot them using \code{plot_pars(fit)}.
+the intervals can be deceiving Plot them using \code{plot_pars(fit)}.
 \itemize{
 \item \code{mean} is the posterior mean
 \item \code{lower} is the lower quantile of the highest-density interval (HDI) given in \code{width}.

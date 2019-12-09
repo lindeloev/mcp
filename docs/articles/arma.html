@@ -155,7 +155,7 @@
       <h1>Time series change points with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-12-05</h4>
+            <h4 class="date">2019-12-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/arma.Rmd"><code>vignettes/arma.Rmd</code></a></small>
       <div class="hidden name"><code>arma.Rmd</code></div>
@@ -182,7 +182,7 @@
 <a class="sourceLine" id="cb2-3" title="3">  <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>time <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="dv">1</span>)  <span class="co"># time_2, ar1_2</span></a>
 <a class="sourceLine" id="cb2-4" title="4">)</a>
 <a class="sourceLine" id="cb2-5" title="5">fit =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, ex_ar)</a></code></pre></div>
-<p>Let’s plot it (<span style="color:red">OBS: updated in <code>mcp</code> v0.3</span>) and we see that AR was strong in the first segment and weaker-but-negative in the second:</p>
+<p>Let’s plot it and we see that AR was strong in the first segment and weaker-but-negative in the second:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-3-1.png" width="700"></p>
 <p>We can summarise the inferred coefficients:</p>
@@ -194,17 +194,17 @@
 ##   2: price ~ 1 ~ 0 + time + ar(1)
 ## 
 ## Population-level parameters:
-##     name    mean    lower   upper Rhat n.eff    ts_se
-##    ar1_1   0.734   0.5895   0.894    1   917 5.09e-02
-##    ar1_2  -0.473  -0.6795  -0.248    1  2144 4.94e-02
-##    ar2_1   0.151   0.0129   0.294    1  1090 4.42e-02
-##     cp_1 117.481 113.0992 119.070    1   150 2.05e+02
-##    int_1  17.697  14.8061  19.827    1   231 6.39e+01
-##  sigma_1   4.837   4.3445   5.326    1  3482 1.39e-01
-##   time_2   0.517   0.4829   0.550    1   630 3.39e-03</code></pre>
-<p>Note that he naming syntax for autoregressive intercepts is <code>ar[order]_[segment]</code>. For example, <code>ar1_2</code> is the first-order autoregressive coefficient in segment 2. For slopes it will be <code>ar[order]_[normal mcp name]</code>, e.g., <code>ar1_x_3</code> for a slope on AR(1) in segment 3. In the present dataset, the AR coefficients were simulated from <code>ar1_1 = 0.7</code>, <code>ar2_1 = 0.2</code>, and <code>ar1_2 = -0.4</code>, and these values are reasonably recovered.</p>
-<p>In fact, the posterior mean is almost always exactly the same as <code><a href="https://rdrr.io/r/stats/arima.html">arima(data, order = c(N, 0, 0))</a></code> (see below) , so the non-perfect fits are due to randomness in the simulation - not in the fit.</p>
-<p>Notice that <code>sigma</code> in AR models describe <em>innovations</em>, i.e., the part of the residuals that are not explained by the autoregressive coefficients. <code><a href="https://rdrr.io/r/stats/sd.html">sd(ex_ar$price)</a></code> is always higher. In this case, it is 14.1189233. As always, it is good to assess posteriors and convergence more directly:</p>
+##     name match   sim   mean   lower  upper Rhat n.eff   ts_se
+##    ar1_1    OK   0.7   0.74   0.586   0.90    1   651 7.0e-02
+##    ar1_2    OK  -0.4  -0.48  -0.691  -0.26    1  2197 3.8e-02
+##    ar2_1    OK   0.2   0.14  -0.001   0.29    1   884 4.8e-02
+##     cp_1       120.0 117.51 113.833 119.67    1   162 1.3e+02
+##    int_1        20.0  17.71  15.186  19.99    1   258 4.5e+01
+##  sigma_1    OK   5.0   4.85   4.363   5.33    1  4300 1.2e-01
+##   time_2    OK   0.5   0.52   0.483   0.55    1   702 3.5e-03</code></pre>
+<p>Note that he naming syntax for autoregressive intercepts is <code>ar[order]_[segment]</code>. For example, <code>ar1_2</code> is the first-order autoregressive coefficient in segment 2. For slopes it will be <code>ar[order]_[normal mcp name]</code>, e.g., <code>ar1_x_3</code> for a slope on AR(1) in segment 3.</p>
+<p>Comparing the columns <code>mean</code> and <code>sim</code> we see that the AR coefficients are reasonably recovered. In fact, the posterior mean is almost always exactly the same as <code><a href="https://rdrr.io/r/stats/arima.html">arima(data, order = c(N, 0, 0))</a></code> (see below), so the non-perfect fits are due to randomness in the simulation - not in the fit.</p>
+<p>Notice that <code>sigma</code> in AR models describe <em>innovations</em>, i.e., the part of the residuals that are not explained by the autoregressive coefficients. <code><a href="https://rdrr.io/r/stats/sd.html">sd(ex_ar$price)</a></code> is always higher. In this case, the SD of raw data in the plateau is 9.2. As always, it is good to assess posteriors and convergence more directly:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit)</a></code></pre></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-5-1.png" width="768"></p>
 <p>Sometimes, the trace plot shows that the change point (<code>cp_1</code>) is not well identified with this model and data. As discussed in the article on <a href="../articles/tips.html">tips, tricks, and debugging</a>, you could combine a more informative prior with more samples (<code><a href="../reference/mcp.html">mcp(..., adapt = 10000, iter = 10000)</a></code>), if this is a problem.</p>
@@ -274,19 +274,25 @@
 <p>OK, we can see that the <code>ar</code> coefficients and sigma (<span class="math inline">\(sigma = sqrt(sigma^2)\)</span>) is simulated correctly, if taking <code><a href="https://rdrr.io/r/stats/arima.html">arima()</a></code> as ground truth. Inferring with <code>mcp</code> is straightforward:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1">fit =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, <span class="dt">par_x =</span> <span class="st">"time"</span>)</a></code></pre></div>
 <p>The Bayesian parameter estimates are in perfect correspondence with <code><a href="https://rdrr.io/r/stats/arima.html">arima()</a></code>, even where they deviate a tiny bit from the simulation parameters (due to the inherent randomness in simulating data):</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/fixef.html">fixef</a></span>(fit)</a></code></pre></div>
-<pre><code>##      name       mean      lower      upper     Rhat n.eff      ts_se
-## 1   ar1_1  0.6981130  0.5728371  0.8255703 1.000672  2308 0.01601919
-## 2   ar2_1  0.2259361  0.0719450  0.3843259 1.001767  1402 0.04289572
-## 3   ar3_1 -0.4046783 -0.5290994 -0.2724522 1.002113  2198 0.01804921
-## 4   int_1 19.6490979 17.2554359 21.9448290 1.000789  5885 2.05483928
-## 5 sigma_1  7.8896852  7.1303083  8.6649457 1.001634  5217 0.26649317</code></pre>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/summary.mcpfit.html">fixef</a></span>(fit)</a></code></pre></div>
+<pre><code>##      name match  sim       mean       lower      upper     Rhat n.eff
+## 1   ar1_1    OK  0.7  0.6995161  0.56830957  0.8302902 1.000606  1881
+## 2   ar2_1    OK  0.2  0.2278958  0.07165463  0.3964349 1.000739  1309
+## 3   ar3_1    OK -0.4 -0.4070232 -0.53913940 -0.2811787 1.001149  2445
+## 4   int_1    OK 20.0 19.6872868 17.38886557 22.0588771 1.002688  5111
+## 5 sigma_1    OK  8.0  7.9030908  7.09789518  8.6848390 0.999887  5295
+##        ts_se
+## 1 0.01869618
+## 2 0.04220123
+## 3 0.01918428
+## 4 2.26629182
+## 5 0.27092060</code></pre>
 </div>
 <div id="inferring-an-autocorrelation-only-change" class="section level1">
 <h1 class="hasAnchor">
 <a href="#inferring-an-autocorrelation-only-change" class="anchor"></a>Inferring an autocorrelation-only change</h1>
 <p>One “side-effect” of the <code>mcp</code> implementation of autocorrelation using <code><a href="https://rdrr.io/r/stats/ar.html">ar()</a></code> <em>in the formulas</em> is that you can infer when autocorrelation parameters and structures change.</p>
-<p>Let’s simulate a change point in autocorrelation and see if we can infer it later (<span style="color:red">OBS: this is new in <code>mcp</code> v0.3</span>):</p>
+<p>Let’s simulate a change point in autocorrelation and see if we can infer it later:</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="co"># The model</span></a>
 <a class="sourceLine" id="cb13-2" title="2">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
 <a class="sourceLine" id="cb13-3" title="3">  y <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="dv">1</span>),  <span class="co"># Slope</span></a>
@@ -320,21 +326,21 @@
 ##   2: y ~ 1 ~ 0 + x + ar(1)
 ## 
 ## Population-level parameters:
-##     name   mean  lower  upper Rhat n.eff    ts_se
-##    ar1_1  0.794  0.684  0.909 1.00  2073 1.34e-02
-##    ar1_2  0.124 -0.205  0.457 1.02   523 6.56e-01
-##     cp_1 62.085 48.748 73.941 1.10   130 3.19e+03
-##    int_1 21.255 15.444 27.073 1.08   132 5.76e+02
-##  sigma_1  4.890  4.397  5.381 1.00  3957 1.39e-01
-##      x_1  0.980  0.907  1.054 1.08   140 8.73e-02
-##      x_2  0.980  0.907  1.054 1.08   140 8.73e-02</code></pre>
+##     name match  sim  mean lower upper Rhat n.eff   ts_se
+##    ar1_1    OK  0.8  0.79  0.68  0.90    1  1430 2.0e-02
+##    ar1_2    OK  0.2  0.12 -0.22  0.42    1   506 3.9e-01
+##     cp_1    OK 60.0 62.14 49.24 74.05    1   199 2.4e+03
+##    int_1    OK 20.0 21.04 15.46 26.44    1   141 4.4e+02
+##  sigma_1    OK  5.0  4.88  4.43  5.39    1  3785 1.1e-01
+##      x_1    OK  1.0  0.98  0.91  1.05    1   144 5.7e-02
+##      x_2    OK  1.0  0.98  0.91  1.05    1   144 5.7e-02</code></pre>
 <p>We can also plot some of the parameters. As usual, we see that the change point is not well defined by any known distribution. The fact that the posterior mean is around 60 does not (necessarily) mean that there is a high credence in this value. Usually, I find that any bi- or N-modality on the posterior matches well with what you would guess from looking at the raw data. As they say: Bayesian inference is common sense applied to data.</p>
 <div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit, <span class="dt">regex_pars =</span> <span class="st">"cp_1|ar_*"</span>)</a></code></pre></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
 <p>As usual, we can test hypotheses and do model comparison (<a href="../articles/comparison.html">read more here</a>). We can also ask how much more likely it is (relative to the prior) that there the two autocorrelations are equal compared to them differing. Because we sampled both the prior and posterior (<code><a href="../reference/mcp.html">mcp(..., sample = "both")</a></code>), we can do a Savage-Dickey density ratio test:</p>
 <div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" title="1"><span class="kw"><a href="../reference/hypothesis.html">hypothesis</a></span>(fit, <span class="st">"ar1_1 = ar1_2"</span>)</a></code></pre></div>
-<pre><code>##          hypothesis      mean     lower    upper            p           BF
-## 1 ar1_1 - ar1_2 = 0 0.6705065 0.3348952 1.002241 1.869643e-05 1.869678e-05</code></pre>
+<pre><code>##          hypothesis      mean     lower     upper p BF
+## 1 ar1_1 - ar1_2 = 0 0.6765569 0.3298998 0.9751912 0  0</code></pre>
 <p>In this case, the evidence for equality is so small that it is rounded to zero. This means that not even a single MCMC sample visited a state with noticeable density at zero difference.</p>
 <p>We can assess the same hypothesis using cross-validation, only this time it is more about whether the change point increases the predictive accuracy. The change point is favored with an <code>elpd_diff/se_diff</code> factor of around 2.</p>
 <div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb21-1" title="1">fit_null =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(y <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="dv">1</span>)), data)</a>
@@ -344,11 +350,11 @@
 <a class="sourceLine" id="cb21-5" title="5">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit<span class="op">$</span>loo, fit_null<span class="op">$</span>loo)</a></code></pre></div>
 <pre><code>##        elpd_diff se_diff
 ## model1  0.0       0.0   
-## model2 -8.2       4.2</code></pre>
+## model2 -8.7       4.2</code></pre>
 <p>Of course, we can also do directional tests. For example, what is the evidence that <code>ar1_1</code> is more than 0.3 greater than <code>ar1_2</code>? Answer: around 100 to one.</p>
 <div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb23-1" title="1"><span class="kw"><a href="../reference/hypothesis.html">hypothesis</a></span>(fit, <span class="st">"ar1_1 - 0.3 &gt; ar1_2"</span>)</a></code></pre></div>
 <pre><code>##                hypothesis      mean      lower     upper         p       BF
-## 1 ar1_1 - 0.3 - ar1_2 &gt; 0 0.3705065 0.03489525 0.7022414 0.9817778 53.87805</code></pre>
+## 1 ar1_1 - 0.3 - ar1_2 &gt; 0 0.3752532 0.03495752 0.6812024 0.9876667 80.08108</code></pre>
 </div>
 <div id="ar_prior" class="section level1">
 <h1 class="hasAnchor">

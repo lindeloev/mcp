@@ -155,7 +155,7 @@
       <h1>Varying change points with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-12-05</h4>
+            <h4 class="date">2019-12-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/varying.Rmd"><code>vignettes/varying.Rmd</code></a></small>
       <div class="hidden name"><code>varying.Rmd</code></div>
@@ -168,7 +168,7 @@
 <p>This article in brief:</p>
 <ul>
 <li>How to simulate varying change points</li>
-<li>Get posteriors using <code><a href="../reference/ranef.html">ranef(fit)</a></code>
+<li>Get posteriors using <code><a href="../reference/summary.mcpfit.html">ranef(fit)</a></code>
 </li>
 <li>Plot using <code><a href="../reference/plot.mcpfit.html">plot(fit, facet_by="my_group")</a></code> and <code><a href="../reference/plot_pars.html">plot_pars(fit, pars = "varying", type = "dens_overlay", ncol = 3)</a></code>.</li>
 <li>The default priors restrict varying change points to lie between the two adjacent change points.</li>
@@ -225,16 +225,16 @@
 <pre><code>## # A tibble: 180 x 4
 ##        x id    id_numeric     y
 ##    &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt;
-##  1  85.7 Clark          3  38.8
-##  2  65.1 Clark          3  31.5
-##  3  32.6 Clark          3  22.7
-##  4  35.5 Clark          3  20.3
-##  5  78.9 Clark          3  40.4
-##  6  63.0 Clark          3  28.7
-##  7  65.6 Clark          3  29.5
-##  8  62.3 Clark          3  28.9
-##  9  78.9 Clark          3  36.8
-## 10  81.1 Clark          3  39.4
+##  1 75.3  Clark          3  31.4
+##  2 21.7  Clark          3  17.4
+##  3 96.8  Clark          3  46.7
+##  4  7.57 Clark          3  21.3
+##  5 29.4  Clark          3  20.0
+##  6 30.6  Clark          3  25.5
+##  7 24.0  Clark          3  22.6
+##  8 43.3  Clark          3  19.7
+##  9 64.9  Clark          3  32.1
+## 10 33.9  Clark          3  20.5
 ## # ... with 170 more rows</code></pre>
 <p>Here, we “translated” the <code>id</code> to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around <code>cp_1</code>. The result:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</a>
@@ -252,16 +252,23 @@
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">facet_by=</span><span class="st">"id"</span>, <span class="dt">ncol =</span> <span class="dv">3</span>)</a></code></pre></div>
 <p><img src="varying_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
 <p>It seems that <code>mcp</code> did a good job of recovering the change points. There is a lot of information in this data, since the intercept and the slope on each side of the (varying) change point is shared between participants here.</p>
-<p>If you use <code><a href="../reference/summary.mcpfit.html">summary(fit)</a></code> (or <code><a href="../reference/fixef.html">fixef(fit)</a></code>) you will get the posteriors for the population-level effects. To get the random effects, do:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="kw"><a href="../reference/ranef.html">ranef</a></span>(fit)</a></code></pre></div>
-<pre><code>##                 name       mean      lower      upper      Rhat n.eff    ts_se
-## 1   cp_1_id[Batgirl] -25.325769 -27.317389 -23.288873 0.9998655  5759 1.330638
-## 2    cp_1_id[Batman] -16.075985 -18.148746 -13.937156 1.0031138  4233 3.087306
-## 3     cp_1_id[Clark]  -5.954365  -7.683388  -4.115094 1.0014281  4443 2.356137
-## 4      cp_1_id[Jane]   4.567004   2.703868   6.304474 1.0032102  2483 3.697907
-## 5     cp_1_id[Louis]  15.623165  13.166036  18.030641 1.0022749  3489 7.313888
-## 6 cp_1_id[Spiderman]  27.165950  23.817586  30.399447 1.0008809  4538 1.583935</code></pre>
-<p>Notice how well they are estimated to be 10 apart, indicating good recovery.</p>
+<p>If you use <code><a href="../reference/summary.mcpfit.html">summary(fit)</a></code> (or <code><a href="../reference/summary.mcpfit.html">fixef(fit)</a></code>) you will get the posteriors for the population-level effects. To get the random effects, do:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="kw"><a href="../reference/summary.mcpfit.html">ranef</a></span>(fit)</a></code></pre></div>
+<pre><code>##                 name match sim       mean      lower      upper     Rhat n.eff
+## 1   cp_1_id[Batgirl]    OK -25 -26.188538 -27.755934 -24.593132 1.000215  5820
+## 2    cp_1_id[Batman]    OK -15 -14.628278 -16.397216 -12.970270 1.000096  5632
+## 3     cp_1_id[Clark]    OK  -5  -4.096622  -6.069162  -2.048578 1.000293  4904
+## 4      cp_1_id[Jane]    OK   5   5.262472   2.995098   7.579843 1.001663  5284
+## 5     cp_1_id[Louis]    OK  15  15.526023  13.350386  17.850840 1.000338  4580
+## 6 cp_1_id[Spiderman]    OK  25  24.124942  21.455289  26.749781 1.000247  5324
+##      ts_se
+## 1 1.648913
+## 2 2.074692
+## 3 1.482679
+## 4 1.127518
+## 5 3.829063
+## 6 2.356987</code></pre>
+<p>Inspecting the <code>sim</code> and <code>match</code> columns, we see that they recovered the simulation parameters well.</p>
 <p>Good convergence is not always as obvious as in this example. While <code><a href="../reference/plot_pars.html">plot_pars(fit)</a></code> show population-level parameters only, you can do this to get varying effects only:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit, <span class="dt">pars =</span> <span class="st">"varying"</span>, <span class="dt">type =</span> <span class="st">"trace"</span>, <span class="dt">ncol=</span><span class="dv">3</span>)</a></code></pre></div>
 <p><img src="varying_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
