@@ -1,3 +1,22 @@
+# Resubmission
+This is a resubmission. I believe I have solved all the points raised in the initial review. All tests pass. In this version I have:
+
+* Added single quotes around 'mcp' in DESCRIPTION.
+
+* Added literature to DESCRIPTION with the theoretical foundation for the computations done in mcp. NOTE: rhub says that the DOIs return a HTTP 403 error (forbidden). But the DOI work just fine, e.g., http://doi.org/10.2307/2986119. 
+
+* mcp no longer copies code from other packages so no attribution/ctb is required.
+
+* `print()` and `cat()` now only reside within `print()` and `summary()` functions.
+
+* All functions have a \value specified now. This has led me to do many other improvements in the documentation too.
+
+* All examples run now. Some have been enclosed in \donttest() to reduce runtimes.
+
+* I have taken the liberty to add a few API-breaking updates to `mcp` in this resubmission, so that the API is as stable as possible from the initial CRAN release. These are: (1) changed plotting of time-series, (2) the function name to simulate data, and (3) changed the `summary()` output for simulated data.
+
+* NOTE: one or two of the 1500+ unit tests fail around one in ten times with an error like "loo... tails... missing value where TRUE/FALSE needed". This is an artefact of quick unit testing (few MCMC iterations) and the end user will not experience this.
+
 
 # mcp 0.2
 

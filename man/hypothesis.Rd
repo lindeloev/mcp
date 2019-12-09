@@ -69,7 +69,7 @@ For directional hypotheses, it is p converted to odds.
 }
 }
 \description{
-This function is highly inspired by \code{\link[brms]{hypothesis}}. It returns
+This function is highly inspired by \code{brms::hypothesis()}. It returns
 posterior probabilities and Bayes Factors for flexible hypotheses involving
 model parameters. See the documentation below for the parameter \code{hypotheses}
 for examples of how to specify hypotheses, and \href{https://lindeloev.github.io/mcp/articles/comparison.html}{read worked examples on the mcp website}.

@@ -81,7 +81,7 @@ waic.mcpfit = function(x, ...) {
 
 #' Test hypotheses on mcp objects.
 #'
-#' This function is highly inspired by \code{\link[brms]{hypothesis}}. It returns
+#' This function is highly inspired by `brms::hypothesis()`. It returns
 #' posterior probabilities and Bayes Factors for flexible hypotheses involving
 #' model parameters. See the documentation below for the parameter `hypotheses`
 #' for examples of how to specify hypotheses, and [read worked examples on the mcp website](https://lindeloev.github.io/mcp/articles/comparison.html).
