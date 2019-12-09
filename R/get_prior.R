@@ -138,6 +138,7 @@ truncate_prior_cp = function(ST, i, prior_str) {
 #' @param ST Tibble. A segment table returned by `get_segment_table`.
 #' @param prior A list of user-defined priors. Will overwrite the relevant
 #'   default priors.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @return A named list of strings. The names correspond to the parameter names
 #'   and the strings are the JAGS code for the prior (before converting SD to

@@ -41,6 +41,7 @@ NULL
 #' @param varying Boolean. Get results for varying (TRUE) or population (FALSE)?
 #' @importFrom magrittr %>%
 #' @importFrom dplyr .data
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   # Get posterior/prior samples
@@ -194,6 +195,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #'   * `match` is `"OK"` if `sim` is contained in the HDI interval (`lower` to
 #'     `upper`).
 #'
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples

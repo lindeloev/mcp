@@ -91,6 +91,7 @@
 #'       in `fit$jags_code`
 #' @return An \code{\link{mcpfit}} object.
 #' @seealso \link{get_segment_table}
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @importFrom stats gaussian binomial
 #' @export

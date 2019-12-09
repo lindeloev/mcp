@@ -9,6 +9,7 @@
 #' @inheritParams mcp
 #' @param ytypes A character vector of ytypes to including in model building
 #' @return A string with JAGS code.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 get_all_formulas = function(ST, prior, par_x, ytypes = c("ct", "sigma", "arma")) {
@@ -53,6 +54,7 @@ get_all_formulas = function(ST, prior, par_x, ytypes = c("ct", "sigma", "arma"))
 #' @param init TRUE/FALSE. Set to TRUE for the first call. Adds segment-relative
 #'   X-codings and verbose commenting of one formula
 #' @return A string with JAGS code.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
@@ -215,6 +217,7 @@ get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
 #'   (optional for the user).
 #' @param nsegments Positive integer. Number of segments, typically `nrow(ST)`.
 #' @return A string with R code for the fit$simulate() function corresponding to the model.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 get_simulate = function(formula_str, pars, nsegments, family) {
@@ -386,6 +389,7 @@ get_simulate = function(formula_str, pars, nsegments, family) {
 #' @param family An mcpfamily object
 #' @param is_R Bool. Is this R code (TRUE) or JAGS code (FALSE)?
 #' @return String with JAGS code for AR.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 get_ar_code = function(ar_order, family, is_R, xvar, yvar = NA) {

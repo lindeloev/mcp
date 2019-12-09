@@ -8,6 +8,7 @@
 #'   * `form_y`: String. The expression for y (without tilde)
 #'   * `form_cp`: String. The formula for the change point
 #'   * `form_rhs`: String. The formula for the right-hand side
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 unpack_tildes = function(segment, i) {
@@ -60,6 +61,7 @@ unpack_tildes = function(segment, i) {
 #' @inheritParams unpack_rhs
 #' @param form Character representation of formula
 #' @return NULL
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 check_terms_in_data = function(form, data, i) {
@@ -78,6 +80,7 @@ check_terms_in_data = function(form, data, i) {
 #' @return A one-row tibble with the columns
 #'   * `y`: string. The y variable name.
 #'   * `trials`: string. The trials variable name.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 unpack_y = function(form_y, i, family) {
@@ -139,6 +142,7 @@ unpack_y = function(form_y, i, family) {
 #'   * `cp_in_rel`: bool. Is this intercept change relative?
 #'   * `cp_ran_int`: bool or NA. Is there a random intercept on the change point?
 #'   * `cp_group_col`: char or NA. Which column in data define the random intercept?
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 unpack_cp = function(form_cp, i) {
   if (is.na(form_cp)) {
@@ -217,6 +221,7 @@ unpack_cp = function(form_cp, i) {
 #'   * `_int`: NA or a one-row tibble describing the intercept.
 #'   * `_slope`: NA or a tibble with a row for each slope term.
 #'   * `_code`: NA or a char with the JAGS/R code to implement the slope.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 unpack_rhs = function(form_rhs, i, family, data, last_segment) {
@@ -405,6 +410,7 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
 #' @keywords internal
 #' @param term E.g., "ct(1 + x)", "sigma(0 + rel(x) + I(x^2))", etc.
 #' @return char formula with the content inside the brackets.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 get_term_content = function(term) {
@@ -432,6 +438,7 @@ get_term_content = function(term) {
 #' @keywords internal
 #' @inheritParams unpack_slope
 #' @return A one-row tibble describing the intercept.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 unpack_int = function(form, i, ttype) {
   # It there is no formula for this, return NA and don't go further
@@ -473,6 +480,7 @@ unpack_int = function(form, i, ttype) {
 #' @param last_slope The element in the slope column for this ttype in the previous
 #'   segment. I.e., probably what this function returned last time it was called!
 #' @return A "one-row" list with code (char) and a tibble of slopes.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 unpack_slope = function(form, i, ttype, last_slope) {
@@ -525,6 +533,7 @@ unpack_slope = function(form, i, ttype, last_slope) {
 #' @inheritParams unpack_slope
 #' @param term A character, e.g., "x", "I(x^2)", or "log(x)".
 #' @return A "one-row" list describing a slope term.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 unpack_slope_term = function(term, i, last_slope, ttype = "") {
@@ -610,6 +619,7 @@ unpack_slope_term = function(term, i, last_slope, ttype = "") {
 #' @keywords internal
 #' @param form_str_in A character. These are allowed: "ar(number)" or "ar(number, formula)"
 #' @return A list with $order and $form_str (e.g., "ar(formula)"). The formula is ar(1) or ma(1) if no formula is given
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 unpack_arma = function(form_str_in) {
@@ -659,6 +669,7 @@ unpack_arma = function(form_str_in) {
 #' @keywords internal
 #' @inheritParams unpack_slope_term
 #' @return A "one-row" list describing a varying intercept.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 unpack_varying_term = function(term, i) {
@@ -698,6 +709,7 @@ unpack_varying_term = function(term, i) {
 #' @keywords internal
 #' @inheritParams mcp
 #' @return A tibble with one row describing each segment and the corresponding code.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @importFrom magrittr %>%
 #' @importFrom stats gaussian binomial
@@ -858,6 +870,7 @@ get_segment_table = function(segments, data = NULL, family = gaussian(), par_x =
 #' @param x A column
 #' @param .sep A character to append between pastes
 #' @return string.
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk} but Inspired by
 #'   https://stackoverflow.com/questions/24862046/cumulatively-paste-concatenate-values-grouped-by-another-variable
 #'
@@ -877,7 +890,8 @@ cumpaste = function(x, .sep = " ")
 #' @param col A column
 #' @param na_col If this column is NA, return NA
 #' @return string
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk} but Inspired by
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 format_code = function(col, na_col) {
   # Replace with NA

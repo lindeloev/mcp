@@ -132,7 +132,7 @@ check_integer = function(x, name, lower = -Inf) {
 # Ask reminder questions for CRAN export
 release_questions = function() {
   c(
-    "Have you run the test of fits?",
+    "Have you run the test of fits? options(test_mcp_fits = TRUE)",
     "Have you built the README plots and checked them? source('man/figures/make_README_plots.R')",
     "Have you re-built the site using pkgdown::build_site() AFTER deleting caches of articles?",
     "Have you checked all articles and plots after re-building the site?",
@@ -152,6 +152,7 @@ release_questions = function() {
 #' @param form A formula
 #' @param remove Either "varying" or "population". These are removed.
 #' @return A formula
+#' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 remove_terms = function(form, remove) {
