@@ -12,20 +12,19 @@
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
-#' \dontrun{
-#' # Compute loos
+#' \donttest{
+#' # Define two models and sample them
+#' segments1 = list(y ~ 1 + x, ~ 1)
+#' segments2 = list(y ~ 1 + x)  # Without a change point
+#' fit1 = mcp(segments1, ex_plateaus)
+#' fit2 = mcp(segments2, ex_plateaus)
+#'
+#' # Compute LOO for each and compare (works for waic(fit) too)
 #' fit1$loo = loo(fit1)
 #' fit2$loo = loo(fit2)
-#' fit2$waic = waic(fit2)  # Just for fun
-#' fit1$loo  # view it
-#'
-#' # Compare loos. Top is best. Should be several SDs better than others.
 #' loo::loo_compare(fit1$loo, fit2$loo)
+#' }
 #'
-#' # Compute model weights. Higher weight is better. See help for details..
-#' loo::loo_model_weights(list(fit1$loo, fit2$loo))
-#'}
-
 criterion = function(fit, criterion = "loo", ...) {
   if (!class(fit) == "mcpfit")
     stop("class(fit) must be 'mcpfit'")
@@ -41,8 +40,6 @@ criterion = function(fit, criterion = "loo", ...) {
     # Compute relative effective sample size (for each loglik col)
     chain_id = rep(seq_along(fit$mcmc_post), each = nrow(fit$mcmc_post[[1]]))
     r_eff = loo::relative_eff(exp(loglik), chain_id)  # Likelihood = exp(log-likelihood)
-
-    # Add LOO
     return(loo::loo(loglik, r_eff = r_eff, ...))
   }
 
@@ -61,6 +58,7 @@ criterion = function(fit, criterion = "loo", ...) {
 #' @importFrom loo loo
 #' @export loo
 #' @export
+#'
 loo.mcpfit = function(x, ...) {
   criterion(x, "loo", ...)
 }
@@ -73,6 +71,7 @@ loo.mcpfit = function(x, ...) {
 #' @seealso \link{criterion}
 #' @export waic
 #' @export
+#'
 waic.mcpfit = function(x, ...) {
   criterion(x, "waic")
 }
@@ -92,6 +91,7 @@ waic.mcpfit = function(x, ...) {
 #'
 #' @aliases hypothesis hypothesis.mcpfit
 #' @inheritParams summary.mcpfit
+#' @param fit An \code{\link{mcpfit}} object.
 #' @param hypotheses String representation of a logical test involving model parameters.
 #'   Takes R code that evaluates to TRUE or FALSE in a vectorized way.
 #'
@@ -123,6 +123,7 @@ waic.mcpfit = function(x, ...) {
 #'   * ````"`cp_1_id[John]`/`cp_1_id[Erin]` = 2"````: is the varying change
 #'       point for John (which is relative to `cp_1``) double that of Erin?
 #' @return A data.frame with a row per hypothesis and the following columns:
+#'
 #'   * `hypothesis` is the hypothesis; often re-arranged to test against zero.
 #'   * `mean` is the posterior mean of the left-hand side of the hypothesis.
 #'   * `lower` is the lower bound of the (two-sided) highest-density interval of width `width`.
@@ -133,6 +134,7 @@ waic.mcpfit = function(x, ...) {
 #'   * `BF` Bayes Factor in favor  of the hypothesis.
 #'       For "=" it is the Savage-Dickey density ratio.
 #'       For directional hypotheses, it is p converted to odds.
+#'
 #' @importFrom dplyr .data
 #' @export
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}

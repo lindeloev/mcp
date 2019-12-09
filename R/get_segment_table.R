@@ -64,7 +64,6 @@ unpack_tildes = function(segment, i) {
 #'
 check_terms_in_data = function(form, data, i) {
   found = all.vars(form) %in% colnames(data)
-  found = found[stringr::str_starts(found, "sigma")]  # Sigma need not be in data
   if (!all(found))
     stop("Error in segment ", i, ": Term '", paste0(all.vars(form)[!found], collapse="' and '"), "' found in formula but not in data.")
 }
@@ -150,13 +149,13 @@ unpack_cp = function(form_cp, i) {
       cp_group_col = NA
     ))
   }
-  form_cp = as.formula(form_cp)
+  form_cp = stats::as.formula(form_cp)
 
   # Varying effects
   form_varying = remove_terms(form_cp, "population")
 
   if (!is.null(form_varying)) {
-    varying_terms = attr(terms(form_varying), "term.labels")
+    varying_terms = attr(stats::terms(form_varying), "term.labels")
     if (length(varying_terms) > 1)
       stop("Error in segment", i, " (change point): only one varying effect allowed. Found ", form_cp)
 
@@ -222,7 +221,7 @@ unpack_cp = function(form_cp, i) {
 #'
 unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   # Get general format
-  form_rhs = formula(form_rhs)
+  form_rhs = stats::as.formula(form_rhs)
   attrs = attributes(stats::terms(remove_terms(form_rhs, "varying")))
   term.labels = attrs$term.labels
 
@@ -421,7 +420,7 @@ get_term_content = function(term) {
     content_end = stringr::str_length(term) - 1  # Location of last character in contents
     content = substr(term, content_start, content_end)
 
-    form = as.formula(paste0("~", content), env = globalenv())
+    form = stats::as.formula(paste0("~", content), env = globalenv())
     return(form)
   }
 }
@@ -706,7 +705,7 @@ unpack_varying_term = function(term, i) {
 #' @examples
 #' segments = list(
 #'   y ~ 1 + x,
-#'   ~ 1
+#'   1 + (1|id) ~ 1
 #' )
 #' get_segment_table(segments)
 
