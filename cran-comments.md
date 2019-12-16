@@ -1,3 +1,16 @@
+# Resubmission 2
+
+ * Fixed grammatical error in DESCRIPTION.
+ 
+ * mcp now spawns at most 2 cores on CRAN (if `Sys.getenv("_R_CHECK_LIMIT_CORES_") == "TRUE"`). The examples and vignettes still call `options(mc.cores = 3)` but this should now be ignored on CRAN.
+ 
+ * As mentioned below, the following ERRORs/NOTEs may occur in the CRAN testing but won't be experienced by the end user:
+   - ERROR (install): The dependency `rjags` require JAGS installed.
+   - ERROR (test): The error "loo... tails... missing values where TRUE/FALSE needed" occurs rarely and is an artefact of the testing.
+   - NOTE: The DESCRIPTION DOIs are valid, but Rhub got a HTTP 403 error previously.
+
+
+
 # Resubmission
 This is a resubmission. I believe I have solved all the points raised in the initial review. All tests pass. In this version I have:
 
