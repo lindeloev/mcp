@@ -236,6 +236,13 @@ greater than the previous change point, <code><a href='https://rdrr.io/r/stats/U
 <li><p>A model parameter name (e.g., <code>int_2 = "int_1"</code>), indicating that this parameter is shared -
 typically between segments. If two varying effects are shared this way,
 they will need to have the same grouping variable.</p></li>
+<li><p>A scaled Dirichlet prior is supported for change points if they are all set to
+<code>cp_i = "dirichlet(N)</code> where <code>N</code> is the alpha for this change point and
+<code>N = 1</code> is most often used. This prior is less informative about the
+location of the change points than the default uniform prior, but it
+samples less efficiently, so you will often need to set <code>iter</code> higher.
+It is recommended for hypothesis testing and for the estimation of more
+than 5 change points. <a href='https://lindeloev.github.io/mcp/articles/priors.html'>Read more</a>.</p></li>
 </ul></td>
     </tr>
     <tr>

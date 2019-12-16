@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Test hypotheses on mcp objects. — hypothesis • mcp</title>
+<title>Get JAGS code for the Dirichlet prior — get_dirichlet • mcp</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -50,15 +50,8 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Test hypotheses on mcp objects. — hypothesis" />
-<meta property="og:description" content="This function is highly inspired by brms::hypothesis(). It returns
-posterior probabilities and Bayes Factors for flexible hypotheses involving
-model parameters. See the documentation below for the parameter hypotheses
-for examples of how to specify hypotheses, and read worked examples on the mcp website.
-For directional hypotheses, hypothesis`` executes the hypothesis string in a tidybayes`` environment and summerises the proportion of samples where
-the expression evaluates to TRUE. For equals-hypothesis, a Savage-Dickey
-ratio is computed. Savage-Dickey requires a prior too, so remember
-mcp(..., sample = &quot;both&quot;)." />
+<meta property="og:title" content="Get JAGS code for the Dirichlet prior — get_dirichlet" />
+<meta property="og:description" content="Get JAGS code for the Dirichlet prior" />
 <meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -207,93 +200,50 @@ mcp(..., sample = &quot;both&quot;)." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Test hypotheses on mcp objects.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/lindeloev/mcp/blob/master/R/comparison.R'><code>R/comparison.R</code></a></small>
-    <div class="hidden name"><code>hypothesis.Rd</code></div>
+    <h1>Get JAGS code for the Dirichlet prior</h1>
+    <small class="dont-index">Source: <a href='https://github.com/lindeloev/mcp/blob/master/R/get_jagscode.R'><code>R/get_jagscode.R</code></a></small>
+    <div class="hidden name"><code>get_dirichlet.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function is highly inspired by <code><a href='https://rdrr.io/pkg/brms/man/hypothesis.html'>brms::hypothesis()</a></code>. It returns
-posterior probabilities and Bayes Factors for flexible hypotheses involving
-model parameters. See the documentation below for the parameter <code>hypotheses</code>
-for examples of how to specify hypotheses, and <a href='https://lindeloev.github.io/mcp/articles/comparison.html'>read worked examples on the mcp website</a>.
-For directional hypotheses, <code>hypothesis`` executes the hypothesis string in a </code>tidybayes`` environment and summerises the proportion of samples where
-the expression evaluates to TRUE. For equals-hypothesis, a Savage-Dickey
-ratio is computed. Savage-Dickey requires a prior too, so remember
-<code><a href='mcp.html'>mcp(..., sample = "both")</a></code>.</p>
+    <p>Get JAGS code for the Dirichlet prior</p>
     </div>
 
-    <pre class="usage"><span class='fu'>hypothesis</span>(<span class='no'>fit</span>, <span class='no'>hypotheses</span>, <span class='kw'>width</span> <span class='kw'>=</span> <span class='fl'>0.95</span>, <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>3</span>)</pre>
+    <pre class="usage"><span class='fu'>get_dirichlet</span>(<span class='no'>prior</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>fit</th>
-      <td><p>An <code><a href='mcpfit-class.html'>mcpfit</a></code> object.</p></td>
-    </tr>
-    <tr>
-      <th>hypotheses</th>
-      <td><p>String representation of a logical test involving model parameters.
-Takes R code that evaluates to TRUE or FALSE in a vectorized way.</p>
-<p>Directional hypotheses are specified using &lt;, &gt;, &lt;=, or &gt;=. <code>hypothesis</code>
-returns the posterior probability and odds in favor of the stated hypothesis.
-The odds can be interpreted as a Bayes Factor. For example:</p><ul>
-<li><p><code>"cp_1 &gt; 30"</code>:  the first change point is above 30.</p></li>
-<li><p><code>"int_1 &gt; int_2"</code>: the intercept is greater in segment 1 than 2.</p></li>
-<li><p><code>"x_2 - x_1 &lt;= 3"</code>: the difference between slope 1 and 2 is less
-than or equal to 3.</p></li>
-<li><p><code>"int_1 &gt; -2 &amp; int_1 &lt; 2"</code>: int_1 is between -2 and 2 (an interval hypothesis). This can be useful as a Region Of Practical Equivalence test (ROPE).</p></li>
-<li><p><code>"cp_1^2 &lt; 30 | (log(x_1) + log(x_2)) &gt; 5"</code>: be creative.</p></li>
-<li><p><code>"`cp_1_id[1]` &gt; `cp_1_id[2]`"</code>: id1 is greater than id2, as estimated
-through the varying-by-"id" change point in segment 1. Note that <code>``</code>
-required for varying effects.</p></li>
-</ul>
-
-<p>Hypotheses can also test equality using the equal sign (=). This runs a
-Savage-Dickey test, i.e., the proportion by which the probability density
-has increased from the prior to the posterior at a given value. Therefore,
-it requires <code><a href='mcp.html'>mcp(sample = "both")</a></code>. There are two requirements:
-First, there can only be one equal sign, so don't use and (&amp;) or or (|).
-Second, the point to test has to be on the right, and the variables on the left.</p><ul>
-<li><p><code>"cp_1 = 30"</code>: is the first change point at 30? Or to be more precise:
-by what factor has the credence in cp_1 = 30 risen/fallen when
-conditioning on the data, relative to the prior credence?</p></li>
-<li><p><code>"int_1 + int_2 = 0"</code>: Is the sum of two intercepts zero?</p></li>
-<li><p><code>"`cp_1_id[John]`/`cp_1_id[Erin]` = 2"</code>: is the varying change
-point for John (which is relative to `cp_1``) double that of Erin?</p></li>
+      <th>prior</th>
+      <td><p>Named list. Names are parameter names (<code>cp_i</code>, <code>int_i</code>, <code>xvar_i</code>,
+`sigma``) and the values are either</p><ul>
+<li><p>A JAGS distribution (e.g., <code>int_1 = "dnorm(0, 1) T(0,)"</code>) indicating a
+conventional prior distribution. Uninformative priors based on data
+properties are used where priors are not specified. This ensures good
+parameter estimations, but it is a questionable for hypothesis testing.
+<code>mcp</code> uses SD (not precision) for dnorm, dt, dlogis, etc. See
+details. Change points are forced to be ordered through the priors using
+truncation, except for uniform priors where the lower bound should be
+greater than the previous change point, <code><a href='https://rdrr.io/r/stats/Uniform.html'>dunif(cp_1, MAXX)</a></code>.</p></li>
+<li><p>A numerical value (e.g., <code>int_1 = -2.1</code>) indicating a fixed value.</p></li>
+<li><p>A model parameter name (e.g., <code>int_2 = "int_1"</code>), indicating that this parameter is shared -
+typically between segments. If two varying effects are shared this way,
+they will need to have the same grouping variable.</p></li>
+<li><p>A scaled Dirichlet prior is supported for change points if they are all set to
+<code>cp_i = "dirichlet(N)</code> where <code>N</code> is the alpha for this change point and
+<code>N = 1</code> is most often used. This prior is less informative about the
+location of the change points than the default uniform prior, but it
+samples less efficiently, so you will often need to set <code>iter</code> higher.
+It is recommended for hypothesis testing and for the estimation of more
+than 5 change points. <a href='https://lindeloev.github.io/mcp/articles/priors.html'>Read more</a>.</p></li>
 </ul></td>
-    </tr>
-    <tr>
-      <th>width</th>
-      <td><p>Float. The width of the highest posterior density interval
-(between 0 and 1).</p></td>
-    </tr>
-    <tr>
-      <th>digits</th>
-      <td><p>a non-null value for digits specifies the minimum number of
-significant digits to be printed in values. The default, NULL, uses
-getOption("digits"). (For the interpretation for complex numbers see signif.)
-Non-integer values will be rounded down, and only values greater than or
-equal to 1 and no greater than 22 are accepted.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A data.frame with a row per hypothesis and the following columns:</p><ul>
-<li><p><code>hypothesis</code> is the hypothesis; often re-arranged to test against zero.</p></li>
-<li><p><code>mean</code> is the posterior mean of the left-hand side of the hypothesis.</p></li>
-<li><p><code>lower</code> is the lower bound of the (two-sided) highest-density interval of width <code>width</code>.</p></li>
-<li><p><code>upper</code> is the upper bound of ditto.</p></li>
-<li><p><code>p</code> Posterior probability.
-For "=" (Savage-Dickey), it is the BF converted to p.
-For directional hypotheses, it is the proportion of samples that returns TRUE.</p></li>
-<li><p><code>BF</code> Bayes Factor in favor  of the hypothesis.
-For "=" it is the Savage-Dickey density ratio.
-For directional hypotheses, it is p converted to odds.</p></li>
-</ul>
-
+    <p>A string</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
