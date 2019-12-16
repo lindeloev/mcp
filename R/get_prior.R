@@ -237,6 +237,11 @@ get_prior = function(ST, family, prior = list()) {
     }
   }
 
+  # A check
+  name_matches = names(prior) %in% names(default_prior)
+  if (!all(name_matches))
+    stop("Prior(s) were specified for the following parmameter name(s) that are not part of the model: '", paste0(names(prior)[!name_matches], collapse = "', '"), "'")
+
   # Replace default priors with user prior and return
   prior = utils::modifyList(default_prior, prior)
 
