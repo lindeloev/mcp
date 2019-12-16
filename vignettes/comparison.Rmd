@@ -15,6 +15,7 @@ There are three main ways of doing model comparison in `mcp`:
  * Flexible directional tests using `hypothesis(fit, cp_1 > 40)` or `hypothesis(fit, cp_1 > 40 & x_2 > x_1)`.
  * Point Bayes Factors tests using the Savage-Dickey density ratio, e.g., `hypothesis(fit, cp_1 = 50)` or `hypothesis(fit, x_2 = x_1)`.
 
+*NOTE: the default prior is unfit for `hypothesis` for models with 2+ change points. The Dirichlet prior may be a better alternative. [Read more here](../docs/articles/priors.html).*
 
 # Some models to play with
 We know quite a bit about human short term memory. Namely, the average human has almost perfect recall when presented with 1-4 items (we remember them all), and then errors begins intruding when presented with more items [(Cowan, 2001)](https://www.ncbi.nlm.nih.gov/pubmed/11515286). We also know that memory is not infinite, so as $N \rightarrow \infty$, it has to plateau.
@@ -39,7 +40,7 @@ segments_simple = list(recalled | trials(items) ~ 1 + items)
 Notice that `items` is used both as `trials` and x-axis. No problem. 
 
 
-Simulate some data using `fit$simulate`:
+Simulate some data using `fit$simulate()`:
 
 ```{r}
 library(mcp)

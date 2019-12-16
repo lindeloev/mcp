@@ -155,7 +155,7 @@
       <h1>Change point model comparison with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-12-09</h4>
+            <h4 class="date">2019-12-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/comparison.Rmd"><code>vignettes/comparison.Rmd</code></a></small>
       <div class="hidden name"><code>comparison.Rmd</code></div>
@@ -170,6 +170,7 @@
 <li>Flexible directional tests using <code><a href="../reference/hypothesis.html">hypothesis(fit, cp_1 &gt; 40)</a></code> or <code><a href="../reference/hypothesis.html">hypothesis(fit, cp_1 &gt; 40 &amp; x_2 &gt; x_1)</a></code>.</li>
 <li>Point Bayes Factors tests using the Savage-Dickey density ratio, e.g., <code><a href="../reference/hypothesis.html">hypothesis(fit, cp_1 = 50)</a></code> or <code><a href="../reference/hypothesis.html">hypothesis(fit, x_2 = x_1)</a></code>.</li>
 </ul>
+<p><em>NOTE: the default prior is unfit for <code>hypothesis</code> for models with 2+ change points. The Dirichlet prior may be a better alternative. <a href="../docs/articles/priors.html">Read more here</a>.</em></p>
 <div id="some-models-to-play-with" class="section level1">
 <h1 class="hasAnchor">
 <a href="#some-models-to-play-with" class="anchor"></a>Some models to play with</h1>
@@ -188,7 +189,7 @@
 <a class="sourceLine" id="cb1-11" title="11"><span class="co"># A very simple model</span></a>
 <a class="sourceLine" id="cb1-12" title="12">segments_simple =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(recalled <span class="op">|</span><span class="st"> </span><span class="kw">trials</span>(items) <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>items)</a></code></pre></div>
 <p>Notice that <code>items</code> is used both as <code>trials</code> and x-axis. No problem.</p>
-<p>Simulate some data using <code>fit$simulate</code>:</p>
+<p>Simulate some data using <code>fit$simulate()</code>:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(mcp)</a>
 <a class="sourceLine" id="cb2-2" title="2"><span class="kw"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="dt">mc.cores =</span> <span class="dv">3</span>)  <span class="co"># Speed up sampling!</span></a>
 <a class="sourceLine" id="cb2-3" title="3"></a>

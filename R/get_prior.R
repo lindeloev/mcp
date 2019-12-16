@@ -7,6 +7,7 @@ cp_prior = list(
   cp_1 = "dunif(MINX, MAXX)",
   cp = "dunif(%s, MAXX)",
   cp_rel = "dunif(0, MAXX - %s)",
+  #cp = "dirichlet(1)",
   sd = "dnorm(0, (MAXX - MINX) / 2) T(0, )"
 )
 
@@ -100,12 +101,12 @@ truncate_prior_cp = function(ST, i, prior_str) {
   S = ST[i,]
 
   # User provided prior. Truncate it to ensure correct order
-  is_dunif = stringr::str_detect(prior_str, "dunif")
+  is_bounded = stringr::str_detect(prior_str, "dunif|dirichlet")
   is_truncated = stringr::str_detect(prior_str, "T\\(")
   is_fixed = is.numeric(prior_str)
 
   # OK, we need to add truncation ourselves.
-  if (!is_dunif & !is_truncated & !is_fixed) {
+  if (!is_bounded & !is_truncated & !is_fixed) {
     if (S$cp_int_rel != 0) {
       # Relative: be positive (greater than former cp) and within observed range
       return(paste0(prior_str, " T(0, MAXX - ", ST$cp_code_prior[i - 1], ")"))
@@ -168,6 +169,7 @@ get_prior = function(ST, family, prior = list()) {
     # Change point
     if (i > 1)
       default_prior[[S$cp_name]] = get_default_prior_cp(ST, i, family)
+      #default_prior[[S$cp_name]] = priors[[family$family]]$cp
 
     # Change point varying effects
     if (!is.na(S$cp_sd)) {
@@ -228,8 +230,17 @@ get_prior = function(ST, family, prior = list()) {
     # Truncate change point prior if supplied by user
     if (i > 1 & ST$cp_name[i] %in% names(prior)) {
       prior[[S$cp_name]] = truncate_prior_cp(ST, i, prior[[S$cp_name]])
+      # # If this is not a dirichlet, truncate it to ensure ordered change points
+      # if (!stringr::str_detect(prior[[S$cp_name]], "^dirichlet\\([0-9]+\\)")) {
+      #   prior[[S$cp_name]] = truncate_prior_cp(ST, i, prior[[S$cp_name]])
+      # }
     }
   }
+
+  # A check
+  name_matches = names(prior) %in% names(default_prior)
+  if (!all(name_matches))
+    stop("Prior(s) were specified for the following parmameter name(s) that are not part of the model: '", paste0(names(prior)[!name_matches], collapse = "', '"), "'")
 
   # Replace default priors with user prior and return
   prior = utils::modifyList(default_prior, prior)

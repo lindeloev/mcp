@@ -53,6 +53,13 @@ greater than the previous change point, \code{dunif(cp_1, MAXX)}.
 \item A model parameter name (e.g., \code{int_2 = "int_1"}), indicating that this parameter is shared -
 typically between segments. If two varying effects are shared this way,
 they will need to have the same grouping variable.
+\item A scaled Dirichlet prior is supported for change points if they are all set to
+\verb{cp_i = "dirichlet(N)} where \code{N} is the alpha for this change point and
+\code{N = 1} is most often used. This prior is less informative about the
+location of the change points than the default uniform prior, but it
+samples less efficiently, so you will often need to set \code{iter} higher.
+It is recommended for hypothesis testing and for the estimation of more
+than 5 change points. \href{https://lindeloev.github.io/mcp/articles/priors.html}{Read more}.
 }}
 
 \item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}.
@@ -172,11 +179,10 @@ print(ex_fit$prior)
 
 # Set priors and re-run
 prior = list(
-  int_1 = "dt(10, 5, 1) T(0, )", # t-dist intercept. Truncated to positive.
-  year_1 = "dnorm(0, 3)",      # slope of segment 1. Mean = 0, SD = 5.
+  int_1 = 15,
+  time_2 = "dt(0, 2, 1) T(0, )",  # t-dist slope. Truncated to positive.
   cp_2 = "dunif(cp_1, 80)",    # change point to segment 2 > cp_1 and < 80.
-  year_2 = "year_1",           # Shared slope between segment 2 and 1
-  int_3 = 15                   # Fixed intercept of segment 3
+  int_3 = "int_1"           # Shared intercept between segment 1 and 3
 )
 
 \donttest{

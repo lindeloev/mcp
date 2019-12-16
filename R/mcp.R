@@ -43,6 +43,13 @@
 #'  * A model parameter name (e.g., `int_2 = "int_1"`), indicating that this parameter is shared -
 #'      typically between segments. If two varying effects are shared this way,
 #'      they will need to have the same grouping variable.
+#'  * A scaled Dirichlet prior is supported for change points if they are all set to
+#'      `cp_i = "dirichlet(N)` where `N` is the alpha for this change point and
+#'      `N = 1` is most often used. This prior is less informative about the
+#'      location of the change points than the default uniform prior, but it
+#'      samples less efficiently, so you will often need to set `iter` higher.
+#'      It is recommended for hypothesis testing and for the estimation of more
+#'      than 5 change points. [Read more](https://lindeloev.github.io/mcp/articles/priors.html).
 #' @param family One of `gaussian()`, `binomial()`, `bernoulli()`, or `poission()`.
 #'   Only default link functions are currently supported.
 #' @param par_x String (default: NULL). Only relevant if no segments contains
@@ -137,11 +144,10 @@
 #'
 #' # Set priors and re-run
 #' prior = list(
-#'   int_1 = "dt(10, 5, 1) T(0, )", # t-dist intercept. Truncated to positive.
-#'   year_1 = "dnorm(0, 3)",      # slope of segment 1. Mean = 0, SD = 5.
+#'   int_1 = 15,
+#'   time_2 = "dt(0, 2, 1) T(0, )",  # t-dist slope. Truncated to positive.
 #'   cp_2 = "dunif(cp_1, 80)",    # change point to segment 2 > cp_1 and < 80.
-#'   year_2 = "year_1",           # Shared slope between segment 2 and 1
-#'   int_3 = 15                   # Fixed intercept of segment 3
+#'   int_3 = "int_1"           # Shared intercept between segment 1 and 3
 #' )
 #'
 #' \donttest{
@@ -169,7 +175,7 @@ mcp = function(segments,
   ################
 
   # Check data
-  if (is.null(data) & sample == TRUE)
+  if (is.null(data) & !(sample %in% c(FALSE, "none")))
     stop("Cannot sample without data.")
 
   if (!is.null(data)) {

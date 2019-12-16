@@ -33,13 +33,17 @@ run_jags = function(data,
   if (length(pars) <= 2)
     pars = c(pars, "cp_0", "cp_1")
 
-  # Set number of cores from "all" or mc.cores
+  # Set number of cores from "all" or mc.cores. Max at 2 for CRAN etc.
   opts = options()
   if (is.numeric(opts$mc.cores))
     cores = opts$mc.cores
   if (cores == "all") {
     cores = parallel::detectCores() - 1
     n.chains = cores
+  }
+  if (Sys.getenv("_R_CHECK_LIMIT_CORES_", "") == "TRUE") {
+    if (cores > 1)
+      cores = 2
   }
 
   # Get data ready...
