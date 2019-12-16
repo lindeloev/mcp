@@ -176,7 +176,7 @@ mcp = function(segments,
   ################
 
   # Check data
-  if (is.null(data) & sample == TRUE)
+  if (is.null(data) & !(sample %in% c(FALSE, "none")))
     stop("Cannot sample without data.")
 
   if (!is.null(data)) {
