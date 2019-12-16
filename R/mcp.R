@@ -43,6 +43,13 @@
 #'  * A model parameter name (e.g., `int_2 = "int_1"`), indicating that this parameter is shared -
 #'      typically between segments. If two varying effects are shared this way,
 #'      they will need to have the same grouping variable.
+#'  * A scaled Dirichlet prior is supported for change poings if they are all set to
+#'      `cp_i = "dirichlet(N)` where `N` is the alpha for this change point and
+#'      `N = 1` is most oftenly used. This prior is less informative about the
+#'      location of the change points than the default uniform prior, but it
+#'      samples less efficiently, so you will often need to set `iter` higher.
+#'      It is recommended for hypothesis testing and for the estimation of more
+#'      than 5 change points. [Read more](https://lindeloev.github.io/mcp/articles/priors.html).
 #' @param family One of `gaussian()`, `binomial()`, `bernoulli()`, or `poission()`.
 #'   Only default link functions are currently supported.
 #' @param par_x String (default: NULL). Only relevant if no segments contains

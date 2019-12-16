@@ -15,16 +15,45 @@ get_jagscode = function(prior, ST, formula_str, arma_order, family, sample) {
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
   mm = paste0("
-model {
-  # Priors for population-level effects\n")
-  ##########
-  # PRIORS #
-  ##########
+model {")
+
+  ####################################
+  # DIRICHLET PRIOR ON CHANGE POINTS #
+  ####################################
+  # Get change point priors and check if they are Dirichlet
+  cps = prior[stringr::str_detect(names(prior), "^cp_[1-9]+$")]
+  is_dirichlet = stringr::str_detect(cps, "^dirichlet\\([1-9]+\\)$")
+  if (any(is_dirichlet)) {
+    if (!all(is_dirichlet))
+      stop("All or none of the change point priors can be 'dirichlet(N)'. Not just some.")
+
+    # Build JAGS code. cp_betas is a simplex. cp_i is scaled to the observed range of x.
+    mm = paste0(mm, "
+    # Scaled Dirichlet prior on change points
+    cp_betas ~ ddirch(c(", paste0(stringr::str_extract(cps, "[0-9]+"), collapse = ", "), ", 1))")  # OBS: adds an extra 1
+    for (i in seq_along(cps)) {
+      mm = paste0(mm, "
+    cp_", i, " = MINX + sum(cp_betas[1:", i, "]) * (MAXX - MINX)")
+    }
+
+    # Clean up. Remove any dirichlet priors from the list of priors
+    is_dirichlet2 = stringr::str_detect(prior, "^dirichlet\\([1-9]+\\)$")
+    prior[is_dirichlet2] = NULL
+  }
+
+  ################
+  # OTHER PRIORS #
+  ################
+  # ... also handles non-Dirichlet priors
+
   # Split up priors into population and varying
   prior_pop = prior[!names(prior) %in% ST$cp_group]
   prior_varying = prior[names(prior) %in% ST$cp_group]
 
   # Use get_prior_str() to add population-level priors
+  mm = paste0(mm, "
+
+  # Priors for population-level effects\n")
   for (i in 1:length(prior_pop)) {
     mm = paste0(mm, get_prior_str(prior_pop, i))
   }
@@ -145,7 +174,7 @@ get_prior_str = function(prior, i, varying_group = NULL) {
   name = names(prior[i])
 
   # Is this fixed?
-  all_d = "dunif|dbern|dbeta|dbin|dchisqr|ddexp|dexp|df|dgamma|dgen.gamma|dhyper|dlogis|dlnorm|dnegbin|dnchisqr|dnorm|dpar|dpois|dt|dweib"  # All JAGS distributions
+  all_d = "dunif|dbern|dbeta|dbin|dchisqr|ddexp|dexp|df|dgamma|dgen.gamma|dhyper|dlogis|dlnorm|dnegbin|dnchisqr|dnorm|dpar|dpois|dt|dweib|dirichlet"  # All JAGS distributions
   is_fixed = stringr::str_detect(value, "^[-0-9.]+$") |
     value %in% names(prior)
 
@@ -174,6 +203,35 @@ get_prior_str = function(prior, i, varying_group = NULL) {
   }
 }
 
+
+#' Get JAGS code for the Dirichlet prior
+#'
+#' @aliases get_dirichlet
+#' @keywords internal
+#' @inheritParams mcp
+#' @return A string
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @encoding UTF-8
+#'
+get_dirichlet = function(prior) {
+  # Get change point priors and whether they are dirichlets.
+  cps = prior[stringr::str_detect(names(prior), "^cp_[1-9]+$")]
+  is_dirichlet = stringr::str_detect(cps, "^dirichlet\\([1-9]+\\)$")
+
+  if (any(is_dirichlet) & !all(is_dirichlet))
+    stop("All or none of the change point priors can be 'dirichlet(N)'. Not just some.")
+
+  # Make JAGS code. cp_betas is a simplex.
+  # cp_i are shifted and scaled to the observed range of x
+  mm = paste0("
+  # Scaled Dirichlet prior on change points
+  cp_betas ~ ddirch(c(", paste0(stringr::str_extract(cps, "[0-9]+"), collapse = ", "), "))")
+
+  for (i in seq_along(cps)) {
+    mm = paste0(mm, "
+  cp_", i, " = XMIN + cp_betas[", i, "] * (XMAX - XMIN)")
+  }
+}
 
 
 #' Transform a prior from SD to precision.
