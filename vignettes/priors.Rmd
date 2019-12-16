@@ -35,7 +35,7 @@ The values are JAGS code, so all JAGS distributions are allowed. These also incl
 
 Other notes:
 
-* Order restriction is automatically applied to change points (`cp_*` parameters) using truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the x-axis. You can override this behavior by defining `T()` or `dunif` yourself (`dunif` cannot be truncated), in which case `mcp` won't do further.
+* Order restriction is automatically applied to change points (`cp_*` parameters) using truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the x-axis. You can override this behavior by defining `T()` or `dunif` yourself (`dunif` cannot be truncated), in which case `mcp` won't do further. Dirichlet priors are inherently ordered ([jump to section](#cp_prior)).
 
 * In addition to the model parameters, `MINX` (minimum x-value), `MAXX` (maximum x-value), `SDX`, `MEANX`, `MINY`, `MAXY`, `MEANY`, and `SDY` are also available when you set priors. They are used to set uninformative default priors. Strictly speaking, this is "illegal", but it does ensure that estimation works reasonably across many orders of magnitude.
 
@@ -95,12 +95,136 @@ We see the effects of the priors.
 Of course, it will usually be the other way around: setting priors manually will often serve to sample the "correct" posterior.
 
 
-# Default priors on change points
-Change points have to be ordered from left (`cp_1`) to right (`cp_2+`). This order restriction is enforced through the priors. The first change point defaults to `cp_1 = dunif(MINX, MAXX)`. In other words, the change point has to happen in the observed range of x, but it is equally probable across this range. The second change point defaults to `cp_2 = dunif(cp_1, MAXX)`, i.e., it has to occur in the observed range AND be greater than `cp_1`, and so forth for `cp_3` (greater than `cp_2`), etc.
+# Default priors on change points {#cp_prior}
+Change points have to be ordered from left (`cp_1`) to right (`cp_2+`). This order restriction is enforced through the priors. You need to make an important choice. I am writing this up more formally, 
 
-One side effect is that later change points have greater prior probability density towards the right side of the x-axis. You can see this if you sample the priors without data (`fit = mcp(segments, data, sample = "prior")`) and summarise the estimates (`summary(fit)`). In practice, this "bias" is so weak that it takes a combination of many change points and few data for it to impact the posterior in any noticeable way.
+* The default `dunif`-based prior is suitable for estimation and it will work well for `loo()` cross-validation as well. It's main virtue is that it samples the change point posteriors relatively effectively, but it will often be deeply unfit for Bayes Factors if there are 2+ change points (see below).
+
+* Use the `Dirichlet` prior if you want a more uninformative prior that is better suited for Bayes Factors, scientific publication, or 6+ change points. It has better known mathematical properties and a precedence in [Büerkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/). It is not default because for many problems it samples order(s) of magnitude less efficiently than the default priors while yielding identical fits. In these cases you need to increase the number of MCMC samples (e.g. `mcp(..., iter = 20000)`).
+
+They are identical for one change point (`dunif(MINX, MAXX)`). They begin to diverge at 2+ change points, as can be seen in the plot below where they are scaled to the range 50-150. Note that *the dunif is not as informative as it looks* because the serial-truncation make `cp_1` act as a kind of hyperprior to `cp_2+` which is hyper for `cp_3+` and so forth. So even weak information that `cp_1` happens early will change the distribution for the other change points strongly towards being less informative. But if you do a Savage-Dickey test using `hypothesis(cp_5 = 100)`, it will use the priors below.
+
+
+```{r, echo = FALSE, results=FALSE, warning=FALSE, message=FALSE}
+data_dummy = data.frame(x = c(50, 100, 150), y = rnorm(3))
+
+# Sample priors for two default change points
+segments_two = list(y ~ x, ~ 1, ~1)
+fit_two = mcp(segments_two, data_dummy, sample = "prior", chains = 1, iter = 30000)
+
+# Sample priors for five default change points
+segments_five = list(y ~ x, ~ 1, ~1, ~1, ~1, ~1)
+fit_five = mcp(segments_five, data_dummy, sample = "prior", chains = 1, iter = 30000)
+```
+
+```{r, echo = FALSE, fig.height=6, fig.width=7}
+par(mfrow = c(2,2))
+
+
+###############
+# DIRICH TWO #
+###############
+
+# Initiate for cp_1
+curve(dbeta(x, 1, 2) / 2, 
+      ylab = "density",
+      xlab = NA,
+      main = "Dirichlet two")
+
+text(0.1, 0.7, labels = "cp_1")
+
+# Add others
+curve(dbeta(x, 2, 1) / 2, add = T); text(0.9, 0.7, labels = "cp_2")
+
+# The sum
+curve(dunif(x, 0, 1), lty = 2, add = T); text(0.5, 0.95, labels = "sum")
+
+# Add extra x-axis
+axis(1, at = seq(0, 1, by = 0.2), labels = seq(50, 150, by = 20), line=3)
+mtext("Beta", 1, line = 1, at = -0.2)
+mtext("Data", 1, line = 3, at = -0.2)
+
+
+###############
+# DIRICH FIVE #
+###############
+
+# Initiate for cp_1
+curve(dbeta(x, 1, 5) / 5, 
+      ylab = "density",
+      xlab = NA,
+      main = "Dirichlet five")
+
+text(0.1, 0.8, labels = "cp_1")
+
+# Add others
+curve(dbeta(x, 2, 4) / 5, add = T); text(0.25, 0.48, labels = "cp_2")
+curve(dbeta(x, 3, 3) / 5, add = T); text(0.5, 0.43, labels = "cp_3") 
+curve(dbeta(x, 4, 2) / 5, add = T); text(0.75, 0.48, labels = "cp_4") 
+curve(dbeta(x, 5, 1) / 5, add = T); text(0.9, 0.8, labels = "cp_5") 
+
+# The sum
+curve(dunif(x, 0, 1), lty = 2, add = T); text(0.5, 0.95, labels = "sum")
+
+# Add extra x-axis
+axis(1, at = seq(0, 1, by = 0.2), labels = seq(50, 150, by = 20), line=3)
+mtext("Beta", 1, line = 1, at = -0.2)
+mtext("Data", 1, line = 3, at = -0.2)
+
+
+############
+# UNIF TWO #
+############
+y1 = density(fit_two$mcmc_prior[[1]][, "cp_1"])
+y2 = density(fit_two$mcmc_prior[[1]][, "cp_2"])
+plot(y2, xlab = NA, xlim = c(50, 150), main = "Uniform two")
+lines(y1)
+text(75, 0.013, labels = "cp_1")
+text(130, 0.025, labels = "cp_2")
+
+
+
+#############
+# UNIF FIVE #
+#############
+z1 = density(fit_five$mcmc_prior[[1]][, "cp_1"])
+z2 = density(fit_five$mcmc_prior[[1]][, "cp_2"])
+z3 = density(fit_five$mcmc_prior[[1]][, "cp_3"])
+z4 = density(fit_five$mcmc_prior[[1]][, "cp_4"])
+z5 = density(fit_five$mcmc_prior[[1]][, "cp_5"])
+plot(z5, xlab = NA, xlim = c(50, 150), main = "Uniform five"); text(140, 0.45, labels = "cp_5")
+lines(z4); text(140, 0.2, labels = "cp_4")
+lines(z3); text(140, 0.1, labels = "cp_3")
+lines(z3); text(129, 0.05, labels = "cp_2")
+lines(z2); text(80, 0.05, labels = "cp_1")
+lines(z1)
+
+par(mfrow = c(1,1))
+```
+
+
+
+## `dunif`-based prior on change points (default)
+The first change point defaults to `cp_1 = dunif(MINX, MAXX)`. In other words, the change point has to happen in the observed range of x, but it is equally probable across this range. The second change point defaults to `cp_2 = dunif(cp_1, MAXX)`, i.e., it has to occur in the observed range AND be greater than `cp_1`, and so forth for `cp_3` (greater than `cp_2`), etc.
+
+One side effect is that later change points have greater prior probability density towards the right side of the x-axis. You can see this if you sample the priors without data (`fit = mcp(segments, data, sample = "prior")`) and summarise the estimates (`summary(fit)`). In practice, this "bias" is so weak that it takes a combination of many change points and few data for it to impact the posterior in any noticeable way. However, if you do 
 
 If you want more informed priors on the change point location, i.e., `cp_2 = "dnorm(40, 10)`, `mcp` adds this order restriction by adding `cp_2 = "dnorm(40, 10) T(cp_1, MAXX)`. You can avoid this behavior by explicitly doing an "empty" truncation yourself, e.g., `cp_2 = "dnorm(40, 10) T(,)`. However, the model may fail to sample the correct posterior in samples where order restriction is not kept.
+
+## Dirichlet-based prior on change points
+The [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) is a multivariate beta prior and these betas jointly form a simplex, meaning that they are all positive and sum to one. They are all in the interval $[0, 1]$ so they are shifted and scaled to $[min(x), max(x)]$. The Dirichlet prior has the nice property that (1) the order-restriction and boundedness is inherent to the distribution, and (2) it represents a uniform prior that *any* change happens at any $x$, i.e., it is maximally uninformative. It underlies the modeling of monotonic effects in brms ([Büerkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/)).
+
+To use the Dirichlet prior, you need to specify it for all or none of the change points. E.g.,
+
+```{r, eval=FALSE}
+prior_dirichlet = list(
+  cp_1 = "dirichlet(1)",
+  cp_2 = "dirichlet(1)",
+  cp_3 = "dirichlet(1)"
+)
+```
+
+The number in the parenthesis is the $\alpha$ parameter, so you could also specify `cp_1 = "dirichlet(3)` if you want to push credence for that and later change points more to the rightwards while pushing earlier priors leftwards.
 
 
 # Default priors on linear predictors
