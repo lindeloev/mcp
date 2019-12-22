@@ -2,8 +2,6 @@
 # SETUP AND FUNCTIONS #
 #######################
 `%>%` = magrittr::`%>%`
-options(mc.cores = 3)
-
 
 #' Test a list of segments and simulation values
 #'
