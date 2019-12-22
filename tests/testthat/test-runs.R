@@ -192,9 +192,9 @@ test_plot = function(fit, varying_cols) {
   quantiles = rbinom(1, 1, 0.5) == 1  # sometimes try adding quantiles
   # To facet or not to facet
   if (length(varying_cols) > 0) {
-    gg = plot(fit, facet_by = varying_cols[1], quantiles = quantiles)  # just take the first
+    gg = plot(fit, facet_by = varying_cols[1], q_fit = quantiles, q_predict = quantiles)  # just take the first
   } else {
-    gg = plot(fit, quantiles = quantiles)
+    gg = plot(fit, q_fit = quantiles, q_predict = quantiles)
   }
   testthat::expect_s3_class(gg, c("gg", "ggplot"))
 }
