@@ -82,7 +82,7 @@ segments_binomial = list(
   ~ 1 + x  # disjoined changing rate
 )
 fit_binomial = mcp(segments_binomial, ex_binomial, family = binomial())
-theme_it(plot(fit_binomial, quantiles = TRUE), "Binomial")
+theme_it(plot(fit_binomial, q_fit = TRUE), "Binomial")
 save_it("ex_binomial.png")
 
 
@@ -143,7 +143,7 @@ segments_variance = list(
 )
 
 fit_variance = mcp(segments_variance, ex_variance, iter = 10000, adapt = 10000)
-theme_it(plot(fit_variance, quantiles = TRUE, quantiles_type = "predict"), "Variance and prediction intervals")
+theme_it(plot(fit_variance, q_predict = TRUE), "Variance and prediction intervals")
 save_it("ex_variance.png")
 
 

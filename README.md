@@ -47,7 +47,7 @@ fit = mcp(segments, data = ex_demo)
 
 ## See results
 
-Plot lines drawn randomly from the posterior on top of data to inspect the fit:
+The default plot includes data, fitted lines drawn randomly from the posterior, and change point(s) posterior density for each chain:
 ```r
 plot(fit)
 ```
@@ -203,7 +203,7 @@ segments = list(
   1 + (1|id) ~ 0 + x  # joined slope, varying by id
 )
 fit = mcp(segments, ex_varying)
-plot(fit, facet_by = "id")
+plot(fit, facet_by = "id", cp_dens = FALSE)
 ```
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_varying.png)
@@ -237,7 +237,7 @@ segments = list(
   ~ 1 + x             # disjoined changing rate
 )
 fit = mcp(segments, ex_binomial, family = binomial())
-plot(fit, quantiles = TRUE)
+plot(fit, q_fit = TRUE)
 ```
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_binomial.png)
@@ -294,7 +294,7 @@ segments = list(
   ~ 0 + x
 )
 fit = mcp(segments, ex_variance, cores = 3, adapt = 5000, iter = 5000)
-plot(fit, quantiles = TRUE, quantiles_type = "predict")
+plot(fit, q_predict = TRUE)
 ```
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_variance.png)
@@ -358,7 +358,7 @@ prior = list(
   cp_1 = "dunif(20, 50)"  # has to occur in this interval
 )
 fit = mcp(segments, ex_rel_prior, prior, iter = 10000)
-plot(fit)
+plot(fit, cp_dens = FALSE)
 ```
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_fix_rel.png)
