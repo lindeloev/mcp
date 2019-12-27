@@ -166,6 +166,10 @@ get_jags_data = function(data, ST, jags_code, sample) {
     }
   }
 
+  # For default prior
+  if (nrow(ST) > 1)
+    jags_data$N_CP = nrow(ST) - 1
+
   # Set response = NA if we only sample prior
   if (sample == "prior")
     jags_data[[ST$y[1]]] = rep(NA, nrow(data))
