@@ -203,7 +203,11 @@ plot.mcpfit = function(x,
 
     # Interpolate trials for binomial at the values in "eval_at"
     # to make sure that there are actually values to plot
-    interpolated_trials = suppressWarnings(stats::approx(x = fit$data[, fit$pars$x], y = fit$data[, fit$pars$trials], xout = eval_at)$y)
+    #interpolated_trials = suppressWarnings(stats::approx(x = fit$data[, fit$pars$x], y = fit$data[, fit$pars$trials], xout = eval_at)$y)
+    interpolated_trials = stats::approx(x = fit$data[, fit$pars$x], y = fit$data[, fit$pars$trials], xout = eval_at)$y %>%
+      suppressWarnings() %>%
+      round()  # Only integers
+
     samples = samples %>%
       tidyr::expand_grid(!!xvar := eval_at) %>%  # correct name of x-var
       dplyr::mutate(!!fit$pars$trials := rep(interpolated_trials, nrow(samples)))
@@ -218,11 +222,11 @@ plot.mcpfit = function(x,
   # Predict y from model by adding fitted/predicted draws (vectorized)
   if (lines > 0 | (any(q_fit != FALSE))) {
     samples = samples %>%
-      dplyr::mutate(!!yvar := rlang::exec(simulate, !!!., type = "fitted", rate = rate, which_y = which_y))
+      dplyr::mutate(!!yvar := rlang::exec(simulate, !!!., type = "fitted", rate = rate, which_y = which_y, add_attr = FALSE))
   }
   if (any(q_predict != FALSE)) {
     samples = samples %>%
-      dplyr::mutate(predicted_ = rlang::exec(simulate, !!!., type = "predict", rate = rate))
+      dplyr::mutate(predicted_ = rlang::exec(simulate, !!!., type = "predict", rate = rate, add_attr = FALSE))
   }
 
 
@@ -330,31 +334,32 @@ plot.mcpfit = function(x,
 #' @inheritParams plot.mcpfit
 #' @param q Quantiles
 #' @param ... Arguments passed to geom_line
-#' @return A \pkg{ggplot2} object.
+#' @return A `ggplot2::geom_line` object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 geom_quantiles = function(samples, q, xvar, facet_by, ...) {
+  # Trick to declare no facet = common group for all
+  if (length(facet_by) == 0)
+    facet_by = xvar
+
+  # First: add quantiles column
   data_quantiles = samples %>%
     tidyr::expand_grid(quant = q) %>%
-    dplyr::group_by(!!xvar, .data$quant)
 
-  # (... and for each group, if requested)
-  if (!is.null(facet_by)) {
-    data_quantiles = data_quantiles %>%
-      dplyr::group_by(!!rlang::sym(facet_by), add = TRUE)
-  }
-
-  # Continue...
-  data_quantiles = data_quantiles %>%
+    # Now compute the quantile for each parameter, quantile, and (optionally) facet:
+    dplyr::group_by(!!xvar, .data$quant) %>%
+    dplyr::group_by(!!rlang::sym(facet_by), add = TRUE) %>%
     dplyr::summarise(
       y = stats::quantile(.data$y_quant, probs = .data$quant[1])
     )
 
   # Return geom
-  geom = ggplot2::geom_line(aes(
-    y = .data$y,
-    group = .data$quant),
+  geom = ggplot2::geom_line(
+    mapping = aes(
+      y = .data$y,
+      group = .data$quant
+    ),
     data = data_quantiles,
     lty = 2,
     lwd = 0.7,

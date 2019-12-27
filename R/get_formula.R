@@ -259,20 +259,27 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     args_if_exists(pars$varying, " = 0"),
     ifelse(is_arma, paste0("\n    ", pars$y, " = NULL, \n    ydata = NULL, "), ""), "
     type = 'predict',
-    quantiles = FALSE,
+    quantile = FALSE,
     rate = FALSE,
     which_y = 'ct',
+    add_attr = TRUE,
     ...) {
 
     # Use this for return to add simulation parameters to the output
     args_names = as.list(match.call())  # Which arguments this function was called with
     all_values = c(as.list(environment()), list(...))  # all vars and values in env
     add_simulated = function(x) {
-      args_values = all_values[names(all_values) %in% names(args_names)]  # Only those coming from call
-      args_values[['", pars$x ,"']] = NULL  # Remove x
-      ", ifelse(length(pars$trials) > 0, yes = paste0("args_values[['", pars$trials, "']] = NULL  # Remove trials"), no = ""), "
-      attr(x, 'simulated') = args_values  # Set as attribute
-      return(x)
+      # Do not add simulated attribute
+      if (add_attr == FALSE) {
+        return(x)
+      } else {
+        # Add it!
+        args_values = all_values[names(all_values) %in% names(args_names)]  # Only those coming from call
+        args_values[['", pars$x ,"']] = NULL  # Remove x
+        ", ifelse(length(pars$trials) > 0, yes = paste0("args_values[['", pars$trials, "']] = NULL  # Remove trials"), no = ""), "
+        attr(x, 'simulated') = args_values  # Set as attribute
+        return(x)
+      }
     }
 
     # Helpers to simplify making the code for this function
@@ -338,15 +345,16 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     }")
     }
     out = paste0(out, "else if (type == 'predict') {
+      if (any(sigma_ < 0))
+        stop('Modelled negative sigma, which is impossible. First detected at ", pars$x, " = ', min(", pars$x, "[sigma_ < 0]))
       return(add_simulated(rnorm(length(", pars$x, "), y_, sigma_)))
-      # if (quantiles == TRUE)
-      #   quantiles = c(0.025, 0.975)
-      # if (is.numeric(quantiles)) {
-      #   add_simulated(qnorm(quantiles, y_, sigma_))
-      # } else if (quantiles == FALSE) {
+      # return(add_simulated(qnorm(length(", pars$x, "), y_, sigma_)))
+      # if (is.numeric(quantile)) {
+      #   add_simulated(qnorm(quantile, y_, sigma_))
+      # } else if (quantile == FALSE) {
       #   add_simulated(rnorm(length(", pars$x, "), y_, sigma_))
       # } else {
-      #   stop('Invalid quantiles argument to simulate()')
+      #   stop('Invalid `quantile` argument to simulate()')
       # }
     }")
   } else if (family$family == "binomial") {
@@ -364,7 +372,11 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     if (type == 'fitted') return(add_simulated(ilogit(y_)))")
   } else if (family$family == "poisson") {
     out = paste0(out, "
-    if (type == 'predict') return(add_simulated(rpois(length(", pars$x, "), exp(y_))))
+    if (type == 'predict') {
+      if (any(exp(y_) > 2146275819))
+        stop('Modelled extremely large value: exp(", pars$y, ") > 2146275819. First detected at ", pars$x, " = ', min(", pars$x, "[exp(y_) > 2146275819]))
+      return(add_simulated(rpois(length(", pars$x, "), exp(y_))))
+    }
     if (type == 'fitted') return(add_simulated(exp(y_)))")
   }
 
