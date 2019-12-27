@@ -4,10 +4,11 @@
 
 # Generic default priors that applies to many families
 cp_prior = list(
-  cp_1 = "dunif(MINX, MAXX)",
-  cp = "dunif(%s, MAXX)",
-  cp_rel = "dunif(0, MAXX - %s)",
+  cp_1 = "dunif(MINX, MAXX)",  # If there is only one change point
+  cp = "dt(MINX, STEP, 1)",
   #cp = "dirichlet(1)",
+  #cp = "dunif(%s, MAXX)",
+  cp_rel = "dunif(0, MAXX - %s)",
   sd = "dnorm(0, (MAXX - MINX) / 2) T(0, )"
 )
 
@@ -57,17 +58,18 @@ get_default_prior_cp = function(ST, i, family) {
   if (i < 2)
     stop("Only i >= 2 allowed.")
 
-  # First change point
-  if (i == 2)
-    return(priors[[family$family]]$cp_1)
+  # # First change point
+  # if (i == 2)
+  #   return(priors[[family$family]]$cp_1)
 
-  # A relative change point intercept
-  if (i > 2 & ST$cp_int_rel[i] != 0)
-    return(sprintf(priors[[family$family]]$cp_rel, ST$cp_code_prior[i - 1]))
+  # # A relative change point intercept
+  # if (i > 2 & ST$cp_int_rel[i] != 0)
+  #   return(sprintf(priors[[family$family]]$cp_rel, ST$cp_code_prior[i - 1]))
 
   # An absolute change point intercept
-  if (i > 2 & ST$cp_int_rel[i] == 0)
-    return(sprintf(priors[[family$family]]$cp, ST$cp_code_prior[i - 1]))
+  if (i >= 2)
+    #return(sprintf(priors[[family$family]]$cp, ST$cp_code_prior[i - 1]))
+    return(truncate_prior_cp(ST, i, priors[[family$family]]$cp))
 }
 
 
@@ -166,10 +168,14 @@ get_prior = function(ST, family, prior = list()) {
       }
     }
 
-    # Change point
-    if (i > 1)
-      default_prior[[S$cp_name]] = get_default_prior_cp(ST, i, family)
-      #default_prior[[S$cp_name]] = priors[[family$family]]$cp
+    # Change point.
+    if (i > 1) {
+      if (nrow(ST) == 2) {
+        default_prior[[S$cp_name]] = priors[[family$family]]$cp_1
+      } else {
+        default_prior[[S$cp_name]] = get_default_prior_cp(ST, i, family)
+      }
+    }
 
     # Change point varying effects
     if (!is.na(S$cp_sd)) {
