@@ -140,10 +140,11 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp) go in-depth w
 [Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
  * See priors in `fit$prior`.
  * Set priors using `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_1 = "dunif(0, 45)")`.
+ * The default prior is fast but informative for 2+ change points. Use `cp_i = "dirichlet(1)"` to gain neatness at the cost of speed.
  * Fix parameters to specific values using `cp_1 = 45`.
  * Share parameters between segments using `slope_1 = "slope_2"`.
  * Truncate priors using `T(lower, upper)`, e.g., `int_1 = "dnorm(0, 1) T(0, )"`. `mcp` applies this automatically to change point priors to enforce order restriction. This is true for [varying change points](https://lindeloev.github.io/mcp/articles/varying.html) too.
- * Do prior predictive checks using `mcp(segments, data, sample="prior")`.
+ * Do prior predictive checks using `mcp(segments, data, sample = "prior")`.
 
 [Varying change points](https://lindeloev.github.io/mcp/articles/varying.html):
  * Simulate varying change points using `fit$simulate()`.
