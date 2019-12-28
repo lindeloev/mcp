@@ -275,10 +275,19 @@ plot.mcpfit = function(x,
 
   # Add change point densities?
   if (cp_dens == TRUE & length(fit$segments) > 1) {
-    # The scale of the actual data
-    # TO DO: use something else if geom_data = FALSE.
-    y_data_max = max(fit$data[, fit$pars$y])
-    y_data_min = min(fit$data[, fit$pars$y])
+    # The scale of the actual plot (or something close enough)
+    if (which_y == "ct" & geom_data != FALSE) {
+      y_data_max = max(fit$data[, fit$pars$y])
+      y_data_min = min(fit$data[, fit$pars$y])
+    } else if (any(q_predict != FALSE)) {
+      y_data_max = max(samples$predicted_)
+      y_data_min = min(samples$predicted_)
+    } else if (as.character(yvar) %in% names(samples)) {
+      y_data_max = max(dplyr::pull(samples, as.character(yvar)))
+      y_data_min = min(dplyr::pull(samples, as.character(yvar)))
+    } else {
+      stop("Failed to draw change point density for this plot. Please raise an error on GitHub.")
+    }
 
     # Function to get density for each grouping in the dplyr pipes below.
     density_xy = function(x) {
@@ -288,14 +297,17 @@ plot.mcpfit = function(x,
         return()
     }
 
-    # Get density as x-y values by chain and change point number
-    samples_tmp = get_samples(fit, prior = prior)  # Use all samples for this
-    cp_dens_xy = tidybayes::gather_draws(samples_tmp, `^cp_[0-9]+$`, regex = TRUE) %>%
-      dplyr::group_by(.data$.variable, .data$.chain) %>%
+    # Get and group samples to be used for computing density
+    cp_regex = "^cp_[0-9]+$"
+    cp_dens_xy = get_samples(fit, prior = prior) %>%  # Use all samples for this
+      tidybayes::gather_draws(!!rlang::sym(cp_regex), regex = TRUE) %>%
+      dplyr::group_by(.data$.chain, add = TRUE) %>%
+
+      # Get density as x-y values by chain and change point number.
       dplyr::summarise(dens = list(density_xy(.data$.value))) %>%
       tidyr::unnest(cols = c(.data$dens)) %>%
 
-      # Scale to plot
+      # Then scale to plot.
       dplyr::mutate(y_dens = y_data_min + .data$y_dens * (y_data_max - y_data_min) * dens_height / max(.data$y_dens))
 
     # Add cp density to plot
