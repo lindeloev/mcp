@@ -16,7 +16,7 @@ geom_quantiles(samples, q, xvar, facet_by, ...)
 \item{...}{Arguments passed to geom_line}
 }
 \value{
-A \pkg{ggplot2} object.
+A \code{ggplot2::geom_line} object.
 }
 \description{
 Called by \code{plot.mcpfit}.
