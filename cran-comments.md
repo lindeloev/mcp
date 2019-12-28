@@ -1,6 +1,6 @@
 # Resubmission 3
 
- * Deleted call to `options(mc.cores = 3)`. Even though that shouldn't spawn more cores on CRAN cf. last resubmission notes, it should be easier to review now.
+ * Deleted call to `options(mc.cores = 3)`.
  
 
 # Resubmission 2

@@ -69,7 +69,7 @@ plot(data$year, data$y)
 The next sections go into more detail, but let us quickly see if we can recover the parameters used to simulate the data.
 
 ```{r, results=FALSE, message=FALSE, warning=FALSE}
-fit = mcp(segments, data, family = binomial())
+fit = mcp(segments, data, family = binomial(), adapt = 5000)
 ```
 
 
