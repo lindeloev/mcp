@@ -3,14 +3,15 @@
 theme_it = function(x, title) {
   x +
     ggplot2::ggtitle(title) +
-    ggplot2::theme_gray(13) # +
+    ggplot2::theme_gray(13) +
+    ggplot2::theme(legend.position = "none")  # +
   # theme(axis.title = element_blank(),
   #       axis.text = element_blank(),
   #       axis.ticks = element_blank())
 }
 
 save_it = function(filename) {
-  ggplot2::ggsave(paste0("./man/figures/", filename), width=6, height=3, dpi = 100)
+  ggplot2::ggsave(paste0("./man/figures/", filename), width=6, height=3, dpi = 100, type = "cairo")
 }
 
 
@@ -69,7 +70,7 @@ segments_varying = list(
   1 + (1|id) ~ 0 + x + sigma(1)  # joined slope, varying by id
 )
 fit_varying = mcp(segments_varying, ex_varying)
-theme_it(plot(fit_varying, facet_by = "id"), "Varying slope change")
+theme_it(plot(fit_varying, facet_by = "id", cp_dens = FALSE), "Varying slope change")
 save_it("ex_varying.png")
 
 
@@ -102,7 +103,7 @@ prior_rel = list(
 )
 
 fit_rel = mcp(segments_rel, ex_rel_prior, prior_rel, iter = 10000)
-theme_it(plot(fit_rel), "rel() and prior")
+theme_it(plot(fit_rel, cp_dens = FALSE), "rel() and prior")
 save_it("ex_fix_rel.png")
 
 

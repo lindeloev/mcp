@@ -206,19 +206,29 @@
     <div id="mcp-020" class="section level1">
 <h1 class="page-header">
 <a href="#mcp-020" class="anchor"></a>mcp 0.2.0</h1>
-<p>The API and internal structure should be stable now. v0.2.0 is aimed at CRAN.</p>
+<p>The API and internal structure should be stable now. v0.2.0 will be released on CRAN.</p>
 <div id="new-features" class="section level2">
 <h2 class="hasAnchor">
 <a href="#new-features" class="anchor"></a>New features:</h2>
 <ul>
 <li>Model quadratic and other terms using <code><a href="https://rdrr.io/r/base/AsIs.html">I(x^2)</a></code>, <code><a href="https://rdrr.io/r/base/AsIs.html">I(x^3.24)</a></code>, <code><a href="https://rdrr.io/r/base/Trig.html">sin(x)</a></code>, <code><a href="https://rdrr.io/r/base/MathFun.html">sqrt(x)</a></code>, etc.</li>
 <li>Model variance for <code>family = gaussian()</code> using <code>~ sigma([formula here])</code>.</li>
-<li>Model Nth order autoregressive models using <code>~ ar(order, formula)</code>, typically like <code>y ~ 1 + x + ar(2)</code> for AR(2). <code><a href="../reference/plot.mcpfit.html">plot()</a></code> visualize posteriors for AR(N) models. Simulate AR(N) models from scratch or given known data with <code>fit$simulate()</code>. The <a href="https://lindeloev.github.io/mcp/articles/arma.html">article on AR(N)</a> has more details and examples. AR(N) models are popular to detect changes in time-series.</li>
-<li>Plot prediction intervals using <code><a href="../reference/plot.mcpfit.html">plot(fit, quantiles = TRUE, quantiles_type = "predict")</a></code>.</li>
-<li>Now respects <code><a href="https://rdrr.io/r/base/options.html">options(mc.cores = 3)</a></code> for considerable speed gains. All vignettes/articles have been updated to recommend this as a default, though serial sampling is still the technical default.</li>
+<li>Model Nth order autoregressive models using <code>~ ar(order, formula)</code>, typically like <code>y ~ 1 + x + ar(2)</code> for AR(2). Simulate AR(N) models from scratch or given known data with <code>fit$simulate()</code>. The <a href="https://lindeloev.github.io/mcp/articles/arma.html">article on AR(N)</a> has more details and examples. AR(N) models are popular to detect changes in time-series.</li>
+<li>Many updates to <code><a href="../reference/plot.mcpfit.html">plot()</a></code>.
+<ul>
+<li>Includes the posterior densities of the change point(s). Disable using <code><a href="../reference/plot.mcpfit.html">plot(fit, cp_dens = FALSE)</a></code>.</li>
+<li>Supports AR(N) models (see above).</li>
+<li>Plot posterior parameter intervals using <code><a href="../reference/plot.mcpfit.html">plot(fit, q_fit = TRUE)</a></code>. <code><a href="../reference/plot.mcpfit.html">plot(fit, q_fit = c(0.025, 0.5, 0.975))</a></code> plots 95% HDI and the median.</li>
+<li>Plot prediction intervals using <code><a href="../reference/plot.mcpfit.html">plot(fit, q_predict = TRUE)</a></code>.</li>
+<li>Choose data geom. Currently takes “point” (default) and “line” (<code><a href="../reference/plot.mcpfit.html">plot(fit, geom_data = "line")</a></code>). The latter is useful for time series. Disable using <code>geom_data = FALSE</code>.</li>
+</ul>
+</li>
+<li>Use <code><a href="https://rdrr.io/r/base/options.html">options(mc.cores = 3)</a></code> for considerable speed gains. All vignettes/articles have been updated to recommend this as a default, though serial sampling is still the technical default.</li>
 <li>
-<code>fit$simulate()</code> now adds the simulation parameters as an attribute (<code><a href="https://rdrr.io/r/base/attr.html">attr(y, "simulate")</a></code>) to the predicted variable. <code><a href="../reference/summary.mcpfit.html">summary()</a></code> now recognizes this and adds the simulated values to the results table (columns <code>sim</code> and <code>match</code>) so that one can inspect whether the values were recovered.</li>
+<code>fit$simulate()</code> adds the simulation parameters as an attribute (<code><a href="https://rdrr.io/r/base/attr.html">attr(y, "simulate")</a></code>) to the predicted variable. <code><a href="../reference/summary.mcpfit.html">summary()</a></code> recognizes this and adds the simulated values to the results table (columns <code>sim</code> and <code>match</code>) so that one can inspect whether the values were recovered.</li>
 <li>Use <code><a href="../reference/plot.mcpfit.html">plot(fit, which_y = "sigma")</a></code> to plot the residual standard deviation on the y-axis. It works for AR(N) as well (<code>which_y = "ar1"</code>, <code>which_y = "ar2"</code>, etc.). This is useful to visualize change points in variance and autocorrelation. The vignettes on variance and autocorrelations have been updated with worked examples.</li>
+<li>Set a Dirichlet prior on the change points using <code>prior = list(cp_1 = "dirichlet(1)", cp_2 = ...)</code>. <a href="https://lindeloev.github.io/mcp/articles/priors.html">Read pros and cons here</a>.</li>
+<li><code><a href="../reference/plot.mcpfit.html">plot()</a></code></li>
 </ul>
 </div>
 <div id="other-changes" class="section level2">
@@ -228,9 +238,10 @@
 <li>
 <code>fit$func_y()</code> has been renamed to <code>fit$simulate()</code>.</li>
 <li>
-<code><a href="../reference/plot.mcpfit.html">plot()</a></code> now only visualizes the total fit while <code><a href="../reference/plot_pars.html">plot_pars()</a></code> only visualize individual parameters. These functions were mixed in <code><a href="../reference/plot.mcpfit.html">plot()</a></code> in v0.1.</li>
+<code><a href="../reference/plot.mcpfit.html">plot()</a></code> only visualize the total fit while <code><a href="../reference/plot_pars.html">plot_pars()</a></code> only visualize individual parameters. These functions were mixed in <code><a href="../reference/plot.mcpfit.html">plot()</a></code> previously.</li>
 <li>The argument <code>update</code> has been discarded from <code><a href="../reference/mcp.html">mcp()</a></code> (it’s all on <code>adapt</code> now) and <code>inits</code> has been added.</li>
 <li>Many internal changes to make <code>mcp</code> more future proof. The biggest internal change is that <code>rjags</code> and <code>future</code> replace the <code>dclone</code> package. Among other things, this gives faster and cleaner installations.</li>
+<li>Many more informative error messages to help you quickly understand and solve errors.</li>
 <li>Updated documentation and website.</li>
 </ul>
 </div>

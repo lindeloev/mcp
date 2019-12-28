@@ -155,7 +155,7 @@
       <h1>Varying change points with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-12-09</h4>
+            <h4 class="date">2019-12-28</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/varying.Rmd"><code>vignettes/varying.Rmd</code></a></small>
       <div class="hidden name"><code>varying.Rmd</code></div>
@@ -225,17 +225,17 @@
 <pre><code>## # A tibble: 180 x 4
 ##        x id    id_numeric     y
 ##    &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt;
-##  1 75.3  Clark          3  31.4
-##  2 21.7  Clark          3  17.4
-##  3 96.8  Clark          3  46.7
-##  4  7.57 Clark          3  21.3
-##  5 29.4  Clark          3  20.0
-##  6 30.6  Clark          3  25.5
-##  7 24.0  Clark          3  22.6
-##  8 43.3  Clark          3  19.7
-##  9 64.9  Clark          3  32.1
-## 10 33.9  Clark          3  20.5
-## # ... with 170 more rows</code></pre>
+##  1  82.9 Clark          3  36.5
+##  2  41.6 Clark          3  22.0
+##  3  33.8 Clark          3  19.7
+##  4  64.2 Clark          3  28.6
+##  5  77.2 Clark          3  38.1
+##  6  29.0 Clark          3  19.1
+##  7  26.2 Clark          3  18.1
+##  8  20.8 Clark          3  19.7
+##  9  52.1 Clark          3  22.7
+## 10  54.4 Clark          3  24.3
+## # … with 170 more rows</code></pre>
 <p>Here, we “translated” the <code>id</code> to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around <code>cp_1</code>. The result:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</a>
 <a class="sourceLine" id="cb6-2" title="2"><span class="kw">ggplot</span>(data, <span class="kw">aes</span>(<span class="dt">x=</span>x, <span class="dt">y=</span>y)) <span class="op">+</span><span class="st"> </span></a>
@@ -255,19 +255,19 @@
 <p>If you use <code><a href="../reference/summary.mcpfit.html">summary(fit)</a></code> (or <code><a href="../reference/summary.mcpfit.html">fixef(fit)</a></code>) you will get the posteriors for the population-level effects. To get the random effects, do:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="kw"><a href="../reference/summary.mcpfit.html">ranef</a></span>(fit)</a></code></pre></div>
 <pre><code>##                 name match sim       mean      lower      upper     Rhat n.eff
-## 1   cp_1_id[Batgirl]    OK -25 -26.188538 -27.755934 -24.593132 1.000215  5820
-## 2    cp_1_id[Batman]    OK -15 -14.628278 -16.397216 -12.970270 1.000096  5632
-## 3     cp_1_id[Clark]    OK  -5  -4.096622  -6.069162  -2.048578 1.000293  4904
-## 4      cp_1_id[Jane]    OK   5   5.262472   2.995098   7.579843 1.001663  5284
-## 5     cp_1_id[Louis]    OK  15  15.526023  13.350386  17.850840 1.000338  4580
-## 6 cp_1_id[Spiderman]    OK  25  24.124942  21.455289  26.749781 1.000247  5324
+## 1   cp_1_id[Batgirl]    OK -25 -23.968472 -25.532067 -22.335595 1.000138  5993
+## 2    cp_1_id[Batman]    OK -15 -14.649117 -16.437477 -12.820361 1.001654  5675
+## 3     cp_1_id[Clark]    OK  -5  -3.849770  -5.709448  -1.920019 1.000789  4688
+## 4      cp_1_id[Jane]    OK   5   4.254337   2.368896   6.224216 1.000780  3616
+## 5     cp_1_id[Louis]    OK  15  13.517305  11.316122  15.964348 1.003304  3943
+## 6 cp_1_id[Spiderman]    OK  25  24.695716  21.528672  27.781659 1.000633  6345
 ##      ts_se
-## 1 1.648913
-## 2 2.074692
-## 3 1.482679
-## 4 1.127518
-## 5 3.829063
-## 6 2.356987</code></pre>
+## 1 1.381713
+## 2 2.254590
+## 3 1.556784
+## 4 1.410153
+## 5 5.651332
+## 6 1.398379</code></pre>
 <p>Inspecting the <code>sim</code> and <code>match</code> columns, we see that they recovered the simulation parameters well.</p>
 <p>Good convergence is not always as obvious as in this example. While <code><a href="../reference/plot_pars.html">plot_pars(fit)</a></code> show population-level parameters only, you can do this to get varying effects only:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit, <span class="dt">pars =</span> <span class="st">"varying"</span>, <span class="dt">type =</span> <span class="st">"trace"</span>, <span class="dt">ncol=</span><span class="dv">3</span>)</a></code></pre></div>
@@ -298,14 +298,16 @@
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(fit<span class="op">$</span>jags_code)</a></code></pre></div>
 <pre><code>## 
 ## model {
+## 
 ##   # Priors for population-level effects
+##   cp_0 = MINX  # mcp helper value.
+##   cp_2 = MAXX  # mcp helper value.
+## 
 ##   cp_1 ~ dunif(MINX, MAXX)
 ##   cp_1_sd ~ dnorm(0, 1/((MAXX-MINX)/2)^2) T(0, )
 ##   int_1 ~ dt(0, 1/(3*SDY)^2, 3) 
 ##   x_2 ~ dt(0, 1/(SDY/(MAXX-MINX))^2, 3) 
 ##   sigma_1 ~ dnorm(0, 1/(SDY)^2) T(0, )
-##   cp_0 = -10^100  # mcp helper value; minus infinity
-##   cp_2 = 10^100  # mcp helper value; plus infinity
 ## 
 ##   # Priors for varying effects
 ##   for (id_ in 1:n_unique_id) {

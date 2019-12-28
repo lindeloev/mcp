@@ -155,7 +155,7 @@
       <h1>An overview of change point packages in R</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-12-09</h4>
+            <h4 class="date">2019-12-28</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/packages.Rmd"><code>vignettes/packages.Rmd</code></a></small>
       <div class="hidden name"><code>packages.Rmd</code></div>
@@ -253,12 +253,12 @@
 ## 
 ## Population-level parameters:
 ##     name   mean lower upper Rhat n.eff   ts_se
-##     cp_1 30.792 27.18 34.00    1  1620  14.802
-##     cp_2 64.291 45.33 76.03    1   723 562.890
-##    int_1  2.040  1.65  2.43    1  4785   0.076
-##    int_2 -0.069 -0.54  0.39    1  1789   0.277
-##    int_3  0.915  0.52  1.31    1  2138   0.174
-##  sigma_1  1.062  0.92  1.22    1  4231   0.013</code></pre>
+##     cp_1 30.598 27.04 33.99    1  1172  21.996
+##     cp_2 63.497 46.32 75.98    1   530 792.083
+##    int_1  2.049  1.65  2.44    1  4195   0.084
+##    int_2 -0.074 -0.55  0.36    1  1544   0.282
+##    int_3  0.913  0.53  1.30    1  1660   0.183
+##  sigma_1  1.061  0.91  1.21    1  3958   0.014</code></pre>
 <p>The summary shows good parameter recovery, though the second change point is detected a bit early. This is understandable if you look at the data, and the true change point is still within the highest density interval.</p>
 <p>Plotting the posterior distributions of the change points reveal that they are not well represented by a Gaussian or other known distributions. Therefore, confidence intervals are likely to be meaningless for this problem.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(patchwork)</a>
@@ -342,7 +342,7 @@
 <a class="sourceLine" id="cb16-5" title="5">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit_mcp<span class="op">$</span>loo, fit_mcp_<span class="dv">1</span><span class="op">$</span>loo)</a></code></pre></div>
 <pre><code>##        elpd_diff se_diff
 ## model1  0.0       0.0   
-## model2 -5.6       2.7</code></pre>
+## model2 -5.8       2.7</code></pre>
 <p>While <code>segmented</code> prefers the one-change-point model, <code>mcp</code> prefers the (true) two-change-point model. Again, the models compared here are <em>very</em> different since <code>segmented</code> does inference on a slope-only model.</p>
 </div>
 <div id="breakpoints" class="section level1">

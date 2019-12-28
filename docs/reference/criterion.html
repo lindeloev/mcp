@@ -269,24 +269,24 @@ more in <code><a href='https://mc-stan.org/loo/reference/loo.html'>loo</a></code
 #&gt; Graph information:
 #&gt;    Observed stochastic nodes: 100
 #&gt;    Unobserved stochastic nodes: 5
-#&gt;    Total graph size: 1328
+#&gt;    Total graph size: 1324
 #&gt; 
 #&gt; Initializing model
-#&gt; </div><div class='output co'>#&gt; <span class='message'>Finished sampling in 5.1 seconds</span></div><div class='input'><span class='no'>fit2</span> <span class='kw'>=</span> <span class='fu'><a href='mcp.html'>mcp</a></span>(<span class='no'>segments2</span>, <span class='no'>ex_plateaus</span>)</div><div class='output co'>#&gt; Compiling model graph
+#&gt; </div><div class='output co'>#&gt; <span class='message'>Finished sampling in 5.6 seconds</span></div><div class='input'><span class='no'>fit2</span> <span class='kw'>=</span> <span class='fu'><a href='mcp.html'>mcp</a></span>(<span class='no'>segments2</span>, <span class='no'>ex_plateaus</span>)</div><div class='output co'>#&gt; Compiling model graph
 #&gt;    Resolving undeclared variables
 #&gt;    Allocating nodes
 #&gt; Graph information:
 #&gt;    Observed stochastic nodes: 100
 #&gt;    Unobserved stochastic nodes: 3
-#&gt;    Total graph size: 727
+#&gt;    Total graph size: 723
 #&gt; 
 #&gt; Initializing model
-#&gt; </div><div class='output co'>#&gt; <span class='message'>Finished sampling in 2.2 seconds</span></div><div class='input'>
+#&gt; </div><div class='output co'>#&gt; <span class='message'>Finished sampling in 2.6 seconds</span></div><div class='input'>
 <span class='co'># Compute LOO for each and compare (works for waic(fit) too)</span>
 <span class='no'>fit1</span>$<span class='no'>loo</span> <span class='kw'>=</span> <span class='fu'>loo</span>(<span class='no'>fit1</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.</span></div><div class='input'><span class='no'>fit2</span>$<span class='no'>loo</span> <span class='kw'>=</span> <span class='fu'>loo</span>(<span class='no'>fit2</span>)
 <span class='kw pkg'>loo</span><span class='kw ns'>::</span><span class='fu'><a href='https://mc-stan.org/loo/reference/loo_compare.html'>loo_compare</a></span>(<span class='no'>fit1</span>$<span class='no'>loo</span>, <span class='no'>fit2</span>$<span class='no'>loo</span>)</div><div class='output co'>#&gt;        elpd_diff se_diff
 #&gt; model1  0.0       0.0   
-#&gt; model2 -4.2       2.2   </div><div class='input'># }
+#&gt; model2 -5.0       2.4   </div><div class='input'># }
 
 </div></pre>
   </div>

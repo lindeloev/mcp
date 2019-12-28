@@ -195,7 +195,7 @@
 <div id="see-results" class="section level2">
 <h2 class="hasAnchor">
 <a href="#see-results" class="anchor"></a>See results</h2>
-<p>Plot lines drawn randomly from the posterior on top of data to inspect the fit:</p>
+<p>The default plot includes data, fitted lines drawn randomly from the posterior, and change point(s) posterior density for each chain:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
 <p><img src="https://github.com/lindeloev/mcp/raw/master/man/figures/ex_demo.png"></p>
 <p>Use <code><a href="reference/summary.mcpfit.html">summary()</a></code> to summarise the posterior distribution as well as sampling diagnostics. They were <a href="https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R">simulated with mcp</a> so the summary include the “true” values in the column <code>sim</code> and the column <code>match</code> show whether this true value is within the interval:</p>
@@ -262,10 +262,11 @@ model2 -7.9       4.6</code></pre>
 <ul>
 <li>See priors in <code>fit$prior</code>.</li>
 <li>Set priors using <code>mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_1 = "dunif(0, 45)")</code>.</li>
+<li>The default prior is fast but informative for 2+ change points. Use <code>cp_i = "dirichlet(1)"</code> to gain neatness at the cost of speed.</li>
 <li>Fix parameters to specific values using <code>cp_1 = 45</code>.</li>
 <li>Share parameters between segments using <code>slope_1 = "slope_2"</code>.</li>
 <li>Truncate priors using <code><a href="https://rdrr.io/r/base/logical.html">T(lower, upper)</a></code>, e.g., <code>int_1 = "dnorm(0, 1) T(0, )"</code>. <code>mcp</code> applies this automatically to change point priors to enforce order restriction. This is true for <a href="https://lindeloev.github.io/mcp/articles/varying.html">varying change points</a> too.</li>
-<li>Do prior predictive checks using <code><a href="reference/mcp.html">mcp(segments, data, sample="prior")</a></code>.</li>
+<li>Do prior predictive checks using <code><a href="reference/mcp.html">mcp(segments, data, sample = "prior")</a></code>.</li>
 </ul>
 <p><a href="https://lindeloev.github.io/mcp/articles/varying.html">Varying change points</a>:</p>
 <ul>
@@ -333,7 +334,7 @@ model2 -7.9       4.6</code></pre>
 <a class="sourceLine" id="cb13-3" title="3">  <span class="dv">1</span> <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span><span class="op">|</span>id) <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>x  <span class="co"># joined slope, varying by id</span></a>
 <a class="sourceLine" id="cb13-4" title="4">)</a>
 <a class="sourceLine" id="cb13-5" title="5">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, ex_varying)</a>
-<a class="sourceLine" id="cb13-6" title="6"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">facet_by =</span> <span class="st">"id"</span>)</a></code></pre></div>
+<a class="sourceLine" id="cb13-6" title="6"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">facet_by =</span> <span class="st">"id"</span>, <span class="dt">cp_dens =</span> <span class="ot">FALSE</span>)</a></code></pre></div>
 <p><img src="https://github.com/lindeloev/mcp/raw/master/man/figures/ex_varying.png"></p>
 <p>Summarise the varying change points using <code><a href="reference/summary.mcpfit.html">ranef()</a></code> or plot them using <code><a href="reference/plot_pars.html">plot_pars(fit, "varying")</a></code>. Again, <a href="https://github.com/lindeloev/mcp/tree/master/data-raw/ex_varying.R">this data was simulated</a> so the columns <code>match</code> and <code>sim</code> are added to show simulation values and whether they are inside the interval. Set the <code>width</code> wider for a more lenient criterion.</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1"><span class="kw"><a href="reference/summary.mcpfit.html">ranef</a></span>(fit, <span class="dt">width =</span> <span class="fl">0.98</span>)</a></code></pre></div>
@@ -356,7 +357,7 @@ model2 -7.9       4.6</code></pre>
 <a class="sourceLine" id="cb16-4" title="4">  <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x             <span class="co"># disjoined changing rate</span></a>
 <a class="sourceLine" id="cb16-5" title="5">)</a>
 <a class="sourceLine" id="cb16-6" title="6">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, ex_binomial, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>())</a>
-<a class="sourceLine" id="cb16-7" title="7"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">quantiles =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
+<a class="sourceLine" id="cb16-7" title="7"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">q_fit =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
 <p><img src="https://github.com/lindeloev/mcp/raw/master/man/figures/ex_binomial.png"></p>
 <p>Use <code><a href="reference/plot.mcpfit.html">plot(fit, rate = FALSE)</a></code> if you want the points and fit lines on the original scale of <code>y</code> rather than divided by <code>N</code>.</p>
 </div>
@@ -395,7 +396,7 @@ model2 -7.9       4.6</code></pre>
 <a class="sourceLine" id="cb20-4" title="4">  <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>x</a>
 <a class="sourceLine" id="cb20-5" title="5">)</a>
 <a class="sourceLine" id="cb20-6" title="6">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, ex_variance, <span class="dt">cores =</span> <span class="dv">3</span>, <span class="dt">adapt =</span> <span class="dv">5000</span>, <span class="dt">iter =</span> <span class="dv">5000</span>)</a>
-<a class="sourceLine" id="cb20-7" title="7"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">quantiles =</span> <span class="ot">TRUE</span>, <span class="dt">quantiles_type =</span> <span class="st">"predict"</span>)</a></code></pre></div>
+<a class="sourceLine" id="cb20-7" title="7"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">q_predict =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
 <p><img src="https://github.com/lindeloev/mcp/raw/master/man/figures/ex_variance.png"></p>
 </div>
 <div id="quadratic-and-other-exponentiations" class="section level2">
@@ -442,7 +443,7 @@ model2 -7.9       4.6</code></pre>
 <a class="sourceLine" id="cb23-11" title="11">  <span class="dt">cp_1 =</span> <span class="st">"dunif(20, 50)"</span>  <span class="co"># has to occur in this interval</span></a>
 <a class="sourceLine" id="cb23-12" title="12">)</a>
 <a class="sourceLine" id="cb23-13" title="13">fit =<span class="st"> </span><span class="kw"><a href="reference/mcp.html">mcp</a></span>(segments, ex_rel_prior, prior, <span class="dt">iter =</span> <span class="dv">10000</span>)</a>
-<a class="sourceLine" id="cb23-14" title="14"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
+<a class="sourceLine" id="cb23-14" title="14"><span class="kw"><a href="reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">cp_dens =</span> <span class="ot">FALSE</span>)</a></code></pre></div>
 <p><img src="https://github.com/lindeloev/mcp/raw/master/man/figures/ex_fix_rel.png"></p>
 <p>Comparing the summary to the fitted lines in the plot, we can see that <code>int_2</code> and <code>x_2</code> are relative values. We also see that the “wrong” priors made it harder to recover the parameters used <a href="https://github.com/lindeloev/mcp/tree/master/data-raw/ex_rel_prior.R">to simulate this data</a> (<code>match</code> and <code>sim</code> columns):</p>
 <div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb24-1" title="1"><span class="kw"><a href="reference/summary.mcpfit.html">summary</a></span>(fit)</a></code></pre></div>

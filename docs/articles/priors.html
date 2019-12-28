@@ -155,7 +155,7 @@
       <h1>Working with priors in mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-12-16</h4>
+            <h4 class="date">2019-12-28</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/priors.Rmd"><code>vignettes/priors.Rmd</code></a></small>
       <div class="hidden name"><code>priors.Rmd</code></div>
@@ -186,7 +186,7 @@
 <p>The values are JAGS code, so all JAGS distributions are allowed. These also include <code>gamma</code>, <code>dt</code>, <code>cauchy</code>, and many others. See the <a href="https://web.sgh.waw.pl/~atoroj/ekonometria_bayesowska/jags_user_manual.pdf">JAGS user manual</a> for more details. The parameterization of the distributions are identical to standard R. Use SD when you specify priors for <code>dnorm</code>, <code>dt</code>, <code>dlogis</code>, etc. <code>mcp</code> converts to precision for JAGS under the hood via the <code><a href="../reference/sd_to_prec.html">sd_to_prec()</a></code> function (<code>prec = 1 / sd^2</code>), so you don’t have to worry about it. You can see the effects of this conversion by inspecting the difference between <code>fit$prior</code> (using SD) and <code>fit$jags_code</code> (using precision).</p>
 <p>Other notes:</p>
 <ul>
-<li><p>Order restriction is automatically applied to change points (<code>cp_*</code> parameters) using truncation (e.g., <code><a href="https://rdrr.io/r/base/logical.html">T(cp_1, )</a></code>) so that they are in the correct order on the x-axis. You can override this behavior by defining <code><a href="https://rdrr.io/r/base/logical.html">T()</a></code> or <code>dunif</code> yourself (<code>dunif</code> cannot be truncated), in which case <code>mcp</code> won’t do further. Dirichlet priors are inherently ordered (<a href="#cp_prior">jump to section</a>).</p></li>
+<li><p>Order restriction is automatically applied to change points (<code>cp_*</code> parameters) using truncation (e.g., <code><a href="https://rdrr.io/r/base/logical.html">T(cp_1, )</a></code>) so that they are in the correct order on the x-axis. You can override this behavior by defining <code><a href="https://rdrr.io/r/base/logical.html">T()</a></code> or <code>dunif</code> yourself (<code>dunif</code> is inherently truncated), in which case <code>mcp</code> won’t do further. Dirichlet priors are inherently ordered (<a href="#cp_prior">jump to section</a>) and cannot be further truncated.</p></li>
 <li><p>In addition to the model parameters, <code>MINX</code> (minimum x-value), <code>MAXX</code> (maximum x-value), <code>SDX</code>, <code>MEANX</code>, <code>MINY</code>, <code>MAXY</code>, <code>MEANY</code>, and <code>SDY</code> are also available when you set priors. They are used to set uninformative default priors. Strictly speaking, this is “illegal”, but it does ensure that estimation works reasonably across many orders of magnitude.</p></li>
 <li><p>You can fix any parameter to a specific value. Simply set it to a numerical value (as <code>cp_2</code> above). A constant is a 100% prior belief in that value, and it will therefore not be estimated.</p></li>
 <li><p>You can also equate one variable with another (<code>x_3 = "x_2"</code> above). You would usually do this to share parameters across segments, but you can be creative and do something like <code>x_3 = "x_2 + 5 - cp_1/10"</code> if you want. In any case, it will lead to one less parameter being estimated, i.e., one less free parameter.</p></li>
@@ -200,17 +200,27 @@
 <a class="sourceLine" id="cb2-6" title="6"></a>
 <a class="sourceLine" id="cb2-7" title="7"><span class="co"># Look at fit$prior and show them side-by-side</span></a>
 <a class="sourceLine" id="cb2-8" title="8"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(<span class="dt">manual =</span> empty_manual<span class="op">$</span>prior, <span class="dt">default =</span> empty_default<span class="op">$</span>prior)</a></code></pre></div>
-<pre><code>##         manual                 default                        
-## cp_1    "dunif(MINX, cp_2)"    "dunif(MINX, MAXX)"            
-## cp_2    80                     "dunif(cp_1, MAXX)"            
-## int_1   "dnorm(0, 5) T(, 10)"  "dt(0, 3 * SDY, 3)"            
-## int_2   "dt(0, 3 * SDY, 3)"    "dt(0, 3 * SDY, 3)"            
-## int_3   "dt(0, 3 * SDY, 3)"    "dt(0, 3 * SDY, 3)"            
-## x_1     "dbeta(2, 5)"          "dt(0, SDY / (MAXX - MINX), 3)"
-## x_2     "dt(0, 1, 3) T(x_1, )" "dt(0, SDY / (MAXX - MINX), 3)"
-## x_3     "x_2"                  "dt(0, SDY / (MAXX - MINX), 3)"
-## sigma_1 "dnorm(0, SDY) T(0, )" "dnorm(0, SDY) T(0, )"</code></pre>
-<p>Now, let’s simulate some data that from the model specified by <code>segments</code>. The following data “violates” the manual priors so as to show their effect.</p>
+<pre><code>##         manual                
+## cp_1    "dunif(MINX, cp_2)"   
+## cp_2    80                    
+## int_1   "dnorm(0, 5) T(, 10)" 
+## int_2   "dt(0, 3 * SDY, 3)"   
+## int_3   "dt(0, 3 * SDY, 3)"   
+## x_1     "dbeta(2, 5)"         
+## x_2     "dt(0, 1, 3) T(x_1, )"
+## x_3     "x_2"                 
+## sigma_1 "dnorm(0, SDY) T(0, )"
+##         default                                          
+## cp_1    "dt(MINX, (MAXX - MINX) / N_CP, 1) T(cp_0, MAXX)"
+## cp_2    "dt(MINX, (MAXX - MINX) / N_CP, 1) T(cp_1, MAXX)"
+## int_1   "dt(0, 3 * SDY, 3)"                              
+## int_2   "dt(0, 3 * SDY, 3)"                              
+## int_3   "dt(0, 3 * SDY, 3)"                              
+## x_1     "dt(0, SDY / (MAXX - MINX), 3)"                  
+## x_2     "dt(0, SDY / (MAXX - MINX), 3)"                  
+## x_3     "dt(0, SDY / (MAXX - MINX), 3)"                  
+## sigma_1 "dnorm(0, SDY) T(0, )"</code></pre>
+<p>Now, let’s simulate some data that from the model specified by <code>segments</code>. The following priors are “at odds” with the actual data so as to show their effect.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">data =<span class="st"> </span>tibble<span class="op">::</span><span class="kw"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span>(</a>
 <a class="sourceLine" id="cb4-2" title="2">  <span class="dt">x =</span> <span class="kw"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span>(<span class="dv">200</span>, <span class="dv">0</span>, <span class="dv">100</span>),  <span class="co"># 200 datapoints between 0 and 100</span></a>
 <a class="sourceLine" id="cb4-3" title="3">  <span class="dt">y =</span> empty_default<span class="op">$</span><span class="kw"><a href="https://rdrr.io/r/stats/simulate.html">simulate</a></span>(x, </a>
@@ -219,16 +229,25 @@
 <a class="sourceLine" id="cb4-6" title="6">    <span class="dt">cp_1 =</span> <span class="dv">35</span>, <span class="dt">cp_2 =</span> <span class="dv">70</span>,  <span class="co"># change points</span></a>
 <a class="sourceLine" id="cb4-7" title="7">    <span class="dt">sigma =</span> <span class="dv">5</span>)</a>
 <a class="sourceLine" id="cb4-8" title="8">)</a></code></pre></div>
-<p>Sample and plot the fits. We let the manual fit adapt for longer, since it is harder to find the right posterior under these weird prior constraints (priors will usually improve sampling efficiency).</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">fit_manual =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, prior, <span class="dt">adapt =</span> <span class="dv">5000</span>)</a>
-<a class="sourceLine" id="cb5-2" title="2">fit_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data)</a></code></pre></div>
+<p>Sample the prior and posterior. We let the manual fit adapt for longer, since it is harder to find the right posterior under these weird prior constraints (priors will usually improve sampling efficiency).</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">fit_manual =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, prior, <span class="dt">sample =</span> <span class="st">"both"</span>, <span class="dt">adapt =</span> <span class="dv">10000</span>)</a>
+<a class="sourceLine" id="cb5-2" title="2">fit_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, <span class="dt">sample =</span> <span class="st">"both"</span>, <span class="dt">adapt =</span> <span class="dv">10000</span>)</a></code></pre></div>
+<p>First, let’s look at the priors side by side. Notice the use of <code>prior = TRUE</code> to show prior samples. This works in <code><a href="../reference/plot.mcpfit.html">plot()</a></code>, <code><a href="../reference/plot_pars.html">plot_pars()</a></code>, and <code><a href="../reference/summary.mcpfit.html">summary()</a></code> among others.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</a>
-<a class="sourceLine" id="cb6-2" title="2">plot_default =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_default) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Default priors"</span>)</a>
-<a class="sourceLine" id="cb6-3" title="3">plot_manual =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_manual) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Manual priors"</span>)</a>
+<a class="sourceLine" id="cb6-2" title="2">pp_default =<span class="st"> </span><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit_default, <span class="dt">type =</span> <span class="st">"dens_overlay"</span>, <span class="dt">prior =</span> <span class="ot">TRUE</span>) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb6-3" title="3"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">"Default priors"</span>)</a>
 <a class="sourceLine" id="cb6-4" title="4"></a>
-<a class="sourceLine" id="cb6-5" title="5"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(patchwork)</a>
-<a class="sourceLine" id="cb6-6" title="6">plot_default <span class="op">+</span><span class="st"> </span>plot_manual</a></code></pre></div>
-<p><img src="priors_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
+<a class="sourceLine" id="cb6-5" title="5">pp_manual =<span class="st"> </span><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit_manual, <span class="dt">type =</span> <span class="st">"dens_overlay"</span>, <span class="dt">prior =</span> <span class="ot">TRUE</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb6-6" title="6"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">"Manual priors"</span>)</a>
+<a class="sourceLine" id="cb6-7" title="7"></a>
+<a class="sourceLine" id="cb6-8" title="8">pp_default <span class="op">+</span><span class="st"> </span>pp_manual</a></code></pre></div>
+<p><img src="priors_files/figure-html/unnamed-chunk-5-1.png" width="576"></p>
+<p>Here is the resulting posterior fits:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1">plot_default =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_default) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Default priors"</span>)</a>
+<a class="sourceLine" id="cb7-2" title="2">plot_manual =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_manual) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Manual priors"</span>)</a>
+<a class="sourceLine" id="cb7-3" title="3"></a>
+<a class="sourceLine" id="cb7-4" title="4">plot_default <span class="op">+</span><span class="st"> </span>plot_manual</a></code></pre></div>
+<p><img src="priors_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
 <p>We see the effects of the priors.</p>
 <ul>
 <li>The intercept <code>int_1</code> was truncated to be below 10.</li>
@@ -241,37 +260,50 @@
 <div id="cp_prior" class="section level1">
 <h1 class="hasAnchor">
 <a href="#cp_prior" class="anchor"></a>Default priors on change points</h1>
-<p>Change points have to be ordered from left (<code>cp_1</code>) to right (<code>cp_2+</code>). This order restriction is enforced through the priors. You need to make an important choice. I am writing this up more formally,</p>
+<p>Change points have to be ordered from left (<code>cp_1</code>) to right (<code>cp_2+</code>). This order restriction is enforced through the priors and this is not trival. <code>mcp</code> currently offers two “packages” of change point priors that achieves different goals:</p>
 <ul>
-<li><p>The default <code>dunif</code>-based prior is suitable for estimation and it will work well for <code><a href="../reference/criterion.html">loo()</a></code> cross-validation as well. It’s main virtue is that it samples the change point posteriors relatively effectively, but it will often be deeply unfit for Bayes Factors if there are 2+ change points (see below).</p></li>
-<li><p>Use the <code>Dirichlet</code> prior if you want a more uninformative prior that is better suited for Bayes Factors, scientific publication, or 6+ change points. It has better known mathematical properties and a precedence in <a href="https://psyarxiv.com/9qkhj/">Büerkner &amp; Charpentier (2019)</a>. It is not default because for many problems it samples order(s) of magnitude less efficiently than the default priors while yielding identical fits. In these cases you need to increase the number of MCMC samples (e.g. <code><a href="../reference/mcp.html">mcp(..., iter = 20000)</a></code>).</p></li>
+<li><p><strong>Speed and estimation:</strong> The default prior is suitable for estimation, prediction, and it works well for <code><a href="../reference/criterion.html">loo()</a></code> cross-validation as well. It’s main virtue is that it samples the change point posteriors relatively effectively, but it will often be deeply unfit for Bayes Factors if there are 3+ change points (see below). It may also favor “late” change points too much if estimating many change points with little data (e.g. 5 change points with 100 data points or 10 with 300).</p></li>
+<li><p><strong>Uninformative and nice mathematical properties:</strong> Use the <code>Dirichlet</code> prior if you want a more uninformative prior that is better suited for <em>everything</em> including Bayes Factors, scientific publication, or even estimation at 6+ change points. It has better known mathematical properties and a precedence in <a href="https://psyarxiv.com/9qkhj/">Büerkner &amp; Charpentier (2019)</a>. It is not default because it often samples order(s) of magnitude less efficiently than the default priors while yielding identical fits. In these cases you need to increase the number of MCMC samples (e.g. <code><a href="../reference/mcp.html">mcp(..., iter = 20000)</a></code>).</p></li>
 </ul>
-<p>They are identical for one change point (<code><a href="https://rdrr.io/r/stats/Uniform.html">dunif(MINX, MAXX)</a></code>). They begin to diverge at 2+ change points, as can be seen in the plot below where they are scaled to the range 50-150. Note that <em>the dunif is not as informative as it looks</em> because the serial-truncation make <code>cp_1</code> act as a kind of hyperprior to <code>cp_2+</code> which is hyper for <code>cp_3+</code> and so forth. So even weak information that <code>cp_1</code> happens early will change the distribution for the other change points strongly towards being less informative. But if you do a Savage-Dickey test using <code><a href="../reference/hypothesis.html">hypothesis(cp_5 = 100)</a></code>, it will use the priors below.</p>
-<p><img src="priors_files/figure-html/unnamed-chunk-7-1.png" width="672"></p>
-<div id="dunif-based-prior-on-change-points-default" class="section level2">
+<p>They two “packages” are identical for one change point, though the default still samples more effectively.</p>
+<p><img src="priors_files/figure-html/unnamed-chunk-8-1.png" width="672"></p>
+<div id="the-t-tail-prior-on-2-change-points-default" class="section level2">
 <h2 class="hasAnchor">
-<a href="#dunif-based-prior-on-change-points-default" class="anchor"></a><code>dunif</code>-based prior on change points (default)</h2>
-<p>The first change point defaults to <code>cp_1 = dunif(MINX, MAXX)</code>. In other words, the change point has to happen in the observed range of x, but it is equally probable across this range. The second change point defaults to <code>cp_2 = dunif(cp_1, MAXX)</code>, i.e., it has to occur in the observed range AND be greater than <code>cp_1</code>, and so forth for <code>cp_3</code> (greater than <code>cp_2</code>), etc.</p>
-<p>One side effect is that later change points have greater prior probability density towards the right side of the x-axis. You can see this if you sample the priors without data (<code>fit = mcp(segments, data, sample = "prior")</code>) and summarise the estimates (<code><a href="../reference/summary.mcpfit.html">summary(fit)</a></code>). In practice, this “bias” is so weak that it takes a combination of many change points and few data for it to impact the posterior in any noticeable way. However, if you do</p>
-<p>If you want more informed priors on the change point location, i.e., <code>cp_2 = "dnorm(40, 10)</code>, <code>mcp</code> adds this order restriction by adding <code>cp_2 = "dnorm(40, 10) T(cp_1, MAXX)</code>. You can avoid this behavior by explicitly doing an “empty” truncation yourself, e.g., <code>cp_2 = "dnorm(40, 10) T(,)</code>. However, the model may fail to sample the correct posterior in samples where order restriction is not kept.</p>
+<a href="#the-t-tail-prior-on-2-change-points-default" class="anchor"></a>The t-tail prior on 2+ change points (default)</h2>
+<p><em>OBS: These priors are likely to change in versions beyond mcp 0.2, but not drastically.</em></p>
+<p>The first change point defaults to <code>cp_1 = dunif(MINX, MAXX)</code>. In other words, the change point has to happen in the observed range of x, but it is equally probable across this range. This is identical to the Dirichlet prior.</p>
+<p>For 2+ change points, the default is <code>cp_i = dt(MINX, (MAXX-MINX) / N_CP, 1) T(cp_i-1, MAXX)</code>. This is not as complicated as it looks, so let me unpack it.</p>
+<ul>
+<li>It is t-distributed with one degree of freedom (<code><a href="https://rdrr.io/r/stats/TDist.html">dt(..., 1)</a></code>).</li>
+<li>It is truncated to be greater than the previous <code>cp</code>. For example, <code>cp_3 = dt(...) T(cp_2, MAXX)</code>. Since <code>cp_0 = MINX</code>, all change points are “forced” to be in the observed range of <code>x</code>.</li>
+<li>The standard deviation is the distance between equally-spaced change points: <code>(MAXX - MINX) / N_CP</code>.</li>
+<li>The mean is always the lowest observed <code>x</code>. Thus <code>cp_1</code> is a half-t and <code>cp_2+</code> are right tails of the same t. Hence the name “t-tail prior”. Since they are estimated using MCMC, the fact that the <em>absolute</em> densities are smaller for later change points is of no importance since only the <em>relative</em> densities matter.</li>
+</ul>
+<p>One side effect of the truncation is that later change points have greater prior probability density towards the right side of the x-axis. In practice, this “bias” is so weak that it takes a combination of many change points and few data for it to impact the posterior in any noticeable way.</p>
 </div>
 <div id="dirichlet-based-prior-on-change-points" class="section level2">
 <h2 class="hasAnchor">
 <a href="#dirichlet-based-prior-on-change-points" class="anchor"></a>Dirichlet-based prior on change points</h2>
 <p>The <a href="https://en.wikipedia.org/wiki/Dirichlet_distribution">Dirichlet distribution</a> is a multivariate beta prior and these betas jointly form a simplex, meaning that they are all positive and sum to one. They are all in the interval <span class="math inline">\([0, 1]\)</span> so they are shifted and scaled to <span class="math inline">\([min(x), max(x)]\)</span>. The Dirichlet prior has the nice property that (1) the order-restriction and boundedness is inherent to the distribution, and (2) it represents a uniform prior that <em>any</em> change happens at any <span class="math inline">\(x\)</span>, i.e., it is maximally uninformative. It underlies the modeling of monotonic effects in brms (<a href="https://psyarxiv.com/9qkhj/">Büerkner &amp; Charpentier (2019)</a>).</p>
 <p>To use the Dirichlet prior, you need to specify it for all or none of the change points. E.g.,</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1">prior_dirichlet =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb7-2" title="2">  <span class="dt">cp_1 =</span> <span class="st">"dirichlet(1)"</span>,</a>
-<a class="sourceLine" id="cb7-3" title="3">  <span class="dt">cp_2 =</span> <span class="st">"dirichlet(1)"</span>,</a>
-<a class="sourceLine" id="cb7-4" title="4">  <span class="dt">cp_3 =</span> <span class="st">"dirichlet(1)"</span></a>
-<a class="sourceLine" id="cb7-5" title="5">)</a></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">prior_dirichlet =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
+<a class="sourceLine" id="cb8-2" title="2">  <span class="dt">cp_1 =</span> <span class="st">"dirichlet(1)"</span>,</a>
+<a class="sourceLine" id="cb8-3" title="3">  <span class="dt">cp_2 =</span> <span class="st">"dirichlet(1)"</span>,</a>
+<a class="sourceLine" id="cb8-4" title="4">  <span class="dt">cp_3 =</span> <span class="st">"dirichlet(1)"</span></a>
+<a class="sourceLine" id="cb8-5" title="5">)</a></code></pre></div>
 <p>The number in the parenthesis is the <span class="math inline">\(\alpha\)</span> parameter, so you could also specify <code>cp_1 = "dirichlet(3)</code> if you want to push credence for that and later change points more to the rightwards while pushing earlier priors leftwards.</p>
+</div>
+<div id="manual-priors-on-change-points" class="section level2">
+<h2 class="hasAnchor">
+<a href="#manual-priors-on-change-points" class="anchor"></a>Manual priors on change points</h2>
+<p>You can easily change or modify change point priors, just as we did in the initial example. But beware that the nature of the priors change when truncation is applied. Use <code><a href="../reference/plot_pars.html">plot_pars(fit, prior = TRUE)</a></code> to check the resulting prior.</p>
+<p>If you want more informed priors on the change point location, i.e., <code>cp_2 = "dnorm(40, 10)</code>, <code>mcp</code> adds this order restriction by adding <code>cp_2 = "dnorm(40, 10) T(cp_1, MAXX)</code>. You can avoid this behavior by explicitly doing an “empty” truncation yourself, e.g., <code>cp_2 = "dnorm(40, 10) T(,)</code>. However, the model may fail to sample the correct posterior in samples where order restriction is not kept.</p>
 </div>
 </div>
 <div id="default-priors-on-linear-predictors" class="section level1">
 <h1 class="hasAnchor">
 <a href="#default-priors-on-linear-predictors" class="anchor"></a>Default priors on linear predictors</h1>
-<p><em>OBS: These priors are very likely to change in versions beyond mcp 0.1.</em></p>
+<p><em>OBS: These priors are very to change in versions beyond mcp 0.2, but not drastically.</em></p>
 <p>You can see the default priors for the <code><a href="https://rdrr.io/r/stats/family.html">gaussian()</a></code> family in the previous example. They are similar to the <code>brms</code> default priors, i.e., t-distributed around mean = 0 with a standard deviation that scales with the data.</p>
 <p>This means that there will be some “shrinkage” towards a mean and SD of zero for all parameters, especially for parameters with a large mean and a small SD.</p>
 <p>The slopes are scaled as if it changed +/- 1 SD through the entire x-axis. This too will be insufficient for very steep slopes, i.e., if there are many change points on <code>x</code>.</p>
@@ -292,25 +324,29 @@
 <h1 class="hasAnchor">
 <a href="#prior-predictive-checks" class="anchor"></a>Prior predictive checks</h1>
 <p>Prior predictive checks is a great way to ensure that the priors are meaningful. Simply set <code>sample = "prior"</code>. Let us do it for the two sets of priors defined previously in this article, to see their different prior predictive space.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1"><span class="co"># Sample priors </span></a>
-<a class="sourceLine" id="cb8-2" title="2">fit_pp_manual =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, prior, <span class="dt">sample =</span> <span class="st">"prior"</span>)</a>
-<a class="sourceLine" id="cb8-3" title="3">fit_pp_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, <span class="dt">sample =</span> <span class="st">"prior"</span>)</a>
-<a class="sourceLine" id="cb8-4" title="4"></a>
-<a class="sourceLine" id="cb8-5" title="5"><span class="co"># Plot it</span></a>
-<a class="sourceLine" id="cb8-6" title="6">plot_pp_manual =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_pp_manual, <span class="dt">lines =</span> <span class="dv">100</span>) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/graphics/plot.window.html">ylim</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="op">-</span><span class="dv">400</span>, <span class="dv">400</span>)) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Manual prior"</span>)</a>
-<a class="sourceLine" id="cb8-7" title="7">plot_pp_default =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_pp_default, <span class="dt">lines =</span> <span class="dv">100</span>) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/graphics/plot.window.html">ylim</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="op">-</span><span class="dv">400</span>, <span class="dv">400</span>)) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Default prior"</span>)</a>
-<a class="sourceLine" id="cb8-8" title="8">plot_pp_manual <span class="op">+</span><span class="st">  </span>plot_pp_default  <span class="co"># using patchwork</span></a></code></pre></div>
-<p><img src="priors_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="co"># Sample priors </span></a>
+<a class="sourceLine" id="cb9-2" title="2">fit_pp_manual =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, prior, <span class="dt">sample =</span> <span class="st">"prior"</span>)</a>
+<a class="sourceLine" id="cb9-3" title="3">fit_pp_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, <span class="dt">sample =</span> <span class="st">"prior"</span>)</a>
+<a class="sourceLine" id="cb9-4" title="4"></a>
+<a class="sourceLine" id="cb9-5" title="5"><span class="co"># Plot it</span></a>
+<a class="sourceLine" id="cb9-6" title="6">plot_pp_manual =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_pp_manual, <span class="dt">lines =</span> <span class="dv">100</span>) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/graphics/plot.window.html">ylim</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="op">-</span><span class="dv">400</span>, <span class="dv">400</span>)) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Manual prior"</span>)</a>
+<a class="sourceLine" id="cb9-7" title="7">plot_pp_default =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_pp_default, <span class="dt">lines =</span> <span class="dv">100</span>) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/graphics/plot.window.html">ylim</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="op">-</span><span class="dv">400</span>, <span class="dv">400</span>)) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Default prior"</span>)</a>
+<a class="sourceLine" id="cb9-8" title="8">plot_pp_manual <span class="op">+</span><span class="st">  </span>plot_pp_default  <span class="co"># using patchwork</span></a></code></pre></div>
+<p><img src="priors_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
 <p>You can see how the manual priors are more dense to the left, and the “concerted” change at x = 80.</p>
 </div>
 <div id="jags-code" class="section level1">
 <h1 class="hasAnchor">
 <a href="#jags-code" class="anchor"></a>JAGS code</h1>
 <p>Here is the JAGS code for <code>fit_manual</code>:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(fit_manual<span class="op">$</span>jags_code)</a></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(fit_manual<span class="op">$</span>jags_code)</a></code></pre></div>
 <pre><code>## 
 ## model {
+## 
 ##   # Priors for population-level effects
+##   cp_0 = MINX  # mcp helper value.
+##   cp_3 = MAXX  # mcp helper value.
+## 
 ##   cp_1 ~ dunif(MINX, cp_2)
 ##   cp_2 = 80  # Fixed
 ##   int_1 ~ dnorm(0, 1/(5)^2) T(, 10)
@@ -320,8 +356,6 @@
 ##   x_2 ~ dt(0, 1/(1)^2, 3) T(x_1, )
 ##   x_3 = x_2  # Fixed
 ##   sigma_1 ~ dnorm(0, 1/(SDY)^2) T(0, )
-##   cp_0 = -10^100  # mcp helper value; minus infinity
-##   cp_3 = 10^100  # mcp helper value; plus infinity
 ## 
 ## 
 ##   # Model and likelihood
@@ -366,8 +400,9 @@
 <li><a href="#setting-a-prior">Setting a prior</a></li>
       <li>
 <a href="#cp_prior">Default priors on change points</a><ul class="nav nav-pills nav-stacked">
-<li><a href="#dunif-based-prior-on-change-points-default"><code>dunif</code>-based prior on change points (default)</a></li>
+<li><a href="#the-t-tail-prior-on-2-change-points-default">The t-tail prior on 2+ change points (default)</a></li>
       <li><a href="#dirichlet-based-prior-on-change-points">Dirichlet-based prior on change points</a></li>
+      <li><a href="#manual-priors-on-change-points">Manual priors on change points</a></li>
       </ul>
 </li>
       <li><a href="#default-priors-on-linear-predictors">Default priors on linear predictors</a></li>

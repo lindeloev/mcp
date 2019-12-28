@@ -214,8 +214,10 @@
   <span class='no'>x</span>,
   <span class='kw'>facet_by</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>25</span>,
-  <span class='kw'>quantiles</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>quantiles_type</span> <span class='kw'>=</span> <span class='st'>"fitted"</span>,
+  <span class='kw'>geom_data</span> <span class='kw'>=</span> <span class='st'>"point"</span>,
+  <span class='kw'>cp_dens</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>q_fit</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>q_predict</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>rate</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>which_y</span> <span class='kw'>=</span> <span class='st'>"ct"</span>,
@@ -239,13 +241,23 @@
       <td><p>Positive integer or <code>FALSE</code>. Number of lines (posterior
 draws) to use when <code>type = "segments"</code>. FALSE (or <code>lines = 0</code>)
 plots no lines. Note that lines always plot fitted values. For prediction
-intervals, see <code>quantiles_type</code> argument.</p></td>
+intervals, see the <code>q_predict</code> argument.</p></td>
     </tr>
     <tr>
-      <th>quantiles</th>
-      <td><p>Whether to plot quantiles.</p><ul>
+      <th>geom_data</th>
+      <td><p>String. One of "point" (default), "line" (good for time-series),
+or FALSE (don not plot).</p></td>
+    </tr>
+    <tr>
+      <th>cp_dens</th>
+      <td><p>TRUE/FALSE. Plot posterior densities of the change point(s)?
+Currently does not respect <code>facet_by</code>. This will be added in the future.</p></td>
+    </tr>
+    <tr>
+      <th>q_fit</th>
+      <td><p>Whether to plot quantiles of the posterior (fitted value).</p><ul>
 <li><p><strong>TRUE:</strong> Add 2.5% and 97.5% quantiles. Corresponds to
-<code>quantiles = c(0.025, 0.975)</code>.</p></li>
+<code>q_fit = c(0.025, 0.975)</code>.</p></li>
 <li><p><strong>FALSE (default):</strong> No quantiles</p></li>
 <li><p>A vector of quantiles. For example, <code>quantiles = 0.5</code>
 plots the median and <code>quantiles = c(0.2, 0.8)</code> plots the 20% and 80%
@@ -253,8 +265,8 @@ quantiles.</p></li>
 </ul></td>
     </tr>
     <tr>
-      <th>quantiles_type</th>
-      <td><p>One of 'fitted' or 'predict. Only applies if <code>quantile = TRUE</code>.</p></td>
+      <th>q_predict</th>
+      <td><p>Same as <code>q_fit</code>, but for the prediction interval.</p></td>
     </tr>
     <tr>
       <th>rate</th>
@@ -295,7 +307,7 @@ effects you want to plot.</p></li>
     <pre class="examples"><div class='input'><span class='co'># Typical usage. ex_fit is an mcpfit object.</span>
 <span class='fu'>plot</span>(<span class='no'>ex_fit</span>)</div><div class='img'><img src='plot.mcpfit-1.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)  <span class='co'># The prior</span></div><div class='img'><img src='plot.mcpfit-2.png' alt='' width='700' height='433' /></div><div class='input'>
 <span class='co'># \donttest{</span>
-<span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>quantiles</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)  <span class='co'># 95% HDI without lines</span></div><div class='img'><img src='plot.mcpfit-3.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>quantiles</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.1</span>, <span class='fl'>0.9</span>), <span class='kw'>quantiles_type</span> <span class='kw'>=</span> <span class='st'>"predict"</span>)  <span class='co'># 80% prediction interval</span></div><div class='img'><img src='plot.mcpfit-4.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>which_y</span> <span class='kw'>=</span> <span class='st'>"sigma"</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>100</span>)  <span class='co'># The variance parameter on y</span></div><div class='img'><img src='plot.mcpfit-5.png' alt='' width='700' height='433' /></div><div class='input'><span class='co'># }</span>
+<span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>q_fit</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)  <span class='co'># 95% HDI without lines</span></div><div class='img'><img src='plot.mcpfit-3.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>q_predict</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.1</span>, <span class='fl'>0.9</span>))  <span class='co'># 80% prediction interval</span></div><div class='img'><img src='plot.mcpfit-4.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>which_y</span> <span class='kw'>=</span> <span class='st'>"sigma"</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>100</span>)  <span class='co'># The variance parameter on y</span></div><div class='img'><img src='plot.mcpfit-5.png' alt='' width='700' height='433' /></div><div class='input'><span class='co'># }</span>
 
 <span class='co'># Show a panel for each varying effect</span>
 <span class='co'># plot(fit, facet_by = "my_column")</span>
