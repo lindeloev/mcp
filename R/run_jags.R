@@ -167,7 +167,7 @@ get_jags_data = function(data, ST, jags_code, sample) {
   }
 
   # For default prior
-  if (nrow(ST) > 1)
+  if (stringr::str_detect(jags_code, "N_CP"))
     jags_data$N_CP = nrow(ST) - 1
 
   # Set response = NA if we only sample prior

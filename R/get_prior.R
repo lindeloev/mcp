@@ -5,9 +5,7 @@
 # Generic default priors that applies to many families
 cp_prior = list(
   cp_1 = "dunif(MINX, MAXX)",  # If there is only one change point
-  cp = "dt(MINX, STEP, 1)",
-  #cp = "dirichlet(1)",
-  #cp = "dunif(%s, MAXX)",
+  cp = "dt(MINX, (MAXX - MINX) / N_CP, 1)",
   cp_rel = "dunif(0, MAXX - %s)",
   sd = "dnorm(0, (MAXX - MINX) / 2) T(0, )"
 )
@@ -58,14 +56,6 @@ get_default_prior_cp = function(ST, i, family) {
   if (i < 2)
     stop("Only i >= 2 allowed.")
 
-  # # First change point
-  # if (i == 2)
-  #   return(priors[[family$family]]$cp_1)
-
-  # # A relative change point intercept
-  # if (i > 2 & ST$cp_int_rel[i] != 0)
-  #   return(sprintf(priors[[family$family]]$cp_rel, ST$cp_code_prior[i - 1]))
-
   # An absolute change point intercept
   if (i >= 2)
     #return(sprintf(priors[[family$family]]$cp, ST$cp_code_prior[i - 1]))
@@ -88,7 +78,6 @@ get_default_prior_cp_group = function(ST, i) {
     trunc_to = paste0("MAXX - ", ST$cp_code_prior[i])
   if (i < nrow(ST))
     trunc_to = paste0(ST$cp_code_prior[i + 1], " - ", ST$cp_code_prior[i])
-  #trunc = paste0("T(", ifelse(i == 2, "MINX", ST$cp_code_prior[i-1]), ", ", ifelse(i == nrow(ST), "MAXX", ST$cp_code_prior[i+1]), ")")
   trunc = paste0("T(", trunc_from, ", ", trunc_to, ")")
   return(paste0("dnorm(0, ", ST$cp_sd[i], ") ", trunc))
 }
@@ -199,11 +188,9 @@ get_prior = function(ST, family, prior = list()) {
 
     # MA intercept
     for (order in seq_len(sum(!is.na(S$ma_int[[1]])))) {  # Number of entries in int
-      #if (!all(is.na(S$ma_int[[1]][[order]]) == TRUE)) {  # If this intercept exists...
-        for (name in S$ma_int[[1]][[order]]$name) {
-          default_prior[[name]] = priors[[family$family]]$arma_int
-        }
-      #}
+      for (name in S$ma_int[[1]][[order]]$name) {
+        default_prior[[name]] = priors[[family$family]]$arma_int
+      }
     }
 
     # MA slope
@@ -217,11 +204,9 @@ get_prior = function(ST, family, prior = list()) {
 
     # AR intercept
     for (order in seq_len(sum(!is.na(S$ar_int[[1]])))) {  # Number of entries in int
-      #if (!all(is.na(S$ar_int[[1]][[order]]) == TRUE)) {  # If this intercept exists...
-        for (name in S$ar_int[[1]][[order]]$name) {
-          default_prior[[name]] = priors[[family$family]]$arma_int
-        }
-      #}
+      for (name in S$ar_int[[1]][[order]]$name) {
+        default_prior[[name]] = priors[[family$family]]$arma_int
+      }
     }
 
     # AR slope
@@ -236,10 +221,6 @@ get_prior = function(ST, family, prior = list()) {
     # Truncate change point prior if supplied by user
     if (i > 1 & ST$cp_name[i] %in% names(prior)) {
       prior[[S$cp_name]] = truncate_prior_cp(ST, i, prior[[S$cp_name]])
-      # # If this is not a dirichlet, truncate it to ensure ordered change points
-      # if (!stringr::str_detect(prior[[S$cp_name]], "^dirichlet\\([0-9]+\\)")) {
-      #   prior[[S$cp_name]] = truncate_prior_cp(ST, i, prior[[S$cp_name]])
-      # }
     }
   }
 

@@ -55,9 +55,6 @@ model {")
 
   # Priors for population-level effects\n")
 
-  if (nrow(ST) > 1)
-    mm = paste0(mm, "  STEP = (MAXX - MINX) / N_CP\n")
-
   # Helpers for change points:
   mm = paste0(mm, "  cp_0 = MINX  # mcp helper value.\n")
   mm = paste0(mm, "  cp_", nrow(ST), " = MAXX  # mcp helper value.\n\n")
