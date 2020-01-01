@@ -1,4 +1,3 @@
-
 options(mc.cores = 1)
 
 ############
@@ -110,24 +109,22 @@ test_runs = function(segments,
     )
 
     # Allow for known messages and wornings that does not signify errors
-    if (length(quiet_out$warnings) > 0) {
-      accepted_warnings = c("Adaptation incomplete")  # due to very small test datasets
-      accepted_messages = c(
-        "Finished sampling in",
-        "The current implementation of autoregression can be fragile",
-        "Autoregression currently assumes homoskedasticity",
-        "You are using ar\\(\\) together"
-      )
+    accepted_warnings = c("Adaptation incomplete")  # due to very small test datasets
+    accepted_messages = c(
+      "Finished sampling in",
+      "The current implementation of autoregression can be fragile",
+      "Autoregression currently assumes homoskedasticity",
+      "You are using ar\\(\\) together"
+    )
 
-      for (warn in quiet_out$warnings) {
-        if (!any(stringr::str_starts(warn, accepted_warnings))) {
-          testthat::fail("Got an unknown warning: ", warn)
-        }
+    for (warn in quiet_out$warnings) {
+      if (!any(stringr::str_starts(warn, accepted_warnings))) {
+        testthat::fail("Got an unknown warning: ", warn)
       }
-      for (msg in quiet_out$messages) {
-        if (!any(stringr::str_starts(msg, accepted_messages))) {
-          testthat::fail("Got an unknown message: ", msg)
-        }
+    }
+    for (msg in quiet_out$messages) {
+      if (!any(stringr::str_starts(msg, accepted_messages))) {
+        testthat::fail("Got an unknown message: ", msg)
       }
     }
 
@@ -189,14 +186,28 @@ test_summary = function(fit, varying_cols) {
 
 # Test the regular plot, including faceting
 test_plot = function(fit, varying_cols) {
-  quantiles = rbinom(1, 1, 0.5) == 1  # sometimes try adding quantiles
+  q_fit = rbinom(1, 1, 0.5) == 1  # add quantiles sometimes
+  q_predict = rbinom(1, 1, 0.5) == 1  # add quantiles sometimes
   # To facet or not to facet
   if (length(varying_cols) > 0) {
-    gg = plot(fit, facet_by = varying_cols[1], quantiles = quantiles)  # just take the first
+    gg = try(plot(fit, facet_by = varying_cols[1], q_fit = q_fit, q_predict = q_predict, lines = 3), silent = TRUE)  # just take the first
   } else {
-    gg = plot(fit, quantiles = quantiles)
+    gg = try(plot(fit, q_fit = q_fit, q_predict = q_predict, lines = 3), silent = TRUE)
   }
-  testthat::expect_s3_class(gg, c("gg", "ggplot"))
+  # Is it a ggplot or a known error?
+  if (inherits(gg, "try-error")) {
+    # (the error is an artefact of very small test data --> wide posteriors.)
+    if (fit$family$family == "poisson") {
+      expected_error = "Modelled extremely large value"
+    } else if (any(stringr::str_detect(fit$pars$sigma, "^sigma_.*_.*$"))) {  # for slopes on sigma
+      expected_error = "Modelled negative sigma"
+    } else {
+      expected_error = ">>>>do_not_expect_any_errors<<<<<"
+    }
+    expect_true(any(stringr::str_starts(attr(gg, "condition")$message, expected_error)))
+  } else {
+    testthat::expect_s3_class(gg, c("gg", "ggplot"))
+  }
 }
 
 # Test plot() calls to bayesplot

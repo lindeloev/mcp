@@ -54,13 +54,14 @@ model {")
   mm = paste0(mm, "
 
   # Priors for population-level effects\n")
+
+  # Helpers for change points:
+  mm = paste0(mm, "  cp_0 = MINX  # mcp helper value.\n")
+  mm = paste0(mm, "  cp_", nrow(ST), " = MAXX  # mcp helper value.\n\n")
   for (i in 1:length(prior_pop)) {
     mm = paste0(mm, get_prior_str(prior_pop, i))
   }
 
-  # Helpers for change points:
-  mm = paste0(mm, "  cp_0 = -10^100  # mcp helper value; minus infinity\n")
-  mm = paste0(mm, "  cp_", nrow(ST), " = 10^100  # mcp helper value; plus infinity\n")
 
   # Use get_prior_str() to add varying priors
   if (length(prior_varying) > 0) {

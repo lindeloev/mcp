@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Plot full fits — plot.mcpfit • mcp</title>
+<title>Return a geom_line representing the quantiles — geom_quantiles • mcp</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -50,9 +50,8 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Plot full fits — plot.mcpfit" />
-<meta property="og:description" content="Plot prior or posterior draws of segments on top of data. Use plot_pars to
-plot individual parameter estimates." />
+<meta property="og:title" content="Return a geom_line representing the quantiles — geom_quantiles" />
+<meta property="og:description" content="Called by plot.mcpfit." />
 <meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -201,37 +200,23 @@ plot individual parameter estimates." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Plot full fits</h1>
+    <h1>Return a geom_line representing the quantiles</h1>
     <small class="dont-index">Source: <a href='https://github.com/lindeloev/mcp/blob/master/R/plot.R'><code>R/plot.R</code></a></small>
-    <div class="hidden name"><code>plot.mcpfit.Rd</code></div>
+    <div class="hidden name"><code>geom_quantiles.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Plot prior or posterior draws of segments on top of data. Use <code>plot_pars</code> to
-plot individual parameter estimates.</p>
+    <p>Called by <code>plot.mcpfit</code>.</p>
     </div>
 
-    <pre class="usage"><span class='co'># S3 method for mcpfit</span>
-<span class='fu'>plot</span>(
-  <span class='no'>x</span>,
-  <span class='kw'>facet_by</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>25</span>,
-  <span class='kw'>geom_data</span> <span class='kw'>=</span> <span class='st'>"point"</span>,
-  <span class='kw'>cp_dens</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>q_fit</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>q_predict</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>rate</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>which_y</span> <span class='kw'>=</span> <span class='st'>"ct"</span>,
-  <span class='no'>...</span>
-)</pre>
+    <pre class="usage"><span class='fu'>geom_quantiles</span>(<span class='no'>samples</span>, <span class='no'>q</span>, <span class='no'>xvar</span>, <span class='no'>facet_by</span>, <span class='no'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>x</th>
-      <td><p>An <code><a href='mcpfit-class.html'>mcpfit</a></code> object</p></td>
+      <th>q</th>
+      <td><p>Quantiles</p></td>
     </tr>
     <tr>
       <th>facet_by</th>
@@ -239,97 +224,21 @@ plot individual parameter estimates.</p>
 <code>facet_by</code> only applies for <code>type = "segments"</code></p></td>
     </tr>
     <tr>
-      <th>lines</th>
-      <td><p>Positive integer or <code>FALSE</code>. Number of lines (posterior
-draws) to use when <code>type = "segments"</code>. FALSE (or <code>lines = 0</code>)
-plots no lines. Note that lines always plot fitted values. For prediction
-intervals, see the <code>q_predict</code> argument.</p></td>
-    </tr>
-    <tr>
-      <th>geom_data</th>
-      <td><p>String. One of "point" (default), "line" (good for time-series),
-or FALSE (don not plot).</p></td>
-    </tr>
-    <tr>
-      <th>cp_dens</th>
-      <td><p>TRUE/FALSE. Plot posterior densities of the change point(s)?
-Currently does not respect <code>facet_by</code>. This will be added in the future.</p></td>
-    </tr>
-    <tr>
-      <th>q_fit</th>
-      <td><p>Whether to plot quantiles of the posterior (fitted value).</p><ul>
-<li><p><strong>TRUE:</strong> Add 2.5% and 97.5% quantiles. Corresponds to
-<code>q_fit = c(0.025, 0.975)</code>.</p></li>
-<li><p><strong>FALSE (default):</strong> No quantiles</p></li>
-<li><p>A vector of quantiles. For example, <code>quantiles = 0.5</code>
-plots the median and <code>quantiles = c(0.2, 0.8)</code> plots the 20% and 80%
-quantiles.</p></li>
-</ul></td>
-    </tr>
-    <tr>
-      <th>q_predict</th>
-      <td><p>Same as <code>q_fit</code>, but for the prediction interval.</p></td>
-    </tr>
-    <tr>
-      <th>rate</th>
-      <td><p>Boolean. For binomial models, plot on raw data (<code>rate = FALSE</code>) or
-response divided by number of trials (<code>rate = TRUE</code>). If FALSE, linear
-interpolation on trial number is used to infer trials at a particular x.
-<code>rate</code> only applies for <code>type = "segments"</code></p></td>
-    </tr>
-    <tr>
-      <th>prior</th>
-      <td><p>TRUE/FALSE. Plot using prior samples? Useful for <code><a href='mcp.html'>mcp(..., sample = "both")</a></code></p></td>
-    </tr>
-    <tr>
-      <th>which_y</th>
-      <td><p>What to plot on the y-axis. One of</p><ul>
-<li><p><code>"ct"</code>: The central tendency which is often the mean after applying the
-link function (default).</p></li>
-<li><p><code>"sigma"</code>: The variance</p></li>
-<li><p><code>"ar1"</code>, <code>"ar2"</code>, etc. depending on which order of the autoregressive
-effects you want to plot.</p></li>
-</ul></td>
-    </tr>
-    <tr>
       <th>...</th>
-      <td><p>Currently ignored.</p></td>
+      <td><p>Arguments passed to geom_line</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A <span class="pkg">ggplot2</span> object.</p>
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+    <p>A <code><a href='https://ggplot2.tidyverse.org/reference/geom_path.html'>ggplot2::geom_line</a></code> object.</p>
 
-    <p><code>plot()</code> uses <code>fit$simulate()</code> on posterior samples. These represent the
-(joint) posterior distribution.</p>
-
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><span class='co'># Typical usage. ex_fit is an mcpfit object.</span>
-<span class='fu'>plot</span>(<span class='no'>ex_fit</span>)
-<span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)  <span class='co'># The prior</span>
-
-<span class='co'># \donttest{</span>
-<span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>q_fit</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)  <span class='co'># 95% HDI without lines</span>
-<span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>q_predict</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.1</span>, <span class='fl'>0.9</span>))  <span class='co'># 80% prediction interval</span>
-<span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>which_y</span> <span class='kw'>=</span> <span class='st'>"sigma"</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>100</span>)  <span class='co'># The variance parameter on y</span>
-<span class='co'># }</span>
-
-<span class='co'># Show a panel for each varying effect</span>
-<span class='co'># plot(fit, facet_by = "my_column")</span>
-
-<span class='co'># Customize plots using regular ggplot2</span>
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>ggplot2</span>)
-<span class='fu'>plot</span>(<span class='no'>ex_fit</span>) + <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_bw</a></span>(<span class='fl'>15</span>) + <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>ggtitle</a></span>(<span class='st'>"Great plot!"</span>)</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
       <li><a href="#value">Value</a></li>
-      <li><a href="#details">Details</a></li>
-      <li><a href="#examples">Examples</a></li>
     </ul>
 
     <h2>Author</h2>

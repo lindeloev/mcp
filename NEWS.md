@@ -6,15 +6,20 @@ The API and internal structure should be stable now. v0.2.0 will be released on 
 
  * Model quadratic and other terms using `I(x^2)`, `I(x^3.24)`, `sin(x)`, `sqrt(x)`, etc.
  * Model variance for `family = gaussian()` using `~ sigma([formula here])`.
- * Model Nth order autoregressive models using `~ ar(order, formula)`, typically like `y ~ 1 + x + ar(2)` for AR(2). `plot()` visualize posteriors for AR(N) models. Simulate AR(N) models from scratch or given known data with `fit$simulate()`. The [article on AR(N)](https://lindeloev.github.io/mcp/articles/arma.html) has more details and examples. AR(N) models are popular to detect changes in time-series.
- * Plot prediction intervals using `plot(fit, quantiles = TRUE, quantiles_type = "predict")`.
+ * Model Nth order autoregressive models using `~ ar(order, formula)`, typically like `y ~ 1 + x + ar(2)` for AR(2). Simulate AR(N) models from scratch or given known data with `fit$simulate()`. The [article on AR(N)](https://lindeloev.github.io/mcp/articles/arma.html) has more details and examples. AR(N) models are popular to detect changes in time-series.
+ * Many updates to `plot()`.
+   - Includes the posterior densities of the change point(s). Disable using `plot(fit, cp_dens = FALSE)`.
+   - Supports AR(N) models (see above).
+   - Plot posterior parameter intervals using `plot(fit, q_fit = TRUE)`. `plot(fit, q_fit = c(0.025, 0.5, 0.975))` plots 95% HDI and the median.
+   - Plot prediction intervals using `plot(fit, q_predict = TRUE)`.
+   - Choose data geom. Currently takes "point" (default) and "line" (`plot(fit, geom_data = "line")`). The latter is useful for time series. Disable using `geom_data = FALSE`.
  * Use `options(mc.cores = 3)` for considerable speed gains. All vignettes/articles have been updated to recommend this as a default, though serial sampling is still the technical default.
  * `fit$simulate()` adds the simulation parameters as an attribute (`attr(y, "simulate")`) to the predicted variable. `summary()` recognizes this and adds the simulated values to the results table (columns `sim` and `match`) so that one can inspect whether the values were recovered.
  * Use `plot(fit, which_y = "sigma")` to plot the residual standard deviation on the y-axis. It works for AR(N) as well (`which_y = "ar1"`, `which_y = "ar2"`, etc.). This is useful to visualize change points in variance and autocorrelation. The vignettes on variance and autocorrelations have been updated with worked examples.
  * Set a Dirichlet prior on the change points using `prior = list(cp_1 = "dirichlet(1)", cp_2 = ...)`. [Read pros and cons here](https://lindeloev.github.io/mcp/articles/priors.html).
 
 ## Other changes:
-
+ * The default prior has been changed from "truncated-uniforms" to a "t-tail" prior to be more uninformative while still sampling effectively. [Read more here](https://lindeloev.github.io/mcp/articles/priors.html)
  * `fit$func_y()` has been renamed to `fit$simulate()`.
  * `plot()` only visualize the total fit while `plot_pars()` only visualize individual parameters. These functions were mixed in `plot()` previously.
  * The argument `update` has been discarded from `mcp()` (it's all on `adapt` now) and `inits` has been added.

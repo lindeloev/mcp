@@ -173,7 +173,7 @@ First, let's get a visual to see that the posterior is reasonably narrow and con
 plot(fit)
 ```
 
-You can also plot the `ar1_` parameters directly. Now the y-axis is `ar1`:
+You could use `plot(fit, geom_data = "line")` for a more classical line plot of the time series data. You can also plot the `ar1_` parameters directly. Now the y-axis is `ar1`:
 
 ```{r}
 plot(fit, which_y = "ar1", lines = 100)

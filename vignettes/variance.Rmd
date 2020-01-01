@@ -46,7 +46,7 @@ fit = mcp(segments, data, par_x = "x")
 We plot the results with the prediction interval to show the effect of the variance, since it won't be immediately obvious on the default plot of the fitted mean predictions:
 
 ```{r}
-plot(fit, quantiles = TRUE, quantiles_type = "predict")
+plot(fit, q_predict = TRUE)
 ```
 
 
@@ -121,14 +121,14 @@ fit = mcp(segments, data, prior)
 Plotting the prediction interval is an intuitive way to to see how the variance is estimated:
 
 ```{r}
-plot(fit, quantiles = TRUE, quantiles_type = "predict")
+plot(fit, q_predict = TRUE)
 ```
 
 
 We can also plot the `sigma_` parameters directly. Now the y-axis is `sigma`:
 
 ```{r}
-plot(fit, which_y = "sigma", quantiles = TRUE)
+plot(fit, which_y = "sigma", q_fit = TRUE)
 ```
 
 

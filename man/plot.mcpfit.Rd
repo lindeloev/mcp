@@ -4,14 +4,16 @@
 \name{plot.mcpfit}
 \alias{plot.mcpfit}
 \alias{plot}
-\title{Plot fits with data}
+\title{Plot full fits}
 \usage{
 \method{plot}{mcpfit}(
   x,
   facet_by = NULL,
   lines = 25,
-  quantiles = FALSE,
-  quantiles_type = "fitted",
+  geom_data = "point",
+  cp_dens = TRUE,
+  q_fit = FALSE,
+  q_predict = FALSE,
   rate = TRUE,
   prior = FALSE,
   which_y = "ct",
@@ -27,19 +29,25 @@
 \item{lines}{Positive integer or \code{FALSE}. Number of lines (posterior
 draws) to use when \code{type = "segments"}. FALSE (or \code{lines = 0})
 plots no lines. Note that lines always plot fitted values. For prediction
-intervals, see \code{quantiles_type} argument.}
+intervals, see the \code{q_predict} argument.}
 
-\item{quantiles}{Whether to plot quantiles.
+\item{geom_data}{String. One of "point" (default), "line" (good for time-series),
+or FALSE (don not plot).}
+
+\item{cp_dens}{TRUE/FALSE. Plot posterior densities of the change point(s)?
+Currently does not respect \code{facet_by}. This will be added in the future.}
+
+\item{q_fit}{Whether to plot quantiles of the posterior (fitted value).
 \itemize{
 \item \strong{TRUE:} Add 2.5\% and 97.5\% quantiles. Corresponds to
-\code{quantiles = c(0.025, 0.975)}.
+\code{q_fit = c(0.025, 0.975)}.
 \item \strong{FALSE (default):} No quantiles
 \item A vector of quantiles. For example, \code{quantiles = 0.5}
 plots the median and \code{quantiles = c(0.2, 0.8)} plots the 20\% and 80\%
 quantiles.
 }}
 
-\item{quantiles_type}{One of 'fitted' or 'predict. Only applies if \code{quantile = TRUE}.}
+\item{q_predict}{Same as \code{q_fit}, but for the prediction interval.}
 
 \item{rate}{Boolean. For binomial models, plot on raw data (\code{rate = FALSE}) or
 response divided by number of trials (\code{rate = TRUE}). If FALSE, linear
@@ -63,7 +71,8 @@ effects you want to plot.
 A \pkg{ggplot2} object.
 }
 \description{
-Plot prior or posterior draws of segments on top of data.
+Plot prior or posterior draws of segments on top of data. Use \code{plot_pars} to
+plot individual parameter estimates.
 }
 \details{
 \code{plot()} uses \code{fit$simulate()} on posterior samples. These represent the
@@ -75,8 +84,8 @@ plot(ex_fit)
 plot(ex_fit, prior = TRUE)  # The prior
 
 \donttest{
-plot(ex_fit, lines = 0, quantiles = TRUE)  # 95\% HDI without lines
-plot(ex_fit, quantiles = c(0.1, 0.9), quantiles_type = "predict")  # 80\% prediction interval
+plot(ex_fit, lines = 0, q_fit = TRUE)  # 95\% HDI without lines
+plot(ex_fit, q_predict = c(0.1, 0.9))  # 80\% prediction interval
 plot(ex_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
 }
 

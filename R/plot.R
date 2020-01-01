@@ -1,27 +1,32 @@
-#' Plot fits with data
+#' Plot full fits
 #'
-#' Plot prior or posterior draws of segments on top of data.
+#' Plot prior or posterior draws of segments on top of data. Use `plot_pars` to
+#' plot individual parameter estimates.
 #'
 #' @aliases plot plot.mcpfit
 #' @param x An \code{\link{mcpfit}} object
 #' @param facet_by String. Name of a varying group.
 #'   `facet_by` only applies for `type = "segments"`
-#' @param rate Boolean. For binomial models, plot on raw data (`rate = FALSE`) or
-#'   response divided by number of trials (`rate = TRUE`). If FALSE, linear
-#'   interpolation on trial number is used to infer trials at a particular x.
-#'   `rate` only applies for `type = "segments"`
 #' @param lines Positive integer or `FALSE`. Number of lines (posterior
 #'   draws) to use when `type = "segments"`. FALSE (or `lines = 0`)
 #'   plots no lines. Note that lines always plot fitted values. For prediction
-#'   intervals, see `quantiles_type` argument.
-#' @param quantiles Whether to plot quantiles.
+#'   intervals, see the `q_predict` argument.
+#' @param geom_data String. One of "point" (default), "line" (good for time-series),
+#'   or FALSE (don not plot).
+#' @param cp_dens TRUE/FALSE. Plot posterior densities of the change point(s)?
+#'   Currently does not respect `facet_by`. This will be added in the future.
+#' @param q_fit Whether to plot quantiles of the posterior (fitted value).
 #'   * \strong{TRUE:} Add 2.5% and 97.5% quantiles. Corresponds to
-#'       `quantiles = c(0.025, 0.975)`.
+#'       `q_fit = c(0.025, 0.975)`.
 #'   * \strong{FALSE (default):} No quantiles
 #'   * A vector of quantiles. For example, `quantiles = 0.5`
 #'       plots the median and `quantiles = c(0.2, 0.8)` plots the 20% and 80%
 #'       quantiles.
-#' @param quantiles_type One of 'fitted' or 'predict. Only applies if `quantile = TRUE`.
+#' @param q_predict Same as `q_fit`, but for the prediction interval.
+#' @param rate Boolean. For binomial models, plot on raw data (`rate = FALSE`) or
+#'   response divided by number of trials (`rate = TRUE`). If FALSE, linear
+#'   interpolation on trial number is used to infer trials at a particular x.
+#'   `rate` only applies for `type = "segments"`
 #' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
 #' @param which_y What to plot on the y-axis. One of
 #'
@@ -49,8 +54,8 @@
 #' plot(ex_fit, prior = TRUE)  # The prior
 #'
 #' \donttest{
-#' plot(ex_fit, lines = 0, quantiles = TRUE)  # 95% HDI without lines
-#' plot(ex_fit, quantiles = c(0.1, 0.9), quantiles_type = "predict")  # 80% prediction interval
+#' plot(ex_fit, lines = 0, q_fit = TRUE)  # 95% HDI without lines
+#' plot(ex_fit, q_predict = c(0.1, 0.9))  # 80% prediction interval
 #' plot(ex_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
 #' }
 #'
@@ -64,8 +69,10 @@
 plot.mcpfit = function(x,
                        facet_by = NULL,
                        lines = 25,
-                       quantiles = FALSE,
-                       quantiles_type = "fitted",
+                       geom_data = "point",
+                       cp_dens = TRUE,
+                       q_fit = FALSE,
+                       q_predict = FALSE,
                        rate = TRUE,
                        prior = FALSE,
                        which_y = "ct",
@@ -92,17 +99,29 @@ plot.mcpfit = function(x,
     warning("Setting `lines` to 1000 (maximum).")
   }
 
-  if (all(quantiles == TRUE))
-    quantiles = c(0.025, 0.975)
+  if (!geom_data %in% c("point", "line", FALSE))
+    stop("`geom_data` has to be one of 'point', 'line', or FALSE.")
 
-  if (!is.logical(quantiles) & !is.numeric(quantiles))
-    stop("`quantiles` has to be TRUE, FALSE, or a vector of numbers.")
+  if (!is.logical(cp_dens))
+    stop("`cp_dens` must be TRUE or FALSE.")
 
-  if (is.numeric(quantiles) & (any(quantiles > 1) | any(quantiles < 0)))
-    stop ("All `quantiles` have to be between 0 (0%) and 1 (100%).")
+  if (all(q_fit == TRUE))
+    q_fit = c(0.025, 0.975)
 
-  if (!quantiles_type %in% c("predict", "fitted"))
-    stop("`quantiles_type` has to be one of 'predict' or 'fitted'")
+  if (all(q_predict == TRUE))
+    q_predict = c(0.025, 0.975)
+
+  if (!is.logical(q_fit) & !is.numeric(q_fit))
+    stop("`q_fit` has to be TRUE, FALSE, or a vector of numbers.")
+
+  if (is.numeric(q_fit) & (any(q_fit > 1) | any(q_fit < 0)))
+    stop ("All `q_fit` have to be between 0 (0%) and 1 (100%).")
+
+  if (!is.logical(q_predict) & !is.numeric(q_predict))
+    stop("`q_predict` has to be TRUE, FALSE, or a vector of numbers.")
+
+  if (is.numeric(q_predict) & (any(q_predict > 1) | any(q_predict < 0)))
+    stop ("All `q_predict` have to be between 0 (0%) and 1 (100%).")
 
   if (!is.logical(rate))
     stop("`rate` has to be TRUE or FALSE.")
@@ -129,16 +148,18 @@ plot.mcpfit = function(x,
   # General settings
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)
-  simulate = fit$simulate
-  if (all(quantiles == FALSE)) {
+  simulate = fit$simulate  # To make a function call work later
+  dens_threshold = 0.001  # Do not display change point densities below this threshold.
+  dens_height = 0.2  # proportion of plot y-axis that the change point density makes up
+  if (all(q_fit == FALSE) & all(q_predict == FALSE)) {
     HDI_SAMPLES = lines
   } else {
     HDI_SAMPLES = 1000 # Maximum number of draws to use for computing HDI
     HDI_SAMPLES = min(HDI_SAMPLES, length(samples) * nrow(samples[[1]]))
   }
   is_arma = length(fit$pars$arma) > 0
-  if (is_arma & all(quantiles != FALSE))
-    message("Plotting ar() with quantiles != FALSE can be slow. Raise an issue at GitHub (or thumb-up existing ones) if you need this.")
+  if (is_arma & (all(q_fit != FALSE) | all(q_predict != FALSE)))
+    message("Plotting ar() with quantiles can be slow. Raise an issue at GitHub (or thumb-up existing ones) if you need this.")
   if (!is.null(facet_by)) {
     n_facet_levels = length(unique(fit$data[, facet_by]))
   } else {
@@ -183,7 +204,11 @@ plot.mcpfit = function(x,
 
     # Interpolate trials for binomial at the values in "eval_at"
     # to make sure that there are actually values to plot
-    interpolated_trials = suppressWarnings(stats::approx(x = fit$data[, fit$pars$x], y = fit$data[, fit$pars$trials], xout = eval_at)$y)
+    #interpolated_trials = suppressWarnings(stats::approx(x = fit$data[, fit$pars$x], y = fit$data[, fit$pars$trials], xout = eval_at)$y)
+    interpolated_trials = stats::approx(x = fit$data[, fit$pars$x], y = fit$data[, fit$pars$trials], xout = eval_at)$y %>%
+      suppressWarnings() %>%
+      round()  # Only integers
+
     samples = samples %>%
       tidyr::expand_grid(!!xvar := eval_at) %>%  # correct name of x-var
       dplyr::mutate(!!fit$pars$trials := rep(interpolated_trials, nrow(samples)))
@@ -196,13 +221,13 @@ plot.mcpfit = function(x,
   }
 
   # Predict y from model by adding fitted/predicted draws (vectorized)
-  if (lines > 0 | (any(quantiles != FALSE) & quantiles_type == "fitted")) {
+  if (lines > 0 | (any(q_fit != FALSE))) {
     samples = samples %>%
-      dplyr::mutate(!!yvar := rlang::exec(simulate, !!!., type = "fitted", rate = rate, which_y = which_y))
+      dplyr::mutate(!!yvar := rlang::exec(simulate, !!!., type = "fitted", rate = rate, which_y = which_y, add_attr = FALSE))
   }
-  if (quantiles_type == "predict") {
+  if (any(q_predict != FALSE)) {
     samples = samples %>%
-      dplyr::mutate(predicted_ = rlang::exec(simulate, !!!., type = "predict", rate = rate))
+      dplyr::mutate(predicted_ = rlang::exec(simulate, !!!., type = "predict", rate = rate, add_attr = FALSE))
   }
 
 
@@ -215,10 +240,14 @@ plot.mcpfit = function(x,
     fit$data[, fit$pars$y] = fit$data[, fit$pars$y] / fit$data[, fit$pars$trials]
   }
 
-  # Initiate plot. Lines for ARMA. Points for everything else
+  # Initiate plot.
   gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y))
-  if (which_y == "ct")
-    gg = gg + geom_point()
+  if (which_y == "ct") {
+    if (geom_data == "point")
+      gg = gg + geom_point()
+    if (geom_data == "line")
+      gg = gg + geom_line()
+  }
 
   # Add lines?
   if (lines > 0) {
@@ -236,31 +265,62 @@ plot.mcpfit = function(x,
   }
 
   # Add quantiles?
-  if (is.numeric(quantiles)) {
-    # Select what data to do quantiles on
-    if (quantiles_type == "fitted") samples = dplyr::mutate(samples, y_quant = !!yvar)
-    if (quantiles_type == "predict") samples = dplyr::mutate(samples, y_quant = .data$predicted_)
+  if (lines > 0 | (any(q_fit != FALSE))) {
+    samples_fit = dplyr::mutate(samples, y_quant = !!yvar)
+    gg = gg + geom_quantiles(samples_fit, q_fit, xvar, facet_by, color = "red")
+  }
+  if (any(q_predict != FALSE)) {
+    samples_predict = dplyr::mutate(samples, y_quant = .data$predicted_)
+    gg = gg + geom_quantiles(samples_predict, q_predict, xvar, facet_by, color = "green4")
+  }
 
-    # For each quantile and each x, add quantile of !!yvar
-    data_quantiles = samples %>%
-      tidyr::expand_grid(quant = quantiles) %>%
-      dplyr::group_by(!!xvar, .data$quant)
-
-    # (... and for each group, if requested)
-    if (!is.null(facet_by)) {
-     data_quantiles = data_quantiles %>%
-       dplyr::group_by(!!rlang::sym(facet_by), add = TRUE)
+  # Add change point densities?
+  if (cp_dens == TRUE & length(fit$segments) > 1) {
+    # The scale of the actual plot (or something close enough)
+    if (which_y == "ct" & geom_data != FALSE) {
+      y_data_max = max(fit$data[, fit$pars$y])
+      y_data_min = min(fit$data[, fit$pars$y])
+    } else if (any(q_predict != FALSE)) {
+      y_data_max = max(samples$predicted_)
+      y_data_min = min(samples$predicted_)
+    } else if (as.character(yvar) %in% names(samples)) {
+      y_data_max = max(dplyr::pull(samples, as.character(yvar)))
+      y_data_min = min(dplyr::pull(samples, as.character(yvar)))
+    } else {
+      stop("Failed to draw change point density for this plot. Please raise an error on GitHub.")
     }
 
-    # Continue...
-    data_quantiles = data_quantiles %>%
-      dplyr::summarise(
-        y = stats::quantile(.data$y_quant, probs = .data$quant[1])
-      )
+    # Function to get density for each grouping in the dplyr pipes below.
+    density_xy = function(x) {
+      tmp = stats::density(x)
+      df = data.frame(x_dens = tmp$x, y_dens = tmp$y) %>%
+        dplyr::filter(.data$y_dens > dens_threshold) %>%
+        return()
+    }
 
-    # Add quantiles to plot
-    gg = gg +
-      geom_line(aes(y = .data$y, group = .data$quant), data = data_quantiles, lty = 2, lwd = 0.7, color = "red")
+    # Get and group samples to be used for computing density
+    cp_regex = "^cp_[0-9]+$"
+    cp_dens_xy = get_samples(fit, prior = prior) %>%  # Use all samples for this
+      tidybayes::gather_draws(!!rlang::sym(cp_regex), regex = TRUE) %>%
+      dplyr::group_by(.data$.chain, add = TRUE) %>%
+
+      # Get density as x-y values by chain and change point number.
+      dplyr::summarise(dens = list(density_xy(.data$.value))) %>%
+      tidyr::unnest(cols = c(.data$dens)) %>%
+
+      # Then scale to plot.
+      dplyr::mutate(y_dens = y_data_min + .data$y_dens * (y_data_max - y_data_min) * dens_height / max(.data$y_dens))
+
+    # Add cp density to plot
+    gg = gg + ggplot2::geom_line(
+      data = cp_dens_xy,
+      mapping = aes(
+        x = .data$x_dens,
+        y = .data$y_dens,
+        color = .data$.chain,
+        group = interaction(.data$.variable, .data$.chain))) +
+      ggplot2::theme(legend.position = "none")
+
   }
 
   # Add faceting?
@@ -278,8 +338,52 @@ plot.mcpfit = function(x,
 }
 
 
+#' Return a geom_line representing the quantiles
+#'
+#' Called by `plot.mcpfit`.
+#'
+#' @aliases geom_quantiles
+#' @keywords internal
+#' @inheritParams plot.mcpfit
+#' @param q Quantiles
+#' @param ... Arguments passed to geom_line
+#' @return A `ggplot2::geom_line` object.
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
+geom_quantiles = function(samples, q, xvar, facet_by, ...) {
+  # Trick to declare no facet = common group for all
+  if (length(facet_by) == 0)
+    facet_by = xvar
 
-#' Plot mcpfit objects with `bayesplot`
+  # First: add quantiles column
+  data_quantiles = samples %>%
+    tidyr::expand_grid(quant = q) %>%
+
+    # Now compute the quantile for each parameter, quantile, and (optionally) facet:
+    dplyr::group_by(!!xvar, .data$quant) %>%
+    dplyr::group_by(!!rlang::sym(facet_by), add = TRUE) %>%
+    dplyr::summarise(
+      y = stats::quantile(.data$y_quant, probs = .data$quant[1])
+    )
+
+  # Return geom
+  geom = ggplot2::geom_line(
+    mapping = aes(
+      y = .data$y,
+      group = .data$quant
+    ),
+    data = data_quantiles,
+    lty = 2,
+    lwd = 0.7,
+    ...)
+  return(geom)
+}
+
+
+
+
+#' Plot individual parameters
 #'
 #' Plot many types of plots of parameter estimates. See examples for typical use
 #' cases.
