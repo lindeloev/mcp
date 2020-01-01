@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Plot fits with data — plot.mcpfit • mcp</title>
+<title>Plot full fits — plot.mcpfit • mcp</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -50,8 +50,9 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Plot fits with data — plot.mcpfit" />
-<meta property="og:description" content="Plot prior or posterior draws of segments on top of data." />
+<meta property="og:title" content="Plot full fits — plot.mcpfit" />
+<meta property="og:description" content="Plot prior or posterior draws of segments on top of data. Use plot_pars to
+plot individual parameter estimates." />
 <meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -200,13 +201,14 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Plot fits with data</h1>
+    <h1>Plot full fits</h1>
     <small class="dont-index">Source: <a href='https://github.com/lindeloev/mcp/blob/master/R/plot.R'><code>R/plot.R</code></a></small>
     <div class="hidden name"><code>plot.mcpfit.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Plot prior or posterior draws of segments on top of data.</p>
+    <p>Plot prior or posterior draws of segments on top of data. Use <code>plot_pars</code> to
+plot individual parameter estimates.</p>
     </div>
 
     <pre class="usage"><span class='co'># S3 method for mcpfit</span>
@@ -304,18 +306,22 @@ effects you want to plot.</p></li>
 (joint) posterior distribution.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'># Typical usage. ex_fit is an mcpfit object.</span>
-<span class='fu'>plot</span>(<span class='no'>ex_fit</span>)</div><div class='img'><img src='plot.mcpfit-1.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)  <span class='co'># The prior</span></div><div class='img'><img src='plot.mcpfit-2.png' alt='' width='700' height='433' /></div><div class='input'>
+    <pre class="examples"><span class='co'># Typical usage. ex_fit is an mcpfit object.</span>
+<span class='fu'>plot</span>(<span class='no'>ex_fit</span>)
+<span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)  <span class='co'># The prior</span>
+
 <span class='co'># \donttest{</span>
-<span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>q_fit</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)  <span class='co'># 95% HDI without lines</span></div><div class='img'><img src='plot.mcpfit-3.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>q_predict</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.1</span>, <span class='fl'>0.9</span>))  <span class='co'># 80% prediction interval</span></div><div class='img'><img src='plot.mcpfit-4.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>which_y</span> <span class='kw'>=</span> <span class='st'>"sigma"</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>100</span>)  <span class='co'># The variance parameter on y</span></div><div class='img'><img src='plot.mcpfit-5.png' alt='' width='700' height='433' /></div><div class='input'><span class='co'># }</span>
+<span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>q_fit</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)  <span class='co'># 95% HDI without lines</span>
+<span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>q_predict</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.1</span>, <span class='fl'>0.9</span>))  <span class='co'># 80% prediction interval</span>
+<span class='fu'>plot</span>(<span class='no'>ex_fit</span>, <span class='kw'>which_y</span> <span class='kw'>=</span> <span class='st'>"sigma"</span>, <span class='kw'>lines</span> <span class='kw'>=</span> <span class='fl'>100</span>)  <span class='co'># The variance parameter on y</span>
+<span class='co'># }</span>
 
 <span class='co'># Show a panel for each varying effect</span>
 <span class='co'># plot(fit, facet_by = "my_column")</span>
 
 <span class='co'># Customize plots using regular ggplot2</span>
 <span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>ggplot2</span>)
-<span class='fu'>plot</span>(<span class='no'>ex_fit</span>) + <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_bw</a></span>(<span class='fl'>15</span>) + <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>ggtitle</a></span>(<span class='st'>"Great plot!"</span>)</div><div class='img'><img src='plot.mcpfit-6.png' alt='' width='700' height='433' /></div><div class='input'>
-</div></pre>
+<span class='fu'>plot</span>(<span class='no'>ex_fit</span>) + <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_bw</a></span>(<span class='fl'>15</span>) + <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>ggtitle</a></span>(<span class='st'>"Great plot!"</span>)</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

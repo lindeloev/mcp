@@ -51,14 +51,14 @@
   
 
 <meta property="og:title" content="Test hypotheses on mcp objects. — hypothesis" />
-<meta property="og:description" content="This function is highly inspired by brms::hypothesis(). It returns
-posterior probabilities and Bayes Factors for flexible hypotheses involving
+<meta property="og:description" content="Rreturns posterior probabilities and Bayes Factors for flexible hypotheses involving
 model parameters. See the documentation below for the parameter hypotheses
 for examples of how to specify hypotheses, and read worked examples on the mcp website.
 For directional hypotheses, hypothesis`` executes the hypothesis string in a tidybayes`` environment and summerises the proportion of samples where
 the expression evaluates to TRUE. For equals-hypothesis, a Savage-Dickey
 ratio is computed. Savage-Dickey requires a prior too, so remember
-mcp(..., sample = &quot;both&quot;)." />
+mcp(..., sample = &quot;both&quot;). This function is heavily inspired by the
+`hypothesis` function from the `brms` package." />
 <meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -213,14 +213,14 @@ mcp(..., sample = &quot;both&quot;)." />
     </div>
 
     <div class="ref-description">
-    <p>This function is highly inspired by <code><a href='https://rdrr.io/pkg/brms/man/hypothesis.html'>brms::hypothesis()</a></code>. It returns
-posterior probabilities and Bayes Factors for flexible hypotheses involving
+    <p>Rreturns posterior probabilities and Bayes Factors for flexible hypotheses involving
 model parameters. See the documentation below for the parameter <code>hypotheses</code>
 for examples of how to specify hypotheses, and <a href='https://lindeloev.github.io/mcp/articles/comparison.html'>read worked examples on the mcp website</a>.
 For directional hypotheses, <code>hypothesis`` executes the hypothesis string in a </code>tidybayes`` environment and summerises the proportion of samples where
 the expression evaluates to TRUE. For equals-hypothesis, a Savage-Dickey
 ratio is computed. Savage-Dickey requires a prior too, so remember
-<code><a href='mcp.html'>mcp(..., sample = "both")</a></code>.</p>
+<code><a href='mcp.html'>mcp(..., sample = "both")</a></code>. This function is heavily inspired by the
+`hypothesis` function from the `brms` package.</p>
     </div>
 
     <pre class="usage"><span class='fu'>hypothesis</span>(<span class='no'>fit</span>, <span class='no'>hypotheses</span>, <span class='kw'>width</span> <span class='kw'>=</span> <span class='fl'>0.95</span>, <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>3</span>)</pre>

@@ -82,7 +82,7 @@ segments_binomial = list(
   ~ 0 + x,  # joined changing rate
   ~ 1 + x  # disjoined changing rate
 )
-fit_binomial = mcp(segments_binomial, ex_binomial, family = binomial())
+fit_binomial = mcp(segments_binomial, ex_binomial, family = binomial(), adapt = 5000)
 theme_it(plot(fit_binomial, q_fit = TRUE), "Binomial")
 save_it("ex_binomial.png")
 

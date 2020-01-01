@@ -228,13 +228,14 @@
 <code>fit$simulate()</code> adds the simulation parameters as an attribute (<code><a href="https://rdrr.io/r/base/attr.html">attr(y, "simulate")</a></code>) to the predicted variable. <code><a href="../reference/summary.mcpfit.html">summary()</a></code> recognizes this and adds the simulated values to the results table (columns <code>sim</code> and <code>match</code>) so that one can inspect whether the values were recovered.</li>
 <li>Use <code><a href="../reference/plot.mcpfit.html">plot(fit, which_y = "sigma")</a></code> to plot the residual standard deviation on the y-axis. It works for AR(N) as well (<code>which_y = "ar1"</code>, <code>which_y = "ar2"</code>, etc.). This is useful to visualize change points in variance and autocorrelation. The vignettes on variance and autocorrelations have been updated with worked examples.</li>
 <li>Set a Dirichlet prior on the change points using <code>prior = list(cp_1 = "dirichlet(1)", cp_2 = ...)</code>. <a href="https://lindeloev.github.io/mcp/articles/priors.html">Read pros and cons here</a>.</li>
-<li><code><a href="../reference/plot.mcpfit.html">plot()</a></code></li>
 </ul>
 </div>
 <div id="other-changes" class="section level2">
 <h2 class="hasAnchor">
 <a href="#other-changes" class="anchor"></a>Other changes:</h2>
 <ul>
+<li>The default prior has been changed from “truncated-uniforms” to a “t-tail” prior to be more uninformative while still sampling effectively. <a href="https://lindeloev.github.io/mcp/articles/priors.html">Read more here</a>
+</li>
 <li>
 <code>fit$func_y()</code> has been renamed to <code>fit$simulate()</code>.</li>
 <li>

@@ -4,7 +4,7 @@
 \name{plot.mcpfit}
 \alias{plot.mcpfit}
 \alias{plot}
-\title{Plot fits with data}
+\title{Plot full fits}
 \usage{
 \method{plot}{mcpfit}(
   x,
@@ -71,7 +71,8 @@ effects you want to plot.
 A \pkg{ggplot2} object.
 }
 \description{
-Plot prior or posterior draws of segments on top of data.
+Plot prior or posterior draws of segments on top of data. Use \code{plot_pars} to
+plot individual parameter estimates.
 }
 \details{
 \code{plot()} uses \code{fit$simulate()} on posterior samples. These represent the
