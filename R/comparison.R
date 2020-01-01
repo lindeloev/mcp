@@ -81,15 +81,15 @@ waic.mcpfit = function(x, ...) {
 
 #' Test hypotheses on mcp objects.
 #'
-#' This function is highly inspired by `brms::hypothesis()`. It returns
-#' posterior probabilities and Bayes Factors for flexible hypotheses involving
+#' Rreturns posterior probabilities and Bayes Factors for flexible hypotheses involving
 #' model parameters. See the documentation below for the parameter `hypotheses`
 #' for examples of how to specify hypotheses, and [read worked examples on the mcp website](https://lindeloev.github.io/mcp/articles/comparison.html).
 #' For directional hypotheses, `hypothesis`` executes the hypothesis string in
 #' a `tidybayes`` environment and summerises the proportion of samples where
 #' the expression evaluates to TRUE. For equals-hypothesis, a Savage-Dickey
 #' ratio is computed. Savage-Dickey requires a prior too, so remember
-#' `mcp(..., sample = "both")`.
+#' `mcp(..., sample = "both")`. This function is heavily inspired by the
+#' `hypothesis` function from the `brms` package.
 #'
 #' @aliases hypothesis hypothesis.mcpfit
 #' @inheritParams summary.mcpfit

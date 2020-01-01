@@ -1,6 +1,7 @@
-#' Plot fits with data
+#' Plot full fits
 #'
-#' Plot prior or posterior draws of segments on top of data.
+#' Plot prior or posterior draws of segments on top of data. Use `plot_pars` to
+#' plot individual parameter estimates.
 #'
 #' @aliases plot plot.mcpfit
 #' @param x An \code{\link{mcpfit}} object
@@ -264,11 +265,11 @@ plot.mcpfit = function(x,
   }
 
   # Add quantiles?
-  if (is.numeric(q_fit)) {
+  if (lines > 0 | (any(q_fit != FALSE))) {
     samples_fit = dplyr::mutate(samples, y_quant = !!yvar)
     gg = gg + geom_quantiles(samples_fit, q_fit, xvar, facet_by, color = "red")
   }
-  if (is.numeric(q_predict)) {
+  if (any(q_predict != FALSE)) {
     samples_predict = dplyr::mutate(samples, y_quant = .data$predicted_)
     gg = gg + geom_quantiles(samples_predict, q_predict, xvar, facet_by, color = "green4")
   }
@@ -382,7 +383,7 @@ geom_quantiles = function(samples, q, xvar, facet_by, ...) {
 
 
 
-#' Plot mcpfit objects with `bayesplot`
+#' Plot individual parameters
 #'
 #' Plot many types of plots of parameter estimates. See examples for typical use
 #' cases.

@@ -17,10 +17,9 @@ The API and internal structure should be stable now. v0.2.0 will be released on 
  * `fit$simulate()` adds the simulation parameters as an attribute (`attr(y, "simulate")`) to the predicted variable. `summary()` recognizes this and adds the simulated values to the results table (columns `sim` and `match`) so that one can inspect whether the values were recovered.
  * Use `plot(fit, which_y = "sigma")` to plot the residual standard deviation on the y-axis. It works for AR(N) as well (`which_y = "ar1"`, `which_y = "ar2"`, etc.). This is useful to visualize change points in variance and autocorrelation. The vignettes on variance and autocorrelations have been updated with worked examples.
  * Set a Dirichlet prior on the change points using `prior = list(cp_1 = "dirichlet(1)", cp_2 = ...)`. [Read pros and cons here](https://lindeloev.github.io/mcp/articles/priors.html).
- * `plot()`
 
 ## Other changes:
-
+ * The default prior has been changed from "truncated-uniforms" to a "t-tail" prior to be more uninformative while still sampling effectively. [Read more here](https://lindeloev.github.io/mcp/articles/priors.html)
  * `fit$func_y()` has been renamed to `fit$simulate()`.
  * `plot()` only visualize the total fit while `plot_pars()` only visualize individual parameters. These functions were mixed in `plot()` previously.
  * The argument `update` has been discarded from `mcp()` (it's all on `adapt` now) and `inits` has been added.
