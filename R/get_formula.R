@@ -362,10 +362,10 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     if (type == 'predict') {
       if (rate == FALSE) return(add_simulated(rbinom(length(", pars$x, "), ", pars$trials, ", ilogit(y_))))
       if (rate == TRUE)  return(add_simulated(rbinom(length(", pars$x, "), ", pars$trials, ", ilogit(y_)) / ", pars$trials, "))
-    }
-    if (type == 'fitted')
+    } else if (type == 'fitted') {
       if (rate == FALSE) return(add_simulated(", pars$trials, " * ilogit(y_)))
-      if (rate == TRUE)  return(add_simulated(ilogit(y_)))")
+      if (rate == TRUE)  return(add_simulated(ilogit(y_)))
+    }")
   } else if (family$family == "bernoulli") {
     out = paste0(out, "
     if (type == 'predict') return(add_simulated(rbinom(length(", pars$x, "), 1, ilogit(y_))))
@@ -376,8 +376,9 @@ get_simulate = function(formula_str, pars, nsegments, family) {
       if (any(exp(y_) > 2146275819))
         stop('Modelled extremely large value: exp(", pars$y, ") > 2146275819. First detected at ", pars$x, " = ', min(", pars$x, "[exp(y_) > 2146275819]))
       return(add_simulated(rpois(length(", pars$x, "), exp(y_))))
-    }
-    if (type == 'fitted') return(add_simulated(exp(y_)))")
+    } else if (type == 'fitted') {
+        return(add_simulated(exp(y_)))
+      }")
   }
 
   out = paste0(out, "
