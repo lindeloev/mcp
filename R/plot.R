@@ -574,7 +574,10 @@ get_eval_at = function(fit, facet_by) {
   for (i in seq_len(nrow(cp_hdis))) {
     x_proportion = (cp_hdis$upper[i] - cp_hdis$lower[i]) / (xmax - xmin)  # how big a section of x is this CP's HDI?
     length.out = ceiling(X_RESOLUTION_CP * x_proportion)  # number of x-points to add
-    eval_at = c(eval_at, seq(from = cp_hdis$lower[i], to = cp_hdis$upper[i], length.out = length.out))
+    add_this = seq(from = max(xmin, cp_hdis$lower[i]),  # hack to avoid bug for relative cps. TO DO
+                   to = min(xmax, cp_hdis$upper[i]),  # hack to avoid bug for relative cps. TO DO
+                   length.out = length.out)
+    eval_at = c(eval_at, add_this)
   }
 
   return(sort(eval_at))
