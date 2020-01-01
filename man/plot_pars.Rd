@@ -3,7 +3,7 @@
 \encoding{UTF-8}
 \name{plot_pars}
 \alias{plot_pars}
-\title{Plot mcpfit objects with \code{bayesplot}}
+\title{Plot individual parameters}
 \usage{
 plot_pars(
   fit,
