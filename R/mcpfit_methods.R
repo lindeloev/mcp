@@ -98,11 +98,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   }
   diagnostics = data.frame(
     Rhat = Rhat,  # Gelman-Rubin
-    n.eff = round(coda::effectiveSize(samples)),  # Effective sample size
-    ts_se = lapply(samples, coda::spectrum0.ar) %>%  # Time-series SE
-      data.frame() %>%
-      dplyr::select(tidyselect::starts_with("spec")) %>%
-      rowMeans()
+    n.eff = round(coda::effectiveSize(samples))  # Effective sample size
   )
 
   # Add simulation parameters if the data is simulated

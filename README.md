@@ -67,17 +67,17 @@ Segments:
   3: response ~ 1 ~ 1 + time
 
 Population-level parameters:
-    name match  sim  mean lower  upper Rhat n.eff   ts_se
-    cp_1    OK 30.0 30.46 22.98 37.770    1   427 295.851
-    cp_2    OK 70.0 69.78 69.29 70.252    1  5279   0.133
-   int_1    OK 10.0 10.29  8.88 11.672    1  1412   3.250
-   int_3    OK  0.0  0.51 -2.35  3.374    1   802  24.608
- sigma_1    OK  4.0  4.00  3.42  4.572    1  4243   0.178
-  time_2    OK  0.5  0.53  0.41  0.660    1   462   0.083
-  time_3    OK -0.2 -0.22 -0.39 -0.053    1   778   0.087
+    name match  sim  mean lower  upper Rhat n.eff
+    cp_1    OK 30.0 30.46 22.98 37.770    1   427
+    cp_2    OK 70.0 69.78 69.29 70.252    1  5279
+   int_1    OK 10.0 10.29  8.88 11.672    1  1412
+   int_3    OK  0.0  0.51 -2.35  3.374    1   802
+ sigma_1    OK  4.0  4.00  3.42  4.572    1  4243
+  time_2    OK  0.5  0.53  0.41  0.660    1   462
+  time_3    OK -0.2 -0.22 -0.39 -0.053    1   778
 ```
 
-`rhat` is the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag), `eff` is the [effective sample size](https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html), and `ts_se` is the time-series standard error.
+`rhat` is the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag), `eff` is the [effective sample size](https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html).
 
 `plot_pars(fit)` can be used to inspect the posteriors and convergence of all parameters. See the documentation of `plot_pars()` for many other plotting options. Here, we plot just the (population-level) change points. They often have "strange" posterior distributions, highlighting the need for a computational approach:
 
@@ -216,13 +216,13 @@ ranef(fit, width = 0.98)
 ```
 
 ```r
-           name match   sim  mean   lower   upper Rhat n.eff ts_se
- cp_1_id[Benny]    OK -17.5 -18.1 -21.970 -14.877    1   895  23.2
-  cp_1_id[Bill]    OK -10.5  -7.6 -10.658  -4.451    1   420  37.5
-  cp_1_id[Cath]    OK  -3.5  -2.8  -5.634   0.027    1   888  23.7
-  cp_1_id[Erin]    OK   3.5   3.1   0.041   5.952    1  3622   3.5
-  cp_1_id[John]    OK  10.5  11.3   7.577  14.989    1  2321   5.1
-  cp_1_id[Rose]    OK  17.5  14.1  10.485  18.079    1  5150   2.6
+           name match   sim  mean   lower   upper Rhat n.eff
+ cp_1_id[Benny]    OK -17.5 -18.1 -21.970 -14.877    1   895
+  cp_1_id[Bill]    OK -10.5  -7.6 -10.658  -4.451    1   420
+  cp_1_id[Cath]    OK  -3.5  -2.8  -5.634   0.027    1   888
+  cp_1_id[Erin]    OK   3.5   3.1   0.041   5.952    1  3622
+  cp_1_id[John]    OK  10.5  11.3   7.577  14.989    1  2321
+  cp_1_id[Rose]    OK  17.5  14.1  10.485  18.079    1  5150
 ```
 
 
@@ -263,14 +263,14 @@ The AR(N) parameters on intercepts are named `ar[order]_[segment]`. All paramete
 
 ```r
 Population-level parameters:
-    name match   sim    mean     lower   upper Rhat n.eff    ts_se
-   ar1_1    OK   0.7   0.741  5.86e-01   0.892 1.01   713  0.06970
-   ar1_2    OK  -0.4  -0.478 -6.88e-01  -0.255 1.00  2151  0.04722
-   ar2_1    OK   0.2   0.145 -6.56e-04   0.284 1.01   798  0.05767
-    cp_1       120.0 117.313  1.14e+02 118.963 1.05   241 80.51360
-   int_1        20.0  17.558  1.51e+01  19.831 1.02   293 36.27328
- sigma_1    OK   5.0   4.829  4.39e+00   5.334 1.00  3750  0.10756
-  time_2    OK   0.5   0.517  4.85e-01   0.553 1.00   661  0.00405
+    name match   sim    mean     lower   upper Rhat n.eff
+   ar1_1    OK   0.7   0.741  5.86e-01   0.892 1.01   713
+   ar1_2    OK  -0.4  -0.478 -6.88e-01  -0.255 1.00  2151
+   ar2_1    OK   0.2   0.145 -6.56e-04   0.284 1.01   798
+    cp_1       120.0 117.313  1.14e+02 118.963 1.05   241
+   int_1        20.0  17.558  1.51e+01  19.831 1.02   293
+ sigma_1    OK   5.0   4.829  4.39e+00   5.334 1.00  3750
+  time_2    OK   0.5   0.517  4.85e-01   0.553 1.00   661
 ```
 
 The fit plot shows the inferred autocorrelated nature:
@@ -372,15 +372,15 @@ summary(fit)
 
 ```r
 Population-level parameters:
-    name match   sim  mean  lower upper Rhat n.eff    ts_se
-    cp_1    OK  25.0 23.15  20.00 25.81 1.00   297   240.44
-    cp_2        40.0 51.85  47.06 56.36 1.02   428   323.61
-   int_1        25.0 10.00  10.00 10.00  NaN     0     0.00
-   int_2    OK -10.0 -6.86 -21.57 11.89 1.03   190 10678.42
- sigma_1         7.0  9.70   8.32 11.18 1.00  7516     1.56
-     x_1         1.0  1.58   1.24  1.91 1.07   120     7.90
-     x_2    OK  -3.0 -3.28  -3.61 -2.96 1.04   293     2.31
-     x_3         0.5  1.58   1.24  1.91 1.07   120     7.90
+    name match   sim  mean  lower upper Rhat n.eff
+    cp_1    OK  25.0 23.15  20.00 25.81 1.00   297
+    cp_2        40.0 51.85  47.06 56.36 1.02   428
+   int_1        25.0 10.00  10.00 10.00  NaN     0
+   int_2    OK -10.0 -6.86 -21.57 11.89 1.03   190
+ sigma_1         7.0  9.70   8.32 11.18 1.00  7516
+     x_1         1.0  1.58   1.24  1.91 1.07   120
+     x_2    OK  -3.0 -3.28  -3.61 -2.96 1.04   293
+     x_3         0.5  1.58   1.24  1.91 1.07   120
 ```
 
 
