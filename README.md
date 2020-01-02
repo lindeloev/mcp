@@ -325,7 +325,7 @@ You can use `sin(x)`, `cos(x)`, and `tan(x)` to do trigonometry. This can be use
 ```r
 segments = list(
   y ~ 1 + sin(x),
-  ~ 0 + cos(x) + x
+  ~ 1 + cos(x) + x
 )
 
 fit = mcp(segments, ex_trig)
@@ -400,4 +400,23 @@ tidy_draws(fit$samples) %>%
 fit$pars$model  # check out which parameters are inferred.
 spread_draws(fit$samples, cp_1, cp_2, int_1, year_1) %>%
  # tidybayes stuff here
+```
+
+
+# Citation
+A paper formally introducing `mcp` is in progress. To cite `mcp` in publications use:
+
+
+> Jonas Kristoffer Lindeløv (2020). mcp: Regression with Multiple Change Points. https://github.com/lindeloev/mcp.
+
+A BibTeX entry for LaTeX users is
+
+```
+  @Manual{,
+    title = {mcp: Regression with Multiple Change Points},
+    author = {Jonas Kristoffer Lindeløv},
+    year = {2020},
+    note = {R package version 0.2.0},
+    note = {https://github.com/lindeloev/mcp}
+  }
 ```
