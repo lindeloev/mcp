@@ -213,13 +213,12 @@ z3 = density(fit_five$mcmc_prior[[1]][, "cp_3"], from = MINX, to = MAXX)
 z4 = density(fit_five$mcmc_prior[[1]][, "cp_4"], from = MINX, to = MAXX)
 z5 = density(fit_five$mcmc_prior[[1]][, "cp_5"], from = MINX, to = MAXX)
 
-plot(z5, xlab = NA, xlim = c(MINX, MAXX), main = "t-tail five"); text(135, 0.08, labels = "cp_5")
-
-lines(z1$x, (z1$y + z2$y + z3$y + z4$y + z5$y), lty = 2); text(100, 0.045, labels = "sum")
-lines(z4); text(125, 0.025, labels = "cp_4")
-lines(z3); text(100, 0.02, labels = "cp_3")
-lines(z3); text(75, 0.025, labels = "cp_2")
-lines(z2); text(55, 0.043, labels = "cp_1")
+plot(z1$x, (z1$y + z2$y + z3$y + z4$y + z5$y), type = "l", lty = 2, xlab = NA, xlim = c(MINX, MAXX), ylim = c(0, 0.07), main = "t-tail five"); text(100, 0.043, labels = "sum")
+lines(z5); text(137, 0.03, labels = "cp_5")
+lines(z4); text(115, 0.020, labels = "cp_4")
+lines(z3); text(94, 0.023, labels = "cp_3")
+lines(z3); text(75, 0.027, labels = "cp_2")
+lines(z2); text(62, 0.041, labels = "cp_1")
 lines(z1)
 
 par(mfrow = c(1,1))
@@ -232,9 +231,9 @@ par(mfrow = c(1,1))
 
 The first change point defaults to `cp_1 = dunif(MINX, MAXX)`. In other words, the change point has to happen in the observed range of x, but it is equally probable across this range. This is identical to the Dirichlet prior.
 
-For 2+ change points, the default is `cp_i = dt(MINX, (MAXX-MINX) / N_CP, 1) T(cp_i-1, MAXX)`. This is not as complicated as it looks, so let me unpack it.
+For 2+ change points, the default (on *all* change points) is `cp_i = dt(MINX, (MAXX-MINX) / N_CP, N_CP - 1) T(cp_i-1, MAXX)`. This is not as complicated as it looks, so let me unpack it.
 
- * It is t-distributed with one degree of freedom (`dt(..., 1)`).
+ * It is t-distributed with $N - 1$ degree of freedom (`dt(..., N_CP - 1)`). This ensures narrower priors as the number of change points increase, so as to avoid excessive accumulation of densities at high $x$.
  * It is truncated to be greater than the previous `cp`. For example, `cp_3 = dt(...) T(cp_2, MAXX)`. Since `cp_0 = MINX`, all change points are "forced" to be in the observed range of `x`.
  * The standard deviation is the distance between equally-spaced change points: `(MAXX - MINX) / N_CP`.
  * The mean is always the lowest observed `x`. Thus `cp_1` is a half-t and `cp_2+` are right tails of the same t. Hence the name "t-tail prior". Since they are estimated using MCMC, the fact that the *absolute* densities are smaller for later change points is of no importance since only the *relative* densities matter.
