@@ -1,6 +1,7 @@
 Package: mcp
 Title: Regression with Multiple Change Points
 Version: 0.2.0
+Date: 2020-01-02
 URL: http://lindeloev.github.io/mcp/, https://github.com/lindeloev/mcp
 BugReports: https://github.com/lindeloev/mcp/issues
 Authors@R: 
