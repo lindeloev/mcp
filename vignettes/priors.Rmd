@@ -193,7 +193,7 @@ mtext("Data", 1, line = 3, at = -0.2)
 ###############
 y1 = density(fit_two$mcmc_prior[[1]][, "cp_1"], from = MINX, to = MAXX)
 y2 = density(fit_two$mcmc_prior[[1]][, "cp_2"], from = MINX, to = MAXX)
-plot(y1$x, y1$y + y2$y, type = "l", lty = 2, xlab = NA, xlim = c(MINX, MAXX), main = "t-tail two")
+plot(y1$x, y1$y + y2$y, type = "l", lty = 2, xlab = NA, xlim = c(MINX, MAXX), main = "t-tail two", ylab = "Density")
 
 lines(y1)
 lines(y2)

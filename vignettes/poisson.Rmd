@@ -69,7 +69,7 @@ plot_pars(fit)
 # Priors
 `poisson()` defaults to `link = 'log'`, meaning that we have to exponentiate the estimates to get the "raw" Poisson parameter $\lambda$. $\lambda$ has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is `exp(result$mean[2])` (`r exp(result$mean[2])`) and it is `exp(result$mean[3])` (`r exp(result$mean[3])`) for segment 2.
 
-Default priors were used. They are normals with a standard deviation of 10. I.e. with 95% probability mass between `exp(10) = 22026` and `exp(-10) = 1 / 22026`:
+Default priors were used. They are normals with a standard deviation of 10. I.e. with 68% probability mass between `exp(10) = 22026` and `exp(-10) = 1 / 22026`:
 
 ```{r}
 cbind(fit$prior)
