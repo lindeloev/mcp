@@ -265,7 +265,7 @@ plot.mcpfit = function(x,
   }
 
   # Add quantiles?
-  if (lines > 0 | (any(q_fit != FALSE))) {
+  if ((any(q_fit != FALSE))) {
     samples_fit = dplyr::mutate(samples, y_quant = !!yvar)
     gg = gg + geom_quantiles(samples_fit, q_fit, xvar, facet_by, color = "red")
   }
