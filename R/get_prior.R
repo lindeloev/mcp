@@ -5,7 +5,7 @@
 # Generic default priors that applies to many families
 cp_prior = list(
   cp_1 = "dunif(MINX, MAXX)",  # If there is only one change point
-  cp = "dt(MINX, (MAXX - MINX) / N_CP, 1)",
+  cp = "dt(MINX, (MAXX - MINX) / N_CP, N_CP - 1)",
   cp_rel = "dunif(0, MAXX - %s)",
   sd = "dnorm(0, (MAXX - MINX) / 2) T(0, )"
 )
