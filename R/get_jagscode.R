@@ -25,7 +25,7 @@ model {")
   is_dirichlet = stringr::str_detect(cps, "^dirichlet\\([1-9]+\\)$")
   if (any(is_dirichlet)) {
     if (!all(is_dirichlet))
-      stop("All or none of the change point priors can be 'dirichlet(N)'. Not just some.")
+      stop("All or none of the change point priors can be 'dirichlet(N)' and all N > 0.")
 
     # Build JAGS code. cp_betas is a simplex. cp_i is scaled to the observed range of x.
     mm = paste0(mm, "
@@ -201,36 +201,6 @@ get_prior_str = function(prior, i, varying_group = NULL) {
   } else {
     # Fixed value. Just equate name and value
     return(paste0("  ", name, " = ", value, "  # Fixed\n"))
-  }
-}
-
-
-#' Get JAGS code for the Dirichlet prior
-#'
-#' @aliases get_dirichlet
-#' @keywords internal
-#' @inheritParams mcp
-#' @return A string
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @encoding UTF-8
-#'
-get_dirichlet = function(prior) {
-  # Get change point priors and whether they are dirichlets.
-  cps = prior[stringr::str_detect(names(prior), "^cp_[1-9]+$")]
-  is_dirichlet = stringr::str_detect(cps, "^dirichlet\\([1-9]+\\)$")
-
-  if (any(is_dirichlet) & !all(is_dirichlet))
-    stop("All or none of the change point priors can be 'dirichlet(N)'. Not just some.")
-
-  # Make JAGS code. cp_betas is a simplex.
-  # cp_i are shifted and scaled to the observed range of x
-  mm = paste0("
-  # Scaled Dirichlet prior on change points
-  cp_betas ~ ddirch(c(", paste0(stringr::str_extract(cps, "[0-9]+"), collapse = ", "), "))")
-
-  for (i in seq_along(cps)) {
-    mm = paste0(mm, "
-  cp_", i, " = XMIN + cp_betas[", i, "] * (XMAX - XMIN)")
   }
 }
 
