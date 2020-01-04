@@ -1,11 +1,11 @@
 # The model
-segments = list(
+model = list(
   price ~ 1 + ar(2),
   ~ 0 + time + ar(1)
 )
 
 # Simulate fitted data
-empty = mcp::mcp(segments, sample = FALSE)
+empty = mcp::mcp(model, sample = FALSE)
 set.seed(42)
 ex_ar = tibble::tibble(
   time = 1:200,

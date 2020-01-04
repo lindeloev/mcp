@@ -13,7 +13,7 @@
 #' See `methods(class = "mcpfit")` for an overview of available methods.
 #'
 #' User-provided information (see \code{\link{mcp}} for more details):
-#' @slot segments A list of formulas, making up the model.
+#' @slot model A list of formulas, making up the model.
 #'   Provided by user. See \code{\link{mcp}} for more details.
 #' @slot data A data frame.
 #'   Provided by user. See \code{\link{mcp}} for more details.
@@ -228,8 +228,8 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
   if (!is.null(samples))
     cat("Iterations: ", nrow(samples[[1]]) * length(samples), " from ", length(samples), " chains.\n", sep="")
   cat("Segments:\n")
-  for (i in 1:length(fit$segments)) {
-    cat("  ", i, ": ", format(fit$segments[i]), "\n", sep = "")
+  for (i in 1:length(fit$model)) {
+    cat("  ", i, ": ", format(fit$model[i]), "\n", sep = "")
   }
 
   # Data

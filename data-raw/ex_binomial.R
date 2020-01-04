@@ -1,12 +1,12 @@
 # Define the model
-segments = list(
+model = list(
   y | trials(N) ~ 1,  # constant rate
   ~ 0 + x,  # joined changing rate
   ~ 1 + x  # disjoined changing rate
 )
 
 # Simulate data
-empty = mcp::mcp(segments, family = binomial(), sample = FALSE)
+empty = mcp::mcp(model, family = binomial(), sample = FALSE)
 set.seed(42)
 ex_binomial = tibble::tibble(
   x = 1:100,

@@ -26,7 +26,7 @@ This article in brief:
 You specify varying effects using the classical [`lmer`](https://www.rdocumentation.org/packages/lme4/versions/1.1-21/topics/lmer) syntax `(1|group)`. Currently (v. 0.1) `mcp` only support varying intercepts. For example, here we model a varying change point between a plateau and a joined slope:
 
 ```{r}
-segments = list(
+model = list(
   y ~ 1,  # int_1
   1 + (1|id) ~ 0 + x  # cp_1, cp_1_sd, cp_1_id[i]
 )
@@ -35,7 +35,7 @@ segments = list(
 You can have multiple varying change points with multiple groupings:
 
 ```{r}
-segments = list(
+model = list(
   y ~ 1,  # int_1
   1 + (1|id) ~ 0 + x,  # cp_1, cp_1_sd, cp_1_id[i]
   1 + (1|species) ~ 0,  # cp_2, cp_2_sd, cp_2_species[i]
@@ -57,7 +57,7 @@ Here are some properties of the change point varying effects:
 Let us do a worked example, simulating the varying change point between a plateau and a slope: 
 
 ```{r}
-segments = list(
+model = list(
   y ~ 1,  # int_1
   1 + (1|id) ~ 0 + x  # cp_1, cp_1_sd, cp_1_id[i]
 )
@@ -67,31 +67,30 @@ It is quite similar to simulating non-varying data, except that we need to simul
 
 ```{r, message=FALSE, warning=FALSE}
 library(mcp)
-empty = mcp(segments, sample = FALSE)
+empty = mcp(model, sample = FALSE)
 
 library(dplyr)
 varying = c("Clark", "Louis", "Batman", "Batgirl", "Spiderman", "Jane")
-data = tibble(
+df = data.frame(
   x = runif(length(varying) * 30, 0, 100),  # 30 data points for each
-  id = rep(varying, each = 30),  # the group names
-  id_numeric = as.numeric(as.factor(id)),  # to positive integers
-  y = empty$simulate(x,
-    # Population-level:
-    int_1 = 20, x_2 = 0.5, cp_1 = 50, sigma = 2,
-    
-    # Varying: zero-centered and 10 between each level
-    cp_1_id = 10 * (id_numeric - mean(id_numeric))
-  )
+  id = rep(varying, each = 30)  # the group names
 )
+df$id_numeric = as.numeric(as.factor(df$id))  # to positive integers
+df$y = empty$simulate(df$x,
+  # Population-level:
+  int_1 = 20, x_2 = 0.5, cp_1 = 50, sigma = 2,
+  
+  # Varying: zero-centered and 10 between each level
+  cp_1_id = 10 * (df$id_numeric - mean(df$id_numeric)))
 
-data
+df
 ```
 
 Here, we "translated" the `id` to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around `cp_1`. The result:
 
 ```{r}
 library(ggplot2)
-ggplot(data, aes(x=x, y=y)) + 
+ggplot(df, aes(x=x, y=y)) + 
   geom_point() +
   facet_wrap(~id)
 ```
@@ -101,7 +100,7 @@ ggplot(data, aes(x=x, y=y)) +
 Fitting the model is simple:
 
 ```{r, cache = TRUE, message = FALSE, warning=FALSE, results=FALSE}
-fit = mcp(segments, data)
+fit = mcp(model, data = df)
 ```
 
 If we just use `plot(fit)`, we would see all points in one plot. We want to facet by `id`, so:

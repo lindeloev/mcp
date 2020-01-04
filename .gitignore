@@ -1,6 +1,7 @@
 .Rproj.user
 .Rhistory
 inst/doc
+vignettes/binomial_cache
 vignettes/comparison_cache
 vignettes/packages_cache
 vignettes/poisson_cache

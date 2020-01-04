@@ -23,7 +23,7 @@ We know quite a bit about human short term memory. Namely, the average human has
 In other words, on "easy" trials with $N <= capacity$ items to be recalled, we expect a constant high binomial rate. When $N > capacity$, the rate declines. We specify a prior reflecting our a priori knowledge.
 
 ```{r}
-segments = list(
+model = list(
   recalled | trials(items) ~ 1,
   ~ 0 + items
 )
@@ -34,7 +34,7 @@ prior = list(
 )
 
 # A very simple model
-segments_simple = list(recalled | trials(items) ~ 1 + items)
+model_simple = list(recalled | trials(items) ~ 1 + items)
 ```
 
 Notice that `items` is used both as `trials` and x-axis. No problem. 
@@ -46,22 +46,25 @@ Simulate some data using `fit$simulate()`:
 library(mcp)
 options(mc.cores = 3)  # Speed up sampling!
 
-empty = mcp(segments, family = binomial(), sample = FALSE)
+empty = mcp(model, family = binomial(), sample = FALSE)
 
 set.seed(42)
-data = tibble::tibble(
-  items = rep(1:9, each = 40),
-  recalled = empty$simulate(items, int_1 = 2.5, items_2 = -0.4, cp_1 = 4, sigma = 0.5)
-)
+df = data.frame(items = rep(1:9, each = 40))
+df$recalled = empty$simulate(
+  df$items, 
+  cp_1 = 4,
+  int_1 = 2.5, 
+  items_2 = -0.4, 
+  sigma = 0.5)
 ```
 
 
 Now fit it with and without the informative prior. We set `iter` fairly high because this model is not sampled effectively. We will also add `sample = "both"` to sample *both* prior and posterior. We will need both to compute point Bayes Factors using `hypothesis()` later.
 
 ```{r, cache = TRUE, message = FALSE, warning = FALSE, results=FALSE}
-fit_default = mcp(segments, data, family = binomial(), sample = "both", iter = 10000)
-fit_info = mcp(segments, data, prior, family = binomial(), sample = "both", iter = 10000)
-fit_simple = mcp(segments_simple, data, family = binomial(), sample = "both", iter = 10000)
+fit_default = mcp(model, data = df,             family = binomial(), sample = "both", iter = 10000)
+fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 10000)
+fit_simple = mcp(model_simple, data = df,       family = binomial(), sample = "both", iter = 10000)
 ```
 
 We plot them and add a few `ggplot2` layers. We jitter the raw data in the middle plot, just to give a sense of the densities.

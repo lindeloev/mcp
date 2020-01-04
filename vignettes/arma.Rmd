@@ -31,11 +31,11 @@ We model this as a plateau (`1`)  with a second-order autoregressive residual (`
 
 
 ```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}
-segments = list(
+model = list(
   price ~ 1 + ar(2),  # int_1, ar1_1, ar2_1
   ~ 0 + time + ar(1)  # time_2, ar1_2
 )
-fit = mcp(segments, ex_ar)
+fit = mcp(model, ex_ar)
 ```
 
 Let's plot it and we see that AR was strong in the first segment and weaker-but-negative in the second:
@@ -81,7 +81,7 @@ You have the full suite of [`mcp` formula syntax](../articles/formulas.html) ava
 You can combine `ar()` with any regression model and with [varying change points](../articles/varying.html). Combining with `sigma()` will run will be valid if they change intercepts together so that each segment has homoskedastic residuals, i.e.,
 
 ```{r}
-segments = list(
+model = list(
   y ~ 1 + ar(1) + sigma(1),
   ~ 0 + x + ar(1) + sigma(1),
   ~ 1
@@ -103,29 +103,27 @@ Assessing the correctness of autocorrelation is less intuitive than seeing e.g. 
 
 ```{r}
 # Model
-segments = list(response ~ 1 + ar(3))
+model = list(response ~ 1 + ar(3))
 
 # Simulate data
-empty = mcp(segments, sample = FALSE, par_x = "time")
+empty = mcp(model, sample = FALSE, par_x = "time")
 set.seed(42)  # For consistent "random" results
-data = tibble::tibble(
-  time = 1:200,
-  response = empty$simulate(
-    time, 
+df = data.frame(time = 1:200)
+df$response = empty$simulate(
+    df$time, 
     int_1 = 20, 
     ar1_1 = 0.7, 
     ar2_1 = 0.2, 
     ar3_1 = -0.4, 
     sigma_1 = 8)
-)
 
 # Base arima AR(3)
-arima(data$response, order = c(3, 0, 0))
+arima(df$response, order = c(3, 0, 0))
 ```
 OK, we can see that the `ar` coefficients and sigma ($sigma = sqrt(sigma^2)$) is simulated correctly, if taking `arima()` as ground truth. Inferring with `mcp` is straightforward:
 
 ```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}
-fit = mcp(segments, data, par_x = "time")
+fit = mcp(model, df, par_x = "time")
 ```
 
 The Bayesian parameter estimates are in perfect correspondence with `arima()`, even where they deviate a tiny bit from the simulation parameters (due to the inherent randomness in simulating data):
@@ -142,21 +140,21 @@ Let's simulate a change point in autocorrelation and see if we can infer it late
 
 ```{r}
 # The model
-segments = list(
+model = list(
   y ~ 1 + x + ar(1),  # Slope
   ~ 0 + x + ar(1)  # Slope and relative increase
 )
 
 # Get fitted predictions
-empty = mcp(segments, sample = FALSE)
+empty = mcp(model, sample = FALSE)
 set.seed(42)
-data = tibble::tibble(
-  x = seq(0, 100, length.out = 200),
-  y = empty$simulate(x, cp_1 = 60,
-                   int_1 = 20, x_1 = 1, x_2 = 1,  # same slope
-                   ar1_1 = 0.8, ar1_2 = 0.2,
-                   sigma_1 = 5)
-)
+df = data.frame(x = seq(0, 100, length.out = 200))
+df$y = empty$simulate(
+  df$x, 
+  cp_1 = 60,
+  int_1 = 20, x_1 = 1, x_2 = 1,  # same slope
+  ar1_1 = 0.8, ar1_2 = 0.2,
+  sigma_1 = 5)
 ```
 
 
@@ -164,7 +162,7 @@ data = tibble::tibble(
 
 ```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
 prior = list(x_2 = "x_1")  # Set the two slopes equal
-fit = mcp(segments, data, prior, sample = "both")
+fit = mcp(model, data = df, prior = prior, sample = "both")
 ```
 
 First, let's get a visual to see that the posterior is reasonably narrow and consistent:
@@ -205,7 +203,7 @@ In this case, the evidence for equality is so small that it is rounded to zero. 
 We can assess the same hypothesis using cross-validation, only this time it is more about whether the change point increases the predictive accuracy. The change point is favored with an `elpd_diff/se_diff` factor of around 2.
 
 ```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
-fit_null = mcp(list(y ~ 1 + x + ar(1)), data)
+fit_null = mcp(list(y ~ 1 + x + ar(1)), data = df)
 fit$loo = loo(fit)
 fit_null$loo = loo(fit_null)
 
@@ -243,11 +241,11 @@ Notice that the posteriors are smoothed at sharp cutoffs, slightly misrepresenti
 Let's inspect the priors for a more advanced AR model, since you would often have to inform these:
 
 ```{r}
-segments = list(
+model = list(
   y ~ 1 + ar(2, 1 + x),
   ~ 0 + ar(1, rel(1) + I(x^2))
 )
-empty = mcp(segments, sample = FALSE)
+empty = mcp(model, sample = FALSE)
 cbind(empty$prior)
 ```
 

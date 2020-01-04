@@ -7,22 +7,21 @@
 #'
 #' @aliases test_fit
 #' @keywords internal
-#' @param all_segments A list of lists. Each sub-list is an unnamed list of
-#'   formulas with one named entry called "simulated" with parameter values to
-#'   be used for simulation.
-test_fit = function(segments, simulated) {
+#' @param model A list of (unnamed) formulas
+#' @param simulated Parameter values to be used for simulation.
+test_fit = function(model, simulated) {
   testthat::skip_if(is.null(options("test_mcp_fits")[[1]]),
                     "This time-consuming test is only run locally before release.")
 
   # Simulate
-  empty = mcp(segments, sample = FALSE, par_x = "x")
+  empty = mcp(model, sample = FALSE, par_x = "x")
   data = tibble::tibble(
     x = 1:200,  # Needs to be reasonably high to get a correct estimate
     y = do.call(empty$simulate, c(list(x = 1:200), simulated))
   )
 
   # Fit
-  quiet_out = purrr::quietly(mcp)(segments, data, par_x = "x")
+  quiet_out = purrr::quietly(mcp)(model, data, par_x = "x")
   fit <<- quiet_out$result
 
   # Check parameter recovery
@@ -31,7 +30,7 @@ test_fit = function(segments, simulated) {
   if (success == FALSE) {
     print(results_table)
   }
-  testthat::expect_true(success, segments)
+  testthat::expect_true(success, model)
 }
 
 
@@ -39,18 +38,18 @@ test_fit = function(segments, simulated) {
 #'
 #' @aliases apply_test_fit
 #' @keywords internal
-#' @param all_segments A list of lists. Each sub-list is an unnamed list of
+#' @param all_modelss A list of lists. Each sub-list is an unnamed list of
 #'   formulas with one named entry called "simulated" with parameter values to
 #'   be used for simulation.
-apply_test_fit = function(all_segments, code) {
-  for (this in all_segments) {
+apply_test_fit = function(all_models, code) {
+  for (this in all_models) {
     # Split into formulas and simulation values
     simulated = this[names(this) == "simulated"][[1]]
-    segments = this[names(this) == ""]
+    model = this[names(this) == ""]
 
     # Test!
     testthat::test_that(
-      test_fit(segments, simulated),
+      test_fit(model, simulated),
       code = code
     )
   }
@@ -63,7 +62,7 @@ apply_test_fit = function(all_segments, code) {
 # TEST GAUSSIAN #
 #################
 
-segments_gauss = list(
+models_gauss = list(
   # Simple
   list(y ~ 1,
        ~ 1,
@@ -114,4 +113,4 @@ segments_gauss = list(
 
 )
 
-apply_test_fit(segments_gauss, "Gaussian fit")
+apply_test_fit(models_gauss, "Gaussian fit")

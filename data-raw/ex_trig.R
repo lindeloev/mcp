@@ -1,11 +1,11 @@
 # Define the model
-segments = list(
+model = list(
   y ~ 1 + sin(x),
   ~ 1 + cos(x) + x
 )
 
 # Simulate the data
-empty = mcp::mcp(segments, sample = FALSE)
+empty = mcp::mcp(model, sample = FALSE)
 set.seed(40)
 ex_trig = tibble::tibble(
   x = seq(0, 35, by = 0.2),
