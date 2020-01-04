@@ -1,12 +1,12 @@
 # Define the model
-segments = list(
+model = list(
   y ~ 1 + x,
   ~ rel(1) + rel(x),
   rel(1) ~ 0 + x
 )
 
 # Simulate data
-empty = mcp::mcp(segments, sample = FALSE)
+empty = mcp::mcp(model, sample = FALSE)
 set.seed(40)
 ex_rel_prior = tibble::tibble(
   x = 1:100,

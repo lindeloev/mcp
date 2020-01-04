@@ -35,14 +35,14 @@ The following model infers the two change points between three segments.
 library(mcp)
 
 # Define the model
-segments = list(
+model = list(
   response ~ 1,  # plateau (int_1)
   ~ 0 + time,    # joined slope (time_2) at cp_1
   ~ 1 + time     # disjoined slope (int_3, time_3) at cp_2
 )
 
 # Fit it. The `ex_demo` dataset is included in mcp
-fit = mcp(segments, data = ex_demo)
+fit = mcp(model, data = ex_demo)
 ```
 
 ## See results
@@ -104,13 +104,13 @@ For model comparisons, we can fit a null model and compare the predictive perfor
 
 ```r
 # Define the model
-segments_null = list(
+model_null = list(
   response ~ 1 + time,  # intercept (int_1) and slope (time_1)
   ~ 1 + time            # disjoined slope (int_2, time_1)
 )
 
 # Fit it
-fit_null = mcp(segments_null, ex_demo)
+fit_null = mcp(model_null, ex_demo)
 ```
 
 Leveraging the power of `loo::loo`, we see that the two-change-points model is preferred (it is on top), but the `elpd_diff / se_diff` ratio ratio indicate that this preference is not very strong.
@@ -144,7 +144,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp) go in-depth w
  * Fix parameters to specific values using `cp_1 = 45`.
  * Share parameters between segments using `slope_1 = "slope_2"`.
  * Truncate priors using `T(lower, upper)`, e.g., `int_1 = "dnorm(0, 1) T(0, )"`. `mcp` applies this automatically to change point priors to enforce order restriction. This is true for [varying change points](https://lindeloev.github.io/mcp/articles/varying.html) too.
- * Do prior predictive checks using `mcp(segments, data, sample = "prior")`.
+ * Do prior predictive checks using `mcp(model, data, sample = "prior")`.
 
 [Varying change points](https://lindeloev.github.io/mcp/articles/varying.html):
  * Simulate varying change points using `fit$simulate()`.
@@ -184,11 +184,11 @@ Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and 
 Find the single change point between two plateaus ([see how this data was simulated with mcp](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R)).
 
 ```r
-segments = list(
+model = list(
     y ~ 1,  # plateau (int_1)
     ~ 1     # plateau (int_2)
 )
-fit = mcp(segments, ex_plateaus, par_x = "x")
+fit = mcp(model, ex_plateaus, par_x = "x")
 plot(fit)
 ```
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_plateaus.png)
@@ -199,11 +199,11 @@ plot(fit)
 Here, we find the single change point between two joined slopes. While the slopes are shared by all participants, the change point varies by `id`. Read more about [varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html).
 
 ```r
-segments = list(
+model = list(
   y ~ 1 + x,          # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope, varying by id
 )
-fit = mcp(segments, ex_varying)
+fit = mcp(model, ex_varying)
 plot(fit, facet_by = "id", cp_dens = FALSE)
 ```
 
@@ -232,12 +232,12 @@ ranef(fit, width = 0.98)
 Here is a binomial change point model with three segments. We plot the 95% HDI too:
 
 ```r
-segments = list(
+model = list(
   y | trials(N) ~ 1,  # constant rate
   ~ 0 + x,            # joined changing rate
   ~ 1 + x             # disjoined changing rate
 )
-fit = mcp(segments, ex_binomial, family = binomial())
+fit = mcp(model, ex_binomial, family = binomial())
 plot(fit, q_fit = TRUE)
 ```
 
@@ -251,11 +251,11 @@ Use `plot(fit, rate = FALSE)` if you want the points and fit lines on the origin
 `mcp` allows for flexible time series analysis with autoregressive residuals of arbitrary order. Below, we model a change from a plateau with strong positive AR(2) residuals to a slope with medium AR(1) residuals. These data were simulated with mcp [here](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_ar.R) and the generating values are in the `sim` column. You can also do regression on the AR coefficients themselves using e.g., `ar(1, 1 + x)`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html).
 
 ```r
-segments = list(
+model = list(
   price ~ 1 + ar(2),
   ~ 0 + time + ar(1)
 )
-fit = mcp(segments, ex_ar)
+fit = mcp(model, ex_ar)
 summary(fit)
 ```
 
@@ -289,12 +289,12 @@ You can model variance by adding a `sigma()` term to the formula. The inside `si
 Effects on variance is best visualized using *prediction intervals*. See more in the documentation for `plot.mcpfit()`.
 
 ```r
-segments = list(
+model = list(
   y ~ 1,
   ~ 0 + sigma(1 + x),
   ~ 0 + x
 )
-fit = mcp(segments, ex_variance, cores = 3, adapt = 5000, iter = 5000)
+fit = mcp(model, ex_variance, cores = 3, adapt = 5000, iter = 5000)
 plot(fit, q_predict = TRUE)
 ```
 
@@ -306,11 +306,11 @@ plot(fit, q_predict = TRUE)
 Write exponents as `I(x^N)`. E.g., quadratic `I(x^2)`, cubic `I(x^3)`, or some other power function `I(x^1.5)`. The example below detects the onset of linear + quadratic growth. This is often called the BLQ model (Broken Line Quadratic) in nutrition research.
 
 ```r
-segments = list(
+model = list(
   y ~ 1,
   ~ 0 + x + I(x^2)
 )
-fit = mcp(segments, ex_quadratic)
+fit = mcp(model, ex_quadratic)
 plot(fit)
 ```
 
@@ -323,12 +323,12 @@ plot(fit)
 You can use `sin(x)`, `cos(x)`, and `tan(x)` to do trigonometry. This can be useful for seasonal trends and other periodic data. You can also do `exp(x)`, `abs(x)`, `log(x)`, and `sqrt(x)`, but beware that the two latter will currently fail in segment 2+. Raise an issue if you need this.
 
 ```r
-segments = list(
+model = list(
   y ~ 1 + sin(x),
   ~ 1 + cos(x) + x
 )
 
-fit = mcp(segments, ex_trig)
+fit = mcp(model, ex_trig)
 plot(fit)
 ```
 
@@ -346,7 +346,7 @@ Here we find the two change points between three segments. The slope and interce
 Some of the default priors are overwritten. The first intercept (`int_1`) is forced to be 10, the slopes are in segment 1 and 3 is shared. It is easy to see these effects in the `ex_rel_prior` dataset because they violate it somewhat. The first change point has to be at `x = 20` or later.
 
 ```r
-segments = list(
+model = list(
   y ~ 1 + x,
   ~ rel(1) + rel(x),
   rel(1) ~ 0 + x
@@ -358,7 +358,7 @@ prior = list(
   int_2 = "dnorm(0, 20)",
   cp_1 = "dunif(20, 50)"  # has to occur in this interval
 )
-fit = mcp(segments, ex_rel_prior, prior, iter = 10000)
+fit = mcp(model, ex_rel_prior, prior, iter = 10000)
 plot(fit, cp_dens = FALSE)
 ```
 

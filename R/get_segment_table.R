@@ -347,7 +347,7 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   # Start by building it as a string: "ce(1 + x + ...)" to bring it into a compatible format
   if (length(term.labels > 0)) {
     term.labels[1] = paste0(attrs$intercept, " + ", term.labels[1])
-    ct_terms = paste0(term.labels, collapse = " + ")  # for use in fit$segments and in summary()
+    ct_terms = paste0(term.labels, collapse = " + ")  # for use in fit$model and in summary()
     ct_terms = paste0("ct(", ct_terms, ")")  # Get it in "standard" format
   } else {
     ct_terms = paste0("ct(", attrs$intercept, ")")  # Plateau model: "ct(0)" or "ct(1)"
@@ -715,20 +715,20 @@ unpack_varying_term = function(term, i) {
 #' @importFrom stats gaussian binomial
 #' @export
 #' @examples
-#' segments = list(
+#' model = list(
 #'   y ~ 1 + x,
 #'   1 + (1|id) ~ 1
 #' )
-#' get_segment_table(segments)
+#' get_segment_table(model)
 
-get_segment_table = function(segments, data = NULL, family = gaussian(), par_x = NULL) {
+get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NULL) {
   #####################################################
   # BUILD "SEGMENT TABLE (ST)" FROM ISOLATED SEGMENTS #
   #####################################################
   ST = tibble::tibble()
-  for (i in seq_along(segments)) {
+  for (i in seq_along(model)) {
     # Get ready...
-    segment = segments[[i]]
+    segment = model[[i]]
     if (!is.null(data))
       check_terms_in_data(segment, data, i)
 

@@ -16,7 +16,7 @@ For GLM families with a variance parameter (`sigma`), you can model this explici
 Let us model a simple change in variance on a plateau model. First, we specify the model:
 
 ```{r}
-segments = list(
+model = list(
   y ~ 1,  # sigma(1) is implicit in the first segment
   ~ 0 + sigma(1)  # a new intercept on sigma, but not on the mean
 )
@@ -28,20 +28,20 @@ We can simulate some data, starting with low variance and an abrupt change to a 
 library(mcp)
 options(mc.cores = 3)  # Speed up sampling!
 
-empty = mcp(segments, sample = FALSE, par_x = "x")
+empty = mcp(model, sample = FALSE, par_x = "x")
 set.seed(40)
-data = tibble::tibble(
-  x = 1:100,
-  y = empty$simulate(x, cp_1 = 50, int_1 = 20, 
-                   sigma_1 = 5, sigma_2 = 20)
-)
+df = data.frame(x = 1:100)
+df$y = empty$simulate(
+  df$x, 
+  cp_1 = 50, int_1 = 20, 
+  sigma_1 = 5, sigma_2 = 20)
 ```
 
 
 Now we fit the model to the simulated data.
 
 ```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
-fit = mcp(segments, data, par_x = "x")
+fit = mcp(model, data = df, par_x = "x")
 ```
 We plot the results with the prediction interval to show the effect of the variance, since it won't be immediately obvious on the default plot of the fitted mean predictions:
 
@@ -61,7 +61,7 @@ summary(fit)
 We can model changes in `sigma` alone or in combination with changes in the mean. In the following, I define a needlessly complex model, just to demonstrate the flexibility of modeling variance:
 
 ```{r}
-segments = list(
+model = list(
   # Increasing variance.
   y ~ 1 + sigma(1 + x),
   
@@ -95,19 +95,18 @@ In general, the variance parameters are named `sigma_[normalname]`, where "norma
 We simulate some data from this model, setting all parameters. As always, we can fit an empty model to get `fit$simulate`, which is useful for simulation and predictions from this model.
 
 ```{r}
-empty = mcp(segments, sample = FALSE)
+empty = mcp(model, sample = FALSE)
 set.seed(40)
-data = tibble::tibble(
-  x = 1:200,
-  y = empty$simulate(x,
-    cp_1 = 50, cp_2 = 100, cp_3 = 150,
-    int_1 = -20, int_2 = 0,
-    sigma_1 = 3, sigma_x_1 = 0.5,
-    sigma_2 = 10, 
-    sigma_x_3 = -0.5,
-    sigma_x_3_E2 = 0.02,
-    x_3 = 1, x_4 = 1)
-)
+df = data.frame(x = 1:200)
+df$y = empty$simulate(
+  df$x,
+  cp_1 = 50, cp_2 = 100, cp_3 = 150,
+  int_1 = -20, int_2 = 0,
+  sigma_1 = 3, sigma_x_1 = 0.5,
+  sigma_2 = 10, 
+  sigma_x_3 = -0.5,
+  sigma_x_3_E2 = 0.02,
+  x_3 = 1, x_4 = 1)
 ```
 
 
@@ -115,7 +114,7 @@ data = tibble::tibble(
 Fit it in parallel, to speed things up:
 
 ```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}
-fit = mcp(segments, data, prior)
+fit = mcp(model, data = df, prior = prior)
 ```
 
 Plotting the prediction interval is an intuitive way to to see how the variance is estimated:
@@ -153,7 +152,7 @@ This confirms the impression from `Rhat` and `n.eff`. Setting `mcp(..., iter = 1
 The variance model applies to varying change points as well. For example, here we do a spin on the example in [the article on varying change points](../articles/varying.html), and add a by-person change in `sigma`. We model two joined slopes, varying by `id`. The second slope is also characterized by a different variance. This means that the model has more information about when the change point occurs, so it should be easier to estimate (require fewer data).
 
 ```{r}
-segments = list(
+model = list(
   # intercept + slope
   y ~ 1 + x,
   
@@ -164,21 +163,22 @@ segments = list(
 
 Simulate data:
 ```{r}
-empty = mcp(segments, sample = FALSE)
+empty = mcp(model, sample = FALSE)
 set.seed(40)
-data = tibble::tibble(
-    x = 1:180,
-    id = rep(1:6, times = 30),
-    y = empty$simulate(x, 
-          cp_1 = 70, cp_1_id = 15 * (id - mean(id)),
-          int_1 = 20, x_1 = 1, x_2 = -0.5,
-          sigma_1 = 10, sigma_2 = 25)
+df = data.frame(
+  x = 1:180,
+  id = rep(1:6, times = 30)
 )
+df$y = empty$simulate(
+  df$x, 
+  cp_1 = 70, cp_1_id = 15 * (df$id - mean(df$id)),
+  int_1 = 20, x_1 = 1, x_2 = -0.5,
+  sigma_1 = 10, sigma_2 = 25)
 ```
 
 Fit it:
 ```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
-fit = mcp(segments, data)
+fit = mcp(model, data = df)
 ```
 
 Plot it:

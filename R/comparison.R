@@ -16,10 +16,10 @@
 #' \donttest{
 #' # Define two models and sample them
 #' # options(mc.cores = 3)  # Speed up sampling
-#' segments1 = list(y ~ 1 + x, ~ 1)
-#' segments2 = list(y ~ 1 + x)  # Without a change point
-#' fit1 = mcp(segments1, ex_plateaus)
-#' fit2 = mcp(segments2, ex_plateaus)
+#' model1 = list(y ~ 1 + x, ~ 1)
+#' model2 = list(y ~ 1 + x)  # Without a change point
+#' fit1 = mcp(model1, ex_plateaus)
+#' fit2 = mcp(model2, ex_plateaus)
 #'
 #' # Compute LOO for each and compare (works for waic(fit) too)
 #' fit1$loo = loo(fit1)

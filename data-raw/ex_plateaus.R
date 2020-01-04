@@ -1,9 +1,9 @@
 # Define model
-segments = list(
+model = list(
   y ~ 1,
   ~ 1
 )
-empty = mcp::mcp(segments, sample = FALSE, par_x = "x")
+empty = mcp::mcp(model, sample = FALSE, par_x = "x")
 
 # Simulate data
 set.seed(40)

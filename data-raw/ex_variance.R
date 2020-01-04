@@ -1,12 +1,12 @@
 # Define model
-segments = list(
+model = list(
   y ~ 1,
   ~ 0 + sigma(1 + x),
   ~ 0 + x
 )
 
 # Simulate data
-empty = mcp::mcp(segments, sample = FALSE)
+empty = mcp::mcp(model, sample = FALSE)
 
 set.seed(30)
 ex_variance = tibble::tibble(
