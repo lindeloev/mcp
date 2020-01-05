@@ -10,8 +10,7 @@ geom_quantiles(samples, q, xvar, facet_by, ...)
 \arguments{
 \item{q}{Quantiles}
 
-\item{facet_by}{String. Name of a varying group.
-\code{facet_by} only applies for \code{type = "segments"}}
+\item{facet_by}{String. Name of a varying group.}
 
 \item{...}{Arguments passed to geom_line}
 }

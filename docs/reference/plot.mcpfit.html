@@ -51,7 +51,7 @@
   
 
 <meta property="og:title" content="Plot full fits — plot.mcpfit" />
-<meta property="og:description" content="Plot prior or posterior draws of segments on top of data. Use plot_pars to
+<meta property="og:description" content="Plot prior or posterior model draws on top of data. Use plot_pars to
 plot individual parameter estimates." />
 <meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png" />
 <meta name="twitter:card" content="summary" />
@@ -207,7 +207,7 @@ plot individual parameter estimates." />
     </div>
 
     <div class="ref-description">
-    <p>Plot prior or posterior draws of segments on top of data. Use <code>plot_pars</code> to
+    <p>Plot prior or posterior model draws on top of data. Use <code>plot_pars</code> to
 plot individual parameter estimates.</p>
     </div>
 
@@ -235,15 +235,14 @@ plot individual parameter estimates.</p>
     </tr>
     <tr>
       <th>facet_by</th>
-      <td><p>String. Name of a varying group.
-<code>facet_by</code> only applies for <code>type = "segments"</code></p></td>
+      <td><p>String. Name of a varying group.</p></td>
     </tr>
     <tr>
       <th>lines</th>
       <td><p>Positive integer or <code>FALSE</code>. Number of lines (posterior
-draws) to use when <code>type = "segments"</code>. FALSE (or <code>lines = 0</code>)
-plots no lines. Note that lines always plot fitted values. For prediction
-intervals, see the <code>q_predict</code> argument.</p></td>
+draws). FALSE or <code>lines = 0</code> plots no lines. Note that lines always plot
+fitted values - not predicted. For prediction intervals, see the
+<code>q_predict</code> argument.</p></td>
     </tr>
     <tr>
       <th>geom_data</th>
@@ -274,8 +273,7 @@ quantiles.</p></li>
       <th>rate</th>
       <td><p>Boolean. For binomial models, plot on raw data (<code>rate = FALSE</code>) or
 response divided by number of trials (<code>rate = TRUE</code>). If FALSE, linear
-interpolation on trial number is used to infer trials at a particular x.
-<code>rate</code> only applies for <code>type = "segments"</code></p></td>
+interpolation on trial number is used to infer trials at a particular x.</p></td>
     </tr>
     <tr>
       <th>prior</th>

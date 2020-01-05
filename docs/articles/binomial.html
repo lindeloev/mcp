@@ -155,7 +155,7 @@
       <h1>Binomial change point analysis with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-12-28</h4>
+            <h4 class="date">2020-01-05</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/binomial.Rmd"><code>vignettes/binomial.Rmd</code></a></small>
       <div class="hidden name"><code>binomial.Rmd</code></div>
@@ -166,7 +166,7 @@
     
 <p><code>mcp</code> aims to implement Generalized Linear Models in a way that closely mimics that of <a href="https://github.com/paul-buerkner/brms">brms::brm</a>. You can set the family and link functions using the <code>family</code> argument.</p>
 <p>First, let us specify a toy model with three segments:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1">model =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
 <a class="sourceLine" id="cb1-2" title="2">  y <span class="op">|</span><span class="st"> </span><span class="kw">trials</span>(N) <span class="op">~</span><span class="st"> </span><span class="dv">1</span>,  <span class="co"># constant rate</span></a>
 <a class="sourceLine" id="cb1-3" title="3">  <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>year,  <span class="co"># joined changing rate</span></a>
 <a class="sourceLine" id="cb1-4" title="4">  <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>year  <span class="co"># disjoined changing rate</span></a>
@@ -177,7 +177,7 @@
 <p>If you already have data, you can safely skip this section.</p>
 <p>We run <code>mcp</code> with <code>sample = FALSE</code> to get what we need to simulate data.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(mcp)</a>
-<a class="sourceLine" id="cb2-2" title="2">empty =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a></code></pre></div>
+<a class="sourceLine" id="cb2-2" title="2">empty =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(model, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a></code></pre></div>
 <p>Now we can simulate. First, let us see the model parameters.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">empty<span class="op">$</span>pars</a></code></pre></div>
 <pre><code>## $x
@@ -209,40 +209,127 @@
 <li>It takes two change points (<code>cp_*</code>) - one between each segment.</li>
 </ul>
 <p><code>empty$simulate</code> is now a function that can predict data given these parameters. If you are in a reasonable R editor, type <code>empty$simulate(</code> and press TAB to see the required arguments. I came up with some values below, including change points at <span class="math inline">\(year = 25\)</span> and <span class="math inline">\(year = 65\)</span>. Notice that because <code><a href="https://rdrr.io/r/stats/family.html">binomial()</a></code> defaults to the link function <code>link = "logit"</code>, the intercept and slopes are on a <a href="https://en.wikipedia.org/wiki/Logit">logit scale</a>. Briefly, this extends the narrow range of binomial rates (0-1) to an infinite logit scale from minus infinity to plus infinity. This will be important later when we set priors.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(tibble)</a>
-<a class="sourceLine" id="cb5-2" title="2">data =<span class="st"> </span><span class="kw">tibble</span>(</a>
-<a class="sourceLine" id="cb5-3" title="3">  <span class="dt">year =</span> <span class="dv">1901</span><span class="op">:</span><span class="dv">2000</span>,  <span class="co"># evaluate for each of these</span></a>
-<a class="sourceLine" id="cb5-4" title="4">  <span class="dt">N =</span> <span class="kw"><a href="https://rdrr.io/r/base/sample.html">sample</a></span>(<span class="dv">10</span><span class="op">:</span><span class="dv">20</span>, <span class="dt">size =</span> <span class="dv">100</span>, <span class="dt">replace =</span> <span class="ot">TRUE</span>),  <span class="co"># number of trials</span></a>
-<a class="sourceLine" id="cb5-5" title="5">  <span class="dt">y =</span> empty<span class="op">$</span><span class="kw"><a href="https://rdrr.io/r/stats/simulate.html">simulate</a></span>(year, N, </a>
-<a class="sourceLine" id="cb5-6" title="6">                   <span class="dt">cp_1 =</span> <span class="dv">1925</span>, <span class="dt">cp_2 =</span> <span class="dv">1965</span>, </a>
-<a class="sourceLine" id="cb5-7" title="7">                   <span class="dt">int_1 =</span> <span class="dv">2</span>, <span class="dt">int_3 =</span> <span class="dv">0</span>, </a>
-<a class="sourceLine" id="cb5-8" title="8">                   <span class="dt">year_2 =</span> <span class="fl">-0.2</span>, <span class="dt">year_3 =</span> <span class="fl">0.05</span>)</a>
-<a class="sourceLine" id="cb5-9" title="9">)</a>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">df =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(</a>
+<a class="sourceLine" id="cb5-2" title="2">  <span class="dt">year =</span> <span class="dv">1901</span><span class="op">:</span><span class="dv">2000</span>,  <span class="co"># evaluate for each of these</span></a>
+<a class="sourceLine" id="cb5-3" title="3">  <span class="dt">N =</span> <span class="kw"><a href="https://rdrr.io/r/base/sample.html">sample</a></span>(<span class="dv">10</span><span class="op">:</span><span class="dv">20</span>, <span class="dt">size =</span> <span class="dv">100</span>, <span class="dt">replace =</span> <span class="ot">TRUE</span>)  <span class="co"># number of trials</span></a>
+<a class="sourceLine" id="cb5-4" title="4">)</a>
+<a class="sourceLine" id="cb5-5" title="5">df<span class="op">$</span>y =<span class="st"> </span>empty<span class="op">$</span><span class="kw"><a href="https://rdrr.io/r/stats/simulate.html">simulate</a></span>(</a>
+<a class="sourceLine" id="cb5-6" title="6">  df<span class="op">$</span>year, df<span class="op">$</span>N, </a>
+<a class="sourceLine" id="cb5-7" title="7">  <span class="dt">cp_1 =</span> <span class="dv">1925</span>, <span class="dt">cp_2 =</span> <span class="dv">1965</span>, </a>
+<a class="sourceLine" id="cb5-8" title="8">  <span class="dt">int_1 =</span> <span class="dv">2</span>, <span class="dt">int_3 =</span> <span class="dv">0</span>, </a>
+<a class="sourceLine" id="cb5-9" title="9">  <span class="dt">year_2 =</span> <span class="fl">-0.2</span>, <span class="dt">year_3 =</span> <span class="fl">0.05</span>)</a>
 <a class="sourceLine" id="cb5-10" title="10"></a>
-<a class="sourceLine" id="cb5-11" title="11">data</a></code></pre></div>
-<pre><code>## # A tibble: 100 x 3
-##     year     N     y
-##    &lt;int&gt; &lt;int&gt; &lt;int&gt;
-##  1  1901    20    19
-##  2  1902    20    19
-##  3  1903    12    11
-##  4  1904    17    14
-##  5  1905    10     9
-##  6  1906    17    15
-##  7  1907    14    12
-##  8  1908    11    11
-##  9  1909    10    10
-## 10  1910    16    13
-## # … with 90 more rows</code></pre>
+<a class="sourceLine" id="cb5-11" title="11">df</a></code></pre></div>
+<pre><code>##     year  N  y
+## 1   1901 19 16
+## 2   1902 18 17
+## 3   1903 12 10
+## 4   1904 10 10
+## 5   1905 18 16
+## 6   1906 15 12
+## 7   1907 20 20
+## 8   1908 20 19
+## 9   1909 19 17
+## 10  1910 11  9
+## 11  1911 13 12
+## 12  1912 17 15
+## 13  1913 10  8
+## 14  1914 20 18
+## 15  1915 13 12
+## 16  1916 18 15
+## 17  1917 10 10
+## 18  1918 19 15
+## 19  1919 14 13
+## 20  1920 14 12
+## 21  1921 16 15
+## 22  1922 10  9
+## 23  1923 11  8
+## 24  1924 14 12
+## 25  1925 14 14
+## 26  1926 20 18
+## 27  1927 12  7
+## 28  1928 10 10
+## 29  1929 19 16
+## 30  1930 12  9
+## 31  1931 16 15
+## 32  1932 19 12
+## 33  1933 14  5
+## 34  1934 12  6
+## 35  1935 15  5
+## 36  1936 17 10
+## 37  1937 19  7
+## 38  1938 10  2
+## 39  1939 20  7
+## 40  1940 16  2
+## 41  1941 13  4
+## 42  1942 13  3
+## 43  1943 11  2
+## 44  1944 11  1
+## 45  1945 19  2
+## 46  1946 15  2
+## 47  1947 19  1
+## 48  1948 16  2
+## 49  1949 13  1
+## 50  1950 15  0
+## 51  1951 19  1
+## 52  1952 19  1
+## 53  1953 20  0
+## 54  1954 11  1
+## 55  1955 10  0
+## 56  1956 10  0
+## 57  1957 10  1
+## 58  1958 16  0
+## 59  1959 10  0
+## 60  1960 19  0
+## 61  1961 14  0
+## 62  1962 17  0
+## 63  1963 20  0
+## 64  1964 10  0
+## 65  1965 15 10
+## 66  1966 16 12
+## 67  1967 19  9
+## 68  1968 11  7
+## 69  1969 15  7
+## 70  1970 11  3
+## 71  1971 20  9
+## 72  1972 19 13
+## 73  1973 14  8
+## 74  1974 16  9
+## 75  1975 13  7
+## 76  1976 17  9
+## 77  1977 16  9
+## 78  1978 14  8
+## 79  1979 15  9
+## 80  1980 12  9
+## 81  1981 13 10
+## 82  1982 16 11
+## 83  1983 16  9
+## 84  1984 16 11
+## 85  1985 20 17
+## 86  1986 16 13
+## 87  1987 11  6
+## 88  1988 18 10
+## 89  1989 11  8
+## 90  1990 12 10
+## 91  1991 19 16
+## 92  1992 13  8
+## 93  1993 13 10
+## 94  1994 12  8
+## 95  1995 13 12
+## 96  1996 18 16
+## 97  1997 17 15
+## 98  1998 15 12
+## 99  1999 12  8
+## 100 2000 16 13</code></pre>
 <p>Visually:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(data<span class="op">$</span>year, data<span class="op">$</span>y)</a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(df<span class="op">$</span>year, df<span class="op">$</span>y)</a></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
 </div>
 <div id="check-parameter-recovery" class="section level1">
 <h1 class="hasAnchor">
 <a href="#check-parameter-recovery" class="anchor"></a>Check parameter recovery</h1>
 <p>The next sections go into more detail, but let us quickly see if we can recover the parameters used to simulate the data.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">fit =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="dt">adapt =</span> <span class="dv">5000</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">fit =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(model, <span class="dt">data =</span> df, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="dt">adapt =</span> <span class="dv">5000</span>)</a></code></pre></div>
 <p>We can use <code>summary</code> to see that it recovered the parameters to a pretty good precision. Again, recall that intercepts and slopes are on a <code>logit</code> scale.</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="kw"><a href="../reference/summary.mcpfit.html">summary</a></span>(fit)</a></code></pre></div>
 <pre><code>## Family: binomial(link = 'logit')
@@ -253,13 +340,13 @@
 ##   3: y | trials(N) ~ 1 ~ 1 + year
 ## 
 ## Population-level parameters:
-##    name match     sim     mean    lower    upper Rhat n.eff   ts_se
-##    cp_1    OK 1925.00 1924.228 1921.498 1927.157    1   795 2.3e+01
-##    cp_2       1965.00 1964.502 1964.002 1964.951    1  5107 1.5e-01
-##   int_1    OK    2.00    2.030    1.714    2.350    1  1265 1.8e-01
-##   int_3    OK    0.00   -0.194   -0.531    0.153    1   944 3.0e-01
-##  year_2         -0.20   -0.172   -0.195   -0.148    1  1106 1.1e-03
-##  year_3    OK    0.05    0.057    0.039    0.075    1   947 8.1e-04</code></pre>
+##    name match     sim     mean    lower    upper Rhat n.eff
+##    cp_1    OK 1925.00 1921.325 1917.853 1925.090    1   500
+##    cp_2       1965.00 1964.500 1964.035 1964.982    1  5456
+##   int_1    OK    2.00    2.119    1.769    2.497    1   929
+##   int_3    OK    0.00    0.050   -0.284    0.380    1  1011
+##  year_2         -0.20   -0.162   -0.186   -0.139    1   972
+##  year_3    OK    0.05    0.038    0.022    0.056    1   992</code></pre>
 <p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have <a href="../docs/articles/varying.html">varying effects</a>, use <code><a href="../reference/summary.mcpfit.html">ranef(fit)</a></code> to see them.</p>
 <p>Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
@@ -286,12 +373,12 @@
 <p><code>mcp</code> uses priors to achieve a lot of it’s functionality. See <a href="../docs/articles/priors.html">how to set priors</a>, including how to share parameters between segments and how to fix values. Here, I post a few notes about the binomial-specific default priors.</p>
 <p>The default priors in <code>mcp</code> are set so that they are reasonably broad to cover most scenarios, though also specific enough to sample effectively. They are not “default” as in “canonical”. Rather, they are “default” as in “what happens if you do nothing else”. All priors are stored in <code>fit$prior</code> (also <code>empty$prior</code>). We did not specify <code>prior</code> above, so it ran with default priors:</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(fit<span class="op">$</span>prior)</a></code></pre></div>
-<pre><code>##        [,1]                                             
-## cp_1   "dt(MINX, (MAXX - MINX) / N_CP, 1) T(cp_0, MAXX)"
-## cp_2   "dt(MINX, (MAXX - MINX) / N_CP, 1) T(cp_1, MAXX)"
-## int_1  "dnorm(0, 3)"                                    
-## int_3  "dnorm(0, 3)"                                    
-## year_2 "dnorm(0, 3 / (MAXX - MINX))"                    
+<pre><code>##        [,1]                                                    
+## cp_1   "dt(MINX, (MAXX - MINX) / N_CP, N_CP - 1) T(cp_0, MAXX)"
+## cp_2   "dt(MINX, (MAXX - MINX) / N_CP, N_CP - 1) T(cp_1, MAXX)"
+## int_1  "dnorm(0, 3)"                                           
+## int_3  "dnorm(0, 3)"                                           
+## year_2 "dnorm(0, 3 / (MAXX - MINX))"                           
 ## year_3 "dnorm(0, 3 / (MAXX - MINX))"</code></pre>
 <p>The priors on change points are discussed extensively in the prior vignette. The priors on slopes and intercepts are normals with standard deviation of “3” logits. This corresponds to quite extreme binomial probabilities, yet not so extreme as to be totally flat. Here are visualization of priors <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm(0, 1)</a></code> (red), <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm(0, 2)</a></code> (black, mcp default), and a <code><a href="https://rdrr.io/r/stats/Normal.html">dnorm(0, 5)</a></code> (blue) prior, and the correspondence between logits and probabilities:</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1">inverse_logit =<span class="st"> </span><span class="cf">function</span>(x) <span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(x) <span class="op">/</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(x))</a>
@@ -323,8 +410,8 @@
 ##   cp_0 = MINX  # mcp helper value.
 ##   cp_3 = MAXX  # mcp helper value.
 ## 
-##   cp_1 ~ dt(MINX, 1/((MAXX-MINX)/N_CP)^2, 1) T(cp_0, MAXX)
-##   cp_2 ~ dt(MINX, 1/((MAXX-MINX)/N_CP)^2, 1) T(cp_1, MAXX)
+##   cp_1 ~ dt(MINX, 1/((MAXX-MINX)/N_CP)^2, N_CP-1) T(cp_0, MAXX)
+##   cp_2 ~ dt(MINX, 1/((MAXX-MINX)/N_CP)^2, N_CP-1) T(cp_1, MAXX)
 ##   int_1 ~ dnorm(0, 1/(3)^2) 
 ##   int_3 ~ dnorm(0, 1/(3)^2) 
 ##   year_2 ~ dnorm(0, 1/(3/(MAXX-MINX))^2) 

@@ -155,7 +155,7 @@
       <h1>Change point model comparison with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2019-12-28</h4>
+            <h4 class="date">2020-01-05</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/comparison.Rmd"><code>vignettes/comparison.Rmd</code></a></small>
       <div class="hidden name"><code>comparison.Rmd</code></div>
@@ -176,7 +176,7 @@
 <a href="#some-models-to-play-with" class="anchor"></a>Some models to play with</h1>
 <p>We know quite a bit about human short term memory. Namely, the average human has almost perfect recall when presented with 1-4 items (we remember them all), and then errors begins intruding when presented with more items <a href="https://www.ncbi.nlm.nih.gov/pubmed/11515286">(Cowan, 2001)</a>. We also know that memory is not infinite, so as <span class="math inline">\(N \rightarrow \infty\)</span>, it has to plateau.</p>
 <p>In other words, on “easy” trials with <span class="math inline">\(N &lt;= capacity\)</span> items to be recalled, we expect a constant high binomial rate. When <span class="math inline">\(N &gt; capacity\)</span>, the rate declines. We specify a prior reflecting our a priori knowledge.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1">segments =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1">model =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
 <a class="sourceLine" id="cb1-2" title="2">  recalled <span class="op">|</span><span class="st"> </span><span class="kw">trials</span>(items) <span class="op">~</span><span class="st"> </span><span class="dv">1</span>,</a>
 <a class="sourceLine" id="cb1-3" title="3">  <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>items</a>
 <a class="sourceLine" id="cb1-4" title="4">)</a>
@@ -187,23 +187,26 @@
 <a class="sourceLine" id="cb1-9" title="9">)</a>
 <a class="sourceLine" id="cb1-10" title="10"></a>
 <a class="sourceLine" id="cb1-11" title="11"><span class="co"># A very simple model</span></a>
-<a class="sourceLine" id="cb1-12" title="12">segments_simple =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(recalled <span class="op">|</span><span class="st"> </span><span class="kw">trials</span>(items) <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>items)</a></code></pre></div>
+<a class="sourceLine" id="cb1-12" title="12">model_simple =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(recalled <span class="op">|</span><span class="st"> </span><span class="kw">trials</span>(items) <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>items)</a></code></pre></div>
 <p>Notice that <code>items</code> is used both as <code>trials</code> and x-axis. No problem.</p>
 <p>Simulate some data using <code>fit$simulate()</code>:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(mcp)</a>
 <a class="sourceLine" id="cb2-2" title="2"><span class="kw"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="dt">mc.cores =</span> <span class="dv">3</span>)  <span class="co"># Speed up sampling!</span></a>
 <a class="sourceLine" id="cb2-3" title="3"></a>
-<a class="sourceLine" id="cb2-4" title="4">empty =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb2-4" title="4">empty =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(model, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a>
 <a class="sourceLine" id="cb2-5" title="5"></a>
 <a class="sourceLine" id="cb2-6" title="6"><span class="kw"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="dv">42</span>)</a>
-<a class="sourceLine" id="cb2-7" title="7">data =<span class="st"> </span>tibble<span class="op">::</span><span class="kw"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span>(</a>
-<a class="sourceLine" id="cb2-8" title="8">  <span class="dt">items =</span> <span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">9</span>, <span class="dt">each =</span> <span class="dv">40</span>),</a>
-<a class="sourceLine" id="cb2-9" title="9">  <span class="dt">recalled =</span> empty<span class="op">$</span><span class="kw"><a href="https://rdrr.io/r/stats/simulate.html">simulate</a></span>(items, <span class="dt">int_1 =</span> <span class="fl">2.5</span>, <span class="dt">items_2 =</span> <span class="fl">-0.4</span>, <span class="dt">cp_1 =</span> <span class="dv">4</span>, <span class="dt">sigma =</span> <span class="fl">0.5</span>)</a>
-<a class="sourceLine" id="cb2-10" title="10">)</a></code></pre></div>
+<a class="sourceLine" id="cb2-7" title="7">df =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="dt">items =</span> <span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">9</span>, <span class="dt">each =</span> <span class="dv">40</span>))</a>
+<a class="sourceLine" id="cb2-8" title="8">df<span class="op">$</span>recalled =<span class="st"> </span>empty<span class="op">$</span><span class="kw"><a href="https://rdrr.io/r/stats/simulate.html">simulate</a></span>(</a>
+<a class="sourceLine" id="cb2-9" title="9">  df<span class="op">$</span>items, </a>
+<a class="sourceLine" id="cb2-10" title="10">  <span class="dt">cp_1 =</span> <span class="dv">4</span>,</a>
+<a class="sourceLine" id="cb2-11" title="11">  <span class="dt">int_1 =</span> <span class="fl">2.5</span>, </a>
+<a class="sourceLine" id="cb2-12" title="12">  <span class="dt">items_2 =</span> <span class="fl">-0.4</span>, </a>
+<a class="sourceLine" id="cb2-13" title="13">  <span class="dt">sigma =</span> <span class="fl">0.5</span>)</a></code></pre></div>
 <p>Now fit it with and without the informative prior. We set <code>iter</code> fairly high because this model is not sampled effectively. We will also add <code>sample = "both"</code> to sample <em>both</em> prior and posterior. We will need both to compute point Bayes Factors using <code><a href="../reference/hypothesis.html">hypothesis()</a></code> later.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">fit_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="dt">sample =</span> <span class="st">"both"</span>, <span class="dt">iter =</span> <span class="dv">10000</span>)</a>
-<a class="sourceLine" id="cb3-2" title="2">fit_info =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments, data, prior, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="dt">sample =</span> <span class="st">"both"</span>, <span class="dt">iter =</span> <span class="dv">10000</span>)</a>
-<a class="sourceLine" id="cb3-3" title="3">fit_simple =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(segments_simple, data, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="dt">sample =</span> <span class="st">"both"</span>, <span class="dt">iter =</span> <span class="dv">10000</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">fit_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(model, <span class="dt">data =</span> df,             <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="dt">sample =</span> <span class="st">"both"</span>, <span class="dt">iter =</span> <span class="dv">10000</span>)</a>
+<a class="sourceLine" id="cb3-2" title="2">fit_info =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(model, <span class="dt">data =</span> df, <span class="dt">prior =</span> prior, <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="dt">sample =</span> <span class="st">"both"</span>, <span class="dt">iter =</span> <span class="dv">10000</span>)</a>
+<a class="sourceLine" id="cb3-3" title="3">fit_simple =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(model_simple, <span class="dt">data =</span> df,       <span class="dt">family =</span> <span class="kw"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="dt">sample =</span> <span class="st">"both"</span>, <span class="dt">iter =</span> <span class="dv">10000</span>)</a></code></pre></div>
 <p>We plot them and add a few <code>ggplot2</code> layers. We jitter the raw data in the middle plot, just to give a sense of the densities.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(patchwork)</a>
 <a class="sourceLine" id="cb4-2" title="2"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</a>
@@ -232,8 +235,8 @@
 <a href="#bayes-factors-using-savage-dickey-density-ratios" class="anchor"></a>Bayes Factors using Savage-Dickey density ratios</h1>
 <p>You can compute probabilities and Bayes Factors for various hypotheses using <code><a href="../reference/hypothesis.html">hypothesis()</a></code>. For example, let’s test the idea that the change point in recall occurs at four items:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="../reference/hypothesis.html">hypothesis</a></span>(fit_default, <span class="st">"cp_1 = 4"</span>)</a></code></pre></div>
-<pre><code>##     hypothesis       mean     lower    upper        p       BF
-## 1 cp_1 - 4 = 0 0.09450494 -1.578214 1.648089 0.770664 3.360414</code></pre>
+<pre><code>##     hypothesis     mean     lower    upper         p       BF
+## 1 cp_1 - 4 = 0 0.144693 -1.454185 1.630162 0.7782485 3.509552</code></pre>
 <p>Let’s unpack:</p>
 <ul>
 <li>
@@ -250,7 +253,7 @@
 <p>Because <code>BF</code> and <code>p</code> depends directly on the prior in Savage-Dickey test, it is as much an expression of the prior as the posterior. Computing it for the higher-prior-density-at-cp_1=4 <code>fit_info</code>, we see a substantially lower BF because we already had a substantial prior belief in <code>cp_1 = 4</code>:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1"><span class="kw"><a href="../reference/hypothesis.html">hypothesis</a></span>(fit_info, <span class="st">"cp_1 = 4"</span>)</a></code></pre></div>
 <pre><code>##     hypothesis      mean      lower    upper         p       BF
-## 1 cp_1 - 4 = 0 0.2288377 -0.9690638 1.387224 0.5794754 1.377982</code></pre>
+## 1 cp_1 - 4 = 0 0.2370218 -0.9887598 1.370463 0.5663504 1.306009</code></pre>
 </div>
 <div id="directional-and-combinatoric-tests" class="section level1">
 <h1 class="hasAnchor">
@@ -269,15 +272,15 @@
 <a class="sourceLine" id="cb10-5" title="5">  <span class="st">"(cp_1 &lt; 3.5 | cp_1 &gt; 4.5) &amp; items_2 &gt; -0.4 &amp; int_1 &lt; 2.5"</span></a>
 <a class="sourceLine" id="cb10-6" title="6">))</a></code></pre></div>
 <pre><code>##                                                 hypothesis     mean      lower
-## 1                                             cp_1 - 3 &gt; 0 1.228838 0.03093622
+## 1                                             cp_1 - 3 &gt; 0 1.237022 0.01124017
 ## 2                                  cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5       NA         NA
 ## 3   cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5 &amp; items_2 &lt; -0.4 &amp; int_1 &gt; 2.5       NA         NA
 ## 4 (cp_1 &lt; 3.5 | cp_1 &gt; 4.5) &amp; items_2 &gt; -0.4 &amp; int_1 &lt; 2.5       NA         NA
 ##      upper         p          BF
-## 1 2.387224 0.9720000 34.71428571
-## 2       NA 0.5251667  1.10600211
-## 3       NA 0.2742667  0.37791659
-## 4       NA 0.0376000  0.03906899</code></pre>
+## 1 2.370463 0.9697333 32.03964758
+## 2       NA 0.5321000  1.13720881
+## 3       NA 0.2863333  0.40121439
+## 4       NA 0.0353000  0.03659169</code></pre>
 <p>Because Bayes Factors are transitive, we can divide them to get the relative evidence for two hypotheses. Here, we get approximately <span class="math inline">\(0.40 / 0.04 = 10\)</span> in favor of hypothesis 3 over hypothesis 4.</p>
 <p>There are more examples <a href="../docs/reference/hypothesis.html">in the documentation for <code>hypothesis</code></a>, including how to test varying effects.</p>
 <p><code>mcp</code> does nothing fancy for the directional tests, and you could do them yourself. Just takes the hypothesis verbatim into <code>mutate</code> and <code>summarise</code> the proportion of samples that “passes” this test. These are identical:</p>
@@ -340,8 +343,8 @@
 <a class="sourceLine" id="cb15-5" title="5">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit_default<span class="op">$</span>loo, fit_info<span class="op">$</span>loo, fit_simple<span class="op">$</span>loo)</a></code></pre></div>
 <pre><code>##        elpd_diff se_diff
 ## model2  0.0       0.0   
-## model1 -0.4       0.2   
-## model3 -4.1       2.8</code></pre>
+## model1 -0.5       0.2   
+## model3 -4.2       2.8</code></pre>
 <p>Aha, so the second model (“model2”, i.e., <code>fit_info</code>) passed to <code>loo_compare()</code> was preferred as the other models had smaller ELPDs. As a first rough conclusion, we’ve learned that informed priors and a plateau improved out-of-sample predictions.</p>
 <p>Again, the absolute number (<code>elpd_diff</code>) is hard to relate to. More interpretable is the <code>elpd_diff</code>/<code>se_diff</code> ratio. This is almost like a z-score, i.e., a ratio of 1.96 corresponds to 95% probability that one model has superior predictive accuracy. This is not an <em>effect size</em> but more a measure of <em>certainty</em> that this is not compatible with equal predictive properties. Just like Bayes Factors, a nice property over frequentist p-values is that you can quantify the relative evidence for and against any pair of models without having to assume one of them as null.</p>
 <p>Note that the <code>loo</code> developers have advised that this ratio is too optimistic in practice, but that one can be confident if it exceeds 5 [Citation needed]. So to conclude, none of these models above stand out as particularly good or bad.</p>
@@ -353,8 +356,8 @@
 <a class="sourceLine" id="cb17-5" title="5">loo<span class="op">::</span><span class="kw"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(fit_default<span class="op">$</span>waic, fit_info<span class="op">$</span>waic, fit_simple<span class="op">$</span>waic)</a></code></pre></div>
 <pre><code>##        elpd_diff se_diff
 ## model2  0.0       0.0   
-## model1 -0.4       0.2   
-## model3 -4.1       2.8</code></pre>
+## model1 -0.5       0.2   
+## model3 -4.2       2.8</code></pre>
 </div>
 <div id="stacking" class="section level2">
 <h2 class="hasAnchor">
