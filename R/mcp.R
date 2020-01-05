@@ -1,22 +1,22 @@
 #' Fit Multiple Linear Segments And Their Change Points
 #'
-#' Given a list of linear segments, `mcp` infers the posterior
+#' Given a model (a list of segment formulas), `mcp` infers the posterior
 #' distributions of the parameters of each segment as well as the change points
 #' between segments. [See more details and worked examples on the mcp website](https://lindeloev.github.io/mcp/).
 #' All segments must regress on the same x-variable. Change
 #' points are forced to be ordered using truncation of the priors. You can run
-#' `fit = mcp(segments, sample=FALSE)` to avoid sampling and the need for
+#' `fit = mcp(model, sample=FALSE)` to avoid sampling and the need for
 #' data if you just want to get the priors (`fit$prior`), the JAGS code
 #' `fit$jags_code`, or the R function to simulate data (`fit$simulate`).
 #'
 #' @aliases mcp
 #' @param data Data.frame or tibble in long format.
-#' @param segments A list of formulas - one for each segment. The first formula
+#' @param model A list of formulas - one for each segment. The first formula
 #'   has the format `response ~ predictors` while the following formulas
 #'   have the format `response ~ changepoint ~ predictors`. The response
 #'   and change points can be omitted (`changepoint ~ predictors` assumes same
-#'   response. `~ predictors` assumes an intercept-only change point). Segments
-#'   can model
+#'   response. `~ predictors` assumes an intercept-only change point). The
+#'   following can be modeled:
 #'
 #'   * *Regular formulas:* e.g., `~ 1 + x`). [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'
@@ -105,7 +105,7 @@
 #' @examples
 #' \donttest{
 #' # Define the segments using formulas. A change point is estimated between each formula.
-#' segments = list(
+#' model = list(
 #'   response ~ 1,  # Plateau in the first segment (int_1)
 #'   ~ 0 + time,    # Joined slope (time_2) at cp_1
 #'   ~ 1 + time     # Disjoined slope (int_3, time_3) at cp_2
@@ -113,7 +113,7 @@
 #'
 #' # Fit it. The `ex_demo` dataset is included in mcp. Sample the prior too.
 #' # options(mc.cores = 3)  # Uncomment to speed up sampling
-#' ex_fit = mcp(segments, data = ex_demo, sample = "both")
+#' ex_fit = mcp(model, data = ex_demo, sample = "both")
 #' }
 #'
 #' # See parameter estimates
@@ -128,8 +128,8 @@
 #'
 #' \donttest{
 #' # Compare to a one-intercept-only model (no change points) with default prior
-#' segments_null = list(response ~ 1)
-#' fit_null = mcp(segments_null, data = ex_demo, par_x = "time")  # fit another model here
+#' model_null = list(response ~ 1)
+#' fit_null = mcp(model_null, data = ex_demo, par_x = "time")  # fit another model here
 #' ex_fit$loo = loo(ex_fit)
 #' fit_null$loo = loo(fit_null)
 #' loo::loo_compare(ex_fit$loo, fit_null$loo)
@@ -151,13 +151,13 @@
 #' )
 #'
 #' \donttest{
-#' fit3 = mcp(segments, data = ex_demo, prior = prior)
+#' fit3 = mcp(model, data = ex_demo, prior = prior)
 #' }
 #'
 #' # Show the JAGS model
 #' cat(ex_fit$jags_code)
 
-mcp = function(segments,
+mcp = function(model,
                data = NULL,
                prior = list(),
                family = gaussian(),
@@ -166,7 +166,7 @@ mcp = function(segments,
                cores = 1,
                chains = 3,
                iter = 3000,
-               adapt = 1000,
+               adapt = 1500,
                inits = NULL,
                jags_code = NULL) {
 
@@ -185,14 +185,14 @@ mcp = function(segments,
     data = data.frame(data)  # Force into data frame
   }
 
-  # Check segments
-  if (!is.list(segments))
-    stop("`segments` must be a list")
+  # Check model
+  if (!is.list(model))
+    stop("`model` must be a list")
 
-  if (length(segments) == 0)
-    stop("At least one segment is needed")
+  if (length(model) == 0)
+    stop("At least one segment is needed in `model`")
 
-  for (segment in segments) {
+  for (segment in model) {
     if (!inherits(segment, "formula"))
       stop("all segments must be formulas.")
   }
@@ -251,7 +251,7 @@ mcp = function(segments,
   ##################
   # Make an abstract table representing the segments and their relations.
   # ("ST" for "segment table").
-  ST = get_segment_table(segments, data, family, par_x)
+  ST = get_segment_table(model, data, family, par_x)
 
   # Make prior
   prior = get_prior(ST, family, prior)
@@ -274,9 +274,6 @@ mcp = function(segments,
   if (length(pars$arma) > 0) {
     if (family$link %in% c("logit", "probit"))
       message("The current implementation of autoregression can be fragile for link='logit'. In particular, if there are any all-success trials (e.g., 10/10), the only solution is for 'ar' to be 0.00. If fitting succeeds, do a proper assessment of model convergence.")
-
-    if (length(pars$sigma) > 1)
-    message("You are using ar() together with sigma(). Autoregression usually assumes homoskedasticity (equal variance at all x). This is not a problem if if intercepts in ar() are joined by intercepts in sigma() like `~ [formula] + sigma(1) + ar(N)`. It may not be a problem for slopes on `sigma` either, but this has not been assessed thoroughly yet. So this is a note to be cautious about interpreting the sigma- and ar-parameters for now.")
 
     if (is.unsorted(data[, pars$x]) & is.unsorted(rev(data[, pars$x])))
       message("'", pars$x, "' is unordered. Please note that ar() applies in the order of data of the data frame - not the values.")
@@ -352,7 +349,7 @@ mcp = function(segments,
   # Make mrpfit object
   mcpfit = list(
     # By user (same order as mcp argument)
-    segments = lapply(ST$form, stats::as.formula, env=globalenv()),  # with explicit response and cp
+    model = lapply(ST$form, stats::as.formula, env=globalenv()),  # with explicit response and cp
     data = data,
     prior = prior,
     family = family,

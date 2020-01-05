@@ -26,14 +26,14 @@ For convenience, you can omit the response and the change point in segment 2+, i
 
 ```{r}
 library(mcp)
-segments = list(
+model = list(
   score ~ 1,  # intercept
   score ~ 1 ~ 0 + time,  # joined slope
   ~ time  # disjoined slope. "score ~ 1 ~ 1 + time" is implicit here.
 )
 
 # Interpret, but do not sample.
-fit = mcp(segments, sample = FALSE)
+fit = mcp(model, sample = FALSE)
 summary(fit)
 ```
 
@@ -57,7 +57,7 @@ Notice how it added the response and the change point to the last segment?
 These parameter names are saved in `fit$pars`. Let us specify a somewhat complex model to show off some parameter names:
 
 ```{r}
-segments = list(
+model = list(
   # int_1
   score ~ 1,
   
@@ -69,7 +69,7 @@ segments = list(
 )
 
 # Intepret, but do not sample.
-fit = mcp(segments, sample = FALSE)
+fit = mcp(model, sample = FALSE)
 fit$pars
 ```
 
@@ -103,8 +103,8 @@ plot(x, y_indicator, main = "(x > cp_1) * int_2")
 The magic of (Bayesian) MCMC sampling is that it can actually infer the change point from this simple formulation. We let `mcp` write the JAGS code for this simple two-plateaus model and see how it uses the indicator formulation of change points:
 
 ```{r}
-segments = list(y ~ 1, ~ 1)
-fit = mcp(segments, sample=FALSE, par_x = "x")
+model = list(y ~ 1, ~ 1)
+fit = mcp(model, sample=FALSE, par_x = "x")
 cat(fit$jags_code)
 ```
 
@@ -140,9 +140,9 @@ plot(x, y_indicator, main = "(x > cp_1) * int_2")
 Let us see this in action:
 
 ```{r}
-segments = list(y ~ 0 + x,
+model = list(y ~ 0 + x,
                 ~ 0 + x)
-fit = mcp(segments, sample = FALSE)
+fit = mcp(model, sample = FALSE)
 cat(fit$jags_code)
 ```
 

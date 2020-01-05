@@ -5,15 +5,15 @@
 \alias{get_segment_table}
 \title{Build a table describing a list of segments}
 \usage{
-get_segment_table(segments, data = NULL, family = gaussian(), par_x = NULL)
+get_segment_table(model, data = NULL, family = gaussian(), par_x = NULL)
 }
 \arguments{
-\item{segments}{A list of formulas - one for each segment. The first formula
+\item{model}{A list of formulas - one for each segment. The first formula
 has the format \code{response ~ predictors} while the following formulas
 have the format \code{response ~ changepoint ~ predictors}. The response
 and change points can be omitted (\code{changepoint ~ predictors} assumes same
-response. \code{~ predictors} assumes an intercept-only change point). Segments
-can model
+response. \code{~ predictors} assumes an intercept-only change point). The
+following can be modeled:
 \itemize{
 \item \emph{Regular formulas:} e.g., \code{~ 1 + x}). \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
 \item \emph{Extended formulas:}, e.g., \code{~ I(x^2) + exp(x) + sin(x)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
@@ -38,11 +38,11 @@ A tibble with one row describing each segment and the corresponding code.
 Used internally for most mcp functions.
 }
 \examples{
-segments = list(
+model = list(
   y ~ 1 + x,
   1 + (1|id) ~ 1
 )
-get_segment_table(segments)
+get_segment_table(model)
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

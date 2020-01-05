@@ -1,11 +1,11 @@
 # Define the model
-segments = list(
+model = list(
   y ~ 1,
   ~ 0 + x + I(x^2)
 )
 
 # Simulate the data
-empty = mcp::mcp(segments, sample = FALSE)
+empty = mcp::mcp(model, sample = FALSE)
 set.seed(42)
 ex_quadratic = tibble::tibble(
   x = seq(0, 40, by = 0.5),

@@ -52,7 +52,7 @@ data_binomial = data.frame(
 # TEST FUNCTIONS #
 ##################
 
-test_runs = function(segments,
+test_runs = function(model,
                     data = data_gauss,
                     prior = list(),
                     family = gaussian(),
@@ -61,7 +61,7 @@ test_runs = function(segments,
 
   # Without sampling, on a data.frame.
   empty = mcp(
-    segments = segments,
+    model = model,
     data = data,
     prior = prior,
     family = family,
@@ -74,22 +74,22 @@ test_runs = function(segments,
   if (sample == TRUE) {
     # If sample = FALSE, it should pass/fail with the above. If TRUE,
     # check for correct types in data structure
-    testthat::expect_true(is.list(empty$segments), segments)
-    testthat::expect_true(is.data.frame(empty$data), segments)
-    testthat::expect_true(is.list(empty$prior), segments)
-    testthat::expect_true(class(empty$family) == "family", segments)
-    testthat::expect_true(is.null(empty$samples), segments)
-    testthat::expect_true(is.null(empty$loglik), segments)
-    testthat::expect_true(is.null(empty$loo), segments)
-    testthat::expect_true(is.null(empty$waic), segments)
-    testthat::expect_true(is.list(empty$pars), segments)
-    testthat::expect_true(is.character(empty$pars$population), segments)
-    testthat::expect_true((is.character(empty$pars$varying) | is.null(empty$pars$varying)), segments)
-    testthat::expect_true(is.character(empty$pars$x), segments)
-    testthat::expect_true(is.character(empty$pars$y), segments)
-    testthat::expect_true(is.character(empty$jags_code), segments)
-    testthat::expect_true(is.function(empty$simulate), segments)
-    testthat::expect_true(is.list(empty$.other), segments)
+    testthat::expect_true(is.list(empty$model), model)
+    testthat::expect_true(is.data.frame(empty$data), model)
+    testthat::expect_true(is.list(empty$prior), model)
+    testthat::expect_true(class(empty$family) == "family", model)
+    testthat::expect_true(is.null(empty$samples), model)
+    testthat::expect_true(is.null(empty$loglik), model)
+    testthat::expect_true(is.null(empty$loo), model)
+    testthat::expect_true(is.null(empty$waic), model)
+    testthat::expect_true(is.list(empty$pars), model)
+    testthat::expect_true(is.character(empty$pars$population), model)
+    testthat::expect_true((is.character(empty$pars$varying) | is.null(empty$pars$varying)), model)
+    testthat::expect_true(is.character(empty$pars$x), model)
+    testthat::expect_true(is.character(empty$pars$y), model)
+    testthat::expect_true(is.character(empty$jags_code), model)
+    testthat::expect_true(is.function(empty$simulate), model)
+    testthat::expect_true(is.list(empty$.other), model)
 
     # Should work for tibbles as well. So do this sometimes
     if (rbinom(1, 1, 0.5) == 1)
@@ -97,7 +97,7 @@ test_runs = function(segments,
 
     # Capture (expected) messages and warnings
     quiet_out = purrr::quietly(mcp)(  # Do not print to console
-      segments = segments,
+      model = model,
       data = data,
       family = family,
       sample = "both",  # prior and posterior to check hypotheses
@@ -149,8 +149,8 @@ test_runs = function(segments,
         fit$mcmc_post = NULL
 
       # Check that samples are the correct format
-      testthat::expect_true(is.list(fit[[col]]), segments)
-      testthat::expect_true(coda::is.mcmc(fit[[col]][[1]]), segments)
+      testthat::expect_true(is.list(fit[[col]]), model)
+      testthat::expect_true(coda::is.mcmc(fit[[col]][[1]]), model)
       testthat::expect_true(all(fit$pars$population %in% colnames(fit[[col]][[1]])))
 
       # Test mcpfit functions
@@ -165,7 +165,7 @@ test_runs = function(segments,
 
 # Tests if summary(fit) and ranef(fit) work as expected
 test_summary = function(fit, varying_cols) {
-  summary_cols = c('name','mean','lower','upper','Rhat','n.eff','ts_se')
+  summary_cols = c('name','mean','lower','upper','Rhat','n.eff')
   result = purrr::quietly(summary)(fit)$result  # Do not print to console
   output = purrr::quietly(summary)(fit)$output  # Do not print to console
   testthat::expect_true(all(colnames(result) %in% summary_cols))  # All columns
@@ -254,27 +254,27 @@ test_hypothesis = function(fit) {
 
 
 
-# Ruitine for testing a list of erroneous segments
-test_bad = function(segments_list, title, ...) {
-  for (segments in segments_list) {
+# Rutine for testing a list of erroneous models
+test_bad = function(models, title, ...) {
+  for (model in models) {
     test_name = paste0(title, ":
-    ", paste0(segments, collapse=", "))
+    ", paste0(model, collapse=", "))
 
     testthat::test_that(test_name, {
-      testthat::expect_error(test_runs(segments, sample = FALSE, ...))  # should err before sampling
+      testthat::expect_error(test_runs(model, sample = FALSE, ...))  # should err before sampling
     })
   }
 }
 
 
-# Routine for testing a list of good segments
-test_good = function(segments_list, title, ...) {
-  for (segments in segments_list) {
+# Routine for testing a list of good models
+test_good = function(models, title, ...) {
+  for (model in models) {
     test_name = paste0(title, ":
-    ", paste0(segments, collapse=", "))
+    ", paste0(model, collapse=", "))
 
     testthat::test_that(test_name, {
-      test_runs(segments, ...)
+      test_runs(model, ...)
     })
   }
 }
@@ -284,23 +284,55 @@ test_good = function(segments_list, title, ...) {
 ###############
 # TEST PRIORS #
 ###############
-good_prior_segments = list(
+prior_models = list(
   y ~ 1 + x,
   1 + (1|id) ~ rel(1) + rel(x),
   rel(1) ~ 0
 )
-good_prior = list(
+
+bad_prior = list(
   list(
+    cp_1 = "dirichlet(1)",  # Has to be all-dirichlet
+    cp_2 = "dnorm(3, 10)"
+  ),
+  list(
+    cp_1 = "dirichlet(1)",
+    cp_2 = "dirichlet(0)"  # alpha has to be > 0
+  )
+)
+
+for (prior in bad_prior) {
+  test_name = paste0("Bad priors: ", paste0(prior, collapse=", "))
+  testthat::test_that(test_name, {
+    testthat::expect_error(test_runs(prior_models, sample = FALSE, prior = prior))
+  })
+}
+
+
+good_prior = list(
+  list(  # Fixed values and non-default change point
     int_2 = "int_1",
     cp_1 = "dnorm(3, 10)",
     x_2 = "-0.5"
+  ),
+  list(  # Outside the observed range allowed
+    cp_1 = "dunif(-100, -90)",
+    cp_2 = "dnorm(100, 20) T(100, 110)"
+  ),
+  list(
+    cp_1 = "dirichlet(1)",  # Dirichlet prior on change points
+    cp_2 = "dirichlet(1)"
+  ),
+  list(
+    cp_1 = "dirichlet(3)",  # Dirichlet prior on change points
+    cp_2 = "dirichlet(2)"
   )
 )
 
 for (prior in good_prior) {
   test_name = paste0("Good priors: ", paste0(prior, collapse=", "))
   testthat::test_that(test_name, {
-    test_runs(good_prior_segments, prior = prior)
+    test_runs(prior_models, prior = prior)
   })
 }
 

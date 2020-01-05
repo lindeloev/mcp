@@ -1,16 +1,15 @@
 #' Plot full fits
 #'
-#' Plot prior or posterior draws of segments on top of data. Use `plot_pars` to
+#' Plot prior or posterior model draws on top of data. Use `plot_pars` to
 #' plot individual parameter estimates.
 #'
 #' @aliases plot plot.mcpfit
 #' @param x An \code{\link{mcpfit}} object
 #' @param facet_by String. Name of a varying group.
-#'   `facet_by` only applies for `type = "segments"`
 #' @param lines Positive integer or `FALSE`. Number of lines (posterior
-#'   draws) to use when `type = "segments"`. FALSE (or `lines = 0`)
-#'   plots no lines. Note that lines always plot fitted values. For prediction
-#'   intervals, see the `q_predict` argument.
+#'   draws). FALSE or `lines = 0` plots no lines. Note that lines always plot
+#'   fitted values - not predicted. For prediction intervals, see the
+#'   `q_predict` argument.
 #' @param geom_data String. One of "point" (default), "line" (good for time-series),
 #'   or FALSE (don not plot).
 #' @param cp_dens TRUE/FALSE. Plot posterior densities of the change point(s)?
@@ -26,7 +25,6 @@
 #' @param rate Boolean. For binomial models, plot on raw data (`rate = FALSE`) or
 #'   response divided by number of trials (`rate = TRUE`). If FALSE, linear
 #'   interpolation on trial number is used to infer trials at a particular x.
-#'   `rate` only applies for `type = "segments"`
 #' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
 #' @param which_y What to plot on the y-axis. One of
 #'
@@ -265,7 +263,7 @@ plot.mcpfit = function(x,
   }
 
   # Add quantiles?
-  if (lines > 0 | (any(q_fit != FALSE))) {
+  if ((any(q_fit != FALSE))) {
     samples_fit = dplyr::mutate(samples, y_quant = !!yvar)
     gg = gg + geom_quantiles(samples_fit, q_fit, xvar, facet_by, color = "red")
   }
@@ -275,7 +273,7 @@ plot.mcpfit = function(x,
   }
 
   # Add change point densities?
-  if (cp_dens == TRUE & length(fit$segments) > 1) {
+  if (cp_dens == TRUE & length(fit$model) > 1) {
     # The scale of the actual plot (or something close enough)
     if (which_y == "ct" & geom_data != FALSE) {
       y_data_max = max(fit$data[, fit$pars$y])
@@ -406,7 +404,6 @@ geom_quantiles = function(samples, q, xvar, facet_by, ...) {
 #'   'trace_highlight', and 'violin".
 #' @param ncol Number of columns in plot. This is useful when you have many
 #'   parameters and only one plot `type`.
-#'   `ncol` only when `type != "segments"`
 #' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
 #'
 #'@details
@@ -568,13 +565,16 @@ get_eval_at = function(fit, facet_by) {
   eval_at = seq(xmin, xmax, length.out = X_RESOLUTION_ALL)
 
   # Add the finer resolution for each change point
-  cp_vars = paste0("cp_", seq_len(length(fit$segments) - 1))  # change point columns
+  cp_vars = paste0("cp_", seq_len(length(fit$model) - 1))  # change point columns
   cp_hdis = fixef(fit, width = CP_INTERVAL)  # get the intervals
   cp_hdis = cp_hdis[cp_hdis$name %in% cp_vars, ]  # select change points
   for (i in seq_len(nrow(cp_hdis))) {
     x_proportion = (cp_hdis$upper[i] - cp_hdis$lower[i]) / (xmax - xmin)  # how big a section of x is this CP's HDI?
     length.out = ceiling(X_RESOLUTION_CP * x_proportion)  # number of x-points to add
-    eval_at = c(eval_at, seq(from = cp_hdis$lower[i], to = cp_hdis$upper[i], length.out = length.out))
+    add_this = seq(from = max(xmin, cp_hdis$lower[i]),  # hack to avoid bug for relative cps. TO DO
+                   to = min(xmax, cp_hdis$upper[i]),  # hack to avoid bug for relative cps. TO DO
+                   length.out = length.out)
+    eval_at = c(eval_at, add_this)
   }
 
   return(sort(eval_at))

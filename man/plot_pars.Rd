@@ -37,8 +37,7 @@ Common calls are "combo", "trace", and "dens_overlay". Current options include
 'trace_highlight', and 'violin".}
 
 \item{ncol}{Number of columns in plot. This is useful when you have many
-parameters and only one plot \code{type}.
-\code{ncol} only when \code{type != "segments"}}
+parameters and only one plot \code{type}.}
 
 \item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
 }

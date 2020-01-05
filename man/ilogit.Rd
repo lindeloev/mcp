@@ -9,6 +9,9 @@ ilogit(eta)
 \arguments{
 \item{eta}{A vector of logits}
 }
+\value{
+A vector with same length as \code{eta}
+}
 \description{
 Inverse logit function
 }

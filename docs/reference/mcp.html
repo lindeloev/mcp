@@ -51,12 +51,12 @@
   
 
 <meta property="og:title" content="Fit Multiple Linear Segments And Their Change Points — mcp" />
-<meta property="og:description" content="Given a list of linear segments, mcp infers the posterior
+<meta property="og:description" content="Given a model (a list of segment formulas), mcp infers the posterior
 distributions of the parameters of each segment as well as the change points
 between segments. See more details and worked examples on the mcp website.
 All segments must regress on the same x-variable. Change
 points are forced to be ordered using truncation of the priors. You can run
-fit = mcp(segments, sample=FALSE) to avoid sampling and the need for
+fit = mcp(model, sample=FALSE) to avoid sampling and the need for
 data if you just want to get the priors (fit$prior), the JAGS code
 fit$jags_code, or the R function to simulate data (fit$simulate)." />
 <meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png" />
@@ -213,18 +213,18 @@ fit$jags_code, or the R function to simulate data (fit$simulate)." />
     </div>
 
     <div class="ref-description">
-    <p>Given a list of linear segments, <code>mcp</code> infers the posterior
+    <p>Given a model (a list of segment formulas), <code>mcp</code> infers the posterior
 distributions of the parameters of each segment as well as the change points
 between segments. <a href='https://lindeloev.github.io/mcp/'>See more details and worked examples on the mcp website</a>.
 All segments must regress on the same x-variable. Change
 points are forced to be ordered using truncation of the priors. You can run
-<code>fit = mcp(segments, sample=FALSE)</code> to avoid sampling and the need for
+<code>fit = mcp(model, sample=FALSE)</code> to avoid sampling and the need for
 data if you just want to get the priors (<code>fit$prior</code>), the JAGS code
 <code>fit$jags_code</code>, or the R function to simulate data (<code>fit$simulate</code>).</p>
     </div>
 
     <pre class="usage"><span class='fu'>mcp</span>(
-  <span class='no'>segments</span>,
+  <span class='no'>model</span>,
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
   <span class='kw'>family</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/family.html'>gaussian</a></span>(),
@@ -233,7 +233,7 @@ data if you just want to get the priors (<code>fit$prior</code>), the JAGS code
   <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>1</span>,
   <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>3</span>,
   <span class='kw'>iter</span> <span class='kw'>=</span> <span class='fl'>3000</span>,
-  <span class='kw'>adapt</span> <span class='kw'>=</span> <span class='fl'>1000</span>,
+  <span class='kw'>adapt</span> <span class='kw'>=</span> <span class='fl'>1500</span>,
   <span class='kw'>inits</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>jags_code</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
 )</pre>
@@ -242,13 +242,13 @@ data if you just want to get the priors (<code>fit$prior</code>), the JAGS code
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>segments</th>
+      <th>model</th>
       <td><p>A list of formulas - one for each segment. The first formula
 has the format <code>response ~ predictors</code> while the following formulas
 have the format <code>response ~ changepoint ~ predictors</code>. The response
 and change points can be omitted (<code>changepoint ~ predictors</code> assumes same
-response. <code>~ predictors</code> assumes an intercept-only change point). Segments
-can model</p><ul>
+response. <code>~ predictors</code> assumes an intercept-only change point). The
+following can be modeled:</p><ul>
 <li><p><em>Regular formulas:</em> e.g., <code>~ 1 + x</code>). <a href='https://lindeloev.github.io/mcp/articles/formulas.html'>Read more</a>.</p></li>
 <li><p><em>Extended formulas:</em>, e.g., <code>~ I(x^2) + exp(x) + sin(x)</code>. <a href='https://lindeloev.github.io/mcp/articles/formulas.html'>Read more</a>.</p></li>
 <li><p><em>Variance:</em> e.g., <code>~sigma(1)</code> for a simple variance change or
@@ -374,9 +374,9 @@ in <code>fit$jags_code</code></p></li>
     <div class='dont-index'><p><a href='get_segment_table.html'>get_segment_table</a></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'># \donttest{</span>
+    <pre class="examples"><span class='co'># \donttest{</span>
 <span class='co'># Define the segments using formulas. A change point is estimated between each formula.</span>
-<span class='no'>segments</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
+<span class='no'>model</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
   <span class='no'>response</span> ~ <span class='fl'>1</span>,  <span class='co'># Plateau in the first segment (int_1)</span>
   ~ <span class='fl'>0</span> + <span class='no'>time</span>,    <span class='co'># Joined slope (time_2) at cp_1</span>
   ~ <span class='fl'>1</span> + <span class='no'>time</span>     <span class='co'># Disjoined slope (int_3, time_3) at cp_2</span>
@@ -384,106 +384,35 @@ in <code>fit$jags_code</code></p></li>
 
 <span class='co'># Fit it. The `ex_demo` dataset is included in mcp. Sample the prior too.</span>
 <span class='co'># options(mc.cores = 3)  # Uncomment to speed up sampling</span>
-<span class='no'>ex_fit</span> <span class='kw'>=</span> <span class='fu'>mcp</span>(<span class='no'>segments</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>ex_demo</span>, <span class='kw'>sample</span> <span class='kw'>=</span> <span class='st'>"both"</span>)</div><div class='output co'>#&gt; Compiling model graph
-#&gt;    Resolving undeclared variables
-#&gt;    Allocating nodes
-#&gt; Graph information:
-#&gt;    Observed stochastic nodes: 100
-#&gt;    Unobserved stochastic nodes: 7
-#&gt;    Total graph size: 1730
-#&gt; 
-#&gt; Initializing model
-#&gt; </div><div class='output co'>#&gt; <span class='message'>Finished sampling in 8.1 seconds</span></div><div class='output co'>#&gt; Compiling model graph
-#&gt;    Resolving undeclared variables
-#&gt;    Allocating nodes
-#&gt; Graph information:
-#&gt;    Observed stochastic nodes: 0
-#&gt;    Unobserved stochastic nodes: 107
-#&gt;    Total graph size: 1730
-#&gt; 
-#&gt; Initializing model
-#&gt; </div><div class='output co'>#&gt; <span class='message'>Finished sampling in 0.1 seconds</span></div><div class='input'><span class='co'># }</span>
+<span class='no'>ex_fit</span> <span class='kw'>=</span> <span class='fu'>mcp</span>(<span class='no'>model</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>ex_demo</span>, <span class='kw'>sample</span> <span class='kw'>=</span> <span class='st'>"both"</span>)
+<span class='co'># }</span>
 
 <span class='co'># See parameter estimates</span>
-<span class='fu'><a href='summary.mcpfit.html'>summary</a></span>(<span class='no'>ex_fit</span>)</div><div class='output co'>#&gt; Family: gaussian(link = 'identity')
-#&gt; Iterations: 9000 from 3 chains.
-#&gt; Segments:
-#&gt;   1: response ~ 1
-#&gt;   2: response ~ 1 ~ 0 + time
-#&gt;   3: response ~ 1 ~ 1 + time
-#&gt; 
-#&gt; Population-level parameters:
-#&gt;     name match  sim  mean lower  upper Rhat n.eff   ts_se
-#&gt;     cp_1    OK 30.0 30.72 22.85 38.051    1   371 366.487
-#&gt;     cp_2    OK 70.0 69.77 69.27 70.232    1  5918   0.129
-#&gt;    int_1    OK 10.0 10.32  8.92 11.724    1  1630   2.621
-#&gt;    int_3    OK  0.0  0.50 -2.40  3.637    1   747  28.905
-#&gt;  sigma_1    OK  4.0  4.01  3.45  4.621    1  4373   0.184
-#&gt;   time_2    OK  0.5  0.54  0.41  0.673    1   381   0.117
-#&gt;   time_3    OK -0.2 -0.22 -0.40 -0.045    1   762   0.098</div><div class='input'>
+<span class='fu'><a href='summary.mcpfit.html'>summary</a></span>(<span class='no'>ex_fit</span>)
+
 <span class='co'># Visual inspection of the results</span>
-<span class='fu'><a href='plot.mcpfit.html'>plot</a></span>(<span class='no'>ex_fit</span>)</div><div class='img'><img src='mcp-1.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'><a href='plot_pars.html'>plot_pars</a></span>(<span class='no'>ex_fit</span>)</div><div class='img'><img src='mcp-2.png' alt='' width='700' height='433' /></div><div class='input'>
+<span class='fu'><a href='plot.mcpfit.html'>plot</a></span>(<span class='no'>ex_fit</span>)
+<span class='fu'><a href='plot_pars.html'>plot_pars</a></span>(<span class='no'>ex_fit</span>)
+
 <span class='co'># Test a hypothesis</span>
-<span class='fu'><a href='hypothesis.html'>hypothesis</a></span>(<span class='no'>ex_fit</span>, <span class='st'>"cp_1 &gt; 10"</span>)</div><div class='output co'>#&gt;      hypothesis     mean   lower   upper p  BF
-#&gt; 1 cp_1 - 10 &gt; 0 20.71633 12.8479 28.0509 1 Inf</div><div class='input'>
+<span class='fu'><a href='hypothesis.html'>hypothesis</a></span>(<span class='no'>ex_fit</span>, <span class='st'>"cp_1 &gt; 10"</span>)
+
 <span class='co'># \donttest{</span>
 <span class='co'># Compare to a one-intercept-only model (no change points) with default prior</span>
-<span class='no'>segments_null</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>response</span> ~ <span class='fl'>1</span>)
-<span class='no'>fit_null</span> <span class='kw'>=</span> <span class='fu'>mcp</span>(<span class='no'>segments_null</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>ex_demo</span>, <span class='kw'>par_x</span> <span class='kw'>=</span> <span class='st'>"time"</span>)  <span class='co'># fit another model here</span></div><div class='output co'>#&gt; Compiling model graph
-#&gt;    Resolving undeclared variables
-#&gt;    Allocating nodes
-#&gt; Graph information:
-#&gt;    Observed stochastic nodes: 100
-#&gt;    Unobserved stochastic nodes: 2
-#&gt;    Total graph size: 518
-#&gt; 
-#&gt; Initializing model
-#&gt; </div><div class='output co'>#&gt; <span class='message'>Finished sampling in 1.6 seconds</span></div><div class='input'><span class='no'>ex_fit</span>$<span class='no'>loo</span> <span class='kw'>=</span> <span class='fu'><a href='criterion.html'>loo</a></span>(<span class='no'>ex_fit</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: Some Pareto k diagnostic values are slightly high. See help('pareto-k-diagnostic') for details.</span></div><div class='input'><span class='no'>fit_null</span>$<span class='no'>loo</span> <span class='kw'>=</span> <span class='fu'><a href='criterion.html'>loo</a></span>(<span class='no'>fit_null</span>)
-<span class='kw pkg'>loo</span><span class='kw ns'>::</span><span class='fu'><a href='https://mc-stan.org/loo/reference/loo_compare.html'>loo_compare</a></span>(<span class='no'>ex_fit</span>$<span class='no'>loo</span>, <span class='no'>fit_null</span>$<span class='no'>loo</span>)</div><div class='output co'>#&gt;        elpd_diff se_diff
-#&gt; model1    0.0       0.0 
-#&gt; model2 -108.0       8.8 </div><div class='input'><span class='co'># }</span>
+<span class='no'>model_null</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>response</span> ~ <span class='fl'>1</span>)
+<span class='no'>fit_null</span> <span class='kw'>=</span> <span class='fu'>mcp</span>(<span class='no'>model_null</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>ex_demo</span>, <span class='kw'>par_x</span> <span class='kw'>=</span> <span class='st'>"time"</span>)  <span class='co'># fit another model here</span>
+<span class='no'>ex_fit</span>$<span class='no'>loo</span> <span class='kw'>=</span> <span class='fu'><a href='criterion.html'>loo</a></span>(<span class='no'>ex_fit</span>)
+<span class='no'>fit_null</span>$<span class='no'>loo</span> <span class='kw'>=</span> <span class='fu'><a href='criterion.html'>loo</a></span>(<span class='no'>fit_null</span>)
+<span class='kw pkg'>loo</span><span class='kw ns'>::</span><span class='fu'><a href='https://mc-stan.org/loo/reference/loo_compare.html'>loo_compare</a></span>(<span class='no'>ex_fit</span>$<span class='no'>loo</span>, <span class='no'>fit_null</span>$<span class='no'>loo</span>)
+<span class='co'># }</span>
 
 <span class='co'># Inspect the prior. Useful for prior predictive checks.</span>
-<span class='fu'><a href='summary.mcpfit.html'>summary</a></span>(<span class='no'>ex_fit</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; Family: gaussian(link = 'identity')
-#&gt; Iterations: 9000 from 3 chains.
-#&gt; Segments:
-#&gt;   1: response ~ 1
-#&gt;   2: response ~ 1 ~ 0 + time
-#&gt;   3: response ~ 1 ~ 1 + time
-#&gt; 
-#&gt; Population-level parameters:
-#&gt;     name match  sim    mean    lower  upper Rhat n.eff   ts_se
-#&gt;     cp_1    OK 30.0 37.4995  3.2e+00  85.94    1  9000 6.2e+02
-#&gt;     cp_2    OK 70.0 60.8963  2.0e+01  97.96    1  9000 5.6e+02
-#&gt;    int_1    OK 10.0 -0.8966 -1.2e+02 117.88    1  9000 4.3e+03
-#&gt;    int_3    OK  0.0  0.2968 -1.2e+02 112.56    1  9000 3.7e+03
-#&gt;  sigma_1    OK  4.0  9.5164  5.4e-03  23.41    1  9000 5.3e+01
-#&gt;   time_2        0.5 -0.0021 -3.9e-01   0.42    1  9000 4.3e-02
-#&gt;   time_3    OK -0.2 -0.0013 -3.8e-01   0.43    1  9000 4.7e-02</div><div class='input'><span class='fu'><a href='plot.mcpfit.html'>plot</a></span>(<span class='no'>ex_fit</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='img'><img src='mcp-3.png' alt='' width='700' height='433' /></div><div class='input'>
+<span class='fu'><a href='summary.mcpfit.html'>summary</a></span>(<span class='no'>ex_fit</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+<span class='fu'><a href='plot.mcpfit.html'>plot</a></span>(<span class='no'>ex_fit</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+
 <span class='co'># Show all priors. Default priors are added where you don't provide any</span>
-<span class='fu'><a href='summary.mcpfit.html'>print</a></span>(<span class='no'>ex_fit</span>$<span class='no'>prior</span>)</div><div class='output co'>#&gt; $cp_1
-#&gt; [1] "dt(MINX, (MAXX - MINX) / N_CP, 1) T(cp_0, MAXX)"
-#&gt; 
-#&gt; $cp_2
-#&gt; [1] "dt(MINX, (MAXX - MINX) / N_CP, 1) T(cp_1, MAXX)"
-#&gt; 
-#&gt; $int_1
-#&gt; [1] "dt(0, 3 * SDY, 3)"
-#&gt; 
-#&gt; $int_3
-#&gt; [1] "dt(0, 3 * SDY, 3)"
-#&gt; 
-#&gt; $time_2
-#&gt; [1] "dt(0, SDY / (MAXX - MINX), 3)"
-#&gt; 
-#&gt; $time_3
-#&gt; [1] "dt(0, SDY / (MAXX - MINX), 3)"
-#&gt; 
-#&gt; $sigma_1
-#&gt; [1] "dnorm(0, SDY) T(0, )"
-#&gt; 
-#&gt; attr(,"class")
-#&gt; [1] "mcpprior"</div><div class='input'>
+<span class='fu'><a href='summary.mcpfit.html'>print</a></span>(<span class='no'>ex_fit</span>$<span class='no'>prior</span>)
+
 <span class='co'># Set priors and re-run</span>
 <span class='no'>prior</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
   <span class='kw'>int_1</span> <span class='kw'>=</span> <span class='fl'>15</span>,
@@ -493,62 +422,11 @@ in <code>fit$jags_code</code></p></li>
 )
 
 <span class='co'># \donttest{</span>
-<span class='no'>fit3</span> <span class='kw'>=</span> <span class='fu'>mcp</span>(<span class='no'>segments</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>ex_demo</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='no'>prior</span>)</div><div class='output co'>#&gt; Compiling model graph
-#&gt;    Resolving undeclared variables
-#&gt;    Allocating nodes
-#&gt; Graph information:
-#&gt;    Observed stochastic nodes: 100
-#&gt;    Unobserved stochastic nodes: 5
-#&gt;    Total graph size: 1729
-#&gt; 
-#&gt; Initializing model
-#&gt; </div><div class='output co'>#&gt; <span class='message'>Finished sampling in 6.4 seconds</span></div><div class='input'><span class='co'># }</span>
+<span class='no'>fit3</span> <span class='kw'>=</span> <span class='fu'>mcp</span>(<span class='no'>model</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>ex_demo</span>, <span class='kw'>prior</span> <span class='kw'>=</span> <span class='no'>prior</span>)
+<span class='co'># }</span>
 
 <span class='co'># Show the JAGS model</span>
-<span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span>(<span class='no'>ex_fit</span>$<span class='no'>jags_code</span>)</div><div class='output co'>#&gt; 
-#&gt; model {
-#&gt; 
-#&gt;   # Priors for population-level effects
-#&gt;   cp_0 = MINX  # mcp helper value.
-#&gt;   cp_3 = MAXX  # mcp helper value.
-#&gt; 
-#&gt;   cp_1 ~ dt(MINX, 1/((MAXX-MINX)/N_CP)^2, 1) T(cp_0, MAXX)
-#&gt;   cp_2 ~ dt(MINX, 1/((MAXX-MINX)/N_CP)^2, 1) T(cp_1, MAXX)
-#&gt;   int_1 ~ dt(0, 1/(3*SDY)^2, 3) 
-#&gt;   int_3 ~ dt(0, 1/(3*SDY)^2, 3) 
-#&gt;   time_2 ~ dt(0, 1/(SDY/(MAXX-MINX))^2, 3) 
-#&gt;   time_3 ~ dt(0, 1/(SDY/(MAXX-MINX))^2, 3) 
-#&gt;   sigma_1 ~ dnorm(0, 1/(SDY)^2) T(0, )
-#&gt; 
-#&gt; 
-#&gt;   # Model and likelihood
-#&gt;   for (i_ in 1:length(time)) {
-#&gt;     X_1_[i_] = min(time[i_], cp_1)
-#&gt;     X_2_[i_] = min(time[i_], cp_2) - cp_1
-#&gt;     X_3_[i_] = min(time[i_], cp_3) - cp_2
-#&gt;     
-#&gt;     # Fitted value
-#&gt;     y_[i_] = 
-#&gt;     
-#&gt;       # Segment 1: response ~ 1
-#&gt;       (time[i_] &gt;= cp_0) * (time[i_] &lt; cp_2) * int_1 + 
-#&gt;     
-#&gt;       # Segment 2: response ~ 1 ~ 0 + time
-#&gt;       (time[i_] &gt;= cp_1) * (time[i_] &lt; cp_2) * time_2 * X_2_[i_] + 
-#&gt;     
-#&gt;       # Segment 3: response ~ 1 ~ 1 + time
-#&gt;       (time[i_] &gt;= cp_2) * int_3 + 
-#&gt;       (time[i_] &gt;= cp_2) * time_3 * X_3_[i_] 
-#&gt;     
-#&gt;     # Fitted standard deviation
-#&gt;     sigma_[i_] = 
-#&gt;       (time[i_] &gt;= cp_0) * sigma_1 
-#&gt; 
-#&gt;     # Likelihood and log-density for family = gaussian()
-#&gt;     response[i_] ~ dnorm((y_[i_]), 1 / sigma_[i_]^2)
-#&gt;     loglik_[i_] = logdensity.norm(response[i_], (y_[i_]), 1 / sigma_[i_]^2)
-#&gt;   }
-#&gt; }</div></pre>
+<span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span>(<span class='no'>ex_fit</span>$<span class='no'>jags_code</span>)</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

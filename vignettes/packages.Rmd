@@ -73,13 +73,13 @@ As a simple example, we simulate some intercept-only data with change points at 
 ```{r}
 # Simulate
 set.seed(42)  # I always use 42; no fiddling
-data = data.frame(
+df = data.frame(
   x = 1:100,
   y = c(rnorm(30, 2), rnorm(40, 0), rnorm(30, 1))
 )
 
 # Plot it
-plot(data)
+plot(df)
 abline(v = c(30, 70), col="red")
 ```
 
@@ -88,8 +88,8 @@ abline(v = c(30, 70), col="red")
 
 ```{r, cache = TRUE, message = FALSE, results=FALSE}
 library(mcp)
-segments = list(y~1, 1~1, 1~1)  # three intercept-only segments
-fit_mcp = mcp(segments, data, par_x = "x")
+model = list(y~1, 1~1, 1~1)  # three intercept-only segments
+fit_mcp = mcp(model, data = df, par_x = "x")
 
 summary(fit_mcp)
 ```
@@ -117,11 +117,11 @@ plot(fit_mcp) + plot_pars(fit_mcp, pars = c("cp_1", "cp_2"), type = "dens_overla
 
 ```{r, message = FALSE, results = FALSE}
 library(EnvCpt)
-fit_envcpt = envcpt(data$y)  # Fit all models at once
+fit_envcpt = envcpt(df$y)  # Fit all models at once
 fit_envcpt$summary  # Show log-likelihoods
 ```
 
-This can be used to maximize the log-likelihood. Of interest here is `meancpt`. The documentation says that it calls `changepoint::cpt.meanvar`, modeling a simultaneous change in mean and variance. Curiously, `changepoint::cpt.meanvar(data$y)` only finds one change point when called directly (see below), but the output matches `changepoint.np::cpt.np(data$y)@cpts`, so I suspect that this function is used instead. `EnvCpt`  has a nice plot of all the models:
+This can be used to maximize the log-likelihood. Of interest here is `meancpt`. The documentation says that it calls `changepoint::cpt.meanvar`, modeling a simultaneous change in mean and variance. Curiously, `changepoint::cpt.meanvar(df$y)` only finds one change point when called directly (see below), but the output matches `changepoint.np::cpt.np(df$y)@cpts`, so I suspect that this function is used instead. `EnvCpt`  has a nice plot of all the models:
 
 ```{r}
 plot(fit_envcpt)
@@ -148,7 +148,7 @@ Enough talk:
 
 ```{r, warning=FALSE}
 library(segmented)
-fit_lm = lm(y ~ 1 + x, data)  # intercept-only model
+fit_lm = lm(y ~ 1 + x, data = df)  # intercept-only model
 fit_segmented = segmented(fit_lm, seg.Z = ~x, npsi = 2)  # Two change points along x
 
 summary(fit_segmented)
@@ -159,7 +159,7 @@ As expected, the change points are off (`psi1.x` and `psi2.x`). The default plot
 
 ```{r}
 plot(fit_segmented)
-points(data)
+points(df)
 lines.segmented(fit_segmented)
 points.segmented(fit_segmented)
 ```
@@ -174,8 +174,8 @@ BF
 
 We can do the same using `mcp`:
 ```{r, cache = TRUE, message = FALSE, results=FALSE, warning=FALSE}
-segments_1 = list(y~1, 1~1)
-fit_mcp_1 = mcp(segments_1, data, par_x = "x")
+model_1 = list(y~1, 1~1)
+fit_mcp_1 = mcp(model_1, data = df, par_x = "x")
 fit_mcp_1$loo = loo(fit_mcp_1)
 fit_mcp$loo = loo(fit_mcp)
 loo::loo_compare(fit_mcp$loo, fit_mcp_1$loo)
@@ -196,7 +196,7 @@ For an intercept-only model (`y ~ 1`) it correctly detects the two change points
 
 ```{r}
 library(strucchange)
-fit_bp = breakpoints(y ~ 1, data = data, breaks = 2)
+fit_bp = breakpoints(y ~ 1, data = df, breaks = 2)
 summary(fit_bp)
 ```
 
@@ -211,9 +211,9 @@ Reassuringly, for `y ~ 1 + x` it "recommends" the same single change point that 
 
 ```{r}
 library(cpm)
-#fit_cpm = detectChangePoint(data$y, cpmType = "Student")  # a single change point
-#fit_cpm = processStream(data$y, cpmType = "Mann-Whitney")  # Detects three
-fit_cpm = processStream(data$y, cpmType = "Student")  # Multiple change points
+#fit_cpm = detectChangePoint(df$y, cpmType = "Student")  # a single change point
+#fit_cpm = processStream(df$y, cpmType = "Mann-Whitney")  # Detects three
+fit_cpm = processStream(df$y, cpmType = "Student")  # Multiple change points
 fit_cpm$changePoints
 ```
 
@@ -232,7 +232,7 @@ It detects the first change point, but not the second.
 
 ```{r, message=FALSE}
 library(changepoint)
-fit_changepoint = cpt.mean(data$y)
+fit_changepoint = cpt.mean(df$y)
 
 # Return estimates
 c(ints = param.est(fit_changepoint)$mean,
@@ -247,7 +247,7 @@ plot(fit_changepoint)
 The package `changepoint.np` extends `changepoint` by providing a non-parametric version. It is unclear which of the `changepoint` functions are extended, but it manages to find both change points to a good precision. As with many other packages, no intervals are provided. As mentioned earlier, I suspect that `EnvCpt` uses this function under the hood.
 
 ```{r}
-changepoint.np::cpt.np(data$y)@cpts
+changepoint.np::cpt.np(df$y)@cpts
 ```
 
 
@@ -261,21 +261,21 @@ We see that it vaguely captures the change point at `x = 30`, and has some smear
 
 ```{r, message = FALSE}
 library(bcp)
-fit_bcp = bcp(data$y, d = 1000)
+fit_bcp = bcp(df$y, d = 1000)
 plot(fit_bcp)
 ```
 
 
 # ecp
-`ecp` contains six functions to detect change points. It is clearly built for multivariate data, but can take univariate too. Of the six functions, I have not managed to get `e.agglo` working for `data`, but here I demonstrate the other five. The resulting information is sparse. It detects one of the two change points, but not both (with the exception of `e.divisive`, which returns four),
+`ecp` contains six functions to detect change points. It is clearly built for multivariate data, but can take univariate too. Of the six functions, I have not managed to get `e.agglo` working for `df`, but here I demonstrate the other five. The resulting information is sparse. It detects one of the two change points, but not both (with the exception of `e.divisive`, which returns four),
 
 ```{r}
-data_ecp = as.matrix(data$y)
-fit_ecp1 = ecp::e.cp3o(data_ecp, K = 2)  # maximum 2 change points
-fit_ecp2 = ecp::e.cp3o_delta(data_ecp, K = 2)  # maximum 2 change points
-fit_ecp3 = ecp::e.divisive(data_ecp, k = 2)  # 2 change points. Ignored???
-fit_ecp4 = ecp::ks.cp3o(data_ecp, K = 2)  # maximum 2 change points
-fit_ecp5 = ecp::ks.cp3o_delta(data_ecp, K = 2)  # maximum 2 change points
+df_ecp = as.matrix(df$y)
+fit_ecp1 = ecp::e.cp3o(df_ecp, K = 2)  # maximum 2 change points
+fit_ecp2 = ecp::e.cp3o_delta(df_ecp, K = 2)  # maximum 2 change points
+fit_ecp3 = ecp::e.divisive(df_ecp, k = 2)  # 2 change points. Ignored???
+fit_ecp4 = ecp::ks.cp3o(df_ecp, K = 2)  # maximum 2 change points
+fit_ecp5 = ecp::ks.cp3o_delta(df_ecp, K = 2)  # maximum 2 change points
 
 # Show the change point estimates
 str(list(
@@ -294,7 +294,7 @@ Short for "Time-Series Multiple Change Point". The output is a single number (!)
 It finds the change point at `x = 30`, but not the second change point at `x = 70`.
 
 ```{r}
-TSMCP::tsmcplm(data$y, X = NULL, method = "adapt", c = 1)
+TSMCP::tsmcplm(df$y, X = NULL, method = "adapt", c = 1)
 ```
 
 
@@ -303,7 +303,7 @@ TSMCP::tsmcplm(data$y, X = NULL, method = "adapt", c = 1)
 The `wbsts` package is focused at time-series data. I must admit that I have not taken the time to understand the underlying model(s) or inference methods, so I am in a poor position to evaluate whether I am using it correctly. It returns no change points for the present data set using default settings:
 
 ```{r}
-wbsts::wbs.lsw(data$y)
+wbsts::wbs.lsw(df$y)
 ```
 
 
@@ -316,14 +316,14 @@ wbsts::wbs.lsw(data$y)
 
 # Packages doing only one change point
 
- * `strucchange::Fstats`: Returns the estimated change point (one number), and nothing else. `strucchange::Fstats(y ~ 1, data = data)` find the change point at 30 in the present data.
- * `SiZer::piecewise.linear`: Returns a change point and parameter estimates, optionally with an interval. Call like `piecewise.linear(data$x, data$y, CI = TRUE)`. Only joined slopes are supported which makes it misestimate the change point in the present data 39 [36.5, 47], but it is consistent with `segmented` which uses a similar model.
+ * `strucchange::Fstats`: Returns the estimated change point (one number), and nothing else. `strucchange::Fstats(y ~ 1, data = df)` find the change point at 30 in the present data.
+ * `SiZer::piecewise.linear`: Returns a change point and parameter estimates, optionally with an interval. Call like `piecewise.linear(df$x, df$y, CI = TRUE)`. Only joined slopes are supported which makes it misestimate the change point in the present data 39 [36.5, 47], but it is consistent with `segmented` which uses a similar model.
  * `easyreg::bl`.
  * `lm.br::lm.br`. Choose between line-line, line-plateau, or plateau-line. Yields confidence intervals. All of these are non-suitable for the present plateau-only model. `lm.br` stands out with the following features: (1) it can take multiple predictors, and it uniquely only models change point over just one of them, keeping the others constant. In comparison, `segmented` models changes in everything, as far as I understand it. (2) It can take known variance. (3) It can take data weights.
 
 
 # Packages doing only fixed change points
-As explained in [../docs/articles/formulas.html], fixed change points can be implemented in almost all regression functions. You simply have an indicator variable saying whether there has been as shift at the corresponding x-value and use it like `lm(y ~ 1 + x * I(x > 30), data)`. Or if you don't want a carry-over effect from the first segment, do `lm(y ~ 1 * I(x < 30) + x * I(x >= 30), data)`. This will work for most regression packages in R, including `survival` and `lme4`.
+As explained in [../docs/articles/formulas.html], fixed change points can be implemented in almost all regression functions. You simply have an indicator variable saying whether there has been as shift at the corresponding x-value and use it like `lm(y ~ 1 + x * I(x > 30), data = df)`. Or if you don't want a carry-over effect from the first segment, do `lm(y ~ 1 * I(x < 30) + x * I(x >= 30), data = df)`. This will work for most regression packages in R, including `survival` and `lme4`.
 
 Some packages include this in a way where you don't have to code your indicators yourself, including:
 

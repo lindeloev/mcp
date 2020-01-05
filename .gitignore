@@ -1,6 +1,7 @@
 .Rproj.user
 .Rhistory
 inst/doc
+vignettes/binomial_cache
 vignettes/comparison_cache
 vignettes/packages_cache
 vignettes/poisson_cache
@@ -8,3 +9,4 @@ vignettes/priors_cache
 vignettes/varying_cache
 vignettes/variance_cache
 vignettes/arma_cache
+fix_twittercard.R

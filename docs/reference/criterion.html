@@ -258,37 +258,19 @@ more in <code><a href='https://mc-stan.org/loo/reference/loo.html'>loo</a></code
 <p>criterion</p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'># \donttest{</span>
+    <pre class="examples"><span class='co'># \donttest{</span>
 <span class='co'># Define two models and sample them</span>
 <span class='co'># options(mc.cores = 3)  # Speed up sampling</span>
-<span class='no'>segments1</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>y</span> ~ <span class='fl'>1</span> + <span class='no'>x</span>, ~ <span class='fl'>1</span>)
-<span class='no'>segments2</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>y</span> ~ <span class='fl'>1</span> + <span class='no'>x</span>)  <span class='co'># Without a change point</span>
-<span class='no'>fit1</span> <span class='kw'>=</span> <span class='fu'><a href='mcp.html'>mcp</a></span>(<span class='no'>segments1</span>, <span class='no'>ex_plateaus</span>)</div><div class='output co'>#&gt; Compiling model graph
-#&gt;    Resolving undeclared variables
-#&gt;    Allocating nodes
-#&gt; Graph information:
-#&gt;    Observed stochastic nodes: 100
-#&gt;    Unobserved stochastic nodes: 5
-#&gt;    Total graph size: 1324
-#&gt; 
-#&gt; Initializing model
-#&gt; </div><div class='output co'>#&gt; <span class='message'>Finished sampling in 5.6 seconds</span></div><div class='input'><span class='no'>fit2</span> <span class='kw'>=</span> <span class='fu'><a href='mcp.html'>mcp</a></span>(<span class='no'>segments2</span>, <span class='no'>ex_plateaus</span>)</div><div class='output co'>#&gt; Compiling model graph
-#&gt;    Resolving undeclared variables
-#&gt;    Allocating nodes
-#&gt; Graph information:
-#&gt;    Observed stochastic nodes: 100
-#&gt;    Unobserved stochastic nodes: 3
-#&gt;    Total graph size: 723
-#&gt; 
-#&gt; Initializing model
-#&gt; </div><div class='output co'>#&gt; <span class='message'>Finished sampling in 2.6 seconds</span></div><div class='input'>
-<span class='co'># Compute LOO for each and compare (works for waic(fit) too)</span>
-<span class='no'>fit1</span>$<span class='no'>loo</span> <span class='kw'>=</span> <span class='fu'>loo</span>(<span class='no'>fit1</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.</span></div><div class='input'><span class='no'>fit2</span>$<span class='no'>loo</span> <span class='kw'>=</span> <span class='fu'>loo</span>(<span class='no'>fit2</span>)
-<span class='kw pkg'>loo</span><span class='kw ns'>::</span><span class='fu'><a href='https://mc-stan.org/loo/reference/loo_compare.html'>loo_compare</a></span>(<span class='no'>fit1</span>$<span class='no'>loo</span>, <span class='no'>fit2</span>$<span class='no'>loo</span>)</div><div class='output co'>#&gt;        elpd_diff se_diff
-#&gt; model1  0.0       0.0   
-#&gt; model2 -5.0       2.4   </div><div class='input'># }
+<span class='no'>model1</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>y</span> ~ <span class='fl'>1</span> + <span class='no'>x</span>, ~ <span class='fl'>1</span>)
+<span class='no'>model2</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>y</span> ~ <span class='fl'>1</span> + <span class='no'>x</span>)  <span class='co'># Without a change point</span>
+<span class='no'>fit1</span> <span class='kw'>=</span> <span class='fu'><a href='mcp.html'>mcp</a></span>(<span class='no'>model1</span>, <span class='no'>ex_plateaus</span>)
+<span class='no'>fit2</span> <span class='kw'>=</span> <span class='fu'><a href='mcp.html'>mcp</a></span>(<span class='no'>model2</span>, <span class='no'>ex_plateaus</span>)
 
-</div></pre>
+<span class='co'># Compute LOO for each and compare (works for waic(fit) too)</span>
+<span class='no'>fit1</span>$<span class='no'>loo</span> <span class='kw'>=</span> <span class='fu'>loo</span>(<span class='no'>fit1</span>)
+<span class='no'>fit2</span>$<span class='no'>loo</span> <span class='kw'>=</span> <span class='fu'>loo</span>(<span class='no'>fit2</span>)
+<span class='kw pkg'>loo</span><span class='kw ns'>::</span><span class='fu'><a href='https://mc-stan.org/loo/reference/loo_compare.html'>loo_compare</a></span>(<span class='no'>fit1</span>$<span class='no'>loo</span>, <span class='no'>fit2</span>$<span class='no'>loo</span>)
+<span class='co'># }</span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

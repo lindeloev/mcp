@@ -24,10 +24,17 @@ Under the hood, `mcp` takes a formula-representation of linear segments and turn
     ```
 
 
+# At a glance
+Here are some example `mcp` models. `mcp` takes a list of formulas - one for each segment. The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the most common formula for segment 2+ would be ` ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
-# Brief example
-`mcp` takes a list of formulas - one for each segment. The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the most common formula for segment 2+ would be ` ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
+![](https://github.com/lindeloev/mcp-paper/raw/master/all_plots_small.png)
+
+Scroll down to see brief introductions to each of these, or browse the website articles for more thorough worked examples and discussions.
+
+
+
+# Brief worked example
 ## Fit a model
 The following model infers the two change points between three segments.
 
@@ -35,14 +42,14 @@ The following model infers the two change points between three segments.
 library(mcp)
 
 # Define the model
-segments = list(
+model = list(
   response ~ 1,  # plateau (int_1)
   ~ 0 + time,    # joined slope (time_2) at cp_1
   ~ 1 + time     # disjoined slope (int_3, time_3) at cp_2
 )
 
 # Fit it. The `ex_demo` dataset is included in mcp
-fit = mcp(segments, data = ex_demo)
+fit = mcp(model, data = ex_demo)
 ```
 
 ## See results
@@ -67,17 +74,17 @@ Segments:
   3: response ~ 1 ~ 1 + time
 
 Population-level parameters:
-    name match  sim  mean lower  upper Rhat n.eff   ts_se
-    cp_1    OK 30.0 30.46 22.98 37.770    1   427 295.851
-    cp_2    OK 70.0 69.78 69.29 70.252    1  5279   0.133
-   int_1    OK 10.0 10.29  8.88 11.672    1  1412   3.250
-   int_3    OK  0.0  0.51 -2.35  3.374    1   802  24.608
- sigma_1    OK  4.0  4.00  3.42  4.572    1  4243   0.178
-  time_2    OK  0.5  0.53  0.41  0.660    1   462   0.083
-  time_3    OK -0.2 -0.22 -0.39 -0.053    1   778   0.087
+    name match  sim  mean lower  upper Rhat n.eff
+    cp_1    OK 30.0 30.27 23.19 38.760    1   384
+    cp_2    OK 70.0 69.78 69.27 70.238    1  5792
+   int_1    OK 10.0 10.26  8.82 11.768    1  1480
+   int_3    OK  0.0  0.44 -2.49  3.428    1   810
+ sigma_1    OK  4.0  4.01  3.43  4.591    1  3852
+  time_2    OK  0.5  0.53  0.40  0.662    1   437
+  time_3    OK -0.2 -0.22 -0.38 -0.035    1   834
 ```
 
-`rhat` is the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag), `eff` is the [effective sample size](https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html), and `ts_se` is the time-series standard error.
+`rhat` is the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag), `eff` is the [effective sample size](https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html).
 
 `plot_pars(fit)` can be used to inspect the posteriors and convergence of all parameters. See the documentation of `plot_pars()` for many other plotting options. Here, we plot just the (population-level) change points. They often have "strange" posterior distributions, highlighting the need for a computational approach:
 
@@ -96,7 +103,7 @@ hypothesis(fit, "cp_1 > 25")
 ```
 ```r
      hypothesis mean lower upper     p   BF
-1 cp_1 - 25 > 0 5.46 -2.02  12.8 0.926 12.4
+1 cp_1 - 25 > 0 5.27 -1.81 13.76 0.917 11.1
 ```
 
 
@@ -104,13 +111,13 @@ For model comparisons, we can fit a null model and compare the predictive perfor
 
 ```r
 # Define the model
-segments_null = list(
+model_null = list(
   response ~ 1 + time,  # intercept (int_1) and slope (time_1)
   ~ 1 + time            # disjoined slope (int_2, time_1)
 )
 
 # Fit it
-fit_null = mcp(segments_null, ex_demo)
+fit_null = mcp(model_null, ex_demo)
 ```
 
 Leveraging the power of `loo::loo`, we see that the two-change-points model is preferred (it is on top), but the `elpd_diff / se_diff` ratio ratio indicate that this preference is not very strong.
@@ -123,7 +130,7 @@ loo::loo_compare(fit$loo, fit_null$loo)
 ```
        elpd_diff se_diff
 model1  0.0       0.0
-model2 -7.9       4.6
+model2 -7.6       4.6
 ```
 
 
@@ -144,7 +151,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp) go in-depth w
  * Fix parameters to specific values using `cp_1 = 45`.
  * Share parameters between segments using `slope_1 = "slope_2"`.
  * Truncate priors using `T(lower, upper)`, e.g., `int_1 = "dnorm(0, 1) T(0, )"`. `mcp` applies this automatically to change point priors to enforce order restriction. This is true for [varying change points](https://lindeloev.github.io/mcp/articles/varying.html) too.
- * Do prior predictive checks using `mcp(segments, data, sample = "prior")`.
+ * Do prior predictive checks using `mcp(model, data, sample = "prior")`.
 
 [Varying change points](https://lindeloev.github.io/mcp/articles/varying.html):
  * Simulate varying change points using `fit$simulate()`.
@@ -184,11 +191,11 @@ Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and 
 Find the single change point between two plateaus ([see how this data was simulated with mcp](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R)).
 
 ```r
-segments = list(
+model = list(
     y ~ 1,  # plateau (int_1)
     ~ 1     # plateau (int_2)
 )
-fit = mcp(segments, ex_plateaus, par_x = "x")
+fit = mcp(model, ex_plateaus, par_x = "x")
 plot(fit)
 ```
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_plateaus.png)
@@ -199,11 +206,11 @@ plot(fit)
 Here, we find the single change point between two joined slopes. While the slopes are shared by all participants, the change point varies by `id`. Read more about [varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html).
 
 ```r
-segments = list(
+model = list(
   y ~ 1 + x,          # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope, varying by id
 )
-fit = mcp(segments, ex_varying)
+fit = mcp(model, ex_varying)
 plot(fit, facet_by = "id", cp_dens = FALSE)
 ```
 
@@ -216,13 +223,13 @@ ranef(fit, width = 0.98)
 ```
 
 ```r
-           name match   sim  mean   lower   upper Rhat n.eff ts_se
- cp_1_id[Benny]    OK -17.5 -18.1 -21.970 -14.877    1   895  23.2
-  cp_1_id[Bill]    OK -10.5  -7.6 -10.658  -4.451    1   420  37.5
-  cp_1_id[Cath]    OK  -3.5  -2.8  -5.634   0.027    1   888  23.7
-  cp_1_id[Erin]    OK   3.5   3.1   0.041   5.952    1  3622   3.5
-  cp_1_id[John]    OK  10.5  11.3   7.577  14.989    1  2321   5.1
-  cp_1_id[Rose]    OK  17.5  14.1  10.485  18.079    1  5150   2.6
+           name match   sim  mean   lower   upper Rhat n.eff
+ cp_1_id[Benny]    OK -17.5 -18.1 -21.970 -14.877    1   895
+  cp_1_id[Bill]    OK -10.5  -7.6 -10.658  -4.451    1   420
+  cp_1_id[Cath]    OK  -3.5  -2.8  -5.634   0.027    1   888
+  cp_1_id[Erin]    OK   3.5   3.1   0.041   5.952    1  3622
+  cp_1_id[John]    OK  10.5  11.3   7.577  14.989    1  2321
+  cp_1_id[Rose]    OK  17.5  14.1  10.485  18.079    1  5150
 ```
 
 
@@ -232,12 +239,12 @@ ranef(fit, width = 0.98)
 Here is a binomial change point model with three segments. We plot the 95% HDI too:
 
 ```r
-segments = list(
+model = list(
   y | trials(N) ~ 1,  # constant rate
   ~ 0 + x,            # joined changing rate
   ~ 1 + x             # disjoined changing rate
 )
-fit = mcp(segments, ex_binomial, family = binomial())
+fit = mcp(model, ex_binomial, family = binomial())
 plot(fit, q_fit = TRUE)
 ```
 
@@ -251,11 +258,11 @@ Use `plot(fit, rate = FALSE)` if you want the points and fit lines on the origin
 `mcp` allows for flexible time series analysis with autoregressive residuals of arbitrary order. Below, we model a change from a plateau with strong positive AR(2) residuals to a slope with medium AR(1) residuals. These data were simulated with mcp [here](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_ar.R) and the generating values are in the `sim` column. You can also do regression on the AR coefficients themselves using e.g., `ar(1, 1 + x)`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html).
 
 ```r
-segments = list(
+model = list(
   price ~ 1 + ar(2),
   ~ 0 + time + ar(1)
 )
-fit = mcp(segments, ex_ar)
+fit = mcp(model, ex_ar)
 summary(fit)
 ```
 
@@ -263,14 +270,14 @@ The AR(N) parameters on intercepts are named `ar[order]_[segment]`. All paramete
 
 ```r
 Population-level parameters:
-    name match   sim    mean     lower   upper Rhat n.eff    ts_se
-   ar1_1    OK   0.7   0.741  5.86e-01   0.892 1.01   713  0.06970
-   ar1_2    OK  -0.4  -0.478 -6.88e-01  -0.255 1.00  2151  0.04722
-   ar2_1    OK   0.2   0.145 -6.56e-04   0.284 1.01   798  0.05767
-    cp_1       120.0 117.313  1.14e+02 118.963 1.05   241 80.51360
-   int_1        20.0  17.558  1.51e+01  19.831 1.02   293 36.27328
- sigma_1    OK   5.0   4.829  4.39e+00   5.334 1.00  3750  0.10756
-  time_2    OK   0.5   0.517  4.85e-01   0.553 1.00   661  0.00405
+    name match   sim    mean     lower   upper Rhat n.eff
+   ar1_1    OK   0.7   0.741  5.86e-01   0.892 1.01   713
+   ar1_2    OK  -0.4  -0.478 -6.88e-01  -0.255 1.00  2151
+   ar2_1    OK   0.2   0.145 -6.56e-04   0.284 1.01   798
+    cp_1       120.0 117.313  1.14e+02 118.963 1.05   241
+   int_1        20.0  17.558  1.51e+01  19.831 1.02   293
+ sigma_1    OK   5.0   4.829  4.39e+00   5.334 1.00  3750
+  time_2    OK   0.5   0.517  4.85e-01   0.553 1.00   661
 ```
 
 The fit plot shows the inferred autocorrelated nature:
@@ -289,12 +296,12 @@ You can model variance by adding a `sigma()` term to the formula. The inside `si
 Effects on variance is best visualized using *prediction intervals*. See more in the documentation for `plot.mcpfit()`.
 
 ```r
-segments = list(
+model = list(
   y ~ 1,
   ~ 0 + sigma(1 + x),
   ~ 0 + x
 )
-fit = mcp(segments, ex_variance, cores = 3, adapt = 5000, iter = 5000)
+fit = mcp(model, ex_variance, cores = 3, adapt = 5000, iter = 5000)
 plot(fit, q_predict = TRUE)
 ```
 
@@ -306,11 +313,11 @@ plot(fit, q_predict = TRUE)
 Write exponents as `I(x^N)`. E.g., quadratic `I(x^2)`, cubic `I(x^3)`, or some other power function `I(x^1.5)`. The example below detects the onset of linear + quadratic growth. This is often called the BLQ model (Broken Line Quadratic) in nutrition research.
 
 ```r
-segments = list(
+model = list(
   y ~ 1,
   ~ 0 + x + I(x^2)
 )
-fit = mcp(segments, ex_quadratic)
+fit = mcp(model, ex_quadratic)
 plot(fit)
 ```
 
@@ -323,12 +330,12 @@ plot(fit)
 You can use `sin(x)`, `cos(x)`, and `tan(x)` to do trigonometry. This can be useful for seasonal trends and other periodic data. You can also do `exp(x)`, `abs(x)`, `log(x)`, and `sqrt(x)`, but beware that the two latter will currently fail in segment 2+. Raise an issue if you need this.
 
 ```r
-segments = list(
+model = list(
   y ~ 1 + sin(x),
-  ~ 0 + cos(x) + x
+  ~ 1 + cos(x) + x
 )
 
-fit = mcp(segments, ex_trig)
+fit = mcp(model, ex_trig)
 plot(fit)
 ```
 
@@ -346,7 +353,7 @@ Here we find the two change points between three segments. The slope and interce
 Some of the default priors are overwritten. The first intercept (`int_1`) is forced to be 10, the slopes are in segment 1 and 3 is shared. It is easy to see these effects in the `ex_rel_prior` dataset because they violate it somewhat. The first change point has to be at `x = 20` or later.
 
 ```r
-segments = list(
+model = list(
   y ~ 1 + x,
   ~ rel(1) + rel(x),
   rel(1) ~ 0 + x
@@ -358,7 +365,7 @@ prior = list(
   int_2 = "dnorm(0, 20)",
   cp_1 = "dunif(20, 50)"  # has to occur in this interval
 )
-fit = mcp(segments, ex_rel_prior, prior, iter = 10000)
+fit = mcp(model, ex_rel_prior, prior, iter = 10000)
 plot(fit, cp_dens = FALSE)
 ```
 
@@ -372,15 +379,15 @@ summary(fit)
 
 ```r
 Population-level parameters:
-    name match   sim  mean  lower upper Rhat n.eff    ts_se
-    cp_1    OK  25.0 23.15  20.00 25.81 1.00   297   240.44
-    cp_2        40.0 51.85  47.06 56.36 1.02   428   323.61
-   int_1        25.0 10.00  10.00 10.00  NaN     0     0.00
-   int_2    OK -10.0 -6.86 -21.57 11.89 1.03   190 10678.42
- sigma_1         7.0  9.70   8.32 11.18 1.00  7516     1.56
-     x_1         1.0  1.58   1.24  1.91 1.07   120     7.90
-     x_2    OK  -3.0 -3.28  -3.61 -2.96 1.04   293     2.31
-     x_3         0.5  1.58   1.24  1.91 1.07   120     7.90
+    name match   sim  mean  lower upper Rhat n.eff
+    cp_1    OK  25.0 23.15  20.00 25.81 1.00   297
+    cp_2        40.0 51.85  47.06 56.36 1.02   428
+   int_1        25.0 10.00  10.00 10.00  NaN     0
+   int_2    OK -10.0 -6.86 -21.57 11.89 1.03   190
+ sigma_1         7.0  9.70   8.32 11.18 1.00  7516
+     x_1         1.0  1.58   1.24  1.91 1.07   120
+     x_2    OK  -3.0 -3.28  -3.61 -2.96 1.04   293
+     x_3         0.5  1.58   1.24  1.91 1.07   120
 ```
 
 
@@ -400,4 +407,19 @@ tidy_draws(fit$samples) %>%
 fit$pars$model  # check out which parameters are inferred.
 spread_draws(fit$samples, cp_1, cp_2, int_1, year_1) %>%
  # tidybayes stuff here
+```
+
+
+# Citation
+[This preprint](https://osf.io/fzqxv) formally introduces `mcp`. Find citation info at the link, call `citation("mcp")` or copy-paste this into your reference manager:
+
+```
+  @Article{,
+    title = {mcp: An R Package for Regression With Multiple Change Points},
+    author = {Jonas Kristoffer Lindeløv},
+    journal = {OSF Preprints},
+    year = {2020},
+    doi = {10.31219/osf.io/fzqxv},
+    encoding = {UTF-8},
+  }
 ```

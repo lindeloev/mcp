@@ -1,11 +1,11 @@
 # Define the model
-segments = list(
+model = list(
   y ~ 1 + x,  # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope
 )
 
 # Simulate data
-empty = mcp::mcp(segments, sample=FALSE)
+empty = mcp::mcp(model, sample=FALSE)
 ex_varying = tibble::tibble(id = c("John", "Benny", "Rose", "Cath", "Bill", "Erin")) %>%
   tidyr::expand_grid(x = seq(1, 100, by=4)) %>%
   dplyr::mutate(

@@ -9,6 +9,9 @@ logit(mu)
 \arguments{
 \item{mu}{A vector of probabilities (0-1)}
 }
+\value{
+A vector with same length as \code{mu}
+}
 \description{
 Logit function
 }

@@ -18,12 +18,12 @@ A dataset if coal mining disasters has grown very popular in the change point li
 ```{r, message=FALSE, warning=FALSE}
 # Number of disasters by year
 library(dplyr)
-data = round(boot::coal) %>% 
+df = round(boot::coal) %>% 
   group_by(date) %>% 
   count()
 
 # See it
-data
+df
 ```
 
 
@@ -35,12 +35,12 @@ options(mc.cores = 3)  # Speed up sampling!
 ```
 
 ```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
-segments = list(
+model = list(
   n ~ 1,  # intercept-only
   ~ 1  # intercept-only
 )
 
-fit = mcp(segments, data, family = poisson(), par_x = "date")
+fit = mcp(model, data = df, family = poisson(), par_x = "date")
 ```
 
 Let us see the two intercepts (lambda in log-units) and the change point (in years):
@@ -69,7 +69,7 @@ plot_pars(fit)
 # Priors
 `poisson()` defaults to `link = 'log'`, meaning that we have to exponentiate the estimates to get the "raw" Poisson parameter $\lambda$. $\lambda$ has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is `exp(result$mean[2])` (`r exp(result$mean[2])`) and it is `exp(result$mean[3])` (`r exp(result$mean[3])`) for segment 2.
 
-Default priors were used. They are normals with a standard deviation of 10. I.e. with 95% probability mass between `exp(10) = 22026` and `exp(-10) = 1 / 22026`:
+Default priors were used. They are normals with a standard deviation of 10. I.e. with 68% probability mass between `exp(10) = 22026` and `exp(-10) = 1 / 22026`:
 
 ```{r}
 cbind(fit$prior)
@@ -81,7 +81,7 @@ As always, the prior on the change point forces it to occur in the observed rang
 prior = list(
   cp_1 = "dnorm(1900, 30) T(MINX, 1925)"
 )
-fit_with_prior = mcp(segments, data, prior, poisson(), par_x = "date")
+fit_with_prior = mcp(model, data = df, prior, poisson(), par_x = "date")
 ```
 
 
@@ -93,8 +93,8 @@ A flat model and a one-decay model:
 
 ```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
 # Fit an intercept-only model
-fit_flat = mcp(list(n ~ 1), data, family=poisson(), par_x = "date")
-fit_decay = mcp(list(n ~ 1 + date), data, family = poisson())
+fit_flat = mcp(list(n ~ 1), data = df, family=poisson(), par_x = "date")
+fit_decay = mcp(list(n ~ 1 + date), data = df, family = poisson())
 
 
 plot(fit_flat) + plot(fit_decay)

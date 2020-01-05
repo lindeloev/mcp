@@ -14,7 +14,7 @@ vignette: >
 `mcp` takes priors in the form of a named list. The names are the parameter names, and the values are JAGS code. Here is a fairly complicated example, just to get enough priors to demonstrate the various ways priors can be used:
 
 ```{r}
-segments = list(
+model = list(
   y ~ 1 + x,  # int_1 + x_1
   ~ 1 + x,  # cp_1, int_2, and x_2
   ~ 1 + x  # cp_2
@@ -49,32 +49,30 @@ Let us see the priors after running them through `mcp` and compare to the defaul
 library(mcp)
 options(mc.cores = 3)  # Speed up sampling!
 
-empty_manual = mcp(segments, prior = prior, sample = FALSE)
-empty_default = mcp(segments, sample = FALSE)
+empty_manual = mcp(model, prior = prior, sample = FALSE)
+empty_default = mcp(model, sample = FALSE)
 
 # Look at fit$prior and show them side-by-side
 cbind(manual = empty_manual$prior, default = empty_default$prior)
 ```
 
-Now, let's simulate some data that from the model specified by `segments`. The following priors are "at odds" with the actual data so as to show their effect.
+Now, let's simulate some data that from the `model`. The following priors are "at odds" with the actual data so as to show their effect.
 
 ```{r}
-data = tibble::tibble(
-  x = runif(200, 0, 100),  # 200 datapoints between 0 and 100
-  y = empty_default$simulate(x, 
+df = data.frame(x = runif(200, 0, 100))  # 200 datapoints between 0 and 100
+df$y = empty_default$simulate(df$x, 
     int_1 = 20, int_2 = 30, int_3 = 30,  # intercepts
     x_1 = -0.5, x_2 = 0.5, x_3 = 0,  # slopes
     cp_1 = 35, cp_2 = 70,  # change points
     sigma = 5)
-)
 ```
 
 
 Sample the prior and posterior. We let the manual fit adapt for longer, since it is harder to find the right posterior under these weird prior constraints (priors will usually improve sampling efficiency).
 
 ```{r, cache = TRUE, message=FALSE, warning=FALSE, results=FALSE}
-fit_manual = mcp(segments, data, prior, sample = "both", adapt = 10000)
-fit_default = mcp(segments, data, sample = "both", adapt = 10000)
+fit_manual = mcp(model, data = df, prior, sample = "both", adapt = 10000)
+fit_default = mcp(model, data = df, sample = "both", adapt = 10000)
 ```
 
 First, let's look at the priors side by side. Notice the use of `prior = TRUE` to show prior samples. This works in `plot()`, `plot_pars()`, and `summary()` among others.
@@ -120,21 +118,21 @@ They two "packages" are identical for one change point, though the default still
 
 
 ```{r, echo = FALSE, results=FALSE, warning=FALSE, message=FALSE}
-data_dummy = data.frame(x = c(50, 100, 150), y = rnorm(3))
+df_dummy = data.frame(x = c(50, 100, 150), y = rnorm(3))
 
 # Sample priors for two default change points
-segments_two = list(y ~ x, ~ 1, ~1)
-fit_two = mcp(segments_two, data_dummy, sample = "prior", chains = 1, iter = 300000)
+model_two = list(y ~ x, ~ 1, ~1)
+fit_two = mcp(model_two, data = df_dummy, sample = "prior", chains = 1, iter = 300000)
 
 # Sample priors for five default change points
-segments_five = list(y ~ x, ~ 1, ~1, ~1, ~1, ~1)
-fit_five = mcp(segments_five, data_dummy, sample = "prior", chains = 1, iter = 300000)
+model_five = list(y ~ x, ~ 1, ~1, ~1, ~1, ~1)
+fit_five = mcp(model_five, data = df_dummy, sample = "prior", chains = 1, iter = 300000)
 ```
 
 ```{r, echo = FALSE, fig.height=6, fig.width=7}
 par(mfrow = c(2,2))
-MINX = min(data_dummy$x)
-MAXX = max(data_dummy$x)
+MINX = min(df_dummy$x)
+MAXX = max(df_dummy$x)
 
 
 ###############
@@ -193,7 +191,10 @@ mtext("Data", 1, line = 3, at = -0.2)
 ###############
 y1 = density(fit_two$mcmc_prior[[1]][, "cp_1"], from = MINX, to = MAXX)
 y2 = density(fit_two$mcmc_prior[[1]][, "cp_2"], from = MINX, to = MAXX)
-plot(y1$x, y1$y + y2$y, type = "l", lty = 2, xlab = NA, xlim = c(MINX, MAXX), main = "t-tail two")
+plot(y1$x, y1$y + y2$y, 
+     type = "l", lty = 2, 
+     xlab = NA, ylab = "Density", main = "t-tail two",
+     xlim = c(MINX, MAXX), ylim = c(0, 0.024))
 
 lines(y1)
 lines(y2)
@@ -213,13 +214,17 @@ z3 = density(fit_five$mcmc_prior[[1]][, "cp_3"], from = MINX, to = MAXX)
 z4 = density(fit_five$mcmc_prior[[1]][, "cp_4"], from = MINX, to = MAXX)
 z5 = density(fit_five$mcmc_prior[[1]][, "cp_5"], from = MINX, to = MAXX)
 
-plot(z5, xlab = NA, xlim = c(MINX, MAXX), main = "t-tail five"); text(135, 0.08, labels = "cp_5")
+plot(z1$x, (z1$y + z2$y + z3$y + z4$y + z5$y), 
+     type = "l", lty = 2, 
+     xlab = NA, ylab = "Density", main = "t-tail five",
+     xlim = c(MINX, MAXX), ylim = c(0, 0.07)); 
+text(100, 0.043, labels = "sum")
 
-lines(z1$x, (z1$y + z2$y + z3$y + z4$y + z5$y), lty = 2); text(100, 0.045, labels = "sum")
-lines(z4); text(125, 0.025, labels = "cp_4")
-lines(z3); text(100, 0.02, labels = "cp_3")
-lines(z3); text(75, 0.025, labels = "cp_2")
-lines(z2); text(55, 0.043, labels = "cp_1")
+lines(z5); text(137, 0.03, labels = "cp_5")
+lines(z4); text(115, 0.020, labels = "cp_4")
+lines(z3); text(94, 0.023, labels = "cp_3")
+lines(z3); text(75, 0.027, labels = "cp_2")
+lines(z2); text(62, 0.041, labels = "cp_1")
 lines(z1)
 
 par(mfrow = c(1,1))
@@ -232,9 +237,9 @@ par(mfrow = c(1,1))
 
 The first change point defaults to `cp_1 = dunif(MINX, MAXX)`. In other words, the change point has to happen in the observed range of x, but it is equally probable across this range. This is identical to the Dirichlet prior.
 
-For 2+ change points, the default is `cp_i = dt(MINX, (MAXX-MINX) / N_CP, 1) T(cp_i-1, MAXX)`. This is not as complicated as it looks, so let me unpack it.
+For 2+ change points, the default (on *all* change points) is `cp_i = dt(MINX, (MAXX-MINX) / N_CP, N_CP - 1) T(cp_i-1, MAXX)`. This is not as complicated as it looks, so let me unpack it.
 
- * It is t-distributed with one degree of freedom (`dt(..., 1)`).
+ * It is t-distributed with $N - 1$ degree of freedom (`dt(..., N_CP - 1)`). This ensures narrower priors as the number of change points increase, so as to avoid excessive accumulation of densities at high $x$.
  * It is truncated to be greater than the previous `cp`. For example, `cp_3 = dt(...) T(cp_2, MAXX)`. Since `cp_0 = MINX`, all change points are "forced" to be in the observed range of `x`.
  * The standard deviation is the distance between equally-spaced change points: `(MAXX - MINX) / N_CP`.
  * The mean is always the lowest observed `x`. Thus `cp_1` is a half-t and `cp_2+` are right tails of the same t. Hence the name "t-tail prior". Since they are estimated using MCMC, the fact that the *absolute* densities are smaller for later change points is of no importance since only the *relative* densities matter.
@@ -289,8 +294,8 @@ Prior predictive checks is a great way to ensure that the priors are meaningful.
 
 ```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
 # Sample priors 
-fit_pp_manual = mcp(segments, data, prior, sample = "prior")
-fit_pp_default = mcp(segments, data, sample = "prior")
+fit_pp_manual = mcp(model, data = df, prior, sample = "prior")
+fit_pp_default = mcp(model, data = df, sample = "prior")
 
 # Plot it
 plot_pp_manual = plot(fit_pp_manual, lines = 100) + ylim(c(-400, 400)) + ggtitle("Manual prior")

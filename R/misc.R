@@ -64,12 +64,14 @@ get_family = function(name, link) {
 #'
 #' @aliases ilogit
 #' @param eta A vector of logits
+#' @return A vector with same length as `eta`
 ilogit = stats::binomial(link = "logit")$linkinv
 
 #' Logit function
 #'
 #' @aliases logit
 #' @param mu A vector of probabilities (0-1)
+#' @return A vector with same length as `mu`
 logit = stats::binomial(link = "logit")$linkfun
 
 

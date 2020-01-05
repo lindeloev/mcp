@@ -23,13 +23,12 @@
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object}
 
-\item{facet_by}{String. Name of a varying group.
-\code{facet_by} only applies for \code{type = "segments"}}
+\item{facet_by}{String. Name of a varying group.}
 
 \item{lines}{Positive integer or \code{FALSE}. Number of lines (posterior
-draws) to use when \code{type = "segments"}. FALSE (or \code{lines = 0})
-plots no lines. Note that lines always plot fitted values. For prediction
-intervals, see the \code{q_predict} argument.}
+draws). FALSE or \code{lines = 0} plots no lines. Note that lines always plot
+fitted values - not predicted. For prediction intervals, see the
+\code{q_predict} argument.}
 
 \item{geom_data}{String. One of "point" (default), "line" (good for time-series),
 or FALSE (don not plot).}
@@ -51,8 +50,7 @@ quantiles.
 
 \item{rate}{Boolean. For binomial models, plot on raw data (\code{rate = FALSE}) or
 response divided by number of trials (\code{rate = TRUE}). If FALSE, linear
-interpolation on trial number is used to infer trials at a particular x.
-\code{rate} only applies for \code{type = "segments"}}
+interpolation on trial number is used to infer trials at a particular x.}
 
 \item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
 
@@ -71,7 +69,7 @@ effects you want to plot.
 A \pkg{ggplot2} object.
 }
 \description{
-Plot prior or posterior draws of segments on top of data. Use \code{plot_pars} to
+Plot prior or posterior model draws on top of data. Use \code{plot_pars} to
 plot individual parameter estimates.
 }
 \details{

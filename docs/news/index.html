@@ -223,10 +223,10 @@
 <li>Choose data geom. Currently takes “point” (default) and “line” (<code><a href="../reference/plot.mcpfit.html">plot(fit, geom_data = "line")</a></code>). The latter is useful for time series. Disable using <code>geom_data = FALSE</code>.</li>
 </ul>
 </li>
-<li>Use <code><a href="https://rdrr.io/r/base/options.html">options(mc.cores = 3)</a></code> for considerable speed gains. All vignettes/articles have been updated to recommend this as a default, though serial sampling is still the technical default.</li>
+<li>Use <code><a href="https://rdrr.io/r/base/options.html">options(mc.cores = 3)</a></code> for considerable speed gains for the rest of the session. All vignettes/articles have been updated to recommend this as a default, though serial sampling is still the technical default. <code><a href="../reference/mcp.html">mcp(..., cores = 3)</a></code> does the same thing on a call-by-ball basis.</li>
 <li>
 <code>fit$simulate()</code> adds the simulation parameters as an attribute (<code><a href="https://rdrr.io/r/base/attr.html">attr(y, "simulate")</a></code>) to the predicted variable. <code><a href="../reference/summary.mcpfit.html">summary()</a></code> recognizes this and adds the simulated values to the results table (columns <code>sim</code> and <code>match</code>) so that one can inspect whether the values were recovered.</li>
-<li>Use <code><a href="../reference/plot.mcpfit.html">plot(fit, which_y = "sigma")</a></code> to plot the residual standard deviation on the y-axis. It works for AR(N) as well (<code>which_y = "ar1"</code>, <code>which_y = "ar2"</code>, etc.). This is useful to visualize change points in variance and autocorrelation. The vignettes on variance and autocorrelations have been updated with worked examples.</li>
+<li>Use <code><a href="../reference/plot.mcpfit.html">plot(fit, which_y = "sigma")</a></code> to plot the residual standard deviation on the y-axis. It works for AR(N) as well, e.g., <code>which_y = "ar1"</code>, <code>which_y = "ar2"</code>, etc. This is useful to visualize change points in variance and autocorrelation. The vignettes on variance and autocorrelations have been updated with worked examples.</li>
 <li>Set a Dirichlet prior on the change points using <code>prior = list(cp_1 = "dirichlet(1)", cp_2 = ...)</code>. <a href="https://lindeloev.github.io/mcp/articles/priors.html">Read pros and cons here</a>.</li>
 </ul>
 </div>
@@ -236,8 +236,7 @@
 <ul>
 <li>The default prior has been changed from “truncated-uniforms” to a “t-tail” prior to be more uninformative while still sampling effectively. <a href="https://lindeloev.github.io/mcp/articles/priors.html">Read more here</a>
 </li>
-<li>
-<code>fit$func_y()</code> has been renamed to <code>fit$simulate()</code>.</li>
+<li>Some renaming: “segments” –&gt; “model”. <code>fit$func_y()</code> –&gt; <code>fit$simulate()</code>.</li>
 <li>
 <code><a href="../reference/plot.mcpfit.html">plot()</a></code> only visualize the total fit while <code><a href="../reference/plot_pars.html">plot_pars()</a></code> only visualize individual parameters. These functions were mixed in <code><a href="../reference/plot.mcpfit.html">plot()</a></code> previously.</li>
 <li>The argument <code>update</code> has been discarded from <code><a href="../reference/mcp.html">mcp()</a></code> (it’s all on <code>adapt</code> now) and <code>inits</code> has been added.</li>
