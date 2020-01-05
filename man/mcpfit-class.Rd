@@ -19,7 +19,7 @@ User-provided information (see \code{\link{mcp}} for more details):
 \section{Slots}{
 
 \describe{
-\item{\code{segments}}{A list of formulas, making up the model.
+\item{\code{model}}{A list of formulas, making up the model.
 Provided by user. See \code{\link{mcp}} for more details.}
 
 \item{\code{data}}{A data frame.

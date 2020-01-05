@@ -1,0 +1,11 @@
+citHeader("To cite mcp in publications use:")
+
+bibentry(
+  bibtype = "Article",
+  title = "mcp: An R Package for Regression With Multiple Change Points",
+  author = person(given = "Jonas Kristoffer", family = "Lindeløv"),
+  journal = "OSF Preprints",
+  year = "2020",
+  doi = "10.31219/osf.io/fzqxv",
+  encoding = "UTF-8"
+)

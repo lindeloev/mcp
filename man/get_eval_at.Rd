@@ -9,8 +9,7 @@ get_eval_at(fit, facet_by)
 \arguments{
 \item{fit}{An mcpfit object.}
 
-\item{facet_by}{String. Name of a varying group.
-\code{facet_by} only applies for \code{type = "segments"}}
+\item{facet_by}{String. Name of a varying group.}
 }
 \description{
 Solves two problems: if setting the number of points too high, the

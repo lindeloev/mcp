@@ -6,7 +6,7 @@
 \title{Fit Multiple Linear Segments And Their Change Points}
 \usage{
 mcp(
-  segments,
+  model,
   data = NULL,
   prior = list(),
   family = gaussian(),
@@ -15,18 +15,18 @@ mcp(
   cores = 1,
   chains = 3,
   iter = 3000,
-  adapt = 1000,
+  adapt = 1500,
   inits = NULL,
   jags_code = NULL
 )
 }
 \arguments{
-\item{segments}{A list of formulas - one for each segment. The first formula
+\item{model}{A list of formulas - one for each segment. The first formula
 has the format \code{response ~ predictors} while the following formulas
 have the format \code{response ~ changepoint ~ predictors}. The response
 and change points can be omitted (\code{changepoint ~ predictors} assumes same
-response. \code{~ predictors} assumes an intercept-only change point). Segments
-can model
+response. \code{~ predictors} assumes an intercept-only change point). The
+following can be modeled:
 \itemize{
 \item \emph{Regular formulas:} e.g., \code{~ 1 + x}). \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
 \item \emph{Extended formulas:}, e.g., \code{~ I(x^2) + exp(x) + sin(x)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
@@ -111,12 +111,12 @@ framework.}
 An \code{\link{mcpfit}} object.
 }
 \description{
-Given a list of linear segments, \code{mcp} infers the posterior
+Given a model (a list of segment formulas), \code{mcp} infers the posterior
 distributions of the parameters of each segment as well as the change points
 between segments. \href{https://lindeloev.github.io/mcp/}{See more details and worked examples on the mcp website}.
 All segments must regress on the same x-variable. Change
 points are forced to be ordered using truncation of the priors. You can run
-\code{fit = mcp(segments, sample=FALSE)} to avoid sampling and the need for
+\code{fit = mcp(model, sample=FALSE)} to avoid sampling and the need for
 data if you just want to get the priors (\code{fit$prior}), the JAGS code
 \code{fit$jags_code}, or the R function to simulate data (\code{fit$simulate}).
 }
@@ -140,7 +140,7 @@ in \code{fit$jags_code}
 \examples{
 \donttest{
 # Define the segments using formulas. A change point is estimated between each formula.
-segments = list(
+model = list(
   response ~ 1,  # Plateau in the first segment (int_1)
   ~ 0 + time,    # Joined slope (time_2) at cp_1
   ~ 1 + time     # Disjoined slope (int_3, time_3) at cp_2
@@ -148,7 +148,7 @@ segments = list(
 
 # Fit it. The `ex_demo` dataset is included in mcp. Sample the prior too.
 # options(mc.cores = 3)  # Uncomment to speed up sampling
-ex_fit = mcp(segments, data = ex_demo, sample = "both")
+ex_fit = mcp(model, data = ex_demo, sample = "both")
 }
 
 # See parameter estimates
@@ -163,8 +163,8 @@ hypothesis(ex_fit, "cp_1 > 10")
 
 \donttest{
 # Compare to a one-intercept-only model (no change points) with default prior
-segments_null = list(response ~ 1)
-fit_null = mcp(segments_null, data = ex_demo, par_x = "time")  # fit another model here
+model_null = list(response ~ 1)
+fit_null = mcp(model_null, data = ex_demo, par_x = "time")  # fit another model here
 ex_fit$loo = loo(ex_fit)
 fit_null$loo = loo(fit_null)
 loo::loo_compare(ex_fit$loo, fit_null$loo)
@@ -186,7 +186,7 @@ prior = list(
 )
 
 \donttest{
-fit3 = mcp(segments, data = ex_demo, prior = prior)
+fit3 = mcp(model, data = ex_demo, prior = prior)
 }
 
 # Show the JAGS model

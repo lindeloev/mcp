@@ -24,10 +24,17 @@ Under the hood, `mcp` takes a formula-representation of linear segments and turn
     ```
 
 
+# At a glance
+Here are some example `mcp` models. `mcp` takes a list of formulas - one for each segment. The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the most common formula for segment 2+ would be ` ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
-# Brief example
-`mcp` takes a list of formulas - one for each segment. The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the most common formula for segment 2+ would be ` ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
+![](https://github.com/lindeloev/mcp-paper/raw/master/all_plots_small.png)
+
+Scroll down to see brief introductions to each of these, or browse the website articles for more thorough worked examples and discussions.
+
+
+
+# Brief worked example
 ## Fit a model
 The following model infers the two change points between three segments.
 
@@ -68,13 +75,13 @@ Segments:
 
 Population-level parameters:
     name match  sim  mean lower  upper Rhat n.eff
-    cp_1    OK 30.0 30.46 22.98 37.770    1   427
-    cp_2    OK 70.0 69.78 69.29 70.252    1  5279
-   int_1    OK 10.0 10.29  8.88 11.672    1  1412
-   int_3    OK  0.0  0.51 -2.35  3.374    1   802
- sigma_1    OK  4.0  4.00  3.42  4.572    1  4243
-  time_2    OK  0.5  0.53  0.41  0.660    1   462
-  time_3    OK -0.2 -0.22 -0.39 -0.053    1   778
+    cp_1    OK 30.0 30.27 23.19 38.760    1   384
+    cp_2    OK 70.0 69.78 69.27 70.238    1  5792
+   int_1    OK 10.0 10.26  8.82 11.768    1  1480
+   int_3    OK  0.0  0.44 -2.49  3.428    1   810
+ sigma_1    OK  4.0  4.01  3.43  4.591    1  3852
+  time_2    OK  0.5  0.53  0.40  0.662    1   437
+  time_3    OK -0.2 -0.22 -0.38 -0.035    1   834
 ```
 
 `rhat` is the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag), `eff` is the [effective sample size](https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html).
@@ -96,7 +103,7 @@ hypothesis(fit, "cp_1 > 25")
 ```
 ```r
      hypothesis mean lower upper     p   BF
-1 cp_1 - 25 > 0 5.46 -2.02  12.8 0.926 12.4
+1 cp_1 - 25 > 0 5.27 -1.81 13.76 0.917 11.1
 ```
 
 
@@ -123,7 +130,7 @@ loo::loo_compare(fit$loo, fit_null$loo)
 ```
        elpd_diff se_diff
 model1  0.0       0.0
-model2 -7.9       4.6
+model2 -7.6       4.6
 ```
 
 
@@ -404,19 +411,15 @@ spread_draws(fit$samples, cp_1, cp_2, int_1, year_1) %>%
 
 
 # Citation
-A paper formally introducing `mcp` is in progress. To cite `mcp` in publications use:
-
-
-> Jonas Kristoffer Lindeløv (2020). mcp: Regression with Multiple Change Points. https://github.com/lindeloev/mcp.
-
-A BibTeX entry for LaTeX users is
+[This preprint](https://osf.io/fzqxv) formally introduces `mcp`. Find citation info at the link, call `citation("mcp")` or copy-paste this into your reference manager:
 
 ```
-  @Manual{,
-    title = {mcp: Regression with Multiple Change Points},
+  @Article{,
+    title = {mcp: An R Package for Regression With Multiple Change Points},
     author = {Jonas Kristoffer Lindeløv},
+    journal = {OSF Preprints},
     year = {2020},
-    note = {R package version 0.2.0},
-    note = {https://github.com/lindeloev/mcp}
+    doi = {10.31219/osf.io/fzqxv},
+    encoding = {UTF-8},
   }
 ```
