@@ -16,7 +16,13 @@ Under the hood, `mcp` takes a formula-representation of linear segments and turn
 
  1. <a href="https://sourceforge.net/projects/mcmc-jags/" target="_blank">Install the latest version of JAGS</a>. Linux users can fetch binaries <a href="http://mcmc-jags.sourceforge.net/" target="_blank">here</a>.
  
- 2. Install `mcp` by running this in R:
+ 2. Install from CRAN:
+ 
+    ```r
+    install.packages("mcp")
+    ```
+    
+    or install the development version from GitHub:
  
     ```r
     if (!requireNamespace("remotes")) install.packages("remotes")
