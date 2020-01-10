@@ -47,7 +47,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9000</span>
       </span>
     </div>
 
@@ -126,14 +126,7 @@
   </a>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right">
-<li>
-  <a href="https://github.com/lindeloev/mcp">
-    <span class="fab fa fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
-      </ul>
+<ul class="nav navbar-nav navbar-right"></ul>
 <form class="navbar-form navbar-right hidden-xs hidden-sm" role="search">
         <div class="form-group">
           <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
@@ -155,9 +148,9 @@
       <h1>Binomial change point analysis with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2020-01-05</h4>
+            <h4 class="date">2020-01-10</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/binomial.Rmd"><code>vignettes/binomial.Rmd</code></a></small>
+      
       <div class="hidden name"><code>binomial.Rmd</code></div>
 
     </div>
@@ -221,106 +214,106 @@
 <a class="sourceLine" id="cb5-10" title="10"></a>
 <a class="sourceLine" id="cb5-11" title="11">df</a></code></pre></div>
 <pre><code>##     year  N  y
-## 1   1901 19 16
-## 2   1902 18 17
-## 3   1903 12 10
-## 4   1904 10 10
-## 5   1905 18 16
-## 6   1906 15 12
-## 7   1907 20 20
-## 8   1908 20 19
-## 9   1909 19 17
-## 10  1910 11  9
-## 11  1911 13 12
-## 12  1912 17 15
-## 13  1913 10  8
-## 14  1914 20 18
-## 15  1915 13 12
-## 16  1916 18 15
-## 17  1917 10 10
-## 18  1918 19 15
-## 19  1919 14 13
-## 20  1920 14 12
-## 21  1921 16 15
-## 22  1922 10  9
-## 23  1923 11  8
-## 24  1924 14 12
-## 25  1925 14 14
-## 26  1926 20 18
-## 27  1927 12  7
-## 28  1928 10 10
-## 29  1929 19 16
-## 30  1930 12  9
-## 31  1931 16 15
-## 32  1932 19 12
-## 33  1933 14  5
-## 34  1934 12  6
-## 35  1935 15  5
-## 36  1936 17 10
-## 37  1937 19  7
-## 38  1938 10  2
-## 39  1939 20  7
-## 40  1940 16  2
-## 41  1941 13  4
-## 42  1942 13  3
-## 43  1943 11  2
-## 44  1944 11  1
-## 45  1945 19  2
-## 46  1946 15  2
-## 47  1947 19  1
-## 48  1948 16  2
-## 49  1949 13  1
-## 50  1950 15  0
-## 51  1951 19  1
-## 52  1952 19  1
-## 53  1953 20  0
-## 54  1954 11  1
-## 55  1955 10  0
-## 56  1956 10  0
-## 57  1957 10  1
-## 58  1958 16  0
-## 59  1959 10  0
-## 60  1960 19  0
-## 61  1961 14  0
-## 62  1962 17  0
+## 1   1901 12 11
+## 2   1902 18 16
+## 3   1903 19 18
+## 4   1904 20 18
+## 5   1905 14 13
+## 6   1906 17 17
+## 7   1907 19 18
+## 8   1908 16 15
+## 9   1909 14  9
+## 10  1910 19 17
+## 11  1911 17 14
+## 12  1912 12 10
+## 13  1913 13 12
+## 14  1914 19 16
+## 15  1915 15 15
+## 16  1916 17 14
+## 17  1917 12 11
+## 18  1918 17 15
+## 19  1919 10 10
+## 20  1920 14 11
+## 21  1921 18 17
+## 22  1922 12 11
+## 23  1923 12 11
+## 24  1924 10  9
+## 25  1925 11 11
+## 26  1926 20 17
+## 27  1927 13 10
+## 28  1928 16 15
+## 29  1929 11  8
+## 30  1930 20 17
+## 31  1931 18 15
+## 32  1932 14  9
+## 33  1933 11  8
+## 34  1934 20 10
+## 35  1935 13  7
+## 36  1936 16  5
+## 37  1937 19  6
+## 38  1938 11  5
+## 39  1939 19  2
+## 40  1940 14  4
+## 41  1941 12  4
+## 42  1942 19  5
+## 43  1943 14  3
+## 44  1944 19  5
+## 45  1945 10  1
+## 46  1946 19  4
+## 47  1947 18  0
+## 48  1948 13  1
+## 49  1949 19  1
+## 50  1950 13  1
+## 51  1951 18  0
+## 52  1952 16  2
+## 53  1953 15  0
+## 54  1954 16  0
+## 55  1955 15  0
+## 56  1956 12  0
+## 57  1957 20  0
+## 58  1958 11  1
+## 59  1959 20  1
+## 60  1960 14  0
+## 61  1961 13  0
+## 62  1962 12  0
 ## 63  1963 20  0
-## 64  1964 10  0
-## 65  1965 15 10
-## 66  1966 16 12
+## 64  1964 13  0
+## 65  1965 14  9
+## 66  1966 13  5
 ## 67  1967 19  9
-## 68  1968 11  7
-## 69  1969 15  7
-## 70  1970 11  3
-## 71  1971 20  9
-## 72  1972 19 13
-## 73  1973 14  8
-## 74  1974 16  9
-## 75  1975 13  7
-## 76  1976 17  9
-## 77  1977 16  9
-## 78  1978 14  8
-## 79  1979 15  9
-## 80  1980 12  9
-## 81  1981 13 10
-## 82  1982 16 11
-## 83  1983 16  9
-## 84  1984 16 11
-## 85  1985 20 17
-## 86  1986 16 13
-## 87  1987 11  6
-## 88  1988 18 10
-## 89  1989 11  8
-## 90  1990 12 10
-## 91  1991 19 16
-## 92  1992 13  8
-## 93  1993 13 10
-## 94  1994 12  8
-## 95  1995 13 12
-## 96  1996 18 16
-## 97  1997 17 15
-## 98  1998 15 12
-## 99  1999 12  8
-## 100 2000 16 13</code></pre>
+## 68  1968 17  9
+## 69  1969 17  8
+## 70  1970 10  7
+## 71  1971 14  6
+## 72  1972 16  5
+## 73  1973 18 13
+## 74  1974 10  7
+## 75  1975 20 13
+## 76  1976 15 11
+## 77  1977 15  8
+## 78  1978 14 11
+## 79  1979 12  7
+## 80  1980 18 14
+## 81  1981 18 14
+## 82  1982 16  8
+## 83  1983 10  8
+## 84  1984 15 10
+## 85  1985 13 11
+## 86  1986 14 11
+## 87  1987 11  8
+## 88  1988 17  8
+## 89  1989 18 15
+## 90  1990 14 11
+## 91  1991 20 17
+## 92  1992 13 12
+## 93  1993 13 12
+## 94  1994 18 17
+## 95  1995 15 14
+## 96  1996 14 12
+## 97  1997 19 17
+## 98  1998 13 11
+## 99  1999 16 16
+## 100 2000 13 12</code></pre>
 <p>Visually:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(df<span class="op">$</span>year, df<span class="op">$</span>y)</a></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
@@ -347,7 +340,7 @@
 ##   int_3    OK    0.00    0.050   -0.284    0.380    1  1011
 ##  year_2         -0.20   -0.162   -0.186   -0.139    1   972
 ##  year_3    OK    0.05    0.038    0.022    0.056    1   992</code></pre>
-<p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have <a href="../docs/articles/varying.html">varying effects</a>, use <code><a href="../reference/summary.mcpfit.html">ranef(fit)</a></code> to see them.</p>
+<p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have <a href="../articles/varying.html">varying effects</a>, use <code><a href="../reference/summary.mcpfit.html">ranef(fit)</a></code> to see them.</p>
 <p>Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit)</a></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
@@ -356,7 +349,7 @@
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">rate =</span> <span class="ot">FALSE</span>)</a></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
 <p>These lines are jagged because <code>N</code> varies from year to year. Although there is close too 100% success rate in the years 1900 - 1920, the number of trials varies, as you can see in the raw data. However, using <code>rate = FALSE</code> will be great when the number of trials is constant for extended periods of time, as <code>y</code> is more interpretable then.</p>
-<p>Of course, these plots work with <a href="../docs/articles/varying.html">varying effects</a> as well.</p>
+<p>Of course, these plots work with <a href="../articles/varying.html">varying effects</a> as well.</p>
 </div>
 <div id="model-diagnostics-and-sampling-options" class="section level1">
 <h1 class="hasAnchor">
@@ -370,7 +363,7 @@
 <div id="priors-for-binomial-models" class="section level1">
 <h1 class="hasAnchor">
 <a href="#priors-for-binomial-models" class="anchor"></a>Priors for binomial models</h1>
-<p><code>mcp</code> uses priors to achieve a lot of it’s functionality. See <a href="../docs/articles/priors.html">how to set priors</a>, including how to share parameters between segments and how to fix values. Here, I post a few notes about the binomial-specific default priors.</p>
+<p><code>mcp</code> uses priors to achieve a lot of it’s functionality. See <a href="../articles/priors.html">how to set priors</a>, including how to share parameters between segments and how to fix values. Here, I post a few notes about the binomial-specific default priors.</p>
 <p>The default priors in <code>mcp</code> are set so that they are reasonably broad to cover most scenarios, though also specific enough to sample effectively. They are not “default” as in “canonical”. Rather, they are “default” as in “what happens if you do nothing else”. All priors are stored in <code>fit$prior</code> (also <code>empty$prior</code>). We did not specify <code>prior</code> above, so it ran with default priors:</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(fit<span class="op">$</span>prior)</a></code></pre></div>
 <pre><code>##        [,1]                                                    

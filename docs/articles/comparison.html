@@ -246,7 +246,7 @@
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1"><span class="kw"><a href="../reference/hypothesis.html">hypothesis</a></span>(fit_info, <span class="st">"cp_1 = 4"</span>)</a></code></pre></div>
 <pre><code>##     hypothesis      mean      lower    upper         p       BF
 ## 1 cp_1 - 4 = 0 0.2370218 -0.9887598 1.370463 0.5663504 1.306009</code></pre>
-<p><a href="../docs/articles/priors.html">The Dirichlet prior on change points</a> may be better than the default prior when testing point hypotheses on change points, but an informed prior beats both.</p>
+<p><a href="../articles/priors.html">The Dirichlet prior on change points</a> may be better than the default prior when testing point hypotheses on change points, but an informed prior beats both.</p>
 </div>
 <div id="directional-and-combinatoric-tests" class="section level1">
 <h1 class="hasAnchor">
@@ -275,7 +275,7 @@
 ## 3       NA 0.2863333  0.40121439
 ## 4       NA 0.0353000  0.03659169</code></pre>
 <p>Because Bayes Factors are transitive, we can divide them to get the relative evidence for two hypotheses. Here, we get approximately <span class="math inline">\(0.40 / 0.04 = 10\)</span> in favor of hypothesis 3 over hypothesis 4.</p>
-<p>There are more examples <a href="../docs/reference/hypothesis.html">in the documentation for <code>hypothesis</code></a>, including how to test varying effects.</p>
+<p>There are more examples <a href="../reference/hypothesis.html">in the documentation for <code>hypothesis</code></a>, including how to test varying effects.</p>
 <p><code>mcp</code> does nothing fancy for the directional tests, and you could do them yourself. Just takes the hypothesis verbatim into <code>mutate</code> and <code>summarise</code> the proportion of samples that “passes” this test. These are identical:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw"><a href="../reference/hypothesis.html">hypothesis</a></span>(fit, <span class="st">"cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5"</span>)</a>
 <a class="sourceLine" id="cb12-2" title="2"></a>
@@ -294,7 +294,7 @@
 <p>We can use the cross-validation from the <code>loo</code> package to compare the predictive performance of <code>mcp</code> models. Use loo to compute Widely Applicable Information Criterion (WAIC) or Estimated Log Predictive Density (ELPD) for each model, and then compare them using <code><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo::loo_compare()</a></code>.</p>
 <p>The strength of LOO-CV is that you can compare any N models, as long as they are models of same data. In general, LOO-CV is the only inferential solution in <code>mcp</code> the models are not nested in each other. For example:</p>
 <ul>
-<li>The existence of one or several change points. The <a href="../docs/articles/poisson.html">article on Poisson change points</a> contain an example of comparing a change-point model to a model without change points.</li>
+<li>The existence of one or several change points. The <a href="../articles/poisson.html">article on Poisson change points</a> contain an example of comparing a change-point model to a model without change points.</li>
 <li>Models that differ by several parameters.</li>
 <li>Comparing different priors.</li>
 </ul>

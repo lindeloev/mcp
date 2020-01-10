@@ -10,7 +10,7 @@ template:
 
 
 # Writes sitemap etc.
-url: https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp
+url: https://lindeloev.github.io/mcp
 
 authors:
   Jonas Kristoffer Lindeløv:
@@ -20,7 +20,7 @@ authors:
 reference:
   - title: Using mcp
     desc: Functions for everyday use of mcp.
-    contents: 
+    contents:
       - mcp
       - plot.mcpfit
       - plot_pars
@@ -30,19 +30,19 @@ reference:
       - loo
       - waic
       - hypothesis
-  
+
   - title: Axillary functions
     desc: These are used internally by mcp, but are exposed here since they may be useful for other purposes. Most other useful internal functions deliver the result already in `mcp(segments, sample = FALSE)`, so `mcp()` will be their API.
     contents:
       - sd_to_prec
       - logit
       - ilogit
-  
+
   - title: Families
     desc: Distributional families that are not available in base R.
     contents:
       - bernoulli
-      
+
   - title: Simulated datasets
     desc: These datasets were simulated with mcp. There are lnks to the simulation scripts in the documentation for each of them. The simulation values will also show up if you fit a model to one of these dataset and call `summary(fit)`. Analyses of most of these are demonstrated on the [front page](https://lindeloev.github.io/mcp).
     contents:
@@ -56,7 +56,7 @@ reference:
       - ex_variance
       - ex_varying
       - ex_fit
-      
+
   - title: Miscellaneous
     desc: Stuff you would not usually consult directly.
     contents:
@@ -64,7 +64,7 @@ reference:
       - print.mcpprior
 
 navbar:
-  left: 
+  left:
     - text: General usage
       menu:
       - text: Formulas

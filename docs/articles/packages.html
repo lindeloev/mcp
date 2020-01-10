@@ -47,7 +47,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9000</span>
       </span>
     </div>
 
@@ -126,14 +126,7 @@
   </a>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right">
-<li>
-  <a href="https://github.com/lindeloev/mcp">
-    <span class="fab fa fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
-      </ul>
+<ul class="nav navbar-nav navbar-right"></ul>
 <form class="navbar-form navbar-right hidden-xs hidden-sm" role="search">
         <div class="form-group">
           <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
@@ -155,9 +148,9 @@
       <h1>An overview of change point packages in R</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2020-01-05</h4>
+            <h4 class="date">2020-01-10</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/packages.Rmd"><code>vignettes/packages.Rmd</code></a></small>
+      
       <div class="hidden name"><code>packages.Rmd</code></div>
 
     </div>
@@ -191,19 +184,19 @@
 <h1 class="hasAnchor">
 <a href="#unique-features-of-mcp" class="anchor"></a>Unique features of mcp</h1>
 <ul>
-<li>Manually specify the segment structure. Other packages allow for specifying segment structure, but it has to be shared for all segments. Read more about <a href="../docs/articles/formulas.html">the formula syntax</a> in <code>mcp</code>.</li>
+<li>Manually specify the segment structure. Other packages allow for specifying segment structure, but it has to be shared for all segments. Read more about <a href="../articles/formulas.html">the formula syntax</a> in <code>mcp</code>.</li>
 <li>Posterior distribution for each change point. This matters since they rarely conform to known distributions so confidence intervals can be misleading.</li>
 <li>
-<em>varying change points</em>: To my knowledge, no other package implements varying change points, i.e., allowing by-group differences in change points while sharing all other parameters. Read more about <a href="../docs/articles/varying.html">varying change points</a> in <code>mcp</code>.</li>
+<em>varying change points</em>: To my knowledge, no other package implements varying change points, i.e., allowing by-group differences in change points while sharing all other parameters. Read more about <a href="../articles/varying.html">varying change points</a> in <code>mcp</code>.</li>
 <li>
-<em>Sharing and fixing parameters</em> to values and other parameters as discussed under <a href="../docs/articles/priors.html">priors in mcp</a>.</li>
+<em>Sharing and fixing parameters</em> to values and other parameters as discussed under <a href="../articles/priors.html">priors in mcp</a>.</li>
 <li>
 <em>Per-segment regression on variance and autocorrelation</em> via the <code><a href="https://rdrr.io/r/stats/sigma.html">sigma()</a></code> (<a href="../articles/variance.html">read more here</a>) and <code><a href="https://rdrr.io/r/stats/ar.html">ar()</a></code> (<a href="../articles/arma.html">read more here</a>) terms, also allowing for more advanced change points involving, e.g., a change in autocorrelation strength.</li>
 <li>
-<em>Explicit priors</em>: <code>bcp</code> is the only other Bayesian change point package I know of. It contains a few high-level prior parameters, but not for specific parameters such as <em>where</em> change points are expected to occur etc. Read more about <a href="../docs/articles/priors.html">priors in mcp</a> for more.</li>
+<em>Explicit priors</em>: <code>bcp</code> is the only other Bayesian change point package I know of. It contains a few high-level prior parameters, but not for specific parameters such as <em>where</em> change points are expected to occur etc. Read more about <a href="../articles/priors.html">priors in mcp</a> for more.</li>
 <li>
 <em>Prior and posterior predictive checks</em>. In general, most other packages have limited or no model checking functionality. The default <code>plot.mcpfit</code> is inherently a visual predictive check and can be applied to priors (<code><a href="../reference/mcp.html">mcp(..., sample = "prior")</a></code> and posteriors. Of course inspecting Gelman-Rubin statistics and effective sample sizes in <code>summary.mcpfit</code>, as well as trace plots (<code><a href="../reference/plot_pars.html">plot_pars(fit, type = "trace")</a></code>), also go a long way.</li>
-<li>Flexible hypothesis testing using <code>loo</code> and <code>hypothesis</code>, including testing the existence of a change point. Most other packages stop at estimation, though some provide p-values. Read more about <a href="../docs/articles/comparison.html">hypothesis testing and model comparison</a> using <code>mcp</code>.</li>
+<li>Flexible hypothesis testing using <code>loo</code> and <code>hypothesis</code>, including testing the existence of a change point. Most other packages stop at estimation, though some provide p-values. Read more about <a href="../articles/comparison.html">hypothesis testing and model comparison</a> using <code>mcp</code>.</li>
 </ul>
 </div>
 <div id="recommendation" class="section level1">
@@ -486,7 +479,7 @@
 <div id="packages-doing-only-fixed-change-points" class="section level1">
 <h1 class="hasAnchor">
 <a href="#packages-doing-only-fixed-change-points" class="anchor"></a>Packages doing only fixed change points</h1>
-<p>As explained in [../docs/articles/formulas.html], fixed change points can be implemented in almost all regression functions. You simply have an indicator variable saying whether there has been as shift at the corresponding x-value and use it like <code><a href="https://rdrr.io/r/stats/lm.html">lm(y ~ 1 + x * I(x &gt; 30), data = df)</a></code>. Or if you don’t want a carry-over effect from the first segment, do <code><a href="https://rdrr.io/r/stats/lm.html">lm(y ~ 1 * I(x &lt; 30) + x * I(x &gt;= 30), data = df)</a></code>. This will work for most regression packages in R, including <code>survival</code> and <code>lme4</code>.</p>
+<p>As explained in <a href="../articles/formulas.htm">the article on mcp formulas</a>, fixed change points can be implemented in almost all regression functions. You simply have an indicator variable saying whether there has been as shift at the corresponding x-value and use it like <code><a href="https://rdrr.io/r/stats/lm.html">lm(y ~ 1 + x * I(x &gt; 30), data = df)</a></code>. Or if you don’t want a carry-over effect from the first segment, do <code><a href="https://rdrr.io/r/stats/lm.html">lm(y ~ 1 * I(x &lt; 30) + x * I(x &gt;= 30), data = df)</a></code>. This will work for most regression packages in R, including <code>survival</code> and <code>lme4</code>.</p>
 <p>Some packages include this in a way where you don’t have to code your indicators yourself, including:</p>
 <ul>
 <li>

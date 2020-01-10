@@ -79,7 +79,7 @@ We can use `summary` to see that it recovered the parameters to a pretty good pr
 summary(fit)
 ```
 
-`summary` uses 95% highest density intervals (HDI) by default, but you can change it using `summary(fit, width = 0.80)`. If you have [varying effects](../docs/articles/varying.html), use `ranef(fit)` to see them.
+`summary` uses 95% highest density intervals (HDI) by default, but you can change it using `summary(fit, width = 0.80)`. If you have [varying effects](../articles/varying.html), use `ranef(fit)` to see them.
 
 Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:
 
@@ -97,7 +97,7 @@ plot(fit, rate = FALSE)
 
 These lines are jagged because `N` varies from year to year. Although there is close too 100% success rate in the years 1900 - 1920, the number of trials varies, as you can see in the raw data. However, using `rate = FALSE` will be great when the number of trials is constant for extended periods of time, as `y` is more interpretable then.
 
-Of course, these plots work with [varying effects](../docs/articles/varying.html) as well.
+Of course, these plots work with [varying effects](../articles/varying.html) as well.
 
 
 # Model diagnostics and sampling options
@@ -113,7 +113,7 @@ Convergence is perfect here as evidenced by the overlapping trace plots that loo
 
 
 # Priors for binomial models
-`mcp` uses priors to achieve a lot of it's functionality. See [how to set priors](../docs/articles/priors.html), including how to share parameters between segments and how to fix values. Here, I post a few notes about the binomial-specific default priors.
+`mcp` uses priors to achieve a lot of it's functionality. See [how to set priors](../articles/priors.html), including how to share parameters between segments and how to fix values. Here, I post a few notes about the binomial-specific default priors.
 
 The default priors in `mcp` are set so that they are reasonably broad to cover most scenarios, though also specific enough to sample effectively. They are not "default" as in "canonical". Rather, they are "default" as in "what happens if you do nothing else". All priors are stored in `fit$prior` (also `empty$prior`). We did not specify `prior` above, so it ran with default priors:
 
