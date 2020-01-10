@@ -58,7 +58,7 @@ model = list(
 fit = mcp(model, data = ex_demo)
 ```
 
-## See results
+## Plot and summary
 
 The default plot includes data, fitted lines drawn randomly from the posterior, and change point(s) posterior density for each chain:
 ```r
@@ -153,7 +153,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp) go in-depth w
 [Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
  * See priors in `fit$prior`.
  * Set priors using `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_1 = "dunif(0, 45)")`.
- * The default prior is fast but informative for 2+ change points. Use `cp_i = "dirichlet(1)"` to gain neatness at the cost of speed.
+ * The default prior for change points is fast for estimation but is mathematically "messy". The Dirichlet prior (`cp_i = "dirichlet(1)"`) is slow but beautiful.
  * Fix parameters to specific values using `cp_1 = 45`.
  * Share parameters between segments using `slope_1 = "slope_2"`.
  * Truncate priors using `T(lower, upper)`, e.g., `int_1 = "dnorm(0, 1) T(0, )"`. `mcp` applies this automatically to change point priors to enforce order restriction. This is true for [varying change points](https://lindeloev.github.io/mcp/articles/varying.html) too.
@@ -174,7 +174,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp) go in-depth w
 [Model comparison and hypothesis testing](https://lindeloev.github.io/mcp/articles/comparison.html):
  * Do Leave-One-Out Cross-Validation using `loo(fit)` and `loo::loo_compare(fit1$loo, fit2$loo)`.
  * Compute Savage-Dickey density rations using `hypothesis(fit, "cp_1 = 40")`.
- * Leverage directional and conditional tests to assess interval hypotheses (`hypothesis(fit, "cp_1 > 30 & cp_1 < 50")`), combined hypotheses (`hypothesis(fit, "cp_1 > 30 & int_1 > int_2")`), etc.
+ * Leverage directional and conditional tests to assess interval hypotheses (`hypothesis(fit, "cp_1 > 30 & cp_1 < 50")`), combined other hypotheses (`hypothesis(fit, "cp_1 > 30 & int_1 > int_2")`), etc.
 
 Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and [autoregression](https://lindeloev.github.io/mcp/articles/arma.html):
  * `~ sigma(1)` models an intercept change in variance. `~ sigma(0 + x)` models increasing/decreasing variance.
@@ -183,7 +183,7 @@ Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and 
  * Simulate effects and change points on `sigma()` and `ar()` using `fit$simulate()`
 
 [Tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/debug.html)
- * Speed up fitting using `mcp(..., cores = 3)` / `options(mcp_cores = 3)`, and/or `mcp(..., adapt = 500)`.
+ * Speed up fitting using `mcp(..., cores = 3)` / `options(mcp_cores = 3)`, and/or fewer iterations, `mcp(..., adapt = 500)`.
  * Help convergence along using `mcp(..., inits = list(cp_1 = 20, int_2 = -3))`.
  * Most errors will be caused by circularly defined priors.
 
@@ -193,7 +193,7 @@ Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and 
 `mcp` aims to support a wide variety of models. Here are some example models for inspiration.
 
 
-## Two plateaus
+## Means
 Find the single change point between two plateaus ([see how this data was simulated with mcp](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R)).
 
 ```r
