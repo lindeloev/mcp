@@ -15,7 +15,6 @@ There are three main ways of doing model comparison in `mcp`:
  * Flexible directional tests using `hypothesis(fit, cp_1 > 40)` or `hypothesis(fit, cp_1 > 40 & x_2 > x_1)`.
  * Point Bayes Factors tests using the Savage-Dickey density ratio, e.g., `hypothesis(fit, cp_1 = 50)` or `hypothesis(fit, x_2 = x_1)`.
 
-*PLEASE NOTE: the default prior is unfit for `hypothesis` for models with 2+ change points. The Dirichlet prior may be a better alternative. [Read more here](../docs/articles/priors.html).*
 
 # Some models to play with
 We know quite a bit about human short term memory. Namely, the average human has almost perfect recall when presented with 1-4 items (we remember them all), and then errors begins intruding when presented with more items [(Cowan, 2001)](https://www.ncbi.nlm.nih.gov/pubmed/11515286). We also know that memory is not infinite, so as $N \rightarrow \infty$, it has to plateau.
@@ -105,6 +104,9 @@ Because `BF` and `p` depends directly on the prior in Savage-Dickey test, it is 
 ```{r}
 hypothesis(fit_info, "cp_1 = 4")
 ```
+
+[The Dirichlet prior on change points](../docs/articles/priors.html) may be better than the default prior when testing point hypotheses on change points, but an informed prior beats both.
+
 
 # Directional and combinatoric tests
 Maybe we just want to test a few directional hypothesis. For example:

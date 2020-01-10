@@ -47,7 +47,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9000</span>
       </span>
     </div>
 
@@ -126,14 +126,7 @@
   </a>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right">
-<li>
-  <a href="https://github.com/lindeloev/mcp">
-    <span class="fab fa fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
-      </ul>
+<ul class="nav navbar-nav navbar-right"></ul>
 <form class="navbar-form navbar-right hidden-xs hidden-sm" role="search">
         <div class="form-group">
           <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
@@ -155,9 +148,9 @@
       <h1>Change point model comparison with mcp</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2020-01-05</h4>
+            <h4 class="date">2020-01-10</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/comparison.Rmd"><code>vignettes/comparison.Rmd</code></a></small>
+      
       <div class="hidden name"><code>comparison.Rmd</code></div>
 
     </div>
@@ -170,7 +163,6 @@
 <li>Flexible directional tests using <code><a href="../reference/hypothesis.html">hypothesis(fit, cp_1 &gt; 40)</a></code> or <code><a href="../reference/hypothesis.html">hypothesis(fit, cp_1 &gt; 40 &amp; x_2 &gt; x_1)</a></code>.</li>
 <li>Point Bayes Factors tests using the Savage-Dickey density ratio, e.g., <code><a href="../reference/hypothesis.html">hypothesis(fit, cp_1 = 50)</a></code> or <code><a href="../reference/hypothesis.html">hypothesis(fit, x_2 = x_1)</a></code>.</li>
 </ul>
-<p><em>PLEASE NOTE: the default prior is unfit for <code>hypothesis</code> for models with 2+ change points. The Dirichlet prior may be a better alternative. <a href="../docs/articles/priors.html">Read more here</a>.</em></p>
 <div id="some-models-to-play-with" class="section level1">
 <h1 class="hasAnchor">
 <a href="#some-models-to-play-with" class="anchor"></a>Some models to play with</h1>
@@ -254,6 +246,7 @@
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1"><span class="kw"><a href="../reference/hypothesis.html">hypothesis</a></span>(fit_info, <span class="st">"cp_1 = 4"</span>)</a></code></pre></div>
 <pre><code>##     hypothesis      mean      lower    upper         p       BF
 ## 1 cp_1 - 4 = 0 0.2370218 -0.9887598 1.370463 0.5663504 1.306009</code></pre>
+<p><a href="../docs/articles/priors.html">The Dirichlet prior on change points</a> may be better than the default prior when testing point hypotheses on change points, but an informed prior beats both.</p>
 </div>
 <div id="directional-and-combinatoric-tests" class="section level1">
 <h1 class="hasAnchor">
