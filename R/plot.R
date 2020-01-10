@@ -499,6 +499,7 @@ plot_pars = function(fit,
 
   # TO DO: a lot of eval(parse()) here. Is there a more built-in method?
   #types = c("dens", "dens_overlay", "trace", "areas")
+  bayesplot::available_mcmc()  # quick fix to make R CMD Check happy that bayesplot is imported
   takes_facet = c("areas", "dens", "dens_overlay", "trace", "hist", "intervals", "trace", "trace_highlight", "violin")
   for (this_type in type) {
     this_facet = ifelse(this_type %in% takes_facet, paste0(", facet_args = list(ncol = ", ncol, ")"), "")
