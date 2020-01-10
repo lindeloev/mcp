@@ -47,14 +47,14 @@ This is a list of other functions, which I find useful on other statistics packa
 library(mcp)
 ```
 
- * Manually specify the segment structure. Other packages allow for specifying segment structure, but it has to be shared for all segments. Read more about [the formula syntax](../docs/articles/formulas.html) in `mcp`.
+ * Manually specify the segment structure. Other packages allow for specifying segment structure, but it has to be shared for all segments. Read more about [the formula syntax](../articles/formulas.html) in `mcp`.
  * Posterior distribution for each change point. This matters since they rarely conform to known distributions so confidence intervals can be misleading.
- * *varying change points*: To my knowledge, no other package implements varying change points, i.e., allowing by-group differences in change points while sharing all other parameters. Read more about [varying change points](../docs/articles/varying.html) in `mcp`.
- * *Sharing and fixing parameters* to values and other parameters as discussed under [priors in mcp](../docs/articles/priors.html).
+ * *varying change points*: To my knowledge, no other package implements varying change points, i.e., allowing by-group differences in change points while sharing all other parameters. Read more about [varying change points](../articles/varying.html) in `mcp`.
+ * *Sharing and fixing parameters* to values and other parameters as discussed under [priors in mcp](../articles/priors.html).
  * *Per-segment regression on variance and autocorrelation* via the `sigma()` ([read more here](../articles/variance.html)) and `ar()` ([read more here](../articles/arma.html)) terms, also allowing for more advanced change points involving, e.g., a change in autocorrelation strength.
- * *Explicit priors*: `bcp` is the only other Bayesian change point package I know of. It contains a few high-level prior parameters, but not for specific parameters such as *where* change points are expected to occur etc. Read more about [priors in mcp](../docs/articles/priors.html) for more.
+ * *Explicit priors*: `bcp` is the only other Bayesian change point package I know of. It contains a few high-level prior parameters, but not for specific parameters such as *where* change points are expected to occur etc. Read more about [priors in mcp](../articles/priors.html) for more.
  * *Prior and posterior predictive checks*. In general, most other packages have limited or no model checking functionality. The default `plot.mcpfit` is inherently a visual predictive check and can be applied to priors (`mcp(..., sample = "prior")` and posteriors. Of course inspecting Gelman-Rubin statistics and effective sample sizes in `summary.mcpfit`, as well as trace plots (`plot_pars(fit, type = "trace")`), also go a long way.
- * Flexible hypothesis testing using `loo` and `hypothesis`, including testing the existence of a change point. Most other packages stop at estimation, though some provide p-values. Read more about [hypothesis testing and model comparison](../docs/articles/comparison.html) using `mcp`.
+ * Flexible hypothesis testing using `loo` and `hypothesis`, including testing the existence of a change point. Most other packages stop at estimation, though some provide p-values. Read more about [hypothesis testing and model comparison](../articles/comparison.html) using `mcp`.
 
 
 # Recommendation
@@ -323,7 +323,7 @@ wbsts::wbs.lsw(df$y)
 
 
 # Packages doing only fixed change points
-As explained in [../docs/articles/formulas.html], fixed change points can be implemented in almost all regression functions. You simply have an indicator variable saying whether there has been as shift at the corresponding x-value and use it like `lm(y ~ 1 + x * I(x > 30), data = df)`. Or if you don't want a carry-over effect from the first segment, do `lm(y ~ 1 * I(x < 30) + x * I(x >= 30), data = df)`. This will work for most regression packages in R, including `survival` and `lme4`.
+As explained in [the article on mcp formulas](../articles/formulas.htm), fixed change points can be implemented in almost all regression functions. You simply have an indicator variable saying whether there has been as shift at the corresponding x-value and use it like `lm(y ~ 1 + x * I(x > 30), data = df)`. Or if you don't want a carry-over effect from the first segment, do `lm(y ~ 1 * I(x < 30) + x * I(x >= 30), data = df)`. This will work for most regression packages in R, including `survival` and `lme4`.
 
 Some packages include this in a way where you don't have to code your indicators yourself, including:
 

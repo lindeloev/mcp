@@ -105,7 +105,7 @@ Because `BF` and `p` depends directly on the prior in Savage-Dickey test, it is 
 hypothesis(fit_info, "cp_1 = 4")
 ```
 
-[The Dirichlet prior on change points](../docs/articles/priors.html) may be better than the default prior when testing point hypotheses on change points, but an informed prior beats both.
+[The Dirichlet prior on change points](../articles/priors.html) may be better than the default prior when testing point hypotheses on change points, but an informed prior beats both.
 
 
 
@@ -127,7 +127,7 @@ hypothesis(fit_info, c(
 
 Because Bayes Factors are transitive, we can divide them to get the relative evidence for two hypotheses. Here, we get approximately $0.40 / 0.04 = 10$ in favor of hypothesis 3 over hypothesis 4.
 
-There are more examples [in the documentation for `hypothesis`](../docs/reference/hypothesis.html), including how to test varying effects. 
+There are more examples [in the documentation for `hypothesis`](../reference/hypothesis.html), including how to test varying effects. 
 
 `mcp` does nothing fancy for the directional tests, and you could do them yourself. Just takes the hypothesis verbatim into `mutate` and `summarise` the proportion of samples that "passes" this test. These are identical:
 
@@ -151,7 +151,7 @@ We can use the cross-validation from the `loo` package to compare the predictive
 
 The strength of LOO-CV is that you can compare any N models, as long as they are models of same data. In general, LOO-CV is the only inferential solution in `mcp` the models are not nested in each other. For example:
 
- * The existence of one or several change points. The [article on Poisson change points](../docs/articles/poisson.html) contain an example of comparing a change-point model to a model without change points.
+ * The existence of one or several change points. The [article on Poisson change points](../articles/poisson.html) contain an example of comparing a change-point model to a model without change points.
  * Models that differ by several parameters.
  * Comparing different priors.
 
