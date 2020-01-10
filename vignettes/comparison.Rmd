@@ -108,6 +108,7 @@ hypothesis(fit_info, "cp_1 = 4")
 [The Dirichlet prior on change points](../docs/articles/priors.html) may be better than the default prior when testing point hypotheses on change points, but an informed prior beats both.
 
 
+
 # Directional and combinatoric tests
 Maybe we just want to test a few directional hypothesis. For example:
 
