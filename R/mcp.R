@@ -73,14 +73,15 @@
 #'   * `"all"`: use all cores but one and sets `chains` to the same value. This is
 #'     a convenient way to maximally use your computer's power.
 #' @param chains Positive integer. Number of chains to run.
-#' @param iter Positive integer. Number of post-warmup samples to draw.
+#' @param iter Positive integer. Number of post-warmup samples to draw. The number
+#'   of iterations per chain is `iter/chains`.
 #' @param adapt Positive integer. Also sometimes called "burnin", this is the
 #'   number of samples used to reach convergence. Set lower for greater speed.
 #'   Set higher if the chains haven't converged yet or look at [tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/tips.html).
 #' @param inits A list if initial values for the parameters. This can be useful
 #'   if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
 #'   Defaults to `NULL`, i.e., no inits.
-#' @param jags_code Pass JAGS code to `mcp` to use directly. This is useful if
+#' @param jags_code String. Pass JAGS code to `mcp` to use directly. This is useful if
 #'   you want to tweak the code in `fit$jags_code` and run it within the `mcp`
 #'   framework.
 #' @details Notes on priors:
@@ -241,6 +242,15 @@ mcp = function(model,
   if (cores > chains)
     message("`cores` is greater than `chains`. Not all cores will be used.")
 
+  # jags_code
+  if(!is.null(jags_code)) {
+    if (!is.character(jags_code)) {
+      stop("`jags_code` must be NULL or a string with a JAGS model, including 'model {...}'.")
+    } else if(!stringr::str_detect(gsub(" ", "", jags_code), "model\\{")) {
+      stop("`jags_code` must be NULL or a string with a JAGS model, including 'model {...}'.")
+    }
+  }
+
   # Parallel fails on R version 3.6.0 and lower (sometimes at least).
   if (cores > 1 & getRversion() < "3.6.1")
     message("Parallel sampling (`cores` > 1) sometimes err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
@@ -283,11 +293,12 @@ mcp = function(model,
   formula_str_sim = get_all_formulas(ST, prior, pars$x, ytypes = c("ct", "sigma", "arma"))
   simulate = get_simulate(formula_str_sim, pars, nrow(ST), family)
 
-  # Make jags code
-  max_arma_order = get_arma_order(pars$arma)
-  formula_str_jags = get_all_formulas(ST, prior, pars$x)
-  jags_code_generated = get_jagscode(prior, ST, formula_str_jags, max_arma_order, family, sample)
-  jags_code = ifelse(is.null(jags_code), yes = jags_code_generated, no = jags_code)  # Get from user?
+  # Make jags code if it is not provided by the user
+  if (is.null(jags_code)) {
+    max_arma_order = get_arma_order(pars$arma)
+    formula_str_jags = get_all_formulas(ST, prior, pars$x)
+    jags_code = get_jagscode(prior, ST, formula_str_jags, max_arma_order, family, sample)
+  }
 
 
   ##########
