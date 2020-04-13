@@ -33,10 +33,11 @@ run_jags = function(data,
   if (length(pars) <= 2)
     pars = c(pars, "cp_0", "cp_1")
 
-  # Set number of cores from "all" or mc.cores. Max at 2 for CRAN etc.
-  opts = options()
-  if (is.numeric(opts$mc.cores))
-    cores = opts$mc.cores
+  # Set number of cores from "all" or mc.cores if `cores` is not specified.
+  # Max at 2 for CRAN etc.
+  opts_cores = options()$mc.cores
+  if (is.numeric(opts_cores) & cores == 1)
+    cores = opts_cores
   if (cores == "all") {
     cores = parallel::detectCores() - 1
     n.chains = cores
@@ -115,7 +116,7 @@ run_jags = function(data,
 
   } else {
     # If it didn't succeed, quit gracefully.
-    warning("--------------\nJAGS failed with the above error. Returning an `mcpfit` without samples. Inspect fit$prior and cat(fit$jags_code) to identify the problem.\n\nRead about typical causes and fixes here: https://lindeloev.github.io/mcp/articles/tips.html.")
+    warning("--------------\nJAGS failed with the above error. Returning an `mcpfit` without samples. Inspect fit$prior and cat(fit$jags_code) to identify the problem. Read about typical problems and fixes here: https://lindeloev.github.io/mcp/articles/tips.html.")
     return(NULL)
   }
 }

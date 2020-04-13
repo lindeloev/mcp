@@ -83,7 +83,7 @@ df$y = empty$simulate(df$x,
   # Varying: zero-centered and 10 between each level
   cp_1_id = 10 * (df$id_numeric - mean(df$id_numeric)))
 
-df
+head(df)
 ```
 
 Here, we "translated" the `id` to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around `cp_1`. The result:
