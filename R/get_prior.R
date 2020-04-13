@@ -7,12 +7,17 @@ cp_prior = list(
   cp_1 = "dunif(MINX, MAXX)",  # If there is only one change point
   cp = "dt(MINX, (MAXX - MINX) / N_CP, N_CP - 1)",
   cp_rel = "dunif(0, MAXX - %s)",
-  sd = "dnorm(0, (MAXX - MINX) / 2) T(0, )"
+  sd = "dnorm(0, 2 * (MAXX - MINX) / N_CP) T(0, )"
 )
 
-sigma_prior = list(
+sigma_prior_identity = list(
   sigma_int = "dnorm(0, SDY) T(0, )",
   sigma_slope = "dt(0, SDY / (MAXX - MINX), 3)"
+)
+
+sigma_prior_log = list(
+  sigma_int = "dnorm(log(SDY) / 2, log(SDY) / 2)",
+  sigma_slope = "dt(0, log(SDY) / (MAXX - MINX), 3)"
 )
 
 arma_prior = list(
@@ -23,28 +28,51 @@ arma_prior = list(
 
 # Per-family priors, mixing in the generic priors
 priors = list(
-  gaussian = c(cp_prior, sigma_prior, arma_prior, list(
-    ct_slope = "dt(0, SDY / (MAXX - MINX), 3)",
-    ct_int = "dt(0, 3 * SDY, 3)"
+  gaussian_identity = c(cp_prior, sigma_prior_identity, arma_prior, list(
+    ct_int = "dt(0, 3 * SDY, 3)",
+    ct_slope = "dt(0, SDY / (MAXX - MINX), 3)"
   )),
 
-  # Identical priors for binomial and bernoulli.
-  # A logit of +/- 5 is quite extreme. Very compatible with 3
-  binomial = c(cp_prior, arma_prior, list(
-    ct_slope = "dnorm(0, 3 / (MAXX - MINX))",
-    ct_int = "dnorm(0, 3)"
+  gaussian_log = c(cp_prior, sigma_prior_log, arma_prior, list(
+    ct_int = "dt(log(MEANY), log(SDY), 3)",  # The SD is inherently an overshoot here, so embodies the "3 * SDY" of the identity
+    ct_slope = "dt(0, log(SDY) / (3 * (MAXX - MINX)), 3)"
   )),
 
-  bernoulli = c(cp_prior, arma_prior, list(
-    ct_slope = "dnorm(0, 3 / (MAXX - MINX))",
-    ct_int = "dnorm(0, 3)"
+  # A logit/probit of +/- 5 is quite extreme. Very compatible with 3
+  binomial_logit = c(cp_prior, arma_prior, list(
+    ct_int = "dnorm(0, 3)",
+    ct_slope = "dnorm(0, 3 / (MAXX - MINX))"
   )),
 
-  poisson = c(cp_prior, arma_prior, list(
-    ct_slope = "dnorm(0, 10)",
-    ct_int = "dnorm(0, 10)"
+  binomial_identity = c(cp_prior, arma_prior, list(
+    ct_int = "dunif(0, 1)",
+    ct_slope = "dnorm(0, 1 / (MAXX - MINX))"
+  )),
+
+  poisson_log = c(cp_prior, arma_prior, list(
+    ct_int = "dnorm(0, 10)",
+    ct_slope = "dnorm(0, 10)"
+  )),
+
+  poisson_identity = c(cp_prior, arma_prior, list(
+    ct_int = "dt(MEANY, MEANY, 3)",  # Double-dipping data (bad). Try not to go below zero.
+    ct_slope = "dt(0, SDY / (MAXX - MINX), 3)"
+  )),
+
+  exponential_identity = c(cp_prior, list(
+    ct_int = "dgamma(0.1, 0.1)",
+    ct_slope = "dnorm(0, log(SDY))"
   ))
 )
+
+# Logit and probit are so similar that the same prior applies
+priors$binomial_probit = priors$binomial_logit
+
+# Identical priors for binomial and bernoulli.
+priors$bernoulli_logit = priors$binomial_logit
+priors$bernoulli_probit = priors$binomial_probit
+priors$bernoulli_identity = priors$binomial_identity
+
 
 
 
@@ -52,14 +80,14 @@ priors = list(
 # GET DEFAULT PRIORS #
 ######################
 # Change point
-get_default_prior_cp = function(ST, i, family) {
+get_default_prior_cp = function(ST, i, default_brutto) {
   if (i < 2)
     stop("Only i >= 2 allowed.")
 
   # An absolute change point intercept
   if (i >= 2)
     #return(sprintf(priors[[family$family]]$cp, ST$cp_code_prior[i - 1]))
-    return(truncate_prior_cp(ST, i, priors[[family$family]]$cp))
+    return(truncate_prior_cp(ST, i, default_brutto$cp))
 }
 
 
@@ -138,8 +166,12 @@ truncate_prior_cp = function(ST, i, prior_str) {
 #'
 
 get_prior = function(ST, family, prior = list()) {
-  # Populate this list
-  default_prior = list()
+  # Get ready to populate this list
+  default_this = list()
+  brutto_name = paste0(family$family, "_", family$link)
+  if (!exists(brutto_name, where = priors))
+    stop("mcp does not currently support `family = ", family$family, "(link = '", family$link, "')`. Please raise an issue on GitHub if you need this.")
+  default_brutto = priors[[brutto_name]]  # Get the full set of priors belong to this family-link combo
 
   # Add model-specific paramters
   for (i in seq_len(nrow(ST))) {
@@ -148,48 +180,48 @@ get_prior = function(ST, family, prior = list()) {
 
     # Intercept
     if (!is.na(S$ct_int))
-      default_prior[[S$ct_int[[1]]$name]] = priors[[family$family]]$ct_int
+      default_this[[S$ct_int[[1]]$name]] = default_brutto$ct_int
 
     # Each slope
     if (!is.na(S$ct_slope)) {
       for (name in S$ct_slope[[1]]$name) {
-        default_prior[[name]] = priors[[family$family]]$ct_slope
+        default_this[[name]] = default_brutto$ct_slope
       }
     }
 
     # Change point.
     if (i > 1) {
       if (nrow(ST) == 2) {
-        default_prior[[S$cp_name]] = priors[[family$family]]$cp_1
+        default_this[[S$cp_name]] = default_brutto$cp_1
       } else {
-        default_prior[[S$cp_name]] = get_default_prior_cp(ST, i, family)
+        default_this[[S$cp_name]] = get_default_prior_cp(ST, i, default_brutto)
       }
     }
 
     # Change point varying effects
     if (!is.na(S$cp_sd)) {
-      default_prior[[S$cp_sd]] = priors[[family$family]]$sd
-      default_prior[[S$cp_group]] = get_default_prior_cp_group(ST, i)
+      default_this[[S$cp_sd]] = default_brutto$sd
+      default_this[[S$cp_group]] = get_default_prior_cp_group(ST, i)
     }
 
     # Sigma intercept
     if (!is.na(S$sigma_int)) {
       for (name in S$sigma_int[[1]]$name) {
-        default_prior[[name]] = priors[[family$family]]$sigma_int
+        default_this[[name]] = default_brutto$sigma_int
       }
     }
 
     # Sigma slope
     if (!is.na(S$sigma_slope)) {
       for (name in S$sigma_slope[[1]]$name) {
-        default_prior[[name]] = priors[[family$family]]$sigma_slope
+        default_this[[name]] = default_brutto$sigma_slope
       }
     }
 
     # MA intercept
     for (order in seq_len(sum(!is.na(S$ma_int[[1]])))) {  # Number of entries in int
       for (name in S$ma_int[[1]][[order]]$name) {
-        default_prior[[name]] = priors[[family$family]]$arma_int
+        default_this[[name]] = default_brutto$arma_int
       }
     }
 
@@ -197,7 +229,7 @@ get_prior = function(ST, family, prior = list()) {
     for (order in seq_len(length(S$ma_slope[[1]]))) {  # Number of entries in slope
       if (!all(is.na(S$ma_slope[[1]][[order]]) == TRUE)) {  # If this slope exists...
         for (name in S$ma_slope[[1]][[order]]$name) {
-          default_prior[[name]] = priors[[family$family]]$arma_slope
+          default_this[[name]] = default_brutto$arma_slope
         }
       }
     }
@@ -205,7 +237,7 @@ get_prior = function(ST, family, prior = list()) {
     # AR intercept
     for (order in seq_len(sum(!is.na(S$ar_int[[1]])))) {  # Number of entries in int
       for (name in S$ar_int[[1]][[order]]$name) {
-        default_prior[[name]] = priors[[family$family]]$arma_int
+        default_this[[name]] = default_brutto$arma_int
       }
     }
 
@@ -213,7 +245,7 @@ get_prior = function(ST, family, prior = list()) {
     for (order in seq_len(length(S$ar_slope[[1]]))) {  # Number of entries in slope
       if (!all(is.na(S$ar_slope[[1]][[order]]) == TRUE)) {  # If this slope exists...
         for (name in S$ar_slope[[1]][[order]]$name) {
-          default_prior[[name]] = priors[[family$family]]$arma_slope
+          default_this[[name]] = default_brutto$arma_slope
         }
       }
     }
@@ -225,22 +257,22 @@ get_prior = function(ST, family, prior = list()) {
   }
 
   # A check
-  name_matches = names(prior) %in% names(default_prior)
+  name_matches = names(prior) %in% names(default_this)
   if (!all(name_matches))
     stop("Prior(s) were specified for the following parmameter name(s) that are not part of the model: '", paste0(names(prior)[!name_matches], collapse = "', '"), "'")
 
   # Replace default priors with user prior and return
-  prior = utils::modifyList(default_prior, prior)
+  this_prior = utils::modifyList(default_this, prior)
 
   # Sort according to type
-  i_cp = stringr::str_starts(names(prior), "cp_")
-  i_ints = stringr::str_starts(names(prior), "int_")
-  i_slopes = stringr::str_starts(names(prior), paste0(ST$x[1], "_"))
-  i_sigma = stringr::str_starts(names(prior), "sigma_")
-  i_ar = stringr::str_starts(names(prior), "ar[0-9]+")
-  i_ma = stringr::str_starts(names(prior), "ma[0-9]+")
+  i_cp = stringr::str_starts(names(this_prior), "cp_")
+  i_ints = stringr::str_starts(names(this_prior), "int_")
+  i_slopes = stringr::str_starts(names(this_prior), paste0(ST$x[1], "_"))
+  i_sigma = stringr::str_starts(names(this_prior), "sigma_")
+  i_ar = stringr::str_starts(names(this_prior), "ar[0-9]+")
+  i_ma = stringr::str_starts(names(this_prior), "ma[0-9]+")
 
-  prior = c(prior[i_cp], prior[i_ints], prior[i_slopes], prior[i_sigma], prior[i_ar], prior[i_ma])
-  class(prior) = "mcpprior"
-  return(prior)
+  this_prior = c(this_prior[i_cp], this_prior[i_ints], this_prior[i_slopes], this_prior[i_sigma], this_prior[i_ar], this_prior[i_ma])
+  class(this_prior) = "mcpprior"
+  return(this_prior)
 }

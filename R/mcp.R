@@ -66,7 +66,8 @@
 #'       prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
 #' @param cores Positive integer or "all". Number of cores.
 #'
-#'   * `1`: serial sampling
+#'   * `1`: serial sampling (Default). `options(mc.cores = 3)` will dominate `cores = 1`
+#'     but not larger values of `cores`.
 #'   * `>1`: parallel sampling on this number of cores. Ideally set `chains`
 #'     to the same value. Note: `cores > 1` takes a few extra seconds the first
 #'     time it's called but subsequent calls will start sampling immediately.
@@ -176,8 +177,11 @@ mcp = function(model,
   ################
 
   # Check data
-  if (is.null(data) & !(sample %in% c(FALSE, "none")))
+  if (is.null(data) & sample %in% c("post", "both"))
     stop("Cannot sample without data.")
+
+  if (is.null(data) & sample == "prior")
+    stop("Cannot sample prior without data as some default priors depend on data. Possible solution: set priors to be independent of data (no SDY, MEANX, etc.) and provide a bit of mock-up data, which then will have no effect.")
 
   if (!is.null(data)) {
     if (!is.data.frame(data) & !tibble::is_tibble(data))
@@ -208,21 +212,9 @@ mcp = function(model,
 
   # Check and recode family
   if (class(family) != "family")
-    stop("`family` must be one of gaussian() or binomial()")
+    stop("`family` is not a valid family. Should be gaussian(), binomial(), etc.")
 
-  if (!family$family %in% c("gaussian", "binomial", "bernoulli", "poisson"))
-    stop("`family` must be one of gaussian(), binomial(), or bernoulli()")
-
-  if (family$family == "gaussian" & !family$link %in% c("identity"))
-    stop("'identity' is currently the only supported link function for gaussian().")
-
-  if (family$family %in% c("binomial", "bernoulli") & !family$link %in% c("logit"))
-    stop("'logit' is currently the only supported link function for binomial() and bernoulli().")
-
-  if (family$family == "poisson" & !family$link %in% c("log"))
-    stop("'log' is currently the only supported link function for poisson().")
-
-  family = get_family(family$family, family$link)  # convert to mcp family
+  family = mcp_family(family)  # convert to mcp family
 
 
   # Check other stuff

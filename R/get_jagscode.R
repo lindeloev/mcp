@@ -75,19 +75,14 @@ model {")
     }
   }
 
-  # Autocorrelation: detect if there is an intercept or slope on AR
-  y_code = "y_[i_]"
+
+  ###################
+  # AUTOCORRELATION #
+  ###################
+  # Detect if there is an intercept or slope on AR
   has_ar = !all(is.na(unlist(ST$ar_code))) | !all(is.na(unlist(ST$ar_int)))
-  if (has_ar) {
-    # Add computation of autocorrelated residuals
+  if (has_ar)
     mm = paste0(mm, get_ar_code(arma_order, family, is_R = FALSE, xvar = ST$x[1]))
-    y_code = paste0(y_code, " + resid_[i_]")
-  }
-
-  # Add inverse link function to back-transform to observed metric
-  #if (family$link != "identity")  # not identity
-  y_code = paste0(family$linkinv_jags, "(", y_code, ")")
-
 
 
 
@@ -109,13 +104,24 @@ model {")
   # Add JAGS code for fitted values and indent it
   mm = paste0(mm, gsub("\n", "\n    ", formula_jags))
 
-  # Finally the likelihood
+
+  ##############
+  # LIKELIHOOD #
+  ##############
+  # Prepare y code (link and AR)
+  y_code = "y_[i_]"
+  if (has_ar)
+    y_code = paste0(y_code, " + resid_[i_]")
+  y_code = paste0(family$linkinv_jags, "(", y_code, ")")
+
+
+  # Family- and link-dependent likelihood
   mm = paste0(mm, "\n\n    # Likelihood and log-density for family = ", family$family, "()
     ")
 
   if (family$family == "gaussian") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dnorm(", y_code, ", 1 / sigma_[i_]^2)
-    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], ", y_code, ", 1 / sigma_[i_]^2)")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dnorm(", y_code, ", 1 / sigma_[i_]^2)  # SD as precision
+    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], ", y_code, ", 1 / sigma_[i_]^2)  # SD as precision")
 
   } else if (family$family == "binomial") {
     mm = paste0(mm, ST$y[1], "[i_] ~ dbin(", y_code, ", ", ST$trials[1], "[i_])
@@ -126,6 +132,9 @@ model {")
   } else if (family$family == "poisson") {
     mm = paste0(mm, ST$y[1], "[i_] ~ dpois(", y_code, ")
     loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], ", y_code, ")")
+  } else if (family$family == "exponential") {
+    mm = paste0(mm, ST$y[1], "[i_] ~ dexp(", y_code, ")
+    loglik_[i_] = logdensity.exp(", ST$y[1], "[i_], ", y_code, ")")
   }
 
   # Compute residuals for AR
