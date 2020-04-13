@@ -93,7 +93,8 @@ a convenient way to maximally use your computer's power.
 
 \item{chains}{Positive integer. Number of chains to run.}
 
-\item{iter}{Positive integer. Number of post-warmup samples to draw.}
+\item{iter}{Positive integer. Number of post-warmup samples to draw. The number
+of iterations per chain is \code{iter/chains}.}
 
 \item{adapt}{Positive integer. Also sometimes called "burnin", this is the
 number of samples used to reach convergence. Set lower for greater speed.
@@ -103,7 +104,7 @@ Set higher if the chains haven't converged yet or look at \href{https://lindeloe
 if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
 Defaults to \code{NULL}, i.e., no inits.}
 
-\item{jags_code}{Pass JAGS code to \code{mcp} to use directly. This is useful if
+\item{jags_code}{String. Pass JAGS code to \code{mcp} to use directly. This is useful if
 you want to tweak the code in \code{fit$jags_code} and run it within the \code{mcp}
 framework.}
 }

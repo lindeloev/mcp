@@ -214,7 +214,7 @@ unpack_cp = function(form_cp, i) {
 #' @keywords internal
 #' @param form_rhs A character representation of a formula
 #' @param i The segment number (integer)
-#' @param family An mcpfamily object returned by `get_family()`.
+#' @param family An mcpfamily object returned by `mcp_family()`.
 #' @param data A data.frame or tibble
 #' @param last_segment The last row in the segment table, made in `get_segment_table()`
 #' @return A one-row tibble with three columns for each of `ct`. `sigma`, `ar`, and `ma`:
@@ -807,6 +807,10 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
       stop("Data column '", ST$x[1], "' has to be numeric.")
     if (!is.numeric(data[, ST$y[1]]))
       stop("Data column '", ST$y[1], "' has to be numeric.")
+    if (any(is.na(data[, ST$x[1]])))
+      stop("NA not allowed in predictor: '", ST$x[1], "'")
+    if (any(is.na(data[, ST$y[1]])))
+      message("NA values detected in '", ST$y[1], "'. They will be imputed using the posterior predictive.")
 
     # Check varying
     if (length(derived_varying) > 0) {

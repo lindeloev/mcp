@@ -1,6 +1,15 @@
 # mcp 0.2.0.9000
 Next release, in progress.
 
+## New features:
+
+ * Support for more link functions across families. E.g., `family = gaussian(link = "log")`, `binomial(link = "identity")`, etc.
+
+
+## Bug fixes
+
+ * sigma is now forced to stay positive via a floor at 0.
+
 
 # mcp 0.2.0
 The API and internal structure should be stable now. v0.2.0 will be released on CRAN.
