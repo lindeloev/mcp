@@ -18,12 +18,12 @@ matrix:
 
 # Do not rebuild packages from source on every commit.
 # Perhaps later look at this: https://pjs-web.de/post/using-ccache-to-speed-up-r-package-checks-on-travis-ci/
-cache: packages
-r_binary_packages:
- - dplyr
- - stringi
- - curl
- - openssl
+#cache: packages
+#r_binary_packages:
+# - dplyr
+# - stringi
+# - curl
+# - openssl
 
 r_build_args: "--no-build-vignettes"
 r_check_args: "--no-build-vignettes --as-cran"
