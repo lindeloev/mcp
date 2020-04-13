@@ -10,3 +10,6 @@ vignettes/varying_cache
 vignettes/variance_cache
 vignettes/arma_cache
 fix_twittercard.R
+renv.lock
+renv
+revdep

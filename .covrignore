@@ -1,1 +1,8 @@
-R/lme4_utils.R
+renv
+revdep
+vignettes
+docs
+data-raw
+man
+pkgdown
+fix_twittercard.R
