@@ -1,5 +1,6 @@
 .Rproj.user
 .Rhistory
+.Rprofile
 inst/doc
 vignettes/binomial_cache
 vignettes/comparison_cache
