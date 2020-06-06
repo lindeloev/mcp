@@ -150,10 +150,10 @@ plot.mcpfit = function(x,
   dens_threshold = 0.001  # Do not display change point densities below this threshold.
   dens_height = 0.2  # proportion of plot y-axis that the change point density makes up
   if (all(q_fit == FALSE) & all(q_predict == FALSE)) {
-    HDI_SAMPLES = lines
+    n_samples = lines
   } else {
-    HDI_SAMPLES = 1000 # Maximum number of draws to use for computing HDI
-    HDI_SAMPLES = min(HDI_SAMPLES, length(samples) * nrow(samples[[1]]))
+    n_samples = 1000 # Maximum number of draws to use for computing HDI
+    n_samples = min(n_samples, length(samples) * nrow(samples[[1]]))
   }
   is_arma = length(fit$pars$arma) > 0
   if (is_arma & (all(q_fit != FALSE) | all(q_predict != FALSE)))
@@ -172,7 +172,9 @@ plot.mcpfit = function(x,
   # No faceting
   if (is.null(facet_by)) {
     samples = samples %>%
-      tidybayes::spread_draws(!!rlang::sym(regex_pars_pop), regex = TRUE)
+      tidybayes::spread_draws(!!rlang::sym(regex_pars_pop),
+                              regex = TRUE,
+                              n = n_samples)
 
   } else {
     # Prepare for faceting
@@ -183,11 +185,9 @@ plot.mcpfit = function(x,
     samples = samples %>%
       tidybayes::spread_draws(!!rlang::sym(regex_pars_pop),
                               (!!rlang::sym(varying_by_facet))[!!rlang::sym(facet_by)],
-                              regex = TRUE)
+                              regex = TRUE,
+                              n = n_samples)
   }
-
-  # Remove some samples
-  samples = tidybayes::sample_draws(samples, n = HDI_SAMPLES)  # TO DO: use spread_draws(n = draws) when tidybayes 1.2 is out
 
   # Get x-coordinates to evaluate simulate (etc.) at
   eval_at = get_eval_at(fit, facet_by)
@@ -215,7 +215,7 @@ plot.mcpfit = function(x,
   # For ARMA prediction, we need the raw data
   # We know that eval_at is the same length as nrow(data), so we can simply add corresponding data$y for each draw
   if (is_arma) {
-    samples = dplyr::mutate(samples, ydata = rep(fit$data[, fit$pars$y], HDI_SAMPLES * n_facet_levels))
+    samples = dplyr::mutate(samples, ydata = rep(fit$data[, fit$pars$y], n_samples * n_facet_levels))
   }
 
   # Predict y from model by adding fitted/predicted draws (vectorized)
@@ -300,7 +300,7 @@ plot.mcpfit = function(x,
     cp_regex = "^cp_[0-9]+$"
     cp_dens_xy = get_samples(fit, prior = prior) %>%  # Use all samples for this
       tidybayes::gather_draws(!!rlang::sym(cp_regex), regex = TRUE) %>%
-      dplyr::group_by(.data$.chain, add = TRUE) %>%
+      dplyr::group_by(.data$.chain, .add = TRUE) %>%
 
       # Get density as x-y values by chain and change point number.
       dplyr::summarise(dens = list(density_xy(.data$.value))) %>%
@@ -360,7 +360,7 @@ geom_quantiles = function(samples, q, xvar, facet_by, ...) {
 
     # Now compute the quantile for each parameter, quantile, and (optionally) facet:
     dplyr::group_by(!!xvar, .data$quant) %>%
-    dplyr::group_by(!!rlang::sym(facet_by), add = TRUE) %>%
+    dplyr::group_by(!!rlang::sym(facet_by), .add = TRUE) %>%
     dplyr::summarise(
       y = stats::quantile(.data$y_quant, probs = .data$quant[1])
     )
