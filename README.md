@@ -165,11 +165,11 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp) go in-depth w
  * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "varying", type = "dens_overlay", ncol = 3)`.
  * The default priors restrict varying change points to lie between the two adjacent change points.
 
-`mcp` currently supports the following GLM:
- * `gaussian(link = "identity")` (default). See examples above and below.
- * `binomial(link = "logit")`. See [binomial change points in mcp](https://lindeloev.github.io/mcp/articles/binomial.html).
- * `bernoulli(link = "logit")`. See [binomial change points in mcp](https://lindeloev.github.io/mcp/articles/binomial.html).
- * `poisson(link = "log")`. See [Poisson change points in mcp](https://lindeloev.github.io/mcp/articles/poisson.html).
+[Supported families and link functions](https://lindeloev.github.io/mcp/articles/families.html): 
+ * `mcp` currently supports specific combinations of families (`gaussian()`, `binomial()`, `bernoulli()`, and `poisson()`) and link functions (`identity`, `logit`, `probit`, and `log`).
+ * Use informative priors to avoid issues when using non-default priors.
+ * Use `binomial(link = "logit")` for [binomial change points in mcp](https://lindeloev.github.io/mcp/articles/binomial.html). Also relevant for `bernoulli(link = "logit")`.
+ * Use `poisson(link = "log")` for [Poisson change points in mcp](https://lindeloev.github.io/mcp/articles/poisson.html).
 
 [Model comparison and hypothesis testing](https://lindeloev.github.io/mcp/articles/comparison.html):
  * Do Leave-One-Out Cross-Validation using `loo(fit)` and `loo::loo_compare(fit1$loo, fit2$loo)`.

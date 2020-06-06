@@ -81,6 +81,8 @@ navbar:
         href: articles/arma.html
     - text: GLM
       menu:
+      - text: Supported families and link functions
+        href: articles/families.html
       - text: Poisson
         href: articles/poisson.html
       - text: Binomial and Bernoulli

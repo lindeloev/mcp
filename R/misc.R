@@ -23,7 +23,7 @@ exponential = function(link = "identity") {
     linkinv = identity  # on lambda
   )
   class(family) = "family"
-  mcp_family(family)
+  family = mcp_family(family)
 }
 
 
