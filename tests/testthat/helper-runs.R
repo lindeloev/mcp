@@ -80,7 +80,8 @@ test_runs = function(model,
     }
 
     # Assign globally so errors can be inspected upon hard fail
-    fit <<- quiet_out$result
+    fit = quiet_out$result
+
 
     # Test criterions. Will warn about very few samples
     if (!is.null(fit$mcmc_post)) {
@@ -149,7 +150,7 @@ test_plot = function(fit, varying_cols) {
   if (inherits(gg, "try-error")) {
     # (the error is an artefact of very small test data --> wide posteriors.)
     if (fit$family$family == "poisson") {
-      expected_error = "Modelled extremely large value"
+      expected_error = "Problem with \`mutate\\(\\)\` input \`predicted\\_\`\\.\\n\\033\\[31mx\\033\\[39m Modelled extremely large value"
     } else if (any(stringr::str_detect(fit$pars$sigma, "^sigma_.*_.*$"))) {  # for slopes on sigma
       expected_error = "Modelled negative sigma"
     } else {
@@ -157,14 +158,14 @@ test_plot = function(fit, varying_cols) {
     }
     expect_true(any(stringr::str_starts(attr(gg, "condition")$message, expected_error)))
   } else {
-    testthat::expect_s3_class(gg, c("gg", "ggplot"))
+    testthat::expect_true(ggplot2::is.ggplot(gg))
   }
 }
 
 # Test plot() calls to bayesplot
 test_plot_pars = function(fit) {
   gg = plot_pars(fit, type = "dens_overlay")
-  testthat::expect_s3_class(gg, c("gg", "ggplot"))
+  testthat::expect_true(ggplot2::is.ggplot(gg))
 }
 
 
