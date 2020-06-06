@@ -300,6 +300,7 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     ")
 
   # Return depends on family
+  # GAUSSIAN ------------------------------
   if (family$family == "gaussian") {
     # If ARMA, build resid_ and return with that
     if (is_arma) {
@@ -362,6 +363,8 @@ get_simulate = function(formula_str, pars, nsegments, family) {
       #   stop('Invalid `quantile` argument to simulate()')
       # }
     }")
+
+  # OTHER FAMILIES ---------------------
   } else if (family$family == "binomial") {
     out = paste0(out, "
     if (type == 'predict') {
@@ -384,6 +387,11 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     } else if (type == 'fitted') {
         return(add_simulated(", family$linkinv_r, "(y_)))
       }")
+  } else if (family$family == "exponential") {
+    out = paste0(out, "
+    if (type == 'predict') return(add_simulated(rexp(length(", pars$x, "),", family$linkinv_r, "(y_))))
+    if (type == 'fitted') return(add_simulated(1 / ", family$linkinv_r, "(y_)))
+      ")
   }
 
   out = paste0(out, "
