@@ -264,12 +264,11 @@ plot.mcpfit = function(x,
 
   # Add quantiles?
   if ((any(q_fit != FALSE))) {
-    samples_fit = dplyr::mutate(samples, y_quant = !!yvar)
-    gg = gg + geom_quantiles(samples_fit, q_fit, xvar, facet_by, color = "red")
+    gg = gg + geom_quantiles(samples, q_fit, xvar, yvar, facet_by, color = "red", lty = 2, lwd = 0.7)
   }
   if (any(q_predict != FALSE)) {
-    samples_predict = dplyr::mutate(samples, y_quant = .data$predicted_)
-    gg = gg + geom_quantiles(samples_predict, q_predict, xvar, facet_by, color = "green4")
+    yvar_predict = rlang::sym("predicted_")
+    gg = gg + geom_quantiles(samples, q_predict, xvar, yvar_predict, facet_by, color = "green4", lty = 2, lwd = 0.7)
   }
 
   # Add change point densities?
@@ -343,41 +342,26 @@ plot.mcpfit = function(x,
 #' @aliases geom_quantiles
 #' @keywords internal
 #' @inheritParams plot.mcpfit
-#' @param q Quantiles
+#' @inheritParams add_quantiles
 #' @param ... Arguments passed to geom_line
 #' @return A `ggplot2::geom_line` object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-geom_quantiles = function(samples, q, xvar, facet_by, ...) {
-  # Trick to declare no facet = common group for all
-  if (length(facet_by) == 0)
-    facet_by = xvar
-
-  # First: add quantiles column
-  data_quantiles = samples %>%
-    tidyr::expand_grid(quant = q) %>%
-
-    # Now compute the quantile for each parameter, quantile, and (optionally) facet:
-    dplyr::group_by(!!xvar, .data$quant) %>%
-    dplyr::group_by(!!rlang::sym(facet_by), .add = TRUE) %>%
-    dplyr::summarise(
-      y = stats::quantile(.data$y_quant, probs = .data$quant[1])
-    )
+geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
+  data_quantiles = add_quantiles(samples, quantiles, xvar, yvar, facet_by)
 
   # Return geom
   geom = ggplot2::geom_line(
     mapping = aes(
       y = .data$y,
-      group = .data$quant
+      group = .data$quantile
     ),
     data = data_quantiles,
-    lty = 2,
-    lwd = 0.7,
-    ...)
+    ...
+  )
   return(geom)
 }
-
 
 
 

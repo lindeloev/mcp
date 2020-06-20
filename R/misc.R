@@ -236,3 +236,33 @@ to_formula = function(form) {
 
   return(form)
 }
+
+#' Expand samples with quantiles
+#'
+#' @aliases add_quantiles
+#' @keywords internal
+#' @inheritParams plot.mcpfit
+#' @param samples A tidybayes tibble
+#' @param quantiles Vector of quantiles (0.0 to 1.0)
+#' @param xvar An rlang::sym() with the name of the x-col in `samples`
+#' @param yvar An rlang::sym() with the name of the response col in `samples`
+#' @return A tidybayes long format tibble with the column "quantile"
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
+add_quantiles = function(samples, quantiles, xvar, yvar, facet_by) {
+  # Trick to declare no facet = common group for all
+  if (length(facet_by) == 0)
+    facet_by = xvar
+
+  # Return data with added quantiles
+  samples %>%
+    tidyr::expand_grid(quantile = quantiles) %>%
+
+    # Now compute the quantile for each parameter, quantile, and (optionally) facet:
+    dplyr::group_by(!!xvar, .data$quantile) %>%
+    dplyr::group_by(!!rlang::sym(facet_by), .add = TRUE) %>%
+    dplyr::summarise(
+      y = stats::quantile(!!yvar, probs = .data$quantile[1])
+    )
+}
