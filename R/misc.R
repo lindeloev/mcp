@@ -214,3 +214,25 @@ remove_terms = function(form, remove) {
     return(stats::as.formula(formula_str, env=globalenv()))
   }
 }
+
+
+#' Takes any formula-like input and returns a formula
+#' @aliases to_formula
+#' @keywords internal
+#' @param form Formula or character (with or without initial tilde/"~")
+#' @return A formula
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+to_formula = function(form) {
+  if (is.character(form)) {
+    # Add tilde
+    if (!stringr::str_detect(form, "^(\\s|)~")) {
+      form = paste0("~", form)
+    }
+    form = stats::as.formula(form)
+  } else if (!rlang::is_formula(form)) {
+    stop("`form` must character or formula but got ", form)
+  }
+
+  return(form)
+}

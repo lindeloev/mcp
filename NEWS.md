@@ -1,3 +1,12 @@
+# mcp 0.3.0
+
+## Other changes
+ - More internal error checking of invalidly specified formulas with helpful error messages.
+
+## Bug fixes
+
+ - Support for dplyr 1.0.0. Now also requires tidybayes 2.0.3
+
 # mcp 0.2.0.9000
 Next release, in progress.
 
