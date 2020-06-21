@@ -13,11 +13,11 @@ The Poisson distribution models the number of events within similar-sized time f
 
 
 # Coal mining disasters
-A dataset if coal mining disasters has grown very popular in the change point literature (available in `boot::coal`). It contains a timestamp of each coal mining disaster from 1851 to 1962. By binning the number of events within each year (fixed time frame), we have something very Poisson-friendly:
+A dataset on coal mining disasters has grown very popular in the change point literature (available in `boot::coal`). It contains a timestamp of each coal mining disaster from 1851 to 1962. By binning the number of events within each year (fixed time frame), we have something very Poisson-friendly:
 
 ```{r, message=FALSE, warning=FALSE}
 # Number of disasters by year
-library(dplyr)
+library(dplyr, warn.conflicts = FALSE)
 df = round(boot::coal) %>% 
   group_by(date) %>% 
   count()

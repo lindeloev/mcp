@@ -69,7 +69,7 @@ It is quite similar to simulating non-varying data, except that we need to simul
 library(mcp)
 empty = mcp(model, sample = FALSE)
 
-library(dplyr)
+library(dplyr, warn.conflicts = FALSE)
 varying = c("Clark", "Louis", "Batman", "Batgirl", "Spiderman", "Jane")
 df = data.frame(
   x = runif(length(varying) * 30, 0, 100),  # 30 data points for each
