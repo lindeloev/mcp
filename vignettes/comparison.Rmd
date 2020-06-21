@@ -135,7 +135,7 @@ There are more examples [in the documentation for `hypothesis`](../reference/hyp
 hypothesis(fit, "cp_1 > 3.5 & cp_1 < 4.5")
 
 # ... is identical to
-library(dplyr)
+library(dplyr, warn.conflicts = FALSE)
 result = tidybayes::tidy_draws(fit$mcmc_post) %>%
   mutate(test = cp_1 > 3.5 & cp_1 < 4.5) %>%
   summarise(p = sum(test) / n())
