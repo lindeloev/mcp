@@ -298,6 +298,17 @@ print.mcpprior = function(x, ...) {
 }
 
 
+#' Checks if argument is an `mcpfit` object
+#'
+#' @aliases is.mcpfit
+#' @param x An `R` object.
+#' @export
+#'
+is.mcpfit = function(x) {
+  inherits(x, "mcpfit")
+}
+
+
 #' Internal function to get samples.
 #'
 #' Returns posterior samples, if available. If not, then prior samples. If not,
