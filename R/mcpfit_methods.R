@@ -44,6 +44,20 @@ NULL
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
+  # Check arguments
+  if (class(fit) != "mcpfit")
+    stop("`object`` must be an mcpfit object.")
+
+  if (!is.numeric(width) | width < 0 | width > 1 | length(width) != 1)
+    stop("`width`` must be a float between 0 and 1. Got: ", width)
+
+  if (!is.logical(varying))
+    stop("`varying` must be TRUE or FALSE. Got: ", varying)
+
+  if (!is.logical(prior))
+    stop("`prior` must be TRUE or FALSE. Got: ", prior)
+
+
   # Get posterior/prior samples
   samples = get_samples(fit, prior = prior)
 
@@ -66,23 +80,20 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   }
 
   # Get parameter estimates
-  # TO DO: Temporarily suppress warnings about tidyr1.0::unnest() until tidybayes 1.2 is out.
-  suppressWarnings(
-    estimates <- samples %>%  # whoa, a use case for <- over = !!!1!1one
-      # Get ready to compute stuff for each parameter
-      tidybayes::tidy_draws() %>%
-      tidyr::pivot_longer(-tidyselect::starts_with(".")) %>%
-      dplyr::group_by(.data$name) %>%
+  estimates = samples %>%
+    # Get ready to compute stuff for each parameter
+    tidybayes::tidy_draws() %>%
+    tidyr::pivot_longer(-tidyselect::starts_with(".")) %>%
+    dplyr::group_by(.data$name) %>%
 
-      # Compute mean and HDI intervals and name appropriately
-      tidybayes::mean_hdci(.data$value, .width = width) %>%
-      dplyr::rename(mean = .data$value,
-                    lower = .data$.lower,
-                    upper = .data$.upper) %>%
+    # Compute mean and HDI intervals and name appropriately
+    tidybayes::mean_hdci(.data$value, .width = width) %>%
+    dplyr::rename(mean = .data$value,
+                  lower = .data$.lower,
+                  upper = .data$.upper) %>%
 
-      # Remove unneeded stuf
-      dplyr::select(-tidyselect::starts_with("."))
-  )
+    # Remove unneeded stuf
+    dplyr::select(-tidyselect::starts_with("."))
 
   # Revert HACK and continue
   if (!stringr::str_detect(regex_pars, "\\|") & varying == FALSE) {
@@ -121,7 +132,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
         }
 
         # Name like the MCMC columns and use only unique combinations (assuming identical value for each level)
-        names(value) = paste0(varying, "[", labs, "]")
+        effect_names = paste0(varying, "[", labs, "]")
         value = value[!duplicated(value)]
 
         # Delete the simulation vector and add the new label-value pairs to list
@@ -133,7 +144,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
     # Now unpack the whole bunch to a left_join() friendly data.frame.
     simulated = unlist(simulated)  # as named vector
     simulated = data.frame(
-      name = names(simulated),
+      name = effect_names,
       sim = as.numeric(simulated),  # without row names
       stringsAsFactors = FALSE
     )
@@ -147,9 +158,8 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 
   # Merge them and return
   result = dplyr::bind_cols(estimates, diagnostics)
-  data.frame(result)
+  data.frame(result, row.names = NULL)
 }
-
 
 
 #' Summarise mcpfit objects
@@ -240,7 +250,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
     print(data.frame(result), digits = digits, row.names = FALSE)
 
     if (!is.null(fit$pars$varying))
-      cat("\nUse `ranef(object)` to summarise the varying effect(s):", paste0(fit$pars$varying, collapse = ", "))
+      cat("\nUse `ranef(fit)` to summarise the varying effect(s):", paste0(fit$pars$varying, collapse = ", "))
 
     return(invisible(result))
   }
@@ -249,8 +259,6 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
     return(invisible(NULL))
   }
 }
-
-
 
 
 #' @aliases fixef fixef.mcpfit fixed.effects
@@ -303,6 +311,9 @@ print.mcpprior = function(x, ...) {
 #' @param message TRUE: gives a message if returning prior samples. FALSE = no message
 #' @param error TRUE: err if there are no samples. FALSE: return NULL
 get_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
+  if (!is.logical(prior))
+    stop("`prior` must be TRUE or FALSE.")
+
   if (prior == TRUE) {
     if (coda::is.mcmc.list(fit$mcmc_prior)) {
       return(fit$mcmc_prior)
@@ -310,6 +321,7 @@ get_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
       stop("Prior requested but the prior was not sampled.")
     }
   }
+
   if (coda::is.mcmc.list(fit$mcmc_post)) {
     return(fit$mcmc_post)
   } else if (coda::is.mcmc.list(fit$mcmc_prior)) {
