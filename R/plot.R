@@ -80,6 +80,7 @@ plot.mcpfit = function(x,
   fit = x
 
   # Check arguments
+  # The following are checked in pp_eval: q_fit, q_predict, rate
   if (class(fit) != "mcpfit")
     stop("Can only plot mcpfit objects. x was class: ", class(fit))
 
@@ -92,46 +93,21 @@ plot.mcpfit = function(x,
     lines = 0
   }
 
-  if (lines > 1000) {
-    lines = 1000
-    warning("Setting `lines` to 1000 (maximum).")
-  }
-
   if (!geom_data %in% c("point", "line", FALSE))
     stop("`geom_data` has to be one of 'point', 'line', or FALSE.")
 
   if (!is.logical(cp_dens))
     stop("`cp_dens` must be TRUE or FALSE.")
 
-  if (all(q_fit == TRUE))
-    q_fit = c(0.025, 0.975)
-
-  if (all(q_predict == TRUE))
-    q_predict = c(0.025, 0.975)
-
-  if (!is.logical(q_fit) & !is.numeric(q_fit))
-    stop("`q_fit` has to be TRUE, FALSE, or a vector of numbers.")
-
-  if (is.numeric(q_fit) & (any(q_fit > 1) | any(q_fit < 0)))
-    stop ("All `q_fit` have to be between 0 (0%) and 1 (100%).")
-
-  if (!is.logical(q_predict) & !is.numeric(q_predict))
-    stop("`q_predict` has to be TRUE, FALSE, or a vector of numbers.")
-
-  if (is.numeric(q_predict) & (any(q_predict > 1) | any(q_predict < 0)))
-    stop ("All `q_predict` have to be between 0 (0%) and 1 (100%).")
-
-  if (!is.logical(rate))
-    stop("`rate` has to be TRUE or FALSE.")
-
-  if (!is.logical(prior))
-    stop("`prior` must be either TRUE or FALSE.")
-
   # Is facet_by a random/nested effect?
-  varying_groups = logical0_to_null(unique(stats::na.omit(fit$.other$ST$cp_group_col)))
   if (!is.null(facet_by)) {
-    if (!facet_by %in% varying_groups)
-      stop("`facet_by` is not a data column used as varying grouping.")
+    if (is.character(facet_by)) {
+      varying_groups = logical0_to_null(unique(stats::na.omit(fit$.other$ST$cp_group_col)))
+      if (!facet_by %in% varying_groups)
+        stop("`facet_by` must be a data column and modeled as a varying effect.")
+    } else {
+      stop("`facet_by` must be a character string. Got ", class(id), ".")
+    }
   }
 
 

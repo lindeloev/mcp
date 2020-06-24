@@ -226,9 +226,6 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
   if (class(object) != "mcpfit")
     stop("`object`` must be an mcpfit object.")
 
-  if (width < 0 | width > 1)
-    stop("`width`` must be between 0 and 1")
-
   if (digits != floor(digits) | digits < 0)
     stop("`digits`` must be a positive integer.")
 
@@ -623,3 +620,4 @@ fitted.mcpfit = function(
     prior = prior,
     which_y = which_y
   )
+}
