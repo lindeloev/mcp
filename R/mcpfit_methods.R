@@ -333,3 +333,282 @@ get_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
 
   return(NULL)
 }
+
+
+#' Get change point samples for each level in the varying effect
+#'
+#' @aliases get_cp_with_varying
+#' @keywords internal
+#' @param fit An `mcpfit` object.
+#' @param i Positive integer. The change point number.
+#' @param prior Boolean.
+#' @return Tibble in long format.
+#'
+get_cp_with_varying = function(fit, i, facet_by = NULL, prior = FALSE) {
+  param_name_pop = rlang::sym(fit$.other$ST$cp_name[i + 1])
+
+  # Return in canonical format for non-varying change points
+  # or varying change points that are not the specified facet
+  varying_col = fit$.other$ST$cp_group_col[i + 1]
+  is_varying = is.na(varying_col) == FALSE
+  is_facet = ifelse(is.character(facet_by) & is_varying, facet_by == varying_col, FALSE)
+  if (is_varying == FALSE | (is_varying == TRUE & is_facet == FALSE)) {
+    #stop("cp_", i, " does not have associated varying effects.")
+
+    samples = get_samples(fit, prior)
+    cp_samples_long = samples %>%
+      tidybayes::spread_draws(!!param_name_pop) %>%
+      rename(cp_value = as.character(param_name_pop)) %>%
+      mutate(
+        cp_param = as.character(param_name_pop),
+        varying_param = NA,
+        varying_level = NA,
+        varying_value = 0,
+        value = cp_value
+      )
+  } else {
+    # Get variable names from the segment table
+    param_name_varying = rlang::sym(fit$.other$ST$cp_group[i + 1])
+    column = rlang::sym(fit$.other$ST$cp_group_col[i + 1])
+
+    # Get samples and get tidy samples for just this i
+    samples = get_samples(fit, prior)
+    cp_samples_long = samples %>%
+      tidybayes::spread_draws(
+        !!param_name_pop,
+        (!!param_name_varying)[!!column]
+      ) %>%
+
+      # Canonical naming for long format.
+      dplyr::ungroup() %>%
+      dplyr::rename(
+        varying_level = as.character(column),
+        varying_value = as.character(param_name_varying),
+        cp_value = as.character(param_name_pop)
+      ) %>%
+
+      # More long format, and add varying to population cp.
+      dplyr::mutate(
+        cp_param = as.character(param_name_pop),
+        varying_param = as.character(param_name_varying),
+        value = cp_value + varying_value #rowSums(select(., starts_with("cp_")))) %>%
+      ) %>%
+
+      # Return nicely
+      dplyr::select(.chain, .iteration, .draw, cp_param, cp_value, varying_param, varying_level, varying_value, value) %>%
+      arrange(varying_level, .chain, .iteration, .draw)
+  }
+
+  return(cp_samples_long)
+}
+
+
+#' Get tidy samples
+#'
+#' @aliases get_tidy_samples
+#' @keywords internal
+#' @param varying `TRUE` (all varying effects), `FALSE` (no varying efects) or
+#'   a character string, specifying a particular varying effect.
+#' @return `tibble` of posterior draws in `tidybayes` format
+
+get_tidy_samples = function(fit, prior = FALSE, varying = TRUE) {
+
+  # Select posterior/prior samples
+  samples = get_samples(fit, prior = prior)
+
+  # General settings
+  xvar = rlang::sym(fit$pars$x)
+  yvar = rlang::sym(fit$pars$y)
+  simulate = fit$simulate  # To make a function call work later
+
+  # All parameters of the model
+  regex_pars_pop = paste0(c(fit$pars$population, fit$pars$varying), collapse="|")
+
+  # No faceting
+  samples = samples %>%
+    tidybayes::spread_draws(!!rlang::sym(regex_pars_pop), regex = TRUE)
+
+  return(samples)
+}
+
+
+#' Predictions from samples
+#'
+#' @aliases pp_eval pp_eval.mcpfit
+#' @keywords internal
+#' @inheritParams plot.mcpfit
+#' @param newdata A `tibble` or a `data.frame` containing predictors in the model. If `NULL` (default), the original data is used.
+#' @param summary Summarise at each x-value
+#' @param q_fit Vector of quantiles. Only in effect when `summary == TRUE`.
+#' @param q_predict Vector of quantiles. Only in effect when `summary == TRUE`.
+#' @return
+#'   * If `summary = TRUE`: A `tibble` with the posterior mean for each row in `newdata`, If `newdata` is `NULL`, the data in `fit$data` is used.
+#'   * If `summary = FALSE`: A `tidybayes` `tibble` with all the posterior samples (`Ns`) evaluated at each row in `newdata` (`Nn`), i.e., with `Ns x Nn` rows.
+#' @seealso fitted.mcpfit predict.mcpfit
+#'
+pp_eval = function(
+  object,
+  newdata = NULL,
+  summary = TRUE,
+  q_fit = FALSE,
+  q_predict = FALSE,
+  rate = TRUE,
+  prior = FALSE,
+  which_y = "ct",
+  varying = TRUE
+) {
+  # Naming convention in mcp
+  fit = object
+
+  # Check inputs
+  if (length(fit$pars$arma) != 0)
+    stop("`predict.mcpfit()` is not implemented for ARMA models yet. Raise an issue on GitHub if you need it.")
+
+  if (!is.null(newdata)) {
+    if (!is.data.frame(newdata) & !tibble::is.tibble(newdata))
+      stop("`newdata` must be a data.frame or a tibble. Got '", paste0(class(newdata), collapse = "', '"), "'")
+
+    required_cols = c(fit$pars$x, fit$pars$trials, fit$pars$varying)
+    cols_in_newdata = required_cols %in% colnames(newdata)
+    if (any(cols_in_newdata == FALSE)) {
+      stop("Missing columns '", paste0(required_cols[!cols_in_newdata], collapse = "', '"), "' in `newdata`.")
+    }
+  } else {
+    newdata = fit$data
+  }
+
+  if (all(q_fit == TRUE))
+    q_fit = c(0.025, 0.975)
+
+  if (all(q_predict == TRUE))
+    q_predict = c(0.025, 0.975)
+
+  if (!is.logical(q_fit) & !is.numeric(q_fit))
+    stop("`q_fit` has to be TRUE, FALSE, or a vector of numbers.")
+
+  if (is.numeric(q_fit) & (any(q_fit > 1) | any(q_fit < 0)))
+    stop ("All `q_fit` have to be between 0 (0%) and 1 (100%).")
+
+  if (!is.logical(q_predict) & !is.numeric(q_predict))
+    stop("`q_predict` has to be TRUE, FALSE, or a vector of numbers.")
+
+  if (is.numeric(q_predict) & (any(q_predict > 1) | any(q_predict < 0)))
+    stop ("All `q_predict` have to be between 0 (0%) and 1 (100%).")
+
+  if (!is.logical(rate))
+    stop("`rate` has to be TRUE or FALSE.")
+
+
+  samples = get_tidy_samples(fit, prior, varying)
+
+  # Summarise
+  if (summary == TRUE) {
+    df_return = suppressMessages(samples %>%  # TO DO: For dplyr 1.0.0 summarise... until it gets more widely adopted and .groups is not experimental anymore.
+                                   dplyr::group_by(!!xvar) %>%
+                                   dplyr::summarise(
+                                     mean = mean(!!yvar)
+                                   ))
+
+    # Quantiles of estimated value
+    if (all(q_fit != FALSE)) {
+      quantiles_fit = samples %>%
+        get_quantiles(q_fit, xvar, yvar, NULL) %>%
+        dplyr::mutate(quantile = 100*quantile) %>%
+        tidyr::pivot_wider(names_from = quantile, names_prefix = "fit", values_from = y)
+
+      df_return = dplyr::left_join(df_return, quantiles_fit, by = as.character(xvar))
+    }
+
+    # Quantiles of prediction
+    if(all(q_predict != FALSE)) {
+      quantiles_predict = samples %>%
+        dplyr::mutate(predicted_ := rlang::exec(simulate, !!!., type = "predict", rate = rate, which_y = which_y, add_attr = FALSE)) %>%
+        get_quantiles(q_predict, xvar, rlang::sym("predicted_"), NULL) %>%
+        dplyr::mutate(quantile = 100*quantile) %>%
+        tidyr::pivot_wider(names_from = quantile, names_prefix = "predict", values_from = y)
+
+      df_return = dplyr::left_join(df_return, quantiles_predict, by = as.character(xvar))
+    }
+
+    return(df_return)
+  } else {
+    return(samples)
+  }
+}
+
+
+#' Samples from the Posterior Predictive Distribution
+#'
+#' @aliases predict predict.mcpfit
+#' @inheritParams pp_eval
+#' @inherit pp_eval return
+#' @seealso pp_eval fitted.mcpfit
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @export
+#' @examples
+#' predict(ex_fit)  # Evaluate at each ex_fit$data
+#' predict(ex_fit, q_predict = TRUE)  # Same, but add prediction intervals
+#' fitted(ex_fit, summary = FALSE)  # Samples instead of summary.
+#' predict(
+#'   ex_fit,
+#'   newdata = data.frame(x = c(-5, 20, 300)),  # Evaluate
+#'   q_predict = c(0.025, 0.5, 0.975)
+#' )
+#'
+predict.mcpfit = function(
+  object,
+  newdata = NULL,
+  summary = TRUE,
+  q_predict = TRUE,
+  rate = TRUE,
+  prior = FALSE,
+  which_y = "ct"
+) {
+  pp_eval(
+    object,
+    newdata = newdata,
+    summary = summary,
+    q_predict = q_predict,
+    rate = rate,
+    prior = prior,
+    which_y = which_y
+  )
+}
+
+
+#' Expected Values from the Posterior Predictive Distribution
+#'
+#' @aliases fitted fitted.mcpfit
+#' @inheritParams pp_eval
+#' @inherit pp_eval return
+#' @seealso pp_eval predict.mcpfit
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @export
+#' @examples
+#' fitted(ex_fit)
+#' fitted(ex_fit, q_fit = TRUE)  # With 95% credible interval.
+#' fitted(ex_fit, summary = FALSE)  # Samples instead of summary.
+#' fitted(ex_fit,
+#'        newdata = data.frame(x = c(-5, 20, 300)),  # New data
+#'        q_predict = c(0.025, 0.5, 0.975))
+#'
+fitted.mcpfit = function(
+  object,
+  newdata = NULL,
+  summary = TRUE,
+  q_fit = TRUE,
+  rate = TRUE,
+  prior = FALSE,
+  which_y = "ct"
+) {
+  pp_eval(
+    object,
+    newdata = newdata,
+    summary = summary,
+    q_fit = q_fit,
+    rate = rate,
+    prior = prior,
+    which_y = which_y
+  )
