@@ -4,7 +4,6 @@
 #' @param link Link function.
 #' @export
 #'
-
 bernoulli = function(link = "logit") {
   # Just copy binomial()
   family = binomial(link = link)
@@ -12,6 +11,12 @@ bernoulli = function(link = "logit") {
   mcp_family(family)
 }
 
+#' Exponential family for mcp
+#'
+#' @aliases exponential
+#' @param link Link function
+#' @export
+#'
 exponential = function(link = "identity") {
   if (link != "identity")
     stop("Only link = 'identity' is currently supported for the exponential() family in mcp.")
@@ -239,7 +244,7 @@ to_formula = function(form) {
 
 #' Expand samples with quantiles
 #'
-#' @aliases add_quantiles
+#' @aliases get_quantiles
 #' @keywords internal
 #' @inheritParams plot.mcpfit
 #' @param samples A tidybayes tibble
@@ -250,7 +255,7 @@ to_formula = function(form) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-add_quantiles = function(samples, quantiles, xvar, yvar, facet_by) {
+get_quantiles = function(samples, quantiles, xvar, yvar, facet_by) {
   # Trick to declare no facet = common group for all
   if (length(facet_by) == 0)
     facet_by = xvar

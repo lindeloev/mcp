@@ -1,23 +1,28 @@
-# mcp 0.3.0
-
-## Other changes
- - More internal error checking of invalidly specified formulas with helpful error messages.
-
-## Bug fixes
-
- - Support for dplyr 1.0.0. Now also requires tidybayes 2.0.3
-
 # mcp 0.2.0.9000
-Next release, in progress.
 
 ## New features:
 
  * Support for more link functions across families. E.g., `family = gaussian(link = "log")`, `binomial(link = "identity")`, etc.
 
+ * Use `predict(fit)` to get predicted values and intervals. Use `fitted(fit)` to get estimated values and intervals. Use `pp_eval(fit, q_fit = ..., q_predict = ...)` to get both in one call. Use the `newdata` argument to get out-of-sample fitted/predicted values and `summary = FALSE` to get per-posterior-sample fits/predictions. The other arguments align with the options already in `plot.mcpfit()`, including getting fits/predictions for sigma, for the prior, and arbitrary quantiles.
+
+
+## Other changes
+
+ * More internal error checking of invalidly specified formulas with helpful error messages.
+
+ * There's no longer a ceiling of the number of lines in `plot.mcpfit()`.
+ 
+ * `ranef()` and `fixef()` returns no longer have rownames.
+
 
 ## Bug fixes
 
+ * Now plots densities of varying change point when `plot(fit, facet_by = "my_varying_column")`.
+
  * sigma is now forced to stay positive via a floor at 0.
+ 
+ * Support and require dplyr 1.0.0. Now also requires tidybayes 2.0.3.
 
 
 # mcp 0.2.0
