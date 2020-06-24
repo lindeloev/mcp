@@ -127,7 +127,6 @@ unpack_y = function(form_y, i, family, data) {
   if (got_trials == TRUE) {
     trials_term = term_labels[trials_term_index]  # Extract terms
     trials_col = get_term_content(trials_term)
-    check_terms_in_data(trials_col, data, i, n_terms = 1)
     term_labels = term_labels[!trials_term_index]  # remove now
   } else {
     trials_col = NA
@@ -139,7 +138,6 @@ unpack_y = function(form_y, i, family, data) {
   if (got_weights == TRUE) {
     weights_term = term_labels[weights_term_index]
     weights_col = get_term_content(weights_term)
-    check_terms_in_data(weights_col, data, i, n_terms = 1)
     term_labels = term_labels[!weights_term_index]
   } else {
     weights_col = NA
@@ -147,9 +145,7 @@ unpack_y = function(form_y, i, family, data) {
 
   # RESPONSE
   y_col = term_labels  # Just for consistent naming
-  if (length(y_col == 1)) {
-    check_terms_in_data(y_col, data, i, n_terms = 1)
-  } else if (length(y_col) > 1) {
+  if (length(y_col) > 1) {
     stop("There should be exactly one response variable. Found '", paste0(y_col, collapse="' and '", "' in segment ", i, "."))
   } else if (length(y_col) == 0 & (got_trials == TRUE | got_weights == TRUE)) {
     stop("Cannot take trials() or weights() without a response variable.")
