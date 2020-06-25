@@ -70,7 +70,7 @@ model_varying = list(
   1 + (1|id) ~ 0 + x + sigma(1)  # joined slope, varying by id
 )
 fit_varying = mcp(model_varying, ex_varying)
-theme_it(plot(fit_varying, facet_by = "id", cp_dens = FALSE), "Varying slope change")
+theme_it(plot(fit_varying, facet_by = "id"), "Varying slope change")
 save_it("ex_varying.png")
 
 

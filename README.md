@@ -217,7 +217,7 @@ model = list(
   1 + (1|id) ~ 0 + x  # joined slope, varying by id
 )
 fit = mcp(model, ex_varying)
-plot(fit, facet_by = "id", cp_dens = FALSE)
+plot(fit, facet_by = "id")
 ```
 
 ![](https://github.com/lindeloev/mcp/raw/master/man/figures/ex_varying.png)
