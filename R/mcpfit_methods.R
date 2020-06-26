@@ -361,8 +361,7 @@ get_cp_with_varying = function(fit, i, facet_by = NULL, prior = FALSE) {
   is_varying = is.na(varying_col) == FALSE
   is_facet = ifelse(is.character(facet_by) & is_varying, facet_by == varying_col, FALSE)
   if (is_varying == FALSE | (is_varying == TRUE & is_facet == FALSE)) {
-    #stop("cp_", i, " does not have associated varying effects.")
-
+    # Return population samples and insert NA in the varying cols
     samples = get_samples(fit, prior)
     cp_samples_long = samples %>%
       tidybayes::spread_draws(!!param_name_pop) %>%
@@ -411,33 +410,114 @@ get_cp_with_varying = function(fit, i, facet_by = NULL, prior = FALSE) {
 }
 
 
-#' Get tidy samples
+#' Get tidy samples with or without varying effects
+#'
+#' Returns in a format useful for `fit$simulate()` with population parameters in wide format
+#' and varying effects in long format (the number of rows will be `n_samples * n_levels_in_varying`).
 #'
 #' @aliases get_tidy_samples
 #' @keywords internal
-#' @param varying `TRUE` (all varying effects), `FALSE` (no varying efects) or
-#'   a character string, specifying a particular varying effect.
-#' @return `tibble` of posterior draws in `tidybayes` format
+#' @inheritParams get_samples
+#' @param population
+#'   * `TRUE`: All population effects. Same as `fit$pars$population`.
+#'   * `FALSE`: No population effects. Same as `c()`.
+#'   * Character vector: Only include specified population parameters - see `fit$pars$population`.
+#' @param varying
+#'   * `TRUE`: All varying effects. Same as `fit$pars$varying`.
+#'   * `FALSE`: No varying efects. Same as `c()`.
+#'   * Character vector: Only include specified varying parameters - see `fit$pars$varying`.
+#' @param absolute
+#'   * `TRUE`: Returns the absolute location of all varying change points.
+#'   * `FALSE`: Just returns the varying effects.
+#'   * Character vector: Only do absolute transform for these varying parameters - see `fit$pars$varying`.
+#'
+#'   OBS: This currently only applies to varying change points. It is not implemented for `rel()` regressors yet.
+#' @return `tibble` of posterior draws in `tidybayes` format.
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @export
+#' @example
+tidy_samples = function(fit, population = TRUE, varying = TRUE, absolute = FALSE, prior = FALSE) {
+  # General argument checks
+  if (all(population == FALSE) & all(varying == FALSE))
+    stop("At least one TRUE or one parameter must be provided through either the `varying` or the `population` arguments.")
 
-get_tidy_samples = function(fit, prior = FALSE, varying = TRUE) {
+  if (all(absolute == TRUE) & (varying == FALSE))
+    stop("`absolute == TRUE` requires that `varying` is not FALSE.")
 
+  # ----- IDENTIFY PARAMETERS -----
+  # Varying parameters. Result is `terms_varying`
+  if (all(varying == FALSE)) {
+    # Select no varying effects
+    use_varying = c()
+  } else if (all(varying == TRUE)) {
+    # Select all varying effects
+    use_varying = !is.na(fit$.other$ST$cp_group)
+  } else if (is.character(varying)) {
+    if (!all(varying %in% fit$pars$varying))
+      stop("Not all `varying` are varying parameters (see fit$pars$varying).")
+    # Select only specified varying effects
+    use_varying = fit$.other$ST$cp_group %in% varying
+  } else {
+    stop("`varying` must be TRUE, FALSE, or a character vector.")
+  }
+  pars_varying = fit$.other$ST$cp_group[use_varying]
+  cols_varying = fit$.other$ST$cp_group_col[use_varying]
+  terms_varying = paste0(pars_varying, "[", cols_varying, "]")  # for tidybayes
+
+  # Population parameters. Result is `pars_population`.
+  if (all(population == FALSE)) {
+    pars_population = c()  # Empty if no absolute varying
+  } else if (all(population == TRUE)) {
+    pars_population = fit$pars$population
+  } else if (is.character(population)) {
+    if (!all(population %in% fit$pars$population))
+      stop("Not all `population` are population parameters (see fit$pars$population).")
+
+    pars_population = population
+  } else {
+    stop("`population` must be TRUE, FALSE, or a character vector.")
+  }
+
+  # Absolute effects. Results is `absolute_cps` and `absolute` (recoded to varying cp names)
+  if (all(absolute == TRUE)) {
+    absolute = fit$.other$ST$cp_group[use_varying]
+    absolute_cps = fit$.other$ST$cp_name[use_varying]
+  } else if (all(absolute == FALSE)) {
+    absolute_cps = c()
+  } else if (is.character(absolute)) {
+    # Check
+    is_in_varying = absolute %in% pars_varying
+    if (any(!is_in_varying))
+        stop("The following parameter names in `absolute` are not in `varying`:", absolute[is_in_varying])
+
+    use_absolute = fit$.other$ST$cp_group %in% absolute
+    absolute_cps = fit$.other$ST$cp_name[use_absolute]
+  } else {
+    stop("`absolute` must be TRUE, FALSE, or a character vector.")
+  }
+
+  # ----- GET THESE PARAMETERS AS TIDY DRAWS -----
   # Select posterior/prior samples
   samples = get_samples(fit, prior = prior)
 
-  # General settings
-  xvar = rlang::sym(fit$pars$x)
-  yvar = rlang::sym(fit$pars$y)
-  simulate = fit$simulate  # To make a function call work later
+  # Build code for tidybayes::spread_draws() and execute it
+  all_terms = unique(c(pars_population, terms_varying, absolute_cps))
+  code = paste0("tidybayes::spread_draws(samples, ", paste0(all_terms, collapse = ", "), ")")
+  tidy_samples = eval(parse(text = code))
 
-  # All parameters of the model
-  regex_pars_pop = paste0(c(fit$pars$population, fit$pars$varying), collapse="|")
+  # Add population cp to varying and delete population cols only included for this purpose.
+  if (length(absolute_cps) > 0) {
+    tidy_samples[, absolute] = tidy_samples[, absolute] + tidy_samples[, absolute_cps]
+    tidy_samples = dplyr::select(tidy_samples, -!!dplyr::setdiff(absolute_cps, pars_population))
+  }
 
-  # No faceting
-  samples = samples %>%
-    tidybayes::spread_draws(!!rlang::sym(regex_pars_pop), regex = TRUE)
-
-  return(samples)
+  # Return with chain etc. first
+  tidy_samples = dplyr::select(tidy_samples, .chain, .iteration, .draw, everything())
+  return(tidy_samples)
 }
+
+
 
 
 #' Predictions from samples
@@ -510,11 +590,14 @@ pp_eval = function(
   samples = get_tidy_samples(fit, prior, varying)
 
   # Summarise
+  xvar = rlang::sym(fit$pars$x)
+  yvar = rlang::sym(fit$pars$y)
   if (summary == TRUE) {
     df_return = suppressMessages(samples %>%  # TO DO: For dplyr 1.0.0 summarise... until it gets more widely adopted and .groups is not experimental anymore.
                                    dplyr::group_by(!!xvar) %>%
                                    dplyr::summarise(
-                                     mean = mean(!!yvar)
+                                     mean = mean(!!yvar),
+                                     Std
                                    ))
 
     # Quantiles of estimated value
