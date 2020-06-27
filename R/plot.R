@@ -33,7 +33,8 @@
 #'   * `"sigma"`: The variance
 #'   * `"ar1"`, `"ar2"`, etc. depending on which order of the autoregressive
 #'     effects you want to plot.
-#'
+#' @param nsamples Number of samples to use for computing `q_fit` and `q_predict`.
+#'   `0` means "all". Ignored if both are `FALSE`. More samples trade speed for accuracy.
 #' @param ... Currently ignored.
 #' @details
 #'   `plot()` uses `fit$simulate()` on posterior samples. These represent the
@@ -74,6 +75,7 @@ plot.mcpfit = function(x,
                        rate = TRUE,
                        prior = FALSE,
                        which_y = "ct",
+                       nsamples = 1000,
                        ...) {
 
   # Just for consistent naming in mcp
@@ -99,6 +101,31 @@ plot.mcpfit = function(x,
   if (!is.logical(cp_dens))
     stop("`cp_dens` must be TRUE or FALSE.")
 
+  if (all(q_fit == TRUE))
+    q_fit = c(0.025, 0.975)
+
+  if (all(q_predict == TRUE))
+    q_predict = c(0.025, 0.975)
+
+  if (!is.logical(q_fit) & !is.numeric(q_fit))
+    stop("`q_fit` has to be TRUE, FALSE, or a vector of numbers.")
+
+  if (is.numeric(q_fit) & (any(q_fit > 1) | any(q_fit < 0)))
+    stop ("All `q_fit` have to be between 0 (0%) and 1 (100%).")
+
+  if (!is.logical(q_predict) & !is.numeric(q_predict))
+    stop("`q_predict` has to be TRUE, FALSE, or a vector of numbers.")
+
+  if (is.numeric(q_predict) & (any(q_predict > 1) | any(q_predict < 0)))
+    stop ("All `q_predict` have to be between 0 (0%) and 1 (100%).")
+
+  if (!is.logical(rate))
+    stop("`rate` has to be TRUE or FALSE.")
+
+  if (!is.logical(prior))
+    stop("`prior` must be either TRUE or FALSE.")
+
+
   # Is facet_by a random/nested effect?
   if (!is.null(facet_by)) {
     if (is.character(facet_by)) {
@@ -116,19 +143,10 @@ plot.mcpfit = function(x,
   # but that makes the tests fail.
   . = "ugly fix to please R CMD check"
 
-  # Select posterior/prior samples
-  samples = get_samples(fit, prior = prior)
-
   # General settings
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)
   simulate = fit$simulate  # To make a function call work later
-  if (all(q_fit == FALSE) & all(q_predict == FALSE)) {
-    n_samples = lines
-  } else {
-    n_samples = 1000 # Maximum number of draws to use for computing HDI
-    n_samples = min(n_samples, length(samples) * nrow(samples[[1]]))
-  }
   is_arma = length(fit$pars$arma) > 0
   if (is_arma & (all(q_fit != FALSE) | all(q_predict != FALSE)))
     message("Plotting ar() with quantiles can be slow. Raise an issue at GitHub (or thumb-up existing ones) if you need this.")
@@ -141,27 +159,22 @@ plot.mcpfit = function(x,
   #################
   # GET PLOT DATA #
   #################
-  regex_pars_pop = paste0(fit$pars$population, collapse="|")
-
-  # No faceting
   if (is.null(facet_by)) {
-    tidy_samples = tidybayes::spread_draws(
-      samples,
-      !!rlang::sym(regex_pars_pop),
-      regex = TRUE
-    )
+    samples = tidy_samples(fit, varying = FALSE, prior = prior)
   } else {
-    # Prepare for faceting
-    # Read more about this weird syntax at https://github.com/mjskay/tidybayes/issues/38
-    varying_by_facet = stats::na.omit(fit$.other$ST$cp_group[stringr::str_detect(fit$.other$ST$cp_group, paste0("_", facet_by, "$"))])
-    varying_by_facet = paste0(varying_by_facet, collapse="|")
+    varying_indices = which(fit$.other$ST$cp_group_col == facet_by)
+    varying_params = fit$.other$ST$cp_group[varying_indices]
+    samples = tidy_samples(fit, varying = varying_params)
+  }
 
-    tidy_samples = tidybayes::spread_draws(
-      samples,
-      !!rlang::sym(regex_pars_pop),
-      (!!rlang::sym(varying_by_facet))[!!rlang::sym(facet_by)],
-      regex = TRUE
-    )
+  # (Optional) subsample for computational speed
+  if (nsamples != 0) {
+    if (all(q_fit == FALSE) & all(q_predict == FALSE)) {
+      samples = tidybayes::sample_draws(samples, n = lines)
+      nsamples = lines
+    } else {
+      samples = tidybayes::sample_draws(samples, n = min(nsamples, nrow(samples)))
+    }
   }
 
   # Get x-coordinates to evaluate simulate (etc.) at
@@ -169,8 +182,7 @@ plot.mcpfit = function(x,
 
   # First, let's get all the predictors in shape for simulate
   if (fit$family$family != "binomial") {
-    samples_expanded = tidy_samples %>%
-      tidybayes::sample_draws(n_samples) %>%
+    samples_expanded = samples %>%
       tidyr::expand_grid(!!xvar := eval_at)  # correct name of x-var
   } else if (fit$family$family == "binomial") {
     if (!is.null(facet_by) & rate == FALSE)
@@ -183,17 +195,16 @@ plot.mcpfit = function(x,
       suppressWarnings() %>%
       round()  # Only integers
 
-    samples_expanded = tidy_samples %>%
-      tidybayes::sample_draws(n_samples) %>%
+    samples_expanded = samples %>%
       tidyr::expand_grid(!!xvar := eval_at) %>%  # correct name of x-var
-      dplyr::mutate(!!fit$pars$trials := rep(interpolated_trials, nrow(tidy_samples)))
+      dplyr::mutate(!!fit$pars$trials := rep(interpolated_trials, nrow(samples)))
   }
 
   # For ARMA prediction, we need the raw data
   # We know that eval_at is the same length as nrow(data), so we can simply add corresponding data$y for each draw
   if (is_arma) {
     samples_expanded = samples_expanded %>%
-      dplyr::mutate(ydata = rep(fit$data[, fit$pars$y], n_samples * n_facet_levels))
+      dplyr::mutate(ydata = rep(fit$data[, fit$pars$y], nsamples * n_facet_levels))
   }
 
   # Predict y from model by adding fitted/predicted draws (vectorized)
@@ -201,7 +212,7 @@ plot.mcpfit = function(x,
     samples_expanded = samples_expanded %>% dplyr::mutate(!!yvar := rlang::exec(simulate, !!!., type = "fitted", rate = rate, which_y = which_y, add_attr = FALSE))
   }
   if (any(q_predict != FALSE)) {
-    samples_expanded = samples_expanded %>% dplyr::mutate(predicted_ = rlang::exec(simulate, !!!., type = "predict", rate = rate, add_attr = FALSE))
+    samples_expanded = samples_expanded %>% dplyr::mutate(.predicted = rlang::exec(simulate, !!!., type = "predict", rate = rate, add_attr = FALSE))
   }
 
 
@@ -244,7 +255,7 @@ plot.mcpfit = function(x,
     gg = gg + geom_quantiles(samples_expanded, q_fit, xvar, yvar, facet_by, color = "red", lty = 2, lwd = 0.7)
   }
   if (any(q_predict != FALSE)) {
-    yvar_predict = rlang::sym("predicted_")
+    yvar_predict = rlang::sym(".predicted")
     gg = gg + geom_quantiles(samples_expanded, q_predict, xvar, yvar_predict, facet_by, color = "green4", lty = 2, lwd = 0.7)
   }
 
@@ -257,8 +268,8 @@ plot.mcpfit = function(x,
       limits_y = c(min(fit$data[, fit$pars$y]),
                    max(fit$data[, fit$pars$y]))
     } else if (any(q_predict != FALSE)) {
-      limits_y = c(min(samples_expanded$predicted_),
-                   max(samples_expanded$predicted_))
+      limits_y = c(min(samples_expanded$.predicted),
+                   max(samples_expanded$.predicted))
     } else if (as.character(yvar) %in% names(samples_expanded)) {
       limits_y = c(min(dplyr::pull(samples_expanded, as.character(yvar))),
                    max(dplyr::pull(samples_expanded, as.character(yvar))))
@@ -266,14 +277,9 @@ plot.mcpfit = function(x,
       stop("Failed to draw change point density for this plot. Please raise an error on GitHub.")
     }
 
-    # To compute densities for faceted values or not to...
-    if (is.null(facet_by)) {
-      gg = gg + geom_cp_density(fit, facet_by, include = TRUE, limits_y, dens_threshold)
-    } else {
-      gg = gg +
-        geom_cp_density(fit, facet_by, include = TRUE, limits_y, dens_threshold) +  # facetted change points
-        geom_cp_density(fit, facet_by, include = FALSE, limits_y, dens_threshold)  # non-facetted change points
-    }
+
+    gg = gg + geom_cp_density(fit, facet_by, limits_y) +
+      ggplot2::coord_cartesian(ylim = c(limits_y[1], NA))  # Remove density flat line from view
   }
 
   # Add faceting?
@@ -292,6 +298,7 @@ plot.mcpfit = function(x,
 }
 
 
+
 #' Density geom for `plot.mcpfit()`
 #'
 #' @aliases geom_cp_density
@@ -301,67 +308,40 @@ plot.mcpfit = function(x,
 #' @param include Boolean. If `TRUE` and `!is.null(facet_by)`, only return
 #'   densities for the change points "affected" by `facet_by`. If `FALSE` and `!is.null(facet_by)`,
 #'   return all densities except those "affected" by `facet_by`. Has no effect if `is.null(facet_by)`
-geom_cp_density = function(fit, facet_by, include, limits_y, dens_threshold) {
-  # Settings
-  dens_threshold = 0.001  # Do not display change point densities below this threshold.
-  dens_height = 0.2  # proportion of plot y-axis that the change point density makes up
+geom_cp_density = function(fit, facet_by, limits_y) {
+  dens_scale = 0.2  # Proportion of plot height
+  dens_cut = 0.05 + 0.007  # How much to move density down. 5% is ggplot default. Move a bit further.
 
-  # Function to get density for each grouping in the dplyr pipes below.
-  density_xy = function(x) {
-    tmp = stats::density(x)
-    df = data.frame(x_dens = tmp$x, y_dens = tmp$y) %>%
-      dplyr::filter(.data$y_dens > dens_threshold) %>%
-      return()
-  }
-
-  # Get and group samples to be used for computing density
-  # If no faceting, just return population densities for all
-  if (is.null(facet_by)) {
-    cp_is = seq_len(nrow(fit$.other$ST) - 1)
+  # Get varying and population change point parameter names
+  if (!is.null(facet_by)) {
+    cp_matches_facet = fit$.other$ST$cp_group_col == facet_by  # Varies by this column
+    cp_not_facet = !cp_matches_facet | is.na(cp_matches_facet)
+    varying = na.omit(fit$.other$ST$cp_group[cp_matches_facet])  # The rest
+    population = na.omit(fit$.other$ST$cp_name[cp_not_facet][-1])  # [-1] to remove cp_0
   } else {
-    is_varying_cp = fit$.other$ST$cp_group_col == facet_by
-    is_varying_cp[is.na(is_varying_cp)] = FALSE  # NA --> FALSE
-    is_varying_cp[1] = NA  # First segment has no change point
-    if (include == TRUE) {
-      cp_is = which(is_varying_cp) - 1  # cp_i that have facet_by as varying effect
-    } else {
-      cp_is = which(!is_varying_cp) - 1  # cp_i that don't
-      facet_by = NULL
-    }
+    varying = c()
+    population = fit$.other$ST$cp_name[-1]
   }
-  cp_samples = mapply(get_cp_with_varying, i = cp_is, MoreArgs = list(fit = fit, facet_by = facet_by), SIMPLIFY = FALSE) %>%
-    dplyr::bind_rows() %>%
-    dplyr::select(.chain, cp_param, varying_level, value)
 
+  # Get samples in long format
+  samples = tidy_samples(fit, population = population, varying = varying, absolute = TRUE) %>%
+    tidyr::pivot_longer(cols = dplyr::starts_with("cp_"), names_to = "cp_name", values_to = "value")
 
-
-  #cp_dens_xy = samples %>%  # Use all samples for this
-  #tidybayes::gather_draws(!!rlang::sym(cp_regex), regex = TRUE) %>%
-  cp_dens_xy = cp_samples %>%
-    dplyr::group_by(.data$.chain, cp_param, varying_level) %>%
-
-    # Get density as x-y values by chain and change point number.
-    dplyr::summarise(dens = list(density_xy(.data$value))) %>%
-    tidyr::unnest(cols = c(.data$dens)) %>%
-
-    # Then scale to plot.
-    dplyr::mutate(y_dens = limits_y[1] + .data$y_dens * (limits_y[2] - limits_y[1]) * dens_height / max(.data$y_dens))
-
-  # For varying: Rename to varying effect col, to work with ggplot faceting
-  if (!is.null(facet_by))
-    cp_dens_xy = dplyr::rename(cp_dens_xy, !!facet_by := "varying_level")
-
-  # Return as geom
-  ggplot2::geom_line(
-    data = cp_dens_xy,
-    mapping = aes(
-      x = .data$x_dens,
-      y = .data$y_dens,
-      color = .data$.chain,
-      group = interaction(.data$cp_param, .data$.chain)))
+  # Make the geom!
+  ggplot2::stat_density(aes(
+    x = value,
+    y = ..scaled.. * diff(limits_y) * dens_scale +  # Scale to proportion of view
+      limits_y[1] -  # Put on x-axis
+      diff(limits_y) * dens_cut,  # Move a bit further down to remove zero-density line from view.
+    group = paste0(.chain, cp_name),  # Apply scaling for each chain X cp_i combo
+    color = .chain
+  ),
+  data = samples,
+  position = "identity",
+  geom = "line",
+  show.legend = FALSE
+  )
 }
-
-
 
 
 #' Return a geom_line representing the quantiles
@@ -391,7 +371,6 @@ geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
   )
   return(geom)
 }
-
 
 
 #' Plot individual parameters

@@ -5,15 +5,23 @@
  * Support for more link functions across families. E.g., `family = gaussian(link = "log")`, `binomial(link = "identity")`, etc.
 
  * Use `predict(fit)` to get predicted values and intervals. Use `fitted(fit)` to get estimated values and intervals. Use `pp_eval(fit, q_fit = ..., q_predict = ...)` to get both in one call. Use the `newdata` argument to get out-of-sample fitted/predicted values and `summary = FALSE` to get per-posterior-sample fits/predictions. The other arguments align with the options already in `plot.mcpfit()`, including getting fits/predictions for sigma, for the prior, and arbitrary quantiles.
+ 
+ * Control the number of samples used to compute intervals in `plot(..., nsamples = 1000)`. Setting `nsamples = 0` uses all samples for maximum accuracy at the cost of speed.
+ 
+ * Although still under evaluation whether it should be part of the API, there is now a `mcp:::tidy_samples(fit)` that returns samples. This is useful for further processing using `tidybayes`, `bayesplot`, and other excellent packages. One useful feature is computing absolute values for varying change points: `mcp:::tidy_samples(fit, absolute = TRUE)`. Check out the docs for more info on how to use this function.
 
 
 ## Other changes
 
- * More internal error checking of invalidly specified formulas with helpful error messages.
-
- * There's no longer a ceiling of the number of lines in `plot.mcpfit()`.
+ * Change point densities in `plot(fit)` are now scaled to 20% of the plot for each chain X changepoint combo. This adresses a common problem where a wide posterior was almost invisibly low when a narrow posterior was present. This means that heights should only be compared *within* each chain x changepoint combo - not across.
  
- * `ranef()` and `fixef()` returns no longer have rownames.
+ * Change point densities in `plot(fit)` are not located directly on the x-axis. They were located 5% above the x-axis in version 0.2.
+ 
+ * There is now more internal error checking of invalidly specified formulas with helpful error messages.
+
+ * Removed the implicit ceiling of 1000 lines in `plot.mcpfit()`.
+ 
+ * Rownames are removed from `ranef()` and `fixef()` returns.
 
 
 ## Bug fixes
