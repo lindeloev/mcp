@@ -343,93 +343,26 @@ get_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
 }
 
 
-#' Get change point samples for each level in the varying effect
-#'
-#' @aliases get_cp_with_varying
-#' @keywords internal
-#' @param fit An `mcpfit` object.
-#' @param i Positive integer. The change point number.
-#' @param prior Boolean.
-#' @return Tibble in long format.
-#'
-get_cp_with_varying = function(fit, i, facet_by = NULL, prior = FALSE) {
-  param_name_pop = rlang::sym(fit$.other$ST$cp_name[i + 1])
-
-  # Return in canonical format for non-varying change points
-  # or varying change points that are not the specified facet
-  varying_col = fit$.other$ST$cp_group_col[i + 1]
-  is_varying = is.na(varying_col) == FALSE
-  is_facet = ifelse(is.character(facet_by) & is_varying, facet_by == varying_col, FALSE)
-  if (is_varying == FALSE | (is_varying == TRUE & is_facet == FALSE)) {
-    # Return population samples and insert NA in the varying cols
-    samples = get_samples(fit, prior)
-    cp_samples_long = samples %>%
-      tidybayes::spread_draws(!!param_name_pop) %>%
-      rename(cp_value = as.character(param_name_pop)) %>%
-      mutate(
-        cp_param = as.character(param_name_pop),
-        varying_param = NA,
-        varying_level = NA,
-        varying_value = 0,
-        value = cp_value
-      )
-  } else {
-    # Get variable names from the segment table
-    param_name_varying = rlang::sym(fit$.other$ST$cp_group[i + 1])
-    column = rlang::sym(fit$.other$ST$cp_group_col[i + 1])
-
-    # Get samples and get tidy samples for just this i
-    samples = get_samples(fit, prior)
-    cp_samples_long = samples %>%
-      tidybayes::spread_draws(
-        !!param_name_pop,
-        (!!param_name_varying)[!!column]
-      ) %>%
-
-      # Canonical naming for long format.
-      dplyr::ungroup() %>%
-      dplyr::rename(
-        varying_level = as.character(column),
-        varying_value = as.character(param_name_varying),
-        cp_value = as.character(param_name_pop)
-      ) %>%
-
-      # More long format, and add varying to population cp.
-      dplyr::mutate(
-        cp_param = as.character(param_name_pop),
-        varying_param = as.character(param_name_varying),
-        value = cp_value + varying_value #rowSums(select(., starts_with("cp_")))) %>%
-      ) %>%
-
-      # Return nicely
-      dplyr::select(.chain, .iteration, .draw, cp_param, cp_value, varying_param, varying_level, varying_value, value) %>%
-      arrange(varying_level, .chain, .iteration, .draw)
-  }
-
-  return(cp_samples_long)
-}
-
-
 #' Get tidy samples with or without varying effects
 #'
 #' Returns in a format useful for `fit$simulate()` with population parameters in wide format
-#' and varying effects in long format (the number of rows will be `n_samples * n_levels_in_varying`).
+#' and varying effects in long format (the number of rows will be `nsamples * n_levels_in_varying`).
 #'
 #' @aliases get_tidy_samples
 #' @keywords internal
 #' @inheritParams get_samples
 #' @param population
-#'   * `TRUE`: All population effects. Same as `fit$pars$population`.
-#'   * `FALSE`: No population effects. Same as `c()`.
-#'   * Character vector: Only include specified population parameters - see `fit$pars$population`.
+#'   * \strong{TRUE:} All population effects. Same as `fit$pars$population`.
+#'   * \strong{FALSE:} No population effects. Same as `c()`.
+#'   * \strong{Character vector:} Only include specified population parameters - see `fit$pars$population`.
 #' @param varying
-#'   * `TRUE`: All varying effects. Same as `fit$pars$varying`.
-#'   * `FALSE`: No varying efects. Same as `c()`.
-#'   * Character vector: Only include specified varying parameters - see `fit$pars$varying`.
+#'   * \strong{TRUE:} All varying effects. Same as `fit$pars$varying`.
+#'   * \strong{FALSE:} No varying efects. Same as `c()`.
+#'   * \strong{Character vector:} Only include specified varying parameters - see `fit$pars$varying`.
 #' @param absolute
-#'   * `TRUE`: Returns the absolute location of all varying change points.
-#'   * `FALSE`: Just returns the varying effects.
-#'   * Character vector: Only do absolute transform for these varying parameters - see `fit$pars$varying`.
+#'   * \strong{TRUE:} Returns the absolute location of all varying change points.
+#'   * \strong{FALSE:} Just returns the varying effects.
+#'   * \strong{Character vector:} Only do absolute transform for these varying parameters - see `fit$pars$varying`.
 #'
 #'   OBS: This currently only applies to varying change points. It is not implemented for `rel()` regressors yet.
 #' @return `tibble` of posterior draws in `tidybayes` format.
@@ -441,9 +374,6 @@ tidy_samples = function(fit, population = TRUE, varying = TRUE, absolute = FALSE
   # General argument checks
   if (all(population == FALSE) & all(varying == FALSE))
     stop("At least one TRUE or one parameter must be provided through either the `varying` or the `population` arguments.")
-
-  if (all(absolute == TRUE) & (varying == FALSE))
-    stop("`absolute == TRUE` requires that `varying` is not FALSE.")
 
   # ----- IDENTIFY PARAMETERS -----
   # Varying parameters. Result is `terms_varying`
@@ -464,6 +394,7 @@ tidy_samples = function(fit, population = TRUE, varying = TRUE, absolute = FALSE
   pars_varying = fit$.other$ST$cp_group[use_varying]
   cols_varying = fit$.other$ST$cp_group_col[use_varying]
   terms_varying = paste0(pars_varying, "[", cols_varying, "]")  # for tidybayes
+  if (all(terms_varying == "[]")) terms_varying = ""  # quick fix
 
   # Population parameters. Result is `pars_population`.
   if (all(population == FALSE)) {
