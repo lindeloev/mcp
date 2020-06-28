@@ -96,7 +96,7 @@ check_terms_in_data = function(form, data, i, n_terms = NULL) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-unpack_y = function(form_y, i, family, data) {
+unpack_y = function(form_y, i, family) {
   # If NA and not segment 1, just return empty
   if (is.na(form_y)) {
     if (i == 1)
@@ -109,8 +109,23 @@ unpack_y = function(form_y, i, family, data) {
     ))
   }
 
-  # Codings for binomial and variance-change
-  term_labels = attr(terms(to_formula(form_y)), "term.labels")
+  # Split by |
+  y_split = strsplit(form_y, "\\|")
+  if (length(y_split) > 2)
+    stop("There can only be zero or one pipe in response. Got '", form_y, "' in segment ", i)
+
+  # RESPONSE
+  lhs = y_split[[1]][1]
+  y_col = attr(terms(to_formula(lhs)), "term.labels")
+  if (length(y_col) != 1)
+    stop("There should be exactly one response variable. Got ", length(ycol), " in segment ", i)
+
+  if (length(y_split[[1]]) == 1)
+    y_split[[1]] = c(y_split[[1]], "invalid_and_empty_filler")  # A pattern that will not be matched in the following
+
+  # If there was a pipe
+  rhs = y_split[[1]][2]
+  term_labels = attr(terms(to_formula(rhs)), "term.labels")
 
   # BINOMIAL TRIALS
   trials_term_index = stringr::str_detect(term_labels, "trials\\(")  # Which terms?
@@ -118,7 +133,7 @@ unpack_y = function(form_y, i, family, data) {
 
   # trials(N) is reserved and required for binomial models
   if (family$family == "binomial" & !got_trials)
-    stop("Error in response of segment 1: need a valid trials() specification, e.g., 'y | trials(N) ~ 1 + x'")
+    stop("Error in response of segment ", i, ": need a valid trials() specification, e.g., 'y | trials(N) ~ 1 + x'")
 
   if (family$family != "binomial" & got_trials)
     stop("Response format `y | trials(N)` only meaningful for family = binomial(); not for ", family$family, "()")
@@ -126,8 +141,10 @@ unpack_y = function(form_y, i, family, data) {
   # Unpack trials_col
   if (got_trials == TRUE) {
     trials_term = term_labels[trials_term_index]  # Extract terms
-    trials_col = get_term_content(trials_term)
-    term_labels = term_labels[!trials_term_index]  # remove now
+    trials_content = get_term_content(trials_term)
+    trials_col = attr(terms(trials_content), "term.labels")
+    if (length(trials_col) != 1)
+      stop("There must be exactly one term inside trials(). Got ", trials_term, " in segment ", i)
   } else {
     trials_col = NA
   }
@@ -137,18 +154,12 @@ unpack_y = function(form_y, i, family, data) {
   got_weights = sum(weights_term_index) > 0
   if (got_weights == TRUE) {
     weights_term = term_labels[weights_term_index]
-    weights_col = get_term_content(weights_term)
-    term_labels = term_labels[!weights_term_index]
+    weights_content = get_term_content(weights_term)
+    weights_col = attr(terms(weights_content), "term.labels")
+    if (length(weights_col) != 1)
+      stop("There must be exactly one term inside weights(). Got ", weights_term, " in segment ", i)
   } else {
     weights_col = NA
-  }
-
-  # RESPONSE
-  y_col = term_labels  # Just for consistent naming
-  if (length(y_col) > 1) {
-    stop("There should be exactly one response variable. Found '", paste0(y_col, collapse="' and '", "' in segment ", i, "."))
-  } else if (length(y_col) == 0 & (got_trials == TRUE | got_weights == TRUE)) {
-    stop("Cannot take trials() or weights() without a response variable.")
   }
 
   # Finally:
@@ -766,7 +777,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
     # Go! Unpack this segment
     row = tibble::tibble(segment = i)
     row = dplyr::bind_cols(row, unpack_tildes(segment, i))
-    row = dplyr::bind_cols(row, unpack_y(row$form_y, i, family, data))
+    row = dplyr::bind_cols(row, unpack_y(row$form_y, i, family))
     row = dplyr::bind_cols(row, unpack_cp(row$form_cp, i))
     row = dplyr::bind_cols(row, unpack_rhs(row$form_rhs, i, family, data, ST[i-1,]))
 
