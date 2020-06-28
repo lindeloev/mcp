@@ -33,7 +33,8 @@
 #'   * `"sigma"`: The variance
 #'   * `"ar1"`, `"ar2"`, etc. depending on which order of the autoregressive
 #'     effects you want to plot.
-#' @param nsamples Number of samples to use for computing `q_fit` and `q_predict`.
+#' @param nsamples Number of samples to use for computing `q_fit` and `q_predict`. If
+#'   there are varying effects, this is the number of samples from each varying group.
 #'   `0` means "all". Ignored if both are `FALSE`. More samples trade speed for accuracy.
 #' @param ... Currently ignored.
 #' @details
@@ -168,12 +169,15 @@ plot.mcpfit = function(x,
   }
 
   # (Optional) subsample for computational speed
-  if (nsamples != 0) {
+  if (nsamples == 0) {
+    nsamples = max(samples$.draw)  # Use all samples
+  } else {
     if (all(q_fit == FALSE) & all(q_predict == FALSE)) {
+      # No need for more samples if they are only used to draw lines.
       samples = tidybayes::sample_draws(samples, n = lines)
       nsamples = lines
     } else {
-      samples = tidybayes::sample_draws(samples, n = min(nsamples, nrow(samples)))
+      samples = tidybayes::sample_draws(samples, n = nsamples)
     }
   }
 
@@ -279,7 +283,10 @@ plot.mcpfit = function(x,
 
 
     gg = gg + geom_cp_density(fit, facet_by, limits_y) +
-      ggplot2::coord_cartesian(ylim = c(limits_y[1], NA))  # Remove density flat line from view
+      ggplot2::coord_cartesian(
+        ylim = c(limits_y[1], NA),  # Remove density flat line from view
+        xlim = c(min(fit$data[, fit$pars$x]), max(fit$data[, fit$pars$x]))  # Very broad varying change point posteriors can expand beyond observed range. TO DO
+      )
   }
 
   # Add faceting?

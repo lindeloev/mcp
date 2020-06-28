@@ -59,6 +59,8 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 
 
   # Get posterior/prior samples
+  # TO DO: transition this to tidy_samples at some point if rhat and n.eff
+  #    can be computed on this data. Would avoid some hacky solutions in the code below.
   samples = get_samples(fit, prior = prior)
 
   # Select only varying or only population-level columns in data
@@ -70,7 +72,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
       stop("There were no matching parameters in the model.")
   }
 
-  # HACK: If there is just one parameter, add two in to make the code run.
+  # HACK: If there is just one parameter, it's not a matrix. Add two in to make the code run.
   all_cols = colnames(samples[[1]])
   get_cols = all_cols[stringr::str_detect(all_cols, regex_pars)]
   if (!stringr::str_detect(regex_pars, "\\|") & varying == FALSE) {
@@ -116,7 +118,6 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   sim_list = attr(fit$data[, fit$pars$y], "simulated")
   if(!is.null(sim_list)) {
     simulated = as.list(sim_list)  # Get as oroper list
-    #simulated = sapply(simulated, language_to_numeric)
     simulated = simulated[sapply(simulated, is.numeric)]  # Remove non-numeric
 
     # Handle varying effects. Finds the matching labels
@@ -127,13 +128,13 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
         label_col = stats::na.omit(fit$.other$ST$cp_group_col)[1]  # What column is the labels in data. TO DO: only works if there is just one grouping factor!
         labs = fit$data[[label_col]]  # Find the labels. Same length as `value`
         if (length(value) != length(labs)) {
-          warning("This is simulated data, but the labels for varying effects in data does not have the same length as the numeric params used for simulation.")
+          warning("This is simulated data, but the labels for varying effect '", label_col, "' in data does not have the same length as the numeric params used for simulation.")
           next
         }
 
         # Name like the MCMC columns and use only unique combinations (assuming identical value for each level)
-        effect_names = paste0(varying, "[", labs, "]")
         value = value[!duplicated(value)]
+        names(value) = unique(paste0(varying, "[", labs, "]"))
 
         # Delete the simulation vector and add the new label-value pairs to list
         simulated[[varying]] = NULL
@@ -144,7 +145,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
     # Now unpack the whole bunch to a left_join() friendly data.frame.
     simulated = unlist(simulated)  # as named vector
     simulated = data.frame(
-      name = effect_names,
+      name = names(simulated),
       sim = as.numeric(simulated),  # without row names
       stringsAsFactors = FALSE
     )
