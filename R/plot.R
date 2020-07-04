@@ -33,9 +33,9 @@
 #'   * `"sigma"`: The variance
 #'   * `"ar1"`, `"ar2"`, etc. depending on which order of the autoregressive
 #'     effects you want to plot.
-#' @param nsamples Number of samples to use for computing `q_fit` and `q_predict`. If
-#'   there are varying effects, this is the number of samples from each varying group.
-#'   `0` means "all". Ignored if both are `FALSE`. More samples trade speed for accuracy.
+#' @param nsamples Integer or `NULL`. Number of samples to use for computing `q_fit` and `q_predict`.
+#'   If there are varying effects, this is the number of samples from each varying group.
+#'   `NULL` means "all". Ignored if both are `FALSE`. More samples trade speed for accuracy.
 #' @param ... Currently ignored.
 #' @details
 #'   `plot()` uses `fit$simulate()` on posterior samples. These represent the
@@ -84,8 +84,7 @@ plot.mcpfit = function(x,
 
   # Check arguments
   # The following are checked in pp_eval: q_fit, q_predict, rate
-  if (class(fit) != "mcpfit")
-    stop("Can only plot mcpfit objects. x was class: ", class(fit))
+  check_mcpfit(fit)
 
   if (!coda::is.mcmc.list(fit$mcmc_post) & !coda::is.mcmc.list(fit$mcmc_prior))
     stop("Cannot plot an mcpfit without prior or posterior samples.")
@@ -126,6 +125,15 @@ plot.mcpfit = function(x,
   if (!is.logical(prior))
     stop("`prior` must be either TRUE or FALSE.")
 
+  if (!is.null(nsamples)) {
+    check_integer(nsamples, "nsamples", lower = 1)
+    if (lines != FALSE & nsamples < lines)
+      stop("`lines` must be less than or equal to `nsamples`.")
+  }
+
+  # No need for more samples if they are only used to draw lines.
+  if (all(q_fit == FALSE) & all(q_predict == FALSE))
+    nsamples = lines
 
   # Is facet_by a random/nested effect?
   if (!is.null(facet_by)) {
@@ -161,24 +169,11 @@ plot.mcpfit = function(x,
   # GET PLOT DATA #
   #################
   if (is.null(facet_by)) {
-    samples = tidy_samples(fit, varying = FALSE, prior = prior)
+    samples = tidy_samples(fit, varying = FALSE, prior = prior, nsamples = nsamples)
   } else {
     varying_indices = which(fit$.other$ST$cp_group_col == facet_by)
     varying_params = fit$.other$ST$cp_group[varying_indices]
-    samples = tidy_samples(fit, varying = varying_params)
-  }
-
-  # (Optional) subsample for computational speed
-  if (nsamples == 0) {
-    nsamples = max(samples$.draw)  # Use all samples
-  } else {
-    if (all(q_fit == FALSE) & all(q_predict == FALSE)) {
-      # No need for more samples if they are only used to draw lines.
-      samples = tidybayes::sample_draws(samples, n = lines)
-      nsamples = lines
-    } else {
-      samples = tidybayes::sample_draws(samples, n = nsamples)
-    }
+    samples = tidy_samples(fit, varying = varying_params, nsamples = nsamples)
   }
 
   # Get x-coordinates to evaluate simulate (etc.) at
@@ -207,8 +202,9 @@ plot.mcpfit = function(x,
   # For ARMA prediction, we need the raw data
   # We know that eval_at is the same length as nrow(data), so we can simply add corresponding data$y for each draw
   if (is_arma) {
+    actual_nsamples = ifelse(is.null(nsamples), max(samples$.draw), nsamples)
     samples_expanded = samples_expanded %>%
-      dplyr::mutate(ydata = rep(fit$data[, fit$pars$y], nsamples * n_facet_levels))
+      dplyr::mutate(ydata = rep(fit$data[, fit$pars$y], actual_nsamples * n_facet_levels))
   }
 
   # Predict y from model by adding fitted/predicted draws (vectorized)
@@ -452,8 +448,7 @@ plot_pars = function(fit,
                      prior = FALSE) {
 
   # Check arguments
-  if (class(fit) != "mcpfit")
-    stop("Can only plot mcpfit objects. x was class: ", class(fit))
+  check_mcpfit(fit)
 
   if (!coda::is.mcmc.list(fit$mcmc_post) & !coda::is.mcmc.list(fit$mcmc_prior))
     stop("Cannot plot an mcpfit without prior or posterior samples.")
@@ -476,7 +471,7 @@ plot_pars = function(fit,
     stop("`prior` must be either TRUE or FALSE.")
 
   # Get posterior/prior samples
-  samples = get_samples(fit, prior = prior)
+  samples = mcmclist_samples(fit, prior = prior)
 
   # Handle special codes
   if ("population" %in% pars) {

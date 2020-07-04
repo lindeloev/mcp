@@ -2,26 +2,34 @@
 
 ## New features:
 
- * Support for more link functions across families. E.g., `family = gaussian(link = "log")`, `binomial(link = "identity")`, etc.
+ * Use `predict(fit)` to get predicted values and intervals. Use `fitted(fit)` to get estimated values and intervals. Use the `newdata` argument to get out-of-sample fitted/predicted values and `summary = FALSE` to get per-posterior-sample fits/predictions. The other arguments align with the options already in `plot.mcpfit()`, including getting fits/predictions for sigma (`which_y = "sigma"`), for the prior (`prior = TRUE`), and arbitrary quantiles (`probs = c(0.1, 0.5, 0.999)`).
+ 
+ * Added support for weighted regression for all families: `model = list(y | weights(weight_column) ~ 1 + x)`. This syntax is borrowed from `brms`.
 
- * Use `predict(fit)` to get predicted values and intervals. Use `fitted(fit)` to get estimated values and intervals. Use `pp_eval(fit, q_fit = ..., q_predict = ...)` to get both in one call. Use the `newdata` argument to get out-of-sample fitted/predicted values and `summary = FALSE` to get per-posterior-sample fits/predictions. The other arguments align with the options already in `plot.mcpfit()`, including getting fits/predictions for sigma, for the prior, and arbitrary quantiles.
+ * Support for more link functions across families (e.g., `family = gaussian(link = "log")`):
+   - `gaussian`: "identity", "log"
+   - `binomial`: "logit", "probit", "identity"
+   - `bernoulli`: "logit", "probit", "identity"
+   - `poisson`: "log", "identity"
+   
+ * Change point densities are now computed on a per-panel basis in `plot(fit, facet_by = "varying_column")`. Previous releases only displayed population-level change points.
  
- * Control the number of samples used to compute intervals in `plot(..., nsamples = 1000)`. Setting `nsamples = 0` uses all samples for maximum accuracy at the cost of speed.
+ * Control the number of samples used to compute statistics in several functions, most notably `plot(..., nsamples = 1000)`. Setting `nsamples = NULL` uses all samples for maximum accuracy at the cost of speed.
  
- * Although still under evaluation whether it should be part of the API, there is now a `mcp:::tidy_samples(fit)` that returns samples. This is useful for further processing using `tidybayes`, `bayesplot`, and other excellent packages. One useful feature is computing absolute values for varying change points: `mcp:::tidy_samples(fit, absolute = TRUE)`. Check out the docs for more info on how to use this function.
+ * Although the API is still in alpha, feel free to try extracting samples using `mcp:::tidy_samples(fit)`. This is useful for further processing using `tidybayes`, `bayesplot`, etc. One useful feature is computing absolute values for varying change points: `mcp:::tidy_samples(fit, population = FALSE, absolute = TRUE)`. Feedback is appreciated before `tidy_samples` will to become part of the `mcp` API in a future release.
 
 
 ## Other changes
 
  * Change point densities in `plot(fit)` are now scaled to 20% of the plot for each chain X changepoint combo. This adresses a common problem where a wide posterior was almost invisibly low when a narrow posterior was present. This means that heights should only be compared *within* each chain x changepoint combo - not across.
  
- * Change point densities in `plot(fit)` are not located directly on the x-axis. They were located 5% above the x-axis in version 0.2.
- 
- * There is now more internal error checking of invalidly specified formulas with helpful error messages.
+ * Change point densities in `plot(fit)` are not located directly on the x-axis. They were "floating" 5% above the x-axis in the previous releases.
 
- * Removed the implicit ceiling of 1000 lines in `plot.mcpfit()`.
+ * Removed the implicit ceiling of 1000 lines and samples in `plot.mcpfit()`.
  
  * Rownames are removed from `ranef()` and `fixef()` returns.
+ 
+ * Fixed several small bugs and added more helpful error messages.
 
 
 ## Bug fixes
