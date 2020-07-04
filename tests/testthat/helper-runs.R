@@ -96,7 +96,7 @@ test_runs = function(model,
 
     for (col in c("mcmc_post", "mcmc_prior")) {
       # To test the prior, try setting mcmc_post = NULL to force use of prior
-      # (get_samples checks for NULL)
+      # (mcmclist_samples checks for NULL)
       if (col == "mcmc_prior")
         fit$mcmc_post = NULL
 
@@ -110,6 +110,7 @@ test_runs = function(model,
       test_summary(fit, varying_cols)
       test_plot(fit, varying_cols)  # default plot
       test_plot_pars(fit)  # bayesplot call
+      test_predictfitted(fit)
     }
   }
 }
@@ -142,9 +143,9 @@ test_plot = function(fit, varying_cols) {
   q_predict = rbinom(1, 1, 0.5) == 1  # add quantiles sometimes
   # To facet or not to facet
   if (length(varying_cols) > 0) {
-    gg = try(plot(fit, facet_by = varying_cols[1], q_fit = q_fit, q_predict = q_predict, lines = 3, nsamples = 0), silent = TRUE)  # just take the first
+    gg = try(plot(fit, facet_by = varying_cols[1], q_fit = q_fit, q_predict = q_predict, lines = 3, nsamples = NULL), silent = TRUE)  # just take the first
   } else {
-    gg = try(plot(fit, q_fit = q_fit, q_predict = q_predict, lines = 3, nsamples = 0), silent = TRUE)
+    gg = try(plot(fit, q_fit = q_fit, q_predict = q_predict, lines = 3, nsamples = NULL), silent = TRUE)
   }
   # Is it a ggplot or a known error?
   if (inherits(gg, "try-error")) {
@@ -157,7 +158,9 @@ test_plot = function(fit, varying_cols) {
     } else {
       expected_error = ">>>>do_not_expect_any_errors<<<<<"
     }
-    expect_true(any(stringr::str_starts(attr(gg, "condition")$message, expected_error)))
+    is_expected = any(stringr::str_starts(attr(gg, "condition")$message, expected_error))
+    if (is_expected == FALSE) print(attr(gg, "condition")$message)
+    expect_true(is_expected)
   } else {
     testthat::expect_true(ggplot2::is.ggplot(gg))
   }
@@ -191,7 +194,7 @@ test_hypothesis = function(fit) {
 
   # Varying
   if (!is.null(fit$pars$varying)) {
-    mcmc_vars = colnames(get_samples(fit)[[1]])
+    mcmc_vars = colnames(mcmclist_samples(fit)[[1]])
     varying_starts = paste0("^", fit$pars$varying[1])
     varying_col_ids = stringr::str_detect(mcmc_vars, varying_starts)
     varying_cols = paste0("`", mcmc_vars[varying_col_ids], "`")  # Add these for varying
@@ -202,6 +205,72 @@ test_hypothesis = function(fit) {
     # Test multiple varying effects
     if (length(varying_cols) > 1)
       run_test_hypothesis(fit, paste0(varying_cols[1], " + ", varying_cols[2]))
+  }
+}
+
+
+test_predictfitted_func = function(fit, func) {
+  # Settings
+  expected_colnames = c(
+    fit$pars$x,
+    fit$pars$trials,
+    na.omit(unique(fit$.other$ST$cp_group_col)),  # varying effects
+    "estimate", "error", "Q2.5", "Q97.5"
+  )
+
+  # Run and test
+  result = try(func(fit), silent = TRUE)
+  if (inherits(result, "try-error")) {
+    error_message = attr(result, "condition")$message
+    expected_error_arma = "\`predict.mcpfit\\(\\)\` is not implemented for ARMA models yet."
+    expected_error_poisson = "Problem with \`mutate\\(\\)\` input \`estimate\`"
+    testthat::expect_true(length(fit$pars$arma) == 0 || stringr::str_starts(error_message, expected_error_arma))
+    print(stringr::str_starts(error_message, expected_error_poisson))
+    print(fit$family$family != "poisson")
+    testthat::expect_true(fit$family$family != "poisson" || stringr::str_starts(error_message, expected_error_poisson))
+  } else {
+    testthat::expect_true(is.data.frame(result))
+    testthat::expect_equal(nrow(result), nrow(fit$data))  # Returns same number of rows as data
+    testthat::expect_true(sum(is.na(result)) == 0)  # No missing values
+    testthat::expect_true(dplyr::setequal(colnames(result), expected_colnames))  # Exactly these columns regardless of order
+    testthat::expect_true(all(result[, fit$pars$x] == fit$data[, fit$pars$x]))  # Output should have same order as input
+  }
+}
+
+test_predictfitted = function(fit) {
+  # Simple tests
+  test_predictfitted_func(fit, fitted)
+  test_predictfitted_func(fit, predict)
+
+  # Test the other arguments. Inside "try" without further checking because such errors should be caught by the above.
+  result_more = try(fitted(
+    fit,
+    newdata = fit$data[sample(nrow(fit$data), 3), ],
+    summary = FALSE,
+    probs = c(0.1, 0.5, 0.999),
+    prior = TRUE,
+    nsamples = 2
+  ), silent = TRUE)
+
+  if (is.data.frame(result_more)) {
+    #testthat::expect_true(nrow(result_more) == nrows * nsamples * 2)  # nrows * nsamples * nchains
+    testthat::expect_true(sum(is.na(result_more)) == 0)
+
+    expected_colnames_more = c(
+      # Tidybayes stuff
+      ".chain", ".iteration", ".draw",
+
+      # Model parameters
+      fit$pars$population,
+      fit$pars$varying,
+
+      # Predictors
+      fit$pars$x,
+      fit$pars$trials,
+      na.omit(unique(fit$.other$ST$cp_group_col)),  # varying effects
+      "estimate"
+    )
+    testthat::expect_true(dplyr::setequal(colnames(result_more), expected_colnames_more))  # Exactly these columns regardless of order
   }
 }
 

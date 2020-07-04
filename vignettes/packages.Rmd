@@ -299,15 +299,6 @@ TSMCP::tsmcplm(df$y, X = NULL, method = "adapt", c = 1)
 
 
 
-# wbsts
-The `wbsts` package is focused at time-series data. I must admit that I have not taken the time to understand the underlying model(s) or inference methods, so I am in a poor position to evaluate whether I am using it correctly. It returns no change points for the present data set using default settings:
-
-```{r}
-wbsts::wbs.lsw(df$y)
-```
-
-
-
 
 # robts::changerob
 `robts` is about robust time-series regression. It is not on CRAN, so it has to be installed using `install.packages("robts", repos="http://R-Forge.R-project.org")`. I fail to install the dependencies, and development of the package seems to have stopped around 2014. It won't be covered further here.
@@ -336,3 +327,33 @@ I have yet to test these:
  * `TSIS` and `segmenTier` may be coerced to do change point analysis, though it is mean for much more complicated switch point models in gene expression analysis. It's primary interface is a Shiny App.
  * `plrs::plrs`. Piecewise Linear Regression, targeted at DNA and gene expression. May also be coerced into simpler problems.
  * Packages that went under my radar initially: `ChangepointTesting`, `changepoint.mv`, `changepointsHD`, `changepointsVar`, `InspectChangepoint`, `breakpoint`, `segmentr`, `Segmentor3IsBack`, `trendsegmentR`, `BayesPiecewiseICAR`, `BayesPieceHazSelect`
+
+
+<!--
+library(not)
+set.seed(42)
+df = data.frame(
++   x = 1:100,
++   y = c(rnorm(30, 2), rnorm(40, 0), rnorm(30, 1))
++ )
+x <- df$y
+ts.plot(predict(not(x, rand.intervals=F, intervals=all.intervals(length(x)))))
+
+You will see that the two change-points are correctly estimated.
+
+Please see below for some other packages and non-packaged code:
+
+https://cran.r-project.org/web/packages/breakfast/index.html (this package is undergoing a major re-write and will incorporate many more methods; please check back in July)
+
+https://cran.r-project.org/web/packages/IDetect/index.html
+
+https://cran.r-project.org/web/packages/trendsegmentR/index.html
+
+https://github.com/pfryz/wild-binary-segmentation-2.0 [this will be part of the “breakfast” package soon]
+
+https://cran.r-project.org/web/packages/mosum/index.html
+
+These and some other latest packages are reviewed e.g. in http://stats.lse.ac.uk/fryzlewicz/wbs2/wbs2sdll.pdf.
+
+Finally, if I may comment on one of the packages listed in your blog post: “wbsts” segments the autocovariance structure of a time series (not its mean!) so is unsuitable for your running example and should not be used on it.
+-->

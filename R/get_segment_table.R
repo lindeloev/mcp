@@ -76,7 +76,7 @@ check_terms_in_data = function(form, data, i, n_terms = NULL) {
 
   # Check n_terms
   if (!is.null(n_terms)) {
-    check_integer(n_terms, lower = 1, name = "n_terms")
+    check_integer(n_terms, "n_terms", lower = 1)
     if (n_terms != length(found))
       stop("Expected ", n_terms, " terms but got ", length(found), ". Specifically, got: ", paste0(all.vars(form), collapse = ", "))
   }

@@ -28,8 +28,7 @@
 #' }
 #'
 criterion = function(fit, criterion = "loo", ...) {
-  if (!class(fit) == "mcpfit")
-    stop("class(fit) must be 'mcpfit'")
+  check_mcpfit(fit)
 
   if (!criterion %in% c("loo", "waic"))
     stop("criterion must be one of 'loo' or 'waic'")
@@ -182,14 +181,14 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
       expression = paste0(LHS, " ", this_comparator, " 0")
 
       # Get effect estimate
-      samples = get_samples(fit) %>%
+      samples = mcmclist_samples(fit) %>%
         tidybayes::tidy_draws() %>%
         dplyr::mutate(effect = eval(parse(text = LHS)))
 
       # TO DO: check need to suppress warnings when tidybayes 1.2 is out?
       estimate = suppressWarnings(tidybayes::mean_hdci(samples, .data$effect, .width = width))
     } else {
-      samples = get_samples(fit) %>%
+      samples = mcmclist_samples(fit) %>%
         tidybayes::tidy_draws()
 
       estimate = list(effect = NA, .lower = NA, .upper = NA)

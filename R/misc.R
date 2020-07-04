@@ -163,6 +163,17 @@ check_integer = function(x, name, lower = -Inf) {
   TRUE
 }
 
+#' Throws an error if this is not an mcpfit
+#'
+#' @aliases check_mcpfit
+#' @keywords interal
+#' @param x Object to be tested
+#'
+check_mcpfit = function(x) {
+  if (!is.mcpfit(x))
+    stop("Expected `mcpfit` but got: ", class(x))
+}
+
 
 
 # Ask reminder questions for CRAN export
@@ -255,9 +266,9 @@ to_formula = function(form) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-get_quantiles = function(samples, quantiles, xvar, yvar, facet_by) {
+get_quantiles = function(samples, quantiles, xvar, yvar, facet_by = NULL) {
   # Trick to declare no facet = common group for all
-  if (length(facet_by) == 0)
+  if (is.null(facet_by))
     facet_by = xvar
 
   # Return data with added quantiles
