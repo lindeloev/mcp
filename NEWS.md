@@ -16,7 +16,11 @@
  
  * Control the number of samples used to compute statistics in several functions, most notably `plot(..., nsamples = 1000)`. Setting `nsamples = NULL` uses all samples for maximum accuracy at the cost of speed.
  
+ * New argument `fit$simulate(..., arma = TRUE)` toggles whether autoregressive effects should be modelled. This argument can also be set in `plot(..., arma = TRUE)`, `predict()`, `fitted()` which all call `fit$simulate()`.
+ 
  * Although the API is still in alpha, feel free to try extracting samples using `mcp:::tidy_samples(fit)`. This is useful for further processing using `tidybayes`, `bayesplot`, etc. One useful feature is computing absolute values for varying change points: `mcp:::tidy_samples(fit, population = FALSE, absolute = TRUE)`. Feedback is appreciated before `tidy_samples` will to become part of the `mcp` API in a future release.
+ 
+ * You can now plot varying effects with `rate = FALSE` for binomial models.
 
 
 ## Other changes

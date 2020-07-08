@@ -55,7 +55,7 @@ df$y = empty$simulate(
   int_1 = 2, int_3 = 0, 
   year_2 = -0.2, year_3 = 0.05)
 
-df
+head(df)
 ```
 
 Visually:

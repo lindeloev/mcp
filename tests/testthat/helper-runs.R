@@ -127,7 +127,7 @@ test_summary = function(fit, varying_cols) {
   # If there are varying effects
   if (length(varying_cols) > 0) {
     testthat::expect_match(output, "ranef\\(")  # noticed about varying effects
-    varying = ranef(fit)  # Do not print to console
+    varying = ranef(fit)
     testthat::expect_true(is.character(varying$name))
     testthat::expect_true(is.numeric(varying$mean))
 
@@ -158,8 +158,9 @@ test_plot = function(fit, varying_cols) {
     } else {
       expected_error = ">>>>do_not_expect_any_errors<<<<<"
     }
+    print(attr(gg, "condition")$message)
     is_expected = any(stringr::str_starts(attr(gg, "condition")$message, expected_error))
-    if (is_expected == FALSE) print(attr(gg, "condition")$message)
+    #if (is_expected == FALSE) print(attr(gg, "condition")$message)
     expect_true(is_expected)
   } else {
     testthat::expect_true(ggplot2::is.ggplot(gg))
@@ -181,7 +182,7 @@ test_hypothesis = function(fit) {
       paste0(base, " > 1"),  # Directional
       paste0(base, " = -1")  # Savage-Dickey (point)
     )
-    result = hypothesis(fit, hypotheses)  # Do not print to console
+    result = hypothesis(fit, hypotheses)
     testthat::expect_true(is.data.frame(result) & nrow(result) == 2)
   }
 
@@ -215,18 +216,18 @@ test_predictfitted_func = function(fit, func) {
     fit$pars$x,
     fit$pars$trials,
     na.omit(unique(fit$.other$ST$cp_group_col)),  # varying effects
-    "estimate", "error", "Q2.5", "Q97.5"
+    as.character(substitute(func)), "error", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
   )
+  if (length(fit$pars$arma) > 0)
+    expected_colnames = c(expected_colnames, fit$pars$y)
 
   # Run and test
   result = try(func(fit), silent = TRUE)
   if (inherits(result, "try-error")) {
     error_message = attr(result, "condition")$message
-    expected_error_arma = "\`predict.mcpfit\\(\\)\` is not implemented for ARMA models yet."
+    #expected_error_arma = "\`predict.mcpfit\\(\\)\` is not implemented for ARMA models yet."
+    #testthat::expect_true(length(fit$pars$arma) == 0 || any(stringr::str_starts(error_message, c(expected_error_arma, expected_error_poisson))))
     expected_error_poisson = "Problem with \`mutate\\(\\)\` input \`estimate\`"
-    testthat::expect_true(length(fit$pars$arma) == 0 || stringr::str_starts(error_message, expected_error_arma))
-    print(stringr::str_starts(error_message, expected_error_poisson))
-    print(fit$family$family != "poisson")
     testthat::expect_true(fit$family$family != "poisson" || stringr::str_starts(error_message, expected_error_poisson))
   } else {
     testthat::expect_true(is.data.frame(result))
@@ -249,7 +250,8 @@ test_predictfitted = function(fit) {
     summary = FALSE,
     probs = c(0.1, 0.5, 0.999),
     prior = TRUE,
-    nsamples = 2
+    nsamples = 2,
+    arma = FALSE
   ), silent = TRUE)
 
   if (is.data.frame(result_more)) {
@@ -268,7 +270,7 @@ test_predictfitted = function(fit) {
       fit$pars$x,
       fit$pars$trials,
       na.omit(unique(fit$.other$ST$cp_group_col)),  # varying effects
-      "estimate"
+      "fitted"
     )
     testthat::expect_true(dplyr::setequal(colnames(result_more), expected_colnames_more))  # Exactly these columns regardless of order
   }

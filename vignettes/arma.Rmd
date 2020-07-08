@@ -93,6 +93,7 @@ I have not tested whether "uncoordinated" changes will yield correct estimates a
 
 ## Order your data
 Note that AR(N) as implemented in `mcp` (and most functions in R) applies to the *order* of the data *in the data frame* without taking into account the actual value of `x`. This has two important implications: 
+
  * You probably want to sort your data according to your `x`. Just do `data = data[order(data$x), ]`.
  * Adjacent data points that lie years apart are modeled to be just as (auto)correlated as adjacent points lying seconds apart.
 
@@ -171,7 +172,7 @@ First, let's get a visual to see that the posterior is reasonably narrow and con
 plot(fit)
 ```
 
-You could use `plot(fit, geom_data = "line")` for a more classical line plot of the time series data. You can also plot the `ar1_` parameters directly. Now the y-axis is `ar1`:
+You could use `plot(fit, geom_data = "line")` for a more classical line plot of the time series data. You can omit plotting AR effect entirely setting `plot(fit, arma = FALSE)`. You can also plot the `ar1_` parameters directly using `which_y`, so the y-axis is the value of `ar1`:
 
 ```{r}
 plot(fit, which_y = "ar1", lines = 100)

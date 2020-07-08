@@ -344,6 +344,39 @@ mcmclist_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
 }
 
 
+
+#' Get relevant info about varying paramters
+#'
+#' @aliases unpack_varying
+#' @keywords internal
+#' @inheritParams tidy_samples
+#' @return A list with slots 'pars', 'cols', and 'indices'.
+#'
+unpack_varying = function(fit, varying) {
+  if (all(varying == FALSE)) {
+    # Select no varying effects
+    use_varying = c()
+  } else if (all(varying == TRUE)) {
+    # Select all varying effects
+    use_varying = !is.na(fit$.other$ST$cp_group)
+  } else if (is.character(varying)) {
+    if (!all(varying %in% fit$pars$varying))
+      stop("Not all `varying` are varying parameters (see fit$pars$varying).")
+    # Select only specified varying effects
+    use_varying = fit$.other$ST$cp_group %in% varying
+  } else {
+    stop("`varying` must be TRUE, FALSE, or a character vector.")
+  }
+
+  return(list(
+    pars = fit$.other$ST$cp_group[use_varying],
+    cols = fit$.other$ST$cp_group_col[use_varying],
+    indices = use_varying
+  ))
+}
+
+
+
 #' Get tidy samples with or without varying effects
 #'
 #' Returns in a format useful for `fit$simulate()` with population parameters in wide format
@@ -372,7 +405,8 @@ mcmclist_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
-#' @example
+#' @example tidy_samples(ex_fit)
+#'
 tidy_samples = function(fit, population = TRUE, varying = TRUE, absolute = FALSE, prior = FALSE, nsamples = NULL) {
   # General argument checks
   if (all(population == FALSE) & all(varying == FALSE))
@@ -384,23 +418,8 @@ tidy_samples = function(fit, population = TRUE, varying = TRUE, absolute = FALSE
 
   # ----- IDENTIFY PARAMETERS -----
   # Varying parameters. Result is `terms_varying`
-  if (all(varying == FALSE)) {
-    # Select no varying effects
-    use_varying = c()
-  } else if (all(varying == TRUE)) {
-    # Select all varying effects
-    use_varying = !is.na(fit$.other$ST$cp_group)
-  } else if (is.character(varying)) {
-    if (!all(varying %in% fit$pars$varying))
-      stop("Not all `varying` are varying parameters (see fit$pars$varying).")
-    # Select only specified varying effects
-    use_varying = fit$.other$ST$cp_group %in% varying
-  } else {
-    stop("`varying` must be TRUE, FALSE, or a character vector.")
-  }
-  pars_varying = fit$.other$ST$cp_group[use_varying]
-  cols_varying = fit$.other$ST$cp_group_col[use_varying]
-  terms_varying = paste0(pars_varying, "[", cols_varying, "]")  # for tidybayes
+  varying_info = unpack_varying(fit, varying)
+  terms_varying = paste0(varying_info$pars, "[", varying_info$cols, "]")  # for tidybayes
   if (all(terms_varying == "[]")) terms_varying = ""  # quick fix
 
   # Population parameters. Result is `pars_population`.
@@ -419,13 +438,13 @@ tidy_samples = function(fit, population = TRUE, varying = TRUE, absolute = FALSE
 
   # Absolute effects. Results is `absolute_cps` and `absolute` (recoded to varying cp names)
   if (all(absolute == TRUE)) {
-    absolute = fit$.other$ST$cp_group[use_varying]
-    absolute_cps = fit$.other$ST$cp_name[use_varying]
+    absolute = fit$.other$ST$cp_group[varying_info$indices]
+    absolute_cps = fit$.other$ST$cp_name[varying_info$indices]
   } else if (all(absolute == FALSE)) {
     absolute_cps = c()
   } else if (is.character(absolute)) {
     # Check
-    is_in_varying = absolute %in% pars_varying
+    is_in_varying = absolute %in% varying_info$pars
     if (any(!is_in_varying))
         stop("The following parameter names in `absolute` are not in `varying`:", absolute[is_in_varying])
 
@@ -445,10 +464,10 @@ tidy_samples = function(fit, population = TRUE, varying = TRUE, absolute = FALSE
   samples = eval(parse(text = code))
 
   # Make varying columns factor if they are factors in fit$data
-  if (length(cols_varying) > 0) {
-    is_factor = lapply(fit$data, is.factor)[cols_varying]
-    cols_to_factorize = cols_varying[as.logical(is_factor)]
-    samples = mutate_at(samples, cols_to_factorize, as.factor)
+  if (length(varying_info$cols) > 0) {
+    is_factor = lapply(fit$data, is.factor)[varying_info$cols]
+    cols_to_factorize = varying_info$cols[as.logical(is_factor)]
+    samples = dplyr::mutate_at(samples, cols_to_factorize, as.factor)
   }
 
   # Add population cp to varying and delete population cols only included for this purpose.
@@ -465,7 +484,7 @@ tidy_samples = function(fit, population = TRUE, varying = TRUE, absolute = FALSE
 
 
 
-#' Predictions from samples
+#' Fits and predictions from samples
 #'
 #' @aliases pp_eval pp_eval.mcpfit
 #' @keywords internal
@@ -489,43 +508,28 @@ pp_eval = function(
   prior = FALSE,
   which_y = "ct",
   varying = TRUE,
+  arma = TRUE,
   nsamples = NULL,
   samples_format = "tidy"
 ) {
   # Naming convention in mcp
   fit = object
   xvar = rlang::sym(fit$pars$x)
+  returnvar = rlang::sym(type)
 
   # What varying cols to use (varying = TRUE keeps them all as is)
-  varying_cols = na.omit(unique(fit$.other$ST$cp_group_col))
-  if (all(varying == FALSE))
-    varying_cols = c()
+  varying_info = unpack_varying(fit, varying)
+  required_cols = c(fit$pars$x, fit$pars$trials, varying_info$cols)
 
   # Check inputs
-  required_cols = c(fit$pars$x, fit$pars$trials, varying_cols)
-  if (!is.null(newdata)) {
-    if (!is.data.frame(newdata) & !tibble::is_tibble(newdata))
-      stop("`newdata` must be a data.frame or a tibble. Got '", paste0(class(newdata), collapse = "', '"), "'")
-
-    cols_in_newdata = required_cols %in% colnames(newdata)
-    if (any(cols_in_newdata == FALSE))
-      stop("Missing columns '", paste0(required_cols[!cols_in_newdata], collapse = "', '"), "' in `newdata`.")
-  } else {
-    # Use original data
-    newdata = fit$data
-  }
-  newdata = data.frame(newdata[, required_cols])
-  colnames(newdata) = required_cols  # Special case for when there's only one predictor
-  newdata$newdata_order = 1:nrow(newdata)  # to maintain order in the output when summary == TRUE
+  if (length(fit$pars$arma) > 0 & !is.null(newdata) && nrow(newdata) > 10)
+    message("This can be slow when arma = TRUE.")
 
   if (!is.logical(summary))
     stop("`summary` must be TRUE or FALSE. Got: ", summary)
 
   if (!(type %in% c("fitted", "predict")))
     stop("`type` must be 'fitted' or 'predict'. Got: '", type, "'.")
-
-  if (type == "predict" & length(fit$pars$arma) > 0)
-    stop("`predict.mcpfit()` is not implemented for ARMA models yet. Raise an issue on GitHub if you need it.")
 
   if (!is.logical(probs) & !is.numeric(probs))
     stop("`probs` has to be TRUE, FALSE, or a vector of numbers.")
@@ -542,47 +546,73 @@ pp_eval = function(
   if (!(samples_format %in% c("tidy", "matrix")))
     stop("`samples_format` must be either 'tidy' or 'matrix'. Got: '", samples_format, "'.")
 
+  # Check and build stuff related to newdata
+  if (!is.null(newdata)) {
+    if (!is.data.frame(newdata) & !tibble::is_tibble(newdata))
+      stop("`newdata` must be a data.frame or a tibble. Got '", paste0(class(newdata), collapse = "', '"), "'")
 
-  # Get data
-  simulate = fit$simulate
+    # Add response column to required_cols for ARMA models
+    if (length(fit$pars$arma) > 0 & arma == TRUE) {
+      if (fit$pars$y %in% colnames(newdata)) {
+        required_cols = c(required_cols, fit$pars$y)
+      } else if (".ydata" %in% colnames(newdata)) {
+        required_cols = c(required_cols, ".ydata")
+      } else {
+        stop("When `arma = TRUE`, `newdata` must have the column: '", fit$pars$y, "' (or the equivalent '.ydata')")
+      }
+    }
 
-  # Get data
-  if (length(varying_cols) > 0) {
+    cols_in_newdata = required_cols %in% colnames(newdata)
+    if (any(cols_in_newdata == FALSE))
+      stop("Missing columns '", paste0(required_cols[!cols_in_newdata], collapse = "', '"), "' in `newdata`.")
+  } else {
+    # Use original data. Remember the response variable too for ARMA
+    newdata = fit$data
+    if (length(fit$pars$arma) > 0 & arma == TRUE)
+      required_cols = c(required_cols, fit$pars$y)
+  }
+  newdata = data.frame(newdata[, required_cols])
+  colnames(newdata) = required_cols  # Special case for when there's only one predictor
+  newdata$newdata_order = 1:nrow(newdata)  # to maintain order in the output when summary == TRUE
+
+
+  # Get fits/predictions
+  if (length(varying_info$cols) > 0) {
     # If there are varying effects: use varying-matching samples for each row of data
-    samples = left_join(
+    samples = dplyr::left_join(
       newdata,
       tidy_samples(fit, prior, population = TRUE, varying = varying, nsamples = nsamples),
-      by = varying_cols
+      by = varying_info$cols
     ) %>%
-      dplyr::mutate(estimate = rlang::exec(simulate, !!!., type = type, rate = rate, which_y = which_y, add_attr = FALSE))
+      dplyr::mutate(!!returnvar := rlang::exec(fit$simulate, !!!., type = type, rate = rate, which_y = which_y, arma = arma, add_attr = FALSE))
   } else {
     # No varying effects: use all samples for each row of data
     samples = tidy_samples(fit, prior, population = TRUE, varying = varying, nsamples = nsamples) %>%
       tidyr::expand_grid(newdata) %>%
-      dplyr::mutate(estimate = rlang::exec(simulate, !!!., type = type, rate = rate, which_y = which_y, add_attr = FALSE))
+      dplyr::mutate(!!returnvar := rlang::exec(fit$simulate, !!!., type = type, rate = rate, which_y = which_y, arma = arma, add_attr = FALSE))
   }
 
 
-  # Summarise
+  # Optionally summarise
   if (summary == TRUE) {
     df_return = samples %>%
       # Summarise for each row in newdata
       dplyr::group_by(newdata_order) %>%
       dplyr::summarise(.groups = "drop",
-        error = sd(estimate),
-        estimate = mean(estimate)
+        error = sd(!!returnvar),
+        !!returnvar := mean(!!returnvar)
       ) %>%
 
       # Apply original order and put newdata as the first columns
       dplyr::arrange(newdata_order) %>%
       dplyr::left_join(newdata, by = "newdata_order") %>%
-      dplyr::select(dplyr::one_of(colnames(newdata)), estimate, error, -newdata_order)
+      dplyr::select(dplyr::one_of(colnames(newdata)), !!returnvar, error, -newdata_order)
 
 
     # Quantiles
     if (all(probs != FALSE)) {
       quantiles_fit = samples %>%
-        get_quantiles(probs, xvar, rlang::sym("estimate")) %>%
+        get_quantiles(probs, xvar, returnvar) %>%
         dplyr::mutate(quantile = 100*quantile) %>%
         tidyr::pivot_wider(names_from = quantile, names_prefix = "Q", values_from = y)
 
@@ -627,6 +657,7 @@ predict.mcpfit = function(
   prior = FALSE,
   which_y = "ct",
   varying = TRUE,
+  arma = TRUE,
   nsamples = NULL,
   samples_format = "tidy"
 ) {
@@ -640,6 +671,7 @@ predict.mcpfit = function(
     prior = prior,
     which_y = which_y,
     varying = varying,
+    arma = arma,
     nsamples = nsamples,
     samples_format = samples_format
   )
@@ -672,6 +704,7 @@ fitted.mcpfit = function(
   prior = FALSE,
   which_y = "ct",
   varying = TRUE,
+  arma = TRUE,
   nsamples = NULL,
   samples_format = "tidy"
 ) {
@@ -685,6 +718,7 @@ fitted.mcpfit = function(
     prior = prior,
     which_y = which_y,
     varying = varying,
+    arma = arma,
     nsamples = nsamples,
     samples_format = samples_format
   )
