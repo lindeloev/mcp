@@ -262,13 +262,18 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     args_if_exists(pars$sigma),
     args_if_exists(pars$arma),
     args_if_exists(pars$varying, " = 0"),
-    ifelse(is_arma, paste0("\n    ", pars$y, " = NULL, \n    ydata = NULL, "), ""), "
+    ifelse(is_arma, paste0("\n    ", pars$y, " = NULL, \n    .ydata = NULL, "), ""), "
     type = 'predict',
     quantile = FALSE,
     rate = FALSE,
     which_y = 'ct',
     add_attr = TRUE,
+    arma = TRUE,
     ...) {
+
+    # Return predictions or fitted values?
+    if (!type %in% c('predict', 'fitted'))
+      stop(\"'`type` must be one of 'predict' or 'fitted'\")
 
     # Use this for return to add simulation parameters to the output
     args_names = as.list(match.call())  # Which arguments this function was called with
@@ -291,13 +296,7 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     cp_0 = -Inf
     cp_", nsegments, " = Inf
 
-    ", formula_func, "
-
-
-    # Return predictions or fitted values?
-    if (!type %in% c('predict', 'fitted'))
-      stop(\"'`type` must be one of 'predict' or 'fitted'\")
-    ")
+    ", formula_func)
 
   # Return depends on family
   # GAUSSIAN ------------------------------
@@ -305,16 +304,19 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     # If ARMA, build resid_ and return with that
     if (is_arma) {
       out = paste0(out, "
-      # Simulate AR residuals",
-        get_ar_code(
-          ar_order = get_arma_order(pars$arma),
-          family = family,
-          is_R = TRUE,
-          xvar = pars$x,
-          yvar = pars$y
-        ), "
-      # Finally, add these autocorrelated predictions to the fitted y_:
-      y_ = y_ + resid_
+
+      if (arma == TRUE) {
+        # Simulate AR residuals",
+          get_ar_code(
+            ar_order = get_arma_order(pars$arma),
+            family = family,
+            is_R = TRUE,
+            xvar = pars$x,
+            yvar = pars$y
+          ), "
+        # Finally, add these autocorrelated predictions to the fitted y_:
+        y_ = y_ + resid_
+      }
     ")
     }
 
@@ -333,36 +335,33 @@ get_simulate = function(formula_str, pars, nsegments, family) {
         stop('`type = \\'fitted\\` is the only option when `which_y != \\'ct\\'`')
 
       return(add_simulated(get(which_y)))
+    }")
+
+    if (is_arma) {
+      out = paste0(out, "
+   if (is.null(", pars$y, ") & is.null(.ydata) & arma == TRUE)
+     message('Returning without AR(N) since `", pars$y, "` was not in the data.')")
     }
 
-    # If fitted or no data (will)
-    if (type == 'fitted') {")
-      if (is_arma) {
-        out = paste0(out, "
-      if (is.null(", pars$y, ") & is.null(ydata))
-        stop('fitted not meaningful for an AR(N) model without data to use for autocorrelation.')")
-      }
+    # If fitted or no data
     out = paste0(out, "
+    if (type == 'fitted') {
       return(add_simulated(", family$linkinv_r, "(y_)))
     }")
-    if(is_arma) {
-      out = paste0(out, " else if (type == 'predict' & (is.null(ydata) & is.null(", pars$y, "))) {
-      return(add_simulated(", family$linkinv_r, "(y_)))
-    }")
-    }
     out = paste0(out, " else if (type == 'predict') {
       if (any(", family$linkinv_r, "(sigma_) < 0))
         stop('Modelled negative sigma. First detected at ", pars$x, " = ', min(", pars$x, "[", family$linkinv_r, "(sigma_) < 0]))
       return(add_simulated(rnorm(length(", pars$x, "), ", family$linkinv_r, "(y_), sigma_)))
-      # return(add_simulated(qnorm(length(", pars$x, "), ", family$linkinv_r, "(y_), sigma_)))
-      # if (is.numeric(quantile)) {
-      #   add_simulated(qnorm(quantile, ", family$linkinv_r, "(y_), sigma_))
-      # } else if (quantile == FALSE) {
-      #   add_simulated(rnorm(length(", pars$x, "), ", family$linkinv_r, "(y_), sigma_))
-      # } else {
-      #   stop('Invalid `quantile` argument to simulate()')
-      # }
     }")
+
+    # return(add_simulated(qnorm(length(", pars$x, "), ", family$linkinv_r, "(y_), sigma_)))
+    # if (is.numeric(quantile)) {
+    #   add_simulated(qnorm(quantile, ", family$linkinv_r, "(y_), sigma_))
+    # } else if (quantile == FALSE) {
+    #   add_simulated(rnorm(length(", pars$x, "), ", family$linkinv_r, "(y_), sigma_))
+    # } else {
+    #   stop('Invalid `quantile` argument to simulate()')
+    # }
 
   # OTHER FAMILIES ---------------------
   } else if (family$family == "binomial") {
@@ -427,7 +426,7 @@ get_ar_code = function(ar_order, family, is_R, xvar, yvar = NA) {
   if (is_R) {
     # mm is the code string to be populated below
     mm = paste0("
-      if(!is.null(ydata)) ", yvar, " = ydata  # Hack to get a consistent argument name
+      if(!is.null(.ydata)) ", yvar, " = .ydata  # Hack to get a consistent argument name
       ar0_ = sigma_[1:", ar_order, "] * 0 + 1
 
       # If got y. Use it to compute residuals
