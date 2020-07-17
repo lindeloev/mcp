@@ -72,7 +72,7 @@ check_terms_in_data = function(form, data, i, n_terms = NULL) {
   # Match varnames to data
   found = all.vars(form) %in% colnames(data)
   if (!all(found))
-    stop("Error in segment ", i, ": Term '", paste0(all.vars(form)[!found], collapse="' and '"), "' found in formula but not all in data.")
+    stop("Error in segment ", i, ": Term '", paste0(all.vars(form)[!found], collapse="' and '"), "' found in formula but not in data.")
 
   # Check n_terms
   if (!is.null(n_terms)) {
@@ -116,16 +116,16 @@ unpack_y = function(form_y, i, family) {
 
   # RESPONSE
   lhs = y_split[[1]][1]
-  y_col = attr(terms(to_formula(lhs)), "term.labels")
+  y_col = attr(stats::terms(to_formula(lhs)), "term.labels")
   if (length(y_col) != 1)
-    stop("There should be exactly one response variable. Got ", length(ycol), " in segment ", i)
+    stop("There should be exactly one response variable. Got ", length(y_col), " in segment ", i)
 
   if (length(y_split[[1]]) == 1)
     y_split[[1]] = c(y_split[[1]], "invalid_and_empty_filler")  # A pattern that will not be matched in the following
 
   # If there was a pipe
   rhs = y_split[[1]][2]
-  term_labels = attr(terms(to_formula(rhs)), "term.labels")
+  term_labels = attr(stats::terms(to_formula(rhs)), "term.labels")
 
   # BINOMIAL TRIALS
   trials_term_index = stringr::str_detect(term_labels, "trials\\(")  # Which terms?
@@ -142,7 +142,7 @@ unpack_y = function(form_y, i, family) {
   if (got_trials == TRUE) {
     trials_term = term_labels[trials_term_index]  # Extract terms
     trials_content = get_term_content(trials_term)
-    trials_col = attr(terms(trials_content), "term.labels")
+    trials_col = attr(stats::terms(trials_content), "term.labels")
     if (length(trials_col) != 1)
       stop("There must be exactly one term inside trials(). Got ", trials_term, " in segment ", i)
   } else {
@@ -155,7 +155,7 @@ unpack_y = function(form_y, i, family) {
   if (got_weights == TRUE) {
     weights_term = term_labels[weights_term_index]
     weights_content = get_term_content(weights_term)
-    weights_col = attr(terms(weights_content), "term.labels")
+    weights_col = attr(stats::terms(weights_content), "term.labels")
     if (length(weights_col) != 1)
       stop("There must be exactly one term inside weights(). Got ", weights_term, " in segment ", i)
   } else {

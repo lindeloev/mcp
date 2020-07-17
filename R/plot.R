@@ -149,15 +149,9 @@ plot.mcpfit = function(x,
       if (!facet_by %in% varying_groups)
         stop("`facet_by` must be a data column and modeled as a varying effect.")
     } else {
-      stop("`facet_by` must be a character string. Got ", class(id), ".")
+      stop("`facet_by` must be a character string. Got ", class(facet_by), ".")
     }
   }
-
-
-  # R CMD Check wants a global definition of ".". The formal way of doing it is
-  # if(getRversion() >= "2.15.1") utils::globalVariables(".")
-  # but that makes the tests fail.
-  . = "ugly fix to please R CMD check"
 
   # Useful vars
   xvar = rlang::sym(fit$pars$x)
@@ -171,12 +165,11 @@ plot.mcpfit = function(x,
   newdata = tibble::tibble(!!xvar := get_eval_at(fit, facet_by))
 
   if (is.null(facet_by) == TRUE) {
-    varying_params = c()
+    varying_pars = NULL
     if (is_arma)
       newdata$.ydata = fit$data[, fit$pars$y]
   } else {
-    varying_indices = which(fit$.other$ST$cp_group_col == facet_by)
-    varying_params = fit$.other$ST$cp_group[varying_indices]
+    varying_pars = unpack_varying(fit, cols = facet_by)$pars
     if (is_arma) {
       # If ARMA, replace newdata with the original data that includes xvar, yvar, and the varying effect.
       newdata = dplyr::rename(fit$data, .ydata = as.character(yvar))
@@ -203,7 +196,7 @@ plot.mcpfit = function(x,
       rate = rate,
       prior = prior,
       which_y = which_y,
-      varying = varying_params,
+      varying = varying_pars,
       arma = arma,
       nsamples = nsamples,
       samples_format = "tidy"
@@ -271,7 +264,6 @@ plot.mcpfit = function(x,
       stop("Failed to draw change point density for this plot. Please raise an error on GitHub.")
     }
 
-
     gg = gg + geom_cp_density(fit, facet_by, limits_y) +
       ggplot2::coord_cartesian(
         ylim = c(limits_y[1], NA),  # Remove density flat line from view
@@ -313,10 +305,10 @@ geom_cp_density = function(fit, facet_by, limits_y) {
   if (!is.null(facet_by)) {
     cp_matches_facet = fit$.other$ST$cp_group_col == facet_by  # Varies by this column
     cp_not_facet = !cp_matches_facet | is.na(cp_matches_facet)
-    varying = na.omit(fit$.other$ST$cp_group[cp_matches_facet])  # The rest
-    population = na.omit(fit$.other$ST$cp_name[cp_not_facet][-1])  # [-1] to remove cp_0
+    varying = stats::na.omit(fit$.other$ST$cp_group[cp_matches_facet])  # The rest
+    population = stats::na.omit(fit$.other$ST$cp_name[cp_not_facet][-1])  # [-1] to remove cp_0
   } else {
-    varying = c()
+    varying = NULL
     population = fit$.other$ST$cp_name[-1]
   }
 
@@ -567,4 +559,139 @@ get_eval_at = function(fit, facet_by) {
   }
 
   return(sort(eval_at))
+}
+
+
+#' Posterior Predictive Checks For Mcpfit Objects
+#'
+#' Plot posterior (default) or prior (`prior = TRUE`) predictive checks. This is convenience wrapper
+#' around the `bayesplot::ppc_*()` methods.
+#'
+#' @aliases pp_check pp_check.mcpfit
+#' @inheritParams pp_eval
+#' @param type One of `bayesplot::available_ppc("grouped", invert = TRUE) %>% stringr::str_remove("ppc_")`
+#' @param facet_by Name of a column in data modeled as varying effect(s).
+#' @param nsamples Number of draws. Note that for summary geoms you may want to use all data,
+#'   e.g., `pp_check(fit, type = "ribbon", nsamples = NULL)`.
+#' @param ... Further arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
+#' @seealso pp_eval predict.mcpfit
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @export
+#' @examples
+#' pp_check(ex_fit)
+#' \donttest{
+#' pp_check(ex_fit, type = "ecdf_overlay")
+#' pp_check(another_fit, type = "loo_intervals", facet_by = "id")
+#' }
+#'
+pp_check = function(
+  object,
+  type = "dens_overlay",
+  facet_by = NULL,
+  newdata = NULL,
+  prior = FALSE,
+  varying = TRUE,
+  arma = TRUE,
+  nsamples = 100,
+  ...
+) {
+  # Internal mcp naming convention
+  fit = object
+
+  # Check and recode inputs
+  if (!is.null(facet_by))
+    if (!is.character(facet_by) || length(facet_by) != 1)
+      stop("`facet_by` must be a single character string.")
+
+  if (is.null(newdata)) {
+    y = as.numeric(fit$data[, fit$pars$y])  # strip simulated data of attributes
+    varying_data = fit$data[, facet_by]
+  } else {
+    y = as.numeric(newdata[, fit$pars$y])  # strip simulated data of attributes
+    varying_data = newdata[, facet_by]
+  }
+
+  allowed_types = bayesplot::available_ppc() %>%
+    stringr::str_remove("ppc_")
+  if (!(type %in% allowed_types))
+    stop("`type` must be one of '", paste0(allowed_types, collapse = "', '"), "'")
+
+  # Get as tidy samples to preserve info on groups and sampled draws
+  samples = pp_eval(
+    fit,
+    newdata = newdata,
+    summary = FALSE,
+    type = "predict",
+    probs = FALSE,
+    rate = FALSE,
+    prior = prior,
+    which_y = "ct",
+    varying = varying,
+    arma = arma,
+    nsamples = nsamples,
+    samples_format = "tidy"
+  )
+
+  # Return plot with or without facets
+  if (is.null(facet_by)) {
+    yrep = tidy_to_matrix(samples, "predict")
+    plot_out = get_ppc_plot(fit, type, y, yrep, nsamples, samples$.draw, ...)  # One plot: use all of y and yrep
+    return(plot_out)
+  } else {
+    groups = unique(varying_data)
+    all_plots = list()
+    for (group in groups) {
+      # Compute/extract y and yrep for this group
+      y_this = y[varying_data == group]
+      samples_this = dplyr::filter(samples, !!rlang::sym(facet_by) == group)
+      yrep_this = tidy_to_matrix(samples_this, "predict")
+
+      # Add plot to list
+      all_plots[[group]] = get_ppc_plot(fit, type, y_this, yrep_this, nsamples, draws = samples_this$.draw) +
+        ggplot2::ggtitle(group)
+    }
+
+    # Return faceted plot using patchwork
+    plot_out = patchwork::wrap_plots(all_plots) + patchwork::plot_layout(guides = "collect")
+    return(plot_out)
+  }
+}
+
+
+#' pp_check for loo statistics
+#'
+#' @aliases get_loo_plot_call
+#' @keywords internal
+#' @inheritParams pp_check
+#' @param y Response vector
+#' @param yrep S X N matrix of predicted responses
+#' @param draws (required for loo-type plots) Indices of draws to use.
+#' @param ... Arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
+#' @return A string
+#' @seealso pp_check.mcpfit
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
+get_ppc_plot = function(fit, type, y, yrep, nsamples, draws = NULL, ...) {
+  is_loo = stringr::str_detect(type, "loo")
+
+  if (is_loo == FALSE) {
+    bayesplot_call = paste0("bayesplot::ppc_", type, "(y, yrep, ...)")
+  } else if (is_loo == TRUE) {
+    # Compute loo if missing
+    fit = with_loo(fit, save_psis = TRUE, info = "Computing `fit$loo = loo(fit, save_psis = TRUE)`...")
+
+    # Extract psis_object and lw
+    psis_object = fit$loo$psis_object
+    lw = psis_object$log_weights[unique(draws), ]
+    psis_object$log_weights = lw
+    attr(psis_object, "dims") = c(dim(yrep))
+
+    # Build call (setting `samples` overwrites bayesplot defaults)
+    bayesplot_call = paste0("bayesplot::ppc_", type, "(y, yrep, psis_object = psis_object, lw = lw, samples = nsamples, ...)")
+  }
+
+  plot_out = suppressWarnings(eval(parse(text = bayesplot_call)))
+  return(plot_out)
 }

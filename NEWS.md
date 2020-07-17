@@ -11,6 +11,8 @@
    - `binomial`: "logit", "probit", "identity"
    - `bernoulli`: "logit", "probit", "identity"
    - `poisson`: "log", "identity"
+ 
+ * Improved model assessment: Use `pp_check(fit)` to do (posterior) predictive checking. Use `residuals(fit)` to get residuals. Both functions respect most of the arguments to `fitted()` and `pp_check` leverages the `bayesplot` package to support many types of plots.
    
  * Change point densities are now computed on a per-panel basis in `plot(fit, facet_by = "varying_column")`. Previous releases only displayed population-level change points.
  
