@@ -110,7 +110,7 @@ test_runs = function(model,
       test_summary(fit, varying_cols)
       test_plot(fit, varying_cols)  # default plot
       test_plot_pars(fit)  # bayesplot call
-      test_predictfitted(fit)
+      test_pp_eval(fit)
     }
   }
 }
@@ -152,15 +152,14 @@ test_plot = function(fit, varying_cols) {
     # (the error is an artefact of very small test data --> wide posteriors.)
     if (fit$family$family == "poisson") {
 
-      expected_error = "Problem with \`mutate\\(\\)\` input \`.predicted\`\\.\\n\\033\\[31mx\\033\\[39m Modelled extremely large value"
+      expected_error = "Problem with \`mutate\\(\\)\` input \`predict\`"
     } else if (any(stringr::str_detect(fit$pars$sigma, "^sigma_.*_.*$"))) {  # for slopes on sigma
       expected_error = "Modelled negative sigma"
     } else {
       expected_error = ">>>>do_not_expect_any_errors<<<<<"
     }
-    print(attr(gg, "condition")$message)
-    is_expected = any(stringr::str_starts(attr(gg, "condition")$message, expected_error))
-    #if (is_expected == FALSE) print(attr(gg, "condition")$message)
+    error_message = attr(gg, "condition")$message
+    is_expected = any(stringr::str_starts(error_message, expected_error))
     expect_true(is_expected)
   } else {
     testthat::expect_true(ggplot2::is.ggplot(gg))
@@ -210,7 +209,7 @@ test_hypothesis = function(fit) {
 }
 
 
-test_predictfitted_func = function(fit, func) {
+test_pp_eval_func = function(fit, func) {
   # Settings
   expected_colnames = c(
     fit$pars$x,
@@ -218,30 +217,29 @@ test_predictfitted_func = function(fit, func) {
     na.omit(unique(fit$.other$ST$cp_group_col)),  # varying effects
     as.character(substitute(func)), "error", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
   )
-  if (length(fit$pars$arma) > 0)
+  if (length(fit$pars$arma) > 0 || as.character(substitute(func)) == "residuals")
     expected_colnames = c(expected_colnames, fit$pars$y)
 
   # Run and test
   result = try(func(fit), silent = TRUE)
   if (inherits(result, "try-error")) {
     error_message = attr(result, "condition")$message
-    #expected_error_arma = "\`predict.mcpfit\\(\\)\` is not implemented for ARMA models yet."
-    #testthat::expect_true(length(fit$pars$arma) == 0 || any(stringr::str_starts(error_message, c(expected_error_arma, expected_error_poisson))))
-    expected_error_poisson = "Problem with \`mutate\\(\\)\` input \`estimate\`"
-    testthat::expect_true(fit$family$family != "poisson" || stringr::str_starts(error_message, expected_error_poisson))
+    expected_error_poisson = "Problem with \`mutate\\(\\)\` input"  # OK: a side-effect of the small data and short sampling.
+    testthat::expect_true(fit$family$family != "poisson" | stringr::str_starts(error_message, expected_error_poisson))  # Only test message for poisson
   } else {
     testthat::expect_true(is.data.frame(result))
     testthat::expect_equal(nrow(result), nrow(fit$data))  # Returns same number of rows as data
-    testthat::expect_true(sum(is.na(result)) == 0)  # No missing values
+    testthat::expect_true(sum(is.na(result)) == 0)  # No missing values)
     testthat::expect_true(dplyr::setequal(colnames(result), expected_colnames))  # Exactly these columns regardless of order
     testthat::expect_true(all(result[, fit$pars$x] == fit$data[, fit$pars$x]))  # Output should have same order as input
   }
 }
 
-test_predictfitted = function(fit) {
-  # Simple tests
-  test_predictfitted_func(fit, fitted)
-  test_predictfitted_func(fit, predict)
+test_pp_eval = function(fit) {
+  # Test pp_eval
+  test_pp_eval_func(fit, fitted)
+  test_pp_eval_func(fit, predict)
+  test_pp_eval_func(fit, residuals)
 
   # Test the other arguments. Inside "try" without further checking because such errors should be caught by the above.
   result_more = try(fitted(
@@ -270,9 +268,28 @@ test_predictfitted = function(fit) {
       fit$pars$x,
       fit$pars$trials,
       na.omit(unique(fit$.other$ST$cp_group_col)),  # varying effects
+      "data_row",
       "fitted"
     )
-    testthat::expect_true(dplyr::setequal(colnames(result_more), expected_colnames_more))  # Exactly these columns regardless of order
+
+    is_equal = dplyr::setequal(colnames(result_more), expected_colnames_more)  # Exactly these columns regardless of order
+    testthat::expect_true(is_equal)
+  }
+
+  # Test pp_check
+  if (length(fit$pars$varying) > 0) {
+    varying_col = na.omit(fit$.other$ST$cp_group_col)[1]  # Just use the first column
+    pp_default = try(pp_check(fit, facet_by = varying_col, nsamples = 2))
+  } else {
+    pp_default = try(pp_check(fit, nsamples = 2))
+  }
+
+  if (inherits(pp_default, "try-error")) {
+    error_message = attr(pp_default, "condition")$message
+    expected_error_poisson = "Problem with \`mutate\\(\\)\` input"  # OK: a side-effect of the small data and short sampling.
+    testthat::expect_true(fit$family$family != "poisson" || stringr::str_starts(error_message, expected_error_poisson))  # Only test message for poisson
+  } else {
+    testthat::expect_true(ggplot2::is.ggplot(pp_default))
   }
 }
 

@@ -93,7 +93,7 @@ ilogit = stats::binomial(link = "logit")$linkinv
 
 #' Probit function
 #'
-#' @alias probit
+#' @aliases probit
 #' @param mu A vector of probabilities (0.0 to 1.0)
 #' @return A vector with same length as `mu`
 #' @export
@@ -102,8 +102,8 @@ probit = stats::binomial(link = "probit")$linkfun
 
 #' Inverse probit function
 #'
-#' @alias iprobit
-#' @param mu A vector of probabilities (0.0 to 1.0)
+#' @aliases iprobit
+#' @param eta A vector of probits
 #' @return A vector with same length as `mu`
 #' @export
 iprobit = stats::binomial(link = "probit")$linkinv
@@ -152,7 +152,7 @@ get_arma_order = function(pars_arma) {
 #' @param lower the smallest allowed value. lower = 1 checks for positive integers.
 #'
 check_integer = function(x, name, lower = -Inf) {
-  x = na.omit(x)
+  x = stats::na.omit(x)
   greater_than = ifelse(lower == -Inf, " ", paste0(" >= ", lower, " "))
   if (!is.numeric(x))
     stop("Only integers", greater_than, "allowed for '", name, "'")
@@ -162,18 +162,6 @@ check_integer = function(x, name, lower = -Inf) {
 
   TRUE
 }
-
-#' Throws an error if this is not an mcpfit
-#'
-#' @aliases check_mcpfit
-#' @keywords interal
-#' @param x Object to be tested
-#'
-check_mcpfit = function(x) {
-  if (!is.mcpfit(x))
-    stop("Expected `mcpfit` but got: ", class(x))
-}
-
 
 
 # Ask reminder questions for CRAN export
@@ -186,8 +174,6 @@ release_questions = function() {
     "Have you run the script to insert the correct logo.png in the HTML meta?"
   )
 }
-
-
 
 
 #' Remove varying or population terms from a formula
