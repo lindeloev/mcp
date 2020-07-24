@@ -279,9 +279,9 @@ test_pp_eval = function(fit) {
   # Test pp_check
   if (length(fit$pars$varying) > 0) {
     varying_col = na.omit(fit$.other$ST$cp_group_col)[1]  # Just use the first column
-    pp_default = try(pp_check(fit, facet_by = varying_col, nsamples = 2))
+    pp_default = try(pp_check(fit, facet_by = varying_col, nsamples = 2), silent = TRUE)
   } else {
-    pp_default = try(pp_check(fit, nsamples = 2))
+    pp_default = try(pp_check(fit, nsamples = 2), silent = TRUE)
   }
 
   if (inherits(pp_default, "try-error")) {
@@ -296,9 +296,9 @@ test_pp_eval = function(fit) {
 
 
 # Rutine for testing a list of erroneous models
-test_bad = function(models, title, ...) {
+test_bad = function(models, ...) {
   for (model in models) {
-    test_name = paste0(title, ":
+    test_name = paste0(as.character(substitute(models)), ":
     ", paste0(model, collapse=", "))
 
     testthat::test_that(test_name, {
@@ -309,9 +309,9 @@ test_bad = function(models, title, ...) {
 
 
 # Routine for testing a list of good models
-test_good = function(models, title, ...) {
+test_good = function(models, ...) {
   for (model in models) {
-    test_name = paste0(title, ":
+    test_name = paste0(as.character(substitute(models)), ":
     ", paste0(model, collapse=", "))
 
     testthat::test_that(test_name, {
