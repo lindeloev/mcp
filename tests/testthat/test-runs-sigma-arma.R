@@ -8,7 +8,7 @@ bad_variance = list(
   list(y ~ 1 + sigma(q))  # variable does not exist
 )
 
-test_bad(bad_variance, "Bad variance")
+test_bad(bad_variance)
 
 
 good_variance = list(
@@ -20,10 +20,12 @@ good_variance = list(
        ~ x + sigma(x),
        ~ 0 + sigma(rel(x))),  # test relative slope
   list(y ~ 1,
-       1 + (1|id) ~ rel(1) + I(x^2) + sigma(rel(1) + x))  # Test with varying change point and more mcp stuff
+       1 + (1|id) ~ rel(1) + I(x^2) + sigma(rel(1) + x)),  # Test with varying change point and more mcp stuff
+  list(y | weights(weights_ok) ~ 1 + sigma(1 + x),  # With weights
+       ~ 0 + sigma(1 + rel(x)))
 )
 
-test_good(good_variance, "Good variance")
+test_good(good_variance)
 
 
 #############
@@ -42,7 +44,7 @@ bad_arma = list(
   list(y ~ ar(x))  # must have order
 )
 
-test_bad(bad_arma, "Bad ARMA")
+test_bad(bad_arma)
 
 
 good_arma = list(
@@ -58,7 +60,9 @@ good_arma = list(
   list(y ~ ar(1) + sigma(1 + x),
        ~ ar(2, 1 + I(x^2)) + sigma(1)),  # With sigma
   list(y ~ ar(1),
-       ~ ar(2, rel(1)))  # Relative to no variance. Perhaps alter this behavior so it becomes illegal?
+       ~ ar(2, rel(1))),  # Relative to no variance. Perhaps alter this behavior so it becomes illegal?
+  list(y | weights(weights_ok) ~ 1 + ar(1),  # With weights
+       ~ 0 + ar(2, 1 + x))
 )
 
-test_good(good_arma, "Good ARMA")
+test_good(good_arma)

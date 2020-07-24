@@ -17,7 +17,10 @@ data_gauss = data.frame(
   id = c("a", "b", "c", "d", "e"),
   ok_id_factor = factor(c(-3, 0, 5, 9, 1.233243)),  # It's a factor, so decimals are OK
   ok_id_integer = -2:2,  # interval
-  bad_id = rnorm(5)  # decimal numbers
+  bad_id = rnorm(5),  # decimal numbers
+
+  weights_ok = c(0.1, 1, 2, 1, 1),
+  weights_bad = c(-0.1, 1, 2, 1, 1)  # With negative
 )
 
 # Only needs to test binomial-specific stuff
@@ -38,5 +41,7 @@ data_binomial = data.frame(
   x = -1:3,
 
   # Varying effects
-  id = c("a", "b", "c", "d", "e")
+  id = c("a", "b", "c", "d", "e"),
+
+  weights_ok = c(0.1, 1, 2, 1, 1)  # Actually not OK since it's not implemented yet
 )

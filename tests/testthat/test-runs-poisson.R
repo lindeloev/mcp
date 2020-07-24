@@ -8,10 +8,13 @@ bad_poisson = list(
   list(y_bad_numeric ~ 1),
 
   # Does not work with sigma
-  list(y ~ 1 + sigma(1))
+  list(y ~ 1 + sigma(1)),
+
+  # Does not work with weights
+  list(y | weights(weights_ok) ~ 1)
 )
 
-test_bad(bad_poisson, "Bad Poisson",
+test_bad(bad_poisson,
          data = data_binomial,
          family = poisson())
 
@@ -27,6 +30,6 @@ good_poisson = list(
        ~ 1 + x + ar(2, 1 + x + I(x^3)))
 )
 
-test_good(good_poisson, "Good Poisson",
+test_good(good_poisson,
           data = data_binomial,
           family = poisson())
