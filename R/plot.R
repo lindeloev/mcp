@@ -4,6 +4,7 @@
 #' plot individual parameter estimates.
 #'
 #' @aliases plot plot.mcpfit
+#' @inheritParams pp_eval
 #' @param x An \code{\link{mcpfit}} object
 #' @param facet_by String. Name of a varying group.
 #' @param lines Positive integer or `FALSE`. Number of lines (posterior
@@ -22,23 +23,6 @@
 #'       plots the median and `quantiles = c(0.2, 0.8)` plots the 20% and 80%
 #'       quantiles.
 #' @param q_predict Same as `q_fit`, but for the prediction interval.
-#' @param rate Boolean. For binomial models, plot on raw data (`rate = FALSE`) or
-#'   response divided by number of trials (`rate = TRUE`). If FALSE, linear
-#'   interpolation on trial number is used to infer trials at a particular x.
-#' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
-#' @param which_y What to plot on the y-axis. One of
-#'
-#'   * `"ct"`: The central tendency which is often the mean after applying the
-#'     link function (default).
-#'   * `"sigma"`: The variance
-#'   * `"ar1"`, `"ar2"`, etc. depending on which order of the autoregressive
-#'     effects you want to plot.
-#' @param arma TRUE or FALSE.
-#'   * `TRUE:` Compute autoregressive residuals. Requires the response variable in `newdata`.
-#'   * `FALSE:` Disregard the autoregressive effects. For `family = gaussian()`, `predict()` just use `sigma` for residuals.
-#' @param nsamples Integer or `NULL`. Number of samples to use for computing `q_fit` and `q_predict`.
-#'   If there are varying effects, this is the number of samples from each varying group.
-#'   `NULL` means "all". Ignored if both are `FALSE`. More samples trade speed for accuracy.
 #' @param ... Currently ignored.
 #' @details
 #'   `plot()` uses `fit$simulate()` on posterior samples. These represent the
@@ -122,15 +106,6 @@ plot.mcpfit = function(x,
 
   if (is.numeric(q_predict) & (any(q_predict > 1) | any(q_predict < 0)))
     stop ("All `q_predict` have to be between 0 (0%) and 1 (100%).")
-
-  if (!is.logical(rate))
-    stop("`rate` has to be TRUE or FALSE.")
-
-  if (!is.logical(prior))
-    stop("`prior` must be either TRUE or FALSE.")
-
-  if (!is.logical(arma))
-    stop("`arma` must be TRUE or FALSE.")
 
   if (!is.null(nsamples)) {
     check_integer(nsamples, "nsamples", lower = 1)
@@ -222,13 +197,19 @@ plot.mcpfit = function(x,
   # TO DO: hack.
   fit$data[, fit$pars$y] = as.numeric(fit$data[, fit$pars$y])
 
-  # Initiate plot.
+  # Initiate plot and show raw data (only applicable when which_y == "ct")
   gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y))
   if (which_y == "ct") {
-    if (geom_data == "point")
-      gg = gg + geom_point()
-    if (geom_data == "line")
+    if (geom_data == "point") {
+      if (is.null(fit$pars$weights)) {
+        gg = gg + geom_point()
+      } else {
+        gg = gg + geom_point(aes(size = fit$data[, fit$pars$weights[1]])) +
+          ggplot2::scale_size_area(max_size = 2 * 1.5/sqrt(1.5))  # See https://stackoverflow.com/questions/63023877/setting-absolute-point-size-for-geom-point-with-scale-size-area/63024297?noredirect=1#comment111454629_63024297
+      }
+    } else if (geom_data == "line") {
       gg = gg + geom_line()
+    }
   }
 
   # Add lines?
@@ -297,6 +278,7 @@ plot.mcpfit = function(x,
 #' @param include Boolean. If `TRUE` and `!is.null(facet_by)`, only return
 #'   densities for the change points "affected" by `facet_by`. If `FALSE` and `!is.null(facet_by)`,
 #'   return all densities except those "affected" by `facet_by`. Has no effect if `is.null(facet_by)`
+#' @return A `ggplot2::stat_density` geom representing the change point densities.
 geom_cp_density = function(fit, facet_by, limits_y) {
   dens_scale = 0.2  # Proportion of plot height
   dens_cut = 0.05 + 0.007  # How much to move density down. 5% is ggplot default. Move a bit further.
@@ -442,7 +424,7 @@ plot_pars = function(fit,
   if (!is.character(pars) | !is.character(regex_pars))
     stop("`pars` and `regex_pars` has to be string/character.")
 
-  if (any(c("population", "varying") %in% pars) & length(pars )> 1)
+  if (any(c("population", "varying") %in% pars) & length(pars ) > 1)
     stop("`pars` cannot be a vector that contains multiple elements AND 'population' or 'varying'.")
 
   if (any(c("hex", "scatter") %in% type) & (length(pars) != 2 | length(regex_pars) > 0))
@@ -521,6 +503,7 @@ plot_pars = function(fit,
 #' @keywords internal
 #' @inheritParams plot.mcpfit
 #' @param fit An mcpfit object.
+#' @return A vector of x-values to evaluate at.
 get_eval_at = function(fit, facet_by) {
   # If there are ARMA terms, evaluate at the data
   if (length(fit$pars$arma) > 0) {
@@ -574,7 +557,8 @@ get_eval_at = function(fit, facet_by) {
 #' @param nsamples Number of draws. Note that for summary geoms you may want to use all data,
 #'   e.g., `pp_check(fit, type = "ribbon", nsamples = NULL)`.
 #' @param ... Further arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
-#' @seealso pp_eval predict.mcpfit
+#' @return A `ggplot2` object for single plots. Enriched by `patchwork` for faceted plots.
+#' @seealso \code{\link{plot.mcpfit}} \code{\link{pp_eval}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
@@ -612,8 +596,8 @@ pp_check = function(
     varying_data = newdata[, facet_by]
   }
 
-  allowed_types = bayesplot::available_ppc() %>%
-    stringr::str_remove("ppc_")
+  allowed_types = stringr::str_remove(bayesplot::available_ppc(), "ppc_")
+  allowed_types = allowed_types[stringr::str_detect(allowed_types, "_grouped") == FALSE]  # Grouped done mcp-side (see below)
   if (!(type %in% allowed_types))
     stop("`type` must be one of '", paste0(allowed_types, collapse = "', '"), "'")
 
@@ -668,8 +652,8 @@ pp_check = function(
 #' @param yrep S X N matrix of predicted responses
 #' @param draws (required for loo-type plots) Indices of draws to use.
 #' @param ... Arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
+#' @return A `ggplot2` object returned by `tidybayes::ppc_*(y, yrep, ...)`.
 #' @return A string
-#' @seealso pp_check.mcpfit
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'

@@ -109,56 +109,65 @@ unpack_y = function(form_y, i, family) {
     ))
   }
 
+
   # Split by |
-  y_split = strsplit(form_y, "\\|")
+  y_split = strsplit(form_y, "\\|")[[1]]
   if (length(y_split) > 2)
     stop("There can only be zero or one pipe in response. Got '", form_y, "' in segment ", i)
 
   # RESPONSE
-  lhs = y_split[[1]][1]
+  lhs = y_split[1]
   y_col = attr(stats::terms(to_formula(lhs)), "term.labels")
   if (length(y_col) != 1)
     stop("There should be exactly one response variable. Got ", length(y_col), " in segment ", i)
 
-  if (length(y_split[[1]]) == 1)
-    y_split[[1]] = c(y_split[[1]], "invalid_and_empty_filler")  # A pattern that will not be matched in the following
+  # Unpack the stuff on the RHS of the pipe, if it was detected:
+  if (length(y_split) == 2) {
+    rhs = y_split[2]
+    term_labels = attr(stats::terms(to_formula(rhs)), "term.labels")
+    ok_terms = stringr::str_detect(term_labels, "trials\\(|weights\\(")
+    if (all(ok_terms) == FALSE)
+      stop("Only terms `trials()` and `weights()` allowed after the pipe in the response variable. Got '", rhs, "'.")
 
-  # If there was a pipe
-  rhs = y_split[[1]][2]
-  term_labels = attr(stats::terms(to_formula(rhs)), "term.labels")
+    # BINOMIAL TRIALS
+    trials_term_index = stringr::str_detect(term_labels, "trials\\(")  # Which terms?
+    got_trials = sum(trials_term_index) > 0
 
-  # BINOMIAL TRIALS
-  trials_term_index = stringr::str_detect(term_labels, "trials\\(")  # Which terms?
-  got_trials = sum(trials_term_index) > 0
+    # trials(N) is reserved and required for binomial models
+    if (family$family == "binomial" & !got_trials)
+      stop("Error in response of segment ", i, ": need a valid trials() specification, e.g., 'y | trials(N) ~ 1 + x'")
 
-  # trials(N) is reserved and required for binomial models
-  if (family$family == "binomial" & !got_trials)
-    stop("Error in response of segment ", i, ": need a valid trials() specification, e.g., 'y | trials(N) ~ 1 + x'")
+    if (family$family != "binomial" & got_trials)
+      stop("Response format `y | trials(N)` only meaningful for family = binomial(); not for ", family$family, "()")
 
-  if (family$family != "binomial" & got_trials)
-    stop("Response format `y | trials(N)` only meaningful for family = binomial(); not for ", family$family, "()")
+    # Unpack trials_col
+    if (got_trials == TRUE) {
+      trials_term = term_labels[trials_term_index]  # Extract terms
+      trials_content = get_term_content(trials_term)
+      trials_col = attr(stats::terms(trials_content), "term.labels")
+      if (length(trials_col) != 1)
+        stop("There must be exactly one term inside trials(). Got ", trials_term, " in segment ", i)
+    } else {
+      trials_col = NA
+    }
 
-  # Unpack trials_col
-  if (got_trials == TRUE) {
-    trials_term = term_labels[trials_term_index]  # Extract terms
-    trials_content = get_term_content(trials_term)
-    trials_col = attr(stats::terms(trials_content), "term.labels")
-    if (length(trials_col) != 1)
-      stop("There must be exactly one term inside trials(). Got ", trials_term, " in segment ", i)
+    # WEIGHTS (same procedure as for trials(N))
+    weights_term_index = stringr::str_detect(term_labels, "weights\\(")
+    got_weights = sum(weights_term_index) > 0
+    if (got_weights == TRUE) {
+      if (family$family != "gaussian")
+        stop("Weights are currently only implemented for `family = gaussian()`. Raise an issue on GitHub if you need it for other families.")
+      weights_term = term_labels[weights_term_index]
+      weights_content = get_term_content(weights_term)
+      weights_col = attr(stats::terms(weights_content), "term.labels")
+      if (length(weights_col) != 1)
+        stop("There must be exactly one term inside weights(). Got ", weights_term, " in segment ", i)
+    } else {
+      weights_col = NA
+    }
   } else {
+    # No pipe in response formula:
     trials_col = NA
-  }
-
-  # WEIGHTS (same procedure as for trials(N))
-  weights_term_index = stringr::str_detect(term_labels, "weights\\(")
-  got_weights = sum(weights_term_index) > 0
-  if (got_weights == TRUE) {
-    weights_term = term_labels[weights_term_index]
-    weights_content = get_term_content(weights_term)
-    weights_col = attr(stats::terms(weights_content), "term.labels")
-    if (length(weights_col) != 1)
-      stop("There must be exactly one term inside weights(). Got ", weights_term, " in segment ", i)
-  } else {
     weights_col = NA
   }
 
@@ -462,12 +471,17 @@ get_term_content = function(term) {
   } else if (length(term) > 1) {
     #term_type = paste0(substr(term, 0, content_start), ")")
     stop("Only one ", term, " allowed in each formula.")
+  } else if (is.na(term)) {
+    return(NA)
   } else if (length(term) == 1) {
     # Get formula inside wrapper
     content_start = stringr::str_locate(term, "\\(") + 1  # Location of first character in contents
     content_end = stringr::str_length(term) - 1  # Location of last character in contents
     content = substr(term, content_start, content_end)
 
+    # To formula
+    if (content == "")
+      stop("Empty terms not allowed in the formulas. Found '", term, "'.")
     form = stats::as.formula(paste0("~", content), env = globalenv())
     return(form)
   }
@@ -787,7 +801,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
   # Fill y and trials, where not explicit.
   # Build "full" formula (with explicit intercepts) and insert instead of the old
   ST = ST %>%
-    tidyr::fill(.data$y, .data$form_y, .data$trials, .direction="downup") %>%  # Usually only provided in segment 1
+    tidyr::fill(.data$y, .data$form_y, .data$trials, .data$weights, .direction="downup") %>%  # Usually only provided in segment 1
     dplyr::mutate(form = paste0(.data$form_y, ifelse(segment == 1, "", .data$form_cp), .data$form_rhs)) %>%  # build full formula
     dplyr::select(-.data$form_y, -.data$form_cp, -.data$form_rhs)  # Not needed anymore
 
@@ -830,7 +844,12 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
   # Response variables
   derived_y = unique(stats::na.omit(ST$y))
   if (length(derived_y) != 1)
-    stop("There should be exactly one response variable. Found '", paste0(derived_y, collapse="' and '", "' across segments."))
+    stop("There should be exactly one response variable. Found '", paste0(derived_y, collapse="' and '"), "' across segments.")
+
+  # Weights
+  derived_weights = unique(stats::na.omit(ST$weights))
+  if (length(derived_weights) > 1)
+    stop("There should be exactly zero or one column used for weights(). Found '", paste0(derived_weights, collapse = "' and '"), "' across segments.")
 
   # Varying effects
   derived_varying = unique(stats::na.omit(ST$cp_group_col))
@@ -870,6 +889,14 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
         stop("Only responses 0 and 1 are allowed for family = bernoulli() in column '", ST$y[1], "'")
     } else if (family$family == "poisson") {
       check_integer(data[, ST$y[1]], ST$y[1], lower = 0)
+    }
+
+    # Check weights
+    if (length(derived_weights) == 1) {
+      if (!is.numeric(data[, derived_weights]))
+        stop("Data column '", derived_weights, "' has to be numeric.")
+      if (any(data[, derived_weights] <= 0))
+        stop("All weights must be greater than zero.")
     }
   }
 

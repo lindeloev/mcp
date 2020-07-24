@@ -137,7 +137,7 @@ get_jags_data = function(data, ST, jags_code, sample) {
   cols_varying = unique(stats::na.omit(ST$cp_group_col))
 
   # Start with "raw" data
-  cols_data = unique(stats::na.omit(c(ST$y, ST$x, ST$trials)))
+  cols_data = unique(stats::na.omit(c(ST$y, ST$x, ST$trials, ST$weights)))
   jags_data = as.list(data[, c(cols_varying, cols_data)])
 
   for (col in cols_varying) {
@@ -145,7 +145,7 @@ get_jags_data = function(data, ST, jags_code, sample) {
     tmp = paste0("n_unique_", col)
     jags_data[[tmp]] = length(unique(data[, col]))
 
-    # Make varying columns numeic in order of appearance
+    # Make varying columns numeric in order of appearance
     # They will be recovered using the recover_levels()
     jags_data[[col]] = as.numeric(factor(jags_data[[col]], levels = unique(jags_data[[col]])))
   }

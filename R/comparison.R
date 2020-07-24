@@ -55,7 +55,7 @@ criterion = function(fit, criterion = "loo", ...) {
 #' @aliases loo LOO loo.mcpfit
 #' @describeIn criterion Computes loo on mcpfit objects
 #' @param x An \code{\link{mcpfit}} object.
-#' @seealso \link{criterion}
+#' @seealso \code{\link{criterion}}
 #' @importFrom loo loo
 #' @export loo
 #' @export
@@ -69,7 +69,7 @@ loo.mcpfit = function(x, ...) {
 #' @param x An \code{\link{mcpfit}} object.
 #' @param ... Currently ignored
 #' @importFrom loo waic
-#' @seealso \link{criterion}
+#' @seealso \code{\link{criterion}}
 #' @export waic
 #' @export
 #'
