@@ -55,8 +55,13 @@ run_jags = function(data,
 
 
   # Define the sampling function in this environment.
-  # Can be used sequentially or in parallel
-  do_sampling = function(n.chains, quiet, ...) {
+  # Can be used sequentially or in parallel.
+  do_sampling = function(seed, n.chains, quiet) {
+    # Optionally seed JAGS. Typically for parallel processing to avoid risk of identical seeds.
+    if (!is.null(seed))
+      inits = c(inits, list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = seed))
+
+    # Compile model
     jm = rjags::jags.model(
       file = textConnection(jags_code),
       data = jags_data,
@@ -79,6 +84,7 @@ run_jags = function(data,
   if (cores == 1) {
     # # SERIAL
     samples = try(do_sampling(
+      seed = NULL,
       n.chains = n.chains,
       quiet = FALSE
     ))
@@ -88,10 +94,10 @@ run_jags = function(data,
     message("Parallel sampling in progress...")
     future::plan(future::multiprocess, .skip = TRUE)
     samples = future.apply::future_lapply(
-      1:n.chains,
-      FUN = do_sampling,
+      sample(1:1000, n.chains),  # Random seed to JAGS
       n.chains = 1,
       quiet = TRUE,
+      FUN = do_sampling,
       future.seed = TRUE
     )
 
