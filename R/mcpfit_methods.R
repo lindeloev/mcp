@@ -39,6 +39,7 @@ NULL
 #' @inheritParams summary.mcpfit
 #' @param fit An \code{\link{mcpfit}}` object.
 #' @param varying Boolean. Get results for varying (TRUE) or population (FALSE)?
+#' @return A data.frame with summaries for each model parameter.
 #' @importFrom magrittr %>%
 #' @importFrom dplyr .data
 #' @encoding UTF-8
@@ -222,14 +223,13 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) {
   # Standard name in mcp
   fit = object
-  samples = mcmclist_samples(fit, prior = prior, error = FALSE)
-
-  if (class(object) != "mcpfit")
-    stop("`object`` must be an mcpfit object.")
+  check_mcpfit(fit)
 
   if (digits != floor(digits) | digits < 0)
     stop("`digits`` must be a positive integer.")
 
+
+  samples = mcmclist_samples(fit, prior = prior, error = FALSE)
 
   # Model info
   cat("Family: ", fit$family$family, "(link = '", fit$family$link, "')\n", sep = "")
@@ -416,6 +416,7 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
 #' @aliases tidy_samples tidy_samples.mcpfit
 #' @keywords internal
 #' @inheritParams mcmclist_samples
+#' @inheritParams pp_eval
 #' @param population
 #'   * \strong{TRUE:} All population effects. Same as `fit$pars$population`.
 #'   * \strong{FALSE:} No population effects. Same as `c()`.
@@ -430,8 +431,6 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
 #'   * \strong{Character vector:} Only do absolute transform for these varying parameters - see `fit$pars$varying`.
 #'
 #'   OBS: This currently only applies to varying change points. It is not implemented for `rel()` regressors yet.
-#' @param nsamples Integer or `NULL`. Number of samples to use for computation. Use this to trade
-#'   computation speed for accuarcy. `NULL` means "all".
 #' @return `tibble` of posterior draws in `tidybayes` format.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -526,7 +525,6 @@ tidy_samples = function(
 #'
 #' @aliases pp_eval pp_eval.mcpfit
 #' @keywords internal
-#' @inheritParams plot.mcpfit
 #' @inheritParams tidy_samples
 #' @param object An `mcpfit` object.
 #' @param newdata A `tibble` or a `data.frame` containing predictors in the model. If `NULL` (default),
@@ -539,6 +537,23 @@ tidy_samples = function(
 #'     See also `predict()`.
 #'   - "residuals": same as "predict" but the observed y-values are subtracted. See also `residuals()`
 #' @param probs Vector of quantiles. Only in effect when `summary == TRUE`.
+#' @param rate Boolean. For binomial models, plot on raw data (`rate = FALSE`) or
+#'   response divided by number of trials (`rate = TRUE`). If FALSE, linear
+#'   interpolation on trial number is used to infer trials at a particular x.
+#' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
+#' @param which_y What to plot on the y-axis. One of
+#'
+#'   * `"ct"`: The central tendency which is often the mean after applying the
+#'     link function (default).
+#'   * `"sigma"`: The variance
+#'   * `"ar1"`, `"ar2"`, etc. depending on which order of the autoregressive
+#'     effects you want to plot.
+#' @param arma TRUE or FALSE.
+#'   * `TRUE:` Compute autoregressive residuals. Requires the response variable in `newdata`.
+#'   * `FALSE:` Disregard the autoregressive effects. For `family = gaussian()`, `predict()` just use `sigma` for residuals.
+#' @param nsamples Integer or `NULL`. Number of samples to use for computing `q_fit` and `q_predict`.
+#'   If there are varying effects, this is the number of samples from each varying group.
+#'   `NULL` means "all". Ignored if both are `FALSE`. More samples trade speed for accuracy.
 #' @param samples_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE`.
 #'   See more under "value"
 #' @param ... Currently unused
@@ -562,7 +577,7 @@ tidy_samples = function(
 #'      `bayesplot::ppc_*` functions.
 #' @importFrom magrittr %>%
 #' @importFrom dplyr .data
-#' @seealso fitted.mcpfit predict.mcpfit residuals.mcpfit
+#' @seealso \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
@@ -627,6 +642,12 @@ pp_eval = function(
 
   if (!is.logical(rate))
     stop("`rate` has to be TRUE or FALSE.")
+
+  if (!is.logical(prior))
+    stop("`prior` must be either TRUE or FALSE.")
+
+  if (!is.logical(arma))
+    stop("`arma` must be TRUE or FALSE.")
 
   if (!(samples_format %in% c("tidy", "matrix")))
     stop("`samples_format` must be either 'tidy' or 'matrix'. Got: '", samples_format, "'.")
@@ -722,18 +743,18 @@ pp_eval = function(
 #' @aliases predict predict.mcpfit
 #' @inheritParams pp_eval
 #' @inherit pp_eval return
-#' @seealso pp_eval fitted.mcpfit residuals.mcpfit
+#' @seealso \code{\link{pp_eval}} \code{\link{fitted.mcpfit}} \code{\link{residuals.mcpfit}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
 #' \donttest{
 #' predict(ex_fit)  # Evaluate at each ex_fit$data
-#' predict(ex_fit, probs = TRUE)  # Same, but add prediction intervals
+#' predict(ex_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
 #' predict(ex_fit, summary = FALSE)  # Samples instead of summary.
 #' predict(
 #'   ex_fit,
-#'   newdata = data.frame(x = c(-5, 20, 300)),  # Evaluate
+#'   newdata = data.frame(time = c(-5, 20, 300)),  # Evaluate
 #'   probs = c(0.025, 0.5, 0.975)
 #' )
 #'}
@@ -774,17 +795,17 @@ predict.mcpfit = function(
 #' @aliases fitted fitted.mcpfit
 #' @inheritParams pp_eval
 #' @inherit pp_eval return
-#' @seealso pp_eval predict.mcpfit residuals.mcpfit
+#' @seealso \code{\link{pp_eval}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
 #' \donttest{
 #' fitted(ex_fit)
-#' fitted(ex_fit, probs = TRUE)  # With 95% credible interval.
+#' fitted(ex_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
 #' fitted(ex_fit, summary = FALSE)  # Samples instead of summary.
 #' fitted(ex_fit,
-#'        newdata = data.frame(x = c(-5, 20, 300)),  # New data
+#'        newdata = data.frame(time = c(-5, 20, 300)),  # New data
 #'        probs = c(0.025, 0.5, 0.975))
 #'}
 #'
@@ -828,18 +849,15 @@ fitted.mcpfit = function(
 #' @inheritParams pp_eval
 #' @importFrom magrittr %>%
 #' @importFrom dplyr .data
-#' @seealso pp_eval predict.mcpfit fitted.mcpfit pp_check.mcpfit
+#' @seealso \code{\link{pp_eval}} \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
-#' \donttest{
 #' residuals(ex_fit)
-#' residuals(ex_fit, probs = TRUE)  # With 95% credible interval.
+#' \donttest{
+#' residuals(ex_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
 #' residuals(ex_fit, summary = FALSE)  # Samples instead of summary.
-#' residuals(ex_fit,
-#'        newdata = data.frame(x = c(-5, 20, 300)),  # New data
-#'        probs = c(0.025, 0.5, 0.975))
 #'}
 #'
 residuals.mcpfit = function(

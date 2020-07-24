@@ -114,15 +114,17 @@ model {")
     y_code = paste0(y_code, " + resid_[i_]")
   y_code = paste0(family$linkinv_jags, "(", y_code, ")")
 
+  # Prepare variance code
+  has_weights = !all(is.na(ST$weights))
+  weights = ifelse(has_weights, yes = paste0(ST$weights[1], "[i_]"), no = "1")
 
   # Family- and link-dependent likelihood
   mm = paste0(mm, "\n\n    # Likelihood and log-density for family = ", family$family, "()
     ")
 
   if (family$family == "gaussian") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dnorm(", y_code, ", 1 / sigma_[i_]^2)  # SD as precision
-    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], ", y_code, ", 1 / sigma_[i_]^2)  # SD as precision")
-
+    mm = paste0(mm, ST$y[1], "[i_] ~ dnorm(", y_code, ", ", weights, " / sigma_[i_]^2)  # SD as precision
+    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], ", y_code, ", ", weights, " / sigma_[i_]^2)  # SD as precision")
   } else if (family$family == "binomial") {
     mm = paste0(mm, ST$y[1], "[i_] ~ dbin(", y_code, ", ", ST$trials[1], "[i_])
     loglik_[i_] = logdensity.bin(", ST$y[1], "[i_], ", y_code, ", ", ST$trials[1], "[i_])")

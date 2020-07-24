@@ -99,7 +99,7 @@
 #'       function. So you will see SDs in `fit$prior` but precision ($1/SD^2)
 #'       in `fit$jags_code`
 #' @return An \code{\link{mcpfit}} object.
-#' @seealso \link{get_segment_table}
+#' @seealso \code{\link{get_segment_table}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @importFrom stats gaussian binomial
@@ -264,6 +264,7 @@ mcp = function(model,
     x = unique(ST$x),
     y = unique(ST$y),
     trials = logical0_to_null(stats::na.omit(unique(ST$trials))),
+    weights = logical0_to_null(stats::na.omit(unique(ST$weights))),
     varying = logical0_to_null(c(stats::na.omit(ST$cp_group))),
     sigma = all_pars[stringr::str_detect(all_pars, "^sigma_")],
     arma = all_pars[stringr::str_detect(all_pars, "(^ar|^ma)[0-9]")]

@@ -1,3 +1,23 @@
+# mcp 0.3
+
+## Notes for the reviewer
+ * This release adds support for `dplyr` 1.0+ and other packages which caused the prior `mcp` to be taken down from CRAN. Sorry it took so long.
+ 
+ * Please see "Expected NOTEs and ERRORs" in the bottom of this document.
+
+## Test environments
+* local Windows 10, R 3.6.1
+* Ubuntu 16.04.6 LTS (on travis-ci): release
+* Ubuntu 16.04.6 LTS (on travis-ci): devel
+* Mac OS X 10.13.3 (on travis-ci): release
+
+## R CMD check results
+There were no ERRORs, WARNINGs, or NOTEs.
+
+## Downstream dependencies
+`mcp` has no downstream dependencies.
+
+
 # Resubmission 3
 
  * Deleted call to `options(mc.cores = 3)`.
