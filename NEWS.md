@@ -17,9 +17,12 @@
    - `binomial`: "logit", "probit", "identity"
    - `bernoulli`: "logit", "probit", "identity"
    - `poisson`: "log", "identity"
+
+ * New argument `scale` in `fitted()`, `plot()`, and `fit$simulate()`. When `scale = "response"` (default), they return fits on the observed scale. When `scale = "linear"`, they return fits on the parameter scale where the linear trends are. Useful for model understanding and debugging.
  
  * Use `pp_check(fit)` to do prior/posterior predictive checking. See `pp_check(fit, type = "x")` for a list of plot types. `pp_check(fit, facet_by = "varying_column")` facets by a data column.
-   
+
+
  * Improvements to `plot()`:
  
    - Change point densities are now computed on a per-panel basis in `plot(fit, facet_by = "varying_column")`. Previous releases only displayed population-level change points.

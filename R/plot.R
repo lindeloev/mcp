@@ -65,6 +65,7 @@ plot.mcpfit = function(x,
                        which_y = "ct",
                        arma = TRUE,
                        nsamples = 2000,
+                       scale = "response",
                        ...) {
 
   # Just for consistent naming in mcp
@@ -174,7 +175,8 @@ plot.mcpfit = function(x,
       varying = varying_pars,
       arma = arma,
       nsamples = nsamples,
-      samples_format = "tidy"
+      samples_format = "tidy",
+      scale = scale
     ) %>%
       dplyr::rename(!!yvar := !!type)  # from "predict"/"fitted" to yvar (response name)
   }
@@ -185,18 +187,32 @@ plot.mcpfit = function(x,
     samples_expanded$.predicted = local_pp_eval("predict") %>% dplyr::pull(yvar)
 
 
-  ###########
-  # PLOT IT #
-  ###########
+
+  ###############################
+  # PREP RESPONSE DATA FOR PLOT #
+  ###############################
+  ydata = fit$data[, fit$pars$y]  # Convenient shortname
+
   # If this is a binomial rate, divide by the number of trials
-  if (fit$family$family == "binomial" & rate == TRUE) {
-    fit$data[, fit$pars$y] = fit$data[, fit$pars$y] / fit$data[, fit$pars$trials]
+  if (fit$family$family == "binomial" & rate == TRUE)
+    ydata = ydata / fit$data[, fit$pars$trials]
+
+  # Show data
+  if (scale == "linear") {
+    ydata = fit$family$linkfun(ydata)
+    if (any(is.infinite(ydata)))
+      message("Removing points with infinite values on the linear scale. You may get a few warnings.")
+    ydata[is.infinite(ydata)] = NA
   }
 
   # If this is time series, strip fit$data$y for the "ts" class to avoid ggplot2 warning about scale picking..
   # TO DO: hack.
-  fit$data[, fit$pars$y] = as.numeric(fit$data[, fit$pars$y])
+  fit$data[, fit$pars$y] = as.numeric(ydata)
 
+
+  ###########
+  # PLOT IT #
+  ###########
   # Initiate plot and show raw data (only applicable when which_y == "ct")
   gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y))
   if (which_y == "ct") {
@@ -258,6 +274,8 @@ plot.mcpfit = function(x,
   }
 
   # Add better y-labels
+  if (scale == "linear")
+    gg = gg + ggplot2::labs(y = paste0(fit$family$link_r, "(", fit$pars$y, ")"))
   if (fit$family$family == "bernoulli" | (fit$family$family == "binomial" & rate == TRUE))
     gg = gg + ggplot2::labs(y = paste0("Probability of success for ", fit$pars$y))
   if (which_y != "ct")
