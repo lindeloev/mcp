@@ -556,6 +556,9 @@ tidy_samples = function(
 #'   `NULL` means "all". Ignored if both are `FALSE`. More samples trade speed for accuracy.
 #' @param samples_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE`.
 #'   See more under "value"
+#' @param scale One of
+#'   * "response": return on the observed scale, i.e., after applying the inverse link function.
+#'   * "linear": return on the parameter scale (where the linear trends are modelled).
 #' @param ... Currently unused
 #' @return
 #'   * If `summary = TRUE`: A `tibble` with the posterior mean for each row in `newdata`,
@@ -594,6 +597,7 @@ pp_eval = function(
   arma = TRUE,
   nsamples = NULL,
   samples_format = "tidy",
+  scale = 'response',
   ...
 ) {
   # Naming convention in mcp
@@ -652,6 +656,9 @@ pp_eval = function(
   if (!(samples_format %in% c("tidy", "matrix")))
     stop("`samples_format` must be either 'tidy' or 'matrix'. Got: '", samples_format, "'.")
 
+  if (scale == "linear" & (type != "fitted"))
+    stop("`scale = 'linear'` is only meaningful when `type = 'fitted'`.")
+
 
   # Check and build stuff related to newdata
   if (!is.null(newdata)) {
@@ -691,12 +698,12 @@ pp_eval = function(
       tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples),
       by = unique(varying_info$cols)
     ) %>%
-      dplyr::mutate(!!returnvar := rlang::exec(fit$simulate, !!!., type = type_for_simulate, rate = rate, which_y = which_y, arma = arma, add_attr = FALSE))
+      dplyr::mutate(!!returnvar := rlang::exec(fit$simulate, !!!., type = type_for_simulate, rate = rate, which_y = which_y, arma = arma, add_attr = FALSE, scale = scale))
   } else {
     # No varying effects: use all samples for each row of data
     samples = tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples) %>%
       tidyr::expand_grid(newdata) %>%
-      dplyr::mutate(!!returnvar := rlang::exec(fit$simulate, !!!., type = type_for_simulate, rate = rate, which_y = which_y, arma = arma, add_attr = FALSE))
+      dplyr::mutate(!!returnvar := rlang::exec(fit$simulate, !!!., type = type_for_simulate, rate = rate, which_y = which_y, arma = arma, add_attr = FALSE, scale = scale))
   }
 
   # Optionally compute residuals
@@ -821,6 +828,7 @@ fitted.mcpfit = function(
   arma = TRUE,
   nsamples = NULL,
   samples_format = "tidy",
+  scale = "response",
   ...
 ) {
   pp_eval(
@@ -835,7 +843,8 @@ fitted.mcpfit = function(
     varying = varying,
     arma = arma,
     nsamples = nsamples,
-    samples_format = samples_format
+    samples_format = samples_format,
+    scale = scale
   )
 }
 

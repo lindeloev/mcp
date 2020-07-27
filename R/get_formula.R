@@ -239,6 +239,13 @@ get_simulate = function(formula_str, pars, nsegments, family) {
   # Helper
   is_arma = length(pars$arma) > 0
 
+  # Allowed values for argument which_y
+  allowed_which_y = c("ct")
+  if (is_arma == TRUE)
+    allowed_which_y = c(allowed_which_y, "ar[0-9]+")
+  if (length(pars$sigma) > 0)
+    allowed_which_y = c(allowed_which_y, "sigma")
+
   # Helper to build the list of simulate() arguments. Simply comma separates correctly
   args_if_exists = function(args, postfix = "") {
     if(length(args) > 0) {
@@ -289,7 +296,10 @@ function(",
     stop(\"`scale` must be 'response' or 'linear'\")
 
   if (scale == 'linear' && type == 'predict')
-    stop(\"`type = 'predict'` not meaningful when `scale = 'linear'`\")
+    stop(\"Only `type = 'fitted'` is meaningful when `scale = 'linear'`\")
+
+  if (stringr::str_detect(which_y, '", paste0(allowed_which_y, collapse = "|"), "') == FALSE)
+    stop(which_y, \" is not a parameter class in this model. It should be one of '", paste0(allowed_which_y, collapse = "', '"), "'\")
 
   # Use this for return to add simulation parameters to the output
   args_names = as.list(match.call())  # Which arguments this function was called with
