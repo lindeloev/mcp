@@ -926,7 +926,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
     dplyr::ungroup() %>%
 
     # Finish up
-    dplyr::select(-dplyr::starts_with("cumsum"))
+    dplyr::select(-tidyselect::starts_with("cumsum"))
 
   # Return
   ST

@@ -116,7 +116,6 @@
 #' # Fit it. The `ex_demo` dataset is included in mcp. Sample the prior too.
 #' # options(mc.cores = 3)  # Uncomment to speed up sampling
 #' ex_fit = mcp(model, data = ex_demo, sample = "both")
-#' }
 #'
 #' # See parameter estimates
 #' summary(ex_fit)
@@ -128,14 +127,12 @@
 #' # Test a hypothesis
 #' hypothesis(ex_fit, "cp_1 > 10")
 #'
-#' \donttest{
 #' # Compare to a one-intercept-only model (no change points) with default prior
 #' model_null = list(response ~ 1)
 #' fit_null = mcp(model_null, data = ex_demo, par_x = "time")  # fit another model here
 #' ex_fit$loo = loo(ex_fit)
 #' fit_null$loo = loo(fit_null)
 #' loo::loo_compare(ex_fit$loo, fit_null$loo)
-#' }
 #'
 #' # Inspect the prior. Useful for prior predictive checks.
 #' summary(ex_fit, prior = TRUE)
@@ -152,7 +149,6 @@
 #'   int_3 = "int_1"           # Shared intercept between segment 1 and 3
 #' )
 #'
-#' \donttest{
 #' fit3 = mcp(model, data = ex_demo, prior = prior)
 #' }
 #'

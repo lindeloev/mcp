@@ -24,7 +24,7 @@ test_fit = function(model, simulated) {
 
   # Fit
   options(mc.cores = NULL)  # Respect `cores`
-  quiet_out = purrr::quietly(mcp)(model, data, par_x = "x", chains = 4, cores = 4, adapt = 4000, iter = 2000)
+  quiet_out = purrr::quietly(mcp)(model, data, par_x = "x", chains = 5, cores = 5, adapt = 10000, iter = 3000)  # Ensure convergence
   fit <<- quiet_out$result
 
   # Results table
