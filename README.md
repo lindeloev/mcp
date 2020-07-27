@@ -162,7 +162,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp) go in-depth w
 [Varying change points](https://lindeloev.github.io/mcp/articles/varying.html):
  * Simulate varying change points using `fit$simulate()`.
  * Get posteriors using `ranef(fit)`.
- * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "varying", type = "dens_overlay", ncol = 3)`.
+ * Plot using `plot(fit, facet_by = "my_group")` and `plot_pars(fit, pars = "varying", type = "dens_overlay", ncol = 3)`.
  * The default priors restrict varying change points to lie between the two adjacent change points.
 
 [Supported families and link functions](https://lindeloev.github.io/mcp/articles/families.html): 

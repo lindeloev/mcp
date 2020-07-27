@@ -614,8 +614,8 @@ pp_eval = function(
   . = "ugly fix to please R CMD check"
 
   # Check inputs
-  if (is_arma == TRUE && arma == TRUE && type == "predict" && !is.null(newdata) && nrow(newdata) > 10)
-    message("This can be slow when arma = TRUE.")
+  if (is_arma == TRUE && arma == TRUE && !is.null(newdata) && nrow(newdata) > 10 && is.null(nsamples))
+    message("Computing fitted and predicted values with AR(N) is slow. Consider setting `nsamples` to a lower value or set `arma = FALSE`.")
 
   if (!is.logical(summary))
     stop("`summary` must be TRUE or FALSE. Got: ", summary)
@@ -665,7 +665,7 @@ pp_eval = function(
       } else if (".ydata" %in% colnames(newdata)) {
         required_cols = c(required_cols, ".ydata")
       } else {
-        stop("When `arma = TRUE`, `newdata` must have the column: '", fit$pars$y, "' (or the equivalent '.ydata')")
+        stop("When `arma = TRUE`, `newdata` must include the response column. I.e., '", fit$pars$y, "' for this model or the equivalent '.ydata')")
       }
     }
 
@@ -727,8 +727,8 @@ pp_eval = function(
         tidyr::pivot_wider(names_from = .data$quantile, names_prefix = "Q", values_from = .data$y)
 
       df_return = dplyr::left_join(df_return, quantiles_fit, by = as.character(xvar))
-      return(data.frame(df_return))
     }
+    return(data.frame(df_return))
   } else if (samples_format == "tidy") {
     return(samples)
   } else if (samples_format == "matrix") {

@@ -38,12 +38,14 @@
  * Change point densities in `plot(fit)` are now scaled to 20% of the plot for each chain X changepoint combo. This adresses a common problem where a wide posterior was almost invisibly low when a narrow posterior was present. This means that heights should only be compared *within* each chain x changepoint combo - not across.
  * Removed the implicit ceiling of 1000 lines and samples in `plot.mcpfit()`.
  * Rownames are removed from `ranef()` and `fixef()` returns.
+ * 
 
 
 ## Bug fixes
 
- * sigma is now forced to stay positive via a floor at 0.
- * Support and require dplyr 1.0.0. Now also requires tidybayes 2.0.3.
+ * Sigma is now forced to stay positive via a floor at 0.
+ * Fixed: support and require dplyr 1.0.0. Now also requires tidybayes 2.0.3.
+ * Fixed: Parallel sampling sometimes produced identical chains.
  * Fixed several small bugs and added many more helpful error messages.
 
 

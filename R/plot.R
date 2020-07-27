@@ -36,15 +36,14 @@
 #' @importFrom dplyr .data
 #' @export
 #' @examples
+#' \donttest{
 #' # Typical usage. ex_fit is an mcpfit object.
 #' plot(ex_fit)
 #' plot(ex_fit, prior = TRUE)  # The prior
 #'
-#' \donttest{
 #' plot(ex_fit, lines = 0, q_fit = TRUE)  # 95% HDI without lines
 #' plot(ex_fit, q_predict = c(0.1, 0.9))  # 80% prediction interval
 #' plot(ex_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
-#' }
 #'
 #' # Show a panel for each varying effect
 #' # plot(fit, facet_by = "my_column")
@@ -52,6 +51,7 @@
 #' # Customize plots using regular ggplot2
 #' library(ggplot2)
 #' plot(ex_fit) + theme_bw(15) + ggtitle("Great plot!")
+#' }
 #'
 plot.mcpfit = function(x,
                        facet_by = NULL,
@@ -296,7 +296,7 @@ geom_cp_density = function(fit, facet_by, limits_y) {
 
   # Get samples in long format
   samples = tidy_samples(fit, population = population, varying = varying, absolute = TRUE) %>%
-    tidyr::pivot_longer(cols = dplyr::starts_with("cp_"), names_to = "cp_name", values_to = "value")
+    tidyr::pivot_longer(cols = tidyselect::starts_with("cp_"), names_to = "cp_name", values_to = "value")
 
   # Make the geom!
   ggplot2::stat_density(aes(
@@ -387,12 +387,11 @@ geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
 #' # Typical usage. ex_fit is an mcpfit object.
 #' plot_pars(ex_fit)
 #'
+#' \dontrun{
 #' # More options
 #' plot_pars(ex_fit, regex_pars = "^cp_")  # Plot only change points
 #' plot_pars(ex_fit, pars = c("int_3", "time_3"))  # Plot these parameters
 #' plot_pars(ex_fit, type = c("trace", "violin"))  # Combine plots
-#'
-#' \dontrun{
 #' # Some plots only take pairs. hex is good to assess identifiability
 #' plot_pars(ex_fit, type = "hex", pars = c("cp_1", "time_2"))
 #'
@@ -563,8 +562,8 @@ get_eval_at = function(fit, facet_by) {
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
-#' pp_check(ex_fit)
 #' \donttest{
+#' pp_check(ex_fit)
 #' pp_check(ex_fit, type = "ecdf_overlay")
 #' pp_check(another_fit, type = "loo_intervals", facet_by = "id")
 #' }

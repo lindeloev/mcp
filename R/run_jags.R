@@ -53,7 +53,6 @@ run_jags = function(data,
   # Start timer
   timer = proc.time()
 
-
   # Define the sampling function in this environment.
   # Can be used sequentially or in parallel.
   do_sampling = function(seed, n.chains, quiet) {

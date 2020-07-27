@@ -257,12 +257,12 @@ get_simulate = function(formula_str, pars, nsegments, family) {
                         no = paste0(unique(c(pars$x, pars$trials)), collapse = ", "))  # x and N, if they differ.
   out = paste0("
   function(",
-    x_and_trials, ", ",
-    args_if_exists(pars$reg),
-    args_if_exists(pars$sigma),
-    args_if_exists(pars$arma),
-    args_if_exists(pars$varying, " = 0"),
-    ifelse(is_arma, paste0("\n    ", pars$y, " = NULL, \n    .ydata = NULL, "), ""), "
+               x_and_trials, ", ",
+               args_if_exists(pars$reg),
+               args_if_exists(pars$sigma),
+               args_if_exists(pars$arma),
+               args_if_exists(pars$varying, " = 0"),
+               ifelse(is_arma, paste0("\n    ", pars$y, " = NULL, \n    .ydata = NULL, "), ""), "
     type = 'predict',
     quantile = FALSE,
     rate = FALSE,
@@ -307,15 +307,13 @@ get_simulate = function(formula_str, pars, nsegments, family) {
 
       if (arma == TRUE) {
         # Simulate AR residuals",
-          get_ar_code(
-            ar_order = get_arma_order(pars$arma),
-            family = family,
-            is_R = TRUE,
-            xvar = pars$x,
-            yvar = pars$y
-          ), "
-        # Finally, add these autocorrelated predictions to the fitted y_:
-        y_ = y_ + resid_
+                   get_ar_code(
+                     ar_order = get_arma_order(pars$arma),
+                     family = family,
+                     is_R = TRUE,
+                     xvar = pars$x,
+                     yvar = pars$y
+                   ), "
       }
     ")
     }
@@ -323,11 +321,9 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     out = paste0(out, "
     # Use which_y to return something else than ct.
     # First, rename to internal parameter name
-    if (which_y == 'sigma') {
-      which_y = 'sigma_'
-    } else if (stringr::str_detect(which_y, '^ar([0-9]+)$')) {
+    if (which_y == 'sigma' || stringr::str_detect(which_y, '^ar([0-9]+)$'))
       which_y = paste0(which_y, '_')
-    }
+
     if (which_y != 'ct') {
       if (!exists(which_y))
         stop(which_y, ' was not found. Try one of \\'sigma\\', \\'ar1\\', etc.')
@@ -337,22 +333,30 @@ get_simulate = function(formula_str, pars, nsegments, family) {
       return(add_simulated(get(which_y)))
     }")
 
-    if (is_arma) {
-      out = paste0(out, "
-   if (is.null(", pars$y, ") & is.null(.ydata) & arma == TRUE)
-     message('Returning without AR(N) since `", pars$y, "` was not in the data.')")
-    }
-
     # If fitted or no data
     out = paste0(out, "
     if (type == 'fitted') {
       return(add_simulated(", family$linkinv_r, "(y_)))
-    }")
-    out = paste0(out, " else if (type == 'predict') {
+    } else if (type == 'predict') {
       if (any(", family$linkinv_r, "(sigma_) < 0))
-        stop('Modelled negative sigma. First detected at ", pars$x, " = ', min(", pars$x, "[", family$linkinv_r, "(sigma_) < 0]))
-      return(add_simulated(rnorm(length(", pars$x, "), ", family$linkinv_r, "(y_), sigma_)))
-    }")
+        stop('Modelled negative sigma. First detected at ", pars$x, " = ', min(", pars$x, "[", family$linkinv_r, "(sigma_) < 0]))")
+
+    # Complex code if ARMA. Simple if not. resid_sigma_ was generated from sigma_ so no need to do an extra rnorm().
+    if (is_arma == TRUE) {
+      out = paste0(out, "
+      if (arma == TRUE) {
+        return(add_simulated(", family$linkinv_r, "(y_ + resid_sigma_)))
+      } else {
+        return(add_simulated(", family$linkinv_r, "(y_ + rnorm(length(", pars$x, "), 0, sigma_))))
+      }")
+    } else if (is_arma == FALSE) {
+      out = paste0(out, "
+      return(add_simulated(rnorm(length(", pars$x, "), ", family$linkinv_r, "(y_), sigma_)))")
+    }
+
+    out = paste0(out, "
+    }
+    ")
 
     # return(add_simulated(qnorm(length(", pars$x, "), ", family$linkinv_r, "(y_), sigma_)))
     # if (is.numeric(quantile)) {
@@ -363,7 +367,7 @@ get_simulate = function(formula_str, pars, nsegments, family) {
     #   stop('Invalid `quantile` argument to simulate()')
     # }
 
-  # OTHER FAMILIES ---------------------
+    # OTHER FAMILIES ---------------------
   } else if (family$family == "binomial") {
     out = paste0(out, "
     if (type == 'predict') {
@@ -426,20 +430,23 @@ get_ar_code = function(ar_order, family, is_R, xvar, yvar = NA) {
   if (is_R) {
     # mm is the code string to be populated below
     mm = paste0("
-      if(!is.null(.ydata)) ", yvar, " = .ydata  # Hack to get a consistent argument name
-      ar0_ = sigma_[1:", ar_order, "] * 0 + 1
+      if (arma == TRUE) {
+        if(!is.null(.ydata)) ", yvar, " = .ydata  # Hack to get a consistent argument name
+        ar0_ = sigma_[1:", ar_order, "] * 0 + 1
 
-      # If got y. Use it to compute residuals
-      if (!all(is.na(", yvar, "))) {
-        if (!is.numeric(", yvar, "))
-          stop('Wrong format of ", yvar, ". Should be numeric.')
-        resid_sigma_ = ", yvar, " - y_
-      } else {
-        # No y, simulate residuals
-        resid_sigma_ = rnorm(length(", xvar, "), 0, sigma_)
-      }
+        # If got y. Use it to compute residuals
+        if (!all(is.na(", yvar, "))) {
+          if (!is.numeric(", yvar, "))
+            stop('Wrong format of ", yvar, ". Should be numeric.')
+          resid_sigma_ = ", yvar, " - y_
+        } else {
+          # No y, simulate residuals
+          message('Generating residuals for AR(N) model since the response column/argument \\'", yvar, "\\' was not provided.')
+          resid_sigma_ = rnorm(length(", xvar, "), 0, sigma_)
+        }
 
-      resid_ = numeric(length(", xvar, "))")
+        # This for-loop is slow, but base::Reduce and purrr::accumulate are even slower.
+        resid_ = numeric(length(", xvar, "))")
 
     # For data points lower than the full order
     for (i in seq_len(ar_order)) {
@@ -449,25 +456,25 @@ get_ar_code = function(ar_order, family, is_R, xvar, yvar = NA) {
 
     # For full order
     mm = paste0(mm, "
-      for (i_ in ", ar_order + 1, ":length(", xvar, ")) {
-        if (all(is.na(", yvar, "))) {
+        for (i_ in ", ar_order + 1, ":length(", xvar, ")) {
+          if (all(is.na(", yvar, "))) {
 
-          resid_[i_] = resid_sigma_[i_]")
+            resid_[i_] = resid_sigma_[i_]")
     for (i in seq_len(ar_order)) {
       mm = paste0(mm, " + ar", i, "_[i_] * resid_[i_ - ", i, "]")
     }
     mm = paste0(mm, "
-        } else {
-          resid_[i_] = ")
+          } else {
+            resid_[i_] = ")
     for (i in seq_len(ar_order)) {
       mm = paste0(mm, " + ar", i, "_[i_] * resid_sigma_[i_ - ", i, "]")
     }
 
     mm = paste0(mm, "
-        }")
-
-    # Finish up
-    mm = paste0(mm, "\n
+          }
+        }
+        resid_arma_ = resid_ - resid_sigma_
+        y_ = y_ + resid_arma_
       }")
   } else {
 

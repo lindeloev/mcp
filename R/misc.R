@@ -241,6 +241,13 @@ to_formula = function(form) {
 
 #' Expand samples with quantiles
 #'
+#' TO DO: implement using `fitted()` and `predict()` but avoid double-computing the samples? E.g.:
+#' `get_quantiles2 = function(fit, quantiles, facet_by = NULL) {`
+#'   `fitted(fit, probs = c(0.1, 0.5, 0.9), newdata = data.frame(x = c(11, 50, 100))) %>%`
+#'   `tidyr::pivot_longer(tidyselect::starts_with("Q")) %>%`
+#'   `dplyr::mutate(quantile = stringr::str_remove(name, "Q") %>% as.numeric() / 100)`
+#' `}`
+#'
 #' @aliases get_quantiles
 #' @keywords internal
 #' @inheritParams plot.mcpfit
