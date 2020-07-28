@@ -81,8 +81,7 @@ priors$bernoulli_identity = priors$binomial_identity
 ######################
 # Change point
 get_default_prior_cp = function(ST, i, default_brutto) {
-  if (i < 2)
-    stop("Only i >= 2 allowed.")
+  assert_integer(i, lower = 2)
 
   # An absolute change point intercept
   if (i >= 2)
@@ -93,8 +92,7 @@ get_default_prior_cp = function(ST, i, default_brutto) {
 
 # Varying-by-group change point
 get_default_prior_cp_group = function(ST, i) {
-  if (i < 2)
-    stop("Only i >= 2 allowed.")
+  assert_integer(i, lower = 2)
 
   # Truncate between last change point and next change point, including their
   # varying effects, but keep in the observed range (MINX, MAXX).

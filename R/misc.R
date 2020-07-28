@@ -141,26 +141,80 @@ get_arma_order = function(pars_arma) {
   }
 }
 
-#' Throws an error if a number/vector contains non-numeric, decimal, or less-than-lower
+#' Asserts whether x contains non-numeric, decimal, or less-than-lower
 #'
-#' The expected behavior of is.integer, with informative error messages.
+#' This is basically an extended `is.integer` with informative error messages.
 #'
-#' @aliases check_integer
+#' @aliases assert_integer
 #' @keywords internal
-#' @param x Numeric value or vector
+#' @param x Value or vector
 #' @param name Name to show in error message.
 #' @param lower the smallest allowed value. lower = 1 checks for positive integers.
 #'
-check_integer = function(x, name, lower = -Inf) {
+assert_integer = function(x, name = NULL, lower = -Inf) {
+  # Recode
   x = stats::na.omit(x)
+  if (is.null(name))
+    name = substitute(x)
+
+  # Do checks
   greater_than = ifelse(lower == -Inf, " ", paste0(" >= ", lower, " "))
   if (!is.numeric(x))
-    stop("Only integers", greater_than, "allowed for '", name, "'")
+    stop("Only integers", greater_than, "allowed for '", name, "'. Got ", x)
 
   if (!all(x == floor(x)) | !all(x >= lower))
-    stop("Only integers", greater_than, "allowed for '", name, "'")
+    stop("Only integers", greater_than, "allowed for '", name, "'. Got ", x)
 
   TRUE
+}
+
+#' Asserts whether x is logical
+#'
+#' This is basically `is.logical` with informative error messages
+#'
+#' @aliases assert_logical
+#' @keywords internal
+#' @inheritParams assert_integer
+#' @param max_length Maximum length of vector. Throws error if this is exceeded
+#'
+assert_logical = function(x, name = NULL, max_length = 1) {
+  if (is.null(name))
+    name = substitute(x)
+
+  if (!is.logical(x))
+    stop("`", name, "` must be TRUE or FALSE. Got ", x)
+
+  if (length(x) > max_length)
+    stop("`", name, "` must be at most length ", max_length, ". Got ", x)
+}
+
+#' Asserts whether x is one of a set of allowed values
+#'
+#' @aliases assert_charvec
+#' @keywords internal
+#' @inheritParams assert_integer
+#' @param allowed Vector of allowed values
+#'
+assert_value = function(x, name = NULL, allowed = c()) {
+  if (is.null(name))
+    name = substitute(x)
+
+  if (!(x %in% allowed)) {
+    allowed[is.character(allowed)] = paste0("'", allowed[is.character(allowed)], "'")  # Add quotes for character values
+    stop("`", name, "` must be one of ", paste0(allowed, collapse = ", "), ". Got ", x)
+  }
+}
+
+
+#' Asserts whether x is an `mcpfit`
+#'
+#' @aliases assert_mcpfit
+#' @keywords internal
+#' @param x Object to be tested
+#'
+assert_mcpfit = function(x) {
+  if (!is.mcpfit(x))
+    stop("Expected `mcpfit` but got: ", class(x))
 }
 
 
@@ -189,6 +243,8 @@ release_questions = function() {
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 remove_terms = function(form, remove) {
+  assert_value(remove, allowed = c("varying", "population"))
+
   # Find terms with "|"
   attrs = attributes(stats::terms(form))
   term.labels = attrs$term.labels
@@ -203,8 +259,6 @@ remove_terms = function(form, remove) {
     term.labels = c(attrs$intercept, term.labels)  # Add intercept indicator
   } else if (remove == "population") {
     term.labels = term.labels[varying_bool]
-  } else {
-    stop("`remove` can only be 'varying' or 'population'.")
   }
 
   # Build formula from terms and return

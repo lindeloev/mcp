@@ -73,22 +73,19 @@ plot.mcpfit = function(x,
 
   # Check arguments
   # The following are checked in pp_eval: q_fit, q_predict, rate
-  check_mcpfit(fit)
+  assert_mcpfit(fit)
 
   if (!coda::is.mcmc.list(fit$mcmc_post) & !coda::is.mcmc.list(fit$mcmc_prior))
     stop("Cannot plot an mcpfit without prior or posterior samples.")
 
   if (lines != FALSE) {
-    check_integer(lines, "lines", lower = 1)
+    assert_integer(lines, lower = 1)
   } else {
     lines = 0
   }
 
-  if (!geom_data %in% c("point", "line", FALSE))
-    stop("`geom_data` has to be one of 'point', 'line', or FALSE.")
-
-  if (!is.logical(cp_dens))
-    stop("`cp_dens` must be TRUE or FALSE.")
+  assert_value(geom_data, allowed = c("point", "line", FALSE))
+  assert_logical(cp_dens)
 
   if (is.logical(q_fit) && all(q_fit == TRUE))
     q_fit = c(0.025, 0.975)
@@ -100,16 +97,16 @@ plot.mcpfit = function(x,
     stop("`q_fit` has to be TRUE, FALSE, or a vector of numbers.")
 
   if (is.numeric(q_fit) & (any(q_fit > 1) | any(q_fit < 0)))
-    stop ("All `q_fit` have to be between 0 (0%) and 1 (100%).")
+    stop("All `q_fit` have to be between 0 (0%) and 1 (100%).")
 
   if (!is.logical(q_predict) & !is.numeric(q_predict))
     stop("`q_predict` has to be TRUE, FALSE, or a vector of numbers.")
 
   if (is.numeric(q_predict) & (any(q_predict > 1) | any(q_predict < 0)))
-    stop ("All `q_predict` have to be between 0 (0%) and 1 (100%).")
+    stop("All `q_predict` have to be between 0 (0%) and 1 (100%).")
 
   if (!is.null(nsamples)) {
-    check_integer(nsamples, "nsamples", lower = 1)
+    assert_integer(nsamples, lower = 1)
     if (lines != FALSE & nsamples < lines)
       stop("`lines` must be less than or equal to `nsamples`.")
   }
@@ -433,7 +430,7 @@ plot_pars = function(fit,
                      prior = FALSE) {
 
   # Check arguments
-  check_mcpfit(fit)
+  assert_mcpfit(fit)
 
   if (!coda::is.mcmc.list(fit$mcmc_post) & !coda::is.mcmc.list(fit$mcmc_prior))
     stop("Cannot plot an mcpfit without prior or posterior samples.")
@@ -450,10 +447,8 @@ plot_pars = function(fit,
   if ("combo" %in% type & length(type) > 1)
     stop("'combo' type cannot be combined with other types. Replace 'combo' with the types you want combo\'ed")
 
-  check_integer(ncol, name = "ncol", lower = 1)
-
-  if (!is.logical(prior))
-    stop("`prior` must be either TRUE or FALSE.")
+  assert_integer(ncol, lower = 1)
+  assert_logical(prior)
 
   # Get posterior/prior samples
   samples = mcmclist_samples(fit, prior = prior)

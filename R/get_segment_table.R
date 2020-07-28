@@ -76,7 +76,7 @@ check_terms_in_data = function(form, data, i, n_terms = NULL) {
 
   # Check n_terms
   if (!is.null(n_terms)) {
-    check_integer(n_terms, "n_terms", lower = 1)
+    assert_integer(n_terms, lower = 1)
     if (n_terms != length(found))
       stop("Expected ", n_terms, " terms but got ", length(found), ". Specifically, got: ", paste0(all.vars(form), collapse = ", "))
   }
@@ -631,7 +631,7 @@ unpack_slope_term = function(term, i, last_slope, ttype = "") {
   if (stringr::str_detect(term, exponent_regex)) {
     # Exponential
     exponent = sub(".*\\^\\(?([0-9.-]+)\\)?$", "\\1", term)
-    check_integer(as.numeric(exponent), term, lower = 0)  # JAGS does not allow for negative or decimal exponents. (TO DO: check if implementing stan version)
+    assert_integer(as.numeric(exponent), term, lower = 0)  # JAGS does not allow for negative or decimal exponents. (TO DO: check if implementing stan version)
     name = paste0(par_x, "_", i, "_E", sub("-", "m", exponent))  # e.g., x_i_E2
     term_recode = gsub(paste0("^", par_x, "\\^"), paste0(rel_x_code, "\\^"), term)
   } else if (stringr::str_detect(term, funcs_regex)) {
@@ -699,7 +699,7 @@ unpack_arma = function(form_str_in) {
   # Check the order
   if (is.na(order))
     stop("Wrong specification of order in '", form_str_in, "'. Must be ar(order) or ar(order, formula) where order is a positive integer.")
-  check_integer(order, form_str_in, lower = 1)
+  assert_integer(order, form_str_in, lower = 1)
 
   # GET FORMULA
   if (has_formula) {
@@ -882,13 +882,13 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
 
     # Check y and trials if binomial
     if (family$family == "binomial") {
-      check_integer(data[, ST$y[1]], ST$y[1], lower = 0)
-      check_integer(data[, ST$trials[1]], ST$trials[1], lower = 1)
+      assert_integer(data[, ST$y[1]], ST$y[1], lower = 0)
+      assert_integer(data[, ST$trials[1]], ST$trials[1], lower = 1)
     } else if (family$family == "bernoulli") {
       if (any(!data[, ST$y[1]] %in% c(0, 1)))
         stop("Only responses 0 and 1 are allowed for family = bernoulli() in column '", ST$y[1], "'")
     } else if (family$family == "poisson") {
-      check_integer(data[, ST$y[1]], ST$y[1], lower = 0)
+      assert_integer(data[, ST$y[1]], ST$y[1], lower = 0)
     }
 
     # Check weights

@@ -280,20 +280,11 @@ function(",
   ...) {
 
   # Return predictions or fitted values?
-  if (!type %in% c('predict', 'fitted'))
-    stop(\"'`type` must be one of 'predict' or 'fitted'\")
-
-  if (!is.logical(quantile))
-    stop(\"`quantile` must be TRUE or FALSE\")
-
-  if (!is.logical(add_attr))
-    stop(\"`add_attr` must be TRUE or FALSE\")
-
-  if (!is.logical(arma))
-    stop(\"`arma` must be TRUE or FALSE\")
-
-  if (!(scale %in% c('response', 'linear')))
-    stop(\"`scale` must be 'response' or 'linear'\")
+  mcp:::assert_value(type, allowed = c('predict', 'fitted'))
+  mcp:::assert_logical(quantile)
+  mcp:::assert_logical(add_attr)
+  mcp:::assert_logical(arma)
+  mcp:::assert_value(scale, allowed = c('response', 'linear'))
 
   if (scale == 'linear' && type == 'predict')
     stop(\"Only `type = 'fitted'` is meaningful when `scale = 'linear'`\")
@@ -328,8 +319,6 @@ function(",
   # Optionally transform
   if (scale == 'response') {
     y_ = ", family$linkinv_r, "(y_)
-  } else if (scale != 'linear') {
-    stop(\"`scale` has to be 'response' or 'linear'\")
   }
   ")
 
