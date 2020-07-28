@@ -218,14 +218,9 @@ mcp = function(model,
     stop("`par_x` must be NULL or a string.")
 
   # Sampler settings
-  if (!sample %in% c("post", "prior", "both") & !is.logical(sample))
-    stop("`sample` must be 'post', 'prior', 'both', or 'none'/FALSE")
-
-  if (cores < 1 | !check_integer(cores, "cores"))
-    stop("`cores` has to be 1 or greater (parallel sampling).")
-
-  if (chains < 1 | !check_integer(chains, "chains"))
-    stop("`chains` has to be 1 or greater.")
+  assert_value(sample, allowed = c("post", "prior", "both", "none", FALSE))
+  assert_integer(cores, lower = 1)
+  assert_integer(chains, lower = 1)
 
   if (cores > chains)
     message("`cores` is greater than `chains`. Not all cores will be used.")

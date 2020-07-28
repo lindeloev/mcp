@@ -46,17 +46,13 @@ NULL
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   # Check arguments
-  check_mcpfit(fit)
+  assert_mcpfit(fit)
 
   if (!is.numeric(width) | width < 0 | width > 1 | length(width) != 1)
     stop("`width`` must be a float between 0 and 1. Got: ", width)
 
-  if (!is.logical(varying))
-    stop("`varying` must be TRUE or FALSE. Got: ", varying)
-
-  if (!is.logical(prior))
-    stop("`prior` must be TRUE or FALSE. Got: ", prior)
-
+  assert_logical(varying)
+  assert_logical(prior)
 
   # Get posterior/prior samples
   # TO DO: transition this to tidy_samples at some point if rhat and n.eff
@@ -223,11 +219,8 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) {
   # Standard name in mcp
   fit = object
-  check_mcpfit(fit)
-
-  if (digits != floor(digits) | digits < 0)
-    stop("`digits`` must be a positive integer.")
-
+  assert_mcpfit(fit)
+  assert_integer(digits, lower = 0)
 
   samples = mcmclist_samples(fit, prior = prior, error = FALSE)
 
@@ -307,18 +300,6 @@ is.mcpfit = function(x) {
 }
 
 
-#' Throws an error if this is not an mcpfit
-#'
-#' @aliases check_mcpfit
-#' @keywords interal
-#' @param x Object to be tested
-#'
-check_mcpfit = function(x) {
-  if (!is.mcpfit(x))
-    stop("Expected `mcpfit` but got: ", class(x))
-}
-
-
 #' Internal function to get samples.
 #'
 #' Returns posterior samples, if available. If not, then prior samples. If not,
@@ -332,8 +313,7 @@ check_mcpfit = function(x) {
 #' @param message TRUE: gives a message if returning prior samples. FALSE = no message
 #' @param error TRUE: err if there are no samples. FALSE: return NULL
 mcmclist_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
-  if (!is.logical(prior))
-    stop("`prior` must be TRUE or FALSE.")
+  assert_logical(prior)
 
   if (prior == TRUE) {
     if (coda::is.mcmc.list(fit$mcmc_prior)) {
@@ -444,13 +424,13 @@ tidy_samples = function(
   nsamples = NULL
 ) {
   # General argument checks
-  check_mcpfit(fit)
+  assert_mcpfit(fit)
 
   if (all(population == FALSE) & all(varying == FALSE))
     stop("At least one TRUE or one parameter must be provided through either the `varying` or the `population` arguments.")
 
   if (!is.null(nsamples))
-    check_integer(nsamples, "nsamples", lower = 1)
+    assert_integer(nsamples, lower = 1)
 
 
   # ----- IDENTIFY PARAMETERS -----
@@ -602,7 +582,7 @@ pp_eval = function(
 ) {
   # Naming convention in mcp
   fit = object
-  check_mcpfit(fit)
+  assert_mcpfit(fit)
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)
   returnvar = rlang::sym(type)
@@ -621,11 +601,8 @@ pp_eval = function(
   if (is_arma == TRUE && arma == TRUE && !is.null(newdata) && nrow(newdata) > 10 && is.null(nsamples))
     message("Computing fitted and predicted values with AR(N) is slow. Consider setting `nsamples` to a lower value or set `arma = FALSE`.")
 
-  if (!is.logical(summary))
-    stop("`summary` must be TRUE or FALSE. Got: ", summary)
-
-  if (!(type %in% c("fitted", "predict", "residuals")))
-    stop("`type` must be 'fitted', 'predict', or 'residuals'. Got: '", type, "'.")
+  assert_logical(summary)
+  assert_value(type, allowed = c("fitted", "predict", "residuals"))
 
   if (type == "residuals") {
     if (!is.null(newdata) && !(fit$pars$y %in% colnames(newdata)))
@@ -642,19 +619,12 @@ pp_eval = function(
     probs = c(0.025, 0.975)
 
   if (is.numeric(probs) & (any(probs > 1) | any(probs < 0)))
-    stop ("All `probs` have to be between 0 (0%) and 1 (100%).")
+    stop("All `probs` have to be between 0 (0%) and 1 (100%).")
 
-  if (!is.logical(rate))
-    stop("`rate` has to be TRUE or FALSE.")
-
-  if (!is.logical(prior))
-    stop("`prior` must be either TRUE or FALSE.")
-
-  if (!is.logical(arma))
-    stop("`arma` must be TRUE or FALSE.")
-
-  if (!(samples_format %in% c("tidy", "matrix")))
-    stop("`samples_format` must be either 'tidy' or 'matrix'. Got: '", samples_format, "'.")
+  assert_logical(rate)
+  assert_logical(prior)
+  assert_logical(arma)
+  assert_value(samples_format, allowed = c("tidy", "matrix"))
 
   if (scale == "linear" & (type != "fitted"))
     stop("`scale = 'linear'` is only meaningful when `type = 'fitted'`.")
@@ -935,7 +905,7 @@ tidy_to_matrix = function(samples, returnvar) {
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 with_loo = function(fit, save_psis = FALSE, info = NULL) {
-  check_mcpfit(fit)
+  assert_mcpfit(fit)
 
   # Add loo if absent or needs psis
   if (is.null(fit$loo) || (save_psis == TRUE && loo::is.loo(fit$loo) && is.null(fit$loo$psis_object))) {

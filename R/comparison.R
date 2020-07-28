@@ -28,10 +28,8 @@
 #' }
 #'
 criterion = function(fit, criterion = "loo", ...) {
-  check_mcpfit(fit)
-
-  if (!criterion %in% c("loo", "waic"))
-    stop("criterion must be one of 'loo' or 'waic'")
+  assert_mcpfit(fit)
+  assert_value(criterion, allowed = c("loo", "waic"))
 
   # Log-likelihood MCMC samples as matrix
   loglik = as.matrix(do.call(rbind.data.frame, fit$mcmc_loglik))
