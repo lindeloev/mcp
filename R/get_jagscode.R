@@ -115,7 +115,7 @@ model {")
   # Prepare y code (link and AR)
   y_code = "y_[i_]"
   if (has_ar)
-    y_code = paste0(y_code, " + resid_[i_]")
+    y_code = paste0(y_code, " + resid_arma_[i_]")
   y_code = paste0(family$linkinv_jags, "(", y_code, ")")
 
   # Prepare variance code
@@ -146,9 +146,9 @@ model {")
   # Compute residuals for AR
   if (has_ar) {
     if (family$family == "binomial") {
-      mm = paste0(mm, "\n    resid_sigma_[i_] = ", family$link_jags, "(", ST$y[1], "[i_] / ", ST$trials[1], "[i_]) - y_[i_]  # Residuals represented by sigma_ after ARMA")
+      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$link_jags, "(", ST$y[1], "[i_] / ", ST$trials[1], "[i_]) - y_[i_]  # Residuals represented by sigma_ after ARMA")
     } else {
-      mm = paste0(mm, "\n    resid_sigma_[i_] = ", family$link_jags, "(", ST$y[1], "[i_])  - y_[i_]  # Residuals represented by sigma_ after ARMA")
+      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$link_jags, "(", ST$y[1], "[i_])  - y_[i_]  # Residuals represented by sigma_ after ARMA")
     }
   }
 
