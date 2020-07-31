@@ -467,11 +467,10 @@ get_ar_code = function(ar_order, family, is_R, xvar, yvar = NA) {
 mm = paste0(mm, "
     # resid_ is the observed residual from y_
     # resid_ is split into the innovation and AR() part. So resid_ = resid_arma_ + resid_sigma_
-    # The for-loops are slow, but base::Reduce and purrr::accumulate are even slower.
+    resid_sigma_ = rnorm(length(", xvar, "), 0, sigma_)
     if (all(is.null(", yvar, "))) {
       message(\"Generating residuals for AR(N) model since the response column/argument '", yvar, "' was not provided.\")
       ar0_ = sigma_[1:", ar_order, "] * 0 + 1
-      resid_sigma_ = rnorm(length(", xvar, "), 0, sigma_)
       resid_abs_ = numeric(length(", xvar, "))")
 
     # For data points lower than the full order
@@ -496,7 +495,7 @@ mm = paste0(mm, "
       resid_arma_ = numeric(length(", xvar, "))
       resid_arma_ = ", paste0("ar", seq_len(ar_order), "_ * dplyr::lag(resid_abs_, ", seq_len(ar_order), ")", collapse = " + "), "
       resid_arma_[seq_len(", ar_order, ")] = 0  # replace NA
-      resid_sigma_ = resid_abs_ - resid_arma_
+      # resid_sigma_ = resid_abs_ - resid_arma_  # Outcommented because it's deterministic in this parameterization (always sums to the observed data exactly)
     }
 
     y_ = y_ + resid_arma_
