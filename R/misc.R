@@ -5,6 +5,8 @@
 #' @export
 #'
 bernoulli = function(link = "logit") {
+  assert_value(link, allowed = c("identity", "logit", "probit
+                                 "))
   # Just copy binomial()
   family = binomial(link = link)
   family$family = "bernoulli"
@@ -18,8 +20,7 @@ bernoulli = function(link = "logit") {
 #' @export
 #'
 exponential = function(link = "identity") {
-  if (link != "identity")
-    stop("Only link = 'identity' is currently supported for the exponential() family in mcp.")
+  assert_value(link, allowed = c("identity"))
 
   family = list(
     family = "exponential",
@@ -109,18 +110,13 @@ probit = stats::binomial(link = "probit")$linkfun
 iprobit = stats::binomial(link = "probit")$linkinv
 
 
-#' Converts logical(0) to null. Returns x otherwise
-#'
-#'@aliases logical0_to_null
-#'@keywords internal
-#'@param x Anything
-#'@return NULL or x
-
+# Converts logical(0) to null. Returns x otherwise
 logical0_to_null = function(x) {
   if (length(x) > 0)
     return(x)
   else return(NULL)
 }
+
 
 #' Extracts the order from ARMA parameter name(s)
 #'
@@ -139,82 +135,6 @@ get_arma_order = function(pars_arma) {
   } else {
     return(0)
   }
-}
-
-#' Asserts whether x contains non-numeric, decimal, or less-than-lower
-#'
-#' This is basically an extended `is.integer` with informative error messages.
-#'
-#' @aliases assert_integer
-#' @keywords internal
-#' @param x Value or vector
-#' @param name Name to show in error message.
-#' @param lower the smallest allowed value. lower = 1 checks for positive integers.
-#'
-assert_integer = function(x, name = NULL, lower = -Inf) {
-  # Recode
-  x = stats::na.omit(x)
-  if (is.null(name))
-    name = substitute(x)
-
-  # Do checks
-  greater_than = ifelse(lower == -Inf, " ", paste0(" >= ", lower, " "))
-  if (!is.numeric(x))
-    stop("Only integers", greater_than, "allowed for '", name, "'. Got ", x)
-
-  if (!all(x == floor(x)) | !all(x >= lower))
-    stop("Only integers", greater_than, "allowed for '", name, "'. Got ", x)
-
-  TRUE
-}
-
-#' Asserts whether x is logical
-#'
-#' This is basically `is.logical` with informative error messages
-#'
-#' @aliases assert_logical
-#' @keywords internal
-#' @inheritParams assert_integer
-#' @param max_length Maximum length of vector. Throws error if this is exceeded
-#'
-assert_logical = function(x, name = NULL, max_length = 1) {
-  if (is.null(name))
-    name = substitute(x)
-
-  if (!is.logical(x))
-    stop("`", name, "` must be TRUE or FALSE. Got ", x)
-
-  if (length(x) > max_length)
-    stop("`", name, "` must be at most length ", max_length, ". Got ", x)
-}
-
-#' Asserts whether x is one of a set of allowed values
-#'
-#' @aliases assert_charvec
-#' @keywords internal
-#' @inheritParams assert_integer
-#' @param allowed Vector of allowed values
-#'
-assert_value = function(x, name = NULL, allowed = c()) {
-  if (is.null(name))
-    name = substitute(x)
-
-  if (!(x %in% allowed)) {
-    allowed[is.character(allowed)] = paste0("'", allowed[is.character(allowed)], "'")  # Add quotes for character values
-    stop("`", name, "` must be one of ", paste0(allowed, collapse = ", "), ". Got ", x)
-  }
-}
-
-
-#' Asserts whether x is an `mcpfit`
-#'
-#' @aliases assert_mcpfit
-#' @keywords internal
-#' @param x Object to be tested
-#'
-assert_mcpfit = function(x) {
-  if (!is.mcpfit(x))
-    stop("Expected `mcpfit` but got: ", class(x))
 }
 
 
@@ -243,6 +163,7 @@ release_questions = function() {
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 remove_terms = function(form, remove) {
+  assert_types(form, "formula")
   assert_value(remove, allowed = c("varying", "population"))
 
   # Find terms with "|"
@@ -280,14 +201,13 @@ remove_terms = function(form, remove) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 to_formula = function(form) {
+  assert_types(form, "character", "formula")
   if (is.character(form)) {
     # Add tilde
     if (!stringr::str_detect(form, "^(\\s|)~")) {
       form = paste0("~", form)
     }
     form = stats::as.formula(form)
-  } else if (!rlang::is_formula(form)) {
-    stop("`form` must character or formula but got ", form)
   }
 
   return(form)

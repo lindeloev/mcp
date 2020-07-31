@@ -1,3 +1,6 @@
+# ABOUT: These are non-plotting functions that take an mcpfit as the first argument
+# -----------------
+
 #' Class `mcpfit` of models fitted with the \pkg{mcp} package
 #'
 #' Models fitted with the \code{\link[mcp:mcp]{mcp}} function are represented as
@@ -47,10 +50,7 @@ NULL
 get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   # Check arguments
   assert_mcpfit(fit)
-
-  if (!is.numeric(width) | width < 0 | width > 1 | length(width) != 1)
-    stop("`width`` must be a float between 0 and 1. Got: ", width)
-
+  assert_numeric(width, lower = 0, upper = 1)
   assert_logical(varying)
   assert_logical(prior)
 
@@ -71,7 +71,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   # HACK: If there is just one parameter, it's not a matrix. Add two in to make the code run.
   all_cols = colnames(samples[[1]])
   get_cols = all_cols[stringr::str_detect(all_cols, regex_pars)]
-  if (!stringr::str_detect(regex_pars, "\\|") & varying == FALSE) {
+  if (!stringr::str_detect(regex_pars, "\\|") && varying == FALSE) {
     samples = lapply(samples, function(x) x[, c(get_cols, "cp_0", "cp_1")])
   } else {
     samples = lapply(samples, function(x) x[, get_cols])
@@ -94,7 +94,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
     dplyr::select(-tidyselect::starts_with("."))
 
   # Revert HACK and continue
-  if (!stringr::str_detect(regex_pars, "\\|") & varying == FALSE) {
+  if (!stringr::str_detect(regex_pars, "\\|") && varying == FALSE) {
     estimates = dplyr::filter(estimates, !.data$name %in% c("cp_0", "cp_1"))
     samples = lapply(samples, function(x) x[, get_cols])
   }
@@ -217,10 +217,11 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #' summary(ex_fit, prior = TRUE)
 #'
 summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) {
-  # Standard name in mcp
-  fit = object
+  fit = object  # Standard name in mcp
   assert_mcpfit(fit)
+  assert_numeric(width, lower = 0, upper = 1)
   assert_integer(digits, lower = 0)
+  assert_logical(prior)
 
   samples = mcmclist_samples(fit, prior = prior, error = FALSE)
 
@@ -313,8 +314,6 @@ is.mcpfit = function(x) {
 #' @param message TRUE: gives a message if returning prior samples. FALSE = no message
 #' @param error TRUE: err if there are no samples. FALSE: return NULL
 mcmclist_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
-  assert_logical(prior)
-
   if (prior == TRUE) {
     if (coda::is.mcmc.list(fit$mcmc_prior)) {
       return(fit$mcmc_prior)
@@ -343,11 +342,20 @@ mcmclist_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
 #'
 #' @aliases unpack_varying unpack_varying.mcpfit
 #' @keywords internal
-#' @param pars A vector of varying parameter names.
-#' @param cols A vector of varying column names. Usually provided via "facet_by" argument in other functions.
-#' @return A list with 'pars', 'cols', and 'indices'.
+#' @param pars `NULL`/`FALSE` for nothing. `TRUE` for all. A vector of varying parameter names for specifics.
+#' @param cols `NULL`/`FALSE` for nothing. `TRUE` for all. A vector of varying column names for specifics. Usually provided via "facet_by" argument in other functions.
+#' @return A list. See details.
+#'
+#' @details
+#' Returns a list with
+#' @slot pars Character vector of parameter names. `NULL` if empty.
+#' @slot cols Character vector of data column names. `NULL` if empty.
+#' @slot indices Logical vector of segments in the segment table that contains the varying effect
 #'
 unpack_varying = function(fit, pars = NULL, cols = NULL) {
+  assert_types(pars, "null", "logical", "character")
+  assert_types(cols, "null", "logical", "character")
+
   # If everything is NULL, just return NULLs
   if ((is.null(pars) && is.null(cols))) {
     return(list(
@@ -372,8 +380,6 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
         stop("Not all `pars` are varying parameters (see fit$pars$varying).")
       # Select only specified varying effects
       use_varying = fit$.other$ST$cp_group %in% pars
-    } else {
-      stop("`pars` must be TRUE, FALSE, or a character vector.")
     }
   } else if (!is.null(cols)) {
     use_varying = tidyr::replace_na(fit$.other$ST$cp_group_col == cols, FALSE)
@@ -425,12 +431,15 @@ tidy_samples = function(
 ) {
   # General argument checks
   assert_mcpfit(fit)
-
-  if (all(population == FALSE) & all(varying == FALSE))
-    stop("At least one TRUE or one parameter must be provided through either the `varying` or the `population` arguments.")
-
+  assert_types(population, "logical", "character")
+  assert_types(varying, "null", "logical", "character")
+  assert_types(absolute, "null", "logical", "character")
+  assert_logical(prior)
   if (!is.null(nsamples))
     assert_integer(nsamples, lower = 1)
+
+  if (all(population == FALSE) && all(varying == FALSE))
+    stop("At least one TRUE or one parameter must be provided through either the `varying` or the `population` arguments.")
 
 
   # ----- IDENTIFY PARAMETERS -----
@@ -449,8 +458,6 @@ tidy_samples = function(
       stop("Not all `population` are population parameters (see fit$pars$population).")
 
     pars_population = population
-  } else {
-    stop("`population` must be TRUE, FALSE, or a character vector.")
   }
 
   # Absolute effects. Results is `absolute_cps` and `absolute` (recoded to varying cp names)
@@ -467,8 +474,6 @@ tidy_samples = function(
 
     use_absolute = fit$.other$ST$cp_group %in% absolute
     absolute_cps = fit$.other$ST$cp_name[use_absolute]
-  } else {
-    stop("`absolute` must be TRUE, FALSE, or a character vector.")
   }
 
   # ----- GET THESE PARAMETERS AS TIDY DRAWS -----
@@ -531,7 +536,7 @@ tidy_samples = function(
 #' @param arma TRUE or FALSE.
 #'   * `TRUE:` Compute autoregressive residuals. Requires the response variable in `newdata`.
 #'   * `FALSE:` Disregard the autoregressive effects. For `family = gaussian()`, `predict()` just use `sigma` for residuals.
-#' @param nsamples Integer or `NULL`. Number of samples to use for computing `q_fit` and `q_predict`.
+#' @param nsamples Integer or `NULL`. Number of samples to return/summarise.
 #'   If there are varying effects, this is the number of samples from each varying group.
 #'   `NULL` means "all". Ignored if both are `FALSE`. More samples trade speed for accuracy.
 #' @param samples_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE`.
@@ -580,7 +585,7 @@ pp_eval = function(
   scale = 'response',
   ...
 ) {
-  # Naming convention in mcp
+  # Recodings
   fit = object
   assert_mcpfit(fit)
   xvar = rlang::sym(fit$pars$x)
@@ -597,12 +602,27 @@ pp_eval = function(
   # but that makes the tests fail.
   . = "ugly fix to please R CMD check"
 
-  # Check inputs
+
+  ########################
+  # ASSERTS AND RECODING #
+  ########################
   if (is_arma == TRUE && arma == TRUE && !is.null(newdata) && nrow(newdata) > 10 && is.null(nsamples))
     message("Computing fitted and predicted values with AR(N) is slow. Consider setting `nsamples` to a lower value or set `arma = FALSE`.")
 
   assert_logical(summary)
   assert_value(type, allowed = c("fitted", "predict", "residuals"))
+  assert_types(probs, "logical", "numeric")
+  if (is.numeric(probs))
+    assert_numeric(probs, lower = 0, upper = 1)
+  if (all(probs == TRUE))
+    probs = c(0.025, 0.975)
+  assert_logical(rate)
+  assert_logical(prior)
+  assert_logical(arma)
+  assert_types(nsamples, "null", "numeric")
+  if (!is.null(nsamples))
+    assert_integer(nsamples, lower = 1)
+  assert_value(samples_format, allowed = c("tidy", "matrix"))
 
   if (type == "residuals") {
     if (!is.null(newdata) && !(fit$pars$y %in% colnames(newdata)))
@@ -611,33 +631,17 @@ pp_eval = function(
     if (!(fit$pars$y %in% required_cols))
       required_cols = c(required_cols, fit$pars$y)
   }
-
-  if (!is.logical(probs) & !is.numeric(probs))
-    stop("`probs` has to be TRUE, FALSE, or a vector of numbers.")
-
-  if (all(probs == TRUE))
-    probs = c(0.025, 0.975)
-
-  if (is.numeric(probs) & (any(probs > 1) | any(probs < 0)))
-    stop("All `probs` have to be between 0 (0%) and 1 (100%).")
-
-  assert_logical(rate)
-  assert_logical(prior)
-  assert_logical(arma)
-  assert_value(samples_format, allowed = c("tidy", "matrix"))
-
-  if (scale == "linear" & (type != "fitted"))
+  if (scale == "linear" && (type != "fitted"))
     stop("`scale = 'linear'` is only meaningful when `type = 'fitted'`.")
 
 
   # Check and build stuff related to newdata
   if (!is.null(newdata)) {
-    if (!is.data.frame(newdata) & !tibble::is_tibble(newdata))
-      stop("`newdata` must be a data.frame or a tibble. Got '", paste0(class(newdata), collapse = "', '"), "'")
+    assert_types(newdata, "data.frame", "tibble")
 
     # Add response column to required_cols for ARMA models
-    if (is_arma == TRUE & arma == TRUE) {
-      if (fit$pars$y %in% colnames(newdata) & !(fit$pars$y %in% required_cols)) {
+    if (is_arma == TRUE && arma == TRUE) {
+      if (fit$pars$y %in% colnames(newdata) && !(fit$pars$y %in% required_cols)) {
         required_cols = c(required_cols, fit$pars$y)
       } else if (".ydata" %in% colnames(newdata)) {
         required_cols = c(required_cols, ".ydata")
@@ -659,7 +663,10 @@ pp_eval = function(
   colnames(newdata) = required_cols  # Special case for when there's only one predictor
   newdata$data_row = 1:nrow(newdata)  # to maintain order in the output when summary == TRUE
 
-  # Get fits/predictions
+
+  ########################
+  # GET FITS/PREDICTIONS #
+  ########################
   type_for_simulate = ifelse(type == "residuals", yes = "fitted", no = type)
   if (length(varying_info$cols) > 0) {
     # If there are varying effects: use varying-matching samples for each row of data
@@ -725,8 +732,8 @@ pp_eval = function(
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
-#' \donttest{
 #' predict(ex_fit)  # Evaluate at each ex_fit$data
+#' \donttest{
 #' predict(ex_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
 #' predict(ex_fit, summary = FALSE)  # Samples instead of summary.
 #' predict(
@@ -833,8 +840,8 @@ fitted.mcpfit = function(
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
-#' residuals(ex_fit)
 #' \donttest{
+#' residuals(ex_fit)
 #' residuals(ex_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
 #' residuals(ex_fit, summary = FALSE)  # Samples instead of summary.
 #'}

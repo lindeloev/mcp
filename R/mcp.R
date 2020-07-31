@@ -121,11 +121,17 @@
 #' summary(ex_fit)
 #'
 #' # Visual inspection of the results
-#' plot(ex_fit)
-#' plot_pars(ex_fit)
+#' plot(ex_fit)  # Visualization of model fit/predictions
+#' plot_pars(ex_fit)  # Parameter distributions
+#' pp_check(ex_fit)  # Prior/Posterior predictive checks
 #'
 #' # Test a hypothesis
 #' hypothesis(ex_fit, "cp_1 > 10")
+#'
+#' # Make predictions
+#' fitted(ex_fit)
+#' predict(ex_fit)
+#' predict(ex_fit, newdata = data.frame(time = c(55.545, 80, 132)))
 #'
 #' # Compare to a one-intercept-only model (no change points) with default prior
 #' model_null = list(response ~ 1)
@@ -173,22 +179,19 @@ mcp = function(model,
   ################
 
   # Check data
-  if (is.null(data) & sample %in% c("post", "both"))
+  if (is.null(data) && sample %in% c("post", "both"))
     stop("Cannot sample without data.")
 
-  if (is.null(data) & sample == "prior")
+  if (is.null(data) && sample == "prior")
     stop("Cannot sample prior without data as some default priors depend on data. Possible solution: set priors to be independent of data (no SDY, MEANX, etc.) and provide a bit of mock-up data, which then will have no effect.")
 
   if (!is.null(data)) {
-    if (!is.data.frame(data) & !tibble::is_tibble(data))
-      stop("`data` must be a data.frame or a tibble.")
-
+    assert_types(data, "data.frame", "tibble")
     data = data.frame(data)  # Force into data frame
   }
 
   # Check model
-  if (!is.list(model))
-    stop("`model` must be a list")
+  assert_types(model, "list")
 
   if (length(model) == 0)
     stop("At least one segment is needed in `model`")
@@ -199,8 +202,7 @@ mcp = function(model,
   }
 
   # Check prior
-  if (!is.list(prior))
-    stop("`prior` must be a named list.")
+  assert_types(prior, "list")
 
   which_duplicated = duplicated(names(prior))
   if (any(which_duplicated))
@@ -212,30 +214,23 @@ mcp = function(model,
 
   family = mcp_family(family)  # convert to mcp family
 
-
-  # Check other stuff
-  if (!is.null(par_x) & !is.character(par_x))
-    stop("`par_x` must be NULL or a string.")
-
-  # Sampler settings
+  # More checking...
+  assert_types(par_x, "null", "character")
   assert_value(sample, allowed = c("post", "prior", "both", "none", FALSE))
   assert_integer(cores, lower = 1)
   assert_integer(chains, lower = 1)
+  assert_types(inits, "null", "list")
 
   if (cores > chains)
     message("`cores` is greater than `chains`. Not all cores will be used.")
 
   # jags_code
-  if(!is.null(jags_code)) {
-    if (!is.character(jags_code)) {
+  if(!is.null(jags_code))
+    if (!is.character(jags_code) || !stringr::str_detect(gsub(" ", "", jags_code), "model\\{"))
       stop("`jags_code` must be NULL or a string with a JAGS model, including 'model {...}'.")
-    } else if(!stringr::str_detect(gsub(" ", "", jags_code), "model\\{")) {
-      stop("`jags_code` must be NULL or a string with a JAGS model, including 'model {...}'.")
-    }
-  }
 
   # Parallel fails on R version 3.6.0 and lower (sometimes at least).
-  if (cores > 1 & getRversion() < "3.6.1")
+  if (cores > 1 && getRversion() < "3.6.1")
     message("Parallel sampling (`cores` > 1) sometimes err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
 
 
@@ -269,7 +264,7 @@ mcp = function(model,
     if (family$link %in% c("logit", "probit"))
       message("The current implementation of autoregression can be fragile for link='logit'. In particular, if there are any all-success trials (e.g., 10/10), the only solution is for 'ar' to be 0.00. If fitting succeeds, do a proper assessment of model convergence.")
 
-    if (is.unsorted(data[, pars$x]) & is.unsorted(rev(data[, pars$x])))
+    if (is.unsorted(data[, pars$x]) && is.unsorted(rev(data[, pars$x])))
       message("'", pars$x, "' is unordered. Please note that ar() applies in the order of data of the data frame - not the values.")
   }
 

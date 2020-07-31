@@ -36,7 +36,7 @@ run_jags = function(data,
   # Set number of cores from "all" or mc.cores if `cores` is not specified.
   # Max at 2 for CRAN etc.
   opts_cores = options()$mc.cores
-  if (is.numeric(opts_cores) & cores == 1)
+  if (is.numeric(opts_cores) && cores == 1)
     cores = opts_cores
   if (cores == "all") {
     cores = parallel::detectCores() - 1
@@ -88,7 +88,7 @@ run_jags = function(data,
       quiet = FALSE
     ))
 
-  } else if (cores == "all" | cores > 1) {
+  } else if (cores == "all" || cores > 1) {
     # PARALLEL using the future package and one chain per worker
     message("Parallel sampling in progress...")
     future::plan(future::multiprocess, .skip = TRUE)

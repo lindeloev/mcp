@@ -13,9 +13,9 @@
 #'
 unpack_tildes = function(segment, i) {
   has_LHS = attributes(stats::terms(segment))$response == 1
-  if (!has_LHS & i == 1) {
+  if (!has_LHS && i == 1) {
     stop("No response variable in segment 1.")
-  } else if (!has_LHS & i > 1) {
+  } else if (!has_LHS && i > 1) {
     # If no LHS, add a change point "intercept"
     form_str = paste("1 ", format(segment))
   } else if (has_LHS) {
@@ -134,10 +134,10 @@ unpack_y = function(form_y, i, family) {
     got_trials = sum(trials_term_index) > 0
 
     # trials(N) is reserved and required for binomial models
-    if (family$family == "binomial" & !got_trials)
+    if (family$family == "binomial" && !got_trials)
       stop("Error in response of segment ", i, ": need a valid trials() specification, e.g., 'y | trials(N) ~ 1 + x'")
 
-    if (family$family != "binomial" & got_trials)
+    if (family$family != "binomial" && got_trials)
       stop("Response format `y | trials(N)` only meaningful for family = binomial(); not for ", family$family, "()")
 
     # Unpack trials_col
@@ -231,7 +231,7 @@ unpack_cp = function(form_cp, i) {
   if (length(attrs$term.labels) > 0)
     stop("Error in segment ", i, " (change point): Only intercepts (1 or rel(1)) are allowed in population-level effects.")
 
-  if (is.null(form_varying) & attrs$intercept == 0)
+  if (is.null(form_varying) && attrs$intercept == 0)
     stop("Error in segment ", i, " (change point): no intercept or varying effect. You can do e.g., ~ 1 or ~ (1 |id).")
 
   # Return as list.
@@ -294,7 +294,7 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   term_labels = term_labels[!sigma_term_index]  # Remove from list of all terms
 
   # If not specified, sigma_1 is implicit in segment 1.
-  if (all(is.na(sigma_int)) == TRUE & all(is.na(sigma_slope)) == TRUE & i == 1 & family$family == "gaussian") {
+  if (all(is.na(sigma_int)) == TRUE && all(is.na(sigma_slope)) == TRUE && i == 1 && family$family == "gaussian") {
     sigma_int = tibble::tibble(
       name = "sigma_1",
       rel = FALSE
@@ -506,10 +506,10 @@ unpack_int = function(form, i, ttype) {
   attrs = attributes(stats::terms(remove_terms(form, "varying")))
   int_rel = attrs$term.labels == "rel(1)"
 
-  if (any(int_rel) == TRUE & i == 1)
+  if (any(int_rel) == TRUE && i == 1)
     stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
 
-  if (any(int_rel) | attrs$intercept == TRUE) {
+  if (any(int_rel) || attrs$intercept == TRUE) {
     # Different naming schemes for central tendency (int_i) and others (e.g., sigma_1; ma_1)
     name = ifelse(ttype == "ct", yes = paste0("int_", i), no = paste0(ttype, "_", i))
     int = tibble::tibble(
@@ -614,7 +614,7 @@ unpack_slope_term = function(term, i, last_slope, ttype = "") {
       stop("Found rel(", term, ") in segment ", i, " does not have a corresponding term to be relative to in segment ", i-1)
     }
   }
-  if (stringr::str_detect(term, "^log\\(|^sqrt\\(") & i > 1)
+  if (stringr::str_detect(term, "^log\\(|^sqrt\\(") && i > 1)
     stop("log() or sqrt() detected in segment 2+. This would fail because mcp models earlier segments as negative x values, and sqrt()/log() cannot take negative values.")
 
   # Regular expressions. Only recognize stuff that is identical between JAGS and base R
@@ -833,7 +833,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
       stop("par_x provided but it does not match the predictor found in segment right-hand side")
   } else if (length(derived_x) == 0) {
     # Zero x derived from segments. Rely on par_x?
-    if (all(is.na(ST$x) & is.character(par_x)))
+    if (all(is.na(ST$x)) && is.character(par_x))
       ST$x = par_x
     else
       stop("This is a plateau-only model so no x-axis variable could be derived from the segment formulas. Use argument 'par_x' to set it explicitly")
@@ -855,7 +855,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
   derived_varying = unique(stats::na.omit(ST$cp_group_col))
 
   # Sigma
-  if (any(c(!is.na(ST$sigma_int)), !is.na(ST$sigma_slope)) & family$family != "gaussian")
+  if (any(c(!is.na(ST$sigma_int)), !is.na(ST$sigma_slope)) && family$family != "gaussian")
     stop("sigma() is only meaningful for family = gaussian()")
 
   # Check data types
@@ -874,7 +874,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
     if (length(derived_varying) > 0) {
       for (varying_col in derived_varying) {
         data_varying = data[, varying_col]
-        if (!is.character(data_varying) & !is.factor(data_varying))
+        if (!is.character(data_varying) && !is.factor(data_varying))
           if (!all(data_varying == floor(data_varying)))
             stop("Varying group '", varying_col, "' has to be integer, character, or factor.")
       }

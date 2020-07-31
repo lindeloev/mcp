@@ -1,3 +1,7 @@
+# ABOUT: These functions "pad" the regression model from get_formula.R
+# resulting in a full JAGS model
+# -----------------
+
 #' Make JAGS code for Multiple Change Point model
 #'
 #' @aliases get_jagscode
@@ -80,7 +84,7 @@ model {")
   # AUTOCORRELATION #
   ###################
   # Detect if there is an intercept or slope on AR
-  has_ar = !all(is.na(unlist(ST$ar_code))) | !all(is.na(unlist(ST$ar_int)))
+  has_ar = !all(is.na(unlist(ST$ar_code))) || !all(is.na(unlist(ST$ar_int)))
   if (has_ar)
     mm = paste0(mm, get_ar_code(arma_order, family, is_R = FALSE, xvar = ST$x[1]))
 
@@ -191,7 +195,7 @@ get_prior_str = function(prior, i, varying_group = NULL) {
     value %in% names(prior)
 
   # If not either number or known parameter, it should be a known distribution.
-  if (!is_fixed & !stringr::str_detect(value, all_d))
+  if (!is_fixed && !stringr::str_detect(value, all_d))
     stop("The prior '", name, " = ", value, "' is not a known distribution, a number, nor a model parameter.")
 
   # If it is a known distribution
