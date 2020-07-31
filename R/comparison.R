@@ -1,3 +1,6 @@
+# ABOUT: These functions compare models and/or hypotheses.
+# -----------------
+
 #' Compute information criteria for model comparison
 #'
 #' Takes an \code{\link{mcpfit}} as input and computes information criteria using loo or
@@ -140,6 +143,11 @@ waic.mcpfit = function(x, ...) {
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
+  assert_mcpfit(fit)
+  assert_types(hypotheses, "character")
+  assert_numeric(width, lower = 0, upper = 1)
+  assert_integer(digits, lower = 0)
+
   # Loop through hypotheses and populate return_df
   return_df = data.frame()
   for (expression in hypotheses) {
@@ -153,13 +161,13 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
     if (n_equals > 1)
       stop("Only one equals-test (Savage-Dickey ratio) allowed in each hypothesis: ", expression)
 
-    if (n_equals == 1 & n_directional > 0)
+    if (n_equals == 1 && n_directional > 0)
       stop("Equals cannot be combined with directional tests: ", expression)
 
     if (n_equals + n_directional == 0)
       stop("At least one operator must be present: <, >, =, <=, or >=: ", expression)
 
-    if (stringr::str_detect(expression, "\\[|\\]") & !stringr::str_detect(expression, "`"))
+    if (stringr::str_detect(expression, "\\[|\\]") && !stringr::str_detect(expression, "`"))
       stop("Needs `` around varying effects, e.g., `cp_1_id[2]`. Got this: ", expression)
 
 
@@ -203,9 +211,9 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
       BF = dens_post / dens_prior
 
       # If there is almost no density. somehow we get negative values.
-      if (dens_post < 0 & dens_prior > 0)
+      if (dens_post < 0 && dens_prior > 0)
         BF = 0
-      if (dens_post > 0 & dens_prior < 0)
+      if (dens_post > 0 && dens_prior < 0)
         BF = Inf
 
       p = BF / (BF + 1)

@@ -1,3 +1,7 @@
+# ABOUT: These functions build the change point regression model for R and JAGS
+# -----------------
+
+
 #' Call `get_formula_str` for multiple ytypes and paste strings
 #'
 #' Currently used to differentiate between the JAGS model (use all) and the
@@ -186,7 +190,7 @@ get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
 
     # If this is just a plateau (~ 0), i.e., the absence of intercept, slope, and varying effects
     if (init == TRUE) {  # Verbose for mean formula. Not for sigma.
-      if (all(is.na(int)) & all(is.na(slope_table))) {
+      if (all(is.na(int)) && all(is.na(slope_table))) {
         formula_str = paste0(formula_str, "  0 + \n")
       }
     }
@@ -229,9 +233,8 @@ get_simulate = function(formula_str, pars, nsegments, family) {
   formula_func = gsub("\\[i_\\]", "", formula_str)  # No explicit indexing needed for R function
   formula_func = gsub("min\\(", "pmin\\(", formula_func)  # vectorized min
   formula_func = gsub("max\\(", "pmax\\(", formula_func)  # vectorized max
-  for (i in seq_len(nsegments)) {
+  for (i in seq_len(nsegments))
     formula_func = gsub(paste0("CP_", i, "_INDEX"), "", formula_func)  # Use vector of data
-  }
 
   # Remove hyperparameter on varying effects from pars$reg since it is not used for simulation
   pars$reg = pars$reg[!stringr::str_ends(pars$reg, "_sd")]
@@ -279,7 +282,7 @@ function(",
   scale = 'response',
   ...) {
 
-  # Return predictions or fitted values?
+  # Asserts
   mcp:::assert_value(type, allowed = c('predict', 'fitted'))
   mcp:::assert_logical(quantile)
   mcp:::assert_logical(add_attr)

@@ -123,7 +123,7 @@ truncate_prior_cp = function(ST, i, prior_str) {
   is_fixed = is.numeric(prior_str)
 
   # OK, we need to add truncation ourselves.
-  if (!is_bounded & !is_truncated & !is_fixed) {
+  if (!is_bounded && !is_truncated && !is_fixed) {
     if (S$cp_int_rel != 0) {
       # Relative: be positive (greater than former cp) and within observed range
       return(paste0(prior_str, " T(0, MAXX - ", ST$cp_code_prior[i - 1], ")"))
@@ -249,7 +249,7 @@ get_prior = function(ST, family, prior = list()) {
     }
 
     # Truncate change point prior if supplied by user
-    if (i > 1 & ST$cp_name[i] %in% names(prior)) {
+    if (i > 1 && ST$cp_name[i] %in% names(prior)) {
       prior[[S$cp_name]] = truncate_prior_cp(ST, i, prior[[S$cp_name]])
     }
   }

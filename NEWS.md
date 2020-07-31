@@ -1,9 +1,8 @@
-# mcp 0.2.0.9000
+# mcp 0.3.0
 
 ## New features:
 
  * Get fits and predictions for in-sample and out-of-sample data: 
-
    - Use `predict(fit)` to get predicted values and quantiles. 
    - Use `fitted(fit)` to get estimated values and quantiles. 
    - Use `residuals(fit)` to get residuals and quantiles.
@@ -39,7 +38,7 @@
  * Change point densities in `plot(fit)` are now scaled to 20% of the plot for each chain X changepoint combo. This adresses a common problem where a wide posterior was almost invisibly low when a narrow posterior was present. This means that heights should only be compared *within* each chain x changepoint combo - not across.
  * Removed the implicit ceiling of 1000 lines and samples in `plot.mcpfit()`.
  * Rownames are removed from `ranef()` and `fixef()` returns.
- * 
+ * A major effort has been put into making `mcp` robust and agile to develop. `mcp` now use defensive programming with helpful error messages. The Test suite includes 3600+ tests.
 
 
 ## Bug fixes
@@ -47,7 +46,7 @@
  * Sigma is now forced to stay positive via a floor at 0.
  * Fixed: support and require dplyr 1.0.0. Now also requires tidybayes 2.0.3.
  * Fixed: Parallel sampling sometimes produced identical chains.
- * Fixed several small bugs and added many more helpful error messages.
+ * Fixed several small bugs
 
 
 # mcp 0.2.0

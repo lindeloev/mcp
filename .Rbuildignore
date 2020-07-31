@@ -8,9 +8,9 @@
 
 # Folders
 docs
-man/figures
-vignettes
-pkgdown
+^man/figures
+^vignettes$
+^pkgdown$
 ^data-raw$
 ^revdep$
 

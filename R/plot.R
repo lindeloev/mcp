@@ -1,3 +1,6 @@
+# ABOUT: These are functions directly related to plotting
+# ----------------
+
 #' Plot full fits
 #'
 #' Plot prior or posterior model draws on top of data. Use `plot_pars` to
@@ -9,8 +12,7 @@
 #' @param facet_by String. Name of a varying group.
 #' @param lines Positive integer or `FALSE`. Number of lines (posterior
 #'   draws). FALSE or `lines = 0` plots no lines. Note that lines always plot
-#'   fitted values - not predicted. For prediction intervals, see the
-#'   `q_predict` argument.
+#'   fitted values - not predicted. For prediction intervals, see the `q_predict` argument.
 #' @param geom_data String. One of "point" (default), "line" (good for time-series),
 #'   or FALSE (don not plot).
 #' @param cp_dens TRUE/FALSE. Plot posterior densities of the change point(s)?
@@ -36,9 +38,9 @@
 #' @importFrom dplyr .data
 #' @export
 #' @examples
-#' \donttest{
 #' # Typical usage. ex_fit is an mcpfit object.
 #' plot(ex_fit)
+#' \donttest{
 #' plot(ex_fit, prior = TRUE)  # The prior
 #'
 #' plot(ex_fit, lines = 0, q_fit = TRUE)  # 95% HDI without lines
@@ -71,12 +73,10 @@ plot.mcpfit = function(x,
   # Just for consistent naming in mcp
   fit = x
 
-  # Check arguments
-  # The following are checked in pp_eval: q_fit, q_predict, rate
+  ########################
+  # ASSERTS AND RECODING #
+  ########################
   assert_mcpfit(fit)
-
-  if (!coda::is.mcmc.list(fit$mcmc_post) & !coda::is.mcmc.list(fit$mcmc_prior))
-    stop("Cannot plot an mcpfit without prior or posterior samples.")
 
   if (lines != FALSE) {
     assert_integer(lines, lower = 1)
@@ -87,44 +87,37 @@ plot.mcpfit = function(x,
   assert_value(geom_data, allowed = c("point", "line", FALSE))
   assert_logical(cp_dens)
 
-  if (is.logical(q_fit) && all(q_fit == TRUE))
+  # Quantiles
+  assert_types(q_fit, "logical", "numeric")
+  assert_types(q_predict, "logical", "numeric")
+  if (all(q_fit == TRUE))
     q_fit = c(0.025, 0.975)
-
-  if (is.logical(q_predict) && all(q_predict == TRUE))
+  if (all(q_predict == TRUE))
     q_predict = c(0.025, 0.975)
-
-  if (!is.logical(q_fit) & !is.numeric(q_fit))
-    stop("`q_fit` has to be TRUE, FALSE, or a vector of numbers.")
-
-  if (is.numeric(q_fit) & (any(q_fit > 1) | any(q_fit < 0)))
-    stop("All `q_fit` have to be between 0 (0%) and 1 (100%).")
-
-  if (!is.logical(q_predict) & !is.numeric(q_predict))
-    stop("`q_predict` has to be TRUE, FALSE, or a vector of numbers.")
-
-  if (is.numeric(q_predict) & (any(q_predict > 1) | any(q_predict < 0)))
-    stop("All `q_predict` have to be between 0 (0%) and 1 (100%).")
+  if (is.numeric(q_fit))
+    assert_numeric(q_fit, lower = 0, upper = 1)
+  if (is.numeric(q_predict))
+    assert_numeric(q_predict, lower = 0, upper = 1)
 
   if (!is.null(nsamples)) {
     assert_integer(nsamples, lower = 1)
-    if (lines != FALSE & nsamples < lines)
+    if (lines != FALSE && nsamples < lines)
       stop("`lines` must be less than or equal to `nsamples`.")
   }
-
-  # No need for more samples if they are only used to draw lines.
-  if (all(q_fit == FALSE) & all(q_predict == FALSE))
+  if (all(q_fit == FALSE) && all(q_predict == FALSE))
+    # No need for more samples if they are only used to draw lines.
     nsamples = lines
 
   # Is facet_by a random/nested effect?
+  assert_types(facet_by, "null", "character")
   if (!is.null(facet_by)) {
-    if (is.character(facet_by)) {
-      varying_groups = logical0_to_null(unique(stats::na.omit(fit$.other$ST$cp_group_col)))
-      if (!facet_by %in% varying_groups)
-        stop("`facet_by` must be a data column and modeled as a varying effect.")
-    } else {
-      stop("`facet_by` must be a character string. Got ", class(facet_by), ".")
-    }
+    varying_groups = logical0_to_null(unique(stats::na.omit(fit$.other$ST$cp_group_col)))
+    if (!(facet_by %in% varying_groups))
+      stop("`facet_by` must be a data column and modeled as a varying effect.")
   }
+
+  if (!coda::is.mcmc.list(fit$mcmc_post) && !coda::is.mcmc.list(fit$mcmc_prior))
+    stop("Cannot plot an mcpfit without prior or posterior samples.")
 
   # Useful vars
   xvar = rlang::sym(fit$pars$x)
@@ -138,7 +131,7 @@ plot.mcpfit = function(x,
   newdata = tibble::tibble(!!xvar := get_eval_at(fit, facet_by))
 
   if (is.null(facet_by) == TRUE) {
-    varying_pars = NULL
+    varying_pars = FALSE
     if (is_arma)
       newdata$.ydata = fit$data[, fit$pars$y]
   } else {
@@ -154,8 +147,7 @@ plot.mcpfit = function(x,
 
   if (fit$family$family == "binomial") {
     # Interpolate trials for binomial at all xvar to make sure that there are actually values to plot
-    newdata[, fit$pars$trials] = stats::approx(x = fit$data[, fit$pars$x], y = fit$data[, fit$pars$trials], xout = dplyr::pull(newdata, xvar))$y %>%
-      suppressWarnings() %>%
+    newdata[, fit$pars$trials] = suppressWarnings(stats::approx(x = fit$data[, fit$pars$x], y = fit$data[, fit$pars$trials], xout = dplyr::pull(newdata, xvar))$y) %>%
       round()  # Only integers
   }
 
@@ -191,7 +183,7 @@ plot.mcpfit = function(x,
   ydata = fit$data[, fit$pars$y]  # Convenient shortname
 
   # If this is a binomial rate, divide by the number of trials
-  if (fit$family$family == "binomial" & rate == TRUE)
+  if (fit$family$family == "binomial" && rate == TRUE)
     ydata = ydata / fit$data[, fit$pars$trials]
 
   # Show data
@@ -241,11 +233,11 @@ plot.mcpfit = function(x,
   }
 
   # Add change point densities?
-  if (cp_dens == TRUE & length(fit$model) > 1) {
+  if (cp_dens == TRUE && length(fit$model) > 1) {
 
     # The scale of the actual plot (or something close enough)
     # This is faster than limits_y = ggplot2::ggplot_build(gg)$layout$panel_params[[1]]$y.range
-    if (which_y == "ct" & geom_data != FALSE) {
+    if (which_y == "ct" && geom_data != FALSE) {
       limits_y = c(min(fit$data[, fit$pars$y]),
                    max(fit$data[, fit$pars$y]))
     } else if (any(q_predict != FALSE)) {
@@ -266,15 +258,14 @@ plot.mcpfit = function(x,
   }
 
   # Add faceting?
-  if (!is.null(facet_by)) {
+  if (!is.null(facet_by))
     gg = gg + facet_wrap(paste0("~", facet_by))
-  }
 
   # Add better y-labels
   if (scale == "linear")
     gg = gg + ggplot2::labs(y = paste0(fit$family$link_r, "(", fit$pars$y, ")"))
-  if (fit$family$family == "bernoulli" | (fit$family$family == "binomial" & rate == TRUE))
-    gg = gg + ggplot2::labs(y = paste0("Probability of success for ", fit$pars$y))
+  if (scale == "response" && (fit$family$family == "bernoulli" || (fit$family$family == "binomial" && rate == TRUE)))
+    gg = gg + ggplot2::labs(y = paste0("P(", fit$pars$y, " = TRUE)"))
   if (which_y != "ct")
     gg = gg + ggplot2::labs(y = which_y)
 
@@ -289,7 +280,7 @@ plot.mcpfit = function(x,
 #' @aliases geom_cp_density
 #' @keywords internal
 #' @param fit An `mcpfit` object
-#' @param facet_by `NULL` or a a string, like `plot.mcpfit(..., facet_by = "id")`.
+#' @param facet_by `NULL` or a a string, like `plot.mcpfit(..., facet_by = "id").`
 #' @param include Boolean. If `TRUE` and `!is.null(facet_by)`, only return
 #'   densities for the change points "affected" by `facet_by`. If `FALSE` and `!is.null(facet_by)`,
 #'   return all densities except those "affected" by `facet_by`. Has no effect if `is.null(facet_by)`
@@ -301,7 +292,7 @@ geom_cp_density = function(fit, facet_by, limits_y) {
   # Get varying and population change point parameter names
   if (!is.null(facet_by)) {
     cp_matches_facet = fit$.other$ST$cp_group_col == facet_by  # Varies by this column
-    cp_not_facet = !cp_matches_facet | is.na(cp_matches_facet)
+    cp_not_facet = cp_matches_facet == FALSE | is.na(cp_matches_facet)
     varying = stats::na.omit(fit$.other$ST$cp_group[cp_matches_facet])  # The rest
     population = stats::na.omit(fit$.other$ST$cp_name[cp_not_facet][-1])  # [-1] to remove cp_0
   } else {
@@ -432,19 +423,19 @@ plot_pars = function(fit,
   # Check arguments
   assert_mcpfit(fit)
 
-  if (!coda::is.mcmc.list(fit$mcmc_post) & !coda::is.mcmc.list(fit$mcmc_prior))
+  if (!coda::is.mcmc.list(fit$mcmc_post) && !coda::is.mcmc.list(fit$mcmc_prior))
     stop("Cannot plot an mcpfit without prior or posterior samples.")
 
-  if (!is.character(pars) | !is.character(regex_pars))
+  if (!is.character(pars) || !is.character(regex_pars))
     stop("`pars` and `regex_pars` has to be string/character.")
 
-  if (any(c("population", "varying") %in% pars) & length(pars ) > 1)
+  if (any(c("population", "varying") %in% pars) && length(pars ) > 1)
     stop("`pars` cannot be a vector that contains multiple elements AND 'population' or 'varying'.")
 
-  if (any(c("hex", "scatter") %in% type) & (length(pars) != 2 | length(regex_pars) > 0))
+  if (any(c("hex", "scatter") %in% type) && (length(pars) != 2 || length(regex_pars) > 0))
     stop("`type` = 'hex' or 'scatter' takes exactly two parameters which must be provided via the `pars` argument")
 
-  if ("combo" %in% type & length(type) > 1)
+  if ("combo" %in% type && length(type) > 1)
     stop("'combo' type cannot be combined with other types. Replace 'combo' with the types you want combo\'ed")
 
   assert_integer(ncol, lower = 1)
@@ -532,7 +523,7 @@ get_eval_at = function(fit, facet_by) {
 
   # Just give up for faceting and prior-plots (usually very distributed change points)
   # and return a reasonable resolution
-  if (!is.null(facet_by) | is.null(fit$mcmc_post)) {
+  if (!is.null(facet_by) || is.null(fit$mcmc_post)) {
     eval_at = seq(xmin, xmax, length.out = X_RESOLUTION_FACET)
     return(eval_at)
   }
@@ -566,7 +557,7 @@ get_eval_at = function(fit, facet_by) {
 #' @inheritParams pp_eval
 #' @param type One of `bayesplot::available_ppc("grouped", invert = TRUE) %>% stringr::str_remove("ppc_")`
 #' @param facet_by Name of a column in data modeled as varying effect(s).
-#' @param nsamples Number of draws. Note that for summary geoms you may want to use all data,
+#' @param nsamples Number of draws. Note that you may want to use all data for summary geoms.
 #'   e.g., `pp_check(fit, type = "ribbon", nsamples = NULL)`.
 #' @param ... Further arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
 #' @return A `ggplot2` object for single plots. Enriched by `patchwork` for faceted plots.
@@ -578,7 +569,7 @@ get_eval_at = function(fit, facet_by) {
 #' \donttest{
 #' pp_check(ex_fit)
 #' pp_check(ex_fit, type = "ecdf_overlay")
-#' pp_check(another_fit, type = "loo_intervals", facet_by = "id")
+#' #pp_check(some_varying_fit, type = "loo_intervals", facet_by = "id")
 #' }
 #'
 pp_check = function(
@@ -594,6 +585,12 @@ pp_check = function(
 ) {
   # Internal mcp naming convention
   fit = object
+  assert_mcpfit(fit)
+  assert_types(facet_by, "null", "character")
+  assert_logical(prior)
+  assert_types(varying, "logical", "character")
+  assert_logical(arma)
+  assert_integer(nsamples, lower = 1)
 
   # Check and recode inputs
   if (!is.null(facet_by))
@@ -604,6 +601,7 @@ pp_check = function(
     y = as.numeric(fit$data[, fit$pars$y])  # strip simulated data of attributes
     varying_data = fit$data[, facet_by]
   } else {
+    assert_types(newdata, "data.frame", "tibble")
     y = as.numeric(newdata[, fit$pars$y])  # strip simulated data of attributes
     varying_data = newdata[, facet_by]
   }

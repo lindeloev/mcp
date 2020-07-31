@@ -1,9 +1,11 @@
 # mcp 0.3
 
 ## Notes for the reviewer
- * This release adds support for `dplyr` 1.0+ and other packages which caused the prior `mcp` to be taken down from CRAN. Sorry it took so long.
+ * This release adds support for `dplyr` 1.0+ and other newer packages which caused the prior `mcp` to be taken down from CRAN. Sorry it took so long.
  
- * Please see "Expected NOTEs and ERRORs" in the bottom of this document.
+ * `rhub` currently have issues with utf8 resulting in the error `Error in loadNamespace(name) : there is no package called 'utf8'`. See https://github.com/r-hub/rhub/issues/374. This has nothing to do with `mcp`.
+ 
+ * Please see unpreventable "Expected NOTEs and ERRORs" in the bottom of this document.
 
 ## Test environments
 * local Windows 10, R 3.6.1
@@ -21,7 +23,6 @@ There were no ERRORs, WARNINGs, or NOTEs.
 # Resubmission 3
 
  * Deleted call to `options(mc.cores = 3)`.
- 
  * See the section "Expected NOTEs and ERRORs" below for anticipated ERRORs and NOTEs.
  
 
@@ -29,7 +30,6 @@ There were no ERRORs, WARNINGs, or NOTEs.
 # Resubmission 2
 
  * Fixed grammatical error in DESCRIPTION.
- 
  * mcp now spawns at most 2 cores on CRAN.
 
 
@@ -38,17 +38,11 @@ There were no ERRORs, WARNINGs, or NOTEs.
 This is a resubmission. I believe I have solved all the points raised in the initial review. All tests pass. In this version I have:
 
 * Added single quotes around 'mcp' in DESCRIPTION.
-
 * Added literature to DESCRIPTION with the theoretical foundation for the computations done in mcp.
-
 * mcp no longer copies code from other packages so no attribution/ctb is required.
-
 * `print()` and `cat()` now only reside within `print()` and `summary()` functions.
-
 * All functions have a \value specified now. This has led me to do many other improvements in the documentation too.
-
 * All examples run now. Some have been enclosed in \donttest() to reduce runtimes.
-
 * I have taken the liberty to add a few API-breaking updates to `mcp` in this resubmission, so that the API is as stable as possible from the initial CRAN release. These are: (1) changed plotting of time-series, (2) the function name to simulate data, and (3) changed the `summary()` output for simulated data.
 
 
@@ -80,8 +74,4 @@ This is the first submission so there are no downstream dependencies.
 
 * INSTALL ERROR: `mcp` uses JAGS (an external binary) for sampling through the `rjags` package. rjags will fail to install without JAGS on the system. This happens when I run `devtools::check_win_release()` and `check_win_devel()`. Travis install JAGS prior to installing packages, and all tests pass. They do too on my Windows PC. Automatic installation for Mac and OSX is set up in the .travis.yml (https://github.com/lindeloev/mcp/blob/master/.travis.yml). Windows binaries for JAGS are here: https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/
 
-* TEST ERROR: One or two of the 1500+ unit tests fail around one in ten times with an error like "loo... tails... missing value where TRUE/FALSE needed". This is an artefact of quick unit testing (few MCMC iterations) and the end user will not experience this.
-
 * DESCRIPTION NOTE: rhub says that the DESCRIPTION DOIs return a HTTP 403 error (forbidden). But the DOI work just fine, e.g., http://doi.org/10.2307/2986119.
-
-* The examples and vignettes call `options(mc.cores = 3)` since this is highly recommended in practice, but the number of cores will be capped at two cores on CRAN (if `Sys.getenv("_R_CHECK_LIMIT_CORES_") == "TRUE"`).
