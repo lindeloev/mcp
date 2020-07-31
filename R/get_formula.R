@@ -272,7 +272,7 @@ function(",
                args_if_exists(pars$sigma),
                args_if_exists(pars$arma),
                args_if_exists(pars$varying, " = 0"),
-               ifelse(is_arma, paste0("\n    ", pars$y, " = NULL, \n    .ydata = NULL, "), ""), "
+               ifelse(is_arma, paste0("\n  ", pars$y, " = NULL, \n  .ydata = NULL, "), ""), "
   type = 'predict',
   quantile = FALSE,
   rate = FALSE,
@@ -458,52 +458,49 @@ get_ar_code = function(ar_order, family, is_R, xvar, yvar = NA) {
   if (is_R) {
     # mm is the code string to be populated below
     mm = paste0("
-      if (arma == TRUE) {
-        if(!is.null(.ydata)) ", yvar, " = .ydata  # Hack to get a consistent argument name
-        ar0_ = sigma_[1:", ar_order, "] * 0 + 1
+    # Hack to make simulate() callable with a fixed yvar name. Used internally in mcp.
+    if(!is.null(.ydata))
+      ", yvar, " = .ydata
+    ")
 
-        # If got y. Use it to compute residuals
-        if (!all(is.na(", yvar, "))) {
-          if (!is.numeric(", yvar, "))
-            stop(\"Wrong format of ", yvar, ". Should be numeric.\")
-          resid_sigma_ = ", yvar, " - y_
-        } else {
-          # No y, simulate residuals
-          message('Generating residuals for AR(N) model since the response column/argument \\'", yvar, "\\' was not provided.')
-          resid_sigma_ = rnorm(length(", xvar, "), 0, sigma_)
-        }
-
-        # This for-loop is slow, but base::Reduce and purrr::accumulate are even slower.
-        resid_ = numeric(length(", xvar, "))")
+# For simulated ydata:
+mm = paste0(mm, "
+    # resid_ is the observed residual from y_
+    # resid_ is split into the innovation and AR() part. So resid_ = resid_arma_ + resid_sigma_
+    # The for-loops are slow, but base::Reduce and purrr::accumulate are even slower.
+    if (all(is.null(", yvar, "))) {
+      message(\"Generating residuals for AR(N) model since the response column/argument '", yvar, "' was not provided.\")
+      ar0_ = sigma_[1:", ar_order, "] * 0 + 1
+      resid_sigma_ = rnorm(length(", xvar, "), 0, sigma_)
+      resid_abs_ = numeric(length(", xvar, "))")
 
     # For data points lower than the full order
     for (i in seq_len(ar_order)) {
-      mm = paste0(mm, "\n      resid_[", i, "] = ",
+      mm = paste0(mm, "\n      resid_abs_[", i, "] = ",
                   paste0("ar", 0:(i-1), "_[", i, " - ", 0:(i-1), "] * resid_sigma_[", i, " - ", 0:(i-1), "]", collapse = " + "))
     }
 
-    # For full order
     mm = paste0(mm, "
-        for (i_ in ", ar_order + 1, ":length(", xvar, ")) {
-          if (all(is.na(", yvar, "))) {
+      for (i_ in ", ar_order + 1, ":length(", xvar, "))
+        resid_abs_[i_] = resid_sigma_[i_] + ", paste0("ar", seq_len(ar_order), "_[i_] * resid_abs_[i_ - ", seq_len(ar_order), "]", collapse = " + "), "
+      ")
 
-            resid_[i_] = resid_sigma_[i_]")
-    for (i in seq_len(ar_order)) {
-      mm = paste0(mm, " + ar", i, "_[i_] * resid_[i_ - ", i, "]")
-    }
+    # For given ydata:
     mm = paste0(mm, "
-          } else {
-            resid_[i_] = ")
-    for (i in seq_len(ar_order)) {
-      mm = paste0(mm, " + ar", i, "_[i_] * resid_sigma_[i_ - ", i, "]")
+
+      resid_arma_ = resid_abs_ - resid_sigma_
+    } else {
+      # Got ydata.
+      mcp:::assert_numeric(", yvar, ")
+      resid_abs_ = ", yvar, " - y_
+      resid_arma_ = numeric(length(", xvar, "))
+      resid_arma_ = ", paste0("ar", seq_len(ar_order), "_ * dplyr::lag(resid_abs_, ", seq_len(ar_order), ")", collapse = " + "), "
+      resid_arma_[seq_len(", ar_order, ")] = 0  # replace NA
+      resid_sigma_ = resid_abs_ - resid_arma_
     }
 
-    mm = paste0(mm, "
-          }
-        }
-        resid_arma_ = resid_ - resid_sigma_
-        y_ = y_ + resid_arma_
-      }")
+    y_ = y_ + resid_arma_
+    ")
   } else {
 
 
@@ -513,22 +510,22 @@ get_ar_code = function(ar_order, family, is_R, xvar, yvar = NA) {
     # For data points lower than the full order
     mm = paste0(mm, "
   # Apply autoregression to the residuals
-  resid_[1] = 0")
+  resid_arma_[1] = 0")
 
     # For data points lower than the full order
     if (ar_order >= 2) {
       for (i in 2:ar_order) {
         mm = paste0(mm, "
-  resid_[", i, "] = ", paste0("ar", 1:(i-1), "_[", i, " - ", 1:(i-1), "] * resid_sigma_[", i, " - ", 1:(i-1), "]", collapse = " +\n              "))
+  resid_arma_[", i, "] = ", paste0("ar", 1:(i-1), "_[", i, " - ", 1:(i-1), "] * resid_abs_[", i, " - ", 1:(i-1), "]", collapse = " +\n              "))
       }
     }
 
     # For full order
     mm = paste0(mm, "
   for (i_ in ", ar_order + 1, ":length(", xvar, ")) {
-    resid_[i_] = 0")
+    resid_arma_[i_] = 0")
     for (i in seq_len(ar_order)) {
-      mm = paste0(mm, " + \n      ar", i, "_[i_] * resid_sigma_[i_ - ", i, "]")
+      mm = paste0(mm, " + \n      ar", i, "_[i_] * resid_abs_[i_ - ", i, "]")
     }
 
     # Finish up

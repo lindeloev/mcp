@@ -606,9 +606,6 @@ pp_eval = function(
   ########################
   # ASSERTS AND RECODING #
   ########################
-  if (is_arma == TRUE && arma == TRUE && !is.null(newdata) && nrow(newdata) > 10 && is.null(nsamples))
-    message("Computing fitted and predicted values with AR(N) is slow. Consider setting `nsamples` to a lower value or set `arma = FALSE`.")
-
   assert_logical(summary)
   assert_value(type, allowed = c("fitted", "predict", "residuals"))
   assert_types(probs, "logical", "numeric")

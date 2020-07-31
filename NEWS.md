@@ -39,6 +39,7 @@
  * Removed the implicit ceiling of 1000 lines and samples in `plot.mcpfit()`.
  * Rownames are removed from `ranef()` and `fixef()` returns.
  * A major effort has been put into making `mcp` robust and agile to develop. `mcp` now use defensive programming with helpful error messages. The Test suite includes 3600+ tests.
+ * `plot()`, `predict()`, etc. are now considerably faster for AR(N) due to vectorization of the underlying code. 
 
 
 ## Bug fixes
