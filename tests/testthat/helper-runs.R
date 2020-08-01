@@ -286,8 +286,15 @@ test_pp_eval = function(fit) {
 
   if (inherits(pp_default, "try-error")) {
     error_message = attr(pp_default, "condition")$message
-    expected_error_poisson = "Problem with \`mutate\\(\\)\` input"  # OK: a side-effect of the small data and short sampling.
-    testthat::expect_true(fit$family$family != "poisson" || stringr::str_starts(error_message, expected_error_poisson))  # Only test message for poisson
+
+    # Expecected error for Poisson
+    if (fit$family$family == "poisson") {
+      expected_error_poisson = "Problem with \`mutate\\(\\)\` input"  # OK: a side-effect of the small data and short sampling.
+      testthat::expect_true(stringr::str_starts(error_message, expected_error_poisson))  # Only test message for poisson
+    } else {
+      # Fail otherwise
+      testthat::expect_true(error_message)
+    }
   } else {
     testthat::expect_true(ggplot2::is.ggplot(pp_default))
   }
