@@ -2,21 +2,21 @@
   "index_name": "lindeloev_mcp",
   "start_urls": [
     {
-      "url": "https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/index.html",
+      "url": "https://lindeloev.github.io/mcp/index.html",
       "selectors_key": "homepage",
       "tags": [
         "homepage"
       ]
     },
     {
-      "url": "https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference",
+      "url": "https://lindeloev.github.io/mcp/reference",
       "selectors_key": "reference",
       "tags": [
         "reference"
       ]
     },
     {
-      "url": "https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles",
+      "url": "https://lindeloev.github.io/mcp/articles",
       "selectors_key": "articles",
       "tags": [
         "articles"
@@ -30,7 +30,7 @@
     "/articles/index.html"
   ],
   "sitemap_urls": [
-    "https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/sitemap.xml"
+    "https://lindeloev.github.io/mcp/sitemap.xml"
   ],
   "selectors": {
     "homepage": {
@@ -74,7 +74,7 @@
         "selector": ".contents h2, .contents h3",
         "default_value": "Context"
       },
-      "text": ".contents p, .contents li, .tempate-article .contents .pre"
+      "text": ".contents p, .contents li"
     }
   },
   "selectors_exclude": [

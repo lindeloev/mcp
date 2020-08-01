@@ -9,9 +9,9 @@
 
 ## Test environments
 * local Windows 10, R 3.6.1
-* Ubuntu 16.04.6 LTS (on travis-ci): release
-* Ubuntu 16.04.6 LTS (on travis-ci): devel
-* Mac OS X 10.13.3 (on travis-ci): release
+* Ubuntu 18.04 (on travis-ci): release
+* Ubuntu 18.04 (on travis-ci): devel
+* Mac OS X 10.13.6 (on travis-ci): release
 
 ## R CMD check results
 There were no ERRORs, WARNINGs, or NOTEs.
