@@ -533,7 +533,7 @@ tidy_samples = function(
 #'   * `"sigma"`: The variance
 #'   * `"ar1"`, `"ar2"`, etc. depending on which order of the autoregressive
 #'     effects you want to plot.
-#' @param arma TRUE or FALSE.
+#' @param arma Whether to include autoregressive effects.
 #'   * `TRUE:` Compute autoregressive residuals. Requires the response variable in `newdata`.
 #'   * `FALSE:` Disregard the autoregressive effects. For `family = gaussian()`, `predict()` just use `sigma` for residuals.
 #' @param nsamples Integer or `NULL`. Number of samples to return/summarise.
@@ -642,8 +642,6 @@ pp_eval = function(
         required_cols = c(required_cols, fit$pars$y)
       } else if (".ydata" %in% colnames(newdata)) {
         required_cols = c(required_cols, ".ydata")
-      } else {
-        stop("When `arma = TRUE`, `newdata` must include the response column. I.e., '", fit$pars$y, "' for this model or the equivalent '.ydata')")
       }
     }
 

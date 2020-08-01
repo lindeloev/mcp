@@ -11,7 +11,7 @@ theme_it = function(x, title) {
 }
 
 save_it = function(filename) {
-  ggplot2::ggsave(paste0("./man/figures/", filename), width=6, height=3, dpi = 100, type = "cairo")
+  ggplot2::ggsave(paste0("./vignettes/figures/", filename), width=6, height=3, dpi = 100, type = "cairo")
 }
 
 

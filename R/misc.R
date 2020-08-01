@@ -142,7 +142,7 @@ get_arma_order = function(pars_arma) {
 release_questions = function() {
   c(
     "Have you run the test of fits? options(test_mcp_fits = TRUE)",
-    "Have you built the README plots and checked them? source('man/figures/make_README_plots.R')",
+    "Have you built the README plots and checked them? source('vignettes/figures/make_README_plots.R')",
     "Have you re-built the site using pkgdown::build_site() AFTER deleting caches of articles?",
     "Have you checked all articles and plots after re-building the site?",
     "Have you run the script to insert the correct logo.png in the HTML meta?"
