@@ -1,207 +1,258 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/index.html</loc>
+    <loc>https://lindeloev.github.io/mcp/index.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/bernoulli.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/bernoulli.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/check_integer.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/check_terms_in_data.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/check_terms_in_data.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/criterion.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/criterion.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/cumpaste.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/cumpaste.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/exponential.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_ar.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/ex_ar.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_binomial.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/ex_binomial.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_demo.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/ex_demo.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_fit.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/ex_fit.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_plateaus.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/ex_plateaus.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_quadratic.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/ex_quadratic.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_rel_prior.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/ex_rel_prior.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_trig.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/ex_trig.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_variance.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/ex_variance.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ex_varying.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/ex_varying.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/format_code.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/fitted.mcpfit.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/geom_quantiles.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/format_code.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_all_formulas.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/geom_cp_density.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_arma_order.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/geom_quantiles.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_ar_code.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_all_formulas.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_density.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_arma_order.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_eval_at.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_ar_code.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_family.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_density.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_formula_str.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_eval_at.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_jagscode.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_formula_str.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_jags_data.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_jagscode.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_prior.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_jags_data.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_prior_str.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_ppc_plot.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_samples.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_prior.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_segment_table.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_prior_str.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_simulate.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_quantiles.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_summary.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_segment_table.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/get_term_content.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_simulate.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/hypothesis.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_summary.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/ilogit.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/get_term_content.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/logical0_to_null.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/hypothesis.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/logit.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/ilogit.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/mcp-package.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/iprobit.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/mcp.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/is.mcpfit.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/mcpfit-class.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/logit.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/plot.mcpfit.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/mcmclist_samples.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/plot_pars.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/mcp-package.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/print.mcpprior.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/mcp.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/recover_levels.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/mcpfit-class.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/remove_terms.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/mcp_family.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/run_jags.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/plot.mcpfit.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/sd_to_prec.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/plot_pars.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/summary.mcpfit.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/pp_check.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_arma.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/pp_eval.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_cp.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/predict.mcpfit.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_int.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/print.mcpprior.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_rhs.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/probit.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_slope.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/recover_levels.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_slope_term.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/remove_terms.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_tildes.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/residuals.mcpfit.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_varying_term.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/run_jags.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/reference/unpack_y.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/sd_to_prec.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/arma.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/summary.mcpfit.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/binomial.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/tidy_samples.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/comparison.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/tidy_to_matrix.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/formulas.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/to_formula.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/packages.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/unpack_arma.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/poisson.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/unpack_cp.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/priors.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/unpack_int.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/tips.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/unpack_rhs.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/variance.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/unpack_slope.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp, https://github.com/lindeloev/mcp/articles/varying.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/unpack_slope_term.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/reference/unpack_tildes.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/reference/unpack_varying.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/reference/unpack_varying_term.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/reference/unpack_y.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/reference/with_loo.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/articles/arma.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/articles/binomial.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/articles/comparison.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/articles/families.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/articles/formulas.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/articles/packages.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/articles/poisson.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/articles/predict.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/articles/priors.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/articles/tips.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/articles/variance.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/articles/varying.html</loc>
   </url>
 </urlset>
