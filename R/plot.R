@@ -119,6 +119,9 @@ plot.mcpfit = function(x,
   if (!coda::is.mcmc.list(fit$mcmc_post) && !coda::is.mcmc.list(fit$mcmc_prior))
     stop("Cannot plot an mcpfit without prior or posterior samples.")
 
+  if (scale == "linear" && rate == FALSE)
+    message("Known bug: the data points are plotted incorrectly when scale = 'linear' and rate = FALSE.")
+
   # Useful vars
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)

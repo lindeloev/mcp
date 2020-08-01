@@ -156,11 +156,11 @@
 #' )
 #'
 #' fit3 = mcp(model, data = ex_demo, prior = prior)
-#' }
 #'
 #' # Show the JAGS model
 #' cat(ex_fit$jags_code)
-
+#' }
+#'
 mcp = function(model,
                data = NULL,
                prior = list(),
