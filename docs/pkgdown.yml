@@ -14,7 +14,11 @@ articles:
   tips: tips.html
   variance: variance.html
   varying: varying.html
+<<<<<<< HEAD
 last_built: 2020-08-01T22:22Z
+=======
+last_built: 2020-08-01T22:08Z
+>>>>>>> 7ba863882bd16fa222acbe540a9874aef4629bcf
 urls:
   reference: https://lindeloev.github.io/mcp/reference
   article: https://lindeloev.github.io/mcp/articles
