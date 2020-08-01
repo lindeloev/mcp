@@ -6,7 +6,11 @@ template:
       api_key: 702ab134d40a7310606c29f341fc5014
       index_name: lindeloev_mcp
   opengraph:
-    img: https://github.com/lindeloev/mcp/raw/master/logo.png  # For Twitter card
+    image:
+        src: https://github.com/lindeloev/mcp/raw/master/man/figures/logo.png  # For Twitter card
+    twitter:
+        creator: "@jonaslindeloev"
+        card: summary_large_image
 
 
 # Writes sitemap etc.
@@ -24,9 +28,13 @@ reference:
       - mcp
       - plot.mcpfit
       - plot_pars
+      - pp_check
       - summary.mcpfit
       - ranef
       - fixef
+      - fitted
+      - predict
+      - residuals
       - loo
       - waic
       - hypothesis
@@ -37,6 +45,9 @@ reference:
       - sd_to_prec
       - logit
       - ilogit
+      - probit
+      - iprobit
+      - is.mcpfit
 
   - title: Families
     desc: Distributional families that are not available in base R.
@@ -79,6 +90,8 @@ navbar:
         href: articles/variance.html
       - text: Time series and autocorrelation
         href: articles/arma.html
+      - text: Fits and predictions
+        href: articles/predict.html
     - text: GLM
       menu:
       - text: Supported families and link functions
