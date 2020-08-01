@@ -2,7 +2,7 @@
 
 ## New features:
 
- * Get fits and predictions for in-sample and out-of-sample data: 
+ * Get fits and predictions for in-sample and out-of-sample data. [Read more in the article on these functions](https://lindeloev.github.io/mcp/articles/predict.html).
    - Use `predict(fit)` to get predicted values and quantiles. 
    - Use `fitted(fit)` to get estimated values and quantiles. 
    - Use `residuals(fit)` to get residuals and quantiles.
