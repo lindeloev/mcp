@@ -5,10 +5,16 @@
 \alias{geom_quantiles}
 \title{Return a geom_line representing the quantiles}
 \usage{
-geom_quantiles(samples, q, xvar, facet_by, ...)
+geom_quantiles(samples, quantiles, xvar, yvar, facet_by, ...)
 }
 \arguments{
-\item{q}{Quantiles}
+\item{samples}{A tidybayes tibble}
+
+\item{quantiles}{Vector of quantiles (0.0 to 1.0)}
+
+\item{xvar}{An rlang::sym() with the name of the x-col in \code{samples}}
+
+\item{yvar}{An rlang::sym() with the name of the response col in \code{samples}}
 
 \item{facet_by}{String. Name of a varying group.}
 

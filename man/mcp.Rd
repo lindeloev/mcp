@@ -83,7 +83,8 @@ prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
 
 \item{cores}{Positive integer or "all". Number of cores.
 \itemize{
-\item \code{1}: serial sampling
+\item \code{1}: serial sampling (Default). \code{options(mc.cores = 3)} will dominate \code{cores = 1}
+but not larger values of \code{cores}.
 \item \verb{>1}: parallel sampling on this number of cores. Ideally set \code{chains}
 to the same value. Note: \code{cores > 1} takes a few extra seconds the first
 time it's called but subsequent calls will start sampling immediately.
@@ -150,26 +151,29 @@ model = list(
 # Fit it. The `ex_demo` dataset is included in mcp. Sample the prior too.
 # options(mc.cores = 3)  # Uncomment to speed up sampling
 ex_fit = mcp(model, data = ex_demo, sample = "both")
-}
 
 # See parameter estimates
 summary(ex_fit)
 
 # Visual inspection of the results
-plot(ex_fit)
-plot_pars(ex_fit)
+plot(ex_fit)  # Visualization of model fit/predictions
+plot_pars(ex_fit)  # Parameter distributions
+pp_check(ex_fit)  # Prior/Posterior predictive checks
 
 # Test a hypothesis
 hypothesis(ex_fit, "cp_1 > 10")
 
-\donttest{
+# Make predictions
+fitted(ex_fit)
+predict(ex_fit)
+predict(ex_fit, newdata = data.frame(time = c(55.545, 80, 132)))
+
 # Compare to a one-intercept-only model (no change points) with default prior
 model_null = list(response ~ 1)
 fit_null = mcp(model_null, data = ex_demo, par_x = "time")  # fit another model here
 ex_fit$loo = loo(ex_fit)
 fit_null$loo = loo(fit_null)
 loo::loo_compare(ex_fit$loo, fit_null$loo)
-}
 
 # Inspect the prior. Useful for prior predictive checks.
 summary(ex_fit, prior = TRUE)
@@ -186,15 +190,15 @@ prior = list(
   int_3 = "int_1"           # Shared intercept between segment 1 and 3
 )
 
-\donttest{
 fit3 = mcp(model, data = ex_demo, prior = prior)
-}
 
 # Show the JAGS model
 cat(ex_fit$jags_code)
 }
+
+}
 \seealso{
-\link{get_segment_table}
+\code{\link{get_segment_table}}
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

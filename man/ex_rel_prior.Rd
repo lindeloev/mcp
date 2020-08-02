@@ -4,11 +4,13 @@
 \name{ex_rel_prior}
 \alias{ex_rel_prior}
 \title{Two change points between three linear segments}
-\format{A data frame with 100 rows and 2 variables:
+\format{
+A data frame with 100 rows and 2 variables:
 \describe{
 \item{x}{The x-axis.}
 \item{y}{The y-axis.}
-}}
+}
+}
 \usage{
 ex_rel_prior
 }

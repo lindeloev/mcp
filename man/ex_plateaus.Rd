@@ -4,11 +4,13 @@
 \name{ex_plateaus}
 \alias{ex_plateaus}
 \title{A change point between two plateaus}
-\format{A data frame with 100 rows and 2 variables:
+\format{
+A data frame with 100 rows and 2 variables:
 \describe{
 \item{x}{The x-axis.}
 \item{y}{The y-axis.}
-}}
+}
+}
 \usage{
 ex_plateaus
 }

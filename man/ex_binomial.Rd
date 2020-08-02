@@ -4,12 +4,14 @@
 \name{ex_binomial}
 \alias{ex_binomial}
 \title{Two change points between three binomial segments}
-\format{A data frame with 100 rows and 3 variables:
+\format{
+A data frame with 100 rows and 3 variables:
 \describe{
 \item{x}{The x-axis.}
 \item{y}{The y-axis.}
 \item{N}{The number of trials for for \code{y}.}
-}}
+}
+}
 \usage{
 ex_binomial
 }

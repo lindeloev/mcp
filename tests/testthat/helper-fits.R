@@ -33,9 +33,8 @@ test_fit = function(model, simulated) {
   effective = all(results_table$n.eff > 100)  # Effective samples
 
   # Show table if the tests failed. Cannot be after tests for some reason...
-  if (recovered == FALSE | effective == FALSE) {
+  if (recovered == FALSE | effective == FALSE)
     print(results_table)
-  }
 
   # Tests
   testthat::expect_true(recovered, model)

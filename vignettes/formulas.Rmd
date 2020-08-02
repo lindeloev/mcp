@@ -70,7 +70,7 @@ model = list(
 
 # Intepret, but do not sample.
 fit = mcp(model, sample = FALSE)
-fit$pars
+str(fit$pars, vec.len = 99)  # Compact display
 ```
 
 
@@ -104,11 +104,11 @@ The magic of (Bayesian) MCMC sampling is that it can actually infer the change p
 
 ```{r}
 model = list(y ~ 1, ~ 1)
-fit = mcp(model, sample=FALSE, par_x = "x")
+fit = mcp(model, sample = FALSE, par_x = "x")
 cat(fit$jags_code)
 ```
 
-Look at the section called `# Fitted value` and you should recognize it. Some unnecessary stuff is added to segment 1 just because it makes the code easier to generate. (`x[i_] >= cp_0` when `cp_0 = -10^100` is a way of writing `x >= -Inf` in JAGS and this is, of course, always true).
+Look at the section called `# Fitted value` which is the (automatically generated) model that was discussed above. Some unnecessary stuff is added to segment 1 just because it makes the code easier to generate. (`x[i_] >= cp_0` when `cp_0` is the smallest value of `x` is, of course, always true).
 
 
 # Modeling slope change points

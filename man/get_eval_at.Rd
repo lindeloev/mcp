@@ -11,6 +11,9 @@ get_eval_at(fit, facet_by)
 
 \item{facet_by}{String. Name of a varying group.}
 }
+\value{
+A vector of x-values to evaluate at.
+}
 \description{
 Solves two problems: if setting the number of points too high, the
 function becomes slow. If setting it too low, the posterior at large intercept-

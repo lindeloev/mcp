@@ -1,10 +1,10 @@
 ---
-title: "Working with priors in mcp"
+title: "Working with priors"
 author: "Jonas Kristoffer Lindeløv"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Working with priors in mcp}
+  %\VignetteIndexEntry{Working with priors}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -71,7 +71,7 @@ df$y = empty_default$simulate(df$x,
 Sample the prior and posterior. We let the manual fit adapt for longer, since it is harder to find the right posterior under these weird prior constraints (priors will usually improve sampling efficiency).
 
 ```{r, cache = TRUE, message=FALSE, warning=FALSE, results=FALSE}
-fit_manual = mcp(model, data = df, prior, sample = "both", adapt = 10000)
+fit_manual = mcp(model, data = df, sample = "both", adapt = 10000, prior = prior)
 fit_default = mcp(model, data = df, sample = "both", adapt = 10000)
 ```
 
@@ -108,6 +108,8 @@ Of course, it will usually be the other way around: setting priors manually will
 
 
 # Default priors on change points {#cp_prior}
+The following are treated more formally in the [mcp paper](https://osf.io/preprints/fzqxv/).
+
 Change points have to be ordered from left (`cp_1`) to right (`cp_2+`). This order restriction is enforced through the priors and this is not trival. `mcp` currently offers two "packages" of change point priors that achieves different goals: 
 
 * **Speed and estimation:** The default prior is suitable for estimation, prediction, and it works well for `loo()` cross-validation as well. It's main virtue is that it samples the change point posteriors relatively effectively, but it will often be deeply unfit for Bayes Factors if there are 3+ change points (see below). It may also favor "late" change points too much if estimating many change points with little data (e.g. 5 change points with 100 data points or 10 with 300).
@@ -233,7 +235,6 @@ par(mfrow = c(1,1))
 
 
 ## The t-tail prior on 2+ change points (default)
-*OBS: These priors are likely to change in versions beyond mcp 0.2, but not drastically.*
 
 The first change point defaults to `cp_1 = dunif(MINX, MAXX)`. In other words, the change point has to happen in the observed range of x, but it is equally probable across this range. This is identical to the Dirichlet prior.
 

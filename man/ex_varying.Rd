@@ -4,13 +4,15 @@
 \name{ex_varying}
 \alias{ex_varying}
 \title{One change point varying by participant}
-\format{A data frame with 150 rows and 4 variables:
+\format{
+A data frame with 150 rows and 4 variables:
 \describe{
 \item{x}{The x-axis.}
 \item{y}{The y-axis.}
 \item{id}{The participant id (character).}
 \item{id_numeric}{The participant id (numeric).}
-}}
+}
+}
 \usage{
 ex_varying
 }

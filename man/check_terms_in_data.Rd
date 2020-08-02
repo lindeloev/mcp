@@ -5,14 +5,16 @@
 \alias{check_terms_in_data}
 \title{Checks if all terms are in the data}
 \usage{
-check_terms_in_data(form, data, i)
+check_terms_in_data(form, data, i, n_terms = NULL)
 }
 \arguments{
-\item{form}{Character representation of formula}
+\item{form}{Formula or character (tilde will be prefixed if it isn't already)}
 
 \item{data}{A data.frame or tibble}
 
 \item{i}{The segment number (integer)}
+
+\item{n_terms}{Int >= 1. Number of expected terms. Will raise error if it doesn't match.}
 }
 \description{
 Checks if all terms are in the data
