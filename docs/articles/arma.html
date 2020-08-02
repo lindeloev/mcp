@@ -59,7 +59,7 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
     General usage
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
@@ -89,7 +89,7 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
     GLM
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
@@ -107,7 +107,7 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
     Other
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
@@ -125,13 +125,13 @@
 <li>
   <a href="https://twitter.com/jonaslindeloev">
     <span class="fa fa-twitter"></span>
-     
+
   </a>
 </li>
 <li>
   <a href="https://github.com/lindeloev/mcp">
     <span class="fa fa-github"></span>
-     
+
   </a>
 </li>
       </ul>
@@ -139,7 +139,7 @@
 <li>
   <a href="https://github.com/lindeloev/mcp/">
     <span class="fab fa fab fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul>
@@ -148,7 +148,7 @@
           <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
 </div>
       </form>
-      
+
     </div>
 <!--/.nav-collapse -->
   </div>
@@ -156,23 +156,23 @@
 </div>
 <!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Time series change points</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
-            
+
             <h4 class="date">2020-08-02</h4>
-      
+
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/arma.Rmd"><code>vignettes/arma.Rmd</code></a></small>
       <div class="hidden name"><code>arma.Rmd</code></div>
 
     </div>
 
-    
-    
+
+
 <!--
  * Compute fit and interpret it
  * Warnings
@@ -201,7 +201,7 @@
 ## Segments:
 ##   1: price ~ 1 + ar(2)
 ##   2: price ~ 1 ~ 0 + time + ar(1)
-## 
+##
 ## Population-level parameters:
 ##     name match   sim   mean   lower  upper Rhat n.eff
 ##    ar1_1    OK   0.7   0.74   0.587   0.89    1   907
@@ -272,15 +272,15 @@
 <pre><code>## Generating residuals for AR(N) model since the response column/argument 'response' was not provided.</code></pre>
 <div class="sourceCode" id="cb10"><html><body><pre class="r"><span class="co"># Base arima AR(3)</span>
 <span class="fu"><a href="https://rdrr.io/r/stats/arima.html">arima</a></span>(<span class="no">df</span>$<span class="no">response</span>, <span class="kw">order</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">3</span>, <span class="fl">0</span>, <span class="fl">0</span>))</pre></body></html></div>
-<pre><code>## 
+<pre><code>##
 ## Call:
 ## arima(x = df$response, order = c(3, 0, 0))
-## 
+##
 ## Coefficients:
 ##          ar1     ar2      ar3  intercept
 ##       0.6977  0.2240  -0.4075    19.5554
 ## s.e.  0.0643  0.0799   0.0649     1.1297
-## 
+##
 ## sigma^2 estimated as 60.03:  log likelihood = -693.86,  aic = 1397.73</code></pre>
 <p>OK, we can see that the <code>ar</code> coefficients and sigma (<span class="math inline">\(sigma = sqrt(sigma^2)\)</span>) is simulated correctly, if taking <code><a href="https://rdrr.io/r/stats/arima.html">arima()</a></code> as ground truth. Inferring with <code>mcp</code> is straightforward:</p>
 <div class="sourceCode" id="cb12"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="no">df</span>, <span class="kw">par_x</span> <span class="kw">=</span> <span class="st">"time"</span>)</pre></body></html></div>
@@ -330,7 +330,7 @@
 ## Segments:
 ##   1: y ~ 1 + x + ar(1)
 ##   2: y ~ 1 ~ 0 + x + ar(1)
-## 
+##
 ## Population-level parameters:
 ##     name match  sim  mean lower upper Rhat n.eff
 ##    ar1_1    OK  0.8  0.79  0.68  0.90    1  2193
@@ -355,7 +355,7 @@
 
 <span class="kw pkg">loo</span><span class="kw ns">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(<span class="no">fit</span>$<span class="no">loo</span>, <span class="no">fit_null</span>$<span class="no">loo</span>)</pre></body></html></div>
 <pre><code>##        elpd_diff se_diff
-## model1  0.0       0.0   
+## model1  0.0       0.0
 ## model2 -8.8       4.3</code></pre>
 <p>Of course, we can also do directional tests. For example, what is the evidence that <code>ar1_1</code> is more than 0.3 greater than <code>ar1_2</code>? Answer: around 100 to one.</p>
 <div class="sourceCode" id="cb25"><html><body><pre class="r"><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span>(<span class="no">fit</span>, <span class="st">"ar1_1 - 0.3 &gt; ar1_2"</span>)</pre></body></html></div>
@@ -368,13 +368,13 @@
 <p>The default prior on autoregressive intercepts is a <code><a href="https://rdrr.io/r/stats/Uniform.html">dunif(-1, 1)</a></code> to ensure a stationary series while being otherwise agnostic about the magnitude and direction of the autocorrelation. For most time series, you would expect a positive first-order autocorrelation, e.g., <code>ar1_1 = "dunif(0, 1)"</code> or even something like <code>ar1_1 = "dnorm(0.5, 0.5) T(0, 1)"</code>. <a href="../articles/priors.html">Read more about priors</a>. Similarly, you would expect a smaller-but-still-positive second-order autocorrelation, e.g., <code>ar2_1 = dunif(0, ar1_1)</code>.</p>
 <p>Here is a complete list of the (default) priors in the model above:</p>
 <div class="sourceCode" id="cb27"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(<span class="no">fit</span>$<span class="no">prior</span>)</pre></body></html></div>
-<pre><code>##         [,1]                           
-## cp_1    "dunif(MINX, MAXX)"            
-## int_1   "dt(0, 3 * SDY, 3)"            
+<pre><code>##         [,1]
+## cp_1    "dunif(MINX, MAXX)"
+## int_1   "dt(0, 3 * SDY, 3)"
 ## x_1     "dt(0, SDY / (MAXX - MINX), 3)"
-## x_2     "x_1"                          
-## sigma_1 "dnorm(0, SDY) T(0, )"         
-## ar1_1   "dunif(-1, 1)"                 
+## x_2     "x_1"
+## sigma_1 "dnorm(0, SDY) T(0, )"
+## ar1_1   "dunif(-1, 1)"
 ## ar1_2   "dunif(-1, 1)"</code></pre>
 <p>We can also visualize them because we sampled the prior. <code>prior = TRUE</code> works in most <code>mcp</code> functions, including <code><a href="../reference/plot.mcpfit.html">plot()</a></code> and <code><a href="../reference/summary.mcpfit.html">summary()</a></code>.</p>
 <div class="sourceCode" id="cb29"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit</span>, <span class="kw">prior</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
@@ -387,15 +387,15 @@
 )
 <span class="no">empty</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="fl">FALSE</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(<span class="no">empty</span>$<span class="no">prior</span>)</pre></body></html></div>
-<pre><code>##            [,1]                         
-## cp_1       "dunif(MINX, MAXX)"          
-## int_1      "dt(0, 3 * SDY, 3)"          
-## sigma_1    "dnorm(0, SDY) T(0, )"       
-## ar1_1      "dunif(-1, 1)"               
-## ar2_1      "dunif(-1, 1)"               
+<pre><code>##            [,1]
+## cp_1       "dunif(MINX, MAXX)"
+## int_1      "dt(0, 3 * SDY, 3)"
+## sigma_1    "dnorm(0, SDY) T(0, )"
+## ar1_1      "dunif(-1, 1)"
+## ar2_1      "dunif(-1, 1)"
 ## ar1_x_1    "dnorm(0, 1 / (MAXX - MINX))"
 ## ar2_x_1    "dnorm(0, 1 / (MAXX - MINX))"
-## ar1_2      "dunif(-1, 1)"               
+## ar1_2      "dunif(-1, 1)"
 ## ar1_x_2_E2 "dnorm(0, 1 / (MAXX - MINX))"</code></pre>
 <p>As with <code>sigma</code>, the link function for the autoregressive coefficient itself is <code>"identity"</code> though the autoregressive coefficient is computed from residuals using the link function provided in <code><a href="../reference/mcp.html">mcp(..., family = func(link = "something"))</a></code>. Because stationarity is important, careful consideration of the allowed and probable values (the prior) is necessary when going beyond simple absolute intercepts to avoid <code>ar</code> values outside [-1, 1].</p>
 <p>Here are a few ways in which you may want to inform the <code>ar</code> parameters in the model above:</p>
@@ -411,53 +411,53 @@
 <a href="#jags-code" class="anchor"></a>JAGS code</h1>
 <p>Here is the JAGS code for the second simulation example, i.e., the one with a single slope going from AR(2) to AR(1). You can print <code>fit$simulate</code> and see that it runs much of the same code.</p>
 <div class="sourceCode" id="cb32"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="no">fit</span>$<span class="no">jags_code</span>)</pre></body></html></div>
-<pre><code>## 
+<pre><code>##
 ## model {
-## 
+##
 ##   # Priors for population-level effects
 ##   cp_0 = MINX  # mcp helper value.
 ##   cp_2 = MAXX  # mcp helper value.
-## 
+##
 ##   cp_1 ~ dunif(MINX, MAXX)
-##   int_1 ~ dt(0, 1/(3*SDY)^2, 3) 
-##   x_1 ~ dt(0, 1/(SDY/(MAXX-MINX))^2, 3) 
+##   int_1 ~ dt(0, 1/(3*SDY)^2, 3)
+##   x_1 ~ dt(0, 1/(SDY/(MAXX-MINX))^2, 3)
 ##   x_2 = x_1  # Fixed
 ##   sigma_1 ~ dnorm(0, 1/(SDY)^2) T(0, )
 ##   ar1_1 ~ dunif(-1, 1)
 ##   ar1_2 ~ dunif(-1, 1)
-## 
-## 
+##
+##
 ##   # Apply autoregression to the residuals
 ##   resid_arma_[1] = 0
 ##   for (i_ in 2:length(x)) {
-##     resid_arma_[i_] = 0 + 
+##     resid_arma_[i_] = 0 +
 ##       ar1_[i_] * resid_abs_[i_ - 1]
 ##   }
-## 
+##
 ##   # Model and likelihood
 ##   for (i_ in 1:length(x)) {
 ##     X_1_[i_] = min(x[i_], cp_1)
 ##     X_2_[i_] = min(x[i_], cp_2) - cp_1
-##     
+##
 ##     # Fitted value
-##     y_[i_] = 
-##     
+##     y_[i_] =
+##
 ##       # Segment 1: y ~ 1 + x + ar(1)
-##       (x[i_] &gt;= cp_0) * int_1 + 
-##       (x[i_] &gt;= cp_0) * x_1 * X_1_[i_] + 
-##     
+##       (x[i_] &gt;= cp_0) * int_1 +
+##       (x[i_] &gt;= cp_0) * x_1 * X_1_[i_] +
+##
 ##       # Segment 2: y ~ 1 ~ 0 + x + ar(1)
-##       (x[i_] &gt;= cp_1) * x_2 * X_2_[i_] 
-##     
+##       (x[i_] &gt;= cp_1) * x_2 * X_2_[i_]
+##
 ##     # Fitted standard deviation
-##     sigma_[i_] = max(0, 
+##     sigma_[i_] = max(0,
 ##       (x[i_] &gt;= cp_0) * sigma_1 )
-##     
+##
 ##     # Autoregressive coefficient for all AR(1)
-##     ar1_[i_] = 
-##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * ar1_1 + 
-##       (x[i_] &gt;= cp_1) * ar1_2 
-## 
+##     ar1_[i_] =
+##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * ar1_1 +
+##       (x[i_] &gt;= cp_1) * ar1_2
+##
 ##     # Likelihood and log-density for family = gaussian()
 ##     y[i_] ~ dnorm((y_[i_] + resid_arma_[i_]), 1 / sigma_[i_]^2)  # SD as precision
 ##     loglik_[i_] = logdensity.norm(y[i_], (y_[i_] + resid_arma_[i_]), 1 / sigma_[i_]^2)  # SD as precision
@@ -488,11 +488,11 @@
       </footer>
 </div>
 
-  
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.js" integrity="sha256-GKvGqXDznoRYHCwKXGnuchvKSwmx9SRMrZOTh2g4Sb0=" crossorigin="anonymous"></script><script>
   docsearch({
-    
-    
+
+
     apiKey: '702ab134d40a7310606c29f341fc5014',
     indexName: 'lindeloev_mcp',
     inputSelector: 'input#search-input.form-control',

@@ -59,7 +59,7 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
     General usage
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
@@ -89,7 +89,7 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
     GLM
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
@@ -107,7 +107,7 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
     Other
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
@@ -125,13 +125,13 @@
 <li>
   <a href="https://twitter.com/jonaslindeloev">
     <span class="fa fa-twitter"></span>
-     
+
   </a>
 </li>
 <li>
   <a href="https://github.com/lindeloev/mcp">
     <span class="fa fa-github"></span>
-     
+
   </a>
 </li>
       </ul>
@@ -139,7 +139,7 @@
 <li>
   <a href="https://github.com/lindeloev/mcp/">
     <span class="fab fa fab fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul>
@@ -148,7 +148,7 @@
           <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
 </div>
       </form>
-      
+
     </div>
 <!--/.nav-collapse -->
   </div>
@@ -156,23 +156,23 @@
 </div>
 <!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Working with priors</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
-            
+
             <h4 class="date">2020-08-02</h4>
-      
+
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/priors.Rmd"><code>vignettes/priors.Rmd</code></a></small>
       <div class="hidden name"><code>priors.Rmd</code></div>
 
     </div>
 
-    
-    
+
+
 <div id="setting-a-prior" class="section level1">
 <h1 class="hasAnchor">
 <a href="#setting-a-prior" class="anchor"></a>Setting a prior</h1>
@@ -209,25 +209,25 @@
 
 <span class="co"># Look at fit$prior and show them side-by-side</span>
 <span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(<span class="kw">manual</span> <span class="kw">=</span> <span class="no">empty_manual</span>$<span class="no">prior</span>, <span class="kw">default</span> <span class="kw">=</span> <span class="no">empty_default</span>$<span class="no">prior</span>)</pre></body></html></div>
-<pre><code>##         manual                
-## cp_1    "dunif(MINX, cp_2)"   
-## cp_2    80                    
-## int_1   "dnorm(0, 5) T(, 10)" 
-## int_2   "dt(0, 3 * SDY, 3)"   
-## int_3   "dt(0, 3 * SDY, 3)"   
-## x_1     "dbeta(2, 5)"         
+<pre><code>##         manual
+## cp_1    "dunif(MINX, cp_2)"
+## cp_2    80
+## int_1   "dnorm(0, 5) T(, 10)"
+## int_2   "dt(0, 3 * SDY, 3)"
+## int_3   "dt(0, 3 * SDY, 3)"
+## x_1     "dbeta(2, 5)"
 ## x_2     "dt(0, 1, 3) T(x_1, )"
-## x_3     "x_2"                 
+## x_3     "x_2"
 ## sigma_1 "dnorm(0, SDY) T(0, )"
-##         default                                                 
+##         default
 ## cp_1    "dt(MINX, (MAXX - MINX) / N_CP, N_CP - 1) T(cp_0, MAXX)"
 ## cp_2    "dt(MINX, (MAXX - MINX) / N_CP, N_CP - 1) T(cp_1, MAXX)"
-## int_1   "dt(0, 3 * SDY, 3)"                                     
-## int_2   "dt(0, 3 * SDY, 3)"                                     
-## int_3   "dt(0, 3 * SDY, 3)"                                     
-## x_1     "dt(0, SDY / (MAXX - MINX), 3)"                         
-## x_2     "dt(0, SDY / (MAXX - MINX), 3)"                         
-## x_3     "dt(0, SDY / (MAXX - MINX), 3)"                         
+## int_1   "dt(0, 3 * SDY, 3)"
+## int_2   "dt(0, 3 * SDY, 3)"
+## int_3   "dt(0, 3 * SDY, 3)"
+## x_1     "dt(0, SDY / (MAXX - MINX), 3)"
+## x_2     "dt(0, SDY / (MAXX - MINX), 3)"
+## x_3     "dt(0, SDY / (MAXX - MINX), 3)"
 ## sigma_1 "dnorm(0, SDY) T(0, )"</code></pre>
 <p>Now, let’s simulate some data that from the <code>model</code>. The following priors are “at odds” with the actual data so as to show their effect.</p>
 <div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">df</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="kw">x</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span>(<span class="fl">200</span>, <span class="fl">0</span>, <span class="fl">100</span>))  <span class="co"># 200 datapoints between 0 and 100</span>
@@ -347,49 +347,49 @@
 <a href="#jags-code" class="anchor"></a>JAGS code</h1>
 <p>Here is the JAGS code for <code>fit_manual</code>:</p>
 <div class="sourceCode" id="cb10"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="no">fit_manual</span>$<span class="no">jags_code</span>)</pre></body></html></div>
-<pre><code>## 
+<pre><code>##
 ## model {
-## 
+##
 ##   # Priors for population-level effects
 ##   cp_0 = MINX  # mcp helper value.
 ##   cp_3 = MAXX  # mcp helper value.
-## 
+##
 ##   cp_1 ~ dunif(MINX, cp_2)
 ##   cp_2 = 80  # Fixed
 ##   int_1 ~ dnorm(0, 1/(5)^2) T(, 10)
-##   int_2 ~ dt(0, 1/(3*SDY)^2, 3) 
-##   int_3 ~ dt(0, 1/(3*SDY)^2, 3) 
+##   int_2 ~ dt(0, 1/(3*SDY)^2, 3)
+##   int_3 ~ dt(0, 1/(3*SDY)^2, 3)
 ##   x_1 ~ dbeta(2, 5)
 ##   x_2 ~ dt(0, 1/(1)^2, 3) T(x_1, )
 ##   x_3 = x_2  # Fixed
 ##   sigma_1 ~ dnorm(0, 1/(SDY)^2) T(0, )
-## 
-## 
+##
+##
 ##   # Model and likelihood
 ##   for (i_ in 1:length(x)) {
 ##     X_1_[i_] = min(x[i_], cp_1)
 ##     X_2_[i_] = min(x[i_], cp_2) - cp_1
 ##     X_3_[i_] = min(x[i_], cp_3) - cp_2
-##     
+##
 ##     # Fitted value
-##     y_[i_] = 
-##     
+##     y_[i_] =
+##
 ##       # Segment 1: y ~ 1 + x
-##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * int_1 + 
-##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * x_1 * X_1_[i_] + 
-##     
+##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * int_1 +
+##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * x_1 * X_1_[i_] +
+##
 ##       # Segment 2: y ~ 1 ~ 1 + x
-##       (x[i_] &gt;= cp_1) * (x[i_] &lt; cp_2) * int_2 + 
-##       (x[i_] &gt;= cp_1) * (x[i_] &lt; cp_2) * x_2 * X_2_[i_] + 
-##     
+##       (x[i_] &gt;= cp_1) * (x[i_] &lt; cp_2) * int_2 +
+##       (x[i_] &gt;= cp_1) * (x[i_] &lt; cp_2) * x_2 * X_2_[i_] +
+##
 ##       # Segment 3: y ~ 1 ~ 1 + x
-##       (x[i_] &gt;= cp_2) * int_3 + 
-##       (x[i_] &gt;= cp_2) * x_3 * X_3_[i_] 
-##     
+##       (x[i_] &gt;= cp_2) * int_3 +
+##       (x[i_] &gt;= cp_2) * x_3 * X_3_[i_]
+##
 ##     # Fitted standard deviation
-##     sigma_[i_] = max(0, 
+##     sigma_[i_] = max(0,
 ##       (x[i_] &gt;= cp_0) * sigma_1 )
-## 
+##
 ##     # Likelihood and log-density for family = gaussian()
 ##     y[i_] ~ dnorm((y_[i_]), 1 / sigma_[i_]^2)  # SD as precision
 ##     loglik_[i_] = logdensity.norm(y[i_], (y_[i_]), 1 / sigma_[i_]^2)  # SD as precision
@@ -419,11 +419,11 @@
       </footer>
 </div>
 
-  
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.js" integrity="sha256-GKvGqXDznoRYHCwKXGnuchvKSwmx9SRMrZOTh2g4Sb0=" crossorigin="anonymous"></script><script>
   docsearch({
-    
-    
+
+
     apiKey: '702ab134d40a7310606c29f341fc5014',
     indexName: 'lindeloev_mcp',
     inputSelector: 'input#search-input.form-control',

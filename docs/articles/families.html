@@ -59,7 +59,7 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
     General usage
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
@@ -89,7 +89,7 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
     GLM
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
@@ -107,7 +107,7 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
     Other
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
@@ -125,13 +125,13 @@
 <li>
   <a href="https://twitter.com/jonaslindeloev">
     <span class="fa fa-twitter"></span>
-     
+
   </a>
 </li>
 <li>
   <a href="https://github.com/lindeloev/mcp">
     <span class="fa fa-github"></span>
-     
+
   </a>
 </li>
       </ul>
@@ -139,7 +139,7 @@
 <li>
   <a href="https://github.com/lindeloev/mcp/">
     <span class="fab fa fab fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul>
@@ -148,7 +148,7 @@
           <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
 </div>
       </form>
-      
+
     </div>
 <!--/.nav-collapse -->
   </div>
@@ -156,23 +156,23 @@
 </div>
 <!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Families and link functions</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
-            
+
             <h4 class="date">2020-08-02</h4>
-      
+
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/families.Rmd"><code>vignettes/families.Rmd</code></a></small>
       <div class="hidden name"><code>families.Rmd</code></div>
 
     </div>
 
-    
-    
+
+
 <p><code>mcp 0.3</code> added support for more response families and link functions. For example, you can now do</p>
 <div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>, <span class="kw">family</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html">gaussian</a></span>(<span class="st">"log"</span>))
 <span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>, <span class="kw">family</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(<span class="st">"identity"</span>))</pre></body></html></div>
@@ -213,10 +213,10 @@
 ##    Observed stochastic nodes: 100
 ##    Unobserved stochastic nodes: 5
 ##    Total graph size: 1514
-## 
+##
 ## Initializing model
-## 
-## 
+##
+##
 ## Error in update.jags(model, n.iter, ...) : Error in node loglik_[68]
 ## Invalid parent values</code></pre>
 <p>Oops, the sampler visited impossible values! Likely <code>P(success) &lt; 0%</code> or <code>P(success) &gt; 100%</code>. Let’s help it along with some more informative priors. For this data and model, the main problem is that the slope of the second segment has too great posterior probability of surpasses 100% with the default <code>mcp</code> priors. So let’s set some more informative priors render a long (early <code>cp_1</code>) and steep (high <code>x_2</code>) slope unlikely:</p>
@@ -236,7 +236,7 @@
 ## Segments:
 ##   1: y | trials(N) ~ 1 + x
 ##   2: y | trials(N) ~ 1 ~ 1 + x
-## 
+##
 ## Population-level parameters:
 ##   name match  sim    mean   lower   upper Rhat n.eff
 ##   cp_1       30.0 39.6508 39.0003 41.3158    1   751
@@ -275,11 +275,11 @@
       </footer>
 </div>
 
-  
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.js" integrity="sha256-GKvGqXDznoRYHCwKXGnuchvKSwmx9SRMrZOTh2g4Sb0=" crossorigin="anonymous"></script><script>
   docsearch({
-    
-    
+
+
     apiKey: '702ab134d40a7310606c29f341fc5014',
     indexName: 'lindeloev_mcp',
     inputSelector: 'input#search-input.form-control',
