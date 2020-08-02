@@ -4,11 +4,13 @@
 \name{ex_demo}
 \alias{ex_demo}
 \title{Two change points between three linear segments}
-\format{A data frame with 100 rows and 2 variables:
+\format{
+A data frame with 100 rows and 2 variables:
 \describe{
 \item{time}{The x-axis.}
 \item{response}{The y-axis.}
-}}
+}
+}
 \usage{
 ex_demo
 }

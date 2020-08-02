@@ -1,10 +1,10 @@
 ---
-title: "Diagnosing and fixing problems in mcp"
+title: "Diagnosing and fixing problems"
 author: "Jonas Kristoffer Lindeløv"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Diagnosing and fixing problems in mcp}
+  %\VignetteIndexEntry{Diagnosing and fixing problems}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

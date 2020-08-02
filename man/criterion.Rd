@@ -58,9 +58,9 @@ loo::loo_compare(fit1$loo, fit2$loo)
 
 }
 \seealso{
-\link{criterion}
+\code{\link{criterion}}
 
-\link{criterion}
+\code{\link{criterion}}
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

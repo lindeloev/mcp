@@ -5,13 +5,14 @@
  
  * `rhub` currently have issues with utf8 resulting in the error `Error in loadNamespace(name) : there is no package called 'utf8'`. See https://github.com/r-hub/rhub/issues/374. This has nothing to do with `mcp`.
  
- * Please see unpreventable "Expected NOTEs and ERRORs" in the bottom of this document.
+ * Please see unpreventable "Expected NOTEs and ERRORs" in the bottom of this file.
 
 ## Test environments
 * local Windows 10, R 3.6.1
-* Ubuntu 18.04 (on travis-ci): release
-* Ubuntu 18.04 (on travis-ci): devel
+* Ubuntu 18.04 (on travis-ci): devel and release
 * Mac OS X 10.13.6 (on travis-ci): release
+* Windows Server 2008 R2 SP1 (on rhub): devel
+* win-builder: devel and release
 
 ## R CMD check results
 There were no ERRORs, WARNINGs, or NOTEs.
@@ -74,4 +75,4 @@ This is the first submission so there are no downstream dependencies.
 
 * INSTALL ERROR: `mcp` uses JAGS (an external binary) for sampling through the `rjags` package. rjags will fail to install without JAGS on the system. This happens when I run `devtools::check_win_release()` and `check_win_devel()`. Travis install JAGS prior to installing packages, and all tests pass. They do too on my Windows PC. Automatic installation for Mac and OSX is set up in the .travis.yml (https://github.com/lindeloev/mcp/blob/master/.travis.yml). Windows binaries for JAGS are here: https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/
 
-* DESCRIPTION NOTE: rhub says that the DESCRIPTION DOIs return a HTTP 403 error (forbidden). But the DOI work just fine, e.g., http://doi.org/10.2307/2986119.
+* DESCRIPTION NOTE: rhub says that the DESCRIPTION DOIs return a HTTP 403 error (forbidden). But the DOI works just fine, e.g., http://doi.org/10.2307/2986119.

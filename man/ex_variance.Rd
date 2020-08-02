@@ -4,11 +4,13 @@
 \name{ex_variance}
 \alias{ex_variance}
 \title{Two change points between three heteroskedastic segments}
-\format{A data frame with 100 rows and 2 variables:
+\format{
+A data frame with 100 rows and 2 variables:
 \describe{
 \item{x}{The x-axis.}
 \item{y}{The y-axis.}
-}}
+}
+}
 \usage{
 ex_variance
 }

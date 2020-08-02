@@ -7,7 +7,7 @@
 logit(mu)
 }
 \arguments{
-\item{mu}{A vector of probabilities (0-1)}
+\item{mu}{A vector of probabilities (0.0 to 1.0)}
 }
 \value{
 A vector with same length as \code{mu}

@@ -30,7 +30,8 @@ Only really used when the model contains varying effects.}
 
 \item{cores}{Positive integer or "all". Number of cores.
 \itemize{
-\item \code{1}: serial sampling
+\item \code{1}: serial sampling (Default). \code{options(mc.cores = 3)} will dominate \code{cores = 1}
+but not larger values of \code{cores}.
 \item \verb{>1}: parallel sampling on this number of cores. Ideally set \code{chains}
 to the same value. Note: \code{cores > 1} takes a few extra seconds the first
 time it's called but subsequent calls will start sampling immediately.

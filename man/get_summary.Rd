@@ -3,6 +3,7 @@
 \encoding{UTF-8}
 \name{get_summary}
 \alias{get_summary}
+\alias{get_summary.mcpfit}
 \title{Internal function for summary.mcpfit, fixef.mcpfit, and ranef.mcpfit}
 \usage{
 get_summary(fit, width, varying = FALSE, prior = FALSE)
@@ -16,6 +17,9 @@ get_summary(fit, width, varying = FALSE, prior = FALSE)
 \item{varying}{Boolean. Get results for varying (TRUE) or population (FALSE)?}
 
 \item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
+}
+\value{
+A data.frame with summaries for each model parameter.
 }
 \description{
 Internal function for summary.mcpfit, fixef.mcpfit, and ranef.mcpfit

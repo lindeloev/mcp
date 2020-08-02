@@ -1,10 +1,10 @@
 ---
-title: "Poisson change point analysis with mcp"
+title: "Poisson change point analysis"
 author: "Jonas Kristoffer Lindeløv"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Poisson change point analysis with mcp}
+  %\VignetteIndexEntry{Poisson change point analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
