@@ -5,24 +5,27 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Working with priors in mcp • mcp</title>
+<title>Working with priors • mcp</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
 <link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><!-- docsearch --><script src="../docsearch.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
+<script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
+<script src="../pkgdown.js"></script><!-- docsearch --><script src="../docsearch.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.3/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous">
 <link href="../docsearch.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script><link href="../extra.css" rel="stylesheet">
-<meta property="og:title" content="Working with priors in mcp">
-<meta property="og:description" content="">
-<meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png">
+<meta property="og:title" content="Working with priors">
+<meta property="og:description" content="mcp">
+<meta property="og:image" content="https://github.com/lindeloev/mcp/raw/master/man/figures/logo.png">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:creator" content="@jonaslindeloev">
+<meta name="twitter:site" content="@jonaslindeloev">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
@@ -34,7 +37,7 @@
   gtag('config', 'UA-1026978-3');
 </script>
 </head>
-<body>
+<body data-spy="scroll" data-target="#toc">
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -47,7 +50,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -78,6 +81,9 @@
     <li>
       <a href="../articles/arma.html">Time series and autocorrelation</a>
     </li>
+    <li>
+      <a href="../articles/predict.html">Fits and predictions</a>
+    </li>
   </ul>
 </li>
 <li class="dropdown">
@@ -88,6 +94,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/families.html">Supported families and link functions</a>
+    </li>
+    <li>
       <a href="../articles/poisson.html">Poisson</a>
     </li>
     <li>
@@ -128,7 +137,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/lindeloev/mcp">
+  <a href="https://github.com/lindeloev/mcp/">
     <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
@@ -152,10 +161,10 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1>Working with priors in mcp</h1>
+      <h1 data-toc-skip>Working with priors</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2020-01-05</h4>
+            <h4 class="date">2020-08-02</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/priors.Rmd"><code>vignettes/priors.Rmd</code></a></small>
       <div class="hidden name"><code>priors.Rmd</code></div>
@@ -168,21 +177,21 @@
 <h1 class="hasAnchor">
 <a href="#setting-a-prior" class="anchor"></a>Setting a prior</h1>
 <p><code>mcp</code> takes priors in the form of a named list. The names are the parameter names, and the values are JAGS code. Here is a fairly complicated example, just to get enough priors to demonstrate the various ways priors can be used:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1">model =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb1-2" title="2">  y <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x,  <span class="co"># int_1 + x_1</span></a>
-<a class="sourceLine" id="cb1-3" title="3">  <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x,  <span class="co"># cp_1, int_2, and x_2</span></a>
-<a class="sourceLine" id="cb1-4" title="4">  <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">+</span><span class="st"> </span>x  <span class="co"># cp_2</span></a>
-<a class="sourceLine" id="cb1-5" title="5">)</a>
-<a class="sourceLine" id="cb1-6" title="6"></a>
-<a class="sourceLine" id="cb1-7" title="7">prior =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb1-8" title="8">  <span class="dt">int_1 =</span> <span class="st">"dnorm(0, 5) T(, 10)"</span>,  <span class="co"># Intercept; less than 10</span></a>
-<a class="sourceLine" id="cb1-9" title="9">  <span class="dt">x_1 =</span> <span class="st">"dbeta(2, 5)"</span>,  <span class="co"># slope: beta with right skew</span></a>
-<a class="sourceLine" id="cb1-10" title="10">  <span class="dt">cp_1 =</span> <span class="st">"dunif(MINX, cp_2)"</span>,  <span class="co"># change point between smallest x and cp_2</span></a>
-<a class="sourceLine" id="cb1-11" title="11">  <span class="dt">x_2 =</span> <span class="st">"dt(0, 1, 3) T(x_1, )"</span>,  <span class="co"># slope 2 &gt; slope 1 and t-distributed</span></a>
-<a class="sourceLine" id="cb1-12" title="12">  <span class="dt">cp_2 =</span> <span class="dv">80</span>,  <span class="co"># A constant (set; not estimated)</span></a>
-<a class="sourceLine" id="cb1-13" title="13">  <span class="dt">x_3 =</span> <span class="st">"x_2"</span>  <span class="co"># continue same slope</span></a>
-<a class="sourceLine" id="cb1-14" title="14">  <span class="co"># int_2 and int_3 not specified. Use default.</span></a>
-<a class="sourceLine" id="cb1-15" title="15">)</a></code></pre></div>
+<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
+  <span class="no">y</span> ~ <span class="fl">1</span> + <span class="no">x</span>,  <span class="co"># int_1 + x_1</span>
+  ~ <span class="fl">1</span> + <span class="no">x</span>,  <span class="co"># cp_1, int_2, and x_2</span>
+  ~ <span class="fl">1</span> + <span class="no">x</span>  <span class="co"># cp_2</span>
+)
+
+<span class="no">prior</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
+  <span class="kw">int_1</span> <span class="kw">=</span> <span class="st">"dnorm(0, 5) T(, 10)"</span>,  <span class="co"># Intercept; less than 10</span>
+  <span class="kw">x_1</span> <span class="kw">=</span> <span class="st">"dbeta(2, 5)"</span>,  <span class="co"># slope: beta with right skew</span>
+  <span class="kw">cp_1</span> <span class="kw">=</span> <span class="st">"dunif(MINX, cp_2)"</span>,  <span class="co"># change point between smallest x and cp_2</span>
+  <span class="kw">x_2</span> <span class="kw">=</span> <span class="st">"dt(0, 1, 3) T(x_1, )"</span>,  <span class="co"># slope 2 &gt; slope 1 and t-distributed</span>
+  <span class="kw">cp_2</span> <span class="kw">=</span> <span class="fl">80</span>,  <span class="co"># A constant (set; not estimated)</span>
+  <span class="kw">x_3</span> <span class="kw">=</span> <span class="st">"x_2"</span>  <span class="co"># continue same slope</span>
+  <span class="co"># int_2 and int_3 not specified. Use default.</span>
+)</pre></body></html></div>
 <p>The values are JAGS code, so all JAGS distributions are allowed. These also include <code>gamma</code>, <code>dt</code>, <code>cauchy</code>, and many others. See the <a href="https://web.sgh.waw.pl/~atoroj/ekonometria_bayesowska/jags_user_manual.pdf">JAGS user manual</a> for more details. The parameterization of the distributions are identical to standard R. Use SD when you specify priors for <code>dnorm</code>, <code>dt</code>, <code>dlogis</code>, etc. <code>mcp</code> converts to precision for JAGS under the hood via the <code><a href="../reference/sd_to_prec.html">sd_to_prec()</a></code> function (<code>prec = 1 / sd^2</code>), so you don’t have to worry about it. You can see the effects of this conversion by inspecting the difference between <code>fit$prior</code> (using SD) and <code>fit$jags_code</code> (using precision).</p>
 <p>Other notes:</p>
 <ul>
@@ -192,14 +201,14 @@
 <li><p>You can also equate one variable with another (<code>x_3 = "x_2"</code> above). You would usually do this to share parameters across segments, but you can be creative and do something like <code>x_3 = "x_2 + 5 - cp_1/10"</code> if you want. In any case, it will lead to one less parameter being estimated, i.e., one less free parameter.</p></li>
 </ul>
 <p>Let us see the priors after running them through <code>mcp</code> and compare to the default priors:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(mcp)</a>
-<a class="sourceLine" id="cb2-2" title="2"><span class="kw"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="dt">mc.cores =</span> <span class="dv">3</span>)  <span class="co"># Speed up sampling!</span></a>
-<a class="sourceLine" id="cb2-3" title="3"></a>
-<a class="sourceLine" id="cb2-4" title="4">empty_manual =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(model, <span class="dt">prior =</span> prior, <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb2-5" title="5">empty_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(model, <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb2-6" title="6"></a>
-<a class="sourceLine" id="cb2-7" title="7"><span class="co"># Look at fit$prior and show them side-by-side</span></a>
-<a class="sourceLine" id="cb2-8" title="8"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(<span class="dt">manual =</span> empty_manual<span class="op">$</span>prior, <span class="dt">default =</span> empty_default<span class="op">$</span>prior)</a></code></pre></div>
+<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">mcp</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">3</span>)  <span class="co"># Speed up sampling!</span>
+
+<span class="no">empty_manual</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">prior</span> <span class="kw">=</span> <span class="no">prior</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="fl">FALSE</span>)
+<span class="no">empty_default</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="fl">FALSE</span>)
+
+<span class="co"># Look at fit$prior and show them side-by-side</span>
+<span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(<span class="kw">manual</span> <span class="kw">=</span> <span class="no">empty_manual</span>$<span class="no">prior</span>, <span class="kw">default</span> <span class="kw">=</span> <span class="no">empty_default</span>$<span class="no">prior</span>)</pre></body></html></div>
 <pre><code>##         manual                
 ## cp_1    "dunif(MINX, cp_2)"   
 ## cp_2    80                    
@@ -221,30 +230,30 @@
 ## x_3     "dt(0, SDY / (MAXX - MINX), 3)"                         
 ## sigma_1 "dnorm(0, SDY) T(0, )"</code></pre>
 <p>Now, let’s simulate some data that from the <code>model</code>. The following priors are “at odds” with the actual data so as to show their effect.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">df =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="dt">x =</span> <span class="kw"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span>(<span class="dv">200</span>, <span class="dv">0</span>, <span class="dv">100</span>))  <span class="co"># 200 datapoints between 0 and 100</span></a>
-<a class="sourceLine" id="cb4-2" title="2">df<span class="op">$</span>y =<span class="st"> </span>empty_default<span class="op">$</span><span class="kw"><a href="https://rdrr.io/r/stats/simulate.html">simulate</a></span>(df<span class="op">$</span>x, </a>
-<a class="sourceLine" id="cb4-3" title="3">    <span class="dt">int_1 =</span> <span class="dv">20</span>, <span class="dt">int_2 =</span> <span class="dv">30</span>, <span class="dt">int_3 =</span> <span class="dv">30</span>,  <span class="co"># intercepts</span></a>
-<a class="sourceLine" id="cb4-4" title="4">    <span class="dt">x_1 =</span> <span class="fl">-0.5</span>, <span class="dt">x_2 =</span> <span class="fl">0.5</span>, <span class="dt">x_3 =</span> <span class="dv">0</span>,  <span class="co"># slopes</span></a>
-<a class="sourceLine" id="cb4-5" title="5">    <span class="dt">cp_1 =</span> <span class="dv">35</span>, <span class="dt">cp_2 =</span> <span class="dv">70</span>,  <span class="co"># change points</span></a>
-<a class="sourceLine" id="cb4-6" title="6">    <span class="dt">sigma =</span> <span class="dv">5</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">df</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="kw">x</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span>(<span class="fl">200</span>, <span class="fl">0</span>, <span class="fl">100</span>))  <span class="co"># 200 datapoints between 0 and 100</span>
+<span class="no">df</span>$<span class="no">y</span> <span class="kw">=</span> <span class="no">empty_default</span>$<span class="fu"><a href="https://rdrr.io/r/stats/simulate.html">simulate</a></span>(<span class="no">df</span>$<span class="no">x</span>,
+    <span class="kw">int_1</span> <span class="kw">=</span> <span class="fl">20</span>, <span class="kw">int_2</span> <span class="kw">=</span> <span class="fl">30</span>, <span class="kw">int_3</span> <span class="kw">=</span> <span class="fl">30</span>,  <span class="co"># intercepts</span>
+    <span class="kw">x_1</span> <span class="kw">=</span> -<span class="fl">0.5</span>, <span class="kw">x_2</span> <span class="kw">=</span> <span class="fl">0.5</span>, <span class="kw">x_3</span> <span class="kw">=</span> <span class="fl">0</span>,  <span class="co"># slopes</span>
+    <span class="kw">cp_1</span> <span class="kw">=</span> <span class="fl">35</span>, <span class="kw">cp_2</span> <span class="kw">=</span> <span class="fl">70</span>,  <span class="co"># change points</span>
+    <span class="kw">sigma</span> <span class="kw">=</span> <span class="fl">5</span>)</pre></body></html></div>
 <p>Sample the prior and posterior. We let the manual fit adapt for longer, since it is harder to find the right posterior under these weird prior constraints (priors will usually improve sampling efficiency).</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">fit_manual =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(model, <span class="dt">data =</span> df, prior, <span class="dt">sample =</span> <span class="st">"both"</span>, <span class="dt">adapt =</span> <span class="dv">10000</span>)</a>
-<a class="sourceLine" id="cb5-2" title="2">fit_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(model, <span class="dt">data =</span> df, <span class="dt">sample =</span> <span class="st">"both"</span>, <span class="dt">adapt =</span> <span class="dv">10000</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="no">fit_manual</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="st">"both"</span>, <span class="kw">adapt</span> <span class="kw">=</span> <span class="fl">10000</span>, <span class="kw">prior</span> <span class="kw">=</span> <span class="no">prior</span>)
+<span class="no">fit_default</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="st">"both"</span>, <span class="kw">adapt</span> <span class="kw">=</span> <span class="fl">10000</span>)</pre></body></html></div>
 <p>First, let’s look at the priors side by side. Notice the use of <code>prior = TRUE</code> to show prior samples. This works in <code><a href="../reference/plot.mcpfit.html">plot()</a></code>, <code><a href="../reference/plot_pars.html">plot_pars()</a></code>, and <code><a href="../reference/summary.mcpfit.html">summary()</a></code> among others.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</a>
-<a class="sourceLine" id="cb6-2" title="2">pp_default =<span class="st"> </span><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit_default, <span class="dt">type =</span> <span class="st">"dens_overlay"</span>, <span class="dt">prior =</span> <span class="ot">TRUE</span>) <span class="op">+</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb6-3" title="3"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">"Default priors"</span>)</a>
-<a class="sourceLine" id="cb6-4" title="4"></a>
-<a class="sourceLine" id="cb6-5" title="5">pp_manual =<span class="st"> </span><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit_manual, <span class="dt">type =</span> <span class="st">"dens_overlay"</span>, <span class="dt">prior =</span> <span class="ot">TRUE</span>) <span class="op">+</span></a>
-<a class="sourceLine" id="cb6-6" title="6"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">"Manual priors"</span>)</a>
-<a class="sourceLine" id="cb6-7" title="7"></a>
-<a class="sourceLine" id="cb6-8" title="8">pp_default <span class="op">+</span><span class="st"> </span>pp_manual</a></code></pre></div>
+<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">ggplot2</span>)
+<span class="no">pp_default</span> <span class="kw">=</span> <span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit_default</span>, <span class="kw">type</span> <span class="kw">=</span> <span class="st">"dens_overlay"</span>, <span class="kw">prior</span> <span class="kw">=</span> <span class="fl">TRUE</span>) +
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span>(<span class="st">"Default priors"</span>)
+
+<span class="no">pp_manual</span> <span class="kw">=</span> <span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit_manual</span>, <span class="kw">type</span> <span class="kw">=</span> <span class="st">"dens_overlay"</span>, <span class="kw">prior</span> <span class="kw">=</span> <span class="fl">TRUE</span>) +
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span>(<span class="st">"Manual priors"</span>)
+
+<span class="no">pp_default</span> + <span class="no">pp_manual</span></pre></body></html></div>
 <p><img src="priors_files/figure-html/unnamed-chunk-5-1.png" width="576"></p>
 <p>Here is the resulting posterior fits:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1">plot_default =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_default) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Default priors"</span>)</a>
-<a class="sourceLine" id="cb7-2" title="2">plot_manual =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_manual) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Manual priors"</span>)</a>
-<a class="sourceLine" id="cb7-3" title="3"></a>
-<a class="sourceLine" id="cb7-4" title="4">plot_default <span class="op">+</span><span class="st"> </span>plot_manual</a></code></pre></div>
+<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">plot_default</span> <span class="kw">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_default</span>) + <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span>(<span class="st">"Default priors"</span>)
+<span class="no">plot_manual</span> <span class="kw">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_manual</span>) + <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span>(<span class="st">"Manual priors"</span>)
+
+<span class="no">plot_default</span> + <span class="no">plot_manual</span></pre></body></html></div>
 <p><img src="priors_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
 <p>We see the effects of the priors.</p>
 <ul>
@@ -258,6 +267,7 @@
 <div id="cp_prior" class="section level1">
 <h1 class="hasAnchor">
 <a href="#cp_prior" class="anchor"></a>Default priors on change points</h1>
+<p>The following are treated more formally in the <a href="https://osf.io/preprints/fzqxv/">mcp paper</a>.</p>
 <p>Change points have to be ordered from left (<code>cp_1</code>) to right (<code>cp_2+</code>). This order restriction is enforced through the priors and this is not trival. <code>mcp</code> currently offers two “packages” of change point priors that achieves different goals:</p>
 <ul>
 <li><p><strong>Speed and estimation:</strong> The default prior is suitable for estimation, prediction, and it works well for <code><a href="../reference/criterion.html">loo()</a></code> cross-validation as well. It’s main virtue is that it samples the change point posteriors relatively effectively, but it will often be deeply unfit for Bayes Factors if there are 3+ change points (see below). It may also favor “late” change points too much if estimating many change points with little data (e.g. 5 change points with 100 data points or 10 with 300).</p></li>
@@ -268,7 +278,6 @@
 <div id="the-t-tail-prior-on-2-change-points-default" class="section level2">
 <h2 class="hasAnchor">
 <a href="#the-t-tail-prior-on-2-change-points-default" class="anchor"></a>The t-tail prior on 2+ change points (default)</h2>
-<p><em>OBS: These priors are likely to change in versions beyond mcp 0.2, but not drastically.</em></p>
 <p>The first change point defaults to <code>cp_1 = dunif(MINX, MAXX)</code>. In other words, the change point has to happen in the observed range of x, but it is equally probable across this range. This is identical to the Dirichlet prior.</p>
 <p>For 2+ change points, the default (on <em>all</em> change points) is <code>cp_i = dt(MINX, (MAXX-MINX) / N_CP, N_CP - 1) T(cp_i-1, MAXX)</code>. This is not as complicated as it looks, so let me unpack it.</p>
 <ul>
@@ -284,11 +293,11 @@
 <a href="#dirichlet-based-prior-on-change-points" class="anchor"></a>Dirichlet-based prior on change points</h2>
 <p>The <a href="https://en.wikipedia.org/wiki/Dirichlet_distribution">Dirichlet distribution</a> is a multivariate beta prior and these betas jointly form a simplex, meaning that they are all positive and sum to one. They are all in the interval <span class="math inline">\([0, 1]\)</span> so they are shifted and scaled to <span class="math inline">\([min(x), max(x)]\)</span>. The Dirichlet prior has the nice property that (1) the order-restriction and boundedness is inherent to the distribution, and (2) it represents a uniform prior that <em>any</em> change happens at any <span class="math inline">\(x\)</span>, i.e., it is maximally uninformative. It underlies the modeling of monotonic effects in brms (<a href="https://psyarxiv.com/9qkhj/">Büerkner &amp; Charpentier (2019)</a>).</p>
 <p>To use the Dirichlet prior, you need to specify it for all or none of the change points. E.g.,</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">prior_dirichlet =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb8-2" title="2">  <span class="dt">cp_1 =</span> <span class="st">"dirichlet(1)"</span>,</a>
-<a class="sourceLine" id="cb8-3" title="3">  <span class="dt">cp_2 =</span> <span class="st">"dirichlet(1)"</span>,</a>
-<a class="sourceLine" id="cb8-4" title="4">  <span class="dt">cp_3 =</span> <span class="st">"dirichlet(1)"</span></a>
-<a class="sourceLine" id="cb8-5" title="5">)</a></code></pre></div>
+<div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="no">prior_dirichlet</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
+  <span class="kw">cp_1</span> <span class="kw">=</span> <span class="st">"dirichlet(1)"</span>,
+  <span class="kw">cp_2</span> <span class="kw">=</span> <span class="st">"dirichlet(1)"</span>,
+  <span class="kw">cp_3</span> <span class="kw">=</span> <span class="st">"dirichlet(1)"</span>
+)</pre></body></html></div>
 <p>The number in the parenthesis is the <span class="math inline">\(\alpha\)</span> parameter, so you could also specify <code>cp_1 = "dirichlet(3)</code> if you want to push credence for that and later change points more to the rightwards while pushing earlier priors leftwards.</p>
 </div>
 <div id="manual-priors-on-change-points" class="section level2">
@@ -322,14 +331,14 @@
 <h1 class="hasAnchor">
 <a href="#prior-predictive-checks" class="anchor"></a>Prior predictive checks</h1>
 <p>Prior predictive checks is a great way to ensure that the priors are meaningful. Simply set <code>sample = "prior"</code>. Let us do it for the two sets of priors defined previously in this article, to see their different prior predictive space.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="co"># Sample priors </span></a>
-<a class="sourceLine" id="cb9-2" title="2">fit_pp_manual =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(model, <span class="dt">data =</span> df, prior, <span class="dt">sample =</span> <span class="st">"prior"</span>)</a>
-<a class="sourceLine" id="cb9-3" title="3">fit_pp_default =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(model, <span class="dt">data =</span> df, <span class="dt">sample =</span> <span class="st">"prior"</span>)</a>
-<a class="sourceLine" id="cb9-4" title="4"></a>
-<a class="sourceLine" id="cb9-5" title="5"><span class="co"># Plot it</span></a>
-<a class="sourceLine" id="cb9-6" title="6">plot_pp_manual =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_pp_manual, <span class="dt">lines =</span> <span class="dv">100</span>) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/graphics/plot.window.html">ylim</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="op">-</span><span class="dv">400</span>, <span class="dv">400</span>)) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Manual prior"</span>)</a>
-<a class="sourceLine" id="cb9-7" title="7">plot_pp_default =<span class="st"> </span><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit_pp_default, <span class="dt">lines =</span> <span class="dv">100</span>) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/graphics/plot.window.html">ylim</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="op">-</span><span class="dv">400</span>, <span class="dv">400</span>)) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">"Default prior"</span>)</a>
-<a class="sourceLine" id="cb9-8" title="8">plot_pp_manual <span class="op">+</span><span class="st">  </span>plot_pp_default  <span class="co"># using patchwork</span></a></code></pre></div>
+<div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="co"># Sample priors </span>
+<span class="no">fit_pp_manual</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>, <span class="no">prior</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="st">"prior"</span>)
+<span class="no">fit_pp_default</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="st">"prior"</span>)
+
+<span class="co"># Plot it</span>
+<span class="no">plot_pp_manual</span> <span class="kw">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_pp_manual</span>, <span class="kw">lines</span> <span class="kw">=</span> <span class="fl">100</span>) + <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(-<span class="fl">400</span>, <span class="fl">400</span>)) + <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span>(<span class="st">"Manual prior"</span>)
+<span class="no">plot_pp_default</span> <span class="kw">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_pp_default</span>, <span class="kw">lines</span> <span class="kw">=</span> <span class="fl">100</span>) + <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(-<span class="fl">400</span>, <span class="fl">400</span>)) + <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span>(<span class="st">"Default prior"</span>)
+<span class="no">plot_pp_manual</span> +  <span class="no">plot_pp_default</span>  <span class="co"># using patchwork</span></pre></body></html></div>
 <p><img src="priors_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
 <p>You can see how the manual priors are more dense to the left, and the “concerted” change at x = 80.</p>
 </div>
@@ -337,7 +346,7 @@
 <h1 class="hasAnchor">
 <a href="#jags-code" class="anchor"></a>JAGS code</h1>
 <p>Here is the JAGS code for <code>fit_manual</code>:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(fit_manual<span class="op">$</span>jags_code)</a></code></pre></div>
+<div class="sourceCode" id="cb10"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="no">fit_manual</span>$<span class="no">jags_code</span>)</pre></body></html></div>
 <pre><code>## 
 ## model {
 ## 
@@ -378,38 +387,22 @@
 ##       (x[i_] &gt;= cp_2) * x_3 * X_3_[i_] 
 ##     
 ##     # Fitted standard deviation
-##     sigma_[i_] = 
-##       (x[i_] &gt;= cp_0) * sigma_1 
+##     sigma_[i_] = max(0, 
+##       (x[i_] &gt;= cp_0) * sigma_1 )
 ## 
 ##     # Likelihood and log-density for family = gaussian()
-##     y[i_] ~ dnorm((y_[i_]), 1 / sigma_[i_]^2)
-##     loglik_[i_] = logdensity.norm(y[i_], (y_[i_]), 1 / sigma_[i_]^2)
+##     y[i_] ~ dnorm((y_[i_]), 1 / sigma_[i_]^2)  # SD as precision
+##     loglik_[i_] = logdensity.norm(y[i_], (y_[i_]), 1 / sigma_[i_]^2)  # SD as precision
 ##   }
 ## }</code></pre>
 </div>
   </div>
 
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-        <div id="tocnav">
-      <h2 class="hasAnchor">
-<a href="#tocnav" class="anchor"></a>Contents</h2>
-      <ul class="nav nav-pills nav-stacked">
-<li><a href="#setting-a-prior">Setting a prior</a></li>
-      <li>
-<a href="#cp_prior">Default priors on change points</a><ul class="nav nav-pills nav-stacked">
-<li><a href="#the-t-tail-prior-on-2-change-points-default">The t-tail prior on 2+ change points (default)</a></li>
-      <li><a href="#dirichlet-based-prior-on-change-points">Dirichlet-based prior on change points</a></li>
-      <li><a href="#manual-priors-on-change-points">Manual priors on change points</a></li>
-      </ul>
-</li>
-      <li><a href="#default-priors-on-linear-predictors">Default priors on linear predictors</a></li>
-      <li><a href="#default-priors-on-varying-effects">Default priors on varying effects</a></li>
-      <li><a href="#prior-predictive-checks">Prior predictive checks</a></li>
-      <li><a href="#jags-code">JAGS code</a></li>
-      </ul>
+        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
+    </nav>
 </div>
-      </div>
 
 </div>
 
@@ -420,7 +413,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
 </div>
 
       </footer>

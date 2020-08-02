@@ -17,6 +17,9 @@
   rate = TRUE,
   prior = FALSE,
   which_y = "ct",
+  arma = TRUE,
+  nsamples = 2000,
+  scale = "response",
   ...
 )
 }
@@ -27,8 +30,7 @@
 
 \item{lines}{Positive integer or \code{FALSE}. Number of lines (posterior
 draws). FALSE or \code{lines = 0} plots no lines. Note that lines always plot
-fitted values - not predicted. For prediction intervals, see the
-\code{q_predict} argument.}
+fitted values - not predicted. For prediction intervals, see the \code{q_predict} argument.}
 
 \item{geom_data}{String. One of "point" (default), "line" (good for time-series),
 or FALSE (don not plot).}
@@ -63,6 +65,22 @@ link function (default).
 effects you want to plot.
 }}
 
+\item{arma}{Whether to include autoregressive effects.
+\itemize{
+\item \verb{TRUE:} Compute autoregressive residuals. Requires the response variable in \code{newdata}.
+\item \verb{FALSE:} Disregard the autoregressive effects. For \code{family = gaussian()}, \code{predict()} just use \code{sigma} for residuals.
+}}
+
+\item{nsamples}{Integer or \code{NULL}. Number of samples to return/summarise.
+If there are varying effects, this is the number of samples from each varying group.
+\code{NULL} means "all". Ignored if both are \code{FALSE}. More samples trade speed for accuracy.}
+
+\item{scale}{One of
+\itemize{
+\item "response": return on the observed scale, i.e., after applying the inverse link function.
+\item "linear": return on the parameter scale (where the linear trends are modelled).
+}}
+
 \item{...}{Currently ignored.}
 }
 \value{
@@ -79,13 +97,12 @@ plot individual parameter estimates.
 \examples{
 # Typical usage. ex_fit is an mcpfit object.
 plot(ex_fit)
+\donttest{
 plot(ex_fit, prior = TRUE)  # The prior
 
-\donttest{
 plot(ex_fit, lines = 0, q_fit = TRUE)  # 95\% HDI without lines
 plot(ex_fit, q_predict = c(0.1, 0.9))  # 80\% prediction interval
 plot(ex_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
-}
 
 # Show a panel for each varying effect
 # plot(fit, facet_by = "my_column")
@@ -93,6 +110,7 @@ plot(ex_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
 # Customize plots using regular ggplot2
 library(ggplot2)
 plot(ex_fit) + theme_bw(15) + ggtitle("Great plot!")
+}
 
 }
 \author{

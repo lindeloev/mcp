@@ -12,13 +12,14 @@ unpack_y(form_y, i, family)
 
 \item{i}{The segment number (integer)}
 
-\item{family}{An mcpfamily object returned by \code{get_family()}.}
+\item{family}{An mcpfamily object returned by \code{mcp_family()}.}
 }
 \value{
 A one-row tibble with the columns
 \itemize{
 \item \code{y}: string. The y variable name.
 \item \code{trials}: string. The trials variable name.
+\item \code{weights}: string. The weights variable name.
 }
 }
 \description{

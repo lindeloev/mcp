@@ -1,10 +1,10 @@
 ---
-title: "Varying change points with mcp"
+title: "Varying change points"
 author: "Jonas Kristoffer Lindeløv"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Varying change points with mcp}
+  %\VignetteIndexEntry{Varying change points}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -106,7 +106,7 @@ fit = mcp(model, data = df)
 If we just use `plot(fit)`, we would see all points in one plot. We want to facet by `id`, so:
 
 ```{r}
-plot(fit, facet_by="id", ncol = 3)
+plot(fit, facet_by = "id", ncol = 3)
 ```
 
 It seems that `mcp` did a good job of recovering the change points. There is a lot of information in this data, since the intercept and the slope on each side of the (varying) change point is shared between participants here.
@@ -122,7 +122,7 @@ Inspecting the `sim` and `match` columns, we see that they recovered the simulat
 Good convergence is not always as obvious as in this example. While `plot_pars(fit)` show population-level parameters only, you can do this to get varying effects only:
 
 ```{r}
-plot_pars(fit, pars = "varying", type = "trace", ncol=3)
+plot_pars(fit, pars = "varying", type = "trace", ncol = 3)
 ```
 
 Notice the use of the `ncol` argument to set the number of columns. You will often have *many* levels on your varying effect, so this is useful to get a good view of all of them. Naturally, you can do this for almost all kinds of plots.

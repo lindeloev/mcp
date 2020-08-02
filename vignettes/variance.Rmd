@@ -1,10 +1,10 @@
 ---
-title: "Modeling variance and variance changes in mcp"
+title: "Modeling variance and variance changes"
 author: "Jonas Kristoffer Lindeløv"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Modeling variance and variance changes in mcp}
+  %\VignetteIndexEntry{Modeling variance and variance changes}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

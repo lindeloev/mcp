@@ -4,11 +4,13 @@
 \name{ex_ar}
 \alias{ex_ar}
 \title{A change point in a time series}
-\format{A data frame with 300 rows and 2 variables:
+\format{
+A data frame with 300 rows and 2 variables:
 \describe{
 \item{time}{The x-axis.}
 \item{price}{The y-axis.}
-}}
+}
+}
 \usage{
 ex_ar
 }

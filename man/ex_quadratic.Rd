@@ -4,11 +4,13 @@
 \name{ex_quadratic}
 \alias{ex_quadratic}
 \title{A change point from plateau to quadratic}
-\format{A data frame with 81 rows and 2 variables:
+\format{
+A data frame with 81 rows and 2 variables:
 \describe{
 \item{x}{The x-axis.}
 \item{y}{The y-axis.}
-}}
+}
+}
 \usage{
 ex_quadratic
 }
