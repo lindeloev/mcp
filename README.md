@@ -171,6 +171,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp) go in-depth w
  * Use informative priors to avoid issues when using non-default priors.
  * Use `binomial(link = "logit")` for [binomial change points in mcp](https://lindeloev.github.io/mcp/articles/binomial.html). Also relevant for `bernoulli(link = "logit")`.
  * Use `poisson(link = "log")` for [Poisson change points in mcp](https://lindeloev.github.io/mcp/articles/poisson.html).
+ * Get results on the parameter scale rather than the observed scale using `plot(fit, scale = "linear")` or `predict(fit, scale = "linear")`.
 
 [Model comparison and hypothesis testing](https://lindeloev.github.io/mcp/articles/comparison.html):
  * Do Leave-One-Out Cross-Validation using `loo(fit)` and `loo::loo_compare(fit1$loo, fit2$loo)`.

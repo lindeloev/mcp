@@ -62,12 +62,11 @@ a sign that you may want to increase argument 'adapt' and 'iter' in \code{\link{
 # Typical usage. ex_fit is an mcpfit object.
 plot_pars(ex_fit)
 
+\dontrun{
 # More options
 plot_pars(ex_fit, regex_pars = "^cp_")  # Plot only change points
 plot_pars(ex_fit, pars = c("int_3", "time_3"))  # Plot these parameters
 plot_pars(ex_fit, type = c("trace", "violin"))  # Combine plots
-
-\dontrun{
 # Some plots only take pairs. hex is good to assess identifiability
 plot_pars(ex_fit, type = "hex", pars = c("cp_1", "time_2"))
 

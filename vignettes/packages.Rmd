@@ -9,16 +9,17 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+**OBS: I have yet to review these packages: `not`, `breakfast`, `IDetect`, `trendsegmentR`, `mosum`, `ChangepointTesting`, `changepoint.mv`, `changepointsHD`, `changepointsVar`, `InspectChangepoint`, `breakpoint`, `segmentr`, `Segmentor3IsBack`, `trendsegmentR`, `BayesPiecewiseICAR`, `BayesPieceHazSelect`.**
 
-There are a lot of change point packages out there already, so why `mcp`? Here are my (probably biased) thoughts about this. I compiled some tables, summarising change point packages ([.xlsx file here](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_tables.xlsx)). I will demonstrate each of these packages in an applied example below to discuss their merits and shortcomings. 
+There are a lot of change point packages out there already, so why `mcp`? Here are my (probably biased) thoughts about this. I compiled some tables, summarising change point packages ([.xlsx file here](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/packages_tables.xlsx)). I will demonstrate each of these packages in an applied example below to discuss their merits and shortcomings. I recommend [this nice overview](http://stats.lse.ac.uk/fryzlewicz/wbs2/wbs2sdll.pdf) of the methodologies used in many of these packages.
 
-I think `segmented`, and `EnvCpt` are good if the data fits what they can model, and `mcp` is a more capable and general-purpose package at the cost of speed. You can see the immediate roadmap for `mcp` at the [GitHub issues tracker](https://github.com/lindeloev/mcp/issues).
+Of the packages reviewed here, I think `segmented`, and `EnvCpt` are good if the data fits what they can model, and `mcp` is a more capable and general-purpose package at the cost of speed. You can see the immediate roadmap for `mcp` at the [GitHub issues tracker](https://github.com/lindeloev/mcp/issues).
 
 
 ## Modeling options
 How much flexibility does the package allow for modeling the system, you're studying? A clear difference here is between packages that allow you to *specify* the number of change points, and packages which infer the number of change points *automatically* (using some criteria), captured in the `N` column below.
 
-![](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_table1.png)
+![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/packages_table1.png)
 
 <br /><br />
 
@@ -28,7 +29,7 @@ What can you learn, once the model has fitted? While all packages return the est
 
 Note that `EnvCpt` returns one log-likelihood per model, which one then could do testing on. `segmented` returns AIC and deviance, so ditto here. However, this is something you would have to do yourself. `mcp` explicitly supports and recommends workflows for detailed model comparisons.
 
-![](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_table2.png)
+![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/packages_table2.png)
 
 <br /><br />
 
@@ -36,7 +37,7 @@ Note that `EnvCpt` returns one log-likelihood per model, which one then could do
 ## Other conveniences
 This is a list of other functions, which I find useful on other statistics packages, including simulating data, getting fitted and predicted values given the model, and an assessment of speed. The option to include prior knowledge could be important in some situations.
 
-![](https://github.com/lindeloev/mcp/raw/master/man/figures/packages_table3.png)
+![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/packages_table3.png)
 
 
 
@@ -326,7 +327,6 @@ I have yet to test these:
  
  * `TSIS` and `segmenTier` may be coerced to do change point analysis, though it is mean for much more complicated switch point models in gene expression analysis. It's primary interface is a Shiny App.
  * `plrs::plrs`. Piecewise Linear Regression, targeted at DNA and gene expression. May also be coerced into simpler problems.
- * Packages that went under my radar initially: `ChangepointTesting`, `changepoint.mv`, `changepointsHD`, `changepointsVar`, `InspectChangepoint`, `breakpoint`, `segmentr`, `Segmentor3IsBack`, `trendsegmentR`, `BayesPiecewiseICAR`, `BayesPieceHazSelect`
 
 
 <!--
@@ -352,8 +352,4 @@ https://cran.r-project.org/web/packages/trendsegmentR/index.html
 https://github.com/pfryz/wild-binary-segmentation-2.0 [this will be part of the “breakfast” package soon]
 
 https://cran.r-project.org/web/packages/mosum/index.html
-
-These and some other latest packages are reviewed e.g. in http://stats.lse.ac.uk/fryzlewicz/wbs2/wbs2sdll.pdf.
-
-Finally, if I may comment on one of the packages listed in your blog post: “wbsts” segments the autocovariance structure of a time series (not its mean!) so is unsuitable for your running example and should not be used on it.
 -->

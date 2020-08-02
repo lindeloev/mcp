@@ -81,7 +81,7 @@ waic.mcpfit = function(x, ...) {
 
 #' Test hypotheses on mcp objects.
 #'
-#' Rreturns posterior probabilities and Bayes Factors for flexible hypotheses involving
+#' Returns posterior probabilities and Bayes Factors for flexible hypotheses involving
 #' model parameters. The documentation for the argument `hypotheses` below
 #' shows examples of how to specify hypotheses, and [read worked examples on the mcp website](https://lindeloev.github.io/mcp/articles/comparison.html).
 #' For directional hypotheses, `hypothesis`` executes the hypothesis string in

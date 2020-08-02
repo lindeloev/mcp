@@ -56,7 +56,7 @@
 
 <meta property="og:title" content="Changelog" />
 <meta property="og:image" content="https://github.com/lindeloev/mcp/raw/master/man/figures/logo.png" />
-<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:card" content="summary" />
 <meta name="twitter:creator" content="@jonaslindeloev" />
 <meta name="twitter:site" content="@jonaslindeloev" />
 
@@ -265,7 +265,7 @@
 <h2 class="hasAnchor">
 <a href="#other-changes" class="anchor"></a>Other changes</h2>
 <ul>
-<li>Change point densities in <code><a href="../reference/plot.mcpfit.html">plot(fit)</a></code> are now scaled to 20% of the plot for each chain X changepoint combo. This adresses a common problem where a wide posterior was almost invisibly low when a narrow posterior was present. This means that heights should only be compared <em>within</em> each chain x changepoint combo - not across.</li>
+<li>Change point densities in <code><a href="../reference/plot.mcpfit.html">plot(fit)</a></code> are now scaled to 20% of the plot for each chain X changepoint combo. This addresses a common problem where a wide posterior was almost invisibly low when a narrow posterior was present. This means that heights should only be compared <em>within</em> each chain x changepoint combo - not across.</li>
 <li>Removed the implicit ceiling of 1000 lines and samples in <code><a href="../reference/plot.mcpfit.html">plot.mcpfit()</a></code>.</li>
 <li>Rownames are removed from <code><a href="../reference/summary.mcpfit.html">ranef()</a></code> and <code><a href="../reference/summary.mcpfit.html">fixef()</a></code> returns.</li>
 <li>A major effort has been put into making <code>mcp</code> robust and agile to develop. <code>mcp</code> now use defensive programming with helpful error messages. The Test suite includes 3600+ tests.</li>

@@ -5,24 +5,27 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Varying change points with mcp • mcp</title>
+<title>Varying change points • mcp</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
 <link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><!-- docsearch --><script src="../docsearch.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
+<script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
+<script src="../pkgdown.js"></script><!-- docsearch --><script src="../docsearch.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.3/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous">
 <link href="../docsearch.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script><link href="../extra.css" rel="stylesheet">
-<meta property="og:title" content="Varying change points with mcp">
-<meta property="og:description" content="">
-<meta property="og:image" content="https://lindeloev.github.io/mcp/logo.png">
+<meta property="og:title" content="Varying change points">
+<meta property="og:description" content="mcp">
+<meta property="og:image" content="https://github.com/lindeloev/mcp/raw/master/man/figures/logo.png">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:creator" content="@jonaslindeloev">
+<meta name="twitter:site" content="@jonaslindeloev">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
@@ -34,7 +37,7 @@
   gtag('config', 'UA-1026978-3');
 </script>
 </head>
-<body>
+<body data-spy="scroll" data-target="#toc">
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -47,7 +50,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
       </span>
     </div>
 
@@ -78,6 +81,9 @@
     <li>
       <a href="../articles/arma.html">Time series and autocorrelation</a>
     </li>
+    <li>
+      <a href="../articles/predict.html">Fits and predictions</a>
+    </li>
   </ul>
 </li>
 <li class="dropdown">
@@ -88,6 +94,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/families.html">Supported families and link functions</a>
+    </li>
+    <li>
       <a href="../articles/poisson.html">Poisson</a>
     </li>
     <li>
@@ -128,7 +137,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/lindeloev/mcp">
+  <a href="https://github.com/lindeloev/mcp/">
     <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
@@ -152,10 +161,10 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1>Varying change points with mcp</h1>
+      <h1 data-toc-skip>Varying change points</h1>
                         <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2020-01-05</h4>
+            <h4 class="date">2020-08-02</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/varying.Rmd"><code>vignettes/varying.Rmd</code></a></small>
       <div class="hidden name"><code>varying.Rmd</code></div>
@@ -178,17 +187,17 @@
 <h1 class="hasAnchor">
 <a href="#specifying-varying-change-points" class="anchor"></a>Specifying varying change points</h1>
 <p>You specify varying effects using the classical <a href="https://www.rdocumentation.org/packages/lme4/versions/1.1-21/topics/lmer"><code>lmer</code></a> syntax <code>(1|group)</code>. Currently (v. 0.1) <code>mcp</code> only support varying intercepts. For example, here we model a varying change point between a plateau and a joined slope:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1">model =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb1-2" title="2">  y <span class="op">~</span><span class="st"> </span><span class="dv">1</span>,  <span class="co"># int_1</span></a>
-<a class="sourceLine" id="cb1-3" title="3">  <span class="dv">1</span> <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span><span class="op">|</span>id) <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>x  <span class="co"># cp_1, cp_1_sd, cp_1_id[i]</span></a>
-<a class="sourceLine" id="cb1-4" title="4">)</a></code></pre></div>
+<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
+  <span class="no">y</span> ~ <span class="fl">1</span>,  <span class="co"># int_1</span>
+  <span class="fl">1</span> + (<span class="fl">1</span><span class="kw">|</span><span class="no">id</span>) ~ <span class="fl">0</span> + <span class="no">x</span>  <span class="co"># cp_1, cp_1_sd, cp_1_id[i]</span>
+)</pre></body></html></div>
 <p>You can have multiple varying change points with multiple groupings:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1">model =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb2-2" title="2">  y <span class="op">~</span><span class="st"> </span><span class="dv">1</span>,  <span class="co"># int_1</span></a>
-<a class="sourceLine" id="cb2-3" title="3">  <span class="dv">1</span> <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span><span class="op">|</span>id) <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>x,  <span class="co"># cp_1, cp_1_sd, cp_1_id[i]</span></a>
-<a class="sourceLine" id="cb2-4" title="4">  <span class="dv">1</span> <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span><span class="op">|</span>species) <span class="op">~</span><span class="st"> </span><span class="dv">0</span>,  <span class="co"># cp_2, cp_2_sd, cp_2_species[i]</span></a>
-<a class="sourceLine" id="cb2-5" title="5">  (<span class="dv">1</span><span class="op">|</span>id) <span class="op">~</span><span class="st"> </span><span class="dv">1</span>  <span class="co"># cp_3 (implicit), cp_3_sd, cp_3_id[i]</span></a>
-<a class="sourceLine" id="cb2-6" title="6">)</a></code></pre></div>
+<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
+  <span class="no">y</span> ~ <span class="fl">1</span>,  <span class="co"># int_1</span>
+  <span class="fl">1</span> + (<span class="fl">1</span><span class="kw">|</span><span class="no">id</span>) ~ <span class="fl">0</span> + <span class="no">x</span>,  <span class="co"># cp_1, cp_1_sd, cp_1_id[i]</span>
+  <span class="fl">1</span> + (<span class="fl">1</span><span class="kw">|</span><span class="no">species</span>) ~ <span class="fl">0</span>,  <span class="co"># cp_2, cp_2_sd, cp_2_species[i]</span>
+  (<span class="fl">1</span><span class="kw">|</span><span class="no">id</span>) ~ <span class="fl">1</span>  <span class="co"># cp_3 (implicit), cp_3_sd, cp_3_id[i]</span>
+)</pre></body></html></div>
 <p>Here are some properties of the change point varying effects:</p>
 <p><strong>Zero centered:</strong> The varying effects are zero-centered around the associated group-level change point. In other words, the sum of all varying effects are exactly zero. This constraint is necessary for the parameters to be identifiable.</p>
 <p><strong>Hierarchical:</strong> Consider the first change point, <code>cp_1</code>, and it’s associated varying effects, <code>cp_1_id</code>. By default, it is modeled as sampled from (nested within) the group-level change point, <code>cp_1</code>, as well as a spread, <code>cp_1_sd</code>.</p>
@@ -198,252 +207,78 @@
 <h1 class="hasAnchor">
 <a href="#simulating-varying-effects" class="anchor"></a>Simulating varying effects</h1>
 <p>Let us do a worked example, simulating the varying change point between a plateau and a slope:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">model =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(</a>
-<a class="sourceLine" id="cb3-2" title="2">  y <span class="op">~</span><span class="st"> </span><span class="dv">1</span>,  <span class="co"># int_1</span></a>
-<a class="sourceLine" id="cb3-3" title="3">  <span class="dv">1</span> <span class="op">+</span><span class="st"> </span>(<span class="dv">1</span><span class="op">|</span>id) <span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>x  <span class="co"># cp_1, cp_1_sd, cp_1_id[i]</span></a>
-<a class="sourceLine" id="cb3-4" title="4">)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
+  <span class="no">y</span> ~ <span class="fl">1</span>,  <span class="co"># int_1</span>
+  <span class="fl">1</span> + (<span class="fl">1</span><span class="kw">|</span><span class="no">id</span>) ~ <span class="fl">0</span> + <span class="no">x</span>  <span class="co"># cp_1, cp_1_sd, cp_1_id[i]</span>
+)</pre></body></html></div>
 <p>It is quite similar to simulating non-varying data, except that we need to simulate some varying offsets before passing all parameters to <code>empty$simulate</code>:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(mcp)</a>
-<a class="sourceLine" id="cb4-2" title="2">empty =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(model, <span class="dt">sample =</span> <span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb4-3" title="3"></a>
-<a class="sourceLine" id="cb4-4" title="4"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(dplyr)</a>
-<a class="sourceLine" id="cb4-5" title="5">varying =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"Clark"</span>, <span class="st">"Louis"</span>, <span class="st">"Batman"</span>, <span class="st">"Batgirl"</span>, <span class="st">"Spiderman"</span>, <span class="st">"Jane"</span>)</a>
-<a class="sourceLine" id="cb4-6" title="6">df =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(</a>
-<a class="sourceLine" id="cb4-7" title="7">  <span class="dt">x =</span> <span class="kw"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/length.html">length</a></span>(varying) <span class="op">*</span><span class="st"> </span><span class="dv">30</span>, <span class="dv">0</span>, <span class="dv">100</span>),  <span class="co"># 30 data points for each</span></a>
-<a class="sourceLine" id="cb4-8" title="8">  <span class="dt">id =</span> <span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(varying, <span class="dt">each =</span> <span class="dv">30</span>)  <span class="co"># the group names</span></a>
-<a class="sourceLine" id="cb4-9" title="9">)</a>
-<a class="sourceLine" id="cb4-10" title="10">df<span class="op">$</span>id_numeric =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/factor.html">as.factor</a></span>(df<span class="op">$</span>id))  <span class="co"># to positive integers</span></a>
-<a class="sourceLine" id="cb4-11" title="11">df<span class="op">$</span>y =<span class="st"> </span>empty<span class="op">$</span><span class="kw"><a href="https://rdrr.io/r/stats/simulate.html">simulate</a></span>(df<span class="op">$</span>x,</a>
-<a class="sourceLine" id="cb4-12" title="12">  <span class="co"># Population-level:</span></a>
-<a class="sourceLine" id="cb4-13" title="13">  <span class="dt">int_1 =</span> <span class="dv">20</span>, <span class="dt">x_2 =</span> <span class="fl">0.5</span>, <span class="dt">cp_1 =</span> <span class="dv">50</span>, <span class="dt">sigma =</span> <span class="dv">2</span>,</a>
-<a class="sourceLine" id="cb4-14" title="14">  </a>
-<a class="sourceLine" id="cb4-15" title="15">  <span class="co"># Varying: zero-centered and 10 between each level</span></a>
-<a class="sourceLine" id="cb4-16" title="16">  <span class="dt">cp_1_id =</span> <span class="dv">10</span> <span class="op">*</span><span class="st"> </span>(df<span class="op">$</span>id_numeric <span class="op">-</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/mean.html">mean</a></span>(df<span class="op">$</span>id_numeric)))</a>
-<a class="sourceLine" id="cb4-17" title="17"></a>
-<a class="sourceLine" id="cb4-18" title="18">df</a></code></pre></div>
-<pre><code>##              x        id id_numeric        y
-## 1   33.1750223     Clark          3 18.91755
-## 2   94.9251489     Clark          3 46.58185
-## 3    2.8842972     Clark          3 18.09860
-## 4   66.7335683     Clark          3 27.78131
-## 5   66.3343874     Clark          3 31.06984
-## 6   91.4709595     Clark          3 43.86298
-## 7   49.3278482     Clark          3 22.77321
-## 8   27.4492045     Clark          3 19.06895
-## 9   18.5286428     Clark          3 19.35421
-## 10  30.9988145     Clark          3 18.74855
-## 11  70.5422589     Clark          3 33.10042
-## 12  31.9299078     Clark          3 22.15523
-## 13  80.1597175     Clark          3 38.39460
-## 14  13.8713671     Clark          3 19.93272
-## 15  20.1397074     Clark          3 19.18865
-## 16  39.2124244     Clark          3 19.80598
-## 17  71.7094248     Clark          3 30.25854
-## 18  77.3550155     Clark          3 32.44052
-## 19  54.3277326     Clark          3 24.22828
-## 20  32.6658716     Clark          3 19.52319
-## 21  48.5421029     Clark          3 21.20077
-## 22  78.4693393     Clark          3 36.02937
-## 23  80.5876435     Clark          3 41.45155
-## 24  29.9807366     Clark          3 18.72527
-## 25  54.8188756     Clark          3 26.59994
-## 26  35.4620212     Clark          3 20.90003
-## 27  37.9930230     Clark          3 21.61682
-## 28  24.4648033     Clark          3 20.60932
-## 29  26.8223916     Clark          3 18.85769
-## 30  73.5974516     Clark          3 32.48876
-## 31  28.5945541     Louis          5 21.15609
-## 32  57.3357784     Louis          5 19.31437
-## 33  80.3753625     Louis          5 27.00193
-## 34  51.5597364     Louis          5 20.15992
-## 35  92.4994902     Louis          5 34.22002
-## 36  47.3395522     Louis          5 18.89724
-## 37  70.7217738     Louis          5 24.30456
-## 38  32.1675132     Louis          5 17.22288
-## 39  96.0627885     Louis          5 35.60438
-## 40  97.1727393     Louis          5 31.99723
-## 41  85.0871361     Louis          5 28.19515
-## 42   6.8208421     Louis          5 19.33109
-## 43  88.8583304     Louis          5 28.03700
-## 44  38.9563337     Louis          5 20.01064
-## 45  50.2640681     Louis          5 15.40707
-## 46   8.0114981     Louis          5 19.06718
-## 47   7.7987064     Louis          5 20.20000
-## 48  93.9909373     Louis          5 34.32500
-## 49  71.9257898     Louis          5 25.87799
-## 50  92.8684321     Louis          5 31.68633
-## 51  97.1369090     Louis          5 32.20823
-## 52  50.9064073     Louis          5 18.96588
-## 53  37.5578514     Louis          5 20.17296
-## 54  35.5951224     Louis          5 19.09276
-## 55   0.5316059     Louis          5 15.62799
-## 56  74.3231418     Louis          5 25.94403
-## 57  74.2302525     Louis          5 22.76157
-## 58  70.3375262     Louis          5 23.96250
-## 59  31.7974728     Louis          5 20.87845
-## 60  85.9257008     Louis          5 29.59288
-## 61   9.2909877    Batman          2 18.69503
-## 62  57.3127250    Batman          2 30.71918
-## 63  95.3676352    Batman          2 49.08646
-## 64  69.1812671    Batman          2 35.95556
-## 65  99.2268156    Batman          2 49.87248
-## 66  18.1884743    Batman          2 19.33940
-## 67  60.8427322    Batman          2 35.38798
-## 68  75.3392278    Batman          2 40.20528
-## 69  19.5461666    Batman          2 21.51774
-## 70  19.6859552    Batman          2 19.10795
-## 71  53.1792842    Batman          2 27.99404
-## 72  22.2021818    Batman          2 20.34081
-## 73   9.7892860    Batman          2 20.32675
-## 74  97.5147632    Batman          2 49.48079
-## 75  13.2037081    Batman          2 21.13517
-## 76  18.7582008    Batman          2 17.98807
-## 77  22.8907934    Batman          2 18.28183
-## 78  96.4326776    Batman          2 51.32740
-## 79  34.8718933    Batman          2 20.08667
-## 80  22.8491112    Batman          2 21.10238
-## 81  39.0075328    Batman          2 22.90768
-## 82  62.8275838    Batman          2 37.20752
-## 83  58.9010522    Batman          2 33.02424
-## 84  33.1394632    Batman          2 20.66252
-## 85  75.9858318    Batman          2 39.61322
-## 86  93.6289605    Batman          2 50.48038
-## 87  44.1184952    Batman          2 23.38907
-## 88  32.8684753    Batman          2 26.04028
-## 89  55.4164605    Batman          2 26.37314
-## 90   5.4797475    Batman          2 18.62343
-## 91  99.1025583   Batgirl          1 57.06895
-## 92  89.0930289   Batgirl          1 53.56244
-## 93  26.2927987   Batgirl          1 18.82109
-## 94  82.6779934   Batgirl          1 52.65519
-## 95  10.9892832   Batgirl          1 24.04992
-## 96  52.7761914   Batgirl          1 34.01997
-## 97  43.6263840   Batgirl          1 31.28762
-## 98  44.3923009   Batgirl          1 24.92169
-## 99  65.8029425   Batgirl          1 40.63538
-## 100 54.8335571   Batgirl          1 36.00201
-## 101 35.3706708   Batgirl          1 23.26965
-## 102 82.2210002   Batgirl          1 47.52401
-## 103 66.4933288   Batgirl          1 40.33247
-## 104 35.3720702   Batgirl          1 23.26941
-## 105  0.4237780   Batgirl          1 20.27431
-## 106 92.0265072   Batgirl          1 53.83852
-## 107 25.0812084   Batgirl          1 17.76193
-## 108 86.7013299   Batgirl          1 52.10944
-## 109 14.8261581   Batgirl          1 19.13825
-## 110 90.8009367   Batgirl          1 53.03431
-## 111 90.1519185   Batgirl          1 50.29730
-## 112  4.6898876   Batgirl          1 17.19499
-## 113  1.3246209   Batgirl          1 17.86080
-## 114 53.9985692   Batgirl          1 34.60930
-## 115 31.2802920   Batgirl          1 21.24169
-## 116  1.1600457   Batgirl          1 19.88527
-## 117 38.1131757   Batgirl          1 27.69870
-## 118 66.7957966   Batgirl          1 42.04866
-## 119 45.3837207   Batgirl          1 29.20673
-## 120 80.8433630   Batgirl          1 48.21171
-## 121 96.0958113 Spiderman          6 31.49201
-## 122 46.4693269 Spiderman          6 20.87523
-## 123 16.9555373 Spiderman          6 19.56713
-## 124 66.5487318 Spiderman          6 21.04404
-## 125 46.4294512 Spiderman          6 19.29084
-## 126 56.0202492 Spiderman          6 21.27548
-## 127 68.2448724 Spiderman          6 19.61485
-## 128  2.5532469 Spiderman          6 18.60253
-## 129 69.9333416 Spiderman          6 19.69766
-## 130 91.7647477 Spiderman          6 28.56942
-## 131 90.8592714 Spiderman          6 28.55599
-## 132 93.6408787 Spiderman          6 28.83063
-## 133 33.0098815 Spiderman          6 19.31716
-## 134 54.1891273 Spiderman          6 18.51717
-## 135  5.1071289 Spiderman          6 22.01692
-## 136 97.1071020 Spiderman          6 33.77195
-## 137  9.7516895 Spiderman          6 18.77803
-## 138 44.2146603 Spiderman          6 20.00491
-## 139 69.4315631 Spiderman          6 19.53341
-## 140 58.9704486 Spiderman          6 21.57479
-## 141 52.8580927 Spiderman          6 19.63185
-## 142 75.5203890 Spiderman          6 19.90463
-## 143  7.6034100 Spiderman          6 20.61233
-## 144 84.4690084 Spiderman          6 25.22858
-## 145 29.4886551 Spiderman          6 22.66057
-## 146 25.0805200 Spiderman          6 20.11393
-## 147 89.8072291 Spiderman          6 26.32066
-## 148 28.5707921 Spiderman          6 21.43363
-## 149 86.4704090 Spiderman          6 24.88408
-## 150 58.6572576 Spiderman          6 21.96109
-## 151 95.0522630      Jane          4 38.06824
-## 152 84.2058571      Jane          4 32.14799
-## 153 70.7952573      Jane          4 24.08919
-## 154 64.7275723      Jane          4 25.95951
-## 155  7.5337734      Jane          4 23.25907
-## 156 42.9396509      Jane          4 20.59846
-## 157  4.6086654      Jane          4 19.13259
-## 158 61.6271520      Jane          4 23.09032
-## 159 14.9573507      Jane          4 20.01085
-## 160 73.5339868      Jane          4 29.97746
-## 161 55.8907655      Jane          4 20.56875
-## 162 92.8956690      Jane          4 37.66811
-## 163 74.9341433      Jane          4 29.78720
-## 164 99.1056949      Jane          4 42.05636
-## 165 68.4341440      Jane          4 27.65783
-## 166 11.5077944      Jane          4 20.11884
-## 167 67.5302884      Jane          4 21.93789
-## 168 17.2309739      Jane          4 18.32796
-## 169 61.0152666      Jane          4 24.08953
-## 170 58.4754855      Jane          4 22.11526
-## 171 74.7208458      Jane          4 28.90715
-## 172 16.3637219      Jane          4 20.39272
-## 173 21.4326270      Jane          4 20.83282
-## 174 85.2040610      Jane          4 36.00524
-## 175 38.9540888      Jane          4 20.83099
-## 176 85.9608937      Jane          4 38.59322
-## 177 10.9130913      Jane          4 23.10889
-## 178 13.0783109      Jane          4 18.70294
-## 179 30.2820038      Jane          4 20.74747
-## 180 57.5796241      Jane          4 23.94904</code></pre>
+<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">mcp</span>)
+<span class="no">empty</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="fl">FALSE</span>)
+
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">dplyr</span>, <span class="kw">warn.conflicts</span> <span class="kw">=</span> <span class="fl">FALSE</span>)
+<span class="no">varying</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"Clark"</span>, <span class="st">"Louis"</span>, <span class="st">"Batman"</span>, <span class="st">"Batgirl"</span>, <span class="st">"Spiderman"</span>, <span class="st">"Jane"</span>)
+<span class="no">df</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(
+  <span class="kw">x</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span>(<span class="no">varying</span>) * <span class="fl">30</span>, <span class="fl">0</span>, <span class="fl">100</span>),  <span class="co"># 30 data points for each</span>
+  <span class="kw">id</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="no">varying</span>, <span class="kw">each</span> <span class="kw">=</span> <span class="fl">30</span>)  <span class="co"># the group names</span>
+)
+<span class="no">df</span>$<span class="no">id_numeric</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/factor.html">as.factor</a></span>(<span class="no">df</span>$<span class="no">id</span>))  <span class="co"># to positive integers</span>
+<span class="no">df</span>$<span class="no">y</span> <span class="kw">=</span> <span class="no">empty</span>$<span class="fu"><a href="https://rdrr.io/r/stats/simulate.html">simulate</a></span>(<span class="no">df</span>$<span class="no">x</span>,
+  <span class="co"># Population-level:</span>
+  <span class="kw">int_1</span> <span class="kw">=</span> <span class="fl">20</span>, <span class="kw">x_2</span> <span class="kw">=</span> <span class="fl">0.5</span>, <span class="kw">cp_1</span> <span class="kw">=</span> <span class="fl">50</span>, <span class="kw">sigma</span> <span class="kw">=</span> <span class="fl">2</span>,
+
+  <span class="co"># Varying: zero-centered and 10 between each level</span>
+  <span class="kw">cp_1_id</span> <span class="kw">=</span> <span class="fl">10</span> * (<span class="no">df</span>$<span class="no">id_numeric</span> - <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span>(<span class="no">df</span>$<span class="no">id_numeric</span>)))
+
+<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">df</span>)</pre></body></html></div>
+<pre><code>##          x    id id_numeric        y
+## 1 54.01724 Clark          3 22.22085
+## 2 74.24237 Clark          3 30.61685
+## 3 90.20926 Clark          3 41.02559
+## 4 96.04774 Clark          3 43.25672
+## 5 91.19080 Clark          3 41.97705
+## 6 76.08185 Clark          3 34.89453</code></pre>
 <p>Here, we “translated” the <code>id</code> to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around <code>cp_1</code>. The result:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</a>
-<a class="sourceLine" id="cb6-2" title="2"><span class="kw">ggplot</span>(df, <span class="kw">aes</span>(<span class="dt">x=</span>x, <span class="dt">y=</span>y)) <span class="op">+</span><span class="st"> </span></a>
-<a class="sourceLine" id="cb6-3" title="3"><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></a>
-<a class="sourceLine" id="cb6-4" title="4"><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>id)</a></code></pre></div>
+<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">ggplot2</span>)
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>(<span class="no">df</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="kw">x</span><span class="kw">=</span><span class="no">x</span>, <span class="kw">y</span><span class="kw">=</span><span class="no">y</span>)) +
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>() +
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html">facet_wrap</a></span>(~<span class="no">id</span>)</pre></body></html></div>
 <p><img src="varying_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
 </div>
 <div id="summarise-and-plot-varying-effects-" class="section level1">
 <h1 class="hasAnchor">
 <a href="#summarise-and-plot-varying-effects-" class="anchor"></a>Summarise and plot varying effects.</h1>
 <p>Fitting the model is simple:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1">fit =<span class="st"> </span><span class="kw"><a href="../reference/mcp.html">mcp</a></span>(model, <span class="dt">data =</span> df)</a></code></pre></div>
+<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>)</pre></body></html></div>
 <p>If we just use <code><a href="../reference/plot.mcpfit.html">plot(fit)</a></code>, we would see all points in one plot. We want to facet by <code>id</code>, so:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1"><span class="kw"><a href="../reference/plot.mcpfit.html">plot</a></span>(fit, <span class="dt">facet_by=</span><span class="st">"id"</span>, <span class="dt">ncol =</span> <span class="dv">3</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>, <span class="kw">facet_by</span> <span class="kw">=</span> <span class="st">"id"</span>, <span class="kw">ncol</span> <span class="kw">=</span> <span class="fl">3</span>)</pre></body></html></div>
 <p><img src="varying_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
 <p>It seems that <code>mcp</code> did a good job of recovering the change points. There is a lot of information in this data, since the intercept and the slope on each side of the (varying) change point is shared between participants here.</p>
 <p>If you use <code><a href="../reference/summary.mcpfit.html">summary(fit)</a></code> (or <code><a href="../reference/summary.mcpfit.html">fixef(fit)</a></code>) you will get the posteriors for the population-level effects. To get the random effects, do:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="kw"><a href="../reference/summary.mcpfit.html">ranef</a></span>(fit)</a></code></pre></div>
-<pre><code>##                 name match sim       mean      lower      upper      Rhat n.eff
-## 1   cp_1_id[Batgirl]    OK -25 -25.037779 -26.446342 -23.621530 1.0000397  6032
-## 2    cp_1_id[Batman]    OK -15 -14.955790 -16.659256 -13.318725 1.0002404  6094
-## 3     cp_1_id[Clark]    OK  -5  -4.998653  -6.655961  -3.402067 1.0000792  4166
-## 4      cp_1_id[Jane]    OK   5   4.978247   3.318662   6.526709 0.9999848  4791
-## 5     cp_1_id[Louis]    OK  15  16.103747  14.411616  17.701612 1.0005380  4275
-## 6 cp_1_id[Spiderman]    OK  25  23.910229  21.819158  25.986350 0.9999900  5824</code></pre>
+<div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="fu"><a href="../reference/summary.mcpfit.html">ranef</a></span>(<span class="no">fit</span>)</pre></body></html></div>
+<pre><code>##                 name match sim       mean      lower      upper     Rhat n.eff
+## 1   cp_1_id[Batgirl]       -25 -27.642179 -29.633069 -25.535566 1.000932  6162
+## 2    cp_1_id[Batman]    OK -15 -15.885094 -17.803994 -14.043178 1.001110  4946
+## 3     cp_1_id[Clark]    OK  -5  -5.468217  -7.785248  -3.200067 1.000450  5420
+## 4      cp_1_id[Jane]    OK   5   6.775620   4.106788   9.637472 1.000404  3542
+## 5     cp_1_id[Louis]    OK  15  15.876310  13.383819  18.426597 1.001681  3944
+## 6 cp_1_id[Spiderman]    OK  25  26.343560  23.151675  29.659387 1.000132  5300</code></pre>
 <p>Inspecting the <code>sim</code> and <code>match</code> columns, we see that they recovered the simulation parameters well.</p>
 <p>Good convergence is not always as obvious as in this example. While <code><a href="../reference/plot_pars.html">plot_pars(fit)</a></code> show population-level parameters only, you can do this to get varying effects only:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit, <span class="dt">pars =</span> <span class="st">"varying"</span>, <span class="dt">type =</span> <span class="st">"trace"</span>, <span class="dt">ncol=</span><span class="dv">3</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit</span>, <span class="kw">pars</span> <span class="kw">=</span> <span class="st">"varying"</span>, <span class="kw">type</span> <span class="kw">=</span> <span class="st">"trace"</span>, <span class="kw">ncol</span> <span class="kw">=</span> <span class="fl">3</span>)</pre></body></html></div>
 <p><img src="varying_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
 <p>Notice the use of the <code>ncol</code> argument to set the number of columns. You will often have <em>many</em> levels on your varying effect, so this is useful to get a good view of all of them. Naturally, you can do this for almost all kinds of plots.</p>
 <p>Using <code>pars = "varying"</code> will plot all varying effects. This may be too much if you have multiple varying effects. To select just one, use regular expression in <code>regex_pars</code>. Two very handy operators are “^” (begins with) and “$” (ends with). Just to show that this “faceting” works for almost all of the many plot types, we now do two columns of <code>"dens_overlay</code>:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw"><a href="../reference/plot_pars.html">plot_pars</a></span>(fit, <span class="dt">regex_pars =</span> <span class="st">"^cp_1_id"</span>, <span class="dt">type =</span> <span class="st">"dens_overlay"</span>, <span class="dt">ncol =</span> <span class="dv">2</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb12"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit</span>, <span class="kw">regex_pars</span> <span class="kw">=</span> <span class="st">"^cp_1_id"</span>, <span class="kw">type</span> <span class="kw">=</span> <span class="st">"dens_overlay"</span>, <span class="kw">ncol</span> <span class="kw">=</span> <span class="fl">2</span>)</pre></body></html></div>
 <p><img src="varying_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
 </div>
 <div id="priors-for-varying-effects" class="section level1">
 <h1 class="hasAnchor">
 <a href="#priors-for-varying-effects" class="anchor"></a>Priors for varying effects</h1>
 <p>You can see the priors of the model like this:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(fit<span class="op">$</span>prior)</a></code></pre></div>
+<div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(<span class="no">fit</span>$<span class="no">prior</span>)</pre></body></html></div>
 <pre><code>##         [,1]                                           
 ## cp_1    "dunif(MINX, MAXX)"                            
-## cp_1_sd "dnorm(0, (MAXX - MINX) / 2) T(0, )"           
+## cp_1_sd "dnorm(0, 2 * (MAXX - MINX) / N_CP) T(0, )"    
 ## cp_1_id "dnorm(0, cp_1_sd) T(MINX - cp_1, MAXX - cp_1)"
 ## int_1   "dt(0, 3 * SDY, 3)"                            
 ## x_2     "dt(0, SDY / (MAXX - MINX), 3)"                
@@ -454,7 +289,7 @@
 <h1 class="hasAnchor">
 <a href="#jags-code" class="anchor"></a>JAGS code</h1>
 <p>Here is the JAGS code for the model used in this article:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(fit<span class="op">$</span>jags_code)</a></code></pre></div>
+<div class="sourceCode" id="cb15"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="no">fit</span>$<span class="no">jags_code</span>)</pre></body></html></div>
 <pre><code>## 
 ## model {
 ## 
@@ -463,7 +298,7 @@
 ##   cp_2 = MAXX  # mcp helper value.
 ## 
 ##   cp_1 ~ dunif(MINX, MAXX)
-##   cp_1_sd ~ dnorm(0, 1/((MAXX-MINX)/2)^2) T(0, )
+##   cp_1_sd ~ dnorm(0, 1/(2*(MAXX-MINX)/N_CP)^2) T(0, )
 ##   int_1 ~ dt(0, 1/(3*SDY)^2, 3) 
 ##   x_2 ~ dt(0, 1/(SDY/(MAXX-MINX))^2, 3) 
 ##   sigma_1 ~ dnorm(0, 1/(SDY)^2) T(0, )
@@ -490,31 +325,22 @@
 ##       (x[i_] &gt;= (cp_1 + cp_1_id[id[i_]])) * x_2 * X_2_[i_] 
 ##     
 ##     # Fitted standard deviation
-##     sigma_[i_] = 
-##       (x[i_] &gt;= cp_0) * sigma_1 
+##     sigma_[i_] = max(0, 
+##       (x[i_] &gt;= cp_0) * sigma_1 )
 ## 
 ##     # Likelihood and log-density for family = gaussian()
-##     y[i_] ~ dnorm((y_[i_]), 1 / sigma_[i_]^2)
-##     loglik_[i_] = logdensity.norm(y[i_], (y_[i_]), 1 / sigma_[i_]^2)
+##     y[i_] ~ dnorm((y_[i_]), 1 / sigma_[i_]^2)  # SD as precision
+##     loglik_[i_] = logdensity.norm(y[i_], (y_[i_]), 1 / sigma_[i_]^2)  # SD as precision
 ##   }
 ## }</code></pre>
 </div>
   </div>
 
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-        <div id="tocnav">
-      <h2 class="hasAnchor">
-<a href="#tocnav" class="anchor"></a>Contents</h2>
-      <ul class="nav nav-pills nav-stacked">
-<li><a href="#specifying-varying-change-points">Specifying varying change points</a></li>
-      <li><a href="#simulating-varying-effects">Simulating varying effects</a></li>
-      <li><a href="#summarise-and-plot-varying-effects-">Summarise and plot varying effects.</a></li>
-      <li><a href="#priors-for-varying-effects">Priors for varying effects</a></li>
-      <li><a href="#jags-code">JAGS code</a></li>
-      </ul>
+        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
+    </nav>
 </div>
-      </div>
 
 </div>
 
@@ -525,7 +351,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
 </div>
 
       </footer>

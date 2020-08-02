@@ -51,7 +51,7 @@ Behind the scenes, `plot()` merely calls `predict()` and `fitted()` to show thes
 
 
 # Extracting `fitted()` values
-To get the fitted valus for each data point, simply do `fitted(fit)`:
+To get the fitted values for each data point, simply do `fitted(fit)`:
 
 ```{r}
 head(fitted(fit))
@@ -82,7 +82,7 @@ fitted(fit, newdata = newdata)
 Note that:
 
  * We get one row per value of `time`.
- * The first value for `time` is in the dataset. The values correspond to the same row in `fitted(fit)` bacause that's merely a shortcut to do `fitted(fit, newdata = fit$data)`. 
+ * The first value for `time` is in the dataset. The values correspond to the same row in `fitted(fit)` because that's merely a shortcut to do `fitted(fit, newdata = fit$data)`. 
  * The second value (`time = 20`) is within the observed region, but not in the dataset.
  * The third value (`time = - 20`) is outside the observed region, but `mcp` merely extends the first segment backwards in time. Because it's a plateau, we see approximately the same values as for `time = 20`. 
  * The fourth value (`time = 200`) is way outside the observed region. Because it is the extrapolation of the slope in the third segment of which we've only observed the first tiny bit, the posterior distribution is very wide because even a small uncertainty in the slope results in very large differences further out.
@@ -111,7 +111,7 @@ Bayesian inference is the principled updating of prior knowledge using data. Whe
 
 Say you want to forecast at `time = 125` and you know that a changepoint to the baseline level (an intercept change to `int_1`) will occur approximately after the same interval as between `cp_1` and `cp_2` (i.e., at `cp_2 + (cp_2 - cp_1)`. Here is a way to "hack" `mcp` to do this. *(NOTE: I plan on implementing this in a much more user-friendly way in a future release; see the discussion in [this github issue](https://github.com/lindeloev/mcp/issues/78) and current status in [this github issue](https://github.com/lindeloev/mcp/issues/82))*.
 
-## Step 1: fit the model to observed data
+## Step 1: run the model for observed data
 We already did that above, resulting in our `fit`. But we only do it to get the default priors that are suitable for inferring change point in this region, so you could've just run it without sampling:
 
 ```{r, eval=FALSE}
@@ -119,7 +119,8 @@ fit = mcp(model, data = ex_demo, sample = FALSE)
 ```
 
 
-## Step 2: set up a model for observed and unobserved regions
+
+## Step 2: fit a model including the unobserved regions
 Now we extend the model with the future segment of which we have prior knowledge:
 
 ```{r}
@@ -145,6 +146,9 @@ Now let's fit it:
 ```{r, results=FALSE, message=FALSE, cache=TRUE}
 fit_forecast = mcp(model_forecast, data = ex_demo, prior = prior_forecast)
 ```
+
+
+## Step 3: predict!
 
 We can go right ahead and compute our 50% and 80% prediction intervals at `time = 125`:
 

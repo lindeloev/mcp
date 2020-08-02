@@ -1,44 +1,36 @@
 ---
-title: "Families and link functions in mcp"
+title: "Families and link functions"
 author: "Jonas Kristoffer Lindeløv"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Families and link functions in mcp}
+  %\VignetteIndexEntry{Families and link functions}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-
-```{r, echo = FALSE}
-library(mcp)
-```
-
 
 `mcp 0.3` added support for more response families and link functions. For example, you can now do
 
 ```{r, eval=FALSE}
 fit = mcp(model, data = df, family = gaussian("log"))
 fit = mcp(model, data = df, family = binomial("identity"))
-fit = mcp(model, data = df, family = exponential("identity"))
 ```
 
 
 This is an ongoing effort and more will be added. This table shows the current status:
 
-[[[[[INSERT XLSX HERE]]]]]
-
-Color codes:
+![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/mcp_glm_status.png)
 
  * **Green:** supported and the default priors are unlikely to change.
  * **Yellow:** supported but the default priors may change.
  * **White:** not currently supported. [Raise a GitHub issue](https://github.com/lindeloev/mcp/issues) if you need it.
- * **Red:** will not be supported.
+ * **Red:** impossible or will not be supported.
 
 See the "GLM" menu above for more details on using GLM with `mcp`.
 
 
 # General remarks
-Some link functions are *default* in GLM for good reasons: they have proven computationally convenient and interpretable. When using a non-default link function, you risk predicting impossible values, at which point `mcp` will error (as it should) - hopefully with informative error messages. For example a `bernoulli("identity")` family with model `prob ~ 1 + x` (i.e., a slope directly on the probability of success) can easily exceed 1 or 0 and there are, of course, no such thing as probabilities below 0% or above 100%. One way to ameliorate such problems is by setting informative [priors](../articles/priors.html) (e.g., via truncation) to prevent the sampler from visiting illigal combinations of such values.
+Some link functions are *default* in GLM for good reasons: they have proven computationally convenient and interpretable. When using a non-default link function, you risk predicting impossible values, at which point `mcp` will error (as it should) - hopefully with informative error messages. For example a `bernoulli("identity")` family with model `prob ~ 1 + x` (i.e., a slope directly on the probability of success) can easily exceed 1 or 0 and there are, of course, no such thing as probabilities below 0% or above 100%. One way to ameliorate such problems is by setting informative [priors](../articles/priors.html) (e.g., via truncation) to prevent the sampler from visiting illegal combinations of such values.
 
 In short: think carefully and proceed at your own risk.
 
@@ -47,7 +39,8 @@ In short: think carefully and proceed at your own risk.
 
 Reviving the example from the article on [binomial models in mcp](../articles/binomial.html), we can model it using an `identity` link function:
 
-```{r}
+```{r, warning=FALSE}
+library(mcp)
 model = list(
   y | trials(N) ~ 1 + x,  # Intercept and slope on P(success)
   ~ 1 + x                 # Disjoined slope on P(success)

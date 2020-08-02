@@ -4,7 +4,9 @@
 \name{ex_fit}
 \alias{ex_fit}
 \title{Example fit of the ex_demo dataset}
-\format{An \code{\link{mcpfit}} object.}
+\format{
+An \code{\link{mcpfit}} object.
+}
 \usage{
 ex_fit
 }

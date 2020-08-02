@@ -1,10 +1,10 @@
 ---
-title: "Binomial change point analysis with mcp"
+title: "Binomial change point analysis"
 author: "Jonas Kristoffer Lindeløv"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Binomial change point analysis with mcp}
+  %\VignetteIndexEntry{Binomial change point analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -96,6 +96,13 @@ plot(fit, rate = FALSE)
 ```
 
 These lines are jagged because `N` varies from year to year. Although there is close too 100% success rate in the years 1900 - 1920, the number of trials varies, as you can see in the raw data. However, using `rate = FALSE` will be great when the number of trials is constant for extended periods of time, as `y` is more interpretable then.
+
+Speaking of alternative visualizations, you can also plot this on the logit scale, where the linear trends are modeled:
+
+```{r, warning=FALSE, message=FALSE}
+plot(fit, scale = "linear")
+```
+
 
 Of course, these plots work with [varying effects](../articles/varying.html) as well.
 

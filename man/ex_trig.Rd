@@ -4,11 +4,13 @@
 \name{ex_trig}
 \alias{ex_trig}
 \title{A change point between two trigonometric segments}
-\format{A data frame with 234 rows and 2 variables:
+\format{
+A data frame with 234 rows and 2 variables:
 \describe{
 \item{x}{The x-axis.}
 \item{y}{The y-axis.}
-}}
+}
+}
 \usage{
 ex_trig
 }
