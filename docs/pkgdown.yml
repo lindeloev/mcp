@@ -1,0 +1,21 @@
+pandoc: 2.7.2
+pkgdown: 1.5.1
+pkgdown_sha: ~
+articles:
+  arma: arma.html
+  binomial: binomial.html
+  comparison: comparison.html
+  families: families.html
+  formulas: formulas.html
+  packages: packages.html
+  poisson: poisson.html
+  predict: predict.html
+  priors: priors.html
+  tips: tips.html
+  variance: variance.html
+  varying: varying.html
+last_built: 2020-08-03T14:04Z
+urls:
+  reference: https://lindeloev.github.io/mcp/reference
+  article: https://lindeloev.github.io/mcp/articles
+
