@@ -231,12 +231,12 @@
 
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">df</span>)</pre></body></html></div>
 <pre><code>##          x    id id_numeric        y
-## 1 49.74609 Clark          3 22.89226
-## 2 79.54339 Clark          3 40.09721
-## 3 41.46020 Clark          3 19.84519
-## 4 78.40503 Clark          3 32.33580
-## 5 12.12818 Clark          3 18.62098
-## 6 56.30187 Clark          3 27.63758</code></pre>
+## 1 54.13349 Clark          3 27.25136
+## 2 78.46531 Clark          3 36.12037
+## 3 59.20939 Clark          3 28.35439
+## 4 33.33814 Clark          3 19.51316
+## 5  5.95686 Clark          3 17.41523
+## 6 88.76017 Clark          3 38.21824</code></pre>
 <p>Here, we “translated” the <code>id</code> to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around <code>cp_1</code>. The result:</p>
 <div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">ggplot2</span>)
 <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>(<span class="no">df</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="kw">x</span><span class="kw">=</span><span class="no">x</span>, <span class="kw">y</span><span class="kw">=</span><span class="no">y</span>)) +
