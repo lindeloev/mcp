@@ -217,13 +217,13 @@
 <a href="#extracting-fitted-values" class="anchor"></a>Extracting <code>fitted()</code> values</h1>
 <p>To get the fitted values for each data point, simply do <code><a href="../reference/fitted.mcpfit.html">fitted(fit)</a></code>:</p>
 <div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="fu"><a href="../reference/fitted.mcpfit.html">fitted</a></span>(<span class="no">fit</span>))</pre></body></html></div>
-<pre><code>##       time    fitted     error      Q2.5     Q97.5
-## 1 68.35820 30.360350 1.0675495 28.263256 32.468359
-## 2 87.29038 -3.328389 0.7622667 -4.824102 -1.839636
-## 3 69.01173 30.713316 1.1010278 28.554636 32.885493
-## 4 11.59361 10.294163 0.7383882  8.809080 11.711138
-## 5 19.50091 10.299688 0.7338284  8.822302 11.715144
-## 6 46.12009 18.349713 1.0449278 15.887739 20.098022</code></pre>
+<pre><code>##       time    fitted     error      Q2.5    Q97.5
+## 1 68.35820 30.368412 1.0550623 28.309231 32.43337
+## 2 87.29038 -3.327456 0.7582516 -4.817741 -1.85705
+## 3 69.01173 30.720513 1.0880345 28.609484 32.86864
+## 4 11.59361 10.265911 0.7150633  8.869836 11.66827
+## 5 19.50091 10.266224 0.7145484  8.869836 11.66827
+## 6 46.12009 18.387190 1.0300460 15.909229 20.08055</code></pre>
 <p>In general, this output will include:</p>
 <ul>
 <li><p>A column for each predictor column in the data. Here, <code>time</code> is the only predictor and you see the values in the same order as in <code>ex_demo</code> (which is copied to <code>fit$data</code>). But models with <a href="../articles/varying.html">varying change points</a> will additionally have a column for the varying data, <code><a href="https://rdrr.io/r/stats/family.html">binomial()</a></code> models include the number of trials, etc.</p></li>
@@ -239,10 +239,10 @@
 <div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">newdata</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="kw">time</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="no">ex_demo</span>$<span class="no">time</span>[<span class="fl">1</span>], <span class="fl">25</span>, -<span class="fl">20</span>, <span class="fl">200</span>))
 <span class="fu"><a href="../reference/fitted.mcpfit.html">fitted</a></span>(<span class="no">fit</span>, <span class="kw">newdata</span> <span class="kw">=</span> <span class="no">newdata</span>)</pre></body></html></div>
 <pre><code>##       time    fitted      error       Q2.5     Q97.5
-## 1  68.3582  30.36035  1.0675495  28.263256 32.468359
-## 2  25.0000  10.35250  0.7160763   8.968458 11.783576
-## 3 -20.0000  10.29398  0.7384837   8.809080 11.711138
-## 4 200.0000 -28.25347 10.5704540 -49.686861 -8.156723</code></pre>
+## 1  68.3582  30.36841  1.0550623  28.309231 32.433369
+## 2  25.0000  10.30424  0.6984145   8.938691 11.687439
+## 3 -20.0000  10.26591  0.7150633   8.869836 11.668270
+## 4 200.0000 -28.24084 10.6526088 -49.298540 -7.905933</code></pre>
 <p>Note that:</p>
 <ul>
 <li>We get one row per value of <code>time</code>.</li>
@@ -265,12 +265,12 @@
 <div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">42</span>)
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="fu"><a href="../reference/predict.mcpfit.html">predict</a></span>(<span class="no">fit</span>, <span class="kw">probs</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0.1</span>, <span class="fl">0.9</span>)))</pre></body></html></div>
 <pre><code>##       time   predict    error       Q10       Q90
-## 1 68.35820 30.286036 4.180773 25.048992 35.701717
-## 2 87.29038 -3.352445 4.093294 -8.642547  1.931335
-## 3 69.01173 30.773631 4.169833 25.432658 36.097625
-## 4 11.59361 10.255830 4.087815  5.152514 15.553834
-## 5 19.50091 10.180018 4.104859  4.906673 15.410395
-## 6 46.12009 18.364016 4.152380 13.126940 23.705630</code></pre>
+## 1 68.35820 30.290758 4.180889 24.959966 35.672366
+## 2 87.29038 -3.356899 4.096895 -8.557500  1.863498
+## 3 69.01173 30.774682 4.177943 25.388760 36.165843
+## 4 11.59361 10.229859 4.069645  5.099154 15.407656
+## 5 19.50091 10.151982 4.082748  4.874197 15.365314
+## 6 46.12009 18.405480 4.135477 13.123604 23.713663</code></pre>
 <p>Note that <code><a href="../reference/predict.mcpfit.html">predict()</a></code> uses random sampling under the hood, so these values will differ slightly from call to call. You can make it replicable using <code><a href="https://rdrr.io/r/base/Random.html">set.seed()</a></code> as above. In general, the more posterior samples, the less the call-to-call variance will be. Conversely, fewer samples means more call-to-call variation, e.g., if you do <code><a href="../reference/predict.mcpfit.html">predict(fit, nsamples = 10)</a></code>).</p>
 </div>
 <div id="residuals" class="section level1">
@@ -309,8 +309,8 @@
 <a href="#step-3-predict" class="anchor"></a>Step 3: predict!</h2>
 <p>We can go right ahead and compute our 50% and 80% prediction intervals at <code>time = 125</code>:</p>
 <div class="sourceCode" id="cb15"><html><body><pre class="r"><span class="fu"><a href="../reference/predict.mcpfit.html">predict</a></span>(<span class="no">fit_forecast</span>, <span class="kw">newdata</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="kw">time</span> <span class="kw">=</span> <span class="fl">125</span>), <span class="kw">probs</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0.1</span>, <span class="fl">0.25</span>, <span class="fl">0.75</span>, <span class="fl">0.9</span>))</pre></body></html></div>
-<pre><code>##   time  predict    error       Q10       Q25     Q75      Q90
-## 1  125 3.858749 10.87805 -13.61713 -5.641222 11.7366 14.54403</code></pre>
+<pre><code>##   time  predict    error      Q10       Q25      Q75      Q90
+## 1  125 3.946098 10.99492 -13.8512 -5.578755 11.79398 14.61287</code></pre>
 <p>To really understand what’s going on here, it may be helpful to visualize the model. For now, we will have to hack this a bit too, manually doing our plot:</p>
 <div class="sourceCode" id="cb17"><html><body><pre class="r"><span class="co"># Get posterior and posterior predictive "predictions"</span>
 <span class="no">newdata</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="kw">time</span> <span class="kw">=</span> <span class="fl">1</span>:<span class="fl">170</span>)
