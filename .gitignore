@@ -1,7 +1,6 @@
 .Rproj.user
 .Rhistory
 .Rprofile
-docs
 fix_twittercard.R
 renv.lock
 renv
