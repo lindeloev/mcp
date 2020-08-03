@@ -124,12 +124,9 @@ fit = mcp(model, data = ex_demo, sample = FALSE)
 Now we extend the model with the future segment of which we have prior knowledge:
 
 ```{r}
-model_forecast = list(
-  response ~ 1,  # plateau (int_1)
-  ~ 0 + time,    # joined slope (time_2) at cp_1
-  ~ 1 + time,    # disjoined slope (int_3, time_3) at cp_2
-  ~ 1     # joined slope (time_4) at cp_3
-)
+model_forecast = c(fit$model, list(
+  ~ 1     # intercept (int_4) after cp_3
+))
 ```
 
 And finally, we extend the list of priors with the two new parameters (`time_4` and `cp_3`). It may be helpful to review [the article on priors in mcp](../articles/priors.html).
