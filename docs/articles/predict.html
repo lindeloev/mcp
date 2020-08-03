@@ -22,7 +22,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="Fits and predictions">
 <meta property="og:description" content="mcp">
-<meta property="og:image" content="https://github.com/lindeloev/mcp/raw/master/man/figures/logo.png">
+<meta property="og:image" content="https://github.com/lindeloev/mcp/raw/docs/man/figures/logo.png">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:creator" content="@jonaslindeloev">
 <meta name="twitter:site" content="@jonaslindeloev">
@@ -179,6 +179,8 @@
 <a href="#preparation-an-example-model" class="anchor"></a>Preparation: an example model</h1>
 <p>We need an <code>mcpfit</code> to get started. We take the <code>ex_demo</code> dataset:</p>
 <div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">mcp</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">3</span>)  <span class="co"># Speed up sampling!</span>
+
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">ex_demo</span>)</pre></body></html></div>
 <pre><code>##       time  response
 ## 1 68.35820 32.842651
@@ -216,12 +218,12 @@
 <p>To get the fitted values for each data point, simply do <code><a href="../reference/fitted.mcpfit.html">fitted(fit)</a></code>:</p>
 <div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="fu"><a href="../reference/fitted.mcpfit.html">fitted</a></span>(<span class="no">fit</span>))</pre></body></html></div>
 <pre><code>##       time    fitted     error      Q2.5     Q97.5
-## 1 68.35820 30.335398 1.0490838 28.302061 32.392469
-## 2 87.29038 -3.331223 0.7600690 -4.806130 -1.815527
-## 3 69.01173 30.685351 1.0824300 28.588563 32.799913
-## 4 11.59361 10.256882 0.7356098  8.824521 11.671404
-## 5 19.50091 10.264763 0.7229024  8.856258 11.671404
-## 6 46.12009 18.427314 1.0305693 16.080953 20.113827</code></pre>
+## 1 68.35820 30.360350 1.0675495 28.263256 32.468359
+## 2 87.29038 -3.328389 0.7622667 -4.824102 -1.839636
+## 3 69.01173 30.713316 1.1010278 28.554636 32.885493
+## 4 11.59361 10.294163 0.7383882  8.809080 11.711138
+## 5 19.50091 10.299688 0.7338284  8.822302 11.715144
+## 6 46.12009 18.349713 1.0449278 15.887739 20.098022</code></pre>
 <p>In general, this output will include:</p>
 <ul>
 <li><p>A column for each predictor column in the data. Here, <code>time</code> is the only predictor and you see the values in the same order as in <code>ex_demo</code> (which is copied to <code>fit$data</code>). But models with <a href="../articles/varying.html">varying change points</a> will additionally have a column for the varying data, <code><a href="https://rdrr.io/r/stats/family.html">binomial()</a></code> models include the number of trials, etc.</p></li>
@@ -237,10 +239,10 @@
 <div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">newdata</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="kw">time</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="no">ex_demo</span>$<span class="no">time</span>[<span class="fl">1</span>], <span class="fl">25</span>, -<span class="fl">20</span>, <span class="fl">200</span>))
 <span class="fu"><a href="../reference/fitted.mcpfit.html">fitted</a></span>(<span class="no">fit</span>, <span class="kw">newdata</span> <span class="kw">=</span> <span class="no">newdata</span>)</pre></body></html></div>
 <pre><code>##       time    fitted      error       Q2.5     Q97.5
-## 1  68.3582  30.33540  1.0490838  28.302061 32.392469
-## 2  25.0000  10.32299  0.7159178   8.968497 11.757525
-## 3 -20.0000  10.25686  0.7357178   8.824521 11.671404
-## 4 200.0000 -28.41087 10.5279362 -49.894271 -8.857697</code></pre>
+## 1  68.3582  30.36035  1.0675495  28.263256 32.468359
+## 2  25.0000  10.35250  0.7160763   8.968458 11.783576
+## 3 -20.0000  10.29398  0.7384837   8.809080 11.711138
+## 4 200.0000 -28.25347 10.5704540 -49.686861 -8.156723</code></pre>
 <p>Note that:</p>
 <ul>
 <li>We get one row per value of <code>time</code>.</li>
@@ -263,12 +265,12 @@
 <div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">42</span>)
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="fu"><a href="../reference/predict.mcpfit.html">predict</a></span>(<span class="no">fit</span>, <span class="kw">probs</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0.1</span>, <span class="fl">0.9</span>)))</pre></body></html></div>
 <pre><code>##       time   predict    error       Q10       Q90
-## 1 68.35820 30.258067 4.179138 24.973645 35.505338
-## 2 87.29038 -3.360078 4.111718 -8.590586  1.915983
-## 3 69.01173 30.736211 4.141409 25.435909 35.968476
-## 4 11.59361 10.222312 4.082259  5.022415 15.387142
-## 5 19.50091 10.148523 4.087641  4.934426 15.379917
-## 6 46.12009 18.438419 4.115260 13.211549 23.734503</code></pre>
+## 1 68.35820 30.286036 4.180773 25.048992 35.701717
+## 2 87.29038 -3.352445 4.093294 -8.642547  1.931335
+## 3 69.01173 30.773631 4.169833 25.432658 36.097625
+## 4 11.59361 10.255830 4.087815  5.152514 15.553834
+## 5 19.50091 10.180018 4.104859  4.906673 15.410395
+## 6 46.12009 18.364016 4.152380 13.126940 23.705630</code></pre>
 <p>Note that <code><a href="../reference/predict.mcpfit.html">predict()</a></code> uses random sampling under the hood, so these values will differ slightly from call to call. You can make it replicable using <code><a href="https://rdrr.io/r/base/Random.html">set.seed()</a></code> as above. In general, the more posterior samples, the less the call-to-call variance will be. Conversely, fewer samples means more call-to-call variation, e.g., if you do <code><a href="../reference/predict.mcpfit.html">predict(fit, nsamples = 10)</a></code>).</p>
 </div>
 <div id="residuals" class="section level1">
@@ -307,8 +309,8 @@
 <a href="#step-3-predict" class="anchor"></a>Step 3: predict!</h2>
 <p>We can go right ahead and compute our 50% and 80% prediction intervals at <code>time = 125</code>:</p>
 <div class="sourceCode" id="cb15"><html><body><pre class="r"><span class="fu"><a href="../reference/predict.mcpfit.html">predict</a></span>(<span class="no">fit_forecast</span>, <span class="kw">newdata</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="kw">time</span> <span class="kw">=</span> <span class="fl">125</span>), <span class="kw">probs</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0.1</span>, <span class="fl">0.25</span>, <span class="fl">0.75</span>, <span class="fl">0.9</span>))</pre></body></html></div>
-<pre><code>##   time  predict    error       Q10       Q25      Q75     Q90
-## 1  125 3.700895 11.05037 -13.93596 -6.340951 11.74761 14.6364</code></pre>
+<pre><code>##   time  predict    error       Q10       Q25     Q75      Q90
+## 1  125 3.858749 10.87805 -13.61713 -5.641222 11.7366 14.54403</code></pre>
 <p>To really understand what’s going on here, it may be helpful to visualize the model. For now, we will have to hack this a bit too, manually doing our plot:</p>
 <div class="sourceCode" id="cb17"><html><body><pre class="r"><span class="co"># Get posterior and posterior predictive "predictions"</span>
 <span class="no">newdata</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="kw">time</span> <span class="kw">=</span> <span class="fl">1</span>:<span class="fl">170</span>)
@@ -329,7 +331,7 @@
   <span class="co"># Observed data</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>(<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="kw">x</span> <span class="kw">=</span> <span class="no">time</span>, <span class="kw">y</span> <span class="kw">=</span> <span class="no">response</span>), <span class="kw">data</span> <span class="kw">=</span> <span class="no">ex_demo</span>) +
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span>(<span class="kw">title</span> <span class="kw">=</span> <span class="st">"Predicting with future change points"</span>)</pre></body></html></div>
-<p><img src="../docs/articles/predict_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
+<p><img src="predict_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
 <p>You can read the predicted values from above at <code>x = 125</code> off this graph. We literally just predicted for all values between 1 and 170, and visualized it using a ribbon. This means that you can also predict further into the future, if you’d like.</p>
 <p>You can extend this approach to an arbitrary number of future segments, even using the posterior from the “unobserved” segment 4 in the priors for parameters in future segments. In Bayesian inference, it really does not make much of a difference whether credence in some parameter values have been updated using data or not - it’s all credence.</p>
 <p>Without doing this formal model of the future change point, one may have thought that the change point should occur around <code>time = 110</code> since that’s the expected value of <code>cp_2 + (cp_2 - cp_1)</code>. However, we truncated the prior for the future change point (<code>cp_3</code>) so that it occurs <em>after</em> the last data point (<code>MAXX</code>), i.e., at <code>time &gt; 100</code>. This is knowledge that the third change point had not yet been observed at <code>time = 100</code>, and this pushes the distribution further into the future (actually around 118; see <code><a href="../reference/summary.mcpfit.html">summary(fit_forecast)</a></code>).</p>

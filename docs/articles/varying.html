@@ -22,7 +22,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="Varying change points">
 <meta property="og:description" content="mcp">
-<meta property="og:image" content="https://github.com/lindeloev/mcp/raw/master/man/figures/logo.png">
+<meta property="og:image" content="https://github.com/lindeloev/mcp/raw/docs/man/figures/logo.png">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:creator" content="@jonaslindeloev">
 <meta name="twitter:site" content="@jonaslindeloev">
@@ -231,12 +231,12 @@
 
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">df</span>)</pre></body></html></div>
 <pre><code>##          x    id id_numeric        y
-## 1 18.41213 Clark          3 18.91649
-## 2 81.99507 Clark          3 36.18609
-## 3 46.43843 Clark          3 24.54768
-## 4 36.48746 Clark          3 19.65311
-## 5 28.85070 Clark          3 18.42040
-## 6 78.64642 Clark          3 35.53951</code></pre>
+## 1 49.74609 Clark          3 22.89226
+## 2 79.54339 Clark          3 40.09721
+## 3 41.46020 Clark          3 19.84519
+## 4 78.40503 Clark          3 32.33580
+## 5 12.12818 Clark          3 18.62098
+## 6 56.30187 Clark          3 27.63758</code></pre>
 <p>Here, we “translated” the <code>id</code> to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around <code>cp_1</code>. The result:</p>
 <div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">ggplot2</span>)
 <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>(<span class="no">df</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="kw">x</span><span class="kw">=</span><span class="no">x</span>, <span class="kw">y</span><span class="kw">=</span><span class="no">y</span>)) +

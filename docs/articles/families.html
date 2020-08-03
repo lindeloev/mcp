@@ -22,7 +22,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="Families and link functions">
 <meta property="og:description" content="mcp">
-<meta property="og:image" content="https://github.com/lindeloev/mcp/raw/master/man/figures/logo.png">
+<meta property="og:image" content="https://github.com/lindeloev/mcp/raw/docs/man/figures/logo.png">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:creator" content="@jonaslindeloev">
 <meta name="twitter:site" content="@jonaslindeloev">
@@ -217,7 +217,7 @@
 ## Initializing model
 ## 
 ## 
-## Error in update.jags(model, n.iter, ...) : Error in node loglik_[64]
+## Error in update.jags(model, n.iter, ...) : Error in node loglik_[65]
 ## Invalid parent values</code></pre>
 <p>Oops, the sampler visited impossible values! Likely <code>P(success) &lt; 0%</code> or <code>P(success) &gt; 100%</code>. Let’s help it along with some more informative priors. For this data and model, the main problem is that the slope of the second segment has too great posterior probability of surpasses 100% with the default <code>mcp</code> priors. So let’s set some more informative priors render a long (early <code>cp_1</code>) and steep (high <code>x_2</code>) slope unlikely:</p>
 <div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">prior</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
@@ -239,11 +239,11 @@
 ## 
 ## Population-level parameters:
 ##   name match  sim     mean   lower   upper Rhat n.eff
-##   cp_1       30.0 39.67902 39.0002 41.3962    1   830
-##  int_1        2.0  0.85467  0.7676  0.9401    1   935
-##  int_2  &lt;NA&gt;   NA  0.13153  0.0558  0.2085    1  1735
-##    x_1  &lt;NA&gt;   NA -0.00045 -0.0041  0.0034    1   861
-##    x_2       -0.2  0.01074  0.0085  0.0131    1  1660</code></pre>
+##   cp_1       30.0 39.64803 39.0001 41.1826    1   915
+##  int_1        2.0  0.85320  0.7584  0.9391    1   814
+##  int_2  &lt;NA&gt;   NA  0.13157  0.0568  0.2073    1  1751
+##    x_1  &lt;NA&gt;   NA -0.00038 -0.0043  0.0036    1   817
+##    x_2       -0.2  0.01071  0.0084  0.0129    1  1718</code></pre>
 </div>
 <div id="specific-remarks" class="section level1">
 <h1 class="hasAnchor">

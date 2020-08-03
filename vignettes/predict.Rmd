@@ -16,6 +16,8 @@ We need an `mcpfit` to get started. We take the `ex_demo` dataset:
 
 ```{r}
 library(mcp)
+options(mc.cores = 3)  # Speed up sampling!
+
 head(ex_demo)
 ```
 
