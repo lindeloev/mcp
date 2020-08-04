@@ -122,6 +122,8 @@ plot.mcpfit = function(x,
   if (scale == "linear" && rate == FALSE)
     message("Known bug: the data points are plotted incorrectly when scale = 'linear' and rate = FALSE.")
 
+  assert_ellipsis(...)
+
   # Useful vars
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)

@@ -222,6 +222,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
   assert_numeric(width, lower = 0, upper = 1)
   assert_integer(digits, lower = 0)
   assert_logical(prior)
+  assert_ellipsis(...)
 
   samples = mcmclist_samples(fit, prior = prior, error = FALSE)
 
@@ -257,6 +258,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
 #' @describeIn summary.mcpfit Get population-level ("fixed") effects of an \code{\link{mcpfit}} object.
 #' @export
 fixef = function(object, width = 0.95, prior = FALSE, ...) {
+  assert_ellipsis(...)
   get_summary(object, width, varying = FALSE, prior = prior)
 }
 
@@ -265,6 +267,7 @@ fixef = function(object, width = 0.95, prior = FALSE, ...) {
 #' @describeIn summary.mcpfit Get varying ("random") effects of an \code{\link{mcpfit}} object.
 #' @export
 ranef = function(object, width = 0.95, prior = FALSE, ...) {
+  assert_ellipsis(...)
   get_summary(object, width, varying = TRUE, prior = prior)
 }
 
@@ -284,6 +287,7 @@ print.mcpfit = function(x, ...) {
 #' @aliases print.mcpprior
 #' @inheritParams print.mcpfit
 print.mcpprior = function(x, ...) {
+  assert_ellipsis(...)
   to_print = cbind(x)
   colnames(to_print) = "prior"
   print(to_print)
@@ -544,7 +548,7 @@ tidy_samples = function(
 #' @param scale One of
 #'   * "response": return on the observed scale, i.e., after applying the inverse link function.
 #'   * "linear": return on the parameter scale (where the linear trends are modelled).
-#' @param ... Currently unused
+#' @param ... Currently ignored.
 #' @return
 #'   * If `summary = TRUE`: A `tibble` with the posterior mean for each row in `newdata`,
 #'     If `newdata` is `NULL`, the data in `fit$data` is used.
@@ -582,8 +586,7 @@ pp_eval = function(
   arma = TRUE,
   nsamples = NULL,
   samples_format = "tidy",
-  scale = 'response',
-  ...
+  scale = 'response'
 ) {
   # Recodings
   fit = object
@@ -752,6 +755,7 @@ predict.mcpfit = function(
   samples_format = "tidy",
   ...
 ) {
+  assert_ellipsis(...)
   pp_eval(
     object,
     newdata = newdata,
@@ -803,6 +807,7 @@ fitted.mcpfit = function(
   scale = "response",
   ...
 ) {
+  assert_ellipsis(...)
   pp_eval(
     object,
     newdata = newdata,
@@ -852,6 +857,7 @@ residuals.mcpfit = function(
   nsamples = NULL,
   ...
 ) {
+  assert_ellipsis(...)
   pp_eval(
     object,
     newdata = newdata,

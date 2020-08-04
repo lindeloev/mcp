@@ -75,6 +75,7 @@ loo.mcpfit = function(x, ...) {
 #' @export
 #'
 waic.mcpfit = function(x, ...) {
+  assert_ellipsis(...)
   criterion(x, "waic")
 }
 
