@@ -115,7 +115,7 @@
       <a href="../articles/packages.html">Comparison to other packages</a>
     </li>
     <li>
-      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
+      <a href="../articles/tips.html">Tips, tricks, and debugging</a>
     </li>
   </ul>
 </li>
@@ -162,9 +162,7 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>An overview of change point packages in R</h1>
-                        <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2020-08-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/packages.Rmd"><code>vignettes/packages.Rmd</code></a></small>
       <div class="hidden name"><code>packages.Rmd</code></div>
@@ -174,13 +172,13 @@
     
     
 <p><strong>OBS: I have yet to review these packages: <code>not</code>, <code>breakfast</code>, <code>IDetect</code>, <code>trendsegmentR</code>, <code>mosum</code>, <code>ChangepointTesting</code>, <code>changepoint.mv</code>, <code>changepointsHD</code>, <code>changepointsVar</code>, <code>InspectChangepoint</code>, <code>breakpoint</code>, <code>segmentr</code>, <code>Segmentor3IsBack</code>, <code>trendsegmentR</code>, <code>BayesPiecewiseICAR</code>, <code>BayesPieceHazSelect</code>.</strong></p>
-<p>There are a lot of change point packages out there already, so why <code>mcp</code>? Here are my (probably biased) thoughts about this. I compiled some tables, summarising change point packages (<a href="https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/packages_tables.xlsx">.xlsx file here</a>). I will demonstrate each of these packages in an applied example below to discuss their merits and shortcomings. I recommend <a href="http://stats.lse.ac.uk/fryzlewicz/wbs2/wbs2sdll.pdf">this nice overview</a> of the methodologies used in many of these packages.</p>
+<p>There are a lot of change point packages out there already, so why <code>mcp</code>? Here are my (probably biased) thoughts about this. I compiled some tables, summarising change point packages (<a href="https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/packages_tables.xlsx">.xlsx file here</a>). I will demonstrate each of these packages in an applied example below to discuss their merits and shortcomings. I recommend <a href="http://stats.lse.ac.uk/fryzlewicz/wbs2/wbs2sdll.pdf">this nice overview</a> of the methodologies used in many of these packages.</p>
 <p>Of the packages reviewed here, I think <code>segmented</code>, and <code>EnvCpt</code> are good if the data fits what they can model, and <code>mcp</code> is a more capable and general-purpose package at the cost of speed. You can see the immediate roadmap for <code>mcp</code> at the <a href="https://github.com/lindeloev/mcp/issues">GitHub issues tracker</a>.</p>
 <div id="modeling-options" class="section level2">
 <h2 class="hasAnchor">
 <a href="#modeling-options" class="anchor"></a>Modeling options</h2>
 <p>How much flexibility does the package allow for modeling the system, you’re studying? A clear difference here is between packages that allow you to <em>specify</em> the number of change points, and packages which infer the number of change points <em>automatically</em> (using some criteria), captured in the <code>N</code> column below.</p>
-<p><img src="https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/packages_table1.png"></p>
+<p><img src="https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/packages_table1.png"></p>
 <p><br><br></p>
 </div>
 <div id="inference" class="section level2">
@@ -188,14 +186,14 @@
 <a href="#inference" class="anchor"></a>Inference</h2>
 <p>What can you learn, once the model has fitted? While all packages return the estimated Change Points, few return an index of uncertainty around that estimate (<code>CP CI</code>: confidence intervals, highest-density intervals, or posterior densities). Sometimes, it may not even be the change point that is of interest, but rather the parameters of the segments in between (<code>params</code>, <code>params CI</code>). Finally, you may want to compare models, e.g., testing whether a change point is present or not, or testing the nature of the segments between change points (<code>hypothesis tests</code>).</p>
 <p>Note that <code>EnvCpt</code> returns one log-likelihood per model, which one then could do testing on. <code>segmented</code> returns AIC and deviance, so ditto here. However, this is something you would have to do yourself. <code>mcp</code> explicitly supports and recommends workflows for detailed model comparisons.</p>
-<p><img src="https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/packages_table2.png"></p>
+<p><img src="https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/packages_table2.png"></p>
 <p><br><br></p>
 </div>
 <div id="other-conveniences" class="section level2">
 <h2 class="hasAnchor">
 <a href="#other-conveniences" class="anchor"></a>Other conveniences</h2>
 <p>This is a list of other functions, which I find useful on other statistics packages, including simulating data, getting fitted and predicted values given the model, and an assessment of speed. The option to include prior knowledge could be important in some situations.</p>
-<p><img src="https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/packages_table3.png"></p>
+<p><img src="https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/packages_table3.png"></p>
 </div>
 <div id="unique-features-of-mcp" class="section level1">
 <h1 class="hasAnchor">
@@ -233,7 +231,9 @@
 <h1 class="hasAnchor">
 <a href="#a-simple-dataset-to-compare-packages" class="anchor"></a>A simple dataset to compare packages</h1>
 <p>As a simple example, we simulate some intercept-only data with change points at 30 (from mean=2 to mean=0) and 70 (to mean=1) and a residual of 1 SD.</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="co"># Simulate</span>
+<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">mcp</span>)
+
+<span class="co"># Simulate</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">42</span>)  <span class="co"># I always use 42; no fiddling</span>
 <span class="no">df</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(
   <span class="kw">x</span> <span class="kw">=</span> <span class="fl">1</span>:<span class="fl">100</span>,
@@ -243,14 +243,13 @@
 <span class="co"># Plot it</span>
 <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">df</span>)
 <span class="fu"><a href="https://rdrr.io/r/graphics/abline.html">abline</a></span>(<span class="kw">v</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">30</span>, <span class="fl">70</span>), <span class="kw">col</span><span class="kw">=</span><span class="st">"red"</span>)</pre></body></html></div>
-<p><img src="packages_files/figure-html/unnamed-chunk-2-1.png" width="700"></p>
+<p><img src="packages_files/figure-html/unnamed-chunk-1-1.png" width="700"></p>
 </div>
 <div id="mcp" class="section level1">
 <h1 class="hasAnchor">
 <a href="#mcp" class="anchor"></a>mcp</h1>
 <p><code>mcp</code> needs no further introduction. We fit the three-plateaus model with default priors:.</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">mcp</span>)
-<span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="no">y</span>~<span class="fl">1</span>, <span class="fl">1</span>~<span class="fl">1</span>, <span class="fl">1</span>~<span class="fl">1</span>)  <span class="co"># three intercept-only segments</span>
+<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="no">y</span>~<span class="fl">1</span>, <span class="fl">1</span>~<span class="fl">1</span>, <span class="fl">1</span>~<span class="fl">1</span>)  <span class="co"># three intercept-only segments</span>
 <span class="no">fit_mcp</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>, <span class="kw">par_x</span> <span class="kw">=</span> <span class="st">"x"</span>)
 
 <span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span>(<span class="no">fit_mcp</span>)</pre></body></html></div>
@@ -263,17 +262,17 @@
 ## 
 ## Population-level parameters:
 ##     name   mean lower upper Rhat n.eff
-##     cp_1 30.665 27.06 33.99    1  1543
-##     cp_2 63.780 46.99 76.41    1   803
-##    int_1  2.045  1.65  2.46    1  4238
-##    int_2 -0.072 -0.49  0.41    1  1278
-##    int_3  0.913  0.52  1.30    1  2063
-##  sigma_1  1.063  0.91  1.22    1  3721</code></pre>
+##     cp_1 30.683 27.03 34.00    1  1627
+##     cp_2 63.657 46.23 76.00    1   841
+##    int_1  2.044  1.64  2.42    1  4369
+##    int_2 -0.071 -0.53  0.38    1  2020
+##    int_3  0.910  0.52  1.31    1  2398
+##  sigma_1  1.064  0.91  1.22    1  4151</code></pre>
 <p>The summary shows good parameter recovery, though the second change point is detected a bit early. This is understandable if you look at the data, and the true change point is still within the highest density interval.</p>
 <p>Plotting the posterior distributions of the change points reveal that they are not well represented by a Gaussian or other known distributions. Therefore, confidence intervals are likely to be meaningless for this problem.</p>
 <div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">patchwork</span>)
 <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_mcp</span>) + <span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit_mcp</span>, <span class="kw">pars</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"cp_1"</span>, <span class="st">"cp_2"</span>), <span class="kw">type</span> <span class="kw">=</span> <span class="st">"dens_overlay"</span>)</pre></body></html></div>
-<p><img src="packages_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
+<p><img src="packages_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
 <p><code>mcp</code> takes around 6 seconds to fit this example, which is the slowest of all the packages considered here. You can bring that down to 2.5 seconds by running in parallel, using <code><a href="../reference/mcp.html">mcp(..., cores = 3)</a></code> or for the full session using <code><a href="https://rdrr.io/r/base/options.html">options(mc.cores = 3)</a></code>.</p>
 </div>
 <div id="envcpt" class="section level1">
@@ -285,7 +284,7 @@
 <span class="no">fit_envcpt</span>$<span class="no">summary</span>  <span class="co"># Show log-likelihoods</span></pre></body></html></div>
 <p>This can be used to maximize the log-likelihood. Of interest here is <code>meancpt</code>. The documentation says that it calls <code><a href="https://rdrr.io/pkg/changepoint/man/cpt.meanvar.html">changepoint::cpt.meanvar</a></code>, modeling a simultaneous change in mean and variance. Curiously, <code><a href="https://rdrr.io/pkg/changepoint/man/cpt.meanvar.html">changepoint::cpt.meanvar(df$y)</a></code> only finds one change point when called directly (see below), but the output matches <code>changepoint.np::cpt.np(df$y)@cpts</code>, so I suspect that this function is used instead. <code>EnvCpt</code> has a nice plot of all the models:</p>
 <div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_envcpt</span>)</pre></body></html></div>
-<p><img src="packages_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
+<p><img src="packages_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
 <p>Digging into the <code>meancpt</code>, we get maximum-likelihood estimates of the change points and the parameters of each segment.</p>
 <div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">fit_envcpt</span>$<span class="no">meancpt</span>@<span class="kw">cpts</span></pre></body></html></div>
 <pre><code>## [1]  30  65 100</code></pre>
@@ -338,7 +337,7 @@
 <span class="fu"><a href="https://rdrr.io/r/graphics/points.html">points</a></span>(<span class="no">df</span>)
 <span class="fu"><a href="https://rdrr.io/pkg/segmented/man/lines.segmented.html">lines.segmented</a></span>(<span class="no">fit_segmented</span>)
 <span class="fu"><a href="https://rdrr.io/pkg/segmented/man/points.segmented.html">points.segmented</a></span>(<span class="no">fit_segmented</span>)</pre></body></html></div>
-<p><img src="packages_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
+<p><img src="packages_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
 <p>Because the fitted objects returned by <code>segmented</code> contains <code>aic</code>, <code>deviance</code>, etc. it is in principle possible to do model comparison. Here is a BIC-based Bayes Factor testing whether there is one or two change points in the data:</p>
 <div class="sourceCode" id="cb14"><html><body><pre class="r"><span class="no">fit_segmented_1</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/pkg/segmented/man/segmented.html">segmented</a></span>(<span class="no">fit_lm</span>, <span class="kw">seg.Z</span> <span class="kw">=</span> ~<span class="no">x</span>, <span class="kw">npsi</span> <span class="kw">=</span> <span class="fl">1</span>)
 <span class="no">BF</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>((<span class="fu"><a href="https://rdrr.io/r/stats/AIC.html">BIC</a></span>(<span class="no">fit_segmented</span>) - <span class="fu"><a href="https://rdrr.io/r/stats/AIC.html">BIC</a></span>(<span class="no">fit_segmented_1</span>))/<span class="fl">2</span>)  <span class="co"># From Wagenmakers (2007)</span>
@@ -352,7 +351,7 @@
 <span class="kw pkg">loo</span><span class="kw ns">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(<span class="no">fit_mcp</span>$<span class="no">loo</span>, <span class="no">fit_mcp_1</span>$<span class="no">loo</span>)</pre></body></html></div>
 <pre><code>##        elpd_diff se_diff
 ## model1  0.0       0.0   
-## model2 -7.7       3.1</code></pre>
+## model2 -5.8       2.7</code></pre>
 <p>While <code>segmented</code> prefers the one-change-point model, <code>mcp</code> prefers the (true) two-change-point model. Again, the models compared here are <em>very</em> different since <code>segmented</code> does inference on a slope-only model.</p>
 </div>
 <div id="strucchangebreakpoints" class="section level1">
@@ -414,7 +413,7 @@
 ##  2.0685868  0.4456268 30.0000000</code></pre>
 <p>Plot:</p>
 <div class="sourceCode" id="cb26"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_changepoint</span>)</pre></body></html></div>
-<p><img src="packages_files/figure-html/unnamed-chunk-17-1.png" width="700"></p>
+<p><img src="packages_files/figure-html/unnamed-chunk-16-1.png" width="700"></p>
 <p>The package <code>changepoint.np</code> extends <code>changepoint</code> by providing a non-parametric version. It is unclear which of the <code>changepoint</code> functions are extended, but it manages to find both change points to a good precision. As with many other packages, no intervals are provided. As mentioned earlier, I suspect that <code>EnvCpt</code> uses this function under the hood.</p>
 <div class="sourceCode" id="cb27"><html><body><pre class="r"><span class="kw pkg">changepoint.np</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/changepoint.np/man/cpt.np.html">cpt.np</a></span>(<span class="no">df</span>$<span class="no">y</span>)@<span class="kw">cpts</span></pre></body></html></div>
 <pre><code>## [1]  29  65 100</code></pre>
@@ -427,7 +426,7 @@
 <div class="sourceCode" id="cb29"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">bcp</span>)
 <span class="no">fit_bcp</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/pkg/bcp/man/bcp.html">bcp</a></span>(<span class="no">df</span>$<span class="no">y</span>, <span class="kw">d</span> <span class="kw">=</span> <span class="fl">1000</span>)
 <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_bcp</span>)</pre></body></html></div>
-<p><img src="packages_files/figure-html/unnamed-chunk-19-1.png" width="700"></p>
+<p><img src="packages_files/figure-html/unnamed-chunk-18-1.png" width="700"></p>
 </div>
 <div id="ecp" class="section level1">
 <h1 class="hasAnchor">

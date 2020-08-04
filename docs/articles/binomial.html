@@ -115,7 +115,7 @@
       <a href="../articles/packages.html">Comparison to other packages</a>
     </li>
     <li>
-      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
+      <a href="../articles/tips.html">Tips, tricks, and debugging</a>
     </li>
   </ul>
 </li>
@@ -162,9 +162,7 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Binomial change point analysis</h1>
-                        <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2020-08-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/binomial.Rmd"><code>vignettes/binomial.Rmd</code></a></small>
       <div class="hidden name"><code>binomial.Rmd</code></div>
@@ -186,6 +184,9 @@
 <p>If you already have data, you can safely skip this section.</p>
 <p>We run <code>mcp</code> with <code>sample = FALSE</code> to get what we need to simulate data.</p>
 <div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">mcp</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">3</span>)  <span class="co"># Speed up sampling</span>
+<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">42</span>)  <span class="co"># Make the script deterministic</span>
+
 <span class="no">empty</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">family</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="kw">sample</span> <span class="kw">=</span> <span class="fl">FALSE</span>)</pre></body></html></div>
 <p>Now we can simulate. First, let us see the model parameters.</p>
 <div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="no">empty</span>$<span class="no">pars</span></pre></body></html></div>
@@ -233,12 +234,12 @@
 
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">df</span>)</pre></body></html></div>
 <pre><code>##   year  N  y
-## 1 1901 20 19
-## 2 1902 20 19
-## 3 1903 19 18
-## 4 1904 12  9
-## 5 1905 20 18
-## 6 1906 18 14</code></pre>
+## 1 1901 10  9
+## 2 1902 14 12
+## 3 1903 10  9
+## 4 1904 18 15
+## 5 1905 19 17
+## 6 1906 13 10</code></pre>
 <p>Visually:</p>
 <div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">df</span>$<span class="no">year</span>, <span class="no">df</span>$<span class="no">y</span>)</pre></body></html></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
@@ -258,13 +259,13 @@
 ##   3: y | trials(N) ~ 1 ~ 1 + year
 ## 
 ## Population-level parameters:
-##    name match     sim     mean    lower    upper Rhat n.eff
-##    cp_1    OK 1925.00 1921.455 1914.918 1926.126  1.4   134
-##    cp_2       1965.00 1956.733 1943.330 1965.000  3.9     4
-##   int_1    OK    2.00    2.026    1.655    2.379  1.0   721
-##   int_3    OK    0.00   -1.113   -3.344    0.429  3.8     4
-##  year_2         -0.20   -0.150   -0.189   -0.099  2.1    40
-##  year_3    OK    0.05    0.066    0.028    0.109  3.2     7</code></pre>
+##    name match     sim     mean    lower   upper Rhat n.eff
+##    cp_1    OK 1925.00 1922.466 1918.016 1926.27  1.6   131
+##    cp_2       1965.00 1957.416 1942.225 1965.00 24.1     2
+##   int_1    OK    2.00    1.781    1.458    2.08  1.0  1324
+##   int_3    OK    0.00   -0.861   -3.416    0.62 14.9     3
+##  year_2         -0.20   -0.154   -0.196   -0.10  2.9    22
+##  year_3    OK    0.05    0.057    0.022    0.11  6.5     5</code></pre>
 <p><code>summary</code> uses 95% highest density intervals (HDI) by default, but you can change it using <code><a href="../reference/summary.mcpfit.html">summary(fit, width = 0.80)</a></code>. If you have <a href="../articles/varying.html">varying effects</a>, use <code><a href="../reference/summary.mcpfit.html">ranef(fit)</a></code> to see them.</p>
 <p>Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>)</pre></body></html></div>

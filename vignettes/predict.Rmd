@@ -1,7 +1,5 @@
 ---
 title: "Fits and predictions"
-author: "Jonas Kristoffer Lindeløv"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Fits and predictions}
@@ -16,7 +14,8 @@ We need an `mcpfit` to get started. We take the `ex_demo` dataset:
 
 ```{r}
 library(mcp)
-options(mc.cores = 3)  # Speed up sampling!
+options(mc.cores = 3)  # Speed up sampling
+set.seed(42)  # Make the script deterministic
 
 head(ex_demo)
 ```
@@ -122,7 +121,7 @@ fit = mcp(model, data = ex_demo, sample = FALSE)
 
 
 
-## Step 2: fit a model including the unobserved regions
+## Step 2: add the unobserved segment(s) and fit
 Now we extend the model with the future segment of which we have prior knowledge:
 
 ```{r}

@@ -115,7 +115,7 @@
       <a href="articles/packages.html">Comparison to other packages</a>
     </li>
     <li>
-      <a href="articles/debug.html">Tips, tricks, and debugging</a>
+      <a href="articles/tips.html">Tips, tricks, and debugging</a>
     </li>
   </ul>
 </li>
@@ -163,7 +163,7 @@
 
 <div id="mcp-regression-with-multiple-change-points" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
-<a href="#mcp-regression-with-multiple-change-points" class="anchor"></a>mcp: Regression with Multiple Change Points<img src="reference/figures/logo.png" align="right" style="padding: 20px; padding-right: 0px;">
+<a href="#mcp-regression-with-multiple-change-points" class="anchor"></a>mcp: Regression with Multiple Change Points<img src="reference/figures/logo_200px.png" align="right" style="padding: 20px; padding-right: 0px;">
 </h1></div>
 
 <p><code>mcp</code> does regression with one or Multiple Change Points (MCP) between Generalized and hierarchical Linear Segments using Bayesian inference. <code>mcp</code> aims to provide maximum flexibility for analyses with a priori knowledge about the number of change points and the form of the segments in between.</p>
@@ -215,7 +215,7 @@
 <a href="#plot-and-summary" class="anchor"></a>Plot and summary</h2>
 <p>The default plot includes data, fitted lines drawn randomly from the posterior, and change point(s) posterior density for each chain:</p>
 <div class="sourceCode" id="cb4"><pre class="r"><span class="fu"><a href="reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>)</pre></div>
-<p><img src="https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_demo.png"></p>
+<p><img src="https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_demo.png"></p>
 <p>Use <code><a href="reference/summary.mcpfit.html">summary()</a></code> to summarise the posterior distribution as well as sampling diagnostics. They were <a href="https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R">simulated with mcp</a> so the summary include the “true” values in the column <code>sim</code> and the column <code>match</code> show whether this true value is within the interval:</p>
 <div class="sourceCode" id="cb5"><pre class="r"><span class="fu"><a href="reference/summary.mcpfit.html">summary</a></span>(<span class="no">fit</span>)</pre></div>
 <div class="sourceCode" id="cb6"><pre class="r">Family: gaussian(link = 'identity')
@@ -237,7 +237,7 @@ Population-level parameters:
 <p><code>rhat</code> is the <a href="https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag">Gelman-Rubin convergence diagnostic</a>, <code>eff</code> is the <a href="https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html">effective sample size</a>. You may also want to do a posterior predictive check using <code><a href="reference/pp_check.html">pp_check(fit)</a></code>.</p>
 <p><code><a href="reference/plot_pars.html">plot_pars(fit)</a></code> can be used to inspect the posteriors and convergence of all parameters. See the documentation of <code><a href="reference/plot_pars.html">plot_pars()</a></code> for many other plotting options. Here, we plot just the (population-level) change points. They often have “strange” posterior distributions, highlighting the need for a computational approach:</p>
 <div class="sourceCode" id="cb7"><pre class="r"><span class="fu"><a href="reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit</span>, <span class="kw">regex_pars</span> <span class="kw">=</span> <span class="st">"cp_"</span>)</pre></div>
-<p><img src="https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_demo_combo.png"></p>
+<p><img src="https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_demo_combo.png"></p>
 <p>Use <code><a href="reference/fitted.mcpfit.html">fitted(fit)</a></code> and <code><a href="reference/predict.mcpfit.html">predict(fit)</a></code> to get fits and predictions for in-sample and out-of-sample data.</p>
 </div>
 <div id="tests-and-model-comparison" class="section level2">
@@ -346,7 +346,7 @@ model2 -7.6       4.6</code></pre>
 )
 <span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="no">ex_plateaus</span>, <span class="kw">par_x</span> <span class="kw">=</span> <span class="st">"x"</span>)
 <span class="fu"><a href="reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>)</pre></div>
-<p><img src="https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_plateaus.png"></p>
+<p><img src="https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_plateaus.png"></p>
 </div>
 <div id="varying-change-points" class="section level2">
 <h2 class="hasAnchor">
@@ -358,7 +358,7 @@ model2 -7.6       4.6</code></pre>
 )
 <span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="no">ex_varying</span>)
 <span class="fu"><a href="reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>, <span class="kw">facet_by</span> <span class="kw">=</span> <span class="st">"id"</span>)</pre></div>
-<p><img src="https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_varying.png"></p>
+<p><img src="https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_varying.png"></p>
 <p>Summarise the varying change points using <code><a href="reference/summary.mcpfit.html">ranef()</a></code> or plot them using <code><a href="reference/plot_pars.html">plot_pars(fit, "varying")</a></code>. Again, <a href="https://github.com/lindeloev/mcp/tree/master/data-raw/ex_varying.R">this data was simulated</a> so the columns <code>match</code> and <code>sim</code> are added to show simulation values and whether they are inside the interval. Set the <code>width</code> wider for a more lenient criterion.</p>
 <div class="sourceCode" id="cb15"><pre class="r"><span class="fu"><a href="reference/summary.mcpfit.html">ranef</a></span>(<span class="no">fit</span>, <span class="kw">width</span> <span class="kw">=</span> <span class="fl">0.98</span>)</pre></div>
 <div class="sourceCode" id="cb16"><pre class="r">           name match   sim  mean   lower   upper Rhat n.eff
@@ -381,7 +381,7 @@ model2 -7.6       4.6</code></pre>
 )
 <span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="no">ex_binomial</span>, <span class="kw">family</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>())
 <span class="fu"><a href="reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>, <span class="kw">q_fit</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></div>
-<p><img src="https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_binomial.png"></p>
+<p><img src="https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_binomial.png"></p>
 <p>Use <code><a href="reference/plot.mcpfit.html">plot(fit, rate = FALSE)</a></code> if you want the points and fit lines on the original scale of <code>y</code> rather than divided by <code>N</code>.</p>
 </div>
 <div id="time-series" class="section level2">
@@ -406,7 +406,7 @@ model2 -7.6       4.6</code></pre>
   time_2    OK   0.5   0.517  4.85e-01   0.553 1.00   661</pre></div>
 <p>The fit plot shows the inferred autocorrelated nature:</p>
 <div class="sourceCode" id="cb20"><pre class="r"><span class="fu"><a href="reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_ar</span>)</pre></div>
-<p><img src="https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_ar.png"></p>
+<p><img src="https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_ar.png"></p>
 </div>
 <div id="variance-change-and-prediction-intervals" class="section level2">
 <h2 class="hasAnchor">
@@ -420,7 +420,7 @@ model2 -7.6       4.6</code></pre>
 )
 <span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="no">ex_variance</span>, <span class="kw">cores</span> <span class="kw">=</span> <span class="fl">3</span>, <span class="kw">adapt</span> <span class="kw">=</span> <span class="fl">5000</span>, <span class="kw">iter</span> <span class="kw">=</span> <span class="fl">5000</span>)
 <span class="fu"><a href="reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>, <span class="kw">q_predict</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></div>
-<p><img src="https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_variance.png"></p>
+<p><img src="https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_variance.png"></p>
 </div>
 <div id="quadratic-and-other-exponentiations" class="section level2">
 <h2 class="hasAnchor">
@@ -432,7 +432,7 @@ model2 -7.6       4.6</code></pre>
 )
 <span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="no">ex_quadratic</span>)
 <span class="fu"><a href="reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>)</pre></div>
-<p><img src="https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_quadratic.png"></p>
+<p><img src="https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_quadratic.png"></p>
 </div>
 <div id="trigonometric-and-others" class="section level2">
 <h2 class="hasAnchor">
@@ -445,7 +445,7 @@ model2 -7.6       4.6</code></pre>
 
 <span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="no">ex_trig</span>)
 <span class="fu"><a href="reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>)</pre></div>
-<p><img src="https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_trig.png"></p>
+<p><img src="https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_trig.png"></p>
 </div>
 <div id="using-rel-and-priors" class="section level2">
 <h2 class="hasAnchor">
@@ -467,7 +467,7 @@ model2 -7.6       4.6</code></pre>
 )
 <span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="no">ex_rel_prior</span>, <span class="no">prior</span>, <span class="kw">iter</span> <span class="kw">=</span> <span class="fl">10000</span>)
 <span class="fu"><a href="reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>)</pre></div>
-<p><img src="https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_fix_rel.png"></p>
+<p><img src="https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_fix_rel.png"></p>
 <p>Comparing the summary to the fitted lines in the plot, we can see that <code>int_2</code> and <code>x_2</code> are relative values. We also see that the “wrong” priors made it harder to recover the parameters used <a href="https://github.com/lindeloev/mcp/tree/master/data-raw/ex_rel_prior.R">to simulate this data</a> (<code>match</code> and <code>sim</code> columns):</p>
 <div class="sourceCode" id="cb25"><pre class="r"><span class="fu"><a href="reference/summary.mcpfit.html">summary</a></span>(<span class="no">fit</span>)</pre></div>
 <div class="sourceCode" id="cb26"><pre class="r">Population-level parameters:

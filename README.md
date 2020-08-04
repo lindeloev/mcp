@@ -1,4 +1,4 @@
-# mcp: Regression with Multiple Change Points<img src="man/figures/logo.png" align="right" style="padding: 20px; padding-right: 0px;" />
+# mcp: Regression with Multiple Change Points<img src="man/figures/logo_200px.png" align="right" style="padding: 20px; padding-right: 0px;" />
 
 [![mcp Travis-CI status](https://travis-ci.org/lindeloev/mcp.svg?branch=master)](https://travis-ci.org/lindeloev/mcp)
 [![mcp Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/r/lindeloev/mcp)
@@ -64,7 +64,7 @@ The default plot includes data, fitted lines drawn randomly from the posterior, 
 ```r
 plot(fit)
 ```
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_demo.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_demo.png)
 
 Use `summary()` to summarise the posterior distribution as well as sampling diagnostics. They were [simulated with mcp](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R) so the summary include the "true" values in the column `sim` and the column `match` show whether this true value is within the interval:
 
@@ -97,7 +97,7 @@ Population-level parameters:
 ```r
 plot_pars(fit, regex_pars = "cp_")
 ```
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_demo_combo.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_demo_combo.png)
 
 Use `fitted(fit)` and `predict(fit)` to get fits and predictions for in-sample and out-of-sample data.
 
@@ -210,7 +210,7 @@ model = list(
 fit = mcp(model, ex_plateaus, par_x = "x")
 plot(fit)
 ```
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_plateaus.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_plateaus.png)
 
 
 ## Varying change points
@@ -226,7 +226,7 @@ fit = mcp(model, ex_varying)
 plot(fit, facet_by = "id")
 ```
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_varying.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_varying.png)
 
 Summarise the varying change points using `ranef()` or plot them using `plot_pars(fit, "varying")`. Again, [this data was simulated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_varying.R) so the columns `match` and `sim` are added to show simulation values and whether they are inside the interval. Set the `width` wider for a more lenient criterion.
 
@@ -260,7 +260,7 @@ fit = mcp(model, ex_binomial, family = binomial())
 plot(fit, q_fit = TRUE)
 ```
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_binomial.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_binomial.png)
 
 Use `plot(fit, rate = FALSE)` if you want the points and fit lines on the original scale of `y` rather than divided by `N`.
 
@@ -298,7 +298,7 @@ The fit plot shows the inferred autocorrelated nature:
 plot(fit_ar)
 ```
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_ar.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_ar.png)
 
 
 
@@ -317,7 +317,7 @@ fit = mcp(model, ex_variance, cores = 3, adapt = 5000, iter = 5000)
 plot(fit, q_predict = TRUE)
 ```
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_variance.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_variance.png)
 
 
 
@@ -333,7 +333,7 @@ fit = mcp(model, ex_quadratic)
 plot(fit)
 ```
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_quadratic.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_quadratic.png)
 
 
 
@@ -351,7 +351,7 @@ fit = mcp(model, ex_trig)
 plot(fit)
 ```
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_trig.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_trig.png)
 
 
 
@@ -381,7 +381,7 @@ fit = mcp(model, ex_rel_prior, prior, iter = 10000)
 plot(fit)
 ```
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_fix_rel.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_fix_rel.png)
 
 Comparing the summary to the fitted lines in the plot, we can see that `int_2` and `x_2` are relative values. We also see that the "wrong" priors made it harder to recover the parameters used [to simulate this data](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_rel_prior.R) (`match` and `sim` columns):
 

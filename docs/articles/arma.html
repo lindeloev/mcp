@@ -115,7 +115,7 @@
       <a href="../articles/packages.html">Comparison to other packages</a>
     </li>
     <li>
-      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
+      <a href="../articles/tips.html">Tips, tricks, and debugging</a>
     </li>
   </ul>
 </li>
@@ -162,9 +162,7 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Time series change points</h1>
-                        <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2020-08-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/arma.Rmd"><code>vignettes/arma.Rmd</code></a></small>
       <div class="hidden name"><code>arma.Rmd</code></div>
@@ -184,18 +182,28 @@
 <a href="#simple-example" class="anchor"></a>Simple example</h1>
 <p>Let’s try and model the simulated <code>ex_ar</code> dataset. Take at look at <a href="https://github.com/lindeloev/mcp/tree/master/data-raw/ex_ar.R">how it was simulated with <code>mcp</code></a> and scroll down to see another simulation.</p>
 <div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">mcp</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">3</span>)  <span class="co"># Speed up sampling!</span></pre></body></html></div>
+<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">3</span>)  <span class="co"># Speed up sampling</span>
+<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">42</span>)  <span class="co"># Make the script deterministic</span>
+
+<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">ex_ar</span>)</pre></body></html></div>
+<pre><code>##   time    price
+## 1    1 26.85479
+## 2    2 21.97486
+## 3    3 24.56901
+## 4    4 26.75759
+## 5    5 27.66546
+## 6    6 26.18671</code></pre>
 <p>We model this as a plateau (<code>1</code>) with a second-order autoregressive residual (<code><a href="https://rdrr.io/r/stats/ar.html">ar(2)</a></code>) followed by a joined slope (<code>0 + time</code>) with a negative first-order autoregressive residual (<code><a href="https://rdrr.io/r/stats/ar.html">ar(1)</a></code>):</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
+<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
   <span class="no">price</span> ~ <span class="fl">1</span> + <span class="fu"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="fl">2</span>),  <span class="co"># int_1, ar1_1, ar2_1</span>
   ~ <span class="fl">0</span> + <span class="no">time</span> + <span class="fu"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="fl">1</span>)  <span class="co"># time_2, ar1_2</span>
 )
 <span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="no">ex_ar</span>)</pre></body></html></div>
 <p>Let’s plot it and we see that AR was strong in the first segment and weaker-but-negative in the second:</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>)</pre></body></html></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-3-1.png" width="700"></p>
 <p>We can summarise the inferred coefficients:</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span>(<span class="no">fit</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span>(<span class="no">fit</span>)</pre></body></html></div>
 <pre><code>## Family: gaussian(link = 'identity')
 ## Iterations: 9000 from 3 chains.
 ## Segments:
@@ -204,17 +212,17 @@
 ## 
 ## Population-level parameters:
 ##     name match   sim   mean   lower  upper Rhat n.eff
-##    ar1_1    OK   0.7   0.74   0.587   0.89    1   907
-##    ar1_2    OK  -0.4  -0.47  -0.685  -0.25    1  2316
-##    ar2_1    OK   0.2   0.15   0.007   0.29    1   936
-##     cp_1       120.0 117.24 114.044 118.84    1   339
-##    int_1        20.0  17.51  15.050  19.59    1   382
-##  sigma_1    OK   5.0   4.83   4.380   5.35    1  4869
-##   time_2    OK   0.5   0.52   0.482   0.55    1   773</code></pre>
+##    ar1_1    OK   0.7   0.73   0.570   0.87  1.0   987
+##    ar1_2    OK  -0.4  -0.47  -0.683  -0.25  1.0  2762
+##    ar2_1    OK   0.2   0.16   0.023   0.30  1.0  1069
+##     cp_1    OK 120.0 117.70 112.916 120.82  1.1    72
+##    int_1    OK  20.0  17.80  14.507  20.17  1.1   167
+##  sigma_1    OK   5.0   4.84   4.356   5.32  1.0  4468
+##   time_2    OK   0.5   0.52   0.483   0.55  1.0   828</code></pre>
 <p>Note that he naming syntax for autoregressive intercepts is <code>ar[order]_[segment]</code>. For example, <code>ar1_2</code> is the first-order autoregressive coefficient in segment 2. For slopes it will be <code>ar[order]_[normal mcp name]</code>, e.g., <code>ar1_x_3</code> for a slope on AR(1) in segment 3.</p>
 <p>Comparing the columns <code>mean</code> and <code>sim</code> we see that the AR coefficients are reasonably recovered. In fact, the posterior mean is almost always exactly the same as <code><a href="https://rdrr.io/r/stats/arima.html">arima(data, order = c(N, 0, 0))</a></code> (see below), so the non-perfect fits are due to randomness in the simulation - not in the fit.</p>
 <p>Notice that <code>sigma</code> in AR models describe <em>innovations</em>, i.e., the part of the residuals that are not explained by the autoregressive coefficients. <code><a href="https://rdrr.io/r/stats/sd.html">sd(ex_ar$price)</a></code> is always higher. In this case, the SD of raw data in the plateau is 9.2. As always, it is good to assess posteriors and convergence more directly:</p>
-<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit</span>)</pre></body></html></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-5-1.png" width="768"></p>
 <p>Sometimes, the trace plot shows that the change point (<code>cp_1</code>) is not well identified with this model and data. As discussed in the article on <a href="../articles/tips.html">tips, tricks, and debugging</a>, you could combine a more informative prior with more samples (<code><a href="../reference/mcp.html">mcp(..., adapt = 10000, iter = 10000)</a></code>), if this is a problem.</p>
 <p>You can do hypothesis testing (see <code><a href="../reference/hypothesis.html">hypothesis()</a></code>) and model comparisons (see <code><a href="../reference/criterion.html">loo()</a></code>) with autoregressive models, just as with any other model in <code>mcp</code>. <a href="../articles/comparison.html">Read more here</a> or scroll down for an applied example.</p>
@@ -234,7 +242,7 @@
 <h2 class="hasAnchor">
 <a href="#combining-ar-and-sigma" class="anchor"></a>Combining ar() and sigma()</h2>
 <p>You can combine <code><a href="https://rdrr.io/r/stats/ar.html">ar()</a></code> with any regression model and with <a href="../articles/varying.html">varying change points</a>. Combining with <code><a href="https://rdrr.io/r/stats/sigma.html">sigma()</a></code> will run will be valid if they change intercepts together so that each segment has homoskedastic residuals, i.e.,</p>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
+<div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
   <span class="no">y</span> ~ <span class="fl">1</span> + <span class="fu"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="fl">1</span>) + <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html">sigma</a></span>(<span class="fl">1</span>),
   ~ <span class="fl">0</span> + <span class="no">x</span> + <span class="fu"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="fl">1</span>) + <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html">sigma</a></span>(<span class="fl">1</span>),
   ~ <span class="fl">1</span>
@@ -255,7 +263,7 @@
 <h1 class="hasAnchor">
 <a href="#simulating-autocorrelated-change-point-data" class="anchor"></a>Simulating autocorrelated change point data</h1>
 <p>Assessing the correctness of autocorrelation is less intuitive than seeing e.g. a mean fit. However, we can verify <code>mcp</code> up against more tested-and-tried functions such as <code><a href="https://rdrr.io/r/stats/arima.html">arima()</a></code> in base R. Let us simulate a single AR(3) segment, i.e., without change points, and see if it fits:</p>
-<div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="co"># Model</span>
+<div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="co"># Model</span>
 <span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="no">response</span> ~ <span class="fl">1</span> + <span class="fu"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="fl">3</span>))
 
 <span class="co"># Simulate data</span>
@@ -270,7 +278,7 @@
     <span class="kw">ar3_1</span> <span class="kw">=</span> -<span class="fl">0.4</span>,
     <span class="kw">sigma_1</span> <span class="kw">=</span> <span class="fl">8</span>)</pre></body></html></div>
 <pre><code>## Generating residuals for AR(N) model since the response column/argument 'response' was not provided.</code></pre>
-<div class="sourceCode" id="cb10"><html><body><pre class="r"><span class="co"># Base arima AR(3)</span>
+<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="co"># Base arima AR(3)</span>
 <span class="fu"><a href="https://rdrr.io/r/stats/arima.html">arima</a></span>(<span class="no">df</span>$<span class="no">response</span>, <span class="kw">order</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">3</span>, <span class="fl">0</span>, <span class="fl">0</span>))</pre></body></html></div>
 <pre><code>## 
 ## Call:
@@ -283,9 +291,9 @@
 ## 
 ## sigma^2 estimated as 60.03:  log likelihood = -693.86,  aic = 1397.73</code></pre>
 <p>OK, we can see that the <code>ar</code> coefficients and sigma (<span class="math inline">\(sigma = sqrt(sigma^2)\)</span>) is simulated correctly, if taking <code><a href="https://rdrr.io/r/stats/arima.html">arima()</a></code> as ground truth. Inferring with <code>mcp</code> is straightforward:</p>
-<div class="sourceCode" id="cb12"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="no">df</span>, <span class="kw">par_x</span> <span class="kw">=</span> <span class="st">"time"</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="no">df</span>, <span class="kw">par_x</span> <span class="kw">=</span> <span class="st">"time"</span>)</pre></body></html></div>
 <p>The Bayesian parameter estimates are in perfect correspondence with <code><a href="https://rdrr.io/r/stats/arima.html">arima()</a></code>, even where they deviate a tiny bit from the simulation parameters (due to the inherent randomness in simulating data):</p>
-<div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="fu"><a href="../reference/summary.mcpfit.html">fixef</a></span>(<span class="no">fit</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb14"><html><body><pre class="r"><span class="fu"><a href="../reference/summary.mcpfit.html">fixef</a></span>(<span class="no">fit</span>)</pre></body></html></div>
 <pre><code>##      name match  sim       mean       lower      upper     Rhat n.eff
 ## 1   ar1_1    OK  0.7  0.6985114  0.57395916  0.8291144 1.000614  2298
 ## 2   ar2_1    OK  0.2  0.2272165  0.07080719  0.3808439 1.000161  1495
@@ -298,7 +306,7 @@
 <a href="#inferring-an-autocorrelation-only-change" class="anchor"></a>Inferring an autocorrelation-only change</h1>
 <p>One “side-effect” of the <code>mcp</code> implementation of autocorrelation using <code><a href="https://rdrr.io/r/stats/ar.html">ar()</a></code> <em>in the formulas</em> is that you can infer when autocorrelation parameters and structures change.</p>
 <p>Let’s simulate a change point in autocorrelation and see if we can infer it later:</p>
-<div class="sourceCode" id="cb15"><html><body><pre class="r"><span class="co"># The model</span>
+<div class="sourceCode" id="cb16"><html><body><pre class="r"><span class="co"># The model</span>
 <span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
   <span class="no">y</span> ~ <span class="fl">1</span> + <span class="no">x</span> + <span class="fu"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="fl">1</span>),  <span class="co"># Slope</span>
   ~ <span class="fl">0</span> + <span class="no">x</span> + <span class="fu"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="fl">1</span>)  <span class="co"># Slope and relative increase</span>
@@ -316,13 +324,13 @@
   <span class="kw">ar1_1</span> <span class="kw">=</span> <span class="fl">0.8</span>, <span class="kw">ar1_2</span> <span class="kw">=</span> <span class="fl">0.2</span>,
   <span class="kw">sigma_1</span> <span class="kw">=</span> <span class="fl">5</span>)</pre></body></html></div>
 <p>… and we use a prior to equate the slopes of each segment (read more about <a href="../articles/priors.html">using priors</a> to equate parameters and define constants). Now let’s see if we can recover these parameters. We use <code>sample = "both"</code> because we will do a Savage-Dickey test later.</p>
-<div class="sourceCode" id="cb16"><html><body><pre class="r"><span class="no">prior</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">x_2</span> <span class="kw">=</span> <span class="st">"x_1"</span>)  <span class="co"># Set the two slopes equal</span>
+<div class="sourceCode" id="cb17"><html><body><pre class="r"><span class="no">prior</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">x_2</span> <span class="kw">=</span> <span class="st">"x_1"</span>)  <span class="co"># Set the two slopes equal</span>
 <span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>, <span class="kw">prior</span> <span class="kw">=</span> <span class="no">prior</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="st">"both"</span>)</pre></body></html></div>
 <p>First, let’s get a visual to see that the posterior is reasonably narrow and consistent:</p>
-<div class="sourceCode" id="cb17"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb18"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>)</pre></body></html></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
 <p>You could use <code><a href="../reference/plot.mcpfit.html">plot(fit, geom_data = "line")</a></code> for a more classical line plot of the time series data. You can omit plotting AR effect entirely setting <code><a href="../reference/plot.mcpfit.html">plot(fit, arma = FALSE)</a></code>. You can also plot the <code>ar1_</code> parameters directly using <code>which_y</code>, so the y-axis is the value of <code>ar1</code>:</p>
-<div class="sourceCode" id="cb18"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>, <span class="kw">which_y</span> <span class="kw">=</span> <span class="st">"ar1"</span>, <span class="kw">lines</span> <span class="kw">=</span> <span class="fl">100</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb19"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>, <span class="kw">which_y</span> <span class="kw">=</span> <span class="st">"ar1"</span>, <span class="kw">lines</span> <span class="kw">=</span> <span class="fl">100</span>)</pre></body></html></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-13-1.png" width="700"></p>
 <p>We recovered the parameters, including the change point:</p>
 <pre><code>## Family: gaussian(link = 'identity')
@@ -341,15 +349,15 @@
 ##      x_1    OK  1.0  0.99  0.92  1.05    1   172
 ##      x_2    OK  1.0  0.99  0.92  1.05    1   172</code></pre>
 <p>We can also plot some of the parameters. As usual, we see that the change point is not well defined by any known distribution. The fact that the posterior mean is around 60 does not (necessarily) mean that there is a high credence in this value. Usually, I find that any bi- or N-modality on the posterior matches well with what you would guess from looking at the raw data. As they say: Bayesian inference is common sense applied to data.</p>
-<div class="sourceCode" id="cb20"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit</span>, <span class="kw">regex_pars</span> <span class="kw">=</span> <span class="st">"cp_1|ar_*"</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb21"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit</span>, <span class="kw">regex_pars</span> <span class="kw">=</span> <span class="st">"cp_1|ar_*"</span>)</pre></body></html></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
 <p>As usual, we can test hypotheses and do model comparison (<a href="../articles/comparison.html">read more here</a>). We can also ask how much more likely it is (relative to the prior) that there the two autocorrelations are equal compared to them differing. Because we sampled both the prior and posterior (<code><a href="../reference/mcp.html">mcp(..., sample = "both")</a></code>), we can do a Savage-Dickey density ratio test:</p>
-<div class="sourceCode" id="cb21"><html><body><pre class="r"><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span>(<span class="no">fit</span>, <span class="st">"ar1_1 = ar1_2"</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb22"><html><body><pre class="r"><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span>(<span class="no">fit</span>, <span class="st">"ar1_1 = ar1_2"</span>)</pre></body></html></div>
 <pre><code>##          hypothesis      mean     lower    upper            p           BF
 ## 1 ar1_1 - ar1_2 = 0 0.6869875 0.3799884 1.007476 0.0001565573 0.0001565818</code></pre>
 <p>In this case, the evidence for equality is so small that it is rounded to zero. This means that not even a single MCMC sample visited a state with noticeable density at zero difference.</p>
 <p>We can assess the same hypothesis using cross-validation, only this time it is more about whether the change point increases the predictive accuracy. The change point is favored with an <code>elpd_diff/se_diff</code> factor of around 2.</p>
-<div class="sourceCode" id="cb23"><html><body><pre class="r"><span class="no">fit_null</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="no">y</span> ~ <span class="fl">1</span> + <span class="no">x</span> + <span class="fu"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="fl">1</span>)), <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>)
+<div class="sourceCode" id="cb24"><html><body><pre class="r"><span class="no">fit_null</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="no">y</span> ~ <span class="fl">1</span> + <span class="no">x</span> + <span class="fu"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="fl">1</span>)), <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>)
 <span class="no">fit</span>$<span class="no">loo</span> <span class="kw">=</span> <span class="fu"><a href="../reference/criterion.html">loo</a></span>(<span class="no">fit</span>)
 <span class="no">fit_null</span>$<span class="no">loo</span> <span class="kw">=</span> <span class="fu"><a href="../reference/criterion.html">loo</a></span>(<span class="no">fit_null</span>)
 
@@ -358,7 +366,7 @@
 ## model1  0.0       0.0   
 ## model2 -8.8       4.3</code></pre>
 <p>Of course, we can also do directional tests. For example, what is the evidence that <code>ar1_1</code> is more than 0.3 greater than <code>ar1_2</code>? Answer: around 100 to one.</p>
-<div class="sourceCode" id="cb25"><html><body><pre class="r"><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span>(<span class="no">fit</span>, <span class="st">"ar1_1 - 0.3 &gt; ar1_2"</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb26"><html><body><pre class="r"><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span>(<span class="no">fit</span>, <span class="st">"ar1_1 - 0.3 &gt; ar1_2"</span>)</pre></body></html></div>
 <pre><code>##                hypothesis      mean      lower     upper         p       BF
 ## 1 ar1_1 - 0.3 - ar1_2 &gt; 0 0.3869875 0.07998841 0.7074764 0.9907778 107.4337</code></pre>
 </div>
@@ -367,7 +375,7 @@
 <a href="#ar_prior" class="anchor"></a>Priors on autoregressive coefficients</h1>
 <p>The default prior on autoregressive intercepts is a <code><a href="https://rdrr.io/r/stats/Uniform.html">dunif(-1, 1)</a></code> to ensure a stationary series while being otherwise agnostic about the magnitude and direction of the autocorrelation. For most time series, you would expect a positive first-order autocorrelation, e.g., <code>ar1_1 = "dunif(0, 1)"</code> or even something like <code>ar1_1 = "dnorm(0.5, 0.5) T(0, 1)"</code>. <a href="../articles/priors.html">Read more about priors</a>. Similarly, you would expect a smaller-but-still-positive second-order autocorrelation, e.g., <code>ar2_1 = dunif(0, ar1_1)</code>.</p>
 <p>Here is a complete list of the (default) priors in the model above:</p>
-<div class="sourceCode" id="cb27"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(<span class="no">fit</span>$<span class="no">prior</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb28"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(<span class="no">fit</span>$<span class="no">prior</span>)</pre></body></html></div>
 <pre><code>##         [,1]                           
 ## cp_1    "dunif(MINX, MAXX)"            
 ## int_1   "dt(0, 3 * SDY, 3)"            
@@ -377,11 +385,11 @@
 ## ar1_1   "dunif(-1, 1)"                 
 ## ar1_2   "dunif(-1, 1)"</code></pre>
 <p>We can also visualize them because we sampled the prior. <code>prior = TRUE</code> works in most <code>mcp</code> functions, including <code><a href="../reference/plot.mcpfit.html">plot()</a></code> and <code><a href="../reference/summary.mcpfit.html">summary()</a></code>.</p>
-<div class="sourceCode" id="cb29"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit</span>, <span class="kw">prior</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb30"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit</span>, <span class="kw">prior</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-21-1.png" width="672"></p>
 <p>Notice that the posteriors are smoothed at sharp cutoffs, slightly misrepresenting the true distribution.</p>
 <p>Let’s inspect the priors for a more advanced AR model, since you would often have to inform these:</p>
-<div class="sourceCode" id="cb30"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
+<div class="sourceCode" id="cb31"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
   <span class="no">y</span> ~ <span class="fl">1</span> + <span class="fu"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="fl">2</span>, <span class="fl">1</span> + <span class="no">x</span>),
   ~ <span class="fl">0</span> + <span class="fu"><a href="https://rdrr.io/r/stats/ar.html">ar</a></span>(<span class="fl">1</span>, <span class="fu">rel</span>(<span class="fl">1</span>) + <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html">I</a></span>(<span class="no">x</span>^<span class="fl">2</span>))
 )
@@ -410,7 +418,7 @@
 <h1 class="hasAnchor">
 <a href="#jags-code" class="anchor"></a>JAGS code</h1>
 <p>Here is the JAGS code for the second simulation example, i.e., the one with a single slope going from AR(2) to AR(1). You can print <code>fit$simulate</code> and see that it runs much of the same code.</p>
-<div class="sourceCode" id="cb32"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="no">fit</span>$<span class="no">jags_code</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb33"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="no">fit</span>$<span class="no">jags_code</span>)</pre></body></html></div>
 <pre><code>## 
 ## model {
 ## 

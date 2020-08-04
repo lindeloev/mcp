@@ -115,7 +115,7 @@
       <a href="../articles/packages.html">Comparison to other packages</a>
     </li>
     <li>
-      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
+      <a href="../articles/tips.html">Tips, tricks, and debugging</a>
     </li>
   </ul>
 </li>
@@ -162,9 +162,7 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Varying change points</h1>
-                        <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2020-08-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/varying.Rmd"><code>vignettes/varying.Rmd</code></a></small>
       <div class="hidden name"><code>varying.Rmd</code></div>
@@ -183,16 +181,19 @@
 <li>The default priors restrict varying change points to lie between the two adjacent change points.</li>
 <li>The article on modeling variance via <code><a href="https://rdrr.io/r/stats/sigma.html">sigma()</a></code> contains <a href="../articles/variance.html">an example on varying change points</a> as well.</li>
 </ul>
+<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">mcp</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">3</span>)  <span class="co"># Speed up sampling</span>
+<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">42</span>)  <span class="co"># Make the script deterministic</span></pre></body></html></div>
 <div id="specifying-varying-change-points" class="section level1">
 <h1 class="hasAnchor">
 <a href="#specifying-varying-change-points" class="anchor"></a>Specifying varying change points</h1>
 <p>You specify varying effects using the classical <a href="https://www.rdocumentation.org/packages/lme4/versions/1.1-21/topics/lmer"><code>lmer</code></a> syntax <code>(1|group)</code>. Currently (v. 0.1) <code>mcp</code> only support varying intercepts. For example, here we model a varying change point between a plateau and a joined slope:</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
+<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
   <span class="no">y</span> ~ <span class="fl">1</span>,  <span class="co"># int_1</span>
   <span class="fl">1</span> + (<span class="fl">1</span><span class="kw">|</span><span class="no">id</span>) ~ <span class="fl">0</span> + <span class="no">x</span>  <span class="co"># cp_1, cp_1_sd, cp_1_id[i]</span>
 )</pre></body></html></div>
 <p>You can have multiple varying change points with multiple groupings:</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
+<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
   <span class="no">y</span> ~ <span class="fl">1</span>,  <span class="co"># int_1</span>
   <span class="fl">1</span> + (<span class="fl">1</span><span class="kw">|</span><span class="no">id</span>) ~ <span class="fl">0</span> + <span class="no">x</span>,  <span class="co"># cp_1, cp_1_sd, cp_1_id[i]</span>
   <span class="fl">1</span> + (<span class="fl">1</span><span class="kw">|</span><span class="no">species</span>) ~ <span class="fl">0</span>,  <span class="co"># cp_2, cp_2_sd, cp_2_species[i]</span>
@@ -207,13 +208,12 @@
 <h1 class="hasAnchor">
 <a href="#simulating-varying-effects" class="anchor"></a>Simulating varying effects</h1>
 <p>Let us do a worked example, simulating the varying change point between a plateau and a slope:</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
+<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
   <span class="no">y</span> ~ <span class="fl">1</span>,  <span class="co"># int_1</span>
   <span class="fl">1</span> + (<span class="fl">1</span><span class="kw">|</span><span class="no">id</span>) ~ <span class="fl">0</span> + <span class="no">x</span>  <span class="co"># cp_1, cp_1_sd, cp_1_id[i]</span>
 )</pre></body></html></div>
 <p>It is quite similar to simulating non-varying data, except that we need to simulate some varying offsets before passing all parameters to <code>empty$simulate</code>:</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">mcp</span>)
-<span class="no">empty</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="fl">FALSE</span>)
+<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="no">empty</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="fl">FALSE</span>)
 
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">dplyr</span>, <span class="kw">warn.conflicts</span> <span class="kw">=</span> <span class="fl">FALSE</span>)
 <span class="no">varying</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"Clark"</span>, <span class="st">"Louis"</span>, <span class="st">"Batman"</span>, <span class="st">"Batgirl"</span>, <span class="st">"Spiderman"</span>, <span class="st">"Jane"</span>)
@@ -231,51 +231,54 @@
 
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">df</span>)</pre></body></html></div>
 <pre><code>##          x    id id_numeric        y
-## 1 54.13349 Clark          3 27.25136
-## 2 78.46531 Clark          3 36.12037
-## 3 59.20939 Clark          3 28.35439
-## 4 33.33814 Clark          3 19.51316
-## 5  5.95686 Clark          3 17.41523
-## 6 88.76017 Clark          3 38.21824</code></pre>
+## 1 91.48060 Clark          3 46.02453
+## 2 93.70754 Clark          3 43.40142
+## 3 28.61395 Clark          3 21.30070
+## 4 83.04476 Clark          3 41.80460
+## 5 64.17455 Clark          3 27.36570
+## 6 51.90959 Clark          3 21.73321</code></pre>
 <p>Here, we “translated” the <code>id</code> to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around <code>cp_1</code>. The result:</p>
-<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">ggplot2</span>)
+<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">ggplot2</span>)
 <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>(<span class="no">df</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="kw">x</span><span class="kw">=</span><span class="no">x</span>, <span class="kw">y</span><span class="kw">=</span><span class="no">y</span>)) +
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>() +
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html">facet_wrap</a></span>(~<span class="no">id</span>)</pre></body></html></div>
-<p><img src="varying_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
+<p><img src="varying_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
 </div>
 <div id="summarise-and-plot-varying-effects-" class="section level1">
 <h1 class="hasAnchor">
 <a href="#summarise-and-plot-varying-effects-" class="anchor"></a>Summarise and plot varying effects.</h1>
 <p>Fitting the model is simple:</p>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>)</pre></body></html></div>
 <p>If we just use <code><a href="../reference/plot.mcpfit.html">plot(fit)</a></code>, we would see all points in one plot. We want to facet by <code>id</code>, so:</p>
-<div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>, <span class="kw">facet_by</span> <span class="kw">=</span> <span class="st">"id"</span>, <span class="kw">ncol</span> <span class="kw">=</span> <span class="fl">3</span>)</pre></body></html></div>
-<p><img src="varying_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
+<div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>, <span class="kw">facet_by</span> <span class="kw">=</span> <span class="st">"id"</span>, <span class="kw">ncol</span> <span class="kw">=</span> <span class="fl">3</span>)</pre></body></html></div>
+<p><img src="varying_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
 <p>It seems that <code>mcp</code> did a good job of recovering the change points. There is a lot of information in this data, since the intercept and the slope on each side of the (varying) change point is shared between participants here.</p>
 <p>If you use <code><a href="../reference/summary.mcpfit.html">summary(fit)</a></code> (or <code><a href="../reference/summary.mcpfit.html">fixef(fit)</a></code>) you will get the posteriors for the population-level effects. To get the random effects, do:</p>
-<div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="fu"><a href="../reference/summary.mcpfit.html">ranef</a></span>(<span class="no">fit</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb10"><html><body><pre class="r"><span class="fu"><a href="../reference/summary.mcpfit.html">ranef</a></span>(<span class="no">fit</span>)</pre></body></html></div>
 <pre><code>##                 name match sim       mean      lower      upper     Rhat n.eff
-## 1   cp_1_id[Batgirl]       -25 -27.642179 -29.633069 -25.535566 1.000932  6162
-## 2    cp_1_id[Batman]    OK -15 -15.885094 -17.803994 -14.043178 1.001110  4946
-## 3     cp_1_id[Clark]    OK  -5  -5.468217  -7.785248  -3.200067 1.000450  5420
-## 4      cp_1_id[Jane]    OK   5   6.775620   4.106788   9.637472 1.000404  3542
-## 5     cp_1_id[Louis]    OK  15  15.876310  13.383819  18.426597 1.001681  3944
-## 6 cp_1_id[Spiderman]    OK  25  26.343560  23.151675  29.659387 1.000132  5300</code></pre>
+## 1   cp_1_id[Batgirl]    OK -25 -24.658731 -26.342381 -23.014957 1.000113  5213
+## 2    cp_1_id[Batman]    OK -15 -15.411302 -17.128470 -13.727827 1.000123  5602
+## 3     cp_1_id[Clark]    OK  -5  -5.600605  -7.134976  -4.010647 1.000724  6350
+## 4      cp_1_id[Jane]    OK   5   5.389034   3.417935   7.320762 1.001900  2140
+## 5     cp_1_id[Louis]    OK  15  16.180264  14.221617  18.179095 1.000008  2828
+## 6 cp_1_id[Spiderman]    OK  25  24.101341  22.009869  26.263599 1.002232  5850</code></pre>
 <p>Inspecting the <code>sim</code> and <code>match</code> columns, we see that they recovered the simulation parameters well.</p>
 <p>Good convergence is not always as obvious as in this example. While <code><a href="../reference/plot_pars.html">plot_pars(fit)</a></code> show population-level parameters only, you can do this to get varying effects only:</p>
-<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit</span>, <span class="kw">pars</span> <span class="kw">=</span> <span class="st">"varying"</span>, <span class="kw">type</span> <span class="kw">=</span> <span class="st">"trace"</span>, <span class="kw">ncol</span> <span class="kw">=</span> <span class="fl">3</span>)</pre></body></html></div>
-<p><img src="varying_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
+<div class="sourceCode" id="cb12"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit</span>, <span class="kw">pars</span> <span class="kw">=</span> <span class="st">"varying"</span>, <span class="kw">type</span> <span class="kw">=</span> <span class="st">"trace"</span>, <span class="kw">ncol</span> <span class="kw">=</span> <span class="fl">3</span>)</pre></body></html></div>
+<p><img src="varying_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
 <p>Notice the use of the <code>ncol</code> argument to set the number of columns. You will often have <em>many</em> levels on your varying effect, so this is useful to get a good view of all of them. Naturally, you can do this for almost all kinds of plots.</p>
 <p>Using <code>pars = "varying"</code> will plot all varying effects. This may be too much if you have multiple varying effects. To select just one, use regular expression in <code>regex_pars</code>. Two very handy operators are “^” (begins with) and “$” (ends with). Just to show that this “faceting” works for almost all of the many plot types, we now do two columns of <code>"dens_overlay</code>:</p>
-<div class="sourceCode" id="cb12"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit</span>, <span class="kw">regex_pars</span> <span class="kw">=</span> <span class="st">"^cp_1_id"</span>, <span class="kw">type</span> <span class="kw">=</span> <span class="st">"dens_overlay"</span>, <span class="kw">ncol</span> <span class="kw">=</span> <span class="fl">2</span>)</pre></body></html></div>
-<p><img src="varying_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
+<div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit</span>, <span class="kw">regex_pars</span> <span class="kw">=</span> <span class="st">"^cp_1_id"</span>, <span class="kw">type</span> <span class="kw">=</span> <span class="st">"dens_overlay"</span>, <span class="kw">ncol</span> <span class="kw">=</span> <span class="fl">2</span>)</pre></body></html></div>
+<p><img src="varying_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
+<p>You can also do posterior predictive checking with facets. I think that for the relatively univariate models supported as of <code>mcp</code> 0.3, this does not add much new information over and above <code><a href="../reference/plot.mcpfit.html">plot(fit, facet_by = "id")</a></code>, but it’s a standard assessment that many will be acquainted with:</p>
+<div class="sourceCode" id="cb14"><html><body><pre class="r"><span class="fu"><a href="../reference/pp_check.html">pp_check</a></span>(<span class="no">fit</span>, <span class="kw">facet_by</span> <span class="kw">=</span> <span class="st">"id"</span>)</pre></body></html></div>
+<p><img src="varying_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
 </div>
 <div id="priors-for-varying-effects" class="section level1">
 <h1 class="hasAnchor">
 <a href="#priors-for-varying-effects" class="anchor"></a>Priors for varying effects</h1>
 <p>You can see the priors of the model like this:</p>
-<div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(<span class="no">fit</span>$<span class="no">prior</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb15"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(<span class="no">fit</span>$<span class="no">prior</span>)</pre></body></html></div>
 <pre><code>##         [,1]                                           
 ## cp_1    "dunif(MINX, MAXX)"                            
 ## cp_1_sd "dnorm(0, 2 * (MAXX - MINX) / N_CP) T(0, )"    
@@ -289,7 +292,7 @@
 <h1 class="hasAnchor">
 <a href="#jags-code" class="anchor"></a>JAGS code</h1>
 <p>Here is the JAGS code for the model used in this article:</p>
-<div class="sourceCode" id="cb15"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="no">fit</span>$<span class="no">jags_code</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb17"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="no">fit</span>$<span class="no">jags_code</span>)</pre></body></html></div>
 <pre><code>## 
 ## model {
 ## 

@@ -1,7 +1,5 @@
 ---
 title: "Diagnosing and fixing problems"
-author: "Jonas Kristoffer Lindeløv"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Diagnosing and fixing problems}

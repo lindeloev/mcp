@@ -50,7 +50,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0.9000</span>
       </span>
     </div>
 
@@ -115,7 +115,7 @@
       <a href="../articles/packages.html">Comparison to other packages</a>
     </li>
     <li>
-      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
+      <a href="../articles/tips.html">Tips, tricks, and debugging</a>
     </li>
   </ul>
 </li>
@@ -162,9 +162,7 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Poisson change point analysis</h1>
-                        <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2020-08-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/poisson.Rmd"><code>vignettes/poisson.Rmd</code></a></small>
       <div class="hidden name"><code>poisson.Rmd</code></div>
@@ -185,25 +183,21 @@
   <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html">count</a></span>()
 
 <span class="co"># See it</span>
-<span class="no">df</span></pre></body></html></div>
-<pre><code>## # A tibble: 81 x 2
-## # Groups:   date [81]
-##     date     n
-##    &lt;dbl&gt; &lt;int&gt;
-##  1  1851     1
-##  2  1852     7
-##  3  1853     5
-##  4  1854     1
-##  5  1856     1
-##  6  1857     5
-##  7  1858     4
-##  8  1859     1
-##  9  1860     2
-## 10  1861     5
-## # ... with 71 more rows</code></pre>
+<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">df</span>)</pre></body></html></div>
+<pre><code>## # A tibble: 6 x 2
+## # Groups:   date [6]
+##    date     n
+##   &lt;dbl&gt; &lt;int&gt;
+## 1  1851     1
+## 2  1852     7
+## 3  1853     5
+## 4  1854     1
+## 5  1856     1
+## 6  1857     5</code></pre>
 <p>The number of events (<code>n</code>) as a function of year (<code>date</code>) is typically modeled as a change between two intercepts. This is very simple to do in <code>mcp</code>:</p>
 <div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">mcp</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">3</span>)  <span class="co"># Speed up sampling!</span></pre></body></html></div>
+<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">3</span>)  <span class="co"># Speed up sampling</span>
+<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">42</span>)  <span class="co"># Make the script deterministic</span></pre></body></html></div>
 <div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
   <span class="no">n</span> ~ <span class="fl">1</span>,  <span class="co"># intercept-only</span>
   ~ <span class="fl">1</span>  <span class="co"># intercept-only</span>
@@ -220,9 +214,9 @@
 ## 
 ## Population-level parameters:
 ##   name    mean   lower   upper Rhat n.eff
-##   cp_1 1888.30 1880.94 1898.25    1  1611
-##  int_1    1.17    0.97    1.36    1  3853
-##  int_2    0.48    0.24    0.72    1  4064</code></pre>
+##   cp_1 1888.41 1880.76 1897.90    1  1376
+##  int_1    1.17    0.99    1.37    1  4327
+##  int_2    0.48    0.23    0.72    1  4123</code></pre>
 <p>We can see that the model ran well with good convergence and a large number of effective samples. At a first glance, the change point is estimated to lie between the years 1880 and 1895 (approximately).</p>
 <p>Let us take a more direct look, using the default <code>mcp</code> plot:</p>
 <div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>)</pre></body></html></div>
@@ -235,7 +229,7 @@
 <div id="priors" class="section level1">
 <h1 class="hasAnchor">
 <a href="#priors" class="anchor"></a>Priors</h1>
-<p><code><a href="https://rdrr.io/r/stats/family.html">poisson()</a></code> defaults to <code>link = 'log'</code>, meaning that we have to exponentiate the estimates to get the “raw” Poisson parameter <span class="math inline">\(\lambda\)</span>. <span class="math inline">\(\lambda\)</span> has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[2])</a></code> (3.224395) and it is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[3])</a></code> (1.6127489) for segment 2.</p>
+<p><code><a href="https://rdrr.io/r/stats/family.html">poisson()</a></code> defaults to <code>link = 'log'</code>, meaning that we have to exponentiate the estimates to get the “raw” Poisson parameter <span class="math inline">\(\lambda\)</span>. <span class="math inline">\(\lambda\)</span> has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[2])</a></code> (3.229398) and it is <code><a href="https://rdrr.io/r/base/Log.html">exp(result$mean[3])</a></code> (1.6141355) for segment 2.</p>
 <p>Default priors were used. They are normals with a standard deviation of 10. I.e. with 68% probability mass between <code>exp(10) = 22026</code> and <code>exp(-10) = 1 / 22026</code>:</p>
 <div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span>(<span class="no">fit</span>$<span class="no">prior</span>)</pre></body></html></div>
 <pre><code>##       [,1]               
@@ -259,7 +253,7 @@
 
 
 <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_flat</span>) + <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_decay</span>)</pre></body></html></div>
-<p><img src="../docs/articles/poisson_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
+<p><img src="poisson_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
 <p>Not we compute and compare the LOO ELPDs:</p>
 <div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="no">fit</span>$<span class="no">loo</span> <span class="kw">=</span> <span class="fu"><a href="../reference/criterion.html">loo</a></span>(<span class="no">fit</span>)
 <span class="no">fit_flat</span>$<span class="no">loo</span> <span class="kw">=</span> <span class="fu"><a href="../reference/criterion.html">loo</a></span>(<span class="no">fit_flat</span>)
@@ -267,17 +261,17 @@
 <div class="sourceCode" id="cb14"><html><body><pre class="r"><span class="kw pkg">loo</span><span class="kw ns">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(<span class="no">fit</span>$<span class="no">loo</span>, <span class="no">fit_flat</span>$<span class="no">loo</span>, <span class="no">fit_decay</span>$<span class="no">loo</span>)</pre></body></html></div>
 <pre><code>##        elpd_diff se_diff
 ## model1  0.0       0.0   
-## model3 -3.8       2.3   
-## model2 -9.1       3.8</code></pre>
+## model3 -4.4       2.5   
+## model2 -9.3       3.8</code></pre>
 <p>The change point model seems to be preferred with a ratio of around 1.7 over the decay model and 2.5 over the flat model. Another approach is to look at the model weights:</p>
 <div class="sourceCode" id="cb16"><html><body><pre class="r"><span class="no">loo_list</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="no">fit</span>$<span class="no">loo</span>, <span class="no">fit_flat</span>$<span class="no">loo</span>, <span class="no">fit_decay</span>$<span class="no">loo</span>)
 <span class="kw pkg">loo</span><span class="kw ns">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_model_weights.html">loo_model_weights</a></span>(<span class="no">loo_list</span>, <span class="kw">method</span><span class="kw">=</span><span class="st">"pseudobma"</span>)</pre></body></html></div>
 <pre><code>## Method: pseudo-BMA+ with Bayesian bootstrap
 ## ------
 ##        weight
-## model1 0.909 
-## model2 0.007 
-## model3 0.084</code></pre>
+## model1 0.915 
+## model2 0.008 
+## model3 0.077</code></pre>
 <p>Again, unsurprisingly, the change point model is preferred and they show the same ranking as implied by <code>loo_compare</code>.</p>
 </div>
 <div id="jags-code" class="section level1">

@@ -115,7 +115,7 @@
       <a href="../articles/packages.html">Comparison to other packages</a>
     </li>
     <li>
-      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
+      <a href="../articles/tips.html">Tips, tricks, and debugging</a>
     </li>
   </ul>
 </li>
@@ -162,9 +162,7 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Fits and predictions</h1>
-                        <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2020-08-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/predict.Rmd"><code>vignettes/predict.Rmd</code></a></small>
       <div class="hidden name"><code>predict.Rmd</code></div>
@@ -179,7 +177,8 @@
 <a href="#preparation-an-example-model" class="anchor"></a>Preparation: an example model</h1>
 <p>We need an <code>mcpfit</code> to get started. We take the <code>ex_demo</code> dataset:</p>
 <div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">mcp</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">3</span>)  <span class="co"># Speed up sampling!</span>
+<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">3</span>)  <span class="co"># Speed up sampling</span>
+<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">42</span>)  <span class="co"># Make the script deterministic</span>
 
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">ex_demo</span>)</pre></body></html></div>
 <pre><code>##       time  response
@@ -217,13 +216,13 @@
 <a href="#extracting-fitted-values" class="anchor"></a>Extracting <code>fitted()</code> values</h1>
 <p>To get the fitted values for each data point, simply do <code><a href="../reference/fitted.mcpfit.html">fitted(fit)</a></code>:</p>
 <div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="fu"><a href="../reference/fitted.mcpfit.html">fitted</a></span>(<span class="no">fit</span>))</pre></body></html></div>
-<pre><code>##       time    fitted     error      Q2.5    Q97.5
-## 1 68.35820 30.368412 1.0550623 28.309231 32.43337
-## 2 87.29038 -3.327456 0.7582516 -4.817741 -1.85705
-## 3 69.01173 30.720513 1.0880345 28.609484 32.86864
-## 4 11.59361 10.265911 0.7150633  8.869836 11.66827
-## 5 19.50091 10.266224 0.7145484  8.869836 11.66827
-## 6 46.12009 18.387190 1.0300460 15.909229 20.08055</code></pre>
+<pre><code>##       time    fitted     error      Q2.5     Q97.5
+## 1 68.35820 30.364198 1.0341955 28.302294 32.399471
+## 2 87.29038 -3.326585 0.7686739 -4.846219 -1.800347
+## 3 69.01173 30.715994 1.0636429 28.590656 32.807780
+## 4 11.59361 10.280417 0.7189566  8.845259 11.652711
+## 5 19.50091 10.282221 0.7160576  8.860667 11.652711
+## 6 46.12009 18.393345 0.9298550 16.391841 20.003463</code></pre>
 <p>In general, this output will include:</p>
 <ul>
 <li><p>A column for each predictor column in the data. Here, <code>time</code> is the only predictor and you see the values in the same order as in <code>ex_demo</code> (which is copied to <code>fit$data</code>). But models with <a href="../articles/varying.html">varying change points</a> will additionally have a column for the varying data, <code><a href="https://rdrr.io/r/stats/family.html">binomial()</a></code> models include the number of trials, etc.</p></li>
@@ -239,10 +238,10 @@
 <div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">newdata</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="kw">time</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="no">ex_demo</span>$<span class="no">time</span>[<span class="fl">1</span>], <span class="fl">25</span>, -<span class="fl">20</span>, <span class="fl">200</span>))
 <span class="fu"><a href="../reference/fitted.mcpfit.html">fitted</a></span>(<span class="no">fit</span>, <span class="kw">newdata</span> <span class="kw">=</span> <span class="no">newdata</span>)</pre></body></html></div>
 <pre><code>##       time    fitted      error       Q2.5     Q97.5
-## 1  68.3582  30.36841  1.0550623  28.309231 32.433369
-## 2  25.0000  10.30424  0.6984145   8.938691 11.687439
-## 3 -20.0000  10.26591  0.7150633   8.869836 11.668270
-## 4 200.0000 -28.24084 10.6526088 -49.298540 -7.905933</code></pre>
+## 1  68.3582  30.36420  1.0341955  28.302294 32.399471
+## 2  25.0000  10.31709  0.7031747   8.935075 11.683769
+## 3 -20.0000  10.28042  0.7189566   8.845259 11.652711
+## 4 200.0000 -27.87143 10.1524849 -48.325726 -8.724991</code></pre>
 <p>Note that:</p>
 <ul>
 <li>We get one row per value of <code>time</code>.</li>
@@ -264,13 +263,13 @@
 <p><code><a href="../reference/predict.mcpfit.html">predict()</a></code> is the posterior predictive and it takes exactly the same arguments as <code><a href="../reference/fitted.mcpfit.html">fitted()</a></code>. This means that you can make predictions for in-sample and out-of-sample data as well. As with <code><a href="../reference/fitted.mcpfit.html">fitted()</a></code>, <code><a href="../reference/plot.mcpfit.html">plot()</a></code> uses <code><a href="../reference/predict.mcpfit.html">predict()</a></code> under the hood to plot prediction intervals. You can see that the values correspond to dashed green lines in the plot (the 80% prediction interval):</p>
 <div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">42</span>)
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="fu"><a href="../reference/predict.mcpfit.html">predict</a></span>(<span class="no">fit</span>, <span class="kw">probs</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0.1</span>, <span class="fl">0.9</span>)))</pre></body></html></div>
-<pre><code>##       time   predict    error       Q10       Q90
-## 1 68.35820 30.290758 4.180889 24.959966 35.672366
-## 2 87.29038 -3.356899 4.096895 -8.557500  1.863498
-## 3 69.01173 30.774682 4.177943 25.388760 36.165843
-## 4 11.59361 10.229859 4.069645  5.099154 15.407656
-## 5 19.50091 10.151982 4.082748  4.874197 15.365314
-## 6 46.12009 18.405480 4.135477 13.123604 23.713663</code></pre>
+<pre><code>##       time   predict    error       Q10      Q90
+## 1 68.35820 30.288095 4.162065 25.040849 35.65361
+## 2 87.29038 -3.353787 4.099322 -8.543648  1.93678
+## 3 69.01173 30.771382 4.146150 25.528032 36.04939
+## 4 11.59361 10.244703 4.064250  5.119304 15.40443
+## 5 19.50091 10.166546 4.081853  4.998089 15.35774
+## 6 46.12009 18.404802 4.111900 13.189125 23.63145</code></pre>
 <p>Note that <code><a href="../reference/predict.mcpfit.html">predict()</a></code> uses random sampling under the hood, so these values will differ slightly from call to call. You can make it replicable using <code><a href="https://rdrr.io/r/base/Random.html">set.seed()</a></code> as above. In general, the more posterior samples, the less the call-to-call variance will be. Conversely, fewer samples means more call-to-call variation, e.g., if you do <code><a href="../reference/predict.mcpfit.html">predict(fit, nsamples = 10)</a></code>).</p>
 </div>
 <div id="residuals" class="section level1">
@@ -289,9 +288,9 @@
 <p>We already did that above, resulting in our <code>fit</code>. But we only do it to get the default priors that are suitable for inferring change point in this region, so you could’ve just run it without sampling:</p>
 <div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">ex_demo</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="fl">FALSE</span>)</pre></body></html></div>
 </div>
-<div id="step-2-fit-a-model-including-the-unobserved-regions" class="section level2">
+<div id="step-2-add-the-unobserved-segments-and-fit" class="section level2">
 <h2 class="hasAnchor">
-<a href="#step-2-fit-a-model-including-the-unobserved-regions" class="anchor"></a>Step 2: fit a model including the unobserved regions</h2>
+<a href="#step-2-add-the-unobserved-segments-and-fit" class="anchor"></a>Step 2: add the unobserved segment(s) and fit</h2>
 <p>Now we extend the model with the future segment of which we have prior knowledge:</p>
 <div class="sourceCode" id="cb12"><html><body><pre class="r"><span class="no">model_forecast</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="no">fit</span>$<span class="no">model</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
   ~ <span class="fl">1</span>     <span class="co"># intercept (int_4) after cp_3</span>

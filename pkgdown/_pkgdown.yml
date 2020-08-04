@@ -105,7 +105,7 @@ navbar:
       - text: Comparison to other packages
         href: articles/packages.html
       - text: Tips, tricks, and debugging
-        href: articles/debug.html
+        href: articles/tips.html
     - text: News
       href: news/index.html
     - icon: fa-twitter

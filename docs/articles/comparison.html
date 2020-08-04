@@ -115,7 +115,7 @@
       <a href="../articles/packages.html">Comparison to other packages</a>
     </li>
     <li>
-      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
+      <a href="../articles/tips.html">Tips, tricks, and debugging</a>
     </li>
   </ul>
 </li>
@@ -162,9 +162,7 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Change point model comparison</h1>
-                        <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2020-08-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/comparison.Rmd"><code>vignettes/comparison.Rmd</code></a></small>
       <div class="hidden name"><code>comparison.Rmd</code></div>
@@ -179,12 +177,15 @@
 <li>Flexible directional tests using <code><a href="../reference/hypothesis.html">hypothesis(fit, cp_1 &gt; 40)</a></code> or <code><a href="../reference/hypothesis.html">hypothesis(fit, cp_1 &gt; 40 &amp; x_2 &gt; x_1)</a></code>.</li>
 <li>Point Bayes Factors tests using the Savage-Dickey density ratio, e.g., <code><a href="../reference/hypothesis.html">hypothesis(fit, cp_1 = 50)</a></code> or <code><a href="../reference/hypothesis.html">hypothesis(fit, x_2 = x_1)</a></code>.</li>
 </ul>
+<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">mcp</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">3</span>)  <span class="co"># Speed up sampling</span>
+<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">42</span>)  <span class="co"># Make the script deterministic</span></pre></body></html></div>
 <div id="some-models-to-play-with" class="section level1">
 <h1 class="hasAnchor">
 <a href="#some-models-to-play-with" class="anchor"></a>Some models to play with</h1>
 <p>We know quite a bit about human short term memory. Namely, the average human has almost perfect recall when presented with 1-4 items (we remember them all), and then errors begins intruding when presented with more items <a href="https://www.ncbi.nlm.nih.gov/pubmed/11515286">(Cowan, 2001)</a>. We also know that memory is not infinite, so as <span class="math inline">\(N \rightarrow \infty\)</span>, it has to plateau.</p>
 <p>In other words, on “easy” trials with <span class="math inline">\(N &lt;= capacity\)</span> items to be recalled, we expect a constant high binomial rate. When <span class="math inline">\(N &gt; capacity\)</span>, the rate declines. We specify a prior reflecting our a priori knowledge.</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
+<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
   <span class="no">recalled</span> <span class="kw">|</span> <span class="fu">trials</span>(<span class="no">items</span>) ~ <span class="fl">1</span>,
   ~ <span class="fl">0</span> + <span class="no">items</span>
 )
@@ -198,25 +199,32 @@
 <span class="no">model_simple</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="no">recalled</span> <span class="kw">|</span> <span class="fu">trials</span>(<span class="no">items</span>) ~ <span class="fl">1</span> + <span class="no">items</span>)</pre></body></html></div>
 <p>Notice that <code>items</code> is used both as <code>trials</code> and x-axis. No problem.</p>
 <p>Simulate some data using <code>fit$simulate()</code>:</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">mcp</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">3</span>)  <span class="co"># Speed up sampling!</span>
-
+<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="co"># Get just the model - no fit</span>
 <span class="no">empty</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">family</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="kw">sample</span> <span class="kw">=</span> <span class="fl">FALSE</span>)
 
-<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">42</span>)
+<span class="co"># Simulate data</span>
 <span class="no">df</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="kw">items</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">1</span>:<span class="fl">9</span>, <span class="kw">each</span> <span class="kw">=</span> <span class="fl">40</span>))
 <span class="no">df</span>$<span class="no">recalled</span> <span class="kw">=</span> <span class="no">empty</span>$<span class="fu"><a href="https://rdrr.io/r/stats/simulate.html">simulate</a></span>(
   <span class="no">df</span>$<span class="no">items</span>,
   <span class="kw">cp_1</span> <span class="kw">=</span> <span class="fl">4</span>,
   <span class="kw">int_1</span> <span class="kw">=</span> <span class="fl">2.5</span>,
   <span class="kw">items_2</span> <span class="kw">=</span> -<span class="fl">0.4</span>,
-  <span class="kw">sigma</span> <span class="kw">=</span> <span class="fl">0.5</span>)</pre></body></html></div>
+  <span class="kw">sigma</span> <span class="kw">=</span> <span class="fl">0.5</span>)
+
+<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">df</span>)</pre></body></html></div>
+<pre><code>##   items recalled
+## 1     1        1
+## 2     1        0
+## 3     1        1
+## 4     1        1
+## 5     1        1
+## 6     1        1</code></pre>
 <p>Now fit it with and without the informative prior. We set <code>iter</code> fairly high because this model is not sampled effectively. We will also add <code>sample = "both"</code> to sample <em>both</em> prior and posterior. We will need both to compute point Bayes Factors using <code><a href="../reference/hypothesis.html">hypothesis()</a></code> later.</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="no">fit_default</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>,             <span class="kw">family</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="kw">sample</span> <span class="kw">=</span> <span class="st">"both"</span>, <span class="kw">iter</span> <span class="kw">=</span> <span class="fl">10000</span>)
+<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="no">fit_default</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>,             <span class="kw">family</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="kw">sample</span> <span class="kw">=</span> <span class="st">"both"</span>, <span class="kw">iter</span> <span class="kw">=</span> <span class="fl">10000</span>)
 <span class="no">fit_info</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>, <span class="kw">prior</span> <span class="kw">=</span> <span class="no">prior</span>, <span class="kw">family</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="kw">sample</span> <span class="kw">=</span> <span class="st">"both"</span>, <span class="kw">iter</span> <span class="kw">=</span> <span class="fl">10000</span>)
 <span class="no">fit_simple</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model_simple</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>,       <span class="kw">family</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(), <span class="kw">sample</span> <span class="kw">=</span> <span class="st">"both"</span>, <span class="kw">iter</span> <span class="kw">=</span> <span class="fl">10000</span>)</pre></body></html></div>
 <p>We plot them and add a few <code>ggplot2</code> layers. We jitter the raw data in the middle plot, just to give a sense of the densities.</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">patchwork</span>)
+<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">patchwork</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">ggplot2</span>)
 
 <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_default</span>) +
@@ -228,13 +236,13 @@
 
 <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_simple</span>) +
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span>(<span class="st">"Simple"</span>)</pre></body></html></div>
-<p><img src="comparison_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
+<p><img src="comparison_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
 </div>
 <div id="bayes-factors-using-savage-dickey-density-ratios" class="section level1">
 <h1 class="hasAnchor">
 <a href="#bayes-factors-using-savage-dickey-density-ratios" class="anchor"></a>Bayes Factors using Savage-Dickey density ratios</h1>
 <p>You can compute probabilities and Bayes Factors for various hypotheses using <code><a href="../reference/hypothesis.html">hypothesis()</a></code>. For example, let’s test the idea that the change point in recall occurs at four items:</p>
-<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span>(<span class="no">fit_default</span>, <span class="st">"cp_1 = 4"</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span>(<span class="no">fit_default</span>, <span class="st">"cp_1 = 4"</span>)</pre></body></html></div>
 <pre><code>##     hypothesis      mean     lower    upper         p       BF
 ## 1 cp_1 - 4 = 0 0.1117639 -1.431675 1.626478 0.7747467 3.439447</code></pre>
 <p>Let’s unpack:</p>
@@ -251,7 +259,7 @@
 <code>p</code>: Because <code>BF</code> is an odds ratio, <code>p</code> can just be computed from it and contains no new information. For example, <span class="math inline">\(p = 0.95\)</span> corresponds to <span class="math inline">\(BF = 19\)</span>.</li>
 </ul>
 <p>Because <code>BF</code> and <code>p</code> depends directly on the prior in Savage-Dickey test, it is as much an expression of the prior as the posterior. Computing it for the higher-prior-density-at-cp_1=4 <code>fit_info</code>, we see a substantially lower BF because we already had a substantial prior belief in <code>cp_1 = 4</code>:</p>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span>(<span class="no">fit_info</span>, <span class="st">"cp_1 = 4"</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span>(<span class="no">fit_info</span>, <span class="st">"cp_1 = 4"</span>)</pre></body></html></div>
 <pre><code>##     hypothesis      mean      lower    upper         p       BF
 ## 1 cp_1 - 4 = 0 0.1977559 -0.9782122 1.324815 0.5858982 1.414865</code></pre>
 <p><a href="../articles/priors.html">The Dirichlet prior on change points</a> may be better than the default prior when testing point hypotheses on change points, but an informed prior beats both.</p>
@@ -266,7 +274,7 @@
 <li>The only constraint is your imagination. How about all hypotheses we may have at once? <code>cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5 &amp; items_2 &lt; -0.4 &amp; int_1 &gt; 2.5</code> against it’s inverse <code>(cp_1 &lt; 3.5 | cp_1 &gt; 4.5) &amp; items_2 &gt; -0.4 &amp; int_1 &lt; 2.5</code>
 </li>
 </ul>
-<div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span>(<span class="no">fit_info</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(
+<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span>(<span class="no">fit_info</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(
   <span class="st">"cp_1 &gt; 3"</span>,
   <span class="st">"cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5"</span>,
   <span class="st">"cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5 &amp; items_2 &lt; -0.4 &amp; int_1 &gt; 2.5"</span>,
@@ -285,7 +293,7 @@
 <p>Because Bayes Factors are transitive, we can divide them to get the relative evidence for two hypotheses. Here, we get approximately <span class="math inline">\(0.40 / 0.04 = 10\)</span> in favor of hypothesis 3 over hypothesis 4.</p>
 <p>There are more examples <a href="../reference/hypothesis.html">in the documentation for <code>hypothesis</code></a>, including how to test varying effects.</p>
 <p><code>mcp</code> does nothing fancy for the directional tests, and you could do them yourself. Just takes the hypothesis verbatim into <code>mutate</code> and <code>summarise</code> the proportion of samples that “passes” this test. These are identical:</p>
-<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span>(<span class="no">fit</span>, <span class="st">"cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5"</span>)
+<div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span>(<span class="no">fit</span>, <span class="st">"cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5"</span>)
 
 <span class="co"># ... is identical to</span>
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">dplyr</span>, <span class="kw">warn.conflicts</span> <span class="kw">=</span> <span class="fl">FALSE</span>)
@@ -322,7 +330,7 @@
 <h2 class="hasAnchor">
 <a href="#applied-example" class="anchor"></a>Applied example</h2>
 <p>We can look at the loo for one model:</p>
-<div class="sourceCode" id="cb12"><html><body><pre class="r"><span class="fu"><a href="../reference/criterion.html">loo</a></span>(<span class="no">fit_info</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb14"><html><body><pre class="r"><span class="fu"><a href="../reference/criterion.html">loo</a></span>(<span class="no">fit_info</span>)</pre></body></html></div>
 <pre><code>## 
 ## Computed from 30000 by 360 log-likelihood matrix
 ## 
@@ -337,7 +345,7 @@
 ## See help('pareto-k-diagnostic') for details.</code></pre>
 <p>This is not terribly informative in and of itself. <span class="math inline">\(looic = -2 * elpd_{loo}\)</span> as is the corresponding SEs, so that is just a matter of scale. What ELPD tells you is that the product of the densities of all left-out data points is approximately <span class="math inline">\(exp(-350) \sim 10 ^ {-146}\)</span>, a vanishingly small number because we multiply many small numbers. This is mentally hard to interpret because the density at a given point is only meaningful relative to the full distribution. Furthermore, it depends on the size of the dataset (the more small densities you multiply, the smaller the ELPD).</p>
 <p>What is interesting is the <em>relative</em> differences in these predicted densities. We can compare the models using <code><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo::loo_compare()</a></code>. We save the results in <code>fit$loo</code> to keep things together, which will also be useful if you want to <code><a href="https://rdrr.io/r/base/save.html">save(fit)</a></code> the objects for later use.</p>
-<div class="sourceCode" id="cb14"><html><body><pre class="r"><span class="no">fit_default</span>$<span class="no">loo</span> <span class="kw">=</span> <span class="fu"><a href="../reference/criterion.html">loo</a></span>(<span class="no">fit_default</span>)
+<div class="sourceCode" id="cb16"><html><body><pre class="r"><span class="no">fit_default</span>$<span class="no">loo</span> <span class="kw">=</span> <span class="fu"><a href="../reference/criterion.html">loo</a></span>(<span class="no">fit_default</span>)
 <span class="no">fit_info</span>$<span class="no">loo</span> <span class="kw">=</span> <span class="fu"><a href="../reference/criterion.html">loo</a></span>(<span class="no">fit_info</span>)
 <span class="no">fit_simple</span>$<span class="no">loo</span> <span class="kw">=</span> <span class="fu"><a href="../reference/criterion.html">loo</a></span>(<span class="no">fit_simple</span>)
 
@@ -350,7 +358,7 @@
 <p>Again, the absolute number (<code>elpd_diff</code>) is hard to relate to. More interpretable is the <code>elpd_diff</code>/<code>se_diff</code> ratio. This is almost like a z-score, i.e., a ratio of 1.96 corresponds to 95% probability that one model has superior predictive accuracy. This is not an <em>effect size</em> but more a measure of <em>certainty</em> that this is not compatible with equal predictive properties. Just like Bayes Factors, a nice property over frequentist p-values is that you can quantify the relative evidence for and against any pair of models without having to assume one of them as null.</p>
 <p>Note that the <code>loo</code> developers have advised that this ratio is too optimistic in practice, but that one can be confident if it exceeds 5 [Citation needed]. So to conclude, none of these models above stand out as particularly good or bad.</p>
 <p>You could do the same using <code>waic</code>. This is computationally lighter at the cost of robustness to influential data points. The results are almost always practically identical.</p>
-<div class="sourceCode" id="cb16"><html><body><pre class="r"><span class="no">fit_default</span>$<span class="no">waic</span> <span class="kw">=</span> <span class="fu"><a href="../reference/criterion.html">waic</a></span>(<span class="no">fit_default</span>)
+<div class="sourceCode" id="cb18"><html><body><pre class="r"><span class="no">fit_default</span>$<span class="no">waic</span> <span class="kw">=</span> <span class="fu"><a href="../reference/criterion.html">waic</a></span>(<span class="no">fit_default</span>)
 <span class="no">fit_info</span>$<span class="no">waic</span> <span class="kw">=</span> <span class="fu"><a href="../reference/criterion.html">waic</a></span>(<span class="no">fit_info</span>)
 <span class="no">fit_simple</span>$<span class="no">waic</span> <span class="kw">=</span> <span class="fu"><a href="../reference/criterion.html">waic</a></span>(<span class="no">fit_simple</span>)
 
@@ -364,7 +372,7 @@
 <h2 class="hasAnchor">
 <a href="#stacking" class="anchor"></a>Stacking</h2>
 <p>The <code>loo</code> package contains many other useful functions. For example, if prediction is your goal, it is often optimal to <em>combine</em> models rather than letting the “winner-takes-it-all” do all the predicting. This is also called <em>stacking</em>:</p>
-<div class="sourceCode" id="cb18"><html><body><pre class="r"><span class="kw pkg">loo</span><span class="kw ns">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_model_weights.html">stacking_weights</a></span>(<span class="no">fit_default</span>$<span class="no">loo</span>, <span class="no">fit_info</span>$<span class="no">loo</span>, <span class="no">fit_simple</span>$<span class="no">loo</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb20"><html><body><pre class="r"><span class="kw pkg">loo</span><span class="kw ns">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_model_weights.html">stacking_weights</a></span>(<span class="no">fit_default</span>$<span class="no">loo</span>, <span class="no">fit_info</span>$<span class="no">loo</span>, <span class="no">fit_simple</span>$<span class="no">loo</span>)</pre></body></html></div>
 <p>This means that once model2 (<code>fit_info</code>) has done it’s “predicting”, the others add very little over and above that. If you want to learn about how well they predict relative to each other, use <code>loo::peudobma_weights()</code> which weights proportional to the ELPD of each model.</p>
 </div>
 </div>

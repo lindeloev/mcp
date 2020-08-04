@@ -115,7 +115,7 @@
       <a href="../articles/packages.html">Comparison to other packages</a>
     </li>
     <li>
-      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
+      <a href="../articles/tips.html">Tips, tricks, and debugging</a>
     </li>
   </ul>
 </li>
@@ -162,9 +162,7 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Working with priors</h1>
-                        <h4 class="author">Jonas Kristoffer Lindeløv</h4>
             
-            <h4 class="date">2020-08-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/master/vignettes/priors.Rmd"><code>vignettes/priors.Rmd</code></a></small>
       <div class="hidden name"><code>priors.Rmd</code></div>
@@ -202,7 +200,8 @@
 </ul>
 <p>Let us see the priors after running them through <code>mcp</code> and compare to the default priors:</p>
 <div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">mcp</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">3</span>)  <span class="co"># Speed up sampling!</span>
+<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">3</span>)  <span class="co"># Speed up sampling</span>
+<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">42</span>)  <span class="co"># Make the script deterministic</span>
 
 <span class="no">empty_manual</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">prior</span> <span class="kw">=</span> <span class="no">prior</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="fl">FALSE</span>)
 <span class="no">empty_default</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="fl">FALSE</span>)
@@ -235,12 +234,21 @@
     <span class="kw">int_1</span> <span class="kw">=</span> <span class="fl">20</span>, <span class="kw">int_2</span> <span class="kw">=</span> <span class="fl">30</span>, <span class="kw">int_3</span> <span class="kw">=</span> <span class="fl">30</span>,  <span class="co"># intercepts</span>
     <span class="kw">x_1</span> <span class="kw">=</span> -<span class="fl">0.5</span>, <span class="kw">x_2</span> <span class="kw">=</span> <span class="fl">0.5</span>, <span class="kw">x_3</span> <span class="kw">=</span> <span class="fl">0</span>,  <span class="co"># slopes</span>
     <span class="kw">cp_1</span> <span class="kw">=</span> <span class="fl">35</span>, <span class="kw">cp_2</span> <span class="kw">=</span> <span class="fl">70</span>,  <span class="co"># change points</span>
-    <span class="kw">sigma</span> <span class="kw">=</span> <span class="fl">5</span>)</pre></body></html></div>
+    <span class="kw">sigma</span> <span class="kw">=</span> <span class="fl">5</span>)
+
+<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">df</span>)</pre></body></html></div>
+<pre><code>##          x        y
+## 1 91.48060 36.00483
+## 2 93.70754 35.22376
+## 3 28.61395  0.67698
+## 4 83.04476 39.24241
+## 5 64.17455 41.25341
+## 6 51.90959 38.98237</code></pre>
 <p>Sample the prior and posterior. We let the manual fit adapt for longer, since it is harder to find the right posterior under these weird prior constraints (priors will usually improve sampling efficiency).</p>
-<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="no">fit_manual</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="st">"both"</span>, <span class="kw">adapt</span> <span class="kw">=</span> <span class="fl">10000</span>, <span class="kw">prior</span> <span class="kw">=</span> <span class="no">prior</span>)
+<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="no">fit_manual</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="st">"both"</span>, <span class="kw">adapt</span> <span class="kw">=</span> <span class="fl">10000</span>, <span class="kw">prior</span> <span class="kw">=</span> <span class="no">prior</span>)
 <span class="no">fit_default</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="st">"both"</span>, <span class="kw">adapt</span> <span class="kw">=</span> <span class="fl">10000</span>)</pre></body></html></div>
 <p>First, let’s look at the priors side by side. Notice the use of <code>prior = TRUE</code> to show prior samples. This works in <code><a href="../reference/plot.mcpfit.html">plot()</a></code>, <code><a href="../reference/plot_pars.html">plot_pars()</a></code>, and <code><a href="../reference/summary.mcpfit.html">summary()</a></code> among others.</p>
-<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">ggplot2</span>)
+<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">ggplot2</span>)
 <span class="no">pp_default</span> <span class="kw">=</span> <span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span>(<span class="no">fit_default</span>, <span class="kw">type</span> <span class="kw">=</span> <span class="st">"dens_overlay"</span>, <span class="kw">prior</span> <span class="kw">=</span> <span class="fl">TRUE</span>) +
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span>(<span class="st">"Default priors"</span>)
 
@@ -250,7 +258,7 @@
 <span class="no">pp_default</span> + <span class="no">pp_manual</span></pre></body></html></div>
 <p><img src="priors_files/figure-html/unnamed-chunk-5-1.png" width="576"></p>
 <p>Here is the resulting posterior fits:</p>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">plot_default</span> <span class="kw">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_default</span>) + <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span>(<span class="st">"Default priors"</span>)
+<div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="no">plot_default</span> <span class="kw">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_default</span>) + <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span>(<span class="st">"Default priors"</span>)
 <span class="no">plot_manual</span> <span class="kw">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_manual</span>) + <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span>(<span class="st">"Manual priors"</span>)
 
 <span class="no">plot_default</span> + <span class="no">plot_manual</span></pre></body></html></div>
@@ -293,7 +301,7 @@
 <a href="#dirichlet-based-prior-on-change-points" class="anchor"></a>Dirichlet-based prior on change points</h2>
 <p>The <a href="https://en.wikipedia.org/wiki/Dirichlet_distribution">Dirichlet distribution</a> is a multivariate beta prior and these betas jointly form a simplex, meaning that they are all positive and sum to one. They are all in the interval <span class="math inline">\([0, 1]\)</span> so they are shifted and scaled to <span class="math inline">\([min(x), max(x)]\)</span>. The Dirichlet prior has the nice property that (1) the order-restriction and boundedness is inherent to the distribution, and (2) it represents a uniform prior that <em>any</em> change happens at any <span class="math inline">\(x\)</span>, i.e., it is maximally uninformative. It underlies the modeling of monotonic effects in brms (<a href="https://psyarxiv.com/9qkhj/">Büerkner &amp; Charpentier (2019)</a>).</p>
 <p>To use the Dirichlet prior, you need to specify it for all or none of the change points. E.g.,</p>
-<div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="no">prior_dirichlet</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
+<div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="no">prior_dirichlet</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
   <span class="kw">cp_1</span> <span class="kw">=</span> <span class="st">"dirichlet(1)"</span>,
   <span class="kw">cp_2</span> <span class="kw">=</span> <span class="st">"dirichlet(1)"</span>,
   <span class="kw">cp_3</span> <span class="kw">=</span> <span class="st">"dirichlet(1)"</span>
@@ -310,7 +318,7 @@
 <div id="default-priors-on-linear-predictors" class="section level1">
 <h1 class="hasAnchor">
 <a href="#default-priors-on-linear-predictors" class="anchor"></a>Default priors on linear predictors</h1>
-<p><em>OBS: These priors are very to change in versions beyond mcp 0.2, but not drastically.</em></p>
+<p><em>OBS: These priors are very to change in versions beyond mcp 0.3, but not drastically.</em></p>
 <p>You can see the default priors for the <code><a href="https://rdrr.io/r/stats/family.html">gaussian()</a></code> family in the previous example. They are similar to the <code>brms</code> default priors, i.e., t-distributed around mean = 0 with a standard deviation that scales with the data.</p>
 <p>This means that there will be some “shrinkage” towards a mean and SD of zero for all parameters, especially for parameters with a large mean and a small SD.</p>
 <p>The slopes are scaled as if it changed +/- 1 SD through the entire x-axis. This too will be insufficient for very steep slopes, i.e., if there are many change points on <code>x</code>.</p>
@@ -331,7 +339,7 @@
 <h1 class="hasAnchor">
 <a href="#prior-predictive-checks" class="anchor"></a>Prior predictive checks</h1>
 <p>Prior predictive checks is a great way to ensure that the priors are meaningful. Simply set <code>sample = "prior"</code>. Let us do it for the two sets of priors defined previously in this article, to see their different prior predictive space.</p>
-<div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="co"># Sample priors </span>
+<div class="sourceCode" id="cb10"><html><body><pre class="r"><span class="co"># Sample priors </span>
 <span class="no">fit_pp_manual</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>, <span class="no">prior</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="st">"prior"</span>)
 <span class="no">fit_pp_default</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">df</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="st">"prior"</span>)
 
@@ -339,14 +347,14 @@
 <span class="no">plot_pp_manual</span> <span class="kw">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_pp_manual</span>, <span class="kw">lines</span> <span class="kw">=</span> <span class="fl">100</span>) + <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(-<span class="fl">400</span>, <span class="fl">400</span>)) + <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span>(<span class="st">"Manual prior"</span>)
 <span class="no">plot_pp_default</span> <span class="kw">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit_pp_default</span>, <span class="kw">lines</span> <span class="kw">=</span> <span class="fl">100</span>) + <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html">ylim</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(-<span class="fl">400</span>, <span class="fl">400</span>)) + <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span>(<span class="st">"Default prior"</span>)
 <span class="no">plot_pp_manual</span> +  <span class="no">plot_pp_default</span>  <span class="co"># using patchwork</span></pre></body></html></div>
-<p><img src="../docs/articles/priors_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
+<p><img src="priors_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
 <p>You can see how the manual priors are more dense to the left, and the “concerted” change at x = 80.</p>
 </div>
 <div id="jags-code" class="section level1">
 <h1 class="hasAnchor">
 <a href="#jags-code" class="anchor"></a>JAGS code</h1>
 <p>Here is the JAGS code for <code>fit_manual</code>:</p>
-<div class="sourceCode" id="cb10"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="no">fit_manual</span>$<span class="no">jags_code</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="no">fit_manual</span>$<span class="no">jags_code</span>)</pre></body></html></div>
 <pre><code>## 
 ## model {
 ## 
