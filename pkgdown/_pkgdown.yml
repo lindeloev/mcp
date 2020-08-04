@@ -7,7 +7,7 @@ template:
       index_name: lindeloev_mcp
   opengraph:
     image:
-        src: https://github.com/lindeloev/mcp/raw/master/man/figures/logo.png  # For Twitter card
+        src: https://github.com/lindeloev/mcp/raw/docs/man/figures/logo.png  # For Twitter card
     twitter:
         creator: "@jonaslindeloev"
         card: summary
@@ -105,7 +105,7 @@ navbar:
       - text: Comparison to other packages
         href: articles/packages.html
       - text: Tips, tricks, and debugging
-        href: articles/debug.html
+        href: articles/tips.html
     - text: News
       href: news/index.html
     - icon: fa-twitter

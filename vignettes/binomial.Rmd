@@ -1,7 +1,5 @@
 ---
 title: "Binomial change point analysis"
-author: "Jonas Kristoffer Lindeløv"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Binomial change point analysis}
@@ -29,6 +27,9 @@ We run `mcp` with `sample = FALSE` to get what we need to simulate data.
 
 ```{r}
 library(mcp)
+options(mc.cores = 3)  # Speed up sampling
+set.seed(42)  # Make the script deterministic
+
 empty = mcp(model, family = binomial(), sample = FALSE)
 ```
 

@@ -1,7 +1,5 @@
 ---
 title: "An overview of change point packages in R"
-author: "Jonas Kristoffer Lindeløv"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{An overview of change point packages in R}
@@ -11,7 +9,7 @@ vignette: >
 
 **OBS: I have yet to review these packages: `not`, `breakfast`, `IDetect`, `trendsegmentR`, `mosum`, `ChangepointTesting`, `changepoint.mv`, `changepointsHD`, `changepointsVar`, `InspectChangepoint`, `breakpoint`, `segmentr`, `Segmentor3IsBack`, `trendsegmentR`, `BayesPiecewiseICAR`, `BayesPieceHazSelect`.**
 
-There are a lot of change point packages out there already, so why `mcp`? Here are my (probably biased) thoughts about this. I compiled some tables, summarising change point packages ([.xlsx file here](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/packages_tables.xlsx)). I will demonstrate each of these packages in an applied example below to discuss their merits and shortcomings. I recommend [this nice overview](http://stats.lse.ac.uk/fryzlewicz/wbs2/wbs2sdll.pdf) of the methodologies used in many of these packages.
+There are a lot of change point packages out there already, so why `mcp`? Here are my (probably biased) thoughts about this. I compiled some tables, summarising change point packages ([.xlsx file here](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/packages_tables.xlsx)). I will demonstrate each of these packages in an applied example below to discuss their merits and shortcomings. I recommend [this nice overview](http://stats.lse.ac.uk/fryzlewicz/wbs2/wbs2sdll.pdf) of the methodologies used in many of these packages.
 
 Of the packages reviewed here, I think `segmented`, and `EnvCpt` are good if the data fits what they can model, and `mcp` is a more capable and general-purpose package at the cost of speed. You can see the immediate roadmap for `mcp` at the [GitHub issues tracker](https://github.com/lindeloev/mcp/issues).
 
@@ -19,7 +17,7 @@ Of the packages reviewed here, I think `segmented`, and `EnvCpt` are good if the
 ## Modeling options
 How much flexibility does the package allow for modeling the system, you're studying? A clear difference here is between packages that allow you to *specify* the number of change points, and packages which infer the number of change points *automatically* (using some criteria), captured in the `N` column below.
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/packages_table1.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/packages_table1.png)
 
 <br /><br />
 
@@ -29,7 +27,7 @@ What can you learn, once the model has fitted? While all packages return the est
 
 Note that `EnvCpt` returns one log-likelihood per model, which one then could do testing on. `segmented` returns AIC and deviance, so ditto here. However, this is something you would have to do yourself. `mcp` explicitly supports and recommends workflows for detailed model comparisons.
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/packages_table2.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/packages_table2.png)
 
 <br /><br />
 
@@ -37,16 +35,11 @@ Note that `EnvCpt` returns one log-likelihood per model, which one then could do
 ## Other conveniences
 This is a list of other functions, which I find useful on other statistics packages, including simulating data, getting fitted and predicted values given the model, and an assessment of speed. The option to include prior knowledge could be important in some situations.
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/packages_table3.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/packages_table3.png)
 
 
 
 # Unique features of mcp
-
-```{r, echo = FALSE}
-# So that calls to mcp stuff does not elicit errors
-library(mcp)
-```
 
  * Manually specify the segment structure. Other packages allow for specifying segment structure, but it has to be shared for all segments. Read more about [the formula syntax](../articles/formulas.html) in `mcp`.
  * Posterior distribution for each change point. This matters since they rarely conform to known distributions so confidence intervals can be misleading.

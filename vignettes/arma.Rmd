@@ -1,7 +1,5 @@
 ---
 title: "Time series change points"
-author: "Jonas Kristoffer Lindeløv"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Time series change points}
@@ -23,7 +21,10 @@ Let's try and model the simulated `ex_ar` dataset. Take at look at [how it was s
 
 ```{r}
 library(mcp)
-options(mc.cores = 3)  # Speed up sampling!
+options(mc.cores = 3)  # Speed up sampling
+set.seed(42)  # Make the script deterministic
+
+head(ex_ar)
 ```
 
 
