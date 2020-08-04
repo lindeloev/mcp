@@ -65,6 +65,8 @@ Let me go all-out on my ego-serving bias and say that `mcp` is the best package 
 As a simple example, we simulate some intercept-only data with change points at 30 (from mean=2 to mean=0) and 70 (to mean=1) and a residual of 1 SD.
 
 ```{r}
+library(mcp)
+
 # Simulate
 set.seed(42)  # I always use 42; no fiddling
 df = data.frame(
@@ -81,7 +83,6 @@ abline(v = c(30, 70), col="red")
 `mcp` needs no further introduction. We fit the three-plateaus model with default priors:.
 
 ```{r, cache = TRUE, message = FALSE, results=FALSE}
-library(mcp)
 model = list(y~1, 1~1, 1~1)  # three intercept-only segments
 fit_mcp = mcp(model, data = df, par_x = "x")
 

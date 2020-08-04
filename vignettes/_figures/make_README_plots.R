@@ -11,7 +11,7 @@ theme_it = function(x, title) {
 }
 
 save_it = function(filename) {
-  ggplot2::ggsave(paste0("./vignettes/figures/", filename), width=6, height=3, dpi = 100, type = "cairo")
+  ggplot2::ggsave(paste0("./vignettes/_figures/", filename), width=6, height=3, dpi = 100, type = "cairo")
 }
 
 
@@ -27,7 +27,7 @@ model_demo = list(
   ~ 0 + time,  # joined slope (time_2) at cp_1
   ~ 1 + time  # disjoined slope (int_1, time_2) at cp_2
 )
-fit_demo = mcp(model_demo, data = ex_demo)  # dataset included in mcp
+fit_demo = mcp(model_demo, data = ex_demo, adapt = 3000)  # dataset included in mcp
 theme_it(plot(fit_demo), "")
 save_it("ex_demo.png")
 
@@ -40,7 +40,7 @@ model_null = list(
   response ~ 1 + time,
   ~ 1 + time
 )
-fit_null = mcp(model_null, ex_demo)
+fit_null = mcp(model_null, ex_demo, adapt = 3000)
 
 # Compare loos:
 fit_demo$loo = loo(fit_demo)
@@ -55,7 +55,7 @@ model_plateaus = list(
   y ~ 1,  # plateau (int_1)
   ~ 1  # plateau (int_2)
 )
-fit_plateaus = mcp(model_plateaus, ex_plateaus, par_x = "x")
+fit_plateaus = mcp(model_plateaus, ex_plateaus, par_x = "x", adapt = 3000)
 theme_it(plot(fit_plateaus, lines = 25), "Two plateaus")
 save_it("ex_plateaus.png")
 
@@ -69,7 +69,7 @@ model_varying = list(
   y ~ 1 + x,  # intercept + slope
   1 + (1|id) ~ 0 + x + sigma(1)  # joined slope, varying by id
 )
-fit_varying = mcp(model_varying, ex_varying)
+fit_varying = mcp(model_varying, ex_varying, adapt = 3000)
 theme_it(plot(fit_varying, facet_by = "id"), "Varying slope change")
 save_it("ex_varying.png")
 
@@ -114,7 +114,7 @@ model_quadratic = list(
   y ~ 1,
   1 ~ 0 + x + I(x^2)
 )
-fit_quadratic = mcp(model_quadratic, ex_quadratic)
+fit_quadratic = mcp(model_quadratic, ex_quadratic, adapt = 3000)
 theme_it(plot(fit_quadratic), "Quadratic and other exponentiations")
 save_it("ex_quadratic.png")
 
@@ -128,7 +128,7 @@ model_trig = list(
   y ~ 1 + sin(x),
   ~ 0 + cos(x) + x
 )
-fit_trig = mcp(model_trig, ex_trig)
+fit_trig = mcp(model_trig, ex_trig, adapt = 3000)
 theme_it(plot(fit_trig), "Trigonometric for periodic trends")
 save_it("ex_trig.png")
 
@@ -157,7 +157,7 @@ model_ar = list(
   ~ 0 + time + ar(1)
 )
 
-fit_ar = mcp(model_ar, ex_ar)
+fit_ar = mcp(model_ar, ex_ar, adapt = 3000)
 plot_ar = plot(fit_ar)
 theme_it(plot_ar, "Time series with autoregressive residuals")
 save_it("ex_ar.png")
