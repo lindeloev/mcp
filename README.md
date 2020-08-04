@@ -1,4 +1,4 @@
-# mcp: Regression with Multiple Change Points<img src="man/figures/logo_200px.png" align="right" style="padding: 20px; padding-right: 0px;" />
+# mcp: Regression with Multiple Change Points<img src="https://github.com/lindeloev/mcp/raw/docs/man/figures/logo_200px.png" align="right" style="padding: 20px; padding-right: 0px;" />
 
 [![mcp Travis-CI status](https://travis-ci.org/lindeloev/mcp.svg?branch=master)](https://travis-ci.org/lindeloev/mcp)
 [![mcp Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/r/lindeloev/mcp)
