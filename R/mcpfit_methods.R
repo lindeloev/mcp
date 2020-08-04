@@ -404,17 +404,17 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
 #' @inheritParams mcmclist_samples
 #' @inheritParams pp_eval
 #' @param population
-#'   * \strong{TRUE:} All population effects. Same as `fit$pars$population`.
-#'   * \strong{FALSE:} No population effects. Same as `c()`.
-#'   * \strong{Character vector:} Only include specified population parameters - see `fit$pars$population`.
-#' @param varying
-#'   * \strong{TRUE:} All varying effects (`fit$pars$varying`).
-#'   * \strong{FALSE:} No varying efects (`c()`).
-#'   * \strong{Character vector:} Only include specified varying parameters - see `fit$pars$varying`.
+#'   * `TRUE` All population effects. Same as `fit$pars$population`.
+#'   * `FALSE` No population effects. Same as `c()`.
+#'   * Character vector: Only include specified population parameters - see `fit$pars$population`.
+#' @param varying One of:
+#'   * `TRUE` All varying effects (`fit$pars$varying`).
+#'   * `FALSE` No varying efects (`c()`).
+#'   * Character vector: Only include specified varying parameters - see `fit$pars$varying`.
 #' @param absolute
-#'   * \strong{TRUE:} Returns the absolute location of all varying change points.
-#'   * \strong{FALSE:} Just returns the varying effects.
-#'   * \strong{Character vector:} Only do absolute transform for these varying parameters - see `fit$pars$varying`.
+#'   * `TRUE` Returns the absolute location of all varying change points.
+#'   * `FALSE` Just returns the varying effects.
+#'   * Character vector: Only do absolute transform for these varying parameters - see `fit$pars$varying`.
 #'
 #'   OBS: This currently only applies to varying change points. It is not implemented for `rel()` regressors yet.
 #' @return `tibble` of posterior draws in `tidybayes` format.
@@ -529,13 +529,13 @@ tidy_samples = function(
 #' @param which_y What to plot on the y-axis. One of
 #'
 #'   * `"ct"`: The central tendency which is often the mean after applying the
-#'     link function (default).
+#'     link function.
 #'   * `"sigma"`: The variance
 #'   * `"ar1"`, `"ar2"`, etc. depending on which order of the autoregressive
 #'     effects you want to plot.
 #' @param arma Whether to include autoregressive effects.
-#'   * `TRUE:` Compute autoregressive residuals. Requires the response variable in `newdata`.
-#'   * `FALSE:` Disregard the autoregressive effects. For `family = gaussian()`, `predict()` just use `sigma` for residuals.
+#'   * `TRUE` Compute autoregressive residuals. Requires the response variable in `newdata`.
+#'   * `FALSE` Disregard the autoregressive effects. For `family = gaussian()`, `predict()` just use `sigma` for residuals.
 #' @param nsamples Integer or `NULL`. Number of samples to return/summarise.
 #'   If there are varying effects, this is the number of samples from each varying group.
 #'   `NULL` means "all". Ignored if both are `FALSE`. More samples trade speed for accuracy.

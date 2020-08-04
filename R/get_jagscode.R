@@ -177,7 +177,7 @@ model {")
 #' @keywords internal
 #' @inheritParams mcp
 #' @param i The index in `prior` to get code for
-#' @param varying_group String or NULL (default). Null indicates a population-
+#' @param varying_group String or NULL. Null indicates a population-
 #'   level prior. String indicates a varying-effects prior (one for each group
 #'   level).
 #' @return A string

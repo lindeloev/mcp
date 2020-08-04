@@ -13,14 +13,14 @@
 #' @param lines Positive integer or `FALSE`. Number of lines (posterior
 #'   draws). FALSE or `lines = 0` plots no lines. Note that lines always plot
 #'   fitted values - not predicted. For prediction intervals, see the `q_predict` argument.
-#' @param geom_data String. One of "point" (default), "line" (good for time-series),
+#' @param geom_data String. One of "point", "line" (good for time-series),
 #'   or FALSE (don not plot).
 #' @param cp_dens TRUE/FALSE. Plot posterior densities of the change point(s)?
 #'   Currently does not respect `facet_by`. This will be added in the future.
 #' @param q_fit Whether to plot quantiles of the posterior (fitted value).
-#'   * \strong{TRUE:} Add 2.5% and 97.5% quantiles. Corresponds to
+#'   * `TRUE` Add 2.5% and 97.5% quantiles. Corresponds to
 #'       `q_fit = c(0.025, 0.975)`.
-#'   * \strong{FALSE (default):} No quantiles
+#'   * `FALSE` No quantiles
 #'   * A vector of quantiles. For example, `quantiles = 0.5`
 #'       plots the median and `quantiles = c(0.2, 0.8)` plots the 20% and 80%
 #'       quantiles.
@@ -362,8 +362,8 @@ geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
 #' @param fit An \code{\link{mcpfit}} object.
 #' @param pars Character vector. One of:
 #'   * Vector of parameter names.
-#'   * \emph{"population" (default):} plots all population parameters.
-#'   * \emph{"varying":} plots all varying effects. To plot a particular varying
+#'   * `"population"` plots all population parameters.
+#'   * `"varying"` plots all varying effects. To plot a particular varying
 #'       effect, use `regex_pars = "^name"`.
 #' @param regex_pars Vector of regular expressions. This will typically just be
 #'   the beginning of the parameter name(s), i.e., "^cp_" plots all change

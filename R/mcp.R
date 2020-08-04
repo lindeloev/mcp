@@ -55,7 +55,7 @@
 #' @param par_x String (default: NULL). Only relevant if no segments contains
 #'   slope (no hint at what x is). Set this, e.g., par_x = "time".
 #' @param sample One of
-#'   * `"post"` (default): Sample the posterior.
+#'   * `"post"`: Sample the posterior.
 #'   * `"prior"`: Sample only the prior. Plots, summaries, etc. will
 #'       use the prior. This is useful for prior predictive checks.
 #'   * `"both"`: Sample both prior and posterior. Plots, summaries, etc.
@@ -66,7 +66,7 @@
 #'       prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
 #' @param cores Positive integer or "all". Number of cores.
 #'
-#'   * `1`: serial sampling (Default). `options(mc.cores = 3)` will dominate `cores = 1`
+#'   * `1`: serial sampling. `options(mc.cores = 3)` will dominate `cores = 1`
 #'     but not larger values of `cores`.
 #'   * `>1`: parallel sampling on this number of cores. Ideally set `chains`
 #'     to the same value. Note: `cores > 1` takes a few extra seconds the first
