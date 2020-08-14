@@ -268,7 +268,7 @@ plot.mcpfit = function(x,
 
   # Add better y-labels
   if (scale == "linear")
-    gg = gg + ggplot2::labs(y = paste0(fit$family$link_r, "(", fit$pars$y, ")"))
+    gg = gg + ggplot2::labs(y = paste0(fit$family$link, "(", fit$pars$y, ")"))
   if (scale == "response" && (fit$family$family == "bernoulli" || (fit$family$family == "binomial" && rate == TRUE)))
     gg = gg + ggplot2::labs(y = paste0("P(", fit$pars$y, " = TRUE)"))
   if (which_y != "ct")

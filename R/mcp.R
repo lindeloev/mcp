@@ -212,7 +212,7 @@ mcp = function(model,
   if (class(family) != "family")
     stop("`family` is not a valid family. Should be gaussian(), binomial(), etc.")
 
-  family = mcp_family(family)  # convert to mcp family
+  family = mcpfamily(family)  # convert to mcp family
 
   # More checking...
   assert_types(par_x, "null", "character")
