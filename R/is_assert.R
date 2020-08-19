@@ -71,3 +71,11 @@ assert_numeric = function(x, lower = -Inf, upper = Inf) {
   if (any(x < lower) || any(x > upper))
     stop("`", substitute(x), "` contained value(s) outside the interval (", lower, ", ", upper, ").")
 }
+
+# Asserts ellipsis. `ellipsis` is a list and `allowed` is a character vector
+assert_ellipsis = function(..., allowed = NULL) {
+  assert_types(allowed, "null", "character")
+  illegal_names = dplyr::setdiff(names(list(...)), allowed)
+  if (length(illegal_names) > 0)
+    stop("The following arguments are not accepted for this function: '", paste0(illegal_names, collapse = "', '"), "'")
+}

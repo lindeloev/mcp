@@ -156,6 +156,6 @@ Returning to the priors, the `3 / (MAXX - MINX)` on slopes mean that this change
 Here is the JAGS code for the model used in this article.
 
 ```{r}
-cat(fit$jags_code)
+fit$jags_code
 ```
 

@@ -32,7 +32,7 @@
 draws). FALSE or \code{lines = 0} plots no lines. Note that lines always plot
 fitted values - not predicted. For prediction intervals, see the \code{q_predict} argument.}
 
-\item{geom_data}{String. One of "point" (default), "line" (good for time-series),
+\item{geom_data}{String. One of "point", "line" (good for time-series),
 or FALSE (don not plot).}
 
 \item{cp_dens}{TRUE/FALSE. Plot posterior densities of the change point(s)?
@@ -40,9 +40,9 @@ Currently does not respect \code{facet_by}. This will be added in the future.}
 
 \item{q_fit}{Whether to plot quantiles of the posterior (fitted value).
 \itemize{
-\item \strong{TRUE:} Add 2.5\% and 97.5\% quantiles. Corresponds to
+\item \code{TRUE} Add 2.5\% and 97.5\% quantiles. Corresponds to
 \code{q_fit = c(0.025, 0.975)}.
-\item \strong{FALSE (default):} No quantiles
+\item \code{FALSE} No quantiles
 \item A vector of quantiles. For example, \code{quantiles = 0.5}
 plots the median and \code{quantiles = c(0.2, 0.8)} plots the 20\% and 80\%
 quantiles.
@@ -59,7 +59,7 @@ interpolation on trial number is used to infer trials at a particular x.}
 \item{which_y}{What to plot on the y-axis. One of
 \itemize{
 \item \code{"ct"}: The central tendency which is often the mean after applying the
-link function (default).
+link function.
 \item \code{"sigma"}: The variance
 \item \code{"ar1"}, \code{"ar2"}, etc. depending on which order of the autoregressive
 effects you want to plot.
@@ -67,8 +67,8 @@ effects you want to plot.
 
 \item{arma}{Whether to include autoregressive effects.
 \itemize{
-\item \verb{TRUE:} Compute autoregressive residuals. Requires the response variable in \code{newdata}.
-\item \verb{FALSE:} Disregard the autoregressive effects. For \code{family = gaussian()}, \code{predict()} just use \code{sigma} for residuals.
+\item \code{TRUE} Compute autoregressive residuals. Requires the response variable in \code{newdata}.
+\item \code{FALSE} Disregard the autoregressive effects. For \code{family = gaussian()}, \code{predict()} just use \code{sigma} for residuals.
 }}
 
 \item{nsamples}{Integer or \code{NULL}. Number of samples to return/summarise.
@@ -95,21 +95,21 @@ plot individual parameter estimates.
 (joint) posterior distribution.
 }
 \examples{
-# Typical usage. ex_fit is an mcpfit object.
-plot(ex_fit)
+# Typical usage. demo_fit is an mcpfit object.
+plot(demo_fit)
 \donttest{
-plot(ex_fit, prior = TRUE)  # The prior
+plot(demo_fit, prior = TRUE)  # The prior
 
-plot(ex_fit, lines = 0, q_fit = TRUE)  # 95\% HDI without lines
-plot(ex_fit, q_predict = c(0.1, 0.9))  # 80\% prediction interval
-plot(ex_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
+plot(demo_fit, lines = 0, q_fit = TRUE)  # 95\% HDI without lines
+plot(demo_fit, q_predict = c(0.1, 0.9))  # 80\% prediction interval
+plot(demo_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
 
 # Show a panel for each varying effect
 # plot(fit, facet_by = "my_column")
 
 # Customize plots using regular ggplot2
 library(ggplot2)
-plot(ex_fit) + theme_bw(15) + ggtitle("Great plot!")
+plot(demo_fit) + theme_bw(15) + ggtitle("Great plot!")
 }
 
 }

@@ -265,7 +265,7 @@ unpack_cp = function(form_cp, i) {
 #' @keywords internal
 #' @param form_rhs A character representation of a formula
 #' @param i The segment number (integer)
-#' @param family An mcpfamily object returned by `mcp_family()`.
+#' @param family An mcpfamily object returned by `mcpfamily()`.
 #' @param data A data.frame or tibble
 #' @param last_segment The last row in the segment table, made in `get_segment_table()`
 #' @return A one-row tibble with three columns for each of `ct`. `sigma`, `ar`, and `ma`:

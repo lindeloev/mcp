@@ -55,7 +55,7 @@
 #' @param par_x String (default: NULL). Only relevant if no segments contains
 #'   slope (no hint at what x is). Set this, e.g., par_x = "time".
 #' @param sample One of
-#'   * `"post"` (default): Sample the posterior.
+#'   * `"post"`: Sample the posterior.
 #'   * `"prior"`: Sample only the prior. Plots, summaries, etc. will
 #'       use the prior. This is useful for prior predictive checks.
 #'   * `"both"`: Sample both prior and posterior. Plots, summaries, etc.
@@ -66,7 +66,7 @@
 #'       prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
 #' @param cores Positive integer or "all". Number of cores.
 #'
-#'   * `1`: serial sampling (Default). `options(mc.cores = 3)` will dominate `cores = 1`
+#'   * `1`: serial sampling. `options(mc.cores = 3)` will dominate `cores = 1`
 #'     but not larger values of `cores`.
 #'   * `>1`: parallel sampling on this number of cores. Ideally set `chains`
 #'     to the same value. Note: `cores > 1` takes a few extra seconds the first
@@ -113,39 +113,40 @@
 #'   ~ 1 + time     # Disjoined slope (int_3, time_3) at cp_2
 #' )
 #'
-#' # Fit it. The `ex_demo` dataset is included in mcp. Sample the prior too.
+#' # Fit it and sample the prior too.
 #' # options(mc.cores = 3)  # Uncomment to speed up sampling
-#' ex_fit = mcp(model, data = ex_demo, sample = "both")
+#' ex = mcp_example("demo")  # Simulated data example
+#' demo_fit = mcp(model, data = ex$data, sample = "both")
 #'
 #' # See parameter estimates
-#' summary(ex_fit)
+#' summary(demo_fit)
 #'
 #' # Visual inspection of the results
-#' plot(ex_fit)  # Visualization of model fit/predictions
-#' plot_pars(ex_fit)  # Parameter distributions
-#' pp_check(ex_fit)  # Prior/Posterior predictive checks
+#' plot(demo_fit)  # Visualization of model fit/predictions
+#' plot_pars(demo_fit)  # Parameter distributions
+#' pp_check(demo_fit)  # Prior/Posterior predictive checks
 #'
 #' # Test a hypothesis
-#' hypothesis(ex_fit, "cp_1 > 10")
+#' hypothesis(demo_fit, "cp_1 > 10")
 #'
 #' # Make predictions
-#' fitted(ex_fit)
-#' predict(ex_fit)
-#' predict(ex_fit, newdata = data.frame(time = c(55.545, 80, 132)))
+#' fitted(demo_fit)
+#' predict(demo_fit)
+#' predict(demo_fit, newdata = data.frame(time = c(55.545, 80, 132)))
 #'
 #' # Compare to a one-intercept-only model (no change points) with default prior
 #' model_null = list(response ~ 1)
-#' fit_null = mcp(model_null, data = ex_demo, par_x = "time")  # fit another model here
-#' ex_fit$loo = loo(ex_fit)
+#' fit_null = mcp(model_null, data = ex$data, par_x = "time")  # fit another model here
+#' demo_fit$loo = loo(demo_fit)
 #' fit_null$loo = loo(fit_null)
-#' loo::loo_compare(ex_fit$loo, fit_null$loo)
+#' loo::loo_compare(demo_fit$loo, fit_null$loo)
 #'
 #' # Inspect the prior. Useful for prior predictive checks.
-#' summary(ex_fit, prior = TRUE)
-#' plot(ex_fit, prior = TRUE)
+#' summary(demo_fit, prior = TRUE)
+#' plot(demo_fit, prior = TRUE)
 #'
 #' # Show all priors. Default priors are added where you don't provide any
-#' print(ex_fit$prior)
+#' print(demo_fit$prior)
 #'
 #' # Set priors and re-run
 #' prior = list(
@@ -155,10 +156,10 @@
 #'   int_3 = "int_1"           # Shared intercept between segment 1 and 3
 #' )
 #'
-#' fit3 = mcp(model, data = ex_demo, prior = prior)
+#' fit3 = mcp(model, data = ex$data, prior = prior)
 #'
 #' # Show the JAGS model
-#' cat(ex_fit$jags_code)
+#' demo_fit$jags_code
 #' }
 #'
 mcp = function(model,
@@ -212,7 +213,7 @@ mcp = function(model,
   if (class(family) != "family")
     stop("`family` is not a valid family. Should be gaussian(), binomial(), etc.")
 
-  family = mcp_family(family)  # convert to mcp family
+  family = mcpfamily(family)  # convert to mcp family
 
   # More checking...
   assert_types(par_x, "null", "character")
@@ -336,10 +337,17 @@ mcp = function(model,
   if (!exists("mcmc_prior")) mcmc_prior = NULL
   if (!exists("mcmc_loglik")) mcmc_loglik = NULL
 
+
+  model = lapply(ST$form, stats::as.formula, env=globalenv())  # with explicit response and cp
+  class(model) = c("mcplist", "list")
+  class(prior) = c("mcplist", "list")
+  class(pars) = c("mcplist", "list")  # for nicer printing
+  class(jags_code) = c("mcptext", "character")  # for nicer printing
+
   # Make mrpfit object
   mcpfit = list(
     # By user (same order as mcp argument)
-    model = lapply(ST$form, stats::as.formula, env=globalenv()),  # with explicit response and cp
+    model = model,
     data = data,
     prior = prior,
     family = family,

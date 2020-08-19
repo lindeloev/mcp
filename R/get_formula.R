@@ -308,6 +308,7 @@ function(",
       args_values[['", pars$x ,"']] = NULL  # Remove x
       ", ifelse(length(pars$trials) > 0, yes = paste0("args_values[['", pars$trials, "']] = NULL  # Remove trials"), no = ""), "
       attr(x, 'simulated') = args_values  # Set as attribute
+      class(attr(x, 'simulated')) = c(\"mcplist\", \"list\")  # for nicer printing
       return(x)
     }
   }
@@ -321,7 +322,7 @@ function(",
 
   # Optionally transform
   if (scale == 'response') {
-    y_ = ", family$linkinv_r, "(y_)
+    y_ = ", family$linkinv_str, "(y_)
   }
   ")
 
@@ -365,16 +366,16 @@ function(",
   if (type == 'fitted') {
     return(add_simulated(y_))
   } else if (type == 'predict') {
-    if (any(", family$linkinv_r, "(sigma_) < 0))
-      stop(\"Modelled negative sigma. First detected at ", pars$x, " = \", min(", pars$x, "[", family$linkinv_r, "(sigma_) < 0]))")
+    if (any(", family$linkinv_str, "(sigma_) < 0))
+      stop(\"Modelled negative sigma. First detected at ", pars$x, " = \", min(", pars$x, "[", family$linkinv_str, "(sigma_) < 0]))")
 
     # Complex code if ARMA. Simple if not. resid_sigma_ was generated from sigma_ so no need to do an extra rnorm().
     if (is_arma == TRUE) {
       out = paste0(out, "
     if (arma == TRUE) {
-      return(add_simulated(", family$linkinv_r, "(", family$link_r, "(y_) + resid_sigma_)))
+      return(add_simulated(", family$linkinv_str, "(", family$linkfun_str, "(y_) + resid_sigma_)))
     } else {
-      return(add_simulated(", family$linkinv_r, "(", family$link_r, "(y_) + rnorm(length(y_), 0, sigma_))))
+      return(add_simulated(", family$linkinv_str, "(", family$linkfun_str, "(y_) + rnorm(length(y_), 0, sigma_))))
     }")
     } else if (is_arma == FALSE) {
       out = paste0(out, "
@@ -412,8 +413,8 @@ function(",
   } else if (family$family == "poisson") {
     out = paste0(out, "
   if (type == 'predict') {
-    if ((scale == 'response' && any(y_ > 2146275819)) || (scale == 'linear' && any(", family$linkinv_r, "(y_) > 2146275819)))
-      stop(\"Modelled extremely large value: ", family$linkinv_r, "(", pars$y, ") > 2146275819.\")
+    if ((scale == 'response' && any(y_ > 2146275819)) || (scale == 'linear' && any(", family$linkinv_str, "(y_) > 2146275819)))
+      stop(\"Modelled extremely large value: ", family$linkinv_str, "(", pars$y, ") > 2146275819.\")
     return(add_simulated(rpois(length(y_), y_)))
   } else if (type == 'fitted') {
     return(add_simulated(y_))

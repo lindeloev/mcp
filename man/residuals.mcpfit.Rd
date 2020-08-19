@@ -32,25 +32,24 @@ the original data is used.}
 
 \item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
 
-\item{varying}{\itemize{
-\item \strong{TRUE:} All varying effects (\code{fit$pars$varying}).
+\item{varying}{One of:
 \itemize{
-\item \strong{FALSE:} No varying efects (\code{c()}).
-\item \strong{Character vector:} Only include specified varying parameters - see \code{fit$pars$varying}.
-}
+\item \code{TRUE} All varying effects (\code{fit$pars$varying}).
+\item \code{FALSE} No varying efects (\code{c()}).
+\item Character vector: Only include specified varying parameters - see \code{fit$pars$varying}.
 }}
 
 \item{arma}{Whether to include autoregressive effects.
 \itemize{
-\item \verb{TRUE:} Compute autoregressive residuals. Requires the response variable in \code{newdata}.
-\item \verb{FALSE:} Disregard the autoregressive effects. For \code{family = gaussian()}, \code{predict()} just use \code{sigma} for residuals.
+\item \code{TRUE} Compute autoregressive residuals. Requires the response variable in \code{newdata}.
+\item \code{FALSE} Disregard the autoregressive effects. For \code{family = gaussian()}, \code{predict()} just use \code{sigma} for residuals.
 }}
 
 \item{nsamples}{Integer or \code{NULL}. Number of samples to return/summarise.
 If there are varying effects, this is the number of samples from each varying group.
 \code{NULL} means "all". Ignored if both are \code{FALSE}. More samples trade speed for accuracy.}
 
-\item{...}{Currently unused}
+\item{...}{Currently ignored.}
 }
 \description{
 Equivalent to  \code{fitted(fit, ...) - fit$data[, fit$data$yvar]} (or \code{fitted(fit, ...) - newdata[, fit$data$yvar]}),
@@ -58,9 +57,9 @@ but with fixed arguments for \code{fitted}: \verb{rate = FALSE, which_y = 'ct', 
 }
 \examples{
 \donttest{
-residuals(ex_fit)
-residuals(ex_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80\% credible interval.
-residuals(ex_fit, summary = FALSE)  # Samples instead of summary.
+residuals(demo_fit)
+residuals(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80\% credible interval.
+residuals(demo_fit, summary = FALSE)  # Samples instead of summary.
 }
 
 }
