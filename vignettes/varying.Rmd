@@ -158,6 +158,6 @@ The priors `cp_1_sd` is the population-level standard deviation of `cp_1_id`, th
 Here is the JAGS code for the model used in this article:
 
 ```{r}
-cat(fit$jags_code)
+fit$jags_code
 ```
 

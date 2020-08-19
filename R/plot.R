@@ -38,21 +38,21 @@
 #' @importFrom dplyr .data
 #' @export
 #' @examples
-#' # Typical usage. ex_fit is an mcpfit object.
-#' plot(ex_fit)
+#' # Typical usage. demo_fit is an mcpfit object.
+#' plot(demo_fit)
 #' \donttest{
-#' plot(ex_fit, prior = TRUE)  # The prior
+#' plot(demo_fit, prior = TRUE)  # The prior
 #'
-#' plot(ex_fit, lines = 0, q_fit = TRUE)  # 95% HDI without lines
-#' plot(ex_fit, q_predict = c(0.1, 0.9))  # 80% prediction interval
-#' plot(ex_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
+#' plot(demo_fit, lines = 0, q_fit = TRUE)  # 95% HDI without lines
+#' plot(demo_fit, q_predict = c(0.1, 0.9))  # 80% prediction interval
+#' plot(demo_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
 #'
 #' # Show a panel for each varying effect
 #' # plot(fit, facet_by = "my_column")
 #'
 #' # Customize plots using regular ggplot2
 #' library(ggplot2)
-#' plot(ex_fit) + theme_bw(15) + ggtitle("Great plot!")
+#' plot(demo_fit) + theme_bw(15) + ggtitle("Great plot!")
 #' }
 #'
 plot.mcpfit = function(x,
@@ -395,19 +395,19 @@ geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
 #' @import patchwork
 #' @export
 #' @examples
-#' # Typical usage. ex_fit is an mcpfit object.
-#' plot_pars(ex_fit)
+#' # Typical usage. demo_fit is an mcpfit object.
+#' plot_pars(demo_fit)
 #'
 #' \dontrun{
 #' # More options
-#' plot_pars(ex_fit, regex_pars = "^cp_")  # Plot only change points
-#' plot_pars(ex_fit, pars = c("int_3", "time_3"))  # Plot these parameters
-#' plot_pars(ex_fit, type = c("trace", "violin"))  # Combine plots
+#' plot_pars(demo_fit, regex_pars = "^cp_")  # Plot only change points
+#' plot_pars(demo_fit, pars = c("int_3", "time_3"))  # Plot these parameters
+#' plot_pars(demo_fit, type = c("trace", "violin"))  # Combine plots
 #' # Some plots only take pairs. hex is good to assess identifiability
-#' plot_pars(ex_fit, type = "hex", pars = c("cp_1", "time_2"))
+#' plot_pars(demo_fit, type = "hex", pars = c("cp_1", "time_2"))
 #'
 #' # Visualize the priors:
-#' plot_pars(ex_fit, prior = TRUE)
+#' plot_pars(demo_fit, prior = TRUE)
 #'
 #' # Useful for varying effects:
 #' # plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all varying effects
@@ -415,7 +415,7 @@ geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
 #'
 #' # Customize multi-column ggplots using "*" instead of "+" (patchwork)
 #' library(ggplot2)
-#' plot_pars(ex_fit, type = c("trace", "dens_overlay")) * theme_bw(10)
+#' plot_pars(demo_fit, type = c("trace", "dens_overlay")) * theme_bw(10)
 #' }
 
 plot_pars = function(fit,
@@ -572,8 +572,8 @@ get_eval_at = function(fit, facet_by) {
 #' @export
 #' @examples
 #' \donttest{
-#' pp_check(ex_fit)
-#' pp_check(ex_fit, type = "ecdf_overlay")
+#' pp_check(demo_fit)
+#' pp_check(demo_fit, type = "ecdf_overlay")
 #' #pp_check(some_varying_fit, type = "loo_intervals", facet_by = "id")
 #' }
 #'

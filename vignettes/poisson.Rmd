@@ -126,6 +126,6 @@ Again, unsurprisingly, the change point model is preferred and they show the sam
 Here is the JAGS code for the full model above.
 
 ```{r}
-cat(fit$jags_code)
+fit$jags_code
 ```
 

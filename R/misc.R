@@ -140,3 +140,355 @@ get_quantiles = function(samples, quantiles, xvar, yvar, facet_by = NULL) {
 
 # Hack to make R CMD pass for function geom_cp_density()
 utils::globalVariables(c("value", "..scaled..", ".chain", "cp_name", "."))
+
+
+#' Print mcplist
+#'
+#' Shows a list in a more condensed format using `str(list)`.
+#' @aliases print.mcplist
+#' @inheritParams print.mcpfit
+print.mcplist = function(x, ...) {
+  assert_types(x, "list")
+  assert_ellipsis(...)
+
+  # For all-formula list (typically fit$model)
+  if (all(sapply(x, is.formula)) == TRUE) {
+    cat(paste0("List of ", length(x), "\n"))
+    for (i in x) {
+      cat(" $ ")
+      print(i)
+    }
+  } else {
+    # Other lists
+    utils::str(x, vec.len = Inf, give.head = FALSE, give.attr = FALSE)
+  }
+}
+
+
+#' Nice printing texts
+#'
+#' Useful for `print(fit$jags_code)`, `print(mcp_demo$call)`, etc.
+#'
+#' @aliases print.mcptext
+#' @param x Character, often with newlines.
+#' @param ... Currently ignored.
+#' @return NULL
+#' @export
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @examples
+#' mytext = "line1 = 2\n line2 = 'horse'"
+#' class(mytext) = "mcptext"
+#' print(mytext)
+print.mcptext = function(x, ...) {
+  assert_types(x, "character")
+  assert_ellipsis(...)
+  cat(x)
+}
+
+
+#' Get example models and data
+#'
+#' @aliases mcp_example
+#' @param name Name of the example. One of:
+#'  * `"demo"`: Two change points between intercepts and joined/disjoined slopes.
+#'  * `"ar"`: One change point in autoregressive residuals.
+#'  * `"binomial"`: Binomial with two change points. Much like `"demo"` on a logit scale.
+#'  * `"intercepts"`: An intercept-only change point.
+#'  * `rel_prior`: Relative parameterization and informative priors.
+#'  * `"quadratic"`: A change point to a quadratic segment.
+#'  * `"trigonometric"`: Trigonometric/seasonal data and model.
+#'  * `"varying"`: Varying / hierarchical change points.
+#'  * `"variance"`: A change in variance, including a variance slope.
+#' @param sample TRUE (run `fit = mcp(model, data, ...)`) or FALSE.
+#' @return List with
+#'  * `model`: A list of formulas
+#'  * `data`: The simulated data
+#'  * `simulated`: The parameters used for simulating the data.
+#'  * `fit`: an `mcpfit` if `sample = TRUE`,
+#'  * `call`: the code to run the above.
+#' @export
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @examples
+#' \donttest{
+#' ex = mcp_example("demo")
+#' plot(ex$data)  # Plot data
+#' print(ex$simulated)  # See true parameters used to simulate
+#' print(ex$call)  # See how the data was simulated
+#'
+#' # Fit the model. Either...
+#' fit = mcp(ex$model, ex$data)
+#' plot(fit)
+#'
+#' ex_with_fit = mcp_example("demo", sample = TRUE)
+#' plot(ex_with_fit$fit)
+#'}
+mcp_example = function(name, sample = FALSE) {
+  assert_value(name, c("demo", "ar", "binomial", "intercepts", "rel_prior", "quadratic", "trigonometric", "varying", "variance"))
+  data = data.frame()  # To make R CMD Check happy.
+  if (name == "demo") {
+    call = "# Define model
+model = list(
+  response ~ 1,
+  ~ 0 + time,
+  ~ 1 + time
+)
+
+# Simulate data
+empty = mcp(model, sample = FALSE)
+set.seed(40)
+data = tibble::tibble(
+  time = runif(100, 0, 100),
+  response = empty$simulate(
+    time,
+    cp_1 = 30,
+    cp_2 = 70,
+    int_1 = 10,
+    int_3 = 0,
+    sigma = 4,
+    time_2 = 0.5,
+    time_3 = -0.2)
+)
+
+# Run sampling
+if (sample == TRUE)
+  fit = mcp(model, data)"
+  } else if (name == "ar") {
+    call = "# Define model
+model = list(
+  price ~ 1 + ar(2),
+  ~ 0 + time + ar(1)
+)
+
+# Simulate data
+empty = mcp(model, sample = FALSE)
+set.seed(42)
+data = tibble::tibble(
+  time = 1:200,
+  price = empty$simulate(
+    time,
+    cp_1 = 120,
+    int_1 = 20,
+    time_2 = 0.5,
+    sigma_1 = 5,
+    ar1_1 = 0.7,
+    ar2_1 = 0.2,
+    ar1_2 = -0.4)
+)
+
+# Run sampling
+if (sample == TRUE)
+  fit = mcp(model, data)"
+  } else if (name == "binomial") {
+    call = "# Define model
+model = list(
+  y | trials(N) ~ 1,  # constant rate
+  ~ 0 + x,  # joined changing rate
+  ~ 1 + x  # disjoined changing rate
+)
+
+# Simulate data
+empty = mcp(model, family = binomial(), sample = FALSE)
+set.seed(42)
+data = tibble::tibble(
+  x = 1:100,
+  N = sample(10, length(x), replace=TRUE),
+  y = empty$simulate(
+    x = x,
+    N,
+    cp_1 = 30,
+    cp_2 = 70,
+    int_1 = 2,
+    int_3 = 0.4,
+    x_2 = -0.2,
+    x_3 = 0.05)
+)
+
+# Run sampling
+if (sample == TRUE)
+  fit = mcp(model, data, family = binomial(), adapt = 5000)
+"
+  } else if (name == "intercepts") {
+    call = "# Define model
+model = list(
+  y ~ 1,
+  ~ 1
+)
+
+# Simulate data
+empty = mcp(model, sample = FALSE, par_x = \"x\")
+set.seed(40)
+data = tibble::tibble(
+  x = runif(100, 0, 100),
+  y = empty$simulate(
+    x,
+    cp_1 = 50,
+    int_1 = 10,
+    int_2 = 20,
+    sigma = 8)
+)
+
+# Run sampling
+if (sample == TRUE)
+  fit = mcp(model, data, par_x = \"x\")"
+  } else if (name == "quadratic") {
+    call = "# Define model
+model = list(
+  y ~ 1,
+  ~ 0 + x + I(x^2)
+)
+
+# Simulate data
+empty = mcp::mcp(model, sample = FALSE)
+set.seed(42)
+data = tibble::tibble(
+  x = seq(0, 40, by = 0.5),
+  y = empty$simulate(
+    x,
+    cp_1 = 15,
+    int_1 = 10,
+    sigma = 30,
+    x_2 = -30,
+    x_2_E2 = 1.5)
+)
+
+# Run sampling
+if (sample == TRUE)
+  fit = mcp(model, data)"
+  } else if (name == "rel_prior") {
+    call = "# Define model
+model = list(
+  y ~ 1 + x,
+  ~ rel(1) + rel(x),
+  rel(1) ~ 0 + x
+)
+
+# Simulate data
+empty = mcp::mcp(model, sample = FALSE)
+set.seed(40)
+data = tibble::tibble(
+  x = 1:100,
+  y = empty$simulate(
+    x,
+    cp_1 = 25,
+    cp_2 = 40,
+    int_1 = 25,
+    int_2 = -10,
+    sigma = 7,
+    x_1 = 1,
+    x_2 = -3,
+    x_3 = 0.5)
+)
+
+# Run sampling
+if (sample == TRUE)
+  fit = mcp(model, data)"
+  } else if (name == "trigonometric") {
+    call = "model = list(
+  y ~ 1 + sin(x),
+  ~ 1 + cos(x) + x
+)
+
+# Simulate data
+empty = mcp::mcp(model, sample = FALSE)
+set.seed(40)
+data = tibble::tibble(
+  x = seq(0, 35, by = 0.2),
+  y = empty$simulate(
+    x,
+    cp_1 = 17,
+    int_1 = 10,
+    x_1_sin = 10,
+    x_2_cos = 8,
+    int_2 = 10,
+    x_2 = 3,
+    sigma = 3
+  )
+)
+
+# Run sampling
+if (sample == TRUE)
+  fit = mcp(model, data)"
+  } else if (name == "variance") {
+    call = "# Define model
+model = list(
+  y ~ 1,
+  ~ 0 + sigma(1 + x),
+  ~ 0 + x
+)
+
+# Simulate data
+empty = mcp::mcp(model, sample = FALSE)
+set.seed(30)
+data = tibble::tibble(
+  x = 1:100,
+  y = empty$simulate(
+    x,
+    cp_1 = 25,
+    cp_2 = 75,
+    int_1 = 20,
+    x_3 = 2,
+    sigma_1 = 7,
+    sigma_2 = 25,
+    sigma_x_2 = -0.45)
+  )
+
+# Run sampling
+if (sample == TRUE)
+  fit = mcp(model, data)"
+  } else if (name == "varying") {
+    call = "# Define model
+model = list(
+  y ~ 1 + x,  # intercept + slope
+  1 + (1|id) ~ 0 + x  # joined slope
+)
+
+# Simulate data
+empty = mcp::mcp(model, sample=FALSE)
+data = tibble::tibble(id = c(\"John\", \"Benny\", \"Rose\", \"Cath\", \"Bill\", \"Erin\")) %>%
+  tidyr::expand_grid(x = seq(1, 100, by=4)) %>%
+  dplyr::mutate(
+    id_numeric = as.numeric(as.factor(id)),
+    y = empty$simulate(
+      x,
+      cp_1 = 40,
+      cp_1_id = 7*(id_numeric - mean(id_numeric)),
+      int_1 = 15,
+      x_1 = 3,
+      x_2 = -2,
+      sigma = 25
+    )
+  )
+
+# Run sampling
+if (sample == TRUE)
+  fit = mcp(model, data)"
+  } else {
+    stop("Unknown `name`: ", name)
+  }
+
+  # Run the code
+  eval(parse(text = call))
+
+  # Get stuff ready for return
+  for (i in seq_along(model))
+    environment(model[[i]]) = parent.frame()
+
+  class(call) = c("mcptext", "character")
+  class(model) = c("mcplist", "list")
+
+  last_col = dplyr::pull(data, -1)  # The response column is always the last column
+  simulated = attr(last_col, "simulated")
+
+  if (sample == FALSE)
+    fit = NULL
+
+  return(list(
+    model = model,  # Bind them to global workspace for nicer display
+    data = data,
+    simulated = simulated,  # response is always the last column
+    fit = fit,
+    call = call
+  ))
+}

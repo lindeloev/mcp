@@ -204,17 +204,17 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #' @export
 #' @examples
 #' # Typical usage
-#' summary(ex_fit)
-#' summary(ex_fit, width = 0.8, digits = 4)  # Set HDI width
+#' summary(demo_fit)
+#' summary(demo_fit, width = 0.8, digits = 4)  # Set HDI width
 #'
 #' # Get the results as a data frame
-#' results = summary(ex_fit)
+#' results = summary(demo_fit)
 #'
 #' # Varying (random) effects
 #' # ranef(my_fit)
 #'
 #' # Summarise prior
-#' summary(ex_fit, prior = TRUE)
+#' summary(demo_fit, prior = TRUE)
 #'
 summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) {
   fit = object  # Standard name in mcp
@@ -278,19 +278,6 @@ ranef = function(object, width = 0.95, prior = FALSE, ...) {
 #' @export
 print.mcpfit = function(x, ...) {
   summary(x, ...)
-}
-
-#' Print mcpprior
-#'
-#' The mcpprior is just a list, but it can be displayed in a more condensed
-#' way using cbind.
-#' @aliases print.mcpprior
-#' @inheritParams print.mcpfit
-print.mcpprior = function(x, ...) {
-  assert_ellipsis(...)
-  to_print = cbind(x)
-  colnames(to_print) = "prior"
-  print(to_print)
 }
 
 
@@ -730,12 +717,12 @@ pp_eval = function(
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
-#' predict(ex_fit)  # Evaluate at each ex_fit$data
+#' predict(demo_fit)  # Evaluate at each demo_fit$data
 #' \donttest{
-#' predict(ex_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
-#' predict(ex_fit, summary = FALSE)  # Samples instead of summary.
+#' predict(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
+#' predict(demo_fit, summary = FALSE)  # Samples instead of summary.
 #' predict(
-#'   ex_fit,
+#'   demo_fit,
 #'   newdata = data.frame(time = c(-5, 20, 300)),  # Evaluate
 #'   probs = c(0.025, 0.5, 0.975)
 #' )
@@ -784,10 +771,10 @@ predict.mcpfit = function(
 #' @export
 #' @examples
 #' \donttest{
-#' fitted(ex_fit)
-#' fitted(ex_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
-#' fitted(ex_fit, summary = FALSE)  # Samples instead of summary.
-#' fitted(ex_fit,
+#' fitted(demo_fit)
+#' fitted(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
+#' fitted(demo_fit, summary = FALSE)  # Samples instead of summary.
+#' fitted(demo_fit,
 #'        newdata = data.frame(time = c(-5, 20, 300)),  # New data
 #'        probs = c(0.025, 0.5, 0.975))
 #'}
@@ -841,9 +828,9 @@ fitted.mcpfit = function(
 #' @export
 #' @examples
 #' \donttest{
-#' residuals(ex_fit)
-#' residuals(ex_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
-#' residuals(ex_fit, summary = FALSE)  # Samples instead of summary.
+#' residuals(demo_fit)
+#' residuals(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
+#' residuals(demo_fit, summary = FALSE)  # Samples instead of summary.
 #'}
 #'
 residuals.mcpfit = function(

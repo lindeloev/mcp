@@ -18,8 +18,7 @@
 get_jagscode = function(prior, ST, formula_str, arma_order, family, sample) {
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
-  mm = paste0("
-model {")
+  mm = paste0("model {")
 
   ####################################
   # DIRICHLET PRIOR ON CHANGE POINTS #

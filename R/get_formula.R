@@ -308,6 +308,7 @@ function(",
       args_values[['", pars$x ,"']] = NULL  # Remove x
       ", ifelse(length(pars$trials) > 0, yes = paste0("args_values[['", pars$trials, "']] = NULL  # Remove trials"), no = ""), "
       attr(x, 'simulated') = args_values  # Set as attribute
+      class(attr(x, 'simulated')) = c(\"mcplist\", \"list\")  # for nicer printing
       return(x)
     }
   }

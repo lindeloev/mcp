@@ -17,18 +17,19 @@ Autocorrelation is common in time series. You can specify N-order autoregressive
 
 
 # Simple example
-Let's try and model the simulated `ex_ar` dataset. Take at look at [how it was simulated with `mcp`](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_ar.R) and scroll down to see another simulation.
+Let's simulate some data using the `mcp_example()` function with the "ar" settings:
 
 ```{r}
 library(mcp)
 options(mc.cores = 3)  # Speed up sampling
 set.seed(42)  # Make the script deterministic
 
-head(ex_ar)
+ex = mcp_example("ar")
+head(ex$data)
 ```
 
 
-We model this as a plateau (`1`)  with a second-order autoregressive residual (`ar(2)`) followed by a joined slope (`0 + time`) with a negative first-order autoregressive residual (`ar(1)`):
+See how this was generated in `ex$call`. We model this as a plateau (`1`)  with a second-order autoregressive residual (`ar(2)`) followed by a joined slope (`0 + time`) with a negative first-order autoregressive residual (`ar(1)`):
 
 
 ```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}
@@ -36,7 +37,7 @@ model = list(
   price ~ 1 + ar(2),  # int_1, ar1_1, ar2_1
   ~ 0 + time + ar(1)  # time_2, ar1_2
 )
-fit = mcp(model, ex_ar)
+fit = mcp(model, ex$data)
 ```
 
 Let's plot it and we see that AR was strong in the first segment and weaker-but-negative in the second:
@@ -56,7 +57,7 @@ Note that he naming syntax for autoregressive intercepts is `ar[order]_[segment]
 
 Comparing the columns `mean` and `sim` we see that the AR coefficients are reasonably recovered. In fact, the posterior mean is almost always exactly the same as `arima(data, order = c(N, 0, 0))` (see below), so the non-perfect fits are due to randomness in the simulation - not in the fit.
 
-Notice that `sigma` in AR models describe *innovations*, i.e., the part of the residuals that are not explained by the autoregressive coefficients. `sd(ex_ar$price)` is always higher. In this case, the SD of raw data in the plateau is `r round(sd(ex_ar$price[1:120]), 2)`. As always, it is good to assess posteriors and convergence more directly:
+Notice that `sigma` in AR models describe *innovations*, i.e., the part of the residuals that are not explained by the autoregressive coefficients. `sd(ex$data$price)` is always higher. In this case, the SD of raw data in the plateau is `r round(sd(ex$data$price[1:120]), 2)`. As always, it is good to assess posteriors and convergence more directly:
 
 ```{r, fig.height=9, fig.width=8}
 plot_pars(fit)
@@ -266,6 +267,6 @@ Here are a few ways in which you may want to inform the `ar` parameters in the m
 Here is the JAGS code for the second simulation example, i.e., the one with a single slope going from AR(2) to AR(1). You can print `fit$simulate` and see that it runs much of the same code.
 
 ```{r}
-cat(fit$jags_code)
+fit$jags_code
 ```
 

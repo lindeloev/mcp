@@ -54,7 +54,8 @@ model = list(
 we can model it using an `identity` link function:
 
 ```{r, eval = FALSE}
-fit = mcp(model, data = ex_binomial, family = binomial(link = "identity"))
+ex = mcp_example("binomial")
+fit = mcp(model, data = ex$data, family = binomial(link = "identity"))
 ```
 
 ```{r, echo = FALSE}
@@ -73,7 +74,7 @@ prior = list(
   cp_1 = "dnorm(30, 10) T(20, )"   # Slope starts not-too-early
 )
 
-fit = mcp(model, data = ex_binomial, family = binomial(link = "identity"), prior = prior)
+fit = mcp(model, data = ex$data, family = binomial(link = "identity"), prior = prior)
 ```
 
 ```{r, fig.width=6, fig.height=4}

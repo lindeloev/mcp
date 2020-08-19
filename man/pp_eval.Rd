@@ -19,8 +19,7 @@ pp_eval(
   arma = TRUE,
   nsamples = NULL,
   samples_format = "tidy",
-  scale = "response",
-  ...
+  scale = "response"
 )
 }
 \arguments{
@@ -51,24 +50,23 @@ interpolation on trial number is used to infer trials at a particular x.}
 \item{which_y}{What to plot on the y-axis. One of
 \itemize{
 \item \code{"ct"}: The central tendency which is often the mean after applying the
-link function (default).
+link function.
 \item \code{"sigma"}: The variance
 \item \code{"ar1"}, \code{"ar2"}, etc. depending on which order of the autoregressive
 effects you want to plot.
 }}
 
-\item{varying}{\itemize{
-\item \strong{TRUE:} All varying effects (\code{fit$pars$varying}).
+\item{varying}{One of:
 \itemize{
-\item \strong{FALSE:} No varying efects (\code{c()}).
-\item \strong{Character vector:} Only include specified varying parameters - see \code{fit$pars$varying}.
-}
+\item \code{TRUE} All varying effects (\code{fit$pars$varying}).
+\item \code{FALSE} No varying efects (\code{c()}).
+\item Character vector: Only include specified varying parameters - see \code{fit$pars$varying}.
 }}
 
 \item{arma}{Whether to include autoregressive effects.
 \itemize{
-\item \verb{TRUE:} Compute autoregressive residuals. Requires the response variable in \code{newdata}.
-\item \verb{FALSE:} Disregard the autoregressive effects. For \code{family = gaussian()}, \code{predict()} just use \code{sigma} for residuals.
+\item \code{TRUE} Compute autoregressive residuals. Requires the response variable in \code{newdata}.
+\item \code{FALSE} Disregard the autoregressive effects. For \code{family = gaussian()}, \code{predict()} just use \code{sigma} for residuals.
 }}
 
 \item{nsamples}{Integer or \code{NULL}. Number of samples to return/summarise.
@@ -84,7 +82,7 @@ See more under "value"}
 \item "linear": return on the parameter scale (where the linear trends are modelled).
 }}
 
-\item{...}{Currently unused}
+\item{...}{Currently ignored.}
 }
 \value{
 \itemize{

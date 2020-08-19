@@ -25,6 +25,11 @@ arma_prior = list(
   arma_slope = "dnorm(0, 1 / (MAXX - MINX))"  # 68% of changing 1 over the observed x values
 )
 
+shape_prior = list(
+  shape_int = "dnorm(0, 10) T(0, )",
+  shape_slope = "dnorm(0, 5)"
+)
+
 
 # Per-family priors, mixing in the generic priors
 priors = list(
@@ -73,7 +78,9 @@ priors$bernoulli_logit = priors$binomial_logit
 priors$bernoulli_probit = priors$binomial_probit
 priors$bernoulli_identity = priors$binomial_identity
 
-
+# Identical lambda priors for negbinomial and poisson
+priors$negbinomial_log = c(priors$poisson_log, shape_prior)
+priors$negbinomial_identity = c(priors$poisson_identity, shape_prior)
 
 
 ######################
@@ -216,6 +223,20 @@ get_prior = function(ST, family, prior = list()) {
       }
     }
 
+    # # Size intercept
+    # if (!is.na(S$size_int)) {
+    #   for (name in S$size_int[[1]]$name) {
+    #     default_this[[name]] = default_brutto$size_int
+    #   }
+    # }
+    #
+    # # Size slope
+    # if (!is.na(S$size_slope)) {
+    #   for (name in S$size_slope[[1]]$name) {
+    #     default_this[[name]] = default_brutto$size_slope
+    #   }
+    # }
+
     # MA intercept
     for (order in seq_len(sum(!is.na(S$ma_int[[1]])))) {  # Number of entries in int
       for (name in S$ma_int[[1]][[order]]$name) {
@@ -271,6 +292,5 @@ get_prior = function(ST, family, prior = list()) {
   i_ma = stringr::str_starts(names(this_prior), "ma[0-9]+")
 
   this_prior = c(this_prior[i_cp], this_prior[i_ints], this_prior[i_slopes], this_prior[i_sigma], this_prior[i_ar], this_prior[i_ma])
-  class(this_prior) = "mcpprior"
   return(this_prior)
 }

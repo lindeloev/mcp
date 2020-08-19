@@ -113,39 +113,40 @@
 #'   ~ 1 + time     # Disjoined slope (int_3, time_3) at cp_2
 #' )
 #'
-#' # Fit it. The `ex_demo` dataset is included in mcp. Sample the prior too.
+#' # Fit it and sample the prior too.
 #' # options(mc.cores = 3)  # Uncomment to speed up sampling
-#' ex_fit = mcp(model, data = ex_demo, sample = "both")
+#' ex = mcp_example("demo")  # Simulated data example
+#' demo_fit = mcp(model, data = ex$data, sample = "both")
 #'
 #' # See parameter estimates
-#' summary(ex_fit)
+#' summary(demo_fit)
 #'
 #' # Visual inspection of the results
-#' plot(ex_fit)  # Visualization of model fit/predictions
-#' plot_pars(ex_fit)  # Parameter distributions
-#' pp_check(ex_fit)  # Prior/Posterior predictive checks
+#' plot(demo_fit)  # Visualization of model fit/predictions
+#' plot_pars(demo_fit)  # Parameter distributions
+#' pp_check(demo_fit)  # Prior/Posterior predictive checks
 #'
 #' # Test a hypothesis
-#' hypothesis(ex_fit, "cp_1 > 10")
+#' hypothesis(demo_fit, "cp_1 > 10")
 #'
 #' # Make predictions
-#' fitted(ex_fit)
-#' predict(ex_fit)
-#' predict(ex_fit, newdata = data.frame(time = c(55.545, 80, 132)))
+#' fitted(demo_fit)
+#' predict(demo_fit)
+#' predict(demo_fit, newdata = data.frame(time = c(55.545, 80, 132)))
 #'
 #' # Compare to a one-intercept-only model (no change points) with default prior
 #' model_null = list(response ~ 1)
-#' fit_null = mcp(model_null, data = ex_demo, par_x = "time")  # fit another model here
-#' ex_fit$loo = loo(ex_fit)
+#' fit_null = mcp(model_null, data = ex$data, par_x = "time")  # fit another model here
+#' demo_fit$loo = loo(demo_fit)
 #' fit_null$loo = loo(fit_null)
-#' loo::loo_compare(ex_fit$loo, fit_null$loo)
+#' loo::loo_compare(demo_fit$loo, fit_null$loo)
 #'
 #' # Inspect the prior. Useful for prior predictive checks.
-#' summary(ex_fit, prior = TRUE)
-#' plot(ex_fit, prior = TRUE)
+#' summary(demo_fit, prior = TRUE)
+#' plot(demo_fit, prior = TRUE)
 #'
 #' # Show all priors. Default priors are added where you don't provide any
-#' print(ex_fit$prior)
+#' print(demo_fit$prior)
 #'
 #' # Set priors and re-run
 #' prior = list(
@@ -155,10 +156,10 @@
 #'   int_3 = "int_1"           # Shared intercept between segment 1 and 3
 #' )
 #'
-#' fit3 = mcp(model, data = ex_demo, prior = prior)
+#' fit3 = mcp(model, data = ex$data, prior = prior)
 #'
 #' # Show the JAGS model
-#' cat(ex_fit$jags_code)
+#' demo_fit$jags_code
 #' }
 #'
 mcp = function(model,
@@ -336,10 +337,17 @@ mcp = function(model,
   if (!exists("mcmc_prior")) mcmc_prior = NULL
   if (!exists("mcmc_loglik")) mcmc_loglik = NULL
 
+
+  model = lapply(ST$form, stats::as.formula, env=globalenv())  # with explicit response and cp
+  class(model) = c("mcplist", "list")
+  class(prior) = c("mcplist", "list")
+  class(pars) = c("mcplist", "list")  # for nicer printing
+  class(jags_code) = c("mcptext", "character")  # for nicer printing
+
   # Make mrpfit object
   mcpfit = list(
     # By user (same order as mcp argument)
-    model = lapply(ST$form, stats::as.formula, env=globalenv()),  # with explicit response and cp
+    model = model,
     data = data,
     prior = prior,
     family = family,

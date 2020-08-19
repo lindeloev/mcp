@@ -5,8 +5,8 @@
 #' @export
 #'
 bernoulli = function(link = "logit") {
-  assert_value(link, allowed = c("identity", "logit", "probit
-                                 "))
+  assert_value(link, allowed = c("identity", "logit", "probit"))
+
   # Just copy binomial()
   family = binomial(link = link)
   family$family = "bernoulli"
@@ -16,7 +16,7 @@ bernoulli = function(link = "logit") {
 #' Exponential family for mcp
 #'
 #' @aliases exponential
-#' @param link Link function
+#' @param link Link function (Character).
 #' @export
 #'
 exponential = function(link = "identity") {
@@ -24,6 +24,26 @@ exponential = function(link = "identity") {
 
   family = list(
     family = "exponential",
+    link = link  # on lambda
+  )
+  class(family) = "family"
+  family = mcpfamily(family)
+}
+
+
+#' Negative binomial for mcp
+#'
+#' Parameterized as `mu` (mean; poisson lambda) and `size` (a shape parameter),
+#' so you can do `rnbinom(10, mu = 10, size = 1)`. Read more in the doc for `rnbinom`,
+#'
+#' @aliases negbinomial
+#' @param link Link function (Character).
+#' @export
+negbinomial = function(link = "log") {
+  assert_value(link, allowed = c("log", "identity"))
+
+  family = list(
+    family = "negbinomial",
     link = link  # on lambda
   )
   class(family) = "family"

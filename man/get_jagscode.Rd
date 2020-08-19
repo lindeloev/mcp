@@ -43,7 +43,7 @@ Only default link functions are currently supported.}
 
 \item{sample}{One of
 \itemize{
-\item \code{"post"} (default): Sample the posterior.
+\item \code{"post"}: Sample the posterior.
 \item \code{"prior"}: Sample only the prior. Plots, summaries, etc. will
 use the prior. This is useful for prior predictive checks.
 \item \code{"both"}: Sample both prior and posterior. Plots, summaries, etc.
