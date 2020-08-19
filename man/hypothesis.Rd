@@ -69,7 +69,7 @@ For directional hypotheses, it is p converted to odds.
 }
 }
 \description{
-Rreturns posterior probabilities and Bayes Factors for flexible hypotheses involving
+Returns posterior probabilities and Bayes Factors for flexible hypotheses involving
 model parameters. The documentation for the argument \code{hypotheses} below
 shows examples of how to specify hypotheses, and \href{https://lindeloev.github.io/mcp/articles/comparison.html}{read worked examples on the mcp website}.
 For directional hypotheses, \verb{hypothesis`` executes the hypothesis string in a }tidybayes`` environment and summerises the proportion of samples where

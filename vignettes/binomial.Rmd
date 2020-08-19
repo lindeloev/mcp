@@ -1,7 +1,5 @@
 ---
 title: "Binomial change point analysis"
-author: "Jonas Kristoffer Lindeløv"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Binomial change point analysis}
@@ -29,6 +27,9 @@ We run `mcp` with `sample = FALSE` to get what we need to simulate data.
 
 ```{r}
 library(mcp)
+options(mc.cores = 3)  # Speed up sampling
+set.seed(42)  # Make the script deterministic
+
 empty = mcp(model, family = binomial(), sample = FALSE)
 ```
 
@@ -155,6 +156,6 @@ Returning to the priors, the `3 / (MAXX - MINX)` on slopes mean that this change
 Here is the JAGS code for the model used in this article.
 
 ```{r}
-cat(fit$jags_code)
+fit$jags_code
 ```
 

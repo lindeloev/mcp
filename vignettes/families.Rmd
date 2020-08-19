@@ -1,7 +1,5 @@
 ---
 title: "Families and link functions"
-author: "Jonas Kristoffer Lindeløv"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Families and link functions}
@@ -19,7 +17,7 @@ fit = mcp(model, data = df, family = binomial("identity"))
 
 This is an ongoing effort and more will be added. This table shows the current status:
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/mcp_glm_status.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/mcp_glm_status.png)
 
  * **Green:** supported and the default priors are unlikely to change.
  * **Yellow:** supported but the default priors may change.
@@ -37,17 +35,40 @@ In short: think carefully and proceed at your own risk.
 
 # An example
 
-Reviving the example from the article on [binomial models in mcp](../articles/binomial.html), we can model it using an `identity` link function:
-
-```{r, warning=FALSE}
+```{r}
 library(mcp)
+options(mc.cores = 3)  # Speed up sampling
+set.seed(42)  # Make the script deterministic
+```
+
+
+Reviving the example from the article on [binomial models in mcp](../articles/binomial.html)...
+
+```{r}
 model = list(
   y | trials(N) ~ 1 + x,  # Intercept and slope on P(success)
   ~ 1 + x                 # Disjoined slope on P(success)
 )
-
-fit = mcp(model, data = ex_binomial, family = binomial(link = "identity"))
 ```
+
+we can model it using an `identity` link function:
+
+```{r, echo = FALSE}
+ex = mcp_example("binomial")
+```
+
+```{r, eval = FALSE}
+ex = mcp_example("binomial")
+fit = mcp(model, data = ex$data, family = binomial(link = "identity"))
+```
+
+```{r, echo = FALSE}
+message("Parallel sampling in progress...
+
+Error in update.jags(model, n.iter, ...) : Error in node loglik_[63]
+Invalid parent values")
+```
+
 
 Oops, the sampler visited impossible values! Likely `P(success) < 0%` or `P(success) > 100%`. Let's help it along with some more informative priors. For this data and model, the main problem is that the slope of the second segment has too great posterior probability of surpasses 100% with the default `mcp` priors. So let's set some more informative priors render a long (early `cp_1`) and steep (high `x_2`) slope unlikely:
 
@@ -57,7 +78,7 @@ prior = list(
   cp_1 = "dnorm(30, 10) T(20, )"   # Slope starts not-too-early
 )
 
-fit = mcp(model, data = ex_binomial, family = binomial(link = "identity"), prior = prior)
+fit = mcp(model, data = ex$data, family = binomial(link = "identity"), prior = prior)
 ```
 
 ```{r, fig.width=6, fig.height=4}

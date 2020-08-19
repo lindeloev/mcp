@@ -1,7 +1,5 @@
 ---
 title: "Varying change points"
-author: "Jonas Kristoffer Lindeløv"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Varying change points}
@@ -19,6 +17,11 @@ This article in brief:
  * The default priors restrict varying change points to lie between the two adjacent change points.
  * The article on modeling variance via `sigma()` contains [an example on varying change points](../articles/variance.html) as well.
 
+```{r}
+library(mcp)
+options(mc.cores = 3)  # Speed up sampling
+set.seed(42)  # Make the script deterministic
+```
 
 
 # Specifying varying change points
@@ -66,7 +69,6 @@ model = list(
 It is quite similar to simulating non-varying data, except that we need to simulate some varying offsets before passing all parameters to `empty$simulate`:
 
 ```{r, message=FALSE, warning=FALSE}
-library(mcp)
 empty = mcp(model, sample = FALSE)
 
 library(dplyr, warn.conflicts = FALSE)
@@ -106,7 +108,7 @@ fit = mcp(model, data = df)
 If we just use `plot(fit)`, we would see all points in one plot. We want to facet by `id`, so:
 
 ```{r}
-plot(fit, facet_by = "id", ncol = 3)
+plot(fit, facet_by = "id")
 ```
 
 It seems that `mcp` did a good job of recovering the change points. There is a lot of information in this data, since the intercept and the slope on each side of the (varying) change point is shared between participants here.
@@ -133,6 +135,12 @@ Using `pars = "varying"` will plot all varying effects. This may be too much if 
 plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2)
 ```
 
+You can also do posterior predictive checking with facets. I think that for the relatively univariate models supported as of `mcp` 0.3, this does not add much new information over and above `plot(fit, facet_by = "id")`, but it's a standard assessment that many will be acquainted with:
+
+```{r}
+pp_check(fit, facet_by = "id")
+```
+
 
 
 
@@ -150,6 +158,6 @@ The priors `cp_1_sd` is the population-level standard deviation of `cp_1_id`, th
 Here is the JAGS code for the model used in this article:
 
 ```{r}
-cat(fit$jags_code)
+fit$jags_code
 ```
 

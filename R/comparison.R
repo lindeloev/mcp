@@ -19,10 +19,11 @@
 #' \donttest{
 #' # Define two models and sample them
 #' # options(mc.cores = 3)  # Speed up sampling
+#' ex = mcp_example("intercepts")  # Get some simulated data.
 #' model1 = list(y ~ 1 + x, ~ 1)
 #' model2 = list(y ~ 1 + x)  # Without a change point
-#' fit1 = mcp(model1, ex_plateaus)
-#' fit2 = mcp(model2, ex_plateaus)
+#' fit1 = mcp(model1, ex$data)
+#' fit2 = mcp(model2, ex$data)
 #'
 #' # Compute LOO for each and compare (works for waic(fit) too)
 #' fit1$loo = loo(fit1)
@@ -75,6 +76,7 @@ loo.mcpfit = function(x, ...) {
 #' @export
 #'
 waic.mcpfit = function(x, ...) {
+  assert_ellipsis(...)
   criterion(x, "waic")
 }
 

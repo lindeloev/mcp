@@ -19,26 +19,25 @@ tidy_samples(
 \item{fit}{An \code{\link{mcpfit}} object}
 
 \item{population}{\itemize{
-\item \strong{TRUE:} All population effects. Same as \code{fit$pars$population}.
+\item \code{TRUE} All population effects. Same as \code{fit$pars$population}.
 \itemize{
-\item \strong{FALSE:} No population effects. Same as \code{c()}.
-\item \strong{Character vector:} Only include specified population parameters - see \code{fit$pars$population}.
+\item \code{FALSE} No population effects. Same as \code{c()}.
+\item Character vector: Only include specified population parameters - see \code{fit$pars$population}.
 }
 }}
 
-\item{varying}{\itemize{
-\item \strong{TRUE:} All varying effects (\code{fit$pars$varying}).
+\item{varying}{One of:
 \itemize{
-\item \strong{FALSE:} No varying efects (\code{c()}).
-\item \strong{Character vector:} Only include specified varying parameters - see \code{fit$pars$varying}.
-}
+\item \code{TRUE} All varying effects (\code{fit$pars$varying}).
+\item \code{FALSE} No varying efects (\code{c()}).
+\item Character vector: Only include specified varying parameters - see \code{fit$pars$varying}.
 }}
 
 \item{absolute}{\itemize{
-\item \strong{TRUE:} Returns the absolute location of all varying change points.
+\item \code{TRUE} Returns the absolute location of all varying change points.
 \itemize{
-\item \strong{FALSE:} Just returns the varying effects.
-\item \strong{Character vector:} Only do absolute transform for these varying parameters - see \code{fit$pars$varying}.
+\item \code{FALSE} Just returns the varying effects.
+\item Character vector: Only do absolute transform for these varying parameters - see \code{fit$pars$varying}.
 }
 
 OBS: This currently only applies to varying change points. It is not implemented for \code{rel()} regressors yet.

@@ -1,7 +1,5 @@
 ---
 title: "Modeling variance and variance changes"
-author: "Jonas Kristoffer Lindeløv"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Modeling variance and variance changes}
@@ -10,6 +8,12 @@ vignette: >
 ---
 
 For GLM families with a variance parameter (`sigma`), you can model this explicitly. For example, if you want a flat mean (a plateau) with increasing variance, you can do `y ~ 1 + sigma(1 + x)`. In general, all formula syntax that is allowed outside of `sigma()` (where it applies to the mean) also works inside it (applying to the variance). For example, if you go all-out, you can do `~ 1 + sigma(rel(1) + sin(x) + I(x^2))`. Read more about mcp formulas [here](../articles/formulas.html). 
+
+```{r}
+library(mcp)
+options(mc.cores = 3)  # Speed up sampling
+set.seed(42)  # Make the script deterministic
+```
 
 
 # Simple example: a change in variance
@@ -25,9 +29,6 @@ model = list(
 We can simulate some data, starting with low variance and an abrupt change to a high variance at $x = 50$:
 
 ```{r}
-library(mcp)
-options(mc.cores = 3)  # Speed up sampling!
-
 empty = mcp(model, sample = FALSE, par_x = "x")
 set.seed(40)
 df = data.frame(x = 1:100)
@@ -35,6 +36,8 @@ df$y = empty$simulate(
   df$x, 
   cp_1 = 50, int_1 = 20, 
   sigma_1 = 5, sigma_2 = 20)
+
+head(df)
 ```
 
 

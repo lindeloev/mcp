@@ -20,8 +20,8 @@ plot_pars(
 \item{pars}{Character vector. One of:
 \itemize{
 \item Vector of parameter names.
-\item \emph{"population" (default):} plots all population parameters.
-\item \emph{"varying":} plots all varying effects. To plot a particular varying
+\item \code{"population"} plots all population parameters.
+\item \code{"varying"} plots all varying effects. To plot a particular varying
 effect, use \code{regex_pars = "^name"}.
 }}
 
@@ -59,19 +59,19 @@ In any case, if you see a few erratic lines or parameter estimates, this is
 a sign that you may want to increase argument 'adapt' and 'iter' in \code{\link{mcp}}.
 }
 \examples{
-# Typical usage. ex_fit is an mcpfit object.
-plot_pars(ex_fit)
+# Typical usage. demo_fit is an mcpfit object.
+plot_pars(demo_fit)
 
 \dontrun{
 # More options
-plot_pars(ex_fit, regex_pars = "^cp_")  # Plot only change points
-plot_pars(ex_fit, pars = c("int_3", "time_3"))  # Plot these parameters
-plot_pars(ex_fit, type = c("trace", "violin"))  # Combine plots
+plot_pars(demo_fit, regex_pars = "^cp_")  # Plot only change points
+plot_pars(demo_fit, pars = c("int_3", "time_3"))  # Plot these parameters
+plot_pars(demo_fit, type = c("trace", "violin"))  # Combine plots
 # Some plots only take pairs. hex is good to assess identifiability
-plot_pars(ex_fit, type = "hex", pars = c("cp_1", "time_2"))
+plot_pars(demo_fit, type = "hex", pars = c("cp_1", "time_2"))
 
 # Visualize the priors:
-plot_pars(ex_fit, prior = TRUE)
+plot_pars(demo_fit, prior = TRUE)
 
 # Useful for varying effects:
 # plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all varying effects
@@ -79,7 +79,7 @@ plot_pars(ex_fit, prior = TRUE)
 
 # Customize multi-column ggplots using "*" instead of "+" (patchwork)
 library(ggplot2)
-plot_pars(ex_fit, type = c("trace", "dens_overlay")) * theme_bw(10)
+plot_pars(demo_fit, type = c("trace", "dens_overlay")) * theme_bw(10)
 }
 }
 \author{

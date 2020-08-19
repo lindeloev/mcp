@@ -80,17 +80,17 @@ Summarise parameter estimates and model diagnostics.
 
 \examples{
 # Typical usage
-summary(ex_fit)
-summary(ex_fit, width = 0.8, digits = 4)  # Set HDI width
+summary(demo_fit)
+summary(demo_fit, width = 0.8, digits = 4)  # Set HDI width
 
 # Get the results as a data frame
-results = summary(ex_fit)
+results = summary(demo_fit)
 
 # Varying (random) effects
 # ranef(my_fit)
 
 # Summarise prior
-summary(ex_fit, prior = TRUE)
+summary(demo_fit, prior = TRUE)
 
 }
 \author{

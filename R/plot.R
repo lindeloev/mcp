@@ -13,14 +13,14 @@
 #' @param lines Positive integer or `FALSE`. Number of lines (posterior
 #'   draws). FALSE or `lines = 0` plots no lines. Note that lines always plot
 #'   fitted values - not predicted. For prediction intervals, see the `q_predict` argument.
-#' @param geom_data String. One of "point" (default), "line" (good for time-series),
+#' @param geom_data String. One of "point", "line" (good for time-series),
 #'   or FALSE (don not plot).
 #' @param cp_dens TRUE/FALSE. Plot posterior densities of the change point(s)?
 #'   Currently does not respect `facet_by`. This will be added in the future.
 #' @param q_fit Whether to plot quantiles of the posterior (fitted value).
-#'   * \strong{TRUE:} Add 2.5% and 97.5% quantiles. Corresponds to
+#'   * `TRUE` Add 2.5% and 97.5% quantiles. Corresponds to
 #'       `q_fit = c(0.025, 0.975)`.
-#'   * \strong{FALSE (default):} No quantiles
+#'   * `FALSE` No quantiles
 #'   * A vector of quantiles. For example, `quantiles = 0.5`
 #'       plots the median and `quantiles = c(0.2, 0.8)` plots the 20% and 80%
 #'       quantiles.
@@ -38,21 +38,21 @@
 #' @importFrom dplyr .data
 #' @export
 #' @examples
-#' # Typical usage. ex_fit is an mcpfit object.
-#' plot(ex_fit)
+#' # Typical usage. demo_fit is an mcpfit object.
+#' plot(demo_fit)
 #' \donttest{
-#' plot(ex_fit, prior = TRUE)  # The prior
+#' plot(demo_fit, prior = TRUE)  # The prior
 #'
-#' plot(ex_fit, lines = 0, q_fit = TRUE)  # 95% HDI without lines
-#' plot(ex_fit, q_predict = c(0.1, 0.9))  # 80% prediction interval
-#' plot(ex_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
+#' plot(demo_fit, lines = 0, q_fit = TRUE)  # 95% HDI without lines
+#' plot(demo_fit, q_predict = c(0.1, 0.9))  # 80% prediction interval
+#' plot(demo_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
 #'
 #' # Show a panel for each varying effect
 #' # plot(fit, facet_by = "my_column")
 #'
 #' # Customize plots using regular ggplot2
 #' library(ggplot2)
-#' plot(ex_fit) + theme_bw(15) + ggtitle("Great plot!")
+#' plot(demo_fit) + theme_bw(15) + ggtitle("Great plot!")
 #' }
 #'
 plot.mcpfit = function(x,
@@ -121,6 +121,8 @@ plot.mcpfit = function(x,
 
   if (scale == "linear" && rate == FALSE)
     message("Known bug: the data points are plotted incorrectly when scale = 'linear' and rate = FALSE.")
+
+  assert_ellipsis(...)
 
   # Useful vars
   xvar = rlang::sym(fit$pars$x)
@@ -266,7 +268,7 @@ plot.mcpfit = function(x,
 
   # Add better y-labels
   if (scale == "linear")
-    gg = gg + ggplot2::labs(y = paste0(fit$family$link_r, "(", fit$pars$y, ")"))
+    gg = gg + ggplot2::labs(y = paste0(fit$family$link, "(", fit$pars$y, ")"))
   if (scale == "response" && (fit$family$family == "bernoulli" || (fit$family$family == "binomial" && rate == TRUE)))
     gg = gg + ggplot2::labs(y = paste0("P(", fit$pars$y, " = TRUE)"))
   if (which_y != "ct")
@@ -362,8 +364,8 @@ geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
 #' @param fit An \code{\link{mcpfit}} object.
 #' @param pars Character vector. One of:
 #'   * Vector of parameter names.
-#'   * \emph{"population" (default):} plots all population parameters.
-#'   * \emph{"varying":} plots all varying effects. To plot a particular varying
+#'   * `"population"` plots all population parameters.
+#'   * `"varying"` plots all varying effects. To plot a particular varying
 #'       effect, use `regex_pars = "^name"`.
 #' @param regex_pars Vector of regular expressions. This will typically just be
 #'   the beginning of the parameter name(s), i.e., "^cp_" plots all change
@@ -393,19 +395,19 @@ geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
 #' @import patchwork
 #' @export
 #' @examples
-#' # Typical usage. ex_fit is an mcpfit object.
-#' plot_pars(ex_fit)
+#' # Typical usage. demo_fit is an mcpfit object.
+#' plot_pars(demo_fit)
 #'
 #' \dontrun{
 #' # More options
-#' plot_pars(ex_fit, regex_pars = "^cp_")  # Plot only change points
-#' plot_pars(ex_fit, pars = c("int_3", "time_3"))  # Plot these parameters
-#' plot_pars(ex_fit, type = c("trace", "violin"))  # Combine plots
+#' plot_pars(demo_fit, regex_pars = "^cp_")  # Plot only change points
+#' plot_pars(demo_fit, pars = c("int_3", "time_3"))  # Plot these parameters
+#' plot_pars(demo_fit, type = c("trace", "violin"))  # Combine plots
 #' # Some plots only take pairs. hex is good to assess identifiability
-#' plot_pars(ex_fit, type = "hex", pars = c("cp_1", "time_2"))
+#' plot_pars(demo_fit, type = "hex", pars = c("cp_1", "time_2"))
 #'
 #' # Visualize the priors:
-#' plot_pars(ex_fit, prior = TRUE)
+#' plot_pars(demo_fit, prior = TRUE)
 #'
 #' # Useful for varying effects:
 #' # plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all varying effects
@@ -413,7 +415,7 @@ geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
 #'
 #' # Customize multi-column ggplots using "*" instead of "+" (patchwork)
 #' library(ggplot2)
-#' plot_pars(ex_fit, type = c("trace", "dens_overlay")) * theme_bw(10)
+#' plot_pars(demo_fit, type = c("trace", "dens_overlay")) * theme_bw(10)
 #' }
 
 plot_pars = function(fit,
@@ -570,8 +572,8 @@ get_eval_at = function(fit, facet_by) {
 #' @export
 #' @examples
 #' \donttest{
-#' pp_check(ex_fit)
-#' pp_check(ex_fit, type = "ecdf_overlay")
+#' pp_check(demo_fit)
+#' pp_check(demo_fit, type = "ecdf_overlay")
 #' #pp_check(some_varying_fit, type = "loo_intervals", facet_by = "id")
 #' }
 #'

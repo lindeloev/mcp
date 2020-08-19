@@ -1,4 +1,4 @@
-# mcp: Regression with Multiple Change Points<img src="man/figures/logo.png" align="right" style="padding: 20px; padding-right: 0px;" />
+# mcp: Regression with Multiple Change Points<img src="https://github.com/lindeloev/mcp/raw/docs/man/figures/logo_200px.png" align="right" style="padding: 20px; padding-right: 0px;" />
 
 [![mcp Travis-CI status](https://travis-ci.org/lindeloev/mcp.svg?branch=master)](https://travis-ci.org/lindeloev/mcp)
 [![mcp Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/r/lindeloev/mcp)
@@ -54,8 +54,9 @@ model = list(
   ~ 1 + time     # disjoined slope (int_3, time_3) at cp_2
 )
 
-# Fit it. The `ex_demo` dataset is included in mcp
-fit = mcp(model, data = ex_demo)
+# Get example data and fit it
+ex = mcp_example("demo")
+fit = mcp(model, data = ex$data)
 ```
 
 ## Plot and summary
@@ -64,9 +65,9 @@ The default plot includes data, fitted lines drawn randomly from the posterior, 
 ```r
 plot(fit)
 ```
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_demo.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_demo.png)
 
-Use `summary()` to summarise the posterior distribution as well as sampling diagnostics. They were [simulated with mcp](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_demo.R) so the summary include the "true" values in the column `sim` and the column `match` show whether this true value is within the interval:
+Use `summary()` to summarise the posterior distribution as well as sampling diagnostics. They were simulated using `mcp` (see `mcp_example("demo")$call`) so the summary include the "true" values in the column `sim` and the column `match` show whether this true value is within the interval:
 
 ```r
 summary(fit)
@@ -97,7 +98,7 @@ Population-level parameters:
 ```r
 plot_pars(fit, regex_pars = "cp_")
 ```
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_demo_combo.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_demo_combo.png)
 
 Use `fitted(fit)` and `predict(fit)` to get fits and predictions for in-sample and out-of-sample data.
 
@@ -124,7 +125,7 @@ model_null = list(
 )
 
 # Fit it
-fit_null = mcp(model_null, ex_demo)
+fit_null = mcp(model_null, ex$data)
 ```
 
 Leveraging the power of `loo::loo`, we see that the two-change-points model is preferred (it is on top), but the `elpd_diff / se_diff` ratio ratio indicate that this preference is not very strong.
@@ -145,11 +146,11 @@ model2 -7.6       4.6
 # Highlights from in-depth guides
 The articles on the [mcp website](https://lindeloev.github.io/mcp) go in-depth with the functionality of `mcp`. Here is an executive summary, to give you a quick sense of what mcp can do.
 
-[About mcp formulas and models](https://lindeloev.github.io/mcp/articles/formulas.html):
+[About mcp models and simulating data](https://lindeloev.github.io/mcp/articles/formulas.html):
  * Parameter names are `int_i` (intercepts), `cp_i` (change points), `x_i` (slopes), `phi_i` (autocorrelation), and `sigma_*` (variance).
  * The change point model is basically an `ifelse` model.
  * Use `rel()` to specify that parameters are relative to those corresponding in the previous segments.
- * Generate data using `fit$simulate()`.
+ * Generate data for all supported models using `fit$simulate()`. See examples in, e.g., `mcp_examples("demo")$call`.
 
 [Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
  * See priors in `fit$prior`.
@@ -161,7 +162,6 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp) go in-depth w
  * Do prior predictive checks using `mcp(model, data, sample = "prior")`.
 
 [Varying change points](https://lindeloev.github.io/mcp/articles/varying.html):
- * Simulate varying change points using `fit$simulate()`.
  * Get posteriors using `ranef(fit)`.
  * Plot using `plot(fit, facet_by = "my_group")` and `plot_pars(fit, pars = "varying", type = "dens_overlay", ncol = 3)`.
  * The default priors restrict varying change points to lie between the two adjacent change points.
@@ -182,7 +182,6 @@ Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and 
  * `~ sigma(1)` models an intercept change in variance. `~ sigma(0 + x)` models increasing/decreasing variance.
  * `~ ar(N)` models Nth order autoregression on residuals. `~ar(N, 0 + x)` models increasing/decreasing autocorrelation.
  * You can model anything for `sigma()` and `ar()`. For example, `~ x + sigma(1 + x + I(x^2))` models polynomial change in variance with `x` on top of a slope on the mean.
- * Simulate effects and change points on `sigma()` and `ar()` using `fit$simulate()`
 
 [Get fitted and predicted values and intervals](https://lindeloev.github.io/mcp/articles/predict.html):
  * `fitted(fit)` and `predict(fit)` take many arguments to predict in-sample and out-of-sample values and intervals.
@@ -200,17 +199,18 @@ Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and 
 
 
 ## Means
-Find the single change point between two plateaus ([see how this data was simulated with mcp](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_plateaus.R)).
+Find the single change point between two plateaus (simulated using `mcp_example("intercepts")$call`).
 
 ```r
 model = list(
     y ~ 1,  # plateau (int_1)
     ~ 1     # plateau (int_2)
 )
-fit = mcp(model, ex_plateaus, par_x = "x")
+ex = mcp_example("intercepts")
+fit = mcp(model, ex$data, par_x = "x")
 plot(fit)
 ```
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_plateaus.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_plateaus.png)
 
 
 ## Varying change points
@@ -222,13 +222,14 @@ model = list(
   y ~ 1 + x,          # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope, varying by id
 )
-fit = mcp(model, ex_varying)
+ex = mcp_example("varying")
+fit = mcp(model, ex$data)
 plot(fit, facet_by = "id")
 ```
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_varying.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_varying.png)
 
-Summarise the varying change points using `ranef()` or plot them using `plot_pars(fit, "varying")`. Again, [this data was simulated](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_varying.R) so the columns `match` and `sim` are added to show simulation values and whether they are inside the interval. Set the `width` wider for a more lenient criterion.
+Summarise the varying change points using `ranef()` or plot them using `plot_pars(fit, "varying")`. Again, this data was simulated using `mcp` (see `mcp_example("varying")$call`) so the columns `match` and `sim` are added to show simulation values and whether they are inside the interval. Set the `width` wider for a more lenient criterion.
 
 ```r
 ranef(fit, width = 0.98)
@@ -246,9 +247,9 @@ ranef(fit, width = 0.98)
 
 
 ## Generalized linear models
-`mcp` supports Generalized Linear Modeling. See extended examples using [`binomial()`](https://lindeloev.github.io/mcp/articles/binomial.html) and [`poisson()`](https://lindeloev.github.io/mcp/articles/poisson.html). These data were simulated with `mcp` [here](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_binomial.R).
+`mcp` supports Generalized Linear Modeling. See extended examples using [`binomial()`](https://lindeloev.github.io/mcp/articles/binomial.html) and [`poisson()`](https://lindeloev.github.io/mcp/articles/poisson.html).
 
-Here is a binomial change point model with three segments. We plot the 95% HDI too:
+Here is a binomial change point model with three segments (see simulation code: `mcp_example("binomial")$call`). We plot the 95% HDI too:
 
 ```r
 model = list(
@@ -256,25 +257,27 @@ model = list(
   ~ 0 + x,            # joined changing rate
   ~ 1 + x             # disjoined changing rate
 )
-fit = mcp(model, ex_binomial, family = binomial())
+ex = mcp_example("binomial")
+fit = mcp(model, ex$data, family = binomial())
 plot(fit, q_fit = TRUE)
 ```
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_binomial.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_binomial.png)
 
 Use `plot(fit, rate = FALSE)` if you want the points and fit lines on the original scale of `y` rather than divided by `N`.
 
 
 
 ## Time series
-`mcp` allows for flexible time series analysis with autoregressive residuals of arbitrary order. Below, we model a change from a plateau with strong positive AR(2) residuals to a slope with medium AR(1) residuals. These data were simulated with mcp [here](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_ar.R) and the generating values are in the `sim` column. You can also do regression on the AR coefficients themselves using e.g., `ar(1, 1 + x)`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html).
+`mcp` allows for flexible time series analysis with autoregressive residuals of arbitrary order. Below, we model a change from a plateau with strong positive AR(2) residuals to a slope with medium AR(1) residuals. These data were simulated with `mcp` (see simulation code: `mcp_example("ar")$call`) and the generating values are in the `sim` column. You can also do regression on the AR coefficients themselves using e.g., `ar(1, 1 + x)`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html).
 
 ```r
 model = list(
   price ~ 1 + ar(2),
   ~ 0 + time + ar(1)
 )
-fit = mcp(model, ex_ar)
+ex = mcp_example("ar")
+fit = mcp(model, ex$data)
 summary(fit)
 ```
 
@@ -298,7 +301,7 @@ The fit plot shows the inferred autocorrelated nature:
 plot(fit_ar)
 ```
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_ar.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_ar.png)
 
 
 
@@ -313,11 +316,12 @@ model = list(
   ~ 0 + sigma(1 + x),
   ~ 0 + x
 )
-fit = mcp(model, ex_variance, cores = 3, adapt = 5000, iter = 5000)
+ex = mcp_example("variance")
+fit = mcp(model, ex$data, cores = 3, adapt = 5000, iter = 5000)
 plot(fit, q_predict = TRUE)
 ```
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_variance.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_variance.png)
 
 
 
@@ -329,11 +333,12 @@ model = list(
   y ~ 1,
   ~ 0 + x + I(x^2)
 )
-fit = mcp(model, ex_quadratic)
+ex = mcp_example("quadratic")
+fit = mcp(model, ex$data)
 plot(fit)
 ```
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_quadratic.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_quadratic.png)
 
 
 
@@ -346,12 +351,12 @@ model = list(
   y ~ 1 + sin(x),
   ~ 1 + cos(x) + x
 )
-
-fit = mcp(model, ex_trig)
+ex = mcp_example("trigonometric")
+fit = mcp(model, ex$data)
 plot(fit)
 ```
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_trig.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_trig.png)
 
 
 
@@ -362,7 +367,7 @@ Read more about [formula options](https://lindeloev.github.io/mcp/articles/formu
 
 Here we find the two change points between three segments. The slope and intercept of segment 2 are parameterized relative to segment 1, i.e., modeling the *change* in intercept and slope since segment 1. So too with the second change point (`cp_2`) which is now the *distance* from `cp_1`. 
 
-Some of the default priors are overwritten. The first intercept (`int_1`) is forced to be 10, the slopes are in segment 1 and 3 is shared. It is easy to see these effects in the `ex_rel_prior` dataset because they violate it somewhat. The first change point has to be at `x = 20` or later.
+Some of the default priors are overwritten. The first intercept (`int_1`) is forced to be 10, the slopes are in segment 1 and 3 is shared. It is easy to see these effects in the (simulated) data because they violate it somewhat. The first change point has to be at `x = 20` or later.
 
 ```r
 model = list(
@@ -377,13 +382,14 @@ prior = list(
   int_2 = "dnorm(0, 20)",
   cp_1 = "dunif(20, 50)"  # has to occur in this interval
 )
-fit = mcp(model, ex_rel_prior, prior, iter = 10000)
+ex = mcp_example("rel_prior")
+fit = mcp(model, ex$data, prior, iter = 10000)
 plot(fit)
 ```
 
-![](https://github.com/lindeloev/mcp/raw/master/vignettes/_figures/ex_fix_rel.png)
+![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_fix_rel.png)
 
-Comparing the summary to the fitted lines in the plot, we can see that `int_2` and `x_2` are relative values. We also see that the "wrong" priors made it harder to recover the parameters used [to simulate this data](https://github.com/lindeloev/mcp/tree/master/data-raw/ex_rel_prior.R) (`match` and `sim` columns):
+Comparing the summary to the fitted lines in the plot, we can see that `int_2` and `x_2` are relative values. We also see that the "wrong" priors made it harder to recover the parameters used to simulate this code (see `mcp_example("rel_prior")$simulated` which is represented in the `match` and `sim` columns):
 
 ```r
 summary(fit)

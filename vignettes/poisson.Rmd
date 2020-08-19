@@ -1,7 +1,5 @@
 ---
 title: "Poisson change point analysis"
-author: "Jonas Kristoffer Lindeløv"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Poisson change point analysis}
@@ -23,7 +21,7 @@ df = round(boot::coal) %>%
   count()
 
 # See it
-df
+head(df)
 ```
 
 
@@ -31,7 +29,8 @@ The number of events (`n`) as a function of year (`date`) is typically modeled a
 
 ```{r}
 library(mcp)
-options(mc.cores = 3)  # Speed up sampling!
+options(mc.cores = 3)  # Speed up sampling
+set.seed(42)  # Make the script deterministic
 ```
 
 ```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
@@ -127,6 +126,6 @@ Again, unsurprisingly, the change point model is preferred and they show the sam
 Here is the JAGS code for the full model above.
 
 ```{r}
-cat(fit$jags_code)
+fit$jags_code
 ```
 

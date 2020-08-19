@@ -1,7 +1,5 @@
 ---
 title: "Fits and predictions"
-author: "Jonas Kristoffer Lindeløv"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Fits and predictions}
@@ -12,11 +10,15 @@ vignette: >
 This article introduces `predict()`, `fitted()`, `residuals()` for in-sample and out-of-sample data. I will also show how to get creative with `mcp`, including how to make predictions around future change points.
 
 # Preparation: an example model
-We need an `mcpfit` to get started. We take the `ex_demo` dataset:
+We need an `mcpfit` to get started. We take the "demo" dataset:
 
 ```{r}
 library(mcp)
-head(ex_demo)
+options(mc.cores = 3)  # Speed up sampling
+set.seed(42)  # Make the script deterministic
+
+ex = mcp_example("demo")
+head(ex$data)
 ```
 
 ... and model it as three segments, i.e., two change points:
@@ -29,8 +31,8 @@ model = list(
   ~ 1 + time     # disjoined slope (int_3, time_3) at cp_2
 )
 
-# Fit it. The `ex_demo` dataset is included in mcp
-fit = mcp(model, data = ex_demo)
+# Fit it
+fit = mcp(model, data = ex$data)
 ```
 
 This is what the data and the inferred fit looks like with 95% credible interval and a 80% prediction interval:
@@ -41,7 +43,7 @@ plot(fit, q_fit = TRUE, q_predict = c(0.1, 0.9))
 
 To review what we see here:
 
- * The black dots is the data from `ex_demo`. 
+ * The black dots is the data from `ex$data`. 
  * The gray lines are 25 samples from the posterior (control using `plot(fit, lines = 100)`).
  * The dashed red lines are the 2.5% and 97.% quantiles of the fitted (expected) values.
  * The green lines are the 10% and 90% quantiles of the predicted values.
@@ -59,7 +61,7 @@ head(fitted(fit))
 
 In general, this output will include:
 
- * A column for each predictor column in the data. Here, `time` is the only predictor and you see the values in the same order as in `ex_demo` (which is copied to `fit$data`). But models with [varying change points](../articles/varying.html) will additionally have a column for the varying data, `binomial()` models include the number of trials, etc.
+ * A column for each predictor column in the data. Here, `time` is the only predictor and you see the values in the same order as in `ex$data` (which is copied to `fit$data`). But models with [varying change points](../articles/varying.html) will additionally have a column for the varying data, `binomial()` models include the number of trials, etc.
  
  * **fitted:** The fitted value which is the mean of the posterior for this predictor value (or set of predictor values). I.e., it is the *Expected Value (EV)*.
  
@@ -75,7 +77,7 @@ If you compare these values to the plot, you will see that they correspond. `plo
 To predict out-of-sample data, you can simply use the `newdata` argument. 
 
 ```{r}
-newdata = data.frame(time = c(ex_demo$time[1], 25, -20, 200))
+newdata = data.frame(time = c(ex$data$time[1], 25, -20, 200))
 fitted(fit, newdata = newdata)
 ```
 
@@ -115,21 +117,18 @@ Say you want to forecast at `time = 125` and you know that a changepoint to the 
 We already did that above, resulting in our `fit`. But we only do it to get the default priors that are suitable for inferring change point in this region, so you could've just run it without sampling:
 
 ```{r, eval=FALSE}
-fit = mcp(model, data = ex_demo, sample = FALSE)
+fit = mcp(model, data = ex$data, sample = FALSE)
 ```
 
 
 
-## Step 2: fit a model including the unobserved regions
+## Step 2: add the unobserved segment(s) and fit
 Now we extend the model with the future segment of which we have prior knowledge:
 
 ```{r}
-model_forecast = list(
-  response ~ 1,  # plateau (int_1)
-  ~ 0 + time,    # joined slope (time_2) at cp_1
-  ~ 1 + time,    # disjoined slope (int_3, time_3) at cp_2
-  ~ 1     # joined slope (time_4) at cp_3
-)
+model_forecast = c(fit$model, list(
+  ~ 1     # intercept (int_4) after cp_3
+))
 ```
 
 And finally, we extend the list of priors with the two new parameters (`time_4` and `cp_3`). It may be helpful to review [the article on priors in mcp](../articles/priors.html).
@@ -144,7 +143,7 @@ prior_forecast = c(fit$prior, list(
 Now let's fit it:
 
 ```{r, results=FALSE, message=FALSE, cache=TRUE}
-fit_forecast = mcp(model_forecast, data = ex_demo, prior = prior_forecast)
+fit_forecast = mcp(model_forecast, data = ex$data, prior = prior_forecast)
 ```
 
 
@@ -176,7 +175,7 @@ ggplot(predict_forecast, aes(x = time, y = predict)) +
   geom_line(aes(y = fitted, group = .draw), data = fitted_forecast, alpha = 0.2) + 
   
   # Observed data
-  geom_point(aes(x = time, y = response), data = ex_demo) + 
+  geom_point(aes(x = time, y = response), data = ex$data) + 
   labs(title = "Predicting with future change points")
 ```
 

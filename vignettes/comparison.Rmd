@@ -1,7 +1,5 @@
 ---
 title: "Change point model comparison"
-author: "Jonas Kristoffer Lindeløv"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Change point model comparison}
@@ -14,6 +12,13 @@ There are three main ways of doing model comparison in `mcp`:
  * Compare any N `mcp` models using leave-One-Out cross validation (LOO-CV). Check out `loo(fit)`, `loo::loo_compare(fit1$loo, fit2$loo, ...)`, and `loo::loo_model_weights(fit1$loo, fit2$loo, ...)`.
  * Flexible directional tests using `hypothesis(fit, cp_1 > 40)` or `hypothesis(fit, cp_1 > 40 & x_2 > x_1)`.
  * Point Bayes Factors tests using the Savage-Dickey density ratio, e.g., `hypothesis(fit, cp_1 = 50)` or `hypothesis(fit, x_2 = x_1)`.
+
+
+```{r}
+library(mcp)
+options(mc.cores = 3)  # Speed up sampling
+set.seed(42)  # Make the script deterministic
+```
 
 
 # Some models to play with
@@ -42,12 +47,10 @@ Notice that `items` is used both as `trials` and x-axis. No problem.
 Simulate some data using `fit$simulate()`:
 
 ```{r}
-library(mcp)
-options(mc.cores = 3)  # Speed up sampling!
-
+# Get just the model - no fit
 empty = mcp(model, family = binomial(), sample = FALSE)
 
-set.seed(42)
+# Simulate data
 df = data.frame(items = rep(1:9, each = 40))
 df$recalled = empty$simulate(
   df$items, 
@@ -55,6 +58,8 @@ df$recalled = empty$simulate(
   int_1 = 2.5, 
   items_2 = -0.4, 
   sigma = 0.5)
+
+head(df)
 ```
 
 

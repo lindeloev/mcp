@@ -1,7 +1,5 @@
 ---
 title: "Working with priors"
-author: "Jonas Kristoffer Lindeløv"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Working with priors}
@@ -47,7 +45,8 @@ Let us see the priors after running them through `mcp` and compare to the defaul
 
 ```{r}
 library(mcp)
-options(mc.cores = 3)  # Speed up sampling!
+options(mc.cores = 3)  # Speed up sampling
+set.seed(42)  # Make the script deterministic
 
 empty_manual = mcp(model, prior = prior, sample = FALSE)
 empty_default = mcp(model, sample = FALSE)
@@ -65,6 +64,8 @@ df$y = empty_default$simulate(df$x,
     x_1 = -0.5, x_2 = 0.5, x_3 = 0,  # slopes
     cp_1 = 35, cp_2 = 70,  # change points
     sigma = 5)
+
+head(df)
 ```
 
 
@@ -271,7 +272,7 @@ If you want more informed priors on the change point location, i.e., `cp_2 = "dn
 
 
 # Default priors on linear predictors
-*OBS: These priors are very to change in versions beyond mcp 0.2, but not drastically.*
+*OBS: These priors are very to change in versions beyond mcp 0.3, but not drastically.*
 
 You can see the default priors for the `gaussian()` family in the previous example. They are similar to the `brms` default priors, i.e., t-distributed around mean = 0 with a standard deviation that scales with the data.
 
@@ -311,6 +312,6 @@ You can see how the manual priors are more dense to the left, and the "concerted
 Here is the JAGS code for `fit_manual`:
 
 ```{r}
-cat(fit_manual$jags_code)
+fit_manual$jags_code
 ```
 

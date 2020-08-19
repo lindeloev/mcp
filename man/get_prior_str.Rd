@@ -34,7 +34,7 @@ than 5 change points. \href{https://lindeloev.github.io/mcp/articles/priors.html
 
 \item{i}{The index in \code{prior} to get code for}
 
-\item{varying_group}{String or NULL (default). Null indicates a population-
+\item{varying_group}{String or NULL. Null indicates a population-
 level prior. String indicates a varying-effects prior (one for each group
 level).}
 }

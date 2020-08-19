@@ -30,18 +30,17 @@ the original data is used.}
 
 \item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
 
-\item{varying}{\itemize{
-\item \strong{TRUE:} All varying effects (\code{fit$pars$varying}).
+\item{varying}{One of:
 \itemize{
-\item \strong{FALSE:} No varying efects (\code{c()}).
-\item \strong{Character vector:} Only include specified varying parameters - see \code{fit$pars$varying}.
-}
+\item \code{TRUE} All varying effects (\code{fit$pars$varying}).
+\item \code{FALSE} No varying efects (\code{c()}).
+\item Character vector: Only include specified varying parameters - see \code{fit$pars$varying}.
 }}
 
 \item{arma}{Whether to include autoregressive effects.
 \itemize{
-\item \verb{TRUE:} Compute autoregressive residuals. Requires the response variable in \code{newdata}.
-\item \verb{FALSE:} Disregard the autoregressive effects. For \code{family = gaussian()}, \code{predict()} just use \code{sigma} for residuals.
+\item \code{TRUE} Compute autoregressive residuals. Requires the response variable in \code{newdata}.
+\item \code{FALSE} Disregard the autoregressive effects. For \code{family = gaussian()}, \code{predict()} just use \code{sigma} for residuals.
 }}
 
 \item{nsamples}{Number of draws. Note that you may want to use all data for summary geoms.
@@ -58,8 +57,8 @@ around the \verb{bayesplot::ppc_*()} methods.
 }
 \examples{
 \donttest{
-pp_check(ex_fit)
-pp_check(ex_fit, type = "ecdf_overlay")
+pp_check(demo_fit)
+pp_check(demo_fit, type = "ecdf_overlay")
 #pp_check(some_varying_fit, type = "loo_intervals", facet_by = "id")
 }
 

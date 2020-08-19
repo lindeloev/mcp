@@ -12,7 +12,7 @@ unpack_y(form_y, i, family)
 
 \item{i}{The segment number (integer)}
 
-\item{family}{An mcpfamily object returned by \code{mcp_family()}.}
+\item{family}{An mcpfamily object returned by \code{mcpfamily()}.}
 }
 \value{
 A one-row tibble with the columns

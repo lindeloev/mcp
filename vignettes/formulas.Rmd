@@ -1,7 +1,5 @@
 ---
 title: "About mcp formulas and models"
-author: "Jonas Kristoffer Lindeløv"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{About mcp formulas and models}
@@ -105,7 +103,7 @@ The magic of (Bayesian) MCMC sampling is that it can actually infer the change p
 ```{r}
 model = list(y ~ 1, ~ 1)
 fit = mcp(model, sample = FALSE, par_x = "x")
-cat(fit$jags_code)
+fit$jags_code
 ```
 
 Look at the section called `# Fitted value` which is the (automatically generated) model that was discussed above. Some unnecessary stuff is added to segment 1 just because it makes the code easier to generate. (`x[i_] >= cp_0` when `cp_0` is the smallest value of `x` is, of course, always true).
@@ -143,7 +141,7 @@ Let us see this in action:
 model = list(y ~ 0 + x,
                 ~ 0 + x)
 fit = mcp(model, sample = FALSE)
-cat(fit$jags_code)
+fit$jags_code
 ```
 
 Again, look at the `#Fitted value` to see the indicator-version in action. And again, `mcp` adds something about `cp_0 = -Inf` and `cp_2 = Inf`, just for internal convenience.
@@ -170,4 +168,4 @@ y_indicator = (x > cp_0) * int_1 +  # Note: no (x < cp_1)
 plot(x, y_indicator, main = "Relative intercept")
 ```
 
-You can look at `cat(fit$jags_code)` and `fit$simulate` to see this in action.
+You can look at `fit$jags_code` and `fit$simulate()` to see this in action.

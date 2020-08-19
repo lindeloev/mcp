@@ -12,7 +12,7 @@ unpack_rhs(form_rhs, i, family, data, last_segment)
 
 \item{i}{The segment number (integer)}
 
-\item{family}{An mcpfamily object returned by \code{mcp_family()}.}
+\item{family}{An mcpfamily object returned by \code{mcpfamily()}.}
 
 \item{data}{A data.frame or tibble}
 
