@@ -278,9 +278,8 @@
 <h1 class="hasAnchor">
 <a href="#jags-code" class="anchor"></a>JAGS code</h1>
 <p>Here is the JAGS code for the full model above.</p>
-<div class="sourceCode" id="cb18"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="no">fit</span>$<span class="no">jags_code</span>)</pre></body></html></div>
-<pre><code>## 
-## model {
+<div class="sourceCode" id="cb18"><html><body><pre class="r"><span class="no">fit</span>$<span class="no">jags_code</span></pre></body></html></div>
+<pre><code>## model {
 ## 
 ##   # Priors for population-level effects
 ##   cp_0 = MINX  # mcp helper value.

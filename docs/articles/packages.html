@@ -50,7 +50,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0.9000</span>
       </span>
     </div>
 
@@ -262,12 +262,12 @@
 ## 
 ## Population-level parameters:
 ##     name   mean lower upper Rhat n.eff
-##     cp_1 30.683 27.03 34.00    1  1627
-##     cp_2 63.657 46.23 76.00    1   841
-##    int_1  2.044  1.64  2.42    1  4369
-##    int_2 -0.071 -0.53  0.38    1  2020
-##    int_3  0.910  0.52  1.31    1  2398
-##  sigma_1  1.064  0.91  1.22    1  4151</code></pre>
+##     cp_1 30.623 27.09  34.0    1  1628
+##     cp_2 63.706 46.47  76.7    1   757
+##    int_1  2.044  1.66   2.5    1  4556
+##    int_2 -0.062 -0.53   0.4    1  1678
+##    int_3  0.915  0.52   1.3    1  2016
+##  sigma_1  1.062  0.92   1.2    1  4631</code></pre>
 <p>The summary shows good parameter recovery, though the second change point is detected a bit early. This is understandable if you look at the data, and the true change point is still within the highest density interval.</p>
 <p>Plotting the posterior distributions of the change points reveal that they are not well represented by a Gaussian or other known distributions. Therefore, confidence intervals are likely to be meaningless for this problem.</p>
 <div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">patchwork</span>)
@@ -351,7 +351,7 @@
 <span class="kw pkg">loo</span><span class="kw ns">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo_compare</a></span>(<span class="no">fit_mcp</span>$<span class="no">loo</span>, <span class="no">fit_mcp_1</span>$<span class="no">loo</span>)</pre></body></html></div>
 <pre><code>##        elpd_diff se_diff
 ## model1  0.0       0.0   
-## model2 -5.8       2.7</code></pre>
+## model2 -5.0       2.7</code></pre>
 <p>While <code>segmented</code> prefers the one-change-point model, <code>mcp</code> prefers the (true) two-change-point model. Again, the models compared here are <em>very</em> different since <code>segmented</code> does inference on a slope-only model.</p>
 </div>
 <div id="strucchangebreakpoints" class="section level1">

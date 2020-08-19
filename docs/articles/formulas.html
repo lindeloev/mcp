@@ -50,7 +50,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0.9000</span>
       </span>
     </div>
 
@@ -206,7 +206,7 @@
 ## 
 ## No samples. Nothing to summarise.</code></pre>
 <p>Notice how it added the response and the change point to the last segment?</p>
-<p><code>mcp</code> is heavily inspired by <code>brms</code> which again is inspired by <a href="https://cran.r-project.org/web/packages/lme4/index.html"><code>lme4::lmer</code></a>. <a href="https://twitter.com/jonaslindeloev/status/1117760777249853440">Here is a bit of history</a> on that.</p>
+<p><code>mcp</code> is heavily inspired by <code>brms</code> which again is inspired by <a href="https://cran.r-project.org/web/packages/lme4/index.html"><code><a href="https://rdrr.io/pkg/lme4/man/lmer.html">lme4::lmer</a></code></a>. <a href="https://twitter.com/jonaslindeloev/status/1117760777249853440">Here is a bit of history</a> on that.</p>
 </div>
 <div id="parameter-names" class="section level1">
 <h1 class="hasAnchor">
@@ -252,7 +252,8 @@
 ##  $ sigma     : chr "sigma_1"
 ##  $ arma      : chr(0) 
 ##  $ reg       : chr [1:8] "cp_1" "cp_1_sd" "cp_2" "cp_2_sd" "int_1" "int_3" "year_2" "year_3"
-##  $ population: chr [1:9] "cp_1" "cp_1_sd" "cp_2" "cp_2_sd" "int_1" "int_3" "year_2" "year_3" "sigma_1"</code></pre>
+##  $ population: chr [1:9] "cp_1" "cp_1_sd" "cp_2" "cp_2_sd" "int_1" "int_3" "year_2" "year_3" "sigma_1"
+##  - attr(*, "class")= chr [1:2] "mcplist" "list"</code></pre>
 </div>
 <div id="modeling-intercept-change-points" class="section level1">
 <h1 class="hasAnchor">
@@ -281,9 +282,8 @@
 <p>The magic of (Bayesian) MCMC sampling is that it can actually infer the change point from this simple formulation. We let <code>mcp</code> write the JAGS code for this simple two-plateaus model and see how it uses the indicator formulation of change points:</p>
 <div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="no">y</span> ~ <span class="fl">1</span>, ~ <span class="fl">1</span>)
 <span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="fl">FALSE</span>, <span class="kw">par_x</span> <span class="kw">=</span> <span class="st">"x"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="no">fit</span>$<span class="no">jags_code</span>)</pre></body></html></div>
-<pre><code>## 
-## model {
+<span class="no">fit</span>$<span class="no">jags_code</span></pre></body></html></div>
+<pre><code>## model {
 ## 
 ##   # Priors for population-level effects
 ##   cp_0 = MINX  # mcp helper value.
@@ -349,9 +349,8 @@
 <div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="no">y</span> ~ <span class="fl">0</span> + <span class="no">x</span>,
                 ~ <span class="fl">0</span> + <span class="no">x</span>)
 <span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="fl">FALSE</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="no">fit</span>$<span class="no">jags_code</span>)</pre></body></html></div>
-<pre><code>## 
-## model {
+<span class="no">fit</span>$<span class="no">jags_code</span></pre></body></html></div>
+<pre><code>## model {
 ## 
 ##   # Priors for population-level effects
 ##   cp_0 = MINX  # mcp helper value.
@@ -407,7 +406,7 @@
 <span class="co"># Plot it</span>
 <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">x</span>, <span class="no">y_indicator</span>, <span class="kw">main</span> <span class="kw">=</span> <span class="st">"Relative intercept"</span>)</pre></body></html></div>
 <p><img src="formulas_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
-<p>You can look at <code><a href="https://rdrr.io/r/base/cat.html">cat(fit$jags_code)</a></code> and <code>fit$simulate</code> to see this in action.</p>
+<p>You can look at <code>fit$jags_code</code> and <code>fit$simulate()</code> to see this in action.</p>
 </div>
   </div>
 

@@ -50,7 +50,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0.9000</span>
       </span>
     </div>
 
@@ -215,7 +215,10 @@
 ## [1] "cp_1"   "cp_2"   "int_1"  "int_3"  "year_2" "year_3"
 ## 
 ## $population
-## [1] "cp_1"   "cp_2"   "int_1"  "int_3"  "year_2" "year_3"</code></pre>
+## [1] "cp_1"   "cp_2"   "int_1"  "int_3"  "year_2" "year_3"
+## 
+## attr(,"class")
+## [1] "mcplist" "list"</code></pre>
 <ul>
 <li>It takes two intercepts (<code>int_*</code>), for segments 1 and 3.</li>
 <li>It takes two slopes (<code>year_*</code>), for segment 2 and 3.</li>
@@ -324,9 +327,8 @@
 <h1 class="hasAnchor">
 <a href="#jags-code" class="anchor"></a>JAGS code</h1>
 <p>Here is the JAGS code for the model used in this article.</p>
-<div class="sourceCode" id="cb18"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="no">fit</span>$<span class="no">jags_code</span>)</pre></body></html></div>
-<pre><code>## 
-## model {
+<div class="sourceCode" id="cb18"><html><body><pre class="r"><span class="no">fit</span>$<span class="no">jags_code</span></pre></body></html></div>
+<pre><code>## model {
 ## 
 ##   # Priors for population-level effects
 ##   cp_0 = MINX  # mcp helper value.

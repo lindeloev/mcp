@@ -50,7 +50,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0.9000</span>
       </span>
     </div>
 
@@ -175,19 +175,22 @@
 <div id="preparation-an-example-model" class="section level1">
 <h1 class="hasAnchor">
 <a href="#preparation-an-example-model" class="anchor"></a>Preparation: an example model</h1>
-<p>We need an <code>mcpfit</code> to get started. We take the <code>ex_demo</code> dataset:</p>
+<p>We need an <code>mcpfit</code> to get started. We take the “demo” dataset:</p>
 <div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">mcp</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">3</span>)  <span class="co"># Speed up sampling</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">42</span>)  <span class="co"># Make the script deterministic</span>
 
-<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">ex_demo</span>)</pre></body></html></div>
-<pre><code>##       time  response
-## 1 68.35820 32.842651
-## 2 87.29038 -1.160003
-## 3 69.01173 27.564248
-## 4 11.59361 10.062971
-## 5 19.50091 14.056859
-## 6 46.12009 18.292640</code></pre>
+<span class="no">ex</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp_example.html">mcp_example</a></span>(<span class="st">"demo"</span>)
+<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">ex</span>$<span class="no">data</span>)</pre></body></html></div>
+<pre><code>## # A tibble: 6 x 2
+##    time response
+##   &lt;dbl&gt;    &lt;dbl&gt;
+## 1  68.4    32.8 
+## 2  87.3    -1.16
+## 3  69.0    27.6 
+## 4  11.6    10.1 
+## 5  19.5    14.1 
+## 6  46.1    18.3</code></pre>
 <p>… and model it as three segments, i.e., two change points:</p>
 <div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="co"># Define the model</span>
 <span class="no">model</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
@@ -196,14 +199,14 @@
   ~ <span class="fl">1</span> + <span class="no">time</span>     <span class="co"># disjoined slope (int_3, time_3) at cp_2</span>
 )
 
-<span class="co"># Fit it. The `ex_demo` dataset is included in mcp</span>
-<span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">ex_demo</span>)</pre></body></html></div>
+<span class="co"># Fit it</span>
+<span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">ex</span>$<span class="no">data</span>)</pre></body></html></div>
 <p>This is what the data and the inferred fit looks like with 95% credible interval and a 80% prediction interval:</p>
 <div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>, <span class="kw">q_fit</span> <span class="kw">=</span> <span class="fl">TRUE</span>, <span class="kw">q_predict</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0.1</span>, <span class="fl">0.9</span>))</pre></body></html></div>
 <p><img src="predict_files/figure-html/unnamed-chunk-3-1.png" width="700"></p>
 <p>To review what we see here:</p>
 <ul>
-<li>The black dots is the data from <code>ex_demo</code>.</li>
+<li>The black dots is the data from <code>ex$data</code>.</li>
 <li>The gray lines are 25 samples from the posterior (control using <code><a href="../reference/plot.mcpfit.html">plot(fit, lines = 100)</a></code>).</li>
 <li>The dashed red lines are the 2.5% and 97.% quantiles of the fitted (expected) values.</li>
 <li>The green lines are the 10% and 90% quantiles of the predicted values.</li>
@@ -217,15 +220,15 @@
 <p>To get the fitted values for each data point, simply do <code><a href="../reference/fitted.mcpfit.html">fitted(fit)</a></code>:</p>
 <div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="fu"><a href="../reference/fitted.mcpfit.html">fitted</a></span>(<span class="no">fit</span>))</pre></body></html></div>
 <pre><code>##       time    fitted     error      Q2.5     Q97.5
-## 1 68.35820 30.364198 1.0341955 28.302294 32.399471
-## 2 87.29038 -3.326585 0.7686739 -4.846219 -1.800347
-## 3 69.01173 30.715994 1.0636429 28.590656 32.807780
-## 4 11.59361 10.280417 0.7189566  8.845259 11.652711
-## 5 19.50091 10.282221 0.7160576  8.860667 11.652711
-## 6 46.12009 18.393345 0.9298550 16.391841 20.003463</code></pre>
+## 1 68.35820 30.352795 1.0524240 28.281702 32.375971
+## 2 87.29038 -3.316264 0.7639949 -4.833468 -1.826587
+## 3 69.01173 30.704731 1.0839745 28.566277 32.786091
+## 4 11.59361 10.302963 0.7323588  8.826560 11.720457
+## 5 19.50091 10.311477 0.7238347  8.878012 11.722323
+## 6 46.12009 18.377166 1.0029739 16.038041 20.057603</code></pre>
 <p>In general, this output will include:</p>
 <ul>
-<li><p>A column for each predictor column in the data. Here, <code>time</code> is the only predictor and you see the values in the same order as in <code>ex_demo</code> (which is copied to <code>fit$data</code>). But models with <a href="../articles/varying.html">varying change points</a> will additionally have a column for the varying data, <code><a href="https://rdrr.io/r/stats/family.html">binomial()</a></code> models include the number of trials, etc.</p></li>
+<li><p>A column for each predictor column in the data. Here, <code>time</code> is the only predictor and you see the values in the same order as in <code>ex$data</code> (which is copied to <code>fit$data</code>). But models with <a href="../articles/varying.html">varying change points</a> will additionally have a column for the varying data, <code><a href="https://rdrr.io/r/stats/family.html">binomial()</a></code> models include the number of trials, etc.</p></li>
 <li><p><strong>fitted:</strong> The fitted value which is the mean of the posterior for this predictor value (or set of predictor values). I.e., it is the <em>Expected Value (EV)</em>.</p></li>
 <li><p><strong>error:</strong>: The standard error corresponding to <code>fitted</code>, i.e., <code><a href="https://rdrr.io/r/base/diff.html">diff(fitted + c(-1, 1) * error)</a></code> is the 68% credible interval.</p></li>
 <li><p><strong>Q[some number]:</strong> The quantiles of the fitted distribution. You can set the quantiles using <code><a href="../reference/fitted.mcpfit.html">fitted(fit, probs = c(0.1, 0.5, 0.9))</a></code>.</p></li>
@@ -235,13 +238,13 @@
 <h2 class="hasAnchor">
 <a href="#expected-values-for-out-of-sample-data" class="anchor"></a>Expected values for out-of-sample data</h2>
 <p>To predict out-of-sample data, you can simply use the <code>newdata</code> argument.</p>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">newdata</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="kw">time</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="no">ex_demo</span>$<span class="no">time</span>[<span class="fl">1</span>], <span class="fl">25</span>, -<span class="fl">20</span>, <span class="fl">200</span>))
+<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">newdata</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="kw">time</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="no">ex</span>$<span class="no">data</span>$<span class="no">time</span>[<span class="fl">1</span>], <span class="fl">25</span>, -<span class="fl">20</span>, <span class="fl">200</span>))
 <span class="fu"><a href="../reference/fitted.mcpfit.html">fitted</a></span>(<span class="no">fit</span>, <span class="kw">newdata</span> <span class="kw">=</span> <span class="no">newdata</span>)</pre></body></html></div>
 <pre><code>##       time    fitted      error       Q2.5     Q97.5
-## 1  68.3582  30.36420  1.0341955  28.302294 32.399471
-## 2  25.0000  10.31709  0.7031747   8.935075 11.683769
-## 3 -20.0000  10.28042  0.7189566   8.845259 11.652711
-## 4 200.0000 -27.87143 10.1524849 -48.325726 -8.724991</code></pre>
+## 1  68.3582  30.35279  1.0524240  28.281702 32.375971
+## 2  25.0000  10.34998  0.7175872   8.967093 11.770927
+## 3 -20.0000  10.30119  0.7382389   8.825298 11.720457
+## 4 200.0000 -28.14998 10.6442779 -49.429380 -7.991097</code></pre>
 <p>Note that:</p>
 <ul>
 <li>We get one row per value of <code>time</code>.</li>
@@ -263,13 +266,13 @@
 <p><code><a href="../reference/predict.mcpfit.html">predict()</a></code> is the posterior predictive and it takes exactly the same arguments as <code><a href="../reference/fitted.mcpfit.html">fitted()</a></code>. This means that you can make predictions for in-sample and out-of-sample data as well. As with <code><a href="../reference/fitted.mcpfit.html">fitted()</a></code>, <code><a href="../reference/plot.mcpfit.html">plot()</a></code> uses <code><a href="../reference/predict.mcpfit.html">predict()</a></code> under the hood to plot prediction intervals. You can see that the values correspond to dashed green lines in the plot (the 80% prediction interval):</p>
 <div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">42</span>)
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="fu"><a href="../reference/predict.mcpfit.html">predict</a></span>(<span class="no">fit</span>, <span class="kw">probs</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0.1</span>, <span class="fl">0.9</span>)))</pre></body></html></div>
-<pre><code>##       time   predict    error       Q10      Q90
-## 1 68.35820 30.288095 4.162065 25.040849 35.65361
-## 2 87.29038 -3.353787 4.099322 -8.543648  1.93678
-## 3 69.01173 30.771382 4.146150 25.528032 36.04939
-## 4 11.59361 10.244703 4.064250  5.119304 15.40443
-## 5 19.50091 10.166546 4.081853  4.998089 15.35774
-## 6 46.12009 18.404802 4.111900 13.189125 23.63145</code></pre>
+<pre><code>##       time   predict    error       Q10       Q90
+## 1 68.35820 30.275914 4.184053 24.972560 35.608088
+## 2 87.29038 -3.339362 4.101321 -8.619435  1.880431
+## 3 69.01173 30.764242 4.148573 25.449155 36.020085
+## 4 11.59361 10.269686 4.077599  5.100657 15.494820
+## 5 19.50091 10.195011 4.107429  4.956546 15.454846
+## 6 46.12009 18.388889 4.124531 13.147433 23.702492</code></pre>
 <p>Note that <code><a href="../reference/predict.mcpfit.html">predict()</a></code> uses random sampling under the hood, so these values will differ slightly from call to call. You can make it replicable using <code><a href="https://rdrr.io/r/base/Random.html">set.seed()</a></code> as above. In general, the more posterior samples, the less the call-to-call variance will be. Conversely, fewer samples means more call-to-call variation, e.g., if you do <code><a href="../reference/predict.mcpfit.html">predict(fit, nsamples = 10)</a></code>).</p>
 </div>
 <div id="residuals" class="section level1">
@@ -286,7 +289,7 @@
 <h2 class="hasAnchor">
 <a href="#step-1-run-the-model-for-observed-data" class="anchor"></a>Step 1: run the model for observed data</h2>
 <p>We already did that above, resulting in our <code>fit</code>. But we only do it to get the default priors that are suitable for inferring change point in this region, so you could’ve just run it without sampling:</p>
-<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">ex_demo</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="fl">FALSE</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">ex</span>$<span class="no">data</span>, <span class="kw">sample</span> <span class="kw">=</span> <span class="fl">FALSE</span>)</pre></body></html></div>
 </div>
 <div id="step-2-add-the-unobserved-segments-and-fit" class="section level2">
 <h2 class="hasAnchor">
@@ -301,7 +304,7 @@
   <span class="kw">cp_3</span> <span class="kw">=</span> <span class="st">"dnorm(cp_2 + (cp_2 - cp_1), 20) T(MAXX, )"</span>  <span class="co"># In the future at the same interval</span>
 ))</pre></body></html></div>
 <p>Now let’s fit it:</p>
-<div class="sourceCode" id="cb14"><html><body><pre class="r"><span class="no">fit_forecast</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model_forecast</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">ex_demo</span>, <span class="kw">prior</span> <span class="kw">=</span> <span class="no">prior_forecast</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb14"><html><body><pre class="r"><span class="no">fit_forecast</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model_forecast</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">ex</span>$<span class="no">data</span>, <span class="kw">prior</span> <span class="kw">=</span> <span class="no">prior_forecast</span>)</pre></body></html></div>
 </div>
 <div id="step-3-predict" class="section level2">
 <h2 class="hasAnchor">
@@ -328,7 +331,7 @@
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span>(<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="kw">y</span> <span class="kw">=</span> <span class="no">fitted</span>, <span class="kw">group</span> <span class="kw">=</span> <span class="no">.draw</span>), <span class="kw">data</span> <span class="kw">=</span> <span class="no">fitted_forecast</span>, <span class="kw">alpha</span> <span class="kw">=</span> <span class="fl">0.2</span>) +
 
   <span class="co"># Observed data</span>
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>(<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="kw">x</span> <span class="kw">=</span> <span class="no">time</span>, <span class="kw">y</span> <span class="kw">=</span> <span class="no">response</span>), <span class="kw">data</span> <span class="kw">=</span> <span class="no">ex_demo</span>) +
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>(<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="kw">x</span> <span class="kw">=</span> <span class="no">time</span>, <span class="kw">y</span> <span class="kw">=</span> <span class="no">response</span>), <span class="kw">data</span> <span class="kw">=</span> <span class="no">ex</span>$<span class="no">data</span>) +
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span>(<span class="kw">title</span> <span class="kw">=</span> <span class="st">"Predicting with future change points"</span>)</pre></body></html></div>
 <p><img src="predict_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
 <p>You can read the predicted values from above at <code>x = 125</code> off this graph. We literally just predicted for all values between 1 and 170, and visualized it using a ribbon. This means that you can also predict further into the future, if you’d like.</p>

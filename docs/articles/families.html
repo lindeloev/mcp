@@ -50,7 +50,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mcp</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0.9000</span>
       </span>
     </div>
 
@@ -205,7 +205,8 @@
   ~ <span class="fl">1</span> + <span class="no">x</span>                 <span class="co"># Disjoined slope on P(success)</span>
 )</pre></body></html></div>
 <p>we can model it using an <code>identity</code> link function:</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">ex_binomial</span>, <span class="kw">family</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(<span class="kw">link</span> <span class="kw">=</span> <span class="st">"identity"</span>))</pre></body></html></div>
+<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">ex</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp_example.html">mcp_example</a></span>(<span class="st">"binomial"</span>)
+<span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">ex</span>$<span class="no">data</span>, <span class="kw">family</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(<span class="kw">link</span> <span class="kw">=</span> <span class="st">"identity"</span>))</pre></body></html></div>
 <pre><code>## Parallel sampling in progress...
 ## 
 ## Error in update.jags(model, n.iter, ...) : Error in node loglik_[63]
@@ -216,9 +217,9 @@
   <span class="kw">cp_1</span> <span class="kw">=</span> <span class="st">"dnorm(30, 10) T(20, )"</span>   <span class="co"># Slope starts not-too-early</span>
 )
 
-<span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">ex_binomial</span>, <span class="kw">family</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(<span class="kw">link</span> <span class="kw">=</span> <span class="st">"identity"</span>), <span class="kw">prior</span> <span class="kw">=</span> <span class="no">prior</span>)</pre></body></html></div>
+<span class="no">fit</span> <span class="kw">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span>(<span class="no">model</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">ex</span>$<span class="no">data</span>, <span class="kw">family</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html">binomial</a></span>(<span class="kw">link</span> <span class="kw">=</span> <span class="st">"identity"</span>), <span class="kw">prior</span> <span class="kw">=</span> <span class="no">prior</span>)</pre></body></html></div>
 <div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span>(<span class="no">fit</span>)</pre></body></html></div>
-<p><img src="families_files/figure-html/unnamed-chunk-7-1.png" width="576"></p>
+<p><img src="families_files/figure-html/unnamed-chunk-8-1.png" width="576"></p>
 <p>Sampling succeeded! This is a bad model of this data. But it illustrates the necessary considerations and steps to ameliorate problems when going beyond default link functions.</p>
 <p>Because of the identity-link, the regression coefficients are interpretable as intercepts and slopes on <code>P(success)</code> in contrast to the “usual” log-odds fitted when <code>family = binomial(link = "logit")</code>. For example, <code>int_1</code> is inferred probability of success at <code>x = 0</code> and likewise for <code>int_2</code> at <code>x = cp_1</code>.</p>
 <div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span>(<span class="no">fit</span>)</pre></body></html></div>
@@ -230,11 +231,11 @@
 ## 
 ## Population-level parameters:
 ##   name match  sim     mean   lower   upper Rhat n.eff
-##   cp_1       30.0 39.65568 39.0002 41.3627    1  1083
-##  int_1        2.0  0.85265  0.7630  0.9412    1   855
-##  int_2  &lt;NA&gt;   NA  0.13074  0.0523  0.2043    1  1715
-##    x_1  &lt;NA&gt;   NA -0.00035 -0.0042  0.0036    1   828
-##    x_2       -0.2  0.01075  0.0084  0.0130    1  1662</code></pre>
+##   cp_1       30.0 39.66810 39.0000 41.2938    1   699
+##  int_1        2.0  0.85453  0.7649  0.9463    1   807
+##  int_2  &lt;NA&gt;   NA  0.13001  0.0545  0.2086    1  1592
+##    x_1  &lt;NA&gt;   NA -0.00045 -0.0044  0.0035    1   745
+##    x_2       -0.2  0.01076  0.0086  0.0131    1  1679</code></pre>
 </div>
 <div id="specific-remarks" class="section level1">
 <h1 class="hasAnchor">
