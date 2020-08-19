@@ -53,6 +53,10 @@ model = list(
 
 we can model it using an `identity` link function:
 
+```{r, echo = FALSE}
+ex = mcp_example("binomial")
+```
+
 ```{r, eval = FALSE}
 ex = mcp_example("binomial")
 fit = mcp(model, data = ex$data, family = binomial(link = "identity"))

@@ -108,7 +108,7 @@ fit = mcp(model, data = df)
 If we just use `plot(fit)`, we would see all points in one plot. We want to facet by `id`, so:
 
 ```{r}
-plot(fit, facet_by = "id", ncol = 3)
+plot(fit, facet_by = "id")
 ```
 
 It seems that `mcp` did a good job of recovering the change points. There is a lot of information in this data, since the intercept and the slope on each side of the (varying) change point is shared between participants here.
