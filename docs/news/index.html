@@ -165,7 +165,7 @@
       <a href="../articles/packages.html">Comparison to other packages</a>
     </li>
     <li>
-      <a href="../articles/debug.html">Tips, tricks, and debugging</a>
+      <a href="../articles/tips.html">Tips, tricks, and debugging</a>
     </li>
   </ul>
 </li>
@@ -215,13 +215,30 @@
       <small>Source: <a href='https://github.com/lindeloev/mcp/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="mcp-030" class="section level1">
-<h1 class="page-header" data-toc-text="0.3.0">
-<a href="#mcp-030" class="anchor"></a>mcp 0.3.0<small> 2020-08-03 </small>
+    <div id="mcp-0309000-development-version" class="section level1">
+<h1 class="page-header" data-toc-text="0.3.0.9000">
+<a href="#mcp-0309000-development-version" class="anchor"></a>mcp 0.3.0.9000 (development version)<small> Unreleased </small>
 </h1>
 <div id="new-features" class="section level2">
 <h2 class="hasAnchor">
 <a href="#new-features" class="anchor"></a>New features:</h2>
+<ul>
+<li><p><code>ex = mcp_example("demo", with_fit = TRUE)</code> is the new interface that replaces the <code>ex_*</code> datasets in prior versions. This reduces clutter of the namespace/documentation and the size of the package. It also gives the user richer details on the simulation and analyses. For “demo”, the <code>ex_demo</code> dataset is now <code>ex$data</code> and the <code>ex_fit</code> is <code>ex$fit</code>.</p></li>
+<li><p>Nicer printing of lists and texts all over. E.g., try <code><a href="../reference/summary.mcpfit.html">print(demo_fit$jags_code)</a></code> and <code><a href="../reference/summary.mcpfit.html">print(demo_fit$pars)</a></code>.</p></li>
+</ul>
+</div>
+<div id="other-changes" class="section level2">
+<h2 class="hasAnchor">
+<a href="#other-changes" class="anchor"></a>Other changes</h2>
+</div>
+</div>
+    <div id="mcp-030" class="section level1">
+<h1 class="page-header" data-toc-text="0.3.0">
+<a href="#mcp-030" class="anchor"></a>mcp 0.3.0<small> 2020-08-03 </small>
+</h1>
+<div id="new-features-1" class="section level2">
+<h2 class="hasAnchor">
+<a href="#new-features-1" class="anchor"></a>New features:</h2>
 <ul>
 <li>
 <p>Get fits and predictions for in-sample and out-of-sample data. <a href="https://lindeloev.github.io/mcp/articles/predict.html">Read more in the article on these functions</a>.</p>
@@ -261,9 +278,9 @@
 <li><p>Although the API is still in alpha, feel free to try extracting samples using <code>mcp:::tidy_samples(fit)</code>. This is useful for further processing using <code>tidybayes</code>, <code>bayesplot</code>, etc. and is used extensively internally in <code>mcp</code>. One useful feature is computing absolute values for varying change points: <code>mcp:::tidy_samples(fit, population = FALSE, absolute = TRUE)</code>. Feedback is appreciated before <code>tidy_samples</code> will to become part of the <code>mcp</code> API in a future release.</p></li>
 </ul>
 </div>
-<div id="other-changes" class="section level2">
+<div id="other-changes-1" class="section level2">
 <h2 class="hasAnchor">
-<a href="#other-changes" class="anchor"></a>Other changes</h2>
+<a href="#other-changes-1" class="anchor"></a>Other changes</h2>
 <ul>
 <li>Change point densities in <code><a href="../reference/plot.mcpfit.html">plot(fit)</a></code> are now scaled to 20% of the plot for each chain X changepoint combo. This addresses a common problem where a wide posterior was almost invisibly low when a narrow posterior was present. This means that heights should only be compared <em>within</em> each chain x changepoint combo - not across.</li>
 <li>Removed the implicit ceiling of 1000 lines and samples in <code><a href="../reference/plot.mcpfit.html">plot.mcpfit()</a></code>.</li>
@@ -289,9 +306,9 @@
 <a href="#mcp-020" class="anchor"></a>mcp 0.2.0<small> 2020-01-09 </small>
 </h1>
 <p>The API and internal structure should be stable now. v0.2.0 will be released on CRAN.</p>
-<div id="new-features-1" class="section level2">
+<div id="new-features-2" class="section level2">
 <h2 class="hasAnchor">
-<a href="#new-features-1" class="anchor"></a>New features:</h2>
+<a href="#new-features-2" class="anchor"></a>New features:</h2>
 <ul>
 <li>Model quadratic and other terms using <code><a href="https://rdrr.io/r/base/AsIs.html">I(x^2)</a></code>, <code><a href="https://rdrr.io/r/base/AsIs.html">I(x^3.24)</a></code>, <code><a href="https://rdrr.io/r/base/Trig.html">sin(x)</a></code>, <code><a href="https://rdrr.io/r/base/MathFun.html">sqrt(x)</a></code>, etc.</li>
 <li>Model variance for <code>family = gaussian()</code> using <code>~ sigma([formula here])</code>.</li>
@@ -320,9 +337,9 @@
 <code>mcp</code> can now be cited! Call <code><a href="https://rdrr.io/r/utils/citation.html">citation("mcp")</a></code> or see the pre-print here: <a href="https://osf.io/fzqxv">https://osf.io/fzqxv</a>.</li>
 </ul>
 </div>
-<div id="other-changes-1" class="section level2">
+<div id="other-changes-2" class="section level2">
 <h2 class="hasAnchor">
-<a href="#other-changes-1" class="anchor"></a>Other changes:</h2>
+<a href="#other-changes-2" class="anchor"></a>Other changes:</h2>
 <ul>
 <li>Some renaming: “segments” –&gt; “model”. <code>fit$func_y()</code> –&gt; <code>fit$simulate()</code>.</li>
 <li>

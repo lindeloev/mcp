@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Articles • mcp</title>
+<title>Get example models and data — mcp_example • mcp</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -54,7 +54,8 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Articles" />
+<meta property="og:title" content="Get example models and data — mcp_example" />
+<meta property="og:description" content="Get example models and data" />
 <meta property="og:image" content="https://github.com/lindeloev/mcp/raw/docs/man/figures/logo.png" />
 <meta name="twitter:card" content="summary" />
 <meta name="twitter:creator" content="@jonaslindeloev" />
@@ -87,7 +88,7 @@
   </head>
 
   <body data-spy="scroll" data-target="#toc">
-    <div class="container template-article-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -211,40 +212,70 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Articles</h1>
+    <h1>Get example models and data</h1>
+    <small class="dont-index">Source: <a href='https://github.com/lindeloev/mcp/blob/master/R/misc.R'><code>R/misc.R</code></a></small>
+    <div class="hidden name"><code>mcp_example.Rd</code></div>
     </div>
 
-    <div class="section ">
-      <h3>All vignettes</h3>
-      <p class="section-desc"></p>
-
-      <dl>
-        <dt><a href="arma.html">Time series change points</a></dt>
-        <dd></dt>
-        <dt><a href="binomial.html">Binomial change point analysis</a></dt>
-        <dd></dt>
-        <dt><a href="comparison.html">Change point model comparison</a></dt>
-        <dd></dt>
-        <dt><a href="families.html">Families and link functions</a></dt>
-        <dd></dt>
-        <dt><a href="formulas.html">About mcp formulas and models</a></dt>
-        <dd></dt>
-        <dt><a href="packages.html">An overview of change point packages in R</a></dt>
-        <dd></dt>
-        <dt><a href="poisson.html">Poisson change point analysis</a></dt>
-        <dd></dt>
-        <dt><a href="predict.html">Fits and predictions</a></dt>
-        <dd></dt>
-        <dt><a href="priors.html">Working with priors</a></dt>
-        <dd></dt>
-        <dt><a href="tips.html">Diagnosing and fixing problems</a></dt>
-        <dd></dt>
-        <dt><a href="variance.html">Modeling variance and variance changes</a></dt>
-        <dd></dt>
-        <dt><a href="varying.html">Varying change points</a></dt>
-        <dd></dt>
-      </dl>
+    <div class="ref-description">
+    <p>Get example models and data</p>
     </div>
+
+    <pre class="usage"><span class='fu'>mcp_example</span>(<span class='no'>name</span>, <span class='kw'>sample</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>name</th>
+      <td><p>Name of the example. One of:</p><ul>
+<li><p><code>"demo"</code>: Two change points between intercepts and joined/disjoined slopes.</p></li>
+<li><p><code>"ar"</code>: One change point in autoregressive residuals.</p></li>
+<li><p><code>"binomial"</code>: Binomial with two change points. Much like <code>"demo"</code> on a logit scale.</p></li>
+<li><p><code>"intercepts"</code>: An intercept-only change point.</p></li>
+<li><p><code>rel_prior</code>: Relative parameterization and informative priors.</p></li>
+<li><p><code>"quadratic"</code>: A change point to a quadratic segment.</p></li>
+<li><p><code>"trigonometric"</code>: Trigonometric/seasonal data and model.</p></li>
+<li><p><code>"varying"</code>: Varying / hierarchical change points.</p></li>
+<li><p><code>"variance"</code>: A change in variance, including a variance slope.</p></li>
+</ul></td>
+    </tr>
+    <tr>
+      <th>sample</th>
+      <td><p>TRUE (run <code>fit = mcp(model, data, ...)</code>) or FALSE.</p></td>
+    </tr>
+    </table>
+
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>List with</p><ul>
+<li><p><code>model</code>: A list of formulas</p></li>
+<li><p><code>data</code>: The simulated data</p></li>
+<li><p><code>simulated</code>: The parameters used for simulating the data.</p></li>
+<li><p><code>fit</code>: an <code>mcpfit</code> if <code>sample = TRUE</code>,</p></li>
+<li><p><code>call</code>: the code to run the above.</p></li>
+</ul>
+
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><span class='co'># \donttest{</span>
+<span class='no'>ex</span> <span class='kw'>=</span> <span class='fu'>mcp_example</span>(<span class='st'>"demo"</span>)
+<span class='fu'><a href='plot.mcpfit.html'>plot</a></span>(<span class='no'>ex</span>$<span class='no'>data</span>)  <span class='co'># Plot data</span>
+<span class='fu'><a href='summary.mcpfit.html'>print</a></span>(<span class='no'>ex</span>$<span class='no'>simulated</span>)  <span class='co'># See true parameters used to simulate</span>
+<span class='fu'><a href='summary.mcpfit.html'>print</a></span>(<span class='no'>ex</span>$<span class='no'>call</span>)  <span class='co'># See how the data was simulated</span>
+
+<span class='co'># Fit the model. Either...</span>
+<span class='no'>fit</span> <span class='kw'>=</span> <span class='fu'><a href='mcp.html'>mcp</a></span>(<span class='no'>ex</span>$<span class='no'>model</span>, <span class='no'>ex</span>$<span class='no'>data</span>)
+<span class='fu'><a href='plot.mcpfit.html'>plot</a></span>(<span class='no'>fit</span>)
+
+<span class='no'>ex_with_fit</span> <span class='kw'>=</span> <span class='fu'>mcp_example</span>(<span class='st'>"demo"</span>, <span class='kw'>sample</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+<span class='fu'><a href='plot.mcpfit.html'>plot</a></span>(<span class='no'>ex_with_fit</span>$<span class='no'>fit</span>)
+<span class='co'># }</span></pre>
+  </div>
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
+    <nav id="toc" data-toggle="toc" class="sticky-top">
+      <h2 data-toc-skip>Contents</h2>
+    </nav>
   </div>
 </div>
 

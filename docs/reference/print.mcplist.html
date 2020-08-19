@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Articles • mcp</title>
+<title>Print mcplist — print.mcplist • mcp</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -54,7 +54,8 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Articles" />
+<meta property="og:title" content="Print mcplist — print.mcplist" />
+<meta property="og:description" content="Shows a list in a more condensed format using str(list)." />
 <meta property="og:image" content="https://github.com/lindeloev/mcp/raw/docs/man/figures/logo.png" />
 <meta name="twitter:card" content="summary" />
 <meta name="twitter:creator" content="@jonaslindeloev" />
@@ -87,7 +88,7 @@
   </head>
 
   <body data-spy="scroll" data-target="#toc">
-    <div class="container template-article-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -211,40 +212,37 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Articles</h1>
+    <h1>Print mcplist</h1>
+    <small class="dont-index">Source: <a href='https://github.com/lindeloev/mcp/blob/master/R/misc.R'><code>R/misc.R</code></a></small>
+    <div class="hidden name"><code>print.mcplist.Rd</code></div>
     </div>
 
-    <div class="section ">
-      <h3>All vignettes</h3>
-      <p class="section-desc"></p>
-
-      <dl>
-        <dt><a href="arma.html">Time series change points</a></dt>
-        <dd></dt>
-        <dt><a href="binomial.html">Binomial change point analysis</a></dt>
-        <dd></dt>
-        <dt><a href="comparison.html">Change point model comparison</a></dt>
-        <dd></dt>
-        <dt><a href="families.html">Families and link functions</a></dt>
-        <dd></dt>
-        <dt><a href="formulas.html">About mcp formulas and models</a></dt>
-        <dd></dt>
-        <dt><a href="packages.html">An overview of change point packages in R</a></dt>
-        <dd></dt>
-        <dt><a href="poisson.html">Poisson change point analysis</a></dt>
-        <dd></dt>
-        <dt><a href="predict.html">Fits and predictions</a></dt>
-        <dd></dt>
-        <dt><a href="priors.html">Working with priors</a></dt>
-        <dd></dt>
-        <dt><a href="tips.html">Diagnosing and fixing problems</a></dt>
-        <dd></dt>
-        <dt><a href="variance.html">Modeling variance and variance changes</a></dt>
-        <dd></dt>
-        <dt><a href="varying.html">Varying change points</a></dt>
-        <dd></dt>
-      </dl>
+    <div class="ref-description">
+    <p>Shows a list in a more condensed format using <code><a href='https://rdrr.io/r/utils/str.html'>str(list)</a></code>.</p>
     </div>
+
+    <pre class="usage"><span class='co'># S3 method for mcplist</span>
+<span class='fu'><a href='summary.mcpfit.html'>print</a></span>(<span class='no'>x</span>, <span class='no'>...</span>)</pre>
+
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>x</th>
+      <td><p>An <code><a href='mcpfit-class.html'>mcpfit</a></code> object.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Currently ignored</p></td>
+    </tr>
+    </table>
+
+
+  </div>
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
+    <nav id="toc" data-toggle="toc" class="sticky-top">
+      <h2 data-toc-skip>Contents</h2>
+    </nav>
   </div>
 </div>
 

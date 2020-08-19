@@ -16,37 +16,10 @@
     <loc>https://lindeloev.github.io/mcp/reference/cumpaste.html</loc>
   </url>
   <url>
+    <loc>https://lindeloev.github.io/mcp/reference/demo_fit.html</loc>
+  </url>
+  <url>
     <loc>https://lindeloev.github.io/mcp/reference/exponential.html</loc>
-  </url>
-  <url>
-    <loc>https://lindeloev.github.io/mcp/reference/ex_ar.html</loc>
-  </url>
-  <url>
-    <loc>https://lindeloev.github.io/mcp/reference/ex_binomial.html</loc>
-  </url>
-  <url>
-    <loc>https://lindeloev.github.io/mcp/reference/ex_demo.html</loc>
-  </url>
-  <url>
-    <loc>https://lindeloev.github.io/mcp/reference/ex_fit.html</loc>
-  </url>
-  <url>
-    <loc>https://lindeloev.github.io/mcp/reference/ex_plateaus.html</loc>
-  </url>
-  <url>
-    <loc>https://lindeloev.github.io/mcp/reference/ex_quadratic.html</loc>
-  </url>
-  <url>
-    <loc>https://lindeloev.github.io/mcp/reference/ex_rel_prior.html</loc>
-  </url>
-  <url>
-    <loc>https://lindeloev.github.io/mcp/reference/ex_trig.html</loc>
-  </url>
-  <url>
-    <loc>https://lindeloev.github.io/mcp/reference/ex_variance.html</loc>
-  </url>
-  <url>
-    <loc>https://lindeloev.github.io/mcp/reference/ex_varying.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp/reference/fitted.mcpfit.html</loc>
@@ -115,9 +88,6 @@
     <loc>https://lindeloev.github.io/mcp/reference/ilogit.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp/reference/iprobit.html</loc>
-  </url>
-  <url>
     <loc>https://lindeloev.github.io/mcp/reference/is.mcpfit.html</loc>
   </url>
   <url>
@@ -133,10 +103,19 @@
     <loc>https://lindeloev.github.io/mcp/reference/mcp.html</loc>
   </url>
   <url>
+    <loc>https://lindeloev.github.io/mcp/reference/mcpfamily.html</loc>
+  </url>
+  <url>
     <loc>https://lindeloev.github.io/mcp/reference/mcpfit-class.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp/reference/mcp_family.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/mcp_example.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/reference/negbinomial.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/reference/phi.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp/reference/plot.mcpfit.html</loc>
@@ -154,7 +133,10 @@
     <loc>https://lindeloev.github.io/mcp/reference/predict.mcpfit.html</loc>
   </url>
   <url>
-    <loc>https://lindeloev.github.io/mcp/reference/print.mcpprior.html</loc>
+    <loc>https://lindeloev.github.io/mcp/reference/print.mcplist.html</loc>
+  </url>
+  <url>
+    <loc>https://lindeloev.github.io/mcp/reference/print.mcptext.html</loc>
   </url>
   <url>
     <loc>https://lindeloev.github.io/mcp/reference/probit.html</loc>
