@@ -407,7 +407,6 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
 #'   * `FALSE` Just returns the varying effects.
 #'   * Character vector: Only do absolute transform for these varying parameters - see `fit$pars$varying`.
 #'
-#'   OBS: This currently only applies to varying change points. It is not implemented for `rel()` regressors yet.
 #' @return `tibble` of posterior draws in `tidybayes` format.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}

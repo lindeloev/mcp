@@ -23,7 +23,7 @@
 #'   * *Extended formulas:*, e.g., `~ I(x^2) + exp(x) + sin(x)`. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'
 #'   * *Variance:* e.g., `~sigma(1)` for a simple variance change or
-#'     `~sigma(rel(1) + I(x^2))`) for more advanced variance structures. [Read more](https://lindeloev.github.io/mcp/articles/variance.html)
+#'     `~sigma(1 + I(x^2))`) for more advanced variance structures. [Read more](https://lindeloev.github.io/mcp/articles/variance.html)
 #'
 #'   * *Autoregression:* e.g., `~ar(1)` for a simple onset/change in AR(1) or
 #'     `ar(2, 0 + x`) for an AR(2) increasing by `x`. [Read more](https://lindeloev.github.io/mcp/articles/arma.html)

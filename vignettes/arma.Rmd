@@ -77,7 +77,7 @@ If you want to control the *direction* of the change, you simply put a positive-
 ## Regression on AR-coefficients
 While the typical usage is `AR(N)`, you can also specify how autocorrelation *itself* changes with $x$ using `ar(N, formula)`. If you want to model a steady change in the AR(1) "strength", you can do `ar(1, 1 + time)`. Please note that the link function for this regression formula is identity, so you can easily exceed the stationary boundary [-1, 1]. See [the section on priors for AR(N)](#ar_prior) how to counter such problems. The regression on the AR coefficients is applied to all orders. Raise an issue on GitHub if you see a use case for per-order control.
 
-You have the full suite of [`mcp` formula syntax](../articles/formulas.html) available inside `ar` so you could easily do  `ar(3, rel(1) + I(x^2) + exp(x))`. Make sure to use a positive-only prior (e.g., `"dunif(0, 1)"` if using `log()` and `sqrt()` since they fail for negative values.
+You have the full suite of [`mcp` formula syntax](../articles/formulas.html) available inside `ar` so you could easily do  `ar(3, 1 + I(x^2) + exp(x))`. Make sure to use a positive-only prior (e.g., `"dunif(0, 1)"` if using `log()` and `sqrt()` since they fail for negative values.
 
 ## Combining ar() and sigma()
 You can combine `ar()` with any regression model and with [varying change points](../articles/varying.html). Combining with `sigma()` will run will be valid if they change intercepts together so that each segment has homoskedastic residuals, i.e.,
@@ -145,7 +145,7 @@ Let's simulate a change point in autocorrelation and see if we can infer it late
 # The model
 model = list(
   y ~ 1 + x + ar(1),  # Slope
-  ~ 0 + x + ar(1)  # Slope and relative increase
+  ~ 0 + x + ar(1)  # Slope
 )
 
 # Get predictions
@@ -247,7 +247,7 @@ Let's inspect the priors for a more advanced AR model, since you would often hav
 ```{r}
 model = list(
   y ~ 1 + ar(2, 1 + x),
-  ~ 0 + ar(1, rel(1) + I(x^2))
+  ~ 0 + ar(1, 1 + I(x^2))
 )
 empty = mcp(model, sample = FALSE)
 cbind(empty$prior)
@@ -258,7 +258,6 @@ As with `sigma`, the link function for the autoregressive coefficient itself is 
 Here are a few ways in which you may want to inform the `ar` parameters in the model above:
 
  * As mentioned above, you may want to constrain second-order autocorrelations to `ar2_1 ~ dunif(0, ar1_1)`.
- * The relative change in intercept in the second segment (`ar1_2`) can at most be -1 with the default prior. If `ar1_1` was 0.8, this means that it can at most change to -0.2 in the next segment. Use `rel()` with care.
  * Slopes can quickly make the parameter exceed the -1 and 1 boundaries, inducing non-stationarity. You would often want to constrain their magnitude to small slopes, taking into consideration the expected span of the x-axis over which this slope runs. The default prior on `ar`-slopes is a 68% change that there is a change of 1 from the first to the last observation (`"dnorm(0, 1 / (MAXX - MINX))"`) and you may want to, for example, suggest a shallow negative slope using `"dnorm(0, 0.1 / (MAXX-MINX)) T( , 0)"`
 
 

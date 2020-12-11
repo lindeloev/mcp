@@ -11,7 +11,7 @@ models_gauss = list(
   # A lot of terms
   list(y ~ 1 + x,
        ~ 0 + x,
-       rel(1) ~ 1 + sigma(1),
+       ~ 1 + sigma(1),
        simulated = list(
          cp_1 = 70,
          cp_2 = 70,

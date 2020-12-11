@@ -20,7 +20,7 @@ good_y = list(
   list(y ~ 1),  # Regular
   list(y ~ 1,  # Explicit and implicit y and cp
        y ~ 1 ~ 1,
-       rel(1) + (1|id) ~ rel(1) + x,
+       1 + (1|id) ~ 1 + x,
        ~ 1),
   list(ok_y ~ 1)  # decimal y
 )
@@ -47,7 +47,7 @@ good_weights = list(
   list(y | weights(weights_ok) ~ 1),  # Regular
   list(y | weights(weights_ok) ~ 1,
        ~ 1 + x + I(x^2),
-       1 + (1|id) ~ rel(1))  # With multiple segments and functions and varying
+       1 + (1|id) ~ 1)  # With multiple segments and functions and varying
 )
 
 test_good(good_weights)
@@ -57,11 +57,7 @@ test_good(good_weights)
 # TEST INTERCEPTS #
 ###################
 bad_intercepts = list(
-  list(y ~ rel(0)),  # rel(0) not supported
-  list(y ~ rel(1)),  # Nothing to be relative to here
-  list(y ~ 2),  # 2 not supported
-  list(y ~ 1,
-       ~ rel(0))  # rel(0) not supported
+  list(y ~ 2)  # 2 not supported
 )
 
 test_bad(bad_intercepts)
@@ -73,10 +69,7 @@ good_intercepts = list(
   list(y ~ 0,  # Multiple segments
        ~ 1,
        ~ 0,
-       ~ 1),
-  list(y ~ 1,  # Chained relative intercepts
-       ~ rel(1),
-       ~ rel(1))
+       ~ 1)
 )
 
 test_good(good_intercepts)
@@ -86,12 +79,9 @@ test_good(good_intercepts)
 # TEST SLOPES #
 ###############
 bad_slopes = list(
-  list(y ~ rel(x)),  # Nothing to be relative to
   list(y ~ x + y),  # Two slopes
   list(y ~ x,  # Two slopes
        ~ y),
-  list(y ~ 1,  # Relative slope after no slope
-       ~ rel(x)),
   list(y ~ bad_x_char),  # not numeric x
   list(y ~ bad_x_factor),  # not numeric x
   list(y ~ 1,
@@ -109,9 +99,6 @@ good_slopes = list(
   list(y ~ 0 + x,  # Multiple on/off
        ~ 0,
        ~ 1 + x),
-  list(y ~ x,  # Chained relative slopes
-       ~ 0 + rel(x),
-       ~ rel(x)),
   list(y ~ 0 + x + I(x^2) + I(x^3),  # Test "non-linear" x
        ~ 0 + exp(x) + abs(x),
        ~ 0 + sin(x) + cos(x) + tan(x)),
@@ -135,8 +122,6 @@ bad_cps = list(
   list(y ~ 1,
        y ~ ~ 1),  # Needs to be explicit if y is defined
   list(y ~ 1,
-       rel(1) ~ 1),  # Nothing to be relative to yet
-  list(y ~ 1,
        1 + (1|bad_id) ~ 1)  # decimal group
 )
 
@@ -151,10 +136,10 @@ good_cps = list(
        ~ 0),
   list(y ~ 0,  # Varying
        1 + (1|id) ~ 1),
-  list(y ~ 0,  # Chained varying and relative cp
+  list(y ~ 0,  # Chained varying cps
        y ~ 1 ~ 1,
-       rel(1) + (1|id) ~ 0,
-       rel(1) + (1|id) ~ 0,
+       1 + (1|id) ~ 0,
+       1 + (1|id) ~ 0,
        ~ x),
   list(y ~ 1,
        (1|id) ~ 0),  # Intercept is implicit. I don't like it, but OK.

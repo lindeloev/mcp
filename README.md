@@ -149,7 +149,6 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp) go in-depth w
 [About mcp models and simulating data](https://lindeloev.github.io/mcp/articles/formulas.html):
  * Parameter names are `int_i` (intercepts), `cp_i` (change points), `x_i` (slopes), `phi_i` (autocorrelation), and `sigma_*` (variance).
  * The change point model is basically an `ifelse` model.
- * Use `rel()` to specify that parameters are relative to those corresponding in the previous segments.
  * Generate data for all supported models using `fit$simulate()`. See examples in, e.g., `mcp_examples("demo")$call`.
 
 [Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
@@ -361,7 +360,7 @@ plot(fit)
 
 
 
-
+<!--
 ## Using `rel()` and priors
 Read more about [formula options](https://lindeloev.github.io/mcp/articles/formulas.html) and [priors](https://lindeloev.github.io/mcp/articles/priors.html).
 
@@ -407,7 +406,7 @@ Population-level parameters:
      x_2    OK  -3.0 -3.28  -3.61 -2.96 1.04   293
      x_3         0.5  1.58   1.24  1.91 1.07   120
 ```
-
+-->
 
 
 

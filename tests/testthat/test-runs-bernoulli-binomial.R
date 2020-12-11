@@ -32,9 +32,9 @@ test_bad(bad_binomial,
 
 good_binomial = list(
   list(y | trials(N) ~ 1),  # one segment
-  list(y | trials(N) ~ 1 + x,  # specified multiple times and with rel()
-       y | trials(N) ~ 1 ~ rel(1) + rel(x),
-       rel(1) ~ 0),
+  list(y | trials(N) ~ 1 + x,  # specified multiple times
+       y | trials(N) ~ 1 ~ 1 + x,
+       ~ 0),
   list(y | trials(N) ~ 1,  # With varying
        1 + (1|id) ~ 1),
   list(y | trials(N) ~ 1 + ar(1))  # Simple AR(1)
@@ -77,9 +77,9 @@ test_bad(bad_bernoulli,
 
 good_bernoulli = list(
   list(y_bern ~ 1),  # one segment
-  list(y_bern ~ 1 + x,  # specified multiple times and with rel()
-       y_bern ~ 1 ~ rel(1) + rel(x),
-       rel(1) ~ 0),
+  list(y_bern ~ 1 + x,  # specified multiple times
+       y_bern ~ 1 ~ 1 + x,
+       1 ~ 0),
   list(y_bern ~ 1,  # With varying
        1 + (1|id) ~ 1)
 )

@@ -21,9 +21,9 @@ test_bad(bad_poisson,
 
 good_poisson = list(
   list(y ~ 1),  # one segment
-  list(y ~ 1 + x,  # specified multiple times and with rel()
-       y  ~ 1 ~ rel(1) + rel(x),
-       rel(1) ~ 0),
+  list(y ~ 1 + x,  # specified multiple times
+       y  ~ 1 ~ 1 + x,
+       1 ~ 0),
   list(y ~ 1,  # With varying
        1 + (1|id) ~ 1),
   list(y ~ 1 + ar(1),

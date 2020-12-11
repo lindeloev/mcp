@@ -175,11 +175,7 @@ get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
     if (!all(is.na(int))) {
       # For absolute intercepts, "remove" earlier stuff affecting the intercept
       # Multiply it with zero from this change point and on
-      if (int$rel == FALSE) {
-        formula_str = gsub("FUTURE_REL", ind_past, formula_str)
-      }
-
-      # Add intercept with indicator
+      formula_str = gsub("FUTURE_REL", ind_past, formula_str)
       formula_str = paste0(formula_str, ind_this, int$name, " + \n")
     }
 

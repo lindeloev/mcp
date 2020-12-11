@@ -6,7 +6,6 @@
 cp_prior = list(
   cp_1 = "dunif(MINX, MAXX)",  # If there is only one change point
   cp = "dt(MINX, (MAXX - MINX) / N_CP, N_CP - 1)",
-  cp_rel = "dunif(0, MAXX - %s)",
   sd = "dnorm(0, 2 * (MAXX - MINX) / N_CP) T(0, )"
 )
 
@@ -92,7 +91,7 @@ get_default_prior_cp = function(ST, i, default_brutto) {
 
   # An absolute change point intercept
   if (i >= 2)
-    #return(sprintf(priors[[family$family]]$cp, ST$cp_code_prior[i - 1]))
+    #return(sprintf(priors[[family$family]]$cp, ST$cp_name[i - 1]))
     return(truncate_prior_cp(ST, i, default_brutto$cp))
 }
 
@@ -104,13 +103,13 @@ get_default_prior_cp_group = function(ST, i) {
   # Truncate between last change point and next change point, including their
   # varying effects, but keep in the observed range (MINX, MAXX).
   if (i == 2)
-    trunc_from = paste0("MINX - ", ST$cp_code_prior[i])
+    trunc_from = paste0("MINX - ", ST$cp_name[i])
   if (i > 2)
-    trunc_from = paste0(ST$cp_code_prior[i-1], " - ", ST$cp_code_prior[i])
+    trunc_from = paste0(ST$cp_name[i-1], " - ", ST$cp_name[i])
   if (i == nrow(ST))
-    trunc_to = paste0("MAXX - ", ST$cp_code_prior[i])
+    trunc_to = paste0("MAXX - ", ST$cp_name[i])
   if (i < nrow(ST))
-    trunc_to = paste0(ST$cp_code_prior[i + 1], " - ", ST$cp_code_prior[i])
+    trunc_to = paste0(ST$cp_name[i + 1], " - ", ST$cp_name[i])
   trunc = paste0("T(", trunc_from, ", ", trunc_to, ")")
   return(paste0("dnorm(0, ", ST$cp_sd[i], ") ", trunc))
 }
@@ -129,16 +128,9 @@ truncate_prior_cp = function(ST, i, prior_str) {
   is_truncated = stringr::str_detect(prior_str, "T\\(")
   is_fixed = is.numeric(prior_str)
 
-  # OK, we need to add truncation ourselves.
+  # Absolute: be greater than the former change point and within observed range
   if (!is_bounded && !is_truncated && !is_fixed) {
-    if (S$cp_int_rel != 0) {
-      # Relative: be positive (greater than former cp) and within observed range
-      return(paste0(prior_str, " T(0, MAXX - ", ST$cp_code_prior[i - 1], ")"))
-    }
-    else {
-      # Absolute: be greater than the former change point and within observed range
-      return(paste0(prior_str, " T(", ST$cp_code_prior[i - 1], ", MAXX)"))
-    }
+    return(paste0(prior_str, " T(", ST$cp_name[i - 1], ", MAXX)"))
   } else {
     # Return unaltered
     return(prior_str)

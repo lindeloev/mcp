@@ -3,8 +3,8 @@
 ###############
 prior_model = list(
   y ~ 1 + x,
-  1 + (1|id) ~ rel(1) + rel(x),
-  rel(1) ~ 0
+  1 + (1|id) ~ 1 + x,
+  ~ 0
 )
 
 bad_prior = list(
@@ -32,7 +32,7 @@ good_prior = list(
     cp_1 = "dnorm(3, 10)",
     x_2 = "-0.5"
   ),
-  list(  # Outside the observed range allowed
+  list(  # Outside the observed range is allowed
     cp_1 = "dunif(-100, -90)",
     cp_2 = "dnorm(100, 20) T(100, 110)"
   ),

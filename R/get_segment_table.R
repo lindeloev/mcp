@@ -23,10 +23,6 @@ unpack_tildes = function(segment, i) {
     form_str = format(segment)
   }
 
-  # Check for rel(0)
-  if (stringr::str_detect(form_str, "rel\\(0\\)"))
-    stop("rel(0) in segment ", i, " is not meaningful. Just write 0 if you want a plateau starting where the earlier segment ended.")
-
   # List of strings for each section
   chunks = stringr::str_trim(strsplit(form_str, "~")[[1]])
 
@@ -190,7 +186,6 @@ unpack_y = function(form_y, i, family) {
 #' @param form_cp Segment formula as string.
 #' @return A one-row tibble with columns:
 #'   * `cp_int`: bool. Whether there is an intercept change in the change point.
-#'   * `cp_in_rel`: bool. Is this intercept change relative?
 #'   * `cp_ran_int`: bool or NA. Is there a random intercept on the change point?
 #'   * `cp_group_col`: char or NA. Which column in data define the random intercept?
 #' @encoding UTF-8
@@ -199,7 +194,6 @@ unpack_cp = function(form_cp, i) {
   if (is.na(form_cp)) {
     return(tibble::tibble(
       cp_int = FALSE,
-      cp_int_rel = FALSE,
       cp_ran_int = FALSE,
       cp_group_col = NA
     ))
@@ -224,12 +218,8 @@ unpack_cp = function(form_cp, i) {
 
   # Fixed effects
   attrs = attributes(stats::terms(remove_terms(form_cp, "varying")))
-  is_int_rel = attrs$term.labels == "rel(1)"
-  if (any(is_int_rel))
-    attrs$term.labels = attrs$term.labels[-is_int_rel]  # code as no term
-
   if (length(attrs$term.labels) > 0)
-    stop("Error in segment ", i, " (change point): Only intercepts (1 or rel(1)) are allowed in population-level effects.")
+    stop("Error in segment ", i, " (change point): Only intercepts (1) are allowed in population-level effects.")
 
   if (is.null(form_varying) && attrs$intercept == 0)
     stop("Error in segment ", i, " (change point): no intercept or varying effect. You can do e.g., ~ 1 or ~ (1 |id).")
@@ -239,7 +229,6 @@ unpack_cp = function(form_cp, i) {
     # If there is a varying effect
     return(tibble::tibble(
       cp_int = attrs$intercept == 1,
-      cp_int_rel = any(is_int_rel),  # the intercept is relative
       cp_ran_int = ifelse(varying_parts[1] == "1", TRUE, NA),  # placeholder for later
       cp_group_col = varying_parts[2]
     ))
@@ -247,7 +236,6 @@ unpack_cp = function(form_cp, i) {
     # If there is no varying effect
     return(tibble::tibble(
       cp_int = attrs$intercept == 1,
-      cp_int_rel = any(is_int_rel),
       cp_ran_int = FALSE,
       cp_group_col = NA
     ))
@@ -267,7 +255,6 @@ unpack_cp = function(form_cp, i) {
 #' @param i The segment number (integer)
 #' @param family An mcpfamily object returned by `mcpfamily()`.
 #' @param data A data.frame or tibble
-#' @param last_segment The last row in the segment table, made in `get_segment_table()`
 #' @return A one-row tibble with three columns for each of `ct`. `sigma`, `ar`, and `ma`:
 #'   * `_int`: NA or a one-row tibble describing the intercept.
 #'   * `_slope`: NA or a tibble with a row for each slope term.
@@ -275,7 +262,7 @@ unpack_cp = function(form_cp, i) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-unpack_rhs = function(form_rhs, i, family, data, last_segment) {
+unpack_rhs = function(form_rhs, i, family, data) {
   # Get general format
   form_rhs = stats::as.formula(form_rhs)
   attrs = attributes(stats::terms(remove_terms(form_rhs, "varying")))
@@ -290,14 +277,13 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   sigma_term = term_labels[sigma_term_index]  # Extract terms
   sigma_form = get_term_content(sigma_term)
   sigma_int = unpack_int(sigma_form, i, "sigma")
-  sigma_slope = unpack_slope(sigma_form, i, "sigma", last_segment$sigma_slope[[1]])
+  sigma_slope = unpack_slope(sigma_form, i, "sigma")
   term_labels = term_labels[!sigma_term_index]  # Remove from list of all terms
 
   # If not specified, sigma_1 is implicit in segment 1.
   if (all(is.na(sigma_int)) == TRUE && all(is.na(sigma_slope)) == TRUE && i == 1 && family$family == "gaussian") {
     sigma_int = tibble::tibble(
-      name = "sigma_1",
-      rel = FALSE
+      name = "sigma_1"
     )
   }
 
@@ -328,19 +314,10 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   ar_code = list()
   if (!is.na(ar_stuff$order)) {
     for (order in seq_len(ar_stuff$order)) {
-      # Set last_segment = NA if the AR order was lower order in the last segment, thus not defined...
-      if (i == 1) {
-        this_last = NA
-      } else if (order > length(last_segment$ar_slope[[1]])) {
-        this_last = NA
-      } else {
-        this_last = last_segment$ar_slope[[1]][[order]]
-      }
-
       # Get intercept and slope like we're used to
       ar_par_name = paste0("ar", order)  # ar1, ar2, ...
       ar_int[[order]] = unpack_int(ar_form, i, ar_par_name)
-      tmp = unpack_slope(ar_form, i, ar_par_name, this_last)
+      tmp = unpack_slope(ar_form, i, ar_par_name)
       ar_slope[[order]] = tmp$slope
       ar_code[[order]] = tmp$code
     }
@@ -368,19 +345,10 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
 
   if (!is.na(ma_stuff$order)) {
     for (order in seq_len(ma_stuff$order)) {
-      # Set last_segment = NA if the MA order was lower order in the last segment, thus not defined...
-      if (i == 1) {
-        this_last = NA
-      } else if (order > length(last_segment$ma_slope[[1]])) {
-        this_last = NA
-      } else {
-        this_last = last_segment$ma_slope[[1]][[order]]
-      }
-
       # Get intercept and slope like we're used to
       ma_par_name = paste0("ma", order)  # ma1, ma2, ...
       ma_int[[order]] = unpack_int(ma_form, i, ma_par_name)
-      tmp = unpack_slope(ma_form, i, ma_par_name, this_last)
+      tmp = unpack_slope(ma_form, i, ma_par_name)
       ma_slope[[order]] = tmp$slope
       ma_code[[order]] = tmp$code
     }
@@ -405,7 +373,7 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
   }
   ct_form = get_term_content(ct_terms)
   ct_int = unpack_int(ct_form, i, "ct")
-  ct_slope = unpack_slope(ct_form, i, "ct", last_segment$ct_slope[[1]])
+  ct_slope = unpack_slope(ct_form, i, "ct")
 
 
   #################
@@ -459,7 +427,7 @@ unpack_rhs = function(form_rhs, i, family, data, last_segment) {
 #'
 #' @aliases get_term_content
 #' @keywords internal
-#' @param term E.g., "ct(1 + x)", "sigma(0 + rel(x) + I(x^2))", etc.
+#' @param term E.g., "ct(1 + x)", "sigma(0 + I(x^2))", etc.
 #' @return char formula with the content inside the brackets.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -498,23 +466,17 @@ get_term_content = function(term) {
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 unpack_int = function(form, i, ttype) {
   # It there is no formula for this, return NA and don't go further
-  if (!rlang::is_formula(form)) {
+  if (!rlang::is_formula(form))
     return(NA)
-  }
 
   # Got a formula... continue
   attrs = attributes(stats::terms(remove_terms(form, "varying")))
-  int_rel = attrs$term.labels == "rel(1)"
 
-  if (any(int_rel) == TRUE && i == 1)
-    stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
-
-  if (any(int_rel) || attrs$intercept == TRUE) {
+  if (any(attrs$intercept == TRUE)) {
     # Different naming schemes for central tendency (int_i) and others (e.g., sigma_1; ma_1)
     name = ifelse(ttype == "ct", yes = paste0("int_", i), no = paste0(ttype, "_", i))
     int = tibble::tibble(
-      name = paste0(name),
-      rel = any(int_rel)
+      name = paste0(name)
     )
   } else {
     int = NA
@@ -533,13 +495,11 @@ unpack_int = function(form, i, ttype) {
 #' @param i Segment number (integer)
 #' @param ttype The term type. One of "ct" (central tendency), "sigma" (variance),
 #'   or "ar" (autoregressive)
-#' @param last_slope The element in the slope column for this ttype in the previous
-#'   segment. I.e., probably what this function returned last time it was called!
 #' @return A "one-row" list with code (char) and a tibble of slopes.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-unpack_slope = function(form, i, ttype, last_slope) {
+unpack_slope = function(form, i, ttype) {
   # If there is no formula information, return NA
   if (!rlang::is_formula(form)) {
     return(list(
@@ -550,7 +510,7 @@ unpack_slope = function(form, i, ttype, last_slope) {
 
   # Get a list of terms as strings
   attrs = attributes(stats::terms(remove_terms(form, "varying")))
-  term_labels = attrs$term.labels[attrs$term.labels != "rel(1)"]
+  term_labels = attrs$term.labels
 
   # Population-level slopes
   if (length(term_labels) > 0) {
@@ -558,7 +518,6 @@ unpack_slope = function(form, i, ttype, last_slope) {
       term_labels,
       FUN = unpack_slope_term,
       i = i,
-      last_slope = last_slope,
       ttype = ifelse(ttype == "ct", "", paste0(ttype, "_"))  # No prefix for ce ("x_1"). Others are "sigma_x_1"
     ) %>%
       dplyr::bind_rows()  # Make it a proper table-like tibble
@@ -592,28 +551,11 @@ unpack_slope = function(form, i, ttype, last_slope) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-unpack_slope_term = function(term, i, last_slope, ttype = "") {
-  # Remove the "rel()" and "I()" in that order. Must be done before checking starts.
-  if (stringr::str_starts(term, "rel\\(")) {
-    term = gsub("^rel\\(|\\)$", "", term)
-    rel = TRUE
-  } else {
-    rel = FALSE
-  }
+unpack_slope_term = function(term, i, ttype = "") {
+  # Remove "I()". Must be done before checking starts.
   if (stringr::str_starts(term, "I\\("))
     term = gsub("^I\\(|\\)$", "", term)
 
-  # Do some checks on rel()
-  if (rel == TRUE) {
-    # Check if the relative slope is legit
-    if (i == 1)
-      stop("rel() cannot be used in segment 1. There is nothing to be relative to.")
-    if (all(is.na(last_slope)) == TRUE)
-      stop("Found rel(", term, ") in segment ", i, " but there are no corresponding slopes in segment ", i-1)
-    if (!term %in% last_slope$term) {
-      stop("Found rel(", term, ") in segment ", i, " does not have a corresponding term to be relative to in segment ", i-1)
-    }
-  }
   if (stringr::str_detect(term, "^log\\(|^sqrt\\(") && i > 1)
     stop("log() or sqrt() detected in segment 2+. This would fail because mcp models earlier segments as negative x values, and sqrt()/log() cannot take negative values.")
 
@@ -627,21 +569,21 @@ unpack_slope_term = function(term, i, last_slope, ttype = "") {
   par_x = gsub(paste0(c(funcs_regex, exponent_regex, end_regex), collapse = "|"), "", term)
 
   # Give the term a valid variable name
-  rel_x_code = paste0("X_", i, "_[i_]")  # x relative to segment start. Must match that inserted in get_formula()
+  X_code = paste0("X_", i, "_[i_]")  # x relative to segment start. Must match that inserted in get_formula()
   if (stringr::str_detect(term, exponent_regex)) {
     # Exponential
     exponent = sub(".*\\^\\(?([0-9.-]+)\\)?$", "\\1", term)
     assert_integer(as.numeric(exponent), term, lower = 0)  # JAGS does not allow for negative or decimal exponents. (TO DO: check if implementing stan version)
     name = paste0(par_x, "_", i, "_E", sub("-", "m", exponent))  # e.g., x_i_E2
-    term_recode = gsub(paste0("^", par_x, "\\^"), paste0(rel_x_code, "\\^"), term)
+    term_recode = gsub(paste0("^", par_x, "\\^"), paste0(X_code, "\\^"), term)
   } else if (stringr::str_detect(term, funcs_regex)) {
     # A simple function
     name = paste0(par_x, "_", i, "_", sub("\\(.*", "\\2", term))  # e.g., x_i_log
-    term_recode = gsub(paste0("\\(", par_x), paste0("(", rel_x_code), term)
+    term_recode = gsub(paste0("\\(", par_x), paste0("(", X_code), term)
   } else if (term == par_x) {
     # No function; just vanilla :-)
     name = paste0(par_x, "_", i)
-    term_recode = rel_x_code
+    term_recode = X_code
   } else {
     stop("mcp failed for term ", term, ". If there is no obvious reason why, please raise an issue at GitHub.")
   }
@@ -649,22 +591,11 @@ unpack_slope_term = function(term, i, last_slope, ttype = "") {
   # Add sigma_name, ma_name, or ar_name
   name = paste0(ttype, name)
 
-  # Add the corresponding term from the last segment if this slope is relative
-  if (rel == FALSE) {
-    name_cumul = name
-    code = paste0(name, " * ", term_recode)
-  } else if (rel == TRUE) {
-    last_name_cumul = last_slope$name_cumul[which(last_slope$term == term)]
-    name_cumul = paste0(last_name_cumul, " + ", name)
-    code = paste0("(", name_cumul, ") * ", term_recode)
-  }
-
+  # Return
   return(list(term = term,
               par_x = par_x,
               name = name,
-              name_cumul = name_cumul,
-              rel = rel,
-              code = code))
+              code = paste0(name, " * ", term_recode)))
 }
 
 
@@ -735,10 +666,6 @@ unpack_varying_term = function(term, i) {
   if (!grepl("^[A-Za-z._0-9]+$", parts[2]))
     stop("Error in segment ", i, " (linear): Grouping variable in varying effects for change points.")
 
-  # Check that nothing is relative
-  if (any(stringr::str_detect(parts, "rel\\(")))
-    stop("Error in segment ", i, " (linear): rel() not supported in varying effects.")
-
   # LHS: Split intercepts and variable
   preds = strsplit(gsub(" ", "", parts[1]), "\\+")[[1]]
   slope = preds[!preds %in% c("0", "1")]
@@ -793,7 +720,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
     row = dplyr::bind_cols(row, unpack_tildes(segment, i))
     row = dplyr::bind_cols(row, unpack_y(row$form_y, i, family))
     row = dplyr::bind_cols(row, unpack_cp(row$form_cp, i))
-    row = dplyr::bind_cols(row, unpack_rhs(row$form_rhs, i, family, data, ST[i-1,]))
+    row = dplyr::bind_cols(row, unpack_rhs(row$form_rhs, i, family, data))
 
     ST = dplyr::bind_rows(ST, row)
   }
@@ -812,14 +739,9 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
   # CHECK SEGMENTS AND DATA #
   ###########################
 
-  # Check segment 1: rel() not possible here.
-  if (any(ST[1, c("cp_int", "cp_int_rel", "cp_ran_int", "cp_group_col")] != FALSE, na.rm = T))
+  # Check segment 1: change point not possible here
+  if (any(ST[1, c("cp_int", "cp_ran_int", "cp_group_col")] != FALSE, na.rm = T))
     stop("Change point defined in first segment. This should not be possible. Submit bug report in the GitHub repo.")
-
-  if (nrow(ST) > 1) {
-    if (ST$cp_int_rel[2] == TRUE)
-      stop("rel() cannot be used for change points in segment 2. There are no earlier change points to be relative to. Relative changepoints work from segment 3 and on.")
-  }
 
   # Set ST$x (what is the x-axis dimension?)
   derived_x = unique(stats::na.omit(ST$x))
@@ -904,9 +826,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
   ###################################
   # MUTATE ST WITH NEW HANDY VALUES #
   ###################################
-
-  # Recode relative columns so 0 = not relative. N > 0 is the number of consecutive "relatives"
-  ST = ST %>%
+  ST %>%
 
     # Add variable names
     dplyr::mutate(
@@ -916,36 +836,11 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
     ) %>%
 
     # Add "cumulative" cp_code_form for concecutive relative intercepts
-    dplyr::group_by(cumsum(!.data$cp_int_rel)) %>%
     dplyr::mutate(
-      cp_code_prior = cumpaste(.data$cp_name, " + "),
-      cp_code_form = ifelse(!is.na(.data$cp_group), yes = paste0(.data$cp_code_prior, " + ", .data$cp_group, "CP_", .data$segment, "_INDEX"), no = .data$cp_code_prior),
-      cp_code_form = format_code(.data$cp_code_form, na_col = .data$cp_name),
-      cp_code_prior = format_code(.data$cp_code_prior, na_col = .data$cp_name)
-    ) %>%
-    dplyr::ungroup() %>%
-
-    # Finish up
-    dplyr::select(-tidyselect::starts_with("cumsum"))
-
-  # Return
-  ST
+      cp_code_form = ifelse(!is.na(.data$cp_group), yes = paste0(.data$cp_name, " + ", .data$cp_group, "CP_", .data$segment, "_INDEX"), no = .data$cp_name),
+      cp_code_form = format_code(.data$cp_code_form, na_col = .data$cp_name)
+    )
 }
-
-
-#' Cumulative pasting of character columns
-#'
-#' @aliases cumpaste
-#' @keywords internal
-#' @param x A column
-#' @param .sep A character to append between pastes
-#' @return string.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk} but Inspired by
-#'   https://stackoverflow.com/questions/24862046/cumulatively-paste-concatenate-values-grouped-by-another-variable
-#'
-cumpaste = function(x, .sep = " ")
-  Reduce(function(x1, x2) paste(x1, x2, sep = .sep), x, accumulate = TRUE)
 
 
 #' Format code with one or multiple terms

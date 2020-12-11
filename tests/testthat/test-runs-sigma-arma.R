@@ -2,9 +2,6 @@
 # TEST VARIANCE #
 #################
 bad_variance = list(
-  list(y ~ 1 + sigma(rel(1))),  # no sigma to be relative to
-  list(y ~ 1,
-       y ~ 1 + sigma(rel(x))),  # no sigma slope to be relative to
   list(y ~ 1 + sigma(q))  # variable does not exist
 )
 
@@ -16,13 +13,9 @@ good_variance = list(
   list(y ~ 1 + sigma(x + I(x^2))),
   list(y ~ 1 + sigma(1 + sin(x))),
   list(y ~ 1,
-       ~ 0 + sigma(rel(1)),  # test relative intercept
-       ~ x + sigma(x),
-       ~ 0 + sigma(rel(x))),  # test relative slope
-  list(y ~ 1,
-       1 + (1|id) ~ rel(1) + I(x^2) + sigma(rel(1) + x)),  # Test with varying change point and more mcp stuff
+       1 + (1|id) ~ 1 + I(x^2) + sigma(1 + x)),  # Test with varying change point and more mcp stuff
   list(y | weights(weights_ok) ~ 1 + sigma(1 + x),  # With weights
-       ~ 0 + sigma(1 + rel(x)))
+       ~ 0 + sigma(1 + x))
 )
 
 test_good(good_variance)
@@ -56,11 +49,11 @@ good_arma = list(
   list(y ~ 1,
        ~ 0 + ar(2)),  # onset of AR
   list(y ~ 1,
-       1 + (1|id) ~ rel(1) + I(x^2) + ar(2, rel(1) + x)),  # varying change point
+       1 + (1|id) ~ 1 + I(x^2) + ar(2, 1 + x)),  # varying change point
   list(y ~ ar(1) + sigma(1 + x),
        ~ ar(2, 1 + I(x^2)) + sigma(1)),  # With sigma
   list(y ~ ar(1),
-       ~ ar(2, rel(1))),  # Relative to no variance. Perhaps alter this behavior so it becomes illegal?
+       ~ ar(2, 1)),
   list(y | weights(weights_ok) ~ 1 + ar(1),  # With weights
        ~ 0 + ar(2, 1 + x))
 )
