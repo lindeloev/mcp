@@ -229,22 +229,6 @@ get_prior = function(ST, family, prior = list()) {
     #   }
     # }
 
-    # MA intercept
-    for (order in seq_len(sum(!is.na(S$ma_int[[1]])))) {  # Number of entries in int
-      for (name in S$ma_int[[1]][[order]]$name) {
-        default_this[[name]] = default_brutto$arma_int
-      }
-    }
-
-    # MA slope
-    for (order in seq_len(length(S$ma_slope[[1]]))) {  # Number of entries in slope
-      if (!all(is.na(S$ma_slope[[1]][[order]]) == TRUE)) {  # If this slope exists...
-        for (name in S$ma_slope[[1]][[order]]$name) {
-          default_this[[name]] = default_brutto$arma_slope
-        }
-      }
-    }
-
     # AR intercept
     for (order in seq_len(sum(!is.na(S$ar_int[[1]])))) {  # Number of entries in int
       for (name in S$ar_int[[1]][[order]]$name) {
@@ -281,8 +265,7 @@ get_prior = function(ST, family, prior = list()) {
   i_slopes = stringr::str_starts(names(this_prior), paste0(ST$x[1], "_"))
   i_sigma = stringr::str_starts(names(this_prior), "sigma_")
   i_ar = stringr::str_starts(names(this_prior), "ar[0-9]+")
-  i_ma = stringr::str_starts(names(this_prior), "ma[0-9]+")
 
-  this_prior = c(this_prior[i_cp], this_prior[i_ints], this_prior[i_slopes], this_prior[i_sigma], this_prior[i_ar], this_prior[i_ma])
+  this_prior = c(this_prior[i_cp], this_prior[i_ints], this_prior[i_slopes], this_prior[i_sigma], this_prior[i_ar])
   return(this_prior)
 }

@@ -96,27 +96,6 @@ get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
       int = S$sigma_int[[1]]
       slope_table = S$sigma_slope[[1]]
       slope_code = S$sigma_code[[1]]
-    } else if (stringr::str_starts(ytype, "ma")) {
-      # Moving average: more involved
-      ma_order = get_arma_order(ytype)  # e.g., "ar12" --> 12
-
-      # Get int (intercept)
-      S_int_order = length(S$ma_int[[1]])  # How many orders are recorded in the segment table
-      if (ma_order <= S_int_order) {
-        int = S$ma_int[[1]][[ma_order]]
-      } else {
-        int = NA
-      }
-
-      # Get slope
-      S_slope_order = length(S$ma_slope[[1]])  # How many orders are recorded in the segment table
-      if (ma_order <= S_slope_order) {
-        slope_table = S$ma_slope[[1]][[ma_order]]
-        slope_code = S$ma_code[[1]][[ma_order]]
-      } else {
-        slope_table = NA
-        slope_code = NA
-      }
     } else if (stringr::str_starts(ytype, "ar")) {
       # Autoregressive: more involved
       ar_order = get_arma_order(ytype)  # e.g., "ar12" --> 12

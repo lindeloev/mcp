@@ -329,37 +329,6 @@ unpack_rhs = function(form_rhs, i, family, data) {
   term_labels = term_labels[!ar_term_index]  # Remove from list of all terms
 
 
-  ######
-  # MA #
-  ######
-  # Same strategy as for AR
-  ma_term_index = stringr::str_detect(term_labels, "ma\\(")  # Which terms?
-  ma_term = term_labels[ma_term_index]  # Extract terms
-  ma_stuff = unpack_arma(ma_term)  # $order and $form_str
-  ma_form = get_term_content(ma_stuff$form_str)
-
-  # Populate each of these for each order of MA
-  ma_int = list()  # Populate this with intercepts for each order
-  ma_slope = list()  # Populate this with slopes for each order
-  ma_code = list()
-
-  if (!is.na(ma_stuff$order)) {
-    for (order in seq_len(ma_stuff$order)) {
-      # Get intercept and slope like we're used to
-      ma_par_name = paste0("ma", order)  # ma1, ma2, ...
-      ma_int[[order]] = unpack_int(ma_form, i, ma_par_name)
-      tmp = unpack_slope(ma_form, i, ma_par_name)
-      ma_slope[[order]] = tmp$slope
-      ma_code[[order]] = tmp$code
-    }
-  } else {
-    ma_int[[1]] = NA
-    ma_slope[[1]] = NA
-    ma_code[[1]] = NA
-  }
-  term_labels = term_labels[!ma_term_index]  # Remove from list of all terms
-
-
   #############################
   # CENTRAL TENDENCIES (MEAN) #
   #############################
@@ -382,7 +351,6 @@ unpack_rhs = function(form_rhs, i, family, data) {
   par_x = stats::na.omit(unique(c(
     ifelse(!is.na(sigma_slope$slope), sigma_slope$slope$par_x, NA),
     ifelse(!is.na(ar_slope[[1]]), ar_slope[[1]]$par_x, NA),  # if it's in order 2+, it's also in order1
-    ifelse(!is.na(ma_slope[[1]]), ma_slope[[1]]$par_x, NA),  # if it's in order 2+, it's also in order1
     ifelse(!is.na(ct_slope$slope), ct_slope$slope$par_x, NA)
   )))
   if (length(par_x) > 1) {
@@ -412,12 +380,7 @@ unpack_rhs = function(form_rhs, i, family, data) {
     # AR stuff
     ar_int = list(ar_int),
     ar_slope = list(ar_slope),
-    ar_code = list(ar_code),
-
-    # MA stuff
-    ma_int = list(ma_int),
-    ma_slope = list(ma_slope),
-    ma_code = list(ma_code)
+    ar_code = list(ar_code)
   ))
 }
 
