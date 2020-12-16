@@ -82,8 +82,6 @@ bad_slopes = list(
   list(y ~ x + y),  # Two slopes
   list(y ~ x,  # Two slopes
        ~ y),
-  list(y ~ bad_x_char),  # not numeric x
-  list(y ~ bad_x_factor),  # not numeric x
   list(y ~ 1,
        ~ log(x)),  # should fail explicitly because negative x
   list(y ~ 1,
@@ -128,6 +126,8 @@ bad_cps = list(
 test_bad(bad_cps)
 
 
+
+
 good_cps = list(
   list(y ~ 0 + x,  # Regular cp
        1 ~ 1),
@@ -150,3 +150,30 @@ good_cps = list(
 )
 
 test_good(good_cps)
+
+
+
+# Test detection of par_x
+bad_par_x = list(
+  list(y ~ 0),  # no par_x
+  list(y ~ 1),  # no par_x
+  list(y ~ 1 + bad_x_char,
+       ~ 0 + bad_x_factor),  # only invalid par_x
+  list(y ~ bad_x_char),  # Has to be continuous
+  list(y ~ bad_x_factor),  # Has to be continuous
+  list(y ~ x + ok_x),  # multiple in one segment
+  list(y ~ x,
+       ~ ok_x)  # Multiple in two segments
+)
+
+test_bad(bad_par_x, par_x = NULL)
+
+
+good_par_x = list(
+  list(y ~ 1 + x),
+  list(y ~ 0,
+       ~ 1,
+       ~ 0 + ok_x)
+)
+
+test_good(good_par_x, par_x = NULL)

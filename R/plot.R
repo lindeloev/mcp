@@ -110,7 +110,7 @@ plot.mcpfit = function(x,
 
   # Is facet_by a random/nested effect?
   assert_types(facet_by, "null", "character")
-  if (!is.null(facet_by)) {
+  if (is.character(facet_by)) {
     varying_groups = logical0_to_null(unique(stats::na.omit(fit$.other$ST$cp_group_col)))
     if (!(facet_by %in% varying_groups))
       stop("`facet_by` must be a data column and modeled as a varying effect.")

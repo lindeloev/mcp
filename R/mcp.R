@@ -217,6 +217,7 @@ mcp = function(model,
 
   # More checking...
   assert_types(par_x, "null", "character")
+  assert_length(par_x, lower = 0, upper = 1)
   assert_value(sample, allowed = c("post", "prior", "both", "none", FALSE))
   assert_integer(cores, lower = 1)
   assert_integer(chains, lower = 1)
@@ -240,6 +241,7 @@ mcp = function(model,
   ##################
   # Make an abstract table representing the segments and their relations.
   # ("ST" for "segment table").
+  par_x = get_par_x(model, data, par_x)
   ST = get_segment_table(model, data, family, par_x)
 
   # Make prior

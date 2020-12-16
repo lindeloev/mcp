@@ -1,3 +1,59 @@
+
+#' Detects par_x and verifies model-data fit
+#'
+#' @aliases get_par_x
+#' @keywords internal
+#' @inheritParams mcp
+#' @return The column name of par_x.
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#'
+get_par_x = function(model, data, par_x = NULL) {
+  assert_types(model, "list")
+  assert_types(data, "data.frame", "tibble")
+  assert_types(par_x, "null", "character")
+  assert_length(par_x, lower = 0, upper = 1)
+
+  # Just check par_x
+  if (is.character(par_x)) {
+    if ((par_x %in% colnames(data)) == FALSE)
+      stop("par_x = '", par_x, "' not found in data.")
+    if (is_continuous(data[, par_x]) == FALSE)
+      stop("par_x = '", par_x, "' has to be continuous. Is it binary or categorical?")
+  }
+
+  # All parameters of RHS
+  model_vars = model %>%
+    lapply(get_rhs) %>%
+    lapply(all.vars) %>%
+    unlist() %>%
+    unique()
+
+  # Check for non-available data
+  missing_in_data = (model_vars %in% colnames(data)) == FALSE
+  if (any(missing_in_data))
+    stop("These terms were found in the model but not in the data: ", paste0(model_vars[missing_in_data], collapse = ", "))
+
+  # Check for exactly one continuous
+  data_in_model = data %>% select(all_of(model_vars))
+  continuous_cols = lapply(data_in_model, is_continuous) %>% unlist()
+  par_x_candidates = names(continuous_cols)[continuous_cols]
+  if (is.character(par_x) & length(par_x_candidates) == 0)
+    return(par_x)
+  if (is.null(par_x) & length(par_x_candidates) == 0)
+    stop("No continuous column for change points found in the formulas. Either provide mcp(..., par_x = 'my_col') or update the model.")
+  if (is.null(par_x) & length(par_x_candidates) > 1)
+    stop("Could not automatically determine the change point dimension (multiple candidates: ", paste0(par_x_candidates, collapse = ", "), "). Set it explictly using mcp(..., par_x = 'my_col').")
+  if (length(par_x_candidates) == 1) {
+    if (is.character(par_x) && par_x != par_x_candidates)
+      stop("Got par_x = '", par_x, "' but identified '", par_x_candidates, "' as the only continuous parameter in the model's right-hand sides.")
+
+    return(par_x_candidates)
+  }
+  stop_github("Reached the end of get_par_x() without returning par_x.")
+}
+
+
 #' Takes a formula and returns a string representation of y, cp, and rhs
 #' @aliases unpack_tildes
 #' @keywords internal
@@ -12,6 +68,7 @@
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
 unpack_tildes = function(segment, i) {
+  #has_LHS = length(model) == 3
   has_LHS = attributes(stats::terms(segment))$response == 1
   if (!has_LHS && i == 1) {
     stop("No response variable in segment 1.")
@@ -50,9 +107,10 @@ unpack_tildes = function(segment, i) {
   }
 }
 
+
 #' Checks if all terms are in the data
 #'
-#' @aliases check_terms_in_data
+#' @aliases assert_terms_in_data
 #' @keywords internal
 #' @inheritParams unpack_rhs
 #' @param form Formula or character (tilde will be prefixed if it isn't already)
@@ -61,7 +119,7 @@ unpack_tildes = function(segment, i) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #'
-check_terms_in_data = function(form, data, i, n_terms = NULL) {
+assert_terms_in_data = function(form, data, i, n_terms = NULL) {
   # To formula if it isn't.
   form = to_formula(form)
 
@@ -345,27 +403,10 @@ unpack_rhs = function(form_rhs, i, family, data) {
   ct_slope = unpack_slope(ct_form, i, "ct")
 
 
-  #################
-  # EXTRACT PAR_X #
-  #################
-  par_x = stats::na.omit(unique(c(
-    ifelse(!is.na(sigma_slope$slope), sigma_slope$slope$par_x, NA),
-    ifelse(!is.na(ar_slope[[1]]), ar_slope[[1]]$par_x, NA),  # if it's in order 2+, it's also in order1
-    ifelse(!is.na(ct_slope$slope), ct_slope$slope$par_x, NA)
-  )))
-  if (length(par_x) > 1) {
-    stop("Found more than one x-variable in segment ", i, ": '", paste(par_x, collapse ="', '"), "'")
-  } else if (length(par_x) == 0) {
-    par_x = NA
-  }
-
-
   ##########
   # RETURN #
   ##########
   return(tibble::tibble(
-    x = par_x,
-
     # Central tendency stuff
     ct_int = list(ct_int),
     ct_code = ct_slope$code,  # must be before ct_slope is defined locally below
@@ -668,6 +709,9 @@ unpack_varying_term = function(term, i) {
 #' get_segment_table(model)
 
 get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NULL) {
+  assert_types(par_x, "character")
+  assert_length(par_x, 1)
+
   #####################################################
   # BUILD "SEGMENT TABLE (ST)" FROM ISOLATED SEGMENTS #
   #####################################################
@@ -676,7 +720,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
     # Get ready...
     segment = model[[i]]
     if (!is.null(data))
-      check_terms_in_data(segment, data, i)
+      assert_terms_in_data(segment, data, i)
 
     # Go! Unpack this segment
     row = tibble::tibble(segment = i)
@@ -695,6 +739,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
     dplyr::mutate(form = paste0(.data$form_y, ifelse(segment == 1, "", .data$form_cp), .data$form_rhs)) %>%  # build full formula
     dplyr::select(-.data$form_y, -.data$form_cp, -.data$form_rhs)  # Not needed anymore
 
+  ST$x = par_x  # TO DO: TEMPORARY UNTIL MULTIPLE REGRESSION IS IMPLEMENTED
 
 
 
@@ -705,26 +750,6 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
   # Check segment 1: change point not possible here
   if (any(ST[1, c("cp_int", "cp_ran_int", "cp_group_col")] != FALSE, na.rm = T))
     stop("Change point defined in first segment. This should not be possible. Submit bug report in the GitHub repo.")
-
-  # Set ST$x (what is the x-axis dimension?)
-  derived_x = unique(stats::na.omit(ST$x))
-  if (length(derived_x) == 1) {
-    # One x derived from segments
-    if (is.null(par_x))  # par_x not provided. Rely on derived
-      ST$x = derived_x
-    else if (par_x == derived_x)  # par_x provided and matches devided.
-      ST$x = derived_x
-    else  # contradicting derived and provided x
-      stop("par_x provided but it does not match the predictor found in segment right-hand side")
-  } else if (length(derived_x) == 0) {
-    # Zero x derived from segments. Rely on par_x?
-    if (all(is.na(ST$x)) && is.character(par_x))
-      ST$x = par_x
-    else
-      stop("This is a plateau-only model so no x-axis variable could be derived from the segment formulas. Use argument 'par_x' to set it explicitly")
-  } else if (length(derived_x) > 1)
-    # More than one...
-    stop("More than one predictor found: '", paste0(unique(stats::na.omit(ST$x)), collapse = "' and '"), "'")
 
   # Response variables
   derived_y = unique(stats::na.omit(ST$y))
@@ -746,8 +771,6 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
   # Check data types
   if (!is.null(data)) {
     # Check x and y
-    if (!is.numeric(data[, ST$x[1]]))
-      stop("Data column '", ST$x[1], "' has to be numeric.")
     if (!is.numeric(data[, ST$y[1]]))
       stop("Data column '", ST$y[1], "' has to be numeric.")
     if (any(is.na(data[, ST$x[1]])))

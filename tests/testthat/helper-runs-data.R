@@ -7,7 +7,7 @@ data_gauss = data.frame(
   bad_y_char = c("a", "b", "c", "d", "e"),
   bad_y_factor = factor(1:5),
 
-  # x should be continuous
+  # par_x should be continuous
   x = -1:3,
   ok_x = rnorm(5),  # test underscore and decimals
   bad_x_char = c("a", "b", "c", "d", "e"),

@@ -606,7 +606,7 @@ pp_eval = function(
   assert_logical(prior)
   assert_logical(arma)
   assert_types(nsamples, "null", "numeric")
-  if (!is.null(nsamples))
+  if (is.numeric(nsamples))
     assert_integer(nsamples, lower = 1)
   assert_value(samples_format, allowed = c("tidy", "matrix"))
 

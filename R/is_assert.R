@@ -5,6 +5,11 @@
 is.tibble = tibble::is_tibble
 is.formula = rlang::is_formula
 
+
+stop_github = function(...) {
+  stop(..., " Please raise an issue on GitHub: https://github.com/lindeloev/mcp/issues")
+}
+
 # Asserts whether x is an `mcpfit`
 assert_mcpfit = function(x) {
   if (!is.mcpfit(x))
@@ -40,6 +45,7 @@ assert_logical = function(x, max_length = 1) {
 
 # Asserts whether x is one of a set of allowed values
 assert_value = function(x, allowed = c()) {
+  assert_length(x, 1)
   if (!(x %in% allowed)) {
     allowed[is.character(allowed)] = paste0("'", allowed[is.character(allowed)], "'")  # Add quotes for character values
     stop("`", substitute(x), "` must be one of ", paste0(allowed, collapse = ", "), ". Got ", x)
@@ -78,4 +84,11 @@ assert_ellipsis = function(..., allowed = NULL) {
   illegal_names = dplyr::setdiff(names(list(...)), allowed)
   if (length(illegal_names) > 0)
     stop("The following arguments are not accepted for this function: '", paste0(illegal_names, collapse = "', '"), "'")
+}
+
+assert_length = function(x, len = NULL, lower = 0, upper = Inf) {
+  if (length(x) < lower | length(x) > upper)
+    stop("`", substitute(x), "` should have a length between ", lower, " and ", upper, " but has length ", length(x))
+  if (is.null(len) == FALSE && length(x) != len)
+    stop("`", substitute(x), "` should have length ", len, " but has length ", length(x))
 }

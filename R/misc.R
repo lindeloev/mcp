@@ -26,6 +26,13 @@ get_arma_order = function(pars_arma) {
 }
 
 
+# Is this a continuous vector?
+is_continuous = function(x) {
+  is.numeric(x) &
+    length(unique(na.omit(x))) > 2
+}
+
+
 # Ask reminder questions for CRAN export
 release_questions = function() {
   c(
@@ -99,6 +106,23 @@ to_formula = function(form) {
   }
 
   return(form)
+}
+
+
+#' Returns the right-hand-side of a formula
+#'
+#' @aliases get_rhs
+#' @keywords internal
+#' @param form Formula, e.g. `~x`, `y ~ x` or `y ~ z ~ x`
+#' @return A formula
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+get_rhs = function(form) {
+  if (length(form) == 2) {
+    return(form)
+  } else if (length(form) == 3) {
+    return(form[-2])
+  }
 }
 
 #' Expand samples with quantiles
