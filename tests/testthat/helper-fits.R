@@ -25,7 +25,7 @@ test_fit = function(model, simulated) {
   # Fit
   options(mc.cores = NULL)  # Respect `cores`
   quiet_out = purrr::quietly(mcp)(model, data, par_x = "x", chains = 5, cores = 5, adapt = 10000, iter = 3000)  # Ensure convergence
-  fit <<- quiet_out$result
+  fit <<- quiet_out$result  # assign to global namespace for easier debugging
 
   # Results table
   results_table = purrr::quietly(fixef)(fit, width = 0.98)$result

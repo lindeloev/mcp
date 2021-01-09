@@ -2,103 +2,90 @@
 # LIST OF DEFAULT PRIORS #
 ##########################
 
-# Generic default priors that applies to many families
-cp_prior = list(
-  cp_1 = "dunif(MINX, MAXX)",  # If there is only one change point
-  cp = "dt(MINX, (MAXX - MINX) / N_CP, N_CP - 1)",
-  sd = "dnorm(0, 2 * (MAXX - MINX) / N_CP) T(0, )"
+default_common_priors = tibble::tribble(
+  ~family, ~link, ~dpar, ~par_type, ~prior,
+  # Changepoint (common for all families)
+  "changepoint", "identity", "cp_1", "Intercept", "dunif(MINX, MAXX)",  # If there is only one change point
+  "changepoint", "identity", "cp", "Intercept", "dt(MINX, (MAXX - MINX) / N_CP, N_CP - 1)",  # For 2+ change points. Read the mcp article for more details on this "t-prior".
+  "changepoint", "identity", "cp_sd", "dummy", "dnorm(0, 2 * (MAXX - MINX) / N_CP) T(0, )",  # Spread of varying effects
+
+  # AR
+  NA, "identity", "ar", "Intercept", "dbeta(0, 1)",
+  NA, "identity", "ar", "dummy", "dt(0, 1, 3)",
+  NA, "identity", "ar", "slope", "dt(0, 1 / (MAXX - MINX), 3)"
 )
 
-sigma_prior_identity = list(
-  sigma_int = "dnorm(0, SDY) T(0, )",
-  sigma_slope = "dt(0, SDY / (MAXX - MINX), 3)"
+default_dpar_priors = tibble::tribble(
+  ~family, ~link, ~dpar, ~par_type, ~prior,
+
+  # Gaussian ct
+  "gaussian", "identity", "ct", "Intercept", "dt(MEANLINKY, SDLINKY, 3)",
+  "gaussian", "identity", "ct", "dummy", "dt(0, SDLINKY, 3)",
+  "gaussian", "identity", "ct", "slope", "dt(0, N_CP * SDLINKY / (MAXX - MINX), 3)",
+
+  # Gaussian sigma
+  "gaussian", "identity", "sigma", "Intercept", "dt(0, SDLINKY, 3) T(0, )",  # Will always be <= observed SDLINKY
+  "gaussian", "identity", "sigma", "dummy", "dt(0, SDLINKY, 3)",
+  "gaussian", "identity", "sigma", "slope", "dt(0, N_CP * SDLINKY / (MAXX - MINX), 3)",
+
+  # Binomial
+  "binomial", "logit", "ct", "Intercept", "dt(0, 2.5, 3)",  # TO DO: center this on data
+  "binomial", "logit", "ct", "dummy", "dt(0, 2.5, 3)",
+  "binomial", "logit", "ct", "slope", "dt(0, N_CP * 2.5 / (MAXX - MINX), 3)",
+
+  "binomial", "identity", "ct", "Intercept", "dbeta(0, 1)",  # TO DO: center this on data
+  "binomial", "identity", "ct", "dummy", "dunif(-1, 1)",
+  "binomial", "identity", "ct", "slope", "dt(0, N_CP / (MAXX - MINX), 3)",
+
+  # Poisson
+  "poisson", "log", "ct", "Intercept", "dt(0, 10)",  # TO DO: center this on data
+  "poisson", "log", "ct", "dummy", "dt(0, 10)",
+  "poisson", "log", "ct", "slope", "dt(0, 10)",
+
+  "poisson", "identity", "ct", "Intercept", "dt(MEANLINKY, MEANLINKY, 3)",
+  "poisson", "identity", "ct", "dummy", "dt(0, MEANLINKY, 3)",
+  "poisson", "identity", "ct", "slope", "dt(0, N_CP * MEANLINKY / (MAXX - MINX), 3)",
+
+  # Negbinomial shape
+  "negbinomial", "identity", "shape", "Intercept", "dt(0, 10, 3) T(0, )",  # TO DO: center this on data
+  "negbinomial", "identity", "shape", "dummy", "dt(0, 10, 3)",
+  "negbinomial", "identity", "shape", "slope", "dt(0, N_CP * 10 / (MAXX - MINX), 3) T(0, )"
 )
 
-sigma_prior_log = list(
-  sigma_int = "dnorm(log(SDY) / 2, log(SDY) / 2)",
-  sigma_slope = "dt(0, log(SDY) / (MAXX - MINX), 3)"
+# Copies sections to other link functions and families
+default_dpar_priors = dplyr::bind_rows(
+  default_dpar_priors,
+
+  # Gaussian
+  default_dpar_priors %>% dplyr::filter(family == "gaussian", link == "identity", dpar == "ct") %>% dplyr::mutate(link = "log"),
+  default_dpar_priors %>% dplyr::filter(family == "gaussian", link == "identity", dpar == "sigma") %>% dplyr::mutate(link = "log"),
+
+  # Bernoulli/binomial
+  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "logit", dpar == "ct") %>% dplyr::mutate(link = "probit"),
+  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "logit", dpar == "ct") %>% dplyr::mutate(family = "bernoulli"),
+  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "logit", dpar == "ct") %>% dplyr::mutate(family = "bernoulli", link = "probit"),
+  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "identity", dpar == "ct") %>% dplyr::mutate(family = "bernoulli"),
+
+  # Negative binomial
+  default_dpar_priors %>% dplyr::filter(family == "poisson", link == "log", dpar == "ct") %>% dplyr::mutate(family = "negbinomial"),
+  default_dpar_priors %>% dplyr::filter(family == "poisson", link == "identity", dpar == "ct") %>% dplyr::mutate(family = "negbinomial"),
+  default_dpar_priors %>% dplyr::filter(family == "negbinomial", link == "identity", dpar == "ct") %>% dplyr::mutate(link = "log")
 )
-
-arma_prior = list(
-  arma_int = "dunif(-1, 1)",
-  arma_slope = "dnorm(0, 1 / (MAXX - MINX))"  # 68% of changing 1 over the observed x values
-)
-
-shape_prior = list(
-  shape_int = "dnorm(0, 10) T(0, )",
-  shape_slope = "dnorm(0, 5)"
-)
-
-
-# Per-family priors, mixing in the generic priors
-priors = list(
-  gaussian_identity = c(cp_prior, sigma_prior_identity, arma_prior, list(
-    ct_int = "dt(0, 3 * SDY, 3)",
-    ct_slope = "dt(0, SDY / (MAXX - MINX), 3)"
-  )),
-
-  gaussian_log = c(cp_prior, sigma_prior_log, arma_prior, list(
-    ct_int = "dt(log(MEANY), log(SDY), 3)",  # The SD is inherently an overshoot here, so embodies the "3 * SDY" of the identity
-    ct_slope = "dt(0, log(SDY) / (3 * (MAXX - MINX)), 3)"
-  )),
-
-  # A logit/probit of +/- 5 is quite extreme. Very compatible with 3
-  binomial_logit = c(cp_prior, arma_prior, list(
-    ct_int = "dnorm(0, 3)",
-    ct_slope = "dnorm(0, 3 / (MAXX - MINX))"
-  )),
-
-  binomial_identity = c(cp_prior, arma_prior, list(
-    ct_int = "dunif(0, 1)",
-    ct_slope = "dnorm(0, 1 / (MAXX - MINX))"
-  )),
-
-  poisson_log = c(cp_prior, arma_prior, list(
-    ct_int = "dnorm(0, 10)",
-    ct_slope = "dnorm(0, 10)"
-  )),
-
-  poisson_identity = c(cp_prior, arma_prior, list(
-    ct_int = "dt(MEANY, MEANY, 3)",  # Double-dipping data (bad). Try not to go below zero.
-    ct_slope = "dt(0, SDY / (MAXX - MINX), 3)"
-  )),
-
-  exponential_identity = c(cp_prior, list(
-    ct_int = "dgamma(0.1, 0.1)",
-    ct_slope = "dnorm(0, log(SDY))"
-  ))
-)
-
-# Logit and probit are so similar that the same prior applies
-priors$binomial_probit = priors$binomial_logit
-
-# Identical priors for binomial and bernoulli.
-priors$bernoulli_logit = priors$binomial_logit
-priors$bernoulli_probit = priors$binomial_probit
-priors$bernoulli_identity = priors$binomial_identity
-
-# Identical lambda priors for negbinomial and poisson
-priors$negbinomial_log = c(priors$poisson_log, shape_prior)
-priors$negbinomial_identity = c(priors$poisson_identity, shape_prior)
 
 
 ######################
 # GET DEFAULT PRIORS #
 ######################
 # Change point
-get_default_prior_cp = function(ST, i, default_brutto) {
-  assert_integer(i, lower = 2)
-
-  # An absolute change point intercept
-  if (i >= 2)
-    #return(sprintf(priors[[family$family]]$cp, ST$cp_name[i - 1]))
-    return(truncate_prior_cp(ST, i, default_brutto$cp))
+get_default_prior_cp = function(ST, i, cp_prior) {
+  assert_integer(i, lower = 2, len = 1)
+  return(truncate_prior_cp(ST, i, cp_prior$cp))
 }
 
 
 # Varying-by-group change point
 get_default_prior_cp_group = function(ST, i) {
-  assert_integer(i, lower = 2)
+  assert_integer(i, lower = 2, len = 1)
 
   # Truncate between last change point and next change point, including their
   # varying effects, but keep in the observed range (MINX, MAXX).
@@ -116,10 +103,13 @@ get_default_prior_cp_group = function(ST, i) {
 
 
 
-#######################
-# USER-DEFINED PRIORS #
-#######################
+####################################
+# USER-DEFINED CHANGE POINT PRIORS #
+####################################
 truncate_prior_cp = function(ST, i, prior_str) {
+  assert_integer(i, lower = 2, len = 1)
+  assert_types(prior_str, "character", len = 1)
+
   # Helper: Current segment.
   S = ST[i,]
 
@@ -129,7 +119,7 @@ truncate_prior_cp = function(ST, i, prior_str) {
   is_fixed = is.numeric(prior_str)
 
   # Absolute: be greater than the former change point and within observed range
-  if (!is_bounded && !is_truncated && !is_fixed) {
+  if (is_bounded == FALSE && is_truncated == FALSE && is_fixed == FALSE) {
     return(paste0(prior_str, " T(", ST$cp_name[i - 1], ", MAXX)"))
   } else {
     # Return unaltered
@@ -143,7 +133,7 @@ truncate_prior_cp = function(ST, i, prior_str) {
 # ALL TOGETHER NOW #
 ####################
 
-#' Get priors for all parameters in a segment table.
+#' Get priors for all parameters in the model
 #'
 #' Starts by finding all default priors. Then replace them with user priors.
 #' User priors for change points are truncated appropriately using
@@ -152,7 +142,9 @@ truncate_prior_cp = function(ST, i, prior_str) {
 #' @aliases get_prior
 #' @keywords internal
 #' @inheritParams mcp
-#' @param ST Tibble. A segment table returned by `get_segment_table`.
+#' @param ST Tibble. A segment table as returned by `get_segment_table`.
+#' @param rhs_table Tibble as returned by `get_rhs()`.
+#' @param family An `mcpfamily` object as returned by `mcpfamily()`.
 #' @param prior A list of user-defined priors. Will overwrite the relevant
 #'   default priors.
 #' @encoding UTF-8
@@ -160,89 +152,36 @@ truncate_prior_cp = function(ST, i, prior_str) {
 #' @return A named list of strings. The names correspond to the parameter names
 #'   and the strings are the JAGS code for the prior (before converting SD to
 #'   precision).
-#'
+get_prior = function(ST, rhs_table, family, prior = list()) {
+  assert_types(family, "mcpfamily")
 
-get_prior = function(ST, family, prior = list()) {
   # Get ready to populate this list
-  default_this = list()
-  brutto_name = paste0(family$family, "_", family$link)
-  if (!exists(brutto_name, where = priors))
-    stop("mcp does not currently support `family = ", family$family, "(link = '", family$link, "')`. Please raise an issue on GitHub if you need this.")
-  default_brutto = priors[[brutto_name]]  # Get the full set of priors belong to this family-link combo
+  default_prior = list()
 
-  # Add model-specific paramters
+  # Priors for change points
+  cp_prior = default_common_priors %>%
+    dplyr::filter(family == "changepoint", link == "identity") %>%
+    dplyr::select(dpar, prior) %>%
+    tibble::deframe() %>%
+    as.list()
+
   for (i in seq_len(nrow(ST))) {
     # Helper: Current segment.
     S = ST[i, ]
 
-    # Intercept
-    if (!is.na(S$ct_int))
-      default_this[[S$ct_int[[1]]$name]] = default_brutto$ct_int
-
-    # Each slope
-    if (!is.na(S$ct_slope)) {
-      for (name in S$ct_slope[[1]]$name) {
-        default_this[[name]] = default_brutto$ct_slope
-      }
-    }
-
-    # Change point.
+    # Change point
     if (i > 1) {
       if (nrow(ST) == 2) {
-        default_this[[S$cp_name]] = default_brutto$cp_1
+        default_prior[[S$cp_name]] = cp_prior$cp_1
       } else {
-        default_this[[S$cp_name]] = get_default_prior_cp(ST, i, default_brutto)
+        default_prior[[S$cp_name]] = get_default_prior_cp(ST, i, cp_prior)
       }
     }
 
     # Change point varying effects
     if (!is.na(S$cp_sd)) {
-      default_this[[S$cp_sd]] = default_brutto$sd
-      default_this[[S$cp_group]] = get_default_prior_cp_group(ST, i)
-    }
-
-    # Sigma intercept
-    if (!is.na(S$sigma_int)) {
-      for (name in S$sigma_int[[1]]$name) {
-        default_this[[name]] = default_brutto$sigma_int
-      }
-    }
-
-    # Sigma slope
-    if (!is.na(S$sigma_slope)) {
-      for (name in S$sigma_slope[[1]]$name) {
-        default_this[[name]] = default_brutto$sigma_slope
-      }
-    }
-
-    # # Size intercept
-    # if (!is.na(S$size_int)) {
-    #   for (name in S$size_int[[1]]$name) {
-    #     default_this[[name]] = default_brutto$size_int
-    #   }
-    # }
-    #
-    # # Size slope
-    # if (!is.na(S$size_slope)) {
-    #   for (name in S$size_slope[[1]]$name) {
-    #     default_this[[name]] = default_brutto$size_slope
-    #   }
-    # }
-
-    # AR intercept
-    for (order in seq_len(sum(!is.na(S$ar_int[[1]])))) {  # Number of entries in int
-      for (name in S$ar_int[[1]][[order]]$name) {
-        default_this[[name]] = default_brutto$arma_int
-      }
-    }
-
-    # AR slope
-    for (order in seq_len(length(S$ar_slope[[1]]))) {  # Number of entries in slope
-      if (!all(is.na(S$ar_slope[[1]][[order]]) == TRUE)) {  # If this slope exists...
-        for (name in S$ar_slope[[1]][[order]]$name) {
-          default_this[[name]] = default_brutto$arma_slope
-        }
-      }
+      default_prior[[S$cp_sd]] = cp_prior$sd
+      default_prior[[S$cp_group]] = get_default_prior_cp_group(ST, i)
     }
 
     # Truncate change point prior if supplied by user
@@ -251,21 +190,25 @@ get_prior = function(ST, family, prior = list()) {
     }
   }
 
+  # Priors for RHS parameters
+  rhs_prior = rhs_table %>%
+    dplyr::left_join(family$default_prior, by = c("dpar", "par_type")) %>%
+    dplyr::select(code_name, prior) %>%
+    tibble::deframe() %>%
+    as.list()
+
+  if (any(is.na(rhs_prior)))
+    stop_github("mcp could not find a default prior for ", and_collapse(names(rhs_prior[is.na(rhs_prior)])))
+
+  # Merge
+  default_prior = c(default_prior, rhs_prior)
+
   # A check
-  name_matches = names(prior) %in% names(default_this)
-  if (!all(name_matches))
-    stop("Prior(s) were specified for the following parmameter name(s) that are not part of the model: '", paste0(names(prior)[!name_matches], collapse = "', '"), "'")
+  name_matches = names(prior) %in% names(default_prior)
+  if (any(name_matches == FALSE))
+    stop("Prior(s) were specified for the following parmameter name(s) that are not part of the model: ", and_collapse(names(prior)[!name_matches]))
 
   # Replace default priors with user prior and return
-  this_prior = utils::modifyList(default_this, prior)
-
-  # Sort according to type
-  i_cp = stringr::str_starts(names(this_prior), "cp_")
-  i_ints = stringr::str_starts(names(this_prior), "int_")
-  i_slopes = stringr::str_starts(names(this_prior), paste0(ST$x[1], "_"))
-  i_sigma = stringr::str_starts(names(this_prior), "sigma_")
-  i_ar = stringr::str_starts(names(this_prior), "ar[0-9]+")
-
-  this_prior = c(this_prior[i_cp], this_prior[i_ints], this_prior[i_slopes], this_prior[i_sigma], this_prior[i_ar])
-  return(this_prior)
+  default_prior = utils::modifyList(default_prior, prior)
+  return(default_prior)
 }

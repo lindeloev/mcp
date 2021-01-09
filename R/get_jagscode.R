@@ -4,7 +4,7 @@
 
 #' Make JAGS code for Multiple Change Point model
 #'
-#' @aliases get_jagscode
+#' @aliases get_jags_code
 #' @keywords internal
 #' @inheritParams mcp
 #' @param formula_str String. The formula string returned by `build_formula_str`.
@@ -13,9 +13,7 @@
 #' @return String. A JAGS model.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
-#'
-get_jagscode = function(prior, ST, formula_str, arma_order, family, sample) {
+get_jags_code = function(prior, ST, formula_str, arma_order, family, sample, par_x) {
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
   mm = paste0("model {")
@@ -55,13 +53,14 @@ get_jagscode = function(prior, ST, formula_str, arma_order, family, sample) {
 
   # Use get_prior_str() to add population-level priors
   mm = paste0(mm, "
-
-  # Priors for population-level effects\n")
+  # mcp helper values\n")
 
   # Helpers for change points:
-  mm = paste0(mm, "  cp_0 = MINX  # mcp helper value.\n")
-  mm = paste0(mm, "  cp_", nrow(ST), " = MAXX  # mcp helper value.\n\n")
-  for (i in 1:length(prior_pop)) {
+  mm = paste0(mm, "  cp_0 = MINX\n")
+  mm = paste0(mm, "  cp_", max(ST$segment), " = MAXX
+
+  # Priors for population-level effects\n")
+  for (i in seq_along(prior_pop)) {
     mm = paste0(mm, get_prior_str(prior_pop, i))
   }
 
@@ -83,9 +82,8 @@ get_jagscode = function(prior, ST, formula_str, arma_order, family, sample) {
   # AUTOCORRELATION #
   ###################
   # Detect if there is an intercept or slope on AR
-  has_ar = !all(is.na(unlist(ST$ar_code))) || !all(is.na(unlist(ST$ar_int)))
-  if (has_ar)
-    mm = paste0(mm, get_ar_code(arma_order, family, is_R = FALSE, xvar = ST$x[1]))
+  if (arma_order > 0)
+    mm = paste0(mm, get_ar_code(arma_order, family, is_R = FALSE, xvar = par_x))
 
 
 
@@ -93,16 +91,15 @@ get_jagscode = function(prior, ST, formula_str, arma_order, family, sample) {
   # FORMULA #
   ###########
   # Transform formula_str into JAGS format. Insert par_x and varying indices
-  formula_jags = gsub("PAR_X", paste0(ST$x[1], "[i_]"), formula_str)
-  for (i in seq_len(nrow(ST))) {
+  formula_jags = formula_str
+  for (i in seq_len(max(ST$segment))) {
     formula_jags = gsub(paste0("CP_", i, "_INDEX"), paste0("[", ST$cp_group_col[i], "[i_]]"), formula_jags)
   }
 
   # Insert formula_jags
   mm = paste0(mm, "
-
   # Model and likelihood
-  for (i_ in 1:length(", ST$x[1], ")) {")
+  for (i_ in 1:length(", par_x, ")) {")
 
   # Add JAGS code for fitted values and indent it
   mm = paste0(mm, gsub("\n", "\n    ", formula_jags))
@@ -112,10 +109,10 @@ get_jagscode = function(prior, ST, formula_str, arma_order, family, sample) {
   # LIKELIHOOD #
   ##############
   # Prepare y code (link and AR)
-  y_code = "y_[i_]"
-  if (has_ar)
-    y_code = paste0(y_code, " + resid_arma_[i_]")
-  y_code = paste0(family$linkinv_str, "(", y_code, ")")
+  ct_code = "ct_[i_]"
+  if (arma_order > 0)
+    ct_code = paste0(ct_code, " + resid_arma_[i_]")
+  ct_code = paste0(family$linkinv_str, "(", ct_code, ")")
 
   # Prepare variance code
   has_weights = !all(is.na(ST$weights))
@@ -126,28 +123,28 @@ get_jagscode = function(prior, ST, formula_str, arma_order, family, sample) {
     ")
 
   if (family$family == "gaussian") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dnorm(", y_code, ", ", weights, " / sigma_[i_]^2)  # SD as precision
-    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], ", y_code, ", ", weights, " / sigma_[i_]^2)  # SD as precision")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dnorm(", ct_code, ", ", weights, " / sigma_[i_]^2)  # SD as precision
+    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], ", ct_code, ", ", weights, " / sigma_[i_]^2)  # SD as precision")
   } else if (family$family == "binomial") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dbin(", y_code, ", ", ST$trials[1], "[i_])
-    loglik_[i_] = logdensity.bin(", ST$y[1], "[i_], ", y_code, ", ", ST$trials[1], "[i_])")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dbin(", ct_code, ", ", ST$trials[1], "[i_])
+    loglik_[i_] = logdensity.bin(", ST$y[1], "[i_], ", ct_code, ", ", ST$trials[1], "[i_])")
   } else if (family$family == "bernoulli") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dbern(", y_code, ")
-    loglik_[i_] = logdensity.bern(", ST$y[1], "[i_], ", y_code, ")")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dbern(", ct_code, ")
+    loglik_[i_] = logdensity.bern(", ST$y[1], "[i_], ", ct_code, ")")
   } else if (family$family == "poisson") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dpois(", y_code, ")
-    loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], ", y_code, ")")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dpois(", ct_code, ")
+    loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], ", ct_code, ")")
   } else if (family$family == "exponential") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dexp(", y_code, ")
-    loglik_[i_] = logdensity.exp(", ST$y[1], "[i_], ", y_code, ")")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dexp(", ct_code, ")
+    loglik_[i_] = logdensity.exp(", ST$y[1], "[i_], ", ct_code, ")")
   }
 
   # Compute residuals for AR
-  if (has_ar) {
+  if (arma_order > 0) {
     if (family$family == "binomial") {
-      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_] / ", ST$trials[1], "[i_]) - y_[i_]  # Residuals represented by sigma_ after ARMA")
+      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_] / ", ST$trials[1], "[i_]) - ct_[i_]  # Residuals represented by sigma_ after ARMA")
     } else {
-      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_])  - y_[i_]  # Residuals represented by sigma_ after ARMA")
+      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_])  - ct_[i_]  # Residuals represented by sigma_ after ARMA")
     }
   }
 
@@ -166,7 +163,7 @@ get_jagscode = function(prior, ST, formula_str, arma_order, family, sample) {
 }")
 
   # Return the model
-  mm
+  return(mm)
 }
 
 
@@ -182,7 +179,6 @@ get_jagscode = function(prior, ST, formula_str, arma_order, family, sample) {
 #' @return A string
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @encoding UTF-8
-#'
 get_prior_str = function(prior, i, varying_group = NULL) {
   # Helpers
   value = prior[[i]]
@@ -235,8 +231,6 @@ get_prior_str = function(prior, i, varying_group = NULL) {
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @encoding UTF-8
 #' @export
-#'
-
 sd_to_prec = function(prior_str) {
   if (stringr::str_detect(prior_str, "dnorm|dt|dcauchy|ddexp|dlogis|dlnorm")) {
     # Identify trunc. If present, cut it out of the prior_str

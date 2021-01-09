@@ -32,10 +32,6 @@
 #' @return A \pkg{ggplot2} object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @importFrom ggplot2 ggplot aes aes_string geom_line geom_point facet_wrap
-#' @importFrom magrittr %>%
-#' @importFrom rlang !! :=
-#' @importFrom dplyr .data
 #' @export
 #' @examples
 #' # Typical usage. demo_fit is an mcpfit object.
@@ -54,7 +50,6 @@
 #' library(ggplot2)
 #' plot(demo_fit) + theme_bw(15) + ggtitle("Great plot!")
 #' }
-#'
 plot.mcpfit = function(x,
                        facet_by = NULL,
                        lines = 25,
@@ -76,10 +71,10 @@ plot.mcpfit = function(x,
   ########################
   # ASSERTS AND RECODING #
   ########################
-  assert_mcpfit(fit)
+  assert_types(fit, "mcpfit")
 
   if (lines != FALSE) {
-    assert_integer(lines, lower = 1)
+    assert_integer(lines, lower = 1, len = 1)
   } else {
     lines = 0
   }
@@ -100,7 +95,7 @@ plot.mcpfit = function(x,
     assert_numeric(q_predict, lower = 0, upper = 1)
 
   if (!is.null(nsamples)) {
-    assert_integer(nsamples, lower = 1)
+    assert_integer(nsamples, lower = 1, len = 1)
     if (lines != FALSE && nsamples < lines)
       stop("`lines` must be less than or equal to `nsamples`.")
   }
@@ -109,7 +104,7 @@ plot.mcpfit = function(x,
     nsamples = lines
 
   # Is facet_by a random/nested effect?
-  assert_types(facet_by, "null", "character")
+  assert_types(facet_by, "null", "character", len = c(0, 1))
   if (is.character(facet_by)) {
     varying_groups = logical0_to_null(unique(stats::na.omit(fit$.other$ST$cp_group_col)))
     if (!(facet_by %in% varying_groups))
@@ -208,24 +203,24 @@ plot.mcpfit = function(x,
   # PLOT IT #
   ###########
   # Initiate plot and show raw data (only applicable when which_y == "ct")
-  gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y))
+  gg = ggplot2::ggplot(fit$data, ggplot2::aes_string(x = fit$pars$x, y = fit$pars$y))
   if (which_y == "ct") {
     if (geom_data == "point") {
       if (is.null(fit$pars$weights)) {
-        gg = gg + geom_point()
+        gg = gg + ggplot2::geom_point()
       } else {
-        gg = gg + geom_point(aes(size = fit$data[, fit$pars$weights[1]])) +
+        gg = gg + ggplot2::geom_point(ggplot2::aes(size = fit$data[, fit$pars$weights[1]])) +
           ggplot2::scale_size_area(max_size = 2 * 1.5/sqrt(1.5))  # See https://stackoverflow.com/questions/63023877/setting-absolute-point-size-for-geom-point-with-scale-size-area/63024297?noredirect=1#comment111454629_63024297
       }
     } else if (geom_data == "line") {
-      gg = gg + geom_line()
+      gg = gg + ggplot2::geom_line()
     }
   }
 
   # Add lines?
   if (lines > 0) {
     data_lines = tidybayes::sample_draws(samples_expanded, lines)  # Only this number of lines
-    gg = gg + geom_line(aes(group = .data$.draw), data = data_lines, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4))
+    gg = gg + ggplot2::geom_line(ggplot2::aes(group = .data$.draw), data = data_lines, color = grDevices::rgb(0.5, 0.5, 0.5, 0.4))
   }
 
   # Add quantiles?
@@ -264,7 +259,7 @@ plot.mcpfit = function(x,
 
   # Add faceting?
   if (!is.null(facet_by))
-    gg = gg + facet_wrap(paste0("~", facet_by))
+    gg = gg + ggplot2::facet_wrap(paste0("~", facet_by))
 
   # Add better y-labels
   if (scale == "linear")
@@ -310,7 +305,7 @@ geom_cp_density = function(fit, facet_by, limits_y) {
     tidyr::pivot_longer(cols = tidyselect::starts_with("cp_"), names_to = "cp_name", values_to = "value")
 
   # Make the geom!
-  ggplot2::stat_density(aes(
+  ggplot2::stat_density(ggplot2::aes(
     x = value,
     y = ..scaled.. * diff(limits_y) * dens_scale +  # Scale to proportion of view
       limits_y[1] -  # Put on x-axis
@@ -338,13 +333,12 @@ geom_cp_density = function(fit, facet_by, limits_y) {
 #' @return A `ggplot2::geom_line` object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
 geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
   data_quantiles = get_quantiles(samples, quantiles, xvar, yvar, facet_by)
 
   # Return geom
   geom = ggplot2::geom_line(
-    mapping = aes(
+    mapping = ggplot2::aes(
       y = .data$y,
       group = .data$quantile
     ),
@@ -392,7 +386,6 @@ geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @return A \pkg{ggplot2} object.
-#' @import patchwork
 #' @export
 #' @examples
 #' # Typical usage. demo_fit is an mcpfit object.
@@ -417,7 +410,6 @@ geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
 #' library(ggplot2)
 #' plot_pars(demo_fit, type = c("trace", "dens_overlay")) * theme_bw(10)
 #' }
-
 plot_pars = function(fit,
                      pars = "population",
                      regex_pars = character(0),
@@ -426,7 +418,7 @@ plot_pars = function(fit,
                      prior = FALSE) {
 
   # Check arguments
-  assert_mcpfit(fit)
+  assert_types(fit, "mcpfit")
 
   if (!coda::is.mcmc.list(fit$mcmc_post) && !coda::is.mcmc.list(fit$mcmc_prior))
     stop("Cannot plot an mcpfit without prior or posterior samples.")
@@ -443,7 +435,7 @@ plot_pars = function(fit,
   if ("combo" %in% type && length(type) > 1)
     stop("'combo' type cannot be combined with other types. Replace 'combo' with the types you want combo\'ed")
 
-  assert_integer(ncol, lower = 1)
+  assert_integer(ncol, lower = 1, len = 1)
   assert_logical(prior)
 
   # Get posterior/prior samples
@@ -576,7 +568,6 @@ get_eval_at = function(fit, facet_by) {
 #' pp_check(demo_fit, type = "ecdf_overlay")
 #' #pp_check(some_varying_fit, type = "loo_intervals", facet_by = "id")
 #' }
-#'
 pp_check = function(
   object,
   type = "dens_overlay",
@@ -590,12 +581,12 @@ pp_check = function(
 ) {
   # Internal mcp naming convention
   fit = object
-  assert_mcpfit(fit)
-  assert_types(facet_by, "null", "character")
+  assert_types(fit, "mcpfit")
+  assert_types(facet_by, "null", "character", len = c(0, 1))
   assert_logical(prior)
   assert_types(varying, "logical", "character")
   assert_logical(arma)
-  assert_integer(nsamples, lower = 1)
+  assert_integer(nsamples, lower = 1, len = 1)
 
   # Check and recode inputs
   if (!is.null(facet_by))
@@ -635,7 +626,6 @@ pp_check = function(
   # Return plot with or without facets
   if (is.null(facet_by)) {
     yrep = tidy_to_matrix(samples, "predict")
-    plot_out = get_ppc_plot(fit, type, y, yrep, nsamples, samples$.draw, ...)  # One plot: use all of y and yrep
     return(plot_out)
   } else {
     groups = unique(varying_data)
@@ -671,7 +661,6 @@ pp_check = function(
 #' @return A string
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
 get_ppc_plot = function(fit, type, y, yrep, nsamples, draws = NULL, ...) {
   is_loo = stringr::str_detect(type, "loo")
 

@@ -50,8 +50,9 @@
 #'      samples less efficiently, so you will often need to set `iter` higher.
 #'      It is recommended for hypothesis testing and for the estimation of more
 #'      than 5 change points. [Read more](https://lindeloev.github.io/mcp/articles/priors.html).
-#' @param family One of `gaussian()`, `binomial()`, `bernoulli()`, or `poission()`.
-#'   Only default link functions are currently supported.
+#' @param family One of `gaussian()`, `binomial()`, `bernoulli()`, or `poission()`
+#'   with a supported link function, e.g., `gaussian(link = "log")`.
+#'   Custom families can also be provided, e.g., `mcpfamily(gaussian(link = "log"))`.
 #' @param par_x String (default: NULL). Only relevant if no segments contains
 #'   slope (no hint at what x is). Set this, e.g., par_x = "time".
 #' @param sample One of
@@ -102,7 +103,6 @@
 #' @seealso \code{\link{get_segment_table}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @importFrom stats gaussian binomial
 #' @export
 #' @examples
 #' \donttest{
@@ -161,7 +161,6 @@
 #' # Show the JAGS model
 #' demo_fit$jags_code
 #' }
-#'
 mcp = function(model,
                data = NULL,
                prior = list(),
@@ -192,7 +191,7 @@ mcp = function(model,
   }
 
   # Check model
-  assert_types(model, "list")
+  assert_types(model, "list", len = c(1, Inf))
 
   if (length(model) == 0)
     stop("At least one segment is needed in `model`")
@@ -207,20 +206,20 @@ mcp = function(model,
 
   which_duplicated = duplicated(names(prior))
   if (any(which_duplicated))
-    stop("`prior` has duplicated entries for the same parameter: ", paste0(names(prior)[which_duplicated]), collapse = ", ")
+    stop("`prior` has duplicated entries for the same parameter: ", and_collapse(names(prior)[which_duplicated]))
 
-  # Check and recode family
-  if (class(family) != "family")
-    stop("`family` is not a valid family. Should be gaussian(), binomial(), etc.")
+  # Transform family to mcpfamily
+  if (is.family(family) == FALSE & is.mcpfamily(family) == FALSE)
+    stop("`family` is not a valid family or mcpfamily. Should be gaussian(), binomial(), mcpfamily(guassian(link = 'log')), etc.")
 
-  family = mcpfamily(family)  # convert to mcp family
+  if (is.mcpfamily(family) == FALSE)
+    family = mcpfamily(family)
 
   # More checking...
-  assert_types(par_x, "null", "character")
-  assert_length(par_x, lower = 0, upper = 1)
+  assert_types(par_x, "null", "character", len = c(0, 1))
   assert_value(sample, allowed = c("post", "prior", "both", "none", FALSE))
-  assert_integer(cores, lower = 1)
-  assert_integer(chains, lower = 1)
+  assert_integer(cores, lower = 1, len = 1)
+  assert_integer(chains, lower = 1, len = 1)
   assert_types(inits, "null", "list")
 
   if (cores > chains)
@@ -239,18 +238,20 @@ mcp = function(model,
   ##################
   # MODEL BUILDING #
   ##################
+
   # Make an abstract table representing the segments and their relations.
   # ("ST" for "segment table").
   par_x = get_par_x(model, data, par_x)
   ST = get_segment_table(model, data, family, par_x)
+  rhs_table = get_rhs_table(model, data, family, par_x)
 
   # Make prior
-  prior = get_prior(ST, family, prior)
+  prior = get_prior(ST, rhs_table, family, prior)
 
   # Make lists of parameters
   all_pars = names(prior)  # There is a prior for every parameter
   pars = list(
-    x = unique(ST$x),
+    x = par_x,
     y = unique(ST$y),
     trials = logical0_to_null(stats::na.omit(unique(ST$trials))),
     weights = logical0_to_null(stats::na.omit(unique(ST$weights))),
@@ -267,39 +268,42 @@ mcp = function(model,
     if (family$link %in% c("logit", "probit"))
       message("The current implementation of autoregression can be fragile for link='logit'. In particular, if there are any all-success trials (e.g., 10/10), the only solution is for 'ar' to be 0.00. If fitting succeeds, do a proper assessment of model convergence.")
 
-    if (is.unsorted(data[, pars$x]) && is.unsorted(rev(data[, pars$x])))
-      message("'", pars$x, "' is unordered. Please note that ar() applies in the order of data of the data frame - not the values.")
+    if (is.unsorted(data[, par_x]) && is.unsorted(rev(data[, par_x])))
+      message("'", par_x, "' is unordered. Please note that ar() applies in the order of data of the data frame - not the values.")
   }
 
   # Make formula_str and simulate
-  formula_str_sim = get_all_formulas(ST, prior, pars$x, ytypes = c("ct", "sigma", "arma"))
-  simulate = get_simulate(formula_str_sim, pars, nrow(ST), family)
+  formula_str = get_all_formulas(ST, rhs_table, par_x)
+  #simulate = get_simulate(formula_str, pars, nrow(ST), family)
 
   # Make jags code if it is not provided by the user
   if (is.null(jags_code)) {
     max_arma_order = get_arma_order(pars$arma)
-    formula_str_jags = get_all_formulas(ST, prior, pars$x)
-    jags_code = get_jagscode(prior, ST, formula_str_jags, max_arma_order, family, sample)
+    jags_code = get_jags_code(prior, ST, formula_str, max_arma_order, family, sample, par_x)
   }
+
 
 
   ##########
   # SAMPLE #
   ##########
+  jags_data = get_jags_data(data, family, ST, rhs_table, jags_code, sample)
+
   # Sample posterior
   if (sample %in% c("post", "both")) {
     samples = run_jags(
       data = data,
       jags_code = jags_code,
+      jags_data = jags_data,
       pars = c(all_pars, "loglik_"),  # Monitor log-likelihood for loo/waic
-      ST = ST,
       cores = cores,
       sample = "post",
       n.chains = chains,
       n.iter = iter,
       n.adapt = adapt,
       inits = inits
-    )
+    ) %>%
+      recover_levels(data, ST)
 
     # Move loglik columns out to it's own list, keeping parameters and loglik apart
     loglik_cols = stringr::str_starts(colnames(samples[[1]]), 'loglik_')  # detect loglik cols
@@ -312,15 +316,16 @@ mcp = function(model,
     samples = run_jags(
       data = data,
       jags_code = jags_code,
+      jags_data = jags_data,
       pars = all_pars,  # Not loglik
-      ST = ST,
       cores = cores,
       sample = "prior",
       n.chains = chains,
       n.iter = iter,
       n.adapt = adapt,
       inits = inits
-    )
+    ) %>%
+      recover_levels(data, ST)
 
     # Move loglik columns out to it's own list, keeping parameters and loglik apart
     loglik_cols = stringr::str_starts(colnames(samples[[1]]), 'loglik_')  # detect loglik cols
@@ -340,7 +345,7 @@ mcp = function(model,
   if (!exists("mcmc_loglik")) mcmc_loglik = NULL
 
 
-  model = lapply(ST$form, stats::as.formula, env=globalenv())  # with explicit response and cp
+  #model = lapply(ST$form, stats::as.formula, env=globalenv())  # with explicit response and cp
   class(model) = c("mcplist", "list")
   class(prior) = c("mcplist", "list")
   class(pars) = c("mcplist", "list")  # for nicer printing
@@ -364,12 +369,13 @@ mcp = function(model,
     # Extracted model
     pars = pars,
     jags_code = jags_code,
-    simulate = simulate,
+    #simulate = simulate,
 
     # Pass info to *.mcpfit() functions.
     # Not meant to be used by the end user.
     .other = list(
-      ST = ST
+      ST = ST,
+      rhs_table = rhs_table
     )
   )
   class(mcpfit) = "mcpfit"

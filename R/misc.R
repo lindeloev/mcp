@@ -56,9 +56,8 @@ release_questions = function() {
 #' @return A formula
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
 remove_terms = function(form, remove) {
-  assert_types(form, "formula")
+  assert_types(form, "formula", len = c(2, 3))
   assert_value(remove, allowed = c("varying", "population"))
 
   # Find terms with "|"
@@ -96,7 +95,7 @@ remove_terms = function(form, remove) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 to_formula = function(form) {
-  assert_types(form, "character", "formula")
+  assert_types(form, "character", "formula", len = c(1, 3))
   if (is.character(form)) {
     # Add tilde
     if (!stringr::str_detect(form, "^(\\s|)~")) {
@@ -106,6 +105,46 @@ to_formula = function(form) {
   }
 
   return(form)
+}
+
+
+#' Homogonize enumerating strings in mcp
+#'
+#' Nice for error messages.
+#'
+#' @aliases collapse_quote
+#' @keywords internal
+#' @param x A character vector
+#' @return Character
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+and_collapse = function(x) {
+  assert_types(x, "character")
+  paste0(x, collapse = " and ")
+}
+
+
+#' Converts formula to string
+#'
+#' Note: this uses base R and circumvents the length-limitation of `deparse()`
+#' and `format()`.
+#'
+#' @aliases formula_to_char
+#' @keywords internal
+#' @param form Any valid formula with any number of tildes.
+#' @return A character.
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+formula_to_char = function(form) {
+  assert_types(form, "formula", len = c(1, 3))
+  form_char = as.character(form)
+  if (length(form_char) == 2 & form_char[1] == "~") {
+    return(paste0(form_char, collapse = " "))
+  } else if (length(form_char == 3) & form_char[1] == "~") {
+    return(paste0(form_char[c(2, 3)], collapse = " ~ "))
+  } else {
+    stop_github("Could not decode formula ", deparse(form, width.cutoff = 500))
+  }
 }
 
 
@@ -144,7 +183,6 @@ get_rhs = function(form) {
 #' @return A tidybayes long format tibble with the column "quantile"
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
 get_quantiles = function(samples, quantiles, xvar, yvar, facet_by = NULL) {
   # Trick to declare no facet = common group for all
   if (is.null(facet_by))
@@ -205,7 +243,7 @@ print.mcplist = function(x, ...) {
 #' class(mytext) = "mcptext"
 #' print(mytext)
 print.mcptext = function(x, ...) {
-  assert_types(x, "character")
+  assert_types(x, "character", len = 1)
   assert_ellipsis(...)
   cat(x)
 }

@@ -30,9 +30,8 @@
 #' fit2$loo = loo(fit2)
 #' loo::loo_compare(fit1$loo, fit2$loo)
 #' }
-#'
 criterion = function(fit, criterion = "loo", ...) {
-  assert_mcpfit(fit)
+  assert_types(fit, "mcpfit")
   assert_value(criterion, allowed = c("loo", "waic"))
 
   # Log-likelihood MCMC samples as matrix
@@ -58,10 +57,8 @@ criterion = function(fit, criterion = "loo", ...) {
 #' @describeIn criterion Computes loo on mcpfit objects
 #' @param x An \code{\link{mcpfit}} object.
 #' @seealso \code{\link{criterion}}
-#' @importFrom loo loo
 #' @export loo
 #' @export
-#'
 loo.mcpfit = function(x, ...) {
   criterion(x, "loo", ...)
 }
@@ -70,11 +67,9 @@ loo.mcpfit = function(x, ...) {
 #' @describeIn criterion Computes WAIC on mcpfit objects
 #' @param x An \code{\link{mcpfit}} object.
 #' @param ... Currently ignored
-#' @importFrom loo waic
 #' @seealso \code{\link{criterion}}
 #' @export waic
 #' @export
-#'
 waic.mcpfit = function(x, ...) {
   assert_ellipsis(...)
   criterion(x, "waic")
@@ -139,16 +134,14 @@ waic.mcpfit = function(x, ...) {
 #'       For "=" it is the Savage-Dickey density ratio.
 #'       For directional hypotheses, it is p converted to odds.
 #'
-#' @importFrom dplyr .data
 #' @export
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
 hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
-  assert_mcpfit(fit)
+  assert_types(fit, "mcpfit")
   assert_types(hypotheses, "character")
-  assert_numeric(width, lower = 0, upper = 1)
-  assert_integer(digits, lower = 0)
+  assert_numeric(width, lower = 0, upper = 1, len = 1)
+  assert_integer(digits, lower = 0, len = 1)
 
   # Loop through hypotheses and populate return_df
   return_df = data.frame()
@@ -263,7 +256,6 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
 #' @return A float
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
 get_density = function(samples, LHS, value) {
   samples = tidybayes::tidy_draws(samples) %>%
     dplyr::mutate(result = eval(parse(text = LHS)))

@@ -31,7 +31,6 @@
 #' @slot jags_code A string with jags code. Use `cat(fit$jags_code)` to show it.
 #' @slot simulate A method to simulate and predict data.
 #' @slot .other Information that is used internally by mcp.
-#'
 NULL
 
 
@@ -43,16 +42,17 @@ NULL
 #' @param fit An \code{\link{mcpfit}}` object.
 #' @param varying Boolean. Get results for varying (TRUE) or population (FALSE)?
 #' @return A data.frame with summaries for each model parameter.
-#' @importFrom magrittr %>%
-#' @importFrom dplyr .data
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   # Check arguments
-  assert_mcpfit(fit)
-  assert_numeric(width, lower = 0, upper = 1)
+  assert_types(fit, "mcpfit")
+  assert_numeric(width, lower = 0, upper = 1, len = 1)
   assert_logical(varying)
   assert_logical(prior)
+
+  if (varying == TRUE & is.null(fit$pars$varying))
+    return(NULL)
 
   # Get posterior/prior samples
   # TO DO: transition this to tidy_samples at some point if rhat and n.eff
@@ -215,12 +215,11 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #'
 #' # Summarise prior
 #' summary(demo_fit, prior = TRUE)
-#'
 summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) {
   fit = object  # Standard name in mcp
-  assert_mcpfit(fit)
-  assert_numeric(width, lower = 0, upper = 1)
-  assert_integer(digits, lower = 0)
+  assert_types(fit, "mcpfit")
+  assert_numeric(width, lower = 0, upper = 1, len = 1)
+  assert_integer(digits, lower = 0, len = 1)
   assert_logical(prior)
   assert_ellipsis(...)
 
@@ -232,7 +231,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
     cat("Iterations: ", nrow(samples[[1]]) * length(samples), " from ", length(samples), " chains.\n", sep="")
   cat("Segments:\n")
   for (i in 1:length(fit$model)) {
-    cat("  ", i, ": ", format(fit$model[i]), "\n", sep = "")
+    cat("  ", i, ": ", formula_to_char(fit$model[[i]]), "\n", sep = "")
   }
 
   # Data
@@ -286,7 +285,6 @@ print.mcpfit = function(x, ...) {
 #' @aliases is.mcpfit
 #' @param x An `R` object.
 #' @export
-#'
 is.mcpfit = function(x) {
   inherits(x, "mcpfit")
 }
@@ -342,7 +340,6 @@ mcmclist_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
 #' @slot pars Character vector of parameter names. `NULL` if empty.
 #' @slot cols Character vector of data column names. `NULL` if empty.
 #' @slot indices Logical vector of segments in the segment table that contains the varying effect
-#'
 unpack_varying = function(fit, pars = NULL, cols = NULL) {
   assert_types(pars, "null", "logical", "character")
   assert_types(cols, "null", "logical", "character")
@@ -410,7 +407,6 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
 #' @return `tibble` of posterior draws in `tidybayes` format.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
 tidy_samples = function(
   fit,
   population = TRUE,
@@ -420,13 +416,13 @@ tidy_samples = function(
   nsamples = NULL
 ) {
   # General argument checks
-  assert_mcpfit(fit)
+  assert_types(fit, "mcpfit")
   assert_types(population, "logical", "character")
   assert_types(varying, "null", "logical", "character")
   assert_types(absolute, "null", "logical", "character")
   assert_logical(prior)
   if (!is.null(nsamples))
-    assert_integer(nsamples, lower = 1)
+    assert_integer(nsamples, lower = 1, len = c(0, 1))
 
   if (all(population == FALSE) && all(varying == FALSE))
     stop("At least one TRUE or one parameter must be provided through either the `varying` or the `population` arguments.")
@@ -553,12 +549,9 @@ tidy_samples = function(
 #'   * If `summary = FALSE` and `samples_format = "matrix"`: An `N_draws` X `nrows(newdata)` matrix with fitted/predicted
 #'       values (depending on `type`). This format is used by `brms` and it's useful as `yrep` in
 #'      `bayesplot::ppc_*` functions.
-#' @importFrom magrittr %>%
-#' @importFrom dplyr .data
 #' @seealso \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
 pp_eval = function(
   object,
   newdata = NULL,
@@ -576,7 +569,7 @@ pp_eval = function(
 ) {
   # Recodings
   fit = object
-  assert_mcpfit(fit)
+  assert_types(fit, "mcpfit")
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)
   returnvar = rlang::sym(type)
@@ -595,9 +588,9 @@ pp_eval = function(
   ########################
   # ASSERTS AND RECODING #
   ########################
-  assert_logical(summary)
+  assert_logical(summary, len = 1)
   assert_value(type, allowed = c("fitted", "predict", "residuals"))
-  assert_types(probs, "logical", "numeric")
+  assert_types(probs, "logical", "numeric", len = c(1, 2))
   if (is.numeric(probs))
     assert_numeric(probs, lower = 0, upper = 1)
   if (all(probs == TRUE))
@@ -605,7 +598,7 @@ pp_eval = function(
   assert_logical(rate)
   assert_logical(prior)
   assert_logical(arma)
-  assert_types(nsamples, "null", "numeric")
+  assert_types(nsamples, "null", "numeric", len = c(0, 1))
   if (is.numeric(nsamples))
     assert_integer(nsamples, lower = 1)
   assert_value(samples_format, allowed = c("tidy", "matrix"))
@@ -636,7 +629,7 @@ pp_eval = function(
 
     cols_in_newdata = required_cols %in% colnames(newdata)
     if (any(cols_in_newdata == FALSE))
-      stop("Missing columns '", paste0(required_cols[!cols_in_newdata], collapse = "', '"), "' in `newdata`.")
+      stop("Missing columns ", and_collapse(required_cols[!cols_in_newdata]), " in `newdata`.")
   } else {
     # Use original data. Remember the response variable too for ARMA
     newdata = fit$data
@@ -726,7 +719,6 @@ pp_eval = function(
 #'   probs = c(0.025, 0.5, 0.975)
 #' )
 #'}
-#'
 predict.mcpfit = function(
   object,
   newdata = NULL,
@@ -777,7 +769,6 @@ predict.mcpfit = function(
 #'        newdata = data.frame(time = c(-5, 20, 300)),  # New data
 #'        probs = c(0.025, 0.5, 0.975))
 #'}
-#'
 fitted.mcpfit = function(
   object,
   newdata = NULL,
@@ -819,8 +810,6 @@ fitted.mcpfit = function(
 #'
 #' @aliases residuals residuals.mcpfit resid resid.mcpfit
 #' @inheritParams pp_eval
-#' @importFrom magrittr %>%
-#' @importFrom dplyr .data
 #' @seealso \code{\link{pp_eval}} \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -831,7 +820,6 @@ fitted.mcpfit = function(
 #' residuals(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
 #' residuals(demo_fit, summary = FALSE)  # Samples instead of summary.
 #'}
-#'
 residuals.mcpfit = function(
   object,
   newdata = NULL,
@@ -872,11 +860,8 @@ residuals.mcpfit = function(
 #' @param samples Samples in tidy format
 #' @param returnvar An `rlang::sym()` object.
 #' @return An  `N_draws` X `nrows(newdata)` matrix.
-#' @importFrom magrittr %>%
-#' @importFrom dplyr .data
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
 tidy_to_matrix = function(samples, returnvar) {
   returnvar = rlang::sym(returnvar)
   samples %>%
@@ -897,9 +882,8 @@ tidy_to_matrix = function(samples, returnvar) {
 #' @return An mcpfit object with loo.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
 with_loo = function(fit, save_psis = FALSE, info = NULL) {
-  assert_mcpfit(fit)
+  assert_types(fit, "mcpfit")
 
   # Add loo if absent or needs psis
   if (is.null(fit$loo) || (save_psis == TRUE && loo::is.loo(fit$loo) && is.null(fit$loo$psis_object))) {

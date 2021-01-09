@@ -2,7 +2,7 @@
 # -----------------
 
 
-#' Call `get_formula_str` for multiple ytypes and paste strings
+#' Call `get_formula_str` for multiple dpars and paste strings
 #'
 #' Currently used to differentiate between the JAGS model (use all) and the
 #' fit$simulate model (do not include arma).
@@ -11,180 +11,100 @@
 #' @keywords internal
 #' @inheritParams get_formula_str
 #' @inheritParams mcp
-#' @param ytypes A character vector of ytypes to including in model building
+#' @param dpars A character vector of dpars to including in model building
 #' @return A string with JAGS code.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
-get_all_formulas = function(ST, prior, par_x, ytypes = c("ct", "sigma", "arma")) {
-  # Initiate with central tendency
-  if ("ct" %in% ytypes) {
-    formula_str = get_formula_str(ST, par_x, ytype = "ct", init = TRUE)
+get_all_formulas = function(ST, rhs_table, par_x) {
+  # Add X-helpers which code the X relative to the start of each segment.
+  local_x_str = "\n# par_x local to each segment"
+  for (i in seq_len(nrow(ST))) {
+    segment_start = ifelse(i > 1, yes = paste0(" - ", ST$cp_code_form[i], ""), no = "")  #
+    segment_end = ifelse(i < nrow(ST), yes = paste0(ST$cp_code_form[i + 1], ""), no = paste0("cp_", i))  # infinite if last segment.
+
+    local_x_str = paste0(local_x_str, "\n", par_x, "_local_", i, "_[i_] = min(", par_x, "[i_], ", segment_end, ")", segment_start)
   }
 
-  # Add sigma
-  if ("sigma" %in% ytypes) {
-    if (any(stringr::str_starts(names(prior), "sigma_"))) {
-      formula_str = paste0(formula_str, "\n\n",
-                           get_formula_str(ST, par_x, ytype = "sigma"))
-    }
-  }
+  # Build formula for each dpar
+  dpar_formula_str = rhs_table %>%
+    dplyr::select(-matrix_data) %>%  # Throw less data around
+    dplyr::rowwise() %>%
+    dplyr::mutate(
+      # Left-join ST
+      this_cp = ST$cp_code_form[[segment]],
+      next_cp = ST$cp_code_form[next_intercept],  # replace segment with code string
+      form = ST$form[[segment]],
 
-  # Add arma
-  if ("arma" %in% ytypes) {
-    all_arma = names(prior)[stringr::str_starts(names(prior), "(^ar|^ma)[0-9]")]  # All priors starting with ar[number] or ma[number]
-    arma_bases = unique(sub("*([0-9]+)_.*$", "\\1", all_arma))  # extract these starts
-    for (arma_base in arma_bases) {
-      formula_str = paste0(formula_str, "\n\n",
-                           get_formula_str(ST, par_x, ytype = arma_base))
-    }
-  }
+      # One dpar per ar order: (ar, 1) --> ar1
+      dpar = paste0(dpar, tidyr::replace_na(order, ""))
+    ) %>%
+
+    # Build formula for each dpar
+    dplyr::group_by(dpar) %>%
+    tidyr::nest() %>%
+    dplyr::rowwise() %>%
+    dplyr::summarise(
+      formula_str = get_formula_str(data, dpar, par_x)
+    ) %>%
+    dplyr::pull(formula_str) %>%
+    paste0(collapse = "\n\n")
 
   # Return
+  formula_str = paste0(local_x_str, "\n\n", dpar_formula_str)
   return(formula_str)
 }
 
 
-#' Build an R formula (as string) given a segment table (ST)
-#'
-#' You will need to replace PAR_X for whatever your x-axis observation column
-#' is called. In JAGS typically `x[i_]`. In R just `x`.
+#' Build an R formula (as string) for a dpar
 #'
 #' @aliases get_formula_str
 #' @keywords internal
 #' @inheritParams mcp
 #' @param ST Tibble. Returned by `get_segment_table`.
-#' @param ytype One of "ct" (central tendency), "sigma", "ar1" (or another order), or "ma1" (or another order)
-#' @param init TRUE/FALSE. Set to TRUE for the first call. Adds segment-relative
-#'   X-codings and verbose commenting of one formula
+#' @param dpar_table A rhs_table with only one (dpar, order) combo
 #' @return A string with JAGS code.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
-get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
-  # Build this! Start empty...
-  formula_str = ""
-
-  ############
-  # Initiate #
-  ############
-  # Optionally add X-helpers which code the X relative to the start of each segment.
-  # Used to compute slopes so that they start in the beginning of each segment.
-  if (init == TRUE) {
-    for (i in seq_len(nrow(ST))) {
-      S = ST[i, ]
-      segment_start = ifelse(i > 1, yes = paste0(" - ", S$cp_code_form, ""), no = "")  #
-      segment_end = ifelse(i < nrow(ST), yes = paste0(ST$cp_code_form[i + 1], ""), no = paste0("cp_", i))  # infinite if last segment.
-
-      formula_str = paste0(formula_str, "\nX_", i, "_[i_] = min(", par_x, "[i_], ", segment_end, ")", segment_start)
-    }
+get_formula_str = function(dpar_table, dpar, par_x) {
+  # Build this! Initiate
+  formula_str = paste0("# Formula for ", dpar)
+  if (dpar == "sigma") {
+    formula_str = paste0(formula_str, "\nsigma_[i_] = max(0, sigma_tmp[i_])  # Count negative sigma as zero-sigma\nsigma_tmp[i_] =  ")
+  } else {
+    formula_str = paste0(formula_str, "\n", dpar, "_[i_] =\n")
   }
 
-  for (i in seq_len(nrow(ST))) {
-    #################################
-    # GET ST COLUMNS FOR THIS YTYPE #
-    #################################
-    # Extract int, slope_table, and slope_code from ST given ytype.
-    # This is possible since the generated formula works the same for all of them.
-    # Programmer's note: The code below is quite repetitive, but I found no simpler solutions.
-    S = ST[i, ]
-    if (ytype == "ct") {
-      int = S$ct_int[[1]]
-      slope_table = S$ct_slope[[1]]
-      slope_code = S$ct_code[[1]]
-    } else if (ytype == "sigma") {
-      int = S$sigma_int[[1]]
-      slope_table = S$sigma_slope[[1]]
-      slope_code = S$sigma_code[[1]]
-    } else if (stringr::str_starts(ytype, "ar")) {
-      # Autoregressive: more involved
-      ar_order = get_arma_order(ytype)  # e.g., "ar12" --> 12
 
-      # Get int (intercept)
-      S_int_order = length(S$ar_int[[1]])  # How many orders are recorded in the segment table
-      if (ar_order <= S_int_order) {
-        int = S$ar_int[[1]][[ar_order]]
-      } else {
-        int = NA
-      }
+  df_code_strs = dpar_table %>%
+    # Code dpar_data_segment column indices
+    dplyr::arrange(segment) %>%  # just to make sure
+    dplyr::group_by(segment) %>%
 
-      # Get slope
-      S_slope_order = length(S$ar_slope[[1]])  # How many orders are recorded in the segment table
-      if (ar_order <= S_slope_order) {
-        slope_table = S$ar_slope[[1]][[ar_order]]
-        slope_code = S$ar_code[[1]][[ar_order]]
-      } else {
-        slope_table = NA
-        slope_code = NA
-      }
-    } else {
-      stop("Got wrong argument for ytype: ", ytype, ". Report an issue on GitHub if you see this.")
-    }
+    # Summarise
+    dplyr::group_by(segment, x_factor) %>%
+    dplyr::summarise(
+      # The parts
+      indicator_this = paste0("  (", par_x, "[i_] >= ", dplyr::first(this_cp), ")"),
+      indicator_next = dplyr::if_else(is.na(dplyr::first(next_cp)) == TRUE, "", paste0(" * (", par_x, "[i_] < ", dplyr::first(next_cp), ")")),
+      inprod = paste0(" * inprod(rhs_data_[i_, c(", paste0(matrix_col, collapse = ", "), ")], c(", paste0(code_name, collapse = ", "), "))"),
+      x_factor = gsub("x", paste0(par_x, "_local_", dplyr::first(segment), "_[i_]"), dplyr::first(x_factor)),
 
+      # All together
+      segment_code = paste0(indicator_this, indicator_next, inprod, " * ", x_factor),
+      form = dplyr::first(form)
+    ) %>%
 
-    ########################
-    # BUILD FORMULA STRING #
-    ########################
-
-    # Start formula string with an informative comment
-    if (i == 1) {
-      if (ytype == "ct") {
-        formula_str = paste0(formula_str, "\n\n# Fitted value\ny_[i_] = \n")
-      } else if (ytype == "sigma") {
-        formula_str = paste0(formula_str, "# Fitted standard deviation\nsigma_[i_] = max(0, \n")  # Add max(0, [formula]) to prevent modeling negative sigmas. JAGS uses precision = 1 / sigma^2 which yields positive precisions for negative sigmas.
-      } else if (stringr::str_detect(ytype, "ar[0-9]+")) {
-        formula_str = paste0(formula_str, "# Autoregressive coefficient for all AR(", ar_order,")\n", ytype, "_[i_] = \n")
-      } else if (stringr::str_detect(ytype, "ma[0-9]+")) {
-        formula_str = paste0(formula_str, "# Moving Average: MA(", ma_order, ")\n", ytype, "_[i_] = \n")
-      }
-    }
-
-    # FUTURE_REL will sometimes be replaced by a less-than indicator (ind_past).
-    # cp_code_form includes varying effects
-    ind_this = paste0("  (", par_x, "[i_] >= ", S$cp_code_form, ") * FUTURE_REL")
-    ind_past = paste0("(", par_x, "[i_] < ", S$cp_code_form, ") * ")
-
-    # Begin building formula
-    if (init == TRUE) {  # Verbose for mean formula
-      formula_str = paste0(formula_str, "\n  # Segment ", i, ": ", S$form, "\n")
-    }
-
-
-    # Add intercept
-    if (!all(is.na(int))) {
-      # For absolute intercepts, "remove" earlier stuff affecting the intercept
-      # Multiply it with zero from this change point and on
-      formula_str = gsub("FUTURE_REL", ind_past, formula_str)
-      formula_str = paste0(formula_str, ind_this, int$name, " + \n")
-    }
-
-    # Add slope
-    if (!all(is.na(slope_table))) {
-      formula_str = paste0(formula_str, ind_this, slope_code, " + \n")
-    }
-
-    # If this is just a plateau (~ 0), i.e., the absence of intercept, slope, and varying effects
-    if (init == TRUE) {  # Verbose for mean formula. Not for sigma.
-      if (all(is.na(int)) && all(is.na(slope_table))) {
-        formula_str = paste0(formula_str, "  0 + \n")
-      }
-    }
-
-    # Finish up formula_str for the last segment
-    if (i == nrow(ST)) {
-      formula_str = substr(formula_str, 1, nchar(formula_str) - 3)
-    }
-  }
-
-  # Remove all "unrealized" FUTURE_REL
-  formula_str = gsub("FUTURE_REL", "", formula_str)
-
-  if (ytype == "sigma") {
-    formula_str = paste0(formula_str, ")")  # End max() statement
-  }
+    # Add title-comment
+    dplyr::group_by(segment) %>%
+    dplyr::mutate(
+      title = dplyr::if_else(dplyr::row_number() == 1, paste0("\n  # Segment ", dplyr::first(segment), ": ", dplyr::first(form), "\n"), ""),
+      segment_code = paste0(title, segment_code)
+    )
 
   # Return
-  formula_str
+  all_predictors = paste0(df_code_strs$segment_code, collapse = " + \n")
+  formula_str = paste0(formula_str, all_predictors)
+  return(formula_str)
 }
 
 
@@ -202,7 +122,6 @@ get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
 #' @return A string with R code for the fit$simulate() function corresponding to the model.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
 get_simulate = function(formula_str, pars, nsegments, family) {
   # First some substitutions
   formula_func = gsub("\\[i_\\]", "", formula_str)  # No explicit indexing needed for R function
@@ -268,7 +187,7 @@ function(",
     stop(\"Only `type = 'fitted'` is meaningful when `scale = 'linear'`\")
 
   if (stringr::str_detect(which_y, '", paste0(allowed_which_y, collapse = "|"), "') == FALSE)
-    stop(which_y, \" is not a parameter class in this model. It should be one of '", paste0(allowed_which_y, collapse = "', '"), "'\")
+    stop(which_y, \" is not a parameter class in this model. It should be one of ", and_collapse(allowed_which_y), "\")
 
   # Use this for return to add simulation parameters to the output
   args_names = as.list(match.call())  # Which arguments this function was called with
@@ -424,7 +343,6 @@ function(",
 #' @return String with JAGS code for AR.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
 get_ar_code = function(ar_order, family, is_R, xvar, yvar = NA) {
   mm = "\n"
 

@@ -51,14 +51,31 @@ negbinomial = function(link = "log") {
 }
 
 
-#' Add A family object to store link functions between R and JAGS.
-#'
-#' This will make more sense once more link functions / families are added.
+#' Create or test objects of type class "mcpfamily"
 #'
 #' @aliases mcpfamily
-#' @keywords internal
-#' @param family A family object, e.g., `binomial(link = "identity")`.
-mcpfamily = function(family) {
+#' @param x A family object, e.g., `binomial(link = "identity")`.
+#' @seealso \code{\link{family}}
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @export
+mcpfamily = function(x) {
+  family = x
+  tmp = x  # Hack: the name "family" causes errors in subset()
+  assert_types(family, "family")
+
+  # Get default priors for RHS
+  dpar_prior = subset(default_dpar_priors, family == tmp$family & link == tmp$link)
+  if (nrow(dpar_prior) == 0)
+    stop("mcp has no default priors for ", family$family, "(link = \"", family$link, "\") so it's likely not supported. See `mcpfamily()` on how to create a custom family.")
+
+  # Add AR for gaussian
+  if (family$family == "gaussian" | family$link == "identity")
+    dpar_prior = rbind(dpar_prior, subset(default_common_priors, dpar == "ar"))
+
+  family$default_prior = dpar_prior
+  family$dpars = unique(dpar_prior$dpar)
+
   # Set linkfun_str
   if (family$link == "identity") {
     family$linkfun_str = ""
@@ -75,12 +92,33 @@ mcpfamily = function(family) {
     identity = ""
   )
 
+  # Add link functions as R functions, if they are not already present
   if (rlang::has_name(family, "linkfun") == FALSE)
     family$linkfun = eval(parse(text = family$link))
   if (rlang::has_name(family, "linkinv") == FALSE)
     family$linkinv = eval(parse(text = family$linkinv_str))
 
+  class(family) = c("mcpfamily", "family")
   return(family)
+}
+
+
+#' @aliases is.mcpfamily
+#' @describeIn mcpfamily
+#' @export
+is.mcpfamily = function(x) {
+  if (inherits(x, "mcpfamily") == FALSE)
+    return(FALSE)
+
+  assert_types(x, "family")
+  assert_types(x$default_prior, "tibble", "data.frame")
+  assert_types(x$dpars, "character")
+  assert_types(x$linkfun_str, "character", len = 1)
+  assert_types(x$linkinv_str, "character", len = 1)
+  assert_types(x$linkfun, "function")
+  assert_types(x$linkinv, "function")
+
+  return(TRUE)
 }
 
 
