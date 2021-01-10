@@ -131,3 +131,16 @@ assert_length = function(x, len = NULL, name = NULL) {
 
   return(TRUE)
 }
+
+
+# Asserts whether matrix x is rank deficient.
+assert_rank = function(x, segment) {
+  QR = qr(x)
+  if (QR$rank < ncol(x)) {
+    bad_cols = colnames(x)[QR$pivot[(QR$rank+1):ncol(x)]]
+    stop("These terms are perfectly colinear with other terms in segment ", segment, ": ", and_collapse(bad_cols), " (the design matix is rank deficient). Consider checking the data and/or the model.")
+    return(bad_cols)
+  }
+
+  TRUE
+}

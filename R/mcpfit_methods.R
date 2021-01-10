@@ -514,7 +514,7 @@ tidy_samples = function(
 #' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
 #' @param which_y What to plot on the y-axis. One of
 #'
-#'   * `"ct"`: The central tendency which is often the mean after applying the
+#'   * `"mu"`: The central tendency which is often the mean after applying the
 #'     link function.
 #'   * `"sigma"`: The variance
 #'   * `"ar1"`, `"ar2"`, etc. depending on which order of the autoregressive
@@ -560,7 +560,7 @@ pp_eval = function(
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
-  which_y = "ct",
+  which_y = "mu",
   varying = TRUE,
   arma = TRUE,
   nsamples = NULL,
@@ -726,7 +726,7 @@ predict.mcpfit = function(
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
-  which_y = "ct",
+  which_y = "mu",
   varying = TRUE,
   arma = TRUE,
   nsamples = NULL,
@@ -776,7 +776,7 @@ fitted.mcpfit = function(
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
-  which_y = "ct",
+  which_y = "mu",
   varying = TRUE,
   arma = TRUE,
   nsamples = NULL,
@@ -806,7 +806,7 @@ fitted.mcpfit = function(
 #' Compute Residuals From Mcpfit Objects
 #'
 #' Equivalent to  `fitted(fit, ...) - fit$data[, fit$data$yvar]` (or `fitted(fit, ...) - newdata[, fit$data$yvar]`),
-#' but with fixed arguments for `fitted`: `rate = FALSE, which_y = 'ct', samples_format = 'tidy'`.
+#' but with fixed arguments for `fitted`: `rate = FALSE, which_y = 'mu', samples_format = 'tidy'`.
 #'
 #' @aliases residuals residuals.mcpfit resid resid.mcpfit
 #' @inheritParams pp_eval
@@ -840,7 +840,7 @@ residuals.mcpfit = function(
     probs = probs,
     rate = FALSE,
     prior = prior,
-    which_y = "ct",
+    which_y = "mu",
     varying = varying,
     arma = arma,
     nsamples = nsamples,

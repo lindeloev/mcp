@@ -18,10 +18,10 @@ default_common_priors = tibble::tribble(
 default_dpar_priors = tibble::tribble(
   ~family, ~link, ~dpar, ~par_type, ~prior,
 
-  # Gaussian ct
-  "gaussian", "identity", "ct", "Intercept", "dt(MEANLINKY, SDLINKY, 3)",
-  "gaussian", "identity", "ct", "dummy", "dt(0, SDLINKY, 3)",
-  "gaussian", "identity", "ct", "slope", "dt(0, N_CP * SDLINKY / (MAXX - MINX), 3)",
+  # Gaussian mu
+  "gaussian", "identity", "mu", "Intercept", "dt(MEANLINKY, SDLINKY, 3)",
+  "gaussian", "identity", "mu", "dummy", "dt(0, SDLINKY, 3)",
+  "gaussian", "identity", "mu", "slope", "dt(0, N_CP * SDLINKY / (MAXX - MINX), 3)",
 
   # Gaussian sigma
   "gaussian", "identity", "sigma", "Intercept", "dt(0, SDLINKY, 3) T(0, )",  # Will always be <= observed SDLINKY
@@ -29,22 +29,22 @@ default_dpar_priors = tibble::tribble(
   "gaussian", "identity", "sigma", "slope", "dt(0, N_CP * SDLINKY / (MAXX - MINX), 3)",
 
   # Binomial
-  "binomial", "logit", "ct", "Intercept", "dt(0, 2.5, 3)",  # TO DO: center this on data
-  "binomial", "logit", "ct", "dummy", "dt(0, 2.5, 3)",
-  "binomial", "logit", "ct", "slope", "dt(0, N_CP * 2.5 / (MAXX - MINX), 3)",
+  "binomial", "logit", "mu", "Intercept", "dt(0, 2.5, 3)",  # TO DO: center this on data
+  "binomial", "logit", "mu", "dummy", "dt(0, 2.5, 3)",
+  "binomial", "logit", "mu", "slope", "dt(0, N_CP * 2.5 / (MAXX - MINX), 3)",
 
-  "binomial", "identity", "ct", "Intercept", "dbeta(0, 1)",  # TO DO: center this on data
-  "binomial", "identity", "ct", "dummy", "dunif(-1, 1)",
-  "binomial", "identity", "ct", "slope", "dt(0, N_CP / (MAXX - MINX), 3)",
+  "binomial", "identity", "mu", "Intercept", "dbeta(0, 1)",  # TO DO: center this on data
+  "binomial", "identity", "mu", "dummy", "dunif(-1, 1)",
+  "binomial", "identity", "mu", "slope", "dt(0, N_CP / (MAXX - MINX), 3)",
 
   # Poisson
-  "poisson", "log", "ct", "Intercept", "dt(0, 10)",  # TO DO: center this on data
-  "poisson", "log", "ct", "dummy", "dt(0, 10)",
-  "poisson", "log", "ct", "slope", "dt(0, 10)",
+  "poisson", "log", "mu", "Intercept", "dt(0, 10)",  # TO DO: center this on data
+  "poisson", "log", "mu", "dummy", "dt(0, 10)",
+  "poisson", "log", "mu", "slope", "dt(0, 10)",
 
-  "poisson", "identity", "ct", "Intercept", "dt(MEANLINKY, MEANLINKY, 3)",
-  "poisson", "identity", "ct", "dummy", "dt(0, MEANLINKY, 3)",
-  "poisson", "identity", "ct", "slope", "dt(0, N_CP * MEANLINKY / (MAXX - MINX), 3)",
+  "poisson", "identity", "mu", "Intercept", "dt(MEANLINKY, MEANLINKY, 3)",
+  "poisson", "identity", "mu", "dummy", "dt(0, MEANLINKY, 3)",
+  "poisson", "identity", "mu", "slope", "dt(0, N_CP * MEANLINKY / (MAXX - MINX), 3)",
 
   # Negbinomial shape
   "negbinomial", "identity", "shape", "Intercept", "dt(0, 10, 3) T(0, )",  # TO DO: center this on data
@@ -57,19 +57,19 @@ default_dpar_priors = dplyr::bind_rows(
   default_dpar_priors,
 
   # Gaussian
-  default_dpar_priors %>% dplyr::filter(family == "gaussian", link == "identity", dpar == "ct") %>% dplyr::mutate(link = "log"),
+  default_dpar_priors %>% dplyr::filter(family == "gaussian", link == "identity", dpar == "mu") %>% dplyr::mutate(link = "log"),
   default_dpar_priors %>% dplyr::filter(family == "gaussian", link == "identity", dpar == "sigma") %>% dplyr::mutate(link = "log"),
 
   # Bernoulli/binomial
-  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "logit", dpar == "ct") %>% dplyr::mutate(link = "probit"),
-  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "logit", dpar == "ct") %>% dplyr::mutate(family = "bernoulli"),
-  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "logit", dpar == "ct") %>% dplyr::mutate(family = "bernoulli", link = "probit"),
-  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "identity", dpar == "ct") %>% dplyr::mutate(family = "bernoulli"),
+  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "logit", dpar == "mu") %>% dplyr::mutate(link = "probit"),
+  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "logit", dpar == "mu") %>% dplyr::mutate(family = "bernoulli"),
+  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "logit", dpar == "mu") %>% dplyr::mutate(family = "bernoulli", link = "probit"),
+  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "identity", dpar == "mu") %>% dplyr::mutate(family = "bernoulli"),
 
   # Negative binomial
-  default_dpar_priors %>% dplyr::filter(family == "poisson", link == "log", dpar == "ct") %>% dplyr::mutate(family = "negbinomial"),
-  default_dpar_priors %>% dplyr::filter(family == "poisson", link == "identity", dpar == "ct") %>% dplyr::mutate(family = "negbinomial"),
-  default_dpar_priors %>% dplyr::filter(family == "negbinomial", link == "identity", dpar == "ct") %>% dplyr::mutate(link = "log")
+  default_dpar_priors %>% dplyr::filter(family == "poisson", link == "log", dpar == "mu") %>% dplyr::mutate(family = "negbinomial"),
+  default_dpar_priors %>% dplyr::filter(family == "poisson", link == "identity", dpar == "mu") %>% dplyr::mutate(family = "negbinomial"),
+  default_dpar_priors %>% dplyr::filter(family == "negbinomial", link == "identity", dpar == "mu") %>% dplyr::mutate(link = "log")
 )
 
 

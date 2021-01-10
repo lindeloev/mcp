@@ -69,7 +69,7 @@ get_formula_str = function(dpar_table, dpar, par_x) {
   # Build this! Initiate
   formula_str = paste0("# Formula for ", dpar)
   if (dpar == "sigma") {
-    formula_str = paste0(formula_str, "\nsigma_[i_] = max(0, sigma_tmp[i_])  # Count negative sigma as zero-sigma\nsigma_tmp[i_] =  ")
+    formula_str = paste0(formula_str, "\nsigma_[i_] = max(10^-9, sigma_tmp[i_])  # Count negative sigma as just-above-zero sigma\nsigma_tmp[i_] =  ")
   } else {
     formula_str = paste0(formula_str, "\n", dpar, "_[i_] =\n")
   }
@@ -137,7 +137,7 @@ get_simulate = function(formula_str, pars, nsegments, family) {
   is_arma = length(pars$arma) > 0
 
   # Allowed values for argument which_y
-  allowed_which_y = c("ct")
+  allowed_which_y = c("mu")
   if (is_arma == TRUE)
     allowed_which_y = c(allowed_which_y, "ar[0-9]+")
   if (length(pars$sigma) > 0)
@@ -170,7 +170,7 @@ function(",
   type = 'predict',
   quantile = FALSE,
   rate = FALSE,
-  which_y = 'ct',
+  which_y = 'mu',
   add_attr = TRUE,
   arma = TRUE,
   scale = 'response',
@@ -241,16 +241,16 @@ function(",
     }
 
     out = paste0(out, "
-  # Use which_y to return something else than ct.
+  # Use which_y to return something else than mu.
   # First, rename to internal parameter name
   if (which_y == 'sigma' || stringr::str_detect(which_y, '^ar([0-9]+)$'))
     which_y = paste0(which_y, '_')
 
-  if (which_y != 'ct') {
+  if (which_y != 'mu') {
     if (!exists(which_y))
       stop(which_y, \" was not found. Try one of 'sigma', 'ar1', etc.\")
     if (type != 'fitted')
-      stop(\"`type = 'fitted'` is the only option when `which_y != 'ct'`\")
+      stop(\"`type = 'fitted'` is the only option when `which_y != 'mu'`\")
 
     return(add_simulated(get(which_y)))
   }")

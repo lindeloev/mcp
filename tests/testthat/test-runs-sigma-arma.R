@@ -26,7 +26,7 @@ test_good(good_variance)
 #############
 # We can assume that it will fail for the same mis-specifications on the formula
 # ar(order, [formula]), since the formula runs through the exact same code as
-# sigma and ct.
+# sigma and mu.
 bad_arma = list(
   list(y ~ ar(0)),  # currently not implemented
   list(y ~ ar(-1)),  # must be positive

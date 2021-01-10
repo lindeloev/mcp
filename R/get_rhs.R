@@ -68,8 +68,8 @@ get_par_x = function(model, data, par_x = NULL) {
 #' @inheritParams mcp
 #' @param form The RHS formula for a particular dpar of a segment.
 #' @param form_rhs The full RHS formula of a segment, including one or several `form`s.
-#' @param i The segment number
-#' @param dpar One of `c("ct", "sigma", "ar")`.
+#' @param segment Integer. The segment number
+#' @param dpar One of `c("mu", "sigma", "ar")`.
 #' @param order Currently only applies to `dpar == "ar"`.
 #' @return A tibble with one row per model parameter and the columns
 #'   - `dpar`: character.
@@ -82,24 +82,25 @@ get_par_x = function(model, data, par_x = NULL) {
 #'
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_rhs_table_dpar = function(data, form, i, dpar, par_x, order = NULL) {
+get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL) {
   assert_types(data, "data.frame", "tibble")
-  assert_types(form, "formula", len = 2)
-  assert_integer(i, lower = 1, len = 1)
+  assert_types(form_rhs, "formula", len = 2)
+  assert_integer(segment, lower = 1, len = 1)
   assert_types(dpar, "character", len = 1)
   assert_types(par_x, "character", len = 1)
   assert_types(order, "null", "integer", len = c(0, 1))
   if (is.null(order) == FALSE)
     assert_integer(order, lower = 1)
 
-  # Variable names for non-ct terms are prefixed with the term type.
-  if (dpar == "ct") {
+  # Variable names for non-mu terms are prefixed with the term type.
+  if (dpar == "mu") {
     dpar_prefix = ""
   } else {
     dpar_prefix = paste0(dpar, order, "_")
   }
 
-  mat = model.matrix(form, data)
+  mat = model.matrix(form_rhs, data)
+  assert_rank(mat, segment)
 
 
   #######################
@@ -123,14 +124,14 @@ get_rhs_table_dpar = function(data, form, i, dpar, par_x, order = NULL) {
 
   # Replace (Intercept) with Intercept
   is_intercept = pars == "(Intercept)"
-  intercept_name = ifelse(dpar == "ct", "Intercept", "")
+  intercept_name = ifelse(dpar == "mu", "Intercept", "")
   pars[is_intercept] = intercept_name
 
   # display_name
   display_name = gsub("\\(|\\)", "", pars)
   display_name = gsub("^", "E", display_name, fixed = TRUE)
   display_name = gsub("-", "M", display_name, fixed = TRUE)
-  display_name = paste0(dpar_prefix, display_name, "_", i)
+  display_name = paste0(dpar_prefix, display_name, "_", segment)
   display_name = gsub("__", "_", display_name, fixed = TRUE)
 
   # code_name
@@ -185,7 +186,7 @@ get_rhs_table_dpar = function(data, form, i, dpar, par_x, order = NULL) {
 
   rhs_table = data.frame(
     dpar = dpar,
-    segment = i,
+    segment = segment,
     display_name,
     code_name = code_name,
     par_type = dplyr::case_when(
@@ -193,8 +194,6 @@ get_rhs_table_dpar = function(data, form, i, dpar, par_x, order = NULL) {
       is_dummy == TRUE ~ "dummy",
       TRUE ~ "slope"
     ),
-    #is_dummy = is_dummy,
-    #is_intercept = is_intercept,
     order = ifelse(is.null(order), NA, order),
     x_factor = x_factor,
     matrix_col = seq_len(ncol(mat_without_x))
@@ -247,7 +246,7 @@ term_contains = function(par_x, terms) {
 #' @aliases get_rhs_table_segment
 #' @keywords internal
 #' @describeIn get_rhs_table_dpar Apply `get_rhs_table_dpar` to each formula in a segment
-get_rhs_table_segment = function(form_rhs, i, family, data, par_x) {
+get_rhs_table_segment = function(form_rhs, segment, family, data, par_x) {
   # Get general format
   form_rhs = stats::as.formula(form_rhs)
   attrs = attributes(stats::terms(remove_terms(form_rhs, "varying")))
@@ -258,18 +257,18 @@ get_rhs_table_segment = function(form_rhs, i, family, data, par_x) {
   ######
   # MU #
   ######
-  # Start by building it as a string: "ct(1 + x + ...)" to bring it into a compatible format
-  ct_terms = term_labels[stringr::str_detect(attrs$term.labels, "sigma\\(|ar\\(") == FALSE]
+  # Start by building it as a string: "mu(1 + x + ...)" to bring it into a compatible format
+  mu_terms = term_labels[stringr::str_detect(attrs$term.labels, "sigma\\(|ar\\(") == FALSE]
 
-  if (length(ct_terms > 0)) {
-    ct_terms[1] = paste0(attrs$intercept, " + ", ct_terms[1])
-    ct_term = paste0(ct_terms, collapse = " + ")  # for use in fit$model and in summary()
-    ct_term = paste0("ct(", ct_term, ")")  # Get it in "standard" format
+  if (length(mu_terms > 0)) {
+    mu_terms[1] = paste0(attrs$intercept, " + ", mu_terms[1])
+    mu_term = paste0(mu_terms, collapse = " + ")  # for use in fit$model and in summary()
+    mu_term = paste0("mu(", mu_term, ")")  # Get it in "standard" format
   } else {
-    ct_term = paste0("ct(", attrs$intercept, ")")  # Plateau model: "ct(0)" or "ct(1)"
+    mu_term = paste0("mu(", attrs$intercept, ")")  # Plateau model: "mu(0)" or "mu(1)"
   }
-  ct_form = get_term_content(ct_term)
-  ct_pars = get_rhs_table_dpar(data, ct_form, i, "ct", par_x)
+  mu_form = get_term_content(mu_term)
+  mu_pars = get_rhs_table_dpar(data, mu_form, segment, "mu", par_x)
 
 
 
@@ -280,15 +279,15 @@ get_rhs_table_segment = function(form_rhs, i, family, data, par_x) {
   sigma_term = term_labels[stringr::str_detect(term_labels, "sigma\\(")]  # Which terms?
 
   # If not specified, sigma_1 is implicit in segment 1.
-  if (length(sigma_term) == 0 && family$family == "gaussian" && i == 1) {
+  if (length(sigma_term) == 0 && family$family == "gaussian" && segment == 1) {
     sigma_form = ~1
-    sigma_pars = get_rhs_table_dpar(data, sigma_form, i, dpar = "sigma", par_x)
+    sigma_pars = get_rhs_table_dpar(data, sigma_form, segment, dpar = "sigma", par_x)
   } else if (length(sigma_term) > 0) {
     if (family$family != "gaussian")
       stop("sigma() is only meaningful for family = gaussian()")
 
     sigma_form = get_term_content(sigma_term)
-    sigma_pars = get_rhs_table_dpar(data, sigma_form, i, dpar = "sigma", par_x)
+    sigma_pars = get_rhs_table_dpar(data, sigma_form, segment, dpar = "sigma", par_x)
   } else {
     sigma_pars = NULL
   }
@@ -305,7 +304,7 @@ get_rhs_table_segment = function(form_rhs, i, family, data, par_x) {
   ar_pars = list()
   if (!is.na(ar_stuff$order)) {
     for (order in seq_len(ar_stuff$order)) {
-      ar_pars = rbind(ar_pars, get_rhs_table_dpar(data, ar_form, i, "ar", par_x, order))
+      ar_pars = rbind(ar_pars, get_rhs_table_dpar(data, ar_form, segment, "ar", par_x, order))
     }
   }
 
@@ -315,7 +314,7 @@ get_rhs_table_segment = function(form_rhs, i, family, data, par_x) {
   # RETURN #
   ##########
   all_pars = rbind(
-    ct_pars,
+    mu_pars,
     sigma_pars,
     ar_pars
   )
@@ -329,7 +328,7 @@ get_rhs_table_segment = function(form_rhs, i, family, data, par_x) {
 #'
 #' @aliases get_term_content
 #' @keywords internal
-#' @param term E.g., "ct(1 + x)", "sigma(0 + I(x^2))", etc.
+#' @param term E.g., "mu(1 + x)", "sigma(0 + I(x^2))", etc.
 #' @return char formula with the content inside the brackets.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -412,7 +411,7 @@ get_rhs_table = function(model, data, family, par_x) {
   rhs = lapply(model, get_rhs)
 
   # rbind parameters for all segment formulas
-  rhs_table = lapply(seq_along(rhs), function(i) get_rhs_table_segment(rhs[[i]], i, family, data, par_x)) %>%
+  rhs_table = lapply(seq_along(rhs), function(segment) get_rhs_table_segment(rhs[[segment]], segment, family, data, par_x)) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(matrix_col = dplyr::row_number())
 
@@ -424,9 +423,7 @@ get_rhs_table = function(model, data, family, par_x) {
   df_next_intercept = rhs_table %>%
     dplyr::arrange(dpar, order, segment) %>%
     dplyr::group_by(dpar, order) %>%
-    dplyr::filter(
-      par_type == "Intercept" |
-        ifelse(sum(par_type == "Intercept" & segment == 1) == 0, segment == 1 & dplyr::row_number() == 1, FALSE)) %>%
+    dplyr::filter(par_type == "Intercept") %>%
     dplyr::mutate(next_intercept = dplyr::lead(segment)) %>%
     dplyr::ungroup() %>%
     dplyr::select(dpar, segment, order, next_intercept)

@@ -259,7 +259,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
 get_density = function(samples, LHS, value) {
   samples = tidybayes::tidy_draws(samples) %>%
     dplyr::mutate(result = eval(parse(text = LHS)))
-  dens = stats::density(dplyr::pull(samples, "result"))
+  dens = stats::density(dplyr::pull(samples, "result"), bw = "SJ")
   dens_point = stats::spline(dens$x, dens$y, xout = value)$y
   return(dens_point)
 }

@@ -108,11 +108,11 @@ get_jags_code = function(prior, ST, formula_str, arma_order, family, sample, par
   ##############
   # LIKELIHOOD #
   ##############
-  # Prepare y code (link and AR)
-  ct_code = "ct_[i_]"
+  # Prepare mu code (link and AR)
+  mu_code = "mu_[i_]"
   if (arma_order > 0)
-    ct_code = paste0(ct_code, " + resid_arma_[i_]")
-  ct_code = paste0(family$linkinv_str, "(", ct_code, ")")
+    mu_code = paste0(mu_code, " + resid_arma_[i_]")
+  mu_code = paste0(family$linkinv_str, "(", mu_code, ")")
 
   # Prepare variance code
   has_weights = !all(is.na(ST$weights))
@@ -123,28 +123,28 @@ get_jags_code = function(prior, ST, formula_str, arma_order, family, sample, par
     ")
 
   if (family$family == "gaussian") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dnorm(", ct_code, ", ", weights, " / sigma_[i_]^2)  # SD as precision
-    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], ", ct_code, ", ", weights, " / sigma_[i_]^2)  # SD as precision")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dnorm(", mu_code, ", ", weights, " / sigma_[i_]^2)  # SD as precision
+    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], ", mu_code, ", ", weights, " / sigma_[i_]^2)  # SD as precision")
   } else if (family$family == "binomial") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dbin(", ct_code, ", ", ST$trials[1], "[i_])
-    loglik_[i_] = logdensity.bin(", ST$y[1], "[i_], ", ct_code, ", ", ST$trials[1], "[i_])")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dbin(", mu_code, ", ", ST$trials[1], "[i_])
+    loglik_[i_] = logdensity.bin(", ST$y[1], "[i_], ", mu_code, ", ", ST$trials[1], "[i_])")
   } else if (family$family == "bernoulli") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dbern(", ct_code, ")
-    loglik_[i_] = logdensity.bern(", ST$y[1], "[i_], ", ct_code, ")")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dbern(", mu_code, ")
+    loglik_[i_] = logdensity.bern(", ST$y[1], "[i_], ", mu_code, ")")
   } else if (family$family == "poisson") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dpois(", ct_code, ")
-    loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], ", ct_code, ")")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dpois(", mu_code, ")
+    loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], ", mu_code, ")")
   } else if (family$family == "exponential") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dexp(", ct_code, ")
-    loglik_[i_] = logdensity.exp(", ST$y[1], "[i_], ", ct_code, ")")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dexp(", mu_code, ")
+    loglik_[i_] = logdensity.exp(", ST$y[1], "[i_], ", mu_code, ")")
   }
 
   # Compute residuals for AR
   if (arma_order > 0) {
     if (family$family == "binomial") {
-      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_] / ", ST$trials[1], "[i_]) - ct_[i_]  # Residuals represented by sigma_ after ARMA")
+      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_] / ", ST$trials[1], "[i_]) - mu_[i_]  # Residuals represented by sigma_ after ARMA")
     } else {
-      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_])  - ct_[i_]  # Residuals represented by sigma_ after ARMA")
+      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_])  - mu_[i_]  # Residuals represented by sigma_ after ARMA")
     }
   }
 

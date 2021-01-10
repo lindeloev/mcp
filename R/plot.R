@@ -59,7 +59,7 @@ plot.mcpfit = function(x,
                        q_predict = FALSE,
                        rate = TRUE,
                        prior = FALSE,
-                       which_y = "ct",
+                       which_y = "mu",
                        arma = TRUE,
                        nsamples = 2000,
                        scale = "response",
@@ -202,9 +202,9 @@ plot.mcpfit = function(x,
   ###########
   # PLOT IT #
   ###########
-  # Initiate plot and show raw data (only applicable when which_y == "ct")
+  # Initiate plot and show raw data (only applicable when which_y == "mu")
   gg = ggplot2::ggplot(fit$data, ggplot2::aes_string(x = fit$pars$x, y = fit$pars$y))
-  if (which_y == "ct") {
+  if (which_y == "mu") {
     if (geom_data == "point") {
       if (is.null(fit$pars$weights)) {
         gg = gg + ggplot2::geom_point()
@@ -237,7 +237,7 @@ plot.mcpfit = function(x,
 
     # The scale of the actual plot (or something close enough)
     # This is faster than limits_y = ggplot2::ggplot_build(gg)$layout$panel_params[[1]]$y.range
-    if (which_y == "ct" && geom_data != FALSE) {
+    if (which_y == "mu" && geom_data != FALSE) {
       limits_y = c(min(fit$data[, fit$pars$y]),
                    max(fit$data[, fit$pars$y]))
     } else if (any(q_predict != FALSE)) {
@@ -266,7 +266,7 @@ plot.mcpfit = function(x,
     gg = gg + ggplot2::labs(y = paste0(fit$family$link, "(", fit$pars$y, ")"))
   if (scale == "response" && (fit$family$family == "bernoulli" || (fit$family$family == "binomial" && rate == TRUE)))
     gg = gg + ggplot2::labs(y = paste0("P(", fit$pars$y, " = TRUE)"))
-  if (which_y != "ct")
+  if (which_y != "mu")
     gg = gg + ggplot2::labs(y = which_y)
 
   gg = gg + ggplot2::theme(legend.position = "none")
@@ -316,7 +316,8 @@ geom_cp_density = function(fit, facet_by, limits_y) {
   data = samples,
   position = "identity",
   geom = "line",
-  show.legend = FALSE
+  show.legend = FALSE,
+  bw = "SJ"
   )
 }
 
@@ -616,7 +617,7 @@ pp_check = function(
     probs = FALSE,
     rate = FALSE,
     prior = prior,
-    which_y = "ct",
+    which_y = "mu",
     varying = varying,
     arma = arma,
     nsamples = nsamples,
