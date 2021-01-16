@@ -202,10 +202,6 @@ get_quantiles = function(samples, quantiles, xvar, yvar, facet_by = NULL) {
 }
 
 
-# Hack to make R CMD pass for function geom_cp_density()
-utils::globalVariables(c("value", "..scaled..", ".chain", "cp_name", "."))
-
-
 #' Print mcplist
 #'
 #' Shows a list in a more condensed format using `str(list)`.
