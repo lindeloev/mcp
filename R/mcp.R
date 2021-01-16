@@ -191,15 +191,7 @@ mcp = function(model,
   }
 
   # Check model
-  assert_types(model, "list", len = c(1, Inf))
-
-  if (length(model) == 0)
-    stop("At least one segment is needed in `model`")
-
-  for (segment in model) {
-    if (!inherits(segment, "formula"))
-      stop("all segments must be formulas.")
-  }
+  assert_types(model, "mcpmodel")
 
   # Check prior
   assert_types(prior, "list")

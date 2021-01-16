@@ -247,6 +247,12 @@ term_contains = function(par_x, terms) {
 #' @keywords internal
 #' @describeIn get_rhs_table_dpar Apply `get_rhs_table_dpar` to each formula in a segment
 get_rhs_table_segment = function(form_rhs, segment, family, data, par_x) {
+  assert_types(form_rhs, "formula", len = c(1, 3))
+  assert_integer(segment, lower = 1, len = 1)
+  assert_types(family, "mcpfamily")
+  assert_types(data, "data.frame", "tibble")
+  assert_types(par_x, "character", len = 1)
+
   # Get general format
   form_rhs = stats::as.formula(form_rhs)
   attrs = attributes(stats::terms(remove_terms(form_rhs, "varying")))

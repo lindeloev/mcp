@@ -19,6 +19,17 @@ is.family = function(x) {
   return(TRUE)
 }
 
+#' @keywords internal
+is.mcpmodel = function(x) {
+  assert_types(x, "list", len = c(1, Inf))
+
+  for (segment in x) {
+    if (!inherits(segment, "formula"))
+      stop("All segments must be formulas. This segment is not a formula: ", segment)
+  }
+
+  return(TRUE)
+}
 
 #' @keywords internal
 stop_github = function(...) {
@@ -64,7 +75,11 @@ assert_value = function(x, allowed = c(), len = 1) {
 
   if (!(x %in% allowed)) {
     allowed[is.character(allowed)] = paste0("'", allowed[is.character(allowed)], "'")  # Add quotes for character values
-    stop("`", substitute(x), "` must be one of ", paste0(allowed, collapse = " or "), ". Got ", x)
+    if (length(allowed) == 1) {
+      stop("`", substitute(x), "` must be ", allowed, ". Got ", paste0(x, collapse = ", "))
+    } else {
+      stop("`", substitute(x), "` must be one of ", paste0(allowed, collapse = " or "), ". Got ", paste0(x, collapse = ", "))
+    }
   }
 
   return(TRUE)
@@ -86,7 +101,11 @@ assert_types = function(x, ..., len = NULL) {
 
   # Return helpful error
   if (!any(passed == TRUE))
-    stop("`", substitute(x), "` must be one of ", paste0(types, collapse = " or "), ". Got ", class(x))
+    if (length(types) == 1) {
+      stop("`", substitute(x), "` must be ", types, ". Got ", paste0(class(x), collapse = ", "))
+    } else {
+      stop("`", substitute(x), "` must be one of ", paste0(types, collapse = " or "), ". Got ", paste0(class(x), collapse = ", "))
+    }
 
   return(TRUE)
 }
