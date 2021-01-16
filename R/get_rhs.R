@@ -7,7 +7,7 @@
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_par_x = function(model, data, par_x = NULL) {
-  assert_types(model, "list", len = c(1, Inf))
+  assert_types(model, "mcpmodel")
   assert_types(data, "data.frame", "tibble")
   assert_types(par_x, "null", "character", len = c(0, 1))
 
@@ -19,21 +19,10 @@ get_par_x = function(model, data, par_x = NULL) {
       stop("par_x = '", par_x, "' has to be continuous. Is it binary or categorical?")
   }
 
-  # All parameters of RHS
-  model_vars = model %>%
-    lapply(get_rhs) %>%
-    lapply(all.vars) %>%
-    unlist() %>%
-    unique()
-
-  # Check for non-available data
-  missing_in_data = (model_vars %in% colnames(data)) == FALSE
-  if (any(missing_in_data))
-    stop("These terms were found in the model but not in the data: ", and_collapse(model_vars[missing_in_data]))
-
   # Check for exactly one continuous
-  data_in_model = data %>% dplyr::select(dplyr::all_of(model_vars))
-  continuous_cols = lapply(data_in_model, is_continuous) %>% unlist()
+  rhs_vars = get_rhs_vars(model)
+  data_in_rhs = data %>% dplyr::select(dplyr::all_of(rhs_vars))
+  continuous_cols = lapply(data_in_rhs, is_continuous) %>% unlist()
   par_x_candidates = names(continuous_cols)[continuous_cols]
   if (is.character(par_x)) {
     if (length(par_x_candidates) == 0) {

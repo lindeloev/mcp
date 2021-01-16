@@ -47,27 +47,6 @@ unpack_tildes = function(segment, i) {
 }
 
 
-#' Checks if all terms are in the data
-#'
-#' @aliases assert_terms_in_data
-#' @keywords internal
-#' @inheritParams mcp
-#' @param form Formula or character (tilde will be prefixed if it isn't already)
-#' @param i Segment number.
-#' @return NULL
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-assert_terms_in_data = function(form, data, i) {
-  # To formula if it isn't.
-  form = to_formula(form)
-
-  # Match varnames to data
-  found = all.vars(form) %in% colnames(data)
-  if (all(found) == FALSE)
-    stop("Error in segment ", i, ": Term(s) ", and_collapse(all.vars(form)[!found]), " found in formula but not in data.")
-}
-
-
 #' Unpacks y variable name
 #'
 #' @aliases unpack_y
@@ -292,14 +271,8 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
   #####################################################
   ST = tibble::tibble()
   for (i in seq_along(model)) {
-    # Get ready...
-    segment = model[[i]]
-    if (is.null(data) == FALSE)
-      assert_terms_in_data(segment, data, i)
-
-    # Go! Unpack this segment
     row = tibble::tibble(segment = i)
-    row = dplyr::bind_cols(row, unpack_tildes(segment, i))
+    row = dplyr::bind_cols(row, unpack_tildes(model[[i]], i))
     row = dplyr::bind_cols(row, unpack_y(row$form_y, i, family))
     row = dplyr::bind_cols(row, unpack_cp(row$form_cp, i))
 

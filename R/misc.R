@@ -165,6 +165,42 @@ get_rhs = function(form) {
 }
 
 
+#' Returns all vars in the RHS of an mcpmodel
+#'
+#' @aliases get_rhs_vars
+#' @keywords internal
+#' @inheritParams mcp
+#' @return Character vector with unique term names
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+get_rhs_vars = function(model) {
+  assert_types(model, "mcpmodel")
+
+  model %>%
+    lapply(get_rhs) %>%
+    lapply(all.vars) %>%
+    unlist() %>%
+    unique()
+}
+
+#' Returns all vars in the RHS of an mcpmodel
+#'
+#' @aliases get_model_vars
+#' @keywords internal
+#' @inheritParams mcp
+#' @return Character vector with unique term names
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+get_model_vars = function(model) {
+  assert_types(model, "mcpmodel")
+
+  model %>%
+    lapply(all.vars) %>%
+    unlist() %>%
+    unique()
+}
+
+
 #' Expand samples with quantiles
 #'
 #' TO DO: implement using `fitted()` and `predict()` but avoid double-computing the samples? E.g.:

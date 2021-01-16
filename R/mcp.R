@@ -178,6 +178,9 @@ mcp = function(model,
   # CHECK INPUTS #
   ################
 
+  # Check model
+  assert_types(model, "mcpmodel")
+
   # Check data
   if (is.null(data) && sample %in% c("post", "both"))
     stop("Cannot sample without data.")
@@ -188,10 +191,14 @@ mcp = function(model,
   if (!is.null(data)) {
     assert_types(data, "data.frame", "tibble")
     data = data.frame(data)  # Force into data frame
-  }
 
-  # Check model
-  assert_types(model, "mcpmodel")
+    rhs_vars = get_rhs_vars(model)
+    assert_data_cols(rhs_vars, data, fail_types = c("na", "nan"))
+
+    model_vars = get_model_vars(model)
+    assert_data_cols(model_vars, data, fail_types = c("infinite"))
+    data = data[, model_vars]  # Remove unused data
+  }
 
   # Check prior
   assert_types(prior, "list")
