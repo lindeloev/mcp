@@ -37,7 +37,7 @@ test_runs = function(model,
     testthat::expect_true(is.character(empty$pars$y), model)
     testthat::expect_true(is.character(empty$jags_code), model)
     testthat::expect_true(is.function(empty$simulate), model)
-    testthat::expect_true(is.list(empty$.other), model)
+    testthat::expect_true(is.list(empty$.internal), model)
 
     # Should work for tibbles as well. So do this sometimes
     if (rbinom(1, 1, 0.5) == 1)
@@ -106,7 +106,7 @@ test_runs = function(model,
       testthat::expect_true(all(fit$pars$population %in% colnames(fit[[col]][[1]])))
 
       # Test mcpfit functions
-      varying_cols = na.omit(fit$.other$ST$cp_group_col)
+      varying_cols = na.omit(fit$.internal$ST$cp_group_col)
       test_summary(fit, varying_cols)
       test_plot(fit, varying_cols)  # default plot
       test_plot_pars(fit)  # bayesplot call
@@ -214,7 +214,7 @@ test_pp_eval_func = function(fit, func) {
   expected_colnames = c(
     fit$pars$x,
     fit$pars$trials,
-    na.omit(unique(fit$.other$ST$cp_group_col)),  # varying effects
+    na.omit(unique(fit$.internal$ST$cp_group_col)),  # varying effects
     as.character(substitute(func)), "error", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
   )
   if (length(fit$pars$arma) > 0 || as.character(substitute(func)) == "residuals")
@@ -267,7 +267,7 @@ test_pp_eval = function(fit) {
       # Predictors
       fit$pars$x,
       fit$pars$trials,
-      na.omit(unique(fit$.other$ST$cp_group_col)),  # varying effects
+      na.omit(unique(fit$.internal$ST$cp_group_col)),  # varying effects
       "data_row",
       "fitted"
     )
@@ -278,7 +278,7 @@ test_pp_eval = function(fit) {
 
   # Test pp_check
   if (length(fit$pars$varying) > 0) {
-    varying_col = na.omit(fit$.other$ST$cp_group_col)[1]  # Just use the first column
+    varying_col = na.omit(fit$.internal$ST$cp_group_col)[1]  # Just use the first column
     pp_default = try(pp_check(fit, facet_by = varying_col, nsamples = 2), silent = TRUE)
   } else {
     pp_default = try(pp_check(fit, nsamples = 2), silent = TRUE)

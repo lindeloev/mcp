@@ -30,7 +30,7 @@
 #' @slot pars A list of character vectors of model parameter names.
 #' @slot jags_code A string with jags code. Use `cat(fit$jags_code)` to show it.
 #' @slot simulate A method to simulate and predict data.
-#' @slot .other Information that is used internally by mcp.
+#' @slot .internal Information that is used internally by mcp.
 NULL
 
 
@@ -121,8 +121,8 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
       if (!is.null(simulated[[this_varying]])) {
         # Find the needed values and labels
         value = simulated[[this_varying]]  # Extract simulation values
-        which_label_col = which(fit$.other$ST$cp_group == this_varying)
-        label_col = fit$.other$ST$cp_group_col[which_label_col]  # What column is the labels in data.
+        which_label_col = which(fit$.internal$ST$cp_group == this_varying)
+        label_col = fit$.internal$ST$cp_group_col[which_label_col]  # What column is the labels in data.
         labs = fit$data[[label_col]]  # Find the labels. Same length as `value`
         if (length(value) != length(labs)) {
           warning("This is simulated data, but the labels for varying effect '", label_col, "' in data does not have the same length as the numeric params used for simulation.")
@@ -349,7 +349,7 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
     return(list(
       pars = NULL,
       cols = NULL,
-      indices = rep(FALSE, nrow(fit$.other$ST))
+      indices = rep(FALSE, nrow(fit$.internal$ST))
     ))
   } else if (!is.null(pars) && !is.null(cols)) {
     stop("One of `pars` and `cols` must be NULL.")
@@ -362,20 +362,20 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
       use_varying = NULL
     } else if (all(pars == TRUE)) {
       # Select all varying effects
-      use_varying = !is.na(fit$.other$ST$cp_group)
+      use_varying = !is.na(fit$.internal$ST$cp_group)
     } else if (is.character(pars)) {
       if (!all(pars %in% fit$pars$varying))
         stop("Not all `pars` are varying parameters (see fit$pars$varying).")
       # Select only specified varying effects
-      use_varying = fit$.other$ST$cp_group %in% pars
+      use_varying = fit$.internal$ST$cp_group %in% pars
     }
   } else if (!is.null(cols)) {
-    use_varying = tidyr::replace_na(fit$.other$ST$cp_group_col == cols, FALSE)
+    use_varying = tidyr::replace_na(fit$.internal$ST$cp_group_col == cols, FALSE)
   }
 
   return(list(
-    pars = fit$.other$ST$cp_group[use_varying],
-    cols = fit$.other$ST$cp_group_col[use_varying],
+    pars = fit$.internal$ST$cp_group[use_varying],
+    cols = fit$.internal$ST$cp_group_col[use_varying],
     indices = use_varying
   ))
 }
@@ -448,8 +448,8 @@ tidy_samples = function(
 
   # Absolute effects. Results is `absolute_cps` and `absolute` (recoded to varying cp names)
   if (all(absolute == TRUE)) {
-    absolute = fit$.other$ST$cp_group[varying_info$indices]
-    absolute_cps = fit$.other$ST$cp_name[varying_info$indices]
+    absolute = fit$.internal$ST$cp_group[varying_info$indices]
+    absolute_cps = fit$.internal$ST$cp_name[varying_info$indices]
   } else if (all(absolute == FALSE)) {
     absolute_cps = NULL
   } else if (is.character(absolute)) {
@@ -458,8 +458,8 @@ tidy_samples = function(
     if (any(!is_in_varying))
       stop("The following parameter names in `absolute` are not in `varying`:", absolute[is_in_varying])
 
-    use_absolute = fit$.other$ST$cp_group %in% absolute
-    absolute_cps = fit$.other$ST$cp_name[use_absolute]
+    use_absolute = fit$.internal$ST$cp_group %in% absolute
+    absolute_cps = fit$.internal$ST$cp_name[use_absolute]
   }
 
   # ----- GET THESE PARAMETERS AS TIDY DRAWS -----

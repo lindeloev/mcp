@@ -106,7 +106,7 @@ plot.mcpfit = function(x,
   # Is facet_by a random/nested effect?
   assert_types(facet_by, "null", "character", len = c(0, 1))
   if (is.character(facet_by)) {
-    varying_groups = logical0_to_null(unique(stats::na.omit(fit$.other$ST$cp_group_col)))
+    varying_groups = logical0_to_null(unique(stats::na.omit(fit$.internal$ST$cp_group_col)))
     if (!(facet_by %in% varying_groups))
       stop("`facet_by` must be a data column and modeled as a varying effect.")
   }
@@ -291,13 +291,13 @@ geom_cp_density = function(fit, facet_by, limits_y) {
 
   # Get varying and population change point parameter names
   if (!is.null(facet_by)) {
-    cp_matches_facet = fit$.other$ST$cp_group_col == facet_by  # Varies by this column
+    cp_matches_facet = fit$.internal$ST$cp_group_col == facet_by  # Varies by this column
     cp_not_facet = cp_matches_facet == FALSE | is.na(cp_matches_facet)
-    varying = stats::na.omit(fit$.other$ST$cp_group[cp_matches_facet])  # The rest
-    population = stats::na.omit(fit$.other$ST$cp_name[cp_not_facet][-1])  # [-1] to remove cp_0
+    varying = stats::na.omit(fit$.internal$ST$cp_group[cp_matches_facet])  # The rest
+    population = stats::na.omit(fit$.internal$ST$cp_name[cp_not_facet][-1])  # [-1] to remove cp_0
   } else {
     varying = NULL
-    population = fit$.other$ST$cp_name[-1]
+    population = fit$.internal$ST$cp_name[-1]
   }
 
   # Get samples in long format

@@ -365,7 +365,7 @@ mcp = function(model,
 
     # Pass info to *.mcpfit() functions.
     # Not meant to be used by the end user.
-    .other = list(
+    .internal = list(
       ST = ST,
       rhs_table = rhs_table
     )
