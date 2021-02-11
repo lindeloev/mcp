@@ -7,13 +7,13 @@
 #' @aliases get_jags_code
 #' @keywords internal
 #' @inheritParams mcp
-#' @param formula_str String. The formula string returned by `build_formula_str`.
+#' @param formula_jags String. The formula string returned by `get_formula_jags()`.
 #' @param ST Segment table. Returned by `get_segment_table()`.
 #' @param arma_order Positive integer. The autoregressive order.
 #' @return String. A JAGS model.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_jags_code = function(prior, ST, formula_str, arma_order, family, sample, par_x) {
+get_jags_code = function(prior, ST, formula_jags, arma_order, family, sample, par_x) {
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
   mm = paste0("model {")
@@ -90,8 +90,7 @@ get_jags_code = function(prior, ST, formula_str, arma_order, family, sample, par
   ###########
   # FORMULA #
   ###########
-  # Transform formula_str into JAGS format. Insert par_x and varying indices
-  formula_jags = formula_str
+  # Transform formula_jags into JAGS format. Insert par_x and varying indices
   for (i in seq_len(max(ST$segment))) {
     formula_jags = gsub(paste0("CP_", i, "_INDEX"), paste0("[", ST$cp_group_col[i], "[i_]]"), formula_jags)
   }

@@ -195,7 +195,7 @@ mcp = function(model,
     rhs_vars = get_rhs_vars(model)
     assert_data_cols(rhs_vars, data, fail_types = c("na", "nan"))
 
-    model_vars = get_model_vars(model)
+    model_vars = unique(c(get_model_vars(model), par_x))
     assert_data_cols(model_vars, data, fail_types = c("infinite"))
     data = data[, model_vars]  # Remove unused data
   }
@@ -239,9 +239,8 @@ mcp = function(model,
   ##################
 
   # Make an abstract table representing the segments and their relations.
-  # ("ST" for "segment table").
   par_x = get_par_x(model, data, par_x)
-  ST = get_segment_table(model, data, family, par_x)
+  ST = get_segment_table(model, data, family, par_x)  #"ST" for "segment table"
   rhs_table = get_rhs_table(model, data, family, par_x)
 
   # Make prior
@@ -271,14 +270,14 @@ mcp = function(model,
       message("'", par_x, "' is unordered. Please note that ar() applies in the order of data of the data frame - not the values.")
   }
 
-  # Make formula_str and simulate
-  formula_str = get_all_formulas(ST, rhs_table, par_x)
-  #simulate = get_simulate(formula_str, pars, nrow(ST), family)
+  # Make formulas
+  formula_jags = get_formula_jags(ST, rhs_table, par_x)
+  formula_r = get_formula_r(formula_jags, rhs_table, pars)
 
   # Make jags code if it is not provided by the user
   if (is.null(jags_code)) {
     max_arma_order = get_arma_order(pars$arma)
-    jags_code = get_jags_code(prior, ST, formula_str, max_arma_order, family, sample, par_x)
+    jags_code = get_jags_code(prior, ST, formula_jags, max_arma_order, family, sample, par_x)
   }
 
 
@@ -368,13 +367,15 @@ mcp = function(model,
     # Extracted model
     pars = pars,
     jags_code = jags_code,
-    #simulate = simulate,
+    simulate = get_fitsimulate(pars),
 
     # Pass info to *.mcpfit() functions.
     # Not meant to be used by the end user.
     .internal = list(
       ST = ST,
-      rhs_table = rhs_table
+      rhs_table = rhs_table,
+      formula_jags = formula_jags,
+      formula_r = formula_r
     )
   )
   class(mcpfit) = "mcpfit"

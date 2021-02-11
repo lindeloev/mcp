@@ -8,7 +8,7 @@
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_par_x = function(model, data, par_x = NULL) {
   assert_types(model, "mcpmodel")
-  assert_types(data, "data.frame", "tibble")
+  assert_types(data, "data.frame")
   assert_types(par_x, "null", "character", len = c(0, 1))
 
   # Just check par_x
@@ -60,6 +60,7 @@ get_par_x = function(model, data, par_x = NULL) {
 #' @param segment Integer. The segment number
 #' @param dpar One of `c("mu", "sigma", "ar")`.
 #' @param order Currently only applies to `dpar == "ar"`.
+#' @param check_rank Boolean. Whether to stop on rank deficiency.
 #' @return A tibble with one row per model parameter and the columns
 #'   - `dpar`: character.
 #'   - `segment`: the segment number (positive integer).
@@ -71,7 +72,7 @@ get_par_x = function(model, data, par_x = NULL) {
 #'
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL) {
+get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL, check_rank = TRUE) {
   assert_types(data, "data.frame", "tibble")
   assert_types(form_rhs, "formula", len = 2)
   assert_integer(segment, lower = 1, len = 1)
@@ -89,7 +90,8 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
   }
 
   mat = model.matrix(form_rhs, data)
-  assert_rank(mat, segment)
+  if (check_rank == TRUE)
+    assert_rank(mat, segment, dpar)
 
 
   #######################
@@ -185,12 +187,13 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
     ),
     order = ifelse(is.null(order), NA, order),
     x_factor = x_factor,
-    matrix_col = seq_len(ncol(mat_without_x))
+    matrix_col = seq_len(ncol(mat_without_x)),
+    stringsAsFactors = FALSE
   ) %>%
     # Add data
     dplyr::rowwise() %>%
     dplyr::mutate(
-      matrix_data = list(mat_without_x %>% as.data.frame() %>% dplyr::pull(matrix_col))
+      matrix_data = list(mat_without_x[, matrix_col])
     ) %>%
     dplyr::ungroup() %>%
     dplyr::select(-matrix_col)
@@ -235,7 +238,7 @@ term_contains = function(par_x, terms) {
 #' @aliases get_rhs_table_segment
 #' @keywords internal
 #' @describeIn get_rhs_table_dpar Apply `get_rhs_table_dpar` to each formula in a segment
-get_rhs_table_segment = function(form_rhs, segment, family, data, par_x) {
+get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_rank = TRUE) {
   assert_types(form_rhs, "formula", len = c(1, 3))
   assert_integer(segment, lower = 1, len = 1)
   assert_types(family, "mcpfamily")
@@ -263,7 +266,7 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x) {
     mu_term = paste0("mu(", attrs$intercept, ")")  # Plateau model: "mu(0)" or "mu(1)"
   }
   mu_form = get_term_content(mu_term)
-  mu_pars = get_rhs_table_dpar(data, mu_form, segment, "mu", par_x)
+  mu_pars = get_rhs_table_dpar(data, mu_form, segment, "mu", par_x, NULL, check_rank)
 
 
 
@@ -282,7 +285,7 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x) {
       stop("sigma() is only meaningful for family = gaussian()")
 
     sigma_form = get_term_content(sigma_term)
-    sigma_pars = get_rhs_table_dpar(data, sigma_form, segment, dpar = "sigma", par_x)
+    sigma_pars = get_rhs_table_dpar(data, sigma_form, segment, dpar = "sigma", par_x, NULL, check_rank)
   } else {
     sigma_pars = NULL
   }
@@ -299,7 +302,7 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x) {
   ar_pars = list()
   if (!is.na(ar_stuff$order)) {
     for (order in seq_len(ar_stuff$order)) {
-      ar_pars = rbind(ar_pars, get_rhs_table_dpar(data, ar_form, segment, "ar", par_x, order))
+      ar_pars = rbind(ar_pars, get_rhs_table_dpar(data, ar_form, segment, "ar", par_x, order, NULL, check_rank))
     }
   }
 
@@ -402,12 +405,13 @@ unpack_arma = function(form_str_in) {
 #' @aliases get_rhs_table
 #' @keywords internal
 #' @describeIn get_rhs_table_dpar Apply `get_rhs_table_segment` to all segments of a model.
-get_rhs_table = function(model, data, family, par_x) {
+get_rhs_table = function(model, data, family, par_x, check_rank = TRUE) {
   rhs = lapply(model, get_rhs)
 
   # rbind parameters for all segment formulas
-  rhs_table = lapply(seq_along(rhs), function(segment) get_rhs_table_segment(rhs[[segment]], segment, family, data, par_x)) %>%
+  rhs_table = lapply(seq_along(rhs), function(segment) get_rhs_table_segment(rhs[[segment]], segment, family, data, par_x, check_rank)) %>%
     dplyr::bind_rows() %>%
+    dplyr::arrange(dpar, segment) %>%
     dplyr::mutate(matrix_col = dplyr::row_number())
 
   # Code next_intercept: Which segment has the next intercept?

@@ -50,9 +50,6 @@ run_jags = function(data,
       cores = 2
   }
 
-  # Start timer
-  timer = proc.time()
-
   # Define the sampling function in this environment.
   # Can be used sequentially or in parallel.
   do_sampling = function(seed, n.chains, quiet) {
@@ -81,7 +78,8 @@ run_jags = function(data,
 
   # Time for sampling!
   if (cores == 1) {
-    # # SERIAL
+    # SERIAL
+    timer = proc.time()
     samples = try(do_sampling(
       seed = NULL,
       n.chains = n.chains,
@@ -90,8 +88,12 @@ run_jags = function(data,
 
   } else if (cores == "all" || cores > 1) {
     # PARALLEL using the future package and one chain per worker
-    message("Parallel sampling in progress...")
+    if (future::nbrOfWorkers() == 1)
+      message("Setting up parallel workers...")
     future::plan(future::multiprocess, .skip = TRUE)
+
+    message("Parallel sampling in progress...")
+    timer = proc.time()
     samples = future.apply::future_lapply(
       sample(1:1000, n.chains),  # Random seed to JAGS
       n.chains = 1,
@@ -150,8 +152,7 @@ get_jags_data = function(data, family, ST, rhs_table, jags_code, sample) {
   }
 
   # RHS data matrix
-  jags_data$rhs_data_ = suppressMessages(dplyr::bind_cols(rhs_table$matrix_data, .name_repair = "unique")) %>% as.matrix()  # Suppress message about lacking column names
-  colnames(jags_data$rhs_data_) = rhs_table$code_name
+  jags_data$rhs_matrix_ = get_rhs_matrix(rhs_table)
 
   # Add e.g. MINX = min(data$x) for all variables where they are used.
   # Searches whether it is in jags_code. If yes, add to jags_data

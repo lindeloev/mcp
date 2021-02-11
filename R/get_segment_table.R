@@ -331,13 +331,13 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
 
     # Check y and trials if binomial
     if (family$family == "binomial") {
-      assert_integer(data[, ST$y[1]], ST$y[1], lower = 0, len = 1)
-      assert_integer(data[, ST$trials[1]], ST$trials[1], lower = 1, len = 1)
+      assert_integer(data[, ST$y[1]], ST$y[1], lower = 0)
+      assert_integer(data[, ST$trials[1]], ST$trials[1], lower = 1)
     } else if (family$family == "bernoulli") {
       if (any(!data[, ST$y[1]] %in% c(0, 1)))
         stop("Only responses 0 and 1 are allowed for family = bernoulli() in column '", ST$y[1], "'")
     } else if (family$family == "poisson") {
-      assert_integer(data[, ST$y[1]], ST$y[1], lower = 0, len = 1)
+      assert_integer(data[, ST$y[1]], ST$y[1], lower = 0)
     }
 
     # Check weights

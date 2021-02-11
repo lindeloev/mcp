@@ -1,3 +1,18 @@
+#' RowSums of element-wise products.
+#' Like an inner product, just vectorized for many y.
+#' This ensures R <--> JAGS code compatibility
+#'
+#' @aliases inprod
+#' @param x A matrix
+#' @param y A matrix
+#' @return A vector
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+inprod = function(x, y) {
+  rowSums(x * y)
+}
+
+
 # Converts logical(0) to null. Returns x otherwise
 logical0_to_null = function(x) {
   if (length(x) > 0)
@@ -198,6 +213,24 @@ get_model_vars = function(model) {
     lapply(all.vars) %>%
     unlist() %>%
     unique()
+}
+
+
+#' Create model matrix from rhs_table
+#'
+#' cbinds rhs_table$matrix_data
+#' @aliases get_rhs_matrix
+#' @keywords internal
+#' @param rhs_table The output of `get_rhs_table()`
+#' @return matrix with one column for each row in `rhs_table`
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+get_rhs_matrix = function(rhs_table) {
+  rhs_matrix = suppressMessages(dplyr::bind_cols(rhs_table$matrix_data, .name_repair = "unique")) %>% # Suppress message about lacking column names
+    as.matrix() %>%
+    magrittr::set_colnames(rhs_table$code_name)
+
+  return(rhs_matrix)
 }
 
 

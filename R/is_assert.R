@@ -153,11 +153,11 @@ assert_length = function(x, len = NULL, name = NULL) {
 
 
 # Asserts whether matrix x is rank deficient.
-assert_rank = function(x, segment) {
+assert_rank = function(x, segment, dpar) {
   QR = qr(x)
   if (QR$rank < ncol(x)) {
     bad_cols = colnames(x)[QR$pivot[(QR$rank+1):ncol(x)]]
-    stop("These terms are perfectly colinear with other terms in segment ", segment, ": ", and_collapse(bad_cols), " (the design matix is rank deficient). Consider checking the data and/or the model.")
+    stop("These terms are perfectly colinear with other terms for ", dpar, " in segment ", segment, ": ", and_collapse(bad_cols), " (the design matrix is rank deficient). Consider checking the data and/or the model.")
     return(bad_cols)
   }
 
@@ -167,7 +167,8 @@ assert_rank = function(x, segment) {
 
 # Asserts whether the data contains these cols and that all of them does not contained fail_types values
 # This is like assert_types(), but applied to multiple columns in data
-assert_data_cols = function(cols, data, fail_types = c("na", "nan", "infinite")) {
+# Typical fail_types would be c("na", "nan", "infinite")
+assert_data_cols = function(cols, data, fail_types = c()) {
   missing_cols = cols[(cols %in% colnames(data)) == FALSE]
   if (length(missing_cols) > 0)
     stop("These model terms are missing from the data: ", and_collapse(missing_cols))
