@@ -73,6 +73,10 @@ get_par_x = function(model, data, par_x = NULL) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL, check_rank = TRUE) {
+  # EMpty segments return no rows
+  if (all(as.character(form_rhs) == c("~", "0")))
+    return(data.frame(dpar = character(0), segment = numeric(0)))
+
   assert_types(data, "data.frame", "tibble")
   assert_types(form_rhs, "formula", len = 2)
   assert_integer(segment, lower = 1, len = 1)
@@ -302,7 +306,7 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
   ar_pars = list()
   if (!is.na(ar_stuff$order)) {
     for (order in seq_len(ar_stuff$order)) {
-      ar_pars = rbind(ar_pars, get_rhs_table_dpar(data, ar_form, segment, "ar", par_x, order, NULL, check_rank))
+      ar_pars = rbind(ar_pars, get_rhs_table_dpar(data, ar_form, segment, "ar", par_x, order, check_rank))
     }
   }
 
@@ -409,6 +413,9 @@ get_rhs_table = function(model, data, family, par_x, check_rank = TRUE) {
   rhs = lapply(model, get_rhs)
 
   # rbind parameters for all segment formulas
+  #print(get_rhs_table_segment(rhs[[1]], 1, family, data, par_x, check_rank))
+  #print(get_rhs_table_segment(rhs[[2]], 2, family, data, par_x, check_rank))
+
   rhs_table = lapply(seq_along(rhs), function(segment) get_rhs_table_segment(rhs[[segment]], segment, family, data, par_x, check_rank)) %>%
     dplyr::bind_rows() %>%
     dplyr::arrange(dpar, segment) %>%

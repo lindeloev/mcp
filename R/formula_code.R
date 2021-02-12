@@ -15,7 +15,7 @@
 #' @return A string with JAGS code.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_formula_jags = function(ST, rhs_table, par_x) {
+get_formula_jags = function(ST, rhs_table, par_x, family) {
   # Add X-helpers which code the X relative to the start of each segment.
   local_x_str = "\n# par_x local to each segment"
   for (i in seq_len(nrow(ST))) {
@@ -51,6 +51,13 @@ get_formula_jags = function(ST, rhs_table, par_x) {
 
   # Concatenate and return
   formula_jags = paste0(local_x_str, "\n\n", formula_jags_dpars)
+
+  # Special case when no terms are present for a given dpar (all ~0): insert "dpar = 0".
+  for (dpar in family$dpars) {
+    if (!(dpar %in% rhs_table$dpar))
+      formula_jags = paste0(formula_jags, "\n\n# All segments are ~ 0 for this par:\n", dpar, "_[i_] = 0")
+  }
+
   class(formula_jags) = c("mcptext", "character")  # Nicer printing
   return(formula_jags)
 }

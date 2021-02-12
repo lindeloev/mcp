@@ -574,10 +574,29 @@ pp_eval = function(
   yvar = rlang::sym(fit$pars$y)
   returnvar = rlang::sym(type)
   is_arma = length(fit$pars$arma) > 0
+  if (is.null(newdata))
+    newdata = fit$data
 
   # What varying cols to use (varying = TRUE keeps them all as is)
+
+  ###############
+  # FIX NEWDATA #
+  ###############
   varying_info = unpack_varying(fit, pars = varying)
-  required_cols = unique(c(fit$pars$x, fit$pars$trials, varying_info$cols))  # May be amended later
+  exclude_varying = fit$pars$varying[!(fit$pars$varying %in% varying_info$cols)]
+  #required_cols = unique(c(fit$pars$x, fit$pars$trials, varying_info$cols))  # May be amended later
+  required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
+  required_cols = required_cols[!(required_cols %in% exclude_varying)]
+  if ((arma == FALSE || is_arma == FALSE) & type != "residuals") {
+    required_cols = required_cols[required_cols != fit$pars$y]
+  } else if (!(fit$pars$y %in% colnames(newdata))) {
+    stop("`newdata` must contain a response column named '", fit$pars$y, "' for when `arma == TRUE` and/or `type = 'residuals'`")
+  }
+  assert_data_cols(newdata, required_cols)  # Helpful error if something is missing
+  newdata = data.frame(newdata[, required_cols])
+  colnames(newdata) = required_cols  # Special case for when there's only one predictor
+  newdata$data_row = seq_len(nrow(newdata))  # to maintain order in the output when summary == TRUE
+
 
   # R CMD Check wants a global definition of ".". The formal way of doing it is
   # if(getRversion() >= "2.15.1") utils::globalVariables(".")
@@ -590,10 +609,10 @@ pp_eval = function(
   ########################
   assert_logical(summary, len = 1)
   assert_value(type, allowed = c("fitted", "predict", "residuals"))
-  assert_types(probs, "logical", "numeric", len = c(1, 2))
+  assert_types(probs, "logical", "numeric")
   if (is.numeric(probs))
     assert_numeric(probs, lower = 0, upper = 1)
-  if (all(probs == TRUE))
+  if (is.logical(probs) & all(probs == TRUE))
     probs = c(0.025, 0.975)
   assert_logical(rate)
   assert_logical(prior)
@@ -603,42 +622,37 @@ pp_eval = function(
     assert_integer(nsamples, lower = 1)
   assert_value(samples_format, allowed = c("tidy", "matrix"))
 
-  if (type == "residuals") {
-    if (!is.null(newdata) && !(fit$pars$y %in% colnames(newdata)))
-      stop("`newdata` must contain a response column named '", fit$pars$y, "' when `type = 'residuals'`")
-
-    if (!(fit$pars$y %in% required_cols))
-      required_cols = c(required_cols, fit$pars$y)
-  }
+  # if (type == "residuals") {
+  #   if (!is.null(newdata) && !(fit$pars$y %in% colnames(newdata)))
+  #     stop("`newdata` must contain a response column named '", fit$pars$y, "' when `type = 'residuals'`")
+  #
+  #   required_cols = c(required_cols, fit$pars$y)
+  # }
   if (scale == "linear" && (type != "fitted"))
     stop("`scale = 'linear'` is only meaningful when `type = 'fitted'`.")
 
 
-  # Check and build stuff related to newdata
-  if (!is.null(newdata)) {
-    assert_types(newdata, "data.frame", "tibble")
+  # # Check and build stuff related to newdata
+  # if (!is.null(newdata)) {
+  #   assert_types(newdata, "data.frame", "tibble")
+  #
+  #   # Add response column to required_cols for ARMA models
+  #   if (is_arma == TRUE && arma == TRUE) {
+  #     if (fit$pars$y %in% colnames(newdata)) {
+  #       required_cols = c(required_cols, fit$pars$y)
+  #     } else if (".ydata" %in% colnames(newdata)) {
+  #       required_cols = c(required_cols, ".ydata")
+  #     }
+  #   }
+  #
+  # } else {
+  #   # Use original data. Remember the response variable too for ARMA
+  #   newdata = fit$data
+  #   if (is_arma == TRUE && arma == TRUE)
+  #     required_cols = c(required_cols, fit$pars$y)
+  # }
+  #required_cols = unique(required_cols)
 
-    # Add response column to required_cols for ARMA models
-    if (is_arma == TRUE && arma == TRUE) {
-      if (fit$pars$y %in% colnames(newdata) && !(fit$pars$y %in% required_cols)) {
-        required_cols = c(required_cols, fit$pars$y)
-      } else if (".ydata" %in% colnames(newdata)) {
-        required_cols = c(required_cols, ".ydata")
-      }
-    }
-
-    cols_in_newdata = required_cols %in% colnames(newdata)
-    if (any(cols_in_newdata == FALSE))
-      stop("Missing columns ", and_collapse(required_cols[!cols_in_newdata]), " in `newdata`.")
-  } else {
-    # Use original data. Remember the response variable too for ARMA
-    newdata = fit$data
-    if (is_arma == TRUE && arma == TRUE && !(fit$pars$y %in% required_cols))
-      required_cols = c(required_cols, fit$pars$y)
-  }
-  newdata = data.frame(newdata[, required_cols])
-  colnames(newdata) = required_cols  # Special case for when there's only one predictor
-  newdata$data_row = 1:nrow(newdata)  # to maintain order in the output when summary == TRUE
 
 
   ########################
@@ -656,8 +670,10 @@ pp_eval = function(
   } else {
     # No varying effects: use all samples for each row of data
     samples = tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples) %>%
-      tidyr::expand_grid(newdata) %>%
-      dplyr::mutate(!!returnvar := rlang::exec(fit$simulate, !!!., type = type_for_simulate, rate = rate, which_y = which_y, arma = arma, add_attr = FALSE, scale = scale))
+      #tidyr::expand_grid(newdata) %>%
+      #dplyr::mutate(!!returnvar := rlang::exec(fit$simulate, !!!., type = type_for_simulate, rate = rate, which_y = which_y, arma = arma, add_attr = FALSE, scale = scale))
+      tidyr::expand_grid(add_rhs_predictors(newdata, fit)) %>%
+      dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!., .type = type_for_simulate, .rate = rate, .which_y = which_y, .arma = arma, .scale = scale))
   }
 
   # Optionally compute residuals

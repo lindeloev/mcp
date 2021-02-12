@@ -168,7 +168,7 @@ assert_rank = function(x, segment, dpar) {
 # Asserts whether the data contains these cols and that all of them does not contained fail_types values
 # This is like assert_types(), but applied to multiple columns in data
 # Typical fail_types would be c("na", "nan", "infinite")
-assert_data_cols = function(cols, data, fail_types = c()) {
+assert_data_cols = function(data, cols, fail_types = c()) {
   missing_cols = cols[(cols %in% colnames(data)) == FALSE]
   if (length(missing_cols) > 0)
     stop("These model terms are missing from the data: ", and_collapse(missing_cols))

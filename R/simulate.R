@@ -12,7 +12,7 @@
 relevel_newdata = function(newdata, fit) {
   # Check that the necessary data is available
   rhs_vars = get_rhs_vars(fit$model)
-  assert_data_cols(rhs_vars, newdata, fail_types = c("na", "nan", "infinite"))
+  assert_data_cols(newdata, cols = rhs_vars, fail_types = c("na", "nan", "infinite"))
 
   # Make sure to carry over the exact level-structure of the original model
   for (col_name in rhs_vars) {
@@ -198,8 +198,9 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
     # OTHER FAMILIES ---------------------
   } else if (fit$family$family == "binomial") {
     if (.type == 'predict') {
-      if (.rate == FALSE) return(rbinom(length(mu_), get(pars$trials), mu_))
-      if (.rate == TRUE)  return(rbinom(length(mu_), get(pars$trials), mu_) / get(pars$trials))
+      N_trials = args[[fit$pars$trials]]
+      if (.rate == FALSE) return(rbinom(length(mu_), N_trials, mu_))
+      if (.rate == TRUE)  return(rbinom(length(mu_), N_trials, mu_) / N_trials)
     } else if (.type == 'fitted') {
       if (.rate == FALSE) return(", pars$trials, " * mu_)
       if (.rate == TRUE)  return(mu_)
@@ -301,20 +302,23 @@ simulate_atomic = function(fit,
 get_fitsimulate = function(pars) {
   # List of argument names
   pars$reg = pars$reg[!stringr::str_ends(pars$reg, "_sd")]  # Remove hyperparameter on varying effects from pars$reg since it is not used for simulation
-  y_args = ifelse(length(pars$arma > 0), paste0(pars$y, " = NULL, .ydata = NULL"), "")
+  #y_args = ifelse(length(pars$arma > 0), paste0(pars$y, " = NULL"), "")
   varying_args = ifelse(length(pars$varying) > 0, paste0(pars$varying, " = 0"), "")
-  required_args = c(pars$reg, pars$sigma, pars$arma, y_args, varying_args)
-  required_args = required_args[required_args != ""]  # remove empty strings
+  args_nodefault = c(pars$reg, pars$sigma, pars$arma)
+  args_withdefault = c(varying_args)
+  args_withdefault = args_withdefault[args_withdefault != ""]  # remove empty strings
+
+
 
   # Build function
-  fitsimulate_code = paste0("function(fit, newdata, ", paste0(required_args, collapse = ", "), ",
+  fitsimulate_code = paste0("function(fit, newdata, ", paste0(c(args_nodefault, args_withdefault), collapse = ", "), ",
   .type = 'predict',
   .rate = FALSE,
   .which_y = 'mu',
   .arma = TRUE,
   .scale = 'response') {
 
-  result = simulate_atomic(fit, newdata, ", paste0(required_args, " = ", required_args, collapse = ", "), ", .type = .type, .rate = .rate, .which_y = .which_y, .arma = .arma, .scale = .scale)
+  result = simulate_atomic(fit, newdata, ", paste0(paste0(args_nodefault, " = ", args_nodefault, collapse = ", "), paste0(args_withdefault, collapse = ", "), collapse = ", "), ", .type = .type, .rate = .rate, .which_y = .which_y, .arma = .arma, .scale = .scale)
   return(result)
 }")
 

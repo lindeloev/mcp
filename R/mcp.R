@@ -162,7 +162,7 @@
 #' demo_fit$jags_code
 #' }
 mcp = function(model,
-               data = NULL,
+               data,
                prior = list(),
                family = gaussian(),
                par_x = NULL,
@@ -181,24 +181,18 @@ mcp = function(model,
   # Check model
   assert_types(model, "mcpmodel")
 
-  # Check data
-  if (is.null(data) && sample %in% c("post", "both"))
-    stop("Cannot sample without data.")
+  # Check data and data-model correspondence
+  assert_types(data, "data.frame", "tibble")
+  data = data.frame(data)
 
-  if (is.null(data) && sample == "prior")
-    stop("Cannot sample prior without data as some default priors depend on data. Possible solution: set priors to be independent of data (no SDY, MEANX, etc.) and provide a bit of mock-up data, which then will have no effect.")
+  assert_types(par_x, "null", "character", len = c(0, 1))
+  par_x = get_par_x(model, data, par_x)
+  rhs_vars = get_rhs_vars(model)
+  assert_data_cols(data, cols = rhs_vars, fail_types = c("na", "nan"))
 
-  if (!is.null(data)) {
-    assert_types(data, "data.frame", "tibble")
-    data = data.frame(data)  # Force into data frame
-
-    rhs_vars = get_rhs_vars(model)
-    assert_data_cols(rhs_vars, data, fail_types = c("na", "nan"))
-
-    model_vars = unique(c(get_model_vars(model), par_x))
-    assert_data_cols(model_vars, data, fail_types = c("infinite"))
-    data = data[, model_vars]  # Remove unused data
-  }
+  model_vars = unique(c(get_model_vars(model), par_x))
+  assert_data_cols(data, cols = model_vars, fail_types = c("infinite"))
+  data = data[, model_vars]  # Remove unused data
 
   # Check prior
   assert_types(prior, "list")
@@ -215,7 +209,6 @@ mcp = function(model,
     family = mcpfamily(family)
 
   # More checking...
-  assert_types(par_x, "null", "character", len = c(0, 1))
   assert_value(sample, allowed = c("post", "prior", "both", "none", FALSE))
   assert_integer(cores, lower = 1, len = 1)
   assert_integer(chains, lower = 1, len = 1)
@@ -271,7 +264,7 @@ mcp = function(model,
   }
 
   # Make formulas
-  formula_jags = get_formula_jags(ST, rhs_table, par_x)
+  formula_jags = get_formula_jags(ST, rhs_table, par_x, family)
   formula_r = get_formula_r(formula_jags, rhs_table, pars)
 
   # Make jags code if it is not provided by the user
@@ -375,7 +368,8 @@ mcp = function(model,
       ST = ST,
       rhs_table = rhs_table,
       formula_jags = formula_jags,
-      formula_r = formula_r
+      formula_r = formula_r,
+      mcp_version = utils::packageVersion("mcp")  # For helpful messages about backwards compatibility
     )
   )
   class(mcpfit) = "mcpfit"

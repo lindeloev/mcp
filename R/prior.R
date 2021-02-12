@@ -10,7 +10,7 @@ default_common_priors = tibble::tribble(
   "changepoint", "identity", "cp_sd", "dummy", "dnorm(0, 2 * (MAXX - MINX) / N_CP) T(0, )",  # Spread of varying effects
 
   # AR
-  NA, "identity", "ar", "Intercept", "dbeta(0, 1)",
+  NA, "identity", "ar", "Intercept", "dunif(-1, 1)",
   NA, "identity", "ar", "dummy", "dt(0, 1, 3)",
   NA, "identity", "ar", "slope", "dt(0, 1 / (MAXX - MINX), 3)"
 )
