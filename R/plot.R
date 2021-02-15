@@ -438,6 +438,7 @@ plot_pars = function(fit,
 
   assert_integer(ncol, lower = 1, len = 1)
   assert_logical(prior)
+  bayesplot::available_mcmc()  # Quick fix to make R CMD Check happy that bayesplot is imported
 
   # Get posterior/prior samples
   samples = mcmclist_samples(fit, prior = prior)
@@ -460,32 +461,27 @@ plot_pars = function(fit,
   if ("combo" %in% type)
     type = c("dens_overlay", "trace")
 
-  # TO DO: a lot of eval(parse()) here. Is there a more built-in method?
-  #types = c("dens", "dens_overlay", "trace", "areas")
-  bayesplot::available_mcmc()  # quick fix to make R CMD Check happy that bayesplot is imported
+  # Call the relevant bayesplot plot function for each type
   takes_facet = c("areas", "dens", "dens_overlay", "trace", "hist", "intervals", "trace", "trace_highlight", "violin")
+  all_plots = list()
   for (this_type in type) {
-    this_facet = ifelse(this_type %in% takes_facet, paste0(", facet_args = list(ncol = ", ncol, ")"), "")
-    command = paste0("plot_", this_type, " = bayesplot::mcmc_", this_type, "(samples, pars = pars, regex_pars = regex_pars", this_facet, ")")
-    eval(parse(text = command)) + ggplot2::theme(strip.placement = NULL)
+    if (this_type %in% takes_facet) {
+      facet_args = list(ncol = ncol)
+    } else {
+      facet_args = list()
+    }
 
+    func_name = paste0("mcmc_", this_type)
+    func_obj = utils::getFromNamespace(func_name, "bayesplot")
+    all_plots[[this_type]] = func_obj(samples, pars = pars, regex_pars = regex_pars, facet_args = facet_args)
   }
 
-  # Select which to plot
-  if (length(type) == 1) {
-    return_plot = eval(parse(text = paste0("plot_", type)))
-    return_plot = return_plot
-  } else {
-    # Use patchwork
-    command = paste0(paste0("plot_", type), collapse = " + ")
-    return_plot = eval(parse(text = command))
-  }
-
-  # Return
-  return_plot & ggplot2::theme(
-    strip.placement = NULL,  # fixes bug: https://github.com/thomasp85/patchwork/issues/132
-    legend.position = "none"  # no legend on chains. Takes up too much space
-  )
+  # Then patch all_plots together and return
+  patchwork::wrap_plots(all_plots) &
+    ggplot2::theme(
+      strip.placement = NULL,  # fixes bug: https://github.com/thomasp85/patchwork/issues/132
+      legend.position = "none"  # no legend on chains. Takes up too much space
+    )
 }
 
 
@@ -627,7 +623,8 @@ pp_check = function(
   # Return plot with or without facets
   if (is.null(facet_by)) {
     yrep = tidy_to_matrix(samples, "predict")
-    return(plot_out)
+    plot_return = get_ppc_plot(fit, type, y, yrep, nsamples)
+    return(plot_return)
   } else {
     groups = unique(varying_data)
     all_plots = list()
@@ -643,8 +640,8 @@ pp_check = function(
     }
 
     # Return faceted plot using patchwork
-    plot_out = patchwork::wrap_plots(all_plots) + patchwork::plot_layout(guides = "collect")
-    return(plot_out)
+    plot_return = patchwork::wrap_plots(all_plots) + patchwork::plot_layout(guides = "collect")
+    return(plot_return)
   }
 }
 
@@ -665,8 +662,12 @@ pp_check = function(
 get_ppc_plot = function(fit, type, y, yrep, nsamples, draws = NULL, ...) {
   is_loo = stringr::str_detect(type, "loo")
 
+  func_name = paste0("ppc_", type)
+  func_obj = utils::getFromNamespace(func_name, "bayesplot")
+
   if (is_loo == FALSE) {
-    bayesplot_call = paste0("bayesplot::ppc_", type, "(y, yrep, ...)")
+    plot_return = suppressWarnings(func_obj(y, yrep, ...))
+    #bayesplot_call = paste0("bayesplot::ppc_", type, "(y, yrep, ...)")
   } else if (is_loo == TRUE) {
     # Compute loo if missing
     fit = with_loo(fit, save_psis = TRUE, info = "Computing `fit$loo = loo(fit, save_psis = TRUE)`...")
@@ -678,9 +679,8 @@ get_ppc_plot = function(fit, type, y, yrep, nsamples, draws = NULL, ...) {
     attr(psis_object, "dims") = c(dim(yrep))
 
     # Build call (setting `samples` overwrites bayesplot defaults)
-    bayesplot_call = paste0("bayesplot::ppc_", type, "(y, yrep, psis_object = psis_object, lw = lw, samples = nsamples, ...)")
+    plot_return = suppressWarnings(func_obj(y, yrep, psis_object = psis_object, lw = lw, samples = nsamples, ...))
   }
 
-  plot_out = suppressWarnings(eval(parse(text = bayesplot_call)))
-  return(plot_out)
+  return(plot_return)
 }

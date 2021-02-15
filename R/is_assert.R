@@ -95,7 +95,7 @@ assert_types = function(x, ..., len = NULL) {
   # Test each function on x
   passed = logical(length(types))
   for (i in seq_along(types)) {
-    is.type = eval(parse(text = paste0("is.", types[[i]])))  # From character to is.foo() function
+    is.type = get(paste0("is.", types[[i]]))  # From character to is.foo() function
     passed[i] = is.type(x)
   }
 
@@ -176,7 +176,7 @@ assert_data_cols = function(data, cols, fail_types = c()) {
   # Only work with the specified columns now
   data = data[, cols]
   for (fail_type in fail_types) {
-    fail_func = eval(parse(text = paste0("is.", fail_type)))  # "na" --> is.na()
+    fail_func = get(paste0("is.", fail_type))  # "na" --> is.na()
     failed_cols = colnames(data)[unlist(lapply(data, function(x) any(fail_func(x))))]  # Character vector of columns that
     if (length(failed_cols) > 0)
       stop("The column(s) ", and_collapse(failed_cols), " contain ", fail_type, " values.")

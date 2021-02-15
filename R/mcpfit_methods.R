@@ -577,7 +577,6 @@ pp_eval = function(
   if (is.null(newdata))
     newdata = fit$data
 
-  # What varying cols to use (varying = TRUE keeps them all as is)
 
   ###############
   # FIX NEWDATA #
@@ -598,12 +597,6 @@ pp_eval = function(
   newdata$data_row = seq_len(nrow(newdata))  # to maintain order in the output when summary == TRUE
 
 
-  # R CMD Check wants a global definition of ".". The formal way of doing it is
-  # if(getRversion() >= "2.15.1") utils::globalVariables(".")
-  # but that makes the tests fail.
-  . = "ugly fix to please R CMD check"
-
-
   ########################
   # ASSERTS AND RECODING #
   ########################
@@ -622,37 +615,8 @@ pp_eval = function(
     assert_integer(nsamples, lower = 1)
   assert_value(samples_format, allowed = c("tidy", "matrix"))
 
-  # if (type == "residuals") {
-  #   if (!is.null(newdata) && !(fit$pars$y %in% colnames(newdata)))
-  #     stop("`newdata` must contain a response column named '", fit$pars$y, "' when `type = 'residuals'`")
-  #
-  #   required_cols = c(required_cols, fit$pars$y)
-  # }
   if (scale == "linear" && (type != "fitted"))
     stop("`scale = 'linear'` is only meaningful when `type = 'fitted'`.")
-
-
-  # # Check and build stuff related to newdata
-  # if (!is.null(newdata)) {
-  #   assert_types(newdata, "data.frame", "tibble")
-  #
-  #   # Add response column to required_cols for ARMA models
-  #   if (is_arma == TRUE && arma == TRUE) {
-  #     if (fit$pars$y %in% colnames(newdata)) {
-  #       required_cols = c(required_cols, fit$pars$y)
-  #     } else if (".ydata" %in% colnames(newdata)) {
-  #       required_cols = c(required_cols, ".ydata")
-  #     }
-  #   }
-  #
-  # } else {
-  #   # Use original data. Remember the response variable too for ARMA
-  #   newdata = fit$data
-  #   if (is_arma == TRUE && arma == TRUE)
-  #     required_cols = c(required_cols, fit$pars$y)
-  # }
-  #required_cols = unique(required_cols)
-
 
 
   ########################

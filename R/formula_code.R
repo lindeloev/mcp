@@ -126,6 +126,8 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x) {
 #' @param rhs_table Output of `get_rhs_table()`
 #' @param pars The list that ends up in `fit$pars`
 #' @return Character
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_formula_r = function(formula_jags, rhs_table, pars) {
   param_pars = get_sim_pars(rhs_table, pars)
 
@@ -154,102 +156,42 @@ get_formula_r = function(formula_jags, rhs_table, pars) {
 }
 
 
-#' Gets code for ARMA terms, resulting in a "resid_"
+#' Get JAGS code to model autoregressive effects
 #'
-#' Developer note: Ensuring that this can be used in both simulate() and JAGS
-#' got quite messy with a lot of if-statements. It works but some refactoring
-#' may be good in the future.
+#' This is simply code for `resid_arma_`.
 #'
-#' @aliases get_ar_code
+#' @aliases get_ar_jagscode
 #' @keywords internal
-#' @param ar_order Positive integer. The order of ARMA
-#' @param family An mcpfamily object
-#' @param is_R Bool. Is this R code (TRUE) or JAGS code (FALSE)?
-#' @return String with JAGS code for AR.
+#' @param ar_order Positive integer.
+#' @param x_name Character. Name of some vector that has the length of the dataset.
+#' @return Character JAGS code
+#' @seealso simulate_ar
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_ar_code = function(ar_order, family, is_R, xvar, yvar = NA) {
-  mm = "\n"
-
-  ##################
-  # FOR SIMULATE() #
-  ##################
-  if (is_R) {
-    # mm is the code string to be populated below
-    mm = paste0("
-    # Hack to make simulate() callable with a fixed yvar name. Used internally in mcp.
-    if(!is.null(.ydata))
-      ", yvar, " = .ydata
-    ")
-
-# For simulated ydata:
-mm = paste0(mm, "
-    # resid_ is the observed residual from y_
-    # resid_ is split into the innovation and AR() part. So resid_ = resid_arma_ + resid_sigma_
-    resid_sigma_ = rnorm(length(", xvar, "), 0, sigma_)
-    if (all(is.null(", yvar, "))) {
-      message(\"Generating residuals for AR(N) model since the response column/argument '", yvar, "' was not provided.\")
-      ar0_ = sigma_[1:", ar_order, "] * 0 + 1
-      resid_abs_ = numeric(length(", xvar, "))")
-
-    # For data points lower than the full order
-    for (i in seq_len(ar_order)) {
-      mm = paste0(mm, "\n      resid_abs_[", i, "] = ",
-                  paste0("ar", 0:(i-1), "_[", i, " - ", 0:(i-1), "] * resid_sigma_[", i, " - ", 0:(i-1), "]", collapse = " + "))
-    }
-
-    mm = paste0(mm, "
-      for (i_ in ", ar_order + 1, ":length(", xvar, "))
-        resid_abs_[i_] = resid_sigma_[i_] + ", paste0("ar", seq_len(ar_order), "_[i_] * resid_abs_[i_ - ", seq_len(ar_order), "]", collapse = " + "), "
-      ")
-
-    # For given ydata:
-    mm = paste0(mm, "
-
-      resid_arma_ = resid_abs_ - resid_sigma_
-    } else {
-      # Got ydata.
-      mcp:::assert_numeric(", yvar, ")
-      resid_abs_ = ", yvar, " - y_
-      resid_arma_ = numeric(length(", xvar, "))
-      resid_arma_ = ", paste0("ar", seq_len(ar_order), "_ * dplyr::lag(resid_abs_, ", seq_len(ar_order), ")", collapse = " + "), "
-      resid_arma_[seq_len(", ar_order, ")] = 0  # replace NA
-      # resid_sigma_ = resid_abs_ - resid_arma_  # Outcommented because it's deterministic in this parameterization (always sums to the observed data exactly)
-    }
-
-    y_ = y_ + resid_arma_
-    ")
-  } else {
-
-
-    #################
-    # FOR JAGS CODE #
-    #################
-    # For data points lower than the full order
-    mm = paste0(mm, "
+get_ar_jagscode = function(ar_order, x_name) {
+  jagscode = "
   # Apply autoregression to the residuals
-  resid_arma_[1] = 0")
+  resid_arma_[1] = 0"
 
-    # For data points lower than the full order
-    if (ar_order >= 2) {
-      for (i in 2:ar_order) {
-        mm = paste0(mm, "
+  # For data points lower than the full order
+  if (ar_order >= 2) {
+    for (i in 2:ar_order) {
+      jagscode = paste0(jagscode, "
   resid_arma_[", i, "] = ", paste0("ar", 1:(i-1), "_[", i, " - ", 1:(i-1), "] * resid_abs_[", i, " - ", 1:(i-1), "]", collapse = " +\n              "))
-      }
     }
-
-    # For full order
-    mm = paste0(mm, "
-  for (i_ in ", ar_order + 1, ":length(", xvar, ")) {
-    resid_arma_[i_] = 0")
-    for (i in seq_len(ar_order)) {
-      mm = paste0(mm, " + \n      ar", i, "_[i_] * resid_abs_[i_ - ", i, "]")
-    }
-
-    # Finish up
-    mm = paste0(mm, "
-  }")
   }
 
-  return(mm)
+  # For full order
+  jagscode = paste0(jagscode, "
+  for (i_ in ", ar_order + 1, ":length(", x_name, ")) {
+    resid_arma_[i_] = 0")
+  for (i in seq_len(ar_order)) {
+    jagscode = paste0(jagscode, " + \n      ar", i, "_[i_] * resid_abs_[i_ - ", i, "]")
+  }
+
+  # Finish up
+  jagscode = paste0(jagscode, "
+  }")
+
+  return(jagscode)
 }

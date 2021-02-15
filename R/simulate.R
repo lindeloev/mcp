@@ -101,6 +101,9 @@ get_sim_pars = function(rhs_table, pars) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .which_y = "mu", .arma = TRUE, .scale = "response") {
+  ###########
+  # ASSERTS #
+  ###########
   assert_types(fit, "mcpfit")
   rhs_table = fit$.internal$rhs_table  # Shorthand
 
@@ -118,7 +121,13 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
   # Other args
   assert_value(.type, allowed = c('predict', 'fitted'), len = 1)
   assert_logical(.rate, len = 1)
-  assert_value(.which_y, allowed = paste0(rhs_table$dpar, tidyr::replace_na(rhs_table$order, "")))  # "mu" "ar1" "ar2" "sigma", etc.
+
+  allowed_which_y = unique(c(
+    paste0(rhs_table$dpar, tidyr::replace_na(rhs_table$order, "")),   # "mu" "ar1" "ar2" "sigma", etc.
+    fit$family$dpars[fit$family$dpars != "ar"]  # any model parameters that have no regerssion terms (~0)
+  ))
+  assert_value(.which_y, allowed = allowed_which_y)
+
   assert_logical(.arma, len = 1)
   assert_value(.scale, allowed = c('response', 'linear'), len = 1)
   if (.scale == 'linear' && .type == 'predict')
@@ -158,22 +167,14 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
     stop("`type = 'fitted'` is the only option when `which_y != 'mu'`")
   }
 
-  # Shortcuts for readability
-  is_arma = any(rhs_table$dpar == "ar")
-
   # Return functions here
   if (fit$family$family == "gaussian") {
     # If ARMA, build resid_ and return with that
+    is_arma = any(rhs_table$dpar == "ar")
     if (is_arma && .arma == TRUE) {
-      ar_code = get_ar_code(
-        ar_order = get_arma_order(fit$pars$arma),
-        family = fit$family,
-        is_R = TRUE,
-        xvar = fit$pars$x,
-        yvar = fit$pars$y
-      )
-
-      eval(parse(text = ar_code))
+      ar_list = mget(ls()[grep("^ar[0-9]+_$", ls())])  # list(ar1_, ar2_, etc.). TO DO: run eval(parse(...)) in a container, return list with $ar1_, $ar2_, etc.
+      ar_result = simulate_ar(sigma_, ar_list, args[[fit$pars$y]])
+      mu_ = mu_ + ar_result$resid_arma
     }
 
     # If fitted or no data
@@ -184,9 +185,9 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
         stop("Modelled negative sigma. First detected at ", fit$pars$x, " = ", min(get(fit$pars$x)[fit$family$linkinv(sigma_) < 0]))
 
       # Complex code if ARMA. Simple if not. resid_sigma_ was generated from sigma_ so no need to do an extra rnorm().
-      if (is_arma == TRUE) {
-        if (arma == TRUE) {
-          return(fit$family$linkinv(fit$family$linkfun(mu_ + resid_sigma_)))
+      if (is_arma) {
+        if (.arma == TRUE) {
+          return(fit$family$linkinv(fit$family$linkfun(mu_ + ar_result$resid_sigma)))
         } else {
           return(family$linkinv(fit$family$linkfun(mu_) + rnorm(length(mu_), 0, sigma_)))
         }
@@ -324,4 +325,64 @@ get_fitsimulate = function(pars) {
 
   fitsimulate_func = eval(parse(text = fitsimulate_code))
   return(fitsimulate_func)
+}
+
+
+#' Simulate/evaulate autoregressive residuals
+#'
+#' Developer note: some of the eval(parse(text = ...)) here could probably be replaced with inner products (%*%).
+#' @aliases simulate_ar
+#' @keywords internal
+#' @param sigma_ Numeric vector of innovations
+#' @param ar_list List with numerical vectors, list(ar1_ = c(...), ar2_ = c(...))
+#' @param resid_abs NULL or Numerical vector of absolute residuals, `fitted_value - observed_value`.
+#' @return List with
+#'   * `resid_arma`: the ARMA part of the residuals
+#'   * `resid_sigma`: the innovations.
+#'
+#'   Note that `resid_abs = resid_arma + resid_sigma`.
+#' @seealso get_ar_jagscode
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+simulate_ar = function(sigma_, ar_list, resid_abs = NULL) {
+  # Check inputs
+  assert_numeric(sigma_)
+  assert_types(ar_list, "list")
+  assert_types(resid_abs, "null", "numeric")
+  if (length(grep("^ar[0-9]+_$", names(ar_list))) != length(ar_list))
+    stop_github("Not all names(ar_list) are arx_.")
+
+  ar_order = length(ar_list)
+
+  # resid_ is the observed residual from y_
+  # resid_ is split into the innovation and AR() part. So resid_ = resid_arma + resid_sigma
+  resid_sigma = rnorm(length(sigma_), 0, sigma_)
+  if (is.null(resid_abs)) {
+    message("Generating residuals for AR(N) model since the response column/argument was not provided.")
+    ar_list$ar0_ = sigma_[seq_len(ar_order)] * 0 + 1  # AR(0) = itself
+    resid_abs = numeric(length(sigma_))
+
+    # Build
+    rcode = ""
+    for (i in seq_len(ar_order)) {
+      rcode = paste0(rcode, "
+        resid_abs[", i, "] = ", paste0("ar_list$ar", 0:(i-1), "_[", i, " - ", 0:(i-1), "] * resid_sigma[", i, " - ", 0:(i-1), "]", collapse = " + "))
+    }
+    rcode = paste0(rcode, "
+      for (i_ in ", ar_order + 1, ":length(sigma_))
+        resid_abs[i_] = resid_sigma[i_] + ", paste0("ar_list$ar", seq_len(ar_order), "_[i_] * resid_abs[i_ - ", seq_len(ar_order), "]", collapse = " + "), "
+      ")
+
+    eval(parse(text = rcode))
+    resid_arma = resid_abs - resid_sigma
+  } else {
+    resid_arma = eval(parse(text = paste0("ar_list$ar", seq_len(ar_order), "_ * dplyr::lag(resid_abs, ", seq_len(ar_order), ")", collapse = " + ")))
+    resid_arma[seq_len(ar_order)] = 0  # replace NA
+    # resid_sigma = resid_abs - resid_arma  # Outcommented because it's deterministic in this parameterization (always sums to the observed data exactly)
+  }
+
+  return(list(
+    resid_arma = resid_arma,
+    resid_sigma = resid_sigma
+  ))
 }

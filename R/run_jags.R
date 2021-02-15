@@ -163,10 +163,9 @@ get_jags_data = function(data, family, ST, rhs_table, jags_code, sample) {
   for (func in funcs) {
     constant_name = toupper(paste0(func, "x"))  # No link function for x
     if (stringr::str_detect(jags_code, constant_name)) {
-      func_eval = eval(parse(text = func))  # as real function
       column = ST$x[1]  # from x/y to data column name
       linkdata = data[, column]  # No link function on x stuff
-      jags_data[[constant_name]] = func_eval(linkdata, na.rm = TRUE)
+      jags_data[[constant_name]] = get(func)(linkdata, na.rm = TRUE)  # Call func
     }
   }
 
@@ -174,10 +173,9 @@ get_jags_data = function(data, family, ST, rhs_table, jags_code, sample) {
   for (func in funcs) {
     constant_name =  toupper(paste0(func, "LINK", "y"))  # Link function applies to y
     if (stringr::str_detect(jags_code, constant_name)) {
-      func_eval = eval(parse(text = func))  # as real function
       column = ST$y[1]  # from x/y to data column name
       linkdata = family$linkfun(data[, column])  # No link function on x stuff
-      jags_data[[constant_name]] = func_eval(linkdata, na.rm = TRUE)
+      jags_data[[constant_name]] = get(func)(linkdata, na.rm = TRUE)  # Call func
     }
   }
 

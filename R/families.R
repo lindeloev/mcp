@@ -94,9 +94,9 @@ mcpfamily = function(x) {
 
   # Add link functions as R functions, if they are not already present
   if (rlang::has_name(family, "linkfun") == FALSE)
-    family$linkfun = eval(parse(text = family$link))
+    family$linkfun = get(family$link)
   if (rlang::has_name(family, "linkinv") == FALSE)
-    family$linkinv = eval(parse(text = family$linkinv_str))
+    family$linkinv = get(family$linkinv_str)
 
   class(family) = c("mcpfamily", "family")
   return(family)

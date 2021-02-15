@@ -269,8 +269,12 @@ mcp = function(model,
 
   # Make jags code if it is not provided by the user
   if (is.null(jags_code)) {
-    max_arma_order = get_arma_order(pars$arma)
-    jags_code = get_jags_code(prior, ST, formula_jags, max_arma_order, family, sample, par_x)
+    if ("ar" %in% rhs_table$dpar) {
+      arma_order = max(rhs_table$order, na.rm = TRUE)
+    } else {
+      arma_order = 0
+    }
+    jags_code = get_jags_code(prior, ST, formula_jags, arma_order, family, sample, par_x)
   }
 
 

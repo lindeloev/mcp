@@ -9,7 +9,7 @@
 #' @inheritParams mcp
 #' @param formula_jags String. The formula string returned by `get_formula_jags()`.
 #' @param ST Segment table. Returned by `get_segment_table()`.
-#' @param arma_order Positive integer. The autoregressive order.
+#' @param arma_order NA or positive integer. The autoregressive order.
 #' @return String. A JAGS model.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -83,7 +83,7 @@ get_jags_code = function(prior, ST, formula_jags, arma_order, family, sample, pa
   ###################
   # Detect if there is an intercept or slope on AR
   if (arma_order > 0)
-    mm = paste0(mm, get_ar_code(arma_order, family, is_R = FALSE, xvar = par_x))
+    mm = paste0(mm, get_ar_jagscode(arma_order, par_x))
 
 
 
