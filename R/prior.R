@@ -165,6 +165,7 @@ get_prior = function(ST, rhs_table, family, prior = list()) {
     tibble::deframe() %>%
     as.list()
 
+
   for (i in seq_len(nrow(ST))) {
     # Helper: Current segment.
     S = ST[i, ]
@@ -180,7 +181,7 @@ get_prior = function(ST, rhs_table, family, prior = list()) {
 
     # Change point varying effects
     if (!is.na(S$cp_sd)) {
-      default_prior[[S$cp_sd]] = cp_prior$sd
+      default_prior[[S$cp_sd]] = cp_prior$cp_sd
       default_prior[[S$cp_group]] = get_default_prior_cp_group(ST, i)
     }
 

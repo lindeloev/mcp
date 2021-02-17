@@ -74,16 +74,11 @@ add_rhs_predictors = function(newdata, fit) {
 #' @keywords internal
 #' @return Character vector
 get_sim_pars = function(rhs_table, pars) {
-  sim_pars = c(
-    pars$reg[stringr::str_starts(pars$reg, "cp_")],  # cp_*
-    rhs_table$code_name  # mu, sigma, ar, etc.
+  c(
+    pars$reg[stringr::str_detect(pars$reg, "^cp_[0-9]+$") & !stringr::str_detect(pars$reg, "^cp_[0-9]+_sd$")],  # cp_1 but not cp_1_sd
+    rhs_table$code_name,  # mu, sigma, ar, etc.
+    pars$varying
   )
-
-  # Default to varying = 0
-  if (is.null(pars$varying) == FALSE)
-    sim_pars = c(sim_pars, paste0(pars$varying, " = 0"))
-
-  return(sim_pars)
 }
 
 
@@ -110,7 +105,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
   # Assert that the ellipsis contains the expected argument names
   param_pars = get_sim_pars(rhs_table, fit$pars)
   pred_pars = paste0(".pred_", rhs_table$code_name)
-  data_pars = c(fit$pars$x, fit$pars$trials)
+  data_pars = c(fit$pars$x, fit$pars$trials)  # varying is not strictly a data par, but acts like it below
   expected_arg_names = c(param_pars, pred_pars, data_pars)
 
   args = list(...)
@@ -254,10 +249,7 @@ simulate_atomic = function(fit,
   mcp:::assert_types(fit, "mcpfit")
   mcp:::assert_types(newdata, "data.frame", "tibble")
   args = list(...)
-  expected_args = c(
-    fit$pars$reg[stringr::str_starts(fit$pars$reg, "cp_")],  # cp_*
-    fit$.internal$rhs_table$code_name  # mu, sigma, ar, etc.
-  )
+  expected_args = get_sim_pars(fit$.internal$rhs_table, fit$pars)
   if (is.null(names(args)) | any(names(args) == ""))  # A more helpful error than assert_ellipsis()
     stop("All arguments must be named.")
   mcp:::assert_ellipsis(..., allowed = expected_args)
@@ -304,7 +296,12 @@ get_fitsimulate = function(pars) {
   # List of argument names
   pars$reg = pars$reg[!stringr::str_ends(pars$reg, "_sd")]  # Remove hyperparameter on varying effects from pars$reg since it is not used for simulation
   #y_args = ifelse(length(pars$arma > 0), paste0(pars$y, " = NULL"), "")
-  varying_args = ifelse(length(pars$varying) > 0, paste0(pars$varying, " = 0"), "")
+  if (length(pars$varying) > 0) {
+    varying_args = paste0(pars$varying, " = 0")
+  } else {
+    varying_args = ""
+  }
+  #varying_args = ifelse(length(pars$varying) > 0, paste0(pars$varying, " = 0"), "")
   args_nodefault = c(pars$reg, pars$sigma, pars$arma)
   args_withdefault = c(varying_args)
   args_withdefault = args_withdefault[args_withdefault != ""]  # remove empty strings
@@ -319,7 +316,7 @@ get_fitsimulate = function(pars) {
   .arma = TRUE,
   .scale = 'response') {
 
-  result = simulate_atomic(fit, newdata, ", paste0(paste0(args_nodefault, " = ", args_nodefault, collapse = ", "), paste0(args_withdefault, collapse = ", "), collapse = ", "), ", .type = .type, .rate = .rate, .which_y = .which_y, .arma = .arma, .scale = .scale)
+  result = simulate_atomic(fit, newdata, ", paste0(paste0(args_nodefault, " = ", args_nodefault, collapse = ", "), ", ", paste0(args_withdefault, collapse = ", ")), ", .type = .type, .rate = .rate, .which_y = .which_y, .arma = .arma, .scale = .scale)
   return(result)
 }")
 

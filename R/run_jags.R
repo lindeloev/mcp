@@ -16,8 +16,6 @@
 #' @return `mcmc.list``
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
-
 run_jags = function(data,
                     jags_code,
                     jags_data,
@@ -114,7 +112,6 @@ run_jags = function(data,
   # Recover the levels of varying effects if it succeeded
   if (coda::is.mcmc.list(samples)) {
     return(samples)
-
   } else {
     # If it didn't succeed, quit gracefully.
     warning("--------------\nJAGS failed with the above error. Returning an `mcpfit` without samples. Inspect fit$prior and fit$jags_code to identify the problem. Read about typical problems and fixes here: https://lindeloev.github.io/mcp/articles/tips.html.")

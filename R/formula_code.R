@@ -4,9 +4,6 @@
 
 #' Call `get_formula_jags_dpar` for multiple dpars and paste strings
 #'
-#' Currently used to differentiate between the JAGS model (use all) and the
-#' fit$simulate model (do not include arma).
-#'
 #' @aliases get_formula_jags
 #' @keywords internal
 #' @inheritParams get_formula_jags_dpar
@@ -133,8 +130,10 @@ get_formula_r = function(formula_jags, rhs_table, pars) {
 
   # Replacements that turns rowwise JAGS code into vectorized R code
   replace_args = c(
-    setNames(paste0(" args$", param_pars), paste0(" ", param_pars)),
-    setNames(paste0("args$", param_pars, ","), paste0(param_pars, ",")),
+    setNames(paste0(", args$", param_pars), paste0(", ", param_pars)),
+    setNames(paste0("args$", param_pars, ", "), paste0(param_pars, ", ")),
+    setNames(paste0(" (args$", param_pars, " + "), paste0(" (", param_pars, " + ")),  # varying change point
+    setNames(paste0(" + args$", param_pars, ")"), paste0(" + ", param_pars, ")")),  # varying change point
     setNames(paste0("cbind(args$"), "cbind("),
     setNames("args$", "args$args$"),  # Fix double-inserting args$ above
     setNames(paste0("args$", pars$x, " >="), paste0(pars$x, " >=")),

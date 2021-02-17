@@ -33,7 +33,7 @@ is.mcpmodel = function(x) {
 
 #' @keywords internal
 stop_github = function(...) {
-  stop(..., ". This looks like an internal error in mcp. Please raise an issue on GitHub: https://github.com/lindeloev/mcp/issues")
+  stop("This looks like an internal error in mcp. To fix this for you and other users, please raise an issue on https://github.com/lindeloev/mcp/issues with the minimum data/code that reproduces this error:\n", ...)
 }
 
 

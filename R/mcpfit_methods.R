@@ -583,7 +583,6 @@ pp_eval = function(
   ###############
   varying_info = unpack_varying(fit, pars = varying)
   exclude_varying = fit$pars$varying[!(fit$pars$varying %in% varying_info$cols)]
-  #required_cols = unique(c(fit$pars$x, fit$pars$trials, varying_info$cols))  # May be amended later
   required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
   required_cols = required_cols[!(required_cols %in% exclude_varying)]
   if ((arma == FALSE || is_arma == FALSE) & type != "residuals") {
@@ -626,16 +625,14 @@ pp_eval = function(
   if (length(varying_info$cols) > 0) {
     # If there are varying effects: use varying-matching samples for each row of data
     samples = dplyr::left_join(
-      newdata,
+      add_rhs_predictors(newdata, fit),
       tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples),
       by = unique(varying_info$cols)
     ) %>%
-      dplyr::mutate(!!returnvar := rlang::exec(fit$simulate, !!!., type = type_for_simulate, rate = rate, which_y = which_y, arma = arma, add_attr = FALSE, scale = scale))
+      dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!., .type = type_for_simulate, .rate = rate, .which_y = which_y, .arma = arma, .scale = scale))
   } else {
     # No varying effects: use all samples for each row of data
     samples = tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples) %>%
-      #tidyr::expand_grid(newdata) %>%
-      #dplyr::mutate(!!returnvar := rlang::exec(fit$simulate, !!!., type = type_for_simulate, rate = rate, which_y = which_y, arma = arma, add_attr = FALSE, scale = scale))
       tidyr::expand_grid(add_rhs_predictors(newdata, fit)) %>%
       dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!., .type = type_for_simulate, .rate = rate, .which_y = which_y, .arma = arma, .scale = scale))
   }

@@ -177,7 +177,6 @@ mcp = function(model,
   ################
   # CHECK INPUTS #
   ################
-
   # Check model
   assert_types(model, "mcpmodel")
 
@@ -230,7 +229,6 @@ mcp = function(model,
   ##################
   # MODEL BUILDING #
   ##################
-
   # Make an abstract table representing the segments and their relations.
   par_x = get_par_x(model, data, par_x)
   ST = get_segment_table(model, data, family, par_x)  #"ST" for "segment table"
@@ -276,7 +274,6 @@ mcp = function(model,
     }
     jags_code = get_jags_code(prior, ST, formula_jags, arma_order, family, sample, par_x)
   }
-
 
 
   ##########
@@ -339,8 +336,6 @@ mcp = function(model,
   if (!exists("mcmc_prior")) mcmc_prior = NULL
   if (!exists("mcmc_loglik")) mcmc_loglik = NULL
 
-
-  #model = lapply(ST$form, stats::as.formula, env=globalenv())  # with explicit response and cp
   class(model) = c("mcplist", "list")
   class(prior) = c("mcplist", "list")
   class(pars) = c("mcplist", "list")  # for nicer printing
