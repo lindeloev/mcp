@@ -73,7 +73,7 @@ assert_logical = function(x, len = 1) {
 assert_value = function(x, allowed = c(), len = 1) {
   assert_length(x, len, name = substitute(x))
 
-  if (!(x %in% allowed)) {
+  if (x %notin% allowed) {
     allowed[is.character(allowed)] = paste0("'", allowed[is.character(allowed)], "'")  # Add quotes for character values
     if (length(allowed) == 1) {
       stop("`", substitute(x), "` must be ", allowed, ". Got ", paste0(x, collapse = ", "))

@@ -51,7 +51,7 @@ get_formula_jags = function(ST, rhs_table, par_x, family) {
 
   # Special case when no terms are present for a given dpar (all ~0): insert "dpar = 0".
   for (dpar in family$dpars) {
-    if (!(dpar %in% rhs_table$dpar))
+    if (dpar %notin% rhs_table$dpar)
       formula_jags = paste0(formula_jags, "\n\n# All segments are ~ 0 for this par:\n", dpar, "_[i_] = 0")
   }
 

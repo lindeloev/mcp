@@ -238,7 +238,7 @@ unpack_varying_term = function(term, i) {
 
   # Return
   return(list(
-    int = !"0" %in% preds,  # bool. Is intercept present?
+    int = "0" %notin% preds,  # bool. Is intercept present?
     slope = slope,
     group = parts[2]))
 }
@@ -334,7 +334,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
       assert_integer(data[, ST$y[1]], ST$y[1], lower = 0)
       assert_integer(data[, ST$trials[1]], ST$trials[1], lower = 1)
     } else if (family$family == "bernoulli") {
-      if (any(!data[, ST$y[1]] %in% c(0, 1)))
+      if (any(data[, ST$y[1]] %notin% c(0, 1)))
         stop("Only responses 0 and 1 are allowed for family = bernoulli() in column '", ST$y[1], "'")
     } else if (family$family == "poisson") {
       assert_integer(data[, ST$y[1]], ST$y[1], lower = 0)

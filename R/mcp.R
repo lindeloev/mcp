@@ -248,7 +248,7 @@ mcp = function(model,
     sigma = all_pars[stringr::str_detect(all_pars, "^sigma_")],
     arma = all_pars[stringr::str_detect(all_pars, "(^ar|^ma)[0-9]")]
   )
-  pars$reg = all_pars[!all_pars %in% c(pars$varying, pars$sigma, pars$arma)]
+  pars$reg = all_pars[all_pars %notin% c(pars$varying, pars$sigma, pars$arma)]
   pars$population = c(pars$reg, pars$sigma, pars$arma)
 
   # Check parameters

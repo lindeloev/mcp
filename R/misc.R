@@ -21,6 +21,10 @@ logical0_to_null = function(x) {
 }
 
 
+# if((a %in% b) == FALSE) --> if(a %notin% b)
+`%notin%` = Negate(`%in%`)
+
+
 # Is this a continuous vector?
 is_continuous = function(x) {
   is.numeric(x) &

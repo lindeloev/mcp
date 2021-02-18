@@ -95,7 +95,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 
   # Revert HACK and continue
   if (!stringr::str_detect(regex_pars, "\\|") && varying == FALSE) {
-    estimates = dplyr::filter(estimates, !.data$name %in% c("cp_0", "cp_1"))
+    estimates = dplyr::filter(estimates, .data$name %notin% c("cp_0", "cp_1"))
     samples = lapply(samples, function(x) x[, get_cols])
   }
 
@@ -582,12 +582,12 @@ pp_eval = function(
   # FIX NEWDATA #
   ###############
   varying_info = unpack_varying(fit, pars = varying)
-  exclude_varying = fit$pars$varying[!(fit$pars$varying %in% varying_info$cols)]
+  exclude_varying = fit$pars$varying[fit$pars$varying %notin% varying_info$cols]
   required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
-  required_cols = required_cols[!(required_cols %in% exclude_varying)]
+  required_cols = required_cols[required_cols %notin% exclude_varying]
   if ((arma == FALSE || is_arma == FALSE) & type != "residuals") {
     required_cols = required_cols[required_cols != fit$pars$y]
-  } else if (!(fit$pars$y %in% colnames(newdata))) {
+  } else if (fit$pars$y %notin% colnames(newdata)) {
     stop("`newdata` must contain a response column named '", fit$pars$y, "' for when `arma == TRUE` and/or `type = 'residuals'`")
   }
   assert_data_cols(newdata, required_cols)  # Helpful error if something is missing

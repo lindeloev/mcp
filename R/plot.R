@@ -107,7 +107,7 @@ plot.mcpfit = function(x,
   assert_types(facet_by, "null", "character", len = c(0, 1))
   if (is.character(facet_by)) {
     varying_groups = logical0_to_null(unique(stats::na.omit(fit$.internal$ST$cp_group_col)))
-    if (!(facet_by %in% varying_groups))
+    if (facet_by %notin% varying_groups)
       stop("`facet_by` must be a data column and modeled as a varying effect.")
   }
 
@@ -601,7 +601,7 @@ pp_check = function(
 
   allowed_types = stringr::str_remove(bayesplot::available_ppc(), "ppc_")
   allowed_types = allowed_types[stringr::str_detect(allowed_types, "_grouped") == FALSE]  # Grouped done mcp-side (see below)
-  if (!(type %in% allowed_types))
+  if (type %notin% allowed_types)
     stop("`type` must be one of '", paste0(allowed_types, collapse = "', '"), "'")
 
   # Get as tidy samples to preserve info on groups and sampled draws
