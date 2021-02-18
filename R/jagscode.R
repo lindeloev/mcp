@@ -161,8 +161,8 @@ get_jags_code = function(prior, ST, formula_jags, arma_order, family, sample, pa
   }
 }")
 
-  # Return the model
-  return(mm)
+  # Return the model string
+  mm
 }
 
 

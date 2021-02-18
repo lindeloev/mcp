@@ -17,7 +17,8 @@ inprod = function(x, y) {
 logical0_to_null = function(x) {
   if (length(x) > 0)
     return(x)
-  else return(NULL)
+  else
+    return(NULL)
 }
 
 
@@ -103,7 +104,7 @@ to_formula = function(form) {
     form = stats::as.formula(form)
   }
 
-  return(form)
+  form
 }
 
 
@@ -210,11 +211,9 @@ get_model_vars = function(model) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_rhs_matrix = function(rhs_table) {
-  rhs_matrix = suppressMessages(dplyr::bind_cols(rhs_table$matrix_data, .name_repair = "unique")) %>% # Suppress message about lacking column names
+  suppressMessages(dplyr::bind_cols(rhs_table$matrix_data, .name_repair = "unique")) %>% # Suppress message about lacking column names
     as.matrix() %>%
     magrittr::set_colnames(rhs_table$code_name)
-
-  return(rhs_matrix)
 }
 
 
@@ -597,11 +596,12 @@ if (sample == TRUE)
   if (sample == FALSE)
     fit = NULL
 
-  return(list(
+  # Return
+  list(
     model = model,  # Bind them to global workspace for nicer display
     data = data,
     simulated = simulated,  # response is always the last column
     fit = fit,
     call = call
-  ))
+  )
 }

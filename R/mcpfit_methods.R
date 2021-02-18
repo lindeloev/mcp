@@ -320,7 +320,7 @@ mcmclist_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
     stop("This mcpfit contains no posterior or prior samples.")
   }
 
-  return(NULL)
+  NULL
 }
 
 
@@ -373,11 +373,12 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
     use_varying = tidyr::replace_na(fit$.internal$ST$cp_group_col == cols, FALSE)
   }
 
-  return(list(
+  # Return
+  list(
     pars = fit$.internal$ST$cp_group[use_varying],
     cols = fit$.internal$ST$cp_group_col[use_varying],
     indices = use_varying
-  ))
+  )
 }
 
 
@@ -485,8 +486,7 @@ tidy_samples = function(
   }
 
   # Return with chain etc. first
-  samples = dplyr::select(samples, .data$.chain, .data$.iteration, .data$.draw, dplyr::everything())
-  return(samples)
+  samples %>% dplyr::select(.data$.chain, .data$.iteration, .data$.draw, dplyr::everything())
 }
 
 
@@ -869,5 +869,5 @@ with_loo = function(fit, save_psis = FALSE, info = NULL) {
     fit$loo = loo(fit, save_psis = save_psis)
   }
 
-  return(fit)
+  fit
 }

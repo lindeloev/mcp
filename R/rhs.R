@@ -202,7 +202,8 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
     dplyr::ungroup() %>%
     dplyr::select(-matrix_col)
 
-  return(rhs_table)
+  # Return
+  rhs_table
 }
 
 
@@ -315,12 +316,11 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
   ##########
   # RETURN #
   ##########
-  all_pars = rbind(
+  rbind(
     mu_pars,
     sigma_pars,
     ar_pars
   )
-  return(all_pars)
 }
 
 
@@ -399,10 +399,11 @@ unpack_arma = function(form_str_in) {
     form_str = paste0(dpar, "(1)")
   }
 
-  return(list(
+  # Return
+  list(
     order = order,
     form_str = form_str
-  ))
+  )
 }
 
 
@@ -411,10 +412,6 @@ unpack_arma = function(form_str_in) {
 #' @describeIn get_rhs_table_dpar Apply `get_rhs_table_segment` to all segments of a model.
 get_rhs_table = function(model, data, family, par_x, check_rank = TRUE) {
   rhs = lapply(model, get_rhs)
-
-  # rbind parameters for all segment formulas
-  #print(get_rhs_table_segment(rhs[[1]], 1, family, data, par_x, check_rank))
-  #print(get_rhs_table_segment(rhs[[2]], 2, family, data, par_x, check_rank))
 
   rhs_table = lapply(seq_along(rhs), function(segment) get_rhs_table_segment(rhs[[segment]], segment, family, data, par_x, check_rank)) %>%
     dplyr::bind_rows() %>%

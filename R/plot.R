@@ -269,8 +269,8 @@ plot.mcpfit = function(x,
   if (which_y != "mu")
     gg = gg + ggplot2::labs(y = which_y)
 
-  gg = gg + ggplot2::theme(legend.position = "none")
-  return(gg)
+  # Return
+  gg + ggplot2::theme(legend.position = "none")
 }
 
 
@@ -338,7 +338,7 @@ geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
   data_quantiles = get_quantiles(samples, quantiles, xvar, yvar, facet_by)
 
   # Return geom
-  geom = ggplot2::geom_line(
+  ggplot2::geom_line(
     mapping = ggplot2::aes(
       y = .data$y,
       group = .data$quantile
@@ -346,7 +346,6 @@ geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
     data = data_quantiles,
     ...
   )
-  return(geom)
 }
 
 
@@ -502,11 +501,6 @@ plot_pars = function(fit,
 #' @param fit An mcpfit object.
 #' @return A vector of x-values to evaluate at.
 get_eval_at = function(fit, facet_by) {
-  # If there are ARMA terms, evaluate at the data
-  if (length(fit$pars$arma) > 0) {
-    return(c(fit$data[, fit$pars$x]))
-  }
-
   # Set resolutions in general and for change points
   X_RESOLUTION_ALL = 100  # Number of points to evaluate at x
   X_RESOLUTION_CP = 600
@@ -515,30 +509,36 @@ get_eval_at = function(fit, facet_by) {
   xmin = min(fit$data[, fit$pars$x])  # smallest observed X
   xmax = max(fit$data[, fit$pars$x])
 
+  # If there are ARMA terms, evaluate at the data
+  if (length(fit$pars$arma) > 0) {
+    return(c(fit$data[, fit$pars$x]))
+
   # Just give up for faceting and prior-plots (usually very distributed change points)
   # and return a reasonable resolution
-  if (!is.null(facet_by) || is.null(fit$mcmc_post)) {
+  } else if (!is.null(facet_by) || is.null(fit$mcmc_post)) {
     eval_at = seq(xmin, xmax, length.out = X_RESOLUTION_FACET)
     return(eval_at)
+
+  # Make regions of fine resolution within course resolution
+  } else {
+    # Make the coarse resolution
+    eval_at = seq(xmin, xmax, length.out = X_RESOLUTION_ALL)
+
+    # Add the finer resolution for each change point
+    cp_vars = paste0("cp_", seq_len(length(fit$model) - 1))  # change point columns
+    cp_hdis = fixef(fit, width = CP_INTERVAL)  # get the intervals
+    cp_hdis = cp_hdis[cp_hdis$name %in% cp_vars, ]  # select change points
+    for (i in seq_len(nrow(cp_hdis))) {
+      x_proportion = (cp_hdis$upper[i] - cp_hdis$lower[i]) / (xmax - xmin)  # how big a section of x is this CP's HDI?
+      length.out = ceiling(X_RESOLUTION_CP * x_proportion)  # number of x-points to add
+      add_this = seq(from = cp_hdis$lower[i],
+                     to = cp_hdis$upper[i],
+                     length.out = length.out)
+      eval_at = c(eval_at, add_this)
+    }
+
+    return(sort(eval_at))
   }
-
-  # Make the coarse resolution
-  eval_at = seq(xmin, xmax, length.out = X_RESOLUTION_ALL)
-
-  # Add the finer resolution for each change point
-  cp_vars = paste0("cp_", seq_len(length(fit$model) - 1))  # change point columns
-  cp_hdis = fixef(fit, width = CP_INTERVAL)  # get the intervals
-  cp_hdis = cp_hdis[cp_hdis$name %in% cp_vars, ]  # select change points
-  for (i in seq_len(nrow(cp_hdis))) {
-    x_proportion = (cp_hdis$upper[i] - cp_hdis$lower[i]) / (xmax - xmin)  # how big a section of x is this CP's HDI?
-    length.out = ceiling(X_RESOLUTION_CP * x_proportion)  # number of x-points to add
-    add_this = seq(from = cp_hdis$lower[i],
-                   to = cp_hdis$upper[i],
-                   length.out = length.out)
-    eval_at = c(eval_at, add_this)
-  }
-
-  return(sort(eval_at))
 }
 
 
@@ -666,7 +666,7 @@ get_ppc_plot = function(fit, type, y, yrep, nsamples, draws = NULL, ...) {
   func_obj = utils::getFromNamespace(func_name, "bayesplot")
 
   if (is_loo == FALSE) {
-    plot_return = suppressWarnings(func_obj(y, yrep, ...))
+    return(suppressWarnings(func_obj(y, yrep, ...)))
     #bayesplot_call = paste0("bayesplot::ppc_", type, "(y, yrep, ...)")
   } else if (is_loo == TRUE) {
     # Compute loo if missing
@@ -679,8 +679,6 @@ get_ppc_plot = function(fit, type, y, yrep, nsamples, draws = NULL, ...) {
     attr(psis_object, "dims") = c(dim(yrep))
 
     # Build call (setting `samples` overwrites bayesplot defaults)
-    plot_return = suppressWarnings(func_obj(y, yrep, psis_object = psis_object, lw = lw, samples = nsamples, ...))
+    return(suppressWarnings(func_obj(y, yrep, psis_object = psis_object, lw = lw, samples = nsamples, ...)))
   }
-
-  return(plot_return)
 }

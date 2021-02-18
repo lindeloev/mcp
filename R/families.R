@@ -99,7 +99,7 @@ mcpfamily = function(x) {
     family$linkinv = get(family$linkinv_str)
 
   class(family) = c("mcpfamily", "family")
-  return(family)
+  family
 }
 
 
@@ -118,7 +118,7 @@ is.mcpfamily = function(x) {
   assert_types(x$linkfun, "function")
   assert_types(x$linkinv, "function")
 
-  return(TRUE)
+  TRUE
 }
 
 

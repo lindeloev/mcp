@@ -16,7 +16,7 @@ is.family = function(x) {
   assert_types(x$family, "character", len = 1)
   assert_types(x$link, "character", len = 1)
 
-  return(TRUE)
+  TRUE
 }
 
 #' @keywords internal
@@ -28,7 +28,7 @@ is.mcpmodel = function(x) {
       stop("All segments must be formulas. This segment is not a formula: ", segment)
   }
 
-  return(TRUE)
+  TRUE
 }
 
 #' @keywords internal
@@ -54,7 +54,7 @@ assert_integer = function(x, name = NULL, lower = -Inf, len = NULL) {
   if (!all(x == floor(x)) || !all(x >= lower))
     stop("Only integers", greater_than, "allowed for '", name, "'. Got ", x)
 
-  return(TRUE)
+  TRUE
 }
 
 
@@ -65,7 +65,7 @@ assert_logical = function(x, len = 1) {
   if (!is.logical(x))
     stop("`", substitute(x), "` must be logical (TRUE or FALSE). Got ", x)
 
-  return(TRUE)
+  TRUE
 }
 
 
@@ -82,7 +82,7 @@ assert_value = function(x, allowed = c(), len = 1) {
     }
   }
 
-  return(TRUE)
+  TRUE
 }
 
 
@@ -107,7 +107,7 @@ assert_types = function(x, ..., len = NULL) {
       stop("`", substitute(x), "` must be one of ", paste0(types, collapse = " or "), ". Got ", paste0(class(x), collapse = ", "))
     }
 
-  return(TRUE)
+  TRUE
 }
 
 
@@ -119,7 +119,7 @@ assert_numeric = function(x, lower = -Inf, upper = Inf, len = NULL) {
   if (any(x < lower) || any(x > upper))
     stop("`", substitute(x), "` contained value(s) outside the interval (", lower, ", ", upper, ").")
 
-  return(TRUE)
+  TRUE
 }
 
 
@@ -131,7 +131,7 @@ assert_ellipsis = function(..., allowed = NULL) {
   if (length(illegal_names) > 0)
     stop("The following arguments are not accepted for this function: ", and_collapse(illegal_names))
 
-  return(TRUE)
+  TRUE
 }
 
 
@@ -148,7 +148,7 @@ assert_length = function(x, len = NULL, name = NULL) {
       stop("`", name, "` should have a length between ", len[1], " and ", len[2], " but has length ", length(x))
   }
 
-  return(TRUE)
+  TRUE
 }
 
 
@@ -161,7 +161,7 @@ assert_rank = function(x, segment, dpar) {
     return(bad_cols)
   }
 
-  return(TRUE)
+  TRUE
 }
 
 
@@ -182,5 +182,5 @@ assert_data_cols = function(data, cols, fail_types = c()) {
       stop("The column(s) ", and_collapse(failed_cols), " contain ", fail_type, " values.")
   }
 
-  return(TRUE)
+  TRUE
 }

@@ -55,8 +55,9 @@ get_formula_jags = function(ST, rhs_table, par_x, family) {
       formula_jags = paste0(formula_jags, "\n\n# All segments are ~ 0 for this par:\n", dpar, "_[i_] = 0")
   }
 
-  class(formula_jags) = c("mcptext", "character")  # Nicer printing
-  return(formula_jags)
+  # Return with nicer printing
+  class(formula_jags) = c("mcptext", "character")
+  formula_jags
 }
 
 
@@ -111,7 +112,8 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x) {
   formula_str = paste0(formula_str, all_predictors)
   if (dpar == "sigma")
     formula_str = paste0(formula_str, "\nsigma_[i_] = max(10^-9, sigma_tmp_[i_])  # Count negative sigma as just-above-zero sigma")
-  return(formula_str)
+
+  formula_str
 }
 
 
@@ -151,7 +153,7 @@ get_formula_r = function(formula_jags, rhs_table, pars) {
     stringi::stri_replace_all_fixed(names(replace_args), replace_args, vectorize_all = FALSE)  # obs: fixed to not interpret $ as regex
 
   class(formula_r) = c("mcptext", "character")  # Nicer printing
-  return(formula_r)
+  formula_r
 }
 
 
@@ -188,9 +190,9 @@ get_ar_jagscode = function(ar_order, x_name) {
     jagscode = paste0(jagscode, " + \n      ar", i, "_[i_] * resid_abs_[i_ - ", i, "]")
   }
 
-  # Finish up
+  # Finish up and return
   jagscode = paste0(jagscode, "
   }")
 
-  return(jagscode)
+  jagscode
 }

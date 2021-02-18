@@ -31,7 +31,7 @@ relevel_newdata = function(newdata, fit) {
     newdata[, col_name] = new_col
   }
 
-  return(newdata)
+  newdata
 }
 
 
@@ -61,11 +61,9 @@ add_rhs_predictors = function(newdata, fit) {
     stop_github("rhs_table_tmp does not match fit$.internal$rhs_table.")
 
   # All permutations of rows in newdata and parameters
-  predictors = as.data.frame(rhs_matrix) %>%
+  as.data.frame(rhs_matrix) %>%
     magrittr::set_colnames(paste0(".pred_", colnames(rhs_matrix))) %>%
     dplyr::bind_cols(newdata)
-
-  return(predictors)
 }
 
 
@@ -277,7 +275,7 @@ simulate_atomic = function(fit,
   # add_simulated etc. and return
   attr(return_me, 'simulated') = args  # Set as attribute
   class(attr(return_me, 'simulated')) = c("mcplist", "list")  # for nicer printing
-  return(return_me)
+  return_me
 }
 
 
@@ -320,8 +318,7 @@ get_fitsimulate = function(pars) {
   return(result)
 }")
 
-  fitsimulate_func = eval(parse(text = fitsimulate_code))
-  return(fitsimulate_func)
+  eval(parse(text = fitsimulate_code))
 }
 
 
@@ -378,8 +375,9 @@ simulate_ar = function(sigma_, ar_list, resid_abs = NULL) {
     # resid_sigma = resid_abs - resid_arma  # Outcommented because it's deterministic in this parameterization (always sums to the observed data exactly)
   }
 
-  return(list(
+  # Return
+  list(
     resid_arma = resid_arma,
     resid_sigma = resid_sigma
-  ))
+  )
 }

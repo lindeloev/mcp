@@ -215,5 +215,5 @@ recover_levels = function(samples, data, ST) {
     }
   }
 
-  return(samples)
+  samples
 }

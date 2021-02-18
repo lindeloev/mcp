@@ -79,7 +79,7 @@ default_dpar_priors = dplyr::bind_rows(
 # Change point
 get_default_prior_cp = function(ST, i, cp_prior) {
   assert_integer(i, lower = 2, len = 1)
-  return(truncate_prior_cp(ST, i, cp_prior$cp))
+  truncate_prior_cp(ST, i, cp_prior$cp)
 }
 
 
@@ -98,7 +98,8 @@ get_default_prior_cp_group = function(ST, i) {
   if (i < nrow(ST))
     trunc_to = paste0(ST$cp_name[i + 1], " - ", ST$cp_name[i])
   trunc = paste0("T(", trunc_from, ", ", trunc_to, ")")
-  return(paste0("dnorm(0, ", ST$cp_sd[i], ") ", trunc))
+
+  paste0("dnorm(0, ", ST$cp_sd[i], ") ", trunc)
 }
 
 
@@ -211,5 +212,5 @@ get_prior = function(ST, rhs_table, family, prior = list()) {
 
   # Replace default priors with user prior and return
   default_prior = utils::modifyList(default_prior, prior)
-  return(default_prior)
+  default_prior
 }

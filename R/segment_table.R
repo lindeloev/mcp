@@ -136,12 +136,10 @@ unpack_y = function(form_y, i, family) {
   }
 
   # Finally:
-  return(
-    tibble::tibble(
-      y = y_col,  # Char
-      trials = trials_col,  # Char or NA
-      weights = weights_col
-    )
+  tibble::tibble(
+    y = y_col,  # Char
+    trials = trials_col,  # Char or NA
+    weights = weights_col
   )
 }
 
@@ -237,10 +235,11 @@ unpack_varying_term = function(term, i) {
     slope = NA
 
   # Return
-  return(list(
+  list(
     int = "0" %notin% preds,  # bool. Is intercept present?
     slope = slope,
-    group = parts[2]))
+    group = parts[2]
+  )
 }
 
 
