@@ -2,7 +2,7 @@ models_arma = list(
   # Simple AR
   list(y ~ 1 + ar(1),
        simulated = list(
-         int_1 = 30,
+         Intercept_1 = 30,
          ar1_1 = 0.7,
          sigma_1 = 10
        )),
@@ -14,7 +14,7 @@ models_arma = list(
        simulated = list(
          cp_1 = 80,
          cp_2 = 140,
-         int_1 = -20,
+         Intercept_1 = -20,
          sigma_1 = 5,
          ar1_1 = 0.7,
          ar2_1 = -0.4,

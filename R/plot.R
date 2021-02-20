@@ -394,7 +394,7 @@ geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
 #' \dontrun{
 #' # More options
 #' plot_pars(demo_fit, regex_pars = "^cp_")  # Plot only change points
-#' plot_pars(demo_fit, pars = c("int_3", "time_3"))  # Plot these parameters
+#' plot_pars(demo_fit, pars = c("Intercept_3", "time_3"))  # Plot these parameters
 #' plot_pars(demo_fit, type = c("trace", "violin"))  # Combine plots
 #' # Some plots only take pairs. hex is good to assess identifiability
 #' plot_pars(demo_fit, type = "hex", pars = c("cp_1", "time_2"))

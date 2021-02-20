@@ -356,8 +356,8 @@ data = tibble::tibble(
     time,
     cp_1 = 30,
     cp_2 = 70,
-    int_1 = 10,
-    int_3 = 0,
+    Intercept_1 = 10,
+    Intercept_3 = 0,
     sigma = 4,
     time_2 = 0.5,
     time_3 = -0.2)
@@ -381,7 +381,7 @@ data = tibble::tibble(
   price = empty$simulate(
     time,
     cp_1 = 120,
-    int_1 = 20,
+    Intercept_1 = 20,
     time_2 = 0.5,
     sigma_1 = 5,
     ar1_1 = 0.7,
@@ -411,8 +411,8 @@ data = tibble::tibble(
     N,
     cp_1 = 30,
     cp_2 = 70,
-    int_1 = 2,
-    int_3 = 0.4,
+    Intercept_1 = 2,
+    Intercept_3 = 0.4,
     x_2 = -0.2,
     x_3 = 0.05)
 )
@@ -436,8 +436,8 @@ data = tibble::tibble(
   y = empty$simulate(
     x,
     cp_1 = 50,
-    int_1 = 10,
-    int_2 = 20,
+    Intercept_1 = 10,
+    Intercept_2 = 20,
     sigma = 8)
 )
 
@@ -459,7 +459,7 @@ data = tibble::tibble(
   y = empty$simulate(
     x,
     cp_1 = 15,
-    int_1 = 10,
+    Intercept_1 = 10,
     sigma = 30,
     x_2 = -30,
     x_2_E2 = 1.5)
@@ -485,8 +485,8 @@ data = tibble::tibble(
     x,
     cp_1 = 25,
     cp_2 = 40,
-    int_1 = 25,
-    int_2 = -10,
+    Intercept_1 = 25,
+    Intercept_2 = -10,
     sigma = 7,
     x_1 = 1,
     x_2 = -3,
@@ -510,10 +510,10 @@ data = tibble::tibble(
   y = empty$simulate(
     x,
     cp_1 = 17,
-    int_1 = 10,
+    Intercept_1 = 10,
     x_1_sin = 10,
     x_2_cos = 8,
-    int_2 = 10,
+    Intercept_2 = 10,
     x_2 = 3,
     sigma = 3
   )
@@ -539,7 +539,7 @@ data = tibble::tibble(
     x,
     cp_1 = 25,
     cp_2 = 75,
-    int_1 = 20,
+    Intercept_1 = 20,
     x_3 = 2,
     sigma_1 = 7,
     sigma_2 = 25,
@@ -566,7 +566,7 @@ data = tibble::tibble(id = c(\"John\", \"Benny\", \"Rose\", \"Cath\", \"Bill\", 
       x,
       cp_1 = 40,
       cp_1_id = 7*(id_numeric - mean(id_numeric)),
-      int_1 = 15,
+      Intercept_1 = 15,
       x_1 = 3,
       x_2 = -2,
       sigma = 25

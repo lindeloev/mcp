@@ -28,7 +28,7 @@ for (prior in bad_prior) {
 
 good_prior = list(
   list(  # Fixed values and non-default change point
-    int_2 = "int_1",
+    Intercept_2 = "Intercept_1",
     cp_1 = "dnorm(3, 10)",
     x_2 = "-0.5"
   ),

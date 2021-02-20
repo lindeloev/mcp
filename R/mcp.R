@@ -28,10 +28,10 @@
 #'   * *Autoregression:* e.g., `~ar(1)` for a simple onset/change in AR(1) or
 #'     `ar(2, 0 + x`) for an AR(2) increasing by `x`. [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
 #'
-#' @param prior Named list. Names are parameter names (`cp_i`, `int_i`, `xvar_i`,
+#' @param prior Named list. Names are parameter names (`cp_i`, `Intercept_i`, `xvar_i`,
 #'  `sigma``) and the values are either
 #'
-#'  * A JAGS distribution (e.g., `int_1 = "dnorm(0, 1) T(0,)"`) indicating a
+#'  * A JAGS distribution (e.g., `Intercept_1 = "dnorm(0, 1) T(0,)"`) indicating a
 #'      conventional prior distribution. Uninformative priors based on data
 #'      properties are used where priors are not specified. This ensures good
 #'      parameter estimations, but it is a questionable for hypothesis testing.
@@ -39,8 +39,8 @@
 #'      details. Change points are forced to be ordered through the priors using
 #'      truncation, except for uniform priors where the lower bound should be
 #'      greater than the previous change point, `dunif(cp_1, MAXX)`.
-#'  * A numerical value (e.g., `int_1 = -2.1`) indicating a fixed value.
-#'  * A model parameter name (e.g., `int_2 = "int_1"`), indicating that this parameter is shared -
+#'  * A numerical value (e.g., `Intercept_1 = -2.1`) indicating a fixed value.
+#'  * A model parameter name (e.g., `Intercept_2 = "Intercept_1"`), indicating that this parameter is shared -
 #'      typically between segments. If two varying effects are shared this way,
 #'      they will need to have the same grouping variable.
 #'  * A scaled Dirichlet prior is supported for change points if they are all set to
@@ -108,9 +108,9 @@
 #' \donttest{
 #' # Define the segments using formulas. A change point is estimated between each formula.
 #' model = list(
-#'   response ~ 1,  # Plateau in the first segment (int_1)
+#'   response ~ 1,  # Plateau in the first segment (Intercept_1)
 #'   ~ 0 + time,    # Joined slope (time_2) at cp_1
-#'   ~ 1 + time     # Disjoined slope (int_3, time_3) at cp_2
+#'   ~ 1 + time     # Disjoined slope (Intercept_3, time_3) at cp_2
 #' )
 #'
 #' # Fit it and sample the prior too.
@@ -150,10 +150,10 @@
 #'
 #' # Set priors and re-run
 #' prior = list(
-#'   int_1 = 15,
+#'   Intercept_1 = 15,
 #'   time_2 = "dt(0, 2, 1) T(0, )",  # t-dist slope. Truncated to positive.
 #'   cp_2 = "dunif(cp_1, 80)",    # change point to segment 2 > cp_1 and < 80.
-#'   int_3 = "int_1"           # Shared intercept between segment 1 and 3
+#'   Intercept_3 = "Intercept_1"           # Shared intercept between segment 1 and 3
 #' )
 #'
 #' fit3 = mcp(model, data = ex$data, prior = prior)

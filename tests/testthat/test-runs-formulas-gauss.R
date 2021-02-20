@@ -79,9 +79,6 @@ test_good(good_intercepts)
 # TEST SLOPES #
 ###############
 bad_slopes = list(
-  list(y ~ x + y),  # Two slopes
-  list(y ~ x,  # Two slopes
-       ~ y),
   list(y ~ 1,
        ~ log(x)),  # should fail explicitly because negative x
   list(y ~ 1,

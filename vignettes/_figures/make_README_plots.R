@@ -77,9 +77,9 @@ save_it("ex_binomial.png")
 ##########################
 ex_rel = mcp_example("rel_prior")
 prior_rel = list(
-  int_1 = 10,  # fixed value
+  Intercept_1 = 10,  # fixed value
   x_3 = "x_1",  # shared slope in segment 1 and 3
-  int_2 = "dnorm(0, 20)",
+  Intercept_2 = "dnorm(0, 20)",
   cp_1 = "dunif(20, 50)"  # has to occur in this interval
 )
 

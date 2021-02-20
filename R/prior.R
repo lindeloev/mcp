@@ -21,35 +21,35 @@ default_dpar_priors = tibble::tribble(
   # Gaussian mu
   "gaussian", "identity", "mu", "Intercept", "dt(MEANLINKY, SDLINKY, 3)",
   "gaussian", "identity", "mu", "dummy", "dt(0, SDLINKY, 3)",
-  "gaussian", "identity", "mu", "slope", "dt(0, N_CP * SDLINKY / (MAXX - MINX), 3)",
+  "gaussian", "identity", "mu", "slope", "dt(0, (N_CP + 1) * SDLINKY / (MAXX - MINX), 3)",
 
   # Gaussian sigma
   "gaussian", "identity", "sigma", "Intercept", "dt(0, SDLINKY, 3) T(0, )",  # Will always be <= observed SDLINKY
   "gaussian", "identity", "sigma", "dummy", "dt(0, SDLINKY, 3)",
-  "gaussian", "identity", "sigma", "slope", "dt(0, N_CP * SDLINKY / (MAXX - MINX), 3)",
+  "gaussian", "identity", "sigma", "slope", "dt(0, (N_CP + 1) * SDLINKY / (MAXX - MINX), 3)",
 
   # Binomial
   "binomial", "logit", "mu", "Intercept", "dt(0, 2.5, 3)",  # TO DO: center this on data
   "binomial", "logit", "mu", "dummy", "dt(0, 2.5, 3)",
-  "binomial", "logit", "mu", "slope", "dt(0, N_CP * 2.5 / (MAXX - MINX), 3)",
+  "binomial", "logit", "mu", "slope", "dt(0, (N_CP + 1) * 2.5 / (MAXX - MINX), 3)",
 
-  "binomial", "identity", "mu", "Intercept", "dbeta(0, 1)",  # TO DO: center this on data
+  "binomial", "identity", "mu", "Intercept", "dbeta(1, 1)",  # TO DO: center this on data
   "binomial", "identity", "mu", "dummy", "dunif(-1, 1)",
-  "binomial", "identity", "mu", "slope", "dt(0, N_CP / (MAXX - MINX), 3)",
+  "binomial", "identity", "mu", "slope", "dt(0, (N_CP + 1) / (MAXX - MINX), 3)",
 
   # Poisson
-  "poisson", "log", "mu", "Intercept", "dt(0, 10)",  # TO DO: center this on data
-  "poisson", "log", "mu", "dummy", "dt(0, 10)",
-  "poisson", "log", "mu", "slope", "dt(0, 10)",
+  "poisson", "log", "mu", "Intercept", "dt(0, 10, 3)",  # TO DO: center this on data
+  "poisson", "log", "mu", "dummy", "dt(0, 10, 3)",
+  "poisson", "log", "mu", "slope", "dt(0, 10, 3)",
 
   "poisson", "identity", "mu", "Intercept", "dt(MEANLINKY, MEANLINKY, 3)",
   "poisson", "identity", "mu", "dummy", "dt(0, MEANLINKY, 3)",
-  "poisson", "identity", "mu", "slope", "dt(0, N_CP * MEANLINKY / (MAXX - MINX), 3)",
+  "poisson", "identity", "mu", "slope", "dt(0, (N_CP + 1) * MEANLINKY / (MAXX - MINX), 3)",
 
   # Negbinomial shape
   "negbinomial", "identity", "shape", "Intercept", "dt(0, 10, 3) T(0, )",  # TO DO: center this on data
   "negbinomial", "identity", "shape", "dummy", "dt(0, 10, 3)",
-  "negbinomial", "identity", "shape", "slope", "dt(0, N_CP * 10 / (MAXX - MINX), 3) T(0, )"
+  "negbinomial", "identity", "shape", "slope", "dt(0, (N_CP + 1) * 10 / (MAXX - MINX), 3) T(0, )"
 )
 
 # Copies sections to other link functions and families

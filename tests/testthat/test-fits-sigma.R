@@ -2,7 +2,7 @@ models_sigma = list(
   # Simple sigma
   list(y ~ 1 + sigma(1 + x),
        simulated = list(
-         int_1 = 30,
+         Intercept_1 = 30,
          sigma_1 = 5,
          sigma_x_1 = 0.1
        )),
@@ -14,7 +14,7 @@ models_sigma = list(
        simulated = list(
          cp_1 = 80,
          cp_2 = 140,
-         int_1 = -20,
+         Intercept_1 = -20,
          sigma_1 = 2,
          x_2 = 0.5,
          sigma_2 = 5,

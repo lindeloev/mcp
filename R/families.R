@@ -69,9 +69,9 @@ mcpfamily = function(x) {
   if (nrow(dpar_prior) == 0)
     stop("mcp has no default priors for ", family$family, "(link = \"", family$link, "\") so it's likely not supported. See `mcpfamily()` on how to create a custom family.")
 
-  # Add AR for gaussian
-  if (family$family == "gaussian" | family$link == "identity")
-    dpar_prior = rbind(dpar_prior, subset(default_common_priors, dpar == "ar"))
+  # Add AR for these
+  #if (family$family == "gaussian" | family$link == "identity")
+  dpar_prior = rbind(dpar_prior, subset(default_common_priors, dpar == "ar"))
 
   family$default_prior = dpar_prior
   family$dpars = unique(dpar_prior$dpar)

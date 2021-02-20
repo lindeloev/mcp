@@ -137,7 +137,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
   # rhs_matrix_ from ellipsis.
   pred_args = args[names(args) %in% pred_pars]
   rhs_matrix_ = do.call(cbind, pred_args)
-  rhs_matrix_ = rhs_matrix_[, match(pred_pars, colnames(rhs_matrix_))]  # Same order as rhs_table$code_name no matter order of args
+  rhs_matrix_ = rhs_matrix_[, match(pred_pars, colnames(rhs_matrix_)), drop = FALSE]  # Same order as rhs_table$code_name no matter order of args
 
   # Run it!
   cp_0 = -Inf

@@ -25,7 +25,7 @@ test_runs = function(model,
     testthat::expect_true(is.list(empty$model), model)
     testthat::expect_true(is.data.frame(empty$data), model)
     testthat::expect_true(is.list(empty$prior), model)
-    testthat::expect_true(class(empty$family) == "family", model)
+    testthat::expect_true(all(class(empty$family) == c("mcpfamily", "family")), model)
     testthat::expect_true(is.null(empty$samples), model)
     testthat::expect_true(is.null(empty$loglik), model)
     testthat::expect_true(is.null(empty$loo), model)
@@ -108,7 +108,7 @@ test_runs = function(model,
       # Test mcpfit functions
       varying_cols = na.omit(fit$.internal$ST$cp_group_col)
       test_summary(fit, varying_cols)
-      test_plot(fit, varying_cols)  # default plot
+      #test_plot(fit, varying_cols)  # default plot
       test_plot_pars(fit)  # bayesplot call
       test_pp_eval(fit)
     }
@@ -160,7 +160,7 @@ test_plot = function(fit, varying_cols) {
     }
     error_message = attr(gg, "condition")$message
     is_expected = any(stringr::str_starts(error_message, expected_error))
-    expect_true(is_expected)
+    testthat::expect_true(is_expected)
   } else {
     testthat::expect_true(ggplot2::is.ggplot(gg))
   }
@@ -265,15 +265,14 @@ test_pp_eval = function(fit) {
       fit$pars$varying,
 
       # Predictors
-      fit$pars$x,
       fit$pars$trials,
+      fit$pars$x,
       na.omit(unique(fit$.internal$ST$cp_group_col)),  # varying effects
       "data_row",
       "fitted"
     )
 
-    is_equal = dplyr::setequal(colnames(result_more), expected_colnames_more)  # Exactly these columns regardless of order
-    testthat::expect_true(is_equal)
+    testthat::expect_true(dplyr::setequal(colnames(result_more), expected_colnames_more))  # Exactly these columns regardless of order
   }
 
   # Test pp_check

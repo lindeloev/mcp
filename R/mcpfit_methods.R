@@ -575,7 +575,8 @@ pp_eval = function(
   returnvar = rlang::sym(type)
   is_arma = length(fit$pars$arma) > 0
   if (is.null(newdata))
-    newdata = fit$data
+    newdata = fit$data %>%
+      dplyr::select(-!!fit$pars$weights)
 
 
   ###############
@@ -583,7 +584,7 @@ pp_eval = function(
   ###############
   varying_info = unpack_varying(fit, pars = varying)
   exclude_varying = fit$pars$varying[fit$pars$varying %notin% varying_info$cols]
-  required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
+  required_cols = colnames(fit$data)[colnames(fit$data) %notin% fit$pars$weights]  # Only predictive columns were saved in fit$data; but exclude weights
   required_cols = required_cols[required_cols %notin% exclude_varying]
   if ((arma == FALSE || is_arma == FALSE) & type != "residuals") {
     required_cols = required_cols[required_cols != fit$pars$y]
@@ -629,12 +630,14 @@ pp_eval = function(
       tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples),
       by = unique(varying_info$cols)
     ) %>%
-      dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!., .type = type_for_simulate, .rate = rate, .which_y = which_y, .arma = arma, .scale = scale))
+      dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!., .type = type_for_simulate, .rate = rate, .which_y = which_y, .arma = arma, .scale = scale)) %>%
+      dplyr::select(-dplyr::starts_with(".pred_"))
   } else {
     # No varying effects: use all samples for each row of data
     samples = tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples) %>%
       tidyr::expand_grid(add_rhs_predictors(newdata, fit)) %>%
-      dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!., .type = type_for_simulate, .rate = rate, .which_y = which_y, .arma = arma, .scale = scale))
+      dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!., .type = type_for_simulate, .rate = rate, .which_y = which_y, .arma = arma, .scale = scale)) %>%
+      dplyr::select(-dplyr::starts_with(".pred_"))
   }
 
   # Optionally compute residuals

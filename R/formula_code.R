@@ -93,7 +93,7 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x) {
       indicator_this = paste0("  (", par_x, "[i_] >= ", dplyr::first(this_cp), ")"),
       indicator_next = dplyr::if_else(is.na(dplyr::first(next_cp)) == TRUE, "", paste0(" * (", par_x, "[i_] < ", dplyr::first(next_cp), ")")),
       inprod = paste0(" * inprod(rhs_matrix_[i_, c(", paste0(matrix_col, collapse = ", "), ")], c(", paste0(code_name, collapse = ", "), "))"),
-      x_factor = gsub("x", paste0(par_x, "_local_", dplyr::first(segment), "_[i_]"), dplyr::first(x_factor)),
+      x_factor = gsub("x(?!p\\()", paste0(par_x, "_local_", dplyr::first(segment), "_[i_]"), dplyr::first(x_factor), perl = TRUE),  # "x" but not "exp("
 
       # All together
       segment_code = paste0(indicator_this, indicator_next, inprod, " * ", x_factor),
@@ -128,20 +128,36 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_formula_r = function(formula_jags, rhs_table, pars) {
-  param_pars = get_sim_pars(rhs_table, pars)
+  all_pars = get_sim_pars(rhs_table, pars)
+  rhs_pars = rhs_table$code_name
+  cp_pars = setdiff(all_pars, rhs_pars)
 
   # Replacements that turns rowwise JAGS code into vectorized R code
   replace_args = c(
-    setNames(paste0(", args$", param_pars), paste0(", ", param_pars)),
-    setNames(paste0("args$", param_pars, ", "), paste0(param_pars, ", ")),
-    setNames(paste0(" (args$", param_pars, " + "), paste0(" (", param_pars, " + ")),  # varying change point
-    setNames(paste0(" + args$", param_pars, ")"), paste0(" + ", param_pars, ")")),  # varying change point
+    # RHS
+    setNames(paste0(", args$", all_pars), paste0(", ", all_pars)),
+    setNames(paste0("args$", rhs_pars, ", "), paste0(rhs_pars, ", ")),
     setNames(paste0("cbind(args$"), "cbind("),
     setNames("args$", "args$args$"),  # Fix double-inserting args$ above
+
+    # Change points
     setNames(paste0("args$", pars$x, " >="), paste0(pars$x, " >=")),
     setNames(paste0("args$", pars$x, " <"), paste0(pars$x, " <")),
+
+    # General
     setNames("pmin(args$", paste0("pmin("))
   )
+  if (length(cp_pars) > 0) {
+    replace_args = c(
+      replace_args,
+      setNames(paste0(" (args$", cp_pars, " + "), paste0(" (", cp_pars, " + ")),  # varying change point
+      setNames(paste0(" + args$", cp_pars, ")"), paste0(" + ", cp_pars, ")")),  # varying change point
+      setNames(paste0(">= args$", cp_pars), paste0(">= ", cp_pars)),
+      setNames(paste0("< args$", cp_pars), paste0("< ", cp_pars)),
+      setNames(paste0(") - args$", cp_pars), paste0(") - ", cp_pars))
+    )
+  }
+
   formula_r = formula_jags %>%
     stringr::str_remove_all("\\[i_\\]") %>%  # Vectorized
     stringi::stri_replace_all_fixed("[i_,", "[,") %>%  # Vectorized
