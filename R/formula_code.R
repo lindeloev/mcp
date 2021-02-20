@@ -16,8 +16,8 @@ get_formula_jags = function(ST, rhs_table, par_x, family) {
   # Add X-helpers which code the X relative to the start of each segment.
   local_x_str = "\n# par_x local to each segment"
   for (i in seq_len(nrow(ST))) {
-    segment_start = ifelse(i > 1, yes = paste0(" - ", ST$cp_code_form[i], ""), no = "")  #
-    segment_end = ifelse(i < nrow(ST), yes = paste0(ST$cp_code_form[i + 1], ""), no = paste0("cp_", i))  # infinite if last segment.
+    segment_start = ifelse(i > 1, yes = paste0(" - ", ST$cp_code_form[i]), no = "")  #
+    segment_end = ifelse(i < nrow(ST), yes = ST$cp_code_form[i + 1], no = paste0("cp_", i))  # infinite if last segment.
 
     local_x_str = paste0(local_x_str, "\n", par_x, "_local_", i, "_[i_] = min(", par_x, "[i_], ", segment_end, ")", segment_start)
   }

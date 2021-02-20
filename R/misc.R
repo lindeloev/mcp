@@ -337,63 +337,40 @@ print.mcptext = function(x, ...) {
 #' plot(ex_with_fit$fit)
 #'}
 mcp_example = function(name, sample = FALSE) {
-  assert_value(name, c("demo", "ar", "binomial", "intercepts", "rel_prior", "quadratic", "trigonometric", "varying", "variance"))
   data = data.frame()  # To make R CMD Check happy.
-  if (name == "demo") {
-    call = "# Define model
-model = list(
-  response ~ 1,
-  ~ 0 + time,
-  ~ 1 + time
-)
 
-# Simulate data
-empty = mcp(model, sample = FALSE)
-set.seed(40)
-data = tibble::tibble(
-  time = runif(100, 0, 100),
-  response = empty$simulate(
-    time,
-    cp_1 = 30,
-    cp_2 = 70,
-    Intercept_1 = 10,
-    Intercept_3 = 0,
-    sigma = 4,
-    time_2 = 0.5,
-    time_3 = -0.2)
-)
-
-# Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data)"
-  } else if (name == "ar") {
-    call = "# Define model
+  examples = list(
+ar = "# Define model
 model = list(
   price ~ 1 + ar(2),
   ~ 0 + time + ar(1)
 )
 
 # Simulate data
-empty = mcp(model, sample = FALSE)
 set.seed(42)
-data = tibble::tibble(
+data = data.frame(
   time = 1:200,
-  price = empty$simulate(
-    time,
-    cp_1 = 120,
-    Intercept_1 = 20,
-    time_2 = 0.5,
-    sigma_1 = 5,
-    ar1_1 = 0.7,
-    ar2_1 = 0.2,
-    ar1_2 = -0.4)
+  price = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
+)
+empty = mcp(model, data, sample = FALSE)
+data$price = NULL  # Simulate new
+data$price = empty$simulate(empty, data,
+  cp_1 = 120,
+  Intercept_1 = 20,
+  time_2 = 0.5,
+  sigma_1 = 5,
+  ar1_1 = 0.7,
+  ar2_1 = 0.2,
+  ar1_2 = -0.4
 )
 
 # Run sampling
 if (sample == TRUE)
-  fit = mcp(model, data)"
-  } else if (name == "binomial") {
-    call = "# Define model
+  fit = mcp(model, data)",
+
+
+
+binomial = "# Define model
 model = list(
   y | trials(N) ~ 1,  # constant rate
   ~ 0 + x,  # joined changing rate
@@ -401,187 +378,246 @@ model = list(
 )
 
 # Simulate data
-empty = mcp(model, family = binomial(), sample = FALSE)
 set.seed(42)
-data = tibble::tibble(
+data = data.frame(
   x = 1:100,
-  N = sample(10, length(x), replace=TRUE),
-  y = empty$simulate(
-    x = x,
-    N,
-    cp_1 = 30,
-    cp_2 = 70,
-    Intercept_1 = 2,
-    Intercept_3 = 0.4,
-    x_2 = -0.2,
-    x_3 = 0.05)
+  N = sample(10, 100, replace=TRUE),
+  y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
+)
+empty = mcp(model, data, family = binomial(), sample = FALSE)
+data$y = empty$simulate(empty, data,
+  cp_1 = 30,
+  cp_2 = 70,
+  Intercept_1 = 2,
+  Intercept_3 = 0.4,
+  x_2 = -0.2,
+  x_3 = 0.05
 )
 
 # Run sampling
 if (sample == TRUE)
   fit = mcp(model, data, family = binomial(), adapt = 5000)
-"
-  } else if (name == "intercepts") {
-    call = "# Define model
+",
+
+
+
+demo = "# Define model
+model = list(
+  response ~ 1,
+  ~ 0 + time,
+  ~ 1 + time
+)
+
+# Simulate data
+set.seed(40)
+data = data.frame(
+  time = runif(100, 0, 100),
+  response = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
+)
+empty = mcp(model, data, sample = FALSE)
+data$response = empty$simulate(empty, data,
+  cp_1 = 30,
+  cp_2 = 70,
+  Intercept_1 = 10,
+  time_2 = 0.5,
+  Intercept_3 = 0,
+  time_3 = -0.2,
+  sigma_1 = 4
+)
+
+# Run sampling
+if (sample == TRUE)
+  fit = mcp(model, data)",
+
+
+
+intercepts = "# Define model
 model = list(
   y ~ 1,
   ~ 1
 )
 
 # Simulate data
-empty = mcp(model, sample = FALSE, par_x = \"x\")
 set.seed(40)
-data = tibble::tibble(
+data = data.frame(
   x = runif(100, 0, 100),
-  y = empty$simulate(
-    x,
-    cp_1 = 50,
-    Intercept_1 = 10,
-    Intercept_2 = 20,
-    sigma = 8)
+  y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
+)
+empty = mcp(model, data, sample = FALSE, par_x = 'x')
+data$y = empty$simulate(empty, data,
+  cp_1 = 50,
+  Intercept_1 = 10,
+  Intercept_2 = 20,
+  sigma_1 = 8
 )
 
 # Run sampling
 if (sample == TRUE)
-  fit = mcp(model, data, par_x = \"x\")"
-  } else if (name == "quadratic") {
-    call = "# Define model
+  fit = mcp(model, data, par_x = 'x')",
+
+
+
+multiple = "# Define model
+model = list(
+  y ~ 1 + x:group + z,
+  ~ 1 + x + group,
+  ~ 0 + I(x^2)
+)
+
+# Simulate data
+data = data.frame(
+  x = 1:220,
+  group = rep(c('A', 'B', 'C', 'D'), 55),
+  z = rnorm(220, mean = 1:220, sd = 25),
+  y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
+)
+empty = mcp(model, data, sample = FALSE, par_x = 'x')
+data$y = empty$simulate(empty, data,
+  cp_1 = 100,
+  cp_2 = 180,
+
+  Intercept_1 = 10,
+  z_1 = 0.2,
+  xgroupA_1 = -0.75,
+  xgroupB_1 = -0.25,
+  xgroupC_1 = 0.25,
+  xgroupD_1 = 0.75,
+
+  Intercept_2 = 40,
+  x_2 = -0.8,
+  groupB_2 = 15,
+  groupC_2 = 30,
+  groupD_2 = 45,
+
+  xE2_3 = 0.1,
+
+  sigma_1 = 5
+)
+
+# Run sampling
+if (sample == TRUE)
+  fit = mcp(model, data, par_x = 'x', cores = 3)",
+
+
+
+quadratic = "# Define model
 model = list(
   y ~ 1,
   ~ 0 + x + I(x^2)
 )
 
 # Simulate data
-empty = mcp::mcp(model, sample = FALSE)
 set.seed(42)
-data = tibble::tibble(
+data = data.frame(
   x = seq(0, 40, by = 0.5),
-  y = empty$simulate(
-    x,
-    cp_1 = 15,
-    Intercept_1 = 10,
-    sigma = 30,
-    x_2 = -30,
-    x_2_E2 = 1.5)
+  y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
+)
+empty = mcp::mcp(model, data, sample = FALSE)
+data$y = empty$simulate(empty, data,
+  cp_1 = 15,
+  Intercept_1 = 10,
+  x_2 = -30,
+  xE2_2 = 1.5,
+  sigma_1 = 30
 )
 
 # Run sampling
 if (sample == TRUE)
-  fit = mcp(model, data)"
-  } else if (name == "rel_prior") {
-    call = "# Define model
-model = list(
-  y ~ 1 + x,
-  ~ rel(1) + rel(x),
-  rel(1) ~ 0 + x
-)
+  fit = mcp(model, data)",
 
-# Simulate data
-empty = mcp::mcp(model, sample = FALSE)
-set.seed(40)
-data = tibble::tibble(
-  x = 1:100,
-  y = empty$simulate(
-    x,
-    cp_1 = 25,
-    cp_2 = 40,
-    Intercept_1 = 25,
-    Intercept_2 = -10,
-    sigma = 7,
-    x_1 = 1,
-    x_2 = -3,
-    x_3 = 0.5)
-)
 
-# Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data)"
-  } else if (name == "trigonometric") {
-    call = "model = list(
+
+trigonometric = "model = list(
   y ~ 1 + sin(x),
   ~ 1 + cos(x) + x
 )
 
 # Simulate data
-empty = mcp::mcp(model, sample = FALSE)
-set.seed(40)
-data = tibble::tibble(
+set.seed(42)
+data = data.frame(
   x = seq(0, 35, by = 0.2),
-  y = empty$simulate(
-    x,
-    cp_1 = 17,
-    Intercept_1 = 10,
-    x_1_sin = 10,
-    x_2_cos = 8,
-    Intercept_2 = 10,
-    x_2 = 3,
-    sigma = 3
-  )
+  y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
+)
+empty = mcp::mcp(model, data, sample = FALSE)
+data$y = empty$simulate(empty, data,
+  cp_1 = 17,
+  Intercept_1 = 10,
+  sinx_1 = 10,
+  Intercept_2 = 10,
+  x_2 = 3,
+  cosx_2 = 8,
+  sigma_1 = 3
 )
 
 # Run sampling
 if (sample == TRUE)
-  fit = mcp(model, data)"
-  } else if (name == "variance") {
-    call = "# Define model
+  fit = mcp(model, data)",
+
+
+
+variance = "# Define model
 model = list(
   y ~ 1,
   ~ 0 + sigma(1 + x),
   ~ 0 + x
 )
 
+
 # Simulate data
-empty = mcp::mcp(model, sample = FALSE)
-set.seed(30)
-data = tibble::tibble(
+set.seed(42)
+data = data.frame(
   x = 1:100,
-  y = empty$simulate(
-    x,
+  y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
+)
+empty = mcp::mcp(model, data, sample = FALSE)
+data$y = empty$simulate(empty, data,
     cp_1 = 25,
     cp_2 = 75,
     Intercept_1 = 20,
     x_3 = 2,
     sigma_1 = 7,
     sigma_2 = 25,
-    sigma_x_2 = -0.45)
+    sigma_x_2 = -0.45
   )
 
 # Run sampling
 if (sample == TRUE)
-  fit = mcp(model, data)"
-  } else if (name == "varying") {
-    call = "# Define model
+  fit = mcp(model, data)",
+
+
+
+varying = "# Define model
 model = list(
   y ~ 1 + x,  # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope
 )
 
 # Simulate data
-empty = mcp::mcp(model, sample=FALSE)
-data = tibble::tibble(id = c(\"John\", \"Benny\", \"Rose\", \"Cath\", \"Bill\", \"Erin\")) %>%
+set.seed(42)
+data = tibble::tibble(id = c('John', 'Benny', 'Rose', 'Cath', 'Bill', 'Erin')) %>%
   tidyr::expand_grid(x = seq(1, 100, by=4)) %>%
   dplyr::mutate(
     id_numeric = as.numeric(as.factor(id)),
-    y = empty$simulate(
-      x,
-      cp_1 = 40,
-      cp_1_id = 7*(id_numeric - mean(id_numeric)),
-      Intercept_1 = 15,
-      x_1 = 3,
-      x_2 = -2,
-      sigma = 25
-    )
+    y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
   )
+empty = mcp(model, data, sample = FALSE)
+data$y = empty$simulate(empty, data,
+  cp_1 = 40,
+  cp_1_id = 7*(data$id_numeric - mean(data$id_numeric)),
+  Intercept_1 = 15,
+  x_1 = 3,
+  x_2 = -2,
+  sigma_1 = 25
+)
 
 # Run sampling
 if (sample == TRUE)
   fit = mcp(model, data)"
-  } else {
-    stop("Unknown `name`: ", name)
-  }
+  )
 
   # Run the code
-  eval(parse(text = call))
+  assert_value(name, allowed = names(examples))
+  eval(parse(text = examples[[name]]))
 
   # Get stuff ready for return
   for (i in seq_along(model))

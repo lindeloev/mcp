@@ -143,8 +143,8 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
   assert_numeric(width, lower = 0, upper = 1, len = 1)
   assert_integer(digits, lower = 0, len = 1)
 
-  # Loop through hypotheses and populate return_df
-  return_df = data.frame()
+  # Loop through hypotheses and populate df_result
+  df_result = data.frame()
   for (expression in hypotheses) {
     ####################
     # PREPARE FOR TEST #
@@ -236,11 +236,11 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
       BF = BF,
       stringsAsFactors = FALSE
     )
-    return_df = dplyr::bind_rows(return_df, new_row)
+    df_result = dplyr::bind_rows(df_result, new_row)
   }
 
   # Finally return
-  return_df
+  df_result
 }
 
 
