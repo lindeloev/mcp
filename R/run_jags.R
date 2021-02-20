@@ -88,7 +88,7 @@ run_jags = function(data,
     # PARALLEL using the future package and one chain per worker
     if (future::nbrOfWorkers() == 1)
       message("Setting up parallel workers...")
-    future::plan(future::multiprocess, .skip = TRUE)
+    future::plan(future::multisession, .skip = TRUE)
 
     message("Parallel sampling in progress...")
     timer = proc.time()

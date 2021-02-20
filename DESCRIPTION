@@ -20,7 +20,7 @@ Roxygen: list(markdown = TRUE)
 Depends: R (>= 3.5.0)
 Imports:
 	parallel,
-	future,
+	future (>= 1.20.0),
 	future.apply,
 	rjags (>= 4.9),
 	coda (>= 0.19.3),
