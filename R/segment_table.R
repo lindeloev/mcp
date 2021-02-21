@@ -1,7 +1,7 @@
 #' Takes a formula and returns a string representation of y, cp, and rhs
 #' @aliases unpack_tildes
 #' @keywords internal
-#' @param segment A formula
+#' @param form A formula
 #' @param i The segment number
 #' @return A one-row tibble with columns:
 #'   * `form`: String. The full formula for this segment.
@@ -10,14 +10,14 @@
 #'   * `form_rhs`: String. The formula for the RHS. Only used to build the formula representation in `summary.mcpfit()`.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-unpack_tildes = function(segment, i) {
-  has_LHS = attributes(stats::terms(segment))$response == 1
-  form_str = formula_to_char(segment)
+unpack_tildes = function(form, i) {
+  has_LHS = attributes(stats::terms(form))$response == 1
+  form_str = formula_to_char(form)
   if (has_LHS == FALSE && i == 1) {
     stop("No response variable in segment 1.")
   } else if (has_LHS == FALSE && i > 1) {
     # If no LHS, add a change point "intercept"
-    form_str = paste("1 ", form_str)
+    form_str = paste("1", form_str)
   }
 
   # List of strings for each section
@@ -260,7 +260,7 @@ unpack_varying_term = function(term, i) {
 #'   y ~ 1 + x,
 #'   1 + (1|id) ~ 1
 #' )
-#' get_segment_table(model)
+#' get_segment_table(model, par_x = "x")
 
 get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
   assert_types(par_x, "character", len = 1)
@@ -282,7 +282,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
   # Build "full" formula (with explicit intercepts) and insert instead of the old
   ST = ST %>%
     tidyr::fill(.data$y, .data$form_y, .data$trials, .data$weights, .direction = "downup") %>%  # Usually only provided in segment 1
-    dplyr::mutate(form = paste0(.data$form_y, ifelse(segment == 1, "", .data$form_cp), .data$form_rhs)) %>%  # build full formula
+    dplyr::mutate(form = ifelse(segment == 1, form, paste0(.data$form_y, .data$form_cp, " ~ ", .data$form_rhs))) %>%  # build full formula
     dplyr::select(-.data$form_y, -.data$form_cp, -.data$form_rhs)  # Not needed anymore
 
   ST$x = par_x  # TO DO: TEMPORARY UNTIL MULTIPLE REGRESSION IS IMPLEMENTED

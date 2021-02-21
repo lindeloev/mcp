@@ -45,6 +45,12 @@ release_questions = function() {
 }
 
 
+# Just returns cp_1, cp_2, etc.
+get_cp_pars = function(pars) {
+  pars$reg[stringr::str_detect(pars$reg, "^cp_[0-9]+$") & !stringr::str_detect(pars$reg, "^cp_[0-9]+_sd$")]  # cp_1 but not cp_1_sd
+}
+
+
 #' Remove varying or population terms from a formula
 #'
 #' WARNING: removes response side from the formula
@@ -296,6 +302,16 @@ print.mcptext = function(x, ...) {
   assert_types(x, "character", len = 1)
   assert_ellipsis(...)
   cat(x)
+}
+
+
+# Set model environment to parent.frame() for prettier printing
+# and because it was created in a different environment than inteded for use.
+fix_model_environment = function(model) {
+  assert_types(model, "mcpmodel")
+  for (i in seq_along(model))
+    environment(model[[i]]) = globalenv()
+  model
 }
 
 
@@ -620,8 +636,7 @@ if (sample == TRUE)
   eval(parse(text = examples[[name]]))
 
   # Get stuff ready for return
-  for (i in seq_along(model))
-    environment(model[[i]]) = parent.frame()
+  model = fix_model_environment(model)
 
   class(call) = c("mcptext", "character")
   class(model) = c("mcplist", "list")

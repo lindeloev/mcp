@@ -26,7 +26,7 @@
 #'   Provided by user. See \code{\link{mcp}} for more details.
 #' @slot mcmc_post An \code{\link[coda]{mcmc.list}} object with posterior samples.
 #' @slot mcmc_prior An \code{\link[coda]{mcmc.list}} object with prior samples.
-#' @slot mcmc_loglik An \code{\link[coda]{mcmc.list}} object with samples of log-likelihood.
+#' @slot loglik An (Nchains * Nsamples) x Ndatarows matrix of log-likelihoods.
 #' @slot pars A list of character vectors of model parameter names.
 #' @slot jags_code A string with jags code. Use `cat(fit$jags_code)` to show it.
 #' @slot simulate A method to simulate and predict data.
@@ -502,11 +502,13 @@ tidy_samples = function(
 #'   the original data is used.
 #' @param summary Summarise at each x-value
 #' @param type One of:
-#'   - "fitted": return fitted values. See also `fitted()`
-#'   - "predict": return predicted values, using random dispersion around the central tendency
+#'   - `"fitted"`: return fitted values. See also `fitted()`
+#'   - `"predict"`: return predicted values, using random dispersion around the central tendency
 #'     (e.g., `y_predict = rnorm(N, y_fitted, sigma_fitted)` for `family = gaussian()`).
 #'     See also `predict()`.
-#'   - "residuals": same as "predict" but the observed y-values are subtracted. See also `residuals()`
+#'   - `"residuals"`: same as "predict" but the observed y-values are subtracted. See also `residuals()`
+#'   - `"loglik"`: return the log-likelihood for each sample for each data point.
+#'     Requires `scale = "response"`.
 #' @param probs Vector of quantiles. Only in effect when `summary == TRUE`.
 #' @param rate Boolean. For binomial models, plot on raw data (`rate = FALSE`) or
 #'   response divided by number of trials (`rate = TRUE`). If FALSE, linear
@@ -586,7 +588,7 @@ pp_eval = function(
   exclude_varying = fit$pars$varying[fit$pars$varying %notin% varying_info$cols]
   required_cols = colnames(fit$data)[colnames(fit$data) %notin% fit$pars$weights]  # Only predictive columns were saved in fit$data; but exclude weights
   required_cols = required_cols[required_cols %notin% exclude_varying]
-  if ((arma == FALSE || is_arma == FALSE) & type != "residuals") {
+  if ((arma == FALSE || is_arma == FALSE) & type %in% c("fitted", "predict")) {
     required_cols = required_cols[required_cols != fit$pars$y]
   } else if (fit$pars$y %notin% colnames(newdata)) {
     stop("`newdata` must contain a response column named '", fit$pars$y, "' for when `arma == TRUE` and/or `type = 'residuals'`")
@@ -601,7 +603,7 @@ pp_eval = function(
   # ASSERTS AND RECODING #
   ########################
   assert_logical(summary, len = 1)
-  assert_value(type, allowed = c("fitted", "predict", "residuals"))
+  assert_value(type, allowed = c("fitted", "predict", "residuals", "loglik"))
   assert_types(probs, "logical", "numeric")
   if (is.numeric(probs))
     assert_numeric(probs, lower = 0, upper = 1)
@@ -615,8 +617,8 @@ pp_eval = function(
     assert_integer(nsamples, lower = 1)
   assert_value(samples_format, allowed = c("tidy", "matrix"))
 
-  if (scale == "linear" && (type != "fitted"))
-    stop("`scale = 'linear'` is only meaningful when `type = 'fitted'`.")
+  #if (scale == "linear" && type == "predict")
+  #  stop("`scale = 'linear'` is only meaningful when `type = 'fitted'`.")
 
 
   ########################

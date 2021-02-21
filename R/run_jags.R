@@ -28,8 +28,8 @@ run_jags = function(data,
                     inits
 ) {
 
-  # Prevent failure of all mcp methods when length(pars) <= 2 (one parameter +
-  # loglik_).This always happens when there is only one parameter, so we just
+  # Prevent failure of all mcp methods when length(pars) <= 2.
+  # This always happens when there is only one parameter, so we just
   # save samples from the dummy change points.
   if (length(pars) <= 2)
     pars = c(pars, "cp_0", "cp_1")

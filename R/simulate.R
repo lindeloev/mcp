@@ -73,7 +73,7 @@ add_rhs_predictors = function(newdata, fit) {
 #' @return Character vector
 get_sim_pars = function(rhs_table, pars) {
   c(
-    pars$reg[stringr::str_detect(pars$reg, "^cp_[0-9]+$") & !stringr::str_detect(pars$reg, "^cp_[0-9]+_sd$")],  # cp_1 but not cp_1_sd
+    get_cp_pars(pars),  # cp_1 but not cp_1_sd
     rhs_table$code_name,  # mu, sigma, ar, etc.
     pars$varying
   )
@@ -112,7 +112,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
     stop_github("Missing the following arguments: ", and_collapse(missing_args))
 
   # Other args
-  assert_value(.type, allowed = c('predict', 'fitted'), len = 1)
+  assert_value(.type, allowed = c("predict", "fitted", "loglik"), len = 1)
   assert_logical(.rate, len = 1)
 
   allowed_which_y = unique(c(
@@ -122,8 +122,8 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
   assert_value(.which_y, allowed = allowed_which_y)
 
   assert_logical(.arma, len = 1)
-  assert_value(.scale, allowed = c('response', 'linear'), len = 1)
-  if (.scale == 'linear' && .type == 'predict')
+  assert_value(.scale, allowed = c("response", "linear"), len = 1)
+  if (.scale == "linear" && .type != "fitted")
     stop("Only `type = 'fitted'` is meaningful when `scale = 'linear'`")
 
 
@@ -148,15 +148,16 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
   ################
   # RETURN STUFF #
   ################
-  .which_y = paste0(.which_y, '_')
-  if (.scale == 'response') {
+  .ydata = args[[fit$pars$y]]
+  .which_y = paste0(.which_y, "_")
+  if (.scale == "response") {
     assign(.which_y, fit$family$linkinv(get(.which_y)))
   }
 
   # Simply return for fitted non-mu params
-  if (.which_y != 'mu_' & .type == 'fitted') {
+  if (.which_y != "mu_" & .type == "fitted") {
     return(get(.which_y))
-  } else if (.which_y != 'mu_' & .type != 'fitted') {
+  } else if (.which_y != "mu_" & .type != "fitted") {
     stop("`type = 'fitted'` is the only option when `which_y != 'mu'`")
   }
 
@@ -166,14 +167,16 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
     is_arma = any(rhs_table$dpar == "ar")
     if (is_arma && .arma == TRUE) {
       ar_list = mget(ls()[grep("^ar[0-9]+_$", ls())])  # list(ar1_, ar2_, etc.). TO DO: run eval(parse(...)) in a container, return list with $ar1_, $ar2_, etc.
-      ar_result = simulate_ar(sigma_, ar_list, args[[fit$pars$y]])
+      ar_result = simulate_ar(sigma_, ar_list, .ydata)
       mu_ = mu_ + ar_result$resid_arma
     }
 
     # If fitted or no data
-    if (.type == 'fitted') {
+    if (.type == "fitted") {
       return(mu_)
-    } else if (.type == 'predict') {
+    } else if(.type == "loglik") {
+      return(dnorm(.ydata, mu_, sigma_, log = TRUE))
+    } else if (.type == "predict") {
       if (any(fit$family$linkinv(sigma_) < 0))
         stop("Modelled negative sigma. First detected at ", fit$pars$x, " = ", min(get(fit$pars$x)[fit$family$linkinv(sigma_) < 0]))
 
@@ -191,28 +194,37 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
 
     # OTHER FAMILIES ---------------------
   } else if (fit$family$family == "binomial") {
-    if (.type == 'predict') {
-      N_trials = args[[fit$pars$trials]]
+    N_trials = args[[fit$pars$trials]]
+
+    if (.type == "fitted") {
+      if (.rate == FALSE) return(N_trials * mu_)
+      if (.rate == TRUE)  return(mu_)
+    } else if (.type == "loglik") {
+      return(dbinom(.ydata, N_trials, mu_, log = TRUE))
+    } else if (.type == "predict") {
       if (.rate == FALSE) return(rbinom(length(mu_), N_trials, mu_))
       if (.rate == TRUE)  return(rbinom(length(mu_), N_trials, mu_) / N_trials)
-    } else if (.type == 'fitted') {
-      if (.rate == FALSE) return(", pars$trials, " * mu_)
-      if (.rate == TRUE)  return(mu_)
     }
   } else if (fit$family$family == "bernoulli") {
-    if (.type == 'predict') return(rbinom(length(mu_), 1, mu_))
-    if (.type == 'fitted') return(mu_)
+    if (.type == "fitted") return(mu_)
+    if (.type == "loglik") return(dbinom(.ydata, 1, mu_, log = TRUE))
+    if (.type == "predict") return(rbinom(length(mu_), 1, mu_))
   } else if (fit$family$family == "poisson") {
-    if (.type == 'predict') {
-      if ((.scale == 'response' && any(mu_ > 2146275819)) || (.scale == 'linear' && any(fit$family$linkinv(mu_) > 2146275819)))
+    if (.type %in% c("predict", "loglik")) {
+      if ((.scale == "response" && any(mu_ > 2146275819)) || (.scale == "linear" && any(fit$family$linkinv(mu_) > 2146275819)))
         stop("Modelled extremely large value: ", fit$family$linkinv_str, "(", fit$pars$y, ") > 2146275819.")
-      return(rpois(length(mu_), mu_))
-    } else if (.type == 'fitted') {
+    }
+    if (.type == "fitted") {
       return(mu_)
+    } else if (.type == "loglik") {
+      return(dpois(.ydata, mu_, log = TRUE))
+    } else if (.type == "predict") {
+      return(rpois(length(mu_), mu_))
     }
   } else if (fit$family$family == "exponential") {
-    if (.type == 'predict') return(rexp(length(mu_), mu_))
-    if (.type == 'fitted') return(1 / mu_)
+    if (.type == "fitted") return(1 / mu_)
+    if (.type == "loglik") return(dexp(.ydata, mu_, log = TRUE))
+    if (.type == "predict") return(rexp(length(mu_), mu_))
   }
 }
 
@@ -237,11 +249,11 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
 simulate_atomic = function(fit,
                         newdata,
                         ...,
-                        .type = 'predict',
+                        .type = "predict",
                         .rate = FALSE,
-                        .which_y = 'mu',
+                        .which_y = "mu",
                         .arma = TRUE,
-                        .scale = 'response') {
+                        .scale = "response") {
 
   # Check inputs.
   mcp:::assert_types(fit, "mcpfit")
@@ -274,8 +286,8 @@ simulate_atomic = function(fit,
     dplyr::pull(.simulated_y)
 
   # add_simulated etc. and return
-  attr(simulated_y, 'simulated') = args  # Set as attribute
-  class(attr(simulated_y, 'simulated')) = c("mcplist", "list")  # for nicer printing
+  attr(simulated_y, "simulated") = args  # Set as attribute
+  class(attr(simulated_y, "simulated")) = c("mcplist", "list")  # for nicer printing
   simulated_y
 }
 

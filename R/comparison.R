@@ -3,17 +3,16 @@
 
 #' Compute information criteria for model comparison
 #'
-#' Takes an \code{\link{mcpfit}} as input and computes information criteria using loo or
-#' WAIC. Compare models using \code{\link[loo]{loo_compare}} and \code{\link[loo]{loo_model_weights}}.
+#' Compare models using \code{\link[loo]{loo_compare}} and \code{\link[loo]{loo_model_weights}}.
 #' more in \code{\link[loo]{loo}}.
 #'
-#' @aliases criterion
-#' @param fit An \code{\link{mcpfit}} object.
-#' @param criterion One of `"loo"` (calls \code{\link[loo]{loo}}) or `"waic"` (calls \code{\link[loo]{waic}}).
+#' @aliases loo LOO loo.mcpfit
+#' @param x An \code{\link{mcpfit}} object.
 #' @param ... Further arguments passed to \code{\link[loo]{loo}}, e.g., `cores` or `save_psis`.
 #' @return a `loo` or `psis_loo` object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @export loo
 #' @export
 #' @examples
 #' \donttest{
@@ -30,49 +29,56 @@
 #' fit2$loo = loo(fit2)
 #' loo::loo_compare(fit1$loo, fit2$loo)
 #' }
-criterion = function(fit, criterion = "loo", ...) {
-  assert_types(fit, "mcpfit")
-  assert_value(criterion, allowed = c("loo", "waic"))
-
-  # Log-likelihood MCMC samples as matrix
-  loglik = as.matrix(do.call(rbind.data.frame, fit$mcmc_loglik))
-
-  # Add LOO
-  if (criterion == "loo") {
-    # Compute relative effective sample size (for each loglik col)
-    chain_id = rep(seq_along(fit$mcmc_post), each = nrow(fit$mcmc_post[[1]]))
-    r_eff = loo::relative_eff(exp(loglik), chain_id)  # Likelihood = exp(log-likelihood)
-    return(loo::loo(loglik, r_eff = r_eff, ...))
-  }
-
-  # Add WAIC
-  if (criterion == "waic") {
-    return(loo::waic(loglik))
-  }
-}
-
-
-
-#' @aliases loo LOO loo.mcpfit
-#' @describeIn criterion Computes loo on mcpfit objects
-#' @param x An \code{\link{mcpfit}} object.
-#' @seealso \code{\link{criterion}}
-#' @export loo
-#' @export
 loo.mcpfit = function(x, ...) {
-  criterion(x, "loo", ...)
+  fit = x
+  assert_types(fit, "mcpfit")
+  if (is.null(fit$loglik))
+    fit = add_loglik(fit)
+
+  # Compute relative effective sample size (for each loglik col)
+  chain_id = rep(seq_along(fit$mcmc_post), each = nrow(fit$mcmc_post[[1]]))
+  r_eff = loo::relative_eff(exp(fit$loglik), chain_id)  # Likelihood = exp(log-likelihood)
+  loo::loo(fit$loglik, r_eff = r_eff, ...)
 }
 
 #' @aliases waic WAIC waic.mcpfit
-#' @describeIn criterion Computes WAIC on mcpfit objects
-#' @param x An \code{\link{mcpfit}} object.
+#' @describeIn loo.mcpfit Computes WAIC on mcpfit objects
+#' @inheritParams loo.mcpfig
 #' @param ... Currently ignored
-#' @seealso \code{\link{criterion}}
 #' @export waic
 #' @export
 waic.mcpfit = function(x, ...) {
   assert_ellipsis(...)
-  criterion(x, "waic")
+  fit = x
+  assert_types(fit, "mcpfit")
+  if (is.null(fit$loglik))
+    fit = add_loglik(fit)
+
+  loo::waic(fit$loglik)
+}
+
+
+#' Add log-likelihood to an mcpfit object.
+#'
+#' @aliases add_loglik
+#' @inheritParams mcp
+#' @seealso loo.mcpfit waic.mcpfit
+#' @return An `mcpfit` object with `fit$loglik` filled as an (Nchains * Nsamples) x Ndata matrix.
+#' @export
+#' @examples
+#' \donttest{
+#' demo_fit = add_loglik(demo_fit)
+#' }
+add_loglik = function(fit) {
+  fit$loglik = pp_eval(fit, type = "loglik", summary = FALSE, probs = FALSE) %>%
+    dplyr::select(.chain, .draw, data_row, loglik) %>%
+
+    # To matrix
+    tidyr::pivot_wider(id_cols =  c(.chain, .draw), names_from = data_row, values_from = loglik) %>%
+    dplyr::select(-.chain, -.draw) %>%
+    as.matrix()
+
+  fit
 }
 
 

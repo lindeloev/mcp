@@ -10,6 +10,7 @@ bernoulli = function(link = "logit") {
   # Just copy binomial()
   family = binomial(link = link)
   family$family = "bernoulli"
+  family$likfun = function(x, prob, log = FALSE) dbinom(x, 1, prob, log)
   mcpfamily(family)
 }
 
@@ -69,12 +70,20 @@ mcpfamily = function(x) {
   if (nrow(dpar_prior) == 0)
     stop("mcp has no default priors for ", family$family, "(link = \"", family$link, "\") so it's likely not supported. See `mcpfamily()` on how to create a custom family.")
 
-  # Add AR for these
-  #if (family$family == "gaussian" | family$link == "identity")
+  # Add priors and list parameters
   dpar_prior = rbind(dpar_prior, subset(default_common_priors, dpar == "ar"))
-
   family$default_prior = dpar_prior
   family$dpars = unique(dpar_prior$dpar)
+
+  # Add likelihood function for stats families
+  if (is.null(family$likfun)) {
+    loglik_funs = list(
+      gaussian = dnorm,
+      binomial = dbinom,
+      poisson = dpois
+    )
+    family$likfun = loglik_funs[[family$family]]
+  }
 
   # Set linkfun_str
   if (family$link == "identity") {

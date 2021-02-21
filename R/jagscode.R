@@ -122,20 +122,15 @@ get_jags_code = function(prior, ST, formula_jags, arma_order, family, sample, pa
     ")
 
   if (family$family == "gaussian") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dnorm(", mu_code, ", ", weights, " / sigma_[i_]^2)  # SD as precision
-    loglik_[i_] = logdensity.norm(", ST$y[1], "[i_], ", mu_code, ", ", weights, " / sigma_[i_]^2)  # SD as precision")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dnorm(", mu_code, ", ", weights, " / sigma_[i_]^2)  # SD as precision")
   } else if (family$family == "binomial") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dbin(", mu_code, ", ", ST$trials[1], "[i_])
-    loglik_[i_] = logdensity.bin(", ST$y[1], "[i_], ", mu_code, ", ", ST$trials[1], "[i_])")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dbin(", mu_code, ", ", ST$trials[1], "[i_])")
   } else if (family$family == "bernoulli") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dbern(", mu_code, ")
-    loglik_[i_] = logdensity.bern(", ST$y[1], "[i_], ", mu_code, ")")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dbern(", mu_code, ")")
   } else if (family$family == "poisson") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dpois(", mu_code, ")
-    loglik_[i_] = logdensity.pois(", ST$y[1], "[i_], ", mu_code, ")")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dpois(", mu_code, ")")
   } else if (family$family == "exponential") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dexp(", mu_code, ")
-    loglik_[i_] = logdensity.exp(", ST$y[1], "[i_], ", mu_code, ")")
+    mm = paste0(mm, ST$y[1], "[i_] ~ dexp(", mu_code, ")")
   }
 
   # Compute residuals for AR
@@ -146,10 +141,6 @@ get_jags_code = function(prior, ST, formula_jags, arma_order, family, sample, pa
       mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_])  - mu_[i_]  # Residuals represented by sigma_ after ARMA")
     }
   }
-
-  # If only the prior is sampled, remove the loglik_[i_] line
-  if (sample == "prior")
-    mm = gsub("loglik.*?$","", mm)
 
 
   ###############

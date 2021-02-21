@@ -283,11 +283,11 @@ mcp = function(model,
 
   # Sample posterior
   if (sample %in% c("post", "both")) {
-    samples = run_jags(
+    mcmc_post = run_jags(
       data = data,
       jags_code = jags_code,
       jags_data = jags_data,
-      pars = c(all_pars, "loglik_"),  # Monitor log-likelihood for loo/waic
+      pars = all_pars,  # Monitor log-likelihood for loo/waic
       cores = cores,
       sample = "post",
       n.chains = chains,
@@ -296,20 +296,15 @@ mcp = function(model,
       inits = inits
     ) %>%
       recover_levels(data, ST)
-
-    # Move loglik columns out to it's own list, keeping parameters and loglik apart
-    loglik_cols = stringr::str_starts(colnames(samples[[1]]), 'loglik_')  # detect loglik cols
-    mcmc_loglik = lapply(samples, function(x) x[, loglik_cols])
-    mcmc_post = lapply(samples, function(x) x[, !loglik_cols])
   }
 
   # Sample prior
   if (sample %in% c("prior", "both")) {
-    samples = run_jags(
+    mcmc_prior = run_jags(
       data = data,
       jags_code = jags_code,
       jags_data = jags_data,
-      pars = all_pars,  # Not loglik
+      pars = all_pars,
       cores = cores,
       sample = "prior",
       n.chains = chains,
@@ -318,10 +313,6 @@ mcp = function(model,
       inits = inits
     ) %>%
       recover_levels(data, ST)
-
-    # Move loglik columns out to it's own list, keeping parameters and loglik apart
-    loglik_cols = stringr::str_starts(colnames(samples[[1]]), 'loglik_')  # detect loglik cols
-    mcmc_prior = lapply(samples, function(x) x[, !loglik_cols])
   }
 
 
@@ -331,11 +322,10 @@ mcp = function(model,
   # Fill in the missing samples
   if (exists("mcmc_post")) class(mcmc_post) = "mcmc.list"
   if (exists("mcmc_prior")) class(mcmc_prior) = "mcmc.list"
-  if (exists("mcmc_loglik")) class(mcmc_loglik) = "mcmc.list"
   if (!exists("mcmc_post")) mcmc_post = NULL
   if (!exists("mcmc_prior")) mcmc_prior = NULL
-  if (!exists("mcmc_loglik")) mcmc_loglik = NULL
 
+  model = lapply(ST$form, stats::as.formula, env=globalenv())
   class(model) = c("mcplist", "list")
   class(prior) = c("mcplist", "list")
   class(pars) = c("mcplist", "list")  # for nicer printing
@@ -352,7 +342,7 @@ mcp = function(model,
     # Results
     mcmc_post = mcmc_post,
     mcmc_prior = mcmc_prior,
-    mcmc_loglik = mcmc_loglik,
+    loglik = NULL,
     loo = NULL,
     waic = NULL,
 
