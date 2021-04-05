@@ -89,6 +89,19 @@ test_runs = function(model,
       fit$waic = suppressWarnings(waic(fit))
       testthat::expect_true(loo::is.psis_loo(fit$loo))
       testthat::expect_true(loo::is.waic(fit$waic))
+
+      # Test pointwise
+      fit$loo_pointwise = suppressWarnings(loo(fit, pointwise = TRUE))
+      rownames(fit$loo$pointwise) = NULL
+      ar_order = mcp:::get_ar_order(fit$.internal$rhs_table)
+      if (is.na(ar_order)) {
+        testthat::expect_equal(fit$loo$pointwise, fit$loo_pointwise$pointwise)
+      } else {
+        # TO DO: this is a hack because of small inaccuracies for the first N points in AR(N) models
+        # It has something to do with the insertion of 0 in simulate_ar() for rows < N
+        nrow_loo = nrow(fit$loo$pointwise)
+        testthat::expect_equal(fit$loo$pointwise[ar_order:nrow_loo, ], fit$loo_pointwise$pointwise[ar_order:nrow_loo, ])
+      }
     }
 
     # Test hypothesis
