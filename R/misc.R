@@ -9,6 +9,8 @@
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 inprod = function(x, y) {
+  assert_types(x, "matrix")
+  assert_types(y, "matrix")
   rowSums(x * y)
 }
 
@@ -33,6 +35,27 @@ is_continuous = function(x) {
 }
 
 
+# List of categorical column names and their unique levels
+get_categorical_levels = function(df) {
+  assert_types(df, "data.frame", "tibble")
+  categorical_cols = colnames(df)[sapply(df, class) %in% c("factor", "logical", "character")]
+  sapply(df[, categorical_cols], unique)
+}
+
+# List of interpolated values at the values in "at". Rembember to remove par_x from "df"
+interpolate_continuous = function(fit, at) {
+  assert_types(fit, "mcpfit")
+  assert_numeric(at)
+
+  # Get numeric RHS data columns
+  data = fit$data[, sapply(fit$data, is.numeric), drop = FALSE]
+  data = data[, colnames(data) %notin% c(fit$pars$x, fit$pars$y, fit$pars$weights, fit$pars$varying)]
+
+  # Return interpolated
+  as.data.frame(lapply(data, function(col) stats::approx(x = fit$data[, fit$pars$x], y = col, xout = at)$y))
+}
+
+
 # Ask reminder questions for CRAN export
 release_questions = function() {
   c(
@@ -45,8 +68,16 @@ release_questions = function() {
 }
 
 
+# Returns the AR order or NA if no AR
+get_ar_order = function(rhs_table) {
+  ar_order = ifelse("ar" %in% rhs_table$dpar, max(rhs_table$order, na.rm = TRUE), NA)
+}
+
+
 # Just returns cp_1, cp_2, etc.
 get_cp_pars = function(pars) {
+  assert_types(pars, "list")
+  assert_types(pars$reg, "character")
   pars$reg[stringr::str_detect(pars$reg, "^cp_[0-9]+$") & !stringr::str_detect(pars$reg, "^cp_[0-9]+_sd$")]  # cp_1 but not cp_1_sd
 }
 
@@ -163,6 +194,7 @@ formula_to_char = function(form) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_rhs = function(form) {
+  assert_types(form, "formula")
   if (length(form) == 2) {
     return(form)
   } else if (length(form) == 3) {
@@ -217,6 +249,7 @@ get_model_vars = function(model) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_rhs_matrix = function(rhs_table) {
+  assert_types(rhs_table, "data.frame", "tibble")
   suppressMessages(dplyr::bind_cols(rhs_table$matrix_data, .name_repair = "unique")) %>% # Suppress message about lacking column names
     as.matrix() %>%
     magrittr::set_colnames(rhs_table$code_name)
@@ -353,6 +386,8 @@ fix_model_environment = function(model) {
 #' plot(ex_with_fit$fit)
 #'}
 mcp_example = function(name, sample = FALSE) {
+  assert_types(name, "character", len = 1)
+  assert_logical(sample, len = 1)
   data = data.frame()  # To make R CMD Check happy.
 
   examples = list(

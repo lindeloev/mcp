@@ -53,8 +53,7 @@
 #' @param family One of `gaussian()`, `binomial()`, `bernoulli()`, or `poission()`
 #'   with a supported link function, e.g., `gaussian(link = "log")`.
 #'   Custom families can also be provided, e.g., `mcpfamily(gaussian(link = "log"))`.
-#' @param par_x String (default: NULL). Only relevant if no segments contains
-#'   slope (no hint at what x is). Set this, e.g., par_x = "time".
+#' @param par_x String (default: `NULL` which is auto-detect).
 #' @param sample One of
 #'   * `"post"`: Sample the posterior.
 #'   * `"prior"`: Sample only the prior. Plots, summaries, etc. will
@@ -267,12 +266,8 @@ mcp = function(model,
 
   # Make jags code if it is not provided by the user
   if (is.null(jags_code)) {
-    if ("ar" %in% rhs_table$dpar) {
-      arma_order = max(rhs_table$order, na.rm = TRUE)
-    } else {
-      arma_order = 0
-    }
-    jags_code = get_jags_code(prior, ST, formula_jags, arma_order, family, sample, par_x)
+    ar_order = get_ar_order(rhs_table)
+    jags_code = get_jags_code(prior, ST, formula_jags, ar_order, family, sample, par_x)
   }
 
 

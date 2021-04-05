@@ -7,8 +7,11 @@
 #' more in \code{\link[loo]{loo}}.
 #'
 #' @aliases loo LOO loo.mcpfit
+#' @inheritParams pp_eval
 #' @param x An \code{\link{mcpfit}} object.
 #' @param ... Further arguments passed to \code{\link[loo]{loo}}, e.g., `cores` or `save_psis`.
+#' @param pointwise `TRUE` calls calls \code{\link[loo]{loo.function}} which is slower but more memory efficient.
+#'   `FALSE` calls the default \code{\link[loo]{loo}}.
 #' @return a `loo` or `psis_loo` object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -29,30 +32,63 @@
 #' fit2$loo = loo(fit2)
 #' loo::loo_compare(fit1$loo, fit2$loo)
 #' }
-loo.mcpfit = function(x, ...) {
+loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE, nsamples = NULL) {
   fit = x
   assert_types(fit, "mcpfit")
-  if (is.null(fit$loglik))
-    fit = add_loglik(fit)
+  chain_id = rep(seq_along(fit$mcmc_post), each =  nrow(fit$mcmc_post[[1]]))
 
-  # Compute relative effective sample size (for each loglik col)
-  chain_id = rep(seq_along(fit$mcmc_post), each = nrow(fit$mcmc_post[[1]]))
-  r_eff = loo::relative_eff(exp(fit$loglik), chain_id)  # Likelihood = exp(log-likelihood)
-  loo::loo(fit$loglik, r_eff = r_eff, ...)
+
+  # Matrix: Fast but memory-greedy matrix-based computation
+  if (pointwise == FALSE) {
+    if (is.null(fit$loglik))
+      fit = add_loglik(fit, varying = varying, arma = arma, nsamples = nsamples)
+    r_eff = loo::relative_eff(exp(fit$loglik), chain_id)  # Likelihood = exp(log-likelihood)
+    loo::loo(fit$loglik, r_eff = r_eff, ...)
+
+  # Pointwise: per-data-row computation
+  } else {
+    ar_order = get_ar_order(fit$.internal$rhs_table)
+
+    # For small models, the majority of the computation time will be pp_eval overhead
+    llfun = function(data_i, draws = NULL, with_exp) {
+      if (is.na(ar_order)) {
+        loglik = pp_eval(fit, newdata = data_i, summary = FALSE, type = "loglik", varying = varying, arma = arma, nsamples = nsamples)$loglik
+      } else {
+        # For ARMA, include the last N rows in call to pp_eval() too
+        data_rows = seq(max(1, data_i$row - ar_order), data_i$row)
+        lldata = fit$data[data_rows, ]
+        loglik = fit %>%
+          pp_eval(newdata = lldata, summary = FALSE, type = "loglik", varying = varying, arma = arma, nsamples = nsamples) %>%
+          dplyr::filter(data_row == max(data_row)) %>%  # last row
+          dplyr::pull(loglik)
+      }
+
+      # Return
+      if (with_exp) {
+        exp(loglik)
+      } else {
+        loglik
+      }
+    }
+    fit$data$row = seq_len(nrow(fit$data))
+    r_eff = loo::relative_eff(llfun, data = fit$data, chain_id, with_exp = TRUE)
+    loo::loo.function(llfun, data = fit$data, r_eff = r_eff, draws = NA, with_exp = FALSE)
+  }
 }
+
 
 #' @aliases waic WAIC waic.mcpfit
 #' @describeIn loo.mcpfit Computes WAIC on mcpfit objects
-#' @inheritParams loo.mcpfig
+#' @inheritParams loo.mcpfit
 #' @param ... Currently ignored
 #' @export waic
 #' @export
-waic.mcpfit = function(x, ...) {
+waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, nsamples = NULL) {
   assert_ellipsis(...)
   fit = x
   assert_types(fit, "mcpfit")
   if (is.null(fit$loglik))
-    fit = add_loglik(fit)
+    fit = add_loglik(fit, varying = varying, arma = arma, nsamples = nsamples)
 
   loo::waic(fit$loglik)
 }
@@ -61,7 +97,7 @@ waic.mcpfit = function(x, ...) {
 #' Add log-likelihood to an mcpfit object.
 #'
 #' @aliases add_loglik
-#' @inheritParams mcp
+#' @inheritParams loo.mcpfit
 #' @seealso loo.mcpfit waic.mcpfit
 #' @return An `mcpfit` object with `fit$loglik` filled as an (Nchains * Nsamples) x Ndata matrix.
 #' @export
@@ -69,8 +105,9 @@ waic.mcpfit = function(x, ...) {
 #' \donttest{
 #' demo_fit = add_loglik(demo_fit)
 #' }
-add_loglik = function(fit) {
-  fit$loglik = pp_eval(fit, type = "loglik", summary = FALSE, probs = FALSE) %>%
+add_loglik = function(x, varying = TRUE, arma = TRUE, nsamples = NULL) {
+  fit = x
+  fit$loglik = pp_eval(fit, type = "loglik", summary = FALSE, probs = FALSE, varying = varying, arma = arma, nsamples = nsamples) %>%
     dplyr::select(.chain, .draw, data_row, loglik) %>%
 
     # To matrix

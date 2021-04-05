@@ -179,13 +179,16 @@ get_formula_r = function(formula_jags, rhs_table, pars) {
 #'
 #' @aliases get_ar_jagscode
 #' @keywords internal
-#' @param ar_order Positive integer.
+#' @param ar_order Positive integer
 #' @param x_name Character. Name of some vector that has the length of the dataset.
 #' @return Character JAGS code
 #' @seealso simulate_ar
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_ar_jagscode = function(ar_order, x_name) {
+  assert_integer(ar_order, lower = 0, len = 1)
+  assert_types(x_name, "character", len = 1)
+
   jagscode = "
   # Apply autoregression to the residuals
   resid_arma_[1] = 0"

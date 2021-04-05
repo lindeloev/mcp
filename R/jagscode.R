@@ -9,11 +9,11 @@
 #' @inheritParams mcp
 #' @param formula_jags String. The formula string returned by `get_formula_jags()`.
 #' @param ST Segment table. Returned by `get_segment_table()`.
-#' @param arma_order NA or positive integer. The autoregressive order.
+#' @param ar_order NA or positive integer. The autoregressive order.
 #' @return String. A JAGS model.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_jags_code = function(prior, ST, formula_jags, arma_order, family, sample, par_x) {
+get_jags_code = function(prior, ST, formula_jags, ar_order, family, sample, par_x) {
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
   mm = paste0("model {")
@@ -82,8 +82,8 @@ get_jags_code = function(prior, ST, formula_jags, arma_order, family, sample, pa
   # AUTOCORRELATION #
   ###################
   # Detect if there is an intercept or slope on AR
-  if (arma_order > 0)
-    mm = paste0(mm, get_ar_jagscode(arma_order, par_x))
+  if (is.na(ar_order) == FALSE)
+    mm = paste0(mm, get_ar_jagscode(ar_order, par_x))
 
 
 
@@ -109,7 +109,7 @@ get_jags_code = function(prior, ST, formula_jags, arma_order, family, sample, pa
   ##############
   # Prepare mu code (link and AR)
   mu_code = "mu_[i_]"
-  if (arma_order > 0)
+  if (is.na(ar_order) == FALSE)
     mu_code = paste0(mu_code, " + resid_arma_[i_]")
   mu_code = paste0(family$linkinv_str, "(", mu_code, ")")
 
@@ -134,7 +134,7 @@ get_jags_code = function(prior, ST, formula_jags, arma_order, family, sample, pa
   }
 
   # Compute residuals for AR
-  if (arma_order > 0) {
+  if (is.na(ar_order) == FALSE) {
     if (family$family == "binomial") {
       mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_] / ", ST$trials[1], "[i_]) - mu_[i_]  # Residuals represented by sigma_ after ARMA")
     } else {
