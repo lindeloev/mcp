@@ -167,7 +167,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
     is_arma = any(rhs_table$dpar == "ar")
     if (is_arma && .arma == TRUE) {
       ar_list = mget(ls()[grep("^ar[0-9]+_$", ls())])  # list(ar1_, ar2_, etc.). TO DO: run eval(parse(...)) in a container, return list with $ar1_, $ar2_, etc.
-      ar_result = simulate_ar(sigma_, ar_list, .ydata)
+      ar_result = simulate_ar(sigma_, ar_list, .ydata - mu_)
       mu_ = mu_ + ar_result$resid_arma
     }
 

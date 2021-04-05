@@ -21,7 +21,7 @@ get_par_x = function(model, data, par_x = NULL) {
 
   # Check for exactly one continuous
   rhs_vars = get_rhs_vars(model)
-  data_in_rhs = data %>% dplyr::select(dplyr::all_of(rhs_vars))
+  data_in_rhs = data %>% dplyr::select(dplyr::all_of(rhs_vars), par_x)
   continuous_cols = lapply(data_in_rhs, is_continuous) %>% unlist()
   par_x_candidates = names(continuous_cols)[continuous_cols]
   if (is.character(par_x)) {

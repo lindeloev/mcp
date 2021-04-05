@@ -113,7 +113,7 @@ mcpfamily = function(x) {
 
 
 #' @aliases is.mcpfamily
-#' @describeIn mcpfamily
+#' @describeIn mcpfamily Checks whether x is an `mcpfamily`.
 #' @export
 is.mcpfamily = function(x) {
   if (inherits(x, "mcpfamily") == FALSE)
