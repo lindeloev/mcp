@@ -83,11 +83,11 @@ get_sim_pars = function(rhs_table, pars) {
 #' Vectorized R-side run of the full model.
 #'
 #' Used internally in mcp.
+#' Parameters not documented here are documented in `pp_eval` (without dot prefix).
 #'
 #' @aliases simulate_vectorized
 #' @keywords internal
 #' @inheritParams mcp
-#' @inheritParams simulate.mcpfit
 #' @param ... Parameter names (e.g., `cp_1 = c(4.3, 4.5, 6.2), Intercept_1 = c(11.2, 12.1, 10.9)`, etc.)
 #'   and predictor columns from `rhs_tables$matrix_data` prefixed with ".pred_" (e.g., `.pred_Intercept_1 = c(1, 1, 1)`).
 #' @return Vector with same length as inputs.
@@ -175,7 +175,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
     if (.type == "fitted") {
       return(mu_)
     } else if(.type == "loglik") {
-      return(dnorm(.ydata, mu_, sigma_, log = TRUE))
+      return(stats::dnorm(.ydata, mu_, sigma_, log = TRUE))
     } else if (.type == "predict") {
       if (any(fit$family$linkinv(sigma_) < 0))
         stop("Modelled negative sigma. First detected at ", fit$pars$x, " = ", min(get(fit$pars$x)[fit$family$linkinv(sigma_) < 0]))
@@ -185,10 +185,10 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
         if (.arma == TRUE) {
           return(fit$family$linkinv(fit$family$linkfun(mu_ + ar_result$resid_sigma)))
         } else {
-          return(family$linkinv(fit$family$linkfun(mu_) + rnorm(length(mu_), 0, sigma_)))
+          return(fit$family$linkinv(fit$family$linkfun(mu_) + stats::rnorm(length(mu_), 0, sigma_)))
         }
       } else {
-        return(rnorm(length(mu_), mu_, sigma_))
+        return(stats::rnorm(length(mu_), mu_, sigma_))
       }
     }
 
@@ -200,15 +200,15 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
       if (.rate == FALSE) return(N_trials * mu_)
       if (.rate == TRUE)  return(mu_)
     } else if (.type == "loglik") {
-      return(dbinom(.ydata, N_trials, mu_, log = TRUE))
+      return(stats::dbinom(.ydata, N_trials, mu_, log = TRUE))
     } else if (.type == "predict") {
-      if (.rate == FALSE) return(rbinom(length(mu_), N_trials, mu_))
-      if (.rate == TRUE)  return(rbinom(length(mu_), N_trials, mu_) / N_trials)
+      if (.rate == FALSE) return(stats::rbinom(length(mu_), N_trials, mu_))
+      if (.rate == TRUE)  return(stats::rbinom(length(mu_), N_trials, mu_) / N_trials)
     }
   } else if (fit$family$family == "bernoulli") {
     if (.type == "fitted") return(mu_)
-    if (.type == "loglik") return(dbinom(.ydata, 1, mu_, log = TRUE))
-    if (.type == "predict") return(rbinom(length(mu_), 1, mu_))
+    if (.type == "loglik") return(stats::dbinom(.ydata, 1, mu_, log = TRUE))
+    if (.type == "predict") return(stats::rbinom(length(mu_), 1, mu_))
   } else if (fit$family$family == "poisson") {
     if (.type %in% c("predict", "loglik")) {
       if ((.scale == "response" && any(mu_ > 2146275819)) || (.scale == "linear" && any(fit$family$linkinv(mu_) > 2146275819)))
@@ -217,14 +217,14 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
     if (.type == "fitted") {
       return(mu_)
     } else if (.type == "loglik") {
-      return(dpois(.ydata, mu_, log = TRUE))
+      return(stats::dpois(.ydata, mu_, log = TRUE))
     } else if (.type == "predict") {
-      return(rpois(length(mu_), mu_))
+      return(stats::rpois(length(mu_), mu_))
     }
   } else if (fit$family$family == "exponential") {
     if (.type == "fitted") return(1 / mu_)
-    if (.type == "loglik") return(dexp(.ydata, mu_, log = TRUE))
-    if (.type == "predict") return(rexp(length(mu_), mu_))
+    if (.type == "loglik") return(stats::dexp(.ydata, mu_, log = TRUE))
+    if (.type == "predict") return(stats::rexp(length(mu_), mu_))
   }
 }
 
@@ -237,10 +237,11 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
 #'  * Call `simulate_vectorized`
 #'  * Add "simulated" attribute and returns
 #'
+#' Parameters not documented here are documented in `pp_eval` (without dot prefix).
+#'
 #' @aliases simulate_atomic
 #' @keywords internal
 #' @inheritParams mcp
-#' @inheritParams simulate.mcpfit
 #' @param newdata A data.frame or tibble that should contain the same columns as `fit$data`
 #' @param ... Parameter values of length 1, e.g., `cp_1 = 80, Intercept_1 = -22.5` etc.
 #' @return Numeric vector with attribute "simulated".
@@ -256,14 +257,14 @@ simulate_atomic = function(fit,
                         .scale = "response") {
 
   # Check inputs.
-  mcp:::assert_types(fit, "mcpfit")
-  mcp:::assert_types(newdata, "data.frame", "tibble")
+  assert_types(fit, "mcpfit")
+  assert_types(newdata, "data.frame", "tibble")
   args = list(...)
   expected_args = get_sim_pars(fit$.internal$rhs_table, fit$pars)
   if (is.null(names(args)) | any(names(args) == ""))  # A more helpful error than assert_ellipsis()
     stop("All arguments must be named.")
-  mcp:::assert_ellipsis(..., allowed = expected_args)
-  lapply(args, mcp:::assert_numeric)
+  assert_ellipsis(..., allowed = expected_args)
+  lapply(args,assert_numeric)
   lapply(args, function(x) stopifnot(length(x) == 1 | length(x) == nrow(newdata)))
   # Other values are asserted in func_fast
 
@@ -283,7 +284,7 @@ simulate_atomic = function(fit,
                                .arma = .arma,
                                .scale = .scale)
     ) %>%
-    dplyr::pull(.simulated_y)
+    dplyr::pull(.data$.simulated_y)
 
   # add_simulated etc. and return
   attr(simulated_y, "simulated") = args  # Set as attribute
@@ -358,7 +359,7 @@ simulate_ar = function(sigma_, ar_list, resid_abs = NULL) {
 
   # resid_ is the observed residual from y_
   # resid_ is split into the innovation and AR() part. So resid_ = resid_arma + resid_sigma
-  resid_sigma = rnorm(length(sigma_), 0, sigma_)
+  resid_sigma = stats::rnorm(length(sigma_), 0, sigma_)
   if (is.null(resid_abs)) {
     message("Generating residuals for AR(N) model since the response column/argument was not provided.")
     ar_list$ar0_ = sigma_[seq_len(ar_order)] * 0 + 1  # AR(0) = itself

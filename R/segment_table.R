@@ -210,37 +210,37 @@ unpack_cp = function(form_cp, i) {
 
 
 
-#' Unpack varying effects
-#'
-#' @aliases unpack_varying_term
-#' @keywords internal
-#' @inheritParams unpack_slope_term
-#' @return A "one-row" list describing a varying intercept.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-unpack_varying_term = function(term, i) {
-  parts = stringr::str_trim(strsplit(term, "\\|")[[1]])  # as c("lhs", "group")
-
-  # Check that there is just one grouping term
-  if (!grepl("^[A-Za-z._0-9]+$", parts[2]))
-    stop("Error in segment ", i, " (right-hand side): Grouping variable in varying effects for change points.")
-
-  # LHS: Split intercepts and variable
-  preds = strsplit(gsub(" ", "", parts[1]), "\\+")[[1]]
-  slope = preds[(preds %in% c("0", "1")) == FALSE]
-  if (length(slope) > 1)
-    stop("Error in segment ", i, " (right-hand side): More than one variable in LHS of varying effect.")
-  else if (length(slope) == 0)
-    # If not slope
-    slope = NA
-
-  # Return
-  list(
-    int = "0" %notin% preds,  # bool. Is intercept present?
-    slope = slope,
-    group = parts[2]
-  )
-}
+# #' Unpack varying effects
+# #'
+# #' @aliases unpack_varying_term
+# #' @keywords internal
+# #' @param term
+# #' @return A "one-row" list describing a varying intercept.
+# #' @encoding UTF-8
+# #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+# unpack_varying_term = function(term, i) {
+#   parts = stringr::str_trim(strsplit(term, "\\|")[[1]])  # as c("lhs", "group")
+#
+#   # Check that there is just one grouping term
+#   if (!grepl("^[A-Za-z._0-9]+$", parts[2]))
+#     stop("Error in segment ", i, " (right-hand side): Grouping variable in varying effects for change points.")
+#
+#   # LHS: Split intercepts and variable
+#   preds = strsplit(gsub(" ", "", parts[1]), "\\+")[[1]]
+#   slope = preds[(preds %in% c("0", "1")) == FALSE]
+#   if (length(slope) > 1)
+#     stop("Error in segment ", i, " (right-hand side): More than one variable in LHS of varying effect.")
+#   else if (length(slope) == 0)
+#     # If not slope
+#     slope = NA
+#
+#   # Return
+#   list(
+#     int = "0" %notin% preds,  # bool. Is intercept present?
+#     slope = slope,
+#     group = parts[2]
+#   )
+# }
 
 
 
@@ -282,7 +282,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
   # Build "full" formula (with explicit intercepts) and insert instead of the old
   ST = ST %>%
     tidyr::fill(.data$y, .data$form_y, .data$trials, .data$weights, .direction = "downup") %>%  # Usually only provided in segment 1
-    dplyr::mutate(form = ifelse(segment == 1, form, paste0(.data$form_y, .data$form_cp, " ~ ", .data$form_rhs))) %>%  # build full formula
+    dplyr::mutate(form = ifelse(.data$segment == 1, .data$form, paste0(.data$form_y, .data$form_cp, " ~ ", .data$form_rhs))) %>%  # build full formula
     dplyr::select(-.data$form_y, -.data$form_cp, -.data$form_rhs)  # Not needed anymore
 
   ST$x = par_x  # TO DO: TEMPORARY UNTIL MULTIPLE REGRESSION IS IMPLEMENTED

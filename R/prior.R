@@ -57,19 +57,19 @@ default_dpar_priors = dplyr::bind_rows(
   default_dpar_priors,
 
   # Gaussian
-  default_dpar_priors %>% dplyr::filter(family == "gaussian", link == "identity", dpar == "mu") %>% dplyr::mutate(link = "log"),
-  default_dpar_priors %>% dplyr::filter(family == "gaussian", link == "identity", dpar == "sigma") %>% dplyr::mutate(link = "log"),
+  default_dpar_priors %>% dplyr::filter(.data$family == "gaussian", .data$link == "identity", .data$dpar == "mu") %>% dplyr::mutate(link = "log"),
+  default_dpar_priors %>% dplyr::filter(.data$family == "gaussian", .data$link == "identity", .data$dpar == "sigma") %>% dplyr::mutate(link = "log"),
 
   # Bernoulli/binomial
-  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "logit", dpar == "mu") %>% dplyr::mutate(link = "probit"),
-  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "logit", dpar == "mu") %>% dplyr::mutate(family = "bernoulli"),
-  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "logit", dpar == "mu") %>% dplyr::mutate(family = "bernoulli", link = "probit"),
-  default_dpar_priors %>% dplyr::filter(family == "binomial", link == "identity", dpar == "mu") %>% dplyr::mutate(family = "bernoulli"),
+  default_dpar_priors %>% dplyr::filter(.data$family == "binomial", .data$link == "logit", .data$dpar == "mu") %>% dplyr::mutate(link = "probit"),
+  default_dpar_priors %>% dplyr::filter(.data$family == "binomial", .data$link == "logit", .data$dpar == "mu") %>% dplyr::mutate(family = "bernoulli"),
+  default_dpar_priors %>% dplyr::filter(.data$family == "binomial", .data$link == "logit", .data$dpar == "mu") %>% dplyr::mutate(family = "bernoulli", link = "probit"),
+  default_dpar_priors %>% dplyr::filter(.data$family == "binomial", .data$link == "identity", .data$dpar == "mu") %>% dplyr::mutate(family = "bernoulli"),
 
   # Negative binomial
-  default_dpar_priors %>% dplyr::filter(family == "poisson", link == "log", dpar == "mu") %>% dplyr::mutate(family = "negbinomial"),
-  default_dpar_priors %>% dplyr::filter(family == "poisson", link == "identity", dpar == "mu") %>% dplyr::mutate(family = "negbinomial"),
-  default_dpar_priors %>% dplyr::filter(family == "negbinomial", link == "identity", dpar == "mu") %>% dplyr::mutate(link = "log")
+  default_dpar_priors %>% dplyr::filter(.data$family == "poisson", .data$link == "log", .data$dpar == "mu") %>% dplyr::mutate(family = "negbinomial"),
+  default_dpar_priors %>% dplyr::filter(.data$family == "poisson", .data$link == "identity", .data$dpar == "mu") %>% dplyr::mutate(family = "negbinomial"),
+  default_dpar_priors %>% dplyr::filter(.data$family == "negbinomial", .data$link == "identity", .data$dpar == "mu") %>% dplyr::mutate(link = "log")
 )
 
 
@@ -142,7 +142,6 @@ truncate_prior_cp = function(ST, i, prior_str) {
 #'
 #' @aliases get_prior
 #' @keywords internal
-#' @inheritParams mcp
 #' @param ST Tibble. A segment table as returned by `get_segment_table`.
 #' @param rhs_table Tibble as returned by `get_rhs()`.
 #' @param family An `mcpfamily` object as returned by `mcpfamily()`.
@@ -161,8 +160,8 @@ get_prior = function(ST, rhs_table, family, prior = list()) {
 
   # Priors for change points
   cp_prior = default_common_priors %>%
-    dplyr::filter(family == "changepoint", link == "identity") %>%
-    dplyr::select(dpar, prior) %>%
+    dplyr::filter(.data$family == "changepoint", .data$link == "identity") %>%
+    dplyr::select(.data$dpar, .data$prior) %>%
     tibble::deframe() %>%
     as.list()
 
@@ -195,7 +194,7 @@ get_prior = function(ST, rhs_table, family, prior = list()) {
   # Priors for RHS parameters
   rhs_prior = rhs_table %>%
     dplyr::left_join(family$default_prior, by = c("dpar", "par_type")) %>%
-    dplyr::select(code_name, prior) %>%
+    dplyr::select(.data$code_name, .data$prior) %>%
     tibble::deframe() %>%
     as.list()
 

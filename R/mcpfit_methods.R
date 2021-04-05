@@ -1,7 +1,7 @@
 # ABOUT: These are non-plotting functions that take an mcpfit as the first argument
 # -----------------
 
-#' Class `mcpfit` of models fitted with the \pkg{mcp} package
+#' Class `mcpfit` of Models Fitted with the \pkg{mcp} Package
 #'
 #' Models fitted with the \code{\link[mcp:mcp]{mcp}} function are represented as
 #' an `mcpfit` object which contains the user input (model, data, family),
@@ -280,7 +280,7 @@ print.mcpfit = function(x, ...) {
 }
 
 
-#' Checks if argument is an `mcpfit` object
+#' Checks if the Argument is an `mcpfit` Object
 #'
 #' @aliases is.mcpfit
 #' @param x An `R` object.
@@ -492,7 +492,7 @@ tidy_samples = function(
 
 
 
-#' Fits and predictions from samples and newdata
+#' Fits and Predictions given Draws and data
 #'
 #' @aliases pp_eval pp_eval.mcpfit
 #' @keywords internal
@@ -681,7 +681,7 @@ pp_eval = function(
 }
 
 
-#' Samples from the Posterior Predictive Distribution
+#' Summary or Draws from the Predictive Distribution
 #'
 #' @aliases predict predict.mcpfit
 #' @inheritParams pp_eval
@@ -733,7 +733,7 @@ predict.mcpfit = function(
 }
 
 
-#' Expected Values from the Posterior Predictive Distribution
+#' Summary or Draws from the Expected Distribution
 #'
 #' @aliases fitted fitted.mcpfit
 #' @inheritParams pp_eval
@@ -785,7 +785,7 @@ fitted.mcpfit = function(
 }
 
 
-#' Compute Residuals From Mcpfit Objects
+#' Summary or Draws from the Residual Distribution
 #'
 #' Equivalent to  `fitted(fit, ...) - fit$data[, fit$data$yvar]` (or `fitted(fit, ...) - newdata[, fit$data$yvar]`),
 #' but with fixed arguments for `fitted`: `rate = FALSE, which_y = 'mu', samples_format = 'tidy'`.

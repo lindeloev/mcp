@@ -24,26 +24,26 @@ get_formula_jags = function(ST, rhs_table, par_x, family) {
 
   # Build formula for each dpar (note plural "_dpars")
   formula_jags_dpars = rhs_table %>%
-    dplyr::select(-matrix_data) %>%  # Throw less data around
+    dplyr::select(-.data$matrix_data) %>%  # Throw less data around
     dplyr::rowwise() %>%
     dplyr::mutate(
       # Left-join ST
-      this_cp = ST$cp_code_form[[segment]],
-      next_cp = ST$cp_code_form[next_intercept],  # replace segment with code string
-      form = ST$form[[segment]],
+      this_cp = ST$cp_code_form[[.data$segment]],
+      next_cp = ST$cp_code_form[.data$next_intercept],  # replace segment with code string
+      form = ST$form[[.data$segment]],
 
       # One dpar per ar order: (ar, 1) --> ar1
-      dpar = paste0(dpar, tidyr::replace_na(order, ""))
+      dpar = paste0(.data$dpar, tidyr::replace_na(.data$order, ""))
     ) %>%
 
     # Build formula for each dpar
-    dplyr::group_by(dpar) %>%
+    dplyr::group_by(.data$dpar) %>%
     tidyr::nest() %>%
     dplyr::rowwise() %>%
     dplyr::summarise(
-      formula_jags_dpar = get_formula_jags_dpar(data, dpar, par_x)
+      formula_jags_dpar = get_formula_jags_dpar(.data$data, .data$dpar, par_x)
     ) %>%
-    dplyr::pull(formula_jags_dpar) %>%
+    dplyr::pull(.data$formula_jags_dpar) %>%
     paste0(collapse = "\n\n")
 
   # Concatenate and return
@@ -83,28 +83,28 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x) {
 
   df_code_strs = dpar_table %>%
     # Code dpar_data_segment column indices
-    dplyr::arrange(segment) %>%  # just to make sure
-    dplyr::group_by(segment) %>%
+    dplyr::arrange(.data$segment) %>%  # just to make sure
+    dplyr::group_by(.data$segment) %>%
 
     # Summarise
-    dplyr::group_by(segment, x_factor) %>%
+    dplyr::group_by(.data$segment, .data$x_factor) %>%
     dplyr::summarise(
       # The parts
-      indicator_this = paste0("  (", par_x, "[i_] >= ", dplyr::first(this_cp), ")"),
-      indicator_next = dplyr::if_else(is.na(dplyr::first(next_cp)) == TRUE, "", paste0(" * (", par_x, "[i_] < ", dplyr::first(next_cp), ")")),
-      inprod = paste0(" * inprod(rhs_matrix_[i_, c(", paste0(matrix_col, collapse = ", "), ")], c(", paste0(code_name, collapse = ", "), "))"),
-      x_factor = gsub("x(?!p\\()", paste0(par_x, "_local_", dplyr::first(segment), "_[i_]"), dplyr::first(x_factor), perl = TRUE),  # "x" but not "exp("
+      indicator_this = paste0("  (", par_x, "[i_] >= ", dplyr::first(.data$this_cp), ")"),
+      indicator_next = dplyr::if_else(is.na(dplyr::first(.data$next_cp)) == TRUE, "", paste0(" * (", par_x, "[i_] < ", dplyr::first(.data$next_cp), ")")),
+      inprod = paste0(" * inprod(rhs_matrix_[i_, c(", paste0(.data$matrix_col, collapse = ", "), ")], c(", paste0(.data$code_name, collapse = ", "), "))"),
+      x_factor = gsub("x(?!p\\()", paste0(par_x, "_local_", dplyr::first(.data$segment), "_[i_]"), dplyr::first(.data$x_factor), perl = TRUE),  # "x" but not "exp("
 
       # All together
-      segment_code = paste0(indicator_this, indicator_next, inprod, " * ", x_factor),
-      form = dplyr::first(form)
+      segment_code = paste0(.data$indicator_this, .data$indicator_next, .data$inprod, " * ", .data$x_factor),
+      form = dplyr::first(.data$form)
     ) %>%
 
     # Add title-comment
-    dplyr::group_by(segment) %>%
+    dplyr::group_by(.data$segment) %>%
     dplyr::mutate(
-      title = dplyr::if_else(dplyr::row_number() == 1, paste0("\n  # Segment ", dplyr::first(segment), ": ", dplyr::first(form), "\n"), ""),
-      segment_code = paste0(title, segment_code)
+      title = dplyr::if_else(dplyr::row_number() == 1, paste0("\n  # Segment ", dplyr::first(.data$segment), ": ", dplyr::first(.data$form), "\n"), ""),
+      segment_code = paste0(.data$title, .data$segment_code)
     )
 
   # Return
@@ -135,26 +135,26 @@ get_formula_r = function(formula_jags, rhs_table, pars) {
   # Replacements that turns rowwise JAGS code into vectorized R code
   replace_args = c(
     # RHS
-    setNames(paste0(", args$", all_pars), paste0(", ", all_pars)),
-    setNames(paste0("args$", rhs_pars, ", "), paste0(rhs_pars, ", ")),
-    setNames(paste0("cbind(args$"), "cbind("),
-    setNames("args$", "args$args$"),  # Fix double-inserting args$ above
+    stats::setNames(paste0(", args$", all_pars), paste0(", ", all_pars)),
+    stats::setNames(paste0("args$", rhs_pars, ", "), paste0(rhs_pars, ", ")),
+    stats::setNames(paste0("cbind(args$"), "cbind("),
+    stats::setNames("args$", "args$args$"),  # Fix double-inserting args$ above
 
     # Change points
-    setNames(paste0("args$", pars$x, " >="), paste0(pars$x, " >=")),
-    setNames(paste0("args$", pars$x, " <"), paste0(pars$x, " <")),
+    stats::setNames(paste0("args$", pars$x, " >="), paste0(pars$x, " >=")),
+    stats::setNames(paste0("args$", pars$x, " <"), paste0(pars$x, " <")),
 
     # General
-    setNames("pmin(args$", paste0("pmin("))
+    stats::setNames("pmin(args$", paste0("pmin("))
   )
   if (length(cp_pars) > 0) {
     replace_args = c(
       replace_args,
-      setNames(paste0(" (args$", cp_pars, " + "), paste0(" (", cp_pars, " + ")),  # varying change point
-      setNames(paste0(" + args$", cp_pars, ")"), paste0(" + ", cp_pars, ")")),  # varying change point
-      setNames(paste0(">= args$", cp_pars), paste0(">= ", cp_pars)),
-      setNames(paste0("< args$", cp_pars), paste0("< ", cp_pars)),
-      setNames(paste0(") - args$", cp_pars), paste0(") - ", cp_pars))
+      stats::setNames(paste0(" (args$", cp_pars, " + "), paste0(" (", cp_pars, " + ")),  # varying change point
+      stats::setNames(paste0(" + args$", cp_pars, ")"), paste0(" + ", cp_pars, ")")),  # varying change point
+      stats::setNames(paste0(">= args$", cp_pars), paste0(">= ", cp_pars)),
+      stats::setNames(paste0("< args$", cp_pars), paste0("< ", cp_pars)),
+      stats::setNames(paste0(") - args$", cp_pars), paste0(") - ", cp_pars))
     )
   }
 

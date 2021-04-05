@@ -1,6 +1,6 @@
-#' Example `mcpfit` for examples
+#' Example `mcpfit`
 #'
-#' This was generated using `mcp_examples("demo", sample = TRUE)`.
+#' This was generated using `demo_fit = mcp_examples("demo", sample = TRUE)$fit`.
 #'
 #' @format An \code{\link{mcpfit}} object.
 #'

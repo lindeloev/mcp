@@ -1,4 +1,4 @@
-#' Bernoulli family for mcp
+#' Bernoulli Family for mcp
 #'
 #' @aliases bernoulli
 #' @param link Link function.
@@ -10,11 +10,11 @@ bernoulli = function(link = "logit") {
   # Just copy binomial()
   family = binomial(link = link)
   family$family = "bernoulli"
-  family$likfun = function(x, prob, log = FALSE) dbinom(x, 1, prob, log)
+  family$likfun = function(x, prob, log = FALSE) stats::dbinom(x, 1, prob, log)
   mcpfamily(family)
 }
 
-#' Exponential family for mcp
+#' Exponential Family for mcp
 #'
 #' @aliases exponential
 #' @param link Link function (Character).
@@ -32,7 +32,7 @@ exponential = function(link = "identity") {
 }
 
 
-#' Negative binomial for mcp
+#' Negative Binomial for mcp
 #'
 #' Parameterized as `mu` (mean; poisson lambda) and `size` (a shape parameter),
 #' so you can do `rnbinom(10, mu = 10, size = 1)`. Read more in the doc for `rnbinom`,
@@ -52,7 +52,7 @@ negbinomial = function(link = "log") {
 }
 
 
-#' Create or test objects of type class "mcpfamily"
+#' Create or Test Objects of Class "mcpfamily"
 #'
 #' @aliases mcpfamily
 #' @param x A family object, e.g., `binomial(link = "identity")`.
@@ -66,21 +66,21 @@ mcpfamily = function(x) {
   assert_types(family, "family")
 
   # Get default priors for RHS
-  dpar_prior = subset(default_dpar_priors, family == tmp$family & link == tmp$link)
+  dpar_prior = default_dpar_priors %>% dplyr::filter(.data$family == tmp$family & .data$link == tmp$link)
   if (nrow(dpar_prior) == 0)
     stop("mcp has no default priors for ", family$family, "(link = \"", family$link, "\") so it's likely not supported. See `mcpfamily()` on how to create a custom family.")
 
   # Add priors and list parameters
-  dpar_prior = rbind(dpar_prior, subset(default_common_priors, dpar == "ar"))
+  dpar_prior = rbind(dpar_prior, default_common_priors %>% dplyr::filter(.data$dpar == "ar"))
   family$default_prior = dpar_prior
   family$dpars = unique(dpar_prior$dpar)
 
   # Add likelihood function for stats families
   if (is.null(family$likfun)) {
     loglik_funs = list(
-      gaussian = dnorm,
-      binomial = dbinom,
-      poisson = dpois
+      gaussian = stats::dnorm,
+      binomial = stats::dbinom,
+      poisson = stats::dpois
     )
     family$likfun = loglik_funs[[family$family]]
   }

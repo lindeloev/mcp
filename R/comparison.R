@@ -1,7 +1,7 @@
 # ABOUT: These functions compare models and/or hypotheses.
 # -----------------
 
-#' Compute information criteria for model comparison
+#' Information Criteria for Model Comparison
 #'
 #' Compare models using \code{\link[loo]{loo_compare}} and \code{\link[loo]{loo_model_weights}}.
 #' more in \code{\link[loo]{loo}}.
@@ -60,8 +60,8 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE) {
         lldata = fit$data[data_rows, ]
         loglik = fit %>%
           pp_eval(newdata = lldata, summary = FALSE, type = "loglik", varying = varying, arma = arma) %>%
-          dplyr::filter(data_row == max(data_row)) %>%  # last row
-          dplyr::pull(loglik)
+          dplyr::filter(.data$data_row == max(.data$data_row)) %>%  # last row
+          dplyr::pull(.data$loglik)
       }
 
       # Return
@@ -95,7 +95,7 @@ waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE) {
 }
 
 
-#' Add log-likelihood to an mcpfit object.
+#' Add Log-Likelihood to an mcpfit Object.
 #'
 #' @aliases add_loglik
 #' @inheritParams loo.mcpfit
@@ -113,23 +113,23 @@ add_loglik = function(x, varying = TRUE, arma = TRUE) {
 
   # Log-likelihoods
   fit$loglik = loglik_samples %>%
-    dplyr::select(.chain, .draw, data_row, loglik) %>%
+    dplyr::select(.data$.chain, .data$.draw, .data$data_row, .data$loglik) %>%
 
     # To matrix
-    tidyr::pivot_wider(id_cols =  c(.chain, .draw), names_from = data_row, values_from = loglik) %>%
-    dplyr::select(-.chain, -.draw) %>%
+    tidyr::pivot_wider(id_cols =  c(.data$.chain, .data$.draw), names_from = .data$data_row, values_from = .data$loglik) %>%
+    dplyr::select(-.data$.chain, -.data$.draw) %>%
     as.matrix()
 
   # Chain info
   rownames(fit$loglik) = loglik_samples %>%
-    dplyr::filter(data_row == 1) %>%
-    dplyr::pull(.chain)
+    dplyr::filter(.data$data_row == 1) %>%
+    dplyr::pull(.data$.chain)
 
   fit
 }
 
 
-#' Test hypotheses on mcp objects.
+#' Test Hypotheses Concerning Individual Parameters
 #'
 #' Returns posterior probabilities and Bayes Factors for flexible hypotheses involving
 #' model parameters. The documentation for the argument `hypotheses` below

@@ -93,7 +93,7 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
     dpar_prefix = paste0(dpar, order, "_")
   }
 
-  mat = model.matrix(form_rhs, data)
+  mat = stats::model.matrix(form_rhs, data)
   if (check_rank == TRUE)
     assert_rank(mat, segment, dpar)
 
@@ -110,8 +110,8 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
     stringr::str_detect("[+:*]")  # TO DO: will fail to detect I(x:b) because the string is already split by :
   split_contains_x = term_contains(par_x, split_terms)
   is_bad = split_contains_x & split_contains_multiple_terms
-  if (any(na.omit(is_bad) == TRUE))
-    stop("mcp does not currently support 2+ terms within a formula function when one of them is par_x = '", par_x, "'. Found: ", and_collapse(all_single_terms[which(is_bad)]))
+  if (any(stats::na.omit(is_bad) == TRUE))
+    stop("mcp does not currently support 2+ terms within a formula function when one of them is par_x = '", par_x, "'. Found: ", and_collapse(split_terms[which(is_bad)]))
 
   # Replace I(...) with ...
   I_contents = stringr::str_extract(pars, "(?<=I\\().*(?=\\))")
@@ -197,10 +197,10 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
     # Add data
     dplyr::rowwise() %>%
     dplyr::mutate(
-      matrix_data = list(mat_without_x[, matrix_col])
+      matrix_data = list(mat_without_x[, .data$matrix_col])
     ) %>%
     dplyr::ungroup() %>%
-    dplyr::select(-matrix_col)
+    dplyr::select(-.data$matrix_col)
 
   # Return
   rhs_table
@@ -415,7 +415,7 @@ get_rhs_table = function(model, data, family, par_x, check_rank = TRUE) {
 
   rhs_table = lapply(seq_along(rhs), function(segment) get_rhs_table_segment(rhs[[segment]], segment, family, data, par_x, check_rank)) %>%
     dplyr::bind_rows() %>%
-    dplyr::arrange(dpar, segment) %>%
+    dplyr::arrange(.data$dpar, .data$segment) %>%
     dplyr::mutate(matrix_col = dplyr::row_number())
 
   # Code next_intercept: Which segment has the next intercept?
@@ -424,18 +424,18 @@ get_rhs_table = function(model, data, family, par_x, check_rank = TRUE) {
   #           (3) left-join this into rhs_table
   #           (4) fill downwards into intermittent segments without intercepts
   df_next_intercept = rhs_table %>%
-    dplyr::arrange(dpar, order, segment) %>%
-    dplyr::group_by(dpar, order) %>%
-    dplyr::filter(par_type == "Intercept") %>%
-    dplyr::mutate(next_intercept = as.integer(dplyr::lead(segment))) %>%
+    dplyr::arrange(.data$dpar, .data$order, .data$segment) %>%
+    dplyr::group_by(.data$dpar, .data$order) %>%
+    dplyr::filter(.data$par_type == "Intercept") %>%
+    dplyr::mutate(next_intercept = as.integer(dplyr::lead(.data$segment))) %>%
     dplyr::ungroup() %>%
-    dplyr::select(dpar, segment, order, next_intercept)
+    dplyr::select(.data$dpar, .data$segment, .data$order, .data$next_intercept)
 
   # Return: left-join and fill-down. NA means "there is no next intercept-segment"
   rhs_table %>%
     dplyr::left_join(df_next_intercept, by = c("dpar", "segment", "order")) %>%
-    dplyr::group_by(dpar, order) %>%
-    tidyr::fill(next_intercept, .direction = "down") %>%
+    dplyr::group_by(.data$dpar, .data$order) %>%
+    tidyr::fill(.data$next_intercept, .direction = "down") %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(next_intercept = dplyr::if_else(segment >= next_intercept, NA_integer_, next_intercept))
+    dplyr::mutate(next_intercept = dplyr::if_else(.data$segment >= .data$next_intercept, NA_integer_, .data$next_intercept))
 }

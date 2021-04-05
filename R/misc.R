@@ -31,7 +31,7 @@ logical0_to_null = function(x) {
 # Is this a continuous vector?
 is_continuous = function(x) {
   is.numeric(x) &
-    length(unique(na.omit(x))) > 2
+    length(unique(stats::na.omit(x))) > 2
 }
 
 
@@ -316,7 +316,7 @@ print.mcplist = function(x, ...) {
 }
 
 
-#' Nice printing texts
+#' Nice Printing of Multiline Texts
 #'
 #' Useful for `print(fit$jags_code)`, `print(mcp_demo$call)`, etc.
 #'
