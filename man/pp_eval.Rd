@@ -4,7 +4,7 @@
 \name{pp_eval}
 \alias{pp_eval}
 \alias{pp_eval.mcpfit}
-\title{Fits and predictions from samples and newdata}
+\title{Fits and Predictions given Draws and data}
 \usage{
 pp_eval(
   object,
@@ -107,7 +107,7 @@ values (depending on \code{type}). This format is used by \code{brms} and it's u
 }
 }
 \description{
-Fits and predictions from samples and newdata
+Fits and Predictions given Draws and data
 }
 \seealso{
 \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}}

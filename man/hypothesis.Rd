@@ -4,7 +4,7 @@
 \name{hypothesis}
 \alias{hypothesis}
 \alias{hypothesis.mcpfit}
-\title{Test hypotheses on mcp objects.}
+\title{Test Hypotheses Concerning Individual Parameters}
 \usage{
 hypothesis(fit, hypotheses, width = 0.95, digits = 3)
 }

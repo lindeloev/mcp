@@ -6,7 +6,7 @@
 \alias{residuals}
 \alias{resid}
 \alias{resid.mcpfit}
-\title{Compute Residuals From Mcpfit Objects}
+\title{Summary or Draws from the Residual Distribution}
 \usage{
 \method{residuals}{mcpfit}(
   object,

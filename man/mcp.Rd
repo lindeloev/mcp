@@ -94,8 +94,8 @@ a convenient way to maximally use your computer's power.
 
 \item{chains}{Positive integer. Number of chains to run.}
 
-\item{iter}{Positive integer. Number of post-warmup samples to draw. The number
-of iterations per chain is \code{iter/chains}.}
+\item{iter}{Positive integer. Number of post-warmup draws from each chain.
+The total number of draws is \code{iter * chains}.}
 
 \item{adapt}{Positive integer. Also sometimes called "burnin", this is the
 number of samples used to reach convergence. Set lower for greater speed.

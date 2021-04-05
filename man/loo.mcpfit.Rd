@@ -8,11 +8,11 @@
 \alias{waic.mcpfit}
 \alias{waic}
 \alias{WAIC}
-\title{Compute information criteria for model comparison}
+\title{Information Criteria for Model Comparison}
 \usage{
-\method{loo}{mcpfit}(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE, nsamples = NULL)
+\method{loo}{mcpfit}(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE)
 
-\method{waic}{mcpfit}(x, ..., varying = TRUE, arma = TRUE, nsamples = NULL)
+\method{waic}{mcpfit}(x, ..., varying = TRUE, arma = TRUE)
 }
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object.}
@@ -34,10 +34,6 @@
 \item \code{TRUE} Compute autoregressive residuals. Requires the response variable in \code{newdata}.
 \item \code{FALSE} Disregard the autoregressive effects. For \code{family = gaussian()}, \code{predict()} just use \code{sigma} for residuals.
 }}
-
-\item{nsamples}{Integer or \code{NULL}. Number of samples to return/summarise.
-If there are varying effects, this is the number of samples from each varying group.
-\code{NULL} means "all". Ignored if both are \code{FALSE}. More samples trade speed for accuracy.}
 }
 \value{
 a \code{loo} or \code{psis_loo} object.

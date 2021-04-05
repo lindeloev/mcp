@@ -2,9 +2,9 @@
 % Please edit documentation in R/comparison.R
 \name{add_loglik}
 \alias{add_loglik}
-\title{Add log-likelihood to an mcpfit object.}
+\title{Add Log-Likelihood to an mcpfit Object.}
 \usage{
-add_loglik(x, varying = TRUE, arma = TRUE, nsamples = NULL)
+add_loglik(x, varying = TRUE, arma = TRUE)
 }
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object.}
@@ -21,16 +21,13 @@ add_loglik(x, varying = TRUE, arma = TRUE, nsamples = NULL)
 \item \code{TRUE} Compute autoregressive residuals. Requires the response variable in \code{newdata}.
 \item \code{FALSE} Disregard the autoregressive effects. For \code{family = gaussian()}, \code{predict()} just use \code{sigma} for residuals.
 }}
-
-\item{nsamples}{Integer or \code{NULL}. Number of samples to return/summarise.
-If there are varying effects, this is the number of samples from each varying group.
-\code{NULL} means "all". Ignored if both are \code{FALSE}. More samples trade speed for accuracy.}
 }
 \value{
-An \code{mcpfit} object with \code{fit$loglik} filled as an (Nchains * Nsamples) x Ndata matrix.
+An \code{mcpfit} object with \code{fit$loglik} filled as an (Nchains * Nsamples) x N
+data matrix with chain number as rownames.
 }
 \description{
-Add log-likelihood to an mcpfit object.
+Add Log-Likelihood to an mcpfit Object.
 }
 \examples{
 \donttest{

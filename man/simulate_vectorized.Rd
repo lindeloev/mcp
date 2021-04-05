@@ -24,6 +24,7 @@ Vector with same length as inputs.
 }
 \description{
 Used internally in mcp.
+Parameters not documented here are documented in \code{pp_eval} (without dot prefix).
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

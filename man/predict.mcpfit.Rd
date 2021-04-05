@@ -4,7 +4,7 @@
 \name{predict.mcpfit}
 \alias{predict.mcpfit}
 \alias{predict}
-\title{Samples from the Posterior Predictive Distribution}
+\title{Summary or Draws from the Predictive Distribution}
 \usage{
 \method{predict}{mcpfit}(
   object,
@@ -89,7 +89,7 @@ values (depending on \code{type}). This format is used by \code{brms} and it's u
 }
 }
 \description{
-Samples from the Posterior Predictive Distribution
+Summary or Draws from the Predictive Distribution
 }
 \examples{
 predict(demo_fit)  # Evaluate at each demo_fit$data

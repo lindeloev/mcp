@@ -2,7 +2,7 @@
 % Please edit documentation in R/families.R
 \name{bernoulli}
 \alias{bernoulli}
-\title{Bernoulli family for mcp}
+\title{Bernoulli Family for mcp}
 \usage{
 bernoulli(link = "logit")
 }
@@ -10,5 +10,5 @@ bernoulli(link = "logit")
 \item{link}{Link function.}
 }
 \description{
-Bernoulli family for mcp
+Bernoulli Family for mcp
 }

@@ -3,7 +3,7 @@
 \encoding{UTF-8}
 \name{sd_to_prec}
 \alias{sd_to_prec}
-\title{Transform a prior from SD to precision.}
+\title{Transform a JAGS Prior from SD to Precision.}
 \usage{
 sd_to_prec(prior_str)
 }

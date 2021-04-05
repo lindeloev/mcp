@@ -4,7 +4,7 @@
 \name{mcpfamily}
 \alias{mcpfamily}
 \alias{is.mcpfamily}
-\title{Create or test objects of type class "mcpfamily"}
+\title{Create or Test Objects of Class "mcpfamily"}
 \usage{
 mcpfamily(x)
 
@@ -14,7 +14,7 @@ is.mcpfamily(x)
 \item{x}{A family object, e.g., \code{binomial(link = "identity")}.}
 }
 \description{
-Create or test objects of type class "mcpfamily"
+Create or Test Objects of Class "mcpfamily"
 }
 \section{Functions}{
 \itemize{

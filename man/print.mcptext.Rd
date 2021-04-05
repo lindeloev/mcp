@@ -3,7 +3,7 @@
 \encoding{UTF-8}
 \name{print.mcptext}
 \alias{print.mcptext}
-\title{Nice printing texts}
+\title{Nice Printing of Multiline Texts}
 \usage{
 \method{print}{mcptext}(x, ...)
 }

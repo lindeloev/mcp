@@ -2,7 +2,7 @@
 % Please edit documentation in R/mcpfit_methods.R
 \name{is.mcpfit}
 \alias{is.mcpfit}
-\title{Checks if argument is an \code{mcpfit} object}
+\title{Checks if the Argument is an \code{mcpfit} Object}
 \usage{
 is.mcpfit(x)
 }
@@ -10,5 +10,5 @@ is.mcpfit(x)
 \item{x}{An \code{R} object.}
 }
 \description{
-Checks if argument is an \code{mcpfit} object
+Checks if the Argument is an \code{mcpfit} Object
 }

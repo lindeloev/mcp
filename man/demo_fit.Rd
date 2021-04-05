@@ -3,7 +3,7 @@
 \docType{data}
 \name{demo_fit}
 \alias{demo_fit}
-\title{Example \code{mcpfit} for examples}
+\title{Example \code{mcpfit}}
 \format{
 An \code{\link{mcpfit}} object.
 }
@@ -11,6 +11,6 @@ An \code{\link{mcpfit}} object.
 demo_fit
 }
 \description{
-This was generated using \code{mcp_examples("demo", sample = TRUE)}.
+This was generated using \code{demo_fit = mcp_examples("demo", sample = TRUE)$fit}.
 }
 \keyword{datasets}

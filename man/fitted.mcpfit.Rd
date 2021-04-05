@@ -4,7 +4,7 @@
 \name{fitted.mcpfit}
 \alias{fitted.mcpfit}
 \alias{fitted}
-\title{Expected Values from the Posterior Predictive Distribution}
+\title{Summary or Draws from the Expected Distribution}
 \usage{
 \method{fitted}{mcpfit}(
   object,
@@ -96,7 +96,7 @@ values (depending on \code{type}). This format is used by \code{brms} and it's u
 }
 }
 \description{
-Expected Values from the Posterior Predictive Distribution
+Summary or Draws from the Expected Distribution
 }
 \examples{
 \donttest{

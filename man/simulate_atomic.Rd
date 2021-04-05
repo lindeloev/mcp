@@ -33,6 +33,9 @@ Does the following:
 \item Add "simulated" attribute and returns
 }
 }
+\details{
+Parameters not documented here are documented in \code{pp_eval} (without dot prefix).
+}
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
 }

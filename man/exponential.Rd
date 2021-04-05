@@ -2,7 +2,7 @@
 % Please edit documentation in R/families.R
 \name{exponential}
 \alias{exponential}
-\title{Exponential family for mcp}
+\title{Exponential Family for mcp}
 \usage{
 exponential(link = "identity")
 }
@@ -10,5 +10,5 @@ exponential(link = "identity")
 \item{link}{Link function (Character).}
 }
 \description{
-Exponential family for mcp
+Exponential Family for mcp
 }

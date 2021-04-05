@@ -4,7 +4,7 @@
 \name{mcpfit-class}
 \alias{mcpfit-class}
 \alias{mcpfit}
-\title{Class \code{mcpfit} of models fitted with the \pkg{mcp} package}
+\title{Class \code{mcpfit} of Models Fitted with the \pkg{mcp} Package}
 \description{
 Models fitted with the \code{\link[mcp:mcp]{mcp}} function are represented as
 an \code{mcpfit} object which contains the user input (model, data, family),
