@@ -4,12 +4,15 @@
 \alias{get_eval_at}
 \title{Get a list of x-coordinates to evaluate fit$simulate at}
 \usage{
-get_eval_at(fit, facet_by)
+get_eval_at(fit, facet_by = NULL, prior = FALSE)
 }
 \arguments{
 \item{fit}{An mcpfit object.}
 
-\item{facet_by}{String. Name of a varying group.}
+\item{facet_by}{Character vector. Names of categorical data columns to split to facets.
+Can be varying or RHS categoricals.}
+
+\item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
 }
 \value{
 A vector of x-values to evaluate at.

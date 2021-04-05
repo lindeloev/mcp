@@ -19,10 +19,10 @@ returns the posterior probability and odds in favor of the stated hypothesis.
 The odds can be interpreted as a Bayes Factor. For example:
 \itemize{
 \item \code{"cp_1 > 30"}:  the first change point is above 30.
-\item \code{"int_1 > int_2"}: the intercept is greater in segment 1 than 2.
+\item \code{"Intercept_1 > Intercept_2"}: the intercept is greater in segment 1 than 2.
 \item \code{"x_2 - x_1 <= 3"}: the difference between slope 1 and 2 is less
 than or equal to 3.
-\item \code{"int_1 > -2 & int_1 < 2"}: int_1 is between -2 and 2 (an interval hypothesis). This can be useful as a Region Of Practical Equivalence test (ROPE).
+\item \code{"Intercept_1 > -2 & Intercept_1 < 2"}: Intercept_1 is between -2 and 2 (an interval hypothesis). This can be useful as a Region Of Practical Equivalence test (ROPE).
 \item \code{"cp_1^2 < 30 | (log(x_1) + log(x_2)) > 5"}: be creative.
 \item \code{"`cp_1_id[1]` > `cp_1_id[2]`"}: id1 is greater than id2, as estimated
 through the varying-by-"id" change point in segment 1. Note that \code{``}
@@ -39,7 +39,7 @@ Second, the point to test has to be on the right, and the variables on the left.
 \item \code{"cp_1 = 30"}: is the first change point at 30? Or to be more precise:
 by what factor has the credence in cp_1 = 30 risen/fallen when
 conditioning on the data, relative to the prior credence?
-\item \code{"int_1 + int_2 = 0"}: Is the sum of two intercepts zero?
+\item \code{"Intercept_1 + Intercept_2 = 0"}: Is the sum of two intercepts zero?
 \item \code{"`cp_1_id[John]`/`cp_1_id[Erin]` = 2"}: is the varying change
 point for John (which is relative to `cp_1``) double that of Erin?
 }}

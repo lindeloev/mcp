@@ -4,16 +4,12 @@
 \alias{recover_levels}
 \title{Recover the levels of varying effects in mcmc.list}
 \usage{
-recover_levels(samples, data, mcmc_col, data_col)
+recover_levels(samples, data, ST)
 }
 \arguments{
 \item{samples}{An mcmc.list with varying columns starting in \code{mcmc_col}.}
 
-\item{data}{A tibble or data.frame with the cols in \code{data_col}.}
-
-\item{mcmc_col}{A vector of strings.}
-
-\item{data_col}{A vector of strings. Has to be same length as \code{mcmc_col}.`}
+\item{data}{A tibble or data.frame}
 }
 \description{
 Jags uses 1, 2, 3, ..., etc. for indexing of varying effects.

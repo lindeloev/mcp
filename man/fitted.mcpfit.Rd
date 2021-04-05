@@ -13,7 +13,7 @@
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
-  which_y = "ct",
+  which_y = "mu",
   varying = TRUE,
   arma = TRUE,
   nsamples = NULL,
@@ -40,7 +40,7 @@ interpolation on trial number is used to infer trials at a particular x.}
 
 \item{which_y}{What to plot on the y-axis. One of
 \itemize{
-\item \code{"ct"}: The central tendency which is often the mean after applying the
+\item \code{"mu"}: The central tendency which is often the mean after applying the
 link function.
 \item \code{"sigma"}: The variance
 \item \code{"ar1"}, \code{"ar2"}, etc. depending on which order of the autoregressive
@@ -107,7 +107,6 @@ fitted(demo_fit,
        newdata = data.frame(time = c(-5, 20, 300)),  # New data
        probs = c(0.025, 0.5, 0.975))
 }
-
 }
 \seealso{
 \code{\link{pp_eval}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}}

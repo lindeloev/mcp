@@ -61,7 +61,6 @@ pp_check(demo_fit)
 pp_check(demo_fit, type = "ecdf_overlay")
 #pp_check(some_varying_fit, type = "loo_intervals", facet_by = "id")
 }
-
 }
 \seealso{
 \code{\link{plot.mcpfit}} \code{\link{pp_eval}}

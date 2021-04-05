@@ -53,7 +53,7 @@ If there are varying effects, this is the number of samples from each varying gr
 }
 \description{
 Equivalent to  \code{fitted(fit, ...) - fit$data[, fit$data$yvar]} (or \code{fitted(fit, ...) - newdata[, fit$data$yvar]}),
-but with fixed arguments for \code{fitted}: \verb{rate = FALSE, which_y = 'ct', samples_format = 'tidy'}.
+but with fixed arguments for \code{fitted}: \verb{rate = FALSE, which_y = 'mu', samples_format = 'tidy'}.
 }
 \examples{
 \donttest{
@@ -61,7 +61,6 @@ residuals(demo_fit)
 residuals(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80\% credible interval.
 residuals(demo_fit, summary = FALSE)  # Samples instead of summary.
 }
-
 }
 \seealso{
 \code{\link{pp_eval}} \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}}

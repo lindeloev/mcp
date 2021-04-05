@@ -35,7 +35,7 @@ Provided by user. See \code{\link{mcp}} for more details.}
 
 \item{\code{mcmc_prior}}{An \code{\link[coda]{mcmc.list}} object with prior samples.}
 
-\item{\code{mcmc_loglik}}{An \code{\link[coda]{mcmc.list}} object with samples of log-likelihood.}
+\item{\code{loglik}}{An (Nchains * Nsamples) x Ndatarows matrix of log-likelihoods.}
 
 \item{\code{pars}}{A list of character vectors of model parameter names.}
 
@@ -43,6 +43,6 @@ Provided by user. See \code{\link{mcp}} for more details.}
 
 \item{\code{simulate}}{A method to simulate and predict data.}
 
-\item{\code{.other}}{Information that is used internally by mcp.}
+\item{\code{.internal}}{Information that is used internally by mcp.}
 }}
 

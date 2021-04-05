@@ -7,7 +7,7 @@
 \usage{
 mcp(
   model,
-  data = NULL,
+  data,
   prior = list(),
   family = gaussian(),
   par_x = NULL,
@@ -31,17 +31,17 @@ following can be modeled:
 \item \emph{Regular formulas:} e.g., \code{~ 1 + x}). \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
 \item \emph{Extended formulas:}, e.g., \code{~ I(x^2) + exp(x) + sin(x)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
 \item \emph{Variance:} e.g., \code{~sigma(1)} for a simple variance change or
-\code{~sigma(rel(1) + I(x^2))}) for more advanced variance structures. \href{https://lindeloev.github.io/mcp/articles/variance.html}{Read more}
+\code{~sigma(1 + I(x^2))}) for more advanced variance structures. \href{https://lindeloev.github.io/mcp/articles/variance.html}{Read more}
 \item \emph{Autoregression:} e.g., \code{~ar(1)} for a simple onset/change in AR(1) or
 \verb{ar(2, 0 + x}) for an AR(2) increasing by \code{x}. \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
 }}
 
 \item{data}{Data.frame or tibble in long format.}
 
-\item{prior}{Named list. Names are parameter names (\code{cp_i}, \code{int_i}, \code{xvar_i},
+\item{prior}{Named list. Names are parameter names (\code{cp_i}, \code{Intercept_i}, \code{xvar_i},
 `sigma``) and the values are either
 \itemize{
-\item A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
+\item A JAGS distribution (e.g., \code{Intercept_1 = "dnorm(0, 1) T(0,)"}) indicating a
 conventional prior distribution. Uninformative priors based on data
 properties are used where priors are not specified. This ensures good
 parameter estimations, but it is a questionable for hypothesis testing.
@@ -49,8 +49,8 @@ parameter estimations, but it is a questionable for hypothesis testing.
 details. Change points are forced to be ordered through the priors using
 truncation, except for uniform priors where the lower bound should be
 greater than the previous change point, \code{dunif(cp_1, MAXX)}.
-\item A numerical value (e.g., \code{int_1 = -2.1}) indicating a fixed value.
-\item A model parameter name (e.g., \code{int_2 = "int_1"}), indicating that this parameter is shared -
+\item A numerical value (e.g., \code{Intercept_1 = -2.1}) indicating a fixed value.
+\item A model parameter name (e.g., \code{Intercept_2 = "Intercept_1"}), indicating that this parameter is shared -
 typically between segments. If two varying effects are shared this way,
 they will need to have the same grouping variable.
 \item A scaled Dirichlet prior is supported for change points if they are all set to
@@ -62,11 +62,11 @@ It is recommended for hypothesis testing and for the estimation of more
 than 5 change points. \href{https://lindeloev.github.io/mcp/articles/priors.html}{Read more}.
 }}
 
-\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}.
-Only default link functions are currently supported.}
+\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}
+with a supported link function, e.g., \code{gaussian(link = "log")}.
+Custom families can also be provided, e.g., \code{mcpfamily(gaussian(link = "log"))}.}
 
-\item{par_x}{String (default: NULL). Only relevant if no segments contains
-slope (no hint at what x is). Set this, e.g., par_x = "time".}
+\item{par_x}{String (default: \code{NULL} which is auto-detect).}
 
 \item{sample}{One of
 \itemize{
@@ -143,9 +143,9 @@ in \code{fit$jags_code}
 \donttest{
 # Define the segments using formulas. A change point is estimated between each formula.
 model = list(
-  response ~ 1,  # Plateau in the first segment (int_1)
+  response ~ 1,  # Plateau in the first segment (Intercept_1)
   ~ 0 + time,    # Joined slope (time_2) at cp_1
-  ~ 1 + time     # Disjoined slope (int_3, time_3) at cp_2
+  ~ 1 + time     # Disjoined slope (Intercept_3, time_3) at cp_2
 )
 
 # Fit it and sample the prior too.
@@ -185,10 +185,10 @@ print(demo_fit$prior)
 
 # Set priors and re-run
 prior = list(
-  int_1 = 15,
+  Intercept_1 = 15,
   time_2 = "dt(0, 2, 1) T(0, )",  # t-dist slope. Truncated to positive.
   cp_2 = "dunif(cp_1, 80)",    # change point to segment 2 > cp_1 and < 80.
-  int_3 = "int_1"           # Shared intercept between segment 1 and 3
+  Intercept_3 = "Intercept_1"           # Shared intercept between segment 1 and 3
 )
 
 fit3 = mcp(model, data = ex$data, prior = prior)
@@ -196,7 +196,6 @@ fit3 = mcp(model, data = ex$data, prior = prior)
 # Show the JAGS model
 demo_fit$jags_code
 }
-
 }
 \seealso{
 \code{\link{get_segment_table}}

@@ -4,14 +4,16 @@
 \alias{get_jags_data}
 \title{Adds helper variables for use in \code{run_jags}}
 \usage{
-get_jags_data(data, ST, jags_code, sample)
+get_jags_data(data, family, ST, rhs_table, jags_code, sample)
 }
 \arguments{
 \item{data}{A tibble}
 
 \item{ST}{A segment table (tibble), returned by \code{get_segment_table}.}
 
-\item{jags_code}{A string. JAGS model, usually returned by \code{make_jagscode()}.}
+\item{rhs_table}{Returned by \code{get_rhs()}}
+
+\item{jags_code}{A string. JAGS model, usually returned by \code{get_jags_code()}.}
 
 \item{sample}{One of
 \itemize{

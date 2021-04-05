@@ -39,8 +39,6 @@ tidy_samples(
 \item \code{FALSE} Just returns the varying effects.
 \item Character vector: Only do absolute transform for these varying parameters - see \code{fit$pars$varying}.
 }
-
-OBS: This currently only applies to varying change points. It is not implemented for \code{rel()} regressors yet.
 }}
 
 \item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}

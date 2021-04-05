@@ -8,8 +8,8 @@
 run_jags(
   data,
   jags_code,
+  jags_data,
   pars,
-  ST,
   cores,
   sample,
   n.chains,
@@ -21,12 +21,9 @@ run_jags(
 \arguments{
 \item{data}{Data.frame or tibble in long format.}
 
-\item{jags_code}{A string. JAGS model, usually returned by \code{make_jagscode()}.}
+\item{jags_code}{A string. JAGS model, usually returned by \code{get_jags_code()}.}
 
 \item{pars}{Character vector of parameters to save/monitor.}
-
-\item{ST}{A segment table (tibble), returned by \code{get_segment_table}.
-Only really used when the model contains varying effects.}
 
 \item{cores}{Positive integer or "all". Number of cores.
 \itemize{

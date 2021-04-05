@@ -8,15 +8,16 @@
 \usage{
 \method{plot}{mcpfit}(
   x,
+  q_fit = FALSE,
+  q_predict = FALSE,
   facet_by = NULL,
+  color_by = NULL,
   lines = 25,
   geom_data = "point",
   cp_dens = TRUE,
-  q_fit = FALSE,
-  q_predict = FALSE,
   rate = TRUE,
   prior = FALSE,
-  which_y = "ct",
+  which_y = "mu",
   arma = TRUE,
   nsamples = 2000,
   scale = "response",
@@ -25,18 +26,6 @@
 }
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object}
-
-\item{facet_by}{String. Name of a varying group.}
-
-\item{lines}{Positive integer or \code{FALSE}. Number of lines (posterior
-draws). FALSE or \code{lines = 0} plots no lines. Note that lines always plot
-fitted values - not predicted. For prediction intervals, see the \code{q_predict} argument.}
-
-\item{geom_data}{String. One of "point", "line" (good for time-series),
-or FALSE (don not plot).}
-
-\item{cp_dens}{TRUE/FALSE. Plot posterior densities of the change point(s)?
-Currently does not respect \code{facet_by}. This will be added in the future.}
 
 \item{q_fit}{Whether to plot quantiles of the posterior (fitted value).
 \itemize{
@@ -50,6 +39,22 @@ quantiles.
 
 \item{q_predict}{Same as \code{q_fit}, but for the prediction interval.}
 
+\item{facet_by}{Character vector. Names of categorical data columns to split to facets.
+Can be varying or RHS categoricals.}
+
+\item{color_by}{Character vector. Names of categorical data columns to color by.
+See \code{facet_by} for more.}
+
+\item{lines}{Positive integer or \code{FALSE}. Number of lines (posterior
+draws). FALSE or \code{lines = 0} plots no lines. Note that lines always plot
+fitted values - not predicted. For prediction intervals, see the \code{q_predict} argument.}
+
+\item{geom_data}{String. One of "point", "line" (good for time-series),
+or FALSE (don not plot).}
+
+\item{cp_dens}{TRUE/FALSE. Plot posterior densities of the change point(s)?
+Currently does not respect \code{facet_by}. This will be added in the future.}
+
 \item{rate}{Boolean. For binomial models, plot on raw data (\code{rate = FALSE}) or
 response divided by number of trials (\code{rate = TRUE}). If FALSE, linear
 interpolation on trial number is used to infer trials at a particular x.}
@@ -58,7 +63,7 @@ interpolation on trial number is used to infer trials at a particular x.}
 
 \item{which_y}{What to plot on the y-axis. One of
 \itemize{
-\item \code{"ct"}: The central tendency which is often the mean after applying the
+\item \code{"mu"}: The central tendency which is often the mean after applying the
 link function.
 \item \code{"sigma"}: The variance
 \item \code{"ar1"}, \code{"ar2"}, etc. depending on which order of the autoregressive
@@ -111,7 +116,6 @@ plot(demo_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
 library(ggplot2)
 plot(demo_fit) + theme_bw(15) + ggtitle("Great plot!")
 }
-
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

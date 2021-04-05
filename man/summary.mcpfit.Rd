@@ -91,7 +91,6 @@ results = summary(demo_fit)
 
 # Summarise prior
 summary(demo_fit, prior = TRUE)
-
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

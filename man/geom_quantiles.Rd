@@ -16,7 +16,8 @@ geom_quantiles(samples, quantiles, xvar, yvar, facet_by, ...)
 
 \item{yvar}{An rlang::sym() with the name of the response col in \code{samples}}
 
-\item{facet_by}{String. Name of a varying group.}
+\item{facet_by}{Character vector. Names of categorical data columns to split to facets.
+Can be varying or RHS categoricals.}
 
 \item{...}{Arguments passed to geom_line}
 }
