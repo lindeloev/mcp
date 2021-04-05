@@ -37,6 +37,7 @@ reference:
       - residuals
       - loo
       - waic
+      - add_loglik
       - hypothesis
 
   - title: Axillary functions
@@ -57,7 +58,7 @@ reference:
       - exponential
 
   - title: Help and demos
-    desc: These datasets were simulated with mcp. There are lnks to the simulation scripts in the documentation for each of them. The simulation values will also show up if you fit a model to one of these dataset and call `summary(fit)`. Analyses of most of these are demonstrated on the [front page](https://lindeloev.github.io/mcp).
+    desc: Some showcases of typical mcp analyses. Most of these are discussed on the [front page](https://lindeloev.github.io/mcp).
     contents:
       - mcp_example
       - demo_fit
@@ -101,6 +102,8 @@ navbar:
         href: articles/packages.html
       - text: Tips, tricks, and debugging
         href: articles/tips.html
+    - text: Functions
+      href: reference/index.html
     - text: News
       href: news/index.html
     - icon: fa-twitter
