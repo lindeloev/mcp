@@ -32,7 +32,7 @@
 #' fit2$loo = loo(fit2)
 #' loo::loo_compare(fit1$loo, fit2$loo)
 #' }
-loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE, nsamples = NULL) {
+loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE) {
   fit = x
   assert_types(fit, "mcpfit")
   chain_id = rep(seq_along(fit$mcmc_post), each =  nrow(fit$mcmc_post[[1]]))
@@ -41,8 +41,9 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE, ns
   # Matrix: Fast but memory-greedy matrix-based computation
   if (pointwise == FALSE) {
     if (is.null(fit$loglik))
-      fit = add_loglik(fit, varying = varying, arma = arma, nsamples = nsamples)
-    r_eff = loo::relative_eff(exp(fit$loglik), chain_id)  # Likelihood = exp(log-likelihood)
+      fit = add_loglik(fit, varying = varying, arma = arma)
+    #chain_id = rownames(fit$loglik) %>% as.numeric()
+    r_eff = loo::relative_eff(exp(fit$loglik), chain_id)
     loo::loo(fit$loglik, r_eff = r_eff, ...)
 
   # Pointwise: per-data-row computation
@@ -52,13 +53,13 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE, ns
     # For small models, the majority of the computation time will be pp_eval overhead
     llfun = function(data_i, draws = NULL, with_exp) {
       if (is.na(ar_order)) {
-        loglik = pp_eval(fit, newdata = data_i, summary = FALSE, type = "loglik", varying = varying, arma = arma, nsamples = nsamples)$loglik
+        loglik = pp_eval(fit, newdata = data_i, summary = FALSE, type = "loglik", varying = varying, arma = arma)$loglik
       } else {
         # For ARMA, include the last N rows in call to pp_eval() too
         data_rows = seq(max(1, data_i$row - ar_order), data_i$row)
         lldata = fit$data[data_rows, ]
         loglik = fit %>%
-          pp_eval(newdata = lldata, summary = FALSE, type = "loglik", varying = varying, arma = arma, nsamples = nsamples) %>%
+          pp_eval(newdata = lldata, summary = FALSE, type = "loglik", varying = varying, arma = arma) %>%
           dplyr::filter(data_row == max(data_row)) %>%  # last row
           dplyr::pull(loglik)
       }
@@ -83,12 +84,12 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE, ns
 #' @param ... Currently ignored
 #' @export waic
 #' @export
-waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, nsamples = NULL) {
+waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE) {
   assert_ellipsis(...)
   fit = x
   assert_types(fit, "mcpfit")
   if (is.null(fit$loglik))
-    fit = add_loglik(fit, varying = varying, arma = arma, nsamples = nsamples)
+    fit = add_loglik(fit, varying = varying, arma = arma)
 
   loo::waic(fit$loglik)
 }
@@ -99,21 +100,30 @@ waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, nsamples = NULL) {
 #' @aliases add_loglik
 #' @inheritParams loo.mcpfit
 #' @seealso loo.mcpfit waic.mcpfit
-#' @return An `mcpfit` object with `fit$loglik` filled as an (Nchains * Nsamples) x Ndata matrix.
+#' @return An `mcpfit` object with `fit$loglik` filled as an (Nchains * Nsamples) x N
+#'   data matrix with chain number as rownames.
 #' @export
 #' @examples
 #' \donttest{
 #' demo_fit = add_loglik(demo_fit)
 #' }
-add_loglik = function(x, varying = TRUE, arma = TRUE, nsamples = NULL) {
+add_loglik = function(x, varying = TRUE, arma = TRUE) {
   fit = x
-  fit$loglik = pp_eval(fit, type = "loglik", summary = FALSE, probs = FALSE, varying = varying, arma = arma, nsamples = nsamples) %>%
+  loglik_samples = pp_eval(fit, type = "loglik", summary = FALSE, probs = FALSE, varying = varying, arma = arma)
+
+  # Log-likelihoods
+  fit$loglik = loglik_samples %>%
     dplyr::select(.chain, .draw, data_row, loglik) %>%
 
     # To matrix
     tidyr::pivot_wider(id_cols =  c(.chain, .draw), names_from = data_row, values_from = loglik) %>%
     dplyr::select(-.chain, -.draw) %>%
     as.matrix()
+
+  # Chain info
+  rownames(fit$loglik) = loglik_samples %>%
+    dplyr::filter(data_row == 1) %>%
+    dplyr::pull(.chain)
 
   fit
 }
