@@ -72,9 +72,13 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   all_cols = colnames(samples[[1]])
   get_cols = all_cols[stringr::str_detect(all_cols, regex_pars)]
   if (!stringr::str_detect(regex_pars, "\\|") && varying == FALSE) {
+    old_class <- class(samples)
     samples = lapply(samples, function(x) x[, c(get_cols, "cp_0", "cp_1")])
+    class(samples) <- old_class
   } else {
+    old_class <- class(samples)
     samples = lapply(samples, function(x) x[, get_cols])
+    class(samples) <- old_class
   }
 
   # Get parameter estimates
