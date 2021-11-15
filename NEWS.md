@@ -1,4 +1,6 @@
-# mcp 0.3.0.9000 (development version)
+# mcp 0.3.1
+
+This is mostly a bug fix release.
 
 ## New features:
 
@@ -7,9 +9,14 @@
  * Nicer printing of lists and texts all over. E.g., try `print(demo_fit$jags_code)` and `print(demo_fit$pars)`.
 
 
-## Other changes
+## Bug fixes
 
+ * Support breaking change in `tidybayes >= 3.0.0`
  
+ * Test runs for breaking change in `dplyr >= 1.0.6`
+
+
+
 
 # mcp 0.3.0
 

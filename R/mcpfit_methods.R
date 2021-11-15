@@ -76,6 +76,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   } else {
     samples = lapply(samples, function(x) x[, get_cols])
   }
+  class(samples) = "mcmc.list"  # Return to original class
 
   # Get parameter estimates
   estimates = samples %>%
@@ -473,7 +474,7 @@ tidy_samples = function(
 
   # Build code for tidybayes::spread_draws() and execute it
   all_terms = unique(c(pars_population, terms_varying, absolute_cps))
-  code = paste0("tidybayes::spread_draws(samples, ", paste0(all_terms, collapse = ", "), ", n = nsamples)")
+  code = paste0("tidybayes::spread_draws(samples, ", paste0(all_terms, collapse = ", "), ", ndraws = nsamples)")
   samples = eval(parse(text = code))
 
   # Make varying columns factor if they are factors in fit$data

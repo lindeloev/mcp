@@ -152,7 +152,7 @@ test_plot = function(fit, varying_cols) {
     # (the error is an artefact of very small test data --> wide posteriors.)
     if (fit$family$family == "poisson") {
 
-      expected_error = "Problem with \`mutate\\(\\)\` input \`predict\`"
+      expected_error = "Problem with \`mutate\\(\\)\`"  # column "predict"
     } else if (any(stringr::str_detect(fit$pars$sigma, "^sigma_.*_.*$"))) {  # for slopes on sigma
       expected_error = "Modelled negative sigma"
     } else {
@@ -224,7 +224,7 @@ test_pp_eval_func = function(fit, func) {
   result = try(func(fit), silent = TRUE)
   if (inherits(result, "try-error")) {
     error_message = attr(result, "condition")$message
-    expected_error_poisson = "Problem with \`mutate\\(\\)\` input"  # OK: a side-effect of the small data and short sampling.
+    expected_error_poisson = "Problem with \`mutate\\(\\)\`"  # column "predict". OK: a side-effect of the small data and short sampling.
     testthat::expect_true(fit$family$family != "poisson" | stringr::str_starts(error_message, expected_error_poisson))  # Only test message for poisson
   } else {
     testthat::expect_true(is.data.frame(result))
@@ -289,7 +289,7 @@ test_pp_eval = function(fit) {
 
     # Expecected error for Poisson
     if (fit$family$family == "poisson") {
-      expected_error_poisson = "Problem with \`mutate\\(\\)\` input"  # OK: a side-effect of the small data and short sampling.
+      expected_error_poisson = "Problem with \`mutate\\(\\)\`"  # column "predict" OK: a side-effect of the small data and short sampling.
       testthat::expect_true(stringr::str_starts(error_message, expected_error_poisson))  # Only test message for poisson
     } else {
       # Fail otherwise

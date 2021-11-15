@@ -1,6 +1,6 @@
 Package: mcp
 Title: Regression with Multiple Change Points
-Version: 0.3.0.9000
+Version: 0.3.1
 Date: 2020-07-27
 URL: http://lindeloev.github.io/mcp/
 BugReports: https://github.com/lindeloev/mcp/issues
@@ -15,7 +15,7 @@ License: GPL-2
 Encoding: UTF-8
 Language: en-US
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 3.5.0)
 Imports:
@@ -26,8 +26,8 @@ Imports:
 	coda (>= 0.19.3),
 	loo (>= 2.1.0),
 	bayesplot (>= 1.7.0),
-	tidybayes (>= 2.0.3),
-	dplyr (>= 1.0.0),
+	tidybayes (>= 3.0.0),
+	dplyr (>= 1.0.6),
 	magrittr (>= 1.5),
 	tidyr (>= 1.0.0),
 	tidyselect (>= 0.2.5),
@@ -39,8 +39,8 @@ Imports:
 	rlang (>= 0.4.1)
 Suggests: 
 	hexbin,
-  testthat (>= 2.1.0),
-  purrr (>= 0.3.3),
+  testthat (>= 3.1.0),
+  purrr (>= 0.3.4),
 	knitr, 
 	rmarkdown,
 	covr
