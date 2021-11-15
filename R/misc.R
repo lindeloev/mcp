@@ -392,7 +392,6 @@ data = data.frame(
   price = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
 )
 empty = mcp(model, data, sample = FALSE)
-data$price = NULL  # Simulate new
 data$price = empty$simulate(empty, data,
   cp_1 = 120,
   Intercept_1 = 20,
@@ -495,7 +494,6 @@ if (sample == TRUE)
   fit = mcp(model, data, par_x = 'x')",
 
 
-
 multiple = "# Define model
 model = list(
   y ~ 1 + x:group + z,
@@ -504,16 +502,17 @@ model = list(
 )
 
 # Simulate data
+set.seed(42)
 data = data.frame(
-  x = 1:220,
-  group = rep(c('A', 'B', 'C', 'D'), 55),
-  z = rnorm(220, mean = 1:220, sd = 25),
+  x = 1:120,
+  group = rep(c('A', 'B', 'C', 'D'), 30),
+  z = rnorm(120, mean = 1:120, sd = 25),
   y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
 )
 empty = mcp(model, data, sample = FALSE, par_x = 'x')
 data$y = empty$simulate(empty, data,
-  cp_1 = 100,
-  cp_2 = 180,
+  cp_1 = 70,
+  cp_2 = 100,
 
   Intercept_1 = 10,
   z_1 = 0.2,
@@ -522,15 +521,58 @@ data$y = empty$simulate(empty, data,
   xgroupC_1 = 0.25,
   xgroupD_1 = 0.75,
 
-  Intercept_2 = 40,
-  x_2 = -0.8,
+  Intercept_2 = 10,
+  x_2 = -1,
   groupB_2 = 15,
   groupC_2 = 30,
   groupD_2 = 45,
 
-  xE2_3 = 0.1,
+  xE2_3 = 0.2,
 
   sigma_1 = 5
+)
+
+# Run sampling
+if (sample == TRUE)
+  fit = mcp(model, data, par_x = 'x', cores = 3)",
+
+
+multiple3 = "# Define model
+model = list(
+  y ~ 1 + x:group + z,
+  ~ 1 + x + group,
+  ~ 0 + I(x^2)
+)
+
+# Simulate data
+set.seed(42)
+data = data.frame(
+  x = 1:120,
+  group = rep(c('A', 'B', 'C', 'D'), 30),
+  z = rnorm(120, mean = 1:120, sd = 25),
+  y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
+)
+empty = mcp(model, data, sample = FALSE, par_x = 'x')
+data$y = empty$simulate(empty, data,
+  cp_1 = 61,
+  cp_2 = 100,
+
+  Intercept_1 = 10,
+  z_1 = 0.2,
+  xgroupA_1 = -0.75,
+  xgroupB_1 = -0.25,
+  xgroupC_1 = 0.25,
+  xgroupD_1 = 0.75,
+
+  Intercept_2 = 10,
+  x_2 = -1.2,
+  groupB_2 = 15,
+  groupC_2 = 30,
+  groupD_2 = 45,
+
+  xE2_3 = 0.15,
+
+  sigma_1 = 23
 )
 
 # Run sampling
@@ -651,7 +693,7 @@ data$y = empty$simulate(empty, data,
 
 # Run sampling
 if (sample == TRUE)
-  fit = mcp(model, data)"
+  fit = mcp(model, data, cores = 3)"
   )
 
   # Run the code
@@ -661,6 +703,7 @@ if (sample == TRUE)
   # Get stuff ready for return
   model = fix_model_environment(model)
 
+  call = examples[[name]]
   class(call) = c("mcptext", "character")
   class(model) = c("mcplist", "list")
 
