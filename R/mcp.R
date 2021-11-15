@@ -291,6 +291,10 @@ mcp = function(model,
       inits = inits
     ) %>%
       recover_levels(data, ST)
+
+    class(mcmc_post) = "mcmc.list"
+  } else {
+    mcmc_post = NULL
   }
 
   # Sample prior
@@ -308,19 +312,17 @@ mcp = function(model,
       inits = inits
     ) %>%
       recover_levels(data, ST)
+
+    class(mcmc_prior) = "mcmc.list"
+  } else {
+    mcmc_prior = NULL
   }
 
 
   ##########
   # RETURN #
   ##########
-  # Fill in the missing samples
-  if (exists("mcmc_post")) class(mcmc_post) = "mcmc.list"
-  if (exists("mcmc_prior")) class(mcmc_prior) = "mcmc.list"
-  if (!exists("mcmc_post")) mcmc_post = NULL
-  if (!exists("mcmc_prior")) mcmc_prior = NULL
-
-  model = lapply(ST$form, stats::as.formula, env=globalenv())
+  model = lapply(ST$form, stats::as.formula, env = globalenv())
   class(model) = c("mcplist", "list")
   class(prior) = c("mcplist", "list")
   class(pars) = c("mcplist", "list")  # for nicer printing
