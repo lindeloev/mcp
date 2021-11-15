@@ -76,6 +76,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   } else {
     samples = lapply(samples, function(x) x[, get_cols])
   }
+  class(samples) = "mcmc.list"  # Return to original class
 
   # Get parameter estimates
   estimates = samples %>%
@@ -290,6 +291,18 @@ is.mcpfit = function(x) {
 }
 
 
+#' Check if this is an AR/MA model
+#'
+#' @aliases is_arma
+#' @keywords internal
+#' @inheritParams mcp
+#' @return TRUE or FALSE
+is_arma = function(fit) {
+  length(fit$pars$arma) > 0
+}
+
+
+
 #' Internal function to get samples.
 #'
 #' Returns posterior samples, if available. If not, then prior samples. If not,
@@ -469,7 +482,7 @@ tidy_samples = function(
 
   # Build code for tidybayes::spread_draws() and execute it
   all_terms = unique(c(pars_population, terms_varying, absolute_cps))
-  code = paste0("tidybayes::spread_draws(samples, ", paste0(all_terms, collapse = ", "), ", n = nsamples)")
+  code = paste0("tidybayes::spread_draws(samples, ", paste0(all_terms, collapse = ", "), ", ndraws = nsamples)")
   samples = eval(parse(text = code))
 
   # Make varying columns factor if they are factors in fit$data
