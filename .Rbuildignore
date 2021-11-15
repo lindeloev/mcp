@@ -3,7 +3,6 @@
 # Hidden stuff
 ^mcp\.Rproj$
 ^\.Rproj\.user$
-.travis.yml
 .covrignore
 
 # Folders
@@ -19,3 +18,4 @@ cran-comments.md
 logo.png
 ^CRAN-RELEASE$
 fix_twittercard.R
+^\.github$
