@@ -17,11 +17,11 @@ simulate_ar(sigma_, ar_list, resid_abs = NULL)
 \value{
 List with
 \itemize{
-\item \code{resid_arma}: the ARMA part of the residuals
+\item \code{resid_ar}: the ARMA part of the residuals
 \item \code{resid_sigma}: the innovations.
 }
 
-Note that \code{resid_abs = resid_arma + resid_sigma}.
+Note that \code{resid_abs = resid_ar + resid_sigma}.
 }
 \description{
 Developer note: some of the eval(parse(text = ...)) here could probably be replaced with inner products (\%*\%).

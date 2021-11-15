@@ -23,7 +23,7 @@ following can be modeled:
 \verb{ar(2, 0 + x}) for an AR(2) increasing by \code{x}. \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
 }}
 
-\item{data}{Data.frame or tibble in long format.}
+\item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)}
 
 \item{par_x}{String (default: \code{NULL} which is auto-detect).}
 }

@@ -19,7 +19,7 @@ run_jags(
 )
 }
 \arguments{
-\item{data}{Data.frame or tibble in long format.}
+\item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)}
 
 \item{jags_code}{A string. JAGS model, usually returned by \code{get_jags_code()}.}
 

@@ -16,7 +16,7 @@ get_ar_jagscode(ar_order, x_name)
 Character JAGS code
 }
 \description{
-This is simply code for \code{resid_arma_}.
+This is simply code for \code{resid_ar_}.
 }
 \seealso{
 simulate_ar

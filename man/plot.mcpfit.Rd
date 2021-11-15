@@ -19,7 +19,7 @@
   prior = FALSE,
   which_y = "mu",
   arma = TRUE,
-  nsamples = 2000,
+  nsamples = NULL,
   scale = "response",
   ...
 )
@@ -45,9 +45,11 @@ Can be varying or RHS categoricals.}
 \item{color_by}{Character vector. Names of categorical data columns to color by.
 See \code{facet_by} for more.}
 
-\item{lines}{Positive integer or \code{FALSE}. Number of lines (posterior
-draws). FALSE or \code{lines = 0} plots no lines. Note that lines always plot
-fitted values - not predicted. For prediction intervals, see the \code{q_predict} argument.}
+\item{lines}{Positive integer or \code{FALSE}. The number of fitted lines (draws).
+If there are categorical predictors, it is the number of fitted lines for
+each combination of \code{color_by} and \code{facet_by}. FALSE or \code{lines = 0} plots
+no lines. Note that lines always plot fitted values - not predicted.
+For prediction intervals, see the \code{q_predict} argument.}
 
 \item{geom_data}{String. One of "point", "line" (good for time-series),
 or FALSE (don not plot).}
@@ -97,7 +99,7 @@ plot individual parameter estimates.
 }
 \details{
 \code{plot()} uses \code{fit$simulate()} on posterior samples. These represent the
-(joint) posterior distribution.
+(joint) posterior distribution.fit
 }
 \examples{
 # Typical usage. demo_fit is an mcpfit object.

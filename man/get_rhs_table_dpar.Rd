@@ -29,7 +29,7 @@ get_rhs_table_segment(
 get_rhs_table(model, data, family, par_x, check_rank = TRUE)
 }
 \arguments{
-\item{data}{Data.frame or tibble in long format.}
+\item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)}
 
 \item{form_rhs}{The full RHS formula of a segment, including one or several \code{form}s.}
 

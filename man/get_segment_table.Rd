@@ -23,7 +23,7 @@ following can be modeled:
 \verb{ar(2, 0 + x}) for an AR(2) increasing by \code{x}. \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
 }}
 
-\item{data}{Data.frame or tibble in long format.}
+\item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)}
 
 \item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}
 with a supported link function, e.g., \code{gaussian(link = "log")}.
