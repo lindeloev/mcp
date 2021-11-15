@@ -110,7 +110,7 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, family, sample, par_
   # Prepare mu code (link and AR)
   mu_code = "mu_[i_]"
   if (is.na(ar_order) == FALSE)
-    mu_code = paste0(mu_code, " + resid_arma_[i_]")
+    mu_code = paste0(mu_code, " + resid_ar_[i_]")
   mu_code = paste0(family$linkinv_str, "(", mu_code, ")")
 
   # Prepare variance code

@@ -175,7 +175,7 @@ get_formula_r = function(formula_jags, rhs_table, pars) {
 
 #' Get JAGS code to model autoregressive effects
 #'
-#' This is simply code for `resid_arma_`.
+#' This is simply code for `resid_ar_`.
 #'
 #' @aliases get_ar_jagscode
 #' @keywords internal
@@ -191,20 +191,20 @@ get_ar_jagscode = function(ar_order, x_name) {
 
   jagscode = "
   # Apply autoregression to the residuals
-  resid_arma_[1] = 0"
+  resid_ar_[1] = 0"
 
   # For data points lower than the full order
   if (ar_order >= 2) {
     for (i in 2:ar_order) {
       jagscode = paste0(jagscode, "
-  resid_arma_[", i, "] = ", paste0("ar", 1:(i-1), "_[", i, " - ", 1:(i-1), "] * resid_abs_[", i, " - ", 1:(i-1), "]", collapse = " +\n              "))
+  resid_ar_[", i, "] = ", paste0("ar", 1:(i-1), "_[", i, " - ", 1:(i-1), "] * resid_abs_[", i, " - ", 1:(i-1), "]", collapse = " +\n              "))
     }
   }
 
   # For full order
   jagscode = paste0(jagscode, "
   for (i_ in ", ar_order + 1, ":length(", x_name, ")) {
-    resid_arma_[i_] = 0")
+    resid_ar_[i_] = 0")
   for (i in seq_len(ar_order)) {
     jagscode = paste0(jagscode, " + \n      ar", i, "_[i_] * resid_abs_[i_ - ", i, "]")
   }

@@ -575,7 +575,6 @@ pp_eval = function(
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)
   returnvar = rlang::sym(type)
-  is_arma = length(fit$pars$arma) > 0
   if (is.null(newdata))
     newdata = fit$data %>%
       dplyr::select(-!!fit$pars$weights)
@@ -588,16 +587,15 @@ pp_eval = function(
   exclude_varying = fit$pars$varying[fit$pars$varying %notin% varying_info$cols]
   required_cols = colnames(fit$data)[colnames(fit$data) %notin% fit$pars$weights]  # Only predictive columns were saved in fit$data; but exclude weights
   required_cols = required_cols[required_cols %notin% exclude_varying]
-  if ((arma == FALSE || is_arma == FALSE) & type %in% c("fitted", "predict")) {
+  if ((arma == FALSE || is_arma(fit) == FALSE) & type %in% c("fitted", "predict")) {
     required_cols = required_cols[required_cols != fit$pars$y]
   } else if (fit$pars$y %notin% colnames(newdata)) {
-    stop("`newdata` must contain a response column named '", fit$pars$y, "' for when `arma == TRUE` and/or `type = 'residuals'`")
+    stop("`newdata` must contain a response column named '", fit$pars$y, "' for when `arma == TRUE` and/or `type == 'residuals'`")
   }
   assert_data_cols(newdata, required_cols)  # Helpful error if something is missing
-  newdata = data.frame(newdata[, required_cols])
-  colnames(newdata) = required_cols  # Special case for when there's only one predictor
+  newdata = data.frame(newdata[, required_cols, drop = FALSE])
+  #colnames(newdata) = required_cols  # Special case for when there's only one predictor
   newdata$data_row = seq_len(nrow(newdata))  # to maintain order in the output when summary == TRUE
-
 
   ########################
   # ASSERTS AND RECODING #

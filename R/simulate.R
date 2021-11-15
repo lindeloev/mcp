@@ -12,7 +12,7 @@
 relevel_newdata = function(newdata, fit) {
   # Check that the necessary data is available
   rhs_vars = get_rhs_vars(fit$model)
-  assert_data_cols(newdata, cols = rhs_vars, fail_types = c("na", "nan", "infinite"))
+  assert_data_cols(newdata, cols = rhs_vars, fail_funcs = c(is.na, is.nan, is.infinite))
 
   # Make sure to carry over the exact level-structure of the original model
   for (col_name in rhs_vars) {
@@ -168,7 +168,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
     if (is_arma && .arma == TRUE) {
       ar_list = mget(ls()[grep("^ar[0-9]+_$", ls())])  # list(ar1_, ar2_, etc.). TO DO: run eval(parse(...)) in a container, return list with $ar1_, $ar2_, etc.
       ar_result = simulate_ar(sigma_, ar_list, .ydata - mu_)
-      mu_ = mu_ + ar_result$resid_arma
+      mu_ = mu_ + ar_result$resid_ar
     }
 
     # If fitted or no data
@@ -340,10 +340,10 @@ get_fitsimulate = function(pars) {
 #' @param ar_list List with numerical vectors, list(ar1_ = c(...), ar2_ = c(...))
 #' @param resid_abs NULL or Numerical vector of absolute residuals, `fitted_value - observed_value`.
 #' @return List with
-#'   * `resid_arma`: the ARMA part of the residuals
+#'   * `resid_ar`: the ARMA part of the residuals
 #'   * `resid_sigma`: the innovations.
 #'
-#'   Note that `resid_abs = resid_arma + resid_sigma`.
+#'   Note that `resid_abs = resid_ar + resid_sigma`.
 #' @seealso get_ar_jagscode
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -358,7 +358,7 @@ simulate_ar = function(sigma_, ar_list, resid_abs = NULL) {
   ar_order = length(ar_list)
 
   # resid_ is the observed residual from y_
-  # resid_ is split into the innovation and AR() part. So resid_ = resid_arma + resid_sigma
+  # resid_ is split into the innovation and AR() part. So resid_ = resid_ar + resid_sigma
   resid_sigma = stats::rnorm(length(sigma_), 0, sigma_)
   if (is.null(resid_abs)) {
     message("Generating residuals for AR(N) model since the response column/argument was not provided.")
@@ -377,16 +377,16 @@ simulate_ar = function(sigma_, ar_list, resid_abs = NULL) {
       ")
 
     eval(parse(text = rcode))
-    resid_arma = resid_abs - resid_sigma
+    resid_ar = resid_abs - resid_sigma
   } else {
-    resid_arma = eval(parse(text = paste0("ar_list$ar", seq_len(ar_order), "_ * dplyr::lag(resid_abs, ", seq_len(ar_order), ")", collapse = " + ")))
-    resid_arma[seq_len(ar_order)] = 0  # replace NA
-    # resid_sigma = resid_abs - resid_arma  # Outcommented because it's deterministic in this parameterization (always sums to the observed data exactly)
+    resid_ar = eval(parse(text = paste0("ar_list$ar", seq_len(ar_order), "_ * dplyr::lag(resid_abs, ", seq_len(ar_order), ")", collapse = " + ")))
+    resid_ar[seq_len(ar_order)] = 0  # replace NA
+    # resid_sigma = resid_abs - resid_ar  # Outcommented because it's deterministic in this parameterization (always sums to the observed data exactly)
   }
 
   # Return
   list(
-    resid_arma = resid_arma,
+    resid_ar = resid_ar,
     resid_sigma = resid_sigma
   )
 }
