@@ -39,17 +39,14 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           curl.exe -o wjags.exe --url https://deac-fra.dl.sourceforge.net/project/mcmc-jags/JAGS/4.x/Windows/JAGS-4.3.0.exe
-          wjags.exe /S
+          ./wjags.exe /S
           del wjags.exe
-        shell: cmd
 
       - name: Install JAGS (if macOS)
         if: runner.os == 'macOS'
-        run : |
-          rm '/usr/local/bin/gfortran'
-          brew install jags
+        run: brew install jags
 
-      # R-specific stuff
+      # R
       - uses: r-lib/actions/setup-r@v1
         with:
           r-version: ${{ matrix.config.r }}
