@@ -39,8 +39,9 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           curl.exe -o wjags.exe --url https://deac-fra.dl.sourceforge.net/project/mcmc-jags/JAGS/4.x/Windows/JAGS-4.3.0.exe
-          ./wjags.exe /S
+          wjags.exe /S
           del wjags.exe
+        shell: cmd
 
       - name: Install JAGS (if macOS)
         if: runner.os == 'macOS'
@@ -61,6 +62,6 @@ jobs:
 
       # Run test coverage on the fastest-to-run job
       - name: Test coverage
-        if: matrix.config.os == 'macOS-latest'
+        if: matrix.config.os == 'macOS-latest' && matrix.config.r == 'release'
         run: covr::codecov()
         shell: Rscript {0}
