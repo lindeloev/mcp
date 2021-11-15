@@ -41,4 +41,11 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v1
         with:
-          extra-packages: rcmdcheck
+          extra-packages: [rcmdcheck, covr]
+
+      - uses: r-lib/actions/check-r-package@v1
+
+      - name: Test coverage
+        if: ${{ matrix.config.os == 'macOS-latest' }}
+        run: covr::codecov()
+        shell: Rscript {0}
