@@ -33,6 +33,23 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@v1
 
+      # JAGS install from https://github.com/boydorr/SpARKjags/blob/master/.github/workflows/test-build.yaml
+      # JAGS is automatically installed on linux via the rjags package.
+      - name: Install JAGS (if Windows)
+        if: runner.os == 'Windows'
+        run: |
+          curl.exe -o wjags.exe --url https://deac-fra.dl.sourceforge.net/project/mcmc-jags/JAGS/4.x/Windows/JAGS-4.3.0.exe
+          wjags.exe /S
+          del wjags.exe
+        shell: cmd
+
+      - name: Install JAGS (if macOS)
+        if: runner.os == 'macOS'
+        run : |
+          rm '/usr/local/bin/gfortran'
+          brew install jags
+
+      # R-specific stuff
       - uses: r-lib/actions/setup-r@v1
         with:
           r-version: ${{ matrix.config.r }}
@@ -45,7 +62,8 @@ jobs:
 
       - uses: r-lib/actions/check-r-package@v1
 
+      # Run test coverage on the fastest-to-run job
       - name: Test coverage
-        if: ${{ matrix.config.os == 'macOS-latest' }}
+        if: matrix.config.os == 'macOS-latest'
         run: covr::codecov()
         shell: Rscript {0}
