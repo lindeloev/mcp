@@ -39,20 +39,7 @@ is_continuous = function(x) {
 get_categorical_levels = function(df) {
   assert_types(df, "data.frame", "tibble")
   categorical_cols = colnames(df)[sapply(df, class) %in% c("factor", "logical", "character")]
-  sapply(df[, categorical_cols], unique)
-}
-
-# List of interpolated values at the values in "at". Rembember to remove par_x from "df"
-interpolate_continuous = function(fit, at) {
-  assert_types(fit, "mcpfit")
-  assert_numeric(at)
-
-  # Get numeric RHS data columns
-  data = fit$data[, sapply(fit$data, is.numeric), drop = FALSE]
-  data = data[, colnames(data) %notin% c(fit$pars$x, fit$pars$y, fit$pars$weights, fit$pars$varying)]
-
-  # Return interpolated
-  as.data.frame(lapply(data, function(col) stats::approx(x = fit$data[, fit$pars$x], y = col, xout = at)$y))
+  lapply(df[, categorical_cols, drop = FALSE], unique)
 }
 
 
@@ -277,16 +264,17 @@ get_rhs_matrix = function(rhs_table) {
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_quantiles = function(samples, quantiles, xvar, yvar, facet_by = NULL) {
   # Trick to declare no facet = common group for all
-  if (is.null(facet_by))
-    facet_by = xvar
+  facet_by = logical0_to_null(facet_by)
+  if (!is.null(facet_by))
+    facet_by = rlang::sym(facet_by)
 
   # Return data with added quantiles
   samples %>%
     tidyr::expand_grid(quantile = quantiles) %>%
 
     # Now compute the quantile for each parameter, quantile, and (optionally) facet:
-    dplyr::group_by(!!xvar, .data$quantile) %>%
-    dplyr::group_by(!!rlang::sym(facet_by), .add = TRUE) %>%
+    dplyr::group_by(!!xvar, .data$quantile, !!facet_by) %>%
+    #dplyr::group_by(!!rlang::sym(facet_by), .add = TRUE) %>%
     dplyr::summarise(
       y = stats::quantile(!!yvar, probs = .data$quantile[1])
     )

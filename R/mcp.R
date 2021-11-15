@@ -10,7 +10,7 @@
 #' `fit$jags_code`, or the R function to simulate data (`fit$simulate`).
 #'
 #' @aliases mcp
-#' @param data Data.frame or tibble in long format.
+#' @param data Table-like data in long format (data.frame, tibble, data.table, etc.)
 #' @param model A list of formulas - one for each segment. The first formula
 #'   has the format `response ~ predictors` while the following formulas
 #'   have the format `response ~ changepoint ~ predictors`. The response

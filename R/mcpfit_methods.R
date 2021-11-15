@@ -494,12 +494,18 @@ tidy_samples = function(
 
   # Add population cp to varying and delete population cols only included for this purpose.
   if (length(absolute_cps) > 0) {
-    samples[, absolute] = samples[, absolute] + samples[, absolute_cps]
-    samples = dplyr::select(samples, -!!dplyr::setdiff(absolute_cps, pars_population))
+    #samples[, absolute] = samples[, absolute] + samples[, absolute_cps]
+    samples[, absolute_cps] = samples[, absolute_cps] + samples[, absolute]
+    samples = dplyr::select(samples, -!!absolute)
   }
 
+  # Unassigned varying effects are just simulated as zero (the population mean)
+  remaining_varying_cols = dplyr::setdiff(fit$pars$varying, colnames(samples))
+  samples[, remaining_varying_cols] = 0
+
   # Return with chain etc. first
-  samples %>% dplyr::select(.data$.chain, .data$.iteration, .data$.draw, dplyr::everything())
+  samples %>%
+    dplyr::select(.data$.chain, .data$.iteration, .data$.draw, dplyr::everything())
 }
 
 
@@ -676,11 +682,11 @@ pp_eval = function(
     # Quantiles
     if (all(probs != FALSE)) {
       quantiles_fit = samples %>%
-        get_quantiles(probs, xvar, returnvar) %>%
+        get_quantiles(probs, xvar, returnvar, varying_info$cols) %>%
         dplyr::mutate(quantile = 100 * .data$quantile) %>%
         tidyr::pivot_wider(names_from = .data$quantile, names_prefix = "Q", values_from = .data$y)
 
-      df_return = dplyr::left_join(df_return, quantiles_fit, by = as.character(xvar))
+      df_return = dplyr::left_join(df_return, quantiles_fit, by = c(as.character(xvar), varying_info$cols))
     }
     return(data.frame(df_return))
   } else if (samples_format == "tidy") {
