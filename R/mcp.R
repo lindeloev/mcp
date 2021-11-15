@@ -186,10 +186,10 @@ mcp = function(model,
   assert_types(par_x, "null", "character", len = c(0, 1))
   par_x = get_par_x(model, data, par_x)
   rhs_vars = get_rhs_vars(model)
-  assert_data_cols(data, cols = rhs_vars, fail_types = c("na", "nan"))
+  assert_data_cols(data, cols = rhs_vars, fail_funcs = c(is.na, is.nan))
 
   model_vars = unique(c(get_model_vars(model), par_x))
-  assert_data_cols(data, cols = model_vars, fail_types = c("infinite"))
+  assert_data_cols(data, cols = model_vars, fail_funcs = c(is.infinite))
   data = data[, model_vars]  # Remove unused data
 
   # Check prior
