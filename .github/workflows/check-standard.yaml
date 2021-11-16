@@ -1,0 +1,67 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/master/examples
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+name: R-CMD-check
+
+jobs:
+  R-CMD-check:
+    runs-on: ${{ matrix.config.os }}
+
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: macOS-latest,   r: 'release'}
+          - {os: windows-latest, r: 'release'}
+          - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
+          - {os: ubuntu-latest,   r: 'release'}
+          - {os: ubuntu-latest,   r: 'oldrel-1'}
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: r-lib/actions/setup-pandoc@v1
+
+      # JAGS install from https://github.com/boydorr/SpARKjags/blob/master/.github/workflows/test-build.yaml
+      # JAGS is automatically installed on linux via the rjags package.
+      - name: Install JAGS (if Windows)
+        if: runner.os == 'Windows'
+        run: |
+          curl.exe -o wjags.exe --url https://deac-fra.dl.sourceforge.net/project/mcmc-jags/JAGS/4.x/Windows/JAGS-4.3.0.exe
+          wjags.exe /S
+          del wjags.exe
+        shell: cmd
+
+      - name: Install JAGS (if macOS)
+        if: runner.os == 'macOS'
+        run: brew install jags
+
+      # R
+      - uses: r-lib/actions/setup-r@v1
+        with:
+          r-version: ${{ matrix.config.r }}
+          http-user-agent: ${{ matrix.config.http-user-agent }}
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v1
+        with:
+          extra-packages: rcmdcheck, covr
+
+      - uses: r-lib/actions/check-r-package@v1
+
+      # Run test coverage on the fastest-to-run job
+      - name: Test coverage
+        if: matrix.config.os == 'macOS-latest' && matrix.config.r == 'release'
+        run: covr::codecov()
+        shell: Rscript {0}

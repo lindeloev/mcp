@@ -23,4 +23,4 @@ models_gauss = list(
          sigma_3 = 6))
 )
 
-apply_test_fit(models_gauss, "Gaussian fit")
+apply_test_fit("Gaussian fit", models_gauss)

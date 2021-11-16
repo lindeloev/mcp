@@ -24,4 +24,4 @@ models_arma = list(
        ))
 )
 
-apply_test_fit(models_arma, "ARMA (gauss) fit")
+apply_test_fit("ARMA (gauss) fit", models_arma)

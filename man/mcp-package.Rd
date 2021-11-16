@@ -28,7 +28,7 @@ A large number of post-processing methods can be applied. These include
 }
 
 Extensive documentation with worked examples is available at the
-\href{http://lindeloev.github.io/mcp}{mcp website}.
+\href{https://lindeloev.github.io/mcp}{mcp website}.
 }
 \seealso{
 Useful links:
