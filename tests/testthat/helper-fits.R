@@ -49,16 +49,13 @@ test_fit = function(model, simulated) {
 #' @param all_models A list of lists. Each sub-list is an unnamed list of
 #'   formulas with one named entry called "simulated" with parameter values to
 #'   be used for simulation.
-apply_test_fit = function(all_models, code) {
+apply_test_fit = function(desc, all_models) {
   for (this in all_models) {
     # Split into formulas and simulation values
     simulated = this[names(this) == "simulated"][[1]]
     model = this[names(this) == ""]
 
     # Test!
-    testthat::test_that(
-      test_fit(model, simulated),
-      code = code
-    )
+    testthat::test_that(desc, test_fit(model, simulated))
   }
 }

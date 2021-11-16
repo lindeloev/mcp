@@ -147,6 +147,9 @@ utils::globalVariables(c("value", "..scaled..", ".chain", "cp_name", "."))
 #' Shows a list in a more condensed format using `str(list)`.
 #' @aliases print.mcplist
 #' @inheritParams print.mcpfit
+#' @export
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 print.mcplist = function(x, ...) {
   assert_types(x, "list")
   assert_ellipsis(...)

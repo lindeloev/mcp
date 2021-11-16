@@ -76,6 +76,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   } else {
     samples = lapply(samples, function(x) x[, get_cols])
   }
+  class(samples) = "mcmc.list"  # Return to original class
 
   # Get parameter estimates
   estimates = samples %>%
@@ -187,7 +188,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #'     be acceptable if < 1.1. It is computed using \code{\link[coda]{gelman.diag}}.
 #'   * `n.eff` is the effective sample size computed using \code{\link[coda]{effectiveSize}}.
 #'     Low effective sample sizes are also obvious as poor mixing in trace plots
-#'     (see `plot_pars(fit)`). Read how to deal with such problems [here](https://lindeloev.github.io/mcp/articles/debug.html)
+#'     (see `plot_pars(fit)`). Read how to deal with such problems [here](https://lindeloev.github.io/mcp/articles/tips.html)
 #'   * `ts_err` is the time-series error, taking autoregressive correlation
 #'     into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
 #'
@@ -473,7 +474,7 @@ tidy_samples = function(
 
   # Build code for tidybayes::spread_draws() and execute it
   all_terms = unique(c(pars_population, terms_varying, absolute_cps))
-  code = paste0("tidybayes::spread_draws(samples, ", paste0(all_terms, collapse = ", "), ", n = nsamples)")
+  code = paste0("tidybayes::spread_draws(samples, ", paste0(all_terms, collapse = ", "), ", ndraws = nsamples)")
   samples = eval(parse(text = code))
 
   # Make varying columns factor if they are factors in fit$data

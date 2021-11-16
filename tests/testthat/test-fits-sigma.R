@@ -22,4 +22,4 @@ models_sigma = list(
        ))
 )
 
-apply_test_fit(models_sigma, "Sigma (gauss) fit")
+apply_test_fit("Sigma (gauss) fit", models_sigma)

@@ -1,4 +1,28 @@
-# mcp 0.3
+# mcp 0.3.1
+
+## Notes for the reviewer
+ * This is a patch release that fixes breaking changes in dependencies.
+
+ * Please see unpreventable "Expected NOTEs and ERRORs" in the bottom of this file.
+
+## R CMD check results
+There were no ERRORs or WARNINGs.
+
+The DESCRIPTION elicits a few NOTEs on rhub:
+ * An incorrect NOTE about misspelled words (correctly spelled family names). 
+ * The DOIs work, but Rhub is unable to verify them.
+
+## Test environments
+rhub
+oldrel, release, and devel on macOS, Linux, and Windows
+ 
+
+## Downstream dependencies
+`mcp` has no downstream dependencies.
+
+
+
+# mcp 0.3.0
 
 ## Notes for the reviewer
  * This release adds support for `dplyr` 1.0+ and other newer packages which caused the prior `mcp` to be taken down from CRAN. Sorry it took so long.
@@ -48,7 +72,7 @@ This is a resubmission. I believe I have solved all the points raised in the ini
 
 
 
-# mcp 0.2
+# mcp 0.2.0
 
 ## Notes for the reviewer
 * This is the first submission of the `mcp` package and my first CRAN submission personally. I have done my best to adhere to all standards. Extensive documentation for `mcp` is available at https://lindeloev.github.io/mcp/.
@@ -73,6 +97,8 @@ This is the first submission so there are no downstream dependencies.
 
 # Expected NOTEs and ERRORs
 
-* INSTALL ERROR: `mcp` uses JAGS (an external binary) for sampling through the `rjags` package. rjags will fail to install without JAGS on the system. This happens when I run `devtools::check_win_release()` and `check_win_devel()`. Travis install JAGS prior to installing packages, and all tests pass. They do too on my Windows PC. Automatic installation for Mac and OSX is set up in the .travis.yml (https://github.com/lindeloev/mcp/blob/master/.travis.yml). Windows binaries for JAGS are here: https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/
+* INSTALL ERROR or PREPERROR: `mcp` uses JAGS (an external binary) for sampling through the `rjags` package. rjags will fail to install without JAGS on the system. This happens when I run `devtools::check_win_release()` and `check_win_devel()`. Travis install JAGS prior to installing packages, and all tests pass. They do too on my Windows PC. Automatic installation for Mac and OSX is set up in the .travis.yml (https://github.com/lindeloev/mcp/blob/master/.travis.yml). Windows binaries for JAGS are here: https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/
 
 * DESCRIPTION NOTE: rhub says that the DESCRIPTION DOIs return a HTTP 403 error (forbidden). But the DOI works just fine, e.g., http://doi.org/10.2307/2986119.
+
+* DESCRIPTION NOTE: rhub says that "Lindeløv" (my family name) and "Gelfand" (an researcher's family name) are misspelled.

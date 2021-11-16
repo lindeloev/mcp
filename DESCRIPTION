@@ -1,8 +1,8 @@
 Package: mcp
 Title: Regression with Multiple Change Points
-Version: 0.3.0.9000
-Date: 2020-07-27
-URL: http://lindeloev.github.io/mcp/
+Version: 0.3.1
+Date: 2021-11-16
+URL: https://lindeloev.github.io/mcp/
 BugReports: https://github.com/lindeloev/mcp/issues
 Authors@R: 
     person(given = "Jonas Kristoffer",
@@ -10,12 +10,12 @@ Authors@R:
            role = c("aut", "cre"),
            email = "jonas@lindeloev.dk",
            comment = c(ORCID = "0000-0003-4565-0595"))
-Description: Flexible and informed regression with Multiple Change Points (MCP). 'mcp' can infer change points in means, variances, autocorrelation structure, and any combination of these, as well as the parameters of the segments in between. All parameters are estimated with uncertainty and prediction intervals are supported - also near the change points. 'mcp' supports hypothesis testing via Savage-Dickey density ratio, posterior contrasts, and cross-validation. 'mcp' is described in Lindeløv (submitted) <doi:10.31219/osf.io/fzqxv> and generalizes the approach described in Carlin, Gelfand, & Smith (1992) <doi:10.2307/2347570> and Stephens (1994) <doi:10.2307/2986119>.
+Description: Flexible and informed regression with Multiple Change Points. 'mcp' can infer change points in means, variances, autocorrelation structure, and any combination of these, as well as the parameters of the segments in between. All parameters are estimated with uncertainty and prediction intervals are supported - also near the change points. 'mcp' supports hypothesis testing via Savage-Dickey density ratio, posterior contrasts, and cross-validation. 'mcp' is described in Lindeløv (submitted) <doi:10.31219/osf.io/fzqxv> and generalizes the approach described in Carlin, Gelfand, & Smith (1992) <doi:10.2307/2347570> and Stephens (1994) <doi:10.2307/2986119>.
 License: GPL-2
 Encoding: UTF-8
 Language: en-US
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 3.5.0)
 Imports:
@@ -26,7 +26,7 @@ Imports:
 	coda (>= 0.19.3),
 	loo (>= 2.1.0),
 	bayesplot (>= 1.7.0),
-	tidybayes (>= 2.0.3),
+	tidybayes (>= 3.0.0),
 	dplyr (>= 1.0.0),
 	magrittr (>= 1.5),
 	tidyr (>= 1.0.0),
@@ -39,8 +39,8 @@ Imports:
 	rlang (>= 0.4.1)
 Suggests: 
 	hexbin,
-  testthat (>= 2.1.0),
-  purrr (>= 0.3.3),
+  testthat (>= 3.1.0),
+  purrr (>= 0.3.4),
 	knitr, 
 	rmarkdown,
 	covr

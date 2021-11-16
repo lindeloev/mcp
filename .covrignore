@@ -1,8 +1,10 @@
-renv
-revdep
 vignettes
 docs
+data
 data-raw
+inst
 man
 pkgdown
+tests
+vignettes
 fix_twittercard.R
