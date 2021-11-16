@@ -188,7 +188,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #'     be acceptable if < 1.1. It is computed using \code{\link[coda]{gelman.diag}}.
 #'   * `n.eff` is the effective sample size computed using \code{\link[coda]{effectiveSize}}.
 #'     Low effective sample sizes are also obvious as poor mixing in trace plots
-#'     (see `plot_pars(fit)`). Read how to deal with such problems [here](https://lindeloev.github.io/mcp/articles/debug.html)
+#'     (see `plot_pars(fit)`). Read how to deal with such problems [here](https://lindeloev.github.io/mcp/articles/tips.html)
 #'   * `ts_err` is the time-series error, taking autoregressive correlation
 #'     into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
 #'
