@@ -11,9 +11,7 @@ This is mostly a bug fix release.
 
 ## Bug fixes
 
- * Support breaking change in `tidybayes >= 3.0.0`
- 
- * Test runs for breaking change in `dplyr >= 1.0.6`
+ * Support breaking changes in `tidybayes >= 3.0.0` and `dplyr >= 1.0.6`
 
 
 
