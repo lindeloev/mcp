@@ -1,3 +1,7 @@
+# Resubmission
+This is a resubmission. I have corrected the invalid URLs in the README.
+
+
 # mcp 0.3.1
 
 ## Notes for the reviewer

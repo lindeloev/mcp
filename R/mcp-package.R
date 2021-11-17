@@ -22,5 +22,5 @@
 #' * Test hypotheses using `hypothesis()` and `loo()`.
 #'
 #' Extensive documentation with worked examples is available at the
-#' [mcp website](https://lindeloev.github.io/mcp).
+#' [mcp website](https://lindeloev.github.io/mcp/).
 NULL
