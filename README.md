@@ -1,9 +1,9 @@
 # mcp: Regression with Multiple Change Points<img src="https://github.com/lindeloev/mcp/raw/docs/man/figures/logo_200px.png" align="right" style="padding: 20px; padding-right: 0px;" />
 
-[![mcp Travis-CI status](https://travis-ci.org/lindeloev/mcp.svg?branch=master)](https://travis-ci.org/lindeloev/mcp/)
+[![mcp Github Actions status](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml)
 [![mcp Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/github/lindeloev/mcp/)
-[![mcp CRAN status](https://www.r-pkg.org/badges/version/mcp/)](https://CRAN.R-project.org/package=mcp)
-[![mcp CRAN downloads](https://cranlogs.r-pkg.org/badges/mcp/)](https://cranlogs.r-pkg.org/badges/mcp/)
+[![mcp CRAN status](https://www.r-pkg.org/badges/version/mcp)](https://CRAN.R-project.org/package=mcp)
+[![mcp CRAN downloads](https://cranlogs.r-pkg.org/badges/mcp)](https://cranlogs.r-pkg.org/badges/mcp)
 
 `mcp` does regression with one or Multiple Change Points (MCP) between Generalized and hierarchical Linear Segments using Bayesian inference. `mcp` aims to provide maximum flexibility for analyses with a priori knowledge about the number of change points and the form of the segments in between.
 
