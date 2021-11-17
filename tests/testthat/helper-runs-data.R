@@ -1,3 +1,5 @@
+library(stats)
+
 # Samples and checks data structure.
 # Meant to be used with testthat::expect_true()
 data_gauss = data.frame(

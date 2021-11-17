@@ -56,6 +56,6 @@ apply_test_fit = function(desc, all_models) {
     model = this[names(this) == ""]
 
     # Test!
-    testthat::test_that(desc, test_fit(model, simulated))
+    testthat::test_that(desc, {test_fit(model, simulated)})
   }
 }

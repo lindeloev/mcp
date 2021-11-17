@@ -321,7 +321,7 @@ test_bad = function(models, ...) {
     ", paste0(model, collapse=", "))
 
     testthat::test_that(test_name, {
-      testthat::expect_error(test_runs(model, sample = FALSE, ...))  # should err before sampling
+      suppressWarnings(testthat::expect_error(test_runs(model, sample = FALSE, ...)))  # should err before sampling
     })
   }
 }
