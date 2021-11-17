@@ -1,9 +1,8 @@
 #' Regression with Multiple Change Points
 #'
-#' @docType package
 #' @name mcp-package
+#' @docType package
 #' @aliases mcp-package
-#'
 #' @description
 #' The \pkg{mcp} package provides an interface to fit regression models with
 #' multiple change points between generalized linear segments, optionally with

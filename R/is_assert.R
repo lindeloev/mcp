@@ -178,7 +178,7 @@ assert_data_cols = function(data, cols, fail_funcs = c()) {
   for (fail_func in fail_funcs) {
     failed_cols = colnames(data)[unlist(lapply(data, function(x) any(fail_func(x))))]  # Character vector of columns that
     if (length(failed_cols) > 0)
-      stop("The column(s) ", and_collapse(failed_cols), " had values where ", as.character(substitue(fail_func)), " was TRUE.")
+      stop("The column(s) ", and_collapse(failed_cols), " had values where ", as.character(substitute(fail_func)), " was TRUE.")
   }
 
   TRUE

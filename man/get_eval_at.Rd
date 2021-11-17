@@ -7,7 +7,7 @@
 get_eval_at(fit, facet_by = NULL, prior = FALSE)
 }
 \arguments{
-\item{fit}{An mcpfit object.}
+\item{fit}{An \code{mcpfit} object.}
 
 \item{facet_by}{Character vector. Names of categorical data columns to split to facets.
 Can be varying or RHS categoricals.}

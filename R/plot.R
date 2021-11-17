@@ -160,7 +160,7 @@ plot.mcpfit = function(x,
       samples_format = "tidy",
       scale = scale
     ) %>%
-      dplyr::select(-any_of(c(as.character(yvar)))) %>%  # Only a problem for ar() models
+      dplyr::select(-dplyr::any_of(c(as.character(yvar)))) %>%  # Only a problem for ar() models
       dplyr::rename(!!yvar := !!type)  # from "predict"/"fitted" to yvar (response name)
   }
 
@@ -331,21 +331,21 @@ geom_cp_density = function(fit, facet_by, prior, limits_y) {
     dplyr::summarise(dens = list(stats::density(value, bw = "SJ", n = 2^10))) %>%
     dplyr::rowwise() %>%
     dplyr::mutate(
-      densx = list(dens$x),
-      densy = list((dens$y / max(dens$y)) *  # Scale to 1 height
+      densx = list(.data$dens$x),
+      densy = list((.data$dens$y / max(.data$dens$y)) *  # Scale to 1 height
                      dens_scale * diff(limits_y) +  # Scale to desired proportion of plot
                      limits_y[1] -  # Put on x-axis
                      diff(limits_y) * dens_cut  # Move a bit further down to remove zero-density line from view.
       )
     ) %>%
-    dplyr::select(-dens) %>%
-    tidyr::unnest(c(densx, densy))
+    dplyr::select(-.data$dens) %>%
+    tidyr::unnest(c(.data$densx, .data$densy))
 
 
   # Make the geom!
   ggplot2::geom_polygon(ggplot2::aes(
-      x = densx,
-      y = densy,
+      x = .data$densx,
+      y = .data$densy,
       group = interaction(.chain, cp_name),
       color = NULL
     ),
@@ -534,7 +534,7 @@ plot_pars = function(fit,
 #' @aliases get_eval_at
 #' @keywords internal
 #' @inheritParams plot.mcpfit
-#' @param fit An mcpfit object.
+#' @param fit An `mcpfit` object.
 #' @return A vector of x-values to evaluate at.
 get_eval_at = function(fit, facet_by = NULL, prior = FALSE) {
   N_BASIS = 100
@@ -620,6 +620,7 @@ interpolate_continuous = function(data, pars, eval_at) {
 #'
 #' @aliases interpolate_newdata
 #' @inheritParams plot.mcpfit
+#' @param fit An `mcpfit` object.
 #' @details
 #' The `par_x` variable will be interpolated with higher resolution around the
 #' change points where the values can change abruptly, but lower resolution in
