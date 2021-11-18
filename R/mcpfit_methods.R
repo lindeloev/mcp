@@ -229,7 +229,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
   # Model info
   cat("Family: ", fit$family$family, "(link = '", fit$family$link, "')\n", sep = "")
   if (!is.null(samples))
-    cat("Iterations: ", nrow(samples[[1]]) * length(samples), " from ", length(samples), " chains.\n", sep="")
+    cat("Iterations: ", niterations(fit), " from ", nchains(fit), " chains.\n", sep="")
   cat("Segments:\n")
   for (i in 1:length(fit$model)) {
     cat("  ", i, ": ", formula_to_char(fit$model[[i]]), "\n", sep = "")
@@ -343,6 +343,40 @@ mcmclist_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
   NULL
 }
 
+
+#' Index \code{mcpfit} objects
+#'
+#' Index variables, iterations, chains, and draws.
+#'
+#' @param fit An \code{mcpfit} object or another \R object for which
+#' the methods are defined.
+#' @param ... Arguments passed to individual methods (if applicable).
+#'
+#' @name draws-index-mcp
+NULL
+
+
+#' @aliases niterations niterations.mcpfit
+#' @describeIn draws-index-mcp Total number of iterations of an `mcpfit` object.
+#' @export
+niterations.mcpfit = function(fit, prior = FALSE) {
+  samples = mcmclist_samples(fit, prior = prior, error = FALSE)
+  sum(sapply(samples, nrow))
+}
+
+#' @aliases nchains nchains.mcpfit
+#' @describeIn draws-index-mcp Number of chains of an `mcpfit` object.
+#' @export
+nchains.mcpfit = function(fit, prior = FALSE) {
+  samples = mcmclist_samples(fit, prior = prior, error = FALSE)
+  length(samples)
+}
+
+#' @export
+niterations = function(fit, ...) UseMethod("niterations")
+
+#' @export
+nchains = function(fit, ...) UseMethod("nchains")
 
 
 #' Get relevant info about varying parameters

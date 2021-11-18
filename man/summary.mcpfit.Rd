@@ -4,21 +4,19 @@
 \name{summary.mcpfit}
 \alias{summary.mcpfit}
 \alias{summary}
-\alias{fixef}
 \alias{fixef.mcpfit}
-\alias{fixed.effects}
-\alias{ranef}
+\alias{fixef}
 \alias{ranef.mcpfit}
-\alias{random.effects}
+\alias{ranef}
 \alias{print.mcpfit}
 \alias{print}
 \title{Summarise mcpfit objects}
 \usage{
 \method{summary}{mcpfit}(object, width = 0.95, digits = 2, prior = FALSE, ...)
 
-fixef(object, width = 0.95, prior = FALSE, ...)
+\method{fixef}{mcpfit}(object, width = 0.95, prior = FALSE, ...)
 
-ranef(object, width = 0.95, prior = FALSE, ...)
+\method{ranef}{mcpfit}(object, width = 0.95, prior = FALSE, ...)
 
 \method{print}{mcpfit}(x, ...)
 }
@@ -71,9 +69,9 @@ Summarise parameter estimates and model diagnostics.
 }
 \section{Functions}{
 \itemize{
-\item \code{fixef}: Get population-level ("fixed") effects of an \code{\link{mcpfit}} object.
+\item \code{fixef.mcpfit}: Fixed (population-level) effects of \code{mcpfit}.
 
-\item \code{ranef}: Get varying ("random") effects of an \code{\link{mcpfit}} object.
+\item \code{ranef.mcpfit}: Random (varying) effects of \code{mcpfit}.
 
 \item \code{print.mcpfit}: Print the posterior summary of an \code{\link{mcpfit}} object.
 }}
