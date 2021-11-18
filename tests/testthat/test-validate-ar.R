@@ -17,8 +17,14 @@ df = data.frame(
 fit_arima = arima(df$y, order = c(2,0,0))
 fit_mcp = mcp(model, df, par_x = "x", adapt = 100, iter = 1000, chains = 2)
 
+# Parameter estimates
 testthat::expect_equal(as.numeric(fit_arima$coef), fixef(fit_mcp)$mean[c(1,2, 4)], tolerance = 0.03)
 
+# Log-likelihood
+fit_mcp = add_loglik(fit_mcp)
+loglik_mcp = mean(rowSums(fit_mcp$loglik))
+loglik_arima = as.numeric(logLik(fit_arima))
+expect_equal(loglik_arima, loglik_mcp, tolerance = 0.01)
 
 
 #################

@@ -5,8 +5,6 @@ model = list(
   y | trials(N) ~ 1 + x + group
 )
 
-
-
 df = tibble::tibble(
   N = round(runif(200, 1, 10)),
   x = seq(0, 20, length.out = 200),
@@ -15,15 +13,20 @@ df = tibble::tibble(
 )
 
 fit_mcp = mcp(model, df, family = binomial(), adapt = 100, iter = 1000)
-
 fit_glm = glm(cbind(y, N - y) ~ x + group, data = df, family = binomial())
 
+# Parameter estimates
 testthat::expect_equal(
   fixef(fit_mcp)$mean,
   as.numeric(fit_glm$coefficients[c(3, 1, 2)]),
   tolerance = 0.02
 )
 
+# Log-likelihood
+fit_mcp = add_loglik(fit_mcp)
+loglik_mcp = mean(rowSums(fit_mcp$loglik))
+loglik_glm = as.numeric(logLik(fit_glm))
+expect_equal(loglik_glm, loglik_mcp, tolerance = 0.01)
 
 
 ##############
