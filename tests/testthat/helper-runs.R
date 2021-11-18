@@ -100,7 +100,7 @@ test_runs = function(model,
         # TO DO: this is a hack because of small inaccuracies for the first N points in AR(N) models
         # It has something to do with the insertion of 0 in simulate_ar() for rows < N
         nrow_loo = nrow(fit$loo$pointwise)
-        testthat::expect_equal(fit$loo$pointwise[ar_order:nrow_loo, ], fit$loo_pointwise$pointwise[ar_order:nrow_loo, ])
+        testthat::expect_equal(fit$loo$pointwise[(1 + ar_order):nrow_loo, ], fit$loo_pointwise$pointwise[(1 + ar_order):nrow_loo, ])
       }
     }
 

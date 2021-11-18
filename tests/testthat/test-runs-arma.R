@@ -19,7 +19,7 @@ test_bad(bad_arma)
 
 good_arma = list(
   list(y ~ ar(1)),  # simple
-  list(y ~ ar(5)),  # higher order
+  list(y ~ ar(3)),  # higher order
   list(y ~ ar(1, 1 + x + I(x^2) + exp(x))),  # complicated regression
   list(y ~ ar(1),
        ~ ar(2, 0 + x)),  # change in ar

@@ -16,11 +16,9 @@ fit_mcp = mcp(model, df, family = binomial(), adapt = 100, iter = 1000)
 fit_glm = glm(cbind(y, N - y) ~ x + group, data = df, family = binomial())
 
 # Parameter estimates
-testthat::expect_equal(
-  fixef(fit_mcp)$mean,
-  as.numeric(fit_glm$coefficients[c(3, 1, 2)]),
-  tolerance = 0.02
-)
+params_mcp = fixef(fit_mcp)$mean
+params_glm = as.numeric(fit_glm$coefficients[c(3, 1, 2)])
+testthat::expect_equal(params_mcp, params_glm, tolerance = 0.02)
 
 # Log-likelihood
 fit_mcp = add_loglik(fit_mcp)
