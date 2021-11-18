@@ -254,19 +254,26 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
 }
 
 
-#' @aliases fixef fixef.mcpfit fixed.effects
-#' @describeIn summary.mcpfit Get population-level ("fixed") effects of an \code{\link{mcpfit}} object.
+
 #' @export
-fixef = function(object, width = 0.95, prior = FALSE, ...) {
+fixef = function(object, ...) UseMethod("fixef")
+
+#' @export
+ranef = function(object, ...) UseMethod("ranef")
+
+
+#' @aliases fixef fixef.mcpfit
+#' @describeIn summary.mcpfit Fixed (population-level) effects of `mcpfit`.
+#' @export
+fixef.mcpfit = function(object, width = 0.95, prior = FALSE, ...) {
   assert_ellipsis(...)
   get_summary(object, width, varying = FALSE, prior = prior)
 }
 
-
-#' @aliases ranef ranef.mcpfit random.effects
-#' @describeIn summary.mcpfit Get varying ("random") effects of an \code{\link{mcpfit}} object.
+#' @aliases ranef ranef.mcpfit
+#' @describeIn summary.mcpfit Random (varying) effects of `mcpfit`.
 #' @export
-ranef = function(object, width = 0.95, prior = FALSE, ...) {
+ranef.mcpfit = function(object, width = 0.95, prior = FALSE, ...) {
   assert_ellipsis(...)
   get_summary(object, width, varying = TRUE, prior = prior)
 }
