@@ -51,7 +51,7 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE) {
     ar_order = get_ar_order(fit$.internal$rhs_table)
 
     # For small models, the majority of the computation time will be pp_eval overhead
-    llfun = function(data_i, draws = NULL, with_exp) {
+    llfun = function(data_i, draws = NULL, link_fun = identity) {
       if (is.na(ar_order)) {
         loglik = pp_eval(fit, newdata = data_i, summary = FALSE, type = "loglik", varying = varying, arma = arma)$loglik
       } else {
@@ -65,15 +65,12 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE) {
       }
 
       # Return
-      if (with_exp) {
-        exp(loglik)
-      } else {
-        loglik
-      }
+      link_fun(loglik)
     }
+
     fit$data$row = seq_len(nrow(fit$data))
-    r_eff = loo::relative_eff(llfun, data = fit$data, chain_id, with_exp = TRUE)
-    loo::loo.function(llfun, data = fit$data, r_eff = r_eff, draws = NA, with_exp = FALSE)
+    r_eff = loo::relative_eff(llfun, data = fit$data, chain_id, link_fun = exp)
+    loo::loo.function(llfun, data = fit$data, r_eff = r_eff, draws = NA)
   }
 }
 
