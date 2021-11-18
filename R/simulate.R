@@ -149,6 +149,8 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
   # RETURN STUFF #
   ################
   .ydata = args[[fit$pars$y]]
+  if (.type == "loglik" & is.null(.ydata))
+    stop(".ydata must be non-NULL for .type = 'loglik'.")
   .which_y = paste0(.which_y, "_")
   if (.scale == "response") {
     assign(.which_y, fit$family$linkinv(get(.which_y)))
@@ -360,7 +362,7 @@ simulate_ar = function(sigma_, ar_list, resid_abs = NULL) {
   # resid_ is the observed residual from y_
   # resid_ is split into the innovation and AR() part. So resid_ = resid_ar + resid_sigma
   resid_sigma = stats::rnorm(length(sigma_), 0, sigma_)
-  if (is.null(resid_abs)) {
+  if (length(resid_abs) == 0) {
     message("Generating residuals for AR(N) model since the response column/argument was not provided.")
     ar_list$ar0_ = sigma_[seq_len(ar_order)] * 0 + 1  # AR(0) = itself
     resid_abs = numeric(length(sigma_))
