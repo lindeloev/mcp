@@ -648,7 +648,7 @@ model = list(
 
 
 # Simulate data
-set.seed(42)
+set.seed(40)
 data = data.frame(
   x = 1:100,
   y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
@@ -666,7 +666,7 @@ data$y = empty$simulate(empty, data,
 
 # Run sampling
 if (sample == TRUE)
-  fit = mcp(model, data)",
+  fit = mcp(model, data, adapt = 3000)",
 
 
 
