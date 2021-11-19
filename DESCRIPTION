@@ -21,7 +21,6 @@ Depends: R (>= 3.5.0)
 Config/testthat/parallel: true
 Config/testthat/edition: 3
 Imports:
-	parallel,
 	future (>= 1.20.0),
 	future.apply,
 	rjags (>= 4.9),
