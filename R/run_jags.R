@@ -40,7 +40,7 @@ run_jags = function(data,
   if (is.numeric(opts_cores) && cores == 1)
     cores = opts_cores
   if (cores == "all") {
-    cores = parallel::detectCores() - 1
+    cores = future::availableCores() - 1
     n.chains = cores
   }
   if (Sys.getenv("_R_CHECK_LIMIT_CORES_", "") == "TRUE") {

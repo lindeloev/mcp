@@ -208,21 +208,24 @@ mcp = function(model,
 
   # More checking...
   assert_value(sample, allowed = c("post", "prior", "both", "none", FALSE))
-  assert_integer(cores, lower = 1, len = 1)
+  if (cores != "all") {
+    assert_integer(cores, lower = 1, len = 1)
+
+    if (cores > chains)
+      message("`cores` is greater than `chains`. Not all cores will be used.")
+
+    # Parallel fails on R version 3.6.0 and lower (sometimes at least).
+    if (cores > 1 && getRversion() < "3.6.1")
+      message("Parallel sampling (`cores` > 1) sometimes err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
+  }
+
   assert_integer(chains, lower = 1, len = 1)
   assert_types(inits, "null", "list")
-
-  if (cores > chains)
-    message("`cores` is greater than `chains`. Not all cores will be used.")
 
   # jags_code
   if(!is.null(jags_code))
     if (!is.character(jags_code) || !stringr::str_detect(gsub(" ", "", jags_code), "model\\{"))
       stop("`jags_code` must be NULL or a string with a JAGS model, including 'model {...}'.")
-
-  # Parallel fails on R version 3.6.0 and lower (sometimes at least).
-  if (cores > 1 && getRversion() < "3.6.1")
-    message("Parallel sampling (`cores` > 1) sometimes err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
 
 
   ##################
