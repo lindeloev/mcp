@@ -33,7 +33,7 @@ expect_equal(loglik_arima, loglik_mcp, tolerance = 0.05)
 # AR SIMULATION #
 #################
 
-newdata = dplyr::select(df, -y) %>% tidyr::expand_grid(rep = 1:100)
+newdata = tidyr::expand_grid(df, rep = 1:100)  # should work with y in data too
 y_simulated = fit_mcp$simulate(
   fit_mcp, newdata,
   Intercept_1 = 9, sigma_1 = 2, ar1_1 = 0.7, ar2_1 = -0.3, groupB_1 = 0

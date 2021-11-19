@@ -266,9 +266,13 @@ simulate_atomic = function(fit,
   if (is.null(names(args)) | any(names(args) == ""))  # A more helpful error than assert_ellipsis()
     stop("All arguments must be named.")
   assert_ellipsis(..., allowed = expected_args)
-  lapply(args,assert_numeric)
+  lapply(args, assert_numeric)
   lapply(args, function(x) stopifnot(length(x) == 1 | length(x) == nrow(newdata)))
   # Other values are asserted in func_fast
+
+  # Remove response column if present - it is to be simulated
+  if (fit$pars$y %in% colnames(newdata))
+    newdata = dplyr::select(newdata, -!!fit$pars$y)
 
   # Get permutations
   predictors = add_rhs_predictors(newdata, fit)
