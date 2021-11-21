@@ -80,6 +80,38 @@ get_sim_pars = function(rhs_table, pars) {
 }
 
 
+
+#' Evaluate model and return a list of dpars
+#'
+#' @details
+#' This is currently hard-coded to be run from `simulate_vectorized`.
+#' It serves to scope the evaluation of the model to prevent name conflicts.
+#'
+#' @keywords internal
+#' @param fit An `mcpfit` object.
+#' @param args args from `simulate_vectorized`
+#' @return `data.frame` with one column per dpar
+#' @noRd
+evaluate_model_dpars = function(fit, args, pred_pars) {
+  # Generate more predictors
+  pred_args = args[names(args) %in% pred_pars]
+  rhs_matrix_ = do.call(cbind, pred_args)
+  rhs_matrix_ = rhs_matrix_[, match(pred_pars, colnames(rhs_matrix_)), drop = FALSE]  # Same order as rhs_table$code_name no matter order of args
+
+  cp_0 = -Inf
+  assign(paste0("cp_", length(fit$model)), Inf)  # e.g., cp_3 = Inf
+
+  # Evaluate model in environment
+  out = new.env()
+  with(out, eval(parse(text = fit$.internal$formula_r)))
+
+  out %>%
+    as.list() %>%
+    as.data.frame() %>%
+    dplyr::select(-dplyr::starts_with("x_local_"), -dplyr::any_of(c("sigma_tmp_", "ar_")))
+}
+
+
 #' Vectorized R-side run of the full model.
 #'
 #' Used internally in mcp.
@@ -127,38 +159,25 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
     stop("Only `type = 'fitted'` is meaningful when `scale = 'linear'`")
 
 
-  #############################
-  # BUILD AND EXECUTE FORMULA #
-  #############################
-  # Get model parameters from ellipsis (args)
-  #param_args = args[names(args) %in% param_pars]
-  #data_args = args[names(args) %in% data_pars]
+  ##################################################
+  # EVALUATE MODEL AND RETURN VIA FAMILY AND .TYPE #
+  ##################################################
+  dpar_values = evaluate_model_dpars(fit, args, pred_pars)
 
-  # rhs_matrix_ from ellipsis.
-  pred_args = args[names(args) %in% pred_pars]
-  rhs_matrix_ = do.call(cbind, pred_args)
-  rhs_matrix_ = rhs_matrix_[, match(pred_pars, colnames(rhs_matrix_)), drop = FALSE]  # Same order as rhs_table$code_name no matter order of args
-
-  # Run it!
-  cp_0 = -Inf
-  assign(paste0("cp_", length(fit$model)), Inf)  # e.g., cp_3 = Inf
-  eval(parse(text = fit$.internal$formula_r))
-
-
-  ################
-  # RETURN STUFF #
-  ################
-  .ydata = args[[fit$pars$y]]
-  if (.type == "loglik" & is.null(.ydata))
+  # Prepare for stuff needing .ydata
+  has_ydata = is.null(args[[fit$pars$y]]) == FALSE
+  if (has_ydata)
+    dpar_values$.ydata = args[[fit$pars$y]]
+  if (.type == "loglik" & has_ydata == FALSE)
     stop(".ydata must be non-NULL for .type = 'loglik'.")
   .which_y = paste0(.which_y, "_")
   if (.scale == "response") {
-    assign(.which_y, fit$family$linkinv(get(.which_y)))
+    dpar_values[[.which_y]] = fit$family$linkinv(dpar_values[[.which_y]])
   }
 
   # Simply return for fitted non-mu params
   if (.which_y != "mu_" & .type == "fitted") {
-    return(get(.which_y))
+    return(dpar_values[[.which_y]])
   } else if (.which_y != "mu_" & .type != "fitted") {
     stop("`type = 'fitted'` is the only option when `which_y != 'mu'`")
   }
@@ -168,65 +187,65 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
     # If ARMA, build resid_ and return with that
     is_arma = any(rhs_table$dpar == "ar")
     if (is_arma && .arma == TRUE) {
-      ar_list = mget(ls()[grep("^ar[0-9]+_$", ls())])  # list(ar1_, ar2_, etc.). TO DO: run eval(parse(...)) in a container, return list with $ar1_, $ar2_, etc.
-      ar_result = simulate_ar(sigma_, ar_list, .ydata - mu_)
-      mu_ = mu_ + ar_result$resid_ar
+      ar_list = dplyr::select(dpar_values, dplyr::matches("^ar[0-9]+_$"))
+      ar_result = simulate_ar(dpar_values$sigma_, ar_list, dpar_values$.ydata - dpar_values$mu_)
+      dpar_values$mu_ = dpar_values$mu_ + ar_result$resid_ar
     }
 
     # If fitted or no data
     if (.type == "fitted") {
-      return(mu_)
+      return(dpar_values$mu_)
     } else if(.type == "loglik") {
-      return(stats::dnorm(.ydata, mu_, sigma_, log = TRUE))
+      return(stats::dnorm(dpar_values$.ydata, dpar_values$mu_, dpar_values$sigma_, log = TRUE))
     } else if (.type == "predict") {
-      if (any(fit$family$linkinv(sigma_) < 0))
-        stop("Modelled negative sigma. First detected at ", fit$pars$x, " = ", min(get(fit$pars$x)[fit$family$linkinv(sigma_) < 0]))
+      if (any(fit$family$linkinv(dpar_values$sigma_) < 0))
+        stop("Modelled negative sigma. First detected at ", fit$pars$x, " = ", min(get(fit$pars$x)[fit$family$linkinv(dpar_values$sigma_) < 0]))
 
       # Complex code if ARMA. Simple if not. resid_sigma_ was generated from sigma_ so no need to do an extra rnorm().
       if (is_arma) {
         if (.arma == TRUE) {
-          return(fit$family$linkinv(fit$family$linkfun(mu_ + ar_result$resid_sigma)))
+          return(fit$family$linkinv(fit$family$linkfun(dpar_values$mu_ + ar_result$resid_sigma)))
         } else {
-          return(fit$family$linkinv(fit$family$linkfun(mu_) + stats::rnorm(length(mu_), 0, sigma_)))
+          return(fit$family$linkinv(fit$family$linkfun(dpar_values$mu_) + stats::rnorm(length(dpar_values$mu_), 0, dpar_values$sigma_)))
         }
       } else {
-        return(stats::rnorm(length(mu_), mu_, sigma_))
+        return(stats::rnorm(length(dpar_values$mu_), dpar_values$mu_, dpar_values$sigma_))
       }
     }
 
     # OTHER FAMILIES ---------------------
   } else if (fit$family$family == "binomial") {
-    N_trials = args[[fit$pars$trials]]
+    dpar_values$N_trials = args[[fit$pars$trials]]
 
     if (.type == "fitted") {
-      if (.rate == FALSE) return(N_trials * mu_)
-      if (.rate == TRUE)  return(mu_)
+      if (.rate == FALSE) return(dpar_values$N_trials * dpar_values$mu_)
+      if (.rate == TRUE)  return(dpar_values$mu_)
     } else if (.type == "loglik") {
-      return(stats::dbinom(.ydata, N_trials, mu_, log = TRUE))
+      return(stats::dbinom(dpar_values$.ydata, dpar_values$N_trials, dpar_values$mu_, log = TRUE))
     } else if (.type == "predict") {
-      if (.rate == FALSE) return(stats::rbinom(length(mu_), N_trials, mu_))
-      if (.rate == TRUE)  return(stats::rbinom(length(mu_), N_trials, mu_) / N_trials)
+      if (.rate == FALSE) return(stats::rbinom(length(dpar_values$mu_), dpar_values$N_trials, dpar_values$mu_))
+      if (.rate == TRUE)  return(stats::rbinom(length(dpar_values$mu_), dpar_values$N_trials, dpar_values$mu_) / dpar_values$N_trials)
     }
   } else if (fit$family$family == "bernoulli") {
-    if (.type == "fitted") return(mu_)
-    if (.type == "loglik") return(stats::dbinom(.ydata, 1, mu_, log = TRUE))
-    if (.type == "predict") return(stats::rbinom(length(mu_), 1, mu_))
+    if (.type == "fitted") return(dpar_values$mu_)
+    if (.type == "loglik") return(stats::dbinom(dpar_values$.ydata, 1, dpar_values$mu_, log = TRUE))
+    if (.type == "predict") return(stats::rbinom(length(dpar_values$mu_), 1, dpar_values$mu_))
   } else if (fit$family$family == "poisson") {
     if (.type %in% c("predict", "loglik")) {
-      if ((.scale == "response" && any(mu_ > 2146275819)) || (.scale == "linear" && any(fit$family$linkinv(mu_) > 2146275819)))
+      if ((.scale == "response" && any(dpar_values$mu_ > 2146275819)) || (.scale == "linear" && any(fit$family$linkinv(dpar_values$mu_) > 2146275819)))
         stop("Modelled extremely large value: ", fit$family$linkinv_str, "(", fit$pars$y, ") > 2146275819.")
     }
     if (.type == "fitted") {
-      return(mu_)
+      return(dpar_values$mu_)
     } else if (.type == "loglik") {
-      return(stats::dpois(.ydata, mu_, log = TRUE))
+      return(stats::dpois(dpar_values$.ydata, dpar_values$mu_, log = TRUE))
     } else if (.type == "predict") {
-      return(stats::rpois(length(mu_), mu_))
+      return(stats::rpois(length(dpar_values$mu_), dpar_values$mu_))
     }
   } else if (fit$family$family == "exponential") {
-    if (.type == "fitted") return(1 / mu_)
-    if (.type == "loglik") return(stats::dexp(.ydata, mu_, log = TRUE))
-    if (.type == "predict") return(stats::rexp(length(mu_), mu_))
+    if (.type == "fitted") return(1 / dpar_values$mu_)
+    if (.type == "loglik") return(stats::dexp(dpar_values$.ydata, dpar_values$mu_, log = TRUE))
+    if (.type == "predict") return(stats::rexp(length(dpar_values$mu_), dpar_values$mu_))
   }
 }
 

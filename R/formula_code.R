@@ -19,7 +19,7 @@ get_formula_jags = function(ST, rhs_table, par_x, family) {
     segment_start = ifelse(i > 1, yes = paste0(" - ", ST$cp_code_form[i]), no = "")  #
     segment_end = ifelse(i < nrow(ST), yes = ST$cp_code_form[i + 1], no = paste0("cp_", i))  # infinite if last segment.
 
-    local_x_str = paste0(local_x_str, "\n", par_x, "_local_", i, "_[i_] = min(", par_x, "[i_], ", segment_end, ")", segment_start)
+    local_x_str = paste0(local_x_str, "\nx_local_", i, "_[i_] = min(", par_x, "[i_], ", segment_end, ")", segment_start)
   }
 
   # Build formula for each dpar (note plural "_dpars")
@@ -93,7 +93,7 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x) {
       indicator_this = paste0("  (", par_x, "[i_] >= ", dplyr::first(.data$this_cp), ")"),
       indicator_next = dplyr::if_else(is.na(dplyr::first(.data$next_cp)) == TRUE, "", paste0(" * (", par_x, "[i_] < ", dplyr::first(.data$next_cp), ")")),
       inprod = paste0(" * inprod(rhs_matrix_[i_, c(", paste0(.data$matrix_col, collapse = ", "), ")], c(", paste0(.data$code_name, collapse = ", "), "))"),
-      x_factor = gsub("x(?!p\\()", paste0(par_x, "_local_", dplyr::first(.data$segment), "_[i_]"), dplyr::first(.data$x_factor), perl = TRUE),  # "x" but not "exp("
+      x_factor = gsub("x(?!p\\()", paste0("x_local_", dplyr::first(.data$segment), "_[i_]"), dplyr::first(.data$x_factor), perl = TRUE),  # "x" but not "exp("
 
       # All together
       segment_code = paste0(.data$indicator_this, .data$indicator_next, .data$inprod, " * ", .data$x_factor),
