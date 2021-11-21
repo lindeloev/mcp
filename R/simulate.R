@@ -106,7 +106,7 @@ evaluate_model_dpars = function(fit, args, pred_pars) {
 
   # Evaluate model in environment
   out = new.env()
-  with(out, eval(parse(text = fit$.internal$formula_r)))
+  with(out, eval(str2expression(fit$.internal$formula_r)))
 
   out %>%
     as.list() %>%

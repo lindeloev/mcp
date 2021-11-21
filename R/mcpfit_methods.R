@@ -527,7 +527,7 @@ tidy_samples = function(
   # Build code for tidybayes::spread_draws() and execute it
   all_terms = unique(c(pars_population, terms_varying, absolute_cps))
   code = paste0("tidybayes::spread_draws(samples, ", paste0(all_terms, collapse = ", "), ", ndraws = nsamples)")
-  samples = eval(parse(text = code))
+  samples = eval(str2lang(code))
 
   # Make varying columns factor if they are factors in fit$data
   if (length(varying_info$cols) > 0) {

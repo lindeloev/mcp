@@ -234,7 +234,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
       # Get effect estimate
       samples = mcmclist_samples(fit) %>%
         tidybayes::tidy_draws() %>%
-        dplyr::mutate(effect = eval(parse(text = LHS)))
+        dplyr::mutate(effect = eval(str2lang(LHS)))
 
       # TO DO: check need to suppress warnings when tidybayes 1.2 is out?
       estimate = suppressWarnings(tidybayes::mean_hdci(samples, .data$effect, .width = width))
@@ -267,7 +267,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
     # DIRECTIONAL: compute p and BF
     if (n_directional != 0) {
       prob = samples %>%
-        dplyr::mutate(result = eval(parse(text = expression))) %>%  # this is where the magic happens
+        dplyr::mutate(result = eval(str2lang(expression))) %>%  # this is where the magic happens
         dplyr::summarise(
           prob = sum(.data$result == TRUE) / dplyr::n()
         )
@@ -309,7 +309,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_density = function(samples, LHS, value) {
   samples = tidybayes::tidy_draws(samples) %>%
-    dplyr::mutate(result = eval(parse(text = LHS)))
+    dplyr::mutate(result = eval(str2lang(LHS)))
   dens = stats::density(dplyr::pull(samples, "result"), bw = "SJ")
   dens_point = stats::spline(dens$x, dens$y, xout = value)$y
   dens_point

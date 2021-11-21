@@ -360,7 +360,7 @@ if (sample == TRUE)
 
 # Run the code
 assert_value(name, allowed = names(examples))
-eval(parse(text = examples[[name]]))
+eval(str2expression(examples[[name]]))
 
 # Get stuff ready for return
 model = fix_model_environment(model)

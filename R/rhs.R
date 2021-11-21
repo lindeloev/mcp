@@ -176,7 +176,7 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
   # Evaluate x_factor funcs on par_x and divide it out of the design matrix.
   x = data[, par_x]
   x_factor_local = gsub("1", "rep(1, length(x))", x_factor)  # Make intercepts ("1") have the correct dimension.
-  mat_factor_x = eval(parse(text = paste0("as.matrix(data.frame(", paste0(x_factor_local, collapse = ", "), "))")))
+  mat_factor_x = eval(str2lang(paste0("as.matrix(data.frame(", paste0(x_factor_local, collapse = ", "), "))")))
   mat_without_x = mat / mat_factor_x
   mat_without_x[mat == 0 & mat_factor_x == 0] = 1  # 0 / 0 means "identityt", i.e., = 1.
 

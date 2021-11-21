@@ -562,7 +562,7 @@ get_eval_at = function(fit, facet_by = NULL, prior = FALSE) {
     samples = mcmclist_samples(fit, prior = prior)
     cp_pars = get_cp_pars(fit$pars)
     call = paste0("tidybayes::spread_draws(samples, ", paste0(cp_pars, collapse = ", "), ")")
-    samples = eval(parse(text = call))
+    samples = eval(str2lang(call))
 
     # Compute and return
     eval_at = sort(c(
