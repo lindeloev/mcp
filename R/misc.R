@@ -261,8 +261,8 @@ get_rhs_matrix = function(rhs_table) {
 tidy_to_matrix = function(samples, returnvar) {
   returnvar = rlang::sym(returnvar)
   samples %>%
-    dplyr::select(.data$.draw, .data$data_row, !!returnvar) %>%
-    tidyr::pivot_wider(names_from = .data$data_row, values_from = !!returnvar) %>%
+    dplyr::select(.data$.draw, .data$data_row, {{ returnvar }}) %>%
+    tidyr::pivot_wider(names_from = .data$data_row, values_from = {{ returnvar }}) %>%
     dplyr::select(-.data$.draw) %>%
     as.matrix()
 }

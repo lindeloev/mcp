@@ -705,7 +705,7 @@ pp_eval = function(
 
   # Optionally compute residuals
   if (type == "residuals")
-    samples = dplyr::mutate(samples, !!returnvar := !!returnvar - !!yvar)  # returnvar should be "residuals" in this case
+    samples = dplyr::mutate(samples, !!returnvar := {{ returnvar }} - {{ yvar }})  # returnvar should be "residuals" in this case
 
   # Optionally summarise
   if (summary == TRUE) {
@@ -713,14 +713,14 @@ pp_eval = function(
       # Summarise for each row in newdata
       dplyr::group_by(.data$data_row) %>%
       dplyr::summarise(.groups = "drop",
-                       error = stats::sd(!!returnvar),
-                       !!returnvar := mean(!!returnvar)
+                       error = stats::sd({{ returnvar }}),
+                       !!returnvar := mean({{ returnvar }})
       ) %>%
 
       # Apply original order and put newdata as the first columns
       dplyr::arrange(.data$data_row) %>%
       dplyr::left_join(newdata, by = "data_row") %>%
-      dplyr::select(dplyr::one_of(colnames(newdata)), !!returnvar, .data$error, -.data$data_row)
+      dplyr::select(dplyr::one_of(colnames(newdata)), {{ returnvar }} , .data$error, -.data$data_row)
 
 
     # Quantiles
