@@ -28,13 +28,6 @@ logical0_to_null = function(x) {
 `%notin%` = Negate(`%in%`)
 
 
-# Is this a continuous vector?
-is_continuous = function(x) {
-  is.numeric(x) &
-    length(unique(stats::na.omit(x))) > 2
-}
-
-
 # List of categorical column names and their unique levels
 get_categorical_levels = function(df) {
   assert_types(df, "data.frame", "tibble")
@@ -248,6 +241,30 @@ get_rhs_matrix = function(rhs_table) {
   suppressMessages(dplyr::bind_cols(rhs_table$matrix_data, .name_repair = "unique")) %>% # Suppress message about lacking column names
     as.matrix() %>%
     magrittr::set_colnames(rhs_table$code_name)
+}
+
+
+#' Convert from tidy to matrix
+#'
+#' Converts from the output of `tidy_samples()` or `pp_eval(fit, samples_format = "tidy")`
+#' to an `N_draws` X `nrows(newdata)` matrix with fitted/predicted values. This format is
+#' used y `brms` and it's useful as `yrep` in `bayesplot::ppc_*` functions.
+#'
+#' @aliases tidy_to_matrix
+#' @keywords internal
+#' @noRd
+#' @param samples Samples in tidy format
+#' @param returnvar An `rlang::sym()` object.
+#' @return An  `N_draws` X `nrows(newdata)` matrix.
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+tidy_to_matrix = function(samples, returnvar) {
+  returnvar = rlang::sym(returnvar)
+  samples %>%
+    dplyr::select(.data$.draw, .data$data_row, !!returnvar) %>%
+    tidyr::pivot_wider(names_from = .data$data_row, values_from = !!returnvar) %>%
+    dplyr::select(-.data$.draw) %>%
+    as.matrix()
 }
 
 

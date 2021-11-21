@@ -954,30 +954,6 @@ residuals.mcpfit = function(
 }
 
 
-#' Convert from tidy to matrix
-#'
-#' Converts from the output of `tidy_samples()` or `pp_eval(fit, samples_format = "tidy")`
-#' to an `N_draws` X `nrows(newdata)` matrix with fitted/predicted values. This format is
-#' used y `brms` and it's useful as `yrep` in `bayesplot::ppc_*` functions.
-#'
-#' @aliases tidy_to_matrix
-#' @keywords internal
-#' @noRd
-#' @param samples Samples in tidy format
-#' @param returnvar An `rlang::sym()` object.
-#' @return An  `N_draws` X `nrows(newdata)` matrix.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-tidy_to_matrix = function(samples, returnvar) {
-  returnvar = rlang::sym(returnvar)
-  samples %>%
-    dplyr::select(.data$.draw, .data$data_row, !!returnvar) %>%
-    tidyr::pivot_wider(names_from = .data$data_row, values_from = !!returnvar) %>%
-    dplyr::select(-.data$.draw) %>%
-    as.matrix()
-}
-
-
 #' Add loo if not already present
 #'
 #' @aliases with_loo

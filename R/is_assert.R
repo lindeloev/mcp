@@ -31,6 +31,14 @@ is.mcpmodel = function(x) {
   TRUE
 }
 
+
+# Is this a continuous vector?
+is_continuous = function(x) {
+  is.numeric(x) &
+    length(unique(stats::na.omit(x))) > 2
+}
+
+
 #' @keywords internal
 stop_github = function(...) {
   stop("This looks like an internal error in mcp. To fix this for you and other users, please raise an issue on https://github.com/lindeloev/mcp/issues with the minimum data/code that reproduces this error:\n", ...)
