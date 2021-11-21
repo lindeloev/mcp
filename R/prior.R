@@ -142,6 +142,7 @@ truncate_prior_cp = function(ST, i, prior_str) {
 #'
 #' @aliases get_prior
 #' @keywords internal
+#' @noRd
 #' @param ST Tibble. A segment table as returned by `get_segment_table`.
 #' @param rhs_table Tibble as returned by `get_rhs()`.
 #' @param family An `mcpfamily` object as returned by `mcpfamily()`.

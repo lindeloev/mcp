@@ -1,6 +1,7 @@
 #' Takes a formula and returns a string representation of y, cp, and rhs
 #' @aliases unpack_tildes
 #' @keywords internal
+#' @noRd
 #' @param form A formula
 #' @param i The segment number
 #' @return A one-row tibble with columns:
@@ -51,6 +52,7 @@ unpack_tildes = function(form, i) {
 #'
 #' @aliases unpack_y
 #' @keywords internal
+#' @noRd
 #' @inheritParams mcp
 #' @param form_y Character representation of formula
 #' @param i Segment number
@@ -148,6 +150,7 @@ unpack_y = function(form_y, i, family) {
 #'
 #' @aliases unpack_cp
 #' @keywords internal
+#' @noRd
 #' @param form_cp Segment formula as string.
 #' @param i segment number
 #' @return A one-row tibble with columns:
@@ -250,6 +253,7 @@ unpack_cp = function(form_cp, i) {
 #'
 #' @aliases get_segment_table
 #' @keywords internal
+#' @noRd
 #' @inheritParams mcp
 #' @return A tibble with one row describing each segment and the corresponding code.
 #' @encoding UTF-8
@@ -378,6 +382,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
 #'
 #' @aliases format_code
 #' @keywords internal
+#' @noRd
 #' @param col A column
 #' @param na_col If this column is NA, return NA
 #' @return string

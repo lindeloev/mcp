@@ -3,7 +3,6 @@
 #' @aliases bernoulli
 #' @param link Link function.
 #' @export
-#'
 bernoulli = function(link = "logit") {
   assert_value(link, allowed = c("identity", "logit", "probit"))
 
@@ -19,7 +18,6 @@ bernoulli = function(link = "logit") {
 #' @aliases exponential
 #' @param link Link function (Character).
 #' @export
-#'
 exponential = function(link = "identity") {
   assert_value(link, allowed = c("identity"))
 

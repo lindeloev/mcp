@@ -5,6 +5,7 @@
 #' Make the levels of categorical predictors match the original data
 #' @aliases relevel_newdata
 #' @keywords internal
+#' @noRd
 #' @inheritParams add_rhs_predictors
 #' @return `newdata` with all categorical columns as factors that have identical levels to the original data.
 #' @encoding UTF-8
@@ -38,6 +39,7 @@ relevel_newdata = function(newdata, fit) {
 #' Add predictors to `newdata`
 #' @aliases add_rhs_predictors
 #' @keywords internal
+#' @noRd
 #' @param newdata A data.frame that contains the RHS-predictors from `fit$data` and `fit$model`.
 #' @param fit An `mcpfit` object.
 #' @return `newdata` with additional (dummy-coded) columns that make up the design matrix required for the model.
@@ -88,6 +90,7 @@ get_sim_pars = function(rhs_table, pars) {
 #' It serves to scope the evaluation of the model to prevent name conflicts.
 #'
 #' @keywords internal
+#' @noRd
 #' @param fit An `mcpfit` object.
 #' @param args args from `simulate_vectorized`
 #' @return `data.frame` with one column per dpar
@@ -119,6 +122,7 @@ evaluate_model_dpars = function(fit, args, pred_pars) {
 #'
 #' @aliases simulate_vectorized
 #' @keywords internal
+#' @noRd
 #' @inheritParams mcp
 #' @param ... Parameter names (e.g., `cp_1 = c(4.3, 4.5, 6.2), Intercept_1 = c(11.2, 12.1, 10.9)`, etc.)
 #'   and predictor columns from `rhs_tables$matrix_data` prefixed with ".pred_" (e.g., `.pred_Intercept_1 = c(1, 1, 1)`).
@@ -262,6 +266,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
 #'
 #' @aliases simulate_atomic
 #' @keywords internal
+#' @noRd
 #' @inheritParams mcp
 #' @param newdata A data.frame or tibble that should contain the same columns as `fit$data`
 #' @param ... Parameter values of length 1, e.g., `cp_1 = 80, Intercept_1 = -22.5` etc.
@@ -325,6 +330,7 @@ simulate_atomic = function(fit,
 #'
 #' @aliases get_fitsimulate
 #' @keywords internal
+#' @noRd
 #' @param pars A list of model parameters, typically from `fit$pars`
 #' @return An R function.
 #' @encoding UTF-8
@@ -361,6 +367,7 @@ get_fitsimulate = function(pars) {
 #' Developer note: some of the eval(parse(text = ...)) here could probably be replaced with inner products (%*%).
 #' @aliases simulate_ar
 #' @keywords internal
+#' @noRd
 #' @param sigma_ Numeric vector of innovations
 #' @param ar_list List with numerical vectors, list(ar1_ = c(...), ar2_ = c(...))
 #' @param resid_abs NULL or Numerical vector of absolute residuals, `fitted_value - observed_value`.

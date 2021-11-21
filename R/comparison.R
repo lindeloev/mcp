@@ -300,6 +300,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
 #'
 #' @aliases get_density
 #' @keywords internal
+#' @noRd
 #' @param samples An mcmc.list
 #' @param LHS Expression to compute posterior
 #' @param value What value to evaluate the density at

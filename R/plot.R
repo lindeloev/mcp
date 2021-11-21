@@ -297,6 +297,7 @@ plot.mcpfit = function(x,
 #'
 #' @aliases geom_cp_density
 #' @keywords internal
+#' @noRd
 #' @inheritParams plot.mcpfit
 #' @param limits_y A vector of length 2 with c(lower, upper) limits on the plot.
 #'   Used for scaling the densities to a proportion of the plot height.
@@ -363,6 +364,7 @@ geom_cp_density = function(fit, facet_by, prior, limits_y) {
 #'
 #' @aliases geom_quantiles
 #' @keywords internal
+#' @noRd
 #' @inheritParams plot.mcpfit
 #' @inheritParams get_quantiles
 #' @param ... Arguments passed to geom_line
@@ -533,6 +535,7 @@ plot_pars = function(fit,
 #'
 #' @aliases get_eval_at
 #' @keywords internal
+#' @noRd
 #' @inheritParams plot.mcpfit
 #' @param fit An `mcpfit` object.
 #' @return A vector of x-values to evaluate at.
@@ -586,6 +589,7 @@ add_group = function(df) {
 #'
 #' @aliases interpolate_continuous
 #' @keywords internal
+#' @noRd
 #' @param data fit$data
 #' @param pars fit$pars
 #' @param eval_at par_x values to interpolate continuous predictors at.
@@ -814,6 +818,7 @@ pp_check = function(
 #'
 #' @aliases get_loo_plot_call
 #' @keywords internal
+#' @noRd
 #' @inheritParams pp_check
 #' @param y Response vector
 #' @param yrep S X N matrix of predicted responses

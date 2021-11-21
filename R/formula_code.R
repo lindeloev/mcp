@@ -6,6 +6,7 @@
 #'
 #' @aliases get_formula_jags
 #' @keywords internal
+#' @noRd
 #' @inheritParams get_formula_jags_dpar
 #' @inheritParams mcp
 #' @param dpars A character vector of dpars to including in model building
@@ -65,6 +66,7 @@ get_formula_jags = function(ST, rhs_table, par_x, family) {
 #'
 #' @aliases get_formula_jags_dpar
 #' @keywords internal
+#' @noRd
 #' @inheritParams mcp
 #' @param ST Tibble. Returned by `get_segment_table`.
 #' @param dpar_table A rhs_table with only one (dpar, order) combo
@@ -121,6 +123,7 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x) {
 #'
 #' @aliases get_formula_r
 #' @keywords internal
+#' @noRd
 #' @param formula_jags Character, often residing in `fit$.internal$formula_jags`.
 #' @param rhs_table Output of `get_rhs_table()`
 #' @param pars The list that ends up in `fit$pars`
@@ -179,6 +182,7 @@ get_formula_r = function(formula_jags, rhs_table, pars) {
 #'
 #' @aliases get_ar_jagscode
 #' @keywords internal
+#' @noRd
 #' @param ar_order Positive integer
 #' @param x_name Character. Name of some vector that has the length of the dataset.
 #' @return Character JAGS code

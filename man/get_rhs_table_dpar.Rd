@@ -3,7 +3,6 @@
 \encoding{UTF-8}
 \name{get_rhs_table_dpar}
 \alias{get_rhs_table_dpar}
-\alias{get_rhs_table_segment}
 \alias{get_rhs_table}
 \title{Get parameter table for a particular RHS dpar}
 \usage{
@@ -14,15 +13,6 @@ get_rhs_table_dpar(
   dpar,
   par_x,
   order = NULL,
-  check_rank = TRUE
-)
-
-get_rhs_table_segment(
-  form_rhs,
-  segment,
-  family,
-  data,
-  par_x,
   check_rank = TRUE
 )
 
@@ -43,10 +33,6 @@ get_rhs_table(model, data, family, par_x, check_rank = TRUE)
 
 \item{check_rank}{Boolean. Whether to stop on rank deficiency.}
 
-\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}
-with a supported link function, e.g., \code{gaussian(link = "log")}.
-Custom families can also be provided, e.g., \code{mcpfamily(gaussian(link = "log"))}.}
-
 \item{model}{A list of formulas - one for each segment. The first formula
 has the format \code{response ~ predictors} while the following formulas
 have the format \code{response ~ changepoint ~ predictors}. The response
@@ -61,6 +47,10 @@ following can be modeled:
 \item \emph{Autoregression:} e.g., \code{~ar(1)} for a simple onset/change in AR(1) or
 \verb{ar(2, 0 + x}) for an AR(2) increasing by \code{x}. \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
 }}
+
+\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}
+with a supported link function, e.g., \code{gaussian(link = "log")}.
+Custom families can also be provided, e.g., \code{mcpfamily(gaussian(link = "log"))}.}
 
 \item{form}{The RHS formula for a particular dpar of a segment.}
 }
@@ -83,8 +73,6 @@ This function extracts an \code{par_x}-less design matrix.
 }
 \section{Functions}{
 \itemize{
-\item \code{get_rhs_table_segment}: Apply \code{get_rhs_table_dpar} to each formula in a segment
-
 \item \code{get_rhs_table}: Apply \code{get_rhs_table_segment} to all segments of a model.
 }}
 

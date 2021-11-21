@@ -6,6 +6,7 @@
 #'
 #' @aliases get_jags_code
 #' @keywords internal
+#' @noRd
 #' @inheritParams mcp
 #' @param formula_jags String. The formula string returned by `get_formula_jags()`.
 #' @param ST Segment table. Returned by `get_segment_table()`.
@@ -161,6 +162,7 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, family, sample, par_
 #'
 #' @aliases get_prior_str
 #' @keywords internal
+#' @noRd
 #' @inheritParams mcp
 #' @param i The index in `prior` to get code for
 #' @param varying_group String or NULL. Null indicates a population-

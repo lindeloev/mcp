@@ -8,6 +8,7 @@
 #'
 #' @aliases run_jags
 #' @keywords internal
+#' @noRd
 #' @inheritParams mcp
 #' @inheritParams rjags::jags.model
 #' @inheritParams rjags::coda.samples
@@ -127,6 +128,7 @@ run_jags = function(data,
 #'
 #' @aliases get_jags_data
 #' @keywords internal
+#' @noRd
 #' @inheritParams run_jags
 #' @param data A tibble
 #' @param ST A segment table (tibble), returned by `get_segment_table`.
@@ -196,6 +198,7 @@ get_jags_data = function(data, family, ST, rhs_table, jags_code, sample) {
 #'
 #' @aliases recover_levels
 #' @keywords internal
+#' @noRd
 #' @param samples An mcmc.list with varying columns starting in `mcmc_col`.
 #' @param data A tibble or data.frame
 recover_levels = function(samples, data, ST) {

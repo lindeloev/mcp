@@ -38,6 +38,7 @@ NULL
 #'
 #' @aliases get_summary get_summary.mcpfit
 #' @keywords internal
+#' @noRd
 #' @inheritParams summary.mcpfit
 #' @param fit An \code{\link{mcpfit}}` object.
 #' @param varying Boolean. Get results for varying (TRUE) or population (FALSE)?
@@ -302,6 +303,7 @@ is.mcpfit = function(x) {
 #'
 #' @aliases is_arma
 #' @keywords internal
+#' @noRd
 #' @inheritParams mcp
 #' @return TRUE or FALSE
 is_arma = function(fit) {
@@ -385,6 +387,7 @@ nchains = function(fit, ...) UseMethod("nchains")
 #'
 #' @aliases unpack_varying unpack_varying.mcpfit
 #' @keywords internal
+#' @noRd
 #' @param pars `NULL`/`FALSE` for nothing. `TRUE` for all. A vector of varying parameter names for specifics.
 #' @param cols `NULL`/`FALSE` for nothing. `TRUE` for all. A vector of varying column names for specifics. Usually provided via "facet_by" argument in other functions.
 #' @return A list. See details.
@@ -959,6 +962,7 @@ residuals.mcpfit = function(
 #'
 #' @aliases tidy_to_matrix
 #' @keywords internal
+#' @noRd
 #' @param samples Samples in tidy format
 #' @param returnvar An `rlang::sym()` object.
 #' @return An  `N_draws` X `nrows(newdata)` matrix.
@@ -978,6 +982,7 @@ tidy_to_matrix = function(samples, returnvar) {
 #'
 #' @aliases with_loo
 #' @keywords internal
+#' @noRd
 #' @param fit An mcpfit object
 #' @param save_psis Logical. See documentation of loo::loo
 #' @param info Optional message if adding loo

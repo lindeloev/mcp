@@ -2,6 +2,7 @@
 #'
 #' @aliases get_par_x
 #' @keywords internal
+#' @noRd
 #' @inheritParams mcp
 #' @return The column name of par_x.
 #' @encoding UTF-8
@@ -211,6 +212,7 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
 #'
 #' @aliases extract_expr
 #' @keywords internal
+#' @noRd
 #' @param expr The expression to search for, e.g., "x" or "sin(x)". This is the needle.
 #' @param pars This is the haystack.
 #' @param par_x The parameter to substitute for x, e.g., "myvar".
@@ -229,6 +231,7 @@ extract_expr = function(expr, pars, par_x) {
 #'
 #' @aliases term_contains
 #' @keywords internal
+#' @noRd
 #' @param par_x The parameter to search for (character).
 #' @param terms A character vector of terms.
 #' @return A logical vector of length `terms`
@@ -242,6 +245,7 @@ term_contains = function(par_x, terms) {
 
 #' @aliases get_rhs_table_segment
 #' @keywords internal
+#' @noRd
 #' @describeIn get_rhs_table_dpar Apply `get_rhs_table_dpar` to each formula in a segment
 get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_rank = TRUE) {
   assert_types(form_rhs, "formula", len = c(1, 3))
@@ -330,6 +334,7 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
 #'
 #' @aliases get_term_content
 #' @keywords internal
+#' @noRd
 #' @param term E.g., "mu(1 + x)", "sigma(0 + I(x^2))", etc.
 #' @return char formula with the content inside the brackets.
 #' @encoding UTF-8
@@ -362,6 +367,7 @@ get_term_content = function(term) {
 #'
 #' @aliases unpack_arma
 #' @keywords internal
+#' @noRd
 #' @param form_str_in A character. These are allowed: "ar(number)" or "ar(number, formula)"
 #' @return A list with `$order` and `$form_str` (e.g., "ar(formula)"). The formula is ar(1) if no formula is given
 #' @encoding UTF-8

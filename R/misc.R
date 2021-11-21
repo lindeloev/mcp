@@ -75,6 +75,7 @@ get_cp_pars = function(pars) {
 #'
 #' @aliases remove_terms
 #' @keywords internal
+#' @noRd
 #' @param form A formula
 #' @param remove Either "varying" or "population". These are removed.
 #' @return A formula
@@ -114,6 +115,7 @@ remove_terms = function(form, remove) {
 #' Takes any formula-like input and returns a formula
 #' @aliases to_formula
 #' @keywords internal
+#' @noRd
 #' @param form Formula or character (with or without initial tilde/"~")
 #' @return A formula
 #' @encoding UTF-8
@@ -138,6 +140,7 @@ to_formula = function(form) {
 #'
 #' @aliases collapse_quote
 #' @keywords internal
+#' @noRd
 #' @param x A character vector
 #' @return Character
 #' @encoding UTF-8
@@ -155,6 +158,7 @@ and_collapse = function(x) {
 #'
 #' @aliases formula_to_char
 #' @keywords internal
+#' @noRd
 #' @param form Any valid formula with any number of tildes.
 #' @return A character.
 #' @encoding UTF-8
@@ -176,6 +180,7 @@ formula_to_char = function(form) {
 #'
 #' @aliases get_rhs
 #' @keywords internal
+#' @noRd
 #' @param form Formula, e.g. `~x`, `y ~ x` or `y ~ z ~ x`
 #' @return A formula
 #' @encoding UTF-8
@@ -194,6 +199,7 @@ get_rhs = function(form) {
 #'
 #' @aliases get_rhs_vars
 #' @keywords internal
+#' @noRd
 #' @inheritParams mcp
 #' @return Character vector with unique term names
 #' @encoding UTF-8
@@ -212,6 +218,7 @@ get_rhs_vars = function(model) {
 #'
 #' @aliases get_model_vars
 #' @keywords internal
+#' @noRd
 #' @inheritParams mcp
 #' @return Character vector with unique term names
 #' @encoding UTF-8
@@ -231,6 +238,7 @@ get_model_vars = function(model) {
 #' cbinds rhs_table$matrix_data
 #' @aliases get_rhs_matrix
 #' @keywords internal
+#' @noRd
 #' @param rhs_table The output of `get_rhs_table()`
 #' @return matrix with one column for each row in `rhs_table`
 #' @encoding UTF-8
@@ -254,6 +262,7 @@ get_rhs_matrix = function(rhs_table) {
 #'
 #' @aliases get_quantiles
 #' @keywords internal
+#' @noRd
 #' @inheritParams plot.mcpfit
 #' @param samples A tidybayes tibble
 #' @param quantiles Vector of quantiles (0.0 to 1.0)
