@@ -63,7 +63,7 @@ residuals(demo_fit, summary = FALSE)  # Samples instead of summary.
 }
 }
 \seealso{
-\code{\link{pp_eval}} \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}}
+\code{\link{pp_eval}} \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}} \code{\link{log_lik.mcpfit}}
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

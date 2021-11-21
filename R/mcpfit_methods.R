@@ -744,7 +744,7 @@ pp_eval = function(
 #' @aliases predict predict.mcpfit
 #' @inheritParams pp_eval
 #' @inherit pp_eval return
-#' @seealso \code{\link{pp_eval}} \code{\link{fitted.mcpfit}} \code{\link{residuals.mcpfit}}
+#' @seealso \code{\link{pp_eval}} \code{\link{fitted.mcpfit}} \code{\link{residuals.mcpfit}} \code{\link{log_lik.mcpfit}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
@@ -796,7 +796,7 @@ predict.mcpfit = function(
 #' @aliases fitted fitted.mcpfit
 #' @inheritParams pp_eval
 #' @inherit pp_eval return
-#' @seealso \code{\link{pp_eval}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}}
+#' @seealso \code{\link{pp_eval}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}} \code{\link{log_lik.mcpfit}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
@@ -843,6 +843,68 @@ fitted.mcpfit = function(
 }
 
 
+#' @export
+log_lik = function(object, ...) UseMethod("log_lik")
+
+#' @export
+#' @describeIn log_lik.mcpfit Alias for built-in method
+logLik.mcpfit <- function(object, ...) {
+  cl <- match.call()
+  cl[[1]] <- quote(log_lik)
+  eval(cl, parent.frame())
+}
+
+#' Pointwise Log-Likelihood
+#'
+#' @aliases log_lik log_lik.mcpfit
+#' @inheritParams pp_eval
+#' @inherit pp_eval return
+#' @seealso \code{\link{pp_eval}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}} \code{\link{fitted.mcpfit}}
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @export
+#' @examples
+#' \donttest{
+#' log_lik(demo_fit)
+#' log_lik(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
+#' log_lik(demo_fit, summary = FALSE)  # Samples instead of summary.
+#' log_lik(demo_fit,
+#'        newdata = data.frame(time = c(-5, 20, 300)),  # New data
+#'        probs = c(0.025, 0.5, 0.975))
+#'}
+log_lik.mcpfit = function(
+  object,
+  newdata = NULL,
+  summary = TRUE,
+  probs = TRUE,
+  rate = TRUE,
+  prior = FALSE,
+  which_y = "mu",
+  varying = TRUE,
+  arma = TRUE,
+  nsamples = NULL,
+  samples_format = "tidy",
+  ...
+) {
+  assert_ellipsis(...)
+  pp_eval(
+    object,
+    newdata = newdata,
+    summary = summary,
+    type = "loglik",
+    probs = probs,
+    rate = rate,
+    prior = prior,
+    which_y = which_y,
+    varying = varying,
+    arma = arma,
+    nsamples = nsamples,
+    samples_format = samples_format,
+    scale = "response"
+  )
+}
+
+
 #' Summary or Draws from the Residual Distribution
 #'
 #' Equivalent to  `fitted(fit, ...) - fit$data[, fit$data$yvar]` (or `fitted(fit, ...) - newdata[, fit$data$yvar]`),
@@ -850,7 +912,7 @@ fitted.mcpfit = function(
 #'
 #' @aliases residuals residuals.mcpfit resid resid.mcpfit
 #' @inheritParams pp_eval
-#' @seealso \code{\link{pp_eval}} \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}}
+#' @seealso \code{\link{pp_eval}} \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}} \code{\link{log_lik.mcpfit}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export

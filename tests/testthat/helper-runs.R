@@ -222,15 +222,15 @@ test_hypothesis = function(fit) {
 }
 
 
-test_pp_eval_func = function(fit, func) {
+test_pp_eval_func = function(fit, func, colname) {
   # Settings
   expected_colnames = c(
     fit$pars$x,
     fit$pars$trials,
     na.omit(unique(fit$.internal$ST$cp_group_col)),  # varying effects
-    as.character(substitute(func)), "error", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
+    colname, "error", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
   )
-  if (length(fit$pars$arma) > 0 || as.character(substitute(func)) == "residuals")
+  if (length(fit$pars$arma) > 0 || colname %in% c("loglik", "residuals"))
     expected_colnames = c(expected_colnames, fit$pars$y)
 
   # Run and test
@@ -250,9 +250,10 @@ test_pp_eval_func = function(fit, func) {
 
 test_pp_eval = function(fit) {
   # Test pp_eval
-  test_pp_eval_func(fit, fitted)
-  test_pp_eval_func(fit, predict)
-  test_pp_eval_func(fit, residuals)
+  test_pp_eval_func(fit, fitted, "fitted")
+  test_pp_eval_func(fit, predict, "predict")
+  test_pp_eval_func(fit, residuals, "residuals")
+  test_pp_eval_func(fit, log_lik, "loglik")
 
   # Test the other arguments. Inside "try" without further checking because such errors should be caught by the above.
   result_more = try(fitted(
