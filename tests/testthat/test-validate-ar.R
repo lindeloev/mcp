@@ -1,8 +1,4 @@
-
-################
-# AR INFERENCE #
-################
-# AR
+# Fit a simple AR model on simulated data
 model = list(
   y ~ 1 + ar(2) + group
 )
@@ -14,30 +10,33 @@ df = data.frame(
   group = rep(c("A", "B"), 150)
 )
 
-fit_arima = arima(df$y, order = c(2,0,0))
 fit_mcp = mcp(model, df, par_x = "x", adapt = 100, iter = 1000, chains = 2)
 
-# Parameter estimates
-params_arima = as.numeric(fit_arima$coef)
-params_mcp = fixef(fit_mcp)$mean[c(1,2, 4)]
-testthat::expect_equal(params_arima, params_mcp, tolerance = 0.03)
 
-# Log-likelihood
-fit_mcp = add_loglik(fit_mcp)
-loglik_mcp = mean(rowSums(fit_mcp$loglik))
-loglik_arima = as.numeric(logLik(fit_arima))
-expect_equal(loglik_arima, loglik_mcp, tolerance = 0.05)
+# Test stuff
+test_that("AR inference against arima()", {
+  fit_arima = arima(df$y, order = c(2,0,0))
+
+  # Parameter estimates
+  params_arima = as.numeric(fit_arima$coef)
+  params_mcp = fixef(fit_mcp)$mean[c(2, 3, 1)]
+  testthat::expect_equal(params_arima, params_mcp, tolerance = 0.03)
+
+  # Log-likelihood
+  fit_mcp = add_loglik(fit_mcp)
+  loglik_mcp = mean(rowSums(fit_mcp$loglik))
+  loglik_arima = as.numeric(logLik(fit_arima))
+  expect_equal(loglik_arima, loglik_mcp, tolerance = 0.05)
+})
 
 
-#################
-# AR SIMULATION #
-#################
+test_that("AR simulation against arima.sim()", {
+  newdata = tidyr::expand_grid(df, rep = 1:100)  # should work with y in data too
+  y_simulated = fit_mcp$simulate(
+    fit_mcp, newdata,
+    Intercept_1 = 9, sigma_1 = 2, ar1_1 = 0.7, ar2_1 = -0.3, groupB_1 = 0
+  )
+  y_arima = arima(y_simulated, order = c(2, 0, 0))
 
-newdata = tidyr::expand_grid(df, rep = 1:100)  # should work with y in data too
-y_simulated = fit_mcp$simulate(
-  fit_mcp, newdata,
-  Intercept_1 = 9, sigma_1 = 2, ar1_1 = 0.7, ar2_1 = -0.3, groupB_1 = 0
-)
-y_arima = arima(y_simulated, order = c(2, 0, 0))
-
-expect_equal(as.numeric(y_arima$coef), c(0.7, -0.3, 9), tolerance = 0.01)
+  expect_equal(as.numeric(y_arima$coef), c(0.7, -0.3, 9), tolerance = 0.01)
+})
