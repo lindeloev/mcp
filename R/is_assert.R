@@ -191,3 +191,17 @@ assert_data_cols = function(data, cols, fail_funcs = c()) {
 
   TRUE
 }
+
+
+# Asserts whether `rel` is in a model
+assert_rel = function(model) {
+  has_rel = model %>%
+    sapply(formula_to_char) %>%
+    stringr::str_detect("rel\\(") %>%
+    any()
+
+  if (has_rel)
+    stop("rel() for model terms was deprecated in mcp 0.4.0. Relative parameter estimates can be computed by subtracting posterior samples. There is no replacement wrt setting priors.")
+
+  TRUE
+}

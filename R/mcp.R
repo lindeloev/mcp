@@ -177,6 +177,7 @@ mcp = function(model,
   ################
   # Check model
   assert_types(model, "mcpmodel")
+  assert_rel(model)
 
   # Check data and data-model correspondence
   assert_types(data, "data.frame", "tibble")
