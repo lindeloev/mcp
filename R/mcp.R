@@ -99,7 +99,6 @@
 #'       function. So you will see SDs in `fit$prior` but precision ($1/SD^2)
 #'       in `fit$jags_code`
 #' @return An \code{\link{mcpfit}} object.
-#' @seealso \code{\link{get_segment_table}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export

@@ -85,7 +85,6 @@ get_sim_pars = function(rhs_table, pars) {
 
 #' Evaluate model and return a list of dpars
 #'
-#' @details
 #' This is currently hard-coded to be run from `simulate_vectorized`.
 #' It serves to scope the evaluation of the model to prevent name conflicts.
 #'

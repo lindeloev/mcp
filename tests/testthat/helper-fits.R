@@ -50,8 +50,9 @@ apply_test_fit = function(desc, all_models) {
 
 
 #' Test whether posteriors matches simulated values
-#' @details
-#' Tests effecitve N and
+#'
+#' Tests recovery of simulation parameters.
+#' Tests effecitve N.
 #'
 #' @aliases test_matches_simulated
 #' @keywords internal

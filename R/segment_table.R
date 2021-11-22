@@ -253,7 +253,6 @@ unpack_cp = function(form_cp, i) {
 #'
 #' @aliases get_segment_table
 #' @keywords internal
-#' @noRd
 #' @inheritParams mcp
 #' @return A tibble with one row describing each segment and the corresponding code.
 #' @encoding UTF-8
@@ -265,7 +264,6 @@ unpack_cp = function(form_cp, i) {
 #'   1 + (1|id) ~ 1
 #' )
 #' get_segment_table(model, par_x = "x")
-
 get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
   assert_types(par_x, "character", len = 1)
 

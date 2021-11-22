@@ -350,35 +350,35 @@ mcmclist_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
 #'
 #' Index variables, iterations, chains, and draws.
 #'
-#' @param fit An \code{mcpfit} object or another \R object for which
-#' the methods are defined.
-#' @param ... Arguments passed to individual methods (if applicable).
-#'
+#' @inheritParams fitted.mcpfit
 #' @name draws-index-mcp
+#' @examples
+#' niterations(demo_fit)
+#' nchains(demo_fit, prior = TRUE)
 NULL
 
 
 #' @aliases niterations niterations.mcpfit
 #' @describeIn draws-index-mcp Total number of iterations of an `mcpfit` object.
 #' @export
-niterations.mcpfit = function(fit, prior = FALSE) {
-  samples = mcmclist_samples(fit, prior = prior, error = FALSE)
+niterations.mcpfit = function(object, prior = FALSE, ...) {
+  samples = mcmclist_samples(object, prior = prior, error = FALSE)
   sum(sapply(samples, nrow))
 }
 
 #' @aliases nchains nchains.mcpfit
 #' @describeIn draws-index-mcp Number of chains of an `mcpfit` object.
 #' @export
-nchains.mcpfit = function(fit, prior = FALSE) {
-  samples = mcmclist_samples(fit, prior = prior, error = FALSE)
+nchains.mcpfit = function(object, prior = FALSE, ...) {
+  samples = mcmclist_samples(object, prior = prior, error = FALSE)
   length(samples)
 }
 
 #' @export
-niterations = function(fit, ...) UseMethod("niterations")
+niterations = function(object, ...) UseMethod("niterations")
 
 #' @export
-nchains = function(fit, ...) UseMethod("nchains")
+nchains = function(object, ...) UseMethod("nchains")
 
 
 #' Get relevant info about varying parameters
@@ -569,8 +569,8 @@ tidy_samples = function(
 #'   - `"predict"`: return predicted values, using random dispersion around the central tendency
 #'     (e.g., `y_predict = rnorm(N, y_fitted, sigma_fitted)` for `family = gaussian()`).
 #'     See also `predict()`.
-#'   - `"residuals"`: same as "predict" but the observed y-values are subtracted. See also `residuals()`
-#'   - `"loglik"`: return the log-likelihood for each sample for each data point.
+#'   - `"residuals"`: same as "predict" but the observed y-values are subtracted. See also `residuals()`.
+#'   - `"loglik"`: return the log-likelihood for each sample for each data point. See also `log_lik()`.
 #'     Requires `scale = "response"`.
 #' @param probs Vector of quantiles. Only in effect when `summary == TRUE`.
 #' @param rate Boolean. For binomial models, plot on raw data (`rate = FALSE`) or
@@ -742,26 +742,46 @@ pp_eval = function(
 }
 
 
-#' Summary or Draws from the Predictive Distribution
+
+#' Fitted and predicted values of `mcp` models fits
 #'
-#' @aliases predict predict.mcpfit
+#' Evaluate the model on data, either summarised (per data-row) or per draw. You
+#' can use draws from the prior (`prior = TRUE`), select the parameter to predict
+#' from (``)
+#'
+#' @details
+#' `residuals(fit)` is equivalent to  `fitted(fit, ...) - fit$data[, fit$data$yvar]` (or `fitted(fit, ...) - newdata[, fit$data$yvar]`),
+#' but with fixed arguments for `fitted`: `rate = FALSE, which_y = 'mu', samples_format = 'tidy'`.
+#'
 #' @inheritParams pp_eval
 #' @inherit pp_eval return
-#' @seealso \code{\link{pp_eval}} \code{\link{fitted.mcpfit}} \code{\link{residuals.mcpfit}} \code{\link{log_lik.mcpfit}}
+#' @seealso \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}} \code{\link{log_lik.mcpfit}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @export
 #' @examples
-#' predict(demo_fit)  # Evaluate at each demo_fit$data
+#' predict(demo_fit)  # Pointwise posterior predictive
+#' fitted(demo_fit)  # Expected value at each demo_fit$data at response-level
+#' residuals(demo_fit)  # Residuals at each demo_fit$data at response-level
+#' log_lik(demo_fit)  # Log-likelihood at each demo_fit$data
+#'
+#' # All of the above take a range of arguments. E.g.,:
 #' \donttest{
 #' predict(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
-#' predict(demo_fit, summary = FALSE)  # Samples instead of summary.
-#' predict(
-#'   demo_fit,
-#'   newdata = data.frame(time = c(-5, 20, 300)),  # Evaluate
-#'   probs = c(0.025, 0.5, 0.975)
-#' )
+#' predict(demo_fit, prior = TRUE)  # Prior predictive
+#' fitted(demo_fit, summary = FALSE)  # Samples instead of summary. Useful for plotting distributions.
+#' fitted(demo_fit, which_y = "sigma")  # Another model parameter
+#'
+#' # Evaluate at novel data
+#' novel_data = data.frame(time = c(-5, 20, 300))  # Only predictors are needed
+#' predict(demo_fit, newdata = novel_data, probs = c(0.025, 0.5, 0.975))
 #'}
+#' @name execute-mcp-model
+NULL
+
+
+#' @aliases predict predict.mcpfit
+#' @describeIn execute-mcp-model Predictive Distribution
+#' @export
 predict.mcpfit = function(
   object,
   newdata = NULL,
@@ -794,24 +814,9 @@ predict.mcpfit = function(
 }
 
 
-#' Summary or Draws from the Expected Distribution
-#'
 #' @aliases fitted fitted.mcpfit
-#' @inheritParams pp_eval
-#' @inherit pp_eval return
-#' @seealso \code{\link{pp_eval}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}} \code{\link{log_lik.mcpfit}}
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @describeIn execute-mcp-model Expected distribution
 #' @export
-#' @examples
-#' \donttest{
-#' fitted(demo_fit)
-#' fitted(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
-#' fitted(demo_fit, summary = FALSE)  # Samples instead of summary.
-#' fitted(demo_fit,
-#'        newdata = data.frame(time = c(-5, 20, 300)),  # New data
-#'        probs = c(0.025, 0.5, 0.975))
-#'}
 fitted.mcpfit = function(
   object,
   newdata = NULL,
@@ -849,32 +854,19 @@ fitted.mcpfit = function(
 #' @export
 log_lik = function(object, ...) UseMethod("log_lik")
 
+#' @aliases logLik.mcpfit
+#' @describeIn execute-mcp-model Alias for built-in method
 #' @export
-#' @describeIn log_lik.mcpfit Alias for built-in method
 logLik.mcpfit <- function(object, ...) {
   cl <- match.call()
   cl[[1]] <- quote(log_lik)
   eval(cl, parent.frame())
 }
 
-#' Pointwise Log-Likelihood
-#'
+
 #' @aliases log_lik log_lik.mcpfit
-#' @inheritParams pp_eval
-#' @inherit pp_eval return
-#' @seealso \code{\link{pp_eval}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}} \code{\link{fitted.mcpfit}}
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @describeIn execute-mcp-model Pointwise log-likelihood
 #' @export
-#' @examples
-#' \donttest{
-#' log_lik(demo_fit)
-#' log_lik(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
-#' log_lik(demo_fit, summary = FALSE)  # Samples instead of summary.
-#' log_lik(demo_fit,
-#'        newdata = data.frame(time = c(-5, 20, 300)),  # New data
-#'        probs = c(0.025, 0.5, 0.975))
-#'}
 log_lik.mcpfit = function(
   object,
   newdata = NULL,
@@ -908,23 +900,9 @@ log_lik.mcpfit = function(
 }
 
 
-#' Summary or Draws from the Residual Distribution
-#'
-#' Equivalent to  `fitted(fit, ...) - fit$data[, fit$data$yvar]` (or `fitted(fit, ...) - newdata[, fit$data$yvar]`),
-#' but with fixed arguments for `fitted`: `rate = FALSE, which_y = 'mu', samples_format = 'tidy'`.
-#'
-#' @aliases residuals residuals.mcpfit resid resid.mcpfit
-#' @inheritParams pp_eval
-#' @seealso \code{\link{pp_eval}} \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}} \code{\link{log_lik.mcpfit}}
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @aliases residuals residuals.mcpfit
+#' @describeIn execute-mcp-model Residual distribution
 #' @export
-#' @examples
-#' \donttest{
-#' residuals(demo_fit)
-#' residuals(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
-#' residuals(demo_fit, summary = FALSE)  # Samples instead of summary.
-#'}
 residuals.mcpfit = function(
   object,
   newdata = NULL,

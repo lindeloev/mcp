@@ -411,7 +411,7 @@ geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
 #'   parameters and only one plot `type`.
 #' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
 #'
-#'@details
+#' @details
 #'   For other `type`, it calls `bayesplot::mcmc_type()`. Use these
 #'   directly on `fit$mcmc_post` or `fit$mcmc_prior` if you want finer
 #'   control of plotting, e.g., `bayesplot::mcmc_dens(fit$mcmc_post)`. There

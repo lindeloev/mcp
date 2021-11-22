@@ -8,15 +8,16 @@
 \alias{nchains}
 \title{Index \code{mcpfit} objects}
 \usage{
-\method{niterations}{mcpfit}(fit, prior = FALSE)
+\method{niterations}{mcpfit}(object, prior = FALSE, ...)
 
-\method{nchains}{mcpfit}(fit, prior = FALSE)
+\method{nchains}{mcpfit}(object, prior = FALSE, ...)
 }
 \arguments{
-\item{fit}{An \code{mcpfit} object or another \R object for which
-the methods are defined.}
+\item{object}{An \code{mcpfit} object.}
 
-\item{...}{Arguments passed to individual methods (if applicable).}
+\item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
+
+\item{...}{Currently ignored.}
 }
 \description{
 Index variables, iterations, chains, and draws.
@@ -28,3 +29,7 @@ Index variables, iterations, chains, and draws.
 \item \code{nchains.mcpfit}: Number of chains of an \code{mcpfit} object.
 }}
 
+\examples{
+niterations(demo_fit)
+nchains(demo_fit, prior = TRUE)
+}

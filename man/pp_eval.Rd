@@ -36,8 +36,8 @@ the original data is used.}
 \item \code{"predict"}: return predicted values, using random dispersion around the central tendency
 (e.g., \code{y_predict = rnorm(N, y_fitted, sigma_fitted)} for \code{family = gaussian()}).
 See also \code{predict()}.
-\item \code{"residuals"}: same as "predict" but the observed y-values are subtracted. See also \code{residuals()}
-\item \code{"loglik"}: return the log-likelihood for each sample for each data point.
+\item \code{"residuals"}: same as "predict" but the observed y-values are subtracted. See also \code{residuals()}.
+\item \code{"loglik"}: return the log-likelihood for each sample for each data point. See also \code{log_lik()}.
 Requires \code{scale = "response"}.
 }}
 

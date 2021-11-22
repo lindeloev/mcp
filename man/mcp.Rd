@@ -197,9 +197,6 @@ fit3 = mcp(model, data = ex$data, prior = prior)
 demo_fit$jags_code
 }
 }
-\seealso{
-\code{\link{get_segment_table}}
-}
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
 }
