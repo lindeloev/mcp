@@ -187,7 +187,7 @@ get_prior = function(ST, rhs_table, family, prior = list()) {
     }
 
     # Truncate change point prior if supplied by user
-    if (i > 1 && ST$cp_name[i] %in% names(prior)) {
+    if (i > 1 && ST$cp_name[i] %in% names(prior) && is.numeric(prior[[S$cp_name]]) == FALSE) {
       prior[[S$cp_name]] = truncate_prior_cp(ST, i, prior[[S$cp_name]])
     }
   }
