@@ -353,6 +353,9 @@ get_fitsimulate = function(pars) {
   .arma = TRUE,
   .scale = 'response') {
 
+  if (is.numeric(fit))
+    stop('`fit` must be an `mcpfit` object. fit$simulate() had many breaking changes in mcp v0.4, to accomodate multiple regression models.')
+
   result = simulate_atomic(fit, newdata, ", paste0(args_all, " = ", args_all, collapse = ", "), ", .type = .type, .rate = .rate, .which_y = .which_y, .arma = .arma, .scale = .scale)
   return(result)
 }")
