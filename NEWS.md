@@ -2,7 +2,7 @@
 
 ## Major new features
 
--   Supports several continuous predictors, categorical predictors, interactions, etc. for all terms on RHS. E.g., `~ 1 + x + x:group + sigma(1 + group) + ar(2, 0 + z)`. Basically, it now "feels" like `lm()` for each distributional parameter in each segment. All mcp functions support this now, including `plot()`, `fit$simulate()`, `predict(fit, newdata = ...)`, `hypothesis()`, `pp_check()`, etc. Explore `ex = mcp_example("multiple", sample = TRUE)` to see it in action.
+-   Supports several continuous predictors, categorical predictors, interactions, etc. for all terms on RHS. E.g., `~ 1 + x + x:group + sigma(1 + group) + ar(2, 0 + z)`. Basically, it now "feels" like `lm()` for each distributional parameter in each segment. All mcp functions support this now, including `plot()`, `fit$simulate()`, `predict(fit, newdata = ...)`, `hypothesis()`, `pp_check()`, etc. Explore `ex = mcp_example("multiple")` to see it in action.
 
 ## Major breaking changes
 
@@ -16,6 +16,7 @@
 
 -   Changed order of arguments in `plot()` so the most used are first and the new `color_by` has a nice place in the sequence of arguments. From `plot(fit, lines, geom_data, cp_dens, q_fit, q_predict, ...)` to `plot(fit, q_fit, q_predict, facet_by, color_by, lines, geom_data, ...)`
 
+-   `fit = mcp_example("name")` now returns the fit directly instead of a list with a `$fit` entry. It now defaults to sampling the model (`sample = "post"`) and the `sample` argument is now directly passed to `mcp(..., sample = sample)` so `sample = TRUE` is deprecated.
 
 ## Other new features
 
@@ -35,7 +36,6 @@
 
 -   Added `log_lik(fit)` which is analogous to e.g., `fitted(fit)`.
 
-
 ## Minor breaking changes
 
 -   Minor updates to several priors to be more in line with brms.
@@ -50,7 +50,6 @@
 
 -   `fit$data` now only contains the data columns that are used in the model.
 
-
 ## Bug fixes
 
 -   The quantiles for `fitted()` and `predict()` for varying-changepoint models ignored the varying level - they were identical across levels.
@@ -60,7 +59,6 @@
 -   Now works for 200+ characters formulas too.
 
 -   Fixed #131 (`cores = "all"` failed). Thanks for reporting, @m-r-munroe!
-
 
 ## Behind the scenes
 
@@ -76,15 +74,13 @@
 
 -   Many small improvements in efficiency and code simplicity.
 
-
-
 # mcp 0.3.1
 
 This is mostly a bug fix release.
 
 ## New features:
 
--   `ex = mcp_example("demo", with_fit = TRUE)` is the new interface that replaces the `ex_*` datasets in prior versions. This reduces clutter of the namespace/documentation and the size of the package. It also gives the user richer details on the simulation and analyses. For "demo", the `ex_demo` dataset is now `ex$data` and the `ex_fit` is `ex$fit`.
+-   `ex = mcp_example("demo", sample = TRUE)` is the new interface that replaces the `ex_*` datasets in prior versions. This reduces clutter of the namespace/documentation and the size of the package. It also gives the user richer details on the simulation and analyses. For "demo", the `ex_demo` dataset is now `ex$data` and the `ex_fit` is `ex$fit`.
 
 -   Nicer printing of lists and texts all over. E.g., try `print(demo_fit$jags_code)` and `print(demo_fit$pars)`.
 

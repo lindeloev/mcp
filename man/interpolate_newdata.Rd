@@ -38,7 +38,7 @@ applied to all factor-combos.
 \examples{
 \dontrun{
 # Get predictors for a fit
-fit = mcp_example("multiple", sample = TRUE)$fit
+fit = mcp_example("multiple")
 newdata = interpolate_newdata(fit)
 
 # Fit summary

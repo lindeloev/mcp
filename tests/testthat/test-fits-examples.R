@@ -5,6 +5,6 @@ testthat::skip("This time-consuming test is only run locally before release.")
 examples = c("ar", "binomial", "demo", "intercepts", "multiple", "quadratic", "variance", "varying")
 for (example in examples) {
   message("Now running example mcp_example('", example, "')")
-  fit = mcp_example(example, sample = TRUE)$fit
+  fit = mcp_example(example)
   test_matches_simulated(fit)
 }

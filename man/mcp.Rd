@@ -150,8 +150,8 @@ model = list(
 
 # Fit it and sample the prior too.
 # options(mc.cores = 3)  # Uncomment to speed up sampling
-ex = mcp_example("demo")  # Simulated data example
-demo_fit = mcp(model, data = ex$data, sample = "both")
+data = mcp_example_data("demo")  # Simulated data example
+demo_fit = mcp(model, data = data, sample = "both")
 
 # See parameter estimates
 summary(demo_fit)
@@ -171,7 +171,7 @@ predict(demo_fit, newdata = data.frame(time = c(55.545, 80, 132)))
 
 # Compare to a one-intercept-only model (no change points) with default prior
 model_null = list(response ~ 1)
-fit_null = mcp(model_null, data = ex$data, par_x = "time")  # fit another model here
+fit_null = mcp(model_null, data = data, par_x = "time")  # fit another model here
 demo_fit$loo = loo(demo_fit)
 fit_null$loo = loo(fit_null)
 loo::loo_compare(demo_fit$loo, fit_null$loo)
@@ -191,7 +191,7 @@ prior = list(
   Intercept_3 = "Intercept_1"           # Shared intercept between segment 1 and 3
 )
 
-fit3 = mcp(model, data = ex$data, prior = prior)
+fit3 = mcp(model, data = data, prior = prior)
 
 # Show the JAGS model
 demo_fit$jags_code

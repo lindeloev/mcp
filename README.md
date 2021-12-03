@@ -56,8 +56,8 @@ model = list(
 )
 
 # Get example data and fit it
-ex = mcp_example("demo")
-fit = mcp(model, data = ex$data)
+data = mcp_example_data("demo")
+fit = mcp(model, data)
 ```
 
 ## Plot and summary
@@ -206,7 +206,7 @@ model = list(
     y ~ 1,  # plateau (int_1)
     ~ 1     # plateau (int_2)
 )
-ex = mcp_example("intercepts")
+data = mcp_example_data("intercepts")
 fit = mcp(model, ex$data, par_x = "x")
 plot(fit)
 ```
@@ -222,7 +222,7 @@ model = list(
   y ~ 1 + x,          # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope, varying by id
 )
-ex = mcp_example("varying")
+ex = mcp_example_data("varying")
 fit = mcp(model, ex$data)
 plot(fit, facet_by = "id")
 ```
@@ -257,7 +257,7 @@ model = list(
   ~ 0 + x,            # joined changing rate
   ~ 1 + x             # disjoined changing rate
 )
-ex = mcp_example("binomial")
+ex = mcp_example_data("binomial")
 fit = mcp(model, ex$data, family = binomial())
 plot(fit, q_fit = TRUE)
 ```
@@ -276,7 +276,7 @@ model = list(
   price ~ 1 + ar(2),
   ~ 0 + time + ar(1)
 )
-ex = mcp_example("ar")
+ex = mcp_example_data("ar")
 fit = mcp(model, ex$data)
 summary(fit)
 ```
@@ -316,7 +316,7 @@ model = list(
   ~ 0 + sigma(1 + x),
   ~ 0 + x
 )
-ex = mcp_example("variance")
+ex = mcp_example_data("variance")
 fit = mcp(model, ex$data, cores = 3, adapt = 5000, iter = 5000)
 plot(fit, q_predict = TRUE)
 ```
@@ -333,7 +333,7 @@ model = list(
   y ~ 1,
   ~ 0 + x + I(x^2)
 )
-ex = mcp_example("quadratic")
+ex = mcp_example_data("quadratic")
 fit = mcp(model, ex$data)
 plot(fit)
 ```
@@ -351,63 +351,13 @@ model = list(
   y ~ 1 + sin(x),
   ~ 1 + cos(x) + x
 )
-ex = mcp_example("trigonometric")
+ex = mcp_example_data("trigonometric")
 fit = mcp(model, ex$data)
 plot(fit)
 ```
 
 ![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_trig.png)
 
-
-
-
-<!--
-## Using `rel()` and priors
-Read more about [formula options](https://lindeloev.github.io/mcp/articles/formulas.html) and [priors](https://lindeloev.github.io/mcp/articles/priors.html).
-
-Here we find the two change points between three segments. The slope and intercept of segment 2 are parameterized relative to segment 1, i.e., modeling the *change* in intercept and slope since segment 1. So too with the second change point (`cp_2`) which is now the *distance* from `cp_1`. 
-
-Some of the default priors are overwritten. The first intercept (`int_1`) is forced to be 10, the slopes are in segment 1 and 3 is shared. It is easy to see these effects in the (simulated) data because they violate it somewhat. The first change point has to be at `x = 20` or later.
-
-```r
-model = list(
-  y ~ 1 + x,
-  ~ rel(1) + rel(x),
-  rel(1) ~ 0 + x
-)
-
-prior = list(
-  int_1 = 10,  # Constant, not estimated
-  x_3 = "x_1",  # shared slope in segment 1 and 3
-  int_2 = "dnorm(0, 20)",
-  cp_1 = "dunif(20, 50)"  # has to occur in this interval
-)
-ex = mcp_example("rel_prior")
-fit = mcp(model, ex$data, prior, iter = 10000)
-plot(fit)
-```
-
-![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_fix_rel.png)
-
-Comparing the summary to the fitted lines in the plot, we can see that `int_2` and `x_2` are relative values. We also see that the "wrong" priors made it harder to recover the parameters used to simulate this code (see `mcp_example("rel_prior")$simulated` which is represented in the `match` and `sim` columns):
-
-```r
-summary(fit)
-```
-
-```r
-Population-level parameters:
-    name match   sim  mean  lower upper Rhat n.eff
-    cp_1    OK  25.0 23.15  20.00 25.81 1.00   297
-    cp_2        40.0 51.85  47.06 56.36 1.02   428
-   int_1        25.0 10.00  10.00 10.00  NaN     0
-   int_2    OK -10.0 -6.86 -21.57 11.89 1.03   190
- sigma_1         7.0  9.70   8.32 11.18 1.00  7516
-     x_1         1.0  1.58   1.24  1.91 1.07   120
-     x_2    OK  -3.0 -3.28  -3.61 -2.96 1.04   293
-     x_3         0.5  1.58   1.24  1.91 1.07   120
-```
--->
 
 
 

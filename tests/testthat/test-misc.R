@@ -22,7 +22,7 @@ test_that("formula tools", {
 # MCPFIT CLASS-METHODS #
 ########################
 # Test on new fit
-demo_settings = mcp_example("demo")
+demo_settings = mcp_example("demo", sample = FALSE)
 demo_fit2 = mcp(demo_settings$model, demo_settings$data, adapt = 2500, iter = 4000, cores = 3)
 
 test_that("Simple mcpfit methods", {

@@ -6,38 +6,35 @@
 #'  * `"ar"`: One change point in autoregressive residuals.
 #'  * `"binomial"`: Binomial with two change points. Much like `"demo"` on a logit scale.
 #'  * `"intercepts"`: An intercept-only change point.
-#'  * `rel_prior`: Relative parameterization and informative priors.
+#'  * `"multiple"`: Multiple regression with categorical predictors and interactions.
 #'  * `"quadratic"`: A change point to a quadratic segment.
 #'  * `"trigonometric"`: Trigonometric/seasonal data and model.
 #'  * `"varying"`: Varying / hierarchical change points.
 #'  * `"variance"`: A change in variance, including a variance slope.
-#' @param sample TRUE (run `fit = mcp(model, data, ...)`) or FALSE.
-#' @return List with
-#'  * `model`: A list of formulas
-#'  * `data`: The simulated data
-#'  * `simulated`: The parameters used for simulating the data.
-#'  * `fit`: an `mcpfit` if `sample = TRUE`,
-#'  * `call`: the code to run the above.
+#' @inheritParams mcp
+#' @return An `mcpfit`, enriched with a `$call` field. It contains the code to
+#'   reproduce the data and the fit.
 #' @export
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @examples
 #' \donttest{
-#' ex = mcp_example("demo")
-#' plot(ex$data)  # Plot data
-#' print(ex$simulated)  # See true parameters used to simulate
-#' print(ex$call)  # See how the data was simulated
-#'
-#' # Fit the model. Either...
-#' fit = mcp(ex$model, ex$data)
+#' fit = mcp_example("multiple")
 #' plot(fit)
+#' print(fit$call)  # See how the data was simulated
 #'
-#' ex_with_fit = mcp_example("demo", sample = TRUE)
-#' plot(ex_with_fit$fit)
+#' # Without sampling
+#' empty = mcp_example("binomial", sample = FALSE)
+#' print(empty)
+#' print(empty$call)
+#' print(empty$data)
+#' #'
+#' #' # Now sample this model
+#' fit2 = mcp(empty$model, empty$data, family = empty$family)
+#' plot(fit2)
 #'}
-mcp_example = function(name, sample = FALSE) {
+mcp_example = function(name, sample = "post") {
   assert_types(name, "character", len = 1)
-  assert_logical(sample, len = 1)
   data = data.frame()  # To make R CMD Check happy.
 
   examples = list(
@@ -65,8 +62,7 @@ data$price = empty$simulate(empty, data,
 )
 
 # Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data)",
+fit = mcp(model, data, sample = sample)",
 
 
 
@@ -81,7 +77,7 @@ model = list(
 set.seed(42)
 data = data.frame(
   x = 1:100,
-  N = sample(10, 100, replace=TRUE),
+  N = base::sample(10, 100, replace=TRUE),
   y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
 )
 empty = mcp(model, data, family = binomial(), sample = FALSE)
@@ -95,8 +91,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data, family = binomial(), adapt = 5000)
+fit = mcp(model, data, family = binomial(), adapt = 5000, sample = sample)
 ",
 
 
@@ -126,8 +121,7 @@ data$response = empty$simulate(empty, data,
 )
 
 # Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data)",
+fit = mcp(model, data, sample = sample)",
 
 
 
@@ -152,8 +146,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data, par_x = 'x')",
+fit = mcp(model, data, par_x = 'x', sample = sample)",
 
 
 multiple = "# Define model
@@ -195,52 +188,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data, par_x = 'x', cores = 3)",
-
-
-multiple3 = "# Define model
-model = list(
-  y ~ 1 + x:group + z,
-  ~ 1 + x + group,
-  ~ 0 + I(x^2)
-)
-
-# Simulate data
-set.seed(42)
-data = data.frame(
-  x = 1:120,
-  group = rep(c('A', 'B', 'C', 'D'), 30),
-  z = rnorm(120, mean = 1:120, sd = 25),
-  y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
-)
-empty = mcp(model, data, sample = FALSE, par_x = 'x')
-data$y = empty$simulate(empty, data,
-  cp_1 = 61,
-  cp_2 = 100,
-
-  Intercept_1 = 10,
-  z_1 = 0.2,
-  xgroupA_1 = -0.75,
-  xgroupB_1 = -0.25,
-  xgroupC_1 = 0.25,
-  xgroupD_1 = 0.75,
-
-  Intercept_2 = 10,
-  x_2 = -1.2,
-  groupB_2 = 15,
-  groupC_2 = 30,
-  groupD_2 = 45,
-
-  xE2_3 = 0.15,
-
-  sigma_1 = 23
-)
-
-# Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data, par_x = 'x', cores = 3)",
-
+fit = mcp(model, data, par_x = 'x', cores = 3, sample = sample)",
 
 
 quadratic = "# Define model
@@ -265,8 +213,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data)",
+fit = mcp(model, data, sample = sample)",
 
 
 
@@ -293,8 +240,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data)",
+fit = mcp(model, data, sample = sample)",
 
 
 
@@ -324,8 +270,7 @@ data$y = empty$simulate(empty, data,
   )
 
 # Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data, adapt = 3000)",
+fit = mcp(model, data, adapt = 3000, sample = sample)",
 
 
 
@@ -354,33 +299,24 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data, cores = 3)"
-  )
-
-# Run the code
-assert_value(name, allowed = names(examples))
-eval(str2expression(examples[[name]]))
-
-# Get stuff ready for return
-model = fix_model_environment(model)
-
-call = examples[[name]]
-class(call) = c("mcptext", "character")
-class(model) = c("mcplist", "list")
-
-last_col = dplyr::pull(data, -1)  # The response column is always the last column
-simulated = attr(last_col, "simulated")
-
-if (sample == FALSE)
-  fit = NULL
-
-# Return
-list(
-  model = model,  # Bind them to global workspace for nicer display
-  data = data,
-  simulated = simulated,  # response is always the last column
-  fit = fit,
-  call = call
+fit = mcp(model, data, cores = 3, sample = sample)"
 )
+
+# Run the code in an environment
+assert_value(name, allowed = names(examples))
+example_env = new.env()
+with(example_env, eval(str2expression(examples[[name]])))
+
+example_env$fit$call = examples[[name]]
+class(example_env$fit$call) = c("mcptext", "character")
+
+example_env$fit
+}
+
+
+#' @aliases mcp_example_data
+#' @export
+#' @describeIn mcp_example Conveniently get simulated data only.
+mcp_example_data = function(name) {
+  mcp_example(name, sample = FALSE)$data
 }

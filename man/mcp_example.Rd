@@ -3,9 +3,12 @@
 \encoding{UTF-8}
 \name{mcp_example}
 \alias{mcp_example}
+\alias{mcp_example_data}
 \title{Get example models and data}
 \usage{
-mcp_example(name, sample = FALSE)
+mcp_example(name, sample = "post")
+
+mcp_example_data(name)
 }
 \arguments{
 \item{name}{Name of the example. One of:
@@ -14,41 +17,53 @@ mcp_example(name, sample = FALSE)
 \item \code{"ar"}: One change point in autoregressive residuals.
 \item \code{"binomial"}: Binomial with two change points. Much like \code{"demo"} on a logit scale.
 \item \code{"intercepts"}: An intercept-only change point.
-\item \code{rel_prior}: Relative parameterization and informative priors.
+\item \code{"multiple"}: Multiple regression with categorical predictors and interactions.
 \item \code{"quadratic"}: A change point to a quadratic segment.
 \item \code{"trigonometric"}: Trigonometric/seasonal data and model.
 \item \code{"varying"}: Varying / hierarchical change points.
 \item \code{"variance"}: A change in variance, including a variance slope.
 }}
 
-\item{sample}{TRUE (run \code{fit = mcp(model, data, ...)}) or FALSE.}
+\item{sample}{One of
+\itemize{
+\item \code{"post"}: Sample the posterior.
+\item \code{"prior"}: Sample only the prior. Plots, summaries, etc. will
+use the prior. This is useful for prior predictive checks.
+\item \code{"both"}: Sample both prior and posterior. Plots, summaries, etc.
+will default to using the posterior. The prior only has effect when doing
+Savage-Dickey density ratios in \code{\link{hypothesis}}.
+\item \code{"none"} or \code{FALSE}: Do not sample. Returns an mcpfit
+object without sample. This is useful if you only want to check
+prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
+}}
 }
 \value{
-List with
-\itemize{
-\item \code{model}: A list of formulas
-\item \code{data}: The simulated data
-\item \code{simulated}: The parameters used for simulating the data.
-\item \code{fit}: an \code{mcpfit} if \code{sample = TRUE},
-\item \code{call}: the code to run the above.
-}
+An \code{mcpfit}, enriched with a \verb{$call} field. It contains the code to
+reproduce the data and the fit.
 }
 \description{
 Get example models and data
 }
+\section{Functions}{
+\itemize{
+\item \code{mcp_example_data}: Conveniently get simulated data only.
+}}
+
 \examples{
 \donttest{
-ex = mcp_example("demo")
-plot(ex$data)  # Plot data
-print(ex$simulated)  # See true parameters used to simulate
-print(ex$call)  # See how the data was simulated
-
-# Fit the model. Either...
-fit = mcp(ex$model, ex$data)
+fit = mcp_example("multiple")
 plot(fit)
+print(fit$call)  # See how the data was simulated
 
-ex_with_fit = mcp_example("demo", sample = TRUE)
-plot(ex_with_fit$fit)
+# Without sampling
+empty = mcp_example("binomial", sample = FALSE)
+print(empty)
+print(empty$call)
+print(empty$data)
+#'
+#' # Now sample this model
+fit2 = mcp(empty$model, empty$data, family = empty$family)
+plot(fit2)
 }
 }
 \author{

@@ -24,7 +24,7 @@ library(mcp)
 options(mc.cores = 3)  # Speed up sampling
 set.seed(42)  # Make the script deterministic
 
-ex = mcp_example("ar")
+ex = mcp_example("ar", sample = FALSE)
 head(ex$data)
 ```
 
