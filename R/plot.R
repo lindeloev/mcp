@@ -3,10 +3,11 @@
 
 #' Plot full fits
 #'
-#' Plot prior or posterior model draws on top of data. Use `plot_pars` to
-#' plot individual parameter estimates.
+#' Plot prior or posterior model draws on top of data. Use `plot_pars()` to
+#' plot individual parameter estimates and `plot_dpar()` to plot dpars.
 #'
-#' @aliases plot plot.mcpfit
+#' @aliases get_plot
+#' @keywords internal
 #' @inheritParams pp_eval
 #' @param x An \code{\link{mcpfit}} object
 #' @param q_fit Whether to plot quantiles of the posterior (fitted value).
@@ -37,7 +38,6 @@
 #' @return A \pkg{ggplot2} object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @export
 #' @examples
 #' # Typical usage. demo_fit is an mcpfit object.
 #' plot(demo_fit)
@@ -55,7 +55,7 @@
 #' library(ggplot2)
 #' plot(demo_fit) + theme_bw(15) + ggtitle("Great plot!")
 #' }
-plot.mcpfit = function(x,
+get_plot = function(x,
                        q_fit = FALSE,
                        q_predict = FALSE,
                        facet_by = NULL,
@@ -112,11 +112,6 @@ plot.mcpfit = function(x,
   # Is facet_by a random/nested effect?
   assert_types(facet_by, "null", "character")
   assert_types(color_by, "null", "character")
-  # IN PROGRESS HERE
-  # all_group_args = c(facet_by, color_by)
-  # rhs_cat_vars = get_categorical_levels(fit$data)
-  # if (length(all_group_args) > 0) {
-  # }
 
   if (is.character(facet_by)) {
     categorical_cols = names(get_categorical_levels(fit$data))
@@ -287,6 +282,54 @@ plot.mcpfit = function(x,
 
   # Return
   gg
+}
+
+
+#' Plot full fits
+#'
+#' Plot prior or posterior model draws on top of data. Use `plot_pars` to
+#' plot individual parameter estimates.
+#'
+#' @aliases plot plot.mcpfit
+#' @inheritParams get_plot
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @export
+plot.mcpfit = function(x,
+                    q_fit = FALSE,
+                    q_predict = FALSE,
+                    facet_by = NULL,
+                    color_by = NULL,
+                    lines = 25,
+                    geom_data = "point",
+                    cp_dens = TRUE,
+                    rate = TRUE,
+                    prior = FALSE,
+                    arma = TRUE,
+                    nsamples = NULL,
+                    scale = "response",
+                    ...) {
+
+  args = list(...)
+  if ("which_y" %in% names(args))
+    warning("plot(fit, which_y = dpar) was deprecated since mcp v0.4. Use plot_dpar() instead.")
+
+  get_plot(
+    x,
+    q_fit = q_fit,
+    q_predict = q_predict,
+    facet_by = facet_by,
+    color_by = color_by,
+    lines = lines,
+    geom_data = geom_data,
+    cp_dens = cp_dens,
+    rate = rate,
+    prior = prior,
+    arma = arma,
+    nsamples = nsamples,
+    scale = "response",
+    ...
+  )
 }
 
 
