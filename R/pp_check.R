@@ -16,6 +16,7 @@
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
+#' @seealso plot_pars plot_dpar pp_check
 #' @examples
 #' \donttest{
 #' pp_check(demo_fit)

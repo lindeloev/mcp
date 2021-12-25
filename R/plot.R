@@ -1,10 +1,7 @@
 # ABOUT: These are functions directly related to plotting
 # ----------------
 
-#' Plot full fits
-#'
-#' Plot prior or posterior model draws on top of data. Use `plot_pars()` to
-#' plot individual parameter estimates and `plot_dpar()` to plot dpars.
+#' Underlies `plot()` and `plot_dpar()`
 #'
 #' @aliases get_plot
 #' @keywords internal
@@ -28,33 +25,13 @@
 #'   no lines. Note that lines always plot fitted values - not predicted.
 #'   For prediction intervals, see the `q_predict` argument.
 #' @param geom_data String. One of "point", "line" (good for time-series),
-#'   or FALSE (don not plot).
+#'   or FALSE (do not plot).
 #' @param cp_dens TRUE/FALSE. Plot posterior densities of the change point(s)?
 #'   Currently does not respect `facet_by`. This will be added in the future.
 #' @param ... Currently ignored.
-#' @details
-#'   `plot()` uses `fit$simulate()` on posterior samples. These represent the
-#'   (joint) posterior distribution.fit
 #' @return A \pkg{ggplot2} object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @examples
-#' # Typical usage. demo_fit is an mcpfit object.
-#' plot(demo_fit)
-#' \donttest{
-#' plot(demo_fit, prior = TRUE)  # The prior
-#'
-#' plot(demo_fit, lines = 0, q_fit = TRUE)  # 95% HDI without lines
-#' plot(demo_fit, q_predict = c(0.1, 0.9))  # 80% prediction interval
-#' plot(demo_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
-#'
-#' # Show a panel for each varying effect
-#' # plot(fit, facet_by = "my_column")
-#'
-#' # Customize plots using regular ggplot2
-#' library(ggplot2)
-#' plot(demo_fit) + theme_bw(15) + ggtitle("Great plot!")
-#' }
 get_plot = function(x,
                        q_fit = FALSE,
                        q_predict = FALSE,
@@ -287,14 +264,35 @@ get_plot = function(x,
 
 #' Plot full fits
 #'
-#' Plot prior or posterior model draws on top of data. Use `plot_pars` to
-#' plot individual parameter estimates.
+#' Plot prior or posterior model draws on top of data.
 #'
 #' @aliases plot plot.mcpfit
+#' @export
 #' @inheritParams get_plot
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @export
+#' @seealso plot_pars plot_dpar pp_check
+#' @details
+#'   `plot()` uses `fit$simulate()` on posterior samples. These represent the
+#'   (joint) posterior distribution.fit
+#' @return A \pkg{ggplot2} object.
+#' @examples
+#' # Typical usage. demo_fit is an mcpfit object.
+#' plot(demo_fit)
+#' \donttest{
+#' plot(demo_fit, prior = TRUE)  # The prior
+#'
+#' plot(demo_fit, lines = 0, q_fit = TRUE)  # 95% HDI without lines
+#' plot(demo_fit, q_predict = c(0.1, 0.9))  # 80% prediction interval
+#' plot(demo_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
+#'
+#' # Show a panel for each varying effect
+#' # plot(fit, facet_by = "my_column")
+#'
+#' # Customize plots using regular ggplot2
+#' library(ggplot2)
+#' plot(demo_fit) + theme_bw(15) + ggtitle("Great plot!")
+#' }
 plot.mcpfit = function(x,
                     q_fit = FALSE,
                     q_predict = FALSE,
@@ -307,7 +305,6 @@ plot.mcpfit = function(x,
                     prior = FALSE,
                     arma = TRUE,
                     nsamples = NULL,
-                    scale = "response",
                     ...) {
 
   args = list(...)
@@ -330,6 +327,43 @@ plot.mcpfit = function(x,
     scale = "response",
     ...
   )
+}
+
+
+#' @aliases plot_dpar
+#' @describeIn plot.mcpfit Plot distributional parameters
+#' @export
+plot_dpar = function(x,
+                     dpar = "mu",
+                     q_fit = FALSE,
+                     facet_by = NULL,
+                     color_by = NULL,
+                     lines = 25,
+                     cp_dens = TRUE,
+                     prior = FALSE,
+                     arma = TRUE,
+                     nsamples = NULL,
+                     scale = "response",
+                     ...) {
+
+  get_plot(
+    x,
+    dpar,
+    q_fit = q_fit,
+    q_predict = FALSE,
+    facet_by = facet_by,
+    color_by = color_by,
+    lines = lines,
+    geom_data = FALSE,
+    cp_dens = cp_dens,
+    rate = TRUE,
+    prior = prior,
+    arma = arma,
+    nsamples = nsamples,
+    scale = scale,
+    ...
+  )
+
 }
 
 

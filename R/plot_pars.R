@@ -36,6 +36,7 @@
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @return A \pkg{ggplot2} object.
 #' @export
+#' @seealso plot_pars plot_dpar pp_check
 #' @examples
 #' # Typical usage. demo_fit is an mcpfit object.
 #' plot_pars(demo_fit)
