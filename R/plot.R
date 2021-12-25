@@ -533,13 +533,13 @@ plot_pars = function(fit,
 #' This function makes a vector of x-values with large spacing in general,
 #' but finer resolution at change points.
 #'
-#' @aliases get_eval_at
+#' @aliases get_x_values
 #' @keywords internal
 #' @noRd
 #' @inheritParams plot.mcpfit
 #' @param fit An `mcpfit` object.
 #' @return A vector of x-values to evaluate at.
-get_eval_at = function(fit, facet_by = NULL, prior = FALSE) {
+get_x_values = function(fit, facet_by = NULL, prior = FALSE) {
   N_BASIS = 100
   N_CP = 50
   X_RESOLUTION_FACET = 300  # Only varying
@@ -553,8 +553,8 @@ get_eval_at = function(fit, facet_by = NULL, prior = FALSE) {
     # Just give up for faceting and prior-plots (usually very distributed change points)
     # and return a reasonable resolution
   } else if (!is.null(facet_by) || is.null(fit$mcmc_post)) {
-    eval_at = seq(min(xdata), max(xdata), length.out = X_RESOLUTION_FACET)
-    return(eval_at)
+    x_values = seq(min(xdata), max(xdata), length.out = X_RESOLUTION_FACET)
+    return(x_values)
 
     # Make regions of fine resolution within course resolution
   } else {
@@ -565,11 +565,11 @@ get_eval_at = function(fit, facet_by = NULL, prior = FALSE) {
     samples = eval(str2lang(call))
 
     # Compute and return
-    eval_at = sort(c(
+    x_values = sort(c(
       seq(min(xdata), max(xdata), length.out = N_BASIS),  # Default res for whole plot
       unlist(lapply(cp_pars, function(cp_par) unname(stats::quantile(samples[[cp_par]], probs = seq(0, 1, length.out = N_CP)))))  # Higher res at change points
     ))
-    return(eval_at)
+    return(x_values)
   }
 }
 
@@ -592,15 +592,15 @@ add_group = function(df) {
 #' @noRd
 #' @param data fit$data
 #' @param pars fit$pars
-#' @param eval_at par_x values to interpolate continuous predictors at.
+#' @param x_values par_x values to interpolate continuous predictors at.
 #' @return `data.frame` with one column for each continuous predictor.
 #'   `NULL` if there are no continous predictors.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-interpolate_continuous = function(data, pars, eval_at) {
+interpolate_continuous = function(data, pars, x_values) {
   assert_types(data, "data.frame", "tibble")
   assert_types(pars, "list")
-  assert_numeric(eval_at)
+  assert_numeric(x_values)
 
   # Get numeric RHS data columns
   numeric_data = data[, sapply(data, is.numeric), drop = FALSE]
@@ -611,7 +611,7 @@ interpolate_continuous = function(data, pars, eval_at) {
 
   # Return interpolated
   numeric_data %>%
-    lapply(function(col) stats::approx(x = dplyr::pull(data, pars$x), y = col, xout = eval_at)$y) %>%
+    lapply(function(col) stats::approx(x = dplyr::pull(data, pars$x), y = col, xout = x_values)$y) %>%
     as.data.frame()
 }
 
@@ -625,6 +625,7 @@ interpolate_continuous = function(data, pars, eval_at) {
 #' @aliases interpolate_newdata
 #' @inheritParams plot.mcpfit
 #' @param fit An `mcpfit` object.
+#' @param x_values Numeric vector of x-values to interpolate at.
 #' @details
 #' The `par_x` variable will be interpolated with higher resolution around the
 #' change points where the values can change abruptly, but lower resolution in
@@ -662,36 +663,35 @@ interpolate_continuous = function(data, pars, eval_at) {
 #'   geom_line(lwd = 2) +
 #'   geom_point(aes(y = y), data = fit$data)
 #' }
-interpolate_newdata = function(fit, facet_by = NULL) {
+interpolate_newdata = function(fit, facet_by = NULL, x_values = get_x_values(fit, facet_by)) {
 
   # Get unique predictors
   xvar = rlang::sym(fit$pars$x)
-  eval_at = get_eval_at(fit, facet_by)
   categorical_interactions = get_categorical_levels(fit$data) %>% expand.grid()
   has_categorical = nrow(categorical_interactions) > 0 | length(colnames(categorical_interactions) %notin% facet_by) > 0
-  has_continuous = interpolate_continuous(fit$data, fit$pars, eval_at[1]) %>% is.null() %>% `!`
+  has_continuous = interpolate_continuous(fit$data, fit$pars, x_values[1]) %>% is.null() %>% `!`
 
   # Return with levels, if such exist
   if (!has_categorical & !has_continuous) {
-    newdata = tibble::tibble(!!xvar := eval_at)
+    newdata = tibble::tibble(!!xvar := x_values)
   } else  if (has_categorical & !has_continuous) {
     newdata = categorical_interactions %>%
-      tidyr::expand_grid(!!xvar := eval_at)
+      tidyr::expand_grid(!!xvar := x_values)
   } else if (!has_categorical & has_continuous) {
-    newdata = interpolate_continuous(fit$data, fit$pars, eval_at) %>%
-      dplyr::mutate(!!xvar := eval_at)
+    newdata = interpolate_continuous(fit$data, fit$pars, x_values) %>%
+      dplyr::mutate(!!xvar := x_values)
   } else if (has_categorical & has_continuous) {
     # Interpolate continuous predictors within each factorial cell (row in categorical_interactions)
     # and up/down-fill if outside the observed region.
     df_list = list()
     for (i in seq_len(nrow(categorical_interactions))) {
       data_i = dplyr::left_join(categorical_interactions[i, , drop = FALSE], fit$data) %>% suppressMessages()
-      interpolated_i = interpolate_continuous(data_i, fit$pars, eval_at) %>%
+      interpolated_i = interpolate_continuous(data_i, fit$pars, x_values) %>%
         tidyr::fill(dplyr::everything(), .direction = "downup")
 
       df_list[[i]] = categorical_interactions[i, , drop = FALSE] %>%
         tidyr::expand_grid(interpolated_i) %>%
-        dplyr::mutate(!!xvar := eval_at)
+        dplyr::mutate(!!xvar := x_values)
     }
 
     newdata = dplyr::bind_rows(df_list)

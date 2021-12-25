@@ -38,7 +38,7 @@
 
 ## Minor breaking changes
 
--   Minor updates to several priors to be more in line with brms.
+-   Minor updates to several priors to be more in line with brms: use `median(link(y))` instead of `mean(link(y))` and `mad(link(y))` instead of `sd(link(y))` for mu and sigma respectively.
 
 -   The data-property constants MEANY and SDY have been renamed to "MEANLINKY" (`mean(link_func(ydata))`, SDLINKY (`sd(link_func(ydata))`) and will now apply the link function specified in the family.
 
