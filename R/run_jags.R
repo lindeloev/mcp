@@ -156,7 +156,7 @@ get_jags_data = function(data, family, ST, rhs_table, jags_code, sample) {
   # Add e.g. MINX = min(data$x) for all variables where they are used.
   # Searches whether it is in jags_code. If yes, add to jags_data
   # TO DO: there must be a more concise way than this...
-  funcs = c("min", "max", "sd", "mean")
+  funcs = c("min", "max", "sd", "mean", "median", "mad")
 
   # For x
   for (func in funcs) {

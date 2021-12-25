@@ -19,14 +19,14 @@ default_dpar_priors = tibble::tribble(
   ~family, ~link, ~dpar, ~par_type, ~prior,
 
   # Gaussian mu
-  "gaussian", "identity", "mu", "Intercept", "dt(MEANLINKY, SDLINKY, 3)",
-  "gaussian", "identity", "mu", "dummy", "dt(0, SDLINKY, 3)",
-  "gaussian", "identity", "mu", "slope", "dt(0, (N_CP + 1) * SDLINKY / (MAXX - MINX), 3)",
+  "gaussian", "identity", "mu", "Intercept", "dt(MEDIANLINKY, MADLINKY, 3)",
+  "gaussian", "identity", "mu", "dummy", "dt(0, MADLINKY, 3)",
+  "gaussian", "identity", "mu", "slope", "dt(0, (N_CP + 1) * MADLINKY / (MAXX - MINX), 3)",
 
   # Gaussian sigma
-  "gaussian", "identity", "sigma", "Intercept", "dt(0, SDLINKY, 3) T(0, )",  # Will always be <= observed SDLINKY
-  "gaussian", "identity", "sigma", "dummy", "dt(0, SDLINKY, 3)",
-  "gaussian", "identity", "sigma", "slope", "dt(0, (N_CP + 1) * SDLINKY / (MAXX - MINX), 3)",
+  "gaussian", "identity", "sigma", "Intercept", "dt(0, MADLINKY, 3) T(0, )",  # Will always be <= observed MADLINKY
+  "gaussian", "identity", "sigma", "dummy", "dt(0, MADLINKY, 3)",
+  "gaussian", "identity", "sigma", "slope", "dt(0, (N_CP + 1) * MADLINKY / (MAXX - MINX), 3)",
 
   # Binomial
   "binomial", "logit", "mu", "Intercept", "dt(0, 2.5, 3)",  # TO DO: center this on data
@@ -42,9 +42,9 @@ default_dpar_priors = tibble::tribble(
   "poisson", "log", "mu", "dummy", "dt(0, 10, 3)",
   "poisson", "log", "mu", "slope", "dt(0, 10, 3)",
 
-  "poisson", "identity", "mu", "Intercept", "dt(MEANLINKY, MEANLINKY, 3)",
-  "poisson", "identity", "mu", "dummy", "dt(0, MEANLINKY, 3)",
-  "poisson", "identity", "mu", "slope", "dt(0, (N_CP + 1) * MEANLINKY / (MAXX - MINX), 3)",
+  "poisson", "identity", "mu", "Intercept", "dt(MEDIANLINKY, MEDIANLINKY, 3)",
+  "poisson", "identity", "mu", "dummy", "dt(0, MEDIANLINKY, 3)",
+  "poisson", "identity", "mu", "slope", "dt(0, (N_CP + 1) * MEDIANLINKY / (MAXX - MINX), 3)",
 
   # Negbinomial shape
   "negbinomial", "identity", "shape", "Intercept", "dt(0, 10, 3) T(0, )",  # TO DO: center this on data
