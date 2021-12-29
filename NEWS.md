@@ -6,7 +6,7 @@
 
 ## Major breaking changes
 
--   Dropped support for rel(). This was ambiguous for interaction terms and made the code hard to maintain. Another way of achieving the same functionality via the priors may be added in future versions.
+-   Dropped support for `rel()` in formulas. This was ambiguous for interaction terms and made the code hard to maintain. Another way of achieving the same functionality via the priors may be added in future versions.
 
 -   Renamed parameters to be more consistent with brms: `int_i` --> `Intercept_i`; `x_1_E2` --> `xE2_1`; `x_1_sin` --> `sinx_1`, etc.
 
@@ -14,7 +14,11 @@
 
 -   Dropped support for `mcp(..., data = NULL)`. You now must provide some mock-up data to inform `mcp` about the types and levels of the predictor columns. See, e.g., `mcp_example("intercepts")$call` for a simple example or `mcp_example("multiple")$call` for a more involved example. All docs have been updated appropriately.
 
--   Changed order of arguments in `plot()` so the most used are first and the new `color_by` has a nice place in the sequence of arguments. From `plot(fit, lines, geom_data, cp_dens, q_fit, q_predict, ...)` to `plot(fit, q_fit, q_predict, facet_by, color_by, lines, geom_data, ...)`
+-   Changed arguments and their order in `plot()`.
+
+    -   The most used arguments are first and the new `color_by` has a nice place in the sequence of arguments. From `plot(fit, lines, geom_data, cp_dens, q_fit, q_predict, ...)` to `plot(fit, q_fit, q_predict, facet_by, color_by, lines, geom_data, ...)`
+
+    -   Dropped arguments `which_y`, `scale` which only made sense for distributional parameters (dpars) and where several of the other arguments (e.g., `q_predict`) were insensible. Use the new `plot_dpar()` for this.
 
 -   `fit = mcp_example("name")` now returns the fit directly instead of a list with a `$fit` entry. It now defaults to sampling the model (`sample = "post"`) and the `sample` argument is now directly passed to `mcp(..., sample = sample)` so `sample = TRUE` is deprecated.
 
@@ -49,6 +53,8 @@
 -   The term "ct" (for "central tendency") has been replaced with "mu", e.g., in `plot(fit, which_y = "mu")`. These were defaults, so I hope no one will notice the renaming.
 
 -   `fit$data` now only contains the data columns that are used in the model.
+
+-   Removed `which_y` argument from `predict()`.
 
 ## Bug fixes
 

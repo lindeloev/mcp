@@ -205,3 +205,34 @@ assert_rel = function(model) {
 
   TRUE
 }
+
+
+assert_typescale = function(type, scale) {
+  assert_value(type, allowed = c("predict", "fitted", "residuals", "loglik"))
+  assert_value(scale, allowed = c("response", "linear"))
+  if (scale == "linear" & type != "fitted")
+    stop("scale = 'linear' is only allowed when type = 'fitted'.")
+
+  TRUE
+}
+
+
+# Check dpar with helpful errors and substitute NULL
+assert_dpar = function(dpar, fit, type) {
+  if (is.null(dpar))
+    dpar = "epred"
+
+  rhs_table = fit$.internal$rhs_table
+  allowed_dpars = unique(c(
+    paste0(rhs_table$dpar, tidyr::replace_na(rhs_table$order, "")),   # "mu" "ar1" "ar2" "sigma", etc.
+    fit$family$dpars[fit$family$dpars != "ar"],  # any model parameters that have no regerssion terms (~0)
+    "epred"
+  ))
+  assert_types(dpar, "character", len = 1)
+  assert_value(dpar, allowed = allowed_dpars)
+
+  if (type != "fitted" & dpar != "epred")
+    stop("dpar = '", dpar, "' is only allowed when type = 'fitted'.")
+
+  dpar
+}

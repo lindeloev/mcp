@@ -565,9 +565,10 @@ tidy_samples = function(
 #'   the original data is used.
 #' @param summary Summarise at each x-value
 #' @param type One of:
-#'   - `"fitted"`: return fitted values. See also `fitted()`
-#'   - `"predict"`: return predicted values, using random dispersion around the central tendency
-#'     (e.g., `y_predict = rnorm(N, y_fitted, sigma_fitted)` for `family = gaussian()`).
+#'   - `"fitted"`: return expected values. When `dpar` is the name of a dpar
+#'     (e.g., `"mu"` or `"sigma"`), the expected value for just this dpar is returned.
+#'     See also `fitted()`.
+#'   - `"predict"`: return predicted values (e.g., `y_predict = rnorm(N, y_fitted, sigma_fitted)` for `family = gaussian()`).
 #'     See also `predict()`.
 #'   - `"residuals"`: same as "predict" but the observed y-values are subtracted. See also `residuals()`.
 #'   - `"loglik"`: return the log-likelihood for each sample for each data point. See also `log_lik()`.
@@ -577,11 +578,12 @@ tidy_samples = function(
 #'   response divided by number of trials (`rate = TRUE`). If FALSE, linear
 #'   interpolation on trial number is used to infer trials at a particular x.
 #' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
-#' @param which_y What to plot on the y-axis. One of
+#' @param dpar What distributional parameter to evaluate. This is only relevant when `type == "fitted"`. E.g.,
 #'
+#'   * `"epred"` (default): Expected value of the full model (or `NULL` for compatibility with brms etc.).
 #'   * `"mu"`: The central tendency which is often the mean after applying the
 #'     link function.
-#'   * `"sigma"`: The variance
+#'   * `"sigma"`: The standard deviation of the residuals.
 #'   * `"ar1"`, `"ar2"`, etc. depending on which order of the autoregressive
 #'     effects you want to plot.
 #' @param arma Whether to include autoregressive effects.
@@ -593,8 +595,9 @@ tidy_samples = function(
 #' @param samples_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE`.
 #'   See more under "value"
 #' @param scale One of
-#'   * "response": return on the observed scale, i.e., after applying the inverse link function.
-#'   * "linear": return on the parameter scale (where the linear trends are modelled).
+#'   * `"response"`: return on the observed scale, i.e., after applying the inverse link function.
+#'   * `"linear"`: return on the parameter scale (where the linear trends are modelled).
+#'     A linear scale is only applicable when `type == "fitted"` and `dpar` is not `NULL`.
 #' @param ... Currently ignored.
 #' @return
 #'   * If `summary = TRUE`: A `tibble` with the posterior mean for each row in `newdata`,
@@ -625,19 +628,21 @@ pp_eval = function(
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
-  which_y = "mu",
+  dpar = "epred",
   varying = TRUE,
   arma = TRUE,
   nsamples = NULL,
   samples_format = "tidy",
   scale = 'response'
 ) {
-  # Recodings
+  # Recode
   fit = object
   assert_types(fit, "mcpfit")
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)
   returnvar = rlang::sym(type)
+  dpar = assert_dpar(dpar, fit = fit, type = type)
+
   if (is.null(newdata))
     newdata = fit$data %>%
       dplyr::select(-!!fit$pars$weights)
@@ -664,7 +669,7 @@ pp_eval = function(
   # ASSERTS AND RECODING #
   ########################
   assert_logical(summary, len = 1)
-  assert_value(type, allowed = c("fitted", "predict", "residuals", "loglik"))
+  assert_typescale(type, scale)
   assert_types(probs, "logical", "numeric")
   if (is.numeric(probs))
     assert_numeric(probs, lower = 0, upper = 1)
@@ -678,9 +683,6 @@ pp_eval = function(
     assert_integer(nsamples, lower = 1)
   assert_value(samples_format, allowed = c("tidy", "matrix"))
 
-  #if (scale == "linear" && type == "predict")
-  #  stop("`scale = 'linear'` is only meaningful when `type = 'fitted'`.")
-
 
   ########################
   # GET FITS/PREDICTIONS #
@@ -693,13 +695,13 @@ pp_eval = function(
       tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples),
       by = unique(varying_info$cols)
     ) %>%
-      dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!., .type = type_for_simulate, .rate = rate, .which_y = which_y, .arma = arma, .scale = scale)) %>%
+      dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!., .type = type_for_simulate, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale)) %>%
       dplyr::select(-dplyr::starts_with(".pred_"))
   } else {
     # No varying effects: use all samples for each row of data
     samples = tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples) %>%
       tidyr::expand_grid(add_rhs_predictors(newdata, fit)) %>%
-      dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!., .type = type_for_simulate, .rate = rate, .which_y = which_y, .arma = arma, .scale = scale)) %>%
+      dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!., .type = type_for_simulate, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale)) %>%
       dplyr::select(-dplyr::starts_with(".pred_"))
   }
 
@@ -751,7 +753,7 @@ pp_eval = function(
 #'
 #' @details
 #' `residuals(fit)` is equivalent to  `fitted(fit, ...) - fit$data[, fit$data$yvar]` (or `fitted(fit, ...) - newdata[, fit$data$yvar]`),
-#' but with fixed arguments for `fitted`: `rate = FALSE, which_y = 'mu', samples_format = 'tidy'`.
+#' but with fixed arguments for `fitted`: `rate = FALSE, dpar = 'mu', samples_format = 'tidy'`.
 #'
 #' @inheritParams pp_eval
 #' @inherit pp_eval return
@@ -769,7 +771,7 @@ pp_eval = function(
 #' predict(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
 #' predict(demo_fit, prior = TRUE)  # Prior predictive
 #' fitted(demo_fit, summary = FALSE)  # Samples instead of summary. Useful for plotting distributions.
-#' fitted(demo_fit, which_y = "sigma")  # Another model parameter
+#' fitted(demo_fit, dpar = "sigma")  # Another model parameter
 #'
 #' # Evaluate at novel data
 #' novel_data = data.frame(time = c(-5, 20, 300))  # Only predictors are needed
@@ -789,7 +791,6 @@ predict.mcpfit = function(
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
-  which_y = "mu",
   varying = TRUE,
   arma = TRUE,
   nsamples = NULL,
@@ -805,7 +806,7 @@ predict.mcpfit = function(
     probs = probs,
     rate = rate,
     prior = prior,
-    which_y = which_y,
+    dpar = NULL,
     varying = varying,
     arma = arma,
     nsamples = nsamples,
@@ -824,7 +825,7 @@ fitted.mcpfit = function(
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
-  which_y = "mu",
+  dpar = "epred",
   varying = TRUE,
   arma = TRUE,
   nsamples = NULL,
@@ -841,7 +842,7 @@ fitted.mcpfit = function(
     probs = probs,
     rate = rate,
     prior = prior,
-    which_y = which_y,
+    dpar = dpar,
     varying = varying,
     arma = arma,
     nsamples = nsamples,
@@ -874,7 +875,6 @@ log_lik.mcpfit = function(
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
-  which_y = "mu",
   varying = TRUE,
   arma = TRUE,
   nsamples = NULL,
@@ -890,7 +890,7 @@ log_lik.mcpfit = function(
     probs = probs,
     rate = rate,
     prior = prior,
-    which_y = which_y,
+    dpar = NULL,
     varying = varying,
     arma = arma,
     nsamples = nsamples,
@@ -923,7 +923,7 @@ residuals.mcpfit = function(
     probs = probs,
     rate = FALSE,
     prior = prior,
-    which_y = "mu",
+    dpar = NULL,
     varying = varying,
     arma = arma,
     nsamples = nsamples,

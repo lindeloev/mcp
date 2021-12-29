@@ -42,7 +42,7 @@ get_plot = function(x,
                        cp_dens = TRUE,
                        rate = TRUE,
                        prior = FALSE,
-                       which_y = "mu",
+                       dpar = "epred",
                        arma = TRUE,
                        nsamples = NULL,
                        scale = "response",
@@ -64,7 +64,8 @@ get_plot = function(x,
 
   assert_value(geom_data, allowed = c("point", "line", FALSE))
   assert_logical(cp_dens)
-
+  assert_typescale(type = "fitted", scale = scale)
+  dpar = assert_dpar(dpar, fit = fit, type = "fitted")
   # Quantiles
   assert_types(q_fit, "logical", "numeric")
   assert_types(q_predict, "logical", "numeric")
@@ -125,7 +126,7 @@ get_plot = function(x,
       type = type,
       rate = rate,
       prior = prior,
-      which_y = which_y,
+      dpar = dpar,
       varying = varying_pars,
       arma = arma,
       nsamples = nsamples,
@@ -174,13 +175,13 @@ get_plot = function(x,
   ###########
   # PLOT IT #
   ###########
-  # Initiate plot and show raw data (only applicable when which_y == "mu"
+  # Initiate plot and show raw data (only applicable in plot.mcpfit())
   if (use_color) {
     gg = ggplot2::ggplot(fit$data, ggplot2::aes_string(x = fit$pars$x, y = fit$pars$y, color = ".group"))
   } else {
     gg = ggplot2::ggplot(fit$data, ggplot2::aes_string(x = fit$pars$x, y = fit$pars$y, color = NULL))
   }
-  if (which_y == "mu") {
+  if (dpar == "epred") {
     if (geom_data == "point") {
       if (is.null(fit$pars$weights)) {
         gg = gg + ggplot2::geom_point()
@@ -213,7 +214,7 @@ get_plot = function(x,
 
     # The scale of the actual plot (or something close enough)
     # This is faster than limits_y = ggplot2::ggplot_build(gg)$layout$panel_params[[1]]$y.range
-    if (which_y == "mu" && geom_data != FALSE) {
+    if (dpar == "epred" && geom_data != FALSE) {
       limits_y = c(min(fit$data[, fit$pars$y]),
                    max(fit$data[, fit$pars$y]))
     } else if (any(q_predict != FALSE)) {
@@ -243,8 +244,8 @@ get_plot = function(x,
     gg = gg + ggplot2::labs(y = paste0(fit$family$link, "(", fit$pars$y, ")"))
   if (scale == "response" && (fit$family$family == "bernoulli" || (fit$family$family == "binomial" && rate == TRUE)))
     gg = gg + ggplot2::labs(y = paste0("P(", fit$pars$y, " = TRUE)"))
-  if (which_y != "mu")
-    gg = gg + ggplot2::labs(y = which_y)
+  if (dpar != "epred")
+    gg = gg + ggplot2::labs(y = dpar)
 
   # No color if no categorical predictors
   if (use_color == FALSE) {
@@ -284,7 +285,7 @@ get_plot = function(x,
 #'
 #' plot(demo_fit, lines = 0, q_fit = TRUE)  # 95% HDI without lines
 #' plot(demo_fit, q_predict = c(0.1, 0.9))  # 80% prediction interval
-#' plot(demo_fit, which_y = "sigma", lines = 100)  # The variance parameter on y
+#' plot_dpar(demo_fit, dpar = "sigma", lines = 100)  # The variance parameter on y
 #'
 #' # Show a panel for each varying effect
 #' # plot(fit, facet_by = "my_column")
@@ -322,6 +323,7 @@ plot.mcpfit = function(x,
     cp_dens = cp_dens,
     rate = rate,
     prior = prior,
+    dpar = NULL,
     arma = arma,
     nsamples = nsamples,
     scale = "response",
@@ -334,7 +336,7 @@ plot.mcpfit = function(x,
 #' @describeIn plot.mcpfit Plot distributional parameters
 #' @export
 plot_dpar = function(x,
-                     dpar = "mu",
+                     dpar = "epred",
                      q_fit = FALSE,
                      facet_by = NULL,
                      color_by = NULL,
@@ -345,10 +347,8 @@ plot_dpar = function(x,
                      nsamples = NULL,
                      scale = "response",
                      ...) {
-
   get_plot(
     x,
-    dpar,
     q_fit = q_fit,
     q_predict = FALSE,
     facet_by = facet_by,
@@ -358,6 +358,7 @@ plot_dpar = function(x,
     cp_dens = cp_dens,
     rate = TRUE,
     prior = prior,
+    dpar = dpar,
     arma = arma,
     nsamples = nsamples,
     scale = scale,

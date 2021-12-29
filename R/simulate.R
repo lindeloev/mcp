@@ -128,7 +128,7 @@ evaluate_model_dpars = function(fit, args, pred_pars) {
 #' @return Vector with same length as inputs.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .which_y = "mu", .arma = TRUE, .scale = "response") {
+simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar = "epred", .arma = TRUE, .scale = "response") {
   ###########
   # ASSERTS #
   ###########
@@ -147,19 +147,11 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
     stop_github("Missing the following arguments: ", and_collapse(missing_args))
 
   # Other args
-  assert_value(.type, allowed = c("predict", "fitted", "loglik"), len = 1)
+  assert_typescale(.type, .scale)
   assert_logical(.rate, len = 1)
 
-  allowed_which_y = unique(c(
-    paste0(rhs_table$dpar, tidyr::replace_na(rhs_table$order, "")),   # "mu" "ar1" "ar2" "sigma", etc.
-    fit$family$dpars[fit$family$dpars != "ar"]  # any model parameters that have no regerssion terms (~0)
-  ))
-  assert_value(.which_y, allowed = allowed_which_y)
-
+  .dpar = assert_dpar(.dpar, fit = fit, type = .type)
   assert_logical(.arma, len = 1)
-  assert_value(.scale, allowed = c("response", "linear"), len = 1)
-  if (.scale == "linear" && .type != "fitted")
-    stop("Only `type = 'fitted'` is meaningful when `scale = 'linear'`")
 
 
   ##################################################
@@ -173,17 +165,14 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
     dpar_values$.ydata = args[[fit$pars$y]]
   if (.type == "loglik" & has_ydata == FALSE)
     stop(".ydata must be non-NULL for .type = 'loglik'.")
-  .which_y = paste0(.which_y, "_")
-  if (.scale == "response") {
-    dpar_values[[.which_y]] = fit$family$linkinv(dpar_values[[.which_y]])
+  .dpar = paste0(.dpar, "_")
+  if (.scale == "response" & .dpar %in% c("epred_", "mu_")) {
+    dpar_values[["mu_"]] = fit$family$linkinv(dpar_values[["mu_"]])
   }
 
-  # Simply return for fitted non-mu params
-  if (.which_y != "mu_" & .type == "fitted") {
-    return(dpar_values[[.which_y]])
-  } else if (.which_y != "mu_" & .type != "fitted") {
-    stop("`type = 'fitted'` is the only option when `which_y != 'mu'`")
-  }
+  # Simply return for fitted dpars
+  if (.dpar %notin% c("epred_", "mu_") & .type == "fitted")
+    return(dpar_values[[.dpar]])
 
   # Return functions here
   if (fit$family$family == "gaussian") {
@@ -201,8 +190,8 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .whic
     } else if(.type == "loglik") {
       return(stats::dnorm(dpar_values$.ydata, dpar_values$mu_, dpar_values$sigma_, log = TRUE))
     } else if (.type == "predict") {
-      if (any(fit$family$linkinv(dpar_values$sigma_) < 0))
-        stop("Modelled negative sigma. First detected at ", fit$pars$x, " = ", min(get(fit$pars$x)[fit$family$linkinv(dpar_values$sigma_) < 0]))
+      if (any(dpar_values$sigma_ < 0))
+        stop("Modelled negative sigma. First detected at ", fit$pars$x, " = ", min(get(fit$pars$x)[dpar_values$sigma_ < 0]))
 
       # Complex code if ARMA. Simple if not. resid_sigma_ was generated from sigma_ so no need to do an extra rnorm().
       if (is_arma) {
@@ -277,11 +266,12 @@ simulate_atomic = function(fit,
                         ...,
                         .type = "predict",
                         .rate = FALSE,
-                        .which_y = "mu",
+                        .dpar = NULL,
                         .arma = TRUE,
                         .scale = "response") {
 
-  # Check inputs.
+  # Check some inputs.
+  # Remaining values are asserted in simulate_vectorized()
   assert_types(fit, "mcpfit")
   assert_types(newdata, "data.frame", "tibble")
   args = list(...)
@@ -291,7 +281,6 @@ simulate_atomic = function(fit,
   assert_ellipsis(..., allowed = expected_args)
   lapply(args, assert_numeric)
   lapply(args, function(x) stopifnot(length(x) == 1 | length(x) == nrow(newdata)))
-  # Other values are asserted in func_fast
 
   # Remove response column if present - it is to be simulated
   if (fit$pars$y %in% colnames(newdata))
@@ -309,7 +298,7 @@ simulate_atomic = function(fit,
                                !!!.,
                                .type = .type,
                                .rate = .rate,
-                               .which_y = .which_y,
+                               .dpar = .dpar,
                                .arma = .arma,
                                .scale = .scale)
     ) %>%
@@ -349,14 +338,14 @@ get_fitsimulate = function(pars) {
   fitsimulate_code = paste0("function(fit, newdata, ", paste0(c(args_required, args_withdefault), collapse = ", "), ",
   .type = 'predict',
   .rate = FALSE,
-  .which_y = 'mu',
+  .dpar = 'epred',
   .arma = TRUE,
   .scale = 'response') {
 
   if (is.numeric(fit))
     stop('`fit` must be an `mcpfit` object. fit$simulate() had many breaking changes in mcp v0.4, to accomodate multiple regression models.')
 
-  result = simulate_atomic(fit, newdata, ", paste0(args_all, " = ", args_all, collapse = ", "), ", .type = .type, .rate = .rate, .which_y = .which_y, .arma = .arma, .scale = .scale)
+  result = simulate_atomic(fit, newdata, ", paste0(args_all, " = ", args_all, collapse = ", "), ", .type = .type, .rate = .rate, .dpar = .dpar, .arma = .arma, .scale = .scale)
   return(result)
 }")
 

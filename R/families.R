@@ -60,7 +60,7 @@ negbinomial = function(link = "log") {
 #' @export
 mcpfamily = function(x) {
   family = x
-  tmp = x  # Hack: the name "family" causes errors in subset()
+  tmp = x  # Hack: the name "family" causes errors in filter()
   assert_types(family, "family")
 
   # Get default priors for RHS
