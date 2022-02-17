@@ -130,7 +130,7 @@ plot(fit, q_predict = TRUE)
 We can also plot the `sigma_` parameters directly. Now the y-axis is `sigma`:
 
 ```{r}
-plot(fit, which_y = "sigma", q_fit = TRUE)
+plot_dpar(fit, dpar = "sigma", q_fit = TRUE)
 ```
 
 

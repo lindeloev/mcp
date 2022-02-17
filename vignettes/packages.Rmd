@@ -7,7 +7,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-**OBS: I have yet to review these packages: `not`, `breakfast`, `IDetect`, `trendsegmentR`, `mosum`, `ChangepointTesting`, `changepoint.mv`, `changepointsHD`, `changepointsVar`, `InspectChangepoint`, `breakpoint`, `segmentr`, `Segmentor3IsBack`, `trendsegmentR`, `BayesPiecewiseICAR`, `BayesPieceHazSelect`.**
+**OBS: I have yet to review these packages: `not`, `breakfast`, `IDetect`, `trendsegmentR`, `mosum`, `ChangepointTesting`, `changepoint.mv`, `changepointsHD`, `changepointsVar`, `InspectChangepoint`, `breakpoint`, `segmentr`, `Segmentor3IsBack`, `trendsegmentR`, `BayesPiecewiseICAR`, `BayesPieceHazSelect`, `CausalImpact`.**
 
 There are a lot of change point packages out there already, so why `mcp`? Here are my (probably biased) thoughts about this. I compiled some tables, summarising change point packages ([.xlsx file here](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/packages_tables.xlsx)). I will demonstrate each of these packages in an applied example below to discuss their merits and shortcomings. I recommend [this nice overview](http://stats.lse.ac.uk/fryzlewicz/wbs2/wbs2sdll.pdf) of the methodologies used in many of these packages.
 

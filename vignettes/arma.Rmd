@@ -175,10 +175,10 @@ First, let's get a visual to see that the posterior is reasonably narrow and con
 plot(fit)
 ```
 
-You could use `plot(fit, geom_data = "line")` for a more classical line plot of the time series data. You can omit plotting AR effect entirely setting `plot(fit, arma = FALSE)`. You can also plot the `ar1_` parameters directly using `which_y`, so the y-axis is the value of `ar1`:
+You could use `plot(fit, geom_data = "line")` for a more classical line plot of the time series data. You can omit plotting AR effect entirely setting `plot(fit, arma = FALSE)`. You can also plot the `ar1_` parameters directly using `plot_dpar()`, so the y-axis is the value of `ar1`:
 
 ```{r}
-plot(fit, which_y = "ar1", lines = 100)
+plot_dpar(fit, dpar = "ar1", lines = 100)
 ```
 
 

@@ -90,7 +90,7 @@ Note that:
  * The fourth value (`time = 200`) is way outside the observed region. Because it is the extrapolation of the slope in the third segment of which we've only observed the first tiny bit, the posterior distribution is very wide because even a small uncertainty in the slope results in very large differences further out.
 
 ## Arguments
-If you look at the documentation for `predict()`, `fitted()`, and `residuals()`, you'll see that they are quite versatile, taking many different arguments. To mention a few, you can set  `which_y = "sigma"` to get fitted values for `sigma` [more on modeling sigma](../articles/variance.html), `prior = TRUE` to predict using only the prior, `varying = TRUE` and `arma = FALSE` can be toggled to include/exclude AR(N) and varying effects.
+If you look at the documentation for `predict()`, `fitted()`, and `residuals()`, you'll see that they are quite versatile, taking many different arguments. To mention a few, you can set  `fitted(fit, dpar = "sigma")` to get fitted values for `sigma` [more on modeling sigma](../articles/variance.html), `prior = TRUE` to predict using only the prior, `varying = TRUE` and `arma = FALSE` can be toggled to include/exclude AR(N) and varying effects.
 
 
 # Predictions
