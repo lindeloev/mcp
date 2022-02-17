@@ -137,6 +137,7 @@ test_summary = function(fit, varying_cols) {
   }
 }
 
+
 # Test the regular plot, including faceting
 test_plot = function(fit, varying_cols) {
   q_fit = rbinom(1, 1, 0.5) == 1  # add quantiles sometimes
@@ -149,17 +150,16 @@ test_plot = function(fit, varying_cols) {
   }
   # Is it a ggplot or a known error?
   if (inherits(gg, "try-error")) {
-    # (the error is an artefact of very small test data --> wide posteriors.)
+    # (the error is an artifact of very small test data --> wide posteriors.)
     if (fit$family$family == "poisson") {
-
-      expected_error = "Problem with \`mutate\\(\\)\`"  # column "predict"
+      expected_error = "predict"  # column "predict" OK: a side-effect of the small data and short sampling.
     } else if (any(stringr::str_detect(fit$pars$sigma, "^sigma_.*_.*$"))) {  # for slopes on sigma
-      expected_error = "Modelled negative sigma"
+      expected_error = "^Modelled negative sigma"
     } else {
       expected_error = ">>>>do_not_expect_any_errors<<<<<"
     }
     error_message = attr(gg, "condition")$message
-    is_expected = any(stringr::str_starts(error_message, expected_error))
+    is_expected = any(stringr::str_detect(error_message, expected_error))
     expect_true(is_expected)
   } else {
     testthat::expect_true(ggplot2::is.ggplot(gg))
@@ -224,8 +224,11 @@ test_pp_eval_func = function(fit, func) {
   result = try(func(fit), silent = TRUE)
   if (inherits(result, "try-error")) {
     error_message = attr(result, "condition")$message
-    expected_error_poisson = "Problem with \`mutate\\(\\)\`"  # column "predict". OK: a side-effect of the small data and short sampling.
-    testthat::expect_true(fit$family$family != "poisson" | stringr::str_starts(error_message, expected_error_poisson))  # Only test message for poisson
+    if (fit$family$family == "poisson") {
+      expect_true(stringr::str_detect(error_message, "predict"))  # column "predict" OK: a side-effect of the small data and short sampling.
+    } else {
+      testthat::expect_null(error_message)
+    }
   } else {
     testthat::expect_true(is.data.frame(result))
     testthat::expect_equal(nrow(result), nrow(fit$data))  # Returns same number of rows as data
@@ -289,8 +292,7 @@ test_pp_eval = function(fit) {
 
     # Expecected error for Poisson
     if (fit$family$family == "poisson") {
-      expected_error_poisson = "Problem with \`mutate\\(\\)\`"  # column "predict" OK: a side-effect of the small data and short sampling.
-      testthat::expect_true(stringr::str_starts(error_message, expected_error_poisson))  # Only test message for poisson
+      testthat::expect_true(stringr::str_detect(error_message, "predict"))  # column "predict" OK: a side-effect of the small data and short sampling.
     } else {
       # Fail otherwise
       testthat::expect_true(error_message)
@@ -299,7 +301,6 @@ test_pp_eval = function(fit) {
     testthat::expect_true(ggplot2::is.ggplot(pp_default))
   }
 }
-
 
 
 # Rutine for testing a list of erroneous models
