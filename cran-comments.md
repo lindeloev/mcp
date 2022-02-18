@@ -1,3 +1,19 @@
+# mcp 0.3.2
+
+## Notes for the reviewer
+ * This release makes the test suite compatible with dplyr 1.0.8. There are no user-facing changes.
+ 
+## R CMD check results
+There were no ERRORs or WARNINGs except the usual artificial ones (see "Expected NOTEs and ERRORs").
+
+## Test environments
+rhub 
+oldrel, release, and devel on macOS, Linux, and Windows
+
+## Downstream dependencies
+`mcp` has no downstream dependencies.
+
+
 # Resubmission
 This is a resubmission. I have corrected the invalid URLs in the README.
 
