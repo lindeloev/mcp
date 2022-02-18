@@ -1,3 +1,9 @@
+# mcp 0.3.2
+
+This release contains no user-facing changes. The test suite suite is now compatible with dplyr 1.0.8, which caused the test suite to fail. This, in turn, would trigger the removal of mcp from CRAN.
+
+
+
 # mcp 0.3.1
 
 This is mostly a bug fix release.
