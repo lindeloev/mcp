@@ -312,7 +312,7 @@ geom_cp_density = function(fit, facet_by, limits_y) {
   # Make the geom!
   ggplot2::stat_density(aes(
     x = value,
-    y = ..scaled.. * diff(limits_y) * dens_scale +  # Scale to proportion of view
+    y = ggplot2::after_stat(!!str2lang("scaled")) * diff(limits_y) * dens_scale +  # Scale to proportion of view
       limits_y[1] -  # Put on x-axis
       diff(limits_y) * dens_cut,  # Move a bit further down to remove zero-density line from view.
     group = paste0(.chain, cp_name),  # Apply scaling for each chain X cp_i combo
