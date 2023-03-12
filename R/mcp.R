@@ -74,8 +74,8 @@
 #'   * `"all"`: use all cores but one and sets `chains` to the same value. This is
 #'     a convenient way to maximally use your computer's power.
 #' @param chains Positive integer. Number of chains to run.
-#' @param iter Positive integer. Number of post-warmup samples to draw. The number
-#'   of iterations per chain is `iter/chains`.
+#' @param iter Positive integer. Number of post-warmup draws from each chain.
+#'   The total number of draws is `iter * chains`.
 #' @param adapt Positive integer. Also sometimes called "burnin", this is the
 #'   number of samples used to reach convergence. Set lower for greater speed.
 #'   Set higher if the chains haven't converged yet or look at [tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/tips.html).
