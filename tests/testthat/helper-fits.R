@@ -12,7 +12,7 @@
 #' @param simulated Parameter values to be used for simulation.
 test_fit = function(model, simulated) {
   testthat::skip_if(is.null(options("test_mcp_fits")[[1]]),
-                    "This time-consuming test is only run locally before release.")
+                    "This time-consuming test is only run locally before release. Set options(test_mcp_fits = TRUE) to run.")
 
   # Simulate
   empty = mcp(model, sample = FALSE, par_x = "x")
