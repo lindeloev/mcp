@@ -150,9 +150,9 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 
     # Add simulation to the beginning of the list
     estimates = estimates %>%
-      dplyr::left_join(simulated, by = "name") %>%
+      dplyr::left_join(simulated, by = "name", multiple = "all") %>%
       dplyr::mutate(match = ifelse(.data$sim > .data$lower & .data$sim < .data$upper, yes = "OK", no = "")) %>%
-      dplyr::select(.data$name, .data$match, .data$sim, .data$mean, .data$lower, .data$upper)
+      dplyr::select("name", "match", "sim", "mean", "lower", "upper")
   }
 
   # Merge them and return
@@ -491,7 +491,7 @@ tidy_samples = function(
   }
 
   # Return with chain etc. first
-  samples = dplyr::select(samples, .data$.chain, .data$.iteration, .data$.draw, dplyr::everything())
+  samples = dplyr::select(samples, ".chain", ".iteration", ".draw", dplyr::everything())
   return(samples)
 }
 
@@ -659,7 +659,8 @@ pp_eval = function(
     samples = dplyr::left_join(
       newdata,
       tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples),
-      by = unique(varying_info$cols)
+      by = unique(varying_info$cols),
+      multiple = "all"
     ) %>%
       dplyr::mutate(!!returnvar := rlang::exec(fit$simulate, !!!., type = type_for_simulate, rate = rate, which_y = which_y, arma = arma, add_attr = FALSE, scale = scale))
   } else {
@@ -686,7 +687,7 @@ pp_eval = function(
       # Apply original order and put newdata as the first columns
       dplyr::arrange(.data$data_row) %>%
       dplyr::left_join(newdata, by = "data_row") %>%
-      dplyr::select(dplyr::one_of(colnames(newdata)), !!returnvar, .data$error, -.data$data_row)
+      dplyr::select(dplyr::one_of(colnames(newdata)), !!returnvar, "error", -"data_row")
 
 
     # Quantiles
@@ -882,9 +883,9 @@ residuals.mcpfit = function(
 tidy_to_matrix = function(samples, returnvar) {
   returnvar = rlang::sym(returnvar)
   samples %>%
-    dplyr::select(.data$.draw, .data$data_row, !!returnvar) %>%
+    dplyr::select(".draw", "data_row", !!returnvar) %>%
     tidyr::pivot_wider(names_from = .data$data_row, values_from = !!returnvar) %>%
-    dplyr::select(-.data$.draw) %>%
+    dplyr::select(-".draw") %>%
     as.matrix()
 }
 
