@@ -695,7 +695,7 @@ pp_eval = function(
       quantiles_fit = samples %>%
         get_quantiles(probs, xvar, returnvar) %>%
         dplyr::mutate(quantile = 100 * .data$quantile) %>%
-        tidyr::pivot_wider(names_from = .data$quantile, names_prefix = "Q", values_from = .data$y)
+        tidyr::pivot_wider(names_from = "quantile", names_prefix = "Q", values_from = "y")
 
       df_return = dplyr::left_join(df_return, quantiles_fit, by = as.character(xvar))
     }
@@ -884,7 +884,7 @@ tidy_to_matrix = function(samples, returnvar) {
   returnvar = rlang::sym(returnvar)
   samples %>%
     dplyr::select(".draw", "data_row", !!returnvar) %>%
-    tidyr::pivot_wider(names_from = .data$data_row, values_from = !!returnvar) %>%
+    tidyr::pivot_wider(names_from = "data_row", values_from = !!returnvar) %>%
     dplyr::select(-".draw") %>%
     as.matrix()
 }
