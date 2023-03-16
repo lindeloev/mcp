@@ -401,7 +401,7 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
 #'   * Character vector: Only include specified population parameters - see `fit$pars$population`.
 #' @param varying One of:
 #'   * `TRUE` All varying effects (`fit$pars$varying`).
-#'   * `FALSE` No varying efects (`c()`).
+#'   * `FALSE` No varying effects (`c()`).
 #'   * Character vector: Only include specified varying parameters - see `fit$pars$varying`.
 #' @param absolute
 #'   * `TRUE` Returns the absolute location of all varying change points.
