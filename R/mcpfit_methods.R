@@ -719,8 +719,8 @@ pp_eval = function(
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
-#' predict(demo_fit)  # Evaluate at each demo_fit$data
 #' \donttest{
+#' predict(demo_fit)  # Evaluate at each demo_fit$data
 #' predict(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
 #' predict(demo_fit, summary = FALSE)  # Samples instead of summary.
 #' predict(
