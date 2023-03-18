@@ -49,7 +49,7 @@ effects you want to plot.
 \item{varying}{One of:
 \itemize{
 \item \code{TRUE} All varying effects (\code{fit$pars$varying}).
-\item \code{FALSE} No varying efects (\code{c()}).
+\item \code{FALSE} No varying effects (\code{c()}).
 \item Character vector: Only include specified varying parameters - see \code{fit$pars$varying}.
 }}
 
@@ -92,8 +92,8 @@ values (depending on \code{type}). This format is used by \code{brms} and it's u
 Samples from the Posterior Predictive Distribution
 }
 \examples{
-predict(demo_fit)  # Evaluate at each demo_fit$data
 \donttest{
+predict(demo_fit)  # Evaluate at each demo_fit$data
 predict(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80\% credible interval.
 predict(demo_fit, summary = FALSE)  # Samples instead of summary.
 predict(

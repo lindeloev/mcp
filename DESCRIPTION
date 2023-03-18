@@ -1,6 +1,6 @@
 Package: mcp
 Title: Regression with Multiple Change Points
-Version: 0.3.2
+Version: 0.3.3
 Date: 2022-02-18
 URL: https://lindeloev.github.io/mcp/
 BugReports: https://github.com/lindeloev/mcp/issues
@@ -15,7 +15,7 @@ License: GPL-2
 Encoding: UTF-8
 Language: en-US
 LazyData: true
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 3.5.0)
 Imports:

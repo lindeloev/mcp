@@ -34,13 +34,13 @@ Takes an \code{\link{mcpfit}} as input and computes information criteria using l
 WAIC. Compare models using \code{\link[loo]{loo_compare}} and \code{\link[loo]{loo_model_weights}}.
 more in \code{\link[loo]{loo}}.
 }
-\section{Methods (by generic)}{
+\section{Functions}{
 \itemize{
-\item \code{loo}: Computes loo on mcpfit objects
+\item \code{loo(mcpfit)}: Computes loo on mcpfit objects
 
-\item \code{waic}: Computes WAIC on mcpfit objects
+\item \code{waic(mcpfit)}: Computes WAIC on mcpfit objects
+
 }}
-
 \examples{
 \donttest{
 # Define two models and sample them

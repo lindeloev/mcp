@@ -35,7 +35,7 @@ the original data is used.}
 \item{varying}{One of:
 \itemize{
 \item \code{TRUE} All varying effects (\code{fit$pars$varying}).
-\item \code{FALSE} No varying efects (\code{c()}).
+\item \code{FALSE} No varying effects (\code{c()}).
 \item Character vector: Only include specified varying parameters - see \code{fit$pars$varying}.
 }}
 
