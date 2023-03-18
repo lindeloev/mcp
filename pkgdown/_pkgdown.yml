@@ -38,6 +38,7 @@ reference:
       - loo
       - waic
       - hypothesis
+      - mcp-package
 
   - title: Axillary functions
     desc: These are used internally by mcp, but are exposed here since they may be useful for other purposes. Most other useful internal functions deliver the result already in `mcp(segments, sample = FALSE)`, so `mcp()` will be their API.
