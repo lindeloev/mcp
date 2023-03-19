@@ -1,3 +1,16 @@
+# mcp 0.3.3
+
+This is a bug fix release
+
+## Bug fixes
+
+ * Support `ggplot >= 3.4.0`, `tidyselect >= 1.2.0`, and newer `future` by replacing deprecated functions.
+ * Accept `mcp(..., cores = "all")`.
+ * Fix documentation of `iter` argument to `mcp()`.
+ * Other small fixes to deployment and documentation.
+
+
+
 # mcp 0.3.2
 
 This release contains no user-facing changes. The test suite suite is now compatible with dplyr 1.0.8, which caused the test suite to fail. This, in turn, would trigger the removal of mcp from CRAN.
