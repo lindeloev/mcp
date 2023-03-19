@@ -1,7 +1,7 @@
 Package: mcp
 Title: Regression with Multiple Change Points
 Version: 0.3.3
-Date: 2022-02-18
+Date: 2023-03-19
 URL: https://lindeloev.github.io/mcp/
 BugReports: https://github.com/lindeloev/mcp/issues
 Authors@R: 
@@ -20,8 +20,8 @@ Roxygen: list(markdown = TRUE)
 Depends: R (>= 3.5.0)
 Imports:
 	parallel,
-	future,
-	future.apply,
+	future (>= 1.16),
+	future.apply (>= 1.4),
 	rjags (>= 4.9),
 	coda (>= 0.19.3),
 	loo (>= 2.1.0),
@@ -42,5 +42,4 @@ Suggests:
   testthat (>= 3.1.0),
   purrr (>= 0.3.4),
 	knitr, 
-	rmarkdown,
-	covr
+	rmarkdown
