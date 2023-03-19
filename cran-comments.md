@@ -1,3 +1,24 @@
+# mcp 0.3.3
+
+## Notes for the reviewer
+ 
+ * This is a bug fix release, mostly for compatibility with breaking changes in 
+   dependencies, including `ggplot 3.4.0` as you kindly notified in a GitHub 
+   issue.
+   
+## R CMD check results
+There were no ERRORs or WARNINGs except the usual artificial ones (see "Expected 
+NOTEs and ERRORs" in the bottom of this file).
+
+## Test environments
+Github Actions: oldrel, release, and devel on Ubuntu. 
+Github Actions: release on MacOS and Windows.
+
+## Downstream dependencies
+`mcp` has no downstream dependencies.
+
+
+
 # mcp 0.3.2
 
 ## Notes for the reviewer
@@ -117,7 +138,7 @@ This is the first submission so there are no downstream dependencies.
 
 # Expected NOTEs and ERRORs
 
-* INSTALL ERROR or PREPERROR: `mcp` uses JAGS (an external binary) for sampling through the `rjags` package. rjags will fail to install without JAGS on the system. This happens when I run `devtools::check_win_release()` and `check_win_devel()`. Travis install JAGS prior to installing packages, and all tests pass. They do too on my Windows PC. Automatic installation for Mac and OSX is set up in the .travis.yml (https://github.com/lindeloev/mcp/blob/master/.travis.yml). Windows binaries for JAGS are here: https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/
+* INSTALL ERROR or PREPERROR: `mcp` uses JAGS (an external binary) for sampling through the `rjags` package. rjags will fail to install without JAGS on the system. This happens when I run `devtools::check_win_release()`, `devtools::check_win_devel()` and `rhub::check_for_cran()`. Github Actions install JAGS prior to installing packages, and all tests pass on Windows, MacOS, and Linux. Binaries for JAGS are here: https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/
 
 * DESCRIPTION NOTE: rhub says that the DESCRIPTION DOIs return a HTTP 403 error (forbidden). But the DOI works just fine, e.g., http://doi.org/10.2307/2986119.
 

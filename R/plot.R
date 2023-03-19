@@ -32,7 +32,7 @@
 #' @return A \pkg{ggplot2} object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @importFrom ggplot2 ggplot aes aes_string geom_line geom_point facet_wrap
+#' @importFrom ggplot2 ggplot aes geom_line geom_point facet_wrap
 #' @importFrom magrittr %>%
 #' @importFrom rlang !! :=
 #' @importFrom dplyr .data
@@ -208,7 +208,7 @@ plot.mcpfit = function(x,
   # PLOT IT #
   ###########
   # Initiate plot and show raw data (only applicable when which_y == "ct")
-  gg = ggplot(fit$data, aes_string(x = fit$pars$x, y = fit$pars$y))
+  gg = ggplot(fit$data, aes(x = !!rlang::sym(fit$pars$x), y = !!rlang::sym(fit$pars$y)))
   if (which_y == "ct") {
     if (geom_data == "point") {
       if (is.null(fit$pars$weights)) {
@@ -312,7 +312,7 @@ geom_cp_density = function(fit, facet_by, limits_y) {
   # Make the geom!
   ggplot2::stat_density(aes(
     x = value,
-    y = ..scaled.. * diff(limits_y) * dens_scale +  # Scale to proportion of view
+    y = ggplot2::after_stat(!!str2lang("scaled")) * diff(limits_y) * dens_scale +  # Scale to proportion of view
       limits_y[1] -  # Put on x-axis
       diff(limits_y) * dens_cut,  # Move a bit further down to remove zero-density line from view.
     group = paste0(.chain, cp_name),  # Apply scaling for each chain X cp_i combo

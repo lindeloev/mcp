@@ -801,9 +801,9 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x = NU
   # Fill y and trials, where not explicit.
   # Build "full" formula (with explicit intercepts) and insert instead of the old
   ST = ST %>%
-    tidyr::fill(.data$y, .data$form_y, .data$trials, .data$weights, .direction="downup") %>%  # Usually only provided in segment 1
+    tidyr::fill("y", "form_y", "trials", "weights", .direction="downup") %>%  # Usually only provided in segment 1
     dplyr::mutate(form = paste0(.data$form_y, ifelse(segment == 1, "", .data$form_cp), .data$form_rhs)) %>%  # build full formula
-    dplyr::select(-.data$form_y, -.data$form_cp, -.data$form_rhs)  # Not needed anymore
+    dplyr::select(-"form_y", -"form_cp", -"form_rhs")  # Not needed anymore
 
 
 

@@ -71,13 +71,13 @@ Summarise parameter estimates and model diagnostics.
 }
 \section{Functions}{
 \itemize{
-\item \code{fixef}: Get population-level ("fixed") effects of an \code{\link{mcpfit}} object.
+\item \code{fixef()}: Get population-level ("fixed") effects of an \code{\link{mcpfit}} object.
 
-\item \code{ranef}: Get varying ("random") effects of an \code{\link{mcpfit}} object.
+\item \code{ranef()}: Get varying ("random") effects of an \code{\link{mcpfit}} object.
 
-\item \code{print.mcpfit}: Print the posterior summary of an \code{\link{mcpfit}} object.
+\item \code{print(mcpfit)}: Print the posterior summary of an \code{\link{mcpfit}} object.
+
 }}
-
 \examples{
 # Typical usage
 summary(demo_fit)

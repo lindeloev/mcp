@@ -74,8 +74,8 @@
 #'   * `"all"`: use all cores but one and sets `chains` to the same value. This is
 #'     a convenient way to maximally use your computer's power.
 #' @param chains Positive integer. Number of chains to run.
-#' @param iter Positive integer. Number of post-warmup samples to draw. The number
-#'   of iterations per chain is `iter/chains`.
+#' @param iter Positive integer. Number of post-warmup draws from each chain.
+#'   The total number of draws is `iter * chains`.
 #' @param adapt Positive integer. Also sometimes called "burnin", this is the
 #'   number of samples used to reach convergence. Set lower for greater speed.
 #'   Set higher if the chains haven't converged yet or look at [tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/tips.html).
@@ -210,7 +210,7 @@ mcp = function(model,
     stop("`prior` has duplicated entries for the same parameter: ", paste0(names(prior)[which_duplicated]), collapse = ", ")
 
   # Check and recode family
-  if (class(family) != "family")
+  if (!inherits(family, "family"))
     stop("`family` is not a valid family. Should be gaussian(), binomial(), etc.")
 
   family = mcpfamily(family)  # convert to mcp family
@@ -218,21 +218,24 @@ mcp = function(model,
   # More checking...
   assert_types(par_x, "null", "character")
   assert_value(sample, allowed = c("post", "prior", "both", "none", FALSE))
-  assert_integer(cores, lower = 1)
   assert_integer(chains, lower = 1)
   assert_types(inits, "null", "list")
 
-  if (cores > chains)
-    message("`cores` is greater than `chains`. Not all cores will be used.")
+  if (cores != "all") {
+    assert_integer(cores, lower = 1)
+
+    if (cores > chains)
+      message("`cores` is greater than `chains`. Not all cores will be used.")
+
+    # Parallel fails on R version 3.6.0 and lower (sometimes at least).
+    if (cores > 1 && getRversion() < "3.6.1")
+      message("Parallel sampling (`cores` > 1) sometimes err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
+  }
 
   # jags_code
   if(!is.null(jags_code))
     if (!is.character(jags_code) || !stringr::str_detect(gsub(" ", "", jags_code), "model\\{"))
       stop("`jags_code` must be NULL or a string with a JAGS model, including 'model {...}'.")
-
-  # Parallel fails on R version 3.6.0 and lower (sometimes at least).
-  if (cores > 1 && getRversion() < "3.6.1")
-    message("Parallel sampling (`cores` > 1) sometimes err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
 
 
   ##################

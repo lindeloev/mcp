@@ -23,7 +23,7 @@ library(mcp)
 options(mc.cores = 3)  # Run in parallel
 
 ex_demo = mcp_example("demo")
-fit_demo = mcp(model_demo$model, data = ex_demo$data, adapt = 3000)  # dataset included in mcp
+fit_demo = mcp(ex_demo$model, data = ex_demo$data, adapt = 3000)  # dataset included in mcp
 theme_it(plot(fit_demo), "")
 save_it("ex_demo.png")
 
@@ -47,9 +47,9 @@ loo::loo_compare(fit_demo$loo, fit_null$loo)
 ################
 # Two plateaus #
 ################
-ex_intercepts = mcp_demo("intercepts")
-fit_plateaus = mcp(ex_intercepts$model, ex_intercepts$data, par_x = "x", adapt = 3000)
-theme_it(plot(fit_plateaus, lines = 25), "Two plateaus")
+ex_intercepts = mcp_example("intercepts")
+fit_intercepts = mcp(ex_intercepts$model, ex_intercepts$data, par_x = "x", adapt = 3000)
+theme_it(plot(fit_intercepts, lines = 25), "Two plateaus")
 save_it("ex_plateaus.png")
 
 
@@ -92,7 +92,7 @@ save_it("ex_fix_rel.png")
 # QUADRATIC #
 #############
 ex_quadratic = mcp_example("quadratic")
-fit_quadratic = mcp(model_quadratic, ex_quadratic, adapt = 3000)
+fit_quadratic = mcp(ex_quadratic$model, ex_quadratic$data, adapt = 3000)
 theme_it(plot(fit_quadratic), "Quadratic and other exponentiations")
 save_it("ex_quadratic.png")
 

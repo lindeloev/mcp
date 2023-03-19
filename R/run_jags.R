@@ -91,7 +91,7 @@ run_jags = function(data,
   } else if (cores == "all" || cores > 1) {
     # PARALLEL using the future package and one chain per worker
     message("Parallel sampling in progress...")
-    future::plan(future::multiprocess, .skip = TRUE)
+    future::plan(future::multisession, .skip = TRUE)
     samples = future.apply::future_lapply(
       sample(1:1000, n.chains),  # Random seed to JAGS
       n.chains = 1,
