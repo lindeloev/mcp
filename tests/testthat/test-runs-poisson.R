@@ -19,17 +19,21 @@ test_bad(bad_poisson,
          family = poisson())
 
 
-good_poisson = list(
-  list(y ~ 1),  # one segment
-  list(y ~ 1 + x,  # specified multiple times and with rel()
-       y  ~ 1 ~ rel(1) + rel(x),
-       rel(1) ~ 0),
+good_poisson_essential = list(
   list(y ~ 1,  # With varying
        1 + (1|id) ~ 1),
   list(y ~ 1 + ar(1),
        ~ 1 + x + ar(2, 1 + x + I(x^3)))
 )
 
-test_good(good_poisson,
+good_poisson_extensive = list(
+  list(y ~ 1),  # one segment
+  list(y ~ 1 + x,  # specified multiple times and with rel()
+       y  ~ 1 ~ rel(1) + rel(x),
+       rel(1) ~ 0)
+)
+
+test_good(good_poisson_essential,
+          good_poisson_extensive,
           data = data_binomial,
           family = poisson())

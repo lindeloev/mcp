@@ -306,6 +306,7 @@ test_pp_eval = function(fit) {
 # Rutine for testing a list of erroneous models
 test_bad = function(models, ...) {
   for (model in models) {
+    stopifnot(all(sapply(model, is.formula)))
     test_name = paste0(as.character(substitute(models)), ":
     ", paste0(model, collapse=", "))
 
@@ -317,9 +318,20 @@ test_bad = function(models, ...) {
 
 
 # Routine for testing a list of good models
-test_good = function(models, ...) {
+test_good = function(essential, extensive = list(), ...) {
+  stopifnot(is.list(essential))
+  stopifnot(is.list(extensive))
+
+  if (is.null(getOption("test_mcp_allmodels"))) {
+    models = essential
+  } else {
+    models = c(essential, extensive)
+  }
+
   for (model in models) {
-    test_name = paste0(as.character(substitute(models)), ":
+    stopifnot(is.list(model))
+    stopifnot(all(sapply(model, is.formula)))
+    test_name = paste0(as.character(substitute(essential)), ":
     ", paste0(model, collapse=", "))
 
     testthat::test_that(test_name, {
