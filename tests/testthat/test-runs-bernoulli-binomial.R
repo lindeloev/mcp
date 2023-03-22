@@ -30,19 +30,22 @@ test_bad(bad_binomial,
          family = binomial())
 
 
-good_binomial = list(
-  list(y | trials(N) ~ 1),  # one segment
-  list(y | trials(N) ~ 1 + x,  # specified multiple times and with rel()
-       y | trials(N) ~ 1 ~ rel(1) + rel(x),
-       rel(1) ~ 0),
+good_binomial_essential = list(
   list(y | trials(N) ~ 1,  # With varying
        1 + (1|id) ~ 1),
   list(y | trials(N) ~ 1 + ar(1))  # Simple AR(1)
   #list(y | trials(N) ~ 1,
   #     1 ~ N)  # N can be both trials and slope. TO DO: Fails in this test because par_x = "x"
 )
+good_binomial_extensive = list(
+  list(y | trials(N) ~ 1),  # one segment
+  list(y | trials(N) ~ 1 + x,  # specified multiple times and with rel()
+       y | trials(N) ~ 1 ~ rel(1) + rel(x),
+       rel(1) ~ 0)
+)
 
-test_good(good_binomial,
+test_good(good_binomial_essential,
+          good_binomial_extensive,
           data = data_binomial,
           family = binomial())
 
@@ -75,16 +78,19 @@ test_bad(bad_bernoulli,
          family = bernoulli())
 
 
-good_bernoulli = list(
-  list(y_bern ~ 1),  # one segment
-  list(y_bern ~ 1 + x,  # specified multiple times and with rel()
-       y_bern ~ 1 ~ rel(1) + rel(x),
-       rel(1) ~ 0),
+good_bernoulli_essential = list(
   list(y_bern ~ 1,  # With varying
        1 + (1|id) ~ 1)
 )
+good_bernoulli_extensive = list(
+  list(y_bern ~ 1),  # one segment
+  list(y_bern ~ 1 + x,  # specified multiple times and with rel()
+       y_bern ~ 1 ~ rel(1) + rel(x),
+       rel(1) ~ 0)
+)
 
-test_good(good_bernoulli,
+test_good(good_bernoulli_essential,
+          good_bernoulli_extensive,
           data = data_binomial,
           family = bernoulli())
 

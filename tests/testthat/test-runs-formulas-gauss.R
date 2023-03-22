@@ -16,16 +16,18 @@ bad_y = list(
 test_bad(bad_y)
 
 
-good_y = list(
-  list(y ~ 1),  # Regular
+good_y_essential = list(
   list(y ~ 1,  # Explicit and implicit y and cp
        y ~ 1 ~ 1,
        rel(1) + (1|id) ~ rel(1) + x,
-       ~ 1),
+       ~ 1)
+)
+good_y_extensive = list(
+  list(y ~ 1),  # Regular
   list(ok_y ~ 1)  # decimal y
 )
 
-test_good(good_y)
+test_good(good_y_essential, good_y_extensive)
 
 
 
@@ -104,21 +106,23 @@ test_bad(bad_slopes)
 
 
 
-good_slopes = list(
-  list(y ~ 0 + x),  # Regular
+good_slopes_essential = list(
   list(y ~ 0 + x,  # Multiple on/off
        ~ 0,
        ~ 1 + x),
+  list(y ~ 0 + x + I(x^2) + I(x^3),  # Test "non-linear" x
+       ~ 0 + exp(x) + abs(x),
+       ~ 0 + sin(x) + cos(x) + tan(x))
+)
+good_slopes_extensive = list(
+  list(y ~ 0 + x),  # Regular
   list(y ~ x,  # Chained relative slopes
        ~ 0 + rel(x),
        ~ rel(x)),
-  list(y ~ 0 + x + I(x^2) + I(x^3),  # Test "non-linear" x
-       ~ 0 + exp(x) + abs(x),
-       ~ 0 + sin(x) + cos(x) + tan(x)),
   list(y ~ ok_x)  # alternative x
 )
 
-test_good(good_slopes, par_x = NULL)
+test_good(good_slopes_essential, good_slopes_extensive, par_x = NULL)
 
 
 
@@ -143,25 +147,28 @@ bad_cps = list(
 test_bad(bad_cps)
 
 
-good_cps = list(
-  list(y ~ 0 + x,  # Regular cp
-       1 ~ 1),
+good_cps_essential = list(
   list(y ~ 1,  # Implicit cp
        ~ 1,
        ~ 0),
   list(y ~ 0,  # Varying
        1 + (1|id) ~ 1),
+
+  list(y ~ 1,
+       1 + (1|id) ~ 1,
+       1 + (1|ok_id_integer) ~ 1,  # multiple groups and alternative data
+       1 + (1|ok_id_factor) ~ 1)  # alternative group data
+)
+good_cps_extensive = list(
+  list(y ~ 0 + x,  # Regular cp
+       1 ~ 1),
   list(y ~ 0,  # Chained varying and relative cp
        y ~ 1 ~ 1,
        rel(1) + (1|id) ~ 0,
        rel(1) + (1|id) ~ 0,
        ~ x),
   list(y ~ 1,
-       (1|id) ~ 0),  # Intercept is implicit. I don't like it, but OK.
-  list(y ~ 1,
-       1 + (1|id) ~ 1,
-       1 + (1|ok_id_integer) ~ 1,  # multiple groups and alternative data
-       1 + (1|ok_id_factor) ~ 1)  # alternative group data
+       (1|id) ~ 0)  # Intercept is implicit. I don't like it, but OK.
 )
 
-test_good(good_cps)
+test_good(good_cps_essential, good_cps_extensive)

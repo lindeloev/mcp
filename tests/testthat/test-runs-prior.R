@@ -26,29 +26,42 @@ for (prior in bad_prior) {
 }
 
 
-good_prior = list(
+good_prior_essential = list(
   list(  # Fixed values and non-default change point
     int_2 = "int_1",
     cp_1 = "dnorm(3, 10)",
     x_2 = "-0.5"
   ),
-  list(  # Outside the observed range allowed
-    cp_1 = "dunif(-100, -90)",
-    cp_2 = "dnorm(100, 20) T(100, 110)"
-  ),
+
   list(
     cp_1 = "dirichlet(1)",  # Dirichlet prior on change points
     cp_2 = "dirichlet(1)"
+  )
+)
+good_prior_extensive = list(
+  list(  # Changepoint outside of the observed range is allowed
+    cp_1 = "dunif(-100, -90)",
+    cp_2 = "dnorm(100, 20) T(100, 110)"
   ),
+
   list(
     cp_1 = "dirichlet(3)",  # Dirichlet prior on change points
     cp_2 = "dirichlet(2)"
   )
 )
 
-for (prior in good_prior) {
-  test_name = paste0("Good priors: ", paste0(prior, collapse=", "))
+for (prior in good_prior_essential) {
+  test_name = paste0("Good priors (essential): ", paste0(prior, collapse=", "))
   testthat::test_that(test_name, {
     test_runs(prior_model, prior = prior)
   })
+}
+
+if (is.null(getOption("test_mcp_allmodels")) == FALSE) {
+  for (prior in good_prior_extensive) {
+    test_name = paste0("Good priors (extensive): ", paste0(prior, collapse=", "))
+    testthat::test_that(test_name, {
+      test_runs(prior_model, prior = prior)
+    })
+  }
 }
