@@ -27,7 +27,7 @@ Imports:
 	loo (>= 2.1.0),
 	bayesplot (>= 1.7.0),
 	tidybayes (>= 3.0.0),
-	dplyr (>= 1.0.0),
+	dplyr (>= 1.1.1),
 	magrittr (>= 1.5),
 	tidyr (>= 1.0.0),
 	tidyselect (>= 0.2.5),
