@@ -49,7 +49,7 @@ the original data is used.}
 If there are varying effects, this is the number of samples from each varying group.
 \code{NULL} means "all". Ignored if both are \code{FALSE}. More samples trade speed for accuracy.}
 
-\item{...}{Currently ignored.}
+\item{...}{Currently unused}
 }
 \description{
 Equivalent to  \code{fitted(fit, ...) - fit$data[, fit$data$yvar]} (or \code{fitted(fit, ...) - newdata[, fit$data$yvar]}),

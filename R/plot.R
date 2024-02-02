@@ -286,9 +286,6 @@ plot.mcpfit = function(x,
 #' @keywords internal
 #' @param fit An `mcpfit` object
 #' @param facet_by `NULL` or a a string, like `plot.mcpfit(..., facet_by = "id").`
-#' @param include Boolean. If `TRUE` and `!is.null(facet_by)`, only return
-#'   densities for the change points "affected" by `facet_by`. If `FALSE` and `!is.null(facet_by)`,
-#'   return all densities except those "affected" by `facet_by`. Has no effect if `is.null(facet_by)`
 #' @return A `ggplot2::stat_density` geom representing the change point densities.
 geom_cp_density = function(fit, facet_by, limits_y) {
   dens_scale = 0.2  # Proportion of plot height

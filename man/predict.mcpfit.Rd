@@ -66,7 +66,7 @@ If there are varying effects, this is the number of samples from each varying gr
 \item{samples_format}{One of "tidy" or "matrix". Controls the output format when \code{summary == FALSE}.
 See more under "value"}
 
-\item{...}{Currently ignored.}
+\item{...}{Currently unused}
 }
 \value{
 \itemize{

@@ -536,7 +536,7 @@ tidy_samples = function(
 #' @param scale One of
 #'   * "response": return on the observed scale, i.e., after applying the inverse link function.
 #'   * "linear": return on the parameter scale (where the linear trends are modelled).
-#' @param ... Currently ignored.
+#' @param ... Currently unused
 #' @return
 #'   * If `summary = TRUE`: A `tibble` with the posterior mean for each row in `newdata`,
 #'     If `newdata` is `NULL`, the data in `fit$data` is used.
@@ -574,7 +574,8 @@ pp_eval = function(
   arma = TRUE,
   nsamples = NULL,
   samples_format = "tidy",
-  scale = 'response'
+  scale = 'response',
+  ...
 ) {
   # Recodings
   fit = object

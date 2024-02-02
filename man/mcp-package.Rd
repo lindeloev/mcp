@@ -25,3 +25,15 @@ A large number of post-processing methods can be applied. These include
 Extensive documentation with worked examples is available at the
 \href{https://lindeloev.github.io/mcp/}{mcp website}.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://lindeloev.github.io/mcp/}
+  \item Report bugs at \url{https://github.com/lindeloev/mcp/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk} (\href{https://orcid.org/0000-0003-4565-0595}{ORCID})
+
+}

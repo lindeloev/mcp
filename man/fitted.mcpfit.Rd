@@ -73,7 +73,7 @@ See more under "value"}
 \item "linear": return on the parameter scale (where the linear trends are modelled).
 }}
 
-\item{...}{Currently ignored.}
+\item{...}{Currently unused}
 }
 \value{
 \itemize{
