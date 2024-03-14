@@ -1,3 +1,26 @@
+# mcp 0.3.4
+
+## Notes for the reviewer
+ 
+ * This fixes NOTES about arguments with missing documentation. No functional code was touched.
+   
+## R CMD check results
+There were no ERRORs or WARNINGs except the usual artificial ones (see "Expected 
+NOTEs and ERRORs" in the bottom of this file).
+
+## Test environments
+Github Actions: oldrel, release, and devel on Ubuntu. 
+Github Actions: release on MacOS and Windows.
+
+## Downstream dependencies
+We checked 1 reverse dependencies, comparing R CMD check results across CRAN and dev versions of this package.
+
+ * We saw 0 new problems
+ * We failed to check 0 packages
+
+
+
+
 # mcp 0.3.3
 
 ## Notes for the reviewer
