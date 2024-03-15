@@ -2,7 +2,7 @@
 
 ## Notes for the reviewer
  
- * This fixes NOTES about arguments with missing documentation. No functional code was touched.
+ * This fixes NOTES about arguments with missing documentation.
    
 ## R CMD check results
 There were no ERRORs or WARNINGs except the usual artificial ones (see "Expected 

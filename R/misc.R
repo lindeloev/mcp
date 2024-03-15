@@ -34,7 +34,7 @@ release_questions = function() {
     "TEST: Have you run `revdepcheck::revdep_check()`?",
 
     "DOC: Have you built the README plots and checked them? source('vignettes/figures/make_README_plots.R')",
-    "DOC: Have you re-built the site using pkgdown::build_site() AFTER deleting caches of articles?",
+    "DOC: Have you re-built the site using pkgdown::build_site() AFTER deleting caches of articles in 'vignettes/*_cache/'?",
     "DOC: Have you checked all articles and plots after re-building the site?",
     "DOC: Have you run the script to insert the correct logo.png in the HTML meta?"
   )

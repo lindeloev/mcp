@@ -1,6 +1,17 @@
+# mcp 0.3.4
+
+This is a bug fix release.
+
+## Bug fixes
+
+ * Now respects the `cores` argument to `mcp()`.
+ * Document all function arguments and remove documentation for removed arguments.
+
+
+
 # mcp 0.3.3
 
-This is a bug fix release
+This is a bug fix release.
 
 ## Bug fixes
 
