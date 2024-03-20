@@ -3,25 +3,22 @@
 \docType{package}
 \name{mcp-package}
 \alias{mcp-package}
-\title{Regression with Multiple Change Points}
+\title{mcp: Regression with Multiple Change Points}
 \description{
-The \pkg{mcp} package provides an interface to fit regression models with
-multiple change points between generalized linear segments, optionally with
-per-segment variance and autocorrelation structures.
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-The main function of \pkg{mcp} is the \code{mcp()} function, which uses a formula
-syntax to specify a wide range of change point models. Based on the supplied
-data, formulas, and additional information, it writes JAGS code on the fly
-and use \pkg{rstan} to fit the model, optionally in parallel to speed up
-sampling. You will need to install JAGS for \code{mcp()} to work.
-
-A large number of post-processing methods can be applied. These include
+Flexible and informed regression with Multiple Change Points. 'mcp' can infer change points in means, variances, autocorrelation structure, and any combination of these, as well as the parameters of the segments in between. All parameters are estimated with uncertainty and prediction intervals are supported - also near the change points. 'mcp' supports hypothesis testing via Savage-Dickey density ratio, posterior contrasts, and cross-validation. 'mcp' is described in Lindeløv (submitted) \doi{10.31219/osf.io/fzqxv} and generalizes the approach described in Carlin, Gelfand, & Smith (1992) \doi{10.2307/2347570} and Stephens (1994) \doi{10.2307/2986119}.
+}
+\seealso{
+Useful links:
 \itemize{
-\item Summarise fits using \code{summary()}, \code{fixef()}, and \code{ranef()}.
-\item Visualize fits using \code{plot()} and individual parameters using \code{plot_pars()}.
-\item Test hypotheses using \code{hypothesis()} and \code{loo()}.
+  \item \url{https://lindeloev.github.io/mcp/}
+  \item Report bugs at \url{https://github.com/lindeloev/mcp/issues}
 }
 
-Extensive documentation with worked examples is available at the
-\href{https://lindeloev.github.io/mcp/}{mcp website}.
 }
+\author{
+\strong{Maintainer}: Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk} (\href{https://orcid.org/0000-0003-4565-0595}{ORCID})
+
+}
+\keyword{internal}

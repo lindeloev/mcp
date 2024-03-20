@@ -10,17 +10,12 @@ get_simulate(formula_str, pars, nsegments, family)
 \arguments{
 \item{formula_str}{string. Returned by \code{get_formula}.}
 
+\item{pars}{List of user-provided parameters, in the format of fit$pars.}
+
 \item{nsegments}{Positive integer. Number of segments, typically \code{nrow(ST)}.}
 
 \item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}.
 Only default link functions are currently supported.}
-
-\item{par_trials}{String. For binomial models: name of trials column.}
-
-\item{pars_pop}{List of population parameters which the user must provide.}
-
-\item{pars_varying}{List varying parameters. They will default to zero
-(optional for the user).}
 }
 \value{
 A string with R code for the fit$simulate() function corresponding to the model.

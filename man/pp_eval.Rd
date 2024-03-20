@@ -19,7 +19,8 @@ pp_eval(
   arma = TRUE,
   nsamples = NULL,
   samples_format = "tidy",
-  scale = "response"
+  scale = "response",
+  ...
 )
 }
 \arguments{
@@ -82,7 +83,7 @@ See more under "value"}
 \item "linear": return on the parameter scale (where the linear trends are modelled).
 }}
 
-\item{...}{Currently ignored.}
+\item{...}{Currently unused}
 }
 \value{
 \itemize{

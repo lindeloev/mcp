@@ -219,10 +219,7 @@ get_formula_str = function(ST, par_x, ytype = "ct", init = FALSE) {
 #' @keywords internal
 #' @inheritParams mcp
 #' @param formula_str string. Returned by `get_formula`.
-#' @param par_trials String. For binomial models: name of trials column.
-#' @param pars_pop List of population parameters which the user must provide.
-#' @param pars_varying List varying parameters. They will default to zero
-#'   (optional for the user).
+#' @param pars List of user-provided parameters, in the format of fit$pars.
 #' @param nsegments Positive integer. Number of segments, typically `nrow(ST)`.
 #' @return A string with R code for the fit$simulate() function corresponding to the model.
 #' @encoding UTF-8

@@ -150,7 +150,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 
     # Add simulation to the beginning of the list
     estimates = estimates %>%
-      dplyr::left_join(simulated, by = "name", multiple = "all") %>%
+      dplyr::left_join(simulated, by = "name", relationship = "one-to-one") %>%
       dplyr::mutate(match = ifelse(.data$sim > .data$lower & .data$sim < .data$upper, yes = "OK", no = "")) %>%
       dplyr::select("name", "match", "sim", "mean", "lower", "upper")
   }
@@ -536,7 +536,7 @@ tidy_samples = function(
 #' @param scale One of
 #'   * "response": return on the observed scale, i.e., after applying the inverse link function.
 #'   * "linear": return on the parameter scale (where the linear trends are modelled).
-#' @param ... Currently ignored.
+#' @param ... Currently unused
 #' @return
 #'   * If `summary = TRUE`: A `tibble` with the posterior mean for each row in `newdata`,
 #'     If `newdata` is `NULL`, the data in `fit$data` is used.
@@ -574,7 +574,8 @@ pp_eval = function(
   arma = TRUE,
   nsamples = NULL,
   samples_format = "tidy",
-  scale = 'response'
+  scale = 'response',
+  ...
 ) {
   # Recodings
   fit = object
@@ -660,7 +661,7 @@ pp_eval = function(
       newdata,
       tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples),
       by = unique(varying_info$cols),
-      multiple = "all"
+      relationship = "many-to-many"
     ) %>%
       dplyr::mutate(!!returnvar := rlang::exec(fit$simulate, !!!., type = type_for_simulate, rate = rate, which_y = which_y, arma = arma, add_attr = FALSE, scale = scale))
   } else {
@@ -686,7 +687,7 @@ pp_eval = function(
 
       # Apply original order and put newdata as the first columns
       dplyr::arrange(.data$data_row) %>%
-      dplyr::left_join(newdata, by = "data_row") %>%
+      dplyr::left_join(newdata, by = "data_row", relationship = "one-to-one") %>%
       dplyr::select(dplyr::one_of(colnames(newdata)), !!returnvar, "error", -"data_row")
 
 
@@ -697,7 +698,7 @@ pp_eval = function(
         dplyr::mutate(quantile = 100 * .data$quantile) %>%
         tidyr::pivot_wider(names_from = "quantile", names_prefix = "Q", values_from = "y")
 
-      df_return = dplyr::left_join(df_return, quantiles_fit, by = as.character(xvar))
+      df_return = dplyr::left_join(df_return, quantiles_fit, by = as.character(xvar), relationship = "many-to-one")
     }
     return(data.frame(df_return))
   } else if (samples_format == "tidy") {

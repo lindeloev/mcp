@@ -10,10 +10,6 @@ geom_cp_density(fit, facet_by, limits_y)
 \item{fit}{An \code{mcpfit} object}
 
 \item{facet_by}{\code{NULL} or a a string, like \verb{plot.mcpfit(..., facet_by = "id").}}
-
-\item{include}{Boolean. If \code{TRUE} and \code{!is.null(facet_by)}, only return
-densities for the change points "affected" by \code{facet_by}. If \code{FALSE} and \code{!is.null(facet_by)},
-return all densities except those "affected" by \code{facet_by}. Has no effect if \code{is.null(facet_by)}}
 }
 \value{
 A \code{ggplot2::stat_density} geom representing the change point densities.
