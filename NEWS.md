@@ -26,11 +26,11 @@
 
 -   In addition to (segment-wide) intercepts and slopes, there are now default priors for categorical predictors.
 
--   Memory improvement: The `mcpfit` is now \< 10% of the size as before because the log-likelihood is not computed by default anymore (no `fit$mcmc_loglik` anymore). You can add it using `fit = add_loglik()` (adds `fit$loglik`) but if absent, it is automatically computed when calling relevant functions, e.g., `loo(fit)`.
+-   Memory improvement: The `mcpfit` is now \< 10% of the size as before because the log-likelihood is not computed by default anymore (no `fit$mcmc_loglik` anymore). You can add it using `fit = add_loglik(fit)` (adds `fit$loglik`) but if absent, it is automatically computed when calling relevant functions, e.g., `loo(fit)`.
 
 -   Several new arguments to `loo`. `loo(fit, pointwise = TRUE)` uses `loo::loo.function()` for more memory-efficient (but slower) computation of LOO. Other new arguments include the usual from `fitted()` etc.: `loo(fit, nsamples = 1000, arma = FALSE, varying = FALSE)`.
 
--   Sampling is now 1-10% faster.
+-   Sampling is now 1-10% faster due to a new formalization of the underlying JAGS code.
 
 -   `plot()` now uses a filled area for the change-point densities to visually distinguish it from color-coded fitted lines.
 
@@ -68,17 +68,19 @@
 
 ## Behind the scenes
 
--   Major changes in how the model is translated into JAGS code. The JAGS code is quite different but equivalent.
+-   Major changes in how the model is translated into JAGS code. The JAGS code is quite different but functionally equivalent.
 
 -   More thorough defensive coding.
 
--   Much expanded test suite (now 4.000+ tests).
+-   Much expanded test suite (now 4.000+ tests when run in full).
 
 -   The test suite now includes external validation of inference and simulation: AR against `arima()`/`arima.sim()`, binomial against `glm()` / `rbinom()`.
 
 -   Fewer imports to userspace. This minimizes the risk of name conflicts.
 
 -   Many small improvements in efficiency and code simplicity.
+
+
 
 # mcp 0.3.1
 
