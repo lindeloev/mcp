@@ -224,7 +224,7 @@ assert_dpar = function(dpar, fit, type) {
 
   rhs_table = fit$.internal$rhs_table
   allowed_dpars = unique(c(
-    paste0(rhs_table$dpar, tidyr::replace_na(rhs_table$order, "")),   # "mu" "ar1" "ar2" "sigma", etc.
+    paste0(rhs_table$dpar, tidyr::replace_na(as.character(rhs_table$order), "")),   # "mu" "ar1" "ar2" "sigma", etc.
     fit$family$dpars[fit$family$dpars != "ar"],  # any model parameters that have no regerssion terms (~0)
     "epred"
   ))

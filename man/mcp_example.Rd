@@ -46,9 +46,9 @@ Get example models and data
 }
 \section{Functions}{
 \itemize{
-\item \code{mcp_example_data}: Conveniently get simulated data only.
-}}
+\item \code{mcp_example_data()}: Conveniently get simulated data only.
 
+}}
 \examples{
 \donttest{
 fit = mcp_example("multiple")

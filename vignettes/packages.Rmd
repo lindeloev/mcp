@@ -286,11 +286,11 @@ str(list(
 
 
 # TSMCP
-Short for "Time-Series Multiple Change Point". The output is a single number (!). For the problem at hand, changing `method` makes no difference. For many other `c` (`c = 0.3`, `c = 4`), it fails to find any change points at all. There is also `TSMCP::cpvnts()` to model AR(N), but I have failed to make it find any change points in the present data set.
+[Update: `TSMCP` is not on CRAN anymore] Short for "Time-Series Multiple Change Point". The output is a single number (!). For the problem at hand, changing `method` makes no difference. For many other `c` (`c = 0.3`, `c = 4`), it fails to find any change points at all. There is also `TSMCP::cpvnts()` to model AR(N), but I have failed to make it find any change points in the present data set.
 
 It finds the change point at `x = 30`, but not the second change point at `x = 70`.
 
-```{r}
+```{r, eval=FALSE}
 TSMCP::tsmcplm(df$y, X = NULL, method = "adapt", c = 1)
 ```
 

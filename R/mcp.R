@@ -270,14 +270,14 @@ mcp = function(model,
   # Make jags code if it is not provided by the user
   if (is.null(jags_code)) {
     ar_order = get_ar_order(rhs_table)
-    jags_code = get_jags_code(prior, ST, formula_jags, ar_order, family, sample, par_x)
+    jags_code = get_jags_code(prior, ST, formula_jags, ar_order, family, par_x)
   }
 
 
   ##########
   # SAMPLE #
   ##########
-  jags_data = get_jags_data(data, family, ST, rhs_table, jags_code, sample)
+  jags_data = get_jags_data(data, family, ST, rhs_table, jags_code)
 
   # Sample posterior
   if (sample %in% c("post", "both")) {
@@ -302,10 +302,14 @@ mcp = function(model,
 
   # Sample prior
   if (sample %in% c("prior", "both")) {
+    # Set response = NA if we only sample prior
+    jags_data_prior = jags_data
+    jags_data_prior[[ST$y[1]]] = rep(NA, nrow(data))
+
     mcmc_prior = run_jags(
       data = data,
       jags_code = jags_code,
-      jags_data = jags_data,
+      jags_data = jags_data_prior,
       pars = all_pars,
       cores = cores,
       sample = "prior",

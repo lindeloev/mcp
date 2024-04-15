@@ -14,7 +14,7 @@ pp_eval(
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
-  which_y = "mu",
+  dpar = "epred",
   varying = TRUE,
   arma = TRUE,
   nsamples = NULL,
@@ -32,9 +32,10 @@ the original data is used.}
 
 \item{type}{One of:
 \itemize{
-\item \code{"fitted"}: return fitted values. See also \code{fitted()}
-\item \code{"predict"}: return predicted values, using random dispersion around the central tendency
-(e.g., \code{y_predict = rnorm(N, y_fitted, sigma_fitted)} for \code{family = gaussian()}).
+\item \code{"fitted"}: return expected values. When \code{dpar} is the name of a dpar
+(e.g., \code{"mu"} or \code{"sigma"}), the expected value for just this dpar is returned.
+See also \code{fitted()}.
+\item \code{"predict"}: return predicted values (e.g., \code{y_predict = rnorm(N, y_fitted, sigma_fitted)} for \code{family = gaussian()}).
 See also \code{predict()}.
 \item \code{"residuals"}: same as "predict" but the observed y-values are subtracted. See also \code{residuals()}.
 \item \code{"loglik"}: return the log-likelihood for each sample for each data point. See also \code{log_lik()}.
@@ -49,11 +50,12 @@ interpolation on trial number is used to infer trials at a particular x.}
 
 \item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
 
-\item{which_y}{What to plot on the y-axis. One of
+\item{dpar}{What distributional parameter to evaluate. This is only relevant when \code{type == "fitted"}. E.g.,
 \itemize{
+\item \code{"epred"} (default): Expected value of the full model (or \code{NULL} for compatibility with brms etc.).
 \item \code{"mu"}: The central tendency which is often the mean after applying the
 link function.
-\item \code{"sigma"}: The variance
+\item \code{"sigma"}: The standard deviation of the residuals.
 \item \code{"ar1"}, \code{"ar2"}, etc. depending on which order of the autoregressive
 effects you want to plot.
 }}
@@ -61,7 +63,7 @@ effects you want to plot.
 \item{varying}{One of:
 \itemize{
 \item \code{TRUE} All varying effects (\code{fit$pars$varying}).
-\item \code{FALSE} No varying efects (\code{c()}).
+\item \code{FALSE} No varying effects (\code{c()}).
 \item Character vector: Only include specified varying parameters - see \code{fit$pars$varying}.
 }}
 
@@ -80,8 +82,9 @@ See more under "value"}
 
 \item{scale}{One of
 \itemize{
-\item "response": return on the observed scale, i.e., after applying the inverse link function.
-\item "linear": return on the parameter scale (where the linear trends are modelled).
+\item \code{"response"}: return on the observed scale, i.e., after applying the inverse link function.
+\item \code{"linear"}: return on the parameter scale (where the linear trends are modelled).
+A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} is not \code{NULL}.
 }}
 
 \item{...}{Currently ignored.}

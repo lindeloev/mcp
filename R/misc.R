@@ -39,11 +39,14 @@ get_categorical_levels = function(df) {
 # Ask reminder questions for CRAN export
 release_questions = function() {
   c(
-    "Have you run the test of fits? options(test_mcp_fits = TRUE)",
-    "Have you built the README plots and checked them? source('vignettes/figures/make_README_plots.R')",
-    "Have you re-built the site using pkgdown::build_site() AFTER deleting caches of articles?",
-    "Have you checked all articles and plots after re-building the site?",
-    "Have you run the script to insert the correct logo.png in the HTML meta?"
+    "TEST: Have you run the extensive tests? options(test_mcp_allmodels = TRUE)",
+    "TEST: Have you run the test of fits? options(test_mcp_fits = TRUE)",
+    "TEST: Have you run `revdepcheck::revdep_check()`?",
+
+    "DOC: Have you built the README plots and checked them? source('vignettes/figures/make_README_plots.R')",
+    "DOC: Have you re-built the site using pkgdown::build_site() AFTER deleting caches of articles in 'vignettes/*_cache/'?",
+    "DOC: Have you checked all articles and plots after re-building the site?",
+    "DOC: Have you run the script to insert the correct logo.png in the HTML meta?"
   )
 }
 
@@ -261,9 +264,9 @@ get_rhs_matrix = function(rhs_table) {
 tidy_to_matrix = function(samples, returnvar) {
   returnvar = rlang::sym(returnvar)
   samples %>%
-    dplyr::select(.data$.draw, .data$data_row, {{ returnvar }}) %>%
-    tidyr::pivot_wider(names_from = .data$data_row, values_from = {{ returnvar }}) %>%
-    dplyr::select(-.data$.draw) %>%
+    dplyr::select(".draw", "data_row", {{ returnvar }}) %>%
+    tidyr::pivot_wider(names_from = "data_row", values_from = {{ returnvar }}) %>%
+    dplyr::select(-".draw") %>%
     as.matrix()
 }
 

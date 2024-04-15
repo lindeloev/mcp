@@ -177,9 +177,9 @@ get_plot = function(x,
   ###########
   # Initiate plot and show raw data (only applicable in plot.mcpfit())
   if (use_color) {
-    gg = ggplot2::ggplot(fit$data, ggplot2::aes_string(x = fit$pars$x, y = fit$pars$y, color = ".group"))
+    gg = ggplot2::ggplot(fit$data, ggplot2::aes(x = !!rlang::sym(fit$pars$x), y = !!rlang::sym(fit$pars$y), color = .group))
   } else {
-    gg = ggplot2::ggplot(fit$data, ggplot2::aes_string(x = fit$pars$x, y = fit$pars$y, color = NULL))
+    gg = ggplot2::ggplot(fit$data, ggplot2::aes(x = !!rlang::sym(fit$pars$x), y = !!rlang::sym(fit$pars$y), color = NULL))
   }
   if (dpar == "epred") {
     if (geom_data == "point") {
@@ -417,8 +417,8 @@ geom_cp_density = function(fit, facet_by, prior, limits_y) {
                      diff(limits_y) * dens_cut  # Move a bit further down to remove zero-density line from view.
       )
     ) %>%
-    dplyr::select(-.data$dens) %>%
-    tidyr::unnest(c(.data$densx, .data$densy))
+    dplyr::select(-"dens") %>%
+    tidyr::unnest(c("densx", "densy"))
 
 
   # Make the geom!

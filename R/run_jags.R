@@ -85,11 +85,11 @@ run_jags = function(data,
       quiet = FALSE
     ))
 
-  } else if (cores == "all" || cores > 1) {
+  } else if (cores > 1) {
     # PARALLEL using the future package and one chain per worker
     if (future::nbrOfWorkers() == 1)
       message("Setting up parallel workers...")
-    future::plan(future::multisession, .skip = TRUE)
+    future::plan(future::multisession, workers = cores, .skip = TRUE)
 
     message("Parallel sampling in progress...")
     timer = proc.time()
@@ -133,7 +133,7 @@ run_jags = function(data,
 #' @param data A tibble
 #' @param ST A segment table (tibble), returned by `get_segment_table`.
 #' @param rhs_table Returned by `get_rhs()`
-get_jags_data = function(data, family, ST, rhs_table, jags_code, sample) {
+get_jags_data = function(data, family, ST, rhs_table, jags_code) {
   cols_varying = unique(stats::na.omit(ST$cp_group_col))
 
   # Start with "raw" data
@@ -181,10 +181,6 @@ get_jags_data = function(data, family, ST, rhs_table, jags_code, sample) {
   # For default prior
   if (stringr::str_detect(jags_code, "N_CP"))
     jags_data$N_CP = nrow(ST) - 1
-
-  # Set response = NA if we only sample prior
-  if (sample == "prior")
-    jags_data[[ST$y[1]]] = rep(NA, nrow(data))
 
   # Return
   jags_data

@@ -5,6 +5,7 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
 
 name: R-CMD-check
 
@@ -18,8 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macOS-latest,   r: 'release'}
-          - {os: windows-latest, r: 'release'}
+          - {os: macos-latest,    r: 'release'}
+          - {os: windows-latest,  r: 'release'}
           - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
           - {os: ubuntu-latest,   r: 'oldrel-1'}
@@ -31,14 +32,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: r-lib/actions/setup-pandoc@v1
+      - uses: r-lib/actions/setup-pandoc@v2
 
       # JAGS install from https://github.com/boydorr/SpARKjags/blob/master/.github/workflows/test-build.yaml
       # JAGS is automatically installed on linux via the rjags package.
       - name: Install JAGS (if Windows)
         if: runner.os == 'Windows'
         run: |
-          curl.exe -o wjags.exe --url https://deac-fra.dl.sourceforge.net/project/mcmc-jags/JAGS/4.x/Windows/JAGS-4.3.0.exe
+          curl.exe -o wjags.exe --url https://deac-fra.dl.sourceforge.net/project/mcmc-jags/JAGS/4.x/Windows/JAGS-4.3.1.exe
           wjags.exe /S
           del wjags.exe
         shell: cmd
@@ -48,20 +49,28 @@ jobs:
         run: brew install jags
 
       # R
-      - uses: r-lib/actions/setup-r@v1
+      - uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      - uses: r-lib/actions/setup-r-dependencies@v1
+      - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: rcmdcheck, covr
+          extra-packages: any::rcmdcheck, any::covr
+          needs: check, coverage
 
-      - uses: r-lib/actions/check-r-package@v1
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          upload-snapshots: true
 
       # Run test coverage on the fastest-to-run job
       - name: Test coverage
-        if: matrix.config.os == 'macOS-latest' && matrix.config.r == 'release'
-        run: covr::codecov()
+        if: matrix.config.os == 'macos-latest' && matrix.config.r == 'release'
+        run: |
+          covr::codecov(
+            quiet = FALSE,
+            clean = FALSE,
+            install_path = file.path(Sys.getenv("RUNNER_TEMP"), "package")
+          )
         shell: Rscript {0}

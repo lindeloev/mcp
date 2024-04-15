@@ -30,7 +30,7 @@ test_that("Binomial inference against glm()", {
 
 
 test_that("Binomial simulation against glm()", {
-  newdata = dplyr::select(df, -y) %>% tidyr::expand_grid(rep = c(1:100))
+  newdata = df %>% dplyr::select(-"y") %>% tidyr::expand_grid(rep = c(1:100))
   newdata$y = fit_mcp$simulate(fit_mcp, newdata, Intercept_1 = 2, x_1 = -0.1, groupB_1 = -1)
 
   fit_glm_sim = glm(cbind(y, N - y) ~ x + group, data = newdata, family = binomial())

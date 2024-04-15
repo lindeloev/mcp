@@ -73,9 +73,9 @@ This function extracts an \code{par_x}-less design matrix.
 }
 \section{Functions}{
 \itemize{
-\item \code{get_rhs_table}: Apply \code{get_rhs_table_segment} to all segments of a model.
-}}
+\item \code{get_rhs_table()}: Apply \code{get_rhs_table_segment} to all segments of a model.
 
+}}
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
 }

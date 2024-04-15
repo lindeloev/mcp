@@ -18,9 +18,9 @@ Create or Test Objects of Class "mcpfamily"
 }
 \section{Functions}{
 \itemize{
-\item \code{is.mcpfamily}: Checks whether x is an \code{mcpfamily}.
-}}
+\item \code{is.mcpfamily()}: Checks whether x is an \code{mcpfamily}.
 
+}}
 \seealso{
 \code{\link{family}}
 }

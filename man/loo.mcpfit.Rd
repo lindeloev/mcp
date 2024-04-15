@@ -25,7 +25,7 @@
 \item{varying}{One of:
 \itemize{
 \item \code{TRUE} All varying effects (\code{fit$pars$varying}).
-\item \code{FALSE} No varying efects (\code{c()}).
+\item \code{FALSE} No varying effects (\code{c()}).
 \item Character vector: Only include specified varying parameters - see \code{fit$pars$varying}.
 }}
 
@@ -44,9 +44,9 @@ more in \code{\link[loo]{loo}}.
 }
 \section{Functions}{
 \itemize{
-\item \code{waic.mcpfit}: Computes WAIC on mcpfit objects
-}}
+\item \code{waic(mcpfit)}: Computes WAIC on mcpfit objects
 
+}}
 \examples{
 \donttest{
 # Define two models and sample them

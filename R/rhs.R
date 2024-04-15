@@ -22,7 +22,7 @@ get_par_x = function(model, data, par_x = NULL) {
 
   # Check for exactly one continuous
   rhs_vars = get_rhs_vars(model)
-  data_in_rhs = data %>% dplyr::select(dplyr::all_of(rhs_vars), par_x)
+  data_in_rhs = data %>% dplyr::select(dplyr::all_of(rhs_vars), dplyr::all_of(par_x))
   continuous_cols = lapply(data_in_rhs, is_continuous) %>% unlist()
   par_x_candidates = names(continuous_cols)[continuous_cols]
   if (is.character(par_x)) {
@@ -201,7 +201,7 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
       matrix_data = list(mat_without_x[, .data$matrix_col])
     ) %>%
     dplyr::ungroup() %>%
-    dplyr::select(-.data$matrix_col)
+    dplyr::select(-"matrix_col")
 
   # Return
   rhs_table
@@ -435,13 +435,13 @@ get_rhs_table = function(model, data, family, par_x, check_rank = TRUE) {
     dplyr::filter(.data$par_type == "Intercept") %>%
     dplyr::mutate(next_intercept = as.integer(dplyr::lead(.data$segment))) %>%
     dplyr::ungroup() %>%
-    dplyr::select(.data$dpar, .data$segment, .data$order, .data$next_intercept)
+    dplyr::select("dpar", "segment", "order", "next_intercept")
 
   # Return: left-join and fill-down. NA means "there is no next intercept-segment"
   rhs_table %>%
     dplyr::left_join(df_next_intercept, by = c("dpar", "segment", "order")) %>%
     dplyr::group_by(.data$dpar, .data$order) %>%
-    tidyr::fill(.data$next_intercept, .direction = "down") %>%
+    tidyr::fill("next_intercept", .direction = "down") %>%
     dplyr::ungroup() %>%
     dplyr::mutate(next_intercept = dplyr::if_else(.data$segment >= .data$next_intercept, NA_integer_, .data$next_intercept))
 }

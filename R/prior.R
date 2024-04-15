@@ -162,7 +162,7 @@ get_prior = function(ST, rhs_table, family, prior = list()) {
   # Priors for change points
   cp_prior = default_common_priors %>%
     dplyr::filter(.data$family == "changepoint", .data$link == "identity") %>%
-    dplyr::select(.data$dpar, .data$prior) %>%
+    dplyr::select("dpar", "prior") %>%
     tibble::deframe() %>%
     as.list()
 
@@ -195,7 +195,7 @@ get_prior = function(ST, rhs_table, family, prior = list()) {
   # Priors for RHS parameters
   rhs_prior = rhs_table %>%
     dplyr::left_join(family$default_prior, by = c("dpar", "par_type")) %>%
-    dplyr::select(.data$code_name, .data$prior) %>%
+    dplyr::select("code_name", "prior") %>%
     tibble::deframe() %>%
     as.list()
 

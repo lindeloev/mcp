@@ -14,7 +14,7 @@
 #' @return String. A JAGS model.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_jags_code = function(prior, ST, formula_jags, ar_order, family, sample, par_x) {
+get_jags_code = function(prior, ST, formula_jags, ar_order, family, par_x) {
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
   mm = paste0("model {")

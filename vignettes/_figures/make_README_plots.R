@@ -48,9 +48,9 @@ loo::loo_compare(fit_demo$loo, fit_null$loo)
 ################
 # Two plateaus #
 ################
-fit_plateaus = mcp_example("intercepts")
-#fit_plateaus = mcp(ex_intercepts$model, ex_intercepts$data, par_x = "x", adapt = 3000)
-theme_it(plot(fit_plateaus, lines = 25), "Two plateaus")
+fit_intercepts = mcp_example("intercepts")
+#fit_intercepts = mcp(ex_intercepts$model, ex_intercepts$data, par_x = "x", adapt = 3000)
+theme_it(plot(fit_intercepts, lines = 25), "Two plateaus")
 save_it("ex_plateaus.png")
 
 

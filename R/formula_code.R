@@ -25,7 +25,7 @@ get_formula_jags = function(ST, rhs_table, par_x, family) {
 
   # Build formula for each dpar (note plural "_dpars")
   formula_jags_dpars = rhs_table %>%
-    dplyr::select(-.data$matrix_data) %>%  # Throw less data around
+    dplyr::select(-"matrix_data") %>%  # Throw less data around
     dplyr::rowwise() %>%
     dplyr::mutate(
       # Left-join ST
@@ -34,7 +34,7 @@ get_formula_jags = function(ST, rhs_table, par_x, family) {
       form = ST$form[[.data$segment]],
 
       # One dpar per ar order: (ar, 1) --> ar1
-      dpar = paste0(.data$dpar, tidyr::replace_na(.data$order, ""))
+      dpar = paste0(.data$dpar, tidyr::replace_na(as.character(.data$order), ""))
     ) %>%
 
     # Build formula for each dpar

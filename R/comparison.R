@@ -110,17 +110,17 @@ add_loglik = function(x, varying = TRUE, arma = TRUE) {
 
   # Log-likelihoods
   fit$loglik = loglik_samples %>%
-    dplyr::select(.data$.chain, .data$.draw, .data$data_row, .data$loglik) %>%
+    dplyr::select(".chain", ".draw", "data_row", "loglik") %>%
 
     # To matrix
     tidyr::pivot_wider(id_cols =  c(.data$.chain, .data$.draw), names_from = .data$data_row, values_from = .data$loglik) %>%
-    dplyr::select(-.data$.chain, -.data$.draw) %>%
+    dplyr::select(-".chain", -".draw") %>%
     as.matrix()
 
   # Chain info
   rownames(fit$loglik) = loglik_samples %>%
     dplyr::filter(.data$data_row == 1) %>%
-    dplyr::pull(.data$.chain)
+    dplyr::pull(".chain")
 
   fit
 }

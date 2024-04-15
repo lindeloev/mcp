@@ -15,20 +15,20 @@ License: GPL-2
 Encoding: UTF-8
 Language: en-US
 LazyData: true
-RoxygenNote: 7.1.2
+RoxygenNote: 7.3.1
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 3.5.0)
 Config/testthat/parallel: true
 Config/testthat/edition: 3
 Imports:
 	future (>= 1.20.0),
-	future.apply,
+	future.apply (>= 1.4),
 	rjags (>= 4.9),
 	coda (>= 0.19.3),
 	loo (>= 2.1.0),
 	bayesplot (>= 1.7.0),
 	tidybayes (>= 3.0.0),
-	dplyr (>= 1.0.0),
+	dplyr (>= 1.1.1),
 	magrittr (>= 1.5),
 	tidyr (>= 1.0.0),
 	tidyselect (>= 0.2.5),
@@ -44,5 +44,4 @@ Suggests:
   testthat (>= 3.1.0),
   purrr (>= 0.3.4),
 	knitr, 
-	rmarkdown,
-	covr
+	rmarkdown

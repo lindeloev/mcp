@@ -151,9 +151,9 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 
     # Add simulation to the beginning of the list
     estimates = estimates %>%
-      dplyr::left_join(simulated, by = "name") %>%
+      dplyr::left_join(simulated, by = "name", relationship = "one-to-one") %>%
       dplyr::mutate(match = ifelse(.data$sim > .data$lower & .data$sim < .data$upper, yes = "OK", no = "")) %>%
-      dplyr::select(.data$name, .data$match, .data$sim, .data$mean, .data$lower, .data$upper)
+      dplyr::select("name", "match", "sim", "mean", "lower", "upper")
   }
 
   # Merge them and return
@@ -455,7 +455,7 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
 #'   * Character vector: Only include specified population parameters - see `fit$pars$population`.
 #' @param varying One of:
 #'   * `TRUE` All varying effects (`fit$pars$varying`).
-#'   * `FALSE` No varying efects (`c()`).
+#'   * `FALSE` No varying effects (`c()`).
 #'   * Character vector: Only include specified varying parameters - see `fit$pars$varying`.
 #' @param absolute
 #'   * `TRUE` Returns the absolute location of all varying change points.
@@ -549,7 +549,7 @@ tidy_samples = function(
 
   # Return with chain etc. first
   samples %>%
-    dplyr::select(.data$.chain, .data$.iteration, .data$.draw, dplyr::everything())
+    dplyr::relocate(".chain", ".iteration", ".draw")
 }
 
 
@@ -693,7 +693,8 @@ pp_eval = function(
     samples = dplyr::left_join(
       add_rhs_predictors(newdata, fit),
       tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples),
-      by = unique(varying_info$cols)
+      by = unique(varying_info$cols),
+      relationship = "many-to-many"
     ) %>%
       dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!., .type = type_for_simulate, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale)) %>%
       dplyr::select(-dplyr::starts_with(".pred_"))
@@ -721,8 +722,8 @@ pp_eval = function(
 
       # Apply original order and put newdata as the first columns
       dplyr::arrange(.data$data_row) %>%
-      dplyr::left_join(newdata, by = "data_row") %>%
-      dplyr::select(dplyr::one_of(colnames(newdata)), {{ returnvar }} , .data$error, -.data$data_row)
+      dplyr::left_join(newdata, by = "data_row", relationship = "one-to-one") %>%
+      dplyr::select(dplyr::one_of(colnames(newdata)), {{ returnvar }} , "error", -"data_row")
 
 
     # Quantiles
@@ -730,9 +731,9 @@ pp_eval = function(
       quantiles_fit = samples %>%
         get_quantiles(probs, xvar, returnvar, varying_info$cols) %>%
         dplyr::mutate(quantile = 100 * .data$quantile) %>%
-        tidyr::pivot_wider(names_from = .data$quantile, names_prefix = "Q", values_from = .data$y)
+        tidyr::pivot_wider(names_from = "quantile", names_prefix = "Q", values_from = "y")
 
-      df_return = dplyr::left_join(df_return, quantiles_fit, by = c(as.character(xvar), varying_info$cols))
+      df_return = dplyr::left_join(df_return, quantiles_fit, by = c(as.character(xvar), varying_info$cols), relationship = "many-to-one")
     }
     return(data.frame(df_return))
   } else if (samples_format == "tidy") {
@@ -761,13 +762,13 @@ pp_eval = function(
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @examples
-#' predict(demo_fit)  # Pointwise posterior predictive
 #' fitted(demo_fit)  # Expected value at each demo_fit$data at response-level
 #' residuals(demo_fit)  # Residuals at each demo_fit$data at response-level
 #' log_lik(demo_fit)  # Log-likelihood at each demo_fit$data
 #'
 #' # All of the above take a range of arguments. E.g.,:
 #' \donttest{
+#' predict(demo_fit)  # Pointwise posterior predictive
 #' predict(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
 #' predict(demo_fit, prior = TRUE)  # Prior predictive
 #' fitted(demo_fit, summary = FALSE)  # Samples instead of summary. Useful for plotting distributions.

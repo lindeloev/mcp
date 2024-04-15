@@ -21,7 +21,6 @@
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
-  which_y = "mu",
   varying = TRUE,
   arma = TRUE,
   nsamples = NULL,
@@ -36,7 +35,7 @@
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
-  which_y = "mu",
+  dpar = "epred",
   varying = TRUE,
   arma = TRUE,
   nsamples = NULL,
@@ -54,7 +53,6 @@
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
-  which_y = "mu",
   varying = TRUE,
   arma = TRUE,
   nsamples = NULL,
@@ -90,19 +88,10 @@ interpolation on trial number is used to infer trials at a particular x.}
 
 \item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
 
-\item{which_y}{What to plot on the y-axis. One of
-\itemize{
-\item \code{"mu"}: The central tendency which is often the mean after applying the
-link function.
-\item \code{"sigma"}: The variance
-\item \code{"ar1"}, \code{"ar2"}, etc. depending on which order of the autoregressive
-effects you want to plot.
-}}
-
 \item{varying}{One of:
 \itemize{
 \item \code{TRUE} All varying effects (\code{fit$pars$varying}).
-\item \code{FALSE} No varying efects (\code{c()}).
+\item \code{FALSE} No varying effects (\code{c()}).
 \item Character vector: Only include specified varying parameters - see \code{fit$pars$varying}.
 }}
 
@@ -121,10 +110,21 @@ See more under "value"}
 
 \item{...}{Currently ignored.}
 
+\item{dpar}{What distributional parameter to evaluate. This is only relevant when \code{type == "fitted"}. E.g.,
+\itemize{
+\item \code{"epred"} (default): Expected value of the full model (or \code{NULL} for compatibility with brms etc.).
+\item \code{"mu"}: The central tendency which is often the mean after applying the
+link function.
+\item \code{"sigma"}: The standard deviation of the residuals.
+\item \code{"ar1"}, \code{"ar2"}, etc. depending on which order of the autoregressive
+effects you want to plot.
+}}
+
 \item{scale}{One of
 \itemize{
-\item "response": return on the observed scale, i.e., after applying the inverse link function.
-\item "linear": return on the parameter scale (where the linear trends are modelled).
+\item \code{"response"}: return on the observed scale, i.e., after applying the inverse link function.
+\item \code{"linear"}: return on the parameter scale (where the linear trends are modelled).
+A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} is not \code{NULL}.
 }}
 }
 \value{
@@ -154,33 +154,33 @@ from (``)
 }
 \details{
 \code{residuals(fit)} is equivalent to  \code{fitted(fit, ...) - fit$data[, fit$data$yvar]} (or \code{fitted(fit, ...) - newdata[, fit$data$yvar]}),
-but with fixed arguments for \code{fitted}: \verb{rate = FALSE, which_y = 'mu', samples_format = 'tidy'}.
+but with fixed arguments for \code{fitted}: \verb{rate = FALSE, dpar = 'mu', samples_format = 'tidy'}.
 }
 \section{Functions}{
 \itemize{
-\item \code{predict.mcpfit}: Predictive Distribution
+\item \code{predict(mcpfit)}: Predictive Distribution
 
-\item \code{fitted.mcpfit}: Expected distribution
+\item \code{fitted(mcpfit)}: Expected distribution
 
-\item \code{logLik.mcpfit}: Alias for built-in method
+\item \code{logLik(mcpfit)}: Alias for built-in method
 
-\item \code{log_lik.mcpfit}: Pointwise log-likelihood
+\item \code{log_lik(mcpfit)}: Pointwise log-likelihood
 
-\item \code{residuals.mcpfit}: Residual distribution
+\item \code{residuals(mcpfit)}: Residual distribution
+
 }}
-
 \examples{
-predict(demo_fit)  # Pointwise posterior predictive
 fitted(demo_fit)  # Expected value at each demo_fit$data at response-level
 residuals(demo_fit)  # Residuals at each demo_fit$data at response-level
 log_lik(demo_fit)  # Log-likelihood at each demo_fit$data
 
 # All of the above take a range of arguments. E.g.,:
 \donttest{
+predict(demo_fit)  # Pointwise posterior predictive
 predict(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80\% credible interval.
 predict(demo_fit, prior = TRUE)  # Prior predictive
 fitted(demo_fit, summary = FALSE)  # Samples instead of summary. Useful for plotting distributions.
-fitted(demo_fit, which_y = "sigma")  # Another model parameter
+fitted(demo_fit, dpar = "sigma")  # Another model parameter
 
 # Evaluate at novel data
 novel_data = data.frame(time = c(-5, 20, 300))  # Only predictors are needed

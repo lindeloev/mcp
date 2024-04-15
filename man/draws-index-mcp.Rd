@@ -24,11 +24,11 @@ Index variables, iterations, chains, and draws.
 }
 \section{Functions}{
 \itemize{
-\item \code{niterations.mcpfit}: Total number of iterations of an \code{mcpfit} object.
+\item \code{niterations(mcpfit)}: Total number of iterations of an \code{mcpfit} object.
 
-\item \code{nchains.mcpfit}: Number of chains of an \code{mcpfit} object.
+\item \code{nchains(mcpfit)}: Number of chains of an \code{mcpfit} object.
+
 }}
-
 \examples{
 niterations(demo_fit)
 nchains(demo_fit, prior = TRUE)
