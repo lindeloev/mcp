@@ -88,11 +88,11 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 
     # Compute mean and HDI intervals and name appropriately
     tidybayes::mean_hdci(.data$value, .width = width) %>%
-    dplyr::rename(mean = .data$value,
-                  lower = .data$.lower,
-                  upper = .data$.upper) %>%
+    dplyr::rename(mean = "value",
+                  lower = ".lower",
+                  upper = ".upper") %>%
 
-    # Remove unneeded stuf
+    # Remove unneeded stuff
     dplyr::select(-tidyselect::starts_with("."))
 
   # Revert HACK and continue
@@ -108,6 +108,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
     Rhat = rep(NA, nrow(estimates))
   }
   diagnostics = data.frame(
+    name = names(Rhat),
     Rhat = Rhat,
     n.eff = round(coda::effectiveSize(samples))
   )
@@ -153,12 +154,13 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
     estimates = estimates %>%
       dplyr::left_join(simulated, by = "name", relationship = "one-to-one") %>%
       dplyr::mutate(match = ifelse(.data$sim > .data$lower & .data$sim < .data$upper, yes = "OK", no = "")) %>%
-      dplyr::select("name", "match", "sim", "mean", "lower", "upper")
+      dplyr::relocate("name", "match", "sim")
   }
 
   # Merge them and return
-  result = dplyr::bind_cols(estimates, diagnostics)
-  data.frame(result, row.names = NULL)
+  result = estimates %>%
+    dplyr::left_join(diagnostics, by = "name", relationship = "one-to-one") %>%
+    data.frame(row.names = NULL)
 }
 
 
@@ -690,21 +692,22 @@ pp_eval = function(
   type_for_simulate = ifelse(type == "residuals", yes = "fitted", no = type)
   if (length(varying_info$cols) > 0) {
     # If there are varying effects: use varying-matching samples for each row of data
-    samples = dplyr::left_join(
+    samples_predictors = dplyr::left_join(
       add_rhs_predictors(newdata, fit),
       tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples),
       by = unique(varying_info$cols),
       relationship = "many-to-many"
-    ) %>%
-      dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!., .type = type_for_simulate, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale)) %>%
-      dplyr::select(-dplyr::starts_with(".pred_"))
+    )
   } else {
     # No varying effects: use all samples for each row of data
-    samples = tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples) %>%
-      tidyr::expand_grid(add_rhs_predictors(newdata, fit)) %>%
-      dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!., .type = type_for_simulate, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale)) %>%
-      dplyr::select(-dplyr::starts_with(".pred_"))
+    samples_predictors = tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples) %>%
+      tidyr::expand_grid(add_rhs_predictors(newdata, fit))
   }
+
+  samples = samples_predictors %>%
+    dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!samples_predictors, .type = type_for_simulate, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale)) %>%
+    dplyr::select(-dplyr::starts_with(".pred_"))
+
 
   # Optionally compute residuals
   if (type == "residuals")

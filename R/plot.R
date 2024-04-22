@@ -177,9 +177,9 @@ get_plot = function(x,
   ###########
   # Initiate plot and show raw data (only applicable in plot.mcpfit())
   if (use_color) {
-    gg = ggplot2::ggplot(fit$data, ggplot2::aes(x = !!rlang::sym(fit$pars$x), y = !!rlang::sym(fit$pars$y), color = .group))
+    gg = ggplot2::ggplot(fit$data, ggplot2::aes(x = .data[[fit$pars$x]], y = .data[[fit$pars$y]], color = .data$.group))
   } else {
-    gg = ggplot2::ggplot(fit$data, ggplot2::aes(x = !!rlang::sym(fit$pars$x), y = !!rlang::sym(fit$pars$y), color = NULL))
+    gg = ggplot2::ggplot(fit$data, ggplot2::aes(x = .data[[fit$pars$x]], y = .data[[fit$pars$y]], color = NULL))
   }
   if (dpar == "epred") {
     if (geom_data == "point") {
@@ -406,8 +406,8 @@ geom_cp_density = function(fit, facet_by, prior, limits_y) {
 
     # Compute density per group
     #dplyr::mutate(!!facet_by := dplyr::if_else(facet_by %in% colnames(.), !!facet_by, NULL)) %>%  # Attempt at faceting non-varying
-    dplyr::group_by(dplyr::across(c(.chain, cp_name, !!facet_by))) %>%
-    dplyr::summarise(dens = list(stats::density(value, bw = "SJ", n = 2^10))) %>%
+    dplyr::group_by(dplyr::across(c(".chain", "cp_name", !!facet_by))) %>%
+    dplyr::summarise(dens = list(stats::density(.data$value, bw = "SJ", n = 2^10))) %>%
     dplyr::rowwise() %>%
     dplyr::mutate(
       densx = list(.data$dens$x),
@@ -425,7 +425,7 @@ geom_cp_density = function(fit, facet_by, prior, limits_y) {
   ggplot2::geom_polygon(ggplot2::aes(
       x = .data$densx,
       y = .data$densy,
-      group = interaction(.chain, cp_name),
+      group = interaction(.data$.chain, .data$cp_name),
       color = NULL
     ),
     data = samples,

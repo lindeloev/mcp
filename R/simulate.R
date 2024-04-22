@@ -295,7 +295,7 @@ simulate_atomic = function(fit,
     dplyr::mutate(
       .simulated_y = rlang::exec(simulate_vectorized,
                                fit,
-                               !!!.,
+                               !!!pred_param_grid,
                                .type = .type,
                                .rate = .rate,
                                .dpar = .dpar,

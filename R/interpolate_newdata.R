@@ -53,11 +53,11 @@ add_group = function(df) {
   categorical_colnames = df %>% get_categorical_levels() %>% names()
   if (length(categorical_colnames) == 0) {
     df$.group = as.factor(1)
-    df
   } else {
-    df %>%
-      dplyr::mutate(.group = dplyr::select(., !!!categorical_colnames) %>% interaction())
+    df$.group = dplyr::select(df, !!!categorical_colnames) %>% interaction()
   }
+
+  df
 }
 
 #' List of interpolated values at the values in "at".

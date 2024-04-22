@@ -113,7 +113,7 @@ add_loglik = function(x, varying = TRUE, arma = TRUE) {
     dplyr::select(".chain", ".draw", "data_row", "loglik") %>%
 
     # To matrix
-    tidyr::pivot_wider(id_cols =  c(.data$.chain, .data$.draw), names_from = .data$data_row, values_from = .data$loglik) %>%
+    tidyr::pivot_wider(id_cols =  c(".chain", ".draw"), names_from = "data_row", values_from = "loglik") %>%
     dplyr::select(-".chain", -".draw") %>%
     as.matrix()
 
