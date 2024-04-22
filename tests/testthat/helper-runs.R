@@ -236,9 +236,9 @@ test_pp_eval_func = function(fit, func, colname) {
   # Run and test
   result = try(func(fit), silent = TRUE)
   if (inherits(result, "try-error")) {
-    error_message = attr(result, "condition")$message
-    expected_error_poisson = "Problem with \`mutate\\(\\)\`"  # column "predict". OK: a side-effect of the small data and short sampling.
-    testthat::expect_true(fit$family$family != "poisson" | stringr::str_starts(error_message, expected_error_poisson))  # Only test message for poisson
+    error_message = as.character(result)
+    expected_error_poisson = "Modelled extremely large value: exp(y)"  # OK: a test-specific side-effect of the small data and short sampling.
+    testthat::expect_true(fit$family$family != "poisson" | stringr::str_detect(error_message, stringr::fixed(expected_error_poisson)))  # Only test message for poisson
   } else {
     testthat::expect_true(is.data.frame(result))
     testthat::expect_equal(nrow(result), nrow(fit$data))  # Returns same number of rows as data
