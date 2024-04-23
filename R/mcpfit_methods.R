@@ -158,7 +158,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   }
 
   # Merge them and return
-  result = estimates %>%
+  estimates %>%
     dplyr::left_join(diagnostics, by = "name", relationship = "one-to-one") %>%
     data.frame(row.names = NULL)
 }
@@ -232,7 +232,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
   # Model info
   cat("Family: ", fit$family$family, "(link = '", fit$family$link, "')\n", sep = "")
   if (!is.null(samples))
-    cat("Iterations: ", niterations(fit), " from ", nchains(fit), " chains.\n", sep="")
+    cat("Iterations: ", niterations(fit, prior = prior), " from ", nchains(fit, prior = prior), " chains.\n", sep="")
   cat("Segments:\n")
   for (i in 1:length(fit$model)) {
     cat("  ", i, ": ", formula_to_char(fit$model[[i]]), "\n", sep = "")
@@ -313,7 +313,6 @@ is_arma = function(fit) {
 }
 
 
-
 #' Internal function to get samples.
 #'
 #' Returns posterior samples, if available. If not, then prior samples. If not,
@@ -338,7 +337,7 @@ mcmclist_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
   if (coda::is.mcmc.list(fit$mcmc_post)) {
     return(fit$mcmc_post)
   } else if (coda::is.mcmc.list(fit$mcmc_prior)) {
-    message("Posterior was not sampled. Using prior samples.")
+    message("Posterior was not sampled. Using prior samples. Set `prior = TRUE` to mute this message.")
     return(fit$mcmc_prior)
   } else if (error == TRUE) {
     stop("This mcpfit contains no posterior or prior samples.")
