@@ -57,14 +57,6 @@ get_ar_order = function(rhs_table) {
 }
 
 
-# Just returns cp_1, cp_2, etc.
-get_cp_pars = function(pars) {
-  assert_types(pars, "list")
-  assert_types(pars$reg, "character")
-  pars$reg[stringr::str_detect(pars$reg, "^cp_[0-9]+$") & !stringr::str_detect(pars$reg, "^cp_[0-9]+_sd$")]  # cp_1 but not cp_1_sd
-}
-
-
 #' Remove varying or population terms from a formula
 #'
 #' WARNING: removes response side from the formula

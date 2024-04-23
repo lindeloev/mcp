@@ -244,14 +244,17 @@ mcp = function(model,
   pars = list(
     x = par_x,
     y = unique(ST$y),
-    trials = logical0_to_null(stats::na.omit(unique(ST$trials))),
-    weights = logical0_to_null(stats::na.omit(unique(ST$weights))),
+    cp = paste0("cp_", 1:nrow(ST))[seq_len(nrow(ST)-1)],  # N_cp = N_segments - 1
+    fixed = c(),
+    population = c(),
     varying = logical0_to_null(c(stats::na.omit(ST$cp_group))),
     sigma = all_pars[stringr::str_detect(all_pars, "^sigma_")],
-    arma = all_pars[stringr::str_detect(all_pars, "(^ar|^ma)[0-9]")]
+    arma = all_pars[stringr::str_detect(all_pars, "(^ar|^ma)[0-9]")],
+    trials = logical0_to_null(stats::na.omit(unique(ST$trials))),
+    weights = logical0_to_null(stats::na.omit(unique(ST$weights)))
   )
-  pars$reg = all_pars[all_pars %notin% c(pars$varying, pars$sigma, pars$arma)]
-  pars$population = c(pars$reg, pars$sigma, pars$arma)
+  pars$fixed = all_pars[all_pars %notin% c(pars$cp, pars$varying, pars$sigma, pars$arma)]
+  pars$population = c(pars$cp, pars$fixed, pars$sigma, pars$arma)
 
   # Check parameters
   # ARMA models

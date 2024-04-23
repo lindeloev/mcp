@@ -75,7 +75,7 @@ add_rhs_predictors = function(newdata, fit) {
 #' @return Character vector
 get_sim_pars = function(rhs_table, pars) {
   c(
-    get_cp_pars(pars),  # cp_1 but not cp_1_sd
+    pars$cp,  # cp_1, cp_2, etc.
     rhs_table$code_name,  # mu, sigma, ar, etc.
     pars$varying
   )
@@ -325,9 +325,9 @@ simulate_atomic = function(fit,
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_fitsimulate = function(pars) {
   # List of argument names
-  pars_reg = pars$reg[!stringr::str_ends(pars$reg, "_sd")]  # Remove hyperparameter on varying effects from pars$reg since it is not used for simulation
+  sim_pars = c(pars$cp, pars$fixed[!stringr::str_ends(pars$fixed, "_sd")])  # Remove hyperparameter on varying effects from pars$reg since it is not used for simulation
 
-  args_required = c(pars_reg, pars$sigma, pars$arma)
+  args_required = c(sim_pars, pars$sigma, pars$arma)
   args_default = c(pars$varying)
   args_all = c(args_required, args_default)
 

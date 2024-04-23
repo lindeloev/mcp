@@ -23,29 +23,29 @@ get_x_values = function(fit, facet_by = NULL, prior = FALSE) {
 
   # If there are ARMA terms, evaluate at the data
   if (length(fit$pars$arma) > 0) {
-    return(xdata)
-
+    x_values = xdata
+  } else if (!is.null(facet_by) || is.null(fit$mcmc_post)) {
     # Just give up for faceting and prior-plots (usually very distributed change points)
     # and return a reasonable resolution
-  } else if (!is.null(facet_by) || is.null(fit$mcmc_post)) {
     x_values = seq(min(xdata), max(xdata), length.out = X_RESOLUTION_FACET)
-    return(x_values)
-
-    # Make regions of fine resolution within course resolution
+  } else if (length(fit$pars$cp) == 0) {
+    # No change points. Use default resolution for the whole plot
+    x_values = seq(min(xdata), max(xdata), length.out = N_BASIS)
   } else {
+    # Make fine resolution around change points in addition to course resolution
     # Get samples for these change points
     samples = mcmclist_samples(fit, prior = prior)
-    cp_pars = get_cp_pars(fit$pars)
+    cp_pars = fit$pars$cp
     call = paste0("tidybayes::spread_draws(samples, ", paste0(cp_pars, collapse = ", "), ")")
     samples = eval(str2lang(call))
 
     # Compute and return
     x_values = sort(c(
-      seq(min(xdata), max(xdata), length.out = N_BASIS),  # Default res for whole plot
+      seq(min(xdata), max(xdata), length.out = N_BASIS),  # Default resolution for the whole plot
       unlist(lapply(cp_pars, function(cp_par) unname(stats::quantile(samples[[cp_par]], probs = seq(0, 1, length.out = N_CP)))))  # Higher res at change points
     ))
-    return(x_values)
   }
+  return(x_values)
 }
 
 # Add column ".group" which is the interaction of all categorical colnames

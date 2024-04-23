@@ -131,14 +131,14 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_formula_r = function(formula_jags, rhs_table, pars) {
-  all_pars = get_sim_pars(rhs_table, pars)
+  sim_pars = get_sim_pars(rhs_table, pars)
   rhs_pars = rhs_table$code_name
-  cp_pars = setdiff(all_pars, rhs_pars)
+  cp_pars = setdiff(sim_pars, rhs_pars)
 
   # Replacements that turns rowwise JAGS code into vectorized R code
   replace_args = c(
     # RHS
-    stats::setNames(paste0(", args$", all_pars), paste0(", ", all_pars)),
+    stats::setNames(paste0(", args$", sim_pars), paste0(", ", sim_pars)),
     stats::setNames(paste0("args$", rhs_pars, ", "), paste0(rhs_pars, ", ")),
     stats::setNames(paste0("cbind(args$"), "cbind("),
     stats::setNames("args$", "args$args$"),  # Fix double-inserting args$ above
