@@ -39,8 +39,8 @@ get_categorical_levels = function(df) {
 # Ask reminder questions for CRAN export
 release_questions = function() {
   c(
-    "TEST: Have you run the extensive tests? options(test_mcp_allmodels = TRUE)",
-    "TEST: Have you run the test of fits? options(test_mcp_fits = TRUE)",
+    #"TEST: Have you run the extensive tests? options(test_mcp_allmodels = TRUE)",
+    "TEST: Have you run the test of fits? (uncomment skip() in test-fits-examples.R and helper-fits.R)",
     "TEST: Have you run `revdepcheck::revdep_check()`?",
 
     "DOC: Have you built the README plots and checked them? source('vignettes/figures/make_README_plots.R')",

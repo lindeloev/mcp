@@ -14,7 +14,7 @@ models_gauss = list(
        ~ 1 + sigma(1),
        simulated = list(
          cp_1 = 70,
-         cp_2 = 70,
+         cp_2 = 140,
          Intercept_1 = 10,
          Intercept_3 = 0,
          x_1 = 0.5,

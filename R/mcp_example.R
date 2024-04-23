@@ -260,7 +260,7 @@ data = data.frame(
 )
 empty = mcp::mcp(model, data, sample = FALSE)
 data$y = empty$simulate(empty, data,
-    cp_1 = 25,
+    cp_1 = 24.5,
     cp_2 = 75,
     Intercept_1 = 20,
     x_3 = 2,
@@ -270,7 +270,7 @@ data$y = empty$simulate(empty, data,
   )
 
 # Run sampling
-fit = mcp(model, data, adapt = 3000, sample = sample)",
+fit = mcp(model, data, iter = 4000, adapt = 3000, sample = sample)",
 
 
 

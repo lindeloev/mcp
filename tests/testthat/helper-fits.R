@@ -11,6 +11,8 @@
 #' @param model A list of (unnamed) formulas
 #' @param simulated Parameter values to be used for simulation.
 test_fit = function(model, simulated) {
+  # COMMENT THIS LINE TO ENABLE EXTENSIVE TESTS. THEN REVERT. DO NOT COMMIT.
+  # It's a slow test so we do it rarely.
   testthat::skip("This time-consuming test is only run locally before release.")
 
   # Simulate
