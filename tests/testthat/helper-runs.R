@@ -104,13 +104,11 @@ test_runs = function(model,
       }
     }
 
-    # Test hypothesis
-    test_hypothesis(fit)
-
     for (col in c("mcmc_post", "mcmc_prior")) {
       # To test the prior, try setting mcmc_post = NULL to force use of prior
       # (mcmclist_samples checks for NULL)
-      if (col == "mcmc_prior")
+      prior = col == "mcmc_prior"
+      if (prior == TRUE)
         fit$mcmc_post = NULL
 
       # Check that samples are the correct format
@@ -120,27 +118,31 @@ test_runs = function(model,
 
       # Test mcpfit functions
       varying_cols = na.omit(fit$.internal$ST$cp_group_col)
-      test_summary(fit, varying_cols)
-      #test_plot(fit, varying_cols)  # default plot
-      test_plot_pars(fit)  # bayesplot call
-      test_pp_eval(fit)
+      test_summary(fit, prior, varying_cols)
+      #test_plot(fit, varying_cols)  # default ggplot plot
+      test_plot_pars(fit, prior)  # bayesplot call
+      test_pp_eval(fit, prior)
+      test_hypothesis(fit, prior)
     }
   }
 }
 
 
 # Tests if summary(fit) and ranef(fit) work as expected
-test_summary = function(fit, varying_cols) {
+test_summary = function(fit, prior, varying_cols) {
+  the_summary = purrr::quietly(summary)(fit, prior = prior)  # Do not print to console
+
+  # Are the correct columns present in result?
   summary_cols = c('name','mean','lower','upper','Rhat','n.eff')
-  result = purrr::quietly(summary)(fit)$result  # Do not print to console
-  output = purrr::quietly(summary)(fit)$output  # Do not print to console
-  testthat::expect_true(all(colnames(result) %in% summary_cols))  # All columns
-  testthat::expect_true(all(result$name %in% fit$pars$population))  # All parameters
+  testthat::expect_true(all(colnames(the_summary$result) %in% summary_cols))
+
+  # Are the correct parameters present in result?
+  testthat::expect_true(all(the_summary$result$name %in% fit$pars$population))  # All parameters
 
   # If there are varying effects
   if (length(varying_cols) > 0) {
-    testthat::expect_match(output, "ranef\\(")  # noticed about varying effects
-    varying = ranef(fit)
+    testthat::expect_match(the_summary$output, "ranef\\(")  # noticed about varying effects
+    varying = ranef(fit, prior = prior)
     testthat::expect_true(is.character(varying$name))
     testthat::expect_true(is.numeric(varying$mean))
 
@@ -149,6 +151,7 @@ test_summary = function(fit, varying_cols) {
     testthat::expect_true(nrow(varying) == n_unique_data)  # TO DO: should fail if there are multiple groups
   }
 }
+
 
 # Test the regular plot, including faceting
 test_plot = function(fit, varying_cols) {
@@ -180,30 +183,30 @@ test_plot = function(fit, varying_cols) {
 }
 
 # Test plot() calls to bayesplot
-test_plot_pars = function(fit) {
-  gg = plot_pars(fit, type = "dens_overlay")
+test_plot_pars = function(fit, prior) {
+  gg = plot_pars(fit, type = "dens_overlay", prior = prior)
   testthat::expect_true(ggplot2::is.ggplot(gg))
 }
 
 
 
-test_hypothesis = function(fit) {
+test_hypothesis = function(fit, prior) {
   # Function to test both directional and point hypotheses
-  run_test_hypothesis = function(fit, base) {
-    hypotheses = c(
-      paste0(base, " > 1"),  # Directional
-      paste0(base, " = -1")  # Savage-Dickey (point)
-    )
-    result = hypothesis(fit, hypotheses)
-    testthat::expect_true(is.data.frame(result) & nrow(result) == 2)
+  run_test_hypothesis = function(fit, base, prior = prior) {
+    hypotheses = paste0(base, " > 1")  # Directional
+    if (prior == FALSE)
+      hypotheses = c(hypotheses,  paste0(base, " = -1"))  # Savage-Dickey (point); only works if both prior and posterior is present.
+
+    result = hypothesis(fit, hypotheses, prior = prior)
+    testthat::expect_true(is.data.frame(result) & nrow(result) == length(hypotheses))
   }
 
   # Test single pop effect
-  run_test_hypothesis(fit, fit$pars$population[1])
+  run_test_hypothesis(fit, fit$pars$population[1], prior = prior)
 
   # Test multiple pop effect
   if (length(fit$pars$population) > 1)
-    run_test_hypothesis(fit, paste0(fit$pars$population[1] , " + ", fit$pars$population[2]))
+    run_test_hypothesis(fit, paste0(fit$pars$population[1] , " + ", fit$pars$population[2]), prior = prior)
 
   # Varying
   if (!is.null(fit$pars$varying)) {
@@ -213,16 +216,16 @@ test_hypothesis = function(fit) {
     varying_cols = paste0("`", mcmc_vars[varying_col_ids], "`")  # Add these for varying
 
     # Test single varying effect
-    run_test_hypothesis(fit, varying_cols[1])
+    run_test_hypothesis(fit, varying_cols[1], prior = prior)
 
     # Test multiple varying effects
     if (length(varying_cols) > 1)
-      run_test_hypothesis(fit, paste0(varying_cols[1], " + ", varying_cols[2]))
+      run_test_hypothesis(fit, paste0(varying_cols[1], " + ", varying_cols[2]), prior = prior)
   }
 }
 
 
-test_pp_eval_func = function(fit, func, colname) {
+test_pp_eval_func = function(fit, func, colname, prior) {
   # Settings
   expected_colnames = c(
     fit$pars$x,
@@ -234,7 +237,7 @@ test_pp_eval_func = function(fit, func, colname) {
     expected_colnames = c(expected_colnames, fit$pars$y)
 
   # Run and test
-  result = try(func(fit), silent = TRUE)
+  result = try(func(fit, prior = prior), silent = TRUE)
   if (inherits(result, "try-error")) {
     error_message = as.character(result)
     expected_error_poisson = "Modelled extremely large value: exp(y)"  # OK: a test-specific side-effect of the small data and short sampling.
@@ -248,12 +251,12 @@ test_pp_eval_func = function(fit, func, colname) {
   }
 }
 
-test_pp_eval = function(fit) {
+test_pp_eval = function(fit, prior) {
   # Test pp_eval
-  test_pp_eval_func(fit, fitted, "fitted")
-  test_pp_eval_func(fit, predict, "predict")
-  test_pp_eval_func(fit, residuals, "residuals")
-  test_pp_eval_func(fit, log_lik, "loglik")
+  test_pp_eval_func(fit, fitted, "fitted", prior)
+  test_pp_eval_func(fit, predict, "predict", prior)
+  test_pp_eval_func(fit, residuals, "residuals", prior)
+  test_pp_eval_func(fit, log_lik, "loglik", prior)
 
   # Test the other arguments. Inside "try" without further checking because such errors should be caught by the above.
   result_more = try(fitted(
@@ -261,7 +264,7 @@ test_pp_eval = function(fit) {
     newdata = fit$data[sample(nrow(fit$data), 3), ],
     summary = FALSE,
     probs = c(0.1, 0.5, 0.999),
-    prior = TRUE,
+    prior = prior,
     nsamples = 2,
     arma = FALSE
   ), silent = TRUE)
@@ -292,9 +295,9 @@ test_pp_eval = function(fit) {
   # Test pp_check
   if (length(fit$pars$varying) > 0) {
     varying_col = na.omit(fit$.internal$ST$cp_group_col)[1]  # Just use the first column
-    pp_default = try(pp_check(fit, facet_by = varying_col, nsamples = 2), silent = TRUE)
+    pp_default = try(pp_check(fit, facet_by = varying_col, nsamples = 2, prior = prior), silent = TRUE)
   } else {
-    pp_default = try(pp_check(fit, nsamples = 2), silent = TRUE)
+    pp_default = try(pp_check(fit, nsamples = 2, prior = prior), silent = TRUE)
   }
 
   if (inherits(pp_default, "try-error")) {

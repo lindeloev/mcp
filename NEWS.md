@@ -40,6 +40,8 @@
 
 -   Added `log_lik(fit)` which is analogous to e.g., `fitted(fit)`.
 
+-   Added option to test hypotheses on the prior using `hypothesis(fit, prior = TRUE)`.
+
 ## Minor breaking changes
 
 -   Minor updates to several priors to be more in line with brms: use `median(link(y))` instead of `mean(link(y))` and `mad(link(y))` instead of `sd(link(y))` for mu and sigma respectively.

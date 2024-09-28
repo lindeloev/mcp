@@ -187,11 +187,12 @@ add_loglik = function(x, varying = TRUE, arma = TRUE) {
 #' @export
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
+hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) {
   assert_types(fit, "mcpfit")
   assert_types(hypotheses, "character")
   assert_numeric(width, lower = 0, upper = 1, len = 1)
   assert_integer(digits, lower = 0, len = 1)
+  assert_logical(prior)
 
   # Loop through hypotheses and populate df_result
   df_result = data.frame()
@@ -232,14 +233,14 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
       expression = paste0(LHS, " ", this_comparator, " 0")
 
       # Get effect estimate
-      samples = mcmclist_samples(fit) %>%
+      samples = mcmclist_samples(fit, prior = prior) %>%
         tidybayes::tidy_draws() %>%
         dplyr::mutate(effect = eval(str2lang(LHS)))
 
       # TO DO: check need to suppress warnings when tidybayes 1.2 is out?
       estimate = suppressWarnings(tidybayes::mean_hdci(samples, .data$effect, .width = width))
     } else {
-      samples = mcmclist_samples(fit) %>%
+      samples = mcmclist_samples(fit, prior = prior) %>%
         tidybayes::tidy_draws()
 
       estimate = list(effect = NA, .lower = NA, .upper = NA)
