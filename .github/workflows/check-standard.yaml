@@ -40,7 +40,7 @@ jobs:
       - name: Install JAGS (if Windows)
         if: runner.os == 'Windows'
         run: |
-          curl.exe -o wjags.exe -L0 -k --url https://deac-fra.dl.sourceforge.net/project/mcmc-jags/JAGS/4.x/Windows/JAGS-4.3.1.exe
+          curl.exe -o wjags.exe -L0 -k --url https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Windows/JAGS-4.3.1.exe
           wjags.exe /S
           del wjags.exe
         shell: cmd
