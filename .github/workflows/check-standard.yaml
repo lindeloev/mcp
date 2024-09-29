@@ -50,7 +50,7 @@ jobs:
         # This worked before R 4.3: brew install jags
         run: |
           curl -o wjags.pkg -L0 -k --url https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Mac%20OS%20X/JAGS-4.3.2.pkg
-          installer -pkg wjags.pkg -target /usr/local
+          sudo installer -pkg wjags.pkg -target /
           rm wjags.pkg
 
       # R
