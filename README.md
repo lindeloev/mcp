@@ -1,7 +1,7 @@
 # mcp: Regression with Multiple Change Points<img src="https://github.com/lindeloev/mcp/raw/docs/man/figures/logo_200px.png" align="right" style="padding: 20px; padding-right: 0px;" />
 
 [![mcp Github Actions status](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml)
-[![mcp Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/master/graph/badge.svg)](https://coveralls.io/github/lindeloev/mcp/)
+[![mcp Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/main/graph/badge.svg)](https://coveralls.io/github/lindeloev/mcp/)
 [![mcp CRAN status](https://www.r-pkg.org/badges/version/mcp)](https://CRAN.R-project.org/package=mcp)
 [![mcp CRAN downloads](https://cranlogs.r-pkg.org/badges/mcp)](https://cranlogs.r-pkg.org/badges/mcp)
 
