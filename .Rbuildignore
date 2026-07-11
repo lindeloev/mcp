@@ -19,3 +19,4 @@ logo.png
 ^CRAN-RELEASE$
 fix_twittercard.R
 ^\.github$
+^CRAN-SUBMISSION$

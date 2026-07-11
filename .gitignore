@@ -2,6 +2,7 @@
 .Rhistory
 .Rprofile
 fix_twittercard.R
+/docs/
 vignettes/arma_cache
 vignettes/binomial_cache
 vignettes/comparison_cache
