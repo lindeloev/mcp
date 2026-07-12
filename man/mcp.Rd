@@ -12,7 +12,7 @@ mcp(
   family = gaussian(),
   par_x = NULL,
   sample = "post",
-  cores = 1,
+  cores = NULL,
   chains = 3,
   iter = 3000,
   adapt = 1500,
@@ -81,16 +81,11 @@ object without sample. This is useful if you only want to check
 prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
 }}
 
-\item{cores}{Positive integer or "all". Number of cores.
-\itemize{
-\item \code{1}: serial sampling. \code{options(mc.cores = 3)} will dominate \code{cores = 1}
-but not larger values of \code{cores}.
-\item \verb{>1}: parallel sampling on this number of cores. Ideally set \code{chains}
-to the same value. Note: \code{cores > 1} takes a few extra seconds the first
-time it's called but subsequent calls will start sampling immediately.
-\item \code{"all"}: use all cores but one and sets \code{chains} to the same value. This is
-a convenient way to maximally use your computer's power.
-}}
+\item{cores}{Deprecated and ignored. Configure parallel processing with a
+\link[future:plan]{future} plan instead, for example
+\code{future::plan(future::multisession, workers = 3)}. With the default future
+plan, chains are sampled sequentially. The argument remains available for
+backwards compatibility.}
 
 \item{chains}{Positive integer. Number of chains to run.}
 
@@ -149,7 +144,7 @@ model = list(
 )
 
 # Fit it and sample the prior too.
-# options(mc.cores = 3)  # Uncomment to speed up sampling
+# future::plan(future::multisession, workers = 3)  # Uncomment for parallel sampling
 data = mcp_example_data("demo")  # Simulated data example
 demo_fit = mcp(model, data = data, sample = "both")
 

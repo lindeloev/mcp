@@ -6,6 +6,8 @@
 
 ## Major breaking changes
 
+-   Parallel sampling is now controlled exclusively through the active `{future}` plan. The `cores` argument to `mcp()` is deprecated and ignored, but remains available for backwards compatibility. Use `future::plan(future::multisession, workers = 3)` before calling `mcp()` to sample chains in parallel, and `future::plan(future::sequential)` to shut down those workers. Without a parallel future plan, chains are sampled sequentially.
+
 -   Dropped support for `rel()` in formulas. This was ambiguous for interaction terms and made the code hard to maintain. Another way of achieving the same functionality via the priors may be added in future versions.
 
 -   Renamed parameters to be more consistent with brms: `int_i` --> `Intercept_i`; `x_1_E2` --> `xE2_1`; `x_1_sin` --> `sinx_1`, etc.

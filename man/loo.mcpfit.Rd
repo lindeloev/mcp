@@ -50,7 +50,7 @@ more in \code{\link[loo]{loo}}.
 \examples{
 \donttest{
 # Define two models and sample them
-# options(mc.cores = 3)  # Speed up sampling
+# future::plan(future::multisession, workers = 3)  # Uncomment for parallel sampling
 data = mcp_example_data("intercepts")  # Get some simulated data.
 model1 = list(y ~ 1 + x, ~ 1)
 model2 = list(y ~ 1 + x)  # Without a change point

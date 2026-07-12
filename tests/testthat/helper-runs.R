@@ -43,9 +43,6 @@ test_runs = function(model,
     if (rbinom(1, 1, 0.5) == 1)
       data = tibble::as_tibble(data)
 
-    # Initiates and shut downs sampling much faster with no multicore
-    options(mc.cores = 1)
-
     # Capture (expected) messages and warnings
     quiet_out = purrr::quietly(mcp)(  # Do not print to console
       model = model,
@@ -55,8 +52,7 @@ test_runs = function(model,
       par_x = par_x,
       adapt = 6,
       iter = 18,  # loo fails if this is too low. TO DO: require next version of loo when it is out.
-      chains = 2,  # 1 or 2
-      cores = 1  # run serial for faster init. Parallel can be trused to just work.
+      chains = 2  # run sequentially under the default future plan
     )
 
     # Allow for known messages and wornings that does not signify errors

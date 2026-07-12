@@ -21,7 +21,6 @@ run_jags = function(data,
                     jags_code,
                     jags_data,
                     pars,
-                    cores,
                     sample,
                     n.chains,
                     n.iter,
@@ -34,20 +33,6 @@ run_jags = function(data,
   # save samples from the dummy change points.
   if (length(pars) <= 2)
     pars = c(pars, "cp_0", "cp_1")
-
-  # Set number of cores from "all" or mc.cores if `cores` is not specified.
-  # Max at 2 for CRAN etc.
-  opts_cores = options()$mc.cores
-  if (is.numeric(opts_cores) && cores == 1)
-    cores = opts_cores
-  if (cores == "all") {
-    cores = future::availableCores() - 1
-    n.chains = cores
-  }
-  if (Sys.getenv("_R_CHECK_LIMIT_CORES_", "") == "TRUE") {
-    if (cores > 1)
-      cores = 2
-  }
 
   # Define the sampling function in this environment.
   # Can be used sequentially or in parallel.
@@ -75,24 +60,19 @@ run_jags = function(data,
     )
   }
 
-  # Time for sampling!
-  if (cores == 1) {
-    # SERIAL
-    timer = proc.time()
+  # Use JAGS directly under a sequential future plan. This compiles the model
+  # only once for all chains and preserves JAGS's progress output.
+  n_workers = future::nbrOfWorkers()
+  timer = proc.time()
+  if (n_workers == 1) {
     samples = try(do_sampling(
       seed = NULL,
       n.chains = n.chains,
       quiet = FALSE
     ))
-
-  } else if (cores > 1) {
-    # PARALLEL using the future package and one chain per worker
-    if (future::nbrOfWorkers() == 1)
-      message("Setting up parallel workers...")
-    future::plan(future::multisession, workers = cores, .skip = TRUE)
-
+  } else {
+    # Submit one chain per future. The user's future plan controls the backend.
     message("Parallel sampling in progress...")
-    timer = proc.time()
     samples = future.apply::future_lapply(
       sample(1:1000, n.chains),  # Random seed to JAGS
       n.chains = 1,

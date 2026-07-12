@@ -11,7 +11,7 @@ For GLM families with a variance parameter (`sigma`), you can model this explici
 
 ```{r}
 library(mcp)
-options(mc.cores = 3)  # Speed up sampling
+future::plan(future::multisession, workers = 3)
 set.seed(42)  # Make the script deterministic
 ```
 
@@ -193,5 +193,9 @@ plot(fit, facet_by = "id")
 As usual, we can get the individual change points:
 ```{r}
 ranef(fit)
+```
+
+```{r cleanup, include=FALSE}
+future::plan(future::sequential)
 ```
 

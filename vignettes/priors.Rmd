@@ -45,7 +45,7 @@ Let us see the priors after running them through `mcp` and compare to the defaul
 
 ```{r}
 library(mcp)
-options(mc.cores = 3)  # Speed up sampling
+future::plan(future::multisession, workers = 3)
 set.seed(42)  # Make the script deterministic
 
 empty_manual = mcp(model, prior = prior, sample = FALSE)
@@ -313,5 +313,9 @@ Here is the JAGS code for `fit_manual`:
 
 ```{r}
 fit_manual$jags_code
+```
+
+```{r cleanup, include=FALSE}
+future::plan(future::sequential)
 ```
 

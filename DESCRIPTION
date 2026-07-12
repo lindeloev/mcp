@@ -15,14 +15,15 @@ License: GPL-2
 Encoding: UTF-8
 Language: en-US
 LazyData: true
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
-Depends: R (>= 3.5.0)
+Depends: R (>= 3.6.0)
 Config/testthat/parallel: true
 Config/testthat/edition: 3
 Imports:
 	future (>= 1.20.0),
 	future.apply (>= 1.4),
+	lifecycle (>= 1.0.0),
 	rjags (>= 4.9),
 	coda (>= 0.19.3),
 	loo (>= 2.1.0),

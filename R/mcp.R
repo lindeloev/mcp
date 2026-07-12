@@ -64,15 +64,11 @@
 #'   * `"none"` or `FALSE`: Do not sample. Returns an mcpfit
 #'       object without sample. This is useful if you only want to check
 #'       prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
-#' @param cores Positive integer or "all". Number of cores.
-#'
-#'   * `1`: serial sampling. `options(mc.cores = 3)` will dominate `cores = 1`
-#'     but not larger values of `cores`.
-#'   * `>1`: parallel sampling on this number of cores. Ideally set `chains`
-#'     to the same value. Note: `cores > 1` takes a few extra seconds the first
-#'     time it's called but subsequent calls will start sampling immediately.
-#'   * `"all"`: use all cores but one and sets `chains` to the same value. This is
-#'     a convenient way to maximally use your computer's power.
+#' @param cores Deprecated and ignored. Configure parallel processing with a
+#'   [future][future::plan] plan instead, for example
+#'   `future::plan(future::multisession, workers = 3)`. With the default future
+#'   plan, chains are sampled sequentially. The argument remains available for
+#'   backwards compatibility.
 #' @param chains Positive integer. Number of chains to run.
 #' @param iter Positive integer. Number of post-warmup draws from each chain.
 #'   The total number of draws is `iter * chains`.
@@ -112,7 +108,7 @@
 #' )
 #'
 #' # Fit it and sample the prior too.
-#' # options(mc.cores = 3)  # Uncomment to speed up sampling
+#' # future::plan(future::multisession, workers = 3)  # Uncomment for parallel sampling
 #' data = mcp_example_data("demo")  # Simulated data example
 #' demo_fit = mcp(model, data = data, sample = "both")
 #'
@@ -165,7 +161,7 @@ mcp = function(model,
                family = gaussian(),
                par_x = NULL,
                sample = "post",
-               cores = 1,
+               cores = NULL,
                chains = 3,
                iter = 3000,
                adapt = 1500,
@@ -208,15 +204,27 @@ mcp = function(model,
 
   # More checking...
   assert_value(sample, allowed = c("post", "prior", "both", "none", FALSE))
-  if (cores != "all") {
-    assert_integer(cores, lower = 1, len = 1)
+  if (!is.null(cores)) {
+    if (!identical(cores, "all"))
+      assert_integer(cores, lower = 1, len = 1)
 
-    if (cores > chains)
-      message("`cores` is greater than `chains`. Not all cores will be used.")
+    cores_details = paste0(
+      "`cores` is ignored. Parallel processing is now controlled by the active ",
+      "future plan. For example, call ",
+      "`future::plan(future::multisession, workers = 3)` before `mcp()`, and ",
+      "`future::plan(future::sequential)` when the workers are no longer needed."
+    )
+    if (identical(cores, "all") || (is.numeric(cores) && cores > 1))
+      cores_details = paste0(
+        "Setting `cores` above one no longer enables parallel processing. ",
+        cores_details
+      )
 
-    # Parallel fails on R version 3.6.0 and lower (sometimes at least).
-    if (cores > 1 && getRversion() < "3.6.1")
-      message("Parallel sampling (`cores` > 1) sometimes err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
+    lifecycle::deprecate_warn(
+      when = "0.4.0",
+      what = "mcp(cores)",
+      details = cores_details
+    )
   }
 
   assert_integer(chains, lower = 1, len = 1)
@@ -289,7 +297,6 @@ mcp = function(model,
       jags_code = jags_code,
       jags_data = jags_data,
       pars = all_pars,  # Monitor log-likelihood for loo/waic
-      cores = cores,
       sample = "post",
       n.chains = chains,
       n.iter = iter,
@@ -314,7 +321,6 @@ mcp = function(model,
       jags_code = jags_code,
       jags_data = jags_data_prior,
       pars = all_pars,
-      cores = cores,
       sample = "prior",
       n.chains = chains,
       n.iter = iter,

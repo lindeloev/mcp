@@ -23,7 +23,18 @@ test_that("formula tools", {
 ########################
 # Test on new fit
 demo_settings = mcp_example("demo", sample = FALSE)
-demo_fit2 = mcp(demo_settings$model, demo_settings$data, adapt = 2500, iter = 4000, cores = 3)
+demo_fit2 = mcp(demo_settings$model, demo_settings$data, adapt = 2500, iter = 4000)
+
+test_that("cores is deprecated and ignored", {
+  model = list(y ~ 1)
+  data = data.frame(x = 1:3, y = 1:3)
+
+  expect_warning(
+    mcp(model, data, par_x = "x", sample = FALSE, cores = 2),
+    "Setting `cores` above one no longer enables parallel processing",
+    class = "lifecycle_warning_deprecated"
+  )
+})
 
 test_that("Simple mcpfit methods", {
   expect_equal(niterations(demo_fit2), 12000)

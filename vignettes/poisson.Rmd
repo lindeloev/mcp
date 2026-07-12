@@ -29,7 +29,7 @@ The number of events (`n`) as a function of year (`date`) is typically modeled a
 
 ```{r}
 library(mcp)
-options(mc.cores = 3)  # Speed up sampling
+future::plan(future::multisession, workers = 3)
 set.seed(42)  # Make the script deterministic
 ```
 
@@ -127,5 +127,9 @@ Here is the JAGS code for the full model above.
 
 ```{r}
 fit$jags_code
+```
+
+```{r cleanup, include=FALSE}
+future::plan(future::sequential)
 ```
 

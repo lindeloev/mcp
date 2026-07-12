@@ -188,7 +188,7 @@ Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and 
  * Forecasting with prior knowledge about future change points.
 
 [Tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/tips.html)
- * Speed up fitting using `mcp(..., cores = 3)` / `options(mcp_cores = 3)`, and/or fewer iterations, `mcp(..., adapt = 500)`.
+ * Speed up fitting using `future::plan(future::multisession, workers = 3)`, and/or fewer iterations, `mcp(..., adapt = 500)`.
  * Help convergence along using `mcp(..., inits = list(cp_1 = 20, int_2 = -3))`.
  * Most errors will be caused by circularly defined priors.
 
@@ -317,7 +317,7 @@ model = list(
   ~ 0 + x
 )
 ex = mcp_example_data("variance")
-fit = mcp(model, ex$data, cores = 3, adapt = 5000, iter = 5000)
+fit = mcp(model, ex$data, adapt = 5000, iter = 5000)
 plot(fit, q_predict = TRUE)
 ```
 

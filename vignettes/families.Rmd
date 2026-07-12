@@ -37,7 +37,7 @@ In short: think carefully and proceed at your own risk.
 
 ```{r}
 library(mcp)
-options(mc.cores = 3)  # Speed up sampling
+future::plan(future::multisession, workers = 3)
 set.seed(42)  # Make the script deterministic
 ```
 
@@ -97,4 +97,8 @@ summary(fit)
 # Specific remarks
 
  * The mean ($1 / {inverse\_link}(\lambda)$) is plotted for `family = exponential()` and output by `fit$simulate(..., fype = "fitted")`. Multiply by `log(2)` to get the median.
+
+```{r cleanup, include=FALSE}
+future::plan(future::sequential)
+```
 

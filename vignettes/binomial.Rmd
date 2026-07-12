@@ -27,7 +27,7 @@ We run `mcp` with `sample = FALSE` to get what we need to simulate data.
 
 ```{r}
 library(mcp)
-options(mc.cores = 3)  # Speed up sampling
+future::plan(future::multisession, workers = 3)
 set.seed(42)  # Make the script deterministic
 
 empty = mcp(model, family = binomial(), sample = FALSE)
@@ -157,5 +157,9 @@ Here is the JAGS code for the model used in this article.
 
 ```{r}
 fit$jags_code
+```
+
+```{r cleanup, include=FALSE}
+future::plan(future::sequential)
 ```
 

@@ -21,7 +21,7 @@ Let's simulate some data using the `mcp_example()` function with the "ar" settin
 
 ```{r}
 library(mcp)
-options(mc.cores = 3)  # Speed up sampling
+future::plan(future::multisession, workers = 3)
 set.seed(42)  # Make the script deterministic
 
 ex = mcp_example("ar", sample = FALSE)
@@ -267,5 +267,9 @@ Here is the JAGS code for the second simulation example, i.e., the one with a si
 
 ```{r}
 fit$jags_code
+```
+
+```{r cleanup, include=FALSE}
+future::plan(future::sequential)
 ```
 

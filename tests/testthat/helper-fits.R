@@ -24,8 +24,7 @@ test_fit = function(model, simulated) {
   newdata$y = do.call(empty$simulate, c(list(fit = empty, newdata = newdata), simulated))
 
   # Fit
-  options(mc.cores = NULL)  # Respect `cores`
-  quiet_out = purrr::quietly(mcp)(model, newdata, par_x = "x", chains = 5, cores = 5, adapt = 10000, iter = 3000)  # Ensure convergence
+  quiet_out = purrr::quietly(mcp)(model, newdata, par_x = "x", chains = 5, adapt = 10000, iter = 3000)  # Ensure convergence
   fit <<- quiet_out$result  # assign to global namespace for easier debugging
 
   test_matches_simulated(fit)

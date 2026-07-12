@@ -16,7 +16,7 @@ There are three main ways of doing model comparison in `mcp`:
 
 ```{r}
 library(mcp)
-options(mc.cores = 3)  # Speed up sampling
+future::plan(future::multisession, workers = 3)
 set.seed(42)  # Make the script deterministic
 ```
 
@@ -215,3 +215,7 @@ loo::stacking_weights(fit_default$loo, fit_info$loo, fit_simple$loo)
 ```
 
 This means that once model2 (`fit_info`) has done it's "predicting", the others add very little over and above that. If you want to learn about how well they predict relative to each other, use `loo::peudobma_weights()` which weights proportional to the ELPD of each model.
+
+```{r cleanup, include=FALSE}
+future::plan(future::sequential)
+```

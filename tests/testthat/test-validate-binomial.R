@@ -1,4 +1,5 @@
 # Fit a simple binomial model on simulated data
+set.seed(42)
 model = list(
   y | trials(N) ~ 1 + x + group
 )

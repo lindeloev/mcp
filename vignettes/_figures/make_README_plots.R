@@ -20,7 +20,7 @@ save_it = function(filename) {
 # Example 1 #
 #############
 library(mcp)
-options(mc.cores = 3)  # Run in parallel
+future::plan(future::multisession, workers = 3)  # Run in parallel
 
 fit_demo = mcp_example("demo")
 #fit_demo = mcp(ex_demo$model, data = ex_demo$data, adapt = 3000)  # dataset included in mcp
@@ -112,3 +112,5 @@ fit_ar = mcp_example("ar")
 #fit_ar = mcp(ex_ar$model, ex_ar$data, adapt = 3000)
 theme_it(plot(fit_ar), "Time series with autoregressive residuals")
 save_it("ex_ar.png")
+
+future::plan(future::sequential)  # Shut down parallel workers

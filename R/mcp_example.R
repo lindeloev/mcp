@@ -188,7 +188,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, par_x = 'x', cores = 3, sample = sample)",
+fit = mcp(model, data, par_x = 'x', sample = sample)",
 
 
 quadratic = "# Define model
@@ -282,12 +282,11 @@ model = list(
 
 # Simulate data
 set.seed(42)
-data = tibble::tibble(id = c('John', 'Benny', 'Rose', 'Cath', 'Bill', 'Erin')) %>%
-  tidyr::expand_grid(x = seq(1, 100, by=4)) %>%
-  dplyr::mutate(
-    id_numeric = as.numeric(as.factor(id)),
-    y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
-  )
+data = tibble::tibble(id = c('John', 'Benny', 'Rose', 'Cath', 'Bill', 'Erin'))
+data = tidyr::expand_grid(data, x = seq(1, 100, by=4))
+data$id_numeric = as.numeric(as.factor(data$id))
+data$y = 2.# or whatever signals 'numeric'. Will be replaced by simulation below.
+
 empty = mcp(model, data, sample = FALSE)
 data$y = empty$simulate(empty, data,
   cp_1 = 40,
@@ -299,7 +298,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, cores = 3, sample = sample)"
+fit = mcp(model, data, sample = sample)"
 )
 
 # Run the code in an environment

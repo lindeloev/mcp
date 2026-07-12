@@ -21,7 +21,7 @@ A common problem when using MCMC is lacking convergence between chains. This wil
 # Speed
 A lot of data and complicated models will slow down fitting.
 
-* Run the chains in parallel using, e.g., `mcp(..., chains=4, cores=4)`. The only reason this is not enabled by default is because parallel sampling fails on some systems. Turn it on for the whole session using `options(mc.cores = 3)` which will override `cores` (which defaults to 1).
+* Run the chains in parallel by selecting a future backend before fitting, e.g., `future::plan(future::multisession, workers = 4)`. The worker pool is reused across calls. Shut it down afterward with `future::plan(future::sequential)`. Without a parallel future plan, chains run sequentially.
 
 * More data usually means better identifiability and faster convergence. Lower the adaption period period using, e.g., `mcp(..., adapt = 300)`. This is also sometimes called "burnin".
 
