@@ -10,7 +10,7 @@ df = data.frame(
   group = rep(c("A", "B"), 150)
 )
 
-fit_mcp = mcp(model, df, par_x = "x", adapt = 100, iter = 1000, chains = 2)
+fit_mcp = quiet_mcp(model, df, par_x = "x", adapt = 100, iter = 1000, chains = 2)
 
 
 # Test stuff
@@ -32,9 +32,14 @@ test_that("AR inference against arima()", {
 
 test_that("AR simulation against arima.sim()", {
   newdata = tidyr::expand_grid(df, rep = 1:100)  # should work with y in data too
-  y_simulated = fit_mcp$simulate(
-    fit_mcp, newdata,
-    Intercept_1 = 9, sigma_1 = 2, ar1_1 = 0.7, ar2_1 = -0.3, groupB_1 = 0
+  expect_message(
+    {
+      y_simulated = fit_mcp$simulate(
+        fit_mcp, newdata,
+        Intercept_1 = 9, sigma_1 = 2, ar1_1 = 0.7, ar2_1 = -0.3, groupB_1 = 0
+      )
+    },
+    "Generating residuals for AR\\(N\\) model"
   )
   y_arima = arima(y_simulated, order = c(2, 0, 0))
 

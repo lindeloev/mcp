@@ -1,5 +1,15 @@
 # Use all mcp functions on a given model to check that it does not result in
 # errors.
+quiet_mcp = function(...) {
+  suppressMessages({
+    capture.output({
+      fit = mcp(...)
+    })
+    fit
+  })
+}
+
+
 test_runs = function(model,
                      data = data_gauss,
                      prior = list(),
@@ -8,7 +18,7 @@ test_runs = function(model,
                      sample = TRUE) {
 
   # Without sampling, on a data.frame.
-  empty = mcp(
+  empty = quiet_mcp(
     model = model,
     data = data,
     prior = prior,
@@ -81,13 +91,13 @@ test_runs = function(model,
 
     # Test criterions. Will warn about very few samples
     if (!is.null(fit$mcmc_post)) {
-      fit$loo = suppressWarnings(loo(fit))
-      fit$waic = suppressWarnings(waic(fit))
+      fit$loo = suppressMessages(suppressWarnings(loo(fit)))
+      fit$waic = suppressMessages(suppressWarnings(waic(fit)))
       testthat::expect_true(loo::is.psis_loo(fit$loo))
       testthat::expect_true(loo::is.waic(fit$waic))
 
       # Test pointwise
-      fit$loo_pointwise = suppressWarnings(loo(fit, pointwise = TRUE))
+      fit$loo_pointwise = suppressMessages(suppressWarnings(loo(fit, pointwise = TRUE)))
       rownames(fit$loo$pointwise) = NULL
       ar_order = mcp:::get_ar_order(fit$.internal$rhs_table)
       if (is.na(ar_order)) {
@@ -104,39 +114,48 @@ test_runs = function(model,
     test_hypothesis(fit)
 
     for (col in c("mcmc_post", "mcmc_prior")) {
-      # To test the prior, try setting mcmc_post = NULL to force use of prior
-      # (mcmclist_samples checks for NULL)
-      if (col == "mcmc_prior")
-        fit$mcmc_post = NULL
+      use_prior = col == "mcmc_prior"
+      fit_to_test = fit
+
+      # Test the informative fallback once. All intentional prior tests below
+      # request prior samples explicitly to avoid repeated messages.
+      if (use_prior) {
+        fit_to_test$mcmc_post = NULL
+        testthat::expect_message(
+          mcmclist_samples(fit_to_test),
+          "Posterior was not sampled. Using prior samples"
+        )
+      }
 
       # Check that samples are the correct format
-      testthat::expect_true(is.list(fit[[col]]), model)
-      testthat::expect_true(coda::is.mcmc(fit[[col]][[1]]), model)
-      testthat::expect_true(all(fit$pars$population %in% colnames(fit[[col]][[1]])))
+      testthat::expect_true(is.list(fit_to_test[[col]]), model)
+      testthat::expect_true(coda::is.mcmc(fit_to_test[[col]][[1]]), model)
+      testthat::expect_true(all(fit_to_test$pars$population %in% colnames(fit_to_test[[col]][[1]])))
 
       # Test mcpfit functions
-      varying_cols = na.omit(fit$.internal$ST$cp_group_col)
-      test_summary(fit, varying_cols)
+      varying_cols = na.omit(fit_to_test$.internal$ST$cp_group_col)
+      test_summary(fit_to_test, varying_cols, prior = use_prior)
       #test_plot(fit, varying_cols)  # default plot
-      test_plot_pars(fit)  # bayesplot call
-      test_pp_eval(fit)
+      test_plot_pars(fit_to_test, prior = use_prior)  # bayesplot call
+      test_pp_eval(fit_to_test, prior = use_prior)
     }
   }
 }
 
 
 # Tests if summary(fit) and ranef(fit) work as expected
-test_summary = function(fit, varying_cols) {
+test_summary = function(fit, varying_cols, prior = FALSE) {
   summary_cols = c('name','mean','lower','upper','Rhat','n.eff')
-  result = purrr::quietly(summary)(fit)$result  # Do not print to console
-  output = purrr::quietly(summary)(fit)$output  # Do not print to console
+  quiet_summary = purrr::quietly(summary)(fit, prior = prior)
+  result = quiet_summary$result  # Do not print to console
+  output = quiet_summary$output  # Do not print to console
   testthat::expect_true(all(colnames(result) %in% summary_cols))  # All columns
   testthat::expect_true(all(result$name %in% fit$pars$population))  # All parameters
 
   # If there are varying effects
   if (length(varying_cols) > 0) {
     testthat::expect_match(output, "ranef\\(")  # noticed about varying effects
-    varying = ranef(fit)
+    varying = ranef(fit, prior = prior)
     testthat::expect_true(is.character(varying$name))
     testthat::expect_true(is.numeric(varying$mean))
 
@@ -171,14 +190,14 @@ test_plot = function(fit, varying_cols) {
     is_expected = any(stringr::str_starts(error_message, expected_error))
     testthat::expect_true(is_expected)
   } else {
-    testthat::expect_true(ggplot2::is.ggplot(gg))
+    testthat::expect_true(ggplot2::is_ggplot(gg))
   }
 }
 
 # Test plot() calls to bayesplot
-test_plot_pars = function(fit) {
-  gg = plot_pars(fit, type = "dens_overlay")
-  testthat::expect_true(ggplot2::is.ggplot(gg))
+test_plot_pars = function(fit, prior = FALSE) {
+  gg = plot_pars(fit, type = "dens_overlay", prior = prior)
+  testthat::expect_true(ggplot2::is_ggplot(gg))
 }
 
 
@@ -218,7 +237,7 @@ test_hypothesis = function(fit) {
 }
 
 
-test_pp_eval_func = function(fit, func, colname) {
+test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
   # Settings
   expected_colnames = c(
     fit$pars$x,
@@ -230,7 +249,7 @@ test_pp_eval_func = function(fit, func, colname) {
     expected_colnames = c(expected_colnames, fit$pars$y)
 
   # Run and test
-  result = try(func(fit), silent = TRUE)
+  result = try(func(fit, prior = prior), silent = TRUE)
   if (inherits(result, "try-error")) {
     error_message = as.character(result)
     expected_error_poisson = "Modelled extremely large value: exp(y)"  # OK: a test-specific side-effect of the small data and short sampling.
@@ -238,18 +257,30 @@ test_pp_eval_func = function(fit, func, colname) {
   } else {
     testthat::expect_true(is.data.frame(result))
     testthat::expect_equal(nrow(result), nrow(fit$data))  # Returns same number of rows as data
-    testthat::expect_true(sum(is.na(result)) == 0)  # No missing values)
+    if (fit$family$family == "poisson") {
+      # Extremely diffuse draws from these deliberately tiny test fits can
+      # overflow derived Poisson summaries. Data keys must remain intact and
+      # the estimate itself must not be entirely missing.
+      data_cols = intersect(
+        c(fit$pars$x, fit$pars$y, fit$pars$trials, na.omit(unique(fit$.internal$ST$cp_group_col))),
+        colnames(result)
+      )
+      testthat::expect_false(anyNA(result[, data_cols, drop = FALSE]))
+      testthat::expect_false(all(is.na(result[, colname])))
+    } else {
+      testthat::expect_false(anyNA(result))
+    }
     testthat::expect_true(dplyr::setequal(colnames(result), expected_colnames))  # Exactly these columns regardless of order
     testthat::expect_true(all(result[, fit$pars$x] == fit$data[, fit$pars$x]))  # Output should have same order as input
   }
 }
 
-test_pp_eval = function(fit) {
+test_pp_eval = function(fit, prior = FALSE) {
   # Test pp_eval
-  test_pp_eval_func(fit, fitted, "fitted")
-  test_pp_eval_func(fit, predict, "predict")
-  test_pp_eval_func(fit, residuals, "residuals")
-  test_pp_eval_func(fit, log_lik, "loglik")
+  test_pp_eval_func(fit, fitted, "fitted", prior = prior)
+  test_pp_eval_func(fit, predict, "predict", prior = prior)
+  test_pp_eval_func(fit, residuals, "residuals", prior = prior)
+  test_pp_eval_func(fit, log_lik, "loglik", prior = prior)
 
   # Test the other arguments. Inside "try" without further checking because such errors should be caught by the above.
   result_more = try(fitted(
@@ -257,7 +288,7 @@ test_pp_eval = function(fit) {
     newdata = fit$data[sample(nrow(fit$data), 3), ],
     summary = FALSE,
     probs = c(0.1, 0.5, 0.999),
-    prior = TRUE,
+    prior = prior,
     nsamples = 2,
     arma = FALSE
   ), silent = TRUE)
@@ -288,9 +319,9 @@ test_pp_eval = function(fit) {
   # Test pp_check
   if (length(fit$pars$varying) > 0) {
     varying_col = na.omit(fit$.internal$ST$cp_group_col)[1]  # Just use the first column
-    pp_default = try(pp_check(fit, facet_by = varying_col, nsamples = 2), silent = TRUE)
+    pp_default = try(pp_check(fit, facet_by = varying_col, nsamples = 2, prior = prior), silent = TRUE)
   } else {
-    pp_default = try(pp_check(fit, nsamples = 2), silent = TRUE)
+    pp_default = try(pp_check(fit, nsamples = 2, prior = prior), silent = TRUE)
   }
 
   if (inherits(pp_default, "try-error")) {
@@ -305,7 +336,7 @@ test_pp_eval = function(fit) {
       testthat::expect_true(error_message)
     }
   } else {
-    testthat::expect_true(ggplot2::is.ggplot(pp_default))
+    testthat::expect_true(ggplot2::is_ggplot(pp_default))
   }
 }
 

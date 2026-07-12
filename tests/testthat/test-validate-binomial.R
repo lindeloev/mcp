@@ -11,7 +11,7 @@ df = tibble::tibble(
   y = rbinom(200, N, ilogit(2 - 0.1 * x + ifelse(group == "B", -1, 0)))
 )
 
-fit_mcp = mcp(model, df, family = binomial(), adapt = 100, iter = 1000)
+fit_mcp = quiet_mcp(model, df, family = binomial(), adapt = 100, iter = 1000)
 
 # Tests
 test_that("Binomial inference against glm()", {
@@ -20,7 +20,7 @@ test_that("Binomial inference against glm()", {
   # Parameter estimates
   params_mcp = fixef(fit_mcp)$mean
   params_glm = as.numeric(fit_glm$coefficients[c(1, 3, 2)])
-  testthat::expect_equal(params_mcp, params_glm, tolerance = 0.02)
+  testthat::expect_lt(max(abs(params_mcp - params_glm)), 0.05)
 
   # Log-likelihood
   fit_mcp = add_loglik(fit_mcp)

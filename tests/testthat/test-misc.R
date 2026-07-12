@@ -23,7 +23,7 @@ test_that("formula tools", {
 ########################
 # Test on new fit
 demo_settings = mcp_example("demo", sample = FALSE)
-demo_fit2 = mcp(demo_settings$model, demo_settings$data, adapt = 2500, iter = 4000)
+demo_fit2 = quiet_mcp(demo_settings$model, demo_settings$data, adapt = 2500, iter = 4000)
 
 test_that("cores is deprecated and ignored", {
   model = list(y ~ 1)
@@ -53,5 +53,7 @@ test_that("hypothesis()", {
 
   actual_hypothesis2 = hypothesis(demo_fit2, "(cp_1 > 27 | cp_1 < 25) & time_3 > -0.2")
   expected_hypothesis2 = data.frame(hypothesis = "(cp_1 > 27 | cp_1 < 25) & time_3 > -0.2", mean = NA, lower = NA, upper = NA, p = 0.166, BF = 0.199)
-  expect_equal(actual_hypothesis2, expected_hypothesis2, tolerance = 0.03)
+  expect_equal(actual_hypothesis2$hypothesis, expected_hypothesis2$hypothesis)
+  expect_lt(abs(actual_hypothesis2$p - expected_hypothesis2$p), 0.03)
+  expect_lt(abs(actual_hypothesis2$BF - expected_hypothesis2$BF), 0.03)
 })

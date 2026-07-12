@@ -337,7 +337,8 @@ mcmclist_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
   if (coda::is.mcmc.list(fit$mcmc_post)) {
     return(fit$mcmc_post)
   } else if (coda::is.mcmc.list(fit$mcmc_prior)) {
-    message("Posterior was not sampled. Using prior samples. Set `prior = TRUE` to mute this message.")
+    if (message)
+      message("Posterior was not sampled. Using prior samples. Set `prior = TRUE` to mute this message.")
     return(fit$mcmc_prior)
   } else if (error == TRUE) {
     stop("This mcpfit contains no posterior or prior samples.")
@@ -861,9 +862,9 @@ log_lik = function(object, ...) UseMethod("log_lik")
 #' @aliases logLik.mcpfit
 #' @describeIn execute-mcp-model Alias for built-in method
 #' @export
-logLik.mcpfit <- function(object, ...) {
-  cl <- match.call()
-  cl[[1]] <- quote(log_lik)
+logLik.mcpfit = function(object, ...) {
+  cl = match.call()
+  cl[[1]] = quote(log_lik)
   eval(cl, parent.frame())
 }
 
