@@ -341,6 +341,7 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
 
     if (!is.na(component_stuff$order)) {
       component_form = get_term_content(component_stuff$form_str)
+      # Expand one formula into a separate regression parameter for each lag.
       arma_pars[[component]] = lapply(
         seq_len(component_stuff$order),
         function(order) get_rhs_table_dpar(
@@ -351,6 +352,16 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
         dplyr::mutate(boundary = component_stuff$boundary)
     }
   }
+
+  # AR and MA use the same transformed observation, so their boundary must be
+  # shared within a segment. One explicitly supplied value applies to both.
+  supplied_boundaries = unique(stats::na.omit(unlist(lapply(arma_pars, function(x) x$boundary))))
+  if (length(supplied_boundaries) > 1)
+    stop("ar() and ma() must use the same `boundary` within a segment.")
+  
+  # Most users need no boundary argument; resolve the common default here.
+  segment_boundary = if (length(supplied_boundaries) == 1) supplied_boundaries else 0.1
+  arma_pars = lapply(arma_pars, dplyr::mutate, boundary = segment_boundary)
 
 
 
@@ -465,7 +476,8 @@ unpack_arma = function(form_str_in) {
     if (length(boundary) != 1 || is.na(boundary) || !is.finite(boundary) || boundary <= 0 || boundary >= 1)
       stop("`boundary` in ", component, "() must be one number between 0 and 1.")
   } else {
-    boundary = 0.1
+    # Defer the default until AR and MA have been parsed together for a segment.
+    boundary = NA_real_
   }
 
   # Return

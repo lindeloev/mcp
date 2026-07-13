@@ -37,7 +37,7 @@ good_binomial = list(
        ~ 0),
   list(y | trials(N) ~ 1,  # With varying
        1 + (1|id) ~ 1),
-  list(y | trials(N) ~ 1 + ar(1))
+  list(y | trials(N) ~ 1 + ar(1) + ma(1))
   #list(y | trials(N) ~ 1,
   #     1 ~ N)  # N can be both trials and slope. TO DO: Fails in this test because par_x = "x"
 )
@@ -70,7 +70,7 @@ bad_bernoulli = list(
   list(y | trials(N) + weights(weights_ok) ~ 1),
 
   # Bernoulli GARMA is not currently supported
-  list(y_bern ~ 1 + ar(1))
+  list(y_bern ~ 1 + ar(1) + ma(1))
 )
 
 test_bad(bad_bernoulli,

@@ -48,6 +48,16 @@ test_that("early lags use coefficients from the current observation", {
 })
 
 
+test_that("generated GARMA code uses all available early AR and MA lags", {
+  jags_code = mcp:::get_arma_jagscode(1, 2, "x")
+
+  expect_match(jags_code, "ar1_\\[2\\] \\* resid_abs_\\[2 - 1\\]")
+  expect_match(jags_code, "ma1_\\[2\\] \\* resid_ma_\\[2 - 1\\]")
+  expect_false(grepl("ma2_\\[2\\]", jags_code))
+  expect_match(jags_code, "ma2_\\[i_\\] \\* resid_ma_\\[i_ - 2\\]")
+})
+
+
 test_that("generated AR residuals use the same partial-lag recursion", {
   ar_list = list(
     ar1_ = c(0.1, 0.2, 0.3, 0.4),

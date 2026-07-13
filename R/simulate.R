@@ -157,53 +157,79 @@ get_garma_observed = function(y, family, boundary, trials = NULL) {
 }
 
 
-#' Generate a generalized autoregressive response series
+#' Evaluate or generate a GARMA response series
 #'
 #' @keywords internal
 #' @noRd
-simulate_garma_ar = function(base_link_mu, ar_list, boundary, family,
-                             trials = NULL, shape = NULL, series_id = NULL) {
+simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
+                          y = NULL, trials = NULL, shape = NULL, sigma = NULL,
+                          series_id = NULL) {
   if (is.null(series_id))
     series_id = rep(1, length(base_link_mu))
   if (length(series_id) != length(base_link_mu) || anyNA(series_id))
     stop_github("series_id must have one non-missing value per observation.")
 
+  generate = is.null(y)
+  if (generate && family$family == "gaussian")
+    message("Generating residuals for AR(N) model since the response column/argument was not provided.")
+
   ar_order = length(ar_list)
+  ma_order = length(ma_list)
   resid_abs = numeric(length(base_link_mu))
+  resid_ma = numeric(length(base_link_mu))
+  resid_arma = numeric(length(base_link_mu))
+  link_mu = numeric(length(base_link_mu))
   mu = numeric(length(base_link_mu))
-  y = numeric(length(base_link_mu))
+  if (generate)
+    y = numeric(length(base_link_mu))
 
   for (rows in split(seq_along(base_link_mu), series_id)) {
     for (position in seq_along(rows)) {
       row = rows[position]
-      resid_ar = 0
-      available_lags = seq_len(min(ar_order, position - 1))
-      for (lag in available_lags) {
-        resid_ar = resid_ar +
+      for (lag in seq_len(min(ar_order, position - 1))) {
+        resid_arma[row] = resid_arma[row] +
           ar_list[[paste0("ar", lag, "_")]][row] * resid_abs[rows[position - lag]]
       }
+      for (lag in seq_len(min(ma_order, position - 1))) {
+        resid_arma[row] = resid_arma[row] +
+          ma_list[[paste0("ma", lag, "_")]][row] * resid_ma[rows[position - lag]]
+      }
 
-      mu[row] = family$linkinv(base_link_mu[row] + resid_ar)
-      if (family$family == "binomial") {
-        y[row] = stats::rbinom(1, trials[row], mu[row])
-      } else if (family$family == "poisson") {
-        if (mu[row] > 2146275819)
-          stop("Modelled extremely large count mean (> 2146275819).")
-        y[row] = stats::rpois(1, mu[row])
-      } else if (family$family == "negbinomial") {
-        if (mu[row] > 2146275819)
-          stop("Modelled extremely large count mean (> 2146275819).")
-        y[row] = stats::rnbinom(1, mu = mu[row], size = shape[row])
-      } else {
-        stop_github("Cannot generate GARMA responses for family = ", family$family, "().")
+      link_mu[row] = base_link_mu[row] + resid_arma[row]
+      mu[row] = family$linkinv(link_mu[row])
+      if (generate) {
+        if (family$family == "gaussian") {
+          y[row] = stats::rnorm(1, mu[row], sigma[row])
+        } else if (family$family == "binomial") {
+          y[row] = stats::rbinom(1, trials[row], mu[row])
+        } else if (family$family == "poisson") {
+          if (mu[row] > 2146275819)
+            stop("Modelled extremely large count mean (> 2146275819).")
+          y[row] = stats::rpois(1, mu[row])
+        } else if (family$family == "negbinomial") {
+          if (mu[row] > 2146275819)
+            stop("Modelled extremely large count mean (> 2146275819).")
+          y[row] = stats::rnbinom(1, mu = mu[row], size = shape[row])
+        } else {
+          stop_github("Cannot generate GARMA responses for family = ", family$family, "().")
+        }
       }
 
       garma_y = get_garma_observed(y[row], family, boundary[row], trials[row])
-      resid_abs[row] = family$linkfun(garma_y) - base_link_mu[row]
+      garma_link_y = family$linkfun(garma_y)
+      resid_abs[row] = garma_link_y - base_link_mu[row]
+      resid_ma[row] = garma_link_y - link_mu[row]
     }
   }
 
-  y
+  list(
+    y = y,
+    mu = mu,
+    link_mu = link_mu,
+    resid_arma = resid_arma,
+    resid_abs = resid_abs,
+    resid_ma = resid_ma
+  )
 }
 
 
@@ -274,44 +300,37 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     return(dpar_values[[.dpar]])
   }
 
-  # GARMA autoregression is defined on the link scale. The observed response is
-  # clipped only where needed to keep log and logit transformations finite.
-  is_arma = any(rhs_table$dpar == "ar")
-  ar_result = NULL
+  # GARMA is defined on the link scale. The observed response is clipped only
+  # where needed to keep log and logit transformations finite.
+  is_arma = any(rhs_table$dpar %in% c("ar", "ma"))
   if (is_arma && .arma == TRUE) {
     base_link_mu = if (uses_link_dpars) dpar_values$link_mu_ else fit$family$linkfun(dpar_values$mu_)
     ar_list = dplyr::select(dpar_values, dplyr::matches("^ar[0-9]+_$"))
-    innovation_sd = if (fit$family$family == "gaussian") dpar_values$sigma_ else numeric(length(base_link_mu))
+    ma_list = dplyr::select(dpar_values, dplyr::matches("^ma[0-9]+_$"))
+    boundary = dpar_values$garma_boundary_
+    if (is.null(boundary))
+      boundary = rep(0.1, length(base_link_mu))
+    trials = if (fit$family$family == "binomial") args[[fit$pars$trials]] else NULL
+    shape = if (fit$family$family == "negbinomial") dpar_values$shape_ else NULL
+    sigma = if (fit$family$family == "gaussian") dpar_values$sigma_ else NULL
 
-    if (has_ydata) {
-      boundary = dpar_values$garma_boundary_
-      if (is.null(boundary))
-        boundary = rep(0.1, length(dpar_values$.ydata))
-      trials = if (fit$family$family == "binomial") args[[fit$pars$trials]] else NULL
-      garma_y = get_garma_observed(dpar_values$.ydata, fit$family, boundary, trials)
-      resid_abs = fit$family$linkfun(garma_y) - base_link_mu
-      ar_result = simulate_ar(innovation_sd, ar_list, resid_abs, series_id = args[[".draw"]])
-    } else if (fit$family$family == "gaussian") {
-      ar_result = simulate_ar(innovation_sd, ar_list, series_id = args[[".draw"]])
-    } else {
-      if (.type != "predict")
-        stop("The response is required to evaluate generalized autoregression.")
-      boundary = dpar_values$garma_boundary_
-      if (is.null(boundary))
-        boundary = rep(0.1, length(base_link_mu))
-      trials = if (fit$family$family == "binomial") args[[fit$pars$trials]] else NULL
-      shape = if (fit$family$family == "negbinomial") dpar_values$shape_ else NULL
-      generated_y = simulate_garma_ar(
-        base_link_mu, ar_list, boundary, fit$family,
-        trials = trials, shape = shape, series_id = args[[".draw"]]
-      )
+    if (!has_ydata && .type != "predict")
+      stop("The response is required to evaluate GARMA terms.")
+
+    arma_result = simulate_garma(
+      base_link_mu, ar_list, ma_list, boundary, fit$family,
+      y = if (has_ydata) dpar_values$.ydata else NULL,
+      trials = trials, shape = shape, sigma = sigma,
+      series_id = args[[".draw"]]
+    )
+    if (!has_ydata) {
       if (fit$family$family == "binomial" && .rate)
-        return(generated_y / trials)
-      return(generated_y)
+        return(arma_result$y / trials)
+      return(arma_result$y)
     }
 
-    dpar_values$link_mu_ = base_link_mu + ar_result$resid_ar
-    dpar_values$mu_ = fit$family$linkinv(dpar_values$link_mu_)
+    dpar_values$link_mu_ = arma_result$link_mu
+    dpar_values$mu_ = arma_result$mu
   }
 
   if (.type == "fitted" && .scale == "linear") {
@@ -331,16 +350,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
       if (any(dpar_values$sigma_ < 0))
         stop("Modelled negative sigma. First detected at ", fit$pars$x, " = ", min(get(fit$pars$x)[dpar_values$sigma_ < 0]))
 
-      # Complex code if ARMA. Simple if not. resid_sigma_ was generated from sigma_ so no need to do an extra rnorm().
-      if (is_arma) {
-        if (.arma == TRUE) {
-          return(fit$family$linkinv(fit$family$linkfun(dpar_values$mu_ + ar_result$resid_sigma)))
-        } else {
-          return(fit$family$linkinv(fit$family$linkfun(dpar_values$mu_) + stats::rnorm(length(dpar_values$mu_), 0, dpar_values$sigma_)))
-        }
-      } else {
-        return(stats::rnorm(length(dpar_values$mu_), dpar_values$mu_, dpar_values$sigma_))
-      }
+      return(stats::rnorm(length(dpar_values$mu_), dpar_values$mu_, dpar_values$sigma_))
     }
 
     # OTHER FAMILIES ---------------------

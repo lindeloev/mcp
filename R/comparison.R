@@ -48,15 +48,18 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE) {
 
   # Pointwise: per-data-row computation
   } else {
-    ar_order = get_ar_order(fit$.internal$rhs_table)
+    ar_order = get_arma_order(fit$.internal$rhs_table, "ar")
+    ma_order = get_arma_order(fit$.internal$rhs_table, "ma")
 
     # For small models, the majority of the computation time will be pp_eval overhead
     llfun = function(data_i, draws = NULL, link_fun = identity) {
-      if (is.na(ar_order)) {
+      if (is.na(ar_order) && is.na(ma_order)) {
         loglik = pp_eval(fit, newdata = data_i, summary = FALSE, type = "loglik", varying = varying, arma = arma)$loglik
       } else {
-        # For ARMA, include the last N rows in call to pp_eval() too
-        data_rows = seq(max(1, data_i$row - ar_order), data_i$row)
+        # AR needs only its direct response lags. MA innovations recursively
+        # depend on all preceding observations, so retain the full history.
+        first_row = if (is.na(ma_order)) max(1, data_i$row - ar_order) else 1
+        data_rows = seq(first_row, data_i$row)
         lldata = fit$data[data_rows, ]
         loglik = fit %>%
           pp_eval(newdata = lldata, summary = FALSE, type = "loglik", varying = varying, arma = arma) %>%

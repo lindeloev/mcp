@@ -26,7 +26,7 @@ good_poisson = list(
        1 ~ 0),
   list(y ~ 1,  # With varying
        1 + (1|id) ~ 1),
-  list(y ~ 1 + ar(1))
+  list(y ~ 1 + ar(1) + ma(1))
 )
 
 test_good(good_poisson,

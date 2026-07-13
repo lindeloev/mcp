@@ -63,7 +63,10 @@ mcpfamily = function(x) {
     stop("mcp has no default priors for ", family$family, "(link = \"", family$link, "\") so it's likely not supported. See `mcpfamily()` on how to create a custom family.")
 
   # Add priors
-  dpar_prior = rbind(dpar_prior, default_common_priors %>% dplyr::filter(.data$dpar == "ar"))
+  dpar_prior = rbind(
+    dpar_prior,
+    default_common_priors %>% dplyr::filter(.data$dpar %in% c("ar", "ma"))
+  )
   family$default_prior = dpar_prior
 
   # Distributional parameters are properties of the family, not of the prior
@@ -165,7 +168,7 @@ add_dpar_specs = function(family) {
   if (is.null(family$dpar_specs))
     family$dpar_specs = get_default_dpar_specs(family)
   assert_dpar_specs(family$dpar_specs)
-  family$dpars = c(family$dpar_specs$dpar, "ar")
+  family$dpars = c(family$dpar_specs$dpar, "ar", "ma")
   family$links = stats::setNames(family$dpar_specs$link, family$dpar_specs$dpar)
   family
 }

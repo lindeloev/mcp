@@ -12,7 +12,12 @@ default_common_priors = tibble::tribble(
   # AR
   NA, "identity", "ar", "Intercept", "dunif(-1, 1)",
   NA, "identity", "ar", "dummy", "dt(0, 1, 3)",
-  NA, "identity", "ar", "slope", "dt(0, 1 / (MAXX - MINX), 3)"
+  NA, "identity", "ar", "slope", "dt(0, 1 / (MAXX - MINX), 3)",
+
+  # MA
+  NA, "identity", "ma", "Intercept", "dunif(-1, 1)",
+  NA, "identity", "ma", "dummy", "dt(0, 1, 3)",
+  NA, "identity", "ma", "slope", "dt(0, 1 / (MAXX - MINX), 3)"
 )
 
 default_dpar_priors = tibble::tribble(

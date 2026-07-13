@@ -9,15 +9,15 @@ test_that("families declare dpars independently of prior rows", {
   expect_equal(gaussian_family$dpar_specs$dpar, c("mu", "sigma"))
   expect_equal(gaussian_family$dpar_specs$link, c("identity", "identity"))
   expect_equal(gaussian_family$dpar_specs$implicit, c(FALSE, TRUE))
-  expect_equal(gaussian_family$dpars, c("mu", "sigma", "ar"))
+  expect_equal(gaussian_family$dpars, c("mu", "sigma", "ar", "ma"))
 
   expect_equal(poisson_family$dpar_specs$dpar, "mu")
   expect_equal(poisson_family$dpar_specs$link, "log")
-  expect_equal(poisson_family$dpars, c("mu", "ar"))
+  expect_equal(poisson_family$dpars, c("mu", "ar", "ma"))
 
   for (family in mean_only_families) {
     expect_equal(family$dpar_specs$dpar, "mu")
-    expect_equal(family$dpars, c("mu", "ar"))
+    expect_equal(family$dpars, c("mu", "ar", "ma"))
   }
 
   # Removing prior metadata must not redefine the mathematical family.

@@ -76,12 +76,36 @@ test_that("GARMA boundaries default to 0.1 and can vary by segment", {
 })
 
 
-test_that("mcp rejects parsed MA terms until they are implemented", {
+test_that("AR and MA share one boundary within a segment", {
   data = data.frame(x = 1:6, y = 1:6)
+  family = mcpfamily(gaussian())
+
+  rhs_table = get_rhs_table(
+    list(y ~ ar(1, boundary = 0.2) + ma(1)),
+    data,
+    family,
+    par_x = "x"
+  )
+  expect_equal(unique(rhs_table$boundary[rhs_table$dpar == "ar"]), 0.2)
+  expect_equal(unique(rhs_table$boundary[rhs_table$dpar == "ma"]), 0.2)
 
   expect_error(
-    mcp(list(y ~ 1 + ma(1)), data, par_x = "x", sample = FALSE),
-    "ma() syntax is recognized, but moving-average terms are not implemented yet.",
+    get_rhs_table(
+      list(y ~ ar(1, boundary = 0.2) + ma(1, boundary = 0.3)),
+      data,
+      family,
+      par_x = "x"
+    ),
+    "ar() and ma() must use the same `boundary` within a segment.",
     fixed = TRUE
   )
+})
+
+
+test_that("mcp builds MA parameters and JAGS code", {
+  data = data.frame(x = 1:6, y = 1:6)
+  fit = mcp(list(y ~ 1 + ma(1)), data, par_x = "x", sample = FALSE)
+
+  expect_true("ma1_1" %in% fit$pars$arma)
+  expect_match(fit$jags_code, "ma1_\\[i_\\] \\* resid_ma_\\[i_ - 1\\]")
 })

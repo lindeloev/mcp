@@ -119,15 +119,15 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x, family) {
 
 #' Build the observation-boundary formula used by GARMA terms
 #'
-#' A boundary supplied with an AR term remains active until the next AR term.
-#' The first supplied boundary also applies to observations before AR onset so
+#' A boundary supplied with an AR or MA term remains active until the next such
+#' term. The first supplied boundary also applies to earlier observations so
 #' they can safely be used as lags.
 #'
 #' @keywords internal
 #' @noRd
 get_garma_boundary_jagscode = function(ST, rhs_table, par_x) {
   boundary_table = rhs_table %>%
-    dplyr::filter(.data$dpar == "ar", !is.na(.data$boundary)) %>%
+    dplyr::filter(.data$dpar %in% c("ar", "ma"), !is.na(.data$boundary)) %>%
     dplyr::distinct(.data$segment, .data$boundary) %>%
     dplyr::arrange(.data$segment)
 
@@ -209,46 +209,62 @@ get_formula_r = function(formula_jags, rhs_table, pars) {
 }
 
 
-#' Get JAGS code to model autoregressive effects
+#' Get JAGS code for GARMA residual recursion
 #'
-#' This is simply code for `resid_ar_`.
-#'
-#' @aliases get_ar_jagscode
+#' @aliases get_arma_jagscode get_ar_jagscode
 #' @keywords internal
 #' @noRd
-#' @param ar_order Positive integer
+#' @param ar_order,ma_order Positive integer or `NA` when absent.
 #' @param x_name Character. Name of some vector that has the length of the dataset.
 #' @return Character JAGS code
-#' @seealso simulate_ar
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_ar_jagscode = function(ar_order, x_name) {
+get_arma_jagscode = function(ar_order, ma_order, x_name) {
+  ar_order = ifelse(is.na(ar_order), 0, ar_order)
+  ma_order = ifelse(is.na(ma_order), 0, ma_order)
   assert_integer(ar_order, lower = 0, len = 1)
+  assert_integer(ma_order, lower = 0, len = 1)
   assert_types(x_name, "character", len = 1)
+  max_order = max(ar_order, ma_order)
+  if (max_order == 0)
+    stop_github("get_arma_jagscode() requires a positive AR or MA order.")
+
+  get_terms = function(row, available_ar, available_ma) {
+    terms = character()
+    if (available_ar > 0) {
+      lags = seq_len(available_ar)
+      terms = c(terms, paste0("ar", lags, "_[", row, "] * resid_abs_[", row, " - ", lags, "]"))
+    }
+    if (available_ma > 0) {
+      lags = seq_len(available_ma)
+      terms = c(terms, paste0("ma", lags, "_[", row, "] * resid_ma_[", row, " - ", lags, "]"))
+    }
+    paste0(terms, collapse = " +\n              ")
+  }
 
   jagscode = "
-  # Apply autoregression to the residuals
-  resid_ar_[1] = 0"
+  # Apply GARMA recursion to link-scale residuals
+  resid_arma_[1] = 0"
 
-  # For data points lower than the full order
-  if (ar_order >= 2) {
-    for (i in 2:ar_order) {
-      jagscode = paste0(jagscode, "
-  resid_ar_[", i, "] = ", paste0("ar", 1:(i-1), "_[", i, "] * resid_abs_[", i, " - ", 1:(i-1), "]", collapse = " +\n              "))
+  if (max_order >= 2) {
+    for (i in 2:max_order) {
+      jagscode = paste0(
+        jagscode, "\n  resid_arma_[", i, "] = ",
+        get_terms(i, min(ar_order, i - 1), min(ma_order, i - 1))
+      )
     }
   }
 
-  # For full order
-  jagscode = paste0(jagscode, "
-  for (i_ in ", ar_order + 1, ":length(", x_name, ")) {
-    resid_ar_[i_] = 0")
-  for (i in seq_len(ar_order)) {
-    jagscode = paste0(jagscode, " + \n      ar", i, "_[i_] * resid_abs_[i_ - ", i, "]")
-  }
+  paste0(
+    jagscode,
+    "\n  for (i_ in ", max_order + 1, ":length(", x_name, ")) {",
+    "\n    resid_arma_[i_] = ", get_terms("i_", ar_order, ma_order),
+    "\n  }"
+  )
+}
 
-  # Finish up and return
-  jagscode = paste0(jagscode, "
-  }")
 
-  jagscode
+# Backwards-compatible internal wrapper for pure AR code generation.
+get_ar_jagscode = function(ar_order, x_name) {
+  get_arma_jagscode(ar_order, NA, x_name)
 }

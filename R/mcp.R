@@ -245,9 +245,6 @@ mcp = function(model,
   ST = get_segment_table(model, data, family, par_x)  #"ST" for "segment table"
   rhs_table = get_rhs_table(model, data, family, par_x)
 
-  if ("ma" %in% rhs_table$dpar)
-    stop("ma() syntax is recognized, but moving-average terms are not implemented yet.")
-
   # Make prior
   prior = get_prior(ST, rhs_table, family, prior)
 
@@ -278,10 +275,10 @@ mcp = function(model,
       negbinomial = "log"
     )
     if (family$family %notin% names(garma_links) || family$link != garma_links[[family$family]])
-      stop("ar() currently supports gaussian(), binomial(), poisson(), and negbinomial() with their default links; bernoulli() and non-default links are not supported.")
+      stop("ar() and ma() currently support gaussian(), binomial(), poisson(), and negbinomial() with their default links; bernoulli() and non-default links are not supported.")
 
     if (is.unsorted(data[, par_x]) && is.unsorted(rev(data[, par_x])))
-      message("'", par_x, "' is unordered. Please note that ar() applies in the order of data of the data frame - not the values.")
+      message("'", par_x, "' is unordered. Please note that ar() and ma() apply in data-frame row order, not the values of '", par_x, "'.")
   }
 
   # Make formulas
@@ -290,8 +287,9 @@ mcp = function(model,
 
   # Make jags code if it is not provided by the user
   if (is.null(jags_code)) {
-    ar_order = get_ar_order(rhs_table)
-    jags_code = get_jags_code(prior, ST, formula_jags, ar_order, family, par_x)
+    ar_order = get_arma_order(rhs_table, "ar")
+    ma_order = get_arma_order(rhs_table, "ma")
+    jags_code = get_jags_code(prior, ST, formula_jags, ar_order, ma_order, family, par_x)
   }
 
 

@@ -10,11 +10,11 @@
 #' @inheritParams mcp
 #' @param formula_jags String. The formula string returned by `get_formula_jags()`.
 #' @param ST Segment table. Returned by `get_segment_table()`.
-#' @param ar_order NA or positive integer. The autoregressive order.
+#' @param ar_order,ma_order NA or positive integer. The GARMA component orders.
 #' @return String. A JAGS model.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_jags_code = function(prior, ST, formula_jags, ar_order, family, par_x) {
+get_jags_code = function(prior, ST, formula_jags, ar_order, ma_order, family, par_x) {
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
   mm = paste0("model {")
@@ -79,12 +79,12 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, family, par_x) {
   }
 
 
-  ###################
-  # AUTOCORRELATION #
-  ###################
-  # Detect if there is an intercept or slope on AR
-  if (is.na(ar_order) == FALSE)
-    mm = paste0(mm, get_ar_jagscode(ar_order, par_x))
+  #########
+  # GARMA #
+  #########
+  has_arma = !is.na(ar_order) || !is.na(ma_order)
+  if (has_arma)
+    mm = paste0(mm, get_arma_jagscode(ar_order, ma_order, par_x))
 
 
 
@@ -113,8 +113,8 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, family, par_x) {
   for (dpar in family$dpar_specs$dpar) {
     spec = get_dpar_spec(family, dpar)
     link_code = paste0("link_", dpar, "_[i_]")
-    if (dpar == "mu" && is.na(ar_order) == FALSE)
-      link_code = paste0(link_code, " + resid_ar_[i_]")
+    if (dpar == "mu" && has_arma)
+      link_code = paste0(link_code, " + resid_arma_[i_]")
 
     linkinv_str = get_link_str(spec$link, inverse = TRUE)
     response_code = ifelse(
@@ -154,23 +154,26 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, family, par_x) {
     )
   }
 
-  # Compute residuals for AR
-  if (is.na(ar_order) == FALSE) {
+  # Compute link-scale residuals for GARMA
+  if (has_arma) {
     if (family$family == "binomial") {
       mm = paste0(
         mm,
         "\n    garma_y_[i_] = min(max(", ST$y[1], "[i_], garma_boundary_[i_]), ", ST$trials[1], "[i_] - garma_boundary_[i_]) / ", ST$trials[1], "[i_]",
-        "\n    resid_abs_[i_] = ", family$linkfun_str, "(garma_y_[i_]) - link_mu_[i_]"
+        "\n    garma_link_y_[i_] = ", family$linkfun_str, "(garma_y_[i_])"
       )
     } else if (family$family %in% c("poisson", "negbinomial")) {
       mm = paste0(
         mm,
         "\n    garma_y_[i_] = max(", ST$y[1], "[i_], garma_boundary_[i_])",
-        "\n    resid_abs_[i_] = ", family$linkfun_str, "(garma_y_[i_]) - link_mu_[i_]"
+        "\n    garma_link_y_[i_] = ", family$linkfun_str, "(garma_y_[i_])"
       )
     } else {
-      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_]) - link_mu_[i_]")
+      mm = paste0(mm, "\n    garma_link_y_[i_] = ", ST$y[1], "[i_]")
     }
+    mm = paste0(mm, "\n    resid_abs_[i_] = garma_link_y_[i_] - link_mu_[i_]")
+    if (!is.na(ma_order))
+      mm = paste0(mm, "\n    resid_ma_[i_] = garma_link_y_[i_] - link_mu_[i_] - resid_arma_[i_]")
   }
 
 

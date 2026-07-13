@@ -51,9 +51,11 @@ release_questions = function() {
 }
 
 
-# Returns the AR order or NA if no AR
-get_ar_order = function(rhs_table) {
-  ar_order = ifelse("ar" %in% rhs_table$dpar, max(rhs_table$order, na.rm = TRUE), NA)
+# Returns the requested AR/MA order, or NA if the term is absent
+get_arma_order = function(rhs_table, term) {
+  assert_value(term, allowed = c("ar", "ma"))
+  orders = rhs_table$order[rhs_table$dpar == term]
+  if (length(orders) == 0) NA else max(orders, na.rm = TRUE)
 }
 
 
