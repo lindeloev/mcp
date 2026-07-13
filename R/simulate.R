@@ -431,39 +431,24 @@ simulate_ar = function(sigma_, ar_list, resid_abs = NULL, series_id = NULL) {
   # resid_ is the observed residual from y_
   # resid_ is split into the innovation and AR() part. So resid_ = resid_ar + resid_sigma
   resid_sigma = stats::rnorm(length(sigma_), 0, sigma_)
-  if (length(resid_abs) == 0) {
+  generate_residuals = length(resid_abs) == 0
+  if (generate_residuals) {
     message("Generating residuals for AR(N) model since the response column/argument was not provided.")
-    ar_list$ar0_ = sigma_[seq_len(ar_order)] * 0 + 1  # AR(0) = itself
     resid_abs = numeric(length(sigma_))
+  }
 
-    # Build
-    rcode = ""
-    for (i in seq_len(ar_order)) {
-      rcode = paste0(rcode, "
-        resid_abs[", i, "] = ", paste0("ar_list$ar", 0:(i-1), "_[", i, " - ", 0:(i-1), "] * resid_sigma[", i, " - ", 0:(i-1), "]", collapse = " + "))
-    }
-    rcode = paste0(rcode, "
-      for (i_ in ", ar_order + 1, ":length(sigma_))
-        resid_abs[i_] = resid_sigma[i_] + ", paste0("ar_list$ar", seq_len(ar_order), "_[i_] * resid_abs[i_ - ", seq_len(ar_order), "]", collapse = " + "), "
-      ")
-
-    eval(parse(text = rcode))
-    resid_ar = resid_abs - resid_sigma
-  } else {
-    resid_ar = numeric(length(resid_abs))
-    for (rows in split(seq_along(resid_abs), series_id)) {
-      if (length(rows) <= ar_order)
-        next
-
-      target_position = seq.int(ar_order + 1, length(rows))
-      target_rows = rows[target_position]
-      for (lag in seq_len(ar_order)) {
-        source_rows = rows[target_position - lag]
-        resid_ar[target_rows] = resid_ar[target_rows] +
-          ar_list[[paste0("ar", lag, "_")]][target_rows] * resid_abs[source_rows]
+  resid_ar = numeric(length(resid_abs))
+  for (rows in split(seq_along(resid_abs), series_id)) {
+    for (position in seq_along(rows)) {
+      row = rows[position]
+      available_lags = seq_len(min(ar_order, position - 1))
+      for (lag in available_lags) {
+        resid_ar[row] = resid_ar[row] +
+          ar_list[[paste0("ar", lag, "_")]][row] * resid_abs[rows[position - lag]]
       }
+      if (generate_residuals)
+        resid_abs[row] = resid_sigma[row] + resid_ar[row]
     }
-    # resid_sigma = resid_abs - resid_ar  # Outcommented because it's deterministic in this parameterization (always sums to the observed data exactly)
   }
 
   # Return

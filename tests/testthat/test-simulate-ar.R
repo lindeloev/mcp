@@ -23,6 +23,52 @@ test_that("series isolation does not depend on contiguous rows", {
 })
 
 
+test_that("AR models use all available early lags", {
+  result = mcp:::simulate_ar(
+    sigma_ = rep(1, 4),
+    ar_list = list(ar1_ = rep(0.5, 4), ar2_ = rep(0.25, 4)),
+    resid_abs = 1:4
+  )
+
+  expect_equal(result$resid_ar, c(0, 0.5, 1.25, 2))
+})
+
+
+test_that("early lags use coefficients from the current observation", {
+  result = mcp:::simulate_ar(
+    sigma_ = rep(1, 3),
+    ar_list = list(ar1_ = c(0.1, 0.5, 0.9), ar2_ = c(0.01, 0.05, 0.09)),
+    resid_abs = c(2, 4, 8)
+  )
+
+  expect_equal(result$resid_ar, c(0, 1, 3.78))
+
+  jags_code = mcp:::get_ar_jagscode(2, "x")
+  expect_match(jags_code, "ar1_\\[2\\] \\* resid_abs_\\[2 - 1\\]")
+})
+
+
+test_that("generated AR residuals use the same partial-lag recursion", {
+  ar_list = list(
+    ar1_ = c(0.1, 0.2, 0.3, 0.4),
+    ar2_ = c(0.01, 0.02, 0.03, 0.04)
+  )
+  set.seed(42)
+  innovations = stats::rnorm(4)
+  expected_residuals = numeric(4)
+  expected_residuals[1] = innovations[1]
+  expected_residuals[2] = innovations[2] + ar_list$ar1_[2] * expected_residuals[1]
+  expected_residuals[3] = innovations[3] + ar_list$ar1_[3] * expected_residuals[2] + ar_list$ar2_[3] * expected_residuals[1]
+  expected_residuals[4] = innovations[4] + ar_list$ar1_[4] * expected_residuals[3] + ar_list$ar2_[4] * expected_residuals[2]
+
+  set.seed(42)
+  result = suppressMessages(mcp:::simulate_ar(rep(1, 4), ar_list))
+
+  expect_equal(result$resid_sigma, innovations)
+  expect_equal(result$resid_ar, expected_residuals - innovations)
+})
+
+
 test_that("pp_eval keeps posterior draws in separate AR series", {
   data = data.frame(x = 1:3, y = 1:3)
   fit = mcp(list(y ~ 1 + ar(1)), data, par_x = "x", sample = "none")

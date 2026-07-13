@@ -197,7 +197,7 @@ get_ar_jagscode = function(ar_order, x_name) {
   if (ar_order >= 2) {
     for (i in 2:ar_order) {
       jagscode = paste0(jagscode, "
-  resid_ar_[", i, "] = ", paste0("ar", 1:(i-1), "_[", i, " - ", 1:(i-1), "] * resid_abs_[", i, " - ", 1:(i-1), "]", collapse = " +\n              "))
+  resid_ar_[", i, "] = ", paste0("ar", 1:(i-1), "_[", i, "] * resid_abs_[", i, " - ", 1:(i-1), "]", collapse = " +\n              "))
     }
   }
 
