@@ -131,3 +131,44 @@ test_that("R-side dpar evaluation supports link and response scales", {
   expect_equal(as.numeric(response), rep(2, nrow(data)))
   expect_equal(as.numeric(linear), rep(log(2), nrow(data)))
 })
+
+
+test_that("quantiles stay separate for rows and categorical curves sharing x", {
+  data = data.frame(
+    x = 1:4,
+    group = factor(c("A", "B", "A", "B")),
+    y = c(0, 10, 0, 10)
+  )
+  fit = mcp(list(y ~ 1 + group), data, par_x = "x", sample = FALSE)
+  draws = cbind(
+    Intercept_1 = c(0, 0),
+    groupB_1 = c(10, 10),
+    sigma_1 = c(1, 1)
+  )
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+  newdata = data.frame(x = c(2, 2), group = c("A", "B"))
+
+  summary = fitted(fit, newdata = newdata, probs = c(0.25, 0.75))
+  expect_equal(summary$fitted, c(0, 10))
+  expect_equal(summary$Q25, c(0, 10))
+  expect_equal(summary$Q75, c(0, 10))
+
+  samples = fitted(fit, newdata = newdata, summary = FALSE, probs = FALSE) %>% add_group()
+  quantile_layer = geom_quantiles(
+    samples,
+    quantiles = c(0.25, 0.75),
+    xvar = rlang::sym("x"),
+    yvar = rlang::sym("fitted"),
+    facet_by = NULL
+  )
+  expect_equal(nrow(quantile_layer$data), 4)
+  expect_equal(sort(unname(quantile_layer$data$y)), c(0, 0, 10, 10))
+  expect_equal(length(unique(quantile_layer$data$.group)), 2)
+
+  plot = ggplot2::ggplot(
+    samples,
+    ggplot2::aes(x = .data$x, color = .data$.group)
+  ) + quantile_layer
+  built_quantiles = ggplot2::ggplot_build(plot)$data[[1]]
+  expect_equal(length(unique(built_quantiles$group)), 4)
+})

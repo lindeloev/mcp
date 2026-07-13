@@ -732,19 +732,20 @@ pp_eval = function(
       # Apply original order and put newdata as the first columns
       dplyr::arrange(.data$data_row) %>%
       dplyr::left_join(newdata_return, by = "data_row", relationship = "one-to-one") %>%
-      dplyr::select(dplyr::one_of(colnames(newdata_return)), {{ returnvar }} , "error", -"data_row")
+      dplyr::select(dplyr::one_of(colnames(newdata_return)), {{ returnvar }} , "error")
 
 
     # Quantiles
     if (all(probs != FALSE)) {
       quantiles_fit = samples %>%
         get_quantiles(probs, xvar, returnvar, varying_info$cols) %>%
+        dplyr::select("data_row", "quantile", "y") %>%
         dplyr::mutate(quantile = 100 * .data$quantile) %>%
         tidyr::pivot_wider(names_from = "quantile", names_prefix = "Q", values_from = "y")
 
-      df_return = dplyr::left_join(df_return, quantiles_fit, by = c(as.character(xvar), varying_info$cols), relationship = "many-to-one")
+      df_return = dplyr::left_join(df_return, quantiles_fit, by = "data_row", relationship = "one-to-one")
     }
-    return(data.frame(df_return))
+    return(data.frame(dplyr::select(df_return, -"data_row")))
   } else if (samples_format == "tidy") {
     return(samples)
   } else if (samples_format == "matrix") {

@@ -456,7 +456,7 @@ geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, ...) {
   ggplot2::geom_line(
     mapping = ggplot2::aes(
       y = .data$y,
-      group = .data$quantile
+      group = interaction(.data$quantile, .data$.group)
     ),
     data = data_quantiles,
     ...

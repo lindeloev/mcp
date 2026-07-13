@@ -26,7 +26,7 @@
 
 ## Other new features
 
--   Added moving-average terms with `ma(q)`. They can be used alone or combined with `ar(p)` in each segment, use the same link-scale GARMA recurrence and `boundary` setting (default `ar(..., boundary = 0.1)`), and support the same default-link families as `ar()`.
+-   Extended autoregression (`ar()`) to GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment. Bernoulli models and non-default links remain unsupported.
 
 -   In addition to (segment-wide) intercepts and slopes, there are now default priors for categorical predictors.
 
@@ -66,7 +66,7 @@
 
 -   Weighted regression: While JAGS correctly modelled weights, R-side simulation/generation ignored it. This means `predict()`, PPCs, `log_lik()`, WAIC, and LOO were incorrect when using weighted regression. Weighted Gaussian posterior predictions and log-likelihoods now use the observation-level standard deviation `sigma / sqrt(weight)`, matching the JAGS precision `weight / sigma^2`. This makes `predict()`, posterior predictive checks, `log_lik()`, WAIC, and LOO consistent with the fitted model.
 
--   AR for non-Gaussian families: calculations in R previously ignored AR effects for non-Gaussian families. AR/MA evaluation now resets for every draw and uses the same link-scale GARMA recurrence as JAGS for Gaussian, binomial, Poisson, and negative-binomial models with their default links. Zero and boundary counts are kept finite using `ar(..., boundary = 0.1)` by default; Bernoulli models and non-default links remain unsupported. In addition, a negligible-impact bug for non-small samples was fixed: AR effects leaked between posterior draws, omitted available partial lags for the first few observations of AR(2+) models.
+-   Bug only noticeable for very small samples: For Gaussian identity-link AR models, R-side calculations could leak residuals between posterior draws and omitted available partial lags for the first observations of AR(2+) models. Each draw is now evaluated as a separate series and uses the same partial-lag recurrence as JAGS.
 
 -   The quantiles for `fitted()` and `predict()` for varying-changepoint models ignored the varying level - they were identical across levels.
 

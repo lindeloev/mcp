@@ -286,20 +286,23 @@ tidy_to_matrix = function(samples, returnvar) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_quantiles = function(samples, quantiles, xvar, yvar, facet_by = NULL) {
-  # Trick to declare no facet = common group for all
   facet_by = logical0_to_null(facet_by)
-  if (!is.null(facet_by))
-    facet_by = rlang::sym(facet_by)
+  group_cols = unique(c(
+    as.character(xvar),
+    facet_by,
+    intersect(c("data_row", ".group"), colnames(samples))
+  ))
 
   # Return data with added quantiles
   samples %>%
     tidyr::expand_grid(quantile = quantiles) %>%
 
-    # Now compute the quantile for each parameter, quantile, and (optionally) facet:
-    dplyr::group_by(!!xvar, .data$quantile, !!facet_by) %>%
-    #dplyr::group_by(!!rlang::sym(facet_by), .add = TRUE) %>%
+    # Keep each evaluated data row and categorical curve separate. Grouping
+    # only by x would mix rows that share the change-point predictor.
+    dplyr::group_by(dplyr::across(dplyr::all_of(group_cols)), .data$quantile) %>%
     dplyr::summarise(
-      y = stats::quantile(!!yvar, probs = .data$quantile[1])
+      y = stats::quantile(!!yvar, probs = .data$quantile[1]),
+      .groups = "drop"
     )
 }
 
