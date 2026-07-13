@@ -26,7 +26,8 @@
 #'   Provided by user. See \code{\link{mcp}} for more details.
 #' @slot mcmc_post An \code{\link[coda]{mcmc.list}} object with posterior samples.
 #' @slot mcmc_prior An \code{\link[coda]{mcmc.list}} object with prior samples.
-#' @slot loglik An (Nchains * Nsamples) x Ndatarows matrix of log-likelihoods.
+#' @slot loglik An (Nchains * Nsamples) by N-observed-responses matrix of
+#'   log-likelihoods.
 #' @slot pars A list of character vectors of model parameter names.
 #' @slot jags_code A string with jags code. Use `cat(fit$jags_code)` to show it.
 #' @slot simulate A method to simulate and predict data.
@@ -715,6 +716,20 @@ pp_eval = function(
     dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!samples_predictors, .type = type_for_simulate, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale)) %>%
     dplyr::select(-dplyr::starts_with(".pred_"), -dplyr::any_of(fit$pars$weights))
 
+  # Missing outcomes are latent in the fitted JAGS model, but they are not
+  # observed-data likelihood contributions. Retain them while evaluating
+  # GARMA histories above, then remove them from returned log likelihoods.
+  if (type == "loglik") {
+    observed_rows = which(!is.na(newdata[, fit$pars$y]))
+    if (length(observed_rows) == 0)
+      stop("Log-likelihood evaluation requires at least one observed response.")
+    samples = dplyr::filter(samples, .data$data_row %in% observed_rows)
+    newdata_return = dplyr::filter(
+      newdata_return,
+      .data$data_row %in% observed_rows
+    )
+  }
+
 
   # Optionally compute residuals
   if (type == "residuals")
@@ -952,17 +967,28 @@ residuals.mcpfit = function(
 #' @param fit An mcpfit object
 #' @param save_psis Logical. See documentation of loo::loo
 #' @param info Optional message if adding loo
+#' @param varying,arma Evaluation settings passed to `loo.mcpfit()`.
 #' @return An mcpfit object with loo.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-with_loo = function(fit, save_psis = FALSE, info = NULL) {
+with_loo = function(fit, save_psis = FALSE, info = NULL,
+                    varying = TRUE, arma = TRUE) {
   assert_types(fit, "mcpfit")
+  settings = get_loglik_settings(fit, varying, arma, nsamples = NULL)
+  settings_match = identical(attr(fit$loo, "mcp_settings"), settings)
+  needs_psis = save_psis == TRUE &&
+    loo::is.loo(fit$loo) && is.null(fit$loo$psis_object)
 
   # Add loo if absent or needs psis
-  if (is.null(fit$loo) || (save_psis == TRUE && loo::is.loo(fit$loo) && is.null(fit$loo$psis_object))) {
+  if (is.null(fit$loo) || !settings_match || needs_psis) {
     if (is.character(info))
       message(info)
-    fit$loo = loo(fit, save_psis = save_psis)
+    fit$loo = loo(
+      fit,
+      save_psis = save_psis,
+      varying = varying,
+      arma = arma
+    )
   }
 
   fit

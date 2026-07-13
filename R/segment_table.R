@@ -318,7 +318,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
     if (!is.numeric(data[, ST$y[1]]))
       stop("Data column '", ST$y[1], "' has to be numeric.")
     if (any(is.na(data[, ST$y[1]])))
-      message("NA values detected in '", ST$y[1], "'. They will be imputed using the posterior predictive.")
+      message("NA values detected in '", ST$y[1], "'. JAGS will treat them as latent responses and impute them during sampling.")
 
     # Check varying
     if (length(derived_varying) > 0) {

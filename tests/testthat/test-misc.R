@@ -61,6 +61,55 @@ test_that("Simple mcpfit methods", {
 
 })
 
+test_that("PPC and LOO draws stay aligned", {
+  expect_error(
+    pp_check(demo_fit, nsamples = 2, not_a_bayesplot_argument = TRUE),
+    "not_a_bayesplot_argument",
+    fixed = TRUE
+  )
+  expect_s3_class(
+    pp_check(demo_fit, type = "ribbon", nsamples = NULL, alpha = 0.2),
+    "ggplot"
+  )
+  expect_error(
+    pp_check(demo_fit, type = "loo_intervals", prior = TRUE, nsamples = 2),
+    "LOO predictive checks require posterior draws",
+    fixed = TRUE
+  )
+
+  fit = demo_fit
+  fit$data[[fit$pars$y]][2] = NA_real_
+  fit$data$facet = factor(rep(1:2, length.out = nrow(fit$data)))
+  fit$loglik = NULL
+  fit$loo = NULL
+
+  expect_s3_class(pp_check(fit, nsamples = 5), "ggplot")
+  fit = add_loglik(fit, nsamples = 10)
+  expect_equal(dim(fit$loglik), c(10, nrow(fit$data) - 1))
+  expect_false(anyNA(fit$loglik))
+
+  loo_result = suppressWarnings(loo(
+    fit, nsamples = 10, save_psis = TRUE
+  ))
+  expect_equal(dim(loo_result$psis_object), dim(fit$loglik))
+  expect_equal(attr(loo_result, "mcp_settings")$nsamples, 10L)
+  loo_changed = suppressWarnings(loo(
+    fit, nsamples = 10, varying = FALSE, arma = FALSE
+  ))
+  expect_false(attr(loo_changed, "mcp_settings")$varying)
+  expect_false(attr(loo_changed, "mcp_settings")$arma)
+
+  expect_s3_class(
+    suppressMessages(pp_check(
+      fit,
+      type = "loo_intervals",
+      facet_by = "facet",
+      nsamples = 5
+    )),
+    "patchwork"
+  )
+})
+
 # hypothesis()
 test_that("hypothesis()", {
   actual_hypothesis1 = hypothesis(demo_fit2, "cp_1 > 27")

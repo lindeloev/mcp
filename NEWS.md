@@ -64,6 +64,12 @@
 
 ## Bug fixes
 
+-   Fixed several posterior predictive check and information-criterion bugs present in v0.3.4. From most to least serious:
+    - Missing responses were scored in WAIC/LOO as if their JAGS-imputed values had been observed. Only an issue if there were many missing data. Fix: missing responses remain latent in JAGS but are excluded from observed-data PPC, log-likelihood, WAIC, and LOO calculations.
+    - Faceted checks dropped arguments intended for bayesplot; faceted LOO checks could pair group-specific predictions with importance weights from the wrong observations.
+    - `prior = TRUE` LOO checks incorrectly combined prior predictions with posterior LOO weights. A rare use case.
+    - `pp_check(..., nsamples = NULL)` errored. Fixed.
+
 -   Weighted regression: While JAGS correctly modelled weights, R-side simulation/generation ignored it. This means `predict()`, PPCs, `log_lik()`, WAIC, and LOO were incorrect when using weighted regression. Weighted Gaussian posterior predictions and log-likelihoods now use the observation-level standard deviation `sigma / sqrt(weight)`, matching the JAGS precision `weight / sigma^2`. This makes `predict()`, posterior predictive checks, `log_lik()`, WAIC, and LOO consistent with the fitted model.
 
 -   Bug only noticeable for very small samples: For Gaussian identity-link AR models, R-side calculations could leak residuals between posterior draws and omitted available partial lags for the first observations of AR(2+) models. Each draw is now evaluated as a separate series and uses the same partial-lag recurrence as JAGS.

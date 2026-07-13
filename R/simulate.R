@@ -169,8 +169,8 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
   if (length(series_id) != length(base_link_mu) || anyNA(series_id))
     stop_github("series_id must have one non-missing value per observation.")
 
-  generate = is.null(y)
-  if (generate && family$family == "gaussian")
+  generate_series = is.null(y)
+  if (generate_series && family$family == "gaussian")
     message("Generating residuals for AR(N) model since the response column/argument was not provided.")
 
   ar_order = length(ar_list)
@@ -180,7 +180,7 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
   resid_arma = numeric(length(base_link_mu))
   link_mu = numeric(length(base_link_mu))
   mu = numeric(length(base_link_mu))
-  if (generate)
+  if (generate_series)
     y = numeric(length(base_link_mu))
 
   for (rows in split(seq_along(base_link_mu), series_id)) {
@@ -197,7 +197,8 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
 
       link_mu[row] = base_link_mu[row] + resid_arma[row]
       mu[row] = family$linkinv(link_mu[row])
-      if (generate) {
+      generate_observation = generate_series || is.na(y[row])
+      if (generate_observation) {
         if (family$family == "gaussian") {
           y[row] = stats::rnorm(1, mu[row], sigma[row])
         } else if (family$family == "binomial") {

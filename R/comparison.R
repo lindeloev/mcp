@@ -12,6 +12,8 @@
 #' @param ... Further arguments passed to \code{\link[loo]{loo}}, e.g., `cores` or `save_psis`.
 #' @param pointwise `TRUE` calls calls \code{\link[loo]{loo.function}} which is slower but more memory efficient.
 #'   `FALSE` calls the default \code{\link[loo]{loo}}.
+#' @param nsamples Integer or `NULL`. Number of posterior draws used for the
+#'   log-likelihood or information criterion. `NULL` uses all draws.
 #' @return a `loo` or `psis_loo` object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -32,49 +34,94 @@
 #' fit2$loo = loo(fit2)
 #' loo::loo_compare(fit1$loo, fit2$loo)
 #' }
-loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE) {
+loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE,
+                      nsamples = NULL) {
   fit = x
   assert_types(fit, "mcpfit")
-  chain_id = rep(seq_along(fit$mcmc_post), each =  nrow(fit$mcmc_post[[1]]))
+  assert_types(varying, "logical", "character")
+  assert_logical(arma)
+  nsamples = validate_loglik_nsamples(fit, nsamples)
+  n_draws = sum(vapply(fit$mcmc_post, nrow, integer(1)))
+  settings = get_loglik_settings(fit, varying, arma, nsamples)
+  if (length(settings$observed_rows) == 0)
+    stop("LOO requires at least one observed response.")
+  chain_id_all = rep(
+    seq_along(fit$mcmc_post),
+    vapply(fit$mcmc_post, nrow, integer(1))
+  )
 
 
   # Matrix: Fast but memory-greedy matrix-based computation
   if (pointwise == FALSE) {
-    if (is.null(fit$loglik))
-      fit = add_loglik(fit, varying = varying, arma = arma)
-    #chain_id = rownames(fit$loglik) %>% as.numeric()
-    r_eff = loo::relative_eff(exp(fit$loglik), chain_id)
-    loo::loo(fit$loglik, r_eff = r_eff, ...)
+    if (!loglik_settings_match(fit$loglik, settings))
+      fit = add_loglik(fit, varying = varying, arma = arma, nsamples = nsamples)
+    chain_id = as.integer(rownames(fit$loglik))
+    r_eff = if (is.null(nsamples)) {
+      loo::relative_eff(exp(fit$loglik), chain_id)
+    } else {
+      1
+    }
+    result = loo::loo(fit$loglik, r_eff = r_eff, ...)
 
   # Pointwise: per-data-row computation
   } else {
+    if (is.null(nsamples)) {
+      n_eval = n_draws
+      chain_id = chain_id_all
+    } else {
+      # Select draws once and reuse them for every observation. Treat the
+      # arbitrary subset as one chain; relative_eff is set to 1 below.
+      draw_indices = sort(sample.int(n_draws, nsamples))
+      selected = as.matrix(fit$mcmc_post)[draw_indices, , drop = FALSE]
+      fit$mcmc_post = coda::mcmc.list(coda::mcmc(selected))
+      n_eval = nsamples
+      chain_id = rep(1L, nsamples)
+    }
     ar_order = get_arma_order(fit$.internal$rhs_table, "ar")
     ma_order = get_arma_order(fit$.internal$rhs_table, "ma")
 
     # For small models, the majority of the computation time will be pp_eval overhead
     llfun = function(data_i, draws = NULL, link_fun = identity) {
+      original_row = data_i$.mcp_original_row
       if (is.na(ar_order) && is.na(ma_order)) {
-        loglik = pp_eval(fit, newdata = data_i, summary = FALSE, type = "loglik", varying = varying, arma = arma)$loglik
+        loglik_samples = pp_eval(
+          fit, newdata = fit$data[original_row, , drop = FALSE],
+          summary = FALSE, type = "loglik",
+          varying = varying, arma = arma
+        )
       } else {
         # AR needs only its direct response lags. MA innovations recursively
         # depend on all preceding observations, so retain the full history.
-        first_row = if (is.na(ma_order)) max(1, data_i$row - ar_order) else 1
-        data_rows = seq(first_row, data_i$row)
+        first_row = if (is.na(ma_order)) max(1, original_row - ar_order) else 1
+        data_rows = seq(first_row, original_row)
         lldata = fit$data[data_rows, ]
-        loglik = fit %>%
+        loglik_samples = fit %>%
           pp_eval(newdata = lldata, summary = FALSE, type = "loglik", varying = varying, arma = arma) %>%
-          dplyr::filter(.data$data_row == max(.data$data_row)) %>%  # last row
-          dplyr::pull(.data$loglik)
+          dplyr::filter(.data$data_row == max(.data$data_row))  # last observed row
       }
 
-      # Return
+      loglik = dplyr::pull(loglik_samples, .data$loglik)
       link_fun(loglik)
     }
 
-    fit$data$row = seq_len(nrow(fit$data))
-    r_eff = loo::relative_eff(llfun, data = fit$data, chain_id, link_fun = exp)
-    loo::loo.function(llfun, data = fit$data, r_eff = r_eff, draws = NA)
+    loo_data = data.frame(.mcp_original_row = settings$observed_rows)
+
+    r_eff = if (is.null(nsamples)) {
+      loo::relative_eff(
+        llfun, data = loo_data, chain_id = chain_id,
+        link_fun = exp, draws = seq_len(n_eval)
+      )
+    } else {
+      1
+    }
+    result = loo::loo.function(
+      llfun, data = loo_data, r_eff = r_eff,
+      draws = seq_len(n_eval), ...
+    )
   }
+
+  attr(result, "mcp_settings") = settings
+  result
 }
 
 
@@ -84,12 +131,14 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE) {
 #' @param ... Currently ignored
 #' @export waic
 #' @export
-waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE) {
+waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, nsamples = NULL) {
   assert_ellipsis(...)
   fit = x
   assert_types(fit, "mcpfit")
-  if (is.null(fit$loglik))
-    fit = add_loglik(fit, varying = varying, arma = arma)
+  nsamples = validate_loglik_nsamples(fit, nsamples)
+  settings = get_loglik_settings(fit, varying, arma, nsamples)
+  if (!loglik_settings_match(fit$loglik, settings))
+    fit = add_loglik(fit, varying = varying, arma = arma, nsamples = nsamples)
 
   loo::waic(fit$loglik)
 }
@@ -100,32 +149,82 @@ waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE) {
 #' @aliases add_loglik
 #' @inheritParams loo.mcpfit
 #' @seealso loo.mcpfit waic.mcpfit
-#' @return An `mcpfit` object with `fit$loglik` filled as an (Nchains * Nsamples) x N
-#'   data matrix with chain number as rownames.
+#' @return An `mcpfit` object with `fit$loglik` filled as an (Nchains * Nsamples)
+#'   by N-observed-responses data matrix with chain number as rownames. Rows
+#'   with missing responses are excluded from the likelihood columns.
 #' @export
 #' @examples
 #' \donttest{
 #' demo_fit = add_loglik(demo_fit)
 #' }
-add_loglik = function(x, varying = TRUE, arma = TRUE) {
+add_loglik = function(x, varying = TRUE, arma = TRUE, nsamples = NULL) {
   fit = x
-  loglik_samples = pp_eval(fit, type = "loglik", summary = FALSE, probs = FALSE, varying = varying, arma = arma)
-
+  nsamples = validate_loglik_nsamples(fit, nsamples)
+  loglik_samples = pp_eval(
+    fit, type = "loglik", summary = FALSE, probs = FALSE,
+    varying = varying, arma = arma, nsamples = nsamples
+  )
   # Log-likelihoods
-  fit$loglik = loglik_samples %>%
+  loglik_wide = loglik_samples %>%
     dplyr::select(".chain", ".draw", "data_row", "loglik") %>%
 
     # To matrix
     tidyr::pivot_wider(id_cols =  c(".chain", ".draw"), names_from = "data_row", values_from = "loglik") %>%
+    dplyr::arrange(.data$.draw)
+  chain_id = loglik_wide$.chain
+  fit$loglik = loglik_wide %>%
     dplyr::select(-".chain", -".draw") %>%
     as.matrix()
 
   # Chain info
-  rownames(fit$loglik) = loglik_samples %>%
-    dplyr::filter(.data$data_row == 1) %>%
-    dplyr::pull(".chain")
+  rownames(fit$loglik) = chain_id
+  attr(fit$loglik, "mcp_settings") = get_loglik_settings(
+    fit, varying, arma, nsamples
+  )
 
   fit
+}
+
+
+#' Validate the number of draws used for information criteria
+#'
+#' @keywords internal
+#' @noRd
+validate_loglik_nsamples = function(fit, nsamples) {
+  assert_types(nsamples, "null", "numeric", len = c(0, 1))
+  if (is.null(nsamples))
+    return(NULL)
+
+  n_draws = sum(vapply(fit$mcmc_post, nrow, integer(1)))
+  assert_integer(nsamples, lower = 1, len = 1)
+  if (nsamples > n_draws)
+    stop("`nsamples` cannot exceed the ", n_draws, " available posterior draws.")
+  as.integer(nsamples)
+}
+
+
+#' Record the settings represented by a log-likelihood or LOO object
+#'
+#' @keywords internal
+#' @noRd
+get_loglik_settings = function(fit, varying, arma, nsamples) {
+  if (!is.null(nsamples))
+    nsamples = as.integer(nsamples)
+  list(
+    varying = varying,
+    arma = arma,
+    nsamples = nsamples,
+    observed_rows = which(!is.na(fit$data[, fit$pars$y]))
+  )
+}
+
+
+#' Check whether cached log likelihoods match requested settings
+#'
+#' @keywords internal
+#' @noRd
+loglik_settings_match = function(loglik, settings) {
+  !is.null(loglik) && identical(attr(loglik, "mcp_settings"), settings)
 }
 
 
