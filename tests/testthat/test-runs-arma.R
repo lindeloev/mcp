@@ -36,3 +36,20 @@ good_arma = list(
 )
 
 test_good(good_arma)
+
+
+test_that("ar() currently requires a Gaussian identity model", {
+  data = data.frame(x = 1:4, y = 1:4)
+
+  expect_error(
+    mcp(
+      list(y ~ 1 + ar(1)),
+      data,
+      family = gaussian(link = "log"),
+      par_x = "x",
+      sample = FALSE
+    ),
+    "ar() is currently only supported for gaussian(link = \"identity\").",
+    fixed = TRUE
+  )
+})

@@ -268,11 +268,8 @@ mcp = function(model,
   # Check parameters
   # ARMA models
   if (length(pars$arma) > 0) {
-    if (family$family %in% c("poisson", "negbinomial"))
-      stop("ar() is not currently supported for family = ", family$family, "().")
-
-    if (family$link %in% c("logit", "probit"))
-      message("The current implementation of autoregression can be fragile for link='logit'. In particular, if there are any all-success trials (e.g., 10/10), the only solution is for 'ar' to be 0.00. If fitting succeeds, do a proper assessment of model convergence.")
+    if (family$family != "gaussian" || family$link != "identity")
+      stop("ar() is currently only supported for gaussian(link = \"identity\").")
 
     if (is.unsorted(data[, par_x]) && is.unsorted(rev(data[, par_x])))
       message("'", par_x, "' is unordered. Please note that ar() applies in the order of data of the data frame - not the values.")

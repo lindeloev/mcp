@@ -69,7 +69,6 @@ test_runs = function(model,
     accepted_warnings = c("Adaptation incomplete")  # due to very small test datasets
     accepted_messages = c(
       "Finished sampling in",
-      "The current implementation of autoregression can be fragile",
       "Autoregression currently assumes homoskedasticity",
       "You are using ar\\(\\) together"
     )

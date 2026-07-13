@@ -22,7 +22,10 @@ bad_binomial = list(
   list(y | trials(N) ~ 1 + sigma(1)),
 
   # Weights not implemented yet
-  list(y | trials(N) + weights(weights_ok) ~ 1)
+  list(y | trials(N) + weights(weights_ok) ~ 1),
+
+  # Generalized autoregression is not implemented yet
+  list(y | trials(N) ~ 1 + ar(1))
 )
 
 test_bad(bad_binomial,
@@ -36,8 +39,7 @@ good_binomial = list(
        y | trials(N) ~ 1 ~ 1 + x,
        ~ 0),
   list(y | trials(N) ~ 1,  # With varying
-       1 + (1|id) ~ 1),
-  list(y | trials(N) ~ 1 + ar(1))  # Simple AR(1)
+       1 + (1|id) ~ 1)
   #list(y | trials(N) ~ 1,
   #     1 ~ N)  # N can be both trials and slope. TO DO: Fails in this test because par_x = "x"
 )
@@ -67,7 +69,10 @@ bad_bernoulli = list(
   list(y_bern ~ 1 + sigma(1)),
 
   # Weights not implemented yet
-  list(y | trials(N) + weights(weights_ok) ~ 1)
+  list(y | trials(N) + weights(weights_ok) ~ 1),
+
+  # Generalized autoregression is not implemented yet
+  list(y_bern ~ 1 + ar(1))
 )
 
 test_bad(bad_bernoulli,
