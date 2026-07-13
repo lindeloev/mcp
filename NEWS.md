@@ -44,6 +44,8 @@
 
 ## Minor breaking changes
 
+-   Removed the non-functional `exponential()` family. It had no default priors and could not be fitted. Exponential survival models would require dedicated support for censoring and survival likelihoods rather than the previous ordinary-response placeholder.
+
 -   Minor updates to several priors to be more in line with brms: use `median(link(y))` instead of `mean(link(y))` and `mad(link(y))` instead of `sd(link(y))` for mu and sigma respectively.
 
 -   The data-property constants MEANY and SDY have been renamed to "MEANLINKY" (`mean(link_func(ydata))`, SDLINKY (`sd(link_func(ydata))`) and will now apply the link function specified in the family.

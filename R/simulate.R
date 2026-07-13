@@ -278,10 +278,6 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     } else if (.type == "predict" && fit$family$family == "negbinomial") {
       return(stats::rnbinom(length(dpar_values$mu_), mu = dpar_values$mu_, size = dpar_values$shape_))
     }
-  } else if (fit$family$family == "exponential") {
-    if (.type == "fitted") return(1 / dpar_values$mu_)
-    if (.type == "loglik") return(stats::dexp(dpar_values$.ydata, dpar_values$mu_, log = TRUE))
-    if (.type == "predict") return(stats::rexp(length(dpar_values$mu_), dpar_values$mu_))
   }
 }
 

@@ -13,23 +13,6 @@ bernoulli = function(link = "logit") {
   mcpfamily(family)
 }
 
-#' Exponential Family for mcp
-#'
-#' @aliases exponential
-#' @param link Link function (Character).
-#' @export
-exponential = function(link = "identity") {
-  assert_value(link, allowed = c("identity"))
-
-  family = list(
-    family = "exponential",
-    link = link  # on lambda
-  )
-  class(family) = "family"
-  family = mcpfamily(family)
-}
-
-
 #' Negative Binomial for mcp
 #'
 #' Parameterized as `mu` (the conditional mean) and `shape` (the same quantity
@@ -150,7 +133,7 @@ get_default_dpar_specs = function(family) {
       new_dpar_spec("shape", family$link_shape, implicit = TRUE)
     )
   } else {
-    # Poisson, Bernoulli, binomial, exponential, and custom mean-only families.
+    # Poisson, Bernoulli, binomial, and custom mean-only families.
     specs = new_dpar_spec("mu", family$link)
   }
 

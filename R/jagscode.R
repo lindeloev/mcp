@@ -152,8 +152,6 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, family, par_x) {
       "nb_prob_[i_] = shape_[i_] / (shape_[i_] + ", mu_code, ")\n    ",
       ST$y[1], "[i_] ~ dnegbin(nb_prob_[i_], shape_[i_])"
     )
-  } else if (family$family == "exponential") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dexp(", mu_code, ")")
   }
 
   # Compute residuals for AR
