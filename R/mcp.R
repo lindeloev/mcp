@@ -245,6 +245,9 @@ mcp = function(model,
   ST = get_segment_table(model, data, family, par_x)  #"ST" for "segment table"
   rhs_table = get_rhs_table(model, data, family, par_x)
 
+  if ("ma" %in% rhs_table$dpar)
+    stop("ma() syntax is recognized, but moving-average terms are not implemented yet.")
+
   # Make prior
   prior = get_prior(ST, rhs_table, family, prior)
 

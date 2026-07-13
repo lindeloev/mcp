@@ -188,8 +188,8 @@ assert_dpar_specs = function(x) {
     stop("Each distributional parameter must occur exactly once in `family$dpar_specs`.")
   if ("mu" %notin% x$dpar)
     stop("`family$dpar_specs` must contain the response-mean parameter 'mu'.")
-  if (any(x$dpar %in% c("epred", "ar")))
-    stop("'epred' and 'ar' are reserved and cannot be family distributional parameters.")
+  if (any(x$dpar %in% c("epred", "ar", "ma")))
+    stop("'epred', 'ar', and 'ma' are reserved and cannot be family distributional parameters.")
 
   supported_links = c("identity", "log", "logit", "probit")
   if (any(x$link %notin% supported_links))

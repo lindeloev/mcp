@@ -59,8 +59,8 @@ get_par_x = function(model, data, par_x = NULL) {
 #' @param form The RHS formula for a particular dpar of a segment.
 #' @param form_rhs The full RHS formula of a segment, including one or several `form`s.
 #' @param segment Integer. The segment number
-#' @param dpar One of `c("mu", "sigma", "ar")`.
-#' @param order Currently only applies to `dpar == "ar"`.
+#' @param dpar A distributional parameter or an `ar`/`ma` component.
+#' @param order Applies to `dpar %in% c("ar", "ma")`.
 #' @param check_rank Boolean. Whether to stop on rank deficiency.
 #' @return A tibble with one row per model parameter and the columns
 #'   - `dpar`: character.
@@ -68,7 +68,7 @@ get_par_x = function(model, data, par_x = NULL) {
 #'   - `display_name`: user-facing parameter name used in summary functions.
 #'   - `code_name`: parameter name used in JAGS and internally in mcp.
 #'   - `par_type`: One of "Intercept", "dummy", or "slope". Used for setting priors and for change point indicator func.
-#'   - `order`: positive integer or NA. Currently only relevant for `dpar == "ar"`.
+#'   - `order`: positive integer or NA. Only relevant for `ar` and `ma`.
 #'   - `matrix_data`: column of the design matrix less the `par_x` term.
 #'
 #' @encoding UTF-8
@@ -260,10 +260,12 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
   term_labels = attrs$term.labels
 
   # Formula wrappers belonging to distributional parameters are declared by
-  # the family. `ar()` remains a separate model component because it carries an
+  # the family. AR and MA are separate model components because they carry an
   # order as well as a formula.
   model_dpars = family$dpar_specs$dpar[family$dpar_specs$dpar != "mu"]
   dpar_patterns = paste0("^", model_dpars, "\\(")
+  arma_components = c("ar", "ma")
+  arma_pattern = paste0("^(", paste0(arma_components, collapse = "|"), ")\\(")
 
   # Give a family-specific error when a recognized dpar wrapper is unavailable.
   used_dpar_wrappers = known_dpar_wrappers()[vapply(
@@ -290,8 +292,8 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
   is_dpar_term = rep(FALSE, length(term_labels))
   for (pattern in dpar_patterns)
     is_dpar_term = is_dpar_term | stringr::str_detect(term_labels, pattern)
-  is_ar_term = stringr::str_detect(term_labels, "^ar\\(")
-  mu_terms = term_labels[!is_dpar_term & !is_ar_term]
+  is_arma_term = stringr::str_detect(term_labels, arma_pattern)
+  mu_terms = term_labels[!is_dpar_term & !is_arma_term]
 
   if (length(mu_terms > 0)) {
     mu_terms[1] = paste0(attrs$intercept, " + ", mu_terms[1])
@@ -329,18 +331,22 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
   }
 
 
-  ######
-  # AR #
-  ######
-  ar_term = term_labels[stringr::str_detect(term_labels, "ar\\(")]  # Extract terms
-  ar_stuff = unpack_arma(ar_term)  # $order and $form_str
-  ar_form = get_term_content(ar_stuff$form_str)
+  #########
+  # AR/MA #
+  #########
+  arma_pars = list()
+  for (component in arma_components) {
+    component_term = term_labels[stringr::str_detect(term_labels, paste0("^", component, "\\("))]
+    component_stuff = unpack_arma(component_term)
 
-  # Populate each of these for each order of AR
-  ar_pars = list()
-  if (!is.na(ar_stuff$order)) {
-    for (order in seq_len(ar_stuff$order)) {
-      ar_pars = rbind(ar_pars, get_rhs_table_dpar(data, ar_form, segment, "ar", par_x, order, check_rank))
+    if (!is.na(component_stuff$order)) {
+      component_form = get_term_content(component_stuff$form_str)
+      arma_pars[[component]] = lapply(
+        seq_len(component_stuff$order),
+        function(order) get_rhs_table_dpar(
+          data, component_form, segment, component, par_x, order, check_rank
+        )
+      ) %>% dplyr::bind_rows()
     }
   }
 
@@ -352,7 +358,7 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
   rbind(
     mu_pars,
     dplyr::bind_rows(dpar_pars),
-    ar_pars
+    dplyr::bind_rows(arma_pars)
   )
 }
 
@@ -397,8 +403,10 @@ get_term_content = function(term) {
 #' @aliases unpack_arma
 #' @keywords internal
 #' @noRd
-#' @param form_str_in A character. These are allowed: "ar(number)" or "ar(number, formula)"
-#' @return A list with `$order` and `$form_str` (e.g., "ar(formula)"). The formula is ar(1) if no formula is given
+#' @param form_str_in A character such as `"ar(number)"`, `"ma(number)"`, or
+#'   either component with a second formula argument.
+#' @return A list with `$order` and `$form_str` (e.g., `"ar(formula)"`).
+#'   The component formula is 1 if no formula is given.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 unpack_arma = function(form_str_in) {
@@ -411,6 +419,9 @@ unpack_arma = function(form_str_in) {
     stop("Only one of these allowed per segment: ", form_str_in)
   }
 
+  component = stringr::str_extract(form_str_in, "^[^(]+")
+  assert_value(component, allowed = c("ar", "ma"))
+
   # GET ORDER
   order_start = stringr::str_locate(form_str_in, "\\(") + 1  # Location of first character in contents
   order_end = stringr::str_locate(form_str_in, ",") - 1  # Where is comma? If no comma, this returns NA, NA
@@ -421,7 +432,7 @@ unpack_arma = function(form_str_in) {
 
   # Check the order
   if (is.na(order))
-    stop("Wrong specification of order in '", form_str_in, "'. Must be ar(order) or ar(order, formula) where order is a positive integer.")
+    stop("Wrong specification of order in '", form_str_in, "'. Must be ", component, "(order) or ", component, "(order, formula) where order is a positive integer.")
   assert_integer(order, form_str_in, lower = 1, len = 1)
 
   # GET FORMULA
@@ -429,9 +440,8 @@ unpack_arma = function(form_str_in) {
     # If there is a formula, remove the order
     form_str = gsub(paste0(order, ", "), "", form_str_in)
   } else {
-    # If there is no formula, return "ar(1)"
-    dpar = substr(form_str_in, 1, order_start - 2)  # "ar"
-    form_str = paste0(dpar, "(1)")
+    # If there is no formula, use an intercept-only component formula.
+    form_str = paste0(component, "(1)")
   }
 
   # Return

@@ -92,6 +92,21 @@ test_that("unsupported dpar wrappers give a family-specific error", {
 })
 
 
+test_that("AR and MA component names are reserved", {
+  family = mcpfamily(gaussian())
+  family$dpar_specs = dplyr::bind_rows(
+    family$dpar_specs,
+    new_dpar_spec("ma", "identity")
+  )
+
+  expect_error(
+    add_dpar_specs(family),
+    "'epred', 'ar', and 'ma' are reserved and cannot be family distributional parameters.",
+    fixed = TRUE
+  )
+})
+
+
 test_that("R-side dpar evaluation supports link and response scales", {
   data = data.frame(x = 1:4, y = c(2, 3, 5, 7))
   fit = mcp(
