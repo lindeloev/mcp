@@ -15,7 +15,6 @@ License: GPL-2
 Encoding: UTF-8
 Language: en-US
 LazyData: true
-RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 3.6.0)
 Config/testthat/parallel: true
@@ -47,3 +46,4 @@ Suggests:
   purrr (>= 0.3.4),
 	knitr, 
 	rmarkdown
+Config/roxygen2/version: 8.0.0
