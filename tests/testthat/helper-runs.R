@@ -300,12 +300,70 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
   }
 }
 
+
+# Weighted Gaussian evaluation must use the same observation-level SD as JAGS:
+# precision = weight / sigma^2, or equivalently SD = sigma / sqrt(weight).
+test_pp_eval_weights = function(fit, prior = FALSE) {
+  if (fit$family$family != "gaussian" || length(fit$pars$weights) == 0)
+    return(invisible(NULL))
+
+  weight_col = fit$pars$weights
+  keys = c(".chain", ".iteration", ".draw", "data_row")
+  mu = fitted(fit, summary = FALSE, probs = FALSE, prior = prior, dpar = "mu")
+  sigma = fitted(fit, summary = FALSE, probs = FALSE, prior = prior, dpar = "sigma")
+  loglik = log_lik(fit, summary = FALSE, probs = FALSE, prior = prior)
+  weights = fit$data[[weight_col]][loglik$data_row]
+  observation_sd = sigma$fitted / sqrt(weights)
+  observed = fit$data[[fit$pars$y]][loglik$data_row]
+
+  testthat::expect_equal(loglik[, keys], mu[, keys])
+  testthat::expect_equal(loglik[, keys], sigma[, keys])
+  testthat::expect_equal(
+    loglik$loglik,
+    stats::dnorm(observed, mu$fitted, observation_sd, log = TRUE)
+  )
+
+  had_random_seed = exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  if (had_random_seed)
+    random_seed = get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+  on.exit({
+    if (had_random_seed) {
+      assign(".Random.seed", random_seed, envir = .GlobalEnv)
+    } else if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+      rm(".Random.seed", envir = .GlobalEnv)
+    }
+  }, add = TRUE)
+
+  set.seed(123)
+  prediction = predict(fit, summary = FALSE, probs = FALSE, prior = prior)
+  set.seed(123)
+  expected = stats::rnorm(nrow(prediction), mu$fitted, observation_sd)
+  testthat::expect_equal(prediction[, keys], mu[, keys])
+  testthat::expect_equal(prediction$predict, expected)
+
+  if (!prior) {
+    newdata_without_weights = fit$data[, colnames(fit$data) != weight_col, drop = FALSE]
+    testthat::expect_error(
+      predict(fit, newdata = newdata_without_weights, summary = FALSE),
+      weight_col,
+      fixed = TRUE
+    )
+    testthat::expect_error(
+      log_lik(fit, newdata = newdata_without_weights, summary = FALSE),
+      weight_col,
+      fixed = TRUE
+    )
+  }
+}
+
+
 test_pp_eval = function(fit, prior = FALSE) {
   # Test pp_eval
   test_pp_eval_func(fit, fitted, "fitted", prior = prior)
   test_pp_eval_func(fit, predict, "predict", prior = prior)
   test_pp_eval_func(fit, residuals, "residuals", prior = prior)
   test_pp_eval_func(fit, log_lik, "loglik", prior = prior)
+  test_pp_eval_weights(fit, prior = prior)
 
   # Test the other arguments. Inside "try" without further checking because such errors should be caught by the above.
   result_more = try(fitted(

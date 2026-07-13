@@ -64,6 +64,8 @@
 
 ## Bug fixes
 
+-   Weighted regression: While JAGS correctly modelled weights, R-side simulation/generation ignored it. This means `predict()`, PPCs, `log_lik()`, WAIC, and LOO were incorrect when using weighted regression. Weighted Gaussian posterior predictions and log-likelihoods now use the observation-level standard deviation `sigma / sqrt(weight)`, matching the JAGS precision `weight / sigma^2`. This makes `predict()`, posterior predictive checks, `log_lik()`, WAIC, and LOO consistent with the fitted model.
+
 -   `ar()` now uses GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links. Zero and boundary counts are made finite using a default `ar(..., boundary = 0.1)`. Bernoulli models and non-default links remain unsupported.
 
 -   The quantiles for `fitted()` and `predict()` for varying-changepoint models ignored the varying level - they were identical across levels.

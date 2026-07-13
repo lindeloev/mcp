@@ -258,6 +258,11 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   param_pars = get_sim_pars(rhs_table, fit$pars)
   pred_pars = paste0(".pred_", rhs_table$code_name)
   data_pars = c(fit$pars$x, fit$pars$trials)  # varying is not strictly a data par, but acts like it below
+  uses_weights = fit$family$family == "gaussian" &&
+    .type %in% c("predict", "loglik") &&
+    length(fit$pars$weights) > 0
+  if (uses_weights)
+    data_pars = c(data_pars, fit$pars$weights)
   expected_arg_names = c(param_pars, pred_pars, data_pars)
 
   args = list(...)
@@ -292,6 +297,16 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   if (!uses_link_dpars && .scale == "response" && .dpar %in% c("epred_", "mu_"))
     dpar_values$mu_ = fit$family$linkinv(dpar_values$mu_)
 
+  # JAGS models Gaussian weights as precision = weight / sigma^2, so the
+  # observation-level SD used for predictions and densities is sigma/sqrt(weight).
+  observation_sigma = dpar_values$sigma_
+  if (uses_weights) {
+    weights = args[[fit$pars$weights]]
+    if (!is.numeric(weights) || anyNA(weights) || any(weights <= 0))
+      stop("All weights must be numeric and greater than zero.")
+    observation_sigma = observation_sigma / sqrt(weights)
+  }
+
   # Simply return for fitted dpars
   if (.dpar %notin% c("epred_", "mu_") & .type == "fitted") {
     link_dpar = paste0("link_", .dpar)
@@ -312,7 +327,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
       boundary = rep(0.1, length(base_link_mu))
     trials = if (fit$family$family == "binomial") args[[fit$pars$trials]] else NULL
     shape = if (fit$family$family == "negbinomial") dpar_values$shape_ else NULL
-    sigma = if (fit$family$family == "gaussian") dpar_values$sigma_ else NULL
+    sigma = if (fit$family$family == "gaussian") observation_sigma else NULL
 
     if (!has_ydata && .type != "predict")
       stop("The response is required to evaluate GARMA terms.")
@@ -345,12 +360,12 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     if (.type == "fitted") {
       return(dpar_values$mu_)
     } else if(.type == "loglik") {
-      return(stats::dnorm(dpar_values$.ydata, dpar_values$mu_, dpar_values$sigma_, log = TRUE))
+      return(stats::dnorm(dpar_values$.ydata, dpar_values$mu_, observation_sigma, log = TRUE))
     } else if (.type == "predict") {
       if (any(dpar_values$sigma_ < 0))
         stop("Modelled negative sigma. First detected at ", fit$pars$x, " = ", min(get(fit$pars$x)[dpar_values$sigma_ < 0]))
 
-      return(stats::rnorm(length(dpar_values$mu_), dpar_values$mu_, dpar_values$sigma_))
+      return(stats::rnorm(length(dpar_values$mu_), dpar_values$mu_, observation_sigma))
     }
 
     # OTHER FAMILIES ---------------------

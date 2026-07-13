@@ -563,8 +563,9 @@ tidy_samples = function(
 #' @keywords internal
 #' @inheritParams tidy_samples
 #' @param object An `mcpfit` object.
-#' @param newdata A `tibble` or a `data.frame` containing predictors in the model. If `NULL` (default),
-#'   the original data is used.
+#' @param newdata A `tibble` or a `data.frame` containing predictors in the model. Weighted
+#'   Gaussian predictions and log-likelihoods also require the weights column. If `NULL`
+#'   (default), the original data is used.
 #' @param summary Summarise at each x-value
 #' @param type One of:
 #'   - `"fitted"`: return expected values. When `dpar` is the name of a dpar
@@ -646,8 +647,7 @@ pp_eval = function(
   dpar = assert_dpar(dpar, fit = fit, type = type)
 
   if (is.null(newdata))
-    newdata = fit$data %>%
-      dplyr::select(-!!fit$pars$weights)
+    newdata = fit$data
 
 
   ###############
@@ -655,7 +655,12 @@ pp_eval = function(
   ###############
   varying_info = unpack_varying(fit, pars = varying)
   exclude_varying = fit$pars$varying[fit$pars$varying %notin% varying_info$cols]
-  required_cols = colnames(fit$data)[colnames(fit$data) %notin% fit$pars$weights]  # Only predictive columns were saved in fit$data; but exclude weights
+  required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
+  uses_weights = fit$family$family == "gaussian" &&
+    type %in% c("predict", "loglik") &&
+    length(fit$pars$weights) > 0
+  if (!uses_weights)
+    required_cols = required_cols[required_cols %notin% fit$pars$weights]
   required_cols = required_cols[required_cols %notin% exclude_varying]
   if ((arma == FALSE || is_arma(fit) == FALSE) & type %in% c("fitted", "predict")) {
     required_cols = required_cols[required_cols != fit$pars$y]
@@ -666,6 +671,7 @@ pp_eval = function(
   newdata = data.frame(newdata[, required_cols, drop = FALSE])
   #colnames(newdata) = required_cols  # Special case for when there's only one predictor
   newdata$data_row = seq_len(nrow(newdata))  # to maintain order in the output when summary == TRUE
+  newdata_return = dplyr::select(newdata, -dplyr::any_of(fit$pars$weights))
 
   ########################
   # ASSERTS AND RECODING #
@@ -706,7 +712,7 @@ pp_eval = function(
 
   samples = samples_predictors %>%
     dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!samples_predictors, .type = type_for_simulate, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale)) %>%
-    dplyr::select(-dplyr::starts_with(".pred_"))
+    dplyr::select(-dplyr::starts_with(".pred_"), -dplyr::any_of(fit$pars$weights))
 
 
   # Optionally compute residuals
@@ -725,8 +731,8 @@ pp_eval = function(
 
       # Apply original order and put newdata as the first columns
       dplyr::arrange(.data$data_row) %>%
-      dplyr::left_join(newdata, by = "data_row", relationship = "one-to-one") %>%
-      dplyr::select(dplyr::one_of(colnames(newdata)), {{ returnvar }} , "error", -"data_row")
+      dplyr::left_join(newdata_return, by = "data_row", relationship = "one-to-one") %>%
+      dplyr::select(dplyr::one_of(colnames(newdata_return)), {{ returnvar }} , "error", -"data_row")
 
 
     # Quantiles
