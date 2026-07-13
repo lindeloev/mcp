@@ -218,7 +218,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     is_arma = any(rhs_table$dpar == "ar")
     if (is_arma && .arma == TRUE) {
       ar_list = dplyr::select(dpar_values, dplyr::matches("^ar[0-9]+_$"))
-      ar_result = simulate_ar(dpar_values$sigma_, ar_list, dpar_values$.ydata - dpar_values$mu_)
+      ar_result = simulate_ar(dpar_values$sigma_, ar_list, dpar_values$.ydata - dpar_values$mu_, series_id = args[[".draw"]])
       dpar_values$mu_ = dpar_values$mu_ + ar_result$resid_ar
     }
 
@@ -402,6 +402,8 @@ get_fitsimulate = function(pars) {
 #' @param sigma_ Numeric vector of innovations
 #' @param ar_list List with numerical vectors, list(ar1_ = c(...), ar2_ = c(...))
 #' @param resid_abs NULL or Numerical vector of absolute residuals, `fitted_value - observed_value`.
+#' @param series_id Optional vector identifying independent series. Lagged
+#'   residuals never cross from one series to another.
 #' @return List with
 #'   * `resid_ar`: the ARMA part of the residuals
 #'   * `resid_sigma`: the innovations.
@@ -410,13 +412,19 @@ get_fitsimulate = function(pars) {
 #' @seealso get_ar_jagscode
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-simulate_ar = function(sigma_, ar_list, resid_abs = NULL) {
+simulate_ar = function(sigma_, ar_list, resid_abs = NULL, series_id = NULL) {
   # Check inputs
   assert_numeric(sigma_)
   assert_types(ar_list, "list")
   assert_types(resid_abs, "null", "numeric")
   if (length(grep("^ar[0-9]+_$", names(ar_list))) != length(ar_list))
     stop_github("Not all names(ar_list) are arx_.")
+  if (is.null(series_id))
+    series_id = rep(1L, length(sigma_))
+  if (length(series_id) != length(sigma_) || anyNA(series_id))
+    stop_github("series_id must have one non-missing value per residual.")
+  if (length(resid_abs) > 0 && length(resid_abs) != length(sigma_))
+    stop_github("resid_abs and sigma_ must have the same length.")
 
   ar_order = length(ar_list)
 
@@ -442,8 +450,19 @@ simulate_ar = function(sigma_, ar_list, resid_abs = NULL) {
     eval(parse(text = rcode))
     resid_ar = resid_abs - resid_sigma
   } else {
-    resid_ar = eval(parse(text = paste0("ar_list$ar", seq_len(ar_order), "_ * dplyr::lag(resid_abs, ", seq_len(ar_order), ")", collapse = " + ")))
-    resid_ar[seq_len(ar_order)] = 0  # replace NA
+    resid_ar = numeric(length(resid_abs))
+    for (rows in split(seq_along(resid_abs), series_id)) {
+      if (length(rows) <= ar_order)
+        next
+
+      target_position = seq.int(ar_order + 1, length(rows))
+      target_rows = rows[target_position]
+      for (lag in seq_len(ar_order)) {
+        source_rows = rows[target_position - lag]
+        resid_ar[target_rows] = resid_ar[target_rows] +
+          ar_list[[paste0("ar", lag, "_")]][target_rows] * resid_abs[source_rows]
+      }
+    }
     # resid_sigma = resid_abs - resid_ar  # Outcommented because it's deterministic in this parameterization (always sums to the observed data exactly)
   }
 
