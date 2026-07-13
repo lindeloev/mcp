@@ -110,7 +110,34 @@ evaluate_model_dpars = function(fit, args, pred_pars) {
   out %>%
     as.list() %>%
     as.data.frame() %>%
-    dplyr::select(-dplyr::starts_with("x_local_"), -dplyr::any_of(c("sigma_tmp_", "ar_")))
+    dplyr::select(-dplyr::starts_with("x_local_"), -dplyr::any_of("ar_"))
+}
+
+
+#' Transform link-scale predictors to distribution-scale parameters
+#'
+#' Mirrors the deterministic dpar transformations in generated JAGS code. Both
+#' representations are kept only during R-side evaluation; neither
+#' observation-level vector is monitored in JAGS.
+#'
+#' @keywords internal
+#' @noRd
+add_response_dpars = function(dpar_values, family) {
+  for (dpar in family$dpar_specs$dpar) {
+    spec = get_dpar_spec(family, dpar)
+    link_name = paste0("link_", dpar, "_")
+    response_name = paste0(dpar, "_")
+
+    if (link_name %notin% names(dpar_values))
+      stop_github("Missing link-scale values for dpar '", dpar, "'.")
+
+    response = get_link_function(spec$link, inverse = TRUE)(dpar_values[[link_name]])
+    if (!is.na(spec$lower))
+      response = pmax(spec$lower, response)
+    dpar_values[[response_name]] = response
+  }
+
+  dpar_values
 }
 
 
@@ -158,6 +185,9 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   # EVALUATE MODEL AND RETURN VIA FAMILY AND .TYPE #
   ##################################################
   dpar_values = evaluate_model_dpars(fit, args, pred_pars)
+  uses_link_dpars = "link_mu_" %in% names(dpar_values)
+  if (uses_link_dpars)
+    dpar_values = add_response_dpars(dpar_values, fit$family)
 
   # Prepare for stuff needing .ydata
   has_ydata = is.null(args[[fit$pars$y]]) == FALSE
@@ -166,13 +196,21 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   if (.type == "loglik" & has_ydata == FALSE)
     stop(".ydata must be non-NULL for .type = 'loglik'.")
   .dpar = paste0(.dpar, "_")
-  if (.scale == "response" & .dpar %in% c("epred_", "mu_")) {
-    dpar_values[["mu_"]] = fit$family$linkinv(dpar_values[["mu_"]])
-  }
+
+  # Family branches below historically operate on `mu_`. For fitted values on
+  # the linear scale, temporarily use its link-scale counterpart.
+  if (uses_link_dpars && .type == "fitted" && .scale == "linear")
+    dpar_values$mu_ = dpar_values$link_mu_
+  if (!uses_link_dpars && .scale == "response" && .dpar %in% c("epred_", "mu_"))
+    dpar_values$mu_ = fit$family$linkinv(dpar_values$mu_)
 
   # Simply return for fitted dpars
-  if (.dpar %notin% c("epred_", "mu_") & .type == "fitted")
+  if (.dpar %notin% c("epred_", "mu_") & .type == "fitted") {
+    link_dpar = paste0("link_", .dpar)
+    if (uses_link_dpars && .scale == "linear" && link_dpar %in% names(dpar_values))
+      return(dpar_values[[link_dpar]])
     return(dpar_values[[.dpar]])
+  }
 
   # Return functions here
   if (fit$family$family == "gaussian") {
@@ -224,7 +262,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     if (.type == "predict") return(stats::rbinom(length(dpar_values$mu_), 1, dpar_values$mu_))
   } else if (fit$family$family == "poisson") {
     if (.type %in% c("predict", "loglik")) {
-      if ((.scale == "response" && any(dpar_values$mu_ > 2146275819)) || (.scale == "linear" && any(fit$family$linkinv(dpar_values$mu_) > 2146275819)))
+      if (any(dpar_values$mu_ > 2146275819))
         stop("Modelled extremely large value: ", fit$family$linkinv_str, "(", fit$pars$y, ") > 2146275819.")
     }
     if (.type == "fitted") {

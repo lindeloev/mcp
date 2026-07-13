@@ -190,14 +190,15 @@ test_plot = function(fit, varying_cols) {
     is_expected = any(stringr::str_starts(error_message, expected_error))
     testthat::expect_true(is_expected)
   } else {
-    testthat::expect_true(ggplot2::is_ggplot(gg))
+    testthat::expect_s3_class(gg, "ggplot")
   }
 }
 
 # Test plot() calls to bayesplot
 test_plot_pars = function(fit, prior = FALSE) {
   gg = plot_pars(fit, type = "dens_overlay", prior = prior)
-  testthat::expect_true(ggplot2::is_ggplot(gg))
+  # `is_ggplot()` is no longer exported by recent ggplot2 versions.
+  testthat::expect_s3_class(gg, "ggplot")
 }
 
 
@@ -336,7 +337,7 @@ test_pp_eval = function(fit, prior = FALSE) {
       testthat::expect_true(error_message)
     }
   } else {
-    testthat::expect_true(ggplot2::is_ggplot(pp_default))
+    testthat::expect_s3_class(pp_default, "ggplot")
   }
 }
 

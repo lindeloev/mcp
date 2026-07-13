@@ -108,11 +108,27 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, family, par_x) {
   ##############
   # LIKELIHOOD #
   ##############
-  # Prepare mu code (link and AR)
+  # Transform link-scale predictors to distribution-scale parameters. These are
+  # deterministic JAGS nodes and are not monitored by default.
+  for (dpar in family$dpar_specs$dpar) {
+    spec = get_dpar_spec(family, dpar)
+    link_code = paste0("link_", dpar, "_[i_]")
+    if (dpar == "mu" && is.na(ar_order) == FALSE)
+      link_code = paste0(link_code, " + resid_ar_[i_]")
+
+    linkinv_str = get_link_str(spec$link, inverse = TRUE)
+    response_code = ifelse(
+      linkinv_str == "",
+      link_code,
+      paste0(linkinv_str, "(", link_code, ")")
+    )
+    if (!is.na(spec$lower))
+      response_code = paste0("max(", format(spec$lower, scientific = TRUE), ", ", response_code, ")")
+
+    mm = paste0(mm, "\n    ", dpar, "_[i_] = ", response_code)
+  }
+
   mu_code = "mu_[i_]"
-  if (is.na(ar_order) == FALSE)
-    mu_code = paste0(mu_code, " + resid_ar_[i_]")
-  mu_code = paste0(family$linkinv_str, "(", mu_code, ")")
 
   # Prepare variance code
   has_weights = !all(is.na(ST$weights))
@@ -137,9 +153,9 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, family, par_x) {
   # Compute residuals for AR
   if (is.na(ar_order) == FALSE) {
     if (family$family == "binomial") {
-      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_] / ", ST$trials[1], "[i_]) - mu_[i_]  # Residuals represented by sigma_ after ARMA")
+      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_] / ", ST$trials[1], "[i_]) - link_mu_[i_]  # Residuals represented by sigma_ after ARMA")
     } else {
-      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_])  - mu_[i_]  # Residuals represented by sigma_ after ARMA")
+      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_])  - link_mu_[i_]  # Residuals represented by sigma_ after ARMA")
     }
   }
 

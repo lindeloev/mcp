@@ -259,13 +259,39 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
   attrs = attributes(stats::terms(remove_terms(form_rhs, "varying")))
   term_labels = attrs$term.labels
 
+  # Formula wrappers belonging to distributional parameters are declared by
+  # the family. `ar()` remains a separate model component because it carries an
+  # order as well as a formula.
+  model_dpars = family$dpar_specs$dpar[family$dpar_specs$dpar != "mu"]
+  dpar_patterns = paste0("^", model_dpars, "\\(")
+
+  # Give a family-specific error when a recognized dpar wrapper is unavailable.
+  used_dpar_wrappers = known_dpar_wrappers()[vapply(
+    known_dpar_wrappers(),
+    function(dpar) any(stringr::str_detect(term_labels, paste0("^", dpar, "\\("))),
+    logical(1)
+  )]
+  unsupported_dpars = setdiff(used_dpar_wrappers, model_dpars)
+  if (length(unsupported_dpars) > 0) {
+    dpar_calls = paste0("`", unsupported_dpars, "()`", collapse = " and ")
+    family_call = paste0(family$family, "()")
+    stop(
+      dpar_calls, " is not a distributional parameter for family = ", family_call, ". ",
+      "See available parameters with `mcpfamily(", family_call, ")$dpars`."
+    )
+  }
+
 
 
   ######
   # MU #
   ######
   # Start by building it as a string: "mu(1 + x + ...)" to bring it into a compatible format
-  mu_terms = term_labels[stringr::str_detect(attrs$term.labels, "sigma\\(|ar\\(") == FALSE]
+  is_dpar_term = rep(FALSE, length(term_labels))
+  for (pattern in dpar_patterns)
+    is_dpar_term = is_dpar_term | stringr::str_detect(term_labels, pattern)
+  is_ar_term = stringr::str_detect(term_labels, "^ar\\(")
+  mu_terms = term_labels[!is_dpar_term & !is_ar_term]
 
   if (length(mu_terms > 0)) {
     mu_terms[1] = paste0(attrs$intercept, " + ", mu_terms[1])
@@ -279,24 +305,27 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
 
 
 
-  #########
-  # SIGMA #
-  #########
-  # Extract sigma terms
-  sigma_term = term_labels[stringr::str_detect(term_labels, "sigma\\(")]  # Which terms?
+  #############################
+  # DISTRIBUTIONAL PARAMETERS #
+  #############################
+  dpar_pars = list()
+  for (dpar in model_dpars) {
+    spec = get_dpar_spec(family, dpar)
+    dpar_term = term_labels[stringr::str_detect(term_labels, paste0("^", dpar, "\\("))]
 
-  # If not specified, sigma_1 is implicit in segment 1.
-  if (length(sigma_term) == 0 && family$family == "gaussian" && segment == 1) {
-    sigma_form = ~1
-    sigma_pars = get_rhs_table_dpar(data, sigma_form, segment, dpar = "sigma", par_x)
-  } else if (length(sigma_term) > 0) {
-    if (family$family != "gaussian")
-      stop("sigma() is only meaningful for family = gaussian()")
-
-    sigma_form = get_term_content(sigma_term)
-    sigma_pars = get_rhs_table_dpar(data, sigma_form, segment, dpar = "sigma", par_x, NULL, check_rank)
-  } else {
-    sigma_pars = NULL
+    # An implicit dpar receives an intercept in segment 1 and then continues
+    # across later segments until the user supplies another dpar intercept.
+    if (length(dpar_term) == 0 && spec$implicit && segment == 1) {
+      dpar_form = ~1
+      dpar_pars[[dpar]] = get_rhs_table_dpar(
+        data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank
+      )
+    } else if (length(dpar_term) > 0) {
+      dpar_form = get_term_content(dpar_term)
+      dpar_pars[[dpar]] = get_rhs_table_dpar(
+        data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank
+      )
+    }
   }
 
 
@@ -322,7 +351,7 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
   ##########
   rbind(
     mu_pars,
-    sigma_pars,
+    dplyr::bind_rows(dpar_pars),
     ar_pars
   )
 }
@@ -417,6 +446,7 @@ unpack_arma = function(form_str_in) {
 #' @keywords internal
 #' @describeIn get_rhs_table_dpar Apply `get_rhs_table_segment` to all segments of a model.
 get_rhs_table = function(model, data, family, par_x, check_rank = TRUE) {
+  family = add_dpar_specs(family)
   rhs = lapply(model, get_rhs)
 
   rhs_table = lapply(seq_along(rhs), function(segment) get_rhs_table_segment(rhs[[segment]], segment, family, data, par_x, check_rank)) %>%

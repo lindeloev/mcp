@@ -42,7 +42,7 @@ get_formula_jags = function(ST, rhs_table, par_x, family) {
     tidyr::nest() %>%
     dplyr::rowwise() %>%
     dplyr::summarise(
-      formula_jags_dpar = get_formula_jags_dpar(.data$data, .data$dpar, par_x)
+      formula_jags_dpar = get_formula_jags_dpar(.data$data, .data$dpar, par_x, family)
     ) %>%
     dplyr::pull(.data$formula_jags_dpar) %>%
     paste0(collapse = "\n\n")
@@ -51,9 +51,9 @@ get_formula_jags = function(ST, rhs_table, par_x, family) {
   formula_jags = paste0(local_x_str, "\n\n", formula_jags_dpars)
 
   # Special case when no terms are present for a given dpar (all ~0): insert "dpar = 0".
-  for (dpar in family$dpars) {
+  for (dpar in family$dpar_specs$dpar) {
     if (dpar %notin% rhs_table$dpar)
-      formula_jags = paste0(formula_jags, "\n\n# All segments are ~ 0 for this par:\n", dpar, "_[i_] = 0")
+      formula_jags = paste0(formula_jags, "\n\n# All segments are ~ 0 for this par:\nlink_", dpar, "_[i_] = 0")
   }
 
   # Return with nicer printing
@@ -68,19 +68,17 @@ get_formula_jags = function(ST, rhs_table, par_x, family) {
 #' @keywords internal
 #' @noRd
 #' @inheritParams mcp
-#' @param ST Tibble. Returned by `get_segment_table`.
 #' @param dpar_table A rhs_table with only one (dpar, order) combo
+#' @param family An mcpfamily object with distributional-parameter metadata.
 #' @return A string with JAGS code.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_formula_jags_dpar = function(dpar_table, dpar, par_x) {
+get_formula_jags_dpar = function(dpar_table, dpar, par_x, family) {
   # Build this! Initiate
   formula_str = paste0("# Formula for ", dpar)
-  if (dpar == "sigma") {
-    formula_str = paste0(formula_str, "\nsigma_tmp_[i_] =\n")
-  } else {
-    formula_str = paste0(formula_str, "\n", dpar, "_[i_] =\n")
-  }
+  is_distributional = dpar %in% family$dpar_specs$dpar
+  node_name = ifelse(is_distributional, paste0("link_", dpar), dpar)
+  formula_str = paste0(formula_str, "\n", node_name, "_[i_] =\n")
 
 
   df_code_strs = dpar_table %>%
@@ -112,8 +110,6 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x) {
   # Return
   all_predictors = paste0(df_code_strs$segment_code, collapse = " + \n")
   formula_str = paste0(formula_str, all_predictors)
-  if (dpar == "sigma")
-    formula_str = paste0(formula_str, "\nsigma_[i_] = max(10^-9, sigma_tmp_[i_])  # Count negative sigma as just-above-zero sigma")
 
   formula_str
 }
