@@ -17,6 +17,22 @@ test_that("formula tools", {
   expect_equal(sd_to_prec("dt(3,2,1)"), "dt(3, 1/(2)^2, 1) ")
 })
 
+test_that("parameter-name collisions give a useful error", {
+  data = data.frame(
+    y = 1:6,
+    x = 1:6,
+    a = c(0, 0, 0, 1, 1, 1),
+    b = c(0, 1, 2, 0, 1, 2),
+    ab = c(0, 1, 0, 1, 0, 1)
+  )
+
+  expect_error(
+    mcp(list(y ~ a:b + ab), data, par_x = "x", sample = FALSE),
+    "`ab_1`: `ab` (mu, segment 1) and `a:b` (mu, segment 1)",
+    fixed = TRUE
+  )
+})
+
 
 ########################
 # MCPFIT CLASS-METHODS #

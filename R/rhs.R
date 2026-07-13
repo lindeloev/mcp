@@ -65,6 +65,8 @@ get_par_x = function(model, data, par_x = NULL) {
 #' @return A tibble with one row per model parameter and the columns
 #'   - `dpar`: character.
 #'   - `segment`: the segment number (positive integer).
+#'   - `matrix_name`: original column name from the model matrix. Used to
+#'     diagnose collisions after parameter names are converted for JAGS.
 #'   - `display_name`: user-facing parameter name used in summary functions.
 #'   - `code_name`: parameter name used in JAGS and internally in mcp.
 #'   - `par_type`: One of "Intercept", "dummy", or "slope". Used for setting priors and for change point indicator func.
@@ -103,6 +105,7 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
   # GET PARAMATER NAMES #
   #######################
   pars = colnames(mat)
+  matrix_name = pars
 
   # Check that all contents with par_x within parantheses contain only a single term
   split_terms = lapply(pars, function(x) stringr::str_split(x, ":")) %>% unlist()
@@ -183,6 +186,7 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
   rhs_table = data.frame(
     dpar = dpar,
     segment = segment,
+    matrix_name = matrix_name,
     display_name,
     code_name = code_name,
     par_type = dplyr::case_when(
@@ -205,6 +209,41 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
 
   # Return
   rhs_table
+}
+
+
+#' Check that model terms have unique internal parameter names
+#'
+#' Formula punctuation is removed from model-matrix column names because the
+#' resulting parameter names must be valid in JAGS. Distinct terms can
+#' therefore occasionally produce the same name, for example `a:b` and `ab`.
+#'
+#' @keywords internal
+#' @noRd
+#' @param rhs_table A data frame returned by `get_rhs_table_dpar()`.
+#' @return `rhs_table`, invisibly. Stops with an informative error on collision.
+assert_unique_rhs_names = function(rhs_table) {
+  duplicated_name = duplicated(rhs_table$code_name) |
+    duplicated(rhs_table$code_name, fromLast = TRUE)
+
+  if (!any(duplicated_name))
+    return(invisible(rhs_table))
+
+  collision_names = unique(rhs_table$code_name[duplicated_name])
+  collision_lines = vapply(collision_names, function(code_name) {
+    rows = rhs_table[rhs_table$code_name == code_name, , drop = FALSE]
+    sources = paste0(
+      "`", rows$matrix_name, "` (", rows$dpar,
+      ", segment ", rows$segment, ")"
+    )
+    paste0("  `", code_name, "`: ", and_collapse(sources))
+  }, character(1))
+
+  stop(
+    "Model terms produce the same parameter name:\n",
+    paste0(collision_lines, collapse = "\n"),
+    "\nRename one predictor column and refit."
+  )
 }
 
 
@@ -502,6 +541,8 @@ get_rhs_table = function(model, data, family, par_x, check_rank = TRUE) {
     dplyr::mutate(matrix_col = dplyr::row_number())
   if ("boundary" %notin% names(rhs_table))
     rhs_table$boundary = NA_real_
+
+  assert_unique_rhs_names(rhs_table)
 
   # Code next_intercept: Which segment has the next intercept?
   # Strategy: (1) select one row for segments with intercepts for each dpar (filter)
