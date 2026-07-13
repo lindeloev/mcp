@@ -260,17 +260,23 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     if (.type == "fitted") return(dpar_values$mu_)
     if (.type == "loglik") return(stats::dbinom(dpar_values$.ydata, 1, dpar_values$mu_, log = TRUE))
     if (.type == "predict") return(stats::rbinom(length(dpar_values$mu_), 1, dpar_values$mu_))
-  } else if (fit$family$family == "poisson") {
-    if (.type %in% c("predict", "loglik")) {
-      if (any(dpar_values$mu_ > 2146275819))
-        stop("Modelled extremely large value: ", fit$family$linkinv_str, "(", fit$pars$y, ") > 2146275819.")
+  } else if (fit$family$family %in% c("poisson", "negbinomial")) {
+    # Shared count-family behavior. The distributions differ only in their
+    # density/RNG calls and the negative-binomial shape parameter.
+    if (.type %in% c("predict", "loglik") && any(dpar_values$mu_ > 2146275819)) {
+      stop("Modelled extremely large count mean (> 2146275819).")
     }
+
     if (.type == "fitted") {
       return(dpar_values$mu_)
-    } else if (.type == "loglik") {
+    } else if (.type == "loglik" && fit$family$family == "poisson") {
       return(stats::dpois(dpar_values$.ydata, dpar_values$mu_, log = TRUE))
-    } else if (.type == "predict") {
+    } else if (.type == "predict" && fit$family$family == "poisson") {
       return(stats::rpois(length(dpar_values$mu_), dpar_values$mu_))
+    } else if (.type == "loglik" && fit$family$family == "negbinomial") {
+      return(stats::dnbinom(dpar_values$.ydata, mu = dpar_values$mu_, size = dpar_values$shape_, log = TRUE))
+    } else if (.type == "predict" && fit$family$family == "negbinomial") {
+      return(stats::rnbinom(length(dpar_values$mu_), mu = dpar_values$mu_, size = dpar_values$shape_))
     }
   } else if (fit$family$family == "exponential") {
     if (.type == "fitted") return(1 / dpar_values$mu_)

@@ -60,6 +60,8 @@
 
 ## Bug fixes
 
+-   Autoregression via `ar()` is removed, now giving an error for Poisson models. Support may be added in the future when handling of zeroes, latent-scale vs. observed-scale AR, etc. is thought through.
+
 -   The quantiles for `fitted()` and `predict()` for varying-changepoint models ignored the varying level - they were identical across levels.
 
 -   Fixed potentially biased priors for `gaussian(link = "log")`. They were `log(mean(y))` instead of `mean(log(y))`.

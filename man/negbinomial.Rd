@@ -4,12 +4,23 @@
 \alias{negbinomial}
 \title{Negative Binomial for mcp}
 \usage{
-negbinomial(link = "log")
+negbinomial(link = "log", link_shape = "log")
 }
 \arguments{
-\item{link}{Link function (Character).}
+\item{link}{Link function for \code{mu}.}
+
+\item{link_shape}{Link function for \code{shape}.}
 }
 \description{
-Parameterized as \code{mu} (mean; poisson lambda) and \code{size} (a shape parameter),
-so you can do \code{rnbinom(10, mu = 10, size = 1)}. Read more in the doc for \code{rnbinom},
+Parameterized as \code{mu} (the conditional mean) and \code{shape} (the same quantity
+as \code{size} in \code{rnbinom()}). Thus
+\code{Var(y) = mu + mu^2 / shape}, and the Poisson distribution is approached as
+\code{shape} approaches infinity.
+}
+\details{
+\code{shape(1)} is added implicitly and is constant across segments unless
+a \code{shape()} formula is supplied. For example, \code{y ~ 1 + x + shape(1 + x)}
+models both the mean and shape. Regression coefficients for both dpars are
+on their link scales. The default constant-shape prior is
+\code{shape ~ inv_gamma(0.4, 0.3)} on the distribution scale, matching brms.
 }

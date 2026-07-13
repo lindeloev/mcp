@@ -46,10 +46,18 @@ default_dpar_priors = tibble::tribble(
   "poisson", "identity", "mu", "dummy", "dt(0, MEDIANLINKY, 3)",
   "poisson", "identity", "mu", "slope", "dt(0, (N_CP + 1) * MEDIANLINKY / (MAXX - MINX), 3)",
 
-  # Negbinomial shape
-  "negbinomial", "identity", "shape", "Intercept", "dt(0, 10, 3) T(0, )",  # TO DO: center this on data
-  "negbinomial", "identity", "shape", "dummy", "dt(0, 10, 3)",
-  "negbinomial", "identity", "shape", "slope", "dt(0, (N_CP + 1) * 10 / (MAXX - MINX), 3) T(0, )"
+  # Negative binomial mu: brms-like intercept calibration with proper mcp-style
+  # priors for dummy variables and slopes.
+  "negbinomial", "log", "mu", "Intercept", "dt(MU_PRIOR_LOCATION, MU_PRIOR_SCALE, 3)",
+  "negbinomial", "log", "mu", "dummy", "dt(0, 2.5, 3)",
+  "negbinomial", "log", "mu", "slope", "dt(0, (N_CP + 1) * 2.5 / (MAXX - MINX), 3)",
+
+  # Negative binomial shape. The intercept-only model induces
+  # shape ~ inverse-gamma(0.4, 0.3) on the distribution scale, matching brms.
+  # If shape is modeled, get_prior() replaces this intercept prior with dt(0, 2.5, 3).
+  "negbinomial", "log", "shape", "Intercept", "dloginvgamma(0.4, 0.3)",
+  "negbinomial", "log", "shape", "dummy", "dt(0, 2.5, 3)",
+  "negbinomial", "log", "shape", "slope", "dt(0, (N_CP + 1) * 2.5 / (MAXX - MINX), 3)"
 )
 
 # Copies sections to other link functions and families
@@ -64,12 +72,7 @@ default_dpar_priors = dplyr::bind_rows(
   default_dpar_priors %>% dplyr::filter(.data$family == "binomial", .data$link == "logit", .data$dpar == "mu") %>% dplyr::mutate(link = "probit"),
   default_dpar_priors %>% dplyr::filter(.data$family == "binomial", .data$link == "logit", .data$dpar == "mu") %>% dplyr::mutate(family = "bernoulli"),
   default_dpar_priors %>% dplyr::filter(.data$family == "binomial", .data$link == "logit", .data$dpar == "mu") %>% dplyr::mutate(family = "bernoulli", link = "probit"),
-  default_dpar_priors %>% dplyr::filter(.data$family == "binomial", .data$link == "identity", .data$dpar == "mu") %>% dplyr::mutate(family = "bernoulli"),
-
-  # Negative binomial
-  default_dpar_priors %>% dplyr::filter(.data$family == "poisson", .data$link == "log", .data$dpar == "mu") %>% dplyr::mutate(family = "negbinomial"),
-  default_dpar_priors %>% dplyr::filter(.data$family == "poisson", .data$link == "identity", .data$dpar == "mu") %>% dplyr::mutate(family = "negbinomial"),
-  default_dpar_priors %>% dplyr::filter(.data$family == "negbinomial", .data$link == "identity", .data$dpar == "mu") %>% dplyr::mutate(link = "log")
+  default_dpar_priors %>% dplyr::filter(.data$family == "binomial", .data$link == "identity", .data$dpar == "mu") %>% dplyr::mutate(family = "bernoulli")
 )
 
 
@@ -193,8 +196,20 @@ get_prior = function(ST, rhs_table, family, prior = list()) {
   }
 
   # Priors for RHS parameters
-  rhs_prior = rhs_table %>%
-    dplyr::left_join(family$default_prior, by = c("dpar", "par_type")) %>%
+  rhs_prior_table = rhs_table %>%
+    dplyr::left_join(family$default_prior, by = c("dpar", "par_type"))
+
+  # brms uses an inverse-gamma prior for a single constant shape, but switches
+  # to link-scale coefficient priors for distributional shape regression.
+  if (family$family == "negbinomial") {
+    shape_rows = rhs_prior_table$dpar == "shape"
+    shape_is_modeled = sum(shape_rows) > 1 || any(rhs_prior_table$par_type[shape_rows] != "Intercept")
+    if (shape_is_modeled) {
+      rhs_prior_table$prior[shape_rows & rhs_prior_table$par_type == "Intercept"] = "dt(0, 2.5, 3)"
+    }
+  }
+
+  rhs_prior = rhs_prior_table %>%
     dplyr::select("code_name", "prior") %>%
     tibble::deframe() %>%
     as.list()

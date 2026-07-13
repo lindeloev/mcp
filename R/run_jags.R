@@ -158,6 +158,22 @@ get_jags_data = function(data, family, ST, rhs_table, jags_code) {
     }
   }
 
+  # brms-like, robust prior calibration for count-family mean intercepts.
+  # Zeros are moved slightly above zero only for this prior calculation so a
+  # log link remains finite; the likelihood still uses the original counts.
+  needs_mu_prior = stringr::str_detect(jags_code, "MU_PRIOR_LOCATION|MU_PRIOR_SCALE")
+  if (needs_mu_prior) {
+    y_prior = data[, ST$y[1]]
+    if (family$link %in% c("log", "inverse", "1/mu^2"))
+      y_prior[y_prior == 0] = 0.1
+    y_prior_link = family$linkfun(y_prior)
+
+    if (stringr::str_detect(jags_code, "MU_PRIOR_LOCATION"))
+      jags_data$MU_PRIOR_LOCATION = round(stats::median(y_prior_link, na.rm = TRUE), 1)
+    if (stringr::str_detect(jags_code, "MU_PRIOR_SCALE"))
+      jags_data$MU_PRIOR_SCALE = max(2.5, round(stats::mad(y_prior_link, na.rm = TRUE), 1))
+  }
+
   # For default prior
   if (stringr::str_detect(jags_code, "N_CP"))
     jags_data$N_CP = nrow(ST) - 1

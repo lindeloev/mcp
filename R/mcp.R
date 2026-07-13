@@ -50,7 +50,8 @@
 #'      samples less efficiently, so you will often need to set `iter` higher.
 #'      It is recommended for hypothesis testing and for the estimation of more
 #'      than 5 change points. [Read more](https://lindeloev.github.io/mcp/articles/priors.html).
-#' @param family One of `gaussian()`, `binomial()`, `bernoulli()`, or `poission()`
+#' @param family One of `gaussian()`, `binomial()`, `bernoulli()`, `poisson()`,
+#'   or `negbinomial()`.
 #'   with a supported link function, e.g., `gaussian(link = "log")`.
 #'   Custom families can also be provided, e.g., `mcpfamily(gaussian(link = "log"))`.
 #' @param par_x String (default: `NULL` which is auto-detect).
@@ -267,6 +268,9 @@ mcp = function(model,
   # Check parameters
   # ARMA models
   if (length(pars$arma) > 0) {
+    if (family$family %in% c("poisson", "negbinomial"))
+      stop("ar() is not currently supported for family = ", family$family, "().")
+
     if (family$link %in% c("logit", "probit"))
       message("The current implementation of autoregression can be fragile for link='logit'. In particular, if there are any all-success trials (e.g., 10/10), the only solution is for 'ar' to be 0.00. If fitting succeeds, do a proper assessment of model convergence.")
 

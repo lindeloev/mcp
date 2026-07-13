@@ -32,18 +32,29 @@ exponential = function(link = "identity") {
 
 #' Negative Binomial for mcp
 #'
-#' Parameterized as `mu` (mean; poisson lambda) and `size` (a shape parameter),
-#' so you can do `rnbinom(10, mu = 10, size = 1)`. Read more in the doc for `rnbinom`,
+#' Parameterized as `mu` (the conditional mean) and `shape` (the same quantity
+#' as `size` in `rnbinom()`). Thus `Var(y) = mu + mu^2 / shape`, which approaches
+#' the Poisson variance as `shape` approaches infinity.
 #'
 #' @aliases negbinomial
-#' @param link Link function (Character).
+#' @param link Link function for `mu`.
+#' @param link_shape Link function for `shape`.
+#' @details `shape(1)` is added implicitly and is constant across segments unless
+#'   a `shape()` formula is supplied. For example, `y ~ 1 + x + shape(1 + x)`
+#'   models both the mean and shape. Regression coefficients for both dpars are
+#'   on their link scales.
 #' @export
-negbinomial = function(link = "log") {
-  assert_value(link, allowed = c("log", "identity"))
+negbinomial = function(link = "log", link_shape = "log") {
+  assert_value(link, allowed = "log")
+  assert_value(link_shape, allowed = "log")
 
   family = list(
     family = "negbinomial",
-    link = link  # on lambda
+    link = link,
+    link_shape = link_shape,
+    likfun = function(x, mu, shape, log = FALSE) {
+      stats::dnbinom(x, mu = mu, size = shape, log = log)
+    }
   )
   class(family) = "family"
   family = mcpfamily(family)
@@ -123,19 +134,24 @@ new_dpar_spec = function(dpar, link, implicit = FALSE, lower = NA_real_) {
 #' Default distributional parameters for built-in families
 #'
 #' Additional families can provide their own `dpar_specs` before calling
-#' `mcpfamily()`. Negative-binomial-specific metadata is intentionally deferred
-#' until that family is implemented.
+#' `mcpfamily()`.
 #'
 #' @keywords internal
 #' @noRd
 get_default_dpar_specs = function(family) {
-  specs = new_dpar_spec("mu", family$link)
-
   if (family$family == "gaussian") {
     specs = dplyr::bind_rows(
-      specs,
+      new_dpar_spec("mu", family$link),
       new_dpar_spec("sigma", "identity", implicit = TRUE, lower = 1e-9)
     )
+  } else if (family$family == "negbinomial") {
+    specs = dplyr::bind_rows(
+      new_dpar_spec("mu", family$link),
+      new_dpar_spec("shape", family$link_shape, implicit = TRUE)
+    )
+  } else {
+    # Poisson, Bernoulli, binomial, exponential, and custom mean-only families.
+    specs = new_dpar_spec("mu", family$link)
   }
 
   specs

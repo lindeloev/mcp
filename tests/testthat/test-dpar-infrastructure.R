@@ -1,6 +1,10 @@
 test_that("families declare dpars independently of prior rows", {
   gaussian_family = mcpfamily(gaussian())
   poisson_family = mcpfamily(poisson())
+  mean_only_families = list(
+    binomial = mcpfamily(binomial()),
+    bernoulli = bernoulli()
+  )
 
   expect_equal(gaussian_family$dpar_specs$dpar, c("mu", "sigma"))
   expect_equal(gaussian_family$dpar_specs$link, c("identity", "identity"))
@@ -10,6 +14,11 @@ test_that("families declare dpars independently of prior rows", {
   expect_equal(poisson_family$dpar_specs$dpar, "mu")
   expect_equal(poisson_family$dpar_specs$link, "log")
   expect_equal(poisson_family$dpars, c("mu", "ar"))
+
+  for (family in mean_only_families) {
+    expect_equal(family$dpar_specs$dpar, "mu")
+    expect_equal(family$dpars, c("mu", "ar"))
+  }
 
   # Removing prior metadata must not redefine the mathematical family.
   gaussian_family$default_prior = dplyr::filter(

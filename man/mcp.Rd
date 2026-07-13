@@ -62,7 +62,8 @@ It is recommended for hypothesis testing and for the estimation of more
 than 5 change points. \href{https://lindeloev.github.io/mcp/articles/priors.html}{Read more}.
 }}
 
-\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}
+\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, \code{poisson()},
+or \code{negbinomial()}.
 with a supported link function, e.g., \code{gaussian(link = "log")}.
 Custom families can also be provided, e.g., \code{mcpfamily(gaussian(link = "log"))}.}
 

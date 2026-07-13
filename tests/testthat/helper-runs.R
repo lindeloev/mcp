@@ -253,8 +253,9 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
   result = try(func(fit, prior = prior), silent = TRUE)
   if (inherits(result, "try-error")) {
     error_message = as.character(result)
-    expected_error_poisson = "Modelled extremely large value: exp(y)"  # OK: a test-specific side-effect of the small data and short sampling.
-    testthat::expect_true(fit$family$family != "poisson" | stringr::str_detect(error_message, stringr::fixed(expected_error_poisson)))  # Only test message for poisson
+    is_count_family = fit$family$family %in% c("poisson", "negbinomial")
+    expected_error_count = "Modelled extremely large count mean"  # A test-specific side-effect of the small data and short sampling.
+    testthat::expect_true(!is_count_family | stringr::str_detect(error_message, stringr::fixed(expected_error_count)))
   } else {
     testthat::expect_true(is.data.frame(result))
     testthat::expect_equal(nrow(result), nrow(fit$data))  # Returns same number of rows as data
@@ -328,10 +329,10 @@ test_pp_eval = function(fit, prior = FALSE) {
   if (inherits(pp_default, "try-error")) {
     error_message = as.character(pp_default)
 
-    # Expecected error for Poisson
-    if (fit$family$family == "poisson") {
-      expected_error_poisson = "Modelled extremely large value: exp(y)"  # OK: a test-specific side-effect of the small data and short sampling.
-      testthat::expect_true(stringr::str_detect(error_message, stringr::fixed(expected_error_poisson)))  # Only test message for poisson
+    # Expected count-family errors from the intentionally tiny data, extremely
+    # short sampling, and broad prior predictive distributions.
+    if (fit$family$family %in% c("poisson", "negbinomial")) {
+      testthat::expect_true(stringr::str_detect(error_message, "Modelled extremely large count mean"))
     } else {
       # Fail otherwise
       testthat::expect_true(error_message)

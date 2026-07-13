@@ -42,6 +42,7 @@ Imports:
 	rlang (>= 0.4.1)
 Suggests: 
 	hexbin,
+	MASS,
   testthat (>= 3.1.0),
   purrr (>= 0.3.4),
 	knitr, 

@@ -146,6 +146,12 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, family, par_x) {
     mm = paste0(mm, ST$y[1], "[i_] ~ dbern(", mu_code, ")")
   } else if (family$family == "poisson") {
     mm = paste0(mm, ST$y[1], "[i_] ~ dpois(", mu_code, ")")
+  } else if (family$family == "negbinomial") {
+    mm = paste0(
+      mm,
+      "nb_prob_[i_] = shape_[i_] / (shape_[i_] + ", mu_code, ")\n    ",
+      ST$y[1], "[i_] ~ dnegbin(nb_prob_[i_], shape_[i_])"
+    )
   } else if (family$family == "exponential") {
     mm = paste0(mm, ST$y[1], "[i_] ~ dexp(", mu_code, ")")
   }
@@ -191,6 +197,27 @@ get_prior_str = function(prior, i, varying_group = NULL) {
   # Helpers
   value = prior[[i]]
   name = names(prior[i])
+
+  # JAGS does not support dinvgamma or dloginvgamma. Write it manually.
+  # If inverse_shape ~ Gamma(a, b), then
+  # shape = exp(-log(inverse_shape)) ~ InvGamma(a, b).
+  if (stringr::str_detect(value, "^dloginvgamma\\(")) {
+    if (!is.null(varying_group))
+      stop("dloginvgamma() is currently only supported for population-level parameters.")
+
+    prior_match = stringr::str_match(
+      value,
+      "^dloginvgamma\\(\\s*([^,]+)\\s*,\\s*([^\\)]+)\\s*\\)$"
+    )
+    if (anyNA(prior_match))
+      stop("Expected dloginvgamma(shape, scale). Got '", value, "'.")
+
+    inverse_name = paste0(name, "_inverse")
+    return(paste0(
+      "  ", inverse_name, " ~ dgamma(", prior_match[2], ", ", prior_match[3], ")\n",
+      "  ", name, " = -log(", inverse_name, ")  # log of inverse-gamma dpar\n"
+    ))
+  }
 
   # Is this fixed?
   all_d = "dunif|dbern|dbeta|dbin|dchisqr|ddexp|dexp|df|dgamma|dgen.gamma|dhyper|dlogis|dlnorm|dnegbin|dnchisqr|dnorm|dpar|dpois|dt|dweib|dirichlet"  # All JAGS distributions

@@ -167,7 +167,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
  * The default priors restrict varying change points to lie between the two adjacent change points.
 
 [Supported families and link functions](https://lindeloev.github.io/mcp/articles/families.html): 
- * `mcp` currently supports specific combinations of families (`gaussian()`, `binomial()`, `bernoulli()`, and `poisson()`) and link functions (`identity`, `logit`, `probit`, and `log`).
+ * `mcp` currently supports specific combinations of families (`gaussian()`, `binomial()`, `bernoulli()`, `poisson()`, and `negbinomial()`) and link functions (`identity`, `logit`, `probit`, and `log`).
  * Use informative priors to avoid issues when using non-default priors.
  * Use `binomial(link = "logit")` for [binomial change points in mcp](https://lindeloev.github.io/mcp/articles/binomial.html). Also relevant for `bernoulli(link = "logit")`.
  * Use `poisson(link = "log")` for [Poisson change points in mcp](https://lindeloev.github.io/mcp/articles/poisson.html).
