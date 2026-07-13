@@ -271,8 +271,14 @@ mcp = function(model,
   # Check parameters
   # ARMA models
   if (length(pars$arma) > 0) {
-    if (family$family != "gaussian" || family$link != "identity")
-      stop("ar() is currently only supported for gaussian(link = \"identity\").")
+    garma_links = c(
+      gaussian = "identity",
+      binomial = "logit",
+      poisson = "log",
+      negbinomial = "log"
+    )
+    if (family$family %notin% names(garma_links) || family$link != garma_links[[family$family]])
+      stop("ar() currently supports gaussian(), binomial(), poisson(), and negbinomial() with their default links; bernoulli() and non-default links are not supported.")
 
     if (is.unsorted(data[, par_x]) && is.unsorted(rev(data[, par_x])))
       message("'", par_x, "' is unordered. Please note that ar() applies in the order of data of the data frame - not the values.")

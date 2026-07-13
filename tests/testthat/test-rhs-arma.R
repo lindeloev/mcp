@@ -51,6 +51,31 @@ test_that("MA order errors describe MA syntax", {
 })
 
 
+test_that("GARMA boundaries default to 0.1 and can vary by segment", {
+  data = data.frame(x = 1:6, y = 1:6)
+  rhs_table = get_rhs_table(
+    list(
+      y ~ ar(1),
+      ~ ar(1, 1 + x, boundary = 0.2)
+    ),
+    data,
+    mcpfamily(gaussian()),
+    par_x = "x"
+  )
+
+  boundaries = rhs_table %>%
+    dplyr::filter(.data$dpar == "ar") %>%
+    dplyr::distinct(.data$segment, .data$boundary)
+  expect_equal(boundaries$boundary, c(0.1, 0.2))
+
+  expect_error(
+    get_rhs_table(list(y ~ ar(1, boundary = 0)), data, mcpfamily(gaussian()), "x"),
+    "`boundary` in ar() must be one number between 0 and 1.",
+    fixed = TRUE
+  )
+})
+
+
 test_that("mcp rejects parsed MA terms until they are implemented", {
   data = data.frame(x = 1:6, y = 1:6)
 

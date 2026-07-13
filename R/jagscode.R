@@ -157,9 +157,19 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, family, par_x) {
   # Compute residuals for AR
   if (is.na(ar_order) == FALSE) {
     if (family$family == "binomial") {
-      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_] / ", ST$trials[1], "[i_]) - link_mu_[i_]  # Residuals represented by sigma_ after ARMA")
+      mm = paste0(
+        mm,
+        "\n    garma_y_[i_] = min(max(", ST$y[1], "[i_], garma_boundary_[i_]), ", ST$trials[1], "[i_] - garma_boundary_[i_]) / ", ST$trials[1], "[i_]",
+        "\n    resid_abs_[i_] = ", family$linkfun_str, "(garma_y_[i_]) - link_mu_[i_]"
+      )
+    } else if (family$family %in% c("poisson", "negbinomial")) {
+      mm = paste0(
+        mm,
+        "\n    garma_y_[i_] = max(", ST$y[1], "[i_], garma_boundary_[i_])",
+        "\n    resid_abs_[i_] = ", family$linkfun_str, "(garma_y_[i_]) - link_mu_[i_]"
+      )
     } else {
-      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_])  - link_mu_[i_]  # Residuals represented by sigma_ after ARMA")
+      mm = paste0(mm, "\n    resid_abs_[i_] = ", family$linkfun_str, "(", ST$y[1], "[i_]) - link_mu_[i_]")
     }
   }
 

@@ -346,7 +346,9 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
         function(order) get_rhs_table_dpar(
           data, component_form, segment, component, par_x, order, check_rank
         )
-      ) %>% dplyr::bind_rows()
+      ) %>%
+        dplyr::bind_rows() %>%
+        dplyr::mutate(boundary = component_stuff$boundary)
     }
   }
 
@@ -355,7 +357,7 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
   ##########
   # RETURN #
   ##########
-  rbind(
+  dplyr::bind_rows(
     mu_pars,
     dplyr::bind_rows(dpar_pars),
     dplyr::bind_rows(arma_pars)
@@ -405,8 +407,8 @@ get_term_content = function(term) {
 #' @noRd
 #' @param form_str_in A character such as `"ar(number)"`, `"ma(number)"`, or
 #'   either component with a second formula argument.
-#' @return A list with `$order` and `$form_str` (e.g., `"ar(formula)"`).
-#'   The component formula is 1 if no formula is given.
+#' @return A list with `$order`, `$form_str` (e.g., `"ar(formula)"`), and
+#'   `$boundary`. The component formula is 1 if no formula is given.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 unpack_arma = function(form_str_in) {
@@ -419,35 +421,58 @@ unpack_arma = function(form_str_in) {
     stop("Only one of these allowed per segment: ", form_str_in)
   }
 
-  component = stringr::str_extract(form_str_in, "^[^(]+")
+  component_call = str2lang(form_str_in)
+  component = as.character(component_call[[1]])
   assert_value(component, allowed = c("ar", "ma"))
 
+  component_args = as.list(component_call)[-1]
+  component_arg_names = names(component_args)
+  if (is.null(component_arg_names))
+    component_arg_names = rep("", length(component_args))
+
+  if (length(component_args) == 0 || component_arg_names[1] %notin% c("", "order"))
+    stop("The first argument to ", component, "() must be its order.")
+
+  boundary_index = which(component_arg_names == "boundary")
+  if (length(boundary_index) > 1)
+    stop("Only one `boundary` value is allowed in ", component, "().")
+
+  formula_index = setdiff(seq_along(component_args), c(1, boundary_index))
+  if (length(formula_index) > 1 || any(component_arg_names[formula_index] %notin% c("", "formula")))
+    stop(component, "() accepts only `order`, an optional formula, and `boundary`.")
+
   # GET ORDER
-  order_start = stringr::str_locate(form_str_in, "\\(") + 1  # Location of first character in contents
-  order_end = stringr::str_locate(form_str_in, ",") - 1  # Where is comma? If no comma, this returns NA, NA
-  has_formula = !all(is.na(order_end))  # Is there a formula (a comma?)
-  if (!has_formula)
-    order_end = stringr::str_length(form_str_in) - 1  # No formula; just remove the end parenthesis
-  order = suppressWarnings(as.numeric(substr(form_str_in, order_start, order_end)))
+  order_str = paste(deparse(component_args[[1]], width.cutoff = 500), collapse = "")
+  order = suppressWarnings(as.numeric(order_str))
 
   # Check the order
   if (is.na(order))
     stop("Wrong specification of order in '", form_str_in, "'. Must be ", component, "(order) or ", component, "(order, formula) where order is a positive integer.")
   assert_integer(order, form_str_in, lower = 1, len = 1)
 
-  # GET FORMULA
-  if (has_formula) {
-    # If there is a formula, remove the order
-    form_str = gsub(paste0(order, ", "), "", form_str_in)
+  # GET FORMULA AND BOUNDARY
+  if (length(formula_index) == 1) {
+    formula_str = paste(deparse(component_args[[formula_index]], width.cutoff = 500), collapse = "")
+    form_str = paste0(component, "(", formula_str, ")")
   } else {
     # If there is no formula, use an intercept-only component formula.
     form_str = paste0(component, "(1)")
   }
 
+  if (length(boundary_index) == 1) {
+    boundary_str = paste(deparse(component_args[[boundary_index]], width.cutoff = 500), collapse = "")
+    boundary = suppressWarnings(as.numeric(boundary_str))
+    if (length(boundary) != 1 || is.na(boundary) || !is.finite(boundary) || boundary <= 0 || boundary >= 1)
+      stop("`boundary` in ", component, "() must be one number between 0 and 1.")
+  } else {
+    boundary = 0.1
+  }
+
   # Return
   list(
     order = order,
-    form_str = form_str
+    form_str = form_str,
+    boundary = boundary
   )
 }
 
@@ -463,6 +488,8 @@ get_rhs_table = function(model, data, family, par_x, check_rank = TRUE) {
     dplyr::bind_rows() %>%
     dplyr::arrange(.data$dpar, .data$segment) %>%
     dplyr::mutate(matrix_col = dplyr::row_number())
+  if ("boundary" %notin% names(rhs_table))
+    rhs_table$boundary = NA_real_
 
   # Code next_intercept: Which segment has the next intercept?
   # Strategy: (1) select one row for segments with intercepts for each dpar (filter)

@@ -47,8 +47,10 @@ get_formula_jags = function(ST, rhs_table, par_x, family) {
     dplyr::pull(.data$formula_jags_dpar) %>%
     paste0(collapse = "\n\n")
 
+  garma_boundary_str = get_garma_boundary_jagscode(ST, rhs_table, par_x)
+
   # Concatenate and return
-  formula_jags = paste0(local_x_str, "\n\n", formula_jags_dpars)
+  formula_jags = paste0(local_x_str, garma_boundary_str, "\n\n", formula_jags_dpars)
 
   # Special case when no terms are present for a given dpar (all ~0): insert "dpar = 0".
   for (dpar in family$dpar_specs$dpar) {
@@ -112,6 +114,41 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x, family) {
   formula_str = paste0(formula_str, all_predictors)
 
   formula_str
+}
+
+
+#' Build the observation-boundary formula used by GARMA terms
+#'
+#' A boundary supplied with an AR term remains active until the next AR term.
+#' The first supplied boundary also applies to observations before AR onset so
+#' they can safely be used as lags.
+#'
+#' @keywords internal
+#' @noRd
+get_garma_boundary_jagscode = function(ST, rhs_table, par_x) {
+  boundary_table = rhs_table %>%
+    dplyr::filter(.data$dpar == "ar", !is.na(.data$boundary)) %>%
+    dplyr::distinct(.data$segment, .data$boundary) %>%
+    dplyr::arrange(.data$segment)
+
+  if (nrow(boundary_table) == 0)
+    return("")
+  if (anyDuplicated(boundary_table$segment))
+    stop_github("Found multiple GARMA boundaries in one segment.")
+
+  boundary_parts = character(nrow(boundary_table))
+  for (i in seq_len(nrow(boundary_table))) {
+    lower = if (i == 1) "" else paste0("(", par_x, "[i_] >= ", ST$cp_code_form[boundary_table$segment[i]], ") * ")
+    upper = if (i == nrow(boundary_table)) "" else paste0("(", par_x, "[i_] < ", ST$cp_code_form[boundary_table$segment[i + 1]], ") * ")
+    boundary_value = sprintf("%.15g", boundary_table$boundary[i])
+    boundary_parts[i] = paste0("  ", lower, upper, boundary_value)
+  }
+
+  paste0(
+    "\n\n# GARMA observation boundary\n",
+    "garma_boundary_[i_] =\n",
+    paste0(boundary_parts, collapse = " +\n")
+  )
 }
 
 

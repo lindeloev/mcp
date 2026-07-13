@@ -11,10 +11,7 @@ bad_poisson = list(
   list(y ~ 1 + sigma(1)),
 
   # Does not work with weights
-  list(y | weights(weights_ok) ~ 1),
-
-  # Count-family AR requires a dedicated residual model
-  list(y ~ 1 + ar(1))
+  list(y | weights(weights_ok) ~ 1)
 )
 
 test_bad(bad_poisson,
@@ -28,7 +25,8 @@ good_poisson = list(
        y  ~ 1 ~ 1 + x,
        1 ~ 0),
   list(y ~ 1,  # With varying
-       1 + (1|id) ~ 1)
+       1 + (1|id) ~ 1),
+  list(y ~ 1 + ar(1))
 )
 
 test_good(good_poisson,

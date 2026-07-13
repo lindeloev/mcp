@@ -87,6 +87,9 @@ test_runs = function(model,
     # Assign globally so errors can be inspected upon hard fail
     fit = quiet_out$result
 
+    if (is_arma(fit))
+      test_arma_simulation(fit)
+
 
     # Test criterions. Will warn about very few samples
     if (!is.null(fit$mcmc_post)) {
@@ -130,6 +133,35 @@ test_runs = function(model,
       test_plot_pars(fit_to_test, prior = use_prior)  # bayesplot call
       test_pp_eval(fit_to_test, prior = use_prior)
     }
+  }
+}
+
+
+# Exercise fresh-series simulation for every accepted AR/MA model. Detailed
+# recursion and R/JAGS agreement are tested separately in test-validate-garma.R.
+test_arma_simulation = function(fit) {
+  control_args = c("fit", "newdata", ".type", ".rate", ".dpar", ".arma", ".scale")
+  component_args = setdiff(names(formals(fit$simulate)), control_args)
+  component_values = stats::setNames(as.list(rep(0, length(component_args))), component_args)
+  call = c(
+    list(fit = fit, newdata = fit$data),
+    component_values,
+    list(.type = "predict")
+  )
+  simulated = suppressMessages(do.call(fit$simulate, call))
+
+  testthat::expect_length(simulated, nrow(fit$data))
+  testthat::expect_true(is.numeric(simulated))
+  testthat::expect_false(anyNA(simulated))
+  testthat::expect_true(all(is.finite(simulated)))
+
+  if (fit$family$family == "binomial") {
+    trials = fit$data[[fit$pars$trials]]
+    testthat::expect_true(all(simulated >= 0 & simulated <= trials))
+    testthat::expect_true(all(simulated == floor(simulated)))
+  } else if (fit$family$family %in% c("poisson", "negbinomial")) {
+    testthat::expect_true(all(simulated >= 0))
+    testthat::expect_true(all(simulated == floor(simulated)))
   }
 }
 

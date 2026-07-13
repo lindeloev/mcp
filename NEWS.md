@@ -62,7 +62,7 @@
 
 ## Bug fixes
 
--   Autoregression via `ar()` is temporarily restricted to `gaussian(link = "identity")` models while generalized autoregression is implemented explicitly.
+-   `ar()` now uses GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links. Zero and boundary counts are made finite using a default `ar(..., boundary = 0.1)`. Bernoulli models and non-default links remain unsupported.
 
 -   The quantiles for `fitted()` and `predict()` for varying-changepoint models ignored the varying level - they were identical across levels.
 

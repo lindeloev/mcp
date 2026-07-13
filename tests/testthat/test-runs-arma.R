@@ -38,7 +38,7 @@ good_arma = list(
 test_good(good_arma)
 
 
-test_that("ar() currently requires a Gaussian identity model", {
+test_that("ar() currently requires a supported default-link model", {
   data = data.frame(x = 1:4, y = 1:4)
 
   expect_error(
@@ -49,7 +49,7 @@ test_that("ar() currently requires a Gaussian identity model", {
       par_x = "x",
       sample = FALSE
     ),
-    "ar() is currently only supported for gaussian(link = \"identity\").",
+    "ar() currently supports gaussian(), binomial(), poisson(), and negbinomial() with their default links; bernoulli() and non-default links are not supported.",
     fixed = TRUE
   )
 })
