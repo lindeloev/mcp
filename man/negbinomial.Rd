@@ -13,14 +13,12 @@ negbinomial(link = "log", link_shape = "log")
 }
 \description{
 Parameterized as \code{mu} (the conditional mean) and \code{shape} (the same quantity
-as \code{size} in \code{rnbinom()}). Thus
-\code{Var(y) = mu + mu^2 / shape}, and the Poisson distribution is approached as
-\code{shape} approaches infinity.
+as \code{size} in \code{rnbinom()}). Thus \code{Var(y) = mu + mu^2 / shape}, which approaches
+the Poisson variance as \code{shape} approaches infinity.
 }
 \details{
 \code{shape(1)} is added implicitly and is constant across segments unless
 a \code{shape()} formula is supplied. For example, \code{y ~ 1 + x + shape(1 + x)}
 models both the mean and shape. Regression coefficients for both dpars are
-on their link scales. The default constant-shape prior is
-\code{shape ~ inv_gamma(0.4, 0.3)} on the distribution scale, matching brms.
+on their link scales.
 }

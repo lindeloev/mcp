@@ -586,11 +586,11 @@ tidy_samples = function(
 #'   * `"mu"`: The central tendency which is often the mean after applying the
 #'     link function.
 #'   * `"sigma"`: The standard deviation of the residuals.
-#'   * `"ar1"`, `"ar2"`, etc. depending on which order of the autoregressive
-#'     effects you want to plot.
-#' @param arma Whether to include autoregressive effects.
-#'   * `TRUE` Compute autoregressive residuals. Requires the response variable in `newdata`.
-#'   * `FALSE` Disregard the autoregressive effects. For `family = gaussian()`, `predict()` just use `sigma` for residuals.
+#'   * `"ar1"`, `"ar2"`, `"ma1"`, `"ma2"`, etc. depending on which AR or MA
+#'     coefficient you want to evaluate.
+#' @param arma Whether to include AR and MA effects.
+#'   * `TRUE` Compute the GARMA residual recurrence. Requires the response variable in `newdata`.
+#'   * `FALSE` Disregard AR and MA effects. For `family = gaussian()`, `predict()` uses only `sigma` for residuals.
 #' @param nsamples Integer or `NULL`. Number of samples to return/summarise.
 #'   If there are varying effects, this is the number of samples from each varying group.
 #'   `NULL` means "all". Ignored if both are `FALSE`. More samples trade speed for accuracy.

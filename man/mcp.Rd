@@ -32,8 +32,11 @@ following can be modeled:
 \item \emph{Extended formulas:}, e.g., \code{~ I(x^2) + exp(x) + sin(x)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
 \item \emph{Variance:} e.g., \code{~sigma(1)} for a simple variance change or
 \code{~sigma(1 + I(x^2))}) for more advanced variance structures. \href{https://lindeloev.github.io/mcp/articles/variance.html}{Read more}
-\item \emph{Autoregression:} e.g., \code{~ar(1)} for a simple onset/change in AR(1) or
-\verb{ar(2, 0 + x}) for an AR(2) increasing by \code{x}. \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
+\item \emph{Time-series residuals:} use \code{ar(p)} and \code{ma(q)} separately or together,
+e.g., \code{~ 1 + ar(1) + ma(1)}. Both accept an optional regression formula
+and observation \code{boundary}. GARMA terms support Gaussian, binomial,
+Poisson, and negative-binomial families with their default links.
+\href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
 }}
 
 \item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)}

@@ -20,16 +20,14 @@ Useful links:
   \item Report bugs at \url{https://github.com/lindeloev/mcp/issues}
 }
 
-
-Useful links:
-\itemize{
-  \item \url{https://lindeloev.github.io/mcp/}
-  \item Report bugs at \url{https://github.com/lindeloev/mcp/issues}
-}
-
 }
 \author{
 \strong{Maintainer}: Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk} (\href{https://orcid.org/0000-0003-4565-0595}{ORCID})
+
+Authors:
+\itemize{
+  \item Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk} (\href{https://orcid.org/0000-0003-4565-0595}{ORCID})
+}
 
 }
 \keyword{internal}

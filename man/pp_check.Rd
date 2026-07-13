@@ -37,10 +37,10 @@ the original data is used.}
 \item Character vector: Only include specified varying parameters - see \code{fit$pars$varying}.
 }}
 
-\item{arma}{Whether to include autoregressive effects.
+\item{arma}{Whether to include AR and MA effects.
 \itemize{
-\item \code{TRUE} Compute autoregressive residuals. Requires the response variable in \code{newdata}.
-\item \code{FALSE} Disregard the autoregressive effects. For \code{family = gaussian()}, \code{predict()} just use \code{sigma} for residuals.
+\item \code{TRUE} Compute the GARMA residual recurrence. Requires the response variable in \code{newdata}.
+\item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 }}
 
 \item{nsamples}{Number of draws. Note that you may want to use all data for summary geoms.

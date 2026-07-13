@@ -68,14 +68,14 @@ interpolation on trial number is used to infer trials at a particular x.}
 \item \code{"mu"}: The central tendency which is often the mean after applying the
 link function.
 \item \code{"sigma"}: The standard deviation of the residuals.
-\item \code{"ar1"}, \code{"ar2"}, etc. depending on which order of the autoregressive
-effects you want to plot.
+\item \code{"ar1"}, \code{"ar2"}, \code{"ma1"}, \code{"ma2"}, etc. depending on which AR or MA
+coefficient you want to evaluate.
 }}
 
-\item{arma}{Whether to include autoregressive effects.
+\item{arma}{Whether to include AR and MA effects.
 \itemize{
-\item \code{TRUE} Compute autoregressive residuals. Requires the response variable in \code{newdata}.
-\item \code{FALSE} Disregard the autoregressive effects. For \code{family = gaussian()}, \code{predict()} just use \code{sigma} for residuals.
+\item \code{TRUE} Compute the GARMA residual recurrence. Requires the response variable in \code{newdata}.
+\item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 }}
 
 \item{nsamples}{Integer or \code{NULL}. Number of samples to return/summarise.

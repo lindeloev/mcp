@@ -20,10 +20,8 @@ tidy_samples(
 
 \item{population}{\itemize{
 \item \code{TRUE} All population effects. Same as \code{fit$pars$population}.
-\itemize{
 \item \code{FALSE} No population effects. Same as \code{c()}.
 \item Character vector: Only include specified population parameters - see \code{fit$pars$population}.
-}
 }}
 
 \item{varying}{One of:
@@ -35,10 +33,8 @@ tidy_samples(
 
 \item{absolute}{\itemize{
 \item \code{TRUE} Returns the absolute location of all varying change points.
-\itemize{
 \item \code{FALSE} Just returns the varying effects.
 \item Character vector: Only do absolute transform for these varying parameters - see \code{fit$pars$varying}.
-}
 }}
 
 \item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}

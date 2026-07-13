@@ -25,11 +25,11 @@ get_rhs_table(model, data, family, par_x, check_rank = TRUE)
 
 \item{segment}{Integer. The segment number}
 
-\item{dpar}{One of \code{c("mu", "sigma", "ar")}.}
+\item{dpar}{A distributional parameter or an \code{ar}/\code{ma} component.}
 
 \item{par_x}{String (default: \code{NULL} which is auto-detect).}
 
-\item{order}{Currently only applies to \code{dpar == "ar"}.}
+\item{order}{Applies to \code{dpar \%in\% c("ar", "ma")}.}
 
 \item{check_rank}{Boolean. Whether to stop on rank deficiency.}
 
@@ -44,11 +44,15 @@ following can be modeled:
 \item \emph{Extended formulas:}, e.g., \code{~ I(x^2) + exp(x) + sin(x)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
 \item \emph{Variance:} e.g., \code{~sigma(1)} for a simple variance change or
 \code{~sigma(1 + I(x^2))}) for more advanced variance structures. \href{https://lindeloev.github.io/mcp/articles/variance.html}{Read more}
-\item \emph{Autoregression:} e.g., \code{~ar(1)} for a simple onset/change in AR(1) or
-\verb{ar(2, 0 + x}) for an AR(2) increasing by \code{x}. \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
+\item \emph{Time-series residuals:} use \code{ar(p)} and \code{ma(q)} separately or together,
+e.g., \code{~ 1 + ar(1) + ma(1)}. Both accept an optional regression formula
+and observation \code{boundary}. GARMA terms support Gaussian, binomial,
+Poisson, and negative-binomial families with their default links.
+\href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
 }}
 
-\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}
+\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, \code{poisson()},
+or \code{negbinomial()}.
 with a supported link function, e.g., \code{gaussian(link = "log")}.
 Custom families can also be provided, e.g., \code{mcpfamily(gaussian(link = "log"))}.}
 
@@ -62,7 +66,7 @@ A tibble with one row per model parameter and the columns
 \item \code{display_name}: user-facing parameter name used in summary functions.
 \item \code{code_name}: parameter name used in JAGS and internally in mcp.
 \item \code{par_type}: One of "Intercept", "dummy", or "slope". Used for setting priors and for change point indicator func.
-\item \code{order}: positive integer or NA. Currently only relevant for \code{dpar == "ar"}.
+\item \code{order}: positive integer or NA. Only relevant for \code{ar} and \code{ma}.
 \item \code{matrix_data}: column of the design matrix less the \code{par_x} term.
 }
 }

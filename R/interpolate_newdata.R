@@ -21,7 +21,7 @@ get_x_values = function(fit, facet_by = NULL, prior = FALSE) {
 
   xdata = fit$data[, fit$pars$x] %>% as.numeric()
 
-  # If there are ARMA terms, evaluate at the data
+  # If there are AR/MA terms, evaluate at the data
   if (length(fit$pars$arma) > 0) {
     x_values = xdata
   } else if (!is.null(facet_by) || is.null(fit$mcmc_post)) {
@@ -174,10 +174,10 @@ interpolate_newdata = function(fit, facet_by = NULL, x_values = get_x_values(fit
     stop_github("Not one of the possible combos of categorical and continuous.")
   }
 
-  # Add response column for AR models
+  # Add response column for AR/MA models
   if (is_arma(fit)) {
     if (nrow(newdata) != nrow(fit$data))
-      stop_github("nrow(newdata) != nrow(fit$data) in interpolate_newdata for an AR model.")
+      stop_github("nrow(newdata) != nrow(fit$data) in interpolate_newdata for an AR/MA model.")
     newdata[, fit$pars$y] = fit$data[, fit$pars$y]
   }
 

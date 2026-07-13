@@ -133,7 +133,7 @@ get_plot = function(x,
       samples_format = "tidy",
       scale = scale
     ) %>%
-      dplyr::select(-dplyr::any_of(c(as.character(yvar)))) %>%  # Only a problem for ar() models
+      dplyr::select(-dplyr::any_of(c(as.character(yvar)))) %>%  # Only a problem for AR/MA models
       dplyr::rename(!!yvar := !!type)  # from "predict"/"fitted" to yvar (response name)
   }
 

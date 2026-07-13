@@ -25,8 +25,11 @@
 #'   * *Variance:* e.g., `~sigma(1)` for a simple variance change or
 #'     `~sigma(1 + I(x^2))`) for more advanced variance structures. [Read more](https://lindeloev.github.io/mcp/articles/variance.html)
 #'
-#'   * *Autoregression:* e.g., `~ar(1)` for a simple onset/change in AR(1) or
-#'     `ar(2, 0 + x`) for an AR(2) increasing by `x`. [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
+#'   * *Time-series residuals:* use `ar(p)` and `ma(q)` separately or together,
+#'     e.g., `~ 1 + ar(1) + ma(1)`. Both accept an optional regression formula
+#'     and observation `boundary`. GARMA terms support Gaussian, binomial,
+#'     Poisson, and negative-binomial families with their default links.
+#'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
 #'
 #' @param prior Named list. Names are parameter names (`cp_i`, `Intercept_i`, `xvar_i`,
 #'  `sigma``) and the values are either
