@@ -399,6 +399,29 @@ test_pp_eval = function(fit, prior = FALSE) {
     testthat::expect_true(dplyr::setequal(colnames(result_more), expected_colnames_more))  # Exactly these columns regardless of order
   }
 
+  # Population-level evaluation should not require varying grouping columns.
+  if (length(fit$pars$varying) > 0) {
+    varying_cols = stats::na.omit(unique(fit$.internal$ST$cp_group_col))
+    population_newdata = fit$data[, colnames(fit$data) %notin%
+      c(fit$pars$y, varying_cols), drop = FALSE]
+    population_result = fitted(
+      fit,
+      newdata = population_newdata,
+      summary = FALSE,
+      probs = FALSE,
+      prior = prior,
+      varying = FALSE,
+      arma = FALSE,
+      nsamples = 2
+    )
+
+    testthat::expect_equal(
+      sort(unique(population_result$data_row)),
+      seq_len(nrow(population_newdata))
+    )
+    testthat::expect_false(any(varying_cols %in% colnames(population_result)))
+  }
+
   # Test pp_check
   if (length(fit$pars$varying) > 0) {
     varying_col = na.omit(fit$.internal$ST$cp_group_col)[1]  # Just use the first column

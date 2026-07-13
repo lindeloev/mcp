@@ -654,7 +654,8 @@ pp_eval = function(
   # FIX NEWDATA #
   ###############
   varying_info = unpack_varying(fit, pars = varying)
-  exclude_varying = fit$pars$varying[fit$pars$varying %notin% varying_info$cols]
+  varying_cols = unique(stats::na.omit(fit$.internal$ST$cp_group_col))
+  exclude_varying = setdiff(varying_cols, varying_info$cols)
   required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
   uses_weights = fit$family$family == "gaussian" &&
     type %in% c("predict", "loglik") &&
