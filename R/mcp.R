@@ -5,8 +5,8 @@
 #' between segments. [See more details and worked examples on the mcp website](https://lindeloev.github.io/mcp/).
 #' All segments must regress on the same x-variable. Change
 #' points are forced to be ordered using truncation of the priors. You can run
-#' `fit = mcp(model, sample=FALSE)` to avoid sampling and the need for
-#' data if you just want to get the priors (`fit$prior`), the JAGS code
+#' `fit = mcp(model, data, sample=FALSE)` to avoid sampling if you just want to
+#' inspect the priors (`fit$prior` and [prior_summary()]), the JAGS code
 #' `fit$jags_code`, or the R function to simulate data (`fit$simulate`).
 #'
 #' @aliases mcp
@@ -41,7 +41,7 @@
 #'      `mcp` uses SD (not precision) for dnorm, dt, dlogis, etc. See
 #'      details. Change points are forced to be ordered through the priors using
 #'      truncation, except for uniform priors where the lower bound should be
-#'      greater than the previous change point, `dunif(cp_1, MAXX)`.
+#'      greater than the previous change point, `dunif(cp_1, max(time))`.
 #'  * A numerical value (e.g., `Intercept_1 = -2.1`) indicating a fixed value.
 #'  * A model parameter name (e.g., `Intercept_2 = "Intercept_1"`), indicating that this parameter is shared -
 #'      typically between segments. If two varying effects are shared this way,
@@ -90,14 +90,17 @@
 #'       truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the
 #'       x-axis UNLESS you do it yourself. The one exception is for dunif
 #'       distributions where you have to do it as above.
-#'   * In addition to the model parameters, `MINX` (minimum x-value), `MAXX`
-#'       (maximum x-value), `SDX` (etc...), `MINY`, `MAXY`, and `SDY`
-#'       are also available when you set priors. They are used to set uninformative
-#'       default priors.
+#'   * Data-dependent prior values can be written directly, for example
+#'       `min(time)`, `max(time)`, `median(response)`, `mad(response)`,
+#'       `max(time) - min(time)`, `segment_width(time)`, `n_segments()`, and `n_cp()`.
+#'       They are resolved from the model data before JAGS code is generated.
+#'       The older constants `MINX`, `MAXX`, `MEANX`, `SDX`, `MINY`, `MAXY`,
+#'       `MEANY`, `SDY`, and `N_CP` remain accepted with a deprecation warning.
 #'   * Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision
 #'       but `mcp` converts to precision under the hood via the sd_to_prec()
 #'       function. So you will see SDs in `fit$prior` but precision ($1/SD^2)
-#'       in `fit$jags_code`
+#'       in `fit$jags_code`. Use `prior_summary(fit)` for resolved priors and
+#'       `prior_summary(fit, verbose = TRUE)` for their rules and descriptions.
 #' @return An \code{\link{mcpfit}} object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -249,7 +252,11 @@ mcp = function(model,
   rhs_table = get_rhs_table(model, data, family, par_x)
 
   # Make prior
-  prior = get_prior(ST, rhs_table, family, prior)
+  prior = get_prior(ST, rhs_table, family, prior, data)
+  prior_table = attr(prior, "prior_table")
+  prior_context = attr(prior, "prior_context")
+  attr(prior, "prior_table") = NULL
+  attr(prior, "prior_context") = NULL
 
   # Make lists of parameters
   all_pars = names(prior)  # There is a prior for every parameter
@@ -292,7 +299,10 @@ mcp = function(model,
   if (is.null(jags_code)) {
     ar_order = get_arma_order(rhs_table, "ar")
     ma_order = get_arma_order(rhs_table, "ma")
-    jags_code = get_jags_code(prior, ST, formula_jags, ar_order, ma_order, family, par_x)
+    jags_code = get_jags_code(
+      prior, ST, formula_jags, ar_order, ma_order, family, par_x,
+      prior_table, prior_context
+    )
   }
 
 
@@ -382,6 +392,8 @@ mcp = function(model,
       rhs_table = rhs_table,
       formula_jags = formula_jags,
       formula_r = formula_r,
+      prior_table = prior_table,
+      prior_context = prior_context,
       mcp_version = utils::packageVersion("mcp")  # For helpful messages about backwards compatibility
     )
   )

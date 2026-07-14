@@ -11,10 +11,25 @@
 #' @param formula_jags String. The formula string returned by `get_formula_jags()`.
 #' @param ST Segment table. Returned by `get_segment_table()`.
 #' @param ar_order,ma_order NA or positive integer. The GARMA component orders.
+#' @param prior_table Resolved prior metadata from `get_prior()`.
+#' @param prior_context Data summaries used while resolving priors.
 #' @return String. A JAGS model.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_jags_code = function(prior, ST, formula_jags, ar_order, ma_order, family, par_x) {
+get_jags_code = function(prior, ST, formula_jags, ar_order, ma_order, family, par_x,
+                          prior_table = NULL, prior_context = NULL) {
+  prior_description = if (is.null(prior_table)) {
+    stats::setNames(rep("Prior", length(prior)), names(prior))
+  } else {
+    stats::setNames(prior_table$description, prior_table$parameter)
+  }
+  prior_kind_ = if (is.null(prior_table)) {
+    NULL
+  } else {
+    stats::setNames(prior_table$kind, prior_table$parameter)
+  }
+  prior_context_ = prior_context
+
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Add fixed variables.
   mm = paste0("model {")
@@ -31,11 +46,13 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, ma_order, family, pa
 
     # Build JAGS code. cp_betas is a simplex. cp_i is scaled to the observed range of x.
     mm = paste0(mm, "
-    # Scaled Dirichlet prior on change points
-    cp_betas ~ ddirch(c(", paste0(stringr::str_extract(cps, "[0-9]+"), collapse = ", "), ", 1))")  # OBS: adds an extra 1
+  # Scaled Dirichlet prior on change points
+  cp_betas ~ ddirch(c(", paste0(stringr::str_extract(cps, "[0-9]+"), collapse = ", "), ", 1))  # Scaled Dirichlet prior on change points")  # OBS: adds an extra 1
     for (i in seq_along(cps)) {
       mm = paste0(mm, "
-    cp_", i, " = MINX + sum(cp_betas[1:", i, "]) * (MAXX - MINX)")
+  cp_", i, " = ", format_prior_number(prior_context_$x_min),
+                  " + sum(cp_betas[1:", i, "]) * ", format_prior_number(prior_context_$x_span),
+                  "  # Within the observed change-point span")
     }
 
     # Clean up. Remove any dirichlet priors from the list of priors
@@ -57,12 +74,17 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, ma_order, family, pa
   # mcp helper values\n")
 
   # Helpers for change points:
-  mm = paste0(mm, "  cp_0 = MINX\n")
-  mm = paste0(mm, "  cp_", max(ST$segment), " = MAXX
+  mm = paste0(mm, "  cp_0 = ", format_prior_number(prior_context_$x_min), "\n")
+  mm = paste0(mm, "  cp_", max(ST$segment), " = ", format_prior_number(prior_context_$x_max), "
 
   # Priors for population-level effects\n")
   for (i in seq_along(prior_pop)) {
-    mm = paste0(mm, get_prior_str(prior_pop, i))
+    name = names(prior_pop)[i]
+    mm = paste0(mm, get_prior_str(
+      prior_pop, i,
+      description = prior_description[[name]],
+      kind = if (is.null(prior_kind_)) NULL else prior_kind_[[name]]
+    ))
   }
 
 
@@ -73,7 +95,9 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, ma_order, family, pa
       mm = paste0(mm, get_prior_str(
         prior = prior_varying,
         i = i,
-        varying_group = stats::na.omit(ST$cp_group_col[ST$cp_group == names(prior_varying[i])])
+        varying_group = stats::na.omit(ST$cp_group_col[ST$cp_group == names(prior_varying[i])]),
+        description = prior_description[[names(prior_varying)[i]]],
+        kind = if (is.null(prior_kind_)) NULL else prior_kind_[[names(prior_varying)[i]]]
       ))
     }
   }
@@ -201,13 +225,19 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, ma_order, family, pa
 #' @param varying_group String or NULL. Null indicates a population-
 #'   level prior. String indicates a varying-effects prior (one for each group
 #'   level).
+#' @param description Short comment to include in generated JAGS code.
+#' @param kind One of distribution, alias, expression, or constant.
 #' @return A string
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @encoding UTF-8
-get_prior_str = function(prior, i, varying_group = NULL) {
+get_prior_str = function(prior, i, varying_group = NULL,
+                          description = "Prior", kind = NULL) {
   # Helpers
   value = prior[[i]]
   name = names(prior[i])
+  description = gsub("[\r\n]+", " ", description)
+  if (is.null(kind))
+    kind = prior_kind(value, names(prior))
 
   # JAGS does not support dinvgamma or dloginvgamma. Write it manually.
   # If inverse_shape ~ Gamma(a, b), then
@@ -216,48 +246,34 @@ get_prior_str = function(prior, i, varying_group = NULL) {
     if (!is.null(varying_group))
       stop("dloginvgamma() is currently only supported for population-level parameters.")
 
-    prior_match = stringr::str_match(
-      value,
-      "^dloginvgamma\\(\\s*([^,]+)\\s*,\\s*([^\\)]+)\\s*\\)$"
-    )
-    if (anyNA(prior_match))
+    call = parse_prior_call(value)
+    if (is.null(call) || call$name != "dloginvgamma" || length(call$args) != 2)
       stop("Expected dloginvgamma(shape, scale). Got '", value, "'.")
 
     inverse_name = paste0(name, "_inverse")
     return(paste0(
-      "  ", inverse_name, " ~ dgamma(", prior_match[2], ", ", prior_match[3], ")\n",
-      "  ", name, " = -log(", inverse_name, ")  # log of inverse-gamma dpar\n"
+      "  ", inverse_name, " ~ dgamma(", call$args[1], ", ", call$args[2], ")  # ", description, "\n",
+      "  ", name, " = -log(", inverse_name, ")  # Log of inverse-gamma parameter\n"
     ))
   }
 
-  # Is this fixed?
-  all_d = "dunif|dbern|dbeta|dbin|dchisqr|ddexp|dexp|df|dgamma|dgen.gamma|dhyper|dlogis|dlnorm|dnegbin|dnchisqr|dnorm|dpar|dpois|dt|dweib|dirichlet"  # All JAGS distributions
-  is_fixed = stringr::str_detect(value, "^[-0-9.]+$") |
-    value %in% names(prior)
-
-  # If not either number or known parameter, it should be a known distribution.
-  if (!is_fixed && !stringr::str_detect(value, all_d))
-    stop("The prior '", name, " = ", value, "' is not a known distribution, a number, nor a model parameter.")
-
-  # If it is a known distribution
-  if (!is_fixed) {
+  if (kind == "distribution") {
     # Convert to precision
     value = sd_to_prec(value)
 
     # ... and this is a population-level effect
     if (is.null(varying_group)) {
-      return(paste0("  ", name, " ~ ", value, "\n"))
+      return(paste0("  ", name, " ~ ", value, "  # ", description, "\n"))
     } else {
       # It is a varying effect!
       return(paste0("  for (", varying_group, "_ in 1:n_unique_", varying_group, ") {
-    ", name, "_uncentered[", varying_group, "_] ~ ", value, "
+    ", name, "_uncentered[", varying_group, "_] ~ ", value, "  # ", description, "
   }
   ", name, " = ", name, "_uncentered - mean(", name, "_uncentered)  # vectorized zero-centering\n"))
     }
-  } else {
-    # Fixed value. Just equate name and value
-    return(paste0("  ", name, " = ", value, "  # Fixed\n"))
   }
+
+  paste0("  ", name, " = ", value, "  # ", description, "\n")
 }
 
 
@@ -278,30 +294,16 @@ get_prior_str = function(prior, i, varying_group = NULL) {
 #' @encoding UTF-8
 #' @export
 sd_to_prec = function(prior_str) {
-  if (stringr::str_detect(prior_str, "dnorm|dt|dcauchy|ddexp|dlogis|dlnorm")) {
-    # Identify trunc. If present, cut it out of the prior_str
-    trunc_start = gregexpr("T\\(", prior_str)[[1]]
-    if (trunc_start != -1) {
-      trunc = substr(prior_str, trunc_start, 1000)
-      prior_str = substr(prior_str, 0, trunc_start-1)
-    } else trunc = ""
+  parts = split_prior_truncation(prior_str)
+  call = parse_prior_call(parts$distribution)
+  if (is.null(call) || call$name %notin% c("dnorm", "dt", "dcauchy", "ddexp", "dlogis", "dlnorm"))
+    return(prior_str)
+  if (length(call$args) < 2)
+    stop("Expected a scale as the second argument of '", prior_str, "'.")
 
-    # Split by commas to get distribution arguments.
-    # Then convert the second to precision
-    pieces = stringr::str_trim(strsplit(prior_str, ",")[[1]])
-    pieces = gsub(" ", "", pieces)  # Remove spaces. Just so we know what we have.
-
-    # In two-parameter distributions, tau is followed by a parenthesis.
-    # Remove it so we just have the "value"
-    is_dt = stringr::str_starts(pieces[1], "dt\\(")
-    if (!is_dt) {
-      pieces[2] = substr(pieces[2], 1, nchar(pieces[2])-1)
-    }
-    pieces[2] = paste0("1/(", pieces[2], ")^2")  # convert to precision
-
-    # Stitch together again and return
-    new_prior = paste0(paste0(pieces, collapse = ", "), ifelse(!is_dt, ") ", " "), trunc)
-    return(new_prior)
-  }
-  else return(prior_str)
+  call$args[2] = paste0("1/(", gsub(" ", "", call$args[2]), ")^2")
+  converted = paste0(call$name, "(", paste(call$args, collapse = ", "), ") ")
+  if (!is.null(parts$truncation))
+    converted = paste0(converted, gsub("\\s+", "", parts$truncation))
+  converted
 }

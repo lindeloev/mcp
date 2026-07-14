@@ -54,20 +54,13 @@ negbinomial = function(link = "log", link_shape = "log") {
 #' @export
 mcpfamily = function(x) {
   family = x
-  tmp = x  # Hack: the name "family" causes errors in filter()
   assert_types(family, "family")
 
-  # Get default priors for RHS
-  dpar_prior = default_dpar_priors %>% dplyr::filter(.data$family == tmp$family & .data$link == tmp$link)
-  if (nrow(dpar_prior) == 0)
-    stop("mcp has no default priors for ", family$family, "(link = \"", family$link, "\") so it's likely not supported. See `mcpfamily()` on how to create a custom family.")
-
-  # Add priors
-  dpar_prior = rbind(
-    dpar_prior,
-    default_common_priors %>% dplyr::filter(.data$dpar %in% c("ar", "ma"))
-  )
-  family$default_prior = dpar_prior
+  # The family owns informative, symbolic defaults for its distributional
+  # parameters. Change-point and ARMA defaults belong to those components.
+  if (is.null(family$default_prior))
+    family$default_prior = get_family_default_priors(family)
+  family$default_prior = normalize_family_default_priors(family$default_prior)
 
   # Distributional parameters are properties of the family, not of the prior
   # table. Keeping this metadata separate prevents a missing/default prior from
@@ -258,6 +251,9 @@ is.mcpfamily = function(x) {
 
   assert_types(x, "family")
   assert_types(x$default_prior, "tibble", "data.frame")
+  # Stored fits may contain the released three-column table. New family
+  # objects are normalized to include description and condition metadata.
+  assert_data_cols(x$default_prior, c("dpar", "par_type", "prior"))
   assert_types(x$dpars, "character")
   if (!is.null(x$dpar_specs)) {
     assert_dpar_specs(x$dpar_specs)

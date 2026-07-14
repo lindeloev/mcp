@@ -1,236 +1,214 @@
-##########################
-# LIST OF DEFAULT PRIORS #
-##########################
+# Prior assembly -----------------------------------------------------------
 
-default_common_priors = tibble::tribble(
-  ~family, ~link, ~dpar, ~par_type, ~prior,
-  # Changepoint (common for all families)
-  "changepoint", "identity", "cp_1", "Intercept", "dunif(MINX, MAXX)",  # If there is only one change point
-  "changepoint", "identity", "cp", "Intercept", "dt(MINX, (MAXX - MINX) / N_CP, N_CP - 1)",  # For 2+ change points. Read the mcp article for more details on this "t-prior".
-  "changepoint", "identity", "cp_sd", "dummy", "dnorm(0, 2 * (MAXX - MINX) / N_CP) T(0, )",  # Spread of varying effects
+# Default builders return symbolic specifications only. Defaults and user
+# priors are overlaid first and compiled together in one final pass.
 
-  # AR
-  NA, "identity", "ar", "Intercept", "dunif(-1, 1)",
-  NA, "identity", "ar", "dummy", "dt(0, 1, 3)",
-  NA, "identity", "ar", "slope", "dt(0, 1 / (MAXX - MINX), 3)",
-
-  # MA
-  NA, "identity", "ma", "Intercept", "dunif(-1, 1)",
-  NA, "identity", "ma", "dummy", "dt(0, 1, 3)",
-  NA, "identity", "ma", "slope", "dt(0, 1 / (MAXX - MINX), 3)"
-)
-
-default_dpar_priors = tibble::tribble(
-  ~family, ~link, ~dpar, ~par_type, ~prior,
-
-  # Gaussian mu
-  "gaussian", "identity", "mu", "Intercept", "dt(MEDIANLINKY, MADLINKY, 3)",
-  "gaussian", "identity", "mu", "dummy", "dt(0, MADLINKY, 3)",
-  "gaussian", "identity", "mu", "slope", "dt(0, (N_CP + 1) * MADLINKY / (MAXX - MINX), 3)",
-
-  # Gaussian sigma
-  "gaussian", "identity", "sigma", "Intercept", "dt(0, MADLINKY, 3) T(0, )",  # Will always be <= observed MADLINKY
-  "gaussian", "identity", "sigma", "dummy", "dt(0, MADLINKY, 3)",
-  "gaussian", "identity", "sigma", "slope", "dt(0, (N_CP + 1) * MADLINKY / (MAXX - MINX), 3)",
-
-  # Binomial
-  "binomial", "logit", "mu", "Intercept", "dt(0, 2.5, 3)",  # TO DO: center this on data
-  "binomial", "logit", "mu", "dummy", "dt(0, 2.5, 3)",
-  "binomial", "logit", "mu", "slope", "dt(0, (N_CP + 1) * 2.5 / (MAXX - MINX), 3)",
-
-  "binomial", "identity", "mu", "Intercept", "dbeta(1, 1)",  # TO DO: center this on data
-  "binomial", "identity", "mu", "dummy", "dunif(-1, 1)",
-  "binomial", "identity", "mu", "slope", "dt(0, (N_CP + 1) / (MAXX - MINX), 3)",
-
-  # Poisson
-  "poisson", "log", "mu", "Intercept", "dt(0, 10, 3)",  # TO DO: center this on data
-  "poisson", "log", "mu", "dummy", "dt(0, 10, 3)",
-  "poisson", "log", "mu", "slope", "dt(0, 10, 3)",
-
-  "poisson", "identity", "mu", "Intercept", "dt(MEDIANLINKY, MEDIANLINKY, 3)",
-  "poisson", "identity", "mu", "dummy", "dt(0, MEDIANLINKY, 3)",
-  "poisson", "identity", "mu", "slope", "dt(0, (N_CP + 1) * MEDIANLINKY / (MAXX - MINX), 3)",
-
-  # Negative binomial mu: brms-like intercept calibration with proper mcp-style
-  # priors for dummy variables and slopes.
-  "negbinomial", "log", "mu", "Intercept", "dt(MU_PRIOR_LOCATION, MU_PRIOR_SCALE, 3)",
-  "negbinomial", "log", "mu", "dummy", "dt(0, 2.5, 3)",
-  "negbinomial", "log", "mu", "slope", "dt(0, (N_CP + 1) * 2.5 / (MAXX - MINX), 3)",
-
-  # Negative binomial shape. The intercept-only model induces
-  # shape ~ inverse-gamma(0.4, 0.3) on the distribution scale, matching brms.
-  # If shape is modeled, get_prior() replaces this intercept prior with dt(0, 2.5, 3).
-  "negbinomial", "log", "shape", "Intercept", "dloginvgamma(0.4, 0.3)",
-  "negbinomial", "log", "shape", "dummy", "dt(0, 2.5, 3)",
-  "negbinomial", "log", "shape", "slope", "dt(0, (N_CP + 1) * 2.5 / (MAXX - MINX), 3)"
-)
-
-# Copies sections to other link functions and families
-default_dpar_priors = dplyr::bind_rows(
-  default_dpar_priors,
-
-  # Gaussian
-  default_dpar_priors %>% dplyr::filter(.data$family == "gaussian", .data$link == "identity", .data$dpar == "mu") %>% dplyr::mutate(link = "log"),
-  default_dpar_priors %>% dplyr::filter(.data$family == "gaussian", .data$link == "identity", .data$dpar == "sigma") %>% dplyr::mutate(link = "log"),
-
-  # Bernoulli/binomial
-  default_dpar_priors %>% dplyr::filter(.data$family == "binomial", .data$link == "logit", .data$dpar == "mu") %>% dplyr::mutate(link = "probit"),
-  default_dpar_priors %>% dplyr::filter(.data$family == "binomial", .data$link == "logit", .data$dpar == "mu") %>% dplyr::mutate(family = "bernoulli"),
-  default_dpar_priors %>% dplyr::filter(.data$family == "binomial", .data$link == "logit", .data$dpar == "mu") %>% dplyr::mutate(family = "bernoulli", link = "probit"),
-  default_dpar_priors %>% dplyr::filter(.data$family == "binomial", .data$link == "identity", .data$dpar == "mu") %>% dplyr::mutate(family = "bernoulli")
-)
-
-
-######################
-# GET DEFAULT PRIORS #
-######################
-# Change point
-get_default_prior_cp = function(ST, i, cp_prior) {
-  assert_integer(i, lower = 2, len = 1)
-  truncate_prior_cp(ST, i, cp_prior$cp)
+empty_prior_specs = function() {
+  tibble::tibble(
+    parameter = character(),
+    code = character(),
+    description = character(),
+    source = character()
+  )
 }
 
 
-# Varying-by-group change point
-get_default_prior_cp_group = function(ST, i) {
-  assert_integer(i, lower = 2, len = 1)
+default_cp_specs = function(ST, context) {
+  n_cp = context$n_cp
+  if (n_cp == 0)
+    return(empty_prior_specs())
 
-  # Truncate between last change point and next change point, including their
-  # varying effects, but keep in the observed range (MINX, MAXX).
-  if (i == 2)
-    trunc_from = paste0("MINX - ", ST$cp_name[i])
-  if (i > 2)
-    trunc_from = paste0(ST$cp_name[i-1], " - ", ST$cp_name[i])
-  if (i == nrow(ST))
-    trunc_to = paste0("MAXX - ", ST$cp_name[i])
-  if (i < nrow(ST))
-    trunc_to = paste0(ST$cp_name[i + 1], " - ", ST$cp_name[i])
-  trunc = paste0("T(", trunc_from, ", ", trunc_to, ")")
-
-  paste0("dnorm(0, ", ST$cp_sd[i], ") ", trunc)
-}
-
-
-
-####################################
-# USER-DEFINED CHANGE POINT PRIORS #
-####################################
-truncate_prior_cp = function(ST, i, prior_str) {
-  assert_integer(i, lower = 2, len = 1)
-  assert_types(prior_str, "character", len = 1)
-
-  # Helper: Current segment.
-  S = ST[i,]
-
-  # User provided prior. Truncate it to ensure correct order
-  is_bounded = stringr::str_detect(prior_str, "dunif|dirichlet")
-  is_truncated = stringr::str_detect(prior_str, "T\\(")
-  is_fixed = is.numeric(prior_str)
-
-  # Absolute: be greater than the former change point and within observed range
-  if (is_bounded == FALSE && is_truncated == FALSE && is_fixed == FALSE) {
-    return(paste0(prior_str, " T(", ST$cp_name[i - 1], ", MAXX)"))
-  } else {
-    # Return unaltered
-    return(prior_str)
+  specs = list()
+  cp_names = ST$cp_name[seq_len(nrow(ST)) > 1]
+  for (j in seq_along(cp_names)) {
+    name = cp_names[j]
+    if (n_cp == 1) {
+      code = "dunif(min(.x), max(.x))"
+    } else {
+      lower = if (j == 1) "min(.x)" else cp_names[j - 1]
+      code = paste0(
+        "dt(min(.x), (max(.x) - min(.x)) / n_cp(), n_cp() - 1) T(",
+        lower, ", max(.x))"
+      )
+    }
+    specs[[name]] = tibble::tibble(
+      parameter = name,
+      code = code,
+      description = if (j == 1) {
+        "Within the observed change-point span"
+      } else {
+        paste0("Ordered after ", cp_names[j - 1], " within the observed change-point span")
+      },
+      source = "default"
+    )
   }
+
+  for (i in seq_len(nrow(ST))) {
+    if (is.na(ST$cp_sd[i]))
+      next
+
+    sd_name = ST$cp_sd[i]
+    group_name = ST$cp_group[i]
+    specs[[sd_name]] = tibble::tibble(
+      parameter = sd_name,
+      code = "dnorm(0, 2 * (max(.x) - min(.x)) / n_cp()) T(0, )",
+      description = "Group-level change-point variation",
+      source = "default"
+    )
+
+    lower = if (i == 2) {
+      paste0("min(.x) - ", ST$cp_name[i])
+    } else {
+      paste0(ST$cp_name[i - 1], " - ", ST$cp_name[i])
+    }
+    upper = if (i == nrow(ST)) {
+      paste0("max(.x) - ", ST$cp_name[i])
+    } else {
+      paste0(ST$cp_name[i + 1], " - ", ST$cp_name[i])
+    }
+    specs[[group_name]] = tibble::tibble(
+      parameter = group_name,
+      code = paste0("dnorm(0, ", sd_name, ") T(", lower, ", ", upper, ")"),
+      description = "Zero-centered group-level change-point offsets",
+      source = "default"
+    )
+  }
+
+  dplyr::bind_rows(specs)
 }
 
 
+default_rhs_specs = function(rhs_table, family) {
+  defaults = dplyr::bind_rows(family$default_prior, default_arma_priors())
 
-####################
-# ALL TOGETHER NOW #
-####################
+  shape_rows = rhs_table$dpar == "shape"
+  shape_is_modeled = any(shape_rows) && (
+    sum(shape_rows) > 1 || any(rhs_table$par_type[shape_rows] != "Intercept")
+  )
+  shape_condition = if (shape_is_modeled) "shape_modeled" else "shape_constant"
+  defaults = defaults %>%
+    dplyr::filter(.data$condition == "always" | .data$condition == shape_condition)
+
+  keys = paste(defaults$dpar, defaults$par_type)
+  if (anyDuplicated(keys))
+    stop_github("Default prior specifications are not unique by dpar and par_type.")
+
+  joined = rhs_table %>%
+    dplyr::left_join(defaults, by = c("dpar", "par_type"))
+  if (any(is.na(joined$prior))) {
+    stop_github(
+      "mcp could not find a default prior for ",
+      and_collapse(joined$code_name[is.na(joined$prior)])
+    )
+  }
+
+  tibble::tibble(
+    parameter = joined$code_name,
+    code = joined$prior,
+    description = joined$description,
+    source = "default"
+  )
+}
+
+
+truncate_prior_cp = function(ST, i, prior_value, context) {
+  if (is.numeric(prior_value))
+    return(prior_value)
+  is_bounded = stringr::str_detect(prior_value, "^\\s*(dunif|dirichlet)\\s*\\(")
+  is_truncated = stringr::str_detect(prior_value, "T\\s*\\(")
+  if (is_bounded || is_truncated)
+    return(prior_value)
+
+  lower = if (i == 2) {
+    paste0("min(", context$x_display, ")")
+  } else {
+    ST$cp_name[i - 1]
+  }
+  paste0(prior_value, " T(", lower, ", max(", context$x_display, "))")
+}
+
+
+overlay_user_priors = function(specs, prior, ST, context) {
+  name_matches = names(prior) %in% specs$parameter
+  if (any(!name_matches)) {
+    stop(
+      "Prior(s) were specified for parameter name(s) that are not part of the model: ",
+      and_collapse(names(prior)[!name_matches])
+    )
+  }
+
+  auto_truncated = character()
+  for (i in seq_len(nrow(ST))) {
+    name = ST$cp_name[i]
+    if (i > 1 && name %in% names(prior)) {
+      original = prior[[name]]
+      prior[[name]] = truncate_prior_cp(ST, i, original, context)
+      if (!identical(prior[[name]], original))
+        auto_truncated = c(auto_truncated, name)
+    }
+  }
+
+  for (name in names(prior)) {
+    i = match(name, specs$parameter)
+    specs$code[i] = prior[[name]]
+    specs$source[i] = "user"
+    specs$description[i] = if (name %in% auto_truncated) {
+      "User-specified prior with ordered change-point bounds added by mcp"
+    } else {
+      NA_character_
+    }
+  }
+  specs
+}
+
 
 #' Get priors for all parameters in the model
 #'
-#' Starts by finding all default priors. Then replace them with user priors.
-#' User priors for change points are truncated appropriately using
-#' `truncate_prior_cp``, if not done manually by the user already.
-#'
-#' @aliases get_prior
 #' @keywords internal
 #' @noRd
-#' @param ST Tibble. A segment table as returned by `get_segment_table`.
-#' @param rhs_table Tibble as returned by `get_rhs()`.
-#' @param family An `mcpfamily` object as returned by `mcpfamily()`.
-#' @param prior A list of user-defined priors. Will overwrite the relevant
-#'   default priors.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @return A named list of strings. The names correspond to the parameter names
-#'   and the strings are the JAGS code for the prior (before converting SD to
-#'   precision).
-get_prior = function(ST, rhs_table, family, prior = list()) {
+get_prior = function(ST, rhs_table, family, prior = list(), data) {
   assert_types(family, "mcpfamily")
+  context = prior_context(data, ST)
+  warn_legacy_prior_constants(prior, context)
 
-  # Get ready to populate this list
-  default_prior = list()
+  specs = dplyr::bind_rows(
+    default_cp_specs(ST, context),
+    default_rhs_specs(rhs_table, family)
+  )
+  specs = overlay_user_priors(specs, prior, ST, context)
 
-  # Priors for change points
-  cp_prior = default_common_priors %>%
-    dplyr::filter(.data$family == "changepoint", .data$link == "identity") %>%
-    dplyr::select("dpar", "prior") %>%
-    tibble::deframe() %>%
-    as.list()
+  all_names = specs$parameter
+  table = compile_prior_specs(specs, all_names, context)
+  resolved = stats::setNames(as.list(table$value), table$parameter)
+  attr(resolved, "prior_table") = table
+  attr(resolved, "prior_context") = context[c(
+    "x_name", "y_name", "x_display", "y_display", "x_min", "x_max",
+    "x_span", "n_cp", "n_segments", "segment_width"
+  )]
+  resolved
+}
 
 
-  for (i in seq_len(nrow(ST))) {
-    # Helper: Current segment.
-    S = ST[i, ]
-
-    # Change point
-    if (i > 1) {
-      if (nrow(ST) == 2) {
-        default_prior[[S$cp_name]] = cp_prior$cp_1
-      } else {
-        default_prior[[S$cp_name]] = get_default_prior_cp(ST, i, cp_prior)
-      }
-    }
-
-    # Change point varying effects
-    if (!is.na(S$cp_sd)) {
-      default_prior[[S$cp_sd]] = cp_prior$cp_sd
-      default_prior[[S$cp_group]] = get_default_prior_cp_group(ST, i)
-    }
-
-    # Truncate change point prior if supplied by user
-    if (i > 1 && ST$cp_name[i] %in% names(prior) && is.numeric(prior[[S$cp_name]]) == FALSE) {
-      prior[[S$cp_name]] = truncate_prior_cp(ST, i, prior[[S$cp_name]])
-    }
-  }
-
-  # Priors for RHS parameters
-  rhs_prior_table = rhs_table %>%
-    dplyr::left_join(family$default_prior, by = c("dpar", "par_type"))
-
-  # brms uses an inverse-gamma prior for a single constant shape, but switches
-  # to link-scale coefficient priors for distributional shape regression.
-  if (family$family == "negbinomial") {
-    shape_rows = rhs_prior_table$dpar == "shape"
-    shape_is_modeled = sum(shape_rows) > 1 || any(rhs_prior_table$par_type[shape_rows] != "Intercept")
-    if (shape_is_modeled) {
-      rhs_prior_table$prior[shape_rows & rhs_prior_table$par_type == "Intercept"] = "dt(0, 2.5, 3)"
-    }
-  }
-
-  rhs_prior = rhs_prior_table %>%
-    dplyr::select("code_name", "prior") %>%
-    tibble::deframe() %>%
-    as.list()
-
-  if (any(is.na(rhs_prior)))
-    stop_github("mcp could not find a default prior for ", and_collapse(names(rhs_prior[is.na(rhs_prior)])))
-
-  # Merge
-  default_prior = c(default_prior, rhs_prior)
-
-  # A check
-  name_matches = names(prior) %in% names(default_prior)
-  if (any(name_matches == FALSE))
-    stop("Prior(s) were specified for the following parmameter name(s) that are not part of the model: ", and_collapse(names(prior)[!name_matches]))
-
-  # Replace default priors with user prior and return
-  default_prior = utils::modifyList(default_prior, prior)
-  default_prior
+#' Summarise priors used by an mcp model
+#'
+#' Shows the effective, resolved priors on the familiar SD/scale
+#' parameterization rather than JAGS precision. Use `verbose = TRUE` to also
+#' see the symbolic rule, its description, source, and kind.
+#'
+#' @param fit An `mcpfit` object.
+#' @param verbose Logical. Include rule, description, source, and kind.
+#' @return A tibble with one row per model parameter.
+#' @export
+prior_summary = function(fit, verbose = FALSE) {
+  assert_types(fit, "mcpfit")
+  assert_types(verbose, "logical", len = 1)
+  table = fit$.internal$prior_table
+  if (is.null(table))
+    table = attr(fit$prior, "prior_table")
+  if (is.null(table))
+    table = legacy_prior_table(fit)
+  public = c("parameter", "prior", "bounds")
+  if (verbose)
+    public = c(public, "rule", "description", "source", "kind")
+  table[, public, drop = FALSE]
 }

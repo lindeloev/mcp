@@ -17,6 +17,66 @@ test_that("formula tools", {
   expect_equal(sd_to_prec("dt(3,2,1)"), "dt(3, 1/(2)^2, 1) ")
 })
 
+test_that("priors are resolved without changing their parameterization", {
+  data = data.frame(x = 1:6, y = c(2, 4, 3, 8, 7, 9))
+  default_fit = mcp(list(y ~ 1 + x, ~ 1 + x), data, sample = FALSE)
+  expect_equal(
+    unclass(default_fit$prior),
+    list(
+      cp_1 = "dunif(1, 6)",
+      Intercept_1 = "dt(5.5, 3.7065, 3)",
+      x_1 = "dt(0, 1.4826, 3)",
+      Intercept_2 = "dt(5.5, 3.7065, 3)",
+      x_2 = "dt(0, 1.4826, 3)",
+      sigma_1 = "dt(0, 3.7065, 3) T(0, )"
+    )
+  )
+
+  fit = mcp(
+    list(y ~ 1 + x, ~ 1 + x),
+    data,
+    prior = list(
+      Intercept_1 = "dt(median(y), mad(y), 3)T(, max(y))",
+      x_1 = 5,
+      Intercept_2 = "Intercept_1",
+      x_2 = "x_1 / (max(x) - min(x))"
+    ),
+    sample = FALSE
+  )
+
+  expect_equal(fit$prior$Intercept_1, "dt(5.5, 3.7065, 3) T(, 9)")
+  expect_equal(fit$prior$x_2, "x_1/5")
+  expect_false(grepl("MINX|MAXX|N_CP|LINKY", fit$jags_code))
+  expect_match(fit$jags_code, "# User-specified prior", fixed = TRUE)
+
+  compact = prior_summary(fit)
+  verbose = prior_summary(fit, verbose = TRUE)
+  expect_named(compact, c("parameter", "prior", "bounds"))
+  expect_named(
+    verbose,
+    c("parameter", "prior", "bounds", "rule", "description", "source", "kind")
+  )
+  expect_equal(
+    verbose$kind[match(c("Intercept_1", "x_1", "Intercept_2", "x_2"), verbose$parameter)],
+    c("distribution", "constant", "alias", "expression")
+  )
+  expect_equal(verbose$source[verbose$parameter == "Intercept_1"], "user")
+
+  legacy_fit = NULL
+  expect_warning(
+    legacy_fit <- mcp(
+      list(y ~ 1, ~ 1), data,
+      par_x = "x", prior = list(cp_1 = "dunif(MINX, MAXX)"), sample = FALSE
+    ),
+    "Deprecated prior data constant"
+  )
+  expect_equal(legacy_fit$prior$cp_1, "dunif(1, 6)")
+
+  legacy_fit$.internal$prior_table = NULL
+  legacy_fit$prior$cp_1 = "dunif(MINX, MAXX)"
+  expect_equal(prior_summary(legacy_fit)$prior[1], "uniform(min = 1, max = 6)")
+})
+
 test_that("parameter-name collisions give a useful error", {
   data = data.frame(
     y = 1:6,

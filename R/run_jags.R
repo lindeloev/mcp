@@ -133,50 +133,10 @@ get_jags_data = function(data, family, ST, rhs_table, jags_code) {
   # RHS data matrix
   jags_data$rhs_matrix_ = get_rhs_matrix(rhs_table)
 
-  # Add e.g. MINX = min(data$x) for all variables where they are used.
-  # Searches whether it is in jags_code. If yes, add to jags_data
-  # TO DO: there must be a more concise way than this...
-  funcs = c("min", "max", "sd", "mean", "median", "mad")
-
-  # For x
-  for (func in funcs) {
-    constant_name = toupper(paste0(func, "x"))  # No link function for x
-    if (stringr::str_detect(jags_code, constant_name)) {
-      column = ST$x[1]  # from x/y to data column name
-      linkdata = data[, column]  # No link function on x stuff
-      jags_data[[constant_name]] = get(func)(linkdata, na.rm = TRUE)  # Call func
-    }
-  }
-
-  # For y
-  for (func in funcs) {
-    constant_name =  toupper(paste0(func, "LINK", "y"))  # Link function applies to y
-    if (stringr::str_detect(jags_code, constant_name)) {
-      column = ST$y[1]  # from x/y to data column name
-      linkdata = family$linkfun(data[, column])  # No link function on x stuff
-      jags_data[[constant_name]] = get(func)(linkdata, na.rm = TRUE)  # Call func
-    }
-  }
-
-  # brms-like, robust prior calibration for count-family mean intercepts.
-  # Zeros are moved slightly above zero only for this prior calculation so a
-  # log link remains finite; the likelihood still uses the original counts.
-  needs_mu_prior = stringr::str_detect(jags_code, "MU_PRIOR_LOCATION|MU_PRIOR_SCALE")
-  if (needs_mu_prior) {
-    y_prior = data[, ST$y[1]]
-    if (family$link %in% c("log", "inverse", "1/mu^2"))
-      y_prior[y_prior == 0] = 0.1
-    y_prior_link = family$linkfun(y_prior)
-
-    if (stringr::str_detect(jags_code, "MU_PRIOR_LOCATION"))
-      jags_data$MU_PRIOR_LOCATION = round(stats::median(y_prior_link, na.rm = TRUE), 1)
-    if (stringr::str_detect(jags_code, "MU_PRIOR_SCALE"))
-      jags_data$MU_PRIOR_SCALE = max(2.5, round(stats::mad(y_prior_link, na.rm = TRUE), 1))
-  }
-
-  # For default prior
-  if (stringr::str_detect(jags_code, "N_CP"))
-    jags_data$N_CP = nrow(ST) - 1
+  # Compatibility for custom JAGS code written with the released data
+  # constants. Generated code and newly resolved priors no longer need these.
+  context = prior_context(data, ST)
+  jags_data = add_legacy_prior_jags_data(jags_data, jags_code, context)
 
   # Return
   jags_data

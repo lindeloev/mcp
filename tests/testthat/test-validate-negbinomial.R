@@ -61,7 +61,7 @@ test_that("modeled shape uses link-scale coefficient priors", {
   expect_equal(fit$prior$shape_1, "dt(0, 2.5, 3)")
   expect_equal(
     fit$prior$shape_x_1,
-    "dt(0, (N_CP + 1) * 2.5 / (MAXX - MINX), 3)"
+    "dt(0, 0.625, 3)"
   )
 })
 

@@ -10,10 +10,32 @@ test_that("families declare dpars independently of prior rows", {
   expect_equal(gaussian_family$dpar_specs$link, c("identity", "identity"))
   expect_equal(gaussian_family$dpar_specs$implicit, c(FALSE, TRUE))
   expect_equal(gaussian_family$dpars, c("mu", "sigma", "ar", "ma"))
+  expect_named(
+    gaussian_family$default_prior,
+    c("dpar", "par_type", "prior", "description", "condition")
+  )
+  expect_equal(
+    gaussian_family$default_prior$prior[
+      gaussian_family$default_prior$dpar == "mu" &
+        gaussian_family$default_prior$par_type == "slope"
+    ],
+    "dt(0, mad(.y) / segment_width(.x), 3)"
+  )
 
   expect_equal(poisson_family$dpar_specs$dpar, "mu")
   expect_equal(poisson_family$dpar_specs$link, "log")
   expect_equal(poisson_family$dpars, c("mu", "ar", "ma"))
+
+  # Existing custom-family tables need only the original three columns.
+  custom_family = gaussian()
+  custom_family$default_prior = data.frame(
+    dpar = "mu",
+    par_type = "Intercept",
+    prior = "dnorm(0, 1)"
+  )
+  custom_family = mcpfamily(custom_family)
+  expect_equal(custom_family$default_prior$condition, "always")
+  expect_true(is.na(custom_family$default_prior$description))
 
   for (family in mean_only_families) {
     expect_equal(family$dpar_specs$dpar, "mu")
@@ -26,6 +48,18 @@ test_that("families declare dpars independently of prior rows", {
     .data$dpar != "sigma"
   )
   expect_equal(gaussian_family$dpar_specs$dpar, c("mu", "sigma"))
+})
+
+
+test_that("family prior builders determine their supported links", {
+  unsupported = gaussian()
+  unsupported$link = "probit"
+
+  expect_null(default_priors_gaussian("probit"))
+  expect_null(default_priors_binomial("log"))
+  expect_null(default_priors_poisson("probit"))
+  expect_null(default_priors_negbinomial("identity"))
+  expect_error(mcpfamily(unsupported), "no default priors for gaussian")
 })
 
 
