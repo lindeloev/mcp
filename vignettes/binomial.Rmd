@@ -129,19 +129,20 @@ The default priors in `mcp` are set so that they are reasonably broad to cover m
 cbind(fit$prior)
 ```
 
-The priors on change points are discussed extensively in the prior vignette. The priors on slopes and intercepts are normals with standard deviation of "3" logits. This corresponds to quite extreme binomial probabilities, yet not so extreme as to be totally flat. Here are visualization of priors `dnorm(0, 1)` (red), `dnorm(0, 2)` (black, mcp default), and a `dnorm(0, 5)` (blue) prior, and the correspondence between logits and probabilities:
+The priors on change points are discussed extensively in the prior vignette. With the default logit link, intercepts and categorical contrasts use `dt(0, 2.5, 3)`: a weakly regularizing Student-t prior inspired by `brms`. This covers extreme probabilities without being effectively flat. The figure compares Student-t priors with scales 1 (red), 2.5 (black, the `mcp` default), and 5 (blue), together with their correspondence to probabilities:
 
 ```{r}
 inverse_logit = function(x) exp(x) / (1 + exp(x))
+scaled_t = function(x, scale) dt(x / scale, df = 3) / scale
 
 # Start the plot
 library(ggplot2)
 ggplot(data.frame(logits = 0), aes(x = logits)) + 
   
-  # Plot normal prior. Set parameters in "args"
-  stat_function(fun=dnorm, args = list(mean=0, sd = 1), lwd=2, col="red") +
-  stat_function(fun=dnorm, args = list(mean=0, sd = 3), lwd=2, col="black") +
-  stat_function(fun=dnorm, args = list(mean=0, sd = 5), lwd=2, col="blue") +
+  # Plot Student-t priors. Set scale in "args"
+  stat_function(fun=scaled_t, args = list(scale = 1), lwd=2, col="red") +
+  stat_function(fun=scaled_t, args = list(scale = 2.5), lwd=2, col="black") +
+  stat_function(fun=scaled_t, args = list(scale = 5), lwd=2, col="blue") +
   
   # Set the secondary axis
   scale_x_continuous(breaks = -7:7,limits = c(-7, 7), sec.axis = sec_axis(~ inverse_logit(.), name = "Probability", breaks = round(inverse_logit(seq(-7, 7, by = 2)), 3)))
@@ -149,7 +150,7 @@ ggplot(data.frame(logits = 0), aes(x = logits)) +
 
 Please keep in mind that when these priors combine through the model, the joint probability may be quite different. 
 
-Returning to the priors, the `3 / (MAXX - MINX)` on slopes mean that this change in probability occurs over the course of the observed X.
+Slope scales are divided by the expected segment width, `(max(x) - min(x)) / n_segments()`. The implied change across a typical segment therefore has the same 2.5-logit scale, even when the model contains several change points.
 
 
 # JAGS code

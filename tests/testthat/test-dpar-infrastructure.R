@@ -19,7 +19,7 @@ test_that("families declare dpars independently of prior rows", {
       gaussian_family$default_prior$dpar == "mu" &
         gaussian_family$default_prior$par_type == "slope"
     ],
-    "dt(0, mad(.y) / segment_width(.x), 3)"
+    "dt(0, max(2.5, round(mad(.y), 1)) / segment_width(.x), 3)"
   )
 
   expect_equal(poisson_family$dpar_specs$dpar, "mu")

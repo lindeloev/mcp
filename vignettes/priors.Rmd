@@ -21,7 +21,7 @@ model = list(
 prior = list(
   int_1 = "dnorm(0, 5) T(, 10)",  # Intercept; less than 10
   x_1 = "dbeta(2, 5)",  # slope: beta with right skew
-  cp_1 = "dunif(MINX, cp_2)",  # change point between smallest x and cp_2
+  cp_1 = "dunif(min(x), cp_2)",  # change point between smallest x and cp_2
   x_2 = "dt(0, 1, 3) T(x_1, )",  # slope 2 > slope 1 and t-distributed
   cp_2 = 80,  # A constant (set; not estimated)
   x_3 = "x_2"  # continue same slope
@@ -35,7 +35,7 @@ Other notes:
 
 * Order restriction is automatically applied to change points (`cp_*` parameters) using truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the x-axis. You can override this behavior by defining `T()` or `dunif` yourself (`dunif` is inherently truncated), in which case `mcp` won't do further. Dirichlet priors are inherently ordered ([jump to section](#cp_prior)) and cannot be further truncated.
 
-* In addition to the model parameters, `MINX` (minimum x-value), `MAXX` (maximum x-value), `SDX`, `MEANX`, `MINY`, `MAXY`, `MEANY`, and `SDY` are also available when you set priors. They are used to set uninformative default priors. Strictly speaking, this is "illegal", but it does ensure that estimation works reasonably across many orders of magnitude.
+* Data-dependent values can be written directly in priors: for example, `min(x)`, `max(x)`, `median(y)`, `mad(y)`, `max(x) - min(x)`, `segment_width(x)`, `n_segments()`, and `n_cp()`. `mcp` resolves these expressions before generating JAGS code. The older uppercase constants (`MINX`, `MAXX`, and so on) remain temporarily supported with a deprecation warning.
 
 * You can fix any parameter to a specific value. Simply set it to a numerical value (as `cp_2` above). A constant is a 100% prior belief in that value, and it will therefore not be estimated.
 
@@ -51,8 +51,10 @@ set.seed(42)  # Make the script deterministic
 empty_manual = mcp(model, prior = prior, sample = FALSE)
 empty_default = mcp(model, sample = FALSE)
 
-# Look at fit$prior and show them side-by-side
-cbind(manual = empty_manual$prior, default = empty_default$prior)
+# Inspect resolved priors and bounds. Add rules, descriptions, sources, and
+# kinds with prior_summary(empty_manual, verbose = TRUE).
+prior_summary(empty_manual)
+prior_summary(empty_default)
 ```
 
 Now, let's simulate some data that from the `model`. The following priors are "at odds" with the actual data so as to show their effect.
@@ -237,13 +239,13 @@ par(mfrow = c(1,1))
 
 ## The t-tail prior on 2+ change points (default)
 
-The first change point defaults to `cp_1 = dunif(MINX, MAXX)`. In other words, the change point has to happen in the observed range of x, but it is equally probable across this range. This is identical to the Dirichlet prior.
+The first change point defaults to the rule `cp_1 = uniform(min = min(x), max = max(x))`. In other words, the change point has to happen in the observed range of x, but it is equally probable across this range. This is identical to the Dirichlet prior.
 
-For 2+ change points, the default (on *all* change points) is `cp_i = dt(MINX, (MAXX-MINX) / N_CP, N_CP - 1) T(cp_i-1, MAXX)`. This is not as complicated as it looks, so let me unpack it.
+For 2+ change points, the default rule (on *all* change points) is `cp_i = student_t(df = n_cp() - 1, location = min(x), scale = (max(x) - min(x)) / n_cp())`, bounded below by the preceding change point and above by `max(x)`. This is not as complicated as it looks, so let me unpack it.
 
- * It is t-distributed with $N - 1$ degree of freedom (`dt(..., N_CP - 1)`). This ensures narrower priors as the number of change points increase, so as to avoid excessive accumulation of densities at high $x$.
- * It is truncated to be greater than the previous `cp`. For example, `cp_3 = dt(...) T(cp_2, MAXX)`. Since `cp_0 = MINX`, all change points are "forced" to be in the observed range of `x`.
- * The standard deviation is the distance between equally-spaced change points: `(MAXX - MINX) / N_CP`.
+ * It is t-distributed with $N - 1$ degree of freedom (`n_cp() - 1`). This ensures narrower priors as the number of change points increase, so as to avoid excessive accumulation of densities at high $x$.
+ * It is truncated to be greater than the previous `cp`. For example, `cp_3` is bounded below by `cp_2` and above by `max(x)`. Since `cp_0 = min(x)`, all change points are "forced" to be in the observed range of `x`.
+ * The standard deviation is the distance between equally-spaced change points: `(max(x) - min(x)) / n_cp()`.
  * The mean is always the lowest observed `x`. Thus `cp_1` is a half-t and `cp_2+` are right tails of the same t. Hence the name "t-tail prior". Since they are estimated using MCMC, the fact that the *absolute* densities are smaller for later change points is of no importance since only the *relative* densities matter.
 
 One side effect of the truncation is that later change points have greater prior probability density towards the right side of the x-axis. In practice, this "bias" is so weak that it takes a combination of many change points and few data for it to impact the posterior in any noticeable way.
@@ -268,17 +270,15 @@ The number in the parenthesis is the $\alpha$ parameter, so you could also speci
 ## Manual priors on change points
 You can easily change or modify change point priors, just as we did in the initial example. But beware that the nature of the priors change when truncation is applied. Use `plot_pars(fit, prior = TRUE)` to check the resulting prior.
 
-If you want more informed priors on the change point location, i.e., `cp_2 = "dnorm(40, 10)`, `mcp` adds this order restriction by adding `cp_2 = "dnorm(40, 10) T(cp_1, MAXX)`. You can avoid this behavior by explicitly doing an "empty" truncation yourself, e.g., `cp_2 = "dnorm(40, 10) T(,)`. However, the model may fail to sample the correct posterior in samples where order restriction is not kept.
+If you want more informed priors on the change point location, i.e., `cp_2 = "dnorm(40, 10)`, `mcp` adds this order restriction by adding bounds equivalent to `cp_2 = "dnorm(40, 10) T(cp_1, max(x))"`. You can avoid this behavior by explicitly doing an "empty" truncation yourself, e.g., `cp_2 = "dnorm(40, 10) T(,)`. However, the model may fail to sample the correct posterior in samples where order restriction is not kept.
 
 
 # Default priors on linear predictors
-*OBS: These priors are very to change in versions beyond mcp 0.3, but not drastically.*
+The defaults borrow the robust calibration used by `brms`, adapted to the local parameterization of `mcp`. Intercepts use Student-t priors centered on a robust, link-appropriate location. Data-calibrated scales are at least 2.5, avoiding implausibly narrow defaults when the response happens to have little variation. Unlike the flat default coefficient priors in `brms`, `mcp` uses proper Student-t priors because change-point models need regularization for stable sampling and prior prediction.
 
-You can see the default priors for the `gaussian()` family in the previous example. They are similar to the `brms` default priors, i.e., t-distributed around mean = 0 with a standard deviation that scales with the data.
+Continuous slopes use the corresponding coefficient scale divided by the expected segment width, `(max(x) - min(x)) / n_segments()`. Thus the prior concerns the amount of change across a typical segment rather than depending arbitrarily on the units or number of change points. Categorical contrasts use the same scale without the width adjustment.
 
-This means that there will be some "shrinkage" towards a mean and SD of zero for all parameters, especially for parameters with a large mean and a small SD.
-
-The slopes are scaled as if it changed +/- 1 SD through the entire x-axis. This too will be insufficient for very steep slopes, i.e., if there are many change points on `x`.
+For Gaussian models, residual-SD priors are always calibrated from `mad(y)` on the response scale. This remains true for `gaussian(link = "log")`: the link constrains the conditional mean, not the observations, so non-positive responses are valid and are never passed through `log()` merely to construct a sigma prior.
 
 See the family-specific articles for more information about the priors for other families:
 

@@ -68,17 +68,17 @@ plot_pars(fit)
 # Priors
 `poisson()` defaults to `link = 'log'`, meaning that we have to exponentiate the estimates to get the "raw" Poisson parameter $\lambda$. $\lambda$ has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is `exp(result$mean[2])` (`r exp(result$mean[2])`) and it is `exp(result$mean[3])` (`r exp(result$mean[3])`) for segment 2.
 
-Default priors were used. They are normals with a standard deviation of 10. I.e. with 68% probability mass between `exp(10) = 22026` and `exp(-10) = 1 / 22026`:
+Default priors were used. The intercept prior is a Student-t distribution centered on the rounded median of `log(pmax(n, 0.1))`, with scale equal to the maximum of 2.5 and its rounded MAD. This follows the robust calibration used by `brms` while handling zero counts. Categorical contrasts use scale 2.5, and continuous-slope scales are divided by the expected segment width:
 
 ```{r}
 cbind(fit$prior)
 ```
 
-As always, the prior on the change point forces it to occur in the observed range. These priors are very vague, so update with more informed priors for your particular case, e.g.:
+As always, the prior on the change point forces it to occur in the observed range. The coefficient priors are deliberately broad defaults, so update them with more informed priors for your particular case when possible, e.g.:
 
 ```{r, cache = TRUE, eval=FALSE}
 prior = list(
-  cp_1 = "dnorm(1900, 30) T(MINX, 1925)"
+  cp_1 = "dnorm(1900, 30) T(min(date), 1925)"
 )
 fit_with_prior = mcp(model, data = df, prior, poisson(), par_x = "date")
 ```

@@ -136,7 +136,7 @@ And finally, we extend the list of priors with the two new parameters (`time_4` 
 ```{r}
 prior_forecast = c(fit$prior, list(
   int_4 = "int_1",  # Return to this value
-  cp_3 = "dnorm(cp_2 + (cp_2 - cp_1), 20) T(MAXX, )"  # In the future at the same interval
+  cp_3 = "dnorm(cp_2 + (cp_2 - cp_1), 20) T(max(time), )"  # In the future at the same interval
 ))
 ```
 
@@ -183,7 +183,7 @@ You can read the predicted values from above at `x = 125` off this graph. We lit
 
 You can extend this approach to an arbitrary number of future segments, even using the posterior from the "unobserved" segment 4 in the priors for parameters in future segments. In Bayesian inference, it really does not make much of a difference whether credence in some parameter values have been updated using data or not - it's all credence.
 
-Without doing this formal model of the future change point, one may have thought that the change point should occur around `time = 110` since that's the expected value of `cp_2 + (cp_2 - cp_1)`. However, we truncated the prior for the future change point (`cp_3`) so that it occurs *after* the last data point (`MAXX`), i.e., at `time > 100`. This is knowledge that the third change point had not yet been observed at `time = 100`, and this pushes the distribution further into the future (actually around 118; see `summary(fit_forecast)`).
+Without doing this formal model of the future change point, one may have thought that the change point should occur around `time = 110` since that's the expected value of `cp_2 + (cp_2 - cp_1)`. However, we truncated the prior for the future change point (`cp_3`) so that it occurs *after* the last data point (`max(time)`), i.e., at `time > 100`. This is knowledge that the third change point had not yet been observed at `time = 100`, and this pushes the distribution further into the future (actually around 118; see `summary(fit_forecast)`).
 
 ```{r cleanup, include=FALSE}
 future::plan(future::sequential)

@@ -44,13 +44,15 @@
 
 -   Added `log_lik(fit)` which is analogous to e.g., `fitted(fit)`.
 
+-   Added `prior_summary(fit)`. Its compact output shows each parameter's resolved prior and bounds; `prior_summary(fit, verbose = TRUE)` also shows the data-dependent rule, a plain-language description, source, and kind (`distribution`, `alias`, `expression`, or `constant`). Default priors are now resolved before JAGS code is generated, so `fit$prior` and generated code no longer depend on opaque data constants.
+
 ## Minor breaking changes
 
 -   Removed the non-functional `exponential()` family. It had no default priors and could not be fitted. Exponential survival models would require dedicated support for censoring and survival likelihoods rather than the previous ordinary-response placeholder.
 
--   Minor updates to several priors to be more in line with brms: use `median(link(y))` instead of `mean(link(y))` and `mad(link(y))` instead of `sd(link(y))` for mu and sigma respectively.
+-   Default coefficient priors are now more consistent with `brms` defaults while retaining proper priors and change-point-aware scaling for the `mcp` parameterization. For non-small datasets, this should have minimal influence since priors remain minimally informative. See priors using `prior_summary(fit, verbose = TRUE)`.
 
--   The data-property constants MEANY and SDY have been renamed to "MEANLINKY" (`mean(link_func(ydata))`, SDLINKY (`sd(link_func(ydata))`) and will now apply the link function specified in the family.
+-   Uppercase data-dependent constants for priors (`MINX`, `MAXX`, etc.) remain temporarily supported with a deprecation warning. They are now replaced with readable expressions such as `min(time)`, `max(time) - min(time)`, `mad(response)`, `segment_width(time)`, `n_segments()`, and `n_cp()`.
 
 -   All default slope priors now broaden with more change points because narrower intervals allows for steeper slopes within the same overall spread.
 
@@ -75,8 +77,6 @@
 -   Bug only noticeable for very small samples: For Gaussian identity-link AR models, R-side calculations could leak residuals between posterior draws and omitted available partial lags for the first observations of AR(2+) models. Each draw is now evaluated as a separate series and uses the same partial-lag recurrence as JAGS.
 
 -   The quantiles for `fitted()` and `predict()` for varying-changepoint models ignored the varying level - they were identical across levels.
-
--   Fixed potentially biased priors for `gaussian(link = "log")`. They were `log(mean(y))` instead of `mean(log(y))`.
 
 -   Now works for 200+ characters formulas too.
 

@@ -24,11 +24,11 @@ test_that("priors are resolved without changing their parameterization", {
     unclass(default_fit$prior),
     list(
       cp_1 = "dunif(1, 6)",
-      Intercept_1 = "dt(5.5, 3.7065, 3)",
-      x_1 = "dt(0, 1.4826, 3)",
-      Intercept_2 = "dt(5.5, 3.7065, 3)",
-      x_2 = "dt(0, 1.4826, 3)",
-      sigma_1 = "dt(0, 3.7065, 3) T(0, )"
+      Intercept_1 = "dt(5.5, 3.7, 3)",
+      x_1 = "dt(0, 1.48, 3)",
+      Intercept_2 = "dt(5.5, 3.7, 3)",
+      x_2 = "dt(0, 1.48, 3)",
+      sigma_1 = "dt(0, 3.7, 3) T(0, )"
     )
   )
 
@@ -75,6 +75,34 @@ test_that("priors are resolved without changing their parameterization", {
   legacy_fit$.internal$prior_table = NULL
   legacy_fit$prior$cp_1 = "dunif(MINX, MAXX)"
   expect_equal(prior_summary(legacy_fit)$prior[1], "uniform(min = 1, max = 6)")
+})
+
+
+test_that("Gaussian defaults use coherent response and link scales", {
+  log_data = data.frame(
+    x = 1:6,
+    y = c(-10, 80, 90, 100, 110, 120)
+  )
+  log_fit = mcp(
+    list(y ~ 1 + x), log_data,
+    family = gaussian(link = "log"), sample = FALSE
+  )
+
+  # Non-positive responses are valid: the log link applies to mu, not y.
+  expect_equal(log_fit$prior$Intercept_1, "dt(4.6, 2.5, 3)")
+  expect_equal(log_fit$prior$x_1, "dt(0, 0.5, 3)")
+  expect_equal(log_fit$prior$sigma_1, "dt(0, 22.2, 3) T(0, )")
+  expect_false(grepl("log\\(y\\)", log_fit$jags_code))
+
+  rules = prior_summary(log_fit, verbose = TRUE)
+  sigma_rule = rules$rule[rules$parameter == "sigma_1"]
+  expect_match(sigma_rule, "mad(y)", fixed = TRUE)
+  expect_false(grepl("mad(log(y))", sigma_rule, fixed = TRUE))
+
+  small_data = data.frame(x = 1:4, y = c(0.01, 0.02, 0.03, 0.04))
+  small_fit = mcp(list(y ~ 1 + x), small_data, sample = FALSE)
+  expect_equal(small_fit$prior$Intercept_1, "dt(0, 2.5, 3)")
+  expect_equal(small_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0, )")
 })
 
 test_that("parameter-name collisions give a useful error", {

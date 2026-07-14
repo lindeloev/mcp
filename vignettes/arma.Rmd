@@ -283,7 +283,7 @@ AR and MA coefficient regressions use an identity link, while their residual inp
 Here are a few ways in which you may want to inform the AR or MA parameters:
 
  * As mentioned above, you may want to constrain second-order autocorrelations to `ar2_1 ~ dunif(0, ar1_1)`.
- * Slopes can quickly make the parameter exceed the -1 and 1 boundaries, inducing non-stationarity. You would often want to constrain their magnitude to small slopes, taking into consideration the expected span of the x-axis over which this slope runs. The default prior on `ar`-slopes is a 68% change that there is a change of 1 from the first to the last observation (`"dnorm(0, 1 / (MAXX - MINX))"`) and you may want to, for example, suggest a shallow negative slope using `"dnorm(0, 0.1 / (MAXX-MINX)) T( , 0)"`
+ * Slopes can quickly make the parameter exceed the -1 and 1 boundaries, inducing non-stationarity. You would often want to constrain their magnitude to small slopes, taking into consideration the expected span of the x-axis over which this slope runs. The default prior on `ar`-slopes is a 68% change that there is a change of 1 from the first to the last observation (`"dnorm(0, 1 / (max(x) - min(x)))"`) and you may want to, for example, suggest a shallow negative slope using `"dnorm(0, 0.1 / (max(x) - min(x))) T( , 0)"`
 
 
 
