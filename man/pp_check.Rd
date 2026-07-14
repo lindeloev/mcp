@@ -25,8 +25,9 @@ pp_check(
 
 \item{facet_by}{Name of a column in data modeled as varying effect(s).}
 
-\item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model. If \code{NULL} (default),
-the original data is used.}
+\item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model. Weighted
+Gaussian predictions and log-likelihoods also require the weights column. If \code{NULL}
+(default), the original data is used.}
 
 \item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
 
@@ -43,8 +44,11 @@ the original data is used.}
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 }}
 
-\item{nsamples}{Number of draws. Note that you may want to use all data for summary geoms.
-e.g., \code{pp_check(fit, type = "ribbon", nsamples = NULL)}.}
+\item{nsamples}{Number of draws. Note that you may want to use all draws for
+summary geoms, e.g., \code{pp_check(fit, type = "ribbon", nsamples = NULL)}.
+LOO checks always evaluate all posterior draws to preserve their PSIS
+weights; where supported, \code{nsamples} is passed to bayesplot to control the
+number of plotted samples.}
 
 \item{...}{Further arguments passed to \code{bayesplot::ppc_type(y, yrep, ...)}}
 }
@@ -54,6 +58,11 @@ A \code{ggplot2} object for single plots. Enriched by \code{patchwork} for facet
 \description{
 Plot posterior (default) or prior (\code{prior = TRUE}) predictive checks. This is convenience wrapper
 around the \verb{bayesplot::ppc_*()} methods.
+}
+\details{
+Missing responses are omitted from the observed-data check. LOO
+predictive checks use posterior draws and the original fitted data, so
+they do not support \code{prior = TRUE} or \code{newdata}.
 }
 \examples{
 \donttest{

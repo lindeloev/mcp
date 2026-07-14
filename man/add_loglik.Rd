@@ -4,7 +4,7 @@
 \alias{add_loglik}
 \title{Add Log-Likelihood to an mcpfit Object.}
 \usage{
-add_loglik(x, varying = TRUE, arma = TRUE)
+add_loglik(x, varying = TRUE, arma = TRUE, nsamples = NULL)
 }
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object.}
@@ -21,10 +21,14 @@ add_loglik(x, varying = TRUE, arma = TRUE)
 \item \code{TRUE} Compute the GARMA residual recurrence. Requires the response variable in \code{newdata}.
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 }}
+
+\item{nsamples}{Integer or \code{NULL}. Number of posterior draws used for the
+log-likelihood or information criterion. \code{NULL} uses all draws.}
 }
 \value{
-An \code{mcpfit} object with \code{fit$loglik} filled as an (Nchains * Nsamples) x N
-data matrix with chain number as rownames.
+An \code{mcpfit} object with \code{fit$loglik} filled as an (Nchains * Nsamples)
+by N-observed-responses data matrix with chain number as rownames. Rows
+with missing responses are excluded from the likelihood columns.
 }
 \description{
 Add Log-Likelihood to an mcpfit Object.

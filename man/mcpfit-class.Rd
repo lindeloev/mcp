@@ -35,7 +35,8 @@ Provided by user. See \code{\link{mcp}} for more details.}
 
 \item{\code{mcmc_prior}}{An \code{\link[coda]{mcmc.list}} object with prior samples.}
 
-\item{\code{loglik}}{An (Nchains * Nsamples) x Ndatarows matrix of log-likelihoods.}
+\item{\code{loglik}}{An (Nchains * Nsamples) by N-observed-responses matrix of
+log-likelihoods.}
 
 \item{\code{pars}}{A list of character vectors of model parameter names.}
 

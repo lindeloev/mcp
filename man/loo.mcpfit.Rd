@@ -10,9 +10,9 @@
 \alias{WAIC}
 \title{Information Criteria for Model Comparison}
 \usage{
-\method{loo}{mcpfit}(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE)
+\method{loo}{mcpfit}(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE, nsamples = NULL)
 
-\method{waic}{mcpfit}(x, ..., varying = TRUE, arma = TRUE)
+\method{waic}{mcpfit}(x, ..., varying = TRUE, arma = TRUE, nsamples = NULL)
 }
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object.}
@@ -34,6 +34,9 @@
 \item \code{TRUE} Compute the GARMA residual recurrence. Requires the response variable in \code{newdata}.
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 }}
+
+\item{nsamples}{Integer or \code{NULL}. Number of posterior draws used for the
+log-likelihood or information criterion. \code{NULL} uses all draws.}
 }
 \value{
 a \code{loo} or \code{psis_loo} object.

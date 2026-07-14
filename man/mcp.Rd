@@ -51,7 +51,7 @@ parameter estimations, but it is a questionable for hypothesis testing.
 \code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
 details. Change points are forced to be ordered through the priors using
 truncation, except for uniform priors where the lower bound should be
-greater than the previous change point, \code{dunif(cp_1, MAXX)}.
+greater than the previous change point, \code{dunif(cp_1, max(time))}.
 \item A numerical value (e.g., \code{Intercept_1 = -2.1}) indicating a fixed value.
 \item A model parameter name (e.g., \code{Intercept_2 = "Intercept_1"}), indicating that this parameter is shared -
 typically between segments. If two varying effects are shared this way,
@@ -117,8 +117,8 @@ distributions of the parameters of each segment as well as the change points
 between segments. \href{https://lindeloev.github.io/mcp/}{See more details and worked examples on the mcp website}.
 All segments must regress on the same x-variable. Change
 points are forced to be ordered using truncation of the priors. You can run
-\code{fit = mcp(model, sample=FALSE)} to avoid sampling and the need for
-data if you just want to get the priors (\code{fit$prior}), the JAGS code
+\code{fit = mcp(model, data, sample=FALSE)} to avoid sampling if you just want to
+inspect the priors (\code{fit$prior} and \code{\link[=prior_summary]{prior_summary()}}), the JAGS code
 \code{fit$jags_code}, or the R function to simulate data (\code{fit$simulate}).
 }
 \details{
@@ -128,14 +128,17 @@ Notes on priors:
 truncation (e.g., \code{T(cp_1, )}) so that they are in the correct order on the
 x-axis UNLESS you do it yourself. The one exception is for dunif
 distributions where you have to do it as above.
-\item In addition to the model parameters, \code{MINX} (minimum x-value), \code{MAXX}
-(maximum x-value), \code{SDX} (etc...), \code{MINY}, \code{MAXY}, and \code{SDY}
-are also available when you set priors. They are used to set uninformative
-default priors.
+\item Data-dependent prior values can be written directly, for example
+\code{min(time)}, \code{max(time)}, \code{median(response)}, \code{mad(response)},
+\code{max(time) - min(time)}, \code{segment_width(time)}, \code{n_segments()}, and \code{n_cp()}.
+They are resolved from the model data before JAGS code is generated.
+The older constants \code{MINX}, \code{MAXX}, \code{MEANX}, \code{SDX}, \code{MINY}, \code{MAXY},
+\code{MEANY}, \code{SDY}, and \code{N_CP} remain accepted with a deprecation warning.
 \item Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision
 but \code{mcp} converts to precision under the hood via the sd_to_prec()
 function. So you will see SDs in \code{fit$prior} but precision ($1/SD^2)
-in \code{fit$jags_code}
+in \code{fit$jags_code}. Use \code{prior_summary(fit)} for resolved priors and
+\code{prior_summary(fit, verbose = TRUE)} for their rules and descriptions.
 }
 }
 \examples{

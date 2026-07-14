@@ -25,8 +25,9 @@ pp_eval(
 \arguments{
 \item{object}{An \code{mcpfit} object.}
 
-\item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model. If \code{NULL} (default),
-the original data is used.}
+\item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model. Weighted
+Gaussian predictions and log-likelihoods also require the weights column. If \code{NULL}
+(default), the original data is used.}
 
 \item{summary}{Summarise at each x-value}
 

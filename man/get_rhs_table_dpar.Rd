@@ -63,6 +63,8 @@ A tibble with one row per model parameter and the columns
 \itemize{
 \item \code{dpar}: character.
 \item \code{segment}: the segment number (positive integer).
+\item \code{matrix_name}: original column name from the model matrix. Used to
+diagnose collisions after parameter names are converted for JAGS.
 \item \code{display_name}: user-facing parameter name used in summary functions.
 \item \code{code_name}: parameter name used in JAGS and internally in mcp.
 \item \code{par_type}: One of "Intercept", "dummy", or "slope". Used for setting priors and for change point indicator func.
