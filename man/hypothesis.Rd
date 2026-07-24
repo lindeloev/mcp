@@ -15,8 +15,9 @@ hypothesis(fit, hypotheses, width = 0.95, digits = 3)
 Takes R code that evaluates to TRUE or FALSE in a vectorized way.
 
 Directional hypotheses are specified using <, >, <=, or >=. \code{hypothesis}
-returns the posterior probability and odds in favor of the stated hypothesis.
-The odds can be interpreted as a Bayes Factor. For example:
+returns the posterior probability and the Bayes factor in favor of the
+stated hypothesis. The Bayes factor requires both prior and posterior
+samples from \code{mcp(sample = "both")}. For example:
 \itemize{
 \item \code{"cp_1 > 30"}:  the first change point is above 30.
 \item \code{"Intercept_1 > Intercept_2"}: the intercept is greater in segment 1 than 2.
@@ -65,18 +66,21 @@ For "=" (Savage-Dickey), it is the BF converted to p.
 For directional hypotheses, it is the proportion of samples that returns TRUE.
 \item \code{BF} Bayes Factor in favor  of the hypothesis.
 For "=" it is the Savage-Dickey density ratio.
-For directional hypotheses, it is p converted to odds.
+For directional hypotheses, it is the posterior odds divided by the
+prior odds.
 }
 }
 \description{
 Returns posterior probabilities and Bayes Factors for flexible hypotheses involving
 model parameters. The documentation for the argument \code{hypotheses} below
 shows examples of how to specify hypotheses, and \href{https://lindeloev.github.io/mcp/articles/comparison.html}{read worked examples on the mcp website}.
-For directional hypotheses, \verb{hypothesis`` executes the hypothesis string in a }tidybayes`` environment and summerises the proportion of samples where
-the expression evaluates to TRUE. For equals-hypothesis, a Savage-Dickey
-ratio is computed. Savage-Dickey requires a prior too, so remember
-\code{mcp(..., sample = "both")}. This function is heavily inspired by the
-`hypothesis` function from the `brms` package.
+For directional hypotheses, \code{hypothesis} executes the hypothesis string in
+a \code{tidybayes} environment and summarises the proportion of posterior and
+prior samples where the expression evaluates to TRUE. The Bayes factor is
+the posterior odds divided by the prior odds. For equals-hypotheses, a
+Savage-Dickey ratio is computed. Both kinds of Bayes factor require prior
+samples, so remember \code{mcp(..., sample = "both")}. This function is heavily inspired by the
+\code{hypothesis} function from the \code{brms} package.
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

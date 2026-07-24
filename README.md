@@ -57,7 +57,7 @@ model = list(
 
 # Get example data and fit it
 data = mcp_example_data("demo")
-fit = mcp(model, data)
+fit = mcp(model, data, sample = "both")
 ```
 
 ## Plot and summary
@@ -110,10 +110,6 @@ We can test (joint) probabilities in the model using `hypothesis()` ([see more h
 
 ```r
 hypothesis(fit, "cp_1 > 25")
-```
-```r
-     hypothesis mean lower upper     p   BF
-1 cp_1 - 25 > 0 5.27 -1.81 13.76 0.917 11.1
 ```
 
 For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation ([see more here](https://lindeloev.github.io/mcp/articles/comparison.html)). Our null model omits the first plateau and change point, essentially testing the credence of that change point:

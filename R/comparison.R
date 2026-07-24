@@ -233,11 +233,12 @@ loglik_settings_match = function(loglik, settings) {
 #' Returns posterior probabilities and Bayes Factors for flexible hypotheses involving
 #' model parameters. The documentation for the argument `hypotheses` below
 #' shows examples of how to specify hypotheses, and [read worked examples on the mcp website](https://lindeloev.github.io/mcp/articles/comparison.html).
-#' For directional hypotheses, `hypothesis`` executes the hypothesis string in
-#' a `tidybayes`` environment and summerises the proportion of samples where
-#' the expression evaluates to TRUE. For equals-hypothesis, a Savage-Dickey
-#' ratio is computed. Savage-Dickey requires a prior too, so remember
-#' `mcp(..., sample = "both")`. This function is heavily inspired by the
+#' For directional hypotheses, `hypothesis` executes the hypothesis string in
+#' a `tidybayes` environment and summarises the proportion of posterior and
+#' prior samples where the expression evaluates to TRUE. The Bayes factor is
+#' the posterior odds divided by the prior odds. For equals-hypotheses, a
+#' Savage-Dickey ratio is computed. Both kinds of Bayes factor require prior
+#' samples, so remember `mcp(..., sample = "both")`. This function is heavily inspired by the
 #' `hypothesis` function from the `brms` package.
 #'
 #' @aliases hypothesis hypothesis.mcpfit
@@ -247,8 +248,9 @@ loglik_settings_match = function(loglik, settings) {
 #'   Takes R code that evaluates to TRUE or FALSE in a vectorized way.
 #'
 #'   Directional hypotheses are specified using <, >, <=, or >=. `hypothesis`
-#'   returns the posterior probability and odds in favor of the stated hypothesis.
-#'   The odds can be interpreted as a Bayes Factor. For example:
+#'   returns the posterior probability and the Bayes factor in favor of the
+#'   stated hypothesis. The Bayes factor requires both prior and posterior
+#'   samples from `mcp(sample = "both")`. For example:
 #'
 #'   * `"cp_1 > 30"`:  the first change point is above 30.
 #'   * `"Intercept_1 > Intercept_2"`: the intercept is greater in segment 1 than 2.
@@ -284,7 +286,8 @@ loglik_settings_match = function(loglik, settings) {
 #'       For directional hypotheses, it is the proportion of samples that returns TRUE.
 #'   * `BF` Bayes Factor in favor  of the hypothesis.
 #'       For "=" it is the Savage-Dickey density ratio.
-#'       For directional hypotheses, it is p converted to odds.
+#'       For directional hypotheses, it is the posterior odds divided by the
+#'       prior odds.
 #'
 #' @export
 #' @encoding UTF-8
@@ -368,14 +371,28 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3) {
 
     # DIRECTIONAL: compute p and BF
     if (n_directional != 0) {
-      prob = samples %>%
+      if (!coda::is.mcmc.list(fit$mcmc_prior) || !coda::is.mcmc.list(fit$mcmc_post))
+        stop("Directional Bayes factors require both prior and posterior samples. Run mcp(..., sample = 'both').")
+
+      # Evaluate the same hypothesis on the posterior and prior draws.
+      prob_post = samples %>%
         dplyr::mutate(result = eval(str2lang(expression))) %>%  # this is where the magic happens
         dplyr::summarise(
           prob = sum(.data$result == TRUE) / dplyr::n()
         )
 
-      p = prob$prob
-      BF = prob$prob / (1 - prob$prob)
+      prob_prior = tidybayes::tidy_draws(fit$mcmc_prior) %>%
+        dplyr::mutate(result = eval(str2lang(expression))) %>%
+        dplyr::summarise(
+          prob = sum(.data$result == TRUE) / dplyr::n()
+        )
+
+      p = prob_post$prob
+
+      # A Bayes factor is the update from prior odds to posterior odds.
+      posterior_odds = prob_post$prob / (1 - prob_post$prob)
+      prior_odds = prob_prior$prob / (1 - prob_prior$prob)
+      BF = posterior_odds / prior_odds
     }
 
     # Add to list

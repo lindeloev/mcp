@@ -63,7 +63,7 @@ head(df)
 ```
 
 
-Now fit it with and without the informative prior. We set `iter` fairly high because this model is not sampled effectively. We will also add `sample = "both"` to sample *both* prior and posterior. We will need both to compute point Bayes Factors using `hypothesis()` later.
+Now fit it with and without the informative prior. We set `iter` fairly high because this model is not sampled effectively. We will also add `sample = "both"` to sample *both* prior and posterior. We will need both to compute Bayes factors using `hypothesis()` later.
 
 ```{r, cache = TRUE, message = FALSE, warning = FALSE, results=FALSE}
 fit_default = mcp(model, data = df,             family = binomial(), sample = "both", iter = 10000)
@@ -130,23 +130,32 @@ hypothesis(fit_info, c(
 ))
 ```
 
-Because Bayes Factors are transitive, we can divide them to get the relative evidence for two hypotheses. Here, we get approximately $0.40 / 0.04 = 10$ in favor of hypothesis 3 over hypothesis 4.
+Comparing the Bayes factors shows which hypothesis received the larger update
+from prior to posterior.
 
 There are more examples [in the documentation for `hypothesis`](../reference/hypothesis.html), including how to test varying effects. 
 
-`mcp` does nothing fancy for the directional tests, and you could do them yourself. Just takes the hypothesis verbatim into `mutate` and `summarise` the proportion of samples that "passes" this test. These are identical:
+`mcp` evaluates the directional hypothesis for both posterior and prior
+samples. The posterior probability is reported as `p`, and the Bayes factor is
+the posterior odds divided by the prior odds:
 
 ```{r, eval = FALSE}
-hypothesis(fit, "cp_1 > 3.5 & cp_1 < 4.5")
+hypothesis(fit_info, "cp_1 > 3.5 & cp_1 < 4.5")
 
 # ... is identical to
 library(dplyr, warn.conflicts = FALSE)
-result = tidybayes::tidy_draws(fit$mcmc_post) %>%
-  mutate(test = cp_1 > 3.5 & cp_1 < 4.5) %>%
-  summarise(p = sum(test) / n())
+prob = function(samples) {
+  tidybayes::tidy_draws(samples) %>%
+    mutate(test = cp_1 > 3.5 & cp_1 < 4.5) %>%
+    summarise(p = sum(test) / n()) %>%
+    pull(p)
+}
 
-print(c(p = result$p, 
-        BF = result$p / (1 - result$p)))
+p_post = prob(fit_info$mcmc_post)
+p_prior = prob(fit_info$mcmc_prior)
+BF = (p_post / (1 - p_post)) / (p_prior / (1 - p_prior))
+
+print(c(p = p_post, BF = BF))
 ```
 
 

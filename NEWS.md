@@ -66,10 +66,14 @@
 
 ## Bug fixes
 
+-   Directional Bayes factors now divide posterior odds by prior odds. Previously,
+    they reported posterior odds alone, which is only a Bayes factor when the
+    prior probability of the hypothesis is 0.5.
+
 -   Fixed several posterior predictive check and information-criterion bugs present in v0.3.4. From most to least serious:
-    - Missing responses were scored in WAIC/LOO as if their JAGS-imputed values had been observed. Only an issue if there were many missing data. Fix: missing responses remain latent in JAGS but are excluded from observed-data PPC, log-likelihood, WAIC, and LOO calculations.
-    - Faceted checks dropped arguments intended for bayesplot; faceted LOO checks could pair group-specific predictions with importance weights from the wrong observations.
-    - `prior = TRUE` LOO checks incorrectly combined prior predictions with posterior LOO weights. A rare use case.
+    - For missing data: Missing responses were scored in WAIC/LOO as if their JAGS-imputed values had been observed. Fix: missing responses remain latent in JAGS but are excluded from observed-data PPC, log-likelihood, WAIC, and LOO calculations.
+    - For models with varying change points: LOO checks with `facet_by != NULL` could pair group-specific predictions with weights from the wrong observations.
+    - LOO checks with `prior = TRUE` incorrectly combined prior predictions with posterior LOO weights. A rare use case.
     - `pp_check(..., nsamples = NULL)` errored. Fixed.
 
 -   Weighted regression: While JAGS correctly modelled weights, R-side simulation/generation ignored it. This means `predict()`, PPCs, `log_lik()`, WAIC, and LOO were incorrect when using weighted regression. Weighted Gaussian posterior predictions and log-likelihoods now use the observation-level standard deviation `sigma / sqrt(weight)`, matching the JAGS precision `weight / sigma^2`. This makes `predict()`, posterior predictive checks, `log_lik()`, WAIC, and LOO consistent with the fitted model.
