@@ -46,6 +46,23 @@ test_good(good_binomial,
           data = data_binomial,
           family = binomial())
 
+test_that("binomial responses cannot exceed trials", {
+  invalid_data = data_binomial
+  invalid_data$y[1] = invalid_data$N[1] + 1
+
+  expect_error(
+    mcp(
+      list(y | trials(N) ~ 1),
+      data = invalid_data,
+      family = binomial(),
+      par_x = "x",
+      sample = FALSE
+    ),
+    "responses in 'y' cannot exceed trials in 'N'. Found invalid data in row(s): 1.",
+    fixed = TRUE
+  )
+})
+
 
 
 

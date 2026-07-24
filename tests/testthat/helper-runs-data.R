@@ -27,13 +27,13 @@ data_gauss = data.frame(
 
 # Only needs to test binomial-specific stuff
 data_binomial = data.frame(
-  # y should be a natural number > 0
+  # y should be a non-negative integer
   y = c(1, 0, 100, 3, 5),
   y_bad_numeric = c(-1, 5.1, 10, 3, 5),  # negative, decimal,
 
   y_bern = c(0, 1, 0, 1, 1),
 
-  # trials should be a natural number 0 <= N <= y
+  # trials should be a positive integer with y <= N
   N = c(1, 1, 100, 6, 10),
   N_bad_numeric = c(-1, 1.1, 99, 6, 10),  # smaller than y, decimal, negative
   N_bad_factor = factor(c(1, 0, 50, 6, 10)),

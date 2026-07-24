@@ -332,8 +332,21 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
 
     # Check y and trials if binomial
     if (family$family == "binomial") {
-      assert_integer(data[, ST$y[1]], ST$y[1], lower = 0)
-      assert_integer(data[, ST$trials[1]], ST$trials[1], lower = 1)
+      y = data[, ST$y[1]]
+      trials = data[, ST$trials[1]]
+      assert_integer(y, ST$y[1], lower = 0)
+      assert_integer(trials, ST$trials[1], lower = 1)
+
+      # Missing responses are allowed for JAGS imputation, so compare only
+      # rows where both the response and number of trials are observed.
+      invalid_rows = which(!is.na(y) & !is.na(trials) & y > trials)
+      if (length(invalid_rows) > 0)
+        stop(
+          "For family = binomial(), responses in '", ST$y[1],
+          "' cannot exceed trials in '", ST$trials[1],
+          "'. Found invalid data in row(s): ",
+          paste(invalid_rows, collapse = ", "), "."
+        )
     } else if (family$family == "bernoulli") {
       if (any(data[, ST$y[1]] %notin% c(0, 1)))
         stop("Only responses 0 and 1 are allowed for family = bernoulli() in column '", ST$y[1], "'")
