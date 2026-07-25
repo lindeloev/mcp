@@ -129,7 +129,10 @@ test_runs = function(model,
       #test_plot(fit, varying_cols)  # default ggplot plot
       test_plot_pars(fit_to_test, prior = use_prior)  # bayesplot call
       test_pp_eval(fit_to_test, prior = use_prior)
-      test_hypothesis(fit_to_test, prior = use_prior)
+      # hypothesis() always needs both prior and posterior samples to compute
+      # Bayes factors, regardless of `prior` (which only selects the estimate
+      # source), so test against `fit` rather than `fit_to_test`.
+      test_hypothesis(fit, prior = use_prior)
     }
   }
 }
