@@ -38,7 +38,9 @@ good_arma = list(
   list(y ~ ar(1),
        ~ ar(2, 1)),
   list(y | weights(weights_ok) ~ 1 + ar(1),  # With weights
-       ~ 0 + ar(2, 1 + x))
+       ~ 0 + ar(2, 1 + x)),
+  list(y ~ 0 + ar(1),
+       ~ 0 + ar(2))  # mu is ~0 across all segments; only ar() gives structure
 )
 
 test_good(good_arma)

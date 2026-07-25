@@ -488,3 +488,85 @@ test_that("integer varying groups can control plot color", {
   expect_equal(length(unique(quantiles$colour)), 2)
   expect_equal(length(unique(quantiles$group)), 4)
 })
+
+
+test_that("fitted() intervals differ across varying levels and contain the fitted value", {
+  data = data.frame(
+    x = rep(1:4, 2),
+    id = rep(1:2, each = 4),
+    y = 0
+  )
+  fit = mcp(
+    list(y ~ 1, 1 + (1 | id) ~ 1),
+    data,
+    par_x = "x",
+    sample = FALSE
+  )
+
+  # cp_1_id[1] spans the query point x = 2.5, so the varying change point for
+  # id 1 is sometimes before and sometimes after it (mixed segment
+  # membership across draws). cp_1_id[2] stays below x = 2.5 for every draw,
+  # so id 2 is deterministically in segment 2.
+  sample_names = c(fit$pars$population, "cp_1_id[1]", "cp_1_id[2]")
+  n_draws = 20
+  draws = matrix(
+    0,
+    nrow = n_draws,
+    ncol = length(sample_names),
+    dimnames = list(NULL, sample_names)
+  )
+  draws[, "cp_1"] = 2.5
+  draws[, "cp_1_sd"] = 1
+  draws[, "cp_1_id[1]"] = seq(-1, 1, length.out = n_draws)
+  draws[, "cp_1_id[2]"] = seq(-0.9, -0.6, length.out = n_draws)
+  draws[, "Intercept_1"] = 0
+  draws[, "Intercept_2"] = seq(9, 11, length.out = n_draws)
+  draws[, "sigma_1"] = 1
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+
+  newdata = data.frame(x = c(2.5, 2.5), id = c(1, 2))
+  result = fitted(fit, newdata = newdata, probs = c(0.025, 0.975))
+
+  # The interval must reflect each row's own varying level rather than being
+  # identical (or pooled) across levels.
+  expect_false(isTRUE(all.equal(result$Q2.5[1], result$Q2.5[2])))
+  expect_false(isTRUE(all.equal(result$Q97.5[1], result$Q97.5[2])))
+
+  # The fitted point estimate must fall within its own reported interval.
+  expect_true(all(result$fitted >= result$Q2.5))
+  expect_true(all(result$fitted <= result$Q97.5))
+})
+
+
+test_that("sigma() and ar() support categorical predictors and interactions", {
+  data = data.frame(
+    x = rep(1:4, 3),
+    group = rep(c("A", "B", "C"), each = 4),
+    y = 0
+  )
+
+  fit_sigma = mcp(
+    list(y ~ 1 + sigma(1 + group + x:group)),
+    data,
+    par_x = "x",
+    sample = FALSE
+  )
+  expect_true(all(
+    c("sigma_groupB_1", "sigma_groupC_1", "sigma_groupAx_1", "sigma_groupBx_1", "sigma_groupCx_1") %in%
+      fit_sigma$pars$population
+  ))
+
+  # x is not sorted across groups here, which is irrelevant for parsing but
+  # triggers an unrelated ar()/ma() row-order notice.
+  fit_ar = suppressWarnings(mcp(
+    list(y ~ ar(1, 1 + group + x:group)),
+    data,
+    par_x = "x",
+    sample = FALSE
+  ))
+  expect_true(all(
+    c("ar1_groupB_1", "ar1_groupC_1", "ar1_groupAx_1", "ar1_groupBx_1", "ar1_groupCx_1") %in%
+      fit_ar$pars$population
+  ))
+})
+
