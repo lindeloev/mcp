@@ -450,7 +450,7 @@ simulate_atomic = function(fit,
 
   # Remove response column if present - it is to be simulated
   if (fit$pars$y %in% colnames(newdata))
-    newdata = dplyr::select(newdata, -!!fit$pars$y)
+    newdata = dplyr::select(newdata, -dplyr::all_of(fit$pars$y))
 
   # Get permutations
   predictors = add_rhs_predictors(newdata, fit)

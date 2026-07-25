@@ -533,7 +533,7 @@ tidy_samples = function(
   if (length(absolute_cps) > 0) {
     #samples[, absolute] = samples[, absolute] + samples[, absolute_cps]
     samples[, absolute_cps] = samples[, absolute_cps] + samples[, absolute]
-    samples = dplyr::select(samples, -!!absolute)
+    samples = dplyr::select(samples, -dplyr::all_of(absolute))
   }
 
   # Unassigned varying effects are just simulated as zero (the population mean)
@@ -704,7 +704,7 @@ pp_eval = function(
   }
 
   samples = samples_predictors %>%
-    dplyr::mutate(!!type := rlang::exec(simulate_vectorized, fit, !!!samples_predictors, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale))
+    dplyr::mutate("{type}" := rlang::exec(simulate_vectorized, fit, !!!samples_predictors, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale))
 
   # Plotting can request fitted and predicted values from the same evaluated
   # parameter rows, guaranteeing identical joint draw IDs without rebuilding

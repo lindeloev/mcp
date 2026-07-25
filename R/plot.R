@@ -186,7 +186,7 @@ get_plot = function(x,
   eval_draws = eval_draws %>%
     # Only a problem for AR/MA models, where newdata contains the response.
     dplyr::select(-dplyr::any_of(as.character(yvar))) %>%
-    dplyr::rename(!!yvar := "fitted") %>%
+    dplyr::rename("{fit$pars$y}" := "fitted") %>%
     add_plot_groups(curve_by = curve_by, color_by = color_by)
 
 

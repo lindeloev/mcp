@@ -132,7 +132,6 @@ interpolate_continuous = function(data, pars, x_values, varying_cols = NULL) {
 interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by)) {
 
   # Get unique predictors
-  xvar = rlang::sym(fit$pars$x)
   varying_cols = unique(stats::na.omit(fit$.internal$ST$cp_group_col))
   by = unique(c(names(get_categorical_levels(fit$data)), intersect(varying_cols, by)))
   # Numeric varying-group IDs are discrete even when they are not requested
@@ -143,13 +142,13 @@ interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by))
 
   # Return with levels, if such exist
   if (!has_groups & !has_continuous) {
-    newdata = tibble::tibble(!!xvar := x_values)
+    newdata = tibble::tibble("{fit$pars$x}" := x_values)
   } else  if (has_groups & !has_continuous) {
     newdata = by_grid %>%
-      tidyr::expand_grid(!!xvar := x_values)
+      tidyr::expand_grid("{fit$pars$x}" := x_values)
   } else if (!has_groups & has_continuous) {
     newdata = interpolate_continuous(fit$data, fit$pars, x_values, varying_cols) %>%
-      dplyr::mutate(!!xvar := x_values)
+      dplyr::mutate("{fit$pars$x}" := x_values)
   } else if (has_groups & has_continuous) {
     # Interpolate continuous predictors within each row of by_grid
     # and up/down-fill if outside the observed region.
@@ -161,7 +160,7 @@ interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by))
 
       df_list[[i]] = by_grid[i, , drop = FALSE] %>%
         tidyr::expand_grid(interpolated_i) %>%
-        dplyr::mutate(!!xvar := x_values)
+        dplyr::mutate("{fit$pars$x}" := x_values)
     }
 
     newdata = dplyr::bind_rows(df_list)
