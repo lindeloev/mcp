@@ -13,21 +13,22 @@
 #' @noRd
 #' @inheritParams plot.mcpfit
 #' @param fit An `mcpfit` object.
+#' @param by Character vector of grouping columns to evaluate separately.
 #' @return A vector of x-values to evaluate at.
-get_x_values = function(fit, facet_by = NULL, prior = FALSE) {
+get_x_values = function(fit, by = NULL, prior = FALSE) {
   N_BASIS = 100
   N_CP = 50
-  X_RESOLUTION_FACET = 300  # Only varying
+  X_RESOLUTION_GROUPED = 300
 
   xdata = fit$data[, fit$pars$x] %>% as.numeric()
 
   # If there are AR/MA terms, evaluate at the data
   if (length(fit$pars$arma) > 0) {
     x_values = xdata
-  } else if (!is.null(facet_by) || is.null(fit$mcmc_post)) {
-    # Just give up for faceting and prior-plots (usually very distributed change points)
+  } else if (!is.null(by) || is.null(fit$mcmc_post)) {
+    # Just give up for grouped and prior evaluations (usually very distributed change points)
     # and return a reasonable resolution
-    x_values = seq(min(xdata), max(xdata), length.out = X_RESOLUTION_FACET)
+    x_values = seq(min(xdata), max(xdata), length.out = X_RESOLUTION_GROUPED)
   } else if (length(fit$pars$cp) == 0) {
     # No change points. Use default resolution for the whole plot
     x_values = seq(min(xdata), max(xdata), length.out = N_BASIS)
@@ -48,18 +49,6 @@ get_x_values = function(fit, facet_by = NULL, prior = FALSE) {
   return(x_values)
 }
 
-# Add column ".group" which is the interaction of all categorical colnames
-add_group = function(df) {
-  categorical_colnames = df %>% get_categorical_levels() %>% names()
-  if (length(categorical_colnames) == 0) {
-    df$.group = as.factor(1)
-  } else {
-    df$.group = dplyr::select(df, !!!categorical_colnames) %>% interaction()
-  }
-
-  df
-}
-
 #' List of interpolated values at the values in "at".
 #'
 #' @aliases interpolate_continuous
@@ -68,18 +57,20 @@ add_group = function(df) {
 #' @param data fit$data
 #' @param pars fit$pars
 #' @param x_values par_x values to interpolate continuous predictors at.
+#' @param varying_cols Varying-effect columns to exclude from continuous
+#'   interpolation.
 #' @return `data.frame` with one column for each continuous predictor.
 #'   `NULL` if there are no continous predictors.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-interpolate_continuous = function(data, pars, x_values) {
+interpolate_continuous = function(data, pars, x_values, varying_cols = NULL) {
   assert_types(data, "data.frame", "tibble")
   assert_types(pars, "list")
   assert_numeric(x_values)
 
   # Get numeric RHS data columns
   numeric_data = data[, sapply(data, is.numeric), drop = FALSE]
-  numeric_data = numeric_data[, colnames(numeric_data) %notin% c(pars$x, pars$y, pars$weights, pars$varying), drop = FALSE]
+  numeric_data = numeric_data[, colnames(numeric_data) %notin% c(pars$x, pars$y, pars$weights, varying_cols), drop = FALSE]
 
   if (ncol(numeric_data) == 0)
     return(NULL)
@@ -98,17 +89,17 @@ interpolate_continuous = function(data, pars, x_values) {
 #' build your own custom plot.
 #'
 #' @aliases interpolate_newdata
-#' @inheritParams plot.mcpfit
 #' @param fit An `mcpfit` object.
+#' @param by Character vector of categorical or varying-effect columns to evaluate separately.
+#'   Categorical model predictors are always included.
 #' @param x_values Numeric vector of x-values to interpolate at.
 #' @details
 #' The `par_x` variable will be interpolated with higher resolution around the
 #' change points where the values can change abruptly, but lower resolution in
 #' between to speed up the computation.
 #'
-#' Categorical variables are combined factorially (all level combos) and all
-#' continuous variables are interpolated at the x-values (see above paragraph) and
-#' applied to all factor-combos.
+#' Categorical variables and requested varying-effect groups are combined factorially (all level combinations).
+#' Continuous variables are interpolated at the x-values and applied to every curve.
 #' @return `tibble` with
 #'  * Cols for par_x
 #'  * unique levels combos of factorial vars
@@ -138,33 +129,37 @@ interpolate_continuous = function(data, pars, x_values) {
 #'   geom_line(lwd = 2) +
 #'   geom_point(aes(y = y), data = fit$data)
 #' }
-interpolate_newdata = function(fit, facet_by = NULL, x_values = get_x_values(fit, facet_by)) {
+interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by)) {
 
   # Get unique predictors
   xvar = rlang::sym(fit$pars$x)
-  categorical_interactions = get_categorical_levels(fit$data) %>% expand.grid()
-  has_categorical = nrow(categorical_interactions) > 0 | length(colnames(categorical_interactions) %notin% facet_by) > 0
-  has_continuous = interpolate_continuous(fit$data, fit$pars, x_values[1]) %>% is.null() %>% `!`
+  varying_cols = unique(stats::na.omit(fit$.internal$ST$cp_group_col))
+  by = unique(c(names(get_categorical_levels(fit$data)), intersect(varying_cols, by)))
+  # Numeric varying-group IDs are discrete even when they are not requested
+  # for evaluation, so never interpolate them as continuous predictors.
+  by_grid = lapply(fit$data[, by, drop = FALSE], unique) %>% expand.grid()
+  has_groups = nrow(by_grid) > 0 | length(colnames(by_grid) %notin% by) > 0
+  has_continuous = interpolate_continuous(fit$data, fit$pars, x_values[1], varying_cols) %>% is.null() %>% `!`
 
   # Return with levels, if such exist
-  if (!has_categorical & !has_continuous) {
+  if (!has_groups & !has_continuous) {
     newdata = tibble::tibble(!!xvar := x_values)
-  } else  if (has_categorical & !has_continuous) {
-    newdata = categorical_interactions %>%
+  } else  if (has_groups & !has_continuous) {
+    newdata = by_grid %>%
       tidyr::expand_grid(!!xvar := x_values)
-  } else if (!has_categorical & has_continuous) {
-    newdata = interpolate_continuous(fit$data, fit$pars, x_values) %>%
+  } else if (!has_groups & has_continuous) {
+    newdata = interpolate_continuous(fit$data, fit$pars, x_values, varying_cols) %>%
       dplyr::mutate(!!xvar := x_values)
-  } else if (has_categorical & has_continuous) {
-    # Interpolate continuous predictors within each factorial cell (row in categorical_interactions)
+  } else if (has_groups & has_continuous) {
+    # Interpolate continuous predictors within each row of by_grid
     # and up/down-fill if outside the observed region.
     df_list = list()
-    for (i in seq_len(nrow(categorical_interactions))) {
-      data_i = dplyr::left_join(categorical_interactions[i, , drop = FALSE], fit$data) %>% suppressMessages()
-      interpolated_i = interpolate_continuous(data_i, fit$pars, x_values) %>%
+    for (i in seq_len(nrow(by_grid))) {
+      data_i = dplyr::left_join(by_grid[i, , drop = FALSE], fit$data) %>% suppressMessages()
+      interpolated_i = interpolate_continuous(data_i, fit$pars, x_values, varying_cols) %>%
         tidyr::fill(dplyr::everything(), .direction = "downup")
 
-      df_list[[i]] = categorical_interactions[i, , drop = FALSE] %>%
+      df_list[[i]] = by_grid[i, , drop = FALSE] %>%
         tidyr::expand_grid(interpolated_i) %>%
         dplyr::mutate(!!xvar := x_values)
     }

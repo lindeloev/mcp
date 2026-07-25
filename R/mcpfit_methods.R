@@ -430,7 +430,7 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
       use_varying = fit$.internal$ST$cp_group %in% pars
     }
   } else if (!is.null(cols)) {
-    use_varying = tidyr::replace_na(fit$.internal$ST$cp_group_col == cols, FALSE)
+    use_varying = tidyr::replace_na(fit$.internal$ST$cp_group_col %in% cols, FALSE)
   }
 
   # Return
@@ -614,7 +614,7 @@ tidy_samples = function(
 #'     The return columns are:
 #'
 #'      - Predictors from `newdata`.
-#'      - Sample descriptors: ".chain", ".iter", ".draw" (see the `tidybayes` package for more), and "data_row" (`newdata` rownumber)
+#'      - Sample descriptors: ".chain", ".iter", ".draw" (see the `tidybayes` package for more), and `data_row`, the row number in the evaluated `newdata`.
 #'      - Sample values: one column for each parameter in the model.
 #'      - The estimate. Either "predict" or "fitted", i.e., the name of the `type` argument.
 #'
@@ -637,14 +637,12 @@ pp_eval = function(
   arma = TRUE,
   nsamples = NULL,
   samples_format = "tidy",
-  scale = 'response'
+  scale = 'response',
+  .include_fitted = FALSE
 ) {
   # Recode
   fit = object
   assert_types(fit, "mcpfit")
-  xvar = rlang::sym(fit$pars$x)
-  yvar = rlang::sym(fit$pars$y)
-  returnvar = rlang::sym(type)
   dpar = assert_dpar(dpar, fit = fit, type = type)
 
   if (is.null(newdata))
@@ -672,7 +670,7 @@ pp_eval = function(
   assert_data_cols(newdata, required_cols)  # Helpful error if something is missing
   newdata = data.frame(newdata[, required_cols, drop = FALSE])
   #colnames(newdata) = required_cols  # Special case for when there's only one predictor
-  newdata$data_row = seq_len(nrow(newdata))  # to maintain order in the output when summary == TRUE
+  newdata$data_row = seq_len(nrow(newdata))  # Evaluation key throughout summaries, matrices, plots, and metrics
   newdata_return = dplyr::select(newdata, -dplyr::any_of(fit$pars$weights))
 
   ########################
@@ -688,6 +686,9 @@ pp_eval = function(
   assert_logical(rate)
   assert_logical(prior)
   assert_logical(arma)
+  assert_logical(.include_fitted, len = 1)
+  if (.include_fitted && (type != "predict" || summary))
+    stop_github("`.include_fitted` requires `type = 'predict'` and `summary = FALSE`.")
   assert_types(nsamples, "null", "numeric", len = c(0, 1))
   if (is.numeric(nsamples))
     assert_integer(nsamples, lower = 1)
@@ -697,7 +698,7 @@ pp_eval = function(
   ########################
   # GET FITS/PREDICTIONS #
   ########################
-  type_for_simulate = ifelse(type == "residuals", yes = "fitted", no = type)
+  simulate_type = ifelse(type == "residuals", yes = "fitted", no = type)
   if (length(varying_info$cols) > 0) {
     # If there are varying effects: use varying-matching samples for each row of data
     samples_predictors = dplyr::left_join(
@@ -713,8 +714,16 @@ pp_eval = function(
   }
 
   samples = samples_predictors %>%
-    dplyr::mutate(!!returnvar := rlang::exec(simulate_vectorized, fit, !!!samples_predictors, .type = type_for_simulate, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale)) %>%
-    dplyr::select(-dplyr::starts_with(".pred_"), -dplyr::any_of(fit$pars$weights))
+    dplyr::mutate(!!type := rlang::exec(simulate_vectorized, fit, !!!samples_predictors, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale))
+
+  # Plotting can request fitted and predicted values from the same evaluated
+  # parameter rows, guaranteeing identical joint draw IDs without rebuilding
+  # model predictors in the plotting layer.
+  if (.include_fitted) {
+    samples$fitted = rlang::exec(simulate_vectorized, fit, !!!samples_predictors, .type = "fitted", .rate = rate, .dpar = dpar, .arma = arma, .scale = scale)
+  }
+
+  samples = samples %>% dplyr::select(-dplyr::starts_with(".pred_"), -dplyr::any_of(fit$pars$weights))
 
   # Missing outcomes are latent in the fitted JAGS model, but they are not
   # observed-data likelihood contributions. Retain them while evaluating
@@ -733,7 +742,11 @@ pp_eval = function(
 
   # Optionally compute residuals
   if (type == "residuals")
-    samples = dplyr::mutate(samples, !!returnvar := {{ returnvar }} - {{ yvar }})  # returnvar should be "residuals" in this case
+    samples = dplyr::mutate(samples, !!type := .data[[type]] - .data[[fit$pars$y]])
+
+  # Fail early if varying-effect joins or another evaluation step duplicated
+  # or dropped any joint draw/evaluation-row combinations.
+  validate_eval_draws(samples, type)
 
   # Optionally summarise
   if (summary == TRUE) {
@@ -741,25 +754,23 @@ pp_eval = function(
       # Summarise for each row in newdata
       dplyr::group_by(.data$data_row) %>%
       dplyr::summarise(.groups = "drop",
-                       error = stats::sd({{ returnvar }}),
-                       !!returnvar := mean({{ returnvar }})
+                       error = stats::sd(.data[[type]]),
+                       !!type := mean(.data[[type]])
       ) %>%
 
       # Apply original order and put newdata as the first columns
       dplyr::arrange(.data$data_row) %>%
       dplyr::left_join(newdata_return, by = "data_row", relationship = "one-to-one") %>%
-      dplyr::select(dplyr::one_of(colnames(newdata_return)), {{ returnvar }} , "error")
+      dplyr::select(dplyr::one_of(colnames(newdata_return)), dplyr::all_of(type), "error")
 
 
     # Quantiles
     if (all(probs != FALSE)) {
-      quantiles_fit = samples %>%
-        get_quantiles(probs, xvar, returnvar, varying_info$cols) %>%
-        dplyr::select("data_row", "quantile", "y") %>%
+      quantiles = get_quantiles(samples, probs, type) %>%
         dplyr::mutate(quantile = 100 * .data$quantile) %>%
-        tidyr::pivot_wider(names_from = "quantile", names_prefix = "Q", values_from = "y")
+        tidyr::pivot_wider(names_from = "quantile", names_prefix = "Q", values_from = dplyr::all_of(type))
 
-      df_return = dplyr::left_join(df_return, quantiles_fit, by = "data_row", relationship = "one-to-one")
+      df_return = dplyr::left_join(df_return, quantiles, by = "data_row", relationship = "one-to-one")
     }
     return(data.frame(dplyr::select(df_return, -"data_row")))
   } else if (samples_format == "tidy") {

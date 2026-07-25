@@ -100,7 +100,9 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE,
           dplyr::filter(.data$data_row == max(.data$data_row))  # last observed row
       }
 
-      loglik = dplyr::pull(loglik_samples, .data$loglik)
+      # Matrix conversion validates and explicitly orders the joint draws, so
+      # every observation passed to loo uses the same draw identity.
+      loglik = as.numeric(tidy_to_matrix(loglik_samples, type = "loglik")[, 1])
       link_fun(loglik)
     }
 
@@ -160,27 +162,22 @@ waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, nsamples = NULL) {
 add_loglik = function(x, varying = TRUE, arma = TRUE, nsamples = NULL) {
   fit = x
   nsamples = validate_loglik_nsamples(fit, nsamples)
+  settings = get_loglik_settings(fit, varying, arma, nsamples)
   loglik_samples = pp_eval(
     fit, type = "loglik", summary = FALSE, probs = FALSE,
     varying = varying, arma = arma, nsamples = nsamples
   )
-  # Log-likelihoods
-  loglik_wide = loglik_samples %>%
-    dplyr::select(".chain", ".draw", "data_row", "loglik") %>%
-
-    # To matrix
-    tidyr::pivot_wider(id_cols =  c(".chain", ".draw"), names_from = "data_row", values_from = "loglik") %>%
+  draw_index = loglik_samples %>%
+    dplyr::select(".draw", ".chain") %>%
+    dplyr::distinct() %>%
     dplyr::arrange(.data$.draw)
-  chain_id = loglik_wide$.chain
-  fit$loglik = loglik_wide %>%
-    dplyr::select(-".chain", -".draw") %>%
-    as.matrix()
+  if (anyDuplicated(draw_index$.draw))
+    stop_github("Chain metadata differs across evaluation rows for the same `.draw`.")
+  fit$loglik = tidy_to_matrix(loglik_samples, type = "loglik", data_rows = settings$observed_rows)
 
   # Chain info
-  rownames(fit$loglik) = chain_id
-  attr(fit$loglik, "mcp_settings") = get_loglik_settings(
-    fit, varying, arma, nsamples
-  )
+  rownames(fit$loglik) = draw_index$.chain
+  attr(fit$loglik, "mcp_settings") = settings
 
   fit
 }

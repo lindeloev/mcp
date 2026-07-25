@@ -38,7 +38,7 @@
 
 -   `plot()` now uses a filled area for the change-point densities to visually distinguish it from color-coded fitted lines.
 
--   Added `interpolate_newdata(fit)` which generates a data.frame with all combinations of categorical predictors along with interpolated continuous predictors. The documentation shows how this can be useful for generating custom plots when simple tweaking `plot()` is not enough.
+-   Added `interpolate_newdata(fit, by = NULL)` which generates a data.frame with all combinations of categorical predictors along with interpolated continuous predictors. Use `by` to include varying-effect groups. The documentation shows how this can be useful for generating custom plots when simple tweaking `plot()` is not enough.
 
 -   Added `niterations(fit)` and `nchains(fit)` for convenience.
 

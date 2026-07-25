@@ -241,69 +241,100 @@ get_rhs_matrix = function(rhs_table) {
 }
 
 
-#' Convert from tidy to matrix
+#' Evaluated-draw identity helpers
 #'
-#' Converts from the output of `tidy_samples()` or `pp_eval(fit, samples_format = "tidy")`
-#' to an `N_draws` X `nrows(newdata)` matrix with fitted/predicted values. This format is
-#' used y `brms` and it's useful as `yrep` in `bayesplot::ppc_*` functions.
+#' Within one call to `pp_eval()`, `data_row` identifies a row in the evaluated data.
+#' Together, `.draw` and `data_row` must identify exactly one evaluated value.
+#' Plotting groups, predictor values, and varying-effect columns are metadata for
+#' that row and never determine which draws may be summarised together.
+#'
+#' @keywords internal
+#' @noRd
+#' @param samples Evaluated draws in tidy format.
+#' @param type Name of the evaluated-value column, matching `pp_eval(type)`.
+#' @return `samples`, invisibly.
+validate_eval_draws = function(samples, type) {
+  assert_types(samples, "data.frame", "tibble")
+  assert_types(type, "character", len = 1)
+  assert_data_cols(samples, c(".draw", "data_row", type))
+
+  if (anyNA(samples$.draw) || anyNA(samples$data_row))
+    stop_github("Evaluated draws contain missing `.draw` or `data_row` keys.")
+
+  keys = samples[, c(".draw", "data_row"), drop = FALSE]
+  if (anyDuplicated(keys))
+    stop_github("Evaluated draws must contain one `", type, "` value per `.draw` and `data_row`.")
+
+  n_draws = length(unique(samples$.draw))
+  n_rows = length(unique(samples$data_row))
+  if (nrow(samples) != n_draws * n_rows)
+    stop_github("Every `data_row` must contain the same complete set of posterior draws.")
+
+  invisible(samples)
+}
+
+
+#' Convert evaluated draws from tidy to matrix format
+#'
+#' Converts the output of `pp_eval(fit, samples_format = "tidy")` to an `N_draws`
+#' by `N_evaluation_rows` matrix. Explicit keys prevent duplicate or incomplete
+#' draw/row combinations from being silently reshaped.
 #'
 #' @aliases tidy_to_matrix
 #' @keywords internal
 #' @noRd
-#' @param samples Samples in tidy format
-#' @param returnvar An `rlang::sym()` object.
-#' @return An  `N_draws` X `nrows(newdata)` matrix.
+#' @inheritParams validate_eval_draws
+#' @param data_rows Optional `data_row` values to use as matrix columns.
+#' @return A numeric matrix.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-tidy_to_matrix = function(samples, returnvar) {
-  returnvar = rlang::sym(returnvar)
-  samples %>%
-    dplyr::select(".draw", "data_row", {{ returnvar }}) %>%
-    tidyr::pivot_wider(names_from = "data_row", values_from = {{ returnvar }}) %>%
-    dplyr::select(-".draw") %>%
-    as.matrix()
+tidy_to_matrix = function(samples, type, data_rows = NULL) {
+  assert_types(type, "character", len = 1)
+  assert_data_cols(samples, c(".draw", "data_row", type))
+
+  if (is.null(data_rows))
+    data_rows = sort(unique(samples$data_row))
+  if (anyDuplicated(data_rows))
+    stop_github("Requested `data_row` values must be unique.")
+
+  missing_rows = setdiff(data_rows, unique(samples$data_row))
+  if (length(missing_rows) > 0)
+    stop_github("Requested evaluation rows are absent: ", paste(missing_rows, collapse = ", "), ".")
+  samples = dplyr::filter(samples, .data$data_row %in% data_rows)
+
+  draw_ids = sort(unique(samples$.draw))
+  result = matrix(NA_real_, nrow = length(draw_ids), ncol = length(data_rows), dimnames = list(NULL, as.character(data_rows)))
+  matrix_rows = match(samples$.draw, draw_ids)
+  matrix_cols = match(samples$data_row, data_rows)
+  result[cbind(matrix_rows, matrix_cols)] = samples[[type]]
+  result
 }
 
 
-#' Expand samples with quantiles
-#'
-#' TO DO: implement using `fitted()` and `predict()` but avoid double-computing the samples? E.g.:
-#' `get_quantiles2 = function(fit, quantiles, facet_by = NULL) {`
-#'   `fitted(fit, probs = c(0.1, 0.5, 0.9), newdata = data.frame(x = c(11, 50, 100))) %>%`
-#'   `tidyr::pivot_longer(tidyselect::starts_with("Q")) %>%`
-#'   `dplyr::mutate(quantile = stringr::str_remove(name, "Q") %>% as.numeric() / 100)`
-#' `}`
+#' Compute evaluated-draw quantiles without pooling evaluation rows
 #'
 #' @aliases get_quantiles
 #' @keywords internal
 #' @noRd
-#' @inheritParams plot.mcpfit
-#' @param samples A tidybayes tibble
-#' @param quantiles Vector of quantiles (0.0 to 1.0)
-#' @param xvar An rlang::sym() with the name of the x-col in `samples`
-#' @param yvar An rlang::sym() with the name of the response col in `samples`
-#' @return A tidybayes long format tibble with the column "quantile"
+#' @inheritParams validate_eval_draws
+#' @param quantiles Vector of quantiles between zero and one.
+#' @param keep Evaluation-row metadata to rejoin after summarising.
+#' @return A tibble with `data_row`, `quantile`, the `type` column, and requested metadata.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_quantiles = function(samples, quantiles, xvar, yvar, facet_by = NULL) {
-  facet_by = logical0_to_null(facet_by)
-  group_cols = unique(c(
-    as.character(xvar),
-    facet_by,
-    intersect(c("data_row", ".group"), colnames(samples))
-  ))
+get_quantiles = function(samples, quantiles, type, keep = NULL) {
+  keep = unique(keep)
+  assert_data_cols(samples, c("data_row", type, keep))
+  grid = samples %>% dplyr::select("data_row", dplyr::all_of(keep)) %>% dplyr::distinct()
+  if (anyDuplicated(grid$data_row))
+    stop_github("Evaluation-row metadata differs across draws for the same `data_row`.")
 
-  # Return data with added quantiles
-  samples %>%
-    tidyr::expand_grid(quantile = quantiles) %>%
+  result = samples %>%
+    dplyr::group_by(.data$data_row) %>%
+    dplyr::reframe(quantile = quantiles,
+                   !!type := stats::quantile(.data[[type]], probs = quantiles, names = FALSE))
 
-    # Keep each evaluated data row and categorical curve separate. Grouping
-    # only by x would mix rows that share the change-point predictor.
-    dplyr::group_by(dplyr::across(dplyr::all_of(group_cols)), .data$quantile) %>%
-    dplyr::summarise(
-      y = stats::quantile(!!yvar, probs = .data$quantile[1]),
-      .groups = "drop"
-    )
+  dplyr::left_join(result, grid, by = "data_row", relationship = "many-to-one")
 }
 
 
