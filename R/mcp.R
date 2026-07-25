@@ -248,11 +248,13 @@ mcp = function(model,
   ##################
   # Make an abstract table representing the segments and their relations.
   par_x = get_par_x(model, data, par_x)
-  ST = get_segment_table(model, data, family, par_x)  #"ST" for "segment table"
+  segment_table = get_segment_table(model, data, family, par_x)  #"ST" for "segment table", "CP" for "change points"
+  ST = segment_table$ST
+  CP = segment_table$CP
   rhs_table = get_rhs_table(model, data, family, par_x)
 
   # Make prior
-  prior = get_prior(ST, rhs_table, family, prior, data)
+  prior = get_prior(ST, CP, rhs_table, family, prior, data)
   prior_table = attr(prior, "prior_table")
   prior_context = attr(prior, "prior_context")
   attr(prior, "prior_table") = NULL
@@ -389,6 +391,7 @@ mcp = function(model,
     # Not meant to be used by the end user.
     .internal = list(
       ST = ST,
+      CP = CP,
       rhs_table = rhs_table,
       formula_jags = formula_jags,
       formula_r = formula_r,

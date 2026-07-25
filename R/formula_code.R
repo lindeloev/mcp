@@ -14,25 +14,28 @@
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_formula_jags = function(ST, rhs_table, par_x, family) {
+  # Explicit segment -> boundary-code lookup instead of relying on ST's row
+  # order matching segment numbers.
+  boundary_code = stats::setNames(ST$cp_code_form, ST$segment)
+
   # Add X-helpers which code the X relative to the start of each segment.
   local_x_str = "\n# par_x local to each segment"
   for (i in seq_len(nrow(ST))) {
-    segment_start = ifelse(i > 1, yes = paste0(" - ", ST$cp_code_form[i]), no = "")  #
-    segment_end = ifelse(i < nrow(ST), yes = ST$cp_code_form[i + 1], no = paste0("cp_", i))  # infinite if last segment.
+    segment_start = ifelse(i > 1, yes = paste0(" - ", boundary_code[[as.character(i)]]), no = "")  #
+    segment_end = ifelse(i < nrow(ST), yes = boundary_code[[as.character(i + 1)]], no = paste0("cp_", i))  # infinite if last segment.
 
     local_x_str = paste0(local_x_str, "\nx_local_", i, "_[i_] = min(", par_x, "[i_], ", segment_end, ")", segment_start)
   }
 
   # Build formula for each dpar (note plural "_dpars")
+  this_cp_lookup = dplyr::select(ST, "segment", "form", this_cp = "cp_code_form")
+  next_cp_lookup = dplyr::select(ST, next_intercept = "segment", next_cp = "cp_code_form")
+
   formula_jags_dpars = rhs_table %>%
     dplyr::select(-"matrix_data") %>%  # Throw less data around
-    dplyr::rowwise() %>%
+    dplyr::left_join(this_cp_lookup, by = "segment") %>%
+    dplyr::left_join(next_cp_lookup, by = "next_intercept") %>%
     dplyr::mutate(
-      # Left-join ST
-      this_cp = ST$cp_code_form[[.data$segment]],
-      next_cp = ST$cp_code_form[.data$next_intercept],  # replace segment with code string
-      form = ST$form[[.data$segment]],
-
       # One dpar per ar order: (ar, 1) --> ar1
       dpar = paste0(.data$dpar, tidyr::replace_na(as.character(.data$order), ""))
     ) %>%
@@ -136,10 +139,11 @@ get_garma_boundary_jagscode = function(ST, rhs_table, par_x) {
   if (anyDuplicated(boundary_table$segment))
     stop_github("Found multiple GARMA boundaries in one segment.")
 
+  boundary_code = stats::setNames(ST$cp_code_form, ST$segment)
   boundary_parts = character(nrow(boundary_table))
   for (i in seq_len(nrow(boundary_table))) {
-    lower = if (i == 1) "" else paste0("(", par_x, "[i_] >= ", ST$cp_code_form[boundary_table$segment[i]], ") * ")
-    upper = if (i == nrow(boundary_table)) "" else paste0("(", par_x, "[i_] < ", ST$cp_code_form[boundary_table$segment[i + 1]], ") * ")
+    lower = if (i == 1) "" else paste0("(", par_x, "[i_] >= ", boundary_code[[as.character(boundary_table$segment[i])]], ") * ")
+    upper = if (i == nrow(boundary_table)) "" else paste0("(", par_x, "[i_] < ", boundary_code[[as.character(boundary_table$segment[i + 1])]], ") * ")
     boundary_value = sprintf("%.15g", boundary_table$boundary[i])
     boundary_parts[i] = paste0("  ", lower, upper, boundary_value)
   }

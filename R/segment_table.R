@@ -254,16 +254,13 @@ unpack_cp = function(form_cp, i) {
 #' @aliases get_segment_table
 #' @keywords internal
 #' @inheritParams mcp
-#' @return A tibble with one row describing each segment and the corresponding code.
+#' @return A list with `ST` (a tibble with one row per segment, including
+#'   change-point code for the change point starting that segment) and `CP`
+#'   (a tibble with one row per estimated change point, naturally indexed by
+#'   `cp = 1, 2, ...`).
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @export
-#' @examples
-#' model = list(
-#'   y ~ 1 + x,
-#'   1 + (1|id) ~ 1
-#' )
-#' get_segment_table(model, par_x = "x")
+#' @noRd
 get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
   assert_types(par_x, "character", len = 1)
 
@@ -365,23 +362,52 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
   }
 
 
-  ###################################
-  # MUTATE ST WITH NEW HANDY VALUES #
-  ###################################
-  ST %>%
+  ###############################################
+  # SPLIT INTO `segments` AND `change_points`    #
+  ###############################################
+  # `segments`: one row per segment, shared metadata only.
+  segments = ST %>%
+    dplyr::select("segment", "form", "y", "trials", "weights", "x")
 
-    # Add variable names
-    dplyr::mutate(
-      cp_name = paste0("cp_", .data$segment - 1),
-      cp_sd = ifelse(.data$cp_ran_int == TRUE, paste0(.data$cp_name, "_sd"), NA),
-      cp_group = ifelse(.data$cp_ran_int == TRUE, paste0(.data$cp_name, "_", .data$cp_group_col), NA)
+  # `change_points`: one row per *estimated* change point (nrow(ST) - 1 of
+  # them), naturally indexed by `cp` instead of borrowing the segment index.
+  # `segment` is an explicit join key: the segment that this change point starts.
+  change_points = ST %>%
+    dplyr::filter(.data$segment > 1) %>%
+    dplyr::transmute(
+      cp = .data$segment - 1,
+      segment = .data$segment,
+      name = paste0("cp_", .data$cp),
+      varying = .data$cp_ran_int,
+      group_col = .data$cp_group_col,
+      sd_name = ifelse(.data$varying, paste0(.data$name, "_sd"), NA),
+      group_name = ifelse(.data$varying, paste0(.data$name, "_", .data$group_col), NA)
     ) %>%
-
-    # Code varying change points
     dplyr::mutate(
-      cp_code_form = ifelse(!is.na(.data$cp_group), yes = paste0(.data$cp_name, " + ", .data$cp_group, "CP_", .data$segment, "_INDEX"), no = .data$cp_name),
-      cp_code_form = format_code(.data$cp_code_form, na_col = .data$cp_name)
+      code = ifelse(!is.na(.data$group_name), yes = paste0(.data$name, " + ", .data$group_name, "CP_", .data$segment, "_INDEX"), no = .data$name),
+      code = format_code(.data$code, na_col = .data$name)
     )
+
+  # `ST`: `segments` with change-point info joined back in by `segment`.
+  # Segment 1 has no row in `change_points` (there is no change point before
+  # it), so it is given the fixed lower boundary `cp_0` explicitly. Kept in
+  # this per-segment shape because most consumers look up the change point
+  # *starting* a given segment, not the change point by its own number.
+  ST = segments %>%
+    dplyr::left_join(
+      dplyr::select(
+        change_points, "segment",
+        cp_name = "name", cp_group_col = "group_col",
+        cp_sd = "sd_name", cp_group = "group_name", cp_code_form = "code"
+      ),
+      by = "segment"
+    ) %>%
+    dplyr::mutate(
+      cp_name = dplyr::coalesce(.data$cp_name, "cp_0"),
+      cp_code_form = dplyr::coalesce(.data$cp_code_form, "cp_0")
+    )
+
+  list(ST = ST, CP = change_points)
 }
 
 

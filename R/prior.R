@@ -13,19 +13,18 @@ empty_prior_specs = function() {
 }
 
 
-default_cp_specs = function(ST, context) {
+default_cp_specs = function(CP, context) {
   n_cp = context$n_cp
   if (n_cp == 0)
     return(empty_prior_specs())
 
   specs = list()
-  cp_names = ST$cp_name[seq_len(nrow(ST)) > 1]
-  for (j in seq_along(cp_names)) {
-    name = cp_names[j]
+  for (j in seq_len(nrow(CP))) {
+    name = CP$name[j]
     if (n_cp == 1) {
       code = "dunif(min(.x), max(.x))"
     } else {
-      lower = if (j == 1) "min(.x)" else cp_names[j - 1]
+      lower = if (j == 1) "min(.x)" else CP$name[j - 1]
       code = paste0(
         "dt(min(.x), (max(.x) - min(.x)) / n_cp(), n_cp() - 1) T(",
         lower, ", max(.x))"
@@ -37,18 +36,18 @@ default_cp_specs = function(ST, context) {
       description = if (j == 1) {
         "Within the observed change-point span"
       } else {
-        paste0("Ordered after ", cp_names[j - 1], " within the observed change-point span")
+        paste0("Ordered after ", CP$name[j - 1], " within the observed change-point span")
       },
       source = "default"
     )
   }
 
-  for (i in seq_len(nrow(ST))) {
-    if (is.na(ST$cp_sd[i]))
+  for (j in seq_len(nrow(CP))) {
+    if (!CP$varying[j])
       next
 
-    sd_name = ST$cp_sd[i]
-    group_name = ST$cp_group[i]
+    sd_name = CP$sd_name[j]
+    group_name = CP$group_name[j]
     specs[[sd_name]] = tibble::tibble(
       parameter = sd_name,
       code = "dnorm(0, 2 * (max(.x) - min(.x)) / n_cp()) T(0, )",
@@ -56,15 +55,15 @@ default_cp_specs = function(ST, context) {
       source = "default"
     )
 
-    lower = if (i == 2) {
-      paste0("min(.x) - ", ST$cp_name[i])
+    lower = if (j == 1) {
+      paste0("min(.x) - ", CP$name[j])
     } else {
-      paste0(ST$cp_name[i - 1], " - ", ST$cp_name[i])
+      paste0(CP$name[j - 1], " - ", CP$name[j])
     }
-    upper = if (i == nrow(ST)) {
-      paste0("max(.x) - ", ST$cp_name[i])
+    upper = if (j == nrow(CP)) {
+      paste0("max(.x) - ", CP$name[j])
     } else {
-      paste0(ST$cp_name[i + 1], " - ", ST$cp_name[i])
+      paste0(CP$name[j + 1], " - ", CP$name[j])
     }
     specs[[group_name]] = tibble::tibble(
       parameter = group_name,
@@ -111,7 +110,7 @@ default_rhs_specs = function(rhs_table, family) {
 }
 
 
-truncate_prior_cp = function(ST, i, prior_value, context) {
+truncate_prior_cp = function(CP, j, prior_value, context) {
   if (is.numeric(prior_value))
     return(prior_value)
   is_bounded = stringr::str_detect(prior_value, "^\\s*(dunif|dirichlet)\\s*\\(")
@@ -119,16 +118,16 @@ truncate_prior_cp = function(ST, i, prior_value, context) {
   if (is_bounded || is_truncated)
     return(prior_value)
 
-  lower = if (i == 2) {
+  lower = if (j == 1) {
     paste0("min(", context$x_display, ")")
   } else {
-    ST$cp_name[i - 1]
+    CP$name[j - 1]
   }
   paste0(prior_value, " T(", lower, ", max(", context$x_display, "))")
 }
 
 
-overlay_user_priors = function(specs, prior, ST, context) {
+overlay_user_priors = function(specs, prior, CP, context) {
   name_matches = names(prior) %in% specs$parameter
   if (any(!name_matches)) {
     stop(
@@ -138,11 +137,11 @@ overlay_user_priors = function(specs, prior, ST, context) {
   }
 
   auto_truncated = character()
-  for (i in seq_len(nrow(ST))) {
-    name = ST$cp_name[i]
-    if (i > 1 && name %in% names(prior)) {
+  for (j in seq_len(nrow(CP))) {
+    name = CP$name[j]
+    if (name %in% names(prior)) {
       original = prior[[name]]
-      prior[[name]] = truncate_prior_cp(ST, i, original, context)
+      prior[[name]] = truncate_prior_cp(CP, j, original, context)
       if (!identical(prior[[name]], original))
         auto_truncated = c(auto_truncated, name)
     }
@@ -166,16 +165,16 @@ overlay_user_priors = function(specs, prior, ST, context) {
 #'
 #' @keywords internal
 #' @noRd
-get_prior = function(ST, rhs_table, family, prior = list(), data) {
+get_prior = function(ST, CP, rhs_table, family, prior = list(), data) {
   assert_types(family, "mcpfamily")
   context = prior_context(data, ST)
   warn_legacy_prior_constants(prior, context)
 
   specs = dplyr::bind_rows(
-    default_cp_specs(ST, context),
+    default_cp_specs(CP, context),
     default_rhs_specs(rhs_table, family)
   )
-  specs = overlay_user_priors(specs, prior, ST, context)
+  specs = overlay_user_priors(specs, prior, CP, context)
 
   all_names = specs$parameter
   table = compile_prior_specs(specs, all_names, context)
