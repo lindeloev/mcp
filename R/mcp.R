@@ -261,20 +261,22 @@ mcp = function(model,
 
   # Make lists of parameters
   all_pars = names(prior)  # There is a prior for every parameter
+  family_dpars = family$dpar_specs$dpar
+  pars_table = get_pars_table(rhs_table, CP, family)
   pars = list(
     x = par_x,
     y = unique(ST$y),
     cp = paste0("cp_", 1:nrow(ST))[seq_len(nrow(ST)-1)],  # N_cp = N_segments - 1
-    fixed = c(),
+    fixed = pars_table$name[pars_table$dpar == "mu"],
     population = c(),
     varying = logical0_to_null(c(stats::na.omit(ST$cp_group))),
-    sigma = all_pars[stringr::str_detect(all_pars, "^sigma_")],
-    arma = all_pars[stringr::str_detect(all_pars, "(^ar|^ma)[0-9]")],
+    sigma = pars_table$name[pars_table$dpar %in% setdiff(family_dpars, "mu")],
+    arma = pars_table$name[pars_table$dpar %notin% c("cp", family_dpars)],
     trials = logical0_to_null(stats::na.omit(unique(ST$trials))),
     weights = logical0_to_null(stats::na.omit(unique(ST$weights)))
   )
-  pars$fixed = all_pars[all_pars %notin% c(pars$cp, pars$varying, pars$sigma, pars$arma)]
-  pars$population = c(pars$cp, pars$fixed, pars$sigma, pars$arma)
+  cp_population = pars_table$name[pars_table$dpar == "cp" & pars_table$name %notin% pars$varying]
+  pars$population = pars_table$name[pars_table$name %in% c(cp_population, pars$fixed, pars$sigma, pars$arma)]
 
   # Check parameters
   # ARMA models
@@ -389,6 +391,7 @@ mcp = function(model,
       ST = ST,
       CP = CP,
       rhs_table = rhs_table,
+      pars_table = pars_table,
       formula_jags = formula_jags,
       formula_r = formula_r,
       prior_table = prior_table,

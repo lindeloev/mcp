@@ -43,7 +43,8 @@ NULL
 #' @inheritParams summary.mcpfit
 #' @param fit An \code{\link{mcpfit}}` object.
 #' @param varying Boolean. Get results for varying (TRUE) or population (FALSE)?
-#' @return A data.frame with summaries for each model parameter.
+#' @return A data.frame with summaries for each model parameter, ordered and
+#'   labeled with `segment` and `dpar` columns (see `summary.mcpfit`).
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
@@ -88,6 +89,17 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
       ess_tail = round(.data$ess_tail)
   )
 
+  # Order rows and add `segment`/`dpar` using the canonical parameter table
+  # built in mcp(). Varying-effect columns (e.g. "cp_1_id[A]") are matched by
+  # their base name; ties (i.e., levels of the same varying effect) are
+  # broken alphabetically by the full column name.
+  pars_table = fit$.internal$pars_table
+  base_name = sub("\\[.*\\]$", "", estimates$name)
+  match_idx = match(base_name, pars_table$name)
+  estimates$segment = pars_table$segment[match_idx]
+  estimates$dpar = pars_table$dpar[match_idx]
+  estimates = estimates[order(match_idx, estimates$name), ]
+
   # Add simulation parameters if the data is simulated
   sim_list = attr(fit$data[, fit$pars$y], "simulated")
   if(!is.null(sim_list)) {
@@ -129,7 +141,9 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
     estimates = estimates %>%
       dplyr::left_join(simulated, by = "name", relationship = "one-to-one") %>%
       dplyr::mutate(match = ifelse(.data$sim > .data$lower & .data$sim < .data$upper, yes = "OK", no = "")) %>%
-      dplyr::relocate("name", "match", "sim")
+      dplyr::relocate("name", "segment", "dpar", "match", "sim")
+  } else {
+    estimates = dplyr::relocate(estimates, "name", "segment", "dpar")
   }
 
   data.frame(estimates, row.names = NULL)
@@ -152,10 +166,16 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #' @param prior TRUE/FALSE. Summarise prior instead of posterior?
 #' @param ... Currently ignored
 #'
-#' @return A data frame with parameter estimates and MCMC diagnostics.
-#'   OBS: The change point distributions are often not unimodal and symmetric so
-#'   the intervals can be deceiving Plot them using `plot_pars(fit)`.
+#' @return A data frame with parameter estimates and MCMC diagnostics. Rows
+#'   are ordered by change point first, then `mu`, then the other
+#'   distributional parameters, then `ar`/`ma` components - each ascending by
+#'   segment. OBS: The change point distributions are often not unimodal and
+#'   symmetric so the intervals can be deceiving. Plot them using
+#'   `plot_pars(fit)`.
 #'
+#'   * `segment` is the segment the parameter belongs to.
+#'   * `dpar` is the distributional parameter (`"cp"`, `"mu"`, `"sigma"`,
+#'     `"ar1"`, `"ma1"`, etc.) the parameter belongs to.
 #'   * `mean` is the posterior mean
 #'   * `lower` and `upper` are the bounds of the central posterior interval
 #'     given in `width`.

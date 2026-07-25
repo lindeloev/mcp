@@ -51,10 +51,10 @@ test_that("priors are resolved without changing their parameterization", {
 
   compact = prior_summary(fit)
   verbose = prior_summary(fit, verbose = TRUE)
-  expect_named(compact, c("parameter", "prior", "bounds"))
+  expect_named(compact, c("parameter", "segment", "dpar", "prior", "bounds"))
   expect_named(
     verbose,
-    c("parameter", "prior", "bounds", "rule", "description", "source", "kind")
+    c("parameter", "segment", "dpar", "prior", "bounds", "rule", "description", "source", "kind")
   )
   expect_equal(
     verbose$kind[match(c("Intercept_1", "x_1", "Intercept_2", "x_2"), verbose$parameter)],
@@ -232,12 +232,12 @@ test_that("PPC and LOO draws stay aligned", {
   expect_false(attr(loo_changed, "mcp_settings")$arma)
 
   expect_s3_class(
-    suppressMessages(pp_check(
+    suppressWarnings(suppressMessages(pp_check(
       fit,
       type = "loo_intervals",
       facet_by = "facet",
       ndraws = 5
-    )),
+    ))),
     "patchwork"
   )
 })

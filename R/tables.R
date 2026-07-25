@@ -354,6 +354,64 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
 }
 
 
+#' Build a table of parameter names with their segment and dpar
+#'
+#' Provides the canonical display order used by `summary()`, `fixef()`,
+#' `ranef()`, `prior_summary()`, and `plot_pars(pars = "population")`: change
+#' points first (including their SD/group-level hyperparameters), then `mu`,
+#' then the other distributional parameters in the order declared by the
+#' family, then `ar`/`ma` components (combined with their lag, e.g. `"ar1"`),
+#' each ascending by segment.
+#'
+#' @aliases get_pars_table
+#' @keywords internal
+#' @noRd
+#' @param rhs_table A table from `get_rhs_table()`.
+#' @param CP A table of change points from `get_segment_table()`.
+#' @param family An `mcpfamily` object.
+#' @return A tibble with one row per model parameter (population and
+#'   varying), with columns `name`, `segment`, and `dpar`.
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+get_pars_table = function(rhs_table, CP, family) {
+  cp_pars = tibble::tibble(name = character(0), segment = integer(0), dpar = character(0), .tie = integer(0))
+  if (nrow(CP) > 0) {
+    cp_pars = tibble::tibble(name = CP$name, segment = CP$segment, dpar = "cp", .tie = 0L)
+    varying_cp = CP[CP$varying, , drop = FALSE]
+    if (nrow(varying_cp) > 0) {
+      cp_pars = dplyr::bind_rows(
+        cp_pars,
+        tibble::tibble(name = varying_cp$sd_name, segment = varying_cp$segment, dpar = "cp", .tie = 1L),
+        tibble::tibble(name = varying_cp$group_name, segment = varying_cp$segment, dpar = "cp", .tie = 2L)
+      )
+    }
+  }
+
+  rhs_pars = rhs_table %>%
+    dplyr::transmute(
+      name = .data$code_name,
+      segment = .data$segment,
+      dpar = ifelse(.data$dpar %in% c("ar", "ma"), paste0(.data$dpar, .data$order), .data$dpar),
+      .tie = .data$matrix_col
+    )
+
+  # Canonical group order: cp, mu, other family dpars (declared order), then
+  # ar/ma labels sorted by component ("ar" before "ma") and then lag order.
+  arma_labels = unique(rhs_pars$dpar[rhs_pars$dpar %notin% c("mu", family$dpar_specs$dpar)])
+  arma_labels = arma_labels[order(
+    match(sub("[0-9]+$", "", arma_labels), c("ar", "ma")),
+    as.integer(sub("^[a-z]+", "", arma_labels))
+  )]
+  dpar_levels = c("cp", "mu", setdiff(family$dpar_specs$dpar, "mu"), arma_labels)
+
+  dplyr::bind_rows(cp_pars, rhs_pars) %>%
+    dplyr::mutate(dpar = factor(.data$dpar, levels = dpar_levels)) %>%
+    dplyr::arrange(.data$dpar, .data$segment, .data$.tie) %>%
+    dplyr::mutate(dpar = as.character(.data$dpar)) %>%
+    dplyr::select("name", "segment", "dpar")
+}
+
+
 #' Format code with one or multiple terms
 #'
 #' Take a value like "a + b" and

@@ -74,7 +74,9 @@
 
 -   All default slope priors now broaden with more change points because narrower intervals allows for steeper slopes within the same overall spread.
 
--   New order in `summary()` etc.: all change points first (as always). Then ordered by (segment, dpar, as-lm-order).
+-   `summary()`, `fixef()`, `ranef()`, `prior_summary()`, and everything else now return rows in
+    a canonical order instead of the previous incidental (near-alphabetical)
+    order. They also gained columns `segment` and `dpar` columns. This may affect scripts that index results positionally.
 
 -   The term "ct" (for "central tendency") has been replaced with "mu", e.g., in `plot(fit, which_y = "mu")`. These were defaults, so I hope no one will notice the renaming.
 

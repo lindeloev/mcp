@@ -214,7 +214,10 @@ get_prior = function(ST, CP, rhs_table, family, prior = list(), data) {
 #'
 #' @param fit An `mcpfit` object.
 #' @param verbose Logical. Include rule, description, source, and kind.
-#' @return A tibble with one row per model parameter.
+#' @return A tibble with one row per model parameter, ordered and labeled
+#'   the same way as `summary()`: change points first, then `mu`, then the
+#'   other distributional parameters, then `ar`/`ma` components - each with
+#'   `segment` and `dpar` columns.
 #' @export
 prior_summary = function(fit, verbose = FALSE) {
   assert_types(fit, "mcpfit")
@@ -224,8 +227,18 @@ prior_summary = function(fit, verbose = FALSE) {
     table = attr(fit$prior, "prior_table")
   if (is.null(table))
     table = legacy_prior_table(fit)
-  public = c("parameter", "prior", "bounds")
+
+  pars_table = fit$.internal$pars_table
+  if (!is.null(pars_table)) {
+    match_idx = match(table$parameter, pars_table$name)
+    table$segment = pars_table$segment[match_idx]
+    table$dpar = pars_table$dpar[match_idx]
+    table = table[order(match_idx), ]
+  }
+
+  public = c("parameter", "segment", "dpar", "prior", "bounds")
   if (verbose)
     public = c(public, "rule", "description", "source", "kind")
+  public = intersect(public, names(table))
   table[, public, drop = FALSE]
 }

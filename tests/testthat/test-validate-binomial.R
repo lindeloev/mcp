@@ -17,9 +17,9 @@ fit_mcp = quiet_mcp(model, df, family = binomial(), adapt = 100, iter = 1000)
 test_that("Binomial inference against glm()", {
   fit_glm = glm(cbind(y, N - y) ~ x + group, data = df, family = binomial())
 
-  # Parameter estimates
+  # Parameter estimates. Both are in (Intercept, x, groupB) order.
   params_mcp = fixef(fit_mcp)$mean
-  params_glm = as.numeric(fit_glm$coefficients[c(1, 3, 2)])
+  params_glm = as.numeric(fit_glm$coefficients)
   testthat::expect_lt(max(abs(params_mcp - params_glm)), 0.05)
 
   # Log-likelihood

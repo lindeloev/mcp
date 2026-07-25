@@ -586,7 +586,7 @@ test_that("sigma() and ar() support categorical predictors and interactions", {
 
   # x is not sorted across groups here, which is irrelevant for parsing but
   # triggers an unrelated ar()/ma() row-order notice.
-  fit_ar = suppressWarnings(mcp(
+  fit_ar = suppressMessages(mcp(
     list(y ~ ar(1, 1 + group + x:group)),
     data,
     par_x = "x",

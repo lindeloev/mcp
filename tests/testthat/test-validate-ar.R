@@ -17,9 +17,10 @@ fit_mcp = quiet_mcp(model, df, par_x = "x", adapt = 100, iter = 1000, chains = 2
 test_that("AR inference against arima()", {
   fit_arima = arima(df$y, order = c(2,0,0))
 
-  # Parameter estimates
+  # Parameter estimates. arima() returns c(ar1, ar2, intercept).
   params_arima = as.numeric(fit_arima$coef)
-  params_mcp = fixef(fit_mcp)$mean[c(2, 3, 1)]
+  fixef_mcp = fixef(fit_mcp)
+  params_mcp = fixef_mcp$mean[match(c("ar1_1", "ar2_1", "Intercept_1"), fixef_mcp$name)]
   testthat::expect_equal(params_arima, params_mcp, tolerance = 0.03)
 
   # Log-likelihood
