@@ -100,7 +100,7 @@ Let's unpack:
 
  * `hypothesis`: For internal convenience, `hypothesis` always re-arranges to test against zero. 
  * `mean`: When subtracting $4$, the posterior distribution is very close, but somewhat dispersed. 
- * `lower` and `uppwer`: The interval width defaults to 95% highest density interval, but you can change it using `hypothesis(..., width = 0.8)`. It is two-sided, so if you want the bound for a one-sided 5% test, just do `width = 0.975`.
+ * `lower` and `upper`: The interval width defaults to a 95% central posterior interval, but you can change it using `hypothesis(..., width = 0.8)`.
  * `BF`: The Savage-Dickey density ratio, which is a Bayes Factor. This is the factor by which the density increases from the prior to the posterior at `cp_1 = 4`. A $BF > 1$ means that we now believe *more* in this value, $BF = 1$ means that our credence to this value is *unchanged*, and $BF < 1$ means that we believe *less* in it.
  * `p`: Because `BF` is an odds ratio, `p` can just be computed from it and contains no new information. For example, $p = 0.95$ corresponds to $BF = 19$. 
 

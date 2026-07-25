@@ -169,7 +169,7 @@ test_arma_simulation = function(fit) {
 
 # Tests if summary(fit) and ranef(fit) work as expected
 test_summary = function(fit, varying_cols, prior = FALSE) {
-  summary_cols = c('name','mean','lower','upper','Rhat','n.eff')
+  summary_cols = c('name','mean','lower','upper','Rhat','ess_bulk','ess_tail')
   quiet_summary = purrr::quietly(summary)(fit, prior = prior)
   result = quiet_summary$result  # Do not print to console
   output = quiet_summary$output  # Do not print to console

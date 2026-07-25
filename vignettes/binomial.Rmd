@@ -80,7 +80,7 @@ We can use `summary` to see that it recovered the parameters to a pretty good pr
 summary(fit)
 ```
 
-`summary` uses 95% highest density intervals (HDI) by default, but you can change it using `summary(fit, width = 0.80)`. If you have [varying effects](../articles/varying.html), use `ranef(fit)` to see them.
+`summary` uses 95% central posterior intervals by default, but you can change it using `summary(fit, width = 0.80)`. If you have [varying effects](../articles/varying.html), use `ranef(fit)` to see them.
 
 Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:
 
@@ -115,7 +115,7 @@ Already in the default `plot` as used above, it will be obvious if there was poo
 plot_pars(fit)
 ```
 
-Convergence is perfect here as evidenced by the overlapping trace plots that look like fat caterpillars (Bayesians love fat caterpillars). Notice that the posterior distribution of change points can be quite non-normal and sometimes even bimodal. Therefore, one should be careful not to interpret the HDI as if it was normal.
+Convergence is perfect here as evidenced by the overlapping trace plots that look like fat caterpillars (Bayesians love fat caterpillars). Notice that the posterior distribution of change points can be quite non-normal and sometimes even bimodal. Therefore, one should be careful not to interpret the interval as if it was normal.
 
 `plot()` and `plot_pars()` can do a lot more than this, so check out their documentation.
 

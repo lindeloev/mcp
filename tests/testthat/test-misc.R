@@ -155,6 +155,44 @@ test_that("Simple mcpfit methods", {
 
 })
 
+test_that("posterior draws accessor preserves the stored chains", {
+  draws = posterior_draws(demo_fit)
+
+  expect_s3_class(draws, "draws_array")
+  expect_equal(
+    dim(draws),
+    c(
+      nrow(demo_fit$mcmc_post[[1]]),
+      length(demo_fit$mcmc_post),
+      ncol(demo_fit$mcmc_post[[1]])
+    )
+  )
+  expect_equal(posterior::variables(draws), colnames(demo_fit$mcmc_post[[1]]))
+  expect_s3_class(demo_fit$mcmc_post, "mcmc.list")
+})
+
+test_that("summaries use central intervals and posterior diagnostics", {
+  width = 0.8
+  result = fixef(demo_fit, width = width)
+  parameter = result$name[[1]]
+  values = unlist(lapply(
+    demo_fit$mcmc_post,
+    function(chain) chain[, parameter]
+  ))
+  parameter_matrix = posterior::extract_variable_matrix(
+    posterior_draws(demo_fit),
+    variable = parameter
+  )
+
+  expect_equal(result$lower[[1]], unname(quantile(values, 0.1)))
+  expect_equal(result$upper[[1]], unname(quantile(values, 0.9)))
+  expect_equal(result$Rhat[[1]], posterior::rhat(parameter_matrix))
+  expect_equal(result$ess_bulk[[1]], round(posterior::ess_bulk(parameter_matrix)))
+  expect_equal(result$ess_tail[[1]], round(posterior::ess_tail(parameter_matrix)))
+  expect_true(all(c("Rhat", "ess_bulk", "ess_tail") %in% names(result)))
+  expect_false("n.eff" %in% names(result))
+})
+
 test_that("PPC and LOO draws stay aligned", {
   expect_error(
     pp_check(demo_fit, nsamples = 2, not_a_bayesplot_argument = TRUE),
@@ -236,6 +274,9 @@ test_that("hypothesis()", {
   prior_draws = unlist(lapply(fit_asymmetric$mcmc_prior, function(chain) chain[, "cp_1"]))
   p_prior = mean(prior_draws > threshold)
   expected_BF = (p_post / (1 - p_post)) / (p_prior / (1 - p_prior))
+  effect_draws = cp_draws - threshold
+  expect_equal(actual_directional$lower, unname(quantile(effect_draws, 0.025)))
+  expect_equal(actual_directional$upper, unname(quantile(effect_draws, 0.975)))
   expect_equal(actual_directional$p, p_post)
   expect_equal(actual_directional$BF, expected_BF)
 

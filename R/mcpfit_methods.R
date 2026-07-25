@@ -56,8 +56,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   if (varying == TRUE & is.null(fit$pars$varying))
     return(NULL)
 
-  # Keep samples separated by chain for coda's Rhat and effective-size diagnostics.
-  samples = mcmclist_samples(fit, prior = prior)
+  samples = posterior_draws(fit, prior = prior)
 
   # Select only varying or only population-level columns in data
   if (varying == FALSE) {
@@ -68,39 +67,25 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
       stop("There were no matching parameters in the model.")
   }
 
-  all_cols = colnames(samples[[1]])
+  all_cols = posterior::variables(samples)
   get_cols = all_cols[stringr::str_detect(all_cols, regex_pars)]
-  samples = lapply(samples, function(x) x[, get_cols, drop = FALSE])
-  class(samples) = "mcmc.list"  # Return to original class
+  samples = posterior::subset_draws(samples, variable = get_cols)
 
-  # Get parameter estimates
-  estimates = samples %>%
-    # Get ready to compute stuff for each parameter
-    tidybayes::tidy_draws() %>%
-    tidyr::pivot_longer(-tidyselect::starts_with(".")) %>%
-    dplyr::group_by(.data$name) %>%
-
-    # Compute mean and HDI intervals and name appropriately
-    tidybayes::mean_hdci(.data$value, .width = width) %>%
-    dplyr::rename(mean = "value",
-                  lower = ".lower",
-                  upper = ".upper") %>%
-
-    # Remove unneeded stuff
-    dplyr::select(-tidyselect::starts_with("."))
-
-  # Diagnostics: Gelman-Rubin and effective sample size
-  Rhat = try(coda::gelman.diag(samples, multivariate = FALSE)$psrf[, 1], TRUE)
-  if (!is.numeric(Rhat)) {
-    warning("Rhat computation failed: ", Rhat)
-    Rhat = stats::setNames(rep(NA_real_, nrow(estimates)), estimates$name)
-  } else if (is.null(names(Rhat))) {
-    names(Rhat) = colnames(samples[[1]])
-  }
-  diagnostics = data.frame(
-    name = names(Rhat),
-    Rhat = Rhat,
-    n.eff = round(coda::effectiveSize(samples))
+  # Get parameter estimates and diagnostics
+  tail_prob = (1 - width) / 2
+  estimates = posterior::summarise_draws(
+    samples,
+    mean = base::mean,
+    lower = function(x) stats::quantile(x, tail_prob, names = FALSE),
+    upper = function(x) stats::quantile(x, 1 - tail_prob, names = FALSE),
+    Rhat = posterior::rhat,
+    ess_bulk = function(x) suppressWarnings(posterior::ess_bulk(x)),
+    ess_tail = function(x) suppressWarnings(posterior::ess_tail(x))
+  ) %>%
+    dplyr::rename(name = "variable") %>%
+    dplyr::mutate(
+      ess_bulk = round(.data$ess_bulk),
+      ess_tail = round(.data$ess_tail)
   )
 
   # Add simulation parameters if the data is simulated
@@ -147,10 +132,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
       dplyr::relocate("name", "match", "sim")
   }
 
-  # Merge them and return
-  estimates %>%
-    dplyr::left_join(diagnostics, by = "name", relationship = "one-to-one") %>%
-    data.frame(row.names = NULL)
+  data.frame(estimates, row.names = NULL)
 }
 
 
@@ -160,8 +142,8 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #'
 #' @aliases summary summary.mcpfit
 #' @param object An \code{\link{mcpfit}} object.
-#' @param width Float. The width of the highest posterior density interval
-#'   (between 0 and 1).
+#' @param width Float. The width of the central posterior interval (between 0
+#'   and 1).
 #' @param digits a non-null value for digits specifies the minimum number of
 #'   significant digits to be printed in values. The default, NULL, uses
 #'   getOption("digits"). (For the interpretation for complex numbers see signif.)
@@ -175,23 +157,20 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #'   the intervals can be deceiving Plot them using `plot_pars(fit)`.
 #'
 #'   * `mean` is the posterior mean
-#'   * `lower` is the lower quantile of the highest-density interval (HDI) given in `width`.
-#'   * `upper` is the upper quantile.
-#'   * `Rhat` is the Gelman-Rubin convergence diagnostic which is often taken to
-#'     be acceptable if < 1.1. It is computed using \code{\link[coda]{gelman.diag}}.
-#'   * `n.eff` is the effective sample size computed using \code{\link[coda]{effectiveSize}}.
+#'   * `lower` and `upper` are the bounds of the central posterior interval
+#'     given in `width`.
+#'   * `Rhat` is the rank-normalized split-Rhat convergence diagnostic.
+#'   * `ess_bulk` and `ess_tail` are the bulk and tail effective sample sizes.
 #'     Low effective sample sizes are also obvious as poor mixing in trace plots
 #'     (see `plot_pars(fit)`). Read how to deal with such problems [here](https://lindeloev.github.io/mcp/articles/tips.html)
-#'   * `ts_err` is the time-series error, taking autoregressive correlation
-#'     into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
 #'
 #'  For simulated data, the summary contains two additional columns so that it
 #'  is easy to inspect whether the model can recover the parameters. Run
 #'  simulation and summary multiple times to get a sense of the robustness.
 #'
 #'   * `sim` is the value used to generate the data.
-#'   * `match` is `"OK"` if `sim` is contained in the HDI interval (`lower` to
-#'     `upper`).
+#'   * `match` is `"OK"` if `sim` is contained in the central posterior
+#'     interval (`lower` to `upper`).
 #'
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -199,7 +178,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #' @examples
 #' # Typical usage
 #' summary(demo_fit)
-#' summary(demo_fit, width = 0.8, digits = 4)  # Set HDI width
+#' summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 #'
 #' # Get the results as a data frame
 #' results = summary(demo_fit)
@@ -335,6 +314,28 @@ mcmclist_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
   }
 
   NULL
+}
+
+
+#' Get samples as a posterior draws array
+#'
+#' This is the single internal conversion from the stored
+#' \code{\link[coda]{mcmc.list}} representation to a posterior draws object.
+#'
+#' @keywords internal
+#' @noRd
+#' @inheritParams mcmclist_samples
+posterior_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
+  samples = mcmclist_samples(
+    fit,
+    prior = prior,
+    message = message,
+    error = error
+  )
+  if (is.null(samples))
+    return(NULL)
+
+  posterior::as_draws_array(samples)
 }
 
 

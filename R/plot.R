@@ -241,7 +241,8 @@ get_plot = function(x,
   # Add lines?
   if (lines > 0) {
     # Select joint posterior draws once, then show the same draws for all curves.
-    data_lines = tidybayes::sample_draws(eval_draws, lines)
+    selected_draws = sample(unique(eval_draws$.draw), lines)
+    data_lines = dplyr::filter(eval_draws, .data$.draw %in% selected_draws)
     line_mapping = if (use_color) {
       ggplot2::aes(group = interaction(.data$.draw, .data$.group), color = .data$.color)
     } else {
@@ -334,7 +335,7 @@ get_plot = function(x,
 #' \donttest{
 #' plot(demo_fit, prior = TRUE)  # The prior
 #'
-#' plot(demo_fit, lines = 0, q_fit = TRUE)  # 95% HDI without lines
+#' plot(demo_fit, lines = 0, q_fit = TRUE)  # 95% central interval without lines
 #' plot(demo_fit, q_predict = c(0.1, 0.9))  # 80% prediction interval
 #' plot_dpar(demo_fit, dpar = "sigma", lines = 100)  # The variance parameter on y
 #'

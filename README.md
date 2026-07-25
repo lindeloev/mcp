@@ -10,7 +10,7 @@
 
 Change points are also called **switch points**, **break points**, **broken line** regression, **broken stick** regression, **bilinear** regression, **piecewise linear** regression, **local linear** regression, **segmented** regression, and (performance) **discontinuity** models. `mcp` aims to be be useful for all of them. See how `mcp` compares to [other R packages](https://lindeloev.github.io/mcp/articles/packages.html).
 
-Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. `mcp` leverages the power of `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
+Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. `mcp` leverages the power of `posterior`, `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
 
 
 # Install
@@ -92,7 +92,7 @@ Population-level parameters:
   time_3    OK -0.2 -0.22 -0.38 -0.035    1   834
 ```
 
-`rhat` is the [Gelman-Rubin convergence diagnostic](https://www.rdocumentation.org/packages/coda/versions/0.19-3/topics/gelman.diag), `eff` is the [effective sample size](https://mc-stan.org/docs/2_18/reference-manual/effective-sample-size-section.html). You may also want to do a posterior predictive check using `pp_check(fit)`.
+`Rhat` is the rank-normalized split-Rhat convergence diagnostic; `ess_bulk` and `ess_tail` are the effective sample sizes for the bulk and tails of the posterior. You may also want to do a posterior predictive check using `pp_check(fit)`.
 
 `plot_pars(fit)` can be used to inspect the posteriors and convergence of all parameters. See the documentation of `plot_pars()` for many other plotting options. Here, we plot just the (population-level) change points. They often have "strange" posterior distributions, highlighting the need for a computational approach:
 
@@ -245,7 +245,7 @@ ranef(fit, width = 0.98)
 ## Generalized linear models
 `mcp` supports Generalized Linear Modeling. See extended examples using [`binomial()`](https://lindeloev.github.io/mcp/articles/binomial.html) and [`poisson()`](https://lindeloev.github.io/mcp/articles/poisson.html).
 
-Here is a binomial change point model with three segments (see simulation code: `mcp_example("binomial")$call`). We plot the 95% HDI too:
+Here is a binomial change point model with three segments (see simulation code: `mcp_example("binomial")$call`). We plot the 95% central posterior interval too:
 
 ```r
 model = list(

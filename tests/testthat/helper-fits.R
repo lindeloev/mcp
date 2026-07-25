@@ -71,7 +71,7 @@ test_matches_simulated = function(fit) {
   correctly_estimated = all(summaries$match == "OK" | (summaries$sim > new_lower & summaries$sim < new_upper))
 
   # At least some effective samples
-  good_eff = all(summaries$n.eff > 50)
+  good_eff = all(summaries$ess_bulk > 50 & summaries$ess_tail > 50)
 
   # Test
   if (correctly_estimated == FALSE | good_eff == FALSE)

@@ -91,7 +91,7 @@ plot_pars = function(fit,
   bayesplot::available_mcmc()  # Quick fix to make R CMD Check happy that bayesplot is imported
 
   # Get posterior/prior samples
-  samples = mcmclist_samples(fit, prior = prior)
+  samples = posterior_draws(fit, prior = prior)
 
   # Handle special codes
   if ("population" %in% pars) {

@@ -25,6 +25,7 @@ Imports:
 	lifecycle (>= 1.0.0),
 	rjags (>= 4.9),
 	coda (>= 0.19.3),
+	posterior (>= 1.0.0),
 	loo (>= 2.1.0),
 	bayesplot (>= 1.7.0),
 	tidybayes (>= 3.0.0),

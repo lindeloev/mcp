@@ -140,13 +140,13 @@ plot_dpar(fit, dpar = "sigma", q_fit = TRUE)
 summary(fit)
 ```
 
-The effective sample size (`n.eff`) is fairly low, indicating poor mixing for these parameters. `Rhat` is acceptable at < 1.1, indicating good convergence between chains. Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:
+The bulk and tail effective sample sizes (`ess_bulk` and `ess_tail`) are fairly low, indicating poor mixing for these parameters. `Rhat` is acceptable at < 1.1, indicating good convergence between chains. Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:
 
 ```{r, fig.height=7, fig.width = 6}
 plot_pars(fit, regex_pars = "sigma_")
 ```
 
-This confirms the impression from `Rhat` and `n.eff`. Setting `mcp(..., iter = 10000)` would be advisable to increase the effective sample size. Read more about [tips, tricks, and debugging](../articles/tips.html).
+This confirms the impression from `Rhat`, `ess_bulk`, and `ess_tail`. Setting `mcp(..., iter = 10000)` would be advisable to increase the effective sample size. Read more about [tips, tricks, and debugging](../articles/tips.html).
 
 
 

@@ -231,7 +231,7 @@ loglik_settings_match = function(loglik, settings) {
 #' model parameters. The documentation for the argument `hypotheses` below
 #' shows examples of how to specify hypotheses, and [read worked examples on the mcp website](https://lindeloev.github.io/mcp/articles/comparison.html).
 #' For directional hypotheses, `hypothesis` executes the hypothesis string in
-#' a `tidybayes` environment and summarises the proportion of posterior and
+#' a data-frame environment and summarises the proportion of posterior and
 #' prior samples where the expression evaluates to TRUE. The Bayes factor is
 #' the posterior odds divided by the prior odds. For equals-hypotheses, a
 #' Savage-Dickey ratio is computed. Both kinds of Bayes factor require prior
@@ -276,7 +276,7 @@ loglik_settings_match = function(loglik, settings) {
 #'
 #'   * `hypothesis` is the hypothesis; often re-arranged to test against zero.
 #'   * `mean` is the posterior mean of the left-hand side of the hypothesis.
-#'   * `lower` is the lower bound of the (two-sided) highest-density interval of width `width`.
+#'   * `lower` is the lower bound of the central posterior interval of width `width`.
 #'   * `upper` is the upper bound of ditto.
 #'   * `p` Posterior probability.
 #'       For "=" (Savage-Dickey), it is the BF converted to p.
@@ -335,14 +335,19 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
       expression = paste0(LHS, " ", this_comparator, " 0")
 
       # Get effect estimate
-      samples = mcmclist_samples(fit, prior = prior) %>%
-        tidybayes::tidy_draws() %>%
+      samples = posterior_draws(fit, prior = prior) %>%
+        posterior::as_draws_df() %>%
         dplyr::mutate(effect = eval(str2lang(LHS)))
 
-      estimate = tidybayes::mean_hdci(samples, .data$effect, .width = width)
+      tail_prob = (1 - width) / 2
+      estimate = list(
+        effect = mean(samples$effect),
+        .lower = stats::quantile(samples$effect, tail_prob, names = FALSE),
+        .upper = stats::quantile(samples$effect, 1 - tail_prob, names = FALSE)
+      )
     } else {
-      samples = mcmclist_samples(fit, prior = prior) %>%
-        tidybayes::tidy_draws()
+      samples = posterior_draws(fit, prior = prior) %>%
+        posterior::as_draws_df()
 
       estimate = list(effect = NA, .lower = NA, .upper = NA)
     }
@@ -353,8 +358,8 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
         stop("Model contains '='. Both prior and posterior samples are needed to compute Savage-Dickey density ratios. Run mcp(..., sample = 'both'")
 
       # Finally, let's compute those densities
-      dens_prior = get_density(fit$mcmc_prior, LHS, 0)
-      dens_post = get_density(fit$mcmc_post, LHS, 0)
+      dens_prior = get_density(posterior_draws(fit, prior = TRUE), LHS, 0)
+      dens_post = get_density(posterior_draws(fit), LHS, 0)
       BF = dens_post / dens_prior
 
       # If there is almost no density. somehow we get negative values.
@@ -378,7 +383,8 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
           prob = sum(.data$result == TRUE) / dplyr::n()
         )
 
-      prob_prior = tidybayes::tidy_draws(fit$mcmc_prior) %>%
+      prob_prior = posterior_draws(fit, prior = TRUE) %>%
+        posterior::as_draws_df() %>%
         dplyr::mutate(result = eval(str2lang(expression))) %>%
         dplyr::summarise(
           prob = sum(.data$result == TRUE) / dplyr::n()
@@ -417,14 +423,14 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
 #' @aliases get_density
 #' @keywords internal
 #' @noRd
-#' @param samples An mcmc.list
+#' @param samples A posterior draws object.
 #' @param LHS Expression to compute posterior
 #' @param value What value to evaluate the density at
 #' @return A float
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_density = function(samples, LHS, value) {
-  samples = tidybayes::tidy_draws(samples) %>%
+  samples = posterior::as_draws_df(samples) %>%
     dplyr::mutate(result = eval(str2lang(LHS)))
   dens = stats::density(dplyr::pull(samples, "result"), bw = "SJ")
   dens_point = stats::spline(dens$x, dens$y, xout = value)$y
