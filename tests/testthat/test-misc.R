@@ -231,7 +231,7 @@ test_that("hypothesis()", {
     )
   }
 
-  actual_directional = hypothesis(fit_asymmetric, directional)
+  actual_directional = expect_no_warning(hypothesis(fit_asymmetric, directional))
   p_post = mean(cp_draws > threshold)
   prior_draws = unlist(lapply(fit_asymmetric$mcmc_prior, function(chain) chain[, "cp_1"]))
   p_prior = mean(prior_draws > threshold)

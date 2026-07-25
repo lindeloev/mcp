@@ -211,8 +211,8 @@ get_plot = function(x,
   fit$data = add_plot_groups(fit$data, curve_by = curve_by, color_by = color_by)
   use_color = !is.null(color_by) && length(unique(fit$data$.color)) > 1
 
-  # If this is time series, strip fit$data$y for the "ts" class to avoid ggplot2 warning about scale picking..
-  # TO DO: hack.
+  # Store the plotting-scale response and strip any "ts" class to avoid
+  # ggplot2 warnings about scale selection.
   fit$data[, fit$pars$y] = as.numeric(ydata)
 
 
@@ -280,7 +280,8 @@ get_plot = function(x,
     gg = gg + geom_cp_density(fit, facet_by, prior, limits_y) +
       ggplot2::coord_cartesian(
         ylim = c(limits_y[1], NA),  # Remove density flat line from view
-        xlim = c(min(fit$data[, fit$pars$x]), max(fit$data[, fit$pars$x]))  # Very broad varying change point posteriors can expand beyond observed range. TO DO
+        # Do not let broad varying change-point densities expand the observed x-range.
+        xlim = c(min(fit$data[, fit$pars$x]), max(fit$data[, fit$pars$x]))
       )
   }
 

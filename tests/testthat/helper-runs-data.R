@@ -17,7 +17,7 @@ data_gauss = data.frame(
 
   # varying effects should be categorical-ish
   id = c("a", "b", "c", "d", "e"),
-  ok_id_factor = factor(c(-3, 0, 5, 9, 1.233243)),  # It's a factor, so decimals are OK
+  ok_id_factor = factor(c(-3, 0, -3, 0, 1.233243)),  # Repeated levels; as a factor, decimals are OK
   ok_id_integer = -2:2,  # interval
   bad_id = rnorm(5),  # decimal numbers
 

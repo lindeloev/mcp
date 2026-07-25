@@ -37,9 +37,9 @@ good_binomial = list(
        ~ 0),
   list(y | trials(N) ~ 1,  # With varying
        1 + (1|id) ~ 1),
-  list(y | trials(N) ~ 1 + ar(1) + ma(1))
-  #list(y | trials(N) ~ 1,
-  #     1 ~ N)  # N can be both trials and slope. TO DO: Fails in this test because par_x = "x"
+  list(y | trials(N) ~ 1 + ar(1) + ma(1)),
+  list(y | trials(N) ~ 1,
+       1 ~ N)  # N can be both trials and slope
 )
 
 test_good(good_binomial,

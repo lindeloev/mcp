@@ -287,7 +287,8 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
     dplyr::mutate(form = ifelse(.data$segment == 1, .data$form, paste0(.data$form_y, .data$form_cp, " ~ ", .data$form_rhs))) %>%  # build full formula
     dplyr::select(-"form_y", -"form_cp", -"form_rhs")  # Not needed anymore
 
-  ST$x = par_x  # TO DO: TEMPORARY UNTIL MULTIPLE REGRESSION IS IMPLEMENTED
+  # Every segment shares one change-point dimension, including multiple-regression models.
+  ST$x = par_x
 
 
 

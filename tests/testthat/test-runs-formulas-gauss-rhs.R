@@ -63,6 +63,15 @@ bad_slopes = list(
 
 test_bad(bad_slopes)
 
+test_that("formula functions reject multiple terms containing par_x", {
+  expect_no_warning(
+    expect_error(
+      mcp(list(y ~ I(x:ok_x)), data_gauss, par_x = "x", sample = FALSE),
+      "does not currently support 2\\+ terms within a formula function"
+    )
+  )
+})
+
 
 
 good_slopes = list(

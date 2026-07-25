@@ -95,6 +95,16 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
     dpar_prefix = paste0(dpar, order, "_")
   }
 
+  # Check raw terms before model.matrix() evaluates expressions such as I(x:b).
+  formula_terms = attr(stats::terms(form_rhs), "term.labels")
+  contains_multiple_terms = formula_terms %>%
+    stringr::str_extract("(?<=\\().*(?=\\))") %>%
+    stringr::str_detect("[+:*]")
+  contains_x = term_contains(par_x, formula_terms)
+  is_bad = contains_x & contains_multiple_terms
+  if (any(stats::na.omit(is_bad) == TRUE))
+    stop("mcp does not currently support 2+ terms within a formula function when one of them is par_x = '", par_x, "'. Found: ", and_collapse(formula_terms[which(is_bad)]))
+
   mat = stats::model.matrix(form_rhs, data)
   if (check_rank == TRUE)
     assert_rank(mat, segment, dpar)
@@ -105,16 +115,6 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
   #######################
   pars = colnames(mat)
   matrix_name = pars
-
-  # Check that all contents with par_x within parantheses contain only a single term
-  split_terms = lapply(pars, function(x) stringr::str_split(x, ":")) %>% unlist()
-  split_contains_multiple_terms = split_terms %>%
-    stringr::str_extract("(?<=\\().*(?=\\))") %>%
-    stringr::str_detect("[+:*]")  # TO DO: will fail to detect I(x:b) because the string is already split by :
-  split_contains_x = term_contains(par_x, split_terms)
-  is_bad = split_contains_x & split_contains_multiple_terms
-  if (any(stats::na.omit(is_bad) == TRUE))
-    stop("mcp does not currently support 2+ terms within a formula function when one of them is par_x = '", par_x, "'. Found: ", and_collapse(split_terms[which(is_bad)]))
 
   # Replace I(...) with ...
   I_contents = stringr::str_extract(pars, "(?<=I\\().*(?=\\))")

@@ -61,7 +61,7 @@ test_runs = function(model,
       sample = "both",  # prior and posterior to check hypotheses
       par_x = par_x,
       adapt = 6,
-      iter = 18,  # loo fails if this is too low. TO DO: require next version of loo when it is out.
+      iter = 18,  # Keep enough draws for the minimum supported loo version.
       chains = 2  # run sequentially under the default future plan
     )
 
@@ -183,9 +183,9 @@ test_summary = function(fit, varying_cols, prior = FALSE) {
     testthat::expect_true(is.character(varying$name))
     testthat::expect_true(is.numeric(varying$mean))
 
-    group_level_counts = lapply(varying_cols, function(col) length(fit$data[, col]))
-    n_unique_data = sum(unlist(group_level_counts))
-    testthat::expect_true(nrow(varying) == n_unique_data)  # TO DO: should fail if there are multiple groups
+    group_level_counts = lapply(varying_cols, function(col) length(unique(fit$data[[col]])))
+    n_varying_levels = sum(unlist(group_level_counts))
+    testthat::expect_equal(nrow(varying), n_varying_levels)
   }
 }
 

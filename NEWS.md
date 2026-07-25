@@ -22,6 +22,8 @@
 
     -   Dropped arguments `which_y`, `scale` which only made sense for distributional parameters (dpars) and where several of the other arguments (e.g., `q_predict`) were insensible. Use the new `plot_dpar()` for this.
 
+-   `which_y` is deprecated across `fitted()`, `predict()`, `plot()`, `fit$simulate()`, etc. Use `dpar` instead, following the naming used by `brms`/`posterior`. Its default also changed from `dpar = "mu"` to `dpar = "epred"`, i.e., `fitted()` now returns the expected value of the response by default rather than the central-tendency parameter on the response scale. For the currently supported families these coincide, but `epred` is the forward-compatible choice for families where the mean depends on more than one distributional parameter (e.g., lognormal).
+
 -   `fit = mcp_example("name")` now returns the fit directly instead of a list with a `$fit` entry. It now defaults to sampling the model (`sample = "post"`) and the `sample` argument is now directly passed to `mcp(..., sample = sample)` so `sample = TRUE` is deprecated.
 
 ## Other new features

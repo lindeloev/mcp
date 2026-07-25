@@ -339,8 +339,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
         tidybayes::tidy_draws() %>%
         dplyr::mutate(effect = eval(str2lang(LHS)))
 
-      # TO DO: check need to suppress warnings when tidybayes 1.2 is out?
-      estimate = suppressWarnings(tidybayes::mean_hdci(samples, .data$effect, .width = width))
+      estimate = tidybayes::mean_hdci(samples, .data$effect, .width = width)
     } else {
       samples = mcmclist_samples(fit, prior = prior) %>%
         tidybayes::tidy_draws()

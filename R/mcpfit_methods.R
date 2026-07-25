@@ -56,9 +56,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   if (varying == TRUE & is.null(fit$pars$varying))
     return(NULL)
 
-  # Get posterior/prior samples
-  # TO DO: transition this to tidy_samples at some point if rhat and n.eff
-  #    can be computed on this data. Would avoid some hacky solutions in the code below.
+  # Keep samples separated by chain for coda's Rhat and effective-size diagnostics.
   samples = mcmclist_samples(fit, prior = prior)
 
   # Select only varying or only population-level columns in data
@@ -70,14 +68,9 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
       stop("There were no matching parameters in the model.")
   }
 
-  # HACK: If there is just one parameter, it's not a matrix. Add two in to make the code run.
   all_cols = colnames(samples[[1]])
   get_cols = all_cols[stringr::str_detect(all_cols, regex_pars)]
-  if (!stringr::str_detect(regex_pars, "\\|") && varying == FALSE) {
-    samples = lapply(samples, function(x) x[, c(get_cols, "cp_0", "cp_1")])
-  } else {
-    samples = lapply(samples, function(x) x[, get_cols])
-  }
+  samples = lapply(samples, function(x) x[, get_cols, drop = FALSE])
   class(samples) = "mcmc.list"  # Return to original class
 
   # Get parameter estimates
@@ -96,17 +89,13 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
     # Remove unneeded stuff
     dplyr::select(-tidyselect::starts_with("."))
 
-  # Revert HACK and continue
-  if (!stringr::str_detect(regex_pars, "\\|") && varying == FALSE) {
-    estimates = dplyr::filter(estimates, .data$name %notin% c("cp_0", "cp_1"))
-    samples = lapply(samples, function(x) x[, get_cols])
-  }
-
   # Diagnostics: Gelman-Rubin and effective sample size
   Rhat = try(coda::gelman.diag(samples, multivariate = FALSE)$psrf[, 1], TRUE)
   if (!is.numeric(Rhat)) {
     warning("Rhat computation failed: ", Rhat)
-    Rhat = rep(NA, nrow(estimates))
+    Rhat = stats::setNames(rep(NA_real_, nrow(estimates)), estimates$name)
+  } else if (is.null(names(Rhat))) {
+    names(Rhat) = colnames(samples[[1]])
   }
   diagnostics = data.frame(
     name = names(Rhat),
