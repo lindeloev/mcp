@@ -7,7 +7,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-For GLM families with a variance parameter (`sigma`), you can model this explicitly. For example, if you want a flat mean (a plateau) with increasing variance, you can do `y ~ 1 + sigma(1 + x)`. In general, all formula syntax that is allowed outside of `sigma()` (where it applies to the mean) also works inside it (applying to the variance). For example, if you go all-out, you can do `~ 1 + sigma(rel(1) + sin(x) + I(x^2))`. Read more about mcp formulas [here](../articles/formulas.html). 
+For GLM families with a variance parameter (`sigma`), you can model this explicitly. For example, if you want a flat mean (a plateau) with increasing variance, you can do `y ~ 1 + sigma(1 + x)`. In general, all formula syntax that is allowed outside of `sigma()` (where it applies to the mean) also works inside it (applying to the variance). For example, you can do `~ 1 + sigma(1 + z + I(x^2))`. Read more about mcp formulas [here](../articles/formulas.html).
 
 ```{r}
 library(mcp)

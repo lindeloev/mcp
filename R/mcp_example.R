@@ -8,7 +8,6 @@
 #'  * `"intercepts"`: An intercept-only change point.
 #'  * `"multiple"`: Multiple regression with categorical predictors and interactions.
 #'  * `"quadratic"`: A change point to a quadratic segment.
-#'  * `"trigonometric"`: Trigonometric/seasonal data and model.
 #'  * `"varying"`: Varying / hierarchical change points.
 #'  * `"variance"`: A change in variance, including a variance slope.
 #' @inheritParams mcp
@@ -210,33 +209,6 @@ data$y = empty$simulate(empty, data,
   x_2 = -30,
   xE2_2 = 1.5,
   sigma_1 = 30
-)
-
-# Run sampling
-fit = mcp(model, data, sample = sample)",
-
-
-
-trigonometric = "model = list(
-  y ~ 1 + sin(x),
-  ~ 1 + cos(x) + x
-)
-
-# Simulate data
-set.seed(42)
-data = data.frame(
-  x = seq(0, 35, by = 0.2),
-  y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
-)
-empty = mcp::mcp(model, data, sample = FALSE)
-data$y = empty$simulate(empty, data,
-  cp_1 = 17,
-  Intercept_1 = 10,
-  sinx_1 = 10,
-  Intercept_2 = 10,
-  x_2 = 3,
-  cosx_2 = 8,
-  sigma_1 = 3
 )
 
 # Run sampling

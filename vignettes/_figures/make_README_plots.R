@@ -83,18 +83,6 @@ fit_quadratic = mcp_example("quadratic")
 theme_it(plot(fit_quadratic), "Quadratic and other exponentiations")
 save_it("ex_quadratic.png")
 
-
-
-#################
-# TRIGONOMETRIC #
-#################
-fit_trig = mcp_example("trigonometric")
-#fit_trig = mcp(ex_trig$model, ex_trig$data, adapt = 3000)
-theme_it(plot(fit_trig), "Trigonometric for periodic trends")
-save_it("ex_trig.png")
-
-
-
 ############
 # VARIANCE #
 ############

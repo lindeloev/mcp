@@ -336,27 +336,6 @@ plot(fit)
 
 ![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_quadratic.png)
 
-
-
-
-## Trigonometric and others
-You can use `sin(x)`, `cos(x)`, and `tan(x)` to do trigonometry. This can be useful for seasonal trends and other periodic data. You can also do `exp(x)`, `abs(x)`, `log(x)`, and `sqrt(x)`, but beware that the two latter will currently fail in segment 2+. Raise an issue if you need this.
-
-```r
-model = list(
-  y ~ 1 + sin(x),
-  ~ 1 + cos(x) + x
-)
-ex = mcp_example_data("trigonometric")
-fit = mcp(model, ex$data)
-plot(fit)
-```
-
-![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_trig.png)
-
-
-
-
 # Do much more with the MCMC samples
 Don't be constrained by these simple `mcp` functions. `fit$samples` is a regular `mcmc.list` object and all methods apply. You can work with the MCMC samples just as you would with `brms`, `rstanarm`, `jags`, or other samplers using the always excellent `tidybayes`:
 

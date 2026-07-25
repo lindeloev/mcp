@@ -95,7 +95,7 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
     dpar_prefix = paste0(dpar, order, "_")
   }
 
-  # Check raw terms before model.matrix() evaluates expressions such as I(x:b).
+  # Complex expressions involving par_x do not yet have stable parameter names.
   formula_terms = attr(stats::terms(form_rhs), "term.labels")
   contains_multiple_terms = formula_terms %>%
     stringr::str_extract("(?<=\\().*(?=\\))") %>%
@@ -143,9 +143,10 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
   # GET X_FACTOR #
   ################
 
-  # Detect terms with par_x and extract this multiplicative part
-  all_patterns = c("x", "x\\^[\\+\\-0-9]+", "abs\\(x\\)", "sin\\(x\\)", "cos\\(x\\)", "tan\\(x\\)", "exp\\(x\\)", "log\\(x\\)", "sqrt\\(x\\)")
-  pars_terms = lapply(all_patterns, extract_expr, pars, par_x)
+  # Bare par_x and polynomial bases are relative to the segment onset. Other
+  # transformations stay evaluated on the original input in the model matrix.
+  local_patterns = c("x", "x\\^[\\+\\-0-9]+")
+  pars_terms = lapply(local_patterns, extract_expr, pars, par_x)
 
   # Now convert par_x to "x"
   pattern_convert_to_x = gsub("x", par_x, "^x$|^x(?=\\^)|(?<=\\()x", fixed = TRUE)
@@ -153,20 +154,15 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
 
   # Finally, multiply-merge to vector
   data_subterms = tibble::tibble(as.data.frame(pars_terms))
-  colnames(data_subterms) = gsub("\\", "", all_patterns, fixed = TRUE)
+  colnames(data_subterms) = gsub("\\", "", local_patterns, fixed = TRUE)
   x_factor = tidyr::unite(data_subterms, "x_factor", sep = "*", na.rm = TRUE) %>% dplyr::pull(x_factor)  # same length as pars
 
   # Check exponent
   exponent = stringr::str_extract(dplyr::pull(data_subterms, 2), "(?<=\\^)[-0-9]+$")
   sapply(as.numeric(exponent), assert_integer, lower = 0, name = ". Got exponents in formula.")
 
-  # Independent of x?
-  is_independent_of_x = term_contains(par_x, pars) == FALSE
-  if (any(x_factor[is_independent_of_x] != ""))
-    stop_github("Internal mcp error: coded term as both dependent and independent of x")
-  x_factor[is_independent_of_x] = "1"
-  if (any(x_factor == ""))
-    stop_github("Internal mcp error: did not code x_factor for term ", pars[x_factor == ""])
+  # Everything not recognized as a local basis remains in the model matrix.
+  x_factor[x_factor == ""] = "1"
 
 
 
@@ -251,7 +247,7 @@ assert_unique_rhs_names = function(rhs_table) {
 #' @aliases extract_expr
 #' @keywords internal
 #' @noRd
-#' @param expr The expression to search for, e.g., "x" or "sin(x)". This is the needle.
+#' @param expr The expression to search for, e.g., "x" or "I(x^2)". This is the needle.
 #' @param pars This is the haystack.
 #' @param par_x The parameter to substitute for x, e.g., "myvar".
 #' @return A character vector of length `pars` with matches to `expr`.

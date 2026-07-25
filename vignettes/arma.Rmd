@@ -103,7 +103,7 @@ To control the *direction* of a change, put a one-sided prior on the correspondi
 ## Regression on AR/MA coefficients
 You can specify how the coefficients change with $x$ using `ar(p, formula)` and `ma(q, formula)`. For example, `ar(1, 1 + time)` models a steady change in AR(1) strength. These regression formulas use an identity link, so slopes can easily produce non-stationary or non-invertible coefficients. See [the section on priors](#ar_prior) for ways to constrain them. The same formula is applied separately to every order in the term.
 
-The full suite of [`mcp` formula syntax](../articles/formulas.html) is available inside both terms, so you could use `ar(3, 1 + I(x^2) + exp(x))` or `ma(1, 0 + group)`. Make sure to use a positive-only prior (e.g., `"dunif(0, 1)"`) with transformations such as `log()` and `sqrt()`, since they fail for negative values.
+The full suite of [`mcp` formula syntax](../articles/formulas.html) is available inside both terms, so you could use `ar(3, 1 + I(x^2) + exp(z))` or `ma(1, 0 + group)`. Transformed predictors must stay within the transformation's domain; for example, values passed to `log()` and `sqrt()` must be non-negative.
 
 ## Combining ar(), ma(), and sigma()
 You can combine `ar()` and `ma()` with any regression model and with [varying change points](../articles/varying.html). For Gaussian models, `sigma()` controls the innovation standard deviation:

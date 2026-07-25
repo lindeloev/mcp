@@ -6,6 +6,12 @@
 
 ## Major breaking changes
 
+-   Formula transformations now use the original predictor values, as in
+    `lm()`, `glm()`, and `brms`. Previously, transformations of the change-point
+    predictor such as `sin(x)` and `exp(x)` restarted at each segment onset.
+    Bare `par_x` and polynomial bases such as `I(par_x^2)` remain segment-local
+    to support joined segment shapes.
+
 -   Posterior summaries now report central quantile intervals instead of
     highest-density intervals. Sampling diagnostics now use the rank-normalized
     split-Rhat, bulk ESS, and tail ESS from `posterior`; the `n.eff` column has

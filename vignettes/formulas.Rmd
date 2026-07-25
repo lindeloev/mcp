@@ -20,6 +20,11 @@ The format of each segment is generally `response ~ changepoint ~ predictors + s
  * **The predictors** can be `0` (no change in intercept), `1` (change in intercept), and any column in your data which you want to model a slope on.
  * **The variance predictors** has [it's own article](../articles/variance.html), but they follow the same rules as the **predictors**.
 
+Transformations in formulas are evaluated on the original predictor values, as
+in `lm()` and `glm()`. The change-point predictor is the exception: bare
+`par_x` and polynomial bases such as `I(par_x^2)` use distance from the segment
+onset so that they can describe joined segment shapes.
+
 For convenience, you can omit the response and the change point in segment 2+, in which case the former response and an intercept-only (as opposed to random/varying) change point is assumed. When you call `summary(fit)`, it will show the explicit representation. Let us see this in action for this model where we predict `score` as a function of `time` in three segments, i.e., with two change points:
 
 ```{r}

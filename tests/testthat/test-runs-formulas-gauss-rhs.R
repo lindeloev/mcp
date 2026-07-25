@@ -72,6 +72,39 @@ test_that("formula functions reject multiple terms containing par_x", {
   )
 })
 
+test_that("transformations use the original par_x while segment bases stay local", {
+  data = data.frame(x = 0:10, y = 0)
+  fit = mcp(
+    list(y ~ 1, ~ 1 + sin(x) + x + I(x^2)),
+    data,
+    sample = FALSE
+  )
+  table = fit$.internal$rhs_table
+
+  expect_equal(table$x_factor[table$matrix_name == "sin(x)"], "1")
+  expect_equal(
+    unname(table$matrix_data[[which(table$matrix_name == "sin(x)")]]),
+    sin(data$x)
+  )
+  expect_equal(table$x_factor[table$matrix_name == "x"], "x")
+  expect_equal(table$x_factor[table$matrix_name == "I(x^2)"], "x^2")
+
+  fitted = fit$simulate(
+    fit,
+    data,
+    cp_1 = 5,
+    Intercept_1 = 0,
+    Intercept_2 = 0,
+    sinx_2 = 2,
+    x_2 = 0,
+    xE2_2 = 0,
+    sigma_1 = 1,
+    .type = "fitted"
+  )
+  expected = ifelse(data$x < 5, 0, 2 * sin(data$x))
+  expect_equal(as.numeric(fitted), expected)
+})
+
 
 
 good_slopes = list(
