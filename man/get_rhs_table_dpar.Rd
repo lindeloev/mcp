@@ -55,8 +55,6 @@ Poisson, and negative-binomial families with their default links.
 or \code{negbinomial()}.
 with a supported link function, e.g., \code{gaussian(link = "log")}.
 Custom families can also be provided, e.g., \code{mcpfamily(gaussian(link = "log"))}.}
-
-\item{form}{The RHS formula for a particular dpar of a segment.}
 }
 \value{
 A tibble with one row per model parameter and the columns

@@ -602,7 +602,7 @@ tidy_samples = function(
 #'   * `"response"`: return on the observed scale, i.e., after applying the inverse link function.
 #'   * `"linear"`: return on the parameter scale (where the linear trends are modelled).
 #'     A linear scale is only applicable when `type == "fitted"` and `dpar` is not `NULL`.
-#' @param ... Currently ignored.
+#' @param .include_fitted Internal. Include fitted values with unsummarised predictions.
 #' @return
 #'   * If `summary = TRUE`: A `tibble` with the posterior mean for each row in `newdata`,
 #'     If `newdata` is `NULL`, the data in `fit$data` is used.
@@ -794,6 +794,7 @@ pp_eval = function(
 #' but with fixed arguments for `fitted`: `rate = FALSE, dpar = 'mu', samples_format = 'tidy'`.
 #'
 #' @inheritParams pp_eval
+#' @param ... Currently ignored.
 #' @inherit pp_eval return
 #' @seealso \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}} \code{\link{log_lik.mcpfit}}
 #' @encoding UTF-8

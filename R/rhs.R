@@ -56,7 +56,6 @@ get_par_x = function(model, data, par_x = NULL) {
 #' @aliases get_rhs_table_dpar
 #' @keywords internal
 #' @inheritParams mcp
-#' @param form The RHS formula for a particular dpar of a segment.
 #' @param form_rhs The full RHS formula of a segment, including one or several `form`s.
 #' @param segment Integer. The segment number
 #' @param dpar A distributional parameter or an `ar`/`ma` component.

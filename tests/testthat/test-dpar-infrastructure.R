@@ -382,7 +382,7 @@ test_that("color_by controls color without pooling categorical curves", {
   )
   interaction_quantiles = ggplot2::ggplot_build(interaction_color)$data[[2]]
   expect_equal(length(unique(interaction_quantiles$colour)), 4)
-  expect_equal(interaction_color$labels$colour, "group × condition")
+  expect_equal(interaction_color$labels$colour, "group:condition")
 
   faceted = plot(
     fit,

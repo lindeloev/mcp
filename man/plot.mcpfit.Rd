@@ -56,13 +56,12 @@ quantiles.
 \item{facet_by}{Character vector. Names of categorical data columns to split to facets.
 Can be varying or RHS categoricals.}
 
-\item{color_by}{Character vector. Names of categorical data columns to color by.
-See \code{facet_by} for more.}
+\item{color_by}{\code{NULL} for no color grouping, or a character vector naming categorical or varying-effect data columns to color by.
+Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.}
 
 \item{lines}{Positive integer or \code{FALSE}. The number of fitted lines (draws).
-If there are categorical predictors, it is the number of fitted lines for
-each combination of \code{color_by} and \code{facet_by}. FALSE or \code{lines = 0} plots
-no lines. Note that lines always plot fitted values - not predicted.
+It is the number of joint posterior draws shown for every curve. FALSE or \code{lines = 0} plots no lines.
+Note that lines always plot fitted values - not predicted.
 For prediction intervals, see the \code{q_predict} argument.}
 
 \item{geom_data}{String. One of "point", "line" (good for time-series),

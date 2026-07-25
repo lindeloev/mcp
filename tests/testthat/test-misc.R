@@ -129,6 +129,12 @@ test_that("parameter-name collisions give a useful error", {
 demo_settings = mcp_example("demo", sample = FALSE)
 demo_fit2 = quiet_mcp(demo_settings$model, demo_settings$data, adapt = 2500, iter = 4000)
 
+test_that("binomial example can be constructed without sampling", {
+  fit = mcp_example("binomial", sample = FALSE)
+  expect_s3_class(fit, "mcpfit")
+  expect_true(all(fit$data$y <= fit$data$N))
+})
+
 test_that("cores is deprecated and ignored", {
   model = list(y ~ 1)
   data = data.frame(x = 1:3, y = 1:3)

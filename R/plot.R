@@ -9,13 +9,13 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
   if (length(curve_by) == 0) {
     df$.group = factor(rep(1, nrow(df)))
   } else {
-    df$.group = interaction(df[, curve_by, drop = FALSE], drop = TRUE, sep = " × ")
+    df$.group = interaction(df[, curve_by, drop = FALSE], drop = TRUE, sep = ":")
   }
 
   if (length(color_by) == 0) {
     df$.color = factor(rep(1, nrow(df)))
   } else {
-    df$.color = interaction(df[, color_by, drop = FALSE], drop = TRUE, sep = " × ")
+    df$.color = interaction(df[, color_by, drop = FALSE], drop = TRUE, sep = ":")
   }
 
   df
@@ -305,7 +305,7 @@ get_plot = function(x,
   } else {
     gg = gg +
       ggplot2::scale_color_viridis_d(end = 0.9) +   # Yellow is not distinct from the background
-      ggplot2::labs(color = paste(color_by, collapse = " × "))
+      ggplot2::labs(color = paste(color_by, collapse = ":"))
   }
 
   # Return

@@ -5,17 +5,13 @@
 \alias{interpolate_newdata}
 \title{Returns a data.frame with all combos of predictors}
 \usage{
-interpolate_newdata(
-  fit,
-  facet_by = NULL,
-  x_values = get_x_values(fit, facet_by)
-)
+interpolate_newdata(fit, by = NULL, x_values = get_x_values(fit, by))
 }
 \arguments{
 \item{fit}{An \code{mcpfit} object.}
 
-\item{facet_by}{Character vector. Names of categorical data columns to split to facets.
-Can be varying or RHS categoricals.}
+\item{by}{Character vector of categorical or varying-effect columns to evaluate separately.
+Categorical model predictors are always included.}
 
 \item{x_values}{Numeric vector of x-values to interpolate at.}
 }
@@ -37,9 +33,8 @@ The \code{par_x} variable will be interpolated with higher resolution around the
 change points where the values can change abruptly, but lower resolution in
 between to speed up the computation.
 
-Categorical variables are combined factorially (all level combos) and all
-continuous variables are interpolated at the x-values (see above paragraph) and
-applied to all factor-combos.
+Categorical variables and requested varying-effect groups are combined factorially (all level combinations).
+Continuous variables are interpolated at the x-values and applied to every curve.
 }
 \examples{
 \dontrun{

@@ -139,7 +139,7 @@ varying effects, the returned data is expanded with the relevant levels for each
 The return columns are:
 \itemize{
 \item Predictors from \code{newdata}.
-\item Sample descriptors: ".chain", ".iter", ".draw" (see the \code{tidybayes} package for more), and "data_row" (\code{newdata} rownumber)
+\item Sample descriptors: ".chain", ".iter", ".draw" (see the \code{tidybayes} package for more), and \code{data_row}, the row number in the evaluated \code{newdata}.
 \item Sample values: one column for each parameter in the model.
 \item The estimate. Either "predict" or "fitted", i.e., the name of the \code{type} argument.
 }
