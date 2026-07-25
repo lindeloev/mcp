@@ -104,9 +104,6 @@ test_runs = function(model,
       testthat::expect_equal(fit$loo$pointwise, fit$loo_pointwise$pointwise)
     }
 
-    # Test hypothesis
-    test_hypothesis(fit)
-
     for (col in c("mcmc_post", "mcmc_prior")) {
       use_prior = col == "mcmc_prior"
       fit_to_test = fit
@@ -129,9 +126,10 @@ test_runs = function(model,
       # Test mcpfit functions
       varying_cols = na.omit(fit_to_test$.internal$ST$cp_group_col)
       test_summary(fit_to_test, varying_cols, prior = use_prior)
-      #test_plot(fit, varying_cols)  # default plot
+      #test_plot(fit, varying_cols)  # default ggplot plot
       test_plot_pars(fit_to_test, prior = use_prior)  # bayesplot call
       test_pp_eval(fit_to_test, prior = use_prior)
+      test_hypothesis(fit_to_test, prior = use_prior)
     }
   }
 }
@@ -188,6 +186,7 @@ test_summary = function(fit, varying_cols, prior = FALSE) {
   }
 }
 
+
 # Test the regular plot, including faceting
 test_plot = function(fit, varying_cols) {
   q_fit = rbinom(1, 1, 0.5) == 1  # add quantiles sometimes
@@ -225,23 +224,23 @@ test_plot_pars = function(fit, prior = FALSE) {
 
 
 
-test_hypothesis = function(fit) {
+test_hypothesis = function(fit, prior) {
   # Function to test both directional and point hypotheses
-  run_test_hypothesis = function(fit, base) {
-    hypotheses = c(
-      paste0(base, " > 1"),  # Directional
-      paste0(base, " = -1")  # Savage-Dickey (point)
-    )
-    result = hypothesis(fit, hypotheses)
-    testthat::expect_true(is.data.frame(result) & nrow(result) == 2)
+  run_test_hypothesis = function(fit, base, prior = prior) {
+    hypotheses = paste0(base, " > 1")  # Directional
+    if (prior == FALSE)
+      hypotheses = c(hypotheses,  paste0(base, " = -1"))  # Savage-Dickey (point); only works if both prior and posterior is present.
+
+    result = hypothesis(fit, hypotheses, prior = prior)
+    testthat::expect_true(is.data.frame(result) & nrow(result) == length(hypotheses))
   }
 
   # Test single pop effect
-  run_test_hypothesis(fit, fit$pars$population[1])
+  run_test_hypothesis(fit, fit$pars$population[1], prior = prior)
 
   # Test multiple pop effect
   if (length(fit$pars$population) > 1)
-    run_test_hypothesis(fit, paste0(fit$pars$population[1] , " + ", fit$pars$population[2]))
+    run_test_hypothesis(fit, paste0(fit$pars$population[1] , " + ", fit$pars$population[2]), prior = prior)
 
   # Varying
   if (!is.null(fit$pars$varying)) {
@@ -251,11 +250,11 @@ test_hypothesis = function(fit) {
     varying_cols = paste0("`", mcmc_vars[varying_col_ids], "`")  # Add these for varying
 
     # Test single varying effect
-    run_test_hypothesis(fit, varying_cols[1])
+    run_test_hypothesis(fit, varying_cols[1], prior = prior)
 
     # Test multiple varying effects
     if (length(varying_cols) > 1)
-      run_test_hypothesis(fit, paste0(varying_cols[1], " + ", varying_cols[2]))
+      run_test_hypothesis(fit, paste0(varying_cols[1], " + ", varying_cols[2]), prior = prior)
   }
 }
 

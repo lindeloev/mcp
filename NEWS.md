@@ -46,6 +46,8 @@
 
 -   Added `prior_summary(fit)`. Its compact output shows each parameter's resolved prior and bounds; `prior_summary(fit, verbose = TRUE)` also shows the data-dependent rule, a plain-language description, source, and kind (`distribution`, `alias`, `expression`, or `constant`). Default priors are now resolved before JAGS code is generated, so `fit$prior` and generated code no longer depend on opaque data constants.
 
+-   Added option to test hypotheses on the prior using `hypothesis(fit, prior = TRUE)`.
+
 ## Minor breaking changes
 
 -   Removed the non-functional `exponential()` family. It had no default priors and could not be fitted. Exponential survival models would require dedicated support for censoring and survival likelihoods rather than the previous ordinary-response placeholder.
