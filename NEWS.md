@@ -104,6 +104,8 @@
 
 ## Behind the scenes
 
+-   Built-in response families now carry their distributional parameters, default priors, response validation, R-side expected-value/log-likelihood/random-generation functions, JAGS likelihood, and optional GARMA behavior in one internal `mcpfamily` specification. The model machinery delegates to that contract instead of branching on family names.
+
 -   Major changes in how the model is translated into JAGS code. The JAGS code is quite different but functionally equivalent.
 
 -   More thorough defensive coding.

@@ -43,7 +43,7 @@ test_that("negative-binomial exposes mean-shape metadata and defaults", {
   data = data.frame(x = 1:5, y = c(0, 1, 2, 4, 8))
   fit = mcp(list(y ~ 1 + x), data, family = negbinomial(), sample = FALSE)
 
-  expect_equal(fit$family$dpars, c("mu", "shape", "ar", "ma"))
+  expect_equal(fit$family$dpars, c("mu", "shape"))
   expect_equal(fit$family$links, c(mu = "log", shape = "log"))
   expect_equal(fit$prior$shape_1, "dloginvgamma(0.4, 0.3)")
 })
@@ -70,7 +70,7 @@ test_that("negative-binomial support does not alter Poisson metadata or priors",
   data = data.frame(x = 1:5, y = c(0, 1, 2, 4, 8))
   fit = mcp(list(y ~ 1 + x), data, family = poisson(), sample = FALSE)
 
-  expect_equal(fit$family$dpars, c("mu", "ar", "ma"))
+  expect_equal(fit$family$dpars, "mu")
   expect_equal(fit$family$links, c(mu = "log"))
   expect_equal(fit$prior$Intercept_1, "dt(0.7, 2.5, 3)")
   expect_equal(fit$prior$x_1, "dt(0, 0.625, 3)")

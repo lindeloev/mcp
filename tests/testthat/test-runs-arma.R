@@ -46,18 +46,25 @@ good_arma = list(
 test_good(good_arma)
 
 
-test_that("ar() and ma() require a supported default-link model", {
+test_that("ar() and ma() require a family GARMA implementation", {
   data = data.frame(x = 1:4, y = 1:4)
+  family = gaussian(link = "log")
+
+  expect_null(mcpfamily(family)$garma)
+  expect_s3_class(
+    mcp(list(y ~ 1 + x), data, family = family, par_x = "x", sample = FALSE),
+    "mcpfit"
+  )
 
   expect_error(
     mcp(
       list(y ~ 1 + ar(1) + ma(1)),
       data,
-      family = gaussian(link = "log"),
+      family = family,
       par_x = "x",
       sample = FALSE
     ),
-    "ar() and ma() currently support gaussian(), binomial(), poisson(), and negbinomial() with their default links; bernoulli() and non-default links are not supported.",
+    "family = gaussian(link = \"log\") does not define the GARMA behavior required by ar() or ma().",
     fixed = TRUE
   )
 })

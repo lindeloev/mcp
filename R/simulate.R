@@ -145,15 +145,10 @@ add_response_dpars = function(dpar_values, family) {
 #'
 #' @keywords internal
 #' @noRd
-get_garma_observed = function(y, family, boundary, trials = NULL) {
-  if (family$family == "gaussian")
-    return(y)
-  if (family$family == "binomial")
-    return(pmin(pmax(y, boundary), trials - boundary) / trials)
-  if (family$family %in% c("poisson", "negbinomial"))
-    return(pmax(y, boundary))
-
-  stop_github("GARMA observation transformation is unavailable for family = ", family$family, "().")
+get_garma_observed = function(y, family, boundary, data = list()) {
+  if (is.null(family$garma))
+    stop_github("GARMA observation transformation is unavailable for family = ", family$family, "().")
+  family$garma$observed_r(y, data, boundary)
 }
 
 
@@ -162,16 +157,15 @@ get_garma_observed = function(y, family, boundary, trials = NULL) {
 #' @keywords internal
 #' @noRd
 simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
-                          y = NULL, trials = NULL, shape = NULL, sigma = NULL,
-                          series_id = NULL) {
+                          dpars, data = list(), y = NULL, series_id = NULL) {
   if (is.null(series_id))
     series_id = rep(1, length(base_link_mu))
   if (length(series_id) != length(base_link_mu) || anyNA(series_id))
     stop_github("series_id must have one non-missing value per observation.")
 
   generate_series = is.null(y)
-  if (generate_series && family$family == "gaussian")
-    message("Generating residuals for AR(N) model since the response column/argument was not provided.")
+  if (generate_series && !is.null(family$garma$generate_message))
+    message(family$garma$generate_message)
 
   ar_order = length(ar_list)
   ma_order = length(ma_list)
@@ -199,24 +193,14 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
       mu[row] = family$linkinv(link_mu[row])
       generate_observation = generate_series || is.na(y[row])
       if (generate_observation) {
-        if (family$family == "gaussian") {
-          y[row] = stats::rnorm(1, mu[row], sigma[row])
-        } else if (family$family == "binomial") {
-          y[row] = stats::rbinom(1, trials[row], mu[row])
-        } else if (family$family == "poisson") {
-          if (mu[row] > 2146275819)
-            stop("Modelled extremely large count mean (> 2146275819).")
-          y[row] = stats::rpois(1, mu[row])
-        } else if (family$family == "negbinomial") {
-          if (mu[row] > 2146275819)
-            stop("Modelled extremely large count mean (> 2146275819).")
-          y[row] = stats::rnbinom(1, mu = mu[row], size = shape[row])
-        } else {
-          stop_github("Cannot generate GARMA responses for family = ", family$family, "().")
-        }
+        row_dpars = lapply(dpars, function(x) if (length(x) == 1) x else x[row])
+        row_dpars$mu = mu[row]
+        row_data = lapply(data, function(x) if (length(x) == 1) x else x[row])
+        y[row] = family$r$rng(1, row_dpars, row_data)
       }
 
-      garma_y = get_garma_observed(y[row], family, boundary[row], trials[row])
+      row_data = lapply(data, function(x) if (length(x) == 1) x else x[row])
+      garma_y = get_garma_observed(y[row], family, boundary[row], row_data)
       garma_link_y = family$linkfun(garma_y)
       resid_abs[row] = garma_link_y - base_link_mu[row]
       resid_ma[row] = garma_link_y - link_mu[row]
@@ -253,17 +237,18 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   # ASSERTS #
   ###########
   assert_types(fit, "mcpfit")
+  if (!is.mcpfamily(fit$family))
+    fit$family = mcpfamily(fit$family)
   rhs_table = fit$.internal$rhs_table  # Shorthand
 
   # Assert that the ellipsis contains the expected argument names
   param_pars = get_sim_pars(rhs_table, fit$pars)
   pred_pars = paste0(".pred_", rhs_table$code_name)
-  data_pars = c(fit$pars$x, fit$pars$trials)  # varying is not strictly a data par, but acts like it below
-  uses_weights = fit$family$family == "gaussian" &&
-    .type %in% c("predict", "loglik") &&
-    length(fit$pars$weights) > 0
-  if (uses_weights)
-    data_pars = c(data_pars, fit$pars$weights)
+  operation = switch(.type, fitted = "epred", loglik = "log_lik", predict = "rng")
+  is_arma = any(rhs_table$dpar %in% c("ar", "ma"))
+  aux_operations = c(operation, if (is_arma && .arma) "garma")
+  aux_columns = get_family_aux_columns(fit$family, fit$.internal$ST, aux_operations)
+  data_pars = c(fit$pars$x, stats::na.omit(unname(aux_columns)))
   expected_arg_names = c(param_pars, pred_pars, data_pars)
 
   args = list(...)
@@ -298,15 +283,10 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   if (!uses_link_dpars && .scale == "response" && .dpar %in% c("epred_", "mu_"))
     dpar_values$mu_ = fit$family$linkinv(dpar_values$mu_)
 
-  # JAGS models Gaussian weights as precision = weight / sigma^2, so the
-  # observation-level SD used for predictions and densities is sigma/sqrt(weight).
-  observation_sigma = dpar_values$sigma_
-  if (uses_weights) {
-    weights = args[[fit$pars$weights]]
-    if (!is.numeric(weights) || anyNA(weights) || any(weights <= 0))
-      stop("All weights must be numeric and greater than zero.")
-    observation_sigma = observation_sigma / sqrt(weights)
-  }
+  response_data = get_family_response_data(fit$family, fit$.internal$ST, args)
+  dpars = stats::setNames(lapply(fit$family$dpars, function(dpar) {
+    dpar_values[[paste0(dpar, "_")]]
+  }), fit$family$dpars)
 
   # Simply return for fitted dpars
   if (.dpar %notin% c("epred_", "mu_") & .type == "fitted") {
@@ -318,7 +298,6 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
 
   # GARMA is defined on the link scale. The observed response is clipped only
   # where needed to keep log and logit transformations finite.
-  is_arma = any(rhs_table$dpar %in% c("ar", "ma"))
   if (is_arma && .arma == TRUE) {
     base_link_mu = if (uses_link_dpars) dpar_values$link_mu_ else fit$family$linkfun(dpar_values$mu_)
     ar_list = dplyr::select(dpar_values, dplyr::matches("^ar[0-9]+_$"))
@@ -326,27 +305,21 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     boundary = dpar_values$garma_boundary_
     if (is.null(boundary))
       boundary = rep(0.1, length(base_link_mu))
-    trials = if (fit$family$family == "binomial") args[[fit$pars$trials]] else NULL
-    shape = if (fit$family$family == "negbinomial") dpar_values$shape_ else NULL
-    sigma = if (fit$family$family == "gaussian") observation_sigma else NULL
-
     if (!has_ydata && .type != "predict")
       stop("The response is required to evaluate GARMA terms.")
 
     arma_result = simulate_garma(
       base_link_mu, ar_list, ma_list, boundary, fit$family,
+      dpars = dpars, data = response_data,
       y = if (has_ydata) dpar_values$.ydata else NULL,
-      trials = trials, shape = shape, sigma = sigma,
       series_id = args[[".draw"]]
     )
-    if (!has_ydata) {
-      if (fit$family$family == "binomial" && .rate)
-        return(arma_result$y / trials)
-      return(arma_result$y)
-    }
+    if (!has_ydata)
+      return(fit$family$response$observed(arma_result$y, response_data, .rate))
 
     dpar_values$link_mu_ = arma_result$link_mu
     dpar_values$mu_ = arma_result$mu
+    dpars$mu = arma_result$mu
   }
 
   if (.type == "fitted" && .scale == "linear") {
@@ -355,56 +328,12 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     return(dpar_values$mu_)
   }
 
-  # Return functions here
-  if (fit$family$family == "gaussian") {
-    # If fitted or no data
-    if (.type == "fitted") {
-      return(dpar_values$mu_)
-    } else if(.type == "loglik") {
-      return(stats::dnorm(dpar_values$.ydata, dpar_values$mu_, observation_sigma, log = TRUE))
-    } else if (.type == "predict") {
-      if (any(dpar_values$sigma_ < 0))
-        stop("Modelled negative sigma. First detected at ", fit$pars$x, " = ", min(get(fit$pars$x)[dpar_values$sigma_ < 0]))
-
-      return(stats::rnorm(length(dpar_values$mu_), dpar_values$mu_, observation_sigma))
-    }
-
-    # OTHER FAMILIES ---------------------
-  } else if (fit$family$family == "binomial") {
-    dpar_values$N_trials = args[[fit$pars$trials]]
-
-    if (.type == "fitted") {
-      if (.rate == FALSE) return(dpar_values$N_trials * dpar_values$mu_)
-      if (.rate == TRUE)  return(dpar_values$mu_)
-    } else if (.type == "loglik") {
-      return(stats::dbinom(dpar_values$.ydata, dpar_values$N_trials, dpar_values$mu_, log = TRUE))
-    } else if (.type == "predict") {
-      if (.rate == FALSE) return(stats::rbinom(length(dpar_values$mu_), dpar_values$N_trials, dpar_values$mu_))
-      if (.rate == TRUE)  return(stats::rbinom(length(dpar_values$mu_), dpar_values$N_trials, dpar_values$mu_) / dpar_values$N_trials)
-    }
-  } else if (fit$family$family == "bernoulli") {
-    if (.type == "fitted") return(dpar_values$mu_)
-    if (.type == "loglik") return(stats::dbinom(dpar_values$.ydata, 1, dpar_values$mu_, log = TRUE))
-    if (.type == "predict") return(stats::rbinom(length(dpar_values$mu_), 1, dpar_values$mu_))
-  } else if (fit$family$family %in% c("poisson", "negbinomial")) {
-    # Shared count-family behavior. The distributions differ only in their
-    # density/RNG calls and the negative-binomial shape parameter.
-    if (.type %in% c("predict", "loglik") && any(dpar_values$mu_ > 2146275819)) {
-      stop("Modelled extremely large count mean (> 2146275819).")
-    }
-
-    if (.type == "fitted") {
-      return(dpar_values$mu_)
-    } else if (.type == "loglik" && fit$family$family == "poisson") {
-      return(stats::dpois(dpar_values$.ydata, dpar_values$mu_, log = TRUE))
-    } else if (.type == "predict" && fit$family$family == "poisson") {
-      return(stats::rpois(length(dpar_values$mu_), dpar_values$mu_))
-    } else if (.type == "loglik" && fit$family$family == "negbinomial") {
-      return(stats::dnbinom(dpar_values$.ydata, mu = dpar_values$mu_, size = dpar_values$shape_, log = TRUE))
-    } else if (.type == "predict" && fit$family$family == "negbinomial") {
-      return(stats::rnbinom(length(dpar_values$mu_), mu = dpar_values$mu_, size = dpar_values$shape_))
-    }
-  }
+  if (.type == "fitted")
+    return(fit$family$r$epred(dpars, response_data, rate = .rate))
+  if (.type == "loglik")
+    return(fit$family$r$log_lik(dpar_values$.ydata, dpars, response_data))
+  if (.type == "predict")
+    return(fit$family$r$rng(length(dpars$mu), dpars, response_data, rate = .rate))
 }
 
 

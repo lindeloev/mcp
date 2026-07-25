@@ -56,7 +56,6 @@
 #' @param family One of `gaussian()`, `binomial()`, `bernoulli()`, `poisson()`,
 #'   or `negbinomial()`.
 #'   with a supported link function, e.g., `gaussian(link = "log")`.
-#'   Custom families can also be provided, e.g., `mcpfamily(gaussian(link = "log"))`.
 #' @param par_x String (default: `NULL` which is auto-detect).
 #' @param sample One of
 #'   * `"post"`: Sample the posterior.
@@ -280,14 +279,11 @@ mcp = function(model,
   # Check parameters
   # ARMA models
   if (length(pars$arma) > 0) {
-    garma_links = c(
-      gaussian = "identity",
-      binomial = "logit",
-      poisson = "log",
-      negbinomial = "log"
-    )
-    if (family$family %notin% names(garma_links) || family$link != garma_links[[family$family]])
-      stop("ar() and ma() currently support gaussian(), binomial(), poisson(), and negbinomial() with their default links; bernoulli() and non-default links are not supported.")
+    if (is.null(family$garma))
+      stop(
+        "family = ", family$family, "(link = \"", family$link,
+        "\") does not define the GARMA behavior required by ar() or ma()."
+      )
 
     if (is.unsorted(data[, par_x]) && is.unsorted(rev(data[, par_x])))
       message("'", par_x, "' is unordered. Please note that ar() and ma() apply in data-frame row order, not the values of '", par_x, "'.")

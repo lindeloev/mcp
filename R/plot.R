@@ -75,6 +75,8 @@ get_plot = function(x,
   # ASSERTS AND RECODING #
   ########################
   assert_types(fit, "mcpfit")
+  if (!is.mcpfamily(fit$family))
+    fit$family = mcpfamily(fit$family)
 
   if (lines != FALSE) {
     assert_integer(lines, lower = 1, len = 1)
@@ -194,10 +196,8 @@ get_plot = function(x,
   # PREP RESPONSE DATA FOR PLOT #
   ###############################
   ydata = fit$data[, fit$pars$y]  # Convenient shortname
-
-  # If this is a binomial rate, divide by the number of trials
-  if (fit$family$family == "binomial" && rate == TRUE)
-    ydata = ydata / fit$data[, fit$pars$trials]
+  response_data = get_family_response_data(fit$family, fit$.internal$ST, fit$data)
+  ydata = fit$family$response$observed(ydata, response_data, rate)
 
   # Show data
   if (scale == "linear") {
@@ -227,10 +227,12 @@ get_plot = function(x,
   }
   if (dpar == "epred") {
     if (geom_data == "point") {
-      if (is.null(fit$pars$weights)) {
+      point_size = fit$family$response$point_size
+      point_size_col = get_family_aux_columns(fit$family, fit$.internal$ST)[point_size]
+      if (length(point_size_col) == 0 || is.na(point_size_col)) {
         gg = gg + ggplot2::geom_point()
       } else {
-        gg = gg + ggplot2::geom_point(ggplot2::aes(size = fit$data[, fit$pars$weights[1]])) +
+        gg = gg + ggplot2::geom_point(ggplot2::aes(size = fit$data[, point_size_col])) +
           ggplot2::scale_size_area(max_size = 2 * 1.5/sqrt(1.5))  # See https://stackoverflow.com/questions/63023877/setting-absolute-point-size-for-geom-point-with-scale-size-area/63024297?noredirect=1#comment111454629_63024297
       }
     } else if (geom_data == "line") {
@@ -294,7 +296,7 @@ get_plot = function(x,
   # Add better y-labels
   if (scale == "linear")
     gg = gg + ggplot2::labs(y = paste0(fit$family$link, "(", fit$pars$y, ")"))
-  if (scale == "response" && (fit$family$family == "bernoulli" || (fit$family$family == "binomial" && rate == TRUE)))
+  if (scale == "response" && fit$family$response$probability(rate))
     gg = gg + ggplot2::labs(y = paste0("P(", fit$pars$y, " = TRUE)"))
   if (dpar != "epred")
     gg = gg + ggplot2::labs(y = dpar)

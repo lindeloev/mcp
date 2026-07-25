@@ -2,6 +2,24 @@
 # resulting in a full JAGS model
 # -----------------
 
+get_jags_family_context = function(ST) {
+  list(
+    y = paste0(ST$y[1], "[i_]"),
+    boundary = "garma_boundary_[i_]",
+    dpar = function(name) paste0(name, "_[i_]"),
+    local = function(name) paste0(name, "_[i_]"),
+    aux = function(name, default = NULL) {
+      if (name %notin% names(ST) || all(is.na(ST[[name]]))) {
+        if (!is.null(default))
+          return(default)
+        stop_github("Missing response auxiliary ", name, "() in JAGS family context.")
+      }
+      paste0(stats::na.omit(unique(ST[[name]]))[1], "[i_]")
+    }
+  )
+}
+
+
 #' Make JAGS code for Multiple Change Point model
 #'
 #' @aliases get_jags_code
@@ -152,49 +170,22 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, ma_order, family, pa
     mm = paste0(mm, "\n    ", dpar, "_[i_] = ", response_code)
   }
 
-  mu_code = "mu_[i_]"
-
-  # Prepare variance code
-  has_weights = !all(is.na(ST$weights))
-  weights = ifelse(has_weights, yes = paste0(ST$weights[1], "[i_]"), no = "1")
-
-  # Family- and link-dependent likelihood
+  context = get_jags_family_context(ST)
   mm = paste0(mm, "\n\n    # Likelihood and log-density for family = ", family$family, "()
     ")
-
-  if (family$family == "gaussian") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dnorm(", mu_code, ", ", weights, " / sigma_[i_]^2)  # SD as precision")
-  } else if (family$family == "binomial") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dbin(", mu_code, ", ", ST$trials[1], "[i_])")
-  } else if (family$family == "bernoulli") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dbern(", mu_code, ")")
-  } else if (family$family == "poisson") {
-    mm = paste0(mm, ST$y[1], "[i_] ~ dpois(", mu_code, ")")
-  } else if (family$family == "negbinomial") {
-    mm = paste0(
-      mm,
-      "nb_prob_[i_] = shape_[i_] / (shape_[i_] + ", mu_code, ")\n    ",
-      ST$y[1], "[i_] ~ dnegbin(nb_prob_[i_], shape_[i_])"
-    )
-  }
+  likelihood = family$backends$jags$likelihood(context)
+  mm = paste0(mm, paste(likelihood, collapse = "\n    "))
 
   # Compute link-scale residuals for GARMA
   if (has_arma) {
-    if (family$family == "binomial") {
-      mm = paste0(
-        mm,
-        "\n    garma_y_[i_] = min(max(", ST$y[1], "[i_], garma_boundary_[i_]), ", ST$trials[1], "[i_] - garma_boundary_[i_]) / ", ST$trials[1], "[i_]",
-        "\n    garma_link_y_[i_] = ", family$linkfun_str, "(garma_y_[i_])"
-      )
-    } else if (family$family %in% c("poisson", "negbinomial")) {
-      mm = paste0(
-        mm,
-        "\n    garma_y_[i_] = max(", ST$y[1], "[i_], garma_boundary_[i_])",
-        "\n    garma_link_y_[i_] = ", family$linkfun_str, "(garma_y_[i_])"
-      )
-    } else {
-      mm = paste0(mm, "\n    garma_link_y_[i_] = ", ST$y[1], "[i_]")
-    }
+    garma_y = family$garma$observed_jags(context)
+    garma_link_y = if (family$linkfun_str == "") "garma_y_[i_]" else
+      paste0(family$linkfun_str, "(garma_y_[i_])")
+    mm = paste0(
+      mm,
+      "\n    garma_y_[i_] = ", garma_y,
+      "\n    garma_link_y_[i_] = ", garma_link_y
+    )
     mm = paste0(mm, "\n    resid_abs_[i_] = garma_link_y_[i_] - link_mu_[i_]")
     if (!is.na(ma_order))
       mm = paste0(mm, "\n    resid_ma_[i_] = garma_link_y_[i_] - link_mu_[i_] - resid_arma_[i_]")

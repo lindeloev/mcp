@@ -527,7 +527,6 @@ unpack_arma = function(form_str_in) {
 #' @keywords internal
 #' @describeIn get_rhs_table_dpar Apply `get_rhs_table_segment` to all segments of a model.
 get_rhs_table = function(model, data, family, par_x, check_rank = TRUE) {
-  family = add_dpar_specs(family)
   rhs = lapply(model, get_rhs)
 
   rhs_table = lapply(seq_along(rhs), function(segment) get_rhs_table_segment(rhs[[segment]], segment, family, data, par_x, check_rank)) %>%

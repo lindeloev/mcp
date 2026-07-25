@@ -56,23 +56,20 @@ unpack_tildes = function(form, i) {
 #' @inheritParams mcp
 #' @param form_y Character representation of formula
 #' @param i Segment number
-#' @return A one-row tibble with the columns
-#'   * `y`: string. The y variable name.
-#'   * `trials`: string. The trials variable name.
-#'   * `weights`: string. The weights variable name.
+#' @return A one-row tibble with the response and auxiliary-data columns.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 unpack_y = function(form_y, i, family) {
+  declared = names(family$response$auxiliary)
+  aux_names = unique(c("trials", "weights", declared))
+  response = stats::setNames(as.list(rep(NA_character_, length(aux_names) + 1)), c("y", aux_names))
+
   # If NA and not segment 1, just return empty
   if (is.na(form_y)) {
     if (i == 1)
       stop("A response must be defined in segment 1, e.g., 'y ~ 1'")
 
-    return(tibble::tibble(
-      y = NA,
-      trials = NA,
-      weights = NA
-    ))
+    return(tibble::as_tibble(response))
   }
 
 
@@ -86,63 +83,40 @@ unpack_y = function(form_y, i, family) {
   y_col = attr(stats::terms(to_formula(lhs)), "term.labels")
   if (length(y_col) != 1)
     stop("There should be exactly one response variable. Got ", length(y_col), " in segment ", i)
+  response$y = y_col
 
-  # Unpack the stuff on the RHS of the pipe, if it was detected:
+  term_labels = character()
   if (length(y_split) == 2) {
     rhs = y_split[2]
     term_labels = attr(stats::terms(to_formula(rhs)), "term.labels")
-    ok_terms = stringr::str_detect(term_labels, "trials\\(|weights\\(")
-    if (all(ok_terms) == FALSE)
-      stop("Only terms `trials()` and `weights()` allowed after the pipe in the response variable. Got '", rhs, "'.")
-
-    # BINOMIAL TRIALS
-    trials_term_index = stringr::str_detect(term_labels, "trials\\(")  # Which terms?
-    got_trials = sum(trials_term_index) > 0
-
-    # trials(N) is reserved and required for binomial models
-    if (family$family == "binomial" && !got_trials)
-      stop("Error in response of segment ", i, ": need a valid trials() specification, e.g., 'y | trials(N) ~ 1 + x'")
-
-    if (family$family != "binomial" && got_trials)
-      stop("Response format `y | trials(N)` only meaningful for family = binomial(); not for ", family$family, "()")
-
-    # Unpack trials_col
-    if (got_trials == TRUE) {
-      trials_term = term_labels[trials_term_index]  # Extract terms
-      trials_content = get_term_content(trials_term)
-      trials_col = attr(stats::terms(trials_content), "term.labels")
-      if (length(trials_col) != 1)
-        stop("There must be exactly one term inside trials(). Got ", trials_term, " in segment ", i)
-    } else {
-      trials_col = NA
-    }
-
-    # WEIGHTS (same procedure as for trials(N))
-    weights_term_index = stringr::str_detect(term_labels, "weights\\(")
-    got_weights = sum(weights_term_index) > 0
-    if (got_weights == TRUE) {
-      if (family$family != "gaussian")
-        stop("Weights are currently only implemented for `family = gaussian()`. Raise an issue on GitHub if you need it for other families.")
-      weights_term = term_labels[weights_term_index]
-      weights_content = get_term_content(weights_term)
-      weights_col = attr(stats::terms(weights_content), "term.labels")
-      if (length(weights_col) != 1)
-        stop("There must be exactly one term inside weights(). Got ", weights_term, " in segment ", i)
-    } else {
-      weights_col = NA
-    }
-  } else {
-    # No pipe in response formula:
-    trials_col = NA
-    weights_col = NA
+    ok_terms = if (length(declared) == 0) rep(FALSE, length(term_labels)) else
+      vapply(term_labels, function(term) any(stringr::str_detect(term, paste0("^", declared, "\\("))), logical(1))
+    if (!all(ok_terms))
+      stop(
+        "Only ", if (length(declared) == 0) "no terms are" else and_collapse(paste0("`", declared, "()`")),
+        " allowed after the pipe for family = ", family$family, "(). Got '", rhs, "'."
+      )
   }
 
-  # Finally:
-  tibble::tibble(
-    y = y_col,  # Char
-    trials = trials_col,  # Char or NA
-    weights = weights_col
-  )
+  for (name in declared) {
+    term_index = stringr::str_detect(term_labels, paste0("^", name, "\\("))
+    got_term = any(term_index)
+    if (family$response$auxiliary[[name]]$required && !got_term)
+      stop("Error in response of segment ", i, ": need a valid ", name, "() specification.")
+    if (!got_term)
+      next
+    if (sum(term_index) > 1)
+      stop("Only one ", name, "() term is allowed in segment ", i, ".")
+
+    term = term_labels[term_index]
+    content = get_term_content(term)
+    column = attr(stats::terms(content), "term.labels")
+    if (length(column) != 1)
+      stop("There must be exactly one term inside ", name, "(). Got ", term, " in segment ", i)
+    response[[name]] = column
+  }
+
+  tibble::as_tibble(response)
 }
 
 
@@ -302,10 +276,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
   if (length(derived_y) != 1)
     stop("There should be exactly one response variable. Found ", and_collapse(derived_y), " across segments.")
 
-  # Weights
-  derived_weights = unique(stats::na.omit(ST$weights))
-  if (length(derived_weights) > 1)
-    stop("There should be exactly zero or one column used for weights(). Found ", and_collapse(derived_weights), " across segments.")
+  aux_columns = get_family_aux_columns(family, ST)
 
   # Varying effects
   derived_varying = unique(stats::na.omit(ST$cp_group_col))
@@ -328,37 +299,9 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
       }
     }
 
-    # Check y and trials if binomial
-    if (family$family == "binomial") {
-      y = data[, ST$y[1]]
-      trials = data[, ST$trials[1]]
-      assert_integer(y, ST$y[1], lower = 0)
-      assert_integer(trials, ST$trials[1], lower = 1)
-
-      # Missing responses are allowed for JAGS imputation, so compare only
-      # rows where both the response and number of trials are observed.
-      invalid_rows = which(!is.na(y) & !is.na(trials) & y > trials)
-      if (length(invalid_rows) > 0)
-        stop(
-          "For family = binomial(), responses in '", ST$y[1],
-          "' cannot exceed trials in '", ST$trials[1],
-          "'. Found invalid data in row(s): ",
-          paste(invalid_rows, collapse = ", "), "."
-        )
-    } else if (family$family == "bernoulli") {
-      if (any(data[, ST$y[1]] %notin% c(0, 1)))
-        stop("Only responses 0 and 1 are allowed for family = bernoulli() in column '", ST$y[1], "'")
-    } else if (family$family %in% c("poisson", "negbinomial")) {
-      assert_integer(data[, ST$y[1]], ST$y[1], lower = 0)
-    }
-
-    # Check weights
-    if (length(derived_weights) == 1) {
-      if (!is.numeric(data[, derived_weights]))
-        stop("Data column '", derived_weights, "' has to be numeric.")
-      if (any(data[, derived_weights] <= 0))
-        stop("All weights must be greater than zero.")
-    }
+    response_data = get_family_response_data(family, ST, data)
+    response_columns = c(list(y = ST$y[1]), as.list(aux_columns))
+    family$response$validate(data[[ST$y[1]]], response_data, response_columns)
   }
 
 

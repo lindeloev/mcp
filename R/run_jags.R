@@ -117,7 +117,8 @@ get_jags_data = function(data, family, ST, rhs_table, jags_code) {
   cols_varying = unique(stats::na.omit(ST$cp_group_col))
 
   # Start with "raw" data
-  cols_data = unique(stats::na.omit(c(ST$y, ST$x, ST$trials, ST$weights)))
+  aux_columns = get_family_aux_columns(family, ST)
+  cols_data = unique(stats::na.omit(c(ST$y, ST$x, unname(aux_columns))))
   jags_data = as.list(data[, c(cols_varying, cols_data)])
 
   for (col in cols_varying) {

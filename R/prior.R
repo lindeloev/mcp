@@ -13,6 +13,19 @@ empty_prior_specs = function() {
 }
 
 
+default_arma_priors = function() {
+  tibble::tribble(
+    ~dpar, ~par_type, ~prior, ~description, ~condition,
+    "ar", "Intercept", "dunif(-1, 1)", "Bounded dependence coefficient", "always",
+    "ar", "dummy", "dt(0, 1, 3)", "Current weak prior for a categorical dependence coefficient", "always",
+    "ar", "slope", "dt(0, 1 / (max(.x) - min(.x)), 3)", "One coefficient-unit change across the observed change-point span", "always",
+    "ma", "Intercept", "dunif(-1, 1)", "Bounded dependence coefficient", "always",
+    "ma", "dummy", "dt(0, 1, 3)", "Current weak prior for a categorical dependence coefficient", "always",
+    "ma", "slope", "dt(0, 1 / (max(.x) - min(.x)), 3)", "One coefficient-unit change across the observed change-point span", "always"
+  )
+}
+
+
 default_cp_specs = function(CP, context) {
   n_cp = context$n_cp
   if (n_cp == 0)
@@ -80,13 +93,18 @@ default_cp_specs = function(CP, context) {
 default_rhs_specs = function(rhs_table, family) {
   defaults = dplyr::bind_rows(family$default_prior, default_arma_priors())
 
-  shape_rows = rhs_table$dpar == "shape"
-  shape_is_modeled = any(shape_rows) && (
-    sum(shape_rows) > 1 || any(rhs_table$par_type[shape_rows] != "Intercept")
-  )
-  shape_condition = if (shape_is_modeled) "shape_modeled" else "shape_constant"
-  defaults = defaults %>%
-    dplyr::filter(.data$condition == "always" | .data$condition == shape_condition)
+  modeled_dpars = unique(defaults$dpar[defaults$condition == "modeled"])
+  for (dpar in modeled_dpars) {
+    rows = rhs_table$dpar == dpar
+    is_modeled = any(rows) && (sum(rows) > 1 || any(rhs_table$par_type[rows] != "Intercept"))
+    condition = if (is_modeled) "modeled" else "constant"
+    defaults = defaults %>%
+      dplyr::filter(
+        .data$dpar != .env$dpar |
+          .data$condition == "always" |
+          .data$condition == .env$condition
+      )
+  }
 
   keys = paste(defaults$dpar, defaults$par_type)
   if (anyDuplicated(keys))

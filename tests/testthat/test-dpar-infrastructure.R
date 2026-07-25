@@ -9,7 +9,7 @@ test_that("families declare dpars independently of prior rows", {
   expect_equal(gaussian_family$dpar_specs$dpar, c("mu", "sigma"))
   expect_equal(gaussian_family$dpar_specs$link, c("identity", "identity"))
   expect_equal(gaussian_family$dpar_specs$implicit, c(FALSE, TRUE))
-  expect_equal(gaussian_family$dpars, c("mu", "sigma", "ar", "ma"))
+  expect_equal(gaussian_family$dpars, c("mu", "sigma"))
   expect_named(
     gaussian_family$default_prior,
     c("dpar", "par_type", "prior", "description", "condition")
@@ -24,22 +24,20 @@ test_that("families declare dpars independently of prior rows", {
 
   expect_equal(poisson_family$dpar_specs$dpar, "mu")
   expect_equal(poisson_family$dpar_specs$link, "log")
-  expect_equal(poisson_family$dpars, c("mu", "ar", "ma"))
+  expect_equal(poisson_family$dpars, "mu")
 
-  # Existing custom-family tables need only the original three columns.
-  custom_family = gaussian()
-  custom_family$default_prior = data.frame(
+  # Compact prior tables are normalized at the family boundary.
+  normalized_prior = normalize_family_default_priors(data.frame(
     dpar = "mu",
     par_type = "Intercept",
     prior = "dnorm(0, 1)"
-  )
-  custom_family = mcpfamily(custom_family)
-  expect_equal(custom_family$default_prior$condition, "always")
-  expect_true(is.na(custom_family$default_prior$description))
+  ))
+  expect_equal(normalized_prior$condition, "always")
+  expect_true(is.na(normalized_prior$description))
 
   for (family in mean_only_families) {
     expect_equal(family$dpar_specs$dpar, "mu")
-    expect_equal(family$dpars, c("mu", "ar", "ma"))
+    expect_equal(family$dpars, "mu")
   }
 
   # Removing prior metadata must not redefine the mathematical family.
@@ -51,15 +49,45 @@ test_that("families declare dpars independently of prior rows", {
 })
 
 
-test_that("family prior builders determine their supported links", {
-  unsupported = gaussian()
-  unsupported$link = "probit"
+test_that("built-in families implement the shared internal contract", {
+  families = list(
+    mcpfamily(gaussian()),
+    mcpfamily(binomial()),
+    bernoulli(),
+    mcpfamily(poisson()),
+    negbinomial()
+  )
 
-  expect_null(default_priors_gaussian("probit"))
-  expect_null(default_priors_binomial("log"))
-  expect_null(default_priors_poisson("probit"))
-  expect_null(default_priors_negbinomial("identity"))
-  expect_error(mcpfamily(unsupported), "no default priors for gaussian")
+  for (family in families) {
+    expect_true(is.mcpfamily(family))
+    expect_true(is.function(family$r$epred))
+    expect_true(is.function(family$r$log_lik))
+    expect_true(is.function(family$r$rng))
+    expect_true(is.function(family$backends$jags$likelihood))
+    expect_true(is.list(family$response$auxiliary))
+    expect_true(is.function(family$response$observed))
+    expect_true(is.function(family$response$probability))
+  }
+
+  expect_true(is.function(mcpfamily(gaussian())$garma$observed_r))
+  expect_null(mcpfamily(gaussian(link = "log"))$garma)
+})
+
+
+test_that("family prior builders determine their supported links", {
+  unsupported_gaussian = gaussian()
+  unsupported_gaussian$link = "probit"
+  unsupported_binomial = binomial()
+  unsupported_binomial$link = "log"
+  unsupported_poisson = poisson()
+  unsupported_poisson$link = "probit"
+  unsupported_negbinomial = negbinomial()
+  unsupported_negbinomial$link = "identity"
+
+  expect_error(mcpfamily(unsupported_gaussian), "no default priors for gaussian")
+  expect_error(mcpfamily(unsupported_binomial), "no default priors for binomial")
+  expect_error(mcpfamily(unsupported_poisson), "no default priors for poisson")
+  expect_error(mcpfamily(unsupported_negbinomial), "require log links")
 })
 
 

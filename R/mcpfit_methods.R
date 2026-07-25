@@ -633,6 +633,8 @@ pp_eval = function(
   # Recode
   fit = object
   assert_types(fit, "mcpfit")
+  if (!is.mcpfamily(fit$family))
+    fit$family = mcpfamily(fit$family)
   dpar = assert_dpar(dpar, fit = fit, type = type)
 
   if (is.null(newdata))
@@ -646,11 +648,12 @@ pp_eval = function(
   varying_cols = unique(stats::na.omit(fit$.internal$ST$cp_group_col))
   exclude_varying = setdiff(varying_cols, varying_info$cols)
   required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
-  uses_weights = fit$family$family == "gaussian" &&
-    type %in% c("predict", "loglik") &&
-    length(fit$pars$weights) > 0
-  if (!uses_weights)
-    required_cols = required_cols[required_cols %notin% fit$pars$weights]
+  operation = switch(type, predict = "rng", loglik = "log_lik", fitted = "epred", residuals = "epred")
+  aux_operations = c(operation, if (arma && is_arma(fit)) "garma")
+  aux_columns = get_family_aux_columns(fit$family, fit$.internal$ST)
+  aux_used = names(get_family_aux_columns(fit$family, fit$.internal$ST, aux_operations))
+  unused_aux_columns = unname(aux_columns[names(aux_columns) %notin% aux_used])
+  required_cols = required_cols[required_cols %notin% unused_aux_columns]
   required_cols = required_cols[required_cols %notin% exclude_varying]
   if ((arma == FALSE || is_arma(fit) == FALSE) & type %in% c("fitted", "predict")) {
     required_cols = required_cols[required_cols != fit$pars$y]
@@ -661,7 +664,9 @@ pp_eval = function(
   newdata = data.frame(newdata[, required_cols, drop = FALSE])
   #colnames(newdata) = required_cols  # Special case for when there's only one predictor
   newdata$data_row = seq_len(nrow(newdata))  # Evaluation key throughout summaries, matrices, plots, and metrics
-  newdata_return = dplyr::select(newdata, -dplyr::any_of(fit$pars$weights))
+  point_size_col = aux_columns[fit$family$response$point_size]
+  point_size_col = unname(point_size_col[!is.na(point_size_col)])
+  newdata_return = dplyr::select(newdata, -dplyr::any_of(point_size_col))
 
   ########################
   # ASSERTS AND RECODING #
@@ -713,7 +718,7 @@ pp_eval = function(
     samples$fitted = rlang::exec(simulate_vectorized, fit, !!!samples_predictors, .type = "fitted", .rate = rate, .dpar = dpar, .arma = arma, .scale = scale)
   }
 
-  samples = samples %>% dplyr::select(-dplyr::starts_with(".pred_"), -dplyr::any_of(fit$pars$weights))
+  samples = samples %>% dplyr::select(-dplyr::starts_with(".pred_"), -dplyr::any_of(point_size_col))
 
   # Missing outcomes are latent in the fitted JAGS model, but they are not
   # observed-data likelihood contributions. Retain them while evaluating
