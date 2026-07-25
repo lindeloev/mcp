@@ -8,11 +8,12 @@
 #' @inheritParams pp_eval
 #' @param type One of `bayesplot::available_ppc("grouped", invert = TRUE) %>% stringr::str_remove("ppc_")`
 #' @param facet_by Name of a column in data modeled as varying effect(s).
-#' @param nsamples Number of draws. Note that you may want to use all draws for
-#'   summary geoms, e.g., `pp_check(fit, type = "ribbon", nsamples = NULL)`.
+#' @param ndraws Number of posterior draws. Note that you may want to use all
+#'   draws for summary geoms, e.g., `pp_check(fit, type = "ribbon", ndraws = NULL)`.
 #'   LOO checks always evaluate all posterior draws to preserve their PSIS
-#'   weights; where supported, `nsamples` is passed to bayesplot to control the
+#'   weights; where supported, `ndraws` is passed to bayesplot to control the
 #'   number of plotted samples.
+#' @param nsamples Deprecated. Use `ndraws` instead.
 #' @param ... Further arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
 #' @details Missing responses are omitted from the observed-data check. LOO
 #'   predictive checks use posterior draws and the original fitted data, so
@@ -37,9 +38,12 @@ pp_check = function(
   prior = FALSE,
   varying = TRUE,
   arma = TRUE,
-  nsamples = 100,
+  ndraws = 100,
+  nsamples = lifecycle::deprecated(),
   ...
 ) {
+  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "pp_check")
+
   # Internal mcp naming convention
   fit = object
   assert_types(fit, "mcpfit")
@@ -47,9 +51,9 @@ pp_check = function(
   assert_logical(prior)
   assert_types(varying, "logical", "character")
   assert_logical(arma)
-  assert_types(nsamples, "null", "numeric", len = c(0, 1))
-  if (!is.null(nsamples))
-    assert_integer(nsamples, lower = 1, len = 1)
+  assert_types(ndraws, "null", "numeric", len = c(0, 1))
+  if (!is.null(ndraws))
+    assert_integer(ndraws, lower = 1, len = 1)
 
   # Check and recode inputs
   if (!is.null(facet_by))
@@ -97,7 +101,7 @@ pp_check = function(
     # LOO weights are computed for every posterior draw. Keep those draws
     # intact; bayesplot's `samples` argument controls plot sampling where
     # supported.
-    nsamples = if (is_loo) NULL else nsamples,
+    ndraws = if (is_loo) NULL else ndraws,
     samples_format = "tidy"
   )
   # Return plot with or without facets
@@ -105,7 +109,7 @@ pp_check = function(
     y = y_all[observed_rows]
     yrep = tidy_to_matrix(samples, type = "predict", data_rows = observed_rows)
     plot_return = get_ppc_plot(
-      fit, type, y, yrep, nsamples,
+      fit, type, y, yrep, ndraws,
       observations = observed_rows,
       varying = varying,
       arma = arma,
@@ -123,7 +127,7 @@ pp_check = function(
 
       # Add plot to list
       all_plots[[as.character(group)]] = get_ppc_plot(
-        fit, type, y_this, yrep_this, nsamples,
+        fit, type, y_this, yrep_this, ndraws,
         observations = observations_this,
         varying = varying,
         arma = arma,
@@ -153,7 +157,7 @@ pp_check = function(
 #' @return A string
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_ppc_plot = function(fit, type, y, yrep, nsamples,
+get_ppc_plot = function(fit, type, y, yrep, ndraws,
                         observations = NULL, varying = TRUE, arma = TRUE, ...) {
   is_loo = stringr::str_detect(type, "loo")
 
@@ -199,9 +203,9 @@ get_ppc_plot = function(fit, type, y, yrep, nsamples,
     } else if ("lw" %in% plot_formals) {
       plot_args$lw = lw
     }
-    if ("samples" %in% plot_formals && !is.null(nsamples) &&
+    if ("samples" %in% plot_formals && !is.null(ndraws) &&
         "samples" %notin% names(list(...)))
-      plot_args$samples = nsamples
+      plot_args$samples = ndraws
 
     return(suppressWarnings(rlang::exec(func_obj, !!!plot_args, ...)))
   }

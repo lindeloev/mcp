@@ -196,9 +196,9 @@ test_plot = function(fit, varying_cols) {
   q_predict = rbinom(1, 1, 0.5) == 1  # add quantiles sometimes
   # To facet or not to facet
   if (length(varying_cols) > 0) {
-    gg = try(plot(fit, facet_by = varying_cols[1], q_fit = q_fit, q_predict = q_predict, lines = 3, nsamples = NULL), silent = TRUE)  # just take the first
+    gg = try(plot(fit, facet_by = varying_cols[1], q_fit = q_fit, q_predict = q_predict, lines = 3, ndraws = NULL), silent = TRUE)  # just take the first
   } else {
-    gg = try(plot(fit, q_fit = q_fit, q_predict = q_predict, lines = 3, nsamples = NULL), silent = TRUE)
+    gg = try(plot(fit, q_fit = q_fit, q_predict = q_predict, lines = 3, ndraws = NULL), silent = TRUE)
   }
   # Is it a ggplot or a known error?
   if (inherits(gg, "try-error")) {
@@ -373,12 +373,12 @@ test_pp_eval = function(fit, prior = FALSE) {
     summary = FALSE,
     probs = c(0.1, 0.5, 0.999),
     prior = prior,
-    nsamples = 2,
+    ndraws = 2,
     arma = FALSE
   ), silent = TRUE)
 
   if (is.data.frame(result_more)) {
-    #testthat::expect_true(nrow(result_more) == nrows * nsamples * 2)  # nrows * nsamples * nchains
+    #testthat::expect_true(nrow(result_more) == nrows * ndraws * 2)  # nrows * ndraws * nchains
     testthat::expect_true(sum(is.na(result_more)) == 0)
 
     expected_colnames_more = c(
@@ -413,7 +413,7 @@ test_pp_eval = function(fit, prior = FALSE) {
       prior = prior,
       varying = FALSE,
       arma = FALSE,
-      nsamples = 2
+      ndraws = 2
     )
 
     testthat::expect_equal(
@@ -426,9 +426,9 @@ test_pp_eval = function(fit, prior = FALSE) {
   # Test pp_check
   if (length(fit$pars$varying) > 0) {
     varying_col = na.omit(fit$.internal$ST$cp_group_col)[1]  # Just use the first column
-    pp_default = try(pp_check(fit, facet_by = varying_col, nsamples = 2, prior = prior), silent = TRUE)
+    pp_default = try(pp_check(fit, facet_by = varying_col, ndraws = 2, prior = prior), silent = TRUE)
   } else {
-    pp_default = try(pp_check(fit, nsamples = 2, prior = prior), silent = TRUE)
+    pp_default = try(pp_check(fit, ndraws = 2, prior = prior), silent = TRUE)
   }
 
   if (inherits(pp_default, "try-error")) {

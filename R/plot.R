@@ -64,9 +64,11 @@ get_plot = function(x,
                        prior = FALSE,
                        dpar = "epred",
                        arma = TRUE,
-                       nsamples = NULL,
+                       ndraws = NULL,
                        scale = "response",
+                       nsamples = lifecycle::deprecated(),
                        ...) {
+  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "get_plot")
 
   # Just for consistent naming in mcp
   fit = x
@@ -100,14 +102,14 @@ get_plot = function(x,
   if (is.numeric(q_predict))
     assert_numeric(q_predict, lower = 0, upper = 1)
 
-  if (!is.null(nsamples)) {
-    assert_integer(nsamples, lower = 1, len = 1)
-    if (lines != FALSE && nsamples < lines)
-      stop("`lines` must be less than or equal to `nsamples`.")
+  if (!is.null(ndraws)) {
+    assert_integer(ndraws, lower = 1, len = 1)
+    if (lines != FALSE && ndraws < lines)
+      stop("`lines` must be less than or equal to `ndraws`.")
   }
   if (all(q_fit == FALSE) && all(q_predict == FALSE))
     # No need for more samples if they are only used to draw lines.
-    nsamples = lines
+    ndraws = lines
 
   # Validate columns used for faceting and color.
   assert_types(facet_by, "null", "character")
@@ -168,7 +170,7 @@ get_plot = function(x,
       dpar = dpar,
       varying = varying_pars,
       arma = arma,
-      nsamples = nsamples,
+      ndraws = ndraws,
       samples_format = "tidy",
       scale = scale,
       .include_fitted = include_fitted
@@ -359,8 +361,10 @@ plot.mcpfit = function(x,
                     rate = TRUE,
                     prior = FALSE,
                     arma = TRUE,
-                    nsamples = NULL,
+                    ndraws = NULL,
+                    nsamples = lifecycle::deprecated(),
                     ...) {
+  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "plot.mcpfit")
 
   args = list(...)
   if ("which_y" %in% names(args))
@@ -379,7 +383,7 @@ plot.mcpfit = function(x,
     prior = prior,
     dpar = NULL,
     arma = arma,
-    nsamples = nsamples,
+    ndraws = ndraws,
     scale = "response",
     ...
   )
@@ -398,9 +402,11 @@ plot_dpar = function(x,
                      cp_dens = TRUE,
                      prior = FALSE,
                      arma = TRUE,
-                     nsamples = NULL,
+                     ndraws = NULL,
                      scale = "response",
+                     nsamples = lifecycle::deprecated(),
                      ...) {
+  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "plot_dpar")
   get_plot(
     x,
     q_fit = q_fit,
@@ -414,7 +420,7 @@ plot_dpar = function(x,
     prior = prior,
     dpar = dpar,
     arma = arma,
-    nsamples = nsamples,
+    ndraws = ndraws,
     scale = scale,
     ...
   )

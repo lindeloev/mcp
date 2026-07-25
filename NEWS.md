@@ -40,13 +40,15 @@
 
 ## Other new features
 
+-   The user-facing `nsamples` argument is soft-deprecated in favor of `ndraws`, matching the terminology used by `posterior`, `rvar`, and related packages. Existing calls continue to work for now.
+
 -   Extended autoregression (`ar()`) to GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment. Bernoulli models and non-default links remain unsupported.
 
 -   In addition to (segment-wide) intercepts and slopes, there are now default priors for categorical predictors.
 
 -   Memory improvement: The `mcpfit` is now \< 10% of the size as before because the log-likelihood is not computed by default anymore (no `fit$mcmc_loglik` anymore). You can add it using `fit = add_loglik(fit)` (adds `fit$loglik`) but if absent, it is automatically computed when calling relevant functions, e.g., `loo(fit)`.
 
--   Several new arguments to `loo`. `loo(fit, pointwise = TRUE)` uses `loo::loo.function()` for more memory-efficient (but slower) computation of LOO. Other new arguments include the usual from `fitted()` etc.: `loo(fit, nsamples = 1000, arma = FALSE, varying = FALSE)`.
+-   Several new arguments to `loo`. `loo(fit, pointwise = TRUE)` uses `loo::loo.function()` for more memory-efficient (but slower) computation of LOO. Other new arguments include the usual from `fitted()` etc.: `loo(fit, ndraws = 1000, arma = FALSE, varying = FALSE)`.
 
 -   Sampling is now 1-10% faster due to a new formalization of the underlying JAGS code.
 
@@ -90,7 +92,7 @@
     - For missing data: Missing responses were scored in WAIC/LOO as if their JAGS-imputed values had been observed. Fix: missing responses remain latent in JAGS but are excluded from observed-data PPC, log-likelihood, WAIC, and LOO calculations.
     - For models with varying change points: LOO checks with `facet_by != NULL` could pair group-specific predictions with weights from the wrong observations.
     - LOO checks with `prior = TRUE` incorrectly combined prior predictions with posterior LOO weights. A rare use case.
-    - `pp_check(..., nsamples = NULL)` errored. Fixed.
+    - `pp_check(..., ndraws = NULL)` errored. Fixed.
 
 -   Weighted regression: While JAGS correctly modelled weights, R-side simulation/generation ignored it. This means `predict()`, PPCs, `log_lik()`, WAIC, and LOO were incorrect when using weighted regression. Weighted Gaussian posterior predictions and log-likelihoods now use the observation-level standard deviation `sigma / sqrt(weight)`, matching the JAGS precision `weight / sigma^2`. This makes `predict()`, posterior predictive checks, `log_lik()`, WAIC, and LOO consistent with the fitted model.
 

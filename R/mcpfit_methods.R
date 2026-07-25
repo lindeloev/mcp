@@ -26,7 +26,7 @@
 #'   Provided by user. See \code{\link{mcp}} for more details.
 #' @slot mcmc_post An \code{\link[coda]{mcmc.list}} object with posterior samples.
 #' @slot mcmc_prior An \code{\link[coda]{mcmc.list}} object with prior samples.
-#' @slot loglik An (Nchains * Nsamples) by N-observed-responses matrix of
+#' @slot loglik An (Nchains * Ndraws) by N-observed-responses matrix of
 #'   log-likelihoods.
 #' @slot pars A list of character vectors of model parameter names.
 #' @slot jags_code A string with jags code. Use `cat(fit$jags_code)` to show it.
@@ -433,10 +433,33 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
 
 
 
+#' Resolve the deprecated `nsamples` argument
+#'
+#' @keywords internal
+#' @noRd
+resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
+                         env = rlang::caller_env(),
+                         user_env = rlang::caller_env(2)) {
+  if (lifecycle::is_present(nsamples)) {
+    lifecycle::deprecate_soft(
+      "0.4.0",
+      paste0(what, "(nsamples)"),
+      paste0(what, "(ndraws)"),
+      env = env,
+      user_env = user_env
+    )
+    if (!ndraws_missing)
+      stop("Use only one of `ndraws` and deprecated `nsamples`.")
+    ndraws = nsamples
+  }
+  ndraws
+}
+
+
 #' Get tidy samples with or without varying effects
 #'
 #' Returns in a format useful for `fit$simulate()` with population parameters in wide format
-#' and varying effects in long format (the number of rows will be `nsamples * n_levels_in_varying`).
+#' and varying effects in long format (the number of rows will be `ndraws * n_levels_in_varying`).
 #'
 #' @aliases tidy_samples tidy_samples.mcpfit
 #' @keywords internal
@@ -464,16 +487,19 @@ tidy_samples = function(
   varying = TRUE,
   absolute = FALSE,
   prior = FALSE,
-  nsamples = NULL
+  ndraws = NULL,
+  nsamples = lifecycle::deprecated()
 ) {
+  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "tidy_samples")
+
   # General argument checks
   assert_types(fit, "mcpfit")
   assert_types(population, "logical", "character")
   assert_types(varying, "null", "logical", "character")
   assert_types(absolute, "null", "logical", "character")
   assert_logical(prior)
-  if (!is.null(nsamples))
-    assert_integer(nsamples, lower = 1, len = c(0, 1))
+  if (!is.null(ndraws))
+    assert_integer(ndraws, lower = 1, len = c(0, 1))
 
   if (all(population == FALSE) && all(varying == FALSE))
     stop("At least one TRUE or one parameter must be provided through either the `varying` or the `population` arguments.")
@@ -519,7 +545,7 @@ tidy_samples = function(
 
   # Build code for tidybayes::spread_draws() and execute it
   all_terms = unique(c(pars_population, terms_varying, absolute_cps))
-  code = paste0("tidybayes::spread_draws(samples, ", paste0(all_terms, collapse = ", "), ", ndraws = nsamples)")
+  code = paste0("tidybayes::spread_draws(samples, ", paste0(all_terms, collapse = ", "), ", ndraws = ndraws)")
   samples = eval(str2lang(code))
 
   # Make varying columns factor if they are factors in fit$data
@@ -583,9 +609,10 @@ tidy_samples = function(
 #' @param arma Whether to include AR and MA effects.
 #'   * `TRUE` Compute the GARMA residual recurrence. Requires the response variable in `newdata`.
 #'   * `FALSE` Disregard AR and MA effects. For `family = gaussian()`, `predict()` uses only `sigma` for residuals.
-#' @param nsamples Integer or `NULL`. Number of samples to return/summarise.
-#'   If there are varying effects, this is the number of samples from each varying group.
+#' @param ndraws Integer or `NULL`. Number of posterior draws to return/summarise.
+#'   If there are varying effects, this is the number of draws from each varying group.
 #'   `NULL` means "all". Ignored if both are `FALSE`. More samples trade speed for accuracy.
+#' @param nsamples Deprecated. Use `ndraws` instead.
 #' @param samples_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE`.
 #'   See more under "value"
 #' @param scale One of
@@ -598,14 +625,14 @@ tidy_samples = function(
 #'     If `newdata` is `NULL`, the data in `fit$data` is used.
 #'
 #'   * If `summary = FALSE` and `samples_format = "tidy"`: A `tidybayes` `tibble` with all the posterior
-#'     samples (`Ns`) evaluated at each row in `newdata` (`Nn`), i.e., with `Ns x Nn` rows. If there are
+#'     draws (`Nd`) evaluated at each row in `newdata` (`Nn`), i.e., with `Nd x Nn` rows. If there are
 #'     varying effects, the returned data is expanded with the relevant levels for each row.
 #'
 #'     The return columns are:
 #'
 #'      - Predictors from `newdata`.
-#'      - Sample descriptors: ".chain", ".iter", ".draw" (see the `tidybayes` package for more), and `data_row`, the row number in the evaluated `newdata`.
-#'      - Sample values: one column for each parameter in the model.
+#'      - Draw descriptors: ".chain", ".iteration", ".draw" (see the `posterior` and `tidybayes` packages), and `data_row`, the row number in the evaluated `newdata`.
+#'      - Draw values: one column for each parameter in the model.
 #'      - The estimate. Either "predict" or "fitted", i.e., the name of the `type` argument.
 #'
 #'   * If `summary = FALSE` and `samples_format = "matrix"`: An `N_draws` X `nrows(newdata)` matrix with fitted/predicted
@@ -625,11 +652,14 @@ pp_eval = function(
   dpar = "epred",
   varying = TRUE,
   arma = TRUE,
-  nsamples = NULL,
+  ndraws = NULL,
   samples_format = "tidy",
   scale = 'response',
-  .include_fitted = FALSE
+  .include_fitted = FALSE,
+  nsamples = lifecycle::deprecated()
 ) {
+  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "pp_eval")
+
   # Recode
   fit = object
   assert_types(fit, "mcpfit")
@@ -684,9 +714,9 @@ pp_eval = function(
   assert_logical(.include_fitted, len = 1)
   if (.include_fitted && (type != "predict" || summary))
     stop_github("`.include_fitted` requires `type = 'predict'` and `summary = FALSE`.")
-  assert_types(nsamples, "null", "numeric", len = c(0, 1))
-  if (is.numeric(nsamples))
-    assert_integer(nsamples, lower = 1)
+  assert_types(ndraws, "null", "numeric", len = c(0, 1))
+  if (is.numeric(ndraws))
+    assert_integer(ndraws, lower = 1)
   assert_value(samples_format, allowed = c("tidy", "matrix"))
 
 
@@ -698,13 +728,13 @@ pp_eval = function(
     # If there are varying effects: use varying-matching samples for each row of data
     samples_predictors = dplyr::left_join(
       add_rhs_predictors(newdata, fit),
-      tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples),
+      tidy_samples(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws),
       by = unique(varying_info$cols),
       relationship = "many-to-many"
     )
   } else {
     # No varying effects: use all samples for each row of data
-    samples_predictors = tidy_samples(fit, population = TRUE, varying = varying, prior = prior, nsamples = nsamples) %>%
+    samples_predictors = tidy_samples(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws) %>%
       tidyr::expand_grid(add_rhs_predictors(newdata, fit))
   }
 
@@ -827,10 +857,12 @@ predict.mcpfit = function(
   prior = FALSE,
   varying = TRUE,
   arma = TRUE,
-  nsamples = NULL,
+  ndraws = NULL,
   samples_format = "tidy",
+  nsamples = lifecycle::deprecated(),
   ...
 ) {
+  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "predict.mcpfit")
   assert_ellipsis(...)
   pp_eval(
     object,
@@ -843,7 +875,7 @@ predict.mcpfit = function(
     dpar = NULL,
     varying = varying,
     arma = arma,
-    nsamples = nsamples,
+    ndraws = ndraws,
     samples_format = samples_format
   )
 }
@@ -862,11 +894,13 @@ fitted.mcpfit = function(
   dpar = "epred",
   varying = TRUE,
   arma = TRUE,
-  nsamples = NULL,
+  ndraws = NULL,
   samples_format = "tidy",
   scale = "response",
+  nsamples = lifecycle::deprecated(),
   ...
 ) {
+  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "fitted.mcpfit")
   assert_ellipsis(...)
   pp_eval(
     object,
@@ -879,7 +913,7 @@ fitted.mcpfit = function(
     dpar = dpar,
     varying = varying,
     arma = arma,
-    nsamples = nsamples,
+    ndraws = ndraws,
     samples_format = samples_format,
     scale = scale
   )
@@ -911,10 +945,12 @@ log_lik.mcpfit = function(
   prior = FALSE,
   varying = TRUE,
   arma = TRUE,
-  nsamples = NULL,
+  ndraws = NULL,
   samples_format = "tidy",
+  nsamples = lifecycle::deprecated(),
   ...
 ) {
+  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "log_lik.mcpfit")
   assert_ellipsis(...)
   pp_eval(
     object,
@@ -927,7 +963,7 @@ log_lik.mcpfit = function(
     dpar = NULL,
     varying = varying,
     arma = arma,
-    nsamples = nsamples,
+    ndraws = ndraws,
     samples_format = samples_format,
     scale = "response"
   )
@@ -945,9 +981,11 @@ residuals.mcpfit = function(
   prior = FALSE,
   varying = TRUE,
   arma = TRUE,
-  nsamples = NULL,
+  ndraws = NULL,
+  nsamples = lifecycle::deprecated(),
   ...
 ) {
+  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "residuals.mcpfit")
   assert_ellipsis(...)
   pp_eval(
     object,
@@ -960,7 +998,7 @@ residuals.mcpfit = function(
     dpar = NULL,
     varying = varying,
     arma = arma,
-    nsamples = nsamples,
+    ndraws = ndraws,
     samples_format = "tidy"
   )
 }
@@ -981,7 +1019,7 @@ residuals.mcpfit = function(
 with_loo = function(fit, save_psis = FALSE, info = NULL,
                     varying = TRUE, arma = TRUE) {
   assert_types(fit, "mcpfit")
-  settings = get_loglik_settings(fit, varying, arma, nsamples = NULL)
+  settings = get_loglik_settings(fit, varying, arma, ndraws = NULL)
   settings_match = identical(attr(fit$loo, "mcp_settings"), settings)
   needs_psis = save_psis == TRUE &&
     loo::is.loo(fit$loo) && is.null(fit$loo$psis_object)

@@ -101,7 +101,7 @@ set.seed(42)
 head(predict(fit, probs = c(0.1, 0.9)))
 ```
 
-Note that `predict()` uses random sampling under the hood, so these values will differ slightly from call to call. You can make it replicable using `set.seed()` as above. In general, the more posterior samples, the less the call-to-call variance will be. Conversely, fewer samples means more call-to-call variation, e.g., if you do `predict(fit, nsamples = 10)`).
+Note that `predict()` uses random sampling under the hood, so these values will differ slightly from call to call. You can make it replicable using `set.seed()` as above. In general, the more posterior draws, the less the call-to-call variance will be. Conversely, fewer draws means more call-to-call variation, e.g., if you do `predict(fit, ndraws = 10)`).
 
 
 # Residuals
@@ -160,7 +160,7 @@ To really understand what's going on here, it may be helpful to visualize the mo
 ```{r, cache=TRUE}
 # Get posterior and posterior predictive "predictions"
 newdata = data.frame(time = 1:170)
-fitted_forecast = fitted(fit_forecast, newdata = newdata, summary = FALSE, nsamples = 50)
+fitted_forecast = fitted(fit_forecast, newdata = newdata, summary = FALSE, ndraws = 50)
 predict_forecast = predict(fit_forecast, newdata = newdata, summary = FALSE)
 
 # Plot it

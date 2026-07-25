@@ -195,16 +195,16 @@ test_that("summaries use central intervals and posterior diagnostics", {
 
 test_that("PPC and LOO draws stay aligned", {
   expect_error(
-    pp_check(demo_fit, nsamples = 2, not_a_bayesplot_argument = TRUE),
+    pp_check(demo_fit, ndraws = 2, not_a_bayesplot_argument = TRUE),
     "not_a_bayesplot_argument",
     fixed = TRUE
   )
   expect_s3_class(
-    pp_check(demo_fit, type = "ribbon", nsamples = NULL, alpha = 0.2),
+    pp_check(demo_fit, type = "ribbon", ndraws = NULL, alpha = 0.2),
     "ggplot"
   )
   expect_error(
-    pp_check(demo_fit, type = "loo_intervals", prior = TRUE, nsamples = 2),
+    pp_check(demo_fit, type = "loo_intervals", prior = TRUE, ndraws = 2),
     "LOO predictive checks require posterior draws",
     fixed = TRUE
   )
@@ -215,18 +215,18 @@ test_that("PPC and LOO draws stay aligned", {
   fit$loglik = NULL
   fit$loo = NULL
 
-  expect_s3_class(pp_check(fit, nsamples = 5), "ggplot")
-  fit = add_loglik(fit, nsamples = 10)
+  expect_s3_class(pp_check(fit, ndraws = 5), "ggplot")
+  fit = add_loglik(fit, ndraws = 10)
   expect_equal(dim(fit$loglik), c(10, nrow(fit$data) - 1))
   expect_false(anyNA(fit$loglik))
 
   loo_result = suppressWarnings(loo(
-    fit, nsamples = 10, save_psis = TRUE
+    fit, ndraws = 10, save_psis = TRUE
   ))
   expect_equal(dim(loo_result$psis_object), dim(fit$loglik))
-  expect_equal(attr(loo_result, "mcp_settings")$nsamples, 10L)
+  expect_equal(attr(loo_result, "mcp_settings")$ndraws, 10L)
   loo_changed = suppressWarnings(loo(
-    fit, nsamples = 10, varying = FALSE, arma = FALSE
+    fit, ndraws = 10, varying = FALSE, arma = FALSE
   ))
   expect_false(attr(loo_changed, "mcp_settings")$varying)
   expect_false(attr(loo_changed, "mcp_settings")$arma)
@@ -236,9 +236,22 @@ test_that("PPC and LOO draws stay aligned", {
       fit,
       type = "loo_intervals",
       facet_by = "facet",
-      nsamples = 5
+      ndraws = 5
     )),
     "patchwork"
+  )
+})
+
+
+test_that("nsamples is a soft-deprecated alias for ndraws", {
+  lifecycle::expect_deprecated(
+    result <- fitted(demo_fit, nsamples = 2, summary = FALSE)
+  )
+  expect_equal(length(unique(result$.draw)), 2)
+  expect_error(
+    suppressWarnings(fitted(demo_fit, ndraws = 2, nsamples = 2)),
+    "Use only one of `ndraws` and deprecated `nsamples`.",
+    fixed = TRUE
   )
 })
 
