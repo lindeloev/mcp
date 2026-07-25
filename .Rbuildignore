@@ -14,6 +14,7 @@ docs
 ^revdep$
 
 # Files
+AGENTS.md
 cran-comments.md
 logo.png
 ^CRAN-RELEASE$
