@@ -1,27 +1,20 @@
 # ABOUT: These functions are used internally for for defensive programming.
 # -----------------
 
-# Synonym so that assert_types(x, "tibble", "formula") works
-#' @keywords internal
-is.tibble = tibble::is_tibble
-
-#' @keywords internal
-is.formula = rlang::is_formula
-
 #' @keywords internal
 is.family = function(x) {
   if (inherits(x, "family") == FALSE)
     return(FALSE)
 
-  assert_types(x$family, "character", len = 1)
-  assert_types(x$link, "character", len = 1)
+  checkmate::assert_string(x$family)
+  checkmate::assert_string(x$link)
 
   TRUE
 }
 
 #' @keywords internal
 is.mcpmodel = function(x) {
-  assert_types(x, "list", len = c(1, Inf))
+  checkmate::assert_list(x, min.len = 1)
 
   for (segment in x) {
     if (!inherits(segment, "formula"))
@@ -45,121 +38,6 @@ stop_github = function(...) {
 }
 
 
-# Asserts whether x contains non-numeric, decimal, or less-than-lower
-assert_integer = function(x, name = NULL, lower = -Inf, len = NULL) {
-  assert_length(x, len, name = substitute(x))
-
-  # Recode
-  if (is.null(name))
-    name = substitute(x)
-  x = stats::na.omit(x)
-
-  # Do checks
-  greater_than = ifelse(lower == -Inf, " ", paste0(" >= ", lower, " "))
-  if (!is.numeric(x))
-    stop("Only integers", greater_than, "allowed for '", name, "'. Got ", x)
-
-  if (!all(x == floor(x)) || !all(x >= lower))
-    stop("Only integers", greater_than, "allowed for '", name, "'. Got ", x)
-
-  TRUE
-}
-
-
-# Asserts whether x is logical
-assert_logical = function(x, len = 1) {
-  assert_length(x, len, name = substitute(x))
-
-  if (!is.logical(x))
-    stop("`", substitute(x), "` must be logical (TRUE or FALSE). Got ", x)
-
-  TRUE
-}
-
-
-# Asserts whether x is one of a set of allowed values
-assert_value = function(x, allowed = c(), len = 1) {
-  assert_length(x, len, name = substitute(x))
-
-  if (x %notin% allowed) {
-    allowed[is.character(allowed)] = paste0("'", allowed[is.character(allowed)], "'")  # Add quotes for character values
-    if (length(allowed) == 1) {
-      stop("`", substitute(x), "` must be ", allowed, ". Got ", paste0(x, collapse = ", "))
-    } else {
-      stop("`", substitute(x), "` must be one of ", paste0(allowed, collapse = " or "), ". Got ", paste0(x, collapse = ", "))
-    }
-  }
-
-  TRUE
-}
-
-
-# Asserts whether x is one of a set of allowed types.
-# e.g., `assert_types(vec, "numeric", "character", "foo")`
-assert_types = function(x, ..., len = NULL) {
-  assert_length(x, len, name = substitute(x))
-  types = list(...)
-
-  # Test each function on x
-  passed = logical(length(types))
-  for (i in seq_along(types)) {
-    is.type = get(paste0("is.", types[[i]]))  # From character to is.foo() function
-    passed[i] = is.type(x)
-  }
-
-  # Return helpful error
-  if (!any(passed == TRUE))
-    if (length(types) == 1) {
-      stop("`", substitute(x), "` must be ", types, ". Got ", paste0(class(x), collapse = ", "))
-    } else {
-      stop("`", substitute(x), "` must be one of ", paste0(types, collapse = " or "), ". Got ", paste0(class(x), collapse = ", "))
-    }
-
-  TRUE
-}
-
-
-# Asserts whether x is numeric in range
-assert_numeric = function(x, lower = -Inf, upper = Inf, len = NULL) {
-  assert_length(x, len, name = substitute(x))
-  if (!is.numeric(x))
-    stop("`", substitute(x), "` must be numeric. Got ", class(x))
-  if (any(x < lower) || any(x > upper))
-    stop("`", substitute(x), "` contained value(s) outside the interval (", lower, ", ", upper, ").")
-
-  TRUE
-}
-
-
-# Asserts ellipsis. `ellipsis` is a list and `allowed` is a character vector
-assert_ellipsis = function(..., allowed = NULL) {
-  assert_types(allowed, "null", "character")
-
-  illegal_names = dplyr::setdiff(names(list(...)), allowed)
-  if (length(illegal_names) > 0)
-    stop("The following arguments are not accepted for this function: ", and_collapse(illegal_names))
-
-  TRUE
-}
-
-
-# Asserts whether the length of x matches len or len = c(lower, upper)
-assert_length = function(x, len = NULL, name = NULL) {
-  if (is.null(name))
-    name = substitute(x)
-
-  if (is.null(len) == FALSE) {
-    if (length(len) == 1 && length(x) != len)
-      stop("`", name, "` should have length ", len, " but has length ", length(x))
-
-    if (length(len) == 2 && (length(x) < len[1] | length(x) > len[2]))
-      stop("`", name, "` should have a length between ", len[1], " and ", len[2], " but has length ", length(x))
-  }
-
-  TRUE
-}
-
-
 # Asserts whether matrix x is rank deficient.
 assert_rank = function(x, segment, dpar) {
   QR = qr(x)
@@ -174,7 +52,7 @@ assert_rank = function(x, segment, dpar) {
 
 
 # Asserts whether the data contains these cols and that all of them does not contained fail_funcs values
-# This is like assert_types(), but applied to multiple columns in data
+# This applies checks to multiple columns in data.
 # Typical fail_funcs would be c(is.na, is.nan, is.infinite)
 assert_data_cols = function(data, cols, fail_funcs = c()) {
   missing_cols = cols[(cols %in% colnames(data)) == FALSE]
@@ -208,8 +86,8 @@ assert_rel = function(model) {
 
 
 assert_typescale = function(type, scale) {
-  assert_value(type, allowed = c("predict", "fitted", "residuals", "loglik"))
-  assert_value(scale, allowed = c("response", "linear"))
+  rlang::arg_match0(type, c("predict", "fitted", "residuals", "loglik"))
+  rlang::arg_match0(scale, c("response", "linear"))
   if (scale == "linear" & type != "fitted")
     stop("scale = 'linear' is only allowed when type = 'fitted'.")
 
@@ -228,8 +106,8 @@ assert_dpar = function(dpar, fit, type) {
     fit$family$dpars[fit$family$dpars %notin% c("ar", "ma")],  # any model parameters that have no regression terms (~0)
     "epred"
   ))
-  assert_types(dpar, "character", len = 1)
-  assert_value(dpar, allowed = allowed_dpars)
+  checkmate::assert_string(dpar)
+  dpar = rlang::arg_match0(dpar, allowed_dpars)
 
   if (type != "fitted" & dpar != "epred")
     stop("dpar = '", dpar, "' is only allowed when type = 'fitted'.")

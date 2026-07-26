@@ -39,9 +39,9 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE,
                       ndraws = NULL, nsamples = lifecycle::deprecated()) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "loo.mcpfit")
   fit = x
-  assert_types(fit, "mcpfit")
-  assert_types(varying, "logical", "character")
-  assert_logical(arma)
+  checkmate::assert_class(fit, "mcpfit")
+  checkmate::assert_multi_class(varying, c("logical", "character"))
+  checkmate::assert_flag(arma)
   ndraws = validate_loglik_ndraws(fit, ndraws)
   n_draws = sum(vapply(fit$mcmc_post, nrow, integer(1)))
   settings = get_loglik_settings(fit, varying, arma, ndraws)
@@ -138,9 +138,9 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE,
 waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, ndraws = NULL,
                        nsamples = lifecycle::deprecated()) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "waic.mcpfit")
-  assert_ellipsis(...)
+  rlang::check_dots_empty()
   fit = x
-  assert_types(fit, "mcpfit")
+  checkmate::assert_class(fit, "mcpfit")
   ndraws = validate_loglik_ndraws(fit, ndraws)
   settings = get_loglik_settings(fit, varying, arma, ndraws)
   if (!loglik_settings_match(fit$loglik, settings))
@@ -194,12 +194,11 @@ add_loglik = function(x, varying = TRUE, arma = TRUE, ndraws = NULL,
 #' @keywords internal
 #' @noRd
 validate_loglik_ndraws = function(fit, ndraws) {
-  assert_types(ndraws, "null", "numeric", len = c(0, 1))
+  checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
   if (is.null(ndraws))
     return(NULL)
 
   n_draws = sum(vapply(fit$mcmc_post, nrow, integer(1)))
-  assert_integer(ndraws, lower = 1, len = 1)
   if (ndraws > n_draws)
     stop("`ndraws` cannot exceed the ", n_draws, " available posterior draws.")
   as.integer(ndraws)
@@ -296,11 +295,11 @@ loglik_settings_match = function(loglik, settings) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) {
-  assert_types(fit, "mcpfit")
-  assert_types(hypotheses, "character")
-  assert_numeric(width, lower = 0, upper = 1, len = 1)
-  assert_integer(digits, lower = 0, len = 1)
-  assert_logical(prior)
+  checkmate::assert_class(fit, "mcpfit")
+  checkmate::assert_character(hypotheses)
+  checkmate::assert_number(width, lower = 0, upper = 1)
+  checkmate::assert_int(digits, lower = 0)
+  checkmate::assert_flag(prior)
 
   # Loop through hypotheses and populate df_result
   df_result = data.frame()

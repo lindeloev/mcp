@@ -46,14 +46,12 @@ pp_check = function(
 
   # Internal mcp naming convention
   fit = object
-  assert_types(fit, "mcpfit")
-  assert_types(facet_by, "null", "character", len = c(0, 1))
-  assert_logical(prior)
-  assert_types(varying, "logical", "character")
-  assert_logical(arma)
-  assert_types(ndraws, "null", "numeric", len = c(0, 1))
-  if (!is.null(ndraws))
-    assert_integer(ndraws, lower = 1, len = 1)
+  checkmate::assert_class(fit, "mcpfit")
+  checkmate::assert_string(facet_by, null.ok = TRUE)
+  checkmate::assert_flag(prior)
+  checkmate::assert_multi_class(varying, c("logical", "character"))
+  checkmate::assert_flag(arma)
+  checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
 
   # Check and recode inputs
   if (!is.null(facet_by))
@@ -63,7 +61,7 @@ pp_check = function(
   if (is.null(newdata)) {
     eval_data = fit$data
   } else {
-    assert_types(newdata, "data.frame", "tibble")
+    checkmate::assert_data_frame(newdata)
     eval_data = data.frame(newdata)
   }
   assert_data_cols(eval_data, fit$pars$y)
@@ -164,12 +162,10 @@ get_ppc_plot = function(fit, type, y, yrep, ndraws,
   func_name = paste0("ppc_", type)
   func_obj = utils::getFromNamespace(func_name, "bayesplot")
   plot_formals = names(formals(func_obj))
-  assert_ellipsis(
-    ...,
-    allowed = setdiff(
-      plot_formals,
-      c("y", "yrep", "psis_object", "lw", "...")
-    )
+  checkmate::assert_subset(
+    names(list(...)),
+    setdiff(plot_formals, c("y", "yrep", "psis_object", "lw", "...")),
+    .var.name = "names of arguments in `...`"
   )
 
   if (is_loo == FALSE) {

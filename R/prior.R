@@ -5,7 +5,7 @@
 #' @keywords internal
 #' @noRd
 get_prior = function(ST, CP, rhs_table, family, prior = list(), data) {
-  assert_types(family, "mcpfamily")
+  checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
   context = prior_context(data, ST)
   warn_legacy_prior_constants(prior, context)
 
@@ -41,8 +41,8 @@ get_prior = function(ST, CP, rhs_table, family, prior = list(), data) {
 #'   `segment` and `dpar` columns.
 #' @export
 prior_summary = function(fit, verbose = FALSE) {
-  assert_types(fit, "mcpfit")
-  assert_types(verbose, "logical", len = 1)
+  checkmate::assert_class(fit, "mcpfit")
+  checkmate::assert_flag(verbose)
   table = fit$.internal$prior_table
   if (is.null(table))
     table = attr(fit$prior, "prior_table")

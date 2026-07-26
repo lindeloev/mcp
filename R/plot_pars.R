@@ -69,7 +69,7 @@ plot_pars = function(fit,
 ) {
 
   # Check arguments
-  assert_types(fit, "mcpfit")
+  checkmate::assert_class(fit, "mcpfit")
 
   if (!coda::is.mcmc.list(fit$mcmc_post) && !coda::is.mcmc.list(fit$mcmc_prior))
     stop("Cannot plot an mcpfit without prior or posterior samples.")
@@ -86,8 +86,8 @@ plot_pars = function(fit,
   if ("combo" %in% type && length(type) > 1)
     stop("'combo' type cannot be combined with other types. Replace 'combo' with the types you want combo\'ed")
 
-  assert_integer(ncol, lower = 1, len = 1)
-  assert_logical(prior)
+  checkmate::assert_int(ncol, lower = 1)
+  checkmate::assert_flag(prior)
   bayesplot::available_mcmc()  # Quick fix to make R CMD Check happy that bayesplot is imported
 
   # Get posterior/prior samples

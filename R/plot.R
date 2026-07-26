@@ -76,34 +76,46 @@ get_plot = function(x,
   ########################
   # ASSERTS AND RECODING #
   ########################
-  assert_types(fit, "mcpfit")
+  checkmate::assert_class(fit, "mcpfit")
   if (!is.mcpfamily(fit$family))
     fit$family = mcpfamily(fit$family)
 
   if (lines != FALSE) {
-    assert_integer(lines, lower = 1, len = 1)
+    checkmate::assert_int(lines, lower = 1)
   } else {
     lines = 0
   }
 
-  assert_value(geom_data, allowed = c("point", "line", FALSE))
-  assert_logical(cp_dens)
+  checkmate::assert(
+    checkmate::check_choice(geom_data, c("point", "line")),
+    checkmate::check_false(geom_data),
+    .var.name = "geom_data"
+  )
+  checkmate::assert_flag(cp_dens)
   assert_typescale(type = "fitted", scale = scale)
   dpar = assert_dpar(dpar, fit = fit, type = "fitted")
   # Quantiles
-  assert_types(q_fit, "logical", "numeric")
-  assert_types(q_predict, "logical", "numeric")
+  checkmate::assert(
+    checkmate::check_flag(q_fit),
+    checkmate::check_numeric(q_fit, any.missing = FALSE),
+    .var.name = "q_fit"
+  )
+  checkmate::assert(
+    checkmate::check_flag(q_predict),
+    checkmate::check_numeric(q_predict, any.missing = FALSE),
+    .var.name = "q_predict"
+  )
   if (all(q_fit == TRUE))
     q_fit = c(0.025, 0.975)
   if (all(q_predict == TRUE))
     q_predict = c(0.025, 0.975)
   if (is.numeric(q_fit))
-    assert_numeric(q_fit, lower = 0, upper = 1)
+    checkmate::assert_numeric(q_fit, lower = 0, upper = 1, any.missing = FALSE)
   if (is.numeric(q_predict))
-    assert_numeric(q_predict, lower = 0, upper = 1)
+    checkmate::assert_numeric(q_predict, lower = 0, upper = 1, any.missing = FALSE)
 
   if (!is.null(ndraws)) {
-    assert_integer(ndraws, lower = 1, len = 1)
+    checkmate::assert_int(ndraws, lower = 1)
     if (lines != FALSE && ndraws < lines)
       stop("`lines` must be less than or equal to `ndraws`.")
   }
@@ -112,8 +124,8 @@ get_plot = function(x,
     ndraws = lines
 
   # Validate columns used for faceting and color.
-  assert_types(facet_by, "null", "character")
-  assert_types(color_by, "null", "character")
+  checkmate::assert_character(facet_by, null.ok = TRUE)
+  checkmate::assert_character(color_by, null.ok = TRUE)
   facet_by = logical0_to_null(unique(facet_by))
   color_by = logical0_to_null(unique(color_by))
 
@@ -145,7 +157,7 @@ get_plot = function(x,
   if (scale == "linear" && rate == FALSE)
     message("Known bug: the data points are plotted incorrectly when scale = 'linear' and rate = FALSE.")
 
-  assert_ellipsis(...)
+  rlang::check_dots_empty()
 
   # Useful vars
   xvar = rlang::sym(fit$pars$x)

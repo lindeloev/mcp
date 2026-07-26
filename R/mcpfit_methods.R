@@ -49,10 +49,10 @@ NULL
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   # Check arguments
-  assert_types(fit, "mcpfit")
-  assert_numeric(width, lower = 0, upper = 1, len = 1)
-  assert_logical(varying)
-  assert_logical(prior)
+  checkmate::assert_class(fit, "mcpfit")
+  checkmate::assert_number(width, lower = 0, upper = 1)
+  checkmate::assert_flag(varying)
+  checkmate::assert_flag(prior)
 
   if (varying == TRUE & is.null(fit$pars$varying))
     return(NULL)
@@ -210,11 +210,11 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #' summary(demo_fit, prior = TRUE)
 summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) {
   fit = object  # Standard name in mcp
-  assert_types(fit, "mcpfit")
-  assert_numeric(width, lower = 0, upper = 1, len = 1)
-  assert_integer(digits, lower = 0, len = 1)
-  assert_logical(prior)
-  assert_ellipsis(...)
+  checkmate::assert_class(fit, "mcpfit")
+  checkmate::assert_number(width, lower = 0, upper = 1)
+  checkmate::assert_int(digits, lower = 0)
+  checkmate::assert_flag(prior)
+  rlang::check_dots_empty()
 
   samples = mcmclist_samples(fit, prior = prior, error = FALSE)
 
@@ -258,7 +258,7 @@ ranef = function(object, ...) UseMethod("ranef")
 #' @describeIn summary.mcpfit Fixed (population-level) effects of `mcpfit`.
 #' @export
 fixef.mcpfit = function(object, width = 0.95, prior = FALSE, ...) {
-  assert_ellipsis(...)
+  rlang::check_dots_empty()
   get_summary(object, width, varying = FALSE, prior = prior)
 }
 
@@ -266,7 +266,7 @@ fixef.mcpfit = function(object, width = 0.95, prior = FALSE, ...) {
 #' @describeIn summary.mcpfit Random (varying) effects of `mcpfit`.
 #' @export
 ranef.mcpfit = function(object, width = 0.95, prior = FALSE, ...) {
-  assert_ellipsis(...)
+  rlang::check_dots_empty()
   get_summary(object, width, varying = TRUE, prior = prior)
 }
 
@@ -411,8 +411,8 @@ nchains = function(object, ...) UseMethod("nchains")
 #' @slot cols Character vector of data column names. `NULL` if empty.
 #' @slot indices Logical vector of segments in the segment table that contains the varying effect
 unpack_varying = function(fit, pars = NULL, cols = NULL) {
-  assert_types(pars, "null", "logical", "character")
-  assert_types(cols, "null", "logical", "character")
+  checkmate::assert_multi_class(pars, c("logical", "character"), null.ok = TRUE)
+  checkmate::assert_multi_class(cols, c("logical", "character"), null.ok = TRUE)
 
   # If everything is NULL, just return NULLs
   if ((is.null(pars) && is.null(cols))) {
@@ -513,13 +513,12 @@ tidy_samples = function(
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "tidy_samples")
 
   # General argument checks
-  assert_types(fit, "mcpfit")
-  assert_types(population, "logical", "character")
-  assert_types(varying, "null", "logical", "character")
-  assert_types(absolute, "null", "logical", "character")
-  assert_logical(prior)
-  if (!is.null(ndraws))
-    assert_integer(ndraws, lower = 1, len = c(0, 1))
+  checkmate::assert_class(fit, "mcpfit")
+  checkmate::assert_multi_class(population, c("logical", "character"))
+  checkmate::assert_multi_class(varying, c("logical", "character"), null.ok = TRUE)
+  checkmate::assert_multi_class(absolute, c("logical", "character"), null.ok = TRUE)
+  checkmate::assert_flag(prior)
+  checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
 
   if (all(population == FALSE) && all(varying == FALSE))
     stop("At least one TRUE or one parameter must be provided through either the `varying` or the `population` arguments.")
@@ -682,7 +681,7 @@ pp_eval = function(
 
   # Recode
   fit = object
-  assert_types(fit, "mcpfit")
+  checkmate::assert_class(fit, "mcpfit")
   if (!is.mcpfamily(fit$family))
     fit$family = mcpfamily(fit$family)
   dpar = assert_dpar(dpar, fit = fit, type = type)
@@ -721,23 +720,25 @@ pp_eval = function(
   ########################
   # ASSERTS AND RECODING #
   ########################
-  assert_logical(summary, len = 1)
+  checkmate::assert_flag(summary)
   assert_typescale(type, scale)
-  assert_types(probs, "logical", "numeric")
+  checkmate::assert(
+    checkmate::check_flag(probs),
+    checkmate::check_numeric(probs, any.missing = FALSE),
+    .var.name = "probs"
+  )
   if (is.numeric(probs))
-    assert_numeric(probs, lower = 0, upper = 1)
+    checkmate::assert_numeric(probs, lower = 0, upper = 1, any.missing = FALSE)
   if (is.logical(probs) & all(probs == TRUE))
     probs = c(0.025, 0.975)
-  assert_logical(rate)
-  assert_logical(prior)
-  assert_logical(arma)
-  assert_logical(.include_fitted, len = 1)
+  checkmate::assert_flag(rate)
+  checkmate::assert_flag(prior)
+  checkmate::assert_flag(arma)
+  checkmate::assert_flag(.include_fitted)
   if (.include_fitted && (type != "predict" || summary))
     stop_github("`.include_fitted` requires `type = 'predict'` and `summary = FALSE`.")
-  assert_types(ndraws, "null", "numeric", len = c(0, 1))
-  if (is.numeric(ndraws))
-    assert_integer(ndraws, lower = 1)
-  assert_value(samples_format, allowed = c("tidy", "matrix"))
+  checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
+  samples_format = rlang::arg_match0(samples_format, c("tidy", "matrix"))
 
 
   ########################
@@ -836,7 +837,7 @@ pp_eval = function(
 #'
 #' @details
 #' `residuals(fit)` is equivalent to  `fitted(fit, ...) - fit$data[, fit$data$yvar]` (or `fitted(fit, ...) - newdata[, fit$data$yvar]`),
-#' but with fixed arguments for `fitted`: `rate = FALSE, dpar = 'mu', samples_format = 'tidy'`.
+#' but with fixed arguments for `fitted`: `rate = FALSE, dpar = 'epred', samples_format = 'tidy'`.
 #'
 #' @inheritParams pp_eval
 #' @param ... Currently ignored.
@@ -883,7 +884,7 @@ predict.mcpfit = function(
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "predict.mcpfit")
-  assert_ellipsis(...)
+  rlang::check_dots_empty()
   pp_eval(
     object,
     newdata = newdata,
@@ -921,7 +922,7 @@ fitted.mcpfit = function(
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "fitted.mcpfit")
-  assert_ellipsis(...)
+  rlang::check_dots_empty()
   pp_eval(
     object,
     newdata = newdata,
@@ -971,7 +972,7 @@ log_lik.mcpfit = function(
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "log_lik.mcpfit")
-  assert_ellipsis(...)
+  rlang::check_dots_empty()
   pp_eval(
     object,
     newdata = newdata,
@@ -1006,7 +1007,7 @@ residuals.mcpfit = function(
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "residuals.mcpfit")
-  assert_ellipsis(...)
+  rlang::check_dots_empty()
   pp_eval(
     object,
     newdata = newdata,
@@ -1038,7 +1039,7 @@ residuals.mcpfit = function(
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 with_loo = function(fit, save_psis = FALSE, info = NULL,
                     varying = TRUE, arma = TRUE) {
-  assert_types(fit, "mcpfit")
+  checkmate::assert_class(fit, "mcpfit")
   settings = get_loglik_settings(fit, varying, arma, ndraws = NULL)
   settings_match = identical(attr(fit$loo, "mcp_settings"), settings)
   needs_psis = save_psis == TRUE &&

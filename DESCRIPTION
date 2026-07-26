@@ -38,8 +38,9 @@ Imports:
 	stringi (>= 1.4.3),
 	ggplot2 (>= 3.2.1),
 	patchwork (>= 1.0.0),
+	checkmate (>= 2.3.0),
 	stats,
-	rlang (>= 0.4.1)
+	rlang (>= 1.0.0)
 Suggests: 
 	hexbin,
 	MASS,

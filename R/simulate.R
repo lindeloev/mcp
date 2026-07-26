@@ -46,8 +46,8 @@ relevel_newdata = function(newdata, fit) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 add_rhs_predictors = function(newdata, fit) {
-  assert_types(fit, "mcpfit")
-  assert_types(newdata, "data.frame", "tibble")
+  checkmate::assert_class(fit, "mcpfit")
+  checkmate::assert_data_frame(newdata)
 
   # Make categorical predictors match the original data
   newdata = newdata %>%
@@ -236,7 +236,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   ###########
   # ASSERTS #
   ###########
-  assert_types(fit, "mcpfit")
+  checkmate::assert_class(fit, "mcpfit")
   if (!is.mcpfamily(fit$family))
     fit$family = mcpfamily(fit$family)
   rhs_table = fit$.internal$rhs_table  # Shorthand
@@ -258,10 +258,10 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
 
   # Other args
   assert_typescale(.type, .scale)
-  assert_logical(.rate, len = 1)
+  checkmate::assert_flag(.rate)
 
   .dpar = assert_dpar(.dpar, fit = fit, type = .type)
-  assert_logical(.arma, len = 1)
+  checkmate::assert_flag(.arma)
 
 
   ##################################################
@@ -367,14 +367,18 @@ simulate_atomic = function(fit,
 
   # Check some inputs.
   # Remaining values are asserted in simulate_vectorized()
-  assert_types(fit, "mcpfit")
-  assert_types(newdata, "data.frame", "tibble")
+  checkmate::assert_class(fit, "mcpfit")
+  checkmate::assert_data_frame(newdata)
   args = list(...)
   expected_args = get_sim_pars(fit$.internal$rhs_table, fit$pars)
-  if (is.null(names(args)) | any(names(args) == ""))  # A more helpful error than assert_ellipsis()
+  if (is.null(names(args)) | any(names(args) == ""))
     stop("All arguments must be named.")
-  assert_ellipsis(..., allowed = expected_args)
-  lapply(args, assert_numeric)
+  checkmate::assert_subset(
+    names(args),
+    expected_args,
+    .var.name = "names of arguments in `...`"
+  )
+  lapply(args, checkmate::assert_numeric, any.missing = FALSE)
   lapply(args, function(x) stopifnot(length(x) == 1 | length(x) == nrow(newdata)))
 
   # Remove response column if present - it is to be simulated
@@ -470,9 +474,9 @@ get_fitsimulate = function(pars) {
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 simulate_ar = function(sigma_, ar_list, resid_abs = NULL, series_id = NULL) {
   # Check inputs
-  assert_numeric(sigma_)
-  assert_types(ar_list, "list")
-  assert_types(resid_abs, "null", "numeric")
+  checkmate::assert_numeric(sigma_, any.missing = FALSE)
+  checkmate::assert_list(ar_list)
+  checkmate::assert_numeric(resid_abs, any.missing = FALSE, null.ok = TRUE)
   if (length(grep("^ar[0-9]+_$", names(ar_list))) != length(ar_list))
     stop_github("Not all names(ar_list) are arx_.")
   if (is.null(series_id))

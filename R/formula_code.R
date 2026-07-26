@@ -226,9 +226,9 @@ get_formula_r = function(formula_jags, rhs_table, pars) {
 get_arma_jagscode = function(ar_order, ma_order, x_name) {
   ar_order = ifelse(is.na(ar_order), 0, ar_order)
   ma_order = ifelse(is.na(ma_order), 0, ma_order)
-  assert_integer(ar_order, lower = 0, len = 1)
-  assert_integer(ma_order, lower = 0, len = 1)
-  assert_types(x_name, "character", len = 1)
+  checkmate::assert_int(ar_order, lower = 0)
+  checkmate::assert_int(ma_order, lower = 0)
+  checkmate::assert_string(x_name)
   max_order = max(ar_order, ma_order)
   if (max_order == 0)
     stop_github("get_arma_jagscode() requires a positive AR or MA order.")

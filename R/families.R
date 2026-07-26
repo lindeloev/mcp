@@ -6,7 +6,7 @@
 #' @param link Link function.
 #' @export
 bernoulli = function(link = "logit") {
-  assert_value(link, allowed = c("identity", "logit", "probit"))
+  link = rlang::arg_match0(link, c("identity", "logit", "probit"))
 
   family = stats::binomial(link = link)
   family$family = "bernoulli"
@@ -29,8 +29,8 @@ bernoulli = function(link = "logit") {
 #'   on their link scales.
 #' @export
 negbinomial = function(link = "log", link_shape = "log") {
-  assert_value(link, allowed = "log")
-  assert_value(link_shape, allowed = "log")
+  link = rlang::arg_match0(link, "log")
+  link_shape = rlang::arg_match0(link_shape, "log")
 
   family = list(family = "negbinomial", link = link, link_shape = link_shape)
   class(family) = "family"
@@ -47,7 +47,7 @@ negbinomial = function(link = "log", link_shape = "log") {
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 mcpfamily = function(x) {
-  assert_types(x, "family")
+  checkmate::assert_true(is.family(x), .var.name = "x")
 
   family = switch(
     x$family,
@@ -113,7 +113,7 @@ validate_count_mean = function(mu) {
 
 
 normalize_family_default_priors = function(defaults) {
-  assert_types(defaults, "tibble", "data.frame")
+  checkmate::assert_data_frame(defaults)
   assert_data_cols(defaults, c("dpar", "par_type", "prior"))
   defaults = tibble::as_tibble(defaults)
   if (!"description" %in% names(defaults))
@@ -222,8 +222,8 @@ mcpfamily_binomial = function(family) {
       operations = c("epred", "log_lik", "rng", "garma")
     )),
     validate = function(y, data, columns) {
-      assert_integer(y, columns$y, lower = 0)
-      assert_integer(data$trials, columns$trials, lower = 1)
+      checkmate::assert_integerish(y, lower = 0, .var.name = columns$y)
+      checkmate::assert_integerish(data$trials, lower = 1, .var.name = columns$trials)
       invalid = which(!is.na(y) & !is.na(data$trials) & y > data$trials)
       if (length(invalid) > 0)
         stop(
@@ -335,7 +335,7 @@ mcpfamily_poisson = function(family) {
 
   response = list(
     validate = function(y, data, columns) {
-      assert_integer(y, columns$y, lower = 0)
+      checkmate::assert_integerish(y, lower = 0, .var.name = columns$y)
       invisible(TRUE)
     }
   )
@@ -387,7 +387,7 @@ mcpfamily_negbinomial = function(family) {
   )
   response = list(
     validate = function(y, data, columns) {
-      assert_integer(y, columns$y, lower = 0)
+      checkmate::assert_integerish(y, lower = 0, .var.name = columns$y)
       invisible(TRUE)
     }
   )
@@ -454,7 +454,7 @@ add_dpar_specs = function(family) {
 
 
 assert_dpar_specs = function(x) {
-  assert_types(x, "data.frame", "tibble")
+  checkmate::assert_data_frame(x)
   required = c("dpar", "link", "implicit", "lower")
   assert_data_cols(x, required)
 
@@ -544,34 +544,34 @@ is.mcpfamily = function(x) {
   if (any(required %notin% names(x)))
     return(FALSE)
 
-  assert_types(x, "family")
-  assert_types(x$default_prior, "tibble", "data.frame")
+  checkmate::assert_true(is.family(x), .var.name = "x")
+  checkmate::assert_data_frame(x$default_prior)
   assert_data_cols(x$default_prior, c("dpar", "par_type", "prior"))
   assert_dpar_specs(x$dpar_specs)
-  assert_types(x$dpars, "character")
-  assert_types(x$links, "character")
-  assert_types(x$response$auxiliary, "list")
-  assert_types(x$response$validate, "function")
-  assert_types(x$response$observed, "function")
-  assert_types(x$response$probability, "function")
-  assert_types(x$response$point_size, "null", "character", len = c(0, 1))
+  checkmate::assert_character(x$dpars)
+  checkmate::assert_character(x$links)
+  checkmate::assert_list(x$response$auxiliary)
+  checkmate::assert_function(x$response$validate)
+  checkmate::assert_function(x$response$observed)
+  checkmate::assert_function(x$response$probability)
+  checkmate::assert_string(x$response$point_size, null.ok = TRUE)
   for (auxiliary in x$response$auxiliary) {
-    assert_logical(auxiliary$required, len = 1)
-    assert_types(auxiliary$operations, "character")
+    checkmate::assert_flag(auxiliary$required)
+    checkmate::assert_character(auxiliary$operations)
   }
-  assert_types(x$r$epred, "function")
-  assert_types(x$r$log_lik, "function")
-  assert_types(x$r$rng, "function")
-  assert_types(x$backends$jags$likelihood, "function")
+  checkmate::assert_function(x$r$epred)
+  checkmate::assert_function(x$r$log_lik)
+  checkmate::assert_function(x$r$rng)
+  checkmate::assert_function(x$backends$jags$likelihood)
   if (!is.null(x$garma)) {
-    assert_types(x$garma$observed_r, "function")
-    assert_types(x$garma$observed_jags, "function")
-    assert_types(x$garma$generate_message, "null", "character", len = c(0, 1))
+    checkmate::assert_function(x$garma$observed_r)
+    checkmate::assert_function(x$garma$observed_jags)
+    checkmate::assert_string(x$garma$generate_message, null.ok = TRUE)
   }
-  assert_types(x$linkfun_str, "character", len = 1)
-  assert_types(x$linkinv_str, "character", len = 1)
-  assert_types(x$linkfun, "function")
-  assert_types(x$linkinv, "function")
+  checkmate::assert_string(x$linkfun_str)
+  checkmate::assert_string(x$linkinv_str)
+  checkmate::assert_function(x$linkfun)
+  checkmate::assert_function(x$linkinv)
 
   TRUE
 }

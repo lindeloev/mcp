@@ -9,8 +9,8 @@
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 inprod = function(x, y) {
-  assert_types(x, "matrix")
-  assert_types(y, "matrix")
+  checkmate::assert_matrix(x)
+  checkmate::assert_matrix(y)
   rowSums(x * y)
 }
 
@@ -30,7 +30,7 @@ logical0_to_null = function(x) {
 
 # List of categorical column names and their unique levels
 get_categorical_levels = function(df) {
-  assert_types(df, "data.frame", "tibble")
+  checkmate::assert_data_frame(df)
   categorical_cols = colnames(df)[sapply(df, class) %in% c("factor", "logical", "character")]
   lapply(df[, categorical_cols, drop = FALSE], unique)
 }
@@ -53,7 +53,7 @@ release_questions = function() {
 
 # Returns the requested AR/MA order, or NA if the term is absent
 get_arma_order = function(rhs_table, term) {
-  assert_value(term, allowed = c("ar", "ma"))
+  term = rlang::arg_match0(term, c("ar", "ma"))
   orders = rhs_table$order[rhs_table$dpar == term]
   if (length(orders) == 0) NA else max(orders, na.rm = TRUE)
 }
@@ -72,8 +72,8 @@ get_arma_order = function(rhs_table, term) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 remove_terms = function(form, remove) {
-  assert_types(form, "formula", len = c(2, 3))
-  assert_value(remove, allowed = c("varying", "population"))
+  checkmate::assert_formula(form)
+  remove = rlang::arg_match0(remove, c("varying", "population"))
 
   # Find terms with "|"
   attrs = attributes(stats::terms(form))
@@ -111,7 +111,11 @@ remove_terms = function(form, remove) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 to_formula = function(form) {
-  assert_types(form, "character", "formula", len = c(1, 3))
+  checkmate::assert(
+    checkmate::check_character(form, min.len = 1, max.len = 3),
+    checkmate::check_formula(form),
+    .var.name = "form"
+  )
   if (is.character(form)) {
     # Add tilde
     if (!stringr::str_detect(form, "^(\\s|)~")) {
@@ -136,7 +140,7 @@ to_formula = function(form) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 and_collapse = function(x) {
-  assert_types(x, "character")
+  checkmate::assert_character(x)
   paste0(x, collapse = " and ")
 }
 
@@ -201,7 +205,7 @@ warn_nonconvergence = function(mcmc_post) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 formula_to_char = function(form) {
-  assert_types(form, "formula", len = c(1, 3))
+  checkmate::assert_formula(form)
   form_char = as.character(form)
   if (length(form_char) == 2 & form_char[1] == "~") {
     return(paste0(form_char, collapse = " "))
@@ -223,7 +227,7 @@ formula_to_char = function(form) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_rhs = function(form) {
-  assert_types(form, "formula")
+  checkmate::assert_formula(form)
   if (length(form) == 2) {
     return(form)
   } else if (length(form) == 3) {
@@ -242,7 +246,7 @@ get_rhs = function(form) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_rhs_vars = function(model) {
-  assert_types(model, "mcpmodel")
+  checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
 
   model %>%
     lapply(get_rhs) %>%
@@ -261,7 +265,7 @@ get_rhs_vars = function(model) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_model_vars = function(model) {
-  assert_types(model, "mcpmodel")
+  checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
 
   model %>%
     lapply(all.vars) %>%
@@ -281,7 +285,7 @@ get_model_vars = function(model) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_rhs_matrix = function(rhs_table) {
-  assert_types(rhs_table, "data.frame", "tibble")
+  checkmate::assert_data_frame(rhs_table)
   suppressMessages(dplyr::bind_cols(rhs_table$matrix_data, .name_repair = "unique")) %>% # Suppress message about lacking column names
     as.matrix() %>%
     magrittr::set_colnames(rhs_table$code_name)
@@ -301,8 +305,8 @@ get_rhs_matrix = function(rhs_table) {
 #' @param type Name of the evaluated-value column, matching `pp_eval(type)`.
 #' @return `samples`, invisibly.
 validate_eval_draws = function(samples, type) {
-  assert_types(samples, "data.frame", "tibble")
-  assert_types(type, "character", len = 1)
+  checkmate::assert_data_frame(samples)
+  checkmate::assert_string(type)
   assert_data_cols(samples, c(".draw", "data_row", type))
 
   if (anyNA(samples$.draw) || anyNA(samples$data_row))
@@ -336,7 +340,7 @@ validate_eval_draws = function(samples, type) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 tidy_to_matrix = function(samples, type, data_rows = NULL) {
-  assert_types(type, "character", len = 1)
+  checkmate::assert_string(type)
   assert_data_cols(samples, c(".draw", "data_row", type))
 
   if (is.null(data_rows))
@@ -394,11 +398,11 @@ get_quantiles = function(samples, quantiles, type, keep = NULL) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 print.mcplist = function(x, ...) {
-  assert_types(x, "list")
-  assert_ellipsis(...)
+  checkmate::assert_list(x)
+  rlang::check_dots_empty()
 
   # For all-formula list (typically fit$model)
-  if (all(sapply(x, is.formula)) == TRUE) {
+  if (all(sapply(x, rlang::is_formula)) == TRUE) {
     cat(paste0("List of ", length(x), "\n"))
     for (i in x) {
       cat(" $ ")
@@ -427,8 +431,8 @@ print.mcplist = function(x, ...) {
 #' class(mytext) = "mcptext"
 #' print(mytext)
 print.mcptext = function(x, ...) {
-  assert_types(x, "character", len = 1)
-  assert_ellipsis(...)
+  checkmate::assert_string(x)
+  rlang::check_dots_empty()
   cat(x)
 }
 
@@ -436,7 +440,7 @@ print.mcptext = function(x, ...) {
 # Set model environment to parent.frame() for prettier printing
 # and because it was created in a different environment than inteded for use.
 fix_model_environment = function(model) {
-  assert_types(model, "mcpmodel")
+  checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
   for (i in seq_along(model))
     environment(model[[i]]) = globalenv()
   model

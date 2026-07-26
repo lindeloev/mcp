@@ -178,14 +178,14 @@ mcp = function(model,
   # CHECK INPUTS #
   ################
   # Check model
-  assert_types(model, "mcpmodel")
+  checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
   assert_rel(model)
 
   # Check data and data-model correspondence
-  assert_types(data, "data.frame", "tibble")
+  checkmate::assert_data_frame(data)
   data = data.frame(data)
 
-  assert_types(par_x, "null", "character", len = c(0, 1))
+  checkmate::assert_string(par_x, null.ok = TRUE)
   par_x = get_par_x(model, data, par_x)
   rhs_vars = get_rhs_vars(model)
   assert_data_cols(data, cols = rhs_vars, fail_funcs = c(is.na, is.nan))
@@ -195,7 +195,7 @@ mcp = function(model,
   data = data[, model_vars]  # Remove unused data
 
   # Check prior
-  assert_types(prior, "list")
+  checkmate::assert_list(prior)
 
   which_duplicated = duplicated(names(prior))
   if (any(which_duplicated))
@@ -209,10 +209,14 @@ mcp = function(model,
     family = mcpfamily(family)
 
   # More checking...
-  assert_value(sample, allowed = c("post", "prior", "both", "none", FALSE))
+  checkmate::assert(
+    checkmate::check_choice(sample, c("post", "prior", "both", "none")),
+    checkmate::check_false(sample),
+    .var.name = "sample"
+  )
   if (!is.null(cores)) {
     if (!identical(cores, "all"))
-      assert_integer(cores, lower = 1, len = 1)
+      checkmate::assert_int(cores, lower = 1)
 
     cores_details = paste0(
       "`cores` is ignored. Parallel processing is now controlled by the active ",
@@ -233,8 +237,8 @@ mcp = function(model,
     )
   }
 
-  assert_integer(chains, lower = 1, len = 1)
-  assert_types(inits, "null", "list")
+  checkmate::assert_int(chains, lower = 1)
+  checkmate::assert_list(inits, null.ok = TRUE)
 
   # jags_code
   if(!is.null(jags_code))

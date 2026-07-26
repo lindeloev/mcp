@@ -236,7 +236,7 @@ unpack_cp = function(form_cp, i) {
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @noRd
 get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
-  assert_types(par_x, "character", len = 1)
+  checkmate::assert_string(par_x)
 
   #####################################################
   # BUILD "SEGMENT TABLE (ST)" FROM ISOLATED SEGMENTS #

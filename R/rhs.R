@@ -8,9 +8,9 @@
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_par_x = function(model, data, par_x = NULL) {
-  assert_types(model, "mcpmodel")
-  assert_types(data, "data.frame")
-  assert_types(par_x, "null", "character", len = c(0, 1))
+  checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
+  checkmate::assert_data_frame(data)
+  checkmate::assert_string(par_x, null.ok = TRUE)
 
   # Just check par_x
   if (is.character(par_x)) {
@@ -79,14 +79,15 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
   if (all(as.character(form_rhs) == c("~", "0")))
     return(data.frame(dpar = character(0), segment = numeric(0)))
 
-  assert_types(data, "data.frame", "tibble")
-  assert_types(form_rhs, "formula", len = 2)
-  assert_integer(segment, lower = 1, len = 1)
-  assert_types(dpar, "character", len = 1)
-  assert_types(par_x, "character", len = 1)
-  assert_types(order, "null", "integer", len = c(0, 1))
+  checkmate::assert_data_frame(data)
+  checkmate::assert_formula(form_rhs)
+  checkmate::assert_int(length(form_rhs), lower = 2, upper = 2, .var.name = "length(form_rhs)")
+  checkmate::assert_int(segment, lower = 1)
+  checkmate::assert_string(dpar)
+  checkmate::assert_string(par_x)
+  checkmate::assert_integer(order, max.len = 1, null.ok = TRUE)
   if (is.null(order) == FALSE)
-    assert_integer(order, lower = 1)
+    checkmate::assert_integerish(order, lower = 1)
 
   # Variable names for non-mu terms are prefixed with the term type.
   if (dpar == "mu") {
@@ -159,7 +160,11 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
 
   # Check exponent
   exponent = stringr::str_extract(dplyr::pull(data_subterms, 2), "(?<=\\^)[-0-9]+$")
-  sapply(as.numeric(exponent), assert_integer, lower = 0, name = ". Got exponents in formula.")
+  checkmate::assert_integerish(
+    as.numeric(exponent),
+    lower = 0,
+    .var.name = "exponents in formula"
+  )
 
   # Everything not recognized as a local basis remains in the model matrix.
   x_factor[x_factor == ""] = "1"
@@ -282,11 +287,11 @@ term_contains = function(par_x, terms) {
 #' @noRd
 #' @describeIn get_rhs_table_dpar Apply `get_rhs_table_dpar` to each formula in a segment
 get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_rank = TRUE) {
-  assert_types(form_rhs, "formula", len = c(1, 3))
-  assert_integer(segment, lower = 1, len = 1)
-  assert_types(family, "mcpfamily")
-  assert_types(data, "data.frame", "tibble")
-  assert_types(par_x, "character", len = 1)
+  checkmate::assert_formula(form_rhs)
+  checkmate::assert_int(segment, lower = 1)
+  checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
+  checkmate::assert_data_frame(data)
+  checkmate::assert_string(par_x)
 
   # Get general format
   form_rhs = stats::as.formula(form_rhs)
@@ -468,7 +473,7 @@ unpack_arma = function(form_str_in) {
 
   component_call = str2lang(form_str_in)
   component = as.character(component_call[[1]])
-  assert_value(component, allowed = c("ar", "ma"))
+  component = rlang::arg_match0(component, c("ar", "ma"))
 
   component_args = as.list(component_call)[-1]
   component_arg_names = names(component_args)
@@ -493,7 +498,7 @@ unpack_arma = function(form_str_in) {
   # Check the order
   if (is.na(order))
     stop("Wrong specification of order in '", form_str_in, "'. Must be ", component, "(order) or ", component, "(order, formula) where order is a positive integer.")
-  assert_integer(order, form_str_in, lower = 1, len = 1)
+  checkmate::assert_int(order, lower = 1, .var.name = form_str_in)
 
   # GET FORMULA AND BOUNDARY
   if (length(formula_index) == 1) {

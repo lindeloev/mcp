@@ -64,9 +64,9 @@ get_x_values = function(fit, by = NULL, prior = FALSE) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 interpolate_continuous = function(data, pars, x_values, varying_cols = NULL) {
-  assert_types(data, "data.frame", "tibble")
-  assert_types(pars, "list")
-  assert_numeric(x_values)
+  checkmate::assert_data_frame(data)
+  checkmate::assert_list(pars)
+  checkmate::assert_numeric(x_values, any.missing = FALSE)
 
   # Get numeric RHS data columns
   numeric_data = data[, sapply(data, is.numeric), drop = FALSE]

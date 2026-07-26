@@ -34,6 +34,6 @@ test_good(
 
 
 test_that("negative-binomial links are explicit and currently log-only", {
-  expect_error(negbinomial(link = "identity"), "`link` must be 'log'")
-  expect_error(negbinomial(link_shape = "identity"), "`link_shape` must be 'log'")
+  expect_error(negbinomial(link = "identity"), '`link` must be one of "log"')
+  expect_error(negbinomial(link_shape = "identity"), '`link_shape` must be one of "log"')
 })

@@ -33,7 +33,7 @@
 #' plot(fit2)
 #'}
 mcp_example = function(name, sample = "post") {
-  assert_types(name, "character", len = 1)
+  checkmate::assert_string(name)
   data = data.frame()  # To make R CMD Check happy.
 
   examples = list(
@@ -274,7 +274,7 @@ fit = mcp(model, data, sample = sample)"
 )
 
 # Run the code in an environment
-assert_value(name, allowed = names(examples))
+name = rlang::arg_match0(name, names(examples))
 example_env = new.env()
 with(example_env, eval(str2expression(examples[[name]])))
 
