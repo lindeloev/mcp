@@ -327,6 +327,7 @@ mcp = function(model,
       recover_levels(data, ST)
 
     class(mcmc_post) = "mcmc.list"
+    warn_nonconvergence(mcmc_post)
   } else {
     mcmc_post = NULL
   }

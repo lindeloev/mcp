@@ -141,6 +141,53 @@ and_collapse = function(x) {
 }
 
 
+#' Warn about poorly mixed posterior chains
+#'
+#' Thresholds (Rhat > 1.01, bulk/tail ESS < 400) follow the recommendations in
+#' Vehtari, Gelman, Simpson, Carpenter, & Bürkner (2021). "Rank-normalization,
+#' folding, and localization: An improved Rhat for assessing convergence of
+#' MCMC". Bayesian Analysis, 16(2), 667-718. \doi{10.1214/20-BA1221}. The same
+#' thresholds are used by Stan/`cmdstanr`/`brms`.
+#'
+#' @aliases warn_nonconvergence
+#' @keywords internal
+#' @noRd
+#' @param mcmc_post An `mcmc.list` of posterior draws.
+#' @return `NULL`, invisibly. Called for the warning side-effect.
+#' @encoding UTF-8
+#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+warn_nonconvergence = function(mcmc_post) {
+  if (coda::nchain(mcmc_post) < 2)
+    return(invisible(NULL))  # Rhat/ESS need >= 2 chains
+
+  diagnostics = posterior::summarise_draws(
+    posterior::as_draws_df(mcmc_post),
+    rhat = posterior::rhat,
+    ess_bulk = function(x) suppressWarnings(posterior::ess_bulk(x)),
+    ess_tail = function(x) suppressWarnings(posterior::ess_tail(x))
+  )
+
+  bad_rhat = diagnostics$variable[!is.na(diagnostics$rhat) & diagnostics$rhat > 1.01]
+  bad_ess = diagnostics$variable[
+    (!is.na(diagnostics$ess_bulk) & diagnostics$ess_bulk < 400) |
+    (!is.na(diagnostics$ess_tail) & diagnostics$ess_tail < 400)
+  ]
+
+  if (length(bad_rhat) == 0 && length(bad_ess) == 0)
+    return(invisible(NULL))
+
+  warning(
+    "Some parameters may not have converged well:\n",
+    if (length(bad_rhat) > 0) paste0("  * Rhat > 1.01: ", and_collapse(bad_rhat), "\n"),
+    if (length(bad_ess) > 0) paste0("  * ess_bulk or ess_tail < 400: ", and_collapse(bad_ess), "\n"),
+    "Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing ",
+    "`iter`/`adapt` or simplifying the model before trusting these results.",
+    call. = FALSE
+  )
+  invisible(NULL)
+}
+
+
 #' Converts formula to string
 #'
 #' Note: this uses base R and circumvents the length-limitation of `deparse()`

@@ -1,12 +1,12 @@
 # Use all mcp functions on a given model to check that it does not result in
 # errors.
 quiet_mcp = function(...) {
-  suppressMessages({
+  suppressWarnings(suppressMessages({
     capture.output({
       fit = mcp(...)
     })
     fit
-  })
+  }))
 }
 
 
@@ -66,7 +66,10 @@ test_runs = function(model,
     )
 
     # Allow for known messages and wornings that does not signify errors
-    accepted_warnings = c("Adaptation incomplete")  # due to very small test datasets
+    accepted_warnings = c(
+      "Adaptation incomplete",  # due to very small test datasets
+      "Some parameters may not have converged well"  # ditto - too few iterations to mix
+    )
     accepted_messages = c(
       "Finished sampling in",
       "Autoregression currently assumes homoskedasticity",

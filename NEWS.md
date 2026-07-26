@@ -64,6 +64,8 @@
 
 -   Added option to test hypotheses on the prior using `hypothesis(fit, prior = TRUE)`.
 
+-   `mcp()` now warns when posterior samples show poor mixing.
+
 ## Minor breaking changes
 
 -   Removed the non-functional `exponential()` family. It had no default priors and could not be fitted. Exponential survival models would require dedicated support for censoring and survival likelihoods rather than the previous ordinary-response placeholder.
