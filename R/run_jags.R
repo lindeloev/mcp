@@ -134,6 +134,11 @@ get_jags_data = function(data, family, ST, rhs_table, jags_code) {
   # RHS data matrix
   jags_data$rhs_matrix_ = get_rhs_matrix(rhs_table)
 
+  # Add named data constants for change point prior bounds (see jagsify_constants())
+  jags_constants = attr(jags_code, "jags_constants")
+  if (!is.null(jags_constants))
+    jags_data[names(jags_constants)] = jags_constants
+
   # Compatibility for custom JAGS code written with the released data
   # constants. Generated code and newly resolved priors no longer need these.
   context = prior_context(data, ST)
