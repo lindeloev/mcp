@@ -21,6 +21,10 @@
 #'   'trace_highlight', and 'violin".
 #' @param ncol Number of columns in plot. This is useful when you have many
 #'   parameters and only one plot `type`.
+#' @param nvariables Positive integer. Maximum number of parameters plotted per
+#'   page. The default of 5 follows `brms::plot.brmsfit()`.
+#' @param ask Logical. In an interactive session, prompt before printing each
+#'   page after the first. Only used when there are multiple pages.
 #' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
 #'
 #' @details
@@ -32,9 +36,13 @@
 #'
 #'   In any case, if you see a few erratic lines or parameter estimates, this is
 #'   a sign that you may want to increase argument 'adapt' and 'iter' in \code{\link{mcp}}.
+#'
+#'   Up to `nvariables` parameters are shown on each page. Multi-page plots are
+#'   printed in sequence; in interactive use, `ask = TRUE` pauses between pages.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @return A \pkg{ggplot2} object.
+#' @return A \pkg{ggplot2} object when all selected parameters fit on one page.
+#'   For multiple pages, an invisible list of \pkg{ggplot2} objects.
 #' @export
 #' @seealso plot_pars plot_dpar pp_check
 #' @examples
@@ -55,6 +63,8 @@
 #' # Useful for varying effects:
 #' # plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all varying effects
 #' # plot_pars(my_fit, regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying
+#' # pages = plot_pars(my_fit, pars = "varying", ask = FALSE)
+#' # pages[[1]]  # Inspect or customize one page
 #'
 #' # Customize multi-column ggplots using "*" instead of "+" (patchwork)
 #' library(ggplot2)
@@ -65,7 +75,9 @@ plot_pars = function(fit,
                      regex_pars = character(0),
                      type = "combo",
                      ncol = 1,
-                     prior = FALSE
+                     prior = FALSE,
+                     nvariables = 5,
+                     ask = TRUE
 ) {
 
   # Check arguments
@@ -87,7 +99,11 @@ plot_pars = function(fit,
     stop("'combo' type cannot be combined with other types. Replace 'combo' with the types you want combo\'ed")
 
   checkmate::assert_int(ncol, lower = 1)
+  checkmate::assert_int(nvariables, lower = 1)
+  checkmate::assert_flag(ask)
   checkmate::assert_flag(prior)
+  if (any(c("hex", "scatter") %in% type) && nvariables < 2)
+    stop("`nvariables` must be at least 2 for `type = 'hex'` or `type = 'scatter'`.")
   bayesplot::available_mcmc()  # Quick fix to make R CMD Check happy that bayesplot is imported
 
   # Get posterior/prior samples
@@ -107,29 +123,50 @@ plot_pars = function(fit,
     pars = character(0)
   }
 
+  select_parameters = utils::getFromNamespace("select_parameters", "bayesplot")
+  pars = select_parameters(
+    explicit = pars,
+    patterns = regex_pars,
+    complete_pars = posterior::variables(samples)
+  )
+
   # Handles combo. Returns a customizable ggplot which "combo" does not.
   if ("combo" %in% type)
     type = c("dens_overlay", "trace")
 
-  # Call the relevant bayesplot plot function for each type
-  takes_facet = c("areas", "dens", "dens_overlay", "trace", "hist", "intervals", "trace", "trace_highlight", "violin")
-  all_plots = list()
-  for (this_type in type) {
-    if (this_type %in% takes_facet) {
-      facet_args = list(ncol = ncol)
-    } else {
-      facet_args = list()
-    }
+  # Call the relevant bayesplot plot function for each type and page
+  takes_facet = c(
+    "areas", "dens", "dens_overlay", "trace", "hist", "intervals",
+    "trace_highlight", "violin"
+  )
+  page_pars = split(pars, ceiling(seq_along(pars) / nvariables))
+  pages = lapply(page_pars, function(this_page_pars) {
+    all_plots = stats::setNames(lapply(type, function(this_type) {
+      func = utils::getFromNamespace(paste0("mcmc_", this_type), "bayesplot")
+      facet_args = if (this_type %in% takes_facet) list(ncol = ncol) else list()
+      func(
+        samples,
+        pars = this_page_pars,
+        regex_pars = character(0),
+        facet_args = facet_args
+      )
+    }), type)
 
-    func_name = paste0("mcmc_", this_type)
-    func_obj = utils::getFromNamespace(func_name, "bayesplot")
-    all_plots[[this_type]] = func_obj(samples, pars = pars, regex_pars = regex_pars, facet_args = facet_args)
+    patchwork::wrap_plots(all_plots) &
+      ggplot2::theme(
+        strip.placement = NULL,  # fixes bug: https://github.com/thomasp85/patchwork/issues/132
+        legend.position = "none"  # no legend on chains. Takes up too much space
+      )
+  })
+
+  if (length(pages) == 1)
+    return(pages[[1]])
+
+  for (page in seq_along(pages)) {
+    if (page > 1 && ask && interactive())
+      invisible(readline(prompt = "Press <Enter> to continue"))
+    print(pages[[page]])
   }
 
-  # Then patch all_plots together and return
-  patchwork::wrap_plots(all_plots) &
-    ggplot2::theme(
-      strip.placement = NULL,  # fixes bug: https://github.com/thomasp85/patchwork/issues/132
-      legend.position = "none"  # no legend on chains. Takes up too much space
-    )
+  invisible(pages)
 }

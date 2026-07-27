@@ -223,8 +223,12 @@ test_plot = function(fit, varying_cols) {
 
 # Test plot() calls to bayesplot
 test_plot_pars = function(fit, prior = FALSE) {
-  gg = plot_pars(fit, type = "dens_overlay", prior = prior)
-  # `is_ggplot()` is no longer exported by recent ggplot2 versions.
+  gg = plot_pars(
+    fit,
+    type = "dens_overlay",
+    prior = prior,
+    nvariables = length(fit$pars$population)
+  )
   testthat::expect_s3_class(gg, "ggplot")
 }
 
