@@ -609,7 +609,7 @@ tidy_samples = function(
 #'     See also `fitted()`.
 #'   - `"predict"`: return predicted values (e.g., `y_predict = rnorm(N, y_fitted, sigma_fitted)` for `family = gaussian()`).
 #'     See also `predict()`.
-#'   - `"residuals"`: same as "predict" but the observed y-values are subtracted. See also `residuals()`.
+#'   - `"residuals"`: observed y-values minus the fitted values. See also `residuals()`.
 #'   - `"loglik"`: return the log-likelihood for each sample for each data point. See also `log_lik()`.
 #'     Requires `scale = "response"`.
 #' @param probs Vector of quantiles. Only in effect when `summary == TRUE`.
@@ -788,7 +788,7 @@ pp_eval = function(
 
   # Optionally compute residuals
   if (type == "residuals")
-    samples = dplyr::mutate(samples, !!type := .data[[type]] - .data[[fit$pars$y]])
+    samples = dplyr::mutate(samples, !!type := .data[[fit$pars$y]] - .data[[type]])
 
   # Fail early if varying-effect joins or another evaluation step duplicated
   # or dropped any joint draw/evaluation-row combinations.
@@ -836,7 +836,7 @@ pp_eval = function(
 #' from (``)
 #'
 #' @details
-#' `residuals(fit)` is equivalent to  `fitted(fit, ...) - fit$data[, fit$data$yvar]` (or `fitted(fit, ...) - newdata[, fit$data$yvar]`),
+#' `residuals(fit)` is equivalent to `fit$data[, fit$data$yvar] - fitted(fit, ...)` (or `newdata[, fit$data$yvar] - fitted(fit, ...)`),
 #' but with fixed arguments for `fitted`: `rate = FALSE, dpar = 'epred', samples_format = 'tidy'`.
 #'
 #' @inheritParams pp_eval

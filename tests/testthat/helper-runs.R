@@ -305,6 +305,15 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
     }
     testthat::expect_true(dplyr::setequal(colnames(result), expected_colnames))  # Exactly these columns regardless of order
     testthat::expect_true(all(result[, fit$pars$x] == fit$data[, fit$pars$x]))  # Output should have same order as input
+
+    if (colname == "residuals") {
+      fitted_result = fitted(fit, prior = prior)
+      observed = fit$data[[fit$pars$y]]
+      testthat::expect_equal(result$residuals, observed - fitted_result$fitted)
+      testthat::expect_equal(result$error, fitted_result$error)
+      testthat::expect_equal(result$Q2.5, observed - fitted_result$Q97.5)
+      testthat::expect_equal(result$Q97.5, observed - fitted_result$Q2.5)
+    }
   }
 }
 

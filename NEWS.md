@@ -68,6 +68,8 @@
 
 ## Minor breaking changes
 
+-   `residuals()` now uses the conventional `observed - fitted` sign. Previously, `mcp` residuals used `fitted - observed`.
+
 -   Removed the non-functional `exponential()` family. It had no default priors and could not be fitted. Exponential survival models would require dedicated support for censoring and survival likelihoods rather than the previous ordinary-response placeholder.
 
 -   Default coefficient priors are now more consistent with `brms` defaults while retaining proper priors and change-point-aware scaling for the `mcp` parameterization. For non-small datasets, this should have minimal influence since priors remain minimally informative. See priors using `prior_summary(fit, verbose = TRUE)`.
