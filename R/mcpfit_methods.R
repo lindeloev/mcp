@@ -944,16 +944,6 @@ fitted.mcpfit = function(
 #' @export
 log_lik = function(object, ...) UseMethod("log_lik")
 
-#' @aliases logLik.mcpfit
-#' @describeIn execute-mcp-model Alias for built-in method
-#' @export
-logLik.mcpfit = function(object, ...) {
-  cl = match.call()
-  cl[[1]] = quote(log_lik)
-  eval(cl, parent.frame())
-}
-
-
 #' @aliases log_lik log_lik.mcpfit
 #' @describeIn execute-mcp-model Pointwise log-likelihood
 #' @export
