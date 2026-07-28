@@ -11,7 +11,9 @@ plot_pars(
   regex_pars = character(0),
   type = "combo",
   ncol = 1,
-  prior = FALSE
+  prior = FALSE,
+  nvariables = 5,
+  ask = TRUE
 )
 }
 \arguments{
@@ -40,9 +42,16 @@ Common calls are "combo", "trace", and "dens_overlay". Current options include
 parameters and only one plot \code{type}.}
 
 \item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
+
+\item{nvariables}{Positive integer. Maximum number of parameters plotted per
+page. The default of 5 follows \code{brms::plot.brmsfit()}.}
+
+\item{ask}{Logical. In an interactive session, prompt before printing each
+page after the first. Only used when there are multiple pages.}
 }
 \value{
-A \pkg{ggplot2} object.
+A \pkg{ggplot2} object when all selected parameters fit on one page.
+For multiple pages, an invisible list of \pkg{ggplot2} objects.
 }
 \description{
 Plot many types of plots of parameter estimates. See examples for typical use
@@ -57,6 +66,9 @@ are also a number of useful plots in the \pkg{coda} package, i.e.,
 
 In any case, if you see a few erratic lines or parameter estimates, this is
 a sign that you may want to increase argument 'adapt' and 'iter' in \code{\link{mcp}}.
+
+Up to \code{nvariables} parameters are shown on each page. Multi-page plots are
+printed in sequence; in interactive use, \code{ask = TRUE} pauses between pages.
 }
 \examples{
 # Typical usage. demo_fit is an mcpfit object.
@@ -76,6 +88,8 @@ plot_pars(demo_fit, prior = TRUE)
 # Useful for varying effects:
 # plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all varying effects
 # plot_pars(my_fit, regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying
+# pages = plot_pars(my_fit, pars = "varying", ask = FALSE)
+# pages[[1]]  # Inspect or customize one page
 
 # Customize multi-column ggplots using "*" instead of "+" (patchwork)
 library(ggplot2)

@@ -15,6 +15,7 @@ docs
 
 # Files
 AGENTS.md
+LEARNINGS.md
 cran-comments.md
 logo.png
 ^CRAN-RELEASE$

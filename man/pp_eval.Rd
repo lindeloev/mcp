@@ -17,10 +17,11 @@ pp_eval(
   dpar = "epred",
   varying = TRUE,
   arma = TRUE,
-  nsamples = NULL,
+  ndraws = NULL,
   samples_format = "tidy",
   scale = "response",
-  .include_fitted = FALSE
+  .include_fitted = FALSE,
+  nsamples = lifecycle::deprecated()
 )
 }
 \arguments{
@@ -39,7 +40,7 @@ Gaussian predictions and log-likelihoods also require the weights column. If \co
 See also \code{fitted()}.
 \item \code{"predict"}: return predicted values (e.g., \code{y_predict = rnorm(N, y_fitted, sigma_fitted)} for \code{family = gaussian()}).
 See also \code{predict()}.
-\item \code{"residuals"}: same as "predict" but the observed y-values are subtracted. See also \code{residuals()}.
+\item \code{"residuals"}: observed y-values minus the fitted values. See also \code{residuals()}.
 \item \code{"loglik"}: return the log-likelihood for each sample for each data point. See also \code{log_lik()}.
 Requires \code{scale = "response"}.
 }}
@@ -75,8 +76,8 @@ coefficient you want to evaluate.
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 }}
 
-\item{nsamples}{Integer or \code{NULL}. Number of samples to return/summarise.
-If there are varying effects, this is the number of samples from each varying group.
+\item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
+If there are varying effects, this is the number of draws from each varying group.
 \code{NULL} means "all". Ignored if both are \code{FALSE}. More samples trade speed for accuracy.}
 
 \item{samples_format}{One of "tidy" or "matrix". Controls the output format when \code{summary == FALSE}.
@@ -90,20 +91,22 @@ A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} i
 }}
 
 \item{.include_fitted}{Internal. Include fitted values with unsummarised predictions.}
+
+\item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 }
 \value{
 \itemize{
 \item If \code{summary = TRUE}: A \code{tibble} with the posterior mean for each row in \code{newdata},
 If \code{newdata} is \code{NULL}, the data in \code{fit$data} is used.
 \item If \code{summary = FALSE} and \code{samples_format = "tidy"}: A \code{tidybayes} \code{tibble} with all the posterior
-samples (\code{Ns}) evaluated at each row in \code{newdata} (\code{Nn}), i.e., with \verb{Ns x Nn} rows. If there are
+draws (\code{Nd}) evaluated at each row in \code{newdata} (\code{Nn}), i.e., with \verb{Nd x Nn} rows. If there are
 varying effects, the returned data is expanded with the relevant levels for each row.
 
 The return columns are:
 \itemize{
 \item Predictors from \code{newdata}.
-\item Sample descriptors: ".chain", ".iter", ".draw" (see the \code{tidybayes} package for more), and \code{data_row}, the row number in the evaluated \code{newdata}.
-\item Sample values: one column for each parameter in the model.
+\item Draw descriptors: ".chain", ".iteration", ".draw" (see the \code{posterior} and \code{tidybayes} packages), and \code{data_row}, the row number in the evaluated \code{newdata}.
+\item Draw values: one column for each parameter in the model.
 \item The estimate. Either "predict" or "fitted", i.e., the name of the \code{type} argument.
 }
 \item If \code{summary = FALSE} and \code{samples_format = "matrix"}: An \code{N_draws} X \code{nrows(newdata)} matrix with fitted/predicted

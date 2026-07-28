@@ -19,7 +19,8 @@
   rate = TRUE,
   prior = FALSE,
   arma = TRUE,
-  nsamples = NULL,
+  ndraws = NULL,
+  nsamples = lifecycle::deprecated(),
   ...
 )
 
@@ -33,8 +34,9 @@ plot_dpar(
   cp_dens = TRUE,
   prior = FALSE,
   arma = TRUE,
-  nsamples = NULL,
+  ndraws = NULL,
   scale = "response",
+  nsamples = lifecycle::deprecated(),
   ...
 )
 }
@@ -82,9 +84,11 @@ interpolation on trial number is used to infer trials at a particular x.}
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 }}
 
-\item{nsamples}{Integer or \code{NULL}. Number of samples to return/summarise.
-If there are varying effects, this is the number of samples from each varying group.
+\item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
+If there are varying effects, this is the number of draws from each varying group.
 \code{NULL} means "all". Ignored if both are \code{FALSE}. More samples trade speed for accuracy.}
+
+\item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 
 \item{...}{Currently ignored.}
 
@@ -126,7 +130,7 @@ plot(demo_fit)
 \donttest{
 plot(demo_fit, prior = TRUE)  # The prior
 
-plot(demo_fit, lines = 0, q_fit = TRUE)  # 95\% HDI without lines
+plot(demo_fit, lines = 0, q_fit = TRUE)  # 95\% central interval without lines
 plot(demo_fit, q_predict = c(0.1, 0.9))  # 80\% prediction interval
 plot_dpar(demo_fit, dpar = "sigma", lines = 100)  # The variance parameter on y
 

@@ -41,7 +41,7 @@ response. \code{~ predictors} assumes an intercept-only change point). The
 following can be modeled:
 \itemize{
 \item \emph{Regular formulas:} e.g., \code{~ 1 + x}). \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
-\item \emph{Extended formulas:}, e.g., \code{~ I(x^2) + exp(x) + sin(x)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
+\item \emph{Extended formulas:}, e.g., \code{~ I(x^2) + exp(z)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
 \item \emph{Variance:} e.g., \code{~sigma(1)} for a simple variance change or
 \code{~sigma(1 + I(x^2))}) for more advanced variance structures. \href{https://lindeloev.github.io/mcp/articles/variance.html}{Read more}
 \item \emph{Time-series residuals:} use \code{ar(p)} and \code{ma(q)} separately or together,
@@ -53,8 +53,7 @@ Poisson, and negative-binomial families with their default links.
 
 \item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, \code{poisson()},
 or \code{negbinomial()}.
-with a supported link function, e.g., \code{gaussian(link = "log")}.
-Custom families can also be provided, e.g., \code{mcpfamily(gaussian(link = "log"))}.}
+with a supported link function, e.g., \code{gaussian(link = "log")}.}
 }
 \value{
 A tibble with one row per model parameter and the columns

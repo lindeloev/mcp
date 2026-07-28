@@ -2,7 +2,6 @@
 
 S3method(fitted,mcpfit)
 S3method(fixef,mcpfit)
-S3method(logLik,mcpfit)
 S3method(log_lik,mcpfit)
 S3method(loo,mcpfit)
 S3method(nchains,mcpfit)

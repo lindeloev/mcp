@@ -12,7 +12,10 @@ prior_summary(fit, verbose = FALSE)
 \item{verbose}{Logical. Include rule, description, source, and kind.}
 }
 \value{
-A tibble with one row per model parameter.
+A tibble with one row per model parameter, ordered and labeled
+the same way as \code{summary()}: change points first, then \code{mu}, then the
+other distributional parameters, then \code{ar}/\code{ma} components - each with
+\code{segment} and \code{dpar} columns.
 }
 \description{
 Shows the effective, resolved priors on the familiar SD/scale

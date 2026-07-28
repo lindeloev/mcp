@@ -6,7 +6,7 @@
 \alias{hypothesis.mcpfit}
 \title{Test Hypotheses Concerning Individual Parameters}
 \usage{
-hypothesis(fit, hypotheses, width = 0.95, digits = 3)
+hypothesis(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE)
 }
 \arguments{
 \item{fit}{An \code{\link{mcpfit}} object.}
@@ -45,21 +45,23 @@ conditioning on the data, relative to the prior credence?
 point for John (which is relative to `cp_1``) double that of Erin?
 }}
 
-\item{width}{Float. The width of the highest posterior density interval
-(between 0 and 1).}
+\item{width}{Float. The width of the central posterior interval (between 0
+and 1).}
 
 \item{digits}{a non-null value for digits specifies the minimum number of
 significant digits to be printed in values. The default, NULL, uses
 getOption("digits"). (For the interpretation for complex numbers see signif.)
 Non-integer values will be rounded down, and only values greater than or
 equal to 1 and no greater than 22 are accepted.}
+
+\item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
 }
 \value{
 A data.frame with a row per hypothesis and the following columns:
 \itemize{
 \item \code{hypothesis} is the hypothesis; often re-arranged to test against zero.
 \item \code{mean} is the posterior mean of the left-hand side of the hypothesis.
-\item \code{lower} is the lower bound of the (two-sided) highest-density interval of width \code{width}.
+\item \code{lower} is the lower bound of the central posterior interval of width \code{width}.
 \item \code{upper} is the upper bound of ditto.
 \item \code{p} Posterior probability.
 For "=" (Savage-Dickey), it is the BF converted to p.
@@ -75,7 +77,7 @@ Returns posterior probabilities and Bayes Factors for flexible hypotheses involv
 model parameters. The documentation for the argument \code{hypotheses} below
 shows examples of how to specify hypotheses, and \href{https://lindeloev.github.io/mcp/articles/comparison.html}{read worked examples on the mcp website}.
 For directional hypotheses, \code{hypothesis} executes the hypothesis string in
-a \code{tidybayes} environment and summarises the proportion of posterior and
+a data-frame environment and summarises the proportion of posterior and
 prior samples where the expression evaluates to TRUE. The Bayes factor is
 the posterior odds divided by the prior odds. For equals-hypotheses, a
 Savage-Dickey ratio is computed. Both kinds of Bayes factor require prior

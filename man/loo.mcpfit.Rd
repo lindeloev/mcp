@@ -10,9 +10,24 @@
 \alias{WAIC}
 \title{Information Criteria for Model Comparison}
 \usage{
-\method{loo}{mcpfit}(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE, nsamples = NULL)
+\method{loo}{mcpfit}(
+  x,
+  ...,
+  pointwise = FALSE,
+  varying = TRUE,
+  arma = TRUE,
+  ndraws = NULL,
+  nsamples = lifecycle::deprecated()
+)
 
-\method{waic}{mcpfit}(x, ..., varying = TRUE, arma = TRUE, nsamples = NULL)
+\method{waic}{mcpfit}(
+  x,
+  ...,
+  varying = TRUE,
+  arma = TRUE,
+  ndraws = NULL,
+  nsamples = lifecycle::deprecated()
+)
 }
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object.}
@@ -35,8 +50,10 @@
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 }}
 
-\item{nsamples}{Integer or \code{NULL}. Number of posterior draws used for the
+\item{ndraws}{Integer or \code{NULL}. Number of posterior draws used for the
 log-likelihood or information criterion. \code{NULL} uses all draws.}
+
+\item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 }
 \value{
 a \code{loo} or \code{psis_loo} object.

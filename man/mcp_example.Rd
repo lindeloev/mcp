@@ -19,7 +19,6 @@ mcp_example_data(name)
 \item \code{"intercepts"}: An intercept-only change point.
 \item \code{"multiple"}: Multiple regression with categorical predictors and interactions.
 \item \code{"quadratic"}: A change point to a quadratic segment.
-\item \code{"trigonometric"}: Trigonometric/seasonal data and model.
 \item \code{"varying"}: Varying / hierarchical change points.
 \item \code{"variance"}: A change in variance, including a variance slope.
 }}

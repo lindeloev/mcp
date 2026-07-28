@@ -4,7 +4,13 @@
 \alias{add_loglik}
 \title{Add Log-Likelihood to an mcpfit Object.}
 \usage{
-add_loglik(x, varying = TRUE, arma = TRUE, nsamples = NULL)
+add_loglik(
+  x,
+  varying = TRUE,
+  arma = TRUE,
+  ndraws = NULL,
+  nsamples = lifecycle::deprecated()
+)
 }
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object.}
@@ -22,11 +28,13 @@ add_loglik(x, varying = TRUE, arma = TRUE, nsamples = NULL)
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 }}
 
-\item{nsamples}{Integer or \code{NULL}. Number of posterior draws used for the
+\item{ndraws}{Integer or \code{NULL}. Number of posterior draws used for the
 log-likelihood or information criterion. \code{NULL} uses all draws.}
+
+\item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 }
 \value{
-An \code{mcpfit} object with \code{fit$loglik} filled as an (Nchains * Nsamples)
+An \code{mcpfit} object with \code{fit$loglik} filled as an (Nchains * Ndraws)
 by N-observed-responses data matrix with chain number as rownames. Rows
 with missing responses are excluded from the likelihood columns.
 }

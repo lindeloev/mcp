@@ -18,8 +18,9 @@ get_plot(
   prior = FALSE,
   dpar = "epred",
   arma = TRUE,
-  nsamples = NULL,
+  ndraws = NULL,
   scale = "response",
+  nsamples = lifecycle::deprecated(),
   ...
 )
 }
@@ -77,8 +78,8 @@ coefficient you want to evaluate.
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 }}
 
-\item{nsamples}{Integer or \code{NULL}. Number of samples to return/summarise.
-If there are varying effects, this is the number of samples from each varying group.
+\item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
+If there are varying effects, this is the number of draws from each varying group.
 \code{NULL} means "all". Ignored if both are \code{FALSE}. More samples trade speed for accuracy.}
 
 \item{scale}{One of
@@ -87,6 +88,8 @@ If there are varying effects, this is the number of samples from each varying gr
 \item \code{"linear"}: return on the parameter scale (where the linear trends are modelled).
 A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} is not \code{NULL}.
 }}
+
+\item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 
 \item{...}{Currently ignored.}
 }

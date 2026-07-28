@@ -14,7 +14,8 @@ pp_check(
   prior = FALSE,
   varying = TRUE,
   arma = TRUE,
-  nsamples = 100,
+  ndraws = 100,
+  nsamples = lifecycle::deprecated(),
   ...
 )
 }
@@ -44,11 +45,13 @@ Gaussian predictions and log-likelihoods also require the weights column. If \co
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 }}
 
-\item{nsamples}{Number of draws. Note that you may want to use all draws for
-summary geoms, e.g., \code{pp_check(fit, type = "ribbon", nsamples = NULL)}.
+\item{ndraws}{Number of posterior draws. Note that you may want to use all
+draws for summary geoms, e.g., \code{pp_check(fit, type = "ribbon", ndraws = NULL)}.
 LOO checks always evaluate all posterior draws to preserve their PSIS
-weights; where supported, \code{nsamples} is passed to bayesplot to control the
+weights; where supported, \code{ndraws} is passed to bayesplot to control the
 number of plotted samples.}
+
+\item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 
 \item{...}{Further arguments passed to \code{bayesplot::ppc_type(y, yrep, ...)}}
 }

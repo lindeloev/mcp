@@ -12,7 +12,8 @@ tidy_samples(
   varying = TRUE,
   absolute = FALSE,
   prior = FALSE,
-  nsamples = NULL
+  ndraws = NULL,
+  nsamples = lifecycle::deprecated()
 )
 }
 \arguments{
@@ -39,16 +40,18 @@ tidy_samples(
 
 \item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
 
-\item{nsamples}{Integer or \code{NULL}. Number of samples to return/summarise.
-If there are varying effects, this is the number of samples from each varying group.
+\item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
+If there are varying effects, this is the number of draws from each varying group.
 \code{NULL} means "all". Ignored if both are \code{FALSE}. More samples trade speed for accuracy.}
+
+\item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 }
 \value{
 \code{tibble} of posterior draws in \code{tidybayes} format.
 }
 \description{
 Returns in a format useful for \code{fit$simulate()} with population parameters in wide format
-and varying effects in long format (the number of rows will be \code{nsamples * n_levels_in_varying}).
+and varying effects in long format (the number of rows will be \code{ndraws * n_levels_in_varying}).
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

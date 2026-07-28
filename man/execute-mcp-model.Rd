@@ -7,7 +7,6 @@
 \alias{predict}
 \alias{fitted.mcpfit}
 \alias{fitted}
-\alias{logLik.mcpfit}
 \alias{log_lik.mcpfit}
 \alias{log_lik}
 \alias{residuals.mcpfit}
@@ -23,8 +22,9 @@
   prior = FALSE,
   varying = TRUE,
   arma = TRUE,
-  nsamples = NULL,
+  ndraws = NULL,
   samples_format = "tidy",
+  nsamples = lifecycle::deprecated(),
   ...
 )
 
@@ -38,13 +38,12 @@
   dpar = "epred",
   varying = TRUE,
   arma = TRUE,
-  nsamples = NULL,
+  ndraws = NULL,
   samples_format = "tidy",
   scale = "response",
+  nsamples = lifecycle::deprecated(),
   ...
 )
-
-\method{logLik}{mcpfit}(object, ...)
 
 \method{log_lik}{mcpfit}(
   object,
@@ -55,8 +54,9 @@
   prior = FALSE,
   varying = TRUE,
   arma = TRUE,
-  nsamples = NULL,
+  ndraws = NULL,
   samples_format = "tidy",
+  nsamples = lifecycle::deprecated(),
   ...
 )
 
@@ -68,7 +68,8 @@
   prior = FALSE,
   varying = TRUE,
   arma = TRUE,
-  nsamples = NULL,
+  ndraws = NULL,
+  nsamples = lifecycle::deprecated(),
   ...
 )
 }
@@ -102,12 +103,14 @@ interpolation on trial number is used to infer trials at a particular x.}
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 }}
 
-\item{nsamples}{Integer or \code{NULL}. Number of samples to return/summarise.
-If there are varying effects, this is the number of samples from each varying group.
+\item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
+If there are varying effects, this is the number of draws from each varying group.
 \code{NULL} means "all". Ignored if both are \code{FALSE}. More samples trade speed for accuracy.}
 
 \item{samples_format}{One of "tidy" or "matrix". Controls the output format when \code{summary == FALSE}.
 See more under "value"}
+
+\item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 
 \item{...}{Currently ignored.}
 
@@ -133,14 +136,14 @@ A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} i
 \item If \code{summary = TRUE}: A \code{tibble} with the posterior mean for each row in \code{newdata},
 If \code{newdata} is \code{NULL}, the data in \code{fit$data} is used.
 \item If \code{summary = FALSE} and \code{samples_format = "tidy"}: A \code{tidybayes} \code{tibble} with all the posterior
-samples (\code{Ns}) evaluated at each row in \code{newdata} (\code{Nn}), i.e., with \verb{Ns x Nn} rows. If there are
+draws (\code{Nd}) evaluated at each row in \code{newdata} (\code{Nn}), i.e., with \verb{Nd x Nn} rows. If there are
 varying effects, the returned data is expanded with the relevant levels for each row.
 
 The return columns are:
 \itemize{
 \item Predictors from \code{newdata}.
-\item Sample descriptors: ".chain", ".iter", ".draw" (see the \code{tidybayes} package for more), and \code{data_row}, the row number in the evaluated \code{newdata}.
-\item Sample values: one column for each parameter in the model.
+\item Draw descriptors: ".chain", ".iteration", ".draw" (see the \code{posterior} and \code{tidybayes} packages), and \code{data_row}, the row number in the evaluated \code{newdata}.
+\item Draw values: one column for each parameter in the model.
 \item The estimate. Either "predict" or "fitted", i.e., the name of the \code{type} argument.
 }
 \item If \code{summary = FALSE} and \code{samples_format = "matrix"}: An \code{N_draws} X \code{nrows(newdata)} matrix with fitted/predicted
@@ -154,16 +157,14 @@ can use draws from the prior (\code{prior = TRUE}), select the parameter to pred
 from (``)
 }
 \details{
-\code{residuals(fit)} is equivalent to  \code{fitted(fit, ...) - fit$data[, fit$data$yvar]} (or \code{fitted(fit, ...) - newdata[, fit$data$yvar]}),
-but with fixed arguments for \code{fitted}: \verb{rate = FALSE, dpar = 'mu', samples_format = 'tidy'}.
+\code{residuals(fit)} is equivalent to \code{fit$data[, fit$data$yvar] - fitted(fit, ...)} (or \code{newdata[, fit$data$yvar] - fitted(fit, ...)}),
+but with fixed arguments for \code{fitted}: \verb{rate = FALSE, dpar = 'epred', samples_format = 'tidy'}.
 }
 \section{Functions}{
 \itemize{
 \item \code{predict(mcpfit)}: Predictive Distribution
 
 \item \code{fitted(mcpfit)}: Expected distribution
-
-\item \code{logLik(mcpfit)}: Alias for built-in method
 
 \item \code{log_lik(mcpfit)}: Pointwise log-likelihood
 

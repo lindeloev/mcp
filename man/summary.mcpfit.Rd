@@ -23,8 +23,8 @@
 \arguments{
 \item{object}{An \code{\link{mcpfit}} object.}
 
-\item{width}{Float. The width of the highest posterior density interval
-(between 0 and 1).}
+\item{width}{Float. The width of the central posterior interval (between 0
+and 1).}
 
 \item{digits}{a non-null value for digits specifies the minimum number of
 significant digits to be printed in values. The default, NULL, uses
@@ -39,20 +39,23 @@ equal to 1 and no greater than 22 are accepted.}
 \item{x}{An \code{\link{mcpfit}} object.}
 }
 \value{
-A data frame with parameter estimates and MCMC diagnostics.
-OBS: The change point distributions are often not unimodal and symmetric so
-the intervals can be deceiving Plot them using \code{plot_pars(fit)}.
+A data frame with parameter estimates and MCMC diagnostics. Rows
+are ordered by change point first, then \code{mu}, then the other
+distributional parameters, then \code{ar}/\code{ma} components - each ascending by
+segment. OBS: The change point distributions are often not unimodal and
+symmetric so the intervals can be deceiving. Plot them using
+\code{plot_pars(fit)}.
 \itemize{
+\item \code{segment} is the segment the parameter belongs to.
+\item \code{dpar} is the distributional parameter (\code{"cp"}, \code{"mu"}, \code{"sigma"},
+\code{"ar1"}, \code{"ma1"}, etc.) the parameter belongs to.
 \item \code{mean} is the posterior mean
-\item \code{lower} is the lower quantile of the highest-density interval (HDI) given in \code{width}.
-\item \code{upper} is the upper quantile.
-\item \code{Rhat} is the Gelman-Rubin convergence diagnostic which is often taken to
-be acceptable if < 1.1. It is computed using \code{\link[coda]{gelman.diag}}.
-\item \code{n.eff} is the effective sample size computed using \code{\link[coda]{effectiveSize}}.
+\item \code{lower} and \code{upper} are the bounds of the central posterior interval
+given in \code{width}.
+\item \code{Rhat} is the rank-normalized split-Rhat convergence diagnostic.
+\item \code{ess_bulk} and \code{ess_tail} are the bulk and tail effective sample sizes.
 Low effective sample sizes are also obvious as poor mixing in trace plots
 (see \code{plot_pars(fit)}). Read how to deal with such problems \href{https://lindeloev.github.io/mcp/articles/tips.html}{here}
-\item \code{ts_err} is the time-series error, taking autoregressive correlation
-into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
 }
 
 For simulated data, the summary contains two additional columns so that it
@@ -60,8 +63,8 @@ is easy to inspect whether the model can recover the parameters. Run
 simulation and summary multiple times to get a sense of the robustness.
 \itemize{
 \item \code{sim} is the value used to generate the data.
-\item \code{match} is \code{"OK"} if \code{sim} is contained in the HDI interval (\code{lower} to
-\code{upper}).
+\item \code{match} is \code{"OK"} if \code{sim} is contained in the central posterior
+interval (\code{lower} to \code{upper}).
 }
 }
 \description{
@@ -79,7 +82,7 @@ Summarise parameter estimates and model diagnostics.
 \examples{
 # Typical usage
 summary(demo_fit)
-summary(demo_fit, width = 0.8, digits = 4)  # Set HDI width
+summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 
 # Get the results as a data frame
 results = summary(demo_fit)
