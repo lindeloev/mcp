@@ -49,7 +49,7 @@
 
 -   Extended autoregression (`ar()`) to GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment. Bernoulli models and non-default links remain unsupported.
 
--   Added warnings about two current AR/MA model-checking limitations. Posterior predictive checks condition on the observed response history and are one-step-ahead checks rather than jointly replicated time series, so serial summaries such as ACF and run lengths may be misleading. Observationwise PSIS-LOO and WAIC are also problematic because they use individual conditional likelihood terms as validation units; in PSIS-LOO, a held-out response remains in the conditioning history of later terms. Prefer leave-future-out or blocked cross-validation, which are not yet implemented in `mcp`.
+-   Added warnings for AR/MA models to `loo()`, `predict()`, etc. where the serial dependence is currently ignored. Proper handling requires leave-future-out or blocked cross-validation, which are not currently implemented in `mcp`.
 
 -   In addition to (segment-wide) intercepts and slopes, there are now default priors for categorical predictors.
 
@@ -94,7 +94,7 @@
 
 -   Uppercase data-dependent constants for priors (`MINX`, `MAXX`, etc.) remain temporarily supported with a deprecation warning. They are now replaced with readable expressions such as `min(time)`, `max(time) - min(time)`, `mad(response)`, `segment_width(time)`, `n_segments()`, and `n_cp()`.
 
--   Default priors for coefficients involving local `par_x` now broaden with
+-   Default priors for coefficients involving local `par_x` (except AR/MA) now broaden with
     more change points because narrower intervals allow steeper slopes within
     the same overall spread.
 
