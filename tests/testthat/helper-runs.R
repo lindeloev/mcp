@@ -440,9 +440,9 @@ test_pp_eval = function(fit, prior = FALSE) {
   # Test pp_check
   if (length(fit$pars$varying) > 0) {
     varying_col = na.omit(fit$.internal$ST$cp_group_col)[1]  # Just use the first column
-    pp_default = try(pp_check(fit, facet_by = varying_col, ndraws = 2, prior = prior), silent = TRUE)
+    pp_default = try(suppressWarnings(pp_check(fit, facet_by = varying_col, ndraws = 2, prior = prior)), silent = TRUE)
   } else {
-    pp_default = try(pp_check(fit, ndraws = 2, prior = prior), silent = TRUE)
+    pp_default = try(suppressWarnings(pp_check(fit, ndraws = 2, prior = prior)), silent = TRUE)
   }
 
   if (inherits(pp_default, "try-error")) {

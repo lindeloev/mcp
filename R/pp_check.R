@@ -52,6 +52,7 @@ pp_check = function(
   checkmate::assert_multi_class(varying, c("logical", "character"))
   checkmate::assert_flag(arma)
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
+  warn_arma_check(fit, arma, "ppc")
 
   # Check and recode inputs
   if (!is.null(facet_by))

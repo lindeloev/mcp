@@ -15,6 +15,11 @@
 #' @param ndraws Integer or `NULL`. Number of posterior draws used for the
 #'   log-likelihood or information criterion. `NULL` uses all draws.
 #' @param nsamples Deprecated. Use `ndraws` instead.
+#' @details Observationwise PSIS-LOO and WAIC are problematic for AR/MA models
+#'   because both treat individual conditional likelihood terms as validation
+#'   units. In PSIS-LOO, a held-out response also remains in the conditioning
+#'   history of later terms. Prefer leave-future-out or blocked
+#'   cross-validation, which are not currently implemented in mcp.
 #' @return a `loo` or `psis_loo` object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -42,6 +47,7 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE,
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_multi_class(varying, c("logical", "character"))
   checkmate::assert_flag(arma)
+  warn_arma_check(fit, arma, "information_criterion")
   ndraws = validate_loglik_ndraws(fit, ndraws)
   n_draws = sum(vapply(fit$mcmc_post, nrow, integer(1)))
   settings = get_loglik_settings(fit, varying, arma, ndraws)
@@ -141,6 +147,9 @@ waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, ndraws = NULL,
   rlang::check_dots_empty()
   fit = x
   checkmate::assert_class(fit, "mcpfit")
+  checkmate::assert_multi_class(varying, c("logical", "character"))
+  checkmate::assert_flag(arma)
+  warn_arma_check(fit, arma, "information_criterion")
   ndraws = validate_loglik_ndraws(fit, ndraws)
   settings = get_loglik_settings(fit, varying, arma, ndraws)
   if (!loglik_settings_match(fit$loglik, settings))

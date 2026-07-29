@@ -192,6 +192,41 @@ warn_nonconvergence = function(mcmc_post) {
 }
 
 
+#' Warn about model-checking limitations for AR/MA models
+#'
+#' @keywords internal
+#' @noRd
+#' @param fit An mcpfit object.
+#' @param arma Whether AR and MA effects are included in the evaluation.
+#' @param check One of `"ppc"` or `"information_criterion"`.
+#' @return `NULL`, invisibly. Called for the warning side-effect.
+warn_arma_check = function(fit, arma, check) {
+  if (!arma || !is_arma(fit))
+    return(invisible(NULL))
+
+  warning(
+    switch(
+      check,
+      ppc = paste(
+        "For AR/MA models, mcp conditions predictions on the observed response history.",
+        "These are one-step-ahead conditional predictions, not jointly replicated time series.",
+        "Serial summaries such as ACF and run lengths may therefore be misleading.",
+        "Joint-series posterior predictive checks are not yet supported."
+      ),
+      information_criterion = paste(
+        "Observationwise PSIS-LOO/WAIC is problematic for AR/MA models because both treat",
+        "individual conditional likelihood terms as validation units. In PSIS-LOO, a held-out",
+        "response also remains in the conditioning history of later terms. Prefer leave-future-out",
+        "or blocked cross-validation. These methods are not currently implemented in mcp."
+      ),
+      stop_github("Unknown AR/MA check type: ", check)
+    ),
+    call. = FALSE
+  )
+  invisible(NULL)
+}
+
+
 #' Converts formula to string
 #'
 #' Note: this uses base R and circumvents the length-limitation of `deparse()`

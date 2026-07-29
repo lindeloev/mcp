@@ -46,6 +46,29 @@ good_arma = list(
 test_good(good_arma)
 
 
+test_that("AR/MA model checks warn about conditional validation", {
+  data = data.frame(x = 1:4, y = 1:4)
+  fit = quiet_mcp(list(y ~ 1 + ar(1)), data = data, par_x = "x", sample = FALSE)
+
+  expect_warning(
+    try(pp_check(fit, ndraws = 1), silent = TRUE),
+    "one-step-ahead conditional predictions",
+    fixed = TRUE
+  )
+  expect_warning(
+    try(loo(fit), silent = TRUE),
+    "Observationwise PSIS-LOO/WAIC is problematic",
+    fixed = TRUE
+  )
+  expect_warning(
+    try(waic(fit), silent = TRUE),
+    "Observationwise PSIS-LOO/WAIC is problematic",
+    fixed = TRUE
+  )
+  expect_no_warning(warn_arma_check(fit, arma = FALSE, "ppc"))
+})
+
+
 test_that("ar() and ma() require a family GARMA implementation", {
   data = data.frame(x = 1:4, y = 1:4)
   family = gaussian(link = "log")

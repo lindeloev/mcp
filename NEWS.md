@@ -49,6 +49,8 @@
 
 -   Extended autoregression (`ar()`) to GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment. Bernoulli models and non-default links remain unsupported.
 
+-   Added warnings about two current AR/MA model-checking limitations. Posterior predictive checks condition on the observed response history and are one-step-ahead checks rather than jointly replicated time series, so serial summaries such as ACF and run lengths may be misleading. Observationwise PSIS-LOO and WAIC are also problematic because they use individual conditional likelihood terms as validation units; in PSIS-LOO, a held-out response remains in the conditioning history of later terms. Prefer leave-future-out or blocked cross-validation, which are not yet implemented in `mcp`.
+
 -   In addition to (segment-wide) intercepts and slopes, there are now default priors for categorical predictors.
 
 -   Memory improvement: The `mcpfit` is now \< 10% of the size as before because the log-likelihood is not computed by default anymore (no `fit$mcmc_loglik` anymore). You can add it using `fit = add_loglik(fit)` (adds `fit$loglik`) but if absent, it is automatically computed when calling relevant functions, e.g., `loo(fit)`.
