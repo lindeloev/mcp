@@ -307,7 +307,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
     testthat::expect_true(all(result[, fit$pars$x] == fit$data[, fit$pars$x]))  # Output should have same order as input
 
     if (colname == "residuals") {
-      fitted_result = fitted(fit, prior = prior)
+      fitted_result = fitted(fit, rate = FALSE, prior = prior)  # residuals are on observed-data scale
       observed = fit$data[[fit$pars$y]]
       testthat::expect_equal(result$residuals, observed - fitted_result$fitted)
       testthat::expect_equal(result$error, fitted_result$error)
@@ -489,4 +489,3 @@ test_good = function(models, ...) {
     })
   }
 }
-
