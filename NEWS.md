@@ -51,15 +51,12 @@
 
 ## Other new features
 
--   Fitting and fresh-series simulation now warn that higher-order direct
-    AR/MA coefficients are not jointly constrained to stationary or invertible
-    regions.
 
 -   The user-facing `nsamples` argument is soft-deprecated in favor of `ndraws`, matching the terminology used by `posterior`, `rvar`, and related packages. Existing calls continue to work for now.
 
 -   Extended autoregression (`ar()`) to GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment. Bernoulli models and non-default links remain unsupported.
 
--   Added warnings for AR/MA models to `loo()`, `predict()`, etc. where the serial dependence is currently ignored. Proper handling requires leave-future-out or blocked cross-validation, which are not currently implemented in `mcp`.
+-   Added AR/MA warnings: (1) for AR/MA models to `loo()`, `predict()`, etc. where the serial dependence is currently ignored. Proper handling requires leave-future-out or blocked cross-validation, which are not currently implemented in `mcp`. (2) when posterior probability is >10% of violation of AR-stationarity or MA-invertibility.
 
 -   In addition to (segment-wide) intercepts and slopes, there are now default priors for categorical predictors.
 

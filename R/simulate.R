@@ -381,14 +381,6 @@ simulate_atomic = function(fit,
   lapply(args, checkmate::assert_numeric, any.missing = FALSE)
   lapply(args, function(x) stopifnot(length(x) == 1 | length(x) == nrow(newdata)))
 
-  if (.type == "predict" && .arma) {
-    warn_high_order_arma(
-      get_arma_order(fit$.internal$rhs_table, "ar"),
-      get_arma_order(fit$.internal$rhs_table, "ma"),
-      "simulate"
-    )
-  }
-
   # Remove response column if present - it is to be simulated
   if (fit$pars$y %in% colnames(newdata))
     newdata = dplyr::select(newdata, -dplyr::all_of(fit$pars$y))
@@ -396,6 +388,13 @@ simulate_atomic = function(fit,
   # Get permutations
   predictors = add_rhs_predictors(newdata, fit)
   pred_param_grid = cbind(predictors, args)  # Use tidyr::expand_grid() if any args have length > 1.
+  if (.type == "predict" && .arma && is_arma(fit)) {
+    values = evaluate_model_dpars(
+      fit, as.list(pred_param_grid),
+      paste0(".pred_", fit$.internal$rhs_table$code_name)
+    )
+    warn_arma_simulation(values)
+  }
 
   # Get y
   simulated_y = pred_param_grid %>%

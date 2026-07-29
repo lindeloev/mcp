@@ -33,17 +33,14 @@ test_that("AR inference against arima()", {
 
 test_that("AR simulation against arima.sim()", {
   newdata = tidyr::expand_grid(df, rep = 1:100)  # should work with y in data too
-  expect_warning(
-    expect_message(
-      {
-        y_simulated = fit_mcp$simulate(
-          fit_mcp, newdata,
-          Intercept_1 = 9, sigma_1 = 2, ar1_1 = 0.7, ar2_1 = -0.3, groupB_1 = 0
-        )
-      },
-      "Generating residuals for AR\\(N\\) model"
-    ),
-    "Generating a fresh series with ar\\(2\\)"
+  expect_message(
+    {
+      y_simulated = fit_mcp$simulate(
+        fit_mcp, newdata,
+        Intercept_1 = 9, sigma_1 = 2, ar1_1 = 0.7, ar2_1 = -0.3, groupB_1 = 0
+      )
+    },
+    "Generating residuals for AR\\(N\\) model"
   )
   y_arima = arima(y_simulated, order = c(2, 0, 0))
 

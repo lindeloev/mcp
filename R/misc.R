@@ -227,27 +227,113 @@ warn_arma_check = function(fit, arma, check) {
 }
 
 
-#' Warn when higher-order direct AR/MA coefficients need root checks
+#' Check AR stationarity or MA invertibility row by row
 #'
 #' @keywords internal
 #' @noRd
-#' @param ar_order,ma_order Non-negative AR and MA orders.
-#' @param action Either `"fit"` or `"simulate"`.
+#' @param values Evaluated model parameters, including `ar1_`, `ma1_`, etc.
+#' @param component Either `"ar"` or `"ma"`.
+#' @return A logical vector.
+arma_root_violations = function(values, component) {
+  component = rlang::arg_match0(component, c("ar", "ma"))
+  pattern = paste0("^", component, "([0-9]+)_$")
+  coefficient_names = grep(pattern, names(values), value = TRUE)
+  if (length(coefficient_names) == 0)
+    return(rep(FALSE, nrow(values)))
+  orders = as.integer(sub(pattern, "\\1", coefficient_names))
+  coefficients = as.matrix(values[, coefficient_names[order(orders)], drop = FALSE])
+  if (ncol(coefficients) == 1)
+    return(!is.finite(coefficients[, 1]) | abs(coefficients[, 1]) >= 1)
+
+  apply(coefficients, 1, function(x) {
+    polynomial = c(1, if (component == "ar") -x else x)
+    any(!is.finite(x)) || any(Mod(polyroot(polynomial)) <= 1)
+  })
+}
+
+
+#' Warn when a posterior AR/MA root smoke test finds violations
+#'
+#' @keywords internal
+#' @noRd
+#' @param fit An `mcpfit` object with posterior draws.
+#' @param ndraws,nrows Maximum numbers of draws and observed rows to check.
+#' @param threshold Warn when the estimated violation probability exceeds this.
 #' @return `NULL`, invisibly.
-warn_high_order_arma = function(ar_order, ma_order, action) {
-  action = rlang::arg_match0(action, c("fit", "simulate"))
-  high_order = c(
-    if (!is.na(ar_order) && ar_order > 1) paste0("ar(", ar_order, ")"),
-    if (!is.na(ma_order) && ma_order > 1) paste0("ma(", ma_order, ")")
+warn_arma_fit = function(fit, ndraws = 500, nrows = 100, threshold = 0.10) {
+  rows = unique(round(seq(1, nrow(fit$data), length.out = min(nrows, nrow(fit$data)))))
+  newdata = fit$data[rows, , drop = FALSE]
+  newdata$data_row = seq_len(nrow(newdata))
+  varying_info = unpack_varying(fit, pars = TRUE)
+  draws = as.matrix(fit$mcmc_post)
+  # Spread the check over all retained post-warmup draws and chains.
+  keep = unique(round(seq(1, nrow(draws), length.out = min(ndraws, nrow(draws)))))
+  smoke_fit = fit
+  smoke_fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws[keep, , drop = FALSE]))
+  samples = tidy_samples(
+    smoke_fit, population = TRUE, varying = length(varying_info$cols) > 0
   )
-  if (length(high_order) == 0)
+  predictors = add_rhs_predictors(newdata, fit)
+  if (length(varying_info$cols) > 0) {
+    samples_predictors = dplyr::left_join(
+      predictors, samples, by = unique(varying_info$cols),
+      relationship = "many-to-many"
+    )
+  } else {
+    samples_predictors = tidyr::expand_grid(samples, predictors)
+  }
+
+  values = evaluate_model_dpars(
+    fit, as.list(samples_predictors),
+    paste0(".pred_", fit$.internal$rhs_table$code_name)
+  )
+  components = intersect(c("ar", "ma"), unique(fit$.internal$rhs_table$dpar))
+  probabilities = vapply(components, function(component) {
+    violations = arma_root_violations(values, component)
+    max(tapply(violations, samples_predictors$data_row, mean))
+  }, numeric(1))
+  bad = probabilities > threshold
+  if (!any(bad))
     return(invisible(NULL))
 
-  prefix = if (action == "fit") "Fitting " else "Generating a fresh series with "
+  details = paste0(
+    toupper(names(probabilities)[bad]), ": ",
+    round(100 * probabilities[bad]), "%"
+  )
   warning(
-    prefix, and_collapse(high_order), " with direct coefficients. ",
-    "Independent coefficient priors do not ensure AR stationarity or MA invertibility. ",
+    "Posterior AR/MA root smoke test found violations at observed predictor values ",
+    "(maximum checked-draw violation rate: ",
+    paste(details, collapse = "; "), "). ",
+    "For time-varying coefficients this is a local check, not proof of global ",
+    "stationarity or invertibility. ",
     "See `vignette(\"arma\")`.",
+    call. = FALSE
+  )
+  invisible(NULL)
+}
+
+
+#' Warn when fresh-series AR/MA coefficients violate root conditions
+#'
+#' @keywords internal
+#' @noRd
+#' @inheritParams arma_root_violations
+#' @return `NULL`, invisibly.
+warn_arma_simulation = function(values) {
+  bad = vapply(c("ar", "ma"), function(component) {
+    any(arma_root_violations(values, component))
+  }, logical(1))
+  if (!any(bad))
+    return(invisible(NULL))
+
+  warning(
+    "Generating a fresh series with locally non-",
+    if (all(bad)) "stationary AR and non-invertible MA" else if (bad["ar"]) {
+      "stationary AR"
+    } else {
+      "invertible MA"
+    },
+    " coefficients. See `vignette(\"arma\")`.",
     call. = FALSE
   )
   invisible(NULL)

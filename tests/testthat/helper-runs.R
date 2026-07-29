@@ -69,8 +69,7 @@ test_runs = function(model,
     accepted_warnings = c(
       "Adaptation incomplete",  # due to very small test datasets
       "Some parameters may not have converged well",  # ditto - too few iterations to mix
-      "Fitting ar\\(",
-      "Fitting ma\\("
+      "Posterior AR/MA root smoke test"
     )
     accepted_messages = c(
       "Finished sampling in",

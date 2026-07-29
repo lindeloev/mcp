@@ -135,14 +135,49 @@ test_that("AR and MA defaults regularize direct coefficients", {
 })
 
 
-test_that("higher-order ARMA operations warn", {
-  expect_no_warning(warn_high_order_arma(1, 1, "fit"))
-  expect_warning(
-    warn_high_order_arma(2, 0, "fit"),
-    "do not ensure AR stationarity"
+test_that("ARMA root warnings are conditional", {
+  expect_equal(
+    arma_root_violations(data.frame(ma1_ = c(0.5, 1.1)), "ma"),
+    c(FALSE, TRUE)
+  )
+
+  data = data.frame(x = 1:6, y = rep(0, 6))
+  fit = mcp(list(y ~ 1 + ar(2)), data, par_x = "x", sample = FALSE)
+  draws = cbind(
+    Intercept_1 = 0,
+    sigma_1 = 1,
+    ar1_1 = c(0.5, 0.9, 0.5, 0.9),
+    ar2_1 = c(0.2, 0.5, 0.2, 0.5)
+  )
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+
+  expect_warning(warn_arma_fit(fit, ndraws = 4), "AR: 50%")
+  fit$mcmc_post[[1]][, "ar1_1"] = 0.5
+  fit$mcmc_post[[1]][, "ar2_1"] = 0.2
+  expect_no_warning(warn_arma_fit(fit, ndraws = 4))
+
+  expect_no_warning(
+    suppressMessages(fit$simulate(
+      fit, data,
+      Intercept_1 = 0, sigma_1 = 1, ar1_1 = 0.5, ar2_1 = 0.2
+    ))
   )
   expect_warning(
-    warn_high_order_arma(0, 2, "simulate"),
-    "Generating a fresh series with ma\\(2\\)"
+    suppressMessages(fit$simulate(
+      fit, data,
+      Intercept_1 = 0, sigma_1 = 1, ar1_1 = 0.9, ar2_1 = 0.5
+    )),
+    "locally non-stationary AR"
+  )
+
+  varying_fit = mcp(
+    list(y ~ 1 + ar(1, 1 + x)), data, par_x = "x", sample = FALSE
+  )
+  expect_warning(
+    suppressMessages(varying_fit$simulate(
+      varying_fit, data,
+      Intercept_1 = 0, sigma_1 = 1, ar1_1 = 0, ar1_x_1 = 0.3
+    )),
+    "locally non-stationary AR"
   )
 })
