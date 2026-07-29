@@ -209,9 +209,9 @@ mcpfamily_binomial = function(family) {
   } else if (family$link %in% c("logit", "probit")) {
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~description, ~condition,
-      "mu", "Intercept", "dt(0, 2.5, 3)", "Weakly regularizing link-scale intercept", "always",
-      "mu", "dummy", "dt(0, 2.5, 3)", "Regularizing categorical contrast on the link scale", "always",
-      "mu", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "Regularizing link-scale coefficient scaled to a reference predictor change", "always"
+      "mu", "Intercept", "dt(0, 1.5, 3)", "Weakly regularizing link-scale intercept", "always",
+      "mu", "dummy", "dt(0, 1.5, 3)", "Weakly regularizing categorical contrast on the link scale", "always",
+      "mu", "slope", "dt(0, 1.5 / predictor_scale(), 3)", "Weakly regularizing link-scale coefficient scaled to a reference predictor change", "always"
     )
   } else {
     stop("mcp has no default priors for binomial(link = \"", family$link, "\") so it's likely not supported.")
@@ -276,9 +276,9 @@ mcpfamily_bernoulli = function(family) {
   } else if (family$link %in% c("logit", "probit")) {
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~description, ~condition,
-      "mu", "Intercept", "dt(0, 2.5, 3)", "Weakly regularizing link-scale intercept", "always",
-      "mu", "dummy", "dt(0, 2.5, 3)", "Regularizing categorical contrast on the link scale", "always",
-      "mu", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "Regularizing link-scale coefficient scaled to a reference predictor change", "always"
+      "mu", "Intercept", "dt(0, 1.5, 3)", "Weakly regularizing link-scale intercept", "always",
+      "mu", "dummy", "dt(0, 1.5, 3)", "Weakly regularizing categorical contrast on the link scale", "always",
+      "mu", "slope", "dt(0, 1.5 / predictor_scale(), 3)", "Weakly regularizing link-scale coefficient scaled to a reference predictor change", "always"
     )
   } else {
     stop("mcp has no default priors for bernoulli(link = \"", family$link, "\") so it's likely not supported.")

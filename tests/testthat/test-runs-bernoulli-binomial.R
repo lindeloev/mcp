@@ -46,6 +46,23 @@ test_good(good_binomial,
           data = data_binomial,
           family = binomial())
 
+test_that("binomial and Bernoulli links share weakly regularizing defaults", {
+  families = list(
+    mcpfamily(binomial("logit")),
+    mcpfamily(binomial("probit")),
+    bernoulli("logit"),
+    bernoulli("probit")
+  )
+  expected = c(
+    "dt(0, 1.5, 3)",
+    "dt(0, 1.5, 3)",
+    "dt(0, 1.5 / predictor_scale(), 3)"
+  )
+
+  for (family in families)
+    expect_equal(family$default_prior$prior, expected)
+})
+
 test_that("binomial responses cannot exceed trials", {
   invalid_data = data_binomial
   invalid_data$y[1] = invalid_data$N[1] + 1
