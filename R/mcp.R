@@ -305,15 +305,18 @@ mcp = function(model,
   formula_jags = get_formula_jags(ST, rhs_table, par_x, family)
   formula_r = get_formula_r(formula_jags, rhs_table, pars)
 
+  ar_order = get_arma_order(rhs_table, "ar")
+  ma_order = get_arma_order(rhs_table, "ma")
+
   # Make jags code if it is not provided by the user
   if (is.null(jags_code)) {
-    ar_order = get_arma_order(rhs_table, "ar")
-    ma_order = get_arma_order(rhs_table, "ma")
     jags_code = get_jags_code(
       prior, ST, formula_jags, ar_order, ma_order, family, par_x,
       prior_table, prior_context
     )
   }
+  if (sample %in% c("post", "both"))
+    warn_high_order_arma(ar_order, ma_order, "fit")
 
 
   ##########

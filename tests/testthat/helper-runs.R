@@ -68,7 +68,9 @@ test_runs = function(model,
     # Allow for known messages and wornings that does not signify errors
     accepted_warnings = c(
       "Adaptation incomplete",  # due to very small test datasets
-      "Some parameters may not have converged well"  # ditto - too few iterations to mix
+      "Some parameters may not have converged well",  # ditto - too few iterations to mix
+      "Fitting ar\\(",
+      "Fitting ma\\("
     )
     accepted_messages = c(
       "Finished sampling in",
@@ -152,7 +154,7 @@ test_arma_simulation = function(fit) {
     component_values,
     list(.type = "predict")
   )
-  simulated = suppressMessages(do.call(fit$simulate, call))
+  simulated = suppressWarnings(suppressMessages(do.call(fit$simulate, call)))
 
   testthat::expect_length(simulated, nrow(fit$data))
   testthat::expect_true(is.numeric(simulated))

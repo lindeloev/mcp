@@ -109,3 +109,40 @@ test_that("mcp builds MA parameters and JAGS code", {
   expect_true("ma1_1" %in% fit$pars$arma)
   expect_match(fit$jags_code, "ma1_\\[i_\\] \\* resid_ma_\\[i_ - 1\\]")
 })
+
+
+test_that("AR and MA defaults regularize direct coefficients", {
+  data = data.frame(
+    x = 1:12,
+    y = rep(0, 12),
+    group = rep(c("a", "b"), 6)
+  )
+  fit = mcp(
+    list(y ~ 1 + ar(2, 1 + x) + ma(1, 1 + group)),
+    data, sample = FALSE
+  )
+
+  expect_equal(fit$prior$ar1_1, "dnorm(0, 0.5) T(-1, 1)")
+  expect_equal(fit$prior$ar2_1, "dnorm(0, 0.5) T(-1, 1)")
+  expect_equal(fit$prior$ma1_1, "dnorm(0, 0.5) T(-1, 1)")
+  expect_equal(fit$prior$ar1_x_1, "dnorm(0, 0.02272727)")
+  expect_equal(fit$prior$ma1_groupb_1, "dnorm(0, 0.25)")
+
+  ar_prior = prior_summary(fit)
+  ar_prior = ar_prior[ar_prior$parameter == "ar1_1", ]
+  expect_match(ar_prior$prior, "normal", fixed = TRUE)
+  expect_equal(ar_prior$bounds, "[-1, 1]")
+})
+
+
+test_that("higher-order ARMA operations warn", {
+  expect_no_warning(warn_high_order_arma(1, 1, "fit"))
+  expect_warning(
+    warn_high_order_arma(2, 0, "fit"),
+    "do not ensure AR stationarity"
+  )
+  expect_warning(
+    warn_high_order_arma(0, 2, "simulate"),
+    "Generating a fresh series with ma\\(2\\)"
+  )
+})

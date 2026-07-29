@@ -227,6 +227,33 @@ warn_arma_check = function(fit, arma, check) {
 }
 
 
+#' Warn when higher-order direct AR/MA coefficients need root checks
+#'
+#' @keywords internal
+#' @noRd
+#' @param ar_order,ma_order Non-negative AR and MA orders.
+#' @param action Either `"fit"` or `"simulate"`.
+#' @return `NULL`, invisibly.
+warn_high_order_arma = function(ar_order, ma_order, action) {
+  action = rlang::arg_match0(action, c("fit", "simulate"))
+  high_order = c(
+    if (!is.na(ar_order) && ar_order > 1) paste0("ar(", ar_order, ")"),
+    if (!is.na(ma_order) && ma_order > 1) paste0("ma(", ma_order, ")")
+  )
+  if (length(high_order) == 0)
+    return(invisible(NULL))
+
+  prefix = if (action == "fit") "Fitting " else "Generating a fresh series with "
+  warning(
+    prefix, and_collapse(high_order), " with direct coefficients. ",
+    "Independent coefficient priors do not ensure AR stationarity or MA invertibility. ",
+    "See `vignette(\"arma\")`.",
+    call. = FALSE
+  )
+  invisible(NULL)
+}
+
+
 #' Converts formula to string
 #'
 #' Note: this uses base R and circumvents the length-limitation of `deparse()`

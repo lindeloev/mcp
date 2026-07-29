@@ -35,7 +35,7 @@ Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression
 
 `mcp` evaluates this as a finite, conditional recurrence: the observed history supplies earlier residuals, and unavailable residuals before the start of the series are set to zero.
 
-The AR and MA coefficients are modeled directly and are not jointly constrained to the stationary or invertible regions. Consequently, there are three ways to achieve non-stationarity for AR or non-invertibility for MA: (1) through AR/MA regression like `ar(1, 1+x)` including when it accumulates across segments: `model = list(y ~ ar(1), ~ ar(0+x))`, (2) through higher-order AR/MA term like `ar(2)`. The same is true of `ma()`.
+The AR and MA coefficients are modeled directly and are not jointly constrained to the stationary or invertible regions. With higher-order terms such as `ar(2)`, independently bounded coefficients can violate the usual root conditions. Coefficients that change across predictors or segments, such as `ar(1, 1 + x)` or `model = list(y ~ ar(1), ~ ar(1))`, instead define a time-varying process to which the usual constant-coefficient conditions do not directly apply. The same applies to `ma()`.
 
 GARMA currently supports only the default links for `gaussian()` (identity), `binomial()` (logit), `poisson()` (log), and `negbinomial()` (log). `bernoulli()` and non-default links are rejected for now.
 
@@ -242,7 +242,17 @@ hypothesis(fit, "ar1_1 - 0.3 > ar1_2")
 
 
 # Priors on AR and MA coefficients {#ar_prior}
-The default prior on both AR and MA intercepts is `dunif(-1, 1)`. This bounds each intercept but does not by itself guarantee joint stationarity or invertibility for orders above one. Moreover, categorical contrasts and slopes have unbounded Student-$t$ priors, so the resulting coefficient can leave $[-1, 1]$ even at order one. For many time series, you would expect a positive first-order AR coefficient, e.g., `ar1_1 = "dunif(0, 1)"` or `ar1_1 = "dnorm(0.5, 0.5) T(0, 1)"`. [Read more about priors](../articles/priors.html). Higher-order and MA priors should reflect the plausible dependence structure for the application.
+The default prior on each AR and MA intercept is a truncated normal distribution:
+
+```r
+dnorm(0, 0.5) T(-1, 1)
+```
+
+It is symmetric around zero and gently shrinks away from the boundaries: its central 95% interval is approximately $[-0.84, 0.84]$. This is a regularizing prior on each direct coefficient, not a joint stationarity or invertibility constraint for orders above one.
+
+Categorical contrasts default to `dnorm(0, 0.25)`. Numeric slopes are also normal and scaled so that one representative predictor change has prior SD 0.25. Thus approximately 95% of the prior change lies within $\pm 0.5$.
+
+The defaults express no assumption about the sign. For a time series where positive first-order autocorrelation is expected, alternatives include `ar1_1 = "dunif(0, 1)"` or `ar1_1 = "dnorm(0.5, 0.5) T(0, 1)"`. [Read more about specifying and checking priors](../articles/priors.html).
 
 Here is a complete list of the (default) priors in the model above:
 
@@ -269,12 +279,12 @@ empty = mcp(model, sample = FALSE)
 cbind(empty$prior)
 ```
 
-AR and MA coefficient regressions use an identity link, while their residual inputs use the supported response-family link described above. Careful priors become especially important with higher orders or coefficient slopes, where individual values in [-1, 1] do not ensure a stable recurrence.
+AR and MA coefficient regressions use an identity link, while their residual inputs use the supported response-family link described above. Careful priors become especially important with higher orders or coefficient slopes, where individual values in [-1, 1] do not ensure a stable recurrence. `mcp()` warns when fitting higher-order AR or MA models, and `fit$simulate()` warns when using one to generate a fresh series.
 
 Here are a few ways in which you may want to inform the AR or MA parameters:
 
  * For a constant AR(2) process, stationarity requires $-1 < \phi_2 < 1$ and $\phi_2 - 1 < \phi_1 < 1 - \phi_2$. One dependent-prior construction that stays in this region is `ar2_1 = "dunif(-1, 1)"` together with `ar1_1 = "dunif(ar2_1 - 1, 1 - ar2_1)"`. The simpler suggestion `ar2_1 = "dunif(0, ar1_1)"` is not sufficient. Higher orders require the corresponding joint root condition.
- * Slopes can quickly make AR coefficients non-stationary or MA coefficients non-invertible. You would often want to constrain their magnitude to small slopes, taking into consideration the expected span of the x-axis over which this slope runs. The default slope prior is a Student-$t_3$ distribution whose scale corresponds to a one-unit coefficient change across the observed change-point span: `"dt(0, 1 / (max(x) - min(x)), 3)"`. For example, a shallow negative change could instead use `"dt(0, 0.1 / (max(x) - min(x)), 3) T(, 0)"`.
+ * Slopes can quickly make AR coefficients non-stationary or MA coefficients non-invertible. Constrain their magnitude with reference to a plausible change over the predictor range. For example, a shallow negative change over the observed x-span could use `"dnorm(0, 0.1 / (max(x) - min(x))) T(, 0)"`.
 
 
 

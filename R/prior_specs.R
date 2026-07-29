@@ -16,12 +16,12 @@ empty_prior_specs = function() {
 default_arma_specs = function() {
   tibble::tribble(
     ~dpar, ~par_type, ~prior, ~description, ~condition,
-    "ar", "Intercept", "dunif(-1, 1)", "Bounded dependence coefficient", "always",
-    "ar", "dummy", "dt(0, 1, 3)", "Current weak prior for a categorical dependence coefficient", "always",
-    "ar", "slope", "dt(0, 1 / (max(.x) - min(.x)), 3)", "One coefficient-unit change across the observed change-point span", "always",
-    "ma", "Intercept", "dunif(-1, 1)", "Bounded dependence coefficient", "always",
-    "ma", "dummy", "dt(0, 1, 3)", "Current weak prior for a categorical dependence coefficient", "always",
-    "ma", "slope", "dt(0, 1 / (max(.x) - min(.x)), 3)", "One coefficient-unit change across the observed change-point span", "always"
+    "ar", "Intercept", "dnorm(0, 0.5) T(-1, 1)", "Zero-centered regularizing dependence coefficient", "always",
+    "ar", "dummy", "dnorm(0, 0.25)", "Modest categorical change in a dependence coefficient", "always",
+    "ar", "slope", "dnorm(0, 0.25 / predictor_scale())", "Modest dependence-coefficient change over a representative predictor change", "always",
+    "ma", "Intercept", "dnorm(0, 0.5) T(-1, 1)", "Zero-centered regularizing dependence coefficient", "always",
+    "ma", "dummy", "dnorm(0, 0.25)", "Modest categorical change in a dependence coefficient", "always",
+    "ma", "slope", "dnorm(0, 0.25 / predictor_scale())", "Modest dependence-coefficient change over a representative predictor change", "always"
   )
 }
 

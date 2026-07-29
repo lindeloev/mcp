@@ -288,6 +288,10 @@ See the family-specific articles for more information about the priors for other
 
  * `vignette("binomial")` - also relevant for `bernoulli`
  * `vignette("poisson")`
+ * `vignette("variance")` for explicit `sigma()` models
+ * `vignette("arma")` for AR/MA regularization and root conditions
+
+The general principles belong here: parameterization, data-based scaling, proper regularization, and prior predictive checking. Exact defaults and constraints that arise from a particular likelihood or model component are documented in its own article. `prior_summary(fit, verbose = TRUE)` is the authoritative model-specific inventory, so the articles do not need to duplicate every generated prior.
 
 
 # Default priors on varying effects

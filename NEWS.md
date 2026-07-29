@@ -6,6 +6,12 @@
 
 ## Major breaking changes
 
+-   AR and MA intercepts now have zero-centered, regularizing
+    `dnorm(0, 0.5) T(-1, 1)` priors, replacing independent uniform priors.
+    Their categorical contrasts and numeric slopes now use modest normal priors
+    instead of heavy-tailed Student-t priors. Coefficients remain direct and
+    are not jointly constrained to stationary or invertible regions.
+
 -   Gaussian models with an explicit `sigma()` formula now model the residual
     standard deviation with a log link, as in `brms`. Models without an explicit
     `sigma()` are unchanged: `sigma_1` remains the residual SD itself with the
@@ -44,6 +50,10 @@
 -   `fit = mcp_example("name")` now returns the fit directly instead of a list with a `$fit` entry. It now defaults to sampling the model (`sample = "post"`) and the `sample` argument is now directly passed to `mcp(..., sample = sample)` so `sample = TRUE` is deprecated.
 
 ## Other new features
+
+-   Fitting and fresh-series simulation now warn that higher-order direct
+    AR/MA coefficients are not jointly constrained to stationary or invertible
+    regions.
 
 -   The user-facing `nsamples` argument is soft-deprecated in favor of `ndraws`, matching the terminology used by `posterior`, `rvar`, and related packages. Existing calls continue to work for now.
 
