@@ -31,7 +31,9 @@
 #'   * *Time-series residuals:* use `ar(p)` and `ma(q)` separately or together,
 #'     e.g., `~ 1 + ar(1) + ma(1)`. Both accept an optional regression formula
 #'     and observation `boundary`. GARMA terms support Gaussian, binomial,
-#'     Poisson, and negative-binomial families with their default links.
+#'     Poisson, and negative-binomial families with their default links. They
+#'     define a finite conditional recurrence and do not jointly constrain AR
+#'     coefficients to stationarity or MA coefficients to invertibility.
 #'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
 #'
 #' @param prior Named list. Names are parameter names (`cp_i`, `Intercept_i`, `xvar_i`,
