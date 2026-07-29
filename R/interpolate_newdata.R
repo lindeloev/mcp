@@ -68,7 +68,7 @@ interpolate_continuous = function(data, pars, x_values, varying_cols = NULL) {
   checkmate::assert_list(pars)
   checkmate::assert_numeric(x_values, any.missing = FALSE)
 
-  # Get numeric RHS data columns
+  # Get numeric predictor columns
   numeric_data = data[, sapply(data, is.numeric), drop = FALSE]
   numeric_data = numeric_data[, colnames(numeric_data) %notin% c(pars$x, pars$y, pars$weights, varying_cols), drop = FALSE]
 
@@ -84,7 +84,7 @@ interpolate_continuous = function(data, pars, x_values, varying_cols = NULL) {
 
 #' Returns a data.frame with all combos of predictors
 #'
-#' This function is used to synthesize predictors for all combos of RHS predictors.
+#' This function synthesizes predictors for all combinations of predictor values.
 #' It is used internally in `plot.mcpfit()` and may be useful if you want to
 #' build your own custom plot.
 #'
@@ -132,7 +132,7 @@ interpolate_continuous = function(data, pars, x_values, varying_cols = NULL) {
 interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by)) {
 
   # Get unique predictors
-  varying_cols = unique(stats::na.omit(fit$.internal$ST$cp_group_col))
+  varying_cols = unique(stats::na.omit(get_fit_model_tables(fit)$group_effects$group_col))
   by = unique(c(names(get_categorical_levels(fit$data)), intersect(varying_cols, by)))
   # Numeric varying-group IDs are discrete even when they are not requested
   # for evaluation, so never interpolate them as continuous predictors.

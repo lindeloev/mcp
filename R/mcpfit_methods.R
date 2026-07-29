@@ -93,11 +93,11 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
   # built in mcp(). Varying-effect columns (e.g. "cp_1_id[A]") are matched by
   # their base name; ties (i.e., levels of the same varying effect) are
   # broken alphabetically by the full column name.
-  pars_table = fit$.internal$pars_table
+  pars = get_fit_model_tables(fit)$pars
   base_name = sub("\\[.*\\]$", "", estimates$name)
-  match_idx = match(base_name, pars_table$name)
-  estimates$segment = pars_table$segment[match_idx]
-  estimates$dpar = pars_table$dpar[match_idx]
+  match_idx = match(base_name, pars$name)
+  estimates$segment = pars$segment[match_idx]
+  estimates$dpar = pars$dpar[match_idx]
   estimates = estimates[order(match_idx, estimates$name), ]
 
   # Add simulation parameters if the data is simulated
@@ -111,8 +111,8 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
       if (!is.null(simulated[[this_varying]])) {
         # Find the needed values and labels
         value = simulated[[this_varying]]  # Extract simulation values
-        which_label_col = which(fit$.internal$ST$cp_group == this_varying)
-        label_col = fit$.internal$ST$cp_group_col[which_label_col]  # What column is the labels in data.
+        group_effects = get_fit_model_tables(fit)$group_effects
+        label_col = group_effects$group_col[group_effects$name == this_varying]
         labs = fit$data[[label_col]]  # Find the labels. Same length as `value`
         if (length(value) != length(labs)) {
           warning("This is simulated data, but the labels for varying effect '", label_col, "' in data does not have the same length as the numeric params used for simulation.")
@@ -396,12 +396,14 @@ nchains = function(object, ...) UseMethod("nchains")
 
 #' Get relevant info about varying parameters
 #'
-#' Returns parameters, data columns, and implicated segments given parameter name(s) or column(s).
+#' Returns parameters, data columns, and effect metadata given parameter
+#' name(s), model part(s), or column(s).
 #'
 #' @aliases unpack_varying unpack_varying.mcpfit
 #' @keywords internal
 #' @noRd
-#' @param pars `NULL`/`FALSE` for nothing. `TRUE` for all. A vector of varying parameter names for specifics.
+#' @param pars `NULL`/`FALSE` for nothing. `TRUE` for all. A character vector
+#'   containing `"cp"`, `"predictor"`, or exact varying parameter names.
 #' @param cols `NULL`/`FALSE` for nothing. `TRUE` for all. A vector of varying column names for specifics. Usually provided via "facet_by" argument in other functions.
 #' @return A list. See details.
 #'
@@ -409,17 +411,25 @@ nchains = function(object, ...) UseMethod("nchains")
 #' Returns a list with
 #' @slot pars Character vector of parameter names. `NULL` if empty.
 #' @slot cols Character vector of data column names. `NULL` if empty.
-#' @slot indices Logical vector of segments in the segment table that contains the varying effect
+#' @slot indices Logical vector indexing the group-effects table.
+#' @slot effects The selected rows of the group-effects table.
 unpack_varying = function(fit, pars = NULL, cols = NULL) {
   checkmate::assert_multi_class(pars, c("logical", "character"), null.ok = TRUE)
   checkmate::assert_multi_class(cols, c("logical", "character"), null.ok = TRUE)
+  if (is.logical(pars))
+    checkmate::assert_flag(pars)
+  if (is.logical(cols))
+    checkmate::assert_flag(cols)
+  group_effects = get_fit_model_tables(fit)$group_effects
+  use_varying = rep(FALSE, nrow(group_effects))
 
   # If everything is NULL, just return NULLs
   if ((is.null(pars) && is.null(cols))) {
     return(list(
       pars = NULL,
       cols = NULL,
-      indices = rep(FALSE, nrow(fit$.internal$ST))
+      indices = use_varying,
+      effects = group_effects[use_varying, , drop = FALSE]
     ))
   } else if (!is.null(pars) && !is.null(cols)) {
     stop("One of `pars` and `cols` must be NULL.")
@@ -429,25 +439,34 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
   if (!is.null(pars)) {
     if (all(pars == FALSE)) {
       # Select no varying effects
-      use_varying = NULL
+      use_varying[] = FALSE
     } else if (all(pars == TRUE)) {
       # Select all varying effects
-      use_varying = !is.na(fit$.internal$ST$cp_group)
+      use_varying[] = TRUE
     } else if (is.character(pars)) {
-      if (!all(pars %in% fit$pars$varying))
-        stop("Not all `pars` are varying parameters (see fit$pars$varying).")
-      # Select only specified varying effects
-      use_varying = fit$.internal$ST$cp_group %in% pars
+      allowed = c("cp", "predictor", group_effects$name)
+      unknown = pars[pars %notin% allowed]
+      if (length(unknown) > 0)
+        stop(
+          "Unknown `varying` selection: ", and_collapse(unknown), ". ",
+          "Use TRUE, FALSE, \"cp\", \"predictor\", or names from fit$pars$varying."
+        )
+      use_varying = group_effects$part %in% pars | group_effects$name %in% pars
     }
   } else if (!is.null(cols)) {
-    use_varying = tidyr::replace_na(fit$.internal$ST$cp_group_col %in% cols, FALSE)
+    if (all(cols == TRUE)) {
+      use_varying[] = TRUE
+    } else if (!all(cols == FALSE)) {
+      use_varying = group_effects$group_col %in% cols
+    }
   }
 
   # Return
   list(
-    pars = fit$.internal$ST$cp_group[use_varying],
-    cols = fit$.internal$ST$cp_group_col[use_varying],
-    indices = use_varying
+    pars = logical0_to_null(group_effects$name[use_varying]),
+    cols = logical0_to_null(group_effects$group_col[use_varying]),
+    indices = use_varying,
+    effects = group_effects[use_varying, , drop = FALSE]
   )
 }
 
@@ -492,7 +511,11 @@ resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
 #' @param varying One of:
 #'   * `TRUE` All varying effects (`fit$pars$varying`).
 #'   * `FALSE` No varying effects (`c()`).
-#'   * Character vector: Only include specified varying parameters - see `fit$pars$varying`.
+#'   * `"cp"` or `"predictor"`: All varying effects belonging to that part of
+#'     the model. Predictor-side varying effects are not yet supported, so
+#'     `"predictor"` currently selects none.
+#'   * Character vector: Only include specified varying parameters - see
+#'     `fit$pars$varying`.
 #' @param absolute
 #'   * `TRUE` Returns the absolute location of all varying change points.
 #'   * `FALSE` Just returns the varying effects.
@@ -544,18 +567,20 @@ tidy_samples = function(
 
   # Absolute effects. Results is `absolute_cps` and `absolute` (recoded to varying cp names)
   if (all(absolute == TRUE)) {
-    absolute = fit$.internal$ST$cp_group[varying_info$indices]
-    absolute_cps = fit$.internal$ST$cp_name[varying_info$indices]
+    cp_effects = varying_info$effects[varying_info$effects$part == "cp", , drop = FALSE]
+    absolute = cp_effects$name
+    absolute_cps = cp_effects$population_name
   } else if (all(absolute == FALSE)) {
     absolute_cps = NULL
   } else if (is.character(absolute)) {
     # Check
     is_in_varying = absolute %in% varying_info$pars
     if (any(!is_in_varying))
-      stop("The following parameter names in `absolute` are not in `varying`:", absolute[is_in_varying])
+      stop("The following parameter names in `absolute` are not in `varying`: ", and_collapse(absolute[!is_in_varying]))
 
-    use_absolute = fit$.internal$ST$cp_group %in% absolute
-    absolute_cps = fit$.internal$ST$cp_name[use_absolute]
+    absolute_cps = varying_info$effects$population_name[
+      varying_info$effects$name %in% absolute
+    ]
   }
 
   # ----- GET THESE PARAMETERS AS TIDY DRAWS -----
@@ -694,13 +719,14 @@ pp_eval = function(
   # FIX NEWDATA #
   ###############
   varying_info = unpack_varying(fit, pars = varying)
-  varying_cols = unique(stats::na.omit(fit$.internal$ST$cp_group_col))
+  model_tables = get_fit_model_tables(fit)
+  varying_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
   exclude_varying = setdiff(varying_cols, varying_info$cols)
   required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
   operation = switch(type, predict = "rng", loglik = "log_lik", fitted = "epred", residuals = "epred")
   aux_operations = c(operation, if (arma && is_arma(fit)) "garma")
-  aux_columns = get_family_aux_columns(fit$family, fit$.internal$ST)
-  aux_used = names(get_family_aux_columns(fit$family, fit$.internal$ST, aux_operations))
+  aux_columns = get_family_aux_columns(fit$family, model_tables$segments)
+  aux_used = names(get_family_aux_columns(fit$family, model_tables$segments, aux_operations))
   unused_aux_columns = unname(aux_columns[names(aux_columns) %notin% aux_used])
   required_cols = required_cols[required_cols %notin% unused_aux_columns]
   required_cols = required_cols[required_cols %notin% exclude_varying]

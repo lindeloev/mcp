@@ -193,11 +193,12 @@ test_that("generated code separates link and distribution scales", {
     unname(unlist(change_fit$prior[c("sigma_1", "sigma_2")])),
     rep("dt(0, 2.5, 3)", 2)
   )
-  expect_false(change_fit$.internal$rhs_table$explicit[
-    change_fit$.internal$rhs_table$code_name == "sigma_1"
+  predictors = get_fit_model_tables(change_fit)$predictors
+  expect_false(predictors$explicit[
+    predictors$code_name == "sigma_1"
   ])
-  expect_true(change_fit$.internal$rhs_table$explicit[
-    change_fit$.internal$rhs_table$code_name == "sigma_2"
+  expect_true(predictors$explicit[
+    predictors$code_name == "sigma_2"
   ])
 
   expect_false(any(grepl("^link_", fit$pars$population)))
@@ -214,16 +215,16 @@ test_that("declared dpar wrappers use the generic formula path", {
   )
   family = add_dpar_specs(family)
 
-  rhs_table = get_rhs_table(
+  predictors = get_predictors(
     list(y ~ 1 + x + aux(1 + x)),
     data,
     family,
     par_x = "x"
   )
 
-  expect_setequal(unique(rhs_table$dpar), c("mu", "sigma", "aux"))
+  expect_setequal(unique(predictors$dpar), c("mu", "sigma", "aux"))
   expect_equal(
-    rhs_table$code_name[rhs_table$dpar == "aux"],
+    predictors$code_name[predictors$dpar == "aux"],
     c("aux_1", "aux_x_1")
   )
 })

@@ -40,7 +40,8 @@ relevel_newdata = function(newdata, fit) {
 #' @aliases add_rhs_predictors
 #' @keywords internal
 #' @noRd
-#' @param newdata A data.frame that contains the RHS-predictors from `fit$data` and `fit$model`.
+#' @param newdata A data.frame that contains the predictor columns from
+#'   `fit$data` and `fit$model`.
 #' @param fit An `mcpfit` object.
 #' @return `newdata` with additional (dummy-coded) columns that make up the design matrix required for the model.
 #' @encoding UTF-8
@@ -54,17 +55,21 @@ add_rhs_predictors = function(newdata, fit) {
     as.data.frame() %>%
     relevel_newdata(fit)
 
-  # Get rhs_matrix
-  rhs_table_tmp = get_rhs_table(fit$model, newdata, fit$family, fit$pars$x, check_rank = FALSE)
-  rhs_matrix = get_rhs_matrix(rhs_table_tmp)
+  # Get predictor matrix
+  predictors = get_fit_model_tables(fit)$predictors
+  new_predictors = get_predictors(
+    fit$model, newdata, fit$family, fit$pars$x, check_rank = FALSE
+  )
+  predictor_matrix = get_predictor_matrix(new_predictors)
 
   # Check that the variable structure matches
-  if (nrow(fit$.internal$rhs_table) != nrow(rhs_table_tmp) || any(fit$.internal$rhs_table$code_name != rhs_table_tmp$code_name))
-    stop_github("rhs_table_tmp does not match fit$.internal$rhs_table.")
+  if (nrow(predictors) != nrow(new_predictors) ||
+      any(predictors$code_name != new_predictors$code_name))
+    stop_github("The new predictors table does not match the fitted model.")
 
   # All permutations of rows in newdata and parameters
-  as.data.frame(rhs_matrix) %>%
-    magrittr::set_colnames(paste0(".pred_", colnames(rhs_matrix))) %>%
+  as.data.frame(predictor_matrix) %>%
+    magrittr::set_colnames(paste0(".pred_", colnames(predictor_matrix))) %>%
     dplyr::bind_cols(newdata)
 }
 
@@ -73,10 +78,10 @@ add_rhs_predictors = function(newdata, fit) {
 #' @aliases get_sim_pars
 #' @keywords internal
 #' @return Character vector
-get_sim_pars = function(rhs_table, pars) {
+get_sim_pars = function(predictors, pars) {
   c(
     pars$cp,  # cp_1, cp_2, etc.
-    rhs_table$code_name,  # mu, sigma, ar, etc.
+    predictors$code_name,  # mu, sigma, ar, etc.
     pars$varying
   )
 }
@@ -98,7 +103,7 @@ evaluate_model_dpars = function(fit, args, pred_pars) {
   # Generate more predictors
   pred_args = args[names(args) %in% pred_pars]
   rhs_matrix_ = do.call(cbind, pred_args)
-  rhs_matrix_ = rhs_matrix_[, match(pred_pars, colnames(rhs_matrix_)), drop = FALSE]  # Same order as rhs_table$code_name no matter order of args
+  rhs_matrix_ = rhs_matrix_[, match(pred_pars, colnames(rhs_matrix_)), drop = FALSE]  # Same order as predictors$code_name no matter order of args
 
   cp_0 = -Inf
   assign(paste0("cp_", length(fit$model)), Inf)  # e.g., cp_3 = Inf
@@ -228,7 +233,8 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
 #' @noRd
 #' @inheritParams mcp
 #' @param ... Parameter names (e.g., `cp_1 = c(4.3, 4.5, 6.2), Intercept_1 = c(11.2, 12.1, 10.9)`, etc.)
-#'   and predictor columns from `rhs_tables$matrix_data` prefixed with ".pred_" (e.g., `.pred_Intercept_1 = c(1, 1, 1)`).
+#'   and columns from `predictors$matrix_data` prefixed with ".pred_" (e.g.,
+#'   `.pred_Intercept_1 = c(1, 1, 1)`).
 #' @return Vector with same length as inputs.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -239,15 +245,16 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   checkmate::assert_class(fit, "mcpfit")
   if (!is.mcpfamily(fit$family))
     fit$family = mcpfamily(fit$family)
-  rhs_table = fit$.internal$rhs_table  # Shorthand
+  model_tables = get_fit_model_tables(fit)
+  predictors = model_tables$predictors
 
   # Assert that the ellipsis contains the expected argument names
-  param_pars = get_sim_pars(rhs_table, fit$pars)
-  pred_pars = paste0(".pred_", rhs_table$code_name)
+  param_pars = get_sim_pars(predictors, fit$pars)
+  pred_pars = paste0(".pred_", predictors$code_name)
   operation = switch(.type, fitted = "epred", loglik = "log_lik", predict = "rng")
-  is_arma = any(rhs_table$dpar %in% c("ar", "ma"))
+  is_arma = any(predictors$dpar %in% c("ar", "ma"))
   aux_operations = c(operation, if (is_arma && .arma) "garma")
-  aux_columns = get_family_aux_columns(fit$family, fit$.internal$ST, aux_operations)
+  aux_columns = get_family_aux_columns(fit$family, model_tables$segments, aux_operations)
   data_pars = c(fit$pars$x, stats::na.omit(unname(aux_columns)))
   expected_arg_names = c(param_pars, pred_pars, data_pars)
 
@@ -283,7 +290,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   if (!uses_link_dpars && .scale == "response" && .dpar %in% c("epred_", "mu_"))
     dpar_values$mu_ = fit$family$linkinv(dpar_values$mu_)
 
-  response_data = get_family_response_data(fit$family, fit$.internal$ST, args)
+  response_data = get_family_response_data(fit$family, model_tables$segments, args)
   dpars = stats::setNames(lapply(fit$family$dpars, function(dpar) {
     dpar_values[[paste0(dpar, "_")]]
   }), fit$family$dpars)
@@ -370,7 +377,8 @@ simulate_atomic = function(fit,
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_data_frame(newdata)
   args = list(...)
-  expected_args = get_sim_pars(fit$.internal$rhs_table, fit$pars)
+  model_predictors = get_fit_model_tables(fit)$predictors
+  expected_args = get_sim_pars(model_predictors, fit$pars)
   if (is.null(names(args)) | any(names(args) == ""))
     stop("All arguments must be named.")
   checkmate::assert_subset(
@@ -386,12 +394,12 @@ simulate_atomic = function(fit,
     newdata = dplyr::select(newdata, -dplyr::all_of(fit$pars$y))
 
   # Get permutations
-  predictors = add_rhs_predictors(newdata, fit)
-  pred_param_grid = cbind(predictors, args)  # Use tidyr::expand_grid() if any args have length > 1.
+  predictor_data = add_rhs_predictors(newdata, fit)
+  pred_param_grid = cbind(predictor_data, args)  # Use tidyr::expand_grid() if any args have length > 1.
   if (.type == "predict" && .arma && is_arma(fit)) {
     values = evaluate_model_dpars(
       fit, as.list(pred_param_grid),
-      paste0(".pred_", fit$.internal$rhs_table$code_name)
+      paste0(".pred_", model_predictors$code_name)
     )
     warn_arma_simulation(values)
   }

@@ -100,9 +100,9 @@ assert_dpar = function(dpar, fit, type) {
   if (is.null(dpar))
     dpar = "epred"
 
-  rhs_table = fit$.internal$rhs_table
+  predictors = get_fit_model_tables(fit)$predictors
   allowed_dpars = unique(c(
-    paste0(rhs_table$dpar, tidyr::replace_na(as.character(rhs_table$order), "")),   # "mu" "ar1" "ar2" "sigma", etc.
+    paste0(predictors$dpar, tidyr::replace_na(as.character(predictors$order), "")),   # "mu" "ar1" "ar2" "sigma", etc.
     fit$family$dpars[fit$family$dpars %notin% c("ar", "ma")],  # any model parameters that have no regression terms (~0)
     "epred"
   ))

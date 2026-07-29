@@ -128,7 +128,7 @@ test_runs = function(model,
       testthat::expect_true(all(fit_to_test$pars$population %in% colnames(fit_to_test[[col]][[1]])))
 
       # Test mcpfit functions
-      varying_cols = na.omit(fit_to_test$.internal$ST$cp_group_col)
+      varying_cols = na.omit(get_fit_model_tables(fit_to_test)$group_effects$group_col)
       test_summary(fit_to_test, varying_cols, prior = use_prior)
       #test_plot(fit, varying_cols)  # default ggplot plot
       test_plot_pars(fit_to_test, prior = use_prior)  # bayesplot call
@@ -273,7 +273,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
   expected_colnames = c(
     fit$pars$x,
     fit$pars$trials,
-    na.omit(unique(fit$.internal$ST$cp_group_col)),  # varying effects
+    na.omit(unique(get_fit_model_tables(fit)$group_effects$group_col)),  # varying effects
     colname, "error", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
   )
   if (length(fit$pars$arma) > 0 || colname %in% c("loglik", "residuals"))
@@ -294,7 +294,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
       # overflow derived Poisson summaries. Data keys must remain intact and
       # the estimate itself must not be entirely missing.
       data_cols = intersect(
-        c(fit$pars$x, fit$pars$y, fit$pars$trials, na.omit(unique(fit$.internal$ST$cp_group_col))),
+        c(fit$pars$x, fit$pars$y, fit$pars$trials, na.omit(unique(get_fit_model_tables(fit)$group_effects$group_col))),
         colnames(result)
       )
       testthat::expect_false(anyNA(result[, data_cols, drop = FALSE]))
@@ -388,6 +388,7 @@ test_pp_eval = function(fit, prior = FALSE) {
     summary = FALSE,
     probs = c(0.1, 0.5, 0.999),
     prior = prior,
+    varying = "cp",
     ndraws = 2,
     arma = FALSE
   ), silent = TRUE)
@@ -407,7 +408,7 @@ test_pp_eval = function(fit, prior = FALSE) {
       # Predictors
       fit$pars$trials,
       fit$pars$x,
-      na.omit(unique(fit$.internal$ST$cp_group_col)),  # varying effects
+      na.omit(unique(get_fit_model_tables(fit)$group_effects$group_col)),  # varying effects
       "data_row",
       "fitted"
     )
@@ -415,9 +416,10 @@ test_pp_eval = function(fit, prior = FALSE) {
     testthat::expect_true(dplyr::setequal(colnames(result_more), expected_colnames_more))  # Exactly these columns regardless of order
   }
 
-  # Population-level evaluation should not require varying grouping columns.
+  # Until predictor-side group effects are implemented, the "predictor"
+  # selector is population-only and should not require grouping columns.
   if (length(fit$pars$varying) > 0) {
-    varying_cols = stats::na.omit(unique(fit$.internal$ST$cp_group_col))
+    varying_cols = stats::na.omit(unique(get_fit_model_tables(fit)$group_effects$group_col))
     population_newdata = fit$data[, colnames(fit$data) %notin%
       c(fit$pars$y, varying_cols), drop = FALSE]
     population_result = fitted(
@@ -426,7 +428,7 @@ test_pp_eval = function(fit, prior = FALSE) {
       summary = FALSE,
       probs = FALSE,
       prior = prior,
-      varying = FALSE,
+      varying = "predictor",
       arma = FALSE,
       ndraws = 2
     )
@@ -440,7 +442,7 @@ test_pp_eval = function(fit, prior = FALSE) {
 
   # Test pp_check
   if (length(fit$pars$varying) > 0) {
-    varying_col = na.omit(fit$.internal$ST$cp_group_col)[1]  # Just use the first column
+    varying_col = na.omit(get_fit_model_tables(fit)$group_effects$group_col)[1]  # Just use the first column
     pp_default = try(suppressWarnings(pp_check(fit, facet_by = varying_col, ndraws = 2, prior = prior)), silent = TRUE)
   } else {
     pp_default = try(suppressWarnings(pp_check(fit, ndraws = 2, prior = prior)), silent = TRUE)

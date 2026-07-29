@@ -4,16 +4,16 @@
 #'
 #' @keywords internal
 #' @noRd
-get_prior = function(ST, CP, rhs_table, family, prior = list(), data) {
+get_prior = function(segments, cps, predictors, family, prior = list(), data) {
   checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
-  context = prior_context(data, ST)
+  context = prior_context(data, segments)
   warn_legacy_prior_constants(prior, context)
 
   specs = dplyr::bind_rows(
-    default_cp_specs(CP, context),
-    default_rhs_specs(rhs_table, family)
+    default_cp_specs(cps, context),
+    default_predictor_specs(predictors, family)
   )
-  specs = overlay_user_prior_specs(specs, prior, CP, context)
+  specs = overlay_user_prior_specs(specs, prior, cps, context)
 
   all_names = specs$parameter
   table = compile_prior_specs(specs, all_names, context)
@@ -49,11 +49,11 @@ prior_summary = function(fit, verbose = FALSE) {
   if (is.null(table))
     table = legacy_prior_table(fit)
 
-  pars_table = fit$.internal$pars_table
-  if (!is.null(pars_table)) {
-    match_idx = match(table$parameter, pars_table$name)
-    table$segment = pars_table$segment[match_idx]
-    table$dpar = pars_table$dpar[match_idx]
+  pars = get_fit_model_tables(fit)$pars
+  if (!is.null(pars)) {
+    match_idx = match(table$parameter, pars$name)
+    table$segment = pars$segment[match_idx]
+    table$dpar = pars$dpar[match_idx]
     table = table[order(match_idx), ]
   }
 

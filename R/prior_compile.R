@@ -23,9 +23,9 @@ display_data_name = function(x) {
 
 
 # Collect data and model summaries used to resolve symbolic prior templates.
-prior_context = function(data, ST) {
-  x_name = ST$x[1]
-  y_name = ST$y[1]
+prior_context = function(data, segments) {
+  x_name = segments$x[1]
+  y_name = segments$y[1]
   x = data[[x_name]]
   list(
     data = data,
@@ -36,9 +36,9 @@ prior_context = function(data, ST) {
     x_min = min(x, na.rm = TRUE),
     x_max = max(x, na.rm = TRUE),
     x_span = diff(range(x, na.rm = TRUE)),
-    n_cp = nrow(ST) - 1,
-    n_segments = nrow(ST),
-    segment_width = diff(range(x, na.rm = TRUE)) / nrow(ST)
+    n_cp = nrow(segments) - 1,
+    n_segments = nrow(segments),
+    segment_width = diff(range(x, na.rm = TRUE)) / nrow(segments)
   )
 }
 

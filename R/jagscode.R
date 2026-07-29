@@ -2,19 +2,19 @@
 # resulting in a full JAGS model
 # -----------------
 
-get_jags_family_context = function(ST) {
+get_jags_family_context = function(segments) {
   list(
-    y = paste0(ST$y[1], "[i_]"),
+    y = paste0(segments$y[1], "[i_]"),
     boundary = "garma_boundary_[i_]",
     dpar = function(name) paste0(name, "_[i_]"),
     local = function(name) paste0(name, "_[i_]"),
     aux = function(name, default = NULL) {
-      if (name %notin% names(ST) || all(is.na(ST[[name]]))) {
+      if (name %notin% names(segments) || all(is.na(segments[[name]]))) {
         if (!is.null(default))
           return(default)
         stop_github("Missing response auxiliary ", name, "() in JAGS family context.")
       }
-      paste0(stats::na.omit(unique(ST[[name]]))[1], "[i_]")
+      paste0(stats::na.omit(unique(segments[[name]]))[1], "[i_]")
     }
   )
 }
@@ -93,7 +93,7 @@ jagsify_constants = function(x, registry) {
 #' @noRd
 #' @inheritParams mcp
 #' @param formula_jags String. The formula string returned by `get_formula_jags()`.
-#' @param ST Segment table. Returned by `get_segment_table()`.
+#' @param segments Segment table returned by `get_segment_tables()`.
 #' @param ar_order,ma_order NA or positive integer. The GARMA component orders.
 #' @param prior_table Resolved prior metadata from `get_prior()`.
 #' @param prior_context Data summaries used while resolving priors.
@@ -101,7 +101,7 @@ jagsify_constants = function(x, registry) {
 #'   of data constants referenced by change point priors (see `jagsify_constants()`).
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_jags_code = function(prior, ST, formula_jags, ar_order, ma_order, family, par_x,
+get_jags_code = function(prior, segments, formula_jags, ar_order, ma_order, family, par_x,
                           prior_table = NULL, prior_context = NULL) {
   prior_description = if (is.null(prior_table)) {
     stats::setNames(rep("Prior", length(prior)), names(prior))
@@ -166,8 +166,8 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, ma_order, family, pa
   # ... also handles non-Dirichlet priors
 
   # Split up priors into population and varying
-  prior_pop = prior[!names(prior) %in% ST$cp_group]
-  prior_varying = prior[names(prior) %in% ST$cp_group]
+  prior_pop = prior[!names(prior) %in% segments$cp_group]
+  prior_varying = prior[names(prior) %in% segments$cp_group]
 
   # Use get_prior_str() to add population-level priors
   mm = paste0(mm, "
@@ -175,7 +175,7 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, ma_order, family, pa
 
   # Helpers for change points:
   mm = paste0(mm, "  cp_0 = ", jagsify_constants(format_prior_number(prior_context_$x_min), jags_constants), "\n")
-  mm = paste0(mm, "  cp_", max(ST$segment), " = ", jagsify_constants(format_prior_number(prior_context_$x_max), jags_constants), "
+  mm = paste0(mm, "  cp_", max(segments$segment), " = ", jagsify_constants(format_prior_number(prior_context_$x_max), jags_constants), "
 
   # Priors for population-level effects\n")
   is_cp_name = function(name) grepl("^cp_[0-9]+$", name)
@@ -199,7 +199,7 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, ma_order, family, pa
       mm = paste0(mm, get_prior_str(
         prior = prior_varying,
         i = i,
-        varying_group = stats::na.omit(ST$cp_group_col[ST$cp_group == names(prior_varying[i])]),
+        varying_group = stats::na.omit(segments$cp_group_col[segments$cp_group == names(prior_varying[i])]),
         description = prior_description[[names(prior_varying)[i]]],
         kind = if (is.null(prior_kind_)) NULL else prior_kind_[[names(prior_varying)[i]]]
       ))
@@ -220,8 +220,8 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, ma_order, family, pa
   # FORMULA #
   ###########
   # Transform formula_jags into JAGS format. Insert par_x and varying indices
-  for (i in seq_len(max(ST$segment))) {
-    formula_jags = gsub(paste0("CP_", i, "_INDEX"), paste0("[", ST$cp_group_col[i], "[i_]]"), formula_jags)
+  for (i in seq_len(max(segments$segment))) {
+    formula_jags = gsub(paste0("CP_", i, "_INDEX"), paste0("[", segments$cp_group_col[i], "[i_]]"), formula_jags)
   }
 
   # Insert formula_jags
@@ -256,7 +256,7 @@ get_jags_code = function(prior, ST, formula_jags, ar_order, ma_order, family, pa
     mm = paste0(mm, "\n    ", dpar, "_[i_] = ", response_code)
   }
 
-  context = get_jags_family_context(ST)
+  context = get_jags_family_context(segments)
   mm = paste0(mm, "\n\n    # Likelihood and log-density for family = ", family$family, "()
     ")
   likelihood = family$backends$jags$likelihood(context)

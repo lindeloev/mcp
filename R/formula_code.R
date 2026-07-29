@@ -13,25 +13,25 @@
 #' @return A string with JAGS code.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_formula_jags = function(ST, rhs_table, par_x, family) {
-  # Explicit segment -> boundary-code lookup instead of relying on ST's row
+get_formula_jags = function(segments, predictors, par_x, family) {
+  # Explicit segment -> boundary-code lookup instead of relying on row
   # order matching segment numbers.
-  boundary_code = stats::setNames(ST$cp_code_form, ST$segment)
+  boundary_code = stats::setNames(segments$cp_code_form, segments$segment)
 
   # Add X-helpers which code the X relative to the start of each segment.
   local_x_str = "\n# par_x local to each segment"
-  for (i in seq_len(nrow(ST))) {
+  for (i in seq_len(nrow(segments))) {
     segment_start = ifelse(i > 1, yes = paste0(" - ", boundary_code[[as.character(i)]]), no = "")  #
-    segment_end = ifelse(i < nrow(ST), yes = boundary_code[[as.character(i + 1)]], no = paste0("cp_", i))  # infinite if last segment.
+    segment_end = ifelse(i < nrow(segments), yes = boundary_code[[as.character(i + 1)]], no = paste0("cp_", i))  # infinite if last segment.
 
     local_x_str = paste0(local_x_str, "\nx_local_", i, "_[i_] = min(", par_x, "[i_], ", segment_end, ")", segment_start)
   }
 
   # Build formula for each dpar (note plural "_dpars")
-  this_cp_lookup = dplyr::select(ST, "segment", "form", this_cp = "cp_code_form")
-  next_cp_lookup = dplyr::select(ST, next_intercept = "segment", next_cp = "cp_code_form")
+  this_cp_lookup = dplyr::select(segments, "segment", "form", this_cp = "cp_code_form")
+  next_cp_lookup = dplyr::select(segments, next_intercept = "segment", next_cp = "cp_code_form")
 
-  formula_jags_dpars = rhs_table %>%
+  formula_jags_dpars = predictors %>%
     dplyr::select(-"matrix_data") %>%  # Throw less data around
     dplyr::left_join(this_cp_lookup, by = "segment") %>%
     dplyr::left_join(next_cp_lookup, by = "next_intercept") %>%
@@ -50,14 +50,14 @@ get_formula_jags = function(ST, rhs_table, par_x, family) {
     dplyr::pull(.data$formula_jags_dpar) %>%
     paste0(collapse = "\n\n")
 
-  garma_boundary_str = get_garma_boundary_jagscode(ST, rhs_table, par_x)
+  garma_boundary_str = get_garma_boundary_jagscode(segments, predictors, par_x)
 
   # Concatenate and return
   formula_jags = paste0(local_x_str, garma_boundary_str, "\n\n", formula_jags_dpars)
 
   # Special case when no terms are present for a given dpar (all ~0): insert "dpar = 0".
   for (dpar in family$dpar_specs$dpar) {
-    if (dpar %notin% rhs_table$dpar)
+    if (dpar %notin% predictors$dpar)
       formula_jags = paste0(formula_jags, "\n\n# All segments are ~ 0 for this par:\nlink_", dpar, "_[i_] = 0")
   }
 
@@ -73,7 +73,7 @@ get_formula_jags = function(ST, rhs_table, par_x, family) {
 #' @keywords internal
 #' @noRd
 #' @inheritParams mcp
-#' @param dpar_table A rhs_table with only one (dpar, order) combo
+#' @param dpar_table Rows of `predictors` for one `(dpar, order)` pair.
 #' @param family An mcpfamily object with distributional-parameter metadata.
 #' @return A string with JAGS code.
 #' @encoding UTF-8
@@ -128,8 +128,8 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x, family) {
 #'
 #' @keywords internal
 #' @noRd
-get_garma_boundary_jagscode = function(ST, rhs_table, par_x) {
-  boundary_table = rhs_table %>%
+get_garma_boundary_jagscode = function(segments, predictors, par_x) {
+  boundary_table = predictors %>%
     dplyr::filter(.data$dpar %in% c("ar", "ma"), !is.na(.data$boundary)) %>%
     dplyr::distinct(.data$segment, .data$boundary) %>%
     dplyr::arrange(.data$segment)
@@ -139,7 +139,7 @@ get_garma_boundary_jagscode = function(ST, rhs_table, par_x) {
   if (anyDuplicated(boundary_table$segment))
     stop_github("Found multiple GARMA boundaries in one segment.")
 
-  boundary_code = stats::setNames(ST$cp_code_form, ST$segment)
+  boundary_code = stats::setNames(segments$cp_code_form, segments$segment)
   boundary_parts = character(nrow(boundary_table))
   for (i in seq_len(nrow(boundary_table))) {
     lower = if (i == 1) "" else paste0("(", par_x, "[i_] >= ", boundary_code[[as.character(boundary_table$segment[i])]], ") * ")
@@ -162,21 +162,21 @@ get_garma_boundary_jagscode = function(ST, rhs_table, par_x) {
 #' @keywords internal
 #' @noRd
 #' @param formula_jags Character, often residing in `fit$.internal$formula_jags`.
-#' @param rhs_table Output of `get_rhs_table()`
+#' @param predictors Output of `get_predictors()`.
 #' @param pars The list that ends up in `fit$pars`
 #' @return Character
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_formula_r = function(formula_jags, rhs_table, pars) {
-  sim_pars = get_sim_pars(rhs_table, pars)
-  rhs_pars = rhs_table$code_name
-  cp_pars = setdiff(sim_pars, rhs_pars)
+get_formula_r = function(formula_jags, predictors, pars) {
+  sim_pars = get_sim_pars(predictors, pars)
+  predictor_pars = predictors$code_name
+  cp_pars = setdiff(sim_pars, predictor_pars)
 
   # Replacements that turns rowwise JAGS code into vectorized R code
   replace_args = c(
-    # RHS
+    # Predictor part
     stats::setNames(paste0(", args$", sim_pars), paste0(", ", sim_pars)),
-    stats::setNames(paste0("args$", rhs_pars, ", "), paste0(rhs_pars, ", ")),
+    stats::setNames(paste0("args$", predictor_pars, ", "), paste0(predictor_pars, ", ")),
     stats::setNames(paste0("cbind(args$"), "cbind("),
     stats::setNames("args$", "args$args$"),  # Fix double-inserting args$ above
 

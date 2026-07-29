@@ -52,9 +52,9 @@ release_questions = function() {
 
 
 # Returns the requested AR/MA order, or NA if the term is absent
-get_arma_order = function(rhs_table, term) {
+get_arma_order = function(predictors, term) {
   term = rlang::arg_match0(term, c("ar", "ma"))
-  orders = rhs_table$order[rhs_table$dpar == term]
+  orders = predictors$order[predictors$dpar == term]
   if (length(orders) == 0) NA else max(orders, na.rm = TRUE)
 }
 
@@ -273,21 +273,22 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, threshold = 0.10) {
   samples = tidy_samples(
     smoke_fit, population = TRUE, varying = length(varying_info$cols) > 0
   )
-  predictors = add_rhs_predictors(newdata, fit)
+  predictor_data = add_rhs_predictors(newdata, fit)
   if (length(varying_info$cols) > 0) {
     samples_predictors = dplyr::left_join(
-      predictors, samples, by = unique(varying_info$cols),
+      predictor_data, samples, by = unique(varying_info$cols),
       relationship = "many-to-many"
     )
   } else {
-    samples_predictors = tidyr::expand_grid(samples, predictors)
+    samples_predictors = tidyr::expand_grid(samples, predictor_data)
   }
 
+  model_predictors = get_fit_model_tables(fit)$predictors
   values = evaluate_model_dpars(
     fit, as.list(samples_predictors),
-    paste0(".pred_", fit$.internal$rhs_table$code_name)
+    paste0(".pred_", model_predictors$code_name)
   )
-  components = intersect(c("ar", "ma"), unique(fit$.internal$rhs_table$dpar))
+  components = intersect(c("ar", "ma"), unique(model_predictors$dpar))
   probabilities = vapply(components, function(component) {
     violations = arma_root_violations(values, component)
     max(tapply(violations, samples_predictors$data_row, mean))
@@ -384,7 +385,7 @@ get_rhs = function(form) {
 }
 
 
-#' Returns all vars in the RHS of an mcpmodel
+#' Returns all variables in the predictor parts of an mcpmodel
 #'
 #' @aliases get_rhs_vars
 #' @keywords internal
@@ -403,7 +404,7 @@ get_rhs_vars = function(model) {
     unique()
 }
 
-#' Returns all vars in the RHS of an mcpmodel
+#' Returns all variables in the predictor parts of an mcpmodel
 #'
 #' @aliases get_model_vars
 #' @keywords internal
@@ -422,21 +423,21 @@ get_model_vars = function(model) {
 }
 
 
-#' Create model matrix from rhs_table
+#' Create a model matrix from the population-coefficients table
 #'
-#' cbinds rhs_table$matrix_data
-#' @aliases get_rhs_matrix
+#' cbinds `predictors$matrix_data`.
+#' @aliases get_predictor_matrix
 #' @keywords internal
 #' @noRd
-#' @param rhs_table The output of `get_rhs_table()`
-#' @return matrix with one column for each row in `rhs_table`
+#' @param predictors The output of `get_predictors()`.
+#' @return A matrix with one column for each row in `predictors`.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_rhs_matrix = function(rhs_table) {
-  checkmate::assert_data_frame(rhs_table)
-  suppressMessages(dplyr::bind_cols(rhs_table$matrix_data, .name_repair = "unique")) %>% # Suppress message about lacking column names
+get_predictor_matrix = function(predictors) {
+  checkmate::assert_data_frame(predictors)
+  suppressMessages(dplyr::bind_cols(predictors$matrix_data, .name_repair = "unique")) %>% # Suppress message about lacking column names
     as.matrix() %>%
-    magrittr::set_colnames(rhs_table$code_name)
+    magrittr::set_colnames(predictors$code_name)
 }
 
 

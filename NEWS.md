@@ -4,6 +4,12 @@
 
 -   Supports several continuous predictors, categorical predictors, interactions, etc. for all terms on RHS. E.g., `~ 1 + x + x:group + sigma(1 + group) + ar(2, 0 + z)`. Basically, it now "feels" like `lm()` for each distributional parameter in each segment. All mcp functions support this now, including `plot()`, `fit$simulate()`, `predict(fit, newdata = ...)`, `hypothesis()`, `pp_check()`, etc. Explore `ex = mcp_example("multiple")` to see it in action. Default priors generally align with brms, with some adjustments to the change-point model.
 
+-   Prediction methods now accept `varying = "cp"` and
+    `varying = "predictor"` as fast selectors for group-level effects in the
+    corresponding formula part. Exact varying-parameter names remain
+    supported too, `varying = TRUE` selects all, and `ranef()` continues to return
+    all group-level effects.
+
 ## Major breaking changes
 
 -   AR and MA intercepts now have zero-centered, regularizing

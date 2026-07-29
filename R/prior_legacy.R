@@ -92,10 +92,10 @@ add_legacy_prior_jags_data = function(jags_data, jags_code, context) {
 
 
 legacy_prior_table = function(fit) {
-  ST = if (!is.null(fit$.internal$ST)) fit$.internal$ST else fit$.other$ST
-  if (is.null(ST) || is.null(fit$data) || is.null(fit$prior))
+  segments = get_fit_model_tables(fit)$segments
+  if (is.null(segments) || is.null(fit$data) || is.null(fit$prior))
     stop("This legacy mcpfit does not contain enough information to reconstruct its priors.")
-  context = prior_context(fit$data, ST)
+  context = prior_context(fit$data, segments)
   all_names = names(fit$prior)
   specs = tibble::tibble(
     parameter = all_names,

@@ -26,18 +26,18 @@ default_arma_specs = function() {
 }
 
 
-default_cp_specs = function(CP, context) {
+default_cp_specs = function(cps, context) {
   n_cp = context$n_cp
   if (n_cp == 0)
     return(empty_prior_specs())
 
   specs = list()
-  for (j in seq_len(nrow(CP))) {
-    name = CP$name[j]
+  for (j in seq_len(nrow(cps))) {
+    name = cps$name[j]
     if (n_cp == 1) {
       code = "dunif(min(.x), max(.x))"
     } else {
-      lower = if (j == 1) "min(.x)" else CP$name[j - 1]
+      lower = if (j == 1) "min(.x)" else cps$name[j - 1]
       code = paste0(
         "dt(min(.x), (max(.x) - min(.x)) / n_cp(), n_cp() - 1) T(",
         lower, ", max(.x))"
@@ -49,18 +49,18 @@ default_cp_specs = function(CP, context) {
       description = if (j == 1) {
         "Within the observed change-point span"
       } else {
-        paste0("Ordered after ", CP$name[j - 1], " within the observed change-point span")
+        paste0("Ordered after ", cps$name[j - 1], " within the observed change-point span")
       },
       source = "default"
     )
   }
 
-  for (j in seq_len(nrow(CP))) {
-    if (!CP$varying[j])
+  for (j in seq_len(nrow(cps))) {
+    if (!cps$varying[j])
       next
 
-    sd_name = CP$sd_name[j]
-    group_name = CP$group_name[j]
+    sd_name = cps$sd_name[j]
+    group_name = cps$group_name[j]
     specs[[sd_name]] = tibble::tibble(
       parameter = sd_name,
       code = "dnorm(0, 2 * (max(.x) - min(.x)) / n_cp()) T(0, )",
@@ -69,14 +69,14 @@ default_cp_specs = function(CP, context) {
     )
 
     lower = if (j == 1) {
-      paste0("min(.x) - ", CP$name[j])
+      paste0("min(.x) - ", cps$name[j])
     } else {
-      paste0(CP$name[j - 1], " - ", CP$name[j])
+      paste0(cps$name[j - 1], " - ", cps$name[j])
     }
-    upper = if (j == nrow(CP)) {
-      paste0("max(.x) - ", CP$name[j])
+    upper = if (j == nrow(cps)) {
+      paste0("max(.x) - ", cps$name[j])
     } else {
-      paste0(CP$name[j + 1], " - ", CP$name[j])
+      paste0(cps$name[j + 1], " - ", cps$name[j])
     }
     specs[[group_name]] = tibble::tibble(
       parameter = group_name,
@@ -115,7 +115,7 @@ default_predictor_scale = function(matrix_data, x_factor) {
 }
 
 
-default_rhs_specs = function(rhs_table, family) {
+default_predictor_specs = function(predictors, family) {
   defaults = dplyr::bind_rows(family$default_prior, default_arma_specs())
 
   modeled_dpars = unique(defaults$dpar[defaults$condition == "modeled"])
@@ -134,7 +134,7 @@ default_rhs_specs = function(rhs_table, family) {
   if (anyDuplicated(keys))
     stop_github("Default prior specifications are not unique by dpar and par_type.")
 
-  joined = rhs_table %>%
+  joined = predictors %>%
     dplyr::left_join(defaults, by = c("dpar", "par_type"))
   if (any(is.na(joined$prior))) {
     stop_github(
@@ -161,7 +161,7 @@ default_rhs_specs = function(rhs_table, family) {
 }
 
 
-truncate_cp_prior = function(CP, j, prior_value, context) {
+truncate_cp_prior = function(cps, j, prior_value, context) {
   if (is.numeric(prior_value))
     return(prior_value)
   is_bounded = stringr::str_detect(prior_value, "^\\s*(dunif|dirichlet)\\s*\\(")
@@ -172,13 +172,13 @@ truncate_cp_prior = function(CP, j, prior_value, context) {
   lower = if (j == 1) {
     paste0("min(", context$x_display, ")")
   } else {
-    CP$name[j - 1]
+    cps$name[j - 1]
   }
   paste0(prior_value, " T(", lower, ", max(", context$x_display, "))")
 }
 
 
-overlay_user_prior_specs = function(specs, prior, CP, context) {
+overlay_user_prior_specs = function(specs, prior, cps, context) {
   name_matches = names(prior) %in% specs$parameter
   if (any(!name_matches)) {
     stop(
@@ -188,11 +188,11 @@ overlay_user_prior_specs = function(specs, prior, CP, context) {
   }
 
   auto_truncated = character()
-  for (j in seq_len(nrow(CP))) {
-    name = CP$name[j]
+  for (j in seq_len(nrow(cps))) {
+    name = cps$name[j]
     if (name %in% names(prior)) {
       original = prior[[name]]
-      prior[[name]] = truncate_cp_prior(CP, j, original, context)
+      prior[[name]] = truncate_cp_prior(cps, j, original, context)
       if (!identical(prior[[name]], original))
         auto_truncated = c(auto_truncated, name)
     }

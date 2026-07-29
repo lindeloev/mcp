@@ -12,10 +12,11 @@
 #' @aliases mcp
 #' @param data Table-like data in long format (data.frame, tibble, data.table, etc.)
 #' @param model A list of formulas - one for each segment. The first formula
-#'   has the format `response ~ predictors` while the following formulas
-#'   have the format `response ~ changepoint ~ predictors`. The response
-#'   and change points can be omitted (`changepoint ~ predictors` assumes same
-#'   response. `~ predictors` assumes an intercept-only change point). The
+#'   has the format `response ~ predictor` while the following formulas have
+#'   the format `response ~ cp ~ predictor`. Here, `cp` names the change-point
+#'   part of the formula rather than a literal variable. The response and
+#'   change-point parts can be omitted (`cp ~ predictor` assumes the same
+#'   response; `~ predictor` assumes an intercept-only change point). The
 #'   following can be modeled:
 #'
 #'   * *Regular formulas:* e.g., `~ 1 + x`). [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
@@ -254,16 +255,16 @@ mcp = function(model,
   ##################
   # MODEL BUILDING #
   ##################
-  # Make an abstract table representing the segments and their relations.
+  # Build model metadata.
   par_x = get_par_x(model, data, par_x)
-  segment_table = get_segment_table(model, data, family, par_x)  #"ST" for "segment table", "CP" for "change points"
-  ST = segment_table$ST
-  CP = segment_table$CP
-  rhs_table = get_rhs_table(model, data, family, par_x)
-  family = resolve_dpar_specs(family, rhs_table, model)
+  segment_tables = get_segment_tables(model, data, family, par_x)
+  segments = segment_tables$segments
+  cps = segment_tables$cps
+  predictors = get_predictors(model, data, family, par_x)
+  family = resolve_dpar_specs(family, predictors, model)
 
   # Make prior
-  prior = get_prior(ST, CP, rhs_table, family, prior, data)
+  prior = get_prior(segments, cps, predictors, family, prior, data)
   prior_table = attr(prior, "prior_table")
   prior_context = attr(prior, "prior_context")
   attr(prior, "prior_table") = NULL
@@ -272,21 +273,28 @@ mcp = function(model,
   # Make lists of parameters
   all_pars = names(prior)  # There is a prior for every parameter
   family_dpars = family$dpar_specs$dpar
-  pars_table = get_pars_table(rhs_table, CP, family)
+  pars_table = get_pars_table(predictors, cps, family)
+  group_effects = get_group_effects(cps)
+  model_tables = list(
+    segments = segments,
+    cps = cps,
+    predictors = predictors,
+    group_effects = group_effects,
+    pars = pars_table
+  )
   pars = list(
     x = par_x,
-    y = unique(ST$y),
-    cp = paste0("cp_", 1:nrow(ST))[seq_len(nrow(ST)-1)],  # N_cp = N_segments - 1
+    y = unique(segments$y),
+    cp = paste0("cp_", 1:nrow(segments))[seq_len(nrow(segments)-1)],  # N_cp = N_segments - 1
     fixed = pars_table$name[pars_table$dpar == "mu"],
     population = c(),
-    varying = logical0_to_null(c(stats::na.omit(ST$cp_group))),
+    varying = logical0_to_null(group_effects$name),
     sigma = pars_table$name[pars_table$dpar %in% setdiff(family_dpars, "mu")],
     arma = pars_table$name[pars_table$dpar %notin% c("cp", family_dpars)],
-    trials = logical0_to_null(stats::na.omit(unique(ST$trials))),
-    weights = logical0_to_null(stats::na.omit(unique(ST$weights)))
+    trials = logical0_to_null(stats::na.omit(unique(segments$trials))),
+    weights = logical0_to_null(stats::na.omit(unique(segments$weights)))
   )
-  cp_population = pars_table$name[pars_table$dpar == "cp" & pars_table$name %notin% pars$varying]
-  pars$population = pars_table$name[pars_table$name %in% c(cp_population, pars$fixed, pars$sigma, pars$arma)]
+  pars$population = pars_table$name[pars_table$scope == "population"]
 
   # Check parameters
   # ARMA models
@@ -302,15 +310,15 @@ mcp = function(model,
   }
 
   # Make formulas
-  formula_jags = get_formula_jags(ST, rhs_table, par_x, family)
-  formula_r = get_formula_r(formula_jags, rhs_table, pars)
+  formula_jags = get_formula_jags(segments, predictors, par_x, family)
+  formula_r = get_formula_r(formula_jags, predictors, pars)
 
   # Make jags code if it is not provided by the user
   if (is.null(jags_code)) {
-    ar_order = get_arma_order(rhs_table, "ar")
-    ma_order = get_arma_order(rhs_table, "ma")
+    ar_order = get_arma_order(predictors, "ar")
+    ma_order = get_arma_order(predictors, "ma")
     jags_code = get_jags_code(
-      prior, ST, formula_jags, ar_order, ma_order, family, par_x,
+      prior, segments, formula_jags, ar_order, ma_order, family, par_x,
       prior_table, prior_context
     )
   }
@@ -319,7 +327,7 @@ mcp = function(model,
   ##########
   # SAMPLE #
   ##########
-  jags_data = get_jags_data(data, family, ST, rhs_table, jags_code)
+  jags_data = get_jags_data(data, family, segments, predictors, jags_code)
 
   # Sample posterior
   if (sample %in% c("post", "both")) {
@@ -334,7 +342,7 @@ mcp = function(model,
       n.adapt = adapt,
       inits = inits
     ) %>%
-      recover_levels(data, ST)
+      recover_levels(data, segments)
 
     class(mcmc_post) = "mcmc.list"
     warn_nonconvergence(mcmc_post)
@@ -346,7 +354,7 @@ mcp = function(model,
   if (sample %in% c("prior", "both")) {
     # Set response = NA if we only sample prior
     jags_data_prior = jags_data
-    jags_data_prior[[ST$y[1]]] = rep(NA, nrow(data))
+    jags_data_prior[[segments$y[1]]] = rep(NA, nrow(data))
 
     mcmc_prior = run_jags(
       data = data,
@@ -359,7 +367,7 @@ mcp = function(model,
       n.adapt = adapt,
       inits = inits
     ) %>%
-      recover_levels(data, ST)
+      recover_levels(data, segments)
 
     class(mcmc_prior) = "mcmc.list"
   } else {
@@ -370,7 +378,7 @@ mcp = function(model,
   ##########
   # RETURN #
   ##########
-  model = lapply(ST$form, stats::as.formula, env = globalenv())
+  model = lapply(segments$form, stats::as.formula, env = globalenv())
   class(model) = c("mcplist", "list")
   class(prior) = c("mcplist", "list")
   class(pars) = c("mcplist", "list")  # for nicer printing
@@ -399,10 +407,7 @@ mcp = function(model,
     # Pass info to *.mcpfit() functions.
     # Not meant to be used by the end user.
     .internal = list(
-      ST = ST,
-      CP = CP,
-      rhs_table = rhs_table,
-      pars_table = pars_table,
+      model_tables = model_tables,
       formula_jags = formula_jags,
       formula_r = formula_r,
       prior_table = prior_table,

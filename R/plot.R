@@ -37,7 +37,7 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 #'       quantiles.
 #' @param q_predict Same as `q_fit`, but for the prediction interval.
 #' @param facet_by Character vector. Names of categorical data columns to split to facets.
-#'   Can be varying or RHS categoricals.
+#'   Can be grouping-factor or categorical predictor columns.
 #' @param color_by `NULL` for no color grouping, or a character vector naming categorical or varying-effect data columns to color by.
 #'   Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.
 #' @param lines Positive integer or `FALSE`. The number of fitted lines (draws).
@@ -129,8 +129,9 @@ get_plot = function(x,
   facet_by = logical0_to_null(unique(facet_by))
   color_by = logical0_to_null(unique(color_by))
 
+  model_tables = get_fit_model_tables(fit)
   categorical_cols = names(get_categorical_levels(fit$data))
-  varying_cols = unique(stats::na.omit(fit$.internal$ST$cp_group_col))
+  varying_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
   curve_by = unique(c(categorical_cols, varying_cols))
 
   validate_plot_groups = function(cols, arg) {
@@ -210,7 +211,7 @@ get_plot = function(x,
   # PREP RESPONSE DATA FOR PLOT #
   ###############################
   ydata = fit$data[, fit$pars$y]  # Convenient shortname
-  response_data = get_family_response_data(fit$family, fit$.internal$ST, fit$data)
+  response_data = get_family_response_data(fit$family, model_tables$segments, fit$data)
   ydata = fit$family$response$observed(ydata, response_data, rate)
 
   # Show data
@@ -242,7 +243,7 @@ get_plot = function(x,
   if (dpar == "epred") {
     if (geom_data == "point") {
       point_size = fit$family$response$point_size
-      point_size_col = get_family_aux_columns(fit$family, fit$.internal$ST)[point_size]
+      point_size_col = get_family_aux_columns(fit$family, model_tables$segments)[point_size]
       if (length(point_size_col) == 0 || is.na(point_size_col)) {
         gg = gg + ggplot2::geom_point()
       } else {
@@ -458,20 +459,22 @@ geom_cp_density = function(fit, facet_by, prior, limits_y) {
 
   # facet_by will expand by group in tidy_samples(). Categorical cols share
   # parameters across facets, so only expand for varying effects.
-  varying_cols = unique(stats::na.omit(fit$.internal$ST$cp_group_col))
+  model_tables = get_fit_model_tables(fit)
+  cps = model_tables$cps
+  varying_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
   facet_by = intersect(facet_by, varying_cols)
-  cp_matches_facet = fit$.internal$ST$cp_group_col %in% facet_by
+  cp_matches_facet = cps$group_col %in% facet_by
   cp_not_facet = cp_matches_facet == FALSE | is.na(cp_matches_facet)
   if (all(cp_not_facet))
     facet_by = NULL
 
   # Get varying and population change point parameter names
   if (!is.null(facet_by)) {
-    varying = stats::na.omit(fit$.internal$ST$cp_group[cp_matches_facet])  # The rest
-    population = stats::na.omit(fit$.internal$ST$cp_name[cp_not_facet][-1])  # [-1] to remove cp_0
+    varying = stats::na.omit(cps$group_name[cp_matches_facet])
+    population = stats::na.omit(cps$name[cp_not_facet])
   } else {
     varying = NULL
-    population = fit$.internal$ST$cp_name[-1]
+    population = cps$name
   }
 
   # Get samples in long format

@@ -79,7 +79,7 @@ test_that("transformations use the original par_x while segment bases stay local
     data,
     sample = FALSE
   )
-  table = fit$.internal$rhs_table
+  table = get_fit_model_tables(fit)$predictors
 
   expect_equal(table$x_factor[table$matrix_name == "sin(x)"], "1")
   expect_equal(

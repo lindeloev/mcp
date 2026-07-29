@@ -466,13 +466,13 @@ add_dpar_specs = function(family) {
 
 
 # Resolve each active dpar link from whether its formula is explicit.
-resolve_dpar_specs = function(family, rhs_table, model = NULL) {
+resolve_dpar_specs = function(family, predictors, model = NULL) {
   checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
-  checkmate::assert_data_frame(rhs_table)
-  assert_data_cols(rhs_table, c("dpar", "explicit"))
+  checkmate::assert_data_frame(predictors)
+  assert_data_cols(predictors, c("dpar", "explicit"))
   family = add_dpar_specs(family)
 
-  modeled_dpars = unique(rhs_table$dpar[rhs_table$explicit])
+  modeled_dpars = unique(predictors$dpar[predictors$explicit])
   if (!is.null(model)) {
     term_labels = unlist(lapply(model, function(segment) {
       rhs = get_rhs(segment)
@@ -560,7 +560,7 @@ get_dpar_spec = function(family, dpar) {
 
 
 # Find response-auxiliary data columns used by the requested operations.
-get_family_aux_columns = function(family, ST, operations = NULL) {
+get_family_aux_columns = function(family, segments, operations = NULL) {
   auxiliary = family$response$auxiliary
   if (!is.null(operations)) {
     used = vapply(auxiliary, function(x) any(x$operations %in% operations), logical(1))
@@ -571,9 +571,9 @@ get_family_aux_columns = function(family, ST, operations = NULL) {
     return(stats::setNames(character(), character()))
 
   stats::setNames(vapply(aux_names, function(name) {
-    if (name %notin% names(ST))
+    if (name %notin% names(segments))
       return(NA_character_)
-    cols = unique(stats::na.omit(ST[[name]]))
+    cols = unique(stats::na.omit(segments[[name]]))
     if (length(cols) > 1)
       stop("There should be exactly zero or one column used for ", name, "().")
     if (length(cols) == 0) NA_character_ else cols
@@ -582,8 +582,8 @@ get_family_aux_columns = function(family, ST, operations = NULL) {
 
 
 # Extract the response-auxiliary columns declared by a fitted family.
-get_family_response_data = function(family, ST, data) {
-  columns = get_family_aux_columns(family, ST)
+get_family_response_data = function(family, segments, data) {
+  columns = get_family_aux_columns(family, segments)
   out = lapply(columns, function(column) {
     if (is.na(column) || column %notin% names(data)) NULL else data[[column]]
   })

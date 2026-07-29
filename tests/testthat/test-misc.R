@@ -11,6 +11,63 @@ test_that("families", {
   expect_false(is.mcpfamily(gaussian()))
 })
 
+
+test_that("model metadata uses aligned table names and varying selectors", {
+  data = data.frame(
+    x = 1:6,
+    y = c(2, 4, 3, 8, 7, 9),
+    id = rep(c("a", "b"), each = 3)
+  )
+  fit = mcp(list(y ~ 1, (1 | id) ~ 1), data, par_x = "x", sample = FALSE)
+  tables = get_fit_model_tables(fit)
+
+  expect_named(
+    tables,
+    c("segments", "cps", "predictors", "group_effects", "pars")
+  )
+  expect_named(
+    tables$group_effects,
+    c("population_name", "name", "part", "group_col", "segment", "dpar", "sd_name")
+  )
+  expect_true(all(tables$pars$part %in% c("cp", "predictor")))
+  expect_true(all(tables$pars$scope %in% c("population", "group")))
+
+  expect_equal(unpack_varying(fit, pars = "cp")$pars, fit$pars$varying)
+  expect_null(unpack_varying(fit, pars = "predictor")$pars)
+  expect_equal(
+    unpack_varying(fit, pars = fit$pars$varying)$pars,
+    fit$pars$varying
+  )
+  expect_error(unpack_varying(fit, pars = "unknown"), "Unknown `varying`")
+})
+
+
+test_that("model-table accessor supports saved fits with legacy metadata", {
+  data = data.frame(
+    x = 1:6,
+    y = c(2, 4, 3, 8, 7, 9),
+    id = rep(c("a", "b"), each = 3)
+  )
+  fit = mcp(list(y ~ 1, (1 | id) ~ 1), data, par_x = "x", sample = FALSE)
+  current = get_fit_model_tables(fit)
+  legacy = fit
+  legacy$.internal$model_tables = NULL
+  legacy$.internal$ST = current$segments
+  legacy$.internal$CP = current$cps
+  legacy$.internal$rhs_table = current$predictors
+  legacy$.internal$pars_table = dplyr::select(
+    current$pars, "name", "segment", "dpar"
+  )
+
+  recovered = get_fit_model_tables(legacy)
+  expect_equal(recovered$segments, current$segments)
+  expect_equal(recovered$cps, current$cps)
+  expect_equal(recovered$predictors, current$predictors)
+  expect_equal(recovered$group_effects, current$group_effects)
+  expect_equal(recovered$pars, current$pars)
+})
+
+
 # Code
 test_that("formula tools", {
   expect_equal(sd_to_prec("dnorm(5, 1)"), "dnorm(5, 1/(1)^2) ")

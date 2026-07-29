@@ -8,7 +8,8 @@
 #'   * `form`: String. The full formula for this segment.
 #'   * `form_y`: String. The expression for y (without tilde)
 #'   * `form_cp`: String. The formula for the change point.
-#'   * `form_rhs`: String. The formula for the RHS. Only used to build the formula representation in `summary.mcpfit()`.
+#'   * `form_rhs`: String. The predictor formula. Only used to build the
+#'     formula representation in `summary.mcpfit()`.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 unpack_tildes = function(form, i) {
@@ -129,21 +130,21 @@ unpack_y = function(form_y, i, family) {
 #' @param i segment number
 #' @return A one-row tibble with columns:
 #'   * `cp_int`: bool. Whether there is an intercept change in the change point.
-#'   * `cp_ran_int`: bool or NA. Is there a random intercept on the change point?
-#'   * `cp_group_col`: char or NA. Which column in data define the random intercept?
+#'   * `cp_varying`: bool or NA. Is there a group-level intercept on the change point?
+#'   * `cp_group_col`: char or NA. Which data column defines the grouping factor?
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 unpack_cp = function(form_cp, i) {
   if (is.na(form_cp)) {
     return(tibble::tibble(
       cp_int = FALSE,
-      cp_ran_int = FALSE,
+      cp_varying = FALSE,
       cp_group_col = NA
     ))
   }
   form_cp = stats::as.formula(form_cp)
 
-  # Varying effects
+  # Group-level effects
   form_varying = remove_terms(form_cp, "population")
 
   if (!is.null(form_varying)) {
@@ -159,7 +160,7 @@ unpack_cp = function(form_cp, i) {
       stop("Error in segment ", i, " (change point): invalid format of grouping variable in varying effects. Got: ", varying_parts[2])
   }
 
-  # Fixed effects
+  # Population-level effects
   attrs = attributes(stats::terms(remove_terms(form_cp, "varying")))
   if (length(attrs$term.labels) > 0)
     stop("Error in segment ", i, " (change point): Only intercepts (1) are allowed in population-level effects.")
@@ -172,14 +173,14 @@ unpack_cp = function(form_cp, i) {
     # If there is a varying effect
     return(tibble::tibble(
       cp_int = attrs$intercept == 1,
-      cp_ran_int = ifelse(varying_parts[1] == "1", TRUE, NA),  # placeholder for later
+      cp_varying = ifelse(varying_parts[1] == "1", TRUE, NA),  # placeholder for later
       cp_group_col = varying_parts[2]
     ))
   } else {
     # If there is no varying effect
     return(tibble::tibble(
       cp_int = attrs$intercept == 1,
-      cp_ran_int = FALSE,
+      cp_varying = FALSE,
       cp_group_col = NA
     ))
   }
@@ -221,45 +222,44 @@ unpack_cp = function(form_cp, i) {
 
 
 
-#' Build a table describing a list of segments
+#' Build tables describing a list of segments
 #'
 #' Used internally for most mcp functions.
 #'
-#' @aliases get_segment_table
+#' @aliases get_segment_tables
 #' @keywords internal
 #' @inheritParams mcp
-#' @return A list with `ST` (a tibble with one row per segment, including
-#'   change-point code for the change point starting that segment) and `CP`
-#'   (a tibble with one row per estimated change point, naturally indexed by
-#'   `cp = 1, 2, ...`).
+#' @return A list with `segments` (one row per segment, including change-point
+#'   code for the change point starting that segment) and `cps` (one row per
+#'   estimated change point, naturally indexed by `cp = 1, 2, ...`).
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @noRd
-get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
+get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
   checkmate::assert_string(par_x)
 
-  #####################################################
-  # BUILD "SEGMENT TABLE (ST)" FROM ISOLATED SEGMENTS #
-  #####################################################
-  ST = tibble::tibble()
+  ############################################
+  # BUILD SEGMENTS FROM ISOLATED FORMULAS    #
+  ############################################
+  segments = tibble::tibble()
   for (i in seq_along(model)) {
     row = tibble::tibble(segment = i)
     row = dplyr::bind_cols(row, unpack_tildes(model[[i]], i))
     row = dplyr::bind_cols(row, unpack_y(row$form_y, i, family))
     row = dplyr::bind_cols(row, unpack_cp(row$form_cp, i))
 
-    ST = dplyr::bind_rows(ST, row)
+    segments = dplyr::bind_rows(segments, row)
   }
 
   # Fill y and trials, where not explicit.
   # Build "full" formula (with explicit intercepts) and insert instead of the old
-  ST = ST %>%
+  segments = segments %>%
     tidyr::fill("y", "form_y", "trials", "weights", .direction = "downup") %>%  # Usually only provided in segment 1
     dplyr::mutate(form = ifelse(.data$segment == 1, .data$form, paste0(.data$form_y, .data$form_cp, " ~ ", .data$form_rhs))) %>%  # build full formula
     dplyr::select(-"form_y", -"form_cp", -"form_rhs")  # Not needed anymore
 
   # Every segment shares one change-point dimension, including multiple-regression models.
-  ST$x = par_x
+  segments$x = par_x
 
 
 
@@ -268,26 +268,26 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
   ###########################
 
   # Check segment 1: change point not possible here
-  if (any(ST[1, c("cp_int", "cp_ran_int", "cp_group_col")] != FALSE, na.rm = T))
+  if (any(segments[1, c("cp_int", "cp_varying", "cp_group_col")] != FALSE, na.rm = TRUE))
     stop("Change point defined in first segment. This should not be possible. Submit bug report in the GitHub repo.")
 
   # Response variables
-  derived_y = unique(stats::na.omit(ST$y))
+  derived_y = unique(stats::na.omit(segments$y))
   if (length(derived_y) != 1)
     stop("There should be exactly one response variable. Found ", and_collapse(derived_y), " across segments.")
 
-  aux_columns = get_family_aux_columns(family, ST)
+  aux_columns = get_family_aux_columns(family, segments)
 
-  # Varying effects
-  derived_varying = unique(stats::na.omit(ST$cp_group_col))
+  # Group-level effects
+  derived_varying = unique(stats::na.omit(segments$cp_group_col))
 
   # Check data types
   if (!is.null(data)) {
     # Check y
-    if (!is.numeric(data[, ST$y[1]]))
-      stop("Data column '", ST$y[1], "' has to be numeric.")
-    if (any(is.na(data[, ST$y[1]])))
-      message("NA values detected in '", ST$y[1], "'. JAGS will treat them as latent responses and impute them during sampling.")
+    if (!is.numeric(data[, segments$y[1]]))
+      stop("Data column '", segments$y[1], "' has to be numeric.")
+    if (any(is.na(data[, segments$y[1]])))
+      message("NA values detected in '", segments$y[1], "'. JAGS will treat them as latent responses and impute them during sampling.")
 
     # Check varying
     if (length(derived_varying) > 0) {
@@ -299,29 +299,29 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
       }
     }
 
-    response_data = get_family_response_data(family, ST, data)
-    response_columns = c(list(y = ST$y[1]), as.list(aux_columns))
-    family$response$validate(data[[ST$y[1]]], response_data, response_columns)
+    response_data = get_family_response_data(family, segments, data)
+    response_columns = c(list(y = segments$y[1]), as.list(aux_columns))
+    family$response$validate(data[[segments$y[1]]], response_data, response_columns)
   }
 
 
   ###############################################
-  # SPLIT INTO `segments` AND `change_points`    #
+  # SPLIT INTO `segments` AND `cps`              #
   ###############################################
   # `segments`: one row per segment, shared metadata only.
-  segments = ST %>%
+  segment_metadata = segments %>%
     dplyr::select("segment", "form", "y", "trials", "weights", "x")
 
-  # `change_points`: one row per *estimated* change point (nrow(ST) - 1 of
+  # `cps`: one row per *estimated* change point (nrow(segments) - 1 of
   # them), naturally indexed by `cp` instead of borrowing the segment index.
   # `segment` is an explicit join key: the segment that this change point starts.
-  change_points = ST %>%
+  cps = segments %>%
     dplyr::filter(.data$segment > 1) %>%
     dplyr::transmute(
       cp = .data$segment - 1,
       segment = .data$segment,
       name = paste0("cp_", .data$cp),
-      varying = .data$cp_ran_int,
+      varying = .data$cp_varying,
       group_col = .data$cp_group_col,
       sd_name = ifelse(.data$varying, paste0(.data$name, "_sd"), NA),
       group_name = ifelse(.data$varying, paste0(.data$name, "_", .data$group_col), NA)
@@ -331,15 +331,15 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
       code = format_code(.data$code, na_col = .data$name)
     )
 
-  # `ST`: `segments` with change-point info joined back in by `segment`.
-  # Segment 1 has no row in `change_points` (there is no change point before
+  # `segments`: shared segment metadata with change-point info joined back in
+  # by `segment`. Segment 1 has no row in `cps` (there is no change point before
   # it), so it is given the fixed lower boundary `cp_0` explicitly. Kept in
   # this per-segment shape because most consumers look up the change point
   # *starting* a given segment, not the change point by its own number.
-  ST = segments %>%
+  segments = segment_metadata %>%
     dplyr::left_join(
       dplyr::select(
-        change_points, "segment",
+        cps, "segment",
         cp_name = "name", cp_group_col = "group_col",
         cp_sd = "sd_name", cp_group = "group_name", cp_code_form = "code"
       ),
@@ -350,7 +350,7 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
       cp_code_form = dplyr::coalesce(.data$cp_code_form, "cp_0")
     )
 
-  list(ST = ST, CP = change_points)
+  list(segments = segments, cps = cps)
 }
 
 
@@ -366,30 +366,44 @@ get_segment_table = function(model, data = NULL, family = gaussian(), par_x) {
 #' @aliases get_pars_table
 #' @keywords internal
 #' @noRd
-#' @param rhs_table A table from `get_rhs_table()`.
-#' @param CP A table of change points from `get_segment_table()`.
+#' @param predictors A table from `get_predictors()`.
+#' @param cps A table of change points from `get_segment_tables()`.
 #' @param family An `mcpfamily` object.
 #' @return A tibble with one row per model parameter (population and
-#'   varying), with columns `name`, `segment`, and `dpar`.
+#'   group), with columns `name`, `part`, `scope`, `segment`, and `dpar`.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_pars_table = function(rhs_table, CP, family) {
-  cp_pars = tibble::tibble(name = character(0), segment = integer(0), dpar = character(0), .tie = integer(0))
-  if (nrow(CP) > 0) {
-    cp_pars = tibble::tibble(name = CP$name, segment = CP$segment, dpar = "cp", .tie = 0L)
-    varying_cp = CP[CP$varying, , drop = FALSE]
+get_pars_table = function(predictors, cps, family) {
+  cp_pars = tibble::tibble(
+    name = character(), part = character(), scope = character(),
+    segment = integer(), dpar = character(), .tie = integer()
+  )
+  if (nrow(cps) > 0) {
+    cp_pars = tibble::tibble(
+      name = cps$name, part = "cp", scope = "population",
+      segment = cps$segment, dpar = "cp", .tie = 0L
+    )
+    varying_cp = cps[cps$varying, , drop = FALSE]
     if (nrow(varying_cp) > 0) {
       cp_pars = dplyr::bind_rows(
         cp_pars,
-        tibble::tibble(name = varying_cp$sd_name, segment = varying_cp$segment, dpar = "cp", .tie = 1L),
-        tibble::tibble(name = varying_cp$group_name, segment = varying_cp$segment, dpar = "cp", .tie = 2L)
+        tibble::tibble(
+          name = varying_cp$sd_name, part = "cp", scope = "population",
+          segment = varying_cp$segment, dpar = "cp", .tie = 1L
+        ),
+        tibble::tibble(
+          name = varying_cp$group_name, part = "cp", scope = "group",
+          segment = varying_cp$segment, dpar = "cp", .tie = 2L
+        )
       )
     }
   }
 
-  rhs_pars = rhs_table %>%
+  predictor_pars = predictors %>%
     dplyr::transmute(
       name = .data$code_name,
+      part = "predictor",
+      scope = "population",
       segment = .data$segment,
       dpar = ifelse(.data$dpar %in% c("ar", "ma"), paste0(.data$dpar, .data$order), .data$dpar),
       .tie = .data$matrix_col
@@ -397,18 +411,90 @@ get_pars_table = function(rhs_table, CP, family) {
 
   # Canonical group order: cp, mu, other family dpars (declared order), then
   # ar/ma labels sorted by component ("ar" before "ma") and then lag order.
-  arma_labels = unique(rhs_pars$dpar[rhs_pars$dpar %notin% c("mu", family$dpar_specs$dpar)])
+  arma_labels = unique(predictor_pars$dpar[predictor_pars$dpar %notin% c("mu", family$dpar_specs$dpar)])
   arma_labels = arma_labels[order(
     match(sub("[0-9]+$", "", arma_labels), c("ar", "ma")),
     as.integer(sub("^[a-z]+", "", arma_labels))
   )]
   dpar_levels = c("cp", "mu", setdiff(family$dpar_specs$dpar, "mu"), arma_labels)
 
-  dplyr::bind_rows(cp_pars, rhs_pars) %>%
+  dplyr::bind_rows(cp_pars, predictor_pars) %>%
     dplyr::mutate(dpar = factor(.data$dpar, levels = dpar_levels)) %>%
     dplyr::arrange(.data$dpar, .data$segment, .data$.tie) %>%
     dplyr::mutate(dpar = as.character(.data$dpar)) %>%
-    dplyr::select("name", "segment", "dpar")
+    dplyr::select("name", "part", "scope", "segment", "dpar")
+}
+
+
+#' Build the table of group-level effects
+#'
+#' @keywords internal
+#' @noRd
+#' @param cps A table from `get_segment_tables()`.
+#' @return A tibble with one row per group-level effect.
+get_group_effects = function(cps) {
+  cps %>%
+    dplyr::filter(.data$varying) %>%
+    dplyr::transmute(
+      population_name = as.character(.data$name),
+      name = as.character(.data$group_name),
+      part = "cp",
+      group_col = as.character(.data$group_col),
+      segment = .data$segment,
+      dpar = "cp",
+      sd_name = as.character(.data$sd_name)
+    )
+}
+
+
+#' Get model metadata tables from a fitted model
+#'
+#' New fits store consistently named tables in `.internal$model_tables`. The
+#' fallback keeps methods working for legacy saved fits.
+#'
+#' @keywords internal
+#' @noRd
+#' @param fit An `mcpfit` object.
+#' @return A list with `segments`, `cps`, `predictors`, `group_effects`, and
+#'   `pars`.
+get_fit_model_tables = function(fit) {
+  if (!is.null(fit$.internal$model_tables))
+    return(fit$.internal$model_tables)
+
+  segments = fit$.internal$ST
+  if (is.null(segments) && !is.null(fit$.other))
+    segments = fit$.other$ST
+  cps = fit$.internal$CP
+  if (is.null(cps) && !is.null(segments)) {
+    cps = segments %>%
+      dplyr::filter(.data$segment > 1) %>%
+      dplyr::transmute(
+        cp = .data$segment - 1,
+        segment = .data$segment,
+        name = .data$cp_name,
+        varying = !is.na(.data$cp_group),
+        group_col = .data$cp_group_col,
+        sd_name = .data$cp_sd,
+        group_name = .data$cp_group,
+        code = .data$cp_code_form
+      )
+  }
+
+  pars = fit$.internal$pars_table
+  if (!is.null(pars) && "part" %notin% names(pars)) {
+    group_names = stats::na.omit(cps$group_name)
+    pars$part = ifelse(pars$dpar == "cp", "cp", "predictor")
+    pars$scope = ifelse(pars$name %in% group_names, "group", "population")
+    pars = dplyr::select(pars, "name", "part", "scope", "segment", "dpar")
+  }
+
+  list(
+    segments = segments,
+    cps = cps,
+    predictors = fit$.internal$rhs_table,
+    group_effects = get_group_effects(cps),
+    pars = pars
+  )
 }
 
 

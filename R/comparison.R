@@ -85,8 +85,9 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE,
       n_eval = ndraws
       chain_id = rep(1L, ndraws)
     }
-    ar_order = get_arma_order(fit$.internal$rhs_table, "ar")
-    ma_order = get_arma_order(fit$.internal$rhs_table, "ma")
+    predictors = get_fit_model_tables(fit)$predictors
+    ar_order = get_arma_order(predictors, "ar")
+    ma_order = get_arma_order(predictors, "ma")
 
     # For small models, the majority of the computation time will be pp_eval overhead
     llfun = function(data_i, draws = NULL, link_fun = identity) {

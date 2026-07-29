@@ -47,16 +47,17 @@ get_par_x = function(model, data, par_x = NULL) {
 }
 
 
-#' Get parameter table for a particular RHS dpar
+#' Get predictors for one distributional parameter
 #'
 #' This function extracts an `par_x`-less design matrix.
 #' `par_x` will be relative to the segment onset, so it will be multiplied in in the formula
 #' (`jags_code` and `fit$simulate()`).
 #'
-#' @aliases get_rhs_table_dpar
+#' @aliases get_predictors_dpar
 #' @keywords internal
 #' @inheritParams mcp
-#' @param form_rhs The full RHS formula of a segment, including one or several `form`s.
+#' @param form_rhs The full predictor formula of a segment, including one or
+#'   several distributional terms.
 #' @param segment Integer. The segment number
 #' @param dpar A distributional parameter or an `ar`/`ma` component.
 #' @param order Applies to `dpar %in% c("ar", "ma")`.
@@ -75,7 +76,7 @@ get_par_x = function(model, data, par_x = NULL) {
 #'
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL, check_rank = TRUE) {
+get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL, check_rank = TRUE) {
   # EMpty segments return no rows
   if (all(as.character(form_rhs) == c("~", "0")))
     return(data.frame(dpar = character(0), segment = numeric(0)))
@@ -184,7 +185,7 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
   mat_without_x = mat / mat_factor_x
   mat_without_x[mat == 0 & mat_factor_x == 0] = 1  # 0 / 0 means "identityt", i.e., = 1.
 
-  rhs_table = data.frame(
+  predictors = data.frame(
     dpar = dpar,
     segment = segment,
     matrix_name = matrix_name,
@@ -209,7 +210,7 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
     dplyr::select(-"matrix_col")
 
   # Return
-  rhs_table
+  predictors
 }
 
 
@@ -221,18 +222,19 @@ get_rhs_table_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL
 #'
 #' @keywords internal
 #' @noRd
-#' @param rhs_table A data frame returned by `get_rhs_table_dpar()`.
-#' @return `rhs_table`, invisibly. Stops with an informative error on collision.
-assert_unique_rhs_names = function(rhs_table) {
-  duplicated_name = duplicated(rhs_table$code_name) |
-    duplicated(rhs_table$code_name, fromLast = TRUE)
+#' @param predictors A data frame returned by `get_predictors_dpar()`.
+#' @return `predictors`, invisibly. Stops with an informative error on
+#'   collision.
+assert_unique_predictor_names = function(predictors) {
+  duplicated_name = duplicated(predictors$code_name) |
+    duplicated(predictors$code_name, fromLast = TRUE)
 
   if (!any(duplicated_name))
-    return(invisible(rhs_table))
+    return(invisible(predictors))
 
-  collision_names = unique(rhs_table$code_name[duplicated_name])
+  collision_names = unique(predictors$code_name[duplicated_name])
   collision_lines = vapply(collision_names, function(code_name) {
-    rows = rhs_table[rhs_table$code_name == code_name, , drop = FALSE]
+    rows = predictors[predictors$code_name == code_name, , drop = FALSE]
     sources = paste0(
       "`", rows$matrix_name, "` (", rows$dpar,
       ", segment ", rows$segment, ")"
@@ -283,11 +285,12 @@ term_contains = function(par_x, terms) {
 }
 
 
-#' @aliases get_rhs_table_segment
+#' @aliases get_predictors_segment
 #' @keywords internal
 #' @noRd
-#' @describeIn get_rhs_table_dpar Apply `get_rhs_table_dpar` to each formula in a segment
-get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_rank = TRUE) {
+#' @describeIn get_predictors_dpar Apply `get_predictors_dpar` to
+#'   each formula in a segment
+get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_rank = TRUE) {
   checkmate::assert_formula(form_rhs)
   checkmate::assert_int(segment, lower = 1)
   checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
@@ -343,7 +346,7 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
     mu_term = paste0("mu(", attrs$intercept, ")")  # Plateau model: "mu(0)" or "mu(1)"
   }
   mu_form = get_term_content(mu_term)
-  mu_pars = get_rhs_table_dpar(data, mu_form, segment, "mu", par_x, NULL, check_rank) %>%
+  mu_pars = get_predictors_dpar(data, mu_form, segment, "mu", par_x, NULL, check_rank) %>%
     dplyr::mutate(explicit = TRUE)
 
 
@@ -360,13 +363,13 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
     # across later segments until the user supplies another dpar intercept.
     if (length(dpar_term) == 0 && spec$implicit && segment == 1) {
       dpar_form = ~1
-      dpar_pars[[dpar]] = get_rhs_table_dpar(
+      dpar_pars[[dpar]] = get_predictors_dpar(
         data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank
       ) %>%
         dplyr::mutate(explicit = FALSE)
     } else if (length(dpar_term) > 0) {
       dpar_form = get_term_content(dpar_term)
-      dpar_pars[[dpar]] = get_rhs_table_dpar(
+      dpar_pars[[dpar]] = get_predictors_dpar(
         data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank
       ) %>%
         dplyr::mutate(explicit = TRUE)
@@ -387,7 +390,7 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
       # Expand one formula into a separate regression parameter for each lag.
       arma_pars[[component]] = lapply(
         seq_len(component_stuff$order),
-        function(order) get_rhs_table_dpar(
+        function(order) get_predictors_dpar(
           data, component_form, segment, component, par_x, order, check_rank
         )
       ) %>%
@@ -532,27 +535,28 @@ unpack_arma = function(form_str_in) {
 }
 
 
-#' @aliases get_rhs_table
+#' @aliases get_predictors
 #' @keywords internal
-#' @describeIn get_rhs_table_dpar Apply `get_rhs_table_segment` to all segments of a model.
-get_rhs_table = function(model, data, family, par_x, check_rank = TRUE) {
+#' @describeIn get_predictors_dpar Apply `get_predictors_segment`
+#'   to all segments of a model.
+get_predictors = function(model, data, family, par_x, check_rank = TRUE) {
   rhs = lapply(model, get_rhs)
 
-  rhs_table = lapply(seq_along(rhs), function(segment) get_rhs_table_segment(rhs[[segment]], segment, family, data, par_x, check_rank)) %>%
+  predictors = lapply(seq_along(rhs), function(segment) get_predictors_segment(rhs[[segment]], segment, family, data, par_x, check_rank)) %>%
     dplyr::bind_rows() %>%
     dplyr::arrange(.data$dpar, .data$segment) %>%
     dplyr::mutate(matrix_col = dplyr::row_number())
-  if ("boundary" %notin% names(rhs_table))
-    rhs_table$boundary = NA_real_
+  if ("boundary" %notin% names(predictors))
+    predictors$boundary = NA_real_
 
-  assert_unique_rhs_names(rhs_table)
+  assert_unique_predictor_names(predictors)
 
   # Code next_intercept: Which segment has the next intercept?
   # Strategy: (1) select one row for segments with intercepts for each dpar (filter)
   #           (2) save this segment number in the last segment that had an intercept (lag)
-  #           (3) left-join this into rhs_table
+  #           (3) left-join this into predictors
   #           (4) fill downwards into intermittent segments without intercepts
-  df_next_intercept = rhs_table %>%
+  df_next_intercept = predictors %>%
     dplyr::arrange(.data$dpar, .data$order, .data$segment) %>%
     dplyr::group_by(.data$dpar, .data$order) %>%
     dplyr::filter(.data$par_type == "Intercept") %>%
@@ -561,7 +565,7 @@ get_rhs_table = function(model, data, family, par_x, check_rank = TRUE) {
     dplyr::select("dpar", "segment", "order", "next_intercept")
 
   # Return: left-join and fill-down. NA means "there is no next intercept-segment"
-  rhs_table %>%
+  predictors %>%
     dplyr::left_join(df_next_intercept, by = c("dpar", "segment", "order")) %>%
     dplyr::group_by(.data$dpar, .data$order) %>%
     tidyr::fill("next_intercept", .direction = "down") %>%
