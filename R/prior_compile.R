@@ -4,6 +4,7 @@
 # resolved values stored in fit$prior and the metadata shown by prior_summary().
 # JAGS precision conversion remains a separate final code-generation step.
 
+# Format one numeric prior value for stable display and generated code.
 format_prior_number = function(x) {
   if (length(x) != 1 || !is.numeric(x))
     stop_github("Expected one numeric prior value.")
@@ -15,11 +16,13 @@ format_prior_number = function(x) {
 }
 
 
+# Quote non-syntactic data names for readable symbolic prior rules.
 display_data_name = function(x) {
   if (make.names(x) == x && !grepl("^[.][0-9]", x)) x else paste0("`", x, "`")
 }
 
 
+# Collect data and model summaries used to resolve symbolic prior templates.
 prior_context = function(data, ST) {
   x_name = ST$x[1]
   y_name = ST$y[1]
@@ -40,12 +43,14 @@ prior_context = function(data, ST) {
 }
 
 
+# Substitute the actual predictor and response names into a prior template.
 instantiate_prior_template = function(x, context) {
   x = stringr::str_replace_all(x, stringr::fixed(".x"), context$x_display)
   stringr::str_replace_all(x, stringr::fixed(".y"), context$y_display)
 }
 
 
+# Split a delimited string without splitting inside nested parentheses.
 split_top_level = function(x, separator = ",") {
   if (!nzchar(trimws(x)))
     return(character())
@@ -65,6 +70,7 @@ split_top_level = function(x, separator = ",") {
 }
 
 
+# Separate a prior distribution call from its optional truncation clause.
 split_prior_truncation = function(x) {
   match = regexpr("(?<=\\))\\s*T\\s*\\(", x, perl = TRUE)
   if (match[1] == -1)
@@ -76,6 +82,7 @@ split_prior_truncation = function(x) {
 }
 
 
+# Parse a simple prior call into its function name and argument strings.
 parse_prior_call = function(x) {
   x = trimws(x)
   if (!grepl("^[A-Za-z.][A-Za-z0-9._]*\\s*\\(", x))
@@ -90,6 +97,7 @@ parse_prior_call = function(x) {
 }
 
 
+# Check whether an expression contains only approved data and math operations.
 allowed_data_expression = function(expr, data_names) {
   if (is.numeric(expr))
     return(TRUE)
@@ -106,6 +114,7 @@ allowed_data_expression = function(expr, data_names) {
 }
 
 
+# Resolve prior-expression symbols, summaries, and arithmetic where possible.
 resolve_prior_ast = function(expr, context) {
   if (is.numeric(expr))
     return(as.numeric(expr))
@@ -124,6 +133,23 @@ resolve_prior_ast = function(expr, context) {
     if (length(args) != 0)
       stop("`", fun, "()` does not take arguments in prior expressions.")
     return(if (fun == "n_cp") context$n_cp else context$n_segments)
+  }
+
+  if (fun %in% c("log_response_location", "log_response_scale")) {
+    if (length(args) != 1 || !is.name(args[[1]]) ||
+        as.character(args[[1]]) != context$y_name) {
+      stop("`", fun, "()` takes the response variable.")
+    }
+    is_location = fun == "log_response_location"
+    y = stats::na.omit(context$data[[context$y_name]])
+    y = suppressWarnings(log(ifelse(y == 0, 0.1, y)))
+    summary_fun = if (is_location) median else mad
+    value = round(summary_fun(y), 1)
+    if (!is.finite(value))
+      value = if (is_location) 0 else 2.5
+    if (!is_location)
+      value = max(2.5, value)
+    return(value)
   }
 
   summaries = c("min", "max", "mean", "median", "sd", "mad", "segment_width")
@@ -150,6 +176,7 @@ resolve_prior_ast = function(expr, context) {
 }
 
 
+# Parse and resolve one symbolic prior expression to displayable code.
 resolve_prior_expression = function(x, context) {
   expr = tryCatch(parse(text = x, keep.source = FALSE)[[1]], error = function(e) NULL)
   if (is.null(expr))
@@ -161,6 +188,7 @@ resolve_prior_expression = function(x, context) {
 }
 
 
+# Resolve every argument and bound in one prior specification.
 resolve_prior_value = function(x, context) {
   if (is.numeric(x))
     return(format_prior_number(x))
@@ -185,6 +213,7 @@ resolve_prior_value = function(x, context) {
 }
 
 
+# Translate known JAGS prior calls into readable distribution descriptions.
 human_prior_call = function(x) {
   parts = split_prior_truncation(x)
   call = parse_prior_call(parts$distribution)
@@ -205,6 +234,7 @@ human_prior_call = function(x) {
 }
 
 
+# Summarize the support implied by a prior distribution or truncation.
 prior_bounds = function(x) {
   parts = split_prior_truncation(x)
   if (!is.null(parts$truncation)) {
@@ -227,6 +257,7 @@ prior_bounds = function(x) {
 }
 
 
+# Classify a prior as a distribution, alias, expression, or constant.
 prior_kind = function(value, all_names) {
   if (is.numeric(value) || (is.character(value) && grepl("^[-+]?[0-9.eE]+$", trimws(value))))
     return("constant")
@@ -240,6 +271,7 @@ prior_kind = function(value, all_names) {
 }
 
 
+# Compile one prior into its resolved value and user-facing metadata.
 compile_prior_record = function(parameter, code, all_names, context, source,
                                  description = NULL) {
   kind = prior_kind(code, all_names)
@@ -282,6 +314,7 @@ compile_prior_record = function(parameter, code, all_names, context, source,
 }
 
 
+# Compile all symbolic prior specifications into the final prior table.
 compile_prior_specs = function(specs, all_names, context) {
   required = c("parameter", "code", "description", "source")
   assert_data_cols(specs, required)

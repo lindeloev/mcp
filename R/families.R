@@ -134,8 +134,8 @@ mcpfamily_gaussian = function(family) {
     mu_location = response_location
     mu_scale = response_scale
   } else {
-    mu_location = "round(log(max(median(.y), 0.1)), 1)"
-    mu_scale = "2.5"
+    mu_location = "log_response_location(.y)"
+    mu_scale = "log_response_scale(.y)"
   }
 
   default_prior = tibble::tribble(
