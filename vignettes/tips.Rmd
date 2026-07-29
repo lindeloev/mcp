@@ -32,7 +32,7 @@ Most of these problems should stem from inappropriate priors and such problems m
 
  * Errors on "directed cycle" usually stems from using parameters in priors. For example, if you set `prior = list(int_1 = "dnorm(int_2, 1)"", int_2 = "dnorm(int_1, 1)")` this is an infinite regress.
 
- * Errors on "incompatible with parent nodes" usually stem from impossible values. For example, if you set `prior = list(sigma = "dnorm(0, 1)"")`, this allows for a negative standard deviation, which is impossible. Think about changing the prior distributions and perhaps truncate them using `T(lower, upper)`.
+ * Errors on "incompatible with parent nodes" usually stem from impossible values. For example, the implicit `sigma_1` in a model without `sigma()` is an SD, so a custom normal prior should be truncated above zero. Coefficients in an explicit `sigma()` model are instead unconstrained log-SD values and do not need positive truncation.
 
 
 If you encounter these or other problems, don't hesitate to [raise a Github Issue](https://github.com/lindeloev/mcp/issues), asking for help or filing a bug report.

@@ -3,8 +3,8 @@ models_sigma = list(
   list(y ~ 1 + sigma(1 + x),
        simulated = list(
          Intercept_1 = 30,
-         sigma_1 = 5,
-         sigma_x_1 = 0.1
+         sigma_1 = log(5),
+         sigma_x_1 = 0.005
        )),
 
   # Larger sigma
@@ -15,10 +15,10 @@ models_sigma = list(
          cp_1 = 80,
          cp_2 = 140,
          Intercept_1 = -20,
-         sigma_1 = 2,
+         sigma_1 = log(2),
          x_2 = 0.5,
-         sigma_2 = 5,
-         sigma_x_2 = 0.2
+         sigma_2 = log(5),
+         sigma_x_2 = 0.005
        ))
 )
 

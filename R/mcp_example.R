@@ -236,9 +236,9 @@ data$y = empty$simulate(empty, data,
     cp_2 = 75,
     Intercept_1 = 20,
     x_3 = 2,
-    sigma_1 = 7,
-    sigma_2 = 25,
-    sigma_x_2 = -0.45
+    sigma_1 = log(7),
+    sigma_2 = log(25),
+    sigma_x_2 = log(2.5 / 25) / (75 - 24.5)
   )
 
 # Run sampling

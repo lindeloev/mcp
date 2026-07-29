@@ -23,7 +23,10 @@
 #'   * *Extended formulas:*, e.g., `~ I(x^2) + exp(z)`. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'
 #'   * *Variance:* e.g., `~sigma(1)` for a simple variance change or
-#'     `~sigma(1 + I(x^2))`) for more advanced variance structures. [Read more](https://lindeloev.github.io/mcp/articles/variance.html)
+#'     `~sigma(1 + I(x^2))`) for more advanced variance structures. Explicit
+#'     sigma formulas model log-SD, while the implicit constant `sigma_1` in a
+#'     model without `sigma()` remains on the response scale.
+#'     [Read more](https://lindeloev.github.io/mcp/articles/variance.html)
 #'
 #'   * *Time-series residuals:* use `ar(p)` and `ma(q)` separately or together,
 #'     e.g., `~ 1 + ar(1) + ma(1)`. Both accept an optional regression formula
@@ -255,6 +258,7 @@ mcp = function(model,
   ST = segment_table$ST
   CP = segment_table$CP
   rhs_table = get_rhs_table(model, data, family, par_x)
+  family = resolve_dpar_specs(family, rhs_table, model)
 
   # Make prior
   prior = get_prior(ST, CP, rhs_table, family, prior, data)

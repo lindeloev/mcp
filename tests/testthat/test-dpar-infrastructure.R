@@ -8,6 +8,9 @@ test_that("families declare dpars independently of prior rows", {
 
   expect_equal(gaussian_family$dpar_specs$dpar, c("mu", "sigma"))
   expect_equal(gaussian_family$dpar_specs$link, c("identity", "identity"))
+  expect_equal(gaussian_family$dpar_specs$link_constant, c("identity", "identity"))
+  expect_equal(gaussian_family$dpar_specs$link_modeled, c("identity", "log"))
+  expect_false(any(gaussian_family$dpar_specs$modeled))
   expect_equal(gaussian_family$dpar_specs$implicit, c(FALSE, TRUE))
   expect_equal(gaussian_family$dpars, c("mu", "sigma"))
   expect_named(
@@ -93,17 +96,54 @@ test_that("family prior builders determine their supported links", {
 
 test_that("generated code separates link and distribution scales", {
   data = data.frame(x = 1:4, y = c(2, 3, 5, 7))
-  fit = mcp(
-    list(y ~ 1 + x + sigma(1)),
+  constant_fit = mcp(
+    list(y ~ 1 + x),
     data,
     family = gaussian(link = "log"),
     sample = FALSE
   )
+  fit = mcp(
+    list(y ~ 1 + x + sigma(1 + x)),
+    data,
+    family = gaussian(link = "log"),
+    sample = FALSE
+  )
+  change_fit = mcp(
+    list(y ~ 1, ~ 0 + sigma(1)),
+    data,
+    par_x = "x",
+    sample = FALSE
+  )
+
+  expect_match(constant_fit$jags_code, "sigma_\\[i_\\] = link_sigma_\\[i_\\]")
+  expect_false(grepl("max\\(1e-09, link_sigma_", constant_fit$jags_code))
+  expect_equal(constant_fit$family$links["sigma"], c(sigma = "identity"))
+  expect_false(constant_fit$family$dpar_specs$modeled[
+    constant_fit$family$dpar_specs$dpar == "sigma"
+  ])
+  expect_equal(constant_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0, )")
 
   expect_match(fit$.internal$formula_jags, "link_mu_\\[i_\\] =")
   expect_match(fit$.internal$formula_jags, "link_sigma_\\[i_\\] =")
   expect_match(fit$jags_code, "mu_\\[i_\\] = exp\\(link_mu_\\[i_\\]\\)")
-  expect_match(fit$jags_code, "sigma_\\[i_\\] = max\\(1e-09, link_sigma_\\[i_\\]\\)")
+  expect_match(fit$jags_code, "sigma_\\[i_\\] = exp\\(link_sigma_\\[i_\\]\\)")
+  expect_equal(fit$family$links[c("mu", "sigma")], c(mu = "log", sigma = "log"))
+  expect_true(fit$family$dpar_specs$modeled[fit$family$dpar_specs$dpar == "sigma"])
+  expect_equal(fit$prior$sigma_1, "dt(0, 2.5, 3)")
+  expect_equal(fit$prior$sigma_x_1, "dt(0, 0.8333333, 3)")
+  expect_false(grepl("max\\(1e-09, link_sigma_", fit$jags_code))
+
+  expect_equal(change_fit$family$links["sigma"], c(sigma = "log"))
+  expect_equal(
+    unname(unlist(change_fit$prior[c("sigma_1", "sigma_2")])),
+    rep("dt(0, 2.5, 3)", 2)
+  )
+  expect_false(change_fit$.internal$rhs_table$explicit[
+    change_fit$.internal$rhs_table$code_name == "sigma_1"
+  ])
+  expect_true(change_fit$.internal$rhs_table$explicit[
+    change_fit$.internal$rhs_table$code_name == "sigma_2"
+  ])
 
   expect_false(any(grepl("^link_", fit$pars$population)))
   expect_false(any(grepl("^(mu_|sigma_)\\[", fit$pars$population)))
@@ -192,6 +232,14 @@ test_that("R-side dpar evaluation supports link and response scales", {
 
   expect_equal(as.numeric(response), rep(2, nrow(data)))
   expect_equal(as.numeric(linear), rep(log(2), nrow(data)))
+
+  args$Intercept_1 = 0
+  args$sigma_1 = log(3)
+  args$.dpar = "sigma"
+  sigma_response = rlang::exec(fit$simulate, !!!args, .scale = "response")
+  sigma_linear = rlang::exec(fit$simulate, !!!args, .scale = "linear")
+  expect_equal(as.numeric(sigma_response), rep(3, nrow(data)))
+  expect_equal(as.numeric(sigma_linear), rep(log(3), nrow(data)))
 })
 
 
@@ -270,8 +318,8 @@ test_that("distributional parameters use the same evaluation identity", {
   draws = cbind(
     Intercept_1 = rep(0, 4),
     groupB_1 = rep(10, 4),
-    sigma_1 = rep(1, 4),
-    sigma_groupB_1 = rep(2, 4)
+    sigma_1 = rep(0, 4),
+    sigma_groupB_1 = rep(log(3), 4)
   )
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
   newdata = data.frame(
@@ -597,4 +645,3 @@ test_that("sigma() and ar() support categorical predictors and interactions", {
       fit_ar$pars$population
   ))
 })
-

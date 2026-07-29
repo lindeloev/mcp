@@ -19,8 +19,8 @@ models_gauss = list(
          Intercept_3 = 0,
          x_1 = 0.5,
          x_2 = -1,
-         sigma_1 = 3,
-         sigma_3 = 6))
+         sigma_1 = log(3),
+         sigma_3 = log(6)))
 )
 
 apply_test_fit("Gaussian fit", models_gauss)

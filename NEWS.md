@@ -6,6 +6,11 @@
 
 ## Major breaking changes
 
+-   Gaussian models with an explicit `sigma()` formula now model the residual
+    standard deviation with a log link, as in `brms`. Models without an explicit
+    `sigma()` are unchanged: `sigma_1` remains the residual SD itself with the
+    response-scale half-Student-t prior.
+
 -   Formula transformations now use the original predictor values, as in
     `lm()`, `glm()`, and `brms`. Previously, transformations of the change-point
     predictor such as `sin(x)` and `exp(x)` restarted at each segment onset.
@@ -73,6 +78,8 @@
 -   Removed the non-functional `exponential()` family. It had no default priors and could not be fitted. Exponential survival models would require dedicated support for censoring and survival likelihoods rather than the previous ordinary-response placeholder.
 
 -   Default coefficient priors are now more consistent with `brms` defaults while retaining proper priors and change-point-aware scaling for the `mcp` parameterization. For non-small datasets, this should have minimal influence since priors remain minimally informative. See priors using `prior_summary(fit, verbose = TRUE)`.
+
+-   The implicit Gaussian `sigma_1` prior is now the same response-calibrated half-Student-t used by `brms`, `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`. Version 0.3.4 instead used a response-SD-calibrated half-normal prior. Both are weakly informative so will have negligible impact on fits.
 
 -   Uppercase data-dependent constants for priors (`MINX`, `MAXX`, etc.) remain temporarily supported with a deprecation warning. They are now replaced with readable expressions such as `min(time)`, `max(time) - min(time)`, `mad(response)`, `segment_width(time)`, `n_segments()`, and `n_cp()`.
 

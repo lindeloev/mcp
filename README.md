@@ -175,7 +175,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
  * Leverage directional and conditional tests to assess interval hypotheses (`hypothesis(fit, "cp_1 > 30 & cp_1 < 50")`), combined other hypotheses (`hypothesis(fit, "cp_1 > 30 & int_1 > int_2")`), etc.
 
 Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and [autoregression](https://lindeloev.github.io/mcp/articles/arma.html):
- * `~ sigma(1)` models an intercept change in variance. `~ sigma(0 + x)` models increasing/decreasing variance.
+ * `~ sigma(1)` models an intercept change in variance. `~ sigma(0 + x)` models increasing/decreasing variance. Explicit `sigma()` formulas use a log link, so their coefficients are on the log-SD scale.
  * `~ ar(N)` models Nth order autoregression on residuals. `~ar(N, 0 + x)` models increasing/decreasing autocorrelation.
  * You can model anything for `sigma()` and `ar()`. For example, `~ x + sigma(1 + x + I(x^2))` models polynomial change in variance with `x` on top of a slope on the mean.
 
@@ -302,7 +302,7 @@ plot(fit_ar)
 
 
 ## Variance change and prediction intervals
-You can model variance by adding a `sigma()` term to the formula. The inside `sigma()` can take everything that the formulas outside do. Read more in [the article on variance](https://lindeloev.github.io/mcp/articles/variance.html). The example below models two change points. The first is variance-only: variance abruptly increases and then declines linearly with `x`. The second change point is the stop of the variance-decline and the onset of a slope on the mean.
+You can model variance by adding a `sigma()` term to the formula. The inside `sigma()` can take everything that the formulas outside do and models log-SD, ensuring that SD stays positive. Read more in [the article on variance](https://lindeloev.github.io/mcp/articles/variance.html). The example below models two change points. The first is variance-only: variance abruptly increases and then declines on the log scale with `x`. The second change point is the stop of the variance-decline and the onset of a slope on the mean.
 
 Effects on variance is best visualized using *prediction intervals*. See more in the documentation for `plot.mcpfit()`.
 

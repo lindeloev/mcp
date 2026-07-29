@@ -70,6 +70,7 @@ get_par_x = function(model, data, par_x = NULL) {
 #'   - `code_name`: parameter name used in JAGS and internally in mcp.
 #'   - `par_type`: One of "Intercept", "dummy", or "slope". Used for setting priors and for change point indicator func.
 #'   - `order`: positive integer or NA. Only relevant for `ar` and `ma`.
+#'   - `explicit`: whether the distributional parameter was supplied in the formula.
 #'   - `matrix_data`: column of the design matrix less the `par_x` term.
 #'
 #' @encoding UTF-8
@@ -342,7 +343,8 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
     mu_term = paste0("mu(", attrs$intercept, ")")  # Plateau model: "mu(0)" or "mu(1)"
   }
   mu_form = get_term_content(mu_term)
-  mu_pars = get_rhs_table_dpar(data, mu_form, segment, "mu", par_x, NULL, check_rank)
+  mu_pars = get_rhs_table_dpar(data, mu_form, segment, "mu", par_x, NULL, check_rank) %>%
+    dplyr::mutate(explicit = TRUE)
 
 
 
@@ -360,12 +362,14 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
       dpar_form = ~1
       dpar_pars[[dpar]] = get_rhs_table_dpar(
         data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank
-      )
+      ) %>%
+        dplyr::mutate(explicit = FALSE)
     } else if (length(dpar_term) > 0) {
       dpar_form = get_term_content(dpar_term)
       dpar_pars[[dpar]] = get_rhs_table_dpar(
         data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank
-      )
+      ) %>%
+        dplyr::mutate(explicit = TRUE)
     }
   }
 
@@ -388,7 +392,7 @@ get_rhs_table_segment = function(form_rhs, segment, family, data, par_x, check_r
         )
       ) %>%
         dplyr::bind_rows() %>%
-        dplyr::mutate(boundary = component_stuff$boundary)
+        dplyr::mutate(boundary = component_stuff$boundary, explicit = TRUE)
     }
   }
 

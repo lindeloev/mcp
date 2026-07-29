@@ -140,12 +140,13 @@ mcpfamily_gaussian = function(family) {
 
   default_prior = tibble::tribble(
     ~dpar, ~par_type, ~prior, ~description, ~condition,
-    "mu", "Intercept", paste0("dt(", mu_location, ", ", mu_scale, ", 3)"), "Robustly centered mean intercept with a brms-inspired minimum scale", "always",
+    "mu", "Intercept", paste0("dt(", mu_location, ", ", mu_scale, ", 3)"), "Robustly centered mean intercept with a minimum scale of 2.5", "always",
     "mu", "dummy", paste0("dt(0, ", mu_scale, ", 3)"), "Regularizing mean contrast on the link scale", "always",
     "mu", "slope", paste0("dt(0, ", mu_scale, " / segment_width(.x), 3)"), "Regularizing mean slope scaled to the expected segment width", "always",
-    "sigma", "Intercept", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Positive residual SD calibrated on the response scale", "always",
-    "sigma", "dummy", paste0("dt(0, ", response_scale, ", 3)"), "Residual-SD contrast calibrated on the response scale", "always",
-    "sigma", "slope", paste0("dt(0, ", response_scale, " / segment_width(.x), 3)"), "Residual-SD slope scaled to the expected segment width", "always"
+    "sigma", "Intercept", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Positive residual SD calibrated on the response scale", "constant",
+    "sigma", "Intercept", "dt(0, 2.5, 3)", "Weakly regularizing modeled log-SD intercept", "modeled",
+    "sigma", "dummy", "dt(0, 2.5, 3)", "Regularizing log-SD contrast", "always",
+    "sigma", "slope", "dt(0, 2.5 / segment_width(.x), 3)", "Regularizing log-SD slope scaled to the expected segment width", "always"
   )
 
   response = list(
@@ -186,7 +187,7 @@ mcpfamily_gaussian = function(family) {
     family,
     dpar_specs = dplyr::bind_rows(
       new_dpar_spec("mu", family$link),
-      new_dpar_spec("sigma", "identity", implicit = TRUE, lower = 1e-9)
+      new_dpar_spec("sigma", "identity", implicit = TRUE, link_modeled = "log")
     ),
     default_prior = default_prior,
     response = response,
@@ -208,7 +209,7 @@ mcpfamily_binomial = function(family) {
   } else if (family$link %in% c("logit", "probit")) {
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~description, ~condition,
-      "mu", "Intercept", "dt(0, 2.5, 3)", "brms-inspired weak prior for the link-scale intercept", "always",
+      "mu", "Intercept", "dt(0, 2.5, 3)", "Weakly regularizing link-scale intercept", "always",
       "mu", "dummy", "dt(0, 2.5, 3)", "Regularizing categorical contrast on the link scale", "always",
       "mu", "slope", "dt(0, 2.5 / segment_width(.x), 3)", "Regularizing link-scale slope scaled to the expected segment width", "always"
     )
@@ -275,7 +276,7 @@ mcpfamily_bernoulli = function(family) {
   } else if (family$link %in% c("logit", "probit")) {
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~description, ~condition,
-      "mu", "Intercept", "dt(0, 2.5, 3)", "brms-inspired weak prior for the link-scale intercept", "always",
+      "mu", "Intercept", "dt(0, 2.5, 3)", "Weakly regularizing link-scale intercept", "always",
       "mu", "dummy", "dt(0, 2.5, 3)", "Regularizing categorical contrast on the link scale", "always",
       "mu", "slope", "dt(0, 2.5 / segment_width(.x), 3)", "Regularizing link-scale slope scaled to the expected segment width", "always"
     )
@@ -325,7 +326,7 @@ mcpfamily_poisson = function(family) {
     count_y = "log(pmax(.y, 0.1))"
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~description, ~condition,
-      "mu", "Intercept", paste0("dt(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)), 3)"), "Robustly centered log-count intercept with a brms-inspired minimum scale", "always",
+      "mu", "Intercept", paste0("dt(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)), 3)"), "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
       "mu", "dummy", "dt(0, 2.5, 3)", "Regularizing categorical contrast on the log scale", "always",
       "mu", "slope", "dt(0, 2.5 / segment_width(.x), 3)", "Regularizing log-count slope scaled to the expected segment width", "always"
     )
@@ -377,11 +378,11 @@ mcpfamily_negbinomial = function(family) {
   count_y = "log(pmax(.y, 0.1))"
   default_prior = tibble::tribble(
     ~dpar, ~par_type, ~prior, ~description, ~condition,
-    "mu", "Intercept", paste0("dt(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)), 3)"), "Robustly centered log-count intercept with a brms-inspired minimum scale", "always",
+    "mu", "Intercept", paste0("dt(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)), 3)"), "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
     "mu", "dummy", "dt(0, 2.5, 3)", "Regularizing categorical count contrast on the log scale", "always",
     "mu", "slope", "dt(0, 2.5 / segment_width(.x), 3)", "Regularizing log-count slope scaled to the expected segment width", "always",
-    "shape", "Intercept", "dloginvgamma(0.4, 0.3)", "brms-compatible negative-binomial shape prior", "constant",
-    "shape", "Intercept", "dt(0, 2.5, 3)", "brms-inspired prior for a modeled log-shape intercept", "modeled",
+    "shape", "Intercept", "dloginvgamma(0.4, 0.3)", "Weakly regularizing positive overdispersion shape", "constant",
+    "shape", "Intercept", "dt(0, 2.5, 3)", "Weakly regularizing modeled log-shape intercept", "modeled",
     "shape", "dummy", "dt(0, 2.5, 3)", "Regularizing shape contrast on the log scale", "always",
     "shape", "slope", "dt(0, 2.5 / segment_width(.x), 3)", "Regularizing log-shape slope scaled to the expected segment width", "always"
   )
@@ -435,8 +436,17 @@ mcpfamily_negbinomial = function(family) {
 #'
 #' @keywords internal
 #' @noRd
-new_dpar_spec = function(dpar, link, implicit = FALSE, lower = NA_real_) {
-  tibble::tibble(dpar = dpar, link = link, implicit = implicit, lower = lower)
+new_dpar_spec = function(dpar, link, implicit = FALSE, lower = NA_real_,
+                          link_modeled = link) {
+  tibble::tibble(
+    dpar = dpar,
+    link = link,
+    link_constant = link,
+    link_modeled = link_modeled,
+    modeled = FALSE,
+    implicit = implicit,
+    lower = lower
+  )
 }
 
 
@@ -445,7 +455,9 @@ known_dpar_wrappers = function() {
 }
 
 
+# Normalize and expose a family's distributional-parameter metadata.
 add_dpar_specs = function(family) {
+  family$dpar_specs = normalize_dpar_specs(family$dpar_specs)
   assert_dpar_specs(family$dpar_specs)
   family$dpars = family$dpar_specs$dpar
   family$links = stats::setNames(family$dpar_specs$link, family$dpar_specs$dpar)
@@ -453,15 +465,69 @@ add_dpar_specs = function(family) {
 }
 
 
-assert_dpar_specs = function(x) {
+# Resolve each active dpar link from whether its formula is explicit.
+resolve_dpar_specs = function(family, rhs_table, model = NULL) {
+  checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
+  checkmate::assert_data_frame(rhs_table)
+  assert_data_cols(rhs_table, c("dpar", "explicit"))
+  family = add_dpar_specs(family)
+
+  modeled_dpars = unique(rhs_table$dpar[rhs_table$explicit])
+  if (!is.null(model)) {
+    term_labels = unlist(lapply(model, function(segment) {
+      rhs = get_rhs(segment)
+      attr(stats::terms(remove_terms(rhs, "varying")), "term.labels")
+    }))
+    declared_dpars = family$dpar_specs$dpar[vapply(
+      family$dpar_specs$dpar,
+      function(dpar) any(stringr::str_detect(term_labels, paste0("^", dpar, "\\("))),
+      logical(1)
+    )]
+    modeled_dpars = union(modeled_dpars, declared_dpars)
+  }
+
+  family$dpar_specs$modeled = vapply(
+    family$dpar_specs$dpar,
+    function(dpar) dpar %in% modeled_dpars,
+    logical(1)
+  )
+  family$dpar_specs$link = ifelse(
+    family$dpar_specs$modeled,
+    family$dpar_specs$link_modeled,
+    family$dpar_specs$link_constant
+  )
+
+  add_dpar_specs(family)
+}
+
+
+# Add conditional-link fields missing from older dpar specifications.
+normalize_dpar_specs = function(x) {
   checkmate::assert_data_frame(x)
-  required = c("dpar", "link", "implicit", "lower")
+  if ("link_constant" %notin% names(x))
+    x$link_constant = x$link
+  if ("link_modeled" %notin% names(x))
+    x$link_modeled = x$link
+  if ("modeled" %notin% names(x))
+    x$modeled = FALSE
+  x
+}
+
+
+# Validate distributional-parameter metadata and supported links.
+assert_dpar_specs = function(x) {
+  x = normalize_dpar_specs(x)
+  required = c(
+    "dpar", "link", "link_constant", "link_modeled", "modeled",
+    "implicit", "lower"
+  )
   assert_data_cols(x, required)
 
   if (!is.character(x$dpar) || anyNA(x$dpar) || any(x$dpar == ""))
     stop("`family$dpar_specs$dpar` must contain non-empty parameter names.")
-  if (!is.character(x$link) || anyNA(x$link))
-    stop("`family$dpar_specs$link` must contain link names without missing values.")
+  link_cols = c("link", "link_constant", "link_modeled")
+  if (any(!vapply(x[link_cols], is.character, logical(1))) || anyNA(x[link_cols]))
+    stop("Links in `family$dpar_specs` must be names without missing values.")
   if (anyDuplicated(x$dpar))
     stop("Each distributional parameter must occur exactly once in `family$dpar_specs`.")
   if ("mu" %notin% x$dpar)
@@ -470,8 +536,11 @@ assert_dpar_specs = function(x) {
     stop("'epred', 'ar', and 'ma' are reserved and cannot be family distributional parameters.")
 
   supported_links = c("identity", "log", "logit", "probit")
-  if (any(x$link %notin% supported_links))
-    stop("Unsupported dpar link(s): ", and_collapse(unique(x$link[x$link %notin% supported_links])))
+  links = unique(unlist(x[link_cols], use.names = FALSE))
+  if (any(links %notin% supported_links))
+    stop("Unsupported dpar link(s): ", and_collapse(links[links %notin% supported_links]))
+  if (!is.logical(x$modeled) || anyNA(x$modeled))
+    stop("`family$dpar_specs$modeled` must be logical without missing values.")
   if (!is.logical(x$implicit) || anyNA(x$implicit))
     stop("`family$dpar_specs$implicit` must be logical without missing values.")
   if (!is.numeric(x$lower))
@@ -481,6 +550,7 @@ assert_dpar_specs = function(x) {
 }
 
 
+# Return the single specification row for one distributional parameter.
 get_dpar_spec = function(family, dpar) {
   spec = family$dpar_specs[family$dpar_specs$dpar == dpar, , drop = FALSE]
   if (nrow(spec) != 1)
@@ -489,6 +559,7 @@ get_dpar_spec = function(family, dpar) {
 }
 
 
+# Find response-auxiliary data columns used by the requested operations.
 get_family_aux_columns = function(family, ST, operations = NULL) {
   auxiliary = family$response$auxiliary
   if (!is.null(operations)) {
@@ -510,6 +581,7 @@ get_family_aux_columns = function(family, ST, operations = NULL) {
 }
 
 
+# Extract the response-auxiliary columns declared by a fitted family.
 get_family_response_data = function(family, ST, data) {
   columns = get_family_aux_columns(family, ST)
   out = lapply(columns, function(column) {
@@ -519,6 +591,7 @@ get_family_response_data = function(family, ST, data) {
 }
 
 
+# Return the JAGS function name for a link or inverse link.
 get_link_str = function(link, inverse = FALSE) {
   if (!inverse)
     return(ifelse(link == "identity", "", link))
@@ -527,12 +600,14 @@ get_link_str = function(link, inverse = FALSE) {
 }
 
 
+# Return the executable R function for a link or inverse link.
 get_link_function = function(link, inverse = FALSE) {
   link_object = stats::make.link(link)
   if (inverse) link_object$linkinv else link_object$linkfun
 }
 
 
+# Check that an object implements the complete mcp family contract.
 #' @aliases is.mcpfamily
 #' @describeIn mcpfamily Checks whether x is an `mcpfamily`.
 #' @export

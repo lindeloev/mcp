@@ -208,8 +208,6 @@ test_plot = function(fit, varying_cols) {
     # (the error is an artifact of very small test data --> wide posteriors.)
     if (fit$family$family == "poisson") {
       expected_error = "predict"  # column "predict" OK: a side-effect of the small data and short sampling.
-    } else if (any(stringr::str_detect(fit$pars$sigma, "^sigma_.*_.*$"))) {  # for slopes on sigma
-      expected_error = "^Modelled negative sigma"
     } else {
       expected_error = ">>>>do_not_expect_any_errors<<<<<"
     }

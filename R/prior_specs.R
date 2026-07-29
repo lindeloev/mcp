@@ -95,8 +95,7 @@ default_rhs_specs = function(rhs_table, family) {
 
   modeled_dpars = unique(defaults$dpar[defaults$condition == "modeled"])
   for (dpar in modeled_dpars) {
-    rows = rhs_table$dpar == dpar
-    is_modeled = any(rows) && (sum(rows) > 1 || any(rhs_table$par_type[rows] != "Intercept"))
+    is_modeled = get_dpar_spec(family, dpar)$modeled
     condition = if (is_modeled) "modeled" else "constant"
     defaults = defaults %>%
       dplyr::filter(

@@ -53,7 +53,7 @@ Notice how it added the response and the change point to the last segment?
  * `cp_i` is the ith change point. Notice that `cp_i` is specified in segment `i + 1`. `cp_1` occurs when there are two segments, and `cp_2` when there are three segments, etc. *OBS: future versions may start at cp_2.*.
  * `cp_i_group` is the varying *deviations* from `cp_i`. See [varying change points in mcp](articles/varying.html).
  * `cp_i_sd` is the population-level standard deviation of the varying effects.
- * `sigma_*` are variance parameters about which you can [read more here](../articles/variance.html)). Note that for `family = gaussian()` and other families with an SD residual, there will always be an `sigma_1`, i.e., the common sigma initiated in the first segment.
+ * `sigma_*` are variance parameters about which you can [read more here](../articles/variance.html)). With an explicit `sigma()` formula these are log-SD coefficients. If no `sigma()` is supplied, the implicit `sigma_1` is instead the common response-scale SD initiated in the first segment.
  * `arj_i` are autocorrelation coefficients of order `j` for segment `i` ([read more here](../articles/arma.html)).
 
 
