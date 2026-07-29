@@ -22,7 +22,7 @@ test_that("families declare dpars independently of prior rows", {
       gaussian_family$default_prior$dpar == "mu" &
         gaussian_family$default_prior$par_type == "slope"
     ],
-    "dt(0, max(2.5, round(mad(.y), 1)) / segment_width(.x), 3)"
+    "dt(0, max(2.5, round(mad(.y), 1)) / predictor_scale(), 3)"
   )
 
   expect_equal(poisson_family$dpar_specs$dpar, "mu")
@@ -49,6 +49,61 @@ test_that("families declare dpars independently of prior rows", {
     .data$dpar != "sigma"
   )
   expect_equal(gaussian_family$dpar_specs$dpar, c("mu", "sigma"))
+})
+
+
+test_that("default coefficient priors scale representative predictor changes", {
+  x = 1:30
+  data = data.frame(
+    x = x,
+    z = (x * 7) %% 31,
+    w = exp((((x * 11) %% 37) + 1) / 10),
+    b = rep(c(0, 10), 15),
+    g = factor(rep(c("a", "b", "c"), 10)),
+    y = sin(x / 3) + x / 10
+  )
+  fit = mcp(
+    list(
+      y ~ 1 + x + I(x^2) + z + log(w) + b + g + x:z + z:g +
+        sigma(1 + z + x:z)
+    ),
+    data,
+    family = gaussian(),
+    par_x = "x",
+    sample = FALSE
+  )
+
+  rounded = function(x) as.numeric(format_prior_number(x))
+  scaled_t = function(base, reference_change) {
+    paste0(
+      "dt(0, ",
+      format_prior_number(base / rounded(reference_change)),
+      ", 3)"
+    )
+  }
+  mu_scale = max(2.5, round(stats::mad(data$y), 1))
+  segment_width = diff(range(data$x))
+  z_scale = rounded(2 * stats::sd(data$z))
+
+  expect_equal(fit$prior$x_1, scaled_t(mu_scale, segment_width))
+  expect_equal(fit$prior$xE2_1, scaled_t(mu_scale, segment_width^2))
+  expect_equal(fit$prior$z_1, scaled_t(mu_scale, z_scale))
+  expect_equal(
+    fit$prior$logw_1,
+    scaled_t(mu_scale, 2 * stats::sd(log(data$w)))
+  )
+  expect_equal(fit$prior$b_1, scaled_t(mu_scale, 10))
+  expect_equal(fit$prior$gb_1, "dt(0, 2.5, 3)")
+  expect_equal(fit$prior$xz_1, scaled_t(mu_scale, segment_width * z_scale))
+  expect_equal(
+    fit$prior$zgb_1,
+    scaled_t(mu_scale, 2 * stats::sd(data$z * (data$g == "b")))
+  )
+  expect_equal(fit$prior$sigma_z_1, scaled_t(2.5, z_scale))
+  expect_equal(
+    fit$prior$sigma_zx_1,
+    scaled_t(2.5, segment_width * z_scale)
+  )
 })
 
 

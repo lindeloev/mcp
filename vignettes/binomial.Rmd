@@ -150,7 +150,7 @@ ggplot(data.frame(logits = 0), aes(x = logits)) +
 
 Please keep in mind that when these priors combine through the model, the joint probability may be quite different. 
 
-Slope scales are divided by the expected segment width, `(max(x) - min(x)) / n_segments()`. The implied change across a typical segment therefore has the same 2.5-logit scale, even when the model contains several change points.
+Numeric coefficient scales are divided by a representative change in their model-matrix column: its range when it has two values, and two standard deviations otherwise. Terms involving local `par_x` additionally use the expected segment width, `(max(x) - min(x)) / n_segments()`. The implied change across a typical segment therefore has the same 2.5-logit scale, even when the model contains several change points.
 
 
 # JAGS code

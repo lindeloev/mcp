@@ -68,7 +68,7 @@ plot_pars(fit)
 # Priors
 `poisson()` defaults to `link = 'log'`, meaning that we have to exponentiate the estimates to get the "raw" Poisson parameter $\lambda$. $\lambda$ has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is `exp(result$mean[2])` (`r exp(result$mean[2])`) and it is `exp(result$mean[3])` (`r exp(result$mean[3])`) for segment 2.
 
-Default priors were used. The intercept prior is a Student-t distribution centered on the rounded median of `log(pmax(n, 0.1))`, with scale equal to the maximum of 2.5 and its rounded MAD. This follows the robust calibration used by `brms` while handling zero counts. Categorical contrasts use scale 2.5, and continuous-slope scales are divided by the expected segment width:
+Default priors were used. The intercept prior is a Student-t distribution centered on the rounded median of `log(pmax(n, 0.1))`, with scale equal to the maximum of 2.5 and its rounded MAD. This follows the robust calibration used by `brms` while handling zero counts. Categorical contrasts use scale 2.5. Numeric coefficient scales are divided by their binary range or two standard deviations, with terms involving local `par_x` additionally divided by the expected segment width:
 
 ```{r}
 cbind(fit$prior)

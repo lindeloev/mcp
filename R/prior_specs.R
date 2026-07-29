@@ -90,6 +90,31 @@ default_cp_specs = function(CP, context) {
 }
 
 
+# Express a reference change in one model-matrix column for prior scaling.
+default_predictor_scale = function(matrix_data, x_factor) {
+  values = stats::na.omit(as.numeric(matrix_data))
+  unique_values = unique(values)
+  data_scale = if (length(unique_values) <= 1) {
+    1
+  } else if (length(unique_values) == 2) {
+    diff(range(unique_values))
+  } else {
+    2 * stats::sd(values)
+  }
+  if (!is.finite(data_scale) || data_scale <= 0)
+    stop_github("Could not derive a positive scale from a model-matrix column.")
+
+  parts = character()
+  if (x_factor != "1")
+    parts = gsub("x", "segment_width(.x)", x_factor, fixed = TRUE)
+  if (data_scale != 1)
+    parts = c(parts, format_prior_number(data_scale))
+  if (length(parts) == 0)
+    parts = "1"
+  paste0("(", paste(parts, collapse = " * "), ")")
+}
+
+
 default_rhs_specs = function(rhs_table, family) {
   defaults = dplyr::bind_rows(family$default_prior, default_arma_specs())
 
@@ -117,6 +142,15 @@ default_rhs_specs = function(rhs_table, family) {
       and_collapse(joined$code_name[is.na(joined$prior)])
     )
   }
+  scaled = grepl("predictor_scale()", joined$prior, fixed = TRUE)
+  joined$prior[scaled] = vapply(which(scaled), function(i) {
+    gsub(
+      "predictor_scale()",
+      default_predictor_scale(joined$matrix_data[[i]], joined$x_factor[i]),
+      joined$prior[i],
+      fixed = TRUE
+    )
+  }, character(1))
 
   tibble::tibble(
     parameter = joined$code_name,

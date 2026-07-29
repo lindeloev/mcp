@@ -276,11 +276,13 @@ If you want more informed priors on the change point location, i.e., `cp_2 = "dn
 # Default priors on linear predictors
 The defaults borrow the robust calibration used by `brms`, adapted to the local parameterization of `mcp`. Intercepts use Student-t priors centered on a robust, link-appropriate location. Data-calibrated scales are at least 2.5, avoiding implausibly narrow defaults when the response happens to have little variation. Unlike the flat default coefficient priors in `brms`, `mcp` uses proper Student-t priors because change-point models need regularization for stable sampling and prior prediction.
 
-Continuous slopes use the corresponding coefficient scale divided by the expected segment width, `(max(x) - min(x)) / n_segments()`. Thus the prior concerns the amount of change across a typical segment rather than depending arbitrarily on the units or number of change points. Categorical contrasts use the same scale without the width adjustment.
+Numeric coefficient priors use the corresponding family-level scale divided by a representative change in the model-matrix column: its observed range when it has two values, and two standard deviations otherwise. This is the scaling convention proposed by [Gelman (2008)](https://doi.org/10.1002/sim.3107). Transformations and interactions are treated as model-matrix columns in their own right. Treatment-coded categorical contrasts keep the family-level scale.
+
+For terms involving local `par_x`, the representative change also includes the expected segment width, `(max(x) - min(x)) / n_segments()`, or the corresponding power for polynomial terms. Thus the prior concerns the amount of change across a typical segment rather than depending arbitrarily on the units or number of change points.
 
 For Gaussian models without an explicit `sigma()` formula, the residual-SD prior is calibrated from `mad(y)` on the response scale. This remains true for `gaussian(link = "log")`: that link constrains the conditional mean, not the observations, so non-positive responses are valid and are never passed through `log()` merely to construct a sigma prior.
 
-An explicit `sigma()` formula instead models log-SD, as in `brms`. Its intercept prior is `dt(0, 2.5, 3)`, and its proper contrast and slope priors use the same link-scale width, with continuous slopes divided by the expected segment width. These proper coefficient priors intentionally differ from the improper flat defaults in `brms` so that prior-only sampling remains defined.
+An explicit `sigma()` formula instead models log-SD, as in `brms`. Its intercept prior is `dt(0, 2.5, 3)`, and its proper contrast and numeric-coefficient priors use the same reference-change scaling described above. These proper coefficient priors intentionally differ from the improper flat defaults in `brms` so that prior-only sampling remains defined.
 
 See the family-specific articles for more information about the priors for other families:
 

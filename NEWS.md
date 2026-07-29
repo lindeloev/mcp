@@ -2,7 +2,7 @@
 
 ## Major new features
 
--   Supports several continuous predictors, categorical predictors, interactions, etc. for all terms on RHS. E.g., `~ 1 + x + x:group + sigma(1 + group) + ar(2, 0 + z)`. Basically, it now "feels" like `lm()` for each distributional parameter in each segment. All mcp functions support this now, including `plot()`, `fit$simulate()`, `predict(fit, newdata = ...)`, `hypothesis()`, `pp_check()`, etc. Explore `ex = mcp_example("multiple")` to see it in action.
+-   Supports several continuous predictors, categorical predictors, interactions, etc. for all terms on RHS. E.g., `~ 1 + x + x:group + sigma(1 + group) + ar(2, 0 + z)`. Basically, it now "feels" like `lm()` for each distributional parameter in each segment. All mcp functions support this now, including `plot()`, `fit$simulate()`, `predict(fit, newdata = ...)`, `hypothesis()`, `pp_check()`, etc. Explore `ex = mcp_example("multiple")` to see it in action. Default priors generally align with brms, with some adjustments to the change-point model.
 
 ## Major breaking changes
 
@@ -71,6 +71,9 @@
 
 -   `mcp()` now warns when posterior samples show poor mixing.
 
+-   With the introduction of multiple regression including categorical predictors (including for distributional parameters) come default priors. For term involving local `par_x`, this scale is multiplied by the expected segment width "as usual". For non-`par_x` terms, numeric coefficients are scaled to data and model. Briefly, based on its observed range when it has two values, and two standard deviations otherwise, aligning with [Gelman (2008)](https://doi.org/10.1002/sim.3107) and alignsthe prior autoscaling in [`rstanarm`](https://mc-stan.org/rstanarm/reference/priors.html). 
+
+
 ## Minor breaking changes
 
 -   `residuals()` now uses the conventional `observed - fitted` sign. Previously, `mcp` residuals used `fitted - observed`.
@@ -85,7 +88,9 @@
 
 -   Uppercase data-dependent constants for priors (`MINX`, `MAXX`, etc.) remain temporarily supported with a deprecation warning. They are now replaced with readable expressions such as `min(time)`, `max(time) - min(time)`, `mad(response)`, `segment_width(time)`, `n_segments()`, and `n_cp()`.
 
--   All default slope priors now broaden with more change points because narrower intervals allows for steeper slopes within the same overall spread.
+-   Default priors for coefficients involving local `par_x` now broaden with
+    more change points because narrower intervals allow steeper slopes within
+    the same overall spread.
 
 -   `summary()`, `fixef()`, `ranef()`, `prior_summary()`, and everything else now return rows in
     a canonical order instead of the previous incidental (near-alphabetical)
