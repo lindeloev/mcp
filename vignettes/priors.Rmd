@@ -280,6 +280,20 @@ Numeric coefficient priors use the corresponding family-level scale divided by a
 
 For terms involving local `par_x`, the representative change also includes the expected segment width, `(max(x) - min(x)) / n_segments()`, or the corresponding power for polynomial terms. Thus the prior concerns the amount of change across a typical segment rather than depending arbitrarily on the units or number of change points.
 
+## Gaussian mean priors
+
+With the identity link, the Gaussian intercept prior is centered on
+`round(median(y), 1)` and uses scale `max(2.5, round(mad(y), 1))`. Contrasts and
+numeric coefficients use the same scale and the reference-change scaling
+above.
+
+With the log link, this calibration uses the log response, replacing zero by
+0.1 and using finite fallbacks. Both intercept rules follow `brms`; `mcp` adds
+proper scaled coefficient priors for prior sampling and mild segment
+regularization.
+
+## Gaussian residual-SD priors
+
 For Gaussian models without an explicit `sigma()` formula, the residual-SD prior is calibrated from `mad(y)` on the response scale. This remains true for `gaussian(link = "log")`: that link constrains the conditional mean, not the observations, so non-positive responses are valid and are never passed through `log()` merely to construct a sigma prior.
 
 An explicit `sigma()` formula instead models log-SD, as in `brms`. Its intercept prior is `dt(0, 2.5, 3)`, and its proper contrast and numeric-coefficient priors use the same reference-change scaling described above. These proper coefficient priors intentionally differ from the improper flat defaults in `brms` so that prior-only sampling remains defined.
@@ -287,7 +301,7 @@ An explicit `sigma()` formula instead models log-SD, as in `brms`. Its intercept
 See the family-specific articles for more information about the priors for other families:
 
  * `vignette("binomial")` - also relevant for `bernoulli`
- * `vignette("poisson")`
+ * `vignette("poisson")` - also relevant for negative-binomial `shape`
  * `vignette("variance")` for explicit `sigma()` models
  * `vignette("arma")` for AR/MA regularization and root conditions
 

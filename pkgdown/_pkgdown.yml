@@ -93,7 +93,7 @@ navbar:
       menu:
       - text: Supported families and link functions
         href: articles/families.html
-      - text: Poisson
+      - text: Poisson and negative binomial
         href: articles/poisson.html
       - text: Binomial and Bernoulli
         href: articles/binomial.html

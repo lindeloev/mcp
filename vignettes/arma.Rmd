@@ -250,6 +250,8 @@ dnorm(0, 0.5) T(-1, 1)
 
 It is symmetric around zero and gently shrinks away from the boundaries: its central 95% interval is approximately $[-0.84, 0.84]$. This is a regularizing prior on each direct coefficient, not a joint stationarity or invertibility constraint for orders above one.
 
+`brms` also models AR and MA coefficients directly within $[-1, 1]$, but uses flat default priors over that range. Thus `mcp` keeps the familiar parameter interpretation while adding mild regularization toward zero; fits should generally be similar when the likelihood is informative.
+
 Categorical contrasts default to `dnorm(0, 0.25)`. Numeric slopes are also normal and scaled so that one representative predictor change has prior SD 0.25. Thus approximately 95% of the prior change lies within $\pm 0.5$.
 
 The defaults express no assumption about the sign. For a time series where positive first-order autocorrelation is expected, alternatives include `ar1_1 = "dunif(0, 1)"` or `ar1_1 = "dnorm(0.5, 0.5) T(0, 1)"`. [Read more about specifying and checking priors](../articles/priors.html).
@@ -279,7 +281,7 @@ empty = mcp(model, sample = FALSE)
 cbind(empty$prior)
 ```
 
-AR and MA coefficient regressions use an identity link, while their residual inputs use the supported response-family link described above. Careful priors become especially important with higher orders or coefficient slopes, where individual values in [-1, 1] do not ensure a stable recurrence. `mcp()` warns when fitting higher-order AR or MA models, and `fit$simulate()` warns when using one to generate a fresh series.
+AR and MA coefficient regressions use an identity link, while their residual inputs use the supported response-family link described above. Careful priors become especially important with higher orders or coefficient slopes, where individual values in [-1, 1] do not ensure a stable recurrence. After fitting, `mcp()` checks up to 500 posterior draws at up to 100 observed predictor rows and warns if more than 10% of the checked draws violate the root condition at any checked row. `fit$simulate()` checks the supplied coefficient trajectory before generating a fresh series. For predictor- or segment-varying coefficients these are local smoke tests, not proofs of global stationarity or invertibility.
 
 Here are a few ways in which you may want to inform the AR or MA parameters:
 

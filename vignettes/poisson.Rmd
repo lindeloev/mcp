@@ -1,13 +1,16 @@
 ---
-title: "Poisson change point analysis"
+title: "Poisson and negative-binomial change point analysis"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Poisson change point analysis}
+  %\VignetteIndexEntry{Poisson and negative-binomial change point analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-The Poisson distribution models the number of events within similar-sized time frames. 
+The Poisson and negative-binomial distributions model counts observed within
+comparable units of time, space, or exposure. The worked example below uses
+Poisson regression; a later section explains the additional `shape` parameter
+and priors in `negbinomial()`.
 
 
 # Coal mining disasters
@@ -65,10 +68,12 @@ plot_pars(fit)
 ```
 
 
-# Priors
+# Priors for Poisson models
 `poisson()` defaults to `link = 'log'`, meaning that we have to exponentiate the estimates to get the "raw" Poisson parameter $\lambda$. $\lambda$ has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is `exp(result$mean[2])` (`r exp(result$mean[2])`) and it is `exp(result$mean[3])` (`r exp(result$mean[3])`) for segment 2.
 
-Default priors were used. The intercept prior is a Student-t distribution centered on the rounded median of `log(pmax(n, 0.1))`, with scale equal to the maximum of 2.5 and its rounded MAD. This follows the robust calibration used by `brms` while handling zero counts. Categorical contrasts use scale 2.5. Numeric coefficient scales are divided by their binary range or two standard deviations, with terms involving local `par_x` additionally divided by the expected segment width:
+The intercept prior is a Student-t distribution centered on the rounded median of `log(pmax(n, 0.1))`, with scale equal to the maximum of 2.5 and its rounded MAD. This follows the robust calibration in `brms`; `pmax()` keeps zeros finite and the minimum scale avoids a narrow prior.
+
+Categorical contrasts use scale 2.5; numeric coefficients are scaled to a representative predictor change. These are proper Student-t priors where `brms` is flat, allowing prior sampling and mild regularization of short segments.
 
 ```{r}
 cbind(fit$prior)
@@ -82,6 +87,24 @@ prior = list(
 )
 fit_with_prior = mcp(model, data = df, prior, poisson(), par_x = "date")
 ```
+
+
+# Negative-binomial extension
+
+`negbinomial()` uses log links for both its conditional mean `mu` and
+overdispersion `shape`, where
+$\operatorname{Var}(y) = \mu + \mu^2 / \mathit{shape}$. Its mean priors are the
+same as for `poisson()`.
+
+When no `shape()` formula is supplied, the response-scale shape has an
+inverse-gamma(0.4, 0.3) prior, matching `brms`. It covers both strong
+overdispersion and the large-shape Poisson limit; `fit$prior` shows its
+log-shape representation as `dloginvgamma(0.4, 0.3)`.
+
+An explicit `shape()` formula models log-shape. Its intercept defaults to
+`dt(0, 2.5, 3)` and coefficients use the usual proper scaling. `brms` uses the
+same intercept prior but flat coefficients. Shape regression can be weakly
+identified, so informed priors may be useful.
 
 
 # Model comparison
@@ -122,8 +145,8 @@ loo::loo_model_weights(loo_list, method="pseudobma")
 Again, unsurprisingly, the change point model is preferred and they show the same ranking as implied by `loo_compare`.
 
 
-# JAGS code
-Here is the JAGS code for the full model above.
+# JAGS code for the Poisson example
+Here is the JAGS code for the full Poisson change-point model above.
 
 ```{r}
 fit$jags_code
@@ -132,4 +155,3 @@ fit$jags_code
 ```{r cleanup, include=FALSE}
 future::plan(future::sequential)
 ```
-

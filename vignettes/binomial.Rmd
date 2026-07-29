@@ -131,6 +131,10 @@ cbind(fit$prior)
 
 The priors on change points are discussed extensively in the prior vignette. With the default logit link, intercepts and categorical contrasts use `dt(0, 1.5, 3)`. Its central 95% interval is approximately -4.8 to 4.8 logits, corresponding to probabilities from 0.008 to 0.992, while its heavy tails retain support for more extreme values. The figure compares Student-t priors with scales 1 (red), 1.5 (black, the `mcp` default), and 2.5 (blue), together with their correspondence to probabilities. The probit link currently uses the same numerical default for simplicity.
 
+Compared with the `dt(0, 2.5, 3)` intercept and flat coefficient defaults in
+`brms`, these proper priors mildly reduce extreme predictions in short
+segments while remaining broad and heavy-tailed.
+
 ```{r}
 inverse_logit = function(x) exp(x) / (1 + exp(x))
 scaled_t = function(x, scale) dt(x / scale, df = 3) / scale
@@ -163,4 +167,3 @@ fit$jags_code
 ```{r cleanup, include=FALSE}
 future::plan(future::sequential)
 ```
-
