@@ -7,18 +7,20 @@
 
 # Folders
 docs
-^man/figures
-^vignettes$
-^pkgdown$
 ^data-raw$
+^man/figures
+^pkgdown$
 ^revdep$
+^vignettes$
 
 # Files
 AGENTS.md
-LEARNINGS.md
 cran-comments.md
-logo.png
 ^CRAN-RELEASE$
+^CRAN-SUBMISSION$
 fix_twittercard.R
 ^\.github$
-^CRAN-SUBMISSION$
+LEARNINGS.md
+logo.png
+TODO.md
+
