@@ -203,17 +203,17 @@ test_that("parameter-name collisions give a useful error", {
 # MCPFIT CLASS-METHODS #
 ########################
 # Test on new fit
-demo_settings = mcp_example("demo", sample = FALSE)
+demo_settings = mcp_example("demo", sample = FALSE, plot = FALSE)
 demo_fit2 = quiet_mcp(demo_settings$model, demo_settings$data, adapt = 2500, iter = 4000)
 
 test_that("binomial example can be constructed without sampling", {
-  fit = mcp_example("binomial", sample = FALSE)
+  fit = mcp_example("binomial", sample = FALSE, plot = FALSE)
   expect_s3_class(fit, "mcpfit")
   expect_true(all(fit$data$y <= fit$data$N))
 })
 
 test_that("group example contains independent factor effects", {
-  fit = mcp_example("group", sample = FALSE)
+  fit = mcp_example("group", sample = FALSE, plot = FALSE)
   expect_s3_class(fit, "mcpfit")
   expect_equal(fit$pars$cp, "cp_1")
   expect_equal(

@@ -11,6 +11,8 @@
 #'  * `"quadratic"`: A change point to a quadratic segment.
 #'  * `"varying"`: Varying / hierarchical change points.
 #'  * `"variance"`: A change in variance, including a variance slope.
+#' @param plot Logical. Plot the fitted example? No plot is produced when
+#'   `sample = FALSE`.
 #' @inheritParams mcp
 #' @return An `mcpfit`, enriched with a `$call` field. It contains the code to
 #'   reproduce the data and the fit.
@@ -20,11 +22,10 @@
 #' @examples
 #' \donttest{
 #' fit = mcp_example("multiple")
-#' plot(fit)
 #' print(fit$call)  # See how the data was simulated
 #'
 #' # Without sampling
-#' empty = mcp_example("binomial", sample = FALSE)
+#' empty = mcp_example("binomial", sample = FALSE, plot = FALSE)
 #' print(empty)
 #' print(empty$call)
 #' print(empty$data)
@@ -33,9 +34,12 @@
 #' fit2 = mcp(empty$model, empty$data, family = empty$family)
 #' plot(fit2)
 #'}
-mcp_example = function(name, sample = "post") {
+mcp_example = function(name, sample = "post", plot = TRUE) {
   checkmate::assert_string(name)
+  checkmate::assert_flag(plot)
   data = data.frame()  # To make R CMD Check happy.
+  fit = NULL  # To make R CMD Check happy.
+  plot = plot && !(sample %in% c(FALSE, "none"))
 
   examples = list(
     ar = "# Define model
@@ -62,11 +66,19 @@ data$price = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, sample = sample)",
+fit = mcp(model, data, sample = sample, seed = 42)
+
+# Illustrative plot
+if (plot) {
+  set.seed(42)
+  gg1 = plot(fit) + ggplot2::labs(title = \"plot(fit)\")
+  set.seed(43)
+  gg2 = plot_dpar(fit, \"ar1\") + ggplot2::labs(title = 'plot_dpar(fit, \"ar1\")')
+  print(gg1 / gg2)
+}",
 
 
-
-binomial = "# Define model
+    binomial = "# Define model
 model = list(
   y | trials(N) ~ 1,  # constant rate
   ~ 0 + x,  # joined changing rate
@@ -91,12 +103,16 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, family = binomial(), adapt = 5000, sample = sample)
-",
+fit = mcp(model, data, family = binomial(), adapt = 5000, sample = sample, seed = 42)
+
+# Illustrative plot
+if (plot) {
+  set.seed(42)
+  print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))
+}",
 
 
-
-demo = "# Define model
+    demo = "# Define model
 model = list(
   response ~ 1,
   ~ 0 + time,
@@ -121,11 +137,16 @@ data$response = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, sample = sample)",
+fit = mcp(model, data, sample = sample, seed = 40)
+
+# Illustrative plot
+if (plot) {
+  set.seed(40)
+  print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))
+}",
 
 
-
-group = "# Define model
+    group = "# Define model
 model = list(
   y ~ 1 + condition + (condition || participant),
   ~ 1 + condition  # group effects carry into this segment
@@ -155,9 +176,15 @@ data$y = empty$simulate(empty, data,
 # Run sampling
 fit = mcp(
   model, data, par_x = 'x', sample = sample,
-  adapt = 2000, iter = 20000
-)",
+  adapt = 2000, iter = 20000, seed = 200
+)
 
+# Illustrative plot
+if (plot) {
+  set.seed(200)
+  print(plot(fit, facet_by = 'participant', color_by = 'condition') +
+      ggplot2::labs(title = 'plot(fit, facet_by = \"participant\", color_by = \"condition\")'))
+}",
 
 
 intercepts = "# Define model
@@ -167,7 +194,7 @@ model = list(
 )
 
 # Simulate data
-set.seed(40)
+set.seed(42)
 data = data.frame(
   x = runif(100, 0, 100),
   y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
@@ -181,7 +208,13 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, par_x = 'x', sample = sample)",
+fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
+
+# Illustrative plot
+if (plot) {
+  set.seed(42)
+  print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))
+}",
 
 
 multiple = "# Define model
@@ -223,7 +256,13 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, par_x = 'x', sample = sample)",
+fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
+
+# Illustrative plot
+if (plot) {
+  set.seed(42)
+  print(plot(fit, color_by = 'group') + ggplot2::labs(title = 'plot(fit, color_by = \"group\")'))
+}",
 
 
 quadratic = "# Define model
@@ -248,8 +287,13 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, sample = sample)",
+fit = mcp(model, data, sample = sample, seed = 42)
 
+# Illustrative plot
+if (plot) {
+  set.seed(42)
+  print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))
+}",
 
 
 variance = "# Define model
@@ -278,7 +322,16 @@ data$y = empty$simulate(empty, data,
   )
 
 # Run sampling
-fit = mcp(model, data, iter = 4000, adapt = 3000, sample = sample)",
+fit = mcp(model, data, iter = 4000, adapt = 3000, sample = sample, seed = 40)
+
+# Illustrative plot
+if (plot) {
+  set.seed(40)
+  gg1 = plot(fit, q_predict = TRUE) + ggplot2::labs(title = 'plot(fit, q_predict = TRUE)')
+  set.seed(41)
+  gg2 = plot_dpar(fit, 'sigma') + ggplot2::labs(title = 'plot_dpar(fit, \"sigma\")')
+  print(gg1 / gg2)
+}",
 
 
 
@@ -306,18 +359,22 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, sample = sample)"
-)
+fit = mcp(model, data, sample = sample, seed = 42)
 
-# Run the code in an environment
-name = rlang::arg_match0(name, names(examples))
-example_env = new.env()
-with(example_env, eval(str2expression(examples[[name]])))
+# Illustrative plot
+if (plot) {
+  set.seed(42)
+  print(plot(fit, facet_by = 'id') + ggplot2::labs(title = 'plot(fit, facet_by = \"id\")'))
+}"
+  )
 
-example_env$fit$call = examples[[name]]
-class(example_env$fit$call) = c("mcptext", "character")
+  # Run the code
+  name = rlang::arg_match0(name, names(examples))
+  eval(str2expression(examples[[name]]))
 
-example_env$fit
+  fit$call = examples[[name]]
+  class(fit$call) = c("mcptext", "character")
+  fit
 }
 
 
@@ -325,5 +382,5 @@ example_env$fit
 #' @export
 #' @describeIn mcp_example Conveniently get simulated data only.
 mcp_example_data = function(name) {
-  mcp_example(name, sample = FALSE)$data
+  mcp_example(name, sample = FALSE, plot = FALSE)$data
 }

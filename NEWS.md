@@ -8,6 +8,8 @@
 
 -   Use `mcp(..., seed = 42)` for reproducible JAGS sampling.
 
+-   `mcp_example(...)` now shows an illustrative plot of the fitted example by default. Disable using `plot = FALSE`.
+
 -   Prediction methods now accept `varying = "cp"` and
     `varying = "predictor"` as fast selectors for group-level effects in the
     corresponding formula part. Exact varying-parameter names remain

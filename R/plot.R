@@ -270,7 +270,7 @@ get_plot = function(x,
     } else {
       ggplot2::aes(group = interaction(.data$.draw, .data$.group))
     }
-    gg = gg + ggplot2::geom_line(line_mapping, data = data_lines, alpha = 0.4)
+    gg = gg + ggplot2::geom_line(line_mapping, data = data_lines, alpha = 0.2)
   }
 
   # Add quantiles?
