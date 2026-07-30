@@ -229,7 +229,8 @@ get_plot = function(x,
 
   # Color info
   fit$data = add_plot_groups(fit$data, curve_by = curve_by, color_by = color_by)
-  use_color = !is.null(color_by) && length(unique(fit$data$.color)) > 1
+  ncolors = length(unique(eval_draws$.color))
+  use_color = !is.null(color_by) && ncolors > 1
 
   # Store the plotting-scale response and strip any "ts" class to avoid
   # ggplot2 warnings about scale selection.
@@ -300,7 +301,7 @@ get_plot = function(x,
       stop("Failed to draw change point density for this plot. Please raise an error on GitHub.")
     }
 
-    gg = gg + geom_cp_density(fit, facet_by, prior, limits_y) +
+    gg = gg + geom_cp_density(fit, facet_by, prior, limits_y, use_color) +
       ggplot2::coord_cartesian(
         ylim = c(limits_y[1], NA),  # Remove density flat line from view
         # Do not let broad varying change-point densities expand the observed x-range.
@@ -327,9 +328,16 @@ get_plot = function(x,
       ggplot2::theme(legend.position = "none") +
       ggplot2::scale_color_manual(values = "#858585")
   } else {
-    gg = gg +
-      ggplot2::scale_color_viridis_d(end = 0.9) +   # Yellow is not distinct from the background
-      ggplot2::labs(color = paste(color_by, collapse = ":"))
+    plot_colors = c(
+      "#0072B2", "#D55E00", "#009E73", "#CC79A7",
+      "#E69F00", "#56B4E9", "#F5C710"
+    )
+    color_scale = if (ncolors <= length(plot_colors)) {
+      ggplot2::scale_color_manual(values = plot_colors)
+    } else {
+      ggplot2::scale_color_viridis_d(begin = 0.05, end = 0.75)
+    }
+    gg = gg + color_scale + ggplot2::labs(color = paste(color_by, collapse = ":"))
   }
 
   # Return
@@ -458,7 +466,7 @@ plot_dpar = function(x,
 #' @param limits_y A vector of length 2 with c(lower, upper) limits on the plot.
 #'   Used for scaling the densities to a proportion of the plot height.
 #' @return A `ggplot2::geom_polygon()` representing the change point densities.
-geom_cp_density = function(fit, facet_by, prior, limits_y) {
+geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
   dens_scale = 0.2  # Proportion of plot height
   dens_cut = 0.05  # How much to move density down. 5% is ggplot default. Move a bit further.
 
@@ -507,11 +515,13 @@ geom_cp_density = function(fit, facet_by, prior, limits_y) {
   ggplot2::geom_polygon(ggplot2::aes(
       x = .data$densx,
       y = .data$densy,
-      group = interaction(.data$.chain, .data$cp_name),
-      color = NULL
+      group = interaction(.data$.chain, .data$cp_name)
     ),
     data = samples,
-    alpha = 1 / max(samples$.chain),  # Sum to opaque
+    color = if (use_color) "#666666" else "#3182BD",
+    fill = if (use_color) "#A6A6A6" else "#6BAED6",
+    linewidth = 0.25,
+    alpha = 0.4 / max(samples$.chain),  # Combined opacity is approximately 35-40%
     show.legend = FALSE
   )
 }

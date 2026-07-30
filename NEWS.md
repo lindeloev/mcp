@@ -6,7 +6,7 @@
 
 -   Predictor formulas now support group-level effects (sometimes called random or varying effects) using familiar `lme4` and `brms` syntax. `(1 | group)` specifies a group-level intercept, while `(1 + x || group)` and `(factor || group)` support independent coefficients, including slopes and factors. This also works inside distributional formulas such as `sigma(1 + (factor || id))`. As with `ar()`, an effect carries into later segments until it is redefined or disabled with `(0 | group)`. See `mcp_example("group")` for a worked example. Correlated multi-coefficient `|` terms are not yet supported.
 
--   Use `mcp(..., seed = 42)` for reproducible JAGS sampling.
+-   Use `mcp(..., seed = 42)` for reproducible JAGS sampling. See `mcp_example("demo")$call` how to ensure reproducibility across simulation, fit, and plotting.
 
 -   `mcp_example(...)` now shows an illustrative plot of the fitted example by default. Disable using `plot = FALSE`.
 
@@ -63,6 +63,7 @@
 
 ## Other new features
 
+-   Default plot colors now use an Okabe-Ito categorical palette for `color_by`, with clipped viridis for more than seven groups. Change-point densities are translucent blue with gray fitted draws and neutral gray when fitted draws are colored.
 
 -   The user-facing `nsamples` argument is soft-deprecated in favor of `ndraws`, matching the terminology used by `posterior`, `rvar`, and related packages. Existing calls continue to work for now.
 

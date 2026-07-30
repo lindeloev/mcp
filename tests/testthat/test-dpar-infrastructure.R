@@ -467,6 +467,7 @@ test_that("quantiles stay separate for rows and categorical curves sharing x", {
 
 
 test_that("color_by controls color without pooling categorical curves", {
+  plot_colors = c("#0072B2", "#D55E00", "#009E73", "#CC79A7")
   data = expand.grid(
     x = 1:4,
     group = factor(c("A", "B")),
@@ -510,9 +511,9 @@ test_that("color_by controls color without pooling categorical curves", {
   )
   one_color_layers = ggplot2::ggplot_build(one_color)$data
   one_color_quantiles = one_color_layers[[2]]
-  expect_equal(length(unique(one_color_quantiles$colour)), 2)
+  expect_setequal(unique(one_color_quantiles$colour), plot_colors[1:2])
   expect_equal(length(unique(one_color_quantiles$group)), 8)
-  expect_equal(length(unique(one_color_layers[[3]]$colour)), 2)
+  expect_setequal(unique(one_color_layers[[3]]$colour), plot_colors[1:2])
   expect_equal(length(unique(one_color_layers[[3]]$group)), 8)
   expect_equal(one_color$labels$colour, "group")
 
@@ -523,7 +524,7 @@ test_that("color_by controls color without pooling categorical curves", {
     q_fit = c(0.25, 0.75)
   )
   interaction_quantiles = ggplot2::ggplot_build(interaction_color)$data[[2]]
-  expect_equal(length(unique(interaction_quantiles$colour)), 4)
+  expect_setequal(unique(interaction_quantiles$colour), plot_colors)
   expect_equal(interaction_color$labels$colour, "group:condition")
 
   faceted = plot(
@@ -556,7 +557,7 @@ test_that("color_by controls color without pooling categorical curves", {
     q_fit = c(0.25, 0.75)
   )
   dpar_quantiles = ggplot2::ggplot_build(dpar_plot)$data[[1]]
-  expect_equal(length(unique(dpar_quantiles$colour)), 2)
+  expect_setequal(unique(dpar_quantiles$colour), plot_colors[1:2])
   expect_equal(length(unique(dpar_quantiles$group)), 8)
 
   # A posterior draw is joint across curves, so every curve should use the
@@ -573,6 +574,23 @@ test_that("color_by controls color without pooling categorical curves", {
     logical(1),
     draws_by_curve[[1]]
   )))
+})
+
+
+test_that("change point density colors adapt to fitted colors", {
+  plots = list(plot(demo_fit, lines = 1), plot_dpar(demo_fit, dpar = "sigma", lines = 1))
+  for (plot in plots) {
+    layer = which(vapply(plot$layers, function(x) inherits(x$geom, "GeomPolygon"), logical(1)))
+    density = ggplot2::ggplot_build(plot)$data[[layer]]
+    expect_equal(unique(density$fill), "#6BAED6")
+    expect_equal(unique(density$colour), "#3182BD")
+    expect_equal(unique(density$linewidth), 0.25)
+    expect_equal(unique(density$alpha), 0.4 / nchains(demo_fit))
+  }
+
+  gray_density = geom_cp_density(demo_fit, NULL, FALSE, c(0, 1), use_color = TRUE)
+  expect_equal(gray_density$aes_params$fill, "#A6A6A6")
+  expect_equal(gray_density$aes_params$colour, "#666666")
 })
 
 
