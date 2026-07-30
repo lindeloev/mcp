@@ -115,7 +115,8 @@
 
 -   `summary()`, `fixef()`, `ranef()`, `prior_summary()`, and everything else now return rows in
     a canonical order instead of the previous incidental (near-alphabetical)
-    order. They also gained columns `segment` and `dpar` columns. This may affect scripts that index results positionally.
+    order. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to
+    include `segment` and `dpar` columns.
 
 -   The term "ct" (for "central tendency") has been replaced with "mu", e.g., in `plot(fit, which_y = "mu")`. These were defaults, so I hope no one will notice the renaming.
 

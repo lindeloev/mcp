@@ -173,12 +173,21 @@ test_arma_simulation = function(fit) {
 
 # Tests if summary(fit) and ranef(fit) work as expected
 test_summary = function(fit, varying_cols, prior = FALSE) {
-  summary_cols = c('name','segment','dpar','mean','lower','upper','Rhat','ess_bulk','ess_tail')
+  summary_cols = c('name','mean','lower','upper','Rhat','ess_bulk','ess_tail')
+  verbose_summary_cols = c('name','segment','dpar','mean','lower','upper','Rhat','ess_bulk','ess_tail')
+  if (!is.null(attr(fit$data[, fit$pars$y], "simulated"))) {
+    summary_cols = append(summary_cols, c("match", "sim"), after = 1)
+    verbose_summary_cols = append(verbose_summary_cols, c("match", "sim"), after = 3)
+  }
   quiet_summary = purrr::quietly(summary)(fit, prior = prior)
   result = quiet_summary$result  # Do not print to console
   output = quiet_summary$output  # Do not print to console
-  testthat::expect_true(all(colnames(result) %in% summary_cols))  # All columns
+  testthat::expect_named(result, summary_cols)
   testthat::expect_true(all(result$name %in% fit$pars$population))  # All parameters
+  verbose_result = purrr::quietly(summary)(fit, prior = prior, verbose = TRUE)$result
+  testthat::expect_named(verbose_result, verbose_summary_cols)
+  testthat::expect_named(fixef(fit, prior = prior), summary_cols)
+  testthat::expect_named(fixef(fit, prior = prior, verbose = TRUE), verbose_summary_cols)
 
   # If there are varying effects
   if (length(varying_cols) > 0) {
@@ -186,6 +195,7 @@ test_summary = function(fit, varying_cols, prior = FALSE) {
     varying = ranef(fit, prior = prior)
     testthat::expect_true(is.character(varying$name))
     testthat::expect_true(is.numeric(varying$mean))
+    testthat::expect_named(ranef(fit, prior = prior, verbose = TRUE), verbose_summary_cols)
 
     effects = get_fit_model_tables(fit)$group_effects
     group_level_counts = lapply(

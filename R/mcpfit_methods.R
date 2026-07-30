@@ -43,16 +43,19 @@ NULL
 #' @inheritParams summary.mcpfit
 #' @param fit An \code{\link{mcpfit}}` object.
 #' @param varying Boolean. Get results for varying (TRUE) or population (FALSE)?
-#' @return A data.frame with summaries for each model parameter, ordered and
-#'   labeled with `segment` and `dpar` columns (see `summary.mcpfit`).
+#' @param verbose Logical. Include the `segment` and `dpar` columns.
+#' @return A data.frame with summaries for each model parameter. With
+#'   `verbose = TRUE`, rows are labeled with `segment` and `dpar` columns (see
+#'   `summary.mcpfit`).
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
+get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FALSE) {
   # Check arguments
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_number(width, lower = 0, upper = 1)
   checkmate::assert_flag(varying)
   checkmate::assert_flag(prior)
+  checkmate::assert_flag(verbose)
 
   if (varying == TRUE & is.null(fit$pars$varying))
     return(NULL)
@@ -149,6 +152,9 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
     estimates = dplyr::relocate(estimates, "name", "segment", "dpar")
   }
 
+  if (!verbose)
+    estimates = dplyr::select(estimates, -"segment", -"dpar")
+
   data.frame(estimates, row.names = NULL)
 }
 
@@ -167,6 +173,8 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #'   Non-integer values will be rounded down, and only values greater than or
 #'   equal to 1 and no greater than 22 are accepted.
 #' @param prior TRUE/FALSE. Summarise prior instead of posterior?
+#' @param verbose Logical. Include the `segment` and `dpar` columns. Defaults
+#'   to `FALSE` for a compact, v0.3.4-compatible summary.
 #' @param ... Currently ignored
 #'
 #' @return A data frame with parameter estimates and MCMC diagnostics. Rows
@@ -176,6 +184,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #'   symmetric so the intervals can be deceiving. Plot them using
 #'   `plot_pars(fit)`.
 #'
+#'   With `verbose = TRUE`:
 #'   * `segment` is the segment the parameter belongs to.
 #'   * `dpar` is the distributional parameter (`"cp"`, `"mu"`, `"sigma"`,
 #'     `"ar1"`, `"ma1"`, etc.) the parameter belongs to.
@@ -211,12 +220,13 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 #'
 #' # Summarise prior
 #' summary(demo_fit, prior = TRUE)
-summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) {
+summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbose = FALSE, ...) {
   fit = object  # Standard name in mcp
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_number(width, lower = 0, upper = 1)
   checkmate::assert_int(digits, lower = 0)
   checkmate::assert_flag(prior)
+  checkmate::assert_flag(verbose)
   rlang::check_dots_empty()
 
   samples = mcmclist_samples(fit, prior = prior, error = FALSE)
@@ -234,7 +244,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ...) 
   if (!is.null(samples)) {
     # Print and return invisibly
     cat("\nPopulation-level parameters:\n")
-    result = get_summary(fit, width, varying = FALSE, prior = prior)
+    result = get_summary(fit, width, varying = FALSE, prior = prior, verbose = verbose)
     print(data.frame(result), digits = digits, row.names = FALSE)
 
     if (!is.null(fit$pars$varying))
@@ -260,17 +270,17 @@ ranef = function(object, ...) UseMethod("ranef")
 #' @aliases fixef fixef.mcpfit
 #' @describeIn summary.mcpfit Fixed (population-level) effects of `mcpfit`.
 #' @export
-fixef.mcpfit = function(object, width = 0.95, prior = FALSE, ...) {
+fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {
   rlang::check_dots_empty()
-  get_summary(object, width, varying = FALSE, prior = prior)
+  get_summary(object, width, varying = FALSE, prior = prior, verbose = verbose)
 }
 
 #' @aliases ranef ranef.mcpfit
 #' @describeIn summary.mcpfit Random (varying) effects of `mcpfit`.
 #' @export
-ranef.mcpfit = function(object, width = 0.95, prior = FALSE, ...) {
+ranef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {
   rlang::check_dots_empty()
-  get_summary(object, width, varying = TRUE, prior = prior)
+  get_summary(object, width, varying = TRUE, prior = prior, verbose = verbose)
 }
 
 
