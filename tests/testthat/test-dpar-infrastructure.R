@@ -412,6 +412,16 @@ test_that("distributional parameters use the same evaluation identity", {
   expect_equal(sigma_summary$fitted, c(1, 3))
   expect_equal(sigma_summary$Q25, c(1, 3))
   expect_equal(sigma_summary$Q75, c(1, 3))
+
+  predicted = pp_eval(
+    fit,
+    newdata = newdata,
+    summary = FALSE,
+    type = "predict",
+    .include_fitted = TRUE
+  )
+  expect_equal(predicted$fitted, mu$fitted)
+  expect_null(attr(predicted$predict, "fitted"))
 })
 
 
@@ -619,6 +629,14 @@ test_that("integer varying groups can control plot color", {
 
   expect_equal(length(unique(quantiles$colour)), 2)
   expect_equal(length(unique(quantiles$group)), 4)
+})
+
+
+test_that("interpolate_newdata uses the ungrouped adaptive grid by default", {
+  expect_equal(
+    interpolate_newdata(demo_fit)[[demo_fit$pars$x]],
+    get_x_values(demo_fit)
+  )
 })
 
 

@@ -797,19 +797,24 @@ pp_eval = function(
     )
   } else {
     # No varying effects: use all samples for each row of data
-    samples_predictors = tidy_samples(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws) %>%
-      tidyr::expand_grid(add_rhs_predictors(newdata, fit))
+    samples = tibble::as_tibble(tidy_samples(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws))
+    predictors = tibble::as_tibble(add_rhs_predictors(newdata, fit))
+    samples_predictors = dplyr::bind_cols(
+      samples[rep(seq_len(nrow(samples)), each = nrow(predictors)), , drop = FALSE],
+      predictors[rep(seq_len(nrow(predictors)), times = nrow(samples)), , drop = FALSE]
+    )
   }
 
-  samples = samples_predictors %>%
-    dplyr::mutate("{type}" := rlang::exec(simulate_vectorized, fit, !!!samples_predictors, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale))
+  samples = samples_predictors
+  evaluated = rlang::exec(simulate_vectorized, fit, !!!samples_predictors, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale, .include_fitted = .include_fitted)
+  fitted_values = attr(evaluated, "fitted")
+  attr(evaluated, "fitted") = NULL
+  samples[[type]] = evaluated
 
   # Plotting can request fitted and predicted values from the same evaluated
-  # parameter rows, guaranteeing identical joint draw IDs without rebuilding
-  # model predictors in the plotting layer.
-  if (.include_fitted) {
-    samples$fitted = rlang::exec(simulate_vectorized, fit, !!!samples_predictors, .type = "fitted", .rate = rate, .dpar = dpar, .arma = arma, .scale = scale)
-  }
+  # parameter rows and model evaluation.
+  if (.include_fitted)
+    samples$fitted = fitted_values
 
   samples = samples %>% dplyr::select(-dplyr::starts_with(".pred_"), -dplyr::any_of(point_size_col))
 

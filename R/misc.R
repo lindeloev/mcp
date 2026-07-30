@@ -531,13 +531,15 @@ validate_eval_draws = function(samples, type) {
   if (anyNA(samples$.draw) || anyNA(samples$data_row))
     stop_github("Evaluated draws contain missing `.draw` or `data_row` keys.")
 
-  keys = samples[, c(".draw", "data_row"), drop = FALSE]
+  draw_ids = unique(samples$.draw)
+  data_rows = unique(samples$data_row)
+  draw_index = match(samples$.draw, draw_ids)
+  row_index = match(samples$data_row, data_rows)
+  keys = draw_index + length(draw_ids) * (row_index - 1L)
   if (anyDuplicated(keys))
     stop_github("Evaluated draws must contain one `", type, "` value per `.draw` and `data_row`.")
 
-  n_draws = length(unique(samples$.draw))
-  n_rows = length(unique(samples$data_row))
-  if (nrow(samples) != n_draws * n_rows)
+  if (nrow(samples) != length(draw_ids) * length(data_rows))
     stop_github("Every `data_row` must contain the same complete set of posterior draws.")
 
   invisible(samples)

@@ -6,18 +6,23 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
   curve_by = intersect(curve_by, names(df))
   color_by = intersect(color_by, names(df))
 
-  if (length(curve_by) == 0) {
-    df$.group = factor(rep(1, nrow(df)))
-  } else {
-    df$.group = interaction(df[, curve_by, drop = FALSE], drop = TRUE, sep = ":")
+  make_group = function(cols) {
+    if (length(cols) == 0)
+      return(rep.int(1L, nrow(df)))
+
+    # Evaluated draws repeat the same plotting metadata for every posterior
+    # draw. Build the interaction once per evaluation row, then expand it.
+    if ("data_row" %in% names(df)) {
+      first = !duplicated(df$data_row)
+      group = interaction(df[first, cols, drop = FALSE], drop = TRUE, sep = ":")
+      return(group[match(df$data_row, df$data_row[first])])
+    }
+
+    interaction(df[, cols, drop = FALSE], drop = TRUE, sep = ":")
   }
 
-  if (length(color_by) == 0) {
-    df$.color = factor(rep(1, nrow(df)))
-  } else {
-    df$.color = interaction(df[, color_by, drop = FALSE], drop = TRUE, sep = ":")
-  }
-
+  df$.group = make_group(curve_by)
+  df$.color = make_group(color_by)
   df
 }
 

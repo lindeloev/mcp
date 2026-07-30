@@ -130,6 +130,10 @@ interpolate_continuous = function(data, pars, x_values, varying_cols = NULL) {
 #'   geom_point(aes(y = y), data = fit$data)
 #' }
 interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by)) {
+  # Evaluate the default before `by` is normalised below. Otherwise an absent
+  # grouping argument becomes character(0), which selects the denser grouped
+  # grid in get_x_values().
+  x_values = force(x_values)
 
   # Get unique predictors
   varying_cols = unique(stats::na.omit(get_fit_model_tables(fit)$group_effects$group_col))
