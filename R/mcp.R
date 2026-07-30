@@ -94,6 +94,8 @@
 #' @param jags_code String. Pass JAGS code to `mcp` to use directly. This is useful if
 #'   you want to tweak the code in `fit$jags_code` and run it within the `mcp`
 #'   framework.
+#' @param seed `NULL` or a positive integer. Seed for the JAGS random-number
+#'   generators. When supplied, `inits` must be a single named list shared by all chains.
 #' @details Notes on priors:
 #'   * Order restriction is automatically applied to cp_\* parameters using
 #'       truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the
@@ -126,7 +128,7 @@
 #' # Fit it and sample the prior too.
 #' # future::plan(future::multisession, workers = 3)  # Uncomment for parallel sampling
 #' data = mcp_example_data("demo")  # Simulated data example
-#' demo_fit = mcp(model, data = data, sample = "both")
+#' demo_fit = mcp(model, data = data, sample = "both", seed = 42)
 #'
 #' # See parameter estimates
 #' summary(demo_fit)
@@ -182,7 +184,8 @@ mcp = function(model,
                iter = 3000,
                adapt = 1500,
                inits = NULL,
-               jags_code = NULL) {
+               jags_code = NULL,
+               seed = NULL) {
 
   ################
   # CHECK INPUTS #
@@ -249,6 +252,7 @@ mcp = function(model,
 
   checkmate::assert_int(chains, lower = 1)
   checkmate::assert_list(inits, null.ok = TRUE)
+  checkmate::assert_int(seed, lower = 1, null.ok = TRUE)
 
   # jags_code
   if(!is.null(jags_code))
@@ -345,7 +349,8 @@ mcp = function(model,
       n.chains = chains,
       n.iter = iter,
       n.adapt = adapt,
-      inits = inits
+      inits = inits,
+      seed = seed
     ) %>%
       recover_levels(data, group_effects)
 
@@ -370,7 +375,8 @@ mcp = function(model,
       n.chains = chains,
       n.iter = iter,
       n.adapt = adapt,
-      inits = inits
+      inits = inits,
+      seed = seed
     ) %>%
       recover_levels(data, group_effects)
 

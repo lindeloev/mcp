@@ -25,7 +25,8 @@ run_jags = function(data,
                     n.chains,
                     n.iter,
                     n.adapt,
-                    inits
+                    inits,
+                    seed
 ) {
 
   # Prevent failure of all mcp methods when length(pars) <= 2.
@@ -36,11 +37,7 @@ run_jags = function(data,
 
   # Define the sampling function in this environment.
   # Can be used sequentially or in parallel.
-  do_sampling = function(seed, n.chains, quiet) {
-    # Optionally seed JAGS. Typically for parallel processing to avoid risk of identical seeds.
-    if (!is.null(seed))
-      inits = c(inits, list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = seed))
-
+  do_sampling = function(inits, n.chains, quiet) {
     # Compile model
     jm = rjags::jags.model(
       file = textConnection(jags_code),
@@ -65,16 +62,20 @@ run_jags = function(data,
   n_workers = future::nbrOfWorkers()
   timer = proc.time()
   if (n_workers == 1) {
+    inits = get_jags_inits(inits, seed, n.chains, sample)
     samples = try(do_sampling(
-      seed = NULL,
+      inits = inits,
       n.chains = n.chains,
       quiet = FALSE
     ))
   } else {
     # Submit one chain per future. The user's future plan controls the backend.
     message("Parallel sampling in progress...")
+    if (is.null(seed))
+      seed = sample.int(.Machine$integer.max - 2 * n.chains, 1)
+    inits = get_jags_inits(inits, seed, n.chains, sample)
     samples = future.apply::future_lapply(
-      sample(1:1000, n.chains),  # Random seed to JAGS
+      inits,
       n.chains = 1,
       quiet = TRUE,
       FUN = do_sampling,
@@ -98,6 +99,48 @@ run_jags = function(data,
     warning("--------------\nJAGS failed with the above error. Returning an `mcpfit` without samples. Inspect fit$prior and fit$jags_code to identify the problem. Read about typical problems and fixes here: https://lindeloev.github.io/mcp/articles/tips.html.")
     return(NULL)
   }
+}
+
+
+#' Add deterministic JAGS RNG initial values
+#'
+#' @keywords internal
+#' @noRd
+#' @param inits Initial values passed to `mcp()`.
+#' @param seed A positive integer or `NULL`.
+#' @param n.chains Number of chains.
+#' @param sample One of `"post"` or `"prior"`.
+#' @return Initial values in list-of-lists form when `seed` is supplied.
+get_jags_inits = function(inits, seed, n.chains, sample) {
+  if (is.null(seed))
+    return(inits)
+
+  if (length(inits) > 0 && all(vapply(inits, is.list, logical(1))))
+    stop(
+      "When `seed` is supplied, `inits` must be a single named list ",
+      "shared by all chains, not a list of chain-specific lists."
+    )
+
+  if (is.null(inits))
+    inits = list()
+  inits[c(".RNG.name", ".RNG.seed", ".RNG.state")] = NULL
+
+  rng_seed = seq_len(n.chains)
+  if (sample == "prior")
+    rng_seed = rng_seed + n.chains
+  rng_seed = as.integer(
+    ((as.double(seed) - 1 + rng_seed - 1) %% .Machine$integer.max) + 1
+  )
+
+  lapply(
+    rng_seed,
+    function(seed) {
+      c(inits, list(
+        .RNG.name = "base::Wichmann-Hill",
+        .RNG.seed = seed
+      ))
+    }
+  )
 }
 
 

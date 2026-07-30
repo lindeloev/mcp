@@ -6,6 +6,8 @@
 
 -   Predictor formulas now support group-level effects (sometimes called random or varying effects) using familiar `lme4` and `brms` syntax. `(1 | group)` specifies a group-level intercept, while `(1 + x || group)` and `(factor || group)` support independent coefficients, including slopes and factors. This also works inside distributional formulas such as `sigma(1 + (factor || id))`. As with `ar()`, an effect carries into later segments until it is redefined or disabled with `(0 | group)`. See `mcp_example("group")` for a worked example. Correlated multi-coefficient `|` terms are not yet supported.
 
+-   Use `mcp(..., seed = 42)` for reproducible JAGS sampling.
+
 -   Prediction methods now accept `varying = "cp"` and
     `varying = "predictor"` as fast selectors for group-level effects in the
     corresponding formula part. Exact varying-parameter names remain
