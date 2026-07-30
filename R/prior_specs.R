@@ -161,6 +161,68 @@ default_predictor_specs = function(predictors, family) {
 }
 
 
+default_group_specs = function(group_effects, family) {
+  effects = group_effects %>%
+    dplyr::filter(.data$part == "predictor")
+  if (nrow(effects) == 0)
+    return(empty_prior_specs())
+
+  defaults = family$default_prior
+  modeled_dpars = unique(defaults$dpar[defaults$condition == "modeled"])
+  for (dpar in modeled_dpars) {
+    is_modeled = get_dpar_spec(family, dpar)$modeled
+    condition = if (is_modeled) "modeled" else "constant"
+    defaults = defaults %>%
+      dplyr::filter(
+        .data$dpar != .env$dpar |
+          .data$condition == "always" |
+          .data$condition == .env$condition
+      )
+  }
+
+  joined = effects %>%
+    dplyr::left_join(
+      dplyr::select(defaults, "dpar", "par_type", "group_sd_prior"),
+      by = c("dpar", "par_type")
+    )
+  if (any(is.na(joined$group_sd_prior))) {
+    stop_github(
+      "mcp could not find a default group-level SD prior for ",
+      and_collapse(joined$name[is.na(joined$group_sd_prior)])
+    )
+  }
+
+  scaled = grepl("predictor_scale()", joined$group_sd_prior, fixed = TRUE)
+  joined$group_sd_prior[scaled] = vapply(which(scaled), function(i) {
+    gsub(
+      "predictor_scale()",
+      default_predictor_scale(joined$matrix_data[[i]], joined$x_factor[i]),
+      joined$group_sd_prior[i],
+      fixed = TRUE
+    )
+  }, character(1))
+
+  dplyr::bind_rows(
+    tibble::tibble(
+      parameter = joined$sd_name,
+      code = joined$group_sd_prior,
+      description = paste0(
+        "SD of group-level ", joined$dpar, " intercept deviations"
+      ),
+      source = "default"
+    ),
+    tibble::tibble(
+      parameter = joined$name,
+      code = paste0("dnorm(0, ", joined$sd_name, ")"),
+      description = paste0(
+        "Zero-mean group-level ", joined$dpar, " intercept deviations"
+      ),
+      source = "default"
+    )
+  )
+}
+
+
 truncate_cp_prior = function(cps, j, prior_value, context) {
   if (is.numeric(prior_value))
     return(prior_value)

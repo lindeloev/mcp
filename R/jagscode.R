@@ -94,6 +94,7 @@ jagsify_constants = function(x, registry) {
 #' @inheritParams mcp
 #' @param formula_jags String. The formula string returned by `get_formula_jags()`.
 #' @param segments Segment table returned by `get_segment_tables()`.
+#' @param group_effects Group-effect table returned by `get_group_effects()`.
 #' @param ar_order,ma_order NA or positive integer. The GARMA component orders.
 #' @param prior_table Resolved prior metadata from `get_prior()`.
 #' @param prior_context Data summaries used while resolving priors.
@@ -101,7 +102,7 @@ jagsify_constants = function(x, registry) {
 #'   of data constants referenced by change point priors (see `jagsify_constants()`).
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_jags_code = function(prior, segments, formula_jags, ar_order, ma_order, family, par_x,
+get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order, ma_order, family, par_x,
                           prior_table = NULL, prior_context = NULL) {
   prior_description = if (is.null(prior_table)) {
     stats::setNames(rep("Prior", length(prior)), names(prior))
@@ -165,9 +166,9 @@ get_jags_code = function(prior, segments, formula_jags, ar_order, ma_order, fami
   ################
   # ... also handles non-Dirichlet priors
 
-  # Split up priors into population and varying
-  prior_pop = prior[!names(prior) %in% segments$cp_group]
-  prior_varying = prior[names(prior) %in% segments$cp_group]
+  # Split scalar/population priors from group-indexed coefficient priors.
+  prior_pop = prior[!names(prior) %in% group_effects$name]
+  prior_varying = prior[names(prior) %in% group_effects$name]
 
   # Use get_prior_str() to add population-level priors
   mm = paste0(mm, "
@@ -195,11 +196,15 @@ get_jags_code = function(prior, segments, formula_jags, ar_order, ma_order, fami
   if (length(prior_varying) > 0) {
     mm = paste0(mm, "\n  # Priors for varying effects\n")
     for (i in 1:length(prior_varying)) {
+      effect = group_effects[group_effects$name == names(prior_varying)[i], , drop = FALSE]
+      if (nrow(effect) != 1)
+        stop_github("Expected exactly one group-effect row for ", names(prior_varying)[i], ".")
       prior_varying[[i]] = jagsify_constants(prior_varying[[i]], jags_constants)
       mm = paste0(mm, get_prior_str(
         prior = prior_varying,
         i = i,
-        varying_group = stats::na.omit(segments$cp_group_col[segments$cp_group == names(prior_varying[i])]),
+        varying_group = effect$group_col,
+        center = effect$part == "cp",
         description = prior_description[[names(prior_varying)[i]]],
         kind = if (is.null(prior_kind_)) NULL else prior_kind_[[names(prior_varying)[i]]]
       ))
@@ -301,12 +306,14 @@ get_jags_code = function(prior, segments, formula_jags, ar_order, ma_order, fami
 #' @param varying_group String or NULL. Null indicates a population-
 #'   level prior. String indicates a varying-effects prior (one for each group
 #'   level).
+#' @param center Logical. Exactly zero-center a group-indexed vector? This is
+#'   required for change points but not predictor group-level effects.
 #' @param description Short comment to include in generated JAGS code.
 #' @param kind One of distribution, alias, expression, or constant.
 #' @return A string
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @encoding UTF-8
-get_prior_str = function(prior, i, varying_group = NULL,
+get_prior_str = function(prior, i, varying_group = NULL, center = TRUE,
                           description = "Prior", kind = NULL) {
   # Helpers
   value = prior[[i]]
@@ -340,6 +347,10 @@ get_prior_str = function(prior, i, varying_group = NULL,
     # ... and this is a population-level effect
     if (is.null(varying_group)) {
       return(paste0("  ", name, " ~ ", value, "  # ", description, "\n"))
+    } else if (!center) {
+      return(paste0("  for (", varying_group, "_ in 1:n_unique_", varying_group, ") {
+    ", name, "[", varying_group, "_] ~ ", value, "  # ", description, "
+  }\n"))
     } else {
       # It is a varying effect!
       return(paste0("  for (", varying_group, "_ in 1:n_unique_", varying_group, ") {

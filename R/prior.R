@@ -4,14 +4,15 @@
 #'
 #' @keywords internal
 #' @noRd
-get_prior = function(segments, cps, predictors, family, prior = list(), data) {
+get_prior = function(segments, cps, predictors, group_effects, family, prior = list(), data) {
   checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
   context = prior_context(data, segments)
   warn_legacy_prior_constants(prior, context)
 
   specs = dplyr::bind_rows(
     default_cp_specs(cps, context),
-    default_predictor_specs(predictors, family)
+    default_predictor_specs(predictors, family),
+    default_group_specs(group_effects, family)
   )
   specs = overlay_user_prior_specs(specs, prior, cps, context)
 

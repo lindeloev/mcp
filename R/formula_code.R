@@ -13,7 +13,7 @@
 #' @return A string with JAGS code.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_formula_jags = function(segments, predictors, par_x, family) {
+get_formula_jags = function(segments, predictors, group_effects, par_x, family) {
   # Explicit segment -> boundary-code lookup instead of relying on row
   # order matching segment numbers.
   boundary_code = stats::setNames(segments$cp_code_form, segments$segment)
@@ -31,8 +31,25 @@ get_formula_jags = function(segments, predictors, par_x, family) {
   this_cp_lookup = dplyr::select(segments, "segment", "form", this_cp = "cp_code_form")
   next_cp_lookup = dplyr::select(segments, next_intercept = "segment", next_cp = "cp_code_form")
 
-  formula_jags_dpars = predictors %>%
-    dplyr::select(-"matrix_data") %>%  # Throw less data around
+  predictor_group_effects = group_effects %>%
+    dplyr::filter(.data$part == "predictor") %>%
+    dplyr::transmute(
+      dpar = .data$dpar,
+      segment = .data$segment,
+      matrix_col = .data$matrix_col,
+      code_name = paste0(.data$name, "[", .data$group_col, "[i_]]"),
+      order = .data$order,
+      x_factor = .data$x_factor,
+      next_intercept = .data$next_segment
+    )
+  formula_predictors = predictors %>%
+    dplyr::select(
+      "dpar", "segment", "matrix_col", "code_name", "order", "x_factor",
+      "next_intercept"
+    ) %>%
+    dplyr::bind_rows(predictor_group_effects)
+
+  formula_jags_dpars = formula_predictors %>%
     dplyr::left_join(this_cp_lookup, by = "segment") %>%
     dplyr::left_join(next_cp_lookup, by = "next_intercept") %>%
     dplyr::mutate(
@@ -57,7 +74,7 @@ get_formula_jags = function(segments, predictors, par_x, family) {
 
   # Special case when no terms are present for a given dpar (all ~0): insert "dpar = 0".
   for (dpar in family$dpar_specs$dpar) {
-    if (dpar %notin% predictors$dpar)
+    if (dpar %notin% formula_predictors$dpar)
       formula_jags = paste0(formula_jags, "\n\n# All segments are ~ 0 for this par:\nlink_", dpar, "_[i_] = 0")
   }
 
@@ -92,7 +109,7 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x, family) {
     dplyr::group_by(.data$segment) %>%
 
     # Summarise
-    dplyr::group_by(.data$segment, .data$x_factor) %>%
+    dplyr::group_by(.data$segment, .data$x_factor, .data$next_cp) %>%
     dplyr::summarise(
       # The parts
       indicator_this = paste0("  (", par_x, "[i_] >= ", dplyr::first(.data$this_cp), ")"),
@@ -163,20 +180,32 @@ get_garma_boundary_jagscode = function(segments, predictors, par_x) {
 #' @noRd
 #' @param formula_jags Character, often residing in `fit$.internal$formula_jags`.
 #' @param predictors Output of `get_predictors()`.
+#' @param group_effects Output of `get_group_effects()`.
 #' @param pars The list that ends up in `fit$pars`
 #' @return Character
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_formula_r = function(formula_jags, predictors, pars) {
+get_formula_r = function(formula_jags, predictors, group_effects, pars) {
   sim_pars = get_sim_pars(predictors, pars)
   predictor_pars = predictors$code_name
-  cp_pars = setdiff(sim_pars, predictor_pars)
+  predictor_group_effects = group_effects[group_effects$part == "predictor", , drop = FALSE]
+  group_pars = predictor_group_effects$name
+  cp_pars = setdiff(sim_pars, c(predictor_pars, group_pars))
 
   # Replacements that turns rowwise JAGS code into vectorized R code
   replace_args = c(
+    # Group-level predictor coefficients
+    if (length(group_pars) > 0) stats::setNames(
+        paste0("args$", group_pars),
+        paste0(group_pars, "[", predictor_group_effects$group_col, "]")
+      ),
+
     # Predictor part
     stats::setNames(paste0(", args$", sim_pars), paste0(", ", sim_pars)),
-    stats::setNames(paste0("args$", predictor_pars, ", "), paste0(predictor_pars, ", ")),
+    if (length(predictor_pars) > 0) stats::setNames(
+        paste0("args$", predictor_pars, ", "),
+        paste0(predictor_pars, ", ")
+      ),
     stats::setNames(paste0("cbind(args$"), "cbind("),
     stats::setNames("args$", "args$args$"),  # Fix double-inserting args$ above
 

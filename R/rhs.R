@@ -21,7 +21,7 @@ get_par_x = function(model, data, par_x = NULL) {
   }
 
   # Check for exactly one continuous
-  rhs_vars = get_rhs_vars(model)
+  rhs_vars = setdiff(get_rhs_vars(model), get_rhs_group_vars(model))
   data_in_rhs = data %>% dplyr::select(dplyr::all_of(rhs_vars), dplyr::all_of(par_x))
   continuous_cols = lapply(data_in_rhs, is_continuous) %>% unlist()
   par_x_candidates = names(continuous_cols)[continuous_cols]
@@ -79,7 +79,17 @@ get_par_x = function(model, data, par_x = NULL) {
 get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL, check_rank = TRUE) {
   # EMpty segments return no rows
   if (all(as.character(form_rhs) == c("~", "0")))
-    return(data.frame(dpar = character(0), segment = numeric(0)))
+    return(tibble::tibble(
+      dpar = character(),
+      segment = integer(),
+      matrix_name = character(),
+      display_name = character(),
+      code_name = character(),
+      par_type = character(),
+      order = integer(),
+      x_factor = character(),
+      matrix_data = list()
+    ))
 
   checkmate::assert_data_frame(data)
   checkmate::assert_formula(form_rhs)
@@ -285,6 +295,167 @@ term_contains = function(par_x, terms) {
 }
 
 
+#' Is a formula term a group-level term?
+#'
+#' @keywords internal
+#' @noRd
+#' @param term A character representation of one formula term.
+#' @return Logical scalar.
+is_group_term = function(term) {
+  expr = str2lang(term)
+  is.call(expr) && as.character(expr[[1]]) %in% c("|", "||")
+}
+
+
+#' Extract group-level terms from a one-sided formula
+#'
+#' @keywords internal
+#' @noRd
+#' @param form A one-sided formula.
+#' @return Character vector of group-level terms.
+get_group_terms = function(form) {
+  checkmate::assert_formula(form)
+  terms = attr(stats::terms(form), "term.labels")
+  terms[vapply(terms, is_group_term, logical(1))]
+}
+
+
+#' Parse one intercept-only predictor group-level term
+#'
+#' @keywords internal
+#' @noRd
+#' @param term A term such as `"1 | id"` or `"0 | id"`.
+#' @inheritParams get_predictors_dpar
+#' @return A one-row tibble describing either an active group-level intercept
+#'   or an explicit turn-off.
+parse_predictor_group_term = function(term, segment, dpar, data, par_x) {
+  expr = str2lang(term)
+  operator = as.character(expr[[1]])
+  if (!is.call(expr) || operator %notin% c("|", "||") || length(expr) != 3)
+    stop_github("Expected a group-level term, got '", term, "'.")
+
+  group_expr = expr[[3]]
+  if (!is.symbol(group_expr))
+    stop(
+      "Grouping factors in predictor group-level terms must be plain data-column names. Got `",
+      paste(deparse(group_expr), collapse = ""), "` in segment ", segment, "."
+    )
+  group_col = as.character(group_expr)
+  if (group_col %notin% names(data))
+    stop("Grouping factor '", group_col, "' was not found in data.")
+  if (anyNA(data[[group_col]]))
+    stop("Grouping factor '", group_col, "' contains missing values.")
+  if (is.numeric(data[[group_col]]) && any(data[[group_col]] != floor(data[[group_col]])))
+    stop("Grouping factor '", group_col, "' must be integer, character, or factor.")
+
+  coefficient_form = stats::as.formula(call("~", expr[[2]]), env = globalenv())
+  attrs = attributes(stats::terms(coefficient_form))
+  if (length(attrs$term.labels) > 0) {
+    stop(
+      "Predictor group-level effects currently support intercepts only. Got `(",
+      term, ")` in segment ", segment, "."
+    )
+  }
+  active = attrs$intercept == 1
+
+  if (!active) {
+    return(tibble::tibble(
+      dpar = dpar,
+      segment = segment,
+      group_col = group_col,
+      active = FALSE,
+      correlated = operator == "|",
+      population_name = NA_character_,
+      name = NA_character_,
+      sd_name = NA_character_,
+      par_type = NA_character_,
+      matrix_name = NA_character_,
+      display_name = NA_character_,
+      x_factor = NA_character_,
+      matrix_data = list(NULL)
+    ))
+  }
+
+  coefficient = get_predictors_dpar(
+    data, ~1, segment, dpar, par_x, order = NULL, check_rank = FALSE
+  )
+  population_name = coefficient$code_name
+  name = paste0(population_name, "_", group_col)
+
+  tibble::tibble(
+    dpar = dpar,
+    segment = segment,
+    group_col = group_col,
+    active = TRUE,
+    correlated = operator == "|",
+    population_name = population_name,
+    name = name,
+    sd_name = paste0(name, "_sd"),
+    par_type = coefficient$par_type,
+    matrix_name = coefficient$matrix_name,
+    display_name = coefficient$display_name,
+    x_factor = coefficient$x_factor,
+    matrix_data = coefficient$matrix_data
+  )
+}
+
+
+#' Get predictor group-level definitions for one segment
+#'
+#' @keywords internal
+#' @noRd
+#' @inheritParams get_predictors_segment
+#' @return A tibble containing active definitions and explicit turn-offs.
+get_predictor_group_definitions_segment = function(
+  form_rhs, segment, family, data, par_x
+) {
+  form_rhs = stats::as.formula(form_rhs)
+  term_labels = attr(stats::terms(form_rhs), "term.labels")
+  top_level = term_labels[vapply(term_labels, is_group_term, logical(1))]
+
+  definitions = lapply(
+    top_level,
+    parse_predictor_group_term,
+    segment = segment,
+    dpar = "mu",
+    data = data,
+    par_x = par_x
+  )
+
+  for (dpar in setdiff(family$dpar_specs$dpar, "mu")) {
+    dpar_terms = term_labels[stringr::str_detect(term_labels, paste0("^", dpar, "\\("))]
+    if (length(dpar_terms) == 0)
+      next
+    dpar_form = get_term_content(dpar_terms)
+    definitions = c(
+      definitions,
+      lapply(
+        get_group_terms(dpar_form),
+        parse_predictor_group_term,
+        segment = segment,
+        dpar = dpar,
+        data = data,
+        par_x = par_x
+      )
+    )
+  }
+
+  definitions = dplyr::bind_rows(definitions)
+  if (nrow(definitions) == 0)
+    return(definitions)
+
+  keys = paste(definitions$dpar, definitions$group_col)
+  if (anyDuplicated(keys)) {
+    duplicated_keys = unique(keys[duplicated(keys) | duplicated(keys, fromLast = TRUE)])
+    stop(
+      "Only one predictor group-level term per distributional parameter and grouping factor is allowed in a segment. Found ",
+      and_collapse(duplicated_keys), " in segment ", segment, "."
+    )
+  }
+  definitions
+}
+
+
 #' @aliases get_predictors_segment
 #' @keywords internal
 #' @noRd
@@ -297,10 +468,13 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
   checkmate::assert_data_frame(data)
   checkmate::assert_string(par_x)
 
-  # Get general format
+  # Get general format. Top-level group terms belong to mu; group terms inside
+  # distributional wrappers are removed from those formulas below.
   form_rhs = stats::as.formula(form_rhs)
-  attrs = attributes(stats::terms(remove_terms(form_rhs, "varying")))
+  attrs = attributes(stats::terms(form_rhs))
   term_labels = attrs$term.labels
+  top_level_group = vapply(term_labels, is_group_term, logical(1))
+  term_labels = term_labels[!top_level_group]
 
   # Formula wrappers belonging to distributional parameters are declared by
   # the family. AR and MA are separate model components because they carry an
@@ -369,6 +543,7 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
         dplyr::mutate(explicit = FALSE)
     } else if (length(dpar_term) > 0) {
       dpar_form = get_term_content(dpar_term)
+      dpar_form = remove_terms(dpar_form, "varying")
       dpar_pars[[dpar]] = get_predictors_dpar(
         data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank
       ) %>%
@@ -387,6 +562,11 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
 
     if (!is.na(component_stuff$order)) {
       component_form = get_term_content(component_stuff$form_str)
+      if (length(get_group_terms(component_form)) > 0)
+        stop(
+          "Group-level effects inside ", component,
+          "() are not currently supported. Found one in segment ", segment, "."
+        )
       # Expand one formula into a separate regression parameter for each lag.
       arma_pars[[component]] = lapply(
         seq_len(component_stuff$order),
@@ -535,11 +715,11 @@ unpack_arma = function(form_str_in) {
 }
 
 
-#' @aliases get_predictors
+#' @aliases get_predictor_tables
 #' @keywords internal
 #' @describeIn get_predictors_dpar Apply `get_predictors_segment`
 #'   to all segments of a model.
-get_predictors = function(model, data, family, par_x, check_rank = TRUE) {
+get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   rhs = lapply(model, get_rhs)
 
   predictors = lapply(seq_along(rhs), function(segment) get_predictors_segment(rhs[[segment]], segment, family, data, par_x, check_rank)) %>%
@@ -547,7 +727,7 @@ get_predictors = function(model, data, family, par_x, check_rank = TRUE) {
     dplyr::arrange(.data$dpar, .data$segment) %>%
     dplyr::mutate(matrix_col = dplyr::row_number())
   if ("boundary" %notin% names(predictors))
-    predictors$boundary = NA_real_
+    predictors$boundary = rep(NA_real_, nrow(predictors))
 
   assert_unique_predictor_names(predictors)
 
@@ -564,11 +744,61 @@ get_predictors = function(model, data, family, par_x, check_rank = TRUE) {
     dplyr::ungroup() %>%
     dplyr::select("dpar", "segment", "order", "next_intercept")
 
-  # Return: left-join and fill-down. NA means "there is no next intercept-segment"
-  predictors %>%
+  # Population predictors: left-join and fill-down. NA means "there is no next
+  # intercept segment".
+  predictors = predictors %>%
     dplyr::left_join(df_next_intercept, by = c("dpar", "segment", "order")) %>%
     dplyr::group_by(.data$dpar, .data$order) %>%
     tidyr::fill("next_intercept", .direction = "down") %>%
     dplyr::ungroup() %>%
     dplyr::mutate(next_intercept = dplyr::if_else(.data$segment >= .data$next_intercept, NA_integer_, .data$next_intercept))
+
+  # Predictor group-level effects have an independent segment lifetime. A
+  # later definition for the same (dpar, grouping factor) replaces the current
+  # one; `(0 | group)` is represented as an inactive definition that ends it.
+  definitions = lapply(
+    seq_along(rhs),
+    function(segment) get_predictor_group_definitions_segment(
+      rhs[[segment]], segment, family, data, par_x
+    )
+  ) %>%
+    dplyr::bind_rows()
+
+  predictor_group_effects = definitions
+  if (nrow(definitions) > 0) {
+    predictor_group_effects = definitions %>%
+      dplyr::arrange(.data$dpar, .data$group_col, .data$segment) %>%
+      dplyr::group_by(.data$dpar, .data$group_col) %>%
+      dplyr::mutate(next_segment = as.integer(dplyr::lead(.data$segment))) %>%
+      dplyr::ungroup() %>%
+      dplyr::filter(.data$active) %>%
+      dplyr::mutate(
+        population_name = dplyr::if_else(
+          .data$population_name %in% predictors$code_name,
+          .data$population_name,
+          NA_character_
+        ),
+        part = "predictor",
+        order = NA_integer_,
+        matrix_col = nrow(predictors) + dplyr::row_number()
+      ) %>%
+      dplyr::select(
+        "population_name", "name", "part", "group_col", "segment", "dpar",
+        "sd_name", "par_type", "matrix_name", "display_name", "order",
+        "x_factor", "matrix_col", "matrix_data", "next_segment", "correlated"
+      )
+  }
+
+  list(
+    predictors = predictors,
+    group_effects = predictor_group_effects
+  )
+}
+
+
+#' @aliases get_predictors
+#' @keywords internal
+#' @describeIn get_predictors_dpar Return only the population predictor table.
+get_predictors = function(model, data, family, par_x, check_rank = TRUE) {
+  get_predictor_tables(model, data, family, par_x, check_rank)$predictors
 }

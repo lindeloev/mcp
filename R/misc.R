@@ -404,6 +404,30 @@ get_rhs_vars = function(model) {
     unique()
 }
 
+
+#' Returns grouping-factor variables in predictor group-level terms
+#'
+#' @keywords internal
+#' @noRd
+#' @inheritParams mcp
+#' @return Character vector of grouping-factor column names.
+get_rhs_group_vars = function(model) {
+  find_groups = function(expr) {
+    if (!is.call(expr))
+      return(character())
+    if (as.character(expr[[1]]) %in% c("|", "||"))
+      return(all.vars(expr[[3]]))
+    children = as.list(expr)[-1]
+    unique(unlist(lapply(children, find_groups)))
+  }
+
+  model %>%
+    lapply(get_rhs) %>%
+    lapply(function(form) find_groups(form[[2]])) %>%
+    unlist() %>%
+    unique()
+}
+
 #' Returns all variables in the predictor parts of an mcpmodel
 #'
 #' @aliases get_model_vars
@@ -423,21 +447,67 @@ get_model_vars = function(model) {
 }
 
 
-#' Create a model matrix from the population-coefficients table
+#' Get names of columns in the predictor design matrix
 #'
-#' cbinds `predictors$matrix_data`.
+#' @keywords internal
+#' @noRd
+#' @param predictors The output of `get_predictors()`.
+#' @param group_effects The output of `get_group_effects()`.
+#' @return Character vector ordered by design-matrix column.
+get_predictor_design_names = function(predictors, group_effects = NULL) {
+  group_predictors = if (is.null(group_effects) || "matrix_col" %notin% names(group_effects)) {
+    tibble::tibble(matrix_col = integer(), name = character())
+  } else {
+    group_effects[group_effects$part == "predictor", c("matrix_col", "name"), drop = FALSE]
+  }
+  design = dplyr::bind_rows(
+    tibble::tibble(matrix_col = predictors$matrix_col, name = predictors$code_name),
+    group_predictors
+  )
+  design$name[order(design$matrix_col)]
+}
+
+
+#' Create a model matrix from the predictor metadata tables
+#'
+#' Combines population and group-level predictor design columns.
 #' @aliases get_predictor_matrix
 #' @keywords internal
 #' @noRd
 #' @param predictors The output of `get_predictors()`.
-#' @return A matrix with one column for each row in `predictors`.
+#' @param group_effects The output of `get_group_effects()`.
+#' @return A matrix with one column for each population or group-level
+#'   predictor coefficient.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_predictor_matrix = function(predictors) {
+get_predictor_matrix = function(predictors, group_effects = NULL) {
   checkmate::assert_data_frame(predictors)
-  suppressMessages(dplyr::bind_cols(predictors$matrix_data, .name_repair = "unique")) %>% # Suppress message about lacking column names
+  group_predictors = if (is.null(group_effects) || "matrix_col" %notin% names(group_effects)) {
+    tibble::tibble(
+      matrix_col = integer(), name = character(), matrix_data = list()
+    )
+  } else {
+    group_effects[group_effects$part == "predictor", , drop = FALSE]
+  }
+  design = dplyr::bind_rows(
+    dplyr::transmute(
+      predictors,
+      matrix_col = .data$matrix_col,
+      name = .data$code_name,
+      matrix_data = .data$matrix_data
+    ),
+    dplyr::transmute(
+      group_predictors,
+      matrix_col = .data$matrix_col,
+      name = .data$name,
+      matrix_data = .data$matrix_data
+    )
+  ) %>%
+    dplyr::arrange(.data$matrix_col)
+
+  suppressMessages(dplyr::bind_cols(design$matrix_data, .name_repair = "unique")) %>% # Suppress message about lacking column names
     as.matrix() %>%
-    magrittr::set_colnames(predictors$code_name)
+    magrittr::set_colnames(design$name)
 }
 
 

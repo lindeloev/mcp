@@ -116,11 +116,13 @@ normalize_family_default_priors = function(defaults) {
   checkmate::assert_data_frame(defaults)
   assert_data_cols(defaults, c("dpar", "par_type", "prior"))
   defaults = tibble::as_tibble(defaults)
+  if (!"group_sd_prior" %in% names(defaults))
+    defaults$group_sd_prior = NA_character_
   if (!"description" %in% names(defaults))
     defaults$description = NA_character_
   if (!"condition" %in% names(defaults))
     defaults$condition = "always"
-  defaults[, c("dpar", "par_type", "prior", "description", "condition")]
+  defaults[, c("dpar", "par_type", "prior", "group_sd_prior", "description", "condition")]
 }
 
 
@@ -139,14 +141,14 @@ mcpfamily_gaussian = function(family) {
   }
 
   default_prior = tibble::tribble(
-    ~dpar, ~par_type, ~prior, ~description, ~condition,
-    "mu", "Intercept", paste0("dt(", mu_location, ", ", mu_scale, ", 3)"), "Robustly centered mean intercept with a minimum scale of 2.5", "always",
-    "mu", "dummy", paste0("dt(0, ", mu_scale, ", 3)"), "Regularizing mean contrast on the link scale", "always",
-    "mu", "slope", paste0("dt(0, ", mu_scale, " / predictor_scale(), 3)"), "Regularizing mean coefficient scaled to a reference predictor change", "always",
-    "sigma", "Intercept", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Positive residual SD calibrated on the response scale", "constant",
-    "sigma", "Intercept", "dt(0, 2.5, 3)", "Weakly regularizing modeled log-SD intercept", "modeled",
-    "sigma", "dummy", "dt(0, 2.5, 3)", "Regularizing log-SD contrast", "always",
-    "sigma", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "Regularizing log-SD coefficient scaled to a reference predictor change", "always"
+    ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
+    "mu", "Intercept", paste0("dt(", mu_location, ", ", mu_scale, ", 3)"), paste0("dt(0, ", mu_scale, ", 3) T(0, )"), "Robustly centered mean intercept with a minimum scale of 2.5", "always",
+    "mu", "dummy", paste0("dt(0, ", mu_scale, ", 3)"), paste0("dt(0, ", mu_scale, ", 3) T(0, )"), "Regularizing mean contrast on the link scale", "always",
+    "mu", "slope", paste0("dt(0, ", mu_scale, " / predictor_scale(), 3)"), paste0("dt(0, ", mu_scale, " / predictor_scale(), 3) T(0, )"), "Regularizing mean coefficient scaled to a reference predictor change", "always",
+    "sigma", "Intercept", paste0("dt(0, ", response_scale, ", 3) T(0, )"), paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Positive residual SD calibrated on the response scale", "constant",
+    "sigma", "Intercept", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Weakly regularizing modeled log-SD intercept", "modeled",
+    "sigma", "dummy", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Regularizing log-SD contrast", "always",
+    "sigma", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "dt(0, 2.5 / predictor_scale(), 3) T(0, )", "Regularizing log-SD coefficient scaled to a reference predictor change", "always"
   )
 
   response = list(
@@ -201,17 +203,17 @@ mcpfamily_gaussian = function(family) {
 mcpfamily_binomial = function(family) {
   if (family$link == "identity") {
     default_prior = tibble::tribble(
-      ~dpar, ~par_type, ~prior, ~description, ~condition,
-      "mu", "Intercept", "dbeta(1, 1)", "Uniform probability intercept", "always",
-      "mu", "dummy", "dunif(-1, 1)", "Probability difference between levels", "always",
-      "mu", "slope", "dt(0, 1 / predictor_scale(), 3)", "Regularizing probability coefficient scaled to a reference predictor change", "always"
+      ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
+      "mu", "Intercept", "dbeta(1, 1)", "dt(0, 1, 3) T(0, )", "Uniform probability intercept", "always",
+      "mu", "dummy", "dunif(-1, 1)", "dt(0, 1, 3) T(0, )", "Probability difference between levels", "always",
+      "mu", "slope", "dt(0, 1 / predictor_scale(), 3)", "dt(0, 1 / predictor_scale(), 3) T(0, )", "Regularizing probability coefficient scaled to a reference predictor change", "always"
     )
   } else if (family$link %in% c("logit", "probit")) {
     default_prior = tibble::tribble(
-      ~dpar, ~par_type, ~prior, ~description, ~condition,
-      "mu", "Intercept", "dt(0, 1.5, 3)", "Weakly regularizing link-scale intercept", "always",
-      "mu", "dummy", "dt(0, 1.5, 3)", "Weakly regularizing categorical contrast on the link scale", "always",
-      "mu", "slope", "dt(0, 1.5 / predictor_scale(), 3)", "Weakly regularizing link-scale coefficient scaled to a reference predictor change", "always"
+      ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
+      "mu", "Intercept", "dt(0, 1.5, 3)", "dt(0, 1.5, 3) T(0, )", "Weakly regularizing link-scale intercept", "always",
+      "mu", "dummy", "dt(0, 1.5, 3)", "dt(0, 1.5, 3) T(0, )", "Weakly regularizing categorical contrast on the link scale", "always",
+      "mu", "slope", "dt(0, 1.5 / predictor_scale(), 3)", "dt(0, 1.5 / predictor_scale(), 3) T(0, )", "Weakly regularizing link-scale coefficient scaled to a reference predictor change", "always"
     )
   } else {
     stop("mcp has no default priors for binomial(link = \"", family$link, "\") so it's likely not supported.")
@@ -268,17 +270,17 @@ mcpfamily_binomial = function(family) {
 mcpfamily_bernoulli = function(family) {
   if (family$link == "identity") {
     default_prior = tibble::tribble(
-      ~dpar, ~par_type, ~prior, ~description, ~condition,
-      "mu", "Intercept", "dbeta(1, 1)", "Uniform probability intercept", "always",
-      "mu", "dummy", "dunif(-1, 1)", "Probability difference between levels", "always",
-      "mu", "slope", "dt(0, 1 / predictor_scale(), 3)", "Regularizing probability coefficient scaled to a reference predictor change", "always"
+      ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
+      "mu", "Intercept", "dbeta(1, 1)", "dt(0, 1, 3) T(0, )", "Uniform probability intercept", "always",
+      "mu", "dummy", "dunif(-1, 1)", "dt(0, 1, 3) T(0, )", "Probability difference between levels", "always",
+      "mu", "slope", "dt(0, 1 / predictor_scale(), 3)", "dt(0, 1 / predictor_scale(), 3) T(0, )", "Regularizing probability coefficient scaled to a reference predictor change", "always"
     )
   } else if (family$link %in% c("logit", "probit")) {
     default_prior = tibble::tribble(
-      ~dpar, ~par_type, ~prior, ~description, ~condition,
-      "mu", "Intercept", "dt(0, 1.5, 3)", "Weakly regularizing link-scale intercept", "always",
-      "mu", "dummy", "dt(0, 1.5, 3)", "Weakly regularizing categorical contrast on the link scale", "always",
-      "mu", "slope", "dt(0, 1.5 / predictor_scale(), 3)", "Weakly regularizing link-scale coefficient scaled to a reference predictor change", "always"
+      ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
+      "mu", "Intercept", "dt(0, 1.5, 3)", "dt(0, 1.5, 3) T(0, )", "Weakly regularizing link-scale intercept", "always",
+      "mu", "dummy", "dt(0, 1.5, 3)", "dt(0, 1.5, 3) T(0, )", "Weakly regularizing categorical contrast on the link scale", "always",
+      "mu", "slope", "dt(0, 1.5 / predictor_scale(), 3)", "dt(0, 1.5 / predictor_scale(), 3) T(0, )", "Weakly regularizing link-scale coefficient scaled to a reference predictor change", "always"
     )
   } else {
     stop("mcp has no default priors for bernoulli(link = \"", family$link, "\") so it's likely not supported.")
@@ -317,18 +319,18 @@ mcpfamily_poisson = function(family) {
   response_scale = "max(2.5, round(mad(.y), 1))"
   if (family$link == "identity") {
     default_prior = tibble::tribble(
-      ~dpar, ~par_type, ~prior, ~description, ~condition,
-      "mu", "Intercept", paste0("dt(", response_location, ", ", response_scale, ", 3) T(0, )"), "Positive count intercept calibrated on the response scale", "always",
-      "mu", "dummy", paste0("dt(0, ", response_scale, ", 3)"), "Count contrast calibrated on the response scale", "always",
-      "mu", "slope", paste0("dt(0, ", response_scale, " / predictor_scale(), 3)"), "Count coefficient scaled to a reference predictor change", "always"
+      ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
+      "mu", "Intercept", paste0("dt(", response_location, ", ", response_scale, ", 3) T(0, )"), paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Positive count intercept calibrated on the response scale", "always",
+      "mu", "dummy", paste0("dt(0, ", response_scale, ", 3)"), paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Count contrast calibrated on the response scale", "always",
+      "mu", "slope", paste0("dt(0, ", response_scale, " / predictor_scale(), 3)"), paste0("dt(0, ", response_scale, " / predictor_scale(), 3) T(0, )"), "Count coefficient scaled to a reference predictor change", "always"
     )
   } else if (family$link == "log") {
     count_y = "log(pmax(.y, 0.1))"
     default_prior = tibble::tribble(
-      ~dpar, ~par_type, ~prior, ~description, ~condition,
-      "mu", "Intercept", paste0("dt(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)), 3)"), "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
-      "mu", "dummy", "dt(0, 2.5, 3)", "Regularizing categorical contrast on the log scale", "always",
-      "mu", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "Regularizing log-count coefficient scaled to a reference predictor change", "always"
+      ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
+      "mu", "Intercept", paste0("dt(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)), 3)"), "dt(0, 2.5, 3) T(0, )", "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
+      "mu", "dummy", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Regularizing categorical contrast on the log scale", "always",
+      "mu", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "dt(0, 2.5 / predictor_scale(), 3) T(0, )", "Regularizing log-count coefficient scaled to a reference predictor change", "always"
     )
   } else {
     stop("mcp has no default priors for poisson(link = \"", family$link, "\") so it's likely not supported.")
@@ -377,14 +379,14 @@ mcpfamily_negbinomial = function(family) {
 
   count_y = "log(pmax(.y, 0.1))"
   default_prior = tibble::tribble(
-    ~dpar, ~par_type, ~prior, ~description, ~condition,
-    "mu", "Intercept", paste0("dt(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)), 3)"), "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
-    "mu", "dummy", "dt(0, 2.5, 3)", "Regularizing categorical count contrast on the log scale", "always",
-    "mu", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "Regularizing log-count coefficient scaled to a reference predictor change", "always",
-    "shape", "Intercept", "dloginvgamma(0.4, 0.3)", "Weakly regularizing positive overdispersion shape", "constant",
-    "shape", "Intercept", "dt(0, 2.5, 3)", "Weakly regularizing modeled log-shape intercept", "modeled",
-    "shape", "dummy", "dt(0, 2.5, 3)", "Regularizing shape contrast on the log scale", "always",
-    "shape", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "Regularizing log-shape coefficient scaled to a reference predictor change", "always"
+    ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
+    "mu", "Intercept", paste0("dt(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)), 3)"), "dt(0, 2.5, 3) T(0, )", "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
+    "mu", "dummy", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Regularizing categorical count contrast on the log scale", "always",
+    "mu", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "dt(0, 2.5 / predictor_scale(), 3) T(0, )", "Regularizing log-count coefficient scaled to a reference predictor change", "always",
+    "shape", "Intercept", "dloginvgamma(0.4, 0.3)", NA_character_, "Weakly regularizing positive overdispersion shape", "constant",
+    "shape", "Intercept", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Weakly regularizing modeled log-shape intercept", "modeled",
+    "shape", "dummy", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Regularizing shape contrast on the log scale", "always",
+    "shape", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "dt(0, 2.5 / predictor_scale(), 3) T(0, )", "Regularizing log-shape coefficient scaled to a reference predictor change", "always"
   )
   response = list(
     validate = function(y, data, columns) {
@@ -476,7 +478,7 @@ resolve_dpar_specs = function(family, predictors, model = NULL) {
   if (!is.null(model)) {
     term_labels = unlist(lapply(model, function(segment) {
       rhs = get_rhs(segment)
-      attr(stats::terms(remove_terms(rhs, "varying")), "term.labels")
+      attr(stats::terms(rhs), "term.labels")
     }))
     declared_dpars = family$dpar_specs$dpar[vapply(
       family$dpar_specs$dpar,

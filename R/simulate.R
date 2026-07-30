@@ -12,11 +12,14 @@
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 relevel_newdata = function(newdata, fit) {
   # Check that the necessary data is available
-  rhs_vars = get_rhs_vars(fit$model)
+  group_cols = unique(stats::na.omit(
+    get_fit_model_tables(fit)$group_effects$group_col
+  ))
+  rhs_vars = setdiff(get_rhs_vars(fit$model), group_cols)
   assert_data_cols(newdata, cols = rhs_vars, fail_funcs = c(is.na, is.nan, is.infinite))
 
   # Make sure to carry over the exact level-structure of the original model
-  for (col_name in rhs_vars) {
+  for (col_name in intersect(c(rhs_vars, group_cols), names(newdata))) {
     org_col = fit$data[, col_name]
     new_col = newdata[, col_name]
     if (is.character(org_col) | is.factor(org_col)) {
@@ -56,16 +59,37 @@ add_rhs_predictors = function(newdata, fit) {
     relevel_newdata(fit)
 
   # Get predictor matrix
-  predictors = get_fit_model_tables(fit)$predictors
-  new_predictors = get_predictors(
-    fit$model, newdata, fit$family, fit$pars$x, check_rank = FALSE
+  model_tables = get_fit_model_tables(fit)
+  predictors = model_tables$predictors
+  group_effects = model_tables$group_effects
+
+  # Grouping columns do not enter an intercept-only design matrix, but the
+  # parser still validates their model declaration. Supply a fitted level only
+  # while rebuilding metadata when population-only newdata omits the column.
+  design_data = newdata
+  for (group_col in setdiff(
+    unique(stats::na.omit(group_effects$group_col)), names(design_data)
+  ))
+    design_data[[group_col]] = fit$data[[group_col]][1]
+
+  new_tables = get_predictor_tables(
+    fit$model, design_data, fit$family, fit$pars$x, check_rank = FALSE
   )
-  predictor_matrix = get_predictor_matrix(new_predictors)
+  new_predictors = new_tables$predictors
+  new_group_effects = get_group_effects(
+    model_tables$cps, new_tables$group_effects
+  )
+  predictor_matrix = get_predictor_matrix(new_predictors, new_group_effects)
 
   # Check that the variable structure matches
   if (nrow(predictors) != nrow(new_predictors) ||
       any(predictors$code_name != new_predictors$code_name))
     stop_github("The new predictors table does not match the fitted model.")
+  fitted_group = group_effects[group_effects$part == "predictor", , drop = FALSE]
+  rebuilt_group = new_group_effects[new_group_effects$part == "predictor", , drop = FALSE]
+  if (nrow(fitted_group) != nrow(rebuilt_group) ||
+      any(fitted_group$name != rebuilt_group$name))
+    stop_github("The new group-effects table does not match the fitted model.")
 
   # All permutations of rows in newdata and parameters
   as.data.frame(predictor_matrix) %>%
@@ -247,10 +271,13 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     fit$family = mcpfamily(fit$family)
   model_tables = get_fit_model_tables(fit)
   predictors = model_tables$predictors
+  group_effects = model_tables$group_effects
 
   # Assert that the ellipsis contains the expected argument names
   param_pars = get_sim_pars(predictors, fit$pars)
-  pred_pars = paste0(".pred_", predictors$code_name)
+  pred_pars = paste0(
+    ".pred_", get_predictor_design_names(predictors, group_effects)
+  )
   operation = switch(.type, fitted = "epred", loglik = "log_lik", predict = "rng")
   is_arma = any(predictors$dpar %in% c("ar", "ma"))
   aux_operations = c(operation, if (is_arma && .arma) "garma")
@@ -377,7 +404,9 @@ simulate_atomic = function(fit,
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_data_frame(newdata)
   args = list(...)
-  model_predictors = get_fit_model_tables(fit)$predictors
+  model_tables = get_fit_model_tables(fit)
+  model_predictors = model_tables$predictors
+  model_group_effects = model_tables$group_effects
   expected_args = get_sim_pars(model_predictors, fit$pars)
   if (is.null(names(args)) | any(names(args) == ""))
     stop("All arguments must be named.")
@@ -399,7 +428,10 @@ simulate_atomic = function(fit,
   if (.type == "predict" && .arma && is_arma(fit)) {
     values = evaluate_model_dpars(
       fit, as.list(pred_param_grid),
-      paste0(".pred_", model_predictors$code_name)
+      paste0(
+        ".pred_",
+        get_predictor_design_names(model_predictors, model_group_effects)
+      )
     )
     warn_arma_simulation(values)
   }

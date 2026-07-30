@@ -368,12 +368,13 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
 #' @noRd
 #' @param predictors A table from `get_predictors()`.
 #' @param cps A table of change points from `get_segment_tables()`.
+#' @param group_effects A table from `get_group_effects()`.
 #' @param family An `mcpfamily` object.
 #' @return A tibble with one row per model parameter (population and
 #'   group), with columns `name`, `part`, `scope`, `segment`, and `dpar`.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_pars_table = function(predictors, cps, family) {
+get_pars_table = function(predictors, cps, group_effects, family) {
   cp_pars = tibble::tibble(
     name = character(), part = character(), scope = character(),
     segment = integer(), dpar = character(), .tie = integer()
@@ -405,8 +406,31 @@ get_pars_table = function(predictors, cps, family) {
       part = "predictor",
       scope = "population",
       segment = .data$segment,
-      dpar = ifelse(.data$dpar %in% c("ar", "ma"), paste0(.data$dpar, .data$order), .data$dpar),
+      dpar = as.character(ifelse(.data$dpar %in% c("ar", "ma"), paste0(.data$dpar, .data$order), .data$dpar)),
       .tie = .data$matrix_col
+    )
+
+  predictor_group_pars = group_effects %>%
+    dplyr::filter(.data$part == "predictor") %>%
+    dplyr::transmute(
+      name = .data$sd_name,
+      part = "predictor",
+      scope = "population",
+      segment = .data$segment,
+      dpar = .data$dpar,
+      .tie = .data$matrix_col + 0.1
+    ) %>%
+    dplyr::bind_rows(
+      group_effects %>%
+        dplyr::filter(.data$part == "predictor") %>%
+        dplyr::transmute(
+          name = .data$name,
+          part = "predictor",
+          scope = "group",
+          segment = .data$segment,
+          dpar = .data$dpar,
+          .tie = .data$matrix_col + 0.2
+        )
     )
 
   # Canonical group order: cp, mu, other family dpars (declared order), then
@@ -418,7 +442,7 @@ get_pars_table = function(predictors, cps, family) {
   )]
   dpar_levels = c("cp", "mu", setdiff(family$dpar_specs$dpar, "mu"), arma_labels)
 
-  dplyr::bind_rows(cp_pars, predictor_pars) %>%
+  dplyr::bind_rows(cp_pars, predictor_pars, predictor_group_pars) %>%
     dplyr::mutate(dpar = factor(.data$dpar, levels = dpar_levels)) %>%
     dplyr::arrange(.data$dpar, .data$segment, .data$.tie) %>%
     dplyr::mutate(dpar = as.character(.data$dpar)) %>%
@@ -431,9 +455,32 @@ get_pars_table = function(predictors, cps, family) {
 #' @keywords internal
 #' @noRd
 #' @param cps A table from `get_segment_tables()`.
+#' @param predictor_group_effects Predictor-side rows returned by
+#'   `get_predictor_tables()`.
 #' @return A tibble with one row per group-level effect.
-get_group_effects = function(cps) {
-  cps %>%
+get_group_effects = function(cps, predictor_group_effects = NULL) {
+  if (is.null(predictor_group_effects) || nrow(predictor_group_effects) == 0) {
+    predictor_group_effects = tibble::tibble(
+      population_name = character(),
+      name = character(),
+      part = character(),
+      group_col = character(),
+      segment = integer(),
+      dpar = character(),
+      sd_name = character(),
+      par_type = character(),
+      matrix_name = character(),
+      display_name = character(),
+      order = integer(),
+      x_factor = character(),
+      matrix_col = integer(),
+      matrix_data = list(),
+      next_segment = integer(),
+      correlated = logical()
+    )
+  }
+
+  cp_group_effects = cps %>%
     dplyr::filter(.data$varying) %>%
     dplyr::transmute(
       population_name = as.character(.data$name),
@@ -444,6 +491,8 @@ get_group_effects = function(cps) {
       dpar = "cp",
       sd_name = as.character(.data$sd_name)
     )
+
+  dplyr::bind_rows(cp_group_effects, predictor_group_effects)
 }
 
 

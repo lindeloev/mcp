@@ -23,6 +23,14 @@
 #'
 #'   * *Extended formulas:*, e.g., `~ I(x^2) + exp(z)`. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'
+#'   * *Group-level intercepts:* e.g., `~ 1 + (1 | id)`. Predictor group-level
+#'     effects carry into later segments until redefined, and `(0 | id)` turns
+#'     them off. The same syntax works inside distributional formulas, e.g.,
+#'     `~ 1 + sigma(1 + (1 | id))`. `(1 || id)` is also accepted and is
+#'     equivalent while only intercepts are supported. Group-level slopes and
+#'     group-level terms inside `ar()` or `ma()` are not yet supported.
+#'     [Read more](https://lindeloev.github.io/mcp/articles/varying.html).
+#'
 #'   * *Variance:* e.g., `~sigma(1)` for a simple variance change or
 #'     `~sigma(1 + I(x^2))`) for more advanced variance structures. Explicit
 #'     sigma formulas model log-SD, while the implicit constant `sigma_1` in a
@@ -260,11 +268,13 @@ mcp = function(model,
   segment_tables = get_segment_tables(model, data, family, par_x)
   segments = segment_tables$segments
   cps = segment_tables$cps
-  predictors = get_predictors(model, data, family, par_x)
+  predictor_tables = get_predictor_tables(model, data, family, par_x)
+  predictors = predictor_tables$predictors
   family = resolve_dpar_specs(family, predictors, model)
+  group_effects = get_group_effects(cps, predictor_tables$group_effects)
 
   # Make prior
-  prior = get_prior(segments, cps, predictors, family, prior, data)
+  prior = get_prior(segments, cps, predictors, group_effects, family, prior, data)
   prior_table = attr(prior, "prior_table")
   prior_context = attr(prior, "prior_context")
   attr(prior, "prior_table") = NULL
@@ -273,8 +283,7 @@ mcp = function(model,
   # Make lists of parameters
   all_pars = names(prior)  # There is a prior for every parameter
   family_dpars = family$dpar_specs$dpar
-  pars_table = get_pars_table(predictors, cps, family)
-  group_effects = get_group_effects(cps)
+  pars_table = get_pars_table(predictors, cps, group_effects, family)
   model_tables = list(
     segments = segments,
     cps = cps,
@@ -286,11 +295,11 @@ mcp = function(model,
     x = par_x,
     y = unique(segments$y),
     cp = paste0("cp_", 1:nrow(segments))[seq_len(nrow(segments)-1)],  # N_cp = N_segments - 1
-    fixed = pars_table$name[pars_table$dpar == "mu"],
+    fixed = predictors$code_name[predictors$dpar == "mu"],
     population = c(),
     varying = logical0_to_null(group_effects$name),
-    sigma = pars_table$name[pars_table$dpar %in% setdiff(family_dpars, "mu")],
-    arma = pars_table$name[pars_table$dpar %notin% c("cp", family_dpars)],
+    sigma = predictors$code_name[predictors$dpar %in% setdiff(family_dpars, "mu")],
+    arma = predictors$code_name[predictors$dpar %notin% family_dpars],
     trials = logical0_to_null(stats::na.omit(unique(segments$trials))),
     weights = logical0_to_null(stats::na.omit(unique(segments$weights)))
   )
@@ -310,15 +319,15 @@ mcp = function(model,
   }
 
   # Make formulas
-  formula_jags = get_formula_jags(segments, predictors, par_x, family)
-  formula_r = get_formula_r(formula_jags, predictors, pars)
+  formula_jags = get_formula_jags(segments, predictors, group_effects, par_x, family)
+  formula_r = get_formula_r(formula_jags, predictors, group_effects, pars)
 
   # Make jags code if it is not provided by the user
   if (is.null(jags_code)) {
     ar_order = get_arma_order(predictors, "ar")
     ma_order = get_arma_order(predictors, "ma")
     jags_code = get_jags_code(
-      prior, segments, formula_jags, ar_order, ma_order, family, par_x,
+      prior, segments, group_effects, formula_jags, ar_order, ma_order, family, par_x,
       prior_table, prior_context
     )
   }
@@ -327,7 +336,7 @@ mcp = function(model,
   ##########
   # SAMPLE #
   ##########
-  jags_data = get_jags_data(data, family, segments, predictors, jags_code)
+  jags_data = get_jags_data(data, family, segments, predictors, group_effects, jags_code)
 
   # Sample posterior
   if (sample %in% c("post", "both")) {
@@ -342,7 +351,7 @@ mcp = function(model,
       n.adapt = adapt,
       inits = inits
     ) %>%
-      recover_levels(data, segments)
+      recover_levels(data, group_effects)
 
     class(mcmc_post) = "mcmc.list"
     warn_nonconvergence(mcmc_post)
@@ -367,7 +376,7 @@ mcp = function(model,
       n.adapt = adapt,
       inits = inits
     ) %>%
-      recover_levels(data, segments)
+      recover_levels(data, group_effects)
 
     class(mcmc_prior) = "mcmc.list"
   } else {

@@ -119,7 +119,7 @@ plot_pars = function(fit,
     }
   } else if ("varying" %in% pars) {
     # Regex search for varying effects
-    regex_pars = paste0("^", fit$pars$varying)
+    regex_pars = paste0("^", fit$pars$varying, "\\[")
     pars = character(0)
   }
 

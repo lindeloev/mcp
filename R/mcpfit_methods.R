@@ -59,17 +59,20 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE) {
 
   samples = posterior_draws(fit, prior = prior)
 
-  # Select only varying or only population-level columns in data
+  # Select only group-indexed or only population-scope columns.
+  all_cols = posterior::variables(samples)
   if (varying == FALSE) {
-    regex_pars = paste0(paste0("^", fit$pars$population, "$"), collapse = "|")
+    get_cols = all_cols[all_cols %in% fit$pars$population]
   } else {
-    regex_pars = paste0("^", paste(fit$pars$varying, collapse="|^"))
-    if (regex_pars == "^")
+    get_cols = all_cols[vapply(
+      all_cols,
+      function(column) any(startsWith(column, paste0(fit$pars$varying, "["))),
+      logical(1)
+    )]
+    if (length(get_cols) == 0)
       stop("There were no matching parameters in the model.")
   }
 
-  all_cols = posterior::variables(samples)
-  get_cols = all_cols[stringr::str_detect(all_cols, regex_pars)]
   samples = posterior::subset_draws(samples, variable = get_cols)
 
   # Get parameter estimates and diagnostics
@@ -512,8 +515,7 @@ resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
 #'   * `TRUE` All varying effects (`fit$pars$varying`).
 #'   * `FALSE` No varying effects (`c()`).
 #'   * `"cp"` or `"predictor"`: All varying effects belonging to that part of
-#'     the model. Predictor-side varying effects are not yet supported, so
-#'     `"predictor"` currently selects none.
+#'     the model.
 #'   * Character vector: Only include specified varying parameters - see
 #'     `fit$pars$varying`.
 #' @param absolute
@@ -577,10 +579,13 @@ tidy_samples = function(
     is_in_varying = absolute %in% varying_info$pars
     if (any(!is_in_varying))
       stop("The following parameter names in `absolute` are not in `varying`: ", and_collapse(absolute[!is_in_varying]))
-
-    absolute_cps = varying_info$effects$population_name[
-      varying_info$effects$name %in% absolute
+    absolute_effects = varying_info$effects[
+      varying_info$effects$name %in% absolute, , drop = FALSE
     ]
+    if (any(absolute_effects$part != "cp"))
+      stop("`absolute` can select change-point group-level effects only.")
+
+    absolute_cps = absolute_effects$population_name
   }
 
   # ----- GET THESE PARAMETERS AS TIDY DRAWS -----

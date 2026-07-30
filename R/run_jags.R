@@ -113,8 +113,9 @@ run_jags = function(data,
 #' @param data A tibble
 #' @param segments A segment table returned by `get_segment_tables()`.
 #' @param predictors Returned by `get_predictors()`.
-get_jags_data = function(data, family, segments, predictors, jags_code) {
-  cols_varying = unique(stats::na.omit(segments$cp_group_col))
+#' @param group_effects Returned by `get_group_effects()`.
+get_jags_data = function(data, family, segments, predictors, group_effects, jags_code) {
+  cols_varying = unique(stats::na.omit(group_effects$group_col))
 
   # Start with "raw" data
   aux_columns = get_family_aux_columns(family, segments)
@@ -132,7 +133,7 @@ get_jags_data = function(data, family, segments, predictors, jags_code) {
   }
 
   # Predictor design matrix. Keep the JAGS data name for custom-code compatibility.
-  jags_data$rhs_matrix_ = get_predictor_matrix(predictors)
+  jags_data$rhs_matrix_ = get_predictor_matrix(predictors, group_effects)
 
   # Add named data constants for change point prior bounds (see jagsify_constants())
   jags_constants = attr(jags_code, "jags_constants")
@@ -159,21 +160,20 @@ get_jags_data = function(data, family, segments, predictors, jags_code) {
 #' @noRd
 #' @param samples An mcmc.list with varying columns starting in `mcmc_col`.
 #' @param data A tibble or data.frame
-recover_levels = function(samples, data, segments) {
-  for (i in seq_len(nrow(segments))) {
-    segment = segments[i, ]
-    if (!is.na(segment$cp_group_col)) {
-      # Get vectors of old ("from") and replacement column names in samples
-      from = colnames(samples[[1]])[stringr::str_starts(colnames(samples[[1]]), paste0(segment$cp_group, '\\['))]  # Current column names
-      to = sprintf(paste0(segment$cp_group, '[%s]'), unique(data[, segment$cp_group_col]))  # Desired column names
+#' @param group_effects Returned by `get_group_effects()`.
+recover_levels = function(samples, data, group_effects) {
+  for (i in seq_len(nrow(group_effects))) {
+    effect = group_effects[i, ]
+    # Get vectors of old ("from") and replacement column names in samples
+    from = colnames(samples[[1]])[stringr::str_starts(colnames(samples[[1]]), paste0(effect$name, '\\['))]
+    to = sprintf(paste0(effect$name, '[%s]'), unique(data[, effect$group_col]))
 
-      # Recode column names on each list (chain) using lapply
-      names(to) = from
-      samples = lapply(samples, function(x) {
-        colnames(x) = dplyr::recode(colnames(x), !!!to)
-        x
-      })
-    }
+    # Recode column names on each list (chain) using lapply
+    names(to) = from
+    samples = lapply(samples, function(x) {
+      colnames(x) = dplyr::recode(colnames(x), !!!to)
+      x
+    })
   }
 
   samples
