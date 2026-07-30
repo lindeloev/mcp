@@ -99,3 +99,57 @@ test_matches_simulated = function(fit) {
   testthat::expect_true(correctly_estimated)
   testthat::expect_true(good_eff)
 }
+
+
+#' Test the structure and rendering of an mcp_example() plot
+#'
+#' @keywords internal
+#' @param plot The plot produced by `mcp_example()`.
+#' @param example The name passed to `mcp_example()`.
+test_example_plot = function(plot, example) {
+  patchwork_examples = c("ar", "variance")
+  titles = list(
+    ar = c("plot(fit)", 'plot_dpar(fit, "ar1")'),
+    binomial = "plot(fit)",
+    demo = "plot(fit)",
+    group = 'plot(fit, facet_by = "participant", color_by = "condition")',
+    intercepts = "plot(fit)",
+    multiple = 'plot(fit, color_by = "group")',
+    quadratic = "plot(fit)",
+    variance = c('plot(fit, q_predict = TRUE)', 'plot_dpar(fit, "sigma")'),
+    varying = 'plot(fit, facet_by = "id")'
+  )
+
+  testthat::expect_s3_class(plot, "ggplot")
+  testthat::expect_identical(inherits(plot, "patchwork"), example %in% patchwork_examples)
+  testthat::expect_no_error(ggplot2::ggplotGrob(plot))
+
+  plot_titles = if (inherits(plot, "patchwork")) {
+    vapply(seq_along(plot), function(i) plot[[i]]$labels$title, character(1))
+  } else {
+    plot$labels$title
+  }
+  testthat::expect_identical(unname(plot_titles), titles[[example]])
+
+  if (example %in% c("group", "varying"))
+    testthat::expect_s3_class(plot$facet, "FacetWrap")
+  if (example == "group")
+    testthat::expect_identical(plot$labels$colour, "condition")
+  if (example == "multiple")
+    testthat::expect_identical(plot$labels$colour, "group")
+}
+
+
+#' Snapshot an mcp_example() plot using an explicit theme
+#'
+#' @keywords internal
+#' @param plot The plot produced by `mcp_example()`.
+#' @param example The name passed to `mcp_example()`.
+snapshot_example_plot = function(plot, example) {
+  if (inherits(plot, "patchwork"))
+    plot = plot & ggplot2::theme_gray()
+  else
+    plot = plot + ggplot2::theme_gray()
+
+  vdiffr::expect_doppelganger(paste("mcp example", example), plot)
+}
