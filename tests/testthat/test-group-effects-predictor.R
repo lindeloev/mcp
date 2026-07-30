@@ -33,7 +33,10 @@ test_that("predictor group intercepts carry, replace, and turn off", {
   expect_equal(effect$next_segment, 3L)
   expect_equal(effect$dpar, "mu")
   expect_equal(effect$matrix_col, nrow(get_fit_model_tables(fit)$predictors) + 1L)
+  expect_true(effect$sd_name %in% names(formals(fit$simulate)))
+  expect_false(effect$name %in% names(formals(fit$simulate)))
 
+  set.seed(42)
   simulated = fit$simulate(
     fit,
     group_data,
@@ -43,12 +46,13 @@ test_that("predictor group intercepts carry, replace, and turn off", {
     Intercept_2 = 100,
     Intercept_3 = 200,
     sigma_1 = 1,
-    Intercept_1_id = 10,
+    Intercept_1_id_sd = 10,
     .type = "fitted"
   )
+  deviation = attr(simulated, "simulated")$Intercept_1_id
   expect_equal(
     as.numeric(simulated),
-    c(10, 10, 110, 110, 110, 200, 200, 200)
+    c(deviation[1:2], 100 + deviation[3:5], rep(200, 3))
   )
 
   replacement = mcp(
@@ -97,14 +101,22 @@ test_that("predictor group intercepts work for family dpars and group-only formu
   expect_match(fit$jags_code, "sigma_1_id\\[id_\\] ~")
   expect_false(grepl("Intercept_1_id_uncentered", fit$jags_code, fixed = TRUE))
 
+  set.seed(42)
   simulated = fit$simulate(
     fit,
     group_data,
-    Intercept_1_id = rep(c(1, 2), 4),
-    sigma_1_id = rep(log(c(1, 2)), 4),
+    Intercept_1_id_sd = 1,
+    sigma_1_id_sd = 0.5,
     .type = "fitted"
   )
-  expect_equal(as.numeric(simulated), rep(c(1, 2), 4))
+  simulation = attr(simulated, "simulated")
+  expect_equal(as.numeric(simulated), simulation$Intercept_1_id)
+  expect_equal(simulation$Intercept_1_id_sd, 1)
+  expect_equal(simulation$sigma_1_id_sd, 0.5)
+  expect_equal(
+    simulation$Intercept_1_id[group_data$id == "a"],
+    rep(simulation$Intercept_1_id[1], 4)
+  )
 })
 
 
@@ -137,9 +149,7 @@ test_that("double-bar terms expand into independent group coefficients", {
   expect_match(fit$jags_code, "conditionB_1_id\\[id_\\] ~")
   expect_match(fit$jags_code, "conditionC_1_id\\[id_\\] ~")
 
-  intercept_by_id = c(a = -1, b = 0, c = 1)[coefficient_data$id]
-  condition_b_by_id = c(a = 10, b = 20, c = 30)[coefficient_data$id]
-  condition_c_by_id = c(a = 100, b = 200, c = 300)[coefficient_data$id]
+  set.seed(42)
   simulated = fit$simulate(
     fit,
     coefficient_data,
@@ -149,11 +159,15 @@ test_that("double-bar terms expand into independent group coefficients", {
     Intercept_2 = 2,
     Intercept_3 = 3,
     sigma_1 = 1,
-    Intercept_1_id = intercept_by_id,
-    conditionB_1_id = condition_b_by_id,
-    conditionC_1_id = condition_c_by_id,
+    Intercept_1_id_sd = 1,
+    conditionB_1_id_sd = 10,
+    conditionC_1_id_sd = 100,
     .type = "fitted"
   )
+  simulation = attr(simulated, "simulated")
+  intercept_by_id = simulation$Intercept_1_id
+  condition_b_by_id = simulation$conditionB_1_id
+  condition_c_by_id = simulation$conditionC_1_id
   expected = ifelse(
     coefficient_data$x < 4.5,
     1 + intercept_by_id +

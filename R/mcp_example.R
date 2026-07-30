@@ -132,17 +132,13 @@ model = list(
 )
 
 # Simulate balanced data with 12 levels of the grouping factor
-set.seed(42)
+set.seed(200)
 data = tidyr::expand_grid(
   participant = sprintf('participant_%02d', 1:12),
   condition = factor(c('A', 'B')),
   x = seq(0, 100, length.out = 12)
 )
-data$participant_numeric = as.numeric(factor(data$participant))
 data$y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
-
-intercept_deviation = 2 * qnorm(((1:12 - 0.5) / 12))
-condition_deviation = 1.5 * qnorm(((c(7:12, 1:6) - 0.5) / 12))
 
 empty = mcp(model, data, par_x = 'x', sample = FALSE)
 data$y = empty$simulate(empty, data,
@@ -151,15 +147,15 @@ data$y = empty$simulate(empty, data,
   conditionB_1 = 4,
   Intercept_2 = 15,
   conditionB_2 = -2,
-  Intercept_1_participant = intercept_deviation[data$participant_numeric],
-  conditionB_1_participant = condition_deviation[data$participant_numeric],
+  Intercept_1_participant_sd = 2,
+  conditionB_1_participant_sd = 1.5,
   sigma_1 = 1.5
 )
 
 # Run sampling
 fit = mcp(
   model, data, par_x = 'x', sample = sample,
-  adapt = 3000, iter = 19000
+  adapt = 2000, iter = 20000
 )",
 
 

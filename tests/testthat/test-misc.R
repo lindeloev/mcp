@@ -222,6 +222,10 @@ test_that("group example contains independent factor effects", {
   )
   expect_match(fit$call, "condition || participant", fixed = TRUE)
   expect_equal(length(unique(fit$data$participant)), 12)
+  simulated = attr(fit$data$y, "simulated")
+  expect_equal(simulated$Intercept_1_participant_sd, 2)
+  expect_equal(simulated$conditionB_1_participant_sd, 1.5)
+  expect_length(unique(simulated$Intercept_1_participant), 12)
 })
 
 test_that("cores is deprecated and ignored", {

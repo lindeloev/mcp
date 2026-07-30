@@ -407,7 +407,7 @@ mcp = function(model,
     # Extracted model
     pars = pars,
     jags_code = jags_code,
-    simulate = get_fitsimulate(pars),
+    simulate = get_fitsimulate(pars, group_effects),
 
     # Pass info to *.mcpfit() functions.
     # Not meant to be used by the end user.

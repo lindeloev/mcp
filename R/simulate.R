@@ -407,7 +407,13 @@ simulate_atomic = function(fit,
   model_tables = get_fit_model_tables(fit)
   model_predictors = model_tables$predictors
   model_group_effects = model_tables$group_effects
-  expected_args = get_sim_pars(model_predictors, fit$pars)
+  predictor_group_effects = model_group_effects[
+    model_group_effects$part == "predictor", , drop = FALSE
+  ]
+  expected_args = c(
+    setdiff(get_sim_pars(model_predictors, fit$pars), predictor_group_effects$name),
+    predictor_group_effects$sd_name
+  )
   if (is.null(names(args)) | any(names(args) == ""))
     stop("All arguments must be named.")
   checkmate::assert_subset(
@@ -417,10 +423,25 @@ simulate_atomic = function(fit,
   )
   lapply(args, checkmate::assert_numeric, any.missing = FALSE)
   lapply(args, function(x) stopifnot(length(x) == 1 | length(x) == nrow(newdata)))
+  for (sd_name in predictor_group_effects$sd_name)
+    checkmate::assert_number(args[[sd_name]], lower = 0, .var.name = sd_name)
 
   # Remove response column if present - it is to be simulated
   if (fit$pars$y %in% colnames(newdata))
     newdata = dplyr::select(newdata, -dplyr::all_of(fit$pars$y))
+
+  # Simulate one predictor deviation per grouping level, then map to rows.
+  simulated = args
+  for (i in seq_len(nrow(predictor_group_effects))) {
+    effect = predictor_group_effects[i, ]
+    assert_data_cols(newdata, effect$group_col)
+    group = newdata[[effect$group_col]]
+    group_levels = unique(group)
+    group_deviations = stats::rnorm(length(group_levels), 0, args[[effect$sd_name]])
+    args[[effect$name]] = group_deviations[match(group, group_levels)]
+    simulated[[effect$name]] = args[[effect$name]]
+    args[[effect$sd_name]] = NULL
+  }
 
   # Get permutations
   predictor_data = add_rhs_predictors(newdata, fit)
@@ -451,7 +472,7 @@ simulate_atomic = function(fit,
     dplyr::pull(.data$.simulated_y)
 
   # add_simulated etc. and return
-  attr(simulated_y, "simulated") = args  # Set as attribute
+  attr(simulated_y, "simulated") = simulated  # Set as attribute
   class(attr(simulated_y, "simulated")) = c("mcplist", "list")  # for nicer printing
   simulated_y
 }
@@ -465,16 +486,19 @@ simulate_atomic = function(fit,
 #' @aliases get_fitsimulate
 #' @keywords internal
 #' @noRd
-#' @param pars A list of model parameters, typically from `fit$pars`
+#' @param pars A list of model parameters, typically from `fit$pars`.
+#' @param group_effects The output of `get_group_effects()`.
 #' @return An R function.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_fitsimulate = function(pars) {
+get_fitsimulate = function(pars, group_effects) {
   # List of argument names
-  sim_pars = c(pars$cp, pars$fixed[!stringr::str_ends(pars$fixed, "_sd")])  # Remove hyperparameter on varying effects from pars$reg since it is not used for simulation
+  sim_pars = c(pars$cp, pars$fixed)
+  predictor_group_effects = group_effects[group_effects$part == "predictor", , drop = FALSE]
+  cp_group_effects = group_effects[group_effects$part == "cp", , drop = FALSE]
 
   args_required = c(sim_pars, pars$sigma, pars$arma)
-  args_default = c(pars$varying)
+  args_default = c(cp_group_effects$name, predictor_group_effects$sd_name)
   args_all = c(args_required, args_default)
 
   args_withdefault = paste0(args_default, " = 0")

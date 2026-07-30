@@ -125,9 +125,10 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
           next
         }
 
-        # Name like the MCMC columns and use only unique combinations (assuming identical value for each level)
-        value = value[!duplicated(value)]
-        names(value) = unique(paste0(this_varying, "[", labs, "]"))
+        # Name like the MCMC columns and use one value for each group level.
+        keep = !duplicated(labs)
+        value = value[keep]
+        names(value) = paste0(this_varying, "[", labs[keep], "]")
 
         # Delete the simulation vector and add the new label-value pairs to list
         simulated[[this_varying]] = NULL
