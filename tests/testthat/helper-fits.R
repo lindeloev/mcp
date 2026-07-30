@@ -40,7 +40,8 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL) {
 
   # Fit
   quiet_out = purrr::quietly(mcp)(model, newdata, par_x = "x", chains = 5, adapt = 10000, iter = 3000)  # Ensure convergence
-  fit <<- quiet_out$result  # assign to global namespace for easier debugging
+  fit = quiet_out$result
+  assign("fit", fit, envir = .GlobalEnv)  # for easier debugging
 
   test_matches_simulated(fit)
 }

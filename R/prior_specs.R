@@ -201,13 +201,19 @@ default_group_specs = function(group_effects, family) {
       fixed = TRUE
     )
   }, character(1))
+  coefficient_description = ifelse(
+    joined$par_type == "Intercept",
+    "intercept",
+    paste0("coefficient `", joined$display_name, "`")
+  )
 
   dplyr::bind_rows(
     tibble::tibble(
       parameter = joined$sd_name,
       code = joined$group_sd_prior,
       description = paste0(
-        "SD of group-level ", joined$dpar, " intercept deviations"
+        "SD of group-level ", joined$dpar, " ",
+        coefficient_description, " deviations"
       ),
       source = "default"
     ),
@@ -215,7 +221,8 @@ default_group_specs = function(group_effects, family) {
       parameter = joined$name,
       code = paste0("dnorm(0, ", joined$sd_name, ")"),
       description = paste0(
-        "Zero-mean group-level ", joined$dpar, " intercept deviations"
+        "Zero-mean group-level ", joined$dpar, " ",
+        coefficient_description, " deviations"
       ),
       source = "default"
     )

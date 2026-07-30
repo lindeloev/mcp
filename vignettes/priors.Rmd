@@ -310,7 +310,7 @@ The general principles belong here: parameterization, data-based scaling, proper
 
 # Default priors on group-level effects
 
-Each group-level effect has a population-level SD parameter. Predictor-side deviations use a zero-mean normal distribution governed by that SD, as in ordinary multilevel regression. The SD receives a positive, weakly informative prior from the family and link specification. For distributional parameters, the deviations and their SD are on that parameter's link scale; for example, effects inside an explicit `sigma()` formula are on the log-SD scale.
+Each group-level effect has a population-level SD parameter. Predictor-side deviations use a zero-mean normal distribution governed by that SD, as in ordinary multilevel regression. With a multi-coefficient `||` term, every independent coefficient has its own SD. The SD receives a positive, weakly informative prior from the family and link specification. For distributional parameters, the deviations and their SD are on that parameter's link scale; for example, effects inside an explicit `sigma()` formula are on the log-SD scale.
 
 Group-level change-point deviations have additional constraints: they are exactly zero-centered and their default priors keep the resulting change points between the relevant bounds. Predictor-side deviations are mean-zero in their hierarchical distribution but are not forced to sum exactly to zero. See [group-level effects with mcp](https://lindeloev.github.io/mcp/articles/varying.html).
 

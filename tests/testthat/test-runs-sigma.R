@@ -11,6 +11,7 @@ test_bad(bad_variance)
 good_variance = list(
   list(y ~ 1 + sigma(1)),
   list(y ~ 1 + sigma(1 + (1 | id))),
+  list(y ~ 1 + sigma(1 + (ok_id_factor || id))),
   list(y ~ 1 + sigma(x + I(x^2))),
   list(y ~ 1 + sigma(1 + sin(x))),
   list(y ~ 1,

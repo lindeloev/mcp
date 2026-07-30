@@ -274,10 +274,18 @@ test_hypothesis = function(fit, prior) {
 
 test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
   # Settings
+  varying_cols = na.omit(unique(
+    get_fit_model_tables(fit)$group_effects$group_col
+  ))
+  rhs_cols = intersect(
+    setdiff(get_rhs_vars(fit$model), varying_cols),
+    colnames(fit$data)
+  )
   expected_colnames = c(
     fit$pars$x,
     fit$pars$trials,
-    na.omit(unique(get_fit_model_tables(fit)$group_effects$group_col)),  # varying effects
+    rhs_cols,
+    varying_cols,
     colname, "error", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
   )
   if (length(fit$pars$arma) > 0 || colname %in% c("loglik", "residuals"))
@@ -298,7 +306,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
       # overflow derived Poisson summaries. Data keys must remain intact and
       # the estimate itself must not be entirely missing.
       data_cols = intersect(
-        c(fit$pars$x, fit$pars$y, fit$pars$trials, na.omit(unique(get_fit_model_tables(fit)$group_effects$group_col))),
+        c(fit$pars$x, fit$pars$y, fit$pars$trials, rhs_cols, varying_cols),
         colnames(result)
       )
       testthat::expect_false(anyNA(result[, data_cols, drop = FALSE]))
@@ -401,7 +409,13 @@ test_pp_eval = function(fit, prior = FALSE) {
     #testthat::expect_true(nrow(result_more) == nrows * ndraws * 2)  # nrows * ndraws * nchains
     testthat::expect_true(sum(is.na(result_more)) == 0)
 
+    group_effects = get_fit_model_tables(fit)$group_effects
+    all_group_cols = unique(stats::na.omit(group_effects$group_col))
     selected_cp = unpack_varying(fit, pars = "cp")
+    rhs_cols = intersect(
+      setdiff(get_rhs_vars(fit$model), all_group_cols),
+      colnames(fit$data)
+    )
     expected_colnames_more = c(
       # Tidybayes stuff
       ".chain", ".iteration", ".draw",
@@ -413,6 +427,7 @@ test_pp_eval = function(fit, prior = FALSE) {
       # Predictors
       fit$pars$trials,
       fit$pars$x,
+      rhs_cols,
       selected_cp$cols,
       "data_row",
       "fitted"

@@ -4,7 +4,7 @@
 
 -   Supports several continuous predictors, categorical predictors, interactions, etc. for all terms on RHS. E.g., `~ 1 + x + x:group + sigma(1 + group) + ar(2, 0 + z)`. Basically, it now "feels" like `lm()` for each distributional parameter in each segment. All mcp functions support this now, including `plot()`, `fit$simulate()`, `predict(fit, newdata = ...)`, `hypothesis()`, `pp_check()`, etc. Explore `ex = mcp_example("multiple")` to see it in action. Default priors generally align with brms, with some adjustments to the change-point model.
 
--   Predictor formulas now support intercept-only group-level effects (sometimes called random effects or varying efffects) using the familiar `(1 | group)` or `(1 || group)` syntax from `lme4` and `brms`. This also works inside distributional formulas such as `sigma(1 + (1 | id))` and `shape(1 + (1 | id))`. As with `ar()`, an effect carries into later segments until it is redefined or disabled with `(0 | group)`. Group-level slopes and correlated effects are not yet supported.
+-   Predictor formulas now support group-level effects (sometimes called random or varying effects) using familiar `lme4` and `brms` syntax. `(1 | group)` specifies a group-level intercept, while `(1 + x || group)` and `(factor || group)` support independent coefficients, including slopes and factors. This also works inside distributional formulas such as `sigma(1 + (factor || id))`. As with `ar()`, an effect carries into later segments until it is redefined or disabled with `(0 | group)`. Correlated multi-coefficient `|` terms are not yet supported.
 
 -   Prediction methods now accept `varying = "cp"` and
     `varying = "predictor"` as fast selectors for group-level effects in the

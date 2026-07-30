@@ -23,13 +23,9 @@
 #'
 #'   * *Extended formulas:*, e.g., `~ I(x^2) + exp(z)`. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'
-#'   * *Group-level intercepts:* e.g., `~ 1 + (1 | id)`. Predictor group-level
-#'     effects carry into later segments until redefined, and `(0 | id)` turns
-#'     them off. The same syntax works inside distributional formulas, e.g.,
-#'     `~ 1 + sigma(1 + (1 | id))`. `(1 || id)` is also accepted and is
-#'     equivalent while only intercepts are supported. Group-level slopes and
-#'     group-level terms inside `ar()` or `ma()` are not yet supported.
-#'     [Read more](https://lindeloev.github.io/mcp/articles/varying.html).
+#'   * *Group-level effects:* e.g., `~ 1 + (1 | id)` for a group-level
+#'     intercept, or `~ 1 + (factor || id)` for independent intercept and
+#'     factor-contrast deviations. [Read more](https://lindeloev.github.io/mcp/articles/varying.html).
 #'
 #'   * *Variance:* e.g., `~sigma(1)` for a simple variance change or
 #'     `~sigma(1 + I(x^2))`) for more advanced variance structures. Explicit

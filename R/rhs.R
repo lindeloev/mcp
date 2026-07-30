@@ -320,15 +320,17 @@ get_group_terms = function(form) {
 }
 
 
-#' Parse one intercept-only predictor group-level term
+#' Parse one predictor group-level term
 #'
 #' @keywords internal
 #' @noRd
-#' @param term A term such as `"1 | id"` or `"0 | id"`.
+#' @param term A term such as `"1 | id"`, `"factor || id"`, or `"0 | id"`.
 #' @inheritParams get_predictors_dpar
-#' @return A one-row tibble describing either an active group-level intercept
-#'   or an explicit turn-off.
-parse_predictor_group_term = function(term, segment, dpar, data, par_x) {
+#' @return A tibble with one row per group-level coefficient, or one inactive
+#'   row for an explicit turn-off.
+parse_predictor_group_term = function(
+  term, segment, dpar, data, par_x, check_rank = TRUE
+) {
   expr = str2lang(term)
   operator = as.character(expr[[1]])
   if (!is.call(expr) || operator %notin% c("|", "||") || length(expr) != 3)
@@ -350,19 +352,26 @@ parse_predictor_group_term = function(term, segment, dpar, data, par_x) {
 
   coefficient_form = stats::as.formula(call("~", expr[[2]]), env = globalenv())
   attrs = attributes(stats::terms(coefficient_form))
-  if (length(attrs$term.labels) > 0) {
+  if (operator == "|" && length(attrs$term.labels) > 0) {
     stop(
-      "Predictor group-level effects currently support intercepts only. Got `(",
-      term, ")` in segment ", segment, "."
+      "Predictor group-level slopes and factor terms currently require `||`, ",
+      "for example `(1 + x || id)`. Correlated `|` terms are not yet supported. ",
+      "Got `(", term, ")` in segment ", segment, "."
     )
   }
-  active = attrs$intercept == 1
+  coefficient = get_predictors_dpar(
+    data, coefficient_form, segment, dpar, par_x,
+    order = NULL, check_rank = check_rank
+  )
+  assert_unique_predictor_names(coefficient)
+  active = nrow(coefficient) > 0
 
   if (!active) {
     return(tibble::tibble(
       dpar = dpar,
       segment = segment,
       group_col = group_col,
+      group_term = term,
       active = FALSE,
       correlated = operator == "|",
       population_name = NA_character_,
@@ -371,32 +380,30 @@ parse_predictor_group_term = function(term, segment, dpar, data, par_x) {
       par_type = NA_character_,
       matrix_name = NA_character_,
       display_name = NA_character_,
+      order = NA_integer_,
       x_factor = NA_character_,
       matrix_data = list(NULL)
     ))
   }
 
-  coefficient = get_predictors_dpar(
-    data, ~1, segment, dpar, par_x, order = NULL, check_rank = FALSE
-  )
-  population_name = coefficient$code_name
-  name = paste0(population_name, "_", group_col)
-
-  tibble::tibble(
-    dpar = dpar,
-    segment = segment,
-    group_col = group_col,
-    active = TRUE,
-    correlated = operator == "|",
-    population_name = population_name,
-    name = name,
-    sd_name = paste0(name, "_sd"),
-    par_type = coefficient$par_type,
-    matrix_name = coefficient$matrix_name,
-    display_name = coefficient$display_name,
-    x_factor = coefficient$x_factor,
-    matrix_data = coefficient$matrix_data
-  )
+  coefficient %>%
+    dplyr::transmute(
+      dpar = .data$dpar,
+      segment = .data$segment,
+      group_col = .env$group_col,
+      group_term = .env$term,
+      active = TRUE,
+      correlated = .env$operator == "|",
+      population_name = .data$code_name,
+      name = paste0(.data$code_name, "_", .env$group_col),
+      sd_name = paste0(.data$code_name, "_", .env$group_col, "_sd"),
+      par_type = .data$par_type,
+      matrix_name = .data$matrix_name,
+      display_name = .data$display_name,
+      order = as.integer(.data$order),
+      x_factor = .data$x_factor,
+      matrix_data = .data$matrix_data
+    )
 }
 
 
@@ -407,7 +414,7 @@ parse_predictor_group_term = function(term, segment, dpar, data, par_x) {
 #' @inheritParams get_predictors_segment
 #' @return A tibble containing active definitions and explicit turn-offs.
 get_predictor_group_definitions_segment = function(
-  form_rhs, segment, family, data, par_x
+  form_rhs, segment, family, data, par_x, check_rank = TRUE
 ) {
   form_rhs = stats::as.formula(form_rhs)
   term_labels = attr(stats::terms(form_rhs), "term.labels")
@@ -419,7 +426,8 @@ get_predictor_group_definitions_segment = function(
     segment = segment,
     dpar = "mu",
     data = data,
-    par_x = par_x
+    par_x = par_x,
+    check_rank = check_rank
   )
 
   for (dpar in setdiff(family$dpar_specs$dpar, "mu")) {
@@ -435,7 +443,8 @@ get_predictor_group_definitions_segment = function(
         segment = segment,
         dpar = dpar,
         data = data,
-        par_x = par_x
+        par_x = par_x,
+        check_rank = check_rank
       )
     )
   }
@@ -444,7 +453,11 @@ get_predictor_group_definitions_segment = function(
   if (nrow(definitions) == 0)
     return(definitions)
 
-  keys = paste(definitions$dpar, definitions$group_col)
+  group_terms = definitions %>%
+    dplyr::distinct(
+      .data$dpar, .data$group_col, .data$segment, .data$group_term
+    )
+  keys = paste(group_terms$dpar, group_terms$group_col, group_terms$segment)
   if (anyDuplicated(keys)) {
     duplicated_keys = unique(keys[duplicated(keys) | duplicated(keys, fromLast = TRUE)])
     stop(
@@ -754,23 +767,31 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     dplyr::mutate(next_intercept = dplyr::if_else(.data$segment >= .data$next_intercept, NA_integer_, .data$next_intercept))
 
   # Predictor group-level effects have an independent segment lifetime. A
-  # later definition for the same (dpar, grouping factor) replaces the current
-  # one; `(0 | group)` is represented as an inactive definition that ends it.
+  # later definition for the same (dpar, grouping factor) replaces the whole
+  # current coefficient block; `(0 | group)` is represented as an inactive
+  # definition that ends it.
   definitions = lapply(
     seq_along(rhs),
     function(segment) get_predictor_group_definitions_segment(
-      rhs[[segment]], segment, family, data, par_x
+      rhs[[segment]], segment, family, data, par_x, check_rank
     )
   ) %>%
     dplyr::bind_rows()
 
   predictor_group_effects = definitions
   if (nrow(definitions) > 0) {
-    predictor_group_effects = definitions %>%
+    lifetimes = definitions %>%
+      dplyr::distinct(.data$dpar, .data$group_col, .data$segment) %>%
       dplyr::arrange(.data$dpar, .data$group_col, .data$segment) %>%
       dplyr::group_by(.data$dpar, .data$group_col) %>%
       dplyr::mutate(next_segment = as.integer(dplyr::lead(.data$segment))) %>%
-      dplyr::ungroup() %>%
+      dplyr::ungroup()
+
+    predictor_group_effects = definitions %>%
+      dplyr::left_join(
+        lifetimes,
+        by = c("dpar", "group_col", "segment")
+      ) %>%
       dplyr::filter(.data$active) %>%
       dplyr::mutate(
         population_name = dplyr::if_else(
@@ -779,7 +800,6 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
           NA_character_
         ),
         part = "predictor",
-        order = NA_integer_,
         matrix_col = nrow(predictors) + dplyr::row_number()
       ) %>%
       dplyr::select(

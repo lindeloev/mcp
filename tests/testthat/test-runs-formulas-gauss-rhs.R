@@ -48,7 +48,8 @@ good_intercepts = list(
        ~ 1),
   list(y ~ 1 + (1 | id),  # Predictor group intercept carries until explicit turn-off
        ~ 1,
-       ~ 1 + (0 | id))
+       ~ 1 + (0 | id)),
+  list(y ~ 1 + (ok_id_factor || id))  # Independent intercept and factor deviations
 )
 
 test_good(good_intercepts)

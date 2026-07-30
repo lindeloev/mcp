@@ -7,7 +7,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-`mcp` supports group-level effects (also called varying or random effects) in both the predictor and change-point parts of a formula. The syntax and terminology follow `lme4` and `brms`: `(1|group)` specifies a group-level intercept, `fixef()` reports population-level coefficients, and `ranef()` reports group-level deviations.
+`mcp` supports group-level effects (also called varying or random effects) in both the predictor and change-point parts of a formula. The syntax and terminology follow `lme4` and `brms`: `(1|group)` specifies a group-level intercept, `(factor||group)` specifies independent group coefficients, `fixef()` reports population-level coefficients, and `ranef()` reports group-level deviations.
 
 This article in brief:
 
@@ -70,6 +70,19 @@ model = list(
 
 Here, the group-level intercept introduced in segment 1 also applies in segment 2. A later `(1|id)` would replace it from that segment onward, while `(0|id)` turns it off, as in segment 3 above. Persistence is tracked separately for each grouping factor and distributional parameter.
 
+Use `||` for independent group-level slopes and factor coefficients:
+
+```{r}
+model = list(
+  y ~ 1 + condition + (condition||id),
+  ~ 0 + x
+)
+```
+
+With the default treatment coding, `(condition||id)` contains a group-level intercept and one group-level deviation for each non-reference contrast of `condition`. `(0 + condition||id)` instead gives each factor level its own group-level coefficient. Similarly, `(1 + z||id)` specifies independent group-level intercepts and slopes on a numeric predictor `z`. Each coefficient has its own population-level SD.
+
+The population-level and group-level formulas need not contain the same coefficients. For example, `y ~ 1 + (0 + condition||id)` has a population intercept but only group-specific condition coefficients.
+
 Group-level intercepts also work inside distributional formulas:
 
 ```{r}
@@ -78,9 +91,13 @@ model = list(
 )
 ```
 
-This model has group-level deviations in both the conditional mean and log-SD. `(1||id)` is accepted too and is currently equivalent to `(1|id)`. The first version supports intercepts only, so group-level slopes and factor terms such as `(1 + x|id)` or `(0 + factor|id)` give an explicit error. Group-level terms inside `ar()` and `ma()` are also not supported.
+This model has group-level deviations in both the conditional mean and log-SD. The `||` syntax works inside distributional formulas too, for example `sigma(1 + (condition||id))`.
 
-Unlike change-point deviations, predictor deviations are not constrained to sum exactly to zero. They have an ordinary mean-zero hierarchical normal distribution, matching multilevel regression in `lme4` and `brms`. For example, `(1|id)` in segment 1 creates the deviation vector `Intercept_1_id` and its population-level SD parameter `Intercept_1_id_sd`; inside `sigma()`, the corresponding names start with `sigma`.
+A later predictor group-level term for the same distributional parameter and grouping factor replaces the entire earlier block. Thus, if `(condition||id)` is followed in a later segment by `(1||id)`, only the new intercept deviation applies from that segment onward. `(0|id)` turns the block off.
+
+Multi-coefficient terms with `|`, such as `(1 + x|id)`, would imply correlated group coefficients and are not yet supported; use `(1 + x||id)` for independent coefficients. Group-level terms inside `ar()` and `ma()` are also not supported.
+
+Unlike change-point deviations, predictor deviations are not constrained to sum exactly to zero. They have an ordinary mean-zero hierarchical normal distribution, matching multilevel regression in `lme4` and `brms`. For example, `(1|id)` in segment 1 creates the deviation vector `Intercept_1_id` and its population-level SD parameter `Intercept_1_id_sd`. `(condition||id)` additionally creates names such as `conditionB_1_id` and `conditionB_1_id_sd`; inside `sigma()`, the corresponding names start with `sigma`.
 
 
 
