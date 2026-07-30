@@ -14,7 +14,9 @@
 #'   observations on `x`.
 #' @param hyperparameters Optional generative parameters that are not arguments
 #'   to `fit$simulate()`, such as group-level SDs.
-test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL) {
+#' @param family A family or `mcpfamily` used for both simulation and fitting.
+test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
+                     family = gaussian()) {
   # COMMENT THIS LINE TO ENABLE EXTENSIVE TESTS. THEN REVERT. DO NOT COMMIT.
   # It's a slow test so we do it rarely.
   testthat::skip("This time-consuming test is only run locally before release.")
@@ -26,7 +28,7 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL) {
       y = rnorm(400)
     )
   }
-  empty = mcp(model, data = newdata, sample = FALSE, par_x = "x")
+  empty = mcp(model, data = newdata, family = family, sample = FALSE, par_x = "x")
   simulated_y = do.call(empty$simulate, c(list(fit = empty, newdata = newdata), simulated))
   if (!is.null(hyperparameters)) {
     simulation_values = c(
@@ -36,10 +38,10 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL) {
     class(simulation_values) = c("mcplist", "list")
     attr(simulated_y, "simulated") = simulation_values
   }
-  newdata$y = simulated_y
+  newdata[[empty$pars$y]] = simulated_y
 
   # Fit
-  quiet_out = purrr::quietly(mcp)(model, newdata, par_x = "x", chains = 5, adapt = 10000, iter = 3000)  # Ensure convergence
+  quiet_out = purrr::quietly(mcp)(model, newdata, family = family, par_x = "x", chains = 5, adapt = 10000, iter = 3000)  # Ensure convergence
   fit = quiet_out$result
   assign("fit", fit, envir = .GlobalEnv)  # for easier debugging
 
@@ -53,18 +55,22 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL) {
 #' @keywords internal
 #' @param all_models A list of lists. Each sub-list is an unnamed list of
 #'   formulas with one named entry called "simulated" with parameter values to
-#'   be used for simulation.
-apply_test_fit = function(desc, all_models) {
+#'   be used for simulation. It can optionally include a `family` entry.
+#' @param family Default family used when a model does not supply one.
+apply_test_fit = function(desc, all_models, family = gaussian()) {
   for (this in all_models) {
     # Split into formulas and simulation values
     simulated = this[["simulated"]]
     newdata = this[["newdata"]]
     hyperparameters = this[["hyperparameters"]]
+    model_family = this[["family"]]
+    if (is.null(model_family))
+      model_family = family
     model = this[names(this) == ""]
 
     # Test!
     testthat::test_that(desc, {
-      test_fit(model, simulated, newdata, hyperparameters)
+      test_fit(model, simulated, newdata, hyperparameters, model_family)
     })
   }
 }
