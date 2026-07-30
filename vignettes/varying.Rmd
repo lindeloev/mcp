@@ -1,16 +1,18 @@
 ---
-title: "Varying change points"
+title: "Group-level effects"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Varying change points}
+  %\VignetteIndexEntry{Group-level effects}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-A unique feature of `mcp` is modeling change points with group-level effects (also called varying or random effects). This lets the change point vary by a grouping factor while other parameters remain population-level. The terminology follows `brms`: `fixef()` reports population-level effects and `ranef()` reports group-level deviations.
+`mcp` supports group-level effects (also called varying or random effects) in both the predictor and change-point parts of a formula. The syntax and terminology follow `lme4` and `brms`: `(1|group)` specifies a group-level intercept, `fixef()` reports population-level coefficients, and `ranef()` reports group-level deviations.
 
 This article in brief:
 
+ * Predictor and change-point group-level effects
+ * How group-level effects persist across segments
  * How to simulate varying change points
  * Get posteriors using `ranef(fit)`
  * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "varying", type = "dens_overlay", ncol = 3)`.
@@ -26,7 +28,7 @@ set.seed(42)  # Make the script deterministic
 
 # Specifying varying change points
 
-You specify group-level effects using the familiar [`lmer`](https://www.rdocumentation.org/packages/lme4/versions/1.1-21/topics/lmer) and `brms` syntax `(1|group)`. Currently `mcp` supports this syntax only in the cp part, and only for intercepts. For example, here we model a varying change point between a plateau and a joined slope:
+You specify group-level effects using the familiar [`lmer`](https://www.rdocumentation.org/packages/lme4/versions/1.1-21/topics/lmer) and `brms` syntax `(1|group)`. In the cp part, this models a varying change point. For example, here we model a varying change point between a plateau and a joined slope:
 
 ```{r}
 model = list(
@@ -54,9 +56,35 @@ Here are some properties of the change point varying effects:
 
 **Constraints:** The varying effects are constrained to lie (1) in the observed range of the x-axis, and/or (2) between the two adjacent change points. That is, all `cp_1_id` are between `min(x)` and `cp_2`. All `cp_2_species` are between `cp_1` and `cp_3` and all `cp_3_id` are between `cp_2` and `max(x)`. These constraints are enforced through truncation of the default prior (`fit$prior`) and you can override them by specifying a manual prior (see vignette("priors")).
 
+# Predictor group-level effects
+
+The same syntax in the predictor part gives each group a deviation from the population intercept:
+
+```{r}
+model = list(
+  y ~ 1 + (1|id),
+  ~ 0 + x,
+  ~ 1 + (0|id)
+)
+```
+
+Here, the group-level intercept introduced in segment 1 also applies in segment 2. A later `(1|id)` would replace it from that segment onward, while `(0|id)` turns it off, as in segment 3 above. Persistence is tracked separately for each grouping factor and distributional parameter.
+
+Group-level intercepts also work inside distributional formulas:
+
+```{r}
+model = list(
+  y ~ 1 + (1|id) + sigma(1 + (1|id))
+)
+```
+
+This model has group-level deviations in both the conditional mean and log-SD. `(1||id)` is accepted too and is currently equivalent to `(1|id)`. The first version supports intercepts only, so group-level slopes and factor terms such as `(1 + x|id)` or `(0 + factor|id)` give an explicit error. Group-level terms inside `ar()` and `ma()` are also not supported.
+
+Unlike change-point deviations, predictor deviations are not constrained to sum exactly to zero. They have an ordinary mean-zero hierarchical normal distribution, matching multilevel regression in `lme4` and `brms`. For example, `(1|id)` in segment 1 creates the deviation vector `Intercept_1_id` and its population-level SD parameter `Intercept_1_id_sd`; inside `sigma()`, the corresponding names start with `sigma`.
 
 
-# Simulating varying effects
+
+# Simulating varying change points
 Let us do a worked example, simulating the varying change point between a plateau and a slope: 
 
 ```{r}
@@ -123,11 +151,9 @@ Inspecting the `sim` and `match` columns, we see that they recovered the simulat
 
 Prediction methods include all group-level effects by default. Set
 `varying = FALSE` for population-only predictions, `varying = "cp"` for all
-varying effects in the cp part, or supply an exact name such as
-`varying = "cp_1_id"`. The reserved selector `varying = "predictor"` is ready
-for predictor-side group-level effects; because those terms are not yet
-supported, it currently selects no effects. `ranef(fit)` deliberately remains
-simple and returns all group-level effects.
+group-level effects in the cp part, `varying = "predictor"` for predictor-side
+group-level effects, or supply an exact name such as `varying = "cp_1_id"`.
+`ranef(fit)` deliberately remains simple and returns all group-level effects.
 
 Good convergence is not always as obvious as in this example. While `plot_pars(fit)` show population-level parameters only, you can do this to get varying effects only:
 
@@ -159,7 +185,7 @@ You can see the priors of the model like this:
 cbind(fit$prior)
 ```
 
-The priors `cp_1_sd` is the population-level standard deviation of `cp_1_id`, the latter of which is applied to all levels of `id`. This is also apparent if you inspect the JAGS code for this model. The truncation of varying effects is quite contrived, but just keeps them between the two adjacent (population-level) change points.
+The prior `cp_1_sd` is the population-level standard deviation of `cp_1_id`, the latter of which is applied to all levels of `id`. Predictor group-level effects similarly receive a population-level SD parameter, but use ordinary mean-zero normal deviations without exact zero-centering. This is also apparent if you inspect the JAGS code for a model. The truncation of change-point deviations keeps them between the two adjacent population-level change points.
 
 
 # JAGS code

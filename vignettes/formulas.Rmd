@@ -17,8 +17,10 @@ The three formula parts are called **response**, **cp**, and **predictor**. The 
 
  * **The response** is just the name of a column in your data.
  * **The cp part** can be `1` for a population-level change point or `1 + (1|group)` for [group-level change-point deviations](articles/varying.html).
- * **The predictor part** can contain `0` (no intercept), `1` (an intercept), and columns from your data whose effects you want to model.
- * **Distributional predictors**, such as those inside `sigma()`, have [their own article](../articles/variance.html), but follow the same predictor rules.
+ * **The predictor part** can contain `0` (no intercept), `1` (an intercept), columns from your data whose effects you want to model, and intercept-only [group-level effects](articles/varying.html), such as `(1|group)`.
+ * **Distributional predictors**, such as those inside `sigma()`, have [their own article](../articles/variance.html), but follow the same predictor rules, including `(1|group)`.
+
+Predictor group-level effects use the familiar `lme4`/`brms` syntax. For example, `y ~ 1 + (1|id)` gives each `id` a deviation from the population intercept. The effect carries into later segments until another `(1|id)` redefines it; use `(0|id)` to turn it off. `(1||id)` is equivalent in the current intercept-only implementation. Group-level slopes, factors, and terms inside `ar()` or `ma()` are not yet supported.
 
 Transformations in formulas are evaluated on the original predictor values, as
 in `lm()` and `glm()`. The change-point predictor is the exception: bare

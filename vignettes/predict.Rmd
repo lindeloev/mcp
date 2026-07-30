@@ -61,7 +61,7 @@ head(fitted(fit))
 
 In general, this output will include:
 
- * A column for each predictor column in the data. Here, `time` is the only predictor and you see the values in the same order as in `data` (which is copied to `fit$data`). But models with [varying change points](../articles/varying.html) will additionally have a column for the varying data, `binomial()` models include the number of trials, etc.
+ * A column for each predictor column in the data. Here, `time` is the only predictor and you see the values in the same order as in `data` (which is copied to `fit$data`). Models with [group-level effects](../articles/varying.html) additionally include the relevant grouping columns, `binomial()` models include the number of trials, etc.
  
  * **fitted:** The fitted value which is the mean of the posterior for this predictor value (or set of predictor values). I.e., it is the *Expected Value (EV)*.
  
@@ -90,7 +90,7 @@ Note that:
  * The fourth value (`time = 200`) is way outside the observed region. Because it is the extrapolation of the slope in the third segment of which we've only observed the first tiny bit, the posterior distribution is very wide because even a small uncertainty in the slope results in very large differences further out.
 
 ## Arguments
-If you look at the documentation for `predict()`, `fitted()`, and `residuals()`, you'll see that they are quite versatile, taking many different arguments. To mention a few, you can set `fitted(fit, dpar = "sigma")` to get fitted values for `sigma` [more on modeling sigma](../articles/variance.html), `prior = TRUE` to predict using only the prior, and `arma = FALSE` to exclude AR/MA effects. For group-level effects, use `varying = TRUE` (all), `FALSE` (none), `"cp"` or `"predictor"` (a formula part), or an exact varying-parameter name. Predictor-side group-level terms are not yet supported, so `"predictor"` currently selects none.
+If you look at the documentation for `predict()`, `fitted()`, and `residuals()`, you'll see that they are quite versatile, taking many different arguments. To mention a few, you can set `fitted(fit, dpar = "sigma")` to get fitted values for `sigma` [more on modeling sigma](../articles/variance.html), `prior = TRUE` to predict using only the prior, and `arma = FALSE` to exclude AR/MA effects. For group-level effects, use `varying = TRUE` (all), `FALSE` (none), `"cp"` or `"predictor"` (a formula part), or an exact group-level parameter name.
 
 
 # Predictions
