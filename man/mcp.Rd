@@ -22,20 +22,29 @@ mcp(
 }
 \arguments{
 \item{model}{A list of formulas - one for each segment. The first formula
-has the format \code{response ~ predictors} while the following formulas
-have the format \code{response ~ changepoint ~ predictors}. The response
-and change points can be omitted (\code{changepoint ~ predictors} assumes same
-response. \code{~ predictors} assumes an intercept-only change point). The
+has the format \code{response ~ predictor} while the following formulas have
+the format \code{response ~ cp ~ predictor}. Here, \code{cp} names the change-point
+part of the formula rather than a literal variable. The response and
+change-point parts can be omitted (\code{cp ~ predictor} assumes the same
+response; \code{~ predictor} assumes an intercept-only change point). The
 following can be modeled:
 \itemize{
 \item \emph{Regular formulas:} e.g., \code{~ 1 + x}). \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
 \item \emph{Extended formulas:}, e.g., \code{~ I(x^2) + exp(z)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
+\item \emph{Group-level effects:} e.g., \code{~ 1 + (1 | id)} for a group-level
+intercept, or \code{~ 1 + (factor || id)} for independent intercept and
+factor-contrast deviations. \href{https://lindeloev.github.io/mcp/articles/varying.html}{Read more}.
 \item \emph{Variance:} e.g., \code{~sigma(1)} for a simple variance change or
-\code{~sigma(1 + I(x^2))}) for more advanced variance structures. \href{https://lindeloev.github.io/mcp/articles/variance.html}{Read more}
+\code{~sigma(1 + I(x^2))}) for more advanced variance structures. Explicit
+sigma formulas model log-SD, while the implicit constant \code{sigma_1} in a
+model without \code{sigma()} remains on the response scale.
+\href{https://lindeloev.github.io/mcp/articles/variance.html}{Read more}
 \item \emph{Time-series residuals:} use \code{ar(p)} and \code{ma(q)} separately or together,
 e.g., \code{~ 1 + ar(1) + ma(1)}. Both accept an optional regression formula
 and observation \code{boundary}. GARMA terms support Gaussian, binomial,
-Poisson, and negative-binomial families with their default links.
+Poisson, and negative-binomial families with their default links. They
+define a finite conditional recurrence and do not jointly constrain AR
+coefficients to stationarity or MA coefficients to invertibility.
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
 }}
 

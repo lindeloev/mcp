@@ -29,7 +29,10 @@ tidy_samples(
 \itemize{
 \item \code{TRUE} All varying effects (\code{fit$pars$varying}).
 \item \code{FALSE} No varying effects (\code{c()}).
-\item Character vector: Only include specified varying parameters - see \code{fit$pars$varying}.
+\item \code{"cp"} or \code{"predictor"}: All varying effects belonging to that part of
+the model.
+\item Character vector: Only include specified varying parameters - see
+\code{fit$pars$varying}.
 }}
 
 \item{absolute}{\itemize{

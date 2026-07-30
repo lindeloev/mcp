@@ -24,7 +24,7 @@ Categorical model predictors are always included.}
 }
 }
 \description{
-This function is used to synthesize predictors for all combos of RHS predictors.
+This function synthesizes predictors for all combinations of predictor values.
 It is used internally in \code{plot.mcpfit()} and may be useful if you want to
 build your own custom plot.
 }

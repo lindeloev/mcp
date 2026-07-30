@@ -41,7 +41,10 @@
 \itemize{
 \item \code{TRUE} All varying effects (\code{fit$pars$varying}).
 \item \code{FALSE} No varying effects (\code{c()}).
-\item Character vector: Only include specified varying parameters - see \code{fit$pars$varying}.
+\item \code{"cp"} or \code{"predictor"}: All varying effects belonging to that part of
+the model.
+\item Character vector: Only include specified varying parameters - see
+\code{fit$pars$varying}.
 }}
 
 \item{arma}{Whether to include AR and MA effects.
@@ -61,6 +64,13 @@ a \code{loo} or \code{psis_loo} object.
 \description{
 Compare models using \code{\link[loo]{loo_compare}} and \code{\link[loo]{loo_model_weights}}.
 more in \code{\link[loo]{loo}}.
+}
+\details{
+Observationwise PSIS-LOO and WAIC are problematic for AR/MA models
+because both treat individual conditional likelihood terms as validation
+units. In PSIS-LOO, a held-out response also remains in the conditioning
+history of later terms. Prefer leave-future-out or blocked
+cross-validation, which are not currently implemented in mcp.
 }
 \section{Functions}{
 \itemize{

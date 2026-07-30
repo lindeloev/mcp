@@ -40,7 +40,7 @@ quantiles.
 \item{q_predict}{Same as \code{q_fit}, but for the prediction interval.}
 
 \item{facet_by}{Character vector. Names of categorical data columns to split to facets.
-Can be varying or RHS categoricals.}
+Can be grouping-factor or categorical predictor columns.}
 
 \item{color_by}{\code{NULL} for no color grouping, or a character vector naming categorical or varying-effect data columns to color by.
 Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.}
