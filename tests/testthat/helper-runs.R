@@ -187,7 +187,11 @@ test_summary = function(fit, varying_cols, prior = FALSE) {
     testthat::expect_true(is.character(varying$name))
     testthat::expect_true(is.numeric(varying$mean))
 
-    group_level_counts = lapply(varying_cols, function(col) length(unique(fit$data[[col]])))
+    effects = get_fit_model_tables(fit)$group_effects
+    group_level_counts = lapply(
+      effects$group_col,
+      function(col) length(unique(fit$data[[col]]))
+    )
     n_varying_levels = sum(unlist(group_level_counts))
     testthat::expect_equal(nrow(varying), n_varying_levels)
   }
@@ -254,7 +258,7 @@ test_hypothesis = function(fit, prior) {
   # Varying
   if (!is.null(fit$pars$varying)) {
     mcmc_vars = colnames(mcmclist_samples(fit)[[1]])
-    varying_starts = paste0("^", fit$pars$varying[1])
+    varying_starts = paste0("^", fit$pars$varying[1], "\\[")
     varying_col_ids = stringr::str_detect(mcmc_vars, varying_starts)
     varying_cols = paste0("`", mcmc_vars[varying_col_ids], "`")  # Add these for varying
 
@@ -397,6 +401,7 @@ test_pp_eval = function(fit, prior = FALSE) {
     #testthat::expect_true(nrow(result_more) == nrows * ndraws * 2)  # nrows * ndraws * nchains
     testthat::expect_true(sum(is.na(result_more)) == 0)
 
+    selected_cp = unpack_varying(fit, pars = "cp")
     expected_colnames_more = c(
       # Tidybayes stuff
       ".chain", ".iteration", ".draw",
@@ -408,7 +413,7 @@ test_pp_eval = function(fit, prior = FALSE) {
       # Predictors
       fit$pars$trials,
       fit$pars$x,
-      na.omit(unique(get_fit_model_tables(fit)$group_effects$group_col)),  # varying effects
+      selected_cp$cols,
       "data_row",
       "fitted"
     )
@@ -416,8 +421,7 @@ test_pp_eval = function(fit, prior = FALSE) {
     testthat::expect_true(dplyr::setequal(colnames(result_more), expected_colnames_more))  # Exactly these columns regardless of order
   }
 
-  # Until predictor-side group effects are implemented, the "predictor"
-  # selector is population-only and should not require grouping columns.
+  # Population-only evaluation should not require any grouping columns.
   if (length(fit$pars$varying) > 0) {
     varying_cols = stats::na.omit(unique(get_fit_model_tables(fit)$group_effects$group_col))
     population_newdata = fit$data[, colnames(fit$data) %notin%
@@ -428,7 +432,7 @@ test_pp_eval = function(fit, prior = FALSE) {
       summary = FALSE,
       probs = FALSE,
       prior = prior,
-      varying = "predictor",
+      varying = FALSE,
       arma = FALSE,
       ndraws = 2
     )

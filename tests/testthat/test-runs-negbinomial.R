@@ -19,6 +19,7 @@ good_negbinomial = list(
     ~ 1 + x
   ),
   list(y ~ 1 + x + shape(1 + x)),
+  list(y ~ 1 + shape(1 + (1 | id))),
   list(
     y ~ 1 + x + shape(1),
     ~ 0 + x + shape(1)

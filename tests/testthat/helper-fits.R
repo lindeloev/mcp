@@ -10,18 +10,33 @@
 #' @keywords internal
 #' @param model A list of (unnamed) formulas
 #' @param simulated Parameter values to be used for simulation.
-test_fit = function(model, simulated) {
+#' @param newdata Optional simulation design. Defaults to 400 evenly spaced
+#'   observations on `x`.
+#' @param hyperparameters Optional generative parameters that are not arguments
+#'   to `fit$simulate()`, such as group-level SDs.
+test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL) {
   # COMMENT THIS LINE TO ENABLE EXTENSIVE TESTS. THEN REVERT. DO NOT COMMIT.
   # It's a slow test so we do it rarely.
   testthat::skip("This time-consuming test is only run locally before release.")
 
   # Simulate
-  newdata = data.frame(
-    x = seq(1, 200, length.out = 400),  # Needs to be reasonably high to get a correct estimate
-    y = rnorm(400)
-  )
+  if (is.null(newdata)) {
+    newdata = data.frame(
+      x = seq(1, 200, length.out = 400),  # Needs to be reasonably high to get a correct estimate
+      y = rnorm(400)
+    )
+  }
   empty = mcp(model, data = newdata, sample = FALSE, par_x = "x")
-  newdata$y = do.call(empty$simulate, c(list(fit = empty, newdata = newdata), simulated))
+  simulated_y = do.call(empty$simulate, c(list(fit = empty, newdata = newdata), simulated))
+  if (!is.null(hyperparameters)) {
+    simulation_values = c(
+      as.list(attr(simulated_y, "simulated")),
+      hyperparameters
+    )
+    class(simulation_values) = c("mcplist", "list")
+    attr(simulated_y, "simulated") = simulation_values
+  }
+  newdata$y = simulated_y
 
   # Fit
   quiet_out = purrr::quietly(mcp)(model, newdata, par_x = "x", chains = 5, adapt = 10000, iter = 3000)  # Ensure convergence
@@ -41,11 +56,15 @@ test_fit = function(model, simulated) {
 apply_test_fit = function(desc, all_models) {
   for (this in all_models) {
     # Split into formulas and simulation values
-    simulated = this[names(this) == "simulated"][[1]]
+    simulated = this[["simulated"]]
+    newdata = this[["newdata"]]
+    hyperparameters = this[["hyperparameters"]]
     model = this[names(this) == ""]
 
     # Test!
-    testthat::test_that(desc, {test_fit(model, simulated)})
+    testthat::test_that(desc, {
+      test_fit(model, simulated, newdata, hyperparameters)
+    })
   }
 }
 

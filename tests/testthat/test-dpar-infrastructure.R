@@ -15,7 +15,7 @@ test_that("families declare dpars independently of prior rows", {
   expect_equal(gaussian_family$dpars, c("mu", "sigma"))
   expect_named(
     gaussian_family$default_prior,
-    c("dpar", "par_type", "prior", "description", "condition")
+    c("dpar", "par_type", "prior", "group_sd_prior", "description", "condition")
   )
   expect_equal(
     gaussian_family$default_prior$prior[

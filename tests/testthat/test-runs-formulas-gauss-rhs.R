@@ -45,7 +45,10 @@ good_intercepts = list(
   list(y ~ 0,  # Multiple segments
        ~ 1,
        ~ 0,
-       ~ 1)
+       ~ 1),
+  list(y ~ 1 + (1 | id),  # Predictor group intercept carries until explicit turn-off
+       ~ 1,
+       ~ 1 + (0 | id))
 )
 
 test_good(good_intercepts)
