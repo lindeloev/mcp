@@ -5,6 +5,7 @@
 #'  * `"demo"`: Two change points between intercepts and joined/disjoined slopes.
 #'  * `"ar"`: One change point in autoregressive residuals.
 #'  * `"binomial"`: Binomial with two change points. Much like `"demo"` on a logit scale.
+#'  * `"group"`: Group-level (random) intercepts and factor effects across a change point.
 #'  * `"intercepts"`: An intercept-only change point.
 #'  * `"multiple"`: Multiple regression with categorical predictors and interactions.
 #'  * `"quadratic"`: A change point to a quadratic segment.
@@ -121,6 +122,45 @@ data$response = empty$simulate(empty, data,
 
 # Run sampling
 fit = mcp(model, data, sample = sample)",
+
+
+
+group = "# Define model
+model = list(
+  y ~ 1 + condition + (condition || participant),
+  ~ 1 + condition  # group effects carry into this segment
+)
+
+# Simulate balanced data with 12 levels of the grouping factor
+set.seed(42)
+data = tidyr::expand_grid(
+  participant = sprintf('participant_%02d', 1:12),
+  condition = factor(c('A', 'B')),
+  x = seq(0, 100, length.out = 12)
+)
+data$participant_numeric = as.numeric(factor(data$participant))
+data$y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
+
+intercept_deviation = 2 * qnorm(((1:12 - 0.5) / 12))
+condition_deviation = 1.5 * qnorm(((c(7:12, 1:6) - 0.5) / 12))
+
+empty = mcp(model, data, par_x = 'x', sample = FALSE)
+data$y = empty$simulate(empty, data,
+  cp_1 = 50,
+  Intercept_1 = 10,
+  conditionB_1 = 4,
+  Intercept_2 = 15,
+  conditionB_2 = -2,
+  Intercept_1_participant = intercept_deviation[data$participant_numeric],
+  conditionB_1_participant = condition_deviation[data$participant_numeric],
+  sigma_1 = 1.5
+)
+
+# Run sampling
+fit = mcp(
+  model, data, par_x = 'x', sample = sample,
+  adapt = 3000, iter = 19000
+)",
 
 
 
