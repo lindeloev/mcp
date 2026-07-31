@@ -56,7 +56,6 @@ reference:
     contents:
       - bernoulli
       - negbinomial
-      - exponential
 
   - title: Help and demos
     desc: Some showcases of typical mcp analyses. Most of these are discussed on the [front page](https://lindeloev.github.io/mcp).
@@ -68,6 +67,10 @@ reference:
     desc: Stuff you would not usually consult directly.
     contents:
       - mcpfit-class
+      - draws-index-mcp
+      - interpolate_newdata
+      - mcpfamily
+      - prior_summary
       - print.mcplist
       - print.mcptext
 
