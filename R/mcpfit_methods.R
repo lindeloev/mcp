@@ -304,18 +304,6 @@ is.mcpfit = function(x) {
 }
 
 
-#' Check if this is an AR/MA model
-#'
-#' @aliases is_arma
-#' @keywords internal
-#' @noRd
-#' @inheritParams mcp
-#' @return TRUE or FALSE
-is_arma = function(fit) {
-  length(fit$pars$arma) > 0
-}
-
-
 #' Internal function to get samples.
 #'
 #' Returns posterior samples, if available. If not, then prior samples. If not,

@@ -137,42 +137,6 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x, family) {
 }
 
 
-#' Build the observation-boundary formula used by GARMA terms
-#'
-#' A boundary supplied with an AR or MA term remains active until the next such
-#' term. The first supplied boundary also applies to earlier observations so
-#' they can safely be used as lags.
-#'
-#' @keywords internal
-#' @noRd
-get_garma_boundary_jagscode = function(segments, predictors, par_x) {
-  boundary_table = predictors %>%
-    dplyr::filter(.data$dpar %in% c("ar", "ma"), !is.na(.data$boundary)) %>%
-    dplyr::distinct(.data$segment, .data$boundary) %>%
-    dplyr::arrange(.data$segment)
-
-  if (nrow(boundary_table) == 0)
-    return("")
-  if (anyDuplicated(boundary_table$segment))
-    stop_github("Found multiple GARMA boundaries in one segment.")
-
-  boundary_code = stats::setNames(segments$cp_code_form, segments$segment)
-  boundary_parts = character(nrow(boundary_table))
-  for (i in seq_len(nrow(boundary_table))) {
-    lower = if (i == 1) "" else paste0("(", par_x, "[i_] >= ", boundary_code[[as.character(boundary_table$segment[i])]], ") * ")
-    upper = if (i == nrow(boundary_table)) "" else paste0("(", par_x, "[i_] < ", boundary_code[[as.character(boundary_table$segment[i + 1])]], ") * ")
-    boundary_value = sprintf("%.15g", boundary_table$boundary[i])
-    boundary_parts[i] = paste0("  ", lower, upper, boundary_value)
-  }
-
-  paste0(
-    "\n\n# GARMA observation boundary\n",
-    "garma_boundary_[i_] =\n",
-    paste0(boundary_parts, collapse = " +\n")
-  )
-}
-
-
 #' Convert for-looped JAGS code to vectorized R code
 #'
 #' @aliases get_formula_r
@@ -242,62 +206,4 @@ get_formula_r = function(formula_jags, predictors, group_effects, pars) {
 }
 
 
-#' Get JAGS code for GARMA residual recursion
-#'
-#' @aliases get_arma_jagscode get_ar_jagscode
-#' @keywords internal
-#' @noRd
-#' @param ar_order,ma_order Positive integer or `NA` when absent.
-#' @param x_name Character. Name of some vector that has the length of the dataset.
-#' @return Character JAGS code
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_arma_jagscode = function(ar_order, ma_order, x_name) {
-  ar_order = ifelse(is.na(ar_order), 0, ar_order)
-  ma_order = ifelse(is.na(ma_order), 0, ma_order)
-  checkmate::assert_int(ar_order, lower = 0)
-  checkmate::assert_int(ma_order, lower = 0)
-  checkmate::assert_string(x_name)
-  max_order = max(ar_order, ma_order)
-  if (max_order == 0)
-    stop_github("get_arma_jagscode() requires a positive AR or MA order.")
 
-  get_terms = function(row, available_ar, available_ma) {
-    terms = character()
-    if (available_ar > 0) {
-      lags = seq_len(available_ar)
-      terms = c(terms, paste0("ar", lags, "_[", row, "] * resid_abs_[", row, " - ", lags, "]"))
-    }
-    if (available_ma > 0) {
-      lags = seq_len(available_ma)
-      terms = c(terms, paste0("ma", lags, "_[", row, "] * resid_ma_[", row, " - ", lags, "]"))
-    }
-    paste0(terms, collapse = " +\n              ")
-  }
-
-  jagscode = "
-  # Apply GARMA recursion to link-scale residuals
-  resid_arma_[1] = 0"
-
-  if (max_order >= 2) {
-    for (i in 2:max_order) {
-      jagscode = paste0(
-        jagscode, "\n  resid_arma_[", i, "] = ",
-        get_terms(i, min(ar_order, i - 1), min(ma_order, i - 1))
-      )
-    }
-  }
-
-  paste0(
-    jagscode,
-    "\n  for (i_ in ", max_order + 1, ":length(", x_name, ")) {",
-    "\n    resid_arma_[i_] = ", get_terms("i_", ar_order, ma_order),
-    "\n  }"
-  )
-}
-
-
-# Backwards-compatible internal wrapper for pure AR code generation.
-get_ar_jagscode = function(ar_order, x_name) {
-  get_arma_jagscode(ar_order, NA, x_name)
-}
