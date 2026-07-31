@@ -49,36 +49,43 @@ get_x_values = function(fit, by = NULL, prior = FALSE) {
   return(x_values)
 }
 
-#' List of interpolated values at the values in "at".
+#' Get fixed values for continuous predictors
 #'
-#' @aliases interpolate_continuous
+#' @aliases get_continuous_at
 #' @keywords internal
 #' @noRd
 #' @param data fit$data
 #' @param pars fit$pars
-#' @param x_values par_x values to interpolate continuous predictors at.
+#' @param at Named list overriding the default means.
 #' @param varying_cols Varying-effect columns to exclude from continuous
-#'   interpolation.
+#'   predictors.
 #' @return `data.frame` with one column for each continuous predictor.
-#'   `NULL` if there are no continous predictors.
+#'   `NULL` if there are no continuous predictors.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-interpolate_continuous = function(data, pars, x_values, varying_cols = NULL) {
+get_continuous_at = function(data, pars, at = NULL, varying_cols = NULL) {
   checkmate::assert_data_frame(data)
   checkmate::assert_list(pars)
-  checkmate::assert_numeric(x_values, any.missing = FALSE)
 
   # Get numeric predictor columns
   numeric_data = data[, sapply(data, is.numeric), drop = FALSE]
   numeric_data = numeric_data[, colnames(numeric_data) %notin% c(pars$x, pars$y, pars$weights, varying_cols), drop = FALSE]
 
+  checkmate::assert_list(at, types = "numeric", any.missing = FALSE, names = "unique", null.ok = TRUE)
+  if (length(at) > 0 && is.null(names(at)))
+    stop("`at` must be a named list.")
+  invalid_at = setdiff(names(at), names(numeric_data))
+  if (length(invalid_at) > 0)
+    stop("`at` must name continuous predictors other than `par_x`. Invalid: '", paste(invalid_at, collapse = "', '"), "'.")
+  if (any(lengths(at) != 1))
+    stop("Every value in `at` must be a single number.")
+
   if (ncol(numeric_data) == 0)
     return(NULL)
 
-  # Return interpolated
-  numeric_data %>%
-    lapply(function(col) stats::approx(x = dplyr::pull(data, pars$x), y = col, xout = x_values)$y) %>%
-    as.data.frame()
+  values = lapply(numeric_data, mean, na.rm = TRUE)
+  values[names(at)] = at
+  as.data.frame(values)
 }
 
 
@@ -92,18 +99,20 @@ interpolate_continuous = function(data, pars, x_values, varying_cols = NULL) {
 #' @param fit An `mcpfit` object.
 #' @param by Character vector of categorical or varying-effect columns to evaluate separately.
 #'   Categorical model predictors are always included.
-#' @param x_values Numeric vector of x-values to interpolate at.
+#' @param x_values Numeric vector of x-values to evaluate at.
+#' @param at Named list setting additional continuous predictors to fixed values.
+#'   They default to their observed means. For example, `at = list(age = 40)`.
 #' @details
 #' The `par_x` variable will be interpolated with higher resolution around the
 #' change points where the values can change abruptly, but lower resolution in
 #' between to speed up the computation.
 #'
 #' Categorical variables and requested varying-effect groups are combined factorially (all level combinations).
-#' Continuous variables are interpolated at the x-values and applied to every curve.
+#' Additional continuous predictors are held at their observed means, or at values supplied through `at`.
 #' @return `tibble` with
 #'  * Cols for par_x
 #'  * unique levels combos of factorial vars
-#'  * interpolated continuous vars (interpolated within each factorial cell) (fills down/up if outside observed region)
+#'  * fixed values for additional continuous predictors
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
@@ -129,7 +138,7 @@ interpolate_continuous = function(data, pars, x_values, varying_cols = NULL) {
 #'   geom_line(lwd = 2) +
 #'   geom_point(aes(y = y), data = fit$data)
 #' }
-interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by)) {
+interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by), at = NULL) {
   # Evaluate the default before `by` is normalised below. Otherwise an absent
   # grouping argument becomes character(0), which selects the denser grouped
   # grid in get_x_values().
@@ -141,37 +150,15 @@ interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by))
   by = unique(c(categorical_cols, intersect(varying_cols, by)))
   # Numeric varying-group IDs are discrete even when they are not requested
   # for evaluation, so never interpolate them as continuous predictors.
-  by_grid = lapply(fit$data[, by, drop = FALSE], unique) %>% expand.grid()
-  has_groups = nrow(by_grid) > 0 | length(colnames(by_grid) %notin% by) > 0
-  has_continuous = interpolate_continuous(fit$data, fit$pars, x_values[1], varying_cols) %>% is.null() %>% `!`
-
-  # Return with levels, if such exist
-  if (!has_groups & !has_continuous) {
-    newdata = tibble::tibble("{fit$pars$x}" := x_values)
-  } else  if (has_groups & !has_continuous) {
-    newdata = by_grid %>%
-      tidyr::expand_grid("{fit$pars$x}" := x_values)
-  } else if (!has_groups & has_continuous) {
-    newdata = interpolate_continuous(fit$data, fit$pars, x_values, varying_cols) %>%
-      dplyr::mutate("{fit$pars$x}" := x_values)
-  } else if (has_groups & has_continuous) {
-    # Interpolate continuous predictors within each row of by_grid
-    # and up/down-fill if outside the observed region.
-    df_list = list()
-    for (i in seq_len(nrow(by_grid))) {
-      data_i = dplyr::left_join(by_grid[i, , drop = FALSE], fit$data) %>% suppressMessages()
-      interpolated_i = interpolate_continuous(data_i, fit$pars, x_values, varying_cols) %>%
-        tidyr::fill(dplyr::everything(), .direction = "downup")
-
-      df_list[[i]] = by_grid[i, , drop = FALSE] %>%
-        tidyr::expand_grid(interpolated_i) %>%
-        dplyr::mutate("{fit$pars$x}" := x_values)
-    }
-
-    newdata = dplyr::bind_rows(df_list)
+  by_grid = if (length(by) == 0) {
+    data.frame(.row = 1)[, FALSE, drop = FALSE]
   } else {
-    stop_github("Not one of the possible combos of categorical and continuous.")
+    lapply(fit$data[, by, drop = FALSE], unique) %>% expand.grid()
   }
+  continuous_at = get_continuous_at(fit$data, fit$pars, at, varying_cols)
+  newdata = by_grid %>% tidyr::expand_grid("{fit$pars$x}" := x_values)
+  if (!is.null(continuous_at))
+    newdata = tidyr::expand_grid(newdata, continuous_at)
 
   # Add response column for AR/MA models
   if (is_arma(fit)) {

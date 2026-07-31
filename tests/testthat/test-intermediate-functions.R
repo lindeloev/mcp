@@ -18,22 +18,26 @@ test_that("interpolate_newdata() combines categorical and continuous predictors"
     sample = FALSE
   )
 
-  # The has_continuous check probes the full (un-grouped) data, which has
-  # duplicate x values across groups; suppress the resulting approx() notice.
-  newdata = suppressWarnings(interpolate_newdata(fit, x_values = c(1, 2, 3)))
+  newdata = interpolate_newdata(fit, x_values = c(1, 2, 3))
 
   # Categorical levels are combined factorially with x, continuous
-  # predictors are interpolated separately within each group.
+  # predictors are held at their observed means.
   expect_equal(nrow(newdata), 6)
   expect_setequal(unique(newdata$group), c("A", "B"))
-  expect_equal(
-    newdata$z[newdata$group == "A" & newdata$x == 2],
-    4
-  )
-  expect_equal(
-    newdata$z[newdata$group == "B" & newdata$x == 2],
-    10
-  )
+  expect_equal(unique(newdata$z), mean(data$z))
+
+  custom = interpolate_newdata(fit, x_values = 1:3, at = list(z = 4))
+  expect_equal(unique(custom$z), 4)
+  expect_error(interpolate_newdata(fit, at = list(x = 2)), "Invalid: 'x'.", fixed = TRUE)
+  expect_error(interpolate_newdata(fit, at = list(z = 1:2)), "must be a single number")
+
+  draws = matrix(0, 1, length(fit$pars$population), dimnames = list(NULL, fit$pars$population))
+  draws[, "z_1"] = 2
+  draws[, "sigma_1"] = 1
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+  plotted = plot(fit, at = list(z = 4), lines = 1)
+  expect_match(plotted$labels$caption, "z = 4", fixed = TRUE)
+  expect_equal(unique(ggplot2::ggplot_build(plotted)$data[[2]]$y), 8)
 })
 
 test_that("interpolate_newdata() carries the observed response for AR/MA models", {

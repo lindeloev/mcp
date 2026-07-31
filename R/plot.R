@@ -46,6 +46,8 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 #' @param color_by A character vector naming categorical or varying-effect data columns to color by.
 #'   If both `color_by` and `facet_by` are omitted, a sole categorical predictor is colored automatically. Set `color_by = NULL` explicitly to disable this.
 #'   Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.
+#' @param at Named list setting additional continuous predictors to fixed values.
+#'   They default to their observed means. Passed to `interpolate_newdata()`.
 #' @param .grouping Internal. Whether grouping arguments were omitted, mapped, or explicitly disabled.
 #' @param lines Positive integer or `FALSE`. The number of fitted lines (draws).
 #'   It is the number of joint posterior draws shown for every curve. FALSE or `lines = 0` plots no lines.
@@ -73,6 +75,7 @@ get_plot = function(x,
                        arma = TRUE,
                        ndraws = 1000,
                        scale = "response",
+                       at = NULL,
                        .grouping = "auto",
                        nsamples = lifecycle::deprecated(),
                        ...) {
@@ -199,7 +202,7 @@ get_plot = function(x,
   ############################
   # MAKE NEWDATA AND PREDICT #
   ############################
-  newdata = interpolate_newdata(fit, by = by)
+  newdata = interpolate_newdata(fit, by = by, at = at)
 
   # Predict
   local_pp_eval = function(type, newdata, ndraws, include_fitted = FALSE) {
@@ -370,6 +373,12 @@ get_plot = function(x,
   if (dpar != "epred")
     gg = gg + ggplot2::labs(y = dpar)
 
+  at_cols = setdiff(names(newdata), c(fit$pars$x, fit$pars$y, all_categorical_cols, varying_cols))
+  if (length(at_cols) > 0) {
+    at_text = paste0(at_cols, " = ", format(signif(unlist(newdata[1, at_cols]), 4), trim = TRUE))
+    gg = gg + ggplot2::labs(caption = paste("Continuous predictors held at", paste(at_text, collapse = ", ")))
+  }
+
   # No color if no categorical predictors
   if (use_color == FALSE) {
     gg = gg +
@@ -438,6 +447,7 @@ plot.mcpfit = function(x,
                     prior = FALSE,
                     arma = TRUE,
                     ndraws = 1000,
+                    at = NULL,
                     nsamples = lifecycle::deprecated(),
                     ...) {
   grouping = if (missing(color_by) && missing(facet_by)) "auto" else "mapped"
@@ -454,6 +464,7 @@ plot.mcpfit = function(x,
     q_predict = q_predict,
     facet_by = facet_by,
     color_by = color_by,
+    at = at,
     lines = lines,
     geom_data = geom_data,
     cp_dens = cp_dens,
@@ -483,6 +494,7 @@ plot_dpar = function(x,
                      arma = TRUE,
                      ndraws = 1000,
                      scale = "response",
+                     at = NULL,
                      nsamples = lifecycle::deprecated(),
                      ...) {
   grouping = if (missing(color_by) && missing(facet_by)) "auto" else "mapped"
@@ -494,6 +506,7 @@ plot_dpar = function(x,
     q_predict = FALSE,
     facet_by = facet_by,
     color_by = color_by,
+    at = at,
     lines = lines,
     geom_data = FALSE,
     cp_dens = cp_dens,
