@@ -63,7 +63,7 @@ In general, this output will include:
 
  * A column for each predictor column in the data. Here, `time` is the only predictor and you see the values in the same order as in `data` (which is copied to `fit$data`). Models with [group-level effects](../articles/varying.html) additionally include the relevant grouping columns, `binomial()` models include the number of trials, etc.
  
- * **fitted:** The fitted value which is the mean of the posterior for this predictor value (or set of predictor values). I.e., it is the *Expected Value (EV)*.
+ * **fitted:** The fitted value (posterior mean). When `summary = TRUE` (default), the column is called `fitted`. When `summary = FALSE`, the column is named `.epred`, matching `tidybayes::add_epred_draws()` conventions.
  
  * **error:**: The standard error corresponding to `fitted`, i.e., `diff(fitted + c(-1, 1) * error)` is the 68% credible interval.
  
@@ -165,17 +165,17 @@ predict_forecast = predict(fit_forecast, newdata = newdata, summary = FALSE)
 
 # Plot it
 library(ggplot2)
-ggplot(predict_forecast, aes(x = time, y = predict)) + 
+ggplot(predict_forecast, aes(x = time, y = .prediction)) +
   # Prediction intervals and line at x = 125
   stat_summary(fun.data = median_hilow, fun.args = list(conf.int = 0.8), geom = "ribbon", alpha = 0.2) +
-  stat_summary(fun.data = median_hilow, fun.args = list(conf.int = 0.5), geom = "ribbon", alpha = 0.3) + 
-  geom_vline(xintercept = 125, lty = 2, lwd = 1) + 
-  
+  stat_summary(fun.data = median_hilow, fun.args = list(conf.int = 0.5), geom = "ribbon", alpha = 0.3) +
+  geom_vline(xintercept = 125, lty = 2, lwd = 1) +
+
   # Lines for fitted draws
-  geom_line(aes(y = fitted, group = .draw), data = fitted_forecast, alpha = 0.2) + 
-  
+  geom_line(aes(y = .epred, group = .draw), data = fitted_forecast, alpha = 0.2) +
+
   # Observed data
-  geom_point(aes(x = time, y = response), data = data) + 
+  geom_point(aes(x = time, y = response), data = data) +
   labs(title = "Predicting with future change points")
 ```
 

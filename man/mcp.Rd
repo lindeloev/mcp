@@ -17,7 +17,8 @@ mcp(
   iter = 3000,
   adapt = 1500,
   inits = NULL,
-  jags_code = NULL
+  jags_code = NULL,
+  seed = NULL
 )
 }
 \arguments{
@@ -115,6 +116,9 @@ Defaults to \code{NULL}, i.e., no inits.}
 \item{jags_code}{String. Pass JAGS code to \code{mcp} to use directly. This is useful if
 you want to tweak the code in \code{fit$jags_code} and run it within the \code{mcp}
 framework.}
+
+\item{seed}{\code{NULL} or a positive integer. Seed for the JAGS random-number
+generators. When supplied, \code{inits} must be a single named list shared by all chains.}
 }
 \value{
 An \code{\link{mcpfit}} object.
@@ -161,7 +165,7 @@ model = list(
 # Fit it and sample the prior too.
 # future::plan(future::multisession, workers = 3)  # Uncomment for parallel sampling
 data = mcp_example_data("demo")  # Simulated data example
-demo_fit = mcp(model, data = data, sample = "both")
+demo_fit = mcp(model, data = data, sample = "both", seed = 42)
 
 # See parameter estimates
 summary(demo_fit)

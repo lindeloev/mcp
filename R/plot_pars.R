@@ -29,10 +29,10 @@
 #'
 #' @details
 #'   For other `type`, it calls `bayesplot::mcmc_type()`. Use these
-#'   directly on `fit$mcmc_post` or `fit$mcmc_prior` if you want finer
-#'   control of plotting, e.g., `bayesplot::mcmc_dens(fit$mcmc_post)`. There
+#'   directly on `as.mcmc(fit)` or `as_draws(fit)` if you want finer
+#'   control of plotting, e.g., `bayesplot::mcmc_dens(as.mcmc(fit))`. There
 #'   are also a number of useful plots in the \pkg{coda} package, i.e.,
-#'   `coda::gelman.plot(fit$mcmc_post)` and `coda::crosscorr.plot(fit$mcmc_post)`
+#'   `coda::gelman.plot(as.mcmc(fit))` and `coda::crosscorr.plot(as.mcmc(fit))`
 #'
 #'   In any case, if you see a few erratic lines or parameter estimates, this is
 #'   a sign that you may want to increase argument 'adapt' and 'iter' in \code{\link{mcp}}.
@@ -83,7 +83,7 @@ plot_pars = function(fit,
   # Check arguments
   checkmate::assert_class(fit, "mcpfit")
 
-  if (!coda::is.mcmc.list(fit$mcmc_post) && !coda::is.mcmc.list(fit$mcmc_prior))
+  if (!coda::is.mcmc.list(.subset2(fit, "mcmc_post")) && !coda::is.mcmc.list(.subset2(fit, "mcmc_prior")))
     stop("Cannot plot an mcpfit without prior or posterior samples.")
 
   if (!is.character(pars) || !is.character(regex_pars))

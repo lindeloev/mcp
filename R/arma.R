@@ -174,7 +174,7 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, threshold = 0.10) {
   newdata = fit$data[rows, , drop = FALSE]
   newdata$data_row = seq_len(nrow(newdata))
   varying_info = unpack_varying(fit, pars = TRUE)
-  draws = as.matrix(fit$mcmc_post)
+  draws = as.matrix(.subset2(fit, "mcmc_post"))
   # Spread the check over all retained post-warmup draws and chains.
   keep = unique(round(seq(1, nrow(draws), length.out = min(ndraws, nrow(draws)))))
   smoke_fit = fit

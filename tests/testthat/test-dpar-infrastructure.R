@@ -308,24 +308,24 @@ test_that("evaluated-draw helpers enforce draw and data-row identity", {
   samples$.iteration = samples$.draw
   samples$x = 5
   samples$group = factor(c("A", "B")[samples$data_row])
-  samples$fitted = 10 * samples$data_row + samples$.draw
+  samples$`.epred` = 10 * samples$data_row + samples$.draw
   samples = samples[c(6, 1, 4, 2, 5, 3), ]
 
-  expect_silent(validate_eval_draws(samples, "fitted"))
+  expect_silent(validate_eval_draws(samples, ".epred"))
 
   # Equal x values do not define the evaluation unit. Quantiles stay separate
   # by data_row and receive plotting metadata only after summarisation.
   quantiles = get_quantiles(
     samples,
     c(0.25, 0.75),
-    "fitted",
+    ".epred",
     keep = c("x", "group")
   )
   expect_equal(nrow(quantiles), 4)
-  expect_equal(unique(quantiles$fitted[quantiles$data_row == 1]), c(11.5, 12.5))
-  expect_equal(unique(quantiles$fitted[quantiles$data_row == 2]), c(21.5, 22.5))
+  expect_equal(unique(quantiles$.epred[quantiles$data_row == 1]), c(11.5, 12.5))
+  expect_equal(unique(quantiles$.epred[quantiles$data_row == 2]), c(21.5, 22.5))
 
-  fitted_matrix = tidy_to_matrix(samples, type = "fitted", data_rows = c(2, 1))
+  fitted_matrix = tidy_to_matrix(samples, type = ".epred", data_rows = c(2, 1))
   expect_equal(colnames(fitted_matrix), c("2", "1"))
   expect_equal(
     unname(fitted_matrix),
@@ -333,12 +333,12 @@ test_that("evaluated-draw helpers enforce draw and data-row identity", {
   )
 
   expect_error(
-    validate_eval_draws(rbind(samples, samples[1, ]), "fitted"),
-    "one `fitted` value per `.draw` and `data_row`",
+    validate_eval_draws(rbind(samples, samples[1, ]), ".epred"),
+    "one `.epred` value per `.draw` and `data_row`",
     fixed = TRUE
   )
   expect_error(
-    validate_eval_draws(samples[-1, ], "fitted"),
+    validate_eval_draws(samples[-1, ], ".epred"),
     "same complete set of posterior draws",
     fixed = TRUE
   )
@@ -349,7 +349,7 @@ test_that("evaluated-draw helpers enforce draw and data-row identity", {
     get_quantiles(
       inconsistent_grid,
       0.5,
-      "fitted",
+      ".epred",
       keep = "x"
     ),
     "metadata differs across draws",
@@ -400,8 +400,8 @@ test_that("distributional parameters use the same evaluation identity", {
   keys = c(".chain", ".iteration", ".draw", "data_row")
 
   expect_equal(mu[, keys], sigma[, keys])
-  expect_silent(validate_eval_draws(mu, "fitted"))
-  expect_silent(validate_eval_draws(sigma, "fitted"))
+  expect_silent(validate_eval_draws(mu, ".epred"))
+  expect_silent(validate_eval_draws(sigma, ".epred"))
 
   sigma_summary = fitted(
     fit,
@@ -420,8 +420,8 @@ test_that("distributional parameters use the same evaluation identity", {
     type = "predict",
     .include_fitted = TRUE
   )
-  expect_equal(predicted$fitted, mu$fitted)
-  expect_null(attr(predicted$predict, "fitted"))
+  expect_equal(predicted$.epred, mu$.epred)
+  expect_null(attr(predicted$.prediction, ".epred"))
 })
 
 
@@ -446,15 +446,15 @@ test_that("quantiles stay separate for rows and categorical curves sharing x", {
   expect_equal(summary$Q75, c(0, 10))
 
   samples = fitted(fit, newdata = newdata, summary = FALSE, probs = FALSE) %>% add_plot_groups()
-  quantiles = get_quantiles(samples, c(0.25, 0.75), "fitted", c("x", ".group", ".color"))
+  quantiles = get_quantiles(samples, c(0.25, 0.75), ".epred", c("x", ".group", ".color"))
   quantile_layer = geom_quantiles(
     quantiles,
     xvar = rlang::sym("x"),
-    yvar = rlang::sym("fitted"),
+    yvar = rlang::sym(".epred"),
     use_color = TRUE
   )
   expect_equal(nrow(quantile_layer$data), 4)
-  expect_equal(sort(unname(quantile_layer$data$fitted)), c(0, 0, 10, 10))
+  expect_equal(sort(unname(quantile_layer$data$.epred)), c(0, 0, 10, 10))
   expect_equal(length(unique(quantile_layer$data$.group)), 2)
 
   automatic = plot(fit, lines = 0, q_fit = c(0.25, 0.75))

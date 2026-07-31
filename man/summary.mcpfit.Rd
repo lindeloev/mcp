@@ -12,11 +12,11 @@
 \alias{print}
 \title{Summarise mcpfit objects}
 \usage{
-\method{summary}{mcpfit}(object, width = 0.95, digits = 2, prior = FALSE, ...)
+\method{summary}{mcpfit}(object, width = 0.95, digits = 2, prior = FALSE, verbose = FALSE, ...)
 
-\method{fixef}{mcpfit}(object, width = 0.95, prior = FALSE, ...)
+\method{fixef}{mcpfit}(object, width = 0.95, prior = FALSE, verbose = FALSE, ...)
 
-\method{ranef}{mcpfit}(object, width = 0.95, prior = FALSE, ...)
+\method{ranef}{mcpfit}(object, width = 0.95, prior = FALSE, verbose = FALSE, ...)
 
 \method{print}{mcpfit}(x, ...)
 }
@@ -34,6 +34,9 @@ equal to 1 and no greater than 22 are accepted.}
 
 \item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
 
+\item{verbose}{Logical. Include the \code{segment} and \code{dpar} columns. Defaults
+to \code{FALSE} for a compact, v0.3.4-compatible summary.}
+
 \item{...}{Currently ignored}
 
 \item{x}{An \code{\link{mcpfit}} object.}
@@ -45,6 +48,8 @@ distributional parameters, then \code{ar}/\code{ma} components - each ascending 
 segment. OBS: The change point distributions are often not unimodal and
 symmetric so the intervals can be deceiving. Plot them using
 \code{plot_pars(fit)}.
+
+With \code{verbose = TRUE}:
 \itemize{
 \item \code{segment} is the segment the parameter belongs to.
 \item \code{dpar} is the distributional parameter (\code{"cp"}, \code{"mu"}, \code{"sigma"},

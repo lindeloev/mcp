@@ -2,6 +2,12 @@
 
 ## Major new features
 
+-   Aligned with `{posterior}` posterior draw & prediction API. Changes include:
+    - `summary(fit)` now reports rank-normalized `split-Rhat`, `ess_bulk`, and `ess_tail` from `{posterior}` and central quantile intervals instead of HDIs.
+    - adding `as_draws(fit)`, `as_draws_df(fit)`, etc. which also soft-deprecats directly accessing `fit$mcmc_post`. 
+    - Per-draw methods (`summary = FALSE` in `fitted()`, `predict()`, `residuals()`, `log_lik()`) now return dot-prefixed columns (`.epred`, `.prediction`, `.residual`, `.loglik`) for `{tidybayes}` / `{ggdist}` compatibility.
+    - `nsamples` soft-deprecated in favor of `ndraws`; `which_y` deprecated in favor of `dpar`.
+
 -   Supports several continuous predictors, categorical predictors, interactions, etc. for all terms on RHS. E.g., `~ 1 + x + x:group + sigma(1 + group) + ar(2, 0 + z)`. Basically, it now "feels" like `lm()` for each distributional parameter in each segment. All mcp functions support this now, including `plot()`, `fit$simulate()`, `predict(fit, newdata = ...)`, `hypothesis()`, `pp_check()`, etc. Explore `ex = mcp_example("multiple")` to see it in action. Default priors generally align with brms, with some adjustments to the change-point model.
 
 -   Predictor formulas now support group-level effects (sometimes called random or varying effects) using familiar `lme4` and `brms` syntax. `(1 | group)` specifies a group-level intercept, while `(1 + x || group)` and `(factor || group)` support independent coefficients, including slopes and factors. This also works inside distributional formulas such as `sigma(1 + (factor || id))`. As with `ar()`, an effect carries into later segments until it is redefined or disabled with `(0 | group)`. See `mcp_example("group")` for a worked example. Correlated multi-coefficient `|` terms are not yet supported.
@@ -35,12 +41,6 @@
     Bare `par_x` and polynomial bases such as `I(par_x^2)` remain segment-local
     to support joined segment shapes.
 
--   Posterior summaries now report central quantile intervals instead of
-    highest-density intervals. Sampling diagnostics now use the rank-normalized
-    split-Rhat, bulk ESS, and tail ESS from `posterior`; the `n.eff` column has
-    been replaced by `ess_bulk` and `ess_tail`. Intervals will be highly similar
-    for near-symmetrical posteriors.
-
 -   Parallel sampling is now controlled exclusively through the active `{future}` plan. The `cores` argument to `mcp()` is deprecated and ignored, but remains available for backwards compatibility. Use `future::plan(future::multisession, workers = 3)` before calling `mcp()` to sample chains in parallel, and `future::plan(future::sequential)` to shut down those workers. Without a parallel future plan, chains are sampled sequentially.
 
 -   Dropped support for `rel()` in formulas. This was ambiguous for interaction terms and made the code hard to maintain. Another way of achieving the same functionality via the priors may be added in future versions.
@@ -57,15 +57,11 @@
 
     -   Dropped arguments `which_y`, `scale` which only made sense for distributional parameters (dpars) and where several of the other arguments (e.g., `q_predict`) were insensible. Use the new `plot_dpar()` for this.
 
--   `which_y` is deprecated across `fitted()`, `predict()`, `plot()`, `fit$simulate()`, etc. Use `dpar` instead, following the naming used by `brms`/`posterior`. Its default also changed from `dpar = "mu"` to `dpar = "epred"`, i.e., `fitted()` now returns the expected value of the response by default rather than the central-tendency parameter on the response scale. For the currently supported families these coincide, but `epred` is the forward-compatible choice for families where the mean depends on more than one distributional parameter (e.g., lognormal).
-
 -   `fit = mcp_example("name")` now returns the fit directly instead of a list with a `$fit` entry. It now defaults to sampling the model (`sample = "post"`) and the `sample` argument is now directly passed to `mcp(..., sample = sample)` so `sample = TRUE` is deprecated.
 
 ## Other new features
 
 -   Default `plot(fit)` style has been updated in many ways to accomodate multiple regression and group-effects.
-
--   The user-facing `nsamples` argument is soft-deprecated in favor of `ndraws`, matching the terminology used by `posterior`, `rvar`, and related packages. Existing calls continue to work for now.
 
 -   Extended autoregression (`ar()`) to GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment. Bernoulli models and non-default links remain unsupported.
 

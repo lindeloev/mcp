@@ -317,20 +317,22 @@ is.mcpfit = function(x) {
 #' @param message TRUE: gives a message if returning prior samples. FALSE = no message
 #' @param error TRUE: err if there are no samples. FALSE: return NULL
 mcmclist_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
+  mcmc_prior = .subset2(fit, "mcmc_prior")
+  mcmc_post = .subset2(fit, "mcmc_post")
   if (prior == TRUE) {
-    if (coda::is.mcmc.list(fit$mcmc_prior)) {
-      return(fit$mcmc_prior)
+    if (coda::is.mcmc.list(mcmc_prior)) {
+      return(mcmc_prior)
     } else {
       stop("Prior requested but the prior was not sampled.")
     }
   }
 
-  if (coda::is.mcmc.list(fit$mcmc_post)) {
-    return(fit$mcmc_post)
-  } else if (coda::is.mcmc.list(fit$mcmc_prior)) {
+  if (coda::is.mcmc.list(mcmc_post)) {
+    return(mcmc_post)
+  } else if (coda::is.mcmc.list(mcmc_prior)) {
     if (message)
       message("Posterior was not sampled. Using prior samples. Set `prior = TRUE` to mute this message.")
-    return(fit$mcmc_prior)
+    return(mcmc_prior)
   } else if (error == TRUE) {
     stop("This mcpfit contains no posterior or prior samples.")
   }
@@ -358,6 +360,71 @@ posterior_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
     return(NULL)
 
   posterior::as_draws_array(samples)
+}
+
+
+#' Extract MCMC Draws from `mcpfit` Objects
+#'
+#' Extract posterior or prior draws using \pkg{posterior} or \pkg{coda} S3 generics.
+#'
+#' @aliases as_draws as_draws.mcpfit as_draws_df.mcpfit as_draws_array.mcpfit as_draws_matrix.mcpfit as_draws_rvars.mcpfit as.mcmc.mcpfit
+#' @param x An \code{\link{mcpfit}} object.
+#' @param prior Logical. Extract prior draws (`TRUE`) instead of posterior draws (`FALSE`)?
+#' @param ... Passed to \pkg{posterior} format conversion functions.
+#' @return A \pkg{posterior} `draws` object or a \pkg{coda} `mcmc.list` object.
+#' @export
+as_draws.mcpfit = function(x, prior = FALSE, ...) {
+  posterior_draws(x, prior = prior)
+}
+
+#' @export
+as_draws_df.mcpfit = function(x, prior = FALSE, ...) {
+  posterior::as_draws_df(posterior_draws(x, prior = prior), ...)
+}
+
+#' @export
+as_draws_array.mcpfit = function(x, prior = FALSE, ...) {
+  posterior::as_draws_array(posterior_draws(x, prior = prior), ...)
+}
+
+#' @export
+as_draws_matrix.mcpfit = function(x, prior = FALSE, ...) {
+  posterior::as_draws_matrix(posterior_draws(x, prior = prior), ...)
+}
+
+#' @export
+as_draws_rvars.mcpfit = function(x, prior = FALSE, ...) {
+  posterior::as_draws_rvars(posterior_draws(x, prior = prior), ...)
+}
+
+#' @export
+as.mcmc.mcpfit = function(x, prior = FALSE, ...) {
+  mcmclist_samples(x, prior = prior)
+}
+
+
+#' @export
+`$.mcpfit` = function(x, name) {
+  if (name %in% c("mcmc_post", "mcmc_prior")) {
+    lifecycle::deprecate_soft(
+      when = "0.4.0",
+      what = I(paste0("fit$", name)),
+      with = I("as_draws(fit) or as.mcmc(fit)")
+    )
+  }
+  .subset2(x, name)
+}
+
+#' @export
+`[[.mcpfit` = function(x, i, exact = TRUE) {
+  if (is.character(i) && i %in% c("mcmc_post", "mcmc_prior")) {
+    lifecycle::deprecate_soft(
+      when = "0.4.0",
+      what = I(paste0("fit$", i)),
+      with = I("as_draws(fit) or as.mcmc(fit)")
+    )
+  }
+  .subset2(x, i)
 }
 
 
@@ -681,7 +748,7 @@ tidy_samples = function(
 #'      - Predictors from `newdata`.
 #'      - Draw descriptors: ".chain", ".iteration", ".draw" (see the `posterior` and `tidybayes` packages), and `data_row`, the row number in the evaluated `newdata`.
 #'      - Draw values: one column for each parameter in the model.
-#'      - The estimate. Either "predict" or "fitted", i.e., the name of the `type` argument.
+#'      - The estimate. Either ".epred", ".prediction", ".residual", or ".loglik" (matching tidybayes/ggdist conventions).
 #'
 #'   * If `summary = FALSE` and `samples_format = "matrix"`: An `N_draws` X `nrows(newdata)` matrix with fitted/predicted
 #'       values (depending on `type`). This format is used by `brms` and it's useful as `yrep` in
@@ -855,6 +922,17 @@ pp_eval = function(
     }
     return(data.frame(dplyr::select(df_return, -"data_row")))
   } else if (samples_format == "tidy") {
+    value_col = switch(type,
+      fitted = ".epred",
+      predict = ".prediction",
+      residuals = ".residual",
+      loglik = ".loglik",
+      type
+    )
+    if (.include_fitted && "fitted" %in% colnames(samples)) {
+      samples = dplyr::rename(samples, .epred = "fitted")
+    }
+    samples = dplyr::rename(samples, !!value_col := dplyr::all_of(type))
     return(samples)
   } else if (samples_format == "matrix") {
     df_return = tidy_to_matrix(samples, type)

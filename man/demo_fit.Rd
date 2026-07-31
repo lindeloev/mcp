@@ -11,6 +11,6 @@ An \code{\link{mcpfit}} object.
 demo_fit
 }
 \description{
-This was generated using \code{demo_fit = mcp_examples("demo")}.
+This was generated using \code{demo_fit = mcp_example("demo")}.
 }
 \keyword{datasets}

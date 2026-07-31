@@ -6,7 +6,7 @@
 \alias{mcp_example_data}
 \title{Get example models and data}
 \usage{
-mcp_example(name, sample = "post")
+mcp_example(name, sample = "post", plot = TRUE)
 
 mcp_example_data(name)
 }
@@ -16,6 +16,7 @@ mcp_example_data(name)
 \item \code{"demo"}: Two change points between intercepts and joined/disjoined slopes.
 \item \code{"ar"}: One change point in autoregressive residuals.
 \item \code{"binomial"}: Binomial with two change points. Much like \code{"demo"} on a logit scale.
+\item \code{"group"}: Group-level (random) intercepts and factor effects across a change point.
 \item \code{"intercepts"}: An intercept-only change point.
 \item \code{"multiple"}: Multiple regression with categorical predictors and interactions.
 \item \code{"quadratic"}: A change point to a quadratic segment.
@@ -35,6 +36,9 @@ Savage-Dickey density ratios in \code{\link{hypothesis}}.
 object without sample. This is useful if you only want to check
 prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
 }}
+
+\item{plot}{Logical. Plot the fitted example? No plot is produced when
+\code{sample = FALSE}.}
 }
 \value{
 An \code{mcpfit}, enriched with a \verb{$call} field. It contains the code to
@@ -51,11 +55,10 @@ Get example models and data
 \examples{
 \donttest{
 fit = mcp_example("multiple")
-plot(fit)
 print(fit$call)  # See how the data was simulated
 
 # Without sampling
-empty = mcp_example("binomial", sample = FALSE)
+empty = mcp_example("binomial", sample = FALSE, plot = FALSE)
 print(empty)
 print(empty$call)
 print(empty$data)

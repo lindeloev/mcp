@@ -249,29 +249,37 @@ test_that("Simple mcpfit methods", {
 })
 
 test_that("posterior draws accessor preserves the stored chains", {
-  draws = posterior_draws(demo_fit)
+  # Using the new S3 generics
+  draws_array = posterior::as_draws_array(demo_fit)
+  draws_df = posterior::as_draws_df(demo_fit)
+  draws_matrix = posterior::as_draws_matrix(demo_fit)
+  mcmc = coda::as.mcmc(demo_fit)
 
-  expect_s3_class(draws, "draws_array")
+  expect_s3_class(draws_array, "draws_array")
+  expect_s3_class(draws_df, "draws_df")
+  expect_s3_class(draws_matrix, "draws_matrix")
+  expect_s3_class(mcmc, "mcmc.list")
+
+  raw = .subset2(demo_fit, "mcmc_post")
   expect_equal(
-    dim(draws),
-    c(
-      nrow(demo_fit$mcmc_post[[1]]),
-      length(demo_fit$mcmc_post),
-      ncol(demo_fit$mcmc_post[[1]])
-    )
+    dim(draws_array),
+    c(nrow(raw[[1]]), length(raw), ncol(raw[[1]]))
   )
-  expect_equal(posterior::variables(draws), colnames(demo_fit$mcmc_post[[1]]))
-  expect_s3_class(demo_fit$mcmc_post, "mcmc.list")
+  expect_equal(posterior::variables(draws_array), colnames(raw[[1]]))
+
+  # Accessing mcmc_post directly should soft-deprecate
+  lifecycle::expect_deprecated(
+    val <- demo_fit$mcmc_post
+  )
+  expect_s3_class(val, "mcmc.list")
 })
 
 test_that("summaries use central intervals and posterior diagnostics", {
   width = 0.8
   result = fixef(demo_fit, width = width)
   parameter = result$name[[1]]
-  values = unlist(lapply(
-    demo_fit$mcmc_post,
-    function(chain) chain[, parameter]
-  ))
+  raw = .subset2(demo_fit, "mcmc_post")
+  values = unlist(lapply(raw, function(chain) chain[, parameter]))
   parameter_matrix = posterior::extract_variable_matrix(
     posterior_draws(demo_fit),
     variable = parameter
@@ -351,7 +359,8 @@ test_that("nsamples is a soft-deprecated alias for ndraws", {
 # hypothesis()
 test_that("hypothesis()", {
   # Use a draw-derived threshold so the hypothesis is neither rare nor certain.
-  cp_draws = unlist(lapply(demo_fit2$mcmc_post, function(chain) chain[, "cp_1"]))
+  raw = .subset2(demo_fit2, "mcmc_post")
+  cp_draws = unlist(lapply(raw, function(chain) chain[, "cp_1"]))
   threshold = unname(stats::quantile(cp_draws, 0.25))
   threshold_text = format(threshold, digits = 16)
   directional = paste0("cp_1 > ", threshold_text)
@@ -363,21 +372,23 @@ test_that("hypothesis()", {
   )
 
   fit_asymmetric = demo_fit2
-  fit_asymmetric$mcmc_prior = demo_fit2$mcmc_post
+  fit_asymmetric$mcmc_prior = .subset2(demo_fit2, "mcmc_post")
 
   # Force the prior probability above the threshold to 0.25. This makes the
   # prior odds differ from the posterior odds.
-  for (chain in seq_along(fit_asymmetric$mcmc_prior)) {
-    n_draws = nrow(fit_asymmetric$mcmc_prior[[chain]])
-    fit_asymmetric$mcmc_prior[[chain]][, "cp_1"] = c(
+  mcmc_prior = .subset2(fit_asymmetric, "mcmc_prior")
+  for (chain in seq_along(mcmc_prior)) {
+    n_draws = nrow(mcmc_prior[[chain]])
+    mcmc_prior[[chain]][, "cp_1"] = c(
       rep(threshold + 1, floor(n_draws / 4)),
       rep(threshold - 1, n_draws - floor(n_draws / 4))
     )
   }
+  fit_asymmetric$mcmc_prior = mcmc_prior
 
   actual_directional = expect_no_warning(hypothesis(fit_asymmetric, directional))
   p_post = mean(cp_draws > threshold)
-  prior_draws = unlist(lapply(fit_asymmetric$mcmc_prior, function(chain) chain[, "cp_1"]))
+  prior_draws = unlist(lapply(.subset2(fit_asymmetric, "mcmc_prior"), function(chain) chain[, "cp_1"]))
   p_prior = mean(prior_draws > threshold)
   expected_BF = (p_post / (1 - p_post)) / (p_prior / (1 - p_prior))
   effect_draws = cp_draws - threshold
@@ -388,7 +399,7 @@ test_that("hypothesis()", {
 
   # Identical prior and posterior draws must give BF = 1, also for intervals.
   fit_same = demo_fit2
-  fit_same$mcmc_prior = demo_fit2$mcmc_post
+  fit_same$mcmc_prior = .subset2(demo_fit2, "mcmc_post")
   bounds = stats::quantile(cp_draws, c(0.2, 0.8))
   interval = paste0(
     "cp_1 > ", format(bounds[[1]], digits = 16),

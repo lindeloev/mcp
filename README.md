@@ -337,25 +337,30 @@ plot(fit)
 ![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_quadratic.png)
 
 # Do much more with the MCMC samples
-Don't be constrained by these simple `mcp` functions. `fit$samples` is a regular `mcmc.list` object and all methods apply. You can work with the MCMC samples just as you would with `brms`, `rstanarm`, `jags`, or other samplers using the always excellent `tidybayes`:
+Don't be constrained by these simple `mcp` functions. Use the `posterior` package generics to extract draws in any format:
 
 ```r
+library(posterior)
 library(tidybayes)
 
-# Extract all parameters:
-tidy_draws(fit$samples) %>%
-  # tidybayes stuff here
+# Extract as a posterior draws_df (tidybayes-compatible):
+as_draws_df(fit)
 
-# Extract some parameters:
-fit$pars$model  # check out which parameters are inferred.
-spread_draws(fit$samples, cp_1, cp_2, int_1, year_1) %>%
- # tidybayes stuff here
+# Extract as draws array (chains x iterations x parameters):
+as_draws_array(fit)
+
+# Extract as a coda mcmc.list (for coda diagnostics):
+as.mcmc(fit)
+
+# For example, with tidybayes:
+spread_draws(as_draws_df(fit), cp_1, cp_2, Intercept_1)
 ```
 
-It may be convenient to use `fitted(fit, summary = FALSE)` or `predict(fit, summary = FALSE)` which return draws in `tidybayes` format, extended with additional columns for fits and predictions. For example:
+It may be convenient to use `fitted(fit, summary = FALSE)` or `predict(fit, summary = FALSE)` which return draws in tidybayes format. When `summary = FALSE`, the value column uses a dot-prefixed name matching tidybayes conventions: `.epred` for `fitted()`, `.prediction` for `predict()`, `.residual` for `residuals()`. For example:
 
 ```r
-head(fitted(fit, summary = FALSE))
+head(fitted(fit, summary = FALSE))  # column .epred
+head(predict(fit, summary = FALSE))  # column .prediction
 ```
 
 

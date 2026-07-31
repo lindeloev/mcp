@@ -89,10 +89,10 @@ test_that("pp_eval keeps posterior draws in separate AR series", {
     byrow = TRUE,
     dimnames = list(NULL, c("Intercept_1", "sigma_1", "ar1_1"))
   )
-  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))  # direct slot assignment, not the $ generic
 
   result = fitted(fit, summary = FALSE, probs = FALSE)
 
   expect_equal(result$.draw, rep(1:2, each = 3))
-  expect_equal(result$fitted, rep(c(0, 0.5, 1), 2))
+  expect_equal(result$.epred, rep(c(0, 0.5, 1), 2))
 })

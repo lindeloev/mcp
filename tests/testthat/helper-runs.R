@@ -96,7 +96,7 @@ test_runs = function(model,
 
 
     # Test criterions. Will warn about very few samples
-    if (!is.null(fit$mcmc_post)) {
+    if (!is.null(.subset2(fit, "mcmc_post"))) {
       fit$loo = suppressMessages(suppressWarnings(loo(fit)))
       fit$waic = suppressMessages(suppressWarnings(waic(fit)))
       testthat::expect_true(loo::is.psis_loo(fit$loo))
@@ -123,9 +123,10 @@ test_runs = function(model,
       }
 
       # Check that samples are the correct format
-      testthat::expect_true(is.list(fit_to_test[[col]]), model)
-      testthat::expect_true(coda::is.mcmc(fit_to_test[[col]][[1]]), model)
-      testthat::expect_true(all(fit_to_test$pars$population %in% colnames(fit_to_test[[col]][[1]])))
+      samples_col = .subset2(fit_to_test, col)
+      testthat::expect_true(is.list(samples_col), model)
+      testthat::expect_true(coda::is.mcmc(samples_col[[1]]), model)
+      testthat::expect_true(all(fit_to_test$pars$population %in% colnames(samples_col[[1]])))
 
       # Test mcpfit functions
       varying_cols = na.omit(get_fit_model_tables(fit_to_test)$group_effects$group_col)
@@ -351,14 +352,14 @@ test_pp_eval_weights = function(fit, prior = FALSE) {
   sigma = fitted(fit, summary = FALSE, probs = FALSE, prior = prior, dpar = "sigma")
   loglik = log_lik(fit, summary = FALSE, probs = FALSE, prior = prior)
   weights = fit$data[[weight_col]][loglik$data_row]
-  observation_sd = sigma$fitted / sqrt(weights)
+  observation_sd = sigma$.epred / sqrt(weights)
   observed = fit$data[[fit$pars$y]][loglik$data_row]
 
   testthat::expect_equal(loglik[, keys], mu[, keys])
   testthat::expect_equal(loglik[, keys], sigma[, keys])
   testthat::expect_equal(
-    loglik$loglik,
-    stats::dnorm(observed, mu$fitted, observation_sd, log = TRUE)
+    loglik$.loglik,
+    stats::dnorm(observed, mu$.epred, observation_sd, log = TRUE)
   )
 
   had_random_seed = exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
@@ -375,9 +376,9 @@ test_pp_eval_weights = function(fit, prior = FALSE) {
   set.seed(123)
   prediction = predict(fit, summary = FALSE, probs = FALSE, prior = prior)
   set.seed(123)
-  expected = stats::rnorm(nrow(prediction), mu$fitted, observation_sd)
+  expected = stats::rnorm(nrow(prediction), mu$.epred, observation_sd)
   testthat::expect_equal(prediction[, keys], mu[, keys])
-  testthat::expect_equal(prediction$predict, expected)
+  testthat::expect_equal(prediction$.prediction, expected)
 
   if (!prior) {
     newdata_without_weights = fit$data[, colnames(fit$data) != weight_col, drop = FALSE]
@@ -440,7 +441,7 @@ test_pp_eval = function(fit, prior = FALSE) {
       rhs_cols,
       selected_cp$cols,
       "data_row",
-      "fitted"
+      ".epred"  # dot-prefixed for summary = FALSE
     )
 
     testthat::expect_true(dplyr::setequal(colnames(result_more), expected_colnames_more))  # Exactly these columns regardless of order

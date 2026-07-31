@@ -49,13 +49,14 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE,
   checkmate::assert_flag(arma)
   warn_arma_check(fit, arma, "information_criterion")
   ndraws = validate_loglik_ndraws(fit, ndraws)
-  n_draws = sum(vapply(fit$mcmc_post, nrow, integer(1)))
+  mcmc_post = .subset2(fit, "mcmc_post")
+  n_draws = sum(vapply(mcmc_post, nrow, integer(1)))
   settings = get_loglik_settings(fit, varying, arma, ndraws)
   if (length(settings$observed_rows) == 0)
     stop("LOO requires at least one observed response.")
   chain_id_all = rep(
-    seq_along(fit$mcmc_post),
-    vapply(fit$mcmc_post, nrow, integer(1))
+    seq_along(mcmc_post),
+    vapply(mcmc_post, nrow, integer(1))
   )
 
 
@@ -80,7 +81,7 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE,
       # Select draws once and reuse them for every observation. Treat the
       # arbitrary subset as one chain; relative_eff is set to 1 below.
       draw_indices = sort(sample.int(n_draws, ndraws))
-      selected = as.matrix(fit$mcmc_post)[draw_indices, , drop = FALSE]
+      selected = as.matrix(.subset2(fit, "mcmc_post"))[draw_indices, , drop = FALSE]
       fit$mcmc_post = coda::mcmc.list(coda::mcmc(selected))
       n_eval = ndraws
       chain_id = rep(1L, ndraws)
@@ -111,7 +112,7 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE,
 
       # Matrix conversion validates and explicitly orders the joint draws, so
       # every observation passed to loo uses the same draw identity.
-      loglik = as.numeric(tidy_to_matrix(loglik_samples, type = "loglik")[, 1])
+      loglik = as.numeric(tidy_to_matrix(loglik_samples, type = ".loglik")[, 1])
       link_fun(loglik)
     }
 
@@ -189,7 +190,7 @@ add_loglik = function(x, varying = TRUE, arma = TRUE, ndraws = NULL,
     dplyr::arrange(.data$.draw)
   if (anyDuplicated(draw_index$.draw))
     stop_github("Chain metadata differs across evaluation rows for the same `.draw`.")
-  fit$loglik = tidy_to_matrix(loglik_samples, type = "loglik", data_rows = settings$observed_rows)
+  fit$loglik = tidy_to_matrix(loglik_samples, type = ".loglik", data_rows = settings$observed_rows)
 
   # Chain info
   rownames(fit$loglik) = draw_index$.chain
@@ -208,7 +209,8 @@ validate_loglik_ndraws = function(fit, ndraws) {
   if (is.null(ndraws))
     return(NULL)
 
-  n_draws = sum(vapply(fit$mcmc_post, nrow, integer(1)))
+  mcmc_post = .subset2(fit, "mcmc_post")
+  n_draws = sum(vapply(mcmc_post, nrow, integer(1)))
   if (ndraws > n_draws)
     stop("`ndraws` cannot exceed the ", n_draws, " available posterior draws.")
   as.integer(ndraws)
@@ -369,7 +371,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
 
     # SAVAGE-DICKEY: compute p and BF
     if (n_equals == 1) {
-      if (!coda::is.mcmc.list(fit$mcmc_prior) | !coda::is.mcmc.list(fit$mcmc_post))
+      if (!coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) || !coda::is.mcmc.list(.subset2(fit, "mcmc_post")))
         stop("Model contains '='. Both prior and posterior samples are needed to compute Savage-Dickey density ratios. Run mcp(..., sample = 'both'")
 
       # Finally, let's compute those densities
@@ -388,7 +390,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
 
     # DIRECTIONAL: compute p and BF
     if (n_directional != 0) {
-      if (!coda::is.mcmc.list(fit$mcmc_prior) || !coda::is.mcmc.list(fit$mcmc_post))
+      if (!coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) || !coda::is.mcmc.list(.subset2(fit, "mcmc_post")))
         stop("Directional Bayes factors require both prior and posterior samples. Run mcp(..., sample = 'both').")
 
       # Evaluate the same hypothesis on the posterior and prior draws.

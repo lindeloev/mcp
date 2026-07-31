@@ -106,7 +106,7 @@ pp_check = function(
   # Return plot with or without facets
   if (is.null(facet_by)) {
     y = y_all[observed_rows]
-    yrep = tidy_to_matrix(samples, type = "predict", data_rows = observed_rows)
+    yrep = tidy_to_matrix(samples, type = ".prediction", data_rows = observed_rows)
     plot_return = get_ppc_plot(
       fit, type, y, yrep, ndraws,
       observations = observed_rows,
@@ -122,7 +122,7 @@ pp_check = function(
       # Compute/extract y and yrep for this group
       observations_this = observed_rows[varying_data[observed_rows] == group]
       y_this = y_all[observations_this]
-      yrep_this = tidy_to_matrix(samples, type = "predict", data_rows = observations_this)
+      yrep_this = tidy_to_matrix(samples, type = ".prediction", data_rows = observations_this)
 
       # Add plot to list
       all_plots[[as.character(group)]] = get_ppc_plot(

@@ -5,7 +5,12 @@
 \alias{interpolate_newdata}
 \title{Returns a data.frame with all combos of predictors}
 \usage{
-interpolate_newdata(fit, by = NULL, x_values = get_x_values(fit, by))
+interpolate_newdata(
+  fit,
+  by = NULL,
+  x_values = get_x_values(fit, by),
+  at = NULL
+)
 }
 \arguments{
 \item{fit}{An \code{mcpfit} object.}
@@ -13,14 +18,17 @@ interpolate_newdata(fit, by = NULL, x_values = get_x_values(fit, by))
 \item{by}{Character vector of categorical or varying-effect columns to evaluate separately.
 Categorical model predictors are always included.}
 
-\item{x_values}{Numeric vector of x-values to interpolate at.}
+\item{x_values}{Numeric vector of x-values to evaluate at.}
+
+\item{at}{Named list setting additional continuous predictors to fixed values.
+They default to their observed means. For example, \code{at = list(age = 40)}.}
 }
 \value{
 \code{tibble} with
 \itemize{
 \item Cols for par_x
 \item unique levels combos of factorial vars
-\item interpolated continuous vars (interpolated within each factorial cell) (fills down/up if outside observed region)
+\item fixed values for additional continuous predictors
 }
 }
 \description{
@@ -34,7 +42,7 @@ change points where the values can change abruptly, but lower resolution in
 between to speed up the computation.
 
 Categorical variables and requested varying-effect groups are combined factorially (all level combinations).
-Continuous variables are interpolated at the x-values and applied to every curve.
+Additional continuous predictors are held at their observed means, or at values supplied through \code{at}.
 }
 \examples{
 \dontrun{

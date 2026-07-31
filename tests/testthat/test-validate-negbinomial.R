@@ -108,7 +108,7 @@ test_that("negative-binomial coefficients agree with MASS glm.nb", {
   )
   fit_mass = MASS::glm.nb(y ~ x, data = data)
 
-  samples = as.matrix(fit_mcp$mcmc_post)
+  samples = posterior::as_draws_matrix(fit_mcp)
   expect_equal(mean(samples[, "Intercept_1"]), unname(stats::coef(fit_mass)[1]), tolerance = 0.1)
   expect_equal(mean(samples[, "x_1"]), unname(stats::coef(fit_mass)[2]), tolerance = 0.1)
   expect_equal(stats::median(exp(samples[, "shape_1"])), fit_mass$theta, tolerance = 0.5)

@@ -19,7 +19,8 @@
   rate = TRUE,
   prior = FALSE,
   arma = TRUE,
-  ndraws = NULL,
+  ndraws = 1000,
+  at = NULL,
   nsamples = lifecycle::deprecated(),
   ...
 )
@@ -34,8 +35,9 @@ plot_dpar(
   cp_dens = TRUE,
   prior = FALSE,
   arma = TRUE,
-  ndraws = NULL,
+  ndraws = 1000,
   scale = "response",
+  at = NULL,
   nsamples = lifecycle::deprecated(),
   ...
 )
@@ -58,7 +60,8 @@ quantiles.
 \item{facet_by}{Character vector. Names of categorical data columns to split to facets.
 Can be grouping-factor or categorical predictor columns.}
 
-\item{color_by}{\code{NULL} for no color grouping, or a character vector naming categorical or varying-effect data columns to color by.
+\item{color_by}{A character vector naming categorical or varying-effect data columns to color by.
+If both \code{color_by} and \code{facet_by} are omitted, a sole categorical predictor is colored automatically. Set \code{color_by = NULL} explicitly to disable this.
 Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.}
 
 \item{lines}{Positive integer or \code{FALSE}. The number of fitted lines (draws).
@@ -87,6 +90,9 @@ interpolation on trial number is used to infer trials at a particular x.}
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
 If there are varying effects, this is the number of draws from each varying group.
 \code{NULL} means "all". Ignored if both are \code{FALSE}. More samples trade speed for accuracy.}
+
+\item{at}{Named list setting additional continuous predictors to fixed values.
+They default to their observed means. Passed to \code{interpolate_newdata()}.}
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 
@@ -117,7 +123,9 @@ Plot prior or posterior model draws on top of data.
 }
 \details{
 \code{plot()} uses \code{fit$simulate()} on posterior samples. These represent the
-(joint) posterior distribution.fit
+(joint) posterior distribution. Interval summaries use at most 1000 draws
+by default; use \code{ndraws = NULL} to use all draws. Change-point densities
+always use all available draws.
 }
 \section{Functions}{
 \itemize{

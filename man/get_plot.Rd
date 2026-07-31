@@ -18,8 +18,10 @@ get_plot(
   prior = FALSE,
   dpar = "epred",
   arma = TRUE,
-  ndraws = NULL,
+  ndraws = 1000,
   scale = "response",
+  at = NULL,
+  .grouping = "auto",
   nsamples = lifecycle::deprecated(),
   ...
 )
@@ -42,7 +44,8 @@ quantiles.
 \item{facet_by}{Character vector. Names of categorical data columns to split to facets.
 Can be grouping-factor or categorical predictor columns.}
 
-\item{color_by}{\code{NULL} for no color grouping, or a character vector naming categorical or varying-effect data columns to color by.
+\item{color_by}{A character vector naming categorical or varying-effect data columns to color by.
+If both \code{color_by} and \code{facet_by} are omitted, a sole categorical predictor is colored automatically. Set \code{color_by = NULL} explicitly to disable this.
 Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.}
 
 \item{lines}{Positive integer or \code{FALSE}. The number of fitted lines (draws).
@@ -88,6 +91,11 @@ If there are varying effects, this is the number of draws from each varying grou
 \item \code{"linear"}: return on the parameter scale (where the linear trends are modelled).
 A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} is not \code{NULL}.
 }}
+
+\item{at}{Named list setting additional continuous predictors to fixed values.
+They default to their observed means. Passed to \code{interpolate_newdata()}.}
+
+\item{.grouping}{Internal. Whether grouping arguments were omitted, mapped, or explicitly disabled.}
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 

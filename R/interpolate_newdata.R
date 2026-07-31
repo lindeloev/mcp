@@ -25,7 +25,7 @@ get_x_values = function(fit, by = NULL, prior = FALSE) {
   # If there are AR/MA terms, evaluate at the data
   if (length(fit$pars$arma) > 0) {
     x_values = xdata
-  } else if (!is.null(by) || is.null(fit$mcmc_post)) {
+  } else if (!is.null(by) || is.null(.subset2(fit, "mcmc_post"))) {
     # Just give up for grouped and prior evaluations (usually very distributed change points)
     # and return a reasonable resolution
     x_values = seq(min(xdata), max(xdata), length.out = X_RESOLUTION_GROUPED)

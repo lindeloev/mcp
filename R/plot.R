@@ -172,7 +172,7 @@ get_plot = function(x,
     )
   }
 
-  if (!coda::is.mcmc.list(fit$mcmc_post) && !coda::is.mcmc.list(fit$mcmc_prior))
+  if (!coda::is.mcmc.list(.subset2(fit, "mcmc_post")) && !coda::is.mcmc.list(.subset2(fit, "mcmc_prior")))
     stop("Cannot plot an mcpfit without prior or posterior samples.")
 
   available_draws = niterations(fit, prior = prior)
@@ -227,7 +227,7 @@ get_plot = function(x,
     draws %>%
       # Only a problem for AR/MA models, where newdata contains the response.
       dplyr::select(-dplyr::any_of(as.character(yvar))) %>%
-      dplyr::rename("{fit$pars$y}" := "fitted") %>%
+      dplyr::rename("{fit$pars$y}" := ".epred") %>%
       add_plot_groups(curve_by = curve_by, color_by = color_by)
   }
 
@@ -252,7 +252,7 @@ get_plot = function(x,
         show_q_fit && type == "predict"
       )
       if (type == "predict")
-        draws = dplyr::rename(draws, .predicted = "predict")
+        draws = dplyr::rename(draws, .predicted = ".prediction")
       draws = prepare_draws(draws)
       keep = unique(c(as.character(xvar), facet_by, ".group", ".color"))
 
