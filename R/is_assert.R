@@ -55,7 +55,7 @@ assert_rank = function(x, segment, dpar) {
 # This applies checks to multiple columns in data.
 # Typical fail_funcs would be c(is.na, is.nan, is.infinite)
 assert_data_cols = function(data, cols, fail_funcs = c()) {
-  missing_cols = cols[(cols %in% colnames(data)) == FALSE]
+  missing_cols = setdiff(cols, colnames(data))
   if (length(missing_cols) > 0)
     stop("These model terms are missing from the data: ", and_collapse(missing_cols))
 

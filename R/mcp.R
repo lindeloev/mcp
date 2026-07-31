@@ -267,7 +267,6 @@ mcp = function(model,
   # MODEL BUILDING #
   ##################
   # Build model metadata.
-  par_x = get_par_x(model, data, par_x)
   segment_tables = get_segment_tables(model, data, family, par_x)
   segments = segment_tables$segments
   cps = segment_tables$cps

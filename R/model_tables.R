@@ -1,34 +1,5 @@
-# #' Unpack varying effects
-# #'
-# #' @aliases unpack_varying_term
-# #' @keywords internal
-# #' @param term
-# #' @return A "one-row" list describing a varying intercept.
-# #' @encoding UTF-8
-# #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-# unpack_varying_term = function(term, i) {
-#   parts = stringr::str_trim(strsplit(term, "\\|")[[1]])  # as c("lhs", "group")
-#
-#   # Check that there is just one grouping term
-#   if (!grepl("^[A-Za-z._0-9]+$", parts[2]))
-#     stop("Error in segment ", i, " (right-hand side): Grouping variable in varying effects for change points.")
-#
-#   # LHS: Split intercepts and variable
-#   preds = strsplit(gsub(" ", "", parts[1]), "\\+")[[1]]
-#   slope = preds[(preds %in% c("0", "1")) == FALSE]
-#   if (length(slope) > 1)
-#     stop("Error in segment ", i, " (right-hand side): More than one variable in LHS of varying effect.")
-#   else if (length(slope) == 0)
-#     # If not slope
-#     slope = NA
-#
-#   # Return
-#   list(
-#     int = "0" %notin% preds,  # bool. Is intercept present?
-#     slope = slope,
-#     group = parts[2]
-#   )
-# }
+# ABOUT: Building tables describing model segments, change points, and parameters
+# ------------------------------------------------------------
 
 
 
