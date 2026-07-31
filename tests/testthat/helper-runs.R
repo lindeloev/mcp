@@ -214,9 +214,9 @@ test_plot = function(fit, varying_cols) {
   q_predict = rbinom(1, 1, 0.5) == 1  # add quantiles sometimes
   # To facet or not to facet
   if (length(varying_cols) > 0) {
-    gg = try(plot(fit, facet_by = varying_cols[1], q_fit = q_fit, q_predict = q_predict, lines = 3, ndraws = NULL), silent = TRUE)  # just take the first
+    gg = try(plot(fit, facet_by = varying_cols[1], color_by = NULL, q_fit = q_fit, q_predict = q_predict, lines = 3, ndraws = NULL), silent = TRUE)  # just take the first
   } else {
-    gg = try(plot(fit, q_fit = q_fit, q_predict = q_predict, lines = 3, ndraws = NULL), silent = TRUE)
+    gg = try(plot(fit, color_by = NULL, q_fit = q_fit, q_predict = q_predict, lines = 3, ndraws = NULL), silent = TRUE)
   }
   # Is it a ggplot or a known error?
   if (inherits(gg, "try-error")) {

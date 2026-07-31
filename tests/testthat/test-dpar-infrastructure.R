@@ -446,16 +446,21 @@ test_that("quantiles stay separate for rows and categorical curves sharing x", {
   expect_equal(summary$Q75, c(0, 10))
 
   samples = fitted(fit, newdata = newdata, summary = FALSE, probs = FALSE) %>% add_plot_groups()
+  quantiles = get_quantiles(samples, c(0.25, 0.75), "fitted", c("x", ".group", ".color"))
   quantile_layer = geom_quantiles(
-    samples,
-    quantiles = c(0.25, 0.75),
+    quantiles,
     xvar = rlang::sym("x"),
     yvar = rlang::sym("fitted"),
-    facet_by = NULL
+    use_color = TRUE
   )
   expect_equal(nrow(quantile_layer$data), 4)
   expect_equal(sort(unname(quantile_layer$data$fitted)), c(0, 0, 10, 10))
   expect_equal(length(unique(quantile_layer$data$.group)), 2)
+
+  automatic = plot(fit, lines = 0, q_fit = c(0.25, 0.75))
+  automatic_quantiles = ggplot2::ggplot_build(automatic)$data[[2]]
+  expect_equal(automatic$labels$colour, "group")
+  expect_equal(length(unique(automatic_quantiles$colour)), 2)
 
   plot = ggplot2::ggplot(
     samples,
@@ -467,6 +472,9 @@ test_that("quantiles stay separate for rows and categorical curves sharing x", {
 
 
 test_that("color_by controls color without pooling categorical curves", {
+  expect_equal(formals(plot.mcpfit)$ndraws, 1000)
+  expect_equal(formals(plot_dpar)$ndraws, 1000)
+
   plot_colors = c("#0072B2", "#D55E00", "#009E73", "#CC79A7")
   data = expand.grid(
     x = 1:4,
@@ -492,19 +500,35 @@ test_that("color_by controls color without pooling categorical curves", {
   draws[, "sigma_1"] = 1
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
 
+  expect_error(
+    plot(fit, lines = 0, q_fit = c(0.25, 0.75)),
+    "Unmapped categorical predictors: 'group', 'condition'.",
+    fixed = TRUE
+  )
+  expect_error(
+    plot(fit, color_by = "group", lines = 0, q_fit = c(0.25, 0.75)),
+    "Unmapped categorical predictors: 'condition'.",
+    fixed = TRUE
+  )
+
   # NULL disables color, but the two quantiles for all four categorical
   # curves must still remain separate.
-  no_color = plot(fit, color_by = NULL, lines = 0, q_fit = c(0.25, 0.75))
-  no_color_quantiles = ggplot2::ggplot_build(no_color)$data[[2]]
-  expect_equal(length(unique(no_color_quantiles$colour)), 1)
+  no_color = plot(fit, color_by = NULL, lines = 0, q_fit = c(0.25, 0.75), q_predict = c(0.25, 0.75))
+  no_color_layers = ggplot2::ggplot_build(no_color)$data
+  no_color_quantiles = no_color_layers[[2]]
+  expect_equal(unique(no_color_quantiles$colour), "#D55E00")
+  expect_equal(unique(no_color_quantiles$linetype), "longdash")
+  expect_equal(unique(no_color_quantiles$linewidth), 0.85)
+  expect_equal(unique(no_color_layers[[3]]$colour), "#009E73")
+  expect_equal(unique(no_color_layers[[3]]$linetype), "twodash")
   expect_equal(length(unique(no_color_quantiles$group)), 8)
   expect_null(no_color$labels$colour)
 
-  # Selecting one column changes only color: condition still defines separate
-  # curves and is not pooled into the group-specific quantiles.
+  # All categorical curves are identified by either color or facets.
   one_color = plot(
     fit,
     color_by = "group",
+    facet_by = "condition",
     lines = 0,
     q_fit = c(0.25, 0.75),
     q_predict = c(0.25, 0.75)
@@ -512,8 +536,10 @@ test_that("color_by controls color without pooling categorical curves", {
   one_color_layers = ggplot2::ggplot_build(one_color)$data
   one_color_quantiles = one_color_layers[[2]]
   expect_setequal(unique(one_color_quantiles$colour), plot_colors[1:2])
+  expect_equal(unique(one_color_quantiles$linetype), "longdash")
   expect_equal(length(unique(one_color_quantiles$group)), 8)
   expect_setequal(unique(one_color_layers[[3]]$colour), plot_colors[1:2])
+  expect_equal(unique(one_color_layers[[3]]$linetype), "twodash")
   expect_equal(length(unique(one_color_layers[[3]]$group)), 8)
   expect_equal(one_color$labels$colour, "group")
 
@@ -553,6 +579,7 @@ test_that("color_by controls color without pooling categorical curves", {
     fit,
     dpar = "sigma",
     color_by = "group",
+    facet_by = "condition",
     lines = 0,
     q_fit = c(0.25, 0.75)
   )
@@ -595,13 +622,10 @@ test_that("change point density colors adapt to fitted colors", {
 
 
 test_that("integer varying groups can control plot color", {
-  data = data.frame(
-    x = rep(1:4, 2),
-    id = rep(1:2, each = 4),
-    y = 0
-  )
+  data = expand.grid(x = 1:4, id = 1:2, condition = factor(c("A", "B")))
+  data$y = 0
   fit = mcp(
-    list(y ~ 1, 1 + (1 | id) ~ 1),
+    list(y ~ 1 + condition, 1 + (1 | id) ~ 1),
     data,
     par_x = "x",
     sample = FALSE
@@ -623,6 +647,12 @@ test_that("integer varying groups can control plot color", {
 
   interpolated = interpolate_newdata(fit, by = "id", x_values = 1:4)
   expect_equal(sort(unique(interpolated$id)), 1:2)
+  expect_false("id" %in% names(interpolate_newdata(fit, x_values = 1:4)))
+
+  automatic = plot(fit, lines = 0, q_fit = c(0.25, 0.75), cp_dens = FALSE)
+  automatic_quantiles = ggplot2::ggplot_build(automatic)$data[[2]]
+  expect_equal(automatic$labels$colour, "condition")
+  expect_equal(length(unique(automatic_quantiles$colour)), 2)
 
   # Without an explicit facet or color mapping, show the population curve
   # once rather than duplicating it for every integer group ID.
@@ -634,7 +664,7 @@ test_that("integer varying groups can control plot color", {
     cp_dens = FALSE
   )
   population_quantiles = ggplot2::ggplot_build(population_plot)$data[[2]]
-  expect_equal(length(unique(population_quantiles$group)), 2)
+  expect_equal(length(unique(population_quantiles$group)), 4)
 
   plotted = plot(
     fit,
@@ -646,7 +676,20 @@ test_that("integer varying groups can control plot color", {
   quantiles = ggplot2::ggplot_build(plotted)$data[[2]]
 
   expect_equal(length(unique(quantiles$colour)), 2)
-  expect_equal(length(unique(quantiles$group)), 4)
+  expect_equal(length(unique(quantiles$group)), 8)
+
+  grouped = plot(
+    fit,
+    color_by = "condition",
+    facet_by = "id",
+    lines = 0,
+    q_fit = c(0.25, 0.75),
+    cp_dens = FALSE
+  )
+  grouped_quantiles = ggplot2::ggplot_build(grouped)$data[[2]]
+  expect_equal(length(unique(grouped_quantiles$PANEL)), 2)
+  expect_equal(length(unique(grouped_quantiles$colour)), 2)
+  expect_equal(length(unique(grouped_quantiles$group)), 8)
 })
 
 

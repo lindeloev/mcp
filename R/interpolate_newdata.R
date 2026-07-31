@@ -137,7 +137,8 @@ interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by))
 
   # Get unique predictors
   varying_cols = unique(stats::na.omit(get_fit_model_tables(fit)$group_effects$group_col))
-  by = unique(c(names(get_categorical_levels(fit$data)), intersect(varying_cols, by)))
+  categorical_cols = setdiff(names(get_categorical_levels(fit$data)), varying_cols)
+  by = unique(c(categorical_cols, intersect(varying_cols, by)))
   # Numeric varying-group IDs are discrete even when they are not requested
   # for evaluation, so never interpolate them as continuous predictors.
   by_grid = lapply(fit$data[, by, drop = FALSE], unique) %>% expand.grid()

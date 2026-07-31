@@ -43,8 +43,10 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 #' @param q_predict Same as `q_fit`, but for the prediction interval.
 #' @param facet_by Character vector. Names of categorical data columns to split to facets.
 #'   Can be grouping-factor or categorical predictor columns.
-#' @param color_by `NULL` for no color grouping, or a character vector naming categorical or varying-effect data columns to color by.
+#' @param color_by A character vector naming categorical or varying-effect data columns to color by.
+#'   If both `color_by` and `facet_by` are omitted, a sole categorical predictor is colored automatically. Set `color_by = NULL` explicitly to disable this.
 #'   Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.
+#' @param .grouping Internal. Whether grouping arguments were omitted, mapped, or explicitly disabled.
 #' @param lines Positive integer or `FALSE`. The number of fitted lines (draws).
 #'   It is the number of joint posterior draws shown for every curve. FALSE or `lines = 0` plots no lines.
 #'   Note that lines always plot fitted values - not predicted.
@@ -69,8 +71,9 @@ get_plot = function(x,
                        prior = FALSE,
                        dpar = "epred",
                        arma = TRUE,
-                       ndraws = NULL,
+                       ndraws = 1000,
                        scale = "response",
+                       .grouping = "auto",
                        nsamples = lifecycle::deprecated(),
                        ...) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "get_plot")
@@ -118,15 +121,8 @@ get_plot = function(x,
     checkmate::assert_numeric(q_fit, lower = 0, upper = 1, any.missing = FALSE)
   if (is.numeric(q_predict))
     checkmate::assert_numeric(q_predict, lower = 0, upper = 1, any.missing = FALSE)
-
-  if (!is.null(ndraws)) {
-    checkmate::assert_int(ndraws, lower = 1)
-    if (lines != FALSE && ndraws < lines)
-      stop("`lines` must be less than or equal to `ndraws`.")
-  }
-  if (all(q_fit == FALSE) && all(q_predict == FALSE))
-    # No need for more samples if they are only used to draw lines.
-    ndraws = lines
+  show_q_fit = any(q_fit != FALSE)
+  show_q_predict = any(q_predict != FALSE)
 
   # Validate columns used for faceting and color.
   checkmate::assert_character(facet_by, null.ok = TRUE)
@@ -135,17 +131,24 @@ get_plot = function(x,
   color_by = logical0_to_null(unique(color_by))
 
   model_tables = get_fit_model_tables(fit)
-  categorical_cols = names(get_categorical_levels(fit$data))
+  all_categorical_cols = names(get_categorical_levels(fit$data))
   varying_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
-  curve_by = unique(c(categorical_cols, varying_cols))
+  categorical_cols = setdiff(all_categorical_cols, varying_cols)
+  plot_by = unique(c(facet_by, color_by))
+  if (.grouping == "auto" && length(categorical_cols) == 1) {
+    color_by = categorical_cols
+    plot_by = unique(c(facet_by, color_by))
+  }
+  curve_by = unique(c(categorical_cols, intersect(varying_cols, plot_by)))
+  valid_group_cols = unique(c(categorical_cols, varying_cols))
 
   validate_plot_groups = function(cols, arg) {
-    invalid_cols = setdiff(cols, curve_by)
+    invalid_cols = setdiff(cols, valid_group_cols)
     if (length(invalid_cols) > 0) {
-      valid_text = if (length(curve_by) == 0) {
+      valid_text = if (length(valid_group_cols) == 0) {
         "There are no categorical or varying-effect columns in this model."
       } else {
-        paste0("Valid columns are '", paste(curve_by, collapse = "', '"), "'.")
+        paste0("Valid columns are '", paste(valid_group_cols, collapse = "', '"), "'.")
       }
       stop(
         "`", arg, "` must name categorical or varying-effect data columns. ",
@@ -157,8 +160,30 @@ get_plot = function(x,
   validate_plot_groups(facet_by, "facet_by")
   validate_plot_groups(color_by, "color_by")
 
+  unmapped = setdiff(categorical_cols, plot_by)
+  if ((show_q_fit || show_q_predict) && length(categorical_cols) > 1 &&
+      .grouping != "none" && length(unmapped) > 0) {
+    stop(
+      "Unmapped categorical predictors: '", paste(unmapped, collapse = "', '"), "'. ",
+      "Use `color_by` and/or `facet_by` to identify all fitted curves, or set `color_by = NULL` explicitly."
+    )
+  }
+
   if (!coda::is.mcmc.list(fit$mcmc_post) && !coda::is.mcmc.list(fit$mcmc_prior))
     stop("Cannot plot an mcpfit without prior or posterior samples.")
+
+  available_draws = niterations(fit, prior = prior)
+  if (!is.null(ndraws))
+    ndraws = min(ndraws, available_draws)
+  lines = min(lines, available_draws)
+  if (!is.null(ndraws)) {
+    checkmate::assert_int(ndraws, lower = 1)
+    if (lines != FALSE && ndraws < lines)
+      stop("`lines` must be less than or equal to `ndraws`.")
+  }
+  if (!show_q_fit && !show_q_predict)
+    # No need for more samples if they are only used to draw lines.
+    ndraws = lines
 
   if (scale == "linear" && rate == FALSE)
     message("Known bug: the data points are plotted incorrectly when scale = 'linear' and rate = FALSE.")
@@ -168,7 +193,7 @@ get_plot = function(x,
   # Useful vars
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)
-  by = unique(c(facet_by, color_by))
+  by = plot_by
   varying_pars = unpack_varying(fit, cols = by)$pars
 
   ############################
@@ -177,7 +202,7 @@ get_plot = function(x,
   newdata = interpolate_newdata(fit, by = by)
 
   # Predict
-  local_pp_eval = function(type, include_fitted = FALSE) {
+  local_pp_eval = function(type, newdata, ndraws, include_fitted = FALSE) {
     pp_eval(
       object = fit,
       newdata = newdata,
@@ -195,21 +220,47 @@ get_plot = function(x,
     )
   }
 
-  # Evaluate once so fitted values and predictions use exactly the same joint
-  # draw IDs. Prediction draws already contain everything needed to compute
-  # their corresponding fitted values.
-  if (any(q_predict != FALSE)) {
-    eval_draws = local_pp_eval("predict", include_fitted = TRUE)
-    eval_draws = dplyr::rename(eval_draws, .predicted = "predict")
-  } else {
-    eval_draws = local_pp_eval("fitted")
+  prepare_draws = function(draws) {
+    draws %>%
+      # Only a problem for AR/MA models, where newdata contains the response.
+      dplyr::select(-dplyr::any_of(as.character(yvar))) %>%
+      dplyr::rename("{fit$pars$y}" := "fitted") %>%
+      add_plot_groups(curve_by = curve_by, color_by = color_by)
   }
 
-  eval_draws = eval_draws %>%
-    # Only a problem for AR/MA models, where newdata contains the response.
-    dplyr::select(-dplyr::any_of(as.character(yvar))) %>%
-    dplyr::rename("{fit$pars$y}" := "fitted") %>%
-    add_plot_groups(curve_by = curve_by, color_by = color_by)
+  # Fitted lines need only `lines` draws, selected jointly across all curves.
+  eval_lines = if (lines > 0) {
+    prepare_draws(local_pp_eval("fitted", newdata, lines))
+  } else {
+    NULL
+  }
+
+  # Keep peak memory bounded for intervals by evaluating and immediately
+  # summarising one curve at a time. Predictions also return their matching
+  # fitted values, so q_fit and q_predict share the model evaluation.
+  plot_newdata = add_plot_groups(newdata, curve_by = curve_by, color_by = color_by)
+  interval_data = list()
+  if (show_q_fit || show_q_predict) {
+    curve_rows = split(seq_len(nrow(newdata)), plot_newdata$.group)
+    interval_data = lapply(curve_rows, function(rows) {
+      type = if (show_q_predict) "predict" else "fitted"
+      draws = local_pp_eval(
+        type, newdata[rows, , drop = FALSE], ndraws,
+        show_q_fit && type == "predict"
+      )
+      if (type == "predict")
+        draws = dplyr::rename(draws, .predicted = "predict")
+      draws = prepare_draws(draws)
+      keep = unique(c(as.character(xvar), facet_by, ".group", ".color"))
+
+      list(
+        fitted = if (show_q_fit) get_quantiles(draws, q_fit, as.character(yvar), keep) else NULL,
+        predicted = if (show_q_predict) get_quantiles(draws, q_predict, ".predicted", keep) else NULL
+      )
+    })
+  }
+  q_fit_data = dplyr::bind_rows(lapply(interval_data, `[[`, "fitted"))
+  q_predict_data = dplyr::bind_rows(lapply(interval_data, `[[`, "predicted"))
 
 
   ###############################
@@ -229,7 +280,7 @@ get_plot = function(x,
 
   # Color info
   fit$data = add_plot_groups(fit$data, curve_by = curve_by, color_by = color_by)
-  ncolors = length(unique(eval_draws$.color))
+  ncolors = length(unique(plot_newdata$.color))
   use_color = !is.null(color_by) && ncolors > 1
 
   # Store the plotting-scale response and strip any "ts" class to avoid
@@ -263,24 +314,21 @@ get_plot = function(x,
 
   # Add lines?
   if (lines > 0) {
-    # Select joint posterior draws once, then show the same draws for all curves.
-    selected_draws = sample(unique(eval_draws$.draw), lines)
-    data_lines = dplyr::filter(eval_draws, .data$.draw %in% selected_draws)
     line_mapping = if (use_color) {
       ggplot2::aes(group = interaction(.data$.draw, .data$.group), color = .data$.color)
     } else {
       ggplot2::aes(group = interaction(.data$.draw, .data$.group))
     }
-    gg = gg + ggplot2::geom_line(line_mapping, data = data_lines, alpha = 0.2)
+    gg = gg + ggplot2::geom_line(line_mapping, data = eval_lines, alpha = 0.2)
   }
 
   # Add quantiles?
-  if ((any(q_fit != FALSE))) {
-    gg = gg + geom_quantiles(eval_draws, q_fit, xvar, yvar, facet_by, use_color = use_color, lty = 2, lwd = 0.7)
+  if (show_q_fit) {
+    gg = gg + geom_quantiles(q_fit_data, xvar, yvar, use_color, color = "#D55E00", lty = "longdash", lwd = 0.85)
   }
-  if (any(q_predict != FALSE)) {
+  if (show_q_predict) {
     yvar_predict = rlang::sym(".predicted")
-    gg = gg + geom_quantiles(eval_draws, q_predict, xvar, yvar_predict, facet_by, use_color = use_color, lty = 3, lwd = 0.7)
+    gg = gg + geom_quantiles(q_predict_data, xvar, yvar_predict, use_color, color = "#009E73", lty = "twodash", lwd = 0.85)
   }
 
   # Add change point densities?
@@ -291,12 +339,12 @@ get_plot = function(x,
     if (dpar == "epred" && geom_data != FALSE) {
       limits_y = c(min(fit$data[, fit$pars$y]),
                    max(fit$data[, fit$pars$y]))
-    } else if (any(q_predict != FALSE)) {
-      limits_y = c(min(eval_draws$.predicted),
-                   max(eval_draws$.predicted))
-    } else if (as.character(yvar) %in% names(eval_draws)) {
-      limits_y = c(min(dplyr::pull(eval_draws, as.character(yvar))),
-                   max(dplyr::pull(eval_draws, as.character(yvar))))
+    } else if (show_q_predict) {
+      limits_y = range(q_predict_data$.predicted)
+    } else if (show_q_fit) {
+      limits_y = range(dplyr::pull(q_fit_data, as.character(yvar)))
+    } else if (as.character(yvar) %in% names(eval_lines)) {
+      limits_y = range(dplyr::pull(eval_lines, as.character(yvar)))
     } else {
       stop("Failed to draw change point density for this plot. Please raise an error on GitHub.")
     }
@@ -357,7 +405,9 @@ get_plot = function(x,
 #' @seealso plot_pars plot_dpar pp_check
 #' @details
 #'   `plot()` uses `fit$simulate()` on posterior samples. These represent the
-#'   (joint) posterior distribution.fit
+#'   (joint) posterior distribution. Interval summaries use at most 1000 draws
+#'   by default; use `ndraws = NULL` to use all draws. Change-point densities
+#'   always use all available draws.
 #' @return A \pkg{ggplot2} object.
 #' @examples
 #' # Typical usage. demo_fit is an mcpfit object.
@@ -387,9 +437,11 @@ plot.mcpfit = function(x,
                     rate = TRUE,
                     prior = FALSE,
                     arma = TRUE,
-                    ndraws = NULL,
+                    ndraws = 1000,
                     nsamples = lifecycle::deprecated(),
                     ...) {
+  grouping = if (missing(color_by) && missing(facet_by)) "auto" else "mapped"
+  if (!missing(color_by) && is.null(color_by)) grouping = "none"
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "plot.mcpfit")
 
   args = list(...)
@@ -411,6 +463,7 @@ plot.mcpfit = function(x,
     arma = arma,
     ndraws = ndraws,
     scale = "response",
+    .grouping = grouping,
     ...
   )
 }
@@ -428,10 +481,12 @@ plot_dpar = function(x,
                      cp_dens = TRUE,
                      prior = FALSE,
                      arma = TRUE,
-                     ndraws = NULL,
+                     ndraws = 1000,
                      scale = "response",
                      nsamples = lifecycle::deprecated(),
                      ...) {
+  grouping = if (missing(color_by) && missing(facet_by)) "auto" else "mapped"
+  if (!missing(color_by) && is.null(color_by)) grouping = "none"
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "plot_dpar")
   get_plot(
     x,
@@ -448,6 +503,7 @@ plot_dpar = function(x,
     arma = arma,
     ndraws = ndraws,
     scale = scale,
+    .grouping = grouping,
     ...
   )
 
@@ -536,23 +592,20 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
 #' @keywords internal
 #' @noRd
 #' @inheritParams plot.mcpfit
-#' @inheritParams get_quantiles
+#' @param color Fixed line color when `use_color = FALSE`.
 #' @param ... Arguments passed to geom_line
 #' @return A `ggplot2::geom_line` object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-geom_quantiles = function(samples, quantiles, xvar, yvar, facet_by, use_color = TRUE, ...) {
-  # Posterior summaries are defined only by data_row. Curve, color, facet, and
-  # x metadata are rejoined afterward solely to control the plotted geometry.
-  keep = unique(c(as.character(xvar), facet_by, intersect(c(".group", ".color"), colnames(samples))))
-  data_quantiles = get_quantiles(samples, quantiles, type = as.character(yvar), keep = keep)
-
+geom_quantiles = function(data_quantiles, xvar, yvar, use_color = TRUE, color = NULL, ...) {
   quantile_mapping = if (use_color) {
     ggplot2::aes(y = .data[[as.character(yvar)]], group = interaction(.data$quantile, .data$.group), color = .data$.color)
   } else {
     ggplot2::aes(y = .data[[as.character(yvar)]], group = interaction(.data$quantile, .data$.group))
   }
 
-  # Return geom
-  ggplot2::geom_line(mapping = quantile_mapping, data = data_quantiles, ...)
+  if (use_color)
+    return(ggplot2::geom_line(mapping = quantile_mapping, data = data_quantiles, ...))
+
+  ggplot2::geom_line(mapping = quantile_mapping, data = data_quantiles, color = color, ...)
 }

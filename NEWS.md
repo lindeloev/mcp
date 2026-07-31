@@ -63,7 +63,7 @@
 
 ## Other new features
 
--   Default plot colors now use an Okabe-Ito categorical palette for `color_by`, with clipped viridis for more than seven groups. Change-point densities are translucent blue with gray fitted draws and neutral gray when fitted draws are colored.
+-   Default `plot(fit)` style has been updated in many ways to accomodate multiple regression and group-effects.
 
 -   The user-facing `nsamples` argument is soft-deprecated in favor of `ndraws`, matching the terminology used by `posterior`, `rvar`, and related packages. Existing calls continue to work for now.
 
