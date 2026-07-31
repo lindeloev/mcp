@@ -455,8 +455,21 @@ plot.mcpfit = function(x,
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "plot.mcpfit")
 
   args = list(...)
-  if ("which_y" %in% names(args))
-    warning("plot(fit, which_y = dpar) was deprecated since mcp v0.4. Use plot_dpar() instead.")
+  if ("which_y" %in% names(args)) {
+    warn_which_y(args, "plot")
+    return(plot_dpar(
+      x,
+      dpar = args$which_y,
+      facet_by = facet_by,
+      color_by = color_by,
+      at = at,
+      lines = lines,
+      cp_dens = cp_dens,
+      prior = prior,
+      arma = arma,
+      ndraws = ndraws
+    ))
+  }
 
   get_plot(
     x,

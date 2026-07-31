@@ -195,6 +195,9 @@ mcp = function(model,
   assert_rel(model)
 
   # Check data and data-model correspondence
+  if (missing(data) || is.null(data) || !is.data.frame(data))
+    stop("`data` is required in mcp() since mcp v0.4.0. Passing data = NULL or omitting data is no longer supported.", call. = FALSE)
+
   checkmate::assert_data_frame(data)
   data = data.frame(data)
 

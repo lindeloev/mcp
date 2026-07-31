@@ -453,8 +453,10 @@ get_fitsimulate = function(pars, group_effects) {
   .arma = TRUE,
   .scale = 'response') {
 
-  if (is.numeric(fit))
-    stop('`fit` must be an `mcpfit` object. fit$simulate() had many breaking changes in mcp v0.4, to accomodate multiple regression models.')
+  if (!inherits(fit, 'mcpfit'))
+    stop('`fit` must be an `mcpfit` object. fit$simulate() had breaking changes in mcp v0.4.0. Signature is fit$simulate(fit, newdata, ...).', call. = FALSE)
+  if (missing(newdata) || !is.data.frame(newdata))
+    stop('`newdata` must be a data.frame or tibble. fit$simulate() had breaking changes in mcp v0.4.0. Signature is fit$simulate(fit, newdata, ...).', call. = FALSE)
 
   result = simulate_atomic(fit, newdata, ", paste0(args_all, " = ", args_all, collapse = ", "), ", .type = .type, .rate = .rate, .dpar = .dpar, .arma = .arma, .scale = .scale)
   return(result)

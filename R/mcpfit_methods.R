@@ -405,6 +405,10 @@ as.mcmc.mcpfit = function(x, prior = FALSE, ...) {
 
 #' @export
 `$.mcpfit` = function(x, name) {
+  if (name == "fit" && is.null(.subset2(x, "fit"))) {
+    warning("`mcp_example()` now returns an `mcpfit` object directly instead of a list with `$fit`. Returning the object itself.", call. = FALSE)
+    return(x)
+  }
   if (name %in% c("mcmc_post", "mcmc_prior")) {
     lifecycle::deprecate_soft(
       when = "0.4.0",
@@ -997,7 +1001,12 @@ predict.mcpfit = function(
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "predict.mcpfit")
-  rlang::check_dots_empty()
+  dots = list(...)
+  warn_which_y(dots, "predict")
+  dots$which_y = NULL
+  if (length(dots) > 0)
+    stop("Unrecognized argument(s) passed in `...`: ", and_collapse(names(dots)), call. = FALSE)
+
   pp_eval(
     object,
     newdata = newdata,
@@ -1035,7 +1044,14 @@ fitted.mcpfit = function(
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "fitted.mcpfit")
-  rlang::check_dots_empty()
+  dots = list(...)
+  warn_which_y(dots, "fitted")
+  if ("which_y" %in% names(dots) && missing(dpar))
+    dpar = dots$which_y
+  dots$which_y = NULL
+  if (length(dots) > 0)
+    stop("Unrecognized argument(s) passed in `...`: ", and_collapse(names(dots)), call. = FALSE)
+
   pp_eval(
     object,
     newdata = newdata,
@@ -1075,7 +1091,12 @@ log_lik.mcpfit = function(
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "log_lik.mcpfit")
-  rlang::check_dots_empty()
+  dots = list(...)
+  warn_which_y(dots, "log_lik")
+  dots$which_y = NULL
+  if (length(dots) > 0)
+    stop("Unrecognized argument(s) passed in `...`: ", and_collapse(names(dots)), call. = FALSE)
+
   pp_eval(
     object,
     newdata = newdata,
@@ -1110,7 +1131,12 @@ residuals.mcpfit = function(
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "residuals.mcpfit")
-  rlang::check_dots_empty()
+  dots = list(...)
+  warn_which_y(dots, "residuals")
+  dots$which_y = NULL
+  if (length(dots) > 0)
+    stop("Unrecognized argument(s) passed in `...`: ", and_collapse(names(dots)), call. = FALSE)
+
   pp_eval(
     object,
     newdata = newdata,

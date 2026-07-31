@@ -22,6 +22,8 @@
     supported too, `varying = TRUE` selects all, and `ranef()` continues to return
     all group-level effects.
 
+-   Added deprecation detections, in various ways helping users of older mcp-versions who encounter deprecations. Over time these will be removed.
+
 ## Major breaking changes
 
 -   AR and MA intercepts now have zero-centered, regularizing

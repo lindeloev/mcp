@@ -317,6 +317,7 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
 #' @return A list with `segments`, `cps`, `predictors`, `group_effects`, and
 #'   `pars`.
 get_fit_model_tables = function(fit) {
+  check_mcpfit_version(fit)
   if (!is.null(fit$.internal$model_tables))
     return(fit$.internal$model_tables)
 
@@ -355,6 +356,7 @@ get_fit_model_tables = function(fit) {
     pars = pars
   )
 }
+
 
 
 #' Format code with one or multiple terms

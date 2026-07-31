@@ -46,29 +46,56 @@ test_that("model metadata uses aligned table names and varying selectors", {
 })
 
 
-test_that("model-table accessor supports saved fits with legacy metadata", {
+test_that("legacy fit detection blocks pre-0.4.0 mcpfit objects", {
   data = data.frame(
     x = 1:6,
     y = c(2, 4, 3, 8, 7, 9),
     id = rep(c("a", "b"), each = 3)
   )
   fit = mcp(list(y ~ 1, (1 | id) ~ 1), data, par_x = "x", sample = FALSE)
-  current = get_fit_model_tables(fit)
   legacy = fit
-  legacy$.internal$model_tables = NULL
-  legacy$.internal$ST = current$segments
-  legacy$.internal$CP = current$cps
-  legacy$.internal$rhs_table = current$predictors
-  legacy$.internal$pars_table = dplyr::select(
-    current$pars, "name", "segment", "dpar"
+  legacy$family = gaussian()
+
+  expect_error(
+    get_fit_model_tables(legacy),
+    "created with an older version of mcp (< 0.4.0)",
+    fixed = TRUE
+  )
+})
+
+
+test_that("helpful deprecation detections work for old code idioms", {
+  data = data.frame(x = 1:6, y = c(2, 4, 3, 8, 7, 9))
+  fit = mcp(list(y ~ 1 + x), data, sample = FALSE)
+
+  # data = NULL or missing in mcp()
+  expect_error(
+    mcp(list(y ~ 1), data = NULL),
+    "`data` is required in mcp() since mcp v0.4.0",
+    fixed = TRUE
   )
 
-  recovered = get_fit_model_tables(legacy)
-  expect_equal(recovered$segments, current$segments)
-  expect_equal(recovered$cps, current$cps)
-  expect_equal(recovered$predictors, current$predictors)
-  expect_equal(recovered$group_effects, current$group_effects)
-  expect_equal(recovered$pars, current$pars)
+  # plot/fitted with which_y
+  expect_warning(
+    plot(demo_fit, which_y = "sigma"),
+    "`which_y` was deprecated in mcp v0.4.0. Use `plot_dpar()` instead.",
+    fixed = TRUE
+  )
+
+  # fit$simulate() signature change
+  expect_error(
+    fit$simulate(1:5),
+    "breaking changes",
+    fixed = FALSE
+  )
+
+  # ex$fit warning
+  expect_warning(
+    { val = fit$fit },
+    "`mcp_example()` now returns an `mcpfit` object directly",
+    fixed = TRUE
+  )
+  expect_s3_class(val, "mcpfit")
 })
 
 
@@ -125,10 +152,12 @@ test_that("priors are resolved without changing their parameterization", {
 
   legacy_fit = NULL
   expect_warning(
-    legacy_fit <- mcp(
-      list(y ~ 1, ~ 1), data,
-      par_x = "x", prior = list(cp_1 = "dunif(MINX, MAXX)"), sample = FALSE
-    ),
+    {
+      legacy_fit = mcp(
+        list(y ~ 1, ~1), data,
+        par_x = "x", prior = list(cp_1 = "dunif(MINX, MAXX)"), sample = FALSE
+      )
+    },
     "Deprecated prior data constant"
   )
   expect_equal(legacy_fit$prior$cp_1, "dunif(1, 6)")
@@ -245,7 +274,6 @@ test_that("Simple mcpfit methods", {
 
   expect_true(is.mcpfit(demo_fit))
   expect_false(is.mcpfit(mtcars))
-
 })
 
 test_that("posterior draws accessor preserves the stored chains", {
@@ -268,9 +296,9 @@ test_that("posterior draws accessor preserves the stored chains", {
   expect_equal(posterior::variables(draws_array), colnames(raw[[1]]))
 
   # Accessing mcmc_post directly should soft-deprecate
-  lifecycle::expect_deprecated(
-    val <- demo_fit$mcmc_post
-  )
+  lifecycle::expect_deprecated({
+    val = demo_fit$mcmc_post
+  })
   expect_s3_class(val, "mcmc.list")
 })
 
@@ -321,14 +349,10 @@ test_that("PPC and LOO draws stay aligned", {
   expect_equal(dim(fit$loglik), c(10, nrow(fit$data) - 1))
   expect_false(anyNA(fit$loglik))
 
-  loo_result = suppressWarnings(loo(
-    fit, ndraws = 10, save_psis = TRUE
-  ))
+  loo_result = suppressWarnings(loo(fit, ndraws = 10, save_psis = TRUE))
   expect_equal(dim(loo_result$psis_object), dim(fit$loglik))
   expect_equal(attr(loo_result, "mcp_settings")$ndraws, 10L)
-  loo_changed = suppressWarnings(loo(
-    fit, ndraws = 10, varying = FALSE, arma = FALSE
-  ))
+  loo_changed = suppressWarnings(loo(fit, ndraws = 10, varying = FALSE, arma = FALSE))
   expect_false(attr(loo_changed, "mcp_settings")$varying)
   expect_false(attr(loo_changed, "mcp_settings")$arma)
 
@@ -345,9 +369,9 @@ test_that("PPC and LOO draws stay aligned", {
 
 
 test_that("nsamples is a soft-deprecated alias for ndraws", {
-  lifecycle::expect_deprecated(
-    result <- fitted(demo_fit, nsamples = 2, summary = FALSE)
-  )
+  lifecycle::expect_deprecated({
+    result = fitted(demo_fit, nsamples = 2, summary = FALSE)
+  })
   expect_equal(length(unique(result$.draw)), 2)
   expect_error(
     suppressWarnings(fitted(demo_fit, ndraws = 2, nsamples = 2)),
