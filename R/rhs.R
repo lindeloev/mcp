@@ -617,39 +617,6 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
 
 
 
-#' Get formula inside a wrapper
-#'
-#' @aliases get_term_content
-#' @keywords internal
-#' @noRd
-#' @param term E.g., "mu(1 + x)", "sigma(0 + I(x^2))", etc.
-#' @return char formula with the content inside the brackets.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_term_content = function(term) {
-  # Handle cases of no input or several inputs
-  if (length(term) == 0) {
-    return(NA)
-  } else if (length(term) > 1) {
-    #dpar = paste0(substr(term, 0, content_start), ")")
-    stop("Only one ", term, " allowed in each formula.")
-  } else if (is.na(term)) {
-    return(NA)
-  } else if (length(term) == 1) {
-    # Get formula inside wrapper
-    content_start = stringr::str_locate(term, "\\(") + 1  # Location of first character in contents
-    content_end = stringr::str_length(term) - 1  # Location of last character in contents
-    content = substr(term, content_start, content_end)
-
-    # To formula
-    if (content == "")
-      stop("Empty terms not allowed in the formulas. Found '", term, "'.")
-    form = stats::as.formula(paste0("~", content), env = globalenv())
-    return(form)
-  }
-}
-
-
 #' @aliases get_predictor_tables
 #' @keywords internal
 #' @describeIn get_predictors_dpar Apply `get_predictors_segment`
