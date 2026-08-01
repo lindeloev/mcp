@@ -22,7 +22,7 @@
 #' @examples
 #' \donttest{
 #' fit = mcp_example("multiple")
-#' print(fit$call)  # See how the data was simulated
+#' print(fit$call) # See how the data was simulated
 #'
 #' # Without sampling
 #' empty = mcp_example("binomial", sample = FALSE, plot = FALSE)
@@ -33,12 +33,13 @@
 #' #' # Now sample this model
 #' fit2 = mcp(empty$model, empty$data, family = empty$family)
 #' plot(fit2)
-#'}
-mcp_example = function(name, sample = "post", plot = TRUE) {
+#' }
+mcp_example = function(name, sample = "post", warn = FALSE, plot = TRUE) {
   checkmate::assert_string(name)
+  checkmate::assert_flag(warn)
   checkmate::assert_flag(plot)
-  data = data.frame()  # To make R CMD Check happy.
-  fit = NULL  # To make R CMD Check happy.
+  data = data.frame() # To make R CMD Check happy.
+  fit = NULL # To make R CMD Check happy.
   plot = plot && !(sample %in% c(FALSE, "none"))
 
   examples = list(
@@ -51,22 +52,22 @@ model = list(
 # Simulate data
 set.seed(42)
 data = data.frame(
-  time = 1:200,
+  time = 1:120,
   price = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
 )
 empty = mcp(model, data, sample = FALSE)
 data$price = empty$simulate(empty, data,
-  cp_1 = 120,
+  cp_1 = 75,
   Intercept_1 = 20,
   time_2 = 0.5,
   sigma_1 = 5,
-  ar1_1 = 0.7,
-  ar2_1 = 0.2,
-  ar1_2 = -0.4
+  ar1_1 = 0.6,
+  ar2_1 = 0.3,
+  ar1_2 = -0.5
 )
 
 # Run sampling
-fit = mcp(model, data, sample = sample, seed = 42)
+fit = mcp(model, data, sample = sample, adapt = 2000, iter = 5000, warn = warn, seed = 42)
 
 # Illustrative plot
 if (plot) {
@@ -76,8 +77,6 @@ if (plot) {
   gg2 = plot_dpar(fit, \"ar1\") + ggplot2::labs(title = 'plot_dpar(fit, \"ar1\")')
   print(gg1 / gg2)
 }",
-
-
     binomial = "# Define model
 model = list(
   y | trials(N) ~ 1,  # constant rate
@@ -96,22 +95,20 @@ empty = mcp(model, data, family = binomial(), sample = FALSE)
 data$y = empty$simulate(empty, data,
   cp_1 = 30,
   cp_2 = 70,
-  Intercept_1 = 2,
-  Intercept_3 = 0.4,
-  x_2 = -0.2,
+  Intercept_1 = 1.5,
+  Intercept_3 = -1,
+  x_2 = -0.15,
   x_3 = 0.05
 )
 
 # Run sampling
-fit = mcp(model, data, family = binomial(), adapt = 5000, sample = sample, seed = 42)
+fit = mcp(model, data, family = binomial(), sample = sample, warn = warn, seed = 42)
 
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))
+  print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit = TRUE)'))
 }",
-
-
     demo = "# Define model
 model = list(
   response ~ 1,
@@ -120,7 +117,7 @@ model = list(
 )
 
 # Simulate data
-set.seed(40)
+set.seed(42)
 data = data.frame(
   time = runif(100, 0, 100),
   response = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
@@ -137,15 +134,13 @@ data$response = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, sample = sample, seed = 40)
+fit = mcp(model, data, iter = 4000, sample = sample, warn = warn, seed = 42)
 
 # Illustrative plot
 if (plot) {
-  set.seed(40)
+  set.seed(42)
   print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))
 }",
-
-
     group = "# Define model
 model = list(
   y ~ 1 + condition + (condition || participant),
@@ -175,7 +170,7 @@ data$y = empty$simulate(empty, data,
 
 # Run sampling
 fit = mcp(
-  model, data, par_x = 'x', sample = sample,
+  model, data, par_x = 'x', sample = sample, warn = warn,
   adapt = 2000, iter = 20000, seed = 200
 )
 
@@ -185,9 +180,7 @@ if (plot) {
   print(plot(fit, facet_by = 'participant', color_by = 'condition') +
       ggplot2::labs(title = 'plot(fit, facet_by = \"participant\", color_by = \"condition\")'))
 }",
-
-
-intercepts = "# Define model
+    intercepts = "# Define model
 model = list(
   y ~ 1,
   ~ 1
@@ -208,16 +201,14 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
+fit = mcp(model, data, par_x = 'x', sample = sample, warn = warn, seed = 42)
 
 # Illustrative plot
 if (plot) {
   set.seed(42)
   print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))
 }",
-
-
-multiple = "# Define model
+    multiple = "# Define model
 model = list(
   y ~ 1 + x:group + z,
   ~ 1 + x + group,
@@ -256,16 +247,14 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
+fit = mcp(model, data, par_x = 'x', sample = sample, warn = warn, seed = 42)
 
 # Illustrative plot
 if (plot) {
   set.seed(42)
   print(plot(fit, color_by = 'group') + ggplot2::labs(title = 'plot(fit, color_by = \"group\")'))
 }",
-
-
-quadratic = "# Define model
+    quadratic = "# Define model
 model = list(
   y ~ 1,
   ~ 0 + x + I(x^2)
@@ -287,16 +276,14 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, sample = sample, seed = 42)
+fit = mcp(model, data, sample = sample, warn = warn, seed = 42)
 
 # Illustrative plot
 if (plot) {
   set.seed(42)
   print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))
 }",
-
-
-variance = "# Define model
+    variance = "# Define model
 model = list(
   y ~ 1,
   ~ 0 + sigma(1 + x),
@@ -322,7 +309,7 @@ data$y = empty$simulate(empty, data,
   )
 
 # Run sampling
-fit = mcp(model, data, iter = 4000, adapt = 3000, sample = sample, seed = 40)
+fit = mcp(model, data, iter = 4000, adapt = 3000, sample = sample, warn = warn, seed = 40)
 
 # Illustrative plot
 if (plot) {
@@ -332,10 +319,7 @@ if (plot) {
   gg2 = plot_dpar(fit, 'sigma') + ggplot2::labs(title = 'plot_dpar(fit, \"sigma\")')
   print(gg1 / gg2)
 }",
-
-
-
-varying = "# Define model
+    varying = "# Define model
 model = list(
   y ~ 1 + x,  # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope
@@ -359,7 +343,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, sample = sample, seed = 42)
+fit = mcp(model, data, sample = sample, warn = warn, seed = 42)
 
 # Illustrative plot
 if (plot) {

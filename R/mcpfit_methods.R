@@ -251,6 +251,21 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
     if (!is.null(fit$pars$varying))
       cat("\nUse `ranef(fit)` to summarise the varying effect(s):", paste0(fit$pars$varying, collapse = ", "))
 
+    # Convergence warning footer
+    all_res = result
+    if (!is.null(fit$pars$varying)) {
+      ran_res = get_summary(fit, width, varying = TRUE, prior = prior, verbose = verbose)
+      all_res = dplyr::bind_rows(all_res, ran_res)
+    }
+    bad_mask = (!is.na(all_res$Rhat) & all_res$Rhat > 1.01) |
+               (!is.na(all_res$ess_bulk) & all_res$ess_bulk < 400) |
+               (!is.na(all_res$ess_tail) & all_res$ess_tail < 400)
+    n_bad = sum(bad_mask)
+    if (n_bad > 0) {
+      param_str = if (n_bad == 1) "1 parameter shows" else paste0(n_bad, " parameters show")
+      cat("\nWarning: ", param_str, " poor convergence (Rhat > 1.01 or ESS < 400).\n", sep = "")
+    }
+
     return(invisible(result))
   }
   else {

@@ -96,6 +96,8 @@
 #'   framework.
 #' @param seed `NULL` or a positive integer. Seed for the JAGS random-number
 #'   generators. When supplied, `inits` must be a single named list shared by all chains.
+#' @param warn Logical. Warn about non-convergence (`Rhat > 1.01` or `ESS < 400`)
+#'   after sampling? Defaults to `TRUE`.
 #' @details Notes on priors:
 #'   * Order restriction is automatically applied to cp_\* parameters using
 #'       truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the
@@ -185,7 +187,8 @@ mcp = function(model,
                adapt = 1500,
                inits = NULL,
                jags_code = NULL,
-               seed = NULL) {
+               seed = NULL,
+               warn = TRUE) {
 
   ################
   # CHECK INPUTS #
@@ -256,6 +259,7 @@ mcp = function(model,
   checkmate::assert_int(chains, lower = 1)
   checkmate::assert_list(inits, null.ok = TRUE)
   checkmate::assert_int(seed, lower = 1, null.ok = TRUE)
+  checkmate::assert_flag(warn)
 
   # jags_code
   if(!is.null(jags_code))
@@ -357,7 +361,8 @@ mcp = function(model,
       recover_levels(data, group_effects)
 
     class(mcmc_post) = "mcmc.list"
-    warn_nonconvergence(mcmc_post)
+    if (isTRUE(warn))
+      warn_nonconvergence(mcmc_post)
   } else {
     mcmc_post = NULL
   }
@@ -425,6 +430,7 @@ mcp = function(model,
       formula_r = formula_r,
       prior_table = prior_table,
       prior_context = prior_context,
+      warn = warn,
       mcp_version = utils::packageVersion("mcp")  # For helpful messages about backwards compatibility
     )
   )

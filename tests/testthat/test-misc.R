@@ -434,3 +434,29 @@ test_that("hypothesis()", {
   expect_equal(actual_interval$p, mean(cp_draws > bounds[[1]] & cp_draws < bounds[[2]]))
   expect_equal(actual_interval$BF, 1)
 })
+
+
+test_that("warn parameter and summary convergence footer work as expected", {
+  data = data.frame(x = 1:20, y = rnorm(20))
+  model = list(y ~ 1, ~ 1)
+
+  # 1. warn = FALSE suppresses sampling convergence warning
+  fit_nowarn = suppressWarnings(mcp(model, data, par_x = "x", iter = 50, adapt = 50, warn = FALSE))
+  expect_equal(fit_nowarn$.internal$warn, FALSE)
+
+  # 2. summary() includes warning footer if convergence is poor
+  # Force high Rhat by modifying posterior draws
+  fit_bad = fit_nowarn
+  raw_post = .subset2(fit_bad, "mcmc_post")
+  raw_post[[1]][, "cp_1"] = 5
+  raw_post[[2]][, "cp_1"] = 15
+  raw_post[[3]][, "cp_1"] = 25
+  fit_bad$mcmc_post = raw_post
+
+  sum_out = capture.output(summary(fit_bad))
+  expect_true(any(grepl("Warning: .* parameter.* show.* poor convergence", sum_out)))
+
+  # 3. mcp_example defaults to warn = FALSE
+  ex_fit = mcp_example("intercepts", sample = FALSE)
+  expect_s3_class(ex_fit, "mcpfit")
+})

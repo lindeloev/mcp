@@ -89,7 +89,7 @@
 
 -   Added option to test hypotheses on the prior using `hypothesis(fit, prior = TRUE)`.
 
--   `mcp()` now warns when posterior samples show poor mixing.
+-   `mcp(..., warn = TRUE)` now controls runtime convergence warnings (`Rhat > 1.01` or `ESS < 400`). Warning also appear in `summary(fit)` footer.
 
 -   With the introduction of multiple regression including categorical predictors (including for distributional parameters) come default priors. For term involving local `par_x`, this scale is multiplied by the expected segment width "as usual". For non-`par_x` terms, numeric coefficients are scaled to data and model. Briefly, based on its observed range when it has two values, and two standard deviations otherwise, aligning with [Gelman (2008)](https://doi.org/10.1002/sim.3107) and the prior autoscaling in [`rstanarm`](https://mc-stan.org/rstanarm/reference/priors.html).
 
