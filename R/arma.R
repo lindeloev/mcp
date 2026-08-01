@@ -179,7 +179,7 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, threshold = 0.10) {
   keep = unique(round(seq(1, nrow(draws), length.out = min(ndraws, nrow(draws)))))
   smoke_fit = fit
   smoke_fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws[keep, , drop = FALSE]))
-  samples = tidy_samples(
+  samples = mcp_draws(
     smoke_fit, population = TRUE, varying = length(varying_info$cols) > 0
   )
   predictor_data = add_rhs_predictors(newdata, fit)

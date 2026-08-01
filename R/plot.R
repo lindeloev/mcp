@@ -558,7 +558,7 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
   dens_scale = 0.2  # Proportion of plot height
   dens_cut = 0.05  # How much to move density down. 5% is ggplot default. Move a bit further.
 
-  # facet_by will expand by group in tidy_samples(). Categorical cols share
+  # facet_by will expand by group in mcp_draws(). Categorical cols share
   # parameters across facets, so only expand for varying effects.
   model_tables = get_fit_model_tables(fit)
   cps = model_tables$cps
@@ -579,7 +579,7 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
   }
 
   # Get samples in long format
-  samples = tidy_samples(fit, population = population, varying = varying, absolute = TRUE, prior = prior) %>%
+  samples = mcp_draws(fit, population = population, varying = varying, absolute = TRUE, prior = prior) %>%
     tidyr::pivot_longer(cols = tidyselect::matches("^cp_[0-9]+$"), names_to = "cp_name", values_to = "value") %>%
 
     # Compute density per group. Tolerate zero-variance CPs like cp_2 = 80.

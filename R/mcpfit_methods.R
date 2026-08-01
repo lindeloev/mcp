@@ -607,11 +607,14 @@ resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
 
 #' Get tidy samples with or without varying effects
 #'
+#' Extract posterior or prior draws formatted as tidy data frames
+#'
 #' Returns in a format useful for `fit$simulate()` with population parameters in wide format
 #' and varying effects in long format (the number of rows will be `ndraws * n_levels_in_varying`).
 #'
-#' @aliases tidy_samples tidy_samples.mcpfit
+#' @aliases mcp_draws
 #' @keywords internal
+#' @noRd
 #' @inheritParams mcmclist_samples
 #' @inheritParams pp_eval
 #' @param population
@@ -633,7 +636,7 @@ resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
 #' @return `tibble` of posterior draws in `tidybayes` format.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-tidy_samples = function(
+mcp_draws = function(
   fit,
   population = TRUE,
   varying = TRUE,
@@ -642,7 +645,7 @@ tidy_samples = function(
   ndraws = NULL,
   nsamples = lifecycle::deprecated()
 ) {
-  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "tidy_samples")
+  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "mcp_draws")
 
   # General argument checks
   checkmate::assert_class(fit, "mcpfit")
@@ -728,13 +731,24 @@ tidy_samples = function(
 }
 
 
+#' Deprecated internal helper for MCMC draw extraction
+#' @keywords internal
+#' @noRd
+tidy_samples = function(...) {
+  lifecycle::deprecate_soft(
+    when = "0.4.0",
+    what = "tidy_samples()",
+    with = "posterior::as_draws_df() or tidybayes::spread_draws()"
+  )
+  mcp_draws(...)
+}
 
 
 #' Fits and Predictions given Draws and data
 #'
 #' @aliases pp_eval pp_eval.mcpfit
 #' @keywords internal
-#' @inheritParams tidy_samples
+#' @inheritParams mcp_draws
 #' @param object An `mcpfit` object.
 #' @param newdata A `tibble` or a `data.frame` containing predictors in the model. Weighted
 #'   Gaussian predictions and log-likelihoods also require the weights column. If `NULL`
@@ -887,13 +901,13 @@ pp_eval = function(
     # If there are varying effects: use varying-matching samples for each row of data
     samples_predictors = dplyr::left_join(
       add_rhs_predictors(newdata, fit),
-      tidy_samples(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws),
+      mcp_draws(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws),
       by = unique(varying_info$cols),
       relationship = "many-to-many"
     )
   } else {
     # No varying effects: use all samples for each row of data
-    samples = tibble::as_tibble(tidy_samples(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws))
+    samples = tibble::as_tibble(mcp_draws(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws))
     predictors = tibble::as_tibble(add_rhs_predictors(newdata, fit))
     samples_predictors = dplyr::bind_cols(
       samples[rep(seq_len(nrow(samples)), each = nrow(predictors)), , drop = FALSE],
