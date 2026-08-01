@@ -123,7 +123,7 @@ fit1 = mcp(model1, data)
 #> 
 #> Initializing model
 #> 
-#> Finished sampling in 2.6 seconds
+#> Finished sampling in 1.3 seconds
 #> Warning: Some parameters may not have converged well:
 #>   * Rhat > 1.01: Intercept_1 and cp_1 and x_1
 #>   * ess_bulk or ess_tail < 400: Intercept_1 and cp_1 and x_1
@@ -139,7 +139,7 @@ fit2 = mcp(model2, data)
 #> 
 #> Initializing model
 #> 
-#> Finished sampling in 1.1 seconds
+#> Finished sampling in 0.6 seconds
 
 # Compute LOO for each and compare (works for waic(fit) too)
 fit1$loo = loo(fit1)
@@ -148,7 +148,7 @@ fit2$loo = loo(fit2)
 loo::loo_compare(fit1$loo, fit2$loo)
 #>   model elpd_diff se_diff p_worse       diag_diff      diag_elpd
 #>  model1       0.0     0.0      NA                 1 k_psis > 0.7
-#>  model2      -0.5     2.6    0.57 |elpd_diff| < 4               
+#>  model2      -0.8     2.8    0.61 |elpd_diff| < 4               
 #> 
 #> Diagnostic flags present.
 #> See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)

@@ -169,6 +169,14 @@ with default priors:.
 
 model = list(y ~ 1, 1 ~ 1, 1 ~ 1) # three intercept-only segments
 fit_mcp = mcp(model, data = df, par_x = "x")
+```
+
+    ## Warning: Some parameters may not have converged well:
+    ##   * Rhat > 1.01: Intercept_1 and Intercept_2 and Intercept_3 and cp_1 and cp_2 and sigma_1
+    ##   * ess_bulk or ess_tail < 400: Intercept_1 and Intercept_2 and Intercept_3 and cp_1 and cp_2
+    ## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`adapt` or simplifying the model before trusting these results.
+
+``` r
 
 summary(fit_mcp)
 ```
@@ -181,13 +189,15 @@ summary(fit_mcp)
     ##   3: y ~ 1 ~ 1
     ## 
     ## Population-level parameters:
-    ##         name   mean lower upper Rhat ess_bulk ess_tail
-    ##         cp_1 30.713 26.81 33.91    1     1667     1542
-    ##         cp_2 63.185 45.69 75.66    1      783      628
-    ##  Intercept_1  2.041  1.64  2.44    1     4378     5259
-    ##  Intercept_2 -0.074 -0.56  0.36    1     1988     2098
-    ##  Intercept_3  0.909  0.51  1.31    1     1385     1526
-    ##      sigma_1  1.065  0.92  1.24    1     3959     3890
+    ##         name  mean lower upper Rhat ess_bulk ess_tail
+    ##         cp_1 28.32 11.65  33.9  1.2       12       14
+    ##         cp_2 59.30 27.60  75.7  1.2       11       15
+    ##  Intercept_1  2.11  1.67   2.9  1.1       17       15
+    ##  Intercept_2  0.16 -0.54   1.9  1.2       12       15
+    ##  Intercept_3  0.86  0.32   1.3  1.1       13       19
+    ##      sigma_1  1.07  0.92   1.2  1.0     1113     4154
+    ## 
+    ## Warning: 6 parameters show poor convergence (Rhat > 1.01 or ESS < 400).
 
 The summary shows good parameter recovery, though the second change
 point is detected a bit early. This is understandable if you look at the
@@ -380,8 +390,8 @@ loo::loo_compare(fit_mcp$loo, fit_mcp_1$loo)
 ```
 
     ##   model elpd_diff se_diff p_worse diag_diff      diag_elpd
-    ##  model1       0.0     0.0      NA           3 k_psis > 0.7
-    ##  model2      -5.5     2.7    0.98           6 k_psis > 0.7
+    ##  model1       0.0     0.0      NA           1 k_psis > 0.7
+    ##  model2      -5.5     2.3    0.99           5 k_psis > 0.7
 
     ## 
     ## Diagnostic flags present.

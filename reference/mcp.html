@@ -284,7 +284,7 @@ in <code>fit$jags_code</code>. Use <code>prior_summary(fit)</code> for resolved 
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Initializing model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 4.3 seconds</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 2 seconds</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Some parameters may not have converged well:</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>   * ess_bulk or ess_tail &lt; 400: cp_1 and time_2</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`adapt` or simplifying the model before trusting these results.</span>
@@ -559,7 +559,7 @@ in <code>fit$jags_code</code>. Use <code>prior_summary(fit)</code> for resolved 
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Initializing model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 0.6 seconds</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 0.3 seconds</span>
 <span class="r-in"><span><span class="va">demo_fit</span><span class="op">$</span><span class="va">loo</span> <span class="op">=</span> <span class="fu"><a href="loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit_null</span><span class="op">$</span><span class="va">loo</span> <span class="op">=</span> <span class="fu"><a href="loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_null</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">$</span><span class="va">loo</span>, <span class="va">fit_null</span><span class="op">$</span><span class="va">loo</span><span class="op">)</span></span></span>
@@ -618,10 +618,9 @@ in <code>fit$jags_code</code>. Use <code>prior_summary(fit)</code> for resolved 
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Initializing model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 3.4 seconds</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 1.5 seconds</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Some parameters may not have converged well:</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span>   * Rhat &gt; 1.01: cp_2</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span>   * ess_bulk or ess_tail &lt; 400: cp_2 and time_3</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span>   * Rhat &gt; 1.01: time_2</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`adapt` or simplifying the model before trusting these results.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Show the JAGS model</span></span></span>

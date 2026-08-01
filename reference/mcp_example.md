@@ -94,7 +94,7 @@ fit = mcp_example("multiple")
 #> 
 #> Initializing model
 #> 
-#> Finished sampling in 10.8 seconds
+#> Finished sampling in 4.7 seconds
 
 print(fit$call) # See how the data was simulated
 #> # Define model
@@ -200,7 +200,10 @@ fit2 = mcp(empty$model, empty$data, family = empty$family)
 #> 
 #> Initializing model
 #> 
-#> Finished sampling in 5 seconds
+#> Finished sampling in 2.2 seconds
+#> Warning: Some parameters may not have converged well:
+#>   * ess_bulk or ess_tail < 400: cp_2
+#> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`adapt` or simplifying the model before trusting these results.
 plot(fit2)
 
 # }

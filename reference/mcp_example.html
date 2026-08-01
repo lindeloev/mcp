@@ -141,7 +141,7 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Initializing model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 10.8 seconds</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 4.7 seconds</span>
 <span class="r-plt img"><img src="mcp_example-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="summary.mcpfit.html">print</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">call</span><span class="op">)</span> <span class="co"># See how the data was simulated</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # Define model</span>
@@ -247,7 +247,10 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Initializing model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 5 seconds</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 2.2 seconds</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Some parameters may not have converged well:</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span>   * ess_bulk or ess_tail &lt; 400: cp_2</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`adapt` or simplifying the model before trusting these results.</span>
 <span class="r-in"><span><span class="fu"><a href="plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit2</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="mcp_example-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

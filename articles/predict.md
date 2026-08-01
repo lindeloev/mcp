@@ -51,8 +51,8 @@ fit = mcp(model, data = data)
     ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
     ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
     ## replaced (<none>). See also help("future.options", package = "future") [future
-    ## 'future_lapply-1' (e18b05feaf74fd17e1c3db392495cb72-1); on
-    ## e18b05feaf74fd17e1c3db392495cb72@runnervmvrwv9<9015>]
+    ## 'future_lapply-1' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-1); on
+    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
 
     ## Warning: MultisessionFuture ('future_lapply-2') added, removed, or modified
     ## connections. A future expression must close any opened connections and must not
@@ -60,16 +60,8 @@ fit = mcp(model, data = data)
     ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
     ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
     ## replaced (<none>). See also help("future.options", package = "future") [future
-    ## 'future_lapply-2' (e18b05feaf74fd17e1c3db392495cb72-2); on
-    ## e18b05feaf74fd17e1c3db392495cb72@runnervmvrwv9<9015>]
-    ## Warning: MultisessionFuture ('future_lapply-2') added, removed, or modified
-    ## connections. A future expression must close any opened connections and must not
-    ## close connections it did not open. Details: 1 connection added ([index=6,
-    ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
-    ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
-    ## replaced (<none>). See also help("future.options", package = "future") [future
-    ## 'future_lapply-2' (e18b05feaf74fd17e1c3db392495cb72-2); on
-    ## e18b05feaf74fd17e1c3db392495cb72@runnervmvrwv9<9015>]
+    ## 'future_lapply-2' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-2); on
+    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
 
     ## Warning: MultisessionFuture ('future_lapply-3') added, removed, or modified
     ## connections. A future expression must close any opened connections and must not
@@ -77,8 +69,8 @@ fit = mcp(model, data = data)
     ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
     ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
     ## replaced (<none>). See also help("future.options", package = "future") [future
-    ## 'future_lapply-3' (e18b05feaf74fd17e1c3db392495cb72-3); on
-    ## e18b05feaf74fd17e1c3db392495cb72@runnervmvrwv9<9015>]
+    ## 'future_lapply-3' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-3); on
+    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
 
     ## Warning: Some parameters may not have converged well:
     ##   * ess_bulk or ess_tail < 400: cp_1 and time_2
@@ -323,8 +315,8 @@ fit_forecast = mcp(model_forecast, data = data, prior = prior_forecast)
     ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
     ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
     ## replaced (<none>). See also help("future.options", package = "future") [future
-    ## 'future_lapply-1' (e18b05feaf74fd17e1c3db392495cb72-4); on
-    ## e18b05feaf74fd17e1c3db392495cb72@runnervmvrwv9<9015>]
+    ## 'future_lapply-1' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-4); on
+    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
 
     ## Warning: MultisessionFuture ('future_lapply-2') added, removed, or modified
     ## connections. A future expression must close any opened connections and must not
@@ -332,8 +324,16 @@ fit_forecast = mcp(model_forecast, data = data, prior = prior_forecast)
     ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
     ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
     ## replaced (<none>). See also help("future.options", package = "future") [future
-    ## 'future_lapply-2' (e18b05feaf74fd17e1c3db392495cb72-5); on
-    ## e18b05feaf74fd17e1c3db392495cb72@runnervmvrwv9<9015>]
+    ## 'future_lapply-2' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-5); on
+    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
+    ## Warning: MultisessionFuture ('future_lapply-2') added, removed, or modified
+    ## connections. A future expression must close any opened connections and must not
+    ## close connections it did not open. Details: 1 connection added ([index=7,
+    ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
+    ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
+    ## replaced (<none>). See also help("future.options", package = "future") [future
+    ## 'future_lapply-2' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-5); on
+    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
 
     ## Warning: MultisessionFuture ('future_lapply-3') added, removed, or modified
     ## connections. A future expression must close any opened connections and must not
@@ -341,8 +341,16 @@ fit_forecast = mcp(model_forecast, data = data, prior = prior_forecast)
     ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
     ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
     ## replaced (<none>). See also help("future.options", package = "future") [future
-    ## 'future_lapply-3' (e18b05feaf74fd17e1c3db392495cb72-6); on
-    ## e18b05feaf74fd17e1c3db392495cb72@runnervmvrwv9<9015>]
+    ## 'future_lapply-3' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-6); on
+    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
+    ## Warning: MultisessionFuture ('future_lapply-3') added, removed, or modified
+    ## connections. A future expression must close any opened connections and must not
+    ## close connections it did not open. Details: 1 connection added ([index=7,
+    ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
+    ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
+    ## replaced (<none>). See also help("future.options", package = "future") [future
+    ## 'future_lapply-3' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-6); on
+    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
 
     ## Warning: Some parameters may not have converged well:
     ##   * ess_bulk or ess_tail < 400: cp_1

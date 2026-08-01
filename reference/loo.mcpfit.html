@@ -175,7 +175,7 @@ cross-validation, which are not currently implemented in mcp.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Initializing model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 2.6 seconds</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 1.3 seconds</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Some parameters may not have converged well:</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>   * Rhat &gt; 1.01: Intercept_1 and cp_1 and x_1</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>   * ess_bulk or ess_tail &lt; 400: Intercept_1 and cp_1 and x_1</span>
@@ -191,7 +191,7 @@ cross-validation, which are not currently implemented in mcp.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Initializing model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 1.1 seconds</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 0.6 seconds</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Compute LOO for each and compare (works for waic(fit) too)</span></span></span>
 <span class="r-in"><span><span class="va">fit1</span><span class="op">$</span><span class="va">loo</span> <span class="op">=</span> <span class="fu">loo</span><span class="op">(</span><span class="va">fit1</span><span class="op">)</span></span></span>
@@ -200,7 +200,7 @@ cross-validation, which are not currently implemented in mcp.</p>
 <span class="r-in"><span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">fit1</span><span class="op">$</span><span class="va">loo</span>, <span class="va">fit2</span><span class="op">$</span><span class="va">loo</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   model elpd_diff se_diff p_worse       diag_diff      diag_elpd</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  model1       0.0     0.0      NA                 1 k_psis &gt; 0.7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  model2      -0.5     2.6    0.57 |elpd_diff| &lt; 4               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  model2      -0.8     2.8    0.61 |elpd_diff| &lt; 4               </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Diagnostic flags present.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span>
