@@ -1,22 +1,16 @@
+# Folders
+docs/
+
+# Hidden
+.lintr
 .Rproj.user
 .Rhistory
 .Rprofile
-AGENTS.md
-fix_twittercard.R
-/docs/
-vignettes/arma_cache
-vignettes/binomial_cache
-vignettes/comparison_cache
-vignettes/families_cache
-vignettes/formulas_cache
-vignettes/packages_cache
-vignettes/poisson_cache
-vignettes/predict_cache
-vignettes/priors_cache
-vignettes/tips_cache
-vignettes/variance_cache
-vignettes/varying_cache
-TODO.md
-.lintr
 .vscode
 
+# Files
+AGENTS.md
+fix_twittercard.R
+dev/TODO.md
+vignettes/*_cache/
+vignettes/*_files/

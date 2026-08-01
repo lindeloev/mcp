@@ -7,7 +7,8 @@
 .covrignore
 
 # Folders
-docs
+^docs$
+^dev$
 ^data-raw$
 ^man/figures
 ^pkgdown$
@@ -21,10 +22,6 @@ cran-comments.md
 ^CRAN-SUBMISSION$
 fix_twittercard.R
 ^\.github$
-LEARNINGS.md
 logo.png
-TODO.md
 ^\.lintr$
 ^\.vscode$
-
-
