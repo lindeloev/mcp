@@ -43,16 +43,23 @@ Scroll down to see brief introductions to each of these, or browse the website a
 
 # Brief worked example
 ## Fit a model
-The following model infers the two change points between three segments.
+The following model infers the two change points between three segments. You can run this complete worked example (which fits the model and plots by default) in one line:
 
 ```r
 library(mcp)
 
+# Fit and plot a worked example model:
+fit = mcp_example("demo")
+```
+
+Or define the model and fit it manually:
+
+```r
 # Define the model
 model = list(
-  response ~ 1,  # plateau (int_1)
+  response ~ 1,  # plateau (Intercept_1)
   ~ 0 + time,    # joined slope (time_2) at cp_1
-  ~ 1 + time     # disjoined slope (int_3, time_3) at cp_2
+  ~ 1 + time     # disjoined slope (Intercept_3, time_3) at cp_2
 )
 
 # Get example data and fit it
@@ -85,8 +92,8 @@ Population-level parameters:
     name match  sim  mean lower  upper Rhat n.eff
     cp_1    OK 30.0 30.27 23.19 38.760    1   384
     cp_2    OK 70.0 69.78 69.27 70.238    1  5792
-   int_1    OK 10.0 10.26  8.82 11.768    1  1480
-   int_3    OK  0.0  0.44 -2.49  3.428    1   810
+ Intercept_1 OK 10.0 10.26  8.82 11.768    1  1480
+ Intercept_3 OK  0.0  0.44 -2.49  3.428    1   810
  sigma_1    OK  4.0  4.01  3.43  4.591    1  3852
   time_2    OK  0.5  0.53  0.40  0.662    1   437
   time_3    OK -0.2 -0.22 -0.38 -0.035    1   834
@@ -117,15 +124,15 @@ For model comparisons, we can fit a null model and compare the predictive perfor
 ```r
 # Define the model
 model_null = list(
-  response ~ 1 + time,  # intercept (int_1) and slope (time_1)
-  ~ 1 + time            # disjoined slope (int_2, time_1)
+  response ~ 1 + time,  # intercept (Intercept_1) and slope (time_1)
+  ~ 1 + time            # disjoined slope (Intercept_2, time_1)
 )
 
 # Fit it
-fit_null = mcp(model_null, ex$data)
+fit_null = mcp(model_null, data)
 ```
 
-Leveraging the power of `loo::loo`, we see that the two-change-points model is preferred (it is on top), but the `elpd_diff / se_diff` ratio ratio indicate that this preference is not very strong.
+Leveraging the power of `loo::loo`, we see that the two-change-points model is preferred (it is on top), but the `elpd_diff / se_diff` ratio indicates that this preference is not very strong.
 ```r
 fit$loo = loo(fit)
 fit_null$loo = loo(fit_null)
@@ -144,17 +151,17 @@ model2 -7.6       4.6
 The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth with the functionality of `mcp`. Here is an executive summary, to give you a quick sense of what mcp can do.
 
 [About mcp models and simulating data](https://lindeloev.github.io/mcp/articles/formulas.html):
- * Parameter names are `int_i` (intercepts), `cp_i` (change points), `x_i` (slopes), `phi_i` (autocorrelation), and `sigma_*` (variance).
+ * Parameter names are `Intercept_i` (intercepts), `cp_i` (change points), `x_i` (slopes), `ar*`/`ma*` (autocorrelation), and `sigma_*` (variance).
  * The change point model is basically an `ifelse` model.
  * Generate data for all supported models using `fit$simulate()`. See examples in, e.g., `mcp_examples("demo")$call`.
 
 [Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
  * See priors in `fit$prior`.
- * Set priors using `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_1 = "dunif(0, 45)")`.
+ * Set priors using `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")`.
  * The default prior for change points is fast for estimation but is mathematically "messy". The Dirichlet prior (`cp_i = "dirichlet(1)"`) is slow but beautiful.
  * Fix parameters to specific values using `cp_1 = 45`.
  * Share parameters between segments using `slope_1 = "slope_2"`.
- * Truncate priors using `T(lower, upper)`, e.g., `int_1 = "dnorm(0, 1) T(0, )"`. `mcp` applies this automatically to change point priors to enforce order restriction. This is true for [varying change points](https://lindeloev.github.io/mcp/articles/varying.html) too.
+ * Truncate priors using `T(lower, upper)`, e.g., `Intercept_1 = "dnorm(0, 1) T(0, )"`. `mcp` applies this automatically to change point priors to enforce order restriction. This is true for [varying change points](https://lindeloev.github.io/mcp/articles/varying.html) too.
  * Do prior predictive checks using `mcp(model, data, sample = "prior")`.
 
 [Varying change points](https://lindeloev.github.io/mcp/articles/varying.html):
@@ -171,8 +178,8 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 [Model comparison and hypothesis testing](https://lindeloev.github.io/mcp/articles/comparison.html):
  * Do Leave-One-Out Cross-Validation using `loo(fit)` and `loo::loo_compare(fit1$loo, fit2$loo)`.
- * Compute Savage-Dickey density rations using `hypothesis(fit, "cp_1 = 40")`.
- * Leverage directional and conditional tests to assess interval hypotheses (`hypothesis(fit, "cp_1 > 30 & cp_1 < 50")`), combined other hypotheses (`hypothesis(fit, "cp_1 > 30 & int_1 > int_2")`), etc.
+ * Compute Savage-Dickey density ratios using `hypothesis(fit, "cp_1 = 40")`.
+ * Leverage directional and conditional tests to assess interval hypotheses (`hypothesis(fit, "cp_1 > 30 & cp_1 < 50")`), combined other hypotheses (`hypothesis(fit, "cp_1 > 30 & Intercept_1 > Intercept_2")`), etc.
 
 Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and [autoregression](https://lindeloev.github.io/mcp/articles/arma.html):
  * `~ sigma(1)` models an intercept change in variance. `~ sigma(0 + x)` models increasing/decreasing variance. Explicit `sigma()` formulas use a log link, so their coefficients are on the log-SD scale.
@@ -185,7 +192,7 @@ Modeling [variance](https://lindeloev.github.io/mcp/articles/variance.html) and 
 
 [Tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/tips.html)
  * Speed up fitting using `future::plan(future::multisession, workers = 3)`, and/or fewer iterations, `mcp(..., adapt = 500)`.
- * Help convergence along using `mcp(..., inits = list(cp_1 = 20, int_2 = -3))`.
+ * Help convergence along using `mcp(..., inits = list(cp_1 = 20, Intercept_2 = -3))`.
  * Most errors will be caused by circularly defined priors.
 
 
@@ -199,11 +206,11 @@ Find the single change point between two plateaus (simulated using `mcp_example(
 
 ```r
 model = list(
-    y ~ 1,  # plateau (int_1)
-    ~ 1     # plateau (int_2)
+    y ~ 1,  # plateau (Intercept_1)
+    ~ 1     # plateau (Intercept_2)
 )
 data = mcp_example_data("intercepts")
-fit = mcp(model, ex$data, par_x = "x")
+fit = mcp(model, data, par_x = "x")
 plot(fit)
 ```
 ![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_plateaus.png)
@@ -218,8 +225,8 @@ model = list(
   y ~ 1 + x,          # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope, varying by id
 )
-ex = mcp_example_data("varying")
-fit = mcp(model, ex$data)
+data = mcp_example_data("varying")
+fit = mcp(model, data)
 plot(fit, facet_by = "id")
 ```
 
@@ -253,8 +260,8 @@ model = list(
   ~ 0 + x,            # joined changing rate
   ~ 1 + x             # disjoined changing rate
 )
-ex = mcp_example_data("binomial")
-fit = mcp(model, ex$data, family = binomial())
+data = mcp_example_data("binomial")
+fit = mcp(model, data, family = binomial())
 plot(fit, q_fit = TRUE)
 ```
 
@@ -272,8 +279,8 @@ model = list(
   price ~ 1 + ar(2),
   ~ 0 + time + ar(1)
 )
-ex = mcp_example_data("ar")
-fit = mcp(model, ex$data)
+data = mcp_example_data("ar")
+fit = mcp(model, data)
 summary(fit)
 ```
 
@@ -286,7 +293,7 @@ Population-level parameters:
    ar1_2    OK  -0.4  -0.478 -6.88e-01  -0.255 1.00  2151
    ar2_1    OK   0.2   0.145 -6.56e-04   0.284 1.01   798
     cp_1       120.0 117.313  1.14e+02 118.963 1.05   241
-   int_1        20.0  17.558  1.51e+01  19.831 1.02   293
+Intercept_1      20.0  17.558  1.51e+01  19.831 1.02   293
  sigma_1    OK   5.0   4.829  4.39e+00   5.334 1.00  3750
   time_2    OK   0.5   0.517  4.85e-01   0.553 1.00   661
 ```
@@ -294,7 +301,7 @@ Population-level parameters:
 The fit plot shows the inferred autocorrelated nature:
 
 ```r
-plot(fit_ar)
+plot(fit)
 ```
 
 ![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_ar.png)
@@ -312,8 +319,8 @@ model = list(
   ~ 0 + sigma(1 + x),
   ~ 0 + x
 )
-ex = mcp_example_data("variance")
-fit = mcp(model, ex$data, adapt = 5000, iter = 5000)
+data = mcp_example_data("variance")
+fit = mcp(model, data, adapt = 5000, iter = 5000)
 plot(fit, q_predict = TRUE)
 ```
 
@@ -329,8 +336,8 @@ model = list(
   y ~ 1,
   ~ 0 + x + I(x^2)
 )
-ex = mcp_example_data("quadratic")
-fit = mcp(model, ex$data)
+data = mcp_example_data("quadratic")
+fit = mcp(model, data)
 plot(fit)
 ```
 

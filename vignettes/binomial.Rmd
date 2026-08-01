@@ -30,7 +30,13 @@ library(mcp)
 future::plan(future::multisession, workers = 3)
 set.seed(42)  # Make the script deterministic
 
-empty = mcp(model, family = binomial(), sample = FALSE)
+df = data.frame(
+  year = 1901:2020,  # evaluate for each of these
+  N = sample(10:20, size = 120, replace = TRUE),  # number of trials
+  y = 1
+)
+
+empty = mcp(model, data = df, family = binomial(), sample = FALSE)
 ```
 
 Now we can simulate. First, let us see the model parameters.
@@ -39,21 +45,17 @@ Now we can simulate. First, let us see the model parameters.
 empty$pars
 ```
 
- * It takes two intercepts (`int_*`), for segments 1 and 3.
+ * It takes two intercepts (`Intercept_*`), for segments 1 and 3.
  * It takes two slopes (`year_*`), for segment 2 and 3.
  * It takes two change points (`cp_*`) - one between each segment. 
 
-`empty$simulate` is now a function that can predict data given these parameters. If you are in a reasonable R editor, type `empty$simulate(` and press TAB to see the required arguments. I came up with some values below, including change points at $year = 25$ and $year = 65$. Notice that because `binomial()` defaults to the link function `link = "logit"`, the intercept and slopes are on a [logit scale](https://en.wikipedia.org/wiki/Logit). Briefly, this extends the narrow range of binomial rates (0-1) to an infinite logit scale from minus infinity to plus infinity. This will be important later when we set priors.
+`empty$simulate` is now a function that can predict data given these parameters (signature: `empty$simulate(fit, newdata, ...)`). If you are in a reasonable R editor, type `empty$simulate(` and press TAB to see the required arguments. I came up with some values below, including change points at $year = 25$ and $year = 65$. Notice that because `binomial()` defaults to the link function `link = "logit"`, the intercept and slopes are on a [logit scale](https://en.wikipedia.org/wiki/Logit). Briefly, this extends the narrow range of binomial rates (0-1) to an infinite logit scale from minus infinity to plus infinity. This will be important later when we set priors.
 
 ```{r}
-df = data.frame(
-  year = 1901:2020,  # evaluate for each of these
-  N = sample(10:20, size = 120, replace = TRUE)  # number of trials
-)
 df$y = empty$simulate(
-  df$year, df$N, 
+  empty, df, 
   cp_1 = 1925, cp_2 = 1975, 
-  int_1 = 2, int_3 = -1, 
+  Intercept_1 = 2, Intercept_3 = -1, 
   year_2 = -0.1, year_3 = 0.1)
 
 head(df)
@@ -101,7 +103,7 @@ These lines are jagged because `N` varies from year to year. Although there is c
 Speaking of alternative visualizations, you can also plot this on the logit scale, where the linear trends are modeled:
 
 ```{r, warning=FALSE, message=FALSE}
-plot(fit, scale = "linear")
+plot_dpar(fit)
 ```
 
 

@@ -13,19 +13,19 @@ vignette: >
 
 ```{r}
 model = list(
-  y ~ 1 + x,  # int_1 + x_1
-  ~ 1 + x,  # cp_1, int_2, and x_2
+  y ~ 1 + x,  # Intercept_1 + x_1
+  ~ 1 + x,  # cp_1, Intercept_2, and x_2
   ~ 1 + x  # cp_2
 )
 
 prior = list(
-  int_1 = "dnorm(0, 5) T(, 10)",  # Intercept; less than 10
+  Intercept_1 = "dnorm(0, 5) T(, 10)",  # Intercept; less than 10
   x_1 = "dbeta(2, 5)",  # slope: beta with right skew
   cp_1 = "dunif(min(x), cp_2)",  # change point between smallest x and cp_2
   x_2 = "dt(0, 1, 3) T(x_1, )",  # slope 2 > slope 1 and t-distributed
   cp_2 = 80,  # A constant (set; not estimated)
   x_3 = "x_2"  # continue same slope
-  # int_2 and int_3 not specified. Use default.
+  # Intercept_2 and Intercept_3 not specified. Use default.
 )
 ```
 
@@ -46,10 +46,9 @@ Let us see the priors after running them through `mcp` and compare to the defaul
 ```{r}
 library(mcp)
 future::plan(future::multisession, workers = 3)
-set.seed(42)  # Make the script deterministic
-
-empty_manual = mcp(model, prior = prior, sample = FALSE)
-empty_default = mcp(model, sample = FALSE)
+df_dummy = data.frame(x = 1:100, y = 1:100)
+empty_manual = mcp(model, data = df_dummy, prior = prior, sample = FALSE)
+empty_default = mcp(model, data = df_dummy, sample = FALSE)
 
 # Inspect resolved priors and bounds. Add rules, descriptions, sources, and
 # kinds with prior_summary(empty_manual, verbose = TRUE).
@@ -60,9 +59,9 @@ prior_summary(empty_default)
 Now, let's simulate some data that from the `model`. The following priors are "at odds" with the actual data so as to show their effect.
 
 ```{r}
-df = data.frame(x = runif(200, 0, 100))  # 200 datapoints between 0 and 100
-df$y = empty_default$simulate(df$x, 
-    int_1 = 20, int_2 = 30, int_3 = 30,  # intercepts
+df = data.frame(x = runif(200, 0, 100), y = 1)  # 200 datapoints between 0 and 100
+df$y = empty_default$simulate(empty_default, df, 
+    Intercept_1 = 20, Intercept_2 = 30, Intercept_3 = 30,  # intercepts
     x_1 = -0.5, x_2 = 0.5, x_3 = 0,  # slopes
     cp_1 = 35, cp_2 = 70,  # change points
     sigma = 5)
@@ -102,7 +101,7 @@ plot_default + plot_manual
 
 We see the effects of the priors.
 
- * The intercept `int_1` was truncated to be below 10.
+ * The intercept `Intercept_1` was truncated to be below 10.
  * The slope `x_1` is bound to be non-negative (because `dbeta`).
  * The slopes `x_2` and `x_3` were forced to be identical.
  * The change point `cp_2` was a constant, so there is no uncertainty there.
@@ -320,7 +319,7 @@ Prior predictive checks is a great way to ensure that the priors are meaningful.
 
 ```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
 # Sample priors 
-fit_pp_manual = mcp(model, data = df, prior, sample = "prior")
+fit_pp_manual = mcp(model, data = df, prior = prior, sample = "prior")
 fit_pp_default = mcp(model, data = df, sample = "prior")
 
 # Plot it

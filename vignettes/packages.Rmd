@@ -68,7 +68,7 @@ As a simple example, we simulate some intercept-only data with change points at 
 library(mcp)
 
 # Simulate
-set.seed(42)  # I always use 42; no fiddling
+set.seed(42) # I always use 42; no fiddling
 df = data.frame(
   x = 1:100,
   y = c(rnorm(30, 2), rnorm(40, 0), rnorm(30, 1))
@@ -76,14 +76,14 @@ df = data.frame(
 
 # Plot it
 plot(df)
-abline(v = c(30, 70), col="red")
+abline(v = c(30, 70), col = "red")
 ```
 
 # mcp
 `mcp` needs no further introduction. We fit the three-plateaus model with default priors:.
 
 ```{r, cache = TRUE, message = FALSE, results=FALSE}
-model = list(y~1, 1~1, 1~1)  # three intercept-only segments
+model = list(y ~ 1, 1 ~ 1, 1 ~ 1) # three intercept-only segments
 fit_mcp = mcp(model, data = df, par_x = "x")
 
 summary(fit_mcp)
@@ -110,22 +110,22 @@ plot(fit_mcp) + plot_pars(fit_mcp, pars = c("cp_1", "cp_2"), type = "dens_overla
 # EnvCpt
 `EnvCpt` can detect change points in mean and variance (not separately), slopes ("trends"), and AR(1)/AR(2), as well as conveniently fitting various models without change points. It automatically infers the number of change points. Unless otherwise instructed (through `models` argument), `EnvCpt` fits all models to the data, allowing you to pick one.
 
-```{r, message = FALSE, results = FALSE}
+```{r, message = FALSE, results = FALSE, eval = requireNamespace("EnvCpt", quietly = TRUE)}
 library(EnvCpt)
-fit_envcpt = envcpt(df$y)  # Fit all models at once
-fit_envcpt$summary  # Show log-likelihoods
+fit_envcpt = envcpt(df$y) # Fit all models at once
+fit_envcpt$summary # Show log-likelihoods
 ```
 
 The log-likelihoods can be used to maximize the fit. Of interest here is `meancpt`. Under the hood, it calls `changepoint::cpt.meanvar`, modeling a simultaneous change in mean and variance. As here, it does not always find the same change points as `changepoint::cpt.meanvar(df$y)` because the default parameters differ between the two. 
 
 `EnvCpt`  has a nice plot of all the models:
 
-```{r}
+```{r, eval = requireNamespace("EnvCpt", quietly = TRUE)}
 plot(fit_envcpt)
 ```
 
 Digging into the `meancpt`, we get maximum-likelihood estimates of the change points and the parameters of each segment.
-```{r}
+```{r, eval = requireNamespace("EnvCpt", quietly = TRUE)}
 fit_envcpt$meancpt@cpts
 fit_envcpt$meancpt@param.est
 ```
@@ -145,8 +145,8 @@ Enough talk:
 
 ```{r, warning=FALSE}
 library(segmented)
-fit_lm = lm(y ~ 1 + x, data = df)  # intercept-only model
-fit_segmented = segmented(fit_lm, seg.Z = ~x, npsi = 2)  # Two change points along x
+fit_lm = lm(y ~ 1 + x, data = df) # intercept-only model
+fit_segmented = segmented(fit_lm, seg.Z = ~x, npsi = 2) # Two change points along x
 
 summary(fit_segmented)
 ```
@@ -165,13 +165,13 @@ Because the fitted objects returned by `segmented` contains `aic`, `deviance`, e
 
 ```{r}
 fit_segmented_1 = segmented(fit_lm, seg.Z = ~x, npsi = 1)
-BF = exp((BIC(fit_segmented) - BIC(fit_segmented_1))/2)  # From Wagenmakers (2007)
+BF = exp((BIC(fit_segmented) - BIC(fit_segmented_1)) / 2) # From Wagenmakers (2007)
 BF
 ```
 
 We can do the same using `mcp`:
 ```{r, cache = TRUE, message = FALSE, results=FALSE, warning=FALSE}
-model_1 = list(y~1, 1~1)
+model_1 = list(y ~ 1, 1 ~ 1)
 fit_mcp_1 = mcp(model_1, data = df, par_x = "x")
 fit_mcp_1$loo = loo(fit_mcp_1)
 fit_mcp$loo = loo(fit_mcp)
@@ -191,7 +191,7 @@ While `segmented` prefers the one-change-point model, `mcp` prefers the (true) t
 
 For an intercept-only model (`y ~ 1`) it correctly detects the two change points with estimates similar to `mcp`. As with most other packages, there are no intervals on the change points nor estimates of the parameters of the segments in between.
 
-```{r}
+```{r, eval = requireNamespace("strucchange", quietly = TRUE)}
 library(strucchange)
 fit_bp = breakpoints(y ~ 1, data = df, breaks = 2)
 summary(fit_bp)
@@ -206,11 +206,11 @@ Reassuringly, for `y ~ 1 + x` it "recommends" the same single change point that 
 # cpm
 `cpm` is an intercept-only (in mean and variance) package, so it cannot model slopes. It can detect single change points via `detectChangePoint` and multiple change points via `processStream`. `processStream` is an automatic change point detection, using a p-value threshold to determine if a candidate should be marked as a hit. Multiple ways of computing p-values (`cpmType`) are available. In my limited testing, they return similar change points, though not identical.
 
-```{r}
+```{r, eval = requireNamespace("cpm", quietly = TRUE)}
 library(cpm)
-#fit_cpm = detectChangePoint(df$y, cpmType = "Student")  # a single change point
-#fit_cpm = processStream(df$y, cpmType = "Mann-Whitney")  # Detects three
-fit_cpm = processStream(df$y, cpmType = "Student")  # Multiple change points
+# fit_cpm = detectChangePoint(df$y, cpmType = "Student")  # a single change point
+# fit_cpm = processStream(df$y, cpmType = "Mann-Whitney")  # Detects three
+fit_cpm = processStream(df$y, cpmType = "Student") # Multiple change points
 fit_cpm$changePoints
 ```
 
@@ -227,23 +227,25 @@ It detects two change points, which is good. No intervals are returned and no pl
 
 It detects the first change point, but not the second.
 
-```{r, message=FALSE}
+```{r, message=FALSE, eval = requireNamespace("changepoint", quietly = TRUE)}
 library(changepoint)
 fit_changepoint = cpt.mean(df$y)
 
 # Return estimates
-c(ints = param.est(fit_changepoint)$mean,
-  cp = cpts(fit_changepoint))
+c(
+  ints = param.est(fit_changepoint)$mean,
+  cp = cpts(fit_changepoint)
+)
 ```
 
 Plot:
-```{r}
+```{r, eval = requireNamespace("changepoint", quietly = TRUE)}
 plot(fit_changepoint)
 ```
 
 The package `changepoint.np` extends `changepoint` by providing a non-parametric version. It is unclear which of the `changepoint` functions are extended, but it manages to find both change points to a good precision. As with many other packages, no intervals are provided. As mentioned earlier, I suspect that `EnvCpt` uses this function under the hood.
 
-```{r}
+```{r, eval = requireNamespace("changepoint.np", quietly = TRUE)}
 changepoint.np::cpt.np(df$y)@cpts
 ```
 
@@ -256,7 +258,7 @@ changepoint.np::cpt.np(df$y)@cpts
 
 We see that it vaguely captures the change point at `x = 30`, and has some smeared-out probability around `x = 60` (`mcp` detected a single change point at `x = 64` here). `bcp` has some "false alarms" at `x < 20`.
 
-```{r, message = FALSE}
+```{r, message = FALSE, eval = requireNamespace("bcp", quietly = TRUE)}
 library(bcp)
 fit_bcp = bcp(df$y, d = 1000)
 plot(fit_bcp)
@@ -266,13 +268,13 @@ plot(fit_bcp)
 # ecp
 `ecp` contains six functions to detect change points. It is clearly built for multivariate data, but can take univariate too. Of the six functions, I have not managed to get `e.agglo` working for `df`, but here I demonstrate the other five. The resulting information is sparse. It detects one of the two change points, but not both (with the exception of `e.divisive`, which returns four),
 
-```{r}
+```{r, eval = requireNamespace("ecp", quietly = TRUE)}
 df_ecp = as.matrix(df$y)
-fit_ecp1 = ecp::e.cp3o(df_ecp, K = 2)  # maximum 2 change points
-fit_ecp2 = ecp::e.cp3o_delta(df_ecp, K = 2)  # maximum 2 change points
-fit_ecp3 = ecp::e.divisive(df_ecp, k = 2)  # 2 change points. Ignored???
-fit_ecp4 = ecp::ks.cp3o(df_ecp, K = 2)  # maximum 2 change points
-fit_ecp5 = ecp::ks.cp3o_delta(df_ecp, K = 2)  # maximum 2 change points
+fit_ecp1 = ecp::e.cp3o(df_ecp, K = 2) # maximum 2 change points
+fit_ecp2 = ecp::e.cp3o_delta(df_ecp, K = 2) # maximum 2 change points
+fit_ecp3 = ecp::e.divisive(df_ecp, k = 2) # 2 change points. Ignored???
+fit_ecp4 = ecp::ks.cp3o(df_ecp, K = 2) # maximum 2 change points
+fit_ecp5 = ecp::ks.cp3o_delta(df_ecp, K = 2) # maximum 2 change points
 
 # Show the change point estimates
 str(list(

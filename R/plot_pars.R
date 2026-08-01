@@ -44,7 +44,7 @@
 #' @return A \pkg{ggplot2} object when all selected parameters fit on one page.
 #'   For multiple pages, an invisible list of \pkg{ggplot2} objects.
 #' @export
-#' @seealso plot_pars plot_dpar pp_check
+#' @seealso plot_dpar pp_check
 #' @examples
 #' # Typical usage. demo_fit is an mcpfit object.
 #' plot_pars(demo_fit)

@@ -85,7 +85,7 @@ As always, the prior on the change point forces it to occur in the observed rang
 prior = list(
   cp_1 = "dnorm(1900, 30) T(min(date), 1925)"
 )
-fit_with_prior = mcp(model, data = df, prior, poisson(), par_x = "date")
+fit_with_prior = mcp(model, data = df, family = poisson(), prior = prior, par_x = "date")
 ```
 
 

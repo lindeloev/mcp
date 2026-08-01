@@ -32,7 +32,7 @@ You specify group-level effects using the familiar [`lmer`](https://www.rdocumen
 
 ```{r}
 model = list(
-  y ~ 1,  # int_1
+  y ~ 1,  # Intercept_1
   1 + (1|id) ~ 0 + x  # cp_1, cp_1_sd, cp_1_id[i]
 )
 ```
@@ -41,7 +41,7 @@ You can have multiple varying change points with multiple groupings:
 
 ```{r}
 model = list(
-  y ~ 1,  # int_1
+  y ~ 1,  # Intercept_1
   1 + (1|id) ~ 0 + x,  # cp_1, cp_1_sd, cp_1_id[i]
   1 + (1|species) ~ 0,  # cp_2, cp_2_sd, cp_2_species[i]
   (1|id) ~ 1  # cp_3 (implicit), cp_3_sd, cp_3_id[i]
@@ -106,7 +106,7 @@ Let us do a worked example, simulating the varying change point between a platea
 
 ```{r}
 model = list(
-  y ~ 1,  # int_1
+  y ~ 1,  # Intercept_1
   1 + (1|id) ~ 0 + x  # cp_1, cp_1_sd, cp_1_id[i]
 )
 ```
@@ -114,18 +114,20 @@ model = list(
 It is quite similar to simulating non-varying data, except that we need to simulate some varying offsets before passing all parameters to `empty$simulate`:
 
 ```{r, message=FALSE, warning=FALSE}
-empty = mcp(model, sample = FALSE)
-
 library(dplyr, warn.conflicts = FALSE)
 varying = c("Clark", "Louis", "Batman", "Batgirl", "Spiderman", "Jane")
 df = data.frame(
   x = runif(length(varying) * 30, 0, 100),  # 30 data points for each
-  id = rep(varying, each = 30)  # the group names
+  id = rep(varying, each = 30),  # the group names
+  y = 1
 )
 df$id_numeric = as.numeric(as.factor(df$id))  # to positive integers
-df$y = empty$simulate(df$x,
+
+empty = mcp(model, data = df, sample = FALSE)
+
+df$y = empty$simulate(empty, df,
   # Population-level:
-  int_1 = 20, x_2 = 0.5, cp_1 = 50, sigma = 2,
+  Intercept_1 = 20, x_2 = 0.5, cp_1 = 50, sigma = 2,
   
   # Varying: zero-centered and 10 between each level
   cp_1_id = 10 * (df$id_numeric - mean(df$id_numeric)))
@@ -161,7 +163,7 @@ It seems that `mcp` did a good job of recovering the change points. There is a l
 If you use `summary(fit)` (or `fixef(fit)`) you will get the posteriors for the population-level effects. To get the random effects, do:
 
 ```{r}
-ranef(fit)
+mcp::ranef(fit)
 ```
 
 Inspecting the `sim` and `match` columns, we see that they recovered the simulation parameters well.

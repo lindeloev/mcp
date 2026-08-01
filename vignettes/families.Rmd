@@ -87,7 +87,7 @@ plot(fit)
 
 Sampling succeeded! This is a bad model of this data. But it illustrates the necessary considerations and steps to ameliorate problems when going beyond default link functions. 
 
-Because of the identity-link, the regression coefficients are interpretable as intercepts and slopes on `P(success)` in contrast to the "usual" log-odds fitted when `family = binomial(link = "logit")`. For example, `int_1` is inferred probability of success at `x = 0` and likewise for `int_2` at `x = cp_1`.
+Because of the identity-link, the regression coefficients are interpretable as intercepts and slopes on `P(success)` in contrast to the "usual" log-odds fitted when `family = binomial(link = "logit")`. For example, `Intercept_1` is inferred probability of success at `x = 0` and likewise for `Intercept_2` at `x = cp_1`.
 
 ```{r}
 summary(fit)

@@ -682,6 +682,6 @@ probit = stats::binomial(link = "probit")$linkfun
 #'
 #' @aliases phi
 #' @param eta A vector of probits
-#' @return A vector with same length as `mu`
+#' @return A vector with same length as `eta`
 #' @export
 phi = stats::binomial(link = "probit")$linkinv

@@ -28,9 +28,8 @@
 #' empty = mcp_example("binomial", sample = FALSE, plot = FALSE)
 #' print(empty)
 #' print(empty$call)
-#' print(empty$data)
-#' #'
-#' #' # Now sample this model
+#'
+#' # Now sample this model
 #' fit2 = mcp(empty$model, empty$data, family = empty$family)
 #' plot(fit2)
 #' }

@@ -413,7 +413,7 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
 }
 
 
-#' Simulate/evaulate autoregressive residuals
+#' Simulate/evaluate autoregressive residuals
 #'
 #' Developer note: some of the eval(parse(text = ...)) here could probably be replaced with inner products (%*%).
 #' @aliases simulate_ar

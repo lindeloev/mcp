@@ -64,7 +64,7 @@ See how this was generated in `ex$call`. We model this as a plateau (`1`)  with 
 
 ```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}
 model = list(
-  price ~ 1 + ar(2),  # int_1, ar1_1, ar2_1
+  price ~ 1 + ar(2),  # Intercept_1, ar1_1, ar2_1
   ~ 0 + time + ar(1)  # time_2, ar1_2
 )
 fit = mcp(model, ex$data)
@@ -277,7 +277,7 @@ model = list(
   y ~ 1 + ar(2, 1 + x),
   ~ 0 + ar(1, 1 + I(x^2))
 )
-empty = mcp(model, sample = FALSE)
+empty = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE)
 cbind(empty$prior)
 ```
 

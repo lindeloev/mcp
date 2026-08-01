@@ -17,7 +17,7 @@ There are three main ways of doing model comparison in `mcp`:
 ```{r}
 library(mcp)
 future::plan(future::multisession, workers = 3)
-set.seed(42)  # Make the script deterministic
+set.seed(42) # Make the script deterministic
 ```
 
 
@@ -32,9 +32,9 @@ model = list(
   ~ 0 + items
 )
 prior = list(
-  int_1 = "dnorm(2, 1)",  # high recall for easy trials
-  cp_1 = "dnorm(4, 1)",  # performance dicontinuity around 4
-  items_2 = "dnorm(-0.4, 1) T( , -0.2)"  # performance deteriorates considerably
+  Intercept_1 = "dnorm(2, 1)", # high recall for easy trials
+  cp_1 = "dnorm(4, 1)", # performance dicontinuity around 4
+  items_2 = "dnorm(-0.4, 1) T( , -0.2)" # performance deteriorates considerably
 )
 
 # A very simple model
@@ -47,17 +47,18 @@ Notice that `items` is used both as `trials` and x-axis. No problem.
 Simulate some data using `fit$simulate()`:
 
 ```{r}
-# Get just the model - no fit
-empty = mcp(model, family = binomial(), sample = FALSE)
-
 # Simulate data
-df = data.frame(items = rep(1:9, each = 40))
+df = data.frame(items = rep(1:9, each = 40), recalled = 1)
+
+# Get just the model - no fit
+empty = mcp(model, data = df, family = binomial(), sample = FALSE)
+
 df$recalled = empty$simulate(
-  df$items, 
+  empty, df,
   cp_1 = 4,
-  int_1 = 2.5, 
-  items_2 = -0.4, 
-  sigma = 0.5)
+  Intercept_1 = 2.5,
+  items_2 = -0.4
+)
 
 head(df)
 ```
@@ -66,9 +67,9 @@ head(df)
 Now fit it with and without the informative prior. We set `iter` fairly high because this model is not sampled effectively. We will also add `sample = "both"` to sample *both* prior and posterior. We will need both to compute Bayes factors using `hypothesis()` later.
 
 ```{r, cache = TRUE, message = FALSE, warning = FALSE, results=FALSE}
-fit_default = mcp(model, data = df,             family = binomial(), sample = "both", iter = 10000)
+fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 10000)
 fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 10000)
-fit_simple = mcp(model_simple, data = df,       family = binomial(), sample = "both", iter = 10000)
+fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 10000)
 ```
 
 We plot them and add a few `ggplot2` layers. We jitter the raw data in the middle plot, just to give a sense of the densities.
@@ -77,14 +78,14 @@ We plot them and add a few `ggplot2` layers. We jitter the raw data in the middl
 library(patchwork)
 library(ggplot2)
 
-plot(fit_default) + 
+plot(fit_default) +
   ggtitle("Default") +
-  
-plot(fit_info) + 
-  ggtitle("Informed") + 
-  geom_jitter(height = 0.05, color = "red", size = 0.2) + 
-  
-plot(fit_simple) + 
+
+  plot(fit_info) +
+  ggtitle("Informed") +
+  geom_jitter(height = 0.05, color = "red", size = 0.2) +
+
+  plot(fit_simple) +
   ggtitle("Simple")
 ```
 
@@ -119,14 +120,14 @@ Maybe we just want to test a few directional hypothesis. For example:
 
  * Does recall begin to deteriorate when `cp_1 > 3`?
  * Is the change point in the interval `cp_1 > 3.5 & cp_1 < 4.5`?
- * The only constraint is your imagination. How about all hypotheses we may have at once? `cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & int_1 > 2.5` against it's inverse `(cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & int_1 < 2.5`
+ * The only constraint is your imagination. How about all hypotheses we may have at once? `cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & Intercept_1 > 2.5` against it's inverse `(cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & Intercept_1 < 2.5`
 
 ```{r}
 hypothesis(fit_info, c(
   "cp_1 > 3",
   "cp_1 > 3.5 & cp_1 < 4.5",
-  "cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & int_1 > 2.5",
-  "(cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & int_1 < 2.5"
+  "cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & Intercept_1 > 2.5",
+  "(cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & Intercept_1 < 2.5"
 ))
 ```
 
@@ -139,20 +140,17 @@ There are more examples [in the documentation for `hypothesis`](../reference/hyp
 samples. The posterior probability is reported as `p`, and the Bayes factor is
 the posterior odds divided by the prior odds:
 
-```{r, eval = FALSE}
+```{r}
 hypothesis(fit_info, "cp_1 > 3.5 & cp_1 < 4.5")
 
 # ... is identical to
-library(dplyr, warn.conflicts = FALSE)
-prob = function(samples) {
-  tidybayes::tidy_draws(samples) %>%
-    mutate(test = cp_1 > 3.5 & cp_1 < 4.5) %>%
-    summarise(p = sum(test) / n()) %>%
-    pull(p)
+prob = function(fit, prior = FALSE) {
+  draws = tidy_samples(fit, prior = prior)
+  mean(draws$cp_1 > 3.5 & draws$cp_1 < 4.5)
 }
 
-p_post = prob(fit_info$mcmc_post)
-p_prior = prob(fit_info$mcmc_prior)
+p_post = prob(fit_info, prior = FALSE)
+p_prior = prob(fit_info, prior = TRUE)
 BF = (p_post / (1 - p_post)) / (p_prior / (1 - p_prior))
 
 print(c(p = p_post, BF = BF))

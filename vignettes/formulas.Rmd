@@ -40,7 +40,7 @@ model = list(
 )
 
 # Interpret, but do not sample.
-fit = mcp(model, sample = FALSE)
+fit = mcp(model, data = data.frame(score = 1:10, time = 1:10), sample = FALSE)
 summary(fit)
 ```
 
@@ -52,7 +52,7 @@ Notice how it added the response and cp parts to the last segment?
 # Parameter names
 `mcp` automatically assigns names to the parameters in the format `type_i` where `i` is the segment number. Specifically:
 
- * `int_i` is the intercept in the ith segment.
+ * `Intercept_i` is the intercept in the ith segment.
  * `year_i` is the slope in on the data column `year` in the ith segment. `x_i` is the slope on the data column `x` in the ith segment. The slope takes name after the data it is regressed on.
  * `cp_i` is the ith change point. Notice that `cp_i` is specified in segment `i + 1`. `cp_1` occurs when there are two segments, and `cp_2` when there are three segments, etc. *OBS: future versions may start at cp_2.*.
  * `cp_i_group` is the varying *deviations* from `cp_i`. See [varying change points in mcp](articles/varying.html).
@@ -65,18 +65,18 @@ These parameter names are saved in `fit$pars`. Let us specify a somewhat complex
 
 ```{r}
 model = list(
-  # int_1
+  # Intercept_1
   score ~ 1,
   
-  # cp_1, cp_1_sd, cp_1_id, x_2
+  # cp_1, cp_1_sd, cp_1_id, year_2
   1 + (1|id) ~ 0 + year,
   
-  # cp_2, cp_2_sd, cp_2_condition, int_2, x_2
-  1 + (1|condition) ~ 1 + rel(year)
+  # cp_2, cp_2_sd, cp_2_condition, Intercept_3, year_3
+  1 + (1|condition) ~ 1 + year
 )
 
-# Intepret, but do not sample.
-fit = mcp(model, sample = FALSE)
+# Interpret, but do not sample.
+fit = mcp(model, data = data.frame(score = 1:10, year = 1:10, id = 1:10, condition = rep(c("A", "B"), 5)), sample = FALSE)
 str(fit$pars, vec.len = 99)  # Compact display
 ```
 
@@ -89,29 +89,29 @@ A change point is simply like an `ifelse` statement or multiplying with indicato
 # Model parameters
 x = 1:20
 cp_1 = 12
-int_1 = 5
-int_2 = 10
+Intercept_1 = 5
+Intercept_2 = 10
 
 # Ifelse version
-y_ifelse = ifelse(x <= cp_1, yes = int_1, no = int_2)
+y_ifelse = ifelse(x <= cp_1, yes = Intercept_1, no = Intercept_2)
 
 # Indicator equivalent using dummy helpers
 cp_0 = -Inf
 cp_2 = Inf
-y_indicator = (x > cp_0) * (x <= cp_1) * int_1 +  # Between cp_0 and cp_1
-              (x > cp_1) * (x <= cp_2) * int_2  # Between cp_1 and cp_2
+y_indicator = (x > cp_0) * (x <= cp_1) * Intercept_1 +  # Between cp_0 and cp_1
+              (x > cp_1) * (x <= cp_2) * Intercept_2  # Between cp_1 and cp_2
 
 # Show it
 par(mfrow = c(1,2))
 plot(x, y_ifelse, main = "ifelse(x <= cp_1)")
-plot(x, y_indicator, main = "(x > cp_1) * int_2")
+plot(x, y_indicator, main = "(x > cp_1) * Intercept_2")
 ```
 
 The magic of (Bayesian) MCMC sampling is that it can actually infer the change point from this simple formulation. We let `mcp` write the JAGS code for this simple two-plateaus model and see how it uses the indicator formulation of change points:
 
 ```{r}
 model = list(y ~ 1, ~ 1)
-fit = mcp(model, sample = FALSE, par_x = "x")
+fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE, par_x = "x")
 fit$jags_code
 ```
 
@@ -141,7 +141,7 @@ y_indicator = (x > cp_0) * slope_1 * pmin(x, cp_1) +
 # Show it
 par(mfrow = c(1,2))
 plot(x, y_ifelse, main = "ifelse(x <= cp_1)")
-plot(x, y_indicator, main = "(x > cp_1) * int_2")
+plot(x, y_indicator, main = "(x > cp_1) * Intercept_2")
 ```
 
 Let us see this in action:
@@ -149,7 +149,7 @@ Let us see this in action:
 ```{r}
 model = list(y ~ 0 + x,
                 ~ 0 + x)
-fit = mcp(model, sample = FALSE)
+fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE)
 fit$jags_code
 ```
 
@@ -159,19 +159,19 @@ You will find the exact same formula for `y_ = ...` if you do `print(fit$simulat
 
 
 # Modeling relative slopes and intercepts
-`mcp` allows for specifying relative intercepts and change points through `rel()`. Relative slopes are easy: just replace `x_2` with `x_1 + x_2`. You could do the same if all segments are intercept-only. However, if the previous segment had a slope, we want the intercept to be relative to where that "ended". The `mcp` solution is to only "turn off" the "hanging intercept" from that slope's ending (`pmin(x, cp_i)`) when the model encounters an absolute intercept. An indicator does this.
+Relative parameters and changepoints can be modeled by specifying prior relationships or parameter offsets. Relative slopes are easy: just replace `x_2` with `x_1 + x_2`. You could do the same if all segments are intercept-only. However, if the previous segment had a slope, we want the intercept to be relative to where that "ended". The `mcp` solution is to only "turn off" the "hanging intercept" from that slope's ending (`pmin(x, cp_i)`) when the model encounters an absolute intercept. An indicator does this.
 
 ```{r}
 # Model parameters
 x = 1:20
 cp_1 = 12
-int_1 = 5
-int_2 = 3  # let's model this as relative
+Intercept_1 = 5
+Intercept_2 = 3  # let's model this as relative
 
 # Indicator version.
 cp_0 = -Inf
-y_indicator = (x > cp_0) * int_1 +  # Note: no (x < cp_1)
-              (x > cp_1) * (int_2)
+y_indicator = (x > cp_0) * Intercept_1 +  # Note: no (x < cp_1)
+              (x > cp_1) * (Intercept_2)
 
 # Plot it
 plot(x, y_indicator, main = "Relative intercept")

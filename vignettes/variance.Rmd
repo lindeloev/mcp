@@ -44,12 +44,12 @@ model = list(
 We can simulate some data, starting with low variance and an abrupt change to a high variance at $x = 50$:
 
 ```{r}
-empty = mcp(model, sample = FALSE, par_x = "x")
 set.seed(40)
-df = data.frame(x = 1:100)
+df = data.frame(x = 1:100, y = 1)
+empty = mcp(model, data = df, sample = FALSE, par_x = "x")
 df$y = empty$simulate(
-  df$x, 
-  cp_1 = 50, int_1 = 20, 
+  empty, df, 
+  cp_1 = 50, Intercept_1 = 20, 
   sigma_1 = log(5), sigma_2 = log(20))
 
 head(df)
@@ -113,17 +113,17 @@ In general, the log-SD parameters are named `sigma_[normalname]`, where "normaln
 We simulate some data from this model, setting all parameters. As always, we can fit an empty model to get `fit$simulate`, which is useful for simulation and predictions from this model.
 
 ```{r}
-empty = mcp(model, sample = FALSE)
 set.seed(40)
-df = data.frame(x = 1:200)
+df = data.frame(x = 1:200, y = 1)
+empty = mcp(model, data = df, sample = FALSE)
 df$y = empty$simulate(
-  df$x,
+  empty, df,
   cp_1 = 50, cp_2 = 100, cp_3 = 150,
-  int_1 = -20, int_2 = 0,
+  Intercept_1 = -20, Intercept_2 = 0,
   sigma_1 = log(3), sigma_x_1 = log(2) / 50,
   sigma_2 = log(10),
   sigma_x_3 = -0.03,
-  sigma_x_3_E2 = 0.0003,
+  sigma_xE2_3 = 0.0003,
   x_3 = 1, x_4 = 1)
 ```
 
@@ -181,16 +181,17 @@ model = list(
 
 Simulate data:
 ```{r}
-empty = mcp(model, sample = FALSE)
 set.seed(40)
 df = data.frame(
   x = 1:180,
-  id = rep(1:6, times = 30)
+  id = rep(1:6, times = 30),
+  y = 1
 )
+empty = mcp(model, data = df, sample = FALSE)
 df$y = empty$simulate(
-  df$x, 
+  empty, df, 
   cp_1 = 70, cp_1_id = 15 * (df$id - mean(df$id)),
-  int_1 = 20, x_1 = 1, x_2 = -0.5,
+  Intercept_1 = 20, x_1 = 1, x_2 = -0.5,
   sigma_1 = log(10), sigma_2 = log(25))
 ```
 
@@ -207,7 +208,7 @@ plot(fit, facet_by = "id")
 
 As usual, we can get the individual change points:
 ```{r}
-ranef(fit)
+mcp::ranef(fit)
 ```
 
 ```{r cleanup, include=FALSE}

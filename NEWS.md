@@ -4,7 +4,7 @@
 
 -   Aligned with `{posterior}` posterior draw & prediction API. Changes include:
     - `summary(fit)` now reports rank-normalized `split-Rhat`, `ess_bulk`, and `ess_tail` from `{posterior}` and central quantile intervals instead of HDIs.
-    - adding `as_draws(fit)`, `as_draws_df(fit)`, etc. which also soft-deprecats directly accessing `fit$mcmc_post`. 
+    - adding `as_draws(fit)`, `as_draws_df(fit)`, etc. which also soft-deprecates directly accessing `fit$mcmc_post`. 
     - Per-draw methods (`summary = FALSE` in `fitted()`, `predict()`, `residuals()`, `log_lik()`) now return dot-prefixed columns (`.epred`, `.prediction`, `.residual`, `.loglik`) for `{tidybayes}` / `{ggdist}` compatibility.
     - `nsamples` soft-deprecated in favor of `ndraws`; `which_y` deprecated in favor of `dpar`.
 
@@ -63,7 +63,7 @@
 
 ## Other new features
 
--   Default `plot(fit)` style has been updated in many ways to accomodate multiple regression and group-effects.
+-   Default `plot(fit)` style has been updated in many ways to accommodate multiple regression and group-effects.
 
 -   Extended autoregression (`ar()`) to GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment. Bernoulli models and non-default links remain unsupported.
 

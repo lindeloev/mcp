@@ -26,9 +26,9 @@ head(data)
 ```{r, results=FALSE, message=FALSE, cache=TRUE}
 # Define the model
 model = list(
-  response ~ 1,  # plateau (int_1)
+  response ~ 1,  # plateau (Intercept_1)
   ~ 0 + time,    # joined slope (time_2) at cp_1
-  ~ 1 + time     # disjoined slope (int_3, time_3) at cp_2
+  ~ 1 + time     # disjoined slope (Intercept_3, time_3) at cp_2
 )
 
 # Fit it
@@ -111,7 +111,7 @@ Note that `predict()` uses random sampling under the hood, so these values will 
 # Forecasting with future change points
 Bayesian inference is the principled updating of prior knowledge using data. Where there is little or now data, the prior speaks louder. Sometimes, we can learn surprising stuff simply by inspecting the prior predictive, e.g., how the priors combine when "put through" the model. In `mcp`, most functions come with a `prior = FALSE` default, but you can simply do `plot(fit, prior = TRUE)`, `fitted(fit, prior = TRUE)`, or `predict(fit, prior = TRUE)`. 
 
-Say you want to forecast at `time = 125` and you know that a changepoint to the baseline level (an intercept change to `int_1`) will occur approximately after the same interval as between `cp_1` and `cp_2` (i.e., at `cp_2 + (cp_2 - cp_1)`. Here is a way to "hack" `mcp` to do this. *(NOTE: I plan on implementing this in a much more user-friendly way in a future release; see the discussion in [this github issue](https://github.com/lindeloev/mcp/issues/78) and current status in [this github issue](https://github.com/lindeloev/mcp/issues/82))*.
+Say you want to forecast at `time = 125` and you know that a changepoint to the baseline level (an intercept change to `Intercept_1`) will occur approximately after the same interval as between `cp_1` and `cp_2` (i.e., at `cp_2 + (cp_2 - cp_1)`). Here is a way to "hack" `mcp` to do this. *(NOTE: I plan on implementing this in a much more user-friendly way in a future release; see the discussion in [this github issue](https://github.com/lindeloev/mcp/issues/78) and current status in [this github issue](https://github.com/lindeloev/mcp/issues/82))*.
 
 ## Step 1: run the model for observed data
 We already did that above, resulting in our `fit`. But we only do it to get the default priors that are suitable for inferring change point in this region, so you could've just run it without sampling:
@@ -127,7 +127,7 @@ Now we extend the model with the future segment of which we have prior knowledge
 
 ```{r}
 model_forecast = c(fit$model, list(
-  ~ 1     # intercept (int_4) after cp_3
+  ~ 1     # intercept (Intercept_4) after cp_3
 ))
 ```
 
@@ -135,7 +135,7 @@ And finally, we extend the list of priors with the two new parameters (`time_4` 
 
 ```{r}
 prior_forecast = c(fit$prior, list(
-  int_4 = "int_1",  # Return to this value
+  Intercept_4 = "Intercept_1",  # Return to this value
   cp_3 = "dnorm(cp_2 + (cp_2 - cp_1), 20) T(max(time), )"  # In the future at the same interval
 ))
 ```
