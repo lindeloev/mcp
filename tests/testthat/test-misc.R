@@ -432,7 +432,7 @@ test_that("hypothesis()", {
   expect_equal(actual_directional$p, p_post)
   expect_equal(actual_directional$BF, expected_BF)
 
-  # Identical prior and posterior draws must give BF = 1, also for intervals.
+  # Identical prior and posterior draws must give BF = 1, also for intervals and Savage-Dickey equality.
   fit_same = demo_fit2
   fit_same$mcmc_prior = .subset2(demo_fit2, "mcmc_post")
   bounds = stats::quantile(cp_draws, c(0.2, 0.8))
@@ -443,6 +443,16 @@ test_that("hypothesis()", {
   actual_interval = hypothesis(fit_same, interval)
   expect_equal(actual_interval$p, mean(cp_draws > bounds[[1]] & cp_draws < bounds[[2]]))
   expect_equal(actual_interval$BF, 1)
+
+  # Savage-Dickey point equality test (requires prior)
+  mid_val = format(mean(cp_draws), digits = 16)
+  equality_expr = paste0("cp_1 = ", mid_val)
+  actual_equality = hypothesis(fit_same, equality_expr)
+  expect_s3_class(actual_equality, "data.frame")
+  expect_equal(actual_equality$hypothesis, paste0("cp_1 - ", mid_val, " = 0"))
+  expect_false(is.na(actual_equality$p))
+  expect_false(is.na(actual_equality$BF))
+  expect_equal(actual_equality$BF, 1, tolerance = 1e-3)
 })
 
 

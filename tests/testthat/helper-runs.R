@@ -267,11 +267,16 @@ test_plot_pars = function(fit, prior = FALSE) {
 
 
 test_hypothesis = function(fit, prior) {
-  # Function to test both directional and point hypotheses
+  # Function to test directional, interval, and point equality hypotheses
   run_test_hypothesis = function(fit, base, prior = prior) {
     hypotheses = paste0(base, " > 1")  # Directional
-    if (prior == FALSE)
-      hypotheses = c(hypotheses,  paste0(base, " = -1"))  # Savage-Dickey (point); only works if both prior and posterior is present.
+    if (prior == FALSE) {
+      hypotheses = c(
+        hypotheses,
+        paste0(base, " = -1"),  # Savage-Dickey (point); only works if both prior and posterior is present.
+        paste0(base, " > -10 & ", base, " < 10")  # Interval hypothesis requiring prior
+      )
+    }
 
     result = hypothesis(fit, hypotheses, prior = prior)
     testthat::expect_true(is.data.frame(result) & nrow(result) == length(hypotheses))
