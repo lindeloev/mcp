@@ -582,10 +582,18 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
   samples = tidy_samples(fit, population = population, varying = varying, absolute = TRUE, prior = prior) %>%
     tidyr::pivot_longer(cols = tidyselect::matches("^cp_[0-9]+$"), names_to = "cp_name", values_to = "value") %>%
 
-    # Compute density per group
-    #dplyr::mutate(!!facet_by := dplyr::if_else(facet_by %in% colnames(.), !!facet_by, NULL)) %>%  # Attempt at faceting non-varying
+    # Compute density per group. Tolerate zero-variance CPs like cp_2 = 80.
     dplyr::group_by(dplyr::across(dplyr::all_of(c(".chain", "cp_name", facet_by)))) %>%
-    dplyr::summarise(dens = list(stats::density(.data$value, bw = "SJ", n = 2^10))) %>%
+    dplyr::summarise(dens = list(
+      if (stats::sd(.data$value) == 0) {
+        stats::density(.data$value, bw = "nrd0", n = 2^10)
+      } else {
+        tryCatch(
+          stats::density(.data$value, bw = "SJ", n = 2^10),
+          error = function(e) stats::density(.data$value, bw = "nrd0", n = 2^10)
+        )
+      }
+    )) %>%
     dplyr::rowwise() %>%
     dplyr::mutate(
       densx = list(.data$dens$x),
