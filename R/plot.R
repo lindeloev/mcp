@@ -224,11 +224,17 @@ get_plot = function(x,
   }
 
   prepare_draws = function(draws) {
-    draws %>%
+    draws = draws %>%
       # Only a problem for AR/MA models, where newdata contains the response.
-      dplyr::select(-dplyr::any_of(as.character(yvar))) %>%
-      dplyr::rename("{fit$pars$y}" := ".epred") %>%
-      add_plot_groups(curve_by = curve_by, color_by = color_by)
+      dplyr::select(-dplyr::any_of(as.character(yvar)))
+
+    # ".epred" is only present for `type = "fitted"` (or "predict" with
+    # `.include_fitted = TRUE`). Predict-only draws (no q_fit requested) have
+    # no fitted values to rename.
+    if (".epred" %in% names(draws))
+      draws = dplyr::rename(draws, "{fit$pars$y}" := ".epred")
+
+    add_plot_groups(draws, curve_by = curve_by, color_by = color_by)
   }
 
   # Fitted lines need only `lines` draws, selected jointly across all curves.
