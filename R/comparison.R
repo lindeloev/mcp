@@ -340,7 +340,6 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
     # the test value by putting everything on the LHS and zero on the RHS.
     if (!stringr::str_detect(expression, "\\||&")) {
       # Determine which comparator is used here
-      #comparators = c("=", "<", ">"," <=", ">=")
       this_comparator = stringr::str_extract(expression, "<=|>=|<|>|=")
 
       # Re-arrange to LHS [comparator] 0.

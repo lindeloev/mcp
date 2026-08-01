@@ -192,7 +192,6 @@ get_term_content = function(term) {
   if (length(term) == 0) {
     return(NA)
   } else if (length(term) > 1) {
-    #dpar = paste0(substr(term, 0, content_start), ")")
     stop("Only one ", term, " allowed in each formula.")
   } else if (is.na(term)) {
     return(NA)
