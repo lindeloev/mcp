@@ -351,9 +351,10 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
       expression = paste0(LHS, " ", this_comparator, " 0")
 
       # Get effect estimate
+      LHS_expr = rlang::parse_expr(LHS)
       samples = posterior_draws(fit, prior = prior) %>%
-        posterior::as_draws_df() %>%
-        dplyr::mutate(effect = eval(str2lang(LHS)))
+        posterior::as_draws_df()
+      samples$effect = rlang::eval_tidy(LHS_expr, data = samples)
 
       tail_prob = (1 - width) / 2
       estimate = list(
@@ -393,24 +394,19 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
         stop("Directional Bayes factors require both prior and posterior samples. Run mcp(..., sample = 'both').")
 
       # Evaluate the same hypothesis on the posterior and prior draws.
-      prob_post = samples %>%
-        dplyr::mutate(result = eval(str2lang(expression))) %>%  # this is where the magic happens
-        dplyr::summarise(
-          prob = sum(.data$result == TRUE) / dplyr::n()
-        )
+      expr_parsed = rlang::parse_expr(expression)
 
-      prob_prior = posterior_draws(fit, prior = TRUE) %>%
-        posterior::as_draws_df() %>%
-        dplyr::mutate(result = eval(str2lang(expression))) %>%
-        dplyr::summarise(
-          prob = sum(.data$result == TRUE) / dplyr::n()
-        )
+      res_post = rlang::eval_tidy(expr_parsed, data = samples)
+      prob_post_val = mean(res_post == TRUE)
 
-      p = prob_post$prob
+      draws_prior = posterior_draws(fit, prior = TRUE) %>%
+        posterior::as_draws_df()
+      res_prior = rlang::eval_tidy(expr_parsed, data = draws_prior)
+      prob_prior_val = mean(res_prior == TRUE)
 
       # A Bayes factor is the update from prior odds to posterior odds.
-      posterior_odds = prob_post$prob / (1 - prob_post$prob)
-      prior_odds = prob_prior$prob / (1 - prob_prior$prob)
+      posterior_odds = prob_post_val / (1 - prob_post_val)
+      prior_odds = prob_prior_val / (1 - prob_prior_val)
       BF = posterior_odds / prior_odds
     }
 
@@ -420,7 +416,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
       mean = estimate$effect,
       lower = estimate$.lower,
       upper = estimate$.upper,
-      p = p,
+      p = prob_post_val,
       BF = BF,
       stringsAsFactors = FALSE
     )
@@ -446,9 +442,9 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_density = function(samples, LHS, value) {
-  samples = posterior::as_draws_df(samples) %>%
-    dplyr::mutate(result = eval(str2lang(LHS)))
-  dens = stats::density(dplyr::pull(samples, "result"), bw = "SJ")
+  draws = posterior::as_draws_df(samples)
+  res = rlang::eval_tidy(rlang::parse_expr(LHS), data = draws)
+  dens = stats::density(res, bw = "SJ")
   dens_point = stats::spline(dens$x, dens$y, xout = value)$y
   dens_point
 }
