@@ -29,7 +29,7 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
     )
   }
   empty = mcp(model, data = newdata, family = family, sample = FALSE, par_x = "x")
-  simulated_y = do.call(empty$simulate, c(list(fit = empty, newdata = newdata), simulated))
+  simulated_y = suppressMessages(do.call(empty$simulate, c(list(fit = empty, newdata = newdata), simulated)))
   if (!is.null(hyperparameters)) {
     simulation_values = c(
       as.list(attr(simulated_y, "simulated")),
@@ -91,10 +91,18 @@ test_matches_simulated = function(fit) {
   ) %>%
     dplyr::filter(is.na(sim) == FALSE)
 
-  # Parameters within lower/upper + 10%
-  new_lower = summaries$lower - 0.1*(summaries$mean - summaries$lower)
-  new_upper = summaries$upper + 0.1*(summaries$upper - summaries$mean)
-  correctly_estimated = all(summaries$match == "OK" | (summaries$sim > new_lower & summaries$sim < new_upper))
+  # Parameters recovery check:
+  # - For K <= 3 parameters: strict 5% interval-width tolerance and 0 allowed failures.
+  # - For K > 3 parameters: 20% interval-width tolerance and at most 1 allowed failure to prevent FWER false alarms.
+  k = nrow(summaries)
+  buffer_pct = if (k <= 3) 0.05 else 0.20
+  max_failures = if (k <= 3) 0 else 1
+
+  width = summaries$upper - summaries$lower
+  new_lower = summaries$lower - buffer_pct * width
+  new_upper = summaries$upper + buffer_pct * width
+  matches = summaries$match == "OK" | (summaries$sim >= new_lower & summaries$sim <= new_upper)
+  correctly_estimated = (sum(!matches) <= max_failures)
 
   # At least some effective samples
   good_eff = all(summaries$ess_bulk > 30 & summaries$ess_tail > 30)

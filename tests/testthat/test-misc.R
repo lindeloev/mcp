@@ -461,7 +461,7 @@ test_that("warn parameter and summary convergence footer work as expected", {
   model = list(y ~ 1, ~ 1)
 
   # 1. warn = FALSE suppresses sampling convergence warning
-  fit_nowarn = suppressWarnings(mcp(model, data, par_x = "x", iter = 50, adapt = 50, warn = FALSE))
+  fit_nowarn = quiet_mcp(model, data, par_x = "x", iter = 50, adapt = 50, warn = FALSE)
   expect_equal(fit_nowarn$.internal$warn, FALSE)
 
   # 2. summary() includes warning footer if convergence is poor
