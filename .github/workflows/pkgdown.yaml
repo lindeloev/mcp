@@ -5,8 +5,24 @@
 on:
   push:
     branches: [dev, main]
+    paths:
+      - 'vignettes/**'
+      - 'pkgdown/**'
+      - 'man/**'
+      - 'DESCRIPTION'
+      - 'README.md'
+      - 'NEWS.md'
+      - '.github/workflows/pkgdown.yaml'
   pull_request:
     branches: [dev, main]
+    paths:
+      - 'vignettes/**'
+      - 'pkgdown/**'
+      - 'man/**'
+      - 'DESCRIPTION'
+      - 'README.md'
+      - 'NEWS.md'
+      - '.github/workflows/pkgdown.yaml'
   workflow_dispatch:
 
 name: pkgdown
