@@ -3,6 +3,7 @@
 #' This ensures R <--> JAGS code compatibility
 #'
 #' @aliases inprod
+#' @keywords internal
 #' @param x A matrix
 #' @param y A matrix
 #' @return A vector

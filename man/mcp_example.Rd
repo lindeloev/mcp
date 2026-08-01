@@ -6,7 +6,7 @@
 \alias{mcp_example_data}
 \title{Get example models and data}
 \usage{
-mcp_example(name, sample = "post", plot = TRUE)
+mcp_example(name, sample = "post", warn = FALSE, plot = TRUE)
 
 mcp_example_data(name)
 }
@@ -37,6 +37,9 @@ object without sample. This is useful if you only want to check
 prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
 }}
 
+\item{warn}{Logical. Warn about non-convergence (\code{Rhat > 1.01} or \code{ESS < 400})
+after sampling? Defaults to \code{TRUE}.}
+
 \item{plot}{Logical. Plot the fitted example? No plot is produced when
 \code{sample = FALSE}.}
 }
@@ -55,15 +58,14 @@ Get example models and data
 \examples{
 \donttest{
 fit = mcp_example("multiple")
-print(fit$call)  # See how the data was simulated
+print(fit$call) # See how the data was simulated
 
 # Without sampling
 empty = mcp_example("binomial", sample = FALSE, plot = FALSE)
 print(empty)
 print(empty$call)
-print(empty$data)
-#'
-#' # Now sample this model
+
+# Now sample this model
 fit2 = mcp(empty$model, empty$data, family = empty$family)
 plot(fit2)
 }

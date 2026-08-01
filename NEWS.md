@@ -26,6 +26,8 @@
 
 ## Major breaking changes
 
+Although a lot has been updated, the parameter estimates in v0.4.0 remain practically identical to the previous public release (v0.3.4). 
+
 -   AR and MA intercepts now have zero-centered, regularizing
     `dnorm(0, 0.5) T(-1, 1)` priors, replacing independent uniform priors.
     Their categorical contrasts and numeric slopes now use modest normal priors

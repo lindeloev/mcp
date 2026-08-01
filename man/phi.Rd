@@ -10,7 +10,7 @@ phi(eta)
 \item{eta}{A vector of probits}
 }
 \value{
-A vector with same length as \code{mu}
+A vector with same length as \code{eta}
 }
 \description{
 Inverse probit function

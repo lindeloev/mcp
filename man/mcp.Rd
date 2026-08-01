@@ -18,7 +18,8 @@ mcp(
   adapt = 1500,
   inits = NULL,
   jags_code = NULL,
-  seed = NULL
+  seed = NULL,
+  warn = TRUE
 )
 }
 \arguments{
@@ -119,6 +120,9 @@ framework.}
 
 \item{seed}{\code{NULL} or a positive integer. Seed for the JAGS random-number
 generators. When supplied, \code{inits} must be a single named list shared by all chains.}
+
+\item{warn}{Logical. Warn about non-convergence (\code{Rhat > 1.01} or \code{ESS < 400})
+after sampling? Defaults to \code{TRUE}.}
 }
 \value{
 An \code{\link{mcpfit}} object.

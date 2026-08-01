@@ -622,7 +622,6 @@ resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
 #'
 #' @aliases mcp_draws
 #' @keywords internal
-#' @noRd
 #' @inheritParams mcmclist_samples
 #' @inheritParams pp_eval
 #' @param population

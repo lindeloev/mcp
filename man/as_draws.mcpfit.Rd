@@ -8,20 +8,21 @@
 \alias{as_draws_matrix.mcpfit}
 \alias{as_draws_rvars.mcpfit}
 \alias{as.mcmc.mcpfit}
+\alias{tidy_draws.mcpfit}
 \title{Extract MCMC Draws from \code{mcpfit} Objects}
 \usage{
-as_draws.mcpfit(x, prior = FALSE, ...)
+\method{as_draws}{mcpfit}(x, prior = FALSE, ...)
 }
 \arguments{
-\item{x}{An \code{\link{mcpfit}} object.}
+\item{x, model}{An \code{\link{mcpfit}} object.}
 
 \item{prior}{Logical. Extract prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE})?}
 
-\item{...}{Passed to \pkg{posterior} format conversion functions.}
+\item{...}{Passed to \pkg{posterior} or \pkg{tidybayes} format conversion functions.}
 }
 \value{
 A \pkg{posterior} \code{draws} object or a \pkg{coda} \code{mcmc.list} object.
 }
 \description{
-Extract posterior or prior draws using \pkg{posterior} or \pkg{coda} S3 generics.
+Extract posterior or prior draws using \pkg{posterior}, \pkg{tidybayes}, or \pkg{coda} S3 generics.
 }

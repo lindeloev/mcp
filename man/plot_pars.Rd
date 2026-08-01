@@ -97,7 +97,7 @@ plot_pars(demo_fit, type = c("trace", "dens_overlay")) * theme_bw(10)
 }
 }
 \seealso{
-plot_pars plot_dpar pp_check
+plot_dpar pp_check
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

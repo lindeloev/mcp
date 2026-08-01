@@ -25,3 +25,4 @@ This ensures R <--> JAGS code compatibility
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
 }
+\keyword{internal}

@@ -385,7 +385,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
       if (dens_post > 0 && dens_prior < 0)
         BF = Inf
 
-      p = BF / (BF + 1)
+      prob_post_val = BF / (BF + 1)
     }
 
     # DIRECTIONAL: compute p and BF

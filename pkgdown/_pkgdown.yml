@@ -1,4 +1,5 @@
 template:
+  bootstrap: 5
   params:
     bootswatch: flatly  # Theme
     ganalytics: UA-1026978-3  # Google Analytics
@@ -39,6 +40,7 @@ reference:
       - waic
       - add_loglik
       - hypothesis
+      - as_draws.mcpfit
       - mcp-package
 
   - title: Axillary functions
