@@ -313,7 +313,7 @@ fit = mcp(model, data, iter = 4000, adapt = 3000, sample = sample, warn = warn, 
 # Illustrative plot
 if (plot) {
   set.seed(40)
-  gg1 = plot(fit, q_predict = TRUE) + ggplot2::labs(title = 'plot(fit, q_predict = TRUE)')
+  gg1 = plot(fit, q_predict = TRUE, ndraws = 9000) + ggplot2::labs(title = 'plot(fit, q_predict = TRUE)')
   set.seed(41)
   gg2 = plot_dpar(fit, 'sigma') + ggplot2::labs(title = 'plot_dpar(fit, \"sigma\")')
   print(gg1 / gg2)
