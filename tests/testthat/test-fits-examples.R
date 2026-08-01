@@ -1,6 +1,6 @@
-# COMMENT THIS LINE TO ENABLE EXTENSIVE TESTS. THEN REVERT. DO NOT COMMIT.
-# It's a slow test so we do it rarely.
-testthat::skip("This time-consuming test is only run locally before release.")
+if (Sys.getenv("MCP_TEST_LEVEL") != "release") {
+  testthat::skip("Time-consuming example fit recovery tests are only run when MCP_TEST_LEVEL='release'.")
+}
 testthat::skip_if_not_installed("vdiffr")
 
 # Runs through all examples in mcp::mcp_example() and verifies the fits and plots.

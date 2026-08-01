@@ -10,12 +10,31 @@ quiet_mcp = function(...) {
 }
 
 
+get_mcp_test_level = function() {
+  if (identical(Sys.getenv("MCP_TEST_LEVEL"), "release")) return("release")
+  "default"
+}
+
+# testthat deletes any vdiffr/snapshot file it didn't see referenced during the
+# current run (testthat:::SnapshotReporter$end_reporter), *unless* it thinks
+# it's running on CI (Sys.getenv("CI") == "true"). Since test-fits-examples.R
+# (which owns tests/testthat/_snaps/fits-examples/) is only actually exercised
+# at MCP_TEST_LEVEL = "release", every default-level run would otherwise wipe
+# those reference snapshots from disk. Spoof CI so cleanup is skipped whenever
+# we're not doing a release-level run; leave it alone at release level so
+# snapshot review/cleanup keeps working normally.
+if (get_mcp_test_level() != "release" && !isTRUE(as.logical(Sys.getenv("CI", "false")))) {
+  Sys.setenv(CI = "true")
+}
+
+
 test_runs = function(model,
                      data = data_gauss,
                      prior = list(),
                      family = gaussian(),
                      par_x = "x",
-                     sample = TRUE) {
+                     sample = TRUE,
+                     test_s3 = FALSE) {
 
   # Without sampling, on a data.frame.
   empty = quiet_mcp(
@@ -27,29 +46,26 @@ test_runs = function(model,
     sample = FALSE
   )
 
-  # With (very brief!) sampling, on a tibble
-  # Just to leverage JAGS code checking and the mcpfit data structure
-  if (sample == TRUE) {
-    # If sample = FALSE, it should pass/fail with the above. If TRUE,
-    # check for correct types in data structure
-    testthat::expect_true(is.list(empty$model), model)
-    testthat::expect_true(is.data.frame(empty$data), model)
-    testthat::expect_true(is.list(empty$prior), model)
-    testthat::expect_true(all(class(empty$family) == c("mcpfamily", "family")), model)
-    testthat::expect_true(is.null(empty$samples), model)
-    testthat::expect_true(is.null(empty$loglik), model)
-    testthat::expect_true(is.null(empty$loo), model)
-    testthat::expect_true(is.null(empty$waic), model)
-    testthat::expect_true(is.list(empty$pars), model)
-    testthat::expect_true(is.character(empty$pars$population), model)
-    testthat::expect_true((is.character(empty$pars$varying) | is.null(empty$pars$varying)), model)
-    testthat::expect_true(is.character(empty$pars$x), model)
-    testthat::expect_true(is.character(empty$pars$y), model)
-    testthat::expect_true(is.character(empty$jags_code), model)
-    testthat::expect_true(is.function(empty$simulate), model)
-    testthat::expect_true(is.list(empty$.internal), model)
+  testthat::expect_true(is.list(empty$model), model)
+  testthat::expect_true(is.data.frame(empty$data), model)
+  testthat::expect_true(is.list(empty$prior), model)
+  testthat::expect_true(all(class(empty$family) == c("mcpfamily", "family")), model)
+  testthat::expect_true(is.null(empty$samples), model)
+  testthat::expect_true(is.null(empty$loglik), model)
+  testthat::expect_true(is.null(empty$loo), model)
+  testthat::expect_true(is.null(empty$waic), model)
+  testthat::expect_true(is.list(empty$pars), model)
+  testthat::expect_true(is.character(empty$pars$population), model)
+  testthat::expect_true((is.character(empty$pars$varying) | is.null(empty$pars$varying)), model)
+  testthat::expect_true(is.character(empty$pars$x), model)
+  testthat::expect_true(is.character(empty$pars$y), model)
+  testthat::expect_true(is.character(empty$jags_code), model)
+  testthat::expect_true(is.function(empty$simulate), model)
+  testthat::expect_true(is.list(empty$.internal), model)
 
-    # Should work for tibbles as well. So do this sometimes
+  level = get_mcp_test_level()
+
+  if (sample) {
     if (rbinom(1, 1, 0.5) == 1)
       data = tibble::as_tibble(data)
 
@@ -94,51 +110,53 @@ test_runs = function(model,
     if (is_arma(fit))
       test_arma_simulation(fit)
 
+    if (test_s3 || level == "release") {
+      test_s3_methods(fit)
+    }
+  }
+}
 
-    # Test criterions. Will warn about very few samples
-    if (!is.null(.subset2(fit, "mcmc_post"))) {
-      fit$loo = suppressMessages(suppressWarnings(loo(fit)))
-      fit$waic = suppressMessages(suppressWarnings(waic(fit)))
-      testthat::expect_true(loo::is.psis_loo(fit$loo))
-      testthat::expect_true(loo::is.waic(fit$waic))
 
-      # Test pointwise
-      fit$loo_pointwise = suppressMessages(suppressWarnings(loo(fit, pointwise = TRUE)))
-      rownames(fit$loo$pointwise) = NULL
-      testthat::expect_equal(fit$loo$pointwise, fit$loo_pointwise$pointwise)
+test_s3_methods = function(fit) {
+  # Test criterions. Will warn about very few samples
+  if (!is.null(.subset2(fit, "mcmc_post"))) {
+    fit$loo = suppressMessages(suppressWarnings(loo(fit)))
+    fit$waic = suppressMessages(suppressWarnings(waic(fit)))
+    testthat::expect_true(loo::is.psis_loo(fit$loo))
+    testthat::expect_true(loo::is.waic(fit$waic))
+
+    # Test pointwise
+    fit$loo_pointwise = suppressMessages(suppressWarnings(loo(fit, pointwise = TRUE)))
+    rownames(fit$loo$pointwise) = NULL
+    testthat::expect_equal(fit$loo$pointwise, fit$loo_pointwise$pointwise)
+  }
+
+  for (col in c("mcmc_post", "mcmc_prior")) {
+    use_prior = col == "mcmc_prior"
+    fit_to_test = fit
+
+    # Test the informative fallback once. All intentional prior tests below
+    # request prior samples explicitly to avoid repeated messages.
+    if (use_prior) {
+      fit_to_test$mcmc_post = NULL
+      testthat::expect_message(
+        mcmclist_samples(fit_to_test),
+        "Posterior was not sampled. Using prior samples"
+      )
     }
 
-    for (col in c("mcmc_post", "mcmc_prior")) {
-      use_prior = col == "mcmc_prior"
-      fit_to_test = fit
+    # Check that samples are the correct format
+    samples_col = .subset2(fit_to_test, col)
+    testthat::expect_true(is.list(samples_col))
+    testthat::expect_true(coda::is.mcmc(samples_col[[1]]))
+    testthat::expect_true(all(fit_to_test$pars$population %in% colnames(samples_col[[1]])))
 
-      # Test the informative fallback once. All intentional prior tests below
-      # request prior samples explicitly to avoid repeated messages.
-      if (use_prior) {
-        fit_to_test$mcmc_post = NULL
-        testthat::expect_message(
-          mcmclist_samples(fit_to_test),
-          "Posterior was not sampled. Using prior samples"
-        )
-      }
-
-      # Check that samples are the correct format
-      samples_col = .subset2(fit_to_test, col)
-      testthat::expect_true(is.list(samples_col), model)
-      testthat::expect_true(coda::is.mcmc(samples_col[[1]]), model)
-      testthat::expect_true(all(fit_to_test$pars$population %in% colnames(samples_col[[1]])))
-
-      # Test mcpfit functions
-      varying_cols = na.omit(get_fit_model_tables(fit_to_test)$group_effects$group_col)
-      test_summary(fit_to_test, varying_cols, prior = use_prior)
-      #test_plot(fit, varying_cols)  # default ggplot plot
-      test_plot_pars(fit_to_test, prior = use_prior)  # bayesplot call
-      test_pp_eval(fit_to_test, prior = use_prior)
-      # hypothesis() always needs both prior and posterior samples to compute
-      # Bayes factors, regardless of `prior` (which only selects the estimate
-      # source), so test against `fit` rather than `fit_to_test`.
-      test_hypothesis(fit, prior = use_prior)
-    }
+    # Test mcpfit functions
+    varying_cols = na.omit(get_fit_model_tables(fit_to_test)$group_effects$group_col)
+    test_summary(fit_to_test, varying_cols, prior = use_prior)
+    test_plot_pars(fit_to_test, prior = use_prior)
+    test_pp_eval(fit_to_test, prior = use_prior)
+    test_hypothesis(fit, prior = use_prior)
   }
 }
 

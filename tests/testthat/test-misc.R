@@ -233,7 +233,8 @@ test_that("parameter-name collisions give a useful error", {
 ########################
 # Test on new fit
 demo_settings = mcp_example("demo", sample = FALSE, plot = FALSE)
-demo_fit2 = quiet_mcp(demo_settings$model, demo_settings$data, adapt = 2500, iter = 4000)
+demo_fit_iter = 50  # only niterations()/nchains() metadata is checked below, not recovery
+demo_fit2 = quiet_mcp(demo_settings$model, demo_settings$data, adapt = 50, iter = demo_fit_iter)
 
 test_that("binomial example can be constructed without sampling", {
   fit = mcp_example("binomial", sample = FALSE, plot = FALSE)
@@ -269,7 +270,7 @@ test_that("cores is deprecated and ignored", {
 })
 
 test_that("Simple mcpfit methods", {
-  expect_equal(niterations(demo_fit2), 12000)
+  expect_equal(niterations(demo_fit2), demo_fit_iter * 3)
   expect_equal(nchains(demo_fit), 3)
 
   expect_true(is.mcpfit(demo_fit))
