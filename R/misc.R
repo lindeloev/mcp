@@ -42,8 +42,8 @@ release_questions = function() {
     #"TEST: Have you run the extensive tests? options(test_mcp_allmodels = TRUE)",
     "TEST: Have you run the test of fits? (uncomment skip() in test-fits-examples.R and helper-fits.R)",
     "TEST: Have you reviewed all example plots? Before running test-fits-examples.R, use `Sys.setenv(MCP_MAKE_PLOT_TEST_FILE = '~/mcp-example-plots.pdf')`.",
+    "TEST: Have you run `dev/ai-check-jagscode.R` to start LLM review?",
     "TEST: Have you run `revdepcheck::revdep_check()`?",
-
 
     "DATA: Have you generated a new `demo_fit` if needed?",
 
