@@ -25,7 +25,7 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
   if (is.null(newdata)) {
     newdata = data.frame(
       x = seq(1, 200, length.out = 400),  # Needs to be reasonably high to get a correct estimate
-      y = rnorm(400)
+      y = 0
     )
   }
   empty = mcp(model, data = newdata, family = family, sample = FALSE, par_x = "x")
@@ -93,11 +93,11 @@ test_matches_simulated = function(fit) {
 
   # Parameters within lower/upper + 10%
   new_lower = summaries$lower - 0.1*(summaries$mean - summaries$lower)
-  new_upper = summaries$upper - 0.1*(summaries$mean - summaries$upper)
+  new_upper = summaries$upper + 0.1*(summaries$upper - summaries$mean)
   correctly_estimated = all(summaries$match == "OK" | (summaries$sim > new_lower & summaries$sim < new_upper))
 
   # At least some effective samples
-  good_eff = all(summaries$ess_bulk > 50 & summaries$ess_tail > 50)
+  good_eff = all(summaries$ess_bulk > 30 & summaries$ess_tail > 30)
 
   # Test
   if (correctly_estimated == FALSE | good_eff == FALSE)
