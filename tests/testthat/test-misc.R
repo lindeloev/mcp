@@ -301,6 +301,16 @@ test_that("posterior draws accessor preserves the stored chains", {
     val = demo_fit$mcmc_post
   })
   expect_s3_class(val, "mcmc.list")
+
+  if (requireNamespace("tidybayes", quietly = TRUE)) {
+    td = tidybayes::tidy_draws(demo_fit)
+    expect_s3_class(td, "tbl_df")
+    expect_true("Intercept_1" %in% names(td))
+
+    sd_df = tidybayes::spread_draws(demo_fit, Intercept_1, cp_1)
+    expect_s3_class(sd_df, "tbl_df")
+    expect_true(all(c("Intercept_1", "cp_1") %in% names(sd_df)))
+  }
 })
 
 test_that("summaries use central intervals and posterior diagnostics", {

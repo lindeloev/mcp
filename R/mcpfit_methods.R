@@ -380,41 +380,63 @@ posterior_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
 
 #' Extract MCMC Draws from `mcpfit` Objects
 #'
-#' Extract posterior or prior draws using \pkg{posterior} or \pkg{coda} S3 generics.
+#' Extract posterior or prior draws using \pkg{posterior}, \pkg{tidybayes}, or \pkg{coda} S3 generics.
 #'
-#' @aliases as_draws as_draws.mcpfit as_draws_df.mcpfit as_draws_array.mcpfit as_draws_matrix.mcpfit as_draws_rvars.mcpfit as.mcmc.mcpfit
-#' @param x An \code{\link{mcpfit}} object.
+#' @aliases as_draws as_draws.mcpfit as_draws_df.mcpfit as_draws_array.mcpfit as_draws_matrix.mcpfit as_draws_rvars.mcpfit as.mcmc.mcpfit tidy_draws.mcpfit
+#' @param x,model An \code{\link{mcpfit}} object.
 #' @param prior Logical. Extract prior draws (`TRUE`) instead of posterior draws (`FALSE`)?
-#' @param ... Passed to \pkg{posterior} format conversion functions.
+#' @param ... Passed to \pkg{posterior} or \pkg{tidybayes} format conversion functions.
 #' @return A \pkg{posterior} `draws` object or a \pkg{coda} `mcmc.list` object.
-#' @export
+#' @exportS3Method posterior::as_draws
 as_draws.mcpfit = function(x, prior = FALSE, ...) {
   posterior_draws(x, prior = prior)
 }
 
-#' @export
+#' @exportS3Method posterior::as_draws_df
 as_draws_df.mcpfit = function(x, prior = FALSE, ...) {
   posterior::as_draws_df(posterior_draws(x, prior = prior), ...)
 }
 
-#' @export
+#' @exportS3Method posterior::as_draws_array
 as_draws_array.mcpfit = function(x, prior = FALSE, ...) {
   posterior::as_draws_array(posterior_draws(x, prior = prior), ...)
 }
 
-#' @export
+#' @exportS3Method posterior::as_draws_matrix
 as_draws_matrix.mcpfit = function(x, prior = FALSE, ...) {
   posterior::as_draws_matrix(posterior_draws(x, prior = prior), ...)
 }
 
-#' @export
+#' @exportS3Method posterior::as_draws_rvars
 as_draws_rvars.mcpfit = function(x, prior = FALSE, ...) {
   posterior::as_draws_rvars(posterior_draws(x, prior = prior), ...)
 }
 
-#' @export
+#' @exportS3Method coda::as.mcmc
 as.mcmc.mcpfit = function(x, prior = FALSE, ...) {
   mcmclist_samples(x, prior = prior)
+}
+
+#' @exportS3Method tidybayes::tidy_draws
+tidy_draws.mcpfit = function(model, ...) {
+  posterior::as_draws_df(model, ...)
+}
+
+
+.onLoad = function(libname, pkgname) {
+  if (requireNamespace("posterior", quietly = TRUE)) {
+    registerS3method("as_draws", "mcpfit", as_draws.mcpfit, envir = asNamespace("posterior"))
+    registerS3method("as_draws_df", "mcpfit", as_draws_df.mcpfit, envir = asNamespace("posterior"))
+    registerS3method("as_draws_array", "mcpfit", as_draws_array.mcpfit, envir = asNamespace("posterior"))
+    registerS3method("as_draws_matrix", "mcpfit", as_draws_matrix.mcpfit, envir = asNamespace("posterior"))
+    registerS3method("as_draws_rvars", "mcpfit", as_draws_rvars.mcpfit, envir = asNamespace("posterior"))
+  }
+  if (requireNamespace("coda", quietly = TRUE)) {
+    registerS3method("as.mcmc", "mcpfit", as.mcmc.mcpfit, envir = asNamespace("coda"))
+  }
+  if (requireNamespace("tidybayes", quietly = TRUE)) {
+    registerS3method("tidy_draws", "mcpfit", tidy_draws.mcpfit, envir = asNamespace("tidybayes"))
+  }
 }
 
 

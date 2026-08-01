@@ -193,8 +193,9 @@ mtext("Data", 1, line = 3, at = -0.2)
 ###############
 # DEFAULT TWO #
 ###############
-y1 = density(fit_two$mcmc_prior[[1]][, "cp_1"], from = MINX, to = MAXX)
-y2 = density(fit_two$mcmc_prior[[1]][, "cp_2"], from = MINX, to = MAXX)
+draws_two = posterior::as_draws_df(fit_two)
+y1 = density(draws_two$cp_1, from = MINX, to = MAXX)
+y2 = density(draws_two$cp_2, from = MINX, to = MAXX)
 plot(y1$x, y1$y + y2$y, 
      type = "l", lty = 2, 
      xlab = NA, ylab = "Density", main = "t-tail two",
@@ -212,11 +213,12 @@ text(130, 0.011, labels = "cp_2")
 ################
 # DEFAULT FIVE #
 ################
-z1 = density(fit_five$mcmc_prior[[1]][, "cp_1"], from = MINX, to = MAXX)
-z2 = density(fit_five$mcmc_prior[[1]][, "cp_2"], from = MINX, to = MAXX)
-z3 = density(fit_five$mcmc_prior[[1]][, "cp_3"], from = MINX, to = MAXX)
-z4 = density(fit_five$mcmc_prior[[1]][, "cp_4"], from = MINX, to = MAXX)
-z5 = density(fit_five$mcmc_prior[[1]][, "cp_5"], from = MINX, to = MAXX)
+draws_five = posterior::as_draws_df(fit_five)
+z1 = density(draws_five$cp_1, from = MINX, to = MAXX)
+z2 = density(draws_five$cp_2, from = MINX, to = MAXX)
+z3 = density(draws_five$cp_3, from = MINX, to = MAXX)
+z4 = density(draws_five$cp_4, from = MINX, to = MAXX)
+z5 = density(draws_five$cp_5, from = MINX, to = MAXX)
 
 plot(z1$x, (z1$y + z2$y + z3$y + z4$y + z5$y), 
      type = "l", lty = 2, 
