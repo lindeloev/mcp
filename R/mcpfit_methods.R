@@ -391,7 +391,7 @@ posterior_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
 #' Extract posterior or prior draws using \pkg{posterior}, \pkg{tidybayes}, or \pkg{coda} S3 generics.
 #'
 #' @aliases as_draws as_draws.mcpfit as_draws_df.mcpfit as_draws_array.mcpfit as_draws_matrix.mcpfit as_draws_rvars.mcpfit as.mcmc.mcpfit tidy_draws.mcpfit
-#' @param x,model An \code{\link{mcpfit}} object.
+#' @param x An \code{\link{mcpfit}} object.
 #' @param prior Logical. Extract prior draws (`TRUE`) instead of posterior draws (`FALSE`)?
 #' @param ... Passed to \pkg{posterior} or \pkg{tidybayes} format conversion functions.
 #' @return A \pkg{posterior} `draws` object or a \pkg{coda} `mcmc.list` object.
@@ -426,8 +426,8 @@ as.mcmc.mcpfit = function(x, prior = FALSE, ...) {
 }
 
 #' @exportS3Method tidybayes::tidy_draws
-tidy_draws.mcpfit = function(model, ...) {
-  posterior::as_draws_df(model, ...)
+tidy_draws.mcpfit = function(x, ...) {
+  posterior::as_draws_df(x, ...)
 }
 
 

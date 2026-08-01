@@ -2,12 +2,16 @@
 
 on:
   push:
-    branches: [main, master]
+    branches: [dev, main]
   pull_request:
-    branches: [main, master]
+    branches: [dev, main]
   workflow_dispatch:
 
 name: R-CMD-check
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   R-CMD-check:
@@ -30,35 +34,33 @@ jobs:
       R_KEEP_PKG_SOURCE: yes
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
       - uses: r-lib/actions/setup-pandoc@v2
 
-      # JAGS install. Inspired by https://github.com/boydorr/SpARKjags/blob/master/.github/workflows/test-build.yaml
-      # but updated with ignoring certificates and redirects.
-      # JAGS is automatically installed on linux via the rjags package.
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          http-user-agent: ${{ matrix.config.http-user-agent }}
+          use-public-rspm: true
+
+      # JAGS install before installing R dependencies
       - name: Install JAGS (if Windows)
         if: runner.os == 'Windows'
         run: |
-          curl.exe -o wjags.exe -L0 -k --url https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Windows/JAGS-4.3.1.exe
+          curl.exe -o wjags.exe -L0 -k --url https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Windows/JAGS-4.3.2.exe
           wjags.exe /S
           del wjags.exe
         shell: cmd
 
       - name: Install JAGS (if macOS)
         if: runner.os == 'macOS'
-        # This worked before R 4.3: brew install jags
         run: |
-          curl -o wjags.pkg -L0 -k --url https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Mac%20OS%20X/JAGS-4.3.2.pkg
-          sudo installer -pkg wjags.pkg -target /
-          rm wjags.pkg
-
-      # R
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: ${{ matrix.config.r }}
-          http-user-agent: ${{ matrix.config.http-user-agent }}
-          use-public-rspm: true
+          export HOMEBREW_NO_REQUIRE_TAP_TRUST=1
+          brew untap aws/tap 2>/dev/null || true
+          brew install jags || (curl -o wjags.pkg -L0 -k --url https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Mac%20OS%20X/JAGS-4.3.2.pkg && sudo installer -pkg wjags.pkg -target / && rm wjags.pkg)
+          sudo mkdir -p /usr/local/lib
+          if [ -d /opt/homebrew/lib ]; then sudo ln -sf /opt/homebrew/lib/libjags* /usr/local/lib/ && sudo ln -sf /opt/homebrew/lib/JAGS /usr/local/lib/; fi
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:

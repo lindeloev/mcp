@@ -17,6 +17,7 @@
 
 # Files
 AGENTS.md
+^CONTRIBUTING\.md$
 cran-comments.md
 ^CRAN-RELEASE$
 ^CRAN-SUBMISSION$
