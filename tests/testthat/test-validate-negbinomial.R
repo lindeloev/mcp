@@ -89,6 +89,9 @@ test_that("negative-binomial support does not alter Poisson metadata or priors",
 
 
 test_that("negative-binomial coefficients agree with MASS glm.nb", {
+  if (Sys.getenv("MCP_TEST_LEVEL") != "release") {
+    testthat::skip("Time-consuming validation tests against reference implementations are only run when MCP_TEST_LEVEL='release'.")
+  }
   testthat::skip_if_not_installed("MASS")
   set.seed(42)
   data = data.frame(x = seq(-1, 1, length.out = 300))

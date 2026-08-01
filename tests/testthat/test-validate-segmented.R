@@ -1,3 +1,7 @@
+if (Sys.getenv("MCP_TEST_LEVEL") != "release") {
+  testthat::skip("Time-consuming validation tests against reference implementations are only run when MCP_TEST_LEVEL='release'.")
+}
+
 # Compare mcp estimated change points and segment parameters against segmented::segmented()
 
 test_that("Gaussian 2-changepoint model agrees with segmented()", {

@@ -1,3 +1,7 @@
+if (Sys.getenv("MCP_TEST_LEVEL") != "release") {
+  testthat::skip("Time-consuming validation tests against reference implementations are only run when MCP_TEST_LEVEL='release'.")
+}
+
 # Fit a simple Gaussian model on simulated data
 set.seed(42)
 model = list(

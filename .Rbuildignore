@@ -3,6 +3,7 @@
 # Hidden stuff
 ^mcp\.Rproj$
 ^\.Rproj\.user$
+^\.Rprofile$
 .covrignore
 
 # Folders
