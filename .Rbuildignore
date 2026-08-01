@@ -23,4 +23,7 @@ fix_twittercard.R
 LEARNINGS.md
 logo.png
 TODO.md
+^\.lintr$
+^\.vscode$
+
 

@@ -17,3 +17,6 @@ vignettes/tips_cache
 vignettes/variance_cache
 vignettes/varying_cache
 TODO.md
+.lintr
+.vscode
+
