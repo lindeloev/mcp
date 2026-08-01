@@ -1,0 +1,43 @@
+# mcp: Regression with Multiple Change Points
+
+Flexible and informed regression with Multiple Change Points. 'mcp' can
+infer change points in means, variances, autocorrelation structure, and
+any combination of these, as well as the parameters of the segments in
+between. All parameters are estimated with uncertainty and prediction
+intervals are supported - also near the change points. 'mcp' supports
+hypothesis testing via Savage-Dickey density ratio, posterior contrasts,
+and cross-validation. 'mcp' is described in Lindeløv (submitted)
+[doi:10.31219/osf.io/fzqxv](https://doi.org/10.31219/osf.io/fzqxv) and
+generalizes the approach described in Carlin, Gelfand, & Smith (1992)
+[doi:10.2307/2347570](https://doi.org/10.2307/2347570) and Stephens
+(1994) [doi:10.2307/2986119](https://doi.org/10.2307/2986119) .
+
+Flexible and informed regression with Multiple Change Points. 'mcp' can
+infer change points in means, variances, autocorrelation structure, and
+any combination of these, as well as the parameters of the segments in
+between. All parameters are estimated with uncertainty and prediction
+intervals are supported - also near the change points. 'mcp' supports
+hypothesis testing via Savage-Dickey density ratio, posterior contrasts,
+and cross-validation. 'mcp' is described in Lindeløv (submitted)
+[doi:10.31219/osf.io/fzqxv](https://doi.org/10.31219/osf.io/fzqxv) and
+generalizes the approach described in Carlin, Gelfand, & Smith (1992)
+[doi:10.2307/2347570](https://doi.org/10.2307/2347570) and Stephens
+(1994) [doi:10.2307/2986119](https://doi.org/10.2307/2986119) .
+
+## See also
+
+Useful links:
+
+- <https://lindeloev.github.io/mcp/>
+
+- Report bugs at <https://github.com/lindeloev/mcp/issues>
+
+## Author
+
+**Maintainer**: Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
+([ORCID](https://orcid.org/0000-0003-4565-0595))
+
+Authors:
+
+- Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
+  ([ORCID](https://orcid.org/0000-0003-4565-0595))
