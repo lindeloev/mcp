@@ -112,7 +112,9 @@ navbar:
       href: reference/index.html
     - text: News
       href: news/index.html
-    - icon: fa-twitter
-      href: https://twitter.com/jonaslindeloev
+    - icon: fa-bluesky
+      href: https://bsky.app/profile/jonaslindeloev.bsky.social
+      aria-label: Bluesky
     - icon: fa-github
       href: https://github.com/lindeloev/mcp
+      aria-label: GitHub

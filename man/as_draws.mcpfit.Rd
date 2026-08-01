@@ -14,7 +14,7 @@
 \method{as_draws}{mcpfit}(x, prior = FALSE, ...)
 }
 \arguments{
-\item{x, model}{An \code{\link{mcpfit}} object.}
+\item{x}{An \code{\link{mcpfit}} object.}
 
 \item{prior}{Logical. Extract prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE})?}
 

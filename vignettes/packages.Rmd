@@ -143,7 +143,7 @@ The primary modeling assumption of standard `segmented` is continuous (joined) s
 
 Enough talk:
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, eval = requireNamespace("segmented", quietly = TRUE)}
 library(segmented)
 fit_lm = lm(y ~ 1 + x, data = df) # intercept-only model
 fit_segmented = segmented(fit_lm, seg.Z = ~x, npsi = 2) # Two change points along x
@@ -154,7 +154,7 @@ summary(fit_segmented)
 As expected, the change points are off (`psi1.x` and `psi2.x`). The default plot is sparse, but you can quickly add more info:
 
 
-```{r}
+```{r, eval = requireNamespace("segmented", quietly = TRUE)}
 plot(fit_segmented)
 points(df)
 lines.segmented(fit_segmented)
@@ -163,7 +163,7 @@ points.segmented(fit_segmented)
 
 Because the fitted objects returned by `segmented` contains `aic`, `deviance`, etc. it is in principle possible to do model comparison. Here is a BIC-based Bayes Factor testing whether there is one or two change points in the data:
 
-```{r}
+```{r, eval = requireNamespace("segmented", quietly = TRUE)}
 fit_segmented_1 = segmented(fit_lm, seg.Z = ~x, npsi = 1)
 BF = exp((BIC(fit_segmented) - BIC(fit_segmented_1)) / 2) # From Wagenmakers (2007)
 BF
