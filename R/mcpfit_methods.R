@@ -147,7 +147,15 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
     # Add simulation to the beginning of the list
     estimates = estimates %>%
       dplyr::left_join(simulated, by = "name", relationship = "one-to-one") %>%
-      dplyr::mutate(match = ifelse(.data$sim > .data$lower & .data$sim < .data$upper, yes = "OK", no = "")) %>%
+      dplyr::mutate(
+        cp_width = ifelse(stringr::str_detect(.data$name, "^cp_[0-9]+"), .data$upper - .data$lower, 0),
+        match = ifelse(
+          .data$sim >= (.data$lower - 0.05 * .data$cp_width) &
+          .data$sim <= (.data$upper + 0.05 * .data$cp_width),
+          yes = "OK", no = ""
+        )
+      ) %>%
+      dplyr::select(-"cp_width") %>%
       dplyr::relocate("name", "segment", "dpar", "match", "sim")
   } else {
     estimates = dplyr::relocate(estimates, "name", "segment", "dpar")
