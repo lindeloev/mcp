@@ -39,8 +39,10 @@ run_jags = function(data,
   # Can be used sequentially or in parallel.
   do_sampling = function(inits, n.chains, quiet) {
     # Compile model
+    jags_connection = textConnection(jags_code)
+    on.exit(close(jags_connection), add = TRUE)
     jm = rjags::jags.model(
-      file = textConnection(jags_code),
+      file = jags_connection,
       data = jags_data,
       inits = inits,
       n.chains = n.chains,
