@@ -2,128 +2,92 @@
 
 ## Major new features
 
+-   **Multiple regression:** `mcp` now supports several continuous predictors, categorical predictors, interactions, etc. for all terms on RHS. E.g., `~ 1 + x + x:group + sigma(1 + group) + ar(2, 0 + z)`. Basically, it now aims to "feels" like `lm()` or `glm()` for each distributional parameter in each segment. Explore `ex = mcp_example("multiple")` to see it in action. Default priors generally align with brms, with some adjustments to accommodate the change-point model.
+
+-   **Random effects on RHS:** Predictor formulas now support group-level effects (sometimes called random or varying effects) using familiar `lme4` and `brms` syntax. `(1 | group)` specifies a group-level intercept, while `(1 + x || group)` and `(factor || group)` support independent coefficients, including slopes and factors. This also works inside distributional formulas such as `sigma(1 + (factor || id))`. As with `ar()`, an effect carries into later segments until it is redefined or disabled with `(0 | group)`. See `mcp_example("group")` for a worked example. Correlated multi-coefficient terms are not yet supported.
+
 -   mcpfits now work natively with `{posterior}` and `{tidybayes}` posterior draw and prediction API. Changes include:
     - `summary(fit)` now reports rank-normalized `split-Rhat`, `ess_bulk`, and `ess_tail` from `{posterior}` and central quantile intervals instead of HDIs.
-    - adding `as_draws(fit)`, `as_draws_df(fit)`, `tidy_draws(fit)`, etc. with full S3 generic registration for `{posterior}` and `{tidybayes}` (`spread_draws()`, `gather_draws()`), which also soft-deprecates directly accessing `fit$mcmc_post`. 
+    - adding `as_draws(fit)`, `as_draws_df(fit)`, `tidy_draws(fit)`, etc. with full S3 generic registration for `{posterior}` and `{tidybayes}` (`spread_draws()`, `gather_draws()`). 
     - Per-draw methods (`summary = FALSE` in `fitted()`, `predict()`, `residuals()`, `log_lik()`) now return dot-prefixed columns (`.epred`, `.prediction`, `.residual`, `.loglik`) for `{tidybayes}` / `{ggdist}` compatibility.
     - `nsamples` soft-deprecated in favor of `ndraws`; `which_y` deprecated in favor of `dpar`.
 
--   Supports several continuous predictors, categorical predictors, interactions, etc. for all terms on RHS. E.g., `~ 1 + x + x:group + sigma(1 + group) + ar(2, 0 + z)`. Basically, it now "feels" like `lm()` for each distributional parameter in each segment. All mcp functions support this now, including `plot()`, `fit$simulate()`, `predict(fit, newdata = ...)`, `hypothesis()`, `pp_check()`, etc. Explore `ex = mcp_example("multiple")` to see it in action. Default priors generally align with brms, with some adjustments to the change-point model.
+-   **Negative binomial and GARMA:** You can now do `mcp(..., family = negbinomial())`. Autoregression (`ar()`) has been generalized to GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment.
 
--   Predictor formulas now support group-level effects (sometimes called random or varying effects) using familiar `lme4` and `brms` syntax. `(1 | group)` specifies a group-level intercept, while `(1 + x || group)` and `(factor || group)` support independent coefficients, including slopes and factors. This also works inside distributional formulas such as `sigma(1 + (factor || id))`. As with `ar()`, an effect carries into later segments until it is redefined or disabled with `(0 | group)`. See `mcp_example("group")` for a worked example. Correlated multi-coefficient `|` terms are not yet supported.
-
--   Use `mcp(..., seed = 42)` for reproducible JAGS sampling. See `mcp_example("demo")$call` how to ensure reproducibility across simulation, fit, and plotting.
-
--   `mcp_example(...)` now shows an illustrative plot of the fitted example by default. Disable using `plot = FALSE`.
-
--   Prediction methods now accept `varying = "cp"` and
-    `varying = "predictor"` as fast selectors for group-level effects in the
-    corresponding formula part. Exact varying-parameter names remain
-    supported too, `varying = TRUE` selects all, and `ranef()` continues to return
-    all group-level effects.
-
--   Added deprecation detections, in various ways helping users of older mcp-versions who encounter deprecations. Over time these will be removed.
 
 ## Major breaking changes
 
-Although a lot has been updated, the parameter estimates in v0.4.0 remain practically identical to the previous public release (v0.3.4). 
+mcp v0.4 is a major breaking change with the aim of remaining relatively stable going forward towards version 1.0. Although a lot has been updated, the parameter estimates in v0.4.0 remain practically identical to the previous public release (v0.3.4). Deprecation detections were added until we reach 1.0.
 
--   AR and MA intercepts now have zero-centered, regularizing
-    `dnorm(0, 0.5) T(-1, 1)` priors, replacing independent uniform priors.
-    Their categorical contrasts and numeric slopes now use modest normal priors
-    instead of heavy-tailed Student-t priors. Coefficients remain direct and
-    are not jointly constrained to stationary or invertible regions.
+-   Renamed parameters to be more consistent with brms: `int_i` --> `Intercept_i`; `x_1_E2` --> `xE2_1`; `x_1_sin` --> `sinx_1`, etc.
 
--   Gaussian models with an explicit `sigma()` formula now model the residual
-    standard deviation with a log link, as in `brms`. Models without an explicit
-    `sigma()` are unchanged: `sigma_1` remains the residual SD itself with the
-    response-scale half-Student-t prior.
+-   `summary()`, `fixef()`, `ranef()`, `prior_summary()`, and everything else now return rows in a canonical order instead of the previous incidental (near-alphabetical) order. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to include `segment` and `dpar` columns.
 
--   Formula transformations now use the original predictor values, as in
-    `lm()`, `glm()`, and `brms`. Previously, transformations of the change-point
-    predictor such as `sin(x)` and `exp(x)` restarted at each segment onset.
-    Bare `par_x` and polynomial bases such as `I(par_x^2)` remain segment-local
-    to support joined segment shapes.
+-   `plot()` is not split into `plot()` for plotting full fits while `plot_dpar()` plots one distributional parameter (`mu`, `sigma`, `shape`, `ar1`, etc.). The argument order was changed too. The new coloring function (`plot(fit, color_by = "column")`) is particularly useful when models include categorical predictors or rhs group-level effects. See `mcp_example("group")` for a worked example.
+
+-   AR and MA intercepts now have zero-centered, regularizing `dnorm(0, 0.5) T(-1, 1)` priors, replacing independent uniform priors. Their categorical contrasts and numeric slopes now use modest normal priors instead of heavy-tailed Student-t priors. Coefficients remain direct and are not jointly constrained to stationary or invertible regions.
+
+-   Gaussian models with an explicit `sigma()` formula now model the residual standard deviation with a log link, as in `brms`. Models without an explicit `sigma()` are unchanged: `sigma_1` remains the residual SD itself with the response-scale half-Student-t prior.
+
+-   Formula transformations now use the original predictor values, as in `lm()`, `glm()`, and `brms`. Previously, transformations of the change-point predictor such as `sin(x)` and `exp(x)` restarted at each segment onset. Bare `par_x` and polynomial bases such as `I(par_x^2)` remain segment-local to support joined segment shapes.
 
 -   Parallel sampling is now controlled exclusively through the active `{future}` plan. The `cores` argument to `mcp()` is deprecated and ignored, but remains available for backwards compatibility. Use `future::plan(future::multisession, workers = 3)` before calling `mcp()` to sample chains in parallel, and `future::plan(future::sequential)` to shut down those workers. Without a parallel future plan, chains are sampled sequentially.
 
 -   Dropped support for `rel()` in formulas. This was ambiguous for interaction terms and made the code hard to maintain. Another way of achieving the same functionality via the priors may be added in future versions.
 
--   Renamed parameters to be more consistent with brms: `int_i` --> `Intercept_i`; `x_1_E2` --> `xE2_1`; `x_1_sin` --> `sinx_1`, etc.
-
 -   The arguments for `fit$simulate()` have all changed to accommodate multiple (categorical) predictors. `fit$simulate(fit, data, ..., .type = "predict")` is the new argument structure. Note that (1) it now requires `fit` as the first argument, (2) it requires `data.frame` or `tibble` as the second argument instead of just a vector of `par_x`, (3) further arguments are prefixed with a "." to avoid name conflicts internally in mcp. `...` are the model parameters as usual.
 
 -   Dropped support for `mcp(..., data = NULL)`. You now must provide some mock-up data to inform `mcp` about the types and levels of the predictor columns. See, e.g., `mcp_example("intercepts")$call` for a simple example or `mcp_example("multiple")$call` for a more involved example. All docs have been updated appropriately.
 
--   Changed arguments and their order in `plot()`.
-
-    -   The most used arguments are first and the new `color_by` has a nice place in the sequence of arguments. From `plot(fit, lines, geom_data, cp_dens, q_fit, q_predict, ...)` to `plot(fit, q_fit, q_predict, facet_by, color_by, lines, geom_data, ...)`
-
-    -   Dropped arguments `which_y`, `scale` which only made sense for distributional parameters (dpars) and where several of the other arguments (e.g., `q_predict`) were insensible. Use the new `plot_dpar()` for this.
-
 -   `fit = mcp_example("name")` now returns the fit directly instead of a list with a `$fit` entry. It now defaults to sampling the model (`sample = "post"`) and the `sample` argument is now directly passed to `mcp(..., sample = sample)` so `sample = TRUE` is deprecated.
+
 
 ## Other new features
 
+-   Added `prior_summary(fit)`. Its compact output shows each parameter's resolved prior and bounds; `prior_summary(fit, verbose = TRUE)` also shows the data-dependent rule, a plain-language description, source, and kind (`distribution`, `alias`, `expression`, or `constant`). Default priors are now resolved before JAGS code is generated, so `fit$prior` and generated code no longer depend on opaque data constants.
+
+-   With the introduction of multiple regression including categorical predictors (including for distributional parameters) come default priors. For non-`par_x` terms, numeric coefficients are now auto-scaled to data and model. Briefly, based on its observed range when it has two values, and two standard deviations otherwise, aligning with [Gelman (2008)](https://doi.org/10.1002/sim.3107) and the prior autoscaling in [`rstanarm`](https://mc-stan.org/rstanarm/reference/priors.html). See `prior_summary(fit, verbose = TRUE)` for details.
+
 -   Default `plot(fit)` style has been updated in many ways to accommodate multiple regression and group-effects.
 
--   Extended autoregression (`ar()`) to GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment. Bernoulli models and non-default links remain unsupported.
+-   Added option to test hypotheses on the prior using `hypothesis(fit, prior = TRUE)`.
 
--   Added AR/MA warnings: (1) for AR/MA models to `loo()`, `predict()`, etc. where the serial dependence is currently ignored. Proper handling requires leave-future-out or blocked cross-validation, which are not currently implemented in `mcp`. (2) when posterior probability is >10% of violation of AR-stationarity or MA-invertibility.
+-   `mcp_example(...)` now shows an illustrative plot of the fitted example by default. Disable using `plot = FALSE`.
 
--   In addition to (segment-wide) intercepts and slopes, there are now default priors for categorical predictors.
+-   Methods like `fitted()` and `predict()` now accept `fitted(fit, varying = "cp")` and `fitted(fit, varying = "predictor")` as fast selectors for group-level effects in the corresponding formula part. Exact varying-parameter names remain supported too, `varying = TRUE` selects all, and `ranef()` continues to return all group-level effects.
+
+-   Use `mcp(..., seed = 42)` for reproducible JAGS sampling. See `mcp_example("demo")$call` how to ensure reproducibility across simulation, fit, and plotting.
 
 -   Memory improvement: The `mcpfit` is now \< 10% of the size as before because the log-likelihood is not computed by default anymore (no `fit$mcmc_loglik` anymore). You can add it using `fit = add_loglik(fit)` (adds `fit$loglik`) but if absent, it is automatically computed when calling relevant functions, e.g., `loo(fit)`.
 
--   Several new arguments to `loo`. `loo(fit, pointwise = TRUE)` uses `loo::loo.function()` for more memory-efficient (but slower) computation of LOO. Other new arguments include the usual from `fitted()` etc.: `loo(fit, ndraws = 1000, arma = FALSE, varying = FALSE)`.
-
 -   Sampling is now 1-10% faster due to a new formalization of the underlying JAGS code.
 
--   `plot()` now uses a filled area for the change-point densities to visually distinguish it from color-coded fitted lines.
+-   Added AR/MA warnings: (1) for AR/MA models to `loo()`, `predict()`, etc. where the serial dependence is currently ignored. Proper handling requires leave-future-out or blocked cross-validation, which are not currently implemented in `mcp`. (2) when posterior probability is >10% of violation of AR-stationarity or MA-invertibility.
+
+-   Several new arguments to `loo`. `loo(fit, pointwise = TRUE)` uses `loo::loo.function()` for more memory-efficient (but slower) computation of LOO. Other new arguments include the usual from `fitted()` etc.: `loo(fit, ndraws = 1000, arma = FALSE, varying = FALSE)`.
 
 -   Added `interpolate_newdata(fit, by = NULL)` which generates a data.frame with all combinations of categorical predictors along with interpolated continuous predictors. Use `by` to include varying-effect groups. The documentation shows how this can be useful for generating custom plots when simple tweaking `plot()` is not enough.
 
 -   Added `niterations(fit)` and `nchains(fit)` for convenience.
 
--   Added `log_lik(fit)` which is analogous to e.g., `fitted(fit)`.
-
--   Added `prior_summary(fit)`. Its compact output shows each parameter's resolved prior and bounds; `prior_summary(fit, verbose = TRUE)` also shows the data-dependent rule, a plain-language description, source, and kind (`distribution`, `alias`, `expression`, or `constant`). Default priors are now resolved before JAGS code is generated, so `fit$prior` and generated code no longer depend on opaque data constants.
-
--   Added option to test hypotheses on the prior using `hypothesis(fit, prior = TRUE)`.
+-   Added `log_lik(fit)` which has same behavior and output format as `fitted(fit)` and `predict(fit)`.
 
 -   `mcp(..., warn = TRUE)` now controls runtime convergence warnings (`Rhat > 1.01` or `ESS < 400`). Warning also appear in `summary(fit)` footer.
-
--   With the introduction of multiple regression including categorical predictors (including for distributional parameters) come default priors. For term involving local `par_x`, this scale is multiplied by the expected segment width "as usual". For non-`par_x` terms, numeric coefficients are scaled to data and model. Briefly, based on its observed range when it has two values, and two standard deviations otherwise, aligning with [Gelman (2008)](https://doi.org/10.1002/sim.3107) and the prior autoscaling in [`rstanarm`](https://mc-stan.org/rstanarm/reference/priors.html).
 
 
 ## Minor breaking changes
 
--   `residuals()` now uses the conventional `observed - fitted` sign. Previously, `mcp` residuals used `fitted - observed`.
-
 -   Removed the non-functional `exponential()` family. It had no default priors and could not be fitted. Exponential survival models would require dedicated support for censoring and survival likelihoods rather than the previous ordinary-response placeholder.
 
--   Default coefficient priors are now more consistent with `brms` defaults while retaining proper priors and change-point-aware scaling for the `mcp` parameterization. For non-small datasets, this should have minimal influence since priors remain minimally informative. See priors using `prior_summary(fit, verbose = TRUE)`.
-
--   Binomial and Bernoulli models with logit or probit links now use a narrower (but still very uninformative)
-    `dt(0, 1.5, 3)` rather than `dt(0, 2.5, 3)` for intercepts and categorical
-    contrasts.
-
--   Gaussian models with a log link is now more aligned with `brms`: calibrate priors using data, replacing zeros with 0.1 and using finite location and scale fallbacks.
-
--   The implicit Gaussian `sigma_1` prior is now the same response-calibrated half-Student-t used by `brms`, `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`. Version 0.3.4 instead used a response-SD-calibrated half-normal prior. Both are weakly informative so will have negligible impact on fits.
+-   Default coefficient priors are now more consistent with `brms` defaults while retaining proper priors and change-point-aware scaling for the `mcp` parameterization. For non-small datasets, this should have minimal influence since priors remain minimally informative. See priors using `prior_summary(fit, verbose = TRUE)`. The implicit Gaussian `sigma_1` prior is now the same response-calibrated half-Student-t used by `brms`, `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`. Version 0.3.4 instead used a response-SD-calibrated half-normal prior. Both are weakly informative so will have negligible impact on fits.
 
 -   Uppercase data-dependent constants for priors (`MINX`, `MAXX`, etc.) remain temporarily supported with a deprecation warning. They are now replaced with readable expressions such as `min(time)`, `max(time) - min(time)`, `mad(response)`, `segment_width(time)`, `n_segments()`, and `n_cp()`.
 
--   Default priors for coefficients involving local `par_x` (except AR/MA) now broaden with
-    more change points because narrower intervals allow steeper slopes within
-    the same overall spread.
+-   Binomial and Bernoulli models with logit or probit links now use a narrower (but still very uninformative) `dt(0, 1.5, 3)` rather than `dt(0, 2.5, 3)` for intercepts and categorical contrasts.
 
--   `summary()`, `fixef()`, `ranef()`, `prior_summary()`, and everything else now return rows in
-    a canonical order instead of the previous incidental (near-alphabetical)
-    order. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to
-    include `segment` and `dpar` columns.
+-   Gaussian models with a log link is now more aligned with `brms`: calibrate priors using data, replacing zeros with 0.1 and using finite location and scale fallbacks.
 
--   The term "ct" (for "central tendency") has been replaced with "mu", e.g., in `plot(fit, which_y = "mu")`. These were defaults, so I hope no one will notice the renaming.
+-   The term "ct" (for "central tendency") has been replaced with "mu", e.g., in `plot(fit, which_y = "mu")`. These were defaults, so hopefully no-one will notice the renaming.
 
 -   `fit$data` now only contains the data columns that are used in the model.
 
@@ -131,9 +95,9 @@ Although a lot has been updated, the parameter estimates in v0.4.0 remain practi
 
 ## Bug fixes
 
--   Directional Bayes factors now divide posterior odds by prior odds. Previously,
-    they reported posterior odds alone, which is only a Bayes factor when the
-    prior probability of the hypothesis is 0.5.
+-   Directional Bayes factors now divide posterior odds by prior odds. Previously, they reported posterior odds alone, which is only a Bayes factor when the prior probability of the hypothesis is 0.5.
+
+-   `residuals()` now uses the conventional `observed - fitted` sign. Previously, `mcp` residuals used `fitted - observed`.
 
 -   Fixed several posterior predictive check and information-criterion bugs present in v0.3.4. From most to least serious:
     - For missing data: Missing responses were scored in WAIC/LOO as if their JAGS-imputed values had been observed. Fix: missing responses remain latent in JAGS but are excluded from observed-data PPC, log-likelihood, WAIC, and LOO calculations.
@@ -149,23 +113,24 @@ Although a lot has been updated, the parameter estimates in v0.4.0 remain practi
 
 -   Now works for 200+ characters formulas too.
 
--   Fixed #131 (`cores = "all"` failed). Thanks for reporting, @m-r-munroe!
+-   Fixed `cores = "all"` failed. Thanks for reporting, @m-r-munroe!
 
 ## Behind the scenes
 
--   Built-in response families now carry their distributional parameters, default priors, response validation, R-side expected-value/log-likelihood/random-generation functions, JAGS likelihood, and optional GARMA behavior in one internal `mcpfamily` specification. The model machinery delegates to that contract instead of branching on family names.
+In general, every effort has been made to anticipate future developments and build the structure needed for that.
+
+-  The mcpfamily contains everything which was previously scattered across multiple functions. This means it is easy to add families and link functions - also enabling custom families. 
 
 -   Major changes in how the model is translated into JAGS code. The JAGS code is quite different but functionally equivalent.
 
 -   More thorough defensive coding.
 
--   Much expanded test suite (now 4.000+ tests when run in full).
-
--   The test suite now includes external validation of inference and simulation: AR against `arima()`/`arima.sim()`, binomial against `glm()` / `rbinom()`.
+-   Much expanded test suite (now 7.000+ tests when run in full). The test suite now includes external validation of inference and simulation: AR against `arima()`/`arima.sim()`, binomial against `glm()` / `rbinom()`, and against `{segmented}`.
 
 -   Fewer imports to userspace. This minimizes the risk of name conflicts.
 
 -   Many small improvements in efficiency and code simplicity.
+
 
 # mcp 0.3.4
 
