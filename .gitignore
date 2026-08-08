@@ -1,5 +1,7 @@
 # Folders
 docs/
+pkgdown/assets/mcp_showcase.png
+pkgdown/assets/mcp_showcase_small.png
 
 # Hidden
 .lintr

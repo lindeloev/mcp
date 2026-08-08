@@ -1,41 +1,47 @@
-# mcp: Regression with Multiple Change Points<img src="https://github.com/lindeloev/mcp/raw/docs/man/figures/logo_200px.png" align="right" style="padding: 20px; padding-right: 0px;" />
+# mcp: Regression with Multiple Change Points<img src="https://github.com/lindeloev/mcp/raw/docs/man/figures/logo_200px.png" align="right" style="padding: 20px; padding-right: 0px;"/>
 
+[![mcp Github Actions status](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml) [![mcp Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/main/graph/badge.svg)](https://coveralls.io/github/lindeloev/mcp/) [![mcp CRAN status](https://www.r-pkg.org/badges/version/mcp)](https://CRAN.R-project.org/package=mcp) [![mcp CRAN downloads](https://cranlogs.r-pkg.org/badges/mcp)](https://cranlogs.r-pkg.org/badges/mcp)
 
-[![mcp Github Actions status](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml)
-[![mcp Coveralls status](https://codecov.io/gh/lindeloev/mcp/branch/main/graph/badge.svg)](https://coveralls.io/github/lindeloev/mcp/)
-[![mcp CRAN status](https://www.r-pkg.org/badges/version/mcp)](https://CRAN.R-project.org/package=mcp)
-[![mcp CRAN downloads](https://cranlogs.r-pkg.org/badges/mcp)](https://cranlogs.r-pkg.org/badges/mcp)
+`mcp` does `lm`/`glm`/`brms`-like regression in each of one or Multiple Change Points (MCP) using Bayesian inference. `mcp` is especially useful if you have a priori knowledge about the number of change points and the trend of the segments in between. It supports GLM with random effects and modeling of distributional parameters.
 
-`mcp` does regression with one or Multiple Change Points (MCP) between Generalized and hierarchical Linear Segments using Bayesian inference. `mcp` aims to provide maximum flexibility for analyses with a priori knowledge about the number of change points and the form of the segments in between.
+`mcp` aims to feel "R-native" like `lm`/`glm` at its simplest while the more Bayesian aspects are inspired by the `brms`-`posterior` set of packages. Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code (see `fit$jags_code`).
 
-Change points are also called **switch points**, **break points**, **broken line** regression, **broken stick** regression, **bilinear** regression, **piecewise linear** regression, **local linear** regression, **segmented** regression, and (performance) **discontinuity** models. `mcp` aims to be be useful for all of them. See how `mcp` compares to [other R packages](https://lindeloev.github.io/mcp/articles/packages.html).
-
-Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code. `mcp` leverages the power of `posterior`, `tidybayes`, `bayesplot`, `coda`, and `loo` to make change point analysis easy and powerful.
-
+Change points are also called **switch points**, **break points**, **broken line** regression, **broken stick** regression, **bilinear** regression, **piecewise linear** regression, **local linear** regression, **segmented** regression, and (performance) **discontinuity** models. `mcp` aims to be be useful for all of them. See pros/cons of `mcp` relative to [other great R packages](https://lindeloev.github.io/mcp/articles/packages.html).
 
 # Install
 
- 1. <a href="https://sourceforge.net/projects/mcmc-jags/" target="_blank">Install the latest version of JAGS</a>. Linux users can fetch binaries <a href="https://mcmc-jags.sourceforge.io/" target="_blank">here</a>.
- 
- 2. Install from CRAN:
- 
-    ```r
+1.  [Install the latest version of JAGS](https://sourceforge.net/projects/mcmc-jags/). Linux users can fetch binaries [here](https://mcmc-jags.sourceforge.io/).
+
+2.  Install from CRAN:
+
+    ``` r
     install.packages("mcp")
     ```
-    
+
     or install the development version from GitHub:
- 
-    ```r
+
+    ``` r
     if (!requireNamespace("remotes")) install.packages("remotes")
     remotes::install_github("lindeloev/mcp")
     ```
 
-
 # At a glance
-Here are some example `mcp` models. `mcp` takes a list of formulas - one for each segment. The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the most common formula for segment 2+ would be ` ~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
+
+`mcp` takes a list of formulas - one for each segment:
+
+``` r
+model = list(
+  response ~ 1,  # plateau (Intercept_1)
+  ~ 0 + time,    # joined slope (time_2) at cp_1
+  ~ 1 + time     # disjoined slope (Intercept_3, time_3) at cp_2
+)
+fit = mcp(model, demo_fit$data)
+```
+
+The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the most common formula for segment 2+ would be `~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)). The predictors can be continuous, categorical, and interactions for any distributional parameter (variance, autoregression, etc.).
 
 
-![](https://github.com/lindeloev/mcp-paper/raw/master/all_plots_small.png)
+![](https://lindeloev.github.io/mcp/mcp_showcase.png)
 
 Scroll down to see brief introductions to each of these, or browse the website articles for more thorough worked examples and discussions.
 
@@ -218,21 +224,21 @@ plot(fit)
 
 ## Varying change points
 
-Here, we find the single change point between two joined slopes. While the slopes are shared by all participants, the change point varies by `id`. Read more about [varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html).
+Here, we find the single change point between two joined slopes. While the slopes are shared by all participants (`id`), their change points are individual (varying). Read more about [varying change points in mcp](https://lindeloev.github.io/mcp/articles/varying.html).
 
 ```r
 model = list(
   y ~ 1 + x,          # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope, varying by id
 )
-data = mcp_example_data("varying")
+data = mcp_example_data("varying_cp")
 fit = mcp(model, data)
 plot(fit, facet_by = "id")
 ```
 
 ![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/ex_varying.png)
 
-Summarise the varying change points using `ranef()` or plot them using `plot_pars(fit, "varying")`. Again, this data was simulated using `mcp` (see `mcp_example("varying")$call`) so the columns `match` and `sim` are added to show simulation values and whether they are inside the interval. Set the `width` wider for a more lenient criterion.
+Summarise the varying change points using `ranef()` or plot them using `plot_pars(fit, "varying")`. Again, this data was simulated using `mcp` (see `mcp_example("varying_cp")$call`) so the columns `match` and `sim` are added to show simulation values and whether they are inside the interval. Set the `width` wider for a more lenient criterion.
 
 ```r
 ranef(fit, width = 0.98)
@@ -319,7 +325,7 @@ model = list(
   ~ 0 + sigma(1 + x),
   ~ 0 + x
 )
-data = mcp_example_data("variance")
+data = mcp_example_data("sigma")
 fit = mcp(model, data, adapt = 5000, iter = 5000)
 plot(fit, q_predict = TRUE)
 ```
@@ -369,7 +375,6 @@ It may be convenient to use `fitted(fit, summary = FALSE)` or `predict(fit, summ
 head(fitted(fit, summary = FALSE))  # column .epred
 head(predict(fit, summary = FALSE))  # column .prediction
 ```
-
 
 # Citation
 [This preprint](https://osf.io/fzqxv) formally introduces `mcp`. Find citation info at the link, call `citation("mcp")` or copy-paste this into your reference manager:

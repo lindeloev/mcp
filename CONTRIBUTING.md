@@ -48,7 +48,7 @@ devtools::test()
 
 `mcp` uses visual snapshots for selected example plots:
 
-Visual snapshots for example plots (`demo`, `group`, `variance`) are checked using [`vdiffr`](https://vdiffr.r-lib.org/). When plot aesthetics or layout changes are introduced intentionally, you can review and update the reference SVG snapshots stored in `tests/testthat/_snaps/`:
+Visual snapshots for example plots (`demo`, `varying_mu`, `sigma`) are checked using [`vdiffr`](https://vdiffr.r-lib.org/). When plot aesthetics or layout changes are introduced intentionally, you can review and update the reference SVG snapshots stored in `tests/testthat/_snaps/`:
 
 ```R
 testthat::snapshot_review()

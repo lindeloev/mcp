@@ -22,3 +22,6 @@ every page in a list so no plots are silently discarded.
 
 ## Bridge sampling
 Requires a lot of work on tracking priors, including their truncation etc. Since bridge sampling is very sensitive to priors anyway, and I doubt users will put a lot of thought into priors, I have opted not to do it.
+
+## Check of simulation recovery
+If the simulated changepoint location is the same as the location of an actual data point, the changepoint posterior can be confined to just *before* that data point. The current check of recovery is a bit hacky, but everything else explodes in complexity.

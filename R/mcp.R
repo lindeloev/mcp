@@ -12,8 +12,8 @@
 #' @aliases mcp
 #' @param data Table-like data in long format (data.frame, tibble, data.table, etc.)
 #' @param model A list of formulas - one for each segment. The first formula
-#'   has the format `response ~ predictor` while the following formulas have
-#'   the format `response ~ cp ~ predictor`. Here, `cp` names the change-point
+#'   has the format `response ~ predictors` while the following formulas have
+#'   the format `response ~ cp ~ predictors`. Here, `cp` names the change-point
 #'   part of the formula rather than a literal variable. The response and
 #'   change-point parts can be omitted (`cp ~ predictor` assumes the same
 #'   response; `~ predictor` assumes an intercept-only change point). The
@@ -21,14 +21,14 @@
 #'
 #'   * *Regular formulas:* e.g., `~ 1 + x`). [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'
-#'   * *Extended formulas:*, e.g., `~ I(x^2) + exp(z)`. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
+#'   * *Extended formulas:*, e.g., `~ x:group + I(x^2) + exp(z)`. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'
 #'   * *Group-level effects:* e.g., `~ 1 + (1 | id)` for a group-level
 #'     intercept, or `~ 1 + (factor || id)` for independent intercept and
 #'     factor-contrast deviations. [Read more](https://lindeloev.github.io/mcp/articles/varying.html).
 #'
 #'   * *Variance:* e.g., `~sigma(1)` for a simple variance change or
-#'     `~sigma(1 + I(x^2))`) for more advanced variance structures. Explicit
+#'     `~sigma(1 + x + group)`) for more advanced variance structures. Explicit
 #'     sigma formulas model log-SD, while the implicit constant `sigma_1` in a
 #'     model without `sigma()` remains on the response scale.
 #'     [Read more](https://lindeloev.github.io/mcp/articles/variance.html)
