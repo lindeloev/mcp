@@ -516,11 +516,11 @@ test_that("color_by controls color without pooling categorical curves", {
   no_color = plot(fit, color_by = NULL, lines = 0, q_fit = c(0.25, 0.75), q_predict = c(0.25, 0.75))
   no_color_layers = ggplot2::ggplot_build(no_color)$data
   no_color_quantiles = no_color_layers[[2]]
-  expect_equal(unique(no_color_quantiles$colour), "#D55E00")
-  expect_equal(unique(no_color_quantiles$linetype), "longdash")
+  expect_equal(unique(no_color_quantiles$colour), "red")
+  expect_equal(unique(no_color_quantiles$linetype), "dashed")
   expect_equal(unique(no_color_quantiles$linewidth), 0.85)
   expect_equal(unique(no_color_layers[[3]]$colour), "#009E73")
-  expect_equal(unique(no_color_layers[[3]]$linetype), "twodash")
+  expect_equal(unique(no_color_layers[[3]]$linetype), "dashed")
   expect_equal(length(unique(no_color_quantiles$group)), 8)
   expect_null(no_color$labels$colour)
 
@@ -536,10 +536,10 @@ test_that("color_by controls color without pooling categorical curves", {
   one_color_layers = ggplot2::ggplot_build(one_color)$data
   one_color_quantiles = one_color_layers[[2]]
   expect_setequal(unique(one_color_quantiles$colour), plot_colors[1:2])
-  expect_equal(unique(one_color_quantiles$linetype), "longdash")
+  expect_equal(unique(one_color_quantiles$linetype), "dashed")
   expect_equal(length(unique(one_color_quantiles$group)), 8)
   expect_setequal(unique(one_color_layers[[3]]$colour), plot_colors[1:2])
-  expect_equal(unique(one_color_layers[[3]]$linetype), "twodash")
+  expect_equal(unique(one_color_layers[[3]]$linetype), "dashed")
   expect_equal(length(unique(one_color_layers[[3]]$group)), 8)
   expect_equal(one_color$labels$colour, "group")
 

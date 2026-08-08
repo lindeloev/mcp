@@ -333,11 +333,11 @@ get_plot = function(x,
 
   # Add quantiles?
   if (show_q_fit) {
-    gg = gg + geom_quantiles(q_fit_data, xvar, yvar, use_color, color = "#D55E00", lty = "longdash", lwd = 0.85)
+    gg = gg + geom_quantiles(q_fit_data, xvar, yvar, use_color, color = "red", lty = "dashed", lwd = 0.85)
   }
   if (show_q_predict) {
     yvar_predict = rlang::sym(".predicted")
-    gg = gg + geom_quantiles(q_predict_data, xvar, yvar_predict, use_color, color = "#009E73", lty = "twodash", lwd = 0.85)
+    gg = gg + geom_quantiles(q_predict_data, xvar, yvar_predict, use_color, color = "#009E73", lty = "dashed", lwd = 0.85)
   }
 
   # Add change point densities?
