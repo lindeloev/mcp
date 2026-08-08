@@ -39,6 +39,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Dropped support for `mcp(..., data = NULL)`. You now must provide some mock-up data to inform `mcp` about the types and levels of the predictor columns. See, e.g., `mcp_example("intercepts")$call` for a simple example or `mcp_example("multiple")$call` for a more involved example. All docs have been updated appropriately.
 
+-   mcp no longer exports `phi`, `logit`, `ilogit`, or `probit`.
+
 -   `fit = mcp_example("name")` now returns the fit directly instead of a list with a `$fit` entry. It now defaults to sampling the model (`sample = "post"`) and the `sample` argument is now directly passed to `mcp(..., sample = sample)` so `sample = TRUE` is deprecated.
 
 
@@ -119,17 +121,15 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 In general, every effort has been made to anticipate future developments and build the structure needed for that.
 
--  The mcpfamily contains everything which was previously scattered across multiple functions. This means it is easy to add families and link functions - also enabling custom families. 
+-  The `mcpfamily` contains everything which was previously scattered across multiple functions. This means it is easy to add families and link functions - also enabling custom families in a future release.
 
--   Major changes in how the model is translated into JAGS code. The JAGS code is quite different but functionally equivalent.
+-   Major changes in how the model is translated into JAGS code. The JAGS code is quite different but functionally equivalent. This also opens for adding a new sampler in a future release.
 
 -   More thorough defensive coding.
 
--   Much expanded test suite (now 7.000+ tests when run in full). The test suite now includes external validation of inference and simulation: AR against `arima()`/`arima.sim()`, binomial against `glm()` / `rbinom()`, and against `{segmented}`.
+-   Much expanded test suite (now 7.000+ tests when run in full). The test suite now includes external validation of inference and simulation: AR against `arima()`/`arima.sim()`, binomial against `glm()` / `rbinom()`, and changepoints against `{segmented}`.
 
 -   Fewer imports to userspace. This minimizes the risk of name conflicts.
-
--   Many small improvements in efficiency and code simplicity.
 
 
 # mcp 0.3.4

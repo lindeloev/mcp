@@ -654,34 +654,10 @@ is.mcpfamily = function(x) {
 }
 
 
-#' Logit function
-#'
-#' @aliases logit
-#' @param mu A vector of probabilities (0.0 to 1.0)
-#' @return A vector with same length as `mu`
-#' @export
 logit = stats::binomial(link = "logit")$linkfun
 
-#' Inverse logit function
-#'
-#' @aliases ilogit
-#' @param eta A vector of logits
-#' @return A vector with same length as `eta`
-#' @export
 ilogit = stats::binomial(link = "logit")$linkinv
 
-#' Probit function
-#'
-#' @aliases probit
-#' @param mu A vector of probabilities (0.0 to 1.0)
-#' @return A vector with same length as `mu`
-#' @export
 probit = stats::binomial(link = "probit")$linkfun
 
-#' Inverse probit function
-#'
-#' @aliases phi
-#' @param eta A vector of probits
-#' @return A vector with same length as `eta`
-#' @export
 phi = stats::binomial(link = "probit")$linkinv

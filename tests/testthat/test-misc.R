@@ -1,9 +1,10 @@
 # Link functions
 test_that("Link functions", {
-  expect_equal(ilogit(1), 0.73105858)
-  expect_equal(logit(0.7), 0.84729786)
-  expect_equal(phi(1), 0.84134475)
-  expect_equal(probit(0.7), 0.52440051)
+  expect_equal(mcp:::ilogit(1), 0.73105858)
+  expect_equal(mcp:::logit(0.7), 0.84729786)
+  expect_equal(mcp:::phi(1), 0.84134475)
+  expect_equal(mcp:::probit(0.7), 0.52440051)
+  expect_false(any(c("ilogit", "logit", "phi", "probit") %in% getNamespaceExports("mcp")))
 })
 
 test_that("families", {
