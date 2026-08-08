@@ -41,8 +41,8 @@ get_categorical_levels = function(df) {
 release_questions = function() {
   c(
     #"TEST: Have you run the extensive tests? options(test_mcp_allmodels = TRUE)",
-    "TEST: Have you run the test of fits? (uncomment skip() in test-fits-examples.R and helper-fits.R)",
-    "TEST: Have you reviewed all example plots? Before running test-fits-examples.R, use `Sys.setenv(MCP_MAKE_PLOT_TEST_FILE = '~/mcp-example-plots.pdf')`.",
+    "TEST: Have you run the release-level fit recovery tests? options(Ncpus = 11); Sys.setenv(MCP_TEST_LEVEL = 'release'); devtools::test()",
+    "TEST: Have you manually reviewed all mcp_example() plots?",
     "TEST: Have you run `dev/ai-check-jagscode.R` to start LLM review?",
     "TEST: Have you run `revdepcheck::revdep_check()`?",
 

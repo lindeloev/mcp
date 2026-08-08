@@ -17,8 +17,8 @@ get_mcp_test_level = function() {
 
 # testthat deletes any vdiffr/snapshot file it didn't see referenced during the
 # current run (testthat:::SnapshotReporter$end_reporter), *unless* it thinks
-# it's running on CI (Sys.getenv("CI") == "true"). Since test-fits-examples.R
-# (which owns tests/testthat/_snaps/fits-examples/) is only actually exercised
+# it's running on CI (Sys.getenv("CI") == "true"). Since test-fits-example-*.R
+# files (which own tests/testthat/_snaps/fits-examples/) only run
 # at MCP_TEST_LEVEL = "release", every default-level run would otherwise wipe
 # those reference snapshots from disk. Spoof CI so cleanup is skipped whenever
 # we're not doing a release-level run; leave it alone at release level so

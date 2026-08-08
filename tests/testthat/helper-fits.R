@@ -163,3 +163,17 @@ snapshot_example_plot = function(plot, example) {
 
   vdiffr::expect_doppelganger(paste("mcp example", example), plot)
 }
+
+
+#' Test one mcp_example() fit and plot
+#'
+#' @keywords internal
+test_mcp_example = function(example, snapshot = FALSE) {
+  suppressMessages(capture.output(fit <- mcp_example(example, plot = TRUE)))
+  example_plot = ggplot2::last_plot()
+
+  test_matches_simulated(fit, min_ess = 30)
+  test_example_plot(example_plot, example)
+  if (snapshot)
+    snapshot_example_plot(example_plot, example)
+}
