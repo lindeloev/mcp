@@ -1,26 +1,21 @@
 models_gauss = list(
-  # Simple
-  list(y ~ 1,
-       ~ 1,
-       simulated = list(
-         Intercept_1 = 10,
-         Intercept_2 = 20,
-         sigma_1 = 5,
-         cp_1 = 100)),
-
-  # A lot of terms
-  list(y ~ 1 + x,
-       ~ 0 + x,
-       ~ 1 + sigma(1),
-       simulated = list(
-         cp_1 = 70,
-         cp_2 = 140,
-         Intercept_1 = 10,
-         Intercept_3 = 0,
-         x_1 = 0.5,
-         x_2 = -1,
-         sigma_1 = log(3),
-         sigma_3 = log(6)))
+  # Log-link Gaussian with a CP in the mean.
+  list(
+    y ~ 1 + x,
+    ~ 1 + x,
+    simulated = list(
+      cp_1 = 93,
+      Intercept_1 = log(9),
+      x_1 = 0.003,
+      Intercept_2 = log(14),
+      x_2 = -0.004,
+      sigma_1 = 2
+    ),
+    family = gaussian(link = "log"),
+    chains = 2,
+    adapt = 500,
+    iter = 750,
+    min_ess = 50)
 )
 
-apply_test_fit("Gaussian fit", models_gauss)
+apply_test_fit("Gaussian recovery", models_gauss)

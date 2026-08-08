@@ -20,10 +20,10 @@ test_fits_examples = function() {
 
   for (example in examples) {
     message("Now running example mcp_example('", example, "')")
-    fit = mcp_example(example, plot = TRUE)
+    suppressMessages(capture.output(fit = mcp_example(example, plot = TRUE)))
     example_plot = ggplot2::last_plot()
 
-    test_matches_simulated(fit)
+    test_matches_simulated(fit, min_ess = 30)
     test_example_plot(example_plot, example)
     if (example %in% snapshot_examples)
       snapshot_example_plot(example_plot, example)

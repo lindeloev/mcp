@@ -272,7 +272,7 @@ test_that("cores is deprecated and ignored", {
 test_that("Simple mcpfit methods", {
   expect_equal(ndraws(demo_fit2), demo_fit_iter * 3)
   expect_equal(niterations(demo_fit2), demo_fit_iter)
-  expect_equal(nchains(demo_fit), 3)
+  expect_equal(nchains(demo_fit2), 3)
 
   expect_true(is.mcpfit(demo_fit))
   expect_false(is.mcpfit(mtcars))

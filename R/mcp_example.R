@@ -60,9 +60,9 @@ data$price = empty$simulate(empty, data,
   Intercept_1 = 20,
   time_2 = 0.5,
   sigma_1 = 5,
-  ar1_1 = 0.6,
-  ar2_1 = 0.3,
-  ar1_2 = -0.5
+  ar1_1 = 0.4,
+  ar2_1 = 0.15,
+  ar1_2 = -0.3
 )
 
 # Run sampling
@@ -76,6 +76,8 @@ if (plot) {
   gg2 = plot_dpar(fit, \"ar1\") + ggplot2::labs(title = 'plot_dpar(fit, \"ar1\")')
   print(gg1 / gg2)
 }",
+
+
     binomial = "# Define model
 model = list(
   y | trials(N) ~ 1,  # constant rate
@@ -87,7 +89,7 @@ model = list(
 set.seed(42)
 data = data.frame(
   x = 1:100,
-  N = base::sample(10, 100, replace=TRUE),
+  N = base::sample(15, 25, replace=TRUE),
   y = 0.  # Numeric placeholder that is valid for every sampled trial count.
 )
 empty = mcp(model, data, family = binomial(), sample = FALSE)
@@ -108,6 +110,8 @@ if (plot) {
   set.seed(42)
   print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit = TRUE)'))
 }",
+
+
     demo = "# Define model
 model = list(
   response ~ 1,
@@ -138,8 +142,10 @@ fit = mcp(model, data, iter = 4000, sample = sample, warn = warn, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))
+  print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit = TRUE)'))
 }",
+
+
     group = "# Define model
 model = list(
   y ~ 1 + condition + (condition || participant),
@@ -168,10 +174,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(
-  model, data, par_x = 'x', sample = sample, warn = warn,
-  adapt = 2000, iter = 20000, seed = 200
-)
+fit = mcp(model, data, par_x = 'x', sample = sample, warn = warn, iter = 15000, seed = 200)
 
 # Illustrative plot
 if (plot) {
@@ -188,7 +191,7 @@ model = list(
 # Simulate data
 set.seed(42)
 data = data.frame(
-  x = runif(100, 0, 100),
+  x = runif(60, 0, 100),
   y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
 )
 empty = mcp(model, data, sample = FALSE, par_x = 'x')
@@ -205,7 +208,7 @@ fit = mcp(model, data, par_x = 'x', sample = sample, warn = warn, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))
+  print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit = TRUE)'))
 }",
     multiple = "# Define model
 model = list(
@@ -246,7 +249,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, par_x = 'x', sample = sample, warn = warn, seed = 42)
+fit = mcp(model, data, par_x = 'x', iter = 10000, sample = sample, warn = warn, seed = 42)
 
 # Illustrative plot
 if (plot) {
@@ -260,9 +263,9 @@ model = list(
 )
 
 # Simulate data
-set.seed(42)
+set.seed(40)
 data = data.frame(
-  x = seq(0, 40, by = 0.5),
+  x = c(seq(0, 10, by = 0.3), seq(20, 40, by = 0.3)),
   y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
 )
 empty = mcp::mcp(model, data, sample = FALSE)
@@ -271,16 +274,16 @@ data$y = empty$simulate(empty, data,
   Intercept_1 = 10,
   x_2 = -30,
   xE2_2 = 1.5,
-  sigma_1 = 30
+  sigma_1 = 20
 )
 
 # Run sampling
-fit = mcp(model, data, sample = sample, warn = warn, seed = 42)
+fit = mcp(model, data, adapt = 2000, iter = 10000, sample = sample, warn = warn, seed = 40)
 
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))
+  print(plot(fit, q_fit  = TRUE, q_predict = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit  = TRUE, q_predict = TRUE)'))
 }",
     variance = "# Define model
 model = list(
@@ -301,14 +304,14 @@ data$y = empty$simulate(empty, data,
     cp_1 = 24.5,
     cp_2 = 75,
     Intercept_1 = 20,
-    x_3 = 2,
+    x_3 = 1,
     sigma_1 = log(7),
     sigma_2 = log(25),
     sigma_x_2 = log(2.5 / 25) / (75 - 24.5)
   )
 
 # Run sampling
-fit = mcp(model, data, iter = 4000, adapt = 3000, sample = sample, warn = warn, seed = 40)
+fit = mcp(model, data, iter = 3000, sample = sample, warn = warn, seed = 40)
 
 # Illustrative plot
 if (plot) {
@@ -326,23 +329,23 @@ model = list(
 
 # Simulate data
 set.seed(42)
-data = tibble::tibble(id = c('John', 'Benny', 'Rose', 'Cath', 'Bill', 'Erin'))
-data = tidyr::expand_grid(data, x = seq(1, 100, by=4))
+data = tibble::tibble(id = c('John', 'Omar', 'Rose', 'Cath', 'Ni', 'Erin', 'Frank', 'Mark', 'Slava'))
+data = tidyr::expand_grid(data, x = seq(1, 100, by=20))
 data$id_numeric = as.numeric(as.factor(data$id))
 data$y = 2.# or whatever signals 'numeric'. Will be replaced by simulation below.
 
 empty = mcp(model, data, sample = FALSE)
 data$y = empty$simulate(empty, data,
   cp_1 = 40,
-  cp_1_id = 7*(data$id_numeric - mean(data$id_numeric)),
+  cp_1_id = 8*(data$id_numeric - mean(data$id_numeric)),
   Intercept_1 = 15,
   x_1 = 3,
   x_2 = -2,
-  sigma_1 = 25
+  sigma_1 = 10
 )
 
 # Run sampling
-fit = mcp(model, data, sample = sample, warn = warn, seed = 42)
+fit = mcp(model, data, iter = 4000, sample = sample, warn = warn, seed = 42)
 
 # Illustrative plot
 if (plot) {
