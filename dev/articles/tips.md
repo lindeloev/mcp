@@ -1,0 +1,59 @@
+# Diagnosing and fixing problems
+
+## Convergence
+
+A common problem when using MCMC is lacking convergence between chains.
+This will show up as large `rhat` values (\> 1.1 is a common criterion)
+and non-converging lines in `plot_pars(fit)`.
+
+- The first thing to try is always to make the model warm up longer to
+  see if it reaches convergence later: `mcp(fit, data, adapt = 10000)`.
+
+- It can be a sign of a deeper non-identifiability in the model. This
+  will show up as strong correlations in the joint distribution of any
+  pair of implicated parameters:
+  `plot_pars(fit, pars = c("Intercept_1", "Intercept_2"), type = "hex")`.
+  This may give you ideas how to change the model.
+
+- You can set the initial values for the JAGS sampler using, e.g.,
+  `mcp(..., inits = list(cp_1 = 20, Intercept_2 = -20, etc.))`. This
+  will be passed to `jags.fit` and you can see more documentation there.
+
+## Speed
+
+A lot of data and complicated models will slow down fitting.
+
+- Run the chains in parallel by selecting a future backend before
+  fitting, e.g., `future::plan(future::multisession, workers = 4)`. The
+  worker pool is reused across calls. Shut it down afterward with
+  `future::plan(future::sequential)`. Without a parallel future plan,
+  chains run sequentially.
+
+- More data usually means better identifiability and faster convergence.
+  Lower the adaption period period using, e.g., `mcp(..., adapt = 300)`.
+  This is also sometimes called “burnin”.
+
+## Errors or won’t run
+
+Most of these problems should stem from inappropriate priors and such
+problems may be exacerbated by fragile link functions (e.g.,
+`binomial(link = "identity")`. The article on [priors in
+mcp](https://lindeloev.github.io/mcp/articles/priors.html) may be
+helpful, but in particular:
+
+- Errors on “directed cycle” usually stems from using parameters in
+  priors. For example, if you set
+  `prior = list(Intercept_1 = "dnorm(Intercept_2, 1)", Intercept_2 = "dnorm(Intercept_1, 1)")`
+  this is an infinite regress.
+
+- Errors on “incompatible with parent nodes” usually stem from
+  impossible values. For example, the implicit `sigma_1` in a model
+  without [`sigma()`](https://rdrr.io/r/stats/sigma.html) is an SD, so a
+  custom normal prior should be truncated above zero. Coefficients in an
+  explicit [`sigma()`](https://rdrr.io/r/stats/sigma.html) model are
+  instead unconstrained log-SD values and do not need positive
+  truncation.
+
+If you encounter these or other problems, don’t hesitate to [raise a
+Github Issue](https://github.com/lindeloev/mcp/issues), asking for help
+or filing a bug report.
