@@ -3,19 +3,27 @@
 \name{draws-index-mcp}
 \alias{draws-index-mcp}
 \alias{niterations.mcpfit}
-\alias{niterations}
 \alias{nchains.mcpfit}
+\alias{ndraws.mcpfit}
+\alias{ndraws}
 \alias{nchains}
+\alias{niterations}
 \title{Index \code{mcpfit} objects}
 \usage{
-\method{niterations}{mcpfit}(object, prior = FALSE, ...)
+\method{niterations}{mcpfit}(object, ...)
 
-\method{nchains}{mcpfit}(object, prior = FALSE, ...)
+\method{nchains}{mcpfit}(object, ...)
+
+\method{ndraws}{mcpfit}(object, ...)
+
+ndraws(x)
+
+nchains(x)
+
+niterations(x)
 }
 \arguments{
 \item{object}{An \code{mcpfit} object.}
-
-\item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
 
 \item{...}{Currently ignored.}
 }
@@ -24,12 +32,12 @@ Index variables, iterations, chains, and draws.
 }
 \section{Functions}{
 \itemize{
-\item \code{niterations(mcpfit)}: Total number of iterations of an \code{mcpfit} object.
+\item \code{niterations(mcpfit)}: Number of iterations per chain of an \code{mcpfit} object.
 
 \item \code{nchains(mcpfit)}: Number of chains of an \code{mcpfit} object.
 
 }}
 \examples{
 niterations(demo_fit)
-nchains(demo_fit, prior = TRUE)
+nchains(as_draws(demo_fit, prior = TRUE))
 }

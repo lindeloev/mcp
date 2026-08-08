@@ -9,9 +9,23 @@
 \alias{as_draws_rvars.mcpfit}
 \alias{as.mcmc.mcpfit}
 \alias{tidy_draws.mcpfit}
+\alias{as_draws_df}
+\alias{as_draws_array}
+\alias{as_draws_matrix}
+\alias{as_draws_rvars}
 \title{Extract MCMC Draws from \code{mcpfit} Objects}
 \usage{
 \method{as_draws}{mcpfit}(x, prior = FALSE, ...)
+
+as_draws(x, ...)
+
+as_draws_df(x, ...)
+
+as_draws_array(x, ...)
+
+as_draws_matrix(x, ...)
+
+as_draws_rvars(x, ...)
 }
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object.}

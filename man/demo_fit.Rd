@@ -3,7 +3,7 @@
 \docType{data}
 \name{demo_fit}
 \alias{demo_fit}
-\title{Example \code{mcpfit}}
+\title{Pre-fitted example mcp model}
 \format{
 An \code{\link{mcpfit}} object.
 }
@@ -11,6 +11,14 @@ An \code{\link{mcpfit}} object.
 demo_fit
 }
 \description{
-This was generated using \code{demo_fit = mcp_example("demo")}.
+\code{demo_fit} is an \code{mcpfit} object generated using \code{mcp_example("demo", sample = FALSE)},
+though with two modifications: it only has 2 x 1000 samples, and it also includes prior samples.
+}
+\details{
+It is used to quickly demonstrate \code{mcp} functionality in various documentation.
+}
+\seealso{
+\code{\link{mcp_example}} for the model and data used to create it,
+and \code{\link{mcpfit-class}} for the structure and methods of fitted models.
 }
 \keyword{datasets}

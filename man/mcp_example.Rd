@@ -4,7 +4,7 @@
 \name{mcp_example}
 \alias{mcp_example}
 \alias{mcp_example_data}
-\title{Get example models and data}
+\title{Run example models}
 \usage{
 mcp_example(name, sample = "post", warn = FALSE, plot = TRUE)
 
@@ -14,14 +14,14 @@ mcp_example_data(name)
 \item{name}{Name of the example. One of:
 \itemize{
 \item \code{"demo"}: Two change points between intercepts and joined/disjoined slopes.
-\item \code{"ar"}: One change point in autoregressive residuals.
-\item \code{"binomial"}: Binomial with two change points. Much like \code{"demo"} on a logit scale.
-\item \code{"group"}: Group-level (random) intercepts and factor effects across a change point.
 \item \code{"intercepts"}: An intercept-only change point.
 \item \code{"multiple"}: Multiple regression with categorical predictors and interactions.
-\item \code{"quadratic"}: A change point to a quadratic segment.
-\item \code{"varying"}: Varying / hierarchical change points.
-\item \code{"variance"}: A change in variance, including a variance slope.
+\item \code{"binomial"}: Binomial with two change points. Much like \code{"demo"} on a logit scale.
+\item \code{"varying_mu"}: Varying (Group-level) intercepts and factor effects across a change point.
+\item \code{"varying_cp"}: Varying (random) change points.
+\item \code{"quadratic"}: A change point to a quadratic segment where there is no data.
+\item \code{"ar"}: One change point in autoregressive residuals (the \code{ar1} dpar)
+\item \code{"sigma"}: A change in "sigma" dpar, including a slope on sigma.
 }}
 
 \item{sample}{One of
@@ -48,7 +48,7 @@ An \code{mcpfit}, enriched with a \verb{$call} field. It contains the code to
 reproduce the data and the fit.
 }
 \description{
-Get example models and data
+Run example models
 }
 \section{Functions}{
 \itemize{
