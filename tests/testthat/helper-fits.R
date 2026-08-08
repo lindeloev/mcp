@@ -135,15 +135,15 @@ test_matches_simulated = function(fit, min_ess) {
 #' @param plot The plot produced by `mcp_example()`.
 #' @param example The name passed to `mcp_example()`.
 test_example_plot = function(plot, example) {
-  patchwork_examples = c("ar", "variance")
+  patchwork_examples = c("ar", "sigma")
 
   testthat::expect_s3_class(plot, "ggplot")
   testthat::expect_identical(inherits(plot, "patchwork"), example %in% patchwork_examples)
   testthat::expect_no_error(ggplot2::ggplotGrob(plot))
 
-  if (example %in% c("group", "varying"))
+  if (example %in% c("varying_mu", "varying_cp"))
     testthat::expect_s3_class(plot$facet, "FacetWrap")
-  if (example == "group")
+  if (example == "varying_mu")
     testthat::expect_identical(plot$labels$colour, "condition")
   if (example == "multiple")
     testthat::expect_identical(plot$labels$colour, "group")

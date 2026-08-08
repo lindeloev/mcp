@@ -242,20 +242,20 @@ test_that("binomial example can be constructed without sampling", {
   expect_true(all(fit$data$y <= fit$data$N))
 })
 
-test_that("group example contains independent factor effects", {
-  fit = mcp_example("group", sample = FALSE, plot = FALSE)
+test_that("varying_mu example contains independent factor effects", {
+  fit = mcp_example("varying_mu", sample = FALSE, plot = FALSE)
   expect_s3_class(fit, "mcpfit")
   expect_equal(fit$pars$cp, "cp_1")
   expect_equal(
     fit$pars$varying,
-    c("Intercept_1_participant", "conditionB_1_participant")
+    c("Intercept_1_id", "conditionB_1_id")
   )
-  expect_match(fit$call, "condition || participant", fixed = TRUE)
-  expect_equal(length(unique(fit$data$participant)), 12)
+  expect_match(fit$call, "condition || id", fixed = TRUE)
+  expect_equal(length(unique(fit$data$id)), 9)
   simulated = attr(fit$data$y, "simulated")
-  expect_equal(simulated$Intercept_1_participant_sd, 2)
-  expect_equal(simulated$conditionB_1_participant_sd, 1.5)
-  expect_length(unique(simulated$Intercept_1_participant), 12)
+  expect_equal(simulated$Intercept_1_id_sd, 2)
+  expect_equal(simulated$conditionB_1_id_sd, 2)
+  expect_length(unique(simulated$Intercept_1_id), 9)
 })
 
 test_that("cores is deprecated and ignored", {

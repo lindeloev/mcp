@@ -58,7 +58,7 @@ save_it("ex_plateaus.png")
 ########################
 # VARYING SLOPE CHANGE #
 ########################
-fit_varying = mcp_example("varying")
+fit_varying = mcp_example("varying_cp")
 #fit_varying = mcp(ex_varying$model, ex_varying$data, adapt = 3000)
 theme_it(plot(fit_varying, facet_by = "id"), "Varying slope change")
 save_it("ex_varying.png")
@@ -86,7 +86,7 @@ save_it("ex_quadratic.png")
 ############
 # VARIANCE #
 ############
-ex_variance = mcp_example("variance", sample = FALSE)
+ex_variance = mcp_example("sigma", sample = FALSE)
 fit_variance = mcp(ex_variance$model, ex_variance$data, iter = 10000, adapt = 10000)
 theme_it(plot(fit_variance, q_predict = TRUE), "Variance and prediction intervals")
 save_it("ex_variance.png")

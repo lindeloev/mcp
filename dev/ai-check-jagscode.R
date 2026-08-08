@@ -43,6 +43,6 @@ build_llm_prompt = function(fit) {
 }
 
 devtools::load_all()
-fit = mcp_example("variance")
+fit = mcp_example("sigma")
 prompt = build_llm_prompt(fit)
 cat(prompt)

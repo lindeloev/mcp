@@ -1,16 +1,16 @@
-#' Get example models and data
+#' Run example models
 #'
 #' @aliases mcp_example
 #' @param name Name of the example. One of:
 #'  * `"demo"`: Two change points between intercepts and joined/disjoined slopes.
-#'  * `"ar"`: One change point in autoregressive residuals.
-#'  * `"binomial"`: Binomial with two change points. Much like `"demo"` on a logit scale.
-#'  * `"group"`: Group-level (random) intercepts and factor effects across a change point.
 #'  * `"intercepts"`: An intercept-only change point.
 #'  * `"multiple"`: Multiple regression with categorical predictors and interactions.
-#'  * `"quadratic"`: A change point to a quadratic segment.
-#'  * `"varying"`: Varying / hierarchical change points.
-#'  * `"variance"`: A change in variance, including a variance slope.
+#'  * `"binomial"`: Binomial with two change points. Much like `"demo"` on a logit scale.
+#'  * `"varying_mu"`: Varying (Group-level) intercepts and factor effects across a change point.
+#'  * `"varying_cp"`: Varying (random) change points.
+#'  * `"quadratic"`: A change point to a quadratic segment where there is no data.
+#'  * `"ar"`: One change point in autoregressive residuals (the `ar1` dpar)
+#'  * `"sigma"`: A change in "sigma" dpar, including a slope on sigma.
 #' @param plot Logical. Plot the fitted example? No plot is produced when
 #'   `sample = FALSE`.
 #' @inheritParams mcp
@@ -146,18 +146,18 @@ if (plot) {
 }",
 
 
-    group = "# Define model
+    varying_mu = "# Define model
 model = list(
-  y ~ 1 + condition + (condition || participant),
+  y ~ 1 + condition + (condition || id),
   ~ 1 + condition  # group effects carry into this segment
 )
 
-# Simulate balanced data with 12 levels of the grouping factor
+# Simulate balanced data with 9 levels of the grouping factor
 set.seed(200)
 data = tidyr::expand_grid(
-  participant = sprintf('participant_%02d', 1:12),
+  id = sprintf('id_%02d', 1:9),
   condition = factor(c('A', 'B')),
-  x = seq(0, 100, length.out = 12)
+  x = seq(0, 100, length.out = 9)
 )
 data$y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
 
@@ -166,10 +166,10 @@ data$y = empty$simulate(empty, data,
   cp_1 = 50,
   Intercept_1 = 10,
   conditionB_1 = 4,
-  Intercept_2 = 15,
+  Intercept_2 = 13,
   conditionB_2 = -2,
-  Intercept_1_participant_sd = 2,
-  conditionB_1_participant_sd = 1.5,
+  Intercept_1_id_sd = 2,
+  conditionB_1_id_sd = 2,
   sigma_1 = 1.5
 )
 
@@ -179,8 +179,8 @@ fit = mcp(model, data, par_x = 'x', sample = sample, warn = warn, iter = 15000, 
 # Illustrative plot
 if (plot) {
   set.seed(200)
-  print(plot(fit, facet_by = 'participant', color_by = 'condition') +
-      ggplot2::labs(title = 'plot(fit, facet_by = \"participant\", color_by = \"condition\")'))
+  print(plot(fit, facet_by = 'id', color_by = 'condition') +
+      ggplot2::labs(title = 'plot(fit, facet_by = \"id\", color_by = \"condition\")'))
 }",
     intercepts = "# Define model
 model = list(
@@ -285,7 +285,7 @@ if (plot) {
   set.seed(42)
   print(plot(fit, q_fit  = TRUE, q_predict = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit  = TRUE, q_predict = TRUE)'))
 }",
-    variance = "# Define model
+    sigma = "# Define model
 model = list(
   y ~ 1,
   ~ 0 + sigma(1 + x),
@@ -321,7 +321,7 @@ if (plot) {
   gg2 = plot_dpar(fit, 'sigma') + ggplot2::labs(title = 'plot_dpar(fit, \"sigma\")')
   print(gg1 / gg2)
 }",
-    varying = "# Define model
+    varying_cp = "# Define model
 model = list(
   y ~ 1 + x,  # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope

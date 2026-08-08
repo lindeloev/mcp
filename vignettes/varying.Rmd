@@ -158,7 +158,7 @@ If we just use `plot(fit)`, we would see all points in one plot. We want to face
 plot(fit, facet_by = "id")
 ```
 
-It seems that `mcp` did a good job of recovering the change points. There is a lot of information in this data, since the intercept and the slope on each side of the (varying) change point is shared between participants here.
+It seems that `mcp` did a good job of recovering the change points. There is a lot of information in this data, since the intercept and the slope on each side of the (varying) change point is shared between participants (`id`) here.
 
 If you use `summary(fit)` (or `fixef(fit)`) you will get the posteriors for the population-level effects. To get the random effects, do:
 
