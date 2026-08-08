@@ -270,7 +270,8 @@ test_that("cores is deprecated and ignored", {
 })
 
 test_that("Simple mcpfit methods", {
-  expect_equal(niterations(demo_fit2), demo_fit_iter * 3)
+  expect_equal(ndraws(demo_fit2), demo_fit_iter * 3)
+  expect_equal(niterations(demo_fit2), demo_fit_iter)
   expect_equal(nchains(demo_fit), 3)
 
   expect_true(is.mcpfit(demo_fit))
@@ -278,10 +279,15 @@ test_that("Simple mcpfit methods", {
 })
 
 test_that("posterior draws accessor preserves the stored chains", {
-  # Using the new S3 generics
-  draws_array = posterior::as_draws_array(demo_fit)
-  draws_df = posterior::as_draws_df(demo_fit)
-  draws_matrix = posterior::as_draws_matrix(demo_fit)
+  expect_identical(as_draws, posterior::as_draws)
+  expect_identical(as_draws_df, posterior::as_draws_df)
+  expect_identical(as_draws_array, posterior::as_draws_array)
+  expect_identical(as_draws_matrix, posterior::as_draws_matrix)
+  expect_identical(as_draws_rvars, posterior::as_draws_rvars)
+
+  draws_array = as_draws_array(demo_fit)
+  draws_df = as_draws_df(demo_fit)
+  draws_matrix = as_draws_matrix(demo_fit)
   mcmc = coda::as.mcmc(demo_fit)
 
   expect_s3_class(draws_array, "draws_array")

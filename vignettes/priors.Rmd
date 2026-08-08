@@ -193,7 +193,7 @@ mtext("Data", 1, line = 3, at = -0.2)
 ###############
 # DEFAULT TWO #
 ###############
-draws_two = posterior::as_draws_df(fit_two)
+draws_two = as_draws_df(fit_two)
 y1 = density(draws_two$cp_1, from = MINX, to = MAXX)
 y2 = density(draws_two$cp_2, from = MINX, to = MAXX)
 plot(y1$x, y1$y + y2$y, 
@@ -213,7 +213,7 @@ text(130, 0.011, labels = "cp_2")
 ################
 # DEFAULT FIVE #
 ################
-draws_five = posterior::as_draws_df(fit_five)
+draws_five = as_draws_df(fit_five)
 z1 = density(draws_five$cp_1, from = MINX, to = MAXX)
 z2 = density(draws_five$cp_2, from = MINX, to = MAXX)
 z3 = density(draws_five$cp_3, from = MINX, to = MAXX)

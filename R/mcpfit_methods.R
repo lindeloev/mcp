@@ -243,7 +243,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
   # Model info
   cat("Family: ", fit$family$family, "(link = '", fit$family$link, "')\n", sep = "")
   if (!is.null(samples))
-    cat("Iterations: ", niterations(fit, prior = prior), " from ", nchains(fit, prior = prior), " chains.\n", sep="")
+    cat("Iterations: ", coda::niter(samples), " from ", coda::nchain(samples), " chains.\n", sep="")
   cat("Segments:\n")
   for (i in 1:length(fit$model)) {
     cat("  ", i, ": ", formula_to_char(fit$model[[i]]), "\n", sep = "")
@@ -420,6 +420,26 @@ as_draws_rvars.mcpfit = function(x, prior = FALSE, ...) {
   posterior::as_draws_rvars(posterior_draws(x, prior = prior), ...)
 }
 
+#' @rdname as_draws.mcpfit
+#' @export
+as_draws = posterior::as_draws
+
+#' @rdname as_draws.mcpfit
+#' @export
+as_draws_df = posterior::as_draws_df
+
+#' @rdname as_draws.mcpfit
+#' @export
+as_draws_array = posterior::as_draws_array
+
+#' @rdname as_draws.mcpfit
+#' @export
+as_draws_matrix = posterior::as_draws_matrix
+
+#' @rdname as_draws.mcpfit
+#' @export
+as_draws_rvars = posterior::as_draws_rvars
+
 #' @exportS3Method coda::as.mcmc
 as.mcmc.mcpfit = function(x, prior = FALSE, ...) {
   mcmclist_samples(x, prior = prior)
@@ -438,6 +458,9 @@ tidy_draws.mcpfit = function(x, ...) {
     registerS3method("as_draws_array", "mcpfit", as_draws_array.mcpfit, envir = asNamespace("posterior"))
     registerS3method("as_draws_matrix", "mcpfit", as_draws_matrix.mcpfit, envir = asNamespace("posterior"))
     registerS3method("as_draws_rvars", "mcpfit", as_draws_rvars.mcpfit, envir = asNamespace("posterior"))
+    registerS3method("nchains", "mcpfit", nchains.mcpfit, envir = asNamespace("posterior"))
+    registerS3method("ndraws", "mcpfit", ndraws.mcpfit, envir = asNamespace("posterior"))
+    registerS3method("niterations", "mcpfit", niterations.mcpfit, envir = asNamespace("posterior"))
   }
   if (requireNamespace("coda", quietly = TRUE)) {
     registerS3method("as.mcmc", "mcpfit", as.mcmc.mcpfit, envir = asNamespace("coda"))
@@ -458,7 +481,7 @@ tidy_draws.mcpfit = function(x, ...) {
     lifecycle::deprecate_soft(
       when = "0.4.0",
       what = I(paste0("fit$", name)),
-      with = I("as_draws(fit) or as.mcmc(fit)")
+      with = I("as_draws(fit) or coda::as.mcmc(fit)")
     )
   }
   .subset2(x, name)
@@ -470,7 +493,7 @@ tidy_draws.mcpfit = function(x, ...) {
     lifecycle::deprecate_soft(
       when = "0.4.0",
       what = I(paste0("fit$", i)),
-      with = I("as_draws(fit) or as.mcmc(fit)")
+      with = I("as_draws(fit) or coda::as.mcmc(fit)")
     )
   }
   .subset2(x, i)
@@ -485,32 +508,42 @@ tidy_draws.mcpfit = function(x, ...) {
 #' @name draws-index-mcp
 #' @examples
 #' niterations(demo_fit)
-#' nchains(demo_fit, prior = TRUE)
+#' nchains(as_draws(demo_fit, prior = TRUE))
 NULL
 
 
-#' @aliases niterations niterations.mcpfit
-#' @describeIn draws-index-mcp Total number of iterations of an `mcpfit` object.
-#' @export
-niterations.mcpfit = function(object, prior = FALSE, ...) {
-  samples = mcmclist_samples(object, prior = prior, error = FALSE)
-  sum(sapply(samples, nrow))
+#' @aliases niterations.mcpfit
+#' @describeIn draws-index-mcp Number of iterations per chain of an `mcpfit` object.
+#' @exportS3Method posterior::niterations
+niterations.mcpfit = function(object, ...) {
+  coda::niter(mcmclist_samples(object))
 }
 
-#' @aliases nchains nchains.mcpfit
+#' @aliases nchains.mcpfit
 #' @describeIn draws-index-mcp Number of chains of an `mcpfit` object.
-#' @export
-nchains.mcpfit = function(object, prior = FALSE, ...) {
-  samples = mcmclist_samples(object, prior = prior, error = FALSE)
-  length(samples)
+#' @exportS3Method posterior::nchains
+nchains.mcpfit = function(object, ...) {
+  coda::nchain(mcmclist_samples(object))
 }
 
-#' @export
-niterations = function(object, ...) UseMethod("niterations")
+#' @rdname draws-index-mcp
+#' @exportS3Method posterior::ndraws
+ndraws.mcpfit = function(object, ...) {
+  samples = mcmclist_samples(object)
+  sum(vapply(samples, nrow, integer(1)))
+}
 
+#' @rdname draws-index-mcp
 #' @export
-nchains = function(object, ...) UseMethod("nchains")
+ndraws = posterior::ndraws
 
+#' @rdname draws-index-mcp
+#' @export
+nchains = posterior::nchains
+
+#' @rdname draws-index-mcp
+#' @export
+niterations = posterior::niterations
 
 #' Get relevant info about varying parameters
 #'
@@ -745,7 +778,7 @@ tidy_samples = function(...) {
   lifecycle::deprecate_soft(
     when = "0.4.0",
     what = "tidy_samples()",
-    with = "posterior::as_draws_df() or tidybayes::spread_draws()"
+    with = "as_draws_df() or tidybayes::spread_draws()"
   )
   mcp_draws(...)
 }

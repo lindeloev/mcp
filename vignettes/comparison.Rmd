@@ -145,7 +145,7 @@ hypothesis(fit_info, "cp_1 > 3.5 & cp_1 < 4.5")
 
 # ... is identical to
 prob = function(fit, prior = FALSE) {
-  draws = posterior::as_draws_df(fit, prior = prior)
+  draws = as_draws_df(fit, prior = prior)
   mean(draws$cp_1 > 3.5 & draws$cp_1 < 4.5)
 }
 

@@ -29,10 +29,10 @@
 #'
 #' @details
 #'   For other `type`, it calls `bayesplot::mcmc_type()`. Use these
-#'   directly on `as.mcmc(fit)` or `as_draws(fit)` if you want finer
-#'   control of plotting, e.g., `bayesplot::mcmc_dens(as.mcmc(fit))`. There
+#'   directly on `coda::as.mcmc(fit)` or `as_draws(fit)` if you want finer
+#'   control of plotting, e.g., `bayesplot::mcmc_dens(coda::as.mcmc(fit))`. There
 #'   are also a number of useful plots in the \pkg{coda} package, i.e.,
-#'   `coda::gelman.plot(as.mcmc(fit))` and `coda::crosscorr.plot(as.mcmc(fit))`
+#'   `coda::gelman.plot(coda::as.mcmc(fit))` and `coda::crosscorr.plot(coda::as.mcmc(fit))`
 #'
 #'   In any case, if you see a few erratic lines or parameter estimates, this is
 #'   a sign that you may want to increase argument 'adapt' and 'iter' in \code{\link{mcp}}.

@@ -175,7 +175,7 @@ get_plot = function(x,
   if (!coda::is.mcmc.list(.subset2(fit, "mcmc_post")) && !coda::is.mcmc.list(.subset2(fit, "mcmc_prior")))
     stop("Cannot plot an mcpfit without prior or posterior samples.")
 
-  available_draws = niterations(fit, prior = prior)
+  available_draws = sum(vapply(mcmclist_samples(fit, prior = prior), nrow, integer(1)))  # Like niterations(fit), but also supporting prior = TRUE
   if (!is.null(ndraws))
     ndraws = min(ndraws, available_draws)
   lines = min(lines, available_draws)
