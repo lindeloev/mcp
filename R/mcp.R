@@ -3,12 +3,12 @@
 #' Given a model (a list of segment formulas), `mcp` infers the posterior
 #' distributions of the parameters of each segment as well as the change points
 #' between segments. [See more details and worked examples on the mcp website](https://lindeloev.github.io/mcp/).
-#' All segments must regress on the same x-variable. Change
-#' points use ordered default priors, but user-specified population-level priors can relax that
-#' constraint. Realized group-specific change points are ordered. You can run
+#' All segments must regress on the same x-variable. You can run
 #' `fit = mcp(model, data, sample=FALSE)` to avoid sampling if you just want to
 #' inspect the priors (`fit$prior` and [prior_summary()]), the JAGS code
 #' `fit$jags_code`, or the R function to simulate data (`fit$simulate`).
+#'
+#' mcp models ordered change points. The ordering is imposed through the prior.
 #'
 #' @aliases mcp
 #' @param data Table-like data in long format (data.frame, tibble, data.table, etc.)
@@ -52,10 +52,11 @@
 #'      are used where priors are not specified. These are designed for stable
 #'      estimation and prediction, but should be justified before hypothesis testing.
 #'      `mcp` uses SD (not precision) for dnorm, dt, dlogis, etc. See
-#'      details. Default population-level change-point priors are ordered using
-#'      truncation. User-specified `dunif()` priors and explicit truncations are
-#'      used as written, so users must supply any desired ordering bounds, e.g.,
-#'      `dunif(cp_1, max(time))` for `cp_2`.
+#'      details. With multiple change points, the default is a regularizing
+#'      Student-t prior centered at `min(x)` and sequentially truncated between
+#'      the preceding change point and `max(x)`. User-specified `dunif()` priors
+#'      and explicit truncations are used as written, so users must supply the
+#'      ordering bounds, e.g., `dunif(cp_1, max(time))` for `cp_2`.
 #'  * A numerical value (e.g., `Intercept_1 = -2.1`) indicating a fixed value.
 #'  * A model parameter name (e.g., `Intercept_2 = "Intercept_1"`), indicating that this parameter is shared -
 #'      typically between segments. If two group-level deviations are shared this way,
@@ -108,8 +109,10 @@
 #'   * Default population-level `cp_\*` priors are ordered. For user priors,
 #'       `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior has neither
 #'       explicit truncation nor an inherently bounded form such as `dunif()` or
-#'       `dirichlet()`. Group-level change-point deviations are not guaranteed to
-#'       preserve the population-level ordering.
+#'       `dirichlet()`. After sampling, all population- and group-level change
+#'       points are checked for strict ordering; population-level change points
+#'       are also checked against the observed x-range. This includes numerically
+#'       fixed change points.
 #'   * Data-dependent prior values can be written directly, for example
 #'       `min(time)`, `max(time)`, `median(response)`, `mad(response)`,
 #'       `max(time) - min(time)`, `segment_width(time)`, `n_segments()`, and `n_cp()`.
@@ -373,6 +376,7 @@ mcp = function(model,
       recover_levels(data, group_effects)
 
     class(mcmc_post) = "mcmc.list"
+    assert_ordered_cp_draws(mcmc_post, cps, data[[par_x]])
     if (isTRUE(warn))
       warn_nonconvergence(mcmc_post)
   } else {
@@ -401,6 +405,7 @@ mcp = function(model,
       recover_levels(data, group_effects)
 
     class(mcmc_prior) = "mcmc.list"
+    assert_ordered_cp_draws(mcmc_prior, cps, data[[par_x]])
   } else {
     mcmc_prior = NULL
   }

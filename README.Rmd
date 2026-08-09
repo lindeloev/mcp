@@ -191,15 +191,15 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 [About mcp models and simulating data](https://lindeloev.github.io/mcp/articles/formulas.html):
  * Parameter names are `Intercept_i` (intercepts), `cp_i` (change points), `x_i` (slopes), `ar*`/`ma*` (autocorrelation), and `sigma_*` (Gaussian residual standard deviation).
  * The change point model is basically an `ifelse` model.
- * Generate data for all supported models using `fit$simulate()`. See examples in, e.g., `mcp_examples("demo")$call`.
+ * Generate data for all supported models using `fit$simulate()`. See examples in, e.g., `mcp_example("demo")$call`.
 
 [Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
  * See priors in `fit$prior`.
  * Set priors using `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")`.
- * The default prior for change points is fast for estimation but is mathematically "messy". The Dirichlet prior (`cp_i = "dirichlet(1)"`) is slow but beautiful.
+ * One change point has a uniform default prior. Multiple change points use sequentially truncated Student-t priors centered at the minimum x; this regularizes their spacings. `cp_i = "dirichlet(1)"` instead gives the ordered-uniform distribution, with exchangeable spacings. Only uniform is uninformative.
  * Fix parameters to specific values using `cp_1 = 45`.
  * Share parameters between segments using `slope_1 = "slope_2"`.
- * Truncate priors using `T(lower, upper)`, e.g., `Intercept_1 = "dnorm(0, 1) T(0, )"`. `mcp` adds ordering bounds to otherwise unbounded population-level change-point priors. User-supplied bounds are respected, and [group-level change points](https://lindeloev.github.io/mcp/articles/varying.html) are not guaranteed to be ordered.
+ * Truncate priors using `T(lower, upper)`, e.g., `Intercept_1 = "dnorm(0, 1) T(0, )"`. `mcp` adds ordering bounds to population-level change-point priors. Users can override these.
  * Do prior predictive checks using `mcp(model, data, sample = "prior")`.
 
 [Group-level change points](https://lindeloev.github.io/mcp/articles/varying.html):

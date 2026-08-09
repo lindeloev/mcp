@@ -87,3 +87,41 @@ test_that("simulation rejects unordered group-level change points", {
     "must remain ordered"
   )
 })
+
+
+test_that("sampled change points are checked for range and ordering", {
+  cps = tibble::tibble(
+    name = c("cp_1", "cp_2"),
+    varying = c(TRUE, TRUE),
+    group_name = c("cp_1_id", "cp_2_id")
+  )
+  draws = cbind(
+    cp_1 = c(3, 4), cp_2 = c(7, 8),
+    `cp_1_id[A]` = c(1, 1), `cp_2_id[A]` = c(-1, -1),
+    `cp_1_id[B]` = c(-1, -1), `cp_2_id[B]` = c(1, 1)
+  )
+  samples = coda::mcmc.list(coda::mcmc(draws))
+
+  expect_no_error(assert_ordered_cp_draws(samples, cps, 0:10))
+
+  unordered_population = samples
+  unordered_population[[1]][1, "cp_2"] = 2
+  expect_error(
+    assert_ordered_cp_draws(unordered_population, cps, 0:10),
+    "population-level.*strictly ordered"
+  )
+
+  unordered_group = samples
+  unordered_group[[1]][1, "cp_1_id[A]"] = 5
+  expect_error(
+    assert_ordered_cp_draws(unordered_group, cps, 0:10),
+    "group-level.*strictly ordered"
+  )
+
+  out_of_range = samples
+  out_of_range[[1]][1, "cp_1"] = -1
+  expect_error(
+    assert_ordered_cp_draws(out_of_range, cps, 0:10),
+    "population-level.*observed range"
+  )
+})

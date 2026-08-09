@@ -112,11 +112,11 @@ Of course, it will usually be the other way around: setting priors manually will
 # Default priors on change points {#cp_prior}
 The following are treated more formally in the [mcp paper](https://osf.io/preprints/fzqxv/).
 
-The default priors order the population-level change points from left (`cp_1`) to right (`cp_2+`). User priors can relax the population-level ordering. Models with group-level change points additionally constrain their realized locations to remain ordered within every group. `mcp` offers two built-in population-level prior families with different tradeoffs:
+The default priors order the population-level change points from left (`cp_1`) to right (`cp_2+`). User-supplied bounds are used as written, but all sampled population- and group-level change points are checked for ordering; population-level change points are also checked against the observed x-range. `mcp` offers two built-in population-level prior families with different tradeoffs:
 
-* **Speed and estimation:** The default prior is suitable for estimation, prediction, and it works well for `loo()` cross-validation as well. It's main virtue is that it samples the change point posteriors relatively effectively, but it will often be deeply unfit for Bayes Factors if there are 3+ change points (see below). It may also favor "late" change points too much if estimating many change points with little data (e.g. 5 change points with 100 data points or 10 with 300).
+* **Regularizing t-tail prior:** The default for multiple change points uses sequentially truncated Student-t distributions centered at the minimum x. It samples efficiently, and is reasonably close to the dirichlet priors (see below), but its segment spacings are not exchangeable and it can regularize the middle spacings downward.
 
-* **Symmetric segment spacings:** Use the Dirichlet prior when its explicit joint prior on segment spacings matches the scientific question, particularly for Bayes factors or many change points. With equal concentration parameters it treats the spacings exchangeably; this is a substantive prior, not an uninformative one. It has well-known mathematical properties and precedent in [Bürkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/). It is not the default because it can sample orders of magnitude less efficiently. In these cases, increase the number of MCMC draws (e.g., `mcp(..., iter = 20000)`).
+* **Symmetric segment spacings:** `dirichlet(1)` is equivalent to sorting independent uniforms and treats the spacings exchangeably. This is a transparent substantive prior, not an uninformative one, but JAGS samples it much less efficiently than the t-tail prior. It follows [Bürkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/).
 
 With one change point, both specifications imply a uniform location within the observed range, though the direct uniform default samples more efficiently.
 
@@ -244,12 +244,12 @@ With exactly one change point, the default rule is `cp_1 = uniform(min = min(x),
 
 For 2+ change points, the default rule (on *all* change points) is `cp_i = student_t(df = n_cp() - 1, location = min(x), scale = (max(x) - min(x)) / n_cp())`, bounded below by the preceding change point and above by `max(x)`. This is not as complicated as it looks, so let me unpack it.
 
- * It is t-distributed with $N - 1$ degree of freedom (`n_cp() - 1`). This ensures narrower priors as the number of change points increase, so as to avoid excessive accumulation of densities at high $x$.
+ * It is t-distributed with $N - 1$ degrees of freedom (`n_cp() - 1`). Together with the decreasing scale, this makes the underlying distributions more concentrated as the number of change points increases.
  * Under the defaults, it is bounded below by the preceding population-level `cp` and above by `max(x)`. For example, `cp_3` is bounded below by `cp_2` and above by `max(x)`, keeping the default population-level change points ordered within the observed range.
- * The standard deviation is the distance between equally-spaced change points: `(max(x) - min(x)) / n_cp()`.
- * The mean is always the lowest observed `x`. Thus `cp_1` is a half-t and `cp_2+` are right tails of the same t. Hence the name "t-tail prior". Since they are estimated using MCMC, the fact that the *absolute* densities are smaller for later change points is of no importance since only the *relative* densities matter.
+ * The scale is `(max(x) - min(x)) / n_cp()`. This is a calibration choice, not the equal-segment spacing (which would divide by `n_cp() + 1`) and not the Student-t standard deviation; for low degrees of freedom the untruncated variance is not finite.
+ * The location parameter of the underlying Student-t is always the lowest observed `x`. Thus `cp_1` is a bounded half-t and `cp_2+` use sequentially truncated right tails of the same t, hence the name "t-tail prior". Their means are shifted by truncation and are not equal to `min(x)`.
 
-One side effect of the truncation is that later change points have greater prior probability density towards the right side of the x-axis. In practice, this "bias" is so weak that it takes a combination of many change points and few data for it to impact the posterior in any noticeable way.
+The sequential truncation does not produce uniform order statistics. The middle segments tend get narrower than the first/last segments. For non-small datasets, the effect on the posterior is negligible, though point-`hypothesis()` tests via Savage-Dickey would be strongly impacted.
 
 
 ## Dirichlet-based prior on change points

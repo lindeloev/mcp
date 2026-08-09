@@ -46,10 +46,12 @@ default_cp_specs = function(cps, context) {
     specs[[name]] = tibble::tibble(
       parameter = name,
       code = code,
-      description = if (j == 1) {
+      description = if (n_cp == 1) {
         "Within the observed change-point span"
+      } else if (j == 1) {
+        "Regularizing t-tail within the observed change-point span"
       } else {
-        paste0("Ordered after ", cps$name[j - 1], " within the observed change-point span")
+        paste0("Regularizing t-tail ordered after ", cps$name[j - 1], " within the observed change-point span")
       },
       source = "default"
     )

@@ -54,7 +54,7 @@ Here are some properties of group-level change-point deviations:
 
 **Hierarchical:** Consider the population-level change point `cp_1` and its associated group-level deviations `cp_1_id`. Their spread is governed by the population-level parameter `cp_1_sd`.
 
-**Constraints:** Realized group-specific change points are ordered within each group, and must be between adjacent population-level change points, i.e., `cp_{i-1} < cp_i[id] < cp_{i+1}` for all `i`.
+**Constraint:** Realized group-specific change points must remain strictly ordered within each group.
 
 Unlike predictor group-level effects, a change-point group effect applies only to the boundary where it is written. There is no carry-over as there is for group-level effects on RHS.
 
@@ -204,7 +204,7 @@ You can see the priors of the model like this:
 cbind(fit$prior)
 ```
 
-The prior `cp_1_sd` is the population-level standard deviation governing the `cp_1_id` deviations across levels of `id`. Change-point deviations are exactly zero-centered, while predictor group-level effects use ordinary hierarchical mean-zero deviations. Change-point deviations additionally receive sequential bounds, and their realized locations are constrained to remain ordered within each group.
+The prior `cp_1_sd` is the population-level standard deviation governing the `cp_1_id` deviations across levels of `id`. Change-point deviations are exactly zero-centered, while predictor group-level effects use ordinary hierarchical mean-zero deviations. Their realized locations are constrained to remain ordered within each group.
 
 
 # JAGS code

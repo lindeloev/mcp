@@ -114,3 +114,58 @@ assert_dpar = function(dpar, fit, type) {
 
   dpar
 }
+
+
+#' Check sampled population- and group-level change-point locations
+#'
+#' @keywords internal
+#' @noRd
+#' @param samples An `mcmc.list` after group levels have been recovered.
+#' @param cps The change-point table from `get_segment_tables()`.
+#' @param x The observed change-point predictor.
+assert_ordered_cp_draws = function(samples, cps, x) {
+  if (is.null(samples) || nrow(cps) == 0)
+    return(invisible(NULL))
+
+  x_range = range(x, na.rm = TRUE)
+  check_locations = function(locations, scope, check_range = FALSE) {
+    if (any(!is.finite(locations)))
+      stop("Sampled ", scope, " change points must be finite.")
+    if (check_range && any(locations < x_range[1] | locations > x_range[2]))
+      stop("Sampled ", scope, " change points must lie within the observed range of the change-point predictor.")
+    if (ncol(locations) > 1 && any(locations[, -1, drop = FALSE] <= locations[, -ncol(locations), drop = FALSE]))
+      stop("Sampled ", scope, " change points must remain strictly ordered in every draw.")
+  }
+
+  for (chain in samples) {
+    missing_cps = setdiff(cps$name, colnames(chain))
+    if (length(missing_cps) > 0)
+      stop_github("Sampled output is missing change point(s): ", and_collapse(missing_cps), ".")
+
+    population = chain[, cps$name, drop = FALSE]
+    check_locations(population, "population-level", check_range = TRUE)
+
+    varying = which(cps$varying)
+    if (length(varying) == 0 || nrow(cps) < 2)
+      next
+
+    first_name = cps$group_name[varying[1]]
+    first_prefix = paste0(first_name, "[")
+    group_cols = colnames(chain)[startsWith(colnames(chain), first_prefix)]
+    if (length(group_cols) == 0)
+      stop_github("Sampled output is missing group-level change point `", first_name, "`.")
+    group_levels = substring(group_cols, nchar(first_prefix) + 1L, nchar(group_cols) - 1L)
+    for (group_level in group_levels) {
+      realized = population
+      for (j in varying) {
+        group_col = paste0(cps$group_name[j], "[", group_level, "]")
+        if (!group_col %in% colnames(chain))
+          stop_github("Sampled output is missing group-level change point `", group_col, "`.")
+        realized[, j] = realized[, j] + chain[, group_col]
+      }
+      check_locations(realized, "group-level")
+    }
+  }
+
+  invisible(NULL)
+}
