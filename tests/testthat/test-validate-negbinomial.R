@@ -101,13 +101,15 @@ test_that("negative-binomial coefficients agree with MASS glm.nb", {
     size = 2.5
   )
 
-  fit_mcp = quiet_mcp(
+  fit_mcp = mcp(
     list(y ~ 1 + x),
     data,
     family = negbinomial(),
     adapt = 500,
     iter = 2000,
-    chains = 2
+    chains = 2,
+    warn = FALSE,
+    quiet = TRUE
   )
   fit_mass = MASS::glm.nb(y ~ x, data = data)
 

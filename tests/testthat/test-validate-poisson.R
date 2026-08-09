@@ -14,7 +14,7 @@ df = tibble::tibble(
   y = rpois(200, lambda = exp(1 + 0.15 * x + ifelse(group == "B", -0.5, 0)))
 )
 
-fit_mcp = quiet_mcp(model, df, family = poisson(), adapt = 500, iter = 2000, seed = 42)
+fit_mcp = mcp(model, df, family = poisson(), adapt = 500, iter = 2000, seed = 42, warn = FALSE, quiet = TRUE)
 
 # Tests
 test_that("Poisson inference against glm()", {
@@ -40,14 +40,16 @@ test_that("Poisson fixed change-point inference against glm()", {
     y = rpois(200, lambda = exp(1 + 0.1 * x + 0.2 * pmax(0, x - 5)))
   )
 
-  fit_mcp_cp = quiet_mcp(
+  fit_mcp_cp = mcp(
     list(y ~ 1 + x, ~ 0 + x),
     df_cp,
     family = poisson(),
     prior = list(cp_1 = 5),
     adapt = 500,
     iter = 2000,
-    seed = 42
+    seed = 42,
+    warn = FALSE,
+    quiet = TRUE
   )
 
   fit_glm_cp = glm(y ~ x + I(pmax(0, x - 5)), data = df_cp, family = poisson())

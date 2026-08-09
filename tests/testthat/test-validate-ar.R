@@ -14,7 +14,7 @@ df = data.frame(
   group = rep(c("A", "B"), 150)
 )
 
-fit_mcp = quiet_mcp(model, df, par_x = "x", adapt = 100, iter = 1000, chains = 2)
+fit_mcp = mcp(model, df, par_x = "x", adapt = 100, iter = 1000, chains = 2, warn = FALSE, quiet = TRUE)
 
 
 # Test stuff

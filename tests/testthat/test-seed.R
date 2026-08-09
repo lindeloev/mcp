@@ -65,7 +65,7 @@ test_that("mcp seed reproduces prior and posterior samples", {
   on.exit(future::plan(old_plan), add = TRUE)
 
   fit_seeded = function(seed) {
-    quiet_mcp(
+    suppressWarnings(mcp(
       seed_model,
       seed_data,
       par_x = "x",
@@ -74,8 +74,10 @@ test_that("mcp seed reproduces prior and posterior samples", {
       adapt = 20,
       iter = 30,
       inits = list(Intercept_1 = 0),
-      seed = seed
-    )
+      seed = seed,
+      warn = FALSE,
+      quiet = TRUE
+    ))
   }
 
   fit_1 = fit_seeded(123)

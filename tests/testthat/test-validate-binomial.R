@@ -15,7 +15,7 @@ df = tibble::tibble(
   y = rbinom(200, N, ilogit(2 - 0.1 * x + ifelse(group == "B", -1, 0)))
 )
 
-fit_mcp = quiet_mcp(model, df, family = binomial(), adapt = 100, iter = 1000, seed = 42)
+fit_mcp = mcp(model, df, family = binomial(), adapt = 100, iter = 1000, seed = 42, warn = FALSE, quiet = TRUE)
 
 # Tests
 test_that("Binomial inference against glm()", {

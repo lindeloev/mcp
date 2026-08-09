@@ -46,8 +46,7 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
   newdata[[empty$pars$y]] = simulated_y
 
   # Fit
-  quiet_out = purrr::quietly(mcp)(model, newdata, family = family, par_x = "x", chains = chains, adapt = adapt, iter = iter, seed = 42)  # Ensure convergence
-  fit = quiet_out$result
+  fit = mcp(model, newdata, family = family, par_x = "x", chains = chains, adapt = adapt, iter = iter, seed = 42, warn = FALSE, quiet = TRUE)  # Ensure convergence
   assign("fit", fit, envir = .GlobalEnv)  # for easier debugging
 
   test_matches_simulated(fit, min_ess)

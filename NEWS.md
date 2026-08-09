@@ -58,23 +58,23 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Methods like `fitted()` and `predict()` now accept `fitted(fit, varying = "cp")` and `fitted(fit, varying = "predictor")` as fast selectors for group-level effects in the corresponding formula part. Exact varying-parameter names remain supported too, `varying = TRUE` selects all, and `ranef()` continues to return all group-level effects.
 
--   Use `mcp(..., seed = 42)` for reproducible JAGS sampling. See `mcp_example("demo")$call` how to ensure reproducibility across simulation, fit, and plotting.
+-   Added `log_lik(fit)` which has same behavior and output format as `fitted(fit)` and `predict(fit)`.
 
 -   Memory improvement: The `mcpfit` is now \< 10% of the size as before because the log-likelihood is not computed by default anymore (no `fit$mcmc_loglik` anymore). You can add it using `fit = add_loglik(fit)` (adds `fit$loglik`) but if absent, it is automatically computed when calling relevant functions, e.g., `loo(fit)`.
 
 -   Sampling is now 1-10% faster due to a new formalization of the underlying JAGS code.
+
+-   Use `mcp(..., seed = 42)` for reproducible JAGS sampling. See `mcp_example("demo")$call` how to ensure reproducibility across simulation, fit, and plotting.
+
+-   `mcp(..., quiet = TRUE)` suppresses routine JAGS output and mcp sampling-status messages while preserving warnings and errors.
+
+-   `mcp(..., warn = TRUE)` now controls runtime convergence warnings (`Rhat > 1.01` or `ESS < 400`). Warning also appear in `summary(fit)` footer.
 
 -   Added AR/MA warnings: (1) for AR/MA models to `loo()`, `predict()`, etc. where the serial dependence is currently ignored. Proper handling requires leave-future-out or blocked cross-validation, which are not currently implemented in `mcp`. (2) when posterior probability is >10% of violation of AR-stationarity or MA-invertibility.
 
 -   Several new arguments to `loo`. `loo(fit, pointwise = TRUE)` uses `loo::loo.function()` for more memory-efficient (but slower) computation of LOO. Other new arguments include the usual from `fitted()` etc.: `loo(fit, ndraws = 1000, arma = FALSE, varying = FALSE)`.
 
 -   Added `interpolate_newdata(fit, by = NULL)` which generates a data.frame with all combinations of categorical predictors along with interpolated continuous predictors. Use `by` to include varying-effect groups. The documentation shows how this can be useful for generating custom plots when simple tweaking `plot()` is not enough.
-
--   Added `niterations(fit)` and `nchains(fit)` for convenience.
-
--   Added `log_lik(fit)` which has same behavior and output format as `fitted(fit)` and `predict(fit)`.
-
--   `mcp(..., warn = TRUE)` now controls runtime convergence warnings (`Rhat > 1.01` or `ESS < 400`). Warning also appear in `summary(fit)` footer.
 
 
 ## Minor breaking changes

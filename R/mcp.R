@@ -98,6 +98,8 @@
 #'   generators. When supplied, `inits` must be a single named list shared by all chains.
 #' @param warn Logical. Warn about non-convergence (`Rhat > 1.01` or `ESS < 400`)
 #'   after sampling? Defaults to `TRUE`.
+#' @param quiet Logical. Suppress routine JAGS output and mcp sampling-status
+#'   messages? Defaults to `FALSE`.
 #' @details Notes on priors:
 #'   * Order restriction is automatically applied to cp_\* parameters using
 #'       truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the
@@ -188,7 +190,8 @@ mcp = function(model,
                inits = NULL,
                jags_code = NULL,
                seed = NULL,
-               warn = TRUE) {
+               warn = TRUE,
+               quiet = FALSE) {
 
   ################
   # CHECK INPUTS #
@@ -260,6 +263,7 @@ mcp = function(model,
   checkmate::assert_list(inits, null.ok = TRUE)
   checkmate::assert_int(seed, lower = 1, null.ok = TRUE)
   checkmate::assert_flag(warn)
+  checkmate::assert_flag(quiet)
 
   # jags_code
   if(!is.null(jags_code))
@@ -356,7 +360,8 @@ mcp = function(model,
       n.iter = iter,
       n.adapt = adapt,
       inits = inits,
-      seed = seed
+      seed = seed,
+      quiet = quiet
     ) %>%
       recover_levels(data, group_effects)
 
@@ -383,7 +388,8 @@ mcp = function(model,
       n.iter = iter,
       n.adapt = adapt,
       inits = inits,
-      seed = seed
+      seed = seed,
+      quiet = quiet
     ) %>%
       recover_levels(data, group_effects)
 

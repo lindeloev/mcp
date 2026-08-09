@@ -26,7 +26,8 @@ run_jags = function(data,
                     n.iter,
                     n.adapt,
                     inits,
-                    seed
+                    seed,
+                    quiet
 ) {
 
   # Prevent failure of all mcp methods when length(pars) <= 2.
@@ -37,26 +38,38 @@ run_jags = function(data,
 
   # Define the sampling function in this environment.
   # Can be used sequentially or in parallel.
-  do_sampling = function(inits, n.chains, quiet) {
-    # Compile model
-    jags_connection = textConnection(jags_code)
-    on.exit(close(jags_connection), add = TRUE)
-    jm = rjags::jags.model(
-      file = jags_connection,
-      data = jags_data,
-      inits = inits,
-      n.chains = n.chains,
-      n.adapt = n.adapt,
-      quiet = quiet
-    )
+  do_sampling = function(inits, n.chains) {
+    sample_jags = function() {
+      # Compile model
+      jags_connection = textConnection(jags_code)
+      on.exit(close(jags_connection), add = TRUE)
+      jm = rjags::jags.model(
+        file = jags_connection,
+        data = jags_data,
+        inits = inits,
+        n.chains = n.chains,
+        n.adapt = n.adapt,
+        quiet = quiet
+      )
 
-    # Sample and return
-    rjags::coda.samples(
-      model = jm,
-      variable.names = pars,
-      n.iter = n.iter,
-      quiet = quiet
-    )
+      # Sample and return
+      rjags::coda.samples(
+        model = jm,
+        variable.names = pars,
+        n.iter = n.iter,
+        quiet = quiet
+      )
+    }
+
+    # rjags still prints some adaptation notices with quiet = TRUE.
+    if (quiet) {
+      samples = NULL
+      save_samples = function() samples <<- sample_jags()
+      capture.output(save_samples())
+    } else {
+      samples = sample_jags()
+    }
+    samples
   }
 
   # Use JAGS directly under a sequential future plan. This compiles the model
@@ -67,19 +80,18 @@ run_jags = function(data,
     inits = get_jags_inits(inits, seed, n.chains, sample)
     samples = try(do_sampling(
       inits = inits,
-      n.chains = n.chains,
-      quiet = FALSE
+      n.chains = n.chains
     ))
   } else {
     # Submit one chain per future. The user's future plan controls the backend.
-    message("Parallel sampling in progress...")
+    if (!quiet)
+      message("Parallel sampling in progress...")
     if (is.null(seed))
       seed = sample.int(.Machine$integer.max - 2 * n.chains, 1)
     inits = get_jags_inits(inits, seed, n.chains, sample)
     samples = future.apply::future_lapply(
       inits,
       n.chains = 1,
-      quiet = TRUE,
       FUN = do_sampling,
       future.seed = TRUE
     )
@@ -91,7 +103,8 @@ run_jags = function(data,
 
   # Sampling finished
   passed = proc.time() - timer
-  message("Finished sampling in ", round(passed["elapsed"], 1), " seconds\n")
+  if (!quiet)
+    message("Finished sampling in ", round(passed["elapsed"], 1), " seconds\n")
 
   # Recover the levels of varying effects if it succeeded
   if (coda::is.mcmc.list(samples)) {

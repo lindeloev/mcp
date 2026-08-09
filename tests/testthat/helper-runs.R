@@ -1,15 +1,3 @@
-# Use all mcp functions on a given model to check that it does not result in
-# errors.
-quiet_mcp = function(...) {
-  suppressWarnings(suppressMessages({
-    capture.output({
-      fit = mcp(...)
-    })
-    fit
-  }))
-}
-
-
 get_mcp_test_level = function() {
   if (identical(Sys.getenv("MCP_TEST_LEVEL"), "release")) return("release")
   "default"
@@ -37,13 +25,14 @@ test_runs = function(model,
                      test_s3 = FALSE) {
 
   # Without sampling, on a data.frame.
-  empty = quiet_mcp(
+  empty = mcp(
     model = model,
     data = data,
     prior = prior,
     family = family,
     par_x = par_x,
-    sample = FALSE
+    sample = FALSE,
+    quiet = TRUE
   )
 
   testthat::expect_true(is.list(empty$model), model)
@@ -69,16 +58,27 @@ test_runs = function(model,
     if (rbinom(1, 1, 0.5) == 1)
       data = tibble::as_tibble(data)
 
-    # Capture (expected) messages and warnings
-    quiet_out = purrr::quietly(mcp)(  # Do not print to console
-      model = model,
-      data = data,
-      family = family,
-      sample = "both",  # prior and posterior to check hypotheses
-      par_x = par_x,
-      adapt = 6,
-      iter = 18,  # Keep enough draws for the minimum supported loo version.
-      chains = 2  # run sequentially under the default future plan
+    warnings = messages = character()
+    fit = withCallingHandlers(
+      mcp(
+        model = model,
+        data = data,
+        family = family,
+        sample = "both",  # prior and posterior to check hypotheses
+        par_x = par_x,
+        adapt = 6,
+        iter = 18,  # Keep enough draws for the minimum supported loo version.
+        chains = 2,  # run sequentially under the default future plan
+        quiet = TRUE
+      ),
+      warning = function(condition) {
+        warnings <<- c(warnings, conditionMessage(condition))
+        invokeRestart("muffleWarning")
+      },
+      message = function(condition) {
+        messages <<- c(messages, conditionMessage(condition))
+        invokeRestart("muffleMessage")
+      }
     )
 
     # Allow for known messages and wornings that does not signify errors
@@ -88,24 +88,22 @@ test_runs = function(model,
       "Posterior AR/MA root smoke test"
     )
     accepted_messages = c(
-      "Finished sampling in",
       "Autoregression currently assumes homoskedasticity",
       "You are using ar\\(\\) together"
     )
 
-    for (warn in quiet_out$warnings) {
+    for (warn in warnings) {
       if (!any(stringr::str_starts(warn, accepted_warnings))) {
         testthat::fail("Got an unknown warning: ", warn)
       }
     }
-    for (msg in quiet_out$messages) {
+    for (msg in messages) {
       if (!any(stringr::str_starts(msg, accepted_messages))) {
         testthat::fail("Got an unknown message: ", msg)
       }
     }
 
     # Assign globally so errors can be inspected upon hard fail
-    fit = quiet_out$result
 
     if (is_arma(fit))
       test_arma_simulation(fit)
@@ -198,19 +196,17 @@ test_summary = function(fit, varying_cols, prior = FALSE) {
     summary_cols = append(summary_cols, c("match", "sim"), after = 1)
     verbose_summary_cols = append(verbose_summary_cols, c("match", "sim"), after = 3)
   }
-  quiet_summary = purrr::quietly(summary)(fit, prior = prior)
-  result = quiet_summary$result  # Do not print to console
-  output = quiet_summary$output  # Do not print to console
+  output = capture.output(result <- summary(fit, prior = prior))
   testthat::expect_named(result, summary_cols)
   testthat::expect_true(all(result$name %in% fit$pars$population))  # All parameters
-  verbose_result = purrr::quietly(summary)(fit, prior = prior, verbose = TRUE)$result
+  capture.output(verbose_result <- summary(fit, prior = prior, verbose = TRUE))
   testthat::expect_named(verbose_result, verbose_summary_cols)
   testthat::expect_named(fixef(fit, prior = prior), summary_cols)
   testthat::expect_named(fixef(fit, prior = prior, verbose = TRUE), verbose_summary_cols)
 
   # If there are varying effects
   if (length(varying_cols) > 0) {
-    testthat::expect_match(output, "ranef\\(")  # noticed about varying effects
+    testthat::expect_true(any(grepl("ranef\\(", output)))  # noticed about varying effects
     varying = ranef(fit, prior = prior)
     testthat::expect_true(is.character(varying$name))
     testthat::expect_true(is.numeric(varying$mean))

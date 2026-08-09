@@ -14,7 +14,7 @@ df = tibble::tibble(
   y = 3 + 0.5 * x + ifelse(group == "B", -2, 0) + rnorm(200, sd = 1.5)
 )
 
-fit_mcp = quiet_mcp(model, df, family = gaussian(), adapt = 500, iter = 2000, seed = 42)
+fit_mcp = mcp(model, df, family = gaussian(), adapt = 500, iter = 2000, seed = 42, warn = FALSE, quiet = TRUE)
 
 # Tests
 test_that("Gaussian inference against lm()", {
@@ -40,14 +40,16 @@ test_that("Gaussian fixed change-point inference against lm()", {
     y = 2 + 0.5 * x + 1.2 * pmax(0, x - 10) + rnorm(200, sd = 1)
   )
 
-  fit_mcp_cp = quiet_mcp(
+  fit_mcp_cp = mcp(
     list(y ~ 1 + x, ~ 0 + x),
     df_cp,
     family = gaussian(),
     prior = list(cp_1 = 10),
     adapt = 500,
     iter = 2000,
-    seed = 42
+    seed = 42,
+    warn = FALSE,
+    quiet = TRUE
   )
 
   fit_lm_cp = lm(y ~ x + I(pmax(0, x - 10)), data = df_cp)

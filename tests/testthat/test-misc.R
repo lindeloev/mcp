@@ -235,7 +235,7 @@ test_that("parameter-name collisions give a useful error", {
 # Test on new fit
 demo_settings = mcp_example("demo", sample = FALSE, plot = FALSE)
 demo_fit_iter = 50  # only niterations()/nchains() metadata is checked below, not recovery
-demo_fit2 = quiet_mcp(demo_settings$model, demo_settings$data, adapt = 50, iter = demo_fit_iter)
+demo_fit2 = suppressWarnings(mcp(demo_settings$model, demo_settings$data, adapt = 50, iter = demo_fit_iter, warn = FALSE, quiet = TRUE))
 
 test_that("binomial example can be constructed without sampling", {
   fit = mcp_example("binomial", sample = FALSE, plot = FALSE)
@@ -468,7 +468,7 @@ test_that("warn parameter and summary convergence footer work as expected", {
   model = list(y ~ 1, ~ 1)
 
   # 1. warn = FALSE suppresses sampling convergence warning
-  fit_nowarn = quiet_mcp(model, data, par_x = "x", iter = 50, adapt = 50, warn = FALSE)
+  fit_nowarn = suppressWarnings(mcp(model, data, par_x = "x", iter = 50, adapt = 50, warn = FALSE, quiet = TRUE))
   expect_equal(fit_nowarn$.internal$warn, FALSE)
 
   # 2. summary() includes warning footer if convergence is poor

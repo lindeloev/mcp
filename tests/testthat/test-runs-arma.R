@@ -48,7 +48,7 @@ test_good(good_arma)
 
 test_that("AR/MA model checks warn about conditional validation", {
   data = data.frame(x = 1:4, y = 1:4)
-  fit = quiet_mcp(list(y ~ 1 + ar(1)), data = data, par_x = "x", sample = FALSE)
+  fit = mcp(list(y ~ 1 + ar(1)), data = data, par_x = "x", sample = FALSE, quiet = TRUE)
 
   expect_warning(
     try(pp_check(fit, ndraws = 1), silent = TRUE),

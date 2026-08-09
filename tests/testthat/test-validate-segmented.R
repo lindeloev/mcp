@@ -22,7 +22,7 @@ test_that("Gaussian 2-changepoint model agrees with segmented()", {
     ~ 0 + x,
     ~ 0 + x
   )
-  fit_mcp = quiet_mcp(model, df, family = gaussian(), adapt = 500, iter = 2000, seed = 42)
+  fit_mcp = mcp(model, df, family = gaussian(), adapt = 500, iter = 2000, seed = 42, warn = FALSE, quiet = TRUE)
 
   # Extract mcp estimates
   fix_mcp = fixef(fit_mcp)
@@ -72,7 +72,7 @@ test_that("Poisson 2-changepoint model agrees with segmented()", {
     ~ 0 + x,
     ~ 0 + x
   )
-  fit_mcp = quiet_mcp(model, df, family = poisson(), adapt = 500, iter = 2000, seed = 123)
+  fit_mcp = mcp(model, df, family = poisson(), adapt = 500, iter = 2000, seed = 123, warn = FALSE, quiet = TRUE)
 
   # Extract mcp estimates
   fix_mcp = fixef(fit_mcp)
@@ -120,7 +120,7 @@ test_that("Binomial 2-changepoint model agrees with segmented()", {
     ~ 0 + x,
     ~ 0 + x
   )
-  fit_mcp = quiet_mcp(model, df, family = binomial(), adapt = 500, iter = 2000, seed = 42)
+  fit_mcp = mcp(model, df, family = binomial(), adapt = 500, iter = 2000, seed = 42, warn = FALSE, quiet = TRUE)
 
   # Extract mcp estimates
   fix_mcp = fixef(fit_mcp)
