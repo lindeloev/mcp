@@ -10,12 +10,12 @@
 ^docs$
 ^dev$
 ^data-raw$
-^man/figures
 ^pkgdown$
 ^revdep$
 ^vignettes$
 
 # Files
+^README\.Rmd$
 AGENTS.md
 ^CONTRIBUTING\.md$
 cran-comments.md

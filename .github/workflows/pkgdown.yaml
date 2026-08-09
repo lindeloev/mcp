@@ -11,6 +11,7 @@ on:
       - 'man/**'
       - 'DESCRIPTION'
       - 'README.md'
+      - 'README.Rmd'
       - 'NEWS.md'
       - '.github/workflows/pkgdown.yaml'
   pull_request:
@@ -21,6 +22,7 @@ on:
       - 'man/**'
       - 'DESCRIPTION'
       - 'README.md'
+      - 'README.Rmd'
       - 'NEWS.md'
       - '.github/workflows/pkgdown.yaml'
   workflow_dispatch:
@@ -56,6 +58,10 @@ jobs:
         with:
           extra-packages: any::pkgdown, any::segmented, local::.
           needs: website
+
+      - name: Render README
+        run: rmarkdown::render("README.Rmd", output_format = "github_document", quiet = TRUE)
+        shell: Rscript {0}
 
       - name: Build collage
         run: Rscript vignettes/_figures/mcp_showcase.R
