@@ -202,6 +202,7 @@ mcp = function(model,
   # Check model
   checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
   assert_rel(model)
+  assert_no_offsets(model)
 
   # Check data and data-model correspondence
   if (missing(data) || is.null(data) || !is.data.frame(data))

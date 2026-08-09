@@ -73,6 +73,31 @@ get_rhs = function(form) {
 }
 
 
+#' Reject formula offsets until they are implemented
+#'
+#' @keywords internal
+#' @noRd
+#' @param model An mcp model.
+#' @return `NULL`, invisibly. Stops if `offset()` occurs anywhere in the model.
+assert_no_offsets = function(model) {
+  contains_offset = function(expr) {
+    if (!is.call(expr))
+      return(FALSE)
+
+    call_name = deparse1(expr[[1]])
+    if (call_name %in% c("offset", "stats::offset"))
+      return(TRUE)
+
+    any(vapply(as.list(expr)[-1], contains_offset, logical(1)))
+  }
+
+  if (any(vapply(model, contains_offset, logical(1))))
+    stop("Formula offsets using `offset()` are not implemented yet.", call. = FALSE)
+
+  invisible(NULL)
+}
+
+
 #' Returns all variables in the predictor parts of an mcpmodel
 #'
 #' @aliases get_rhs_vars

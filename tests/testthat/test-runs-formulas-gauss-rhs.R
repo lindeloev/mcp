@@ -76,6 +76,26 @@ test_that("formula functions reject multiple terms containing par_x", {
   )
 })
 
+test_that("formula offsets are rejected explicitly", {
+  offset_models = list(
+    list(y ~ 1 + offset(log(ok_x))),
+    list(y ~ 1 + sigma(1 + offset(ok_x))),
+    list(y ~ 1 + ar(1, 1 + offset(ok_x))),
+    list(y ~ 1 + stats::offset(ok_x))
+  )
+
+  for (model in offset_models) {
+    expect_error(
+      mcp(model, data_gauss, par_x = "x", sample = FALSE),
+      "Formula offsets using `offset()` are not implemented yet.",
+      fixed = TRUE
+    )
+  }
+
+  data = transform(data_gauss, offset = ok_x)
+  expect_no_error(mcp(list(y ~ 1 + offset), data, par_x = "x", sample = FALSE))
+})
+
 test_that("transformations use the original par_x while segment bases stay local", {
   data = data.frame(x = 0:10, y = 0)
   fit = mcp(
