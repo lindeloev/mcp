@@ -160,12 +160,12 @@ test_that("generated JAGS uses the same bounded GARMA residuals", {
     sample = FALSE
   )
 
-  expect_match(poisson_fit$jags_code, "garma_y_\\[i_\\] = \\(0\\.01 \\+ y\\[i_\\]\\)")
+  expect_match(poisson_fit$jags_code, "garma_y_\\[i_\\] = max\\(y\\[i_\\], garma_boundary_\\[i_\\]\\)")
   expect_match(poisson_fit$jags_code, "garma_link_y_\\[i_\\] = log\\(garma_y_\\[i_\\]\\)")
   expect_match(poisson_fit$jags_code, "resid_abs_\\[i_\\] = garma_link_y_\\[i_\\] - link_mu_\\[i_\\]")
   expect_match(poisson_fit$jags_code, "resid_ma_\\[i_\\] = garma_link_y_\\[i_\\] - link_mu_\\[i_\\] - resid_arma_\\[i_\\]")
   expect_match(poisson_fit$jags_code, "ma1_\\[i_\\] \\* resid_ma_\\[i_ - 1\\]")
-  expect_match(binomial_fit$jags_code, "garma_y_\\[i_\\] = \\(0\\.01 \\+ 0\\.98 \\* y\\[i_\\] / N\\[i_\\]\\)")
+  expect_match(binomial_fit$jags_code, "garma_y_\\[i_\\] = min\\(max\\(y\\[i_\\], garma_boundary_\\[i_\\]\\), N\\[i_\\] - garma_boundary_\\[i_\\]\\) / N\\[i_\\]")
   expect_match(binomial_fit$jags_code, "garma_link_y_\\[i_\\] = logit\\(garma_y_\\[i_\\]\\)")
   expect_match(segmented_fit$jags_code, "\\(x\\[i_\\] < cp_1\\) \\* 0\\.1")
   expect_match(segmented_fit$jags_code, "\\(x\\[i_\\] >= cp_1\\) \\* 0\\.2")

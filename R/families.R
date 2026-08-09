@@ -251,7 +251,10 @@ mcpfamily_binomial = function(family) {
   garma = if (family$link == "logit") {
     list(
       observed_r = function(y, data, boundary) pmin(pmax(y, boundary), data$trials - boundary) / data$trials,
-      observed_jags = function(context) paste0("(0.01 + 0.98 * ", context$y, " / ", context$aux("trials"), ")")
+      observed_jags = function(context) paste0(
+        "min(max(", context$y, ", ", context$boundary, "), ",
+        context$aux("trials"), " - ", context$boundary, ") / ", context$aux("trials")
+      )
     )
   }
 
@@ -357,7 +360,7 @@ mcpfamily_poisson = function(family) {
   garma = if (family$link == "log") {
     list(
       observed_r = function(y, data, boundary) pmax(y, boundary),
-      observed_jags = function(context) paste0("(0.01 + ", context$y, ")")
+      observed_jags = function(context) paste0("max(", context$y, ", ", context$boundary, ")")
     )
   }
 
