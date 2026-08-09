@@ -4,7 +4,8 @@
 #' distributions of the parameters of each segment as well as the change points
 #' between segments. [See more details and worked examples on the mcp website](https://lindeloev.github.io/mcp/).
 #' All segments must regress on the same x-variable. Change
-#' points are forced to be ordered using truncation of the priors. You can run
+#' points use ordered default priors, but user-specified priors can relax that
+#' constraint. Group-specific change points are not necessarily ordered. You can run
 #' `fit = mcp(model, data, sample=FALSE)` to avoid sampling if you just want to
 #' inspect the priors (`fit$prior` and [prior_summary()]), the JAGS code
 #' `fit$jags_code`, or the R function to simulate data (`fit$simulate`).
@@ -27,9 +28,9 @@
 #'     intercept, or `~ 1 + (factor || id)` for independent intercept and
 #'     factor-contrast deviations. [Read more](https://lindeloev.github.io/mcp/articles/varying.html).
 #'
-#'   * *Variance:* e.g., `~sigma(1)` for a simple variance change or
-#'     `~sigma(1 + x + group)`) for more advanced variance structures. Explicit
-#'     sigma formulas model log-SD, while the implicit constant `sigma_1` in a
+#'   * *Gaussian residual standard deviation:* e.g., `~sigma(1)` for a simple
+#'     standard-deviation change or `~sigma(1 + x + group)`) for more advanced
+#'     structures. Explicit `sigma()` formulas model log-SD, while the implicit constant `sigma_1` in a
 #'     model without `sigma()` remains on the response scale.
 #'     [Read more](https://lindeloev.github.io/mcp/articles/variance.html)
 #'
@@ -42,24 +43,25 @@
 #'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
 #'
 #' @param prior Named list. Names are parameter names (`cp_i`, `Intercept_i`, `xvar_i`,
-#'  `sigma``) and the values are either
+#'  `sigma`) and the values are either
 #'
 #'  * A JAGS distribution (e.g., `Intercept_1 = "dnorm(0, 1) T(0,)"`) indicating a
-#'      conventional prior distribution. Uninformative priors based on data
-#'      properties are used where priors are not specified. This ensures good
-#'      parameter estimations, but it is a questionable for hypothesis testing.
+#'      conventional prior distribution. Data-calibrated, regularizing defaults
+#'      are used where priors are not specified. These are designed for stable
+#'      estimation and prediction, but should be justified before hypothesis testing.
 #'      `mcp` uses SD (not precision) for dnorm, dt, dlogis, etc. See
-#'      details. Change points are forced to be ordered through the priors using
-#'      truncation, except for uniform priors where the lower bound should be
-#'      greater than the previous change point, `dunif(cp_1, max(time))`.
+#'      details. Default population-level change-point priors are ordered using
+#'      truncation. User-specified `dunif()` priors and explicit truncations are
+#'      used as written, so users must supply any desired ordering bounds, e.g.,
+#'      `dunif(cp_1, max(time))` for `cp_2`.
 #'  * A numerical value (e.g., `Intercept_1 = -2.1`) indicating a fixed value.
 #'  * A model parameter name (e.g., `Intercept_2 = "Intercept_1"`), indicating that this parameter is shared -
-#'      typically between segments. If two varying effects are shared this way,
+#'      typically between segments. If two group-level deviations are shared this way,
 #'      they will need to have the same grouping variable.
 #'  * A scaled Dirichlet prior is supported for change points if they are all set to
-#'      `cp_i = "dirichlet(N)` where `N` is the alpha for this change point and
-#'      `N = 1` is most often used. This prior is less informative about the
-#'      location of the change points than the default uniform prior, but it
+#'      `cp_i = "dirichlet(N)"` where `N` is the alpha for this change point and
+#'      `N = 1` is most often used. This prior is symmetric over segment spacings,
+#'      unlike the regularizing t-tail default for multiple change points, but it
 #'      samples less efficiently, so you will often need to set `iter` higher.
 #'      It is recommended for hypothesis testing and for the estimation of more
 #'      than 5 change points. [Read more](https://lindeloev.github.io/mcp/articles/priors.html).
@@ -101,10 +103,11 @@
 #' @param quiet Logical. Suppress routine JAGS output and mcp sampling-status
 #'   messages? Defaults to `FALSE`.
 #' @details Notes on priors:
-#'   * Order restriction is automatically applied to cp_\* parameters using
-#'       truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the
-#'       x-axis UNLESS you do it yourself. The one exception is for dunif
-#'       distributions where you have to do it as above.
+#'   * Default population-level `cp_\*` priors are ordered. For user priors,
+#'       `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior has neither
+#'       explicit truncation nor an inherently bounded form such as `dunif()` or
+#'       `dirichlet()`. Group-level change-point deviations are not guaranteed to
+#'       preserve the population-level ordering.
 #'   * Data-dependent prior values can be written directly, for example
 #'       `min(time)`, `max(time)`, `median(response)`, `mad(response)`,
 #'       `max(time) - min(time)`, `segment_width(time)`, `n_segments()`, and `n_cp()`.

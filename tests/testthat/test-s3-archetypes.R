@@ -2,7 +2,7 @@ test_that("S3 methods work on archetypal Gaussian fit", {
   test_runs(list(y ~ 1 + x, ~ 0 + x), test_s3 = TRUE)
 })
 
-test_that("S3 methods work on archetypal varying-effects fit", {
+test_that("S3 methods work on archetypal group-level-effects fit", {
   test_runs(list(y ~ 1 + (1 | id), ~ 0 + x), test_s3 = TRUE)
 })
 

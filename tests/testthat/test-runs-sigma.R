@@ -1,14 +1,14 @@
 #################
-# TEST VARIANCE #
+# TEST GAUSSIAN STANDARD DEVIATION #
 #################
-bad_variance = list(
+bad_sigma = list(
   list(y ~ 1 + sigma(q))  # variable does not exist
 )
 
-test_bad(bad_variance)
+test_bad(bad_sigma)
 
 
-good_variance = list(
+good_sigma = list(
   list(y ~ 1 + sigma(1)),
   list(y ~ 1 + sigma(1 + (1 | id))),
   list(y ~ 1 + sigma(1 + (ok_id_factor || id))),
@@ -20,4 +20,4 @@ good_variance = list(
        ~ 0 + sigma(1 + x))
 )
 
-test_good(good_variance)
+test_good(good_sigma)

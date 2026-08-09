@@ -183,8 +183,8 @@ get_formula_r = function(formula_jags, predictors, group_effects, pars) {
   if (length(cp_pars) > 0) {
     replace_args = c(
       replace_args,
-      stats::setNames(paste0(" (args$", cp_pars, " + "), paste0(" (", cp_pars, " + ")),  # varying change point
-      stats::setNames(paste0(" + args$", cp_pars, ")"), paste0(" + ", cp_pars, ")")),  # varying change point
+      stats::setNames(paste0(" (args$", cp_pars, " + "), paste0(" (", cp_pars, " + ")),  # group-level change point
+      stats::setNames(paste0(" + args$", cp_pars, ")"), paste0(" + ", cp_pars, ")")),  # group-level change point
       stats::setNames(paste0(">= args$", cp_pars), paste0(">= ", cp_pars)),
       stats::setNames(paste0("< args$", cp_pars), paste0("< ", cp_pars)),
       stats::setNames(paste0(") - args$", cp_pars), paste0(") - ", cp_pars))
@@ -204,6 +204,3 @@ get_formula_r = function(formula_jags, predictors, group_effects, pars) {
   class(formula_r) = c("mcptext", "character")  # Nicer printing
   formula_r
 }
-
-
-

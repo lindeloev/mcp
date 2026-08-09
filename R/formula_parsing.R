@@ -362,14 +362,14 @@ unpack_cp = function(form_cp, i) {
   if (!is.null(form_varying)) {
     varying_terms = attr(stats::terms(form_varying), "term.labels")
     if (length(varying_terms) > 1)
-      stop("Error in segment", i, " (change point): only one varying effect allowed. Found ", form_cp)
+      stop("Error in segment", i, " (change point): only one group-level effect is allowed. Found ", form_cp)
 
     varying_parts = strsplit(gsub(" ", "", varying_terms), "\\|")[[1]]
     if (!varying_parts[1] == "1")
-      stop("Error in segment ", i, " (change point): Only plain intercepts are allowed in varying effects, e.g., (1|id).", i)
+      stop("Error in segment ", i, " (change point): Only plain intercepts are allowed in group-level effects, e.g., (1|id).", i)
 
     if (!grepl("^[A-Za-z._0-9]+$", varying_parts[2]))
-      stop("Error in segment ", i, " (change point): invalid format of grouping variable in varying effects. Got: ", varying_parts[2])
+      stop("Error in segment ", i, " (change point): invalid grouping-variable format in group-level effect. Got: ", varying_parts[2])
   }
 
   # Population-level effects
@@ -378,18 +378,18 @@ unpack_cp = function(form_cp, i) {
     stop("Error in segment ", i, " (change point): Only intercepts (1) are allowed in population-level effects.")
 
   if (is.null(form_varying) && attrs$intercept == 0)
-    stop("Error in segment ", i, " (change point): no intercept or varying effect. You can do e.g., ~ 1 or ~ (1 |id).")
+    stop("Error in segment ", i, " (change point): no population-level intercept or group-level effect. You can do e.g., ~ 1 or ~ (1 |id).")
 
   # Return as list.
   if (!is.null(form_varying)) {
-    # If there is a varying effect
+    # If there is a group-level effect
     return(tibble::tibble(
       cp_int = attrs$intercept == 1,
       cp_varying = ifelse(varying_parts[1] == "1", TRUE, NA),  # placeholder for later
       cp_group_col = varying_parts[2]
     ))
   } else {
-    # If there is no varying effect
+    # If there is no group-level effect
     return(tibble::tibble(
       cp_int = attrs$intercept == 1,
       cp_varying = FALSE,

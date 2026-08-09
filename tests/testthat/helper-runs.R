@@ -204,9 +204,9 @@ test_summary = function(fit, varying_cols, prior = FALSE) {
   testthat::expect_named(fixef(fit, prior = prior), summary_cols)
   testthat::expect_named(fixef(fit, prior = prior, verbose = TRUE), verbose_summary_cols)
 
-  # If there are varying effects
+  # If there are group-level effects
   if (length(varying_cols) > 0) {
-    testthat::expect_true(any(grepl("ranef\\(", output)))  # noticed about varying effects
+    testthat::expect_true(any(grepl("ranef\\(", output)))  # notice about group-level effects
     varying = ranef(fit, prior = prior)
     testthat::expect_true(is.character(varying$name))
     testthat::expect_true(is.numeric(varying$mean))
@@ -292,10 +292,10 @@ test_hypothesis = function(fit, prior) {
     varying_col_ids = stringr::str_detect(mcmc_vars, varying_starts)
     varying_cols = paste0("`", mcmc_vars[varying_col_ids], "`")  # Add these for varying
 
-    # Test single varying effect
+    # Test one group-level deviation
     run_test_hypothesis(fit, varying_cols[1], prior = prior)
 
-    # Test multiple varying effects
+    # Test multiple group-level deviations
     if (length(varying_cols) > 1)
       run_test_hypothesis(fit, paste0(varying_cols[1], " + ", varying_cols[2]), prior = prior)
   }

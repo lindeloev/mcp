@@ -115,7 +115,7 @@ test_matches_simulated = function(fit, min_ess) {
   correctly_estimated = (sum(!matches) <= max_failures)
 
   # At least some effective samples for structural parameters. Individual
-  # varying effects are still checked for recovery above, but their ESS is not
+  # Group-level deviations are still checked for recovery above, but their ESS is not
   # a useful regression signal because it is dominated by partial pooling.
   ess_summaries = summaries[!grepl("[", summaries$name, fixed = TRUE), ]
   good_eff = all(ess_summaries$ess_bulk > min_ess & ess_summaries$ess_tail > min_ess)

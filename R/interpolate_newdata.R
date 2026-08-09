@@ -57,19 +57,19 @@ get_x_values = function(fit, by = NULL, prior = FALSE) {
 #' @param data fit$data
 #' @param pars fit$pars
 #' @param at Named list overriding the default means.
-#' @param varying_cols Varying-effect columns to exclude from continuous
+#' @param group_cols Grouping columns to exclude from continuous
 #'   predictors.
 #' @return `data.frame` with one column for each continuous predictor.
 #'   `NULL` if there are no continuous predictors.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_continuous_at = function(data, pars, at = NULL, varying_cols = NULL) {
+get_continuous_at = function(data, pars, at = NULL, group_cols = NULL) {
   checkmate::assert_data_frame(data)
   checkmate::assert_list(pars)
 
   # Get numeric predictor columns
   numeric_data = data[, sapply(data, is.numeric), drop = FALSE]
-  numeric_data = numeric_data[, colnames(numeric_data) %notin% c(pars$x, pars$y, pars$weights, varying_cols), drop = FALSE]
+  numeric_data = numeric_data[, colnames(numeric_data) %notin% c(pars$x, pars$y, pars$weights, group_cols), drop = FALSE]
 
   checkmate::assert_list(at, types = "numeric", any.missing = FALSE, names = "unique", null.ok = TRUE)
   if (length(at) > 0 && is.null(names(at)))
@@ -97,7 +97,7 @@ get_continuous_at = function(data, pars, at = NULL, varying_cols = NULL) {
 #'
 #' @aliases interpolate_newdata
 #' @param fit An `mcpfit` object.
-#' @param by Character vector of categorical or varying-effect columns to evaluate separately.
+#' @param by Character vector of categorical or group-level columns to evaluate separately.
 #'   Categorical model predictors are always included.
 #' @param x_values Numeric vector of x-values to evaluate at.
 #' @param at Named list setting additional continuous predictors to fixed values.
@@ -107,7 +107,7 @@ get_continuous_at = function(data, pars, at = NULL, varying_cols = NULL) {
 #' change points where the values can change abruptly, but lower resolution in
 #' between to speed up the computation.
 #'
-#' Categorical variables and requested varying-effect groups are combined factorially (all level combinations).
+#' Categorical variables and requested grouping factors are combined factorially (all level combinations).
 #' Additional continuous predictors are held at their observed means, or at values supplied through `at`.
 #' @return `tibble` with
 #'  * Cols for par_x
@@ -145,17 +145,17 @@ interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by),
   x_values = force(x_values)
 
   # Get unique predictors
-  varying_cols = unique(stats::na.omit(get_fit_model_tables(fit)$group_effects$group_col))
-  categorical_cols = setdiff(names(get_categorical_levels(fit$data)), varying_cols)
-  by = unique(c(categorical_cols, intersect(varying_cols, by)))
-  # Numeric varying-group IDs are discrete even when they are not requested
+  group_cols = unique(stats::na.omit(get_fit_model_tables(fit)$group_effects$group_col))
+  categorical_cols = setdiff(names(get_categorical_levels(fit$data)), group_cols)
+  by = unique(c(categorical_cols, intersect(group_cols, by)))
+  # Numeric group IDs are discrete even when they are not requested
   # for evaluation, so never interpolate them as continuous predictors.
   by_grid = if (length(by) == 0) {
     data.frame(.row = 1)[, FALSE, drop = FALSE]
   } else {
     lapply(fit$data[, by, drop = FALSE], unique) %>% expand.grid()
   }
-  continuous_at = get_continuous_at(fit$data, fit$pars, at, varying_cols)
+  continuous_at = get_continuous_at(fit$data, fit$pars, at, group_cols)
   newdata = by_grid %>% tidyr::expand_grid("{fit$pars$x}" := x_values)
   if (!is.null(continuous_at))
     newdata = tidyr::expand_grid(newdata, continuous_at)

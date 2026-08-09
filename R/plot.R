@@ -37,13 +37,13 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 #'   * `TRUE` Add 2.5% and 97.5% quantiles. Corresponds to
 #'       `q_fit = c(0.025, 0.975)`.
 #'   * `FALSE` No quantiles
-#'   * A vector of quantiles. For example, `quantiles = 0.5`
-#'       plots the median and `quantiles = c(0.2, 0.8)` plots the 20% and 80%
+#'   * A vector of quantiles. For example, `q_fit = 0.5`
+#'       plots the median and `q_fit = c(0.2, 0.8)` plots the 20% and 80%
 #'       quantiles.
-#' @param q_predict Same as `q_fit`, but for the prediction interval.
+#' @param q_predict Same as `q_fit`, but for the posterior predictive interval.
 #' @param facet_by Character vector. Names of categorical data columns to split to facets.
 #'   Can be grouping-factor or categorical predictor columns.
-#' @param color_by A character vector naming categorical or varying-effect data columns to color by.
+#' @param color_by A character vector naming categorical predictor or grouping columns to color by.
 #'   If both `color_by` and `facet_by` are omitted, a sole categorical predictor is colored automatically. Set `color_by = NULL` explicitly to disable this.
 #'   Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.
 #' @param at Named list setting additional continuous predictors to fixed values.
@@ -52,7 +52,7 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 #' @param lines Positive integer or `FALSE`. The number of fitted lines (draws).
 #'   It is the number of joint posterior draws shown for every curve. FALSE or `lines = 0` plots no lines.
 #'   Note that lines always plot fitted values - not predicted.
-#'   For prediction intervals, see the `q_predict` argument.
+#'   For posterior predictive intervals, see the `q_predict` argument.
 #' @param geom_data String. One of "point", "line" (good for time-series),
 #'   or FALSE (do not plot).
 #' @param cp_dens TRUE/FALSE. Plot posterior densities of the change point(s)?
@@ -135,26 +135,26 @@ get_plot = function(x,
 
   model_tables = get_fit_model_tables(fit)
   all_categorical_cols = names(get_categorical_levels(fit$data))
-  varying_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
-  categorical_cols = setdiff(all_categorical_cols, varying_cols)
+  group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
+  categorical_cols = setdiff(all_categorical_cols, group_cols)
   plot_by = unique(c(facet_by, color_by))
   if (.grouping == "auto" && length(categorical_cols) == 1) {
     color_by = categorical_cols
     plot_by = unique(c(facet_by, color_by))
   }
-  curve_by = unique(c(categorical_cols, intersect(varying_cols, plot_by)))
-  valid_group_cols = unique(c(categorical_cols, varying_cols))
+  curve_by = unique(c(categorical_cols, intersect(group_cols, plot_by)))
+  valid_group_cols = unique(c(categorical_cols, group_cols))
 
   validate_plot_groups = function(cols, arg) {
     invalid_cols = setdiff(cols, valid_group_cols)
     if (length(invalid_cols) > 0) {
       valid_text = if (length(valid_group_cols) == 0) {
-        "There are no categorical or varying-effect columns in this model."
+        "There are no categorical predictor or grouping columns in this model."
       } else {
         paste0("Valid columns are '", paste(valid_group_cols, collapse = "', '"), "'.")
       }
       stop(
-        "`", arg, "` must name categorical or varying-effect data columns. ",
+        "`", arg, "` must name categorical predictor or grouping columns. ",
         "Invalid: '", paste(invalid_cols, collapse = "', '"), "'. ",
         valid_text
       )
@@ -197,7 +197,7 @@ get_plot = function(x,
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)
   by = plot_by
-  varying_pars = unpack_varying(fit, cols = by)$pars
+  group_pars = unpack_varying(fit, cols = by)$pars
 
   ############################
   # MAKE NEWDATA AND PREDICT #
@@ -214,7 +214,7 @@ get_plot = function(x,
       rate = rate,
       prior = prior,
       dpar = dpar,
-      varying = varying_pars,
+      varying = group_pars,
       arma = arma,
       ndraws = ndraws,
       samples_format = "tidy",
@@ -361,7 +361,7 @@ get_plot = function(x,
     gg = gg + geom_cp_density(fit, facet_by, prior, limits_y, use_color) +
       ggplot2::coord_cartesian(
         ylim = c(limits_y[1], NA),  # Remove density flat line from view
-        # Do not let broad varying change-point densities expand the observed x-range.
+        # Do not let broad group-specific change-point densities expand the observed x-range.
         xlim = c(min(fit$data[, fit$pars$x]), max(fit$data[, fit$pars$x]))
       )
   }
@@ -379,7 +379,7 @@ get_plot = function(x,
   if (dpar != "epred")
     gg = gg + ggplot2::labs(y = dpar)
 
-  at_cols = setdiff(names(newdata), c(fit$pars$x, fit$pars$y, all_categorical_cols, varying_cols))
+  at_cols = setdiff(names(newdata), c(fit$pars$x, fit$pars$y, all_categorical_cols, group_cols))
   if (length(at_cols) > 0) {
     at_text = paste0(at_cols, " = ", format(signif(unlist(newdata[1, at_cols]), 4), trim = TRUE))
     gg = gg + ggplot2::labs(caption = paste("Continuous predictors held at", paste(at_text, collapse = ", ")))
@@ -431,10 +431,10 @@ get_plot = function(x,
 #' plot(demo_fit, prior = TRUE)  # The prior
 #'
 #' plot(demo_fit, lines = 0, q_fit = TRUE)  # 95% central interval without lines
-#' plot(demo_fit, q_predict = c(0.1, 0.9))  # 80% prediction interval
-#' plot_dpar(demo_fit, dpar = "sigma", lines = 100)  # The variance parameter on y
+#' plot(demo_fit, q_predict = c(0.1, 0.9))  # 80% posterior predictive interval
+#' plot_dpar(demo_fit, dpar = "sigma", lines = 100)  # Residual standard deviation on y
 #'
-#' # Show a panel for each varying effect
+#' # Show a panel for each group-level effect
 #' # plot(fit, facet_by = "my_column")
 #'
 #' # Customize plots using regular ggplot2
@@ -559,17 +559,17 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
   dens_cut = 0.05  # How much to move density down. 5% is ggplot default. Move a bit further.
 
   # facet_by will expand by group in mcp_draws(). Categorical cols share
-  # parameters across facets, so only expand for varying effects.
+  # parameters across facets, so only expand for group-level effects.
   model_tables = get_fit_model_tables(fit)
   cps = model_tables$cps
-  varying_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
-  facet_by = intersect(facet_by, varying_cols)
+  group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
+  facet_by = intersect(facet_by, group_cols)
   cp_matches_facet = cps$group_col %in% facet_by
   cp_not_facet = cp_matches_facet == FALSE | is.na(cp_matches_facet)
   if (all(cp_not_facet))
     facet_by = NULL
 
-  # Get varying and population change point parameter names
+  # Get group-level and population-level change-point parameter names.
   if (!is.null(facet_by)) {
     varying = stats::na.omit(cps$group_name[cp_matches_facet])
     population = stats::na.omit(cps$name[cp_not_facet])

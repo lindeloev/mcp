@@ -1,13 +1,13 @@
 ---
-title: "Modeling variance and variance changes"
+title: "Modeling standard deviation and its changes"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Modeling variance and variance changes}
+  %\VignetteIndexEntry{Modeling standard deviation and its changes}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-For GLM families with a variance parameter (`sigma`), you can model this explicitly. For example, if you want a flat mean (a plateau) with increasing variance, you can do `y ~ 1 + sigma(1 + x)`. An explicit `sigma()` formula uses a log link, so its linear predictor is log-SD and `sigma = exp(eta_sigma)`, as in `brms`. This guarantees a positive, smoothly varying SD. In general, all formula syntax that is allowed outside of `sigma()` (where it applies to the mean) also works inside it (applying to log-SD). For example, you can do `~ 1 + sigma(1 + z + I(x^2))`. Read more about mcp formulas [here](../articles/formulas.html).
+For Gaussian models, you can explicitly model the residual standard deviation (`sigma`). For example, a plateau mean with an increasing standard deviation can be written as `y ~ 1 + sigma(1 + x)`. An explicit `sigma()` formula uses a log link, so its linear predictor is log-SD and `sigma = exp(eta_sigma)`, as in `brms`. This guarantees a positive, smoothly varying standard deviation. Formula syntax allowed outside `sigma()` (where it applies to the mean) also works inside it (where it applies to log-SD). For example, `~ 1 + sigma(1 + z + I(x^2))` is valid. Read more about mcp formulas [here](../articles/formulas.html).
 
 There is one intentional distinction for the common model without any `sigma()` term. Its implicit constant `sigma_1` is the residual SD itself, not log-SD, and its default response-scale half-Student-t prior matches `brms`. As soon as any segment contains an explicit `sigma()` term, all `sigma_*` coefficients in that model are on the log-SD scale. Thus simulation values use, for example, `sigma_1 = log(5)`, while `fitted(fit, dpar = "sigma")` still returns an SD of 5 on the response scale.
 
@@ -31,8 +31,8 @@ set.seed(42)  # Make the script deterministic
 ```
 
 
-# Simple example: a change in variance
-Let us model a simple change in variance on a plateau model. First, we specify the model:
+# Simple example: a change in standard deviation
+Let us model a simple change in residual standard deviation with a plateau mean:
 
 ```{r}
 model = list(
@@ -41,7 +41,7 @@ model = list(
 )
 ```
 
-We can simulate some data, starting with low variance and an abrupt change to a high variance at $x = 50$:
+We can simulate data with an abrupt change from a low to a high residual standard deviation at $x = 50$:
 
 ```{r}
 set.seed(40)
@@ -61,7 +61,7 @@ Now we fit the model to the simulated data.
 ```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
 fit = mcp(model, data = df, par_x = "x")
 ```
-We plot the results with the prediction interval to show the effect of the variance, since it won't be immediately obvious on the default plot of the fitted mean predictions:
+We plot a posterior predictive interval to show the effect of the changing standard deviation, which is not immediately visible in the default plot of the expected response:
 
 ```{r}
 plot(fit, q_predict = TRUE)
@@ -76,20 +76,20 @@ summary(fit)
 
 
 # Advanced example
-We can model changes in `sigma` alone or in combination with changes in the mean. In the following, I define a needlessly complex model, just to demonstrate the flexibility of modeling variance:
+We can model changes in `sigma` alone or together with changes in the mean. The following deliberately complex model demonstrates that flexibility:
 
 ```{r}
 model = list(
-  # Increasing variance.
+  # Increasing standard deviation.
   y ~ 1 + sigma(1 + x),
   
-  # Abrupt change in mean and variance.
+  # Abrupt change in mean and standard deviation.
   ~ 1 + sigma(1),
   
-  # Joined slope on mean. variance changes as 2nd order poly.
+  # Joined slope on mean; log-SD changes as a second-order polynomial.
   ~ 0 + x + sigma(0 + x + I(x^2)),
   
-  # Continue slope on mean, but plateau variance (no sigma() tern).
+  # Continue slope on mean, but plateau standard deviation (no sigma() term).
   ~ 0 + x
 )
 
@@ -102,8 +102,8 @@ prior = list(
 
 Notice a few things here:
 
- * Segment 3 and 4: I changed the variance on a continuous slope. You can do this using priors to define that the slope is shared between segment 3 and 4, effectively canceling the change point on the mean (more about using priors in mcp [here](../articles/priors.html)).
- * Segment 4: By not specifying `sigma()`, segment 4 (and later segments) just inherits the variance from the state it was left in in the previous segment. 
+ * Segments 3 and 4: The residual standard deviation changes while the mean slope continues. Sharing the slope through the prior effectively removes the change point in the mean (read more about [priors in mcp](../articles/priors.html)).
+ * Segment 4: Without a new `sigma()` term, segment 4 and later segments inherit the preceding standard-deviation trajectory at the value where it was left.
 
 In general, the log-SD parameters are named `sigma_[normalname]`, where "normalname" is the usual parameter names in mcp (see more [here](../articles/formulas.html)). For example, the log-SD slope on `x` in segment 3 is `sigma_x_3`. However, `sigma_int_i` is just too verbose, so log-SD intercepts are simply called `sigma_i`, where i is the segment number.
 
@@ -135,7 +135,7 @@ Fit it in parallel, to speed things up:
 fit = mcp(model, data = df, prior = prior)
 ```
 
-Plotting the prediction interval is an intuitive way to to see how the variance is estimated:
+Plotting a posterior predictive interval is an intuitive way to see how the residual standard deviation is estimated:
 
 ```{r}
 plot(fit, q_predict = TRUE)
@@ -149,7 +149,7 @@ plot_dpar(fit, dpar = "sigma", q_fit = TRUE)
 ```
 
 
-`summary()` show that the parameters are well recovered (compare `sim` to `mean`). The last change point is estimated with greater uncertainty than the others. This is expected, given that the only "signal" of this change point is a stop in variance growth.
+`summary()` shows that the parameters are well recovered (compare `sim` to `mean`). The last change point is estimated with greater uncertainty than the others because its only signal is a stop in standard-deviation growth.
 
 ```{r}
 summary(fit)
@@ -166,15 +166,15 @@ This confirms the impression from `Rhat`, `ess_bulk`, and `ess_tail`. Setting `m
 
 
 
-# Varying change points and variance
-The variance model applies to varying change points as well. For example, here we do a spin on the example in [the article on varying change points](../articles/varying.html), and add a by-person change in `sigma`. We model two joined slopes, varying by `id`. The second slope is also characterized by a different variance. This means that the model has more information about when the change point occurs, so it should be easier to estimate (require fewer data).
+# Group-level change points and standard deviation
+The standard-deviation model also applies with group-level change-point deviations. Here we adapt the [group-level effects example](../articles/varying.html) and add a by-person change in `sigma`. The second joined slope has a different residual standard deviation, giving the model more information about the change-point location.
 
 ```{r}
 model = list(
   # intercept + slope
   y ~ 1 + x,
   
-  # joined slope and increase in variance, varying by id.
+  # Joined slope and increased standard deviation, with a group-level change point.
   1 + (1|id) ~ 0 + x + sigma(1)
 )
 ```

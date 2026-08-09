@@ -7,7 +7,7 @@
 #' @aliases pp_check pp_check.mcpfit
 #' @inheritParams pp_eval
 #' @param type One of `bayesplot::available_ppc("grouped", invert = TRUE) %>% stringr::str_remove("ppc_")`
-#' @param facet_by Name of a column in data modeled as varying effect(s).
+#' @param facet_by Name of a grouping column used by group-level effects.
 #' @param ndraws Number of posterior draws. Note that you may want to use all
 #'   draws for summary geoms, e.g., `pp_check(fit, type = "ribbon", ndraws = NULL)`.
 #'   LOO checks always evaluate all posterior draws to preserve their PSIS
@@ -28,7 +28,7 @@
 #' \donttest{
 #' pp_check(demo_fit)
 #' pp_check(demo_fit, type = "ecdf_overlay")
-#' #pp_check(some_varying_fit, type = "loo_intervals", facet_by = "id")
+#' #pp_check(some_group_fit, type = "loo_intervals", facet_by = "id")
 #' }
 pp_check = function(
   object,
@@ -73,7 +73,7 @@ pp_check = function(
   observed_rows = which(!is.na(y_all))
   if (length(observed_rows) == 0)
     stop("`pp_check()` requires at least one observed response.")
-  varying_data = if (is.null(facet_by)) NULL else eval_data[, facet_by]
+  group_data = if (is.null(facet_by)) NULL else eval_data[, facet_by]
 
   allowed_types = stringr::str_remove(bayesplot::available_ppc(), "ppc_")
   allowed_types = allowed_types[stringr::str_detect(allowed_types, "_grouped") == FALSE]  # Grouped done mcp-side (see below)
@@ -116,11 +116,11 @@ pp_check = function(
     )
     return(plot_return)
   } else {
-    groups = unique(varying_data[observed_rows])
+    groups = unique(group_data[observed_rows])
     all_plots = list()
     for (group in groups) {
       # Compute/extract y and yrep for this group
-      observations_this = observed_rows[varying_data[observed_rows] == group]
+      observations_this = observed_rows[group_data[observed_rows] == group]
       y_this = y_all[observations_this]
       yrep_this = tidy_to_matrix(samples, type = ".prediction", data_rows = observations_this)
 

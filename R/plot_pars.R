@@ -7,13 +7,13 @@
 #' @param fit An \code{\link{mcpfit}} object.
 #' @param pars Character vector. One of:
 #'   * Vector of parameter names.
-#'   * `"population"` plots all population parameters.
-#'   * `"varying"` plots all varying effects. To plot a particular varying
+#'   * `"population"` plots all population-level parameters.
+#'   * `"varying"` plots all group-level deviations. To plot a particular group-level
 #'       effect, use `regex_pars = "^name"`.
 #' @param regex_pars Vector of regular expressions. This will typically just be
 #'   the beginning of the parameter name(s), i.e., "^cp_" plots all change
-#'   points, "^my_varying" plots all levels of a particular varying effect, and
-#'   "^cp_|^my_varying" plots both.
+#'   points, "^my_group_effect" plots all levels of a particular group-level effect, and
+#'   "^cp_|^my_group_effect" plots both.
 #' @param type String or vector of strings. Calls `bayesplot::mcmc_>>type<<()`.
 #'   Common calls are "combo", "trace", and "dens_overlay". Current options include
 #'   'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
@@ -60,9 +60,9 @@
 #' # Visualize the priors:
 #' plot_pars(demo_fit, prior = TRUE)
 #'
-#' # Useful for varying effects:
-#' # plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all varying effects
-#' # plot_pars(my_fit, regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying
+#' # Useful for group-level effects:
+#' # plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all group-level deviations
+#' # plot_pars(my_fit, regex_pars = "my_group_effect", ncol = 3)  # one group-level effect
 #' # pages = plot_pars(my_fit, pars = "varying", ask = FALSE)
 #' # pages[[1]]  # Inspect or customize one page
 #'
@@ -118,7 +118,7 @@ plot_pars = function(fit,
       pars = character(0)
     }
   } else if ("varying" %in% pars) {
-    # Regex search for varying effects
+    # Regex search for group-level deviations
     regex_pars = paste0("^", fit$pars$varying, "\\[")
     pars = character(0)
   }

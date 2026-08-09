@@ -20,7 +20,7 @@ The three formula parts are called **response**, **cp**, and **predictor**. The 
  * **The predictor part** can contain `0` (no intercept), `1` (an intercept), columns from your data whose effects you want to model, and [group-level effects](articles/varying.html), such as `(1|group)` and `(factor||group)`.
  * **Distributional predictors**, such as those inside `sigma()`, have [their own article](../articles/variance.html), but follow the same predictor rules, including group-level effects.
 
-Predictor group-level effects use familiar `lme4`/`brms` syntax. For example, `y ~ 1 + (1|id)` gives each `id` a deviation from the population intercept. Use `||` for several independent group coefficients: `(1 + x||id)` adds an intercept and numeric slope, while `(factor||id)` adds an intercept and treatment-coded factor contrasts. `(0 + factor||id)` instead adds one independent coefficient for each factor level. Each coefficient has its own population-level SD.
+Predictor group-level effects use familiar `lme4`/`brms` syntax. For example, `y ~ 1 + (1|id)` gives each `id` a deviation from the population-level intercept. Use `||` for several independent group coefficients: `(1 + x||id)` adds an intercept and numeric slope, while `(factor||id)` adds an intercept and treatment-coded factor contrasts. `(0 + factor||id)` instead adds one independent coefficient for each factor level. Each coefficient has its own population-level SD.
 
 A group-level term carries into later segments until another term for the same distributional parameter and grouping factor replaces the whole block; use `(0|id)` to turn it off. Correlated multi-coefficient `|` terms, such as `(1 + x|id)`, and group-level terms inside `ar()` or `ma()` are not yet supported.
 
@@ -55,9 +55,9 @@ Notice how it added the response and cp parts to the last segment?
  * `Intercept_i` is the intercept in the ith segment.
  * `year_i` is the slope in on the data column `year` in the ith segment. `x_i` is the slope on the data column `x` in the ith segment. The slope takes name after the data it is regressed on.
  * `cp_i` is the ith change point. Notice that `cp_i` is specified in segment `i + 1`. `cp_1` occurs when there are two segments, and `cp_2` when there are three segments, etc. *OBS: future versions may start at cp_2.*.
- * `cp_i_group` is the varying *deviations* from `cp_i`. See [varying change points in mcp](articles/varying.html).
- * `cp_i_sd` is the population-level standard deviation of the varying effects.
- * `sigma_*` are variance parameters about which you can [read more here](../articles/variance.html)). With an explicit `sigma()` formula these are log-SD coefficients. If no `sigma()` is supplied, the implicit `sigma_1` is instead the common response-scale SD initiated in the first segment.
+ * `cp_i_group` contains the group-level deviations from population-level `cp_i`. See [group-level change points in mcp](articles/varying.html).
+ * `cp_i_sd` is the population-level standard deviation governing those group-level deviations.
+ * `sigma_*` describe the Gaussian residual standard deviation; [read more here](../articles/variance.html). With an explicit `sigma()` formula these are log-SD coefficients. If no `sigma()` is supplied, the implicit `sigma_1` is instead the common response-scale SD initiated in the first segment.
  * `arj_i` are autocorrelation coefficients of order `j` for segment `i` ([read more here](../articles/arma.html)).
 
 

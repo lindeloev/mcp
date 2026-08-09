@@ -33,7 +33,7 @@ The values are JAGS code, so all JAGS distributions are allowed. These also incl
 
 Other notes:
 
-* Order restriction is automatically applied to change points (`cp_*` parameters) using truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the x-axis. You can override this behavior by defining `T()` or `dunif` yourself (`dunif` is inherently truncated), in which case `mcp` won't do further. Dirichlet priors are inherently ordered ([jump to section](#cp_prior)) and cannot be further truncated.
+* Default population-level change-point priors are ordered. For user priors, `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior has neither explicit truncation nor an inherently bounded form such as `dunif()` or `dirichlet()`. User-specified bounds are respected as written, and group-level change-point deviations are not guaranteed to preserve the population-level ordering.
 
 * Data-dependent values can be written directly in priors: for example, `min(x)`, `max(x)`, `median(y)`, `mad(y)`, `max(x) - min(x)`, `segment_width(x)`, `n_segments()`, and `n_cp()`. `mcp` resolves these expressions before generating JAGS code. The older uppercase constants (`MINX`, `MAXX`, and so on) remain temporarily supported with a deprecation warning.
 
@@ -112,13 +112,13 @@ Of course, it will usually be the other way around: setting priors manually will
 # Default priors on change points {#cp_prior}
 The following are treated more formally in the [mcp paper](https://osf.io/preprints/fzqxv/).
 
-Change points have to be ordered from left (`cp_1`) to right (`cp_2+`). This order restriction is enforced through the priors and this is not trivial. `mcp` currently offers two "packages" of change point priors that achieves different goals: 
+The default priors order the population-level change points from left (`cp_1`) to right (`cp_2+`). User priors can relax this ordering, and realized group-level change points are not necessarily ordered. `mcp` offers two built-in prior families with different tradeoffs:
 
 * **Speed and estimation:** The default prior is suitable for estimation, prediction, and it works well for `loo()` cross-validation as well. It's main virtue is that it samples the change point posteriors relatively effectively, but it will often be deeply unfit for Bayes Factors if there are 3+ change points (see below). It may also favor "late" change points too much if estimating many change points with little data (e.g. 5 change points with 100 data points or 10 with 300).
 
-* **Uninformative and nice mathematical properties:** Use the `Dirichlet` prior if you want a more uninformative prior that is better suited for *everything* including Bayes Factors, scientific publication, or even estimation at 6+ change points. It has better known mathematical properties and a precedence in [Büerkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/). It is not default because it often samples order(s) of magnitude less efficiently than the default priors while yielding identical fits. In these cases you need to increase the number of MCMC samples (e.g. `mcp(..., iter = 20000)`).
+* **Symmetric segment spacings:** Use the Dirichlet prior when its explicit joint prior on segment spacings matches the scientific question, particularly for Bayes factors or many change points. With equal concentration parameters it treats the spacings exchangeably; this is a substantive prior, not an uninformative one. It has well-known mathematical properties and precedent in [Bürkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/). It is not the default because it can sample orders of magnitude less efficiently. In these cases, increase the number of MCMC draws (e.g., `mcp(..., iter = 20000)`).
 
-They two "packages" are identical for one change point, though the default still samples more effectively.
+With one change point, both specifications imply a uniform location within the observed range, though the direct uniform default samples more efficiently.
 
 
 ```{r, echo = FALSE, results=FALSE, warning=FALSE, message=FALSE}
@@ -240,12 +240,12 @@ par(mfrow = c(1,1))
 
 ## The t-tail prior on 2+ change points (default)
 
-The first change point defaults to the rule `cp_1 = uniform(min = min(x), max = max(x))`. In other words, the change point has to happen in the observed range of x, but it is equally probable across this range. This is identical to the Dirichlet prior.
+With exactly one change point, the default rule is `cp_1 = uniform(min = min(x), max = max(x))`. Thus its location is uniform over the observed x-range. This is equivalent to the one-change-point Dirichlet specification.
 
 For 2+ change points, the default rule (on *all* change points) is `cp_i = student_t(df = n_cp() - 1, location = min(x), scale = (max(x) - min(x)) / n_cp())`, bounded below by the preceding change point and above by `max(x)`. This is not as complicated as it looks, so let me unpack it.
 
  * It is t-distributed with $N - 1$ degree of freedom (`n_cp() - 1`). This ensures narrower priors as the number of change points increase, so as to avoid excessive accumulation of densities at high $x$.
- * It is truncated to be greater than the previous `cp`. For example, `cp_3` is bounded below by `cp_2` and above by `max(x)`. Since `cp_0 = min(x)`, all change points are "forced" to be in the observed range of `x`.
+ * Under the defaults, it is bounded below by the preceding population-level `cp` and above by `max(x)`. For example, `cp_3` is bounded below by `cp_2` and above by `max(x)`, keeping the default population-level change points ordered within the observed range.
  * The standard deviation is the distance between equally-spaced change points: `(max(x) - min(x)) / n_cp()`.
  * The mean is always the lowest observed `x`. Thus `cp_1` is a half-t and `cp_2+` are right tails of the same t. Hence the name "t-tail prior". Since they are estimated using MCMC, the fact that the *absolute* densities are smaller for later change points is of no importance since only the *relative* densities matter.
 
@@ -253,7 +253,7 @@ One side effect of the truncation is that later change points have greater prior
 
 
 ## Dirichlet-based prior on change points
-The [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) is a multivariate beta prior and these betas jointly form a simplex, meaning that they are all positive and sum to one. They are all in the interval $[0, 1]$ so they are shifted and scaled to $[min(x), max(x)]$. The Dirichlet prior has the nice property that (1) the order-restriction and boundedness is inherent to the distribution, and (2) it represents a uniform prior that *any* change happens at any $x$, i.e., it is maximally uninformative. It underlies the modeling of monotonic effects in brms ([Büerkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/)).
+The [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) places a joint prior on positive segment spacings that sum to the observed x-range. Consequently, the derived population-level change points are bounded and ordered. Equal concentration parameters make the spacings exchangeable, but do not make the prior uninformative: they encode a specific joint distribution over segment widths. This construction also underlies monotonic effects in `brms` ([Bürkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/)).
 
 To use the Dirichlet prior, you need to specify it for all or none of the change points. E.g.,
 
@@ -271,7 +271,7 @@ The number in the parenthesis is the $\alpha$ parameter, so you could also speci
 ## Manual priors on change points
 You can easily change or modify change point priors, just as we did in the initial example. But beware that the nature of the priors change when truncation is applied. Use `plot_pars(fit, prior = TRUE)` to check the resulting prior.
 
-If you want more informed priors on the change point location, i.e., `cp_2 = "dnorm(40, 10)`, `mcp` adds this order restriction by adding bounds equivalent to `cp_2 = "dnorm(40, 10) T(cp_1, max(x))"`. You can avoid this behavior by explicitly doing an "empty" truncation yourself, e.g., `cp_2 = "dnorm(40, 10) T(,)`. However, the model may fail to sample the correct posterior in samples where order restriction is not kept.
+For an otherwise unbounded user prior such as `cp_2 = "dnorm(40, 10)"`, `mcp` adds default bounds equivalent to `cp_2 = "dnorm(40, 10) T(cp_1, max(x))"`. An explicit truncation, including `T(,)`, or a `dunif()` prior is used as written. Relaxing the order can make segment labels ambiguous and sampling difficult, so inspect the resulting prior carefully.
 
 
 # Default priors on linear predictors
@@ -313,7 +313,7 @@ The general principles belong here: parameterization, data-based scaling, proper
 
 Each group-level effect has a population-level SD parameter. Predictor-side deviations use a zero-mean normal distribution governed by that SD, as in ordinary multilevel regression. With a multi-coefficient `||` term, every independent coefficient has its own SD. The SD receives a positive, weakly informative prior from the family and link specification. For distributional parameters, the deviations and their SD are on that parameter's link scale; for example, effects inside an explicit `sigma()` formula are on the log-SD scale.
 
-Group-level change-point deviations have additional constraints: they are exactly zero-centered and their default priors keep the resulting change points between the relevant bounds. Predictor-side deviations are mean-zero in their hierarchical distribution but are not forced to sum exactly to zero. See [group-level effects with mcp](https://lindeloev.github.io/mcp/articles/varying.html).
+Group-level change-point deviations have additional constraints: they are exactly zero-centered, and their default priors bound each resulting change point relative to the adjacent population-level change points or observed range. These bounds do not guarantee that realized group-level change points are mutually ordered. Predictor-side deviations are mean-zero in their hierarchical distribution but are not forced to sum exactly to zero. See [group-level effects with mcp](https://lindeloev.github.io/mcp/articles/varying.html).
 
 
 # Prior predictive checks

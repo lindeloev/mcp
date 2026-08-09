@@ -4,7 +4,7 @@
 
 -   **Multiple regression:** `mcp` now supports several continuous predictors, categorical predictors, interactions, etc. for all terms on RHS. E.g., `~ 1 + x + x:group + sigma(1 + group) + ar(2, 0 + z)`. Basically, it now aims to "feels" like `lm()` or `glm()` for each distributional parameter in each segment. Explore `ex = mcp_example("multiple")` to see it in action. Default priors generally align with brms, with some adjustments to accommodate the change-point model.
 
--   **Random effects on RHS:** Predictor formulas now support group-level effects (sometimes called random or varying effects) using familiar `lme4` and `brms` syntax. `(1 | group)` specifies a group-level intercept, while `(1 + x || group)` and `(factor || group)` support independent coefficients, including slopes and factors. This also works inside distributional formulas such as `sigma(1 + (factor || id))`. As with `ar()`, an effect carries into later segments until it is redefined or disabled with `(0 | group)`. See `mcp_example("varying_mu")` for a worked example. Correlated multi-coefficient terms are not yet supported.
+-   **Group-level effects on RHS:** Predictor formulas now support group-level effects (sometimes called random effects) using familiar `lme4` and `brms` syntax. `(1 | group)` specifies a group-level intercept, while `(1 + x || group)` and `(factor || group)` support independent coefficients, including slopes and factors. This also works inside distributional formulas such as `sigma(1 + (factor || id))`. As with `ar()`, an effect carries into later segments until it is redefined or disabled with `(0 | group)`. See `mcp_example("varying_mu")` for a worked example. Correlated multi-coefficient terms are not yet supported.
 
 -   mcpfits now work natively with `{posterior}` and `{tidybayes}` posterior draw and prediction API. Changes include:
     - `summary(fit)` now reports rank-normalized `split-Rhat`, `ess_bulk`, and `ess_tail` from `{posterior}` and central quantile intervals instead of HDIs.
@@ -56,7 +56,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   `mcp_example(...)` now shows an illustrative plot of the fitted example by default. Disable using `plot = FALSE`.
 
--   Methods like `fitted()` and `predict()` now accept `fitted(fit, varying = "cp")` and `fitted(fit, varying = "predictor")` as fast selectors for group-level effects in the corresponding formula part. Exact varying-parameter names remain supported too, `varying = TRUE` selects all, and `ranef()` continues to return all group-level effects.
+-   Methods like `fitted()` and `predict()` now accept `fitted(fit, varying = "cp")` and `fitted(fit, varying = "predictor")` as fast selectors for group-level effects in the corresponding formula part. Exact group-level parameter names remain supported too, `varying = TRUE` selects all, and `ranef()` continues to return all group-level effects.
 
 -   Added `log_lik(fit)` which has same behavior and output format as `fitted(fit)` and `predict(fit)`.
 
@@ -74,7 +74,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Several new arguments to `loo`. `loo(fit, pointwise = TRUE)` uses `loo::loo.function()` for more memory-efficient (but slower) computation of LOO. Other new arguments include the usual from `fitted()` etc.: `loo(fit, ndraws = 1000, arma = FALSE, varying = FALSE)`.
 
--   Added `interpolate_newdata(fit, by = NULL)` which generates a data.frame with all combinations of categorical predictors along with interpolated continuous predictors. Use `by` to include varying-effect groups. The documentation shows how this can be useful for generating custom plots when simple tweaking `plot()` is not enough.
+-   Added `interpolate_newdata(fit, by = NULL)` which generates a data.frame with all combinations of categorical predictors along with interpolated continuous predictors. Use `by` to include grouping factors. The documentation shows how this can be useful for generating custom plots when simple tweaking `plot()` is not enough.
 
 
 ## Minor breaking changes
@@ -85,7 +85,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Uppercase data-dependent constants for priors (`MINX`, `MAXX`, etc.) remain temporarily supported with a deprecation warning. They are now replaced with readable expressions such as `min(time)`, `max(time) - min(time)`, `mad(response)`, `segment_width(time)`, `n_segments()`, and `n_cp()`.
 
--   Binomial and Bernoulli models with logit or probit links now use a narrower (but still very uninformative) `dt(0, 1.5, 3)` rather than `dt(0, 2.5, 3)` for intercepts and categorical contrasts.
+-   Binomial and Bernoulli models with logit or probit links now use a narrower, weakly regularizing `dt(0, 1.5, 3)` rather than `dt(0, 2.5, 3)` for intercepts and categorical contrasts.
 
 -   Gaussian models with a log link is now more aligned with `brms`: calibrate priors using data, replacing zeros with 0.1 and using finite location and scale fallbacks.
 
@@ -103,7 +103,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Fixed several posterior predictive check and information-criterion bugs present in v0.3.4. From most to least serious:
     - For missing data: Missing responses were scored in WAIC/LOO as if their JAGS-imputed values had been observed. Fix: missing responses remain latent in JAGS but are excluded from observed-data PPC, log-likelihood, WAIC, and LOO calculations.
-    - For models with varying change points: LOO checks with `facet_by != NULL` could pair group-specific predictions with weights from the wrong observations.
+    - For models with group-level change points, LOO checks with `facet_by != NULL` could pair group-specific predictions with weights from the wrong observations.
     - LOO checks with `prior = TRUE` incorrectly combined prior predictions with posterior LOO weights. A rare use case.
     - `pp_check(..., ndraws = NULL)` errored. Fixed.
 
@@ -111,7 +111,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Bug only noticeable for very small samples: For Gaussian identity-link AR models, R-side calculations could leak residuals between posterior draws and omitted available partial lags for the first observations of AR(2+) models. Each draw is now evaluated as a separate series and uses the same partial-lag recurrence as JAGS.
 
--   The quantiles for `fitted()` and `predict()` for varying-changepoint models ignored the varying level - they were identical across levels.
+-   The quantiles from `fitted()` and `predict()` for group-level change-point models ignored the group level and were identical across levels.
 
 -   Now works for 200+ characters formulas too.
 
@@ -191,21 +191,21 @@ This is mostly a bug fix release.
     -   `bernoulli`: "logit", "probit", "identity"
     -   `poisson`: "log", "identity"
 
--   New argument `scale` in `fitted()`, `plot()`, and `fit$simulate()`. When `scale = "response"` (default), they return fits on the observed scale. When `scale = "linear"`, they return fits on the parameter scale where the linear trends are. Useful for model understanding and debugging.
+-   New argument `scale` in `fitted()`, `plot()`, and `fit$simulate()`. When `scale = "response"` (default), they return fits on the response scale. When `scale = "linear"`, they return fits on the linear-predictor (link) scale. Useful for model understanding and debugging.
 
--   Use `pp_check(fit)` to do prior/posterior predictive checking. See `pp_check(fit, type = "x")` for a list of plot types. `pp_check(fit, facet_by = "varying_column")` facets by a data column.
+-   Use `pp_check(fit)` to do prior/posterior predictive checking. See `pp_check(fit, type = "x")` for a list of plot types. `pp_check(fit, facet_by = "group_column")` facets by a grouping column.
 
 -   Improvements to `plot()`:
 
-    -   Change point densities are now computed on a per-panel basis in `plot(fit, facet_by = "varying_column")`. Previous releases only displayed population-level change points.
-    -   You can now plot varying effects with `rate = FALSE` for binomial models.
+    -   Change-point densities are now computed on a per-panel basis in `plot(fit, facet_by = "group_column")`. Previous releases only displayed population-level change points.
+    -   You can now plot group-level effects with `rate = FALSE` for binomial models.
     -   Change point densities in `plot(fit)` are not located directly on the x-axis. They were "floating" 5% above the x-axis in the previous releases.
 
 -   New argument `nsamples` reduces the number of samples used in most functions to speed up processing. `nsamples = NULL` uses all samples for maximum accuracy.
 
 -   New argument `arma` in many functions toggles whether autoregressive effects should be modelled.
 
--   Although the API is still in alpha, feel free to try extracting samples using `mcp:::tidy_samples(fit)`. This is useful for further processing using `tidybayes`, `bayesplot`, etc. and is used extensively internally in `mcp`. One useful feature is computing absolute values for varying change points: `mcp:::tidy_samples(fit, population = FALSE, absolute = TRUE)`. Feedback is appreciated before `tidy_samples` will to become part of the `mcp` API in a future release.
+-   Although the API is still in alpha, feel free to try extracting samples using `mcp:::tidy_samples(fit)`. This is useful for further processing using `tidybayes`, `bayesplot`, etc. and is used extensively internally in `mcp`. One useful feature is computing absolute values for group-specific change points: `mcp:::tidy_samples(fit, population = FALSE, absolute = TRUE)`. Feedback is appreciated before `tidy_samples` becomes part of the `mcp` API in a future release.
 
 ## Other changes
 
@@ -230,7 +230,7 @@ The API and internal structure should be stable now. v0.2.0 will be released on 
 
 -   Model quadratic and other terms using `I(x^2)`, `I(x^3.24)`, `sin(x)`, `sqrt(x)`, etc.
 
--   Model variance for `family = gaussian()` using `~ sigma([formula here])`.
+-   Model residual standard deviation for `family = gaussian()` using `~ sigma([formula here])`.
 
 -   Model Nth order autoregressive models using `~ ar(order, formula)`, typically like `y ~ 1 + x + ar(2)` for AR(2). Simulate AR(N) models from scratch or given known data with `fit$simulate()`. The [article on AR(N)](https://lindeloev.github.io/mcp/articles/arma.html) has more details and examples. AR(N) models are popular to detect changes in time-series.
 
@@ -239,19 +239,19 @@ The API and internal structure should be stable now. v0.2.0 will be released on 
     -   Includes the posterior densities of the change point(s). Disable using `plot(fit, cp_dens = FALSE)`.
     -   Supports AR(N) models (see above).
     -   Plot posterior parameter intervals using `plot(fit, q_fit = TRUE)`. `plot(fit, q_fit = c(0.025, 0.5, 0.975))` plots 95% HDI and the median.
-    -   Plot prediction intervals using `plot(fit, q_predict = TRUE)`.
+    -   Plot posterior predictive intervals using `plot(fit, q_predict = TRUE)`.
     -   Choose data geom. Currently takes "point" (default) and "line" (`plot(fit, geom_data = "line")`). The latter is useful for time series. Disable using `geom_data = FALSE`.
 
 -   Use `options(mc.cores = 3)` for considerable speed gains for the rest of the session. All vignettes/articles have been updated to recommend this as a default, though serial sampling is still the technical default. `mcp(..., cores = 3)` does the same thing on a call-by-ball basis.
 
 -   `fit$simulate()` adds the simulation parameters as an attribute (`attr(y, "simulate")`) to the predicted variable. `summary()` recognizes this and adds the simulated values to the results table (columns `sim` and `match`) so that one can inspect whether the values were recovered.
 
--   Use `plot(fit, which_y = "sigma")` to plot the residual standard deviation on the y-axis. It works for AR(N) as well, e.g., `which_y = "ar1"`, `which_y = "ar2"`, etc. This is useful to visualize change points in variance and autocorrelation. The vignettes on variance and autocorrelations have been updated with worked examples.
+-   Use `plot(fit, which_y = "sigma")` to plot the residual standard deviation on the y-axis. It works for AR(N) as well, e.g., `which_y = "ar1"`, `which_y = "ar2"`, etc. This is useful to visualize changes in residual standard deviation and autocorrelation. The relevant vignettes have been updated with worked examples.
 
 -   Much love for the priors:
 
     -   Set a Dirichlet prior on the change points using `prior = list(cp_1 = "dirichlet(1)", cp_2 = ...)`. [Read pros and cons here](https://lindeloev.github.io/mcp/articles/priors.html).
-    -   The default prior has been changed from "truncated-uniforms" to a "t-tail" prior to be more uninformative while still sampling effectively. [Read more here](https://lindeloev.github.io/mcp/articles/priors.html).
+    -   The default prior has been changed from truncated uniforms to a regularizing t-tail prior that samples effectively. [Read more here](https://lindeloev.github.io/mcp/articles/priors.html).
     -   You can now sample the prior using `mcp(..., sample = "prior")` or `mcp(..., sample = "both")` and most methods can now take the prior: `plot(fit, prior = TRUE)`, `plot_pars(fit, prior = TRUE)`, `summary(fit, prior = TRUE)`, `ranef(fit, prior = TRUE)`.
 
 -   `mcp` can now be cited! Call `citation("mcp")` or see the pre-print here: <https://osf.io/fzqxv>.

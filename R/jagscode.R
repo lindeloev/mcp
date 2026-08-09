@@ -168,7 +168,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
 
   # Split scalar/population priors from group-indexed coefficient priors.
   prior_pop = prior[!names(prior) %in% group_effects$name]
-  prior_varying = prior[names(prior) %in% group_effects$name]
+  prior_group = prior[names(prior) %in% group_effects$name]
 
   # Use get_prior_str() to add population-level priors
   mm = paste0(mm, "
@@ -192,21 +192,21 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   }
 
 
-  # Use get_prior_str() to add varying priors
-  if (length(prior_varying) > 0) {
-    mm = paste0(mm, "\n  # Priors for varying effects\n")
-    for (i in 1:length(prior_varying)) {
-      effect = group_effects[group_effects$name == names(prior_varying)[i], , drop = FALSE]
+  # Use get_prior_str() to add group-level priors.
+  if (length(prior_group) > 0) {
+    mm = paste0(mm, "\n  # Priors for group-level effects\n")
+    for (i in 1:length(prior_group)) {
+      effect = group_effects[group_effects$name == names(prior_group)[i], , drop = FALSE]
       if (nrow(effect) != 1)
-        stop_github("Expected exactly one group-effect row for ", names(prior_varying)[i], ".")
-      prior_varying[[i]] = jagsify_constants(prior_varying[[i]], jags_constants)
+        stop_github("Expected exactly one group-effect row for ", names(prior_group)[i], ".")
+      prior_group[[i]] = jagsify_constants(prior_group[[i]], jags_constants)
       mm = paste0(mm, get_prior_str(
-        prior = prior_varying,
+        prior = prior_group,
         i = i,
-        varying_group = effect$group_col,
+        group_col = effect$group_col,
         center = effect$part == "cp",
-        description = prior_description[[names(prior_varying)[i]]],
-        kind = if (is.null(prior_kind_)) NULL else prior_kind_[[names(prior_varying)[i]]]
+        description = prior_description[[names(prior_group)[i]]],
+        kind = if (is.null(prior_kind_)) NULL else prior_kind_[[names(prior_group)[i]]]
       ))
     }
   }
@@ -224,7 +224,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   ###########
   # FORMULA #
   ###########
-  # Transform formula_jags into JAGS format. Insert par_x and varying indices
+  # Transform formula_jags into JAGS format. Insert par_x and group indices.
   for (i in seq_len(max(segments$segment))) {
     formula_jags = gsub(paste0("CP_", i, "_INDEX"), paste0("[", segments$cp_group_col[i], "[i_]]"), formula_jags)
   }
@@ -304,8 +304,8 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
 #' @noRd
 #' @inheritParams mcp
 #' @param i The index in `prior` to get code for
-#' @param varying_group String or NULL. Null indicates a population-
-#'   level prior. String indicates a varying-effects prior (one for each group
+#' @param group_col String or NULL. `NULL` indicates a population-level prior.
+#'   A string indicates a group-level prior (one value for each group
 #'   level).
 #' @param center Logical. Exactly zero-center a group-indexed vector? This is
 #'   required for change points but not predictor group-level effects.
@@ -314,7 +314,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
 #' @return A string
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @encoding UTF-8
-get_prior_str = function(prior, i, varying_group = NULL, center = TRUE,
+get_prior_str = function(prior, i, group_col = NULL, center = TRUE,
                           description = "Prior", kind = NULL) {
   # Helpers
   value = prior[[i]]
@@ -327,7 +327,7 @@ get_prior_str = function(prior, i, varying_group = NULL, center = TRUE,
   # If inverse_shape ~ Gamma(a, b), then
   # shape = exp(-log(inverse_shape)) ~ InvGamma(a, b).
   if (stringr::str_detect(value, "^dloginvgamma\\(")) {
-    if (!is.null(varying_group))
+    if (!is.null(group_col))
       stop("dloginvgamma() is currently only supported for population-level parameters.")
 
     call = parse_prior_call(value)
@@ -346,16 +346,16 @@ get_prior_str = function(prior, i, varying_group = NULL, center = TRUE,
     value = sd_to_prec(value)
 
     # ... and this is a population-level effect
-    if (is.null(varying_group)) {
+    if (is.null(group_col)) {
       return(paste0("  ", name, " ~ ", value, "  # ", description, "\n"))
     } else if (!center) {
-      return(paste0("  for (", varying_group, "_ in 1:n_unique_", varying_group, ") {
-    ", name, "[", varying_group, "_] ~ ", value, "  # ", description, "
+      return(paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {
+    ", name, "[", group_col, "_] ~ ", value, "  # ", description, "
   }\n"))
     } else {
-      # It is a varying effect!
-      return(paste0("  for (", varying_group, "_ in 1:n_unique_", varying_group, ") {
-    ", name, "_uncentered[", varying_group, "_] ~ ", value, "  # ", description, "
+      # It is an exactly centered group-level deviation.
+      return(paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {
+    ", name, "_uncentered[", group_col, "_] ~ ", value, "  # ", description, "
   }
   ", name, " = ", name, "_uncentered - mean(", name, "_uncentered)  # vectorized zero-centering\n"))
     }

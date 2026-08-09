@@ -273,8 +273,8 @@ loglik_settings_match = function(loglik, settings) {
 #'   * `"Intercept_1 > -2 & Intercept_1 < 2"`: Intercept_1 is between -2 and 2 (an interval hypothesis). This can be useful as a Region Of Practical Equivalence test (ROPE).
 #'   * `"cp_1^2 < 30 | (log(x_1) + log(x_2)) > 5"`: be creative.
 #'   * \code{"`cp_1_id[1]` > `cp_1_id[2]`"}: id1 is greater than id2, as estimated
-#'       through the varying-by-"id" change point in segment 1. Note that \code{``}
-#'       required for varying effects.
+#'       through the group-level change-point deviation for `id` in segment 1.
+#'       Note that \code{``} are required for group-level deviations.
 #'
 #'   Hypotheses can also test equality using the equal sign (=). This runs a
 #'   Savage-Dickey test, i.e., the proportion by which the probability density
@@ -333,7 +333,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
       stop("At least one operator must be present: <, >, =, <=, or >=: ", expression)
 
     if (stringr::str_detect(expression, "\\[|\\]") && !stringr::str_detect(expression, "`"))
-      stop("Needs `` around varying effects, e.g., `cp_1_id[2]`. Got this: ", expression)
+      stop("Needs `` around group-level deviations, e.g., `cp_1_id[2]`. Got this: ", expression)
 
 
     # If this is a single expression (does not contain & or |), we can estimate

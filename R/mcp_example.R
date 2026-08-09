@@ -6,8 +6,8 @@
 #'  * `"intercepts"`: An intercept-only change point.
 #'  * `"multiple"`: Multiple regression with categorical predictors and interactions.
 #'  * `"binomial"`: Binomial with two change points. Much like `"demo"` on a logit scale.
-#'  * `"varying_mu"`: Varying (Group-level) intercepts and factor effects across a change point.
-#'  * `"varying_cp"`: Varying (random) change points.
+#'  * `"varying_mu"`: Group-level intercepts and factor deviations across a change point.
+#'  * `"varying_cp"`: Group-level change-point deviations (random effects).
 #'  * `"quadratic"`: A change point to a quadratic segment where there is no data.
 #'  * `"ar"`: One change point in autoregressive residuals (the `ar1` dpar)
 #'  * `"sigma"`: A change in "sigma" dpar, including a slope on sigma.
@@ -80,9 +80,9 @@ if (plot) {
 
     binomial = "# Define model
 model = list(
-  y | trials(N) ~ 1,  # constant rate
-  ~ 0 + x,  # joined changing rate
-  ~ 1 + x  # disjoined changing rate
+  y | trials(N) ~ 1,  # constant success probability
+  ~ 0 + x,  # joined changing success probability
+  ~ 1 + x  # disjoined changing success probability
 )
 
 # Simulate data

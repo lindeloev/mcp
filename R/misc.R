@@ -188,7 +188,7 @@ get_predictor_matrix = function(predictors, group_effects = NULL) {
 #'
 #' Within one call to `pp_eval()`, `data_row` identifies a row in the evaluated data.
 #' Together, `.draw` and `data_row` must identify exactly one evaluated value.
-#' Plotting groups, predictor values, and varying-effect columns are metadata for
+#' Plotting groups, predictor values, and group-level columns are metadata for
 #' that row and never determine which draws may be summarised together.
 #'
 #' @keywords internal

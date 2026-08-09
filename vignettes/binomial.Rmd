@@ -13,9 +13,9 @@ First, let us specify a toy model with three segments:
 
 ```{r}
 model = list(
-  y | trials(N) ~ 1,  # constant rate
-  ~ 0 + year,  # joined changing rate
-  ~ 1 + year  # disjoined changing rate
+  y | trials(N) ~ 1,  # constant success probability
+  ~ 0 + year,  # joined changing success probability
+  ~ 1 + year  # disjoined changing success probability
 )
 ```
 
@@ -49,7 +49,7 @@ empty$pars
  * It takes two slopes (`year_*`), for segment 2 and 3.
  * It takes two change points (`cp_*`) - one between each segment. 
 
-`empty$simulate` is now a function that can predict data given these parameters (signature: `empty$simulate(fit, newdata, ...)`). If you are in a reasonable R editor, type `empty$simulate(` and press TAB to see the required arguments. I came up with some values below, including change points at $year = 25$ and $year = 65$. Notice that because `binomial()` defaults to the link function `link = "logit"`, the intercept and slopes are on a [logit scale](https://en.wikipedia.org/wiki/Logit). Briefly, this extends the narrow range of binomial rates (0-1) to an infinite logit scale from minus infinity to plus infinity. This will be important later when we set priors.
+`empty$simulate` is now a function that can predict data given these parameters (signature: `empty$simulate(fit, newdata, ...)`). If you are in a reasonable R editor, type `empty$simulate(` and press TAB to see the required arguments. I came up with some values below, including change points at $year = 25$ and $year = 65$. Because `binomial()` defaults to `link = "logit"`, the intercept and slopes are on the [logit scale](https://en.wikipedia.org/wiki/Logit), which maps success probabilities between 0 and 1 to the real line. This will be important later when we set priors.
 
 ```{r}
 df$y = empty$simulate(
@@ -82,7 +82,7 @@ We can use `summary` to see that it recovered the parameters to a pretty good pr
 summary(fit)
 ```
 
-`summary` uses 95% central posterior intervals by default, but you can change it using `summary(fit, width = 0.80)`. If you have [varying effects](../articles/varying.html), use `ranef(fit)` to see them.
+`summary` uses 95% central posterior intervals by default, but you can change it using `summary(fit, width = 0.80)`. If you have [group-level effects](../articles/varying.html), use `ranef(fit)` to see their deviations.
 
 Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:
 
@@ -92,13 +92,13 @@ plot(fit)
 
 These lines are just `fit$simulate` applied to a random draw of the posterior samples. In other words, they represent the joint distribution of the parameters. You can change the number of draws (lines) using `plot(fit, lines = 50)`.
 
-Notice for binomial models it defaults to plot the *rate* (`y / N`) as a function of x. The reason why is obvious when we plot on "raw" data by toggling `rate`:
+For binomial models, the default plot shows the observed success proportion (`y / N`) and fitted success probability as functions of x. Compare this with success counts by toggling `rate`:
 
 ```{r}
 plot(fit, rate = FALSE)
 ```
 
-These lines are jagged because `N` varies from year to year. Although there is close too 100% success rate in the years 1900 - 1920, the number of trials varies, as you can see in the raw data. However, using `rate = FALSE` will be great when the number of trials is constant for extended periods of time, as `y` is more interpretable then.
+These lines are jagged because `N` varies from year to year. Although the success probability is close to 1 in 1900--1920, the number of trials varies. Using `rate = FALSE` can be useful when the number of trials is constant for extended periods and the success count `y` is directly interpretable.
 
 Speaking of alternative visualizations, you can also plot this on the logit scale, where the linear trends are modeled:
 
@@ -107,7 +107,7 @@ plot_dpar(fit)
 ```
 
 
-Of course, these plots work with [varying effects](../articles/varying.html) as well.
+These plots work with [group-level effects](../articles/varying.html) as well.
 
 
 # Model diagnostics and sampling options

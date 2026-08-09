@@ -134,7 +134,7 @@ hypothesis(fit_info, c(
 Comparing the Bayes factors shows which hypothesis received the larger update
 from prior to posterior.
 
-There are more examples [in the documentation for `hypothesis`](../reference/hypothesis.html), including how to test varying effects. 
+There are more examples [in the documentation for `hypothesis`](../reference/hypothesis.html), including how to test group-level deviations.
 
 `mcp` evaluates the directional hypothesis for both posterior and prior
 samples. The posterior probability is reported as `p`, and the Bayes factor is

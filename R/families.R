@@ -204,9 +204,9 @@ mcpfamily_binomial = function(family) {
   if (family$link == "identity") {
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", "dbeta(1, 1)", "dt(0, 1, 3) T(0, )", "Uniform probability intercept", "always",
-      "mu", "dummy", "dunif(-1, 1)", "dt(0, 1, 3) T(0, )", "Probability difference between levels", "always",
-      "mu", "slope", "dt(0, 1 / predictor_scale(), 3)", "dt(0, 1 / predictor_scale(), 3) T(0, )", "Regularizing probability coefficient scaled to a reference predictor change", "always"
+      "mu", "Intercept", "dbeta(1, 1)", "dt(0, 1, 3) T(0, )", "Uniform success-probability intercept", "always",
+      "mu", "dummy", "dunif(-1, 1)", "dt(0, 1, 3) T(0, )", "Success-probability difference between levels", "always",
+      "mu", "slope", "dt(0, 1 / predictor_scale(), 3)", "dt(0, 1 / predictor_scale(), 3) T(0, )", "Regularizing success-probability coefficient scaled to a reference predictor change", "always"
     )
   } else if (family$link %in% c("logit", "probit")) {
     default_prior = tibble::tribble(
@@ -271,9 +271,9 @@ mcpfamily_bernoulli = function(family) {
   if (family$link == "identity") {
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", "dbeta(1, 1)", "dt(0, 1, 3) T(0, )", "Uniform probability intercept", "always",
-      "mu", "dummy", "dunif(-1, 1)", "dt(0, 1, 3) T(0, )", "Probability difference between levels", "always",
-      "mu", "slope", "dt(0, 1 / predictor_scale(), 3)", "dt(0, 1 / predictor_scale(), 3) T(0, )", "Regularizing probability coefficient scaled to a reference predictor change", "always"
+      "mu", "Intercept", "dbeta(1, 1)", "dt(0, 1, 3) T(0, )", "Uniform P(y = TRUE) intercept", "always",
+      "mu", "dummy", "dunif(-1, 1)", "dt(0, 1, 3) T(0, )", "P(y = TRUE) difference between levels", "always",
+      "mu", "slope", "dt(0, 1 / predictor_scale(), 3)", "dt(0, 1 / predictor_scale(), 3) T(0, )", "Regularizing P(y = TRUE) coefficient scaled to a reference predictor change", "always"
     )
   } else if (family$link %in% c("logit", "probit")) {
     default_prior = tibble::tribble(

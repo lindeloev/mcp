@@ -42,7 +42,8 @@ NULL
 #' @noRd
 #' @inheritParams summary.mcpfit
 #' @param fit An \code{\link{mcpfit}}` object.
-#' @param varying Boolean. Get results for varying (TRUE) or population (FALSE)?
+#' @param varying Boolean. Summarise group-level deviations (`TRUE`) or
+#'   population-level effects (`FALSE`)? The name is retained for compatibility.
 #' @param verbose Logical. Include the `segment` and `dpar` columns.
 #' @return A data.frame with summaries for each model parameter. With
 #'   `verbose = TRUE`, rows are labeled with `segment` and `dpar` columns (see
@@ -96,8 +97,8 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
   )
 
   # Order rows and add `segment`/`dpar` using the canonical parameter table
-  # built in mcp(). Varying-effect columns (e.g. "cp_1_id[A]") are matched by
-  # their base name; ties (i.e., levels of the same varying effect) are
+  # built in mcp(). Group-level columns (e.g. "cp_1_id[A]") are matched by
+  # their base name; ties (i.e., levels of the same group-level effect) are
   # broken alphabetically by the full column name.
   pars = get_fit_model_tables(fit)$pars
   base_name = sub("\\[.*\\]$", "", estimates$name)
@@ -112,26 +113,26 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
     simulated = as.list(sim_list)  # Get as oroper list
     simulated = simulated[sapply(simulated, is.numeric)]  # Remove non-numeric
 
-    # Handle varying effects. Finds the matching labels
-    for (this_varying in fit$pars$varying) {
-      if (!is.null(simulated[[this_varying]])) {
+    # Handle group-level deviations. Find the matching labels.
+    for (this_group_effect in fit$pars$varying) {
+      if (!is.null(simulated[[this_group_effect]])) {
         # Find the needed values and labels
-        value = simulated[[this_varying]]  # Extract simulation values
+        value = simulated[[this_group_effect]]  # Extract simulation values
         group_effects = get_fit_model_tables(fit)$group_effects
-        label_col = group_effects$group_col[group_effects$name == this_varying]
+        label_col = group_effects$group_col[group_effects$name == this_group_effect]
         labs = fit$data[[label_col]]  # Find the labels. Same length as `value`
         if (length(value) != length(labs)) {
-          warning("This is simulated data, but the labels for varying effect '", label_col, "' in data does not have the same length as the numeric params used for simulation.")
+          warning("This is simulated data, but the labels for group-level effect '", label_col, "' in data do not have the same length as the numeric parameters used for simulation.")
           next
         }
 
         # Name like the MCMC columns and use one value for each group level.
         keep = !duplicated(labs)
         value = value[keep]
-        names(value) = paste0(this_varying, "[", labs[keep], "]")
+        names(value) = paste0(this_group_effect, "[", labs[keep], "]")
 
         # Delete the simulation vector and add the new label-value pairs to list
-        simulated[[this_varying]] = NULL
+        simulated[[this_group_effect]] = NULL
         simulated = c(simulated, as.list(value))
       }
     }
@@ -176,11 +177,9 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
 #' @param object An \code{\link{mcpfit}} object.
 #' @param width Float. The width of the central posterior interval (between 0
 #'   and 1).
-#' @param digits a non-null value for digits specifies the minimum number of
-#'   significant digits to be printed in values. The default, NULL, uses
-#'   getOption("digits"). (For the interpretation for complex numbers see signif.)
-#'   Non-integer values will be rounded down, and only values greater than or
-#'   equal to 1 and no greater than 22 are accepted.
+#' @param digits Non-negative integer. Number of significant digits used when
+#'   printing the summary. Defaults to 2. The invisibly returned data frame
+#'   retains the unrounded values.
 #' @param prior TRUE/FALSE. Summarise prior instead of posterior?
 #' @param verbose Logical. Include the `segment` and `dpar` columns. Defaults
 #'   to `FALSE` for a compact, v0.3.4-compatible summary.
@@ -224,7 +223,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
 #' # Get the results as a data frame
 #' results = summary(demo_fit)
 #'
-#' # Varying (random) effects
+#' # Group-level deviations (random effects)
 #' # ranef(my_fit)
 #'
 #' # Summarise prior
@@ -257,7 +256,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
     print(data.frame(result), digits = digits, row.names = FALSE)
 
     if (!is.null(fit$pars$varying))
-      cat("\nUse `ranef(fit)` to summarise the varying effect(s):", paste0(fit$pars$varying, collapse = ", "))
+      cat("\nUse `ranef(fit)` to summarise the group-level deviation(s):", paste0(fit$pars$varying, collapse = ", "))
 
     # Convergence warning footer
     all_res = result
@@ -292,7 +291,7 @@ ranef = function(object, ...) UseMethod("ranef")
 
 
 #' @aliases fixef fixef.mcpfit
-#' @describeIn summary.mcpfit Fixed (population-level) effects of `mcpfit`.
+#' @describeIn summary.mcpfit Population-level effects of `mcpfit`.
 #' @export
 fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {
   rlang::check_dots_empty()
@@ -300,7 +299,7 @@ fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ..
 }
 
 #' @aliases ranef ranef.mcpfit
-#' @describeIn summary.mcpfit Random (varying) effects of `mcpfit`.
+#' @describeIn summary.mcpfit Group-level deviations (random effects) of `mcpfit`.
 #' @export
 ranef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {
   rlang::check_dots_empty()
@@ -545,7 +544,7 @@ nchains = posterior::nchains
 #' @export
 niterations = posterior::niterations
 
-#' Get relevant info about varying parameters
+#' Get information about group-level parameters
 #'
 #' Returns parameters, data columns, and effect metadata given parameter
 #' name(s), model part(s), or column(s).
@@ -554,8 +553,9 @@ niterations = posterior::niterations
 #' @keywords internal
 #' @noRd
 #' @param pars `NULL`/`FALSE` for nothing. `TRUE` for all. A character vector
-#'   containing `"cp"`, `"predictor"`, or exact varying parameter names.
-#' @param cols `NULL`/`FALSE` for nothing. `TRUE` for all. A vector of varying column names for specifics. Usually provided via "facet_by" argument in other functions.
+#'   containing `"cp"`, `"predictor"`, or exact group-level parameter names.
+#' @param cols `NULL`/`FALSE` for nothing. `TRUE` for all. A vector of grouping
+#'   column names for specifics. Usually provided via `facet_by` elsewhere.
 #' @return A list. See details.
 #'
 #' @details
@@ -572,15 +572,15 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
   if (is.logical(cols))
     checkmate::assert_flag(cols)
   group_effects = get_fit_model_tables(fit)$group_effects
-  use_varying = rep(FALSE, nrow(group_effects))
+  use_group = rep(FALSE, nrow(group_effects))
 
   # If everything is NULL, just return NULLs
   if ((is.null(pars) && is.null(cols))) {
     return(list(
       pars = NULL,
       cols = NULL,
-      indices = use_varying,
-      effects = group_effects[use_varying, , drop = FALSE]
+      indices = use_group,
+      effects = group_effects[use_group, , drop = FALSE]
     ))
   } else if (!is.null(pars) && !is.null(cols)) {
     stop("One of `pars` and `cols` must be NULL.")
@@ -589,11 +589,11 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
 
   if (!is.null(pars)) {
     if (all(pars == FALSE)) {
-      # Select no varying effects
-      use_varying[] = FALSE
+      # Select no group-level effects
+      use_group[] = FALSE
     } else if (all(pars == TRUE)) {
-      # Select all varying effects
-      use_varying[] = TRUE
+      # Select all group-level effects
+      use_group[] = TRUE
     } else if (is.character(pars)) {
       allowed = c("cp", "predictor", group_effects$name)
       unknown = pars[pars %notin% allowed]
@@ -602,22 +602,22 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
           "Unknown `varying` selection: ", and_collapse(unknown), ". ",
           "Use TRUE, FALSE, \"cp\", \"predictor\", or names from fit$pars$varying."
         )
-      use_varying = group_effects$part %in% pars | group_effects$name %in% pars
+      use_group = group_effects$part %in% pars | group_effects$name %in% pars
     }
   } else if (!is.null(cols)) {
     if (all(cols == TRUE)) {
-      use_varying[] = TRUE
+      use_group[] = TRUE
     } else if (!all(cols == FALSE)) {
-      use_varying = group_effects$group_col %in% cols
+      use_group = group_effects$group_col %in% cols
     }
   }
 
   # Return
   list(
-    pars = logical0_to_null(group_effects$name[use_varying]),
-    cols = logical0_to_null(group_effects$group_col[use_varying]),
-    indices = use_varying,
-    effects = group_effects[use_varying, , drop = FALSE]
+    pars = logical0_to_null(group_effects$name[use_group]),
+    cols = logical0_to_null(group_effects$group_col[use_group]),
+    indices = use_group,
+    effects = group_effects[use_group, , drop = FALSE]
   )
 }
 
@@ -646,32 +646,33 @@ resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
 }
 
 
-#' Get tidy samples with or without varying effects
+#' Get tidy samples with or without group-level effects
 #'
 #' Extract posterior or prior draws formatted as tidy data frames
 #'
-#' Returns in a format useful for `fit$simulate()` with population parameters in wide format
-#' and varying effects in long format (the number of rows will be `ndraws * n_levels_in_varying`).
+#' Returns in a format useful for `fit$simulate()` with population-level parameters in wide format
+#' and group-level deviations in long format (the number of rows is multiplied
+#' by the number of selected group levels).
 #'
 #' @aliases mcp_draws
 #' @keywords internal
 #' @inheritParams mcmclist_samples
 #' @inheritParams pp_eval
 #' @param population
-#'   * `TRUE` All population effects. Same as `fit$pars$population`.
-#'   * `FALSE` No population effects. Same as `c()`.
-#'   * Character vector: Only include specified population parameters - see `fit$pars$population`.
+#'   * `TRUE` All population-level effects. Same as `fit$pars$population`.
+#'   * `FALSE` No population-level effects. Same as `c()`.
+#'   * Character vector: Only include specified population-level parameters; see `fit$pars$population`.
 #' @param varying One of:
-#'   * `TRUE` All varying effects (`fit$pars$varying`).
-#'   * `FALSE` No varying effects (`c()`).
-#'   * `"cp"` or `"predictor"`: All varying effects belonging to that part of
+#'   * `TRUE` All group-level deviations (`fit$pars$varying`).
+#'   * `FALSE` No group-level deviations (`c()`).
+#'   * `"cp"` or `"predictor"`: All group-level deviations belonging to that part of
 #'     the model.
-#'   * Character vector: Only include specified varying parameters - see
+#'   * Character vector: Only include specified group-level parameters - see
 #'     `fit$pars$varying`.
 #' @param absolute
-#'   * `TRUE` Returns the absolute location of all varying change points.
-#'   * `FALSE` Just returns the varying effects.
-#'   * Character vector: Only do absolute transform for these varying parameters - see `fit$pars$varying`.
+#'   * `TRUE` Returns the absolute location of all group-specific change points.
+#'   * `FALSE` Return the group-level deviations.
+#'   * Character vector: Apply the absolute transform only to these group-level parameters; see `fit$pars$varying`.
 #'
 #' @return `tibble` of posterior draws in `tidybayes` format.
 #' @encoding UTF-8
@@ -700,37 +701,37 @@ mcp_draws = function(
 
 
   # ----- IDENTIFY PARAMETERS -----
-  # Varying parameters. Result is `terms_varying`
-  varying_info = unpack_varying(fit, pars = varying)
-  terms_varying = paste0(varying_info$pars, "[", varying_info$cols, "]")  # for tidybayes
-  if (all(terms_varying == "[]")) terms_varying = ""  # quick fix
+  # Group-level parameters formatted for tidybayes.
+  group_info = unpack_varying(fit, pars = varying)
+  group_terms = paste0(group_info$pars, "[", group_info$cols, "]")
+  if (all(group_terms == "[]")) group_terms = ""  # quick fix
 
-  # Population parameters. Result is `pars_population`.
+  # Population-level parameters. Result is `pars_population`.
   if (all(population == FALSE)) {
-    pars_population = c()  # Empty if no absolute varying
+    pars_population = c()  # Empty if no absolute group-level change points
   } else if (all(population == TRUE)) {
     pars_population = fit$pars$population
   } else if (is.character(population)) {
     if (!all(population %in% fit$pars$population))
-      stop("Not all `population` are population parameters (see fit$pars$population).")
+      stop("Not all `population` selections are population-level parameters (see fit$pars$population).")
 
     pars_population = population
   }
 
-  # Absolute effects. Results is `absolute_cps` and `absolute` (recoded to varying cp names)
+  # Absolute effects. Results are `absolute_cps` and `absolute`.
   if (all(absolute == TRUE)) {
-    cp_effects = varying_info$effects[varying_info$effects$part == "cp", , drop = FALSE]
+    cp_effects = group_info$effects[group_info$effects$part == "cp", , drop = FALSE]
     absolute = cp_effects$name
     absolute_cps = cp_effects$population_name
   } else if (all(absolute == FALSE)) {
     absolute_cps = NULL
   } else if (is.character(absolute)) {
     # Check
-    is_in_varying = absolute %in% varying_info$pars
-    if (any(!is_in_varying))
-      stop("The following parameter names in `absolute` are not in `varying`: ", and_collapse(absolute[!is_in_varying]))
-    absolute_effects = varying_info$effects[
-      varying_info$effects$name %in% absolute, , drop = FALSE
+    is_group_selection = absolute %in% group_info$pars
+    if (any(!is_group_selection))
+      stop("The following parameter names in `absolute` are not in `varying`: ", and_collapse(absolute[!is_group_selection]))
+    absolute_effects = group_info$effects[
+      group_info$effects$name %in% absolute, , drop = FALSE
     ]
     if (any(absolute_effects$part != "cp"))
       stop("`absolute` can select change-point group-level effects only.")
@@ -743,27 +744,27 @@ mcp_draws = function(
   samples = mcmclist_samples(fit, prior = prior)
 
   # Build code for tidybayes::spread_draws() and execute it
-  all_terms = unique(c(pars_population, terms_varying, absolute_cps))
+  all_terms = unique(c(pars_population, group_terms, absolute_cps))
   code = paste0("tidybayes::spread_draws(samples, ", paste0(all_terms, collapse = ", "), ", ndraws = ndraws)")
   samples = eval(str2lang(code))
 
-  # Make varying columns factor if they are factors in fit$data
-  if (length(varying_info$cols) > 0) {
-    is_factor = lapply(fit$data, is.factor)[varying_info$cols]
-    cols_to_factorize = varying_info$cols[as.logical(is_factor)]
+  # Preserve factor grouping columns from fit$data.
+  if (length(group_info$cols) > 0) {
+    is_factor = lapply(fit$data, is.factor)[group_info$cols]
+    cols_to_factorize = group_info$cols[as.logical(is_factor)]
     samples = dplyr::mutate_at(samples, cols_to_factorize, as.factor)
   }
 
-  # Add population cp to varying and delete population cols only included for this purpose.
+  # Add population-level change points to deviations, then remove helper columns.
   if (length(absolute_cps) > 0) {
     #samples[, absolute] = samples[, absolute] + samples[, absolute_cps]
     samples[, absolute_cps] = samples[, absolute_cps] + samples[, absolute]
     samples = dplyr::select(samples, -dplyr::all_of(absolute))
   }
 
-  # Unassigned varying effects are just simulated as zero (the population mean)
-  remaining_varying_cols = dplyr::setdiff(fit$pars$varying, colnames(samples))
-  samples[, remaining_varying_cols] = 0
+  # Unassigned group-level deviations are simulated as zero (the population-level mean).
+  remaining_group_cols = dplyr::setdiff(fit$pars$varying, colnames(samples))
+  samples[, remaining_group_cols] = 0
 
   # Return with chain etc. first
   samples %>%
@@ -795,8 +796,8 @@ tidy_samples = function(...) {
 #'   (default), the original data is used.
 #' @param summary Summarise at each x-value
 #' @param type One of:
-#'   - `"fitted"`: return expected values. When `dpar` is the name of a dpar
-#'     (e.g., `"mu"` or `"sigma"`), the expected value for just this dpar is returned.
+#'   - `"fitted"`: return the expected response. When `dpar` names a
+#'     distributional parameter (e.g., `"mu"` or `"sigma"`), that parameter is returned instead.
 #'     See also `fitted()`.
 #'   - `"predict"`: return predicted values (e.g., `y_predict = rnorm(N, y_fitted, sigma_fitted)` for `family = gaussian()`).
 #'     See also `predict()`.
@@ -804,13 +805,13 @@ tidy_samples = function(...) {
 #'   - `"loglik"`: return the log-likelihood for each sample for each data point. See also `log_lik()`.
 #'     Requires `scale = "response"`.
 #' @param probs Vector of quantiles. Only in effect when `summary == TRUE`.
-#' @param rate Boolean. For binomial models, plot on raw data (`rate = FALSE`) or
-#'   response divided by number of trials (`rate = TRUE`). If FALSE, linear
+#' @param rate Boolean. For binomial models, return counts (`rate = FALSE`) or
+#'   the observed or expected success proportion (`rate = TRUE`). If `FALSE`, linear
 #'   interpolation on trial number is used to infer trials at a particular x.
 #' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
 #' @param dpar What distributional parameter to evaluate. This is only relevant when `type == "fitted"`. E.g.,
 #'
-#'   * `"epred"` (default): Expected value of the full model (or `NULL` for compatibility with brms etc.).
+#'   * `"epred"` (default): Expected response from the full model (or `NULL` for compatibility with brms etc.).
 #'   * `"mu"`: The central tendency which is often the mean after applying the
 #'     link function.
 #'   * `"sigma"`: The standard deviation of the residuals.
@@ -820,23 +821,27 @@ tidy_samples = function(...) {
 #'   * `TRUE` Compute the GARMA residual recurrence. Requires the response variable in `newdata`.
 #'   * `FALSE` Disregard AR and MA effects. For `family = gaussian()`, `predict()` uses only `sigma` for residuals.
 #' @param ndraws Integer or `NULL`. Number of posterior draws to return/summarise.
-#'   If there are varying effects, this is the number of draws from each varying group.
+#'   If there are group-level effects, this is the number of draws from each group.
 #'   `NULL` means "all". Ignored if both are `FALSE`. More samples trade speed for accuracy.
 #' @param nsamples Deprecated. Use `ndraws` instead.
 #' @param samples_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE`.
 #'   See more under "value"
 #' @param scale One of
 #'   * `"response"`: return on the observed scale, i.e., after applying the inverse link function.
-#'   * `"linear"`: return on the parameter scale (where the linear trends are modelled).
+#'   * `"linear"`: return on the linear-predictor (link) scale, where the linear
+#'     trends are modeled.
 #'     A linear scale is only applicable when `type == "fitted"` and `dpar` is not `NULL`.
 #' @param .include_fitted Internal. Include fitted values with unsummarised predictions.
 #' @return
-#'   * If `summary = TRUE`: A `tibble` with the posterior mean for each row in `newdata`,
-#'     If `newdata` is `NULL`, the data in `fit$data` is used.
+#'   * If `summary = TRUE`: A data frame with the draw mean and SD (`error`) for
+#'     each row in `newdata`. With posterior draws (the default), `error` is the
+#'     posterior predictive SD for `type = "predict"` and the posterior SD of the
+#'     evaluated quantity otherwise. With `prior = TRUE`, these are the analogous
+#'     prior summaries. If `newdata` is `NULL`, the data in `fit$data` is used.
 #'
 #'   * If `summary = FALSE` and `samples_format = "tidy"`: A `tidybayes` `tibble` with all the posterior
 #'     draws (`Nd`) evaluated at each row in `newdata` (`Nn`), i.e., with `Nd x Nn` rows. If there are
-#'     varying effects, the returned data is expanded with the relevant levels for each row.
+#'     group-level effects, the returned data is expanded with the relevant levels for each row.
 #'
 #'     The return columns are:
 #'
@@ -884,10 +889,10 @@ pp_eval = function(
   ###############
   # FIX NEWDATA #
   ###############
-  varying_info = unpack_varying(fit, pars = varying)
+  group_info = unpack_varying(fit, pars = varying)
   model_tables = get_fit_model_tables(fit)
-  varying_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
-  exclude_varying = setdiff(varying_cols, varying_info$cols)
+  group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
+  exclude_group_cols = setdiff(group_cols, group_info$cols)
   required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
   operation = switch(type, predict = "rng", loglik = "log_lik", fitted = "epred", residuals = "epred")
   aux_operations = c(operation, if (arma && is_arma(fit)) "garma")
@@ -895,7 +900,7 @@ pp_eval = function(
   aux_used = names(get_family_aux_columns(fit$family, model_tables$segments, aux_operations))
   unused_aux_columns = unname(aux_columns[names(aux_columns) %notin% aux_used])
   required_cols = required_cols[required_cols %notin% unused_aux_columns]
-  required_cols = required_cols[required_cols %notin% exclude_varying]
+  required_cols = required_cols[required_cols %notin% exclude_group_cols]
   if ((arma == FALSE || is_arma(fit) == FALSE) & type %in% c("fitted", "predict")) {
     required_cols = required_cols[required_cols != fit$pars$y]
   } else if (fit$pars$y %notin% colnames(newdata)) {
@@ -937,16 +942,16 @@ pp_eval = function(
   # GET FITS/PREDICTIONS #
   ########################
   simulate_type = ifelse(type == "residuals", yes = "fitted", no = type)
-  if (length(varying_info$cols) > 0) {
-    # If there are varying effects: use varying-matching samples for each row of data
+  if (length(group_info$cols) > 0) {
+    # Match group-level draws to each row of data.
     samples_predictors = dplyr::left_join(
       add_rhs_predictors(newdata, fit),
       mcp_draws(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws),
-      by = unique(varying_info$cols),
+      by = unique(group_info$cols),
       relationship = "many-to-many"
     )
   } else {
-    # No varying effects: use all samples for each row of data
+    # Without group-level effects, use all draws for each row of data.
     samples = tibble::as_tibble(mcp_draws(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws))
     predictors = tibble::as_tibble(add_rhs_predictors(newdata, fit))
     samples_predictors = dplyr::bind_cols(
@@ -987,7 +992,7 @@ pp_eval = function(
   if (type == "residuals")
     samples = dplyr::mutate(samples, !!type := .data[[fit$pars$y]] - .data[[type]])
 
-  # Fail early if varying-effect joins or another evaluation step duplicated
+  # Fail early if group-level joins or another evaluation step duplicated
   # or dropped any joint draw/evaluation-row combinations.
   validate_eval_draws(samples, type)
 
@@ -1040,8 +1045,9 @@ pp_eval = function(
 #' Fitted and predicted values of `mcp` models fits
 #'
 #' Evaluate the model on data, either summarised (per data-row) or per draw. You
-#' can use draws from the prior (`prior = TRUE`), select the parameter to predict
-#' from (``)
+#' can use draws from the prior (`prior = TRUE`), select a distributional
+#' parameter with `dpar`, and choose the response or linear-predictor scale with
+#' `scale` where applicable.
 #'
 #' @details
 #' `residuals(fit)` is equivalent to `fit$data[, fit$data$yvar] - fitted(fit, ...)` (or `newdata[, fit$data$yvar] - fitted(fit, ...)`),
@@ -1054,14 +1060,14 @@ pp_eval = function(
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @examples
-#' fitted(demo_fit)  # Expected value at each demo_fit$data at response-level
-#' residuals(demo_fit)  # Residuals at each demo_fit$data at response-level
+#' fitted(demo_fit)  # Expected response for each row of demo_fit$data
+#' residuals(demo_fit)  # Residuals for each row of demo_fit$data
 #' log_lik(demo_fit)  # Log-likelihood at each demo_fit$data
 #'
 #' # All of the above take a range of arguments. E.g.,:
 #' \donttest{
 #' predict(demo_fit)  # Pointwise posterior predictive
-#' predict(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80% credible interval.
+#' predict(demo_fit, probs = c(0.1, 0.5, 0.9))  # Median and 80% posterior predictive interval.
 #' predict(demo_fit, prior = TRUE)  # Prior predictive
 #' fitted(demo_fit, summary = FALSE)  # Samples instead of summary. Useful for plotting distributions.
 #' fitted(demo_fit, dpar = "sigma")  # Another model parameter
@@ -1116,7 +1122,7 @@ predict.mcpfit = function(
 
 
 #' @aliases fitted fitted.mcpfit
-#' @describeIn execute-mcp-model Expected distribution
+#' @describeIn execute-mcp-model Expected response
 #' @export
 fitted.mcpfit = function(
   object,

@@ -7,17 +7,17 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-`mcp` supports group-level effects (also called varying or random effects) in both the predictor and change-point parts of a formula. The syntax and terminology follow `lme4` and `brms`: `(1|group)` specifies a group-level intercept, `(factor||group)` specifies independent group coefficients, `fixef()` reports population-level coefficients, and `ranef()` reports group-level deviations.
+`mcp` supports group-level effects (also called random effects) in both the predictor and change-point parts of a formula. The syntax follows `lme4` and `brms`: `(1|group)` specifies a group-level intercept, `(factor||group)` specifies independent group coefficients, `fixef()` reports population-level effects, and `ranef()` reports group-level deviations.
 
 This article in brief:
 
  * Predictor and change-point group-level effects
  * How group-level effects persist across segments
- * How to simulate varying change points
+ * How to simulate group-level change-point deviations
  * Get posteriors using `ranef(fit)`
  * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "varying", type = "dens_overlay", ncol = 3)`.
- * The default priors restrict varying change points to lie between the two adjacent change points.
- * The article on modeling variance via `sigma()` contains [an example on varying change points](../articles/variance.html) as well.
+ * The default priors bound group-specific change points relative to adjacent population-level change points.
+ * The article on modeling standard deviation via `sigma()` contains [another group-level change-point example](../articles/variance.html).
 
 ```{r}
 library(mcp)
@@ -26,9 +26,9 @@ set.seed(42)  # Make the script deterministic
 ```
 
 
-# Specifying varying change points
+# Specifying group-level change points
 
-You specify group-level effects using the familiar [`lmer`](https://www.rdocumentation.org/packages/lme4/versions/1.1-21/topics/lmer) and `brms` syntax `(1|group)`. In the cp part, this models a varying change point. For example, here we model a varying change point between a plateau and a joined slope:
+You specify group-level effects using the familiar [`lmer`](https://www.rdocumentation.org/packages/lme4/versions/1.1-21/topics/lmer) and `brms` syntax `(1|group)`. In the cp part, this models a group-specific deviation from the population-level change point. For example:
 
 ```{r}
 model = list(
@@ -37,7 +37,7 @@ model = list(
 )
 ```
 
-You can have multiple varying change points with multiple groupings:
+You can have multiple group-level change points with multiple grouping factors:
 
 ```{r}
 model = list(
@@ -48,17 +48,17 @@ model = list(
 )
 ```
 
-Here are some properties of the change point varying effects:
+Here are some properties of group-level change-point deviations:
 
-**Zero centered:** The group-level deviations are zero-centered around the associated population-level change point. In other words, the sum of all varying effects is exactly zero. This constraint is necessary for the parameters to be identifiable.
+**Zero centered:** The group-level deviations are zero-centered around the associated population-level change point. In other words, their sum is exactly zero. This constraint is necessary for the parameters to be identifiable.
 
 **Hierarchical:** Consider the population-level change point `cp_1` and its associated group-level deviations `cp_1_id`. Their spread is governed by the population-level parameter `cp_1_sd`.
 
-**Constraints:** The varying effects are constrained to lie (1) in the observed range of the x-axis, and/or (2) between the two adjacent change points. That is, all `cp_1_id` are between `min(x)` and `cp_2`. All `cp_2_species` are between `cp_1` and `cp_3` and all `cp_3_id` are between `cp_2` and `max(x)`. These constraints are enforced through truncation of the default prior (`fit$prior`) and you can override them by specifying a manual prior (see vignette("priors")).
+**Constraints:** The default priors bound each group-specific change point using the observed range and adjacent population-level change points. For example, `cp_1 + cp_1_id` lies between `min(x)` and population-level `cp_2`. These individual bounds do not guarantee that realized group-level change points are ordered. Manual priors can override the bounds; see `vignette("priors")`.
 
 # Predictor group-level effects
 
-The same syntax in the predictor part gives each group a deviation from the population intercept:
+The same syntax in the predictor part gives each group a deviation from the population-level intercept:
 
 ```{r}
 model = list(
@@ -81,7 +81,7 @@ model = list(
 
 With the default treatment coding, `(condition||id)` contains a group-level intercept and one group-level deviation for each non-reference contrast of `condition`. `(0 + condition||id)` instead gives each factor level its own group-level coefficient. Similarly, `(1 + z||id)` specifies independent group-level intercepts and slopes on a numeric predictor `z`. Each coefficient has its own population-level SD.
 
-The population-level and group-level formulas need not contain the same coefficients. For example, `y ~ 1 + (0 + condition||id)` has a population intercept but only group-specific condition coefficients.
+The population-level and group-level formulas need not contain the same coefficients. For example, `y ~ 1 + (0 + condition||id)` has a population-level intercept but only group-specific condition coefficients.
 
 Group-level intercepts also work inside distributional formulas:
 
@@ -101,8 +101,8 @@ Unlike change-point deviations, predictor deviations are not constrained to sum 
 
 
 
-# Simulating varying change points
-Let us do a worked example, simulating the varying change point between a plateau and a slope: 
+# Simulating group-level change points
+Let us simulate group-specific deviations in the change point between a plateau and a slope:
 
 ```{r}
 model = list(
@@ -111,14 +111,14 @@ model = list(
 )
 ```
 
-It is quite similar to simulating non-varying data, except that we need to simulate some varying offsets before passing all parameters to `empty$simulate`:
+This is similar to simulating a population-level model, except that we first create group-level deviations to pass to `empty$simulate`:
 
 ```{r, message=FALSE, warning=FALSE}
 library(dplyr, warn.conflicts = FALSE)
-varying = c("Clark", "Louis", "Batman", "Batgirl", "Spiderman", "Jane")
+group_levels = c("Clark", "Louis", "Batman", "Batgirl", "Spiderman", "Jane")
 df = data.frame(
-  x = runif(length(varying) * 30, 0, 100),  # 30 data points for each
-  id = rep(varying, each = 30),  # the group names
+  x = runif(length(group_levels) * 30, 0, 100),  # 30 data points for each
+  id = rep(group_levels, each = 30),  # the group names
   y = 1
 )
 df$id_numeric = as.numeric(as.factor(df$id))  # to positive integers
@@ -129,13 +129,13 @@ df$y = empty$simulate(empty, df,
   # Population-level:
   Intercept_1 = 20, x_2 = 0.5, cp_1 = 50, sigma = 2,
   
-  # Varying: zero-centered and 10 between each level
+  # Group-level deviations: zero-centered and 10 between each level
   cp_1_id = 10 * (df$id_numeric - mean(df$id_numeric)))
 
 head(df)
 ```
 
-Here, we "translated" the `id` to an offset on the x-axis by multiplying with 10. We subtracted the mean to make the varying effects zero-centered around `cp_1`. The result:
+Here, we translated `id` to a deviation on the x-axis by multiplying by 10. We subtracted the mean to center the group-level deviations on `cp_1`. The result:
 
 ```{r}
 library(ggplot2)
@@ -145,7 +145,7 @@ ggplot(df, aes(x=x, y=y)) +
 ```
 
 
-# Summarise and plot varying effects.
+# Summarise and plot group-level effects
 Fitting the model is simple:
 
 ```{r, cache = TRUE, message = FALSE, warning=FALSE, results=FALSE}
@@ -158,9 +158,9 @@ If we just use `plot(fit)`, we would see all points in one plot. We want to face
 plot(fit, facet_by = "id")
 ```
 
-It seems that `mcp` did a good job of recovering the change points. There is a lot of information in this data, since the intercept and the slope on each side of the (varying) change point is shared between participants (`id`) here.
+It seems that `mcp` recovered the group-specific change points well. There is a lot of information in these data because the population-level intercept and slopes on either side of the change point are shared across participants (`id`).
 
-If you use `summary(fit)` (or `fixef(fit)`) you will get the posteriors for the population-level effects. To get the random effects, do:
+`summary(fit)` (or `fixef(fit)`) returns posterior summaries for the population-level effects. To get the group-level deviations (random effects), use:
 
 ```{r}
 mcp::ranef(fit)
@@ -174,15 +174,15 @@ group-level effects in the cp part, `varying = "predictor"` for predictor-side
 group-level effects, or supply an exact name such as `varying = "cp_1_id"`.
 `ranef(fit)` deliberately remains simple and returns all group-level effects.
 
-Good convergence is not always as obvious as in this example. While `plot_pars(fit)` show population-level parameters only, you can do this to get varying effects only:
+Good convergence is not always as obvious as in this example. While `plot_pars(fit)` shows population-level parameters only, you can select the group-level deviations with the compatibility keyword `"varying"`:
 
 ```{r}
 plot_pars(fit, pars = "varying", type = "trace", ncol = 3)
 ```
 
-Notice the use of the `ncol` argument to set the number of columns. You will often have *many* levels on your varying effect, so this is useful to get a good view of all of them. Naturally, you can do this for almost all kinds of plots.
+The `ncol` argument controls the number of columns. Group-level effects often have many levels, so this is useful for viewing all deviations.
 
-Using `pars = "varying"` will plot all varying effects. This may be too much if you have multiple varying effects. To select just one, use regular expression in `regex_pars`. Two very handy operators are "^" (begins with) and "$" (ends with). Just to show that this "faceting" works for almost all of the many plot types, we now do two columns of `"dens_overlay`:
+Using `pars = "varying"` plots all group-level deviations. To select one group-level effect, use a regular expression in `regex_pars`; for example, `^` anchors the start of a parameter name:
 
 ```{r}
 plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2)
@@ -197,14 +197,14 @@ pp_check(fit, facet_by = "id")
 
 
 
-# Priors for varying effects
+# Priors for group-level effects
 You can see the priors of the model like this:
 
 ```{r}
 cbind(fit$prior)
 ```
 
-The prior `cp_1_sd` is the population-level standard deviation of `cp_1_id`, the latter of which is applied to all levels of `id`. Predictor group-level effects similarly receive a population-level SD parameter, but use ordinary mean-zero normal deviations without exact zero-centering. This is also apparent if you inspect the JAGS code for a model. The truncation of change-point deviations keeps them between the two adjacent population-level change points.
+The prior `cp_1_sd` is the population-level standard deviation governing the `cp_1_id` deviations across levels of `id`. Predictor group-level effects similarly receive a population-level SD parameter, but use ordinary mean-zero normal deviations without exact zero-centering. The default truncation bounds each group-specific change point relative to adjacent population-level change points; it does not guarantee ordering among realized group-specific change points.
 
 
 # JAGS code

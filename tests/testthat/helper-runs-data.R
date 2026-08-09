@@ -15,7 +15,7 @@ data_gauss = data.frame(
   bad_x_char = c("a", "b", "c", "d", "e"),
   bad_x_factor = factor(1:5),
 
-  # varying effects should be categorical-ish
+  # Group-level effects should use categorical-like grouping variables
   id = c("a", "b", "c", "d", "e"),
   ok_id_factor = factor(c(-3, 0, -3, 0, 1.233243)),  # Repeated levels; as a factor, decimals are OK
   ok_id_integer = -2:2,  # interval
@@ -42,7 +42,7 @@ data_binomial = data.frame(
   # x
   x = -1:3,
 
-  # Varying effects
+  # Group-level effects
   id = c("a", "b", "c", "d", "e"),
 
   weights_ok = c(0.1, 1, 2, 1, 1)  # Actually not OK since it's not implemented yet

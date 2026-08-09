@@ -106,7 +106,7 @@ run_jags = function(data,
   if (!quiet)
     message("Finished sampling in ", round(passed["elapsed"], 1), " seconds\n")
 
-  # Recover the levels of varying effects if it succeeded
+  # Recover the levels of group-level effects if it succeeded
   if (coda::is.mcmc.list(samples)) {
     return(samples)
   } else {
@@ -162,7 +162,7 @@ get_jags_inits = function(inits, seed, n.chains, sample) {
 #' Adds helper variables for use in `run_jags`
 #'
 #' Returns the relevant data columns as a list and add elements with unique
-#' varying group levels.
+#' grouping-factor levels.
 #'
 #' @aliases get_jags_data
 #' @keywords internal
@@ -173,19 +173,19 @@ get_jags_inits = function(inits, seed, n.chains, sample) {
 #' @param predictors Returned by `get_predictors()`.
 #' @param group_effects Returned by `get_group_effects()`.
 get_jags_data = function(data, family, segments, predictors, group_effects, jags_code) {
-  cols_varying = unique(stats::na.omit(group_effects$group_col))
+  group_cols = unique(stats::na.omit(group_effects$group_col))
 
   # Start with "raw" data
   aux_columns = get_family_aux_columns(family, segments)
   cols_data = unique(stats::na.omit(c(segments$y, segments$x, unname(aux_columns))))
-  jags_data = as.list(data[, c(cols_varying, cols_data)])
+  jags_data = as.list(data[, c(group_cols, cols_data)])
 
-  for (col in cols_varying) {
-    # Add meta-data (now many varying group levels)
+  for (col in group_cols) {
+    # Add metadata for the grouping-factor levels.
     tmp = paste0("n_unique_", col)
     jags_data[[tmp]] = length(unique(data[, col]))
 
-    # Make varying columns numeric in order of appearance
+    # Make grouping columns numeric in order of appearance.
     # They will be recovered using the recover_levels()
     jags_data[[col]] = as.numeric(factor(jags_data[[col]], levels = unique(jags_data[[col]])))
   }
@@ -208,15 +208,15 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
 }
 
 
-#' Recover the levels of varying effects in mcmc.list
+#' Recover the levels of group-level effects in mcmc.list
 #'
-#' Jags uses 1, 2, 3, ..., etc. for indexing of varying effects.
+#' JAGS uses 1, 2, 3, ... for indexing group-level effects.
 #' This function adds back the original levels, whether numeric or string
 #'
 #' @aliases recover_levels
 #' @keywords internal
 #' @noRd
-#' @param samples An mcmc.list with varying columns starting in `mcmc_col`.
+#' @param samples An mcmc.list with group-level columns starting in `mcmc_col`.
 #' @param data A tibble or data.frame
 #' @param group_effects Returned by `get_group_effects()`.
 recover_levels = function(samples, data, group_effects) {

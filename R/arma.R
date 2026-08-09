@@ -173,19 +173,19 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, threshold = 0.10) {
   rows = unique(round(seq(1, nrow(fit$data), length.out = min(nrows, nrow(fit$data)))))
   newdata = fit$data[rows, , drop = FALSE]
   newdata$data_row = seq_len(nrow(newdata))
-  varying_info = unpack_varying(fit, pars = TRUE)
+  group_info = unpack_varying(fit, pars = TRUE)
   draws = as.matrix(.subset2(fit, "mcmc_post"))
   # Spread the check over all retained post-warmup draws and chains.
   keep = unique(round(seq(1, nrow(draws), length.out = min(ndraws, nrow(draws)))))
   smoke_fit = fit
   smoke_fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws[keep, , drop = FALSE]))
   samples = mcp_draws(
-    smoke_fit, population = TRUE, varying = length(varying_info$cols) > 0
+    smoke_fit, population = TRUE, varying = length(group_info$cols) > 0
   )
   predictor_data = add_rhs_predictors(newdata, fit)
-  if (length(varying_info$cols) > 0) {
+  if (length(group_info$cols) > 0) {
     samples_predictors = dplyr::left_join(
-      predictor_data, samples, by = unique(varying_info$cols),
+      predictor_data, samples, by = unique(group_info$cols),
       relationship = "many-to-many"
     )
   } else {

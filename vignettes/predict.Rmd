@@ -35,7 +35,7 @@ model = list(
 fit = mcp(model, data = data)
 ```
 
-This is what the data and the inferred fit looks like with 95% credible interval and a 80% prediction interval:
+This is what the data and inferred fit look like with a 95% central posterior interval for the expected response and an 80% posterior predictive interval:
 
 ```{r}
 plot(fit, q_fit = TRUE, q_predict = c(0.1, 0.9))
@@ -65,14 +65,14 @@ In general, this output will include:
  
  * **fitted:** The fitted value (posterior mean). When `summary = TRUE` (default), the column is called `fitted`. When `summary = FALSE`, the column is named `.epred`, matching `tidybayes::add_epred_draws()` conventions.
  
- * **error:**: The standard error corresponding to `fitted`, i.e., `diff(fitted + c(-1, 1) * error)` is the 68% credible interval.
+ * **error:** The posterior standard deviation of the expected response corresponding to `fitted`. In `predict()` output, `error` is instead the posterior predictive standard deviation.
  
  * **Q[some number]:** The quantiles of the fitted distribution. You can set the quantiles using `fitted(fit, probs = c(0.1, 0.5, 0.9))`.
  
 If you compare these values to the plot, you will see that they correspond. `plot()` merely calls `fitted()` behind the scenes.
 
 
-## Expected values for out-of-sample data
+## Expected responses for out-of-sample data
 
 To predict out-of-sample data, you can simply use the `newdata` argument. 
 
@@ -94,7 +94,7 @@ If you look at the documentation for `predict()`, `fitted()`, and `residuals()`,
 
 
 # Predictions
-`predict()` is the posterior predictive and it takes exactly the same arguments as `fitted()`. This means that you can make predictions for in-sample and out-of-sample data as well. As with `fitted()`, `plot()` uses `predict()` under the hood to plot prediction intervals. You can see that the values correspond to dashed green lines in the plot (the 80% prediction interval):
+`predict()` draws from the posterior predictive distribution and takes almost the same arguments as `fitted()`. This supports predictions for in-sample and out-of-sample data. `plot()` uses `predict()` under the hood for posterior predictive intervals. The values below correspond to the dashed green lines in the plot (the 80% posterior predictive interval):
 
 ```{r}
 set.seed(42)
@@ -149,7 +149,7 @@ fit_forecast = mcp(model_forecast, data = data, prior = prior_forecast)
 
 ## Step 3: predict!
 
-We can go right ahead and compute our 50% and 80% prediction intervals at `time = 125`:
+We can now compute 50% and 80% posterior predictive intervals at `time = 125`:
 
 ```{r}
 predict(fit_forecast, newdata = data.frame(time = 125), probs = c(0.1, 0.25, 0.75, 0.9))
@@ -158,7 +158,7 @@ predict(fit_forecast, newdata = data.frame(time = 125), probs = c(0.1, 0.25, 0.7
 To really understand what's going on here, it may be helpful to visualize the model. For now, we will have to hack this a bit too, manually doing our plot:
 
 ```{r, cache=TRUE}
-# Get posterior and posterior predictive "predictions"
+# Get expected-response and posterior predictive draws
 newdata = data.frame(time = 1:170)
 fitted_forecast = fitted(fit_forecast, newdata = newdata, summary = FALSE, ndraws = 50)
 predict_forecast = predict(fit_forecast, newdata = newdata, summary = FALSE)
@@ -166,7 +166,7 @@ predict_forecast = predict(fit_forecast, newdata = newdata, summary = FALSE)
 # Plot it
 library(ggplot2)
 ggplot(predict_forecast, aes(x = time, y = .prediction)) +
-  # Prediction intervals and line at x = 125
+  # Posterior predictive intervals and line at x = 125
   stat_summary(fun.data = median_hilow, fun.args = list(conf.int = 0.8), geom = "ribbon", alpha = 0.2) +
   stat_summary(fun.data = median_hilow, fun.args = list(conf.int = 0.5), geom = "ribbon", alpha = 0.3) +
   geom_vline(xintercept = 125, lty = 2, lwd = 1) +

@@ -28,7 +28,7 @@ See the "GLM" menu above for more details on using GLM with `mcp`.
 
 
 # General remarks
-Some link functions are *default* in GLM for good reasons: they have proven computationally convenient and interpretable. When using a non-default link function, you risk predicting impossible values, at which point `mcp` will error (as it should) - hopefully with informative error messages. For example a `bernoulli("identity")` family with model `prob ~ 1 + x` (i.e., a slope directly on the probability of success) can easily exceed 1 or 0 and there are, of course, no such thing as probabilities below 0% or above 100%. One way to ameliorate such problems is by setting informative [priors](../articles/priors.html) (e.g., via truncation) to prevent the sampler from visiting illegal combinations of such values.
+Some link functions are *default* in GLMs for good reasons: they are computationally convenient and interpretable. A non-default link can imply impossible values, at which point `mcp` errors. For example, a `bernoulli("identity")` model `prob ~ 1 + x` places a slope directly on `P(y = TRUE)`, which can easily fall below 0 or exceed 1. Informative [priors](../articles/priors.html), for example through truncation, can prevent the sampler from visiting invalid values.
 
 In short: think carefully and proceed at your own risk.
 
@@ -46,8 +46,8 @@ Reviving the example from the article on [binomial models in mcp](../articles/bi
 
 ```{r}
 model = list(
-  y | trials(N) ~ 1 + x,  # Intercept and slope on P(success)
-  ~ 1 + x                 # Disjoined slope on P(success)
+  y | trials(N) ~ 1 + x,  # Intercept and slope on success probability
+  ~ 1 + x                 # Disjoined slope on success probability
 )
 ```
 
@@ -70,7 +70,7 @@ Invalid parent values")
 ```
 
 
-Oops, the sampler visited impossible values! Likely `P(success) < 0%` or `P(success) > 100%`. Let's help it along with some more informative priors. For this data and model, the main problem is that the slope of the second segment has too great posterior probability of surpasses 100% with the default `mcp` priors. So let's set some more informative priors render a long (early `cp_1`) and steep (high `x_2`) slope unlikely:
+Oops, the sampler visited impossible success probabilities, below 0 or above 1. For these data, the second-segment slope has too much posterior support for exceeding 1 under the defaults. We therefore use more informative priors that make a long, steep slope unlikely:
 
 ```{r, results=FALSE, message=FALSE, warning=FALSE}
 prior = list(
@@ -87,7 +87,7 @@ plot(fit)
 
 Sampling succeeded! This is a bad model of this data. But it illustrates the necessary considerations and steps to ameliorate problems when going beyond default link functions. 
 
-Because of the identity-link, the regression coefficients are interpretable as intercepts and slopes on `P(success)` in contrast to the "usual" log-odds fitted when `family = binomial(link = "logit")`. For example, `Intercept_1` is inferred probability of success at `x = 0` and likewise for `Intercept_2` at `x = cp_1`.
+Because of the identity link, the binomial regression coefficients are intercepts and slopes on the success probability, in contrast to the log-odds fitted by `family = binomial(link = "logit")`. For example, `Intercept_1` is the success probability at `x = 0`, and `Intercept_2` is the success probability at `x = cp_1`.
 
 ```{r}
 summary(fit)
@@ -101,4 +101,3 @@ summary(fit)
 ```{r cleanup, include=FALSE}
 future::plan(future::sequential)
 ```
-
