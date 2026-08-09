@@ -101,8 +101,13 @@
 #'   framework.
 #' @param seed `NULL` or a positive integer. Seed for the JAGS random-number
 #'   generators. When supplied, `inits` must be a single named list shared by all chains.
-#' @param warn Logical. Warn about non-convergence (`Rhat > 1.01` or `ESS < 400`)
-#'   after sampling? Defaults to `TRUE`.
+#' @param diagnostics Named list of diagnostic warning thresholds. Available
+#'   elements are `rhat = 1.01`, `ess_bulk = 400`, `ess_tail = 400`,
+#'   `ar = 0.10`, and `ma = 0.10`. An empty list uses these defaults; a partial
+#'   list overrides only the supplied values. Set an element to `NULL` to disable
+#'   that diagnostic, or use `FALSE` to disable all configurable diagnostic
+#'   warnings. In [summary.mcpfit()], `NULL` inherits the settings used to fit
+#'   the model, while a list or `FALSE` overrides the diagnostic footer.
 #' @param quiet Logical. Suppress routine JAGS output and mcp sampling-status
 #'   messages? Defaults to `FALSE`.
 #' @details Notes on priors:
@@ -198,7 +203,7 @@ mcp = function(model,
                inits = NULL,
                jags_code = NULL,
                seed = NULL,
-               warn = TRUE,
+               diagnostics = list(),
                quiet = FALSE) {
 
   ################
@@ -271,7 +276,7 @@ mcp = function(model,
   checkmate::assert_int(chains, lower = 1)
   checkmate::assert_list(inits, null.ok = TRUE)
   checkmate::assert_int(seed, lower = 1, null.ok = TRUE)
-  checkmate::assert_flag(warn)
+  diagnostics = resolve_diagnostics(diagnostics)
   checkmate::assert_flag(quiet)
 
   # jags_code
@@ -377,8 +382,7 @@ mcp = function(model,
 
     class(mcmc_post) = "mcmc.list"
     assert_ordered_cp_draws(mcmc_post, cps, data[[par_x]])
-    if (isTRUE(warn))
-      warn_nonconvergence(mcmc_post)
+    warn_nonconvergence(mcmc_post, diagnostics)
   } else {
     mcmc_post = NULL
   }
@@ -448,14 +452,14 @@ mcp = function(model,
       formula_r = formula_r,
       prior_table = prior_table,
       prior_context = prior_context,
-      warn = warn,
+      diagnostics = diagnostics,
       mcp_version = utils::packageVersion("mcp")  # For helpful messages about backwards compatibility
     )
   )
   class(mcpfit) = "mcpfit"
 
   if (!is.null(mcmc_post) && length(pars$arma) > 0)
-    warn_arma_fit(mcpfit)
+    warn_arma_fit(mcpfit, diagnostics = diagnostics)
 
   # Return it
   mcpfit

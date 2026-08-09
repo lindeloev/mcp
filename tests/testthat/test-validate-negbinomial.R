@@ -108,7 +108,7 @@ test_that("negative-binomial coefficients agree with MASS glm.nb", {
     adapt = 500,
     iter = 2000,
     chains = 2,
-    warn = FALSE,
+    diagnostics = FALSE,
     quiet = TRUE
   )
   fit_mass = MASS::glm.nb(y ~ x, data = data)

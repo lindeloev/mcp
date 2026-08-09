@@ -7,7 +7,7 @@
 -   **Group-level effects on RHS:** Predictor formulas now support group-level effects (sometimes called random effects) using familiar `lme4` and `brms` syntax. `(1 | group)` specifies a group-level intercept, while `(1 + x || group)` and `(factor || group)` support independent coefficients, including slopes and factors. This also works inside distributional formulas such as `sigma(1 + (factor || id))`. As with `ar()`, an effect carries into later segments until it is redefined or disabled with `(0 | group)`. See `mcp_example("group_mu")` for a worked example. Correlated multi-coefficient terms are not yet supported.
 
 -   mcpfits now work natively with `{posterior}` and `{tidybayes}` posterior draw and prediction API. Changes include:
-    - `summary(fit)` now reports rank-normalized `split-Rhat`, `ess_bulk`, and `ess_tail` from `{posterior}` and central quantile intervals instead of HDIs.
+    - `summary(fit)` now reports rank-normalized split-`rhat`, `ess_bulk`, and `ess_tail` from `{posterior}` and central quantile intervals instead of HDIs.
     - adding `as_draws(fit)`, `as_draws_df(fit)`, `tidy_draws(fit)`, `ndraws(fit)`, etc. with full S3 generic registration for `{posterior}` and `{tidybayes}` (`spread_draws()`, `gather_draws()`). 
     - Per-draw methods (`summary = FALSE` in `fitted()`, `predict()`, `residuals()`, `log_lik()`) now return dot-prefixed columns (`.epred`, `.prediction`, `.residual`, `.loglik`) for `{tidybayes}` / `{ggdist}` compatibility.
     - `nsamples` soft-deprecated in favor of `ndraws`; `which_y` deprecated in favor of `dpar`.
@@ -24,6 +24,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 -   Renamed the `fit$pars$varying` metadata field to `fit$pars$group` and `fit$pars$fixed` to `fit$pars$mu`. The example names `"varying_mu"` and `"varying_cp"` are now `"group_mu"` and `"group_cp"`. In `plot_pars()`, use `pars = "group"`; the old `"varying"` selector remains as a deprecated alias. The established `varying =` method argument remains unchanged.
 
 -   `summary()`, `fixef()`, `ranef()`, `prior_summary()`, and everything else now return rows in a canonical order instead of the previous incidental (near-alphabetical) order. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to include `segment` and `dpar` columns.
+
+-   `Rhat` was renamed to `rhat` in `summary()`, `fixef()`, and `ranef()`, to match `{posterior}` standard.
 
 -   `plot()` is not split into `plot()` for plotting full fits while `plot_dpar()` plots one distributional parameter (`mu`, `sigma`, `shape`, `ar1`, etc.). The argument order was changed too. The new coloring function (`plot(fit, color_by = "column")`) is particularly useful when models include categorical predictors or rhs group-level effects. See `mcp_example("group_mu")` for a worked example.
 
@@ -75,9 +77,9 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   `mcp(..., quiet = TRUE)` suppresses routine JAGS output and mcp sampling-status messages while preserving warnings and errors.
 
--   `mcp(..., warn = TRUE)` now controls runtime convergence warnings (`Rhat > 1.01` or `ESS < 400`). Warning also appear in `summary(fit)` footer.
+-   Added warnings when various thresholds are exceeded. `mcp(..., diagnostics = list(rhat = 1.01, ess_bulk = 400, ess_tail = 400, ar = 0.10, ma = 0.10))` controls fit diagnostics with configurable thresholds. Partial lists override these defaults, individual diagnostics can be disabled with `NULL`, and `diagnostics = FALSE` disables diagnostic warnings. `summary(fit)` inherits these settings and accepts its own override for the diagnostic footer.
 
--   Added AR/MA warnings: (1) for AR/MA models to `loo()`, `predict()`, etc. where the serial dependence is currently ignored. Proper handling requires leave-future-out or blocked cross-validation, which are not currently implemented in `mcp`. (2) when posterior probability is >10% of violation of AR-stationarity or MA-invertibility.
+-   Added AR/MA warnings: (1) for AR/MA models to `loo()`, `predict()`, etc. where the serial dependence is currently ignored. Proper handling requires leave-future-out or blocked cross-validation, which are not currently implemented in `mcp`. (2) when posterior violation probabilities exceed the configurable `ar` or `ma` diagnostic thresholds (10% by default).
 
 -   Several new arguments to `loo`. `loo(fit, pointwise = TRUE)` uses `loo::loo.function()` for more memory-efficient (but slower) computation of LOO. Other new arguments include the usual from `fitted()` etc.: `loo(fit, ndraws = 1000, arma = FALSE, varying = FALSE)`.
 

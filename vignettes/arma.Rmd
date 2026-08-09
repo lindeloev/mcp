@@ -281,7 +281,7 @@ empty = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE)
 cbind(empty$prior)
 ```
 
-AR and MA coefficient regressions use an identity link, while their residual inputs use the supported response-family link described above. Careful priors become especially important with higher orders or coefficient slopes, where individual values in [-1, 1] do not ensure a stable recurrence. After fitting, `mcp()` checks up to 500 posterior draws at up to 100 observed predictor rows and warns if more than 10% of the checked draws violate the root condition at any checked row. `fit$simulate()` checks the supplied coefficient trajectory before generating a fresh series. For predictor- or segment-varying coefficients these are local smoke tests, not proofs of global stationarity or invertibility.
+AR and MA coefficient regressions use an identity link, while their residual inputs use the supported response-family link described above. Careful priors become especially important with higher orders or coefficient slopes, where individual values in [-1, 1] do not ensure a stable recurrence. After fitting, `mcp()` checks up to 500 posterior draws at up to 100 observed predictor rows and warns if the checked-draw violation rate exceeds the corresponding `ar` or `ma` threshold in `diagnostics` (10% by default). `fit$simulate()` checks the supplied coefficient trajectory before generating a fresh series. For predictor- or segment-varying coefficients these are local smoke tests, not proofs of global stationarity or invertibility.
 
 Here are a few ways in which you may want to inform the AR or MA parameters:
 

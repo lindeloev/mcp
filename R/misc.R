@@ -73,9 +73,33 @@ and_collapse = function(x) {
 }
 
 
+# Merge partial diagnostics with the defaults.
+resolve_diagnostics = function(diagnostics = list()) {
+  defaults = list(
+    rhat = 1.01,
+    ess_bulk = 400,
+    ess_tail = 400,
+    ar = 0.10,
+    ma = 0.10
+  )
+  if (identical(diagnostics, FALSE))
+    return(lapply(defaults, function(x) NULL))
+  if (!is.list(diagnostics))
+    stop("`diagnostics` must be a named list or FALSE.")
+  if (length(diagnostics) > 0 && (is.null(names(diagnostics)) || any(names(diagnostics) == "")))
+    stop("Every element of `diagnostics` must be named.")
+
+  unknown = setdiff(names(diagnostics), names(defaults))
+  if (length(unknown) > 0)
+    stop("Unknown diagnostic(s): ", and_collapse(unknown), ".")
+  defaults[names(diagnostics)] = diagnostics
+  defaults
+}
+
+
 #' Warn about poorly mixed posterior chains
 #'
-#' Thresholds (Rhat > 1.01, bulk/tail ESS < 400) follow the recommendations in
+#' Thresholds (rhat > 1.01, bulk/tail ESS < 400) follow the recommendations in
 #' Vehtari, Gelman, Simpson, Carpenter, & Bürkner (2021). "Rank-normalization,
 #' folding, and localization: An improved Rhat for assessing convergence of
 #' MCMC". Bayesian Analysis, 16(2), 667-718. \doi{10.1214/20-BA1221}. The same
@@ -85,33 +109,42 @@ and_collapse = function(x) {
 #' @keywords internal
 #' @noRd
 #' @param mcmc_post An `mcmc.list` of posterior draws.
+#' @param diagnostics A resolved diagnostics configuration.
 #' @return `NULL`, invisibly. Called for the warning side-effect.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-warn_nonconvergence = function(mcmc_post) {
-  if (coda::nchain(mcmc_post) < 2)
-    return(invisible(NULL))  # Rhat/ESS need >= 2 chains
+warn_nonconvergence = function(mcmc_post, diagnostics = list()) {
+  diagnostics = resolve_diagnostics(diagnostics)
+  if (all(vapply(diagnostics[c("rhat", "ess_bulk", "ess_tail")], is.null, logical(1))) ||
+      coda::nchain(mcmc_post) < 2)
+    return(invisible(NULL))  # rhat/ESS need >= 2 chains
 
-  diagnostics = posterior::summarise_draws(
+  results = posterior::summarise_draws(
     posterior::as_draws_df(mcmc_post),
     rhat = posterior::rhat,
     ess_bulk = function(x) suppressWarnings(posterior::ess_bulk(x)),
     ess_tail = function(x) suppressWarnings(posterior::ess_tail(x))
   )
 
-  bad_rhat = diagnostics$variable[!is.na(diagnostics$rhat) & diagnostics$rhat > 1.01]
-  bad_ess = diagnostics$variable[
-    (!is.na(diagnostics$ess_bulk) & diagnostics$ess_bulk < 400) |
-    (!is.na(diagnostics$ess_tail) & diagnostics$ess_tail < 400)
-  ]
-
-  if (length(bad_rhat) == 0 && length(bad_ess) == 0)
+  bad = rep(FALSE, nrow(results))
+  if (!is.null(diagnostics$rhat))
+    bad = bad | (!is.na(results$rhat) & results$rhat > diagnostics$rhat)
+  if (!is.null(diagnostics$ess_bulk))
+    bad = bad | (!is.na(results$ess_bulk) & results$ess_bulk < diagnostics$ess_bulk)
+  if (!is.null(diagnostics$ess_tail))
+    bad = bad | (!is.na(results$ess_tail) & results$ess_tail < diagnostics$ess_tail)
+  if (!any(bad))
     return(invisible(NULL))
 
+  thresholds = c(
+    if (!is.null(diagnostics$rhat)) paste0("rhat > ", diagnostics$rhat),
+    if (!is.null(diagnostics$ess_bulk)) paste0("ess_bulk < ", diagnostics$ess_bulk),
+    if (!is.null(diagnostics$ess_tail)) paste0("ess_tail < ", diagnostics$ess_tail)
+  )
   warning(
     "Some parameters may not have converged well:\n",
-    if (length(bad_rhat) > 0) paste0("  * Rhat > 1.01: ", and_collapse(bad_rhat), "\n"),
-    if (length(bad_ess) > 0) paste0("  * ess_bulk or ess_tail < 400: ", and_collapse(bad_ess), "\n"),
+    "  * ", paste(thresholds, collapse = " or "), ": ",
+    and_collapse(results$variable[bad]), "\n",
     "Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing ",
     "`iter`/`adapt` or simplifying the model before trusting these results.",
     call. = FALSE

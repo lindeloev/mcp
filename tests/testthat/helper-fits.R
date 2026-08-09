@@ -46,7 +46,7 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
   newdata[[empty$pars$y]] = simulated_y
 
   # Fit
-  fit = mcp(model, newdata, family = family, par_x = "x", chains = chains, adapt = adapt, iter = iter, seed = 42, warn = FALSE, quiet = TRUE)  # Ensure convergence
+  fit = mcp(model, newdata, family = family, par_x = "x", chains = chains, adapt = adapt, iter = iter, seed = 42, diagnostics = FALSE, quiet = TRUE)  # Ensure convergence
   assign("fit", fit, envir = .GlobalEnv)  # for easier debugging
 
   test_matches_simulated(fit, min_ess)

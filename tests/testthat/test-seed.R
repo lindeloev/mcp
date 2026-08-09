@@ -75,7 +75,7 @@ test_that("mcp seed reproduces prior and posterior samples", {
       iter = 30,
       inits = list(Intercept_1 = 0),
       seed = seed,
-      warn = FALSE,
+      diagnostics = FALSE,
       quiet = TRUE
     ))
   }

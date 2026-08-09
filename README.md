@@ -150,7 +150,7 @@ Population-level parameters:
   time_3    OK -0.2 -0.22 -0.38 -0.035    1   834
 ```
 
-`Rhat` is the rank-normalized split-Rhat convergence diagnostic;
+`rhat` is the rank-normalized split-Rhat convergence diagnostic;
 `ess_bulk` and `ess_tail` are the effective sample sizes for the bulk
 and tails of the posterior. You may also want to do a posterior
 predictive check using `pp_check(fit)`.

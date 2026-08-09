@@ -123,7 +123,7 @@ Segments:
   3: response ~ 1 ~ 1 + time
 
 Population-level parameters:
-    name match  sim  mean lower  upper Rhat n.eff
+    name match  sim  mean lower  upper rhat n.eff
     cp_1    OK 30.0 30.27 23.19 38.760    1   384
     cp_2    OK 70.0 69.78 69.27 70.238    1  5792
  Intercept_1 OK 10.0 10.26  8.82 11.768    1  1480
@@ -133,7 +133,7 @@ Population-level parameters:
   time_3    OK -0.2 -0.22 -0.38 -0.035    1   834
 ```
 
-`Rhat` is the rank-normalized split-Rhat convergence diagnostic; `ess_bulk` and `ess_tail` are the effective sample sizes for the bulk and tails of the posterior. You may also want to do a posterior predictive check using `pp_check(fit)`.
+`rhat` is the rank-normalized split-Rhat convergence diagnostic; `ess_bulk` and `ess_tail` are the effective sample sizes for the bulk and tails of the posterior. Warning thresholds can be changed with `mcp(..., diagnostics = list(rhat = 1.01, ess_bulk = 400, ess_tail = 400))`; `summary()` inherits these settings. You may also want to do a posterior predictive check using `pp_check(fit)`.
 
 `plot_pars(fit)` can be used to inspect the posteriors and convergence of all parameters. See the documentation of `plot_pars()` for many other plotting options. Here, we plot just the (population-level) change points. They often have "strange" posterior distributions, highlighting the need for a computational approach:
 
@@ -286,7 +286,7 @@ ranef(fit, width = 0.98)
 ```
 
 ```r
-           name match   sim  mean   lower   upper Rhat n.eff
+           name match   sim  mean   lower   upper rhat n.eff
  cp_1_id[Benny]    OK -17.5 -18.1 -21.970 -14.877    1   895
   cp_1_id[Bill]    OK -10.5  -7.6 -10.658  -4.451    1   420
   cp_1_id[Cath]    OK  -3.5  -2.8  -5.634   0.027    1   888
@@ -339,7 +339,7 @@ The AR(N) parameters on intercepts are named `ar[order]_[segment]`. All paramete
 
 ```r
 Population-level parameters:
-    name match   sim    mean     lower   upper Rhat n.eff
+    name match   sim    mean     lower   upper rhat n.eff
    ar1_1    OK   0.7   0.741  5.86e-01   0.892 1.01   713
    ar1_2    OK  -0.4  -0.478 -6.88e-01  -0.255 1.00  2151
    ar2_1    OK   0.2   0.145 -6.56e-04   0.284 1.01   798

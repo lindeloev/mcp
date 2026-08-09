@@ -152,6 +152,9 @@ test_that("ARMA root warnings are conditional", {
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
 
   expect_warning(warn_arma_fit(fit, ndraws = 4), "AR: 50%")
+  expect_no_warning(warn_arma_fit(fit, ndraws = 4, diagnostics = list(ar = 0.6)))
+  expect_no_warning(warn_arma_fit(fit, ndraws = 4, diagnostics = FALSE))
+
   mcmc_tmp = .subset2(fit, "mcmc_post")
   mcmc_tmp[[1]][, "ar1_1"] = 0.5
   mcmc_tmp[[1]][, "ar2_1"] = 0.2

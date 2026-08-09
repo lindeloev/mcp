@@ -236,7 +236,7 @@ test_that("parameter-name collisions give a useful error", {
 # Test on new fit
 demo_settings = mcp_example("demo", sample = FALSE, plot = FALSE)
 demo_fit_iter = 50  # only niterations()/nchains() metadata is checked below, not recovery
-demo_fit2 = suppressWarnings(mcp(demo_settings$model, demo_settings$data, adapt = 50, iter = demo_fit_iter, warn = FALSE, quiet = TRUE))
+demo_fit2 = suppressWarnings(mcp(demo_settings$model, demo_settings$data, adapt = 50, iter = demo_fit_iter, diagnostics = FALSE, quiet = TRUE))
 
 test_that("binomial example can be constructed without sampling", {
   fit = mcp_example("binomial", sample = FALSE, plot = FALSE)
@@ -334,10 +334,10 @@ test_that("summaries use central intervals and posterior diagnostics", {
 
   expect_equal(result$lower[[1]], unname(quantile(values, 0.1)))
   expect_equal(result$upper[[1]], unname(quantile(values, 0.9)))
-  expect_equal(result$Rhat[[1]], posterior::rhat(parameter_matrix))
+  expect_equal(result$rhat[[1]], posterior::rhat(parameter_matrix))
   expect_equal(result$ess_bulk[[1]], round(posterior::ess_bulk(parameter_matrix)))
   expect_equal(result$ess_tail[[1]], round(posterior::ess_tail(parameter_matrix)))
-  expect_true(all(c("Rhat", "ess_bulk", "ess_tail") %in% names(result)))
+  expect_true(all(c("rhat", "ess_bulk", "ess_tail") %in% names(result)))
   expect_false("n.eff" %in% names(result))
 })
 
@@ -464,16 +464,24 @@ test_that("hypothesis()", {
 })
 
 
-test_that("warn parameter and summary convergence footer work as expected", {
+test_that("diagnostic settings control fit warnings and summary footers", {
+  defaults = resolve_diagnostics()
+  expect_equal(defaults, list(rhat = 1.01, ess_bulk = 400, ess_tail = 400, ar = 0.1, ma = 0.1))
+  custom = resolve_diagnostics(list(ess_bulk = 800, ar = NULL))
+  expect_equal(custom$ess_bulk, 800)
+  expect_null(custom$ar)
+  expect_equal(custom$rhat, defaults$rhat)
+  expect_true(all(vapply(resolve_diagnostics(FALSE), is.null, logical(1))))
+  expect_error(resolve_diagnostics(list(unknown = 1)), "Unknown diagnostic")
+
   data = data.frame(x = 1:20, y = rnorm(20))
   model = list(y ~ 1, ~ 1)
 
-  # 1. warn = FALSE suppresses sampling convergence warning
-  fit_nowarn = suppressWarnings(mcp(model, data, par_x = "x", iter = 50, adapt = 50, warn = FALSE, quiet = TRUE))
-  expect_equal(fit_nowarn$.internal$warn, FALSE)
+  # diagnostics = FALSE suppresses fit warnings and the inherited footer.
+  fit_nowarn = suppressWarnings(mcp(model, data, par_x = "x", iter = 50, adapt = 50, diagnostics = FALSE, quiet = TRUE))
+  expect_true(all(vapply(fit_nowarn$.internal$diagnostics, is.null, logical(1))))
 
-  # 2. summary() includes warning footer if convergence is poor
-  # Force high Rhat by modifying posterior draws
+  # Force high rhat by modifying posterior draws.
   fit_bad = fit_nowarn
   raw_post = .subset2(fit_bad, "mcmc_post")
   raw_post[[1]][, "cp_1"] = 5
@@ -481,10 +489,20 @@ test_that("warn parameter and summary convergence footer work as expected", {
   raw_post[[3]][, "cp_1"] = 25
   fit_bad$mcmc_post = raw_post
 
-  sum_out = capture.output(summary(fit_bad))
-  expect_true(any(grepl("Warning: .* parameter.* show.* poor convergence", sum_out)))
+  inherited = capture.output(summary(fit_bad))
+  expect_false(any(grepl("poor convergence", inherited)))
 
-  # 3. mcp_example defaults to warn = FALSE
+  strict = list(rhat = 1.01, ess_bulk = NULL, ess_tail = NULL)
+  strict_out = capture.output(summary(fit_bad, diagnostics = strict))
+  expect_true(any(grepl("poor convergence.*rhat > 1.01", strict_out)))
+
+  convergence_off = list(rhat = NULL, ess_bulk = NULL, ess_tail = NULL)
+  diagnostics_off = capture.output(summary(fit_bad, diagnostics = convergence_off))
+  expect_false(any(grepl("poor convergence", diagnostics_off)))
+
+  expect_warning(warn_nonconvergence(raw_post, strict), "rhat > 1.01")
+  expect_no_warning(warn_nonconvergence(raw_post, convergence_off))
+
   ex_fit = mcp_example("intercepts", sample = FALSE)
   expect_s3_class(ex_fit, "mcpfit")
 })

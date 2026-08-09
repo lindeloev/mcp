@@ -167,9 +167,18 @@ arma_root_violations = function(values, component) {
 #' @noRd
 #' @param fit An `mcpfit` object with posterior draws.
 #' @param ndraws,nrows Maximum numbers of draws and observed rows to check.
-#' @param threshold Warn when the estimated violation probability exceeds this.
+#' @param diagnostics A resolved diagnostics configuration.
 #' @return `NULL`, invisibly.
-warn_arma_fit = function(fit, ndraws = 500, nrows = 100, threshold = 0.10) {
+warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
+  diagnostics = resolve_diagnostics(diagnostics)
+  model_predictors = get_fit_model_tables(fit)$predictors
+  components = intersect(c("ar", "ma"), unique(model_predictors$dpar))
+  enabled = vapply(components, function(component) {
+    !is.null(diagnostics[[component]])
+  }, logical(1))
+  if (!any(enabled))
+    return(invisible(NULL))
+
   rows = unique(round(seq(1, nrow(fit$data), length.out = min(nrows, nrow(fit$data)))))
   newdata = fit$data[rows, , drop = FALSE]
   newdata$data_row = seq_len(nrow(newdata))
@@ -192,7 +201,6 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, threshold = 0.10) {
     samples_predictors = tidyr::expand_grid(samples, predictor_data)
   }
 
-  model_predictors = get_fit_model_tables(fit)$predictors
   values = evaluate_model_dpars(
     fit, as.list(samples_predictors),
     paste0(".pred_", model_predictors$code_name)
@@ -202,7 +210,10 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, threshold = 0.10) {
     violations = arma_root_violations(values, component)
     max(tapply(violations, samples_predictors$data_row, mean))
   }, numeric(1))
-  bad = probabilities > threshold
+  bad = vapply(names(probabilities), function(component) {
+    threshold = diagnostics[[component]]
+    !is.null(threshold) && probabilities[[component]] > threshold
+  }, logical(1))
   if (!any(bad))
     return(invisible(NULL))
 

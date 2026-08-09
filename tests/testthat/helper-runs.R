@@ -190,8 +190,8 @@ test_arma_simulation = function(fit) {
 
 # Tests if summary(fit) and ranef(fit) work as expected
 test_summary = function(fit, varying_cols, prior = FALSE) {
-  summary_cols = c('name','mean','lower','upper','Rhat','ess_bulk','ess_tail')
-  verbose_summary_cols = c('name','segment','dpar','mean','lower','upper','Rhat','ess_bulk','ess_tail')
+  summary_cols = c('name','mean','lower','upper','rhat','ess_bulk','ess_tail')
+  verbose_summary_cols = c('name','segment','dpar','mean','lower','upper','rhat','ess_bulk','ess_tail')
   if (!is.null(attr(fit$data[, fit$pars$y], "simulated"))) {
     summary_cols = append(summary_cols, c("match", "sim"), after = 1)
     verbose_summary_cols = append(verbose_summary_cols, c("match", "sim"), after = 3)

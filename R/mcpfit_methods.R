@@ -86,7 +86,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
     mean = base::mean,
     lower = function(x) stats::quantile(x, tail_prob, names = FALSE),
     upper = function(x) stats::quantile(x, 1 - tail_prob, names = FALSE),
-    Rhat = posterior::rhat,
+    rhat = posterior::rhat,
     ess_bulk = function(x) suppressWarnings(posterior::ess_bulk(x)),
     ess_tail = function(x) suppressWarnings(posterior::ess_tail(x))
   ) %>%
@@ -183,6 +183,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
 #' @param prior TRUE/FALSE. Summarise prior instead of posterior?
 #' @param verbose Logical. Include the `segment` and `dpar` columns. Defaults
 #'   to `FALSE` for a compact, v0.3.4-compatible summary.
+#' @inheritParams mcp
 #' @param ... Currently ignored
 #'
 #' @return A data frame with parameter estimates and MCMC diagnostics. Rows
@@ -199,7 +200,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
 #'   * `mean` is the posterior mean
 #'   * `lower` and `upper` are the bounds of the central posterior interval
 #'     given in `width`.
-#'   * `Rhat` is the rank-normalized split-Rhat convergence diagnostic.
+#'   * `rhat` is the rank-normalized split-Rhat convergence diagnostic.
 #'   * `ess_bulk` and `ess_tail` are the bulk and tail effective sample sizes.
 #'     Low effective sample sizes are also obvious as poor mixing in trace plots
 #'     (see `plot_pars(fit)`). Read how to deal with such problems [here](https://lindeloev.github.io/mcp/articles/tips.html)
@@ -228,7 +229,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
 #'
 #' # Summarise prior
 #' summary(demo_fit, prior = TRUE)
-summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbose = FALSE, ...) {
+summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbose = FALSE, diagnostics = NULL, ...) {
   fit = object  # Standard name in mcp
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_number(width, lower = 0, upper = 1)
@@ -236,6 +237,13 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
   checkmate::assert_flag(prior)
   checkmate::assert_flag(verbose)
   rlang::check_dots_empty()
+
+  if (is.null(diagnostics)) {
+    diagnostics = .subset2(fit, ".internal")[["diagnostics"]]
+    if (is.null(diagnostics))
+      diagnostics = list()
+  }
+  diagnostics = resolve_diagnostics(diagnostics)
 
   samples = mcmclist_samples(fit, prior = prior, error = FALSE)
 
@@ -264,13 +272,23 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
       ran_res = get_summary(fit, width, varying = TRUE, prior = prior, verbose = verbose)
       all_res = dplyr::bind_rows(all_res, ran_res)
     }
-    bad_mask = (!is.na(all_res$Rhat) & all_res$Rhat > 1.01) |
-               (!is.na(all_res$ess_bulk) & all_res$ess_bulk < 400) |
-               (!is.na(all_res$ess_tail) & all_res$ess_tail < 400)
+    bad_mask = rep(FALSE, nrow(all_res))
+    if (!is.null(diagnostics$rhat))
+      bad_mask = bad_mask | (!is.na(all_res$rhat) & all_res$rhat > diagnostics$rhat)
+    if (!is.null(diagnostics$ess_bulk))
+      bad_mask = bad_mask | (!is.na(all_res$ess_bulk) & all_res$ess_bulk < diagnostics$ess_bulk)
+    if (!is.null(diagnostics$ess_tail))
+      bad_mask = bad_mask | (!is.na(all_res$ess_tail) & all_res$ess_tail < diagnostics$ess_tail)
     n_bad = sum(bad_mask)
     if (n_bad > 0) {
       param_str = if (n_bad == 1) "1 parameter shows" else paste0(n_bad, " parameters show")
-      cat("\nWarning: ", param_str, " poor convergence (Rhat > 1.01 or ESS < 400).\n", sep = "")
+      thresholds = c(
+        if (!is.null(diagnostics$rhat)) paste0("rhat > ", diagnostics$rhat),
+        if (!is.null(diagnostics$ess_bulk)) paste0("ess_bulk < ", diagnostics$ess_bulk),
+        if (!is.null(diagnostics$ess_tail)) paste0("ess_tail < ", diagnostics$ess_tail)
+      )
+      thresholds = paste(thresholds, collapse = " or ")
+      cat("\nWarning: ", param_str, " poor convergence (", thresholds, ").\n", sep = "")
     }
 
     return(invisible(result))
