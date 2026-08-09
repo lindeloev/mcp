@@ -40,7 +40,7 @@ test_bad(bad_intercepts)
 
 
 good_intercepts = list(
-  #list(y ~ 0),  # would be nice if it worked, but mcmc.list does not behave well with just one variable
+  list(y ~ 0),
   list(ok_y ~ 1),  # y can be called whatever
   list(y ~ 0,  # Multiple segments
        ~ 1,
@@ -129,6 +129,106 @@ test_that("transformations use the original par_x while segment bases stay local
   expect_equal(as.numeric(fitted), expected)
 })
 
+test_that("prediction reuses fitted factor encodings", {
+  data = data.frame(
+    x = 1:6,
+    y = 1:6,
+    condition = ordered(rep(c("low", "middle", "high"), 2))
+  )
+  ordered_fit = mcp(list(y ~ condition), data, par_x = "x", sample = FALSE)
+  ordered_matrix = get_predictor_matrix(
+    get_fit_model_tables(ordered_fit)$predictors,
+    get_fit_model_tables(ordered_fit)$group_effects
+  )
+  ordered_new = add_rhs_predictors(
+    transform(data, condition = as.character(condition)), ordered_fit
+  )
+  expect_equal(
+    unname(as.matrix(ordered_new[, paste0(".pred_", colnames(ordered_matrix))])),
+    unname(ordered_matrix)
+  )
+
+  custom_data = transform(data, condition = factor(condition))
+  contrasts(custom_data$condition) = stats::contr.sum(3)
+  custom_fit = mcp(list(y ~ condition), custom_data, par_x = "x", sample = FALSE)
+  custom_matrix = get_predictor_matrix(
+    get_fit_model_tables(custom_fit)$predictors,
+    get_fit_model_tables(custom_fit)$group_effects
+  )
+  custom_new = add_rhs_predictors(
+    transform(custom_data, condition = as.character(condition)), custom_fit
+  )
+  expect_equal(
+    unname(as.matrix(custom_new[, paste0(".pred_", colnames(custom_matrix))])),
+    unname(custom_matrix)
+  )
+})
+
+test_that("prediction is independent of later contrast options", {
+  old_options = options(contrasts = c("contr.treatment", "contr.poly"))
+  on.exit(options(old_options), add = TRUE)
+  data = data.frame(
+    x = 1:6,
+    y = 1:6,
+    condition = factor(rep(c("a", "b", "c"), 2))
+  )
+  fit = mcp(list(y ~ condition), data, par_x = "x", sample = FALSE)
+  fitted_matrix = get_predictor_matrix(
+    get_fit_model_tables(fit)$predictors,
+    get_fit_model_tables(fit)$group_effects
+  )
+
+  options(contrasts = c("contr.sum", "contr.poly"))
+  new_matrix = add_rhs_predictors(data, fit)
+  expect_equal(
+    unname(as.matrix(new_matrix[, paste0(".pred_", colnames(fitted_matrix))])),
+    unname(fitted_matrix)
+  )
+})
+
+test_that("data-derived bases reuse their fitted specification", {
+  data = data.frame(x = 1:8, y = 1:8)
+  newdata = data.frame(x = 9:10)
+
+  scale_fit = mcp(list(y ~ scale(x)), data, sample = FALSE)
+  scale_matrix = add_rhs_predictors(newdata, scale_fit)
+  expect_equal(
+    scale_matrix[[paste0(".pred_", setdiff(scale_fit$pars$mu, "Intercept_1"))]],
+    as.numeric(scale(newdata$x, center = mean(data$x), scale = stats::sd(data$x)))
+  )
+
+  poly_basis = stats::poly(data$x, 2)
+  poly_fit = mcp(list(y ~ poly(x, 2)), data, sample = FALSE)
+  poly_matrix = add_rhs_predictors(newdata, poly_fit)
+  expect_equal(
+    unname(as.matrix(poly_matrix[, paste0(".pred_", setdiff(poly_fit$pars$mu, "Intercept_1"))])),
+    unname(stats::predict(poly_basis, newdata$x))
+  )
+
+  spline_basis = splines::ns(data$x, df = 3)
+  spline_fit = mcp(list(y ~ splines::ns(x, df = 3)), data, sample = FALSE)
+  spline_matrix = add_rhs_predictors(newdata, spline_fit)
+  expect_equal(
+    unname(as.matrix(spline_matrix[, paste0(".pred_", setdiff(spline_fit$pars$mu, "Intercept_1"))])),
+    matrix(
+      as.numeric(stats::predict(spline_basis, newdata$x)),
+      nrow = nrow(newdata)
+    )
+  )
+
+  bs_newdata = data.frame(x = 2:3)
+  bs_basis = splines::bs(data$x, df = 3)
+  bs_fit = mcp(list(y ~ splines::bs(x, df = 3)), data, sample = FALSE)
+  bs_matrix = add_rhs_predictors(bs_newdata, bs_fit)
+  expect_equal(
+    unname(as.matrix(bs_matrix[, paste0(".pred_", setdiff(bs_fit$pars$mu, "Intercept_1"))])),
+    matrix(
+      as.numeric(stats::predict(bs_basis, bs_newdata$x)),
+      nrow = nrow(bs_newdata)
+    )
+  )
+})
+
 
 
 good_slopes = list(
@@ -139,6 +239,8 @@ good_slopes = list(
   list(y ~ 0 + x + I(x^2) + I(x^3),  # Test "non-linear" x
        ~ 0 + exp(x) + abs(x),
        ~ 0 + sin(x) + cos(x) + tan(x)),
+  list(y ~ poly(x, 2)),
+  list(y ~ splines::ns(x, df = 3)),
   list(y ~ ok_x)  # alternative x
 )
 

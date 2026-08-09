@@ -24,14 +24,15 @@ test_that("model metadata uses aligned table names and varying selectors", {
 
   expect_named(
     tables,
-    c("segments", "cps", "predictors", "group_effects", "pars")
+    c("segments", "cps", "predictors", "group_effects", "pars", "design_specs")
   )
   expect_named(
     tables$group_effects,
     c(
       "population_name", "name", "part", "group_col", "segment", "dpar",
       "sd_name", "par_type", "matrix_name", "display_name", "order",
-      "x_factor", "matrix_col", "matrix_data", "next_segment", "correlated"
+      "x_factor", "design_id", "design_col", "matrix_col", "matrix_data",
+      "next_segment", "correlated"
     )
   )
   expect_true(all(tables$pars$part %in% c("cp", "predictor")))

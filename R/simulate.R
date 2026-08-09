@@ -23,7 +23,11 @@ relevel_newdata = function(newdata, fit) {
     org_col = fit$data[, col_name]
     new_col = newdata[, col_name]
     if (is.character(org_col) | is.factor(org_col)) {
-      new_col = factor(new_col, levels = levels(factor(org_col)))
+      new_col = factor(
+        new_col,
+        levels = levels(factor(org_col)),
+        ordered = is.ordered(org_col)
+      )
 
       # Helpful error
       if (any(is.na(new_col))) {
@@ -36,6 +40,69 @@ relevel_newdata = function(newdata, fit) {
   }
 
   newdata
+}
+
+
+#' Evaluate fitted predictor designs on new data
+#'
+#' @keywords internal
+#' @noRd
+#' @param table A fitted population-predictor or group-effects table.
+#' @param design_specs Named fitted specifications from `get_predictor_tables()`.
+#' @inheritParams add_rhs_predictors
+#' @return `table` with `matrix_data` evaluated on `newdata`.
+evaluate_fitted_designs = function(table, design_specs, newdata, par_x) {
+  if (nrow(table) == 0 || "design_id" %notin% names(table))
+    return(table)
+
+  design_ids = unique(stats::na.omit(table$design_id))
+  for (design_id in design_ids) {
+    rows = which(table$design_id == design_id)
+    spec = design_specs[[design_id]]
+    if (is.null(spec))
+      stop_github("Missing fitted design specification '", design_id, "'.")
+
+    # Recreate the component matrix relevant here
+    component_matrix = get_fitted_design(data = newdata, spec = spec)$matrix
+    component_matrix = component_matrix[
+      , table$design_col[rows], drop = FALSE
+    ]
+
+    # Bare par_x terms are represented relative to segment onset elsewhere in
+    # mcp. Divide those factors out exactly as during fitting, then replace the
+    # stored fitting-data columns with their newdata values.
+    component_matrix = remove_x_factors(
+      component_matrix, table$x_factor[rows], newdata[, par_x]
+    )
+    table$matrix_data[rows] = unname(as.list(as.data.frame(component_matrix)))
+  }
+
+  table
+}
+
+
+#' Rebuild predictors for fitted objects without stored design specifications
+#'
+#' @keywords internal
+#' @noRd
+#' @inheritParams add_rhs_predictors
+#' @return A predictor matrix.
+#' @section Removal:
+#' This compatibility path can be removed for mcp 1.0 together with support
+#' for fitted objects that predate stored design specifications.
+get_legacy_predictor_matrix = function(newdata, fit, model_tables) {
+  design_data = newdata
+  group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
+  for (group_col in setdiff(group_cols, names(design_data)))
+    design_data[[group_col]] = fit$data[[group_col]][1]
+
+  new_tables = get_predictor_tables(
+    fit$model, design_data, fit$family, fit$pars$x, check_rank = FALSE
+  )
+  new_group_effects = get_group_effects(
+    model_tables$cps, new_tables$group_effects
+  )
+  get_predictor_matrix(new_tables$predictors, new_group_effects)
 }
 #' Add predictors to `newdata`
 #' @aliases add_rhs_predictors
@@ -56,38 +123,23 @@ add_rhs_predictors = function(newdata, fit) {
     as.data.frame() %>%
     relevel_newdata(fit)
 
-  # Get predictor matrix
+  # Evaluate the fitted design on newdata
   model_tables = get_fit_model_tables(fit)
   predictors = model_tables$predictors
   group_effects = model_tables$group_effects
-
-  # Grouping columns do not enter an intercept-only design matrix, but the
-  # parser still validates their model declaration. Supply a fitted level only
-  # while rebuilding metadata when population-only newdata omits the column.
-  design_data = newdata
-  for (group_col in setdiff(
-    unique(stats::na.omit(group_effects$group_col)), names(design_data)
-  ))
-    design_data[[group_col]] = fit$data[[group_col]][1]
-
-  new_tables = get_predictor_tables(
-    fit$model, design_data, fit$family, fit$pars$x, check_rank = FALSE
-  )
-  new_predictors = new_tables$predictors
-  new_group_effects = get_group_effects(
-    model_tables$cps, new_tables$group_effects
-  )
-  predictor_matrix = get_predictor_matrix(new_predictors, new_group_effects)
-
-  # Check that the variable structure matches
-  if (nrow(predictors) != nrow(new_predictors) ||
-      any(predictors$code_name != new_predictors$code_name))
-    stop_github("The new predictors table does not match the fitted model.")
-  fitted_group = group_effects[group_effects$part == "predictor", , drop = FALSE]
-  rebuilt_group = new_group_effects[new_group_effects$part == "predictor", , drop = FALSE]
-  if (nrow(fitted_group) != nrow(rebuilt_group) ||
-      any(fitted_group$name != rebuilt_group$name))
-    stop_github("The new group-effects table does not match the fitted model.")
+  design_specs = model_tables$design_specs
+  if (is.null(design_specs)) {
+    # TODO(mcp 1.0): Remove this branch with legacy fitted-object support.
+    predictor_matrix = get_legacy_predictor_matrix(newdata, fit, model_tables)
+  } else {
+    predictors = evaluate_fitted_designs(
+      predictors, design_specs, newdata, fit$pars$x
+    )
+    group_effects = evaluate_fitted_designs(
+      group_effects, design_specs, newdata, fit$pars$x
+    )
+    predictor_matrix = get_predictor_matrix(predictors, group_effects)
+  }
 
   # All permutations of rows in newdata and parameters
   as.data.frame(predictor_matrix) %>%

@@ -30,12 +30,6 @@ run_jags = function(data,
                     quiet
 ) {
 
-  # Prevent failure of all mcp methods when length(pars) <= 2.
-  # This always happens when there is only one parameter, so we just
-  # save samples from the dummy change points.
-  if (length(pars) <= 2)
-    pars = c(pars, "cp_0", "cp_1")
-
   # Define the sampling function in this environment.
   # Can be used sequentially or in parallel.
   do_sampling = function(inits, n.chains) {

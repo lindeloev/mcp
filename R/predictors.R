@@ -3,6 +3,89 @@
 # parameter, and assembling the resulting per-segment and per-model tables.
 # ------------------------------------------------------------
 
+#' Build and retain an R model-matrix specification
+#'
+#' The terms stored on a model frame contain fitted calls produced by
+#' `makepredictcall()`, including centers, scales, polynomial coefficients,
+#' and spline knots. Reusing them makes design matrices independent of
+#' `newdata` and later changes to contrast options.
+#'
+#' @keywords internal
+#' @noRd
+#' @param form A one-sided predictor formula.
+#' @param data A data frame used to fit the design.
+#' @param spec An optional fitted specification returned by this function.
+#' @return A list with `matrix` and `spec`.
+get_fitted_design = function(form = NULL, data, spec = NULL) {
+  if (is.null(spec)) {
+    frame = stats::model.frame(form, data)
+    fitted_terms = attr(frame, "terms")
+    matrix = stats::model.matrix(fitted_terms, frame)
+    factor_cols = vapply(frame, is.factor, logical(1))
+    spec = list(
+      terms = fitted_terms,
+      xlevels = lapply(frame[factor_cols], levels),
+      contrasts = attr(matrix, "contrasts"),
+      columns = colnames(matrix)
+    )
+  } else {
+    frame = stats::model.frame(spec$terms, data, xlev = spec$xlevels)
+    matrix = stats::model.matrix(
+      spec$terms, frame, contrasts.arg = spec$contrasts
+    )
+    if (!identical(colnames(matrix), spec$columns))
+      stop("The model matrix for `newdata` does not match the fitted model.")
+  }
+
+  list(matrix = matrix, spec = spec)
+}
+
+
+#' Collect fitted design specifications carried by predictor rows
+#'
+#' Each call to `get_predictors_dpar()` temporarily repeats its fitted design
+#' specification on its coefficient rows so ordinary `bind_rows()` operations
+#' can carry it through the parser. This helper deduplicates those temporary
+#' columns into the named list stored once on the fitted model.
+#'
+#' @keywords internal
+#' @noRd
+#' @param ... Predictor tables that may contain `design_id` and `design_spec`.
+#' @return A named list of fitted design specifications.
+collect_design_specs = function(...) {
+  tables = list(...)
+  tables = lapply(tables, function(table) {
+    if (!all(c("design_id", "design_spec") %in% names(table)))
+      return(NULL)
+    dplyr::select(table, "design_id", "design_spec")
+  })
+  rows = dplyr::bind_rows(tables) %>%
+    dplyr::filter(!is.na(.data$design_id)) %>%
+    dplyr::distinct(.data$design_id, .keep_all = TRUE)
+
+  stats::setNames(rows$design_spec, rows$design_id)
+}
+
+
+#' Express a design matrix relative to the segment onset
+#'
+#' @keywords internal
+#' @noRd
+#' @param matrix A model matrix.
+#' @param x_factor One factor for each matrix column.
+#' @param x Values of the change-point predictor.
+#' @return `matrix` with the local change-point factors divided out.
+remove_x_factors = function(matrix, x_factor, x) {
+  factor_code = x_factor
+  factor_code[factor_code == "1"] = "rep(1, length(x))"
+  factor_matrix = eval(str2lang(paste0(
+    "as.matrix(data.frame(", paste0(factor_code, collapse = ", "), "))"
+  )))
+  out = matrix / factor_matrix
+  out[matrix == 0 & factor_matrix == 0] = 1
+  out
+}
+
 #' Detects par_x and verifies model-data fit
 #'
 #' @aliases get_par_x
@@ -77,11 +160,14 @@ get_par_x = function(model, data, par_x = NULL) {
 #'   - `par_type`: One of "Intercept", "dummy", or "slope". Used for setting priors and for change point indicator func.
 #'   - `order`: positive integer or NA. Only relevant for `ar` and `ma`.
 #'   - `explicit`: whether the distributional parameter was supplied in the formula.
+#'   - `design_id`: key of the fitted component formula that produced the row.
+#'   - `design_col`: column occupied by the row in that component's model matrix.
 #'   - `matrix_data`: column of the design matrix less the `par_x` term.
 #'
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL, check_rank = TRUE) {
+get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL,
+                               check_rank = TRUE, design_id = NULL) {
   # EMpty segments return no rows
   if (all(as.character(form_rhs) == c("~", "0")))
     return(tibble::tibble(
@@ -93,6 +179,9 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
       par_type = character(),
       order = integer(),
       x_factor = character(),
+      design_id = character(),
+      design_col = integer(),
+      design_spec = list(),
       matrix_data = list()
     ))
 
@@ -102,6 +191,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   checkmate::assert_int(segment, lower = 1)
   checkmate::assert_string(dpar)
   checkmate::assert_string(par_x)
+  checkmate::assert_string(design_id)
   checkmate::assert_integer(order, max.len = 1, null.ok = TRUE)
   if (is.null(order) == FALSE)
     checkmate::assert_integerish(order, lower = 1)
@@ -123,7 +213,8 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   if (any(stats::na.omit(is_bad) == TRUE))
     stop("mcp does not currently support 2+ terms within a formula function when one of them is par_x = '", par_x, "'. Found: ", and_collapse(formula_terms[which(is_bad)]))
 
-  mat = stats::model.matrix(form_rhs, data)
+  design = get_fitted_design(form_rhs, data)
+  mat = design$matrix
   if (check_rank == TRUE)
     assert_rank(mat, segment, dpar)
 
@@ -149,6 +240,19 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   display_name = gsub("-", "M", display_name, fixed = TRUE)
   display_name = paste0(dpar_prefix, display_name, "_", segment)
   display_name = gsub("__", "_", display_name, fixed = TRUE)
+
+  # Multi-column bases often include arguments and namespaces in their matrix
+  # names. Name both the position within the basis and the segment explicitly.
+  is_basis = grepl("[,=]|::", matrix_name)
+  term_index = attr(mat, "assign")[is_basis]
+  basis_name = formula_terms[term_index]
+  basis_name = sub("^.*::", "", basis_name)
+  basis_name = gsub("[^A-Za-z0-9]+", "_", basis_name)
+  basis_name = gsub("^_|_$", "", basis_name)
+  basis_col = ave(term_index, term_index, FUN = seq_along)
+  display_name[is_basis] = paste0(
+    dpar_prefix, basis_name, "_basis", basis_col, "_", segment
+  )
 
   # code_name
   code_name = gsub("[: +]", "", display_name)
@@ -194,11 +298,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
 
   # Divide design matrix cols with x_factor.
   # Evaluate x_factor funcs on par_x and divide it out of the design matrix.
-  x = data[, par_x]
-  x_factor_local = gsub("1", "rep(1, length(x))", x_factor)  # Make intercepts ("1") have the correct dimension.
-  mat_factor_x = eval(str2lang(paste0("as.matrix(data.frame(", paste0(x_factor_local, collapse = ", "), "))")))
-  mat_without_x = mat / mat_factor_x
-  mat_without_x[mat == 0 & mat_factor_x == 0] = 1  # 0 / 0 means "identityt", i.e., = 1.
+  mat_without_x = remove_x_factors(mat, x_factor, data[, par_x])
 
   predictors = data.frame(
     dpar = dpar,
@@ -213,12 +313,15 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
     ),
     order = ifelse(is.null(order), NA, order),
     x_factor = x_factor,
+    design_id = design_id,
+    design_col = seq_len(ncol(mat_without_x)),
     matrix_col = seq_len(ncol(mat_without_x)),
     stringsAsFactors = FALSE
   ) %>%
     # Add data
     dplyr::rowwise() %>%
     dplyr::mutate(
+      design_spec = list(design$spec),
       matrix_data = list(mat_without_x[, .data$matrix_col])
     ) %>%
     dplyr::ungroup() %>%
@@ -364,7 +467,10 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
     mu_term = paste0("mu(", attrs$intercept, ")")  # Plateau model: "mu(0)" or "mu(1)"
   }
   mu_form = get_term_content(mu_term)
-  mu_pars = get_predictors_dpar(data, mu_form, segment, "mu", par_x, NULL, check_rank) %>%
+  mu_pars = get_predictors_dpar(
+    data, mu_form, segment, "mu", par_x, NULL, check_rank,
+    design_id = paste("population", "mu", segment, sep = ":")
+  ) %>%
     dplyr::mutate(explicit = TRUE)
 
 
@@ -382,14 +488,16 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
     if (length(dpar_term) == 0 && spec$implicit && segment == 1) {
       dpar_form = ~1
       dpar_pars[[dpar]] = get_predictors_dpar(
-        data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank
+        data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank,
+        design_id = paste("population", dpar, segment, sep = ":")
       ) %>%
         dplyr::mutate(explicit = FALSE)
     } else if (length(dpar_term) > 0) {
       dpar_form = get_term_content(dpar_term)
       dpar_form = remove_terms(dpar_form, "varying")
       dpar_pars[[dpar]] = get_predictors_dpar(
-        data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank
+        data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank,
+        design_id = paste("population", dpar, segment, sep = ":")
       ) %>%
         dplyr::mutate(explicit = TRUE)
     }
@@ -415,7 +523,8 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
       arma_pars[[component]] = lapply(
         seq_len(component_stuff$order),
         function(order) get_predictors_dpar(
-          data, component_form, segment, component, par_x, order, check_rank
+          data, component_form, segment, component, par_x, order, check_rank,
+          design_id = paste("population", component, order, segment, sep = ":")
         )
       ) %>%
         dplyr::bind_rows() %>%
@@ -523,13 +632,21 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
       dplyr::select(
         "population_name", "name", "part", "group_col", "segment", "dpar",
         "sd_name", "par_type", "matrix_name", "display_name", "order",
-        "x_factor", "matrix_col", "matrix_data", "next_segment", "correlated"
+        "x_factor", "design_id", "design_col", "matrix_col", "matrix_data",
+        "next_segment", "correlated", "design_spec"
       )
   }
 
+  # Store each fitted component specification once, not on every coefficient.
+  design_specs = collect_design_specs(predictors, definitions)
+  predictors = dplyr::select(predictors, -"design_spec")
+  if ("design_spec" %in% names(predictor_group_effects))
+    predictor_group_effects = dplyr::select(predictor_group_effects, -"design_spec")
+
   list(
     predictors = predictors,
-    group_effects = predictor_group_effects
+    group_effects = predictor_group_effects,
+    design_specs = design_specs
   )
 }
 

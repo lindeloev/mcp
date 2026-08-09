@@ -54,6 +54,7 @@ Notice how it added the response and cp parts to the last segment?
 
  * `Intercept_i` is the intercept in the ith segment.
  * `year_i` is the slope in on the data column `year` in the ith segment. `x_i` is the slope on the data column `x` in the ith segment. The slope takes name after the data it is regressed on.
+ * Multi-column R bases identify both the basis column and segment. For example, `poly_x_2_basis1_1` is the first column of `poly(x, 2)` in segment 1.
  * `cp_i` is the ith change point. Notice that `cp_i` is specified in segment `i + 1`. `cp_1` occurs when there are two segments, and `cp_2` when there are three segments, etc. *OBS: future versions may start at cp_2.*.
  * `cp_i_group` contains the group-level deviations from population-level `cp_i`. See [group-level change points in mcp](articles/varying.html).
  * `cp_i_sd` is the population-level standard deviation governing those group-level deviations.

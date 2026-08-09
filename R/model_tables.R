@@ -262,6 +262,8 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
       display_name = character(),
       order = integer(),
       x_factor = character(),
+      design_id = character(),
+      design_col = integer(),
       matrix_col = integer(),
       matrix_data = list(),
       next_segment = integer(),
@@ -293,8 +295,8 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
 #' @keywords internal
 #' @noRd
 #' @param fit An `mcpfit` object.
-#' @return A list with `segments`, `cps`, `predictors`, `group_effects`, and
-#'   `pars`.
+#' @return A list with `segments`, `cps`, `predictors`, `group_effects`, `pars`,
+#'   and fitted `design_specs`.
 get_fit_model_tables = function(fit) {
   check_mcpfit_version(fit)
   if (!is.null(fit$.internal$model_tables))
@@ -332,7 +334,8 @@ get_fit_model_tables = function(fit) {
     cps = cps,
     predictors = fit$.internal$rhs_table,
     group_effects = get_group_effects(cps),
-    pars = pars
+    pars = pars,
+    design_specs = NULL
   )
 }
 

@@ -11,7 +11,7 @@
 #' @return Logical scalar.
 is_group_term = function(term) {
   expr = str2lang(term)
-  is.call(expr) && as.character(expr[[1]]) %in% c("|", "||")
+  is.call(expr) && as.character(expr[[1]])[1] %in% c("|", "||")
 }
 
 
@@ -69,7 +69,8 @@ parse_predictor_group_term = function(
   }
   coefficient = get_predictors_dpar(
     data, coefficient_form, segment, dpar, par_x,
-    order = NULL, check_rank = check_rank
+    order = NULL, check_rank = check_rank,
+    design_id = paste("group", dpar, group_col, segment, sep = ":")
   )
   assert_unique_predictor_names(coefficient)
   active = nrow(coefficient) > 0
@@ -90,6 +91,9 @@ parse_predictor_group_term = function(
       display_name = NA_character_,
       order = NA_integer_,
       x_factor = NA_character_,
+      design_id = NA_character_,
+      design_col = NA_integer_,
+      design_spec = list(NULL),
       matrix_data = list(NULL)
     ))
   }
@@ -110,6 +114,9 @@ parse_predictor_group_term = function(
       display_name = .data$display_name,
       order = as.integer(.data$order),
       x_factor = .data$x_factor,
+      design_id = .data$design_id,
+      design_col = .data$design_col,
+      design_spec = .data$design_spec,
       matrix_data = .data$matrix_data
     )
 }

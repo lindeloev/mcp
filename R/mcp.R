@@ -23,6 +23,8 @@
 #'   * *Regular formulas:* e.g., `~ 1 + x`). [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'
 #'   * *Extended formulas:*, e.g., `~ x:group + I(x^2) + exp(z)`. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
+#'     R-side bases such as `scale()`, `poly()`, and `splines::ns()` are evaluated
+#'     before sampling, and their fitted scaling or basis is reused for `newdata`.
 #'
 #'   * *Group-level effects:* e.g., `~ 1 + (1 | id)` for a group-level
 #'     intercept, or `~ 1 + (factor || id)` for independent intercept and
@@ -303,7 +305,8 @@ mcp = function(model,
     cps = cps,
     predictors = predictors,
     group_effects = group_effects,
-    pars = pars_table
+    pars = pars_table,
+    design_specs = predictor_tables$design_specs
   )
   pars = list(
     x = par_x,

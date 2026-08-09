@@ -17,8 +17,6 @@ By default, `testthat` uses 2 parallel worker processes. For maximum test execut
 
 ```R
 Sys.setenv(TESTTHAT_CPUS = 11)
-# options(Ncpus=12)  # alternative
-# devtools::test(cpus = 11)  # alternative
 devtools::test()
 ```
 

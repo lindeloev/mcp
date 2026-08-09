@@ -128,7 +128,7 @@ get_rhs_group_vars = function(model) {
   find_groups = function(expr) {
     if (!is.call(expr))
       return(character())
-    if (as.character(expr[[1]]) %in% c("|", "||"))
+    if (as.character(expr[[1]])[1] %in% c("|", "||"))
       return(all.vars(expr[[3]]))
     nested_groups = lapply(rlang::call_args(expr), find_groups)
     unique(unlist(nested_groups))
