@@ -372,12 +372,9 @@ simulate_atomic = function(fit,
   model_tables = get_fit_model_tables(fit)
   model_predictors = model_tables$predictors
   model_group_effects = model_tables$group_effects
-  predictor_group_effects = model_group_effects[
-    model_group_effects$part == "predictor", , drop = FALSE
-  ]
   expected_args = c(
-    setdiff(get_sim_pars(model_predictors, fit$pars), predictor_group_effects$name),
-    predictor_group_effects$sd_name
+    setdiff(get_sim_pars(model_predictors, fit$pars), model_group_effects$name),
+    model_group_effects$sd_name
   )
   if (is.null(names(args)) | any(names(args) == ""))
     stop("All arguments must be named.")
@@ -388,25 +385,29 @@ simulate_atomic = function(fit,
   )
   lapply(args, checkmate::assert_numeric, any.missing = FALSE)
   lapply(args, function(x) stopifnot(length(x) == 1 | length(x) == nrow(newdata)))
-  for (sd_name in predictor_group_effects$sd_name)
+  for (sd_name in model_group_effects$sd_name)
     checkmate::assert_number(args[[sd_name]], lower = 0, .var.name = sd_name)
 
   # Remove response column if present - it is to be simulated
   if (fit$pars$y %in% colnames(newdata))
     newdata = dplyr::select(newdata, -dplyr::all_of(fit$pars$y))
 
-  # Simulate one predictor deviation per grouping level, then map to rows.
+  # Simulate one deviation per grouping level, then map to rows. Change-point
+  # deviations are exactly centered, matching the fitted parameterization.
   simulated = args
-  for (i in seq_len(nrow(predictor_group_effects))) {
-    effect = predictor_group_effects[i, ]
+  for (i in seq_len(nrow(model_group_effects))) {
+    effect = model_group_effects[i, ]
     assert_data_cols(newdata, effect$group_col)
     group = newdata[[effect$group_col]]
     group_levels = unique(group)
     group_deviations = stats::rnorm(length(group_levels), 0, args[[effect$sd_name]])
+    if (effect$part == "cp")
+      group_deviations = group_deviations - mean(group_deviations)
     args[[effect$name]] = group_deviations[match(group, group_levels)]
     simulated[[effect$name]] = args[[effect$name]]
     args[[effect$sd_name]] = NULL
   }
+  assert_ordered_group_cps(model_tables$cps, args)
 
   # Get permutations
   predictor_data = add_rhs_predictors(newdata, fit)
@@ -463,7 +464,7 @@ get_fitsimulate = function(pars, group_effects) {
   cp_group_effects = group_effects[group_effects$part == "cp", , drop = FALSE]
 
   args_required = c(sim_pars, pars$sigma, pars$arma)
-  args_default = c(cp_group_effects$name, predictor_group_effects$sd_name)
+  args_default = c(cp_group_effects$sd_name, predictor_group_effects$sd_name)
   args_all = c(args_required, args_default)
 
   args_withdefault = paste0(args_default, " = 0")

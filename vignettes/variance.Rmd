@@ -190,7 +190,7 @@ df = data.frame(
 empty = mcp(model, data = df, sample = FALSE)
 df$y = empty$simulate(
   empty, df, 
-  cp_1 = 70, cp_1_id = 15 * (df$id - mean(df$id)),
+  cp_1 = 70, cp_1_sd = 30,
   Intercept_1 = 20, x_1 = 1, x_2 = -0.5,
   sigma_1 = log(10), sigma_2 = log(25))
 ```

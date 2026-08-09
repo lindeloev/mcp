@@ -331,13 +331,12 @@ model = list(
 set.seed(42)
 data = tibble::tibble(id = c('John', 'Omar', 'Rose', 'Cath', 'Ni', 'Erin', 'Frank', 'Mark', 'Slava'))
 data = tidyr::expand_grid(data, x = seq(1, 100, by=20))
-data$id_numeric = as.numeric(as.factor(data$id))
 data$y = 2.# or whatever signals 'numeric'. Will be replaced by simulation below.
 
 empty = mcp(model, data, sample = FALSE)
 data$y = empty$simulate(empty, data,
   cp_1 = 40,
-  cp_1_id = 8*(data$id_numeric - mean(data$id_numeric)),
+  cp_1_sd = 20,
   Intercept_1 = 15,
   x_1 = 3,
   x_2 = -2,

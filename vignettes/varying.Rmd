@@ -113,7 +113,7 @@ model = list(
 )
 ```
 
-This is similar to simulating a population-level model, except that we first create group-level deviations to pass to `empty$simulate`:
+This follows the same interface as predictor group-level effects: supply the population-level SD and `fit$simulate()` draws one deviation per group and centers them exactly on zero.
 
 ```{r, message=FALSE, warning=FALSE}
 library(dplyr, warn.conflicts = FALSE)
@@ -123,21 +123,19 @@ df = data.frame(
   id = rep(group_levels, each = 30),  # the group names
   y = 1
 )
-df$id_numeric = as.numeric(as.factor(df$id))  # to positive integers
-
 empty = mcp(model, data = df, sample = FALSE)
 
 df$y = empty$simulate(empty, df,
   # Population-level:
   Intercept_1 = 20, x_2 = 0.5, cp_1 = 50, sigma = 2,
   
-  # Group-level deviations: centered on zero and 10 between each level
-  cp_1_id = 10 * (df$id_numeric - mean(df$id_numeric)))
+  # Generate exactly centered group-level deviations with this SD
+  cp_1_sd = 15)
 
 head(df)
 ```
 
-Here, we translated `id` to a deviation on the x-axis by multiplying by 10. We subtracted the mean to center the group-level deviations on `cp_1`. The result:
+For models with multiple group-level change points, all deviations are drawn once and then checked for ordering. An unordered draw produces an error; `fit$simulate()` does not redraw, sort, or clip the change points. The result:
 
 ```{r}
 library(ggplot2)
