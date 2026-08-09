@@ -204,6 +204,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
         prior = prior_group,
         i = i,
         group_col = effect$group_col,
+        center = effect$part == "cp",
         description = prior_description[[names(prior_group)[i]]],
         kind = if (is.null(prior_kind_)) NULL else prior_kind_[[names(prior_group)[i]]]
       ))
@@ -325,12 +326,13 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
 #' @param group_col String or NULL. `NULL` indicates a population-level prior.
 #'   A string indicates a group-level prior (one value for each group
 #'   level).
+#' @param center Logical. Exactly zero-center a group-indexed vector?
 #' @param description Short comment to include in generated JAGS code.
 #' @param kind One of distribution, alias, expression, or constant.
 #' @return A string
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @encoding UTF-8
-get_prior_str = function(prior, i, group_col = NULL,
+get_prior_str = function(prior, i, group_col = NULL, center = FALSE,
                           description = "Prior", kind = NULL) {
   # Helpers
   value = prior[[i]]
@@ -364,10 +366,15 @@ get_prior_str = function(prior, i, group_col = NULL,
     # ... and this is a population-level effect
     if (is.null(group_col)) {
       return(paste0("  ", name, " ~ ", value, "  # ", description, "\n"))
-    } else {
+    } else if (!center) {
       return(paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {
     ", name, "[", group_col, "_] ~ ", value, "  # ", description, "
   }\n"))
+    } else {
+      return(paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {
+    ", name, "_uncentered[", group_col, "_] ~ ", value, "  # ", description, "
+  }
+  ", name, " = ", name, "_uncentered - mean(", name, "_uncentered)  # vectorized zero-centering\n"))
     }
   }
 

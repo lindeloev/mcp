@@ -28,7 +28,7 @@ test_that("group-level change-point priors and JAGS code enforce ordering", {
   )
 
   expect_match(fit$prior$cp_2_id, "cp_1_id\\[id_\\]")
-  expect_false(grepl("uncentered", fit$jags_code, fixed = TRUE))
+  expect_match(fit$jags_code, "cp_1_id = cp_1_id_uncentered - mean")
   expect_match(fit$jags_code, "Order realized group-level change points")
   expect_match(fit$jags_code, "cp_order_\\[id_, 1\\] ~ dbern\\(step")
 })

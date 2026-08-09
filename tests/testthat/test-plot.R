@@ -19,3 +19,24 @@ test_that("plot_pars() paginates without changing its single-page return", {
   expect_true(all(vapply(pages, inherits, logical(1), what = "ggplot")))
   expect_s3_class(plots[[2]], "ggplot")
 })
+
+test_that("plot_pars() prefers the group selector and supports its deprecated alias", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off())
+
+  fit = unclass(demo_fit)
+  fit$pars$group = "group_par"
+  for (chain in seq_along(fit$mcmc_post))
+    colnames(fit$mcmc_post[[chain]])[1] = "group_par[1]"
+  class(fit) = class(demo_fit)
+
+  expect_no_warning(
+    group_plot <- plot_pars(fit, pars = "group", type = "dens", ask = FALSE)
+  )
+  expect_warning(
+    varying_plot <- plot_pars(fit, pars = "varying", type = "dens", ask = FALSE),
+    "deprecated"
+  )
+  expect_s3_class(group_plot, "ggplot")
+  expect_s3_class(varying_plot, "ggplot")
+})

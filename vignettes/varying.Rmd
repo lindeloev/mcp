@@ -50,7 +50,7 @@ model = list(
 
 Here are some properties of group-level change-point deviations:
 
-**Zero centered in distribution:** The group-level deviations have hierarchical normal priors centered on zero, like ordinary group-level effects. Their realized arithmetic mean is not constrained to equal zero exactly.
+**Exactly zero centered:** The group-level deviations sum to zero around the associated population-level change point. Besides making `cp_i` the arithmetic mean of the group-specific change points, this avoids a poorly identified translation between `cp_i` and the average group deviation.
 
 **Hierarchical:** Consider the population-level change point `cp_1` and its associated group-level deviations `cp_1_id`. Their spread is governed by the population-level parameter `cp_1_sd`.
 
@@ -206,7 +206,7 @@ You can see the priors of the model like this:
 cbind(fit$prior)
 ```
 
-The prior `cp_1_sd` is the population-level standard deviation governing the `cp_1_id` deviations across levels of `id`. Change-point and predictor group-level effects both use ordinary mean-zero normal deviations without exact zero-centering. Change-point deviations additionally receive sequential bounds, and their realized locations are constrained to remain ordered within each group.
+The prior `cp_1_sd` is the population-level standard deviation governing the `cp_1_id` deviations across levels of `id`. Change-point deviations are exactly zero-centered, while predictor group-level effects use ordinary hierarchical mean-zero deviations. Change-point deviations additionally receive sequential bounds, and their realized locations are constrained to remain ordered within each group.
 
 
 # JAGS code

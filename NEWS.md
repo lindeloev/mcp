@@ -33,7 +33,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Formula transformations now use the original predictor values, as in `lm()`, `glm()`, and `brms`. Previously, transformations of the change-point predictor such as `sin(x)` and `exp(x)` restarted at each segment onset. Bare `par_x` and polynomial bases such as `I(par_x^2)` remain segment-local to support joined segment shapes.
 
--   Group-level change points (1|id) now use ordinary hierarchical mean-zero priors rather than exact sum-to-zero centering. For models with multiple group-level change points, (1|id), they are now constrained to remain ordered. Read more in vignette on group-level effects.
+-   Group-level change points `(1|id)` remain exactly zero-centered to identify population-level change points and support efficient sampling. For models with multiple group-level change points, their realized locations are now constrained to remain ordered. Read more in the vignette on group-level effects.
 
 
 -   Parallel sampling is now controlled exclusively through the active `{future}` plan. The `cores` argument to `mcp()` is deprecated and ignored, but remains available for backwards compatibility. Use `future::plan(future::multisession, workers = 3)` before calling `mcp()` to sample chains in parallel, and `future::plan(future::sequential)` to shut down those workers. Without a parallel future plan, chains are sampled sequentially.
