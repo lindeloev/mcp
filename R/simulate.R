@@ -37,8 +37,6 @@ relevel_newdata = function(newdata, fit) {
 
   newdata
 }
-
-
 #' Add predictors to `newdata`
 #' @aliases add_rhs_predictors
 #' @keywords internal
@@ -143,6 +141,31 @@ evaluate_model_dpars = function(fit, args, pred_pars) {
 }
 
 
+#' Check ordering of realized group-level change points
+#'
+#' @keywords internal
+#' @noRd
+assert_ordered_group_cps = function(cps, args) {
+  if (nrow(cps) < 2 || !any(cps$varying))
+    return(invisible(NULL))
+
+  boundaries = lapply(seq_len(nrow(cps)), function(i) {
+    value = args[[cps$name[i]]]
+    if (cps$varying[i])
+      value = value + args[[cps$group_name[i]]]
+    value
+  })
+  n = max(lengths(boundaries))
+  boundaries = vapply(
+    boundaries, rep, numeric(n), length.out = n
+  )
+  if (any(boundaries[, -1, drop = FALSE] <= boundaries[, -ncol(boundaries), drop = FALSE]))
+    stop("Realized group-level change points must remain ordered, i.e., between population-level change points. Consider using smaller `sd`.")
+
+  invisible(NULL)
+}
+
+
 #' Transform link-scale predictors to distribution-scale parameters
 #'
 #' Mirrors the deterministic dpar transformations in generated JAGS code. Both
@@ -223,6 +246,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   missing_args = dplyr::setdiff(expected_arg_names, names(args))
   if (length(missing_args) > 0)
     stop_github("Missing the following arguments: ", and_collapse(missing_args))
+  assert_ordered_group_cps(model_tables$cps, args)
 
   # Other args
   assert_typescale(.type, .scale)
@@ -464,6 +488,4 @@ get_fitsimulate = function(pars, group_effects) {
 
   eval(parse(text = fitsimulate_code))
 }
-
-
 

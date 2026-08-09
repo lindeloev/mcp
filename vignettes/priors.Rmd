@@ -33,7 +33,7 @@ The values are JAGS code, so all JAGS distributions are allowed. These also incl
 
 Other notes:
 
-* Default population-level change-point priors are ordered. For user priors, `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior has neither explicit truncation nor an inherently bounded form such as `dunif()` or `dirichlet()`. User-specified bounds are respected as written, and group-level change-point deviations are not guaranteed to preserve the population-level ordering.
+* Default population-level change-point priors are ordered. For user priors, `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior has neither explicit truncation nor an inherently bounded form such as `dunif()` or `dirichlet()`. User-specified population-level bounds are respected as written. When change points have group-level deviations, their realized locations are constrained to remain ordered within every group.
 
 * Data-dependent values can be written directly in priors: for example, `min(x)`, `max(x)`, `median(y)`, `mad(y)`, `max(x) - min(x)`, `segment_width(x)`, `n_segments()`, and `n_cp()`. `mcp` resolves these expressions before generating JAGS code. The older uppercase constants (`MINX`, `MAXX`, and so on) remain temporarily supported with a deprecation warning.
 
@@ -112,7 +112,7 @@ Of course, it will usually be the other way around: setting priors manually will
 # Default priors on change points {#cp_prior}
 The following are treated more formally in the [mcp paper](https://osf.io/preprints/fzqxv/).
 
-The default priors order the population-level change points from left (`cp_1`) to right (`cp_2+`). User priors can relax this ordering, and realized group-level change points are not necessarily ordered. `mcp` offers two built-in prior families with different tradeoffs:
+The default priors order the population-level change points from left (`cp_1`) to right (`cp_2+`). User priors can relax the population-level ordering. Models with group-level change points additionally constrain their realized locations to remain ordered within every group. `mcp` offers two built-in population-level prior families with different tradeoffs:
 
 * **Speed and estimation:** The default prior is suitable for estimation, prediction, and it works well for `loo()` cross-validation as well. It's main virtue is that it samples the change point posteriors relatively effectively, but it will often be deeply unfit for Bayes Factors if there are 3+ change points (see below). It may also favor "late" change points too much if estimating many change points with little data (e.g. 5 change points with 100 data points or 10 with 300).
 
@@ -313,7 +313,7 @@ The general principles belong here: parameterization, data-based scaling, proper
 
 Each group-level effect has a population-level SD parameter. Predictor-side deviations use a zero-mean normal distribution governed by that SD, as in ordinary multilevel regression. With a multi-coefficient `||` term, every independent coefficient has its own SD. The SD receives a positive, weakly informative prior from the family and link specification. For distributional parameters, the deviations and their SD are on that parameter's link scale; for example, effects inside an explicit `sigma()` formula are on the log-SD scale.
 
-Group-level change-point deviations have additional constraints: they are exactly zero-centered, and their default priors bound each resulting change point relative to the adjacent population-level change points or observed range. These bounds do not guarantee that realized group-level change points are mutually ordered. Predictor-side deviations are mean-zero in their hierarchical distribution but are not forced to sum exactly to zero. See [group-level effects with mcp](https://lindeloev.github.io/mcp/articles/varying.html).
+Group-level change-point deviations are mean-zero in their hierarchical distribution but are not forced to sum exactly to zero. Their default priors use sequential bounds, and the model constrains the resulting locations to remain ordered within each group. All group-level change points in one model must use the same grouping factor. Predictor-side deviations are also hierarchically mean-zero but have no ordering constraint. See [group-level effects with mcp](https://lindeloev.github.io/mcp/articles/varying.html).
 
 
 # Prior predictive checks

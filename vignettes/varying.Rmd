@@ -37,24 +37,26 @@ model = list(
 )
 ```
 
-You can have multiple group-level change points with multiple grouping factors:
+You can have multiple group-level change points, but they must use the same grouping factor so their realized locations can be ordered within each group:
 
 ```{r}
 model = list(
   y ~ 1,  # Intercept_1
   1 + (1|id) ~ 0 + x,  # cp_1, cp_1_sd, cp_1_id[i]
-  1 + (1|species) ~ 0,  # cp_2, cp_2_sd, cp_2_species[i]
-  (1|id) ~ 1  # cp_3 (implicit), cp_3_sd, cp_3_id[i]
+  1 + (1|id) ~ 0,      # cp_2, cp_2_sd, cp_2_id[i]
+  (1|id) ~ 1           # cp_3 (implicit), cp_3_sd, cp_3_id[i]
 )
 ```
 
 Here are some properties of group-level change-point deviations:
 
-**Zero centered:** The group-level deviations are zero-centered around the associated population-level change point. In other words, their sum is exactly zero. This constraint is necessary for the parameters to be identifiable.
+**Zero centered in distribution:** The group-level deviations have hierarchical normal priors centered on zero, like ordinary group-level effects. Their realized arithmetic mean is not constrained to equal zero exactly.
 
 **Hierarchical:** Consider the population-level change point `cp_1` and its associated group-level deviations `cp_1_id`. Their spread is governed by the population-level parameter `cp_1_sd`.
 
-**Constraints:** The default priors bound each group-specific change point using the observed range and adjacent population-level change points. For example, `cp_1 + cp_1_id` lies between `min(x)` and population-level `cp_2`. These individual bounds do not guarantee that realized group-level change points are ordered. Manual priors can override the bounds; see `vignette("priors")`.
+**Constraints:** Realized group-specific change points are ordered within each group, and must be between adjacent population-level change points, i.e., `cp_{i-1} < cp_i[id] < cp_{i+1}` for all `i`.
+
+Unlike predictor group-level effects, a change-point group effect applies only to the boundary where it is written. There is no carry-over as there is for group-level effects on RHS.
 
 # Predictor group-level effects
 
@@ -129,7 +131,7 @@ df$y = empty$simulate(empty, df,
   # Population-level:
   Intercept_1 = 20, x_2 = 0.5, cp_1 = 50, sigma = 2,
   
-  # Group-level deviations: zero-centered and 10 between each level
+  # Group-level deviations: centered on zero and 10 between each level
   cp_1_id = 10 * (df$id_numeric - mean(df$id_numeric)))
 
 head(df)
@@ -204,7 +206,7 @@ You can see the priors of the model like this:
 cbind(fit$prior)
 ```
 
-The prior `cp_1_sd` is the population-level standard deviation governing the `cp_1_id` deviations across levels of `id`. Predictor group-level effects similarly receive a population-level SD parameter, but use ordinary mean-zero normal deviations without exact zero-centering. The default truncation bounds each group-specific change point relative to adjacent population-level change points; it does not guarantee ordering among realized group-specific change points.
+The prior `cp_1_sd` is the population-level standard deviation governing the `cp_1_id` deviations across levels of `id`. Change-point and predictor group-level effects both use ordinary mean-zero normal deviations without exact zero-centering. Change-point deviations additionally receive sequential bounds, and their realized locations are constrained to remain ordered within each group.
 
 
 # JAGS code

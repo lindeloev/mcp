@@ -4,8 +4,8 @@
 #' distributions of the parameters of each segment as well as the change points
 #' between segments. [See more details and worked examples on the mcp website](https://lindeloev.github.io/mcp/).
 #' All segments must regress on the same x-variable. Change
-#' points use ordered default priors, but user-specified priors can relax that
-#' constraint. Group-specific change points are not necessarily ordered. You can run
+#' points use ordered default priors, but user-specified population-level priors can relax that
+#' constraint. Realized group-specific change points are ordered. You can run
 #' `fit = mcp(model, data, sample=FALSE)` to avoid sampling if you just want to
 #' inspect the priors (`fit$prior` and [prior_summary()]), the JAGS code
 #' `fit$jags_code`, or the R function to simulate data (`fit$simulate`).

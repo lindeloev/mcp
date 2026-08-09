@@ -190,6 +190,13 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
     jags_data[[col]] = as.numeric(factor(jags_data[[col]], levels = unique(jags_data[[col]])))
   }
 
+  cp_group_effects = group_effects[group_effects$part == "cp", , drop = FALSE]
+  if (nrow(cp_group_effects) > 0 && nrow(segments) > 2 &&
+      grepl("cp_order_", jags_code, fixed = TRUE)) {
+    n_group = length(unique(data[[cp_group_effects$group_col[1]]]))
+    jags_data$cp_order_ = matrix(1, nrow = n_group, ncol = nrow(segments) - 2L)
+  }
+
   # Predictor design matrix. Keep the JAGS data name for custom-code compatibility.
   jags_data$rhs_matrix_ = get_predictor_matrix(predictors, group_effects)
 

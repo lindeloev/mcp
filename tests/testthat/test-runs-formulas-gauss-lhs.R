@@ -11,7 +11,13 @@ bad_cps = list(
   list(y ~ 1,
        y ~ ~ 1),  # Needs to be explicit if y is defined
   list(y ~ 1,
-       1 + (1|bad_id) ~ 1)  # decimal group
+       1 + (1|bad_id) ~ 1),  # decimal group
+  list(y ~ 1,
+       1 + (1|id) ~ 1,
+       1 + (1|ok_id_integer) ~ 1),  # CP grouping factors must agree
+  list(y ~ 1,
+       1 + (1|id) ~ 1,
+       1 + (1|ok_id_factor) ~ 1)  # CP grouping factors must agree
 )
 
 test_bad(bad_cps)
@@ -36,8 +42,8 @@ good_cps = list(
        (1|id) ~ 0),  # Intercept is implicit. I don't like it, but OK.
   list(y ~ 1,
        1 + (1|id) ~ 1,
-       1 + (1|ok_id_integer) ~ 1,  # multiple groups and alternative data
-       1 + (1|ok_id_factor) ~ 1)  # alternative group data
+       1 + (1|id) ~ 1,
+       1 + (1|id) ~ 1)
 )
 
 test_good(good_cps)

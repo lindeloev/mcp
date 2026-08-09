@@ -68,20 +68,19 @@ default_cp_specs = function(cps, context) {
       source = "default"
     )
 
-    lower = if (j == 1) {
-      paste0("min(.x) - ", cps$name[j])
-    } else {
-      paste0(cps$name[j - 1], " - ", cps$name[j])
-    }
-    upper = if (j == nrow(cps)) {
-      paste0("max(.x) - ", cps$name[j])
-    } else {
-      paste0(cps$name[j + 1], " - ", cps$name[j])
-    }
+    previous_cp = if (j == 1) "min(.x)" else cps$code[j - 1]
+    previous_cp = stringr::str_replace(
+      previous_cp, "CP_[0-9]+_INDEX", paste0("[", cps$group_col[j], "_]")
+    )
+    later_population = which(seq_len(nrow(cps)) > j & !cps$varying)
+    next_cp = if (length(later_population) == 0) "max(.x)" else
+      cps$name[later_population[1]]
+    lower = paste0(previous_cp, " - ", cps$name[j])
+    upper = paste0(next_cp, " - ", cps$name[j])
     specs[[group_name]] = tibble::tibble(
       parameter = group_name,
       code = paste0("dnorm(0, ", sd_name, ") T(", lower, ", ", upper, ")"),
-      description = "Zero-centered group-level change-point offsets",
+      description = "Zero-mean ordered group-level change-point offsets",
       source = "default"
     )
   }

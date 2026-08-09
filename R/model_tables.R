@@ -112,6 +112,14 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
       code = format_code(.data$code, na_col = .data$name)
     )
 
+  cp_group_cols = unique(stats::na.omit(cps$group_col))
+  if (length(cp_group_cols) > 1) {
+    stop(
+      "All group-level change points must use the same grouping factor. Found ",
+      and_collapse(paste0("'", cp_group_cols, "'")), "."
+    )
+  }
+
   # `segments`: shared segment metadata with change-point info joined back in
   # by `segment`. Segment 1 has no row in `cps` (there is no change point before
   # it), so it is given the fixed lower boundary `cp_0` explicitly. Kept in
