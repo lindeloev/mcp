@@ -8,7 +8,7 @@
 #' @param pars Character vector. One of:
 #'   * Vector of parameter names.
 #'   * `"population"` plots all population-level parameters.
-#'   * `"varying"` plots all group-level deviations. To plot a particular group-level
+#'   * `"group"` plots all group-level deviations. To plot a particular group-level
 #'       effect, use `regex_pars = "^name"`.
 #' @param regex_pars Vector of regular expressions. This will typically just be
 #'   the beginning of the parameter name(s), i.e., "^cp_" plots all change
@@ -61,9 +61,9 @@
 #' plot_pars(demo_fit, prior = TRUE)
 #'
 #' # Useful for group-level effects:
-#' # plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all group-level deviations
+#' # plot_pars(my_fit, pars = "group", ncol = 3)  # plot all group-level deviations
 #' # plot_pars(my_fit, regex_pars = "my_group_effect", ncol = 3)  # one group-level effect
-#' # pages = plot_pars(my_fit, pars = "varying", ask = FALSE)
+#' # pages = plot_pars(my_fit, pars = "group", ask = FALSE)
 #' # pages[[1]]  # Inspect or customize one page
 #'
 #' # Customize multi-column ggplots using "*" instead of "+" (patchwork)
@@ -89,8 +89,13 @@ plot_pars = function(fit,
   if (!is.character(pars) || !is.character(regex_pars))
     stop("`pars` and `regex_pars` has to be string/character.")
 
-  if (any(c("population", "varying") %in% pars) && length(pars ) > 1)
-    stop("`pars` cannot be a vector that contains multiple elements AND 'population' or 'varying'.")
+  if ("varying" %in% pars) {
+    warning("`pars = \"varying\"` is deprecated; use `pars = \"group\"`.", call. = FALSE)
+    pars[pars == "varying"] = "group"
+  }
+
+  if (any(c("population", "group") %in% pars) && length(pars ) > 1)
+    stop("`pars` cannot combine 'population' or 'group' with other elements.")
 
   if (any(c("hex", "scatter") %in% type) && (length(pars) != 2 || length(regex_pars) > 0))
     stop("`type` = 'hex' or 'scatter' takes exactly two parameters which must be provided via the `pars` argument")
@@ -117,9 +122,9 @@ plot_pars = function(fit,
       # This probably means that the user left pars as default.
       pars = character(0)
     }
-  } else if ("varying" %in% pars) {
+  } else if ("group" %in% pars) {
     # Regex search for group-level deviations
-    regex_pars = paste0("^", fit$pars$varying, "\\[")
+    regex_pars = paste0("^", fit$pars$group, "\\[")
     pars = character(0)
   }
 

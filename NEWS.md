@@ -4,7 +4,7 @@
 
 -   **Multiple regression:** `mcp` now supports several continuous predictors, categorical predictors, interactions, etc. for all terms on RHS. E.g., `~ 1 + x + x:group + sigma(1 + group) + ar(2, 0 + z)`. Basically, it now aims to "feels" like `lm()` or `glm()` for each distributional parameter in each segment. Explore `ex = mcp_example("multiple")` to see it in action. Default priors generally align with brms, with some adjustments to accommodate the change-point model.
 
--   **Group-level effects on RHS:** Predictor formulas now support group-level effects (sometimes called random effects) using familiar `lme4` and `brms` syntax. `(1 | group)` specifies a group-level intercept, while `(1 + x || group)` and `(factor || group)` support independent coefficients, including slopes and factors. This also works inside distributional formulas such as `sigma(1 + (factor || id))`. As with `ar()`, an effect carries into later segments until it is redefined or disabled with `(0 | group)`. See `mcp_example("varying_mu")` for a worked example. Correlated multi-coefficient terms are not yet supported.
+-   **Group-level effects on RHS:** Predictor formulas now support group-level effects (sometimes called random effects) using familiar `lme4` and `brms` syntax. `(1 | group)` specifies a group-level intercept, while `(1 + x || group)` and `(factor || group)` support independent coefficients, including slopes and factors. This also works inside distributional formulas such as `sigma(1 + (factor || id))`. As with `ar()`, an effect carries into later segments until it is redefined or disabled with `(0 | group)`. See `mcp_example("group_mu")` for a worked example. Correlated multi-coefficient terms are not yet supported.
 
 -   mcpfits now work natively with `{posterior}` and `{tidybayes}` posterior draw and prediction API. Changes include:
     - `summary(fit)` now reports rank-normalized `split-Rhat`, `ess_bulk`, and `ess_tail` from `{posterior}` and central quantile intervals instead of HDIs.
@@ -21,9 +21,11 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Renamed parameters to be more consistent with brms: `int_i` --> `Intercept_i`; `x_1_E2` --> `xE2_1`; `x_1_sin` --> `sinx_1`, etc.
 
+-   Renamed the `fit$pars$varying` metadata field to `fit$pars$group` and `fit$pars$fixed` to `fit$pars$mu`. The example names `"varying_mu"` and `"varying_cp"` are now `"group_mu"` and `"group_cp"`. In `plot_pars()`, use `pars = "group"`; the old `"varying"` selector remains as a deprecated alias. The established `varying =` method argument remains unchanged.
+
 -   `summary()`, `fixef()`, `ranef()`, `prior_summary()`, and everything else now return rows in a canonical order instead of the previous incidental (near-alphabetical) order. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to include `segment` and `dpar` columns.
 
--   `plot()` is not split into `plot()` for plotting full fits while `plot_dpar()` plots one distributional parameter (`mu`, `sigma`, `shape`, `ar1`, etc.). The argument order was changed too. The new coloring function (`plot(fit, color_by = "column")`) is particularly useful when models include categorical predictors or rhs group-level effects. See `mcp_example("varying_mu")` for a worked example.
+-   `plot()` is not split into `plot()` for plotting full fits while `plot_dpar()` plots one distributional parameter (`mu`, `sigma`, `shape`, `ar1`, etc.). The argument order was changed too. The new coloring function (`plot(fit, color_by = "column")`) is particularly useful when models include categorical predictors or rhs group-level effects. See `mcp_example("group_mu")` for a worked example.
 
 -   AR and MA intercepts now have zero-centered, regularizing `dnorm(0, 0.5) T(-1, 1)` priors, replacing independent uniform priors. Their categorical contrasts and numeric slopes now use modest normal priors instead of heavy-tailed Student-t priors. Coefficients remain direct and are not jointly constrained to stationary or invertible regions.
 

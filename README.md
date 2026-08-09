@@ -249,7 +249,7 @@ Do prior predictive checks using `mcp(model, data, sample = "prior")`.
 points](https://lindeloev.github.io/mcp/articles/varying.html): \* Get
 posteriors using `ranef(fit)`. \* Plot using
 `plot(fit, facet_by = "my_group")` and
-`plot_pars(fit, pars = "varying", type = "dens_overlay", ncol = 3)`. \*
+`plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`. \*
 Default priors bound group-specific change points relative to adjacent
 population-level change points.
 
@@ -338,7 +338,7 @@ model = list(
   y ~ 1 + x,          # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope with a group-level change point by id
 )
-data = mcp_example_data("varying_cp")
+data = mcp_example_data("group_cp")
 fit = mcp(model, data)
 plot(fit, facet_by = "id")
 ```
@@ -346,9 +346,9 @@ plot(fit, facet_by = "id")
 <img src="man/figures/README-ex-varying-1.png" alt="" width="100%" />
 
 Summarise the group-level change-point deviations using `ranef()` or
-plot them using the compatibility selector `plot_pars(fit, "varying")`.
+plot them using `plot_pars(fit, "group")`.
 Again, these data were simulated using `mcp` (see
-`mcp_example("varying_cp")$call`), so the `match` and `sim` columns show
+`mcp_example("group_cp")$call`), so the `match` and `sim` columns show
 the simulation values and whether they are inside the interval. Set
 `width` wider for a more lenient criterion.
 

@@ -15,7 +15,7 @@ This article in brief:
  * How group-level effects persist across segments
  * How to simulate group-level change-point deviations
  * Get posteriors using `ranef(fit)`
- * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "varying", type = "dens_overlay", ncol = 3)`.
+ * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
  * The default priors bound group-specific change points relative to adjacent population-level change points.
  * The article on modeling standard deviation via `sigma()` contains [another group-level change-point example](../articles/variance.html).
 
@@ -176,15 +176,15 @@ group-level effects in the cp part, `varying = "predictor"` for predictor-side
 group-level effects, or supply an exact name such as `varying = "cp_1_id"`.
 `ranef(fit)` deliberately remains simple and returns all group-level effects.
 
-Good convergence is not always as obvious as in this example. While `plot_pars(fit)` shows population-level parameters only, you can select the group-level deviations with the compatibility keyword `"varying"`:
+Good convergence is not always as obvious as in this example. While `plot_pars(fit)` shows population-level parameters only, you can select the group-level deviations with `"group"`:
 
 ```{r}
-plot_pars(fit, pars = "varying", type = "trace", ncol = 3)
+plot_pars(fit, pars = "group", type = "trace", ncol = 3)
 ```
 
 The `ncol` argument controls the number of columns. Group-level effects often have many levels, so this is useful for viewing all deviations.
 
-Using `pars = "varying"` plots all group-level deviations. To select one group-level effect, use a regular expression in `regex_pars`; for example, `^` anchors the start of a parameter name:
+Using `pars = "group"` plots all group-level deviations. To select one group-level effect, use a regular expression in `regex_pars`; for example, `^` anchors the start of a parameter name:
 
 ```{r}
 plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2)

@@ -6,8 +6,8 @@
 #'  * `"intercepts"`: An intercept-only change point.
 #'  * `"multiple"`: Multiple regression with categorical predictors and interactions.
 #'  * `"binomial"`: Binomial with two change points. Much like `"demo"` on a logit scale.
-#'  * `"varying_mu"`: Group-level intercepts and factor deviations across a change point.
-#'  * `"varying_cp"`: Group-level change-point deviations (random effects).
+#'  * `"group_mu"`: Group-level intercepts and factor deviations across a change point.
+#'  * `"group_cp"`: Group-level change-point deviations (random effects).
 #'  * `"quadratic"`: A change point to a quadratic segment where there is no data.
 #'  * `"ar"`: One change point in autoregressive residuals (the `ar1` dpar)
 #'  * `"sigma"`: A change in "sigma" dpar, including a slope on sigma.
@@ -146,7 +146,7 @@ if (plot) {
 }",
 
 
-    varying_mu = "# Define model
+    group_mu = "# Define model
 model = list(
   y ~ 1 + condition + (condition || id),
   ~ 1 + condition  # group effects carry into this segment
@@ -321,7 +321,7 @@ if (plot) {
   gg2 = plot_dpar(fit, 'sigma') + ggplot2::labs(title = 'plot_dpar(fit, \"sigma\")')
   print(gg1 / gg2)
 }",
-    varying_cp = "# Define model
+    group_cp = "# Define model
 model = list(
   y ~ 1 + x,  # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope

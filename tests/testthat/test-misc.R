@@ -37,11 +37,11 @@ test_that("model metadata uses aligned table names and varying selectors", {
   expect_true(all(tables$pars$part %in% c("cp", "predictor")))
   expect_true(all(tables$pars$scope %in% c("population", "group")))
 
-  expect_equal(unpack_varying(fit, pars = "cp")$pars, fit$pars$varying)
+  expect_equal(unpack_varying(fit, pars = "cp")$pars, fit$pars$group)
   expect_null(unpack_varying(fit, pars = "predictor")$pars)
   expect_equal(
-    unpack_varying(fit, pars = fit$pars$varying)$pars,
-    fit$pars$varying
+    unpack_varying(fit, pars = fit$pars$group)$pars,
+    fit$pars$group
   )
   expect_error(unpack_varying(fit, pars = "unknown"), "Unknown `varying`")
 })
@@ -243,12 +243,12 @@ test_that("binomial example can be constructed without sampling", {
   expect_true(all(fit$data$y <= fit$data$N))
 })
 
-test_that("varying_mu example contains independent factor effects", {
-  fit = mcp_example("varying_mu", sample = FALSE, plot = FALSE)
+test_that("group_mu example contains independent factor effects", {
+  fit = mcp_example("group_mu", sample = FALSE, plot = FALSE)
   expect_s3_class(fit, "mcpfit")
   expect_equal(fit$pars$cp, "cp_1")
   expect_equal(
-    fit$pars$varying,
+    fit$pars$group,
     c("Intercept_1_id", "conditionB_1_id")
   )
   expect_match(fit$call, "condition || id", fixed = TRUE)

@@ -140,9 +140,9 @@ test_example_plot = function(plot, example) {
   testthat::expect_identical(inherits(plot, "patchwork"), example %in% patchwork_examples)
   testthat::expect_no_error(ggplot2::ggplotGrob(plot))
 
-  if (example %in% c("varying_mu", "varying_cp"))
+  if (example %in% c("group_mu", "group_cp"))
     testthat::expect_s3_class(plot$facet, "FacetWrap")
-  if (example == "varying_mu")
+  if (example == "group_mu")
     testthat::expect_identical(plot$labels$colour, "condition")
   if (example == "multiple")
     testthat::expect_identical(plot$labels$colour, "group")

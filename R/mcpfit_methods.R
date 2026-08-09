@@ -58,7 +58,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
   checkmate::assert_flag(prior)
   checkmate::assert_flag(verbose)
 
-  if (varying == TRUE & is.null(fit$pars$varying))
+  if (varying == TRUE & is.null(fit$pars$group))
     return(NULL)
 
   samples = posterior_draws(fit, prior = prior)
@@ -70,7 +70,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
   } else {
     get_cols = all_cols[vapply(
       all_cols,
-      function(column) any(startsWith(column, paste0(fit$pars$varying, "["))),
+      function(column) any(startsWith(column, paste0(fit$pars$group, "["))),
       logical(1)
     )]
     if (length(get_cols) == 0)
@@ -114,7 +114,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
     simulated = simulated[sapply(simulated, is.numeric)]  # Remove non-numeric
 
     # Handle group-level deviations. Find the matching labels.
-    for (this_group_effect in fit$pars$varying) {
+    for (this_group_effect in fit$pars$group) {
       if (!is.null(simulated[[this_group_effect]])) {
         # Find the needed values and labels
         value = simulated[[this_group_effect]]  # Extract simulation values
@@ -255,12 +255,12 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
     result = get_summary(fit, width, varying = FALSE, prior = prior, verbose = verbose)
     print(data.frame(result), digits = digits, row.names = FALSE)
 
-    if (!is.null(fit$pars$varying))
-      cat("\nUse `ranef(fit)` to summarise the group-level deviation(s):", paste0(fit$pars$varying, collapse = ", "))
+    if (!is.null(fit$pars$group))
+      cat("\nUse `ranef(fit)` to summarise the group-level deviation(s):", paste0(fit$pars$group, collapse = ", "))
 
     # Convergence warning footer
     all_res = result
-    if (!is.null(fit$pars$varying)) {
+    if (!is.null(fit$pars$group)) {
       ran_res = get_summary(fit, width, varying = TRUE, prior = prior, verbose = verbose)
       all_res = dplyr::bind_rows(all_res, ran_res)
     }
@@ -600,7 +600,7 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
       if (length(unknown) > 0)
         stop(
           "Unknown `varying` selection: ", and_collapse(unknown), ". ",
-          "Use TRUE, FALSE, \"cp\", \"predictor\", or names from fit$pars$varying."
+          "Use TRUE, FALSE, \"cp\", \"predictor\", or names from fit$pars$group."
         )
       use_group = group_effects$part %in% pars | group_effects$name %in% pars
     }
@@ -663,16 +663,16 @@ resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
 #'   * `FALSE` No population-level effects. Same as `c()`.
 #'   * Character vector: Only include specified population-level parameters; see `fit$pars$population`.
 #' @param varying One of:
-#'   * `TRUE` All group-level deviations (`fit$pars$varying`).
+#'   * `TRUE` All group-level deviations (`fit$pars$group`).
 #'   * `FALSE` No group-level deviations (`c()`).
 #'   * `"cp"` or `"predictor"`: All group-level deviations belonging to that part of
 #'     the model.
 #'   * Character vector: Only include specified group-level parameters - see
-#'     `fit$pars$varying`.
+#'     `fit$pars$group`.
 #' @param absolute
 #'   * `TRUE` Returns the absolute location of all group-specific change points.
 #'   * `FALSE` Return the group-level deviations.
-#'   * Character vector: Apply the absolute transform only to these group-level parameters; see `fit$pars$varying`.
+#'   * Character vector: Apply the absolute transform only to these group-level parameters; see `fit$pars$group`.
 #'
 #' @return `tibble` of posterior draws in `tidybayes` format.
 #' @encoding UTF-8
@@ -763,7 +763,7 @@ mcp_draws = function(
   }
 
   # Unassigned group-level deviations are simulated as zero (the population-level mean).
-  remaining_group_cols = dplyr::setdiff(fit$pars$varying, colnames(samples))
+  remaining_group_cols = dplyr::setdiff(fit$pars$group, colnames(samples))
   samples[, remaining_group_cols] = 0
 
   # Return with chain etc. first

@@ -204,7 +204,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 [Group-level change points](https://lindeloev.github.io/mcp/articles/varying.html):
  * Get posteriors using `ranef(fit)`.
- * Plot using `plot(fit, facet_by = "my_group")` and `plot_pars(fit, pars = "varying", type = "dens_overlay", ncol = 3)`.
+ * Plot using `plot(fit, facet_by = "my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
  * Default priors bound group-specific change points relative to adjacent population-level change points.
 
 [Supported families and link functions](https://lindeloev.github.io/mcp/articles/families.html): 
@@ -268,18 +268,18 @@ model = list(
   y ~ 1 + x,          # intercept + slope
   1 + (1|id) ~ 0 + x  # joined slope with a group-level change point by id
 )
-data = mcp_example_data("varying_cp")
+data = mcp_example_data("group_cp")
 fit = mcp(model, data)
 plot(fit, facet_by = "id")
 ```
 
 ```{r ex-varying, echo=FALSE, results='hide', message=FALSE, warning=FALSE, fig.width=6, fig.height=3, dpi=100}
-fit = suppressMessages(mcp_example("varying_cp", plot = FALSE))
+fit = suppressMessages(mcp_example("group_cp", plot = FALSE))
 set.seed(42)
 theme_it(plot(fit, facet_by = "id"), "Varying slope change")
 ```
 
-Summarise the group-level change-point deviations using `ranef()` or plot them using the compatibility selector `plot_pars(fit, "varying")`. Again, these data were simulated using `mcp` (see `mcp_example("varying_cp")$call`), so the `match` and `sim` columns show the simulation values and whether they are inside the interval. Set `width` wider for a more lenient criterion.
+Summarise the group-level change-point deviations using `ranef()` or plot them using `plot_pars(fit, "group")`. Again, these data were simulated using `mcp` (see `mcp_example("group_cp")$call`), so the `match` and `sim` columns show the simulation values and whether they are inside the interval. Set `width` wider for a more lenient criterion.
 
 ```r
 ranef(fit, width = 0.98)

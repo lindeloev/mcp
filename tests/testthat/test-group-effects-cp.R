@@ -56,6 +56,6 @@ test_that("simulation rejects unordered group-level change points", {
       sigma_1 = 1,
       .type = "fitted"
     ),
-    "must be ordered"
+    "must remain ordered"
   )
 })

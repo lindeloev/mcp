@@ -104,7 +104,7 @@ get_sim_pars = function(predictors, pars) {
   c(
     pars$cp,  # cp_1, cp_2, etc.
     predictors$code_name,  # mu, sigma, ar, etc.
-    pars$varying
+    pars$group
   )
 }
 
@@ -458,7 +458,7 @@ simulate_atomic = function(fit,
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_fitsimulate = function(pars, group_effects) {
   # List of argument names
-  sim_pars = c(pars$cp, pars$fixed)
+  sim_pars = c(pars$cp, pars$mu)
   predictor_group_effects = group_effects[group_effects$part == "predictor", , drop = FALSE]
   cp_group_effects = group_effects[group_effects$part == "cp", , drop = FALSE]
 
@@ -488,4 +488,3 @@ get_fitsimulate = function(pars, group_effects) {
 
   eval(parse(text = fitsimulate_code))
 }
-

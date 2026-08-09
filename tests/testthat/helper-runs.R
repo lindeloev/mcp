@@ -45,7 +45,7 @@ test_runs = function(model,
   testthat::expect_true(is.null(empty$waic), model)
   testthat::expect_true(is.list(empty$pars), model)
   testthat::expect_true(is.character(empty$pars$population), model)
-  testthat::expect_true((is.character(empty$pars$varying) | is.null(empty$pars$varying)), model)
+  testthat::expect_true((is.character(empty$pars$group) | is.null(empty$pars$group)), model)
   testthat::expect_true(is.character(empty$pars$x), model)
   testthat::expect_true(is.character(empty$pars$y), model)
   testthat::expect_true(is.character(empty$jags_code), model)
@@ -286,9 +286,9 @@ test_hypothesis = function(fit, prior) {
     run_test_hypothesis(fit, paste0(fit$pars$population[1] , " + ", fit$pars$population[2]), prior = prior)
 
   # Varying
-  if (!is.null(fit$pars$varying)) {
+  if (!is.null(fit$pars$group)) {
     mcmc_vars = colnames(mcmclist_samples(fit)[[1]])
-    varying_starts = paste0("^", fit$pars$varying[1], "\\[")
+    varying_starts = paste0("^", fit$pars$group[1], "\\[")
     varying_col_ids = stringr::str_detect(mcmc_vars, varying_starts)
     varying_cols = paste0("`", mcmc_vars[varying_col_ids], "`")  # Add these for varying
 
@@ -452,7 +452,7 @@ test_pp_eval = function(fit, prior = FALSE) {
 
       # Model parameters
       fit$pars$population,
-      fit$pars$varying,
+      fit$pars$group,
 
       # Predictors
       fit$pars$trials,
@@ -467,7 +467,7 @@ test_pp_eval = function(fit, prior = FALSE) {
   }
 
   # Population-only evaluation should not require any grouping columns.
-  if (length(fit$pars$varying) > 0) {
+  if (length(fit$pars$group) > 0) {
     varying_cols = stats::na.omit(unique(get_fit_model_tables(fit)$group_effects$group_col))
     population_newdata = fit$data[, colnames(fit$data) %notin%
       c(fit$pars$y, varying_cols), drop = FALSE]
@@ -490,7 +490,7 @@ test_pp_eval = function(fit, prior = FALSE) {
   }
 
   # Test pp_check
-  if (length(fit$pars$varying) > 0) {
+  if (length(fit$pars$group) > 0) {
     varying_col = na.omit(get_fit_model_tables(fit)$group_effects$group_col)[1]  # Just use the first column
     pp_default = try(suppressWarnings(pp_check(fit, facet_by = varying_col, ndraws = 2, prior = prior)), silent = TRUE)
   } else {

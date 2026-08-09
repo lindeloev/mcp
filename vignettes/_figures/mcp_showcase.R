@@ -51,13 +51,13 @@ fit_ar = mcp_example("ar")
 gg_ar_org = force(last_plot()[[1]])
 ar_model = list(price ~ 1 + ar(2), ~ 0 + time + ar(1))
 
-fit_varying_cp = mcp_example("varying_cp")
-gg_varying_cp_org = force(last_plot()) + scale_x_continuous(breaks = seq(0, 200, by = 25))# + facet_wrap(~id, nrow = 2) + scle_x_continuous()
-varying_cp_model = list(y ~ 1 + x, ~ 1 + (1|id) ~ 0 + x)
+fit_group_cp = mcp_example("group_cp")
+gg_group_cp_org = force(last_plot()) + scale_x_continuous(breaks = seq(0, 200, by = 25))# + facet_wrap(~id, nrow = 2) + scle_x_continuous()
+group_cp_model = list(y ~ 1 + x, ~ 1 + (1|id) ~ 0 + x)
 
-fit_varying_mu = mcp_example("varying_mu")
-gg_varying_mu_org = force(last_plot()) + scale_x_continuous(breaks = seq(0, 200, by = 25))# + facet_wrap(~id, nrow = 2)
-varying_mu_model = list(y ~ 1 + condition + (condition || id), ~ 1 + condition)
+fit_group_mu = mcp_example("group_mu")
+gg_group_mu_org = force(last_plot()) + scale_x_continuous(breaks = seq(0, 200, by = 25))# + facet_wrap(~id, nrow = 2)
+group_mu_model = list(y ~ 1 + condition + (condition || id), ~ 1 + condition)
 
 fit_multiple = mcp_example("multiple")
 gg_multiple_org = force(last_plot())
@@ -69,8 +69,8 @@ gg_intercepts = style_gg(gg_intercepts_org, intercepts_model, "Intercept change"
 gg_binomial = style_gg(gg_binomial_org, binomial_model, "Binomial changes", 0.4, 0.75, 0.5, 0.85)
 gg_sigma = style_gg(gg_sigma_org, sigma_model, "Sigma changes w/prediction", 0.5, 0.75, 0.6, 0.85)
 gg_ar = style_gg(gg_ar_org, ar_model, "AR(N) change", 0.2, 0.75, 0.3, 0.85)
-gg_varying_cp = style_gg(gg_varying_cp_org, varying_cp_model, "Change w/varying change point", 0.5, 0.75, 0.6, 0.85)
-gg_varying_mu = style_gg(gg_varying_mu_org, varying_mu_model, "Change w/varying mean", 0.3, 0.75, 0.4, 0.85)
+gg_group_cp = style_gg(gg_group_cp_org, group_cp_model, "Change with group-level change point", 0.5, 0.75, 0.6, 0.85)
+gg_group_mu = style_gg(gg_group_mu_org, group_mu_model, "Change with group-level mean", 0.3, 0.75, 0.4, 0.85)
 gg_multiple = style_gg(gg_multiple_org, multiple_model, "Changes w/multiple regression with interactions", 0.1, 0.75, 0.2, 0.85)
 
 
@@ -84,8 +84,8 @@ GGGGGG
 
 mcp_showcase = gg_intercepts + gg_binomial +
   gg_sigma + gg_ar +
-  patchwork::wrap_elements(full = gg_varying_cp, clip = FALSE) + 
-  patchwork::wrap_elements(full = gg_varying_mu, clip = FALSE) +
+  patchwork::wrap_elements(full = gg_group_cp, clip = FALSE) +
+  patchwork::wrap_elements(full = gg_group_mu, clip = FALSE) +
   gg_multiple + 
   plot_layout(design = layout, heights = c(0.9, 1, 1.7, 1.4))
 
