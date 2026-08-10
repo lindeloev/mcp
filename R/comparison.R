@@ -250,7 +250,7 @@ loglik_settings_match = function(loglik, settings) {
 #' For directional hypotheses, `hypothesis` executes the hypothesis string in
 #' a data-frame environment and summarises the proportion of posterior and
 #' prior samples where the expression evaluates to TRUE. The Bayes factor is
-#' the posterior odds divided by the prior odds. For equals-hypotheses, a
+#' the posterior odds divided by the prior odds. For equality hypotheses, a
 #' Savage-Dickey ratio is computed. Both kinds of Bayes factor require prior
 #' samples, so remember `mcp(..., sample = "both")`. This function is heavily inspired by the
 #' `hypothesis` function from the `brms` package.
@@ -261,7 +261,7 @@ loglik_settings_match = function(loglik, settings) {
 #' @param hypotheses String representation of a logical test involving model parameters.
 #'   Takes R code that evaluates to TRUE or FALSE in a vectorized way.
 #'
-#'   Directional hypotheses are specified using <, >, <=, or >=. `hypothesis`
+#'   **Directional hypotheses** are specified using <, >, <=, or >=. `hypothesis`
 #'   returns the posterior probability and the Bayes factor in favor of the
 #'   stated hypothesis. The Bayes factor requires both prior and posterior
 #'   samples from `mcp(sample = "both")`. For example:
@@ -274,21 +274,22 @@ loglik_settings_match = function(loglik, settings) {
 #'   * `"cp_1^2 < 30 | (log(x_1) + log(x_2)) > 5"`: be creative.
 #'   * \code{"`cp_1_id[1]` > `cp_1_id[2]`"}: id1 is greater than id2, as estimated
 #'       through the group-level change-point deviation for `id` in segment 1.
-#'       Note that \code{``} are required for group-level deviations.
+#'       Note that \code{``} are required when using `[i]`.
 #'
-#'   Hypotheses can also test equality using the equal sign (=). This runs a
-#'   Savage-Dickey test, i.e., the proportion by which the probability density
-#'   has increased from the prior to the posterior at a given value. Therefore,
-#'   it requires `mcp(sample = "both")`. There are two requirements:
-#'   First, there can only be one equal sign, so don't use and (&) or or (|).
-#'   Second, the point to test has to be on the right, and the variables on the left.
+#'   **Equality hypotheses** use the equal sign (=) and a Savage-Dickey density
+#'   ratio: posterior density divided by prior density at the tested equality.
+#'   This is a Bayes factor for a nested point-null model against the fitted
+#'   continuous model. The point-null model's nuisance prior is the fitted
+#'   model's conditional prior at the equality. Prior and posterior samples are
+#'   required, using `mcp(sample = "both")`.
 #'
-#'   * `"cp_1 = 30"`: is the first change point at 30? Or to be more precise:
-#'       by what factor has the credence in cp_1 = 30 risen/fallen when
-#'       conditioning on the data, relative to the prior credence?
-#'   * `"Intercept_1 + Intercept_2 = 0"`: Is the sum of two intercepts zero?
-#'   * ````"`cp_1_id[John]`/`cp_1_id[Erin]` = 2"````: is the varying change
-#'       point for John (which is relative to `cp_1``) double that of Erin?
+#'   Equality tests are limited to named scalar parameters and affine contrasts.
+#'   Examples:
+#'
+#'   * `"cp_1 = 30"`: compare the point-null model `cp_1 = 30` with the
+#'       continuous alternative.
+#'   * `"Intercept_1 - Intercept_2 = 0"`: compare equal segment intercepts
+#'       with the continuous alternative.
 #' @return A data.frame with a row per hypothesis and the following columns:
 #'
 #'   * `hypothesis` is the hypothesis; often re-arranged to test against zero.
@@ -334,6 +335,11 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
 
     if (stringr::str_detect(expression, "\\[|\\]") && !stringr::str_detect(expression, "`"))
       stop("Needs `` around group-level deviations, e.g., `cp_1_id[2]`. Got this: ", expression)
+
+    if (n_equals == 1) {
+      parameters = colnames(.subset2(fit, "mcmc_post")[[1]])
+      validate_savage_dickey_expression(expression, parameters)
+    }
 
 
     # If this is a single expression (does not contain & or |), we can estimate
@@ -425,6 +431,71 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
 
   # Finally return
   df_result
+}
+
+
+# Validate the deliberately small expression language used by Savage-Dickey tests.
+validate_savage_dickey_expression = function(expression, parameters) {
+  sides = strsplit(expression, "=", fixed = TRUE)[[1]]
+  sides = stringr::str_trim(sides)
+
+  inspect = function(x) {
+    if (is.numeric(x) && length(x) == 1)
+      return(list(valid = TRUE, constant = TRUE))
+
+    if (is.symbol(x)) {
+      is_parameter = as.character(x) %in% parameters
+      return(list(valid = is_parameter, constant = FALSE))
+    }
+
+    if (!is.call(x))
+      return(list(valid = FALSE, constant = FALSE))
+
+    operator = as.character(x[[1]])
+    arguments = as.list(x)[-1]
+
+    if (operator == "(" && length(arguments) == 1)
+      return(inspect(arguments[[1]]))
+
+    if (operator %in% c("+", "-") && length(arguments) == 1)
+      return(inspect(arguments[[1]]))
+
+    if (operator %in% c("+", "-") && length(arguments) == 2) {
+      left = inspect(arguments[[1]])
+      right = inspect(arguments[[2]])
+      return(list(
+        valid = left$valid && right$valid,
+        constant = left$constant && right$constant
+      ))
+    }
+
+    if (operator == "*" && length(arguments) == 2) {
+      left = inspect(arguments[[1]])
+      right = inspect(arguments[[2]])
+      return(list(
+        valid = left$valid && right$valid && (left$constant || right$constant),
+        constant = left$constant && right$constant
+      ))
+    }
+
+    list(valid = FALSE, constant = FALSE)
+  }
+
+  parsed = lapply(sides, rlang::parse_expr)
+  checked = lapply(parsed, inspect)
+  valid = length(sides) == 2 && all(vapply(checked, `[[`, logical(1), "valid"))
+  has_parameter = any(!vapply(checked, `[[`, logical(1), "constant"))
+
+  if (!valid || !has_parameter) {
+    stop(
+      "Savage-Dickey equality hypotheses must use a named scalar parameter or affine contrast. ",
+      "Use only parameter names, numeric constants, +, -, parentheses, and multiplication by a numeric constant: ",
+      expression,
+      call. = FALSE
+    )
+  }
+
+  invisible(TRUE)
 }
 
 

@@ -464,6 +464,30 @@ test_that("hypothesis()", {
 })
 
 
+test_that("Savage-Dickey hypotheses are affine", {
+  parameters = c("x", "y", "group[x]")
+
+  expect_true(validate_savage_dickey_expression("x = 1", parameters))
+  expect_true(validate_savage_dickey_expression("2 * x - y = 3", parameters))
+  expect_true(validate_savage_dickey_expression("`group[x]` - x = 0", parameters))
+
+  nonlinear = c(
+    "x / y = 1",
+    "x * y = 1",
+    "x^2 = 1",
+    "exp(x) = 1",
+    "exp(y) * (x - 1) = 0"
+  )
+  for (expression in nonlinear) {
+    expect_error(
+      validate_savage_dickey_expression(expression, parameters),
+      "named scalar parameter or affine contrast",
+      fixed = TRUE
+    )
+  }
+})
+
+
 test_that("diagnostic settings control fit warnings and summary footers", {
   defaults = resolve_diagnostics()
   expect_equal(defaults, list(rhat = 1.01, ess_bulk = 400, ess_tail = 400, ar = 0.1, ma = 0.1))

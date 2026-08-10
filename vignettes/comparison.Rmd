@@ -91,7 +91,7 @@ plot(fit_default) +
 
 
 # Bayes Factors using Savage-Dickey density ratios
-You can compute probabilities and Bayes Factors for various hypotheses using `hypothesis()`. For example, let's test the idea that the change point in recall occurs at four items:
+You can compute Bayes Factors for point-null hypotheses using `hypothesis()`. For example, let's compare a model in which the change point in recall is fixed at four items with the fitted continuous model:
 
 ```{r}
 hypothesis(fit_default, "cp_1 = 4")
@@ -102,10 +102,12 @@ Let's unpack:
  * `hypothesis`: For internal convenience, `hypothesis` always re-arranges to test against zero. 
  * `mean`: When subtracting $4$, the posterior distribution is very close, but somewhat dispersed. 
  * `lower` and `upper`: The interval width defaults to a 95% central posterior interval, but you can change it using `hypothesis(..., width = 0.8)`.
- * `BF`: The Savage-Dickey density ratio, which is a Bayes Factor. This is the factor by which the density increases from the prior to the posterior at `cp_1 = 4`. A $BF > 1$ means that we now believe *more* in this value, $BF = 1$ means that our credence to this value is *unchanged*, and $BF < 1$ means that we believe *less* in it.
+ * `BF`: The Savage-Dickey density ratio in favor of the point-null model. It is the posterior density divided by the prior density at `cp_1 = 4`. A $BF > 1$ favors the point-null model, $BF = 1$ favors neither model, and $BF < 1$ favors the continuous alternative.
  * `p`: Because `BF` is an odds ratio, `p` can just be computed from it and contains no new information. For example, $p = 0.95$ corresponds to $BF = 19$. 
 
-Because `BF` and `p` depends directly on the prior in Savage-Dickey test, it is as much an expression of the prior as the posterior. Computing it for the higher-prior-density-at-cp_1=4 `fit_info`, we see a substantially lower BF because we already had a substantial prior belief in `cp_1 = 4`:
+Equality tests are limited to named parameters and affine contrasts such as `Intercept_1 - Intercept_2 = 0`. Ratios, parameter products, exponentials, and other nonlinear expressions are rejected.
+
+Because the Bayes factor depends directly on the prior, the prior should represent plausible values under the continuous alternative. The higher prior density at `cp_1 = 4` in `fit_info` produces a lower Bayes factor:
  
 ```{r}
 hypothesis(fit_info, "cp_1 = 4")
