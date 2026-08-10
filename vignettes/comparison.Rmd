@@ -94,7 +94,8 @@ plot(fit_default) +
 You can compute Bayes Factors for point-null hypotheses using `hypothesis()`. For example, let's compare a model in which the change point in recall is fixed at four items with the fitted continuous model:
 
 ```{r}
-hypothesis(fit_default, "cp_1 = 4")
+equality = hypothesis(fit_default, "cp_1 = 4")
+equality
 ```
 
 Let's unpack:
@@ -103,9 +104,18 @@ Let's unpack:
  * `mean`: When subtracting $4$, the posterior distribution is very close, but somewhat dispersed. 
  * `lower` and `upper`: The interval width defaults to a 95% central posterior interval, but you can change it using `hypothesis(..., width = 0.8)`.
  * `BF`: The Savage-Dickey density ratio in favor of the point-null model. It is the posterior density divided by the prior density at `cp_1 = 4`. A $BF > 1$ favors the point-null model, $BF = 1$ favors neither model, and $BF < 1$ favors the continuous alternative.
- * `p`: Because `BF` is an odds ratio, `p` can just be computed from it and contains no new information. For example, $p = 0.95$ corresponds to $BF = 19$. 
+ * `p`: This is `NA` because equality is not an event with positive probability in the continuous model.
 
 Equality tests are limited to named parameters and affine contrasts such as `Intercept_1 - Intercept_2 = 0`. Ratios, parameter products, exponentials, and other nonlinear expressions are rejected.
+
+To convert a Bayes Factor to a posterior probability for the point-null model, supply your own prior probability for that model. For example:
+
+```{r}
+prior_null_prob = 0.25
+posterior_model_prob = equality$BF * prior_null_prob /
+  (equality$BF * prior_null_prob + 1 - prior_null_prob)
+posterior_model_prob
+```
 
 Because the Bayes factor depends directly on the prior, the prior should represent plausible values under the continuous alternative. The higher prior density at `cp_1 = 4` in `fit_info` produces a lower Bayes factor:
  

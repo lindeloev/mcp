@@ -296,9 +296,9 @@ loglik_settings_match = function(loglik, settings) {
 #'   * `mean` is the posterior mean of the left-hand side of the hypothesis.
 #'   * `lower` is the lower bound of the central posterior interval of width `width`.
 #'   * `upper` is the upper bound of ditto.
-#'   * `p` Posterior probability.
-#'       For "=" (Savage-Dickey), it is the BF converted to p.
-#'       For directional hypotheses, it is the proportion of samples that returns TRUE.
+#'   * `p` is the posterior probability of a directional hypothesis. It is `NA`
+#'       for equality hypotheses, which compare models rather than an event
+#'       within the fitted model.
 #'   * `BF` Bayes Factor in favor  of the hypothesis.
 #'       For "=" it is the Savage-Dickey density ratio.
 #'       For directional hypotheses, it is the posterior odds divided by the
@@ -375,7 +375,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
       estimate = list(effect = NA, .lower = NA, .upper = NA)
     }
 
-    # SAVAGE-DICKEY: compute p and BF
+    # SAVAGE-DICKEY: compute BF
     if (n_equals == 1) {
       if (!coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) || !coda::is.mcmc.list(.subset2(fit, "mcmc_post")))
         stop("Model contains '='. Both prior and posterior samples are needed to compute Savage-Dickey density ratios. Run mcp(..., sample = 'both'")
@@ -391,7 +391,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
       if (dens_post > 0 && dens_prior < 0)
         BF = Inf
 
-      prob_post_val = BF / (BF + 1)
+      prob_post_val = NA_real_
     }
 
     # DIRECTIONAL: compute p and BF

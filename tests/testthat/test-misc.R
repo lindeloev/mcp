@@ -458,7 +458,7 @@ test_that("hypothesis()", {
   actual_equality = hypothesis(fit_same, equality_expr)
   expect_s3_class(actual_equality, "data.frame")
   expect_equal(actual_equality$hypothesis, paste0("cp_1 - ", mid_val, " = 0"))
-  expect_false(is.na(actual_equality$p))
+  expect_true(is.na(actual_equality$p))
   expect_false(is.na(actual_equality$BF))
   expect_equal(actual_equality$BF, 1, tolerance = 1e-3)
 })
