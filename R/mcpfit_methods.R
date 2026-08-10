@@ -1071,6 +1071,9 @@ pp_eval = function(
 #' `residuals(fit)` is equivalent to `fit$data[, fit$data$yvar] - fitted(fit, ...)` (or `newdata[, fit$data$yvar] - fitted(fit, ...)`),
 #' but with fixed arguments for `fitted`: `rate = FALSE, dpar = 'epred', samples_format = 'tidy'`.
 #'
+#' `log_lik()` defaults to an unsummarised draws-by-observation matrix, as used
+#' by `loo` and other posterior workflows.
+#'
 #' @inheritParams pp_eval
 #' @param ... Currently ignored.
 #' @inherit pp_eval return
@@ -1194,14 +1197,14 @@ log_lik = function(object, ...) UseMethod("log_lik")
 log_lik.mcpfit = function(
   object,
   newdata = NULL,
-  summary = TRUE,
+  summary = FALSE,
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
   varying = TRUE,
   arma = TRUE,
   ndraws = NULL,
-  samples_format = "tidy",
+  samples_format = "matrix",
   nsamples = lifecycle::deprecated(),
   ...
 ) {

@@ -69,7 +69,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Methods like `fitted()` and `predict()` now accept `fitted(fit, varying = "cp")` and `fitted(fit, varying = "predictor")` as fast selectors for group-level effects in the corresponding formula part. Exact group-level parameter names remain supported too, `varying = TRUE` selects all, and `ranef()` continues to return all group-level effects.
 
--   Added `log_lik(fit)` which has same behavior and output format as `fitted(fit)` and `predict(fit)`.
+-   Added `log_lik(fit)` which returns a draws-by-observation matrix by default. This is the usual `{brms}` return shape and is accepted directly by `{loo}`. `log_lik()` supports the same arguments as e.g. `fitted()`.
 
 -   Memory improvement: The `mcpfit` is now \< 10% of the size as before because the log-likelihood is not computed by default anymore (no `fit$mcmc_loglik` anymore). You can add it using `fit = add_loglik(fit)` (adds `fit$loglik`) but if absent, it is automatically computed when calling relevant functions, e.g., `loo(fit)`.
 

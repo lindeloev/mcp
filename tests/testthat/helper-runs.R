@@ -321,8 +321,29 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
   if (length(fit$pars$arma) > 0 || colname %in% c("loglik", "residuals"))
     expected_colnames = c(expected_colnames, fit$pars$y)
 
+  # `log_lik()` follows the conventional draws-by-observation matrix default.
+  # Its former observation-level data-frame output remains available explicitly.
+  if (colname == "loglik") {
+    default_result = try(func(fit, prior = prior), silent = TRUE)
+    if (!inherits(default_result, "try-error")) {
+      testthat::expect_true(is.matrix(default_result))
+      testthat::expect_equal(
+        ncol(default_result),
+        sum(!is.na(fit$data[[fit$pars$y]]))
+      )
+      testthat::expect_equal(
+        default_result,
+        func(fit, prior = prior, summary = FALSE, samples_format = "matrix")
+      )
+    }
+  }
+
   # Run and test
-  result = try(func(fit, prior = prior), silent = TRUE)
+  result = if (colname == "loglik") {
+    try(func(fit, prior = prior, summary = TRUE), silent = TRUE)
+  } else {
+    try(func(fit, prior = prior), silent = TRUE)
+  }
   if (inherits(result, "try-error")) {
     error_message = as.character(result)
     is_count_family = fit$family$family %in% c("poisson", "negbinomial")
