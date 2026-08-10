@@ -1,4 +1,4 @@
-models_arma = list(
+models_ar = list(
   # Segment-specific AR coefficients and an AR predictor effect.
   list(y ~ 1 + ar(2),
        ~ 0 + x + ar(1, 1 + x),
@@ -26,4 +26,4 @@ models_arma = list(
        min_ess = 50)
 )
 
-apply_test_fit("ARMA (gauss) fit", models_arma)
+apply_test_fit("AR (Gaussian) fit", models_ar)

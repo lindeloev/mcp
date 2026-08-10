@@ -63,7 +63,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Default `plot(fit)` style has been updated in many ways to accommodate multiple regression and group-effects.
 
--   Added `mcp(..., series = "data_column")` to set series in ARMA models.
+-   Added `mcp(..., series = "data_column")` to identify independent series in models with AR/MA terms.
 
 -   Added option to test hypotheses on the prior using `hypothesis(fit, prior = TRUE)`.
 

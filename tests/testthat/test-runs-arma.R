@@ -1,5 +1,5 @@
 #############
-# TEST ARMA #
+# TEST AR/MA #
 #############
 # We can assume that it will fail for the same mis-specifications on the formula
 # ar(order, [formula]), since the formula runs through the exact same code as

@@ -169,7 +169,7 @@ test_that("AR and MA defaults regularize direct coefficients", {
 })
 
 
-test_that("ARMA root warnings are conditional", {
+test_that("AR/MA root warnings are conditional", {
   expect_equal(
     arma_root_violations(data.frame(ma1_ = c(0.5, 1.1)), "ma"),
     c(FALSE, TRUE)

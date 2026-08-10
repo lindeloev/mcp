@@ -73,7 +73,7 @@ test_that("early lags use coefficients from the current observation", {
 
 
 test_that("generated GARMA code uses all available early AR and MA lags", {
-  jags_code = mcp:::get_arma_jagscode(1, 2, "x")
+  jags_code = mcp:::get_garma_jagscode(1, 2, "x")
 
   expect_match(jags_code, "ar1_\\[2\\] \\* resid_abs_\\[2 - 1\\]")
   expect_match(jags_code, "ma1_\\[2\\] \\* resid_ma_\\[2 - 1\\]")

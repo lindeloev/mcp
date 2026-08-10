@@ -6,7 +6,7 @@ test_that("S3 methods work on archetypal group-level-effects fit", {
   test_runs(list(y ~ 1 + (1 | id), ~ 0 + x), test_s3 = TRUE)
 })
 
-test_that("S3 methods work on archetypal ARMA fit", {
+test_that("S3 methods work on archetypal AR fit", {
   test_runs(list(y ~ 1 + ar(1), ~ 0 + ar(2, 1 + x)), test_s3 = TRUE)
 })
 

@@ -234,9 +234,9 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   #########
   # GARMA #
   #########
-  has_arma = !is.na(ar_order) || !is.na(ma_order)
-  if (has_arma)
-    mm = paste0(mm, get_arma_jagscode(ar_order, ma_order, par_x, series))
+  has_arma_terms = !is.na(ar_order) || !is.na(ma_order)
+  if (has_arma_terms)
+    mm = paste0(mm, get_garma_jagscode(ar_order, ma_order, par_x, series))
 
 
 
@@ -269,8 +269,8 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   for (dpar in family$dpar_specs$dpar) {
     spec = get_dpar_spec(family, dpar)
     link_code = paste0("link_", dpar, "_[i_]")
-    if (dpar == "mu" && has_arma)
-      link_code = paste0(link_code, " + resid_arma_[i_]")
+    if (dpar == "mu" && has_arma_terms)
+      link_code = paste0(link_code, " + resid_garma_[i_]")
 
     linkinv_str = get_link_str(spec$link, inverse = TRUE)
     response_code = ifelse(
@@ -288,7 +288,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   mm = paste0(mm, paste(likelihood, collapse = "\n    "))
 
   # Compute link-scale residuals for GARMA
-  if (has_arma) {
+  if (has_arma_terms) {
     garma_y = family$garma$observed_jags(context)
     garma_link_y = if (family$linkfun_str == "") "garma_y_[i_]" else
       paste0(family$linkfun_str, "(garma_y_[i_])")
@@ -299,7 +299,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
     )
     mm = paste0(mm, "\n    resid_abs_[i_] = garma_link_y_[i_] - link_mu_[i_]")
     if (!is.na(ma_order))
-      mm = paste0(mm, "\n    resid_ma_[i_] = garma_link_y_[i_] - link_mu_[i_] - resid_arma_[i_]")
+      mm = paste0(mm, "\n    resid_ma_[i_] = garma_link_y_[i_] - link_mu_[i_] - resid_garma_[i_]")
   }
 
 

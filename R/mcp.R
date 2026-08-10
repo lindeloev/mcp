@@ -110,7 +110,7 @@
 #'   the model, while a list or `FALSE` overrides the diagnostic footer.
 #' @param quiet Logical. Suppress routine JAGS output and mcp sampling-status
 #'   messages? Defaults to `FALSE`.
-#' @param series Only affects ARMA models.
+#' @param series Only affects models with `ar()` or `ma()` terms.
 #'  * `NULL` (default): one long series.
 #'  * character: data column name identifying independent AR/MA series.
 #' @details Notes on priors:
@@ -337,7 +337,7 @@ mcp = function(model,
   pars$population = pars_table$name[pars_table$scope == "population"]
 
   # Check parameters
-  # ARMA models
+  # Models with AR/MA terms
   if (length(pars$arma) > 0) {
     if (is.null(family$garma))
       stop(

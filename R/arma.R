@@ -1,6 +1,7 @@
-# ABOUT: AR/MA (autoregressive/moving-average, "GARMA") specific code:
-# formula parsing, JAGS code generation, R-side simulation/evaluation, and
-# root-condition (stationarity/invertibility) checks.
+# ABOUT: AR/MA-specific code: formula parsing, GARMA recurrence generation,
+# R-side simulation/evaluation, and root-condition (stationarity/invertibility)
+# checks. In prose, "AR/MA" refers to model terms and effects, while "GARMA"
+# refers to the generalized link-scale recurrence.
 # ------------------------------------------------------------
 
 #' Unpack arma order and formula
@@ -298,7 +299,7 @@ warn_arma_simulation = function(values) {
 
 #' Get JAGS code for GARMA residual recursion
 #'
-#' @aliases get_arma_jagscode get_ar_jagscode
+#' @aliases get_garma_jagscode get_ar_jagscode
 #' @keywords internal
 #' @noRd
 #' @param ar_order,ma_order Positive integer or `NA` when absent.
@@ -307,7 +308,7 @@ warn_arma_simulation = function(values) {
 #' @return Character JAGS code
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_arma_jagscode = function(ar_order, ma_order, x_name, series = FALSE) {
+get_garma_jagscode = function(ar_order, ma_order, x_name, series = FALSE) {
   ar_order = ifelse(is.na(ar_order), 0, ar_order)
   ma_order = ifelse(is.na(ma_order), 0, ma_order)
   checkmate::assert_int(ar_order, lower = 0)
@@ -316,7 +317,7 @@ get_arma_jagscode = function(ar_order, ma_order, x_name, series = FALSE) {
   checkmate::assert_flag(series)
   max_order = max(ar_order, ma_order)
   if (max_order == 0)
-    stop_github("get_arma_jagscode() requires a positive AR or MA order.")
+    stop_github("get_garma_jagscode() requires a positive AR or MA order.")
 
   get_terms = function(row, available_ar, available_ma) {
     terms = character()
@@ -341,12 +342,12 @@ get_arma_jagscode = function(ar_order, ma_order, x_name, series = FALSE) {
 
   jagscode = "
   # Apply GARMA recursion to link-scale residuals
-  resid_arma_[1] = 0"
+  resid_garma_[1] = 0"
 
   if (max_order >= 2) {
     for (i in 2:max_order) {
       jagscode = paste0(
-        jagscode, "\n  resid_arma_[", i, "] = ",
+        jagscode, "\n  resid_garma_[", i, "] = ",
         get_terms(i, min(ar_order, i - 1), min(ma_order, i - 1))
       )
     }
@@ -355,7 +356,7 @@ get_arma_jagscode = function(ar_order, ma_order, x_name, series = FALSE) {
   paste0(
     jagscode,
     "\n  for (i_ in ", max_order + 1, ":length(", x_name, ")) {",
-    "\n    resid_arma_[i_] = ", get_terms("i_", ar_order, ma_order),
+    "\n    resid_garma_[i_] = ", get_terms("i_", ar_order, ma_order),
     "\n  }"
   )
 }
@@ -363,7 +364,7 @@ get_arma_jagscode = function(ar_order, ma_order, x_name, series = FALSE) {
 
 # Backwards-compatible internal wrapper for pure AR code generation.
 get_ar_jagscode = function(ar_order, x_name, series = FALSE) {
-  get_arma_jagscode(ar_order, NA, x_name, series)
+  get_garma_jagscode(ar_order, NA, x_name, series)
 }
 
 
@@ -422,7 +423,7 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
   ma_order = length(ma_list)
   resid_abs = numeric(length(base_link_mu))
   resid_ma = numeric(length(base_link_mu))
-  resid_arma = numeric(length(base_link_mu))
+  resid_garma = numeric(length(base_link_mu))
   link_mu = numeric(length(base_link_mu))
   mu = numeric(length(base_link_mu))
   if (generate_series)
@@ -432,15 +433,15 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
     for (position in seq_along(rows)) {
       row = rows[position]
       for (lag in seq_len(min(ar_order, position - 1))) {
-        resid_arma[row] = resid_arma[row] +
+        resid_garma[row] = resid_garma[row] +
           ar_list[[paste0("ar", lag, "_")]][row] * resid_abs[rows[position - lag]]
       }
       for (lag in seq_len(min(ma_order, position - 1))) {
-        resid_arma[row] = resid_arma[row] +
+        resid_garma[row] = resid_garma[row] +
           ma_list[[paste0("ma", lag, "_")]][row] * resid_ma[rows[position - lag]]
       }
 
-      link_mu[row] = base_link_mu[row] + resid_arma[row]
+      link_mu[row] = base_link_mu[row] + resid_garma[row]
       mu[row] = family$linkinv(link_mu[row])
       generate_observation = generate_series || is.na(y[row])
       if (generate_observation) {
@@ -462,7 +463,7 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
     y = y,
     mu = mu,
     link_mu = link_mu,
-    resid_arma = resid_arma,
+    resid_garma = resid_garma,
     resid_abs = resid_abs,
     resid_ma = resid_ma
   )
@@ -482,7 +483,7 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
 #' @param series_id Optional vector identifying independent series. Lagged
 #'   residuals never cross from one series to another.
 #' @return List with
-#'   * `resid_ar`: the ARMA part of the residuals
+#'   * `resid_ar`: the autoregressive part of the residuals
 #'   * `resid_sigma`: the innovations.
 #'
 #'   Note that `resid_abs = resid_ar + resid_sigma`.

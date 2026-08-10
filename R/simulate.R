@@ -288,8 +288,8 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     ".pred_", get_predictor_design_names(predictors, group_effects)
   )
   operation = switch(.type, fitted = "epred", loglik = "log_lik", predict = "rng")
-  is_arma = any(predictors$dpar %in% c("ar", "ma"))
-  aux_operations = c(operation, if (is_arma && .arma) "garma")
+  has_arma_terms = any(predictors$dpar %in% c("ar", "ma"))
+  aux_operations = c(operation, if (has_arma_terms && .arma) "garma")
   aux_columns = get_family_aux_columns(fit$family, model_tables$segments, aux_operations)
   data_pars = c(fit$pars$x, fit$pars$series, stats::na.omit(unname(aux_columns)))
   expected_arg_names = c(param_pars, pred_pars, data_pars)
@@ -345,7 +345,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
 
   # GARMA is defined on the link scale. The observed response is clipped only
   # where needed to keep log and logit transformations finite.
-  if (is_arma && .arma == TRUE) {
+  if (has_arma_terms && .arma == TRUE) {
     base_link_mu = if (uses_link_dpars) dpar_values$link_mu_ else fit$family$linkfun(dpar_values$mu_)
     ar_list = dplyr::select(dpar_values, dplyr::matches("^ar[0-9]+_$"))
     ma_list = dplyr::select(dpar_values, dplyr::matches("^ma[0-9]+_$"))
@@ -362,18 +362,18 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
       series_id = interaction(series_id, args[[fit$pars$series]], drop = TRUE)
     }
 
-    arma_result = simulate_garma(
+    garma_result = simulate_garma(
       base_link_mu, ar_list, ma_list, boundary, fit$family,
       dpars = dpars, data = response_data,
       y = if (has_ydata) dpar_values$.ydata else NULL,
       series_id = series_id
     )
     if (!has_ydata)
-      return(fit$family$response$observed(arma_result$y, response_data, .rate))
+      return(fit$family$response$observed(garma_result$y, response_data, .rate))
 
-    dpar_values$link_mu_ = arma_result$link_mu
-    dpar_values$mu_ = arma_result$mu
-    dpars$mu = arma_result$mu
+    dpar_values$link_mu_ = garma_result$link_mu
+    dpar_values$mu_ = garma_result$mu
+    dpars$mu = garma_result$mu
   }
 
   if (.type == "fitted" && .scale == "linear") {
