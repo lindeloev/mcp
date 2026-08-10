@@ -279,11 +279,13 @@ loglik_settings_match = function(loglik, settings) {
 #'   **Equality hypotheses** use the equal sign (=) and a Savage-Dickey density
 #'   ratio: posterior density divided by prior density at the tested equality.
 #'   This is a Bayes factor for a nested point-null model against the fitted
-#'   continuous model. The point-null model's nuisance prior is the fitted
-#'   model's conditional prior at the equality. Prior and posterior samples are
-#'   required, using `mcp(sample = "both")`.
-#'
-#'   Equality tests are limited to named scalar parameters and affine contrasts.
+#'   continuous model. Prior and posterior samples are required, using 
+#'   `mcp(sample = "both")`.
+#' 
+#'   The point-null model's nuisance prior is the fitted model's conditional 
+#'   prior at the equality. Equality tests are limited to named scalar parameters 
+#'   and affine contrasts. 
+#' 
 #'   Examples:
 #'
 #'   * `"cp_1 = 30"`: compare the point-null model `cp_1 = 30` with the
@@ -380,16 +382,19 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
       if (!coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) || !coda::is.mcmc.list(.subset2(fit, "mcmc_post")))
         stop("Model contains '='. Both prior and posterior samples are needed to compute Savage-Dickey density ratios. Run mcp(..., sample = 'both'")
 
-      # Finally, let's compute those densities
-      dens_prior = get_density(posterior_draws(fit, prior = TRUE), LHS, 0)
-      dens_post = get_density(posterior_draws(fit), LHS, 0)
-      BF = dens_post / dens_prior
+      prior_values = get_hypothesis_values(posterior_draws(fit, prior = TRUE), LHS)
+      post_values = get_hypothesis_values(posterior_draws(fit), LHS)
 
-      # If there is almost no density. somehow we get negative values.
-      if (dens_post < 0 && dens_prior > 0)
-        BF = 0
-      if (dens_post > 0 && dens_prior < 0)
-        BF = Inf
+      if (is_sparse_tail(prior_values, 0) || is_sparse_tail(post_values, 0)) {
+        warning(
+          "The tested value is in a sparse tail of the prior or posterior draws; the Savage-Dickey estimate may be unreliable.",
+          call. = FALSE
+        )
+      }
+
+      dens_prior = get_density(prior_values, 0)
+      dens_post = get_density(post_values, 0)
+      BF = dens_post / dens_prior
 
       prob_post_val = NA_real_
     }
@@ -506,16 +511,25 @@ validate_savage_dickey_expression = function(expression, parameters) {
 #' @aliases get_density
 #' @keywords internal
 #' @noRd
-#' @param samples A posterior draws object.
-#' @param LHS Expression to compute posterior
+#' @param x Numeric draws.
 #' @param value What value to evaluate the density at
 #' @return A float
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_density = function(samples, LHS, value) {
+get_density = function(x, value) {
+  bandwidth = stats::bw.SJ(x)
+  mean(stats::dnorm(value, mean = x, sd = bandwidth))
+}
+
+
+# Evaluate a hypothesis expression for every draw.
+get_hypothesis_values = function(samples, LHS) {
   draws = posterior::as_draws_df(samples)
-  res = rlang::eval_tidy(rlang::parse_expr(LHS), data = draws)
-  dens = stats::density(res, bw = "SJ")
-  dens_point = stats::spline(dens$x, dens$y, xout = value)$y
-  dens_point
+  rlang::eval_tidy(rlang::parse_expr(LHS), data = draws)
+}
+
+
+# Is the tested value outside the central 98% of draws?
+is_sparse_tail = function(x, value) {
+  mean(x <= value) < 0.01 || mean(x >= value) < 0.01
 }

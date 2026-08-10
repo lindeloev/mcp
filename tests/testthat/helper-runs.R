@@ -274,7 +274,7 @@ test_hypothesis = function(fit, prior) {
       )
     }
 
-    result = hypothesis(fit, hypotheses, prior = prior)
+    result = suppressWarnings(hypothesis(fit, hypotheses, prior = prior))
     testthat::expect_true(is.data.frame(result) & nrow(result) == length(hypotheses))
   }
 

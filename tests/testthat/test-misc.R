@@ -461,6 +461,13 @@ test_that("hypothesis()", {
   expect_true(is.na(actual_equality$p))
   expect_false(is.na(actual_equality$BF))
   expect_equal(actual_equality$BF, 1, tolerance = 1e-3)
+
+  tail_val = format(max(cp_draws) + stats::sd(cp_draws), digits = 16)
+  expect_warning(
+    hypothesis(fit_same, paste0("cp_1 = ", tail_val)),
+    "tested value is in a sparse tail",
+    fixed = TRUE
+  )
 })
 
 
@@ -485,6 +492,20 @@ test_that("Savage-Dickey hypotheses are affine", {
       fixed = TRUE
     )
   }
+})
+
+
+test_that("Savage-Dickey density is evaluated directly", {
+  x = seq(-3, 3, length.out = 101)
+  bandwidth = stats::bw.SJ(x)
+
+  expect_equal(
+    get_density(x, 0),
+    mean(stats::dnorm(0, mean = x, sd = bandwidth))
+  )
+  expect_gte(get_density(x, 10), 0)
+  expect_false(is_sparse_tail(x, 0))
+  expect_true(is_sparse_tail(x, 3))
 })
 
 
