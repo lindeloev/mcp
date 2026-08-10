@@ -19,7 +19,7 @@ Serial dependence is common in time series. Add autoregressive terms with `ar(p)
 model = list(y ~ 1 + x + ar(1) + ma(1))
 ```
 
-The most common use case is still `ar(1)`. Like other `mcp` terms, AR and MA coefficients carry over to later segments until another `ar()` or `ma()` term changes them. Both accept a regression formula, such as `ar(1, 1 + x)` or `ma(1, 0 + x)`.
+The most common use case is still `ar(1)`. Like other `mcp` terms, AR and MA coefficients carry over to later segments until another term for the same component changes them. An `ar(p)` or `ma(q)` declaration replaces that whole component: if `ar(1)` follows `ar(2)`, the lag-2 coefficient is zero in the later segment. Both accept a regression formula, such as `ar(1, 1 + x)` or `ma(1, 0 + x)`.
 
 ## GARMA definition
 

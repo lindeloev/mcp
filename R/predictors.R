@@ -593,6 +593,18 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     dplyr::ungroup() %>%
     dplyr::mutate(next_intercept = dplyr::if_else(.data$segment >= .data$next_intercept, NA_integer_, .data$next_intercept))
 
+  # AR/MA declarations replace their whole component. This also preserves a
+  # zero formula, which otherwise has no predictor rows.
+  arma_definitions = get_arma_definitions(rhs)
+  is_arma = predictors$dpar %in% c("ar", "ma")
+  predictors$next_intercept[is_arma] = vapply(which(is_arma), function(i) {
+    next_segment = arma_definitions$segment[
+      arma_definitions$dpar == predictors$dpar[i] &
+        arma_definitions$segment > predictors$segment[i]
+    ]
+    if (length(next_segment) == 0) NA_integer_ else min(next_segment)
+  }, integer(1))
+
   # Predictor group-level effects have an independent segment lifetime. A
   # later definition for the same (dpar, grouping factor) replaces the whole
   # current coefficient block; `(0 | group)` is represented as an inactive

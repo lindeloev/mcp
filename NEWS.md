@@ -122,6 +122,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Weighted regression: While JAGS correctly modelled weights, R-side simulation/generation ignored it. This means `predict()`, PPCs, `log_lik()`, WAIC, and LOO were incorrect when using weighted regression. Weighted Gaussian posterior predictions and log-likelihoods now use the observation-level standard deviation `sigma / sqrt(weight)`, matching the JAGS precision `weight / sigma^2`. This makes `predict()`, posterior predictive checks, `log_lik()`, WAIC, and LOO consistent with the fitted model.
 
+-   In models going from higher-order to lower-order, (`~ ar(2), ~ ar(1)`), the higher-order components were not "turned off".
+
 -   Bug only noticeable for very small samples: For Gaussian identity-link AR models, R-side calculations could leak residuals between posterior draws and omitted available partial lags for the first observations of AR(2+) models. Each draw is now evaluated as a separate series and uses the same partial-lag recurrence as JAGS.
 
 -   The quantiles from `fitted()` and `predict()` for group-level change-point models ignored the group level and were identical across levels.

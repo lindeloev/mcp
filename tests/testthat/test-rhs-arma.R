@@ -35,6 +35,40 @@ test_that("AR and MA each allow one term per segment", {
 })
 
 
+test_that("a lower-order AR/MA declaration turns off higher lags", {
+  data = data.frame(x = 1:6, y = 1:6)
+  family = mcpfamily(gaussian())
+
+  predictors = get_predictors(
+    list(y ~ ar(2), ~ ar(1)), data, family, par_x = "x"
+  )
+  expect_equal(
+    predictors$next_intercept[predictors$code_name == "ar2_1"],
+    2L
+  )
+
+  fit = mcp(list(y ~ ar(2), ~ ar(1)), data, par_x = "x", sample = FALSE, quiet = TRUE)
+  expect_match(
+    fit$jags_code,
+    "(?s)# Formula for ar2.*x\\[i_\\] < cp_1.*ar2_1",
+    perl = TRUE
+  )
+
+  zeroed = get_predictors(
+    list(y ~ ar(2), ~ ar(2, 0)), data, family, par_x = "x"
+  )
+  expect_true(all(zeroed$next_intercept[zeroed$dpar == "ar"] == 2L))
+
+  ma_predictors = get_predictors(
+    list(y ~ ma(2), ~ ma(1)), data, family, par_x = "x"
+  )
+  expect_equal(
+    ma_predictors$next_intercept[ma_predictors$code_name == "ma2_1"],
+    2L
+  )
+})
+
+
 test_that("MA order errors describe MA syntax", {
   data = data.frame(x = 1:6, y = 1:6)
 
