@@ -188,27 +188,27 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
   keep = unique(round(seq(1, nrow(draws), length.out = min(ndraws, nrow(draws)))))
   smoke_fit = fit
   smoke_fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws[keep, , drop = FALSE]))
-  samples = mcp_draws(
+  draws = mcp_draws(
     smoke_fit, population = TRUE, varying = length(group_info$cols) > 0
   )
   predictor_data = add_rhs_predictors(newdata, fit)
   if (length(group_info$cols) > 0) {
-    samples_predictors = dplyr::left_join(
-      predictor_data, samples, by = unique(group_info$cols),
+    draws_predictors = dplyr::left_join(
+      predictor_data, draws, by = unique(group_info$cols),
       relationship = "many-to-many"
     )
   } else {
-    samples_predictors = tidyr::expand_grid(samples, predictor_data)
+    draws_predictors = tidyr::expand_grid(draws, predictor_data)
   }
 
   values = evaluate_model_dpars(
-    fit, as.list(samples_predictors),
+    fit, as.list(draws_predictors),
     paste0(".pred_", model_predictors$code_name)
   )
   components = intersect(c("ar", "ma"), unique(model_predictors$dpar))
   probabilities = vapply(components, function(component) {
     violations = arma_root_violations(values, component)
-    max(tapply(violations, samples_predictors$data_row, mean))
+    max(tapply(violations, draws_predictors$data_row, mean))
   }, numeric(1))
   bad = vapply(names(probabilities), function(component) {
     threshold = diagnostics[[component]]

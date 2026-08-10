@@ -57,13 +57,13 @@ run_jags = function(data,
 
     # rjags still prints some adaptation notices with quiet = TRUE.
     if (quiet) {
-      samples = NULL
-      save_samples = function() samples <<- sample_jags()
-      capture.output(save_samples())
+      draws = NULL
+      save_draws = function() draws <<- sample_jags()
+      capture.output(save_draws())
     } else {
-      samples = sample_jags()
+      draws = sample_jags()
     }
-    samples
+    draws
   }
 
   # Use JAGS directly under a sequential future plan. This compiles the model
@@ -72,7 +72,7 @@ run_jags = function(data,
   timer = proc.time()
   if (n_workers == 1) {
     inits = get_jags_inits(inits, seed, n.chains, sample)
-    samples = try(do_sampling(
+    draws = try(do_sampling(
       inits = inits,
       n.chains = n.chains
     ))
@@ -83,7 +83,7 @@ run_jags = function(data,
     if (is.null(seed))
       seed = sample.int(.Machine$integer.max - 2 * n.chains, 1)
     inits = get_jags_inits(inits, seed, n.chains, sample)
-    samples = future.apply::future_lapply(
+    draws = future.apply::future_lapply(
       inits,
       n.chains = 1,
       FUN = do_sampling,
@@ -91,8 +91,8 @@ run_jags = function(data,
     )
 
     # Get result as mcmc.list
-    samples = unlist(samples, recursive = FALSE)
-    class(samples) = "mcmc.list"
+    draws = unlist(draws, recursive = FALSE)
+    class(draws) = "mcmc.list"
   }
 
   # Sampling finished
@@ -101,11 +101,11 @@ run_jags = function(data,
     message("Finished sampling in ", round(passed["elapsed"], 1), " seconds\n")
 
   # Recover the levels of group-level effects if it succeeded
-  if (coda::is.mcmc.list(samples)) {
-    return(samples)
+  if (coda::is.mcmc.list(draws)) {
+    return(draws)
   } else {
     # If it didn't succeed, quit gracefully.
-    warning("--------------\nJAGS failed with the above error. Returning an `mcpfit` without samples. Inspect fit$prior and fit$jags_code to identify the problem. Read about typical problems and fixes here: https://lindeloev.github.io/mcp/articles/tips.html.")
+    warning("--------------\nJAGS failed with the above error. Returning an `mcpfit` without draws. Inspect fit$prior and fit$jags_code to identify the problem. Read about typical problems and fixes here: https://lindeloev.github.io/mcp/articles/tips.html.")
     return(NULL)
   }
 }
@@ -217,23 +217,23 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
 #' @aliases recover_levels
 #' @keywords internal
 #' @noRd
-#' @param samples An mcmc.list with group-level columns starting in `mcmc_col`.
+#' @param draws An mcmc.list with group-level columns starting in `mcmc_col`.
 #' @param data A tibble or data.frame
 #' @param group_effects Returned by `get_group_effects()`.
-recover_levels = function(samples, data, group_effects) {
+recover_levels = function(draws, data, group_effects) {
   for (i in seq_len(nrow(group_effects))) {
     effect = group_effects[i, ]
-    # Get vectors of old ("from") and replacement column names in samples
-    from = colnames(samples[[1]])[stringr::str_starts(colnames(samples[[1]]), paste0(effect$name, '\\['))]
+    # Get vectors of old ("from") and replacement column names in draws
+    from = colnames(draws[[1]])[stringr::str_starts(colnames(draws[[1]]), paste0(effect$name, '\\['))]
     to = sprintf(paste0(effect$name, '[%s]'), unique(data[, effect$group_col]))
 
     # Recode column names on each list (chain) using lapply
     names(to) = from
-    samples = lapply(samples, function(x) {
+    draws = lapply(draws, function(x) {
       colnames(x) = dplyr::recode(colnames(x), !!!to)
       x
     })
   }
 
-  samples
+  draws
 }

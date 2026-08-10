@@ -12,7 +12,7 @@
 #'   draws for summary geoms, e.g., `pp_check(fit, type = "ribbon", ndraws = NULL)`.
 #'   LOO checks always evaluate all posterior draws to preserve their PSIS
 #'   weights; where supported, `ndraws` is passed to bayesplot to control the
-#'   number of plotted samples.
+#'   number of plotted draws.
 #' @param nsamples Deprecated. Use `ndraws` instead.
 #' @param ... Further arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
 #' @details Missing responses are omitted from the observed-data check. LOO
@@ -85,8 +85,8 @@ pp_check = function(
   if (is_loo && !is.null(newdata))
     stop("LOO predictive checks require the original fitted data; `newdata` is not supported.")
 
-  # Get as tidy samples to preserve info on groups and sampled draws
-  samples = pp_eval(
+  # Get tidy draws to preserve group and draw identifiers
+  draws = pp_eval(
     fit,
     newdata = newdata,
     summary = FALSE,
@@ -101,12 +101,12 @@ pp_check = function(
     # intact; bayesplot's `samples` argument controls plot sampling where
     # supported.
     ndraws = if (is_loo) NULL else ndraws,
-    samples_format = "tidy"
+    draws_format = "tidy"
   )
   # Return plot with or without facets
   if (is.null(facet_by)) {
     y = y_all[observed_rows]
-    yrep = tidy_to_matrix(samples, type = ".prediction", data_rows = observed_rows)
+    yrep = tidy_to_matrix(draws, type = ".prediction", data_rows = observed_rows)
     plot_return = get_ppc_plot(
       fit, type, y, yrep, ndraws,
       observations = observed_rows,
@@ -122,7 +122,7 @@ pp_check = function(
       # Compute/extract y and yrep for this group
       observations_this = observed_rows[group_data[observed_rows] == group]
       y_this = y_all[observations_this]
-      yrep_this = tidy_to_matrix(samples, type = ".prediction", data_rows = observations_this)
+      yrep_this = tidy_to_matrix(draws, type = ".prediction", data_rows = observations_this)
 
       # Add plot to list
       all_plots[[as.character(group)]] = get_ppc_plot(

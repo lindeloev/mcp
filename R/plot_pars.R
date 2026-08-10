@@ -25,7 +25,7 @@
 #'   page. The default of 5 follows `brms::plot.brmsfit()`.
 #' @param ask Logical. In an interactive session, prompt before printing each
 #'   page after the first. Only used when there are multiple pages.
-#' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
+#' @param prior TRUE/FALSE. Plot using prior draws? Useful for `mcp(..., sample = "both")`
 #'
 #' @details
 #'   For other `type`, it calls `bayesplot::mcmc_type()`. Use these
@@ -84,7 +84,7 @@ plot_pars = function(fit,
   checkmate::assert_class(fit, "mcpfit")
 
   if (!coda::is.mcmc.list(.subset2(fit, "mcmc_post")) && !coda::is.mcmc.list(.subset2(fit, "mcmc_prior")))
-    stop("Cannot plot an mcpfit without prior or posterior samples.")
+    stop("Cannot plot an mcpfit without prior or posterior draws.")
 
   if (!is.character(pars) || !is.character(regex_pars))
     stop("`pars` and `regex_pars` has to be string/character.")
@@ -111,8 +111,8 @@ plot_pars = function(fit,
     stop("`nvariables` must be at least 2 for `type = 'hex'` or `type = 'scatter'`.")
   bayesplot::available_mcmc()  # Quick fix to make R CMD Check happy that bayesplot is imported
 
-  # Get posterior/prior samples
-  samples = posterior_draws(fit, prior = prior)
+  # Get posterior/prior draws
+  draws = posterior_draws(fit, prior = prior)
 
   # Handle special codes
   if ("population" %in% pars) {
@@ -132,7 +132,7 @@ plot_pars = function(fit,
   pars = select_parameters(
     explicit = pars,
     patterns = regex_pars,
-    complete_pars = posterior::variables(samples)
+    complete_pars = posterior::variables(draws)
   )
 
   # Handles combo. Returns a customizable ggplot which "combo" does not.
@@ -150,7 +150,7 @@ plot_pars = function(fit,
       func = utils::getFromNamespace(paste0("mcmc_", this_type), "bayesplot")
       facet_args = if (this_type %in% takes_facet) list(ncol = ncol) else list()
       func(
-        samples,
+        draws,
         pars = this_page_pars,
         regex_pars = character(0),
         facet_args = facet_args

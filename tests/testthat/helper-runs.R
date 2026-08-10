@@ -138,8 +138,8 @@ test_s3_methods = function(fit) {
     if (use_prior) {
       fit_to_test$mcmc_post = NULL
       testthat::expect_message(
-        mcmclist_samples(fit_to_test),
-        "Posterior was not sampled. Using prior samples"
+        mcmclist_draws(fit_to_test),
+        "Posterior was not drawn. Using prior draws"
       )
     }
 
@@ -287,7 +287,7 @@ test_hypothesis = function(fit, prior) {
 
   # Varying
   if (!is.null(fit$pars$group)) {
-    mcmc_vars = colnames(mcmclist_samples(fit)[[1]])
+    mcmc_vars = colnames(mcmclist_draws(fit)[[1]])
     varying_starts = paste0("^", fit$pars$group[1], "\\[")
     varying_col_ids = stringr::str_detect(mcmc_vars, varying_starts)
     varying_cols = paste0("`", mcmc_vars[varying_col_ids], "`")  # Add these for varying
@@ -333,7 +333,13 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
       )
       testthat::expect_equal(
         default_result,
-        func(fit, prior = prior, summary = FALSE, samples_format = "matrix")
+        func(fit, prior = prior, summary = FALSE, draws_format = "matrix")
+      )
+      testthat::expect_equal(
+        default_result,
+        suppressWarnings(func(
+          fit, prior = prior, summary = FALSE, samples_format = "matrix"
+        ))
       )
     }
   }

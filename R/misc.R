@@ -226,35 +226,35 @@ get_predictor_matrix = function(predictors, group_effects = NULL) {
 #'
 #' @keywords internal
 #' @noRd
-#' @param samples Evaluated draws in tidy format.
+#' @param draws Evaluated draws in tidy format.
 #' @param type Name of the evaluated-value column, matching `pp_eval(type)`.
-#' @return `samples`, invisibly.
-validate_eval_draws = function(samples, type) {
-  checkmate::assert_data_frame(samples)
+#' @return `draws`, invisibly.
+validate_eval_draws = function(draws, type) {
+  checkmate::assert_data_frame(draws)
   checkmate::assert_string(type)
-  assert_data_cols(samples, c(".draw", "data_row", type))
+  assert_data_cols(draws, c(".draw", "data_row", type))
 
-  if (anyNA(samples$.draw) || anyNA(samples$data_row))
+  if (anyNA(draws$.draw) || anyNA(draws$data_row))
     stop_github("Evaluated draws contain missing `.draw` or `data_row` keys.")
 
-  draw_ids = unique(samples$.draw)
-  data_rows = unique(samples$data_row)
-  draw_index = match(samples$.draw, draw_ids)
-  row_index = match(samples$data_row, data_rows)
+  draw_ids = unique(draws$.draw)
+  data_rows = unique(draws$data_row)
+  draw_index = match(draws$.draw, draw_ids)
+  row_index = match(draws$data_row, data_rows)
   keys = draw_index + length(draw_ids) * (row_index - 1L)
   if (anyDuplicated(keys))
     stop_github("Evaluated draws must contain one `", type, "` value per `.draw` and `data_row`.")
 
-  if (nrow(samples) != length(draw_ids) * length(data_rows))
+  if (nrow(draws) != length(draw_ids) * length(data_rows))
     stop_github("Every `data_row` must contain the same complete set of posterior draws.")
 
-  invisible(samples)
+  invisible(draws)
 }
 
 
 #' Convert evaluated draws from tidy to matrix format
 #'
-#' Converts the output of `pp_eval(fit, samples_format = "tidy")` to an `N_draws`
+#' Converts the output of `pp_eval(fit, draws_format = "tidy")` to an `N_draws`
 #' by `N_evaluation_rows` matrix. Explicit keys prevent duplicate or incomplete
 #' draw/row combinations from being silently reshaped.
 #'
@@ -266,25 +266,25 @@ validate_eval_draws = function(samples, type) {
 #' @return A numeric matrix.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-tidy_to_matrix = function(samples, type, data_rows = NULL) {
+tidy_to_matrix = function(draws, type, data_rows = NULL) {
   checkmate::assert_string(type)
-  assert_data_cols(samples, c(".draw", "data_row", type))
+  assert_data_cols(draws, c(".draw", "data_row", type))
 
   if (is.null(data_rows))
-    data_rows = sort(unique(samples$data_row))
+    data_rows = sort(unique(draws$data_row))
   if (anyDuplicated(data_rows))
     stop_github("Requested `data_row` values must be unique.")
 
-  missing_rows = setdiff(data_rows, unique(samples$data_row))
+  missing_rows = setdiff(data_rows, unique(draws$data_row))
   if (length(missing_rows) > 0)
     stop_github("Requested evaluation rows are absent: ", paste(missing_rows, collapse = ", "), ".")
-  samples = dplyr::filter(samples, .data$data_row %in% data_rows)
+  draws = dplyr::filter(draws, .data$data_row %in% data_rows)
 
-  draw_ids = sort(unique(samples$.draw))
+  draw_ids = sort(unique(draws$.draw))
   result = matrix(NA_real_, nrow = length(draw_ids), ncol = length(data_rows), dimnames = list(NULL, as.character(data_rows)))
-  matrix_rows = match(samples$.draw, draw_ids)
-  matrix_cols = match(samples$data_row, data_rows)
-  result[cbind(matrix_rows, matrix_cols)] = samples[[type]]
+  matrix_rows = match(draws$.draw, draw_ids)
+  matrix_cols = match(draws$data_row, data_rows)
+  result[cbind(matrix_rows, matrix_cols)] = draws[[type]]
   result
 }
 
@@ -300,14 +300,14 @@ tidy_to_matrix = function(samples, type, data_rows = NULL) {
 #' @return A tibble with `data_row`, `quantile`, the `type` column, and requested metadata.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_quantiles = function(samples, quantiles, type, keep = NULL) {
+get_quantiles = function(draws, quantiles, type, keep = NULL) {
   keep = unique(keep)
-  assert_data_cols(samples, c("data_row", type, keep))
-  grid = samples %>% dplyr::select("data_row", dplyr::all_of(keep)) %>% dplyr::distinct()
+  assert_data_cols(draws, c("data_row", type, keep))
+  grid = draws %>% dplyr::select("data_row", dplyr::all_of(keep)) %>% dplyr::distinct()
   if (anyDuplicated(grid$data_row))
     stop_github("Evaluation-row metadata differs across draws for the same `data_row`.")
 
-  result = samples %>%
+  result = draws %>%
     dplyr::group_by(.data$data_row) %>%
     dplyr::reframe(quantile = quantiles,
                    !!type := stats::quantile(.data[[type]], probs = quantiles, names = FALSE))

@@ -249,10 +249,10 @@ loglik_settings_match = function(loglik, settings) {
 #' shows examples of how to specify hypotheses, and [read worked examples on the mcp website](https://lindeloev.github.io/mcp/articles/comparison.html).
 #' For directional hypotheses, `hypothesis` executes the hypothesis string in
 #' a data-frame environment and summarises the proportion of posterior and
-#' prior samples where the expression evaluates to TRUE. The Bayes factor is
+#' prior draws where the expression evaluates to TRUE. The Bayes factor is
 #' the posterior odds divided by the prior odds. For equality hypotheses, a
 #' Savage-Dickey ratio is computed. Both kinds of Bayes factor require prior
-#' samples, so remember `mcp(..., sample = "both")`. This function is heavily inspired by the
+#' draws, so remember `mcp(..., sample = "both")`. This function is heavily inspired by the
 #' `hypothesis` function from the `brms` package.
 #'
 #' @aliases hypothesis hypothesis.mcpfit
@@ -264,7 +264,7 @@ loglik_settings_match = function(loglik, settings) {
 #'   **Directional hypotheses** are specified using <, >, <=, or >=. `hypothesis`
 #'   returns the posterior probability and the Bayes factor in favor of the
 #'   stated hypothesis. The Bayes factor requires both prior and posterior
-#'   samples from `mcp(sample = "both")`. For example:
+#'   draws from `mcp(sample = "both")`. For example:
 #'
 #'   * `"cp_1 > 30"`:  the first change point is above 30.
 #'   * `"Intercept_1 > Intercept_2"`: the intercept is greater in segment 1 than 2.
@@ -279,7 +279,7 @@ loglik_settings_match = function(loglik, settings) {
 #'   **Equality hypotheses** use the equal sign (=) and a Savage-Dickey density
 #'   ratio: posterior density divided by prior density at the tested equality.
 #'   This is a Bayes factor for a nested point-null model against the fitted
-#'   continuous model. Prior and posterior samples are required, using 
+#'   continuous model. Prior and posterior draws are required, using
 #'   `mcp(sample = "both")`.
 #' 
 #'   The point-null model's nuisance prior is the fitted model's conditional 
@@ -360,18 +360,18 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
 
       # Get effect estimate
       LHS_expr = rlang::parse_expr(LHS)
-      samples = posterior_draws(fit, prior = prior) %>%
+      draws = posterior_draws(fit, prior = prior) %>%
         posterior::as_draws_df()
-      samples$effect = rlang::eval_tidy(LHS_expr, data = samples)
+      draws$effect = rlang::eval_tidy(LHS_expr, data = draws)
 
       tail_prob = (1 - width) / 2
       estimate = list(
-        effect = mean(samples$effect),
-        .lower = stats::quantile(samples$effect, tail_prob, names = FALSE),
-        .upper = stats::quantile(samples$effect, 1 - tail_prob, names = FALSE)
+        effect = mean(draws$effect),
+        .lower = stats::quantile(draws$effect, tail_prob, names = FALSE),
+        .upper = stats::quantile(draws$effect, 1 - tail_prob, names = FALSE)
       )
     } else {
-      samples = posterior_draws(fit, prior = prior) %>%
+      draws = posterior_draws(fit, prior = prior) %>%
         posterior::as_draws_df()
 
       estimate = list(effect = NA, .lower = NA, .upper = NA)
@@ -380,7 +380,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
     # SAVAGE-DICKEY: compute BF
     if (n_equals == 1) {
       if (!coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) || !coda::is.mcmc.list(.subset2(fit, "mcmc_post")))
-        stop("Model contains '='. Both prior and posterior samples are needed to compute Savage-Dickey density ratios. Run mcp(..., sample = 'both'")
+        stop("Model contains '='. Both prior and posterior draws are needed to compute Savage-Dickey density ratios. Run mcp(..., sample = 'both'")
 
       prior_values = get_hypothesis_values(posterior_draws(fit, prior = TRUE), LHS)
       post_values = get_hypothesis_values(posterior_draws(fit), LHS)
@@ -402,12 +402,12 @@ hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) 
     # DIRECTIONAL: compute p and BF
     if (n_directional != 0) {
       if (!coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) || !coda::is.mcmc.list(.subset2(fit, "mcmc_post")))
-        stop("Directional Bayes factors require both prior and posterior samples. Run mcp(..., sample = 'both').")
+        stop("Directional Bayes factors require both prior and posterior draws. Run mcp(..., sample = 'both').")
 
       # Evaluate the same hypothesis on the posterior and prior draws.
       expr_parsed = rlang::parse_expr(expression)
 
-      res_post = rlang::eval_tidy(expr_parsed, data = samples)
+      res_post = rlang::eval_tidy(expr_parsed, data = draws)
       prob_post_val = mean(res_post == TRUE)
 
       draws_prior = posterior_draws(fit, prior = TRUE) %>%
@@ -523,8 +523,8 @@ get_density = function(x, value) {
 
 
 # Evaluate a hypothesis expression for every draw.
-get_hypothesis_values = function(samples, LHS) {
-  draws = posterior::as_draws_df(samples)
+get_hypothesis_values = function(draws, LHS) {
+  draws = posterior::as_draws_df(draws)
   rlang::eval_tidy(rlang::parse_expr(LHS), data = draws)
 }
 

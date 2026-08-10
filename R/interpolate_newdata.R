@@ -34,16 +34,16 @@ get_x_values = function(fit, by = NULL, prior = FALSE) {
     x_values = seq(min(xdata), max(xdata), length.out = N_BASIS)
   } else {
     # Make fine resolution around change points in addition to course resolution
-    # Get samples for these change points
-    samples = mcmclist_samples(fit, prior = prior)
+    # Get draws for these change points
+    draws = mcmclist_draws(fit, prior = prior)
     cp_pars = fit$pars$cp
-    call = paste0("tidybayes::spread_draws(samples, ", paste0(cp_pars, collapse = ", "), ")")
-    samples = eval(str2lang(call))
+    call = paste0("tidybayes::spread_draws(draws, ", paste0(cp_pars, collapse = ", "), ")")
+    draws = eval(str2lang(call))
 
     # Compute and return
     x_values = sort(c(
       seq(min(xdata), max(xdata), length.out = N_BASIS),  # Default resolution for the whole plot
-      unlist(lapply(cp_pars, function(cp_par) unname(stats::quantile(samples[[cp_par]], probs = seq(0, 1, length.out = N_CP)))))  # Higher res at change points
+      unlist(lapply(cp_pars, function(cp_par) unname(stats::quantile(draws[[cp_par]], probs = seq(0, 1, length.out = N_CP)))))  # Higher res at change points
     ))
   }
   return(x_values)
@@ -125,7 +125,7 @@ get_continuous_at = function(data, pars, at = NULL, group_cols = NULL) {
 #' # Fit summary
 #' fitted(fit, newdata)
 #'
-#' # Predictions for each sample
+#' # Predictions for each draw
 #' prediction = predict(fit, newdata, summary = FALSE)
 #' prediction[, c(".chain", ".iteration", ".draw", "x", "group", "z", "predict")]
 #'

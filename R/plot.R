@@ -173,9 +173,9 @@ get_plot = function(x,
   }
 
   if (!coda::is.mcmc.list(.subset2(fit, "mcmc_post")) && !coda::is.mcmc.list(.subset2(fit, "mcmc_prior")))
-    stop("Cannot plot an mcpfit without prior or posterior samples.")
+    stop("Cannot plot an mcpfit without prior or posterior draws.")
 
-  available_draws = sum(vapply(mcmclist_samples(fit, prior = prior), nrow, integer(1)))  # Like niterations(fit), but also supporting prior = TRUE
+  available_draws = sum(vapply(mcmclist_draws(fit, prior = prior), nrow, integer(1)))  # Like niterations(fit), but also supporting prior = TRUE
   if (!is.null(ndraws))
     ndraws = min(ndraws, available_draws)
   lines = min(lines, available_draws)
@@ -185,7 +185,7 @@ get_plot = function(x,
       stop("`lines` must be less than or equal to `ndraws`.")
   }
   if (!show_q_fit && !show_q_predict)
-    # No need for more samples if they are only used to draw lines.
+    # No need for more draws if they are only used to draw lines.
     ndraws = lines
 
   if (scale == "linear" && rate == FALSE)
@@ -209,7 +209,7 @@ get_plot = function(x,
     pp_eval(
       object = fit,
       newdata = newdata,
-      summary = FALSE,  # Get samples
+      summary = FALSE,  # Get draws
       type = type,
       rate = rate,
       prior = prior,
@@ -217,7 +217,7 @@ get_plot = function(x,
       varying = group_pars,
       arma = arma,
       ndraws = ndraws,
-      samples_format = "tidy",
+      draws_format = "tidy",
       scale = scale,
       .include_fitted = include_fitted
     )
@@ -419,7 +419,7 @@ get_plot = function(x,
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @seealso plot_pars plot_dpar pp_check
 #' @details
-#'   `plot()` uses `fit$simulate()` on posterior samples. These represent the
+#'   `plot()` uses `fit$simulate()` on posterior draws. These represent the
 #'   (joint) posterior distribution. Interval summaries use at most 1000 draws
 #'   by default; use `ndraws = NULL` to use all draws. Change-point densities
 #'   always use all available draws.
@@ -578,8 +578,8 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
     population = cps$name
   }
 
-  # Get samples in long format
-  samples = mcp_draws(fit, population = population, varying = varying, absolute = TRUE, prior = prior) %>%
+  # Get draws in long format
+  draws = mcp_draws(fit, population = population, varying = varying, absolute = TRUE, prior = prior) %>%
     tidyr::pivot_longer(cols = tidyselect::matches("^cp_[0-9]+$"), names_to = "cp_name", values_to = "value") %>%
 
     # Compute density per group. Tolerate zero-variance CPs like cp_2 = 80.
@@ -613,11 +613,11 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
       y = .data$densy,
       group = interaction(.data$.chain, .data$cp_name)
     ),
-    data = samples,
+    data = draws,
     color = if (use_color) "#666666" else "#3182BD",
     fill = if (use_color) "#A6A6A6" else "#6BAED6",
     linewidth = 0.25,
-    alpha = 0.4 / max(samples$.chain),  # Combined opacity is approximately 35-40%
+    alpha = 0.4 / max(draws$.chain),  # Combined opacity is approximately 35-40%
     show.legend = FALSE
   )
 }

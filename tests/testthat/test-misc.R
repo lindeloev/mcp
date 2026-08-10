@@ -410,7 +410,7 @@ test_that("hypothesis()", {
 
   expect_error(
     hypothesis(demo_fit2, directional),
-    "Directional Bayes factors require both prior and posterior samples",
+    "Directional Bayes factors require both prior and posterior draws",
     fixed = TRUE
   )
 

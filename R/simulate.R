@@ -1,4 +1,4 @@
-# ABOUT: These functions take data/samples and run them through
+# ABOUT: These functions take data/draws and run them through
 # formula code to make model predictions
 # ------------------------------------------------------------
 

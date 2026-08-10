@@ -6,7 +6,7 @@
 #' Models fitted with the \code{\link[mcp:mcp]{mcp}} function are represented as
 #' an `mcpfit` object which contains the user input (model, data, family),
 #' derived model characteristics (prior, parameter names, and jags code), and
-#' the fit (prior and/or posterior mcmc samples).
+#' the fit (prior and/or posterior MCMC draws).
 #'
 #' @name mcpfit-class
 #' @aliases mcpfit
@@ -24,8 +24,8 @@
 #'   Provided by user. See \code{\link{mcp}} for more details.
 #' @slot prior A named list.
 #'   Provided by user. See \code{\link{mcp}} for more details.
-#' @slot mcmc_post An \code{\link[coda]{mcmc.list}} object with posterior samples.
-#' @slot mcmc_prior An \code{\link[coda]{mcmc.list}} object with prior samples.
+#' @slot mcmc_post An \code{\link[coda]{mcmc.list}} object with posterior draws.
+#' @slot mcmc_prior An \code{\link[coda]{mcmc.list}} object with prior draws.
 #' @slot loglik An (Nchains * Ndraws) by N-observed-responses matrix of
 #'   log-likelihoods.
 #' @slot pars A list of character vectors of model parameter names.
@@ -61,10 +61,10 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
   if (varying == TRUE & is.null(fit$pars$group))
     return(NULL)
 
-  samples = posterior_draws(fit, prior = prior)
+  draws = posterior_draws(fit, prior = prior)
 
   # Select only group-indexed or only population-scope columns.
-  all_cols = posterior::variables(samples)
+  all_cols = posterior::variables(draws)
   if (varying == FALSE) {
     get_cols = all_cols[all_cols %in% fit$pars$population]
   } else {
@@ -77,12 +77,12 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
       stop("There were no matching parameters in the model.")
   }
 
-  samples = posterior::subset_draws(samples, variable = get_cols)
+  draws = posterior::subset_draws(draws, variable = get_cols)
 
   # Get parameter estimates and diagnostics
   tail_prob = (1 - width) / 2
   estimates = posterior::summarise_draws(
-    samples,
+    draws,
     mean = base::mean,
     lower = function(x) stats::quantile(x, tail_prob, names = FALSE),
     upper = function(x) stats::quantile(x, 1 - tail_prob, names = FALSE),
@@ -245,19 +245,19 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
   }
   diagnostics = resolve_diagnostics(diagnostics)
 
-  samples = mcmclist_samples(fit, prior = prior, error = FALSE)
+  draws = mcmclist_draws(fit, prior = prior, error = FALSE)
 
   # Model info
   cat("Family: ", fit$family$family, "(link = '", fit$family$link, "')\n", sep = "")
-  if (!is.null(samples))
-    cat("Iterations: ", coda::niter(samples), " from ", coda::nchain(samples), " chains.\n", sep="")
+  if (!is.null(draws))
+    cat("Iterations: ", coda::niter(draws), " from ", coda::nchain(draws), " chains.\n", sep="")
   cat("Segments:\n")
   for (i in 1:length(fit$model)) {
     cat("  ", i, ": ", formula_to_char(fit$model[[i]]), "\n", sep = "")
   }
 
   # Data
-  if (!is.null(samples)) {
+  if (!is.null(draws)) {
     # Print and return invisibly
     cat("\nPopulation-level parameters:\n")
     result = get_summary(fit, width, varying = FALSE, prior = prior, verbose = verbose)
@@ -294,7 +294,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
     return(invisible(result))
   }
   else {
-    cat("\nNo samples. Nothing to summarise.")
+    cat("\nNo draws. Nothing to summarise.")
     return(invisible(NULL))
   }
 }
@@ -344,26 +344,26 @@ is.mcpfit = function(x) {
 }
 
 
-#' Internal function to get samples.
+#' Internal function to get draws.
 #'
-#' Returns posterior samples, if available. If not, then prior samples. If not,
+#' Returns posterior draws, if available. If not, then prior draws. If not,
 #' then throw an informative error. This is useful for summary and plotting, that
 #' works on both.
 #'
-#' @aliases mcmclist_samples mcmclist_samples.mcpfit
+#' @aliases mcmclist_draws mcmclist_draws.mcpfit
 #' @keywords internal
 #' @inheritParams summary.mcpfit
 #' @param fit An \code{\link{mcpfit}} object
-#' @param message TRUE: gives a message if returning prior samples. FALSE = no message
-#' @param error TRUE: err if there are no samples. FALSE: return NULL
-mcmclist_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
+#' @param message TRUE: gives a message if returning prior draws. FALSE = no message
+#' @param error TRUE: err if there are no draws. FALSE: return NULL
+mcmclist_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
   mcmc_prior = .subset2(fit, "mcmc_prior")
   mcmc_post = .subset2(fit, "mcmc_post")
   if (prior == TRUE) {
     if (coda::is.mcmc.list(mcmc_prior)) {
       return(mcmc_prior)
     } else {
-      stop("Prior requested but the prior was not sampled.")
+      stop("Prior requested but the prior was not drawn.")
     }
   }
 
@@ -371,35 +371,35 @@ mcmclist_samples = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
     return(mcmc_post)
   } else if (coda::is.mcmc.list(mcmc_prior)) {
     if (message)
-      message("Posterior was not sampled. Using prior samples. Set `prior = TRUE` to mute this message.")
+      message("Posterior was not drawn. Using prior draws. Set `prior = TRUE` to mute this message.")
     return(mcmc_prior)
   } else if (error == TRUE) {
-    stop("This mcpfit contains no posterior or prior samples.")
+    stop("This mcpfit contains no posterior or prior draws.")
   }
 
   NULL
 }
 
 
-#' Get samples as a posterior draws array
+#' Get draws as a posterior draws array
 #'
 #' This is the single internal conversion from the stored
 #' \code{\link[coda]{mcmc.list}} representation to a posterior draws object.
 #'
 #' @keywords internal
 #' @noRd
-#' @inheritParams mcmclist_samples
+#' @inheritParams mcmclist_draws
 posterior_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
-  samples = mcmclist_samples(
+  draws = mcmclist_draws(
     fit,
     prior = prior,
     message = message,
     error = error
   )
-  if (is.null(samples))
+  if (is.null(draws))
     return(NULL)
 
-  posterior::as_draws_array(samples)
+  posterior::as_draws_array(draws)
 }
 
 
@@ -459,7 +459,7 @@ as_draws_rvars = posterior::as_draws_rvars
 
 #' @exportS3Method coda::as.mcmc
 as.mcmc.mcpfit = function(x, prior = FALSE, ...) {
-  mcmclist_samples(x, prior = prior)
+  mcmclist_draws(x, prior = prior)
 }
 
 #' @exportS3Method tidybayes::tidy_draws
@@ -533,21 +533,21 @@ NULL
 #' @describeIn draws-index-mcp Number of iterations per chain of an `mcpfit` object.
 #' @exportS3Method posterior::niterations
 niterations.mcpfit = function(object, ...) {
-  coda::niter(mcmclist_samples(object))
+  coda::niter(mcmclist_draws(object))
 }
 
 #' @aliases nchains.mcpfit
 #' @describeIn draws-index-mcp Number of chains of an `mcpfit` object.
 #' @exportS3Method posterior::nchains
 nchains.mcpfit = function(object, ...) {
-  coda::nchain(mcmclist_samples(object))
+  coda::nchain(mcmclist_draws(object))
 }
 
 #' @rdname draws-index-mcp
 #' @exportS3Method posterior::ndraws
 ndraws.mcpfit = function(object, ...) {
-  samples = mcmclist_samples(object)
-  sum(vapply(samples, nrow, integer(1)))
+  draws = mcmclist_draws(object)
+  sum(vapply(draws, nrow, integer(1)))
 }
 
 #' @rdname draws-index-mcp
@@ -664,7 +664,30 @@ resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
 }
 
 
-#' Get tidy samples with or without group-level effects
+#' Resolve the deprecated `samples_format` argument
+#'
+#' @keywords internal
+#' @noRd
+resolve_draws_format = function(draws_format, samples_format, draws_format_missing, what,
+                                env = rlang::caller_env(),
+                                user_env = rlang::caller_env(2)) {
+  if (lifecycle::is_present(samples_format)) {
+    lifecycle::deprecate_soft(
+      "0.4.0",
+      paste0(what, "(samples_format)"),
+      paste0(what, "(draws_format)"),
+      env = env,
+      user_env = user_env
+    )
+    if (!draws_format_missing)
+      stop("Use only one of `draws_format` and deprecated `samples_format`.")
+    draws_format = samples_format
+  }
+  rlang::arg_match0(draws_format, c("tidy", "matrix"))
+}
+
+
+#' Get tidy draws with or without group-level effects
 #'
 #' Extract posterior or prior draws formatted as tidy data frames
 #'
@@ -674,7 +697,7 @@ resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
 #'
 #' @aliases mcp_draws
 #' @keywords internal
-#' @inheritParams mcmclist_samples
+#' @inheritParams mcmclist_draws
 #' @inheritParams pp_eval
 #' @param population
 #'   * `TRUE` All population-level effects. Same as `fit$pars$population`.
@@ -758,34 +781,34 @@ mcp_draws = function(
   }
 
   # ----- GET THESE PARAMETERS AS TIDY DRAWS -----
-  # Select posterior/prior samples
-  samples = mcmclist_samples(fit, prior = prior)
+  # Select posterior/prior draws
+  draws = mcmclist_draws(fit, prior = prior)
 
   # Build code for tidybayes::spread_draws() and execute it
   all_terms = unique(c(pars_population, group_terms, absolute_cps))
-  code = paste0("tidybayes::spread_draws(samples, ", paste0(all_terms, collapse = ", "), ", ndraws = ndraws)")
-  samples = eval(str2lang(code))
+  code = paste0("tidybayes::spread_draws(draws, ", paste0(all_terms, collapse = ", "), ", ndraws = ndraws)")
+  draws = eval(str2lang(code))
 
   # Preserve factor grouping columns from fit$data.
   if (length(group_info$cols) > 0) {
     is_factor = lapply(fit$data, is.factor)[group_info$cols]
     cols_to_factorize = group_info$cols[as.logical(is_factor)]
-    samples = dplyr::mutate_at(samples, cols_to_factorize, as.factor)
+    draws = dplyr::mutate_at(draws, cols_to_factorize, as.factor)
   }
 
   # Add population-level change points to deviations, then remove helper columns.
   if (length(absolute_cps) > 0) {
-    #samples[, absolute] = samples[, absolute] + samples[, absolute_cps]
-    samples[, absolute_cps] = samples[, absolute_cps] + samples[, absolute]
-    samples = dplyr::select(samples, -dplyr::all_of(absolute))
+    # draws[, absolute] = draws[, absolute] + draws[, absolute_cps]
+    draws[, absolute_cps] = draws[, absolute_cps] + draws[, absolute]
+    draws = dplyr::select(draws, -dplyr::all_of(absolute))
   }
 
   # Unassigned group-level deviations are simulated as zero (the population-level mean).
-  remaining_group_cols = dplyr::setdiff(fit$pars$group, colnames(samples))
-  samples[, remaining_group_cols] = 0
+  remaining_group_cols = dplyr::setdiff(fit$pars$group, colnames(draws))
+  draws[, remaining_group_cols] = 0
 
   # Return with chain etc. first
-  samples %>%
+  draws %>%
     dplyr::relocate(".chain", ".iteration", ".draw")
 }
 
@@ -820,13 +843,13 @@ tidy_samples = function(...) {
 #'   - `"predict"`: return predicted values (e.g., `y_predict = rnorm(N, y_fitted, sigma_fitted)` for `family = gaussian()`).
 #'     See also `predict()`.
 #'   - `"residuals"`: observed y-values minus the fitted values. See also `residuals()`.
-#'   - `"loglik"`: return the log-likelihood for each sample for each data point. See also `log_lik()`.
+#'   - `"loglik"`: return the log-likelihood for each draw for each data point. See also `log_lik()`.
 #'     Requires `scale = "response"`.
 #' @param probs Vector of quantiles. Only in effect when `summary == TRUE`.
 #' @param rate Boolean. For binomial models, return counts (`rate = FALSE`) or
 #'   the observed or expected success proportion (`rate = TRUE`). If `FALSE`, linear
 #'   interpolation on trial number is used to infer trials at a particular x.
-#' @param prior TRUE/FALSE. Plot using prior samples? Useful for `mcp(..., sample = "both")`
+#' @param prior TRUE/FALSE. Plot using prior draws? Useful for `mcp(..., sample = "both")`
 #' @param dpar What distributional parameter to evaluate. This is only relevant when `type == "fitted"`. E.g.,
 #'
 #'   * `"epred"` (default): Expected response from the full model (or `NULL` for compatibility with brms etc.).
@@ -840,9 +863,10 @@ tidy_samples = function(...) {
 #'   * `FALSE` Disregard AR and MA effects. For `family = gaussian()`, `predict()` uses only `sigma` for residuals.
 #' @param ndraws Integer or `NULL`. Number of posterior draws to return/summarise.
 #'   If there are group-level effects, this is the number of draws from each group.
-#'   `NULL` means "all". Ignored if both are `FALSE`. More samples trade speed for accuracy.
+#'   `NULL` means "all". Ignored if both are `FALSE`. More draws trade speed for accuracy.
 #' @param nsamples Deprecated. Use `ndraws` instead.
-#' @param samples_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE`.
+#' @param draws_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE`.
+#' @param samples_format Deprecated. Use `draws_format` instead.
 #'   See more under "value"
 #' @param scale One of
 #'   * `"response"`: return on the observed scale, i.e., after applying the inverse link function.
@@ -857,7 +881,7 @@ tidy_samples = function(...) {
 #'     evaluated quantity otherwise. With `prior = TRUE`, these are the analogous
 #'     prior summaries. If `newdata` is `NULL`, the data in `fit$data` is used.
 #'
-#'   * If `summary = FALSE` and `samples_format = "tidy"`: A `tidybayes` `tibble` with all the posterior
+#'   * If `summary = FALSE` and `draws_format = "tidy"`: A `tidybayes` `tibble` with all the posterior
 #'     draws (`Nd`) evaluated at each row in `newdata` (`Nn`), i.e., with `Nd x Nn` rows. If there are
 #'     group-level effects, the returned data is expanded with the relevant levels for each row.
 #'
@@ -868,7 +892,7 @@ tidy_samples = function(...) {
 #'      - Draw values: one column for each parameter in the model.
 #'      - The estimate. Either ".epred", ".prediction", ".residual", or ".loglik" (matching tidybayes/ggdist conventions).
 #'
-#'   * If `summary = FALSE` and `samples_format = "matrix"`: An `N_draws` X `nrows(newdata)` matrix with fitted/predicted
+#'   * If `summary = FALSE` and `draws_format = "matrix"`: An `N_draws` X `nrows(newdata)` matrix with fitted/predicted
 #'       values (depending on `type`). This format is used by `brms` and it's useful as `yrep` in
 #'      `bayesplot::ppc_*` functions.
 #' @seealso \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}}
@@ -886,12 +910,14 @@ pp_eval = function(
   varying = TRUE,
   arma = TRUE,
   ndraws = NULL,
-  samples_format = "tidy",
+  draws_format = "tidy",
   scale = 'response',
   .include_fitted = FALSE,
-  nsamples = lifecycle::deprecated()
+  nsamples = lifecycle::deprecated(),
+  samples_format = lifecycle::deprecated()
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "pp_eval")
+  draws_format = resolve_draws_format(draws_format, samples_format, missing(draws_format), "pp_eval")
 
   # Recode
   fit = object
@@ -953,7 +979,6 @@ pp_eval = function(
   if (.include_fitted && (type != "predict" || summary))
     stop_github("`.include_fitted` requires `type = 'predict'` and `summary = FALSE`.")
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
-  samples_format = rlang::arg_match0(samples_format, c("tidy", "matrix"))
 
 
   ########################
@@ -962,7 +987,7 @@ pp_eval = function(
   simulate_type = ifelse(type == "residuals", yes = "fitted", no = type)
   if (length(group_info$cols) > 0) {
     # Match group-level draws to each row of data.
-    samples_predictors = dplyr::left_join(
+    draws_predictors = dplyr::left_join(
       add_rhs_predictors(newdata, fit),
       mcp_draws(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws),
       by = unique(group_info$cols),
@@ -970,26 +995,26 @@ pp_eval = function(
     )
   } else {
     # Without group-level effects, use all draws for each row of data.
-    samples = tibble::as_tibble(mcp_draws(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws))
+    draws = tibble::as_tibble(mcp_draws(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws))
     predictors = tibble::as_tibble(add_rhs_predictors(newdata, fit))
-    samples_predictors = dplyr::bind_cols(
-      samples[rep(seq_len(nrow(samples)), each = nrow(predictors)), , drop = FALSE],
-      predictors[rep(seq_len(nrow(predictors)), times = nrow(samples)), , drop = FALSE]
+    draws_predictors = dplyr::bind_cols(
+      draws[rep(seq_len(nrow(draws)), each = nrow(predictors)), , drop = FALSE],
+      predictors[rep(seq_len(nrow(predictors)), times = nrow(draws)), , drop = FALSE]
     )
   }
 
-  samples = samples_predictors
-  evaluated = rlang::exec(simulate_vectorized, fit, !!!samples_predictors, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale, .include_fitted = .include_fitted)
+  draws = draws_predictors
+  evaluated = rlang::exec(simulate_vectorized, fit, !!!draws_predictors, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale, .include_fitted = .include_fitted)
   fitted_values = attr(evaluated, "fitted")
   attr(evaluated, "fitted") = NULL
-  samples[[type]] = evaluated
+  draws[[type]] = evaluated
 
   # Plotting can request fitted and predicted values from the same evaluated
   # parameter rows and model evaluation.
   if (.include_fitted)
-    samples$fitted = fitted_values
+    draws$fitted = fitted_values
 
-  samples = samples %>% dplyr::select(-dplyr::starts_with(".pred_"), -dplyr::any_of(point_size_col))
+  draws = draws %>% dplyr::select(-dplyr::starts_with(".pred_"), -dplyr::any_of(point_size_col))
 
   # Missing outcomes are latent in the fitted JAGS model, but they are not
   # observed-data likelihood contributions. Retain them while evaluating
@@ -998,7 +1023,7 @@ pp_eval = function(
     observed_rows = which(!is.na(newdata[, fit$pars$y]))
     if (length(observed_rows) == 0)
       stop("Log-likelihood evaluation requires at least one observed response.")
-    samples = dplyr::filter(samples, .data$data_row %in% observed_rows)
+    draws = dplyr::filter(draws, .data$data_row %in% observed_rows)
     newdata_return = dplyr::filter(
       newdata_return,
       .data$data_row %in% observed_rows
@@ -1008,15 +1033,15 @@ pp_eval = function(
 
   # Optionally compute residuals
   if (type == "residuals")
-    samples = dplyr::mutate(samples, !!type := .data[[fit$pars$y]] - .data[[type]])
+    draws = dplyr::mutate(draws, !!type := .data[[fit$pars$y]] - .data[[type]])
 
   # Fail early if group-level joins or another evaluation step duplicated
   # or dropped any joint draw/evaluation-row combinations.
-  validate_eval_draws(samples, type)
+  validate_eval_draws(draws, type)
 
   # Optionally summarise
   if (summary == TRUE) {
-    df_return = samples %>%
+    df_return = draws %>%
       # Summarise for each row in newdata
       dplyr::group_by(.data$data_row) %>%
       dplyr::summarise(.groups = "drop",
@@ -1032,14 +1057,14 @@ pp_eval = function(
 
     # Quantiles
     if (all(probs != FALSE)) {
-      quantiles = get_quantiles(samples, probs, type) %>%
+      quantiles = get_quantiles(draws, probs, type) %>%
         dplyr::mutate(quantile = 100 * .data$quantile) %>%
         tidyr::pivot_wider(names_from = "quantile", names_prefix = "Q", values_from = dplyr::all_of(type))
 
       df_return = dplyr::left_join(df_return, quantiles, by = "data_row", relationship = "one-to-one")
     }
     return(data.frame(dplyr::select(df_return, -"data_row")))
-  } else if (samples_format == "tidy") {
+  } else if (draws_format == "tidy") {
     value_col = switch(type,
       fitted = ".epred",
       predict = ".prediction",
@@ -1047,13 +1072,13 @@ pp_eval = function(
       loglik = ".loglik",
       type
     )
-    if (.include_fitted && "fitted" %in% colnames(samples)) {
-      samples = dplyr::rename(samples, .epred = "fitted")
+    if (.include_fitted && "fitted" %in% colnames(draws)) {
+      draws = dplyr::rename(draws, .epred = "fitted")
     }
-    samples = dplyr::rename(samples, !!value_col := dplyr::all_of(type))
-    return(samples)
-  } else if (samples_format == "matrix") {
-    df_return = tidy_to_matrix(samples, type)
+    draws = dplyr::rename(draws, !!value_col := dplyr::all_of(type))
+    return(draws)
+  } else if (draws_format == "matrix") {
+    df_return = tidy_to_matrix(draws, type)
     return(df_return)
   }
 }
@@ -1069,7 +1094,7 @@ pp_eval = function(
 #'
 #' @details
 #' `residuals(fit)` is equivalent to `fit$data[, fit$data$yvar] - fitted(fit, ...)` (or `newdata[, fit$data$yvar] - fitted(fit, ...)`),
-#' but with fixed arguments for `fitted`: `rate = FALSE, dpar = 'epred', samples_format = 'tidy'`.
+#' but with fixed arguments for `fitted`: `rate = FALSE, dpar = 'epred', draws_format = 'tidy'`.
 #'
 #' `log_lik()` defaults to an unsummarised draws-by-observation matrix, as used
 #' by `loo` and other posterior workflows.
@@ -1090,7 +1115,7 @@ pp_eval = function(
 #' predict(demo_fit)  # Pointwise posterior predictive
 #' predict(demo_fit, probs = c(0.1, 0.5, 0.9))  # Median and 80% posterior predictive interval.
 #' predict(demo_fit, prior = TRUE)  # Prior predictive
-#' fitted(demo_fit, summary = FALSE)  # Samples instead of summary. Useful for plotting distributions.
+#' fitted(demo_fit, summary = FALSE)  # Draws instead of summary. Useful for plotting distributions.
 #' fitted(demo_fit, dpar = "sigma")  # Another model parameter
 #'
 #' # Evaluate at novel data
@@ -1114,11 +1139,13 @@ predict.mcpfit = function(
   varying = TRUE,
   arma = TRUE,
   ndraws = NULL,
-  samples_format = "tidy",
+  draws_format = "tidy",
   nsamples = lifecycle::deprecated(),
+  samples_format = lifecycle::deprecated(),
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "predict.mcpfit")
+  draws_format = resolve_draws_format(draws_format, samples_format, missing(draws_format), "predict.mcpfit")
   dots = list(...)
   warn_which_y(dots, "predict")
   dots$which_y = NULL
@@ -1137,7 +1164,7 @@ predict.mcpfit = function(
     varying = varying,
     arma = arma,
     ndraws = ndraws,
-    samples_format = samples_format
+    draws_format = draws_format
   )
 }
 
@@ -1156,12 +1183,14 @@ fitted.mcpfit = function(
   varying = TRUE,
   arma = TRUE,
   ndraws = NULL,
-  samples_format = "tidy",
+  draws_format = "tidy",
   scale = "response",
   nsamples = lifecycle::deprecated(),
+  samples_format = lifecycle::deprecated(),
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "fitted.mcpfit")
+  draws_format = resolve_draws_format(draws_format, samples_format, missing(draws_format), "fitted.mcpfit")
   dots = list(...)
   warn_which_y(dots, "fitted")
   if ("which_y" %in% names(dots) && missing(dpar))
@@ -1182,7 +1211,7 @@ fitted.mcpfit = function(
     varying = varying,
     arma = arma,
     ndraws = ndraws,
-    samples_format = samples_format,
+    draws_format = draws_format,
     scale = scale
   )
 }
@@ -1204,11 +1233,13 @@ log_lik.mcpfit = function(
   varying = TRUE,
   arma = TRUE,
   ndraws = NULL,
-  samples_format = "matrix",
+  draws_format = "matrix",
   nsamples = lifecycle::deprecated(),
+  samples_format = lifecycle::deprecated(),
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "log_lik.mcpfit")
+  draws_format = resolve_draws_format(draws_format, samples_format, missing(draws_format), "log_lik.mcpfit")
   dots = list(...)
   warn_which_y(dots, "log_lik")
   dots$which_y = NULL
@@ -1227,7 +1258,7 @@ log_lik.mcpfit = function(
     varying = varying,
     arma = arma,
     ndraws = ndraws,
-    samples_format = samples_format,
+    draws_format = draws_format,
     scale = "response"
   )
 }
@@ -1267,7 +1298,7 @@ residuals.mcpfit = function(
     varying = varying,
     arma = arma,
     ndraws = ndraws,
-    samples_format = "tidy"
+    draws_format = "tidy"
   )
 }
 

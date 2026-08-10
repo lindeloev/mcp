@@ -79,7 +79,7 @@ assert_rel = function(model) {
     any()
 
   if (has_rel)
-    stop("rel() for model terms was deprecated in mcp 0.4.0. Relative parameter estimates can be computed by subtracting posterior samples. There is no replacement wrt setting priors.")
+    stop("rel() for model terms was deprecated in mcp 0.4.0. Relative parameter estimates can be computed by subtracting posterior draws. There is no replacement wrt setting priors.")
 
   TRUE
 }
@@ -120,11 +120,11 @@ assert_dpar = function(dpar, fit, type) {
 #'
 #' @keywords internal
 #' @noRd
-#' @param samples An `mcmc.list` after group levels have been recovered.
+#' @param draws An `mcmc.list` after group levels have been recovered.
 #' @param cps The change-point table from `get_segment_tables()`.
 #' @param x The observed change-point predictor.
-assert_ordered_cp_draws = function(samples, cps, x) {
-  if (is.null(samples) || nrow(cps) == 0)
+assert_ordered_cp_draws = function(draws, cps, x) {
+  if (is.null(draws) || nrow(cps) == 0)
     return(invisible(NULL))
 
   x_range = range(x, na.rm = TRUE)
@@ -137,7 +137,7 @@ assert_ordered_cp_draws = function(samples, cps, x) {
       stop("Sampled ", scope, " change points must remain strictly ordered in every draw.")
   }
 
-  for (chain in samples) {
+  for (chain in draws) {
     missing_cps = setdiff(cps$name, colnames(chain))
     if (length(missing_cps) > 0)
       stop_github("Sampled output is missing change point(s): ", and_collapse(missing_cps), ".")

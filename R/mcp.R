@@ -65,7 +65,7 @@
 #'      `cp_i = "dirichlet(N)"` where `N` is the alpha for this change point and
 #'      `N = 1` is most often used. This prior is symmetric over segment spacings,
 #'      unlike the regularizing t-tail default for multiple change points, but it
-#'      samples less efficiently, so you will often need to set `iter` higher.
+#'      mixes less efficiently, so you will often need to set `iter` higher.
 #'      It is recommended for hypothesis testing and for the estimation of more
 #'      than 5 change points. [Read more](https://lindeloev.github.io/mcp/articles/priors.html).
 #' @param family One of `gaussian()`, `binomial()`, `bernoulli()`, `poisson()`,
@@ -91,7 +91,7 @@
 #' @param iter Positive integer. Number of post-warmup draws from each chain.
 #'   The total number of draws is `iter * chains`.
 #' @param adapt Positive integer. Also sometimes called "burnin", this is the
-#'   number of samples used to reach convergence. Set lower for greater speed.
+#'   number of adaptation iterations used to reach convergence. Set lower for greater speed.
 #'   Set higher if the chains haven't converged yet or look at [tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/tips.html).
 #' @param inits A list if initial values for the parameters. This can be useful
 #'   if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
