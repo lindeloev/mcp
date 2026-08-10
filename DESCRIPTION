@@ -41,7 +41,8 @@ Imports:
 	checkmate (>= 2.3.0),
 	stats,
 	rlang (>= 1.0.0)
-Suggests: 
+Suggests:
+	rstantools (>= 2.0.0),
 	hexbin,
 	MASS,
 	segmented,

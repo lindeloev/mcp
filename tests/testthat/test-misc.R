@@ -318,6 +318,24 @@ test_that("posterior draws accessor preserves the stored chains", {
     sd_df = tidybayes::spread_draws(demo_fit, Intercept_1, cp_1)
     expect_s3_class(sd_df, "tbl_df")
     expect_true(all(c("Intercept_1", "cp_1") %in% names(sd_df)))
+
+    if (requireNamespace("rstantools", quietly = TRUE)) {
+      newdata = demo_fit$data[1:3, , drop = FALSE]
+      expect_equal(dim(rstantools::posterior_epred(demo_fit, newdata, draws = 2)), c(2, 3))
+      expect_equal(dim(rstantools::posterior_predict(demo_fit, newdata, draws = 2)), c(2, 3))
+      expect_equal(dim(rstantools::posterior_linpred(demo_fit, newdata = newdata, draws = 2)), c(2, 3))
+
+      epred_draws = tidybayes::add_epred_draws(newdata, demo_fit, ndraws = 2)
+      predicted_draws = tidybayes::add_predicted_draws(newdata, demo_fit, ndraws = 2)
+      linpred_draws = tidybayes::add_linpred_draws(newdata, demo_fit, ndraws = 2)
+      expect_s3_class(epred_draws, "tbl_df")
+      expect_true(".epred" %in% names(epred_draws))
+      expect_true(".prediction" %in% names(predicted_draws))
+      expect_true(".linpred" %in% names(linpred_draws))
+      expect_equal(nrow(epred_draws), 6)
+      expect_equal(nrow(predicted_draws), 6)
+      expect_equal(nrow(linpred_draws), 6)
+    }
   }
 })
 

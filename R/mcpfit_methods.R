@@ -485,6 +485,11 @@ tidy_draws.mcpfit = function(x, ...) {
   if (requireNamespace("tidybayes", quietly = TRUE)) {
     registerS3method("tidy_draws", "mcpfit", tidy_draws.mcpfit, envir = asNamespace("tidybayes"))
   }
+  if (requireNamespace("rstantools", quietly = TRUE)) {
+    registerS3method("posterior_epred", "mcpfit", posterior_epred.mcpfit, envir = asNamespace("rstantools"))
+    registerS3method("posterior_predict", "mcpfit", posterior_predict.mcpfit, envir = asNamespace("rstantools"))
+    registerS3method("posterior_linpred", "mcpfit", posterior_linpred.mcpfit, envir = asNamespace("rstantools"))
+  }
 }
 
 
@@ -1214,6 +1219,173 @@ fitted.mcpfit = function(
     draws_format = draws_format,
     scale = scale
   )
+}
+
+
+#' Posterior prediction draws for `mcpfit` objects
+#'
+#' Methods for the `{rstantools}` posterior-prediction generics. They return a
+#' draws-by-observation matrix and enable `{tidybayes}` workflows such as
+#' `add_epred_draws()`, `add_predicted_draws()`, and `add_linpred_draws()`.
+#'
+#' @param object An `mcpfit` object.
+#' @param newdata Optional data frame at which to evaluate the model.
+#' @param draws,ndraws Number of posterior draws to return. `draws` follows the
+#'   `{rstantools}` convention; `ndraws` is the mcp spelling. Supply at most one.
+#' @param re.form,re_formula Group-level effects to include. `NULL` includes all
+#'   effects and `NA` excludes them.
+#' @param dpar Distributional parameter for `posterior_epred()` and
+#'   `posterior_linpred()`; `NULL` uses the expected response.
+#' @param transform For `posterior_linpred()`, return the inverse-link
+#'   transformed expected response instead of the linear predictor.
+#' @param seed Accepted for `{tidybayes}` compatibility. Randomness is controlled
+#'   by the calling context.
+#' @param ... Currently ignored.
+#' @return A numeric `N_draws` by `nrow(newdata)` matrix.
+#' @seealso [fitted.mcpfit()], [predict.mcpfit()]
+posterior_epred.mcpfit = function(
+  object,
+  newdata = NULL,
+  draws = NULL,
+  ndraws = NULL,
+  re.form = NULL,
+  re_formula = NULL,
+  dpar = NULL,
+  seed = NULL,
+  ...
+) {
+  posterior_prediction_matrix(
+    object = object,
+    newdata = newdata,
+    type = "fitted",
+    draws = draws,
+    ndraws = ndraws,
+    re.form = re.form,
+    re_formula = re_formula,
+    dpar = dpar,
+    scale = "response",
+    seed = seed,
+    ...
+  )
+}
+
+
+#' @rdname posterior_epred.mcpfit
+posterior_predict.mcpfit = function(
+  object,
+  newdata = NULL,
+  draws = NULL,
+  ndraws = NULL,
+  re.form = NULL,
+  re_formula = NULL,
+  seed = NULL,
+  ...
+) {
+  posterior_prediction_matrix(
+    object = object,
+    newdata = newdata,
+    type = "predict",
+    draws = draws,
+    ndraws = ndraws,
+    re.form = re.form,
+    re_formula = re_formula,
+    seed = seed,
+    ...
+  )
+}
+
+
+#' @rdname posterior_epred.mcpfit
+posterior_linpred.mcpfit = function(
+  object,
+  transform = FALSE,
+  newdata = NULL,
+  draws = NULL,
+  ndraws = NULL,
+  re.form = NULL,
+  re_formula = NULL,
+  dpar = NULL,
+  seed = NULL,
+  ...
+) {
+  checkmate::assert_flag(transform)
+  posterior_prediction_matrix(
+    object = object,
+    newdata = newdata,
+    type = "fitted",
+    draws = draws,
+    ndraws = ndraws,
+    re.form = re.form,
+    re_formula = re_formula,
+    dpar = dpar,
+    scale = if (transform) "response" else "linear",
+    seed = seed,
+    ...
+  )
+}
+
+
+#' Evaluate posterior prediction draws for rstantools-compatible methods
+#' @keywords internal
+#' @noRd
+posterior_prediction_matrix = function(
+  object,
+  newdata,
+  type,
+  draws,
+  ndraws,
+  re.form,
+  re_formula,
+  dpar = NULL,
+  scale = "response",
+  seed = NULL,
+  ...
+) {
+  checkmate::assert_class(object, "mcpfit")
+  dots = list(...)
+  if (length(dots) > 0)
+    stop("Unrecognized argument(s): ", and_collapse(names(dots)), call. = FALSE)
+  if (!is.null(seed))
+    checkmate::assert_int(seed, lower = 1)
+  if (!is.null(draws) && !is.null(ndraws))
+    stop("Use only one of `draws` and `ndraws`.", call. = FALSE)
+  if (!is.null(draws))
+    ndraws = draws
+  checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
+
+  varying = resolve_re_formula(re.form, re_formula)
+  if (is.null(dpar))
+    dpar = "epred"
+  pp_eval(
+    object,
+    newdata = newdata,
+    summary = FALSE,
+    type = type,
+    probs = FALSE,
+    rate = TRUE,
+    prior = FALSE,
+    dpar = if (type == "fitted") dpar else NULL,
+    varying = varying,
+    arma = TRUE,
+    ndraws = ndraws,
+    draws_format = "matrix",
+    scale = scale
+  )
+}
+
+
+#' Convert rstantools group-effect syntax to mcp's `varying` selector
+#' @keywords internal
+#' @noRd
+resolve_re_formula = function(re.form, re_formula) {
+  if (!is.null(re_formula) && !is.null(re.form))
+    stop("Use only one of `re.form` and `re_formula`.", call. = FALSE)
+  formula = if (!is.null(re_formula)) re_formula else re.form
+  if (is.null(formula))
+    return(TRUE)
+  if (length(formula) == 1 && is.na(formula))
+    return(FALSE)
+  stop("`re.form`/`re_formula` must be NULL or NA for mcpfit objects.", call. = FALSE)
 }
 
 
