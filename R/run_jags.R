@@ -166,13 +166,17 @@ get_jags_inits = function(inits, seed, n.chains, sample) {
 #' @param segments A segment table returned by `get_segment_tables()`.
 #' @param predictors Returned by `get_predictors()`.
 #' @param group_effects Returned by `get_group_effects()`.
-get_jags_data = function(data, family, segments, predictors, group_effects, jags_code) {
+get_jags_data = function(data, family, segments, predictors, group_effects, jags_code,
+                          series = NULL) {
   group_cols = unique(stats::na.omit(group_effects$group_col))
 
   # Start with "raw" data
   aux_columns = get_family_aux_columns(family, segments)
   cols_data = unique(stats::na.omit(c(segments$y, segments$x, unname(aux_columns))))
   jags_data = as.list(data[, c(group_cols, cols_data)])
+
+  if (!is.null(series))
+    jags_data$series_id_ = as.integer(factor(data[[series]], levels = unique(data[[series]])))
 
   for (col in group_cols) {
     # Add metadata for the grouping-factor levels.

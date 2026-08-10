@@ -934,6 +934,8 @@ pp_eval = function(
   if (is.null(newdata))
     newdata = fit$data
 
+  assert_arma_series(newdata, fit$pars$series)
+
 
   ###############
   # FIX NEWDATA #
@@ -941,7 +943,7 @@ pp_eval = function(
   group_info = unpack_varying(fit, pars = varying)
   model_tables = get_fit_model_tables(fit)
   group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
-  exclude_group_cols = setdiff(group_cols, group_info$cols)
+  exclude_group_cols = setdiff(group_cols, c(group_info$cols, fit$pars$series))
   required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
   operation = switch(type, predict = "rng", loglik = "log_lik", fitted = "epred", residuals = "epred")
   aux_operations = c(operation, if (arma && is_arma(fit)) "garma")

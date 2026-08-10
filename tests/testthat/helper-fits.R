@@ -15,12 +15,14 @@
 #' @param hyperparameters Optional generative parameters that are not arguments
 #'   to `fit$simulate()`, such as group-level SDs.
 #' @param family A family or `mcpfamily` used for both simulation and fitting.
+#' @param series Optional independent-series column passed to `mcp()`.
 #' @param chains Number of MCMC chains used when fitting.
 #' @param adapt Number of adaptation iterations used when fitting.
 #' @param iter Number of post-adaptation iterations used when fitting.
 #' @param min_ess Minimum bulk and tail ESS required for every parameter.
 test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
-                     family = gaussian(), chains, adapt, iter, min_ess) {
+                     family = gaussian(), series = NULL, chains, adapt, iter,
+                     min_ess) {
   if (Sys.getenv("MCP_TEST_LEVEL") != "release") {
     testthat::skip("Time-consuming fit recovery tests are only run when MCP_TEST_LEVEL='release'.")
   }
@@ -32,7 +34,10 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
       y = 0
     )
   }
-  empty = mcp(model, data = newdata, family = family, sample = FALSE, par_x = "x")
+  empty = mcp(
+    model, data = newdata, family = family, sample = FALSE,
+    par_x = "x", series = series
+  )
   set.seed(42)
   simulated_y = suppressMessages(do.call(empty$simulate, c(list(fit = empty, newdata = newdata), simulated)))
   if (!is.null(hyperparameters)) {
@@ -46,7 +51,11 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
   newdata[[empty$pars$y]] = simulated_y
 
   # Fit
-  fit = mcp(model, newdata, family = family, par_x = "x", chains = chains, adapt = adapt, iter = iter, seed = 42, diagnostics = FALSE, quiet = TRUE)  # Ensure convergence
+  fit = mcp(
+    model, newdata, family = family, par_x = "x", series = series,
+    chains = chains, adapt = adapt, iter = iter, seed = 42,
+    diagnostics = FALSE, quiet = TRUE
+  )  # Ensure convergence
   assign("fit", fit, envir = .GlobalEnv)  # for easier debugging
 
   test_matches_simulated(fit, min_ess)
@@ -68,6 +77,7 @@ apply_test_fit = function(desc, all_models, family = gaussian()) {
     newdata = this[["newdata"]]
     hyperparameters = this[["hyperparameters"]]
     model_family = this[["family"]]
+    series = this[["series"]]
     chains = this[["chains"]]
     adapt = this[["adapt"]]
     iter = this[["iter"]]
@@ -80,7 +90,10 @@ apply_test_fit = function(desc, all_models, family = gaussian()) {
 
     # Test!
     testthat::test_that(desc, {
-      test_fit(model, simulated, newdata, hyperparameters, model_family, chains, adapt, iter, min_ess)
+      test_fit(
+        model, simulated, newdata, hyperparameters, model_family, series,
+        chains, adapt, iter, min_ess
+      )
     })
   }
 }

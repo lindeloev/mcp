@@ -104,6 +104,26 @@ get_arma_definitions = function(rhs) {
 }
 
 
+#' Validate an optional independent-series column
+#'
+#' @keywords internal
+#' @noRd
+assert_arma_series = function(data, series) {
+  checkmate::assert_string(series, null.ok = TRUE)
+  if (is.null(series))
+    return(invisible(NULL))
+
+  assert_data_cols(data, series, fail_funcs = c(is.na))
+  if (!is.atomic(data[[series]]))
+    stop("`series` must identify an atomic data column.")
+  runs = rle(match(data[[series]], unique(data[[series]])))$values
+  if (anyDuplicated(runs))
+    stop("Rows belonging to each `series` must be contiguous. Sort the data by `series` and then by time.")
+
+  invisible(NULL)
+}
+
+
 #' Check if this is an AR/MA model
 #'
 #' @aliases is_arma
@@ -283,29 +303,39 @@ warn_arma_simulation = function(values) {
 #' @noRd
 #' @param ar_order,ma_order Positive integer or `NA` when absent.
 #' @param x_name Character. Name of some vector that has the length of the dataset.
+#' @param series Whether generated lags must remain within `series_id_`.
 #' @return Character JAGS code
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_arma_jagscode = function(ar_order, ma_order, x_name) {
+get_arma_jagscode = function(ar_order, ma_order, x_name, series = FALSE) {
   ar_order = ifelse(is.na(ar_order), 0, ar_order)
   ma_order = ifelse(is.na(ma_order), 0, ma_order)
   checkmate::assert_int(ar_order, lower = 0)
   checkmate::assert_int(ma_order, lower = 0)
   checkmate::assert_string(x_name)
+  checkmate::assert_flag(series)
   max_order = max(ar_order, ma_order)
   if (max_order == 0)
     stop_github("get_arma_jagscode() requires a positive AR or MA order.")
 
   get_terms = function(row, available_ar, available_ma) {
     terms = character()
+    term_lags = integer()
     if (available_ar > 0) {
       lags = seq_len(available_ar)
       terms = c(terms, paste0("ar", lags, "_[", row, "] * resid_abs_[", row, " - ", lags, "]"))
+      term_lags = c(term_lags, lags)
     }
     if (available_ma > 0) {
       lags = seq_len(available_ma)
       terms = c(terms, paste0("ma", lags, "_[", row, "] * resid_ma_[", row, " - ", lags, "]"))
+      term_lags = c(term_lags, lags)
     }
+    if (series)
+      terms = paste0(
+        "equals(series_id_[", row, "], series_id_[", row, " - ",
+        term_lags, "]) * ", terms
+      )
     paste0(terms, collapse = " +\n              ")
   }
 
@@ -332,8 +362,8 @@ get_arma_jagscode = function(ar_order, ma_order, x_name) {
 
 
 # Backwards-compatible internal wrapper for pure AR code generation.
-get_ar_jagscode = function(ar_order, x_name) {
-  get_arma_jagscode(ar_order, NA, x_name)
+get_ar_jagscode = function(ar_order, x_name, series = FALSE) {
+  get_arma_jagscode(ar_order, NA, x_name, series)
 }
 
 

@@ -126,6 +126,15 @@ AR and MA lags apply to the *order* of rows in the data frame without taking int
  * You probably want to sort your data according to your `x`. Just do `data = data[order(data$x), ]`.
  * Adjacent data points that lie years apart are modeled to be just as (auto)correlated as adjacent points lying seconds apart.
 
+For grouped longitudinal data, identify independent residual histories with `series` and sort each series by time:
+
+```{r, eval=FALSE}
+data = data[order(data$id, data$x), ]
+fit = mcp(model, data, series = "id")
+```
+
+Rows belonging to each series must be contiguous. AR and MA lags reset at each series boundary. The `series` argument is separate from group-level effects such as `(1 | id)`: either can be used without the other.
+
 
 
 # Simulating autocorrelated change point data

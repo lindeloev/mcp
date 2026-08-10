@@ -136,14 +136,14 @@ get_plot = function(x,
   model_tables = get_fit_model_tables(fit)
   all_categorical_cols = names(get_categorical_levels(fit$data))
   group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
-  categorical_cols = setdiff(all_categorical_cols, group_cols)
+  categorical_cols = setdiff(all_categorical_cols, c(group_cols, fit$pars$series))
   plot_by = unique(c(facet_by, color_by))
   if (.grouping == "auto" && length(categorical_cols) == 1) {
     color_by = categorical_cols
     plot_by = unique(c(facet_by, color_by))
   }
-  curve_by = unique(c(categorical_cols, intersect(group_cols, plot_by)))
-  valid_group_cols = unique(c(categorical_cols, group_cols))
+  curve_by = unique(c(categorical_cols, fit$pars$series, intersect(group_cols, plot_by)))
+  valid_group_cols = unique(c(categorical_cols, group_cols, fit$pars$series))
 
   validate_plot_groups = function(cols, arg) {
     invalid_cols = setdiff(cols, valid_group_cols)
@@ -379,7 +379,10 @@ get_plot = function(x,
   if (dpar != "epred")
     gg = gg + ggplot2::labs(y = dpar)
 
-  at_cols = setdiff(names(newdata), c(fit$pars$x, fit$pars$y, all_categorical_cols, group_cols))
+  at_cols = setdiff(
+    names(newdata),
+    c(fit$pars$x, fit$pars$y, fit$pars$series, all_categorical_cols, group_cols)
+  )
   if (length(at_cols) > 0) {
     at_text = paste0(at_cols, " = ", format(signif(unlist(newdata[1, at_cols]), 4), trim = TRUE))
     gg = gg + ggplot2::labs(caption = paste("Continuous predictors held at", paste(at_text, collapse = ", ")))

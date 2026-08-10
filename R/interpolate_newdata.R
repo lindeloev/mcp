@@ -146,8 +146,12 @@ interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by),
 
   # Get unique predictors
   group_cols = unique(stats::na.omit(get_fit_model_tables(fit)$group_effects$group_col))
-  categorical_cols = setdiff(names(get_categorical_levels(fit$data)), group_cols)
-  by = unique(c(categorical_cols, intersect(group_cols, by)))
+  series_col = fit$pars$series
+  categorical_cols = setdiff(
+    names(get_categorical_levels(fit$data)),
+    c(group_cols, series_col)
+  )
+  by = unique(c(categorical_cols, intersect(setdiff(group_cols, series_col), by)))
   # Numeric group IDs are discrete even when they are not requested
   # for evaluation, so never interpolate them as continuous predictors.
   by_grid = if (length(by) == 0) {
@@ -155,7 +159,9 @@ interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by),
   } else {
     lapply(fit$data[, by, drop = FALSE], unique) %>% expand.grid()
   }
-  continuous_at = get_continuous_at(fit$data, fit$pars, at, group_cols)
+  continuous_at = get_continuous_at(
+    fit$data, fit$pars, at, unique(c(group_cols, series_col))
+  )
   newdata = by_grid %>% tidyr::expand_grid("{fit$pars$x}" := x_values)
   if (!is.null(continuous_at))
     newdata = tidyr::expand_grid(newdata, continuous_at)
@@ -164,6 +170,8 @@ interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by),
   if (is_arma(fit)) {
     if (nrow(newdata) != nrow(fit$data))
       stop_github("nrow(newdata) != nrow(fit$data) in interpolate_newdata for an AR/MA model.")
+    if (!is.null(series_col))
+      newdata[, series_col] = fit$data[, series_col]
     newdata[, fit$pars$y] = fit$data[, fit$pars$y]
   }
 

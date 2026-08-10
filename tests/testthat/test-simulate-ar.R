@@ -23,6 +23,30 @@ test_that("series isolation does not depend on contiguous rows", {
 })
 
 
+test_that("fit$simulate resets fresh residual histories by series", {
+  data = data.frame(
+    id = rep(c("a", "b"), each = 2),
+    x = c(1, 2, 1, 3),
+    y = 0
+  )
+  fit = mcp(
+    list(y ~ 1 + ar(1)), data,
+    par_x = "x", series = "id", sample = FALSE, quiet = TRUE
+  )
+
+  set.seed(42)
+  innovations = stats::rnorm(4)
+  expected = innovations
+  expected[c(2, 4)] = innovations[c(2, 4)] + 0.5 * innovations[c(1, 3)]
+
+  set.seed(42)
+  actual = suppressMessages(fit$simulate(
+    fit, data, Intercept_1 = 0, sigma_1 = 1, ar1_1 = 0.5
+  ))
+  expect_equal(as.numeric(actual), expected)
+})
+
+
 test_that("AR models use all available early lags", {
   result = mcp:::simulate_ar(
     sigma_ = rep(1, 4),

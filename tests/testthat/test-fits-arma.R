@@ -14,6 +14,12 @@ models_arma = list(
          ar1_2 = 0.5,
          ar1_x_2 = -0.005
        ),
+       newdata = data.frame(
+         id = rep(c("a", "b"), each = 200),
+         x = rep(seq(1, 200, length.out = 200), 2),
+         y = 0
+       ),
+       series = "id",
        chains = 2,
        adapt = 2000,
        iter = 2000,

@@ -46,6 +46,52 @@ good_arma = list(
 test_good(good_arma)
 
 
+test_that("series resets generated AR/MA lags", {
+  data = data.frame(
+    id = rep(c("a", "b"), each = 2),
+    x = c(1, 2, 1, 3),
+    y = 1:4
+  )
+  fit = suppressMessages(mcp(
+    list(y ~ 1 + ar(2) + ma(1)), data,
+    par_x = "x", series = "id", sample = FALSE, quiet = TRUE
+  ))
+
+  expect_match(
+    fit$jags_code,
+    "equals(series_id_[i_], series_id_[i_ - 2]) * ar2_[i_]",
+    fixed = TRUE
+  )
+  expect_match(
+    fit$jags_code,
+    "equals(series_id_[i_], series_id_[i_ - 1]) * ma1_[i_]",
+    fixed = TRUE
+  )
+  expect_false(grepl("series_id_", mcp(
+    list(y ~ 1 + ar(1)), data, par_x = "x", sample = FALSE, quiet = TRUE
+  )$jags_code, fixed = TRUE))
+})
+
+
+test_that("series input is contiguous and survives interpolation", {
+  data = data.frame(id = c("a", "b", "a"), x = 1:3, y = 1:3)
+
+  expect_error(
+    mcp(list(y ~ ar(1)), data, par_x = "x", series = "id", sample = FALSE),
+    "Rows belonging to each `series` must be contiguous.",
+    fixed = TRUE
+  )
+  ordered = data[order(data$id), ]
+  fit = mcp(
+    list(y ~ ar(1)), ordered,
+    par_x = "x", series = "id", sample = FALSE, quiet = TRUE
+  )
+  interpolated = interpolate_newdata(fit, by = "id", x_values = 11:13)
+  expect_identical(interpolated$id, ordered$id)
+  expect_equal(interpolated$x, 11:13)
+})
+
+
 test_that("AR/MA model checks warn about conditional validation", {
   data = data.frame(x = 1:4, y = 1:4)
   fit = mcp(list(y ~ 1 + ar(1)), data = data, par_x = "x", sample = FALSE, quiet = TRUE)

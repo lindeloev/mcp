@@ -110,6 +110,9 @@
 #'   the model, while a list or `FALSE` overrides the diagnostic footer.
 #' @param quiet Logical. Suppress routine JAGS output and mcp sampling-status
 #'   messages? Defaults to `FALSE`.
+#' @param series Only affects ARMA models.
+#'  * `NULL` (default): one long series.
+#'  * character: data column name identifying independent AR/MA series.
 #' @details Notes on priors:
 #'   * Default population-level `cp_\*` priors are ordered. For user priors,
 #'       `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior has neither
@@ -204,7 +207,8 @@ mcp = function(model,
                jags_code = NULL,
                seed = NULL,
                diagnostics = list(),
-               quiet = FALSE) {
+               quiet = FALSE,
+               series = NULL) {
 
   ################
   # CHECK INPUTS #
@@ -220,13 +224,14 @@ mcp = function(model,
 
   checkmate::assert_data_frame(data)
   data = data.frame(data)
+  assert_arma_series(data, series)
 
   checkmate::assert_string(par_x, null.ok = TRUE)
   par_x = get_par_x(model, data, par_x)
   rhs_vars = get_rhs_vars(model)
   assert_data_cols(data, cols = rhs_vars, fail_funcs = c(is.na, is.nan))
 
-  model_vars = unique(c(get_model_vars(model), par_x))
+  model_vars = unique(c(get_model_vars(model), par_x, series))
   assert_data_cols(data, cols = model_vars, fail_funcs = c(is.infinite))
   data = data[, model_vars]  # Remove unused data
 
@@ -319,6 +324,7 @@ mcp = function(model,
   pars = list(
     x = par_x,
     y = unique(segments$y),
+    series = series,
     cp = paste0("cp_", 1:nrow(segments))[seq_len(nrow(segments)-1)],  # N_cp = N_segments - 1
     mu = predictors$code_name[predictors$dpar == "mu"],
     population = c(),
@@ -339,8 +345,16 @@ mcp = function(model,
         "\") does not define the GARMA behavior required by ar() or ma()."
       )
 
-    if (is.unsorted(data[, par_x]) && is.unsorted(rev(data[, par_x])))
+    x_by_series = split(data[[par_x]], if (is.null(series)) 1 else data[[series]])
+    x_unordered = any(vapply(
+      x_by_series,
+      function(x) is.unsorted(x) && is.unsorted(rev(x)),
+      logical(1)
+    ))
+    if (x_unordered)
       message("'", par_x, "' is unordered. Please note that ar() and ma() apply in data-frame row order, not the values of '", par_x, "'.")
+  } else if (!is.null(series)) {
+    stop("`series` is only used by models containing ar() or ma().")
   }
 
   # Make formulas
@@ -353,7 +367,7 @@ mcp = function(model,
     ma_order = get_arma_order(predictors, "ma")
     jags_code = get_jags_code(
       prior, segments, group_effects, formula_jags, ar_order, ma_order, family, par_x,
-      prior_table, prior_context
+      prior_table, prior_context, series = !is.null(series)
     )
   }
 
@@ -361,7 +375,9 @@ mcp = function(model,
   ##########
   # SAMPLE #
   ##########
-  jags_data = get_jags_data(data, family, segments, predictors, group_effects, jags_code)
+  jags_data = get_jags_data(
+    data, family, segments, predictors, group_effects, jags_code, series
+  )
 
   # Sample posterior
   if (sample %in% c("post", "both")) {

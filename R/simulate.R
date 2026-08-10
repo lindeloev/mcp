@@ -291,7 +291,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   is_arma = any(predictors$dpar %in% c("ar", "ma"))
   aux_operations = c(operation, if (is_arma && .arma) "garma")
   aux_columns = get_family_aux_columns(fit$family, model_tables$segments, aux_operations)
-  data_pars = c(fit$pars$x, stats::na.omit(unname(aux_columns)))
+  data_pars = c(fit$pars$x, fit$pars$series, stats::na.omit(unname(aux_columns)))
   expected_arg_names = c(param_pars, pred_pars, data_pars)
 
   args = list(...)
@@ -355,11 +355,18 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     if (!has_ydata && .type != "predict")
       stop("The response is required to evaluate GARMA terms.")
 
+    series_id = args[[".draw"]]
+    if (!is.null(fit$pars$series)) {
+      if (is.null(series_id))
+        series_id = rep(1, length(args[[fit$pars$series]]))
+      series_id = interaction(series_id, args[[fit$pars$series]], drop = TRUE)
+    }
+
     arma_result = simulate_garma(
       base_link_mu, ar_list, ma_list, boundary, fit$family,
       dpars = dpars, data = response_data,
       y = if (has_ydata) dpar_values$.ydata else NULL,
-      series_id = args[[".draw"]]
+      series_id = series_id
     )
     if (!has_ydata)
       return(fit$family$response$observed(arma_result$y, response_data, .rate))
@@ -420,6 +427,7 @@ simulate_atomic = function(fit,
   # Remaining values are asserted in simulate_vectorized()
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_data_frame(newdata)
+  assert_arma_series(newdata, fit$pars$series)
   args = list(...)
   model_tables = get_fit_model_tables(fit)
   model_predictors = model_tables$predictors

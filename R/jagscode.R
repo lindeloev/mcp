@@ -103,7 +103,7 @@ jagsify_constants = function(x, registry) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order, ma_order, family, par_x,
-                          prior_table = NULL, prior_context = NULL) {
+                          prior_table = NULL, prior_context = NULL, series = FALSE) {
   prior_description = if (is.null(prior_table)) {
     stats::setNames(rep("Prior", length(prior)), names(prior))
   } else {
@@ -236,7 +236,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   #########
   has_arma = !is.na(ar_order) || !is.na(ma_order)
   if (has_arma)
-    mm = paste0(mm, get_arma_jagscode(ar_order, ma_order, par_x))
+    mm = paste0(mm, get_arma_jagscode(ar_order, ma_order, par_x, series))
 
 
 
