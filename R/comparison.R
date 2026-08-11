@@ -309,11 +309,10 @@ loglik_settings_match = function(loglik, settings) {
 #' @export
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-hypothesis = function(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE) {
+hypothesis = function(fit, hypotheses, width = 0.95, prior = FALSE) {
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_character(hypotheses)
   checkmate::assert_number(width, lower = 0, upper = 1)
-  checkmate::assert_int(digits, lower = 0)
   checkmate::assert_flag(prior)
 
   # Loop through hypotheses and populate df_result
