@@ -72,10 +72,10 @@ run_jags = function(data,
   timer = proc.time()
   if (n_workers == 1) {
     inits = get_jags_inits(inits, seed, n.chains, sample)
-    draws = try(do_sampling(
+    draws = do_sampling(
       inits = inits,
       n.chains = n.chains
-    ))
+    )
   } else {
     # Submit one chain per future. The user's future plan controls the backend.
     if (!quiet)
@@ -100,14 +100,7 @@ run_jags = function(data,
   if (!quiet)
     message("Finished sampling in ", round(passed["elapsed"], 1), " seconds\n")
 
-  # Recover the levels of group-level effects if it succeeded
-  if (coda::is.mcmc.list(draws)) {
-    return(draws)
-  } else {
-    # If it didn't succeed, quit gracefully.
-    warning("--------------\nJAGS failed with the above error. Returning an `mcpfit` without draws. Inspect fit$prior and fit$jags_code to identify the problem. Read about typical problems and fixes here: https://lindeloev.github.io/mcp/articles/tips.html.")
-    return(NULL)
-  }
+  draws
 }
 
 
