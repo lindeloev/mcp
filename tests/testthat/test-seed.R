@@ -60,6 +60,20 @@ test_that("mcp seed is validated", {
 })
 
 
+test_that("mcp sampling iterations are validated", {
+  expect_error(
+    mcp(seed_model, seed_data, par_x = "x", sample = FALSE, iter = 0),
+    "Element 1 is not >= 1",
+    fixed = TRUE
+  )
+  expect_error(
+    mcp(seed_model, seed_data, par_x = "x", sample = FALSE, adapt = 1.5),
+    "single integerish value",
+    fixed = TRUE
+  )
+})
+
+
 test_that("mcp seed reproduces prior and posterior samples", {
   old_plan = future::plan(future::sequential)
   on.exit(future::plan(old_plan), add = TRUE)

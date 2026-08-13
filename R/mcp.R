@@ -91,8 +91,8 @@
 #' @param iter Positive integer. Number of post-warmup draws from each chain.
 #'   The total number of draws is `iter * chains`.
 #' @param adapt Positive integer. Also sometimes called "burnin", this is the
-#'   number of adaptation iterations used to reach convergence. Set lower for greater speed.
-#'   Set higher if the chains haven't converged yet or look at [tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/tips.html).
+#'   number of adaptation iterations before sampling. Set lower for greater speed.
+#'   Set higher if needed for sampler adaptation; use diagnostics to assess convergence.
 #' @param inits A list if initial values for the parameters. This can be useful
 #'   if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
 #'   Defaults to `NULL`, i.e., no inits.
@@ -279,6 +279,8 @@ mcp = function(model,
   }
 
   checkmate::assert_int(chains, lower = 1)
+  checkmate::assert_int(iter, lower = 1)
+  checkmate::assert_int(adapt, lower = 1)
   checkmate::assert_list(inits, null.ok = TRUE)
   checkmate::assert_int(seed, lower = 1, null.ok = TRUE)
   diagnostics = resolve_diagnostics(diagnostics)

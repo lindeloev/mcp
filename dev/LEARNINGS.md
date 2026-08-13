@@ -25,3 +25,6 @@ Requires a lot of work on tracking priors, including their truncation etc. Since
 
 ## Check of simulation recovery
 If the simulated changepoint location is the same as the location of an actual data point, the changepoint posterior can be confined to just *before* that data point. The current check of recovery is a bit hacky, but everything else explodes in complexity.
+
+# LOO for time series
+Making `loo` or something loo-like support leave-future-out or blocked sampling would be a large undertaking and it would be slow. One complication is that mcp defaults to data-dependent priors, so changing data changes the priors and hence fit/posterior. It would involve iterations of fitting to before-cutpoint data and doing ELPD on future data. One could ignore and just keep the default priors constant, creating `newdata` that represents leave-future-out and calling `log_lik` on history+newdata. Feasible but slow.
