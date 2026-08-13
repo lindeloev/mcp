@@ -594,6 +594,7 @@ tidy_draws.mcpfit = function(x, ...) {
 #' Index variables, iterations, chains, and draws.
 #'
 #' @inheritParams fitted.mcpfit
+#' @param x An `mcpfit` object or a posterior draws object.
 #' @name draws-index-mcp
 #' @examples
 #' niterations(demo_fit)
@@ -604,21 +605,21 @@ NULL
 #' @aliases niterations.mcpfit
 #' @describeIn draws-index-mcp Number of iterations per chain of an `mcpfit` object.
 #' @exportS3Method posterior::niterations
-niterations.mcpfit = function(object, ...) {
-  coda::niter(mcmclist_draws(object))
+niterations.mcpfit = function(x, ...) {
+  coda::niter(mcmclist_draws(x))
 }
 
 #' @aliases nchains.mcpfit
 #' @describeIn draws-index-mcp Number of chains of an `mcpfit` object.
 #' @exportS3Method posterior::nchains
-nchains.mcpfit = function(object, ...) {
-  coda::nchain(mcmclist_draws(object))
+nchains.mcpfit = function(x, ...) {
+  coda::nchain(mcmclist_draws(x))
 }
 
 #' @rdname draws-index-mcp
 #' @exportS3Method posterior::ndraws
-ndraws.mcpfit = function(object, ...) {
-  draws = mcmclist_draws(object)
+ndraws.mcpfit = function(x, ...) {
+  draws = mcmclist_draws(x)
   sum(vapply(draws, nrow, integer(1)))
 }
 

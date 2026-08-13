@@ -10,11 +10,11 @@
 \alias{niterations}
 \title{Index \code{mcpfit} objects}
 \usage{
-\method{niterations}{mcpfit}(object, ...)
+\method{niterations}{mcpfit}(x, ...)
 
-\method{nchains}{mcpfit}(object, ...)
+\method{nchains}{mcpfit}(x, ...)
 
-\method{ndraws}{mcpfit}(object, ...)
+\method{ndraws}{mcpfit}(x, ...)
 
 ndraws(x)
 
@@ -23,7 +23,7 @@ nchains(x)
 niterations(x)
 }
 \arguments{
-\item{object}{An \code{mcpfit} object.}
+\item{x}{An \code{mcpfit} object or a posterior draws object.}
 
 \item{...}{Currently ignored.}
 }
