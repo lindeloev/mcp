@@ -247,12 +247,14 @@ test_that("binomial example can be constructed without sampling", {
 test_that("group_mu example contains independent factor effects", {
   fit = mcp_example("group_mu", sample = FALSE, plot = FALSE)
   expect_s3_class(fit, "mcpfit")
+  expect_type(fit$call, "language")
+  expect_s3_class(fit$example_code, "mcptext")
   expect_equal(fit$pars$cp, "cp_1")
   expect_equal(
     fit$pars$group,
     c("Intercept_1_id", "conditionB_1_id")
   )
-  expect_match(fit$call, "condition || id", fixed = TRUE)
+  expect_match(fit$example_code, "condition || id", fixed = TRUE)
   expect_equal(length(unique(fit$data$id)), 9)
   simulated = attr(fit$data$y, "simulated")
   expect_equal(simulated$Intercept_1_id_sd, 2)

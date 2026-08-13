@@ -81,7 +81,7 @@ The following model infers the two change points between three segments. You can
 demo_fit = mcp::mcp_example("demo")
 ```
 
-See `fit$call` how it was generated, and explore more demos in `mcp_example()`. But for now, let's walk though the example manually:
+See `demo_fit$example_code` for how it was generated, and explore more demos in `mcp_example()`. But for now, let's walk though the example manually:
 
 ```r
 # Define the model
@@ -109,7 +109,7 @@ set.seed(42)
 theme_it(plot(fit), "")
 ```
 
-Use `summary()` to summarise the posterior distribution as well as sampling diagnostics. They were simulated using `mcp` (see `mcp_example("demo")$call`) so the summary include the "true" values in the column `sim` and the column `match` show whether this true value is within the interval:
+Use `summary()` to summarise the posterior distribution as well as sampling diagnostics. They were simulated using `mcp` (see `mcp_example("demo")$example_code`) so the summary include the "true" values in the column `sim` and the column `match` show whether this true value is within the interval:
 
 ```r
 summary(fit)
@@ -191,7 +191,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 [About mcp models and simulating data](https://lindeloev.github.io/mcp/articles/formulas.html):
  * Parameter names are `Intercept_i` (intercepts), `cp_i` (change points), `x_i` (slopes), `ar*`/`ma*` (autocorrelation), and `sigma_*` (Gaussian residual standard deviation).
  * The change point model is basically an `ifelse` model.
- * Generate data for all supported models using `fit$simulate()`. See examples in, e.g., `mcp_example("demo")$call`.
+ * Generate data for all supported models using `fit$simulate()`. See examples in, e.g., `mcp_example("demo")$example_code`.
 
 [Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
  * See priors in `fit$prior`.
@@ -240,7 +240,7 @@ Modeling [Gaussian residual standard deviation](https://lindeloev.github.io/mcp/
 
 
 ## Means
-Find the single change point between two plateaus (simulated using `mcp_example("intercepts")$call`).
+Find the single change point between two plateaus (simulated using `mcp_example("intercepts")$example_code`).
 
 ```r
 model = list(
@@ -279,7 +279,7 @@ set.seed(42)
 theme_it(plot(fit, facet_by = "id"), "Varying slope change")
 ```
 
-Summarise the group-level change-point deviations using `ranef()` or plot them using `plot_pars(fit, "group")`. Again, these data were simulated using `mcp` (see `mcp_example("group_cp")$call`), so the `match` and `sim` columns show the simulation values and whether they are inside the interval. Set `width` wider for a more lenient criterion.
+Summarise the group-level change-point deviations using `ranef()` or plot them using `plot_pars(fit, "group")`. Again, these data were simulated using `mcp` (see `mcp_example("group_cp")$example_code`), so the `match` and `sim` columns show the simulation values and whether they are inside the interval. Set `width` wider for a more lenient criterion.
 
 ```r
 ranef(fit, width = 0.98)
@@ -299,7 +299,7 @@ ranef(fit, width = 0.98)
 ## Generalized linear models
 `mcp` supports Generalized Linear Modeling. See extended examples using [`binomial()`](https://lindeloev.github.io/mcp/articles/binomial.html) and [`poisson()`](https://lindeloev.github.io/mcp/articles/poisson.html).
 
-Here is a binomial change point model with three segments (see simulation code: `mcp_example("binomial")$call`). We plot the 95% central posterior interval too:
+Here is a binomial change point model with three segments (see simulation code: `mcp_example("binomial")$example_code`). We plot the 95% central posterior interval too:
 
 ```r
 model = list(
@@ -323,7 +323,7 @@ Use `plot(fit, rate = FALSE)` if you want the points and fit lines on the origin
 
 
 ## Time series
-`mcp` allows for flexible time series analysis with autoregressive residuals of arbitrary order. Below, we model a change from a plateau with strong positive AR(2) residuals to a slope with medium AR(1) residuals. These data were simulated with `mcp` (see simulation code: `mcp_example("ar")$call`) and the generating values are in the `sim` column. You can also do regression on the AR coefficients themselves using e.g., `ar(1, 1 + x)`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html).
+`mcp` allows for flexible time series analysis with autoregressive residuals of arbitrary order. Below, we model a change from a plateau with strong positive AR(2) residuals to a slope with medium AR(1) residuals. These data were simulated with `mcp` (see simulation code: `mcp_example("ar")$example_code`) and the generating values are in the `sim` column. You can also do regression on the AR coefficients themselves using e.g., `ar(1, 1 + x)`. [Read more here](https://lindeloev.github.io/mcp/articles/arma.html).
 
 ```r
 model = list(

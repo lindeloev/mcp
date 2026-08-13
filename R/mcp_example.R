@@ -16,7 +16,7 @@
 #' @param diagnostics Diagnostic thresholds passed to [mcp()]. Defaults to
 #'   `FALSE` so examples do not emit fit-diagnostic warnings.
 #' @inheritParams mcp
-#' @return An `mcpfit`, enriched with a `$call` field. It contains the code to
+#' @return An `mcpfit`, enriched with an `$example_code` field. It contains the code to
 #'   reproduce the data and the fit.
 #' @export
 #' @encoding UTF-8
@@ -24,12 +24,12 @@
 #' @examples
 #' \donttest{
 #' fit = mcp_example("multiple")
-#' print(fit$call) # See how the data was simulated
+#' print(fit$example_code) # See how the data was simulated
 #'
 #' # Without sampling
 #' empty = mcp_example("binomial", sample = FALSE, plot = FALSE)
 #' print(empty)
-#' print(empty$call)
+#' print(empty$example_code)
 #'
 #' # Now sample this model
 #' fit2 = mcp(empty$model, empty$data, family = empty$family)
@@ -359,8 +359,8 @@ if (plot) {
   name = rlang::arg_match0(name, names(examples))
   eval(str2expression(examples[[name]]))
 
-  fit$call = examples[[name]]
-  class(fit$call) = c("mcptext", "character")
+  fit$example_code = examples[[name]]
+  class(fit$example_code) = c("mcptext", "character")
   fit
 }
 

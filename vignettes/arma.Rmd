@@ -59,7 +59,7 @@ head(ex$data)
 ```
 
 
-See how this was generated in `ex$call`. We model this as a plateau (`1`)  with a second-order autoregressive residual (`ar(2)`) followed by a joined slope (`0 + time`) with a negative first-order autoregressive residual (`ar(1)`):
+See how this was generated in `ex$example_code`. We model this as a plateau (`1`)  with a second-order autoregressive residual (`ar(2)`) followed by a joined slope (`0 + time`) with a negative first-order autoregressive residual (`ar(1)`):
 
 
 ```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}

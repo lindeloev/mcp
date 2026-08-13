@@ -48,7 +48,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   The arguments for `fit$simulate()` have all changed to accommodate multiple (categorical) predictors. `fit$simulate(fit, data, ..., .type = "predict")` is the new argument structure. Note that (1) it now requires `fit` as the first argument, (2) it requires `data.frame` or `tibble` as the second argument instead of just a vector of `par_x`, (3) further arguments are prefixed with a "." to avoid name conflicts internally in mcp. `...` are the model parameters as usual.
 
--   Dropped support for `mcp(..., data = NULL)`. You now must provide some mock-up data to inform `mcp` about the types and levels of the predictor columns. See, e.g., `mcp_example("intercepts")$call` for a simple example or `mcp_example("multiple")$call` for a more involved example. All docs have been updated appropriately.
+-   Dropped support for `mcp(..., data = NULL)`. You now must provide some mock-up data to inform `mcp` about the types and levels of the predictor columns. See, e.g., `mcp_example("intercepts")$example_code` for a simple example or `mcp_example("multiple")$example_code` for a more involved example. All docs have been updated appropriately.
 
 -   mcp no longer exports `phi`, `logit`, `ilogit`, or `probit`.
 
@@ -77,7 +77,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Sampling is now 1-10% faster due to a new formalization of the underlying JAGS code.
 
--   Use `mcp(..., seed = 42)` for reproducible JAGS sampling. See `mcp_example("demo")$call` how to ensure reproducibility across simulation, fit, and plotting.
+-   Use `mcp(..., seed = 42)` for reproducible JAGS sampling. See `mcp_example("demo")$example_code` how to ensure reproducibility across simulation, fit, and plotting.
 
 -   `mcp(..., quiet = TRUE)` suppresses routine JAGS output and mcp sampling-status messages while preserving warnings and errors.
 
