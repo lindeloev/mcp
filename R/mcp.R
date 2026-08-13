@@ -210,6 +210,8 @@ mcp = function(model,
                quiet = FALSE,
                series = NULL) {
 
+  matched_call = match.call()
+
   ################
   # CHECK INPUTS #
   ################
@@ -449,6 +451,7 @@ mcp = function(model,
     data = data,
     prior = prior,
     family = family,
+    call = matched_call,
 
     # Results
     mcmc_post = mcmc_post,

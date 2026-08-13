@@ -13,6 +13,27 @@ test_that("families", {
 })
 
 
+test_that("mcpfit model accessors follow standard R conventions", {
+  data = data.frame(x = 1:5, y = c(1, 2, NA, 4, 5), unused = 6:10)
+  fit = mcp(list(y ~ 1 + x), data, sample = FALSE)
+
+  expect_identical(names(fit)[1:5], c("model", "data", "prior", "family", "call"))
+  expect_type(fit$call, "language")
+  expect_identical(fit$call[[1]], quote(mcp))
+  expect_identical(family(fit), fit$family)
+  expect_equal(nobs(fit), 4)
+  expect_identical(model.frame(fit), fit$data)
+  expect_identical(formula(fit), fit$model)
+  expect_identical(formula(fit, segment = 1), fit$model[[1]])
+
+  population = fit$pars$population
+  values = matrix(seq_len(3 * length(population)), nrow = 3)
+  colnames(values) = population
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(values))
+  expect_equal(coef(fit), stats::setNames(colMeans(values), population))
+})
+
+
 test_that("model metadata uses aligned table names and varying selectors", {
   data = data.frame(
     x = 1:6,

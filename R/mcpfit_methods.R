@@ -16,6 +16,7 @@
 #' See `methods(class = "mcpfit")` for an overview of available methods.
 #'
 #' User-provided information (see \code{\link{mcp}} for more details):
+#' @slot call The matched call to `mcp()`.
 #' @slot model A list of formulas, making up the model.
 #'   Provided by user. See \code{\link{mcp}} for more details.
 #' @slot data A data frame.
@@ -322,6 +323,72 @@ fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ..
 ranef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {
   rlang::check_dots_empty()
   get_summary(object, width, varying = TRUE, prior = prior, verbose = verbose)
+}
+
+
+#' Extract Model Information from an `mcpfit`
+#'
+#' Standard R accessors for the model formulas, family, fitting data, number of
+#' observations, and population-level coefficients stored in an `mcpfit`.
+#'
+#' @param object,x,formula An `mcpfit` object.
+#' @param segment `NULL` to return all segment formulas, or a positive integer
+#'   selecting one segment.
+#' @param prior Logical. Use prior rather than posterior draws for `coef()`?
+#' @param ... Currently unused.
+#' @return `formula()` returns the complete list of segment formulas, or one
+#'   formula when `segment` is supplied. `family()` returns an `mcpfamily`.
+#'   `model.frame()` returns the data retained in the fit. `nobs()` returns the
+#'   number of non-missing responses. `coef()` returns named posterior means of
+#'   the population-level parameters.
+#' @name model-accessors-mcpfit
+NULL
+
+
+#' @rdname model-accessors-mcpfit
+#' @export
+family.mcpfit = function(object, ...) {
+  rlang::check_dots_empty()
+  object$family
+}
+
+
+#' @rdname model-accessors-mcpfit
+#' @export
+nobs.mcpfit = function(object, ...) {
+  rlang::check_dots_empty()
+  sum(!is.na(object$data[[object$pars$y]]))
+}
+
+
+#' @rdname model-accessors-mcpfit
+#' @export
+model.frame.mcpfit = function(formula, ...) {
+  rlang::check_dots_empty()
+  formula$data
+}
+
+
+#' @rdname model-accessors-mcpfit
+#' @export
+formula.mcpfit = function(x, segment = NULL, ...) {
+  rlang::check_dots_empty()
+  checkmate::assert_int(segment, lower = 1, upper = length(x$model), null.ok = TRUE)
+  if (is.null(segment))
+    return(x$model)
+
+  x$model[[segment]]
+}
+
+
+#' @rdname model-accessors-mcpfit
+#' @export
+coef.mcpfit = function(object, prior = FALSE, ...) {
+  rlang::check_dots_empty()
+  checkmate::assert_flag(prior)
+  draws = posterior::as_draws_matrix(posterior_draws(object, prior = prior))
+  population = object$pars$population
+  stats::setNames(colMeans(draws[, population, drop = FALSE]), population)
 }
 
 
