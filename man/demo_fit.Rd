@@ -11,8 +11,8 @@ An \code{\link{mcpfit}} object.
 demo_fit
 }
 \description{
-\code{demo_fit} is an \code{mcpfit} object generated using \code{mcp_example("demo", sample = FALSE)},
-though with two modifications: it only has 2 x 1000 samples, and it also includes prior samples.
+\code{demo_fit} is an \code{mcpfit} object generated from the \code{mcp_example("demo")}
+model and data with two chains of 1000 posterior draws and prior draws.
 }
 \details{
 It is used to quickly demonstrate \code{mcp} functionality in various documentation.

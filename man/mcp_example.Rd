@@ -6,7 +6,7 @@
 \alias{mcp_example_data}
 \title{Run example models}
 \usage{
-mcp_example(name, sample = "post", warn = FALSE, plot = TRUE)
+mcp_example(name, sample = "post", diagnostics = FALSE, plot = TRUE)
 
 mcp_example_data(name)
 }
@@ -17,8 +17,8 @@ mcp_example_data(name)
 \item \code{"intercepts"}: An intercept-only change point.
 \item \code{"multiple"}: Multiple regression with categorical predictors and interactions.
 \item \code{"binomial"}: Binomial with two change points. Much like \code{"demo"} on a logit scale.
-\item \code{"varying_mu"}: Varying (Group-level) intercepts and factor effects across a change point.
-\item \code{"varying_cp"}: Varying (random) change points.
+\item \code{"group_mu"}: Group-level intercepts and factor deviations across a change point.
+\item \code{"group_cp"}: Group-level change-point deviations (random effects).
 \item \code{"quadratic"}: A change point to a quadratic segment where there is no data.
 \item \code{"ar"}: One change point in autoregressive residuals (the \code{ar1} dpar)
 \item \code{"sigma"}: A change in "sigma" dpar, including a slope on sigma.
@@ -37,14 +37,14 @@ object without sample. This is useful if you only want to check
 prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
 }}
 
-\item{warn}{Logical. Warn about non-convergence (\code{Rhat > 1.01} or \code{ESS < 400})
-after sampling? Defaults to \code{TRUE}.}
+\item{diagnostics}{Diagnostic thresholds passed to \code{\link[=mcp]{mcp()}}. Defaults to
+\code{FALSE} so examples do not emit fit-diagnostic warnings.}
 
 \item{plot}{Logical. Plot the fitted example? No plot is produced when
 \code{sample = FALSE}.}
 }
 \value{
-An \code{mcpfit}, enriched with a \verb{$call} field. It contains the code to
+An \code{mcpfit}, enriched with an \verb{$example_code} field. It contains the code to
 reproduce the data and the fit.
 }
 \description{
@@ -58,12 +58,12 @@ Run example models
 \examples{
 \donttest{
 fit = mcp_example("multiple")
-print(fit$call) # See how the data was simulated
+print(fit$example_code) # See how the data was simulated
 
 # Without sampling
 empty = mcp_example("binomial", sample = FALSE, plot = FALSE)
 print(empty)
-print(empty$call)
+print(empty$example_code)
 
 # Now sample this model
 fit2 = mcp(empty$model, empty$data, family = empty$family)

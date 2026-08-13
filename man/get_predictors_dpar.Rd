@@ -14,7 +14,8 @@ get_predictors_dpar(
   dpar,
   par_x,
   order = NULL,
-  check_rank = TRUE
+  check_rank = TRUE,
+  design_id = NULL
 )
 
 get_predictor_tables(model, data, family, par_x, check_rank = TRUE)
@@ -47,12 +48,14 @@ following can be modeled:
 \itemize{
 \item \emph{Regular formulas:} e.g., \code{~ 1 + x}). \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
 \item \emph{Extended formulas:}, e.g., \code{~ x:group + I(x^2) + exp(z)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
+R-side bases such as \code{scale()}, \code{poly()}, and \code{splines::ns()} are evaluated
+before sampling, and their fitted scaling or basis is reused for \code{newdata}.
 \item \emph{Group-level effects:} e.g., \code{~ 1 + (1 | id)} for a group-level
 intercept, or \code{~ 1 + (factor || id)} for independent intercept and
 factor-contrast deviations. \href{https://lindeloev.github.io/mcp/articles/varying.html}{Read more}.
-\item \emph{Variance:} e.g., \code{~sigma(1)} for a simple variance change or
-\code{~sigma(1 + x + group)}) for more advanced variance structures. Explicit
-sigma formulas model log-SD, while the implicit constant \code{sigma_1} in a
+\item \emph{Gaussian residual standard deviation:} e.g., \code{~sigma(1)} for a simple
+standard-deviation change or \code{~sigma(1 + x + group)}) for more advanced
+structures. Explicit \code{sigma()} formulas model log-SD, while the implicit constant \code{sigma_1} in a
 model without \code{sigma()} remains on the response scale.
 \href{https://lindeloev.github.io/mcp/articles/variance.html}{Read more}
 \item \emph{Time-series residuals:} use \code{ar(p)} and \code{ma(q)} separately or together,
@@ -80,6 +83,8 @@ diagnose collisions after parameter names are converted for JAGS.
 \item \code{par_type}: One of "Intercept", "dummy", or "slope". Used for setting priors and for change point indicator func.
 \item \code{order}: positive integer or NA. Only relevant for \code{ar} and \code{ma}.
 \item \code{explicit}: whether the distributional parameter was supplied in the formula.
+\item \code{design_id}: key of the fitted component formula that produced the row.
+\item \code{design_col}: column occupied by the row in that component's model matrix.
 \item \code{matrix_data}: column of the design matrix less the \code{par_x} term.
 }
 }

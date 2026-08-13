@@ -19,7 +19,9 @@ mcp(
   inits = NULL,
   jags_code = NULL,
   seed = NULL,
-  warn = TRUE
+  diagnostics = list(),
+  quiet = FALSE,
+  series = NULL
 )
 }
 \arguments{
@@ -33,12 +35,14 @@ following can be modeled:
 \itemize{
 \item \emph{Regular formulas:} e.g., \code{~ 1 + x}). \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
 \item \emph{Extended formulas:}, e.g., \code{~ x:group + I(x^2) + exp(z)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
+R-side bases such as \code{scale()}, \code{poly()}, and \code{splines::ns()} are evaluated
+before sampling, and their fitted scaling or basis is reused for \code{newdata}.
 \item \emph{Group-level effects:} e.g., \code{~ 1 + (1 | id)} for a group-level
 intercept, or \code{~ 1 + (factor || id)} for independent intercept and
 factor-contrast deviations. \href{https://lindeloev.github.io/mcp/articles/varying.html}{Read more}.
-\item \emph{Variance:} e.g., \code{~sigma(1)} for a simple variance change or
-\code{~sigma(1 + x + group)}) for more advanced variance structures. Explicit
-sigma formulas model log-SD, while the implicit constant \code{sigma_1} in a
+\item \emph{Gaussian residual standard deviation:} e.g., \code{~sigma(1)} for a simple
+standard-deviation change or \code{~sigma(1 + x + group)}) for more advanced
+structures. Explicit \code{sigma()} formulas model log-SD, while the implicit constant \code{sigma_1} in a
 model without \code{sigma()} remains on the response scale.
 \href{https://lindeloev.github.io/mcp/articles/variance.html}{Read more}
 \item \emph{Time-series residuals:} use \code{ar(p)} and \code{ma(q)} separately or together,
@@ -53,25 +57,27 @@ coefficients to stationarity or MA coefficients to invertibility.
 \item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)}
 
 \item{prior}{Named list. Names are parameter names (\code{cp_i}, \code{Intercept_i}, \code{xvar_i},
-`sigma``) and the values are either
+\code{sigma}) and the values are either
 \itemize{
 \item A JAGS distribution (e.g., \code{Intercept_1 = "dnorm(0, 1) T(0,)"}) indicating a
-conventional prior distribution. Uninformative priors based on data
-properties are used where priors are not specified. This ensures good
-parameter estimations, but it is a questionable for hypothesis testing.
+conventional prior distribution. Data-calibrated, regularizing defaults
+are used where priors are not specified. These are designed for stable
+estimation and prediction, but should be justified before hypothesis testing.
 \code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
-details. Change points are forced to be ordered through the priors using
-truncation, except for uniform priors where the lower bound should be
-greater than the previous change point, \code{dunif(cp_1, max(time))}.
+details. With multiple change points, the default is a regularizing
+Student-t prior centered at \code{min(x)} and sequentially truncated between
+the preceding change point and \code{max(x)}. User-specified \code{dunif()} priors
+and explicit truncations are used as written, so users must supply the
+ordering bounds, e.g., \code{dunif(cp_1, max(time))} for \code{cp_2}.
 \item A numerical value (e.g., \code{Intercept_1 = -2.1}) indicating a fixed value.
 \item A model parameter name (e.g., \code{Intercept_2 = "Intercept_1"}), indicating that this parameter is shared -
-typically between segments. If two varying effects are shared this way,
+typically between segments. If two group-level deviations are shared this way,
 they will need to have the same grouping variable.
 \item A scaled Dirichlet prior is supported for change points if they are all set to
-\verb{cp_i = "dirichlet(N)} where \code{N} is the alpha for this change point and
-\code{N = 1} is most often used. This prior is less informative about the
-location of the change points than the default uniform prior, but it
-samples less efficiently, so you will often need to set \code{iter} higher.
+\code{cp_i = "dirichlet(N)"} where \code{N} is the alpha for this change point and
+\code{N = 1} is most often used. This prior is symmetric over segment spacings,
+unlike the regularizing t-tail default for multiple change points, but it
+mixes less efficiently, so you will often need to set \code{iter} higher.
 It is recommended for hypothesis testing and for the estimation of more
 than 5 change points. \href{https://lindeloev.github.io/mcp/articles/priors.html}{Read more}.
 }}
@@ -107,8 +113,8 @@ backwards compatibility.}
 The total number of draws is \code{iter * chains}.}
 
 \item{adapt}{Positive integer. Also sometimes called "burnin", this is the
-number of samples used to reach convergence. Set lower for greater speed.
-Set higher if the chains haven't converged yet or look at \href{https://lindeloev.github.io/mcp/articles/tips.html}{tips, tricks, and debugging}.}
+number of adaptation iterations before sampling. Set lower for greater speed.
+Set higher if needed for sampler adaptation; use diagnostics to assess convergence.}
 
 \item{inits}{A list if initial values for the parameters. This can be useful
 if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
@@ -121,8 +127,22 @@ framework.}
 \item{seed}{\code{NULL} or a positive integer. Seed for the JAGS random-number
 generators. When supplied, \code{inits} must be a single named list shared by all chains.}
 
-\item{warn}{Logical. Warn about non-convergence (\code{Rhat > 1.01} or \code{ESS < 400})
-after sampling? Defaults to \code{TRUE}.}
+\item{diagnostics}{Named list of diagnostic warning thresholds. Available
+elements are \code{rhat = 1.01}, \code{ess_bulk = 400}, \code{ess_tail = 400},
+\code{ar = 0.10}, and \code{ma = 0.10}. An empty list uses these defaults; a partial
+list overrides only the supplied values. Set an element to \code{NULL} to disable
+that diagnostic, or use \code{FALSE} to disable all configurable diagnostic
+warnings. In \code{\link[=summary.mcpfit]{summary.mcpfit()}}, \code{NULL} inherits the settings used to fit
+the model, while a list or \code{FALSE} overrides the diagnostic footer.}
+
+\item{quiet}{Logical. Suppress routine JAGS output and mcp sampling-status
+messages? Defaults to \code{FALSE}.}
+
+\item{series}{Only affects models with \code{ar()} or \code{ma()} terms.
+\itemize{
+\item \code{NULL} (default): one long series.
+\item character: data column name identifying independent AR/MA series.
+}}
 }
 \value{
 An \code{\link{mcpfit}} object.
@@ -131,19 +151,23 @@ An \code{\link{mcpfit}} object.
 Given a model (a list of segment formulas), \code{mcp} infers the posterior
 distributions of the parameters of each segment as well as the change points
 between segments. \href{https://lindeloev.github.io/mcp/}{See more details and worked examples on the mcp website}.
-All segments must regress on the same x-variable. Change
-points are forced to be ordered using truncation of the priors. You can run
+All segments must regress on the same x-variable. You can run
 \code{fit = mcp(model, data, sample=FALSE)} to avoid sampling if you just want to
 inspect the priors (\code{fit$prior} and \code{\link[=prior_summary]{prior_summary()}}), the JAGS code
 \code{fit$jags_code}, or the R function to simulate data (\code{fit$simulate}).
 }
 \details{
+mcp models ordered change points. The ordering is imposed through the prior.
+
 Notes on priors:
 \itemize{
-\item Order restriction is automatically applied to cp_\* parameters using
-truncation (e.g., \code{T(cp_1, )}) so that they are in the correct order on the
-x-axis UNLESS you do it yourself. The one exception is for dunif
-distributions where you have to do it as above.
+\item Default population-level \verb{cp_\\*} priors are ordered. For user priors,
+\code{mcp} adds truncation (e.g., \code{T(cp_1, )}) only when the prior has neither
+explicit truncation nor an inherently bounded form such as \code{dunif()} or
+\code{dirichlet()}. After sampling, all population- and group-level change
+points are checked for strict ordering; population-level change points
+are also checked against the observed x-range. This includes numerically
+fixed change points.
 \item Data-dependent prior values can be written directly, for example
 \code{min(time)}, \code{max(time)}, \code{median(response)}, \code{mad(response)},
 \code{max(time) - min(time)}, \code{segment_width(time)}, \code{n_segments()}, and \code{n_cp()}.

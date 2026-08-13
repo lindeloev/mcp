@@ -6,7 +6,7 @@
 \alias{hypothesis.mcpfit}
 \title{Test Hypotheses Concerning Individual Parameters}
 \usage{
-hypothesis(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE)
+hypothesis(fit, hypotheses, width = 0.95, prior = FALSE)
 }
 \arguments{
 \item{fit}{An \code{\link{mcpfit}} object.}
@@ -14,10 +14,10 @@ hypothesis(fit, hypotheses, width = 0.95, digits = 3, prior = FALSE)
 \item{hypotheses}{String representation of a logical test involving model parameters.
 Takes R code that evaluates to TRUE or FALSE in a vectorized way.
 
-Directional hypotheses are specified using <, >, <=, or >=. \code{hypothesis}
+\strong{Directional hypotheses} are specified using <, >, <=, or >=. \code{hypothesis}
 returns the posterior probability and the Bayes factor in favor of the
 stated hypothesis. The Bayes factor requires both prior and posterior
-samples from \code{mcp(sample = "both")}. For example:
+draws from \code{mcp(sample = "both")}. For example:
 \itemize{
 \item \code{"cp_1 > 30"}:  the first change point is above 30.
 \item \code{"Intercept_1 > Intercept_2"}: the intercept is greater in segment 1 than 2.
@@ -26,33 +26,30 @@ than or equal to 3.
 \item \code{"Intercept_1 > -2 & Intercept_1 < 2"}: Intercept_1 is between -2 and 2 (an interval hypothesis). This can be useful as a Region Of Practical Equivalence test (ROPE).
 \item \code{"cp_1^2 < 30 | (log(x_1) + log(x_2)) > 5"}: be creative.
 \item \code{"`cp_1_id[1]` > `cp_1_id[2]`"}: id1 is greater than id2, as estimated
-through the varying-by-"id" change point in segment 1. Note that \code{``}
-required for varying effects.
+through the group-level change-point deviation for \code{id} in segment 1.
+Note that \code{``} are required when using \verb{[i]}.
 }
 
-Hypotheses can also test equality using the equal sign (=). This runs a
-Savage-Dickey test, i.e., the proportion by which the probability density
-has increased from the prior to the posterior at a given value. Therefore,
-it requires \code{mcp(sample = "both")}. There are two requirements:
-First, there can only be one equal sign, so don't use and (&) or or (|).
-Second, the point to test has to be on the right, and the variables on the left.
+\strong{Equality hypotheses} use the equal sign (=) and a Savage-Dickey density
+ratio: posterior density divided by prior density at the tested equality.
+This is a Bayes factor for a nested point-null model against the fitted
+continuous model. Prior and posterior draws are required, using
+\code{mcp(sample = "both")}.
+
+The point-null model's nuisance prior is the fitted model's conditional
+prior at the equality. Equality tests are limited to named scalar parameters
+and affine contrasts.
+
+Examples:
 \itemize{
-\item \code{"cp_1 = 30"}: is the first change point at 30? Or to be more precise:
-by what factor has the credence in cp_1 = 30 risen/fallen when
-conditioning on the data, relative to the prior credence?
-\item \code{"Intercept_1 + Intercept_2 = 0"}: Is the sum of two intercepts zero?
-\item \code{"`cp_1_id[John]`/`cp_1_id[Erin]` = 2"}: is the varying change
-point for John (which is relative to `cp_1``) double that of Erin?
+\item \code{"cp_1 = 30"}: compare the point-null model \code{cp_1 = 30} with the
+continuous alternative.
+\item \code{"Intercept_1 - Intercept_2 = 0"}: compare equal segment intercepts
+with the continuous alternative.
 }}
 
 \item{width}{Float. The width of the central posterior interval (between 0
 and 1).}
-
-\item{digits}{a non-null value for digits specifies the minimum number of
-significant digits to be printed in values. The default, NULL, uses
-getOption("digits"). (For the interpretation for complex numbers see signif.)
-Non-integer values will be rounded down, and only values greater than or
-equal to 1 and no greater than 22 are accepted.}
 
 \item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
 }
@@ -63,9 +60,9 @@ A data.frame with a row per hypothesis and the following columns:
 \item \code{mean} is the posterior mean of the left-hand side of the hypothesis.
 \item \code{lower} is the lower bound of the central posterior interval of width \code{width}.
 \item \code{upper} is the upper bound of ditto.
-\item \code{p} Posterior probability.
-For "=" (Savage-Dickey), it is the BF converted to p.
-For directional hypotheses, it is the proportion of samples that returns TRUE.
+\item \code{p} is the posterior probability of a directional hypothesis. It is \code{NA}
+for equality hypotheses, which compare models rather than an event
+within the fitted model.
 \item \code{BF} Bayes Factor in favor  of the hypothesis.
 For "=" it is the Savage-Dickey density ratio.
 For directional hypotheses, it is the posterior odds divided by the
@@ -78,10 +75,10 @@ model parameters. The documentation for the argument \code{hypotheses} below
 shows examples of how to specify hypotheses, and \href{https://lindeloev.github.io/mcp/articles/comparison.html}{read worked examples on the mcp website}.
 For directional hypotheses, \code{hypothesis} executes the hypothesis string in
 a data-frame environment and summarises the proportion of posterior and
-prior samples where the expression evaluates to TRUE. The Bayes factor is
-the posterior odds divided by the prior odds. For equals-hypotheses, a
+prior draws where the expression evaluates to TRUE. The Bayes factor is
+the posterior odds divided by the prior odds. For equality hypotheses, a
 Savage-Dickey ratio is computed. Both kinds of Bayes factor require prior
-samples, so remember \code{mcp(..., sample = "both")}. This function is heavily inspired by the
+draws, so remember \code{mcp(..., sample = "both")}. This function is heavily inspired by the
 \code{hypothesis} function from the \code{brms} package.
 }
 \author{

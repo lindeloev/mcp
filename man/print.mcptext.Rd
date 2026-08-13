@@ -13,7 +13,7 @@
 \item{...}{Currently ignored.}
 }
 \description{
-Useful for \code{print(fit$jags_code)}, \code{print(mcp_demo$call)}, etc.
+Useful for \code{print(fit$jags_code)}, \code{print(mcp_demo$example_code)}, etc.
 }
 \examples{
 mytext = "line1 = 2\n line2 = 'horse'"

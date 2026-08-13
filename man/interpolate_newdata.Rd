@@ -15,7 +15,7 @@ interpolate_newdata(
 \arguments{
 \item{fit}{An \code{mcpfit} object.}
 
-\item{by}{Character vector of categorical or varying-effect columns to evaluate separately.
+\item{by}{Character vector of categorical or group-level columns to evaluate separately.
 Categorical model predictors are always included.}
 
 \item{x_values}{Numeric vector of x-values to evaluate at.}
@@ -41,7 +41,7 @@ The \code{par_x} variable will be interpolated with higher resolution around the
 change points where the values can change abruptly, but lower resolution in
 between to speed up the computation.
 
-Categorical variables and requested varying-effect groups are combined factorially (all level combinations).
+Categorical variables and requested grouping factors are combined factorially (all level combinations).
 Additional continuous predictors are held at their observed means, or at values supplied through \code{at}.
 }
 \examples{
@@ -53,7 +53,7 @@ newdata = interpolate_newdata(fit)
 # Fit summary
 fitted(fit, newdata)
 
-# Predictions for each sample
+# Predictions for each draw
 prediction = predict(fit, newdata, summary = FALSE)
 prediction[, c(".chain", ".iteration", ".draw", "x", "group", "z", "predict")]
 

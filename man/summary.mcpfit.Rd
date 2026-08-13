@@ -12,7 +12,15 @@
 \alias{print}
 \title{Summarise mcpfit objects}
 \usage{
-\method{summary}{mcpfit}(object, width = 0.95, digits = 2, prior = FALSE, verbose = FALSE, ...)
+\method{summary}{mcpfit}(
+  object,
+  width = 0.95,
+  digits = 2,
+  prior = FALSE,
+  verbose = FALSE,
+  diagnostics = NULL,
+  ...
+)
 
 \method{fixef}{mcpfit}(object, width = 0.95, prior = FALSE, verbose = FALSE, ...)
 
@@ -26,16 +34,22 @@
 \item{width}{Float. The width of the central posterior interval (between 0
 and 1).}
 
-\item{digits}{a non-null value for digits specifies the minimum number of
-significant digits to be printed in values. The default, NULL, uses
-getOption("digits"). (For the interpretation for complex numbers see signif.)
-Non-integer values will be rounded down, and only values greater than or
-equal to 1 and no greater than 22 are accepted.}
+\item{digits}{Non-negative integer. Number of significant digits used when
+printing the summary. Defaults to 2. The invisibly returned data frame
+retains the unrounded values.}
 
 \item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
 
 \item{verbose}{Logical. Include the \code{segment} and \code{dpar} columns. Defaults
 to \code{FALSE} for a compact, v0.3.4-compatible summary.}
+
+\item{diagnostics}{Named list of diagnostic warning thresholds. Available
+elements are \code{rhat = 1.01}, \code{ess_bulk = 400}, \code{ess_tail = 400},
+\code{ar = 0.10}, and \code{ma = 0.10}. An empty list uses these defaults; a partial
+list overrides only the supplied values. Set an element to \code{NULL} to disable
+that diagnostic, or use \code{FALSE} to disable all configurable diagnostic
+warnings. In \code{\link[=summary.mcpfit]{summary.mcpfit()}}, \code{NULL} inherits the settings used to fit
+the model, while a list or \code{FALSE} overrides the diagnostic footer.}
 
 \item{...}{Currently ignored}
 
@@ -57,7 +71,7 @@ With \code{verbose = TRUE}:
 \item \code{mean} is the posterior mean
 \item \code{lower} and \code{upper} are the bounds of the central posterior interval
 given in \code{width}.
-\item \code{Rhat} is the rank-normalized split-Rhat convergence diagnostic.
+\item \code{rhat} is the rank-normalized split-Rhat convergence diagnostic.
 \item \code{ess_bulk} and \code{ess_tail} are the bulk and tail effective sample sizes.
 Low effective sample sizes are also obvious as poor mixing in trace plots
 (see \code{plot_pars(fit)}). Read how to deal with such problems \href{https://lindeloev.github.io/mcp/articles/tips.html}{here}
@@ -77,9 +91,9 @@ Summarise parameter estimates and model diagnostics.
 }
 \section{Functions}{
 \itemize{
-\item \code{fixef(mcpfit)}: Fixed (population-level) effects of \code{mcpfit}.
+\item \code{fixef(mcpfit)}: Population-level effects of \code{mcpfit}.
 
-\item \code{ranef(mcpfit)}: Random (varying) effects of \code{mcpfit}.
+\item \code{ranef(mcpfit)}: Group-level deviations (random effects) of \code{mcpfit}.
 
 \item \code{print(mcpfit)}: Print the posterior summary of an \code{\link{mcpfit}} object.
 
@@ -92,7 +106,7 @@ summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 # Get the results as a data frame
 results = summary(demo_fit)
 
-# Varying (random) effects
+# Group-level deviations (random effects)
 # ranef(my_fit)
 
 # Summarise prior

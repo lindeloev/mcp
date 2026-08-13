@@ -9,7 +9,7 @@
 Models fitted with the \code{\link[mcp:mcp]{mcp}} function are represented as
 an \code{mcpfit} object which contains the user input (model, data, family),
 derived model characteristics (prior, parameter names, and jags code), and
-the fit (prior and/or posterior mcmc samples).
+the fit (prior and/or posterior MCMC draws).
 }
 \details{
 See \code{methods(class = "mcpfit")} for an overview of available methods.
@@ -19,6 +19,8 @@ User-provided information (see \code{\link{mcp}} for more details):
 \section{Slots}{
 
 \describe{
+\item{\code{call}}{The matched call to \code{mcp()}.}
+
 \item{\code{model}}{A list of formulas, making up the model.
 Provided by user. See \code{\link{mcp}} for more details.}
 
@@ -31,9 +33,9 @@ Provided by user. See \code{\link{mcp}} for more details.}
 \item{\code{prior}}{A named list.
 Provided by user. See \code{\link{mcp}} for more details.}
 
-\item{\code{mcmc_post}}{An \code{\link[coda]{mcmc.list}} object with posterior samples.}
+\item{\code{mcmc_post}}{An \code{\link[coda]{mcmc.list}} object with posterior draws.}
 
-\item{\code{mcmc_prior}}{An \code{\link[coda]{mcmc.list}} object with prior samples.}
+\item{\code{mcmc_prior}}{An \code{\link[coda]{mcmc.list}} object with prior draws.}
 
 \item{\code{loglik}}{An (Nchains * Ndraws) by N-observed-responses matrix of
 log-likelihoods.}

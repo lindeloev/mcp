@@ -24,22 +24,22 @@ pp_check(
 
 \item{type}{One of \code{bayesplot::available_ppc("grouped", invert = TRUE) \%>\% stringr::str_remove("ppc_")}}
 
-\item{facet_by}{Name of a column in data modeled as varying effect(s).}
+\item{facet_by}{Name of a grouping column used by group-level effects.}
 
 \item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model. Weighted
 Gaussian predictions and log-likelihoods also require the weights column. If \code{NULL}
 (default), the original data is used.}
 
-\item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
+\item{prior}{TRUE/FALSE. Plot using prior draws? Useful for \code{mcp(..., sample = "both")}}
 
 \item{varying}{One of:
 \itemize{
-\item \code{TRUE} All varying effects (\code{fit$pars$varying}).
-\item \code{FALSE} No varying effects (\code{c()}).
-\item \code{"cp"} or \code{"predictor"}: All varying effects belonging to that part of
+\item \code{TRUE} All group-level deviations (\code{fit$pars$group}).
+\item \code{FALSE} No group-level deviations (\code{c()}).
+\item \code{"cp"} or \code{"predictor"}: All group-level deviations belonging to that part of
 the model.
-\item Character vector: Only include specified varying parameters - see
-\code{fit$pars$varying}.
+\item Character vector: Only include specified group-level parameters - see
+\code{fit$pars$group}.
 }}
 
 \item{arma}{Whether to include AR and MA effects.
@@ -52,7 +52,7 @@ the model.
 draws for summary geoms, e.g., \code{pp_check(fit, type = "ribbon", ndraws = NULL)}.
 LOO checks always evaluate all posterior draws to preserve their PSIS
 weights; where supported, \code{ndraws} is passed to bayesplot to control the
-number of plotted samples.}
+number of plotted draws.}
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 
@@ -74,7 +74,7 @@ they do not support \code{prior = TRUE} or \code{newdata}.
 \donttest{
 pp_check(demo_fit)
 pp_check(demo_fit, type = "ecdf_overlay")
-#pp_check(some_varying_fit, type = "loo_intervals", facet_by = "id")
+#pp_check(some_group_fit, type = "loo_intervals", facet_by = "id")
 }
 }
 \seealso{

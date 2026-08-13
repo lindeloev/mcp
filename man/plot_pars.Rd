@@ -22,15 +22,15 @@ plot_pars(
 \item{pars}{Character vector. One of:
 \itemize{
 \item Vector of parameter names.
-\item \code{"population"} plots all population parameters.
-\item \code{"varying"} plots all varying effects. To plot a particular varying
+\item \code{"population"} plots all population-level parameters.
+\item \code{"group"} plots all group-level deviations. To plot a particular group-level
 effect, use \code{regex_pars = "^name"}.
 }}
 
 \item{regex_pars}{Vector of regular expressions. This will typically just be
 the beginning of the parameter name(s), i.e., "^cp_" plots all change
-points, "^my_varying" plots all levels of a particular varying effect, and
-"^cp_|^my_varying" plots both.}
+points, "^my_group_effect" plots all levels of a particular group-level effect, and
+"^cp_|^my_group_effect" plots both.}
 
 \item{type}{String or vector of strings. Calls \verb{bayesplot::mcmc_>>type<<()}.
 Common calls are "combo", "trace", and "dens_overlay". Current options include
@@ -41,7 +41,7 @@ Common calls are "combo", "trace", and "dens_overlay". Current options include
 \item{ncol}{Number of columns in plot. This is useful when you have many
 parameters and only one plot \code{type}.}
 
-\item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
+\item{prior}{TRUE/FALSE. Plot using prior draws? Useful for \code{mcp(..., sample = "both")}}
 
 \item{nvariables}{Positive integer. Maximum number of parameters plotted per
 page. The default of 5 follows \code{brms::plot.brmsfit()}.}
@@ -85,10 +85,10 @@ plot_pars(demo_fit, type = "hex", pars = c("cp_1", "time_2"))
 # Visualize the priors:
 plot_pars(demo_fit, prior = TRUE)
 
-# Useful for varying effects:
-# plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all varying effects
-# plot_pars(my_fit, regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying
-# pages = plot_pars(my_fit, pars = "varying", ask = FALSE)
+# Useful for group-level effects:
+# plot_pars(my_fit, pars = "group", ncol = 3)  # plot all group-level deviations
+# plot_pars(my_fit, regex_pars = "my_group_effect", ncol = 3)  # one group-level effect
+# pages = plot_pars(my_fit, pars = "group", ask = FALSE)
 # pages[[1]]  # Inspect or customize one page
 
 # Customize multi-column ggplots using "*" instead of "+" (patchwork)

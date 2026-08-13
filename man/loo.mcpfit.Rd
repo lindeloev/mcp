@@ -39,12 +39,12 @@
 
 \item{varying}{One of:
 \itemize{
-\item \code{TRUE} All varying effects (\code{fit$pars$varying}).
-\item \code{FALSE} No varying effects (\code{c()}).
-\item \code{"cp"} or \code{"predictor"}: All varying effects belonging to that part of
+\item \code{TRUE} All group-level deviations (\code{fit$pars$group}).
+\item \code{FALSE} No group-level deviations (\code{c()}).
+\item \code{"cp"} or \code{"predictor"}: All group-level deviations belonging to that part of
 the model.
-\item Character vector: Only include specified varying parameters - see
-\code{fit$pars$varying}.
+\item Character vector: Only include specified group-level parameters - see
+\code{fit$pars$group}.
 }}
 
 \item{arma}{Whether to include AR and MA effects.

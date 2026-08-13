@@ -50,24 +50,24 @@ plot_dpar(
 \item \code{TRUE} Add 2.5\% and 97.5\% quantiles. Corresponds to
 \code{q_fit = c(0.025, 0.975)}.
 \item \code{FALSE} No quantiles
-\item A vector of quantiles. For example, \code{quantiles = 0.5}
-plots the median and \code{quantiles = c(0.2, 0.8)} plots the 20\% and 80\%
+\item A vector of quantiles. For example, \code{q_fit = 0.5}
+plots the median and \code{q_fit = c(0.2, 0.8)} plots the 20\% and 80\%
 quantiles.
 }}
 
-\item{q_predict}{Same as \code{q_fit}, but for the prediction interval.}
+\item{q_predict}{Same as \code{q_fit}, but for the posterior predictive interval.}
 
 \item{facet_by}{Character vector. Names of categorical data columns to split to facets.
 Can be grouping-factor or categorical predictor columns.}
 
-\item{color_by}{A character vector naming categorical or varying-effect data columns to color by.
+\item{color_by}{A character vector naming categorical predictor or grouping columns to color by.
 If both \code{color_by} and \code{facet_by} are omitted, a sole categorical predictor is colored automatically. Set \code{color_by = NULL} explicitly to disable this.
 Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.}
 
 \item{lines}{Positive integer or \code{FALSE}. The number of fitted lines (draws).
 It is the number of joint posterior draws shown for every curve. FALSE or \code{lines = 0} plots no lines.
 Note that lines always plot fitted values - not predicted.
-For prediction intervals, see the \code{q_predict} argument.}
+For posterior predictive intervals, see the \code{q_predict} argument.}
 
 \item{geom_data}{String. One of "point", "line" (good for time-series),
 or FALSE (do not plot).}
@@ -75,11 +75,11 @@ or FALSE (do not plot).}
 \item{cp_dens}{TRUE/FALSE. Plot posterior densities of the change point(s)?
 Currently does not respect \code{facet_by}. This will be added in the future.}
 
-\item{rate}{Boolean. For binomial models, plot on raw data (\code{rate = FALSE}) or
-response divided by number of trials (\code{rate = TRUE}). If FALSE, linear
+\item{rate}{Boolean. For binomial models, return counts (\code{rate = FALSE}) or
+the observed or expected success proportion (\code{rate = TRUE}). If \code{FALSE}, linear
 interpolation on trial number is used to infer trials at a particular x.}
 
-\item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
+\item{prior}{TRUE/FALSE. Plot using prior draws? Useful for \code{mcp(..., sample = "both")}}
 
 \item{arma}{Whether to include AR and MA effects.
 \itemize{
@@ -88,8 +88,8 @@ interpolation on trial number is used to infer trials at a particular x.}
 }}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
-If there are varying effects, this is the number of draws from each varying group.
-\code{NULL} means "all". Ignored if both are \code{FALSE}. More samples trade speed for accuracy.}
+If there are group-level effects, this is the number of draws from each group.
+\code{NULL} means "all". Ignored if both are \code{FALSE}. More draws trade speed for accuracy.}
 
 \item{at}{Named list setting additional continuous predictors to fixed values.
 They default to their observed means. Passed to \code{interpolate_newdata()}.}
@@ -100,7 +100,7 @@ They default to their observed means. Passed to \code{interpolate_newdata()}.}
 
 \item{dpar}{What distributional parameter to evaluate. This is only relevant when \code{type == "fitted"}. E.g.,
 \itemize{
-\item \code{"epred"} (default): Expected value of the full model (or \code{NULL} for compatibility with brms etc.).
+\item \code{"epred"} (default): Expected response from the full model (or \code{NULL} for compatibility with brms etc.).
 \item \code{"mu"}: The central tendency which is often the mean after applying the
 link function.
 \item \code{"sigma"}: The standard deviation of the residuals.
@@ -111,7 +111,8 @@ coefficient you want to evaluate.
 \item{scale}{One of
 \itemize{
 \item \code{"response"}: return on the observed scale, i.e., after applying the inverse link function.
-\item \code{"linear"}: return on the parameter scale (where the linear trends are modelled).
+\item \code{"linear"}: return on the linear-predictor (link) scale, where the linear
+trends are modeled.
 A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} is not \code{NULL}.
 }}
 }
@@ -122,7 +123,7 @@ A \pkg{ggplot2} object.
 Plot prior or posterior model draws on top of data.
 }
 \details{
-\code{plot()} uses \code{fit$simulate()} on posterior samples. These represent the
+\code{plot()} uses \code{fit$simulate()} on posterior draws. These represent the
 (joint) posterior distribution. Interval summaries use at most 1000 draws
 by default; use \code{ndraws = NULL} to use all draws. Change-point densities
 always use all available draws.
@@ -139,10 +140,10 @@ plot(demo_fit)
 plot(demo_fit, prior = TRUE)  # The prior
 
 plot(demo_fit, lines = 0, q_fit = TRUE)  # 95\% central interval without lines
-plot(demo_fit, q_predict = c(0.1, 0.9))  # 80\% prediction interval
-plot_dpar(demo_fit, dpar = "sigma", lines = 100)  # The variance parameter on y
+plot(demo_fit, q_predict = c(0.1, 0.9))  # 80\% posterior predictive interval
+plot_dpar(demo_fit, dpar = "sigma", lines = 100)  # Residual standard deviation on y
 
-# Show a panel for each varying effect
+# Show a panel for each group-level effect
 # plot(fit, facet_by = "my_column")
 
 # Customize plots using regular ggplot2

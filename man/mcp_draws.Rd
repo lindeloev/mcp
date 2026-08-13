@@ -3,7 +3,7 @@
 \encoding{UTF-8}
 \name{mcp_draws}
 \alias{mcp_draws}
-\title{Get tidy samples with or without varying effects}
+\title{Get tidy draws with or without group-level effects}
 \usage{
 mcp_draws(
   fit,
@@ -19,32 +19,32 @@ mcp_draws(
 \item{fit}{An \code{\link{mcpfit}} object}
 
 \item{population}{\itemize{
-\item \code{TRUE} All population effects. Same as \code{fit$pars$population}.
-\item \code{FALSE} No population effects. Same as \code{c()}.
-\item Character vector: Only include specified population parameters - see \code{fit$pars$population}.
+\item \code{TRUE} All population-level effects. Same as \code{fit$pars$population}.
+\item \code{FALSE} No population-level effects. Same as \code{c()}.
+\item Character vector: Only include specified population-level parameters; see \code{fit$pars$population}.
 }}
 
 \item{varying}{One of:
 \itemize{
-\item \code{TRUE} All varying effects (\code{fit$pars$varying}).
-\item \code{FALSE} No varying effects (\code{c()}).
-\item \code{"cp"} or \code{"predictor"}: All varying effects belonging to that part of
+\item \code{TRUE} All group-level deviations (\code{fit$pars$group}).
+\item \code{FALSE} No group-level deviations (\code{c()}).
+\item \code{"cp"} or \code{"predictor"}: All group-level deviations belonging to that part of
 the model.
-\item Character vector: Only include specified varying parameters - see
-\code{fit$pars$varying}.
+\item Character vector: Only include specified group-level parameters - see
+\code{fit$pars$group}.
 }}
 
 \item{absolute}{\itemize{
-\item \code{TRUE} Returns the absolute location of all varying change points.
-\item \code{FALSE} Just returns the varying effects.
-\item Character vector: Only do absolute transform for these varying parameters - see \code{fit$pars$varying}.
+\item \code{TRUE} Returns the absolute location of all group-specific change points.
+\item \code{FALSE} Return the group-level deviations.
+\item Character vector: Apply the absolute transform only to these group-level parameters; see \code{fit$pars$group}.
 }}
 
 \item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
-If there are varying effects, this is the number of draws from each varying group.
-\code{NULL} means "all". Ignored if both are \code{FALSE}. More samples trade speed for accuracy.}
+If there are group-level effects, this is the number of draws from each group.
+\code{NULL} means "all". Ignored if both are \code{FALSE}. More draws trade speed for accuracy.}
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 }
@@ -55,8 +55,9 @@ If there are varying effects, this is the number of draws from each varying grou
 Extract posterior or prior draws formatted as tidy data frames
 }
 \details{
-Returns in a format useful for \code{fit$simulate()} with population parameters in wide format
-and varying effects in long format (the number of rows will be \code{ndraws * n_levels_in_varying}).
+Returns in a format useful for \code{fit$simulate()} with population-level parameters in wide format
+and group-level deviations in long format (the number of rows is multiplied
+by the number of selected group levels).
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

@@ -23,8 +23,9 @@
   varying = TRUE,
   arma = TRUE,
   ndraws = NULL,
-  samples_format = "tidy",
+  draws_format = "tidy",
   nsamples = lifecycle::deprecated(),
+  samples_format = lifecycle::deprecated(),
   ...
 )
 
@@ -39,24 +40,26 @@
   varying = TRUE,
   arma = TRUE,
   ndraws = NULL,
-  samples_format = "tidy",
+  draws_format = "tidy",
   scale = "response",
   nsamples = lifecycle::deprecated(),
+  samples_format = lifecycle::deprecated(),
   ...
 )
 
 \method{log_lik}{mcpfit}(
   object,
   newdata = NULL,
-  summary = TRUE,
+  summary = FALSE,
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
   varying = TRUE,
   arma = TRUE,
   ndraws = NULL,
-  samples_format = "tidy",
+  draws_format = "matrix",
   nsamples = lifecycle::deprecated(),
+  samples_format = lifecycle::deprecated(),
   ...
 )
 
@@ -84,20 +87,20 @@ Gaussian predictions and log-likelihoods also require the weights column. If \co
 
 \item{probs}{Vector of quantiles. Only in effect when \code{summary == TRUE}.}
 
-\item{rate}{Boolean. For binomial models, plot on raw data (\code{rate = FALSE}) or
-response divided by number of trials (\code{rate = TRUE}). If FALSE, linear
+\item{rate}{Boolean. For binomial models, return counts (\code{rate = FALSE}) or
+the observed or expected success proportion (\code{rate = TRUE}). If \code{FALSE}, linear
 interpolation on trial number is used to infer trials at a particular x.}
 
-\item{prior}{TRUE/FALSE. Plot using prior samples? Useful for \code{mcp(..., sample = "both")}}
+\item{prior}{TRUE/FALSE. Plot using prior draws? Useful for \code{mcp(..., sample = "both")}}
 
 \item{varying}{One of:
 \itemize{
-\item \code{TRUE} All varying effects (\code{fit$pars$varying}).
-\item \code{FALSE} No varying effects (\code{c()}).
-\item \code{"cp"} or \code{"predictor"}: All varying effects belonging to that part of
+\item \code{TRUE} All group-level deviations (\code{fit$pars$group}).
+\item \code{FALSE} No group-level deviations (\code{c()}).
+\item \code{"cp"} or \code{"predictor"}: All group-level deviations belonging to that part of
 the model.
-\item Character vector: Only include specified varying parameters - see
-\code{fit$pars$varying}.
+\item Character vector: Only include specified group-level parameters - see
+\code{fit$pars$group}.
 }}
 
 \item{arma}{Whether to include AR and MA effects.
@@ -107,19 +110,21 @@ the model.
 }}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
-If there are varying effects, this is the number of draws from each varying group.
-\code{NULL} means "all". Ignored if both are \code{FALSE}. More samples trade speed for accuracy.}
+If there are group-level effects, this is the number of draws from each group.
+\code{NULL} means "all". Ignored if both are \code{FALSE}. More draws trade speed for accuracy.}
 
-\item{samples_format}{One of "tidy" or "matrix". Controls the output format when \code{summary == FALSE}.
-See more under "value"}
+\item{draws_format}{One of "tidy" or "matrix". Controls the output format when \code{summary == FALSE}.}
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
+
+\item{samples_format}{Deprecated. Use \code{draws_format} instead.
+See more under "value"}
 
 \item{...}{Currently ignored.}
 
 \item{dpar}{What distributional parameter to evaluate. This is only relevant when \code{type == "fitted"}. E.g.,
 \itemize{
-\item \code{"epred"} (default): Expected value of the full model (or \code{NULL} for compatibility with brms etc.).
+\item \code{"epred"} (default): Expected response from the full model (or \code{NULL} for compatibility with brms etc.).
 \item \code{"mu"}: The central tendency which is often the mean after applying the
 link function.
 \item \code{"sigma"}: The standard deviation of the residuals.
@@ -130,17 +135,21 @@ coefficient you want to evaluate.
 \item{scale}{One of
 \itemize{
 \item \code{"response"}: return on the observed scale, i.e., after applying the inverse link function.
-\item \code{"linear"}: return on the parameter scale (where the linear trends are modelled).
+\item \code{"linear"}: return on the linear-predictor (link) scale, where the linear
+trends are modeled.
 A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} is not \code{NULL}.
 }}
 }
 \value{
 \itemize{
-\item If \code{summary = TRUE}: A \code{tibble} with the posterior mean for each row in \code{newdata},
-If \code{newdata} is \code{NULL}, the data in \code{fit$data} is used.
-\item If \code{summary = FALSE} and \code{samples_format = "tidy"}: A \code{tidybayes} \code{tibble} with all the posterior
+\item If \code{summary = TRUE}: A data frame with the draw mean and SD (\code{error}) for
+each row in \code{newdata}. With posterior draws (the default), \code{error} is the
+posterior predictive SD for \code{type = "predict"} and the posterior SD of the
+evaluated quantity otherwise. With \code{prior = TRUE}, these are the analogous
+prior summaries. If \code{newdata} is \code{NULL}, the data in \code{fit$data} is used.
+\item If \code{summary = FALSE} and \code{draws_format = "tidy"}: A \code{tidybayes} \code{tibble} with all the posterior
 draws (\code{Nd}) evaluated at each row in \code{newdata} (\code{Nn}), i.e., with \verb{Nd x Nn} rows. If there are
-varying effects, the returned data is expanded with the relevant levels for each row.
+group-level effects, the returned data is expanded with the relevant levels for each row.
 
 The return columns are:
 \itemize{
@@ -149,25 +158,29 @@ The return columns are:
 \item Draw values: one column for each parameter in the model.
 \item The estimate. Either ".epred", ".prediction", ".residual", or ".loglik" (matching tidybayes/ggdist conventions).
 }
-\item If \code{summary = FALSE} and \code{samples_format = "matrix"}: An \code{N_draws} X \code{nrows(newdata)} matrix with fitted/predicted
+\item If \code{summary = FALSE} and \code{draws_format = "matrix"}: An \code{N_draws} X \code{nrows(newdata)} matrix with fitted/predicted
 values (depending on \code{type}). This format is used by \code{brms} and it's useful as \code{yrep} in
 \verb{bayesplot::ppc_*} functions.
 }
 }
 \description{
 Evaluate the model on data, either summarised (per data-row) or per draw. You
-can use draws from the prior (\code{prior = TRUE}), select the parameter to predict
-from (``)
+can use draws from the prior (\code{prior = TRUE}), select a distributional
+parameter with \code{dpar}, and choose the response or linear-predictor scale with
+\code{scale} where applicable.
 }
 \details{
 \code{residuals(fit)} is equivalent to \code{fit$data[, fit$data$yvar] - fitted(fit, ...)} (or \code{newdata[, fit$data$yvar] - fitted(fit, ...)}),
-but with fixed arguments for \code{fitted}: \verb{rate = FALSE, dpar = 'epred', samples_format = 'tidy'}.
+but with fixed arguments for \code{fitted}: \verb{rate = FALSE, dpar = 'epred', draws_format = 'tidy'}.
+
+\code{log_lik()} defaults to an unsummarised draws-by-observation matrix, as used
+by \code{loo} and other posterior workflows.
 }
 \section{Functions}{
 \itemize{
 \item \code{predict(mcpfit)}: Predictive Distribution
 
-\item \code{fitted(mcpfit)}: Expected distribution
+\item \code{fitted(mcpfit)}: Expected response
 
 \item \code{log_lik(mcpfit)}: Pointwise log-likelihood
 
@@ -175,16 +188,16 @@ but with fixed arguments for \code{fitted}: \verb{rate = FALSE, dpar = 'epred', 
 
 }}
 \examples{
-fitted(demo_fit)  # Expected value at each demo_fit$data at response-level
-residuals(demo_fit)  # Residuals at each demo_fit$data at response-level
+fitted(demo_fit)  # Expected response for each row of demo_fit$data
+residuals(demo_fit)  # Residuals for each row of demo_fit$data
 log_lik(demo_fit)  # Log-likelihood at each demo_fit$data
 
 # All of the above take a range of arguments. E.g.,:
 \donttest{
 predict(demo_fit)  # Pointwise posterior predictive
-predict(demo_fit, probs = c(0.1, 0.5, 0.9))  # With median and 80\% credible interval.
+predict(demo_fit, probs = c(0.1, 0.5, 0.9))  # Median and 80\% posterior predictive interval.
 predict(demo_fit, prior = TRUE)  # Prior predictive
-fitted(demo_fit, summary = FALSE)  # Samples instead of summary. Useful for plotting distributions.
+fitted(demo_fit, summary = FALSE)  # Draws instead of summary. Useful for plotting distributions.
 fitted(demo_fit, dpar = "sigma")  # Another model parameter
 
 # Evaluate at novel data
