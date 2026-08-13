@@ -339,8 +339,8 @@ ranef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ..
 #' @return `formula()` returns the complete list of segment formulas, or one
 #'   formula when `segment` is supplied. `family()` returns an `mcpfamily`.
 #'   `model.frame()` returns the data retained in the fit. `nobs()` returns the
-#'   number of non-missing responses. `coef()` returns named posterior means of
-#'   the population-level parameters.
+#'   number of fitting-data rows. `coef()` returns named posterior means of the
+#'   population-level parameters.
 #' @name model-accessors-mcpfit
 NULL
 
@@ -357,7 +357,7 @@ family.mcpfit = function(object, ...) {
 #' @export
 nobs.mcpfit = function(object, ...) {
   rlang::check_dots_empty()
-  sum(!is.na(object$data[[object$pars$y]]))
+  nrow(model.frame(object))
 }
 
 
@@ -389,6 +389,76 @@ coef.mcpfit = function(object, prior = FALSE, ...) {
   draws = posterior::as_draws_matrix(posterior_draws(object, prior = prior))
   population = object$pars$population
   stats::setNames(colMeans(draws[, population, drop = FALSE]), population)
+}
+
+
+#' Posterior Covariance and Central Intervals for `mcpfit` Objects
+#'
+#' Summarise the joint and marginal posterior uncertainty of population-level
+#' model parameters.
+#'
+#' @param object An `mcpfit` object.
+#' @param correlation Return the posterior correlation matrix instead of the
+#'   covariance matrix?
+#' @param pars Optional names of population-level parameters to extract.
+#' @param parm Optional names or positions of population-level parameters to
+#'   include in the intervals.
+#' @param level Width of the central posterior interval.
+#' @param ... Currently unused.
+#' @return `vcov()` returns a posterior covariance or correlation matrix.
+#'   `confint()` returns a two-column matrix of central posterior intervals.
+#' @name posterior-uncertainty-mcpfit
+NULL
+
+
+#' @rdname posterior-uncertainty-mcpfit
+#' @export
+vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, ...) {
+  rlang::check_dots_empty()
+  checkmate::assert_flag(correlation)
+  pars = if (is.null(pars)) object$pars$population else as.character(pars)
+  pars = intersect(object$pars$population, pars)
+  if (length(pars) == 0)
+    return(NULL)
+
+  draws = posterior::as_draws_matrix(posterior_draws(object))
+  if (correlation)
+    return(stats::cor(draws[, pars, drop = FALSE]))
+
+  stats::cov(draws[, pars, drop = FALSE])
+}
+
+
+#' @rdname posterior-uncertainty-mcpfit
+#' @export
+confint.mcpfit = function(object, parm, level = 0.95, ...) {
+  rlang::check_dots_empty()
+  checkmate::assert_number(level, lower = 0, upper = 1)
+  checkmate::assert_true(level > 0 && level < 1, .var.name = "level")
+
+  population = object$pars$population
+  if (missing(parm)) {
+    parm = population
+  } else if (is.numeric(parm)) {
+    parm = population[parm]
+  } else {
+    checkmate::assert_character(parm)
+  }
+  if (!all(parm %in% population))
+    stop("`parm` must name population-level parameters from `coef(object)`.", call. = FALSE)
+
+  # Compute credible interval
+  probs = c((1 - level) / 2, 1 - (1 - level) / 2)
+  draws = posterior::as_draws_matrix(posterior_draws(object))
+  intervals = parm |>
+    vapply(
+      function(parameter) stats::quantile(draws[, parameter], probs = probs, names = FALSE),
+      numeric(2)
+    ) |>
+    t()
+
+  colnames(intervals) = paste0(format(100 * probs, trim = TRUE), " %")
+  intervals
 }
 
 

@@ -27,7 +27,7 @@ test_that("mcpfit model accessors follow standard R conventions", {
   expect_type(fit$call, "language")
   expect_identical(fit$call[[1]], quote(mcp))
   expect_identical(family(fit), fit$family)
-  expect_equal(nobs(fit), 4)
+  expect_equal(nobs(fit), 5)
   expect_identical(model.frame(fit), fit$data)
   expect_identical(formula(fit), fit$model)
   expect_identical(formula(fit, segment = 1), fit$model[[1]])
@@ -37,6 +37,15 @@ test_that("mcpfit model accessors follow standard R conventions", {
   colnames(values) = population
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(values))
   expect_equal(coef(fit), stats::setNames(colMeans(values), population))
+  expect_equal(vcov(fit), stats::cov(values))
+  expect_equal(vcov(fit, correlation = TRUE), stats::cor(values))
+  expected_intervals = t(vapply(
+    population,
+    function(parameter) stats::quantile(values[, parameter], c(0.025, 0.975), names = FALSE),
+    numeric(2)
+  ))
+  colnames(expected_intervals) = c("2.5 %", "97.5 %")
+  expect_equal(confint(fit), expected_intervals)
 })
 
 
