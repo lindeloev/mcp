@@ -396,7 +396,9 @@ test_pp_eval_weights = function(fit, prior = FALSE) {
   keys = c(".chain", ".iteration", ".draw", "data_row")
   mu = fitted(fit, summary = FALSE, probs = FALSE, prior = prior, dpar = "mu")
   sigma = fitted(fit, summary = FALSE, probs = FALSE, prior = prior, dpar = "sigma")
-  loglik = log_lik(fit, summary = FALSE, probs = FALSE, prior = prior)
+  loglik = log_lik(
+    fit, summary = FALSE, probs = FALSE, prior = prior, draws_format = "tidy"
+  )
   weights = fit$data[[weight_col]][loglik$data_row]
   observation_sd = sigma$.epred / sqrt(weights)
   observed = fit$data[[fit$pars$y]][loglik$data_row]
