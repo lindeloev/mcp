@@ -15,7 +15,13 @@ test_that("families", {
 
 test_that("mcpfit model accessors follow standard R conventions", {
   data = data.frame(x = 1:5, y = c(1, 2, NA, 4, 5), unused = 6:10)
-  fit = mcp(list(y ~ 1 + x), data, sample = FALSE)
+  expect_message(
+    {
+      fit = mcp(list(y ~ 1 + x), data, sample = FALSE)
+    },
+    "NA values detected in 'y'",
+    fixed = TRUE
+  )
 
   expect_identical(names(fit)[1:5], c("model", "data", "prior", "family", "call"))
   expect_type(fit$call, "language")
@@ -257,7 +263,9 @@ test_that("parameter-name collisions give a useful error", {
 # Test on new fit
 demo_settings = mcp_example("demo", sample = FALSE, plot = FALSE)
 demo_fit_iter = 50  # only niterations()/nchains() metadata is checked below, not recovery
-demo_fit2 = suppressWarnings(mcp(demo_settings$model, demo_settings$data, adapt = 50, iter = demo_fit_iter, diagnostics = FALSE, quiet = TRUE))
+expect_warning({
+  demo_fit2 = mcp(demo_settings$model, demo_settings$data, adapt = 50, iter = demo_fit_iter, diagnostics = FALSE, quiet = TRUE)
+}, "Adaptation incomplete", fixed = TRUE)
 
 test_that("binomial example can be constructed without sampling", {
   fit = mcp_example("binomial", sample = FALSE, plot = FALSE)
@@ -564,7 +572,9 @@ test_that("diagnostic settings control fit warnings and summary footers", {
   model = list(y ~ 1, ~ 1)
 
   # diagnostics = FALSE suppresses fit warnings and the inherited footer.
-  fit_nowarn = suppressWarnings(mcp(model, data, par_x = "x", iter = 50, adapt = 50, diagnostics = FALSE, quiet = TRUE))
+  expect_warning({
+    fit_nowarn = mcp(model, data, par_x = "x", iter = 50, adapt = 50, diagnostics = FALSE, quiet = TRUE)
+  }, "Adaptation incomplete", fixed = TRUE)
   expect_true(all(vapply(fit_nowarn$.internal$diagnostics, is.null, logical(1))))
 
   # Force high rhat by modifying posterior draws.

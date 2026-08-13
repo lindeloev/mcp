@@ -67,9 +67,16 @@ test_that("series resets generated AR/MA lags", {
     "equals(series_id_[i_], series_id_[i_ - 1]) * ma1_[i_]",
     fixed = TRUE
   )
-  expect_false(grepl("series_id_", mcp(
-    list(y ~ 1 + ar(1)), data, par_x = "x", sample = FALSE, quiet = TRUE
-  )$jags_code, fixed = TRUE))
+  expect_message(
+    {
+      fit_no_series = mcp(
+        list(y ~ 1 + ar(1)), data, par_x = "x", sample = FALSE, quiet = TRUE
+      )
+    },
+    "'x' is unordered",
+    fixed = TRUE
+  )
+  expect_false(grepl("series_id_", fit_no_series$jags_code, fixed = TRUE))
 })
 
 

@@ -79,19 +79,22 @@ test_that("mcp seed reproduces prior and posterior samples", {
   on.exit(future::plan(old_plan), add = TRUE)
 
   fit_seeded = function(seed) {
-    suppressWarnings(mcp(
-      seed_model,
-      seed_data,
-      par_x = "x",
-      sample = "both",
-      chains = 2,
-      adapt = 20,
-      iter = 30,
-      inits = list(Intercept_1 = 0),
-      seed = seed,
-      diagnostics = FALSE,
-      quiet = TRUE
-    ))
+    expect_warning({
+      fit = mcp(
+        seed_model,
+        seed_data,
+        par_x = "x",
+        sample = "both",
+        chains = 2,
+        adapt = 20,
+        iter = 30,
+        inits = list(Intercept_1 = 0),
+        seed = seed,
+        diagnostics = FALSE,
+        quiet = TRUE
+      )
+    }, "Adaptation incomplete", fixed = TRUE)
+    fit
   }
 
   fit_1 = fit_seeded(123)

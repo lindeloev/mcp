@@ -250,15 +250,18 @@ test_that("factor group coefficients sample and predict by level", {
     (data$condition == "B") * c(a = 0.5, b = 1, c = 1.5)[data$id] +
     stats::rnorm(nrow(data), 0, 0.3)
 
-  fit = suppressWarnings(mcp(
-    list(y ~ 1 + (condition || id)),
-    data,
-    par_x = "x",
-    chains = 1,
-    adapt = 20,
-    iter = 20,
-    quiet = TRUE
-  ))
+  expect_warning({
+    fit = mcp(
+      list(y ~ 1 + (condition || id)),
+      data,
+      par_x = "x",
+      chains = 1,
+      adapt = 20,
+      iter = 20,
+      diagnostics = FALSE,
+      quiet = TRUE
+    )
+  }, "Adaptation incomplete", fixed = TRUE)
 
   effects = ranef(fit)
   expect_equal(nrow(effects), 3 * length(unique(data$id)))
@@ -286,15 +289,18 @@ test_that("predictor group effects use existing prediction selectors", {
     id = rep(c("a", "b"), each = 6)
   )
   data$y = 3 + ifelse(data$id == "a", -1, 1) + stats::rnorm(12, 0, 0.2)
-  fit = suppressWarnings(mcp(
-    list(y ~ 1 + (1 | id)),
-    data,
-    par_x = "x",
-    chains = 1,
-    adapt = 20,
-    iter = 20,
-    quiet = TRUE
-  ))
+  expect_warning({
+    fit = mcp(
+      list(y ~ 1 + (1 | id)),
+      data,
+      par_x = "x",
+      chains = 1,
+      adapt = 20,
+      iter = 20,
+      diagnostics = FALSE,
+      quiet = TRUE
+    )
+  }, "Adaptation incomplete", fixed = TRUE)
 
   varying = fitted(
     fit, summary = FALSE, varying = "predictor", ndraws = 2
