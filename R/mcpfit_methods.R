@@ -85,6 +85,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
   estimates = posterior::summarise_draws(
     draws,
     mean = base::mean,
+    sd = stats::sd,
     lower = function(x) stats::quantile(x, tail_prob, names = FALSE),
     upper = function(x) stats::quantile(x, 1 - tail_prob, names = FALSE),
     rhat = posterior::rhat,
@@ -146,7 +147,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
       stringsAsFactors = FALSE
     )
 
-    # Add simulation to the beginning of the list
+    # Add simulation values for comparison with the fitted parameters.
     estimates = estimates %>%
       dplyr::left_join(simulated, by = "name", relationship = "one-to-one") %>%
       dplyr::mutate(
@@ -157,14 +158,20 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
           yes = "OK", no = ""
         )
       ) %>%
-      dplyr::select(-"cp_width") %>%
-      dplyr::relocate("name", "segment", "dpar", "match", "sim")
-  } else {
-    estimates = dplyr::relocate(estimates, "name", "segment", "dpar")
+      dplyr::select(-"cp_width")
   }
 
+  # Return-columns and column-order
   if (!verbose)
     estimates = dplyr::select(estimates, -"segment", -"dpar")
+
+  estimates = dplyr::select(
+    estimates,
+    dplyr::any_of(c(
+      "name", "mean", "sd", "lower", "upper", "rhat", "ess_bulk", "ess_tail",
+      "segment", "dpar", "sim", "match"
+    ))
+  )
 
   data.frame(estimates, row.names = NULL)
 }
@@ -199,6 +206,7 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
 #'   * `dpar` is the distributional parameter (`"cp"`, `"mu"`, `"sigma"`,
 #'     `"ar1"`, `"ma1"`, etc.) the parameter belongs to.
 #'   * `mean` is the posterior mean
+#'   * `sd` is the posterior standard deviation, i.e., the width of the posterior.
 #'   * `lower` and `upper` are the bounds of the central posterior interval
 #'     given in `width`.
 #'   * `rhat` is the rank-normalized split-Rhat convergence diagnostic.
@@ -259,18 +267,34 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
 
   # Data
   if (!is.null(draws)) {
-    # Print and return invisibly
-    cat("\nPopulation-level parameters:\n")
+    # Print and return population-level summaries invisibly.
     result = get_summary(fit, width, varying = FALSE, prior = prior, verbose = verbose)
-    print(data.frame(result), digits = digits, row.names = FALSE)
+    pars = get_fit_model_tables(fit)$pars
+    cp_names = pars$name[pars$part == "cp" & pars$scope == "population"]
+    is_cp = result$name %in% cp_names
 
-    if (!is.null(fit$pars$group))
-      cat("\nUse `ranef(fit)` to summarise the group-level deviation(s):", paste0(fit$pars$group, collapse = ", "))
+    # Format before splitting, so both printed tables share column widths.
+    display = data.frame(lapply(result, format, digits = digits), check.names = FALSE)
+    result_cp = display[is_cp, , drop = FALSE]
+    result_population = display[!is_cp, , drop = FALSE]
+
+    if (nrow(result_cp) > 0) {
+      cat("\nChange point parameters:\n")
+      print(data.frame(result_cp), digits = digits, row.names = FALSE)
+    }
+    if (nrow(result_population) > 0) {
+      cat("\nPopulation-level parameters:\n")
+      print(data.frame(result_population), digits = digits, row.names = FALSE)
+    }
 
     # Convergence warning footer
     all_res = result
     if (!is.null(fit$pars$group)) {
       ran_res = get_summary(fit, width, varying = TRUE, prior = prior, verbose = verbose)
+      cat(
+        "\nGroup-level effects: ", paste(fit$pars$group, collapse = ", "),
+        ". Use `ranef(fit)` to inspect deviations by level.\n", sep = ""
+      )
       all_res = dplyr::bind_rows(all_res, ran_res)
     }
     bad_mask = rep(FALSE, nrow(all_res))

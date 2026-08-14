@@ -382,6 +382,7 @@ test_that("posterior draws accessor preserves the stored chains", {
 test_that("summaries use central intervals and posterior diagnostics", {
   width = 0.8
   result = fixef(demo_fit, width = width)
+  printed = capture.output(summary(demo_fit, width = width))
   parameter = result$name[[1]]
   raw = .subset2(demo_fit, "mcmc_post")
   values = unlist(lapply(raw, function(chain) chain[, parameter]))
@@ -392,9 +393,12 @@ test_that("summaries use central intervals and posterior diagnostics", {
 
   expect_equal(result$lower[[1]], unname(quantile(values, 0.1)))
   expect_equal(result$upper[[1]], unname(quantile(values, 0.9)))
+  expect_equal(result$sd[[1]], stats::sd(values))
   expect_equal(result$rhat[[1]], posterior::rhat(parameter_matrix))
   expect_equal(result$ess_bulk[[1]], round(posterior::ess_bulk(parameter_matrix)))
   expect_equal(result$ess_tail[[1]], round(posterior::ess_tail(parameter_matrix)))
+  expect_true(all(c("Change point parameters:", "Population-level parameters:") %in% printed))
+  expect_true("sd" %in% names(result))
   expect_true(all(c("rhat", "ess_bulk", "ess_tail") %in% names(result)))
   expect_false("n.eff" %in% names(result))
 })

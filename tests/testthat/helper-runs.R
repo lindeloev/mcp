@@ -190,11 +190,11 @@ test_arma_simulation = function(fit) {
 
 # Tests if summary(fit) and ranef(fit) work as expected
 test_summary = function(fit, varying_cols, prior = FALSE) {
-  summary_cols = c('name','mean','lower','upper','rhat','ess_bulk','ess_tail')
-  verbose_summary_cols = c('name','segment','dpar','mean','lower','upper','rhat','ess_bulk','ess_tail')
+  summary_cols = c('name','mean','sd','lower','upper','rhat','ess_bulk','ess_tail')
+  verbose_summary_cols = c('name','mean','sd','lower','upper','rhat','ess_bulk','ess_tail','segment','dpar')
   if (!is.null(attr(fit$data[, fit$pars$y], "simulated"))) {
-    summary_cols = append(summary_cols, c("match", "sim"), after = 1)
-    verbose_summary_cols = append(verbose_summary_cols, c("match", "sim"), after = 3)
+    summary_cols = c(summary_cols, "sim", "match")
+    verbose_summary_cols = c(verbose_summary_cols, "sim", "match")
   }
   output = capture.output(result <- summary(fit, prior = prior))
   testthat::expect_named(result, summary_cols)
@@ -206,7 +206,8 @@ test_summary = function(fit, varying_cols, prior = FALSE) {
 
   # If there are group-level effects
   if (length(varying_cols) > 0) {
-    testthat::expect_true(any(grepl("ranef\\(", output)))  # notice about group-level effects
+    testthat::expect_true(any(grepl("Use `ranef(fit)` to inspect deviations by level.", output, fixed = TRUE)))
+    testthat::expect_false(any(grepl("Group-level parameters:", output, fixed = TRUE)))
     varying = ranef(fit, prior = prior)
     testthat::expect_true(is.character(varying$name))
     testthat::expect_true(is.numeric(varying$mean))

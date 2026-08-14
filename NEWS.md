@@ -11,7 +11,7 @@
     - Adding `as_draws(fit)`, `as_draws_df(fit)`, `tidy_draws(fit)`, `ndraws(fit)`, rstantools linpred/epred, etc. with full S3 generic registration for `{posterior}`, `{rstantools}`, and `{tidybayes}` (`spread_draws()`, `gather_draws()`). 
     - Per-draw methods (`summary = FALSE` in `fitted()`, `predict()`, `residuals()`, `log_lik()`) now return dot-prefixed columns (`.epred`, `.prediction`, `.residual`, `.loglik`) for `{tidybayes}` / `{ggdist}` compatibility.
     - `nsamples` soft-deprecated in favor of `ndraws`; `which_y` deprecated in favor of `dpar`.
-    - Added R generics for mcpfits: `formula(fit)`, `family(fit)`, `model.frame(fit)`, `nobs(fit)`, `coef(fit)`, `vcov(fit)`, and `confint(fit)`. Fits now also store a proper matched `$call`.
+    - Added R generics for mcpfits: `formula(fit)`, `family(fit)`, `model.frame(fit)`, `nobs(fit)`, `coef(fit)`, `vcov(fit)`, and `confint(fit)`. Fits now also store a proper matched `$call`. Printed summaries now report posterior `sd` and has a new layout.
 
 -   **Negative binomial and GARMA:** You can now do `mcp(..., family = negbinomial())`. Autoregression (`ar()`) has been generalized to GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment.
 
