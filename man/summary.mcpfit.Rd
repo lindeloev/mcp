@@ -69,6 +69,7 @@ With \code{verbose = TRUE}:
 \item \code{dpar} is the distributional parameter (\code{"cp"}, \code{"mu"}, \code{"sigma"},
 \code{"ar1"}, \code{"ma1"}, etc.) the parameter belongs to.
 \item \code{mean} is the posterior mean
+\item \code{sd} is the posterior standard deviation, i.e., the width of the posterior.
 \item \code{lower} and \code{upper} are the bounds of the central posterior interval
 given in \code{width}.
 \item \code{rhat} is the rank-normalized split-Rhat convergence diagnostic.
@@ -85,6 +86,10 @@ simulation and summary multiple times to get a sense of the robustness.
 \item \code{match} is \code{"OK"} if \code{sim} is contained in the central posterior
 interval (\code{lower} to \code{upper}).
 }
+
+Printed summaries separate change points and other population-level
+parameters. The returned data frame remains a flat summary of
+population-level parameters; use \code{\link[=ranef]{ranef()}} for group-level deviations.
 }
 \description{
 Summarise parameter estimates and model diagnostics.

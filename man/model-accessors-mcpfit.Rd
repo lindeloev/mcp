@@ -33,8 +33,8 @@ selecting one segment.}
 \code{formula()} returns the complete list of segment formulas, or one
 formula when \code{segment} is supplied. \code{family()} returns an \code{mcpfamily}.
 \code{model.frame()} returns the data retained in the fit. \code{nobs()} returns the
-number of non-missing responses. \code{coef()} returns named posterior means of
-the population-level parameters.
+number of fitting-data rows. \code{coef()} returns named posterior means of the
+population-level parameters.
 }
 \description{
 Standard R accessors for the model formulas, family, fitting data, number of
