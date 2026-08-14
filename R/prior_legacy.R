@@ -89,19 +89,3 @@ add_legacy_prior_jags_data = function(jags_data, jags_code, context) {
   jags_data[used] = as.list(values[used])
   jags_data
 }
-
-
-legacy_prior_table = function(fit) {
-  segments = get_fit_model_tables(fit)$segments
-  if (is.null(segments) || is.null(fit$data) || is.null(fit$prior))
-    stop("This legacy mcpfit does not contain enough information to reconstruct its priors.")
-  context = prior_context(fit$data, segments)
-  all_names = names(fit$prior)
-  specs = tibble::tibble(
-    parameter = all_names,
-    code = unname(unlist(fit$prior)),
-    description = "Stored prior from a legacy mcpfit",
-    source = "legacy"
-  )
-  compile_prior_specs(specs, all_names, context)
-}

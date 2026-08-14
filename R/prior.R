@@ -48,7 +48,7 @@ prior_summary = function(fit, verbose = FALSE) {
   if (is.null(table))
     table = attr(fit$prior, "prior_table")
   if (is.null(table))
-    table = legacy_prior_table(fit)
+    stop("This `mcpfit` object does not contain a resolved prior table. Please re-fit the model using mcp >= 0.4.0.")
 
   pars = get_fit_model_tables(fit)$pars
   if (!is.null(pars)) {

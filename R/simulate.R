@@ -81,29 +81,6 @@ evaluate_fitted_designs = function(table, design_specs, newdata, par_x) {
 }
 
 
-#' Rebuild predictors for fitted objects without stored design specifications
-#'
-#' @keywords internal
-#' @noRd
-#' @inheritParams add_rhs_predictors
-#' @return A predictor matrix.
-#' @section Removal:
-#' This compatibility path can be removed for mcp 1.0 together with support
-#' for fitted objects that predate stored design specifications.
-get_legacy_predictor_matrix = function(newdata, fit, model_tables) {
-  design_data = newdata
-  group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
-  for (group_col in setdiff(group_cols, names(design_data)))
-    design_data[[group_col]] = fit$data[[group_col]][1]
-
-  new_tables = get_predictor_tables(
-    fit$model, design_data, fit$family, fit$pars$x, check_rank = FALSE
-  )
-  new_group_effects = get_group_effects(
-    model_tables$cps, new_tables$group_effects
-  )
-  get_predictor_matrix(new_tables$predictors, new_group_effects)
-}
 #' Add predictors to `newdata`
 #' @aliases add_rhs_predictors
 #' @keywords internal
@@ -128,18 +105,13 @@ add_rhs_predictors = function(newdata, fit) {
   predictors = model_tables$predictors
   group_effects = model_tables$group_effects
   design_specs = model_tables$design_specs
-  if (is.null(design_specs)) {
-    # TODO(mcp 1.0): Remove this branch with legacy fitted-object support.
-    predictor_matrix = get_legacy_predictor_matrix(newdata, fit, model_tables)
-  } else {
-    predictors = evaluate_fitted_designs(
-      predictors, design_specs, newdata, fit$pars$x
-    )
-    group_effects = evaluate_fitted_designs(
-      group_effects, design_specs, newdata, fit$pars$x
-    )
-    predictor_matrix = get_predictor_matrix(predictors, group_effects)
-  }
+  predictors = evaluate_fitted_designs(
+    predictors, design_specs, newdata, fit$pars$x
+  )
+  group_effects = evaluate_fitted_designs(
+    group_effects, design_specs, newdata, fit$pars$x
+  )
+  predictor_matrix = get_predictor_matrix(predictors, group_effects)
 
   # All permutations of rows in newdata and parameters
   as.data.frame(predictor_matrix) %>%
