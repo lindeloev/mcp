@@ -72,12 +72,12 @@ model = list(
   # cp_1, cp_1_sd, cp_1_id, year_2
   1 + (1|id) ~ 0 + year,
   
-  # cp_2, cp_2_sd, cp_2_condition, Intercept_3, year_3
-  1 + (1|condition) ~ 1 + year
+  # cp_2, cp_2_sd, cp_2_id, Intercept_3, year_3
+  1 + (1|id) ~ 1 + year
 )
 
 # Interpret, but do not sample.
-fit = mcp(model, data = data.frame(score = 1:10, year = 1:10, id = 1:10, condition = rep(c("A", "B"), 5)), sample = FALSE)
+fit = mcp(model, data = data.frame(score = 1:10, year = 1:10, id = 1:10), sample = FALSE)
 str(fit$pars, vec.len = 99)  # Compact display
 ```
 

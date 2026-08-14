@@ -34,10 +34,13 @@ reference:
       - plot_pars
       - pp_check
       - summary.mcpfit
+      - model-accessors-mcpfit
+      - posterior-uncertainty-mcpfit
       - ranef
       - fixef
       - fitted
       - predict
+      - posterior_epred.mcpfit
       - residuals
       - loo
       - waic
@@ -50,10 +53,6 @@ reference:
     desc: These are used internally by mcp, but are exposed here since they may be useful for other purposes. Most other useful internal functions deliver the result already in `mcp(segments, sample = FALSE)`, so `mcp()` will be their API.
     contents:
       - sd_to_prec
-      - logit
-      - ilogit
-      - probit
-      - phi
       - is.mcpfit
 
   - title: Families
