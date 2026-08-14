@@ -160,17 +160,18 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
 #' @param group_effects A table from `get_group_effects()`.
 #' @param family An `mcpfamily` object.
 #' @return A tibble with one row per model parameter (population and
-#'   group), with columns `name`, `part`, `scope`, `segment`, and `dpar`.
+#'   group), with columns `name`, `part`, `scope`, `role`, `segment`, and
+#'   `dpar`.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_pars_table = function(predictors, cps, group_effects, family) {
   cp_pars = tibble::tibble(
-    name = character(), part = character(), scope = character(),
+    name = character(), part = character(), scope = character(), role = character(),
     segment = integer(), dpar = character(), .tie = integer()
   )
   if (nrow(cps) > 0) {
     cp_pars = tibble::tibble(
-      name = cps$name, part = "cp", scope = "population",
+      name = cps$name, part = "cp", scope = "population", role = "change_point",
       segment = cps$segment, dpar = "cp", .tie = 0L
     )
     varying_cp = cps[cps$varying, , drop = FALSE]
@@ -178,11 +179,11 @@ get_pars_table = function(predictors, cps, group_effects, family) {
       cp_pars = dplyr::bind_rows(
         cp_pars,
         tibble::tibble(
-          name = varying_cp$sd_name, part = "cp", scope = "population",
+          name = varying_cp$sd_name, part = "cp", scope = "population", role = "group_sd",
           segment = varying_cp$segment, dpar = "cp", .tie = 1L
         ),
         tibble::tibble(
-          name = varying_cp$group_name, part = "cp", scope = "group",
+          name = varying_cp$group_name, part = "cp", scope = "group", role = "group_deviation",
           segment = varying_cp$segment, dpar = "cp", .tie = 2L
         )
       )
@@ -194,6 +195,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
       name = .data$code_name,
       part = "predictor",
       scope = "population",
+      role = as.character(ifelse(.data$dpar %in% family$dpar_specs$dpar, "fixed_effect", "arma")),
       segment = .data$segment,
       dpar = as.character(ifelse(.data$dpar %in% c("ar", "ma"), paste0(.data$dpar, .data$order), .data$dpar)),
       .tie = .data$matrix_col
@@ -205,6 +207,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
       name = .data$sd_name,
       part = "predictor",
       scope = "population",
+      role = "group_sd",
       segment = .data$segment,
       dpar = .data$dpar,
       .tie = .data$matrix_col + 0.1
@@ -216,6 +219,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
           name = .data$name,
           part = "predictor",
           scope = "group",
+          role = "group_deviation",
           segment = .data$segment,
           dpar = .data$dpar,
           .tie = .data$matrix_col + 0.2
@@ -235,7 +239,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
     dplyr::mutate(dpar = factor(.data$dpar, levels = dpar_levels)) %>%
     dplyr::arrange(.data$dpar, .data$segment, .data$.tie) %>%
     dplyr::mutate(dpar = as.character(.data$dpar)) %>%
-    dplyr::select("name", "part", "scope", "segment", "dpar")
+    dplyr::select("name", "part", "scope", "role", "segment", "dpar")
 }
 
 
@@ -289,8 +293,7 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
 
 #' Get model metadata tables from a fitted model
 #'
-#' New fits store consistently named tables in `.internal$model_tables`. The
-#' fallback keeps methods working for legacy saved fits.
+#' Fits store consistently named tables in `.internal$model_tables`.
 #'
 #' @keywords internal
 #' @noRd
@@ -299,44 +302,7 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
 #'   and fitted `design_specs`.
 get_fit_model_tables = function(fit) {
   check_mcpfit_version(fit)
-  if (!is.null(fit$.internal$model_tables))
-    return(fit$.internal$model_tables)
-
-  segments = fit$.internal$ST
-  if (is.null(segments) && !is.null(fit$.other))
-    segments = fit$.other$ST
-  cps = fit$.internal$CP
-  if (is.null(cps) && !is.null(segments)) {
-    cps = segments %>%
-      dplyr::filter(.data$segment > 1) %>%
-      dplyr::transmute(
-        cp = .data$segment - 1,
-        segment = .data$segment,
-        name = .data$cp_name,
-        varying = !is.na(.data$cp_group),
-        group_col = .data$cp_group_col,
-        sd_name = .data$cp_sd,
-        group_name = .data$cp_group,
-        code = .data$cp_code_form
-      )
-  }
-
-  pars = fit$.internal$pars_table
-  if (!is.null(pars) && "part" %notin% names(pars)) {
-    group_names = stats::na.omit(cps$group_name)
-    pars$part = ifelse(pars$dpar == "cp", "cp", "predictor")
-    pars$scope = ifelse(pars$name %in% group_names, "group", "population")
-    pars = dplyr::select(pars, "name", "part", "scope", "segment", "dpar")
-  }
-
-  list(
-    segments = segments,
-    cps = cps,
-    predictors = fit$.internal$rhs_table,
-    group_effects = get_group_effects(cps),
-    pars = pars,
-    design_specs = NULL
-  )
+  fit$.internal$model_tables
 }
 
 

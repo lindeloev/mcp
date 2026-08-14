@@ -197,7 +197,7 @@ get_plot = function(x,
   xvar = rlang::sym(fit$pars$x)
   yvar = rlang::sym(fit$pars$y)
   by = plot_by
-  group_pars = unpack_varying(fit, cols = by)$pars
+  group_pars = unpack_group_effects(fit, cols = by)$pars
 
   ############################
   # MAKE NEWDATA AND PREDICT #

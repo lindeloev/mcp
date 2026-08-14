@@ -36,7 +36,6 @@ test_that("mcpfit model accessors follow standard R conventions", {
   values = matrix(seq_len(3 * length(population)), nrow = 3)
   colnames(values) = population
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(values))
-  expect_equal(coef(fit), stats::setNames(colMeans(values), population))
   expect_equal(vcov(fit), stats::cov(values))
   expect_equal(vcov(fit, correlation = TRUE), stats::cor(values))
   expected_intervals = t(vapply(
@@ -49,7 +48,7 @@ test_that("mcpfit model accessors follow standard R conventions", {
 })
 
 
-test_that("model metadata uses aligned table names and varying selectors", {
+test_that("model metadata uses aligned table names and group-effect selectors", {
   data = data.frame(
     x = 1:6,
     y = c(2, 4, 3, 8, 7, 9),
@@ -73,14 +72,43 @@ test_that("model metadata uses aligned table names and varying selectors", {
   )
   expect_true(all(tables$pars$part %in% c("cp", "predictor")))
   expect_true(all(tables$pars$scope %in% c("population", "group")))
+  expect_true(all(tables$pars$role %in% c("change_point", "fixed_effect", "arma", "group_sd", "group_deviation")))
 
-  expect_equal(unpack_varying(fit, pars = "cp")$pars, fit$pars$group)
-  expect_null(unpack_varying(fit, pars = "predictor")$pars)
+  expect_equal(unpack_group_effects(fit, pars = "cp")$pars, fit$pars$group)
+  expect_null(unpack_group_effects(fit, pars = "predictor")$pars)
   expect_equal(
-    unpack_varying(fit, pars = fit$pars$group)$pars,
+    unpack_group_effects(fit, pars = fit$pars$group)$pars,
     fit$pars$group
   )
-  expect_error(unpack_varying(fit, pars = "unknown"), "Unknown `varying`")
+  expect_error(unpack_group_effects(fit, pars = "unknown"), "Unknown group-effect")
+})
+
+
+test_that("summary, fixef, and ranef select parameter roles consistently", {
+  data = data.frame(
+    x = 1:8,
+    y = c(1, 2, 4, 3, 5, 6, 8, 7),
+    id = rep(c("a", "b"), each = 4)
+  )
+  fit = mcp(
+    list(y ~ 1 + ar(1) + (1 | id), (1 | id) ~ 1),
+    data, par_x = "x", sample = FALSE
+  )
+  pars = get_fit_model_tables(fit)$pars
+  group_draws = unlist(lapply(pars$name[pars$scope == "group"], function(name) {
+    paste0(name, "[", c("a", "b"), "]")
+  }))
+  draw_names = c(pars$name[pars$scope == "population"], group_draws)
+  draws = matrix(seq_len(3 * length(draw_names)), nrow = 3, dimnames = list(NULL, draw_names))
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+
+  capture.output(summary_result <- summary(fit))
+  expect_setequal(summary_result$name, pars$name[pars$scope == "population"])
+  expect_setequal(
+    fixef(fit)$name,
+    pars$name[pars$scope == "population" & pars$role == "fixed_effect"]
+  )
+  expect_setequal(ranef(fit)$name, group_draws)
 })
 
 
@@ -96,6 +124,14 @@ test_that("legacy fit detection blocks pre-0.4.0 mcpfit objects", {
 
   expect_error(
     get_fit_model_tables(legacy),
+    "created with an older version of mcp (< 0.4.0)",
+    fixed = TRUE
+  )
+
+  missing_role = fit
+  missing_role$.internal$model_tables$pars$role = NULL
+  expect_error(
+    get_fit_model_tables(missing_role),
     "created with an older version of mcp (< 0.4.0)",
     fixed = TRUE
   )
@@ -199,10 +235,6 @@ test_that("priors are resolved without changing their parameterization", {
     "Deprecated prior data constant"
   )
   expect_equal(legacy_fit$prior$cp_1, "dunif(1, 6)")
-
-  legacy_fit$.internal$prior_table = NULL
-  legacy_fit$prior$cp_1 = "dunif(MINX, MAXX)"
-  expect_equal(prior_summary(legacy_fit)$prior[1], "uniform(min = 1, max = 6)")
 })
 
 

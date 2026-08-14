@@ -11,7 +11,13 @@
 check_mcpfit_version = function(fit) {
   checkmate::assert_class(fit, "mcpfit")
 
-  is_valid = !is.null(fit$.internal) && is.mcpfamily(fit$family)
+  tables = fit$.internal$model_tables
+  is_valid = !is.null(fit$.internal) &&
+    is.mcpfamily(fit$family) &&
+    !is.null(tables) &&
+    !is.null(tables$pars) &&
+    !is.null(tables$design_specs) &&
+    "role" %in% names(tables$pars)
 
   if (!is_valid) {
     stop(

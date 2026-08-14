@@ -218,7 +218,7 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
   rows = unique(round(seq(1, nrow(fit$data), length.out = min(nrows, nrow(fit$data)))))
   newdata = fit$data[rows, , drop = FALSE]
   newdata$data_row = seq_len(nrow(newdata))
-  group_info = unpack_varying(fit, pars = TRUE)
+  group_info = unpack_group_effects(fit, pars = TRUE)
   draws = as.matrix(.subset2(fit, "mcmc_post"))
   # Spread the check over all retained post-warmup draws and chains.
   keep = unique(round(seq(1, nrow(draws), length.out = min(ndraws, nrow(draws)))))

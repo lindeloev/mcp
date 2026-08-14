@@ -20,10 +20,13 @@ fit_mcp = mcp(model, df, family = gaussian(), adapt = 500, iter = 2000, seed = 4
 test_that("Gaussian inference against lm()", {
   fit_lm = lm(y ~ x + group, data = df)
 
-  # Parameter estimates: (Intercept, x, groupB, sigma)
+  # Regression coefficients
   params_mcp = fixef(fit_mcp)$mean
-  params_lm = c(as.numeric(coef(fit_lm)), summary(fit_lm)$sigma)
+  params_lm = as.numeric(coef(fit_lm))
   testthat::expect_lt(max(abs(params_mcp - params_lm)), 0.1)
+
+  sigma_mcp = summary(fit_mcp)$mean[summary(fit_mcp)$name == "sigma_1"]
+  testthat::expect_lt(abs(sigma_mcp - summary(fit_lm)$sigma), 0.1)
 
   # Log-likelihood
   fit_mcp = add_loglik(fit_mcp)
@@ -55,13 +58,15 @@ test_that("Gaussian fixed change-point inference against lm()", {
   fit_lm_cp = lm(y ~ x + I(pmax(0, x - 10)), data = df_cp)
   coef_lm = coef(fit_lm_cp)
 
-  # mcp parameter order for this model: cp_1, Intercept_1, x_1, x_2, sigma_1
+  # Regression coefficients are in fixef(); the change point and residual SD
+  # are available from summary().
   mcp_fixef = fixef(fit_mcp_cp)
+  mcp_summary = summary(fit_mcp_cp)
   estimates_mcp = c(
     mcp_fixef$mean[mcp_fixef$name == "Intercept_1"],
     mcp_fixef$mean[mcp_fixef$name == "x_1"],
     mcp_fixef$mean[mcp_fixef$name == "x_2"],
-    mcp_fixef$mean[mcp_fixef$name == "sigma_1"]
+    mcp_summary$mean[mcp_summary$name == "sigma_1"]
   )
 
   # lm model parameterization: Intercept, x_1, x_2 (which is x_1 + delta_x), sigma

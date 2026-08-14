@@ -43,35 +43,43 @@ NULL
 #' @noRd
 #' @inheritParams summary.mcpfit
 #' @param fit An \code{\link{mcpfit}}` object.
-#' @param varying Boolean. Summarise group-level deviations (`TRUE`) or
-#'   population-level effects (`FALSE`)? The name is retained for compatibility.
+#' @param scope Which parameter scope to summarise: population-level parameters
+#'   or group-level deviations.
+#' @param role Optional parameter role to select within `scope`.
 #' @param verbose Logical. Include the `segment` and `dpar` columns.
 #' @return A data.frame with summaries for each model parameter. With
 #'   `verbose = TRUE`, rows are labeled with `segment` and `dpar` columns (see
 #'   `summary.mcpfit`).
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FALSE) {
+get_summary = function(fit, width, scope = c("population", "group"), role = NULL,
+                       prior = FALSE, verbose = FALSE) {
   # Check arguments
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_number(width, lower = 0, upper = 1)
-  checkmate::assert_flag(varying)
+  scope = rlang::arg_match0(scope, c("population", "group"))
+  checkmate::assert_character(role, null.ok = TRUE)
   checkmate::assert_flag(prior)
   checkmate::assert_flag(verbose)
 
-  if (varying == TRUE & is.null(fit$pars$group))
+  if (scope == "group" & is.null(fit$pars$group))
     return(NULL)
 
   draws = posterior_draws(fit, prior = prior)
 
-  # Select only group-indexed or only population-scope columns.
+  # Select by the independent scope and role dimensions of the parameter table.
   all_cols = posterior::variables(draws)
-  if (varying == FALSE) {
-    get_cols = all_cols[all_cols %in% fit$pars$population]
+  pars = get_fit_model_tables(fit)$pars
+  selected_names = pars$name[pars$scope == scope]
+  if (!is.null(role))
+    selected_names = selected_names[pars$role[pars$scope == scope] %in% role]
+
+  if (scope == "population") {
+    get_cols = all_cols[all_cols %in% selected_names]
   } else {
     get_cols = all_cols[vapply(
       all_cols,
-      function(column) any(startsWith(column, paste0(fit$pars$group, "["))),
+      function(column) any(startsWith(column, paste0(selected_names, "["))),
       logical(1)
     )]
     if (length(get_cols) == 0)
@@ -102,7 +110,6 @@ get_summary = function(fit, width, varying = FALSE, prior = FALSE, verbose = FAL
   # built in mcp(). Group-level columns (e.g. "cp_1_id[A]") are matched by
   # their base name; ties (i.e., levels of the same group-level effect) are
   # broken alphabetically by the full column name.
-  pars = get_fit_model_tables(fit)$pars
   base_name = sub("\\[.*\\]$", "", estimates$name)
   match_idx = match(base_name, pars$name)
   estimates$segment = pars$segment[match_idx]
@@ -268,7 +275,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
   # Data
   if (!is.null(draws)) {
     # Print and return population-level summaries invisibly.
-    result = get_summary(fit, width, varying = FALSE, prior = prior, verbose = verbose)
+    result = get_summary(fit, width, scope = "population", prior = prior, verbose = verbose)
     pars = get_fit_model_tables(fit)$pars
     cp_names = pars$name[pars$part == "cp" & pars$scope == "population"]
     is_cp = result$name %in% cp_names
@@ -290,7 +297,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
     # Convergence warning footer
     all_res = result
     if (!is.null(fit$pars$group)) {
-      ran_res = get_summary(fit, width, varying = TRUE, prior = prior, verbose = verbose)
+      ran_res = get_summary(fit, width, scope = "group", prior = prior, verbose = verbose)
       cat(
         "\nGroup-level effects: ", paste(fit$pars$group, collapse = ", "),
         ". Use `ranef(fit)` to inspect deviations by level.\n", sep = ""
@@ -334,11 +341,11 @@ ranef = function(object, ...) UseMethod("ranef")
 
 
 #' @aliases fixef fixef.mcpfit
-#' @describeIn summary.mcpfit Population-level effects of `mcpfit`.
+#' @describeIn summary.mcpfit Population-level fixed effects (regression coefficients) of `mcpfit`.
 #' @export
 fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {
   rlang::check_dots_empty()
-  get_summary(object, width, varying = FALSE, prior = prior, verbose = verbose)
+  get_summary(object, width, scope = "population", role = "fixed_effect", prior = prior, verbose = verbose)
 }
 
 #' @aliases ranef ranef.mcpfit
@@ -346,25 +353,23 @@ fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ..
 #' @export
 ranef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {
   rlang::check_dots_empty()
-  get_summary(object, width, varying = TRUE, prior = prior, verbose = verbose)
+  get_summary(object, width, scope = "group", prior = prior, verbose = verbose)
 }
 
 
 #' Extract Model Information from an `mcpfit`
 #'
-#' Standard R accessors for the model formulas, family, fitting data, number of
-#' observations, and population-level coefficients stored in an `mcpfit`.
+#' Standard R accessors for the model formulas, family, fitting data, and number
+#' of observations stored in an `mcpfit`.
 #'
 #' @param object,x,formula An `mcpfit` object.
 #' @param segment `NULL` to return all segment formulas, or a positive integer
 #'   selecting one segment.
-#' @param prior Logical. Use prior rather than posterior draws for `coef()`?
 #' @param ... Currently unused.
 #' @return `formula()` returns the complete list of segment formulas, or one
 #'   formula when `segment` is supplied. `family()` returns an `mcpfamily`.
 #'   `model.frame()` returns the data retained in the fit. `nobs()` returns the
-#'   number of fitting-data rows. `coef()` returns named posterior means of the
-#'   population-level parameters.
+#'   number of fitting-data rows.
 #' @name model-accessors-mcpfit
 NULL
 
@@ -402,17 +407,6 @@ formula.mcpfit = function(x, segment = NULL, ...) {
     return(x$model)
 
   x$model[[segment]]
-}
-
-
-#' @rdname model-accessors-mcpfit
-#' @export
-coef.mcpfit = function(object, prior = FALSE, ...) {
-  rlang::check_dots_empty()
-  checkmate::assert_flag(prior)
-  draws = posterior::as_draws_matrix(posterior_draws(object, prior = prior))
-  population = object$pars$population
-  stats::setNames(colMeans(draws[, population, drop = FALSE]), population)
 }
 
 
@@ -469,7 +463,7 @@ confint.mcpfit = function(object, parm, level = 0.95, ...) {
     checkmate::assert_character(parm)
   }
   if (!all(parm %in% population))
-    stop("`parm` must name population-level parameters from `coef(object)`.", call. = FALSE)
+    stop("`parm` must name population-level parameters from `fit$pars$population`.", call. = FALSE)
 
   # Compute credible interval
   probs = c((1 - level) / 2, 1 - (1 - level) / 2)
@@ -734,7 +728,7 @@ niterations = posterior::niterations
 #' Returns parameters, data columns, and effect metadata given parameter
 #' name(s), model part(s), or column(s).
 #'
-#' @aliases unpack_varying unpack_varying.mcpfit
+#' @aliases unpack_group_effects unpack_group_effects.mcpfit
 #' @keywords internal
 #' @noRd
 #' @param pars `NULL`/`FALSE` for nothing. `TRUE` for all. A character vector
@@ -749,7 +743,7 @@ niterations = posterior::niterations
 #' @slot cols Character vector of data column names. `NULL` if empty.
 #' @slot indices Logical vector indexing the group-effects table.
 #' @slot effects The selected rows of the group-effects table.
-unpack_varying = function(fit, pars = NULL, cols = NULL) {
+unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
   checkmate::assert_multi_class(pars, c("logical", "character"), null.ok = TRUE)
   checkmate::assert_multi_class(cols, c("logical", "character"), null.ok = TRUE)
   if (is.logical(pars))
@@ -784,7 +778,7 @@ unpack_varying = function(fit, pars = NULL, cols = NULL) {
       unknown = pars[pars %notin% allowed]
       if (length(unknown) > 0)
         stop(
-          "Unknown `varying` selection: ", and_collapse(unknown), ". ",
+          "Unknown group-effect selection: ", and_collapse(unknown), ". ",
           "Use TRUE, FALSE, \"cp\", \"predictor\", or names from fit$pars$group."
         )
       use_group = group_effects$part %in% pars | group_effects$name %in% pars
@@ -910,7 +904,7 @@ mcp_draws = function(
 
   # ----- IDENTIFY PARAMETERS -----
   # Group-level parameters formatted for tidybayes.
-  group_info = unpack_varying(fit, pars = varying)
+  group_info = unpack_group_effects(fit, pars = varying)
   group_terms = paste0(group_info$pars, "[", group_info$cols, "]")
   if (all(group_terms == "[]")) group_terms = ""  # quick fix
 
@@ -1102,7 +1096,7 @@ pp_eval = function(
   ###############
   # FIX NEWDATA #
   ###############
-  group_info = unpack_varying(fit, pars = varying)
+  group_info = unpack_group_effects(fit, pars = varying)
   model_tables = get_fit_model_tables(fit)
   group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
   exclude_group_cols = setdiff(group_cols, c(group_info$cols, fit$pars$series))
@@ -1538,7 +1532,7 @@ posterior_prediction_matrix = function(
 }
 
 
-#' Convert rstantools group-effect syntax to mcp's `varying` selector
+#' Convert rstantools group-effect syntax to mcp's group-effect selector
 #' @keywords internal
 #' @noRd
 resolve_re_formula = function(re.form, re_formula) {

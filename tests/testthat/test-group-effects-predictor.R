@@ -86,8 +86,8 @@ test_that("predictor group intercepts work for family dpars and group-only formu
     fit$pars$population,
     c("Intercept_1_id_sd", "sigma_1_id_sd")
   )
-  expect_equal(unpack_varying(fit, "predictor")$pars, effects$name)
-  expect_null(unpack_varying(fit, "cp")$pars)
+  expect_equal(unpack_group_effects(fit, "predictor")$pars, effects$name)
+  expect_null(unpack_group_effects(fit, "cp")$pars)
 
   expect_named(
     fit$prior,

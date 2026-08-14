@@ -11,7 +11,7 @@
     - Adding `as_draws(fit)`, `as_draws_df(fit)`, `tidy_draws(fit)`, `ndraws(fit)`, rstantools linpred/epred, etc. with full S3 generic registration for `{posterior}`, `{rstantools}`, and `{tidybayes}` (`spread_draws()`, `gather_draws()`). 
     - Per-draw methods (`summary = FALSE` in `fitted()`, `predict()`, `residuals()`, `log_lik()`) now return dot-prefixed columns (`.epred`, `.prediction`, `.residual`, `.loglik`) for `{tidybayes}` / `{ggdist}` compatibility.
     - `nsamples` soft-deprecated in favor of `ndraws`; `which_y` deprecated in favor of `dpar`.
-    - Added R generics for mcpfits: `formula(fit)`, `family(fit)`, `model.frame(fit)`, `nobs(fit)`, `coef(fit)`, `vcov(fit)`, and `confint(fit)`. Fits now also store a proper matched `$call`. Printed summaries now report posterior `sd` and has a new layout.
+    - Added R generics for mcpfits: `formula(fit)`, `family(fit)`, `model.frame(fit)`, `nobs(fit)`, `vcov(fit)`, and `confint(fit)`. Fits now also store a proper matched `$call`. Printed summaries now report posterior `sd` and has a new layout.
 
 -   **Negative binomial and GARMA:** You can now do `mcp(..., family = negbinomial())`. Autoregression (`ar()`) has been generalized to GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment.
 
@@ -23,6 +23,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 -   Renamed parameters to be more consistent with brms: `int_i` --> `Intercept_i`; `x_1_E2` --> `xE2_1`; `x_1_sin` --> `sinx_1`, etc.
 
 -   Renamed the `fit$pars$varying` metadata field to `fit$pars$group` and `fit$pars$fixed` to `fit$pars$mu`. The example names `"varying_mu"` and `"varying_cp"` are now `"group_mu"` and `"group_cp"`. In `plot_pars()`, use `pars = "group"`; the old `"varying"` selector remains as a deprecated alias. The established `varying =` method argument remains unchanged.
+
+-   `fixef()` now reports only population-level fixed effects (regression coefficients), excluding change points, AR/MA parameters, and group-effect SDs. This is more consistent with other packages. Use `summary(fit)` to get all parameters
 
 -   `summary()`, `fixef()`, `ranef()`, `prior_summary()`, and everything else now return rows in a canonical order instead of the previous incidental (near-alphabetical) order. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to include `segment` and `dpar` columns.
 

@@ -473,8 +473,7 @@ mcp = function(model,
       formula_r = formula_r,
       prior_table = prior_table,
       prior_context = prior_context,
-      diagnostics = diagnostics,
-      mcp_version = utils::packageVersion("mcp")  # For helpful messages about backwards compatibility
+      diagnostics = diagnostics
     )
   )
   class(mcpfit) = "mcpfit"

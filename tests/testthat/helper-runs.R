@@ -201,8 +201,13 @@ test_summary = function(fit, varying_cols, prior = FALSE) {
   testthat::expect_true(all(result$name %in% fit$pars$population))  # All parameters
   capture.output(verbose_result <- summary(fit, prior = prior, verbose = TRUE))
   testthat::expect_named(verbose_result, verbose_summary_cols)
-  testthat::expect_named(fixef(fit, prior = prior), summary_cols)
-  testthat::expect_named(fixef(fit, prior = prior, verbose = TRUE), verbose_summary_cols)
+  fixed = fixef(fit, prior = prior)
+  fixed_verbose = fixef(fit, prior = prior, verbose = TRUE)
+  testthat::expect_named(fixed, summary_cols)
+  testthat::expect_named(fixed_verbose, verbose_summary_cols)
+  pars = get_fit_model_tables(fit)$pars
+  expected_fixed = pars$name[pars$scope == "population" & pars$role == "fixed_effect"]
+  testthat::expect_setequal(fixed$name, expected_fixed)
 
   # If there are group-level effects
   if (length(varying_cols) > 0) {
@@ -471,7 +476,7 @@ test_pp_eval = function(fit, prior = FALSE) {
 
     group_effects = get_fit_model_tables(fit)$group_effects
     all_group_cols = unique(stats::na.omit(group_effects$group_col))
-    selected_cp = unpack_varying(fit, pars = "cp")
+    selected_cp = unpack_group_effects(fit, pars = "cp")
     rhs_cols = intersect(
       setdiff(get_rhs_vars(fit$model), all_group_cols),
       colnames(fit$data)

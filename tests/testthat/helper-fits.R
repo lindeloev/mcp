@@ -109,7 +109,7 @@ apply_test_fit = function(desc, all_models, family = gaussian()) {
 #' @param fit An `mcpfit` object.
 test_matches_simulated = function(fit, min_ess) {
   summaries = rbind(
-    fixef(fit, width = 0.97),
+    get_summary(fit, width = 0.97, scope = "population"),
     ranef(fit, width = 0.97)
   ) %>%
     dplyr::filter(is.na(sim) == FALSE)
