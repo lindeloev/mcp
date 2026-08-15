@@ -175,7 +175,7 @@ test_that("legacy fit detection blocks pre-0.4.0 mcpfit objects", {
 
   expect_error(
     get_fit_model_tables(legacy),
-    "created with an older version of mcp (< 0.4.0)",
+    "install_github",
     fixed = TRUE
   )
 
@@ -183,7 +183,7 @@ test_that("legacy fit detection blocks pre-0.4.0 mcpfit objects", {
   missing_role$.internal$model_tables$parameters$role = NULL
   expect_error(
     get_fit_model_tables(missing_role),
-    "created with an older version of mcp (< 0.4.0)",
+    "install_github",
     fixed = TRUE
   )
 })
@@ -210,8 +210,20 @@ test_that("helpful deprecation detections work for old code idioms", {
   # fit$simulate() signature change
   expect_error(
     fit$simulate(1:5),
-    "breaking changes",
+    "install_github",
     fixed = FALSE
+  )
+
+  # v0.3.4 parameter names in common post-fit code
+  expect_error(
+    hypothesis(fit, "int_1 > 0"),
+    "use `Intercept_i`",
+    fixed = TRUE
+  )
+  expect_error(
+    plot_pars(fit, pars = "int_1"),
+    "install_github",
+    fixed = TRUE
   )
 
   # ex$fit warning
@@ -527,6 +539,15 @@ test_that("PPC and LOO draws stay aligned", {
     ))),
     "patchwork"
   )
+})
+
+test_that("legacy mcpfits explain how to reproduce v0.3.4", {
+  legacy_fit = demo_fit
+  legacy_fit$.internal$model_tables = NULL
+
+  expect_true(is_legacy_mcpfit(legacy_fit))
+  expect_error(mcp_pars(legacy_fit), "install_github", fixed = TRUE)
+  expect_error(summary(legacy_fit), "v0.4 bug fixes", fixed = TRUE)
 })
 
 

@@ -531,6 +531,7 @@ is.mcpfit = function(x) {
 #' @param message TRUE: gives a message if returning prior draws. FALSE = no message
 #' @param error TRUE: err if there are no draws. FALSE: return NULL
 mcmclist_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
+  check_mcpfit_version(fit)
   mcmc_prior = .subset2(fit, "mcmc_prior")
   mcmc_post = .subset2(fit, "mcmc_post")
   if (prior == TRUE) {

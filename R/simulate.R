@@ -514,9 +514,10 @@ get_fitsimulate = function(cps, predictors, group_effects) {
   .scale = 'response') {
 
   if (!inherits(fit, 'mcpfit'))
-    stop('`fit` must be an `mcpfit` object. fit$simulate() had breaking changes in mcp v0.4.0. Signature is fit$simulate(fit, newdata, ...).', call. = FALSE)
+    stop(legacy_mcp_message('`fit$simulate()` now requires the fit as its first argument. Use `fit$simulate(fit, newdata, ...)`.'), call. = FALSE)
   if (missing(newdata) || !is.data.frame(newdata))
-    stop('`newdata` must be a data.frame or tibble. fit$simulate() had breaking changes in mcp v0.4.0. Signature is fit$simulate(fit, newdata, ...).', call. = FALSE)
+    stop(legacy_mcp_message('`fit$simulate()` now requires a data.frame or tibble as its second argument. Use `fit$simulate(fit, newdata, ...)`.'), call. = FALSE)
+  check_mcpfit_version(fit)
 
   result = simulate_atomic(fit, newdata, ", paste0(args_all, " = ", args_all, collapse = ", "), ", .type = .type, .rate = .rate, .dpar = .dpar, .arma = .arma, .scale = .scale)
   return(result)

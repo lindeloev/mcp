@@ -82,12 +82,12 @@ plot_pars = function(fit,
 
   # Check arguments
   checkmate::assert_class(fit, "mcpfit")
+  if (!is.character(pars) || !is.character(regex_pars))
+    stop("`pars` and `regex_pars` has to be string/character.")
+  check_legacy_parameter_names(pars, "plot_pars(pars)")
 
   if (!coda::is.mcmc.list(.subset2(fit, "mcmc_post")) && !coda::is.mcmc.list(.subset2(fit, "mcmc_prior")))
     stop("Cannot plot an mcpfit without prior or posterior draws.")
-
-  if (!is.character(pars) || !is.character(regex_pars))
-    stop("`pars` and `regex_pars` has to be string/character.")
 
   if ("varying" %in% pars) {
     warning("`pars = \"varying\"` is deprecated; use `pars = \"group\"`.", call. = FALSE)

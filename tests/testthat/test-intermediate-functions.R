@@ -88,6 +88,6 @@ test_that("fit$simulate() errors with a helpful message on the pre-v0.4 calling 
 
   expect_error(
     fit$simulate(1:5, data),
-    "breaking changes"
+    "install_github"
   )
 })

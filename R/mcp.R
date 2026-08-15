@@ -239,6 +239,7 @@ mcp = function(model,
 
   # Check prior
   checkmate::assert_list(prior)
+  check_legacy_parameter_names(names(prior), "prior")
 
   which_duplicated = duplicated(names(prior))
   if (any(which_duplicated))

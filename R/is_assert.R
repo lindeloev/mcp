@@ -79,7 +79,9 @@ assert_rel = function(model) {
     any()
 
   if (has_rel)
-    stop("rel() for model terms was deprecated in mcp 0.4.0. Relative parameter estimates can be computed by subtracting posterior draws. There is no replacement wrt setting priors.")
+    stop(legacy_mcp_message(
+      "`rel()` model terms were removed in mcp v0.4. Relative parameter estimates can be computed by subtracting posterior draws; there is no replacement for setting relative priors."
+    ), call. = FALSE)
 
   TRUE
 }

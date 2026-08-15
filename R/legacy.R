@@ -1,35 +1,56 @@
 # Compatibility and Deprecation Detections for Legacy Code & Fits -------------
 
-#' Check if an mcpfit object is compatible with the current version of mcp
-#'
-#' Throws an informative deprecation error if an mcpfit object was saved using
-#' mcp < 0.4.0, which lacks modern internal data structures and parameter names.
+#' Check if an mcpfit object was created with mcp < 0.4.0
 #'
 #' @keywords internal
 #' @noRd
 #' @param fit An `mcpfit` object.
+is_legacy_mcpfit = function(fit) {
+  tables = fit$.internal$model_tables
+  !is.mcpfamily(fit$family) || is.null(tables) || is.null(tables$parameters) ||
+    !"role" %in% names(tables$parameters)
+}
+
+
+#' Message for code that requires substantial migration from mcp v0.3.4
+#'
+#' @keywords internal
+#' @noRd
+legacy_mcp_message = function(problem) {
+  paste0(
+    problem, "\n",
+    "This appears to use mcp v0.3.4 code or an mcpfit saved with v0.3.4.\n",
+    "To reproduce the old workflow while you migrate, downgrade to mcp v0.3.4:\n",
+    "  remotes::install_github(\"lindeloev/mcp@v0.3.4\")\n",
+    "mcp v0.3.4 does not include important v0.4.0 bug fixes."
+  )
+}
+
+
+#' Stop if an mcpfit cannot be used by mcp v0.4
+#'
+#' @keywords internal
+#' @noRd
 check_mcpfit_version = function(fit) {
   checkmate::assert_class(fit, "mcpfit")
-
-  tables = fit$.internal$model_tables
-  is_valid = !is.null(fit$.internal) &&
-    is.mcpfamily(fit$family) &&
-    !is.null(tables) &&
-    !is.null(tables$data_columns) &&
-    !is.null(tables$parameters) &&
-    !is.null(tables$design_specs) &&
-    "role" %in% names(tables$parameters)
-
-  if (!is_valid) {
-    stop(
-      "This `mcpfit` object was created with an older version of mcp (< 0.4.0).\n",
-      "Internal data structures and parameter names changed in mcp v0.4.0.\n",
-      "Please re-fit the model using mcp >= 0.4.0.",
-      call. = FALSE
-    )
-  }
-
+  if (is_legacy_mcpfit(fit))
+    stop(legacy_mcp_message(
+      "This `mcpfit` object lacks the internal structures introduced in mcp v0.4."
+    ), call. = FALSE)
   TRUE
+}
+
+
+#' Stop on the most common v0.3.4 parameter names
+#'
+#' @keywords internal
+#' @noRd
+check_legacy_parameter_names = function(x, context) {
+  old_names = x[stringr::str_detect(x, "(^|[^[:alnum:]_])int_[0-9]+($|[^[:alnum:]_])")]
+  if (length(old_names) > 0)
+    stop(legacy_mcp_message(paste0(
+      "`", context, "` uses the v0.3.4 parameter name `int_i`; use `Intercept_i` in v0.4, which also changed syntax for some other variable names."
+    )), call. = FALSE)
 }
 
 

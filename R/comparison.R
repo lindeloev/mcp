@@ -263,6 +263,7 @@ get_loglik_settings = function(fit, varying, arma, ndraws) {
 hypothesis = function(fit, hypotheses, width = 0.95, prior = FALSE) {
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_character(hypotheses)
+  check_legacy_parameter_names(hypotheses, "hypothesis()")
   checkmate::assert_number(width, lower = 0, upper = 1)
   checkmate::assert_flag(prior)
 
