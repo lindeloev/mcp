@@ -146,7 +146,7 @@ warn_nonconvergence = function(mcmc_post, diagnostics = list()) {
     "  * ", paste(thresholds, collapse = " or "), ": ",
     and_collapse(results$variable[bad]), "\n",
     "Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing ",
-    "`iter`/`adapt` or simplifying the model before trusting these results.",
+    "`iter`/`warmup` or simplifying the model before trusting these results.",
     call. = FALSE
   )
   invisible(NULL)

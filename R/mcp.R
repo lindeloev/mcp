@@ -90,9 +90,10 @@
 #' @param chains Positive integer. Number of chains to run.
 #' @param iter Positive integer. Number of post-warmup draws from each chain.
 #'   The total number of draws is `iter * chains`.
-#' @param adapt Positive integer. Also sometimes called "burnin", this is the
-#'   number of adaptation iterations before sampling. Set lower for greater speed.
-#'   Set higher if needed for sampler adaptation; use diagnostics to assess convergence.
+#' @param warmup Positive integer. Number of initial iterations per chain which
+#'   are discarded before sampling. Set higher if needed for sampler adaptation; 
+#'   use diagnostics to assess convergence.
+#' @param adapt Deprecated; use `warmup` instead.
 #' @param inits A list if initial values for the parameters. This can be useful
 #'   if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
 #'   Defaults to `NULL`, i.e., no inits.
@@ -202,7 +203,8 @@ mcp = function(model,
                cores = NULL,
                chains = 3,
                iter = 3000,
-               adapt = 1500,
+               warmup = 1500,
+               adapt = lifecycle::deprecated(),
                inits = NULL,
                jags_code = NULL,
                seed = NULL,
@@ -281,9 +283,21 @@ mcp = function(model,
     )
   }
 
+  if (lifecycle::is_present(adapt)) {
+    if (!missing(warmup))
+      stop("Supply only one of `warmup` and deprecated `adapt`.", call. = FALSE)
+
+    lifecycle::deprecate_soft(
+      when = "0.4.0",
+      what = "mcp(adapt)",
+      with = "mcp(warmup)"
+    )
+    warmup = adapt
+  }
+
   checkmate::assert_int(chains, lower = 1)
   checkmate::assert_int(iter, lower = 1)
-  checkmate::assert_int(adapt, lower = 1)
+  checkmate::assert_int(warmup, lower = 1)
   checkmate::assert_list(inits, null.ok = TRUE)
   checkmate::assert_int(seed, lower = 1, null.ok = TRUE)
   diagnostics = resolve_diagnostics(diagnostics)
@@ -386,7 +400,7 @@ mcp = function(model,
       sample = "post",
       n.chains = chains,
       n.iter = iter,
-      n.adapt = adapt,
+      n.adapt = warmup,
       inits = inits,
       seed = seed,
       quiet = quiet
@@ -414,7 +428,7 @@ mcp = function(model,
       sample = "prior",
       n.chains = chains,
       n.iter = iter,
-      n.adapt = adapt,
+      n.adapt = warmup,
       inits = inits,
       seed = seed,
       quiet = quiet

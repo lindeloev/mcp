@@ -368,7 +368,7 @@ test_that("parameter-name collisions give a useful error", {
 demo_settings = mcp_example("demo", sample = FALSE, plot = FALSE)
 demo_fit_iter = 50  # only niterations()/nchains() metadata is checked below, not recovery
 expect_warning({
-  demo_fit2 = mcp(demo_settings$model, demo_settings$data, adapt = 50, iter = demo_fit_iter, diagnostics = FALSE, quiet = TRUE)
+  demo_fit2 = mcp(demo_settings$model, demo_settings$data, warmup = 50, iter = demo_fit_iter, diagnostics = FALSE, quiet = TRUE)
 }, "Adaptation incomplete", fixed = TRUE)
 
 test_that("binomial example can be constructed without sampling", {
@@ -688,7 +688,7 @@ test_that("diagnostic settings control fit warnings and summary footers", {
 
   # diagnostics = FALSE suppresses fit warnings and the inherited footer.
   expect_warning({
-    fit_nowarn = mcp(model, data, par_x = "x", iter = 50, adapt = 50, diagnostics = FALSE, quiet = TRUE)
+    fit_nowarn = mcp(model, data, par_x = "x", iter = 50, warmup = 50, diagnostics = FALSE, quiet = TRUE)
   }, "Adaptation incomplete", fixed = TRUE)
   expect_true(all(vapply(fit_nowarn$.internal$diagnostics, is.null, logical(1))))
 

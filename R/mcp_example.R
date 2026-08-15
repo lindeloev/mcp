@@ -68,7 +68,7 @@ data$price = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, sample = sample, adapt = 2000, iter = 5000,seed = 42)
+fit = mcp(model, data, sample = sample, warmup = 2000, iter = 5000,seed = 42)
 
 # Illustrative plot
 if (plot) {
@@ -280,7 +280,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, adapt = 2000, iter = 10000, sample = sample, seed = 40, diagnostics = list(ess_bulk = 80, ess_tail = 80, rhat = 1.02))
+fit = mcp(model, data, warmup = 2000, iter = 10000, sample = sample, seed = 40, diagnostics = list(ess_bulk = 80, ess_tail = 80, rhat = 1.02))
 
 # Illustrative plot
 if (plot) {

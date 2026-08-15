@@ -5,7 +5,7 @@ models_families_negbinomial = list(
     simulated = list(cp_1 = 93, Intercept_1 = log(4), x_1 = 0.003, Intercept_2 = log(8), x_2 = -0.002, shape_1 = log(10)),
     family = negbinomial(),
     chains = 2,
-    adapt = 500,
+    warmup = 500,
     iter = 750,
     min_ess = 50
   )

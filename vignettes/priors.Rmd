@@ -70,11 +70,11 @@ head(df)
 ```
 
 
-Sample the prior and posterior. We let the manual fit adapt for longer, since it is harder to find the right posterior under these weird prior constraints (priors will usually improve sampling efficiency).
+Sample the prior and posterior. We give the manual fit a longer warmup, since it is harder to find the right posterior under these weird prior constraints (priors will usually improve sampling efficiency).
 
 ```{r, cache = TRUE, message=FALSE, warning=FALSE, results=FALSE}
-fit_manual = mcp(model, data = df, sample = "both", adapt = 10000, prior = prior)
-fit_default = mcp(model, data = df, sample = "both", adapt = 10000)
+fit_manual = mcp(model, data = df, sample = "both", warmup = 10000, prior = prior)
+fit_default = mcp(model, data = df, sample = "both", warmup = 10000)
 ```
 
 First, let's look at the priors side by side. Notice the use of `prior = TRUE` to show prior samples. This works in `plot()`, `plot_pars()`, and `summary()` among others.

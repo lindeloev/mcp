@@ -256,7 +256,7 @@ test_that("factor group coefficients sample and predict by level", {
       data,
       par_x = "x",
       chains = 1,
-      adapt = 20,
+      warmup = 20,
       iter = 20,
       diagnostics = FALSE,
       quiet = TRUE
@@ -295,7 +295,7 @@ test_that("predictor group effects use existing prediction selectors", {
       data,
       par_x = "x",
       chains = 1,
-      adapt = 20,
+      warmup = 20,
       iter = 20,
       diagnostics = FALSE,
       quiet = TRUE

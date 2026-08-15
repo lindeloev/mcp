@@ -67,7 +67,7 @@ test_that("mcp sampling iterations are validated", {
     fixed = TRUE
   )
   expect_error(
-    mcp(seed_model, seed_data, par_x = "x", sample = FALSE, adapt = 1.5),
+    mcp(seed_model, seed_data, par_x = "x", sample = FALSE, warmup = 1.5),
     "single integerish value",
     fixed = TRUE
   )
@@ -86,7 +86,7 @@ test_that("mcp seed reproduces prior and posterior samples", {
         par_x = "x",
         sample = "both",
         chains = 2,
-        adapt = 20,
+        warmup = 20,
         iter = 30,
         inits = list(Intercept_1 = 0),
         seed = seed,

@@ -53,7 +53,7 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
   # Fit
   fit = mcp(
     model, newdata, family = family, par_x = "x", series = series,
-    chains = chains, adapt = adapt, iter = iter, seed = 42,
+    chains = chains, warmup = adapt, iter = iter, seed = 42,
     diagnostics = FALSE, quiet = TRUE
   )  # Ensure convergence
   assign("fit", fit, envir = .GlobalEnv)  # for easier debugging
@@ -79,7 +79,7 @@ apply_test_fit = function(desc, all_models, family = gaussian()) {
     model_family = this[["family"]]
     series = this[["series"]]
     chains = this[["chains"]]
-    adapt = this[["adapt"]]
+    warmup = this[["adapt"]]
     iter = this[["iter"]]
     min_ess = this[["min_ess"]]
     if (is.null(model_family))

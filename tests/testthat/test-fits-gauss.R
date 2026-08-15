@@ -13,7 +13,7 @@ models_gauss = list(
     ),
     family = gaussian(link = "log"),
     chains = 2,
-    adapt = 500,
+    warmup = 500,
     iter = 750,
     min_ess = 50)
 )

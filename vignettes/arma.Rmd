@@ -93,7 +93,7 @@ For Gaussian GARMA models, `sigma` describes the *innovations*, i.e., the part o
 plot_pars(fit)
 ```
 
-Sometimes, the trace plot shows that the change point (`cp_1`) is not well identified with this model and data. As discussed in the article on [tips, tricks, and debugging](../articles/tips.html), you could combine a more informative prior with more samples (`mcp(..., adapt = 10000, iter = 10000)`), if this is a problem.
+Sometimes, the trace plot shows that the change point (`cp_1`) is not well identified with this model and data. As discussed in the article on [tips, tricks, and debugging](../articles/tips.html), you could combine a more informative prior with more samples (`mcp(..., warmup = 10000, iter = 10000)`), if this is a problem.
 
 You can do hypothesis testing with GARMA models using `hypothesis()`. [Read more here](../articles/comparison.html) or scroll down for an applied example.
 

@@ -21,7 +21,7 @@ models_ar = list(
        ),
        series = "id",
        chains = 2,
-       adapt = 2000,
+       warmup = 2000,
        iter = 2000,
        min_ess = 50)
 )

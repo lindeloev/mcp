@@ -6,7 +6,7 @@ models_families_binomial = list(
     newdata = data.frame(x = seq(1, 200, length.out = 400), y = 0, N = 10L),
     family = binomial(link = "probit"),
     chains = 2,
-    adapt = 500,
+    warmup = 500,
     iter = 750,
     min_ess = 50
   ),
@@ -17,7 +17,7 @@ models_families_binomial = list(
     newdata = data.frame(x = seq(1, 200, length.out = 400), y = 0, N = 10L),
     family = binomial(link = "identity"),
     chains = 2,
-    adapt = 500,
+    warmup = 500,
     iter = 1000,
     min_ess = 50
   )

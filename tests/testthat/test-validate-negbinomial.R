@@ -105,7 +105,7 @@ test_that("negative-binomial coefficients agree with MASS glm.nb", {
     list(y ~ 1 + x),
     data,
     family = negbinomial(),
-    adapt = 500,
+    warmup = 500,
     iter = 2000,
     chains = 2,
     diagnostics = FALSE,
