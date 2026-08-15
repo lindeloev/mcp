@@ -85,6 +85,24 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
       stop("There were no matching parameters in the model.")
   }
 
+  # A model such as `y ~ 0` has no primary-response fixed effects. Return a
+  # regular empty summary instead of asking posterior to summarise no draws.
+  if (length(get_cols) == 0) {
+    estimates = data.frame(
+      name = character(), mean = numeric(), sd = numeric(), lower = numeric(),
+      upper = numeric(), rhat = numeric(), ess_bulk = numeric(), ess_tail = numeric()
+    )
+    if (verbose) {
+      estimates$segment = integer()
+      estimates$dpar = character()
+    }
+    if (!is.null(attr(fit$data[, mcp_columns(fit)$response], "simulated"))) {
+      estimates$sim = numeric()
+      estimates$match = character()
+    }
+    return(estimates)
+  }
+
   draws = posterior::subset_draws(draws, variable = get_cols)
 
   # Get parameter estimates and diagnostics
