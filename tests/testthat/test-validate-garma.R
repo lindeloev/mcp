@@ -1,6 +1,7 @@
 garma_test_fit = function(family, model, data, intercept, phi = 0.5, theta = 0.25) {
   fit = mcp(model, data, family = family, par_x = "x", sample = FALSE)
-  args = stats::setNames(as.list(rep(0, length(fit$pars$population))), fit$pars$population)
+  population = mcp_pars(fit, scope = "population")$name
+  args = stats::setNames(as.list(rep(0, length(population))), population)
   args$Intercept_1 = intercept
   if ("ar1_1" %in% names(args))
     args$ar1_1 = phi

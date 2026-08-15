@@ -134,16 +134,17 @@ get_plot = function(x,
   color_by = logical0_to_null(unique(color_by))
 
   model_tables = get_fit_model_tables(fit)
+  data_columns = mcp_columns(fit)
   all_categorical_cols = names(get_categorical_levels(fit$data))
   group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
-  categorical_cols = setdiff(all_categorical_cols, c(group_cols, fit$pars$series))
+  categorical_cols = setdiff(all_categorical_cols, c(group_cols, data_columns$series))
   plot_by = unique(c(facet_by, color_by))
   if (.grouping == "auto" && length(categorical_cols) == 1) {
     color_by = categorical_cols
     plot_by = unique(c(facet_by, color_by))
   }
-  curve_by = unique(c(categorical_cols, fit$pars$series, intersect(group_cols, plot_by)))
-  valid_group_cols = unique(c(categorical_cols, group_cols, fit$pars$series))
+  curve_by = unique(c(categorical_cols, data_columns$series, intersect(group_cols, plot_by)))
+  valid_group_cols = unique(c(categorical_cols, group_cols, data_columns$series))
 
   validate_plot_groups = function(cols, arg) {
     invalid_cols = setdiff(cols, valid_group_cols)
@@ -194,8 +195,8 @@ get_plot = function(x,
   rlang::check_dots_empty()
 
   # Useful vars
-  xvar = rlang::sym(fit$pars$x)
-  yvar = rlang::sym(fit$pars$y)
+  xvar = rlang::sym(data_columns$par_x)
+  yvar = rlang::sym(data_columns$response)
   by = plot_by
   group_pars = unpack_group_effects(fit, cols = by)$pars
 
@@ -232,7 +233,7 @@ get_plot = function(x,
     # `.include_fitted = TRUE`). Predict-only draws (no q_fit requested) have
     # no fitted values to rename.
     if (".epred" %in% names(draws))
-      draws = dplyr::rename(draws, "{fit$pars$y}" := ".epred")
+      draws = dplyr::rename(draws, "{data_columns$response}" := ".epred")
 
     add_plot_groups(draws, curve_by = curve_by, color_by = color_by)
   }
@@ -275,7 +276,8 @@ get_plot = function(x,
   ###############################
   # PREP RESPONSE DATA FOR PLOT #
   ###############################
-  ydata = fit$data[, fit$pars$y]  # Convenient shortname
+  data_columns = mcp_columns(fit)
+  ydata = fit$data[, data_columns$response]  # Convenient shortname
   response_data = get_family_response_data(fit$family, model_tables$segments, fit$data)
   ydata = fit$family$response$observed(ydata, response_data, rate)
 
@@ -294,7 +296,7 @@ get_plot = function(x,
 
   # Store the plotting-scale response and strip any "ts" class to avoid
   # ggplot2 warnings about scale selection.
-  fit$data[, fit$pars$y] = as.numeric(ydata)
+  fit$data[, data_columns$response] = as.numeric(ydata)
 
 
   ###########
@@ -302,9 +304,9 @@ get_plot = function(x,
   ###########
   # Initiate plot and show raw data (only applicable in plot.mcpfit())
   if (use_color) {
-    gg = ggplot2::ggplot(fit$data, ggplot2::aes(x = .data[[fit$pars$x]], y = .data[[fit$pars$y]], group = .data$.group, color = .data$.color))
+    gg = ggplot2::ggplot(fit$data, ggplot2::aes(x = .data[[data_columns$par_x]], y = .data[[data_columns$response]], group = .data$.group, color = .data$.color))
   } else {
-    gg = ggplot2::ggplot(fit$data, ggplot2::aes(x = .data[[fit$pars$x]], y = .data[[fit$pars$y]], group = .data$.group))
+    gg = ggplot2::ggplot(fit$data, ggplot2::aes(x = .data[[data_columns$par_x]], y = .data[[data_columns$response]], group = .data$.group))
   }
   if (dpar == "epred") {
     if (geom_data == "point") {
@@ -346,8 +348,8 @@ get_plot = function(x,
     # The scale of the actual plot (or something close enough)
     # This is faster than limits_y = ggplot2::ggplot_build(gg)$layout$panel_params[[1]]$y.range
     if (dpar == "epred" && geom_data != FALSE) {
-      limits_y = c(min(fit$data[, fit$pars$y]),
-                   max(fit$data[, fit$pars$y]))
+      limits_y = c(min(fit$data[, data_columns$response]),
+                   max(fit$data[, data_columns$response]))
     } else if (show_q_predict) {
       limits_y = range(q_predict_data$.predicted)
     } else if (show_q_fit) {
@@ -362,7 +364,7 @@ get_plot = function(x,
       ggplot2::coord_cartesian(
         ylim = c(limits_y[1], NA),  # Remove density flat line from view
         # Do not let broad group-specific change-point densities expand the observed x-range.
-        xlim = c(min(fit$data[, fit$pars$x]), max(fit$data[, fit$pars$x]))
+        xlim = c(min(fit$data[, data_columns$par_x]), max(fit$data[, data_columns$par_x]))
       )
   }
 
@@ -373,15 +375,15 @@ get_plot = function(x,
 
   # Add better y-labels
   if (scale == "linear")
-    gg = gg + ggplot2::labs(y = paste0(fit$family$link, "(", fit$pars$y, ")"))
+    gg = gg + ggplot2::labs(y = paste0(fit$family$link, "(", data_columns$response, ")"))
   if (scale == "response" && fit$family$response$probability(rate))
-    gg = gg + ggplot2::labs(y = paste0("P(", fit$pars$y, " = TRUE)"))
+    gg = gg + ggplot2::labs(y = paste0("P(", data_columns$response, " = TRUE)"))
   if (dpar != "epred")
     gg = gg + ggplot2::labs(y = dpar)
 
   at_cols = setdiff(
     names(newdata),
-    c(fit$pars$x, fit$pars$y, fit$pars$series, all_categorical_cols, group_cols)
+    c(data_columns$par_x, data_columns$response, data_columns$series, all_categorical_cols, group_cols)
   )
   if (length(at_cols) > 0) {
     at_text = paste0(at_cols, " = ", format(signif(unlist(newdata[1, at_cols]), 4), trim = TRUE))

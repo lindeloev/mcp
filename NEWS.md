@@ -22,9 +22,11 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Renamed parameters to be more consistent with brms: `int_i` --> `Intercept_i`; `x_1_E2` --> `xE2_1`; `x_1_sin` --> `sinx_1`, etc.
 
--   Renamed the `fit$pars$varying` metadata field to `fit$pars$group` and `fit$pars$fixed` to `fit$pars$mu`. The example names `"varying_mu"` and `"varying_cp"` are now `"group_mu"` and `"group_cp"`. In `plot_pars()`, use `pars = "group"`; the old `"varying"` selector remains as a deprecated alias. The established `varying =` method argument remains unchanged.
+-   `fit$pars` was removed. Use `mcp_pars(fit)` for a canonical table of model parameters and `mcp_columns(fit)` for resolved data-column roles, including the automatically chosen `par_x`. 
 
--   `fixef()` now reports only population-level fixed effects (regression coefficients), excluding change points, AR/MA parameters, and group-effect SDs. This is more consistent with other packages. Use `summary(fit)` to get all parameters
+-   In general, renamed `"varying"` to `"group"`. The example names `"varying_mu"` and `"varying_cp"` are now `"group_mu"` and `"group_cp"`. In `plot_pars()`, use `pars = "group"`; the old `"varying"` selector remains as a deprecated alias. The established `varying =` method argument remains unchanged for now.
+
+-   `fixef()` now reports only population-level effects for `mu` (the primary response parameter), excluding change points, other distributional parameters, AR/MA parameters, and group-effect SDs. Use `summary(fit)` to get all parameters.
 
 -   `summary()`, `fixef()`, `ranef()`, `prior_summary()`, and everything else now return rows in a canonical order instead of the previous incidental (near-alphabetical) order. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to include `segment` and `dpar` columns.
 

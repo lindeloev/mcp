@@ -50,7 +50,7 @@ prior_summary = function(fit, verbose = FALSE) {
   if (is.null(table))
     stop("This `mcpfit` object does not contain a resolved prior table. Please re-fit the model using mcp >= 0.4.0.")
 
-  pars = get_fit_model_tables(fit)$pars
+  pars = mcp_pars(fit)
   if (!is.null(pars)) {
     match_idx = match(table$parameter, pars$name)
     table$segment = pars$segment[match_idx]

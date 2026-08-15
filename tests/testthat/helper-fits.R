@@ -48,7 +48,7 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
     class(simulation_values) = c("mcplist", "list")
     attr(simulated_y, "simulated") = simulation_values
   }
-  newdata[[empty$pars$y]] = simulated_y
+  newdata[[mcp_columns(empty)$response]] = simulated_y
 
   # Fit
   fit = mcp(

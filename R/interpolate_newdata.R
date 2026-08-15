@@ -20,23 +20,24 @@ get_x_values = function(fit, by = NULL, prior = FALSE) {
   N_CP = 50
   X_RESOLUTION_GROUPED = 300
 
-  xdata = fit$data[, fit$pars$x] %>% as.numeric()
+  data_columns = mcp_columns(fit)
+  xdata = fit$data[, data_columns$par_x] %>% as.numeric()
 
   # If there are AR/MA terms, evaluate at the data
-  if (length(fit$pars$arma) > 0) {
+  if (has_arma_terms(fit)) {
     x_values = xdata
   } else if (!is.null(by) || is.null(.subset2(fit, "mcmc_post"))) {
     # Just give up for grouped and prior evaluations (usually very distributed change points)
     # and return a reasonable resolution
     x_values = seq(min(xdata), max(xdata), length.out = X_RESOLUTION_GROUPED)
-  } else if (length(fit$pars$cp) == 0) {
+  } else if (nrow(get_fit_model_tables(fit)$cps) == 0) {
     # No change points. Use default resolution for the whole plot
     x_values = seq(min(xdata), max(xdata), length.out = N_BASIS)
   } else {
     # Make fine resolution around change points in addition to course resolution
     # Get draws for these change points
     draws = mcmclist_draws(fit, prior = prior)
-    cp_pars = fit$pars$cp
+    cp_pars = get_fit_model_tables(fit)$cps$name
     call = paste0("tidybayes::spread_draws(draws, ", paste0(cp_pars, collapse = ", "), ")")
     draws = eval(str2lang(call))
 
@@ -55,7 +56,7 @@ get_x_values = function(fit, by = NULL, prior = FALSE) {
 #' @keywords internal
 #' @noRd
 #' @param data fit$data
-#' @param pars fit$pars
+#' @param data_columns Fitting-data column metadata.
 #' @param at Named list overriding the default means.
 #' @param group_cols Grouping columns to exclude from continuous
 #'   predictors.
@@ -63,13 +64,13 @@ get_x_values = function(fit, by = NULL, prior = FALSE) {
 #'   `NULL` if there are no continuous predictors.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_continuous_at = function(data, pars, at = NULL, group_cols = NULL) {
+get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
   checkmate::assert_data_frame(data)
-  checkmate::assert_list(pars)
+  checkmate::assert_list(data_columns)
 
   # Get numeric predictor columns
   numeric_data = data[, sapply(data, is.numeric), drop = FALSE]
-  numeric_data = numeric_data[, colnames(numeric_data) %notin% c(pars$x, pars$y, pars$weights, group_cols), drop = FALSE]
+  numeric_data = numeric_data[, colnames(numeric_data) %notin% c(data_columns$par_x, data_columns$response, data_columns$weights, group_cols), drop = FALSE]
 
   checkmate::assert_list(at, types = "numeric", any.missing = FALSE, names = "unique", null.ok = TRUE)
   if (length(at) > 0 && is.null(names(at)))
@@ -146,7 +147,7 @@ interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by),
 
   # Get unique predictors
   group_cols = unique(stats::na.omit(get_fit_model_tables(fit)$group_effects$group_col))
-  series_col = fit$pars$series
+  series_col = mcp_columns(fit)$series
   categorical_cols = setdiff(
     names(get_categorical_levels(fit$data)),
     c(group_cols, series_col)
@@ -160,19 +161,20 @@ interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by),
     lapply(fit$data[, by, drop = FALSE], unique) %>% expand.grid()
   }
   continuous_at = get_continuous_at(
-    fit$data, fit$pars, at, unique(c(group_cols, series_col))
+    fit$data, mcp_columns(fit), at, unique(c(group_cols, series_col))
   )
-  newdata = by_grid %>% tidyr::expand_grid("{fit$pars$x}" := x_values)
+  data_columns = mcp_columns(fit)
+  newdata = by_grid %>% tidyr::expand_grid("{data_columns$par_x}" := x_values)
   if (!is.null(continuous_at))
     newdata = tidyr::expand_grid(newdata, continuous_at)
 
   # Add response column for AR/MA models
-  if (is_arma(fit)) {
+  if (has_arma_terms(fit)) {
     if (nrow(newdata) != nrow(fit$data))
       stop_github("nrow(newdata) != nrow(fit$data) in interpolate_newdata for an AR/MA model.")
     if (!is.null(series_col))
       newdata[, series_col] = fit$data[, series_col]
-    newdata[, fit$pars$y] = fit$data[, fit$pars$y]
+    newdata[, data_columns$response] = fit$data[, data_columns$response]
   }
 
   as.data.frame(newdata)

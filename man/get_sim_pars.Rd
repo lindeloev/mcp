@@ -4,7 +4,7 @@
 \alias{get_sim_pars}
 \title{Returns parameters needed for simulation}
 \usage{
-get_sim_pars(predictors, pars)
+get_sim_pars(cps, predictors, group_effects)
 }
 \value{
 Character vector

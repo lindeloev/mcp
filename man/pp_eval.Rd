@@ -66,12 +66,11 @@ coefficient you want to evaluate.
 
 \item{varying}{One of:
 \itemize{
-\item \code{TRUE} All group-level deviations (\code{fit$pars$group}).
+\item \code{TRUE} All group-level deviations.
 \item \code{FALSE} No group-level deviations (\code{c()}).
 \item \code{"cp"} or \code{"predictor"}: All group-level deviations belonging to that part of
 the model.
-\item Character vector: Only include specified group-level parameters - see
-\code{fit$pars$group}.
+\item Character vector: Only include specified group-level parameters.
 }}
 
 \item{arma}{Whether to include AR and MA effects.

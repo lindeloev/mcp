@@ -19,25 +19,24 @@ mcp_draws(
 \item{fit}{An \code{\link{mcpfit}} object}
 
 \item{population}{\itemize{
-\item \code{TRUE} All population-level effects. Same as \code{fit$pars$population}.
+\item \code{TRUE} All population-level model parameters.
 \item \code{FALSE} No population-level effects. Same as \code{c()}.
-\item Character vector: Only include specified population-level parameters; see \code{fit$pars$population}.
+\item Character vector: Only include specified population-level parameters.
 }}
 
 \item{varying}{One of:
 \itemize{
-\item \code{TRUE} All group-level deviations (\code{fit$pars$group}).
+\item \code{TRUE} All group-level deviations.
 \item \code{FALSE} No group-level deviations (\code{c()}).
 \item \code{"cp"} or \code{"predictor"}: All group-level deviations belonging to that part of
 the model.
-\item Character vector: Only include specified group-level parameters - see
-\code{fit$pars$group}.
+\item Character vector: Only include specified group-level parameters.
 }}
 
 \item{absolute}{\itemize{
 \item \code{TRUE} Returns the absolute location of all group-specific change points.
 \item \code{FALSE} Return the group-level deviations.
-\item Character vector: Apply the absolute transform only to these group-level parameters; see \code{fit$pars$group}.
+\item Character vector: Apply the absolute transform only to these group-level parameters.
 }}
 
 \item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}

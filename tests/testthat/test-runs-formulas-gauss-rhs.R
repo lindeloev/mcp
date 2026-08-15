@@ -192,24 +192,33 @@ test_that("data-derived bases reuse their fitted specification", {
 
   scale_fit = mcp(list(y ~ scale(x)), data, sample = FALSE)
   scale_matrix = add_rhs_predictors(newdata, scale_fit)
+  scale_pars = get_fit_model_tables(scale_fit)$predictors$code_name[
+    get_fit_model_tables(scale_fit)$predictors$dpar == "mu"
+  ]
   expect_equal(
-    scale_matrix[[paste0(".pred_", setdiff(scale_fit$pars$mu, "Intercept_1"))]],
+    scale_matrix[[paste0(".pred_", setdiff(scale_pars, "Intercept_1"))]],
     as.numeric(scale(newdata$x, center = mean(data$x), scale = stats::sd(data$x)))
   )
 
   poly_basis = stats::poly(data$x, 2)
   poly_fit = mcp(list(y ~ poly(x, 2)), data, sample = FALSE)
   poly_matrix = add_rhs_predictors(newdata, poly_fit)
+  poly_pars = get_fit_model_tables(poly_fit)$predictors$code_name[
+    get_fit_model_tables(poly_fit)$predictors$dpar == "mu"
+  ]
   expect_equal(
-    unname(as.matrix(poly_matrix[, paste0(".pred_", setdiff(poly_fit$pars$mu, "Intercept_1"))])),
+    unname(as.matrix(poly_matrix[, paste0(".pred_", setdiff(poly_pars, "Intercept_1"))])),
     unname(stats::predict(poly_basis, newdata$x))
   )
 
   spline_basis = splines::ns(data$x, df = 3)
   spline_fit = mcp(list(y ~ splines::ns(x, df = 3)), data, sample = FALSE)
   spline_matrix = add_rhs_predictors(newdata, spline_fit)
+  spline_pars = get_fit_model_tables(spline_fit)$predictors$code_name[
+    get_fit_model_tables(spline_fit)$predictors$dpar == "mu"
+  ]
   expect_equal(
-    unname(as.matrix(spline_matrix[, paste0(".pred_", setdiff(spline_fit$pars$mu, "Intercept_1"))])),
+    unname(as.matrix(spline_matrix[, paste0(".pred_", setdiff(spline_pars, "Intercept_1"))])),
     matrix(
       as.numeric(stats::predict(spline_basis, newdata$x)),
       nrow = nrow(newdata)
@@ -220,8 +229,11 @@ test_that("data-derived bases reuse their fitted specification", {
   bs_basis = splines::bs(data$x, df = 3)
   bs_fit = mcp(list(y ~ splines::bs(x, df = 3)), data, sample = FALSE)
   bs_matrix = add_rhs_predictors(bs_newdata, bs_fit)
+  bs_pars = get_fit_model_tables(bs_fit)$predictors$code_name[
+    get_fit_model_tables(bs_fit)$predictors$dpar == "mu"
+  ]
   expect_equal(
-    unname(as.matrix(bs_matrix[, paste0(".pred_", setdiff(bs_fit$pars$mu, "Intercept_1"))])),
+    unname(as.matrix(bs_matrix[, paste0(".pred_", setdiff(bs_pars, "Intercept_1"))])),
     matrix(
       as.numeric(stats::predict(bs_basis, bs_newdata$x)),
       nrow = nrow(bs_newdata)

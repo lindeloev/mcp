@@ -145,12 +145,13 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x, family) {
 #' @param formula_jags Character, often residing in `fit$.internal$formula_jags`.
 #' @param predictors Output of `get_predictors()`.
 #' @param group_effects Output of `get_group_effects()`.
-#' @param pars The list that ends up in `fit$pars`
+#' @param cps Output of `get_segment_tables()`.
+#' @param par_x Name of the change-point predictor.
 #' @return Character
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_formula_r = function(formula_jags, predictors, group_effects, pars) {
-  sim_pars = get_sim_pars(predictors, pars)
+get_formula_r = function(formula_jags, predictors, group_effects, cps, par_x) {
+  sim_pars = get_sim_pars(cps, predictors, group_effects)
   predictor_pars = predictors$code_name
   predictor_group_effects = group_effects[group_effects$part == "predictor", , drop = FALSE]
   group_pars = predictor_group_effects$name
@@ -174,8 +175,8 @@ get_formula_r = function(formula_jags, predictors, group_effects, pars) {
     stats::setNames("args$", "args$args$"),  # Fix double-inserting args$ above
 
     # Change points
-    stats::setNames(paste0("args$", pars$x, " >="), paste0(pars$x, " >=")),
-    stats::setNames(paste0("args$", pars$x, " <"), paste0(pars$x, " <")),
+    stats::setNames(paste0("args$", par_x, " >="), paste0(par_x, " >=")),
+    stats::setNames(paste0("args$", par_x, " <"), paste0(par_x, " <")),
 
     # General
     stats::setNames("pmin(args$", paste0("pmin("))

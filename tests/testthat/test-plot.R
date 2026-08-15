@@ -25,7 +25,14 @@ test_that("plot_pars() prefers the group selector and supports its deprecated al
   on.exit(grDevices::dev.off())
 
   fit = unclass(demo_fit)
-  fit$pars$group = "group_par"
+  fit$.internal$model_tables$parameters = dplyr::bind_rows(
+    fit$.internal$model_tables$parameters,
+    tibble::tibble(
+      name = "group_par", part = "predictor", scope = "group",
+      role = "group_deviation", segment = 1L, dpar = "mu", order = NA_integer_,
+      group_col = "group", population_name = "Intercept_1"
+    )
+  )
   for (chain in seq_along(fit$mcmc_post))
     colnames(fit$mcmc_post[[chain]])[1] = "group_par[1]"
   class(fit) = class(demo_fit)

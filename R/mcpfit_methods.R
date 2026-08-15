@@ -29,7 +29,6 @@
 #' @slot mcmc_prior An \code{\link[coda]{mcmc.list}} object with prior draws.
 #' @slot loglik An (Nchains * Ndraws) by N-observed-responses matrix of
 #'   log-likelihoods.
-#' @slot pars A list of character vectors of model parameter names.
 #' @slot jags_code A string with jags code. Use `cat(fit$jags_code)` to show it.
 #' @slot simulate A method to simulate and predict data.
 #' @slot .internal Information that is used internally by mcp.
@@ -62,14 +61,14 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   checkmate::assert_flag(prior)
   checkmate::assert_flag(verbose)
 
-  if (scope == "group" & is.null(fit$pars$group))
+  if (scope == "group" & nrow(mcp_pars(fit, scope = "group")) == 0)
     return(NULL)
 
   draws = posterior_draws(fit, prior = prior)
 
   # Select by the independent scope and role dimensions of the parameter table.
   all_cols = posterior::variables(draws)
-  pars = get_fit_model_tables(fit)$pars
+  pars = mcp_pars(fit)
   selected_names = pars$name[pars$scope == scope]
   if (!is.null(role))
     selected_names = selected_names[pars$role[pars$scope == scope] %in% role]
@@ -117,13 +116,13 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   estimates = estimates[order(match_idx, estimates$name), ]
 
   # Add simulation parameters if the data is simulated
-  sim_list = attr(fit$data[, fit$pars$y], "simulated")
+  sim_list = attr(fit$data[, mcp_columns(fit)$response], "simulated")
   if(!is.null(sim_list)) {
     simulated = as.list(sim_list)  # Get as oroper list
     simulated = simulated[sapply(simulated, is.numeric)]  # Remove non-numeric
 
     # Handle group-level deviations. Find the matching labels.
-    for (this_group_effect in fit$pars$group) {
+    for (this_group_effect in mcp_pars(fit, scope = "group")$name) {
       if (!is.null(simulated[[this_group_effect]])) {
         # Find the needed values and labels
         value = simulated[[this_group_effect]]  # Extract simulation values
@@ -276,7 +275,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
   if (!is.null(draws)) {
     # Print and return population-level summaries invisibly.
     result = get_summary(fit, width, scope = "population", prior = prior, verbose = verbose)
-    pars = get_fit_model_tables(fit)$pars
+    pars = mcp_pars(fit)
     cp_names = pars$name[pars$part == "cp" & pars$scope == "population"]
     is_cp = result$name %in% cp_names
 
@@ -296,10 +295,11 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
 
     # Convergence warning footer
     all_res = result
-    if (!is.null(fit$pars$group)) {
+    group_names = mcp_pars(fit, scope = "group")$name
+    if (length(group_names) > 0) {
       ran_res = get_summary(fit, width, scope = "group", prior = prior, verbose = verbose)
       cat(
-        "\nGroup-level effects: ", paste(fit$pars$group, collapse = ", "),
+        "\nGroup-level effects: ", paste(group_names, collapse = ", "),
         ". Use `ranef(fit)` to inspect deviations by level.\n", sep = ""
       )
       all_res = dplyr::bind_rows(all_res, ran_res)
@@ -434,8 +434,9 @@ NULL
 vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, ...) {
   rlang::check_dots_empty()
   checkmate::assert_flag(correlation)
-  pars = if (is.null(pars)) object$pars$population else as.character(pars)
-  pars = intersect(object$pars$population, pars)
+  population = mcp_pars(object, scope = "population")$name
+  pars = if (is.null(pars)) population else as.character(pars)
+  pars = intersect(population, pars)
   if (length(pars) == 0)
     return(NULL)
 
@@ -454,7 +455,7 @@ confint.mcpfit = function(object, parm, level = 0.95, ...) {
   checkmate::assert_number(level, lower = 0, upper = 1)
   checkmate::assert_true(level > 0 && level < 1, .var.name = "level")
 
-  population = object$pars$population
+  population = mcp_pars(object, scope = "population")$name
   if (missing(parm)) {
     parm = population
   } else if (is.numeric(parm)) {
@@ -463,7 +464,7 @@ confint.mcpfit = function(object, parm, level = 0.95, ...) {
     checkmate::assert_character(parm)
   }
   if (!all(parm %in% population))
-    stop("`parm` must name population-level parameters from `fit$pars$population`.", call. = FALSE)
+    stop("`parm` must name population-level parameters.", call. = FALSE)
 
   # Compute credible interval
   probs = c((1 - level) / 2, 1 - (1 - level) / 2)
@@ -661,6 +662,13 @@ tidy_draws.mcpfit = function(x, ...) {
       with = I("as_draws(fit) or coda::as.mcmc(fit)")
     )
   }
+  if (name == "pars") {
+    lifecycle::deprecate_soft(
+      when = "0.4.0",
+      what = I("fit$pars"),
+      with = I("mcp_pars(fit) and mcp_columns(fit)")
+    )
+  }
   .subset2(x, name)
 }
 
@@ -671,6 +679,13 @@ tidy_draws.mcpfit = function(x, ...) {
       when = "0.4.0",
       what = I(paste0("fit$", i)),
       with = I("as_draws(fit) or coda::as.mcmc(fit)")
+    )
+  }
+  if (is.character(i) && identical(i, "pars")) {
+    lifecycle::deprecate_soft(
+      when = "0.4.0",
+      what = I("fit$pars"),
+      with = I("mcp_pars(fit) and mcp_columns(fit)")
     )
   }
   .subset2(x, i)
@@ -779,7 +794,7 @@ unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
       if (length(unknown) > 0)
         stop(
           "Unknown group-effect selection: ", and_collapse(unknown), ". ",
-          "Use TRUE, FALSE, \"cp\", \"predictor\", or names from fit$pars$group."
+          "Use TRUE, FALSE, \"cp\", \"predictor\", or a group-effect name."
         )
       use_group = group_effects$part %in% pars | group_effects$name %in% pars
     }
@@ -861,20 +876,19 @@ resolve_draws_format = function(draws_format, samples_format, draws_format_missi
 #' @inheritParams mcmclist_draws
 #' @inheritParams pp_eval
 #' @param population
-#'   * `TRUE` All population-level effects. Same as `fit$pars$population`.
+#'   * `TRUE` All population-level model parameters.
 #'   * `FALSE` No population-level effects. Same as `c()`.
-#'   * Character vector: Only include specified population-level parameters; see `fit$pars$population`.
+#'   * Character vector: Only include specified population-level parameters.
 #' @param varying One of:
-#'   * `TRUE` All group-level deviations (`fit$pars$group`).
+#'   * `TRUE` All group-level deviations.
 #'   * `FALSE` No group-level deviations (`c()`).
 #'   * `"cp"` or `"predictor"`: All group-level deviations belonging to that part of
 #'     the model.
-#'   * Character vector: Only include specified group-level parameters - see
-#'     `fit$pars$group`.
+#'   * Character vector: Only include specified group-level parameters.
 #' @param absolute
 #'   * `TRUE` Returns the absolute location of all group-specific change points.
 #'   * `FALSE` Return the group-level deviations.
-#'   * Character vector: Apply the absolute transform only to these group-level parameters; see `fit$pars$group`.
+#'   * Character vector: Apply the absolute transform only to these group-level parameters.
 #'
 #' @return `tibble` of posterior draws in `tidybayes` format.
 #' @encoding UTF-8
@@ -912,10 +926,10 @@ mcp_draws = function(
   if (all(population == FALSE)) {
     pars_population = c()  # Empty if no absolute group-level change points
   } else if (all(population == TRUE)) {
-    pars_population = fit$pars$population
+    pars_population = mcp_pars(fit, scope = "population")$name
   } else if (is.character(population)) {
-    if (!all(population %in% fit$pars$population))
-      stop("Not all `population` selections are population-level parameters (see fit$pars$population).")
+    if (!all(population %in% mcp_pars(fit, scope = "population")$name))
+      stop("Not all `population` selections are population-level parameters.")
 
     pars_population = population
   }
@@ -965,7 +979,7 @@ mcp_draws = function(
   }
 
   # Unassigned group-level deviations are simulated as zero (the population-level mean).
-  remaining_group_cols = dplyr::setdiff(fit$pars$group, colnames(draws))
+  remaining_group_cols = dplyr::setdiff(mcp_pars(fit, scope = "group")$name, colnames(draws))
   draws[, remaining_group_cols] = 0
 
   # Return with chain etc. first
@@ -1090,7 +1104,8 @@ pp_eval = function(
   if (is.null(newdata))
     newdata = fit$data
 
-  assert_arma_series(newdata, fit$pars$series)
+  data_columns = mcp_columns(fit)
+  assert_arma_series(newdata, data_columns$series)
 
 
   ###############
@@ -1099,7 +1114,7 @@ pp_eval = function(
   group_info = unpack_group_effects(fit, pars = varying)
   model_tables = get_fit_model_tables(fit)
   group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
-  exclude_group_cols = setdiff(group_cols, c(group_info$cols, fit$pars$series))
+  exclude_group_cols = setdiff(group_cols, c(group_info$cols, data_columns$series))
   required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
   operation = switch(type, predict = "rng", loglik = "log_lik", fitted = "epred", residuals = "epred")
   aux_operations = c(operation, if (arma && is_arma(fit)) "garma")
@@ -1109,9 +1124,9 @@ pp_eval = function(
   required_cols = required_cols[required_cols %notin% unused_aux_columns]
   required_cols = required_cols[required_cols %notin% exclude_group_cols]
   if ((arma == FALSE || is_arma(fit) == FALSE) & type %in% c("fitted", "predict")) {
-    required_cols = required_cols[required_cols != fit$pars$y]
-  } else if (fit$pars$y %notin% colnames(newdata)) {
-    stop("`newdata` must contain a response column named '", fit$pars$y, "' for when `arma == TRUE` and/or `type == 'residuals'`")
+    required_cols = required_cols[required_cols != data_columns$response]
+  } else if (data_columns$response %notin% colnames(newdata)) {
+    stop("`newdata` must contain a response column named '", data_columns$response, "' for when `arma == TRUE` and/or `type == 'residuals'`")
   }
   assert_data_cols(newdata, required_cols)  # Helpful error if something is missing
   newdata = data.frame(newdata[, required_cols, drop = FALSE])
@@ -1183,7 +1198,7 @@ pp_eval = function(
   # observed-data likelihood contributions. Retain them while evaluating
   # GARMA histories above, then remove them from returned log likelihoods.
   if (type == "loglik") {
-    observed_rows = which(!is.na(newdata[, fit$pars$y]))
+    observed_rows = which(!is.na(newdata[, data_columns$response]))
     if (length(observed_rows) == 0)
       stop("Log-likelihood evaluation requires at least one observed response.")
     draws = dplyr::filter(draws, .data$data_row %in% observed_rows)
@@ -1196,7 +1211,7 @@ pp_eval = function(
 
   # Optionally compute residuals
   if (type == "residuals")
-    draws = dplyr::mutate(draws, !!type := .data[[fit$pars$y]] - .data[[type]])
+    draws = dplyr::mutate(draws, !!type := .data[[data_columns$response]] - .data[[type]])
 
   # Fail early if group-level joins or another evaluation step duplicated
   # or dropped any joint draw/evaluation-row combinations.

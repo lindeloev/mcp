@@ -77,7 +77,7 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
 
   response_defaults = list(
     auxiliary = list(),
-    validate = function(y, data, columns) invisible(TRUE),
+    validate = function(y, data, response_columns) invisible(TRUE),
     observed = function(y, data, rate) y,
     probability = function(rate) FALSE,
     point_size = NULL
@@ -156,7 +156,7 @@ mcpfamily_gaussian = function(family) {
       required = FALSE,
       operations = c("log_lik", "rng", "garma")
     )),
-    validate = function(y, data, columns) {
+    validate = function(y, data, response_columns) {
       if (!is.null(data$weights)) {
         if (!is.numeric(data$weights) || anyNA(data$weights) || any(data$weights <= 0))
           stop("All weights must be numeric and greater than zero.")
@@ -224,14 +224,14 @@ mcpfamily_binomial = function(family) {
       required = TRUE,
       operations = c("epred", "log_lik", "rng", "garma")
     )),
-    validate = function(y, data, columns) {
-      checkmate::assert_integerish(y, lower = 0, .var.name = columns$y)
-      checkmate::assert_integerish(data$trials, lower = 1, .var.name = columns$trials)
+    validate = function(y, data, response_columns) {
+      checkmate::assert_integerish(y, lower = 0, .var.name = response_columns$y)
+      checkmate::assert_integerish(data$trials, lower = 1, .var.name = response_columns$trials)
       invalid = which(!is.na(y) & !is.na(data$trials) & y > data$trials)
       if (length(invalid) > 0)
         stop(
-          "For family = binomial(), responses in '", columns$y,
-          "' cannot exceed trials in '", columns$trials,
+          "For family = binomial(), responses in '", response_columns$y,
+          "' cannot exceed trials in '", response_columns$trials,
           "'. Found invalid data in row(s): ", paste(invalid, collapse = ", "), "."
         )
       invisible(TRUE)
@@ -290,10 +290,10 @@ mcpfamily_bernoulli = function(family) {
   }
 
   response = list(
-    validate = function(y, data, columns) {
+    validate = function(y, data, response_columns) {
       invalid = which(!is.na(y) & y %notin% c(0, 1))
       if (length(invalid) > 0)
-        stop("Only responses 0 and 1 are allowed for family = bernoulli() in column '", columns$y, "'")
+        stop("Only responses 0 and 1 are allowed for family = bernoulli() in column '", response_columns$y, "'")
       invisible(TRUE)
     },
     probability = function(rate) TRUE
@@ -340,8 +340,8 @@ mcpfamily_poisson = function(family) {
   }
 
   response = list(
-    validate = function(y, data, columns) {
-      checkmate::assert_integerish(y, lower = 0, .var.name = columns$y)
+    validate = function(y, data, response_columns) {
+      checkmate::assert_integerish(y, lower = 0, .var.name = response_columns$y)
       invisible(TRUE)
     }
   )
@@ -392,8 +392,8 @@ mcpfamily_negbinomial = function(family) {
     "shape", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "dt(0, 2.5 / predictor_scale(), 3) T(0, )", "Regularizing log-shape coefficient scaled to a reference predictor change", "always"
   )
   response = list(
-    validate = function(y, data, columns) {
-      checkmate::assert_integerish(y, lower = 0, .var.name = columns$y)
+    validate = function(y, data, response_columns) {
+      checkmate::assert_integerish(y, lower = 0, .var.name = response_columns$y)
       invisible(TRUE)
     }
   )
@@ -588,8 +588,8 @@ get_family_aux_columns = function(family, segments, operations = NULL) {
 
 # Extract the response-auxiliary columns declared by a fitted family.
 get_family_response_data = function(family, segments, data) {
-  columns = get_family_aux_columns(family, segments)
-  out = lapply(columns, function(column) {
+  aux_columns = get_family_aux_columns(family, segments)
+  out = lapply(aux_columns, function(column) {
     if (is.na(column) || column %notin% names(data)) NULL else data[[column]]
   })
   out[!vapply(out, is.null, logical(1))]
@@ -631,6 +631,18 @@ is.mcpfamily = function(x) {
   checkmate::assert_character(x$dpars)
   checkmate::assert_character(x$links)
   checkmate::assert_list(x$response$auxiliary)
+  auxiliary_names = names(x$response$auxiliary)
+  if (length(auxiliary_names) > 0) {
+    checkmate::assert_character(auxiliary_names, any.missing = FALSE, min.len = 1)
+    if (anyDuplicated(auxiliary_names))
+      stop("Family response auxiliary names must be unique.")
+    reserved = intersect(auxiliary_names, c("par_x", "response", "series"))
+    if (length(reserved) > 0)
+      stop(
+        "Family response auxiliary names cannot use reserved column roles: ",
+        and_collapse(reserved), "."
+      )
+  }
   checkmate::assert_function(x$response$validate)
   checkmate::assert_function(x$response$observed)
   checkmate::assert_function(x$response$probability)

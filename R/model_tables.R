@@ -143,14 +143,13 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
 }
 
 
-#' Build a table of parameter names with their segment and dpar
+#' Build the canonical table of model parameter definitions
 #'
 #' Provides the canonical display order used by `summary()`, `fixef()`,
 #' `ranef()`, `prior_summary()`, and `plot_pars(pars = "population")`: change
 #' points first (including their SD/group-level hyperparameters), then `mu`,
 #' then the other distributional parameters in the order declared by the
-#' family, then `ar`/`ma` components (combined with their lag, e.g. `"ar1"`),
-#' each ascending by segment.
+#' family, then `ar`/`ma` components, each ascending by segment.
 #'
 #' @aliases get_pars_table
 #' @keywords internal
@@ -159,20 +158,22 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
 #' @param cps A table of change points from `get_segment_tables()`.
 #' @param group_effects A table from `get_group_effects()`.
 #' @param family An `mcpfamily` object.
-#' @return A tibble with one row per model parameter (population and
-#'   group), with columns `name`, `part`, `scope`, `role`, `segment`, and
-#'   `dpar`.
+#' @return A tibble with one row per model parameter (population and group),
+#'   with columns `name`, `part`, `scope`, `role`, `segment`, `dpar`, `order`,
+#'   `group_col`, and `population_name`.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_pars_table = function(predictors, cps, group_effects, family) {
   cp_pars = tibble::tibble(
     name = character(), part = character(), scope = character(), role = character(),
-    segment = integer(), dpar = character(), .tie = integer()
+    segment = integer(), dpar = character(), order = integer(),
+    group_col = character(), population_name = character(), .tie = integer()
   )
   if (nrow(cps) > 0) {
     cp_pars = tibble::tibble(
       name = cps$name, part = "cp", scope = "population", role = "change_point",
-      segment = cps$segment, dpar = "cp", .tie = 0L
+      segment = cps$segment, dpar = "cp", order = NA_integer_,
+      group_col = NA_character_, population_name = NA_character_, .tie = 0L
     )
     varying_cp = cps[cps$varying, , drop = FALSE]
     if (nrow(varying_cp) > 0) {
@@ -180,11 +181,13 @@ get_pars_table = function(predictors, cps, group_effects, family) {
         cp_pars,
         tibble::tibble(
           name = varying_cp$sd_name, part = "cp", scope = "population", role = "group_sd",
-          segment = varying_cp$segment, dpar = "cp", .tie = 1L
+          segment = varying_cp$segment, dpar = "cp", order = NA_integer_,
+          group_col = varying_cp$group_col, population_name = varying_cp$name, .tie = 1L
         ),
         tibble::tibble(
           name = varying_cp$group_name, part = "cp", scope = "group", role = "group_deviation",
-          segment = varying_cp$segment, dpar = "cp", .tie = 2L
+          segment = varying_cp$segment, dpar = "cp", order = NA_integer_,
+          group_col = varying_cp$group_col, population_name = varying_cp$name, .tie = 2L
         )
       )
     }
@@ -195,9 +198,16 @@ get_pars_table = function(predictors, cps, group_effects, family) {
       name = .data$code_name,
       part = "predictor",
       scope = "population",
-      role = as.character(ifelse(.data$dpar %in% family$dpar_specs$dpar, "fixed_effect", "arma")),
+      role = dplyr::case_when(
+        .data$dpar == "mu" ~ "fixed_effect",
+        .data$dpar %in% family$dpar_specs$dpar ~ "dpar_effect",
+        TRUE ~ "arma"
+      ),
       segment = .data$segment,
-      dpar = as.character(ifelse(.data$dpar %in% c("ar", "ma"), paste0(.data$dpar, .data$order), .data$dpar)),
+      dpar = .data$dpar,
+      order = .data$order,
+      group_col = NA_character_,
+      population_name = NA_character_,
       .tie = .data$matrix_col
     )
 
@@ -210,6 +220,9 @@ get_pars_table = function(predictors, cps, group_effects, family) {
       role = "group_sd",
       segment = .data$segment,
       dpar = .data$dpar,
+      order = .data$order,
+      group_col = .data$group_col,
+      population_name = .data$population_name,
       .tie = .data$matrix_col + 0.1
     ) %>%
     dplyr::bind_rows(
@@ -222,24 +235,79 @@ get_pars_table = function(predictors, cps, group_effects, family) {
           role = "group_deviation",
           segment = .data$segment,
           dpar = .data$dpar,
+          order = .data$order,
+          group_col = .data$group_col,
+          population_name = .data$population_name,
           .tie = .data$matrix_col + 0.2
         )
     )
 
   # Canonical group order: cp, mu, other family dpars (declared order), then
-  # ar/ma labels sorted by component ("ar" before "ma") and then lag order.
-  arma_labels = unique(predictor_pars$dpar[predictor_pars$dpar %notin% c("mu", family$dpar_specs$dpar)])
-  arma_labels = arma_labels[order(
-    match(sub("[0-9]+$", "", arma_labels), c("ar", "ma")),
-    as.integer(sub("^[a-z]+", "", arma_labels))
-  )]
-  dpar_levels = c("cp", "mu", setdiff(family$dpar_specs$dpar, "mu"), arma_labels)
+  # ar/ma components (ar before ma) and their lag order.
+  dpar_levels = c("cp", "mu", setdiff(family$dpar_specs$dpar, "mu"), "ar", "ma")
 
   dplyr::bind_rows(cp_pars, predictor_pars, predictor_group_pars) %>%
     dplyr::mutate(dpar = factor(.data$dpar, levels = dpar_levels)) %>%
-    dplyr::arrange(.data$dpar, .data$segment, .data$.tie) %>%
+    dplyr::arrange(.data$dpar, .data$order, .data$segment, .data$.tie) %>%
     dplyr::mutate(dpar = as.character(.data$dpar)) %>%
-    dplyr::select("name", "part", "scope", "role", "segment", "dpar")
+    dplyr::select("name", "part", "scope", "role", "segment", "dpar", "order", "group_col", "population_name")
+}
+
+
+#' Model parameters
+#'
+#' Return the canonical parameter definitions for an `mcpfit` object. This
+#' works before sampling and is the stable way to discover model parameters.
+#'
+#' @param fit An `mcpfit` object.
+#' @param scope Optional parameter scope(s): `"population"` or `"group"`.
+#' @param role Optional parameter role(s), such as `"fixed_effect"`,
+#'   `"dpar_effect"`, `"arma"`, `"group_sd"`, or `"group_deviation"`.
+#' @return A data frame with one row per parameter definition. `name` is the
+#'   model parameter name; `dpar` identifies its distributional parameter or
+#'   component (`"cp"`, `"ar"`, or `"ma"`); `order` gives an AR/MA lag;
+#'   `group_col` and `population_name` describe group-level effects.
+#' @export
+mcp_pars = function(fit, scope = NULL, role = NULL) {
+  checkmate::assert_class(fit, "mcpfit")
+  if (!is.null(scope))
+    scope = rlang::arg_match(scope, c("population", "group"), multiple = TRUE)
+  if (!is.null(role))
+    checkmate::assert_character(role, any.missing = FALSE)
+
+  parameters = get_fit_model_tables(fit)$parameters
+  keep = rep(TRUE, nrow(parameters))
+  if (!is.null(scope))
+    keep = keep & parameters$scope %in% scope
+  if (!is.null(role))
+    keep = keep & parameters$role %in% role
+  parameters[keep, , drop = FALSE]
+}
+
+
+#' Model data columns
+#'
+#' Return the resolved data-column roles for an `mcpfit` object. In particular,
+#' `par_x` is the change-point predictor chosen automatically or supplied to
+#' [mcp()]. Family-defined response auxiliaries, such as `trials` and
+#' `weights`, are included when relevant.
+#'
+#' @param fit An `mcpfit` object.
+#' @return A named list with `par_x`, `response`, and `series`, plus any
+#'   family-defined response-auxiliary column roles.
+#' @export
+mcp_columns = function(fit) {
+  checkmate::assert_class(fit, "mcpfit")
+  get_fit_model_tables(fit)$data_columns
+}
+
+
+#' Does this fit include autoregressive or moving-average terms?
+#'
+#' @keywords internal
+#' @noRd
+has_arma_terms = function(fit) {
+  any(get_fit_model_tables(fit)$predictors$dpar %in% c("ar", "ma"))
 }
 
 
@@ -298,8 +366,9 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
 #' @keywords internal
 #' @noRd
 #' @param fit An `mcpfit` object.
-#' @return A list with `segments`, `cps`, `predictors`, `group_effects`, `pars`,
-#'   and fitted `design_specs`.
+#' @return A list with fitting-data column metadata in `data_columns`; model tables
+#'   `segments`, `cps`, `predictors`, `group_effects`, and `parameters`; and
+#'   fitted `design_specs`.
 get_fit_model_tables = function(fit) {
   check_mcpfit_version(fit)
   fit$.internal$model_tables

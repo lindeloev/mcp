@@ -15,9 +15,10 @@ check_mcpfit_version = function(fit) {
   is_valid = !is.null(fit$.internal) &&
     is.mcpfamily(fit$family) &&
     !is.null(tables) &&
-    !is.null(tables$pars) &&
+    !is.null(tables$data_columns) &&
+    !is.null(tables$parameters) &&
     !is.null(tables$design_specs) &&
-    "role" %in% names(tables$pars)
+    "role" %in% names(tables$parameters)
 
   if (!is_valid) {
     stop(

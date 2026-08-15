@@ -315,34 +315,26 @@ mcp = function(model,
 
   # Make lists of parameters
   all_pars = names(prior)  # There is a prior for every parameter
-  family_dpars = family$dpar_specs$dpar
-  pars_table = get_pars_table(predictors, cps, group_effects, family)
+  parameters = get_pars_table(predictors, cps, group_effects, family)
+  data_columns = c(
+    list(par_x = par_x, response = unique(segments$y), series = series),
+    lapply(get_family_aux_columns(family, segments), function(column) {
+      if (is.na(column)) NULL else column
+    })
+  )
   model_tables = list(
+    data_columns = data_columns,
     segments = segments,
     cps = cps,
     predictors = predictors,
     group_effects = group_effects,
-    pars = pars_table,
+    parameters = parameters,
     design_specs = predictor_tables$design_specs
   )
-  pars = list(
-    x = par_x,
-    y = unique(segments$y),
-    series = series,
-    cp = paste0("cp_", 1:nrow(segments))[seq_len(nrow(segments)-1)],  # N_cp = N_segments - 1
-    mu = predictors$code_name[predictors$dpar == "mu"],
-    population = c(),
-    group = logical0_to_null(group_effects$name),
-    sigma = predictors$code_name[predictors$dpar %in% setdiff(family_dpars, "mu")],
-    arma = predictors$code_name[predictors$dpar %notin% family_dpars],
-    trials = logical0_to_null(stats::na.omit(unique(segments$trials))),
-    weights = logical0_to_null(stats::na.omit(unique(segments$weights)))
-  )
-  pars$population = pars_table$name[pars_table$scope == "population"]
-
   # Check parameters
   # Models with AR/MA terms
-  if (length(pars$arma) > 0) {
+  has_arma = any(predictors$dpar %in% c("ar", "ma"))
+  if (has_arma) {
     if (is.null(family$garma))
       stop(
         "family = ", family$family, "(link = \"", family$link,
@@ -363,7 +355,7 @@ mcp = function(model,
 
   # Make formulas
   formula_jags = get_formula_jags(segments, predictors, group_effects, par_x, family)
-  formula_r = get_formula_r(formula_jags, predictors, group_effects, pars)
+  formula_r = get_formula_r(formula_jags, predictors, group_effects, cps, par_x)
 
   # Make jags code if it is not provided by the user
   if (is.null(jags_code)) {
@@ -441,7 +433,6 @@ mcp = function(model,
   model = lapply(segments$form, stats::as.formula, env = globalenv())
   class(model) = c("mcplist", "list")
   class(prior) = c("mcplist", "list")
-  class(pars) = c("mcplist", "list")  # for nicer printing
   class(jags_code) = c("mcptext", "character")  # for nicer printing
 
   # Make mrpfit object
@@ -461,9 +452,8 @@ mcp = function(model,
     waic = NULL,
 
     # Extracted model
-    pars = pars,
     jags_code = jags_code,
-    simulate = get_fitsimulate(pars, group_effects),
+    simulate = get_fitsimulate(cps, predictors, group_effects),
 
     # Pass info to *.mcpfit() functions.
     # Not meant to be used by the end user.
@@ -478,7 +468,7 @@ mcp = function(model,
   )
   class(mcpfit) = "mcpfit"
 
-  if (!is.null(mcmc_post) && length(pars$arma) > 0)
+  if (!is.null(mcmc_post) && has_arma)
     warn_arma_fit(mcpfit, diagnostics = diagnostics)
 
   # Return it

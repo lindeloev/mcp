@@ -105,11 +105,12 @@ add_rhs_predictors = function(newdata, fit) {
   predictors = model_tables$predictors
   group_effects = model_tables$group_effects
   design_specs = model_tables$design_specs
+  data_columns = mcp_columns(fit)
   predictors = evaluate_fitted_designs(
-    predictors, design_specs, newdata, fit$pars$x
+    predictors, design_specs, newdata, data_columns$par_x
   )
   group_effects = evaluate_fitted_designs(
-    group_effects, design_specs, newdata, fit$pars$x
+    group_effects, design_specs, newdata, data_columns$par_x
   )
   predictor_matrix = get_predictor_matrix(predictors, group_effects)
 
@@ -124,11 +125,11 @@ add_rhs_predictors = function(newdata, fit) {
 #' @aliases get_sim_pars
 #' @keywords internal
 #' @return Character vector
-get_sim_pars = function(predictors, pars) {
+get_sim_pars = function(cps, predictors, group_effects) {
   c(
-    pars$cp,  # cp_1, cp_2, etc.
-    predictors$code_name,  # mu, sigma, ar, etc.
-    pars$group
+    cps$name,
+    predictors$code_name,
+    group_effects$name
   )
 }
 
@@ -253,9 +254,10 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   model_tables = get_fit_model_tables(fit)
   predictors = model_tables$predictors
   group_effects = model_tables$group_effects
+  data_columns = mcp_columns(fit)
 
   # Assert that the ellipsis contains the expected argument names
-  param_pars = get_sim_pars(predictors, fit$pars)
+  param_pars = get_sim_pars(model_tables$cps, predictors, group_effects)
   pred_pars = paste0(
     ".pred_", get_predictor_design_names(predictors, group_effects)
   )
@@ -263,7 +265,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   has_arma_terms = any(predictors$dpar %in% c("ar", "ma"))
   aux_operations = c(operation, if (has_arma_terms && .arma) "garma")
   aux_columns = get_family_aux_columns(fit$family, model_tables$segments, aux_operations)
-  data_pars = c(fit$pars$x, fit$pars$series, stats::na.omit(unname(aux_columns)))
+  data_pars = c(data_columns$par_x, data_columns$series, stats::na.omit(unname(aux_columns)))
   expected_arg_names = c(param_pars, pred_pars, data_pars)
 
   args = list(...)
@@ -292,9 +294,9 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     dpar_values = add_response_dpars(dpar_values, fit$family)
 
   # Prepare for stuff needing .ydata
-  has_ydata = is.null(args[[fit$pars$y]]) == FALSE
+  has_ydata = is.null(args[[data_columns$response]]) == FALSE
   if (has_ydata)
-    dpar_values$.ydata = args[[fit$pars$y]]
+    dpar_values$.ydata = args[[data_columns$response]]
   if (.type == "loglik" & has_ydata == FALSE)
     stop(".ydata must be non-NULL for .type = 'loglik'.")
   .dpar = paste0(.dpar, "_")
@@ -328,10 +330,10 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
       stop("The response is required to evaluate GARMA terms.")
 
     series_id = args[[".draw"]]
-    if (!is.null(fit$pars$series)) {
+    if (!is.null(data_columns$series)) {
       if (is.null(series_id))
-        series_id = rep(1, length(args[[fit$pars$series]]))
-      series_id = interaction(series_id, args[[fit$pars$series]], drop = TRUE)
+        series_id = rep(1, length(args[[data_columns$series]]))
+      series_id = interaction(series_id, args[[data_columns$series]], drop = TRUE)
     }
 
     garma_result = simulate_garma(
@@ -399,13 +401,14 @@ simulate_atomic = function(fit,
   # Remaining values are asserted in simulate_vectorized()
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_data_frame(newdata)
-  assert_arma_series(newdata, fit$pars$series)
+  data_columns = mcp_columns(fit)
+  assert_arma_series(newdata, data_columns$series)
   args = list(...)
   model_tables = get_fit_model_tables(fit)
   model_predictors = model_tables$predictors
   model_group_effects = model_tables$group_effects
   expected_args = c(
-    setdiff(get_sim_pars(model_predictors, fit$pars), model_group_effects$name),
+    setdiff(get_sim_pars(model_tables$cps, model_predictors, model_group_effects), model_group_effects$name),
     model_group_effects$sd_name
   )
   if (is.null(names(args)) | any(names(args) == ""))
@@ -421,8 +424,8 @@ simulate_atomic = function(fit,
     checkmate::assert_number(args[[sd_name]], lower = 0, .var.name = sd_name)
 
   # Remove response column if present - it is to be simulated
-  if (fit$pars$y %in% colnames(newdata))
-    newdata = dplyr::select(newdata, -dplyr::all_of(fit$pars$y))
+  if (data_columns$response %in% colnames(newdata))
+    newdata = dplyr::select(newdata, -dplyr::all_of(data_columns$response))
 
   # Simulate one deviation per grouping level, then map to rows. Change-point
   # deviations are exactly centered, matching the fitted parameterization.
@@ -484,18 +487,18 @@ simulate_atomic = function(fit,
 #' @aliases get_fitsimulate
 #' @keywords internal
 #' @noRd
-#' @param pars A list of model parameters, typically from `fit$pars`.
+#' @param cps Output of `get_segment_tables()`.
+#' @param predictors Output of `get_predictors()`.
 #' @param group_effects The output of `get_group_effects()`.
 #' @return An R function.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_fitsimulate = function(pars, group_effects) {
+get_fitsimulate = function(cps, predictors, group_effects) {
   # List of argument names
-  sim_pars = c(pars$cp, pars$mu)
   predictor_group_effects = group_effects[group_effects$part == "predictor", , drop = FALSE]
   cp_group_effects = group_effects[group_effects$part == "cp", , drop = FALSE]
 
-  args_required = c(sim_pars, pars$sigma, pars$arma)
+  args_required = c(cps$name, predictors$code_name)
   args_default = c(cp_group_effects$sd_name, predictor_group_effects$sd_name)
   args_all = c(args_required, args_default)
 

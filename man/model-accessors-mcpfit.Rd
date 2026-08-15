@@ -6,7 +6,6 @@
 \alias{nobs.mcpfit}
 \alias{model.frame.mcpfit}
 \alias{formula.mcpfit}
-\alias{coef.mcpfit}
 \title{Extract Model Information from an \code{mcpfit}}
 \usage{
 \method{family}{mcpfit}(object, ...)
@@ -16,8 +15,6 @@
 \method{model.frame}{mcpfit}(formula, ...)
 
 \method{formula}{mcpfit}(x, segment = NULL, ...)
-
-\method{coef}{mcpfit}(object, prior = FALSE, ...)
 }
 \arguments{
 \item{object, x, formula}{An \code{mcpfit} object.}
@@ -26,17 +23,14 @@
 
 \item{segment}{\code{NULL} to return all segment formulas, or a positive integer
 selecting one segment.}
-
-\item{prior}{Logical. Use prior rather than posterior draws for \code{coef()}?}
 }
 \value{
 \code{formula()} returns the complete list of segment formulas, or one
 formula when \code{segment} is supplied. \code{family()} returns an \code{mcpfamily}.
 \code{model.frame()} returns the data retained in the fit. \code{nobs()} returns the
-number of fitting-data rows. \code{coef()} returns named posterior means of the
-population-level parameters.
+number of fitting-data rows.
 }
 \description{
-Standard R accessors for the model formulas, family, fitting data, number of
-observations, and population-level coefficients stored in an \code{mcpfit}.
+Standard R accessors for the model formulas, family, fitting data, and number
+of observations stored in an \code{mcpfit}.
 }

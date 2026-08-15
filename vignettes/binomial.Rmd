@@ -42,7 +42,7 @@ empty = mcp(model, data = df, family = binomial(), sample = FALSE)
 Now we can simulate. First, let us see the model parameters.
 
 ```{r}
-empty$pars
+mcp_pars(empty)
 ```
 
  * It takes two intercepts (`Intercept_*`), for segments 1 and 3.

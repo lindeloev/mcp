@@ -133,7 +133,7 @@ assert_arma_series = function(data, series) {
 #' @inheritParams mcp
 #' @return TRUE or FALSE
 is_arma = function(fit) {
-  length(fit$pars$arma) > 0
+  has_arma_terms(fit)
 }
 
 

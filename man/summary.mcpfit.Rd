@@ -86,17 +86,13 @@ simulation and summary multiple times to get a sense of the robustness.
 \item \code{match} is \code{"OK"} if \code{sim} is contained in the central posterior
 interval (\code{lower} to \code{upper}).
 }
-
-Printed summaries separate change points and other population-level
-parameters. The returned data frame remains a flat summary of
-population-level parameters; use \code{\link[=ranef]{ranef()}} for group-level deviations.
 }
 \description{
 Summarise parameter estimates and model diagnostics.
 }
 \section{Functions}{
 \itemize{
-\item \code{fixef(mcpfit)}: Population-level effects of \code{mcpfit}.
+\item \code{fixef(mcpfit)}: Population-level fixed effects (regression coefficients) of \code{mcpfit}.
 
 \item \code{ranef(mcpfit)}: Group-level deviations (random effects) of \code{mcpfit}.
 

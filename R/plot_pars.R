@@ -117,14 +117,14 @@ plot_pars = function(fit,
   # Handle special codes
   if ("population" %in% pars) {
     if (length(regex_pars) == 0) {
-      pars = fit$pars$population
+      pars = mcp_pars(fit, scope = "population")$name
     } else {
       # This probably means that the user left pars as default.
       pars = character(0)
     }
   } else if ("group" %in% pars) {
     # Regex search for group-level deviations
-    regex_pars = paste0("^", fit$pars$group, "\\[")
+    regex_pars = paste0("^", mcp_pars(fit, scope = "group")$name, "\\[")
     pars = character(0)
   }
 

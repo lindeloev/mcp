@@ -31,7 +31,8 @@ test_that("interpolate_newdata() combines categorical and continuous predictors"
   expect_error(interpolate_newdata(fit, at = list(x = 2)), "Invalid: 'x'.", fixed = TRUE)
   expect_error(interpolate_newdata(fit, at = list(z = 1:2)), "must be a single number")
 
-  draws = matrix(0, 1, length(fit$pars$population), dimnames = list(NULL, fit$pars$population))
+  population = mcp_pars(fit, scope = "population")$name
+  draws = matrix(0, 1, length(population), dimnames = list(NULL, population))
   draws[, "z_1"] = 2
   draws[, "sigma_1"] = 1
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
@@ -52,7 +53,7 @@ test_that("interpolate_newdata() carries the observed response for AR/MA models"
   newdata = interpolate_newdata(fit)
 
   expect_equal(nrow(newdata), nrow(data))
-  expect_equal(newdata[[fit$pars$y]], data$y)
+  expect_equal(newdata[[mcp_columns(fit)$response]], data$y)
 })
 
 test_that("fit$simulate() reproduces the deterministic linear predictor at .type = 'fitted'", {

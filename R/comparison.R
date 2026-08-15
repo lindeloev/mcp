@@ -228,7 +228,7 @@ get_loglik_settings = function(fit, varying, arma, ndraws) {
     varying = varying,
     arma = arma,
     ndraws = ndraws,
-    observed_rows = which(!is.na(fit$data[, fit$pars$y]))
+    observed_rows = which(!is.na(fit$data[, mcp_columns(fit)$response]))
   )
 }
 

@@ -43,11 +43,12 @@ test_runs = function(model,
   testthat::expect_true(is.null(empty$loglik), model)
   testthat::expect_true(is.null(empty$loo), model)
   testthat::expect_true(is.null(empty$waic), model)
-  testthat::expect_true(is.list(empty$pars), model)
-  testthat::expect_true(is.character(empty$pars$population), model)
-  testthat::expect_true((is.character(empty$pars$group) | is.null(empty$pars$group)), model)
-  testthat::expect_true(is.character(empty$pars$x), model)
-  testthat::expect_true(is.character(empty$pars$y), model)
+  parameters = mcp_pars(empty)
+  testthat::expect_true(is.data.frame(parameters), model)
+  testthat::expect_true(is.character(parameters$name), model)
+  columns = mcp_columns(empty)
+  testthat::expect_true(is.character(columns$par_x), model)
+  testthat::expect_true(is.character(columns$response), model)
   testthat::expect_true(is.character(empty$jags_code), model)
   testthat::expect_true(is.function(empty$simulate), model)
   testthat::expect_true(is.list(empty$.internal), model)
@@ -147,7 +148,7 @@ test_s3_methods = function(fit) {
     samples_col = .subset2(fit_to_test, col)
     testthat::expect_true(is.list(samples_col))
     testthat::expect_true(coda::is.mcmc(samples_col[[1]]))
-    testthat::expect_true(all(fit_to_test$pars$population %in% colnames(samples_col[[1]])))
+    testthat::expect_true(all(mcp_pars(fit_to_test, scope = "population")$name %in% colnames(samples_col[[1]])))
 
     # Test mcpfit functions
     varying_cols = na.omit(get_fit_model_tables(fit_to_test)$group_effects$group_col)
@@ -178,7 +179,7 @@ test_arma_simulation = function(fit) {
   testthat::expect_true(all(is.finite(simulated)))
 
   if (fit$family$family == "binomial") {
-    trials = fit$data[[fit$pars$trials]]
+    trials = fit$data[[mcp_columns(fit)$trials]]
     testthat::expect_true(all(simulated >= 0 & simulated <= trials))
     testthat::expect_true(all(simulated == floor(simulated)))
   } else if (fit$family$family %in% c("poisson", "negbinomial")) {
@@ -190,22 +191,23 @@ test_arma_simulation = function(fit) {
 
 # Tests if summary(fit) and ranef(fit) work as expected
 test_summary = function(fit, varying_cols, prior = FALSE) {
+  columns = mcp_columns(fit)
   summary_cols = c('name','mean','sd','lower','upper','rhat','ess_bulk','ess_tail')
   verbose_summary_cols = c('name','mean','sd','lower','upper','rhat','ess_bulk','ess_tail','segment','dpar')
-  if (!is.null(attr(fit$data[, fit$pars$y], "simulated"))) {
+  if (!is.null(attr(fit$data[, columns$response], "simulated"))) {
     summary_cols = c(summary_cols, "sim", "match")
     verbose_summary_cols = c(verbose_summary_cols, "sim", "match")
   }
   output = capture.output(result <- summary(fit, prior = prior))
   testthat::expect_named(result, summary_cols)
-  testthat::expect_true(all(result$name %in% fit$pars$population))  # All parameters
+  testthat::expect_true(all(result$name %in% mcp_pars(fit, scope = "population")$name))  # All parameters
   capture.output(verbose_result <- summary(fit, prior = prior, verbose = TRUE))
   testthat::expect_named(verbose_result, verbose_summary_cols)
   fixed = fixef(fit, prior = prior)
   fixed_verbose = fixef(fit, prior = prior, verbose = TRUE)
   testthat::expect_named(fixed, summary_cols)
   testthat::expect_named(fixed_verbose, verbose_summary_cols)
-  pars = get_fit_model_tables(fit)$pars
+  pars = mcp_pars(fit)
   expected_fixed = pars$name[pars$scope == "population" & pars$role == "fixed_effect"]
   testthat::expect_setequal(fixed$name, expected_fixed)
 
@@ -261,7 +263,7 @@ test_plot_pars = function(fit, prior = FALSE) {
     fit,
     type = "dens_overlay",
     prior = prior,
-    nvariables = length(fit$pars$population)
+    nvariables = nrow(mcp_pars(fit, scope = "population"))
   )
   testthat::expect_s3_class(gg, "ggplot")
 }
@@ -269,6 +271,8 @@ test_plot_pars = function(fit, prior = FALSE) {
 
 
 test_hypothesis = function(fit, prior) {
+  population = mcp_pars(fit, scope = "population")$name
+  group = mcp_pars(fit, scope = "group")$name
   # Function to test directional, interval, and point equality hypotheses
   run_test_hypothesis = function(fit, base, prior = prior) {
     hypotheses = paste0(base, " > 1")  # Directional
@@ -285,16 +289,16 @@ test_hypothesis = function(fit, prior) {
   }
 
   # Test single pop effect
-  run_test_hypothesis(fit, fit$pars$population[1], prior = prior)
+  run_test_hypothesis(fit, population[1], prior = prior)
 
   # Test multiple pop effect
-  if (length(fit$pars$population) > 1)
-    run_test_hypothesis(fit, paste0(fit$pars$population[1] , " + ", fit$pars$population[2]), prior = prior)
+  if (length(population) > 1)
+    run_test_hypothesis(fit, paste0(population[1] , " + ", population[2]), prior = prior)
 
   # Varying
-  if (!is.null(fit$pars$group)) {
+  if (length(group) > 0) {
     mcmc_vars = colnames(mcmclist_draws(fit)[[1]])
-    varying_starts = paste0("^", fit$pars$group[1], "\\[")
+    varying_starts = paste0("^", group[1], "\\[")
     varying_col_ids = stringr::str_detect(mcmc_vars, varying_starts)
     varying_cols = paste0("`", mcmc_vars[varying_col_ids], "`")  # Add these for varying
 
@@ -310,6 +314,7 @@ test_hypothesis = function(fit, prior) {
 
 test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
   # Settings
+  columns = mcp_columns(fit)
   varying_cols = na.omit(unique(
     get_fit_model_tables(fit)$group_effects$group_col
   ))
@@ -318,14 +323,14 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
     colnames(fit$data)
   )
   expected_colnames = c(
-    fit$pars$x,
-    fit$pars$trials,
+    columns$par_x,
+    columns$trials,
     rhs_cols,
     varying_cols,
     colname, "error", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
   )
-  if (length(fit$pars$arma) > 0 || colname %in% c("loglik", "residuals"))
-    expected_colnames = c(expected_colnames, fit$pars$y)
+  if (has_arma_terms(fit) || colname %in% c("loglik", "residuals"))
+    expected_colnames = c(expected_colnames, columns$response)
 
   # `log_lik()` follows the conventional draws-by-observation matrix default.
   # Its former observation-level data-frame output remains available explicitly.
@@ -335,7 +340,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
       testthat::expect_true(is.matrix(default_result))
       testthat::expect_equal(
         ncol(default_result),
-        sum(!is.na(fit$data[[fit$pars$y]]))
+        sum(!is.na(fit$data[[columns$response]]))
       )
       testthat::expect_equal(
         default_result,
@@ -369,7 +374,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
       # overflow derived Poisson summaries. Data keys must remain intact and
       # the estimate itself must not be entirely missing.
       data_cols = intersect(
-        c(fit$pars$x, fit$pars$y, fit$pars$trials, rhs_cols, varying_cols),
+        c(columns$par_x, columns$response, columns$trials, rhs_cols, varying_cols),
         colnames(result)
       )
       testthat::expect_false(anyNA(result[, data_cols, drop = FALSE]))
@@ -378,11 +383,11 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
       testthat::expect_false(anyNA(result))
     }
     testthat::expect_true(dplyr::setequal(colnames(result), expected_colnames))  # Exactly these columns regardless of order
-    testthat::expect_true(all(result[, fit$pars$x] == fit$data[, fit$pars$x]))  # Output should have same order as input
+    testthat::expect_true(all(result[, columns$par_x] == fit$data[, columns$par_x]))  # Output should have same order as input
 
     if (colname == "residuals") {
       fitted_result = fitted(fit, rate = FALSE, prior = prior)  # residuals are on observed-data scale
-      observed = fit$data[[fit$pars$y]]
+      observed = fit$data[[columns$response]]
       testthat::expect_equal(result$residuals, observed - fitted_result$fitted)
       testthat::expect_equal(result$error, fitted_result$error)
       testthat::expect_equal(result$Q2.5, observed - fitted_result$Q97.5)
@@ -395,10 +400,11 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
 # Weighted Gaussian evaluation must use the same observation-level SD as JAGS:
 # precision = weight / sigma^2, or equivalently SD = sigma / sqrt(weight).
 test_pp_eval_weights = function(fit, prior = FALSE) {
-  if (fit$family$family != "gaussian" || length(fit$pars$weights) == 0)
+  columns = mcp_columns(fit)
+  if (fit$family$family != "gaussian" || length(columns$weights) == 0)
     return(invisible(NULL))
 
-  weight_col = fit$pars$weights
+  weight_col = columns$weights
   keys = c(".chain", ".iteration", ".draw", "data_row")
   mu = fitted(fit, summary = FALSE, probs = FALSE, prior = prior, dpar = "mu")
   sigma = fitted(fit, summary = FALSE, probs = FALSE, prior = prior, dpar = "sigma")
@@ -407,7 +413,7 @@ test_pp_eval_weights = function(fit, prior = FALSE) {
   )
   weights = fit$data[[weight_col]][loglik$data_row]
   observation_sd = sigma$.epred / sqrt(weights)
-  observed = fit$data[[fit$pars$y]][loglik$data_row]
+  observed = fit$data[[columns$response]][loglik$data_row]
 
   testthat::expect_equal(loglik[, keys], mu[, keys])
   testthat::expect_equal(loglik[, keys], sigma[, keys])
@@ -451,6 +457,9 @@ test_pp_eval_weights = function(fit, prior = FALSE) {
 
 
 test_pp_eval = function(fit, prior = FALSE) {
+  columns = mcp_columns(fit)
+  population_pars = mcp_pars(fit, scope = "population")$name
+  group_pars = mcp_pars(fit, scope = "group")$name
   # Test pp_eval
   test_pp_eval_func(fit, fitted, "fitted", prior = prior)
   test_pp_eval_func(fit, predict, "predict", prior = prior)
@@ -486,12 +495,12 @@ test_pp_eval = function(fit, prior = FALSE) {
       ".chain", ".iteration", ".draw",
 
       # Model parameters
-      fit$pars$population,
-      fit$pars$group,
+      population_pars,
+      group_pars,
 
       # Predictors
-      fit$pars$trials,
-      fit$pars$x,
+      columns$trials,
+      columns$par_x,
       rhs_cols,
       selected_cp$cols,
       "data_row",
@@ -502,10 +511,10 @@ test_pp_eval = function(fit, prior = FALSE) {
   }
 
   # Population-only evaluation should not require any grouping columns.
-  if (length(fit$pars$group) > 0) {
+  if (length(group_pars) > 0) {
     varying_cols = stats::na.omit(unique(get_fit_model_tables(fit)$group_effects$group_col))
     population_newdata = fit$data[, colnames(fit$data) %notin%
-      c(fit$pars$y, varying_cols), drop = FALSE]
+      c(columns$response, varying_cols), drop = FALSE]
     population_result = fitted(
       fit,
       newdata = population_newdata,
@@ -525,7 +534,7 @@ test_pp_eval = function(fit, prior = FALSE) {
   }
 
   # Test pp_check
-  if (length(fit$pars$group) > 0) {
+  if (length(group_pars) > 0) {
     varying_col = na.omit(get_fit_model_tables(fit)$group_effects$group_col)[1]  # Just use the first column
     pp_default = try(suppressWarnings(pp_check(fit, facet_by = varying_col, ndraws = 2, prior = prior)), silent = TRUE)
   } else {

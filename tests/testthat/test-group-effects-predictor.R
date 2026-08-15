@@ -81,9 +81,9 @@ test_that("predictor group intercepts work for family dpars and group-only formu
   expect_equal(effects$name, c("Intercept_1_id", "sigma_1_id"))
   expect_true(all(is.na(effects$population_name)))
   expect_equal(effects$dpar, c("mu", "sigma"))
-  expect_equal(fit$pars$group, effects$name)
+  expect_equal(mcp_pars(fit, scope = "group")$name, effects$name)
   expect_equal(
-    fit$pars$population,
+    mcp_pars(fit, scope = "population")$name,
     c("Intercept_1_id_sd", "sigma_1_id_sd")
   )
   expect_equal(unpack_group_effects(fit, "predictor")$pars, effects$name)

@@ -40,8 +40,6 @@ Provided by user. See \code{\link{mcp}} for more details.}
 \item{\code{loglik}}{An (Nchains * Ndraws) by N-observed-responses matrix of
 log-likelihoods.}
 
-\item{\code{pars}}{A list of character vectors of model parameter names.}
-
 \item{\code{jags_code}}{A string with jags code. Use \code{cat(fit$jags_code)} to show it.}
 
 \item{\code{simulate}}{A method to simulate and predict data.}

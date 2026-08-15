@@ -201,8 +201,8 @@ test_that("generated code separates link and distribution scales", {
     predictors$code_name == "sigma_2"
   ])
 
-  expect_false(any(grepl("^link_", fit$pars$population)))
-  expect_false(any(grepl("^(mu_|sigma_)\\[", fit$pars$population)))
+  expect_false(any(grepl("^link_", mcp_pars(fit, scope = "population")$name)))
+  expect_false(any(grepl("^(mu_|sigma_)\\[", mcp_pars(fit, scope = "population")$name)))
 })
 
 
@@ -489,11 +489,12 @@ test_that("color_by controls color without pooling categorical curves", {
     sample = FALSE
   )
 
+  population = mcp_pars(fit, scope = "population")$name
   draws = matrix(
     0,
     nrow = 20,
-    ncol = length(fit$pars$population),
-    dimnames = list(NULL, fit$pars$population)
+    ncol = length(population),
+    dimnames = list(NULL, population)
   )
   draws[, "groupB_1"] = seq(9, 11, length.out = 20)
   draws[, "conditiontreatment_1"] = seq(99, 101, length.out = 20)
@@ -631,7 +632,7 @@ test_that("integer varying groups can control plot color", {
     sample = FALSE
   )
 
-  sample_names = c(fit$pars$population, "cp_1_id[1]", "cp_1_id[2]")
+  sample_names = c(mcp_pars(fit, scope = "population")$name, "cp_1_id[1]", "cp_1_id[2]")
   draws = matrix(
     0,
     nrow = 10,
@@ -695,7 +696,7 @@ test_that("integer varying groups can control plot color", {
 
 test_that("interpolate_newdata uses the ungrouped adaptive grid by default", {
   expect_equal(
-    interpolate_newdata(demo_fit)[[demo_fit$pars$x]],
+    interpolate_newdata(demo_fit)[[mcp_columns(demo_fit)$par_x]],
     get_x_values(demo_fit)
   )
 })
@@ -718,7 +719,7 @@ test_that("fitted() intervals differ across varying levels and contain the fitte
   # id 1 is sometimes before and sometimes after it (mixed segment
   # membership across draws). cp_1_id[2] stays below x = 2.5 for every draw,
   # so id 2 is deterministically in segment 2.
-  sample_names = c(fit$pars$population, "cp_1_id[1]", "cp_1_id[2]")
+  sample_names = c(mcp_pars(fit, scope = "population")$name, "cp_1_id[1]", "cp_1_id[2]")
   n_draws = 20
   draws = matrix(
     0,
@@ -764,7 +765,7 @@ test_that("sigma() and ar() support categorical predictors and interactions", {
   )
   expect_true(all(
     c("sigma_groupB_1", "sigma_groupC_1", "sigma_groupAx_1", "sigma_groupBx_1", "sigma_groupCx_1") %in%
-      fit_sigma$pars$population
+      mcp_pars(fit_sigma, scope = "population")$name
   ))
 
   # x is not sorted across groups here, which is irrelevant for parsing but
@@ -777,6 +778,6 @@ test_that("sigma() and ar() support categorical predictors and interactions", {
   ))
   expect_true(all(
     c("ar1_groupB_1", "ar1_groupC_1", "ar1_groupAx_1", "ar1_groupBx_1", "ar1_groupCx_1") %in%
-      fit_ar$pars$population
+      mcp_pars(fit_ar, scope = "population")$name
   ))
 })

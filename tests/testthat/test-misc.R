@@ -31,8 +31,10 @@ test_that("mcpfit model accessors follow standard R conventions", {
   expect_identical(model.frame(fit), fit$data)
   expect_identical(formula(fit), fit$model)
   expect_identical(formula(fit, segment = 1), fit$model[[1]])
+  expect_equal(mcp_columns(fit)$par_x, "x")
+  expect_equal(mcp_columns(fit)$response, "y")
 
-  population = fit$pars$population
+  population = mcp_pars(fit, scope = "population")$name
   values = matrix(seq_len(3 * length(population)), nrow = 3)
   colnames(values) = population
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(values))
@@ -59,8 +61,9 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
 
   expect_named(
     tables,
-    c("segments", "cps", "predictors", "group_effects", "pars", "design_specs")
+    c("data_columns", "segments", "cps", "predictors", "group_effects", "parameters", "design_specs")
   )
+  expect_named(tables$data_columns, c("par_x", "response", "series", "weights"))
   expect_named(
     tables$group_effects,
     c(
@@ -70,17 +73,61 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
       "next_segment", "correlated"
     )
   )
-  expect_true(all(tables$pars$part %in% c("cp", "predictor")))
-  expect_true(all(tables$pars$scope %in% c("population", "group")))
-  expect_true(all(tables$pars$role %in% c("change_point", "fixed_effect", "arma", "group_sd", "group_deviation")))
+  expect_named(
+    tables$parameters,
+    c("name", "part", "scope", "role", "segment", "dpar", "order", "group_col", "population_name")
+  )
+  expect_true(all(tables$parameters$part %in% c("cp", "predictor")))
+  expect_true(all(tables$parameters$scope %in% c("population", "group")))
+  expect_true(all(tables$parameters$role %in% c("change_point", "fixed_effect", "dpar_effect", "arma", "group_sd", "group_deviation")))
+  expect_equal(mcp_pars(fit), tables$parameters)
+  group = mcp_pars(fit, scope = "group")$name
 
-  expect_equal(unpack_group_effects(fit, pars = "cp")$pars, fit$pars$group)
+  expect_equal(unpack_group_effects(fit, pars = "cp")$pars, group)
   expect_null(unpack_group_effects(fit, pars = "predictor")$pars)
   expect_equal(
-    unpack_group_effects(fit, pars = fit$pars$group)$pars,
-    fit$pars$group
+    unpack_group_effects(fit, pars = group)$pars,
+    group
   )
   expect_error(unpack_group_effects(fit, pars = "unknown"), "Unknown group-effect")
+})
+
+
+test_that("mcp_pars() and mcp_columns() are family-neutral metadata accessors", {
+  data = data.frame(x = 1:8, y = c(1, 0, 3, 2, 4, 1, 5, 3))
+  fit = mcp(
+    list(y ~ 1 + x + shape(1 + x)),
+    data,
+    family = negbinomial(),
+    sample = FALSE
+  )
+
+  parameters = mcp_pars(fit)
+  expect_true(all(c("shape_1", "shape_x_1") %in% parameters$name))
+  expect_equal(parameters$dpar[parameters$name == "shape_x_1"], "shape")
+  expect_equal(mcp_columns(fit)$par_x, "x")
+  expect_equal(mcp_columns(fit)$response, "y")
+  expect_false("pars" %in% names(fit))
+  expect_warning(expect_null(fit$pars), "deprecated")
+  expect_warning(expect_null(fit[["pars"]]), "deprecated")
+
+  binomial_fit = mcp(
+    list(y | trials(N) ~ 1),
+    data.frame(x = 1:4, y = 0:3, N = 3),
+    family = binomial(), par_x = "x", sample = FALSE
+  )
+  expect_equal(mcp_columns(binomial_fit)$trials, "N")
+
+  # Runtime methods read the authoritative tables.
+  expect_equal(
+    as.numeric(fit$simulate(
+      fit, data.frame(x = 1:2),
+      Intercept_1 = 0, x_1 = 0, shape_1 = 0, shape_x_1 = 0,
+      .type = "fitted"
+    )),
+    c(1, 1)
+  )
+  expect_equal(interpolate_newdata(fit, x_values = 1:2)$x, 1:2)
 })
 
 
@@ -94,7 +141,11 @@ test_that("summary, fixef, and ranef select parameter roles consistently", {
     list(y ~ 1 + ar(1) + (1 | id), (1 | id) ~ 1),
     data, par_x = "x", sample = FALSE
   )
-  pars = get_fit_model_tables(fit)$pars
+  pars = mcp_pars(fit)
+  expect_equal(pars$dpar[pars$name == "ar1_1"], "ar")
+  expect_equal(pars$order[pars$name == "ar1_1"], 1L)
+  expect_equal(pars$group_col[pars$name == "cp_1_id"], "id")
+  expect_equal(pars$population_name[pars$name == "cp_1_id"], "cp_1")
   group_draws = unlist(lapply(pars$name[pars$scope == "group"], function(name) {
     paste0(name, "[", c("a", "b"), "]")
   }))
@@ -129,7 +180,7 @@ test_that("legacy fit detection blocks pre-0.4.0 mcpfit objects", {
   )
 
   missing_role = fit
-  missing_role$.internal$model_tables$pars$role = NULL
+  missing_role$.internal$model_tables$parameters$role = NULL
   expect_error(
     get_fit_model_tables(missing_role),
     "created with an older version of mcp (< 0.4.0)",
@@ -319,9 +370,9 @@ test_that("group_mu example contains independent factor effects", {
   expect_s3_class(fit, "mcpfit")
   expect_type(fit$call, "language")
   expect_s3_class(fit$example_code, "mcptext")
-  expect_equal(fit$pars$cp, "cp_1")
+  expect_equal(get_fit_model_tables(fit)$cps$name, "cp_1")
   expect_equal(
-    fit$pars$group,
+    mcp_pars(fit, scope = "group")$name,
     c("Intercept_1_id", "conditionB_1_id")
   )
   expect_match(fit$example_code, "condition || id", fixed = TRUE)
@@ -452,7 +503,7 @@ test_that("PPC and LOO draws stay aligned", {
   )
 
   fit = demo_fit
-  fit$data[[fit$pars$y]][2] = NA_real_
+  fit$data[[mcp_columns(fit)$response]][2] = NA_real_
   fit$data$facet = factor(rep(1:2, length.out = nrow(fit$data)))
   fit$loglik = NULL
   fit$loo = NULL
