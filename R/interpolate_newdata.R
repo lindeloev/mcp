@@ -47,7 +47,7 @@ get_x_values = function(fit, by = NULL, prior = FALSE) {
       unlist(lapply(cp_pars, function(cp_par) unname(stats::quantile(draws[[cp_par]], probs = seq(0, 1, length.out = N_CP)))))  # Higher res at change points
     ))
   }
-  return(x_values)
+  x_values
 }
 
 #' Get fixed values for continuous predictors

@@ -44,7 +44,6 @@ assert_rank = function(x, segment, dpar) {
   if (QR$rank < ncol(x)) {
     bad_cols = colnames(x)[QR$pivot[(QR$rank+1):ncol(x)]]
     stop("These terms are perfectly colinear with other terms for ", dpar, " in segment ", segment, ": ", and_collapse(bad_cols), " (the design matrix is rank deficient). Consider checking the data and/or the model.")
-    return(bad_cols)
   }
 
   TRUE

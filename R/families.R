@@ -576,12 +576,14 @@ get_family_aux_columns = function(family, segments, operations = NULL) {
     return(stats::setNames(character(), character()))
 
   stats::setNames(vapply(aux_names, function(name) {
-    if (name %notin% names(segments))
+    if (name %notin% names(segments)) {
       return(NA_character_)
-    cols = unique(stats::na.omit(segments[[name]]))
-    if (length(cols) > 1)
-      stop("There should be exactly zero or one column used for ", name, "().")
-    if (length(cols) == 0) NA_character_ else cols
+    } else {
+      cols = unique(stats::na.omit(segments[[name]]))
+      if (length(cols) > 1)
+        stop("There should be exactly zero or one column used for ", name, "().")
+      if (length(cols) == 0) NA_character_ else cols
+    }
   }, character(1)), aux_names)
 }
 
@@ -598,10 +600,11 @@ get_family_response_data = function(family, segments, data) {
 
 # Return the JAGS function name for a link or inverse link.
 get_link_str = function(link, inverse = FALSE) {
-  if (!inverse)
+  if (!inverse) {
     return(ifelse(link == "identity", "", link))
-
-  switch(link, logit = "ilogit", probit = "phi", log = "exp", identity = "")
+  } else {
+    switch(link, logit = "ilogit", probit = "phi", log = "exp", identity = "")
+  }
 }
 
 

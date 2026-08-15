@@ -16,9 +16,9 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
       first = !duplicated(df$data_row)
       group = interaction(df[first, cols, drop = FALSE], drop = TRUE, sep = ":")
       return(group[match(df$data_row, df$data_row[first])])
+    } else {
+      interaction(df[, cols, drop = FALSE], drop = TRUE, sep = ":")
     }
-
-    interaction(df[, cols, drop = FALSE], drop = TRUE, sep = ":")
   }
 
   df$.group = make_group(curve_by)
@@ -649,8 +649,9 @@ geom_quantiles = function(data_quantiles, xvar, yvar, use_color = TRUE, color = 
     ggplot2::aes(y = .data[[as.character(yvar)]], group = interaction(.data$quantile, .data$.group))
   }
 
-  if (use_color)
+  if (use_color) {
     return(ggplot2::geom_line(mapping = quantile_mapping, data = data_quantiles, ...))
-
-  ggplot2::geom_line(mapping = quantile_mapping, data = data_quantiles, color = color, ...)
+  } else {
+    ggplot2::geom_line(mapping = quantile_mapping, data = data_quantiles, color = color, ...)
+  }
 }

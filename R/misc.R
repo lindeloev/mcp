@@ -18,10 +18,11 @@ inprod = function(x, y) {
 
 # Converts logical(0) to null. Returns x otherwise
 logical0_to_null = function(x) {
-  if (length(x) > 0)
+  if (length(x) > 0) {
     return(x)
-  else
+  } else {
     return(NULL)
+  }
 }
 
 
