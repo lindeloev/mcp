@@ -207,7 +207,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
  * Plot using `plot(fit, facet_by = "my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
  * Default priors bound group-specific change points relative to adjacent population-level change points.
 
-[Supported families and link functions](https://lindeloev.github.io/mcp/articles/families.html): 
+[Supported families and link functions](https://lindeloev.github.io/mcp/articles/families.html):
  * `mcp` currently supports specific combinations of families (`gaussian()`, `binomial()`, `bernoulli()`, `poisson()`, and `negbinomial()`) and link functions (`identity`, `logit`, `probit`, and `log`).
  * Use informative priors to avoid issues when using non-default priors.
  * Use `binomial(link = "logit")` for [binomial change points in mcp](https://lindeloev.github.io/mcp/articles/binomial.html). Also relevant for `bernoulli(link = "logit")`.

@@ -174,7 +174,7 @@ fixef(fit)
 
 
 # Inferring an autocorrelation-only change
-One "side-effect" of the `mcp` implementation of autocorrelation using `ar()` *in the formulas* is that you can infer when autocorrelation parameters and structures change. 
+One "side-effect" of the `mcp` implementation of autocorrelation using `ar()` *in the formulas* is that you can infer when autocorrelation parameters and structures change.
 
 Let's simulate a change point in autocorrelation and see if we can infer it later:
 

@@ -74,7 +74,7 @@ If you compare these values to the plot, you will see that they correspond. `plo
 
 ## Expected responses for out-of-sample data
 
-To predict out-of-sample data, you can simply use the `newdata` argument. 
+To predict out-of-sample data, you can simply use the `newdata` argument.
 
 ```{r}
 newdata = data.frame(time = c(data$time[1], 25, -20, 200))
@@ -109,7 +109,7 @@ Note that `predict()` uses random sampling under the hood, so these values will 
 
 
 # Forecasting with future change points
-Bayesian inference is the principled updating of prior knowledge using data. Where there is little or now data, the prior speaks louder. Sometimes, we can learn surprising stuff simply by inspecting the prior predictive, e.g., how the priors combine when "put through" the model. In `mcp`, most functions come with a `prior = FALSE` default, but you can simply do `plot(fit, prior = TRUE)`, `fitted(fit, prior = TRUE)`, or `predict(fit, prior = TRUE)`. 
+Bayesian inference is the principled updating of prior knowledge using data. Where there is little or now data, the prior speaks louder. Sometimes, we can learn surprising stuff simply by inspecting the prior predictive, e.g., how the priors combine when "put through" the model. In `mcp`, most functions come with a `prior = FALSE` default, but you can simply do `plot(fit, prior = TRUE)`, `fitted(fit, prior = TRUE)`, or `predict(fit, prior = TRUE)`.
 
 Say you want to forecast at `time = 125` and you know that a changepoint to the baseline level (an intercept change to `Intercept_1`) will occur approximately after the same interval as between `cp_1` and `cp_2` (i.e., at `cp_2 + (cp_2 - cp_1)`). Here is a way to "hack" `mcp` to do this. *(NOTE: I plan on implementing this in a much more user-friendly way in a future release; see the discussion in [this github issue](https://github.com/lindeloev/mcp/issues/78) and current status in [this github issue](https://github.com/lindeloev/mcp/issues/82))*.
 

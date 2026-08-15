@@ -41,7 +41,7 @@ prior = list(
 model_simple = list(recalled | trials(items) ~ 1 + items)
 ```
 
-Notice that `items` is used both as `trials` and x-axis. No problem. 
+Notice that `items` is used both as `trials` and x-axis. No problem.
 
 
 Simulate some data using `fit$simulate()`:
@@ -143,14 +143,11 @@ hypothesis(fit_info, c(
 ))
 ```
 
-Comparing the Bayes factors shows which hypothesis received the larger update
-from prior to posterior.
+Comparing the Bayes factors shows which hypothesis received the larger update from prior to posterior.
 
 There are more examples [in the documentation for `hypothesis`](../reference/hypothesis.html), including how to test group-level deviations.
 
-`mcp` evaluates the directional hypothesis for both posterior and prior
-samples. The posterior probability is reported as `p`, and the Bayes factor is
-the posterior odds divided by the prior odds:
+`mcp` evaluates the directional hypothesis for both posterior and prior samples. The posterior probability is reported as `p`, and the Bayes factor is the posterior odds divided by the prior odds:
 
 ```{r}
 hypothesis(fit_info, "cp_1 > 3.5 & cp_1 < 4.5")
@@ -171,7 +168,7 @@ print(c(p = p_post, BF = BF))
 
 
 # Cross Validation
-We can use the cross-validation from the `loo` package to compare the predictive performance of `mcp` models. Use loo to compute Widely Applicable Information Criterion (WAIC) or Estimated Log Predictive Density (ELPD) for each model, and then compare them using `loo::loo_compare()`. 
+We can use the cross-validation from the `loo` package to compare the predictive performance of `mcp` models. Use loo to compute Widely Applicable Information Criterion (WAIC) or Estimated Log Predictive Density (ELPD) for each model, and then compare them using `loo::loo_compare()`.
 
 The strength of LOO-CV is that you can compare any N models, as long as they are models of same data. In general, LOO-CV is the only inferential method for non-nested models in `mcp`. For example:
 

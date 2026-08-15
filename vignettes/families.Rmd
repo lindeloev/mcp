@@ -85,7 +85,7 @@ fit = mcp(model, data = data, family = binomial(link = "identity"), prior = prio
 plot(fit)
 ```
 
-Sampling succeeded! This is a bad model of this data. But it illustrates the necessary considerations and steps to ameliorate problems when going beyond default link functions. 
+Sampling succeeded! This is a bad model of this data. But it illustrates the necessary considerations and steps to ameliorate problems when going beyond default link functions.
 
 Because of the identity link, the binomial regression coefficients are intercepts and slopes on the success probability, in contrast to the log-odds fitted by `family = binomial(link = "logit")`. For example, `Intercept_1` is the success probability at `x = 0`, and `Intercept_2` is the success probability at `x = cp_1`.
 

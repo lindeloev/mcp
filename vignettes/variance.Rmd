@@ -13,16 +13,9 @@ There is one intentional distinction for the common model without any `sigma()` 
 
 # Priors for sigma models
 
-Without an explicit `sigma()` formula, the default is the intercept-only prior
-`dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )` directly on the residual SD. The
-response-calibrated scale adapts to the units of `y`, with a minimum of 2.5 to
-avoid an accidentally narrow prior. This matches `brms`.
+Without an explicit `sigma()` formula, the default is the intercept-only prior `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )` directly on the residual SD. The response-calibrated scale adapts to the units of `y`, with a minimum of 2.5 to avoid an accidentally narrow prior. This matches `brms`.
 
-With an explicit `sigma()` formula, the intercept instead defaults to
-`dt(0, 2.5, 3)` on log-SD, with scaled Student-t coefficient priors. `brms`
-uses the same log-SD parameterization and intercept prior but flat
-coefficients; the proper `mcp` defaults support prior sampling and mildly
-regularize short segments.
+With an explicit `sigma()` formula, the intercept instead defaults to `dt(0, 2.5, 3)` on log-SD, with scaled Student-t coefficient priors. `brms` uses the same log-SD parameterization and intercept prior but flat coefficients; the proper `mcp` defaults support prior sampling and mildly regularize short segments.
 
 ```{r}
 library(mcp)

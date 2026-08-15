@@ -283,15 +283,9 @@ For terms involving local `par_x`, the representative change also includes the e
 
 ## Gaussian mean priors
 
-With the identity link, the Gaussian intercept prior is centered on
-`round(median(y), 1)` and uses scale `max(2.5, round(mad(y), 1))`. Contrasts and
-numeric coefficients use the same scale and the reference-change scaling
-above.
+With the identity link, the Gaussian intercept prior is centered on `round(median(y), 1)` and uses scale `max(2.5, round(mad(y), 1))`. Contrasts and numeric coefficients use the same scale and the reference-change scaling above.
 
-With the log link, this calibration uses the log response, replacing zero by
-0.1 and using finite fallbacks. Both intercept rules follow `brms`; `mcp` adds
-proper scaled coefficient priors for prior sampling and mild segment
-regularization.
+With the log link, this calibration uses the log response, replacing zero by 0.1 and using finite fallbacks. Both intercept rules follow `brms`; `mcp` adds proper scaled coefficient priors for prior sampling and mild segment regularization.
 
 ## Gaussian residual-SD priors
 

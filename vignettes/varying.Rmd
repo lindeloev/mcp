@@ -168,11 +168,7 @@ mcp::ranef(fit)
 
 Inspecting the `sim` and `match` columns, we see that they recovered the simulation parameters well.
 
-Prediction methods include all group-level effects by default. Set
-`varying = FALSE` for population-only predictions, `varying = "cp"` for all
-group-level effects in the cp part, `varying = "predictor"` for predictor-side
-group-level effects, or supply an exact name such as `varying = "cp_1_id"`.
-`ranef(fit)` deliberately remains simple and returns all group-level effects.
+Prediction methods include all group-level effects by default. Set `varying = FALSE` for population-only predictions, `varying = "cp"` for all group-level effects in the cp part, `varying = "predictor"` for predictor-side group-level effects, or supply an exact name such as `varying = "cp_1_id"`. `ranef(fit)` deliberately remains simple and returns all group-level effects.
 
 Good convergence is not always as obvious as in this example. While `plot_pars(fit)` shows population-level parameters only, you can select the group-level deviations with `"group"`:
 

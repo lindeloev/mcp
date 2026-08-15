@@ -24,10 +24,7 @@ Predictor group-level effects use familiar `lme4`/`brms` syntax. For example, `y
 
 A group-level term carries into later segments until another term for the same distributional parameter and grouping factor replaces the whole block; use `(0|id)` to turn it off. Correlated multi-coefficient `|` terms, such as `(1 + x|id)`, and group-level terms inside `ar()` or `ma()` are not yet supported.
 
-Transformations in formulas are evaluated on the original predictor values, as
-in `lm()` and `glm()`. The change-point predictor is the exception: bare
-`par_x` and polynomial bases such as `I(par_x^2)` use distance from the segment
-onset so that they can describe joined segment shapes.
+Transformations in formulas are evaluated on the original predictor values, as in `lm()` and `glm()`. The change-point predictor is the exception: bare `par_x` and polynomial bases such as `I(par_x^2)` use distance from the segment onset so that they can describe joined segment shapes.
 
 For convenience, you can omit the response and cp parts in segment 2+. The previous response and an intercept-only population-level change point are then assumed. When you call `summary(fit)`, it will show the explicit representation. Let us see this in action for this model where we predict `score` as a function of `time` in three segments, i.e., with two change points:
 
@@ -62,10 +59,7 @@ Notice how it added the response and cp parts to the last segment?
  * `arj_i` are autocorrelation coefficients of order `j` for segment `i` ([read more here](../articles/arma.html)).
 
 
-Use `mcp_pars()` to inspect the parameters, including their roles,
-distributional parameters, and segments. Use `mcp_columns()` to inspect the
-resolved data-column roles, including the change-point predictor. Let us
-specify a somewhat complex model:
+Use `mcp_pars()` to inspect the parameters, including their roles, distributional parameters, and segments. Use `mcp_columns()` to inspect the resolved data-column roles, including the change-point predictor. Let us specify a somewhat complex model:
 
 ```{r}
 model = list(
