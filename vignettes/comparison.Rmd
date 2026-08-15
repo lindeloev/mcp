@@ -9,7 +9,7 @@ vignette: >
 
 There are three main ways of doing model comparison in `mcp`:
 
- * Compare any N `mcp` models using leave-One-Out cross validation (LOO-CV). Check out `loo(fit)`, `loo::loo_compare(fit1$loo, fit2$loo, ...)`, and `loo::loo_model_weights(fit1$loo, fit2$loo, ...)`.
+ * Compare any N `mcp` models using leave-One-Out cross validation (LOO-CV). Check out `loo(fit)`, `loo::loo_compare(loo1, loo2, ...)`, and `loo::loo_model_weights(loo1, loo2, ...)`.
  * Flexible directional tests using `hypothesis(fit, cp_1 > 40)` or `hypothesis(fit, cp_1 > 40 & x_2 > x_1)`.
  * Point Bayes Factors tests using the Savage-Dickey density ratio, e.g., `hypothesis(fit, cp_1 = 50)` or `hypothesis(fit, x_2 = x_1)`.
 
@@ -200,14 +200,14 @@ loo(fit_info)
 
 This is not terribly informative in and of itself. $looic = -2 * elpd_{loo}$ as is the corresponding SEs, so that is just a matter of scale. What ELPD tells you is that the product of the densities of all left-out data points is approximately $exp(-350) \sim 10 ^ {-146}$, a vanishingly small number because we multiply many small numbers. This is mentally hard to interpret because the density at a given point is only meaningful relative to the full distribution. Furthermore, it depends on the size of the dataset (the more small densities you multiply, the smaller the ELPD).
 
-What is interesting is the *relative* differences in these predicted densities. We can compare the models using `loo::loo_compare()`. We save the results in `fit$loo` to keep things together, which will also be useful if you want to `save(fit)` the objects for later use.
+What is interesting is the *relative* differences in these predicted densities. We can compare the models using `loo::loo_compare()`. Save the results as separate objects if you want to reuse them or save them for later.
 
 ```{r, cache = TRUE}
-fit_default$loo = loo(fit_default)
-fit_info$loo = loo(fit_info)
-fit_simple$loo = loo(fit_simple)
+loo_default = loo(fit_default)
+loo_info = loo(fit_info)
+loo_simple = loo(fit_simple)
 
-loo::loo_compare(fit_default$loo, fit_info$loo, fit_simple$loo)
+loo::loo_compare(loo_default, loo_info, loo_simple)
 ```
 
 Aha, so the second model ("model2", i.e., `fit_info`) passed to `loo_compare()` was preferred as the other models had smaller ELPDs. As a first rough conclusion, we've learned that informed priors and a plateau improved out-of-sample predictions.
@@ -219,18 +219,18 @@ Unfortunately, [Sivula et al. (2020)](https://arxiv.org/abs/2008.10296) has show
 You could do the same using `waic`. This is computationally lighter at the cost of robustness to influential data points. The results are almost always practically identical.
 
 ```{r, cache = TRUE}
-fit_default$waic = waic(fit_default)
-fit_info$waic = waic(fit_info)
-fit_simple$waic = waic(fit_simple)
+waic_default = waic(fit_default)
+waic_info = waic(fit_info)
+waic_simple = waic(fit_simple)
 
-loo::loo_compare(fit_default$waic, fit_info$waic, fit_simple$waic)
+loo::loo_compare(waic_default, waic_info, waic_simple)
 ```
 
 ## Stacking
 The `loo` package contains many other useful functions. For example, if prediction is your goal, it is often optimal to *combine* models rather than letting the "winner-takes-it-all" do all the predicting. This is also called *stacking*:
 
 ```{r, eval = FALSE}
-loo::stacking_weights(fit_default$loo, fit_info$loo, fit_simple$loo)
+loo::stacking_weights(loo_default, loo_info, loo_simple)
 ```
 
 This means that once model2 (`fit_info`) has done it's "predicting", the others add very little over and above that. If you want to learn about how well they predict relative to each other, use `loo::peudobma_weights()` which weights proportional to the ELPD of each model.

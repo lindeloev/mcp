@@ -29,8 +29,7 @@ test_that("Gaussian inference against lm()", {
   testthat::expect_lt(abs(sigma_mcp - summary(fit_lm)$sigma), 0.1)
 
   # Log-likelihood
-  fit_mcp = add_loglik(fit_mcp)
-  loglik_mcp = mean(rowSums(fit_mcp$loglik))
+  loglik_mcp = mean(rowSums(log_lik(fit_mcp)))
   loglik_lm = as.numeric(logLik(fit_lm))
   expect_equal(loglik_lm, loglik_mcp, tolerance = 0.02)
 })

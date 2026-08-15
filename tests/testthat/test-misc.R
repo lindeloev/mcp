@@ -505,16 +505,14 @@ test_that("PPC and LOO draws stay aligned", {
   fit = demo_fit
   fit$data[[mcp_columns(fit)$response]][2] = NA_real_
   fit$data$facet = factor(rep(1:2, length.out = nrow(fit$data)))
-  fit$loglik = NULL
-  fit$loo = NULL
 
   expect_s3_class(pp_check(fit, ndraws = 5), "ggplot")
-  fit = add_loglik(fit, ndraws = 10)
-  expect_equal(dim(fit$loglik), c(10, nrow(fit$data) - 1))
-  expect_false(anyNA(fit$loglik))
+  loglik = log_lik(fit, ndraws = 10)
+  expect_equal(dim(loglik), c(10, nrow(fit$data) - 1))
+  expect_false(anyNA(loglik))
 
   loo_result = suppressWarnings(loo(fit, ndraws = 10, save_psis = TRUE))
-  expect_equal(dim(loo_result$psis_object), dim(fit$loglik))
+  expect_equal(dim(loo_result$psis_object), dim(loglik))
   expect_equal(attr(loo_result, "mcp_settings")$ndraws, 10L)
   loo_changed = suppressWarnings(loo(fit, ndraws = 10, varying = FALSE, arma = FALSE))
   expect_false(attr(loo_changed, "mcp_settings")$varying)

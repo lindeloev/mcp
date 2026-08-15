@@ -40,9 +40,9 @@ test_runs = function(model,
   testthat::expect_true(is.list(empty$prior), model)
   testthat::expect_true(all(class(empty$family) == c("mcpfamily", "family")), model)
   testthat::expect_true(is.null(empty$samples), model)
-  testthat::expect_true(is.null(empty$loglik), model)
-  testthat::expect_true(is.null(empty$loo), model)
-  testthat::expect_true(is.null(empty$waic), model)
+  testthat::expect_false("loglik" %in% names(empty), model)
+  testthat::expect_false("loo" %in% names(empty), model)
+  testthat::expect_false("waic" %in% names(empty), model)
   parameters = mcp_pars(empty)
   testthat::expect_true(is.data.frame(parameters), model)
   testthat::expect_true(is.character(parameters$name), model)
@@ -119,15 +119,15 @@ test_runs = function(model,
 test_s3_methods = function(fit) {
   # Test criterions. Will warn about very few samples
   if (!is.null(.subset2(fit, "mcmc_post"))) {
-    fit$loo = suppressMessages(suppressWarnings(loo(fit)))
-    fit$waic = suppressMessages(suppressWarnings(waic(fit)))
-    testthat::expect_true(loo::is.psis_loo(fit$loo))
-    testthat::expect_true(loo::is.waic(fit$waic))
+    fit_loo = suppressMessages(suppressWarnings(loo(fit)))
+    fit_waic = suppressMessages(suppressWarnings(waic(fit)))
+    testthat::expect_true(loo::is.psis_loo(fit_loo))
+    testthat::expect_true(loo::is.waic(fit_waic))
 
     # Test pointwise
-    fit$loo_pointwise = suppressMessages(suppressWarnings(loo(fit, pointwise = TRUE)))
-    rownames(fit$loo$pointwise) = NULL
-    testthat::expect_equal(fit$loo$pointwise, fit$loo_pointwise$pointwise)
+    loo_pointwise = suppressMessages(suppressWarnings(loo(fit, pointwise = TRUE)))
+    rownames(fit_loo$pointwise) = NULL
+    testthat::expect_equal(fit_loo$pointwise, loo_pointwise$pointwise)
   }
 
   for (col in c("mcmc_post", "mcmc_prior")) {

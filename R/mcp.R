@@ -169,9 +169,9 @@
 #' # Compare to a one-intercept-only model (no change points) with default prior
 #' model_null = list(response ~ 1)
 #' fit_null = mcp(model_null, data = data, par_x = "time")  # fit another model here
-#' demo_fit$loo = loo(demo_fit)
-#' fit_null$loo = loo(fit_null)
-#' loo::loo_compare(demo_fit$loo, fit_null$loo)
+#' demo_loo = loo(demo_fit)
+#' null_loo = loo(fit_null)
+#' loo::loo_compare(demo_loo, null_loo)
 #'
 #' # Inspect the prior. Useful for prior predictive checks.
 #' summary(demo_fit, prior = TRUE)
@@ -447,9 +447,6 @@ mcp = function(model,
     # Results
     mcmc_post = mcmc_post,
     mcmc_prior = mcmc_prior,
-    loglik = NULL,
-    loo = NULL,
-    waic = NULL,
 
     # Extracted model
     jags_code = jags_code,

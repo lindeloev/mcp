@@ -36,9 +36,9 @@
 #' fit2 = mcp(model2, data)
 #'
 #' # Compute LOO for each and compare (works for waic(fit) too)
-#' fit1$loo = loo(fit1)
-#' fit2$loo = loo(fit2)
-#' loo::loo_compare(fit1$loo, fit2$loo)
+#' loo1 = loo(fit1)
+#' loo2 = loo(fit2)
+#' loo::loo_compare(loo1, loo2)
 #' }
 loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE,
                       ndraws = NULL, nsamples = lifecycle::deprecated()) {
@@ -62,15 +62,15 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE,
 
   # Matrix: Fast but memory-greedy matrix-based computation
   if (pointwise == FALSE) {
-    if (!loglik_settings_match(fit$loglik, settings))
-      fit = add_loglik(fit, varying = varying, arma = arma, ndraws = ndraws)
-    chain_id = as.integer(rownames(fit$loglik))
+    loglik = log_lik(
+      fit, summary = FALSE, varying = varying, arma = arma, ndraws = ndraws
+    )
     r_eff = if (is.null(ndraws)) {
-      loo::relative_eff(exp(fit$loglik), chain_id)
+      loo::relative_eff(exp(loglik), chain_id_all)
     } else {
       1
     }
-    result = loo::loo(fit$loglik, r_eff = r_eff, ...)
+    result = loo::loo(loglik, r_eff = r_eff, ...)
 
   # Pointwise: per-data-row computation
   } else {
@@ -153,50 +153,10 @@ waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, ndraws = NULL,
   checkmate::assert_flag(arma)
   warn_arma_check(fit, arma, "information_criterion")
   ndraws = validate_loglik_ndraws(fit, ndraws)
-  settings = get_loglik_settings(fit, varying, arma, ndraws)
-  if (!loglik_settings_match(fit$loglik, settings))
-    fit = add_loglik(fit, varying = varying, arma = arma, ndraws = ndraws)
-
-  loo::waic(fit$loglik)
-}
-
-
-#' Add Log-Likelihood to an mcpfit Object.
-#'
-#' @aliases add_loglik
-#' @inheritParams loo.mcpfit
-#' @seealso loo.mcpfit waic.mcpfit
-#' @return An `mcpfit` object with `fit$loglik` filled as an (Nchains * Ndraws)
-#'   by N-observed-responses data matrix with chain number as rownames. Rows
-#'   with missing responses are excluded from the likelihood columns.
-#' @export
-#' @examples
-#' \donttest{
-#' demo_fit = add_loglik(demo_fit)
-#' }
-add_loglik = function(x, varying = TRUE, arma = TRUE, ndraws = NULL,
-                      nsamples = lifecycle::deprecated()) {
-  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "add_loglik")
-  fit = x
-  ndraws = validate_loglik_ndraws(fit, ndraws)
-  settings = get_loglik_settings(fit, varying, arma, ndraws)
-  loglik_samples = pp_eval(
-    fit, type = "loglik", summary = FALSE, probs = FALSE,
-    varying = varying, arma = arma, ndraws = ndraws
+  loglik = log_lik(
+    fit, summary = FALSE, varying = varying, arma = arma, ndraws = ndraws
   )
-  draw_index = loglik_samples %>%
-    dplyr::select(".draw", ".chain") %>%
-    dplyr::distinct() %>%
-    dplyr::arrange(.data$.draw)
-  if (anyDuplicated(draw_index$.draw))
-    stop_github("Chain metadata differs across evaluation rows for the same `.draw`.")
-  fit$loglik = tidy_to_matrix(loglik_samples, type = ".loglik", data_rows = settings$observed_rows)
-
-  # Chain info
-  rownames(fit$loglik) = draw_index$.chain
-  attr(fit$loglik, "mcp_settings") = settings
-
-  fit
+  loo::waic(loglik)
 }
 
 
@@ -230,15 +190,6 @@ get_loglik_settings = function(fit, varying, arma, ndraws) {
     ndraws = ndraws,
     observed_rows = which(!is.na(fit$data[, mcp_columns(fit)$response]))
   )
-}
-
-
-#' Check whether cached log likelihoods match requested settings
-#'
-#' @keywords internal
-#' @noRd
-loglik_settings_match = function(loglik, settings) {
-  !is.null(loglik) && identical(attr(loglik, "mcp_settings"), settings)
 }
 
 

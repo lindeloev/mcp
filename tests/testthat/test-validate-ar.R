@@ -28,8 +28,7 @@ test_that("AR inference against arima()", {
   testthat::expect_equal(params_arima, params_mcp, tolerance = 0.03)
 
   # Log-likelihood
-  fit_mcp = add_loglik(fit_mcp)
-  loglik_mcp = mean(rowSums(fit_mcp$loglik))
+  loglik_mcp = mean(rowSums(log_lik(fit_mcp)))
   loglik_arima = as.numeric(logLik(fit_arima))
   expect_equal(loglik_arima, loglik_mcp, tolerance = 0.05)
 })

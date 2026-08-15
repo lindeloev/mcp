@@ -172,10 +172,10 @@ fit_null = mcp(model_null, data)
 
 Leveraging the power of `loo::loo`, we see that the two-change-points model is preferred (it is on top), but the `elpd_diff / se_diff` ratio indicates that this preference is not very strong.
 ```r
-fit$loo = loo(fit)
-fit_null$loo = loo(fit_null)
+fit_loo = loo(fit)
+fit_null_loo = loo(fit_null)
 
-loo::loo_compare(fit$loo, fit_null$loo)
+loo::loo_compare(fit_loo, fit_null_loo)
 ```
 ```
        elpd_diff se_diff
@@ -215,7 +215,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
  * Get results on the linear-predictor (link) scale rather than the response scale using `plot(fit, scale = "linear")` or `fitted(fit, scale = "linear")`.
 
 [Model comparison and hypothesis testing](https://lindeloev.github.io/mcp/articles/comparison.html):
- * Do Leave-One-Out Cross-Validation using `loo(fit)` and `loo::loo_compare(fit1$loo, fit2$loo)`.
+ * Do Leave-One-Out Cross-Validation using `loo(fit)` and `loo::loo_compare(loo1, loo2)`.
  * Compute Savage-Dickey density ratios using `hypothesis(fit, "cp_1 = 40")`.
  * Leverage directional and conditional tests to assess interval hypotheses (`hypothesis(fit, "cp_1 > 30 & cp_1 < 50")`), combined other hypotheses (`hypothesis(fit, "cp_1 > 30 & Intercept_1 > Intercept_2")`), etc.
 

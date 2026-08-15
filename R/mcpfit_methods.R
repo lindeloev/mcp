@@ -669,6 +669,13 @@ tidy_draws.mcpfit = function(x, ...) {
       with = I("mcp_pars(fit) and mcp_columns(fit)")
     )
   }
+  if (name == "log_lik" && !name %in% names(x)) {
+    lifecycle::deprecate_soft(
+      when = "0.4.0",
+      what = I("fit$log_lik"),
+      with = I("log_lik(fit)")
+    )
+  }
   .subset2(x, name)
 }
 

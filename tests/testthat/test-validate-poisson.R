@@ -26,8 +26,7 @@ test_that("Poisson inference against glm()", {
   testthat::expect_lt(max(abs(params_mcp - params_glm)), 0.05)
 
   # Log-likelihood
-  fit_mcp = add_loglik(fit_mcp)
-  loglik_mcp = mean(rowSums(fit_mcp$loglik))
+  loglik_mcp = mean(rowSums(log_lik(fit_mcp)))
   loglik_glm = as.numeric(logLik(fit_glm))
   expect_equal(loglik_glm, loglik_mcp, tolerance = 0.01)
 })

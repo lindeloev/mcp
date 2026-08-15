@@ -173,12 +173,12 @@ We can do the same using `mcp`:
 ```{r, cache = TRUE, message = FALSE, results=FALSE, warning=FALSE}
 model_1 = list(y ~ 1, 1 ~ 1)
 fit_mcp_1 = mcp(model_1, data = df, par_x = "x")
-fit_mcp_1$loo = loo(fit_mcp_1)
-fit_mcp$loo = loo(fit_mcp)
-loo::loo_compare(fit_mcp$loo, fit_mcp_1$loo)
+loo_mcp_1 = loo(fit_mcp_1)
+loo_mcp = loo(fit_mcp)
+loo::loo_compare(loo_mcp, loo_mcp_1)
 ```
 ```{r, echo = FALSE}
-loo::loo_compare(fit_mcp$loo, fit_mcp_1$loo)
+loo::loo_compare(loo_mcp, loo_mcp_1)
 ```
 
 

@@ -78,7 +78,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Added `log_lik(fit)` which returns a draws-by-observation matrix by default. This is the usual `{brms}` return shape and is accepted directly by `{loo}`. `log_lik()` supports the same arguments as e.g. `fitted()`.
 
--   Memory improvement: The `mcpfit` is now \< 10% of the size as before because the log-likelihood is not computed by default anymore (no `fit$mcmc_loglik` anymore). You can add it using `fit = add_loglik(fit)` (adds `fit$loglik`) but if absent, it is automatically computed when calling relevant functions, e.g., `loo(fit)`.
+-   Memory improvement: The `mcpfit` is now \< 10% of the size as before because the log-likelihood is not stored. Use `log_lik(fit)` to compute it, or call `loo(fit)` or `waic(fit)` directly.
 
 -   Sampling is now 1-10% faster due to a new formalization of the underlying JAGS code.
 
@@ -112,6 +112,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 -   `fit$data` now only contains the data columns that are used in the model.
 
 -   Removed `which_y` argument from `predict()`.
+
+-   New `mcpfit` objects no longer include empty `$loo` and `$waic` components.
 
 -   `draws_format` replaces `samples_format` in `fitted()`, `predict()`, and `log_lik()`. The old argument remains available with a soft deprecation.
 
