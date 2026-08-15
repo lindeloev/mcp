@@ -181,7 +181,7 @@ snapshot_example_plot = function(plot, example) {
 #'
 #' @keywords internal
 test_mcp_example = function(example, snapshot = FALSE) {
-  suppressMessages(capture.output(fit <- mcp_example(example, plot = TRUE)))
+  suppressMessages(capture.output({ fit = mcp_example(example, plot = TRUE) }))
   example_plot = ggplot2::last_plot()
 
   test_matches_simulated(fit, min_ess = 30)

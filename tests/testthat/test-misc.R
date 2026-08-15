@@ -153,7 +153,7 @@ test_that("summary, fixef, and ranef select parameter roles consistently", {
   draws = matrix(seq_len(3 * length(draw_names)), nrow = 3, dimnames = list(NULL, draw_names))
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
 
-  capture.output(summary_result <- summary(fit))
+  capture.output({ summary_result = summary(fit) })
   expect_setequal(summary_result$name, pars$name[pars$scope == "population"])
   expect_setequal(
     fixef(fit)$name,

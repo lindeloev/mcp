@@ -58,8 +58,7 @@ run_jags = function(data,
     # rjags still prints some adaptation notices with quiet = TRUE.
     if (quiet) {
       draws = NULL
-      save_draws = function() draws <<- sample_jags()
-      capture.output(save_draws())
+      capture.output({ draws = sample_jags() })
     } else {
       draws = sample_jags()
     }

@@ -26,7 +26,7 @@ test_that("Gaussian 2-changepoint model agrees with segmented()", {
 
   # Extract mcp estimates
   fix_mcp = fixef(fit_mcp)
-  summary_mcp = summary(fit_mcp)
+  capture.output({ summary_mcp = summary(fit_mcp) })
   cp1_mcp = summary_mcp$mean[summary_mcp$name == "cp_1"]
   cp2_mcp = summary_mcp$mean[summary_mcp$name == "cp_2"]
   intercept_mcp = fix_mcp$mean[fix_mcp$name == "Intercept_1"]
@@ -77,7 +77,7 @@ test_that("Poisson 2-changepoint model agrees with segmented()", {
 
   # Extract mcp estimates
   fix_mcp = fixef(fit_mcp)
-  summary_mcp = summary(fit_mcp)
+  capture.output({ summary_mcp = summary(fit_mcp) })
   cp1_mcp = summary_mcp$mean[summary_mcp$name == "cp_1"]
   cp2_mcp = summary_mcp$mean[summary_mcp$name == "cp_2"]
   intercept_mcp = fix_mcp$mean[fix_mcp$name == "Intercept_1"]
@@ -126,7 +126,7 @@ test_that("Binomial 2-changepoint model agrees with segmented()", {
 
   # Extract mcp estimates
   fix_mcp = fixef(fit_mcp)
-  summary_mcp = summary(fit_mcp)
+  capture.output({ summary_mcp = summary(fit_mcp) })
   cp1_mcp = summary_mcp$mean[summary_mcp$name == "cp_1"]
   cp2_mcp = summary_mcp$mean[summary_mcp$name == "cp_2"]
   intercept_mcp = fix_mcp$mean[fix_mcp$name == "Intercept_1"]

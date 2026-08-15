@@ -23,7 +23,7 @@ test_that("AR inference against arima()", {
 
   # Parameter estimates. arima() returns c(ar1, ar2, intercept).
   params_arima = as.numeric(fit_arima$coef)
-  summary_mcp = summary(fit_mcp)
+  capture.output({ summary_mcp = summary(fit_mcp) })
   params_mcp = summary_mcp$mean[match(c("ar1_1", "ar2_1", "Intercept_1"), summary_mcp$name)]
   testthat::expect_equal(params_arima, params_mcp, tolerance = 0.03)
 
