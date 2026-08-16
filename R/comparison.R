@@ -205,6 +205,7 @@ get_loglik_settings = function(fit, varying, arma, ndraws) {
 #' Savage-Dickey ratio is computed. Both kinds of Bayes factor require prior
 #' draws, so remember `mcp(..., sample = "both")`. This function is heavily inspired by the
 #' `hypothesis` function from the `brms` package.
+#' When `prior = TRUE`, the summary is based on prior draws and `BF` is `NA`.
 #'
 #' @aliases hypothesis hypothesis.mcpfit
 #' @inheritParams summary.mcpfit
@@ -246,16 +247,19 @@ get_loglik_settings = function(fit, varying, arma, ndraws) {
 #' @return A data.frame with a row per hypothesis and the following columns:
 #'
 #'   * `hypothesis` is the hypothesis; often re-arranged to test against zero.
-#'   * `mean` is the posterior mean of the left-hand side of the hypothesis.
-#'   * `lower` is the lower bound of the central posterior interval of width `width`.
+#'   * `mean` is the posterior mean of the left-hand side of the hypothesis, or
+#'       the prior mean when `prior = TRUE`.
+#'   * `lower` is the lower bound of the central posterior interval of width `width`,
+#'       or the corresponding prior interval when `prior = TRUE`.
 #'   * `upper` is the upper bound of ditto.
-#'   * `p` is the posterior probability of a directional hypothesis. It is `NA`
+#'   * `p` is the posterior probability of a directional hypothesis, or the prior
+#'       probability when `prior = TRUE`. It is `NA`
 #'       for equality hypotheses, which compare models rather than an event
 #'       within the fitted model.
 #'   * `BF` Bayes Factor in favor  of the hypothesis.
 #'       For "=" it is the Savage-Dickey density ratio.
 #'       For directional hypotheses, it is the posterior odds divided by the
-#'       prior odds.
+#'       prior odds. It is `NA` when `prior = TRUE`.
 #'
 #' @export
 #' @encoding UTF-8
@@ -290,7 +294,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, prior = FALSE) {
       stop("Needs `` around group-level deviations, e.g., `cp_1_id[2]`. Got this: ", expression)
 
     if (n_equals == 1) {
-      parameters = colnames(.subset2(fit, "mcmc_post")[[1]])
+      parameters = colnames(mcmclist_draws(fit, prior = prior)[[1]])
       validate_savage_dickey_expression(expression, parameters)
     }
 
@@ -330,46 +334,52 @@ hypothesis = function(fit, hypotheses, width = 0.95, prior = FALSE) {
 
     # SAVAGE-DICKEY: compute BF
     if (n_equals == 1) {
-      if (!coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) || !coda::is.mcmc.list(.subset2(fit, "mcmc_post")))
-        stop("Model contains '='. Both prior and posterior draws are needed to compute Savage-Dickey density ratios. Run mcp(..., sample = 'both'")
+      if (prior) {
+        BF = NA_real_
+      } else {
+        if (!coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) || !coda::is.mcmc.list(.subset2(fit, "mcmc_post")))
+          stop("Model contains '='. Both prior and posterior draws are needed to compute Savage-Dickey density ratios. Run mcp(..., sample = 'both'")
 
-      prior_values = get_hypothesis_values(posterior_draws(fit, prior = TRUE), LHS)
-      post_values = get_hypothesis_values(posterior_draws(fit), LHS)
+        prior_values = get_hypothesis_values(posterior_draws(fit, prior = TRUE), LHS)
+        post_values = get_hypothesis_values(posterior_draws(fit), LHS)
 
-      if (is_sparse_tail(prior_values, 0) || is_sparse_tail(post_values, 0)) {
-        warning(
-          "The tested value is in a sparse tail of the prior or posterior draws; the Savage-Dickey estimate may be unreliable.",
-          call. = FALSE
-        )
+        if (is_sparse_tail(prior_values, 0) || is_sparse_tail(post_values, 0)) {
+          warning(
+            "The tested value is in a sparse tail of the prior or posterior draws; the Savage-Dickey estimate may be unreliable.",
+            call. = FALSE
+          )
+        }
+
+        dens_prior = get_density(prior_values, 0)
+        dens_post = get_density(post_values, 0)
+        BF = dens_post / dens_prior
       }
-
-      dens_prior = get_density(prior_values, 0)
-      dens_post = get_density(post_values, 0)
-      BF = dens_post / dens_prior
 
       prob_post_val = NA_real_
     }
 
     # DIRECTIONAL: compute p and BF
     if (n_directional != 0) {
-      if (!coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) || !coda::is.mcmc.list(.subset2(fit, "mcmc_post")))
-        stop("Directional Bayes factors require both prior and posterior draws. Run mcp(..., sample = 'both').")
-
-      # Evaluate the same hypothesis on the posterior and prior draws.
       expr_parsed = rlang::parse_expr(expression)
-
       res_post = rlang::eval_tidy(expr_parsed, data = draws)
       prob_post_val = mean(res_post == TRUE)
 
-      draws_prior = posterior_draws(fit, prior = TRUE) %>%
-        posterior::as_draws_df()
-      res_prior = rlang::eval_tidy(expr_parsed, data = draws_prior)
-      prob_prior_val = mean(res_prior == TRUE)
+      if (prior) {
+        BF = NA_real_
+      } else {
+        if (!coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) || !coda::is.mcmc.list(.subset2(fit, "mcmc_post")))
+          stop("Directional Bayes factors require both prior and posterior draws. Run mcp(..., sample = 'both').")
 
-      # A Bayes factor is the update from prior odds to posterior odds.
-      posterior_odds = prob_post_val / (1 - prob_post_val)
-      prior_odds = prob_prior_val / (1 - prob_prior_val)
-      BF = posterior_odds / prior_odds
+        draws_prior = posterior_draws(fit, prior = TRUE) %>%
+          posterior::as_draws_df()
+        res_prior = rlang::eval_tidy(expr_parsed, data = draws_prior)
+        prob_prior_val = mean(res_prior == TRUE)
+
+        # A Bayes factor is the update from prior odds to posterior odds.
+        posterior_odds = prob_post_val / (1 - prob_post_val)
+        prior_odds = prob_prior_val / (1 - prob_prior_val)
+        BF = posterior_odds / prior_odds
+      }
     }
 
     # Add to list

@@ -604,6 +604,14 @@ test_that("hypothesis()", {
   expect_equal(actual_directional$p, p_post)
   expect_equal(actual_directional$BF, expected_BF)
 
+  prior_directional = hypothesis(fit_asymmetric, directional, prior = TRUE)
+  expect_equal(prior_directional$p, p_prior)
+  expect_true(is.na(prior_directional$BF))
+
+  fit_prior_only = fit_asymmetric
+  fit_prior_only$mcmc_post = NULL
+  expect_equal(hypothesis(fit_prior_only, directional, prior = TRUE)$p, p_prior)
+
   # Identical prior and posterior draws must give BF = 1, also for intervals and Savage-Dickey equality.
   fit_same = demo_fit2
   fit_same$mcmc_prior = .subset2(demo_fit2, "mcmc_post")
@@ -625,6 +633,9 @@ test_that("hypothesis()", {
   expect_true(is.na(actual_equality$p))
   expect_false(is.na(actual_equality$BF))
   expect_equal(actual_equality$BF, 1, tolerance = 1e-3)
+
+  prior_equality = hypothesis(fit_same, equality_expr, prior = TRUE)
+  expect_true(is.na(prior_equality$BF))
 
   tail_val = format(max(cp_draws) + stats::sd(cp_draws), digits = 16)
   expect_warning(

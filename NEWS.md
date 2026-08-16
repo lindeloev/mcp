@@ -121,6 +121,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 ## Bug fixes
 
+-   `hypothesis(..., prior = TRUE)` now reports `BF = NA` rather than comparing prior draws with themselves and returning a Bayes factor of 1.
+
 -   Directional Bayes factors now divide posterior odds by prior odds. Previously, they reported posterior odds alone, which is only a Bayes factor when the prior probability of the hypothesis is 0.5.
 
 -   `residuals()` now uses the conventional `observed - fitted` sign. Previously, `mcp` residuals used `fitted - observed`.
