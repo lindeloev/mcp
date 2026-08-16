@@ -56,6 +56,29 @@ test_that("interpolate_newdata() carries the observed response for AR/MA models"
   expect_equal(newdata[[mcp_columns(fit)$response]], data$y)
 })
 
+test_that("interpolate_newdata() does not invent response auxiliaries", {
+  data = data.frame(x = 1:3, N = c(4, 10, 6), y = 0)
+  fit = mcp(
+    list(y | trials(N) ~ 1),
+    data,
+    family = binomial(),
+    par_x = "x",
+    sample = FALSE
+  )
+  draws = matrix(0, 1, 1, dimnames = list(NULL, "Intercept_1"))
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+
+  newdata = interpolate_newdata(fit, x_values = 1:3)
+  expect_false("N" %in% names(newdata))
+  expect_equal(fitted(fit, newdata, summary = FALSE, rate = TRUE)$.epred, rep(0.5, 3))
+  expect_s3_class(plot(fit, lines = 1, q_fit = FALSE, cp_dens = FALSE), "ggplot")
+  expect_error(
+    predict(fit, newdata, summary = FALSE, rate = FALSE),
+    "missing from the data: N",
+    fixed = TRUE
+  )
+})
+
 test_that("fit$simulate() reproduces the deterministic linear predictor at .type = 'fitted'", {
   data = data.frame(x = 1:5, y = 0)
   fit = mcp(

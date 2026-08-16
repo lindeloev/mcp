@@ -1048,8 +1048,8 @@ tidy_samples = function(...) {
 #'     Requires `scale = "response"`.
 #' @param probs Vector of quantiles. Only in effect when `summary == TRUE`.
 #' @param rate Boolean. For binomial models, return counts (`rate = FALSE`) or
-#'   the observed or expected success proportion (`rate = TRUE`). If `FALSE`, linear
-#'   interpolation on trial number is used to infer trials at a particular x.
+#'   the observed or expected success proportion (`rate = TRUE`). Predictions and
+#'   count-scale fitted values require a trials column in `newdata`.
 #' @param prior TRUE/FALSE. Plot using prior draws? Useful for `mcp(..., sample = "both")`
 #' @param dpar What distributional parameter to evaluate. This is only relevant when `type == "fitted"`. E.g.,
 #'
@@ -1144,6 +1144,8 @@ pp_eval = function(
   required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
   operation = switch(type, predict = "rng", loglik = "log_lik", fitted = "epred", residuals = "epred")
   aux_operations = c(operation, if (arma && is_arma(fit)) "garma")
+  if (type == "fitted" && rate && dpar %in% c("epred", "mu"))
+    aux_operations = setdiff(aux_operations, "epred")
   aux_columns = get_family_aux_columns(fit$family, model_tables$segments)
   aux_used = names(get_family_aux_columns(fit$family, model_tables$segments, aux_operations))
   unused_aux_columns = unname(aux_columns[names(aux_columns) %notin% aux_used])

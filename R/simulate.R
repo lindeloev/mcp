@@ -264,6 +264,8 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   operation = switch(.type, fitted = "epred", loglik = "log_lik", predict = "rng")
   has_arma_terms = any(predictors$dpar %in% c("ar", "ma"))
   aux_operations = c(operation, if (has_arma_terms && .arma) "garma")
+  if (.type == "fitted" && .rate && (is.null(.dpar) || .dpar %in% c("epred", "mu")))
+    aux_operations = setdiff(aux_operations, "epred")
   aux_columns = get_family_aux_columns(fit$family, model_tables$segments, aux_operations)
   data_pars = c(data_columns$par_x, data_columns$series, stats::na.omit(unname(aux_columns)))
   expected_arg_names = c(param_pars, pred_pars, data_pars)

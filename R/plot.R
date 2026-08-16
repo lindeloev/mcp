@@ -47,7 +47,8 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 #'   If both `color_by` and `facet_by` are omitted, a sole categorical predictor is colored automatically. Set `color_by = NULL` explicitly to disable this.
 #'   Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.
 #' @param at Named list setting additional continuous predictors to fixed values.
-#'   They default to their observed means. Passed to `interpolate_newdata()`.
+#'   They default to their observed means. Family-specific response auxiliaries
+#'   are not interpolated. Passed to `interpolate_newdata()`.
 #' @param .grouping Internal. Whether grouping arguments were omitted, mapped, or explicitly disabled.
 #' @param lines Positive integer or `FALSE`. The number of fitted lines (draws).
 #'   It is the number of joint posterior draws shown for every curve. FALSE or `lines = 0` plots no lines.

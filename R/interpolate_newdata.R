@@ -69,8 +69,9 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
   checkmate::assert_list(data_columns)
 
   # Get numeric predictor columns
+  auxiliary_cols = unname(unlist(data_columns[setdiff(names(data_columns), c("par_x", "response", "series"))]))
   numeric_data = data[, sapply(data, is.numeric), drop = FALSE]
-  numeric_data = numeric_data[, colnames(numeric_data) %notin% c(data_columns$par_x, data_columns$response, data_columns$weights, group_cols), drop = FALSE]
+  numeric_data = numeric_data[, colnames(numeric_data) %notin% c(data_columns$par_x, data_columns$response, group_cols, auxiliary_cols), drop = FALSE]
 
   checkmate::assert_list(at, types = "numeric", any.missing = FALSE, names = "unique", null.ok = TRUE)
   if (length(at) > 0 && is.null(names(at)))
@@ -110,6 +111,9 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 #'
 #' Categorical variables and requested grouping factors are combined factorially (all level combinations).
 #' Additional continuous predictors are held at their observed means, or at values supplied through `at`.
+#' Family-specific response auxiliaries, such as binomial trial counts and
+#' Gaussian weights, are not interpolated. Supply them in `newdata` when they
+#' are required by the evaluation.
 #' @return `tibble` with
 #'  * Cols for par_x
 #'  * unique levels combos of factorial vars
@@ -146,8 +150,9 @@ interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by),
   x_values = force(x_values)
 
   # Get unique predictors
+  data_columns = mcp_columns(fit)
   group_cols = unique(stats::na.omit(get_fit_model_tables(fit)$group_effects$group_col))
-  series_col = mcp_columns(fit)$series
+  series_col = data_columns$series
   categorical_cols = setdiff(
     names(get_categorical_levels(fit$data)),
     c(group_cols, series_col)
@@ -161,9 +166,8 @@ interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by),
     lapply(fit$data[, by, drop = FALSE], unique) %>% expand.grid()
   }
   continuous_at = get_continuous_at(
-    fit$data, mcp_columns(fit), at, unique(c(group_cols, series_col))
+    fit$data, data_columns, at, unique(c(group_cols, series_col))
   )
-  data_columns = mcp_columns(fit)
   newdata = by_grid %>% tidyr::expand_grid("{data_columns$par_x}" := x_values)
   if (!is.null(continuous_at))
     newdata = tidyr::expand_grid(newdata, continuous_at)
