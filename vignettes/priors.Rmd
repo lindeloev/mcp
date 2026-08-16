@@ -265,7 +265,7 @@ prior_dirichlet = list(
 )
 ```
 
-The number in the parenthesis is the $\alpha$ parameter, so you could also specify `cp_1 = "dirichlet(3)` if you want to push credence for that and later change points more to the rightwards while pushing earlier priors leftwards.
+The number in the parentheses is a common $\alpha$ parameter, so every change point must use the same value. Values below 1 favor uneven spacings, `dirichlet(1)` gives the ordered-uniform distribution, and values above 1 favor more even spacings.
 
 
 ## Manual priors on change points

@@ -62,8 +62,8 @@
 #'      typically between segments. If two group-level deviations are shared this way,
 #'      they will need to have the same grouping variable.
 #'  * A scaled Dirichlet prior is supported for change points if they are all set to
-#'      `cp_i = "dirichlet(N)"` where `N` is the alpha for this change point and
-#'      `N = 1` is most often used. This prior is symmetric over segment spacings,
+#'      `cp_i = "dirichlet(alpha)"` with the same positive `alpha` for every
+#'      change point. `alpha = 1` is most often used. This prior is symmetric over segment spacings,
 #'      unlike the regularizing t-tail default for multiple change points, but it
 #'      mixes less efficiently, so you will often need to set `iter` higher.
 #'      It is recommended for hypothesis testing and for the estimation of more

@@ -140,15 +140,29 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   ####################################
   # Get change point priors and check if they are Dirichlet
   cps = prior[stringr::str_detect(names(prior), "^cp_[1-9]+$")]
-  is_dirichlet = stringr::str_detect(cps, "^dirichlet\\([1-9]+\\)$")
+  dirichlet_calls = lapply(cps, function(x) {
+    call = parse_prior_call(x)
+    if (!is.null(call) && call$name == "dirichlet") call else NULL
+  })
+  is_dirichlet = !vapply(dirichlet_calls, is.null, logical(1))
   if (any(is_dirichlet)) {
     if (!all(is_dirichlet))
-      stop("All or none of the change point priors can be 'dirichlet(N)' and all N > 0.")
+      stop("All or none of the change point priors must be `dirichlet(alpha)`.")
+
+    alpha = vapply(dirichlet_calls, function(call) {
+      if (length(call$args) != 1)
+        return(NA_real_)
+      suppressWarnings(as.numeric(call$args))
+    }, numeric(1))
+    if (any(!is.finite(alpha)) || any(alpha <= 0))
+      stop("`dirichlet(alpha)` requires one finite alpha > 0.")
+    if (any(alpha != alpha[1]))
+      stop("All `dirichlet(alpha)` change point priors must use the same alpha.")
 
     # Build JAGS code. cp_betas is a simplex. cp_i is scaled to the observed range of x.
     mm = paste0(mm, "
   # Scaled Dirichlet prior on change points
-  cp_betas ~ ddirch(c(", paste0(stringr::str_extract(cps, "[0-9]+"), collapse = ", "), ", 1))  # Scaled Dirichlet prior on change points")  # OBS: adds an extra 1
+  cp_betas ~ ddirch(c(", paste(rep(format_prior_number(alpha[1]), length(cps) + 1L), collapse = ", "), "))  # Scaled Dirichlet prior on change points")
     for (i in seq_along(cps)) {
       mm = paste0(mm, "
   cp_", i, " = ", format_prior_number(prior_context_$x_min),
@@ -157,8 +171,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
     }
 
     # Clean up. Remove any dirichlet priors from the list of priors
-    is_dirichlet2 = stringr::str_detect(prior, "^dirichlet\\([1-9]+\\)$")
-    prior[is_dirichlet2] = NULL
+    prior[names(cps)] = NULL
   }
 
   ################

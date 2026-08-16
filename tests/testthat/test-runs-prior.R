@@ -66,8 +66,8 @@ good_prior = list(
     cp_2 = "dirichlet(1)"
   ),
   list(
-    cp_1 = "dirichlet(3)",  # Dirichlet prior on change points
-    cp_2 = "dirichlet(2)"
+    cp_1 = "dirichlet(10)",  # Dirichlet prior on change points
+    cp_2 = "dirichlet(10)"
   )
 )
 
@@ -77,3 +77,44 @@ for (prior in good_prior) {
     test_runs(prior_model, prior = prior)
   })
 }
+
+
+testthat::test_that("Dirichlet change point priors use a common alpha", {
+  fit = mcp(
+    prior_model,
+    data = data_gauss,
+    prior = list(cp_1 = "dirichlet(0.5)", cp_2 = "dirichlet(0.5)"),
+    par_x = "x",
+    sample = FALSE,
+    quiet = TRUE
+  )
+  testthat::expect_match(fit$jags_code, "ddirch(c(0.5, 0.5, 0.5))", fixed = TRUE)
+  fit_10 = mcp(
+    prior_model,
+    data = data_gauss,
+    prior = list(cp_1 = "dirichlet(10)", cp_2 = "dirichlet(10)"),
+    par_x = "x",
+    sample = FALSE,
+    quiet = TRUE
+  )
+  testthat::expect_match(fit_10$jags_code, "ddirch(c(10, 10, 10))", fixed = TRUE)
+  testthat::expect_no_error(suppressWarnings(mcp(
+    prior_model,
+    data = data_gauss,
+    prior = list(cp_1 = "dirichlet(0.5)", cp_2 = "dirichlet(0.5)"),
+    par_x = "x",
+    sample = "prior",
+    chains = 1,
+    iter = 4,
+    warmup = 4,
+    quiet = TRUE
+  )))
+  testthat::expect_error(
+    mcp(prior_model, data = data_gauss, prior = list(cp_1 = "dirichlet(2)", cp_2 = "dirichlet(3)"), par_x = "x", sample = FALSE, quiet = TRUE),
+    "same alpha"
+  )
+  testthat::expect_error(
+    mcp(prior_model, data = data_gauss, prior = list(cp_1 = "dirichlet(0)", cp_2 = "dirichlet(0)"), par_x = "x", sample = FALSE, quiet = TRUE),
+    "finite alpha > 0"
+  )
+})
