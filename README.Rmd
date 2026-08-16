@@ -228,6 +228,11 @@ Modeling [Gaussian residual standard deviation](https://lindeloev.github.io/mcp/
  * `fitted(fit)` and `predict(fit)` take many arguments to predict in-sample and out-of-sample values and intervals.
  * Forecasting with prior knowledge about future change points.
 
+[Missing responses and posterior imputation](https://lindeloev.github.io/mcp/articles/missing.html):
+ * Missing responses are sampled in JAGS and retained with their matching posterior draws.
+ * Use `fitted(fit) |> filter(is.na(y))` for expected responses and `predict(fit) |> filter(is.na(y))` for posterior imputations.
+ * On plotting missing responses, asking probabilistic questions about them, etc.
+
 [Tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/tips.html)
  * Speed up fitting using `future::plan(future::multisession, workers = 3)`, and/or fewer iterations, `mcp(..., warmup = 500)`.
  * Help convergence along using `mcp(..., inits = list(cp_1 = 20, Intercept_2 = -3))`.

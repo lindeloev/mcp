@@ -1392,6 +1392,12 @@ pp_eval = function(
 #' # Evaluate at novel data
 #' novel_data = data.frame(time = c(-5, 20, 300))  # Only predictors are needed
 #' predict(demo_fit, newdata = novel_data, probs = c(0.025, 0.5, 0.975))
+#'
+#' # Work with missing responses
+#' missing_fit = mcp_example("missing", plot = FALSE)
+#' fitted(missing_fit) |> dplyr::filter(is.na(y))  # Expected responses for missing y
+#' fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y))  # Same, but all posterior draws
+#' predict(missing_fit) |> dplyr::filter(is.na(y))  # Posterior predictive for missing y
 #'}
 #' @name execute-mcp-model
 NULL

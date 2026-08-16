@@ -35,6 +35,8 @@ reference:
       - pp_check
       - summary.mcpfit
       - model-accessors-mcpfit
+      - mcp_pars
+      - mcp_columns
       - posterior-uncertainty-mcpfit
       - ranef
       - fixef
@@ -44,7 +46,7 @@ reference:
       - residuals
       - loo
       - waic
-      - add_loglik
+      - log_lik
       - hypothesis
       - as_draws.mcpfit
       - mcp-package
@@ -96,6 +98,8 @@ navbar:
         href: articles/arma.html
       - text: Fits and predictions
         href: articles/predict.html
+      - text: Missing responses and imputation
+        href: articles/missing.html
     - text: GLM
       menu:
       - text: Supported families and link functions
