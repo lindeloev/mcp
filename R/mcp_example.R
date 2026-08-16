@@ -212,6 +212,44 @@ if (plot) {
   set.seed(42)
   print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit = TRUE)'))
 }",
+    missing = "# Define model
+model = list(
+  y ~ 1 + x + condition,
+  ~ 0 + x  # condition effect carries into the second segment
+)
+
+# Simulate complete data
+set.seed(42)
+data = data.frame(
+  x = 1:100,
+  condition = factor(rep(c('A', 'B'), 50)),
+  y = 2.  # Numeric placeholder replaced by simulation below.
+)
+empty = mcp(model, data, par_x = 'x', sample = FALSE)
+data$y = empty$simulate(empty, data,
+  cp_1 = 55,
+  Intercept_1 = 10,
+  x_1 = 0.25,
+  conditionB_1 = 22,
+  x_2 = -0.4,
+  sigma_1 = 4
+)
+
+# Remove scattered responses and a short run away from the change point
+missing_rows = c(8, 19, 27:31, 68, 84, 96)
+data$y[missing_rows] = NA
+
+# Run sampling; JAGS retains posterior draws for the missing responses
+# See them using fitted(fit, newdata = fit$data[is.na(fit$data$y), ], summary = FALSE)
+fit = mcp(model, data, par_x = 'x', iter = 4000, sample = sample,
+  seed = 42, diagnostics = diagnostics)
+
+# Illustrative plot
+if (plot) {
+  set.seed(42)
+  print(plot(fit, q_fit = TRUE, color_by = 'condition') +
+      ggplot2::labs(title = 'plot(fit, q_fit = TRUE, color_by = \"condition\")'))
+}",
     multiple = "# Define model
 model = list(
   y ~ 1 + x:group + z,
