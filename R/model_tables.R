@@ -24,10 +24,11 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
   ############################################
   segments = tibble::tibble()
   for (i in seq_along(model)) {
-    row = tibble::tibble(segment = i)
+    # Keep the original environment while segment formulas are normalized to text.
+    row = tibble::tibble(segment = i, form_env = list(environment(model[[i]])))
     row = dplyr::bind_cols(row, unpack_tildes(model[[i]], i))
-    row = dplyr::bind_cols(row, unpack_y(row$form_y, i, family))
-    row = dplyr::bind_cols(row, unpack_cp(row$form_cp, i))
+    row = dplyr::bind_cols(row, unpack_y(row$form_y, i, family, row$form_env[[1]]))
+    row = dplyr::bind_cols(row, unpack_cp(row$form_cp, i, row$form_env[[1]]))
 
     segments = dplyr::bind_rows(segments, row)
   }
@@ -91,7 +92,7 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
   ###############################################
   # `segments`: one row per segment, shared metadata only.
   segment_metadata = segments %>%
-    dplyr::select("segment", "form", "y", "trials", "weights", "x")
+    dplyr::select("segment", "form", "form_env", "y", "trials", "weights", "x")
 
   # `cps`: one row per *estimated* change point (nrow(segments) - 1 of
   # them), naturally indexed by `cp` instead of borrowing the segment index.

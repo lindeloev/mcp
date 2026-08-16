@@ -198,7 +198,8 @@ remove_terms = function(form, remove) {
   } else {
     formula_terms = paste0(term.labels, collapse = " + ")
     formula_str = paste0("~", formula_terms)
-    return(stats::as.formula(formula_str, env=globalenv()))
+    # Rebuild in the caller's environment so local transformations still resolve.
+    return(stats::as.formula(formula_str, env = environment(form)))
   }
 }
 
@@ -209,10 +210,11 @@ remove_terms = function(form, remove) {
 #' @keywords internal
 #' @noRd
 #' @param term E.g., "mu(1 + x)", "sigma(0 + I(x^2))", etc.
+#' @param env Environment in which the term was originally defined.
 #' @return char formula with the content inside the brackets.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_term_content = function(term) {
+get_term_content = function(term, env = parent.frame()) {
   # Handle cases of no input or several inputs
   if (length(term) == 0) {
     return(NA)
@@ -229,7 +231,8 @@ get_term_content = function(term) {
     # To formula
     if (content == "")
       stop("Empty terms not allowed in the formulas. Found '", term, "'.")
-    form = stats::as.formula(paste0("~", content), env = globalenv())
+    # Wrapper terms are strings, so carry their source formula environment explicitly.
+    form = stats::as.formula(paste0("~", content), env = env)
     return(form)
   }
 }
@@ -297,7 +300,7 @@ unpack_tildes = function(form, i) {
 #' @return A one-row tibble with the response and auxiliary-data columns.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-unpack_y = function(form_y, i, family) {
+unpack_y = function(form_y, i, family, env = parent.frame()) {
   declared = names(family$response$auxiliary)
   aux_names = unique(c("trials", "weights", declared))
   response = stats::setNames(as.list(rep(NA_character_, length(aux_names) + 1)), c("y", aux_names))
@@ -347,7 +350,7 @@ unpack_y = function(form_y, i, family) {
       stop("Only one ", name, "() term is allowed in segment ", i, ".")
 
     term = term_labels[term_index]
-    content = get_term_content(term)
+    content = get_term_content(term, env)
     column = attr(stats::terms(content), "term.labels")
     if (length(column) != 1)
       stop("There must be exactly one term inside ", name, "(). Got ", term, " in segment ", i)
@@ -371,7 +374,7 @@ unpack_y = function(form_y, i, family) {
 #'   * `cp_group_col`: char or NA. Which data column defines the grouping factor?
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-unpack_cp = function(form_cp, i) {
+unpack_cp = function(form_cp, i, env = parent.frame()) {
   if (is.na(form_cp)) {
     return(tibble::tibble(
       cp_int = FALSE,
@@ -379,7 +382,7 @@ unpack_cp = function(form_cp, i) {
       cp_group_col = NA
     ))
   }
-  form_cp = stats::as.formula(form_cp)
+  form_cp = stats::as.formula(form_cp, env = env)
 
   # Group-level effects
   form_varying = remove_terms(form_cp, "population")

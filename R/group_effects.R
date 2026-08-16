@@ -37,7 +37,7 @@ get_group_terms = function(form) {
 #' @return A tibble with one row per group-level coefficient, or one inactive
 #'   row for an explicit turn-off.
 parse_predictor_group_term = function(
-  term, segment, dpar, data, par_x, check_rank = TRUE
+  term, segment, dpar, data, par_x, check_rank = TRUE, env = parent.frame()
 ) {
   expr = str2lang(term)
   operator = as.character(expr[[1]])
@@ -58,7 +58,8 @@ parse_predictor_group_term = function(
   if (is.numeric(data[[group_col]]) && any(data[[group_col]] != floor(data[[group_col]])))
     stop("Grouping factor '", group_col, "' must be integer, character, or factor.")
 
-  coefficient_form = stats::as.formula(call("~", expr[[2]]), env = globalenv())
+  # Group-level coefficient terms inherit the environment of their source formula.
+  coefficient_form = stats::as.formula(call("~", expr[[2]]), env = env)
   attrs = attributes(stats::terms(coefficient_form))
   if (operator == "|" && length(attrs$term.labels) > 0) {
     stop(
@@ -132,6 +133,7 @@ get_predictor_group_definitions_segment = function(
   form_rhs, segment, family, data, par_x, check_rank = TRUE
 ) {
   form_rhs = stats::as.formula(form_rhs)
+  form_env = environment(form_rhs)
   term_labels = attr(stats::terms(form_rhs), "term.labels")
   top_level = term_labels[vapply(term_labels, is_group_term, logical(1))]
 
@@ -142,14 +144,15 @@ get_predictor_group_definitions_segment = function(
     dpar = "mu",
     data = data,
     par_x = par_x,
-    check_rank = check_rank
+    check_rank = check_rank,
+    env = form_env
   )
 
   for (dpar in setdiff(family$dpar_specs$dpar, "mu")) {
     dpar_terms = term_labels[stringr::str_detect(term_labels, paste0("^", dpar, "\\("))]
     if (length(dpar_terms) == 0)
       next
-    dpar_form = get_term_content(dpar_terms)
+    dpar_form = get_term_content(dpar_terms, form_env)
     definitions = c(
       definitions,
       lapply(
@@ -159,7 +162,8 @@ get_predictor_group_definitions_segment = function(
         dpar = dpar,
         data = data,
         par_x = par_x,
-        check_rank = check_rank
+        check_rank = check_rank,
+        env = form_env
       )
     )
   }

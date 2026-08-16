@@ -448,7 +448,8 @@ mcp = function(model,
   ##########
   # RETURN #
   ##########
-  model = lapply(segments$form, stats::as.formula, env = globalenv())
+  # Return normalized formulas without discarding user-defined environments.
+  model = Map(stats::as.formula, segments$form, env = segments$form_env)
   class(model) = c("mcplist", "list")
   class(prior) = c("mcplist", "list")
   class(jags_code) = c("mcptext", "character")  # for nicer printing

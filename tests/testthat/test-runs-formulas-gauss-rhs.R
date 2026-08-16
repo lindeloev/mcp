@@ -242,6 +242,31 @@ test_that("data-derived bases reuse their fitted specification", {
 })
 
 
+test_that("formulas preserve local transformation environments", {
+  data = data.frame(
+    x = 1:8,
+    y = c(1, 2, 1, 2, 5, 6, 5, 6),
+    id = rep(c("a", "b"), 4)
+  )
+  local_fits = function(data) {
+    sq_local = function(x) x^2
+    list(
+      mu = mcp(list(y ~ sq_local(x)), data, par_x = "x", sample = FALSE, quiet = TRUE),
+      sigma = mcp(list(y ~ 1 + sigma(sq_local(x))), data, par_x = "x", sample = FALSE, quiet = TRUE),
+      group = mcp(list(y ~ 1 + (sq_local(x) || id)), data, par_x = "x", sample = FALSE, quiet = TRUE),
+      ar = mcp(list(y ~ 1 + ar(1, sq_local(x))), data, par_x = "x", sample = FALSE, quiet = TRUE)
+    )
+  }
+
+  fits = local_fits(data)
+  expect_true(all(vapply(fits, function(fit) {
+    exists("sq_local", environment(fit$model[[1]]), inherits = FALSE)
+  }, logical(1))))
+  new_matrix = add_rhs_predictors(data.frame(x = 9:10), fits$mu)
+  expect_equal(new_matrix$.pred_sq_localx_1, c(81, 100))
+})
+
+
 
 good_slopes = list(
   list(y ~ 0 + x),  # Regular

@@ -418,6 +418,7 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
   # Get general format. Top-level group terms belong to mu; group terms inside
   # distributional wrappers are removed from those formulas below.
   form_rhs = stats::as.formula(form_rhs)
+  form_env = environment(form_rhs)
   attrs = attributes(stats::terms(form_rhs))
   term_labels = attrs$term.labels
   top_level_group = vapply(term_labels, is_group_term, logical(1))
@@ -466,7 +467,7 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
   } else {
     mu_term = paste0("mu(", attrs$intercept, ")")  # Plateau model: "mu(0)" or "mu(1)"
   }
-  mu_form = get_term_content(mu_term)
+  mu_form = get_term_content(mu_term, form_env)
   mu_pars = get_predictors_dpar(
     data, mu_form, segment, "mu", par_x, NULL, check_rank,
     design_id = paste("population", "mu", segment, sep = ":")
@@ -493,7 +494,7 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
       ) %>%
         dplyr::mutate(explicit = FALSE)
     } else if (length(dpar_term) > 0) {
-      dpar_form = get_term_content(dpar_term)
+      dpar_form = get_term_content(dpar_term, form_env)
       dpar_form = remove_terms(dpar_form, "varying")
       dpar_pars[[dpar]] = get_predictors_dpar(
         data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank,
@@ -513,7 +514,7 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
     component_stuff = unpack_arma(component_term)
 
     if (!is.na(component_stuff$order)) {
-      component_form = get_term_content(component_stuff$form_str)
+      component_form = get_term_content(component_stuff$form_str, form_env)
       if (length(get_group_terms(component_form)) > 0)
         stop(
           "Group-level effects inside ", component,

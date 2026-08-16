@@ -365,11 +365,8 @@ print.mcptext = function(x, ...) {
 }
 
 
-# Set model environment to parent.frame() for prettier printing
-# and because it was created in a different environment than inteded for use.
+# Preserve formula environments so local transformations remain available.
 fix_model_environment = function(model) {
   checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
-  for (i in seq_along(model))
-    environment(model[[i]]) = globalenv()
   model
 }
