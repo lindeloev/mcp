@@ -99,6 +99,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 ## Minor breaking changes
 
+-   mcp now requires R >= 4.1.0, matching its use of the native pipe (`|>`).
+
 -   Removed the non-functional `exponential()` family. It had no default priors and could not be fitted. Exponential survival models would require dedicated support for censoring and survival likelihoods rather than the previous ordinary-response placeholder.
 
 -   Default coefficient priors are now more consistent with `brms` defaults while retaining proper priors and change-point-aware scaling for the `mcp` parameterization. For non-small datasets, this should have minimal influence since priors remain minimally informative. See priors using `prior_summary(fit, verbose = TRUE)`. The implicit Gaussian `sigma_1` prior is now the same response-calibrated half-Student-t used by `brms`, `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`. Version 0.3.4 instead used a response-SD-calibrated half-normal prior. Both are weakly informative so will have negligible impact on fits.
@@ -120,6 +122,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 -   `draws_format` replaces `samples_format` in `fitted()`, `predict()`, and `log_lik()`. The old argument remains available with a soft deprecation.
 
 ## Bug fixes
+
+-   Formula environments are now preserved, so locally defined transformations work in `mcp()` formulas and when applying fitted predictors to new data.
 
 -   `hypothesis(..., prior = TRUE)` now reports `BF = NA` rather than comparing prior draws with themselves and returning a Bayes factor of 1.
 
