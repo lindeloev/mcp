@@ -1426,6 +1426,7 @@ fitted.mcpfit = function(
 #' Methods for the `{rstantools}` posterior-prediction generics. They return a
 #' draws-by-observation matrix and enable `{tidybayes}` workflows such as
 #' `add_epred_draws()`, `add_predicted_draws()`, and `add_linpred_draws()`.
+#' These methods and workflows require the suggested package `{rstantools}`.
 #'
 #' @param object An `mcpfit` object.
 #' @param newdata Optional data frame at which to evaluate the model.
