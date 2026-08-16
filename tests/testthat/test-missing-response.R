@@ -27,4 +27,23 @@ test_that("missing response draws follow covariates and group-level effects", {
     mean(prediction_draws$.prediction[missing_row]),
     mean(data$y, na.rm = TRUE) + 50
   )
+  expect_no_warning(ggplot2::ggplot_build(plot(fit, lines = 0, cp_dens = FALSE)))
+})
+
+
+test_that("change point densities are shown with missing responses", {
+  fit = demo_fit
+  fit$data$y[c(1, 5, 10)] = NA
+
+  plotted = plot(fit, lines = 0)
+  density_layer = which(vapply(
+    plotted$layers,
+    function(layer) inherits(layer$geom, "GeomPolygon"),
+    logical(1)
+  ))
+  density = ggplot2::ggplot_build(plotted)$data[[density_layer]]
+
+  expect_length(density_layer, 1)
+  expect_gt(nrow(density), 0)
+  expect_true(all(is.finite(density$y)))
 })

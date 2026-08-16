@@ -321,12 +321,13 @@ get_plot = function(x,
   }
   if (dpar == "epred") {
     if (geom_data == "point") {
+      observed_data = fit$data[!is.na(fit$data[[data_columns$response]]), , drop = FALSE]
       point_size = fit$family$response$point_size
       point_size_col = get_family_aux_columns(fit$family, model_tables$segments)[point_size]
       if (length(point_size_col) == 0 || is.na(point_size_col)) {
-        gg = gg + ggplot2::geom_point()
+        gg = gg + ggplot2::geom_point(data = observed_data)
       } else {
-        gg = gg + ggplot2::geom_point(ggplot2::aes(size = fit$data[, point_size_col])) +
+        gg = gg + ggplot2::geom_point(ggplot2::aes(size = .data[[point_size_col]]), data = observed_data) +
           ggplot2::scale_size_area(max_size = 2 * 1.5/sqrt(1.5))  # See https://stackoverflow.com/questions/63023877/setting-absolute-point-size-for-geom-point-with-scale-size-area/63024297?noredirect=1#comment111454629_63024297
       }
     } else if (geom_data == "line") {
@@ -359,8 +360,7 @@ get_plot = function(x,
     # The scale of the actual plot (or something close enough)
     # This is faster than limits_y = ggplot2::ggplot_build(gg)$layout$panel_params[[1]]$y.range
     if (dpar == "epred" && geom_data != FALSE) {
-      limits_y = c(min(fit$data[, data_columns$response]),
-                   max(fit$data[, data_columns$response]))
+      limits_y = range(fit$data[[data_columns$response]], finite = TRUE)
     } else if (show_q_predict) {
       limits_y = range(q_predict_data$.predicted)
     } else if (show_q_fit) {
