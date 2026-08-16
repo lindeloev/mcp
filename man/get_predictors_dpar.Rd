@@ -23,7 +23,9 @@ get_predictor_tables(model, data, family, par_x, check_rank = TRUE)
 get_predictors(model, data, family, par_x, check_rank = TRUE)
 }
 \arguments{
-\item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)}
+\item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.).
+Missing values in the response variable are imputed using the posterior predictive.
+\code{\link{fitted.mcpfit}} or \code{\link{predict.mcpfit}} details how to see the imputed values.}
 
 \item{form_rhs}{The full predictor formula of a segment, including one or
 several distributional terms.}
@@ -46,15 +48,15 @@ change-point parts can be omitted (\code{cp ~ predictor} assumes the same
 response; \code{~ predictor} assumes an intercept-only change point). The
 following can be modeled:
 \itemize{
-\item \emph{Regular formulas:} e.g., \code{~ 1 + x}). \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
-\item \emph{Extended formulas:}, e.g., \code{~ x:group + I(x^2) + exp(z)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
+\item \emph{Regular formulas:} e.g., \code{~ 1 + x}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
+\item \emph{Extended formulas:} e.g., \code{~ x:group + I(x^2) + exp(z)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
 R-side bases such as \code{scale()}, \code{poly()}, and \code{splines::ns()} are evaluated
 before sampling, and their fitted scaling or basis is reused for \code{newdata}.
 \item \emph{Group-level effects:} e.g., \code{~ 1 + (1 | id)} for a group-level
 intercept, or \code{~ 1 + (factor || id)} for independent intercept and
 factor-contrast deviations. \href{https://lindeloev.github.io/mcp/articles/varying.html}{Read more}.
 \item \emph{Gaussian residual standard deviation:} e.g., \code{~sigma(1)} for a simple
-standard-deviation change or \code{~sigma(1 + x + group)}) for more advanced
+standard-deviation change or \code{~sigma(1 + x + group)} for more advanced
 structures. Explicit \code{sigma()} formulas model log-SD, while the implicit constant \code{sigma_1} in a
 model without \code{sigma()} remains on the response scale.
 \href{https://lindeloev.github.io/mcp/articles/variance.html}{Read more}
@@ -67,9 +69,9 @@ coefficients to stationarity or MA coefficients to invertibility.
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
 }}
 
-\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, \code{poisson()},
-or \code{negbinomial()}.
-with a supported link function, e.g., \code{gaussian(link = "log")}.}
+\item{family}{A supported family: \code{gaussian()}, \code{binomial()}, \code{bernoulli()},
+\code{poisson()}, or \code{negbinomial()}, with a supported link function; e.g.,
+\code{gaussian(link = "log")}.}
 }
 \value{
 A tibble with one row per model parameter and the columns

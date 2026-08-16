@@ -72,12 +72,11 @@ For posterior predictive intervals, see the \code{q_predict} argument.}
 \item{geom_data}{String. One of "point", "line" (good for time-series),
 or FALSE (do not plot).}
 
-\item{cp_dens}{TRUE/FALSE. Plot posterior densities of the change point(s)?
-Currently does not respect \code{facet_by}. This will be added in the future.}
+\item{cp_dens}{TRUE/FALSE. Plot posterior densities of the change point(s)?}
 
 \item{rate}{Boolean. For binomial models, return counts (\code{rate = FALSE}) or
-the observed or expected success proportion (\code{rate = TRUE}). If \code{FALSE}, linear
-interpolation on trial number is used to infer trials at a particular x.}
+the observed or expected success proportion (\code{rate = TRUE}). Predictions and
+count-scale fitted values require a trials column in \code{newdata}.}
 
 \item{prior}{TRUE/FALSE. Plot using prior draws? Useful for \code{mcp(..., sample = "both")}}
 
@@ -85,6 +84,9 @@ interpolation on trial number is used to infer trials at a particular x.}
 \itemize{
 \item \code{TRUE} Compute the GARMA residual recurrence. Requires the response variable in \code{newdata}.
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
+For posterior evaluation of the original data, retained JAGS imputations
+supply missing GARMA histories. In models with group-level effects, this
+currently requires including all such effects (\code{varying = TRUE}).
 }}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
@@ -92,7 +94,9 @@ If there are group-level effects, this is the number of draws from each group.
 \code{NULL} means "all". Ignored if both are \code{FALSE}. More draws trade speed for accuracy.}
 
 \item{at}{Named list setting additional continuous predictors to fixed values.
-They default to their observed means. Passed to \code{interpolate_newdata()}.}
+They default to their observed means. Family-specific response auxiliaries
+can be supplied as explicit scalar design values. Passed to
+\code{interpolate_newdata()}.}
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 

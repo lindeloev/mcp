@@ -57,16 +57,19 @@ and 1).}
 A data.frame with a row per hypothesis and the following columns:
 \itemize{
 \item \code{hypothesis} is the hypothesis; often re-arranged to test against zero.
-\item \code{mean} is the posterior mean of the left-hand side of the hypothesis.
-\item \code{lower} is the lower bound of the central posterior interval of width \code{width}.
+\item \code{mean} is the posterior mean of the left-hand side of the hypothesis, or
+the prior mean when \code{prior = TRUE}.
+\item \code{lower} is the lower bound of the central posterior interval of width \code{width},
+or the corresponding prior interval when \code{prior = TRUE}.
 \item \code{upper} is the upper bound of ditto.
-\item \code{p} is the posterior probability of a directional hypothesis. It is \code{NA}
+\item \code{p} is the posterior probability of a directional hypothesis, or the prior
+probability when \code{prior = TRUE}. It is \code{NA}
 for equality hypotheses, which compare models rather than an event
 within the fitted model.
 \item \code{BF} Bayes Factor in favor  of the hypothesis.
 For "=" it is the Savage-Dickey density ratio.
 For directional hypotheses, it is the posterior odds divided by the
-prior odds.
+prior odds. It is \code{NA} when \code{prior = TRUE}.
 }
 }
 \description{
@@ -80,6 +83,7 @@ the posterior odds divided by the prior odds. For equality hypotheses, a
 Savage-Dickey ratio is computed. Both kinds of Bayes factor require prior
 draws, so remember \code{mcp(..., sample = "both")}. This function is heavily inspired by the
 \code{hypothesis} function from the \code{brms} package.
+When \code{prior = TRUE}, the summary is based on prior draws and \code{BF} is \code{NA}.
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

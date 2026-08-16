@@ -49,8 +49,8 @@ Requires \code{scale = "response"}.
 \item{probs}{Vector of quantiles. Only in effect when \code{summary == TRUE}.}
 
 \item{rate}{Boolean. For binomial models, return counts (\code{rate = FALSE}) or
-the observed or expected success proportion (\code{rate = TRUE}). If \code{FALSE}, linear
-interpolation on trial number is used to infer trials at a particular x.}
+the observed or expected success proportion (\code{rate = TRUE}). Predictions and
+count-scale fitted values require a trials column in \code{newdata}.}
 
 \item{prior}{TRUE/FALSE. Plot using prior draws? Useful for \code{mcp(..., sample = "both")}}
 
@@ -77,6 +77,9 @@ the model.
 \itemize{
 \item \code{TRUE} Compute the GARMA residual recurrence. Requires the response variable in \code{newdata}.
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
+For posterior evaluation of the original data, retained JAGS imputations
+supply missing GARMA histories. In models with group-level effects, this
+currently requires including all such effects (\code{varying = TRUE}).
 }}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
@@ -113,7 +116,7 @@ group-level effects, the returned data is expanded with the relevant levels for 
 
 The return columns are:
 \itemize{
-\item Predictors from \code{newdata}.
+\item Predictors from \code{newdata}, plus its response column when supplied.
 \item Draw descriptors: ".chain", ".iteration", ".draw" (see the \code{posterior} and \code{tidybayes} packages), and \code{data_row}, the row number in the evaluated \code{newdata}.
 \item Draw values: one column for each parameter in the model.
 \item The estimate. Either ".epred", ".prediction", ".residual", or ".loglik" (matching tidybayes/ggdist conventions).

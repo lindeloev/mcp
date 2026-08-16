@@ -14,36 +14,17 @@ the fit (prior and/or posterior MCMC draws).
 \details{
 See \code{methods(class = "mcpfit")} for an overview of available methods.
 
-User-provided information (see \code{\link{mcp}} for more details):
+Components:
+\itemize{
+\item \code{call}: The matched call to \code{mcp()}.
+\item \code{model}: A list of user-provided formulas.
+\item \code{data}: The user-provided data frame.
+\item \code{family}: An \code{mcpfamily} object.
+\item \code{prior}: A named list of priors.
+\item \code{mcmc_post} and \code{mcmc_prior}: \code{\link[coda]{mcmc.list}} objects with
+posterior and prior draws, respectively.
+\item \code{jags_code}: A string with JAGS code; use \code{cat(fit$jags_code)} to show it.
+\item \code{simulate}: A function to simulate data from supplied parameter values.
+\item \code{.internal}: Information used internally by mcp.
 }
-\section{Slots}{
-
-\describe{
-\item{\code{call}}{The matched call to \code{mcp()}.}
-
-\item{\code{model}}{A list of formulas, making up the model.
-Provided by user. See \code{\link{mcp}} for more details.}
-
-\item{\code{data}}{A data frame.
-Provided by user. See \code{\link{mcp}} for more details.}
-
-\item{\code{family}}{An \code{mcpfamily} object.
-Provided by user. See \code{\link{mcp}} for more details.}
-
-\item{\code{prior}}{A named list.
-Provided by user. See \code{\link{mcp}} for more details.}
-
-\item{\code{mcmc_post}}{An \code{\link[coda]{mcmc.list}} object with posterior draws.}
-
-\item{\code{mcmc_prior}}{An \code{\link[coda]{mcmc.list}} object with prior draws.}
-
-\item{\code{loglik}}{An (Nchains * Ndraws) by N-observed-responses matrix of
-log-likelihoods.}
-
-\item{\code{jags_code}}{A string with jags code. Use \code{cat(fit$jags_code)} to show it.}
-
-\item{\code{simulate}}{A method to simulate and predict data.}
-
-\item{\code{.internal}}{Information that is used internally by mcp.}
-}}
-
+}

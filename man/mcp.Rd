@@ -15,7 +15,8 @@ mcp(
   cores = NULL,
   chains = 3,
   iter = 3000,
-  adapt = 1500,
+  warmup = 1500,
+  adapt = lifecycle::deprecated(),
   inits = NULL,
   jags_code = NULL,
   seed = NULL,
@@ -33,15 +34,15 @@ change-point parts can be omitted (\code{cp ~ predictor} assumes the same
 response; \code{~ predictor} assumes an intercept-only change point). The
 following can be modeled:
 \itemize{
-\item \emph{Regular formulas:} e.g., \code{~ 1 + x}). \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
-\item \emph{Extended formulas:}, e.g., \code{~ x:group + I(x^2) + exp(z)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
+\item \emph{Regular formulas:} e.g., \code{~ 1 + x}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
+\item \emph{Extended formulas:} e.g., \code{~ x:group + I(x^2) + exp(z)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
 R-side bases such as \code{scale()}, \code{poly()}, and \code{splines::ns()} are evaluated
 before sampling, and their fitted scaling or basis is reused for \code{newdata}.
 \item \emph{Group-level effects:} e.g., \code{~ 1 + (1 | id)} for a group-level
 intercept, or \code{~ 1 + (factor || id)} for independent intercept and
 factor-contrast deviations. \href{https://lindeloev.github.io/mcp/articles/varying.html}{Read more}.
 \item \emph{Gaussian residual standard deviation:} e.g., \code{~sigma(1)} for a simple
-standard-deviation change or \code{~sigma(1 + x + group)}) for more advanced
+standard-deviation change or \code{~sigma(1 + x + group)} for more advanced
 structures. Explicit \code{sigma()} formulas model log-SD, while the implicit constant \code{sigma_1} in a
 model without \code{sigma()} remains on the response scale.
 \href{https://lindeloev.github.io/mcp/articles/variance.html}{Read more}
@@ -54,7 +55,9 @@ coefficients to stationarity or MA coefficients to invertibility.
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
 }}
 
-\item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)}
+\item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.).
+Missing values in the response variable are imputed using the posterior predictive.
+\code{\link{fitted.mcpfit}} or \code{\link{predict.mcpfit}} details how to see the imputed values.}
 
 \item{prior}{Named list. Names are parameter names (\code{cp_i}, \code{Intercept_i}, \code{xvar_i},
 \code{sigma}) and the values are either
@@ -74,17 +77,17 @@ ordering bounds, e.g., \code{dunif(cp_1, max(time))} for \code{cp_2}.
 typically between segments. If two group-level deviations are shared this way,
 they will need to have the same grouping variable.
 \item A scaled Dirichlet prior is supported for change points if they are all set to
-\code{cp_i = "dirichlet(N)"} where \code{N} is the alpha for this change point and
-\code{N = 1} is most often used. This prior is symmetric over segment spacings,
+\code{cp_i = "dirichlet(alpha)"} with the same positive \code{alpha} for every
+change point. \code{alpha = 1} is most often used. This prior is symmetric over segment spacings,
 unlike the regularizing t-tail default for multiple change points, but it
 mixes less efficiently, so you will often need to set \code{iter} higher.
 It is recommended for hypothesis testing and for the estimation of more
 than 5 change points. \href{https://lindeloev.github.io/mcp/articles/priors.html}{Read more}.
 }}
 
-\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, \code{poisson()},
-or \code{negbinomial()}.
-with a supported link function, e.g., \code{gaussian(link = "log")}.}
+\item{family}{A supported family: \code{gaussian()}, \code{binomial()}, \code{bernoulli()},
+\code{poisson()}, or \code{negbinomial()}, with a supported link function; e.g.,
+\code{gaussian(link = "log")}.}
 
 \item{par_x}{String (default: \code{NULL} which is auto-detect).}
 
@@ -112,9 +115,11 @@ backwards compatibility.}
 \item{iter}{Positive integer. Number of post-warmup draws from each chain.
 The total number of draws is \code{iter * chains}.}
 
-\item{adapt}{Positive integer. Also sometimes called "burnin", this is the
-number of adaptation iterations before sampling. Set lower for greater speed.
-Set higher if needed for sampler adaptation; use diagnostics to assess convergence.}
+\item{warmup}{Positive integer. Number of initial iterations per chain which
+are discarded before sampling. Set higher if needed for sampler adaptation;
+use diagnostics to assess convergence.}
+
+\item{adapt}{Deprecated; use \code{warmup} instead.}
 
 \item{inits}{A list if initial values for the parameters. This can be useful
 if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
@@ -122,7 +127,8 @@ Defaults to \code{NULL}, i.e., no inits.}
 
 \item{jags_code}{String. Pass JAGS code to \code{mcp} to use directly. This is useful if
 you want to tweak the code in \code{fit$jags_code} and run it within the \code{mcp}
-framework.}
+framework. R-side simulation and prediction methods continue to use the
+mcp-default formulas (with warning), so they may no longer match custom JAGS code.}
 
 \item{seed}{\code{NULL} or a positive integer. Seed for the JAGS random-number
 generators. When supplied, \code{inits} must be a single named list shared by all chains.}
@@ -214,9 +220,9 @@ predict(demo_fit, newdata = data.frame(time = c(55.545, 80, 132)))
 # Compare to a one-intercept-only model (no change points) with default prior
 model_null = list(response ~ 1)
 fit_null = mcp(model_null, data = data, par_x = "time")  # fit another model here
-demo_fit$loo = loo(demo_fit)
-fit_null$loo = loo(fit_null)
-loo::loo_compare(demo_fit$loo, fit_null$loo)
+demo_loo = loo(demo_fit)
+null_loo = loo(fit_null)
+loo::loo_compare(demo_loo, null_loo)
 
 # Inspect the prior. Useful for prior predictive checks.
 summary(demo_fit, prior = TRUE)

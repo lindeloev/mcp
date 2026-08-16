@@ -65,7 +65,7 @@ are also a number of useful plots in the \pkg{coda} package, i.e.,
 \code{coda::gelman.plot(coda::as.mcmc(fit))} and \code{coda::crosscorr.plot(coda::as.mcmc(fit))}
 
 In any case, if you see a few erratic lines or parameter estimates, this is
-a sign that you may want to increase argument 'adapt' and 'iter' in \code{\link{mcp}}.
+a sign that you may want to increase argument 'warmup' and 'iter' in \code{\link{mcp}}.
 
 Up to \code{nvariables} parameters are shown on each page. Multi-page plots are
 printed in sequence; in interactive use, \code{ask = TRUE} pauses between pages.

@@ -71,6 +71,7 @@ A numeric \code{N_draws} by \code{nrow(newdata)} matrix.
 Methods for the \code{{rstantools}} posterior-prediction generics. They return a
 draws-by-observation matrix and enable \code{{tidybayes}} workflows such as
 \code{add_epred_draws()}, \code{add_predicted_draws()}, and \code{add_linpred_draws()}.
+These methods and workflows require the suggested package \code{{rstantools}}.
 }
 \seealso{
 \code{\link[=fitted.mcpfit]{fitted.mcpfit()}}, \code{\link[=predict.mcpfit]{predict.mcpfit()}}

@@ -67,9 +67,10 @@ With \code{verbose = TRUE}:
 \itemize{
 \item \code{segment} is the segment the parameter belongs to.
 \item \code{dpar} is the distributional parameter (\code{"cp"}, \code{"mu"}, \code{"sigma"},
-\code{"ar1"}, \code{"ma1"}, etc.) the parameter belongs to.
+\code{"ar"}, \code{"ma"}, etc.) the parameter belongs to. For AR/MA terms, the
+lag order is encoded in \code{name}, e.g. \code{ar2_1}.
 \item \code{mean} is the posterior mean
-\item \code{sd} is the posterior standard deviation, i.e., the width of the posterior.
+\item \code{sd} is the posterior standard deviation.
 \item \code{lower} and \code{upper} are the bounds of the central posterior interval
 given in \code{width}.
 \item \code{rhat} is the rank-normalized split-Rhat convergence diagnostic.

@@ -45,6 +45,9 @@ the model.
 \itemize{
 \item \code{TRUE} Compute the GARMA residual recurrence. Requires the response variable in \code{newdata}.
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
+For posterior evaluation of the original data, retained JAGS imputations
+supply missing GARMA histories. In models with group-level effects, this
+currently requires including all such effects (\code{varying = TRUE}).
 }}
 
 \item{ndraws}{Number of posterior draws. Note that you may want to use all

@@ -50,6 +50,9 @@ the model.
 \itemize{
 \item \code{TRUE} Compute the GARMA residual recurrence. Requires the response variable in \code{newdata}.
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
+For posterior evaluation of the original data, retained JAGS imputations
+supply missing GARMA histories. In models with group-level effects, this
+currently requires including all such effects (\code{varying = TRUE}).
 }}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws used for the
@@ -69,7 +72,13 @@ Observationwise PSIS-LOO and WAIC are problematic for AR/MA models
 because both treat individual conditional likelihood terms as validation
 units. In PSIS-LOO, a held-out response also remains in the conditioning
 history of later terms. Prefer leave-future-out or blocked
-cross-validation, which are not currently implemented in mcp.
+cross-validation, which are not currently implemented in mcp. When a
+missing response enters a later observed GARMA history, \code{log_lik()},
+\code{loo()}, and \code{waic()} are unavailable with \code{arma = TRUE}: the observed-data
+likelihood requires integrating over that missing history, which mcp does
+not currently implement. Setting \code{arma = FALSE} evaluates the model without
+its AR/MA contribution rather than repairing the criterion for the fitted
+serial model.
 }
 \section{Functions}{
 \itemize{
@@ -87,9 +96,9 @@ fit1 = mcp(model1, data)
 fit2 = mcp(model2, data)
 
 # Compute LOO for each and compare (works for waic(fit) too)
-fit1$loo = loo(fit1)
-fit2$loo = loo(fit2)
-loo::loo_compare(fit1$loo, fit2$loo)
+loo1 = loo(fit1)
+loo2 = loo(fit2)
+loo::loo_compare(loo1, loo2)
 }
 }
 \author{

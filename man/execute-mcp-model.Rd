@@ -88,8 +88,8 @@ Gaussian predictions and log-likelihoods also require the weights column. If \co
 \item{probs}{Vector of quantiles. Only in effect when \code{summary == TRUE}.}
 
 \item{rate}{Boolean. For binomial models, return counts (\code{rate = FALSE}) or
-the observed or expected success proportion (\code{rate = TRUE}). If \code{FALSE}, linear
-interpolation on trial number is used to infer trials at a particular x.}
+the observed or expected success proportion (\code{rate = TRUE}). Predictions and
+count-scale fitted values require a trials column in \code{newdata}.}
 
 \item{prior}{TRUE/FALSE. Plot using prior draws? Useful for \code{mcp(..., sample = "both")}}
 
@@ -106,6 +106,9 @@ the model.
 \itemize{
 \item \code{TRUE} Compute the GARMA residual recurrence. Requires the response variable in \code{newdata}.
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
+For posterior evaluation of the original data, retained JAGS imputations
+supply missing GARMA histories. In models with group-level effects, this
+currently requires including all such effects (\code{varying = TRUE}).
 }}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
@@ -152,7 +155,7 @@ group-level effects, the returned data is expanded with the relevant levels for 
 
 The return columns are:
 \itemize{
-\item Predictors from \code{newdata}.
+\item Predictors from \code{newdata}, plus its response column when supplied.
 \item Draw descriptors: ".chain", ".iteration", ".draw" (see the \code{posterior} and \code{tidybayes} packages), and \code{data_row}, the row number in the evaluated \code{newdata}.
 \item Draw values: one column for each parameter in the model.
 \item The estimate. Either ".epred", ".prediction", ".residual", or ".loglik" (matching tidybayes/ggdist conventions).
@@ -169,11 +172,16 @@ parameter with \code{dpar}, and choose the response or linear-predictor scale wi
 \code{scale} where applicable.
 }
 \details{
-\code{residuals(fit)} is equivalent to \code{fit$data[, fit$data$yvar] - fitted(fit, ...)} (or \code{newdata[, fit$data$yvar] - fitted(fit, ...)}),
+\code{residuals(fit)} is equivalent to \code{fit$data[[mcp_columns(fit)$response]] - fitted(fit, ...)} (or \code{newdata[[mcp_columns(fit)$response]] - fitted(fit, ...)}),
 but with fixed arguments for \code{fitted}: \verb{rate = FALSE, dpar = 'epred', draws_format = 'tidy'}.
 
 \code{log_lik()} defaults to an unsummarised draws-by-observation matrix, as used
 by \code{loo} and other posterior workflows.
+
+Missing responses in the original data remain missing in the response column.
+\code{fitted()} returns their expected responses, while \code{predict()} uses retained
+JAGS imputations for their posterior response draws. In GARMA models these
+imputations also supply the history used for later fitted and predicted rows.
 }
 \section{Functions}{
 \itemize{
@@ -202,6 +210,12 @@ fitted(demo_fit, dpar = "sigma")  # Another model parameter
 # Evaluate at novel data
 novel_data = data.frame(time = c(-5, 20, 300))  # Only predictors are needed
 predict(demo_fit, newdata = novel_data, probs = c(0.025, 0.5, 0.975))
+
+# Work with missing responses
+missing_fit = mcp_example("missing", plot = FALSE)
+fitted(missing_fit) |> dplyr::filter(is.na(y))  # Expected responses for missing y
+fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y))  # Same, but all posterior draws
+predict(missing_fit) |> dplyr::filter(is.na(y))  # Posterior predictive for missing y
 }
 }
 \seealso{

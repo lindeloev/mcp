@@ -21,10 +21,11 @@ Categorical model predictors are always included.}
 \item{x_values}{Numeric vector of x-values to evaluate at.}
 
 \item{at}{Named list setting additional continuous predictors to fixed values.
-They default to their observed means. For example, \code{at = list(age = 40)}.}
+They default to their observed means. Family response auxiliaries can also
+be supplied as explicit scalar design values; e.g., \code{at = list(N = 20)}.}
 }
 \value{
-\code{tibble} with
+\code{data.frame} with
 \itemize{
 \item Cols for par_x
 \item unique levels combos of factorial vars
@@ -43,6 +44,9 @@ between to speed up the computation.
 
 Categorical variables and requested grouping factors are combined factorially (all level combinations).
 Additional continuous predictors are held at their observed means, or at values supplied through \code{at}.
+Family-specific response auxiliaries, such as binomial trial counts and
+Gaussian weights, are not interpolated. Supply an auxiliary as a scalar in
+\code{at} or use \code{newdata} for a varying design.
 }
 \examples{
 \dontrun{
@@ -55,7 +59,7 @@ fitted(fit, newdata)
 
 # Predictions for each draw
 prediction = predict(fit, newdata, summary = FALSE)
-prediction[, c(".chain", ".iteration", ".draw", "x", "group", "z", "predict")]
+prediction[, c(".chain", ".iteration", ".draw", "x", "group", "z", ".prediction")]
 
 # Custom plot
 library(ggplot2)
