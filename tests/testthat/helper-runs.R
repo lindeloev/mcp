@@ -324,7 +324,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
   )
   expected_colnames = c(
     columns$par_x,
-    columns$trials,
+    if (colname == "fitted" && fit$family$family == "binomial" && !has_arma_terms(fit)) NULL else columns$trials,
     rhs_cols,
     varying_cols,
     colname, "error", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
@@ -499,7 +499,7 @@ test_pp_eval = function(fit, prior = FALSE) {
       group_pars,
 
       # Predictors
-      columns$trials,
+      if (fit$family$family == "binomial") NULL else columns$trials,
       columns$par_x,
       rhs_cols,
       selected_cp$cols,

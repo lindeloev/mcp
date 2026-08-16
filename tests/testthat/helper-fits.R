@@ -17,11 +17,11 @@
 #' @param family A family or `mcpfamily` used for both simulation and fitting.
 #' @param series Optional independent-series column passed to `mcp()`.
 #' @param chains Number of MCMC chains used when fitting.
-#' @param adapt Number of adaptation iterations used when fitting.
+#' @param warmup Number of warmup iterations used when fitting.
 #' @param iter Number of post-adaptation iterations used when fitting.
 #' @param min_ess Minimum bulk and tail ESS required for every parameter.
 test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
-                     family = gaussian(), series = NULL, chains, adapt, iter,
+                     family = gaussian(), series = NULL, chains, warmup, iter,
                      min_ess) {
   if (Sys.getenv("MCP_TEST_LEVEL") != "release") {
     testthat::skip("Time-consuming fit recovery tests are only run when MCP_TEST_LEVEL='release'.")
@@ -53,7 +53,7 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
   # Fit
   fit = mcp(
     model, newdata, family = family, par_x = "x", series = series,
-    chains = chains, warmup = adapt, iter = iter, seed = 42,
+    chains = chains, warmup = warmup, iter = iter, seed = 42,
     diagnostics = FALSE, quiet = TRUE
   )  # Ensure convergence
   assign("fit", fit, envir = .GlobalEnv)  # for easier debugging
@@ -79,20 +79,20 @@ apply_test_fit = function(desc, all_models, family = gaussian()) {
     model_family = this[["family"]]
     series = this[["series"]]
     chains = this[["chains"]]
-    warmup = this[["adapt"]]
+    warmup = this[["warmup"]]
     iter = this[["iter"]]
     min_ess = this[["min_ess"]]
     if (is.null(model_family))
       model_family = family
-    if (any(vapply(list(chains, adapt, iter, min_ess), is.null, logical(1))))
-      stop("Every fit-recovery model must specify `chains`, `adapt`, `iter`, and `min_ess`.", call. = FALSE)
+    if (any(vapply(list(chains, warmup, iter, min_ess), is.null, logical(1))))
+      stop("Every fit-recovery model must specify `chains`, `warmup`, `iter`, and `min_ess`.", call. = FALSE)
     model = this[names(this) == ""]
 
     # Test!
     testthat::test_that(desc, {
       test_fit(
         model, simulated, newdata, hyperparameters, model_family, series,
-        chains, adapt, iter, min_ess
+        chains, warmup, iter, min_ess
       )
     })
   }
