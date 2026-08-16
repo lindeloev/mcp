@@ -118,3 +118,33 @@ testthat::test_that("Dirichlet change point priors use a common alpha", {
     "finite alpha > 0"
   )
 })
+
+
+testthat::test_that("Dirichlet change point prior matches direct R simulation", {
+  alpha = 2.5
+  n_draws = 2000L
+  model = list(y ~ 1, ~ 1, ~ 1, ~ 1, ~ 1)
+  prior = stats::setNames(
+    as.list(rep(paste0("dirichlet(", alpha, ")"), 4)),
+    paste0("cp_", 1:4)
+  )
+  fit = suppressWarnings(mcp(
+    model,
+    data = data.frame(x = seq(0, 1, length.out = 20), y = 0),
+    prior = prior,
+    par_x = "x",
+    sample = "prior",
+    chains = 1,
+    iter = n_draws,
+    warmup = 100,
+    quiet = TRUE
+  ))
+  jags_draws = as.matrix(.subset2(fit, "mcmc_prior")[[1]])[, names(prior), drop = FALSE]
+
+  set.seed(123)
+  r_spacings = matrix(stats::rgamma(n_draws * 5, shape = alpha), ncol = 5)
+  r_spacings = r_spacings / rowSums(r_spacings)
+  r_draws = t(apply(r_spacings, 1, cumsum))[, 1:4, drop = FALSE]
+
+  testthat::expect_lt(max(abs(colMeans(jags_draws) - colMeans(r_draws))), 0.025)
+})
