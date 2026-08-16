@@ -15,23 +15,17 @@
 #' @details
 #' See `methods(class = "mcpfit")` for an overview of available methods.
 #'
-#' User-provided information (see \code{\link{mcp}} for more details):
-#' @slot call The matched call to `mcp()`.
-#' @slot model A list of formulas, making up the model.
-#'   Provided by user. See \code{\link{mcp}} for more details.
-#' @slot data A data frame.
-#'   Provided by user. See \code{\link{mcp}} for more details.
-#' @slot family An `mcpfamily` object.
-#'   Provided by user. See \code{\link{mcp}} for more details.
-#' @slot prior A named list.
-#'   Provided by user. See \code{\link{mcp}} for more details.
-#' @slot mcmc_post An \code{\link[coda]{mcmc.list}} object with posterior draws.
-#' @slot mcmc_prior An \code{\link[coda]{mcmc.list}} object with prior draws.
-#' @slot loglik An (Nchains * Ndraws) by N-observed-responses matrix of
-#'   log-likelihoods.
-#' @slot jags_code A string with jags code. Use `cat(fit$jags_code)` to show it.
-#' @slot simulate A method to simulate and predict data.
-#' @slot .internal Information that is used internally by mcp.
+#' Components:
+#' * `call`: The matched call to `mcp()`.
+#' * `model`: A list of user-provided formulas.
+#' * `data`: The user-provided data frame.
+#' * `family`: An `mcpfamily` object.
+#' * `prior`: A named list of priors.
+#' * `mcmc_post` and `mcmc_prior`: \code{\link[coda]{mcmc.list}} objects with
+#'   posterior and prior draws, respectively.
+#' * `jags_code`: A string with JAGS code; use `cat(fit$jags_code)` to show it.
+#' * `simulate`: A function to simulate data from supplied parameter values.
+#' * `.internal`: Information used internally by mcp.
 NULL
 
 
@@ -228,9 +222,10 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'   With `verbose = TRUE`:
 #'   * `segment` is the segment the parameter belongs to.
 #'   * `dpar` is the distributional parameter (`"cp"`, `"mu"`, `"sigma"`,
-#'     `"ar1"`, `"ma1"`, etc.) the parameter belongs to.
+#'     `"ar"`, `"ma"`, etc.) the parameter belongs to. For AR/MA terms, the
+#'     lag order is encoded in `name`, e.g. `ar2_1`.
 #'   * `mean` is the posterior mean
-#'   * `sd` is the posterior standard deviation, i.e., the width of the posterior.
+#'   * `sd` is the posterior standard deviation.
 #'   * `lower` and `upper` are the bounds of the central posterior interval
 #'     given in `width`.
 #'   * `rhat` is the rank-normalized split-Rhat convergence diagnostic.
@@ -780,10 +775,10 @@ niterations = posterior::niterations
 #'
 #' @details
 #' Returns a list with
-#' @slot pars Character vector of parameter names. `NULL` if empty.
-#' @slot cols Character vector of data column names. `NULL` if empty.
-#' @slot indices Logical vector indexing the group-effects table.
-#' @slot effects The selected rows of the group-effects table.
+#' * `pars`: Character vector of parameter names, or `NULL` if empty.
+#' * `cols`: Character vector of data column names, or `NULL` if empty.
+#' * `indices`: Logical vector indexing the group-effects table.
+#' * `effects`: The selected rows of the group-effects table.
 unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
   checkmate::assert_multi_class(pars, c("logical", "character"), null.ok = TRUE)
   checkmate::assert_multi_class(cols, c("logical", "character"), null.ok = TRUE)
@@ -1262,7 +1257,7 @@ pp_eval = function(
 
 
     # Quantiles
-    if (all(probs != FALSE)) {
+    if (!isFALSE(probs)) {
       quantiles = get_quantiles(draws, probs, type) %>%
         dplyr::mutate(quantile = 100 * .data$quantile) %>%
         tidyr::pivot_wider(names_from = "quantile", names_prefix = "Q", values_from = dplyr::all_of(type))
@@ -1299,7 +1294,7 @@ pp_eval = function(
 #' `scale` where applicable.
 #'
 #' @details
-#' `residuals(fit)` is equivalent to `fit$data[, fit$data$yvar] - fitted(fit, ...)` (or `newdata[, fit$data$yvar] - fitted(fit, ...)`),
+#' `residuals(fit)` is equivalent to `fit$data[[mcp_columns(fit)$response]] - fitted(fit, ...)` (or `newdata[[mcp_columns(fit)$response]] - fitted(fit, ...)`),
 #' but with fixed arguments for `fitted`: `rate = FALSE, dpar = 'epred', draws_format = 'tidy'`.
 #'
 #' `log_lik()` defaults to an unsummarised draws-by-observation matrix, as used

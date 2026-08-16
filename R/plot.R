@@ -48,7 +48,8 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 #'   Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.
 #' @param at Named list setting additional continuous predictors to fixed values.
 #'   They default to their observed means. Family-specific response auxiliaries
-#'   are not interpolated. Passed to `interpolate_newdata()`.
+#'   can be supplied as explicit scalar design values. Passed to
+#'   `interpolate_newdata()`.
 #' @param .grouping Internal. Whether grouping arguments were omitted, mapped, or explicitly disabled.
 #' @param lines Positive integer or `FALSE`. The number of fitted lines (draws).
 #'   It is the number of joint posterior draws shown for every curve. FALSE or `lines = 0` plots no lines.
@@ -57,7 +58,6 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 #' @param geom_data String. One of "point", "line" (good for time-series),
 #'   or FALSE (do not plot).
 #' @param cp_dens TRUE/FALSE. Plot posterior densities of the change point(s)?
-#'   Currently does not respect `facet_by`. This will be added in the future.
 #' @param ... Currently ignored.
 #' @return A \pkg{ggplot2} object.
 #' @encoding UTF-8
@@ -91,6 +91,17 @@ get_plot = function(x,
   checkmate::assert_class(fit, "mcpfit")
   if (!is.mcpfamily(fit$family))
     fit$family = mcpfamily(fit$family)
+  checkmate::assert_flag(rate)
+
+  trials_col = mcp_columns(fit)$trials
+  if (!rate && fit$family$family == "binomial" &&
+      (is.null(at) || trials_col %notin% names(at))) {
+    stop(
+      "`plot(..., rate = FALSE)` requires an explicit binomial trial design. ",
+      "Supply it as `at = list(", trials_col, " = ...)`.",
+      call. = FALSE
+    )
+  }
 
   if (lines != FALSE) {
     checkmate::assert_int(lines, lower = 1)
@@ -125,8 +136,8 @@ get_plot = function(x,
     checkmate::assert_numeric(q_fit, lower = 0, upper = 1, any.missing = FALSE)
   if (is.numeric(q_predict))
     checkmate::assert_numeric(q_predict, lower = 0, upper = 1, any.missing = FALSE)
-  show_q_fit = any(q_fit != FALSE)
-  show_q_predict = any(q_predict != FALSE)
+  show_q_fit = !isFALSE(q_fit)
+  show_q_predict = !isFALSE(q_predict)
 
   # Validate columns used for faceting and color.
   checkmate::assert_character(facet_by, null.ok = TRUE)
@@ -189,9 +200,6 @@ get_plot = function(x,
   if (!show_q_fit && !show_q_predict)
     # No need for more draws if they are only used to draw lines.
     ndraws = lines
-
-  if (scale == "linear" && rate == FALSE)
-    message("Known bug: the data points are plotted incorrectly when scale = 'linear' and rate = FALSE.")
 
   rlang::check_dots_empty()
 
@@ -284,7 +292,9 @@ get_plot = function(x,
 
   # Show data
   if (scale == "linear") {
-    ydata = fit$family$linkfun(ydata)
+    ydata = fit$family$linkfun(fit$family$response$observed(
+      ydata, response_data, rate = TRUE
+    ))
     if (any(is.infinite(ydata)))
       message("Removing points with infinite values on the linear scale. You may get a few warnings.")
     ydata[is.infinite(ydata)] = NA
@@ -378,7 +388,7 @@ get_plot = function(x,
   if (scale == "linear")
     gg = gg + ggplot2::labs(y = paste0(fit$family$link, "(", data_columns$response, ")"))
   if (scale == "response" && fit$family$response$probability(rate))
-    gg = gg + ggplot2::labs(y = paste0("P(", data_columns$response, " = TRUE)"))
+    gg = gg + ggplot2::labs(y = "Success probability")
   if (dpar != "epred")
     gg = gg + ggplot2::labs(y = dpar)
 

@@ -76,17 +76,16 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
   checkmate::assert_list(at, types = "numeric", any.missing = FALSE, names = "unique", null.ok = TRUE)
   if (length(at) > 0 && is.null(names(at)))
     stop("`at` must be a named list.")
-  invalid_at = setdiff(names(at), names(numeric_data))
+  invalid_at = setdiff(names(at), c(names(numeric_data), auxiliary_cols))
   if (length(invalid_at) > 0)
-    stop("`at` must name continuous predictors other than `par_x`. Invalid: '", paste(invalid_at, collapse = "', '"), "'.")
+    stop("`at` must name continuous predictors or response auxiliaries. Invalid: '", paste(invalid_at, collapse = "', '"), "'.")
   if (any(lengths(at) != 1))
     stop("Every value in `at` must be a single number.")
 
-  if (ncol(numeric_data) == 0)
-    return(NULL)
-
   values = lapply(numeric_data, mean, na.rm = TRUE)
   values[names(at)] = at
+  if (length(values) == 0)
+    return(NULL)
   as.data.frame(values)
 }
 
@@ -103,7 +102,8 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 #'   Categorical model predictors are always included.
 #' @param x_values Numeric vector of x-values to evaluate at.
 #' @param at Named list setting additional continuous predictors to fixed values.
-#'   They default to their observed means. For example, `at = list(age = 40)`.
+#'   They default to their observed means. Family response auxiliaries can also
+#'   be supplied as explicit scalar design values; e.g., `at = list(N = 20L)`.
 #' @details
 #' The `par_x` variable will be interpolated with higher resolution around the
 #' change points where the values can change abruptly, but lower resolution in
@@ -112,9 +112,9 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 #' Categorical variables and requested grouping factors are combined factorially (all level combinations).
 #' Additional continuous predictors are held at their observed means, or at values supplied through `at`.
 #' Family-specific response auxiliaries, such as binomial trial counts and
-#' Gaussian weights, are not interpolated. Supply them in `newdata` when they
-#' are required by the evaluation.
-#' @return `tibble` with
+#' Gaussian weights, are not interpolated. Supply an auxiliary as a scalar in
+#' `at` or use `newdata` for a varying design.
+#' @return `data.frame` with
 #'  * Cols for par_x
 #'  * unique levels combos of factorial vars
 #'  * fixed values for additional continuous predictors
@@ -132,7 +132,7 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 #'
 #' # Predictions for each draw
 #' prediction = predict(fit, newdata, summary = FALSE)
-#' prediction[, c(".chain", ".iteration", ".draw", "x", "group", "z", "predict")]
+#' prediction[, c(".chain", ".iteration", ".draw", "x", "group", "z", ".prediction")]
 #'
 #' # Custom plot
 #' library(ggplot2)
@@ -171,6 +171,17 @@ interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by),
   newdata = by_grid %>% tidyr::expand_grid("{data_columns$par_x}" := x_values)
   if (!is.null(continuous_at))
     newdata = tidyr::expand_grid(newdata, continuous_at)
+
+  auxiliary_cols = unname(unlist(data_columns[setdiff(names(data_columns), c("par_x", "response", "series"))]))
+  if (any(auxiliary_cols %in% names(newdata))) {
+    model_tables = get_fit_model_tables(fit)
+    response_data = get_family_response_data(fit$family, model_tables$segments, newdata)
+    response_columns = c(
+      list(y = data_columns$response),
+      as.list(get_family_aux_columns(fit$family, model_tables$segments))
+    )
+    fit$family$response$validate(rep(NA_real_, nrow(newdata)), response_data, response_columns)
+  }
 
   # Add response column for AR/MA models
   if (has_arma_terms(fit)) {

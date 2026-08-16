@@ -20,9 +20,9 @@
 #'   response; `~ predictor` assumes an intercept-only change point). The
 #'   following can be modeled:
 #'
-#'   * *Regular formulas:* e.g., `~ 1 + x`). [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
+#'   * *Regular formulas:* e.g., `~ 1 + x`. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'
-#'   * *Extended formulas:*, e.g., `~ x:group + I(x^2) + exp(z)`. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
+#'   * *Extended formulas:* e.g., `~ x:group + I(x^2) + exp(z)`. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'     R-side bases such as `scale()`, `poly()`, and `splines::ns()` are evaluated
 #'     before sampling, and their fitted scaling or basis is reused for `newdata`.
 #'
@@ -31,7 +31,7 @@
 #'     factor-contrast deviations. [Read more](https://lindeloev.github.io/mcp/articles/varying.html).
 #'
 #'   * *Gaussian residual standard deviation:* e.g., `~sigma(1)` for a simple
-#'     standard-deviation change or `~sigma(1 + x + group)`) for more advanced
+#'     standard-deviation change or `~sigma(1 + x + group)` for more advanced
 #'     structures. Explicit `sigma()` formulas model log-SD, while the implicit constant `sigma_1` in a
 #'     model without `sigma()` remains on the response scale.
 #'     [Read more](https://lindeloev.github.io/mcp/articles/variance.html)
@@ -68,9 +68,9 @@
 #'      mixes less efficiently, so you will often need to set `iter` higher.
 #'      It is recommended for hypothesis testing and for the estimation of more
 #'      than 5 change points. [Read more](https://lindeloev.github.io/mcp/articles/priors.html).
-#' @param family One of `gaussian()`, `binomial()`, `bernoulli()`, `poisson()`,
-#'   or `negbinomial()`.
-#'   with a supported link function, e.g., `gaussian(link = "log")`.
+#' @param family A supported family: `gaussian()`, `binomial()`, `bernoulli()`,
+#'   `poisson()`, or `negbinomial()`, with a supported link function; e.g.,
+#'   `gaussian(link = "log")`.
 #' @param par_x String (default: `NULL` which is auto-detect).
 #' @param sample One of
 #'   * `"post"`: Sample the posterior.

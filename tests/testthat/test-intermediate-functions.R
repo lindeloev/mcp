@@ -70,8 +70,16 @@ test_that("interpolate_newdata() does not invent response auxiliaries", {
 
   newdata = interpolate_newdata(fit, x_values = 1:3)
   expect_false("N" %in% names(newdata))
+  expect_equal(interpolate_newdata(fit, x_values = 1:3, at = list(N = 4L))$N, rep(4, 3))
+  expect_error(interpolate_newdata(fit, at = list(N = 2.5)), "N.*integerish")
   expect_equal(fitted(fit, newdata, summary = FALSE, rate = TRUE)$.epred, rep(0.5, 3))
-  expect_s3_class(plot(fit, lines = 1, q_fit = FALSE, cp_dens = FALSE), "ggplot")
+  expect_true("Q0" %in% names(fitted(fit, newdata, probs = 0, rate = TRUE)))
+  plot_none = plot(fit, lines = 0, q_fit = FALSE, cp_dens = FALSE)
+  plot_zero = plot(fit, lines = 0, q_fit = 0, cp_dens = FALSE)
+  expect_gt(length(plot_zero$layers), length(plot_none$layers))
+  expect_identical(plot_none$labels$y, "Success probability")
+  expect_error(plot(fit, rate = FALSE), "requires an explicit binomial trial design")
+  expect_s3_class(plot(fit, rate = FALSE, at = list(N = 4L), cp_dens = FALSE), "ggplot")
   expect_error(
     predict(fit, newdata, summary = FALSE, rate = FALSE),
     "missing from the data: N",
