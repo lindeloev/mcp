@@ -241,6 +241,9 @@ mcp = function(model,
 
   # Check prior
   checkmate::assert_list(prior)
+  if (length(prior) > 0 && (is.null(names(prior)) || anyNA(names(prior)) || any(!nzchar(names(prior))))) {
+    stop("`prior` must be a completely named list; every entry needs a nonempty parameter name.")
+  }
   check_legacy_parameter_names(names(prior), "prior")
 
   which_duplicated = duplicated(names(prior))

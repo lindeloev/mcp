@@ -26,6 +26,31 @@ for (prior in bad_prior) {
 }
 
 
+testthat::test_that("Prior entries must all have nonempty names", {
+  testthat::expect_error(
+    test_runs(prior_model, sample = FALSE, prior = list("dnorm(999, 1)")),
+    "completely named list"
+  )
+  testthat::expect_error(
+    test_runs(prior_model, sample = FALSE, prior = structure(list("dnorm(999, 1)"), names = NA_character_)),
+    "completely named list"
+  )
+  testthat::expect_error(
+    test_runs(prior_model, sample = FALSE, prior = structure(list("dnorm(999, 1)"), names = "")),
+    "completely named list"
+  )
+})
+
+
+testthat::test_that("Prior entries must have unique names", {
+  prior = structure(list("dnorm(999, 1)", "dnorm(999, 1)"), names = c("cp_1", "cp_1"))
+  testthat::expect_error(
+    test_runs(prior_model, sample = FALSE, prior = prior),
+    "duplicated entries"
+  )
+})
+
+
 good_prior = list(
   list(  # Fixed values and non-default change point
     Intercept_2 = "Intercept_1",
