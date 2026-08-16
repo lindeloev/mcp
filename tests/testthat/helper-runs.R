@@ -327,10 +327,9 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
     if (colname == "fitted" && fit$family$family == "binomial" && !has_arma_terms(fit)) NULL else columns$trials,
     rhs_cols,
     varying_cols,
+    columns$response,
     colname, "error", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
   )
-  if (has_arma_terms(fit) || colname %in% c("loglik", "residuals"))
-    expected_colnames = c(expected_colnames, columns$response)
 
   # `log_lik()` follows the conventional draws-by-observation matrix default.
   # Its former observation-level data-frame output remains available explicitly.
@@ -503,6 +502,7 @@ test_pp_eval = function(fit, prior = FALSE) {
       columns$par_x,
       rhs_cols,
       selected_cp$cols,
+      columns$response,
       "data_row",
       ".epred"  # dot-prefixed for summary = FALSE
     )

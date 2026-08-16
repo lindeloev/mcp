@@ -1060,6 +1060,9 @@ tidy_samples = function(...) {
 #' @param arma Whether to include AR and MA effects.
 #'   * `TRUE` Compute the GARMA residual recurrence. Requires the response variable in `newdata`.
 #'   * `FALSE` Disregard AR and MA effects. For `family = gaussian()`, `predict()` uses only `sigma` for residuals.
+#'   For posterior evaluation of the original data, retained JAGS imputations
+#'   supply missing GARMA histories. In models with group-level effects, this
+#'   currently requires including all such effects (`varying = TRUE`).
 #' @param ndraws Integer or `NULL`. Number of posterior draws to return/summarise.
 #'   If there are group-level effects, this is the number of draws from each group.
 #'   `NULL` means "all". Ignored if both are `FALSE`. More draws trade speed for accuracy.
@@ -1086,7 +1089,7 @@ tidy_samples = function(...) {
 #'
 #'     The return columns are:
 #'
-#'      - Predictors from `newdata`.
+#'      - Predictors from `newdata`, plus its response column when supplied.
 #'      - Draw descriptors: ".chain", ".iteration", ".draw" (see the `posterior` and `tidybayes` packages), and `data_row`, the row number in the evaluated `newdata`.
 #'      - Draw values: one column for each parameter in the model.
 #'      - The estimate. Either ".epred", ".prediction", ".residual", or ".loglik" (matching tidybayes/ggdist conventions).
@@ -1126,11 +1129,18 @@ pp_eval = function(
     fit$family = mcpfamily(fit$family)
   dpar = assert_dpar(dpar, fit = fit, type = type)
 
-  if (is.null(newdata))
+  # What data to use
+  using_original_data = is.null(newdata) || identical(data.frame(newdata), fit$data)
+  if (using_original_data)
     newdata = fit$data
 
   data_columns = mcp_columns(fit)
   assert_arma_series(newdata, data_columns$series)
+  if (type == "loglik")
+    assert_loglik_garma_history(fit, newdata, arma)
+
+  response_return = if (data_columns$response %in% colnames(newdata))
+    newdata[, data_columns$response, drop = FALSE] else NULL
 
 
   ###############
@@ -1162,6 +1172,8 @@ pp_eval = function(
   point_size_col = aux_columns[fit$family$response$point_size]
   point_size_col = unname(point_size_col[!is.na(point_size_col)])
   newdata_return = dplyr::select(newdata, -dplyr::any_of(point_size_col))
+  if (!is.null(response_return) && data_columns$response %notin% colnames(newdata_return))
+    newdata_return[[data_columns$response]] = response_return[[data_columns$response]]
 
   ########################
   # ASSERTS AND RECODING #
@@ -1208,16 +1220,65 @@ pp_eval = function(
     )
   }
 
+  # Use imputed response draws for missing responses.
+  # Requires special handling for varying and GARMA.
+  imputed_response = rep(NA_real_, nrow(draws_predictors))
+  has_posterior_draws = coda::is.mcmc.list(.subset2(fit, "mcmc_post"))
+  needs_garma_history = arma && is_arma(fit) &&
+    (type %in% c("predict", "residuals") ||
+       (type == "fitted" && dpar %in% c("epred", "mu")))
+  needs_imputed_response = type == "predict" || needs_garma_history
+  if (needs_imputed_response && using_original_data && !prior && has_posterior_draws &&
+      anyNA(fit$data[[data_columns$response]])) {
+    full_varying = nrow(model_tables$group_effects) == 0 ||
+      (is.logical(varying) && length(varying) == 1 && isTRUE(varying))
+    if (arma && is_arma(fit) && !full_varying)
+      stop(
+        "This model has group-level effects, and its retained missing-response ",
+        "histories are conditional on all of them. GARMA evaluation with missing ",
+        "responses therefore currently requires `varying = TRUE`.",
+        call. = FALSE
+      )
+    if (arma && is_arma(fit) && is.null(fit$.internal$imputed_response))
+      stop(
+        "This fit does not retain the missing response draws needed for coherent ",
+        "GARMA evaluation. ",
+        if (has_custom_jags_code(fit)) {
+          "Automatic response imputation is unavailable with custom `jags_code`."
+        } else {
+          "Refit the model with the current version of mcp."
+        },
+        call. = FALSE
+      )
+    if (full_varying && (!is_arma(fit) || arma))
+      imputed_response = get_imputed_response_draws(fit, draws_predictors)
+    use_imputed = !is.na(imputed_response)
+    if (arma && is_arma(fit) && any(use_imputed))
+      draws_predictors[[data_columns$response]][use_imputed] = imputed_response[use_imputed]
+  }
+
   draws = draws_predictors
+
+  # This is the important step! Evaluate the mcp model on the newdata and draws
   evaluated = rlang::exec(simulate_vectorized, fit, !!!draws_predictors, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale, .include_fitted = .include_fitted)
+
+  # Now more boilerplate stuff...
   fitted_values = attr(evaluated, "fitted")
   attr(evaluated, "fitted") = NULL
+  if (type == "predict" && any(!is.na(imputed_response))) {
+    response_data = get_family_response_data(fit$family, model_tables$segments, data = as.list(draws_predictors))
+    imputed_return = fit$family$response$observed(imputed_response, response_data, rate)
+    evaluated[!is.na(imputed_response)] = imputed_return[!is.na(imputed_response)]
+  }
   draws[[type]] = evaluated
 
   # Plotting can request fitted and predicted values from the same evaluated
   # parameter rows and model evaluation.
   if (.include_fitted)
     draws$fitted = fitted_values
+
+  if (!is.null(response_return))
+    draws[[data_columns$response]] = response_return[[data_columns$response]][draws$data_row]
 
   draws = draws %>% dplyr::select(-dplyr::starts_with(".pred_"), -dplyr::any_of(point_size_col))
 
@@ -1262,7 +1323,7 @@ pp_eval = function(
 
     # Quantiles
     if (!isFALSE(probs)) {
-      quantiles = get_quantiles(draws, probs, type) %>%
+      quantiles = get_quantiles(draws, probs, type, na.rm = type == "residuals") %>%
         dplyr::mutate(quantile = 100 * .data$quantile) %>%
         tidyr::pivot_wider(names_from = "quantile", names_prefix = "Q", values_from = dplyr::all_of(type))
 
@@ -1303,6 +1364,11 @@ pp_eval = function(
 #'
 #' `log_lik()` defaults to an unsummarised draws-by-observation matrix, as used
 #' by `loo` and other posterior workflows.
+#'
+#' Missing responses in the original data remain missing in the response column.
+#' `fitted()` returns their expected responses, while `predict()` uses retained
+#' JAGS imputations for their posterior response draws. In GARMA models these
+#' imputations also supply the history used for later fitted and predicted rows.
 #'
 #' @inheritParams pp_eval
 #' @param ... Currently ignored.

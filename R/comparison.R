@@ -19,7 +19,13 @@
 #'   because both treat individual conditional likelihood terms as validation
 #'   units. In PSIS-LOO, a held-out response also remains in the conditioning
 #'   history of later terms. Prefer leave-future-out or blocked
-#'   cross-validation, which are not currently implemented in mcp.
+#'   cross-validation, which are not currently implemented in mcp. When a
+#'   missing response enters a later observed GARMA history, `log_lik()`,
+#'   `loo()`, and `waic()` are unavailable with `arma = TRUE`: the observed-data
+#'   likelihood requires integrating over that missing history, which mcp does
+#'   not currently implement. Setting `arma = FALSE` evaluates the model without
+#'   its AR/MA contribution rather than repairing the criterion for the fitted
+#'   serial model.
 #' @return a `loo` or `psis_loo` object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -47,6 +53,7 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE,
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_multi_class(varying, c("logical", "character"))
   checkmate::assert_flag(arma)
+  assert_loglik_garma_history(fit, fit$data, arma, "`loo()`")
   warn_arma_check(fit, arma, "information_criterion")
   ndraws = validate_loglik_ndraws(fit, ndraws)
   mcmc_post = .subset2(fit, "mcmc_post")
@@ -151,6 +158,7 @@ waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, ndraws = NULL,
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_multi_class(varying, c("logical", "character"))
   checkmate::assert_flag(arma)
+  assert_loglik_garma_history(fit, fit$data, arma, "`waic()`")
   warn_arma_check(fit, arma, "information_criterion")
   ndraws = validate_loglik_ndraws(fit, ndraws)
   loglik = log_lik(

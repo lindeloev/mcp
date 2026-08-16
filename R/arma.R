@@ -137,6 +137,85 @@ is_arma = function(fit) {
 }
 
 
+#' Check whether missing responses enter a later observed GARMA history
+#'
+#' @keywords internal
+#' @noRd
+has_missing_garma_history = function(fit, data = fit$data) {
+  # Is not AR/MA
+  if (!is_arma(fit))
+    return(FALSE)
+
+  # No missing values in columns
+  columns = mcp_columns(fit)
+  y = data[[columns$response]]
+  if (is.null(y) || !anyNA(y))
+    return(FALSE)
+
+  # Missing values in the history of later observed values (per series)
+  # (e.g., c(1, NA, 3) --> TRUE; c(1, 3, NA, NA) --> FALSE
+  series = if (is.null(columns$series)) rep(1, length(y)) else data[[columns$series]]
+  garma_missing_vec = vapply(split(y, series), function(series_y) {
+    missing_rows = which(is.na(series_y))
+    observed_rows = which(!is.na(series_y))
+
+    length(missing_rows) > 0 &&
+      length(observed_rows) > 0 &&
+      min(missing_rows) < max(observed_rows)
+  }, logical(1))
+  any(garma_missing_vec)
+}
+
+
+#' Reject observed-data likelihoods with unresolved GARMA histories
+#'
+#' @keywords internal
+#' @noRd
+assert_loglik_garma_history = function(fit, data = fit$data, arma = TRUE,
+                                        what = "Log-likelihood evaluation") {
+  if (!arma || !has_missing_garma_history(fit, data))
+    return(invisible(NULL))
+
+  stop(
+    what, " is unavailable with `arma = TRUE` because a missing response occurs ",
+    "in the history of a later observed response. Correct evaluation requires ",
+    "integrating over the missing GARMA history, which mcp does not currently ",
+    "implement. `arma = FALSE` evaluates the model without its AR/MA contribution ",
+    "and should only be used if that is intentional.",
+    call. = FALSE
+  )
+}
+
+
+#' Match retained JAGS imputations to expanded posterior evaluation rows
+#'
+#' @keywords internal
+#' @noRd
+get_imputed_response_draws = function(fit, draws) {
+  # Initialize one optional imputation for each expanded evaluation row
+  imputed = fit$.internal$imputed_response
+  rows = fit$.internal$imputed_response_rows
+  values = rep(NA_real_, nrow(draws))
+
+  # Return missing values when the fit contains no retained imputations
+  if (is.null(imputed) || length(rows) == 0)
+    return(values)
+
+  # Convert stored chains and align them with the requested posterior draws
+  imputed = posterior::as_draws_df(posterior::as_draws_array(imputed))
+  draw_index = match(draws$.draw, imputed$.draw)
+  response = mcp_columns(fit)$response
+
+  # Copy each monitored response node to its matching data row and draw
+  for (row in rows) {
+    use = draws$data_row == row
+    node = paste0(response, "[", row, "]")
+    values[use] = imputed[[node]][draw_index[use]]
+  }
+  values
+}
+
+
 #' Warn about model-checking limitations for AR/MA models
 #'
 #' @keywords internal

@@ -316,11 +316,12 @@ tidy_to_matrix = function(draws, type, data_rows = NULL) {
 #' @noRd
 #' @inheritParams validate_eval_draws
 #' @param quantiles Vector of quantiles between zero and one.
+#' @param na.rm Whether to remove missing values before computing quantiles.
 #' @param keep Evaluation-row metadata to rejoin after summarising.
 #' @return A tibble with `data_row`, `quantile`, the `type` column, and requested metadata.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_quantiles = function(draws, quantiles, type, keep = NULL) {
+get_quantiles = function(draws, quantiles, type, keep = NULL, na.rm = FALSE) {
   keep = unique(keep)
   assert_data_cols(draws, c("data_row", type, keep))
   grid = draws %>% dplyr::select("data_row", dplyr::all_of(keep)) %>% dplyr::distinct()
@@ -330,7 +331,7 @@ get_quantiles = function(draws, quantiles, type, keep = NULL) {
   result = draws %>%
     dplyr::group_by(.data$data_row) %>%
     dplyr::reframe(quantile = quantiles,
-                   !!type := stats::quantile(.data[[type]], probs = quantiles, names = FALSE))
+                   !!type := stats::quantile(.data[[type]], probs = quantiles, names = FALSE, na.rm = na.rm))
 
   dplyr::left_join(result, grid, by = "data_row", relationship = "many-to-one")
 }

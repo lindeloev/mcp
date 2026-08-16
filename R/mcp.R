@@ -11,7 +11,9 @@
 #' mcp models ordered change points. The ordering is imposed through the prior.
 #'
 #' @aliases mcp
-#' @param data Table-like data in long format (data.frame, tibble, data.table, etc.)
+#' @param data Table-like data in long format (data.frame, tibble, data.table, etc.).
+#'   Missing values in the response variable are imputed using the posterior predictive. 
+#'   \code{\link{fitted.mcpfit}} or \code{\link{predict.mcpfit}} details how to see the imputed values.
 #' @param model A list of formulas - one for each segment. The first formula
 #'   has the format `response ~ predictors` while the following formulas have
 #'   the format `response ~ cp ~ predictors`. Here, `cp` names the change-point
@@ -333,8 +335,7 @@ mcp = function(model,
   attr(prior, "prior_table") = NULL
   attr(prior, "prior_context") = NULL
 
-  # Make lists of parameters
-  all_pars = names(prior)  # There is a prior for every parameter
+  # Assemble model metadata used by fitted-model methods
   parameters = get_pars_table(predictors, cps, group_effects, family)
   data_columns = c(
     list(par_x = par_x, response = unique(segments$y), series = series),
@@ -351,8 +352,8 @@ mcp = function(model,
     parameters = parameters,
     design_specs = predictor_tables$design_specs
   )
-  # Check parameters
-  # Models with AR/MA terms
+
+  # Validate AR/MA configuration
   has_arma = any(predictors$dpar %in% c("ar", "ma"))
   if (has_arma) {
     if (is.null(family$garma))
@@ -395,13 +396,19 @@ mcp = function(model,
     data, family, segments, predictors, group_effects, jags_code, series
   )
 
+  # Monitor model parameters and, for generated JAGS code, latent responses
+  all_pars = names(prior)
+  missing_response_rows = which(is.na(data[[segments$y[1]]]))
+  imputed_response_nodes = if (custom_jags_code || length(missing_response_rows) == 0) character() else
+    paste0(segments$y[1], "[", missing_response_rows, "]")
+
   # Sample posterior
   if (sample %in% c("post", "both")) {
     mcmc_post = run_jags(
       data = data,
       jags_code = jags_code,
       jags_data = jags_data,
-      pars = all_pars,  # Monitor log-likelihood for loo/waic
+      pars = c(all_pars, imputed_response_nodes),
       sample = "post",
       n.chains = chains,
       n.iter = iter,
@@ -413,10 +420,18 @@ mcp = function(model,
       recover_levels(data, group_effects)
 
     class(mcmc_post) = "mcmc.list"
+    if (length(imputed_response_nodes) > 0) {
+      mcmc_imputed = mcmc_post[, imputed_response_nodes, drop = FALSE]
+      retained_parameter_nodes = setdiff(colnames(mcmc_post[[1]]), imputed_response_nodes)
+      mcmc_post = mcmc_post[, retained_parameter_nodes, drop = FALSE]
+    } else {
+      mcmc_imputed = NULL
+    }
     assert_ordered_cp_draws(mcmc_post, cps, data[[par_x]])
     warn_nonconvergence(mcmc_post, diagnostics)
   } else {
     mcmc_post = NULL
+    mcmc_imputed = NULL
   }
 
   # Sample prior
@@ -482,7 +497,9 @@ mcp = function(model,
       prior_table = prior_table,
       prior_context = prior_context,
       diagnostics = diagnostics,
-      custom_jags_code = custom_jags_code
+      custom_jags_code = custom_jags_code,
+      imputed_response = mcmc_imputed,
+      imputed_response_rows = if (is.null(mcmc_imputed)) integer() else missing_response_rows
     )
   )
   class(mcpfit) = "mcpfit"

@@ -171,3 +171,50 @@ test_that("generated JAGS uses the same bounded GARMA residuals", {
   expect_match(segmented_fit$jags_code, "\\(x\\[i_\\] < cp_1\\) \\* 0\\.1")
   expect_match(segmented_fit$jags_code, "\\(x\\[i_\\] >= cp_1\\) \\* 0\\.2")
 })
+
+
+test_that("missing GARMA responses stay paired with posterior draws", {
+  data = data.frame(x = 1:5, y = c(1, NA, 2, 3, 4))
+  fit = suppressWarnings(mcp(
+    list(y ~ 1 + ar(1)), data, par_x = "x",
+    chains = 1, iter = 30, warmup = 20, quiet = TRUE, seed = 42
+  ))
+
+  expect_equal(fit$.internal$imputed_response_rows, 2L)
+  expect_equal(ncol(fit$.internal$imputed_response[[1]]), 1L)
+  expect_false("y[2]" %in% colnames(.subset2(fit, "mcmc_post")[[1]]))
+
+  fitted_draws = fitted(fit, summary = FALSE, probs = FALSE)
+  fitted_again = fitted(fit, summary = FALSE, probs = FALSE)
+  prediction_draws = predict(fit, summary = FALSE, probs = FALSE)
+  imputed = get_imputed_response_draws(fit, prediction_draws)
+
+  expect_equal(fitted_draws$.epred, fitted_again$.epred)
+  expect_true(all(is.na(fitted_draws$y[fitted_draws$data_row == 2])))
+  expect_equal(
+    prediction_draws$.prediction[prediction_draws$data_row == 2],
+    imputed[prediction_draws$data_row == 2]
+  )
+
+  row3 = fitted_draws$data_row == 3
+  imputed_by_draw = prediction_draws$.prediction[
+    prediction_draws$data_row == 2
+  ][match(
+    fitted_draws$.draw[row3],
+    prediction_draws$.draw[prediction_draws$data_row == 2]
+  )]
+  expected_row3 = fitted_draws$Intercept_1[row3] +
+    fitted_draws$ar1_1[row3] * (imputed_by_draw - fitted_draws$Intercept_1[row3])
+  expect_equal(fitted_draws$.epred[row3], expected_row3)
+
+  fitted_summary = fitted(fit)
+  prediction_summary = predict(fit)
+  expect_false(is.na(fitted_summary$fitted[2]))
+  expect_false(is.na(prediction_summary$predict[2]))
+  expect_true(is.na(residuals(fit)$residuals[2]))
+
+  expect_error(log_lik(fit), "missing response occurs in the history")
+  expect_error(loo(fit), "missing response occurs in the history")
+  expect_error(waic(fit), "missing response occurs in the history")
+  expect_equal(ncol(log_lik(fit, arma = FALSE)), 4L)
+})
