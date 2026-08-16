@@ -470,6 +470,29 @@ test_that("posterior draws accessor preserves the stored chains", {
       expect_equal(nrow(epred_draws), 6)
       expect_equal(nrow(predicted_draws), 6)
       expect_equal(nrow(linpred_draws), 6)
+
+      binomial_data = data.frame(x = 1:3, N = c(4, 10, 6), y = 0)
+      binomial_fit = mcp(
+        list(y | trials(N) ~ 1),
+        binomial_data,
+        family = binomial(),
+        par_x = "x",
+        sample = FALSE
+      )
+      binomial_fit$mcmc_post = coda::mcmc.list(coda::mcmc(
+        matrix(0, nrow = 20, ncol = 1, dimnames = list(NULL, "Intercept_1"))
+      ))
+
+      epred = rstantools::posterior_epred(binomial_fit, binomial_data, draws = 2)
+      expect_equal(unname(epred), matrix(rep(binomial_data$N / 2, each = 2), nrow = 2))
+
+      set.seed(42)
+      predicted = rstantools::posterior_predict(binomial_fit, binomial_data, draws = 20)
+      expect_true(all(predicted == floor(predicted)))
+      expect_true(any(predicted > 1))
+
+      tidy_epred = tidybayes::add_epred_draws(binomial_data, binomial_fit, ndraws = 2)
+      expect_equal(sort(unique(tidy_epred$.epred)), sort(binomial_data$N / 2))
     }
   }
 })

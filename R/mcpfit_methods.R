@@ -1562,7 +1562,7 @@ posterior_prediction_matrix = function(
     summary = FALSE,
     type = type,
     probs = FALSE,
-    rate = TRUE,
+    rate = FALSE,
     prior = FALSE,
     dpar = if (type == "fitted") dpar else NULL,
     varying = varying,
