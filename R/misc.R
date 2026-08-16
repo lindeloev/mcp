@@ -30,6 +30,25 @@ logical0_to_null = function(x) {
 `%notin%` = Negate(`%in%`)
 
 
+# Whether user-supplied JAGS code may have diverged from mcp's R-side model.
+has_custom_jags_code = function(fit) {
+  isTRUE(fit$.internal$custom_jags_code)
+}
+
+
+# Warn before evaluating an R-side model that was generated from formulas rather
+# than the custom JAGS code used for fitting.
+warn_custom_jags_code = function(fit) {
+  if (has_custom_jags_code(fit)) {
+    warning(
+      "Custom `jags_code` was supplied. mcp's R-side simulations and predictions may not match the fitted JAGS model.",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+
 # List of categorical column names and their unique levels
 get_categorical_levels = function(df) {
   checkmate::assert_data_frame(df)

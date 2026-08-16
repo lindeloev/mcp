@@ -106,6 +106,38 @@ test_that("fit$simulate() reproduces the deterministic linear predictor at .type
   )
 
   expect_equal(as.numeric(simulated), 2 + 3 * data$x)
+  expect_false(fit$.internal$custom_jags_code)
+})
+
+test_that("custom JAGS code warns R-side evaluation and suppresses simulated-truth comparisons", {
+  data = data.frame(x = 1:5, y = 0)
+  generated = mcp(list(y ~ 1 + x), data, par_x = "x", sample = FALSE)
+  fit = mcp(
+    list(y ~ 1 + x),
+    data,
+    par_x = "x",
+    jags_code = generated$jags_code,
+    sample = FALSE
+  )
+  draws = matrix(
+    c(2, 3, 1),
+    nrow = 1,
+    dimnames = list(NULL, c("Intercept_1", "x_1", "sigma_1"))
+  )
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+
+  expect_warning(
+    fit$simulate(fit, data, Intercept_1 = 2, x_1 = 3, sigma_1 = 1, .type = "fitted"),
+    "Custom `jags_code`"
+  )
+  simulated = suppressWarnings(
+    fit$simulate(fit, data, Intercept_1 = 2, x_1 = 3, sigma_1 = 1, .type = "fitted")
+  )
+  fit$data$y = simulated
+
+  expect_warning(fitted(fit, summary = FALSE), "Custom `jags_code`")
+  expect_false(any(c("sim", "match") %in% names(summary(fit))))
+  expect_false(any(c("sim", "match") %in% names(fixef(fit))))
 })
 
 test_that("fit$simulate() errors with a helpful message on the pre-v0.4 calling convention", {

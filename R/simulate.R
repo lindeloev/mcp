@@ -520,6 +520,7 @@ get_fitsimulate = function(cps, predictors, group_effects) {
   if (missing(newdata) || !is.data.frame(newdata))
     stop(legacy_mcp_message('`fit$simulate()` now requires a data.frame or tibble as its second argument. Use `fit$simulate(fit, newdata, ...)`.'), call. = FALSE)
   check_mcpfit_version(fit)
+  warn_custom_jags_code(fit)
 
   result = simulate_atomic(fit, newdata, ", paste0(args_all, " = ", args_all, collapse = ", "), ", .type = .type, .rate = .rate, .dpar = .dpar, .arma = .arma, .scale = .scale)
   return(result)

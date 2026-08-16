@@ -96,6 +96,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Added `interpolate_newdata(fit, by = NULL)` which generates a data.frame with all combinations of categorical predictors along with interpolated continuous predictors. Use `by` to include grouping factors. The documentation shows how this can be useful for generating custom plots when simple tweaking `plot()` is not enough.
 
+-   Fits made with custom `jags_code` now warn when calling R-side simulation, prediction, or model-evaluation methods, because those methods continue to evaluate the supplied formulas rather than the custom JAGS code.
+
 
 ## Minor breaking changes
 

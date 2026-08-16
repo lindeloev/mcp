@@ -99,7 +99,8 @@
 #'   Defaults to `NULL`, i.e., no inits.
 #' @param jags_code String. Pass JAGS code to `mcp` to use directly. This is useful if
 #'   you want to tweak the code in `fit$jags_code` and run it within the `mcp`
-#'   framework.
+#'   framework. R-side simulation and prediction methods continue to use the
+#'   mcp-default formulas (with warning), so they may no longer match custom JAGS code.
 #' @param seed `NULL` or a positive integer. Seed for the JAGS random-number
 #'   generators. When supplied, `inits` must be a single named list shared by all chains.
 #' @param diagnostics Named list of diagnostic warning thresholds. Available
@@ -211,6 +212,7 @@ mcp = function(model,
                diagnostics = list(),
                quiet = FALSE,
                series = NULL) {
+  custom_jags_code = !is.null(jags_code)
 
   matched_call = match.call()
 
@@ -479,7 +481,8 @@ mcp = function(model,
       formula_r = formula_r,
       prior_table = prior_table,
       prior_context = prior_context,
-      diagnostics = diagnostics
+      diagnostics = diagnostics,
+      custom_jags_code = custom_jags_code
     )
   )
   class(mcpfit) = "mcpfit"

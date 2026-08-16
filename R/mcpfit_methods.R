@@ -90,7 +90,8 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
       estimates$segment = integer()
       estimates$dpar = character()
     }
-    if (!is.null(attr(fit$data[, mcp_columns(fit)$response], "simulated"))) {
+    if (!is.null(attr(fit$data[, mcp_columns(fit)$response], "simulated")) &&
+        !has_custom_jags_code(fit)) {
       estimates$sim = numeric()
       estimates$match = character()
     }
@@ -129,6 +130,8 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 
   # Add simulation parameters if the data is simulated
   sim_list = attr(fit$data[, mcp_columns(fit)$response], "simulated")
+  if (has_custom_jags_code(fit))
+    sim_list = NULL
   if(!is.null(sim_list)) {
     simulated = as.list(sim_list)  # Get as oroper list
     simulated = simulated[sapply(simulated, is.numeric)]  # Remove non-numeric
@@ -1118,6 +1121,7 @@ pp_eval = function(
   # Recode
   fit = object
   checkmate::assert_class(fit, "mcpfit")
+  warn_custom_jags_code(fit)
   if (!is.mcpfamily(fit$family))
     fit$family = mcpfamily(fit$family)
   dpar = assert_dpar(dpar, fit = fit, type = type)
