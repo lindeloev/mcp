@@ -14,13 +14,17 @@
 #' @param data Table-like data in long format (data.frame, tibble, data.table, etc.).
 #'   Missing values in the response variable are imputed using the posterior predictive. 
 #'   \code{\link{fitted.mcpfit}} or \code{\link{predict.mcpfit}} details how to see the imputed values.
-#' @param model A list of formulas - one for each segment. The first formula
-#'   has the format `response ~ predictors` while the following formulas have
+#' @param model A list of formulas - one for each segment. The many examples 
+#'   on the [mcp website](https://lindeloev.github.io/mcp/). But briefly:
+#' 
+#'   The first formula has the format `response ~ predictors` while the following formulas have
 #'   the format `response ~ cp ~ predictors`. Here, `cp` names the change-point
 #'   part of the formula rather than a literal variable. The response and
 #'   change-point parts can be omitted (`cp ~ predictor` assumes the same
-#'   response; `~ predictor` assumes an intercept-only change point). The
-#'   following can be modeled:
+#'   response; `~ predictor` assumes an intercept-only change point). Terms normally carry 
+#'   into later segments until redefined (see details).
+#'
+#'   The following terms can be modeled:
 #'
 #'   * *Regular formulas:* e.g., `~ 1 + x`. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'
@@ -45,6 +49,11 @@
 #'     define a finite conditional recurrence and do not jointly constrain AR
 #'     coefficients to stationarity or MA coefficients to invertibility.
 #'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
+#' 
+#'   * *Weights:* `y | weights(w) ~ ...` usespositive Gaussian precision weights, 
+#'     giving residual SD `sigma / sqrt(w)`.
+#' 
+#'   * *Binomial:* use `successes | trials(total) ~ ...` with `family = binomial()`.
 #'
 #' @param prior Named list. Names are parameter names (`cp_i`, `Intercept_i`, `xvar_i`,
 #'  `sigma`) and the values are either
@@ -117,7 +126,21 @@
 #' @param series Only affects models with `ar()` or `ma()` terms.
 #'  * `NULL` (default): one long series.
 #'  * character: data column name identifying independent AR/MA series.
-#' @details Notes on priors:
+#' @details
+#'   * Terms normally carries into the next segment unless otherwise defined.
+#'     `~ 0 + x` adds an increment to the current slope and therefore
+#'     maintains continuity, whereas `~ 1 + x` resets the segment level and slope.
+#'     Its coefficients are absolute segment parameters, so the fitted mean can
+#'     be disjoined at the change point.
+
+#'   * Response evaluation: [fitted.mcpfit()] returns the expected response, while
+#'     [predict.mcpfit()] returns posterior-predictive response draws. For
+#'     binomial models, `rate = TRUE` returns success proportions and
+#'     `rate = FALSE` returns counts; count-scale fitted values and predictions
+#'     require trial counts in `newdata`. See [execute-mcp-model] for all
+#'     response-evaluation methods.
+#'
+#'   Notes on priors:
 #'   * Default population-level `cp_\*` priors are ordered. For user priors,
 #'       `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior has neither
 #'       explicit truncation nor an inherently bounded form such as `dunif()` or
