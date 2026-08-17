@@ -10,8 +10,11 @@
 #' @inheritParams pp_eval
 #' @param x An \code{\link{mcpfit}} object.
 #' @param ... Further arguments passed to \code{\link[loo]{loo}}, e.g., `cores` or `save_psis`.
-#' @param pointwise `TRUE` calls calls \code{\link[loo]{loo.function}} which is slower but more memory efficient.
-#'   `FALSE` calls the default \code{\link[loo]{loo}}.
+#' @param by_row `TRUE` calls \code{\link[loo]{loo.function}} to compute log-likelihood
+#'   contributions row-by-row (observation-by-observation), which is slower but more
+#'   memory efficient. `FALSE` (default) computes the full log-likelihood matrix at once.
+#'   Note that both modes calculate pointwise (observation-level) PSIS-LOO cross-validation.
+#' @param pointwise Deprecated alias for `by_row`.
 #' @param ndraws Integer or `NULL`. Number of posterior draws used for the
 #'   log-likelihood or information criterion. `NULL` uses all draws.
 #' @param nsamples Deprecated. Use `ndraws` instead.
@@ -46,8 +49,13 @@
 #' loo2 = loo(fit2)
 #' loo::loo_compare(loo1, loo2)
 #' }
-loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE,
-                      ndraws = NULL, nsamples = lifecycle::deprecated()) {
+loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(),
+                      varying = TRUE, arma = TRUE, ndraws = NULL,
+                      nsamples = lifecycle::deprecated()) {
+  if (lifecycle::is_present(pointwise)) {
+    lifecycle::deprecate_soft("0.4.0", "loo(pointwise)", "loo(by_row)")
+    by_row = pointwise
+  }
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "loo.mcpfit")
   fit = x
   checkmate::assert_class(fit, "mcpfit")
@@ -68,7 +76,7 @@ loo.mcpfit = function(x, ..., pointwise = FALSE, varying = TRUE, arma = TRUE,
 
 
   # Matrix: Fast but memory-greedy matrix-based computation
-  if (pointwise == FALSE) {
+  if (by_row == FALSE) {
     loglik = log_lik(
       fit, summary = FALSE, varying = varying, arma = arma, ndraws = ndraws
     )
