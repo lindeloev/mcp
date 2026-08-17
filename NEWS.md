@@ -28,8 +28,6 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   In general, renamed `"varying"` to `"group"`. The example names `"varying_mu"` and `"varying_cp"` are now `"group_mu"` and `"group_cp"`. In `plot_pars()`, use `pars = "group"`; the old `"varying"` selector remains as a deprecated alias. The established `varying =` method argument remains unchanged for now.
 
--   `fixef()` now reports only population-level effects for `mu` (the primary response parameter), excluding change points, other distributional parameters, AR/MA parameters, and group-effect SDs. Use `summary(fit)` to get all parameters.
-
 -   `summary()`, `fixef()`, `ranef()`, `prior_summary()`, and everything else now return rows in a canonical order instead of the previous incidental (near-alphabetical) order. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to include `segment` and `dpar` columns.
 
 -   `Rhat` was renamed to `rhat` in `summary()`, `fixef()`, and `ranef()`, to match `{posterior}` standard.
@@ -37,6 +35,10 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 -   `plot()` is now split into `plot()` for plotting full fits while `plot_dpar()` plots one distributional parameter (`mu`, `sigma`, `shape`, `ar1`, etc.). The argument order was changed too. The new coloring function (`plot(fit, color_by = "column")`) is particularly useful when models include categorical predictors or rhs group-level effects. See `mcp_example("group_mu")` for a worked example.
 
 -   `hypothesis()` now restricts equality tests to simple parameter contrasts and gives clearer guidance on Savage-Dickey Bayes factors. Non-linear transformations in hypotheses like `x_1 / x_2 = 1` could previously be run, even though Savage-Dickey does not support it. Equality tests now return `p = NA` because their Bayes factor is a model comparison, not a posterior parameter probability. Density estimates are more robust and warn about sparse tails.
+
+-   `fixef()` now reports only population-level effects for `mu` (the primary response parameter), excluding change points, other distributional parameters, AR/MA parameters, and group-effect SDs. Use `summary(fit)` to get all parameters.
+
+-   `y | weights(w)` now specifies brms-aligned observation log-likelihood weights rather than Gaussian precision weights (which previously scaled the residual SD as `sigma / sqrt(w)`). Predictive draws and expectations now use `sigma` directly while `log_lik()` multiplies observation log-densities by `w`. Additionally, the weight column is no longer removed from `fitted()` and `predict()` output so that observation weights remain available in returned data.
 
 -   AR and MA intercepts now have zero-centered, regularizing `dnorm(0, 0.5) T(-1, 1)` priors, replacing independent uniform priors. Their categorical contrasts and numeric slopes now use modest normal priors instead of heavy-tailed Student-t priors. Coefficients remain direct and are not jointly constrained to stationary or invertible regions.
 

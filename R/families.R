@@ -167,7 +167,7 @@ mcpfamily_gaussian = function(family) {
   response = list(
     auxiliary = list(weights = list(
       required = FALSE,
-      operations = c("log_lik", "rng", "garma")
+      operations = "log_lik"
     )),
     validate = function(y, data, response_columns) {
       if (!is.null(data$weights)) {
@@ -182,14 +182,13 @@ mcpfamily_gaussian = function(family) {
     epred = function(dpars, data, rate = FALSE) dpars$mu,
     log_lik = function(y, dpars, data) {
       weights = if (is.null(data$weights)) 1 else data$weights
-      stats::dnorm(y, dpars$mu, dpars$sigma / sqrt(weights), log = TRUE)
+      weights * stats::dnorm(y, dpars$mu, dpars$sigma, log = TRUE)
     },
     rng = function(n, dpars, data, rate = FALSE) {
-      weights = if (is.null(data$weights)) 1 else data$weights
-      stats::rnorm(n, dpars$mu, dpars$sigma / sqrt(weights))
+      stats::rnorm(n, dpars$mu, dpars$sigma)
     }
   )
-  jags = list(likelihood = function(context) paste0(context$y, " ~ dnorm(", context$dpar("mu"), ", ", context$aux("weights", "1"), " / ", context$dpar("sigma"), "^2)  # SD as precision"))
+  jags = list(likelihood = function(context) paste0(context$y, " ~ dnorm(", context$dpar("mu"), ", ", context$aux("weights", "1"), " / ", context$dpar("sigma"), "^2)"))
   garma = if (family$link == "identity") {
     list(
       observed_r = function(y, data, boundary) y,

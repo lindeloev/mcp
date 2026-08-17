@@ -51,8 +51,7 @@
 #'     coefficients to stationarity or MA coefficients to invertibility.
 #'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
 #' 
-#'   * *Weights:* `y | weights(w) ~ ...` uses positive Gaussian precision weights, 
-#'     giving residual SD `sigma / sqrt(w)`.
+#'   * *Weights:* `y | weights(w) ~ ...` specifies observation log-likelihood weights.
 #' 
 #'   * *Binomial:* use `successes | trials(total) ~ ...` with `family = binomial()`.
 #'

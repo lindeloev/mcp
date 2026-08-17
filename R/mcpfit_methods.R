@@ -1231,12 +1231,11 @@ pp_eval = function(
     stop("`newdata` must contain a response column named '", data_columns$response, "' for when `arma == TRUE` and/or `type == 'residuals'`")
   }
   assert_data_cols(newdata, required_cols)  # Helpful error if something is missing
-  newdata = data.frame(newdata[, required_cols, drop = FALSE])
-  #colnames(newdata) = required_cols  # Special case for when there's only one predictor
+  kept_cols = colnames(newdata)[colnames(newdata) %notin% exclude_group_cols]
+  newdata = data.frame(newdata[, kept_cols, drop = FALSE])
+  #colnames(newdata) = kept_cols  # Special case for when there's only one predictor
   newdata$data_row = seq_len(nrow(newdata))  # Evaluation key throughout summaries, matrices, plots, and metrics
-  point_size_col = aux_columns[fit$family$response$point_size]
-  point_size_col = unname(point_size_col[!is.na(point_size_col)])
-  newdata_return = dplyr::select(newdata, -dplyr::any_of(point_size_col))
+  newdata_return = newdata
   if (!is.null(response_return) && data_columns$response %notin% colnames(newdata_return))
     newdata_return[[data_columns$response]] = response_return[[data_columns$response]]
 
@@ -1360,7 +1359,7 @@ pp_eval = function(
   if (!is.null(response_return))
     draws[[data_columns$response]] = response_return[[data_columns$response]][draws$data_row]
 
-  draws = draws %>% dplyr::select(-dplyr::starts_with(".pred_"), -dplyr::any_of(point_size_col))
+  draws = draws %>% dplyr::select(-dplyr::starts_with(".pred_"))
 
   # Missing outcomes are latent in the fitted JAGS model, but they are not
   # observed-data likelihood contributions. Retain them while evaluating

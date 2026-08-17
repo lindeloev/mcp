@@ -324,10 +324,11 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
   )
   expected_colnames = c(
     columns$par_x,
-    if (colname == "fitted" && fit$family$family == "binomial" && !has_arma_terms(fit)) NULL else columns$trials,
+    columns$trials,
     rhs_cols,
     varying_cols,
     columns$response,
+    if (length(columns$weights) > 0) columns$weights else NULL,
     colname, "error", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
   )
 
@@ -396,8 +397,8 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
 }
 
 
-# Weighted Gaussian evaluation must use the same observation-level SD as JAGS:
-# precision = weight / sigma^2, or equivalently SD = sigma / sqrt(weight).
+# Weighted Gaussian evaluation must use brms-aligned likelihood weights:
+# log_lik = weights * dnorm(y, mu, sigma, log = TRUE) and predictions generated with sigma.
 test_pp_eval_weights = function(fit, prior = FALSE) {
   columns = mcp_columns(fit)
   if (fit$family$family != "gaussian" || length(columns$weights) == 0)
@@ -411,14 +412,13 @@ test_pp_eval_weights = function(fit, prior = FALSE) {
     fit, summary = FALSE, probs = FALSE, prior = prior, draws_format = "tidy"
   )
   weights = fit$data[[weight_col]][loglik$data_row]
-  observation_sd = sigma$.epred / sqrt(weights)
   observed = fit$data[[columns$response]][loglik$data_row]
 
   testthat::expect_equal(loglik[, keys], mu[, keys])
   testthat::expect_equal(loglik[, keys], sigma[, keys])
   testthat::expect_equal(
     loglik$.loglik,
-    stats::dnorm(observed, mu$.epred, observation_sd, log = TRUE)
+    weights * stats::dnorm(observed, mu$.epred, sigma$.epred, log = TRUE)
   )
 
   had_random_seed = exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
@@ -435,16 +435,19 @@ test_pp_eval_weights = function(fit, prior = FALSE) {
   set.seed(123)
   prediction = predict(fit, summary = FALSE, probs = FALSE, prior = prior)
   set.seed(123)
-  expected = stats::rnorm(nrow(prediction), mu$.epred, observation_sd)
+  expected = stats::rnorm(nrow(prediction), mu$.epred, sigma$.epred)
   testthat::expect_equal(prediction[, keys], mu[, keys])
   testthat::expect_equal(prediction$.prediction, expected)
 
+  fit_fitted = fitted(fit, summary = TRUE, prior = prior)
+  testthat::expect_true(weight_col %in% colnames(fit_fitted))
+  fit_predict = predict(fit, summary = TRUE, prior = prior)
+  testthat::expect_true(weight_col %in% colnames(fit_predict))
+
   if (!prior) {
     newdata_without_weights = fit$data[, colnames(fit$data) != weight_col, drop = FALSE]
-    testthat::expect_error(
-      predict(fit, newdata = newdata_without_weights, summary = FALSE),
-      weight_col,
-      fixed = TRUE
+    testthat::expect_no_error(
+      predict(fit, newdata = newdata_without_weights, summary = FALSE)
     )
     testthat::expect_error(
       log_lik(fit, newdata = newdata_without_weights, summary = FALSE),
@@ -498,11 +501,12 @@ test_pp_eval = function(fit, prior = FALSE) {
       group_pars,
 
       # Predictors
-      if (fit$family$family == "binomial") NULL else columns$trials,
+      columns$trials,
       columns$par_x,
       rhs_cols,
       selected_cp$cols,
       columns$response,
+      if (length(columns$weights) > 0) columns$weights else NULL,
       "data_row",
       ".epred"  # dot-prefixed for summary = FALSE
     )
