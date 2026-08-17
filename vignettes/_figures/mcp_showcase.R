@@ -66,11 +66,11 @@ multiple_model = list(y ~ 1 + x:group + z, ~ 1 + x + group, ~ 0 + I(x^2))
 
 # Style them
 gg_intercepts = style_gg(gg_intercepts_org, intercepts_model, "Intercept change", 0.2, 0.75, 0.3, 0.85)
-gg_binomial = style_gg(gg_binomial_org, binomial_model, "Binomial changes", 0.4, 0.75, 0.5, 0.85)
+gg_binomial = style_gg(gg_binomial_org, binomial_model, "Binomial changes and other GLM", 0.4, 0.75, 0.5, 0.85)
 gg_sigma = style_gg(gg_sigma_org, sigma_model, "Sigma changes w/prediction", 0.5, 0.75, 0.6, 0.85)
 gg_ar = style_gg(gg_ar_org, ar_model, "AR(N) change", 0.2, 0.75, 0.3, 0.85)
-gg_group_cp = style_gg(gg_group_cp_org, group_cp_model, "Change with group-level change point", 0.5, 0.75, 0.6, 0.85)
-gg_group_mu = style_gg(gg_group_mu_org, group_mu_model, "Change with group-level mean", 0.3, 0.75, 0.4, 0.85)
+gg_group_cp = style_gg(gg_group_cp_org, group_cp_model, "Group-level change point", 0.5, 0.75, 0.6, 0.85)
+gg_group_mu = style_gg(gg_group_mu_org, group_mu_model, "Group-level mean", 0.3, 0.75, 0.4, 0.85)
 gg_multiple = style_gg(gg_multiple_org, multiple_model, "Changes w/multiple regression with interactions", 0.1, 0.75, 0.2, 0.85)
 
 
@@ -87,7 +87,11 @@ mcp_showcase = gg_intercepts + gg_binomial +
   patchwork::wrap_elements(full = gg_group_cp, clip = FALSE) +
   patchwork::wrap_elements(full = gg_group_mu, clip = FALSE) +
   gg_multiple + 
-  plot_layout(design = layout, heights = c(0.9, 1, 1.7, 1.4))
+  plot_layout(design = layout, heights = c(0.9, 1, 1.7, 1.4)) + 
+  plot_annotation(
+    title = "Regression with change points using {mcp}",
+    theme = theme(plot.title = element_text(size = 19))
+  )
 
 # Save to .gitignored location; will be published 
 dir.create("pkgdown/assets", recursive = TRUE, showWarnings = FALSE)  # Ensure folder exists
