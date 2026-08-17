@@ -145,6 +145,29 @@ test_that("mcp builds MA parameters and JAGS code", {
 })
 
 
+test_that("GARMA evaluation keeps group-level draws as separate series", {
+  data = data.frame(y = 1:5, x = -1:3, id = letters[1:5])
+  fit = mcp(
+    list(y ~ 1, 1 + (1 | id) ~ 1 + ar(1)),
+    data, par_x = "x", sample = FALSE, quiet = TRUE
+  )
+  draws = cbind(
+    cp_1 = c(0.5, 0.6),
+    cp_1_sd = c(0.1, 0.2),
+    Intercept_1 = c(0, 0.1),
+    Intercept_2 = c(1, 1.1),
+    sigma_1 = c(1, 1),
+    ar1_2 = c(0.2, 0.3)
+  )
+  group_draws = matrix(0, nrow = 2, ncol = nrow(data))
+  colnames(group_draws) = paste0("cp_1_id[", data$id, "]")
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(cbind(draws, group_draws)))
+
+  loglik = expect_no_error(log_lik(fit))
+  expect_equal(dim(loglik), c(2, 5))
+})
+
+
 test_that("AR and MA defaults regularize direct coefficients", {
   data = data.frame(
     x = 1:12,

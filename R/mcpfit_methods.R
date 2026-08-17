@@ -1327,12 +1327,24 @@ pp_eval = function(
   draws = draws_predictors
 
   # This is the important step! Evaluate the mcp model on the newdata and draws
-  evaluate = function() rlang::exec(simulate_vectorized, fit, !!!draws_predictors, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale, .include_fitted = .include_fitted)
+  # Group-level joins are row-major, while GARMA recurrences require each
+  # draw's data rows to be contiguous. Evaluate in draw/data order, then
+  # restore the public row order below.
+  evaluation_order = if (arma && is_arma(fit)) {
+    order(draws_predictors$.draw, draws_predictors$data_row)
+  } else {
+    seq_len(nrow(draws_predictors))
+  }
+  evaluation_data = draws_predictors[evaluation_order, , drop = FALSE]
+  evaluate = function() rlang::exec(simulate_vectorized, fit, !!!evaluation_data, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale, .include_fitted = .include_fitted)
   evaluated = if (replicate_garma) suppressMessages(evaluate()) else evaluate()
 
   # Now more boilerplate stuff...
   fitted_values = attr(evaluated, "fitted")
   attr(evaluated, "fitted") = NULL
+  restore_order = order(evaluation_order)
+  evaluated = evaluated[restore_order]
+  if (!is.null(fitted_values)) fitted_values = fitted_values[restore_order]
   if (type == "predict" && any(!is.na(imputed_response))) {
     response_data = get_family_response_data(fit$family, model_tables$segments, data = as.list(draws_predictors))
     imputed_return = fit$family$response$observed(imputed_response, response_data, rate)
