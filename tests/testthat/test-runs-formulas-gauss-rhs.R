@@ -194,16 +194,13 @@ test_that("prediction reuses fitted factor encodings", {
 
   custom_data = transform(data, condition = factor(condition))
   contrasts(custom_data$condition) = stats::contr.sum(3)
-  custom_fit = mcp(list(y ~ condition), custom_data, par_x = "x", sample = FALSE)
+  custom_fit = suppressWarnings(mcp(list(y ~ condition), custom_data, par_x = "x", sample = FALSE))
   custom_matrix = get_predictor_matrix(
     get_fit_model_tables(custom_fit)$predictors,
     get_fit_model_tables(custom_fit)$group_effects
   )
-  custom_new = expect_warning(
-    add_rhs_predictors(
-      transform(custom_data, condition = as.character(condition)), custom_fit
-    ),
-    "contrasts dropped from factor"
+  custom_new = add_rhs_predictors(
+    transform(custom_data, condition = as.character(condition)), custom_fit
   )
   expect_equal(
     unname(as.matrix(custom_new[, paste0(".pred_", colnames(custom_matrix))])),

@@ -151,7 +151,8 @@ test_that("custom JAGS code warns R-side evaluation and suppresses simulated-tru
   fit$data$y = simulated
 
   expect_warning(fitted(fit, summary = FALSE), "Custom `jags_code`")
-  expect_false(any(c("sim", "match") %in% names(summary(fit))))
+  capture.output({ summary_fit = summary(fit) })
+  expect_false(any(c("sim", "match") %in% names(summary_fit)))
   expect_false(any(c("sim", "match") %in% names(fixef(fit))))
 })
 

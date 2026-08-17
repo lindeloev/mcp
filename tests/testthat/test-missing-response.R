@@ -4,11 +4,14 @@ test_that("missing response draws follow covariates and group-level effects", {
     id = factor(c(rep("a", 5), rep("b", 5))),
     y = c(2 + 3 * (0:4), 52 + 3 * (0:3), NA)
   )
-  fit = suppressWarnings(mcp(
-    list(y ~ 1 + x + (1 | id)), data, par_x = "x",
-    chains = 1, iter = 40, warmup = 20, quiet = TRUE,
-    seed = 8, diagnostics = FALSE
-  ))
+  expect_message(
+    fit <- suppressWarnings(mcp(
+      list(y ~ 1 + x + (1 | id)), data, par_x = "x",
+      chains = 1, iter = 40, warmup = 20, quiet = TRUE,
+      seed = 8, diagnostics = FALSE
+    )),
+    "NA values detected in 'y'"
+  )
 
   fitted_draws = fitted(fit, summary = FALSE, probs = FALSE)
   prediction_draws = predict(fit, summary = FALSE, probs = FALSE)

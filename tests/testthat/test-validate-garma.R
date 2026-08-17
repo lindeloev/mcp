@@ -251,10 +251,13 @@ test_that("generated JAGS uses the same bounded GARMA residuals", {
 
 test_that("missing GARMA responses stay paired with posterior draws", {
   data = data.frame(x = 1:5, y = c(1, NA, 2, 3, 4))
-  fit = suppressWarnings(mcp(
-    list(y ~ 1 + ar(1)), data, par_x = "x",
-    chains = 1, iter = 30, warmup = 20, quiet = TRUE, seed = 42
-  ))
+  expect_message(
+    fit <- suppressWarnings(mcp(
+      list(y ~ 1 + ar(1)), data, par_x = "x",
+      chains = 1, iter = 30, warmup = 20, quiet = TRUE, seed = 42
+    )),
+    "NA values detected in 'y'"
+  )
 
   expect_equal(fit$.internal$imputed_response_rows, 2L)
   expect_equal(ncol(fit$.internal$imputed_response[[1]]), 1L)
