@@ -5,6 +5,7 @@ pkgdown/assets/mcp_showcase_small.png
 dev/*
 !dev/LEARNINGS.md
 !dev/DECISIONS.md
+!dev/prompt*
 
 # Hidden
 .lintr
