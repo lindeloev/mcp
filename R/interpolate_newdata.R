@@ -92,6 +92,8 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 
 #' Returns a data.frame with all combos of predictors
 #'
+#' \lifecycle{experimental}
+#'
 #' This function synthesizes predictors for all combinations of predictor values.
 #' It is used internally in `plot.mcpfit()` and may be useful if you want to
 #' build your own custom plot.

@@ -256,6 +256,8 @@ get_pars_table = function(predictors, cps, group_effects, family) {
 
 #' Model parameters
 #'
+#' \lifecycle{experimental}
+#'
 #' Return the canonical parameter definitions for an `mcpfit` object. This
 #' works before sampling and is the stable way to discover model parameters.
 #'
@@ -286,6 +288,8 @@ mcp_pars = function(fit, scope = NULL, role = NULL) {
 
 
 #' Model data columns
+#'
+#' \lifecycle{experimental}
 #'
 #' Return the resolved data-column roles for an `mcpfit` object. In particular,
 #' `par_x` is the change-point predictor chosen automatically or supplied to

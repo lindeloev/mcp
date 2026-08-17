@@ -61,6 +61,7 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
 
 #' Summarise priors used by an mcp model
 #'
+#' \lifecycle{experimental}
 #'
 #' Shows the effective, resolved prior distributions on the familiar SD/scale
 #' parameterization rather than JAGS precision. Symbolic expressions in bounds

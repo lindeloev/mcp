@@ -40,6 +40,8 @@ negbinomial = function(link = "log", link_shape = "log") {
 
 #' Create or Test Objects of Class "mcpfamily"
 #'
+#' \lifecycle{experimental}
+#'
 #' Converts standard R family objects into `mcpfamily` objects used internally by
 #' `mcp`. Supported family and link combinations include:
 #' * `gaussian(link = "identity")` or `gaussian(link = "log")`
