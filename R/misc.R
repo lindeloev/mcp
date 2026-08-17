@@ -52,7 +52,7 @@ warn_custom_jags_code = function(fit) {
 # List of categorical column names and their unique levels
 get_categorical_levels = function(df) {
   checkmate::assert_data_frame(df)
-  categorical_cols = colnames(df)[sapply(df, class) %in% c("factor", "logical", "character")]
+  categorical_cols = colnames(df)[vapply(df, function(x) is.factor(x) || is.logical(x) || is.character(x), logical(1))]
   lapply(df[, categorical_cols, drop = FALSE], unique)
 }
 

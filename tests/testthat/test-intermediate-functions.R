@@ -41,6 +41,21 @@ test_that("interpolate_newdata() combines categorical and continuous predictors"
   expect_equal(unique(ggplot2::ggplot_build(plotted)$data[[2]]$y), 8)
 })
 
+
+test_that("interpolate_newdata() includes ordered factors", {
+  data = data.frame(
+    x = rep(1:3, 2),
+    ordered_group = ordered(rep(c("low", "high"), each = 3)),
+    y = 0
+  )
+  fit = mcp(list(y ~ 1 + ordered_group), data, par_x = "x", sample = FALSE)
+
+  newdata = interpolate_newdata(fit, x_values = 1:2)
+
+  expect_setequal(unique(newdata$ordered_group), c("low", "high"))
+})
+
+
 test_that("interpolate_newdata() carries the observed response for AR/MA models", {
   data = data.frame(x = 1:5, y = c(1, 2, 3, 4, 5))
   fit = mcp(
