@@ -13,6 +13,17 @@ test_that("families", {
 })
 
 
+test_that("mcp rejects non-syntactic data column names", {
+  data = data.frame(`x value` = 1:3, y = 0, check.names = FALSE)
+
+  expect_error(
+    mcp(list(y ~ 1), data, par_x = "x value", sample = FALSE),
+    "`data` has non-syntactic column name(s): `x value`",
+    fixed = TRUE
+  )
+})
+
+
 test_that("mcpfit model accessors follow standard R conventions", {
   data = data.frame(x = 1:5, y = c(1, 2, NA, 4, 5), unused = 6:10)
   expect_message(

@@ -11,7 +11,8 @@
 #' mcp models ordered change points. The ordering is imposed through the prior.
 #'
 #' @aliases mcp
-#' @param data Table-like data in long format (data.frame, tibble, data.table, etc.).
+#' @param data Table-like data in long format (data.frame, tibble, data.table, etc.)
+#'   with syntactic column names.
 #'   Missing values in the response variable are imputed using the posterior predictive. 
 #'   \code{\link{fitted.mcpfit}} or \code{\link{predict.mcpfit}} details how to see the imputed values.
 #' @param model A list of formulas - one for each segment. The many examples 
@@ -254,6 +255,13 @@ mcp = function(model,
     stop("`data` is required in mcp() since mcp v0.4.0. Passing data = NULL or omitting data is no longer supported.", call. = FALSE)
 
   checkmate::assert_data_frame(data)
+  non_syntactic = names(data)[make.names(names(data)) != names(data)]
+  if (length(non_syntactic) > 0)
+    stop(
+      "`data` has non-syntactic column name(s): ",
+      paste0("`", non_syntactic, "`", collapse = ", "), ". Rename them before fitting.",
+      call. = FALSE
+    )
   data = data.frame(data)
   assert_arma_series(data, series)
 
