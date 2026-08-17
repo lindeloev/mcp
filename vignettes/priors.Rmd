@@ -29,7 +29,7 @@ prior = list(
 )
 ```
 
-The values are JAGS code, so all JAGS distributions are allowed. These also include `gamma`, `dt`, `cauchy`, and many others. See the [JAGS user manual](https://web.sgh.waw.pl/~atoroj/ekonometria_bayesowska/jags_user_manual.pdf) for more details. The parameterization of the distributions are identical to standard R. Use SD when you specify priors for `dnorm`, `dt`, `dlogis`, etc. `mcp` converts to precision for JAGS under the hood via the `sd_to_prec()` function (`prec = 1 / sd^2`), so you don't have to worry about it. You can see the effects of this conversion by inspecting the difference between `fit$prior` (using SD) and `fit$jags_code` (using precision).
+The values use mcp's JAGS-string syntax, so JAGS distributions are generally allowed. See the [JAGS user manual](https://web.sgh.waw.pl/~atoroj/ekonometria_bayesowska/jags_user_manual.pdf) for more details. Prior strings use conventional distribution scales: SD for `dnorm()`, scale for `dt()`, `ddexp()`, and `dlogis()`, and log-SD for `dlnorm()`. When generating JAGS code, `mcp` converts these to inverse variance for `dnorm()`, `dt()`, and `dlnorm()`, and inverse scale for `ddexp()` and `dlogis()`. JAGS does not provide `dcauchy()`; use `dt(location, scale, 1)` for a Cauchy prior. You can inspect the translation by comparing `fit$prior` with `fit$jags_code`.
 
 Other notes:
 

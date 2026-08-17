@@ -105,6 +105,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   mcp now requires R >= 4.1.0, matching its use of the native pipe (`|>`).
 
+-   Corrected the JAGS translation of prior scales. `ddexp()` and `dlogis()` now convert their conventional scale to inverse scale rather than inverse variance; The exported `sd_to_prec()` helper is soft-deprecated because prior translation is now an internal, sampler-specific step.
+
 -   Removed the non-functional `exponential()` family. It had no default priors and could not be fitted. Exponential survival models would require dedicated support for censoring and survival likelihoods rather than the previous ordinary-response placeholder.
 
 -   Default coefficient priors are now more consistent with `brms` defaults while retaining proper priors and change-point-aware scaling for the `mcp` parameterization. For non-small datasets, this should have minimal influence since priors remain minimally informative. See priors using `prior_summary(fit, verbose = TRUE)`. The implicit Gaussian `sigma_1` prior is now the same response-calibrated half-Student-t used by `brms`, `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`. Version 0.3.4 instead used a response-SD-calibrated half-normal prior. Both are weakly informative so will have negligible impact on fits.

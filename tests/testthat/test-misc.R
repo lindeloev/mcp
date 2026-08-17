@@ -263,9 +263,21 @@ test_that("helpful deprecation detections work for old code idioms", {
 
 
 # Code
-test_that("formula tools", {
-  expect_equal(sd_to_prec("dnorm(5, 1)"), "dnorm(5, 1/(1)^2) ")
-  expect_equal(sd_to_prec("dt(3,2,1)"), "dt(3, 1/(2)^2, 1) ")
+test_that("legacy prior scales are translated to JAGS parameters", {
+  expect_equal(prior_to_jags("dnorm(5, 2)"), "dnorm(5, 1/(2)^2) ")
+  expect_equal(prior_to_jags("dt(3, 2, 1)"), "dt(3, 1/(2)^2, 1) ")
+  expect_equal(prior_to_jags("dlnorm(3, 2)"), "dlnorm(3, 1/(2)^2) ")
+  expect_equal(prior_to_jags("ddexp(3, 2)"), "ddexp(3, 1/(2)) ")
+  expect_equal(prior_to_jags("dlogis(3, 2) T(0, )"), "dlogis(3, 1/(2)) T(0,)")
+  expect_error(
+    prior_to_jags("dcauchy(3, 2)"),
+    "use `dt(location, scale, 1)`",
+    fixed = TRUE
+  )
+  expect_warning(
+    sd_to_prec("dnorm(5, 2)"),
+    "deprecated"
+  )
 })
 
 test_that("priors are resolved without changing their parameterization", {
@@ -297,6 +309,7 @@ test_that("priors are resolved without changing their parameterization", {
 
   expect_equal(fit$prior$Intercept_1, "dt(5.5, 3.7065, 3) T(, 9)")
   expect_equal(fit$prior$x_2, "x_1/5")
+  expect_equal(fit$.internal$prior_format, "jags_string_v1")
   expect_false(grepl("MINX|MAXX|N_CP|LINKY", fit$jags_code))
   expect_match(fit$jags_code, "# User-specified prior", fixed = TRUE)
 

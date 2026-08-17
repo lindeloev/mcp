@@ -51,6 +51,23 @@ testthat::test_that("Prior entries must have unique names", {
 })
 
 
+testthat::test_that("Prior entries must be scalar numbers or strings", {
+  testthat::expect_error(
+    validate_prior_v1(list(cp_1 = c(1, 2))),
+    "finite numeric scalar or one nonempty character string"
+  )
+  testthat::expect_error(
+    validate_prior_v1(list(cp_1 = NA_real_)),
+    "finite numeric scalar or one nonempty character string"
+  )
+  testthat::expect_error(
+    validate_prior_v1(list(cp_1 = " ")),
+    "finite numeric scalar or one nonempty character string"
+  )
+  testthat::expect_invisible(validate_prior_v1(list(cp_1 = 1, Intercept_1 = "dnorm(0, 1)")))
+})
+
+
 good_prior = list(
   list(  # Fixed values and non-default change point
     Intercept_2 = "Intercept_1",

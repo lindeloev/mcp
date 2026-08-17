@@ -1,5 +1,36 @@
 # Prior assembly -----------------------------------------------------------
 
+# Validate the plain named-list prior format introduced before sampler-
+# agnostic prior objects. A future front end can dispatch classed prior objects
+# separately and retain this function as the legacy JAGS-string path.
+validate_prior_v1 = function(prior) {
+  checkmate::assert_list(prior)
+  if (length(prior) > 0 &&
+      (is.null(names(prior)) || anyNA(names(prior)) || any(!nzchar(names(prior))))) {
+    stop("`prior` must be a completely named list; every entry needs a nonempty parameter name.")
+  }
+  check_legacy_parameter_names(names(prior), "prior")
+
+  which_duplicated = duplicated(names(prior))
+  if (any(which_duplicated))
+    stop("`prior` has duplicated entries for the same parameter: ", and_collapse(names(prior)[which_duplicated]))
+
+  valid_value = vapply(prior, function(value) {
+    is_numeric = is.numeric(value) && length(value) == 1 && is.finite(value)
+    is_string = is.character(value) && length(value) == 1 &&
+      !is.na(value) && nzchar(trimws(value))
+    is_numeric || is_string
+  }, logical(1))
+  if (any(!valid_value)) {
+    stop(
+      "Each `prior` value must be one finite numeric scalar or one nonempty character string. Invalid value(s): ",
+      and_collapse(names(prior)[!valid_value])
+    )
+  }
+
+  invisible(prior)
+}
+
 #' Get priors for all parameters in the model
 #'
 #' @keywords internal

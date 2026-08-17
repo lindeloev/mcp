@@ -59,11 +59,14 @@
 #' @param prior Named list. Names are parameter names (`cp_i`, `Intercept_i`, `xvar_i`,
 #'  `sigma`) and the values are either
 #'
-#'  * A JAGS distribution (e.g., `Intercept_1 = "dnorm(0, 1) T(0,)"`) indicating a
+#'  * A distribution in mcp's JAGS-string syntax (e.g.,
+#'      `Intercept_1 = "dnorm(0, 1) T(0,)"`) indicating a
 #'      conventional prior distribution. Data-calibrated, regularizing defaults
 #'      are used where priors are not specified. These are designed for stable
 #'      estimation and prediction, but should be justified before hypothesis testing.
-#'      `mcp` uses SD (not precision) for dnorm, dt, dlogis, etc. See
+#'      `mcp` uses conventional distribution scales rather than JAGS precision:
+#'      SD for `dnorm()`, scale for `dt()`, `ddexp()`, and `dlogis()`, and
+#'      log-SD for `dlnorm()`. See
 #'      details. With multiple change points, the default is a regularizing
 #'      Student-t prior centered at `min(x)` and sequentially truncated between
 #'      the preceding change point and `max(x)`. User-specified `dunif()` priors
@@ -155,10 +158,12 @@
 #'       They are resolved from the model data before JAGS code is generated.
 #'       The older constants `MINX`, `MAXX`, `MEANX`, `SDX`, `MINY`, `MAXY`,
 #'       `MEANY`, `SDY`, and `N_CP` remain accepted with a deprecation warning.
-#'   * Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision
-#'       but `mcp` converts to precision under the hood via the sd_to_prec()
-#'       function. So you will see SDs in `fit$prior` but precision ($1/SD^2)
-#'       in `fit$jags_code`. Use `prior_summary(fit)` for resolved priors and
+#'   * Prior strings use conventional scale parameterizations. `mcp` converts
+#'       these to the parameterization required by JAGS when generating code:
+#'       inverse variance for `dnorm()`, `dt()`, and `dlnorm()`, and inverse
+#'       scale for `ddexp()` and `dlogis()`. JAGS does not provide `dcauchy()`;
+#'       use `dt(location, scale, 1)` for a Cauchy prior. Use
+#'       `prior_summary(fit)` for resolved priors and
 #'       `prior_summary(fit, verbose = TRUE)` for their rules and descriptions.
 #' @return An \code{\link{mcpfit}} object.
 #' @encoding UTF-8
@@ -273,16 +278,9 @@ mcp = function(model,
   assert_data_cols(data, cols = model_vars, fail_funcs = c(is.infinite))
   data = data[, model_vars]  # Remove unused data
 
-  # Check prior
-  checkmate::assert_list(prior)
-  if (length(prior) > 0 && (is.null(names(prior)) || anyNA(names(prior)) || any(!nzchar(names(prior))))) {
-    stop("`prior` must be a completely named list; every entry needs a nonempty parameter name.")
-  }
-  check_legacy_parameter_names(names(prior), "prior")
-
-  which_duplicated = duplicated(names(prior))
-  if (any(which_duplicated))
-    stop("`prior` has duplicated entries for the same parameter: ", and_collapse(names(prior)[which_duplicated]))
+  # Plain named lists are the v0.4 JAGS-string prior format. Future classed
+  # sampler-agnostic prior objects can dispatch before this legacy path.
+  validate_prior_v1(prior)
 
   # Transform family to mcpfamily
   if (!is.family(family) && !is.mcpfamily(family))
@@ -528,6 +526,7 @@ mcp = function(model,
       formula_r = formula_r,
       prior_table = prior_table,
       prior_context = prior_context,
+      prior_format = "jags_string_v1",
       diagnostics = diagnostics,
       custom_jags_code = custom_jags_code,
       imputed_response = mcmc_imputed,

@@ -373,8 +373,7 @@ get_prior_str = function(prior, i, group_col = NULL, center = FALSE,
   }
 
   if (kind == "distribution") {
-    # Convert to precision
-    value = sd_to_prec(value)
+    value = prior_to_jags(value)
 
     # ... and this is a population-level effect
     if (is.null(group_col)) {
@@ -395,14 +394,51 @@ get_prior_str = function(prior, i, group_col = NULL, center = FALSE,
 }
 
 
-#' Transform a JAGS Prior from SD to Precision.
+# Translate a scale-parameterized prior to JAGS ---------------------------
+
+# mcp's legacy string syntax uses conventional distribution scales. JAGS
+# uses inverse variance for normal-like distributions and inverse scale for
+# double-exponential and logistic distributions.
+prior_to_jags = function(prior_str) {
+  parts = split_prior_truncation(prior_str)
+  call = parse_prior_call(parts$distribution)
+  if (is.null(call))
+    return(prior_str)
+  if (call$name == "dcauchy")
+    stop("JAGS does not support `dcauchy()`; use `dt(location, scale, 1)` instead.")
+
+  exponent = switch(
+    call$name,
+    dnorm = 2,
+    dt = 2,
+    dlnorm = 2,
+    ddexp = 1,
+    dlogis = 1,
+    NULL
+  )
+  if (is.null(exponent))
+    return(prior_str)
+  if (length(call$args) < 2)
+    stop("Expected a scale as the second argument of '", prior_str, "'.")
+
+  denominator = paste0("(", gsub(" ", "", call$args[2]), ")")
+  if (exponent == 2)
+    denominator = paste0(denominator, "^2")
+  call$args[2] = paste0("1/", denominator)
+  converted = paste0(call$name, "(", paste(call$args, collapse = ", "), ") ")
+  if (!is.null(parts$truncation))
+    converted = paste0(converted, gsub("\\s+", "", parts$truncation))
+  converted
+}
+
+
+#' Transform an mcp prior to the parameterization used by JAGS.
 #'
-#' JAGS uses precision rather than SD. This function converts
+#' This function is deprecated. JAGS uses precision rather than SD for some
+#' distributions. For example, this function converts
 #' `dnorm(4.2, 1.3)` into `dnorm(4.2, 1/1.3^2)`. It allows users to specify
-#' priors using SD and then it's transformed for the JAGS code. It works for the
-#' following distributions: dnorm|dt|dcauchy|ddexp|dlogis|dlnorm. In all of
-#' these,
-#' tau/sd is the second parameter.
+#' priors using conventional scale parameters before they are translated to
+#' JAGS code. Users normally do not need to call this function.
 #'
 #' @aliases sd_to_prec
 #' @param prior_str String. A JAGS prior. Can be truncated, e.g.
@@ -412,16 +448,6 @@ get_prior_str = function(prior, i, group_col = NULL, center = FALSE,
 #' @encoding UTF-8
 #' @export
 sd_to_prec = function(prior_str) {
-  parts = split_prior_truncation(prior_str)
-  call = parse_prior_call(parts$distribution)
-  if (is.null(call) || call$name %notin% c("dnorm", "dt", "dcauchy", "ddexp", "dlogis", "dlnorm"))
-    return(prior_str)
-  if (length(call$args) < 2)
-    stop("Expected a scale as the second argument of '", prior_str, "'.")
-
-  call$args[2] = paste0("1/(", gsub(" ", "", call$args[2]), ")^2")
-  converted = paste0(call$name, "(", paste(call$args, collapse = ", "), ") ")
-  if (!is.null(parts$truncation))
-    converted = paste0(converted, gsub("\\s+", "", parts$truncation))
-  converted
+  lifecycle::deprecate_soft("0.4.0", "sd_to_prec()")
+  prior_to_jags(prior_str)
 }
