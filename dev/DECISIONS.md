@@ -30,5 +30,8 @@ Making `loo` or something loo-like support leave-future-out or blocked sampling 
 ## 2026-08-14: R generic functions deviations
 coef() will be implemented later. I have not settled on what set of parameters to include.
 
-## fit$jags_code and fit$simulate()
+## 2026-08-14: fit$jags_code and fit$simulate()
 Supplying custom `mcp(..., jags_code)` will make fit$simulate() out of sync. This is a known error but requires too much extra tooling to address for now. Options include user-supplied "r_code" to match or a very capable JAGS -> R translator (mcp already does this for it's own models internally).
+
+## 2026-08-17: What is population-level?
+`summary.mcpfit()` calls both distributional parameters (`dpar`, e.g., sigma, shape, ...) and AR/MA parameters "population-level". Only change points and group-level effects are not called population-level. This may not be classical wording, but having sections for each `dpar` seems like bloat.
