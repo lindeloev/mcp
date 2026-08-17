@@ -5,8 +5,9 @@
 #' around the `bayesplot::ppc_*()` methods.
 #'
 #' @aliases pp_check pp_check.mcpfit
-#' @inheritParams pp_eval
-#' @param type One of `bayesplot::available_ppc("grouped", invert = TRUE) %>% stringr::str_remove("ppc_")`
+#' @param type String specifying the type of plot. See \code{\link[bayesplot:PPC-overview]{bayesplot::available_ppc()}}
+#'   for available plot types, omitting the \code{"ppc_"} prefix (e.g., \code{"dens_overlay"},
+#'   \code{"ribbon"}, \code{"intervals"}).
 #' @param facet_by Name of a grouping column used by group-level effects.
 #' @param ndraws Number of posterior draws. Note that you may want to use all
 #'   draws for summary geoms, e.g., `pp_check(fit, type = "ribbon", ndraws = NULL)`.

@@ -18,7 +18,7 @@
 #' Components:
 #' * `call`: The matched call to `mcp()`.
 #' * `model`: A list of user-provided formulas.
-#' * `data`: The user-provided data frame.
+#' * `data`: The user-provided data frame reduced to model-used columns.
 #' * `family`: An `mcpfamily` object.
 #' * `prior`: A named list of priors.
 #' * `mcmc_post` and `mcmc_prior`: \code{\link[coda]{mcmc.list}} objects with
@@ -491,7 +491,7 @@ vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, dpar = "mu", ..
     pars = parameters$name
   } else {
     checkmate::assert_character(pars, any.missing = FALSE)
-    pars = intersect(parameters$name, pars)
+    checkmate::assert_subset(pars, parameters$name)
   }
   if (length(pars) == 0)
     return(NULL)
@@ -943,7 +943,7 @@ resolve_draws_format = function(draws_format, samples_format, draws_format_missi
 #'   * `TRUE` All population-level model parameters.
 #'   * `FALSE` No population-level effects. Same as `c()`.
 #'   * Character vector: Only include specified population-level parameters.
-#' @param varying One of:
+#' @param varying Group-level effects. One of:
 #'   * `TRUE` All group-level deviations.
 #'   * `FALSE` No group-level deviations (`c()`).
 #'   * `"cp"` or `"predictor"`: All group-level deviations belonging to that part of
@@ -1098,8 +1098,7 @@ tidy_samples = function(...) {
 #' @param dpar What distributional parameter to evaluate. This is only relevant when `type == "fitted"`. E.g.,
 #'
 #'   * `"epred"` (default): Expected response from the full model (or `NULL` for compatibility with brms etc.).
-#'   * `"mu"`: The central tendency which is often the mean after applying the
-#'     link function.
+#'   * `"mu"`: The conditional mean (or success probability per trial for binomial/bernoulli models), on the link or response scale.
 #'   * `"sigma"`: The standard deviation of the residuals.
 #'   * `"ar1"`, `"ar2"`, `"ma1"`, `"ma2"`, etc. depending on which AR or MA
 #'     coefficient you want to evaluate.
@@ -1113,7 +1112,7 @@ tidy_samples = function(...) {
 #'   If there are group-level effects, this is the number of draws from each group.
 #'   `NULL` means "all". Ignored if both are `FALSE`. More draws trade speed for accuracy.
 #' @param nsamples Deprecated. Use `ndraws` instead.
-#' @param draws_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE`.
+#' @param draws_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE` (for `fitted()`, `predict()`, and `log_lik()`). `residuals()` always returns tidy output.
 #' @param samples_format Deprecated. Use `draws_format` instead.
 #'   See more under "value"
 #' @param scale One of

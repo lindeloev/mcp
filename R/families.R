@@ -40,6 +40,17 @@ negbinomial = function(link = "log", link_shape = "log") {
 
 #' Create or Test Objects of Class "mcpfamily"
 #'
+#' Converts standard R family objects into `mcpfamily` objects used internally by
+#' `mcp`. Supported family and link combinations include:
+#' * `gaussian(link = "identity")` or `gaussian(link = "log")`
+#' * `binomial(link = "logit")`, `binomial(link = "probit")`, or `binomial(link = "identity")`
+#' * `bernoulli(link = "logit")`, `bernoulli(link = "probit")`, or `bernoulli(link = "identity")`
+#' * `poisson(link = "log")` or `poisson(link = "identity")`
+#' * `negbinomial(link = "log", link_shape = "log")`
+#'
+#' Note: `mcpfamily` objects are shipped with mcp - there is not (yet) support for user-supplied
+#' families.
+#'
 #' @aliases mcpfamily
 #' @param x A family object, e.g., `binomial(link = "identity")`.
 #' @seealso \code{\link{family}}

@@ -51,13 +51,13 @@
 #'     coefficients to stationarity or MA coefficients to invertibility.
 #'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
 #' 
-#'   * *Weights:* `y | weights(w) ~ ...` usespositive Gaussian precision weights, 
+#'   * *Weights:* `y | weights(w) ~ ...` uses positive Gaussian precision weights, 
 #'     giving residual SD `sigma / sqrt(w)`.
 #' 
 #'   * *Binomial:* use `successes | trials(total) ~ ...` with `family = binomial()`.
 #'
 #' @param prior Named list. Names are parameter names (`cp_i`, `Intercept_i`, `xvar_i`,
-#'  `sigma`) and the values are either
+#'  `sigma_1`, etc.) and the values are either
 #'
 #'  * A distribution in mcp's JAGS-string syntax (e.g.,
 #'      `Intercept_1 = "dnorm(0, 1) T(0,)"`) indicating a
@@ -286,7 +286,7 @@ mcp = function(model,
 
   # Transform family to mcpfamily
   if (!is.family(family) && !is.mcpfamily(family))
-    stop("`family` is not a valid family or mcpfamily. Should be gaussian(), binomial(), mcpfamily(guassian(link = 'log')), etc.")
+    stop("`family` is not a valid family or mcpfamily. Should be gaussian(), binomial(), mcpfamily(gaussian(link = 'log')), etc.")
 
   if (is.mcpfamily(family) == FALSE)
     family = mcpfamily(family)

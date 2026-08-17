@@ -61,9 +61,11 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
 
 #' Summarise priors used by an mcp model
 #'
-#' Shows the effective, resolved priors on the familiar SD/scale
-#' parameterization rather than JAGS precision. Use `verbose = TRUE` to also
-#' see the symbolic rule, its description, source, and kind.
+#'
+#' Shows the effective, resolved prior distributions on the familiar SD/scale
+#' parameterization rather than JAGS precision. Symbolic expressions in bounds
+#' (e.g. `min(x)` or `max(x)`) may be retained in symbolic form in compact output,
+#' while `verbose = TRUE` displays the underlying rule, description, source, and kind.
 #'
 #' @param fit An `mcpfit` object.
 #' @param verbose Logical. Include rule, description, source, and kind.

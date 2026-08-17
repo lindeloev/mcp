@@ -71,6 +71,7 @@ test_that("mcpfit model accessors follow standard R conventions", {
   expect_equal(vcov(fit), stats::cov(values[, fixed, drop = FALSE]))
   expect_equal(vcov(fit, correlation = TRUE), stats::cor(values[, fixed, drop = FALSE]))
   expect_equal(vcov(fit, pars = "all"), stats::cov(values))
+  expect_error(vcov(fit, pars = "nonexistent"))
   expected_intervals = t(vapply(
     population,
     function(parameter) stats::quantile(values[, parameter], c(0.025, 0.975), names = FALSE),
