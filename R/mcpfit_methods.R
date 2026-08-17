@@ -1209,11 +1209,13 @@ pp_eval = function(
   ###############
   # FIX NEWDATA #
   ###############
+  # Identify grouping columns to exclude based on the varying argument
   group_info = unpack_group_effects(fit, pars = varying)
   model_tables = get_fit_model_tables(fit)
   group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
   exclude_group_cols = setdiff(group_cols, c(group_info$cols, data_columns$series))
-  required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
+
+  # Determine auxiliary column requirements for the specified operation
   operation = switch(type, predict = "rng", loglik = "log_lik", fitted = "epred", residuals = "epred")
   aux_operations = c(operation, if (arma && is_arma(fit)) "garma")
   if (type == "fitted" && rate && dpar %in% c("epred", "mu"))
@@ -1221,6 +1223,9 @@ pp_eval = function(
   aux_columns = get_family_aux_columns(fit$family, model_tables$segments)
   aux_used = names(get_family_aux_columns(fit$family, model_tables$segments, aux_operations))
   unused_aux_columns = unname(aux_columns[names(aux_columns) %notin% aux_used])
+
+  # Build required columns list and check presence in newdata
+  required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
   required_cols = required_cols[required_cols %notin% unused_aux_columns]
   required_cols = required_cols[required_cols %notin% exclude_group_cols]
   response_not_required = type %in% c("fitted", "predict") &&
@@ -1231,6 +1236,8 @@ pp_eval = function(
     stop("`newdata` must contain a response column named '", data_columns$response, "' for when `arma == TRUE` and/or `type == 'residuals'`")
   }
   assert_data_cols(newdata, required_cols)  # Helpful error if something is missing
+
+  # Filter newdata columns and attach evaluation key
   kept_cols = colnames(newdata)[colnames(newdata) %notin% exclude_group_cols]
   newdata = data.frame(newdata[, kept_cols, drop = FALSE])
   #colnames(newdata) = kept_cols  # Special case for when there's only one predictor
@@ -1270,7 +1277,7 @@ pp_eval = function(
   simulate_type = ifelse(type == "residuals", yes = "fitted", no = type)
   if (length(group_info$cols) > 0) {
     # Match group-level draws to each row of data.
-    draws_predictors = dplyr::left_join(
+    draws = dplyr::left_join(
       add_rhs_predictors(newdata, fit),
       mcp_draws(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws),
       by = unique(group_info$cols),
@@ -1278,17 +1285,17 @@ pp_eval = function(
     )
   } else {
     # Without group-level effects, use all draws for each row of data.
-    draws = tibble::as_tibble(mcp_draws(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws))
+    mcmc_draws = tibble::as_tibble(mcp_draws(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws))
     predictors = tibble::as_tibble(add_rhs_predictors(newdata, fit))
-    draws_predictors = dplyr::bind_cols(
-      draws[rep(seq_len(nrow(draws)), each = nrow(predictors)), , drop = FALSE],
-      predictors[rep(seq_len(nrow(predictors)), times = nrow(draws)), , drop = FALSE]
+    draws = dplyr::bind_cols(
+      mcmc_draws[rep(seq_len(nrow(mcmc_draws)), each = nrow(predictors)), , drop = FALSE],
+      predictors[rep(seq_len(nrow(predictors)), times = nrow(mcmc_draws)), , drop = FALSE]
     )
   }
 
   # Use imputed response draws for missing responses.
   # Requires special handling for varying and GARMA.
-  imputed_response = rep(NA_real_, nrow(draws_predictors))
+  imputed_response = rep(NA_real_, nrow(draws))
   has_posterior_draws = coda::is.mcmc.list(.subset2(fit, "mcmc_post"))
   needs_garma_history = arma && is_arma(fit) &&
     (type %in% c("predict", "residuals") ||
@@ -1317,24 +1324,22 @@ pp_eval = function(
         call. = FALSE
       )
     if (full_varying && (!is_arma(fit) || arma))
-      imputed_response = get_imputed_response_draws(fit, draws_predictors)
+      imputed_response = get_imputed_response_draws(fit, draws)
     use_imputed = !is.na(imputed_response)
     if (arma && is_arma(fit) && any(use_imputed))
-      draws_predictors[[data_columns$response]][use_imputed] = imputed_response[use_imputed]
+      draws[[data_columns$response]][use_imputed] = imputed_response[use_imputed]
   }
 
-  draws = draws_predictors
-
-  # This is the important step! Evaluate the mcp model on the newdata and draws
+  # This is the important step!Evaluate the mcp model on newdata and draws.
   # Group-level joins are row-major, while GARMA recurrences require each
   # draw's data rows to be contiguous. Evaluate in draw/data order, then
   # restore the public row order below.
   evaluation_order = if (arma && is_arma(fit)) {
-    order(draws_predictors$.draw, draws_predictors$data_row)
+    order(draws$.draw, draws$data_row)
   } else {
-    seq_len(nrow(draws_predictors))
+    seq_len(nrow(draws))
   }
-  evaluation_data = draws_predictors[evaluation_order, , drop = FALSE]
+  evaluation_data = draws[evaluation_order, , drop = FALSE]
   evaluate = function() rlang::exec(simulate_vectorized, fit, !!!evaluation_data, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale, .include_fitted = .include_fitted)
   evaluated = if (replicate_garma) suppressMessages(evaluate()) else evaluate()
 
@@ -1345,7 +1350,7 @@ pp_eval = function(
   evaluated = evaluated[restore_order]
   if (!is.null(fitted_values)) fitted_values = fitted_values[restore_order]
   if (type == "predict" && any(!is.na(imputed_response))) {
-    response_data = get_family_response_data(fit$family, model_tables$segments, data = as.list(draws_predictors))
+    response_data = get_family_response_data(fit$family, model_tables$segments, data = as.list(draws))
     imputed_return = fit$family$response$observed(imputed_response, response_data, rate)
     evaluated[!is.na(imputed_response)] = imputed_return[!is.na(imputed_response)]
   }
