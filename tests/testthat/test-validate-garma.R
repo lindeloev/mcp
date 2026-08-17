@@ -105,6 +105,38 @@ test_that("R-side GARMA log likelihood uses its conditional mean", {
 })
 
 
+test_that("conditional GARMA evaluation resets vectorized ordered series", {
+  y = c(1, 2, 4, 10, 20, 40)
+  series_id = rep(c("a", "b"), each = 3)
+  base_link_mu = rep(0, length(y))
+  expected = numeric(length(y))
+  for (series in unique(series_id)) {
+    rows = which(series_id == series)
+    expected[rows] = expected_garma_link(y[rows], 0, phi = 0.5, theta = 0.25)
+  }
+
+  args = list(
+    base_link_mu = base_link_mu,
+    ar_list = list(ar1_ = rep(0.5, length(y))),
+    ma_list = list(ma1_ = rep(0.25, length(y))),
+    boundary = rep(0.1, length(y)),
+    family = mcpfamily(gaussian()),
+    dpars = list(mu = base_link_mu, sigma = rep(1, length(y))),
+    y = y,
+    series_id = series_id
+  )
+  actual = do.call(simulate_garma, args)
+
+  expect_equal(actual$link_mu, expected)
+  args$series_id = rep(c("a", "b"), 3)
+  expect_error(
+    do.call(simulate_garma, args),
+    "Rows belonging to each series_id must be contiguous.",
+    fixed = TRUE
+  )
+})
+
+
 test_that("fit$simulate generates GARMA series recursively", {
   data = data.frame(x = 1:6, y = 0)
   built = garma_test_fit(poisson(), list(y ~ 1 + ar(1) + ma(1)), data, log(2))

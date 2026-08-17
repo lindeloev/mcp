@@ -487,6 +487,9 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
     series_id = rep(1, length(base_link_mu))
   if (length(series_id) != length(base_link_mu) || anyNA(series_id))
     stop_github("series_id must have one non-missing value per observation.")
+  series_runs = rle(as.character(series_id))
+  if (anyDuplicated(series_runs$values))
+    stop_github("Rows belonging to each series_id must be contiguous.")
 
   generate_series = is.null(y)
   if (generate_series && !is.null(family$garma$generate_message))
@@ -494,6 +497,50 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
 
   ar_order = length(ar_list)
   ma_order = length(ma_list)
+  n = length(base_link_mu)
+
+  # For performance, loop over time positions while vectorizing across draws
+  # and series. This assumes ordered rows within contiguous series (checked above).
+  if (!generate_series && !anyNA(y)) {
+    garma_y = get_garma_observed(y, family, boundary, data)
+    garma_link_y = family$linkfun(garma_y)
+    resid_abs = garma_link_y - base_link_mu
+
+    # Prepare vectors for the recursion
+    resid_ma = numeric(n)
+    resid_garma = numeric(n)
+    link_mu = numeric(n)
+    positions = sequence(series_runs$lengths)
+    rows_by_position = split(
+      seq_len(n),
+      factor(positions, levels = seq_len(max(positions)))
+    )
+
+    # Begin recursion
+    for (rows in rows_by_position) {
+      position = positions[rows[1]]
+      for (lag in seq_len(min(ar_order, position - 1))) {
+        resid_garma[rows] = resid_garma[rows] +
+          ar_list[[paste0("ar", lag, "_")]][rows] * resid_abs[rows - lag]
+      }
+      for (lag in seq_len(min(ma_order, position - 1))) {
+        resid_garma[rows] = resid_garma[rows] +
+          ma_list[[paste0("ma", lag, "_")]][rows] * resid_ma[rows - lag]
+      }
+      link_mu[rows] = base_link_mu[rows] + resid_garma[rows]
+      resid_ma[rows] = garma_link_y[rows] - link_mu[rows]
+    }
+
+    return(list(
+      y = y,
+      mu = family$linkinv(link_mu),
+      link_mu = link_mu,
+      resid_garma = resid_garma,
+      resid_abs = resid_abs,
+      resid_ma = resid_ma
+    ))
+  }
+
   resid_abs = numeric(length(base_link_mu))
   resid_ma = numeric(length(base_link_mu))
   resid_garma = numeric(length(base_link_mu))
