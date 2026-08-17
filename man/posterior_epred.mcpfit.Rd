@@ -45,7 +45,10 @@ posterior_linpred.mcpfit(
 \arguments{
 \item{object}{An \code{mcpfit} object.}
 
-\item{newdata}{Optional data frame at which to evaluate the model.}
+\item{newdata}{Optional data frame at which to evaluate the model. For GARMA
+\code{posterior_predict()}, only predictors and required response auxiliaries are
+needed: each response series is generated recursively without conditioning
+on an observed response column.}
 
 \item{draws, ndraws}{Number of posterior draws to return. \code{draws} follows the
 \code{{rstantools}} convention; \code{ndraws} is the mcp spelling. Supply at most one.}
@@ -72,6 +75,11 @@ Methods for the \code{{rstantools}} posterior-prediction generics. They return a
 draws-by-observation matrix and enable \code{{tidybayes}} workflows such as
 \code{add_epred_draws()}, \code{add_predicted_draws()}, and \code{add_linpred_draws()}.
 These methods and workflows require the suggested package \code{{rstantools}}.
+}
+\details{
+For GARMA models, \code{posterior_predict()} generates each replicated
+response series recursively. It does not condition later predictions on
+the observed response history, unlike \code{fitted()} and \code{predict()}.
 }
 \seealso{
 \code{\link[=fitted.mcpfit]{fitted.mcpfit()}}, \code{\link[=predict.mcpfit]{predict.mcpfit()}}

@@ -6,7 +6,7 @@
 \alias{confint.mcpfit}
 \title{Posterior Covariance and Central Intervals for \code{mcpfit} Objects}
 \usage{
-\method{vcov}{mcpfit}(object, correlation = FALSE, pars = NULL, ...)
+\method{vcov}{mcpfit}(object, correlation = FALSE, pars = NULL, dpar = "mu", ...)
 
 \method{confint}{mcpfit}(object, parm, level = 0.95, ...)
 }
@@ -16,7 +16,10 @@
 \item{correlation}{Return the posterior correlation matrix instead of the
 covariance matrix?}
 
-\item{pars}{Optional names of population-level parameters to extract.}
+\item{pars}{Optional names of population-level parameters to extract, or
+\code{"all"} for all population-level parameters.}
+
+\item{dpar}{Distributional parameter(s) to select when \code{pars = NULL}.}
 
 \item{...}{Currently unused.}
 
@@ -32,4 +35,21 @@ include in the intervals.}
 \description{
 Summarise the joint and marginal posterior uncertainty of population-level
 model parameters.
+}
+\examples{
+# Posterior covariance of the primary-response coefficients, matching fixef().
+vcov(demo_fit)
+
+# Central posterior intervals for all population-level parameters, or a selection.
+confint(demo_fit)
+confint(demo_fit, parm = "cp_1")
+confint(demo_fit, parm = c("Intercept_1", "time_2"), level = 0.8)
+
+# Include change points, residual SDs, group SDs, and AR/MA parameters.
+vcov(demo_fit, pars = "all")
+
+# Inspect posterior parameter correlations across the full population model.
+# Useful to quickly check identifiability (high correlation). Inspecting
+`bayesplot::mcmc_pairs(as_draws(demo_fit))` is better, though.
+vcov(demo_fit, pars = "all", correlation = TRUE)
 }

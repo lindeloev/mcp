@@ -26,13 +26,17 @@ mcp(
 )
 }
 \arguments{
-\item{model}{A list of formulas - one for each segment. The first formula
-has the format \code{response ~ predictors} while the following formulas have
+\item{model}{A list of formulas - one for each segment. The many examples
+on the \href{https://lindeloev.github.io/mcp/}{mcp website}. But briefly:
+
+The first formula has the format \code{response ~ predictors} while the following formulas have
 the format \code{response ~ cp ~ predictors}. Here, \code{cp} names the change-point
 part of the formula rather than a literal variable. The response and
 change-point parts can be omitted (\code{cp ~ predictor} assumes the same
-response; \code{~ predictor} assumes an intercept-only change point). The
-following can be modeled:
+response; \code{~ predictor} assumes an intercept-only change point). Terms normally carry
+into later segments until redefined (see details).
+
+The following terms can be modeled:
 \itemize{
 \item \emph{Regular formulas:} e.g., \code{~ 1 + x}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
 \item \emph{Extended formulas:} e.g., \code{~ x:group + I(x^2) + exp(z)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
@@ -53,6 +57,9 @@ Poisson, and negative-binomial families with their default links. They
 define a finite conditional recurrence and do not jointly constrain AR
 coefficients to stationarity or MA coefficients to invertibility.
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
+\item \emph{Weights:} \code{y | weights(w) ~ ...} usespositive Gaussian precision weights,
+giving residual SD \code{sigma / sqrt(w)}.
+\item \emph{Binomial:} use \code{successes | trials(total) ~ ...} with \code{family = binomial()}.
 }}
 
 \item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.).
@@ -164,6 +171,19 @@ inspect the priors (\code{fit$prior} and \code{\link[=prior_summary]{prior_summa
 }
 \details{
 mcp models ordered change points. The ordering is imposed through the prior.
+\itemize{
+\item Terms normally carries into the next segment unless otherwise defined.
+\code{~ 0 + x} adds an increment to the current slope and therefore
+maintains continuity, whereas \code{~ 1 + x} resets the segment level and slope.
+Its coefficients are absolute segment parameters, so the fitted mean can
+be disjoined at the change point.
+\item Response evaluation: \code{\link[=fitted.mcpfit]{fitted.mcpfit()}} returns the expected response, while
+\code{\link[=predict.mcpfit]{predict.mcpfit()}} returns posterior-predictive response draws. For
+binomial models, \code{rate = TRUE} returns success proportions and
+\code{rate = FALSE} returns counts; count-scale fitted values and predictions
+require trial counts in \code{newdata}. See \link{execute-mcp-model} for all
+response-evaluation methods.
+}
 
 Notes on priors:
 \itemize{

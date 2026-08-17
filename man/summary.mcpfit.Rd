@@ -22,7 +22,7 @@
   ...
 )
 
-\method{fixef}{mcpfit}(object, width = 0.95, prior = FALSE, verbose = FALSE, ...)
+\method{fixef}{mcpfit}(object, width = 0.95, prior = FALSE, verbose = FALSE, dpar = "mu", ...)
 
 \method{ranef}{mcpfit}(object, width = 0.95, prior = FALSE, verbose = FALSE, ...)
 
@@ -52,6 +52,10 @@ warnings. In \code{\link[=summary.mcpfit]{summary.mcpfit()}}, \code{NULL} inheri
 the model, while a list or \code{FALSE} overrides the diagnostic footer.}
 
 \item{...}{Currently ignored}
+
+\item{dpar}{Distributional parameter(s) whose regression coefficients to
+return. For modeled distributional parameters such as \code{sigma()}, these
+coefficients are on the link scale.}
 
 \item{x}{An \code{\link{mcpfit}} object.}
 }

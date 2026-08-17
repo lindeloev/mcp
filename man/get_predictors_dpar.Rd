@@ -40,13 +40,17 @@ several distributional terms.}
 
 \item{check_rank}{Boolean. Whether to stop on rank deficiency.}
 
-\item{model}{A list of formulas - one for each segment. The first formula
-has the format \code{response ~ predictors} while the following formulas have
+\item{model}{A list of formulas - one for each segment. The many examples
+on the \href{https://lindeloev.github.io/mcp/}{mcp website}. But briefly:
+
+The first formula has the format \code{response ~ predictors} while the following formulas have
 the format \code{response ~ cp ~ predictors}. Here, \code{cp} names the change-point
 part of the formula rather than a literal variable. The response and
 change-point parts can be omitted (\code{cp ~ predictor} assumes the same
-response; \code{~ predictor} assumes an intercept-only change point). The
-following can be modeled:
+response; \code{~ predictor} assumes an intercept-only change point). Terms normally carry
+into later segments until redefined (see details).
+
+The following terms can be modeled:
 \itemize{
 \item \emph{Regular formulas:} e.g., \code{~ 1 + x}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
 \item \emph{Extended formulas:} e.g., \code{~ x:group + I(x^2) + exp(z)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
@@ -67,6 +71,9 @@ Poisson, and negative-binomial families with their default links. They
 define a finite conditional recurrence and do not jointly constrain AR
 coefficients to stationarity or MA coefficients to invertibility.
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
+\item \emph{Weights:} \code{y | weights(w) ~ ...} usespositive Gaussian precision weights,
+giving residual SD \code{sigma / sqrt(w)}.
+\item \emph{Binomial:} use \code{successes | trials(total) ~ ...} with \code{family = binomial()}.
 }}
 
 \item{family}{A supported family: \code{gaussian()}, \code{binomial()}, \code{bernoulli()},

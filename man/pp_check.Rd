@@ -28,7 +28,13 @@ pp_check(
 
 \item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model. Weighted
 Gaussian predictions and log-likelihoods also require the weights column. If \code{NULL}
-(default), the original data is used.}
+(default), the original data is used. GARMA evaluation with \code{fitted()},
+\code{predict()}, \code{residuals()}, or \code{log_lik()} conditions on the response history,
+so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
+\code{residuals()}, missing response histories are supported only in the original
+fitted data, using retained posterior imputations. \code{log_lik()} is unavailable
+when a missing response enters a later observed history. Use \code{\link[rstantools:posterior_predict]{posterior_predict()}}
+to generate fresh response series recursively from predictor-only \code{newdata}.}
 
 \item{prior}{TRUE/FALSE. Plot using prior draws? Useful for \code{mcp(..., sample = "both")}}
 
@@ -68,9 +74,11 @@ Plot posterior (default) or prior (\code{prior = TRUE}) predictive checks. This 
 around the \verb{bayesplot::ppc_*()} methods.
 }
 \details{
-Missing responses are omitted from the observed-data check. LOO
-predictive checks use posterior draws and the original fitted data, so
-they do not support \code{prior = TRUE} or \code{newdata}.
+Missing responses are omitted from the observed-data check. For
+GARMA models, each replicated response series is generated recursively
+rather than conditioning on the observed response history. LOO predictive
+checks use posterior draws and the original fitted data, so they do not
+support \code{prior = TRUE} or \code{newdata}.
 }
 \examples{
 \donttest{

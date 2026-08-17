@@ -21,6 +21,7 @@ pp_eval(
   draws_format = "tidy",
   scale = "response",
   .include_fitted = FALSE,
+  .garma_replicate = FALSE,
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated()
 )
@@ -30,7 +31,13 @@ pp_eval(
 
 \item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model. Weighted
 Gaussian predictions and log-likelihoods also require the weights column. If \code{NULL}
-(default), the original data is used.}
+(default), the original data is used. GARMA evaluation with \code{fitted()},
+\code{predict()}, \code{residuals()}, or \code{log_lik()} conditions on the response history,
+so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
+\code{residuals()}, missing response histories are supported only in the original
+fitted data, using retained posterior imputations. \code{log_lik()} is unavailable
+when a missing response enters a later observed history. Use \code{\link[rstantools:posterior_predict]{posterior_predict()}}
+to generate fresh response series recursively from predictor-only \code{newdata}.}
 
 \item{summary}{Summarise at each x-value}
 
@@ -97,6 +104,9 @@ A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} i
 }}
 
 \item{.include_fitted}{Internal. Include fitted values with unsummarised predictions.}
+
+\item{.garma_replicate}{Internal. For GARMA predictions, generate each
+response history recursively instead of conditioning on observed responses.}
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 
