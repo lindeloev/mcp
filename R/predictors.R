@@ -67,22 +67,66 @@ collect_design_specs = function(...) {
 }
 
 
-#' Express a design matrix relative to the segment onset
+#' Rewrite supported segment-local uses of the change-point axis
 #'
 #' @keywords internal
 #' @noRd
-#' @param matrix A model matrix.
-#' @param x_factor One factor for each matrix column.
-#' @param x Values of the change-point predictor.
-#' @return `matrix` with the local change-point factors divided out.
-remove_x_factors = function(matrix, x_factor, x) {
-  factor_code = x_factor
-  factor_code[factor_code == "1"] = "rep(1, length(x))"
-  factor_matrix = eval(str2lang(paste0(
-    "as.matrix(data.frame(", paste0(factor_code, collapse = ", "), "))"
-  )))
-  out = matrix / factor_matrix
-  out[matrix == 0 & factor_matrix == 0] = 1
+#' @param form A one-sided predictor formula.
+#' @param par_x Name of the change-point axis.
+#' @return The rewritten formula and the local degree of each formula term.
+rewrite_local_x = function(form, par_x) {
+  local_name = ".mcp_local_x"
+
+  # Recognize only exact x and I(x^k) factors; transformations stay global.
+  local_degree = function(x) {
+    if (x %in% c(par_x, paste0("I(", par_x, ")")))
+      return(1L)
+    prefix = paste0("I(", par_x, "^")
+    if (!startsWith(x, prefix) || !endsWith(x, ")"))
+      return(0L)
+    power = substr(x, nchar(prefix) + 1L, nchar(x) - 1L)
+    if (grepl("^[+-]?[0-9]+$", power)) as.integer(power) else 0L
+  }
+
+  # terms() has expanded formula operators, leaving colon-separated factors.
+  rewrite_term = function(x) {
+    factors = strsplit(x, ":", fixed = TRUE)[[1]]
+    degrees = vapply(factors, local_degree, integer(1))
+    is_local = degrees != 0L
+    factors[is_local] = sub(par_x, local_name, factors[is_local], fixed = TRUE)
+    list(label = paste0(factors, collapse = ":"), degree = sum(degrees))
+  }
+
+  # Rewrite the expanded term labels, then restore the original intercept setting.
+  terms = stats::terms(form)
+  rewritten = lapply(attr(terms, "term.labels"), rewrite_term)
+  labels = vapply(rewritten, `[[`, character(1), "label")
+  form = stats::reformulate(
+    labels, intercept = attr(terms, "intercept"), env = environment(form)
+  )
+  list(
+    form = form,
+    degree = vapply(rewritten, `[[`, integer(1), "degree"),
+    name = local_name
+  )
+}
+
+
+#' Make a shared R/JAGS-safe coefficient name
+#'
+#' Ordinary mcp parameter names are unchanged. Less common punctuation from
+#' quoted data names or factor levels is replaced and checked for collisions
+#' after all coefficients have been assembled.
+#'
+#' @keywords internal
+#' @noRd
+#' @param x Candidate coefficient names.
+#' @return Syntactic ASCII identifiers accepted by both R and JAGS.
+make_code_name = function(x) {
+  out = gsub("[^A-Za-z0-9_.]", "_", x)
+  out = gsub("_+", "_", out)
+  needs_prefix = !grepl("^[A-Za-z]", out)
+  out[needs_prefix] = paste0("b_", out[needs_prefix])
   out
 }
 
@@ -213,17 +257,28 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   if (any(stats::na.omit(is_bad) == TRUE))
     stop("mcp does not currently support 2+ terms within a formula function when one of them is par_x = '", par_x, "'. Found: ", and_collapse(formula_terms[which(is_bad)]))
 
-  design = get_fitted_design(form_rhs, data)
+  source_design = get_fitted_design(form_rhs, data)
+  matrix_name = colnames(source_design$matrix)
+
+  local = rewrite_local_x(form_rhs, par_x)
+  if (local$name %in% names(data))
+    stop("Data column '", local$name, "' is reserved for mcp's formula compiler.")
+  local_data = data
+  local_data[[local$name]] = data[[par_x]]
+  design = get_fitted_design(local$form, local_data)
+  design$spec$local_x_name = local$name
   mat = design$matrix
+  if (!identical(dim(mat), dim(source_design$matrix)) ||
+      !isTRUE(all.equal(unname(mat), unname(source_design$matrix))))
+    stop_github("Rewriting the segment-local change-point axis changed the model matrix.")
   if (check_rank == TRUE)
-    assert_rank(mat, segment, dpar)
+    assert_rank(source_design$matrix, segment, dpar)
 
 
   #######################
   # GET PARAMATER NAMES #
   #######################
-  pars = colnames(mat)
-  matrix_name = pars
+  pars = matrix_name
 
   # Replace I(...) with ...
   I_contents = stringr::str_extract(pars, "(?<=I\\().*(?=\\))")
@@ -255,7 +310,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   )
 
   # code_name
-  code_name = gsub("[: +]", "", display_name)
+  code_name = make_code_name(gsub("[: +]", "", display_name))
 
   # is_dummy
   is_dummy = apply(mat, 2, function(x) all(x %in% c(0, 1)))
@@ -265,30 +320,14 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   # GET X_FACTOR #
   ################
 
-  # Bare par_x and polynomial bases are relative to the segment onset. Other
-  # transformations stay evaluated on the original input in the model matrix.
-  local_patterns = c("x", "x\\^[\\+\\-0-9]+")
-  pars_terms = lapply(local_patterns, extract_expr, pars, par_x)
-
-  # Now convert par_x to "x"
-  pattern_convert_to_x = gsub("x", par_x, "^x$|^x(?=\\^)|(?<=\\()x", fixed = TRUE)
-  pars_terms = lapply(pars_terms, function(x) stringr::str_replace(x, pattern_convert_to_x, "x"))
-
-  # Finally, multiply-merge to vector
-  data_subterms = tibble::tibble(as.data.frame(pars_terms))
-  colnames(data_subterms) = gsub("\\", "", local_patterns, fixed = TRUE)
-  x_factor = tidyr::unite(data_subterms, "x_factor", sep = "*", na.rm = TRUE) %>% dplyr::pull(x_factor)  # same length as pars
-
-  # Check exponent
-  exponent = stringr::str_extract(dplyr::pull(data_subterms, 2), "(?<=\\^)[-0-9]+$")
-  checkmate::assert_integerish(
-    as.numeric(exponent),
-    lower = 0,
-    .var.name = "exponents in formula"
+  # Bare par_x and supported powers are relative to the segment onset. The
+  # model-matrix assign vector maps expanded factor columns back to terms.
+  local_degree = c(0L, local$degree)[attr(mat, "assign") + 1L]
+  checkmate::assert_integerish(local_degree, lower = 0, .var.name = "exponents in formula")
+  x_factor = ifelse(
+    local_degree == 0L, "1",
+    ifelse(local_degree == 1L, "x", paste0("x^", local_degree))
   )
-
-  # Everything not recognized as a local basis remains in the model matrix.
-  x_factor[x_factor == ""] = "1"
 
 
 
@@ -296,9 +335,10 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   # COMPUTE X-LESS DESIGN MATRIX #
   ################################
 
-  # Divide design matrix cols with x_factor.
-  # Evaluate x_factor funcs on par_x and divide it out of the design matrix.
-  mat_without_x = remove_x_factors(mat, x_factor, data[, par_x])
+  # Evaluate the same fitted design with the local factor set to one. This is
+  # exact at zeros and lets model.matrix handle interactions and contrasts.
+  local_data[[local$name]] = 1
+  mat_without_x = get_fitted_design(data = local_data, spec = design$spec)$matrix
 
   predictors = data.frame(
     dpar = dpar,
@@ -368,23 +408,6 @@ assert_unique_predictor_names = function(predictors) {
 }
 
 
-#' Get expressions as they appear with/without interactions
-#'
-#' @aliases extract_expr
-#' @keywords internal
-#' @noRd
-#' @param expr The expression to search for, e.g., "x" or "I(x^2)". This is the needle.
-#' @param pars This is the haystack.
-#' @param par_x The parameter to substitute for x, e.g., "myvar".
-#' @return A character vector of length `pars` with matches to `expr`.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-extract_expr = function(expr, pars, par_x) {
-  regex_exact = gsub("x", par_x, gsub("expr", expr, "^expr$|^expr(?=:)|(?<=:)expr(?=:)|(?<=:)expr$", fixed = TRUE), fixed = TRUE)  # Alone or as part of an interaction. Prevents something like "this_is_not_x^2" being detected as "x^2"
-  stringr::str_extract(pars, regex_exact)
-}
-
-
 #' Detect terms that contain a particular variable
 #'
 #' Finds it whether it's in an interaction, in an expression, etc. without false positives.
@@ -398,8 +421,7 @@ extract_expr = function(expr, pars, par_x) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 term_contains = function(par_x, terms) {
-  regex_contains_par_x = gsub("x", par_x, "^x$|^x[: +*^]|[: +*^\\(]x[: +*^\\)]|[: +*^]x$")
-  stringr::str_detect(terms, regex_contains_par_x)
+  vapply(terms, function(term) par_x %in% all.vars(str2lang(term)), logical(1))
 }
 
 

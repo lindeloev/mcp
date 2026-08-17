@@ -161,8 +161,7 @@
 #'   * Prior strings use conventional scale parameterizations. `mcp` converts
 #'       these to the parameterization required by JAGS when generating code:
 #'       inverse variance for `dnorm()`, `dt()`, and `dlnorm()`, and inverse
-#'       scale for `ddexp()` and `dlogis()`. JAGS does not provide `dcauchy()`;
-#'       use `dt(location, scale, 1)` for a Cauchy prior. Use
+#'       scale for `ddexp()` and `dlogis()`. Use
 #'       `prior_summary(fit)` for resolved priors and
 #'       `prior_summary(fit, verbose = TRUE)` for their rules and descriptions.
 #' @return An \code{\link{mcpfit}} object.

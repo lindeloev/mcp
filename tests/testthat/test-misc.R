@@ -23,6 +23,24 @@ test_that("mcp rejects non-syntactic data column names", {
   )
 })
 
+test_that("mcp rejects data names that collide with generated JAGS nodes", {
+  data = data.frame(mu_ = 1:5, x = 1:5)
+  expect_error(
+    mcp(list(mu_ ~ 1), data, par_x = "x", sample = FALSE),
+    "Data column name(s) collide with mcp's generated JAGS namespace: 'mu_'",
+    fixed = TRUE
+  )
+})
+
+test_that("mcp rejects generated parameter names that collide with change points", {
+  data = data.frame(x = 1:5, cp = c(0, 1, 0, 1, 0), y = 1:5)
+  expect_error(
+    mcp(list(y ~ cp, ~ 1), data, par_x = "x", sample = FALSE),
+    "Generated parameter name(s) collide in the JAGS namespace: 'cp_1'",
+    fixed = TRUE
+  )
+})
+
 
 test_that("mcpfit model accessors follow standard R conventions", {
   data = data.frame(x = 1:5, y = c(1, 2, NA, 4, 5), unused = 6:10)

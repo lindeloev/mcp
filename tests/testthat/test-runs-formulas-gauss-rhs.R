@@ -129,6 +129,50 @@ test_that("transformations use the original par_x while segment bases stay local
   expect_equal(as.numeric(fitted), expected)
 })
 
+test_that("par_x is recognized as an exact formula symbol", {
+  data = data.frame(a.b = 0:4, axb = c(2, 4, 6, 8, 10), y = 0)
+  fit = mcp(list(y ~ 0 + axb), data, par_x = "a.b", sample = FALSE)
+  predictor = dplyr::filter(get_fit_model_tables(fit)$predictors, .data$dpar == "mu")
+
+  expect_equal(predictor$x_factor, "1")
+  expect_equal(unname(predictor$matrix_data[[1]]), data$axb)
+})
+
+test_that("x-free interactions are evaluated directly at zero", {
+  data = data.frame(x = 0:4, z = c(2, 0, 0, 4, 5), y = 0)
+  fit = mcp(list(y ~ 0 + x:z), data, par_x = "x", sample = FALSE)
+  predictor = dplyr::filter(get_fit_model_tables(fit)$predictors, .data$dpar == "mu")
+
+  expect_equal(predictor$x_factor, "x")
+  expect_equal(unname(predictor$matrix_data[[1]]), data$z)
+
+  segmented = mcp(list(y ~ 0, ~ 0 + x:z), data, par_x = "x", sample = FALSE)
+  fitted = segmented$simulate(
+    segmented, data, cp_1 = 0, xz_2 = 1, sigma_1 = 1, .type = "fitted"
+  )
+  expect_equal(as.numeric(fitted), data$x * data$z)
+})
+
+test_that("factor punctuation produces safe parameter names", {
+  data = data.frame(
+    x = 1:4,
+    condition = factor(
+      c("reference", "a/b", "reference", "a/b"),
+      levels = c("reference", "a/b")
+    ),
+    y = 0
+  )
+  fit = mcp(list(y ~ condition), data, par_x = "x", sample = FALSE)
+  predictor = get_fit_model_tables(fit)$predictors
+  slash_row = grepl("a/b", predictor$matrix_name, fixed = TRUE)
+  safe_name = predictor$code_name[slash_row]
+
+  expect_true(length(safe_name) == 1 && grepl("^[A-Za-z][A-Za-z0-9_.]*$", safe_name))
+  args = list(fit = fit, newdata = data, Intercept_1 = 0, sigma_1 = 1, .type = "fitted")
+  args[[safe_name]] = 1
+  expect_no_error(do.call(fit$simulate, args))
+})
+
 test_that("prediction reuses fitted factor encodings", {
   data = data.frame(
     x = 1:6,
@@ -155,8 +199,11 @@ test_that("prediction reuses fitted factor encodings", {
     get_fit_model_tables(custom_fit)$predictors,
     get_fit_model_tables(custom_fit)$group_effects
   )
-  custom_new = add_rhs_predictors(
-    transform(custom_data, condition = as.character(condition)), custom_fit
+  custom_new = expect_warning(
+    add_rhs_predictors(
+      transform(custom_data, condition = as.character(condition)), custom_fit
+    ),
+    "contrasts dropped from factor"
   )
   expect_equal(
     unname(as.matrix(custom_new[, paste0(".pred_", colnames(custom_matrix))])),

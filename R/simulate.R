@@ -51,7 +51,7 @@ relevel_newdata = function(newdata, fit) {
 #' @param design_specs Named fitted specifications from `get_predictor_tables()`.
 #' @inheritParams add_rhs_predictors
 #' @return `table` with `matrix_data` evaluated on `newdata`.
-evaluate_fitted_designs = function(table, design_specs, newdata, par_x) {
+evaluate_fitted_designs = function(table, design_specs, newdata) {
   if (nrow(table) == 0 || "design_id" %notin% names(table))
     return(table)
 
@@ -63,17 +63,14 @@ evaluate_fitted_designs = function(table, design_specs, newdata, par_x) {
       stop_github("Missing fitted design specification '", design_id, "'.")
 
     # Recreate the component matrix relevant here
-    component_matrix = get_fitted_design(data = newdata, spec = spec)$matrix
+    design_data = newdata
+    if (!is.null(spec$local_x_name))
+      design_data[[spec$local_x_name]] = 1
+    component_matrix = get_fitted_design(data = design_data, spec = spec)$matrix
     component_matrix = component_matrix[
       , table$design_col[rows], drop = FALSE
     ]
 
-    # Bare par_x terms are represented relative to segment onset elsewhere in
-    # mcp. Divide those factors out exactly as during fitting, then replace the
-    # stored fitting-data columns with their newdata values.
-    component_matrix = remove_x_factors(
-      component_matrix, table$x_factor[rows], newdata[, par_x]
-    )
     table$matrix_data[rows] = unname(as.list(as.data.frame(component_matrix)))
   }
 
@@ -107,10 +104,10 @@ add_rhs_predictors = function(newdata, fit) {
   design_specs = model_tables$design_specs
   data_columns = mcp_columns(fit)
   predictors = evaluate_fitted_designs(
-    predictors, design_specs, newdata, data_columns$par_x
+    predictors, design_specs, newdata
   )
   group_effects = evaluate_fitted_designs(
-    group_effects, design_specs, newdata, data_columns$par_x
+    group_effects, design_specs, newdata
   )
   predictor_matrix = get_predictor_matrix(predictors, group_effects)
 
