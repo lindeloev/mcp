@@ -413,7 +413,8 @@ family.mcpfit = function(object, ...) {
 #' @export
 nobs.mcpfit = function(object, ...) {
   rlang::check_dots_empty()
-  nrow(model.frame(object))
+  y_col = mcp_columns(object)$response
+  sum(!is.na(object$data[[y_col]]))
 }
 
 
@@ -1678,6 +1679,7 @@ posterior_linpred.mcpfit = function(
     re_formula = re_formula,
     dpar = dpar,
     scale = if (transform) "response" else "linear",
+    rate = TRUE,
     seed = seed,
     ...
   )
@@ -1697,6 +1699,7 @@ posterior_prediction_matrix = function(
   re_formula,
   dpar = NULL,
   scale = "response",
+  rate = FALSE,
   seed = NULL,
   ...
 ) {
@@ -1721,7 +1724,7 @@ posterior_prediction_matrix = function(
     summary = FALSE,
     type = type,
     probs = FALSE,
-    rate = FALSE,
+    rate = rate,
     prior = FALSE,
     dpar = if (type == "fitted") dpar else NULL,
     varying = varying,
