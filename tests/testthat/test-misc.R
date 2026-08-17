@@ -35,11 +35,13 @@ test_that("mcpfit model accessors follow standard R conventions", {
   expect_equal(mcp_columns(fit)$response, "y")
 
   population = mcp_pars(fit, scope = "population")$name
+  fixed = mcp_pars(fit, scope = "population", role = "fixed_effect")$name
   values = matrix(seq_len(3 * length(population)), nrow = 3)
   colnames(values) = population
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(values))
-  expect_equal(vcov(fit), stats::cov(values))
-  expect_equal(vcov(fit, correlation = TRUE), stats::cor(values))
+  expect_equal(vcov(fit), stats::cov(values[, fixed, drop = FALSE]))
+  expect_equal(vcov(fit, correlation = TRUE), stats::cor(values[, fixed, drop = FALSE]))
+  expect_equal(vcov(fit, pars = "all"), stats::cov(values))
   expected_intervals = t(vapply(
     population,
     function(parameter) stats::quantile(values[, parameter], c(0.025, 0.975), names = FALSE),
@@ -47,6 +49,19 @@ test_that("mcpfit model accessors follow standard R conventions", {
   ))
   colnames(expected_intervals) = c("2.5 %", "97.5 %")
   expect_equal(confint(fit), expected_intervals)
+})
+
+
+test_that("fixef() and vcov() select distributional-parameter coefficients", {
+  data = data.frame(x = 1:5, y = 0)
+  fit = mcp(list(y ~ 1 + sigma(1 + x)), data, par_x = "x", sample = FALSE)
+  pars = mcp_pars(fit, scope = "population")
+  values = matrix(seq_len(3 * nrow(pars)), nrow = 3, dimnames = list(NULL, pars$name))
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(values))
+  sigma_names = pars$name[pars$dpar == "sigma" & pars$role == "dpar_effect"]
+
+  expect_setequal(fixef(fit, dpar = "sigma")$name, sigma_names)
+  expect_equal(vcov(fit, dpar = "sigma"), stats::cov(values[, sigma_names, drop = FALSE]))
 })
 
 

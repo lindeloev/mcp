@@ -46,12 +46,13 @@ NULL
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_summary = function(fit, width, scope = c("population", "group"), role = NULL,
-                       prior = FALSE, verbose = FALSE) {
+                       dpar = NULL, prior = FALSE, verbose = FALSE) {
   # Check arguments
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_number(width, lower = 0, upper = 1)
   scope = rlang::arg_match0(scope, c("population", "group"))
   checkmate::assert_character(role, null.ok = TRUE)
+  checkmate::assert_character(dpar, any.missing = FALSE, null.ok = TRUE)
   checkmate::assert_flag(prior)
   checkmate::assert_flag(verbose)
 
@@ -63,9 +64,12 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   # Select by the independent scope and role dimensions of the parameter table.
   all_cols = posterior::variables(draws)
   pars = mcp_pars(fit)
-  selected_names = pars$name[pars$scope == scope]
+  selected = pars$scope == scope
   if (!is.null(role))
-    selected_names = selected_names[pars$role[pars$scope == scope] %in% role]
+    selected = selected & pars$role %in% role
+  if (!is.null(dpar))
+    selected = selected & pars$dpar %in% dpar
+  selected_names = pars$name[selected]
 
   if (scope == "population") {
     get_cols = all_cols[all_cols %in% selected_names]
@@ -358,10 +362,17 @@ ranef = function(object, ...) UseMethod("ranef")
 
 #' @aliases fixef fixef.mcpfit
 #' @describeIn summary.mcpfit Population-level fixed effects (regression coefficients) of `mcpfit`.
+#' @param dpar Distributional parameter(s) whose regression coefficients to
+#'   return. For modeled distributional parameters such as `sigma()`, these
+#'   coefficients are on the link scale.
 #' @export
-fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {
+fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, dpar = "mu", ...) {
   rlang::check_dots_empty()
-  get_summary(object, width, scope = "population", role = "fixed_effect", prior = prior, verbose = verbose)
+  checkmate::assert_subset(dpar, object$family$dpar_specs$dpar)
+  get_summary(
+    object, width, scope = "population", role = c("fixed_effect", "dpar_effect"),
+    dpar = dpar, prior = prior, verbose = verbose
+  )
 }
 
 #' @aliases ranef ranef.mcpfit
@@ -434,7 +445,9 @@ formula.mcpfit = function(x, segment = NULL, ...) {
 #' @param object An `mcpfit` object.
 #' @param correlation Return the posterior correlation matrix instead of the
 #'   covariance matrix?
-#' @param pars Optional names of population-level parameters to extract.
+#' @param pars Optional names of population-level parameters to extract, or
+#'   `"all"` for all population-level parameters.
+#' @param dpar Distributional parameter(s) to select when `pars = NULL`.
 #' @param parm Optional names or positions of population-level parameters to
 #'   include in the intervals.
 #' @param level Width of the central posterior interval.
@@ -442,17 +455,43 @@ formula.mcpfit = function(x, segment = NULL, ...) {
 #' @return `vcov()` returns a posterior covariance or correlation matrix.
 #'   `confint()` returns a two-column matrix of central posterior intervals.
 #' @name posterior-uncertainty-mcpfit
+#' @examples
+#' # Posterior covariance of the primary-response coefficients, matching fixef().
+#' vcov(demo_fit)
+#'
+#' # Central posterior intervals for all population-level parameters, or a selection.
+#' confint(demo_fit)
+#' confint(demo_fit, parm = "cp_1")
+#' confint(demo_fit, parm = c("Intercept_1", "time_2"), level = 0.8)
+#'
+#' # Include change points, residual SDs, group SDs, and AR/MA parameters.
+#' vcov(demo_fit, pars = "all")
+#'
+#' # Inspect posterior parameter correlations across the full population model.
+#' # Useful to quickly check identifiability (high correlation). Inspecting
+#' `bayesplot::mcmc_pairs(as_draws(demo_fit))` is better, though.
+#' vcov(demo_fit, pars = "all", correlation = TRUE)
 NULL
 
 
 #' @rdname posterior-uncertainty-mcpfit
 #' @export
-vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, ...) {
+vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, dpar = "mu", ...) {
   rlang::check_dots_empty()
   checkmate::assert_flag(correlation)
-  population = mcp_pars(object, scope = "population")$name
-  pars = if (is.null(pars)) population else as.character(pars)
-  pars = intersect(population, pars)
+  parameters = mcp_pars(object, scope = "population")
+  if (is.null(pars)) {
+    checkmate::assert_subset(dpar, object$family$dpar_specs$dpar)
+    pars = parameters$name[
+      parameters$role %in% c("fixed_effect", "dpar_effect") &
+        parameters$dpar %in% dpar
+    ]
+  } else if (identical(pars, "all")) {
+    pars = parameters$name
+  } else {
+    checkmate::assert_character(pars, any.missing = FALSE)
+    pars = intersect(parameters$name, pars)
+  }
   if (length(pars) == 0)
     return(NULL)
 
