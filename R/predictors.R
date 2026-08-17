@@ -460,7 +460,7 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
   is_arma_term = stringr::str_detect(term_labels, arma_pattern)
   mu_terms = term_labels[!is_dpar_term & !is_arma_term]
 
-  if (length(mu_terms > 0)) {
+  if (length(mu_terms) > 0) {
     mu_terms[1] = paste0(attrs$intercept, " + ", mu_terms[1])
     mu_term = paste0(mu_terms, collapse = " + ")  # for use in fit$model and in summary()
     mu_term = paste0("mu(", mu_term, ")")  # Get it in "standard" format

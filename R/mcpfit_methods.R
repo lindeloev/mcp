@@ -56,7 +56,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   checkmate::assert_flag(prior)
   checkmate::assert_flag(verbose)
 
-  if (scope == "group" & nrow(mcp_pars(fit, scope = "group")) == 0)
+  if (scope == "group" && nrow(mcp_pars(fit, scope = "group")) == 0)
     return(NULL)
 
   draws = posterior_draws(fit, prior = prior)
@@ -287,7 +287,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
   if (!is.null(draws))
     cat("Iterations: ", coda::niter(draws), " from ", coda::nchain(draws), " chains.\n", sep="")
   cat("Segments:\n")
-  for (i in 1:length(fit$model)) {
+  for (i in seq_along(fit$model)) {
     cat("  ", i, ": ", formula_to_char(fit$model[[i]]), "\n", sep = "")
   }
 
@@ -1252,7 +1252,7 @@ pp_eval = function(
   )
   if (is.numeric(probs))
     checkmate::assert_numeric(probs, lower = 0, upper = 1, any.missing = FALSE)
-  if (is.logical(probs) & all(probs == TRUE))
+  if (is.logical(probs) && all(probs == TRUE))
     probs = c(0.025, 0.975)
   checkmate::assert_flag(rate)
   checkmate::assert_flag(prior)

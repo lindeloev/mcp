@@ -161,7 +161,7 @@ assert_rel = function(model) {
 assert_typescale = function(type, scale) {
   rlang::arg_match0(type, c("predict", "fitted", "residuals", "loglik"))
   rlang::arg_match0(scale, c("response", "linear"))
-  if (scale == "linear" & type != "fitted")
+  if (scale == "linear" && type != "fitted")
     stop("scale = 'linear' is only allowed when type = 'fitted'.")
 
   TRUE
@@ -182,7 +182,7 @@ assert_dpar = function(dpar, fit, type) {
   checkmate::assert_string(dpar)
   dpar = rlang::arg_match0(dpar, allowed_dpars)
 
-  if (type != "fitted" & dpar != "epred")
+  if (type != "fitted" && dpar != "epred")
     stop("dpar = '", dpar, "' is only allowed when type = 'fitted'.")
 
   dpar

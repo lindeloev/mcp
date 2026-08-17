@@ -277,7 +277,7 @@ mcp = function(model,
     stop("`prior` has duplicated entries for the same parameter: ", and_collapse(names(prior)[which_duplicated]))
 
   # Transform family to mcpfamily
-  if (is.family(family) == FALSE & is.mcpfamily(family) == FALSE)
+  if (!is.family(family) && !is.mcpfamily(family))
     stop("`family` is not a valid family or mcpfamily. Should be gaussian(), binomial(), mcpfamily(guassian(link = 'log')), etc.")
 
   if (is.mcpfamily(family) == FALSE)

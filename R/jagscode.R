@@ -208,7 +208,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   # Use get_prior_str() to add group-level priors.
   if (length(prior_group) > 0) {
     mm = paste0(mm, "\n  # Priors for group-level effects\n")
-    for (i in 1:length(prior_group)) {
+    for (i in seq_along(prior_group)) {
       effect = group_effects[group_effects$name == names(prior_group)[i], , drop = FALSE]
       if (nrow(effect) != 1)
         stop_github("Expected exactly one group-effect row for ", names(prior_group)[i], ".")

@@ -22,7 +22,7 @@ relevel_newdata = function(newdata, fit) {
   for (col_name in intersect(c(rhs_vars, group_cols), names(newdata))) {
     org_col = fit$data[, col_name]
     new_col = newdata[, col_name]
-    if (is.character(org_col) | is.factor(org_col)) {
+    if (is.character(org_col) || is.factor(org_col)) {
       new_col = factor(
         new_col,
         levels = levels(factor(org_col)),
@@ -299,7 +299,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   has_ydata = is.null(args[[data_columns$response]]) == FALSE
   if (has_ydata)
     dpar_values$.ydata = args[[data_columns$response]]
-  if (.type == "loglik" & has_ydata == FALSE)
+  if (.type == "loglik" && has_ydata == FALSE)
     stop(".ydata must be non-NULL for .type = 'loglik'.")
   .dpar = paste0(.dpar, "_")
 
@@ -312,7 +312,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   }), fit$family$dpars)
 
   # Simply return for fitted dpars
-  if (.dpar %notin% c("epred_", "mu_") & .type == "fitted") {
+  if (.dpar %notin% c("epred_", "mu_") && .type == "fitted") {
     link_dpar = paste0("link_", .dpar)
     if (uses_link_dpars && .scale == "linear" && link_dpar %in% names(dpar_values))
       return(dpar_values[[link_dpar]])
@@ -418,7 +418,7 @@ simulate_atomic = function(fit,
     setdiff(get_sim_pars(model_tables$cps, model_predictors, model_group_effects), model_group_effects$name),
     model_group_effects$sd_name
   )
-  if (is.null(names(args)) | any(names(args) == ""))
+  if (is.null(names(args)) || any(names(args) == ""))
     stop("All arguments must be named.")
   checkmate::assert_subset(
     names(args),
