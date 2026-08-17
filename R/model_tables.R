@@ -64,10 +64,13 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
   # Check data types
   if (!is.null(data)) {
     # Check y
-    if (!is.numeric(data[, segments$y[1]]))
-      stop("Data column '", segments$y[1], "' has to be numeric.")
-    if (any(is.na(data[, segments$y[1]])))
-      message("NA values detected in '", segments$y[1], "'. JAGS will treat them as latent responses and impute them during sampling.")
+    y_col = segments$y[1]
+    if (is.logical(data[[y_col]]))
+      data[[y_col]] = as.numeric(data[[y_col]])
+    if (!is.numeric(data[[y_col]]))
+      stop("Data column '", y_col, "' has to be numeric.")
+    if (any(is.na(data[[y_col]])))
+      message("NA values detected in '", y_col, "'. JAGS will treat them as latent responses and impute them during sampling.")
 
     # Check varying
     if (length(derived_varying) > 0) {

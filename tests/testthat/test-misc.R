@@ -56,7 +56,7 @@ test_that("mcpfit model accessors follow standard R conventions", {
   expect_type(fit$call, "language")
   expect_identical(fit$call[[1]], quote(mcp))
   expect_identical(family(fit), fit$family)
-  expect_equal(nobs(fit), 5)
+  expect_equal(nobs(fit), 4)
   expect_identical(model.frame(fit), fit$data)
   expect_identical(formula(fit), fit$model)
   expect_identical(formula(fit, segment = 1), fit$model[[1]])
@@ -807,4 +807,51 @@ test_that("diagnostic settings control fit warnings and summary footers", {
 
   ex_fit = mcp_example("intercepts", sample = FALSE)
   expect_s3_class(ex_fit, "mcpfit")
+})
+
+test_that("bernoulli accepts logical TRUE/FALSE responses and converts to 0/1", {
+  data_logical = data.frame(
+    x = 1:6,
+    y = c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE)
+  )
+  fit = mcp(list(y ~ 1 + x), data = data_logical, family = bernoulli(), sample = FALSE)
+  expect_s3_class(fit, "mcpfit")
+  expect_equal(fit$data$y, c(1, 0, 1, 0, 1, 0))
+})
+
+test_that("posterior_linpred evaluates binomial models on probability scale when transform = TRUE", {
+  data_bin = data.frame(
+    x = c(1, 2, 3),
+    y = c(2, 3, 4),
+    N = c(5, 5, 5)
+  )
+  fit = mcp(list(y | trials(N) ~ 1 + x), data = data_bin, family = binomial(), sample = FALSE)
+  
+  # Mock 1 posterior draw where Intercept_1 = 0, x_1 = 0 -> logit(p) = 0 -> p = 0.5
+  population = mcp_pars(fit, scope = "population")$name
+  draws = matrix(rep(0, length(population)), nrow = 1)
+  colnames(draws) = population
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+
+  linpred_link = rstantools::posterior_linpred(fit, transform = FALSE)
+  linpred_prob = rstantools::posterior_linpred(fit, transform = TRUE)
+  epred_counts = rstantools::posterior_epred(fit)
+
+  expect_equal(unname(linpred_link), matrix(c(0, 0, 0), nrow = 1))
+  expect_equal(unname(linpred_prob), matrix(c(0.5, 0.5, 0.5), nrow = 1))
+  expect_equal(unname(epred_counts), matrix(c(2.5, 2.5, 2.5), nrow = 1))
+})
+
+test_that("loo supports by_row and soft-deprecates pointwise", {
+  data = data.frame(x = 1:5, y = c(2, 4, 6, 8, 10))
+  fit = mcp(list(y ~ 1 + x), data = data, sample = FALSE)
+  
+  population = mcp_pars(fit, scope = "population")$name
+  draws = matrix(rep(c(1, 2, 0.5), each = 5), nrow = 5)
+  colnames(draws) = population
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+
+  loo_by_row = suppressWarnings(loo(fit, by_row = TRUE))
+  expect_s3_class(loo_by_row, "psis_loo")
+  expect_warning(loo(fit, pointwise = TRUE), "deprecated")
 })

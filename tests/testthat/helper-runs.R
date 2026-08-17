@@ -124,8 +124,8 @@ test_s3_methods = function(fit) {
     testthat::expect_true(loo::is.psis_loo(fit_loo))
     testthat::expect_true(loo::is.waic(fit_waic))
 
-    # Test pointwise
-    loo_pointwise = suppressMessages(suppressWarnings(loo(fit, pointwise = TRUE)))
+    # Test pointwise / by_row
+    loo_pointwise = suppressMessages(suppressWarnings(loo(fit, by_row = TRUE)))
     rownames(fit_loo$pointwise) = NULL
     testthat::expect_equal(fit_loo$pointwise, loo_pointwise$pointwise)
   }

@@ -276,6 +276,9 @@ mcp = function(model,
   assert_model_data(data, par_x, rhs_vars)
   assert_data_cols(data, cols = model_vars, fail_funcs = c(is.infinite))
   data = data[, model_vars]  # Remove unused data
+  response_var = get_model_vars(model)[1]
+  if (response_var %in% names(data) && is.logical(data[[response_var]]))
+    data[[response_var]] = as.numeric(data[[response_var]])
 
   # Plain named lists are the v0.4 JAGS-string prior format. Future classed
   # sampler-agnostic prior objects can dispatch before this legacy path.
