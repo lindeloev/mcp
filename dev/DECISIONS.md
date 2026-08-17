@@ -35,3 +35,6 @@ Supplying custom `mcp(..., jags_code)` will make fit$simulate() out of sync. Thi
 
 ## 2026-08-17: What is population-level?
 `summary.mcpfit()` calls both distributional parameters (`dpar`, e.g., sigma, shape, ...) and AR/MA parameters "population-level". Only change points and group-level effects are not called population-level. This may not be classical wording, but having sections for each `dpar` seems like bloat.
+
+## 2026-08-07: GARMA order > data length
+Running ar(4) on length-3 data fails in JAGS with uninformative error. This is such a rare edge case that I will not add ~15 lines to protect against it for each series x group combo.

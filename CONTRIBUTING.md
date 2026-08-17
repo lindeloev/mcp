@@ -2,6 +2,14 @@
 
 Thank you for your interest in contributing to `mcp`! This document outlines guidelines and developer workflows for running tests and contributing code.
 
+## Submitting code
+Once tests pass locally (see below), create a pull request to the `dev` branch which will initiate tests via github workflows.
+
+AI-based bug finding is welcome and is actively used during development of `mcp`. See `dev/promot*` for prompts.
+
+See `dev/DECISIONS.md` for decisions made during development to balance functionality/bug-free against code simplicity. It is better to have simple/readable code than to add 200 lines of code to fix a rare edge case.
+
+
 ## Running Tests
 
 `mcp` uses `testthat` (edition 3) for unit and integration testing.
