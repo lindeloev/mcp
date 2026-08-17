@@ -222,7 +222,7 @@ get_imputed_response_draws = function(fit, draws) {
 #' @noRd
 #' @param fit An mcpfit object.
 #' @param arma Whether AR and MA effects are included in the evaluation.
-#' @param check One of `"ppc"` or `"information_criterion"`.
+#' @param check Currently only `"information_criterion"`.
 #' @return `NULL`, invisibly. Called for the warning side-effect.
 warn_arma_check = function(fit, arma, check) {
   if (!arma || !is_arma(fit))
@@ -231,12 +231,6 @@ warn_arma_check = function(fit, arma, check) {
   warning(
     switch(
       check,
-      ppc = paste(
-        "For AR/MA models, mcp conditions predictions on the observed response history.",
-        "These are one-step-ahead conditional predictions, not jointly replicated time series.",
-        "Serial summaries such as ACF and run lengths may therefore be misleading.",
-        "Joint-series posterior predictive checks are not yet supported."
-      ),
       information_criterion = paste(
         "Observationwise PSIS-LOO/WAIC is problematic for AR/MA models because both treat",
         "individual conditional likelihood terms as validation units. In PSIS-LOO, a held-out",

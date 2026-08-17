@@ -15,9 +15,11 @@
 #'   number of plotted draws.
 #' @param nsamples Deprecated. Use `ndraws` instead.
 #' @param ... Further arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
-#' @details Missing responses are omitted from the observed-data check. LOO
-#'   predictive checks use posterior draws and the original fitted data, so
-#'   they do not support `prior = TRUE` or `newdata`.
+#' @details Missing responses are omitted from the observed-data check. For
+#'   GARMA models, each replicated response series is generated recursively
+#'   rather than conditioning on the observed response history. LOO predictive
+#'   checks use posterior draws and the original fitted data, so they do not
+#'   support `prior = TRUE` or `newdata`.
 #' @return A `ggplot2` object for single plots. Enriched by `patchwork` for faceted plots.
 #' @seealso \code{\link{plot.mcpfit}} \code{\link{pp_eval}}
 #' @encoding UTF-8
@@ -52,7 +54,6 @@ pp_check = function(
   checkmate::assert_multi_class(varying, c("logical", "character"))
   checkmate::assert_flag(arma)
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
-  warn_arma_check(fit, arma, "ppc")
 
   # Check and recode inputs
   if (!is.null(facet_by))
@@ -102,7 +103,8 @@ pp_check = function(
     # intact; bayesplot's `samples` argument controls plot sampling where
     # supported.
     ndraws = if (is_loo) NULL else ndraws,
-    draws_format = "tidy"
+    draws_format = "tidy",
+    .garma_replicate = TRUE
   )
   # Return plot with or without facets
   if (is.null(facet_by)) {

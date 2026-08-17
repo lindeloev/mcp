@@ -31,9 +31,7 @@ $$
 + \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right].
 $$
 
-Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations. Unavailable lags at the beginning of the series contribute zero. This same recurrence is used by JAGS, fitted values, predictions, log likelihoods, and fresh-series simulation.
-
-`mcp` evaluates this as a finite, conditional recurrence: the observed history supplies earlier residuals, and unavailable residuals before the start of the series are set to zero.
+Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations. Unavailable lags at the beginning of the series contribute zero. This same recurrence is used by JAGS, fitted values, predictions, log likelihoods, and fresh-series simulation. 
 
 The AR and MA coefficients are modeled directly and are not jointly constrained to the stationary or invertible regions. With higher-order terms such as `ar(2)`, independently bounded coefficients can violate the usual root conditions. Coefficients that change across predictors or segments, such as `ar(1, 1 + x)` or `model = list(y ~ ar(1), ~ ar(1))`, instead define a time-varying process to which the usual constant-coefficient conditions do not directly apply. The same applies to `ma()`.
 
@@ -296,6 +294,14 @@ Here are a few ways in which you may want to inform the AR or MA parameters:
 
  * For a constant AR(2) process, stationarity requires $-1 < \phi_2 < 1$ and $\phi_2 - 1 < \phi_1 < 1 - \phi_2$. One dependent-prior construction that stays in this region is `ar2_1 = "dunif(-1, 1)"` together with `ar1_1 = "dunif(ar2_1 - 1, 1 - ar2_1)"`. The simpler suggestion `ar2_1 = "dunif(0, ar1_1)"` is not sufficient. Higher orders require the corresponding joint root condition.
  * Slopes can quickly make AR coefficients non-stationary or MA coefficients non-invertible. Constrain their magnitude with reference to a plausible change over the predictor range. For example, a shallow negative change over the observed x-span could use `"dnorm(0, 0.1 / (max(x) - min(x))) T(, 0)"`.
+
+
+# Notes on observed data vs simulated data
+JAGS, `fitted()`, `predict()`, and `log_lik()` evaluate a finite, conditional recurrence: the response history supplies earlier residuals, and unavailable residuals before the start of the series are set to zero.
+
+* `fitted()` and `predict()` use posterior imputations for the actual missing response data, so it is conditional on the actual data values/order for the ar/ma modeling.
+* `log_lik()` is unavailable if the data has missingness before some observed data.
+* In contrast, `posterior_predict()` and `pp_check()` generate each series from the model posteriors without regards to the original data. This makes serial summaries of posterior replications, such as their autocorrelation and run lengths, meaningful.
 
 
 

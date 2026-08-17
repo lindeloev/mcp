@@ -137,7 +137,9 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Fixed several posterior predictive check and information-criterion bugs present in v0.3.4. From most to least serious:
     - For missing data: Missing responses were scored in WAIC/LOO as if their JAGS-imputed values had been observed. Fix: missing responses remain latent in JAGS but are excluded from observed-data PPC, log-likelihood, WAIC, and LOO calculations.
+    
     - For models with group-level change points, LOO checks with `facet_by != NULL` could pair group-specific predictions with weights from the wrong observations.
+    - For AR/MA models, `pp_check()` conditioned every prediction on the observed response history. They now generate each posterior replication recursively as a fresh time series.
     - LOO checks with `prior = TRUE` incorrectly combined prior predictions with posterior LOO weights. A rare use case.
     - `pp_check(..., ndraws = NULL)` errored. Fixed.
 
@@ -146,6 +148,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 -   In models going from higher-order to lower-order, (`~ ar(2), ~ ar(1)`), the higher-order components were not "turned off".
 
 -   Bug only noticeable for very small samples: For Gaussian identity-link AR models, R-side calculations could leak residuals between posterior draws and omitted available partial lags for the first observations of AR(2+) models. Each draw is now evaluated as a separate series and uses the same partial-lag recurrence as JAGS.
+
+-   Conditional R-side GARMA histories are now evaluated across posterior draws rather than through a scalar loop over every draw and observation. This substantially speeds up `fitted()`, `predict()`, `residuals()`, and `log_lik()` for AR/MA models.
 
 -   The quantiles from `fitted()` and `predict()` for group-level change-point models ignored the group level and were identical across levels.
 

@@ -131,12 +131,16 @@ The predictors required by the model must themselves be observed. `mcp` currentl
 
 Missing rows are not treated as observed contributions to `log_lik()`, `loo()`, or `waic()`. For ordinary non-AR/MA models, the remaining observed rows can still be used for these calculations.
 
-AR/MA models need extra care because a missing response can become part of the history for later observations. `mcp` retains the JAGS draws so `fitted()` and `predict()` can reconstruct that history, but it does not currently integrate over missing histories for pointwise likelihood calculations. Consequently, `log_lik()`, `loo()`, and `waic()` are unavailable when a missing response enters a later observed GARMA history. The [time-series article](../articles/arma.html) discusses the broader limitations of observationwise information criteria for serial models.
+AR/MA models need extra care because a missing response can become part of the history for later observations. `mcp` retains the JAGS draws so `fitted()` and `predict()` can reconstruct that history, but it does not currently integrate over missing histories for pointwise likelihood calculations. Consequently, `log_lik()`, `loo()`, and `waic()` are unavailable when a missing response preceeds some observed data. 
+
+The [time-series article](../articles/arma.html) discusses this. Briefly, use `posterior_predict()` to generate fresh replicated series from the posteriors (as all
+other mcp functions do), which do not depend on the observed response history.
+```
 
 
 # Original data versus new data
 
-The retained JAGS draws belong to the missing rows in the original fitted data. Calling `predict(fit)` uses them. Predictions for genuinely new data are ordinary posterior predictions rather than imputations of the original missing responses:
+The retained JAGS draws belong to the missing rows in the original fitted data. Calling `predict(fit)` uses them. For the non-AR/MA example in this article, predictions for genuinely new data are ordinary posterior predictions rather than imputations of the original missing responses:
 
 ```{r}
 newdata = data.frame(

@@ -99,15 +99,10 @@ test_that("series input is contiguous and survives interpolation", {
 })
 
 
-test_that("AR/MA model checks warn about conditional validation", {
+test_that("AR/MA model checks warn only about conditional information criteria", {
   data = data.frame(x = 1:4, y = 1:4)
   fit = mcp(list(y ~ 1 + ar(1)), data = data, par_x = "x", sample = FALSE, quiet = TRUE)
 
-  expect_warning(
-    try(pp_check(fit, ndraws = 1), silent = TRUE),
-    "one-step-ahead conditional predictions",
-    fixed = TRUE
-  )
   expect_warning(
     try(loo(fit), silent = TRUE),
     "Observationwise PSIS-LOO/WAIC is problematic",
@@ -118,7 +113,16 @@ test_that("AR/MA model checks warn about conditional validation", {
     "Observationwise PSIS-LOO/WAIC is problematic",
     fixed = TRUE
   )
-  expect_no_warning(warn_arma_check(fit, arma = FALSE, "ppc"))
+  expect_no_warning(warn_arma_check(fit, arma = FALSE, "information_criterion"))
+
+  fixed_draws = matrix(
+    rep(c(0, 1, 0.5), 5),
+    nrow = 5,
+    byrow = TRUE,
+    dimnames = list(NULL, c("Intercept_1", "sigma_1", "ar1_1"))
+  )
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(fixed_draws))
+  expect_no_warning(suppressMessages(pp_check(fit, ndraws = 2)))
 })
 
 

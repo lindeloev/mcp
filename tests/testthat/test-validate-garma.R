@@ -133,6 +133,50 @@ test_that("fit$simulate generates GARMA series recursively", {
 })
 
 
+test_that("posterior_predict generates fresh GARMA series recursively", {
+  data = data.frame(x = 1:3, y = c(10, 20, 30))
+  fit = mcp(
+    list(y ~ 1 + ar(1)), data,
+    par_x = "x", sample = FALSE, quiet = TRUE
+  )
+  fixed_draws = matrix(
+    rep(c(0, 0, 0.5), 2),
+    nrow = 2,
+    byrow = TRUE,
+    dimnames = list(NULL, c("Intercept_1", "sigma_1", "ar1_1"))
+  )
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(fixed_draws))
+
+  set.seed(42)
+  conditional = predict(fit, summary = FALSE, probs = FALSE)
+  set.seed(42)
+  replicated = posterior_predict.mcpfit(fit)
+  set.seed(42)
+  predictor_only = posterior_predict.mcpfit(
+    fit,
+    newdata = data.frame(x = data$x)
+  )
+
+  expect_equal(conditional$.prediction, rep(c(0, 5, 10), 2), tolerance = 0.01)
+  expect_equal(unname(replicated), matrix(0, nrow = 2, ncol = 3), tolerance = 0.01)
+  expect_equal(predictor_only, replicated)
+
+  novel_missing = data
+  novel_missing$y[2] = NA
+  for (method in list(fitted, predict, residuals)) {
+    expect_error(
+      method(fit, newdata = novel_missing),
+      "supported only for the original fitted data",
+      fixed = TRUE
+    )
+  }
+
+  fit$data$y[2] = NA
+  set.seed(42)
+  expect_equal(posterior_predict.mcpfit(fit), replicated)
+})
+
+
 test_that("generated JAGS uses the same bounded GARMA residuals", {
   count_data = data.frame(x = 1:4, y = c(0, 1, 4, 2))
   binomial_data = transform(count_data, N = 4)
