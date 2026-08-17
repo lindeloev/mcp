@@ -58,8 +58,6 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
   if (length(derived_y) != 1)
     stop("There should be exactly one response variable. Found ", and_collapse(derived_y), " across segments.")
 
-  aux_columns = get_family_aux_columns(family, segments)
-
   # Group-level effects
   derived_varying = unique(stats::na.omit(segments$cp_group_col))
 
@@ -81,9 +79,7 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
       }
     }
 
-    response_data = get_family_response_data(family, segments, data)
-    response_columns = c(list(y = segments$y[1]), as.list(aux_columns))
-    family$response$validate(data[[segments$y[1]]], response_data, response_columns)
+    assert_response_data(family, segments, data)
   }
 
 

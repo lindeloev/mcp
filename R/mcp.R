@@ -237,9 +237,8 @@ mcp = function(model,
   checkmate::assert_string(par_x, null.ok = TRUE)
   par_x = get_par_x(model, data, par_x)
   rhs_vars = get_rhs_vars(model)
-  assert_data_cols(data, cols = rhs_vars, fail_funcs = c(is.na, is.nan))
-
   model_vars = unique(c(get_model_vars(model), par_x, series))
+  assert_model_data(data, par_x, rhs_vars)
   assert_data_cols(data, cols = model_vars, fail_funcs = c(is.infinite))
   data = data[, model_vars]  # Remove unused data
 
@@ -323,6 +322,7 @@ mcp = function(model,
   segment_tables = get_segment_tables(model, data, family, par_x)
   segments = segment_tables$segments
   cps = segment_tables$cps
+  assert_model_data(data, par_x, group_cols = stats::na.omit(cps$group_col))
   predictor_tables = get_predictor_tables(model, data, family, par_x)
   predictors = predictor_tables$predictors
   family = resolve_dpar_specs(family, predictors, model)
@@ -334,6 +334,7 @@ mcp = function(model,
   prior_context = attr(prior, "prior_context")
   attr(prior, "prior_table") = NULL
   attr(prior, "prior_context") = NULL
+  assert_fixed_sigma(prior_table, predictors, family)
 
   # Assemble model metadata used by fitted-model methods
   parameters = get_pars_table(predictors, cps, group_effects, family)

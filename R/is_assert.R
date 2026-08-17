@@ -59,14 +59,86 @@ assert_data_cols = function(data, cols, fail_funcs = c()) {
     stop("These model terms are missing from the data: ", and_collapse(missing_cols))
 
   # Only work with the specified columns now
-  data = data[, cols]
+  data = data[, cols, drop = FALSE]
   for (fail_func in fail_funcs) {
     failed_cols = colnames(data)[unlist(lapply(data, function(x) any(fail_func(x))))]  # Character vector of columns that
-    if (length(failed_cols) > 0)
-      stop("The column(s) ", and_collapse(failed_cols), " had values where ", as.character(substitute(fail_func)), " was TRUE.")
+    if (length(failed_cols) > 0) {
+      # Fail with informative message
+      fail_name = if (identical(fail_func, is.na)) "is.na" else
+        if (identical(fail_func, is.nan)) "is.nan" else
+          if (identical(fail_func, is.infinite)) "is.infinite" else "the validation check"
+      stop("The column(s) ", and_collapse(failed_cols), " had values where ", fail_name, " was TRUE.")
+    }
   }
 
   TRUE
+}
+
+
+# Validate data that define model structure rather than an individual response.
+# Response columns are intentionally excluded because some families support
+# missing responses as latent values during posterior sampling.
+assert_model_data = function(data, par_x, rhs_vars = character(), group_cols = character()) {
+  assert_data_cols(data, rhs_vars, fail_funcs = c(is.na, is.nan))
+  assert_data_cols(
+    data, unique(c(par_x, group_cols)),
+    fail_funcs = c(is.na, is.nan, is.infinite)
+  )
+
+  invisible(TRUE)
+}
+
+
+# Validate response auxiliaries independently of whether responses themselves
+# are observed. This makes the same family-level invariants available to model
+# construction and R-side simulation.
+assert_response_data = function(family, segments, data) {
+  aux_columns = get_family_aux_columns(family, segments)
+  response_columns = c(list(y = segments$y[1]), as.list(aux_columns))
+  response_data = get_family_response_data(family, segments, data)
+  y = if (segments$y[1] %in% names(data)) data[[segments$y[1]]] else rep(NA_real_, nrow(data))
+  family$response$validate(y, response_data, response_columns)
+
+  invisible(TRUE)
+}
+
+
+# Fixed residual standard deviations must be valid without relying on the
+# numerical lower bound used for observation-level calculations.
+assert_fixed_sigma = function(prior_table, predictors, family) {
+  sigma_parameters = predictors$code_name[predictors$dpar == "sigma"]
+  if (length(sigma_parameters) == 0)
+    return(invisible(TRUE))
+  if (get_dpar_spec(family, "sigma")$modeled)
+    return(invisible(TRUE))
+
+  fixed_sigma = prior_table$parameter %in% sigma_parameters & prior_table$kind == "constant"
+  sigma_values = suppressWarnings(as.numeric(prior_table$value[fixed_sigma]))
+  if (any(sigma_values <= 0)) {
+    bad_parameters = prior_table$parameter[fixed_sigma][sigma_values <= 0]
+    stop(
+      "Fixed residual standard deviation parameter(s) must be positive: ",
+      and_collapse(bad_parameters), "."
+    )
+  }
+
+  invisible(TRUE)
+}
+
+
+# Change-point locations supplied to simulation must use the same ordering as
+# the population-level parameters in the fitted model.
+assert_ordered_population_cps = function(cps, args) {
+  if (nrow(cps) < 2)
+    return(invisible(NULL))
+
+  locations = lapply(cps$name, function(name) args[[name]])
+  n = max(lengths(locations))
+  locations = do.call(cbind, lapply(locations, rep, length.out = n))
+  if (any(locations[, -1, drop = FALSE] <= locations[, -ncol(locations), drop = FALSE]))
+    stop("Population-level change points must remain strictly ordered.")
+
+  invisible(NULL)
 }
 
 

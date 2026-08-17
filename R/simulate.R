@@ -409,6 +409,11 @@ simulate_atomic = function(fit,
   model_tables = get_fit_model_tables(fit)
   model_predictors = model_tables$predictors
   model_group_effects = model_tables$group_effects
+  assert_model_data(
+    newdata, data_columns$par_x,
+    group_cols = stats::na.omit(model_group_effects$group_col)
+  )
+  assert_response_data(fit$family, model_tables$segments, newdata)
   expected_args = c(
     setdiff(get_sim_pars(model_tables$cps, model_predictors, model_group_effects), model_group_effects$name),
     model_group_effects$sd_name
@@ -422,6 +427,7 @@ simulate_atomic = function(fit,
   )
   lapply(args, checkmate::assert_numeric, any.missing = FALSE)
   lapply(args, function(x) stopifnot(length(x) == 1 | length(x) == nrow(newdata)))
+  assert_ordered_population_cps(model_tables$cps, args)
   for (sd_name in model_group_effects$sd_name)
     checkmate::assert_number(args[[sd_name]], lower = 0, .var.name = sd_name)
 

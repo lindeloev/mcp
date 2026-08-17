@@ -8,6 +8,34 @@ bad_sigma = list(
 test_bad(bad_sigma)
 
 
+test_that("fixed residual SDs must be positive", {
+  data = data.frame(x = 1:4, y = 0)
+
+  expect_error(
+    mcp(
+      list(y ~ 1), data,
+      par_x = "x", prior = list(sigma_1 = 0), sample = FALSE
+    ),
+    "Fixed residual standard deviation parameter(s) must be positive: sigma_1.",
+    fixed = TRUE
+  )
+  expect_error(
+    mcp(
+      list(y ~ 1), data,
+      par_x = "x", prior = list(sigma_1 = -1), sample = FALSE
+    ),
+    "Fixed residual standard deviation parameter(s) must be positive: sigma_1.",
+    fixed = TRUE
+  )
+  expect_silent(
+    mcp(
+      list(y ~ 1 + sigma(1)), data,
+      par_x = "x", prior = list(sigma_1 = 0), sample = FALSE
+    )
+  )
+})
+
+
 good_sigma = list(
   list(y ~ 1 + sigma(1)),
   list(y ~ 1 + sigma(1 + (1 | id))),

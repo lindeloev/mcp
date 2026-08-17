@@ -226,7 +226,7 @@ mcpfamily_binomial = function(family) {
     )),
     validate = function(y, data, response_columns) {
       checkmate::assert_integerish(y, lower = 0, .var.name = response_columns$y)
-      checkmate::assert_integerish(data$trials, lower = 1, .var.name = response_columns$trials)
+      checkmate::assert_integerish(data$trials, lower = 1, any.missing = FALSE, .var.name = response_columns$trials)
       invalid = which(!is.na(y) & !is.na(data$trials) & y > data$trials)
       if (length(invalid) > 0)
         stop(
