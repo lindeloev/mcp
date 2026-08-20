@@ -390,6 +390,14 @@ get_prior_str = function(prior, i, group_col = NULL, center = FALSE,
     }
   }
 
+  # Fixed constants/expressions for group-level effects must be vectors over group
+  # levels so they can be indexed as name[group_col[i_]] in the likelihood.
+  if (!is.null(group_col)) {
+    return(paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {
+    ", name, "[", group_col, "_] = ", value, "  # ", description, "
+  }\n"))
+  }
+
   paste0("  ", name, " = ", value, "  # ", description, "\n")
 }
 

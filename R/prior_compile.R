@@ -259,7 +259,7 @@ prior_bounds = function(x) {
 
 # Classify a prior as a distribution, alias, expression, or constant.
 prior_kind = function(value, all_names) {
-  if (is.numeric(value) || (is.character(value) && grepl("^[-+]?[0-9.eE]+$", trimws(value))))
+  if (is.numeric(value) || (is.character(value) && !is.na(suppressWarnings(as.numeric(trimws(value))))))
     return("constant")
   parts = split_prior_truncation(value)
   call = parse_prior_call(parts$distribution)

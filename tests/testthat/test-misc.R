@@ -854,5 +854,14 @@ test_that("loo supports by_row and soft-deprecates pointwise", {
 
   loo_by_row = suppressWarnings(loo(fit, by_row = TRUE))
   expect_s3_class(loo_by_row, "psis_loo")
-  expect_warning(loo(fit, pointwise = TRUE), "deprecated")
+  expect_warning(
+    withCallingHandlers(
+      loo(fit, pointwise = TRUE),
+      warning = function(w) {
+        if (!grepl("deprecated", conditionMessage(w)))
+          invokeRestart("muffleWarning")
+      }
+    ),
+    "deprecated"
+  )
 })
