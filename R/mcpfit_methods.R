@@ -1209,13 +1209,13 @@ pp_eval = function(
   ###############
   # FIX NEWDATA #
   ###############
-  # Identify grouping columns to exclude based on the varying argument
+  # Identify grouping columns to exclude based on the `varying` argument
   group_info = unpack_group_effects(fit, pars = varying)
   model_tables = get_fit_model_tables(fit)
   group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
   exclude_group_cols = setdiff(group_cols, c(group_info$cols, data_columns$series))
 
-  # Determine auxiliary column requirements for the specified operation
+  # Determine which auxiliary columns are needed for this operation
   operation = switch(type, predict = "rng", loglik = "log_lik", fitted = "epred", residuals = "epred")
   aux_operations = c(operation, if (arma && is_arma(fit)) "garma")
   if (type == "fitted" && rate && dpar %in% c("epred", "mu"))
@@ -1224,7 +1224,7 @@ pp_eval = function(
   aux_used = names(get_family_aux_columns(fit$family, model_tables$segments, aux_operations))
   unused_aux_columns = unname(aux_columns[names(aux_columns) %notin% aux_used])
 
-  # Build required columns list and check presence in newdata
+  # Build list of required columns and validate presence in newdata
   required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
   required_cols = required_cols[required_cols %notin% unused_aux_columns]
   required_cols = required_cols[required_cols %notin% exclude_group_cols]
@@ -1235,12 +1235,13 @@ pp_eval = function(
   } else if (data_columns$response %notin% colnames(newdata)) {
     stop("`newdata` must contain a response column named '", data_columns$response, "' for when `arma == TRUE` and/or `type == 'residuals'`")
   }
-  assert_data_cols(newdata, required_cols)  # Helpful error if something is missing
+  assert_data_cols(newdata, required_cols)
 
-  # Filter newdata columns and attach evaluation key
+  # Filter newdata columns and attach unique evaluation row index
   kept_cols = colnames(newdata)[colnames(newdata) %notin% exclude_group_cols]
+  if (replicate_garma)
+    kept_cols = kept_cols[kept_cols != data_columns$response]
   newdata = data.frame(newdata[, kept_cols, drop = FALSE])
-  #colnames(newdata) = kept_cols  # Special case for when there's only one predictor
   newdata$data_row = seq_len(nrow(newdata))  # Evaluation key throughout summaries, matrices, plots, and metrics
   newdata_return = newdata
   if (!is.null(response_return) && data_columns$response %notin% colnames(newdata_return))

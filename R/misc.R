@@ -384,10 +384,3 @@ print.mcptext = function(x, ...) {
   rlang::check_dots_empty()
   cat(x)
 }
-
-
-# Preserve formula environments so local transformations remain available.
-fix_model_environment = function(model) {
-  checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
-  model
-}

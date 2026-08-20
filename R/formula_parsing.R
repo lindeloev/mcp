@@ -390,11 +390,11 @@ unpack_cp = function(form_cp, i, env = parent.frame()) {
   if (!is.null(form_varying)) {
     varying_terms = attr(stats::terms(form_varying), "term.labels")
     if (length(varying_terms) > 1)
-      stop("Error in segment", i, " (change point): only one group-level effect is allowed. Found ", form_cp)
+      stop("Error in segment ", i, " (change point): only one group-level effect is allowed. Found ", form_cp)
 
     varying_parts = strsplit(gsub(" ", "", varying_terms), "\\|")[[1]]
     if (!varying_parts[1] == "1")
-      stop("Error in segment ", i, " (change point): Only plain intercepts are allowed in group-level effects, e.g., (1|id).", i)
+      stop("Error in segment ", i, " (change point): Only plain intercepts are allowed in group-level effects, e.g., (1|id).")
 
     if (!grepl("^[A-Za-z._0-9]+$", varying_parts[2]))
       stop("Error in segment ", i, " (change point): invalid grouping-variable format in group-level effect. Got: ", varying_parts[2])
