@@ -34,17 +34,15 @@ get_x_values = function(fit, by = NULL, prior = FALSE) {
     # No change points. Use default resolution for the whole plot
     x_values = seq(min(xdata), max(xdata), length.out = N_BASIS)
   } else {
-    # Make fine resolution around change points in addition to course resolution
-    # Get draws for these change points
+    # Make fine resolution around change points in addition to coarse resolution
     draws = mcmclist_draws(fit, prior = prior)
     cp_pars = get_fit_model_tables(fit)$cps$name
-    call = paste0("tidybayes::spread_draws(draws, ", paste0(cp_pars, collapse = ", "), ")")
-    draws = eval(str2lang(call))
+    draws_mat = as.matrix(draws)[, cp_pars, drop = FALSE]
 
     # Compute and return
     x_values = sort(c(
       seq(min(xdata), max(xdata), length.out = N_BASIS),  # Default resolution for the whole plot
-      unlist(lapply(cp_pars, function(cp_par) unname(stats::quantile(draws[[cp_par]], probs = seq(0, 1, length.out = N_CP)))))  # Higher res at change points
+      unlist(lapply(cp_pars, function(cp_par) unname(stats::quantile(draws_mat[, cp_par], probs = seq(0, 1, length.out = N_CP)))))  # Higher res at change points
     ))
   }
   x_values
