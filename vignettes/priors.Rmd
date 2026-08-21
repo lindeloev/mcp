@@ -5,11 +5,16 @@ vignette: >
   %\VignetteIndexEntry{Working with priors}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+editor_options: 
+  markdown: 
+    wrap: none
 ---
 
+*NOTE: the JAGS-specific prior interface below is likely to be deprecated in the future, when additional backends are added beyond JAGS.*
 
 # Setting a prior
-`mcp` takes priors in the form of a named list. The names are the parameter names, and the values are JAGS code. Here is a fairly complicated example, just to get enough priors to demonstrate the various ways priors can be used:
+
+`mcp` takes priors in the form of a named list. The names are the parameter names, and the values are JAGS code. Here is a fairly complicated example, to demonstrate the various ways priors can be used:
 
 ```{r}
 model = list(
@@ -29,17 +34,17 @@ prior = list(
 )
 ```
 
-The values use mcp's JAGS-string syntax, so JAGS distributions are generally allowed. See the [JAGS user manual](https://web.sgh.waw.pl/~atoroj/ekonometria_bayesowska/jags_user_manual.pdf) for more details. Prior strings use conventional distribution scales: SD for `dnorm()`, scale for `dt()`, `ddexp()`, and `dlogis()`, and log-SD for `dlnorm()`. When generating JAGS code, `mcp` converts these to inverse variance for `dnorm()`, `dt()`, and `dlnorm()`, and inverse scale for `ddexp()` and `dlogis()`. JAGS does not provide `dcauchy()`; use `dt(location, scale, 1)` for a Cauchy prior. You can inspect the translation by comparing `fit$prior` with `fit$jags_code`.
+The values use mcp's JAGS-string syntax, so JAGS distributions are generally allowed. See the [JAGS user manual](https://web.sgh.waw.pl/~atoroj/ekonometria_bayesowska/jags_user_manual.pdf) for more details. Prior strings use R-like conventional distribution scales even though JAGS has a different parameterization underneath: SD for `dnorm()`, scale for `dt()`, `ddexp()`, and `dlogis()`, and log-SD for `dlnorm()`. When generating JAGS code, `mcp` converts these to inverse variance for `dnorm()`, `dt()`, and `dlnorm()`, and inverse scale for `ddexp()` and `dlogis()`. You can inspect the translation by comparing `fit$prior` with `fit$jags_code`.
 
 Other notes:
 
-* Default population-level change-point priors are ordered. For user priors, `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior has neither explicit truncation nor an inherently bounded form such as `dunif()` or `dirichlet()`. User-specified population-level bounds are respected as written. When change points have group-level deviations, their realized locations are constrained to remain ordered within every group.
+- Default population-level change-point priors are ordered. For user priors, `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior has neither explicit truncation nor an inherently bounded form such as `dunif()` or `dirichlet()`. User-specified population-level bounds are respected as written. When change points have group-level deviations, their realized locations are constrained to remain ordered within every group.
 
-* Data-dependent values can be written directly in priors: for example, `min(x)`, `max(x)`, `median(y)`, `mad(y)`, `max(x) - min(x)`, `segment_width(x)`, `n_segments()`, and `n_cp()`. `mcp` resolves these expressions before generating JAGS code. The older uppercase constants (`MINX`, `MAXX`, and so on) remain temporarily supported with a deprecation warning.
+- Data-dependent values can be written directly in priors: for example, `min(x)`, `max(x)`, `median(y)`, `mad(y)`, `max(x) - min(x)`, `segment_width(x)`, `n_segments()`, and `n_cp()`. `mcp` resolves these expressions before generating JAGS code. The older uppercase constants (`MINX`, `MAXX`, and so on) remain temporarily supported with a deprecation warning.
 
-* You can fix any parameter to a specific value. Simply set it to a numerical value (as `cp_2` above). A constant is a 100% prior belief in that value, and it will therefore not be estimated.
+- You can fix any parameter to a specific value. Simply set it to a numerical value (as `cp_2` above). A constant is a 100% prior belief in that value, and it will therefore not be estimated.
 
-* You can also equate one variable with another (`x_3 = "x_2"` above). You would usually do this to share parameters across segments, but you can be creative and do something like `x_3 = "x_2 + 5 - cp_1/10"` if you want. In any case, it will lead to one less parameter being estimated, i.e., one less free parameter.
+- You can also equate one variable with another (`x_3 = "x_2"` above). You would usually do this to share parameters across segments, but you can be creative and do something like `x_3 = "x_2 + 5 - cp_1/10"` if you want. In any case, it will lead to one less parameter being estimated, i.e., one less free parameter.
 
 Let us see the priors after running them through `mcp` and compare to the default priors:
 
@@ -69,7 +74,6 @@ df$y = empty_default$simulate(empty_default, df,
 
 head(df)
 ```
-
 
 Sample the prior and posterior. We give the manual fit a longer warmup, since it is harder to find the right posterior under these weird prior constraints (priors will usually improve sampling efficiency).
 
@@ -107,25 +111,26 @@ plot_default + plot_manual
 
 We see the effects of the priors.
 
- * The intercept `Intercept_1` was truncated to be below 10.
- * The slope `x_1` is bound to be non-negative (because `dbeta`).
- * The slopes `x_2` and `x_3` were forced to be identical.
- * The change point `cp_2` was a constant, so there is no uncertainty there.
+- The intercept `Intercept_1` was truncated to be below 10.
+- The slope `x_1` is bound to be non-negative (because `dbeta`).
+- The slopes `x_2` and `x_3` were forced to be identical.
+- The change point `cp_2` was a constant, so there is no uncertainty there.
 
 Of course, it will usually be the other way around: setting priors manually will often serve to sample the "correct" posterior.
 
-
 # Default priors on change points {#cp_prior}
+
 The following are treated more formally in the [mcp paper](https://osf.io/preprints/fzqxv/).
 
-The default priors order the population-level change points from left (`cp_1`) to right (`cp_2+`). User-supplied bounds are used as written, but all sampled population- and group-level change points are checked for ordering; population-level change points are also checked against the observed x-range. `mcp` offers two built-in population-level prior families with different tradeoffs:
+The default priors order the population-level change points from left (`cp_1`) to right (`cp_2+`). `mcp` offers two built-in population-level prior families with different tradeoffs:
 
-* **Regularizing t-tail prior:** The default for multiple change points uses sequentially truncated Student-t distributions centered at the minimum x. It samples efficiently, and is reasonably close to the dirichlet priors (see below), but its segment spacings are not exchangeable and it can regularize the middle spacings downward.
+- **One change point:** a uniform distribution from min(x) to max(x). For 2+ change points:
 
-* **Symmetric segment spacings:** `dirichlet(1)` is equivalent to sorting independent uniforms and treats the spacings exchangeably. This is a transparent substantive prior, not an uninformative one, but JAGS samples it much less efficiently than the t-tail prior. It follows [Bürkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/).
+- **Symmetric segment spacings:** `dirichlet(1)` is equivalent to sorting independent uniforms and treats the spacings exchangeably. This is a transparent substantive prior, not an uninformative one, but JAGS samples it quite inefficiently. It follows [Bürkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/).
+
+- **Regularizing "t-tail" prior:** The default for 2+ change points is sequentially truncated Student-t distributions centered at the minimum x. There is no nice math behind this, but it reasonably approximate the dirichlet prior (see above and visualization below) and samples efficiently. For 5+ change points, it squeeze the middle change point priors a bit together.
 
 With one change point, both specifications imply a uniform location within the observed range, though the direct uniform default samples more efficiently.
-
 
 ```{r, echo = FALSE, results=FALSE, warning=FALSE, message=FALSE}
 df_dummy = data.frame(x = c(50, 100, 150), y = rnorm(3))
