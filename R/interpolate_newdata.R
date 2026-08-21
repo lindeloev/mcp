@@ -173,6 +173,10 @@ interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by),
     newdata = tidyr::expand_grid(newdata, continuous_at)
 
   auxiliary_cols = unname(unlist(data_columns[setdiff(names(data_columns), c("par_x", "response", "series"))]))
+  auxiliary_cols = setdiff(
+    unname(unlist(data_columns[setdiff(names(data_columns), c("par_x", "response", "series"))])),
+    data_columns$par_x  # Don't remove par_x when it is also a rhs parameter, e.g.: y | trials(N) ~ N
+  )
   if (any(auxiliary_cols %in% names(newdata))) {
     model_tables = get_fit_model_tables(fit)
     response_data = get_family_response_data(fit$family, model_tables$segments, newdata)
