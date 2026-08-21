@@ -5,16 +5,11 @@
 #' around the `bayesplot::ppc_*()` methods.
 #'
 #' @aliases pp_check pp_check.mcpfit
+#' @inheritParams pp_eval
 #' @param type String specifying the type of plot. See \code{\link[bayesplot:PPC-overview]{bayesplot::available_ppc()}}
 #'   for available plot types, omitting the \code{"ppc_"} prefix (e.g., \code{"dens_overlay"},
 #'   \code{"ribbon"}, \code{"intervals"}).
 #' @param facet_by Name of a grouping column used by group-level effects.
-#' @param ndraws Number of posterior draws. Note that you may want to use all
-#'   draws for summary geoms, e.g., `pp_check(fit, type = "ribbon", ndraws = NULL)`.
-#'   LOO checks always evaluate all posterior draws to preserve their PSIS
-#'   weights; where supported, `ndraws` is passed to bayesplot to control the
-#'   number of plotted draws.
-#' @param nsamples Deprecated. Use `ndraws` instead.
 #' @param ... Further arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
 #' @details Missing responses are omitted from the observed-data check. For
 #'   GARMA models, each replicated response series is generated recursively

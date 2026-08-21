@@ -39,11 +39,11 @@ the model.
 \item Character vector: Apply the absolute transform only to these group-level parameters.
 }}
 
-\item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
+\item{prior}{Logical. Summarise prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)?}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
 If there are group-level effects, this is the number of draws from each group.
-\code{NULL} means "all". Ignored if both are \code{FALSE}. More draws trade speed for accuracy.}
+\code{NULL} means "all". More draws trade speed for accuracy.}
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 }

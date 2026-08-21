@@ -213,11 +213,11 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #' @param digits Non-negative integer. Number of significant digits used when
 #'   printing the summary. Defaults to 2. The invisibly returned data frame
 #'   retains the unrounded values.
-#' @param prior TRUE/FALSE. Summarise prior instead of posterior?
+#' @param prior Logical. Summarise prior draws (`TRUE`) instead of posterior draws (`FALSE`, default)?
 #' @param verbose Logical. Include the `segment` and `dpar` columns. Defaults
 #'   to `FALSE` for a compact, v0.3.4-compatible summary.
 #' @inheritParams mcp
-#' @param ... Currently ignored
+#' @param ... Currently ignored.
 #'
 #' @return A data frame with parameter estimates and MCMC diagnostics. Rows
 #'   are ordered by change point first, then `mu`, then the other
@@ -470,7 +470,7 @@ formula.mcpfit = function(x, segment = NULL, ...) {
 #'
 #' # Inspect posterior parameter correlations across the full population model.
 #' # Useful to quickly check identifiability (high correlation). Inspecting
-#' `bayesplot::mcmc_pairs(as_draws(demo_fit))` is better, though.
+#' # `bayesplot::mcmc_pairs(as_draws(demo_fit))` is better, though.
 #' vcov(demo_fit, pars = "all", correlation = TRUE)
 NULL
 
@@ -1094,7 +1094,7 @@ tidy_samples = function(...) {
 #' @param rate Boolean. For binomial models, return counts (`rate = FALSE`) or
 #'   the observed or expected success proportion (`rate = TRUE`). Predictions and
 #'   count-scale fitted values require a trials column in `newdata`.
-#' @param prior TRUE/FALSE. Plot using prior draws? Useful for `mcp(..., sample = "both")`
+#' @param prior Logical. Evaluate prior draws (`TRUE`) instead of posterior draws (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
 #' @param dpar What distributional parameter to evaluate. This is only relevant when `type == "fitted"`. E.g.,
 #'
 #'   * `"epred"` (default): Expected response from the full model (or `NULL` for compatibility with brms etc.).
@@ -1110,7 +1110,7 @@ tidy_samples = function(...) {
 #'   currently requires including all such effects (`varying = TRUE`).
 #' @param ndraws Integer or `NULL`. Number of posterior draws to return/summarise.
 #'   If there are group-level effects, this is the number of draws from each group.
-#'   `NULL` means "all". Ignored if both are `FALSE`. More draws trade speed for accuracy.
+#'   `NULL` means "all". More draws trade speed for accuracy.
 #' @param nsamples Deprecated. Use `ndraws` instead.
 #' @param draws_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE` (for `fitted()`, `predict()`, and `log_lik()`). `residuals()` always returns tidy output.
 #' @param samples_format Deprecated. Use `draws_format` instead.

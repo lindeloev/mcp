@@ -38,7 +38,7 @@ and 1).}
 printing the summary. Defaults to 2. The invisibly returned data frame
 retains the unrounded values.}
 
-\item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
+\item{prior}{Logical. Summarise prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)?}
 
 \item{verbose}{Logical. Include the \code{segment} and \code{dpar} columns. Defaults
 to \code{FALSE} for a compact, v0.3.4-compatible summary.}
@@ -51,7 +51,7 @@ that diagnostic, or use \code{FALSE} to disable all configurable diagnostic
 warnings. In \code{\link[=summary.mcpfit]{summary.mcpfit()}}, \code{NULL} inherits the settings used to fit
 the model, while a list or \code{FALSE} overrides the diagnostic footer.}
 
-\item{...}{Currently ignored}
+\item{...}{Currently ignored.}
 
 \item{dpar}{Distributional parameter(s) whose regression coefficients to
 return. For modeled distributional parameters such as \code{sigma()}, these

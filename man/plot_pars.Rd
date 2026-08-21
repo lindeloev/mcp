@@ -41,7 +41,7 @@ Common calls are "combo", "trace", and "dens_overlay". Current options include
 \item{ncol}{Number of columns in plot. This is useful when you have many
 parameters and only one plot \code{type}.}
 
-\item{prior}{TRUE/FALSE. Plot using prior draws? Useful for \code{mcp(..., sample = "both")}}
+\item{prior}{Logical. Plot prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)? Useful for \code{mcp(..., sample = "both")}.}
 
 \item{nvariables}{Positive integer. Maximum number of parameters plotted per
 page. The default of 5 follows \code{brms::plot.brmsfit()}.}

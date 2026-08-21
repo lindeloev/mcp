@@ -25,7 +25,7 @@
 #'   page. The default of 5 follows `brms::plot.brmsfit()`.
 #' @param ask Logical. In an interactive session, prompt before printing each
 #'   page after the first. Only used when there are multiple pages.
-#' @param prior TRUE/FALSE. Plot using prior draws? Useful for `mcp(..., sample = "both")`
+#' @param prior Logical. Plot prior draws (`TRUE`) instead of posterior draws (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
 #'
 #' @details
 #'   For other `type`, it calls `bayesplot::mcmc_type()`. Use these

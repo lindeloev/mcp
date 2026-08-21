@@ -17,6 +17,8 @@ Language: en-US
 LazyData: true
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 4.1.0)
+RdMacros: 
+	lifecycle
 Config/testthat/parallel: true
 Config/testthat/edition: 3
 Imports:

@@ -97,7 +97,7 @@ to generate fresh response series recursively from predictor-only \code{newdata}
 the observed or expected success proportion (\code{rate = TRUE}). Predictions and
 count-scale fitted values require a trials column in \code{newdata}.}
 
-\item{prior}{TRUE/FALSE. Plot using prior draws? Useful for \code{mcp(..., sample = "both")}}
+\item{prior}{Logical. Evaluate prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)? Useful for \code{mcp(..., sample = "both")}.}
 
 \item{varying}{Group-level effects. One of:
 \itemize{
@@ -119,7 +119,7 @@ currently requires including all such effects (\code{varying = TRUE}).
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
 If there are group-level effects, this is the number of draws from each group.
-\code{NULL} means "all". Ignored if both are \code{FALSE}. More draws trade speed for accuracy.}
+\code{NULL} means "all". More draws trade speed for accuracy.}
 
 \item{draws_format}{One of "tidy" or "matrix". Controls the output format when \code{summary == FALSE} (for \code{fitted()}, \code{predict()}, and \code{log_lik()}). \code{residuals()} always returns tidy output.}
 

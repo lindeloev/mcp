@@ -10,7 +10,7 @@
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object.}
 
-\item{...}{Currently ignored}
+\item{...}{Currently ignored.}
 }
 \description{
 Shows a list in a more condensed format using \code{str(list)}.

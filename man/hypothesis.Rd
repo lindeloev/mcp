@@ -51,7 +51,7 @@ with the continuous alternative.
 \item{width}{Float. The width of the central posterior interval (between 0
 and 1).}
 
-\item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
+\item{prior}{Logical. Summarise prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)?}
 }
 \value{
 A data.frame with a row per hypothesis and the following columns:

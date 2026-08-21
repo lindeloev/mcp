@@ -50,6 +50,6 @@ vcov(demo_fit, pars = "all")
 
 # Inspect posterior parameter correlations across the full population model.
 # Useful to quickly check identifiability (high correlation). Inspecting
-`bayesplot::mcmc_pairs(as_draws(demo_fit))` is better, though.
+# `bayesplot::mcmc_pairs(as_draws(demo_fit))` is better, though.
 vcov(demo_fit, pars = "all", correlation = TRUE)
 }

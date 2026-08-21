@@ -10,7 +10,7 @@ mcmclist_draws(fit, prior = FALSE, message = TRUE, error = TRUE)
 \arguments{
 \item{fit}{An \code{\link{mcpfit}} object}
 
-\item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
+\item{prior}{Logical. Summarise prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)?}
 
 \item{message}{TRUE: gives a message if returning prior draws. FALSE = no message}
 
