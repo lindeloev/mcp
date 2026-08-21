@@ -33,11 +33,13 @@ be supplied as explicit scalar design values; e.g., \code{at = list(N = 20)}.}
 }
 }
 \description{
+\lifecycle{experimental}
+}
+\details{
 This function synthesizes predictors for all combinations of predictor values.
 It is used internally in \code{plot.mcpfit()} and may be useful if you want to
 build your own custom plot.
-}
-\details{
+
 The \code{par_x} variable will be interpolated with higher resolution around the
 change points where the values can change abruptly, but lower resolution in
 between to speed up the computation.

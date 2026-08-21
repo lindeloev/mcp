@@ -21,6 +21,9 @@ component (\code{"cp"}, \code{"ar"}, or \code{"ma"}); \code{order} gives an AR/M
 \code{group_col} and \code{population_name} describe group-level effects.
 }
 \description{
+\lifecycle{experimental}
+}
+\details{
 Return the canonical parameter definitions for an \code{mcpfit} object. This
 works before sampling and is the stable way to discover model parameters.
 }

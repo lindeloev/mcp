@@ -23,7 +23,8 @@ get_predictor_tables(model, data, family, par_x, check_rank = TRUE)
 get_predictors(model, data, family, par_x, check_rank = TRUE)
 }
 \arguments{
-\item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.).
+\item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)
+with syntactic column names.
 Missing values in the response variable are imputed using the posterior predictive.
 \code{\link{fitted.mcpfit}} or \code{\link{predict.mcpfit}} details how to see the imputed values.}
 
@@ -71,8 +72,7 @@ Poisson, and negative-binomial families with their default links. They
 define a finite conditional recurrence and do not jointly constrain AR
 coefficients to stationarity or MA coefficients to invertibility.
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
-\item \emph{Weights:} \code{y | weights(w) ~ ...} usespositive Gaussian precision weights,
-giving residual SD \code{sigma / sqrt(w)}.
+\item \emph{Weights:} \code{y | weights(w) ~ ...} specifies observation log-likelihood weights.
 \item \emph{Binomial:} use \code{successes | trials(total) ~ ...} with \code{family = binomial()}.
 }}
 

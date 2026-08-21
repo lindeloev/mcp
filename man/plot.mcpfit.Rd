@@ -105,8 +105,7 @@ can be supplied as explicit scalar design values. Passed to
 \item{dpar}{What distributional parameter to evaluate. This is only relevant when \code{type == "fitted"}. E.g.,
 \itemize{
 \item \code{"epred"} (default): Expected response from the full model (or \code{NULL} for compatibility with brms etc.).
-\item \code{"mu"}: The central tendency which is often the mean after applying the
-link function.
+\item \code{"mu"}: The conditional mean (or success probability per trial for binomial/bernoulli models), on the link or response scale.
 \item \code{"sigma"}: The standard deviation of the residuals.
 \item \code{"ar1"}, \code{"ar2"}, \code{"ma1"}, \code{"ma2"}, etc. depending on which AR or MA
 coefficient you want to evaluate.

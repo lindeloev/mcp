@@ -18,7 +18,7 @@ Components:
 \itemize{
 \item \code{call}: The matched call to \code{mcp()}.
 \item \code{model}: A list of user-provided formulas.
-\item \code{data}: The user-provided data frame.
+\item \code{data}: The user-provided data frame reduced to model-used columns.
 \item \code{family}: An \code{mcpfamily} object.
 \item \code{prior}: A named list of priors.
 \item \code{mcmc_post} and \code{mcmc_prior}: \code{\link[coda]{mcmc.list}} objects with

@@ -20,41 +20,11 @@ pp_check(
 )
 }
 \arguments{
-\item{object}{An \code{mcpfit} object.}
-
-\item{type}{One of \code{bayesplot::available_ppc("grouped", invert = TRUE) \%>\% stringr::str_remove("ppc_")}}
+\item{type}{String specifying the type of plot. See \code{\link[bayesplot:PPC-overview]{bayesplot::available_ppc()}}
+for available plot types, omitting the \code{"ppc_"} prefix (e.g., \code{"dens_overlay"},
+\code{"ribbon"}, \code{"intervals"}).}
 
 \item{facet_by}{Name of a grouping column used by group-level effects.}
-
-\item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model. Weighted
-Gaussian predictions and log-likelihoods also require the weights column. If \code{NULL}
-(default), the original data is used. GARMA evaluation with \code{fitted()},
-\code{predict()}, \code{residuals()}, or \code{log_lik()} conditions on the response history,
-so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
-\code{residuals()}, missing response histories are supported only in the original
-fitted data, using retained posterior imputations. \code{log_lik()} is unavailable
-when a missing response enters a later observed history. Use \code{\link[rstantools:posterior_predict]{posterior_predict()}}
-to generate fresh response series recursively from predictor-only \code{newdata}.}
-
-\item{prior}{TRUE/FALSE. Plot using prior draws? Useful for \code{mcp(..., sample = "both")}}
-
-\item{varying}{One of:
-\itemize{
-\item \code{TRUE} All group-level deviations.
-\item \code{FALSE} No group-level deviations (\code{c()}).
-\item \code{"cp"} or \code{"predictor"}: All group-level deviations belonging to that part of
-the model.
-\item Character vector: Only include specified group-level parameters.
-}}
-
-\item{arma}{Whether to include AR and MA effects.
-\itemize{
-\item \code{TRUE} Compute the GARMA residual recurrence. Requires the response variable in \code{newdata}.
-\item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
-For posterior evaluation of the original data, retained JAGS imputations
-supply missing GARMA histories. In models with group-level effects, this
-currently requires including all such effects (\code{varying = TRUE}).
-}}
 
 \item{ndraws}{Number of posterior draws. Note that you may want to use all
 draws for summary geoms, e.g., \code{pp_check(fit, type = "ribbon", ndraws = NULL)}.

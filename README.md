@@ -119,6 +119,7 @@ posterior, and change point(s) posterior density for each chain. Here we
 also add fitted interval (`q_fit`):
 
 ``` r
+set.seed(42)
 plot(fit, q_fit = TRUE) + ggtitle("Regression with two change points")
 ```
 
@@ -132,24 +133,21 @@ summary(fit)
 ```
 
     ## Family: gaussian(link = 'identity')
-    ## Iterations: 4000 from 3 chains.
+    ## Iterations: 12000 from 3 chains.
     ## Segments:
     ##   1: response ~ 1
     ##   2: response ~ 1 ~ 0 + time
     ##   3: response ~ 1 ~ 1 + time
     ## 
-    ## Change point parameters:
-    ##         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  cp_1        23.78 5.124 13.90 33.39    1      420      914 30.0    OK
-    ##  cp_2        69.91 0.341 69.35 70.48    1     6637     9729 70.0    OK
-    ## 
     ## Population-level parameters:
-    ##         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  Intercept_1  9.02 0.919  7.12 10.71    1      732     1249 10.0    OK
-    ##  time_2       0.40 0.054  0.31  0.52    1      457     1112  0.5    OK
-    ##  Intercept_3  2.26 1.221 -0.15  4.72    1     1207     2043  0.0    OK
-    ##  time_3      -0.27 0.066 -0.40 -0.14    1     1198     1910 -0.2    OK
-    ##  sigma_1      3.67 0.269  3.19  4.25    1     5564     5492  4.0    OK
+    ##         name match  sim  mean lower upper Rhat ess_bulk ess_tail
+    ##         cp_1    OK 30.0 23.78 13.90 33.39    1      420      914
+    ##         cp_2    OK 70.0 69.91 69.35 70.48    1     6637     9729
+    ##  Intercept_1    OK 10.0  9.02  7.12 10.71    1      732     1249
+    ##       time_2    OK  0.5  0.40  0.31  0.52    1      457     1112
+    ##  Intercept_3    OK  0.0  2.26 -0.15  4.72    1     1207     2043
+    ##       time_3    OK -0.2 -0.27 -0.40 -0.14    1     1198     1910
+    ##      sigma_1    OK  4.0  3.67  3.19  4.25    1     5564     5492
 
 - `rhat` is the rank-normalized split-Rhat convergence diagnostic.
 - `ess_bulk` and `ess_tail` are the effective sample sizes for the bulk
@@ -176,6 +174,7 @@ Do a posterior predictive check to see if the model recovers the
 empirical distribution in the data:
 
 ``` r
+set.seed(42)
 pp_check(fit) + ggtitle("Posterior Predictive check for change point regression")
 ```
 
@@ -216,7 +215,7 @@ model_null = list(
 )
 
 # Fit it
-fit_null = mcp(model_null, demo_fit$data)
+fit_null = mcp(model_null, demo_fit$data, seed = 42)
 ```
 
 Leveraging the power of `loo::loo()`, we see that the two-change-points
@@ -232,7 +231,7 @@ loo::loo_compare(fit_loo, fit_null_loo)
 
     ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
     ##  model1       0.0     0.0      NA                    
-    ##  model2      -4.6     3.4    0.91
+    ##  model2      -4.7     3.4    0.91
 
 # Highlights from in-depth guides
 
@@ -395,7 +394,7 @@ For example:
 head(fitted(fit, summary = FALSE))  # column .epred
 ```
 
-    ## # A tibble: 6 × 14
+    ## # A tibble: 6 × 13
     ##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
     ##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
     ## 1      1          1     1  30.6  70.3        8.78  0.552       0.476 -0.216
@@ -404,8 +403,7 @@ head(fitted(fit, summary = FALSE))  # column .epred
     ## 4      1          1     1  30.6  70.3        8.78  0.552       0.476 -0.216
     ## 5      1          1     1  30.6  70.3        8.78  0.552       0.476 -0.216
     ## 6      1          1     1  30.6  70.3        8.78  0.552       0.476 -0.216
-    ## # ℹ 5 more variables: sigma_1 <dbl>, time <dbl>, data_row <int>, .epred <dbl>,
-    ## #   response <dbl>
+    ## # ℹ 4 more variables: sigma_1 <dbl>, time <dbl>, data_row <int>, .epred <dbl>
 
 # Citation
 

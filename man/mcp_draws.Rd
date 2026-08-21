@@ -24,7 +24,7 @@ mcp_draws(
 \item Character vector: Only include specified population-level parameters.
 }}
 
-\item{varying}{One of:
+\item{varying}{Group-level effects. One of:
 \itemize{
 \item \code{TRUE} All group-level deviations.
 \item \code{FALSE} No group-level deviations (\code{c()}).

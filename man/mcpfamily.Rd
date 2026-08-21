@@ -14,7 +14,21 @@ is.mcpfamily(x)
 \item{x}{A family object, e.g., \code{binomial(link = "identity")}.}
 }
 \description{
-Create or Test Objects of Class "mcpfamily"
+\lifecycle{experimental}
+}
+\details{
+Converts standard R family objects into \code{mcpfamily} objects used internally by
+\code{mcp}. Supported family and link combinations include:
+\itemize{
+\item \code{gaussian(link = "identity")} or \code{gaussian(link = "log")}
+\item \code{binomial(link = "logit")}, \code{binomial(link = "probit")}, or \code{binomial(link = "identity")}
+\item \code{bernoulli(link = "logit")}, \code{bernoulli(link = "probit")}, or \code{bernoulli(link = "identity")}
+\item \code{poisson(link = "log")} or \code{poisson(link = "identity")}
+\item \code{negbinomial(link = "log", link_shape = "log")}
+}
+
+Note: \code{mcpfamily} objects are shipped with mcp - there is not (yet) support for user-supplied
+families.
 }
 \section{Functions}{
 \itemize{

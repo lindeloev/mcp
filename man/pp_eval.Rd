@@ -64,14 +64,13 @@ count-scale fitted values require a trials column in \code{newdata}.}
 \item{dpar}{What distributional parameter to evaluate. This is only relevant when \code{type == "fitted"}. E.g.,
 \itemize{
 \item \code{"epred"} (default): Expected response from the full model (or \code{NULL} for compatibility with brms etc.).
-\item \code{"mu"}: The central tendency which is often the mean after applying the
-link function.
+\item \code{"mu"}: The conditional mean (or success probability per trial for binomial/bernoulli models), on the link or response scale.
 \item \code{"sigma"}: The standard deviation of the residuals.
 \item \code{"ar1"}, \code{"ar2"}, \code{"ma1"}, \code{"ma2"}, etc. depending on which AR or MA
 coefficient you want to evaluate.
 }}
 
-\item{varying}{One of:
+\item{varying}{Group-level effects. One of:
 \itemize{
 \item \code{TRUE} All group-level deviations.
 \item \code{FALSE} No group-level deviations (\code{c()}).
@@ -93,7 +92,7 @@ currently requires including all such effects (\code{varying = TRUE}).
 If there are group-level effects, this is the number of draws from each group.
 \code{NULL} means "all". Ignored if both are \code{FALSE}. More draws trade speed for accuracy.}
 
-\item{draws_format}{One of "tidy" or "matrix". Controls the output format when \code{summary == FALSE}.}
+\item{draws_format}{One of "tidy" or "matrix". Controls the output format when \code{summary == FALSE} (for \code{fitted()}, \code{predict()}, and \code{log_lik()}). \code{residuals()} always returns tidy output.}
 
 \item{scale}{One of
 \itemize{

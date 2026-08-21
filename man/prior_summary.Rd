@@ -18,7 +18,11 @@ other distributional parameters, then \code{ar}/\code{ma} components - each with
 \code{segment} and \code{dpar} columns.
 }
 \description{
-Shows the effective, resolved priors on the familiar SD/scale
-parameterization rather than JAGS precision. Use \code{verbose = TRUE} to also
-see the symbolic rule, its description, source, and kind.
+\lifecycle{experimental}
+}
+\details{
+Shows the effective, resolved prior distributions on the familiar SD/scale
+parameterization rather than JAGS precision. Symbolic expressions in bounds
+(e.g. \code{min(x)} or \code{max(x)}) may be retained in symbolic form in compact output,
+while \code{verbose = TRUE} displays the underlying rule, description, source, and kind.
 }

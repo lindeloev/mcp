@@ -96,6 +96,7 @@ fit = mcp(model, demo_fit$data, iter = 4000, sample = "both", seed = 42)
 The default plot includes data, fitted lines drawn randomly from the posterior, and change point(s) posterior density for each chain. Here we also add fitted interval (`q_fit`):
 
 ```{r demo-plot, fig.width=6, fig.height=3, dpi=100}
+set.seed(42)
 plot(fit, q_fit = TRUE) + ggtitle("Regression with two change points")
 ```
 
@@ -118,6 +119,7 @@ plot_pars(fit, regex_pars = "cp_") + ggtitle("Change point posteriors")
 Do a posterior predictive check to see if the model recovers the empirical distribution in the data:
 
 ```{r demo-pp_check, fig.width=6, fig.height=3, dpi=100}
+set.seed(42)
 pp_check(fit) + ggtitle("Posterior Predictive check for change point regression")
 ```
 
@@ -141,7 +143,7 @@ model_null = list(
 )
 
 # Fit it
-fit_null = mcp(model_null, demo_fit$data)
+fit_null = mcp(model_null, demo_fit$data, seed = 42)
 ```
 
 Leveraging the power of `loo::loo()`, we see that the two-change-points model is preferred (it is on top), but the `elpd_diff / se_diff` ratio indicates that this preference is not very strong:
@@ -191,7 +193,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 [Supported families and link functions](https://lindeloev.github.io/mcp/articles/families.html):
 
--  `mcp` currently supports specific combinations of families (`gaussian()`, `binomial()`, `bernoulli()`, `poisson()`, and `negbinomial()`) and link functions (`identity`, `logit`, `probit`, and `log`).
+- `mcp` currently supports specific combinations of families (`gaussian()`, `binomial()`, `bernoulli()`, `poisson()`, and `negbinomial()`) and link functions (`identity`, `logit`, `probit`, and `log`).
 
 - On using informative priors to incorporate expert knowledge.
 

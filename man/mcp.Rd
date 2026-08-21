@@ -57,23 +57,26 @@ Poisson, and negative-binomial families with their default links. They
 define a finite conditional recurrence and do not jointly constrain AR
 coefficients to stationarity or MA coefficients to invertibility.
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
-\item \emph{Weights:} \code{y | weights(w) ~ ...} usespositive Gaussian precision weights,
-giving residual SD \code{sigma / sqrt(w)}.
+\item \emph{Weights:} \code{y | weights(w) ~ ...} specifies observation log-likelihood weights.
 \item \emph{Binomial:} use \code{successes | trials(total) ~ ...} with \code{family = binomial()}.
 }}
 
-\item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.).
+\item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)
+with syntactic column names.
 Missing values in the response variable are imputed using the posterior predictive.
 \code{\link{fitted.mcpfit}} or \code{\link{predict.mcpfit}} details how to see the imputed values.}
 
 \item{prior}{Named list. Names are parameter names (\code{cp_i}, \code{Intercept_i}, \code{xvar_i},
-\code{sigma}) and the values are either
+\code{sigma_1}, etc.) and the values are either
 \itemize{
-\item A JAGS distribution (e.g., \code{Intercept_1 = "dnorm(0, 1) T(0,)"}) indicating a
+\item A distribution in mcp's JAGS-string syntax (e.g.,
+\code{Intercept_1 = "dnorm(0, 1) T(0,)"}) indicating a
 conventional prior distribution. Data-calibrated, regularizing defaults
 are used where priors are not specified. These are designed for stable
 estimation and prediction, but should be justified before hypothesis testing.
-\code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
+\code{mcp} uses conventional distribution scales rather than JAGS precision:
+SD for \code{dnorm()}, scale for \code{dt()}, \code{ddexp()}, and \code{dlogis()}, and
+log-SD for \code{dlnorm()}. See
 details. With multiple change points, the default is a regularizing
 Student-t prior centered at \code{min(x)} and sequentially truncated between
 the preceding change point and \code{max(x)}. User-specified \code{dunif()} priors
@@ -200,10 +203,11 @@ fixed change points.
 They are resolved from the model data before JAGS code is generated.
 The older constants \code{MINX}, \code{MAXX}, \code{MEANX}, \code{SDX}, \code{MINY}, \code{MAXY},
 \code{MEANY}, \code{SDY}, and \code{N_CP} remain accepted with a deprecation warning.
-\item Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision
-but \code{mcp} converts to precision under the hood via the sd_to_prec()
-function. So you will see SDs in \code{fit$prior} but precision ($1/SD^2)
-in \code{fit$jags_code}. Use \code{prior_summary(fit)} for resolved priors and
+\item Prior strings use conventional scale parameterizations. \code{mcp} converts
+these to the parameterization required by JAGS when generating code:
+inverse variance for \code{dnorm()}, \code{dt()}, and \code{dlnorm()}, and inverse
+scale for \code{ddexp()} and \code{dlogis()}. Use
+\code{prior_summary(fit)} for resolved priors and
 \code{prior_summary(fit, verbose = TRUE)} for their rules and descriptions.
 }
 }

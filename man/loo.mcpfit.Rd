@@ -13,7 +13,8 @@
 \method{loo}{mcpfit}(
   x,
   ...,
-  pointwise = FALSE,
+  by_row = FALSE,
+  pointwise = lifecycle::deprecated(),
   varying = TRUE,
   arma = TRUE,
   ndraws = NULL,
@@ -34,10 +35,14 @@
 
 \item{...}{Currently ignored}
 
-\item{pointwise}{\code{TRUE} calls calls \code{\link[loo]{loo.function}} which is slower but more memory efficient.
-\code{FALSE} calls the default \code{\link[loo]{loo}}.}
+\item{by_row}{\code{TRUE} calls \code{\link[loo]{loo.function}} to compute log-likelihood
+contributions row-by-row (observation-by-observation), which is slower but more
+memory efficient. \code{FALSE} (default) computes the full log-likelihood matrix at once.
+Note that both modes calculate pointwise (observation-level) PSIS-LOO cross-validation.}
 
-\item{varying}{One of:
+\item{pointwise}{Deprecated alias for \code{by_row}.}
+
+\item{varying}{Group-level effects. One of:
 \itemize{
 \item \code{TRUE} All group-level deviations.
 \item \code{FALSE} No group-level deviations (\code{c()}).

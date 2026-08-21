@@ -14,6 +14,9 @@ A named list with \code{par_x}, \code{response}, and \code{series}, plus any
 family-defined response-auxiliary column roles.
 }
 \description{
+\lifecycle{experimental}
+}
+\details{
 Return the resolved data-column roles for an \code{mcpfit} object. In particular,
 \code{par_x} is the change-point predictor chosen automatically or supplied to
 \code{\link[=mcp]{mcp()}}. Family-defined response auxiliaries, such as \code{trials} and
