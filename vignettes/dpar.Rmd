@@ -1,17 +1,19 @@
 ---
-title: "Modeling standard deviation and its changes"
+title: "Variance change points and other distributional parameters"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Modeling standard deviation and its changes}
+  %\VignetteIndexEntry{Variance change points and other distributional parameters}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-For Gaussian models, you can explicitly model the residual standard deviation (`sigma`). For example, a plateau mean with an increasing standard deviation can be written as `y ~ 1 + sigma(1 + x)`. An explicit `sigma()` formula uses a log link, so its linear predictor is log-SD and `sigma = exp(eta_sigma)`, as in `brms`. This guarantees a positive, smoothly varying standard deviation. Formula syntax allowed outside `sigma()` (where it applies to the mean) also works inside it (where it applies to log-SD). For example, `~ 1 + sigma(1 + z + I(x^2))` is valid. Read more about mcp formulas [here](../articles/formulas.html).
+`mcp` supports **distributional regression**, where any parameter of a response distribution can be regressed on predictors and have change points across segments. In standard regression, formulas model only the conditional mean ($\mu$). Distributional regression extends this by allowing formulas for auxiliary parameters such as residual standard deviation (`sigma`), negative-binomial overdispersion (`shape`), or time-series autocorrelation (`ar` / `ma`).
+
+For Gaussian models, the most common distributional parameter is the residual standard deviation (`sigma`). For example, a plateau mean with an increasing standard deviation can be written as `y ~ 1 + sigma(1 + x)`. An explicit `sigma()` formula uses a log link, so its linear predictor is log-SD and $\text{sigma} = \exp(\eta_{\text{sigma}})$, matching `brms`. This guarantees a positive, smoothly varying standard deviation. Formula syntax allowed outside `sigma()` (where it applies to the mean) also works inside it (where it applies to log-SD). For example, `~ 1 + sigma(1 + z + I(x^2))` is valid. Read more about mcp formulas [here](../articles/formulas.html).
 
 There is one intentional distinction for the common model without any `sigma()` term. Its implicit constant `sigma_1` is the residual SD itself, not log-SD, and its default response-scale half-Student-t prior matches `brms`. As soon as any segment contains an explicit `sigma()` term, all `sigma_*` coefficients in that model are on the log-SD scale. Thus simulation values use, for example, `sigma_1 = log(5)`, while `fitted(fit, dpar = "sigma")` still returns an SD of 5 on the response scale.
 
-# Priors for sigma models
+# Priors for distributional parameters
 
 Without an explicit `sigma()` formula, the default is the intercept-only prior `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )` directly on the residual SD. The response-calibrated scale adapts to the units of `y`, with a minimum of 2.5 to avoid an accidentally narrow prior. This matches `brms`.
 
@@ -40,6 +42,7 @@ We can simulate data with an abrupt change from a low to a high residual standar
 set.seed(40)
 df = data.frame(x = 1:100, y = 1)
 empty = mcp(model, data = df, sample = FALSE, par_x = "x")
+set.seed(42)
 df$y = empty$simulate(
   empty, df, 
   cp_1 = 50, Intercept_1 = 20, 
@@ -52,11 +55,12 @@ head(df)
 Now we fit the model to the simulated data.
 
 ```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, data = df, par_x = "x")
+fit = mcp(model, data = df, par_x = "x", seed = 42)
 ```
 We plot a posterior predictive interval to show the effect of the changing standard deviation, which is not immediately visible in the default plot of the expected response:
 
 ```{r}
+set.seed(42)
 plot(fit, q_predict = TRUE)
 ```
 
@@ -109,6 +113,7 @@ We simulate some data from this model, setting all parameters. As always, we can
 set.seed(40)
 df = data.frame(x = 1:200, y = 1)
 empty = mcp(model, data = df, sample = FALSE)
+set.seed(42)
 df$y = empty$simulate(
   empty, df,
   cp_1 = 50, cp_2 = 100, cp_3 = 150,
@@ -125,12 +130,13 @@ df$y = empty$simulate(
 Fit it in parallel, to speed things up:
 
 ```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, data = df, prior = prior)
+fit = mcp(model, data = df, prior = prior, seed = 42)
 ```
 
 Plotting a posterior predictive interval is an intuitive way to see how the residual standard deviation is estimated:
 
 ```{r}
+set.seed(42)
 plot(fit, q_predict = TRUE)
 ```
 
@@ -138,6 +144,7 @@ plot(fit, q_predict = TRUE)
 We can also plot the `sigma_` parameters directly. Now the y-axis is `sigma`:
 
 ```{r}
+set.seed(42)
 plot_dpar(fit, dpar = "sigma", q_fit = TRUE)
 ```
 
@@ -151,6 +158,7 @@ summary(fit)
 The bulk and tail effective sample sizes (`ess_bulk` and `ess_tail`) are fairly low, indicating poor mixing for these parameters. `rhat` is acceptable at < 1.1, indicating good convergence between chains. Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:
 
 ```{r, fig.height=7, fig.width = 6}
+set.seed(42)
 plot_pars(fit, regex_pars = "sigma_")
 ```
 
@@ -181,6 +189,7 @@ df = data.frame(
   y = 1
 )
 empty = mcp(model, data = df, sample = FALSE)
+set.seed(42)
 df$y = empty$simulate(
   empty, df, 
   cp_1 = 70, cp_1_sd = 30,
@@ -190,11 +199,12 @@ df$y = empty$simulate(
 
 Fit it:
 ```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, data = df)
+fit = mcp(model, data = df, seed = 42)
 ```
 
 Plot it:
 ```{r}
+set.seed(42)
 plot(fit, facet_by = "id")
 ```
 
@@ -203,6 +213,47 @@ As usual, we can get the individual change points:
 ```{r}
 mcp::ranef(fit)
 ```
+
+
+# Generalizing to other distributional parameters (dpars)
+
+`sigma` is just one instance of a distributional parameter in `mcp`. In general, every response family defines a set of supported `dpars` (distributional parameters). The default linear predictor in any segment formula models the location parameter `mu` (or probability/rate under the family's link function). Other `dpars` can be regressed on predictors or given change points using wrapper functions named after the `dpar`.
+
+Here is an overview of standard distributional parameters across response families:
+
+ * **`mu`**: Conditional mean or location (e.g. mean for `gaussian()`, success probability for `binomial()`, event rate for `poisson()`). Modeled by default without any wrapper.
+ * **`sigma`**: Residual standard deviation for `gaussian()` (modeled on the log-SD scale via `sigma(...)`).
+ * **`shape`**: Overdispersion / shape parameter for `negbinomial()` (modeled on the log-shape scale via `shape(...)`).
+ * **`ar()` / `ma()`**: Autoregressive and moving-average serial dependence terms for time-series models ([read more here](../articles/arma.html)).
+
+### Inspecting and working with dpars
+
+You can inspect the parameters in a fitted model or family object using `mcp_pars(fit)` or `cbind(fit$prior)`.
+
+Many core `mcp` functions take a `dpar` argument to extract or visualize specific distributional parameters:
+
+ * **`fitted(fit, dpar = "sigma")` or `fitted(fit, dpar = "shape")`**: Returns fitted values for the target `dpar` evaluated on the natural/response scale.
+ * **`predict(fit, dpar = "sigma")`**: Generates posterior predictive draws for the specified distributional parameter.
+ * **`plot_dpar(fit, dpar = "sigma")` or `plot_dpar(fit, dpar = "shape")`**: Plots the trajectory of the distributional parameter over $x$, complete with credible intervals across segments.
+
+### Example: Modeling `shape()` in negative-binomial regression
+
+For a `negbinomial()` model, `shape()` controls the overdispersion ($\operatorname{Var}(y) = \mu + \mu^2 / \text{shape}$). You can model a change in overdispersion across segments just like `sigma()`:
+
+```{r, eval=FALSE}
+model_nb = list(
+  y ~ 1 + x + shape(1),     # Segment 1: intercept on shape
+  ~ 1 + x + shape(1 + x)    # Segment 2: changing shape (overdispersion) over x
+)
+fit_nb = mcp(model_nb, data = df_count, family = negbinomial(), seed = 42)
+
+# Visualize the shape trajectory across segments
+set.seed(42)
+plot_dpar(fit_nb, dpar = "shape")
+```
+
+Just like `sigma()`, an explicit `shape()` formula models log-shape so that the parameter remains strictly positive. All formula features (intercepts, continuous slopes, categorical contrasts, polynomial terms, and group-level deviations) work identically for any `dpar`.
+
 
 ```{r cleanup, include=FALSE}
 future::plan(future::sequential)
