@@ -25,7 +25,7 @@ set.seed(42)
 
 `mcp` aims to feel "R-native" like `lm`/`glm` at its simplest while the more Bayesian aspects are inspired by `brms` and `posterior`. Under the hood, `mcp` takes a formula-representation of linear segments and turns it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code (see `fit$jags_code`).
 
-`mcp` has [200+ academic citations](https://scholar.google.com/scholar?cites=5590697509718421309) across ecology, astronomy, neuroscience, epidemiology, and other disciplines. See applications in the citing literature. Still, consider if `mcp` is the right tool for your problem. See [list of R change point packages](https://lindeloev.github.io/mcp/articles/packages.html).
+`mcp` has [200+ academic citations](https://scholar.google.com/scholar?cites=5590697509718421309) across ecology, astronomy, neuroscience, epidemiology, and other disciplines. See applications in the citing literature. Still, consider if `mcp` is the right tool for your problem - see [overview of change point packages](https://lindeloev.github.io/mcp/articles/packages.html).
 
 Change points are also called **switch points**, **break points**, **broken line** regression, **broken stick** regression, **bilinear** regression, **piecewise linear** regression, **local linear** regression, **segmented** regression, and (performance) **discontinuity** models. `mcp` aims to be be useful for all of them.
 
@@ -63,7 +63,7 @@ fit = mcp(model, data)
 
 The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the most common formula for segment 2+ would be `~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
-You can do change point regression for a large number of models in a syntax that aligns with `lm()`/`glm()`/`brms::brm()`. Visit [the mcp website](https://lindeloev.github.io/mcp/) for worked examples and tips for many of them.
+You can do change point regression for a large number of models in a syntax that aligns with `lm()`/`glm()`/`brms`. Visit [the mcp website](https://lindeloev.github.io/mcp/) for worked examples and tips for many of them.
 
 ![Several plots showing mcp regression fits across different models and change-point structures.](https://lindeloev.github.io/mcp/dev/mcp_showcase_small.png)
 
@@ -133,7 +133,7 @@ We can test (joint) probabilities in the model using `hypothesis()` ([see more h
 hypothesis(fit, "cp_1 > 25")
 ```
 
-For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation ([see more here](https://lindeloev.github.io/mcp/articles/comparison.html)). Let’s specify a null model with no change points: a single straight line.
+For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation ([see more here](https://lindeloev.github.io/mcp/articles/comparison.html)). Let’s specify a null model null model where the first two segments are reduced to one straight line, i.e., removing the change point:
 
 ```{r demo-fit-null, results='hide', message=FALSE}
 # Define the model
@@ -164,30 +164,6 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 - Generate data for all supported models using `fit$simulate()`. See examples in, e.g., `mcp_example("demo")$example_code`.
 
-[Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
-
-- See priors in `fit$prior`.
-
-- Set priors using `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")`.
-
-- One change point has a uniform default prior. Multiple change points use sequentially truncated Student-t priors centered at the minimum x; this regularizes their spacings. `cp_i = "dirichlet(1)"` instead gives the ordered-uniform distribution, with exchangeable spacings. Only uniform is uninformative.
-
-- Fix parameters to specific values using `cp_1 = 45`.
-
-- Share parameters between segments using `slope_1 = "slope_2"`.
-
-- Truncate priors using `T(lower, upper)`, e.g., `Intercept_1 = "dnorm(0, 1) T(0, )"`. `mcp` adds ordering bounds to population-level change-point priors. Users can override these.
-
-- Do prior predictive checks using `mcp(model, data, sample = "prior")`.
-
-[Group-level change points](https://lindeloev.github.io/mcp/articles/varying.html):
-
-- Get posteriors using `ranef(fit)`.
-
-- Plot using `plot(fit, facet_by = "my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
-
-- Default priors bound group-specific change points relative to adjacent population-level change points.
-
 [Supported families and link functions](https://lindeloev.github.io/mcp/articles/families.html):
 
 - `mcp` currently supports specific combinations of families (`gaussian()`, `binomial()`, `bernoulli()`, `poisson()`, and `negbinomial()`) and link functions (`identity`, `logit`, `probit`, and `log`).
@@ -208,19 +184,39 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 - Leverage directional and conditional tests to assess interval hypotheses (`hypothesis(fit, "cp_1 > 30 & cp_1 < 50")`), combined other hypotheses (`hypothesis(fit, "cp_1 > 30 & Intercept_1 > Intercept_2")`), etc.
 
-Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) and distributional parameters like [Gaussian residual standard deviation](https://lindeloev.github.io/mcp/articles/variance.html):
+[Group-level change points](https://lindeloev.github.io/mcp/articles/varying.html):
 
-- `~ sigma(1)` models an intercept change in standard deviation. `~ sigma(0 + x)` models increasing/decreasing standard deviation. Explicit `sigma()` formulas use a log link, so their coefficients are on the log-SD scale.
+- Model group-level change points using `+(condition|id)`. Get posteriors using `ranef(fit)`.
+
+- Plot using `plot(fit, facet_by = "my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
+
+- Default priors bound group-specific change points relative to adjacent population-level change points.
+
+Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) and distributional parameters like [Gaussian residual standard deviation](https://lindeloev.github.io/mcp/articles/dpar.html):
+
+- `~ 0 + sigma(1)` models an intercept change in standard deviation. `~ 0 + sigma(0 + x)` models increasing/decreasing standard deviation. Explicit `sigma()` formulas use a log link, so their coefficients are on the log-SD scale.
 
 - `~ ar(N)` models Nth order autoregression on residuals. `~ar(N, 0 + x)` models increasing/decreasing autocorrelation.
 
-- You can model anything for `sigma()` and `ar()`. For example, `~ x + sigma(1 + x:condition)` models a polynomial change in log-SD with `x` on top of a slope on the mean.
+- You can provide complete models in distributional parameters (currently `sigma()`, `shape()`, and `mu()`) and time-series (`ar()` and `ma()`). For example, `~ x + sigma(1 + x:condition)` models an abrupt change followed by a by-condition slopes in variance.
 
 [Get fitted and predicted values and intervals](https://lindeloev.github.io/mcp/articles/predict.html):
 
 - `fitted(fit)` and `predict(fit)` take many arguments to predict in-sample and out-of-sample values and intervals.
 
 - Forecasting with prior knowledge about future change points.
+
+[Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
+
+- See priors in `fit$prior` and set priors using `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")`.
+
+- One change point has a uniform default prior. An ideal default prior for multiple change points is `cp_i = "dirichlet(1)"` which is a simplex of equidistant beta distributions, but because it samples inefficiently, a mcp defaults to an approximation using truncated Student-t priors centered at the minimum x. Informativeness increases and the number of change points increase.
+
+- Fix parameters to specific values using `cp_1 = 45` and share parameters between segments using `slope_1 = "slope_2"`.
+
+- Truncate priors using `T(lower, upper)`, e.g., `Intercept_1 = "dnorm(0, 1) T(0, )"`. `mcp` adds ordering bounds to population-level change-point priors. Users can override these.
+
+- Do prior predictive checks using `mcp(model, data, sample = "prior") |> plot()`.
 
 [Missing responses and posterior imputation](https://lindeloev.github.io/mcp/articles/missing.html):
 
@@ -244,8 +240,8 @@ Use the `posterior` package generics to extract draws in any format:
 library(posterior)
 library(tidybayes)
 
-as_draws_df(fit)  # draws_df (tidybayes-compatible)
-as_draws_array(fit)  # draws array (iterations x chains x parameters)
+as_draws_df(fit)    # draws_df (tidybayes-compatible)
+as_draws_array(fit) # draws array (iterations x chains x parameters)
 coda::as.mcmc(fit)  # coda mcmc.list (for coda diagnostics)
 spread_draws(as_draws_df(fit), cp_1, cp_2, Intercept_1)  # tidybayes
 ```
