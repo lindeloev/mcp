@@ -61,6 +61,7 @@ imputed = predict(fit, probs = c(0.1, 0.5, 0.9)) |>
   filter(is.na(y))
 
 # Start with mcp plot with prediction interval. Use all draws for less Monte Carlo error.
+set.seed(42)
 plot(fit, color_by = "condition", q_predict = c(0.1, 0.9), ndraws = Inf) +
 
   # Add posterior predictive interval
@@ -123,7 +124,7 @@ Missing responses work with the usual `mcp` model features. For example, you can
 
  * Include [continuous and categorical predictors](../articles/formulas.html) so imputations follow observed covariate information.
  * Use [group-level effects](../articles/varying.html) so sparsely observed groups borrow information from the population and their available observations.
- * [Model changing residual standard deviation with `sigma()`](../articles/variance.html) so imputation uncertainty can vary over the predictor range.
+ * [Model changing residual standard deviation with `sigma()`](../articles/dpar.html) so imputation uncertainty can vary over the predictor range.
  * Use [binomial, Bernoulli, Poisson, or negative-binomial responses](../articles/families.html). Their imputations remain on the appropriate discrete response scale; binomial predictions can also be returned as rates.
 
 The predictors required by the model must themselves be observed. `mcp` currently imputes missing responses, not missing predictor values, and it does not model the process that caused responses to be missing. As with ordinary regression using incomplete outcomes, interpretation relies on the missing responses being reasonably explained by the observed predictors and model structure.

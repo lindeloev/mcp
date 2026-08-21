@@ -65,13 +65,12 @@ model = list(
   price ~ 1 + ar(2),  # Intercept_1, ar1_1, ar2_1
   ~ 0 + time + ar(1)  # time_2, ar1_2
 )
-fit = mcp(model, ex$data)
-```
+fit = mcp(model, ex$data, seed = 42)
 
 Let's plot it and we see that AR was strong in the first segment and weaker-but-negative in the second:
 
 ```{r}
-plot(fit)
+set.seed(42)
 ```
 
 
@@ -88,7 +87,7 @@ Comparing the columns `mean` and `sim` we see that the AR coefficients are reaso
 For Gaussian GARMA models, `sigma` describes the *innovations*, i.e., the part of the residuals not explained by AR and MA coefficients. `sd(ex$data$price)` is therefore generally higher. In this case, the SD of raw data in the plateau is `r round(sd(ex$data$price[1:120]), 2)`. As always, it is good to assess posteriors and convergence more directly:
 
 ```{r, fig.height=9, fig.width=8}
-plot_pars(fit)
+set.seed(42)
 ```
 
 Sometimes, the trace plot shows that the change point (`cp_1`) is not well identified with this model and data. As discussed in the article on [tips, tricks, and debugging](../articles/tips.html), you could combine a more informative prior with more samples (`mcp(..., warmup = 10000, iter = 10000)`), if this is a problem.
@@ -161,9 +160,8 @@ arima(df$response, order = c(3, 0, 0))
 OK, we can see that the `ar` coefficients and sigma ($sigma = sqrt(sigma^2)$) is simulated correctly, if taking `arima()` as ground truth. Inferring with `mcp` is straightforward:
 
 ```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, df, par_x = "time")
+fit = mcp(model, df, par_x = "time", seed = 42)
 ```
-
 The Bayesian parameter estimates are in perfect correspondence with `arima()`, even where they deviate a tiny bit from the simulation parameters (due to the inherent randomness in simulating data):
 ```{r}
 fixef(fit)
@@ -202,21 +200,20 @@ df$y = empty$simulate(
 
 ```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
 prior = list(x_2 = "x_1")  # Set the two slopes equal
-fit = mcp(model, data = df, prior = prior, sample = "both")
+fit = mcp(model, data = df, prior = prior, sample = "both", seed = 42)
 ```
 
-First, let's get a visual to see that the posterior is reasonably narrow and consistent:
 
 ```{r}
+set.seed(42)
 plot(fit)
 ```
-
 You could use `plot(fit, geom_data = "line")` for a more classical line plot of the time series data. Set `plot(fit, arma = FALSE)` to omit all AR and MA effects. You can also plot `ar1_` or `ma1_` parameters directly using `plot_dpar()`:
 
 ```{r}
+set.seed(42)
 plot_dpar(fit, dpar = "ar1", lines = 100)
 ```
-
 
 We recovered the parameters, including the change point:
 
@@ -228,9 +225,9 @@ summary(fit)
 We can also plot some of the parameters. As usual, we see that the change point is not well defined by any known distribution. The fact that the posterior mean is around 60 does not (necessarily) mean that there is a high credence in this value. Usually, I find that any bi- or N-modality on the posterior matches well with what you would guess from looking at the raw data. As they say: Bayesian inference is common sense applied to data.
 
 ```{r}
+set.seed(42)
 plot_pars(fit, regex_pars = "cp_1|ar_*")
 ```
-
 
 As usual, we can test hypotheses ([read more here](../articles/comparison.html)). We can also ask how much more likely it is (relative to the prior) that there the two autocorrelations are equal compared to them differing. Because we sampled both the prior and posterior (`mcp(..., sample = "both")`), we can do a Savage-Dickey density ratio test:
 
@@ -272,9 +269,9 @@ cbind(fit$prior)
 We can also visualize them because we sampled the prior. `prior = TRUE` works in most `mcp` functions, including `plot()` and `summary()`.
 
 ```{r, fig.height=10, fig.width=7}
+set.seed(42)
 plot_pars(fit, prior = TRUE)
 ```
-
 Notice that the posteriors are smoothed at sharp cutoffs, slightly misrepresenting the true distribution.
 
 Let's inspect the priors for a more advanced AR model, since you would often have to inform these:

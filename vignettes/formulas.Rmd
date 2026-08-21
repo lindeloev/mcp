@@ -1,8 +1,8 @@
 ---
-title: "About mcp formulas and models"
+title: "Understanding mcp formulas"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{About mcp formulas and models}
+  %\VignetteIndexEntry{Understanding mcp formulas}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

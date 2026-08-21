@@ -78,10 +78,11 @@ prior = list(
   cp_1 = "dnorm(30, 10) T(20, )"   # Slope starts not-too-early
 )
 
-fit = mcp(model, data = data, family = binomial(link = "identity"), prior = prior)
+fit = mcp(model, data = data, family = binomial(link = "identity"), prior = prior, seed = 42)
 ```
 
 ```{r, fig.width=6, fig.height=4}
+set.seed(42)
 plot(fit)
 ```
 

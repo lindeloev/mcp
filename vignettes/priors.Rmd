@@ -60,6 +60,7 @@ Now, let's simulate some data that from the `model`. The following priors are "a
 
 ```{r}
 df = data.frame(x = runif(200, 0, 100), y = 1)  # 200 datapoints between 0 and 100
+set.seed(42)
 df$y = empty_default$simulate(empty_default, df, 
     Intercept_1 = 20, Intercept_2 = 30, Intercept_3 = 30,  # intercepts
     x_1 = -0.5, x_2 = 0.5, x_3 = 0,  # slopes
@@ -73,17 +74,19 @@ head(df)
 Sample the prior and posterior. We give the manual fit a longer warmup, since it is harder to find the right posterior under these weird prior constraints (priors will usually improve sampling efficiency).
 
 ```{r, cache = TRUE, message=FALSE, warning=FALSE, results=FALSE}
-fit_manual = mcp(model, data = df, sample = "both", warmup = 10000, prior = prior)
-fit_default = mcp(model, data = df, sample = "both", warmup = 10000)
+fit_manual = mcp(model, data = df, sample = "both", warmup = 10000, prior = prior, seed = 42)
+fit_default = mcp(model, data = df, sample = "both", warmup = 10000, seed = 42)
 ```
 
 First, let's look at the priors side by side. Notice the use of `prior = TRUE` to show prior samples. This works in `plot()`, `plot_pars()`, and `summary()` among others.
 
 ```{r, fig.height=12, fig.width=6}
 library(ggplot2)
+set.seed(42)
 pp_default = plot_pars(fit_default, type = "dens_overlay", prior = TRUE) + 
   ggtitle("Default priors")
 
+set.seed(42)
 pp_manual = plot_pars(fit_manual, type = "dens_overlay", prior = TRUE) +
   ggtitle("Manual priors")
 
@@ -93,7 +96,10 @@ pp_default + pp_manual
 Here is the resulting posterior fits:
 
 ```{r}
+set.seed(42)
 plot_default = plot(fit_default) + ggtitle("Default priors")
+
+set.seed(42)
 plot_manual = plot(fit_manual) + ggtitle("Manual priors")
 
 plot_default + plot_manual
@@ -126,11 +132,11 @@ df_dummy = data.frame(x = c(50, 100, 150), y = rnorm(3))
 
 # Sample priors for two default change points
 model_two = list(y ~ x, ~ 1, ~1)
-fit_two = mcp(model_two, data = df_dummy, sample = "prior", chains = 1, iter = 300000)
+fit_two = mcp(model_two, data = df_dummy, sample = "prior", chains = 1, iter = 300000, seed = 42)
 
 # Sample priors for five default change points
 model_five = list(y ~ x, ~ 1, ~1, ~1, ~1, ~1)
-fit_five = mcp(model_five, data = df_dummy, sample = "prior", chains = 1, iter = 300000)
+fit_five = mcp(model_five, data = df_dummy, sample = "prior", chains = 1, iter = 300000, seed = 42)
 ```
 
 ```{r, echo = FALSE, fig.height=6, fig.width=7}
@@ -315,11 +321,13 @@ Prior predictive checks is a great way to ensure that the priors are meaningful.
 
 ```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
 # Sample priors 
-fit_pp_manual = mcp(model, data = df, prior = prior, sample = "prior")
-fit_pp_default = mcp(model, data = df, sample = "prior")
+fit_pp_manual = mcp(model, data = df, prior = prior, sample = "prior", seed = 42)
+fit_pp_default = mcp(model, data = df, sample = "prior", seed = 42)
 
 # Plot it
+set.seed(42)
 plot_pp_manual = plot(fit_pp_manual, lines = 100) + ylim(c(-400, 400)) + ggtitle("Manual prior")
+set.seed(42)
 plot_pp_default = plot(fit_pp_default, lines = 100) + ylim(c(-400, 400)) + ggtitle("Default prior")
 plot_pp_manual +  plot_pp_default  # using patchwork
 ```

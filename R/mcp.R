@@ -13,16 +13,16 @@
 #' @aliases mcp
 #' @param data Table-like data in long format (data.frame, tibble, data.table, etc.)
 #'   with syntactic column names.
-#'   Missing values in the response variable are imputed using the posterior predictive. 
+#'   Missing values in the response variable are imputed using the posterior predictive.
 #'   \code{\link{fitted.mcpfit}} or \code{\link{predict.mcpfit}} details how to see the imputed values.
-#' @param model A list of formulas - one for each segment. The many examples 
+#' @param model A list of formulas - one for each segment. The many examples
 #'   on the [mcp website](https://lindeloev.github.io/mcp/). But briefly:
-#' 
+#'
 #'   The first formula has the format `response ~ predictors` while the following formulas have
 #'   the format `response ~ cp ~ predictors`. Here, `cp` names the change-point
 #'   part of the formula rather than a literal variable. The response and
 #'   change-point parts can be omitted (`cp ~ predictor` assumes the same
-#'   response; `~ predictor` assumes an intercept-only change point). Terms normally carry 
+#'   response; `~ predictor` assumes an intercept-only change point). Terms normally carry
 #'   into later segments until redefined (see details).
 #'
 #'   The following terms can be modeled:
@@ -41,7 +41,7 @@
 #'     standard-deviation change or `~sigma(1 + x + group)` for more advanced
 #'     structures. Explicit `sigma()` formulas model log-SD, while the implicit constant `sigma_1` in a
 #'     model without `sigma()` remains on the response scale.
-#'     [Read more](https://lindeloev.github.io/mcp/articles/variance.html)
+#'     [Read more](https://lindeloev.github.io/mcp/articles/dpar.html)
 #'
 #'   * *Time-series residuals:* use `ar(p)` and `ma(q)` separately or together,
 #'     e.g., `~ 1 + ar(1) + ma(1)`. Both accept an optional regression formula
@@ -50,9 +50,9 @@
 #'     define a finite conditional recurrence and do not jointly constrain AR
 #'     coefficients to stationarity or MA coefficients to invertibility.
 #'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
-#' 
+#'
 #'   * *Weights:* `y | weights(w) ~ ...` specifies observation log-likelihood weights.
-#' 
+#'
 #'   * *Binomial:* use `successes | trials(total) ~ ...` with `family = binomial()`.
 #'
 #' @param prior Named list. Names are parameter names (`cp_i`, `Intercept_i`, `xvar_i`,
@@ -105,7 +105,7 @@
 #' @param iter Positive integer. Number of post-warmup draws from each chain.
 #'   The total number of draws is `iter * chains`.
 #' @param warmup Positive integer. Number of initial iterations per chain which
-#'   are discarded before sampling. Set higher if needed for sampler adaptation; 
+#'   are discarded before sampling. Set higher if needed for sampler adaptation;
 #'   use diagnostics to assess convergence.
 #' @param adapt Deprecated; use `warmup` instead.
 #' @param inits A list if initial values for the parameters. This can be useful

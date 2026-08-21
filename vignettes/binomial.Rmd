@@ -52,6 +52,7 @@ mcp_pars(empty)
 `empty$simulate` is now a function that can predict data given these parameters (signature: `empty$simulate(fit, newdata, ...)`). If you are in a reasonable R editor, type `empty$simulate(` and press TAB to see the required arguments. I came up with some values below, including change points at $year = 25$ and $year = 65$. Because `binomial()` defaults to `link = "logit"`, the intercept and slopes are on the [logit scale](https://en.wikipedia.org/wiki/Logit), which maps success probabilities between 0 and 1 to the real line. This will be important later when we set priors.
 
 ```{r}
+set.seed(42)
 df$y = empty$simulate(
   empty, df, 
   cp_1 = 1925, cp_2 = 1975, 
@@ -72,7 +73,7 @@ plot(df$year, df$y)
 The next sections go into more detail, but let us quickly see if we can recover the parameters used to simulate the data.
 
 ```{r, cache = TRUE, results=FALSE, message=FALSE, warning=FALSE}
-fit = mcp(model, data = df, family = binomial(), warmup = 5000)
+fit = mcp(model, data = df, family = binomial(), warmup = 5000, seed = 42)
 ```
 
 
@@ -87,6 +88,7 @@ summary(fit)
 Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:
 
 ```{r}
+set.seed(42)
 plot(fit)
 ```
 
@@ -95,6 +97,7 @@ These lines are just `fit$simulate` applied to a random draw of the posterior sa
 Speaking of alternative visualizations, you can also plot this on the logit scale, where the linear trends are modeled:
 
 ```{r, warning=FALSE, message=FALSE}
+set.seed(42)
 plot_dpar(fit)
 ```
 
@@ -106,6 +109,7 @@ These plots work with [group-level effects](../articles/varying.html) as well.
 Already in the default `plot` as used above, it will be obvious if there was poor convergence. A more direct assessment is to look at the posterior distributions and trace plots:
 
 ```{r, fig.height = 10, fig.width = 6}
+set.seed(42)
 plot_pars(fit)
 ```
 

@@ -27,8 +27,8 @@ it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code (see
 citations](https://scholar.google.com/scholar?cites=5590697509718421309)
 across ecology, astronomy, neuroscience, epidemiology, and other
 disciplines. See applications in the citing literature. Still, consider
-if `mcp` is the right tool for your problem. See [list of R change point
-packages](https://lindeloev.github.io/mcp/articles/packages.html).
+if `mcp` is the right tool for your problem - see [overview of change
+point packages](https://lindeloev.github.io/mcp/articles/packages.html).
 
 Change points are also called **switch points**, **break points**,
 **broken line** regression, **broken stick** regression, **bilinear**
@@ -79,10 +79,16 @@ be `~ predictors` (more details
 [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
 You can do change point regression for a large number of models in a
-syntax that aligns with `lm()`/`glm()`/`brms::brm()`. Visit [the mcp
-website](#0) for worked examples and tips for many of them.
+syntax that aligns with `lm()`/`glm()`/`brms`. Visit [the mcp
+website](https://lindeloev.github.io/mcp/) for worked examples and tips
+for many of them.
 
-![](https://lindeloev.github.io/mcp/dev/mcp_showcase_small.png)
+<figure>
+<img src="https://lindeloev.github.io/mcp/dev/mcp_showcase_small.png"
+alt="Several plots showing mcp regression fits across different models and change-point structures." />
+<figcaption aria-hidden="true">Several plots showing mcp regression fits
+across different models and change-point structures.</figcaption>
+</figure>
 
 # Brief worked example
 
@@ -133,21 +139,24 @@ summary(fit)
 ```
 
     ## Family: gaussian(link = 'identity')
-    ## Iterations: 12000 from 3 chains.
+    ## Iterations: 4000 from 3 chains.
     ## Segments:
     ##   1: response ~ 1
     ##   2: response ~ 1 ~ 0 + time
     ##   3: response ~ 1 ~ 1 + time
     ## 
+    ## Change point parameters:
+    ##         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match
+    ##  cp_1        23.78 5.124 13.90 33.39    1      420      914 30.0    OK
+    ##  cp_2        69.91 0.341 69.35 70.48    1     6637     9729 70.0    OK
+    ## 
     ## Population-level parameters:
-    ##         name match  sim  mean lower upper Rhat ess_bulk ess_tail
-    ##         cp_1    OK 30.0 23.78 13.90 33.39    1      420      914
-    ##         cp_2    OK 70.0 69.91 69.35 70.48    1     6637     9729
-    ##  Intercept_1    OK 10.0  9.02  7.12 10.71    1      732     1249
-    ##       time_2    OK  0.5  0.40  0.31  0.52    1      457     1112
-    ##  Intercept_3    OK  0.0  2.26 -0.15  4.72    1     1207     2043
-    ##       time_3    OK -0.2 -0.27 -0.40 -0.14    1     1198     1910
-    ##      sigma_1    OK  4.0  3.67  3.19  4.25    1     5564     5492
+    ##         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match
+    ##  Intercept_1  9.02 0.919  7.12 10.71    1      732     1249 10.0    OK
+    ##  time_2       0.40 0.054  0.31  0.52    1      457     1112  0.5    OK
+    ##  Intercept_3  2.26 1.221 -0.15  4.72    1     1207     2043  0.0    OK
+    ##  time_3      -0.27 0.066 -0.40 -0.14    1     1198     1910 -0.2    OK
+    ##  sigma_1      3.67 0.269  3.19  4.25    1     5564     5492  4.0    OK
 
 - `rhat` is the rank-normalized split-Rhat convergence diagnostic.
 - `ess_bulk` and `ess_tail` are the effective sample sizes for the bulk
@@ -204,15 +213,12 @@ For model comparisons, we can fit a null model and compare the
 predictive performance of the two models using (approximate)
 leave-one-out cross-validation ([see more
 here](https://lindeloev.github.io/mcp/articles/comparison.html)). Let’s
-specify a null model without the first plateau - so it is just one
-straight line:
+specify a null model null model where the first two segments are reduced
+to one straight line, i.e., removing the change point:
 
 ``` r
 # Define the model
-model_null = list(
-  response ~ 1 + time,  # intercept (Intercept_1) and slope (time_1)
-  ~ 1 + time            # disjoined slope (Intercept_2, time_1)
-)
+model_null = list(response ~ 1 + time)  # Intercept_1 and time_1
 
 # Fit it
 fit_null = mcp(model_null, demo_fit$data, seed = 42)
@@ -231,7 +237,7 @@ loo::loo_compare(fit_loo, fit_null_loo)
 
     ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
     ##  model1       0.0     0.0      NA                    
-    ##  model2      -4.7     3.4    0.91
+    ##  model2     -97.9     9.2    1.00
 
 # Highlights from in-depth guides
 
@@ -239,8 +245,8 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go
 in-depth with the functionality of `mcp`. Here is an executive summary,
 to give you a quick sense of what mcp can do.
 
-[About mcp models and simulating
-data](https://lindeloev.github.io/mcp/articles/formulas.html):
+[Understanding mcp
+formulas](https://lindeloev.github.io/mcp/articles/formulas.html):
 
 - Parameter names are `Intercept_i` (intercepts), `cp_i` (change
   points), `x_i` (slopes), `ar*`/`ma*` (autocorrelation), and `sigma_*`
@@ -251,40 +257,6 @@ data](https://lindeloev.github.io/mcp/articles/formulas.html):
 
 - Generate data for all supported models using `fit$simulate()`. See
   examples in, e.g., `mcp_example("demo")$example_code`.
-
-[Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
-
-- See priors in `fit$prior`.
-
-- Set priors using
-  `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")`.
-
-- One change point has a uniform default prior. Multiple change points
-  use sequentially truncated Student-t priors centered at the minimum x;
-  this regularizes their spacings. `cp_i = "dirichlet(1)"` instead gives
-  the ordered-uniform distribution, with exchangeable spacings. Only
-  uniform is uninformative.
-
-- Fix parameters to specific values using `cp_1 = 45`.
-
-- Share parameters between segments using `slope_1 = "slope_2"`.
-
-- Truncate priors using `T(lower, upper)`, e.g.,
-  `Intercept_1 = "dnorm(0, 1) T(0, )"`. `mcp` adds ordering bounds to
-  population-level change-point priors. Users can override these.
-
-- Do prior predictive checks using `mcp(model, data, sample = "prior")`.
-
-[Group-level change
-points](https://lindeloev.github.io/mcp/articles/varying.html):
-
-- Get posteriors using `ranef(fit)`.
-
-- Plot using `plot(fit, facet_by = "my_group")` and
-  `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
-
-- Default priors bound group-specific change points relative to adjacent
-  population-level change points.
 
 [Supported families and link
 functions](https://lindeloev.github.io/mcp/articles/families.html):
@@ -322,22 +294,35 @@ testing](https://lindeloev.github.io/mcp/articles/comparison.html):
   other hypotheses
   (`hypothesis(fit, "cp_1 > 30 & Intercept_1 > Intercept_2")`), etc.
 
+[Group-level change
+points](https://lindeloev.github.io/mcp/articles/varying.html):
+
+- Model group-level change points using `+(condition|id)`. Get
+  posteriors using `ranef(fit)`.
+
+- Plot using `plot(fit, facet_by = "my_group")` and
+  `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
+
+- Default priors bound group-specific change points relative to adjacent
+  population-level change points.
+
 Modeling
 [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) and
 distributional parameters like [Gaussian residual standard
-deviation](https://lindeloev.github.io/mcp/articles/variance.html):
+deviation](https://lindeloev.github.io/mcp/articles/dpar.html):
 
-- `~ sigma(1)` models an intercept change in standard deviation.
-  `~ sigma(0 + x)` models increasing/decreasing standard deviation.
+- `~ 0 + sigma(1)` models an intercept change in standard deviation.
+  `~ 0 + sigma(0 + x)` models increasing/decreasing standard deviation.
   Explicit `sigma()` formulas use a log link, so their coefficients are
   on the log-SD scale.
 
 - `~ ar(N)` models Nth order autoregression on residuals.
   `~ar(N, 0 + x)` models increasing/decreasing autocorrelation.
 
-- You can model anything for `sigma()` and `ar()`. For example,
-  `~ x + sigma(1 + x:condition)` models a polynomial change in log-SD
-  with `x` on top of a slope on the mean.
+- You can provide complete models in distributional parameters
+  (currently `sigma()`, `shape()`, and `mu()`) and time-series (`ar()`
+  and `ma()`). For example, `~ x + sigma(1 + x:condition)` models an
+  abrupt change followed by a by-condition slopes in variance.
 
 [Get fitted and predicted values and
 intervals](https://lindeloev.github.io/mcp/articles/predict.html):
@@ -346,6 +331,28 @@ intervals](https://lindeloev.github.io/mcp/articles/predict.html):
   in-sample and out-of-sample values and intervals.
 
 - Forecasting with prior knowledge about future change points.
+
+[Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
+
+- See priors in `fit$prior` and set priors using
+  `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")`.
+
+- One change point has a uniform default prior. An ideal default prior
+  for multiple change points is `cp_i = "dirichlet(1)"` which is a
+  simplex of equidistant beta distributions, but because it samples
+  inefficiently, a mcp defaults to an approximation using truncated
+  Student-t priors centered at the minimum x. Informativeness increases
+  and the number of change points increase.
+
+- Fix parameters to specific values using `cp_1 = 45` and share
+  parameters between segments using `slope_1 = "slope_2"`.
+
+- Truncate priors using `T(lower, upper)`, e.g.,
+  `Intercept_1 = "dnorm(0, 1) T(0, )"`. `mcp` adds ordering bounds to
+  population-level change-point priors. Users can override these.
+
+- Do prior predictive checks using
+  `mcp(model, data, sample = "prior") |> plot()`.
 
 [Missing responses and posterior
 imputation](https://lindeloev.github.io/mcp/articles/missing.html):
@@ -378,9 +385,9 @@ Use the `posterior` package generics to extract draws in any format:
 library(posterior)
 library(tidybayes)
 
-as_draws_df(fit)  # draws_df (tidybayes-compatible)
-as_draws_array(fit)  # draws array (chains x iterations x parameters)
-as.mcmc(fit)  # coda mcmc.list (for coda diagnostics)
+as_draws_df(fit)    # draws_df (tidybayes-compatible)
+as_draws_array(fit) # draws array (iterations x chains x parameters)
+coda::as.mcmc(fit)  # coda mcmc.list (for coda diagnostics)
 spread_draws(as_draws_df(fit), cp_1, cp_2, Intercept_1)  # tidybayes
 ```
 
@@ -394,7 +401,7 @@ For example:
 head(fitted(fit, summary = FALSE))  # column .epred
 ```
 
-    ## # A tibble: 6 × 13
+    ## # A tibble: 6 × 14
     ##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
     ##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
     ## 1      1          1     1  30.6  70.3        8.78  0.552       0.476 -0.216
@@ -403,7 +410,8 @@ head(fitted(fit, summary = FALSE))  # column .epred
     ## 4      1          1     1  30.6  70.3        8.78  0.552       0.476 -0.216
     ## 5      1          1     1  30.6  70.3        8.78  0.552       0.476 -0.216
     ## 6      1          1     1  30.6  70.3        8.78  0.552       0.476 -0.216
-    ## # ℹ 4 more variables: sigma_1 <dbl>, time <dbl>, data_row <int>, .epred <dbl>
+    ## # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>,
+    ## #   data_row <int>, .epred <dbl>
 
 # Citation
 

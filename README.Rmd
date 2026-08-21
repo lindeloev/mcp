@@ -156,7 +156,7 @@ loo::loo_compare(fit_loo, fit_null_loo)
 
 The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth with the functionality of `mcp`. Here is an executive summary, to give you a quick sense of what mcp can do.
 
-[About mcp models and simulating data](https://lindeloev.github.io/mcp/articles/formulas.html):
+[Understanding mcp formulas](https://lindeloev.github.io/mcp/articles/formulas.html):
 
 - Parameter names are `Intercept_i` (intercepts), `cp_i` (change points), `x_i` (slopes), `ar*`/`ma*` (autocorrelation), and `sigma_*` (Gaussian residual standard deviation).
 

@@ -162,7 +162,7 @@ This confirms the impression from `rhat`, `ess_bulk`, and `ess_tail`. Setting `m
 
 Printing the underlying JAGS code, you can see that the regression model is the same for the mean `mu` (see under "\# Formula for mu") and the standard deviation `sigma` (see under "\# Formula for sigma").
 
-This is explained more in [the article on mcp formulas](articles/formulas.Rmd)
+This is explained more in [Understanding mcp formulas](../articles/formulas.html).
 
 ```{r}
 fit$jags_code
