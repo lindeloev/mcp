@@ -26,3 +26,7 @@ parameterization rather than JAGS precision. Symbolic expressions in bounds
 (e.g. \code{min(x)} or \code{max(x)}) may be retained in symbolic form in compact output,
 while \code{verbose = TRUE} displays the underlying rule, description, source, and kind.
 }
+\examples{
+prior_summary(demo_fit)  # Show the effective priors and bounds
+prior_summary(demo_fit, verbose = TRUE)  # Include their rules and sources
+}

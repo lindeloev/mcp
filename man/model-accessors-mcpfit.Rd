@@ -34,3 +34,10 @@ number of fitting-data rows.
 Standard R accessors for the model formulas, family, fitting data, and number
 of observations stored in an \code{mcpfit}.
 }
+\examples{
+formula(demo_fit)  # Show all segment formulas
+formula(demo_fit, segment = 2)  # Show the formula for segment 2
+family(demo_fit)  # Show the response family and link
+head(model.frame(demo_fit))  # Show the top rows of fitting data
+nobs(demo_fit)  # Count observed response rows
+}

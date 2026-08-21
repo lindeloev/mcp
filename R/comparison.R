@@ -278,6 +278,22 @@ get_loglik_settings = function(fit, varying, arma, ndraws) {
 #'       prior odds. It is `NA` when `prior = TRUE`.
 #'
 #' @export
+#' @examples
+#' # demo_fit contains both posterior and prior draws
+#' # A directional hypothesis returns its posterior probability and Bayes factor
+#' hypothesis(demo_fit, "cp_1 > 30")
+#'
+#' # Combine directional statements for an interval (a ROPE-style hypothesis)
+#' hypothesis(demo_fit, "cp_1 > 20 & cp_1 < 30")
+#'
+#' # Evaluate several directional hypotheses at once
+#' hypothesis(demo_fit, c("cp_1 > 20", "cp_2 > 70"))
+#'
+#' # Equality hypotheses use the Savage-Dickey density ratio
+#' hypothesis(demo_fit, "cp_1 = 25")
+#'
+#' # Inspect the corresponding prior probability without a Bayes factor
+#' hypothesis(demo_fit, "cp_1 > 30", prior = TRUE)
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 hypothesis = function(fit, hypotheses, width = 0.95, prior = FALSE) {

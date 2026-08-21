@@ -15,6 +15,9 @@ sd_to_prec(prior_str)
 A string
 }
 \description{
+\lifecycle{deprecated}
+}
+\details{
 This function is deprecated. JAGS uses precision rather than SD for some
 distributions. For example, this function converts
 \code{dnorm(4.2, 1.3)} into \code{dnorm(4.2, 1/1.3^2)}. It allows users to specify

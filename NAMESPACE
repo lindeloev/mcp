@@ -63,23 +63,29 @@ export(sd_to_prec)
 export(waic)
 import(patchwork)
 importFrom(dplyr,.data)
-importFrom(loo,loo)
-importFrom(loo,loo_compare)
-importFrom(loo,waic)
+importFrom(loo,
+  loo,
+  loo_compare,
+  waic
+)
 importFrom(magrittr,"%>%")
-importFrom(rlang,"!!")
-importFrom(rlang,":=")
-importFrom(rlang,.env)
-importFrom(stats,ave)
-importFrom(stats,binomial)
-importFrom(stats,coef)
-importFrom(stats,confint)
-importFrom(stats,family)
-importFrom(stats,formula)
-importFrom(stats,gaussian)
-importFrom(stats,mad)
-importFrom(stats,median)
-importFrom(stats,model.frame)
-importFrom(stats,nobs)
-importFrom(stats,vcov)
+importFrom(rlang,
+  "!!",
+  ":=",
+  .env
+)
+importFrom(stats,
+  ave,
+  binomial,
+  coef,
+  confint,
+  family,
+  formula,
+  gaussian,
+  mad,
+  median,
+  model.frame,
+  nobs,
+  vcov
+)
 importFrom(utils,capture.output)

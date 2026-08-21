@@ -75,6 +75,9 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
 #'   other distributional parameters, then `ar`/`ma` components - each with
 #'   `segment` and `dpar` columns.
 #' @export
+#' @examples
+#' prior_summary(demo_fit)  # Show the effective priors and bounds
+#' prior_summary(demo_fit, verbose = TRUE)  # Include their rules and sources
 prior_summary = function(fit, verbose = FALSE) {
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_flag(verbose)

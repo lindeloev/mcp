@@ -27,3 +27,10 @@ component (\code{"cp"}, \code{"ar"}, or \code{"ma"}); \code{order} gives an AR/M
 Return the canonical parameter definitions for an \code{mcpfit} object. This
 works before sampling and is the stable way to discover model parameters.
 }
+\examples{
+# Show every parameter in the model
+mcp_pars(demo_fit)
+
+# Select population-level coefficients
+mcp_pars(demo_fit, scope = "population", role = "fixed_effect")
+}

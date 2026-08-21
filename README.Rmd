@@ -63,9 +63,9 @@ fit = mcp(model, data)
 
 The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the most common formula for segment 2+ would be `~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
-You can do change point regression for a large number of models in a syntax that aligns with `lm()`/`glm()`/`brms::brm()`. Visit [the mcp website](#0) for worked examples and tips for many of them.
+You can do change point regression for a large number of models in a syntax that aligns with `lm()`/`glm()`/`brms::brm()`. Visit [the mcp website](https://lindeloev.github.io/mcp/) for worked examples and tips for many of them.
 
-![](https://lindeloev.github.io/mcp/dev/mcp_showcase_small.png)
+![Several plots showing mcp regression fits across different models and change-point structures.](https://lindeloev.github.io/mcp/dev/mcp_showcase_small.png)
 
 # Brief worked example
 
@@ -133,14 +133,11 @@ We can test (joint) probabilities in the model using `hypothesis()` ([see more h
 hypothesis(fit, "cp_1 > 25")
 ```
 
-For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation ([see more here](https://lindeloev.github.io/mcp/articles/comparison.html)). Let's specify a null model without the first plateau - so it is just one straight line:
+For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation ([see more here](https://lindeloev.github.io/mcp/articles/comparison.html)). Let’s specify a null model with no change points: a single straight line.
 
 ```{r demo-fit-null, results='hide', message=FALSE}
 # Define the model
-model_null = list(
-  response ~ 1 + time,  # intercept (Intercept_1) and slope (time_1)
-  ~ 1 + time            # disjoined slope (Intercept_2, time_1)
-)
+model_null = list(response ~ 1 + time)  # Intercept_1 and time_1
 
 # Fit it
 fit_null = mcp(model_null, demo_fit$data, seed = 42)
@@ -248,8 +245,8 @@ library(posterior)
 library(tidybayes)
 
 as_draws_df(fit)  # draws_df (tidybayes-compatible)
-as_draws_array(fit)  # draws array (chains x iterations x parameters)
-as.mcmc(fit)  # coda mcmc.list (for coda diagnostics)
+as_draws_array(fit)  # draws array (iterations x chains x parameters)
+coda::as.mcmc(fit)  # coda mcmc.list (for coda diagnostics)
 spread_draws(as_draws_df(fit), cp_1, cp_2, Intercept_1)  # tidybayes
 ```
 

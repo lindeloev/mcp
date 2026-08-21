@@ -26,42 +26,60 @@ authors:
 
 # Structure of the reference page
 reference:
-  - title: Using mcp
-    desc: Functions for everyday use of mcp.
+
+  - title: Fit and show mcpfit
+    desc: mcp() returns and `mcpfit`. These functions illuminate what this fit contains structurally.
     contents:
       - mcp
+      - mcp-package
+      - mcp_pars
+      - mcp_columns
+      - prior_summary
+      - print.mcplist
+      - print.mcptext
+      - is.mcpfit
+      - model-accessors-mcpfit
+      - mcpfit-class
+
+  - title: Visual summaries
+    desc: Plotting of fits, parameters, and diagnostics.
+    contents:
       - plot.mcpfit
       - plot_pars
       - pp_check
+      - interpolate_newdata
+
+  - title: Textual summaries and statistics
+    desc: Summaries that pertain to the whole `mcpfit` or to specific parameters.
+    contents:
       - summary.mcpfit
-      - model-accessors-mcpfit
-      - mcp_pars
-      - mcp_columns
-      - posterior-uncertainty-mcpfit
-      - ranef
       - fixef
-      - fitted
-      - predict
-      - posterior_epred.mcpfit
-      - residuals
+      - ranef
+      - posterior-uncertainty-mcpfit
+      - hypothesis
       - loo
       - waic
-      - log_lik
-      - hypothesis
-      - as_draws.mcpfit
-      - mcp-package
 
-  - title: Axillary functions
-    desc: These are used internally by mcp, but are exposed here since they may be useful for other purposes. Most other useful internal functions deliver the result already in `mcp(segments, sample = FALSE)`, so `mcp()` will be their API.
+  - title: Extract draws or data
+    desc: Per-observation summaries or draws
     contents:
-      - sd_to_prec
-      - is.mcpfit
+      - fitted
+      - predict
+      - residuals
+      - log_lik
+      - posterior_epred.mcpfit
+
+      - as_draws.mcpfit
+      - draws-index-mcp
+
+
 
   - title: Families
     desc: Distributional families that are not available in base R.
     contents:
       - bernoulli
       - negbinomial
+      - mcpfamily
 
   - title: Help and demos
     desc: Some showcases of typical mcp analyses. Most of these are discussed on the [front page](https://lindeloev.github.io/mcp).
@@ -69,16 +87,10 @@ reference:
       - mcp_example
       - demo_fit
 
-  - title: Miscellaneous
-    desc: Stuff you would not usually consult directly.
+  - title: Deprecated
+    desc: Functions retained for backward compatibility.
     contents:
-      - mcpfit-class
-      - draws-index-mcp
-      - interpolate_newdata
-      - mcpfamily
-      - prior_summary
-      - print.mcplist
-      - print.mcptext
+      - sd_to_prec
 
 navbar:
   left:

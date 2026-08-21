@@ -442,6 +442,8 @@ prior_to_jags = function(prior_str) {
 
 #' Transform an mcp prior to the parameterization used by JAGS.
 #'
+#' \lifecycle{deprecated}
+#'
 #' This function is deprecated. JAGS uses precision rather than SD for some
 #' distributions. For example, this function converts
 #' `dnorm(4.2, 1.3)` into `dnorm(4.2, 1/1.3^2)`. It allows users to specify

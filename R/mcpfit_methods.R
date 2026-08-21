@@ -398,6 +398,12 @@ ranef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ..
 #'   `model.frame()` returns the data retained in the fit. `nobs()` returns the
 #'   number of fitting-data rows.
 #' @name model-accessors-mcpfit
+#' @examples
+#' formula(demo_fit)  # Show all segment formulas
+#' formula(demo_fit, segment = 2)  # Show the formula for segment 2
+#' family(demo_fit)  # Show the response family and link
+#' head(model.frame(demo_fit))  # Show the top rows of fitting data
+#' nobs(demo_fit)  # Count observed response rows
 NULL
 
 
@@ -625,6 +631,19 @@ posterior_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
 #' @param prior Logical. Extract prior draws (`TRUE`) instead of posterior draws (`FALSE`)?
 #' @param ... Passed to \pkg{posterior} or \pkg{tidybayes} format conversion functions.
 #' @return A \pkg{posterior} `draws` object or a \pkg{coda} `mcmc.list` object.
+#' @examples
+#' # Default posterior draws, with one row per iteration and chain
+#' draws = as_draws(demo_fit)  # Return a posterior::draws object
+#' head(as_draws_df(demo_fit))  # Convert draws to a data frame
+#'
+#' # Other posterior formats are useful in different downstream packages
+#' as_draws_matrix(demo_fit)[1:3, 1:3]  # Matrix of draws by parameter
+#' as_draws_array(demo_fit)[1:2, , 1:2]  # Iteration-by-chain-by-parameter array
+#' as_draws_rvars(demo_fit)[c("cp_1", "cp_2")]  # Random-variable representation
+#'
+#' # mcp also supports the coda and tidybayes conventions
+#' head(coda::as.mcmc(demo_fit)[[1]])  # First chain as a coda mcmc object
+#' head(tidybayes::tidy_draws(demo_fit))  # Tidybayes-compatible draw data
 #' @exportS3Method posterior::as_draws
 as_draws.mcpfit = function(x, prior = FALSE, ...) {
   posterior_draws(x, prior = prior)
@@ -1462,27 +1481,27 @@ pp_eval = function(
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @examples
-#' fitted(demo_fit)  # Expected response for each row of demo_fit$data
-#' residuals(demo_fit)  # Residuals for each row of demo_fit$data
-#' log_lik(demo_fit)  # Log-likelihood at each demo_fit$data
+#' head(fitted(demo_fit))  # Expected response for each row of demo_fit$data
+#' head(residuals(demo_fit))  # Residuals for each row of demo_fit$data
+#' log_lik(demo_fit)[1:3, 1:3]  # Log-likelihood at each demo_fit$data
 #'
 #' # All of the above take a range of arguments. E.g.,:
 #' \donttest{
-#' predict(demo_fit)  # Pointwise posterior predictive
-#' predict(demo_fit, probs = c(0.1, 0.5, 0.9))  # Median and 80% posterior predictive interval.
-#' predict(demo_fit, prior = TRUE)  # Prior predictive
-#' fitted(demo_fit, summary = FALSE)  # Draws instead of summary. Useful for plotting distributions.
-#' fitted(demo_fit, dpar = "sigma")  # Another model parameter
+#' head(predict(demo_fit))  # Pointwise posterior predictive
+#' head(predict(demo_fit, probs = c(0.1, 0.5, 0.9)))  # Median and 80% posterior predictive interval.
+#' head(predict(demo_fit, prior = TRUE))  # Prior predictive
+#' head(fitted(demo_fit, summary = FALSE))  # Draws instead of summary. Useful for plotting distributions.
+#' head(fitted(demo_fit, dpar = "sigma"))  # Another model parameter
 #'
 #' # Evaluate at novel data
 #' novel_data = data.frame(time = c(-5, 20, 300))  # Only predictors are needed
-#' predict(demo_fit, newdata = novel_data, probs = c(0.025, 0.5, 0.975))
+#' head(predict(demo_fit, newdata = novel_data, probs = c(0.025, 0.5, 0.975)))
 #'
 #' # Work with missing responses
 #' missing_fit = mcp_example("missing", plot = FALSE)
-#' fitted(missing_fit) |> dplyr::filter(is.na(y))  # Expected responses for missing y
-#' fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y))  # Same, but all posterior draws
-#' predict(missing_fit) |> dplyr::filter(is.na(y))  # Posterior predictive for missing y
+#' fitted(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Expected responses for missing y
+#' fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y)) |> head()  # Same, but all posterior draws
+#' predict(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Posterior predictive for missing y
 #'}
 #' @name execute-mcp-model
 NULL

@@ -12,3 +12,9 @@ bernoulli(link = "logit")
 \description{
 Bernoulli Family for mcp
 }
+\examples{
+# Fit a binary-response model with a probit link
+data = data.frame(time = 1:6, y = c(0, 0, 0, 1, 1, 1))
+fit = mcp(list(y ~ 1), data, family = bernoulli(link = "probit"), par_x = "time", sample = FALSE)
+mcp_pars(fit)  # Show the parameters of the fitted Bernoulli model
+}

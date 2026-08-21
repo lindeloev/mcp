@@ -57,11 +57,11 @@ fit = mcp_example("multiple")
 newdata = interpolate_newdata(fit)
 
 # Fit summary
-fitted(fit, newdata)
+head(fitted(fit, newdata))
 
 # Predictions for each draw
 prediction = predict(fit, newdata, summary = FALSE)
-prediction[, c(".chain", ".iteration", ".draw", "x", "group", "z", ".prediction")]
+head(prediction[, c(".chain", ".iteration", ".draw", "x", "group", "z", ".prediction")])
 
 # Custom plot
 library(ggplot2)

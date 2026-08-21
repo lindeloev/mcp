@@ -92,14 +92,6 @@ plot(fit)
 
 These lines are just `fit$simulate` applied to a random draw of the posterior samples. In other words, they represent the joint distribution of the parameters. You can change the number of draws (lines) using `plot(fit, lines = 50)`.
 
-For binomial models, the default plot shows the observed success proportion (`y / N`) and fitted success probability as functions of x. Compare this with success counts by toggling `rate`:
-
-```{r}
-plot(fit, rate = FALSE)
-```
-
-These lines are jagged because `N` varies from year to year. Although the success probability is close to 1 in 1900--1920, the number of trials varies. Using `rate = FALSE` can be useful when the number of trials is constant for extended periods and the success count `y` is directly interpretable.
-
 Speaking of alternative visualizations, you can also plot this on the logit scale, where the linear trends are modeled:
 
 ```{r, warning=FALSE, message=FALSE}

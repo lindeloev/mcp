@@ -22,3 +22,7 @@ Return the resolved data-column roles for an \code{mcpfit} object. In particular
 \code{\link[=mcp]{mcp()}}. Family-defined response auxiliaries, such as \code{trials} and
 \code{weights}, are included when relevant.
 }
+\examples{
+# Show the predictor, response, and auxiliary-column roles
+mcp_columns(demo_fit)
+}

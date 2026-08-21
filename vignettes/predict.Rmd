@@ -131,19 +131,21 @@ model_forecast = c(fit$model, list(
 ))
 ```
 
-And finally, we extend the list of priors with the two new parameters (`time_4` and `cp_3`). It may be helpful to review [the article on priors in mcp](../articles/priors.html).
+And finally, we extend the list of priors with the two new parameters (`time_4` and `cp_3`). The model needs a predictor value at the end of the forecasting horizon so that the future change point remains within its supported range. Its response is missing, so it contributes no observed outcome. It may be helpful to review [the article on priors in mcp](../articles/priors.html).
 
 ```{r}
+forecast_horizon = 170
+data_forecast = rbind(data, data.frame(time = forecast_horizon, response = NA))
 prior_forecast = c(fit$prior, list(
   Intercept_4 = "Intercept_1",  # Return to this value
-  cp_3 = "dnorm(cp_2 + (cp_2 - cp_1), 20) T(max(time), )"  # In the future at the same interval
+  cp_3 = paste0("dnorm(cp_2 + (cp_2 - cp_1), 20) T(", max(data$time), ", ", forecast_horizon, ")")  # In the future at the same interval
 ))
 ```
 
 Now let's fit it:
 
 ```{r, results=FALSE, message=FALSE, cache=TRUE}
-fit_forecast = mcp(model_forecast, data = data, prior = prior_forecast)
+fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast)
 ```
 
 

@@ -22,3 +22,9 @@ a \code{shape()} formula is supplied. For example, \code{y ~ 1 + x + shape(1 + x
 models both the mean and shape. Regression coefficients for both dpars are
 on their link scales.
 }
+\examples{
+# Fit an overdispersed count model with the default log links
+data = data.frame(time = 1:6, count = c(1, 2, 8, 3, 12, 5))
+fit = mcp(list(count ~ 1), data, family = negbinomial(), par_x = "time", sample = FALSE)
+mcp_pars(fit)  # Show the mean and shape parameters
+}

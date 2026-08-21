@@ -200,27 +200,27 @@ imputations also supply the history used for later fitted and predicted rows.
 
 }}
 \examples{
-fitted(demo_fit)  # Expected response for each row of demo_fit$data
-residuals(demo_fit)  # Residuals for each row of demo_fit$data
-log_lik(demo_fit)  # Log-likelihood at each demo_fit$data
+head(fitted(demo_fit))  # Expected response for each row of demo_fit$data
+head(residuals(demo_fit))  # Residuals for each row of demo_fit$data
+log_lik(demo_fit)[1:3, 1:3]  # Log-likelihood at each demo_fit$data
 
 # All of the above take a range of arguments. E.g.,:
 \donttest{
-predict(demo_fit)  # Pointwise posterior predictive
-predict(demo_fit, probs = c(0.1, 0.5, 0.9))  # Median and 80\% posterior predictive interval.
-predict(demo_fit, prior = TRUE)  # Prior predictive
-fitted(demo_fit, summary = FALSE)  # Draws instead of summary. Useful for plotting distributions.
-fitted(demo_fit, dpar = "sigma")  # Another model parameter
+head(predict(demo_fit))  # Pointwise posterior predictive
+head(predict(demo_fit, probs = c(0.1, 0.5, 0.9)))  # Median and 80\% posterior predictive interval.
+head(predict(demo_fit, prior = TRUE))  # Prior predictive
+head(fitted(demo_fit, summary = FALSE))  # Draws instead of summary. Useful for plotting distributions.
+head(fitted(demo_fit, dpar = "sigma"))  # Another model parameter
 
 # Evaluate at novel data
 novel_data = data.frame(time = c(-5, 20, 300))  # Only predictors are needed
-predict(demo_fit, newdata = novel_data, probs = c(0.025, 0.5, 0.975))
+head(predict(demo_fit, newdata = novel_data, probs = c(0.025, 0.5, 0.975)))
 
 # Work with missing responses
 missing_fit = mcp_example("missing", plot = FALSE)
-fitted(missing_fit) |> dplyr::filter(is.na(y))  # Expected responses for missing y
-fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y))  # Same, but all posterior draws
-predict(missing_fit) |> dplyr::filter(is.na(y))  # Posterior predictive for missing y
+fitted(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Expected responses for missing y
+fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y)) |> head()  # Same, but all posterior draws
+predict(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Posterior predictive for missing y
 }
 }
 \seealso{

@@ -1,8 +1,8 @@
 ---
-title: "Change-point regression with missing responses and posterior imputation"
+title: "Missing responses and imputation"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Missing data and imputation}
+  %\VignetteIndexEntry{Missing responses and imputation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,12 +13,14 @@ vignette: >
 
 The built-in example has a change in slope, a strong difference between two conditions, scattered missing responses, and a short run of missing responses. First, let's fit the example and visualize it:
 
-```{r, cache=TRUE, results=FALSE, warning=FALSE, message=FALSE}
+```{r, message=FALSE, warning=FALSE}
 library(mcp)
 library(dplyr)
 library(ggplot2)
 set.seed(42)
+```
 
+```{r, cache=TRUE, results=FALSE, warning=FALSE, message=FALSE}
 fit = mcp_example("missing")
 ```
 
@@ -135,7 +137,6 @@ AR/MA models need extra care because a missing response can become part of the h
 
 The [time-series article](../articles/arma.html) discusses this. Briefly, use `posterior_predict()` to generate fresh replicated series from the posteriors (as all
 other mcp functions do), which do not depend on the observed response history.
-```
 
 
 # Original data versus new data

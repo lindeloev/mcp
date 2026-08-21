@@ -270,6 +270,12 @@ get_pars_table = function(predictors, cps, group_effects, family) {
 #'   component (`"cp"`, `"ar"`, or `"ma"`); `order` gives an AR/MA lag;
 #'   `group_col` and `population_name` describe group-level effects.
 #' @export
+#' @examples
+#' # Show every parameter in the model
+#' mcp_pars(demo_fit)
+#'
+#' # Select population-level coefficients
+#' mcp_pars(demo_fit, scope = "population", role = "fixed_effect")
 mcp_pars = function(fit, scope = NULL, role = NULL) {
   checkmate::assert_class(fit, "mcpfit")
   if (!is.null(scope))
@@ -300,6 +306,9 @@ mcp_pars = function(fit, scope = NULL, role = NULL) {
 #' @return A named list with `par_x`, `response`, and `series`, plus any
 #'   family-defined response-auxiliary column roles.
 #' @export
+#' @examples
+#' # Show the predictor, response, and auxiliary-column roles
+#' mcp_columns(demo_fit)
 mcp_columns = function(fit) {
   checkmate::assert_class(fit, "mcpfit")
   get_fit_model_tables(fit)$data_columns
