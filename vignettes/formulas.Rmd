@@ -157,3 +157,30 @@ fit$jags_code
 Again, look at the section under the comment `# Formula for mu` to see the indicator-version in action. And again, `mcp` adds something about `cp_0 = -Inf` and `cp_2 = Inf`, just for internal convenience.
 
 You will find the exact same formula for `y_ = ...` if you do `print(fit$simulate)`, though this function contains a whole lot of other stuff too.
+
+# Multiple regression and categorical predictors
+
+`mcp` supports standard R formulas with multiple continuous covariates, categorical factors, and interaction terms (e.g., `x:group`, `+ group`, `+ z`, `I(x^2)`).
+
+Let's inspect the model in the overview plot in the top of this page - except I added one plateau segment (`~1`) below to illustrate a point.
+
+```{r}
+# Define model with multiple predictors
+model = list(
+  y ~ 1 + x:group + z, # Segment 1: by-group slopes on x, covariate z
+  ~ 1 + x + group,     # Segment 2: shared slope on x, by-group intercepts
+  ~ 0 + I(x^2),        # Segment 3: "group" intercepts carry over due to "0"
+  ~ 1                  # Segment 4: collapse to shared intercept, no matter group 
+)
+
+# Load data and inspect parameters without sampling
+ex = mcp_example("multiple", sample = FALSE)
+fit = mcp(model, data = ex$data, par_x = "x", sample = FALSE)
+mcp_pars(fit)
+```
+
+Key features of multiple regression models in `mcp`:
+
+- **Common change points across categories**: The change points `cp_1` and `cp_2` are estimated as single locations shared across all levels of `group`. (If you instead want category-specific change-point locations that deviate per group, use group-level effects like `1 + (1|group) ~ ...`; see [group-level effects](varying.html)).
+- **Parameter names and carry-over**: In segment 1, `xgroupA_1` through `xgroupD_1` represent separate slopes for each level of `group`. In segment 2, `groupB_2`, `groupC_2`, and `groupD_2` represent intercept offsets relative to the reference level `groupA`. The continuous slope `z_1` on covariate `z` carries over into subsequent segments unless redefined.
+- **Plotting and prediction**: Visualize by group using `plot(fit, color_by = "group")` or `plot(fit, facet_by = "group")`. By default, other unplotted continuous predictors (like `z`) are held at their mean automatically by `interpolate_newdata()`, or can be set explicitly via `plot(fit, color_by = "group", at = list(z = 0))`.
