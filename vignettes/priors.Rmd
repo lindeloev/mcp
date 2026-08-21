@@ -247,23 +247,21 @@ lines(z1)
 par(mfrow = c(1,1))
 ```
 
-
-
 ## The t-tail prior on 2+ change points (default)
 
 With exactly one change point, the default rule is `cp_1 = uniform(min = min(x), max = max(x))`. Thus its location is uniform over the observed x-range. This is equivalent to the one-change-point Dirichlet specification.
 
 For 2+ change points, the default rule (on *all* change points) is `cp_i = student_t(df = n_cp() - 1, location = min(x), scale = (max(x) - min(x)) / n_cp())`, bounded below by the preceding change point and above by `max(x)`. This is not as complicated as it looks, so let me unpack it.
 
- * It is t-distributed with $N - 1$ degrees of freedom (`n_cp() - 1`). Together with the decreasing scale, this makes the underlying distributions more concentrated as the number of change points increases.
- * Under the defaults, it is bounded below by the preceding population-level `cp` and above by `max(x)`. For example, `cp_3` is bounded below by `cp_2` and above by `max(x)`, keeping the default population-level change points ordered within the observed range.
- * The scale is `(max(x) - min(x)) / n_cp()`. This is a calibration choice, not the equal-segment spacing (which would divide by `n_cp() + 1`) and not the Student-t standard deviation; for low degrees of freedom the untruncated variance is not finite.
- * The location parameter of the underlying Student-t is always the lowest observed `x`. Thus `cp_1` is a bounded half-t and `cp_2+` use sequentially truncated right tails of the same t, hence the name "t-tail prior". Their means are shifted by truncation and are not equal to `min(x)`.
+- It is t-distributed with $N - 1$ degrees of freedom (`n_cp() - 1`). Together with the decreasing scale, this makes the underlying distributions more concentrated as the number of change points increases.
+- Under the defaults, it is bounded below by the preceding population-level `cp` and above by `max(x)`. For example, `cp_3` is bounded below by `cp_2` and above by `max(x)`, keeping the default population-level change points ordered within the observed range.
+- The scale is `(max(x) - min(x)) / n_cp()`. This is a calibration choice, not the equal-segment spacing (which would divide by `n_cp() + 1`) and not the Student-t standard deviation; for low degrees of freedom the untruncated variance is not finite.
+- The location parameter of the underlying Student-t is always the lowest observed `x`. Thus `cp_1` is a bounded half-t and `cp_2+` use sequentially truncated right tails of the same t, hence the name "t-tail prior". Their means are shifted by truncation and are not equal to `min(x)`.
 
 The sequential truncation does not produce uniform order statistics. The middle segments tend get narrower than the first/last segments. For non-small datasets, the effect on the posterior is negligible, though point-`hypothesis()` tests via Savage-Dickey would be strongly impacted.
 
-
 ## Dirichlet-based prior on change points
+
 The [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) places a joint prior on positive segment spacings that sum to the observed x-range. Consequently, the derived population-level change points are bounded and ordered. Equal concentration parameters make the spacings exchangeable, but do not make the prior uninformative: they encode a specific joint distribution over segment widths. This construction also underlies monotonic effects in `brms` ([Bürkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/)).
 
 To use the Dirichlet prior, you need to specify it for all or none of the change points. E.g.,
@@ -278,14 +276,14 @@ prior_dirichlet = list(
 
 The number in the parentheses is a common $\alpha$ parameter, so every change point must use the same value. Values below 1 favor uneven spacings, `dirichlet(1)` gives the ordered-uniform distribution, and values above 1 favor more even spacings.
 
-
 ## Manual priors on change points
+
 You can easily change or modify change point priors, just as we did in the initial example. But beware that the nature of the priors change when truncation is applied. Use `plot_pars(fit, prior = TRUE)` to check the resulting prior.
 
 For an otherwise unbounded user prior such as `cp_2 = "dnorm(40, 10)"`, `mcp` adds default bounds equivalent to `cp_2 = "dnorm(40, 10) T(cp_1, max(x))"`. An explicit truncation, including `T(,)`, or a `dunif()` prior is used as written. Relaxing the order can make segment labels ambiguous and sampling difficult, so inspect the resulting prior carefully.
 
-
 # Default priors on linear predictors
+
 The defaults borrow the robust calibration used by `brms`, adapted to the local parameterization of `mcp`. Intercepts use Student-t priors centered on a robust, link-appropriate location. Data-calibrated scales are at least 2.5, avoiding implausibly narrow defaults when the response happens to have little variation. Unlike the flat default coefficient priors in `brms`, `mcp` uses proper Student-t priors because change-point models need regularization for stable sampling and prior prediction.
 
 Numeric coefficient priors use the corresponding family-level scale divided by a representative change in the model-matrix column: its observed range when it has two values, and two standard deviations otherwise. This is the scaling convention proposed by [Gelman (2008)](https://doi.org/10.1002/sim.3107). Transformations and interactions are treated as model-matrix columns in their own right. Treatment-coded categorical contrasts keep the family-level scale.
@@ -306,13 +304,12 @@ An explicit `sigma()` formula instead models log-SD, as in `brms`. Its intercept
 
 See the family-specific articles for more information about the priors for other families:
 
- * `vignette("binomial")` - also relevant for `bernoulli`
- * `vignette("poisson")` - also relevant for negative-binomial `shape`
- * `vignette("variance")` for explicit `sigma()` models
- * `vignette("arma")` for AR/MA regularization and root conditions
+- `vignette("binomial")` - also relevant for `bernoulli`
+- `vignette("poisson")` - also relevant for negative-binomial `shape`
+- `vignette("variance")` for explicit `sigma()` models
+- `vignette("arma")` for AR/MA regularization and root conditions
 
 The general principles belong here: parameterization, data-based scaling, proper regularization, and prior predictive checking. Exact defaults and constraints that arise from a particular likelihood or model component are documented in its own article. `prior_summary(fit, verbose = TRUE)` is the authoritative model-specific inventory, so the articles do not need to duplicate every generated prior.
-
 
 # Default priors on group-level effects
 
@@ -320,8 +317,8 @@ Each group-level effect has a population-level SD parameter. Predictor-side devi
 
 Group-level change-point deviations are exactly zero-centered so that each population-level change point is the arithmetic mean of its group-specific locations. Their default priors use sequential bounds, and the model constrains the resulting locations to remain ordered within each group. All group-level change points in one model must use the same grouping factor. Predictor-side deviations are hierarchically mean-zero but are neither exactly centered nor ordered. See [group-level effects with mcp](https://lindeloev.github.io/mcp/articles/varying.html).
 
-
 # Prior predictive checks
+
 Prior predictive checks is a great way to ensure that the priors are meaningful. Simply set `sample = "prior"`. Let us do it for the two sets of priors defined previously in this article, to see their different prior predictive space.
 
 ```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
@@ -339,8 +336,8 @@ plot_pp_manual +  plot_pp_default  # using patchwork
 
 You can see how the manual priors are more dense to the left, and the "concerted" change at x = 80.
 
-
 # JAGS code
+
 Here is the JAGS code for `fit_manual`:
 
 ```{r}

@@ -5,6 +5,9 @@ vignette: >
   %\VignetteIndexEntry{Diagnosing and fixing problems}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+editor_options: 
+  markdown: 
+    wrap: none
 ---
 
 

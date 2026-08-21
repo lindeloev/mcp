@@ -5,6 +5,9 @@ vignette: >
   %\VignetteIndexEntry{Variance change points and other distributional parameters}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+editor_options: 
+  markdown: 
+    wrap: none
 ---
 
 `mcp` supports **distributional regression**, where any parameter of a response distribution can be regressed on predictors and have change points across segments. In standard regression, formulas model only the conditional mean `mu()`. Distributional regression extends this by allowing formulas for distributional parameters such as residual standard deviation (`sigma`), negative-binomial overdispersion (`shape`) - and auxilliary parameters for time-series autocorrelation (`ar` / `ma`).

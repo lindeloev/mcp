@@ -66,11 +66,13 @@ model = list(
   ~ 0 + time + ar(1)  # time_2, ar1_2
 )
 fit = mcp(model, ex$data, seed = 42)
+```
 
 Let's plot it and we see that AR was strong in the first segment and weaker-but-negative in the second:
 
 ```{r}
 set.seed(42)
+plot(fit)
 ```
 
 
@@ -88,6 +90,7 @@ For Gaussian GARMA models, `sigma` describes the *innovations*, i.e., the part o
 
 ```{r, fig.height=9, fig.width=8}
 set.seed(42)
+plot_pars(fit)
 ```
 
 Sometimes, the trace plot shows that the change point (`cp_1`) is not well identified with this model and data. As discussed in the article on [tips, tricks, and debugging](../articles/tips.html), you could combine a more informative prior with more samples (`mcp(..., warmup = 10000, iter = 10000)`), if this is a problem.

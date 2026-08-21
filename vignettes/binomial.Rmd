@@ -5,6 +5,9 @@ vignette: >
   %\VignetteIndexEntry{Binomial change point analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+editor_options: 
+  markdown: 
+    wrap: none
 ---
 
 `mcp` aims to implement Generalized Linear Models in a way that closely mimics that of [brms::brm](https://github.com/paul-buerkner/brms). You can set the family and link functions using the `family` argument.

@@ -5,6 +5,9 @@ vignette: >
   %\VignetteIndexEntry{Change point model comparison}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+editor_options: 
+  markdown: 
+    wrap: none
 ---
 
 There are three main ways of doing model comparison in `mcp`:

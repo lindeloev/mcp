@@ -5,6 +5,9 @@ vignette: >
   %\VignetteIndexEntry{Poisson and negative-binomial change point analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+editor_options: 
+  markdown: 
+    wrap: none
 ---
 
 The Poisson and negative-binomial distributions model counts observed within comparable units of time, space, or exposure. The worked example below uses Poisson regression; a later section explains the additional `shape` parameter and priors in `negbinomial()`.

@@ -5,6 +5,9 @@ vignette: >
   %\VignetteIndexEntry{An overview of change point packages in R}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+editor_options: 
+  markdown: 
+    wrap: none
 ---
 
 **OBS: I have yet to review these packages: `not`, `breakfast`, `IDetect`, `trendsegmentR`, `mosum`, `ChangepointTesting`, `changepoint.mv`, `changepointsHD`, `changepointsVar`, `InspectChangepoint`, `breakpoint`, `segmentr`, `Segmentor3IsBack`, `trendsegmentR`, `BayesPiecewiseICAR`, `BayesPieceHazSelect`, `CausalImpact`.**

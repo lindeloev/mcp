@@ -5,6 +5,9 @@ vignette: >
   %\VignetteIndexEntry{Group-level effects}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+editor_options: 
+  markdown: 
+    wrap: none
 ---
 
 `mcp` supports group-level effects (also called random effects) in both the predictor and change-point parts of a formula. The syntax follows `lme4` and `brms`: `(1|group)` specifies a group-level intercept, `(factor||group)` specifies independent group coefficients, `fixef()` reports population-level effects, and `ranef()` reports group-level deviations.

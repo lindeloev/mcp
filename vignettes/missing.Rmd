@@ -5,6 +5,9 @@ vignette: >
   %\VignetteIndexEntry{Missing responses and imputation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+editor_options: 
+  markdown: 
+    wrap: none
 ---
 
 `mcp` allows missing values in the response. JAGS treats the unknown responses as latent variables and samples them together with the model parameters. `mcp` retains those posterior imputation draws for later use. This article shows how to inspect expected responses, posterior imputations, and their uncertainty.
@@ -136,8 +139,7 @@ Missing rows are not treated as observed contributions to `log_lik()`, `loo()`, 
 
 AR/MA models need extra care because a missing response can become part of the history for later observations. `mcp` retains the JAGS draws so `fitted()` and `predict()` can reconstruct that history, but it does not currently integrate over missing histories for pointwise likelihood calculations. Consequently, `log_lik()`, `loo()`, and `waic()` are unavailable when a missing response preceeds some observed data. 
 
-The [time-series article](../articles/arma.html) discusses this. Briefly, use `posterior_predict()` to generate fresh replicated series from the posteriors (as all
-other mcp functions do), which do not depend on the observed response history.
+The [time-series article](../articles/arma.html) discusses this. Briefly, use `posterior_predict()` to generate fresh replicated series from the posteriors (as all other mcp functions do), which do not depend on the observed response history.
 
 
 # Original data versus new data

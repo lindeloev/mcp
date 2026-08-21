@@ -5,6 +5,9 @@ vignette: >
   %\VignetteIndexEntry{Fits and predictions}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+editor_options: 
+  markdown: 
+    wrap: none
 ---
 
 This article introduces `predict()`, `fitted()`, `residuals()` for in-sample and out-of-sample data. I will also show how to get creative with `mcp`, including how to make predictions around future change points.

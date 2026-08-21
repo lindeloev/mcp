@@ -5,6 +5,9 @@ vignette: >
   %\VignetteIndexEntry{Families and link functions}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+editor_options: 
+  markdown: 
+    wrap: none
 ---
 
 `mcp 0.3` added support for more response families and link functions. For example, you can now do
