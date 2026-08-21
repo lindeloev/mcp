@@ -209,7 +209,7 @@ log_lik(demo_fit)[1:3, 1:3]  # Log-likelihood at each demo_fit$data
 head(predict(demo_fit))  # Pointwise posterior predictive
 head(predict(demo_fit, probs = c(0.1, 0.5, 0.9)))  # Median and 80\% posterior predictive interval.
 head(predict(demo_fit, prior = TRUE))  # Prior predictive
-head(fitted(demo_fit, summary = FALSE))  # Draws instead of summary. Useful for plotting distributions.
+head(fitted(demo_fit, summary = FALSE))  # Draws. Useful for plotting distributions.
 head(fitted(demo_fit, dpar = "sigma"))  # Another model parameter
 
 # Evaluate at novel data
@@ -219,7 +219,7 @@ head(predict(demo_fit, newdata = novel_data, probs = c(0.025, 0.5, 0.975)))
 # Work with missing responses
 missing_fit = mcp_example("missing", plot = FALSE)
 fitted(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Expected responses for missing y
-fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y)) |> head()  # Same, but all posterior draws
+fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y)) |> head()  # Same, but draws
 predict(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Posterior predictive for missing y
 }
 }

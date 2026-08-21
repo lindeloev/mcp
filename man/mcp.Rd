@@ -239,7 +239,7 @@ hypothesis(demo_fit, "cp_1 > 10")
 # Make predictions
 head(fitted(demo_fit))
 head(predict(demo_fit))
-head(predict(demo_fit, newdata = data.frame(time = c(55.545, 80, 132)))
+head(predict(demo_fit, newdata = data.frame(time = c(55.545, 80, 132))))
 
 # Compare to a one-intercept-only model (no change points) with default prior
 model_null = list(response ~ 1)

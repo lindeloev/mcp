@@ -5,7 +5,7 @@
 
 library(ggplot2)
 library(patchwork)
-devtools::load_all()
+library(mcp)
 
 # Insert title and model in faceted plot
 style_gg = function(gg, model, title, left, bottom, right, top) {
@@ -15,6 +15,7 @@ style_gg = function(gg, model, title, left, bottom, right, top) {
     coord_cartesian(xlim = c(0, 1), ylim = c(0, 1), expand = FALSE, clip = "off") +
     theme_void()
 
+  # Remove facet titles for space
   gg + 
     labs(title = title) +
     ggplot2::theme(

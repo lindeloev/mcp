@@ -38,7 +38,8 @@ families.
 \examples{
 # mcp() converts supported standard family objects automatically
 data = data.frame(time = 1:6, y = exp(seq(0, 1, length.out = 6)))
-fit = mcp(list(y ~ 1), data, family = mcpfamily(stats::gaussian(link = "log")), par_x = "time", sample = FALSE)
+my_normal = mcpfamily(stats::gaussian(link = "log"))
+fit = mcp(list(y ~ 1), data, family = my_normal, par_x = "time", sample = FALSE)
 family(fit)  # Show the mcp family retained in the fit
 
 # The converted object can also be inspected directly
