@@ -601,8 +601,8 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
     # Compute density per group. Tolerate zero-variance CPs like cp_2 = 80.
     dplyr::group_by(dplyr::across(dplyr::all_of(c(".chain", "cp_name", facet_by)))) %>%
     dplyr::summarise(dens = list(
-      if (stats::sd(.data$value) == 0) {
-        stats::density(.data$value, bw = "nrd0", n = 2^10)
+      if (is.na(stats::sd(.data$value)) || stats::sd(.data$value) == 0) {
+        list(x = rep(.data$value[1], 2), y = c(0, 1))
       } else {
         tryCatch(
           stats::density(.data$value, bw = "SJ", n = 2^10),

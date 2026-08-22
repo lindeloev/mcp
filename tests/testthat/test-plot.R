@@ -47,3 +47,23 @@ test_that("plot_pars() prefers the group selector and supports its deprecated al
   expect_s3_class(group_plot, "ggplot")
   expect_s3_class(varying_plot, "ggplot")
 })
+
+test_that("geom_cp_density draws a vertical spike for fixed change points", {
+  # Unclass because accessing fit$mcmc_* elicits a deprecation warning
+  fit = unclass(demo_fit)
+  for (chain in seq_along(fit$mcmc_post)) {
+    fit$mcmc_post[[chain]][, "cp_1"] = 50
+  }
+  class(fit) = class(demo_fit)
+  p = plot(fit)
+  gb = ggplot2::ggplot_build(p)
+  cp_data = gb$data[[length(gb$data)]]
+
+  # cp_1 is fixed at 50, so its x coordinates should be strictly 50
+  cp_1_data = cp_data[cp_data$group %in% c(1, 2), ]
+  expect_true(all(cp_1_data$x == 50))
+
+  # Peak height should match varying change points (e.g. cp_2)
+  cp_2_data = cp_data[!cp_data$group %in% c(1, 2), ]
+  expect_equal(max(cp_1_data$y), max(cp_2_data$y))
+})
