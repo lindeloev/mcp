@@ -10,7 +10,7 @@
 There are a lot of change point packages out there already, so why
 `mcp`? Here are my (probably biased) thoughts about this. I compiled
 some tables, summarising change point packages ([.xlsx file
-here](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/packages_tables.xlsx)).
+here](https://lindeloev.github.io/mcp/dev/articles/_figures/packages_tables.xlsx)).
 I will demonstrate each of these packages in an applied example below to
 discuss their merits and shortcomings. I recommend [this nice
 overview](http://stats.lse.ac.uk/fryzlewicz/wbs2/wbs2sdll.pdf) of the
@@ -30,7 +30,7 @@ you to *specify* the number of change points, and packages which infer
 the number of change points *automatically* (using some criteria),
 captured in the `N` column below.
 
-![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/packages_table1.png)
+![](_figures/packages_table1.png)
 
   
   
@@ -53,7 +53,7 @@ here. However, this is something you would have to do yourself. `mcp`
 explicitly supports and recommends workflows for detailed model
 comparisons.
 
-![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/packages_table2.png)
+![](_figures/packages_table2.png)
 
   
   
@@ -65,7 +65,7 @@ statistics packages, including simulating data, getting fitted and
 predicted values given the model, and an assessment of speed. The option
 to include prior knowledge could be important in some situations.
 
-![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/packages_table3.png)
+![](_figures/packages_table3.png)
 
 ## Unique features of mcp
 

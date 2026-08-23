@@ -97,7 +97,7 @@ fit = mcp_example("multiple")
 #> 
 #> Initializing model
 #> 
-#> Finished sampling in 15.3 seconds
+#> Finished sampling in 28.7 seconds
 
 print(fit$example_code) # See how the data was simulated
 #> # Define model
@@ -203,7 +203,7 @@ fit2 = mcp(empty$model, empty$data, family = empty$family)
 #> 
 #> Initializing model
 #> 
-#> Finished sampling in 2.7 seconds
+#> Finished sampling in 5.3 seconds
 plot(fit2)
 
 # }

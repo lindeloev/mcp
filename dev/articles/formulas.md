@@ -10,8 +10,7 @@ The formulas are called “segments” because they divide the (observed)
 x-axis into `N` segments. Here are some examples:
 
 ![Several plots showing mcp regression fits across different models and
-change-point
-structures.](https://lindeloev.github.io/mcp/dev/mcp_showcase_small.png)
+change-point structures.](../mcp_showcase_small.png)
 
 Several plots showing mcp regression fits across different models and
 change-point structures.

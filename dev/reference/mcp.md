@@ -349,7 +349,7 @@ demo_fit = mcp(model, data = data, sample = "both", seed = 42)
 #> 
 #> Initializing model
 #> 
-#> Finished sampling in 2.4 seconds
+#> Finished sampling in 4.5 seconds
 #> Warning: Some parameters may not have converged well:
 #>   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1 and time_2
 #> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
@@ -363,7 +363,7 @@ demo_fit = mcp(model, data = data, sample = "both", seed = 42)
 #> 
 #> Initializing model
 #> 
-#> Finished sampling in 0 seconds
+#> Finished sampling in 0.1 seconds
 
 # See parameter estimates
 summary(demo_fit)
@@ -439,13 +439,13 @@ fit_null = mcp(model_null, data = data, par_x = "time")  # fit another model her
 #> 
 #> Initializing model
 #> 
-#> Finished sampling in 0.4 seconds
+#> Finished sampling in 0.6 seconds
 demo_loo = loo(demo_fit)
 null_loo = loo(fit_null)
 loo::loo_compare(demo_loo, null_loo)
 #>   model elpd_diff se_diff p_worse diag_diff diag_elpd
 #>  model1       0.0     0.0      NA                    
-#>  model2    -104.3     8.5    1.00                    
+#>  model2    -104.2     8.5    1.00                    
 
 # Inspect the prior. Useful for prior predictive checks.
 summary(demo_fit, prior = TRUE)
@@ -501,7 +501,7 @@ fit3 = mcp(model, data = data, prior = prior)
 #> 
 #> Initializing model
 #> 
-#> Finished sampling in 1.8 seconds
+#> Finished sampling in 3.6 seconds
 
 # Show the JAGS model
 demo_fit$jags_code

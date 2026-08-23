@@ -99,10 +99,10 @@
 <img src="logo.png" class="logo" alt=""><h1 id="mcp-regression-with-multiple-change-points">mcp: Regression with Multiple Change Points<a class="anchor" aria-label="anchor" href="#mcp-regression-with-multiple-change-points"></a>
 </h1>
 </div>
-<p><a href="https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml" class="external-link"><img src="https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg" alt="mcp Github Actions status"></a> <a href="https://coveralls.io/github/lindeloev/mcp/" class="external-link"><img src="https://codecov.io/gh/lindeloev/mcp/branch/main/graph/badge.svg" alt="mcp Coveralls status"></a> <a href="https://CRAN.R-project.org/package=mcp" class="external-link"><img src="https://www.r-pkg.org/badges/version/mcp" alt="mcp CRAN status"></a> <a href="https://cranlogs.r-pkg.org/badges/mcp" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/mcp" alt="mcp CRAN downloads"></a></p>
+<p><a href="https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml?query=branch%3Adev" class="external-link"><img src="https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg?branch=dev" alt="mcp Github Actions status"></a> <a href="https://codecov.io/gh/lindeloev/mcp/branch/dev" class="external-link"><img src="https://codecov.io/gh/lindeloev/mcp/branch/dev/graph/badge.svg" alt="mcp Codecov status"></a> <a href="https://CRAN.R-project.org/package=mcp" class="external-link"><img src="https://www.r-pkg.org/badges/version/mcp" alt="mcp CRAN status"></a> <a href="https://cranlogs.r-pkg.org/badges/mcp" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/mcp" alt="mcp CRAN downloads"></a></p>
 <p><code>mcp</code> does <code>lm</code>/<code>glm</code>/<code>brms</code>-like regression with Multiple Change Points (hence “<code>mcp</code>”) using Bayesian inference. <code>mcp</code> is especially useful if you have a priori knowledge about the number of change points and the trend of the segments in between. It supports GLMs with group-level effects (random effects), AR/MA, and regression on distributional parameters (<code>sigma</code>, <code>shape</code>, etc.).</p>
 <p><code>mcp</code> aims to feel “R-native” like <code>lm</code>/<code>glm</code> at its simplest while the more Bayesian aspects are inspired by <code>brms</code> and <code>posterior</code>. Under the hood, <code>mcp</code> takes a formula-representation of linear segments and turns it into <a href="https://sourceforge.net/projects/mcmc-jags/" class="external-link">JAGS</a> code (see <code>fit$jags_code</code>).</p>
-<p><code>mcp</code> has <a href="https://scholar.google.com/scholar?cites=5590697509718421309" class="external-link">200+ academic citations</a> across ecology, astronomy, neuroscience, epidemiology, and other disciplines. See applications in the citing literature. Still, consider if <code>mcp</code> is the right tool for your problem - see <a href="https://lindeloev.github.io/mcp/articles/packages.html">overview of change point packages</a>.</p>
+<p><code>mcp</code> has <a href="https://scholar.google.com/scholar?cites=5590697509718421309" class="external-link">200+ academic citations</a> across ecology, astronomy, neuroscience, epidemiology, and other disciplines. See applications in the citing literature. Still, consider if <code>mcp</code> is the right tool for your problem - see <a href="articles/packages.html">overview of change point packages</a>.</p>
 <p>Change points are also called <strong>switch points</strong>, <strong>break points</strong>, <strong>broken line</strong> regression, <strong>broken stick</strong> regression, <strong>bilinear</strong> regression, <strong>piecewise linear</strong> regression, <strong>local linear</strong> regression, <strong>segmented</strong> regression, and (performance) <strong>discontinuity</strong> models. <code>mcp</code> aims to be be useful for all of them.</p>
 </div>
 <div class="section level1">
@@ -130,7 +130,7 @@
 <span></span>
 <span><span class="va">data</span> <span class="op">=</span> <span class="fu"><a href="reference/mcp_example.html">mcp_example_data</a></span><span class="op">(</span><span class="st">"demo"</span><span class="op">)</span></span>
 <span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">data</span><span class="op">)</span></span></code></pre></div>
-<p>The change point(s) are the <code>x</code> at which data changes from being better predicted by one formula to the next. The first formula is just <code>response ~ predictors</code> and the most common formula for segment 2+ would be <code>~ predictors</code> (more details <a href="https://lindeloev.github.io/mcp/articles/formulas.html">here</a>).</p>
+<p>The change point(s) are the <code>x</code> at which data changes from being better predicted by one formula to the next. The first formula is just <code>response ~ predictors</code> and the most common formula for segment 2+ would be <code>~ predictors</code> (more details <a href="articles/formulas.html">here</a>).</p>
 <p>You can do change point regression for a large number of models in a syntax that aligns with <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>/<code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code>/<code>brms</code>. Visit <a href="https://lindeloev.github.io/mcp/">the mcp website</a> for worked examples and tips for many of them.</p>
 <figure><img src="https://lindeloev.github.io/mcp/dev/mcp_showcase_small.png" alt="Several plots showing mcp regression fits across different models and change-point structures."><figcaption aria-hidden="true">
 Several plots showing mcp regression fits across different models and change-point structures.
@@ -139,9 +139,6 @@ Several plots showing mcp regression fits across different models and change-poi
 <div class="section level1">
 <h1 id="brief-worked-example">Brief worked example<a class="anchor" aria-label="anchor" href="#brief-worked-example"></a>
 </h1>
-<div class="section level2">
-<h2 id="fit-a-model">Fit a model<a class="anchor" aria-label="anchor" href="#fit-a-model"></a>
-</h2>
 <p>The following model infers the two change points between three segments. You can run this complete worked example (which fits the model and plots by default) in one line:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">demo_fit</span> <span class="op">=</span> <span class="fu"><a href="reference/mcp_example.html">mcp_example</a></span><span class="op">(</span><span class="st">"demo"</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
@@ -159,7 +156,6 @@ Several plots showing mcp regression fits across different models and change-poi
 <div class="sourceCode" id="cb6"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="do">## Warning: Some parameters may not have converged well:</span></span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="do">##   * rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400: cp_1 and time_2</span></span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="do">## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.</span></span></code></pre></div>
-</div>
 <div class="section level2">
 <h2 id="plot-and-summary">Plot and summary<a class="anchor" aria-label="anchor" href="#plot-and-summary"></a>
 </h2>
@@ -213,12 +209,12 @@ Several plots showing mcp regression fits across different models and change-poi
 <div class="section level2">
 <h2 id="tests-and-model-comparison">Tests and model comparison<a class="anchor" aria-label="anchor" href="#tests-and-model-comparison"></a>
 </h2>
-<p>We can test (joint) probabilities in the model using <code><a href="reference/hypothesis.html">hypothesis()</a></code> (<a href="https://lindeloev.github.io/mcp/articles/comparison.html">see more here</a>). For example, what is the evidence (given priors) that the first change point (<code>cp_1</code>) is later than 25 against it being less than 25?</p>
+<p>We can test (joint) probabilities in the model using <code><a href="reference/hypothesis.html">hypothesis()</a></code> (<a href="articles/comparison.html">see more here</a>). For example, what is the evidence (given priors) that the first change point (<code>cp_1</code>) is later than 25 against it being less than 25?</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"cp_1 &gt; 25"</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb13"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="do">##      hypothesis      mean     lower    upper         p        BF</span></span>
 <span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="do">## 1 cp_1 - 25 &gt; 0 -2.066499 -13.19911 7.559761 0.3494167 0.4010526</span></span></code></pre></div>
-<p>For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation (<a href="https://lindeloev.github.io/mcp/articles/comparison.html">see more here</a>). Let’s specify a null model null model where the first two segments are reduced to one straight line, i.e., removing the change point:</p>
+<p>For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation (<a href="articles/comparison.html">see more here</a>). Let’s specify a null model null model where the first two segments are reduced to one straight line, i.e., removing the change point:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Define the model</span></span>
 <span><span class="va">model_null</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">response</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">time</span><span class="op">)</span>  <span class="co"># Intercept_1 and time_1</span></span>
@@ -240,44 +236,43 @@ Several plots showing mcp regression fits across different models and change-poi
 <h1 id="highlights-from-in-depth-guides">Highlights from in-depth guides<a class="anchor" aria-label="anchor" href="#highlights-from-in-depth-guides"></a>
 </h1>
 <p>The articles on the <a href="https://lindeloev.github.io/mcp/">mcp website</a> go in-depth with the functionality of <code>mcp</code>. Here is an executive summary, to give you a quick sense of what mcp can do.</p>
-<p><a href="https://lindeloev.github.io/mcp/articles/formulas.html">Understanding mcp formulas</a>:</p>
+<p><a href="articles/formulas.html">Understanding mcp formulas</a>:</p>
 <ul>
 <li><p>Parameter names are <code>Intercept_i</code> (intercepts), <code>cp_i</code> (change points), <code>x_i</code> (slopes), <code>ar*</code>/<code>ma*</code> (autocorrelation), and <code>sigma_*</code> (Gaussian residual standard deviation).</p></li>
 <li><p>The change point model is basically an <code>ifelse</code> model with order constraints on the change points.</p></li>
 <li><p>Generate data for all supported models using <code>fit$simulate()</code>. See examples in, e.g., <code>mcp_example("demo")$example_code</code>.</p></li>
 </ul>
-<p><a href="https://lindeloev.github.io/mcp/articles/families.html">Supported families and link functions</a>:</p>
+<p><a href="articles/families.html">Supported families and link functions</a>:</p>
 <ul>
 <li><p><code>mcp</code> currently supports specific combinations of families (<code><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian()</a></code>, <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code>, <code><a href="reference/bernoulli.html">bernoulli()</a></code>, <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson()</a></code>, and <code><a href="reference/negbinomial.html">negbinomial()</a></code>) and link functions (<code>identity</code>, <code>logit</code>, <code>probit</code>, and <code>log</code>).</p></li>
 <li><p>On using informative priors to incorporate expert knowledge.</p></li>
-<li><p>Use <code>binomial(link = "logit")</code> for <a href="https://lindeloev.github.io/mcp/articles/binomial.html">binomial change points in mcp</a>. Also relevant for <code>bernoulli(link = "logit")</code>.</p></li>
-<li><p>Use <code>negbinomial(link = "log")</code> or <code>poisson(link = "log")</code>. Read more on <a href="https://lindeloev.github.io/mcp/articles/poisson.html">Poisson and negative binomial change points in mcp</a>.</p></li>
+<li><p>Use <code>binomial(link = "logit")</code> for <a href="articles/binomial.html">binomial change points in mcp</a>. Also relevant for <code>bernoulli(link = "logit")</code>.</p></li>
+<li><p>Use <code>negbinomial(link = "log")</code> or <code>poisson(link = "log")</code>. Read more on <a href="articles/poisson.html">Poisson and negative binomial change points in mcp</a>.</p></li>
 <li><p>Get results on the linear-predictor (link) scale rather than the response scale using <code>plot(fit, scale = "linear")</code> or <code>fitted(fit, scale = "linear")</code>.</p></li>
 </ul>
-<p><a href="https://lindeloev.github.io/mcp/articles/comparison.html">Model comparison and hypothesis testing</a>:</p>
+<p><a href="articles/comparison.html">Model comparison and hypothesis testing</a>:</p>
 <ul>
 <li><p>Do Leave-One-Out Cross-Validation using <code>loo(fit)</code> and <code>loo::loo_compare(loo1, loo2)</code>.</p></li>
 <li><p>Compute Savage-Dickey density ratios using <code>hypothesis(fit, "cp_1 = 40")</code>.</p></li>
-<li><p>Leverage directional and conditional tests to assess interval hypotheses (<code>hypothesis(fit, "cp_1 &gt; 30 &amp; cp_1 &lt; 50")</code>), combined other hypotheses (<code>hypothesis(fit, "cp_1 &gt; 30 &amp; Intercept_1 &gt; Intercept_2")</code>), etc.</p></li>
 </ul>
-<p><a href="https://lindeloev.github.io/mcp/articles/group_effects.html">Group-level (random) effects</a>:</p>
+<p><a href="articles/group_effects.html">Group-level (random) effects</a>:</p>
 <ul>
 <li><p>Model group-level intercepts, slopes, and change points using <code>(1|id)</code>, <code>(condition||id)</code>, or <code>+(condition|id)</code>. Get posteriors using <code>ranef(fit)</code>.</p></li>
 <li><p>Plot using <code>plot(fit, facet_by = "my_group")</code> and <code>plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)</code>.</p></li>
 <li><p>Default priors bound group-specific change points relative to adjacent population-level change points.</p></li>
 </ul>
-<p>Modeling <a href="https://lindeloev.github.io/mcp/articles/arma.html">autoregression</a> and distributional parameters like <a href="https://lindeloev.github.io/mcp/articles/dpar.html">Gaussian residual standard deviation</a>:</p>
+<p>Modeling <a href="articles/arma.html">autoregression</a> and distributional parameters like <a href="articles/dpar.html">Gaussian residual standard deviation</a>:</p>
 <ul>
 <li><p><code>~ 0 + sigma(1)</code> models an intercept change in standard deviation. <code>~ 0 + sigma(0 + x)</code> models increasing/decreasing standard deviation. Explicit <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> formulas use a log link, so their coefficients are on the log-SD scale.</p></li>
 <li><p><code>~ ar(N)</code> models Nth order autoregression on residuals. <code>~ar(N, 0 + x)</code> models increasing/decreasing autocorrelation.</p></li>
 <li><p>You can provide complete models in distributional parameters (currently <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, <code>shape()</code>, and <code>mu()</code>) and time-series (<code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> and <code>ma()</code>). For example, <code>~ x + sigma(1 + x:condition)</code> models an abrupt change followed by a by-condition slopes in variance.</p></li>
 </ul>
-<p><a href="https://lindeloev.github.io/mcp/articles/predict.html">Get fitted and predicted values and intervals</a>:</p>
+<p><a href="articles/predict.html">Get fitted and predicted values and intervals</a>:</p>
 <ul>
 <li><p><code>fitted(fit)</code> and <code>predict(fit)</code> take many arguments to predict in-sample and out-of-sample values and intervals.</p></li>
 <li><p>Forecasting with prior knowledge about future change points.</p></li>
 </ul>
-<p><a href="https://lindeloev.github.io/mcp/articles/priors.html">Using priors</a>:</p>
+<p><a href="articles/priors.html">Using priors</a>:</p>
 <ul>
 <li><p>See priors in <code>fit$prior</code> and set priors using <code>mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")</code>.</p></li>
 <li><p>One change point has a uniform default prior. An ideal default prior for multiple change points is <code>cp_i = "dirichlet(1)"</code> which is a simplex of equidistant beta distributions, but because it samples inefficiently, a mcp defaults to an approximation using truncated Student-t priors centered at the minimum x. Informativeness increases and the number of change points increase.</p></li>
@@ -285,12 +280,13 @@ Several plots showing mcp regression fits across different models and change-poi
 <li><p>Truncate priors using <code>T(lower, upper)</code>, e.g., <code>Intercept_1 = "dnorm(0, 1) T(0, )"</code>. <code>mcp</code> adds ordering bounds to population-level change-point priors. Users can override these.</p></li>
 <li><p>Do prior predictive checks using <code>mcp(model, data, sample = "prior") |&gt; plot()</code>.</p></li>
 </ul>
-<p><a href="https://lindeloev.github.io/mcp/articles/missing.html">Missing responses and posterior imputation</a>:</p>
+<p><a href="articles/missing.html">Missing responses and posterior imputation</a>:</p>
 <ul>
-<li><p>Missing responses are sampled in JAGS and retained with their matching posterior draws. * Use <code>fitted(fit) |&gt; filter(is.na(y))</code> for expected responses and <code>predict(fit) |&gt; filter(is.na(y))</code> for posterior imputations.</p></li>
+<li><p>Missing responses are sampled in JAGS and retained with their matching posterior draws.</p></li>
+<li><p>Use <code>fitted(fit) |&gt; filter(is.na(y))</code> for expected responses and <code>predict(fit) |&gt; filter(is.na(y))</code> for posterior imputations.</p></li>
 <li><p>On plotting missing responses, asking probabilistic questions about them, etc.</p></li>
 </ul>
-<p><a href="https://lindeloev.github.io/mcp/articles/tips.html">Tips, tricks, and debugging</a></p>
+<p><a href="articles/tips.html">Tips, tricks, and debugging</a></p>
 <ul>
 <li><p>Speed up fitting using <code>future::plan(future::multisession, workers = 3)</code>, and/or fewer iterations, <code>mcp(..., warmup = 500)</code>.</p></li>
 <li><p>Help convergence along using <code>mcp(..., inits = list(cp_1 = 20, Intercept_2 = -3))</code>.</p></li>

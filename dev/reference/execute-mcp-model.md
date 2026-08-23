@@ -355,7 +355,7 @@ missing_fit = mcp_example("missing", plot = FALSE)
 #> 
 #> Initializing model
 #> 
-#> Finished sampling in 1.8 seconds
+#> Finished sampling in 3 seconds
 fitted(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Expected responses for missing y
 #>    y  x condition   fitted     error     Q2.5    Q97.5
 #> 1 NA  8         B 35.59660 1.0822734 33.48860 37.77410

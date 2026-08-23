@@ -1,9 +1,9 @@
 # mcp: Regression with Multiple Change Points
 
 [![mcp Github Actions
-status](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml)
-[![mcp Coveralls
-status](https://codecov.io/gh/lindeloev/mcp/branch/main/graph/badge.svg)](https://coveralls.io/github/lindeloev/mcp/)
+status](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg?branch=dev)](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml?query=branch%3Adev)
+[![mcp Codecov
+status](https://codecov.io/gh/lindeloev/mcp/branch/dev/graph/badge.svg)](https://codecov.io/gh/lindeloev/mcp/branch/dev)
 [![mcp CRAN
 status](https://www.r-pkg.org/badges/version/mcp)](https://CRAN.R-project.org/package=mcp)
 [![mcp CRAN
@@ -27,7 +27,8 @@ citations](https://scholar.google.com/scholar?cites=5590697509718421309)
 across ecology, astronomy, neuroscience, epidemiology, and other
 disciplines. See applications in the citing literature. Still, consider
 if `mcp` is the right tool for your problem - see [overview of change
-point packages](https://lindeloev.github.io/mcp/articles/packages.html).
+point
+packages](https://lindeloev.github.io/mcp/dev/articles/packages.md).
 
 Change points are also called **switch points**, **break points**,
 **broken line** regression, **broken stick** regression, **bilinear**
@@ -78,7 +79,7 @@ The change point(s) are the `x` at which data changes from being better
 predicted by one formula to the next. The first formula is just
 `response ~ predictors` and the most common formula for segment 2+ would
 be `~ predictors` (more details
-[here](https://lindeloev.github.io/mcp/articles/formulas.html)).
+[here](https://lindeloev.github.io/mcp/dev/articles/formulas.md)).
 
 You can do change point regression for a large number of models in a
 syntax that aligns with
@@ -94,8 +95,6 @@ Several plots showing mcp regression fits across different models and
 change-point structures.
 
 # Brief worked example
-
-## Fit a model
 
 The following model infers the two change points between three segments.
 You can run this complete worked example (which fits the model and plots
@@ -222,7 +221,7 @@ get draws, etc.
 We can test (joint) probabilities in the model using
 [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md)
 ([see more
-here](https://lindeloev.github.io/mcp/articles/comparison.html)). For
+here](https://lindeloev.github.io/mcp/dev/articles/comparison.md)). For
 example, what is the evidence (given priors) that the first change point
 (`cp_1`) is later than 25 against it being less than 25?
 
@@ -239,9 +238,9 @@ hypothesis(fit, "cp_1 > 25")
 For model comparisons, we can fit a null model and compare the
 predictive performance of the two models using (approximate)
 leave-one-out cross-validation ([see more
-here](https://lindeloev.github.io/mcp/articles/comparison.html)). Let’s
-specify a null model null model where the first two segments are reduced
-to one straight line, i.e., removing the change point:
+here](https://lindeloev.github.io/mcp/dev/articles/comparison.md)).
+Let’s specify a null model null model where the first two segments are
+reduced to one straight line, i.e., removing the change point:
 
 ``` r
 
@@ -279,7 +278,7 @@ in-depth with the functionality of `mcp`. Here is an executive summary,
 to give you a quick sense of what mcp can do.
 
 [Understanding mcp
-formulas](https://lindeloev.github.io/mcp/articles/formulas.html):
+formulas](https://lindeloev.github.io/mcp/dev/articles/formulas.md):
 
 - Parameter names are `Intercept_i` (intercepts), `cp_i` (change
   points), `x_i` (slopes), `ar*`/`ma*` (autocorrelation), and `sigma_*`
@@ -292,7 +291,7 @@ formulas](https://lindeloev.github.io/mcp/articles/formulas.html):
   examples in, e.g., `mcp_example("demo")$example_code`.
 
 [Supported families and link
-functions](https://lindeloev.github.io/mcp/articles/families.html):
+functions](https://lindeloev.github.io/mcp/dev/articles/families.md):
 
 - `mcp` currently supports specific combinations of families
   ([`gaussian()`](https://rdrr.io/r/stats/family.html),
@@ -305,19 +304,19 @@ functions](https://lindeloev.github.io/mcp/articles/families.html):
 - On using informative priors to incorporate expert knowledge.
 
 - Use `binomial(link = "logit")` for [binomial change points in
-  mcp](https://lindeloev.github.io/mcp/articles/binomial.html). Also
+  mcp](https://lindeloev.github.io/mcp/dev/articles/binomial.md). Also
   relevant for `bernoulli(link = "logit")`.
 
 - Use `negbinomial(link = "log")` or `poisson(link = "log")`. Read more
   on [Poisson and negative binomial change points in
-  mcp](https://lindeloev.github.io/mcp/articles/poisson.html).
+  mcp](https://lindeloev.github.io/mcp/dev/articles/poisson.md).
 
 - Get results on the linear-predictor (link) scale rather than the
   response scale using `plot(fit, scale = "linear")` or
   `fitted(fit, scale = "linear")`.
 
 [Model comparison and hypothesis
-testing](https://lindeloev.github.io/mcp/articles/comparison.html):
+testing](https://lindeloev.github.io/mcp/dev/articles/comparison.md):
 
 - Do Leave-One-Out Cross-Validation using `loo(fit)` and
   `loo::loo_compare(loo1, loo2)`.
@@ -325,13 +324,8 @@ testing](https://lindeloev.github.io/mcp/articles/comparison.html):
 - Compute Savage-Dickey density ratios using
   `hypothesis(fit, "cp_1 = 40")`.
 
-- Leverage directional and conditional tests to assess interval
-  hypotheses (`hypothesis(fit, "cp_1 > 30 & cp_1 < 50")`), combined
-  other hypotheses
-  (`hypothesis(fit, "cp_1 > 30 & Intercept_1 > Intercept_2")`), etc.
-
 [Group-level (random)
-effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
+effects](https://lindeloev.github.io/mcp/dev/articles/group_effects.md):
 
 - Model group-level intercepts, slopes, and change points using
   `(1|id)`, `(condition||id)`, or `+(condition|id)`. Get posteriors
@@ -344,9 +338,9 @@ effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
   population-level change points.
 
 Modeling
-[autoregression](https://lindeloev.github.io/mcp/articles/arma.html) and
-distributional parameters like [Gaussian residual standard
-deviation](https://lindeloev.github.io/mcp/articles/dpar.html):
+[autoregression](https://lindeloev.github.io/mcp/dev/articles/arma.md)
+and distributional parameters like [Gaussian residual standard
+deviation](https://lindeloev.github.io/mcp/dev/articles/dpar.md):
 
 - `~ 0 + sigma(1)` models an intercept change in standard deviation.
   `~ 0 + sigma(0 + x)` models increasing/decreasing standard deviation.
@@ -363,14 +357,14 @@ deviation](https://lindeloev.github.io/mcp/articles/dpar.html):
   abrupt change followed by a by-condition slopes in variance.
 
 [Get fitted and predicted values and
-intervals](https://lindeloev.github.io/mcp/articles/predict.html):
+intervals](https://lindeloev.github.io/mcp/dev/articles/predict.md):
 
 - `fitted(fit)` and `predict(fit)` take many arguments to predict
   in-sample and out-of-sample values and intervals.
 
 - Forecasting with prior knowledge about future change points.
 
-[Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
+[Using priors](https://lindeloev.github.io/mcp/dev/articles/priors.md):
 
 - See priors in `fit$prior` and set priors using
   `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")`.
@@ -393,18 +387,19 @@ intervals](https://lindeloev.github.io/mcp/articles/predict.html):
   `mcp(model, data, sample = "prior") |> plot()`.
 
 [Missing responses and posterior
-imputation](https://lindeloev.github.io/mcp/articles/missing.html):
+imputation](https://lindeloev.github.io/mcp/dev/articles/missing.md):
 
 - Missing responses are sampled in JAGS and retained with their matching
-  posterior draws. \* Use `fitted(fit) |> filter(is.na(y))` for expected
-  responses and `predict(fit) |> filter(is.na(y))` for posterior
-  imputations.
+  posterior draws.
+
+- Use `fitted(fit) |> filter(is.na(y))` for expected responses and
+  `predict(fit) |> filter(is.na(y))` for posterior imputations.
 
 - On plotting missing responses, asking probabilistic questions about
   them, etc.
 
 [Tips, tricks, and
-debugging](https://lindeloev.github.io/mcp/articles/tips.html)
+debugging](https://lindeloev.github.io/mcp/dev/articles/tips.md)
 
 - Speed up fitting using
   `future::plan(future::multisession, workers = 3)`, and/or fewer

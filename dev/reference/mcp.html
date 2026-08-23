@@ -314,7 +314,7 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Initializing model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 2.4 seconds</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 4.5 seconds</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Some parameters may not have converged well:</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>   * rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400: cp_1 and time_2</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.</span>
@@ -328,7 +328,7 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Initializing model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 0 seconds</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 0.1 seconds</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># See parameter estimates</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
@@ -404,13 +404,13 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Initializing model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 0.4 seconds</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 0.6 seconds</span>
 <span class="r-in"><span><span class="va">demo_loo</span> <span class="op">=</span> <span class="fu"><a href="loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">null_loo</span> <span class="op">=</span> <span class="fu"><a href="loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_null</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">demo_loo</span>, <span class="va">null_loo</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   model elpd_diff se_diff p_worse diag_diff diag_elpd</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  model1       0.0     0.0      NA                    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  model2    -104.3     8.5    1.00                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  model2    -104.2     8.5    1.00                    </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Inspect the prior. Useful for prior predictive checks.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
@@ -466,7 +466,7 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Initializing model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 1.8 seconds</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 3.6 seconds</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Show the JAGS model</span></span></span>
 <span class="r-in"><span><span class="va">demo_fit</span><span class="op">$</span><span class="va">jags_code</span></span></span>
