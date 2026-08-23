@@ -22,7 +22,7 @@ The three formula parts are called **response**, **cp**, and **predictor**. The 
 
 `mcp` adds two novelties to the modeling syntax to support segmented regression:
 
-1.  The "cp" part which can be `~ 1` or `~ 1 + (1|group)`. Read more about [group-level change-point deviations](../articles/group_effects.html).
+1.  The "cp" part which can be `~ 1` or `~ 1 + (1|group)`. Read more about [group-level (random) change-point deviations](../articles/group_effects.html).
 2.  The predictor part can contain distributional regression as terms, such as `sigma([formula here])` and `shape()` ([read more](../articles/dpar.html)). Similarly for time-series such as `ar()` and `ma()` ([read more](../articles/arma.html)).
 
 `mcp` is heavily inspired by `brms` which again is inspired by [`lme4::lmer`](https://cran.r-project.org/web/packages/lme4/index.html). [Here is a bit of history](https://twitter.com/jonaslindeloev/status/1117760777249853440) on that.

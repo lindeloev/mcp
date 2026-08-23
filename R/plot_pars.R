@@ -8,7 +8,7 @@
 #' @param pars Character vector. One of:
 #'   * Vector of parameter names.
 #'   * `"population"` plots all population-level parameters.
-#'   * `"group"` plots all group-level deviations. To plot a particular group-level
+#'   * `"group"` plots all group-level deviations (random effects). To plot a particular group-level
 #'       effect, use `regex_pars = "^name"`.
 #' @param regex_pars Vector of regular expressions. This will typically just be
 #'   the beginning of the parameter name(s), i.e., "^cp_" plots all change

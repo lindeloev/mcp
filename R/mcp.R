@@ -33,7 +33,7 @@
 #'     R-side bases such as `scale()`, `poly()`, and `splines::ns()` are evaluated
 #'     before sampling, and their fitted scaling or basis is reused for `newdata`.
 #'
-#'   * *Group-level effects:* e.g., `~ 1 + (1 | id)` for a group-level
+#'   * *Group-level effects (random effects):* e.g., `~ 1 + (1 | id)` for a group-level
 #'     intercept, or `~ 1 + (factor || id)` for independent intercept and
 #'     factor-contrast deviations. [Read more](https://lindeloev.github.io/mcp/articles/group_effects.html).
 #'

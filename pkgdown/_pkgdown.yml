@@ -106,7 +106,7 @@ navbar:
         href: articles/priors.html
       - text: Hypotheses and model comparison
         href: articles/comparison.html
-      - text: Group-level effects
+      - text: Group-level (random) effects
         href: articles/group_effects.html
       - text: Modeling variance
         href: articles/dpar.html

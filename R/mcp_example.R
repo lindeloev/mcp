@@ -6,7 +6,7 @@
 #'  * `"intercepts"`: An intercept-only change point.
 #'  * `"multiple"`: Multiple regression with categorical predictors and interactions.
 #'  * `"binomial"`: Binomial with two change points. Much like `"demo"` on a logit scale.
-#'  * `"group_mu"`: Group-level intercepts and factor deviations across a change point.
+#'  * `"group_mu"`: Group-level predictor deviations (random intercepts/slopes) across a change point.
 #'  * `"group_cp"`: Group-level change-point deviations (random effects).
 #'  * `"quadratic"`: A change point to a quadratic segment where there is no data.
 #'  * `"ar"`: One change point in autoregressive residuals (the `ar1` dpar)

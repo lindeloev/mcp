@@ -1,8 +1,8 @@
 ---
-title: "Group-level effects"
+title: "Group-level (random) effects in mcp"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Group-level effects}
+  %\VignetteIndexEntry{Group-level (random) effects in mcp}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 editor_options: 

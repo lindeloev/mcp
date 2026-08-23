@@ -187,9 +187,9 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 - Leverage directional and conditional tests to assess interval hypotheses (`hypothesis(fit, "cp_1 > 30 & cp_1 < 50")`), combined other hypotheses (`hypothesis(fit, "cp_1 > 30 & Intercept_1 > Intercept_2")`), etc.
 
-[Group-level change points](https://lindeloev.github.io/mcp/articles/group_effects.html):
+[Group-level (random) effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
 
-- Model group-level change points using `+(condition|id)`. Get posteriors using `ranef(fit)`.
+- Model group-level intercepts, slopes, and change points using `(1|id)`, `(condition||id)`, or `+(condition|id)`. Get posteriors using `ranef(fit)`.
 
 - Plot using `plot(fit, facet_by = "my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
 
