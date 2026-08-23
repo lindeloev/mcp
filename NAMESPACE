@@ -88,4 +88,5 @@ importFrom(stats,
   nobs,
   vcov
 )
+importFrom(tidybayes,tidy_draws)
 importFrom(utils,capture.output)
