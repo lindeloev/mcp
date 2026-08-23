@@ -10,98 +10,25 @@ editor_options:
     wrap: none
 ---
 
-`mcp 0.3` added support for more response families and link functions. For example, you can now do
+To do GLM, you specify a family and link function in the conventional way:
 
 ```{r, eval=FALSE}
 fit = mcp(model, data = df, family = gaussian("log"))
 fit = mcp(model, data = df, family = binomial("identity"))
 ```
 
+Currently supported families and link functions include:
 
-This is an ongoing effort and more will be added. This table shows the current status:
+- Default: `gaussian(link = "identity")`. Alternatives: `gaussian(link = "log")`
+- Default: `binomial(link = "logit")`. Alternatives: `binomial(link = "probit")`, `binomial(link = "identity")`
+- Default: `bernoulli(link = "logit")`. Alternatives: `bernoulli(link = "probit")`, `bernoulli(link = "identity")`
+- Default: `poisson(link = "log")`. Alternatives: `poisson(link = "identity")`
+- Default: `negbinomial(link = "log", link_shape = "log")`
 
-![](https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/mcp_glm_status.png)
+See the "GLM" menu above for more details on using GLM with `mcp`. The hardest part about adding new families/links is specifying default priors. Read more in [the article on mcp priors](../articles/priors.html).
 
- * **Green:** supported and the default priors are unlikely to change.
- * **Yellow:** supported but the default priors may change.
- * **White:** not currently supported. [Raise a GitHub issue](https://github.com/lindeloev/mcp/issues) if you need it.
- * **Red:** impossible or will not be supported.
+# On-default link functions
 
-See the "GLM" menu above for more details on using GLM with `mcp`.
-
-
-# General remarks
 Some link functions are *default* in GLMs for good reasons: they are computationally convenient and interpretable. A non-default link can imply impossible values, at which point `mcp` errors. For example, a `bernoulli("identity")` model `prob ~ 1 + x` places a slope directly on `P(y = TRUE)`, which can easily fall below 0 or exceed 1. Informative [priors](../articles/priors.html), for example through truncation, can prevent the sampler from visiting invalid values.
 
 In short: think carefully and proceed at your own risk.
-
-
-# An example
-
-```{r}
-library(mcp)
-future::plan(future::multisession, workers = 3)
-set.seed(42)  # Make the script deterministic
-```
-
-
-Reviving the example from the article on [binomial models in mcp](../articles/binomial.html)...
-
-```{r}
-model = list(
-  y | trials(N) ~ 1 + x,  # Intercept and slope on success probability
-  ~ 1 + x                 # Disjoined slope on success probability
-)
-```
-
-we can model it using an `identity` link function:
-
-```{r, echo = FALSE}
-data = mcp_example_data("binomial")
-```
-
-```{r, eval = FALSE}
-data = mcp_example_data("binomial")
-fit = mcp(model, data = data, family = binomial(link = "identity"))
-```
-
-```{r, echo = FALSE}
-message("Parallel sampling in progress...
-
-Error in update.jags(model, n.iter, ...) : Error in node loglik_[63]
-Invalid parent values")
-```
-
-
-Oops, the sampler visited impossible success probabilities, below 0 or above 1. For these data, the second-segment slope has too much posterior support for exceeding 1 under the defaults. We therefore use more informative priors that make a long, steep slope unlikely:
-
-```{r, results=FALSE, message=FALSE, warning=FALSE}
-prior = list(
-  x_2 = "dnorm(0, 0.002)",         # Slope is unlikely to be steep
-  cp_1 = "dnorm(30, 10) T(20, )"   # Slope starts not-too-early
-)
-
-fit = mcp(model, data = data, family = binomial(link = "identity"), prior = prior, seed = 42)
-```
-
-```{r, fig.width=6, fig.height=4}
-set.seed(42)
-plot(fit)
-```
-
-Sampling succeeded! This is a bad model of this data. But it illustrates the necessary considerations and steps to ameliorate problems when going beyond default link functions.
-
-Because of the identity link, the binomial regression coefficients are intercepts and slopes on the success probability, in contrast to the log-odds fitted by `family = binomial(link = "logit")`. For example, `Intercept_1` is the success probability at `x = 0`, and `Intercept_2` is the success probability at `x = cp_1`.
-
-```{r}
-summary(fit)
-```
-
-
-# Specific remarks
-
- * The mean ($1 / {inverse\_link}(\lambda)$) is plotted for `family = exponential()` and output by `fit$simulate(..., fype = "fitted")`. Multiply by `log(2)` to get the median.
-
-```{r cleanup, include=FALSE}
-future::plan(future::sequential)
-```
