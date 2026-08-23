@@ -9,9 +9,9 @@ First, let us specify a toy model with three segments:
 ``` r
 
 model = list(
-  y | trials(N) ~ 1,  # constant rate
-  ~ 0 + year,  # joined changing rate
-  ~ 1 + year  # disjoined changing rate
+  y | trials(N) ~ 1,  # constant success probability
+  ~ 0 + year,  # joined changing success probability
+  ~ 1 + year  # disjoined changing success probability
 )
 ```
 
@@ -40,20 +40,18 @@ Now we can simulate. First, let us see the model parameters.
 
 ``` r
 
-empty$pars
+mcp_pars(empty)
 ```
 
-    ## List of 10
-    ##  $ x         :"year"
-    ##  $ y         :"y"
-    ##  $ cp        :"cp_1" "cp_2"
-    ##  $ fixed     :"Intercept_1" "year_2" "Intercept_3" "year_3"
-    ##  $ population:"cp_1" "cp_2" "Intercept_1" "year_2" "Intercept_3" "year_3"
-    ##  $ varying   : NULL
-    ##  $ sigma     :
-    ##  $ arma      :
-    ##  $ trials    :"N"
-    ##  $ weights   : NULL
+    ## # A tibble: 6 × 9
+    ##   name        part     scope role  segment dpar  order group_col population_name
+    ##   <chr>       <chr>    <chr> <chr>   <int> <chr> <int> <chr>     <chr>          
+    ## 1 cp_1        cp       popu… chan…       2 cp       NA NA        NA             
+    ## 2 cp_2        cp       popu… chan…       3 cp       NA NA        NA             
+    ## 3 Intercept_1 predict… popu… fixe…       1 mu       NA NA        NA             
+    ## 4 year_2      predict… popu… fixe…       2 mu       NA NA        NA             
+    ## 5 Intercept_3 predict… popu… fixe…       3 mu       NA NA        NA             
+    ## 6 year_3      predict… popu… fixe…       3 mu       NA NA        NA
 
 - It takes two intercepts (`Intercept_*`), for segments 1 and 3.
 - It takes two slopes (`year_*`), for segment 2 and 3.
@@ -63,16 +61,16 @@ empty$pars
 parameters (signature: `empty$simulate(fit, newdata, ...)`). If you are
 in a reasonable R editor, type `empty$simulate(` and press TAB to see
 the required arguments. I came up with some values below, including
-change points at $`year = 25`$ and $`year = 65`$. Notice that because
-[`binomial()`](https://rdrr.io/r/stats/family.html) defaults to the link
-function `link = "logit"`, the intercept and slopes are on a [logit
-scale](https://en.wikipedia.org/wiki/Logit). Briefly, this extends the
-narrow range of binomial rates (0-1) to an infinite logit scale from
-minus infinity to plus infinity. This will be important later when we
-set priors.
+change points at $`year = 25`$ and $`year = 65`$. Because
+[`binomial()`](https://rdrr.io/r/stats/family.html) defaults to
+`link = "logit"`, the intercept and slopes are on the [logit
+scale](https://en.wikipedia.org/wiki/Logit), which maps success
+probabilities between 0 and 1 to the real line. This will be important
+later when we set priors.
 
 ``` r
 
+set.seed(42)
 df$y = empty$simulate(
   empty, df, 
   cp_1 = 1925, cp_2 = 1975, 
@@ -83,12 +81,12 @@ head(df)
 ```
 
     ##   year  N  y
-    ## 1 1901 10  8
-    ## 2 1902 14 13
-    ## 3 1903 10  8
+    ## 1 1901 10  7
+    ## 2 1902 14 10
+    ## 3 1903 10  9
     ## 4 1904 18 15
-    ## 5 1905 19 18
-    ## 6 1906 13 13
+    ## 5 1905 19 16
+    ## 6 1906 13 12
 
 Visually:
 
@@ -106,7 +104,7 @@ recover the parameters used to simulate the data.
 
 ``` r
 
-fit = mcp(model, data = df, family = binomial(), adapt = 5000)
+fit = mcp(model, data = df, family = binomial(), warmup = 5000, seed = 42)
 ```
 
 We can use `summary` to see that it recovered the parameters to a pretty
@@ -125,27 +123,37 @@ summary(fit)
     ##   2: y | trials(N) ~ 1 ~ 0 + year
     ##   3: y | trials(N) ~ 1 ~ 1 + year
     ## 
-    ## Population-level parameters:
-    ##         name match    sim     mean    lower    upper Rhat ess_bulk ess_tail
-    ##         cp_1    OK 1925.0 1921.756 1915.729 1927.613    1      316      765
-    ##         cp_2    OK 1975.0 1972.308 1960.533 1977.352    1       66       84
-    ##  Intercept_1    OK    2.0    2.179    1.818    2.582    1      526     1140
-    ##       year_2    OK   -0.1   -0.093   -0.109   -0.079    1      386      699
-    ##  Intercept_3    OK   -1.0   -1.497   -2.938   -0.712    1       70       80
-    ##       year_3    OK    0.1    0.112    0.093    0.130    1      380     1246
+    ## Change point parameters:
+    ##         name     mean     sd    lower    upper rhat ess_bulk ess_tail    sim
+    ##  cp_1        1930.084 3.0280 1924.086 1935.437    1      440      987 1925.0
+    ##  cp_2        1974.516 0.6268 1973.232 1975.856    1     1120      476 1975.0
+    ##  match
+    ##     OK
+    ##     OK
     ## 
-    ## Warning: 5 parameters show poor convergence (Rhat > 1.01 or ESS < 400).
+    ## Population-level parameters:
+    ##         name     mean     sd    lower    upper rhat ess_bulk ess_tail    sim
+    ##  Intercept_1    1.624 0.1445    1.360    1.921    1      805     1736    2.0
+    ##  year_2        -0.103 0.0108   -0.126   -0.083    1      486     1002   -0.1
+    ##  Intercept_3   -1.078 0.2033   -1.468   -0.678    1      630     1008   -1.0
+    ##  year_3         0.099 0.0088    0.082    0.116    1      810     1856    0.1
+    ##  match
+    ##       
+    ##     OK
+    ##     OK
+    ##     OK
 
 `summary` uses 95% central posterior intervals by default, but you can
-change it using `summary(fit, width = 0.80)`. If you have [varying
-effects](https://lindeloev.github.io/mcp/dev/articles/varying.md), use
-`ranef(fit)` to see them.
+change it using `summary(fit, width = 0.80)`. If you have [group-level
+effects](https://lindeloev.github.io/mcp/dev/articles/group_effects.md),
+use `ranef(fit)` to see their deviations.
 
 Plotting the fit confirms good fit to the data, and we see the
 discontinuities at the two change points:
 
 ``` r
 
+set.seed(42)
 plot(fit)
 ```
 
@@ -156,36 +164,20 @@ posterior samples. In other words, they represent the joint distribution
 of the parameters. You can change the number of draws (lines) using
 `plot(fit, lines = 50)`.
 
-Notice for binomial models it defaults to plot the *rate* (`y / N`) as a
-function of x. The reason why is obvious when we plot on “raw” data by
-toggling `rate`:
-
-``` r
-
-plot(fit, rate = FALSE)
-```
-
-![](binomial_files/figure-html/unnamed-chunk-9-1.png)
-
-These lines are jagged because `N` varies from year to year. Although
-there is close too 100% success rate in the years 1900 - 1920, the
-number of trials varies, as you can see in the raw data. However, using
-`rate = FALSE` will be great when the number of trials is constant for
-extended periods of time, as `y` is more interpretable then.
-
 Speaking of alternative visualizations, you can also plot this on the
 logit scale, where the linear trends are modeled:
 
 ``` r
 
+set.seed(42)
 plot_dpar(fit)
 ```
 
-![](binomial_files/figure-html/unnamed-chunk-10-1.png)
+![](binomial_files/figure-html/unnamed-chunk-9-1.png)
 
-Of course, these plots work with [varying
-effects](https://lindeloev.github.io/mcp/dev/articles/varying.md) as
-well.
+These plots work with [group-level
+effects](https://lindeloev.github.io/mcp/dev/articles/group_effects.md)
+as well.
 
 ## Model diagnostics and sampling options
 
@@ -195,10 +187,11 @@ posterior distributions and trace plots:
 
 ``` r
 
+set.seed(42)
 plot_pars(fit)
 ```
 
-![](binomial_files/figure-html/unnamed-chunk-11-1.png)![](binomial_files/figure-html/unnamed-chunk-11-2.png)
+![](binomial_files/figure-html/unnamed-chunk-10-1.png)![](binomial_files/figure-html/unnamed-chunk-10-2.png)
 
 Convergence is perfect here as evidenced by the overlapping trace plots
 that look like fat caterpillars (Bayesians love fat caterpillars).
@@ -235,9 +228,9 @@ cbind(fit$prior)
     ## cp_1        "dt(1901, 59.5, 1) T(1901, 2020)"
     ## cp_2        "dt(1901, 59.5, 1) T(cp_1, 2020)"
     ## Intercept_1 "dt(0, 1.5, 3)"                  
-    ## year_2      "dt(0, 0.03781513, 3)"           
+    ## year_2      "dt(0, 0.01260504, 3)"           
     ## Intercept_3 "dt(0, 1.5, 3)"                  
-    ## year_3      "dt(0, 0.03781513, 3)"
+    ## year_3      "dt(0, 0.01260504, 3)"
 
 The priors on change points are discussed extensively in the prior
 vignette. With the default logit link, intercepts and categorical
@@ -271,7 +264,7 @@ ggplot(data.frame(logits = 0), aes(x = logits)) +
   scale_x_continuous(breaks = -7:7,limits = c(-7, 7), sec.axis = sec_axis(~ inverse_logit(.), name = "Probability", breaks = round(inverse_logit(seq(-7, 7, by = 2)), 3)))
 ```
 
-![](binomial_files/figure-html/unnamed-chunk-13-1.png)
+![](binomial_files/figure-html/unnamed-chunk-12-1.png)
 
 Please keep in mind that when these priors combine through the model,
 the joint probability may be quite different.
@@ -299,12 +292,12 @@ fit$jags_code
     ##   cp_3 = CONST2_
     ## 
     ##   # Priors for population-level effects
-    ##   cp_1 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(CONST1_,CONST2_)  # Within the observed change-point span
-    ##   cp_2 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(cp_1,CONST2_)  # Ordered after cp_1 within the observed change-point span
+    ##   cp_1 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(CONST1_,CONST2_)  # Regularizing t-tail within the observed change-point span
+    ##   cp_2 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(cp_1,CONST2_)  # Regularizing t-tail ordered after cp_1 within the observed change-point span
     ##   Intercept_1 ~ dt(0, 1/(1.5)^2, 3)   # Weakly regularizing link-scale intercept
-    ##   year_2 ~ dt(0, 1/(0.03781513)^2, 3)   # Weakly regularizing link-scale coefficient scaled to a reference predictor change
+    ##   year_2 ~ dt(0, 1/(0.01260504)^2, 3)   # Weakly regularizing link-scale coefficient scaled to a reference predictor change
     ##   Intercept_3 ~ dt(0, 1/(1.5)^2, 3)   # Weakly regularizing link-scale intercept
-    ##   year_3 ~ dt(0, 1/(0.03781513)^2, 3)   # Weakly regularizing link-scale coefficient scaled to a reference predictor change
+    ##   year_3 ~ dt(0, 1/(0.01260504)^2, 3)   # Weakly regularizing link-scale coefficient scaled to a reference predictor change
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(year)) {

@@ -56,7 +56,7 @@ model = list(
   ~ 1  # intercept-only
 )
 
-fit = mcp(model, data = df, family = poisson(), par_x = "date")
+fit = mcp(model, data = df, family = poisson(), par_x = "date", seed = 42)
 ```
 
 Let us see the two intercepts (lambda in log-units) and the change point
@@ -73,11 +73,14 @@ result = summary(fit)
     ##   1: n ~ 1
     ##   2: n ~ 1 ~ 1
     ## 
+    ## Change point parameters:
+    ##         name    mean    sd   lower   upper rhat ess_bulk ess_tail
+    ##  cp_1        1888.21 3.692 1881.71 1897.74    1     2069     1530
+    ## 
     ## Population-level parameters:
-    ##         name    mean   lower   upper Rhat ess_bulk ess_tail
-    ##         cp_1 1888.35 1881.80 1898.64    1     1876     1699
-    ##  Intercept_1    1.17    0.98    1.35    1     3833     4958
-    ##  Intercept_2    0.48    0.24    0.72    1     4192     4700
+    ##         name    mean    sd   lower   upper rhat ess_bulk ess_tail
+    ##  Intercept_1    1.17 0.096    0.98    1.36    1     4438     4901
+    ##  Intercept_2    0.48 0.123    0.23    0.71    1     4248     4594
 
 We can see that the model ran well with good convergence and a large
 number of effective samples. At a first glance, the change point is
@@ -87,6 +90,7 @@ Let us take a more direct look, using the default `mcp` plot:
 
 ``` r
 
+set.seed(42)
 plot(fit)
 ```
 
@@ -104,6 +108,7 @@ traceplot too, just to check convergence visually.
 
 ``` r
 
+set.seed(42)
 plot_pars(fit)
 ```
 
@@ -115,8 +120,8 @@ plot_pars(fit)
 `link = 'log'`, meaning that we have to exponentiate the estimates to
 get the “raw” Poisson parameter $`\lambda`$. $`\lambda`$ has the nice
 property of being the mean number of events. So we see that the mean
-number of events in segment 1 is `exp(result$mean[2])` (3.2261634) and
-it is `exp(result$mean[3])` (1.6143426) for segment 2.
+number of events in segment 1 is `exp(result$mean[2])` (3.2329953) and
+it is `exp(result$mean[3])` (1.6137835) for segment 2.
 
 The intercept prior is a Student-t distribution centered on the rounded
 median of `log(pmax(n, 0.1))`, with scale equal to the maximum of 2.5
@@ -182,10 +187,11 @@ A flat model and a one-decay model:
 ``` r
 
 # Fit an intercept-only model
-fit_flat = mcp(list(n ~ 1), data = df, family=poisson(), par_x = "date")
-fit_decay = mcp(list(n ~ 1 + date), data = df, family = poisson())
+fit_flat = mcp(list(n ~ 1), data = df, family=poisson(), par_x = "date", seed = 42)
+fit_decay = mcp(list(n ~ 1 + date), data = df, family = poisson(), seed = 42)
 
 
+set.seed(42)
 plot(fit_flat) + plot(fit_decay)
 ```
 
@@ -195,19 +201,19 @@ Not we compute and compare the LOO ELPDs:
 
 ``` r
 
-fit$loo = loo(fit)
-fit_flat$loo = loo(fit_flat)
-fit_decay$loo = loo(fit_decay)
+fit_loo = loo(fit)
+fit_flat_loo = loo(fit_flat)
+fit_decay_loo = loo(fit_decay)
 ```
 
 ``` r
 
-loo::loo_compare(fit$loo, fit_flat$loo, fit_decay$loo)
+loo::loo_compare(fit_loo, fit_flat_loo, fit_decay_loo)
 ```
 
     ##   model elpd_diff se_diff p_worse diag_diff      diag_elpd
-    ##  model1       0.0     0.0      NA           3 k_psis > 0.7
-    ##  model3      -6.0     2.9    0.98   N < 100               
+    ##  model1       0.0     0.0      NA           2 k_psis > 0.7
+    ##  model3      -5.1     2.7    0.97   N < 100               
     ##  model2      -9.3     3.8    0.99   N < 100
 
     ## 
@@ -221,16 +227,16 @@ look at the model weights:
 
 ``` r
 
-loo_list = list(fit$loo, fit_flat$loo, fit_decay$loo)
+loo_list = list(fit_loo, fit_flat_loo, fit_decay_loo)
 loo::loo_model_weights(loo_list, method="pseudobma")
 ```
 
     ## Method: pseudo-BMA+ with Bayesian bootstrap
     ## ------
     ##        weight
-    ## model1 0.962 
-    ## model2 0.007 
-    ## model3 0.032
+    ## model1 0.935 
+    ## model2 0.008 
+    ## model3 0.057
 
 Again, unsurprisingly, the change point model is preferred and they show
 the same ranking as implied by `loo_compare`.

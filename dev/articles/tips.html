@@ -49,10 +49,11 @@
 <li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="../articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
@@ -111,7 +112,7 @@ a common criterion) and non-converging lines in
 <ul>
 <li><p>The first thing to try is always to make the model warm up longer
 to see if it reaches convergence later:
-<code>mcp(fit, data, adapt = 10000)</code>.</p></li>
+<code>mcp(fit, data, warmup = 10000)</code>.</p></li>
 <li><p>It can be a sign of a deeper non-identifiability in the model.
 This will show up as strong correlations in the joint distribution of
 any pair of implicated parameters:
@@ -135,9 +136,9 @@ pool is reused across calls. Shut it down afterward with
 <code>future::plan(future::sequential)</code>. Without a parallel future
 plan, chains run sequentially.</p></li>
 <li><p>More data usually means better identifiability and faster
-convergence. Lower the adaption period period using, e.g.,
-<code>mcp(..., adapt = 300)</code>. This is also sometimes called
-“burnin”.</p></li>
+convergence. Lower the warmup using, e.g.,
+<code>mcp(..., warmup = 300)</code>. For JAGS, warmup iterations are
+used for sampler adaptation and discarded before sampling.</p></li>
 </ul>
 </div>
 <div class="section level2">
@@ -145,8 +146,8 @@ convergence. Lower the adaption period period using, e.g.,
 </h2>
 <p>Most of these problems should stem from inappropriate priors and such
 problems may be exacerbated by fragile link functions (e.g.,
-<code>binomial(link = "identity")</code>. The article on <a href="https://lindeloev.github.io/mcp/articles/priors.html">priors in
-mcp</a> may be helpful, but in particular:</p>
+<code>binomial(link = "identity")</code>. The article on <a href="../articles/priors.html">priors in mcp</a> may be helpful, but in
+particular:</p>
 <ul>
 <li><p>Errors on “directed cycle” usually stems from using parameters in
 priors. For example, if you set

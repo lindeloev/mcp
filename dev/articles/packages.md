@@ -77,18 +77,18 @@ to include prior knowledge could be important in some situations.
 - Posterior distribution for each change point. This matters since they
   rarely conform to known distributions so confidence intervals can be
   misleading.
-- *varying change points*: To my knowledge, no other package implements
-  varying change points, i.e., allowing by-group differences in change
-  points while sharing all other parameters. Read more about [varying
-  change
-  points](https://lindeloev.github.io/mcp/dev/articles/varying.md) in
-  `mcp`.
+- *group-level change points*: To my knowledge, no other package
+  implements group-level change-point deviations while sharing
+  population-level effects. Read more about [group-level change
+  points](https://lindeloev.github.io/mcp/dev/articles/group_effects.md)
+  in `mcp`.
 - *Sharing and fixing parameters* to values and other parameters as
   discussed under [priors in
   mcp](https://lindeloev.github.io/mcp/dev/articles/priors.md).
-- *Per-segment regression on variance and serial dependence* via the
+- *Per-segment regression on Gaussian residual standard deviation and
+  serial dependence* via the
   [`sigma()`](https://rdrr.io/r/stats/sigma.html) ([read more
-  here](https://lindeloev.github.io/mcp/dev/articles/variance.md)),
+  here](https://lindeloev.github.io/mcp/dev/articles/dpar.md)),
   [`ar()`](https://rdrr.io/r/stats/ar.html), and `ma()` ([read more
   here](https://lindeloev.github.io/mcp/dev/articles/arma.md)) terms,
   also allowing for more advanced change points involving, e.g., a
@@ -125,7 +125,7 @@ package *unless:*
   speed up `mcp`. Briefly, configure a parallel future plan and lower
   the number of iterations:
   `future::plan(future::multisession, workers = 4)` followed by
-  `mcp(..., iter = 1000, adapt = 400)`.
+  `mcp(..., iter = 1000, warmup = 400)`.
 - *You want to automatically detect a large number of change points*:
   Most packages does automatic change point detection. This is not a
   space that `mcp` tries to fill. But beware that many of the automatic
@@ -169,7 +169,7 @@ with default priors:.
 ``` r
 
 model = list(y ~ 1, 1 ~ 1, 1 ~ 1) # three intercept-only segments
-fit_mcp = mcp(model, data = df, par_x = "x")
+fit_mcp = mcp(model, data = df, par_x = "x", seed = 42)
 
 summary(fit_mcp)
 ```
@@ -181,14 +181,17 @@ summary(fit_mcp)
     ##   2: y ~ 1 ~ 1
     ##   3: y ~ 1 ~ 1
     ## 
+    ## Change point parameters:
+    ##         name   mean    sd lower upper rhat ess_bulk ess_tail
+    ##  cp_1        30.760 1.812 26.77 33.90    1     1787     2184
+    ##  cp_2        63.487 6.927 45.72 75.83    1      977      762
+    ## 
     ## Population-level parameters:
-    ##         name   mean lower upper Rhat ess_bulk ess_tail
-    ##         cp_1 30.679 26.63 33.92    1     1979     2315
-    ##         cp_2 63.347 45.29 75.70    1      697      570
-    ##  Intercept_1  2.040  1.63  2.46    1     4437     4875
-    ##  Intercept_2 -0.072 -0.55  0.35    1     2021     1881
-    ##  Intercept_3  0.909  0.51  1.32    1     1286     1302
-    ##      sigma_1  1.064  0.92  1.23    1     3910     4066
+    ##         name   mean    sd lower upper rhat ess_bulk ess_tail
+    ##  Intercept_1  2.040 0.203  1.64  2.45    1     4369     5107
+    ##  Intercept_2 -0.071 0.234 -0.56  0.35    1     1777     1661
+    ##  Intercept_3  0.916 0.199  0.53  1.31    1     1712     2275
+    ##  sigma_1      1.064 0.078  0.92  1.23    1     4377     4611
 
 The summary shows good parameter recovery, though the second change
 point is detected a bit early. This is understandable if you look at the
@@ -203,6 +206,7 @@ meaningless for this problem.
 ``` r
 
 library(patchwork)
+set.seed(42)
 plot(fit_mcp) + plot_pars(fit_mcp, pars = c("cp_1", "cp_2"), type = "dens_overlay")
 ```
 
@@ -374,15 +378,15 @@ We can do the same using `mcp`:
 ``` r
 
 model_1 = list(y ~ 1, 1 ~ 1)
-fit_mcp_1 = mcp(model_1, data = df, par_x = "x")
-fit_mcp_1$loo = loo(fit_mcp_1)
-fit_mcp$loo = loo(fit_mcp)
-loo::loo_compare(fit_mcp$loo, fit_mcp_1$loo)
+fit_mcp_1 = mcp(model_1, data = df, par_x = "x", seed = 42)
+loo_mcp_1 = loo(fit_mcp_1)
+loo_mcp = loo(fit_mcp)
+loo::loo_compare(loo_mcp, loo_mcp_1)
 ```
 
     ##   model elpd_diff se_diff p_worse diag_diff      diag_elpd
-    ##  model1       0.0     0.0      NA           2 k_psis > 0.7
-    ##  model2      -5.1     2.7    0.97           6 k_psis > 0.7
+    ##  model1       0.0     0.0      NA           3 k_psis > 0.7
+    ##  model2      -6.3     2.8    0.99           5 k_psis > 0.7
 
     ## 
     ## Diagnostic flags present.
@@ -584,8 +588,8 @@ to have stopped around 2014. It won’t be covered further here.
 
 ## Packages doing only fixed change points
 
-As explained in [the article on mcp
-formulas](https://lindeloev.github.io/mcp/dev/articles/formulas.htm),
+As explained in [Understanding mcp
+formulas](https://lindeloev.github.io/mcp/dev/articles/formulas.md),
 fixed change points can be implemented in almost all regression
 functions. You simply have an indicator variable saying whether there
 has been as shift at the corresponding x-value and use it like

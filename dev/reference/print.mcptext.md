@@ -1,6 +1,6 @@
 # Nice Printing of Multiline Texts
 
-Useful for `print(fit$jags_code)`, `print(mcp_demo$call)`, etc.
+Useful for `print(fit$jags_code)`, `print(mcp_demo$example_code)`, etc.
 
 ## Usage
 

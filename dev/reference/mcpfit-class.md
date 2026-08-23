@@ -4,70 +4,33 @@ Models fitted with the
 [`mcp`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) function
 are represented as an `mcpfit` object which contains the user input
 (model, data, family), derived model characteristics (prior, parameter
-names, and jags code), and the fit (prior and/or posterior mcmc
-samples).
+names, and jags code), and the fit (prior and/or posterior MCMC draws).
 
 ## Details
 
 See `methods(class = "mcpfit")` for an overview of available methods.
 
-User-provided information (see
-[`mcp`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) for more
-details):
+Components:
 
-## Slots
+- `call`: The matched call to
+  [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md).
 
-- `model`:
+- `model`: A list of user-provided formulas.
 
-  A list of formulas, making up the model. Provided by user. See
-  [`mcp`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) for more
-  details.
+- `data`: The user-provided data frame reduced to model-used columns.
 
-- `data`:
+- `family`: An `mcpfamily` object.
 
-  A data frame. Provided by user. See
-  [`mcp`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) for more
-  details.
+- `prior`: A named list of priors.
 
-- `family`:
+- `mcmc_post` and `mcmc_prior`:
+  [`mcmc.list`](https://rdrr.io/pkg/coda/man/mcmc.list.html) objects
+  with posterior and prior draws, respectively.
 
-  An `mcpfamily` object. Provided by user. See
-  [`mcp`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) for more
-  details.
+- `jags_code`: A string with JAGS code; use `cat(fit$jags_code)` to show
+  it.
 
-- `prior`:
+- `simulate`: A function to simulate data from supplied parameter
+  values.
 
-  A named list. Provided by user. See
-  [`mcp`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) for more
-  details.
-
-- `mcmc_post`:
-
-  An [`mcmc.list`](https://rdrr.io/pkg/coda/man/mcmc.list.html) object
-  with posterior samples.
-
-- `mcmc_prior`:
-
-  An [`mcmc.list`](https://rdrr.io/pkg/coda/man/mcmc.list.html) object
-  with prior samples.
-
-- `loglik`:
-
-  An (Nchains \* Ndraws) by N-observed-responses matrix of
-  log-likelihoods.
-
-- `pars`:
-
-  A list of character vectors of model parameter names.
-
-- `jags_code`:
-
-  A string with jags code. Use `cat(fit$jags_code)` to show it.
-
-- `simulate`:
-
-  A method to simulate and predict data.
-
-- `.internal`:
-
-  Information that is used internally by mcp.
+- `.internal`: Information used internally by mcp.

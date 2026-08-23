@@ -7,7 +7,7 @@ This will show up as large `rhat` values (\> 1.1 is a common criterion)
 and non-converging lines in `plot_pars(fit)`.
 
 - The first thing to try is always to make the model warm up longer to
-  see if it reaches convergence later: `mcp(fit, data, adapt = 10000)`.
+  see if it reaches convergence later: `mcp(fit, data, warmup = 10000)`.
 
 - It can be a sign of a deeper non-identifiability in the model. This
   will show up as strong correlations in the joint distribution of any
@@ -30,15 +30,16 @@ A lot of data and complicated models will slow down fitting.
   chains run sequentially.
 
 - More data usually means better identifiability and faster convergence.
-  Lower the adaption period period using, e.g., `mcp(..., adapt = 300)`.
-  This is also sometimes called “burnin”.
+  Lower the warmup using, e.g., `mcp(..., warmup = 300)`. For JAGS,
+  warmup iterations are used for sampler adaptation and discarded before
+  sampling.
 
 ## Errors or won’t run
 
 Most of these problems should stem from inappropriate priors and such
 problems may be exacerbated by fragile link functions (e.g.,
 `binomial(link = "identity")`. The article on [priors in
-mcp](https://lindeloev.github.io/mcp/articles/priors.html) may be
+mcp](https://lindeloev.github.io/mcp/dev/articles/priors.md) may be
 helpful, but in particular:
 
 - Errors on “directed cycle” usually stems from using parameters in

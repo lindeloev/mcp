@@ -47,13 +47,12 @@ get_plot(
 
   - `FALSE` No quantiles
 
-  - A vector of quantiles. For example, `quantiles = 0.5` plots the
-    median and `quantiles = c(0.2, 0.8)` plots the 20% and 80%
-    quantiles.
+  - A vector of quantiles. For example, `q_fit = 0.5` plots the median
+    and `q_fit = c(0.2, 0.8)` plots the 20% and 80% quantiles.
 
 - q_predict:
 
-  Same as `q_fit`, but for the prediction interval.
+  Same as `q_fit`, but for the posterior predictive interval.
 
 - facet_by:
 
@@ -62,8 +61,8 @@ get_plot(
 
 - color_by:
 
-  A character vector naming categorical or varying-effect data columns
-  to color by. If both `color_by` and `facet_by` are omitted, a sole
+  A character vector naming categorical predictor or grouping columns to
+  color by. If both `color_by` and `facet_by` are omitted, a sole
   categorical predictor is colored automatically. Set `color_by = NULL`
   explicitly to disable this. Multiple columns are combined as an
   interaction. Curves and quantiles remain separate for grouping columns
@@ -74,8 +73,8 @@ get_plot(
   Positive integer or `FALSE`. The number of fitted lines (draws). It is
   the number of joint posterior draws shown for every curve. FALSE or
   `lines = 0` plots no lines. Note that lines always plot fitted
-  values - not predicted. For prediction intervals, see the `q_predict`
-  argument.
+  values - not predicted. For posterior predictive intervals, see the
+  `q_predict` argument.
 
 - geom_data:
 
@@ -84,31 +83,29 @@ get_plot(
 
 - cp_dens:
 
-  TRUE/FALSE. Plot posterior densities of the change point(s)? Currently
-  does not respect `facet_by`. This will be added in the future.
+  TRUE/FALSE. Plot posterior densities of the change point(s)?
 
 - rate:
 
-  Boolean. For binomial models, plot on raw data (`rate = FALSE`) or
-  response divided by number of trials (`rate = TRUE`). If FALSE, linear
-  interpolation on trial number is used to infer trials at a particular
-  x.
+  Boolean. For binomial models, return counts (`rate = FALSE`) or the
+  observed or expected success proportion (`rate = TRUE`). Predictions
+  and count-scale fitted values require a trials column in `newdata`.
 
 - prior:
 
-  TRUE/FALSE. Plot using prior samples? Useful for
-  `mcp(..., sample = "both")`
+  Logical. Evaluate prior draws (`TRUE`) instead of posterior draws
+  (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
 
 - dpar:
 
   What distributional parameter to evaluate. This is only relevant when
   `type == "fitted"`. E.g.,
 
-  - `"epred"` (default): Expected value of the full model (or `NULL` for
-    compatibility with brms etc.).
+  - `"epred"` (default): Expected response from the full model (or
+    `NULL` for compatibility with brms etc.).
 
-  - `"mu"`: The central tendency which is often the mean after applying
-    the link function.
+  - `"mu"`: The conditional mean (or success probability per trial for
+    binomial/bernoulli models), on the link or response scale.
 
   - `"sigma"`: The standard deviation of the residuals.
 
@@ -124,14 +121,16 @@ get_plot(
 
   - `FALSE` Disregard AR and MA effects. For `family = gaussian()`,
     [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-    uses only `sigma` for residuals.
+    uses only `sigma` for residuals. For posterior evaluation of the
+    original data, retained JAGS imputations supply missing GARMA
+    histories. In models with group-level effects, this currently
+    requires including all such effects (`varying = TRUE`).
 
 - ndraws:
 
   Integer or `NULL`. Number of posterior draws to return/summarise. If
-  there are varying effects, this is the number of draws from each
-  varying group. `NULL` means "all". Ignored if both are `FALSE`. More
-  samples trade speed for accuracy.
+  there are group-level effects, this is the number of draws from each
+  group. `NULL` means "all". More draws trade speed for accuracy.
 
 - scale:
 
@@ -140,14 +139,16 @@ get_plot(
   - `"response"`: return on the observed scale, i.e., after applying the
     inverse link function.
 
-  - `"linear"`: return on the parameter scale (where the linear trends
-    are modelled). A linear scale is only applicable when
+  - `"linear"`: return on the linear-predictor (link) scale, where the
+    linear trends are modeled. A linear scale is only applicable when
     `type == "fitted"` and `dpar` is not `NULL`.
 
 - at:
 
   Named list setting additional continuous predictors to fixed values.
-  They default to their observed means. Passed to
+  They default to their observed means. Family-specific response
+  auxiliaries can be supplied as explicit scalar design values. Passed
+  to
   [`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md).
 
 - .grouping:

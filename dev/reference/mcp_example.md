@@ -5,7 +5,7 @@ Run example models
 ## Usage
 
 ``` r
-mcp_example(name, sample = "post", warn = FALSE, plot = TRUE)
+mcp_example(name, sample = "post", diagnostics = FALSE, plot = TRUE)
 
 mcp_example_data(name)
 ```
@@ -27,10 +27,10 @@ mcp_example_data(name)
   - `"binomial"`: Binomial with two change points. Much like `"demo"` on
     a logit scale.
 
-  - `"varying_mu"`: Varying (Group-level) intercepts and factor effects
-    across a change point.
+  - `"group_mu"`: Group-level predictor deviations (random
+    intercepts/slopes) across a change point.
 
-  - `"varying_cp"`: Varying (random) change points.
+  - `"group_cp"`: Group-level change-point deviations (random effects).
 
   - `"quadratic"`: A change point to a quadratic segment where there is
     no data.
@@ -56,12 +56,13 @@ mcp_example_data(name)
 
   - `"none"` or `FALSE`: Do not sample. Returns an mcpfit object without
     sample. This is useful if you only want to check prior strings
-    (fit\$prior), the JAGS model (fit\$jags_code), etc.
+    (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
 
-- warn:
+- diagnostics:
 
-  Logical. Warn about non-convergence (`Rhat > 1.01` or `ESS < 400`)
-  after sampling? Defaults to `TRUE`.
+  Diagnostic thresholds passed to
+  [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md).
+  Defaults to `FALSE` so examples do not emit fit-diagnostic warnings.
 
 - plot:
 
@@ -70,8 +71,8 @@ mcp_example_data(name)
 
 ## Value
 
-An `mcpfit`, enriched with a `$call` field. It contains the code to
-reproduce the data and the fit.
+An `mcpfit`, enriched with an `$example_code` field. It contains the
+code to reproduce the data and the fit.
 
 ## Functions
 
@@ -96,9 +97,9 @@ fit = mcp_example("multiple")
 #> 
 #> Initializing model
 #> 
-#> Finished sampling in 27.6 seconds
+#> Finished sampling in 15.3 seconds
 
-print(fit$call) # See how the data was simulated
+print(fit$example_code) # See how the data was simulated
 #> # Define model
 #> model = list(
 #>   y ~ 1 + x:group + z,
@@ -138,7 +139,7 @@ print(fit$call) # See how the data was simulated
 #> )
 #> 
 #> # Run sampling
-#> fit = mcp(model, data, par_x = 'x', iter = 10000, sample = sample, warn = warn, seed = 42)
+#> fit = mcp(model, data, par_x = 'x', iter = 10000, sample = sample, seed = 42, diagnostics = diagnostics)
 #> 
 #> # Illustrative plot
 #> if (plot) {
@@ -155,13 +156,13 @@ print(empty)
 #>   2: y | trials(N) ~ 1 ~ 0 + x
 #>   3: y | trials(N) ~ 1 ~ 1 + x
 #> 
-#> No samples. Nothing to summarise.
-print(empty$call)
+#> No draws. Nothing to summarise.
+print(empty$example_code)
 #> # Define model
 #> model = list(
-#>   y | trials(N) ~ 1,  # constant rate
-#>   ~ 0 + x,  # joined changing rate
-#>   ~ 1 + x  # disjoined changing rate
+#>   y | trials(N) ~ 1,  # constant success probability
+#>   ~ 0 + x,  # joined changing success probability
+#>   ~ 1 + x  # disjoined changing success probability
 #> )
 #> 
 #> # Simulate data
@@ -182,7 +183,7 @@ print(empty$call)
 #> )
 #> 
 #> # Run sampling
-#> fit = mcp(model, data, family = binomial(), sample = sample, warn = warn, seed = 42)
+#> fit = mcp(model, data, family = binomial(), sample = sample, seed = 42, diagnostics = diagnostics)
 #> 
 #> # Illustrative plot
 #> if (plot) {
@@ -202,7 +203,7 @@ fit2 = mcp(empty$model, empty$data, family = empty$family)
 #> 
 #> Initializing model
 #> 
-#> Finished sampling in 4.7 seconds
+#> Finished sampling in 2.7 seconds
 plot(fit2)
 
 # }

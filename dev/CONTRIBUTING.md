@@ -4,6 +4,19 @@ Thank you for your interest in contributing to `mcp`! This document
 outlines guidelines and developer workflows for running tests and
 contributing code.
 
+## Submitting code
+
+Once tests pass locally (see below), create a pull request to the `dev`
+branch which will initiate tests via github workflows.
+
+AI-based bug finding is welcome and is actively used during development
+of `mcp`. See `dev/promot*` for prompts.
+
+See `dev/DECISIONS.md` for decisions made during development to balance
+functionality/bug-free against code simplicity. It is better to have
+simple/readable code than to add 200 lines of code to fix a rare edge
+case.
+
 ## Running Tests
 
 `mcp` uses `testthat` (edition 3) for unit and integration testing.
@@ -27,8 +40,6 @@ test execution speed on multi-core machines (e.g., 11 workers), set:
 ``` r
 
 Sys.setenv(TESTTHAT_CPUS = 11)
-# options(Ncpus=12)  # alternative
-# devtools::test(cpus = 11)  # alternative
 devtools::test()
 ```
 
@@ -66,7 +77,7 @@ devtools::test()
 
 `mcp` uses visual snapshots for selected example plots:
 
-Visual snapshots for example plots (`demo`, `varying_mu`, `sigma`) are
+Visual snapshots for example plots (`demo`, `group_mu`, `sigma`) are
 checked using [`vdiffr`](https://vdiffr.r-lib.org/). When plot
 aesthetics or layout changes are introduced intentionally, you can
 review and update the reference SVG snapshots stored in

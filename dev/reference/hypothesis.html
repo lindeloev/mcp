@@ -4,20 +4,22 @@ model parameters. The documentation for the argument hypotheses below
 shows examples of how to specify hypotheses, and read worked examples on the mcp website.
 For directional hypotheses, hypothesis executes the hypothesis string in
 a data-frame environment and summarises the proportion of posterior and
-prior samples where the expression evaluates to TRUE. The Bayes factor is
-the posterior odds divided by the prior odds. For equals-hypotheses, a
+prior draws where the expression evaluates to TRUE. The Bayes factor is
+the posterior odds divided by the prior odds. For equality hypotheses, a
 Savage-Dickey ratio is computed. Both kinds of Bayes factor require prior
-samples, so remember mcp(..., sample = "both"). This function is heavily inspired by the
-hypothesis function from the brms package.'><meta property="og:description" content='Returns posterior probabilities and Bayes Factors for flexible hypotheses involving
+draws, so remember mcp(..., sample = "both"). This function is heavily inspired by the
+hypothesis function from the brms package.
+When prior = TRUE, the summary is based on prior draws and BF is NA.'><meta property="og:description" content='Returns posterior probabilities and Bayes Factors for flexible hypotheses involving
 model parameters. The documentation for the argument hypotheses below
 shows examples of how to specify hypotheses, and read worked examples on the mcp website.
 For directional hypotheses, hypothesis executes the hypothesis string in
 a data-frame environment and summarises the proportion of posterior and
-prior samples where the expression evaluates to TRUE. The Bayes factor is
-the posterior odds divided by the prior odds. For equals-hypotheses, a
+prior draws where the expression evaluates to TRUE. The Bayes factor is
+the posterior odds divided by the prior odds. For equality hypotheses, a
 Savage-Dickey ratio is computed. Both kinds of Bayes factor require prior
-samples, so remember mcp(..., sample = "both"). This function is heavily inspired by the
-hypothesis function from the brms package.'><meta property="og:image" content="https://github.com/lindeloev/mcp/raw/docs/man/figures/logo.png"><meta name="twitter:card" content="summary"><meta name="twitter:creator" content="@jonaslindeloev"><meta name="twitter:site" content="@jonaslindeloev"><meta name="robots" content="noindex"><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=UA-1026978-3"></script><script>
+draws, so remember mcp(..., sample = "both"). This function is heavily inspired by the
+hypothesis function from the brms package.
+When prior = TRUE, the summary is based on prior draws and BF is NA.'><meta property="og:image" content="https://github.com/lindeloev/mcp/raw/docs/man/figures/logo.png"><meta name="twitter:card" content="summary"><meta name="twitter:creator" content="@jonaslindeloev"><meta name="twitter:site" content="@jonaslindeloev"><meta name="robots" content="noindex"><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=UA-1026978-3"></script><script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
@@ -44,10 +46,11 @@ hypothesis function from the brms package.'><meta property="og:image" content="h
   <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="../articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
@@ -85,16 +88,17 @@ model parameters. The documentation for the argument <code>hypotheses</code> bel
 shows examples of how to specify hypotheses, and <a href="https://lindeloev.github.io/mcp/articles/comparison.html">read worked examples on the mcp website</a>.
 For directional hypotheses, <code>hypothesis</code> executes the hypothesis string in
 a data-frame environment and summarises the proportion of posterior and
-prior samples where the expression evaluates to TRUE. The Bayes factor is
-the posterior odds divided by the prior odds. For equals-hypotheses, a
+prior draws where the expression evaluates to TRUE. The Bayes factor is
+the posterior odds divided by the prior odds. For equality hypotheses, a
 Savage-Dickey ratio is computed. Both kinds of Bayes factor require prior
-samples, so remember <code>mcp(..., sample = "both")</code>. This function is heavily inspired by the
-<code>hypothesis</code> function from the <code>brms</code> package.</p>
+draws, so remember <code>mcp(..., sample = "both")</code>. This function is heavily inspired by the
+<code>hypothesis</code> function from the <code>brms</code> package.
+When <code>prior = TRUE</code>, the summary is based on prior draws and <code>BF</code> is <code>NA</code>.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">fit</span>, <span class="va">hypotheses</span>, width <span class="op">=</span> <span class="fl">0.95</span>, digits <span class="op">=</span> <span class="fl">3</span>, prior <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">fit</span>, <span class="va">hypotheses</span>, width <span class="op">=</span> <span class="fl">0.95</span>, prior <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -108,29 +112,34 @@ samples, so remember <code>mcp(..., sample = "both")</code>. This function is he
 <dt id="arg-hypotheses">hypotheses<a class="anchor" aria-label="anchor" href="#arg-hypotheses"></a></dt>
 <dd><p>String representation of a logical test involving model parameters.
 Takes R code that evaluates to TRUE or FALSE in a vectorized way.</p>
-<p>Directional hypotheses are specified using &lt;, &gt;, &lt;=, or &gt;=. <code>hypothesis</code>
-returns the posterior probability and the Bayes factor in favor of the
-stated hypothesis. The Bayes factor requires both prior and posterior
-samples from <code>mcp(sample = "both")</code>. For example:</p><ul><li><p><code>"cp_1 &gt; 30"</code>:  the first change point is above 30.</p></li>
+<p><strong>Directional hypotheses</strong> are specified using &lt;, &gt;, &lt;=, or &gt;=. <code>hypothesis</code>
+returns the posterior probability \(P(H \mid \text{data})\)
+and the Bayes factor in favor of the stated hypothesis \(H\):
+$$\text{BF}_{10} = \frac{P(H \mid \text{data}) / (1 - P(H \mid \text{data}))}{P(H) / (1 - P(H))}$$
+where \(P(H)\) is the prior probability of \(H\). The Bayes factor requires both prior and posterior
+draws from <code>mcp(sample = "both")</code>. For example:</p><ul><li><p><code>"cp_1 &gt; 30"</code>:  the first change point is above 30.</p></li>
 <li><p><code>"Intercept_1 &gt; Intercept_2"</code>: the intercept is greater in segment 1 than 2.</p></li>
 <li><p><code>"x_2 - x_1 &lt;= 3"</code>: the difference between slope 1 and 2 is less
 than or equal to 3.</p></li>
 <li><p><code>"Intercept_1 &gt; -2 &amp; Intercept_1 &lt; 2"</code>: Intercept_1 is between -2 and 2 (an interval hypothesis). This can be useful as a Region Of Practical Equivalence test (ROPE).</p></li>
 <li><p><code>"cp_1^2 &lt; 30 | (log(x_1) + log(x_2)) &gt; 5"</code>: be creative.</p></li>
 <li><p><code>"`cp_1_id[1]` &gt; `cp_1_id[2]`"</code>: id1 is greater than id2, as estimated
-through the varying-by-"id" change point in segment 1. Note that <code>``</code>
-required for varying effects.</p></li>
-</ul><p>Hypotheses can also test equality using the equal sign (=). This runs a
-Savage-Dickey test, i.e., the proportion by which the probability density
-has increased from the prior to the posterior at a given value. Therefore,
-it requires <code>mcp(sample = "both")</code>. There are two requirements:
-First, there can only be one equal sign, so don't use and (&amp;) or or (|).
-Second, the point to test has to be on the right, and the variables on the left.</p><ul><li><p><code>"cp_1 = 30"</code>: is the first change point at 30? Or to be more precise:
-by what factor has the credence in cp_1 = 30 risen/fallen when
-conditioning on the data, relative to the prior credence?</p></li>
-<li><p><code>"Intercept_1 + Intercept_2 = 0"</code>: Is the sum of two intercepts zero?</p></li>
-<li><p><code>"`cp_1_id[John]`/`cp_1_id[Erin]` = 2"</code>: is the varying change
-point for John (which is relative to `cp_1“) double that of Erin?</p></li>
+through the group-level change-point deviation for <code>id</code> in segment 1.
+Note that <code>``</code> are required when using <code>[i]</code>.</p></li>
+</ul><p><strong>Equality hypotheses</strong> use the equal sign (=) and a Savage-Dickey density
+ratio: posterior density divided by prior density at the tested point equality
+\(\theta = \theta_0\):
+$$\text{BF}_{01} = \frac{p(\theta = \theta_0 \mid \text{data})}{p(\theta = \theta_0)}$$
+where \(\theta\) is the evaluated parameter (or affine contrast), \(\theta_0\) is the hypothesized null value, \(p(\theta = \theta_0 \mid \text{data})\) is the posterior density, and \(p(\theta = \theta_0)\) is the prior density. This is a Bayes factor for a nested point-null model against the fitted
+continuous model (\(\text{BF}_{10} = 1 / \text{BF}_{01}\)). Prior and posterior draws are required, using
+<code>mcp(sample = "both")</code>.</p>
+<p>The point-null model's nuisance prior is the fitted model's conditional
+prior at the equality. Equality tests are limited to named scalar parameters
+and affine contrasts.</p>
+<p>Examples:</p><ul><li><p><code>"cp_1 = 30"</code>: compare the point-null model <code>cp_1 = 30</code> with the
+continuous alternative.</p></li>
+<li><p><code>"Intercept_1 - Intercept_2 = 0"</code>: compare equal segment intercepts
+with the continuous alternative.</p></li>
 </ul></dd>
 
 
@@ -139,37 +148,63 @@ point for John (which is relative to `cp_1“) double that of Erin?</p></li>
 and 1).</p></dd>
 
 
-<dt id="arg-digits">digits<a class="anchor" aria-label="anchor" href="#arg-digits"></a></dt>
-<dd><p>a non-null value for digits specifies the minimum number of
-significant digits to be printed in values. The default, NULL, uses
-getOption("digits"). (For the interpretation for complex numbers see signif.)
-Non-integer values will be rounded down, and only values greater than or
-equal to 1 and no greater than 22 are accepted.</p></dd>
-
-
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>
-<dd><p>TRUE/FALSE. Summarise prior instead of posterior?</p></dd>
+<dd><p>Logical. Summarise prior draws (<code>TRUE</code>) instead of posterior draws (<code>FALSE</code>, default)?</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data.frame with a row per hypothesis and the following columns:</p><ul><li><p><code>hypothesis</code> is the hypothesis; often re-arranged to test against zero.</p></li>
-<li><p><code>mean</code> is the posterior mean of the left-hand side of the hypothesis.</p></li>
-<li><p><code>lower</code> is the lower bound of the central posterior interval of width <code>width</code>.</p></li>
+<li><p><code>mean</code> is the posterior mean of the left-hand side of the hypothesis, or
+the prior mean when <code>prior = TRUE</code>.</p></li>
+<li><p><code>lower</code> is the lower bound of the central posterior interval of width <code>width</code>,
+or the corresponding prior interval when <code>prior = TRUE</code>.</p></li>
 <li><p><code>upper</code> is the upper bound of ditto.</p></li>
-<li><p><code>p</code> Posterior probability.
-For "=" (Savage-Dickey), it is the BF converted to p.
-For directional hypotheses, it is the proportion of samples that returns TRUE.</p></li>
+<li><p><code>p</code> is the posterior probability of a directional hypothesis, or the prior
+probability when <code>prior = TRUE</code>. It is <code>NA</code>
+for equality hypotheses, which compare models rather than an event
+within the fitted model.</p></li>
 <li><p><code>BF</code> Bayes Factor in favor  of the hypothesis.
 For "=" it is the Savage-Dickey density ratio.
 For directional hypotheses, it is the posterior odds divided by the
-prior odds.</p></li>
+prior odds. It is <code>NA</code> when <code>prior = TRUE</code>.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
     <p>Jonas Kristoffer Lindeløv <a href="mailto:jonas@lindeloev.dk">jonas@lindeloev.dk</a></p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># demo_fit contains both posterior and prior draws</span></span></span>
+<span class="r-in"><span><span class="co"># A directional hypothesis returns its posterior probability and Bayes factor</span></span></span>
+<span class="r-in"><span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">demo_fit</span>, <span class="st">"cp_1 &gt; 30"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      hypothesis      mean     lower    upper      p        BF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 - 30 &gt; 0 -5.987575 -15.64057 3.469382 0.1265 0.1433787</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Combine directional statements for an interval (a ROPE-style hypothesis)</span></span></span>
+<span class="r-in"><span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">demo_fit</span>, <span class="st">"cp_1 &gt; 20 &amp; cp_1 &lt; 30"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              hypothesis mean lower upper     p       BF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 &gt; 20 &amp; cp_1 &lt; 30   NA    NA    NA 0.671 12.17313</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Evaluate several directional hypotheses at once</span></span></span>
+<span class="r-in"><span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">demo_fit</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cp_1 &gt; 20"</span>, <span class="st">"cp_2 &gt; 70"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      hypothesis        mean      lower      upper      p       BF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 - 20 &gt; 0  4.01242512 -5.6405723 13.4693818 0.7975 2.158124</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 cp_2 - 70 &gt; 0 -0.08835726 -0.6523915  0.4764874 0.4295 1.070029</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Equality hypotheses use the Savage-Dickey density ratio</span></span></span>
+<span class="r-in"><span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">demo_fit</span>, <span class="st">"cp_1 = 25"</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Savage-Dickey Bayes factor was computed using default prior(s) for `cp_1`. Point Bayes factors are sensitive to the prior distribution; consider specifying informed priors.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      hypothesis       mean     lower    upper  p       BF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 - 25 = 0 -0.9875749 -10.64057 8.469382 NA 5.187415</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Inspect the corresponding prior probability without a Bayes factor</span></span></span>
+<span class="r-in"><span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">demo_fit</span>, <span class="st">"cp_1 &gt; 30"</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      hypothesis     mean     lower    upper      p BF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 - 30 &gt; 0 6.033958 -28.74382 63.32157 0.5025 NA</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

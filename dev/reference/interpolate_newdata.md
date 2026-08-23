@@ -1,9 +1,6 @@
 # Returns a data.frame with all combos of predictors
 
-This function synthesizes predictors for all combinations of predictor
-values. It is used internally in
-[`plot.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md)
-and may be useful if you want to build your own custom plot.
+**\[experimental\]**
 
 ## Usage
 
@@ -24,7 +21,7 @@ interpolate_newdata(
 
 - by:
 
-  Character vector of categorical or varying-effect columns to evaluate
+  Character vector of categorical or group-level columns to evaluate
   separately. Categorical model predictors are always included.
 
 - x_values:
@@ -34,12 +31,13 @@ interpolate_newdata(
 - at:
 
   Named list setting additional continuous predictors to fixed values.
-  They default to their observed means. For example,
-  `at = list(age = 40)`.
+  They default to their observed means. Family response auxiliaries can
+  also be supplied as explicit scalar design values; e.g.,
+  `at = list(N = 20)`.
 
 ## Value
 
-`tibble` with
+`data.frame` with
 
 - Cols for par_x
 
@@ -49,13 +47,21 @@ interpolate_newdata(
 
 ## Details
 
+This function synthesizes predictors for all combinations of predictor
+values. It is used internally in
+[`plot.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md)
+and may be useful if you want to build your own custom plot.
+
 The `par_x` variable will be interpolated with higher resolution around
 the change points where the values can change abruptly, but lower
 resolution in between to speed up the computation.
 
-Categorical variables and requested varying-effect groups are combined
+Categorical variables and requested grouping factors are combined
 factorially (all level combinations). Additional continuous predictors
 are held at their observed means, or at values supplied through `at`.
+Family-specific response auxiliaries, such as binomial trial counts and
+Gaussian weights, are not interpolated. Supply an auxiliary as a scalar
+in `at` or use `newdata` for a varying design.
 
 ## Author
 
@@ -70,11 +76,11 @@ fit = mcp_example("multiple")
 newdata = interpolate_newdata(fit)
 
 # Fit summary
-fitted(fit, newdata)
+head(fitted(fit, newdata))
 
-# Predictions for each sample
+# Predictions for each draw
 prediction = predict(fit, newdata, summary = FALSE)
-prediction[, c(".chain", ".iteration", ".draw", "x", "group", "z", "predict")]
+head(prediction[, c(".chain", ".iteration", ".draw", "x", "group", "z", ".prediction")])
 
 # Custom plot
 library(ggplot2)

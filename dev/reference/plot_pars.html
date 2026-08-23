@@ -28,10 +28,11 @@ cases."><meta property="og:image" content="https://github.com/lindeloev/mcp/raw/
   <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="../articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
@@ -92,8 +93,8 @@ cases.</p>
 
 <dt id="arg-pars">pars<a class="anchor" aria-label="anchor" href="#arg-pars"></a></dt>
 <dd><p>Character vector. One of:</p><ul><li><p>Vector of parameter names.</p></li>
-<li><p><code>"population"</code> plots all population parameters.</p></li>
-<li><p><code>"varying"</code> plots all varying effects. To plot a particular varying
+<li><p><code>"population"</code> plots all population-level parameters.</p></li>
+<li><p><code>"group"</code> plots all group-level deviations (random effects). To plot a particular group-level
 effect, use <code>regex_pars = "^name"</code>.</p></li>
 </ul></dd>
 
@@ -101,8 +102,8 @@ effect, use <code>regex_pars = "^name"</code>.</p></li>
 <dt id="arg-regex-pars">regex_pars<a class="anchor" aria-label="anchor" href="#arg-regex-pars"></a></dt>
 <dd><p>Vector of regular expressions. This will typically just be
 the beginning of the parameter name(s), i.e., "^cp_" plots all change
-points, "^my_varying" plots all levels of a particular varying effect, and
-"^cp_|^my_varying" plots both.</p></dd>
+points, "^my_group_effect" plots all levels of a particular group-level effect, and
+"^cp_|^my_group_effect" plots both.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
@@ -119,7 +120,7 @@ parameters and only one plot <code>type</code>.</p></dd>
 
 
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>
-<dd><p>TRUE/FALSE. Plot using prior samples? Useful for <code>mcp(..., sample = "both")</code></p></dd>
+<dd><p>Logical. Plot prior draws (<code>TRUE</code>) instead of posterior draws (<code>FALSE</code>, default)? Useful for <code>mcp(..., sample = "both")</code>.</p></dd>
 
 
 <dt id="arg-nvariables">nvariables<a class="anchor" aria-label="anchor" href="#arg-nvariables"></a></dt>
@@ -145,7 +146,7 @@ control of plotting, e.g., <code>bayesplot::mcmc_dens(coda::as.mcmc(fit))</code>
 are also a number of useful plots in the <span class="pkg">coda</span> package, i.e.,
 <code>coda::gelman.plot(coda::as.mcmc(fit))</code> and <code>coda::crosscorr.plot(coda::as.mcmc(fit))</code></p>
 <p>In any case, if you see a few erratic lines or parameter estimates, this is
-a sign that you may want to increase argument 'adapt' and 'iter' in <code><a href="mcp.html">mcp</a></code>.</p>
+a sign that you may want to increase argument 'warmup' and 'iter' in <code><a href="mcp.html">mcp</a></code>.</p>
 <p>Up to <code>nvariables</code> parameters are shown on each page. Multi-page plots are
 printed in sequence; in interactive use, <code>ask = TRUE</code> pauses between pages.</p>
     </div>
@@ -176,10 +177,10 @@ printed in sequence; in interactive use, <code>ask = TRUE</code> pauses between 
 <span class="r-in"><span><span class="co"># Visualize the priors:</span></span></span>
 <span class="r-in"><span><span class="fu">plot_pars</span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Useful for varying effects:</span></span></span>
-<span class="r-in"><span><span class="co"># plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all varying effects</span></span></span>
-<span class="r-in"><span><span class="co"># plot_pars(my_fit, regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying</span></span></span>
-<span class="r-in"><span><span class="co"># pages = plot_pars(my_fit, pars = "varying", ask = FALSE)</span></span></span>
+<span class="r-in"><span><span class="co"># Useful for group-level effects:</span></span></span>
+<span class="r-in"><span><span class="co"># plot_pars(my_fit, pars = "group", ncol = 3)  # plot all group-level deviations</span></span></span>
+<span class="r-in"><span><span class="co"># plot_pars(my_fit, regex_pars = "my_group_effect", ncol = 3)  # one group-level effect</span></span></span>
+<span class="r-in"><span><span class="co"># pages = plot_pars(my_fit, pars = "group", ask = FALSE)</span></span></span>
 <span class="r-in"><span><span class="co"># pages[[1]]  # Inspect or customize one page</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Customize multi-column ggplots using "*" instead of "+" (patchwork)</span></span></span>

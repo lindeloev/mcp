@@ -6,13 +6,13 @@ Index variables, iterations, chains, and draws.
 
 ``` r
 # S3 method for class 'mcpfit'
-niterations(object, ...)
+niterations(x, ...)
 
 # S3 method for class 'mcpfit'
-nchains(object, ...)
+nchains(x, ...)
 
 # S3 method for class 'mcpfit'
-ndraws(object, ...)
+ndraws(x, ...)
 
 ndraws(x)
 
@@ -23,9 +23,9 @@ niterations(x)
 
 ## Arguments
 
-- object:
+- x:
 
-  An `mcpfit` object.
+  An `mcpfit` object or a posterior draws object.
 
 - ...:
 
@@ -44,5 +44,5 @@ niterations(x)
 niterations(demo_fit)
 #> [1] 1000
 nchains(as_draws(demo_fit, prior = TRUE))
-#> [1] 3
+#> [1] 2
 ```

@@ -1,11 +1,6 @@
-# Transform a JAGS Prior from SD to Precision.
+# Transform an mcp prior to the parameterization used by JAGS.
 
-JAGS uses precision rather than SD. This function converts
-`dnorm(4.2, 1.3)` into `dnorm(4.2, 1/1.3^2)`. It allows users to specify
-priors using SD and then it's transformed for the JAGS code. It works
-for the following distributions:
-dnorm\|dt\|dcauchy\|ddexp\|dlogis\|dlnorm. In all of these, tau/sd is
-the second parameter.
+**\[deprecated\]**
 
 ## Usage
 
@@ -23,6 +18,14 @@ sd_to_prec(prior_str)
 ## Value
 
 A string
+
+## Details
+
+This function is deprecated. JAGS uses precision rather than SD for some
+distributions. For example, this function converts `dnorm(4.2, 1.3)`
+into `dnorm(4.2, 1/1.3^2)`. It allows users to specify priors using
+conventional scale parameters before they are translated to JAGS code.
+Users normally do not need to call this function.
 
 ## Author
 

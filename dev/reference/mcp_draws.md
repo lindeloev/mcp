@@ -1,4 +1,4 @@
-# Get tidy samples with or without varying effects
+# Get tidy draws with or without group-level effects
 
 Extract posterior or prior draws formatted as tidy data frames
 
@@ -26,47 +26,48 @@ mcp_draws(
 
 - population:
 
-  - `TRUE` All population effects. Same as `fit$pars$population`.
+  - `TRUE` All population-level model parameters.
 
-  - `FALSE` No population effects. Same as
+  - `FALSE` No population-level effects. Same as
     [`c()`](https://rdrr.io/r/base/c.html).
 
-  - Character vector: Only include specified population parameters - see
-    `fit$pars$population`.
+  - Character vector: Only include specified population-level
+    parameters.
 
 - varying:
 
-  One of:
+  Group-level effects. One of:
 
-  - `TRUE` All varying effects (`fit$pars$varying`).
+  - `TRUE` All group-level deviations.
 
-  - `FALSE` No varying effects ([`c()`](https://rdrr.io/r/base/c.html)).
+  - `FALSE` No group-level deviations
+    ([`c()`](https://rdrr.io/r/base/c.html)).
 
-  - `"cp"` or `"predictor"`: All varying effects belonging to that part
-    of the model.
+  - `"cp"` or `"predictor"`: All group-level deviations belonging to
+    that part of the model.
 
-  - Character vector: Only include specified varying parameters - see
-    `fit$pars$varying`.
+  - Character vector: Only include specified group-level parameters.
 
 - absolute:
 
-  - `TRUE` Returns the absolute location of all varying change points.
+  - `TRUE` Returns the absolute location of all group-specific change
+    points.
 
-  - `FALSE` Just returns the varying effects.
+  - `FALSE` Return the group-level deviations.
 
-  - Character vector: Only do absolute transform for these varying
-    parameters - see `fit$pars$varying`.
+  - Character vector: Apply the absolute transform only to these
+    group-level parameters.
 
 - prior:
 
-  TRUE/FALSE. Summarise prior instead of posterior?
+  Logical. Summarise prior draws (`TRUE`) instead of posterior draws
+  (`FALSE`, default)?
 
 - ndraws:
 
   Integer or `NULL`. Number of posterior draws to return/summarise. If
-  there are varying effects, this is the number of draws from each
-  varying group. `NULL` means "all". Ignored if both are `FALSE`. More
-  samples trade speed for accuracy.
+  there are group-level effects, this is the number of draws from each
+  group. `NULL` means "all". More draws trade speed for accuracy.
 
 - nsamples:
 
@@ -78,9 +79,9 @@ mcp_draws(
 
 ## Details
 
-Returns in a format useful for `fit$simulate()` with population
-parameters in wide format and varying effects in long format (the number
-of rows will be `ndraws * n_levels_in_varying`).
+Returns in a format useful for `fit$simulate()` with population-level
+parameters in wide format and group-level deviations in long format (the
+number of rows is multiplied by the number of selected group levels).
 
 ## Author
 

@@ -26,10 +26,11 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage"><li><a class="dropdown-item" href="articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="articles/dpar.html">Modeling variance</a></li>
     <li><a class="dropdown-item" href="articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
@@ -64,6 +65,12 @@
 
 <p>Thank you for your interest in contributing to <code>mcp</code>! This document outlines guidelines and developer workflows for running tests and contributing code.</p>
 <div class="section level2">
+<h2 id="submitting-code">Submitting code<a class="anchor" aria-label="anchor" href="#submitting-code"></a></h2>
+<p>Once tests pass locally (see below), create a pull request to the <code>dev</code> branch which will initiate tests via github workflows.</p>
+<p>AI-based bug finding is welcome and is actively used during development of <code>mcp</code>. See <code>dev/promot*</code> for prompts.</p>
+<p>See <code>dev/DECISIONS.md</code> for decisions made during development to balance functionality/bug-free against code simplicity. It is better to have simple/readable code than to add 200 lines of code to fix a rare edge case.</p>
+</div>
+<div class="section level2">
 <h2 id="running-tests">Running Tests<a class="anchor" aria-label="anchor" href="#running-tests"></a></h2>
 <p><code>mcp</code> uses <code>testthat</code> (edition 3) for unit and integration testing.</p>
 <p>To balance fast feedback during local development and CRAN checks with exhaustive statistical validation, the test suite supports two execution levels set via the <code>MCP_TEST_LEVEL</code> environment variable. JAGS sampling is fast even with the full model matrix, so both levels always run the full suite of formulas/models with brief MCMC sampling - only long-running statistical recovery/visual checks are reserved for <code>"release"</code>:</p>
@@ -79,8 +86,6 @@
 </tr></tbody></table><p>By default, <code>testthat</code> uses 2 parallel worker processes. For maximum test execution speed on multi-core machines (e.g., 11 workers), set:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>TESTTHAT_CPUS <span class="op">=</span> <span class="fl">11</span><span class="op">)</span></span>
-<span><span class="co"># options(Ncpus=12)  # alternative</span></span>
-<span><span class="co"># devtools::test(cpus = 11)  # alternative</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">test</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -96,7 +101,7 @@
 <div class="section level3">
 <h3 id="reviewing-reference-plots">Reviewing Reference Plots<a class="anchor" aria-label="anchor" href="#reviewing-reference-plots"></a></h3>
 <p><code>mcp</code> uses visual snapshots for selected example plots:</p>
-<p>Visual snapshots for example plots (<code>demo</code>, <code>varying_mu</code>, <code>sigma</code>) are checked using <a href="https://vdiffr.r-lib.org/" class="external-link"><code>vdiffr</code></a>. When plot aesthetics or layout changes are introduced intentionally, you can review and update the reference SVG snapshots stored in <code>tests/testthat/_snaps/</code>:</p>
+<p>Visual snapshots for example plots (<code>demo</code>, <code>group_mu</code>, <code>sigma</code>) are checked using <a href="https://vdiffr.r-lib.org/" class="external-link"><code>vdiffr</code></a>. When plot aesthetics or layout changes are introduced intentionally, you can review and update the reference SVG snapshots stored in <code>tests/testthat/_snaps/</code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">testthat</span><span class="fu">::</span><span class="fu"><a href="https://testthat.r-lib.org/reference/snapshot_accept.html" class="external-link">snapshot_review</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>This launches a Shiny UI where you can visually inspect side-by-side plot diffs and individually accept or reject new reference images.</p>

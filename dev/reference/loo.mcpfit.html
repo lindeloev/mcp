@@ -28,10 +28,11 @@ more in loo."><meta property="og:image" content="https://github.com/lindeloev/mc
   <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="../articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
@@ -74,7 +75,8 @@ more in <code><a href="https://mc-stan.org/loo/reference/loo.html" class="extern
 <span><span class="fu">loo</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  <span class="va">...</span>,</span>
-<span>  pointwise <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  by_row <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  pointwise <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  varying <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  arma <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  ndraws <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -104,24 +106,32 @@ more in <code><a href="https://mc-stan.org/loo/reference/loo.html" class="extern
 <dd><p>Currently ignored</p></dd>
 
 
+<dt id="arg-by-row">by_row<a class="anchor" aria-label="anchor" href="#arg-by-row"></a></dt>
+<dd><p><code>TRUE</code> calls <code><a href="https://mc-stan.org/loo/reference/loo.html" class="external-link">loo.function</a></code> to compute log-likelihood
+contributions row-by-row (observation-by-observation), which is slower but more
+memory efficient. <code>FALSE</code> (default) computes the full log-likelihood matrix at once.
+Note that both modes calculate pointwise (observation-level) PSIS-LOO cross-validation.</p></dd>
+
+
 <dt id="arg-pointwise">pointwise<a class="anchor" aria-label="anchor" href="#arg-pointwise"></a></dt>
-<dd><p><code>TRUE</code> calls calls <code><a href="https://mc-stan.org/loo/reference/loo.html" class="external-link">loo.function</a></code> which is slower but more memory efficient.
-<code>FALSE</code> calls the default <code><a href="https://mc-stan.org/loo/reference/loo.html" class="external-link">loo</a></code>.</p></dd>
+<dd><p>Deprecated alias for <code>by_row</code>.</p></dd>
 
 
 <dt id="arg-varying">varying<a class="anchor" aria-label="anchor" href="#arg-varying"></a></dt>
-<dd><p>One of:</p><ul><li><p><code>TRUE</code> All varying effects (<code>fit$pars$varying</code>).</p></li>
-<li><p><code>FALSE</code> No varying effects (<code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code>).</p></li>
-<li><p><code>"cp"</code> or <code>"predictor"</code>: All varying effects belonging to that part of
+<dd><p>Group-level effects. One of:</p><ul><li><p><code>TRUE</code> All group-level deviations.</p></li>
+<li><p><code>FALSE</code> No group-level deviations (<code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code>).</p></li>
+<li><p><code>"cp"</code> or <code>"predictor"</code>: All group-level deviations belonging to that part of
 the model.</p></li>
-<li><p>Character vector: Only include specified varying parameters - see
-<code>fit$pars$varying</code>.</p></li>
+<li><p>Character vector: Only include specified group-level parameters.</p></li>
 </ul></dd>
 
 
 <dt id="arg-arma">arma<a class="anchor" aria-label="anchor" href="#arg-arma"></a></dt>
 <dd><p>Whether to include AR and MA effects.</p><ul><li><p><code>TRUE</code> Compute the GARMA residual recurrence. Requires the response variable in <code>newdata</code>.</p></li>
-<li><p><code>FALSE</code> Disregard AR and MA effects. For <code>family = gaussian()</code>, <code><a href="execute-mcp-model.html">predict()</a></code> uses only <code>sigma</code> for residuals.</p></li>
+<li><p><code>FALSE</code> Disregard AR and MA effects. For <code>family = gaussian()</code>, <code><a href="execute-mcp-model.html">predict()</a></code> uses only <code>sigma</code> for residuals.
+For posterior evaluation of the original data, retained JAGS imputations
+supply missing GARMA histories. In models with group-level effects, this
+currently requires including all such effects (<code>varying = TRUE</code>).</p></li>
 </ul></dd>
 
 
@@ -144,7 +154,13 @@ log-likelihood or information criterion. <code>NULL</code> uses all draws.</p></
 because both treat individual conditional likelihood terms as validation
 units. In PSIS-LOO, a held-out response also remains in the conditioning
 history of later terms. Prefer leave-future-out or blocked
-cross-validation, which are not currently implemented in mcp.</p>
+cross-validation, which are not currently implemented in mcp. When a
+missing response enters a later observed GARMA history, <code><a href="execute-mcp-model.html">log_lik()</a></code>,
+<code>loo()</code>, and <code>waic()</code> are unavailable with <code>arma = TRUE</code>: the observed-data
+likelihood requires integrating over that missing history, which mcp does
+not currently implement. Setting <code>arma = FALSE</code> evaluates the model without
+its AR/MA contribution rather than repairing the criterion for the fitted
+serial model.</p>
     </div>
     <div class="section level2">
     <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>
@@ -175,11 +191,10 @@ cross-validation, which are not currently implemented in mcp.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Initializing model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 1.4 seconds</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 0.9 seconds</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Some parameters may not have converged well:</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span>   * Rhat &gt; 1.01: cp_1 and x_1</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span>   * ess_bulk or ess_tail &lt; 400: Intercept_2 and cp_1 and x_1</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`adapt` or simplifying the model before trusting these results.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span>   * rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400: cp_1 and x_1</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.</span>
 <span class="r-in"><span><span class="va">fit2</span> <span class="op">=</span> <span class="fu"><a href="mcp.html">mcp</a></span><span class="op">(</span><span class="va">model2</span>, <span class="va">data</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Compiling model graph</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    Resolving undeclared variables</span>
@@ -191,16 +206,16 @@ cross-validation, which are not currently implemented in mcp.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Initializing model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 0.7 seconds</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 0.4 seconds</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Compute LOO for each and compare (works for waic(fit) too)</span></span></span>
-<span class="r-in"><span><span class="va">fit1</span><span class="op">$</span><span class="va">loo</span> <span class="op">=</span> <span class="fu">loo</span><span class="op">(</span><span class="va">fit1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">loo1</span> <span class="op">=</span> <span class="fu">loo</span><span class="op">(</span><span class="va">fit1</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.</span>
-<span class="r-in"><span><span class="va">fit2</span><span class="op">$</span><span class="va">loo</span> <span class="op">=</span> <span class="fu">loo</span><span class="op">(</span><span class="va">fit2</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">fit1</span><span class="op">$</span><span class="va">loo</span>, <span class="va">fit2</span><span class="op">$</span><span class="va">loo</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">loo2</span> <span class="op">=</span> <span class="fu">loo</span><span class="op">(</span><span class="va">fit2</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">loo1</span>, <span class="va">loo2</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   model elpd_diff se_diff p_worse diag_diff      diag_elpd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  model1       0.0     0.0      NA           2 k_psis &gt; 0.7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  model2      -1.5     3.2    0.68   N &lt; 100               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  model1       0.0     0.0      NA           3 k_psis &gt; 0.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  model2      -1.7     3.2    0.70   N &lt; 100               </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Diagnostic flags present.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span>

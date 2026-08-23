@@ -1,8 +1,8 @@
 # Pre-fitted example mcp model
 
-`demo_fit` is an `mcpfit` object generated using
-`mcp_example("demo", sample = FALSE)`, though with two modifications: it
-only has 2 x 1000 samples, and it also includes prior samples.
+`demo_fit` is an `mcpfit` object generated from the
+`mcp_example("demo")` model and data with two chains of 1000 posterior
+draws and prior draws.
 
 ## Usage
 

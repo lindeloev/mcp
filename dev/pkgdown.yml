@@ -5,16 +5,18 @@ articles:
   arma: arma.html
   binomial: binomial.html
   comparison: comparison.html
+  dpar: dpar.html
   families: families.html
   formulas: formulas.html
+  group_effects: group_effects.html
+  missing: missing.html
+  packages_overview: packages_overview.html
   packages: packages.html
   poisson: poisson.html
   predict: predict.html
   priors: priors.html
   tips: tips.html
-  variance: variance.html
-  varying: varying.html
-last_built: 2026-08-08T23:08Z
+last_built: 2026-08-23T21:43Z
 urls:
   reference: https://lindeloev.github.io/mcp/reference
   article: https://lindeloev.github.io/mcp/articles

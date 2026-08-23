@@ -19,7 +19,7 @@ print(x, ...)
 
 - ...:
 
-  Currently ignored
+  Currently ignored.
 
 ## Author
 

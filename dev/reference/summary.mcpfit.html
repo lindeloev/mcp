@@ -26,10 +26,11 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="../articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
@@ -68,10 +69,18 @@
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'mcpfit'</span></span>
-<span><span class="fu">summary</span><span class="op">(</span><span class="va">object</span>, width <span class="op">=</span> <span class="fl">0.95</span>, digits <span class="op">=</span> <span class="fl">2</span>, prior <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span>
+<span><span class="fu">summary</span><span class="op">(</span></span>
+<span>  <span class="va">object</span>,</span>
+<span>  width <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  digits <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  prior <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  diagnostics <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'mcpfit'</span></span>
-<span><span class="fu">fixef</span><span class="op">(</span><span class="va">object</span>, width <span class="op">=</span> <span class="fl">0.95</span>, prior <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span>
+<span><span class="fu">fixef</span><span class="op">(</span><span class="va">object</span>, width <span class="op">=</span> <span class="fl">0.95</span>, prior <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span>, dpar <span class="op">=</span> <span class="st">"mu"</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'mcpfit'</span></span>
 <span><span class="fu">ranef</span><span class="op">(</span><span class="va">object</span>, width <span class="op">=</span> <span class="fl">0.95</span>, prior <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span>
@@ -94,15 +103,13 @@ and 1).</p></dd>
 
 
 <dt id="arg-digits">digits<a class="anchor" aria-label="anchor" href="#arg-digits"></a></dt>
-<dd><p>a non-null value for digits specifies the minimum number of
-significant digits to be printed in values. The default, NULL, uses
-getOption("digits"). (For the interpretation for complex numbers see signif.)
-Non-integer values will be rounded down, and only values greater than or
-equal to 1 and no greater than 22 are accepted.</p></dd>
+<dd><p>Non-negative integer. Number of significant digits used when
+printing the summary. Defaults to 2. The invisibly returned data frame
+retains the unrounded values.</p></dd>
 
 
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>
-<dd><p>TRUE/FALSE. Summarise prior instead of posterior?</p></dd>
+<dd><p>Logical. Summarise prior draws (<code>TRUE</code>) instead of posterior draws (<code>FALSE</code>, default)?</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -110,8 +117,24 @@ equal to 1 and no greater than 22 are accepted.</p></dd>
 to <code>FALSE</code> for a compact, v0.3.4-compatible summary.</p></dd>
 
 
+<dt id="arg-diagnostics">diagnostics<a class="anchor" aria-label="anchor" href="#arg-diagnostics"></a></dt>
+<dd><p>Named list of diagnostic warning thresholds. Available
+elements are <code>rhat = 1.01</code>, <code>ess_bulk = 400</code>, <code>ess_tail = 400</code>,
+<code>ar = 0.10</code>, and <code>ma = 0.10</code>. An empty list uses these defaults; a partial
+list overrides only the supplied values. Set an element to <code>NULL</code> to disable
+that diagnostic, or use <code>FALSE</code> to disable all configurable diagnostic
+warnings. In <code>summary.mcpfit()</code>, <code>NULL</code> inherits the settings used to fit
+the model, while a list or <code>FALSE</code> overrides the diagnostic footer.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Currently ignored</p></dd>
+<dd><p>Currently ignored.</p></dd>
+
+
+<dt id="arg-dpar">dpar<a class="anchor" aria-label="anchor" href="#arg-dpar"></a></dt>
+<dd><p>Distributional parameter(s) whose regression coefficients to
+return. For modeled distributional parameters such as <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, these
+coefficients are on the link scale.</p></dd>
 
 
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
@@ -128,11 +151,13 @@ symmetric so the intervals can be deceiving. Plot them using
 <code>plot_pars(fit)</code>.</p>
 <p>With <code>verbose = TRUE</code>:</p><ul><li><p><code>segment</code> is the segment the parameter belongs to.</p></li>
 <li><p><code>dpar</code> is the distributional parameter (<code>"cp"</code>, <code>"mu"</code>, <code>"sigma"</code>,
-<code>"ar1"</code>, <code>"ma1"</code>, etc.) the parameter belongs to.</p></li>
+<code>"ar"</code>, <code>"ma"</code>, etc.) the parameter belongs to. For AR/MA terms, the
+lag order is encoded in <code>name</code>, e.g. <code>ar2_1</code>.</p></li>
 <li><p><code>mean</code> is the posterior mean</p></li>
+<li><p><code>sd</code> is the posterior standard deviation.</p></li>
 <li><p><code>lower</code> and <code>upper</code> are the bounds of the central posterior interval
 given in <code>width</code>.</p></li>
-<li><p><code>Rhat</code> is the rank-normalized split-Rhat convergence diagnostic.</p></li>
+<li><p><code>rhat</code> is the rank-normalized split-Rhat convergence diagnostic.</p></li>
 <li><p><code>ess_bulk</code> and <code>ess_tail</code> are the bulk and tail effective sample sizes.
 Low effective sample sizes are also obvious as poor mixing in trace plots
 (see <code>plot_pars(fit)</code>). Read how to deal with such problems <a href="https://lindeloev.github.io/mcp/articles/tips.html">here</a></p></li>
@@ -145,8 +170,8 @@ interval (<code>lower</code> to <code>upper</code>).</p></li>
     <div class="section level2">
     <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>
 
-<ul><li><p><code>fixef(mcpfit)</code>: Fixed (population-level) effects of <code>mcpfit</code>.</p></li>
-<li><p><code>ranef(mcpfit)</code>: Random (varying) effects of <code>mcpfit</code>.</p></li>
+<ul><li><p><code>fixef(mcpfit)</code>: Population-level fixed effects (regression coefficients) of <code>mcpfit</code>.</p></li>
+<li><p><code>ranef(mcpfit)</code>: Group-level deviations (random effects) of <code>mcpfit</code>.</p></li>
 <li><p><code>print(mcpfit)</code>: Print the posterior summary of an <code><a href="mcpfit-class.html">mcpfit</a></code> object.</p></li>
 </ul></div>
     <div class="section level2">
@@ -159,85 +184,97 @@ interval (<code>lower</code> to <code>upper</code>).</p></li>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Typical usage</span></span></span>
 <span class="r-in"><span><span class="fu">summary</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian(link = 'identity')</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 1000 from 3 chains.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 1000 from 2 chains.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   2: response ~ 1 ~ 0 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   3: response ~ 1 ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         name match  sim  mean lower upper Rhat ess_bulk ess_tail</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         cp_1    OK 30.0 23.21 10.08 32.58    1       95      147</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         cp_2    OK 70.0 69.93 69.35 70.48    1     1618     2087</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1    OK 10.0  8.92  6.66 10.62    1      143      200</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       time_2    OK  0.5  0.40  0.30  0.51    1      115      339</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3    OK  0.0  2.26 -0.17  4.64    1      299      451</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       time_3    OK -0.2 -0.27 -0.40 -0.14    1      308      440</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      sigma_1    OK  4.0  3.68  3.20  4.30    1     1478     1496</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        24.01 5.016 14.36 33.47    1       92      177 30.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        69.91 0.341 69.35 70.48    1     1231     1409 70.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Warning: 5 parameters show poor convergence (Rhat &gt; 1.01 or ESS &lt; 400).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1  9.07 0.891  7.35 10.81    1      142      255 10.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.40 0.055  0.31  0.53    1      104      204  0.5    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3  2.49 1.247 -0.11  4.76    1      205      341  0.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.28 0.068 -0.41 -0.15    1      201      351 -0.2    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      3.67 0.272  3.17  4.22    1     1015     1202  4.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Warning: 5 parameters show poor convergence (rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400).</span>
 <span class="r-in"><span><span class="fu">summary</span><span class="op">(</span><span class="va">demo_fit</span>, width <span class="op">=</span> <span class="fl">0.8</span>, digits <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>  <span class="co"># Set interval width</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian(link = 'identity')</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 1000 from 3 chains.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 1000 from 2 chains.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   2: response ~ 1 ~ 0 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   3: response ~ 1 ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         name match  sim    mean   lower   upper   Rhat ess_bulk ess_tail</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         cp_1    OK 30.0 23.2088 16.4267 30.1189 1.0438       95      147</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         cp_2    OK 70.0 69.9283 69.4451 70.3969 1.0008     1618     2087</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1    OK 10.0  8.9217  7.7206 10.0853 1.0324      143      200</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       time_2        0.5  0.3991  0.3334  0.4707 1.0357      115      339</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3        0.0  2.2600  0.6608  3.8577 1.0129      299      451</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       time_3    OK -0.2 -0.2707 -0.3589 -0.1821 1.0162      308      440</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      sigma_1    OK  4.0  3.6818  3.3514  4.0441 0.9999     1478     1496</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         name    mean      sd   lower   upper  rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        24.0124 5.01586 17.6723 30.5623 1.019       92      177 30.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        69.9116 0.34082 69.4413 70.3846 1.002     1231     1409 70.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Warning: 5 parameters show poor convergence (Rhat &gt; 1.01 or ESS &lt; 400).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         name    mean      sd   lower   upper  rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1  9.0716 0.89137  7.9229 10.1885 1.018      142      255 10.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.4041 0.05485  0.3417  0.4728 1.012      104      204  0.5      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3  2.4904 1.24740  0.8677  4.0253 1.007      205      341  0.0      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.2843 0.06790 -0.3659 -0.1917 1.008      201      351 -0.2    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      3.6675 0.27184  3.3248  4.0329 1.003     1015     1202  4.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Warning: 5 parameters show poor convergence (rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400).</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Get the results as a data frame</span></span></span>
 <span class="r-in"><span><span class="va">results</span> <span class="op">=</span> <span class="fu">summary</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian(link = 'identity')</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 1000 from 3 chains.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 1000 from 2 chains.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   2: response ~ 1 ~ 0 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   3: response ~ 1 ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         name match  sim  mean lower upper Rhat ess_bulk ess_tail</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         cp_1    OK 30.0 23.21 10.08 32.58    1       95      147</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         cp_2    OK 70.0 69.93 69.35 70.48    1     1618     2087</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1    OK 10.0  8.92  6.66 10.62    1      143      200</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       time_2    OK  0.5  0.40  0.30  0.51    1      115      339</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3    OK  0.0  2.26 -0.17  4.64    1      299      451</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       time_3    OK -0.2 -0.27 -0.40 -0.14    1      308      440</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      sigma_1    OK  4.0  3.68  3.20  4.30    1     1478     1496</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        24.01 5.016 14.36 33.47    1       92      177 30.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        69.91 0.341 69.35 70.48    1     1231     1409 70.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Warning: 5 parameters show poor convergence (Rhat &gt; 1.01 or ESS &lt; 400).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1  9.07 0.891  7.35 10.81    1      142      255 10.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.40 0.055  0.31  0.53    1      104      204  0.5    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3  2.49 1.247 -0.11  4.76    1      205      341  0.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.28 0.068 -0.41 -0.15    1      201      351 -0.2    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      3.67 0.272  3.17  4.22    1     1015     1202  4.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Warning: 5 parameters show poor convergence (rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400).</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Varying (random) effects</span></span></span>
+<span class="r-in"><span><span class="co"># Group-level deviations (random effects)</span></span></span>
 <span class="r-in"><span><span class="co"># ranef(my_fit)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Summarise prior</span></span></span>
 <span class="r-in"><span><span class="fu">summary</span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian(link = 'identity')</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 1000 from 3 chains.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 1000 from 2 chains.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   2: response ~ 1 ~ 0 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   3: response ~ 1 ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         name     mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        36.03396 26.53   1.26  93.3    1     1807     1681 30.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        60.13504 25.49  11.04  97.8    1     1813     1728 70.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         name match  sim    mean  lower upper Rhat ess_bulk ess_tail</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         cp_1    OK 30.0 36.4153   1.33  93.0    1     2658     2473</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         cp_2    OK 70.0 60.9086  11.83  97.8    1     2904     2675</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1    OK 10.0  9.2724 -25.89  43.8    1     3013     2649</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       time_2    OK  0.5  0.0115  -0.98   1.1    1     2859     2989</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3    OK  0.0  9.9600 -27.24  46.1    1     2934     2875</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       time_3    OK -0.2  0.0066  -1.12   1.1    1     2873     2905</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      sigma_1    OK  4.0 12.5162   0.39  45.9    1     3059     2988</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         name     mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1  9.29112 22.15 -24.46  45.3    1     1822     1887 10.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.00042  0.52  -0.96   1.0    1     1943     1562  0.5    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3  9.69748 19.11 -25.24  45.4    1     1961     1844  0.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.02395  0.70  -1.24   1.2    1     2196     1800 -0.2    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1     12.35746 14.43   0.39  46.5    1     1910     1965  4.0    OK</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

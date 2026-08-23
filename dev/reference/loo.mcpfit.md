@@ -12,7 +12,8 @@ more in [`loo`](https://mc-stan.org/loo/reference/loo.html).
 loo(
   x,
   ...,
-  pointwise = FALSE,
+  by_row = FALSE,
+  pointwise = lifecycle::deprecated(),
   varying = TRUE,
   arma = TRUE,
   ndraws = NULL,
@@ -42,26 +43,33 @@ waic(
 
   Currently ignored
 
+- by_row:
+
+  `TRUE` calls
+  [`loo.function`](https://mc-stan.org/loo/reference/loo.html) to
+  compute log-likelihood contributions row-by-row
+  (observation-by-observation), which is slower but more memory
+  efficient. `FALSE` (default) computes the full log-likelihood matrix
+  at once. Note that both modes calculate pointwise (observation-level)
+  PSIS-LOO cross-validation.
+
 - pointwise:
 
-  `TRUE` calls calls
-  [`loo.function`](https://mc-stan.org/loo/reference/loo.html) which is
-  slower but more memory efficient. `FALSE` calls the default
-  [`loo`](https://mc-stan.org/loo/reference/loo.html).
+  Deprecated alias for `by_row`.
 
 - varying:
 
-  One of:
+  Group-level effects. One of:
 
-  - `TRUE` All varying effects (`fit$pars$varying`).
+  - `TRUE` All group-level deviations.
 
-  - `FALSE` No varying effects ([`c()`](https://rdrr.io/r/base/c.html)).
+  - `FALSE` No group-level deviations
+    ([`c()`](https://rdrr.io/r/base/c.html)).
 
-  - `"cp"` or `"predictor"`: All varying effects belonging to that part
-    of the model.
+  - `"cp"` or `"predictor"`: All group-level deviations belonging to
+    that part of the model.
 
-  - Character vector: Only include specified varying parameters - see
-    `fit$pars$varying`.
+  - Character vector: Only include specified group-level parameters.
 
 - arma:
 
@@ -72,7 +80,10 @@ waic(
 
   - `FALSE` Disregard AR and MA effects. For `family = gaussian()`,
     [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-    uses only `sigma` for residuals.
+    uses only `sigma` for residuals. For posterior evaluation of the
+    original data, retained JAGS imputations supply missing GARMA
+    histories. In models with group-level effects, this currently
+    requires including all such effects (`varying = TRUE`).
 
 - ndraws:
 
@@ -93,7 +104,14 @@ Observationwise PSIS-LOO and WAIC are problematic for AR/MA models
 because both treat individual conditional likelihood terms as validation
 units. In PSIS-LOO, a held-out response also remains in the conditioning
 history of later terms. Prefer leave-future-out or blocked
-cross-validation, which are not currently implemented in mcp.
+cross-validation, which are not currently implemented in mcp. When a
+missing response enters a later observed GARMA history,
+[`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+`loo()`, and `waic()` are unavailable with `arma = TRUE`: the
+observed-data likelihood requires integrating over that missing history,
+which mcp does not currently implement. Setting `arma = FALSE` evaluates
+the model without its AR/MA contribution rather than repairing the
+criterion for the fitted serial model.
 
 ## Functions
 
@@ -123,11 +141,10 @@ fit1 = mcp(model1, data)
 #> 
 #> Initializing model
 #> 
-#> Finished sampling in 1.4 seconds
+#> Finished sampling in 0.9 seconds
 #> Warning: Some parameters may not have converged well:
-#>   * Rhat > 1.01: cp_1 and x_1
-#>   * ess_bulk or ess_tail < 400: Intercept_2 and cp_1 and x_1
-#> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`adapt` or simplifying the model before trusting these results.
+#>   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1 and x_1
+#> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
 fit2 = mcp(model2, data)
 #> Compiling model graph
 #>    Resolving undeclared variables
@@ -139,16 +156,16 @@ fit2 = mcp(model2, data)
 #> 
 #> Initializing model
 #> 
-#> Finished sampling in 0.7 seconds
+#> Finished sampling in 0.4 seconds
 
 # Compute LOO for each and compare (works for waic(fit) too)
-fit1$loo = loo(fit1)
+loo1 = loo(fit1)
 #> Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
-fit2$loo = loo(fit2)
-loo::loo_compare(fit1$loo, fit2$loo)
+loo2 = loo(fit2)
+loo::loo_compare(loo1, loo2)
 #>   model elpd_diff se_diff p_worse diag_diff      diag_elpd
-#>  model1       0.0     0.0      NA           2 k_psis > 0.7
-#>  model2      -1.5     3.2    0.68   N < 100               
+#>  model1       0.0     0.0      NA           3 k_psis > 0.7
+#>  model2      -1.7     3.2    0.70   N < 100               
 #> 
 #> Diagnostic flags present.
 #> See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)

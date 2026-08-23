@@ -49,10 +49,11 @@
 <li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="../articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
@@ -176,20 +177,20 @@ syntax</a> in <code>mcp</code>.</li>
 they rarely conform to known distributions so confidence intervals can
 be misleading.</li>
 <li>
-<em>varying change points</em>: To my knowledge, no other package
-implements varying change points, i.e., allowing by-group differences in
-change points while sharing all other parameters. Read more about <a href="../articles/varying.html">varying change points</a> in
+<em>group-level change points</em>: To my knowledge, no other
+package implements group-level change-point deviations while sharing
+population-level effects. Read more about <a href="../articles/group_effects.html">group-level change points</a> in
 <code>mcp</code>.</li>
 <li>
 <em>Sharing and fixing parameters</em> to values and other
 parameters as discussed under <a href="../articles/priors.html">priors
 in mcp</a>.</li>
 <li>
-<em>Per-segment regression on variance and serial dependence</em>
-via the <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> (<a href="../articles/variance.html">read
-more here</a>), <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code>, and <code>ma()</code> (<a href="../articles/arma.html">read more here</a>) terms, also allowing
-for more advanced change points involving, e.g., a change in
-autocorrelation strength.</li>
+<em>Per-segment regression on Gaussian residual standard deviation
+and serial dependence</em> via the <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> (<a href="../articles/dpar.html">read more here</a>), <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code>, and
+<code>ma()</code> (<a href="../articles/arma.html">read more here</a>)
+terms, also allowing for more advanced change points involving, e.g., a
+change in autocorrelation strength.</li>
 <li>
 <em>Explicit priors</em>: <code>bcp</code> is the only other
 Bayesian change point package I know of. It contains a few high-level
@@ -226,7 +227,7 @@ hours (but not days) to fit. See <a href="../articles/tips.html">tips
 and tricks</a> how to speed up <code>mcp</code>. Briefly, configure a
 parallel future plan and lower the number of iterations:
 <code>future::plan(future::multisession, workers = 4)</code> followed by
-<code>mcp(..., iter = 1000, adapt = 400)</code>.</li>
+<code>mcp(..., iter = 1000, warmup = 400)</code>.</li>
 <li>
 <em>You want to automatically detect a large number of change
 points</em>: Most packages does automatic change point detection. This
@@ -274,7 +275,7 @@ of 1 SD.</p>
 three-plateaus model with default priors:.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">1</span>, <span class="fl">1</span> <span class="op">~</span> <span class="fl">1</span>, <span class="fl">1</span> <span class="op">~</span> <span class="fl">1</span><span class="op">)</span> <span class="co"># three intercept-only segments</span></span>
-<span><span class="va">fit_mcp</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, par_x <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span></span>
+<span><span class="va">fit_mcp</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, par_x <span class="op">=</span> <span class="st">"x"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit_mcp</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Family: gaussian(link = 'identity')</span></span>
@@ -284,14 +285,17 @@ three-plateaus model with default priors:.</p>
 <span><span class="co">##   2: y ~ 1 ~ 1</span></span>
 <span><span class="co">##   3: y ~ 1 ~ 1</span></span>
 <span><span class="co">## </span></span>
+<span><span class="co">## Change point parameters:</span></span>
+<span><span class="co">##         name   mean    sd lower upper rhat ess_bulk ess_tail</span></span>
+<span><span class="co">##  cp_1        30.760 1.812 26.77 33.90    1     1787     2184</span></span>
+<span><span class="co">##  cp_2        63.487 6.927 45.72 75.83    1      977      762</span></span>
+<span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
-<span><span class="co">##         name   mean lower upper Rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##         cp_1 30.679 26.63 33.92    1     1979     2315</span></span>
-<span><span class="co">##         cp_2 63.347 45.29 75.70    1      697      570</span></span>
-<span><span class="co">##  Intercept_1  2.040  1.63  2.46    1     4437     4875</span></span>
-<span><span class="co">##  Intercept_2 -0.072 -0.55  0.35    1     2021     1881</span></span>
-<span><span class="co">##  Intercept_3  0.909  0.51  1.32    1     1286     1302</span></span>
-<span><span class="co">##      sigma_1  1.064  0.92  1.23    1     3910     4066</span></span></code></pre>
+<span><span class="co">##         name   mean    sd lower upper rhat ess_bulk ess_tail</span></span>
+<span><span class="co">##  Intercept_1  2.040 0.203  1.64  2.45    1     4369     5107</span></span>
+<span><span class="co">##  Intercept_2 -0.071 0.234 -0.56  0.35    1     1777     1661</span></span>
+<span><span class="co">##  Intercept_3  0.916 0.199  0.53  1.31    1     1712     2275</span></span>
+<span><span class="co">##  sigma_1      1.064 0.078  0.92  1.23    1     4377     4611</span></span></code></pre>
 <p>The summary shows good parameter recovery, though the second change
 point is detected a bit early. This is understandable if you look at the
 data, and the true change point is still within the central posterior
@@ -302,6 +306,7 @@ distributions. Therefore, confidence intervals are likely to be
 meaningless for this problem.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_mcp</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit_mcp</span>, pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cp_1"</span>, <span class="st">"cp_2"</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"dens_overlay"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="packages_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="700"></p>
 <p><code>mcp</code> takes around 6 seconds to fit this example, which is
@@ -434,13 +439,13 @@ data:</p>
 <p>We can do the same using <code>mcp</code>:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model_1</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">1</span>, <span class="fl">1</span> <span class="op">~</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="va">fit_mcp_1</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model_1</span>, data <span class="op">=</span> <span class="va">df</span>, par_x <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span></span>
-<span><span class="va">fit_mcp_1</span><span class="op">$</span><span class="va">loo</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_mcp_1</span><span class="op">)</span></span>
-<span><span class="va">fit_mcp</span><span class="op">$</span><span class="va">loo</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_mcp</span><span class="op">)</span></span>
-<span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">fit_mcp</span><span class="op">$</span><span class="va">loo</span>, <span class="va">fit_mcp_1</span><span class="op">$</span><span class="va">loo</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">fit_mcp_1</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model_1</span>, data <span class="op">=</span> <span class="va">df</span>, par_x <span class="op">=</span> <span class="st">"x"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">loo_mcp_1</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_mcp_1</span><span class="op">)</span></span>
+<span><span class="va">loo_mcp</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_mcp</span><span class="op">)</span></span>
+<span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">loo_mcp</span>, <span class="va">loo_mcp_1</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   model elpd_diff se_diff p_worse diag_diff      diag_elpd</span></span>
-<span><span class="co">##  model1       0.0     0.0      NA           2 k_psis &gt; 0.7</span></span>
-<span><span class="co">##  model2      -5.1     2.7    0.97           6 k_psis &gt; 0.7</span></span></code></pre>
+<span><span class="co">##  model1       0.0     0.0      NA           3 k_psis &gt; 0.7</span></span>
+<span><span class="co">##  model2      -6.3     2.8    0.99           5 k_psis &gt; 0.7</span></span></code></pre>
 <pre><code><span><span class="co">## </span></span>
 <span><span class="co">## Diagnostic flags present.</span></span>
 <span><span class="co">## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span></span>
@@ -634,7 +639,7 @@ known variance. (3) It can take data weights.</li>
 <div class="section level2">
 <h2 id="packages-doing-only-fixed-change-points">Packages doing only fixed change points<a class="anchor" aria-label="anchor" href="#packages-doing-only-fixed-change-points"></a>
 </h2>
-<p>As explained in <a href="../articles/formulas.htm">the article on mcp
+<p>As explained in <a href="../articles/formulas.html">Understanding mcp
 formulas</a>, fixed change points can be implemented in almost all
 regression functions. You simply have an indicator variable saying
 whether there has been as shift at the corresponding x-value and use it

@@ -26,10 +26,11 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="../articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
@@ -102,6 +103,80 @@
     <p>A <span class="pkg">posterior</span> <code>draws</code> object or a <span class="pkg">coda</span> <code>mcmc.list</code> object.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Default posterior draws, with one row per iteration and chain</span></span></span>
+<span class="r-in"><span><span class="va">draws</span> <span class="op">=</span> <span class="fu">as_draws</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span>  <span class="co"># Return a posterior::draws object</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">as_draws_df</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Convert draws to a data frame</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> # A draws_df: 6 iterations, 1 chains, and 7 variables</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_1 Intercept_3 cp_1 cp_2 sigma_1 time_2 time_3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        10.1         4.7   24   70     4.1   0.36  -0.33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2        10.1         4.2   25   70     3.8   0.37  -0.33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3        10.1         2.5   25   70     3.8   0.39  -0.26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4         9.9         1.6   25   70     3.8   0.37  -0.26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5         9.5         3.2   25   70     3.5   0.39  -0.36</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6         9.1         3.0   25   70     3.5   0.42  -0.25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Other posterior formats are useful in different downstream packages</span></span></span>
+<span class="r-in"><span><span class="fu">as_draws_matrix</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>  <span class="co"># Matrix of draws by parameter</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> # A draws_matrix: 3 iterations, 1 chains, and 3 variables</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     variable</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw Intercept_1 Intercept_3 cp_1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    1          10         4.7   24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    2          10         4.2   25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    3          10         2.5   25</span>
+<span class="r-in"><span><span class="fu">as_draws_array</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>  <span class="co"># Iteration-by-chain-by-parameter array</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> # A draws_array: 2 iterations, 2 chains, and 2 variables</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = Intercept_1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration  1   2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 10 8.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 10 8.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = Intercept_3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration   1   2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 4.7 2.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 4.2 2.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span><span class="fu">as_draws_rvars</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cp_1"</span>, <span class="st">"cp_2"</span><span class="op">)</span><span class="op">]</span>  <span class="co"># Random-variable representation</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> # A draws_rvars: 1000 iterations, 2 chains, and 2 variables</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $cp_1: rvar&lt;1000,2&gt;[1] <span style="color: #949494;">mean ± sd:</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 24 ± 5 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $cp_2: rvar&lt;1000,2&gt;[1] <span style="color: #949494;">mean ± sd:</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 70 ± 0.34 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># mcp also supports the coda and tidybayes conventions</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">coda</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/coda/man/mcmc.html" class="external-link">as.mcmc</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>  <span class="co"># First chain as a coda mcmc object</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Markov Chain Monte Carlo (MCMC) output:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Start = 3001 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> End = 3007 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Thinning interval = 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      Intercept_1 Intercept_3     cp_1     cp_2  sigma_1    time_2     time_3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1,]   10.122805    4.733476 23.62971 70.13133 4.079635 0.3602996 -0.3309533</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2,]   10.073020    4.211827 25.26966 70.03862 3.839004 0.3735152 -0.3343376</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3,]   10.146927    2.519549 25.07811 69.54561 3.846829 0.3870755 -0.2639302</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4,]    9.917544    1.576157 24.69675 69.56728 3.794215 0.3747316 -0.2649606</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [5,]    9.548849    3.185002 25.32573 69.73441 3.520012 0.3934620 -0.3631516</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [6,]    9.063937    2.963639 25.00800 70.31785 3.529331 0.4162720 -0.2506363</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [7,]    9.349596    2.441074 25.60126 69.35883 3.434344 0.3968397 -0.2671036</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">tidybayes</span><span class="fu">::</span><span class="fu"><a href="https://mjskay.github.io/tidybayes/reference/tidy_draws.html" class="external-link">tidy_draws</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Tidybayes-compatible draw data</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> # A draws_df: 6 iterations, 1 chains, and 7 variables</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_1 Intercept_3 cp_1 cp_2 sigma_1 time_2 time_3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        10.1         4.7   24   70     4.1   0.36  -0.33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2        10.1         4.2   25   70     3.8   0.37  -0.33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3        10.1         2.5   25   70     3.8   0.39  -0.26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4         9.9         1.6   25   70     3.8   0.37  -0.26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5         9.5         3.2   25   70     3.5   0.39  -0.36</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6         9.1         3.0   25   70     3.5   0.42  -0.25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

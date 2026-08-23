@@ -26,10 +26,11 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="../articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
@@ -60,9 +61,9 @@
     </div>
 
     <div class="section level2">
-      <h2 id="using-mcp">Using mcp<a class="anchor" aria-label="anchor" href="#using-mcp"></a></h2>
+      <h2 id="fit-and-show-mcpfit">Fit and show mcpfit<a class="anchor" aria-label="anchor" href="#fit-and-show-mcpfit"></a></h2>
 
-      <div class="section-desc"><p>Functions for everyday use of mcp.</p></div>
+      <div class="section-desc"><p>mcp() returns and <code>mcpfit</code>. These functions illuminate what this fit contains structurally.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -77,6 +78,78 @@
         <dd>Fit Multiple Linear Segments And Their Change Points</dd>
 
         <dt>
+
+          <code><a href="mcp-package.html">mcp-package</a></code>
+
+        </dt>
+        <dd>mcp: Multiple Change Point Regression in R</dd>
+
+        <dt>
+
+          <code><a href="mcp_pars.html">mcp_pars()</a></code>
+
+        </dt>
+        <dd>Model parameters</dd>
+
+        <dt>
+
+          <code><a href="mcp_columns.html">mcp_columns()</a></code>
+
+        </dt>
+        <dd>Model data columns</dd>
+
+        <dt>
+
+          <code><a href="prior_summary.html">prior_summary()</a></code>
+
+        </dt>
+        <dd>Summarise priors used by an mcp model</dd>
+
+        <dt>
+
+          <code><a href="print.mcplist.html">print(<i>&lt;mcplist&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print mcplist</dd>
+
+        <dt>
+
+          <code><a href="print.mcptext.html">print(<i>&lt;mcptext&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Nice Printing of Multiline Texts</dd>
+
+        <dt>
+
+          <code><a href="is.mcpfit.html">is.mcpfit()</a></code>
+
+        </dt>
+        <dd>Checks if the Argument is an <code>mcpfit</code> Object</dd>
+
+        <dt>
+
+          <code><a href="model-accessors-mcpfit.html">family(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="model-accessors-mcpfit.html">nobs(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="model-accessors-mcpfit.html">model.frame(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="model-accessors-mcpfit.html">formula(<i>&lt;mcpfit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Extract Model Information from an <code>mcpfit</code></dd>
+
+        <dt>
+
+          <code><a href="mcpfit-class.html">mcpfit-class</a></code> <code><a href="mcpfit-class.html">mcpfit</a></code>
+
+        </dt>
+        <dd>Class <code>mcpfit</code> of Models Fitted with the <span class="pkg">mcp</span> Package</dd>
+      </dl></div><div class="section level2">
+      <h2 id="visual-summaries">Visual summaries<a class="anchor" aria-label="anchor" href="#visual-summaries"></a></h2>
+
+      <div class="section-desc"><p>Plotting of fits, parameters, and diagnostics.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="plot.mcpfit.html">plot(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="plot.mcpfit.html">plot_dpar()</a></code>
 
@@ -99,6 +172,22 @@
 
         <dt>
 
+          <code><a href="interpolate_newdata.html">interpolate_newdata()</a></code>
+
+        </dt>
+        <dd>Returns a data.frame with all combos of predictors</dd>
+      </dl></div><div class="section level2">
+      <h2 id="textual-summaries-and-statistics">Textual summaries and statistics<a class="anchor" aria-label="anchor" href="#textual-summaries-and-statistics"></a></h2>
+
+      <div class="section-desc"><p>Summaries that pertain to the whole <code>mcpfit</code> or to specific parameters.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
           <code><a href="summary.mcpfit.html">summary(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="summary.mcpfit.html">fixef(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="summary.mcpfit.html">ranef(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="summary.mcpfit.html">print(<i>&lt;mcpfit&gt;</i>)</a></code>
 
         </dt>
@@ -106,24 +195,10 @@
 
         <dt>
 
-          <code><a href="execute-mcp-model.html">predict(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="execute-mcp-model.html">fitted(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="execute-mcp-model.html">log_lik(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="execute-mcp-model.html">residuals(<i>&lt;mcpfit&gt;</i>)</a></code>
+          <code><a href="posterior-uncertainty-mcpfit.html">vcov(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="posterior-uncertainty-mcpfit.html">confint(<i>&lt;mcpfit&gt;</i>)</a></code>
 
         </dt>
-        <dd>Fitted and predicted values of <code>mcp</code> models fits</dd>
-
-        <dt>
-
-          <code><a href="loo.mcpfit.html">loo(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="loo.mcpfit.html">waic(<i>&lt;mcpfit&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Information Criteria for Model Comparison</dd>
-
-        <dt>
-
-          <code><a href="add_loglik.html">add_loglik()</a></code>
-
-        </dt>
-        <dd>Add Log-Likelihood to an mcpfit Object.</dd>
+        <dd>Posterior Covariance and Central Intervals for <code>mcpfit</code> Objects</dd>
 
         <dt>
 
@@ -134,21 +209,14 @@
 
         <dt>
 
-          <code><a href="as_draws.mcpfit.html">as_draws()</a></code> <code><a href="as_draws.mcpfit.html">as_draws_df()</a></code> <code><a href="as_draws.mcpfit.html">as_draws_array()</a></code> <code><a href="as_draws.mcpfit.html">as_draws_matrix()</a></code> <code><a href="as_draws.mcpfit.html">as_draws_rvars()</a></code>
+          <code><a href="loo.mcpfit.html">loo(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="loo.mcpfit.html">waic(<i>&lt;mcpfit&gt;</i>)</a></code>
 
         </dt>
-        <dd>Extract MCMC Draws from <code>mcpfit</code> Objects</dd>
-
-        <dt>
-
-          <code><a href="mcp-package.html">mcp-package</a></code>
-
-        </dt>
-        <dd>mcp: Regression with Multiple Change Points</dd>
+        <dd>Information Criteria for Model Comparison</dd>
       </dl></div><div class="section level2">
-      <h2 id="axillary-functions">Axillary functions<a class="anchor" aria-label="anchor" href="#axillary-functions"></a></h2>
+      <h2 id="extract-draws-or-data">Extract draws or data<a class="anchor" aria-label="anchor" href="#extract-draws-or-data"></a></h2>
 
-      <div class="section-desc"><p>These are used internally by mcp, but are exposed here since they may be useful for other purposes. Most other useful internal functions deliver the result already in <code>mcp(segments, sample = FALSE)</code>, so <code><a href="../reference/mcp.html">mcp()</a></code> will be their API.</p></div>
+      <div class="section-desc"><p>Per-observation summaries or draws</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -157,45 +225,31 @@
 
       <dl><dt>
 
-          <code><a href="sd_to_prec.html">sd_to_prec()</a></code>
+          <code><a href="execute-mcp-model.html">predict(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="execute-mcp-model.html">fitted(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="execute-mcp-model.html">log_lik(<i>&lt;mcpfit&gt;</i>)</a></code> <code><a href="execute-mcp-model.html">residuals(<i>&lt;mcpfit&gt;</i>)</a></code>
 
         </dt>
-        <dd>Transform a JAGS Prior from SD to Precision.</dd>
+        <dd>Fitted and predicted values of <code>mcp</code> models fits</dd>
 
         <dt>
 
-          <code><a href="logit.html">logit()</a></code>
+          <code><a href="posterior_epred.mcpfit.html">posterior_epred.mcpfit()</a></code> <code><a href="posterior_epred.mcpfit.html">posterior_predict.mcpfit()</a></code> <code><a href="posterior_epred.mcpfit.html">posterior_linpred.mcpfit()</a></code>
 
         </dt>
-        <dd>Logit function</dd>
+        <dd>Posterior prediction draws for <code>mcpfit</code> objects</dd>
 
         <dt>
 
-          <code><a href="ilogit.html">ilogit()</a></code>
+          <code><a href="as_draws.mcpfit.html">as_draws()</a></code> <code><a href="as_draws.mcpfit.html">as_draws_df()</a></code> <code><a href="as_draws.mcpfit.html">as_draws_array()</a></code> <code><a href="as_draws.mcpfit.html">as_draws_matrix()</a></code> <code><a href="as_draws.mcpfit.html">as_draws_rvars()</a></code>
 
         </dt>
-        <dd>Inverse logit function</dd>
+        <dd>Extract MCMC Draws from <code>mcpfit</code> Objects</dd>
 
         <dt>
 
-          <code><a href="probit.html">probit()</a></code>
+          <code><a href="draws-index-mcp.html">ndraws()</a></code> <code><a href="draws-index-mcp.html">nchains()</a></code> <code><a href="draws-index-mcp.html">niterations()</a></code>
 
         </dt>
-        <dd>Probit function</dd>
-
-        <dt>
-
-          <code><a href="phi.html">phi()</a></code>
-
-        </dt>
-        <dd>Inverse probit function</dd>
-
-        <dt>
-
-          <code><a href="is.mcpfit.html">is.mcpfit()</a></code>
-
-        </dt>
-        <dd>Checks if the Argument is an <code>mcpfit</code> Object</dd>
+        <dd>Index <code>mcpfit</code> objects</dd>
       </dl></div><div class="section level2">
       <h2 id="families">Families<a class="anchor" aria-label="anchor" href="#families"></a></h2>
 
@@ -219,6 +273,13 @@
 
         </dt>
         <dd>Negative Binomial for mcp</dd>
+
+        <dt>
+
+          <code><a href="mcpfamily.html">mcpfamily()</a></code> <code><a href="mcpfamily.html">is.mcpfamily()</a></code>
+
+        </dt>
+        <dd>Create or Test Objects of Class "mcpfamily"</dd>
       </dl></div><div class="section level2">
       <h2 id="help-and-demos">Help and demos<a class="anchor" aria-label="anchor" href="#help-and-demos"></a></h2>
 
@@ -243,9 +304,9 @@
         </dt>
         <dd>Pre-fitted example mcp model</dd>
       </dl></div><div class="section level2">
-      <h2 id="miscellaneous">Miscellaneous<a class="anchor" aria-label="anchor" href="#miscellaneous"></a></h2>
+      <h2 id="deprecated">Deprecated<a class="anchor" aria-label="anchor" href="#deprecated"></a></h2>
 
-      <div class="section-desc"><p>Stuff you would not usually consult directly.</p></div>
+      <div class="section-desc"><p>Functions retained for backward compatibility.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -254,52 +315,10 @@
 
       <dl><dt>
 
-          <code><a href="mcpfit-class.html">mcpfit-class</a></code> <code><a href="mcpfit-class.html">mcpfit</a></code>
+          <code><a href="sd_to_prec.html">sd_to_prec()</a></code>
 
         </dt>
-        <dd>Class <code>mcpfit</code> of Models Fitted with the <span class="pkg">mcp</span> Package</dd>
-
-        <dt>
-
-          <code><a href="draws-index-mcp.html">ndraws()</a></code> <code><a href="draws-index-mcp.html">nchains()</a></code> <code><a href="draws-index-mcp.html">niterations()</a></code>
-
-        </dt>
-        <dd>Index <code>mcpfit</code> objects</dd>
-
-        <dt>
-
-          <code><a href="interpolate_newdata.html">interpolate_newdata()</a></code>
-
-        </dt>
-        <dd>Returns a data.frame with all combos of predictors</dd>
-
-        <dt>
-
-          <code><a href="mcpfamily.html">mcpfamily()</a></code> <code><a href="mcpfamily.html">is.mcpfamily()</a></code>
-
-        </dt>
-        <dd>Create or Test Objects of Class "mcpfamily"</dd>
-
-        <dt>
-
-          <code><a href="prior_summary.html">prior_summary()</a></code>
-
-        </dt>
-        <dd>Summarise priors used by an mcp model</dd>
-
-        <dt>
-
-          <code><a href="print.mcplist.html">print(<i>&lt;mcplist&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Print mcplist</dd>
-
-        <dt>
-
-          <code><a href="print.mcptext.html">print(<i>&lt;mcptext&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Nice Printing of Multiline Texts</dd>
+        <dd>Transform an mcp prior to the parameterization used by JAGS.</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

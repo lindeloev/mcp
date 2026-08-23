@@ -26,10 +26,11 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="../articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
@@ -101,14 +102,14 @@
 <dd><p>Whether to plot quantiles of the posterior (fitted value).</p><ul><li><p><code>TRUE</code> Add 2.5% and 97.5% quantiles. Corresponds to
 <code>q_fit = c(0.025, 0.975)</code>.</p></li>
 <li><p><code>FALSE</code> No quantiles</p></li>
-<li><p>A vector of quantiles. For example, <code>quantiles = 0.5</code>
-plots the median and <code>quantiles = c(0.2, 0.8)</code> plots the 20% and 80%
+<li><p>A vector of quantiles. For example, <code>q_fit = 0.5</code>
+plots the median and <code>q_fit = c(0.2, 0.8)</code> plots the 20% and 80%
 quantiles.</p></li>
 </ul></dd>
 
 
 <dt id="arg-q-predict">q_predict<a class="anchor" aria-label="anchor" href="#arg-q-predict"></a></dt>
-<dd><p>Same as <code>q_fit</code>, but for the prediction interval.</p></dd>
+<dd><p>Same as <code>q_fit</code>, but for the posterior predictive interval.</p></dd>
 
 
 <dt id="arg-facet-by">facet_by<a class="anchor" aria-label="anchor" href="#arg-facet-by"></a></dt>
@@ -117,7 +118,7 @@ Can be grouping-factor or categorical predictor columns.</p></dd>
 
 
 <dt id="arg-color-by">color_by<a class="anchor" aria-label="anchor" href="#arg-color-by"></a></dt>
-<dd><p>A character vector naming categorical or varying-effect data columns to color by.
+<dd><p>A character vector naming categorical predictor or grouping columns to color by.
 If both <code>color_by</code> and <code>facet_by</code> are omitted, a sole categorical predictor is colored automatically. Set <code>color_by = NULL</code> explicitly to disable this.
 Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.</p></dd>
 
@@ -126,7 +127,7 @@ Multiple columns are combined as an interaction. Curves and quantiles remain sep
 <dd><p>Positive integer or <code>FALSE</code>. The number of fitted lines (draws).
 It is the number of joint posterior draws shown for every curve. FALSE or <code>lines = 0</code> plots no lines.
 Note that lines always plot fitted values - not predicted.
-For prediction intervals, see the <code>q_predict</code> argument.</p></dd>
+For posterior predictive intervals, see the <code>q_predict</code> argument.</p></dd>
 
 
 <dt id="arg-geom-data">geom_data<a class="anchor" aria-label="anchor" href="#arg-geom-data"></a></dt>
@@ -135,24 +136,22 @@ or FALSE (do not plot).</p></dd>
 
 
 <dt id="arg-cp-dens">cp_dens<a class="anchor" aria-label="anchor" href="#arg-cp-dens"></a></dt>
-<dd><p>TRUE/FALSE. Plot posterior densities of the change point(s)?
-Currently does not respect <code>facet_by</code>. This will be added in the future.</p></dd>
+<dd><p>TRUE/FALSE. Plot posterior densities of the change point(s)?</p></dd>
 
 
 <dt id="arg-rate">rate<a class="anchor" aria-label="anchor" href="#arg-rate"></a></dt>
-<dd><p>Boolean. For binomial models, plot on raw data (<code>rate = FALSE</code>) or
-response divided by number of trials (<code>rate = TRUE</code>). If FALSE, linear
-interpolation on trial number is used to infer trials at a particular x.</p></dd>
+<dd><p>Boolean. For binomial models, return counts (<code>rate = FALSE</code>) or
+the observed or expected success proportion (<code>rate = TRUE</code>). Predictions and
+count-scale fitted values require a trials column in <code>newdata</code>.</p></dd>
 
 
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>
-<dd><p>TRUE/FALSE. Plot using prior samples? Useful for <code>mcp(..., sample = "both")</code></p></dd>
+<dd><p>Logical. Evaluate prior draws (<code>TRUE</code>) instead of posterior draws (<code>FALSE</code>, default)? Useful for <code>mcp(..., sample = "both")</code>.</p></dd>
 
 
 <dt id="arg-dpar">dpar<a class="anchor" aria-label="anchor" href="#arg-dpar"></a></dt>
-<dd><p>What distributional parameter to evaluate. This is only relevant when <code>type == "fitted"</code>. E.g.,</p><ul><li><p><code>"epred"</code> (default): Expected value of the full model (or <code>NULL</code> for compatibility with brms etc.).</p></li>
-<li><p><code>"mu"</code>: The central tendency which is often the mean after applying the
-link function.</p></li>
+<dd><p>What distributional parameter to evaluate. This is only relevant when <code>type == "fitted"</code>. E.g.,</p><ul><li><p><code>"epred"</code> (default): Expected response from the full model (or <code>NULL</code> for compatibility with brms etc.).</p></li>
+<li><p><code>"mu"</code>: The conditional mean (or success probability per trial for binomial/bernoulli models), on the link or response scale.</p></li>
 <li><p><code>"sigma"</code>: The standard deviation of the residuals.</p></li>
 <li><p><code>"ar1"</code>, <code>"ar2"</code>, <code>"ma1"</code>, <code>"ma2"</code>, etc. depending on which AR or MA
 coefficient you want to evaluate.</p></li>
@@ -161,26 +160,32 @@ coefficient you want to evaluate.</p></li>
 
 <dt id="arg-arma">arma<a class="anchor" aria-label="anchor" href="#arg-arma"></a></dt>
 <dd><p>Whether to include AR and MA effects.</p><ul><li><p><code>TRUE</code> Compute the GARMA residual recurrence. Requires the response variable in <code>newdata</code>.</p></li>
-<li><p><code>FALSE</code> Disregard AR and MA effects. For <code>family = gaussian()</code>, <code><a href="execute-mcp-model.html">predict()</a></code> uses only <code>sigma</code> for residuals.</p></li>
+<li><p><code>FALSE</code> Disregard AR and MA effects. For <code>family = gaussian()</code>, <code><a href="execute-mcp-model.html">predict()</a></code> uses only <code>sigma</code> for residuals.
+For posterior evaluation of the original data, retained JAGS imputations
+supply missing GARMA histories. In models with group-level effects, this
+currently requires including all such effects (<code>varying = TRUE</code>).</p></li>
 </ul></dd>
 
 
 <dt id="arg-ndraws">ndraws<a class="anchor" aria-label="anchor" href="#arg-ndraws"></a></dt>
 <dd><p>Integer or <code>NULL</code>. Number of posterior draws to return/summarise.
-If there are varying effects, this is the number of draws from each varying group.
-<code>NULL</code> means "all". Ignored if both are <code>FALSE</code>. More samples trade speed for accuracy.</p></dd>
+If there are group-level effects, this is the number of draws from each group.
+<code>NULL</code> means "all". More draws trade speed for accuracy.</p></dd>
 
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
 <dd><p>One of</p><ul><li><p><code>"response"</code>: return on the observed scale, i.e., after applying the inverse link function.</p></li>
-<li><p><code>"linear"</code>: return on the parameter scale (where the linear trends are modelled).
+<li><p><code>"linear"</code>: return on the linear-predictor (link) scale, where the linear
+trends are modeled.
 A linear scale is only applicable when <code>type == "fitted"</code> and <code>dpar</code> is not <code>NULL</code>.</p></li>
 </ul></dd>
 
 
 <dt id="arg-at">at<a class="anchor" aria-label="anchor" href="#arg-at"></a></dt>
 <dd><p>Named list setting additional continuous predictors to fixed values.
-They default to their observed means. Passed to <code><a href="interpolate_newdata.html">interpolate_newdata()</a></code>.</p></dd>
+They default to their observed means. Family-specific response auxiliaries
+can be supplied as explicit scalar design values. Passed to
+<code><a href="interpolate_newdata.html">interpolate_newdata()</a></code>.</p></dd>
 
 
 <dt id="arg--grouping">.grouping<a class="anchor" aria-label="anchor" href="#arg--grouping"></a></dt>

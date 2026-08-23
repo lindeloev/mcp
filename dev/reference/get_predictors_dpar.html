@@ -30,10 +30,11 @@ par_x will be relative to the segment onset, so it will be multiplied in in the 
   <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="../articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
@@ -80,7 +81,8 @@ par_x will be relative to the segment onset, so it will be multiplied in in the 
 <span>  <span class="va">dpar</span>,</span>
 <span>  <span class="va">par_x</span>,</span>
 <span>  order <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  check_rank <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  check_rank <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  design_id <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">get_predictor_tables</span><span class="op">(</span><span class="va">model</span>, <span class="va">data</span>, <span class="va">family</span>, <span class="va">par_x</span>, check_rank <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -93,7 +95,10 @@ par_x will be relative to the segment onset, so it will be multiplied in in the 
 
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>Table-like data in long format (data.frame, tibble, data.table, etc.)</p></dd>
+<dd><p>Table-like data in long format (data.frame, tibble, data.table, etc.)
+with syntactic column names.
+Missing values in the response variable are imputed using the posterior predictive.
+<code><a href="execute-mcp-model.html">fitted.mcpfit</a></code> or <code><a href="execute-mcp-model.html">predict.mcpfit</a></code> details how to see the imputed values.</p></dd>
 
 
 <dt id="arg-form-rhs">form_rhs<a class="anchor" aria-label="anchor" href="#arg-form-rhs"></a></dt>
@@ -122,36 +127,49 @@ several distributional terms.</p></dd>
 
 
 <dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
-<dd><p>A list of formulas - one for each segment. The first formula
-has the format <code>response ~ predictors</code> while the following formulas have
+<dd><p>A list of formulas - one for each segment. The many examples
+on the <a href="https://lindeloev.github.io/mcp/">mcp website</a>. But briefly:</p>
+<p>The first formula has the format <code>response ~ predictors</code> while the following formulas have
 the format <code>response ~ cp ~ predictors</code>. Here, <code>cp</code> names the change-point
 part of the formula rather than a literal variable. The response and
 change-point parts can be omitted (<code>cp ~ predictor</code> assumes the same
-response; <code>~ predictor</code> assumes an intercept-only change point). The
-following can be modeled:</p><ul><li><p><em>Regular formulas:</em> e.g., <code>~ 1 + x</code>). <a href="https://lindeloev.github.io/mcp/articles/formulas.html">Read more</a>.</p></li>
-<li><p><em>Extended formulas:</em>, e.g., <code>~ x:group + I(x^2) + exp(z)</code>. <a href="https://lindeloev.github.io/mcp/articles/formulas.html">Read more</a>.</p></li>
-<li><p><em>Group-level effects:</em> e.g., <code>~ 1 + (1 | id)</code> for a group-level
+response; <code>~ predictor</code> assumes an intercept-only change point). Terms normally carry
+into later segments until redefined (see details).</p>
+<p>The following terms can be modeled:</p><ul><li><p><em>Regular formulas:</em> e.g., <code>~ 1 + x</code>. <a href="https://lindeloev.github.io/mcp/articles/formulas.html">Read more</a>.</p></li>
+<li><p><em>Extended formulas:</em> e.g., <code>~ x:group + I(x^2) + exp(z)</code>. <a href="https://lindeloev.github.io/mcp/articles/formulas.html">Read more</a>.
+R-side bases such as <code><a href="https://rdrr.io/r/base/scale.html" class="external-link">scale()</a></code>, <code><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly()</a></code>, and <code><a href="https://rdrr.io/r/splines/ns.html" class="external-link">splines::ns()</a></code> are evaluated
+before sampling, and their fitted scaling or basis is reused for <code>newdata</code>.</p></li>
+<li><p><em>Group-level effects (random effects):</em> e.g., <code>~ 1 + (1 | id)</code> for a group-level
 intercept, or <code>~ 1 + (factor || id)</code> for independent intercept and
-factor-contrast deviations. <a href="https://lindeloev.github.io/mcp/articles/varying.html">Read more</a>.</p></li>
-<li><p><em>Variance:</em> e.g., <code>~sigma(1)</code> for a simple variance change or
-<code>~sigma(1 + x + group)</code>) for more advanced variance structures. Explicit
-sigma formulas model log-SD, while the implicit constant <code>sigma_1</code> in a
+factor-contrast deviations. <a href="https://lindeloev.github.io/mcp/articles/group_effects.html">Read more</a>.</p></li>
+<li><p><em>Gaussian residual standard deviation:</em> e.g., <code>~sigma(1)</code> for a simple
+standard-deviation change or <code>~sigma(1 + x + group)</code> for more advanced
+structures. Explicit <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> formulas model log-SD, while the implicit constant <code>sigma_1</code> in a
 model without <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> remains on the response scale.
-<a href="https://lindeloev.github.io/mcp/articles/variance.html">Read more</a></p></li>
+<a href="https://lindeloev.github.io/mcp/articles/dpar.html">Read more</a></p></li>
 <li><p><em>Time-series residuals:</em> use <code>ar(p)</code> and <code>ma(q)</code> separately or together,
 e.g., <code>~ 1 + ar(1) + ma(1)</code>. Both accept an optional regression formula
 and observation <code>boundary</code>. GARMA terms support Gaussian, binomial,
 Poisson, and negative-binomial families with their default links. They
-define a finite conditional recurrence and do not jointly constrain AR
-coefficients to stationarity or MA coefficients to invertibility.
+define a finite conditional recurrence on the link scale. For <code>~ ar(p) + ma(q)</code>, the model is:</p>
+<p>$$\eta_t = b_t + \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right] + \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right]$$</p>
+<p>where \(b_t\) is the linear predictor from the segment formulas,
+\(\phi_{j,t}\) is the lag-\(j\) autoregressive (AR) coefficient at time \(t\),
+\(\theta_{k,t}\) is the lag-\(k\) moving-average (MA) coefficient at time \(t\),
+\(g(\cdot)\) is the link function, \(y^*_t\) is the observation,
+and \(\eta_t\) is the resulting full linear predictor including serial dependence. Note some implications:</p><ul><li><p>For an N-order component, the last N values <em>before</em> the segment onset are input to the first \(\eta_t\) in the segment.</p></li>
+<li><p>AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
 <a href="https://lindeloev.github.io/mcp/articles/arma.html">Read more</a></p></li>
+</ul></li>
+<li><p><em>Weights:</em> <code>y | weights(w) ~ ...</code> specifies observation log-likelihood weights.</p></li>
+<li><p><em>Binomial:</em> use <code>successes | trials(total) ~ ...</code> with <code>family = binomial()</code>.</p></li>
 </ul></dd>
 
 
 <dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
-<dd><p>One of <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian()</a></code>, <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code>, <code><a href="bernoulli.html">bernoulli()</a></code>, <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson()</a></code>,
-or <code><a href="negbinomial.html">negbinomial()</a></code>.
-with a supported link function, e.g., <code>gaussian(link = "log")</code>.</p></dd>
+<dd><p>A supported family: <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian()</a></code>, <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code>, <code><a href="bernoulli.html">bernoulli()</a></code>,
+<code><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson()</a></code>, or <code><a href="negbinomial.html">negbinomial()</a></code>, with a supported link function; e.g.,
+<code>gaussian(link = "log")</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -165,6 +183,8 @@ diagnose collisions after parameter names are converted for JAGS.</p></li>
 <li><p><code>par_type</code>: One of "Intercept", "dummy", or "slope". Used for setting priors and for change point indicator func.</p></li>
 <li><p><code>order</code>: positive integer or NA. Only relevant for <code>ar</code> and <code>ma</code>.</p></li>
 <li><p><code>explicit</code>: whether the distributional parameter was supplied in the formula.</p></li>
+<li><p><code>design_id</code>: key of the fitted component formula that produced the row.</p></li>
+<li><p><code>design_col</code>: column occupied by the row in that component's model matrix.</p></li>
 <li><p><code>matrix_data</code>: column of the design matrix less the <code>par_x</code> term.</p></li>
 </ul></div>
     <div class="section level2">

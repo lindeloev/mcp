@@ -49,10 +49,11 @@
 <li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="../articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
 <li class="active nav-item dropdown">
@@ -108,9 +109,9 @@ argument.</p>
 <p>First, let us specify a toy model with three segments:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="va">y</span> <span class="op">|</span> <span class="fu">trials</span><span class="op">(</span><span class="va">N</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span>,  <span class="co"># constant rate</span></span>
-<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">year</span>,  <span class="co"># joined changing rate</span></span>
-<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">year</span>  <span class="co"># disjoined changing rate</span></span>
+<span>  <span class="va">y</span> <span class="op">|</span> <span class="fu">trials</span><span class="op">(</span><span class="va">N</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span>,  <span class="co"># constant success probability</span></span>
+<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">year</span>,  <span class="co"># joined changing success probability</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">year</span>  <span class="co"># disjoined changing success probability</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="simulate-data">Simulate data<a class="anchor" aria-label="anchor" href="#simulate-data"></a>
@@ -132,18 +133,16 @@ we need to simulate data.</p>
 <span><span class="va">empty</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p>Now we can simulate. First, let us see the model parameters.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">empty</span><span class="op">$</span><span class="va">pars</span></span></code></pre></div>
-<pre><code><span><span class="co">## List of 10</span></span>
-<span><span class="co">##  $ x         :"year"</span></span>
-<span><span class="co">##  $ y         :"y"</span></span>
-<span><span class="co">##  $ cp        :"cp_1" "cp_2"</span></span>
-<span><span class="co">##  $ fixed     :"Intercept_1" "year_2" "Intercept_3" "year_3"</span></span>
-<span><span class="co">##  $ population:"cp_1" "cp_2" "Intercept_1" "year_2" "Intercept_3" "year_3"</span></span>
-<span><span class="co">##  $ varying   : NULL</span></span>
-<span><span class="co">##  $ sigma     :</span></span>
-<span><span class="co">##  $ arma      :</span></span>
-<span><span class="co">##  $ trials    :"N"</span></span>
-<span><span class="co">##  $ weights   : NULL</span></span></code></pre>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mcp_pars.html">mcp_pars</a></span><span class="op">(</span><span class="va">empty</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 9</span></span></span>
+<span><span class="co">##   name        part     scope role  segment dpar  order group_col population_name</span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1        cp       popu… chan…       2 cp       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2        cp       popu… chan…       3 cp       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1 predict… popu… fixe…       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> year_2      predict… popu… fixe…       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_3 predict… popu… fixe…       3 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> year_3      predict… popu… fixe…       3 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span></span></span></code></pre>
 <ul>
 <li>It takes two intercepts (<code>Intercept_*</code>), for segments 1
 and 3.</li>
@@ -160,14 +159,13 @@ change points at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi><mi>e</mi><mi>a</mi><mi>r</mi><mo>=</mo><mn>25</mn></mrow><annotation encoding="application/x-tex">year = 25</annotation></semantics></math>
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi><mi>e</mi><mi>a</mi><mi>r</mi><mo>=</mo><mn>65</mn></mrow><annotation encoding="application/x-tex">year = 65</annotation></semantics></math>.
-Notice that because <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code> defaults to the link
-function <code>link = "logit"</code>, the intercept and slopes are on a
-<a href="https://en.wikipedia.org/wiki/Logit" class="external-link">logit scale</a>. Briefly,
-this extends the narrow range of binomial rates (0-1) to an infinite
-logit scale from minus infinity to plus infinity. This will be important
-later when we set priors.</p>
+Because <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code> defaults to <code>link = "logit"</code>,
+the intercept and slopes are on the <a href="https://en.wikipedia.org/wiki/Logit" class="external-link">logit scale</a>, which maps
+success probabilities between 0 and 1 to the real line. This will be
+important later when we set priors.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">df</span><span class="op">$</span><span class="va">y</span> <span class="op">=</span> <span class="va">empty</span><span class="op">$</span><span class="fu">simulate</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">df</span><span class="op">$</span><span class="va">y</span> <span class="op">=</span> <span class="va">empty</span><span class="op">$</span><span class="fu">simulate</span><span class="op">(</span></span>
 <span>  <span class="va">empty</span>, <span class="va">df</span>, </span>
 <span>  cp_1 <span class="op">=</span> <span class="fl">1925</span>, cp_2 <span class="op">=</span> <span class="fl">1975</span>, </span>
 <span>  Intercept_1 <span class="op">=</span> <span class="fl">2</span>, Intercept_3 <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, </span>
@@ -175,12 +173,12 @@ later when we set priors.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   year  N  y</span></span>
-<span><span class="co">## 1 1901 10  8</span></span>
-<span><span class="co">## 2 1902 14 13</span></span>
-<span><span class="co">## 3 1903 10  8</span></span>
+<span><span class="co">## 1 1901 10  7</span></span>
+<span><span class="co">## 2 1902 14 10</span></span>
+<span><span class="co">## 3 1903 10  9</span></span>
 <span><span class="co">## 4 1904 18 15</span></span>
-<span><span class="co">## 5 1905 19 18</span></span>
-<span><span class="co">## 6 1906 13 13</span></span></code></pre>
+<span><span class="co">## 5 1905 19 16</span></span>
+<span><span class="co">## 6 1906 13 12</span></span></code></pre>
 <p>Visually:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">year</span>, <span class="va">df</span><span class="op">$</span><span class="va">y</span><span class="op">)</span></span></code></pre></div>
@@ -192,7 +190,7 @@ later when we set priors.</p>
 <p>The next sections go into more detail, but let us quickly see if we
 can recover the parameters used to simulate the data.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, adapt <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, warmup <span class="op">=</span> <span class="fl">5000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <p>We can use <code>summary</code> to see that it recovered the
 parameters to a pretty good precision. Again, recall that intercepts and
 slopes are on a <code>logit</code> scale.</p>
@@ -205,47 +203,47 @@ slopes are on a <code>logit</code> scale.</p>
 <span><span class="co">##   2: y | trials(N) ~ 1 ~ 0 + year</span></span>
 <span><span class="co">##   3: y | trials(N) ~ 1 ~ 1 + year</span></span>
 <span><span class="co">## </span></span>
-<span><span class="co">## Population-level parameters:</span></span>
-<span><span class="co">##         name match    sim     mean    lower    upper Rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##         cp_1    OK 1925.0 1921.756 1915.729 1927.613    1      316      765</span></span>
-<span><span class="co">##         cp_2    OK 1975.0 1972.308 1960.533 1977.352    1       66       84</span></span>
-<span><span class="co">##  Intercept_1    OK    2.0    2.179    1.818    2.582    1      526     1140</span></span>
-<span><span class="co">##       year_2    OK   -0.1   -0.093   -0.109   -0.079    1      386      699</span></span>
-<span><span class="co">##  Intercept_3    OK   -1.0   -1.497   -2.938   -0.712    1       70       80</span></span>
-<span><span class="co">##       year_3    OK    0.1    0.112    0.093    0.130    1      380     1246</span></span>
+<span><span class="co">## Change point parameters:</span></span>
+<span><span class="co">##         name     mean     sd    lower    upper rhat ess_bulk ess_tail    sim</span></span>
+<span><span class="co">##  cp_1        1930.084 3.0280 1924.086 1935.437    1      440      987 1925.0</span></span>
+<span><span class="co">##  cp_2        1974.516 0.6268 1973.232 1975.856    1     1120      476 1975.0</span></span>
+<span><span class="co">##  match</span></span>
+<span><span class="co">##     OK</span></span>
+<span><span class="co">##     OK</span></span>
 <span><span class="co">## </span></span>
-<span><span class="co">## Warning: 5 parameters show poor convergence (Rhat &gt; 1.01 or ESS &lt; 400).</span></span></code></pre>
+<span><span class="co">## Population-level parameters:</span></span>
+<span><span class="co">##         name     mean     sd    lower    upper rhat ess_bulk ess_tail    sim</span></span>
+<span><span class="co">##  Intercept_1    1.624 0.1445    1.360    1.921    1      805     1736    2.0</span></span>
+<span><span class="co">##  year_2        -0.103 0.0108   -0.126   -0.083    1      486     1002   -0.1</span></span>
+<span><span class="co">##  Intercept_3   -1.078 0.2033   -1.468   -0.678    1      630     1008   -1.0</span></span>
+<span><span class="co">##  year_3         0.099 0.0088    0.082    0.116    1      810     1856    0.1</span></span>
+<span><span class="co">##  match</span></span>
+<span><span class="co">##       </span></span>
+<span><span class="co">##     OK</span></span>
+<span><span class="co">##     OK</span></span>
+<span><span class="co">##     OK</span></span></code></pre>
 <p><code>summary</code> uses 95% central posterior intervals by default,
 but you can change it using <code>summary(fit, width = 0.80)</code>. If
-you have <a href="../articles/varying.html">varying effects</a>, use
-<code>ranef(fit)</code> to see them.</p>
+you have <a href="../articles/group_effects.html">group-level
+effects</a>, use <code>ranef(fit)</code> to see their deviations.</p>
 <p>Plotting the fit confirms good fit to the data, and we see the
 discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="700"></p>
 <p>These lines are just <code>fit$simulate</code> applied to a random
 draw of the posterior samples. In other words, they represent the joint
 distribution of the parameters. You can change the number of draws
 (lines) using <code>plot(fit, lines = 50)</code>.</p>
-<p>Notice for binomial models it defaults to plot the <em>rate</em>
-(<code>y / N</code>) as a function of x. The reason why is obvious when
-we plot on “raw” data by toggling <code>rate</code>:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, rate <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="binomial_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
-<p>These lines are jagged because <code>N</code> varies from year to
-year. Although there is close too 100% success rate in the years 1900 -
-1920, the number of trials varies, as you can see in the raw data.
-However, using <code>rate = FALSE</code> will be great when the number
-of trials is constant for extended periods of time, as <code>y</code> is
-more interpretable then.</p>
 <p>Speaking of alternative visualizations, you can also plot this on the
 logit scale, where the linear trends are modeled:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot_dpar</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<p><img src="binomial_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
-<p>Of course, these plots work with <a href="../articles/varying.html">varying effects</a> as well.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot.mcpfit.html">plot_dpar</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
+<p><img src="binomial_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
+<p>These plots work with <a href="../articles/group_effects.html">group-level effects</a> as
+well.</p>
 </div>
 <div class="section level2">
 <h2 id="model-diagnostics-and-sampling-options">Model diagnostics and sampling options<a class="anchor" aria-label="anchor" href="#model-diagnostics-and-sampling-options"></a>
@@ -253,9 +251,10 @@ logit scale, where the linear trends are modeled:</p>
 <p>Already in the default <code>plot</code> as used above, it will be
 obvious if there was poor convergence. A more direct assessment is to
 look at the posterior distributions and trace plots:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<p><img src="binomial_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="576"><img src="binomial_files/figure-html/unnamed-chunk-11-2.png" class="r-plt" alt="" width="576"></p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
+<p><img src="binomial_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="576"><img src="binomial_files/figure-html/unnamed-chunk-10-2.png" class="r-plt" alt="" width="576"></p>
 <p>Convergence is perfect here as evidenced by the overlapping trace
 plots that look like fat caterpillars (Bayesians love fat caterpillars).
 Notice that the posterior distribution of change points can be quite
@@ -278,15 +277,15 @@ they are “default” as in “what happens if you do nothing else”. All
 priors are stored in <code>fit$prior</code> (also
 <code>empty$prior</code>). We did not specify <code>prior</code> above,
 so it ran with default priors:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">prior</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##             [,1]                             </span></span>
 <span><span class="co">## cp_1        "dt(1901, 59.5, 1) T(1901, 2020)"</span></span>
 <span><span class="co">## cp_2        "dt(1901, 59.5, 1) T(cp_1, 2020)"</span></span>
 <span><span class="co">## Intercept_1 "dt(0, 1.5, 3)"                  </span></span>
-<span><span class="co">## year_2      "dt(0, 0.03781513, 3)"           </span></span>
+<span><span class="co">## year_2      "dt(0, 0.01260504, 3)"           </span></span>
 <span><span class="co">## Intercept_3 "dt(0, 1.5, 3)"                  </span></span>
-<span><span class="co">## year_3      "dt(0, 0.03781513, 3)"</span></span></code></pre>
+<span><span class="co">## year_3      "dt(0, 0.01260504, 3)"</span></span></code></pre>
 <p>The priors on change points are discussed extensively in the prior
 vignette. With the default logit link, intercepts and categorical
 contrasts use <code>dt(0, 1.5, 3)</code>. Its central 95% interval is
@@ -300,7 +299,7 @@ the same numerical default for simplicity.</p>
 coefficient defaults in <code>brms</code>, these proper priors mildly
 reduce extreme predictions in short segments while remaining broad and
 heavy-tailed.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">inverse_logit</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">scaled_t</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">scale</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/TDist.html" class="external-link">dt</a></span><span class="op">(</span><span class="va">x</span> <span class="op">/</span> <span class="va">scale</span>, df <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">/</span> <span class="va">scale</span></span>
 <span></span>
@@ -315,7 +314,7 @@ heavy-tailed.</p>
 <span>  </span>
 <span>  <span class="co"># Set the secondary axis</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_x_continuous</a></span><span class="op">(</span>breaks <span class="op">=</span> <span class="op">-</span><span class="fl">7</span><span class="op">:</span><span class="fl">7</span>,limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">7</span>, <span class="fl">7</span><span class="op">)</span>, sec.axis <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/sec_axis.html" class="external-link">sec_axis</a></span><span class="op">(</span><span class="op">~</span> <span class="fu">inverse_logit</span><span class="op">(</span><span class="va">.</span><span class="op">)</span>, name <span class="op">=</span> <span class="st">"Probability"</span>, breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu">inverse_logit</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">7</span>, <span class="fl">7</span>, by <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="binomial_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="binomial_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="700"></p>
 <p>Please keep in mind that when these priors combine through the model,
 the joint probability may be quite different.</p>
 <p>Numeric coefficient scales are divided by a representative change in
@@ -330,7 +329,7 @@ model contains several change points.</p>
 <h2 id="jags-code">JAGS code<a class="anchor" aria-label="anchor" href="#jags-code"></a>
 </h2>
 <p>Here is the JAGS code for the model used in this article.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="va">jags_code</span></span></code></pre></div>
 <pre><code><span><span class="co">## model {</span></span>
 <span><span class="co">##   # mcp helper values</span></span>
@@ -338,12 +337,12 @@ model contains several change points.</p>
 <span><span class="co">##   cp_3 = CONST2_</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   cp_1 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(CONST1_,CONST2_)  # Within the observed change-point span</span></span>
-<span><span class="co">##   cp_2 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(cp_1,CONST2_)  # Ordered after cp_1 within the observed change-point span</span></span>
+<span><span class="co">##   cp_1 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(CONST1_,CONST2_)  # Regularizing t-tail within the observed change-point span</span></span>
+<span><span class="co">##   cp_2 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(cp_1,CONST2_)  # Regularizing t-tail ordered after cp_1 within the observed change-point span</span></span>
 <span><span class="co">##   Intercept_1 ~ dt(0, 1/(1.5)^2, 3)   # Weakly regularizing link-scale intercept</span></span>
-<span><span class="co">##   year_2 ~ dt(0, 1/(0.03781513)^2, 3)   # Weakly regularizing link-scale coefficient scaled to a reference predictor change</span></span>
+<span><span class="co">##   year_2 ~ dt(0, 1/(0.01260504)^2, 3)   # Weakly regularizing link-scale coefficient scaled to a reference predictor change</span></span>
 <span><span class="co">##   Intercept_3 ~ dt(0, 1/(1.5)^2, 3)   # Weakly regularizing link-scale intercept</span></span>
-<span><span class="co">##   year_3 ~ dt(0, 1/(0.03781513)^2, 3)   # Weakly regularizing link-scale coefficient scaled to a reference predictor change</span></span>
+<span><span class="co">##   year_3 ~ dt(0, 1/(0.01260504)^2, 3)   # Weakly regularizing link-scale coefficient scaled to a reference predictor change</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(year)) {</span></span>
