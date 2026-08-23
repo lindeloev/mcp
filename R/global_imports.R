@@ -6,6 +6,6 @@
 #' @importFrom stats ave binomial coef confint family formula gaussian mad median model.frame nobs vcov
 #' @importFrom utils capture.output
 #' @importFrom rlang !! := .env
-"_PACKAGE"
+NULL
 
 utils::globalVariables(c(".data", ".env"))

@@ -74,7 +74,7 @@ mcp_pars(fit)
 `mcp` automatically assigns names to the parameters in the format `type_i` where `i` is the segment number. Specifically:
 
 - `Intercept_i` is the intercept in the ith segment.
-- `year_i` is the slope in on the data column `year` in the ith segment. `x_i` is the slope on the data column `x` in the ith segment. The slope takes name after the data it is regressed on.
+- `year_i` is the slope on the data column `year` in the ith segment. `x_i` is the slope on the data column `x` in the ith segment. The slope takes name after the data it is regressed on. In both joined and disjoined segments, slopes and intercepts are absolute segment parameters (not differences relative to preceding segments).
 - Multi-column R bases identify both the basis column and segment. For example, `poly_x_2_basis1_1` is the first column of `poly(x, 2)` in segment 1.
 - `cp_i` is the ith change point. Notice that `cp_i` is specified in segment `i + 1`. `cp_1` occurs when there are two segments, and `cp_2` when there are three segments, etc. *OBS: future versions may start at cp_2.*.
 - `cp_i_group` contains the group-level deviations from population-level `cp_i`. See [group-level change points in mcp](../articles/group_effects.html).
@@ -120,7 +120,12 @@ Look at the section under the comment `# Formula for mu` which is the (automatic
 
 # Modeling slope change points
 
-We can use the same principle to model change points on slopes. However, we have to "take off" where the previous slope left us on the y-axis. That is, we have to regard whatever y-value the previous segment ended with as a kind of intercept-at-x=0 in the frame of the new segment. The intercept of segment 2 is `cp_1 * slope_1` and the slope in segment 2 is `x * (slope_2 - cp_1)`.
+We can use the same principle to model change points on slopes. To make segments join continuously, we have to "take off" where the previous segment ended. In `mcp`, this is achieved by defining a segment-local predictor $X_{k,i}$ that plateaus at the segment boundary:
+
+$$X_{1,i} = \min(x_i, \Delta_1)$$
+$$X_{2,i} = \min(x_i, \Delta_2) - \Delta_1$$
+
+When $x \le \Delta_1$, Segment 1 increases at rate $\beta_{1,1}$. When $x > \Delta_1$, Segment 1 plateaus at the constant value $\beta_{1,0} + \beta_{1,1} \Delta_1$, handing over a flat baseline to Segment 2. Starting from $\Delta_1$, Segment 2 adds $\beta_{2,1} (x - \Delta_1)$. Because Segment 1 is flat for $x > \Delta_1$, $\beta_{2,1}$ is the **absolute slope** of Segment 2 (not a difference in slope), and the handover is automatically continuous everywhere:
 
 ```{r}
 # Model parameters
@@ -134,15 +139,14 @@ y_ifelse = ifelse(x <= cp_1,
             yes = slope_1 * x,
             no = cp_1 * slope_1 + slope_2 * (x - cp_1))
 
-# Indicator version. pmin() is a vectorized min()
-cp_0 = -Inf
-y_indicator = (x > cp_0) * slope_1 * pmin(x, cp_1) + 
-              (x > cp_1) * slope_2 * (x - cp_1)
+# Indicator version with local plateauing coordinates (pmin is vectorized min)
+y_local = slope_1 * pmin(x, cp_1) + 
+          (x > cp_1) * slope_2 * (x - cp_1)
 
-# Show it
+# Show that both formulations are identical
 par(mfrow = c(1,2))
-plot(x, y_ifelse, main = "ifelse(x <= cp_1)")
-plot(x, y_indicator, main = "(x > cp_1) * Intercept_2")
+plot(x, y_ifelse, main = "ifelse() version")
+plot(x, y_local, main = "Local plateauing coordinate")
 ```
 
 Let us see this in action:
@@ -154,7 +158,7 @@ fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE)
 fit$jags_code
 ```
 
-Again, look at the section under the comment `# Formula for mu` to see the indicator-version in action. And again, `mcp` adds something about `cp_0 = -Inf` and `cp_2 = Inf`, just for internal convenience.
+Look at the JAGS code under `# par_x local to each segment` and `# Formula for mu` to see `x_local_1_[i_]` and `x_local_2_[i_]` computed exactly this way.
 
 You will find the exact same formula for `y_ = ...` if you do `print(fit$simulate)`, though this function contains a whole lot of other stuff too.
 

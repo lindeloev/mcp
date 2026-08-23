@@ -2,13 +2,7 @@
 #'
 #' Given a model (a list of segment formulas), `mcp` infers the posterior
 #' distributions of the parameters of each segment as well as the change points
-#' between segments. [See more details and worked examples on the mcp website](https://lindeloev.github.io/mcp/).
-#' All segments must regress on the same x-variable. You can run
-#' `fit = mcp(model, data, sample=FALSE)` to avoid sampling if you just want to
-#' inspect the priors (`fit$prior` and [prior_summary()]), the JAGS code
-#' `fit$jags_code`, or the R function to simulate data (`fit$simulate`).
-#'
-#' mcp models ordered change points. The ordering is imposed through the prior.
+#' between segments. See details or [the mcp website](https://lindeloev.github.io/mcp/).
 #'
 #' @aliases mcp
 #' @param data Table-like data in long format (data.frame, tibble, data.table, etc.)
@@ -47,14 +41,17 @@
 #'     e.g., `~ 1 + ar(1) + ma(1)`. Both accept an optional regression formula
 #'     and observation `boundary`. GARMA terms support Gaussian, binomial,
 #'     Poisson, and negative-binomial families with their default links. They
-#'     define a finite conditional recurrence on the link scale:
+#'     define a finite conditional recurrence on the link scale. For `~ ar(p) + ma(q)`, the model is:
+#'
 #'     \deqn{\eta_t = b_t + \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right] + \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right]}
-#'     where \eqn{b_t} is the deterministic linear predictor from the segment formulas,
+#'
+#'     where \eqn{b_t} is the linear predictor from the segment formulas,
 #'     \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
 #'     \eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
-#'     \eqn{g(\cdot)} is the link function, \eqn{y^*_t} is the boundary-constrained observation,
-#'     and \eqn{\eta_t} is the resulting full linear predictor including serial dependence.
-#'     They do not jointly constrain AR coefficients to stationarity or MA coefficients to invertibility.
+#'     \eqn{g(\cdot)} is the link function, \eqn{y^*_t} is the observation,
+#'     and \eqn{\eta_t} is the resulting full linear predictor including serial dependence. Note some implications:
+#'      - For an N-order component, the last N values *before* the segment onset are input to the first \eqn{\eta_t} in the segment.
+#'      - AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
 #'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
 #'
 #'   * *Weights:* `y | weights(w) ~ ...` specifies observation log-likelihood weights.
@@ -101,7 +98,7 @@
 #'       Savage-Dickey density ratios in \code{\link{hypothesis}}.
 #'   * `"none"` or `FALSE`: Do not sample. Returns an mcpfit
 #'       object without sample. This is useful if you only want to check
-#'       prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
+#'       prior strings (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
 #' @param cores Deprecated and ignored. Configure parallel processing with a
 #'   [future][future::plan] plan instead, for example
 #'   `future::plan(future::multisession, workers = 3)`. With the default future
@@ -135,35 +132,34 @@
 #' @param series Only affects models with `ar()` or `ma()` terms.
 #'  * `NULL` (default): one long series.
 #'  * character: data column name identifying independent AR/MA series.
-#' @details
-#'   * Terms normally carries into the next segment unless otherwise defined.
-#'     `~ 0 + x` adds an increment to the current slope and therefore
-#'     maintains continuity, whereas `~ 1 + x` resets the segment level and slope.
-#'     Its coefficients are absolute segment parameters, so the fitted mean can
-#'     be disjoined at the change point.
-
-#'   * Response evaluation: [fitted.mcpfit()] returns the expected response, while
-#'     [predict.mcpfit()] returns posterior-predictive response draws. For
-#'     binomial models, `rate = TRUE` returns success proportions and
-#'     `rate = FALSE` returns counts; count-scale fitted values and predictions
-#'     require trial counts in `newdata`. See [execute-mcp-model] for all
-#'     response-evaluation methods.
 #'
-#'   Notes on priors:
-#'   * Default population-level `cp_\*` priors are ordered. For user priors,
+#' @details
+#' **The mcp model**
+#'
+#' For a continuous predictor \eqn{x}, segment 1 (\eqn{x \le \Delta_1}) is a standard
+#' regression model with the intercept at \eqn{x = 0}:
+#'
+#' \deqn{\eta_{1,i} = f_1(x_i, \mathbf{\beta}_1) = \beta_{1,0} + \beta_{1,1} x_i + \dots}
+#'
+#' Subsequent segments \eqn{k \in \{2, \dots, K\}} are similar, but replace \eqn{x} with a segment-local predictor \eqn{X_{k,i}} measured from the segment onset \eqn{\Delta_{k-1}} and capped at the segment end \eqn{\Delta_k}:
+#'
+#' \deqn{X_{k,i} = \min(x_i, \Delta_k) - \Delta_{k-1}}
+#'
+#' with \eqn{\Delta_K = \max(\mathbf{x})}.
+#'
+#' Joined segments (`~ 0 + x`) continue from the plateaued level of earlier segments with a new segment slope \eqn{\beta_{k,1} X_{k,i}}, enforcing continuity without parameter constraints. Disjoined segments (`~ 1 + x`) introduce a new intercept \eqn{\beta_{k,0}} at \eqn{\Delta_{k-1}} and truncate preceding segments. In both cases, slope and intercept parameters are absolute values (not differences relative to the previous segment).
+#'
+#' Here, the model was presented for the mean (on the link scale). The exact same model apply to distributional parameters (`sigma()`, `shape()`, etc.) and `ar()`/`ma()` too. See more details on the `mcp` model in [mcp-package] and on the [mcp website](https://lindeloev.github.io/mcp/articles/formulas.html).
+#'
+#' **Notes on priors**
+#'
+#'   * *Ordered change point priors:* Default population-level `cp_i` priors are ordered and the ordering is imposed through the priors. For user-defined priors,
 #'       `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior has neither
 #'       explicit truncation nor an inherently bounded form such as `dunif()` or
-#'       `dirichlet()`. After sampling, all population- and group-level change
-#'       points are checked for strict ordering; population-level change points
-#'       are also checked against the observed x-range. This includes numerically
-#'       fixed change points.
-#'   * Data-dependent prior values can be written directly, for example
-#'       `min(time)`, `max(time)`, `median(response)`, `mad(response)`,
-#'       `n_segments()`, and `n_cp()`.
-#'       They are resolved from the model data before JAGS code is generated.
-#'       The older constants `MINX`, `MAXX`, `MEANX`, `SDX`, `MINY`, `MAXY`,
-#'       `MEANY`, `SDY`, and `N_CP` remain accepted with a deprecation warning.
-#'   * Prior strings use conventional scale parameterizations. `mcp` converts
+#'       `dirichlet()`.
+#'   * *Data-dependent terms:* If `mcp` encounters a data-dependent term like `min(time)`, `max(time)`, `median(response)`, or `mad(response)` in the prior string, they are resolved from the model data so a numerical value is passed to JAGS. The following terms are also allowed: `n_segments()`, and `n_cp()`.
+#'       The older constants `MINX`, `MAXX`, `MEANX`, `SDX`, `MINY`, `MAXY`, `MEANY`, `SDY`, and `N_CP` remain accepted with a deprecation warning.
+#'   * *Parameterization:* Prior strings use conventional scale parameterizations. `mcp` converts
 #'       these to the parameterization required by JAGS when generating code:
 #'       inverse variance for `dnorm()`, `dt()`, and `dlnorm()`, and inverse
 #'       scale for `ddexp()` and `dlogis()`. Use
