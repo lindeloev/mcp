@@ -696,8 +696,8 @@ as.mcmc.mcpfit = function(x, prior = FALSE, ...) {
 
 #' @importFrom tidybayes tidy_draws
 #' @exportS3Method tidybayes::tidy_draws
-tidy_draws.mcpfit = function(x, ...) {
-  posterior::as_draws_df(x, ...)
+tidy_draws.mcpfit = function(model, ...) {
+  posterior::as_draws_df(model, ...)
 }
 
 
