@@ -82,11 +82,11 @@ test_that("default coefficient priors scale representative predictor changes", {
     )
   }
   mu_scale = max(2.5, round(stats::mad(data$y), 1))
-  segment_width = diff(range(data$x))
+  x_span = diff(range(data$x))
   z_scale = rounded(2 * stats::sd(data$z))
 
-  expect_equal(fit$prior$x_1, scaled_t(mu_scale, segment_width))
-  expect_equal(fit$prior$xE2_1, scaled_t(mu_scale, segment_width^2))
+  expect_equal(fit$prior$x_1, scaled_t(mu_scale, x_span))
+  expect_equal(fit$prior$xE2_1, scaled_t(mu_scale, x_span^2))
   expect_equal(fit$prior$z_1, scaled_t(mu_scale, z_scale))
   expect_equal(
     fit$prior$logw_1,
@@ -94,7 +94,7 @@ test_that("default coefficient priors scale representative predictor changes", {
   )
   expect_equal(fit$prior$b_1, scaled_t(mu_scale, 10))
   expect_equal(fit$prior$gb_1, "dt(0, 2.5, 3)")
-  expect_equal(fit$prior$xz_1, scaled_t(mu_scale, segment_width * z_scale))
+  expect_equal(fit$prior$xz_1, scaled_t(mu_scale, x_span * z_scale))
   expect_equal(
     fit$prior$zgb_1,
     scaled_t(mu_scale, 2 * stats::sd(data$z * (data$g == "b")))
@@ -102,7 +102,7 @@ test_that("default coefficient priors scale representative predictor changes", {
   expect_equal(fit$prior$sigma_z_1, scaled_t(2.5, z_scale))
   expect_equal(
     fit$prior$sigma_zx_1,
-    scaled_t(2.5, segment_width * z_scale)
+    scaled_t(2.5, x_span * z_scale)
   )
 })
 

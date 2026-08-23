@@ -153,7 +153,7 @@
 #'       fixed change points.
 #'   * Data-dependent prior values can be written directly, for example
 #'       `min(time)`, `max(time)`, `median(response)`, `mad(response)`,
-#'       `max(time) - min(time)`, `segment_width(time)`, `n_segments()`, and `n_cp()`.
+#'       `n_segments()`, and `n_cp()`.
 #'       They are resolved from the model data before JAGS code is generated.
 #'       The older constants `MINX`, `MAXX`, `MEANX`, `SDX`, `MINY`, `MAXY`,
 #'       `MEANY`, `SDY`, and `N_CP` remain accepted with a deprecation warning.

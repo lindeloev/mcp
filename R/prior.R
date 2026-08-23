@@ -53,7 +53,7 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
   attr(resolved, "prior_table") = table
   attr(resolved, "prior_context") = context[c(
     "x_name", "y_name", "x_display", "y_display", "x_min", "x_max",
-    "x_span", "n_cp", "n_segments", "segment_width"
+    "x_span", "n_cp", "n_segments"
   )]
   resolved
 }

@@ -37,8 +37,7 @@ prior_context = function(data, segments) {
     x_max = max(x, na.rm = TRUE),
     x_span = diff(range(x, na.rm = TRUE)),
     n_cp = nrow(segments) - 1,
-    n_segments = nrow(segments),
-    segment_width = diff(range(x, na.rm = TRUE)) / nrow(segments)
+    n_segments = nrow(segments)
   )
 }
 
@@ -152,7 +151,7 @@ resolve_prior_ast = function(expr, context) {
     return(value)
   }
 
-  summaries = c("min", "max", "mean", "median", "sd", "mad", "segment_width")
+  summaries = c("min", "max", "mean", "median", "sd", "mad")
   if (fun %in% summaries && length(args) == 1 && allowed_data_expression(args[[1]], data_names)) {
     data_env = list2env(as.list(context$data), parent = baseenv())
     values = eval(args[[1]], envir = data_env)
@@ -163,8 +162,7 @@ resolve_prior_ast = function(expr, context) {
       mean = mean(values, na.rm = TRUE),
       median = stats::median(values, na.rm = TRUE),
       sd = stats::sd(values, na.rm = TRUE),
-      mad = stats::mad(values, na.rm = TRUE),
-      segment_width = diff(range(values, na.rm = TRUE)) / context$n_segments
+      mad = stats::mad(values, na.rm = TRUE)
     )))
   }
 

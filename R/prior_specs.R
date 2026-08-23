@@ -106,8 +106,12 @@ default_predictor_scale = function(matrix_data, x_factor) {
     stop_github("Could not derive a positive scale from a model-matrix column.")
 
   parts = character()
-  if (x_factor != "1")
-    parts = gsub("x", "segment_width(.x)", x_factor, fixed = TRUE)
+  if (x_factor != "1") {
+    x_expr = if (grepl("\\^", x_factor)) "(max(.x) - min(.x))" else "max(.x) - min(.x)"
+    parts = gsub("x", x_expr, x_factor, fixed = TRUE)
+    if (data_scale != 1 && !grepl("^\\(", parts))
+      parts = paste0("(", parts, ")")
+  }
   if (data_scale != 1)
     parts = c(parts, format_prior_number(data_scale))
   if (length(parts) == 0)

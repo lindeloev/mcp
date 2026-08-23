@@ -21,7 +21,6 @@ This article in brief:
  * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
  * The default priors bound group-specific change points relative to adjacent population-level change points.
  * The article on modeling standard deviation via `sigma()` contains [another group-level change-point example](../articles/dpar.html).
-
 ```{r}
 library(mcp)
 future::plan(future::multisession, workers = 3)

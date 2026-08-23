@@ -307,9 +307,9 @@ test_that("priors are resolved without changing their parameterization", {
     list(
       cp_1 = "dunif(1, 6)",
       Intercept_1 = "dt(5.5, 3.7, 3)",
-      x_1 = "dt(0, 1.48, 3)",
+      x_1 = "dt(0, 0.74, 3)",
       Intercept_2 = "dt(5.5, 3.7, 3)",
-      x_2 = "dt(0, 1.48, 3)",
+      x_2 = "dt(0, 0.74, 3)",
       sigma_1 = "dt(0, 3.7, 3) T(0, )"
     )
   )

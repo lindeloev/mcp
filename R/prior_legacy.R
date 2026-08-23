@@ -48,7 +48,6 @@ warn_legacy_prior_constants = function(prior, context) {
       "Deprecated prior data constant(s): ", and_collapse(used), ". Use readable data ",
       "expressions such as `min(", context$x_display, ")`, `sd(", context$y_display,
       ")`, `max(", context$x_display, ") - min(", context$x_display,
-      ")`, `segment_width(", context$x_display,
       ")`, or `n_cp()` instead.",
       call. = FALSE
     )
