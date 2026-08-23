@@ -1,6 +1,6 @@
 models_ar = list(
   # Segment-specific AR coefficients and an AR predictor effect.
-  list(y ~ 1 + ar(2),
+  list(y ~ 1 + ar(2, series = id),
        ~ 0 + x + ar(1, 1 + x),
        ~ 0,
        simulated = list(
@@ -19,7 +19,6 @@ models_ar = list(
          x = rep(seq(1, 200, length.out = 200), 2),
          y = 0
        ),
-       series = "id",
        chains = 2,
        warmup = 2000,
        iter = 2000,

@@ -12,6 +12,10 @@ bad_arma = list(
   list(y ~ ar("1")),  # Should not take strings
   list(y ~ ar(1 + x)),  # must have order
   list(y ~ ar(x)),  # must have order
+  list(y ~ ar(1, series = 123)),  # invalid series
+  list(y ~ ar(1, series = id1) + ma(1, series = id2)),  # conflicting series in same segment
+  list(y ~ ar(1, series = id1),
+       ~ ar(1, series = id2)),  # conflicting series across segments
   list(y ~ ma(0)),
   list(y ~ ma(-1)),
   list(y ~ ma(1.5)),
@@ -40,7 +44,13 @@ good_arma = list(
   list(y | weights(weights_ok) ~ 1 + ar(1),  # With weights
        ~ 0 + ar(2, 1 + x)),
   list(y ~ 0 + ar(1),
-       ~ 0 + ar(2))  # mu is ~0 across all segments; only ar() gives structure
+       ~ 0 + ar(2)),  # mu is ~0 across all segments; only ar() gives structure
+  list(y ~ 1 + ar(1, series = id)),
+  list(y ~ 1 + ar(1, series = "id")),
+  list(y ~ 1 + ma(1, series = id)),
+  list(y ~ 1 + ar(1, 1 + x, series = id)),
+  list(y ~ 1 + ar(1, series = id) + ma(1)),
+  list(y ~ 1 + ar(1, series = id) + ma(1, series = id))
 )
 
 test_good(good_arma)
@@ -53,10 +63,11 @@ test_that("series resets generated AR/MA lags", {
     y = 1:4
   )
   fit = suppressMessages(mcp(
-    list(y ~ 1 + ar(2) + ma(1)), data,
-    par_x = "x", series = "id", sample = FALSE, quiet = TRUE
+    list(y ~ 1 + ar(2, series = id) + ma(1)), data,
+    par_x = "x", sample = FALSE, quiet = TRUE
   ))
 
+  expect_identical(fit$.internal$model_tables$data_columns$series, "id")
   expect_match(
     fit$jags_code,
     "equals(series_id_[i_], series_id_[i_ - 2]) * ar2_[i_]",
@@ -80,18 +91,35 @@ test_that("series resets generated AR/MA lags", {
 })
 
 
+test_that("series works with character, factor, numeric, and integer columns", {
+  for (col_val in list(c("a", "b"), factor(c("a", "b")), c(1, 2), c(1L, 2L))) {
+    data = data.frame(
+      id = rep(col_val, each = 2),
+      x = 1:4,
+      y = 1:4
+    )
+    fit = mcp(
+      list(y ~ 1 + ar(1, series = id)), data,
+      par_x = "x", sample = FALSE, quiet = TRUE
+    )
+    expect_identical(fit$.internal$model_tables$data_columns$series, "id")
+    expect_true(grepl("series_id_", fit$jags_code, fixed = TRUE))
+  }
+})
+
+
 test_that("series input is contiguous and survives interpolation", {
   data = data.frame(id = c("a", "b", "a"), x = 1:3, y = 1:3)
 
   expect_error(
-    mcp(list(y ~ ar(1)), data, par_x = "x", series = "id", sample = FALSE),
+    mcp(list(y ~ ar(1, series = id)), data, par_x = "x", sample = FALSE),
     "Rows belonging to each `series` must be contiguous.",
     fixed = TRUE
   )
   ordered = data[order(data$id), ]
   fit = mcp(
-    list(y ~ ar(1)), ordered,
-    par_x = "x", series = "id", sample = FALSE, quiet = TRUE
+    list(y ~ ar(1, series = id)), ordered,
+    par_x = "x", sample = FALSE, quiet = TRUE
   )
   interpolated = interpolate_newdata(fit, by = "id", x_values = 11:13)
   expect_identical(interpolated$id, ordered$id)

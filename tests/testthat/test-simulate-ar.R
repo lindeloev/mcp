@@ -30,8 +30,8 @@ test_that("fit$simulate resets fresh residual histories by series", {
     y = 0
   )
   fit = mcp(
-    list(y ~ 1 + ar(1)), data,
-    par_x = "x", series = "id", sample = FALSE, quiet = TRUE
+    list(y ~ 1 + ar(1, series = id)), data,
+    par_x = "x", sample = FALSE, quiet = TRUE
   )
 
   set.seed(42)

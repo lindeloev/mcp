@@ -241,8 +241,7 @@ mcp = function(model,
                jags_code = NULL,
                seed = NULL,
                diagnostics = list(),
-               quiet = FALSE,
-               series = NULL) {
+               quiet = FALSE) {
   custom_jags_code = !is.null(jags_code)
 
   matched_call = match.call()
@@ -268,6 +267,7 @@ mcp = function(model,
       call. = FALSE
     )
   data = data.frame(data)
+  series = get_arma_series(model)
   assert_arma_series(data, series)
 
   checkmate::assert_string(par_x, null.ok = TRUE)
@@ -403,8 +403,6 @@ mcp = function(model,
     ))
     if (x_unordered)
       message("'", par_x, "' is unordered. Please note that ar() and ma() apply in data-frame row order, not the values of '", par_x, "'.")
-  } else if (!is.null(series)) {
-    stop("`series` is only used by models containing ar() or ma().")
   }
 
   # Make formulas

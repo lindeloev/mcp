@@ -25,7 +25,6 @@ The most common use case is still `ar(1)`. Like other `mcp` terms, AR and MA coe
 
 ## GARMA definition
 
-`mcp` implements AR and MA as a generalized ARMA (GARMA) recurrence on the response-family link scale. If $b_t$ is the ordinary regression predictor and $\eta_t$ is the predictor including serial dependence, then
 `mcp` implements AR and MA as a generalized ARMA (GARMA) recurrence on the response-family link scale. If $b_t$ is the ordinary regression predictor from the segment formulas and $\eta_t$ is the predictor including serial dependence, then
 
 $$\eta_t = b_t
@@ -33,11 +32,11 @@ $$\eta_t = b_t
 + \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right].$$
 
 where $\phi_{j,t}$ is the lag-$j$ autoregressive (AR) coefficient at time $t$, $\theta_{k,t}$ is the lag-$k$ moving-average (MA) coefficient at time $t$, $g(\cdot)$ is the link function, and $y^*$ is the boundary-constrained observation. Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations. Unavailable lags at the beginning of the series contribute zero. This same recurrence is used by JAGS, fitted values, predictions, log likelihoods, and fresh-series simulation.
-where $\phi_{j,t}$ is the lag-$j$ autoregressive (AR) coefficient at time $t$, $\theta_{k,t}$ is the lag-$k$ moving-average (MA) coefficient at time $t$, $g(\cdot)$ is the link function, and $y^*$ is the boundary-constrained observation. Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations. This same recurrence is used by JAGS, fitted values, predictions, log likelihoods, and fresh-series simulation.
 
 A key feature of this recurrence is that **AR/MA memory flows continuously across change points**:
+
 - For an order-$N$ component in a new segment, the last $N$ observations *before* the change point are input into the first $\eta_t$ in the new segment, weighted by the new segment's AR/MA parameters.
-- AR/MA lags do not reset at segment boundaries; they only reset at the very beginning of the whole dataset, or across independent series when using `series = "column_name"`.
+- AR/MA lags do not reset at segment boundaries; they only reset at the very beginning of the whole dataset, or across independent series when using `series = "column_name"` inside `ar()` or `ma()` (e.g. `ar(1, series = id)`).
 - Because change point locations $\Delta$ are estimated with posterior uncertainty, the observation boundary where AR/MA parameters switch varies conditionally across MCMC draws.
 
 GARMA currently supports only the default links for `gaussian()` (identity), `binomial()` (logit), `poisson()` (log), and `negbinomial()` (log). `bernoulli()` and non-default links are rejected for now.
@@ -132,14 +131,18 @@ AR and MA lags apply to the *order* of rows in the data frame without taking int
 - You probably want to sort your data according to your `x`. Just do `data = data[order(data$x), ]`.
 - Adjacent data points that lie years apart are modeled to be just as (auto)correlated as adjacent points lying seconds apart.
 
-For grouped longitudinal data, identify independent residual histories with `series` and sort each series by time:
+For grouped longitudinal data, identify independent residual histories with `series` inside `ar()` or `ma()` and sort each series by time:
 
 ```{r, eval=FALSE}
 data = data[order(data$id, data$x), ]
-fit = mcp(model, data, series = "id")
+model = list(
+  y ~ 1 + ar(1, series = id),
+  ~ 0 + x + ar(1)
+)
+fit = mcp(model, data)
 ```
 
-Rows belonging to each series must be contiguous. AR and MA lags reset at each series boundary. The `series` argument is separate from group-level effects such as `(1 | id)`: either can be used without the other.
+Rows belonging to each series must be contiguous. AR and MA lags reset at each series boundary. The `series` argument inside `ar()`/`ma()` is separate from group-level effects such as `(1 | id)`: either can be used without the other.
 
 # Simulating autocorrelated change point data
 

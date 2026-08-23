@@ -21,7 +21,7 @@
 #' @param iter Number of post-adaptation iterations used when fitting.
 #' @param min_ess Minimum bulk and tail ESS required for every parameter.
 test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
-                     family = gaussian(), series = NULL, chains, warmup, iter,
+                     family = gaussian(), chains, warmup, iter,
                      min_ess) {
   if (Sys.getenv("MCP_TEST_LEVEL") != "release") {
     testthat::skip("Time-consuming fit recovery tests are only run when MCP_TEST_LEVEL='release'.")
@@ -36,7 +36,7 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
   }
   empty = mcp(
     model, data = newdata, family = family, sample = FALSE,
-    par_x = "x", series = series
+    par_x = "x"
   )
   set.seed(42)
   simulated_y = suppressMessages(do.call(empty$simulate, c(list(fit = empty, newdata = newdata), simulated)))
@@ -52,7 +52,7 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
 
   # Fit
   fit = mcp(
-    model, newdata, family = family, par_x = "x", series = series,
+    model, newdata, family = family, par_x = "x",
     chains = chains, warmup = warmup, iter = iter, seed = 42,
     diagnostics = FALSE, quiet = TRUE
   )  # Ensure convergence
@@ -77,7 +77,6 @@ apply_test_fit = function(desc, all_models, family = gaussian()) {
     newdata = this[["newdata"]]
     hyperparameters = this[["hyperparameters"]]
     model_family = this[["family"]]
-    series = this[["series"]]
     chains = this[["chains"]]
     warmup = this[["warmup"]]
     iter = this[["iter"]]
@@ -91,7 +90,7 @@ apply_test_fit = function(desc, all_models, family = gaussian()) {
     # Test!
     testthat::test_that(desc, {
       test_fit(
-        model, simulated, newdata, hyperparameters, model_family, series,
+        model, simulated, newdata, hyperparameters, model_family,
         chains, warmup, iter, min_ess
       )
     })

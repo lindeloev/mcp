@@ -19,7 +19,9 @@ unpack_arma = function(form_str_in) {
   if (length(form_str_in) == 0) {
     return(list(
       order = NA,
-      form_str = NA
+      form_str = NA,
+      boundary = NA_real_,
+      series = NA_character_
     ))
   } else if (length(form_str_in) > 1) {
     stop("Only one of these allowed per segment: ", form_str_in)
@@ -41,9 +43,13 @@ unpack_arma = function(form_str_in) {
   if (length(boundary_index) > 1)
     stop("Only one `boundary` value is allowed in ", component, "().")
 
-  formula_index = setdiff(seq_along(component_args), c(1, boundary_index))
+  series_index = which(component_arg_names == "series")
+  if (length(series_index) > 1)
+    stop("Only one `series` value is allowed in ", component, "().")
+
+  formula_index = setdiff(seq_along(component_args), c(1, boundary_index, series_index))
   if (length(formula_index) > 1 || any(component_arg_names[formula_index] %notin% c("", "formula")))
-    stop(component, "() accepts only `order`, an optional formula, and `boundary`.")
+    stop(component, "() accepts only `order`, an optional formula, `boundary`, and `series`.")
 
   # GET ORDER
   order_str = paste(deparse(component_args[[1]], width.cutoff = 500), collapse = "")
@@ -54,7 +60,7 @@ unpack_arma = function(form_str_in) {
     stop("Wrong specification of order in '", form_str_in, "'. Must be ", component, "(order) or ", component, "(order, formula) where order is a positive integer.")
   checkmate::assert_int(order, lower = 1, .var.name = form_str_in)
 
-  # GET FORMULA AND BOUNDARY
+  # GET FORMULA AND BOUNDARY AND SERIES
   if (length(formula_index) == 1) {
     formula_str = paste(deparse(component_args[[formula_index]], width.cutoff = 500), collapse = "")
     form_str = paste0(component, "(", formula_str, ")")
@@ -73,12 +79,45 @@ unpack_arma = function(form_str_in) {
     boundary = NA_real_
   }
 
+  if (length(series_index) == 1) {
+    series_arg = component_args[[series_index]]
+    if (is.symbol(series_arg) || is.character(series_arg)) {
+      series = as.character(series_arg)
+    } else {
+      stop("`series` in ", component, "() must identify a data column name.")
+    }
+    if (length(series) != 1 || !nzchar(series))
+      stop("`series` in ", component, "() must identify a data column name.")
+  } else {
+    series = NA_character_
+  }
+
   # Return
   list(
     order = order,
     form_str = form_str,
-    boundary = boundary
+    boundary = boundary,
+    series = series
   )
+}
+
+
+# Return the single independent-series column across all AR/MA terms, or NULL.
+get_arma_series = function(model) {
+  rhs = lapply(model, get_rhs)
+  series_vec = unique(stats::na.omit(unlist(lapply(rhs, function(form) {
+    term_labels = attributes(stats::terms(form))$term.labels
+    lapply(c("ar", "ma"), function(component) {
+      term = term_labels[stringr::str_detect(term_labels, paste0("^", component, "\\("))]
+      if (length(term) == 0) return(NA_character_)
+      unpack_arma(term)$series
+    })
+  }))))
+
+  if (length(series_vec) > 1)
+    stop("Only one `series` column can be specified across all ar() and ma() terms.")
+
+  if (length(series_vec) == 1) series_vec else NULL
 }
 
 

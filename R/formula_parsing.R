@@ -110,11 +110,13 @@ assert_no_offsets = function(model) {
 get_rhs_vars = function(model) {
   checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
 
-  model %>%
+  vars = model %>%
     lapply(get_rhs) %>%
     lapply(all.vars) %>%
     unlist() %>%
     unique()
+
+  unique(c(vars, get_arma_series(model)))
 }
 
 
@@ -153,12 +155,13 @@ get_rhs_group_vars = function(model) {
 get_model_vars = function(model) {
   checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
 
-  model %>%
+  vars = model %>%
     lapply(all.vars) %>%
     unlist() %>%
     unique()
-}
 
+  unique(c(vars, get_arma_series(model)))
+}
 
 #' Remove varying or population terms from a formula
 #'
