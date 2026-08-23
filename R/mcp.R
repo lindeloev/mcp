@@ -47,8 +47,14 @@
 #'     e.g., `~ 1 + ar(1) + ma(1)`. Both accept an optional regression formula
 #'     and observation `boundary`. GARMA terms support Gaussian, binomial,
 #'     Poisson, and negative-binomial families with their default links. They
-#'     define a finite conditional recurrence and do not jointly constrain AR
-#'     coefficients to stationarity or MA coefficients to invertibility.
+#'     define a finite conditional recurrence on the link scale:
+#'     \deqn{\eta_t = b_t + \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right] + \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right]}
+#'     where \eqn{b_t} is the deterministic linear predictor from the segment formulas,
+#'     \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
+#'     \eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
+#'     \eqn{g(\cdot)} is the link function, \eqn{y^*_t} is the boundary-constrained observation,
+#'     and \eqn{\eta_t} is the resulting full linear predictor including serial dependence.
+#'     They do not jointly constrain AR coefficients to stationarity or MA coefficients to invertibility.
 #'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
 #'
 #'   * *Weights:* `y | weights(w) ~ ...` specifies observation log-likelihood weights.

@@ -108,7 +108,9 @@ Let's unpack:
  * `hypothesis`: For internal convenience, `hypothesis` always re-arranges to test against zero. 
  * `mean`: When subtracting $4$, the posterior distribution is very close, but somewhat dispersed. 
  * `lower` and `upper`: The interval width defaults to a 95% central posterior interval, but you can change it using `hypothesis(..., width = 0.8)`.
- * `BF`: The Savage-Dickey density ratio in favor of the point-null model. It is the posterior density divided by the prior density at `cp_1 = 4`. A $BF > 1$ favors the point-null model, $BF = 1$ favors neither model, and $BF < 1$ favors the continuous alternative.
+ * `BF`: The Savage-Dickey density ratio in favor of the point-null model. It is the posterior density divided by the prior density at the tested equality (here $\theta = \text{cp}_1$ and $\theta_0 = 4$):
+$$BF_{01} = \frac{p(\theta = \theta_0 \mid \text{data})}{p(\theta = \theta_0)}$$
+where $\theta$ is the tested parameter (or contrast), $\theta_0$ is the hypothesized point value, $p(\theta = \theta_0 \mid \text{data})$ is the posterior density, and $p(\theta = \theta_0)$ is the prior density. A $BF > 1$ favors the point-null model, $BF = 1$ favors neither model, and $BF < 1$ favors the continuous alternative.
  * `p`: This is `NA` because equality is not an event with positive probability in the continuous model.
 
 Equality tests are limited to named parameters and affine contrasts such as `Intercept_1 - Intercept_2 = 0`. Ratios, parameter products, exponentials, and other nonlinear expressions are rejected.
@@ -153,6 +155,8 @@ Comparing the Bayes factors shows which hypothesis received the larger update fr
 There are more examples [in the documentation for `hypothesis`](../reference/hypothesis.html), including how to test group-level deviations.
 
 `mcp` evaluates the directional hypothesis for both posterior and prior samples. The posterior probability is reported as `p`, and the Bayes factor is the posterior odds divided by the prior odds:
+$$BF_{10} = \frac{P(H \mid \text{data}) \,/\, [1 - P(H \mid \text{data})]}{P(H) \,/\, [1 - P(H)]}$$
+where $H$ is the stated directional hypothesis, $P(H \mid \text{data})$ is its posterior probability, and $P(H)$ is its prior probability.
 
 ```{r}
 hypothesis(fit_info, "cp_1 > 3.5 & cp_1 < 4.5")

@@ -230,8 +230,10 @@ get_loglik_settings = function(fit, varying, arma, ndraws) {
 #'   Takes R code that evaluates to TRUE or FALSE in a vectorized way.
 #'
 #'   **Directional hypotheses** are specified using <, >, <=, or >=. `hypothesis`
-#'   returns the posterior probability and the Bayes factor in favor of the
-#'   stated hypothesis. The Bayes factor requires both prior and posterior
+#'   returns the posterior probability \eqn{P(H \mid \text{data})}{P(H | data)}
+#'   and the Bayes factor in favor of the stated hypothesis \eqn{H}:
+#'   \deqn{\text{BF}_{10} = \frac{P(H \mid \text{data}) / (1 - P(H \mid \text{data}))}{P(H) / (1 - P(H))}}
+#'   where \eqn{P(H)} is the prior probability of \eqn{H}. The Bayes factor requires both prior and posterior
 #'   draws from `mcp(sample = "both")`. For example:
 #'
 #'   * `"cp_1 > 30"`:  the first change point is above 30.
@@ -245,9 +247,11 @@ get_loglik_settings = function(fit, varying, arma, ndraws) {
 #'       Note that \code{``} are required when using `[i]`.
 #'
 #'   **Equality hypotheses** use the equal sign (=) and a Savage-Dickey density
-#'   ratio: posterior density divided by prior density at the tested equality.
-#'   This is a Bayes factor for a nested point-null model against the fitted
-#'   continuous model. Prior and posterior draws are required, using
+#'   ratio: posterior density divided by prior density at the tested point equality
+#'   \eqn{\theta = \theta_0}:
+#'   \deqn{\text{BF}_{01} = \frac{p(\theta = \theta_0 \mid \text{data})}{p(\theta = \theta_0)}}
+#'   where \eqn{\theta} is the evaluated parameter (or affine contrast), \eqn{\theta_0} is the hypothesized null value, \eqn{p(\theta = \theta_0 \mid \text{data})}{p(theta = theta_0 | data)} is the posterior density, and \eqn{p(\theta = \theta_0)}{p(theta = theta_0)} is the prior density. This is a Bayes factor for a nested point-null model against the fitted
+#'   continuous model (\eqn{\text{BF}_{10} = 1 / \text{BF}_{01}}). Prior and posterior draws are required, using
 #'   `mcp(sample = "both")`.
 #' 
 #'   The point-null model's nuisance prior is the fitted model's conditional 

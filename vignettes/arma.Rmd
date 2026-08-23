@@ -31,7 +31,7 @@ $$\eta_t = b_t
 + \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right]
 + \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right].$$
 
-Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations. Unavailable lags at the beginning of the series contribute zero. This same recurrence is used by JAGS, fitted values, predictions, log likelihoods, and fresh-series simulation.
+where $\phi_{j,t}$ is the lag-$j$ autoregressive (AR) coefficient at time $t$, $\theta_{k,t}$ is the lag-$k$ moving-average (MA) coefficient at time $t$, $g(\cdot)$ is the link function, and $y^*$ is the boundary-constrained observation. Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations. Unavailable lags at the beginning of the series contribute zero. This same recurrence is used by JAGS, fitted values, predictions, log likelihoods, and fresh-series simulation.
 
 The AR and MA coefficients are modeled directly and are not jointly constrained to the stationary or invertible regions. With higher-order terms such as `ar(2)`, independently bounded coefficients can violate the usual root conditions. Coefficients that change across predictors or segments, such as `ar(1, 1 + x)` or `model = list(y ~ ar(1), ~ ar(1))`, instead define a time-varying process to which the usual constant-coefficient conditions do not directly apply. The same applies to `ma()`.
 
