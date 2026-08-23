@@ -7,15 +7,17 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{=html}
 <!--
  * Compute fit and interpret it
  * Warnings
  * Make a demo dataset and add to README
 -->
+```
 
 Serial dependence is common in time series. Add autoregressive terms with `ar(p)`, moving-average terms with `ma(q)`, or both in the segment formulas:
 
-```r
+``` r
 model = list(y ~ 1 + x + ar(1) + ma(1))
 ```
 
@@ -25,13 +27,11 @@ The most common use case is still `ar(1)`. Like other `mcp` terms, AR and MA coe
 
 `mcp` implements AR and MA as a generalized ARMA (GARMA) recurrence on the response-family link scale. If $b_t$ is the ordinary regression predictor and $\eta_t$ is the predictor including serial dependence, then
 
-$$
-\eta_t = b_t
+$$\eta_t = b_t
 + \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right]
-+ \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right].
-$$
++ \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right].$$
 
-Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations. Unavailable lags at the beginning of the series contribute zero. This same recurrence is used by JAGS, fitted values, predictions, log likelihoods, and fresh-series simulation. 
+Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations. Unavailable lags at the beginning of the series contribute zero. This same recurrence is used by JAGS, fitted values, predictions, log likelihoods, and fresh-series simulation.
 
 The AR and MA coefficients are modeled directly and are not jointly constrained to the stationary or invertible regions. With higher-order terms such as `ar(2)`, independently bounded coefficients can violate the usual root conditions. Coefficients that change across predictors or segments, such as `ar(1, 1 + x)` or `model = list(y ~ ar(1), ~ ar(1))`, instead define a time-varying process to which the usual constant-coefficient conditions do not directly apply. The same applies to `ma()`.
 
@@ -43,8 +43,8 @@ The transformed observation $y^*$ keeps log and logit residuals finite when coun
 
 The default should usually be left unchanged. If needed, set it on either term, for example `ar(1, boundary = 0.01) + ma(1)`. AR and MA share one boundary within a segment, and the boundary may differ between segments. Supplying different AR and MA boundaries in the same segment is an error.
 
-
 # Simple example
+
 Let's simulate some data using the `mcp_example()` function with the "ar" settings:
 
 ```{r}
@@ -52,20 +52,18 @@ library(mcp)
 future::plan(future::multisession, workers = 3)
 set.seed(42)  # Make the script deterministic
 
-ex = mcp_example("ar", sample = FALSE)
-head(ex$data)
+fit = mcp_example("ar", sample = FALSE)
+head(fit$data)
 ```
 
-
-See how this was generated in `ex$example_code`. We model this as a plateau (`1`)  with a second-order autoregressive residual (`ar(2)`) followed by a joined slope (`0 + time`) with a negative first-order autoregressive residual (`ar(1)`):
-
+See how this was generated in `fit$example_code`. We model this as a plateau (`1`) with a second-order autoregressive residual (`ar(2)`) followed by a joined slope (`0 + time`) with a negative first-order autoregressive residual (`ar(1)`):
 
 ```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}
 model = list(
   price ~ 1 + ar(2),  # Intercept_1, ar1_1, ar2_1
-  ~ 0 + time + ar(1)  # time_2, ar1_2
+  ~ 0 + time + ar(1)  # time_2, ar1_2; turns off second-order AR
 )
-fit = mcp(model, ex$data, seed = 42)
+fit = mcp(model, fit$data, seed = 42)
 ```
 
 Let's plot it and we see that AR was strong in the first segment and weaker-but-negative in the second:
@@ -74,7 +72,6 @@ Let's plot it and we see that AR was strong in the first segment and weaker-but-
 set.seed(42)
 plot(fit)
 ```
-
 
 We can summarise the inferred coefficients:
 
@@ -86,7 +83,7 @@ The naming syntax is `[component][order]_[segment]` for intercepts. For example,
 
 Comparing the columns `mean` and `sim` we see that the AR coefficients are reasonably recovered. In fact, the posterior mean is almost always exactly the same as `arima(data, order = c(N, 0, 0))` (see below), so the non-perfect fits are due to randomness in the simulation - not in the fit.
 
-For Gaussian GARMA models, `sigma` describes the *innovations*, i.e., the part of the residuals not explained by AR and MA coefficients. `sd(ex$data$price)` is therefore generally higher. In this case, the SD of raw data in the plateau is `r round(sd(ex$data$price[1:120]), 2)`. As always, it is good to assess posteriors and convergence more directly:
+For Gaussian GARMA models, `sigma` describes the *innovations*, i.e., the part of the residuals not explained by AR and MA coefficients. `sd(fit$data$price)` is therefore generally higher. In this case, the SD of raw data in the plateau is `r round(sd(fit$data$price[1:120]), 2)`. As always, it is good to assess posteriors and convergence more directly:
 
 ```{r, fig.height=9, fig.width=8}
 set.seed(42)
@@ -97,19 +94,20 @@ Sometimes, the trace plot shows that the change point (`cp_1`) is not well ident
 
 You can do hypothesis testing with GARMA models using `hypothesis()`. [Read more here](../articles/comparison.html) or scroll down for an applied example.
 
-
-
 # Tips, comments, and warnings
+
 The AR and MA terms apply to link-scale *residuals* from the ordinary regression. In time-series jargon, this is a *dynamical* regression model where the ordinary regression parameters make up the *deterministic* structure. See further comments in the section on priors below.
 
 To control the *direction* of a change, put a one-sided prior on the corresponding coefficient, e.g., `ar1_x_1 = "dnorm(0, 1) T(0, )"`. See recommendations in [the section on priors](#ar_prior).
 
 ## Regression on AR/MA coefficients
+
 You can specify how the coefficients change with $x$ using `ar(p, formula)` and `ma(q, formula)`. For example, `ar(1, 1 + time)` models a steady change in AR(1) strength. These regression formulas use an identity link, so slopes can easily produce non-stationary or non-invertible coefficients. See [the section on priors](#ar_prior) for ways to constrain them. The same formula is applied separately to every order in the term.
 
 Population-level [`mcp` formula syntax](../articles/formulas.html) is available inside both terms, so you could use `ar(3, 1 + I(x^2) + exp(z))` or `ma(1, 0 + group)`. Group-level terms such as `(1|id)` are not supported inside `ar()` or `ma()`. Transformed predictors must stay within the transformation's domain; for example, values passed to `log()` and `sqrt()` must be non-negative.
 
 ## Combining ar(), ma(), and sigma()
+
 You can combine `ar()` and `ma()` with any regression model and with [group-level change points](../articles/varying.html). For Gaussian models, `sigma()` controls the innovation standard deviation:
 
 ```{r}
@@ -121,10 +119,11 @@ model = list(
 ```
 
 ## Order your data
+
 AR and MA lags apply to the *order* of rows in the data frame without taking into account the distance between values of `x`. This has two important implications:
 
- * You probably want to sort your data according to your `x`. Just do `data = data[order(data$x), ]`.
- * Adjacent data points that lie years apart are modeled to be just as (auto)correlated as adjacent points lying seconds apart.
+- You probably want to sort your data according to your `x`. Just do `data = data[order(data$x), ]`.
+- Adjacent data points that lie years apart are modeled to be just as (auto)correlated as adjacent points lying seconds apart.
 
 For grouped longitudinal data, identify independent residual histories with `series` and sort each series by time:
 
@@ -135,9 +134,8 @@ fit = mcp(model, data, series = "id")
 
 Rows belonging to each series must be contiguous. AR and MA lags reset at each series boundary. The `series` argument is separate from group-level effects such as `(1 | id)`: either can be used without the other.
 
-
-
 # Simulating autocorrelated change point data
+
 Assessing the correctness of autocorrelation is less intuitive than seeing e.g. a mean fit. However, we can verify `mcp` up against more tested-and-tried functions such as `arima()` in base R. Let us simulate a single AR(3) segment, i.e., without change points, and see if it fits:
 
 ```{r}
@@ -160,19 +158,21 @@ df$response = empty$simulate(
 # Base arima AR(3)
 arima(df$response, order = c(3, 0, 0))
 ```
+
 OK, we can see that the `ar` coefficients and sigma ($sigma = sqrt(sigma^2)$) is simulated correctly, if taking `arima()` as ground truth. Inferring with `mcp` is straightforward:
 
 ```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}
 fit = mcp(model, df, par_x = "time", seed = 42)
 ```
+
 The Bayesian parameter estimates are in perfect correspondence with `arima()`, even where they deviate a tiny bit from the simulation parameters (due to the inherent randomness in simulating data):
+
 ```{r}
 fixef(fit)
 ```
 
-
-
 # Inferring an autocorrelation-only change
+
 One "side-effect" of the `mcp` implementation of autocorrelation using `ar()` *in the formulas* is that you can infer when autocorrelation parameters and structures change.
 
 Let's simulate a change point in autocorrelation and see if we can infer it later:
@@ -198,7 +198,6 @@ df$y = empty$simulate(
   sigma_1 = 5)
 ```
 
-
 ... and we use a prior to equate the slopes of each segment (read more about [using priors](../articles/priors.html) to equate parameters and define constants). Now let's see if we can recover these parameters. We use `sample = "both"` because we will do a Savage-Dickey test later.
 
 ```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
@@ -206,11 +205,11 @@ prior = list(x_2 = "x_1")  # Set the two slopes equal
 fit = mcp(model, data = df, prior = prior, sample = "both", seed = 42)
 ```
 
-
 ```{r}
 set.seed(42)
 plot(fit)
 ```
+
 You could use `plot(fit, geom_data = "line")` for a more classical line plot of the time series data. Set `plot(fit, arma = FALSE)` to omit all AR and MA effects. You can also plot `ar1_` or `ma1_` parameters directly using `plot_dpar()`:
 
 ```{r}
@@ -223,7 +222,6 @@ We recovered the parameters, including the change point:
 ```{r, echo = FALSE}
 summary(fit)
 ```
-
 
 We can also plot some of the parameters. As usual, we see that the change point is not well defined by any known distribution. The fact that the posterior mean is around 60 does not (necessarily) mean that there is a high credence in this value. Usually, I find that any bi- or N-modality on the posterior matches well with what you would guess from looking at the raw data. As they say: Bayesian inference is common sense applied to data.
 
@@ -246,12 +244,11 @@ Of course, we can also do directional tests. For example, what is the evidence t
 hypothesis(fit, "ar1_1 - 0.3 > ar1_2")
 ```
 
-
-
 # Priors on AR and MA coefficients {#ar_prior}
+
 The default prior on each AR and MA intercept is a truncated normal distribution:
 
-```r
+``` r
 dnorm(0, 0.5) T(-1, 1)
 ```
 
@@ -275,6 +272,7 @@ We can also visualize them because we sampled the prior. `prior = TRUE` works in
 set.seed(42)
 plot_pars(fit, prior = TRUE)
 ```
+
 Notice that the posteriors are smoothed at sharp cutoffs, slightly misrepresenting the true distribution.
 
 Let's inspect the priors for a more advanced AR model, since you would often have to inform these:
@@ -292,20 +290,19 @@ AR and MA coefficient regressions use an identity link, while their residual inp
 
 Here are a few ways in which you may want to inform the AR or MA parameters:
 
- * For a constant AR(2) process, stationarity requires $-1 < \phi_2 < 1$ and $\phi_2 - 1 < \phi_1 < 1 - \phi_2$. One dependent-prior construction that stays in this region is `ar2_1 = "dunif(-1, 1)"` together with `ar1_1 = "dunif(ar2_1 - 1, 1 - ar2_1)"`. The simpler suggestion `ar2_1 = "dunif(0, ar1_1)"` is not sufficient. Higher orders require the corresponding joint root condition.
- * Slopes can quickly make AR coefficients non-stationary or MA coefficients non-invertible. Constrain their magnitude with reference to a plausible change over the predictor range. For example, a shallow negative change over the observed x-span could use `"dnorm(0, 0.1 / (max(x) - min(x))) T(, 0)"`.
-
+- For a constant AR(2) process, stationarity requires $-1 < \phi_2 < 1$ and $\phi_2 - 1 < \phi_1 < 1 - \phi_2$. One dependent-prior construction that stays in this region is `ar2_1 = "dunif(-1, 1)"` together with `ar1_1 = "dunif(ar2_1 - 1, 1 - ar2_1)"`. The simpler suggestion `ar2_1 = "dunif(0, ar1_1)"` is not sufficient. Higher orders require the corresponding joint root condition.
+- Slopes can quickly make AR coefficients non-stationary or MA coefficients non-invertible. Constrain their magnitude with reference to a plausible change over the predictor range. For example, a shallow negative change over the observed x-span could use `"dnorm(0, 0.1 / (max(x) - min(x))) T(, 0)"`.
 
 # Notes on observed data vs simulated data
+
 JAGS, `fitted()`, `predict()`, and `log_lik()` evaluate a finite, conditional recurrence: the response history supplies earlier residuals, and unavailable residuals before the start of the series are set to zero.
 
-* `fitted()` and `predict()` use posterior imputations for the actual missing response data, so it is conditional on the actual data values/order for the ar/ma modeling.
-* `log_lik()` is unavailable if the data has missingness before some observed data.
-* In contrast, `posterior_predict()` and `pp_check()` generate each series from the model posteriors without regards to the original data. This makes serial summaries of posterior replications, such as their autocorrelation and run lengths, meaningful.
-
-
+- `fitted()` and `predict()` use posterior imputations for the actual missing response data, so it is conditional on the actual data values/order for the ar/ma modeling.
+- `log_lik()` is unavailable if the data has missingness before some observed data.
+- In contrast, `posterior_predict()` and `pp_check()` generate each series from the model posteriors without regards to the original data. This makes serial summaries of posterior replications, such as their autocorrelation and run lengths, meaningful.
 
 # JAGS code
+
 Here is the JAGS code for the second simulation example, i.e., the one with a single slope going from AR(2) to AR(1). You can print `fit$simulate` and see that it runs much of the same code.
 
 ```{r}

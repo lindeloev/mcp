@@ -146,10 +146,11 @@ set.seed(42)
 plot_dpar(fit, dpar = "sigma", q_fit = TRUE)
 ```
 
-`summary()` shows that the parameters are well recovered. The last change point is estimated with greater uncertainty than the others because its only signal is a stop in standard-deviation growth.
+`summary(fit)` shows that the parameters are well recovered and a posterior predictive check (`pp_check(fit)`) looks good too. The last change point is estimated with greater uncertainty than the others because its only signal is a stop in standard-deviation growth.
 
 ```{r}
 summary(fit)
+pp_check(fit)
 ```
 
 The bulk and tail effective sample sizes (`ess_bulk` and `ess_tail`) are fairly low, indicating poor mixing for these parameters. `rhat` is acceptable at \< 1.1, indicating good convergence between chains. Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:
@@ -221,7 +222,13 @@ plot(fit, q_predict = TRUE, facet_by = "id", ndraws = Inf)
 As usual, we can get the individual change points:
 
 ```{r}
-mcp::ranef(fit)
+ranef(fit)
+```
+
+... and verify via posterior predictive checks:
+
+```{r}
+pp_check(fit, facet_by = "id")
 ```
 
 # Generalizing to other distributional parameters (dpars)
