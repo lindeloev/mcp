@@ -17,7 +17,7 @@ mcp_example_data(name)
 \item \code{"intercepts"}: An intercept-only change point.
 \item \code{"multiple"}: Multiple regression with categorical predictors and interactions.
 \item \code{"binomial"}: Binomial with two change points. Much like \code{"demo"} on a logit scale.
-\item \code{"group_mu"}: Group-level intercepts and factor deviations across a change point.
+\item \code{"group_mu"}: Group-level predictor deviations (random intercepts/slopes) across a change point.
 \item \code{"group_cp"}: Group-level change-point deviations (random effects).
 \item \code{"quadratic"}: A change point to a quadratic segment where there is no data.
 \item \code{"ar"}: One change point in autoregressive residuals (the \code{ar1} dpar)
@@ -34,7 +34,7 @@ will default to using the posterior. The prior only has effect when doing
 Savage-Dickey density ratios in \code{\link{hypothesis}}.
 \item \code{"none"} or \code{FALSE}: Do not sample. Returns an mcpfit
 object without sample. This is useful if you only want to check
-prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
+prior strings (\code{fit$prior}), the JAGS model (\code{fit$jags_code}), etc.
 }}
 
 \item{diagnostics}{Diagnostic thresholds passed to \code{\link[=mcp]{mcp()}}. Defaults to

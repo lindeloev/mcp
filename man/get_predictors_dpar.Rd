@@ -57,21 +57,32 @@ The following terms can be modeled:
 \item \emph{Extended formulas:} e.g., \code{~ x:group + I(x^2) + exp(z)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
 R-side bases such as \code{scale()}, \code{poly()}, and \code{splines::ns()} are evaluated
 before sampling, and their fitted scaling or basis is reused for \code{newdata}.
-\item \emph{Group-level effects:} e.g., \code{~ 1 + (1 | id)} for a group-level
+\item \emph{Group-level effects (random effects):} e.g., \code{~ 1 + (1 | id)} for a group-level
 intercept, or \code{~ 1 + (factor || id)} for independent intercept and
-factor-contrast deviations. \href{https://lindeloev.github.io/mcp/articles/varying.html}{Read more}.
+factor-contrast deviations. \href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
 \item \emph{Gaussian residual standard deviation:} e.g., \code{~sigma(1)} for a simple
 standard-deviation change or \code{~sigma(1 + x + group)} for more advanced
 structures. Explicit \code{sigma()} formulas model log-SD, while the implicit constant \code{sigma_1} in a
 model without \code{sigma()} remains on the response scale.
-\href{https://lindeloev.github.io/mcp/articles/variance.html}{Read more}
+\href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}
 \item \emph{Time-series residuals:} use \code{ar(p)} and \code{ma(q)} separately or together,
 e.g., \code{~ 1 + ar(1) + ma(1)}. Both accept an optional regression formula
 and observation \code{boundary}. GARMA terms support Gaussian, binomial,
 Poisson, and negative-binomial families with their default links. They
-define a finite conditional recurrence and do not jointly constrain AR
-coefficients to stationarity or MA coefficients to invertibility.
+define a finite conditional recurrence on the link scale. For \code{~ ar(p) + ma(q)}, the model is:
+
+\deqn{\eta_t = b_t + \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right] + \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right]}
+
+where \eqn{b_t} is the linear predictor from the segment formulas,
+\eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
+\eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
+\eqn{g(\cdot)} is the link function, \eqn{y^*_t} is the observation,
+and \eqn{\eta_t} is the resulting full linear predictor including serial dependence. Note some implications:
+\itemize{
+\item For an N-order component, the last N values \emph{before} the segment onset are input to the first \eqn{\eta_t} in the segment.
+\item AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
+}
 \item \emph{Weights:} \code{y | weights(w) ~ ...} specifies observation log-likelihood weights.
 \item \emph{Binomial:} use \code{successes | trials(total) ~ ...} with \code{family = binomial()}.
 }}

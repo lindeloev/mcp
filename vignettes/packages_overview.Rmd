@@ -22,17 +22,17 @@ knitr::opts_chunk$set(
 
 The R ecosystem for change point analysis spans three primary areas of application:
 
-1. **Segmented Regression**: Estimating the parameters of explicitly specified piecewise models (slopes, plateaus, GLM likelihoods, random effects, or prior constraints).
-2. **Time Series Decomposition & Structural Breaks**: Isolating unknown trend shifts, periodic seasonality, and structural instability in time series.
-3. **Change Point Detection**: Finding unknown shift points algorithmically in large data streams with minimal runtime.
+1.  **Segmented & Piecewise Regression**: Estimating the parameters of explicitly specified piecewise models where change points, slopes, plateaus, GLM likelihoods, random effects, or prior constraints are scientifically meaningful parameters.
+2.  **Time Series Decomposition & Structural Breaks**: Isolating unknown trend shifts, periodic seasonality, parameter instability, and dynamic shrinkage in time series.
+3.  **Algorithmic Change Point Detection & Meta-Packages**: Finding unknown shift points algorithmically in large data streams with minimal runtime, multiscale guarantees, multivariate distributions, or unified meta-interfaces.
 
-This guide evaluates how packages perform on common benchmark problems to compare workflow, parameter recovery, and uncertainty estimation.
-
+Packages in this ecosystem are not strictly confined to a single role; several packages (such as `mcp`, `smoothbp`, and `strucchange`) appear across multiple tasks depending on the analytical goal. This guide evaluates how packages perform on common benchmark problems to compare workflow, parameter recovery, and uncertainty estimation.
 
 # Overview of Package Capabilities
 
-The table below outlines the primary functional focus of each package across core modeling dimensions:
+The table below outlines the primary functional focus of key packages across core modeling dimensions:
 
+```{=html}
 <style>
 .full-width-table {
   width: 100vw;
@@ -51,47 +51,30 @@ The table below outlines the primary functional focus of each package across cor
   max-width: 1150px;
 }
 </style>
+```
 
 ::: full-width-table
-| Package | Paradigm | Segmented Regression | GLM Likelihoods | Group / Random Effects | Transition Modeling | Location Uncertainty | Autoregression & Heteroscedasticity |
-|:--------|:--------|:-------:|:-------:|:-------:|:-------:|:--------|:-------:|
-| **`mcp`** | Bayesian | High | High (Gaussian, Binomial, Poisson, NegBin) | High (on CPs & slopes) | Abrupt (discontinuous or joined) | Posterior densities & credible intervals (ETI / HDI) | High (`sigma()`, `ar()`, `ma()`) |
-| **`smoothbp`** | Bayesian | High | - (Gaussian only) | Moderate (on CPs & slopes) | Smooth (logistic transition) | Posterior densities & PIPs | - |
-| **`bcp`** | Bayesian | - | - | - | Abrupt (step changes) | Pointwise posterior break probabilities $P(B_t = 1)$ | - |
-| **`segmented`** | Frequentist | High | High (`glm()`, `coxph()`) | Moderate (`lme()` integration) | Continuous joined lines only | Frequentist SE & CIs (delta, score, boot) | Basic (`Arima()`) |
-| **`Rbeast`** | Bayesian | Moderate (univariate trends) | - | - | Abrupt & gradual | Posterior changepoint probabilities | Seasonal decomposition |
-| **`strucchange`** | Frequentist | Moderate | Basic | - | Abrupt | Asymptotic confidence intervals (Bai 1997) | Empirical fluctuation tests |
-| **`changepoint`** | Algorithmic | Basic (mean/var) | - | - | Abrupt | Point estimates only | - |
+| Package | Paradigm | Primary Tasks | Segmented Regression | GLM Likelihoods | Group / Random Effects | Transition Modeling | Location Uncertainty | Autoregression & Heteroscedasticity |
+|:--------|:--------|:-------------|:-------:|:-------:|:-------:|:-------:|:--------|:-------:|
+| **`mcp`** | Bayesian | Regression, Time Series | High | High (Gaussian, Binomial, Poisson, NegBin) | High (on CPs & slopes) | Abrupt (discontinuous or joined) | Posterior densities & credible intervals (ETI / HDI) | High (`sigma()`, `ar()`, `ma()`) |
+| **`smoothbp`** | Bayesian | Regression, Break Selection | High | \- (Gaussian only) | Moderate (on CPs & slopes) | Smooth (logistic transition) | Posterior densities & PIPs | \- |
+| **`segmented`** | Frequentist | Regression | High | High (`glm()`, `coxph()`) | Moderate (`lme()` integration) | Continuous joined lines only | Frequentist SE & CIs (delta, score, boot) | Basic (`Arima()`) |
+| **`Rbeast`** | Bayesian | Time Series Decomposition | Moderate (univariate trends) | \- | \- | Abrupt & gradual | Posterior changepoint probabilities | Seasonal decomposition |
+| **`dsp`** | Bayesian | Time Series, Trend Filtering | Moderate (trend filtering) | \- | \- | Latent dynamic shrinkage | Posterior state distributions | Time-varying & heteroscedastic |
+| **`strucchange`** | Frequentist | Time Series, Regression | Moderate | Basic | \- | Abrupt (step/slope breaks) | Asymptotic confidence intervals (Bai 1997) | Empirical fluctuation tests |
+| **`changepoint`** | Algorithmic | Detection (Throughput) | Basic (mean/var) | \- | \- | Abrupt | Point estimates only | \- |
+| **`bcp`** | Bayesian | Detection | \- | \- | \- | Abrupt (step changes) | Pointwise posterior break probabilities $P(B_t = 1)$ | \- |
+| **`stepR`** | Algorithmic / Multiscale | Detection, Inference | Basic (mean/var) | \- | \- | Abrupt | Simultaneous confidence intervals & bands (HSMUCE) | Segment-specific variance |
+| **`ecp`** | Nonparametric | Detection (Multivariate) | \- | Nonparametric | \- | Abrupt | Permutation p-values | Multivariate joint distributions |
 :::
-
-
-## The Two Axes of Change Point Analysis
-
-The packages in R trade off **model complexity** (functional regression flexibility, generalized likelihoods, random effects, and custom priors) against **computational scalability** (handling high data volume and discovering dozens of unknown change points):
-
-```
-                            ▲ High Model Complexity
-                            │ (Slopes, GLMs, Random Effects, Priors, ARMA)
-             [ mcp ]        │   
-           [ smoothbp ]     │      [ segmented ]
-                            │   
-          [ strucchange ]   │                         [ Rbeast ]
-  Low Data Volume ──────────┼──────────────────────────────► High Data Volume
-  & Few CPs (1-5)           │             [ bcp ]             & Many CPs (10-50+)
-                            │      [ changepoint / PELT ]
-                            │
-                            ▼ Low Model Complexity
-                              (Piecewise constant mean / variance)
-```
-
 
 # Benchmark Regression Data
 
-To compare how different packages handle change points and parameter recovery, we generate a synthetic dataset ($N = 100$) with two true change points at $x = 30$ and $x = 70$:
+To compare how different packages handle change points and parameter recovery in regression settings, we generate a synthetic dataset ($N = 100$) with two true change points at $x = 30$ and $x = 70$:
 
-- **Segment 1 ($x \in [1, 30]$)**: Plateau at $y = 10$.
-- **Segment 2 ($x \in [31, 70]$)**: Joined linear slope of $+0.50$ per unit $x$, starting from $y = 10$.
-- **Segment 3 ($x \in [71, 100]$)**: Disjoined step jump to intercept $20$ with a downward slope of $-0.30$ per unit $x$.
+- **Segment 1 (**$x \in [1, 30]$): Plateau at $y = 10$.
+- **Segment 2 (**$x \in [31, 70]$): Joined linear slope of $+0.50$ per unit $x$, starting from $y = 10$.
+- **Segment 3 (**$x \in [71, 100]$): Disjoined step jump to intercept $20$ with a downward slope of $-0.30$ per unit $x$.
 - **Residual error**: Gaussian noise with $\sigma = 2$.
 
 ```{r}
@@ -108,15 +91,48 @@ plot(df$x, df$y, xlab = "x", ylab = "y", pch = 16, col = "gray40", main = "Bench
 abline(v = c(30, 70), col = "firebrick", lty = 2, lwd = 1.5)
 ```
 
-
 # Application 1: Segmented & Piecewise Regression
 
-Segmented regression packages estimate interpretable regression parameters (slopes, intercepts, and change point locations) along continuous predictors.
+Segmented regression packages estimate interpretable regression parameters (slopes, intercepts, and change point locations) along continuous predictors. Here, the changepoints and the relationships before and after them are scientifically meaningful parameters.
 
+## Coordinate System: Segmented Regression
+
+The segmented regression landscape trades off **transition & structural flexibility** (continuous joined lines, discontinuous vertical steps, smooth logistic transitions, hierarchical varying effects, and prior constraints) against **likelihood & residual complexity** (GLMs, heteroscedasticity, and autoregressive noise):
+
+```{r, fig.height = 4.5, fig.width = 7.5, message = FALSE, warning = FALSE}
+library(ggplot2)
+
+df_coord_task1 = data.frame(
+  pkg = c("mcp", "smoothbp", "segmented", "strucchange", "bentcableAR", "BreakPoints"),
+  x = c(9.0, 8.5, 3.5, 5.0, 6.0, 3.0),
+  y = c(9.0, 3.5, 7.5, 3.5, 4.5, 6.0),
+  paradigm = c("Bayesian (MCMC)", "Bayesian (Rust)", "Frequentist (IRLS)", "Frequentist (OLS)", "Bayesian / NLS", "Frequentist (GLM)")
+)
+
+ggplot(df_coord_task1, aes(x = x, y = y, label = pkg, color = paradigm)) +
+  geom_point(size = 3.8, alpha = 0.9) +
+  geom_text(aes(y = y + 0.45), fontface = "bold", size = 3.8, show.legend = FALSE) +
+  scale_x_continuous("Structural & Transition Flexibility\n(Strictly joined linear -> Discontinuous steps & plateaus -> Smooth transitions + Covariates / Random effects)", limits = c(1, 10.5)) +
+  scale_y_continuous("Likelihood & Residual Complexity\n(Gaussian only -> GLMs [Binomial, Poisson, NegBin] + Heteroscedasticity [sigma] + ARMA)", limits = c(1, 10.5)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(title = "Task 1: Segmented & Piecewise Regression Landscape", subtitle = "Trade-off between structural transition flexibility and likelihood / residual complexity") +
+  theme_minimal(base_size = 11) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "gray90", linewidth = 0.5),
+    panel.border = element_rect(color = "gray80", fill = NA, linewidth = 0.8),
+    plot.title = element_text(face = "bold", size = 12),
+    plot.subtitle = element_text(color = "gray35", size = 9.5),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold", size = 9),
+    legend.text = element_text(size = 8.5),
+    axis.title = element_text(face = "bold", size = 9.5)
+  )
+```
 
 ## `mcp`: Generative Regression with Multiple Change Points
 
-`mcp` allows specifying different functional forms for each segment (e.g. plateaus, joined slopes, and disjoined steps).
+`mcp` provides an expansive generative regression language where each segment can have its own functional form (plateaus, joined slopes, disjoined steps, polynomial terms, and varying effects).
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 library(mcp)
@@ -150,9 +166,8 @@ plot(fit_mcp, q_fit = TRUE)
 
 **Constraints:**
 
-- Computation uses MCMC sampling (JAGS), requiring more compute time on large datasets (>20,000 observations) or models with $\ge 10$ change points than closed-form alternatives.
+- Computation uses MCMC sampling (JAGS), requiring more compute time on large datasets (\>20,000 observations) or models with $\ge 10$ change points than closed-form alternatives.
 - Selecting the number of change points is performed via model comparison rather than within a single model fit.
-
 
 ## `smoothbp`: Smooth Transitions and Breakpoint Selection
 
@@ -210,7 +225,6 @@ Notice the structural difference between `smoothbp`'s $\omega_1$ posterior and `
 - Models continuous slope transitions; discontinuous intercept step changes across segments are not directly parameterized.
 - While the sampler is compiled in Rust, evaluating multiple logistic transitions across high-dimensional parameter spaces ($\boldsymbol{\omega} \times \boldsymbol{\rho}$) is computationally demanding and does not outpace `mcp` on typical models.
 
-
 ## `segmented`: Frequentist Piecewise Regression
 
 `segmented` estimates breakpoints by extending standard frequentist regression models (`lm`, `glm`, `coxph`, `Arima`).
@@ -249,13 +263,13 @@ lines(fit_seg, col = "blue", lwd = 2)
 - Enforces continuous joined slopes; does not parameterize discontinuous step jumps between slope segments.
 - Does not support Bayesian priors, exact posterior distributions on change points, or varying group-level change-point distributions.
 
-
 ## Other Segmented Regression Packages on CRAN
 
+- **`bentcableAR`**: Models gradual bent-cable transitions with autoregressive errors; conceptually related to `smoothbp` but focused on single bent-cable models.
+- **`BreakPoints`**: Multiple structural change point estimation in linear and generalized linear models.
 - **`segmentr`**: Exact and heuristic segmentation algorithms under customizable segment loss functions.
 - **`BayesPieceHazSelect`**: Bayesian piecewise constant hazard rate modeling with variable selection.
-- **`BreakPoints`**: Multiple structural change point estimation in linear and generalized linear models.
-
+- **`PCpluS`**: Simultaneous estimation of smooth underlying functions and abrupt piecewise-constant changes.
 
 # Application 2: Time Series Decomposition & Structural Breaks
 
@@ -276,6 +290,40 @@ abline(v = 1898, col = "firebrick", lty = 2, lwd = 1.5)
 
 While the Nile dataset reflects a single level shift, real-world time series often feature richer dynamics such as **variance regime changes** (e.g. macroeconomic volatility shocks), **shifts in serial persistence** (modeled via `mcp`'s `~ ar(1)` or `~ ar(2)`), and **seasonal cycles coupled with abrupt policy interventions** (e.g. monthly road casualty drops following mandatory seatbelt legislation in `Seatbelts`).
 
+## Coordinate System: Time Series Decomposition & Structural Breaks
+
+This domain trades off **automated signal decomposition** (discovering unknown trends, harmonic seasonality, outliers, and dynamic shrinkage) against **scientific generative modeling & hypothesis testing** (econometric stability tests, causal counterfactuals, and custom piecewise regression):
+
+```{r, fig.height = 4.5, fig.width = 7.5, message = FALSE, warning = FALSE}
+library(ggplot2)
+
+df_coord_task2 = data.frame(
+  pkg = c("mcp", "Rbeast", "dsp", "strucchange", "EnvCpt", "CausalImpact", "mosum"),
+  x = c(3.0, 8.5, 9.0, 4.0, 6.5, 2.0, 4.5),
+  y = c(9.0, 7.5, 7.0, 4.5, 5.0, 2.5, 3.5),
+  paradigm = c("Bayesian Generative", "Bayesian Model Averaging", "Bayesian Dynamic Shrinkage", "Frequentist Econometric", "Frequentist Model Selection", "Bayesian State-Space", "Frequentist Moving Sum")
+)
+
+ggplot(df_coord_task2, aes(x = x, y = y, label = pkg, color = paradigm)) +
+  geom_point(size = 3.8, alpha = 0.9) +
+  geom_text(aes(y = y + 0.45), fontface = "bold", size = 3.8, show.legend = FALSE) +
+  scale_x_continuous("Decomposition Scope & Automation\n(Predefined single break -> Automated trend/AR selection -> Latent trend filtering -> Bayesian seasonal + outlier decomposition)", limits = c(1, 10.5)) +
+  scale_y_continuous("Scientific Modeling & Inferential Depth\n(Causal counterfactuals -> Fluctuation tests -> Trend decomposition -> Custom piecewise generative regression)", limits = c(1, 10.5)) +
+  scale_color_brewer(palette = "Set1") +
+  labs(title = "Task 2: Time Series Decomposition & Structural Breaks", subtitle = "Trade-off between automated signal decomposition and customized generative regression") +
+  theme_minimal(base_size = 11) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "gray90", linewidth = 0.5),
+    panel.border = element_rect(color = "gray80", fill = NA, linewidth = 0.8),
+    plot.title = element_text(face = "bold", size = 12),
+    plot.subtitle = element_text(color = "gray35", size = 9.5),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold", size = 9),
+    legend.text = element_text(size = 8.5),
+    axis.title = element_text(face = "bold", size = 9.5)
+  )
+```
 
 ## `mcp` on Time Series
 
@@ -298,7 +346,6 @@ plot(fit_mcp_nile)
 ```
 
 `mcp` dates the change point to **1898.3 [1896.4, 1899.7]**, estimating a pre-1898 mean flow of $1094$ and a post-1898 mean flow of $851$.
-
 
 ## `strucchange`: Econometric Testing for Parameter Stability
 
@@ -325,7 +372,6 @@ confint(bp_nile)
 
 - Limited to linear models with Gaussian errors. Does not provide hierarchical varying effects or generalized response distributions.
 
-
 ## `Rbeast`: Bayesian Trend and Seasonal Decomposition
 
 `Rbeast` (Bayesian Estimator of Abrupt change, Seasonal change, and Trend) uses Bayesian model averaging over piecewise linear trends, harmonic seasonal components, and changepoints. It averages over competing numbers of trend and seasonal changes and can represent nonlinear trends.
@@ -346,12 +392,29 @@ For a comparable `mcp` analysis, the two-plateau model fitted above is the close
 
 - Decomposes regular and irregular time series into trend, periodic, and abrupt change components simultaneously.
 - Infers the number and locations of changepoints via model averaging without pre-specifying candidate locations.
-- Accommodates missing observations in the time series.
+- Accommodates missing observations and outliers in the time series.
 
 **Constraints:**
 
 - Designed for univariate time series decomposition rather than general multi-predictor regression grammar.
 
+## `dsp`: Dynamic Shrinkage Processes & Bayesian Trend Filtering
+
+`dsp` implements Bayesian dynamic shrinkage models, placing heavy shrinkage priors on successive differences in a latent trajectory. Most successive differences are shrunk very nearly to zero, while a few escape shrinkage to represent abrupt changes.
+
+**Conceptual difference from `mcp`:** In `mcp`, segmentation is explicit: the user specifies $K$ segments and estimates $K-1$ breakpoint parameters alongside segment slopes and intercepts. In `dsp`, the model is closer to Bayesian trend filtering: the trajectory adapts locally to data without requiring a prespecified number of breakpoints.
+
+**Key capabilities:**
+
+- Estimates locally constant and locally linear signals, time-varying regression coefficients, B-spline trajectories, and heteroscedasticity.
+- Discovers unknown changepoints and localized trend shifts without specifying the number of breaks.
+- Handles outliers and adaptive variance across time.
+
+**Trade-offs:** Dynamic shrinkage produces a highly flexible estimated curve, but sacrifices the explicit, scientifically interpretable per-segment parameterization of `mcp` (e.g. pre- vs. post-intervention slopes, treatment interactions, or hierarchical group effects on changepoint locations).
+
+## `EnvCpt`: Environmental Model Comparison
+
+`EnvCpt` automatically fits and compares 8 combinations of trend, mean changepoints, and AR(1)/AR(2) autocorrelation models using BIC/AIC. It is specifically designed for climate and environmental series where distinguishing genuine changepoints from autocorrelation is critical.
 
 ## `CausalImpact`: Known Interventions with Control Series
 
@@ -406,28 +469,51 @@ plot(fit_mcp_impact)
 
 `mcp` recovers the change point near 70 and the post-intervention intercept increase. That is useful descriptive evidence, but it is not a causal effect: `mcp` has no counterfactual control-series assumption. Conversely, `CausalImpact` estimates the counterfactual effect but depends critically on controls being unaffected by the intervention and retaining a stable relation to the response.
 
-
-## `dsp`: Dynamic Shrinkage Processes
-
-`dsp` implements Bayesian trend filtering using dynamic shrinkage priors on successive differences in latent states.
-
-**Key capabilities:**
-
-- Shrinks adjacent differences toward zero while allowing sparse, large changes to escape shrinkage.
-- Discovers localized trend shifts and heteroscedasticity without explicit changepoint parameterization.
-
-
 ## Other Structural Break and Time Series Packages on CRAN
 
-- **`EnvCpt`**: Automated model selection comparing combinations of trend, mean, and AR(1)/AR(2) change points for climate and environmental series.
 - **`mosum`**: Moving Sum statistics for testing and dating mean/variance shifts with confidence intervals.
 - **`trendsegmentR`**: Linear wavelet-based detection for piecewise-linear trends and slope breaks with robust variance estimators.
 - **`multibreakeR`**: Econometric testing and estimation of multiple structural breaks in multivariate time series.
 
-
 # Application 3: Algorithmic Change Point Detection & Meta-Packages
 
 Detection packages focus on identifying unknown shift locations in large sequences with high computational efficiency.
+Detection packages focus on identifying unknown shift locations in large sequences with high computational efficiency, multiscale guarantees, or joint multivariate distributions.
+
+## Coordinate System: Algorithmic Detection & Meta-Packages
+
+Algorithmic detection trades off **computational scalability** (sampling-based MCMC vs. fast dynamic programming / binary segmentation across $10^5-10^6$ observations) against **signal complexity & inferential scope** (piecewise constants vs. slopes, multiscale confidence bands, observation-level posterior profiles, multivariate joint distributions, and meta-interfaces):
+
+```{r, fig.height = 4.5, fig.width = 7.5, message = FALSE, warning = FALSE}
+library(ggplot2)
+
+df_coord_task3 = data.frame(
+  pkg = c("changepoint", "not", "stepR", "bcp", "ecp", "smoothbp (SS)", "ggchangepoint", "breakfast"),
+  x = c(9.5, 8.5, 7.0, 3.0, 4.5, 3.5, 8.0, 7.5),
+  y = c(2.0, 4.5, 6.0, 7.0, 8.5, 5.5, 9.0, 5.0),
+  scope = c("Univariate Mean / Var (PELT)", "Univariate Slopes & Steps (NOT)", "Multiscale Mean & Var (HSMUCE)", "Pointwise Posterior Probabilities", "Multivariate Joint Distributions", "Spike-and-Slab Selection", "Meta-Framework (15+ Algorithms)", "Multiscale WBS / Isolate-Detect")
+)
+
+ggplot(df_coord_task3, aes(x = x, y = y, label = pkg, color = scope)) +
+  geom_point(size = 3.8, alpha = 0.9) +
+  geom_text(aes(y = y + 0.45), fontface = "bold", size = 3.8, show.legend = FALSE) +
+  scale_x_continuous("Computational Scalability & Speed\n(MCMC / Permutations [10^2-10^3 obs] -> Fast dynamic programming & binary segmentation [10^5-10^6 obs])", limits = c(1, 10.5)) +
+  scale_y_continuous("Signal Complexity & Inferential Scope\n(Point estimates -> Piecewise slopes -> Multiscale CIs -> Posterior profiles -> Multivariate distributions -> Meta-wrappers)", limits = c(1, 10.5)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(title = "Task 3: Algorithmic Change Point Detection & Meta-Packages", subtitle = "Trade-off between massive throughput and inferential / distributional scope") +
+  theme_minimal(base_size = 11) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "gray90", linewidth = 0.5),
+    panel.border = element_rect(color = "gray80", fill = NA, linewidth = 0.8),
+    plot.title = element_text(face = "bold", size = 12),
+    plot.subtitle = element_text(color = "gray35", size = 9.5),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold", size = 9),
+    legend.text = element_text(size = 8.5),
+    axis.title = element_text(face = "bold", size = 9.5)
+  )
+```
 
 To illustrate high-throughput detection across sequences with many change points, we use the `coriell` genomic microarray dataset (Snijders et al. 2001, $N = 2,077$), which exhibits dozens of abrupt copy-number state transitions along chromosomes:
 
@@ -438,7 +524,6 @@ df_dna = data.frame(
   y = as.numeric(na.omit(coriell$Coriell.13330))
 )
 ```
-
 
 ## `changepoint`: High-Throughput Detection via PELT
 
@@ -452,7 +537,6 @@ fit_cpt = cpt.meanvar(df_dna$y, method = "PELT", penalty = "Manual", pen.value =
 plot(fit_cpt, xlab = "Genomic Index", ylab = "Log2 Ratio", main = "changepoint PELT on Coriell DNA (N = 2,077)")
 ```
 
-
 ## `bcp`: Bayesian Change Point Detection
 
 `bcp` implements the Barry and Hartigan (1993) product partition model via Markov chain Monte Carlo, estimating the exact posterior probability profile of a change point at every observation:
@@ -464,10 +548,10 @@ fit_bcp = bcp(df_dna$y, p0 = 0.01, burnin = 100, mcmc = 500)
 plot(fit_bcp, main = "bcp Posterior Probability Profile on Coriell DNA")
 ```
 
-
 ## `not`: Fast Detection of Slope Changes and Steps
 
 `not` is a fast, univariate detection method for an unknown number of change points. Unlike `changepoint`, it includes piecewise-linear signals with either joined or discontinuous lines. This example contains both a slope change and an intercept jump at observation 100.
+`not` (Narrowest-Over-Threshold) is a fast, univariate detection method for an unknown number of change points. Unlike `changepoint`, it includes piecewise-linear signals with either joined or discontinuous lines. This example contains both a slope change and an intercept jump at observation 100.
 
 ```{r}
 set.seed(42)
@@ -507,7 +591,6 @@ plot(fit_mcp_not)
 ```
 
 Both methods recover a change near 100. `not` searches over the number of changes in one fast procedure, whereas `mcp` reports a posterior for the pre-specified single change point and estimates the two regression lines. For many unknown breaks, the computational advantage remains with `not`.
-
 
 ## `stepR`: Multiscale Inference for a Change in Mean and Variance
 
@@ -555,7 +638,6 @@ plot(fit_mcp_step, q_predict = TRUE)
 
 Both fits identify the break near 80. `stepR` is specialized to piecewise-constant signals and reports multiscale confidence intervals/bands; `mcp` gives posterior uncertainty for the location, means, and each segment's residual SD, and can extend the same model to slopes, covariates, or GLM likelihoods.
 
-
 ## `ecp`: Multivariate, Distribution-Free Detection
 
 `ecp` detects changes in the joint distribution of multivariate observations, not merely a change in each marginal mean. The following signal changes both means and variances at observation 80. It has no cross-series correlation, but the simultaneous multivariate shift is beyond an ordinary univariate `mcp` likelihood.
@@ -600,7 +682,6 @@ plot(fit_mcp_ecp, q_predict = TRUE)
 
 `mcp` recovers the shared mean/variance break in `y1`; repeating the model for `y2` checks whether its location agrees. `ecp` instead uses both series jointly and can detect changes in a joint distribution even when a univariate mean/variance model is misspecified. It therefore complements rather than competes directly with `mcp`.
 
-
 ## `smoothbp_ss`: Spike-and-Slab Breakpoint Selection
 
 For discovering whether candidate breakpoints exist within a single Bayesian piecewise model, `smoothbp` provides spike-and-slab variable selection (`smoothbp_ss`):
@@ -625,11 +706,14 @@ pip(fit_ss)
 
 The posterior inclusion probabilities (PIPs) evaluate the probability that each candidate breakpoint is active.
 
+## Meta-Packages: `ggchangepoint` and `tidychangepoint`
+
+As the changepoint ecosystem has diversified, meta-packages such as `tidychangepoint` and `ggchangepoint` provide unified, tidy interfaces wrapping more than a dozen distinct algorithmic packages. They standardize changepoint outputs, provide automated ggplot visualizations, and facilitate method comparison across algorithms. They address the question *"Which detection algorithm should I use?"* rather than providing a custom regression specification.
 
 ## When NOT to Use `mcp` or `smoothbp`
 
+Neither package is designed for high-throughput detection across large sequences with many unknown change points ($\ge 10$\$\\ge 10\$). Specifying 10+ ordered change points in MCMC causes severe label switching, slow sampling, and poor mixing over $2^{10}$ permutations. For signals with dozens of unknown shifts across thousands of observations, use **`changepoint`**, **`not`**, or **`bcp`**.
 Neither package is designed for high-throughput detection across large sequences with many unknown change points ($\ge 10$). Specifying 10+ ordered change points in MCMC causes severe label switching, slow sampling, and poor mixing over $2^{10}$ permutations. For signals with dozens of unknown shifts across thousands of observations, use **`changepoint`**, **`not`**, or **`bcp`**.
-
 
 ## Other Algorithmic Detection Packages on CRAN
 
@@ -640,12 +724,17 @@ Neither package is designed for high-throughput detection across large sequences
 - **`changepoint.geo`**: High-dimensional change point detection via geometric projection.
 - **`ChangepointTesting`**: Sequential hypothesis testing for changes in variance and mean.
 
-
 # Summary: Selecting a Package
 
 - **Bayesian piecewise regression**: Use **`mcp`** for full generative modeling (arbitrary per-segment formulas, GLMs, group effects, ARMA, heteroscedasticity) or **`smoothbp`** for continuous smooth transitions and spike-and-slab selection.
 - **Bayesian point-wise break detection**: Use **`bcp`** for observation-level posterior break probability profiles, or **`Rbeast`** for Bayesian trend and seasonal decomposition.
+- **Frequentist continuous broken-line regression**: Use **`segmented`** when estimating joined slope changes on standard `lm()` / `glm()` fits with fast execution.
+- **Frequentist econometric testing & linear breaks**: Use **`strucchange`** for formal hypothesis tests (CUSUM/MOSUM) and dating of structural breaks in regression models.
+- **Bayesian trend & seasonal decomposition**: Use **`Rbeast`** for automated Bayesian model averaging over trend, periodic seasonal cycles, and changepoints on time series.
+- **Bayesian trend filtering & dynamic shrinkage**: Use **`dsp`** when the signal has localized features, time-varying coefficients, or unknown numbers of shifts without explicit changepoint parameterization.
 - **Known intervention with controls**: Use **`CausalImpact`** to estimate a causal counterfactual after a pre-specified intervention; a change point alone is not a causal effect estimate.
 - **Frequentist continuous broken-line regression**: Use **`segmented`** when estimating joined slope changes on standard `lm()` / `glm()` fits with fast execution.
 - **Frequentist econometric testing**: Use **`strucchange`** for formal hypothesis tests and dating of structural breaks in regression models.
+- **Observation-level posterior probabilities**: Use **`bcp`** for point-wise Bayesian break probability profiles $P(B_t = 1)$.
 - **High-throughput signal detection**: Use **`changepoint`**, **`not`**, or **`stepR`** for rapid univariate detection; use **`ecp`** when a joint multivariate distribution may change.
+- **Meta-comparison across algorithms**: Use **`ggchangepoint`** or **`tidychangepoint`** for standardized tidy workflows comparing multiple underlying detection algorithms.

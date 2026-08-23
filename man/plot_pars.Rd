@@ -23,7 +23,7 @@ plot_pars(
 \itemize{
 \item Vector of parameter names.
 \item \code{"population"} plots all population-level parameters.
-\item \code{"group"} plots all group-level deviations. To plot a particular group-level
+\item \code{"group"} plots all group-level deviations (random effects). To plot a particular group-level
 effect, use \code{regex_pars = "^name"}.
 }}
 
