@@ -335,8 +335,7 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
     "(maximum checked-draw violation rate: ",
     paste(details, collapse = "; "), "). ",
     "For time-varying coefficients this is a local check, not proof of global ",
-    "stationarity or invertibility. ",
-    "See `vignette(\"arma\")`.",
+    "stationarity or invertibility.",
     call. = FALSE
   )
   invisible(NULL)
@@ -363,7 +362,7 @@ warn_arma_simulation = function(values) {
     } else {
       "invertible MA"
     },
-    " coefficients. See `vignette(\"arma\")`.",
+    " coefficients.",
     call. = FALSE
   )
   invisible(NULL)

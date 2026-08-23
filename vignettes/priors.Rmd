@@ -60,7 +60,7 @@ prior_summary(empty_manual, verbose = TRUE)
 prior_summary(empty_default, verbose = TRUE)
 ```
 
-Now, let's simulate some data that from the `model`. The following priors are "at odds" with the actual data so as to show their effect.
+Now, let's simulate some data from `model`. The following priors are "at odds" with the actual data so as to show their effect.
 
 ```{r}
 df = data.frame(x = runif(200, 0, 100), y = 1)  # 200 datapoints between 0 and 100
@@ -97,7 +97,7 @@ pp_manual = plot_pars(fit_manual, type = "dens_overlay", prior = TRUE) +
 pp_default + pp_manual
 ```
 
-Here is the resulting posterior fits:
+Here are the resulting posterior fits:
 
 ```{r}
 set.seed(42)
@@ -109,7 +109,7 @@ plot_manual = plot(fit_manual) + ggtitle("Manual priors")
 plot_default + plot_manual
 ```
 
-We see the effects of the priors.
+We see the effects of the priors:
 
 - The intercept `Intercept_1` was truncated to be below 10.
 - The slope `x_1` is bound to be non-negative (because `dbeta`).
@@ -120,17 +120,13 @@ This is a contrived example. Usually setting priors manually aims to sample the 
 
 # Default priors on change points {#cp_prior}
 
-The following are treated more formally in the [mcp paper](https://osf.io/preprints/fzqxv/).
+Change point locations must lie within the observed range `[min(x), max(x)]` and maintain strict order `cp_1 < cp_2 < ... < cp_n`. Without this rule, change point locations would be unidentifiable. If you inspect `fit$jags_code`, you will see that `mcp` inserts boundary markers at `cp_0 = min(x)` and `cp_{n+1} = max(x)` to ensure the ordering constraint.
 
-The default priors order the population-level change points from left (`cp_1`) to right (`cp_2+`). `mcp` offers two built-in population-level prior families with different trade-offs:
+For any given range, introducing more change points makes the prior for each change point more informative (as shown in the figure below). `mcp` provides two built-in population-level prior families:
 
-- **One change point:** a uniform distribution from min(x) to max(x). For 2+ change points:
-
-- **Symmetric segment spacings:** `dirichlet(1)` is equivalent to sorting independent uniforms and treats the spacings exchangeably. This is a transparent substantive prior, not an uninformative one, but JAGS samples it quite inefficiently. It follows [Bürkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/).
-
-- **Regularizing "t-tail" prior:** The default for 2+ change points is sequentially truncated Student-t distributions centered at the minimum x. There is no nice math behind this, but it reasonably approximate the dirichlet prior (see above and visualization below) and samples efficiently. For 5+ change points, it squeeze the middle change point priors a bit together.
-
-With one change point, both specifications imply a uniform location within the observed range, though the direct uniform default samples more efficiently.
+- **One change point:** Both specifications default to `cp_1 = uniform(min(x), max(x))`. Its location is uniform over the observed x-range.
+- **The t-tail prior (default for 2+ change points):** Sequentially truncated Student-t distributions centered at `min(x)`. Specifically, `cp_i = student_t(df = n_cp() - 1, location = min(x), scale = (max(x) - min(x)) / n_cp()) T(cp_{i-1}, max(x))`.
+- **The Dirichlet prior:** A joint prior on segment spacings specified via `prior = list(cp_1 = "dirichlet(1)", cp_2 = "dirichlet(1)", ...)`.
 
 ```{r, echo = FALSE, results=FALSE, warning=FALSE, message=FALSE}
 df_dummy = data.frame(x = c(0, 0.5, 1), y = rnorm(3))
@@ -248,34 +244,22 @@ lines(z2$x, z1$y / 5); text(0.1, 0.8, labels = "cp_1")
 par(mfrow = c(1,1))
 ```
 
-## Common to both priors
-
-Both priors have all their density between `min(x)` and `max(x)`. In other words, the change point must lie in the observed range. Without this rule, change point locations would be unidentifiable. If you inspect the `fit$jags_code` you will see it even inserts some "dummy" change points at `cp_0 = min(x)` and `cp_{n+1} = max(x)` to ensure the order constraint that `cp_0 < cp_1 < ... < cp_n < cp_{n+1}`.
-
-For any given range, introducing more change points make the prior for each change point more informative as can be seen in the figure above.
-
 ## The t-tail prior on 2+ change points (default)
 
-With exactly one change point, the default rule is `cp_1 = uniform(min(x), max(x))`. Thus its location is uniform over the observed x-range. This is equivalent to the one-change-point Dirichlet specification.
+For 2+ change points, the default rule (on all change points) is `cp_i = student_t(df = n_cp() - 1, location = min(x), scale = (max(x) - min(x)) / n_cp())`, bounded below by the preceding change point and above by `max(x)`.
 
-For 2+ change points, the default rule (on *all* change points) is `cp_i = student_t(df = n_cp() - 1, location = min(x), scale = (max(x) - min(x)) / n_cp())`, bounded below by the preceding change point and above by `max(x)`. This is not as complicated as it looks, so let me unpack it.
-
-- It is t-distributed with $N - 1$ degrees of freedom (`n_cp() - 1`). Together with the decreasing scale, this makes the underlying distributions more concentrated as the number of change points increases.
-- Under the defaults, it is bounded below by the preceding population-level `cp` and above by `max(x)`. For example, `cp_3` is bounded below by `cp_2` and above by `max(x)`, keeping the default population-level change points ordered within the observed range.
-- The scale is `(max(x) - min(x)) / n_cp()`. This is a calibration choice, not the equal-segment spacing (which would divide by `n_cp() + 1`).
-- The location parameter of the underlying Student-t is always the lowest observed `x`. Thus `cp_1` is a bounded half-t and `cp_2+` use sequentially truncated right tails of the same t, hence the name "t-tail prior". Their means are shifted by truncation and are not equal to `min(x)`.
-
-The middle segments tend get narrower than the first/last segments. For non-small datasets, the effect on the posterior is negligible, though point-`hypothesis()` tests via Savage-Dickey would be strongly impacted.
+- **Degrees of freedom:** It is t-distributed with $N - 1$ degrees of freedom (`n_cp() - 1`). Together with the decreasing scale, this makes the underlying distributions more concentrated as the number of change points increases.
+- **Scale:** The scale is `(max(x) - min(x)) / n_cp()`. This is a calibration choice, not the equal-segment spacing (which would divide by `n_cp() + 1`).
+- **Location and truncation:** The location parameter is always the lowest observed `x`. Thus `cp_1` is a bounded half-t and `cp_2+` use sequentially truncated right tails of the same t (hence "t-tail prior"). Their means are shifted by truncation and are not equal to `min(x)`.
+- **Properties:** The sequential truncation does not produce exact uniform order statistics; the middle segments tend to get narrower than the first/last segments. For non-small datasets, the effect on the posterior is negligible, though point-`hypothesis()` tests via Savage-Dickey density ratios would be strongly impacted. Its main advantage is sampling speed: JAGS samples this formulation much faster than the Dirichlet prior.
 
 ## Dirichlet-based prior on change points
 
-The [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) naturally gives the desired ordering and bounding. `mcp` uses the dirichlet prior for change points similarly to how `brms` use it for monotonic effects ([Bürkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/)).
+The [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) places a joint prior on positive segment spacings that sum to the observed x-range. Consequently, the derived population-level change points are naturally ordered and bounded. This construction also underlies monotonic effects in `brms` ([Bürkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/)).
 
-The Dirichlet distribution is a simplex of beta distributions, i.e., they always sum to 1. The individual betas can be seen as inter-changepoint distances. This means the change points are naturally ordered, as desired. For `N` changepoints, the distribution for changepoint `i` is `Beta(i, N + 1 - i)`, so `cp_1 ~ Beta(1, N)` and `cp_N ~ Beta(N, 1)`.
+The Dirichlet distribution is a simplex of beta distributions (they always sum to 1), where the individual betas represent inter-changepoint distances. For $N$ change points, the distribution for change point $i$ is $\text{Beta}(i, N + 1 - i)$, so `cp_1 ~ Beta(1, N)` and `cp_N ~ Beta(N, 1)`. Scaling from $[0, 1]$ to the observed data range (`0 --> min(x)`, `1 --> max(x)`) gives the desired bounding.
 
-Scaling to the observed range (`0 --> min(x)`, `1 --> max(x)`), we naturally get the desired bounding.
-
-To use the Dirichlet prior, you need to specify it for all or none of the change points. E.g.,
+To use the Dirichlet prior, specify it for all change points:
 
 ```{r, eval=FALSE}
 prior_dirichlet = list(
@@ -285,42 +269,22 @@ prior_dirichlet = list(
 )
 ```
 
-The number in the parentheses is a common $\alpha$ parameter, so every change point must use the same value. Values below 1 favor uneven spacings, `dirichlet(1)` gives the ordered-uniform distribution, and values above 1 favor more even spacings.
+The number in parentheses is a common $\alpha$ concentration parameter (all change points must share the same $\alpha$). Values below 1 favor uneven spacings, `dirichlet(1)` treats spacings exchangeably (giving the ordered-uniform distribution), and values above 1 favor more evenly spaced change points.
 
 ## Manual priors on change points
 
-See the initial example above how to modify change point priors. But beware that the nature of the priors change when truncation is applied. Use `plot_pars(fit, prior = TRUE)` to check the resulting prior.
+You can customize change point priors as shown in the initial example. Beware that the nature of the priors changes when truncation is applied; use `plot_pars(fit, prior = TRUE)` to inspect the realized prior distributions.
 
-For an otherwise unbounded user prior such as `cp_2 = "dnorm(40, 10)"`, `mcp` adds default bounds equivalent to `cp_2 = "dnorm(40, 10) T(cp_1, max(x))"`. An explicit truncation, including `T(,)`, or a `dunif()` prior is used as written. Relaxing the order can cause label-switching between segments and sampling difficult, so inspect the resulting prior carefully.
+For an otherwise unbounded user prior such as `cp_2 = "dnorm(40, 10)"`, `mcp` automatically adds default bounds equivalent to `cp_2 = "dnorm(40, 10) T(cp_1, max(x))"`. An explicit truncation, including `T(,)`, or a `dunif()` prior is used as written. Relaxing the order can cause label-switching between segments and make sampling difficult, so inspect the resulting prior carefully.
 
 # Default priors on linear predictors
 
-The defaults borrow the robust calibration used by `brms`, adapted to the `mcp` use case. You can see them using `prior_summary(fit, verbose = TRUE)`. Here, we will just focus on what *differs* from brms.
+The defaults borrow the robust calibration used by `brms`, adapted to the local parameterization of `mcp`. You can inspect all resolved priors for a model using `prior_summary(fit, verbose = TRUE)`.
 
-- **Intercepts:** Unlike the flat default coefficient priors in `brms`, `mcp` uses proper Student-t priors because JAGS does not support flat priors.
-
-- **Slopes:** Numeric coefficient priors use the corresponding family-level scale divided by a representative change in the predictor: its observed range `max(x) - min(x)` for `par_x` and binary variables, and two standard deviations otherwise. This follows the scaling convention proposed by [Gelman (2008)](https://doi.org/10.1002/sim.3107) and ensures that slope priors remain identical and comparable across models regardless of the number of change points.
-
-## Gaussian mean priors
-
-With the identity link, the Gaussian intercept prior is centered on `round(median(y), 1)` and uses scale `max(2.5, round(mad(y), 1))`. Contrasts and numeric coefficients use the same scale and the reference-change scaling above.
-
-With the log link, this calibration uses the log response, replacing zero by 0.1 and using finite fallbacks. Both intercept rules follow `brms`; `mcp` adds proper scaled coefficient priors for prior sampling and mild segment regularization.
-
-## Gaussian residual-SD priors
-
-For Gaussian models without an explicit `sigma()` formula, the residual-SD prior is calibrated from `mad(y)` on the response scale. This remains true for `gaussian(link = "log")`: that link constrains the conditional mean, not the observations, so non-positive responses are valid and are never passed through `log()` merely to construct a sigma prior.
-
-An explicit `sigma()` formula instead models log-SD, as in `brms`. Its intercept prior is `dt(0, 2.5, 3)`, and its proper contrast and numeric-coefficient priors use the same reference-change scaling described above. These proper coefficient priors intentionally differ from the improper flat defaults in `brms` so that prior-only sampling remains defined.
-
-See the family-specific articles for more information about the priors for other families:
-
-- `vignette("binomial")` - also relevant for `bernoulli`
-- `vignette("poisson")` - also relevant for negative-binomial `shape`
-- `vignette("variance")` for explicit `sigma()` models
-- `vignette("arma")` for AR/MA regularization and root conditions
-
-The general principles belong here: parameterization, data-based scaling, proper regularization, and prior predictive checking. Exact defaults and constraints that arise from a particular likelihood or model component are documented in its own article. `prior_summary(fit, verbose = TRUE)` is the authoritative model-specific inventory, so the articles do not need to duplicate every generated prior.
+- **Intercepts:** Unlike the improper flat default coefficient priors in `brms`, `mcp` uses proper Student-t priors because JAGS does not support flat priors. With the identity link, the Gaussian intercept prior is centered on `round(median(y), 1)` with scale `max(2.5, round(mad(y), 1))`. With the log link, location and scale are derived from $\log(y)$ (with zeros replaced by 0.1).
+- **Slopes:** Numeric coefficient priors use the corresponding family-level scale divided by a representative change in the predictor: its observed range `max(x) - min(x)` for `par_x` and binary variables, and two standard deviations ($2\,\text{SD}$) otherwise. This follows the scaling convention proposed by [Gelman (2008)](https://doi.org/10.1002/sim.3107) and ensures that slope priors remain identical and comparable across models regardless of the number of change points.
+- **Unspecified SD model (`sigma`):** For Gaussian models without an explicit `sigma()` formula, `sigma_1` defaults to `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`, matching `brms`. This remains true for `gaussian(link = "log")`: that link constrains the conditional mean, not the observations, so non-positive responses are valid and are not passed through `log()` merely to construct a sigma prior.
+- **Modeled SD (`sigma(1 + x)`):** An explicit `sigma()` formula models log-SD, as in `brms`. Its intercept prior is `dt(0, 2.5, 3)`, and its contrast and numeric-coefficient priors use the same reference-change scaling described above.
 
 # Default priors on group-level effects
 
@@ -330,7 +294,7 @@ Group-level change-point deviations are exactly zero-centered so that each popul
 
 # Prior predictive checks
 
-Prior predictive checks is a great way to ensure that the priors are meaningful. Simply set `sample = "prior"`. Let us do it for the two sets of priors defined previously in this article, to see their different prior predictive space.
+Prior predictive checks are a great way to ensure that the priors are meaningful. Simply set `sample = "prior"`. Let us do it for the two sets of priors defined previously in this article, to see their different prior predictive space.
 
 ```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
 # Sample priors 
