@@ -74,6 +74,8 @@ jobs:
       # Run test coverage on the fastest-to-run job
       - name: Test coverage
         if: matrix.config.os == 'macos-latest' && matrix.config.r == 'release'
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
           covr::codecov(
             quiet = FALSE,
