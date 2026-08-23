@@ -129,9 +129,6 @@
 #'   the model, while a list or `FALSE` overrides the diagnostic footer.
 #' @param quiet Logical. Suppress routine JAGS output and mcp sampling-status
 #'   messages? Defaults to `FALSE`.
-#' @param series Only affects models with `ar()` or `ma()` terms.
-#'  * `NULL` (default): one long series.
-#'  * character: data column name identifying independent AR/MA series.
 #'
 #' @details
 #' **The mcp model**
