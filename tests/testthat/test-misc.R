@@ -708,19 +708,28 @@ test_that("hypothesis()", {
   # Savage-Dickey point equality test (requires prior)
   mid_val = format(mean(cp_draws), digits = 16)
   equality_expr = paste0("cp_1 = ", mid_val)
-  actual_equality = hypothesis(fit_same, equality_expr)
+  expect_warning(
+    actual_equality <- hypothesis(fit_same, equality_expr),
+    "Savage-Dickey Bayes factor was computed using default prior(s) for `cp_1`",
+    fixed = TRUE
+  )
   expect_s3_class(actual_equality, "data.frame")
   expect_equal(actual_equality$hypothesis, paste0("cp_1 - ", mid_val, " = 0"))
   expect_true(is.na(actual_equality$p))
   expect_false(is.na(actual_equality$BF))
   expect_equal(actual_equality$BF, 1, tolerance = 1e-3)
 
+  # With user-specified prior, no default prior warning is emitted
+  fit_user_prior = fit_same
+  fit_user_prior$.internal$prior_table$source[fit_user_prior$.internal$prior_table$parameter == "cp_1"] = "user"
+  expect_no_warning(hypothesis(fit_user_prior, equality_expr))
+
   prior_equality = hypothesis(fit_same, equality_expr, prior = TRUE)
   expect_true(is.na(prior_equality$BF))
 
   tail_val = format(max(cp_draws) + stats::sd(cp_draws), digits = 16)
   expect_warning(
-    hypothesis(fit_same, paste0("cp_1 = ", tail_val)),
+    hypothesis(fit_user_prior, paste0("cp_1 = ", tail_val)),
     "tested value is in a sparse tail",
     fixed = TRUE
   )

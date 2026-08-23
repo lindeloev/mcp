@@ -372,6 +372,19 @@ hypothesis = function(fit, hypotheses, width = 0.95, prior = FALSE) {
         if (!coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) || !coda::is.mcmc.list(.subset2(fit, "mcmc_post")))
           stop("Model contains '='. Both prior and posterior draws are needed to compute Savage-Dickey density ratios. Run mcp(..., sample = 'both'")
 
+        # Warning if testing against default priors
+        hypothesis_pars = sub("\\[.*\\]$", "", all.vars(rlang::parse_expr(expression)))
+        is_default_pars = fit$.internal$prior_table$parameter %in% hypothesis_pars & fit$.internal$prior_table$source == "default"
+        default_pars = fit$.internal$prior_table$parameter[is_default_pars]
+        if (length(default_pars) > 0) {
+          warning(
+            "Savage-Dickey Bayes factor was computed using default prior(s) for ",
+            and_collapse(paste0("`", default_pars, "`")),
+            ". Point Bayes factors are sensitive to the prior distribution; consider specifying informed priors.",
+            call. = FALSE
+          )
+        }
+
         prior_values = get_hypothesis_values(posterior_draws(fit, prior = TRUE), LHS)
         post_values = get_hypothesis_values(posterior_draws(fit), LHS)
 

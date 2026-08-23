@@ -34,7 +34,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   `plot()` is now split into `plot()` for plotting full fits while `plot_dpar()` plots one distributional parameter (`mu`, `sigma`, `shape`, `ar1`, etc.). The argument order was changed too. The new coloring function (`plot(fit, color_by = "column")`) is particularly useful when models include categorical predictors or rhs group-level effects. See `mcp_example("group_mu")` for a worked example.
 
--   `hypothesis()` now restricts equality tests to simple parameter contrasts and gives clearer guidance on Savage-Dickey Bayes factors. Non-linear transformations in hypotheses like `x_1 / x_2 = 1` could previously be run, even though Savage-Dickey does not support it. Equality tests now return `p = NA` because their Bayes factor is a model comparison, not a posterior parameter probability. Density estimates are more robust and warn about sparse tails.
+-   `hypothesis()` now restricts equality tests to simple parameter contrasts and gives clearer guidance on Savage-Dickey Bayes factors. Non-linear transformations in hypotheses like `x_1 / x_2 = 1` could previously be run, even though Savage-Dickey does not support it. Equality tests now return `p = NA` because their Bayes factor is a model comparison, not a posterior parameter probability. Density estimates are more robust, warn when evaluating Savage-Dickey Bayes factors on default priors, and warn about sparse tails.
 
 -   `fixef()` now reports only population-level effects for `mu` (the primary response parameter), excluding change points, other distributional parameters, AR/MA parameters, and group-effect SDs. Use `summary(fit)` to get all parameters.
 
