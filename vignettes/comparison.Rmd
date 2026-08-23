@@ -103,7 +103,7 @@ equality = hypothesis(fit_default, "cp_1 = 4")
 equality
 ```
 
-Let's unpack:
+Notice that `mcp` issues a warning when computing Savage-Dickey Bayes factors on default priors. Because default priors are broad, they suppress the prior density denominator and can heavily bias point Bayes factors. If you obtained these results with a bespoke, substantive prior, you would interpret them as:
 
  * `hypothesis`: For internal convenience, `hypothesis` always re-arranges to test against zero. 
  * `mean`: When subtracting $4$, the posterior distribution is very close, but somewhat dispersed. 
@@ -124,7 +124,7 @@ posterior_model_prob = equality$BF * prior_null_prob /
 posterior_model_prob
 ```
 
-Because the Bayes factor depends directly on the prior, the prior should represent plausible values under the continuous alternative. The higher prior density at `cp_1 = 4` in `fit_info` produces a lower Bayes factor:
+Because point Bayes factors depend directly on the prior density, they require bespoke, substantively justified priors. For example, testing `cp_1 = 4` on `fit_info` runs without warnings because an explicit prior was provided, yielding a substantially different Bayes factor:
  
 ```{r}
 hypothesis(fit_info, "cp_1 = 4")
@@ -218,9 +218,9 @@ loo::loo_compare(loo_default, loo_info, loo_simple)
 
 Aha, so the second model ("model2", i.e., `fit_info`) passed to `loo_compare()` was preferred as the other models had smaller ELPDs. As a first rough conclusion, we've learned that informed priors and a plateau improved out-of-sample predictions.
 
-Again, the absolute number (`elpd_diff`) is hard to relate to. More interpretable is the `z' = elpd_diff`/`se_diff` ratio. This is almost like a z-score, i.e., a ratio of 1.96 corresponds to 95% probability that one model has superior predictive accuracy. This is not an *effect size* but more a measure of *certainty* that this is not compatible with equal predictive properties. Just like Bayes Factors, a nice property over frequentist p-values is that you can quantify the relative evidence for and against any pair of models without having to assume one of them as null.
+In recent versions of `loo`, `loo_compare()` reports `p_worse` (the estimated probability that a model is worse than the best model) alongside diagnostic flags (`diag_diff` and `diag_elpd`) based on [Sivula et al. (2025)](https://doi.org/10.1214/25-BA1569).
 
-Unfortunately, [Sivula et al. (2020)](https://arxiv.org/abs/2008.10296) has shown that the estimation of `se` is underestimated (our $z'$-score is over-estimated) if (1) the model predictions are very similar, (2) the models are misspecified, or (3) for small data. My take-away from this paper is that the lesser these issues apply to your models, the more $z'$ is interpretable as a z-score and threshold-inclined people could use, e.g., $z'= 1.96$ as a decision threshold. To the extent that the issues apply, one may need to move the threshold all the way to $z' = 5$ cf. [this reply from LOO champion Aki Vehtari (2017)](https://discourse.mc-stan.org/t/interpreting-elpd-diff-loo-package/1628).
+These diagnostics highlight when the normal approximation underlying `se_diff` and `p_worse` is unreliable. For example, `|elpd_diff| < 4` flags that models have very similar predictive performance and should be treated as practically indistinguishable (as between `model2` and `model1` here), while `N < 100` warns of small-sample uncertainty underestimation. See the [LOO glossary](https://mc-stan.org/loo/reference/loo-glossary.html) or `?loo::loo-glossary` for details on all diagnostic flags.
 
 You could do the same using `waic`. This is computationally lighter at the cost of robustness to influential data points. The results are almost always practically identical.
 
