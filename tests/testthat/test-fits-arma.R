@@ -12,7 +12,7 @@ models_ar = list(
          ar2_1 = -0.4,
          x_2 = 0.5,
          ar1_2 = 0.5,
-         ar1_x_2 = -0.005
+         ar1_x_2 = -0.002
        ),
        newdata = data.frame(
          id = rep(c("a", "b"), each = 200),

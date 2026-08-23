@@ -5,7 +5,7 @@ models_families_bernoulli = list(
     simulated = list(cp_1 = 93, Intercept_1 = -0.4, x_1 = 0.006, Intercept_2 = 2, x_2 = -0.004),
     family = bernoulli(link = "logit"),
     chains = 2,
-    warmup = 500,
+    warmup = 1000,
     iter = 2000,
     min_ess = 50
   ),
