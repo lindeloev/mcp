@@ -108,7 +108,7 @@ Population-level [`mcp` formula syntax](../articles/formulas.html) is available 
 
 ## Combining ar(), ma(), and sigma()
 
-You can combine `ar()` and `ma()` with any regression model and with [group-level change points](../articles/varying.html). For Gaussian models, `sigma()` controls the innovation standard deviation:
+You can combine `ar()` and `ma()` with any regression model and with [group-level change points](../articles/group_effects.html). For Gaussian models, `sigma()` controls the innovation standard deviation:
 
 ```{r}
 model = list(

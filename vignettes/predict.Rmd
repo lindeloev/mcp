@@ -65,7 +65,7 @@ head(fitted(fit))
 
 In general, this output will include:
 
- * A column for each predictor column in the data. Here, `time` is the only predictor and you see the values in the same order as in `data` (which is copied to `fit$data`). Models with [group-level effects](../articles/varying.html) additionally include the relevant grouping columns, `binomial()` models include the number of trials, etc.
+ * A column for each predictor column in the data. Here, `time` is the only predictor and you see the values in the same order as in `data` (which is copied to `fit$data`). Models with [group-level effects](../articles/group_effects.html) additionally include the relevant grouping columns, `binomial()` models include the number of trials, etc.
  
  * **fitted:** The fitted value (posterior mean). When `summary = TRUE` (default), the column is called `fitted`. When `summary = FALSE`, the column is named `.epred`, matching `tidybayes::add_epred_draws()` conventions.
  

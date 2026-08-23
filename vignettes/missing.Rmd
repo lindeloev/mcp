@@ -126,7 +126,7 @@ The imputation markers above are different: `predict(fit)` evaluates the origina
 Missing responses work with the usual `mcp` model features. For example, you can:
 
  * Include [continuous and categorical predictors](../articles/formulas.html) so imputations follow observed covariate information.
- * Use [group-level effects](../articles/varying.html) so sparsely observed groups borrow information from the population and their available observations.
+ * Use [group-level effects](../articles/group_effects.html) so sparsely observed groups borrow information from the population and their available observations.
  * [Model changing residual standard deviation with `sigma()`](../articles/dpar.html) so imputation uncertainty can vary over the predictor range.
  * Use [binomial, Bernoulli, Poisson, or negative-binomial responses](../articles/families.html). Their imputations remain on the appropriate discrete response scale; binomial predictions can also be returned as rates.
 

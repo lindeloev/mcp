@@ -22,8 +22,8 @@ The three formula parts are called **response**, **cp**, and **predictor**. The 
 
 `mcp` adds two novelties to the modeling syntax to support segmented regression:
 
-1.  The "cp" part which can be `~ 1` or `~ 1 + (1|group)`. Read more about [group-level change-point deviations](articles/varying.html).
-2.  The predictor part can contain distributional regression as terms, such as `sigma([formula here])` and `shape()` ([read more](articles/dpar.html)). Similarly for time-series such as `ar()` and `ma()` ([read more](articles/arma.html)).
+1.  The "cp" part which can be `~ 1` or `~ 1 + (1|group)`. Read more about [group-level change-point deviations](../articles/group_effects.html).
+2.  The predictor part can contain distributional regression as terms, such as `sigma([formula here])` and `shape()` ([read more](../articles/dpar.html)). Similarly for time-series such as `ar()` and `ma()` ([read more](../articles/arma.html)).
 
 `mcp` is heavily inspired by `brms` which again is inspired by [`lme4::lmer`](https://cran.r-project.org/web/packages/lme4/index.html). [Here is a bit of history](https://twitter.com/jonaslindeloev/status/1117760777249853440) on that.
 
@@ -77,7 +77,7 @@ mcp_pars(fit)
 - `year_i` is the slope in on the data column `year` in the ith segment. `x_i` is the slope on the data column `x` in the ith segment. The slope takes name after the data it is regressed on.
 - Multi-column R bases identify both the basis column and segment. For example, `poly_x_2_basis1_1` is the first column of `poly(x, 2)` in segment 1.
 - `cp_i` is the ith change point. Notice that `cp_i` is specified in segment `i + 1`. `cp_1` occurs when there are two segments, and `cp_2` when there are three segments, etc. *OBS: future versions may start at cp_2.*.
-- `cp_i_group` contains the group-level deviations from population-level `cp_i`. See [group-level change points in mcp](articles/varying.html).
+- `cp_i_group` contains the group-level deviations from population-level `cp_i`. See [group-level change points in mcp](../articles/group_effects.html).
 - `cp_i_sd` is the population-level standard deviation governing those group-level deviations.
 - `sigma_*` describe the Gaussian residual standard deviation; [read more here](../articles/dpar.html). With an explicit `sigma()` formula these are log-SD coefficients. If no `sigma()` is supplied, the implicit `sigma_1` is instead the common response-scale SD initiated in the first segment.
 - `arj_i` are autocorrelation coefficients of order `j` for segment `i` ([read more here](../articles/arma.html)).
@@ -181,6 +181,6 @@ mcp_pars(fit)
 
 Key features of multiple regression models in `mcp`:
 
-- **Common change points across categories**: The change points `cp_1` and `cp_2` are estimated as single locations shared across all levels of `group`. (If you instead want category-specific change-point locations that deviate per group, use group-level effects like `1 + (1|group) ~ ...`; see [group-level effects](varying.html)).
+- **Common change points across categories**: The change points `cp_1` and `cp_2` are estimated as single locations shared across all levels of `group`. (If you instead want category-specific change-point locations that deviate per group, use group-level effects like `1 + (1|group) ~ ...`; see [group-level effects](../articles/group_effects.html)).
 - **Parameter names and carry-over**: In segment 1, `xgroupA_1` through `xgroupD_1` represent separate slopes for each level of `group`. In segment 2, `groupB_2`, `groupC_2`, and `groupD_2` represent intercept offsets relative to the reference level `groupA`. The continuous slope `z_1` on covariate `z` carries over into subsequent segments unless redefined.
 - **Plotting and prediction**: Visualize by group using `plot(fit, color_by = "group")` or `plot(fit, facet_by = "group")`. By default, other unplotted continuous predictors (like `z`) are held at their mean automatically by `interpolate_newdata()`, or can be set explicitly via `plot(fit, color_by = "group", at = list(z = 0))`.

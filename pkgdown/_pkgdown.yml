@@ -92,6 +92,10 @@ reference:
     contents:
       - sd_to_prec
 
+redirects:
+  - ["articles/varying.html", "articles/group_effects.html"]
+  - ["articles/variance.html", "articles/dpar.html"]
+
 navbar:
   left:
     - text: General usage
@@ -102,8 +106,8 @@ navbar:
         href: articles/priors.html
       - text: Hypotheses and model comparison
         href: articles/comparison.html
-      - text: Random/varying effects
-        href: articles/varying.html
+      - text: Group-level effects
+        href: articles/group_effects.html
       - text: Modeling variance
         href: articles/dpar.html
       - text: Time series and autocorrelation

@@ -86,7 +86,7 @@ We can use `summary` to see that it recovered the parameters to a pretty good pr
 summary(fit)
 ```
 
-`summary` uses 95% central posterior intervals by default, but you can change it using `summary(fit, width = 0.80)`. If you have [group-level effects](../articles/varying.html), use `ranef(fit)` to see their deviations.
+`summary` uses 95% central posterior intervals by default, but you can change it using `summary(fit, width = 0.80)`. If you have [group-level effects](../articles/group_effects.html), use `ranef(fit)` to see their deviations.
 
 Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:
 
@@ -105,7 +105,7 @@ plot_dpar(fit)
 ```
 
 
-These plots work with [group-level effects](../articles/varying.html) as well.
+These plots work with [group-level effects](../articles/group_effects.html) as well.
 
 
 # Model diagnostics and sampling options

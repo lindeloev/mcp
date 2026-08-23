@@ -187,7 +187,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 - Leverage directional and conditional tests to assess interval hypotheses (`hypothesis(fit, "cp_1 > 30 & cp_1 < 50")`), combined other hypotheses (`hypothesis(fit, "cp_1 > 30 & Intercept_1 > Intercept_2")`), etc.
 
-[Group-level change points](https://lindeloev.github.io/mcp/articles/varying.html):
+[Group-level change points](https://lindeloev.github.io/mcp/articles/group_effects.html):
 
 - Model group-level change points using `+(condition|id)`. Get posteriors using `ranef(fit)`.
 

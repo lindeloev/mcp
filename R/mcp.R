@@ -35,7 +35,7 @@
 #'
 #'   * *Group-level effects:* e.g., `~ 1 + (1 | id)` for a group-level
 #'     intercept, or `~ 1 + (factor || id)` for independent intercept and
-#'     factor-contrast deviations. [Read more](https://lindeloev.github.io/mcp/articles/varying.html).
+#'     factor-contrast deviations. [Read more](https://lindeloev.github.io/mcp/articles/group_effects.html).
 #'
 #'   * *Gaussian residual standard deviation:* e.g., `~sigma(1)` for a simple
 #'     standard-deviation change or `~sigma(1 + x + group)` for more advanced
