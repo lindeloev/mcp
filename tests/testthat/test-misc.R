@@ -574,6 +574,7 @@ test_that("summaries use central intervals and posterior diagnostics", {
   expect_equal(result$ess_bulk[[1]], round(posterior::ess_bulk(parameter_matrix)))
   expect_equal(result$ess_tail[[1]], round(posterior::ess_tail(parameter_matrix)))
   expect_true(all(c("Change point parameters:", "Population-level parameters:") %in% printed))
+  expect_true(any(grepl("\\b[0-9]+\\.[0-9]{2}\\b", printed)))
   expect_true("sd" %in% names(result))
   expect_true(all(c("rhat", "ess_bulk", "ess_tail") %in% names(result)))
   expect_false("n.eff" %in% names(result))
