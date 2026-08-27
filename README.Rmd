@@ -15,7 +15,9 @@ future::plan(future::sequential)
 knitr::opts_chunk$set(
   fig.path = "man/figures/README-",
   out.width = "100%",
-  dpi = 150
+  fig.width = 7.5,
+  fig.height = 3.75,
+  dpi = 125
 )
 
 set.seed(42)
@@ -85,7 +87,7 @@ You can do change point regression for a large number of models in a syntax that
 
 The following model infers the two change points between three segments. You can run this complete worked example (which fits the model and plots by default) in one line:
 
-```{r demo-fit-mcp_example, results='hide', message=FALSE}
+```{r demo-fit-mcp_example, results='hide', message=FALSE, fig.keep='none'}
 demo_fit = mcp_example("demo")
 ```
 
@@ -100,14 +102,14 @@ model = list(
 )
 
 # Get example data and fit it: mcp(model, data, ...)
-fit = mcp(model, demo_fit$data, iter = 4000, sample = "both", seed = 42)
+fit = mcp(model, demo_fit$data, sample = "both", seed = 40)
 ```
 
 ## Plot and summary
 
 The default plot includes data, fitted lines drawn randomly from the posterior, and change point(s) posterior density for each chain. Here we also add fitted interval (`q_fit`):
 
-```{r demo-plot, fig.width=6, fig.height=3}
+```{r demo-plot}
 set.seed(42)
 plot(fit, q_fit = TRUE) + ggtitle("Regression with two change points")
 ```
@@ -124,13 +126,13 @@ summary(fit)
 
 `plot_pars(fit)` can be used to inspect the posteriors and convergence of all parameters. See the documentation of `plot_pars()` for many other plotting options. Here, we plot just the (population-level) change points. They often have "strange" posterior distributions, highlighting the need for a computational approach:
 
-```{r demo-plot_pars, fig.width=6, fig.height=3}
+```{r demo-plot_pars}
 plot_pars(fit, regex_pars = "cp_") + ggtitle("Change point posteriors")
 ```
 
 Do a posterior predictive check to see if the model recovers the empirical distribution in the data:
 
-```{r demo-pp_check, fig.width=6, fig.height=3}
+```{r demo-pp_check}
 set.seed(42)
 pp_check(fit) + ggtitle("Posterior Predictive check for change point regression")
 ```

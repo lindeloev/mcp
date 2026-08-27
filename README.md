@@ -96,7 +96,7 @@ You can run this complete worked example (which fits the model and plots
 by default) in one line:
 
 ``` r
-demo_fit = mcp_example("demo", plot = FALSE)
+demo_fit = mcp_example("demo")
 ```
 
 See `demo_fit$example_code` for how it was generated, and explore more
@@ -112,7 +112,7 @@ model = list(
 )
 
 # Get example data and fit it: mcp(model, data, ...)
-fit = mcp(model, demo_fit$data, iter = 4000, sample = "both", seed = 42)
+fit = mcp(model, demo_fit$data, sample = "both", seed = 40)
 ```
 
 ## Plot and summary
@@ -136,24 +136,24 @@ summary(fit)
 ```
 
     ## Family: gaussian(link = 'identity')
-    ## Iterations: 4000 from 3 chains.
+    ## Iterations: 3000 from 3 chains.
     ## Segments:
     ##   1: response ~ 1
     ##   2: response ~ 1 ~ 0 + time
     ##   3: response ~ 1 ~ 1 + time
     ## 
     ## Change point parameters:
-    ##         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  cp_1        23.78 5.124 13.90 33.39    1      420      914 30.0    OK
-    ##  cp_2        69.91 0.341 69.35 70.48    1     6637     9729 70.0    OK
+    ##         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+    ##  cp_1        30.78 3.604 23.69 38.370    1      426      603 30.0    OK
+    ##  cp_2        69.77 0.293 69.30 70.261    1     5621     7509 70.0    OK
     ## 
     ## Population-level parameters:
-    ##         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  Intercept_1  9.02 0.919  7.12 10.71    1      732     1249 10.0    OK
-    ##  time_2       0.40 0.054  0.31  0.52    1      457     1112  0.5    OK
-    ##  Intercept_3  2.26 1.221 -0.15  4.72    1     1207     2043  0.0    OK
-    ##  time_3      -0.27 0.066 -0.40 -0.14    1     1198     1910 -0.2    OK
-    ##  sigma_1      3.67 0.269  3.19  4.25    1     5564     5492  4.0    OK
+    ##         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+    ##  Intercept_1 10.31 0.705  8.90 11.641    1     1436     2136 10.0    OK
+    ##  time_2       0.54 0.064  0.43  0.682    1      463      668  0.5    OK
+    ##  Intercept_3  0.72 1.566 -2.30  3.873    1      591     1134  0.0    OK
+    ##  time_3      -0.23 0.092 -0.42 -0.055    1      606     1109 -0.2    OK
+    ##  sigma_1      4.01 0.304  3.48  4.691    1     4147     3932  4.0    OK
 
 - `rhat` is the rank-normalized split-Rhat convergence diagnostic.
 - `ess_bulk` and `ess_tail` are the effective sample sizes for the bulk
@@ -202,8 +202,8 @@ than 25 against it being less than 25?
 hypothesis(fit, "cp_1 > 25")
 ```
 
-    ##      hypothesis      mean     lower    upper         p        BF
-    ## 1 cp_1 - 25 > 0 -1.224258 -11.09643 8.389716 0.4039167 0.5059941
+    ##      hypothesis     mean     lower    upper         p       BF
+    ## 1 cp_1 - 25 > 0 5.784828 -1.305529 13.36994 0.9443333 11.13248
 
 For model comparisons, we can fit a null model and compare the
 predictive performance of the two models using (approximate)
@@ -233,7 +233,7 @@ loo::loo_compare(fit_loo, fit_null_loo)
 
     ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
     ##  model1       0.0     0.0      NA                    
-    ##  model2     -97.9     9.2    1.00
+    ##  model2    -105.6     8.9    1.00
 
 # Highlights from in-depth guides
 
@@ -389,12 +389,12 @@ head(fitted(fit, summary = FALSE))  # column .epred
     ## # A tibble: 6 × 14
     ##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
     ##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
-    ## 1      1          1     1  30.6  70.3        8.78  0.552       0.476 -0.216
-    ## 2      1          1     1  30.6  70.3        8.78  0.552       0.476 -0.216
-    ## 3      1          1     1  30.6  70.3        8.78  0.552       0.476 -0.216
-    ## 4      1          1     1  30.6  70.3        8.78  0.552       0.476 -0.216
-    ## 5      1          1     1  30.6  70.3        8.78  0.552       0.476 -0.216
-    ## 6      1          1     1  30.6  70.3        8.78  0.552       0.476 -0.216
+    ## 1      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
+    ## 2      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
+    ## 3      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
+    ## 4      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
+    ## 5      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
+    ## 6      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
     ## # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>,
     ## #   data_row <int>, .epred <dbl>
 

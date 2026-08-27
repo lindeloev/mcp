@@ -120,8 +120,8 @@ Say you want to forecast at `time = 125` and you know that a changepoint to the 
 ## Step 1: run the model for observed data
 We already did that above, resulting in our `fit`. But we only do it to get the default priors that are suitable for inferring change point in this region, so you could've just run it without sampling:
 
-```{r, eval=FALSE}
-fit = mcp(model, data = data, sample = FALSE)
+```{r}
+empty = mcp(model, data = data, sample = FALSE)
 ```
 
 
@@ -130,7 +130,7 @@ fit = mcp(model, data = data, sample = FALSE)
 Now we extend the model with the future segment of which we have prior knowledge:
 
 ```{r}
-model_forecast = c(fit$model, list(
+model_forecast = c(empty$model, list(
   ~ 1     # intercept (Intercept_4) after cp_3
 ))
 ```
@@ -140,7 +140,7 @@ And finally, we extend the list of priors with the two new parameters (`time_4` 
 ```{r}
 forecast_horizon = 170
 data_forecast = rbind(data, data.frame(time = forecast_horizon, response = NA))
-prior_forecast = c(fit$prior, list(
+prior_forecast = c(empty$prior, list(
   Intercept_4 = "Intercept_1",  # Return to this value
   cp_3 = paste0("dnorm(cp_2 + (cp_2 - cp_1), 20) T(", max(data$time), ", ", forecast_horizon, ")")  # In the future at the same interval
 ))
@@ -148,8 +148,8 @@ prior_forecast = c(fit$prior, list(
 
 Now let's fit it:
 
-```{r, results=FALSE, message=FALSE, cache=TRUE}
-fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast, seed = 42)
+```{r, results=FALSE, results='hide', message=FALSE, cache=TRUE}
+fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast, iter = 5000, seed = 42)
 ```
 
 
@@ -171,10 +171,11 @@ predict_forecast = predict(fit_forecast, newdata = newdata, summary = FALSE)
 
 # Plot it
 library(ggplot2)
+library(tidybayes)
 ggplot(predict_forecast, aes(x = time, y = .prediction)) +
   # Posterior predictive intervals and line at x = 125
-  stat_summary(fun.data = median_hilow, fun.args = list(conf.int = 0.8), geom = "ribbon", alpha = 0.2) +
-  stat_summary(fun.data = median_hilow, fun.args = list(conf.int = 0.5), geom = "ribbon", alpha = 0.3) +
+  stat_summary(fun.data = median_qi, fun.args = list(.width = 0.8), geom = "ribbon", alpha = 0.2) +
+  stat_summary(fun.data = median_qi, fun.args = list(.width = 0.5), geom = "ribbon", alpha = 0.3) +
   geom_vline(xintercept = 125, lty = 2, lwd = 1) +
 
   # Lines for fitted draws

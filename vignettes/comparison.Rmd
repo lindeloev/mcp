@@ -98,7 +98,7 @@ plot(fit_default) +
 # Bayes Factors using Savage-Dickey density ratios
 You can compute Bayes Factors for point-null hypotheses using `hypothesis()`. For example, let's compare a model in which the change point in recall is fixed at four items with the fitted continuous model:
 
-```{r}
+```{r, collapse=TRUE}
 equality = hypothesis(fit_default, "cp_1 = 4")
 equality
 ```
@@ -109,7 +109,9 @@ Notice that `mcp` issues a warning when computing Savage-Dickey Bayes factors on
  * `mean`: When subtracting $4$, the posterior distribution is very close, but somewhat dispersed. 
  * `lower` and `upper`: The interval width defaults to a 95% central posterior interval, but you can change it using `hypothesis(..., width = 0.8)`.
  * `BF`: The Savage-Dickey density ratio in favor of the point-null model. It is the posterior density divided by the prior density at the tested equality (here $\theta = \text{cp}_1$ and $\theta_0 = 4$):
+ 
 $$BF_{01} = \frac{p(\theta = \theta_0 \mid \text{data})}{p(\theta = \theta_0)}$$
+
 where $\theta$ is the tested parameter (or contrast), $\theta_0$ is the hypothesized point value, $p(\theta = \theta_0 \mid \text{data})$ is the posterior density, and $p(\theta = \theta_0)$ is the prior density. A $BF > 1$ favors the point-null model, $BF = 1$ favors neither model, and $BF < 1$ favors the continuous alternative.
  * `p`: This is `NA` because equality is not an event with positive probability in the continuous model.
 
@@ -155,7 +157,9 @@ Comparing the Bayes factors shows which hypothesis received the larger update fr
 There are more examples [in the documentation for `hypothesis`](../reference/hypothesis.html), including how to test group-level deviations.
 
 `mcp` evaluates the directional hypothesis for both posterior and prior samples. The posterior probability is reported as `p`, and the Bayes factor is the posterior odds divided by the prior odds:
+
 $$BF_{10} = \frac{P(H \mid \text{data}) \,/\, [1 - P(H \mid \text{data})]}{P(H) \,/\, [1 - P(H)]}$$
+
 where $H$ is the stated directional hypothesis, $P(H \mid \text{data})$ is its posterior probability, and $P(H)$ is its prior probability.
 
 ```{r}
@@ -208,7 +212,7 @@ This is not terribly informative in and of itself. $looic = -2 * elpd_{loo}$ as 
 
 What is interesting is the *relative* differences in these predicted densities. We can compare the models using `loo::loo_compare()`. Save the results as separate objects if you want to reuse them or save them for later.
 
-```{r, cache = TRUE}
+```{r, cache = TRUE, collapse=TRUE}
 loo_default = loo(fit_default)
 loo_info = loo(fit_info)
 loo_simple = loo(fit_simple)
@@ -224,7 +228,7 @@ These diagnostics highlight when the normal approximation underlying `se_diff` a
 
 You could do the same using `waic`. This is computationally lighter at the cost of robustness to influential data points. The results are almost always practically identical.
 
-```{r, cache = TRUE}
+```{r, cache = TRUE, collapse=TRUE}
 waic_default = waic(fit_default)
 waic_info = waic(fit_info)
 waic_simple = waic(fit_simple)
@@ -236,10 +240,14 @@ loo::loo_compare(waic_default, waic_info, waic_simple)
 The `loo` package contains many other useful functions. For example, if prediction is your goal, it is often optimal to *combine* models rather than letting the "winner-takes-it-all" do all the predicting. This is also called *stacking*:
 
 ```{r, eval = FALSE}
-loo::stacking_weights(loo_default, loo_info, loo_simple)
+loo::loo_model_weights(list(
+  default = loo_default, 
+  info = loo_info, 
+  simple = loo_simple
+))
 ```
 
-This means that once model2 (`fit_info`) has done it's "predicting", the others add very little over and above that. If you want to learn about how well they predict relative to each other, use `loo::peudobma_weights()` which weights proportional to the ELPD of each model.
+This means that once model2 (`fit_info`) has done it's "predicting", the others add very little over and above that. If you want to learn about how well they predict relative to each other, use `loo::pseudobma_weights()` which weights proportional to the ELPD of each model.
 
 ```{r cleanup, include=FALSE}
 future::plan(future::sequential)

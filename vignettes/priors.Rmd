@@ -54,10 +54,9 @@ df_dummy = data.frame(x = 1:100, y = 1:100)
 empty_manual = mcp(model, data = df_dummy, prior = prior, sample = FALSE)
 empty_default = mcp(model, data = df_dummy, sample = FALSE)
 
-# Inspect resolved priors and bounds. Add rules, descriptions, sources, and
-# kinds with prior_summary(empty_manual, verbose = TRUE).
-prior_summary(empty_manual, verbose = TRUE)
-prior_summary(empty_default, verbose = TRUE)
+# Inspect resolved priors and bounds
+prior_summary(empty_manual)  # For more details: add verbose = TRUE
+prior_summary(empty_default)
 ```
 
 Now, let's simulate some data from `model`. The following priors are "at odds" with the actual data so as to show their effect.
@@ -87,11 +86,11 @@ First, let's look at the priors side by side. Notice the use of `prior = TRUE` t
 ```{r, fig.height=12, fig.width=6}
 library(ggplot2)
 set.seed(42)
-pp_default = plot_pars(fit_default, type = "dens_overlay", prior = TRUE) + 
+pp_default = plot_pars(fit_default, type = "dens_overlay", prior = TRUE, nvariables = 10) + 
   ggtitle("Default priors")
 
 set.seed(42)
-pp_manual = plot_pars(fit_manual, type = "dens_overlay", prior = TRUE) +
+pp_manual = plot_pars(fit_manual, type = "dens_overlay", prior = TRUE, nvariables = 10) +
   ggtitle("Manual priors")
 
 pp_default + pp_manual
