@@ -263,7 +263,7 @@ test_plot_pars = function(fit, prior = FALSE) {
     fit,
     type = "dens_overlay",
     prior = prior,
-    nvariables = nrow(mcp_pars(fit, scope = "population"))
+    nvariables = NULL
   )
   testthat::expect_s3_class(gg, "ggplot")
 }

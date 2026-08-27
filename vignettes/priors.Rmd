@@ -86,11 +86,11 @@ First, let's look at the priors side by side. Notice the use of `prior = TRUE` t
 ```{r, fig.height=12, fig.width=6}
 library(ggplot2)
 set.seed(42)
-pp_default = plot_pars(fit_default, type = "dens_overlay", prior = TRUE, nvariables = 10) + 
+pp_default = plot_pars(fit_default, type = "dens_overlay", prior = TRUE, nvariables = NULL) + 
   ggtitle("Default priors")
 
 set.seed(42)
-pp_manual = plot_pars(fit_manual, type = "dens_overlay", prior = TRUE, nvariables = 10) +
+pp_manual = plot_pars(fit_manual, type = "dens_overlay", prior = TRUE, nvariables = NULL) +
   ggtitle("Manual priors")
 
 pp_default + pp_manual

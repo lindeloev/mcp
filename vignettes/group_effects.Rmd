@@ -178,7 +178,7 @@ Good convergence is not always as obvious as in this example. While `plot_pars(f
 
 ```{r}
 set.seed(42)
-plot_pars(fit, pars = "group", type = "trace", ncol = 3)
+plot_pars(fit, pars = "group", type = "trace", ncol = 3, nvariables = NULL)
 ```
 
 The `ncol` argument controls the number of columns. Group-level effects often have many levels, so this is useful for viewing all deviations.
@@ -187,7 +187,7 @@ Using `pars = "group"` plots all group-level deviations. To select one group-lev
 
 ```{r}
 set.seed(42)
-plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2)
+plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2, nvariables = NULL)
 ```
 
 You can also do posterior predictive checking with facets. I think that for the relatively univariate models supported as of `mcp` 0.3, this does not add much new information over and above `plot(fit, facet_by = "id")`, but it's a standard assessment that many will be acquainted with:
@@ -204,7 +204,7 @@ pp_check(fit, facet_by = "id")
 You can see the priors of the model like this:
 
 ```{r}
-cbind(fit$prior)
+prior_summary(fit)
 ```
 
 The prior `cp_1_sd` is the population-level standard deviation governing the `cp_1_id` deviations across levels of `id`. Change-point deviations are exactly zero-centered, while predictor group-level effects use ordinary hierarchical mean-zero deviations. Their realized locations are constrained to remain ordered within each group.

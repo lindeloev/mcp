@@ -18,6 +18,14 @@ test_that("plot_pars() paginates without changing its single-page return", {
   expect_equal(unname(page_sizes), c(5L, 2L))
   expect_true(all(vapply(pages, inherits, logical(1), what = "ggplot")))
   expect_s3_class(plots[[2]], "ggplot")
+
+  # nvariables = NULL and nvariables = Inf plot all parameters on one page
+  p_null = plot_pars(demo_fit, type = "dens_overlay", nvariables = NULL)
+  p_inf = plot_pars(demo_fit, type = "dens_overlay", nvariables = Inf)
+  expect_s3_class(p_null, "ggplot")
+  expect_s3_class(p_inf, "ggplot")
+  expect_equal(length(unique(p_null[[1]]$data$Parameter)), 7L)
+  expect_equal(length(unique(p_inf[[1]]$data$Parameter)), 7L)
 })
 
 test_that("plot_pars() prefers the group selector and supports its deprecated alias", {

@@ -21,8 +21,8 @@
 #'   'trace_highlight', and 'violin".
 #' @param ncol Number of columns in plot. This is useful when you have many
 #'   parameters and only one plot `type`.
-#' @param nvariables Positive integer. Maximum number of parameters plotted per
-#'   page. The default of 5 follows `brms::plot.brmsfit()`.
+#' @param nvariables Positive integer or \code{NULL} / \code{Inf}. Maximum number of parameters plotted per
+#'   page. Set to \code{NULL} or \code{Inf} to plot all parameters on a single page. The default of 5 follows `brms::plot.brmsfit()`.
 #' @param ask Logical. In an interactive session, prompt before printing each
 #'   page after the first. Only used when there are multiple pages.
 #' @param prior Logical. Plot prior draws (`TRUE`) instead of posterior draws (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
@@ -104,7 +104,9 @@ plot_pars = function(fit,
     stop("'combo' type cannot be combined with other types. Replace 'combo' with the types you want combo\'ed")
 
   checkmate::assert_int(ncol, lower = 1)
-  checkmate::assert_int(nvariables, lower = 1)
+  if (is.null(nvariables))
+    nvariables = Inf
+  checkmate::assert_number(nvariables, lower = 1)
   checkmate::assert_flag(ask)
   checkmate::assert_flag(prior)
   if (any(c("hex", "scatter") %in% type) && nvariables < 2)
@@ -144,7 +146,11 @@ plot_pars = function(fit,
     "areas", "dens", "dens_overlay", "trace", "hist", "intervals",
     "trace_highlight", "violin"
   )
-  page_pars = split(pars, ceiling(seq_along(pars) / nvariables))
+  page_pars = if (is.infinite(nvariables)) {
+    if (length(pars) > 0) list(pars) else list()
+  } else {
+    split(pars, ceiling(seq_along(pars) / nvariables))
+  }
   pages = lapply(page_pars, function(this_page_pars) {
     all_plots = stats::setNames(lapply(type, function(this_type) {
       func = utils::getFromNamespace(paste0("mcmc_", this_type), "bayesplot")
