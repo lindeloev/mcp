@@ -13,8 +13,6 @@
 #'  * `"sigma"`: A change in "sigma" dpar, including a slope on sigma.
 #' @param plot Logical. Plot the fitted example? No plot is produced when
 #'   `sample = FALSE`.
-#' @param diagnostics Diagnostic thresholds passed to [mcp()]. Defaults to
-#'   `FALSE` so examples do not emit fit-diagnostic warnings.
 #' @inheritParams mcp
 #' @return An `mcpfit`, enriched with an `$example_code` field. It contains the code to
 #'   reproduce the data and the fit.
@@ -35,9 +33,8 @@
 #' fit2 = mcp(empty$model, empty$data, family = empty$family)
 #' plot(fit2)
 #' }
-mcp_example = function(name, sample = "post", diagnostics = FALSE, plot = TRUE) {
+mcp_example = function(name, sample = "post", plot = TRUE) {
   checkmate::assert_string(name)
-  diagnostics = resolve_diagnostics(diagnostics)
   checkmate::assert_flag(plot)
   data = data.frame() # To make R CMD Check happy.
   fit = NULL # To make R CMD Check happy.
@@ -68,7 +65,7 @@ data$price = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, sample = sample, warmup = 2000, iter = 5000, seed = 42, diagnostics = diagnostics)
+fit = mcp(model, data, sample = sample, warmup = 2000, iter = 5000, seed = 42)
 
 # Illustrative plot
 if (plot) {
@@ -105,7 +102,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, family = binomial(), sample = sample, seed = 42, diagnostics = diagnostics)
+fit = mcp(model, data, family = binomial(), sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {
@@ -122,7 +119,7 @@ model = list(
 )
 
 # Simulate data
-set.seed(42)
+set.seed(40)
 data = data.frame(
   time = runif(100, 0, 100),
   response = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
@@ -139,11 +136,11 @@ data$response = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, iter = 4000, sample = sample, seed = 42, diagnostics = diagnostics)
+fit = mcp(model, data, sample = sample, seed = 40)
 
 # Illustrative plot
 if (plot) {
-  set.seed(42)
+  set.seed(40)
   print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit = TRUE)'))
 }",
 
@@ -176,7 +173,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, par_x = 'x', sample = sample, iter = 15000, seed = 200, diagnostics = diagnostics)
+fit = mcp(model, data, par_x = 'x', sample = sample, iter = 15000, seed = 200)
 
 # Illustrative plot
 if (plot) {
@@ -205,7 +202,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42, diagnostics = diagnostics)
+fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {
@@ -241,8 +238,7 @@ data$y[missing_rows] = NA
 
 # Run sampling; JAGS retains posterior draws for the missing responses
 # See them using fitted(fit, newdata = fit$data[is.na(fit$data$y), ], summary = FALSE)
-fit = mcp(model, data, par_x = 'x', iter = 4000, sample = sample,
-  seed = 42, diagnostics = diagnostics)
+fit = mcp(model, data, par_x = 'x', iter = 5000, sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {
@@ -289,7 +285,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, par_x = 'x', iter = 10000, sample = sample, seed = 42, diagnostics = diagnostics)
+fit = mcp(model, data, par_x = 'x', iter = 10000, sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {
@@ -318,12 +314,12 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, warmup = 2000, iter = 10000, sample = sample, seed = 4, diagnostics = diagnostics)
+fit = mcp(model, data, warmup = 2000, iter = 10000, sample = sample, diagnostics = FALSE, seed = 4)
 
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit, q_fit  = TRUE, q_predict = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit  = TRUE, q_predict = TRUE)'))
+  print(plot(fit, q_fit  = TRUE, q_predict = TRUE, ndraws = Inf) + ggplot2::labs(title = 'plot(fit, q_fit  = TRUE, q_predict = TRUE)'))
 }",
     sigma = "# Define model
 model = list(
@@ -351,7 +347,7 @@ data$y = empty$simulate(empty, data,
   )
 
 # Run sampling
-fit = mcp(model, data, iter = 3000, sample = sample, seed = 40, diagnostics = diagnostics)
+fit = mcp(model, data, iter = 3000, sample = sample, seed = 40)
 
 # Illustrative plot
 if (plot) {
@@ -384,7 +380,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, iter = 4000, sample = sample, seed = 42, diagnostics = diagnostics)
+fit = mcp(model, data, iter = 4500, sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {
