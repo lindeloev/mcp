@@ -58,6 +58,7 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 #' @param geom_data String. One of "point", "line" (good for time-series),
 #'   or FALSE (do not plot).
 #' @param cp_dens TRUE/FALSE. Plot posterior densities of the change point(s)?
+#' @param samples,nsamples Deprecated. Use `lines` instead.
 #' @param ... Currently ignored.
 #' @return A \pkg{ggplot2} object.
 #' @encoding UTF-8
@@ -454,8 +455,10 @@ plot.mcpfit = function(x,
                     rate = TRUE,
                     prior = FALSE,
                     arma = TRUE,
+                    scale = "response",
                     at = NULL,
                     samples = lifecycle::deprecated(),
+                    nsamples = lifecycle::deprecated(),
                     ...) {
   grouping = if (missing(color_by) && missing(facet_by)) "auto" else "mapped"
   if (!missing(color_by) && is.null(color_by)) grouping = "none"
@@ -467,6 +470,15 @@ plot.mcpfit = function(x,
       details = "Use `lines` instead to specify the number of lines. Quantiles are now exact."
     )
     if (missing(lines)) lines = samples
+  }
+
+  if (lifecycle::is_present(nsamples)) {
+    lifecycle::deprecate_soft(
+      "0.4.0",
+      "plot.mcpfit(nsamples)",
+      details = "Quantiles are now exact across all draws. Use `lines` to specify the number of lines."
+    )
+    if (missing(lines)) lines = nsamples
   }
 
   args = list(...)
@@ -484,6 +496,7 @@ plot.mcpfit = function(x,
       cp_dens = cp_dens,
       prior = prior,
       arma = arma,
+      scale = scale,
       at = at,
       !!!args
     ))
@@ -504,7 +517,7 @@ plot.mcpfit = function(x,
     prior = prior,
     dpar = NULL,
     arma = arma,
-    scale = "response",
+    scale = scale,
     .grouping = grouping
   )
 }
@@ -525,6 +538,7 @@ plot_dpar = function(x,
                      scale = "response",
                      at = NULL,
                      samples = lifecycle::deprecated(),
+                     nsamples = lifecycle::deprecated(),
                      ...) {
   grouping = if (missing(color_by) && missing(facet_by)) "auto" else "mapped"
   if (!missing(color_by) && is.null(color_by)) grouping = "none"
@@ -536,6 +550,15 @@ plot_dpar = function(x,
       details = "Use `lines` instead to specify the number of lines. Quantiles are now exact."
     )
     if (missing(lines)) lines = samples
+  }
+
+  if (lifecycle::is_present(nsamples)) {
+    lifecycle::deprecate_soft(
+      "0.4.0",
+      "plot_dpar(nsamples)",
+      details = "Quantiles are now exact across all draws. Use `lines` to specify the number of lines."
+    )
+    if (missing(lines)) lines = nsamples
   }
   rlang::check_dots_empty()
 

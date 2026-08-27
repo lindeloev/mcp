@@ -906,8 +906,17 @@ unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
 #' @keywords internal
 #' @noRd
 resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
+                         samples = lifecycle::deprecated(),
                          env = rlang::caller_env(),
                          user_env = rlang::caller_env(2)) {
+  if (lifecycle::is_present(samples)) {
+    lifecycle::deprecate_soft(
+      "0.4.0",
+      paste0(what, "(samples)"),
+      env = env,
+      user_env = user_env
+    )
+  }
   if (lifecycle::is_present(nsamples)) {
     lifecycle::deprecate_soft(
       "0.4.0",
@@ -1193,6 +1202,7 @@ pp_eval = function(
   fit = object
   checkmate::assert_class(fit, "mcpfit")
   warn_custom_jags_code(fit)
+  if (!is.mcpfamily(fit$family) || is.null(fit$family$r$cdf))
   if (!is.mcpfamily(fit$family))
     fit$family = mcpfamily(fit$family)
   if (is.null(fit$family$r$cdf))

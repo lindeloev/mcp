@@ -88,11 +88,19 @@ test_that("plot() supports exact q_predict, deprecates samples, and checks dots"
   expect_equal(p1$layers[[2]]$data, p2$layers[[2]]$data)
   expect_equal(p1$layers[[3]]$data, p2$layers[[3]]$data)
 
-  # Deprecation warning for samples
+  # Deprecation warning for samples and nsamples
   expect_warning(
     plot(demo_fit, samples = 10),
     "deprecated"
   )
+  expect_warning(
+    plot(demo_fit, nsamples = 10),
+    "deprecated"
+  )
+
+  # scale = "linear" in plot.mcpfit
+  p_lin = plot(demo_fit, scale = "linear")
+  expect_s3_class(p_lin, "ggplot")
 
   # Unknown dots trigger an error
   expect_error(
