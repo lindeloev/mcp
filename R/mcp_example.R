@@ -319,7 +319,7 @@ fit = mcp(model, data, warmup = 2000, iter = 10000, sample = sample, diagnostics
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit, q_fit  = TRUE, q_predict = TRUE, ndraws = Inf) + ggplot2::labs(title = 'plot(fit, q_fit  = TRUE, q_predict = TRUE)'))
+  print(plot(fit, q_fit  = TRUE, q_predict = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit  = TRUE, q_predict = TRUE)'))
 }",
     sigma = "# Define model
 model = list(
@@ -352,7 +352,7 @@ fit = mcp(model, data, iter = 3000, sample = sample, seed = 40)
 # Illustrative plot
 if (plot) {
   set.seed(40)
-  gg1 = plot(fit, q_predict = TRUE, ndraws = 9000) + ggplot2::labs(title = 'plot(fit, q_predict = TRUE)')
+  gg1 = plot(fit, q_predict = TRUE) + ggplot2::labs(title = 'plot(fit, q_predict = TRUE)')
   set.seed(41)
   gg2 = plot_dpar(fit, 'sigma') + ggplot2::labs(title = 'plot_dpar(fit, \"sigma\")')
   print(gg1 / gg2)

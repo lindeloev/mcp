@@ -338,6 +338,109 @@ get_quantiles = function(draws, quantiles, type, keep = NULL, na.rm = FALSE) {
 }
 
 
+#' Invert a mixture CDF for a single quantile probability
+#'
+#' @keywords internal
+#' @noRd
+find_mixture_quantile = function(cdf_fn, dpars, data, p, rate = FALSE, is_discrete = FALSE, lower = -Inf, upper = Inf) {
+  # Empirical mixture CDF across all posterior parameter draws
+  mix_cdf = function(y) mean(cdf_fn(y, dpars, data, rate = rate))
+
+  if (!is_discrete) {
+    # Continuous distributions: 1D root-finding with uniroot
+    mu_mean = mean(dpars$mu)
+    sigma_est = if (!is.null(dpars$sigma)) sqrt(mean(dpars$sigma^2) + stats::var(dpars$mu)) else sqrt(max(1, abs(mu_mean)))
+    if (!is.finite(sigma_est) || sigma_est <= 0) sigma_est = 1
+    lo = max(lower, mu_mean - 6 * sigma_est)
+    hi = min(upper, mu_mean + 6 * sigma_est)
+
+    # Expand search bracket if bounds are finite or posterior uncertainty is wide
+    while (mix_cdf(lo) > p && is.infinite(lower)) lo = lo - 2 * sigma_est
+    while (mix_cdf(hi) < p && is.infinite(upper)) hi = hi + 2 * sigma_est
+
+    # Clamp to theoretical boundaries if root lies outside
+    if (mix_cdf(lo) > p) return(lower)
+    if (mix_cdf(hi) < p) return(upper)
+
+    return(stats::uniroot(function(y) mix_cdf(y) - p, c(lo, hi), tol = 1e-4)$root)
+  } else {
+    # Discrete distributions: smallest non-negative integer where CDF >= p
+    trials = if (!is.null(data$trials)) data$trials[1] else Inf
+    mu_mean = mean(dpars$mu)
+    if (rate && !is.null(data$trials)) mu_mean = mu_mean * trials
+
+    # Start search from the rounded expected mean
+    y = max(0L, as.integer(round(mu_mean)))
+    if (!is.null(data$trials) && is.finite(trials)) y = min(as.integer(trials), y)
+
+    # Step up or down to find the exact integer step
+    while (mix_cdf(if (rate) y / trials else y) < p && y < trials) {
+      y = y + 1L
+    }
+    while (y > 0L && mix_cdf(if (rate) (y - 1L) / trials else (y - 1L)) >= p) {
+      y = y - 1L
+    }
+    return(if (rate && !is.null(data$trials)) y / trials else y)
+  }
+}
+
+
+#' Compute exact predictive quantiles via mixture CDF inversion
+#'
+#' Evaluates the exact posterior predictive mixture CDF at each data row
+#' and finds the target quantiles via root-finding (uniroot for continuous,
+#' integer search for discrete count families).
+#'
+#' @keywords internal
+#' @noRd
+get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = FALSE, dpars = attr(draws, "dpars"), response_data = attr(draws, "response_data")) {
+  keep = unique(keep)
+  grid = if (length(keep) > 0) {
+    draws %>% dplyr::select("data_row", dplyr::all_of(keep)) %>% dplyr::distinct()
+  } else {
+    draws %>% dplyr::select("data_row") %>% dplyr::distinct()
+  }
+
+  is_discrete = isTRUE(family$response$is_discrete)
+  cdf_fn = family$r$cdf
+
+  # Fallback to empirical quantiles if no cdf method or dpars available
+  if (is.null(cdf_fn) || is.null(dpars)) {
+    type_col = if (".predicted" %in% names(draws)) ".predicted" else if (".prediction" %in% names(draws)) ".prediction" else ".epred"
+    return(get_quantiles(draws, quantiles, type_col, keep = keep))
+  }
+
+  # Split draws by evaluation row to process one data point across all posterior draws
+  row_indices = split(seq_len(nrow(draws)), draws$data_row)
+  unique_rows = as.integer(names(row_indices))
+
+  res_list = lapply(seq_along(row_indices), function(i) {
+    idx = row_indices[[i]]
+    data_row_id = unique_rows[i]
+
+    # Slice distributional parameters for this data row across all MCMC draws
+    dp_slice = lapply(dpars, function(v) v[idx])
+    rd_slice = if (!is.null(response_data)) lapply(response_data, function(v) v[idx]) else NULL
+
+    # Invert the mixture CDF for each requested quantile probability
+    q_vals = vapply(quantiles, function(q) {
+      find_mixture_quantile(cdf_fn, dp_slice, rd_slice, q, rate = rate, is_discrete = is_discrete)
+    }, numeric(1))
+
+    data.frame(
+      data_row = data_row_id,
+      quantile = quantiles,
+      .predicted = q_vals,
+      stringsAsFactors = FALSE
+    )
+  })
+
+  # Combine and re-attach predictor / grouping metadata
+  result = dplyr::bind_rows(res_list)
+  dplyr::left_join(result, grid, by = "data_row", relationship = "many-to-one")
+}
+
+
 #' Print mcplist
 #'
 #' Shows a list in a more condensed format using `str(list)`.

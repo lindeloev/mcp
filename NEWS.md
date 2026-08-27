@@ -74,6 +74,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 -   Default `plot(fit)` style has been updated in many ways to accommodate multiple regression and group-effects.
 
+-   Predictive intervals (`plot(fit, q_predict = TRUE)` and `predict(fit, summary = TRUE)`) are now precise and faster. They used to be estimated from posterior parameter draws, which has MC error.
+
 -   Added `mcp(..., series = "data_column")` to identify independent series in models with AR/MA terms.
 
 -   Added option to test hypotheses on the prior using `hypothesis(fit, prior = TRUE)`.

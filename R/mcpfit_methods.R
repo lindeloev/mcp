@@ -1195,6 +1195,8 @@ pp_eval = function(
   warn_custom_jags_code(fit)
   if (!is.mcpfamily(fit$family))
     fit$family = mcpfamily(fit$family)
+  if (is.null(fit$family$r$cdf))
+    fit$family$r$cdf = mcpfamily(fit$family)$r$cdf
   dpar = assert_dpar(dpar, fit = fit, type = type)
 
   # What data to use
@@ -1366,10 +1368,16 @@ pp_eval = function(
 
   # Now more boilerplate stuff...
   fitted_values = attr(evaluated, "fitted")
+  dpars_values = attr(evaluated, "dpars")
+  response_data_values = attr(evaluated, "response_data")
   attr(evaluated, "fitted") = NULL
+  attr(evaluated, "dpars") = NULL
+  attr(evaluated, "response_data") = NULL
   restore_order = order(evaluation_order)
   evaluated = evaluated[restore_order]
   if (!is.null(fitted_values)) fitted_values = fitted_values[restore_order]
+  if (!is.null(dpars_values)) dpars_values = lapply(dpars_values, function(v) v[restore_order])
+  if (!is.null(response_data_values)) response_data_values = lapply(response_data_values, function(v) v[restore_order])
   if (type == "predict" && any(!is.na(imputed_response))) {
     response_data = get_family_response_data(fit$family, model_tables$segments, data = as.list(draws))
     imputed_return = fit$family$response$observed(imputed_response, response_data, rate)
@@ -1428,9 +1436,15 @@ pp_eval = function(
 
     # Quantiles
     if (!isFALSE(probs)) {
-      quantiles = get_quantiles(draws, probs, type, na.rm = type == "residuals") %>%
+      val_col = if (type == "predict" && !is.null(fit$family$r$cdf)) ".predicted" else type
+      quantiles = if (type == "predict" && !is.null(fit$family$r$cdf)) {
+        get_mixture_quantiles(draws, probs, fit$family, keep = NULL, rate = rate, dpars = dpars_values, response_data = response_data_values)
+      } else {
+        get_quantiles(draws, probs, type, na.rm = type == "residuals")
+      }
+      quantiles = quantiles %>%
         dplyr::mutate(quantile = 100 * .data$quantile) %>%
-        tidyr::pivot_wider(names_from = "quantile", names_prefix = "Q", values_from = dplyr::all_of(type))
+        tidyr::pivot_wider(names_from = "quantile", names_prefix = "Q", values_from = dplyr::all_of(val_col))
 
       df_return = dplyr::left_join(df_return, quantiles, by = "data_row", relationship = "one-to-one")
     }
@@ -1447,6 +1461,8 @@ pp_eval = function(
       draws = dplyr::rename(draws, .epred = "fitted")
     }
     draws = dplyr::rename(draws, !!value_col := dplyr::all_of(type))
+    if (!is.null(dpars_values)) attr(draws, "dpars") = dpars_values
+    if (!is.null(response_data_values)) attr(draws, "response_data") = response_data_values
     return(draws)
   } else if (draws_format == "matrix") {
     df_return = tidy_to_matrix(draws, type)

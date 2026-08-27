@@ -75,3 +75,33 @@ test_that("geom_cp_density draws a vertical spike for fixed change points", {
   cp_2_data = cp_data[!cp_data$group %in% c(1, 2), ]
   expect_equal(max(cp_1_data$y), max(cp_2_data$y))
 })
+
+
+test_that("plot() supports exact q_predict, deprecates samples, and checks dots", {
+  # Exact q_predict quantiles
+  p = plot(demo_fit, q_fit = TRUE, q_predict = TRUE, lines = 0)
+  expect_s3_class(p, "ggplot")
+
+  # Without lines and using all draws, plot is completely deterministic across consecutive calls
+  p1 = plot(demo_fit, q_fit = TRUE, q_predict = TRUE, lines = 0)
+  p2 = plot(demo_fit, q_fit = TRUE, q_predict = TRUE, lines = 0)
+  expect_equal(p1$layers[[2]]$data, p2$layers[[2]]$data)
+  expect_equal(p1$layers[[3]]$data, p2$layers[[3]]$data)
+
+  # Deprecation warning for samples
+  expect_warning(
+    plot(demo_fit, samples = 10),
+    "deprecated"
+  )
+
+  # Unknown dots trigger an error
+  expect_error(
+    plot(demo_fit, weird_arg = 123),
+    "must be empty"
+  )
+  expect_error(
+    plot_dpar(demo_fit, weird_arg = 123),
+    "must be empty"
+  )
+})
+

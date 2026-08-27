@@ -74,14 +74,9 @@ get_plot = function(x,
                        prior = FALSE,
                        dpar = "epred",
                        arma = TRUE,
-                       ndraws = 1000,
                        scale = "response",
                        at = NULL,
-                       .grouping = "auto",
-                       nsamples = lifecycle::deprecated(),
-                       ...) {
-  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "get_plot")
-
+                       .grouping = "auto") {
   # Just for consistent naming in mcp
   fit = x
 
@@ -91,6 +86,8 @@ get_plot = function(x,
   checkmate::assert_class(fit, "mcpfit")
   if (!is.mcpfamily(fit$family))
     fit$family = mcpfamily(fit$family)
+  if (is.null(fit$family$r$cdf))
+    fit$family$r$cdf = mcpfamily(fit$family)$r$cdf
   checkmate::assert_flag(rate)
 
   trials_col = mcp_columns(fit)$trials
@@ -189,19 +186,7 @@ get_plot = function(x,
     stop("Cannot plot an mcpfit without prior or posterior draws.")
 
   available_draws = sum(vapply(mcmclist_draws(fit, prior = prior), nrow, integer(1)))  # Like niterations(fit), but also supporting prior = TRUE
-  if (!is.null(ndraws))
-    ndraws = min(ndraws, available_draws)
   lines = min(lines, available_draws)
-  if (!is.null(ndraws)) {
-    checkmate::assert_int(ndraws, lower = 1)
-    if (lines != FALSE && ndraws < lines)
-      stop("`lines` must be less than or equal to `ndraws`.")
-  }
-  if (!show_q_fit && !show_q_predict)
-    # No need for more draws if they are only used to draw lines.
-    ndraws = lines
-
-  rlang::check_dots_empty()
 
   # Useful vars
   xvar = rlang::sym(data_columns$par_x)
@@ -215,7 +200,7 @@ get_plot = function(x,
   newdata = interpolate_newdata(fit, by = by, at = at)
 
   # Predict
-  local_pp_eval = function(type, newdata, ndraws, include_fitted = FALSE) {
+  local_pp_eval = function(type, newdata, lines = NULL, include_fitted = FALSE) {
     pp_eval(
       object = fit,
       newdata = newdata,
@@ -226,7 +211,7 @@ get_plot = function(x,
       dpar = dpar,
       varying = group_pars,
       arma = arma,
-      ndraws = ndraws,
+      ndraws = lines,
       draws_format = "tidy",
       scale = scale,
       .include_fitted = include_fitted
@@ -249,7 +234,7 @@ get_plot = function(x,
 
   # Fitted lines need only `lines` draws, selected jointly across all curves.
   eval_lines = if (lines > 0) {
-    prepare_draws(local_pp_eval("fitted", newdata, lines))
+    prepare_draws(local_pp_eval("fitted", newdata, lines = lines))
   } else {
     NULL
   }
@@ -264,9 +249,11 @@ get_plot = function(x,
     interval_data = lapply(curve_rows, function(rows) {
       type = if (show_q_predict) "predict" else "fitted"
       draws = local_pp_eval(
-        type, newdata[rows, , drop = FALSE], ndraws,
-        show_q_fit && type == "predict"
+        type, newdata[rows, , drop = FALSE],
+        include_fitted = show_q_fit && type == "predict"
       )
+      dpars = attr(draws, "dpars")
+      response_data = attr(draws, "response_data")
       if (type == "predict")
         draws = dplyr::rename(draws, .predicted = ".prediction")
       draws = prepare_draws(draws)
@@ -274,7 +261,7 @@ get_plot = function(x,
 
       list(
         fitted = if (show_q_fit) get_quantiles(draws, q_fit, as.character(yvar), keep) else NULL,
-        predicted = if (show_q_predict) get_quantiles(draws, q_predict, ".predicted", keep) else NULL
+        predicted = if (show_q_predict) get_mixture_quantiles(draws, q_predict, fit$family, keep, rate = rate, dpars = dpars, response_data = response_data) else NULL
       )
     })
   }
@@ -436,8 +423,7 @@ get_plot = function(x,
 #' @seealso plot_pars plot_dpar pp_check
 #' @details
 #'   `plot()` uses `fit$simulate()` on posterior draws. These represent the
-#'   (joint) posterior distribution. Interval summaries use at most 1000 draws
-#'   by default; use `ndraws = NULL` to use all draws. Change-point densities
+#'   (joint) posterior distribution. Interval summaries and change-point densities
 #'   always use all available draws.
 #' @return A \pkg{ggplot2} object.
 #' @examples
@@ -468,30 +454,41 @@ plot.mcpfit = function(x,
                     rate = TRUE,
                     prior = FALSE,
                     arma = TRUE,
-                    ndraws = 1000,
                     at = NULL,
-                    nsamples = lifecycle::deprecated(),
+                    samples = lifecycle::deprecated(),
                     ...) {
   grouping = if (missing(color_by) && missing(facet_by)) "auto" else "mapped"
   if (!missing(color_by) && is.null(color_by)) grouping = "none"
-  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "plot.mcpfit")
+
+  if (lifecycle::is_present(samples)) {
+    lifecycle::deprecate_soft(
+      "0.4.0",
+      "plot.mcpfit(samples)",
+      details = "Use `lines` instead to specify the number of lines. Quantiles are now exact."
+    )
+    if (missing(lines)) lines = samples
+  }
 
   args = list(...)
   if ("which_y" %in% names(args)) {
     warn_which_y(args, "plot")
-    return(plot_dpar(
-      x,
-      dpar = args$which_y,
+    dpar_val = args$which_y
+    args$which_y = NULL
+    return(rlang::exec(
+      plot_dpar,
+      x = x,
+      dpar = dpar_val,
       facet_by = facet_by,
       color_by = color_by,
-      at = at,
       lines = lines,
       cp_dens = cp_dens,
       prior = prior,
       arma = arma,
-      ndraws = ndraws
+      at = at,
+      !!!args
     ))
   }
+  rlang::check_dots_empty()
 
   get_plot(
     x,
@@ -507,10 +504,8 @@ plot.mcpfit = function(x,
     prior = prior,
     dpar = NULL,
     arma = arma,
-    ndraws = ndraws,
     scale = "response",
-    .grouping = grouping,
-    ...
+    .grouping = grouping
   )
 }
 
@@ -527,14 +522,23 @@ plot_dpar = function(x,
                      cp_dens = TRUE,
                      prior = FALSE,
                      arma = TRUE,
-                     ndraws = 1000,
                      scale = "response",
                      at = NULL,
-                     nsamples = lifecycle::deprecated(),
+                     samples = lifecycle::deprecated(),
                      ...) {
   grouping = if (missing(color_by) && missing(facet_by)) "auto" else "mapped"
   if (!missing(color_by) && is.null(color_by)) grouping = "none"
-  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "plot_dpar")
+
+  if (lifecycle::is_present(samples)) {
+    lifecycle::deprecate_soft(
+      "0.4.0",
+      "plot_dpar(samples)",
+      details = "Use `lines` instead to specify the number of lines. Quantiles are now exact."
+    )
+    if (missing(lines)) lines = samples
+  }
+  rlang::check_dots_empty()
+
   get_plot(
     x,
     q_fit = q_fit,
@@ -549,12 +553,9 @@ plot_dpar = function(x,
     prior = prior,
     dpar = dpar,
     arma = arma,
-    ndraws = ndraws,
     scale = scale,
-    .grouping = grouping,
-    ...
+    .grouping = grouping
   )
-
 }
 
 

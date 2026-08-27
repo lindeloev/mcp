@@ -246,8 +246,11 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   # ASSERTS #
   ###########
   checkmate::assert_class(fit, "mcpfit")
+  if (!is.mcpfamily(fit$family) || is.null(fit$family$r$cdf))
   if (!is.mcpfamily(fit$family))
     fit$family = mcpfamily(fit$family)
+  if (is.null(fit$family$r$cdf))
+    fit$family$r$cdf = mcpfamily(fit$family)$r$cdf
   model_tables = get_fit_model_tables(fit)
   predictors = model_tables$predictors
   group_effects = model_tables$group_effects
@@ -363,6 +366,8 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     predicted = fit$family$r$rng(length(dpars$mu), dpars, response_data, rate = .rate)
     if (.include_fitted)
       attr(predicted, "fitted") = fit$family$r$epred(dpars, response_data, rate = .rate)
+    attr(predicted, "dpars") = dpars
+    attr(predicted, "response_data") = response_data
     return(predicted)
   }
 }

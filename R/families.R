@@ -205,6 +205,9 @@ mcpfamily_gaussian = function(family) {
     },
     rng = function(n, dpars, data, rate = FALSE) {
       stats::rnorm(n, dpars$mu, dpars$sigma)
+    },
+    cdf = function(q, dpars, data, rate = FALSE) {
+      stats::pnorm(q, dpars$mu, dpars$sigma)
     }
   )
   jags = list(likelihood = function(context) paste0(context$y, " ~ dnorm(", context$dpar("mu"), ", ", context$aux("weights", "1"), " / ", context$dpar("sigma"), "^2)"))
@@ -268,7 +271,8 @@ mcpfamily_binomial = function(family) {
       invisible(TRUE)
     },
     observed = function(y, data, rate) if (rate) y / data$trials else y,
-    probability = function(rate) isTRUE(rate)
+    probability = function(rate) isTRUE(rate),
+    is_discrete = TRUE
   )
   r = list(
     epred = function(dpars, data, rate = FALSE) if (rate) dpars$mu else data$trials * dpars$mu,
@@ -276,6 +280,10 @@ mcpfamily_binomial = function(family) {
     rng = function(n, dpars, data, rate = FALSE) {
       y = stats::rbinom(n, data$trials, dpars$mu)
       if (rate) y / data$trials else y
+    },
+    cdf = function(q, dpars, data, rate = FALSE) {
+      if (rate) q = round(q * data$trials)
+      stats::pbinom(q, data$trials, dpars$mu)
     }
   )
   jags = list(likelihood = function(context) paste0(context$y, " ~ dbin(", context$dpar("mu"), ", ", context$aux("trials"), ")"))
@@ -327,12 +335,14 @@ mcpfamily_bernoulli = function(family) {
         stop("Only responses 0 and 1 are allowed for family = bernoulli() in column '", response_columns$y, "'")
       invisible(TRUE)
     },
-    probability = function(rate) TRUE
+    probability = function(rate) TRUE,
+    is_discrete = TRUE
   )
   r = list(
     epred = function(dpars, data, rate = FALSE) dpars$mu,
     log_lik = function(y, dpars, data) stats::dbinom(y, 1, dpars$mu, log = TRUE),
-    rng = function(n, dpars, data, rate = FALSE) stats::rbinom(n, 1, dpars$mu)
+    rng = function(n, dpars, data, rate = FALSE) stats::rbinom(n, 1, dpars$mu),
+    cdf = function(q, dpars, data, rate = FALSE) stats::pbinom(q, 1, dpars$mu)
   )
   jags = list(likelihood = function(context) paste0(context$y, " ~ dbern(", context$dpar("mu"), ")"))
 
@@ -374,7 +384,8 @@ mcpfamily_poisson = function(family) {
     validate = function(y, data, response_columns) {
       checkmate::assert_integerish(y, lower = 0, .var.name = response_columns$y)
       invisible(TRUE)
-    }
+    },
+    is_discrete = TRUE
   )
   r = list(
     epred = function(dpars, data, rate = FALSE) dpars$mu,
@@ -385,6 +396,10 @@ mcpfamily_poisson = function(family) {
     rng = function(n, dpars, data, rate = FALSE) {
       validate_count_mean(dpars$mu)
       stats::rpois(n, dpars$mu)
+    },
+    cdf = function(q, dpars, data, rate = FALSE) {
+      validate_count_mean(dpars$mu)
+      stats::ppois(q, dpars$mu)
     }
   )
   jags = list(likelihood = function(context) paste0(context$y, " ~ dpois(", context$dpar("mu"), ")"))
@@ -426,7 +441,8 @@ mcpfamily_negbinomial = function(family) {
     validate = function(y, data, response_columns) {
       checkmate::assert_integerish(y, lower = 0, .var.name = response_columns$y)
       invisible(TRUE)
-    }
+    },
+    is_discrete = TRUE
   )
   r = list(
     epred = function(dpars, data, rate = FALSE) dpars$mu,
@@ -437,6 +453,10 @@ mcpfamily_negbinomial = function(family) {
     rng = function(n, dpars, data, rate = FALSE) {
       validate_count_mean(dpars$mu)
       stats::rnbinom(n, mu = dpars$mu, size = dpars$shape)
+    },
+    cdf = function(q, dpars, data, rate = FALSE) {
+      validate_count_mean(dpars$mu)
+      stats::pnbinom(q, mu = dpars$mu, size = dpars$shape)
     }
   )
   jags = list(likelihood = function(context) {

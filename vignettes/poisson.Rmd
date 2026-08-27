@@ -12,8 +12,8 @@ editor_options:
 
 The Poisson and negative-binomial distributions model counts observed within comparable units of time, space, or exposure. The worked example below uses Poisson regression; a later section explains the additional `shape` parameter and priors in `negbinomial()`.
 
-
 # Coal mining disasters
+
 A dataset on coal mining disasters has grown very popular in the change point literature (available in `boot::coal`). It contains a timestamp of each coal mining disaster from 1851 to 1962. By binning the number of events within each year (fixed time frame), we have something very Poisson-friendly:
 
 ```{r, message=FALSE, warning=FALSE}
@@ -26,7 +26,6 @@ df = round(boot::coal) %>%
 # See it
 head(df)
 ```
-
 
 The number of events (`n`) as a function of year (`date`) is typically modeled as a change between two intercepts. This is very simple to do in `mcp`:
 
@@ -69,8 +68,8 @@ set.seed(42)
 plot_pars(fit)
 ```
 
-
 # Priors for Poisson models
+
 `poisson()` defaults to `link = 'log'`, meaning that we have to exponentiate the estimates to get the "raw" Poisson parameter $\lambda$. $\lambda$ has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is `exp(result$mean[2])` (`r exp(result$mean[2])`) and it is `exp(result$mean[3])` (`r exp(result$mean[3])`) for segment 2.
 
 The intercept prior is a Student-t distribution centered on the rounded median of `log(pmax(n, 0.1))`, with scale equal to the maximum of 2.5 and its rounded MAD. This follows the robust calibration in `brms`; `pmax()` keeps zeros finite and the minimum scale avoids a narrow prior.
@@ -78,7 +77,7 @@ The intercept prior is a Student-t distribution centered on the rounded median o
 Categorical contrasts use scale 2.5; numeric coefficients are scaled to a representative predictor change. These are proper Student-t priors where `brms` is flat, allowing prior sampling and mild regularization of short segments.
 
 ```{r}
-cbind(fit$prior)
+prior_summary(fit)
 ```
 
 As always, the prior on the change point forces it to occur in the observed range. The coefficient priors are deliberately broad defaults, so update them with more informed priors for your particular case when possible, e.g.:
@@ -90,7 +89,6 @@ prior = list(
 fit_with_prior = mcp(model, data = df, family = poisson(), prior = prior, par_x = "date")
 ```
 
-
 # Negative-binomial extension
 
 `negbinomial()` uses log links for both its conditional mean `mu` and overdispersion `shape`, where $\operatorname{Var}(y) = \mu + \mu^2 / \mathit{shape}$. Its mean priors are the same as for `poisson()`.
@@ -98,7 +96,6 @@ fit_with_prior = mcp(model, data = df, family = poisson(), prior = prior, par_x 
 When no `shape()` formula is supplied, the response-scale shape has an inverse-gamma(0.4, 0.3) prior, matching `brms`. It covers both strong overdispersion and the large-shape Poisson limit; `fit$prior` shows its log-shape representation as `dloginvgamma(0.4, 0.3)`.
 
 An explicit `shape()` formula models log-shape. Its intercept defaults to `dt(0, 2.5, 3)` and coefficients use the usual proper scaling. `brms` uses the same intercept prior but flat coefficients. Shape regression can be weakly identified, so informed priors may be useful.
-
 
 # Model comparison
 
@@ -116,7 +113,6 @@ set.seed(42)
 plot(fit_flat) + plot(fit_decay)
 ```
 
-
 Not we compute and compare the LOO ELPDs:
 
 ```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
@@ -124,12 +120,12 @@ fit_loo = loo(fit)
 fit_flat_loo = loo(fit_flat)
 fit_decay_loo = loo(fit_decay)
 ```
+
 ```{r}
 loo::loo_compare(fit_loo, fit_flat_loo, fit_decay_loo)
 ```
 
-
-The change point model seems to be preferred with a ratio of around 1.7 over the decay model and 2.5 over the flat model. Another approach is to look at the model weights:
+The change point model seems to be preferred with a ratio of around 1.9 over the decay model and 2.5 over the flat model. Another approach is to look at the model weights:
 
 ```{r}
 loo_list = list(fit_loo, fit_flat_loo, fit_decay_loo)
@@ -138,8 +134,8 @@ loo::loo_model_weights(loo_list, method="pseudobma")
 
 Again, unsurprisingly, the change point model is preferred and they show the same ranking as implied by `loo_compare`.
 
-
 # JAGS code for the Poisson example
+
 Here is the JAGS code for the full Poisson change-point model above.
 
 ```{r}
