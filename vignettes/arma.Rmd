@@ -7,14 +7,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{=html}
-<!--
- * Compute fit and interpret it
- * Warnings
- * Make a demo dataset and add to README
--->
-```
-
 Serial dependence is common in time series. Add autoregressive terms with `ar(p)`, moving-average terms with `ma(q)`, or both in the segment formulas:
 
 ``` r
@@ -27,13 +19,19 @@ The most common use case is still `ar(1)`. Like other `mcp` terms, AR and MA coe
 
 `mcp` implements AR and MA as a generalized ARMA (GARMA) recurrence on the response-family link scale. If $b_t$ is the ordinary regression predictor from the segment formulas and $\eta_t$ is the predictor including serial dependence, then
 
-$$\eta_t = b_t
-+ \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right]
-+ \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right].$$
+$$\begin{aligned}
+\text{AR}_t &= \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right] \\
+\text{MA}_t &= \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right] \\
+\eta_t &= b_t + \text{AR}_t + \text{MA}_t
+\end{aligned}$$
 
-where $\phi_{j,t}$ is the lag-$j$ autoregressive (AR) coefficient at time $t$, $\theta_{k,t}$ is the lag-$k$ moving-average (MA) coefficient at time $t$, $g(\cdot)$ is the link function, and $y^*$ is the boundary-constrained observation. Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations. Unavailable lags at the beginning of the series contribute zero. This same recurrence is used by JAGS, fitted values, predictions, log likelihoods, and fresh-series simulation.
+where $\phi_{j,t}$ is the lag-$j$ autoregressive (AR) coefficient at time $t$, $\theta_{k,t}$ is the lag-$k$ moving-average (MA) coefficient at time $t$, $g(\cdot)$ is the link function, and $y^*$ is the boundary-constrained observation. Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations.
 
-A key feature of this recurrence is that **AR/MA memory flows continuously across change points**:
+**`mcp` does regression with change points on the coefficients** $\phi_{j,t}$ **and** $\theta_{k,t}$. See below for applied examples.
+
+Unavailable lags at the beginning of the series contribute zero. This same recurrence is used by JAGS, fitted values, predictions, log likelihoods, and fresh-series simulation.
+
+A key feature of this recurrence is that AR/MA memory flows continuously across change points:
 
 - For an order-$N$ component in a new segment, the last $N$ observations *before* the change point are input into the first $\eta_t$ in the new segment, weighted by the new segment's AR/MA parameters.
 - AR/MA lags do not reset at segment boundaries; they only reset at the very beginning of the whole dataset, or across independent series when using `series = "column_name"` inside `ar()` or `ma()` (e.g. `ar(1, series = id)`).
@@ -58,8 +56,8 @@ library(mcp)
 future::plan(future::multisession, workers = 3)
 set.seed(42)  # Make the script deterministic
 
-fit = mcp_example("ar", sample = FALSE)
-head(fit$data)
+ar_data = mcp_example_data("ar")
+head(ar_data)
 ```
 
 See how this was generated in `fit$example_code`. We model this as a plateau (`1`) with a second-order autoregressive residual (`ar(2)`) followed by a joined slope (`0 + time`) with a negative first-order autoregressive residual (`ar(1)`):
@@ -69,7 +67,7 @@ model = list(
   price ~ 1 + ar(2),  # Intercept_1, ar1_1, ar2_1
   ~ 0 + time + ar(1)  # time_2, ar1_2; turns off second-order AR
 )
-fit = mcp(model, fit$data, seed = 42)
+fit = mcp(model, ar_data, seed = 42)
 ```
 
 Let's plot it and we see that AR was strong in the first segment and weaker-but-negative in the second:
@@ -133,13 +131,12 @@ AR and MA lags apply to the *order* of rows in the data frame without taking int
 
 For grouped longitudinal data, identify independent residual histories with `series` inside `ar()` or `ma()` and sort each series by time:
 
-```{r, eval=FALSE}
-data = data[order(data$id, data$x), ]
+```{r, eval = FALSE}
 model = list(
   y ~ 1 + ar(1, series = id),
   ~ 0 + x + ar(1)
 )
-fit = mcp(model, data)
+fit = mcp(model, ar_series_data)
 ```
 
 Rows belonging to each series must be contiguous. AR and MA lags reset at each series boundary. The `series` argument inside `ar()`/`ma()` is separate from group-level effects such as `(1 | id)`: either can be used without the other.
@@ -178,7 +175,7 @@ fit = mcp(model, df, par_x = "time", seed = 42)
 The Bayesian parameter estimates are in perfect correspondence with `arima()`, even where they deviate a tiny bit from the simulation parameters (due to the inherent randomness in simulating data):
 
 ```{r}
-fixef(fit)
+summary(fit)
 ```
 
 # Inferring an autocorrelation-only change
@@ -212,24 +209,23 @@ df$y = empty$simulate(
 
 ```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
 prior = list(x_2 = "x_1")  # Set the two slopes equal
-fit = mcp(model, data = df, prior = prior, sample = "both", seed = 42)
+fit = mcp(model, data = df, prior = prior, iter = 12000, sample = "both", seed = 42)
 ```
+
+Let's plot the full model prediction using `plot(fit)`. You could use `plot(fit, geom_data = "line")` for a more classical line plot of the time series data. Set `plot(fit, arma = FALSE)` to omit all AR and MA effects.
+
+We plot it together with the change in the `ar1` parameter using `plot_dpar(fit)`:
 
 ```{r}
+library(patchwork)
 set.seed(42)
-plot(fit)
+plot(fit) /  # Patchwork syntax to show on separate rows
+  plot_dpar(fit, dpar = "ar1", lines = 100)
 ```
 
-You could use `plot(fit, geom_data = "line")` for a more classical line plot of the time series data. Set `plot(fit, arma = FALSE)` to omit all AR and MA effects. You can also plot `ar1_` or `ma1_` parameters directly using `plot_dpar()`:
+We recovered the parameters, including the change point (see `mean` but also the helpful `sim` and `match` columns):
 
 ```{r}
-set.seed(42)
-plot_dpar(fit, dpar = "ar1", lines = 100)
-```
-
-We recovered the parameters, including the change point:
-
-```{r, echo = FALSE}
 summary(fit)
 ```
 
@@ -246,9 +242,9 @@ As usual, we can test hypotheses ([read more here](../articles/comparison.html))
 hypothesis(fit, "ar1_1 = ar1_2")
 ```
 
-In this case, the evidence for equality is so small that it is rounded to zero. This means that not even a single MCMC sample visited a state with noticeable density at zero difference.
+In this case, the evidence for equality is very small so it was rarely visited by the sampler and hence the precision is low .
 
-Of course, we can also do directional tests. For example, what is the evidence that `ar1_1` is more than 0.3 greater than `ar1_2`? Answer: around 100 to one.
+Of course, we can also do directional tests. For example, what is the evidence that `ar1_1` is more than 0.3 greater than `ar1_2`? Answer: More than 100 to one.
 
 ```{r}
 hypothesis(fit, "ar1_1 - 0.3 > ar1_2")
@@ -273,17 +269,17 @@ The defaults express no assumption about the sign. For a time series where posit
 Here is a complete list of the (default) priors in the model above:
 
 ```{r}
-cbind(fit$prior)
+prior_summary(fit)
 ```
 
-We can also visualize them because we sampled the prior. `prior = TRUE` works in most `mcp` functions, including `plot()` and `summary()`.
+We can also visualize the priors because we sampled the prior. `prior = TRUE` works in most `mcp` functions, including `plot()` and `summary()`.
 
 ```{r, fig.height=10, fig.width=7}
 set.seed(42)
 plot_pars(fit, prior = TRUE)
 ```
 
-Notice that the posteriors are smoothed at sharp cutoffs, slightly misrepresenting the true distribution.
+Notice that the plot smoothes the posteriors at sharp cutoffs, slightly misrepresenting the true distribution.
 
 Let's inspect the priors for a more advanced AR model, since you would often have to inform these:
 
@@ -293,7 +289,7 @@ model = list(
   ~ 0 + ar(1, 1 + I(x^2))
 )
 empty = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE)
-cbind(empty$prior)
+prior_summary(empty)
 ```
 
 AR and MA coefficient regressions use an identity link, while their residual inputs use the supported response-family link described above. Careful priors become especially important with higher orders or coefficient slopes, where individual values in [-1, 1] do not ensure a stable recurrence. After fitting, `mcp()` checks up to 500 posterior draws at up to 100 observed predictor rows and warns if the checked-draw violation rate exceeds the corresponding `ar` or `ma` threshold in `diagnostics` (10% by default). `fit$simulate()` checks the supplied coefficient trajectory before generating a fresh series. For predictor- or segment-varying coefficients these are local smoke tests, not proofs of global stationarity or invertibility.
