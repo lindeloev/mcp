@@ -121,13 +121,13 @@ fit_flat_loo = loo(fit_flat)
 fit_decay_loo = loo(fit_decay)
 ```
 
-```{r}
+```{r, results='hold'}
 loo::loo_compare(fit_loo, fit_flat_loo, fit_decay_loo)
 ```
 
 The change point model seems to be preferred with a ratio of around 1.9 over the decay model and 2.5 over the flat model. Another approach is to look at the model weights:
 
-```{r}
+```{r, results='hold'}
 loo_list = list(fit_loo, fit_flat_loo, fit_decay_loo)
 loo::loo_model_weights(loo_list, method="pseudobma")
 ```

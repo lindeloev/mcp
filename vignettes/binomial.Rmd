@@ -101,7 +101,7 @@ Speaking of alternative visualizations, you can also plot this on the logit scal
 
 ```{r, warning=FALSE, message=FALSE}
 set.seed(42)
-plot_dpar(fit)
+plot_dpar(fit, scale = "linear")
 ```
 
 
@@ -113,7 +113,7 @@ Already in the default `plot` as used above, it will be obvious if there was poo
 
 ```{r, fig.height = 10, fig.width = 6}
 set.seed(42)
-plot_pars(fit)
+plot_pars(fit, nvariables = NULL)
 ```
 
 Convergence is perfect here as evidenced by the overlapping trace plots that look like fat caterpillars (Bayesians love fat caterpillars). Notice that the posterior distribution of change points can be quite non-normal and sometimes even bimodal. Therefore, one should be careful not to interpret the interval as if it was normal.
@@ -126,8 +126,9 @@ Convergence is perfect here as evidenced by the overlapping trace plots that loo
 
 The default priors in `mcp` are set so that they are reasonably broad to cover most scenarios, though also specific enough to sample effectively. They are not "default" as in "canonical". Rather, they are "default" as in "what happens if you do nothing else". All priors are stored in `fit$prior` (also `empty$prior`). We did not specify `prior` above, so it ran with default priors:
 
-```{r}
-cbind(fit$prior)
+```{r, results='hold'}
+cbind(fit$prior)  # Raw view
+prior_summary(fit)  # Richer view. Try adding verbose = TRUE
 ```
 
 The priors on change points are discussed extensively in the prior vignette. With the default logit link, intercepts and categorical contrasts use `dt(0, 1.5, 3)`. Its central 95% interval is approximately -4.8 to 4.8 logits, corresponding to probabilities from 0.008 to 0.992, while its heavy tails retain support for more extreme values. The figure compares Student-t priors with scales 1 (red), 1.5 (black, the `mcp` default), and 2.5 (blue), together with their correspondence to probabilities. The probit link currently uses the same numerical default for simplicity.
@@ -148,7 +149,15 @@ ggplot(data.frame(logits = 0), aes(x = logits)) +
   stat_function(fun=scaled_t, args = list(scale = 2.5), lwd=2, col="blue") +
   
   # Set the secondary axis
-  scale_x_continuous(breaks = -7:7,limits = c(-7, 7), sec.axis = sec_axis(~ inverse_logit(.), name = "Probability", breaks = round(inverse_logit(seq(-7, 7, by = 2)), 3)))
+  scale_x_continuous(
+    breaks = -7:7, limits = c(-7, 7), 
+    sec.axis = sec_axis(
+      ~ inverse_logit(.), 
+      name = "Probability",
+      labels = scales::percent_format(),
+      breaks = round(inverse_logit(seq(-7, 7, by = 2)), 3)
+    )
+  )
 ```
 
 Please keep in mind that when these priors combine through the model, the joint probability may be quite different.
