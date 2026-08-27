@@ -126,8 +126,6 @@ navbar:
         href: articles/binomial.html
     - text: Other
       menu:
-      - text: Comparison to other packages
-        href: articles/packages.html
       - text: Tips, tricks, and debugging
         href: articles/tips.html
     - text: Functions

@@ -12,9 +12,9 @@ editor_options:
 
 There are three main ways of doing model comparison in `mcp`:
 
- * Compare any N `mcp` models using leave-One-Out cross validation (LOO-CV). Check out `loo(fit)`, `loo::loo_compare(loo1, loo2, ...)`, and `loo::loo_model_weights(loo1, loo2, ...)`.
- * Flexible directional tests using `hypothesis(fit, cp_1 > 40)` or `hypothesis(fit, cp_1 > 40 & x_2 > x_1)`.
- * Point Bayes Factors tests using the Savage-Dickey density ratio, e.g., `hypothesis(fit, cp_1 = 50)` or `hypothesis(fit, x_2 = x_1)`.
+ 1. Compare any N `mcp` models using leave-One-Out cross validation (LOO-CV). Check out `loo(fit)`, `loo::loo_compare(loo1, loo2, ...)`, and `loo::loo_model_weights(loo1, loo2, ...)`.
+ 2. Flexible directional tests using `hypothesis(fit, cp_1 > 40)` or `hypothesis(fit, cp_1 > 40 & x_2 > x_1)`.
+ 3. Point Bayes Factors tests using the Savage-Dickey density ratio, e.g., `hypothesis(fit, cp_1 = 50)` or `hypothesis(fit, x_2 = x_1)`.
 
 
 ```{r}
