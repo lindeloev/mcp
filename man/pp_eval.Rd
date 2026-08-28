@@ -21,6 +21,7 @@ pp_eval(
   draws_format = "tidy",
   scale = "response",
   .include_fitted = FALSE,
+  .include_dpars = FALSE,
   .garma_replicate = FALSE,
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated()
@@ -103,6 +104,8 @@ A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} i
 }}
 
 \item{.include_fitted}{Internal. Include fitted values with unsummarised predictions.}
+
+\item{.include_dpars}{Internal. Include distributional parameters and response data as attributes with unsummarised predictions.}
 
 \item{.garma_replicate}{Internal. For GARMA predictions, generate each
 response history recursively instead of conditioning on observed responses.}

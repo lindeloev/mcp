@@ -43,8 +43,8 @@ parameters and only one plot \code{type}.}
 
 \item{prior}{Logical. Plot prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)? Useful for \code{mcp(..., sample = "both")}.}
 
-\item{nvariables}{Positive integer. Maximum number of parameters plotted per
-page. The default of 5 follows \code{brms::plot.brmsfit()}.}
+\item{nvariables}{Positive integer or \code{NULL} / \code{Inf}. Maximum number of parameters plotted per
+page. Set to \code{NULL} or \code{Inf} to plot all parameters on a single page. The default of 5 follows \code{brms::plot.brmsfit()}.}
 
 \item{ask}{Logical. In an interactive session, prompt before printing each
 page after the first. Only used when there are multiple pages.}
@@ -74,7 +74,7 @@ printed in sequence; in interactive use, \code{ask = TRUE} pauses between pages.
 # Typical usage. demo_fit is an mcpfit object.
 plot_pars(demo_fit)
 
-\dontrun{
+\donttest{
 # More options
 plot_pars(demo_fit, regex_pars = "^cp_")  # Plot only change points
 plot_pars(demo_fit, pars = c("Intercept_3", "time_3"))  # Plot these parameters

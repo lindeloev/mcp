@@ -51,7 +51,7 @@ Gaussian weights, are not interpolated. Supply an auxiliary as a scalar in
 \code{at} or use \code{newdata} for a varying design.
 }
 \examples{
-\dontrun{
+\donttest{
 # Get predictors for a fit
 fit = mcp_example("multiple")
 newdata = interpolate_newdata(fit)

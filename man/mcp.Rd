@@ -248,7 +248,7 @@ summary(demo_fit, prior = TRUE)
 plot(demo_fit, prior = TRUE)
 
 # Show all priors. Default priors are added where you don't provide any
-print(demo_fit$prior)
+prior_summary(demo_fit)
 
 # Set priors and re-run
 prior = list(

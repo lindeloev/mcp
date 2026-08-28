@@ -18,12 +18,10 @@ get_plot(
   prior = FALSE,
   dpar = "epred",
   arma = TRUE,
-  ndraws = 1000,
+  ndraws = 500,
   scale = "response",
   at = NULL,
-  .grouping = "auto",
-  nsamples = lifecycle::deprecated(),
-  ...
+  .grouping = "auto"
 )
 }
 \arguments{
@@ -101,7 +99,7 @@ can be supplied as explicit scalar design values. Passed to
 
 \item{.grouping}{Internal. Whether grouping arguments were omitted, mapped, or explicitly disabled.}
 
-\item{nsamples}{Deprecated. Use \code{ndraws} instead.}
+\item{samples, nsamples}{Deprecated. Use \code{lines} instead.}
 
 \item{...}{Currently ignored.}
 }

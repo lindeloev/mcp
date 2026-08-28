@@ -19,8 +19,10 @@
   rate = TRUE,
   prior = FALSE,
   arma = TRUE,
-  ndraws = 1000,
+  ndraws = 500,
+  scale = "response",
   at = NULL,
+  samples = lifecycle::deprecated(),
   nsamples = lifecycle::deprecated(),
   ...
 )
@@ -35,9 +37,10 @@ plot_dpar(
   cp_dens = TRUE,
   prior = FALSE,
   arma = TRUE,
-  ndraws = 1000,
+  ndraws = 500,
   scale = "response",
   at = NULL,
+  samples = lifecycle::deprecated(),
   nsamples = lifecycle::deprecated(),
   ...
 )
@@ -93,12 +96,20 @@ currently requires including all such effects (\code{varying = TRUE}).
 If there are group-level effects, this is the number of draws from each group.
 \code{NULL} means "all". More draws trade speed for accuracy.}
 
+\item{scale}{One of
+\itemize{
+\item \code{"response"}: return on the observed scale, i.e., after applying the inverse link function.
+\item \code{"linear"}: return on the linear-predictor (link) scale, where the linear
+trends are modeled.
+A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} is not \code{NULL}.
+}}
+
 \item{at}{Named list setting additional continuous predictors to fixed values.
 They default to their observed means. Family-specific response auxiliaries
 can be supplied as explicit scalar design values. Passed to
 \code{interpolate_newdata()}.}
 
-\item{nsamples}{Deprecated. Use \code{ndraws} instead.}
+\item{samples, nsamples}{Deprecated. Use \code{lines} instead.}
 
 \item{...}{Currently ignored.}
 
@@ -110,14 +121,6 @@ can be supplied as explicit scalar design values. Passed to
 \item \code{"ar1"}, \code{"ar2"}, \code{"ma1"}, \code{"ma2"}, etc. depending on which AR or MA
 coefficient you want to evaluate.
 }}
-
-\item{scale}{One of
-\itemize{
-\item \code{"response"}: return on the observed scale, i.e., after applying the inverse link function.
-\item \code{"linear"}: return on the linear-predictor (link) scale, where the linear
-trends are modeled.
-A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} is not \code{NULL}.
-}}
 }
 \value{
 A \pkg{ggplot2} object.
@@ -127,8 +130,7 @@ Plot prior or posterior model draws on top of data.
 }
 \details{
 \code{plot()} uses \code{fit$simulate()} on posterior draws. These represent the
-(joint) posterior distribution. Interval summaries use at most 1000 draws
-by default; use \code{ndraws = NULL} to use all draws. Change-point densities
+(joint) posterior distribution. Interval summaries and change-point densities
 always use all available draws.
 }
 \section{Functions}{

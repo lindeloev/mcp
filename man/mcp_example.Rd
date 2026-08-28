@@ -6,7 +6,7 @@
 \alias{mcp_example_data}
 \title{Run example models}
 \usage{
-mcp_example(name, sample = "post", diagnostics = FALSE, plot = TRUE)
+mcp_example(name, sample = "post", plot = TRUE)
 
 mcp_example_data(name)
 }
@@ -36,9 +36,6 @@ Savage-Dickey density ratios in \code{\link{hypothesis}}.
 object without sample. This is useful if you only want to check
 prior strings (\code{fit$prior}), the JAGS model (\code{fit$jags_code}), etc.
 }}
-
-\item{diagnostics}{Diagnostic thresholds passed to \code{\link[=mcp]{mcp()}}. Defaults to
-\code{FALSE} so examples do not emit fit-diagnostic warnings.}
 
 \item{plot}{Logical. Plot the fitted example? No plot is produced when
 \code{sample = FALSE}.}
