@@ -67,8 +67,11 @@ test_that("mcpfit model accessors follow standard R conventions", {
   fixed = mcp_pars(fit, scope = "population", role = "fixed_effect")$name
   values = matrix(seq_len(3 * length(population)), nrow = 3)
   colnames(values) = population
+  prior_values = values^2
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(values))
+  fit$mcmc_prior = coda::mcmc.list(coda::mcmc(prior_values))
   expect_equal(vcov(fit), stats::cov(values[, fixed, drop = FALSE]))
+  expect_equal(vcov(fit, prior = TRUE), stats::cov(prior_values[, fixed, drop = FALSE]))
   expect_equal(vcov(fit, correlation = TRUE), stats::cor(values[, fixed, drop = FALSE]))
   expect_equal(vcov(fit, pars = "all"), stats::cov(values))
   expect_error(vcov(fit, pars = "nonexistent"))
@@ -79,6 +82,19 @@ test_that("mcpfit model accessors follow standard R conventions", {
   ))
   colnames(expected_intervals) = c("2.5 %", "97.5 %")
   expect_equal(confint(fit), expected_intervals)
+
+  prior_intervals = t(vapply(
+    population,
+    function(parameter) stats::quantile(prior_values[, parameter], c(0.025, 0.975), names = FALSE),
+    numeric(2)
+  ))
+  colnames(prior_intervals) = c("2.5 %", "97.5 %")
+  expect_equal(confint(fit, prior = TRUE), prior_intervals)
+
+  fit$mcmc_post = NULL
+  expect_error(vcov(fit), "Posterior requested but the posterior was not drawn", fixed = TRUE)
+  expect_error(confint(fit), "Posterior requested but the posterior was not drawn", fixed = TRUE)
+  expect_equal(vcov(fit, prior = TRUE), stats::cov(prior_values[, fixed, drop = FALSE]))
 })
 
 
@@ -875,4 +891,12 @@ test_that("loo supports by_row and soft-deprecates pointwise", {
     ),
     "deprecated"
   )
+})
+
+
+test_that("find_mixture_quantile handles large count means without integer overflow", {
+  cdf_fn = function(q, dpars, data, rate = FALSE) stats::ppois(q, dpars$mu)
+  dpars = list(mu = c(1e8, 1.5e9))
+  res = mcp:::find_mixture_quantile(cdf_fn, dpars, data = NULL, p = 0.975, is_discrete = TRUE)
+  expect_true(is.numeric(res) && is.finite(res) && res > 1.5e9)
 })

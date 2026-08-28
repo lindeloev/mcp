@@ -447,23 +447,24 @@ formula.mcpfit = function(x, segment = NULL, ...) {
 }
 
 
-#' Posterior Covariance and Central Intervals for `mcpfit` Objects
+#' Prior and Posterior Covariance and Central Intervals for `mcpfit` Objects
 #'
-#' Summarise the joint and marginal posterior uncertainty of population-level
-#' model parameters.
+#' Summarise the joint and marginal uncertainty of population-level model
+#' parameters using posterior or prior draws.
 #'
 #' @param object An `mcpfit` object.
-#' @param correlation Return the posterior correlation matrix instead of the
-#'   covariance matrix?
+#' @param correlation Return the correlation matrix instead of the covariance
+#'   matrix?
 #' @param pars Optional names of population-level parameters to extract, or
 #'   `"all"` for all population-level parameters.
 #' @param dpar Distributional parameter(s) to select when `pars = NULL`.
 #' @param parm Optional names or positions of population-level parameters to
 #'   include in the intervals.
-#' @param level Width of the central posterior interval.
+#' @param level Width of the central interval.
+#' @param prior Logical. Use prior draws instead of posterior draws?
 #' @param ... Currently unused.
-#' @return `vcov()` returns a posterior covariance or correlation matrix.
-#'   `confint()` returns a two-column matrix of central posterior intervals.
+#' @return `vcov()` returns a covariance or correlation matrix. `confint()`
+#'   returns a two-column matrix of central intervals.
 #' @name posterior-uncertainty-mcpfit
 #' @examples
 #' # Posterior covariance of the primary-response coefficients, matching fixef().
@@ -473,6 +474,7 @@ formula.mcpfit = function(x, segment = NULL, ...) {
 #' confint(demo_fit)
 #' confint(demo_fit, parm = "cp_1")
 #' confint(demo_fit, parm = c("Intercept_1", "time_2"), level = 0.8)
+#' confint(demo_fit, prior = TRUE)
 #'
 #' # Include change points, residual SDs, group SDs, and AR/MA parameters.
 #' vcov(demo_fit, pars = "all")
@@ -486,9 +488,11 @@ NULL
 
 #' @rdname posterior-uncertainty-mcpfit
 #' @export
-vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, dpar = "mu", ...) {
+vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, dpar = "mu",
+                       prior = FALSE, ...) {
   rlang::check_dots_empty()
   checkmate::assert_flag(correlation)
+  checkmate::assert_flag(prior)
   parameters = mcp_pars(object, scope = "population")
   if (is.null(pars)) {
     checkmate::assert_subset(dpar, object$family$dpar_specs$dpar)
@@ -505,7 +509,9 @@ vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, dpar = "mu", ..
   if (length(pars) == 0)
     return(NULL)
 
-  draws = posterior::as_draws_matrix(posterior_draws(object))
+  draws = posterior::as_draws_matrix(posterior_draws(
+    object, prior = prior, fallback_to_prior = FALSE
+  ))
   if (correlation)
     return(stats::cor(draws[, pars, drop = FALSE]))
 
@@ -515,10 +521,11 @@ vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, dpar = "mu", ..
 
 #' @rdname posterior-uncertainty-mcpfit
 #' @export
-confint.mcpfit = function(object, parm, level = 0.95, ...) {
+confint.mcpfit = function(object, parm, level = 0.95, prior = FALSE, ...) {
   rlang::check_dots_empty()
   checkmate::assert_number(level, lower = 0, upper = 1)
   checkmate::assert_true(level > 0 && level < 1, .var.name = "level")
+  checkmate::assert_flag(prior)
 
   population = mcp_pars(object, scope = "population")$name
   if (missing(parm)) {
@@ -533,7 +540,9 @@ confint.mcpfit = function(object, parm, level = 0.95, ...) {
 
   # Compute credible interval
   probs = c((1 - level) / 2, 1 - (1 - level) / 2)
-  draws = posterior::as_draws_matrix(posterior_draws(object))
+  draws = posterior::as_draws_matrix(posterior_draws(
+    object, prior = prior, fallback_to_prior = FALSE
+  ))
   intervals = parm |>
     vapply(
       function(parameter) stats::quantile(draws[, parameter], probs = probs, names = FALSE),
@@ -578,7 +587,9 @@ is.mcpfit = function(x) {
 #' @param fit An \code{\link{mcpfit}} object
 #' @param message TRUE: gives a message if returning prior draws. FALSE = no message
 #' @param error TRUE: err if there are no draws. FALSE: return NULL
-mcmclist_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
+#' @param fallback_to_prior TRUE: use prior draws when posterior draws are unavailable
+mcmclist_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE,
+                          fallback_to_prior = TRUE) {
   check_mcpfit_version(fit)
   mcmc_prior = .subset2(fit, "mcmc_prior")
   mcmc_post = .subset2(fit, "mcmc_post")
@@ -592,12 +603,14 @@ mcmclist_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
 
   if (coda::is.mcmc.list(mcmc_post)) {
     return(mcmc_post)
-  } else if (coda::is.mcmc.list(mcmc_prior)) {
+  } else if (fallback_to_prior && coda::is.mcmc.list(mcmc_prior)) {
     if (message)
       message("Posterior was not drawn. Using prior draws. Set `prior = TRUE` to mute this message.")
     return(mcmc_prior)
   } else if (error == TRUE) {
-    stop("This mcpfit contains no posterior or prior draws.")
+    if (fallback_to_prior)
+      stop("This mcpfit contains no posterior or prior draws.")
+    stop("Posterior requested but the posterior was not drawn.")
   }
 
   NULL
@@ -612,12 +625,14 @@ mcmclist_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
 #' @keywords internal
 #' @noRd
 #' @inheritParams mcmclist_draws
-posterior_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE) {
+posterior_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE,
+                           fallback_to_prior = TRUE) {
   draws = mcmclist_draws(
     fit,
     prior = prior,
     message = message,
-    error = error
+    error = error,
+    fallback_to_prior = fallback_to_prior
   )
   if (is.null(draws))
     return(NULL)
@@ -1664,7 +1679,9 @@ fitted.mcpfit = function(
 #' @return A numeric `N_draws` by `nrow(newdata)` matrix.
 #' @details For GARMA models, `posterior_predict()` generates each replicated
 #'   response series recursively. It does not condition later predictions on
-#'   the observed response history, unlike `fitted()` and `predict()`.
+#'   the observed response history, unlike `fitted()` and `predict()`. These
+#'   methods require posterior draws. For prior prediction, use `fitted()` or
+#'   `predict()` with `prior = TRUE`.
 #' @seealso [fitted.mcpfit()], [predict.mcpfit()]
 posterior_epred.mcpfit = function(
   object,
@@ -1767,6 +1784,7 @@ posterior_prediction_matrix = function(
   ...
 ) {
   checkmate::assert_class(object, "mcpfit")
+  mcmclist_draws(object, message = FALSE, fallback_to_prior = FALSE)
   dots = list(...)
   if (length(dots) > 0)
     stop("Unrecognized argument(s): ", and_collapse(names(dots)), call. = FALSE)

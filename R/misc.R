@@ -366,18 +366,18 @@ find_mixture_quantile = function(cdf_fn, dpars, data, p, rate = FALSE, is_discre
     trials = if (!is.null(data$trials)) data$trials[1] else Inf
     eval_cdf = function(v) mix_cdf(if (rate && is.finite(trials)) v / trials else v)
 
-    lo = 0L
-    hi = max(1L, as.integer(round(mean(dpars$mu) * (if (rate && is.finite(trials)) trials else 1))))
-    if (is.finite(trials)) hi = min(as.integer(trials), hi)
+    lo = 0
+    hi = max(1, round(mean(dpars$mu) * (if (rate && is.finite(trials)) trials else 1)))
+    if (is.finite(trials)) hi = min(trials, hi)
 
-    while (eval_cdf(hi) < p && hi < trials) hi = hi * 2L
+    while (eval_cdf(hi) < p && hi < trials) hi = if (is.finite(trials)) min(trials, hi * 2) else hi * 2
 
     while (lo < hi) {
-      mid = (lo + hi) %/% 2L
+      mid = floor((lo + hi) / 2)
       if (eval_cdf(mid) >= p) {
         hi = mid
       } else {
-        lo = mid + 1L
+        lo = mid + 1
       }
     }
     return(if (rate && is.finite(trials)) lo / trials else lo)

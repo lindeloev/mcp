@@ -63,8 +63,8 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
   checkmate::assert_flag(arma)
   assert_loglik_garma_history(fit, fit$data, arma, "`loo()`")
   warn_arma_check(fit, arma, "information_criterion")
+  mcmc_post = mcmclist_draws(fit, message = FALSE, fallback_to_prior = FALSE)
   ndraws = validate_loglik_ndraws(fit, ndraws)
-  mcmc_post = .subset2(fit, "mcmc_post")
   n_draws = sum(vapply(mcmc_post, nrow, integer(1)))
   settings = get_loglik_settings(fit, varying, arma, ndraws)
   if (length(settings$observed_rows) == 0)
@@ -168,6 +168,7 @@ waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, ndraws = NULL,
   checkmate::assert_flag(arma)
   assert_loglik_garma_history(fit, fit$data, arma, "`waic()`")
   warn_arma_check(fit, arma, "information_criterion")
+  mcmclist_draws(fit, message = FALSE, fallback_to_prior = FALSE)
   ndraws = validate_loglik_ndraws(fit, ndraws)
   loglik = log_lik(
     fit, summary = FALSE, varying = varying, arma = arma, ndraws = ndraws
