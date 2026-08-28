@@ -446,6 +446,7 @@ get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = F
 #' Shows a list in a more condensed format using `str(list)`.
 #' @aliases print.mcplist
 #' @inheritParams print.mcpfit
+#' @return `x`, invisibly.
 #' @export
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -478,6 +479,7 @@ print.mcplist = function(x, ...) {
 #' @param x Character, often with newlines.
 #' @param ... Currently ignored.
 #' @return NULL
+#' @return `x`, invisibly.
 #' @export
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}

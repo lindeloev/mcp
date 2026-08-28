@@ -559,6 +559,7 @@ print.mcpfit = function(x, ...) {
 #'
 #' @aliases is.mcpfit
 #' @param x An `R` object.
+#' @return A boolean (`TRUE` if `x` is an `mcpfit` object, `FALSE` otherwise).
 #' @export
 is.mcpfit = function(x) {
   inherits(x, "mcpfit")
@@ -785,6 +786,7 @@ tidy_draws.mcpfit = function(model, ...) {
 #'
 #' @inheritParams fitted.mcpfit
 #' @param x An `mcpfit` object or a posterior draws object.
+#' @return An integer count of iterations, chains, or draws.
 #' @name draws-index-mcp
 #' @examples
 #' niterations(demo_fit)
