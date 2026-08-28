@@ -1,5 +1,6 @@
 ---
 title: "Group-level (random) effects in mcp"
+date: "`r format(file.mtime(knitr::current_input()), '%Y-%m-%d')`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Group-level (random) effects in mcp}

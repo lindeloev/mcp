@@ -98,10 +98,6 @@ can be supplied as explicit scalar design values. Passed to
 \code{interpolate_newdata()}.}
 
 \item{.grouping}{Internal. Whether grouping arguments were omitted, mapped, or explicitly disabled.}
-
-\item{samples, nsamples}{Deprecated. Use \code{lines} instead.}
-
-\item{...}{Currently ignored.}
 }
 \value{
 A \pkg{ggplot2} object.

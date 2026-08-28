@@ -1,5 +1,6 @@
 ---
 title: "Working with priors"
+date: "`r format(file.mtime(knitr::current_input()), '%Y-%m-%d')`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Working with priors}

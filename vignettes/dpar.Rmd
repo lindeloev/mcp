@@ -1,5 +1,6 @@
 ---
 title: "Variance change points and other distributional parameters"
+date: "`r format(file.mtime(knitr::current_input()), '%Y-%m-%d')`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Variance change points and other distributional parameters}

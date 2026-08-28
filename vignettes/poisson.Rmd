@@ -1,5 +1,6 @@
 ---
 title: "Poisson and negative-binomial change point analysis"
+date: "`r format(file.mtime(knitr::current_input()), '%Y-%m-%d')`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Poisson and negative-binomial change point analysis}

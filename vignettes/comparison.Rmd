@@ -1,5 +1,6 @@
 ---
 title: "Change point model comparison"
+date: "`r format(file.mtime(knitr::current_input()), '%Y-%m-%d')`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Change point model comparison}

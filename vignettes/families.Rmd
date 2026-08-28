@@ -1,5 +1,6 @@
 ---
 title: "Families and link functions"
+date: "`r format(file.mtime(knitr::current_input()), '%Y-%m-%d')`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Families and link functions}
