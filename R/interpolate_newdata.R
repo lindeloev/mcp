@@ -122,7 +122,7 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Get predictors for a fit
 #' fit = mcp_example("multiple")
 #' newdata = interpolate_newdata(fit)

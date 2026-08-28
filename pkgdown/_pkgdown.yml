@@ -3,6 +3,7 @@ development:
 
 template:
   bootstrap: 5
+  math-rendering: katex
   params:
     bootswatch: flatly  # Theme
     ganalytics: UA-1026978-3  # Google Analytics

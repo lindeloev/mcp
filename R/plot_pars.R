@@ -49,7 +49,7 @@
 #' # Typical usage. demo_fit is an mcpfit object.
 #' plot_pars(demo_fit)
 #'
-#' \dontrun{
+#' \donttest{
 #' # More options
 #' plot_pars(demo_fit, regex_pars = "^cp_")  # Plot only change points
 #' plot_pars(demo_fit, pars = c("Intercept_3", "time_3"))  # Plot these parameters

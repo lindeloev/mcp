@@ -336,6 +336,9 @@ mcp = function(model,
   checkmate::assert_list(inits, null.ok = TRUE)
   checkmate::assert_int(seed, lower = 1, null.ok = TRUE)
   diagnostics = resolve_diagnostics(diagnostics)
+  if (missing(quiet)) {
+    quiet = isTRUE(getOption("mcp.quiet", FALSE)) || identical(Sys.getenv("IN_PKGDOWN"), "true")
+  }
   checkmate::assert_flag(quiet)
 
   # jags_code
