@@ -175,7 +175,8 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
 
   # Data helpers are always present; model helpers occur only in generated code.
   helper_names = unique(c(
-    "rhs_matrix_", "series_id_", "cp_order_",
+    "rhs_matrix_", "series_id_", "cp_order_", "response_observed_",
+    "likelihood_weight_", "likelihood_zero_",
     paste0("n_unique_", group_cols), paste0(group_cols, "_"),
     names(attr(jags_code, "jags_constants")),
     if (generated) c(
@@ -270,6 +271,11 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
   # constants. Generated code and newly resolved priors no longer need these.
   context = prior_context(data, segments)
   jags_data = add_legacy_prior_jags_data(jags_data, jags_code, context)
+
+  if (generated && grepl("response_observed_", jags_code, fixed = TRUE))
+    jags_data$response_observed_ = as.integer(!is.na(data[[segments$y[1]]]))
+  if (generated && grepl("likelihood_zero_", jags_code, fixed = TRUE))
+    jags_data$likelihood_zero_ = numeric(nrow(data))
 
   # Return
   jags_data

@@ -150,7 +150,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - `pp_check(..., ndraws = NULL)` errored. Fixed.
 
-- Weighted regression: While JAGS correctly modelled weights, R-side simulation/generation ignored it. This means `predict()`, PPCs, `log_lik()`, WAIC, and LOO were incorrect when using weighted regression. Weighted Gaussian posterior predictions and log-likelihoods now use the observation-level standard deviation `sigma / sqrt(weight)`, matching the JAGS precision `weight / sigma^2`. This makes `predict()`, posterior predictive checks, `log_lik()`, WAIC, and LOO consistent with the fitted model.
+- Weighted regression now uses brms-style likelihood weights throughout: JAGS targets the Gaussian density raised to `weight`, `log_lik()` multiplies each Gaussian log density by `weight`, and predictive draws use the unweighted response distribution with standard deviation `sigma`. In v0.3.4, weights instead acted as Gaussian precision weights and R-side predictions and information criteria were not fully consistent with the fitted model.
 
 - In models going from higher-order to lower-order, (`~ ar(2), ~ ar(1)`), the higher-order components were not "turned off".
 

@@ -1105,15 +1105,16 @@ tidy_samples = function(...) {
 #' @keywords internal
 #' @inheritParams mcp_draws
 #' @param object An `mcpfit` object.
-#' @param newdata A `tibble` or a `data.frame` containing predictors in the model. Weighted
-#'   Gaussian predictions and log-likelihoods also require the weights column. If `NULL`
-#'   (default), the original data is used. GARMA evaluation with `fitted()`,
-#'   `predict()`, `residuals()`, or `log_lik()` conditions on the response history,
+#' @param newdata A `tibble` or a `data.frame` containing predictors in the model. 
+#' - If `NULL` (default), the original data is used.
+#' - For models with `ar()` or `ma()`: `fitted()`, `predict()`, `residuals()`, or `log_lik()` 
+#'   conditions on the response history,
 #'   so `newdata` must include the response. For `fitted()`, `predict()`, and
 #'   `residuals()`, missing response histories are supported only in the original
 #'   fitted data, using retained posterior imputations. `log_lik()` is unavailable
 #'   when a missing response enters a later observed history. Use [posterior_predict()]
 #'   to generate fresh response series recursively from predictor-only `newdata`.
+#' - For models with `y | weights()`: Require the weights column except for `fitted()` and `predict()`.
 #' @param summary Summarise at each x-value
 #' @param type One of:
 #'   - `"fitted"`: return the expected response. When `dpar` names a

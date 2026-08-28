@@ -54,7 +54,10 @@
 #'      - AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
 #'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
 #'
-#'   * *Weights:* `y | weights(w) ~ ...` specifies observation log-likelihood weights.
+#'   * *Gaussian weights:* `y | weights(w) ~ ...` multiplies each observation's
+#'     Gaussian log-likelihood contribution by `w`, as in `brms`. Weights affect
+#'     posterior inference and `log_lik()`, but not the response distribution used
+#'     by `predict()` or prior/posterior predictive checks.
 #'
 #'   * *Binomial:* use `successes | trials(total) ~ ...` with `family = binomial()`.
 #'
@@ -424,7 +427,8 @@ mcp = function(model,
   # SAMPLE #
   ##########
   jags_data = get_jags_data(
-    data, family, segments, predictors, group_effects, jags_code, series
+    data, family, segments, predictors, group_effects, jags_code, series,
+    generated = !custom_jags_code
   )
 
   # Monitor model parameters and, for generated JAGS code, latent responses
@@ -470,6 +474,8 @@ mcp = function(model,
     # Set response = NA if we only sample prior
     jags_data_prior = jags_data
     jags_data_prior[[segments$y[1]]] = rep(NA, nrow(data))
+    if (!is.null(jags_data_prior$response_observed_))
+      jags_data_prior$response_observed_[] = 0L
 
     mcmc_prior = run_jags(
       data = data,

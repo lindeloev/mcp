@@ -210,7 +210,26 @@ mcpfamily_gaussian = function(family) {
       stats::pnorm(q, dpars$mu, dpars$sigma)
     }
   )
-  jags = list(likelihood = function(context) paste0(context$y, " ~ dnorm(", context$dpar("mu"), ", ", context$aux("weights", "1"), " / ", context$dpar("sigma"), "^2)"))
+  jags = list(
+    likelihood = function(context) {
+      weights = context$aux("weights", "1")
+
+      if (identical(weights, "1")) {
+        # No weight
+        return(paste0(context$y, " ~ dnorm(", context$dpar("mu"), ", 1 / ", context$dpar("sigma"), "^2)"))
+      } else {
+        # The weighted normal contributes sigma^-1 from its normalizing term.
+        # Observing zero from dexp(sigma^(1-w)) contributes sigma^(1-w), so
+        # their product is Normal(y | mu, sigma)^w up to a weight-only constant.
+        c(
+          "# Gaussian likelihood raised to the observation weight",
+          paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)"),
+          paste0(context$y, " ~ dnorm(", context$dpar("mu"), ", likelihood_weight_[i_] / ", context$dpar("sigma"), "^2)"),
+          paste0("likelihood_zero_[i_] ~ dexp(pow(", context$dpar("sigma"), ", 1 - likelihood_weight_[i_]))")
+        )
+      }
+    }
+  )
   garma = if (family$link == "identity") {
     list(
       observed_r = function(y, data, boundary) y,
