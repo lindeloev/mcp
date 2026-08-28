@@ -248,8 +248,10 @@ get_loglik_settings = function(fit, varying, arma, ndraws) {
 #'
 #'   **Equality hypotheses** use the equal sign (=) and a Savage-Dickey density
 #'   ratio: posterior density divided by prior density at the tested point equality
+#' 
 #'   \eqn{\theta = \theta_0}:
 #'   \deqn{\text{BF}_{01} = \frac{p(\theta = \theta_0 \mid \text{data})}{p(\theta = \theta_0)}}
+#' 
 #'   where \eqn{\theta} is the evaluated parameter (or affine contrast), \eqn{\theta_0} is the hypothesized null value, \eqn{p(\theta = \theta_0 \mid \text{data})}{p(theta = theta_0 | data)} is the posterior density, and \eqn{p(\theta = \theta_0)}{p(theta = theta_0)} is the prior density. This is a Bayes factor for a nested point-null model against the fitted
 #'   continuous model (\eqn{\text{BF}_{10} = 1 / \text{BF}_{01}}). Prior and posterior draws are required, using
 #'   `mcp(sample = "both")`.

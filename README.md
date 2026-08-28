@@ -320,7 +320,7 @@ deviation](articles/dpar.html):
 
 [Using priors](articles/priors.html):
 
-- See priors in `fit$prior` and set priors using
+- See priors in `fit$prior` or `prior_summary(fit)` and set priors using
   `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")`.
 
 - One change point has a uniform default prior. An ideal default prior

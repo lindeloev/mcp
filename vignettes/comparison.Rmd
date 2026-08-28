@@ -110,9 +110,9 @@ Notice that `mcp` issues a warning when computing Savage-Dickey Bayes factors on
  * `lower` and `upper`: The interval width defaults to a 95% central posterior interval, but you can change it using `hypothesis(..., width = 0.8)`.
  * `BF`: The Savage-Dickey density ratio in favor of the point-null model. It is the posterior density divided by the prior density at the tested equality (here $\theta = \text{cp}_1$ and $\theta_0 = 4$):
  
-$$BF_{01} = \frac{p(\theta = \theta_0 \mid \text{data})}{p(\theta = \theta_0)}$$
+   $$BF_{01} = \frac{p(\theta = \theta_0 \mid \text{data})}{p(\theta = \theta_0)}$$
 
-where $\theta$ is the tested parameter (or contrast), $\theta_0$ is the hypothesized point value, $p(\theta = \theta_0 \mid \text{data})$ is the posterior density, and $p(\theta = \theta_0)$ is the prior density. A $BF > 1$ favors the point-null model, $BF = 1$ favors neither model, and $BF < 1$ favors the continuous alternative.
+   where $\theta$ is the tested parameter (or contrast), $\theta_0$ is the hypothesized point value, $p(\theta = \theta_0 \mid \text{data})$ is the posterior density, and $p(\theta = \theta_0)$ is the prior density. A $BF > 1$ favors the point-null model, $BF = 1$ favors neither model, and $BF < 1$ favors the continuous alternative.
  * `p`: This is `NA` because equality is not an event with positive probability in the continuous model.
 
 Equality tests are limited to named parameters and affine contrasts such as `Intercept_1 - Intercept_2 = 0`. Ratios, parameter products, exponentials, and other nonlinear expressions are rejected.

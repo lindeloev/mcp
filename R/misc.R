@@ -450,7 +450,7 @@ get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = F
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @examples 
-#' print(demo_fit$moel)
+#' print(demo_fit$model)
 #' print(demo_fit$prior)
 print.mcplist = function(x, ...) {
   checkmate::assert_list(x)

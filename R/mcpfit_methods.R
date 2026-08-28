@@ -22,7 +22,8 @@
 #' * `family`: An `mcpfamily` object.
 #' * `prior`: A named list of priors.
 #' * `mcmc_post` and `mcmc_prior`: \code{\link[coda]{mcmc.list}} objects with
-#'   posterior and prior draws, respectively.
+#'   posterior and prior draws, respectively. Do not access these directly; 
+#'   use as_draws(fit), posterior_draws(fit), or similar.
 #' * `jags_code`: A string with JAGS code; use `cat(fit$jags_code)` to show it.
 #' * `simulate`: A function to simulate data from supplied parameter values.
 #' * `.internal`: Information used internally by mcp.
@@ -301,6 +302,8 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
 
     # Format before splitting, so both printed tables share column widths.
     display = data.frame(lapply(result, format, digits = digits), check.names = FALSE)
+    if ("rhat" %in% names(display))
+      display$rhat = format(result$rhat, digits = digits, nsmall = digits)
     result_cp = display[is_cp, , drop = FALSE]
     result_population = display[!is_cp, , drop = FALSE]
 

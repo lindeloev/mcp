@@ -22,7 +22,8 @@ Components:
 \item \code{family}: An \code{mcpfamily} object.
 \item \code{prior}: A named list of priors.
 \item \code{mcmc_post} and \code{mcmc_prior}: \code{\link[coda]{mcmc.list}} objects with
-posterior and prior draws, respectively.
+posterior and prior draws, respectively. Do not access these directly;
+use as_draws(fit), posterior_draws(fit), or similar.
 \item \code{jags_code}: A string with JAGS code; use \code{cat(fit$jags_code)} to show it.
 \item \code{simulate}: A function to simulate data from supplied parameter values.
 \item \code{.internal}: Information used internally by mcp.

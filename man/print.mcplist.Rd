@@ -15,6 +15,10 @@
 \description{
 Shows a list in a more condensed format using \code{str(list)}.
 }
+\examples{
+print(demo_fit$model)
+print(demo_fit$prior)
+}
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
 }

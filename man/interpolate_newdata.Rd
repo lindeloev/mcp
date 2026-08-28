@@ -53,24 +53,22 @@ Gaussian weights, are not interpolated. Supply an auxiliary as a scalar in
 \examples{
 \donttest{
 # Get predictors for a fit
-fit = mcp_example("multiple")
-newdata = interpolate_newdata(fit)
+newdata = interpolate_newdata(demo_fit)
 
 # Fit summary
-head(fitted(fit, newdata))
+head(fitted(demo_fit, newdata))
 
 # Predictions for each draw
-prediction = predict(fit, newdata, summary = FALSE)
-head(prediction[, c(".chain", ".iteration", ".draw", "x", "group", "z", ".prediction")])
+prediction = predict(demo_fit, newdata, summary = FALSE)
+head(prediction)
 
 # Custom plot
 library(ggplot2)
-newdata = interpolate_newdata(fit)
-plotdata = fitted(fit, newdata)
-ggplot(plotdata, aes(x = x, y = fitted, color = group)) +
-  geom_ribbon(aes(ymin = `Q2.5`, ymax = `Q97.5`, fill = group), alpha = 0.3) +
+plotdata = fitted(demo_fit, newdata)
+ggplot(plotdata, aes(x = time, y = fitted)) +
+  geom_ribbon(aes(ymin = `Q2.5`, ymax = `Q97.5`), alpha = 0.3) +
   geom_line(lwd = 2) +
-  geom_point(aes(y = y), data = fit$data)
+  geom_point(aes(y = response), data = demo_fit$data)
 }
 }
 \author{

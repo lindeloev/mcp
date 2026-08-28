@@ -78,12 +78,12 @@ plot_pars(demo_fit)
 # More options
 plot_pars(demo_fit, regex_pars = "^cp_")  # Plot only change points
 plot_pars(demo_fit, pars = c("Intercept_3", "time_3"))  # Plot these parameters
-plot_pars(demo_fit, type = c("trace", "violin"))  # Combine plots
+plot_pars(demo_fit, type = c("trace", "violin"), regex_pars = "^cp_")  # Combine plots
 # Some plots only take pairs. hex is good to assess identifiability
 plot_pars(demo_fit, type = "hex", pars = c("cp_1", "time_2"))
 
 # Visualize the priors:
-plot_pars(demo_fit, prior = TRUE)
+plot_pars(demo_fit, prior = TRUE, regex_pars = "^cp_")
 
 # Useful for group-level effects:
 # plot_pars(my_fit, pars = "group", ncol = 3)  # plot all group-level deviations
@@ -93,7 +93,8 @@ plot_pars(demo_fit, prior = TRUE)
 
 # Customize multi-column ggplots using "*" instead of "+" (patchwork)
 library(ggplot2)
-plot_pars(demo_fit, type = c("trace", "dens_overlay")) * theme_bw(10)
+library(patchwork)
+plot_pars(demo_fit, regex_pars = "cp") & theme_gray(15)
 }
 }
 \seealso{
