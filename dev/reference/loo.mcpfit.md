@@ -131,29 +131,10 @@ data = mcp_example_data("intercepts")  # Get some simulated data.
 model1 = list(y ~ 1 + x, ~ 1)
 model2 = list(y ~ 1 + x)  # Without a change point
 fit1 = mcp(model1, data)
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 60
-#>    Unobserved stochastic nodes: 5
-#>    Total graph size: 991
-#> 
-#> Initializing model
-#> 
-#> Finished sampling in 1.5 seconds
+#> Warning: Some parameters may not have converged well:
+#>   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1
+#> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
 fit2 = mcp(model2, data)
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 60
-#>    Unobserved stochastic nodes: 3
-#>    Total graph size: 568
-#> 
-#> Initializing model
-#> 
-#> Finished sampling in 0.7 seconds
 
 # Compute LOO for each and compare (works for waic(fit) too)
 loo1 = loo(fit1)
@@ -161,8 +142,8 @@ loo1 = loo(fit1)
 loo2 = loo(fit2)
 loo::loo_compare(loo1, loo2)
 #>   model elpd_diff se_diff p_worse diag_diff      diag_elpd
-#>  model1       0.0     0.0      NA           4 k_psis > 0.7
-#>  model2      -2.1     3.3    0.74   N < 100               
+#>  model1       0.0     0.0      NA           3 k_psis > 0.7
+#>  model2      -2.0     3.2    0.73   N < 100               
 #> 
 #> Diagnostic flags present.
 #> See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)

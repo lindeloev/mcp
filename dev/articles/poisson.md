@@ -75,12 +75,12 @@ result = summary(fit)
     ## 
     ## Change point parameters:
     ##         name    mean    sd   lower   upper rhat ess_bulk ess_tail
-    ##  cp_1        1888.21 3.692 1881.71 1897.74    1     2069     1530
+    ##  cp_1        1888.21 3.692 1881.71 1897.74 1.00     2069     1530
     ## 
     ## Population-level parameters:
     ##         name    mean    sd   lower   upper rhat ess_bulk ess_tail
-    ##  Intercept_1    1.17 0.096    0.98    1.36    1     4438     4901
-    ##  Intercept_2    0.48 0.123    0.23    0.71    1     4248     4594
+    ##  Intercept_1    1.17 0.096    0.98    1.36 1.00     4438     4901
+    ##  Intercept_2    0.48 0.123    0.23    0.71 1.00     4248     4594
 
 We can see that the model ran well with good convergence and a large
 number of effective samples. At a first glance, the change point is
@@ -118,10 +118,10 @@ plot_pars(fit)
 
 [`poisson()`](https://rdrr.io/r/stats/family.html) defaults to
 `link = 'log'`, meaning that we have to exponentiate the estimates to
-get the “raw” Poisson parameter $`\lambda`$. $`\lambda`$ has the nice
-property of being the mean number of events. So we see that the mean
-number of events in segment 1 is `exp(result$mean[2])` (3.2329953) and
-it is `exp(result$mean[3])` (1.6137835) for segment 2.
+get the “raw” Poisson parameter \lambda. \lambda has the nice property
+of being the mean number of events. So we see that the mean number of
+events in segment 1 is `exp(result$mean[2])` (3.2329953) and it is
+`exp(result$mean[3])` (1.6137835) for segment 2.
 
 The intercept prior is a Student-t distribution centered on the rounded
 median of `log(pmax(n, 0.1))`, with scale equal to the maximum of 2.5
@@ -136,13 +136,15 @@ short segments.
 
 ``` r
 
-cbind(fit$prior)
+prior_summary(fit)
 ```
 
-    ##             [,1]               
-    ## cp_1        "dunif(1851, 1962)"
-    ## Intercept_1 "dt(0.7, 2.5, 3)"  
-    ## Intercept_2 "dt(0.7, 2.5, 3)"
+    ## # A tibble: 3 × 5
+    ##   parameter   segment dpar  prior                                         bounds
+    ##   <chr>         <int> <chr> <chr>                                         <chr> 
+    ## 1 cp_1              2 cp    uniform(min = 1851, max = 1962)               [min(…
+    ## 2 Intercept_1       1 mu    student_t(df = 3, location = 0.7, scale = 2.… none  
+    ## 3 Intercept_2       2 mu    student_t(df = 3, location = 0.7, scale = 2.… none
 
 As always, the prior on the change point forces it to occur in the
 observed range. The coefficient priors are deliberately broad defaults,
@@ -161,8 +163,8 @@ fit_with_prior = mcp(model, data = df, family = poisson(), prior = prior, par_x 
 
 [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md)
 uses log links for both its conditional mean `mu` and overdispersion
-`shape`, where $`\operatorname{Var}(y) = \mu + \mu^2 / \mathit{shape}`$.
-Its mean priors are the same as for
+`shape`, where \operatorname{Var}(y) = \mu + \mu^2 / \mathit{shape}. Its
+mean priors are the same as for
 [`poisson()`](https://rdrr.io/r/stats/family.html).
 
 When no `shape()` formula is supplied, the response-scale shape has an
@@ -211,17 +213,17 @@ fit_decay_loo = loo(fit_decay)
 loo::loo_compare(fit_loo, fit_flat_loo, fit_decay_loo)
 ```
 
-    ##   model elpd_diff se_diff p_worse diag_diff      diag_elpd
-    ##  model1       0.0     0.0      NA           2 k_psis > 0.7
-    ##  model3      -5.1     2.7    0.97   N < 100               
-    ##  model2      -9.3     3.8    0.99   N < 100
-
     ## 
     ## Diagnostic flags present.
     ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
     ## or https://mc-stan.org/loo/reference/loo-glossary.html.
 
-The change point model seems to be preferred with a ratio of around 1.7
+    ##   model elpd_diff se_diff p_worse diag_diff      diag_elpd
+    ##  model1       0.0     0.0      NA           2 k_psis > 0.7
+    ##  model3      -5.1     2.7    0.97   N < 100               
+    ##  model2      -9.3     3.8    0.99   N < 100
+
+The change point model seems to be preferred with a ratio of around 1.9
 over the decay model and 2.5 over the flat model. Another approach is to
 look at the model weights:
 

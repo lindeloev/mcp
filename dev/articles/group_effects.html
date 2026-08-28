@@ -11,7 +11,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="../katex-auto.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -67,8 +68,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other">
-<li><a class="dropdown-item" href="../articles/packages.html">Comparison to other packages</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+<li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -328,8 +328,8 @@ remains simple and returns all group-level effects.</p>
 can select the group-level deviations with <code>"group"</code>:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, pars <span class="op">=</span> <span class="st">"group"</span>, type <span class="op">=</span> <span class="st">"trace"</span>, ncol <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
-<p><img src="group_effects_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="700"><img src="group_effects_files/figure-html/unnamed-chunk-13-2.png" class="r-plt" alt="" width="700"></p>
+<span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, pars <span class="op">=</span> <span class="st">"group"</span>, type <span class="op">=</span> <span class="st">"trace"</span>, ncol <span class="op">=</span> <span class="fl">3</span>, nvariables <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<p><img src="group_effects_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="700"></p>
 <p>The <code>ncol</code> argument controls the number of columns.
 Group-level effects often have many levels, so this is useful for
 viewing all deviations.</p>
@@ -339,8 +339,8 @@ To select one group-level effect, use a regular expression in
 of a parameter name:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, regex_pars <span class="op">=</span> <span class="st">"^cp_1_id"</span>, type <span class="op">=</span> <span class="st">"dens_overlay"</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
-<p><img src="group_effects_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="700"><img src="group_effects_files/figure-html/unnamed-chunk-14-2.png" class="r-plt" alt="" width="700"></p>
+<span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, regex_pars <span class="op">=</span> <span class="st">"^cp_1_id"</span>, type <span class="op">=</span> <span class="st">"dens_overlay"</span>, ncol <span class="op">=</span> <span class="fl">2</span>, nvariables <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<p><img src="group_effects_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="700"></p>
 <p>You can also do posterior predictive checking with facets. I think
 that for the relatively univariate models supported as of
 <code>mcp</code> 0.3, this does not add much new information over and
@@ -356,14 +356,16 @@ assessment that many will be acquainted with:</p>
 </h2>
 <p>You can see the priors of the model like this:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">prior</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##             [,1]                                                                     </span></span>
-<span><span class="co">## cp_1        "dunif(0.02388966, 98.88917)"                                            </span></span>
-<span><span class="co">## cp_1_sd     "dnorm(0, 197.7306) T(0, )"                                              </span></span>
-<span><span class="co">## cp_1_id     "dnorm(0, cp_1_sd) T(0.0238896580412984 - cp_1, 98.8891728920862 - cp_1)"</span></span>
-<span><span class="co">## Intercept_1 "dt(23.4, 7.2, 3)"                                                       </span></span>
-<span><span class="co">## x_2         "dt(0, 0.07282637, 3)"                                                   </span></span>
-<span><span class="co">## sigma_1     "dt(0, 7.2, 3) T(0, )"</span></span></code></pre>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
+<span><span class="co">##   parameter   segment dpar  prior                                         bounds</span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    uniform(min = 0.02388966, max = 98.88917)     [min(…</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_1_sd           2 cp    normal(mean = 0, sd = 197.7306)               [0, I…</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> cp_1_id           2 cp    normal(mean = 0, sd = cp_1_sd)                [min(…</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> Intercept_1       1 mu    student_t(df = 3, location = 23.4, scale = 7… none  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> x_2               2 mu    student_t(df = 3, location = 0, scale = 0.07… none  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 7.2)  [0, I…</span></span></code></pre>
 <p>The prior <code>cp_1_sd</code> is the population-level standard
 deviation governing the <code>cp_1_id</code> deviations across levels of
 <code>id</code>. Change-point deviations are exactly zero-centered,

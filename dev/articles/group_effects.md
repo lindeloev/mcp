@@ -286,10 +286,10 @@ the group-level deviations with `"group"`:
 ``` r
 
 set.seed(42)
-plot_pars(fit, pars = "group", type = "trace", ncol = 3)
+plot_pars(fit, pars = "group", type = "trace", ncol = 3, nvariables = NULL)
 ```
 
-![](group_effects_files/figure-html/unnamed-chunk-13-1.png)![](group_effects_files/figure-html/unnamed-chunk-13-2.png)
+![](group_effects_files/figure-html/unnamed-chunk-13-1.png)
 
 The `ncol` argument controls the number of columns. Group-level effects
 often have many levels, so this is useful for viewing all deviations.
@@ -301,10 +301,10 @@ example, `^` anchors the start of a parameter name:
 ``` r
 
 set.seed(42)
-plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2)
+plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2, nvariables = NULL)
 ```
 
-![](group_effects_files/figure-html/unnamed-chunk-14-1.png)![](group_effects_files/figure-html/unnamed-chunk-14-2.png)
+![](group_effects_files/figure-html/unnamed-chunk-14-1.png)
 
 You can also do posterior predictive checking with facets. I think that
 for the relatively univariate models supported as of `mcp` 0.3, this
@@ -326,16 +326,18 @@ You can see the priors of the model like this:
 
 ``` r
 
-cbind(fit$prior)
+prior_summary(fit)
 ```
 
-    ##             [,1]                                                                     
-    ## cp_1        "dunif(0.02388966, 98.88917)"                                            
-    ## cp_1_sd     "dnorm(0, 197.7306) T(0, )"                                              
-    ## cp_1_id     "dnorm(0, cp_1_sd) T(0.0238896580412984 - cp_1, 98.8891728920862 - cp_1)"
-    ## Intercept_1 "dt(23.4, 7.2, 3)"                                                       
-    ## x_2         "dt(0, 0.07282637, 3)"                                                   
-    ## sigma_1     "dt(0, 7.2, 3) T(0, )"
+    ## # A tibble: 6 × 5
+    ##   parameter   segment dpar  prior                                         bounds
+    ##   <chr>         <int> <chr> <chr>                                         <chr> 
+    ## 1 cp_1              2 cp    uniform(min = 0.02388966, max = 98.88917)     [min(…
+    ## 2 cp_1_sd           2 cp    normal(mean = 0, sd = 197.7306)               [0, I…
+    ## 3 cp_1_id           2 cp    normal(mean = 0, sd = cp_1_sd)                [min(…
+    ## 4 Intercept_1       1 mu    student_t(df = 3, location = 23.4, scale = 7… none  
+    ## 5 x_2               2 mu    student_t(df = 3, location = 0, scale = 0.07… none  
+    ## 6 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 7.2)  [0, I…
 
 The prior `cp_1_sd` is the population-level standard deviation governing
 the `cp_1_id` deviations across levels of `id`. Change-point deviations

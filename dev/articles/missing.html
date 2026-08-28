@@ -11,7 +11,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="../katex-auto.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -67,8 +68,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other">
-<li><a class="dropdown-item" href="../articles/packages.html">Comparison to other packages</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+<li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -153,16 +153,16 @@ given the observed covariates (<code>condition</code> and
 <span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##     y  x condition  predict    error      Q10      Q50      Q90</span></span>
-<span><span class="co">## 1  NA  8         B 35.56253 4.419118 29.95548 35.56930 41.20200</span></span>
-<span><span class="co">## 2  NA 19         A 15.73385 4.291075 10.25534 15.74153 21.24741</span></span>
-<span><span class="co">## 3  NA 27         A 17.18995 4.319638 11.68267 17.18341 22.69825</span></span>
-<span><span class="co">## 4  NA 28         B 39.35814 4.360269 33.84142 39.34863 44.97061</span></span>
-<span><span class="co">## 5  NA 29         A 17.53493 4.342543 11.93050 17.57624 23.03809</span></span>
-<span><span class="co">## 6  NA 30         B 39.72457 4.395872 34.21186 39.63402 45.46708</span></span>
-<span><span class="co">## 7  NA 31         A 17.86313 4.310939 12.35445 17.88023 23.35061</span></span>
-<span><span class="co">## 8  NA 68         B 41.02949 4.432776 35.35581 41.01021 46.73113</span></span>
-<span><span class="co">## 9  NA 84         B 34.66639 4.403015 29.10218 34.61960 40.31673</span></span>
-<span><span class="co">## 10 NA 96         B 29.84740 4.444047 24.17653 29.82303 35.50264</span></span></code></pre>
+<span><span class="co">## 1  NA  8         B 35.56012 4.428752 29.97012 35.58970 41.22393</span></span>
+<span><span class="co">## 2  NA 19         A 15.72108 4.293560 10.11604 15.67037 21.23415</span></span>
+<span><span class="co">## 3  NA 27         A 17.18509 4.292231 11.64240 17.18326 22.72653</span></span>
+<span><span class="co">## 4  NA 28         B 39.36003 4.364408 33.83071 39.37170 44.91014</span></span>
+<span><span class="co">## 5  NA 29         A 17.53601 4.340269 12.01996 17.56146 23.10363</span></span>
+<span><span class="co">## 6  NA 30         B 39.72210 4.371321 34.20804 39.74986 45.28754</span></span>
+<span><span class="co">## 7  NA 31         A 17.87290 4.311944 12.39594 17.93966 23.48235</span></span>
+<span><span class="co">## 8  NA 68         B 41.05731 4.436657 35.38428 41.01946 46.67103</span></span>
+<span><span class="co">## 9  NA 84         B 34.64024 4.400042 29.04458 34.61448 40.18853</span></span>
+<span><span class="co">## 10 NA 96         B 29.83363 4.466581 24.11651 29.80542 35.49975</span></span></code></pre>
 <p><code><a href="../reference/execute-mcp-model.html">fitted()</a></code> has the same syntax as <code><a href="../reference/execute-mcp-model.html">predict()</a></code>
 but returns the posterior <em>expected</em> response. Its intervals are
 narrower because they do not include response variation:</p>
@@ -171,16 +171,16 @@ narrower because they do not include response variation:</p>
 <span><span class="fu"><a href="../reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##     y  x condition   fitted     error      Q10      Q50      Q90</span></span>
-<span><span class="co">## 1  NA  8         B 35.59660 1.0822734 34.21332 35.58895 36.97023</span></span>
-<span><span class="co">## 2  NA 19         A 15.67273 0.8439373 14.59499 15.66736 16.75268</span></span>
-<span><span class="co">## 3  NA 27         A 17.18509 0.7712880 16.19701 17.19370 18.16411</span></span>
-<span><span class="co">## 4  NA 28         B 39.37751 0.7529116 38.41263 39.38142 40.32518</span></span>
-<span><span class="co">## 5  NA 29         A 17.56318 0.7702221 16.57246 17.56510 18.55032</span></span>
-<span><span class="co">## 6  NA 30         B 39.75560 0.7532309 38.79511 39.75869 40.70785</span></span>
-<span><span class="co">## 7  NA 31         A 17.94128 0.7763222 16.94184 17.94266 18.93378</span></span>
-<span><span class="co">## 8  NA 68         B 41.01491 1.1308007 39.66032 40.93023 42.50801</span></span>
-<span><span class="co">## 9  NA 84         B 34.61602 0.8909397 33.47974 34.61514 35.75656</span></span>
-<span><span class="co">## 10 NA 96         B 29.81495 1.2722363 28.18347 29.82766 31.43195</span></span></code></pre>
+<span><span class="co">## 1  NA  8         B 35.59410 1.0808576 34.21259 35.58024 36.97628</span></span>
+<span><span class="co">## 2  NA 19         A 15.67323 0.8369118 14.60212 15.66705 16.74641</span></span>
+<span><span class="co">## 3  NA 27         A 17.18394 0.7645671 16.20420 17.19188 18.16005</span></span>
+<span><span class="co">## 4  NA 28         B 39.37086 0.7545884 38.40423 39.37503 40.32378</span></span>
+<span><span class="co">## 5  NA 29         A 17.56162 0.7634425 16.58176 17.56519 18.54122</span></span>
+<span><span class="co">## 6  NA 30         B 39.74854 0.7546261 38.78004 39.75454 40.70388</span></span>
+<span><span class="co">## 7  NA 31         A 17.93929 0.7694313 16.94644 17.94077 18.92591</span></span>
+<span><span class="co">## 8  NA 68         B 41.02455 1.1314420 39.67673 40.93275 42.53350</span></span>
+<span><span class="co">## 9  NA 84         B 34.61577 0.8885163 33.48295 34.61187 35.75197</span></span>
+<span><span class="co">## 10 NA 96         B 29.80698 1.2720626 28.17710 29.82286 31.41796</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="visualize-imputations-on-the-model-plot">Visualize imputations on the model plot<a class="anchor" aria-label="anchor" href="#visualize-imputations-on-the-model-plot"></a>
@@ -249,7 +249,7 @@ calculate probabilities of various statements. For example:</p>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 1 × 3</span></span></span>
 <span><span class="co">##   p_greater p_lower p_between</span></span>
 <span><span class="co">##       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>     0.160  0.087<span style="text-decoration: underline;">6</span>     0.753</span></span></code></pre>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>     0.158  0.088<span style="text-decoration: underline;">8</span>     0.753</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="other-continuous-predictors">Other continuous predictors<a class="anchor" aria-label="anchor" href="#other-continuous-predictors"></a>
@@ -335,9 +335,9 @@ original missing responses:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, newdata <span class="op">=</span> <span class="va">newdata</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##    x condition  predict    error      Q10      Q50      Q90</span></span>
-<span><span class="co">## 1 20         A 15.91159 4.360699 10.27322 15.95551 21.36106</span></span>
-<span><span class="co">## 2 80         B 36.23491 4.358845 30.66190 36.24973 41.81820</span></span></code></pre>
+<pre><code><span><span class="co">##    x condition  predict    error      Q10      Q50     Q90</span></span>
+<span><span class="co">## 1 20         A 15.85747 4.405314 10.30823 15.85948 21.4193</span></span>
+<span><span class="co">## 2 80         B 36.20859 4.358880 30.65399 36.21750 41.7848</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

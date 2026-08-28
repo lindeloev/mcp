@@ -42,13 +42,13 @@ prior_summary(demo_fit)  # Show the effective priors and bounds
 #> # A tibble: 7 × 5
 #>   parameter   segment dpar  prior                                         bounds
 #>   <chr>         <int> <chr> <chr>                                         <chr> 
-#> 1 cp_1              2 cp    student_t(df = 1, location = 0.02388966, sca… [min(…
-#> 2 cp_2              3 cp    student_t(df = 1, location = 0.02388966, sca… [cp_1…
-#> 3 Intercept_1       1 mu    student_t(df = 3, location = 9.5, scale = 11… none  
-#> 4 time_2            2 mu    student_t(df = 3, location = 0, scale = 0.33… none  
-#> 5 Intercept_3       3 mu    student_t(df = 3, location = 9.5, scale = 11… none  
-#> 6 time_3            3 mu    student_t(df = 3, location = 0, scale = 0.33… none  
-#> 7 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 11.2) [0, I…
+#> 1 cp_1              2 cp    student_t(df = 1, location = 3.189323, scale… [min(…
+#> 2 cp_2              3 cp    student_t(df = 1, location = 3.189323, scale… [cp_1…
+#> 3 Intercept_1       1 mu    student_t(df = 3, location = 10.4, scale = 1… none  
+#> 4 time_2            2 mu    student_t(df = 3, location = 0, scale = 0.13… none  
+#> 5 Intercept_3       3 mu    student_t(df = 3, location = 10.4, scale = 1… none  
+#> 6 time_3            3 mu    student_t(df = 3, location = 0, scale = 0.13… none  
+#> 7 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 12.8) [0, I…
 prior_summary(demo_fit, verbose = TRUE)  # Include their rules and sources
 #> # A tibble: 7 × 9
 #>   parameter   segment dpar  prior          bounds rule  description source kind 

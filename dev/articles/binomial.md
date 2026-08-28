@@ -61,7 +61,7 @@ mcp_pars(empty)
 parameters (signature: `empty$simulate(fit, newdata, ...)`). If you are
 in a reasonable R editor, type `empty$simulate(` and press TAB to see
 the required arguments. I came up with some values below, including
-change points at $`year = 25`$ and $`year = 65`$. Because
+change points at year = 25 and year = 65. Because
 [`binomial()`](https://rdrr.io/r/stats/family.html) defaults to
 `link = "logit"`, the intercept and slopes are on the [logit
 scale](https://en.wikipedia.org/wiki/Logit), which maps success
@@ -125,18 +125,18 @@ summary(fit)
     ## 
     ## Change point parameters:
     ##         name     mean     sd    lower    upper rhat ess_bulk ess_tail    sim
-    ##  cp_1        1930.084 3.0280 1924.086 1935.437    1      440      987 1925.0
-    ##  cp_2        1974.516 0.6268 1973.232 1975.856    1     1120      476 1975.0
+    ##  cp_1        1930.084 3.0280 1924.086 1935.437 1.00      440      987 1925.0
+    ##  cp_2        1974.516 0.6268 1973.232 1975.856 1.00     1120      476 1975.0
     ##  match
     ##     OK
     ##     OK
     ## 
     ## Population-level parameters:
     ##         name     mean     sd    lower    upper rhat ess_bulk ess_tail    sim
-    ##  Intercept_1    1.624 0.1445    1.360    1.921    1      805     1736    2.0
-    ##  year_2        -0.103 0.0108   -0.126   -0.083    1      486     1002   -0.1
-    ##  Intercept_3   -1.078 0.2033   -1.468   -0.678    1      630     1008   -1.0
-    ##  year_3         0.099 0.0088    0.082    0.116    1      810     1856    0.1
+    ##  Intercept_1    1.624 0.1445    1.360    1.921 1.00      805     1736    2.0
+    ##  year_2        -0.103 0.0108   -0.126   -0.083 1.01      486     1002   -0.1
+    ##  Intercept_3   -1.078 0.2033   -1.468   -0.678 1.01      630     1008   -1.0
+    ##  year_3         0.099 0.0088    0.082    0.116 1.00      810     1856    0.1
     ##  match
     ##       
     ##     OK
@@ -170,7 +170,7 @@ logit scale, where the linear trends are modeled:
 ``` r
 
 set.seed(42)
-plot_dpar(fit)
+plot_dpar(fit, scale = "linear")
 ```
 
 ![](binomial_files/figure-html/unnamed-chunk-9-1.png)
@@ -188,10 +188,10 @@ posterior distributions and trace plots:
 ``` r
 
 set.seed(42)
-plot_pars(fit)
+plot_pars(fit, nvariables = NULL)
 ```
 
-![](binomial_files/figure-html/unnamed-chunk-10-1.png)![](binomial_files/figure-html/unnamed-chunk-10-2.png)
+![](binomial_files/figure-html/unnamed-chunk-10-1.png)
 
 Convergence is perfect here as evidenced by the overlapping trace plots
 that look like fat caterpillars (Bayesians love fat caterpillars).
@@ -221,7 +221,8 @@ it ran with default priors:
 
 ``` r
 
-cbind(fit$prior)
+cbind(fit$prior)  # Raw view
+prior_summary(fit)  # Richer view. Try adding verbose = TRUE
 ```
 
     ##             [,1]                             
@@ -230,7 +231,16 @@ cbind(fit$prior)
     ## Intercept_1 "dt(0, 1.5, 3)"                  
     ## year_2      "dt(0, 0.01260504, 3)"           
     ## Intercept_3 "dt(0, 1.5, 3)"                  
-    ## year_3      "dt(0, 0.01260504, 3)"
+    ## year_3      "dt(0, 0.01260504, 3)"           
+    ## # A tibble: 6 × 5
+    ##   parameter   segment dpar  prior                                         bounds
+    ##   <chr>         <int> <chr> <chr>                                         <chr> 
+    ## 1 cp_1              2 cp    student_t(df = 1, location = 1901, scale = 5… [min(…
+    ## 2 cp_2              3 cp    student_t(df = 1, location = 1901, scale = 5… [cp_1…
+    ## 3 Intercept_1       1 mu    student_t(df = 3, location = 0, scale = 1.5)  none  
+    ## 4 year_2            2 mu    student_t(df = 3, location = 0, scale = 0.01… none  
+    ## 5 Intercept_3       3 mu    student_t(df = 3, location = 0, scale = 1.5)  none  
+    ## 6 year_3            3 mu    student_t(df = 3, location = 0, scale = 0.01… none
 
 The priors on change points are discussed extensively in the prior
 vignette. With the default logit link, intercepts and categorical
@@ -261,7 +271,15 @@ ggplot(data.frame(logits = 0), aes(x = logits)) +
   stat_function(fun=scaled_t, args = list(scale = 2.5), lwd=2, col="blue") +
   
   # Set the secondary axis
-  scale_x_continuous(breaks = -7:7,limits = c(-7, 7), sec.axis = sec_axis(~ inverse_logit(.), name = "Probability", breaks = round(inverse_logit(seq(-7, 7, by = 2)), 3)))
+  scale_x_continuous(
+    breaks = -7:7, limits = c(-7, 7), 
+    sec.axis = sec_axis(
+      ~ inverse_logit(.), 
+      name = "Probability",
+      labels = scales::percent_format(),
+      breaks = round(inverse_logit(seq(-7, 7, by = 2)), 3)
+    )
+  )
 ```
 
 ![](binomial_files/figure-html/unnamed-chunk-12-1.png)

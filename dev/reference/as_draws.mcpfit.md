@@ -49,12 +49,12 @@ draws = as_draws(demo_fit)  # Return a posterior::draws object
 head(as_draws_df(demo_fit))  # Convert draws to a data frame
 #> # A draws_df: 6 iterations, 1 chains, and 7 variables
 #>   Intercept_1 Intercept_3 cp_1 cp_2 sigma_1 time_2 time_3
-#> 1        10.1         4.7   24   70     4.1   0.36  -0.33
-#> 2        10.1         4.2   25   70     3.8   0.37  -0.33
-#> 3        10.1         2.5   25   70     3.8   0.39  -0.26
-#> 4         9.9         1.6   25   70     3.8   0.37  -0.26
-#> 5         9.5         3.2   25   70     3.5   0.39  -0.36
-#> 6         9.1         3.0   25   70     3.5   0.42  -0.25
+#> 1         8.4       2.111   20   70     4.0   0.39 -0.298
+#> 2         8.9       0.875   20   69     3.7   0.40 -0.205
+#> 3         9.7      -0.905   20   70     3.9   0.40 -0.105
+#> 4         9.6      -1.210   21   69     4.9   0.42 -0.095
+#> 5         9.4      -0.168   22   70     4.5   0.40 -0.199
+#> 6        11.2      -0.015   24   70     4.5   0.40 -0.195
 #> # ... hidden reserved variables {'.chain', '.iteration', '.draw'}
 
 # Other posterior formats are useful in different downstream packages
@@ -62,32 +62,32 @@ as_draws_matrix(demo_fit)[1:3, 1:3]  # Matrix of draws by parameter
 #> # A draws_matrix: 3 iterations, 1 chains, and 3 variables
 #>     variable
 #> draw Intercept_1 Intercept_3 cp_1
-#>    1          10         4.7   24
-#>    2          10         4.2   25
-#>    3          10         2.5   25
+#>    1         8.4        2.11   20
+#>    2         8.9        0.88   20
+#>    3         9.7       -0.91   20
 as_draws_array(demo_fit)[1:2, , 1:2]  # Iteration-by-chain-by-parameter array
 #> # A draws_array: 2 iterations, 2 chains, and 2 variables
 #> , , variable = Intercept_1
 #> 
 #>          chain
-#> iteration  1   2
-#>         1 10 8.7
-#>         2 10 8.7
+#> iteration   1  2
+#>         1 8.4 10
+#>         2 8.9 11
 #> 
 #> , , variable = Intercept_3
 #> 
 #>          chain
-#> iteration   1   2
-#>         1 4.7 2.2
-#>         2 4.2 2.2
+#> iteration    1   2
+#>         1 2.11 1.7
+#>         2 0.88 1.4
 #> 
 as_draws_rvars(demo_fit)[c("cp_1", "cp_2")]  # Random-variable representation
 #> # A draws_rvars: 1000 iterations, 2 chains, and 2 variables
 #> $cp_1: rvar<1000,2>[1] mean ± sd:
-#> [1] 24 ± 5 
+#> [1] 30 ± 3.6 
 #> 
 #> $cp_2: rvar<1000,2>[1] mean ± sd:
-#> [1] 70 ± 0.34 
+#> [1] 70 ± 0.29 
 #> 
 
 # mcp also supports the coda and tidybayes conventions
@@ -96,22 +96,22 @@ head(coda::as.mcmc(demo_fit)[[1]])  # First chain as a coda mcmc object
 #> Start = 3001 
 #> End = 3007 
 #> Thinning interval = 1 
-#>      Intercept_1 Intercept_3     cp_1     cp_2  sigma_1    time_2     time_3
-#> [1,]   10.122805    4.733476 23.62971 70.13133 4.079635 0.3602996 -0.3309533
-#> [2,]   10.073020    4.211827 25.26966 70.03862 3.839004 0.3735152 -0.3343376
-#> [3,]   10.146927    2.519549 25.07811 69.54561 3.846829 0.3870755 -0.2639302
-#> [4,]    9.917544    1.576157 24.69675 69.56728 3.794215 0.3747316 -0.2649606
-#> [5,]    9.548849    3.185002 25.32573 69.73441 3.520012 0.3934620 -0.3631516
-#> [6,]    9.063937    2.963639 25.00800 70.31785 3.529331 0.4162720 -0.2506363
-#> [7,]    9.349596    2.441074 25.60126 69.35883 3.434344 0.3968397 -0.2671036
+#>      Intercept_1 Intercept_3     cp_1     cp_2  sigma_1    time_2      time_3
+#> [1,]    8.440762  2.11057600 19.84137 70.18666 3.996256 0.3947496 -0.29764104
+#> [2,]    8.858730  0.87505090 19.55044 69.49629 3.705049 0.3998132 -0.20542023
+#> [3,]    9.729883 -0.90545278 20.18012 69.94807 3.907430 0.4014265 -0.10543576
+#> [4,]    9.566698 -1.20979125 20.64717 69.33957 4.853139 0.4213045 -0.09496154
+#> [5,]    9.393083 -0.16835228 22.46844 70.21179 4.541024 0.4040311 -0.19902490
+#> [6,]   11.202711 -0.01532687 23.86199 70.20102 4.512374 0.4011385 -0.19509195
+#> [7,]   10.922353  0.46771522 23.84820 69.91665 4.587211 0.4174504 -0.12629247
 head(tidybayes::tidy_draws(demo_fit))  # Tidybayes-compatible draw data
 #> # A draws_df: 6 iterations, 1 chains, and 7 variables
 #>   Intercept_1 Intercept_3 cp_1 cp_2 sigma_1 time_2 time_3
-#> 1        10.1         4.7   24   70     4.1   0.36  -0.33
-#> 2        10.1         4.2   25   70     3.8   0.37  -0.33
-#> 3        10.1         2.5   25   70     3.8   0.39  -0.26
-#> 4         9.9         1.6   25   70     3.8   0.37  -0.26
-#> 5         9.5         3.2   25   70     3.5   0.39  -0.36
-#> 6         9.1         3.0   25   70     3.5   0.42  -0.25
+#> 1         8.4       2.111   20   70     4.0   0.39 -0.298
+#> 2         8.9       0.875   20   69     3.7   0.40 -0.205
+#> 3         9.7      -0.905   20   70     3.9   0.40 -0.105
+#> 4         9.6      -1.210   21   69     4.9   0.42 -0.095
+#> 5         9.4      -0.168   22   70     4.5   0.40 -0.199
+#> 6        11.2      -0.015   24   70     4.5   0.40 -0.195
 #> # ... hidden reserved variables {'.chain', '.iteration', '.draw'}
 ```

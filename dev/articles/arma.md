@@ -19,39 +19,42 @@ formula, such as `ar(1, 1 + x)` or `ma(1, 0 + x)`.
 ### GARMA definition
 
 `mcp` implements AR and MA as a generalized ARMA (GARMA) recurrence on
-the response-family link scale. If $`b_t`$ is the ordinary regression
-predictor from the segment formulas and $`\eta_t`$ is the predictor
+the response-family link scale. If b_t is the ordinary regression
+predictor from the segment formulas and \eta_t is the predictor
 including serial dependence, then
 
-``` math
-\eta_t = b_t
-+ \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right]
-+ \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right].
-```
+\begin{aligned} \text{AR}\_t &= \sum\_{j=1}^{p} \phi\_{j,t}
+\left\[g(y^\*\_{t-j}) - b\_{t-j}\right\] \\ \text{MA}\_t &=
+\sum\_{k=1}^{q} \theta\_{k,t} \left\[g(y^\*\_{t-k}) -
+\eta\_{t-k}\right\] \\ \eta_t &= b_t + \text{AR}\_t + \text{MA}\_t
+\end{aligned}
 
-where $`\phi_{j,t}`$ is the lag-$`j`$ autoregressive (AR) coefficient at
-time $`t`$, $`\theta_{k,t}`$ is the lag-$`k`$ moving-average (MA)
-coefficient at time $`t`$, $`g(\cdot)`$ is the link function, and
-$`y^*`$ is the boundary-constrained observation. Thus
-[`ar()`](https://rdrr.io/r/stats/ar.html) uses lagged link-scale
-residuals relative to the ordinary regression, while `ma()` uses lagged
-one-step innovations. Unavailable lags at the beginning of the series
-contribute zero. This same recurrence is used by JAGS, fitted values,
-predictions, log likelihoods, and fresh-series simulation.
+where \phi\_{j,t} is the lag-j autoregressive (AR) coefficient at time
+t, \theta\_{k,t} is the lag-k moving-average (MA) coefficient at time t,
+g(\cdot) is the link function, and y^\* is the boundary-constrained
+observation. Thus [`ar()`](https://rdrr.io/r/stats/ar.html) uses lagged
+link-scale residuals relative to the ordinary regression, while `ma()`
+uses lagged one-step innovations.
 
-A key feature of this recurrence is that **AR/MA memory flows
-continuously across change points**:
+**`mcp` does regression with change points on the coefficients**
+\phi\_{j,t} **and** \theta\_{k,t}. See below for applied examples.
 
-- For an order-$`N`$ component in a new segment, the last $`N`$
-  observations *before* the change point are input into the first
-  $`\eta_t`$ in the new segment, weighted by the new segment’s AR/MA
-  parameters.
+Unavailable lags at the beginning of the series contribute zero. This
+same recurrence is used by JAGS, fitted values, predictions, log
+likelihoods, and fresh-series simulation.
+
+A key feature of this recurrence is that AR/MA memory flows continuously
+across change points:
+
+- For an order-N component in a new segment, the last N observations
+  *before* the change point are input into the first \eta_t in the new
+  segment, weighted by the new segment’s AR/MA parameters.
 - AR/MA lags do not reset at segment boundaries; they only reset at the
   very beginning of the whole dataset, or across independent series when
   using `series = "column_name"` inside
   [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()`
   (e.g. `ar(1, series = id)`).
-- Because change point locations $`\Delta`$ are estimated with posterior
+- Because change point locations \Delta are estimated with posterior
   uncertainty, the observation boundary where AR/MA parameters switch
   varies conditionally across MCMC draws.
 
@@ -75,7 +78,7 @@ directly apply. The same applies to `ma()`.
 
 #### Observation boundary
 
-The transformed observation $`y^*`$ keeps log and logit residuals finite
+The transformed observation y^\* keeps log and logit residuals finite
 when counts lie on a link boundary. The default `boundary = 0.1`
 replaces zero counts by 0.1 for Poisson and negative-binomial models.
 For binomial models, counts are constrained to the interval from 0.1 to
@@ -100,14 +103,14 @@ library(mcp)
 future::plan(future::multisession, workers = 3)
 set.seed(42)  # Make the script deterministic
 
-fit = mcp_example("ar", sample = FALSE)
+ar_data = mcp_example_data("ar")
 ```
 
     ## Generating residuals for AR(N) model since the response column/argument was not provided.
 
 ``` r
 
-head(fit$data)
+head(ar_data)
 ```
 
     ##      price time
@@ -129,7 +132,7 @@ model = list(
   price ~ 1 + ar(2),  # Intercept_1, ar1_1, ar2_1
   ~ 0 + time + ar(1)  # time_2, ar1_2; turns off second-order AR
 )
-fit = mcp(model, fit$data, seed = 42)
+fit = mcp(model, ar_data, seed = 42)
 ```
 
 Let’s plot it and we see that AR was strong in the first segment and
@@ -158,16 +161,16 @@ summary(fit)
     ## 
     ## Change point parameters:
     ##         name  mean    sd  lower   upper rhat ess_bulk ess_tail   sim match
-    ##  cp_1        74.88 3.404 70.012 80.8900    1      568     1328 75.00    OK
+    ##  cp_1        74.88 3.404 70.012 80.8900 1.00      568     1328 75.00    OK
     ## 
     ## Population-level parameters:
     ##         name  mean    sd  lower   upper rhat ess_bulk ess_tail   sim match
-    ##  Intercept_1 21.00 1.350 18.509 23.8427    1      631     1297 20.00    OK
-    ##  time_2       0.46 0.046  0.370  0.5524    1     1131     1497  0.50    OK
-    ##  sigma_1      5.31 0.358  4.662  6.0729    1     4652     4517  5.00    OK
-    ##  ar1_1        0.43 0.110  0.215  0.6518    1     4627     6150  0.40    OK
-    ##  ar1_2       -0.32 0.156 -0.620 -0.0065    1     6025     5124 -0.30    OK
-    ##  ar2_1        0.18 0.109 -0.037  0.3914    1     4975     7028  0.15    OK
+    ##  Intercept_1 21.00 1.350 18.509 23.8427 1.00      631     1297 20.00    OK
+    ##  time_2       0.46 0.046  0.370  0.5524 1.00     1131     1497  0.50    OK
+    ##  sigma_1      5.31 0.358  4.662  6.0729 1.00     4652     4517  5.00    OK
+    ##  ar1_1        0.43 0.110  0.215  0.6518 1.00     4627     6150  0.40    OK
+    ##  ar1_2       -0.32 0.156 -0.620 -0.0065 1.00     6025     5124 -0.30    OK
+    ##  ar2_1        0.18 0.109 -0.037  0.3914 1.00     4975     7028  0.15    OK
 
 The naming syntax is `[component][order]_[segment]` for intercepts. For
 example, `ar1_2` is the first-order autoregressive coefficient and
@@ -222,7 +225,7 @@ recommendations in [the section on priors](#ar_prior).
 
 ### Regression on AR/MA coefficients
 
-You can specify how the coefficients change with $`x`$ using
+You can specify how the coefficients change with x using
 `ar(p, formula)` and `ma(q, formula)`. For example, `ar(1, 1 + time)`
 models a steady change in AR(1) strength. These regression formulas use
 an identity link, so slopes can easily produce non-stationary or
@@ -274,12 +277,11 @@ and sort each series by time:
 
 ``` r
 
-data = data[order(data$id, data$x), ]
 model = list(
   y ~ 1 + ar(1, series = id),
   ~ 0 + x + ar(1)
 )
-fit = mcp(model, data)
+fit = mcp(model, ar_series_data)
 ```
 
 Rows belonging to each series must be contiguous. AR and MA lags reset
@@ -335,8 +337,8 @@ arima(df$response, order = c(3, 0, 0))
     ## 
     ## sigma^2 estimated as 60.17:  log likelihood = -694.1,  aic = 1398.19
 
-OK, we can see that the `ar` coefficients and sigma
-($`sigma = sqrt(sigma^2)`$) is simulated correctly, if taking
+OK, we can see that the `ar` coefficients and sigma (sigma =
+sqrt(sigma^2)) is simulated correctly, if taking
 [`arima()`](https://rdrr.io/r/stats/arima.html) as ground truth.
 Inferring with `mcp` is straightforward:
 
@@ -352,13 +354,21 @@ randomness in simulating data):
 
 ``` r
 
-fixef(fit)
+summary(fit)
 ```
 
-    ##          name     mean       sd    lower    upper     rhat ess_bulk ess_tail
-    ## 1 Intercept_1 19.70229 1.157492 17.45303 22.04871 1.000597     5283     4578
-    ##   sim match
-    ## 1  20    OK
+    ## Family: gaussian(link = 'identity')
+    ## Iterations: 3000 from 3 chains.
+    ## Segments:
+    ##   1: response ~ 1 + ar(3)
+    ## 
+    ## Population-level parameters:
+    ##         name  mean    sd  lower upper rhat ess_bulk ess_tail  sim match
+    ##  Intercept_1 19.70 1.157 17.453 22.05 1.00     5283     4578 20.0    OK
+    ##  sigma_1      7.89 0.399  7.166  8.72 1.00     5315     4773  8.0    OK
+    ##  ar1_1        0.69 0.065  0.561  0.81 1.00     3438     5760  0.7    OK
+    ##  ar2_1        0.23 0.079  0.076  0.39 1.00     2344     4186  0.2    OK
+    ##  ar3_1       -0.40 0.066 -0.528 -0.27 1.00     3393     5241 -0.4    OK
 
 ## Inferring an autocorrelation-only change
 
@@ -401,53 +411,53 @@ Savage-Dickey test later.
 ``` r
 
 prior = list(x_2 = "x_1")  # Set the two slopes equal
-fit = mcp(model, data = df, prior = prior, sample = "both", seed = 42)
+fit = mcp(model, data = df, prior = prior, iter = 12000, sample = "both", seed = 42)
 ```
+
+Let’s plot the full model prediction using `plot(fit)`. You could use
+`plot(fit, geom_data = "line")` for a more classical line plot of the
+time series data. Set `plot(fit, arma = FALSE)` to omit all AR and MA
+effects.
+
+We plot it together with the change in the `ar1` parameter using
+`plot_dpar(fit)`:
 
 ``` r
 
+library(patchwork)
 set.seed(42)
-plot(fit)
+plot(fit) /  # Patchwork syntax to show on separate rows
+  plot_dpar(fit, dpar = "ar1", lines = 100)
 ```
 
 ![](arma_files/figure-html/unnamed-chunk-13-1.png)
 
-You could use `plot(fit, geom_data = "line")` for a more classical line
-plot of the time series data. Set `plot(fit, arma = FALSE)` to omit all
-AR and MA effects. You can also plot `ar1_` or `ma1_` parameters
-directly using
-[`plot_dpar()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md):
+We recovered the parameters, including the change point (see `mean` but
+also the helpful `sim` and `match` columns):
 
 ``` r
 
-set.seed(42)
-plot_dpar(fit, dpar = "ar1", lines = 100)
+summary(fit)
 ```
 
-![](arma_files/figure-html/unnamed-chunk-14-1.png)
-
-We recovered the parameters, including the change point:
-
     ## Family: gaussian(link = 'identity')
-    ## Iterations: 3000 from 3 chains.
+    ## Iterations: 12000 from 3 chains.
     ## Segments:
     ##   1: y ~ 1 + x + ar(1)
     ##   2: y ~ 1 ~ 0 + x + ar(1)
     ## 
     ## Change point parameters:
     ##         name   mean    sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  cp_1        63.462 5.318 51.11 73.35    1      414     1054 60.0    OK
+    ##  cp_1        63.423 5.636 50.68 73.36 1.00     1592     2133 60.0    OK
     ## 
     ## Population-level parameters:
     ##         name   mean    sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  Intercept_1 21.536 2.661 16.55 27.16    1      157      276 20.0    OK
-    ##  x_1          0.977 0.033  0.91  1.04    1      162      274  1.0    OK
-    ##  x_2          0.977 0.033  0.91  1.04    1      162      274  1.0    OK
-    ##  sigma_1      4.888 0.249  4.42  5.39    1     4594     4381  5.0    OK
-    ##  ar1_1        0.782 0.056  0.67  0.89    1     1989     3726  0.8    OK
-    ##  ar1_2        0.098 0.148 -0.20  0.38    1     1821     3982  0.2    OK
-    ## 
-    ## Warning: 3 parameters show poor convergence (rhat > 1.01 or ess_bulk < 400 or ess_tail < 400).
+    ##  Intercept_1 21.305 2.531 16.41 26.51 1.00      667     1320 20.0    OK
+    ##  x_1          0.980 0.031  0.92  1.04 1.00      667     1275  1.0    OK
+    ##  x_2          0.980 0.031  0.92  1.04 1.00      667     1275  1.0    OK
+    ##  sigma_1      4.883 0.248  4.43  5.40 1.00    18009    18088  5.0    OK
+    ##  ar1_1        0.781 0.056  0.67  0.89 1.00     8512    17873  0.8    OK
+    ##  ar1_2        0.098 0.150 -0.20  0.39 1.00     4728     4594  0.2    OK
 
 We can also plot some of the parameters. As usual, we see that the
 change point is not well defined by any known distribution. The fact
@@ -463,7 +473,7 @@ set.seed(42)
 plot_pars(fit, regex_pars = "cp_1|ar_*")
 ```
 
-![](arma_files/figure-html/unnamed-chunk-16-1.png)
+![](arma_files/figure-html/unnamed-chunk-15-1.png)
 
 As usual, we can test hypotheses ([read more
 here](https://lindeloev.github.io/mcp/dev/articles/comparison.md)). We
@@ -486,15 +496,14 @@ hypothesis(fit, "ar1_1 = ar1_2")
     ## the Savage-Dickey estimate may be unreliable.
 
     ##          hypothesis      mean     lower     upper  p           BF
-    ## 1 ar1_1 - ar1_2 = 0 0.6837909 0.3882111 0.9889435 NA 1.778146e-09
+    ## 1 ar1_1 - ar1_2 = 0 0.6830148 0.3761376 0.9848118 NA 7.191393e-06
 
-In this case, the evidence for equality is so small that it is rounded
-to zero. This means that not even a single MCMC sample visited a state
-with noticeable density at zero difference.
+In this case, the evidence for equality is very small so it was rarely
+visited by the sampler and hence the precision is low .
 
 Of course, we can also do directional tests. For example, what is the
 evidence that `ar1_1` is more than 0.3 greater than `ar1_2`? Answer:
-around 100 to one.
+More than 100 to one.
 
 ``` r
 
@@ -502,7 +511,7 @@ hypothesis(fit, "ar1_1 - 0.3 > ar1_2")
 ```
 
     ##                hypothesis      mean      lower     upper         p       BF
-    ## 1 ar1_1 - 0.3 - ar1_2 > 0 0.3837909 0.08821115 0.6889435 0.9943333 373.6377
+    ## 1 ar1_1 - 0.3 - ar1_2 > 0 0.3830148 0.07613755 0.6848118 0.9927222 289.8967
 
 ## Priors on AR and MA coefficients
 
@@ -514,20 +523,19 @@ dnorm(0, 0.5) T(-1, 1)
 ```
 
 It is symmetric around zero and gently shrinks away from the boundaries:
-its central 95% interval is approximately $`[-0.84, 0.84]`$. This is a
+its central 95% interval is approximately \[-0.84, 0.84\]. This is a
 regularizing prior on each direct coefficient, not a joint stationarity
 or invertibility constraint for orders above one.
 
-`brms` also models AR and MA coefficients directly within $`[-1, 1]`$,
-but uses flat default priors over that range. Thus `mcp` keeps the
-familiar parameter interpretation while adding mild regularization
-toward zero; fits should generally be similar when the likelihood is
-informative.
+`brms` also models AR and MA coefficients directly within \[-1, 1\], but
+uses flat default priors over that range. Thus `mcp` keeps the familiar
+parameter interpretation while adding mild regularization toward zero;
+fits should generally be similar when the likelihood is informative.
 
 Categorical contrasts default to `dnorm(0, 0.25)`. Numeric slopes are
 also normal and scaled so that one representative predictor change has
 prior SD 0.25. Thus approximately 95% of the prior change lies within
-$`\pm 0.5`$.
+\pm 0.5.
 
 The defaults express no assumption about the sign. For a time series
 where positive first-order autocorrelation is expected, alternatives
@@ -539,20 +547,22 @@ Here is a complete list of the (default) priors in the model above:
 
 ``` r
 
-cbind(fit$prior)
+prior_summary(fit)
 ```
 
-    ##             [,1]                    
-    ## cp_1        "dunif(0, 100)"         
-    ## ar1_1       "dnorm(0, 0.5) T(-1, 1)"
-    ## ar1_2       "dnorm(0, 0.5) T(-1, 1)"
-    ## Intercept_1 "dt(72.4, 35.2, 3)"     
-    ## x_1         "dt(0, 0.352, 3)"       
-    ## x_2         "x_1"                   
-    ## sigma_1     "dt(0, 35.2, 3) T(0, )"
+    ## # A tibble: 7 × 5
+    ##   parameter   segment dpar  prior                                         bounds
+    ##   <chr>         <int> <chr> <chr>                                         <chr> 
+    ## 1 cp_1              2 cp    uniform(min = 0, max = 100)                   [min(…
+    ## 2 Intercept_1       1 mu    student_t(df = 3, location = 72.4, scale = 3… none  
+    ## 3 x_1               1 mu    student_t(df = 3, location = 0, scale = 0.35… none  
+    ## 4 x_2               2 mu    x_1                                           none  
+    ## 5 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 35.2) [0, I…
+    ## 6 ar1_1             1 ar    normal(mean = 0, sd = 0.5)                    [-1, …
+    ## 7 ar1_2             2 ar    normal(mean = 0, sd = 0.5)                    [-1, …
 
-We can also visualize them because we sampled the prior. `prior = TRUE`
-works in most `mcp` functions, including
+We can also visualize the priors because we sampled the prior.
+`prior = TRUE` works in most `mcp` functions, including
 [`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md)
 and
 [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md).
@@ -563,9 +573,9 @@ set.seed(42)
 plot_pars(fit, prior = TRUE)
 ```
 
-![](arma_files/figure-html/unnamed-chunk-20-1.png)![](arma_files/figure-html/unnamed-chunk-20-2.png)
+![](arma_files/figure-html/unnamed-chunk-19-1.png)![](arma_files/figure-html/unnamed-chunk-19-2.png)
 
-Notice that the posteriors are smoothed at sharp cutoffs, slightly
+Notice that the plot smoothes the posteriors at sharp cutoffs, slightly
 misrepresenting the true distribution.
 
 Let’s inspect the priors for a more advanced AR model, since you would
@@ -578,19 +588,21 @@ model = list(
   ~ 0 + ar(1, 1 + I(x^2))
 )
 empty = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE)
-cbind(empty$prior)
+prior_summary(empty)
 ```
 
-    ##             [,1]                    
-    ## cp_1        "dunif(1, 10)"          
-    ## ar1_1       "dnorm(0, 0.5) T(-1, 1)"
-    ## ar1_x_1     "dnorm(0, 0.02777778)"  
-    ## ar2_1       "dnorm(0, 0.5) T(-1, 1)"
-    ## ar2_x_1     "dnorm(0, 0.02777778)"  
-    ## ar1_2       "dnorm(0, 0.5) T(-1, 1)"
-    ## ar1_xE2_2   "dnorm(0, 0.00308642)"  
-    ## Intercept_1 "dt(5.5, 3.7, 3)"       
-    ## sigma_1     "dt(0, 3.7, 3) T(0, )"
+    ## # A tibble: 9 × 5
+    ##   parameter   segment dpar  prior                                         bounds
+    ##   <chr>         <int> <chr> <chr>                                         <chr> 
+    ## 1 cp_1              2 cp    uniform(min = 1, max = 10)                    [min(…
+    ## 2 Intercept_1       1 mu    student_t(df = 3, location = 5.5, scale = 3.… none  
+    ## 3 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 3.7)  [0, I…
+    ## 4 ar1_1             1 ar    normal(mean = 0, sd = 0.5)                    [-1, …
+    ## 5 ar1_x_1           1 ar    normal(mean = 0, sd = 0.02777778)             none  
+    ## 6 ar1_2             2 ar    normal(mean = 0, sd = 0.5)                    [-1, …
+    ## 7 ar1_xE2_2         2 ar    normal(mean = 0, sd = 0.00308642)             none  
+    ## 8 ar2_1             1 ar    normal(mean = 0, sd = 0.5)                    [-1, …
+    ## 9 ar2_x_1           1 ar    normal(mean = 0, sd = 0.02777778)             none
 
 AR and MA coefficient regressions use an identity link, while their
 residual inputs use the supported response-family link described above.
@@ -608,13 +620,12 @@ smoke tests, not proofs of global stationarity or invertibility.
 Here are a few ways in which you may want to inform the AR or MA
 parameters:
 
-- For a constant AR(2) process, stationarity requires
-  $`-1 < \phi_2 < 1`$ and $`\phi_2 - 1 < \phi_1 < 1 - \phi_2`$. One
-  dependent-prior construction that stays in this region is
-  `ar2_1 = "dunif(-1, 1)"` together with
-  `ar1_1 = "dunif(ar2_1 - 1, 1 - ar2_1)"`. The simpler suggestion
-  `ar2_1 = "dunif(0, ar1_1)"` is not sufficient. Higher orders require
-  the corresponding joint root condition.
+- For a constant AR(2) process, stationarity requires -1 \< \phi_2 \< 1
+  and \phi_2 - 1 \< \phi_1 \< 1 - \phi_2. One dependent-prior
+  construction that stays in this region is `ar2_1 = "dunif(-1, 1)"`
+  together with `ar1_1 = "dunif(ar2_1 - 1, 1 - ar2_1)"`. The simpler
+  suggestion `ar2_1 = "dunif(0, ar1_1)"` is not sufficient. Higher
+  orders require the corresponding joint root condition.
 - Slopes can quickly make AR coefficients non-stationary or MA
   coefficients non-invertible. Constrain their magnitude with reference
   to a plausible change over the predictor range. For example, a shallow

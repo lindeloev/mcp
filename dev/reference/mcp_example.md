@@ -5,7 +5,7 @@ Run example models
 ## Usage
 
 ``` r
-mcp_example(name, sample = "post", diagnostics = FALSE, plot = TRUE)
+mcp_example(name, sample = "post", plot = TRUE)
 
 mcp_example_data(name)
 ```
@@ -58,12 +58,6 @@ mcp_example_data(name)
     sample. This is useful if you only want to check prior strings
     (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
 
-- diagnostics:
-
-  Diagnostic thresholds passed to
-  [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md).
-  Defaults to `FALSE` so examples do not emit fit-diagnostic warnings.
-
 - plot:
 
   Logical. Plot the fitted example? No plot is produced when
@@ -87,17 +81,6 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 ``` r
 # \donttest{
 fit = mcp_example("multiple")
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 120
-#>    Unobserved stochastic nodes: 15
-#>    Total graph size: 4259
-#> 
-#> Initializing model
-#> 
-#> Finished sampling in 28.7 seconds
 
 print(fit$example_code) # See how the data was simulated
 #> # Define model
@@ -139,7 +122,7 @@ print(fit$example_code) # See how the data was simulated
 #> )
 #> 
 #> # Run sampling
-#> fit = mcp(model, data, par_x = 'x', iter = 10000, sample = sample, seed = 42, diagnostics = diagnostics)
+#> fit = mcp(model, data, par_x = 'x', iter = 10000, sample = sample, seed = 42)
 #> 
 #> # Illustrative plot
 #> if (plot) {
@@ -183,7 +166,7 @@ print(empty$example_code)
 #> )
 #> 
 #> # Run sampling
-#> fit = mcp(model, data, family = binomial(), sample = sample, seed = 42, diagnostics = diagnostics)
+#> fit = mcp(model, data, family = binomial(), sample = sample, seed = 42)
 #> 
 #> # Illustrative plot
 #> if (plot) {
@@ -193,17 +176,6 @@ print(empty$example_code)
 
 # Now sample this model
 fit2 = mcp(empty$model, empty$data, family = empty$family)
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 100
-#>    Unobserved stochastic nodes: 6
-#>    Total graph size: 2229
-#> 
-#> Initializing model
-#> 
-#> Finished sampling in 5.3 seconds
 plot(fit2)
 
 # }

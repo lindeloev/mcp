@@ -18,10 +18,6 @@
   mcp](https://lindeloev.github.io/mcp/dev/articles/group_effects.md):
 - [Missing responses and
   imputation](https://lindeloev.github.io/mcp/dev/articles/missing.md):
-- [Change Point Packages in R: A Practical
-  Guide](https://lindeloev.github.io/mcp/dev/articles/packages_overview.md):
-- [An overview of change point packages in
-  R](https://lindeloev.github.io/mcp/dev/articles/packages.md):
 - [Poisson and negative-binomial change point
   analysis](https://lindeloev.github.io/mcp/dev/articles/poisson.md):
 - [Fits and

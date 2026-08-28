@@ -70,25 +70,42 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 # Get predictors for a fit
-fit = mcp_example("multiple")
-newdata = interpolate_newdata(fit)
+newdata = interpolate_newdata(demo_fit)
 
 # Fit summary
-head(fitted(fit, newdata))
+head(fitted(demo_fit, newdata))
+#>       time   fitted     error     Q2.5    Q97.5
+#> 1 3.189323 10.29993 0.7167564 8.874782 11.66981
+#> 2 4.146597 10.29993 0.7167564 8.874782 11.66981
+#> 3 5.103871 10.29993 0.7167564 8.874782 11.66981
+#> 4 6.061145 10.29993 0.7167564 8.874782 11.66981
+#> 5 7.018419 10.29993 0.7167564 8.874782 11.66981
+#> 6 7.975693 10.29993 0.7167564 8.874782 11.66981
 
 # Predictions for each draw
-prediction = predict(fit, newdata, summary = FALSE)
-head(prediction[, c(".chain", ".iteration", ".draw", "x", "group", "z", ".prediction")])
+prediction = predict(demo_fit, newdata, summary = FALSE)
+head(prediction)
+#> # A tibble: 6 × 13
+#>   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
+#>    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
+#> 1      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
+#> 2      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
+#> 3      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
+#> 4      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
+#> 5      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
+#> 6      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
+#> # ℹ 4 more variables: sigma_1 <dbl>, time <dbl>, data_row <int>,
+#> #   .prediction <dbl>
 
 # Custom plot
 library(ggplot2)
-newdata = interpolate_newdata(fit)
-plotdata = fitted(fit, newdata)
-ggplot(plotdata, aes(x = x, y = fitted, color = group)) +
-  geom_ribbon(aes(ymin = `Q2.5`, ymax = `Q97.5`, fill = group), alpha = 0.3) +
+plotdata = fitted(demo_fit, newdata)
+ggplot(plotdata, aes(x = time, y = fitted)) +
+  geom_ribbon(aes(ymin = `Q2.5`, ymax = `Q97.5`), alpha = 0.3) +
   geom_line(lwd = 2) +
-  geom_point(aes(y = y), data = fit$data)
-} # }
+  geom_point(aes(y = response), data = demo_fit$data)
+
+# }
 ```

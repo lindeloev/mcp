@@ -15,18 +15,17 @@
   adjustments to accommodate the change-point model.
 
 - **Group-level effects on RHS:** Predictor formulas now support
-  group-level effects (sometimes called random effects) using familiar
-  `lme4` and `brms` syntax. `(1 | group)` specifies a group-level
-  intercept, while `(1 + x || group)` and `(factor || group)` support
-  independent coefficients, including slopes and factors. This also
-  works inside distributional formulas such as
-  `sigma(1 + (factor || id))`. As with
+  group-level effects (random effects) using familiar `lme4` and `brms`
+  syntax. `(1 | group)` specifies a group-level intercept, while
+  `(1 + x || group)` and `(factor || group)` support independent
+  coefficients, including slopes and factors. This also works inside
+  distributional formulas such as `sigma(1 + (factor || id))`. As with
   [`ar()`](https://rdrr.io/r/stats/ar.html), an effect carries into
   later segments until it is redefined or disabled with `(0 | group)`.
   See `mcp_example("group_mu")` for a worked example. Correlated
   multi-coefficient terms are not yet supported.
 
-- `mcpfit`s now work natively with R generics,
+- **Native feel:** `mcpfit`s now work natively with R generics,
   [posterior](https://mc-stan.org/posterior/) and
   [tidybayes](https://mjskay.github.io/tidybayes/) posterior draw and
   prediction API. Changes include:
@@ -83,23 +82,11 @@
 mcp v0.4 is a major breaking change with the aim of remaining relatively
 stable going forward towards version 1.0. Although a lot has been
 updated, the parameter estimates in v0.4.0 remain practically identical
-to the previous public release (v0.3.4). Deprecation detections were
-added until we reach 1.0.
+to the previous public release (v0.3.4). Deprecation detections have
+been added until we reach 1.0.
 
 - Renamed parameters to be more consistent with brms: `int_i` –\>
   `Intercept_i`; `x_1_E2` –\> `xE2_1`; `x_1_sin` –\> `sinx_1`, etc.
-
-- `fit$pars` was removed. Use `mcp_pars(fit)` for a canonical table of
-  model parameters and `mcp_columns(fit)` for resolved data-column
-  roles, including the automatically chosen `par_x`.
-
-- In general, renamed `"varying"` to `"group"`. The example names
-  `"varying_mu"` and `"varying_cp"` are now `"group_mu"` and
-  `"group_cp"`. In
-  [`plot_pars()`](https://lindeloev.github.io/mcp/dev/reference/plot_pars.md),
-  use `pars = "group"`; the old `"varying"` selector remains as a
-  deprecated alias. The established `varying =` method argument remains
-  unchanged for now.
 
 - [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
   [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
@@ -148,6 +135,14 @@ added until we reach 1.0.
   parameters, AR/MA parameters, and group-effect SDs. Use `summary(fit)`
   to get all parameters.
 
+- `fit$pars` was removed. Use `mcp_pars(fit)` for a canonical table of
+  model parameters and `mcp_columns(fit)` for resolved data-column
+  roles, including the automatically chosen `par_x`.
+
+- In general, renamed `"varying"` to `"group"`. The old `"varying"`
+  selector remains as a deprecated alias. The established `varying =`
+  method argument remains unchanged for now.
+
 - `y | weights(w)` now specifies brms-aligned observation log-likelihood
   weights rather than Gaussian precision weights (which previously
   scaled the residual SD as `sigma / sqrt(w)`). Predictive draws and
@@ -181,6 +176,14 @@ added until we reach 1.0.
   `exp(x)` restarted at each segment onset. Bare `par_x` and polynomial
   bases such as `I(par_x^2)` remain segment-local to support joined
   segment shapes.
+
+- Corrected the JAGS translation of prior scales. `ddexp()` and
+  [`dlogis()`](https://rdrr.io/r/stats/Logistic.html) now convert their
+  conventional scale to inverse scale rather than inverse variance; The
+  exported
+  [`sd_to_prec()`](https://lindeloev.github.io/mcp/dev/reference/sd_to_prec.md)
+  helper is soft-deprecated because prior translation is now an
+  internal, sampler-specific step.
 
 - Group-level change points `(1|id)` remain exactly zero-centered to
   identify population-level change points and support efficient
@@ -233,11 +236,6 @@ added until we reach 1.0.
 
 - mcp no longer exports `phi`, `logit`, `ilogit`, or `probit`.
 
-- `fit = mcp_example("name")` now returns the fit directly instead of a
-  list with a `$fit` entry. It now defaults to sampling the model
-  (`sample = "post"`) and the `sample` argument is now directly passed
-  to `mcp(..., sample = sample)` so `sample = TRUE` is deprecated.
-
 ### Other new features
 
 - Added `prior_summary(fit)`. Its compact output shows each parameter’s
@@ -260,6 +258,10 @@ added until we reach 1.0.
 
 - Default `plot(fit)` style has been updated in many ways to accommodate
   multiple regression and group-effects.
+
+- Predictive intervals (`plot(fit, q_predict = TRUE)` and
+  `predict(fit, summary = TRUE)`) are now precise and faster. They used
+  to be estimated from posterior parameter draws, which has MC error.
 
 - Added `mcp(..., series = "data_column")` to identify independent
   series in models with AR/MA terms.
@@ -345,13 +347,10 @@ added until we reach 1.0.
 - mcp now requires R \>= 4.1.0, matching its use of the native pipe
   (`|>`).
 
-- Corrected the JAGS translation of prior scales. `ddexp()` and
-  [`dlogis()`](https://rdrr.io/r/stats/Logistic.html) now convert their
-  conventional scale to inverse scale rather than inverse variance; The
-  exported
-  [`sd_to_prec()`](https://lindeloev.github.io/mcp/dev/reference/sd_to_prec.md)
-  helper is soft-deprecated because prior translation is now an
-  internal, sampler-specific step.
+- `fit = mcp_example("name")` now returns the fit directly instead of a
+  list with a `$fit` entry. It now defaults to sampling the model
+  (`sample = "post"`) and the `sample` argument is now directly passed
+  to `mcp(..., sample = sample)` so `sample = TRUE` is deprecated.
 
 - Removed the non-functional `exponential()` family. It had no default
   priors and could not be fitted. Exponential survival models would
@@ -504,13 +503,13 @@ and build the structure needed for that.
   across multiple functions. This means it is easy to add families and
   link functions - also enabling custom families in a future release.
 
-- Major changes in how the model is translated into JAGS code. The JAGS
-  code is quite different but functionally equivalent. This also opens
-  for adding a new sampler in a future release.
+- Major changes in how the model is translated into JAGS code, which is
+  now module-like. The JAGS code is quite different but functionally
+  equivalent. This opens for adding a new sampler in a future release.
 
 - More thorough defensive coding.
 
-- Much expanded test suite (now 7.000+ tests when run in full). The test
+- Much expanded test suite (now 9.000+ tests when run in full). The test
   suite now includes external validation of inference and simulation: AR
   against
   [`arima()`](https://rdrr.io/r/stats/arima.html)/[`arima.sim()`](https://rdrr.io/r/stats/arima.sim.html),

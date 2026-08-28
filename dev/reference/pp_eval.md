@@ -20,6 +20,7 @@ pp_eval(
   draws_format = "tidy",
   scale = "response",
   .include_fitted = FALSE,
+  .include_dpars = FALSE,
   .garma_replicate = FALSE,
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated()
@@ -174,6 +175,11 @@ pp_eval(
 - .include_fitted:
 
   Internal. Include fitted values with unsummarised predictions.
+
+- .include_dpars:
+
+  Internal. Include distributional parameters and response data as
+  attributes with unsummarised predictions.
 
 - .garma_replicate:
 

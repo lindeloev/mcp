@@ -50,27 +50,27 @@ fitting-data rows.
 formula(demo_fit)  # Show all segment formulas
 #> List of 3
 #>  $ response ~ 1
-#> <environment: 0x55f178ac0830>
+#> <environment: 0x55ffb5a5c840>
 #>  $ response ~ 1 ~ 0 + time
-#> <environment: 0x55f178ac0830>
+#> <environment: 0x55ffb5a5c840>
 #>  $ response ~ 1 ~ 1 + time
-#> <environment: 0x55f178ac0830>
+#> <environment: 0x55ffb5a5c840>
 formula(demo_fit, segment = 2)  # Show the formula for segment 2
 #> response ~ 1 ~ 0 + time
-#> <environment: 0x55f178ac0830>
+#> <environment: 0x55ffb5a5c840>
 family(demo_fit)  # Show the response family and link
 #> 
 #> Family: gaussian 
 #> Link function: identity 
 #> 
 head(model.frame(demo_fit))  # Show the top rows of fitting data
-#>     response     time
-#> 1 -3.0084198 91.48060
-#> 2 -7.8768640 93.70754
-#> 3 16.3029101 28.61395
-#> 4 -0.0373553 83.04476
-#> 5 27.4463185 64.17455
-#> 6 22.0610004 51.90959
+#>    response     time
+#> 1 32.842651 68.35820
+#> 2 -1.160003 87.29038
+#> 3 27.564248 69.01173
+#> 4 10.062971 11.59361
+#> 5 14.056859 19.50091
+#> 6 18.292640 46.12009
 nobs(demo_fit)  # Count observed response rows
 #> [1] 100
 ```

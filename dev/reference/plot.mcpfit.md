@@ -18,8 +18,10 @@ plot(
   rate = TRUE,
   prior = FALSE,
   arma = TRUE,
-  ndraws = 1000,
+  ndraws = 500,
+  scale = "response",
   at = NULL,
+  samples = lifecycle::deprecated(),
   nsamples = lifecycle::deprecated(),
   ...
 )
@@ -34,9 +36,10 @@ plot_dpar(
   cp_dens = TRUE,
   prior = FALSE,
   arma = TRUE,
-  ndraws = 1000,
+  ndraws = 500,
   scale = "response",
   at = NULL,
+  samples = lifecycle::deprecated(),
   nsamples = lifecycle::deprecated(),
   ...
 )
@@ -128,6 +131,17 @@ plot_dpar(
   there are group-level effects, this is the number of draws from each
   group. `NULL` means "all". More draws trade speed for accuracy.
 
+- scale:
+
+  One of
+
+  - `"response"`: return on the observed scale, i.e., after applying the
+    inverse link function.
+
+  - `"linear"`: return on the linear-predictor (link) scale, where the
+    linear trends are modeled. A linear scale is only applicable when
+    `type == "fitted"` and `dpar` is not `NULL`.
+
 - at:
 
   Named list setting additional continuous predictors to fixed values.
@@ -136,9 +150,9 @@ plot_dpar(
   to
   [`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md).
 
-- nsamples:
+- samples, nsamples:
 
-  Deprecated. Use `ndraws` instead.
+  Deprecated. Use `lines` instead.
 
 - ...:
 
@@ -160,17 +174,6 @@ plot_dpar(
   - `"ar1"`, `"ar2"`, `"ma1"`, `"ma2"`, etc. depending on which AR or MA
     coefficient you want to evaluate.
 
-- scale:
-
-  One of
-
-  - `"response"`: return on the observed scale, i.e., after applying the
-    inverse link function.
-
-  - `"linear"`: return on the linear-predictor (link) scale, where the
-    linear trends are modeled. A linear scale is only applicable when
-    `type == "fitted"` and `dpar` is not `NULL`.
-
 ## Value
 
 A ggplot2 object.
@@ -178,8 +181,7 @@ A ggplot2 object.
 ## Details
 
 `plot()` uses `fit$simulate()` on posterior draws. These represent the
-(joint) posterior distribution. Interval summaries use at most 1000
-draws by default; use `ndraws = NULL` to use all draws. Change-point
+(joint) posterior distribution. Interval summaries and change-point
 densities always use all available draws.
 
 ## Functions

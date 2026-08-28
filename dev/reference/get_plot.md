@@ -21,12 +21,10 @@ get_plot(
   prior = FALSE,
   dpar = "epred",
   arma = TRUE,
-  ndraws = 1000,
+  ndraws = 500,
   scale = "response",
   at = NULL,
-  .grouping = "auto",
-  nsamples = lifecycle::deprecated(),
-  ...
+  .grouping = "auto"
 )
 ```
 
@@ -156,9 +154,9 @@ get_plot(
   Internal. Whether grouping arguments were omitted, mapped, or
   explicitly disabled.
 
-- nsamples:
+- samples, nsamples:
 
-  Deprecated. Use `ndraws` instead.
+  Deprecated. Use `lines` instead.
 
 - ...:
 

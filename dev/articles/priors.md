@@ -82,41 +82,40 @@ df_dummy = data.frame(x = 1:100, y = 1:100)
 empty_manual = mcp(model, data = df_dummy, prior = prior, sample = FALSE)
 empty_default = mcp(model, data = df_dummy, sample = FALSE)
 
-# Inspect resolved priors and bounds. Add rules, descriptions, sources, and
-# kinds with prior_summary(empty_manual, verbose = TRUE).
-prior_summary(empty_manual, verbose = TRUE)
+# Inspect resolved priors and bounds
+prior_summary(empty_manual)  # For more details: add verbose = TRUE
 ```
 
-    ## # A tibble: 9 × 9
-    ##   parameter   segment dpar  prior          bounds rule  description source kind 
-    ##   <chr>         <int> <chr> <chr>          <chr>  <chr> <chr>       <chr>  <chr>
-    ## 1 cp_1              2 cp    uniform(min =… [min(… unif… User-speci… user   dist…
-    ## 2 cp_2              3 cp    80             none   80    Fixed at 80 user   cons…
-    ## 3 Intercept_1       1 mu    normal(mean =… [-Inf… norm… User-speci… user   dist…
-    ## 4 x_1               1 mu    beta(shape1 =… [0, 1] beta… User-speci… user   dist…
-    ## 5 Intercept_2       2 mu    student_t(df … none   stud… Robustly c… defau… dist…
-    ## 6 x_2               2 mu    student_t(df … [x_1,… stud… User-speci… user   dist…
-    ## 7 Intercept_3       3 mu    student_t(df … none   stud… Robustly c… defau… dist…
-    ## 8 x_3               3 mu    x_2            none   x_2   Same value… user   alias
-    ## 9 sigma_1           1 sigma student_t(df … [0, I… stud… Positive r… defau… dist…
+    ## # A tibble: 9 × 5
+    ##   parameter   segment dpar  prior                                         bounds
+    ##   <chr>         <int> <chr> <chr>                                         <chr> 
+    ## 1 cp_1              2 cp    uniform(min = 1, max = cp_2)                  [min(…
+    ## 2 cp_2              3 cp    80                                            none  
+    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 5)                      [-Inf…
+    ## 4 x_1               1 mu    beta(shape1 = 2, shape2 = 5)                  [0, 1]
+    ## 5 Intercept_2       2 mu    student_t(df = 3, location = 50.5, scale = 3… none  
+    ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 1)    [x_1,…
+    ## 7 Intercept_3       3 mu    student_t(df = 3, location = 50.5, scale = 3… none  
+    ## 8 x_3               3 mu    x_2                                           none  
+    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0, I…
 
 ``` r
 
-prior_summary(empty_default, verbose = TRUE)
+prior_summary(empty_default)
 ```
 
-    ## # A tibble: 9 × 9
-    ##   parameter   segment dpar  prior          bounds rule  description source kind 
-    ##   <chr>         <int> <chr> <chr>          <chr>  <chr> <chr>       <chr>  <chr>
-    ## 1 cp_1              2 cp    student_t(df … [min(… stud… Regularizi… defau… dist…
-    ## 2 cp_2              3 cp    student_t(df … [cp_1… stud… Regularizi… defau… dist…
-    ## 3 Intercept_1       1 mu    student_t(df … none   stud… Robustly c… defau… dist…
-    ## 4 x_1               1 mu    student_t(df … none   stud… Regularizi… defau… dist…
-    ## 5 Intercept_2       2 mu    student_t(df … none   stud… Robustly c… defau… dist…
-    ## 6 x_2               2 mu    student_t(df … none   stud… Regularizi… defau… dist…
-    ## 7 Intercept_3       3 mu    student_t(df … none   stud… Robustly c… defau… dist…
-    ## 8 x_3               3 mu    student_t(df … none   stud… Regularizi… defau… dist…
-    ## 9 sigma_1           1 sigma student_t(df … [0, I… stud… Positive r… defau… dist…
+    ## # A tibble: 9 × 5
+    ##   parameter   segment dpar  prior                                         bounds
+    ##   <chr>         <int> <chr> <chr>                                         <chr> 
+    ## 1 cp_1              2 cp    student_t(df = 1, location = 1, scale = 49.5) [min(…
+    ## 2 cp_2              3 cp    student_t(df = 1, location = 1, scale = 49.5) [cp_1…
+    ## 3 Intercept_1       1 mu    student_t(df = 3, location = 50.5, scale = 3… none  
+    ## 4 x_1               1 mu    student_t(df = 3, location = 0, scale = 0.37… none  
+    ## 5 Intercept_2       2 mu    student_t(df = 3, location = 50.5, scale = 3… none  
+    ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 0.37… none  
+    ## 7 Intercept_3       3 mu    student_t(df = 3, location = 50.5, scale = 3… none  
+    ## 8 x_3               3 mu    student_t(df = 3, location = 0, scale = 0.37… none  
+    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0, I…
 
 Now, let’s simulate some data from `model`. The following priors are “at
 odds” with the actual data so as to show their effect.
@@ -165,27 +164,17 @@ among others.
 
 library(ggplot2)
 set.seed(42)
-pp_default = plot_pars(fit_default, type = "dens_overlay", prior = TRUE) + 
+pp_default = plot_pars(fit_default, type = "dens_overlay", prior = TRUE, nvariables = NULL) + 
   ggtitle("Default priors")
-```
-
-![](priors_files/figure-html/unnamed-chunk-5-1.png)![](priors_files/figure-html/unnamed-chunk-5-2.png)
-
-``` r
 
 set.seed(42)
-pp_manual = plot_pars(fit_manual, type = "dens_overlay", prior = TRUE) +
+pp_manual = plot_pars(fit_manual, type = "dens_overlay", prior = TRUE, nvariables = NULL) +
   ggtitle("Manual priors")
-```
-
-![](priors_files/figure-html/unnamed-chunk-5-3.png)![](priors_files/figure-html/unnamed-chunk-5-4.png)
-
-``` r
 
 pp_default + pp_manual
 ```
 
-    ## integer(0)
+![](priors_files/figure-html/unnamed-chunk-5-1.png)
 
 Here are the resulting posterior fits:
 
@@ -248,7 +237,7 @@ For 2+ change points, the default rule (on all change points) is
 `cp_i = student_t(df = n_cp() - 1, location = min(x), scale = (max(x) - min(x)) / n_cp())`,
 bounded below by the preceding change point and above by `max(x)`.
 
-- **Degrees of freedom:** It is t-distributed with $`N - 1`$ degrees of
+- **Degrees of freedom:** It is t-distributed with N - 1 degrees of
   freedom (`n_cp() - 1`). Together with the decreasing scale, this makes
   the underlying distributions more concentrated as the number of change
   points increases.
@@ -281,9 +270,9 @@ underlies monotonic effects in `brms` ([Bürkner & Charpentier
 
 The Dirichlet distribution is a simplex of beta distributions (they
 always sum to 1), where the individual betas represent inter-changepoint
-distances. For $`N`$ change points, the distribution for change point
-$`i`$ is $`\text{Beta}(i, N + 1 - i)`$, so `cp_1 ~ Beta(1, N)` and
-`cp_N ~ Beta(N, 1)`. Scaling from $`[0, 1]`$ to the observed data range
+distances. For N change points, the distribution for change point i is
+\text{Beta}(i, N + 1 - i), so `cp_1 ~ Beta(1, N)` and
+`cp_N ~ Beta(N, 1)`. Scaling from \[0, 1\] to the observed data range
 (`0 --> min(x)`, `1 --> max(x)`) gives the desired bounding.
 
 To use the Dirichlet prior, specify it for all change points:
@@ -297,8 +286,8 @@ prior_dirichlet = list(
 )
 ```
 
-The number in parentheses is a common $`\alpha`$ concentration parameter
-(all change points must share the same $`\alpha`$). Values below 1 favor
+The number in parentheses is a common \alpha concentration parameter
+(all change points must share the same \alpha). Values below 1 favor
 uneven spacings, `dirichlet(1)` treats spacings exchangeably (giving the
 ordered-uniform distribution), and values above 1 favor more evenly
 spaced change points.
@@ -329,12 +318,12 @@ for a model using `prior_summary(fit, verbose = TRUE)`.
   support flat priors. With the identity link, the Gaussian intercept
   prior is centered on `round(median(y), 1)` with scale
   `max(2.5, round(mad(y), 1))`. With the log link, location and scale
-  are derived from $`\log(y)`$ (with zeros replaced by 0.1).
+  are derived from \log(y) (with zeros replaced by 0.1).
 - **Slopes:** Numeric coefficient priors use the corresponding
   family-level scale divided by a representative change in the
   predictor: its observed range `max(x) - min(x)` for `par_x` and binary
-  variables, and two standard deviations ($`2\,\text{SD}`$) otherwise.
-  This follows the scaling convention proposed by [Gelman
+  variables, and two standard deviations (2\\\text{SD}) otherwise. This
+  follows the scaling convention proposed by [Gelman
   (2008)](https://doi.org/10.1002/sim.3107) and ensures that slope
   priors remain identical and comparable across models regardless of the
   number of change points.

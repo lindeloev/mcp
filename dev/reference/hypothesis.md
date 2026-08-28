@@ -62,8 +62,11 @@ hypothesis(fit, hypotheses, width = 0.95, prior = FALSE)
 
   **Equality hypotheses** use the equal sign (=) and a Savage-Dickey
   density ratio: posterior density divided by prior density at the
-  tested point equality \\\theta = \theta_0\\: \$\$\text{BF}\_{01} =
-  \frac{p(\theta = \theta_0 \mid \text{data})}{p(\theta = \theta_0)}\$\$
+  tested point equality
+
+  \\\theta = \theta_0\\: \$\$\text{BF}\_{01} = \frac{p(\theta = \theta_0
+  \mid \text{data})}{p(\theta = \theta_0)}\$\$
+
   where \\\theta\\ is the evaluated parameter (or affine contrast),
   \\\theta_0\\ is the hypothesized null value, \\p(\theta = \theta_0
   \mid \text{data})\\ is the posterior density, and \\p(\theta =
@@ -128,28 +131,28 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 # demo_fit contains both posterior and prior draws
 # A directional hypothesis returns its posterior probability and Bayes factor
 hypothesis(demo_fit, "cp_1 > 30")
-#>      hypothesis      mean     lower    upper      p        BF
-#> 1 cp_1 - 30 > 0 -5.987575 -15.64057 3.469382 0.1265 0.1433787
+#>      hypothesis      mean     lower    upper      p       BF
+#> 1 cp_1 - 30 > 0 0.4479046 -6.718137 7.884762 0.5635 1.137931
 
 # Combine directional statements for an interval (a ROPE-style hypothesis)
 hypothesis(demo_fit, "cp_1 > 20 & cp_1 < 30")
-#>              hypothesis mean lower upper     p       BF
-#> 1 cp_1 > 20 & cp_1 < 30   NA    NA    NA 0.671 12.17313
+#>              hypothesis mean lower upper      p       BF
+#> 1 cp_1 > 20 & cp_1 < 30   NA    NA    NA 0.4275 4.165939
 
 # Evaluate several directional hypotheses at once
 hypothesis(demo_fit, c("cp_1 > 20", "cp_2 > 70"))
-#>      hypothesis        mean      lower      upper      p       BF
-#> 1 cp_1 - 20 > 0  4.01242512 -5.6405723 13.4693818 0.7975 2.158124
-#> 2 cp_2 - 70 > 0 -0.08835726 -0.6523915  0.4764874 0.4295 1.070029
+#>      hypothesis       mean      lower      upper      p         BF
+#> 1 cp_1 - 20 > 0 10.4479046  3.2818627 17.8847620 0.9910 50.9878079
+#> 2 cp_2 - 70 > 0 -0.2417263 -0.7051304  0.2500245 0.2535  0.4796788
 
 # Equality hypotheses use the Savage-Dickey density ratio
 hypothesis(demo_fit, "cp_1 = 25")
 #> Warning: Savage-Dickey Bayes factor was computed using default prior(s) for `cp_1`. Point Bayes factors are sensitive to the prior distribution; consider specifying informed priors.
-#>      hypothesis       mean     lower    upper  p       BF
-#> 1 cp_1 - 25 = 0 -0.9875749 -10.64057 8.469382 NA 5.187415
+#>      hypothesis     mean     lower    upper  p       BF
+#> 1 cp_1 - 25 = 0 5.447905 -1.718137 12.88476 NA 2.149812
 
 # Inspect the corresponding prior probability without a Bayes factor
 hypothesis(demo_fit, "cp_1 > 30", prior = TRUE)
 #>      hypothesis     mean     lower    upper      p BF
-#> 1 cp_1 - 30 > 0 6.033958 -28.74382 63.32157 0.5025 NA
+#> 1 cp_1 - 30 > 0 7.707796 -25.62943 62.62246 0.5315 NA
 ```

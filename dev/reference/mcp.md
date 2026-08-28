@@ -339,31 +339,6 @@ model = list(
 # future::plan(future::multisession, workers = 3)  # Uncomment for parallel sampling
 data = mcp_example_data("demo")  # Simulated data example
 demo_fit = mcp(model, data = data, sample = "both", seed = 42)
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 100
-#>    Unobserved stochastic nodes: 7
-#>    Total graph size: 2139
-#> 
-#> Initializing model
-#> 
-#> Finished sampling in 4.5 seconds
-#> Warning: Some parameters may not have converged well:
-#>   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1 and time_2
-#> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 0
-#>    Unobserved stochastic nodes: 107
-#>    Total graph size: 2139
-#> 
-#> Initializing model
-#> 
-#> Finished sampling in 0.1 seconds
 
 # See parameter estimates
 summary(demo_fit)
@@ -375,19 +350,17 @@ summary(demo_fit)
 #>   3: response ~ 1 ~ 1 + time
 #> 
 #> Change point parameters:
-#>         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match
-#>  cp_1        23.10 5.203 12.75 32.82    1      303      414 30.0    OK
-#>  cp_2        69.91 0.342 69.35 70.48    1     5513     7615 70.0    OK
+#>         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+#>  cp_1        30.85 3.586 24.10 38.315 1.01      407      541 30.0    OK
+#>  cp_2        69.78 0.291 69.30 70.261 1.00     5745     7530 70.0    OK
 #> 
 #> Population-level parameters:
-#>         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match
-#>  Intercept_1  9.00 0.928  7.06 10.69    1      454      471 10.0    OK
-#>  time_2       0.39 0.051  0.30  0.51    1      387      593  0.5    OK
-#>  Intercept_3  1.71 1.212 -0.68  4.09    1      824     1811  0.0    OK
-#>  time_3      -0.24 0.067 -0.36 -0.11    1      832     1754 -0.2    OK
-#>  sigma_1      3.68 0.273  3.20  4.25    1     4224     4344  4.0    OK
-#> 
-#> Warning: 2 parameters show poor convergence (rhat > 1.01 or ess_bulk < 400 or ess_tail < 400).
+#>         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+#>  Intercept_1 10.32 0.710  8.91 11.711 1.00     1406     2753 10.0    OK
+#>  time_2       0.54 0.065  0.43  0.682 1.01      438      604  0.5    OK
+#>  Intercept_3  0.79 1.531 -2.10  3.856 1.00      749     1389  0.0    OK
+#>  time_3      -0.24 0.091 -0.42 -0.067 1.00      736     1300 -0.2    OK
+#>  sigma_1      4.00 0.299  3.49  4.677 1.00     3844     3900  4.0    OK
 
 # Visual inspection of the results
 plot(demo_fit)  # Visualization of model fit/predictions
@@ -400,52 +373,41 @@ pp_check(demo_fit)  # Prior/Posterior predictive checks
 
 # Test a hypothesis
 hypothesis(demo_fit, "cp_1 > 10")
-#>      hypothesis     mean    lower   upper         p       BF
-#> 1 cp_1 - 10 > 0 13.10434 2.750022 22.8215 0.9877778 17.68719
+#>      hypothesis     mean    lower    upper p  BF
+#> 1 cp_1 - 10 > 0 20.84596 14.09683 28.31539 1 Inf
 
 # Make predictions
 head(fitted(demo_fit))
-#>     response     time    fitted     error      Q2.5      Q97.5
-#> 1 -3.0084198 91.48060 -3.386119 0.7361934 -4.828339 -1.9431978
-#> 2 -7.8768640 93.70754 -3.911807 0.8265426 -5.540613 -2.2927652
-#> 3 16.3029101 28.61395 11.123294 1.0336692  9.164108 13.0789150
-#> 4 -0.0373553 83.04476 -1.394763 0.6392671 -2.640529 -0.1318978
-#> 5 27.4463185 64.17455 24.940974 0.8865290 23.196406 26.6955478
-#> 6 22.0610004 51.90959 20.115305 0.6000163 18.922358 21.2736971
+#>    response     time    fitted     error      Q2.5     Q97.5
+#> 1 32.842651 68.35820 30.374492 1.0363972 28.362893 32.453365
+#> 2 -1.160003 87.29038 -3.333719 0.7695936 -4.836521 -1.822012
+#> 3 27.564248 69.01173 30.727352 1.0675322 28.660966 32.861266
+#> 4 10.062971 11.59361 10.316267 0.7101668  8.907415 11.711335
+#> 5 14.056859 19.50091 10.316619 0.7096133  8.907914 11.711335
+#> 6 18.292640 46.12009 18.367438 0.9842136 16.134892 20.014110
 head(predict(demo_fit))
-#>     response     time   predict    error       Q2.5     Q97.5
-#> 1 -3.0084198 91.48060 -3.356702 3.719059 -10.713765  3.903302
-#> 2 -7.8768640 93.70754 -3.915844 3.781332 -11.078725  3.573730
-#> 3 16.3029101 28.61395 11.120751 3.848448   3.588405 18.597786
-#> 4 -0.0373553 83.04476 -1.408135 3.708950  -8.747380  5.835234
-#> 5 27.4463185 64.17455 24.925625 3.767051  17.515536 32.226158
-#> 6 22.0610004 51.90959 20.080061 3.770960  12.562271 27.548763
+#>    response     time   predict    error       Q2.5     Q97.5
+#> 1 32.842651 68.35820 30.353477 4.210965  22.226246 38.515625
+#> 2 -1.160003 87.29038 -3.299188 4.064416 -11.355322  4.704244
+#> 3 27.564248 69.01173 30.669097 4.170328  22.564006 38.884471
+#> 4 10.062971 11.59361 10.352696 4.047950   2.308171 18.325861
+#> 5 14.056859 19.50091 10.346765 4.086618   2.308800 18.326099
+#> 6 18.292640 46.12009 18.332877 4.100923  10.222899 26.465992
 head(predict(demo_fit, newdata = data.frame(time = c(55.545, 80, 132))))
 #>      time    predict    error       Q2.5     Q97.5
-#> 1  55.545  21.553020 3.763265  14.115814 28.925727
-#> 2  80.000  -0.643233 3.790046  -8.129513  6.735050
-#> 3 132.000 -12.898969 4.891453 -22.486915 -3.313545
+#> 1  55.545  23.465561 4.119947  15.440778 31.460977
+#> 2  80.000  -1.670004 4.092160  -9.679104  6.435948
+#> 3 132.000 -13.894364 5.927965 -25.551752 -2.337486
 
 # Compare to a one-intercept-only model (no change points) with default prior
 model_null = list(response ~ 1)
 fit_null = mcp(model_null, data = data, par_x = "time")  # fit another model here
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 100
-#>    Unobserved stochastic nodes: 2
-#>    Total graph size: 622
-#> 
-#> Initializing model
-#> 
-#> Finished sampling in 0.6 seconds
 demo_loo = loo(demo_fit)
 null_loo = loo(fit_null)
 loo::loo_compare(demo_loo, null_loo)
 #>   model elpd_diff se_diff p_worse diag_diff diag_elpd
 #>  model1       0.0     0.0      NA                    
-#>  model2    -104.2     8.5    1.00                    
+#>  model2    -108.2     8.8    1.00                    
 
 # Inspect the prior. Useful for prior predictive checks.
 summary(demo_fit, prior = TRUE)
@@ -458,29 +420,31 @@ summary(demo_fit, prior = TRUE)
 #> 
 #> Change point parameters:
 #>         name     mean    sd  lower upper rhat ess_bulk ess_tail  sim match
-#>  cp_1        35.77146 25.96   1.56 92.46    1     8902     9027 30.0    OK
-#>  cp_2        60.32791 25.36  11.85 97.80    1     9183     8085 70.0    OK
+#>  cp_1        37.45617 24.88   4.66 91.79 1.00     8902     9027 30.0    OK
+#>  cp_2        60.99546 24.31  14.53 96.92 1.00     9183     8085 70.0    OK
 #> 
 #> Population-level parameters:
 #>         name     mean    sd  lower upper rhat ess_bulk ess_tail  sim match
-#>  Intercept_1  9.61982 23.02 -25.35 45.98    1     9086     8947 10.0    OK
-#>  time_2       0.00280  0.20  -0.35  0.36    1     9363     8823  0.5      
-#>  Intercept_3  9.63090 19.40 -26.52 45.49    1     8828     8629  0.0    OK
-#>  time_3      -0.00039  0.19  -0.35  0.36    1     9183     8660 -0.2    OK
-#>  sigma_1     12.29319 14.82   0.39 46.97    1     8637     8735  4.0    OK
+#>  Intercept_1 10.53694 26.30 -29.43 52.10 1.00     9086     8947 10.0    OK
+#>  time_2       0.00334  0.24  -0.41  0.43 1.00     9363     8823  0.5      
+#>  Intercept_3 10.54960 22.17 -30.77 51.53 1.00     8828     8629  0.0    OK
+#>  time_3      -0.00047  0.22  -0.41  0.43 1.00     9183     8660 -0.2    OK
+#>  sigma_1     14.04936 16.94   0.45 53.68 1.00     8637     8735  4.0    OK
 plot(demo_fit, prior = TRUE)
 
 
 # Show all priors. Default priors are added where you don't provide any
-print(demo_fit$prior)
-#> List of 7
-#>  $ cp_1       :"dt(0.02388966, 49.43264, 1) T(0.02388966, 98.88917)"
-#>  $ cp_2       :"dt(0.02388966, 49.43264, 1) T(cp_1, 98.88917)"
-#>  $ Intercept_1:"dt(9.5, 11.2, 3)"
-#>  $ time_2     :"dt(0, 0.1132855, 3)"
-#>  $ Intercept_3:"dt(9.5, 11.2, 3)"
-#>  $ time_3     :"dt(0, 0.1132855, 3)"
-#>  $ sigma_1    :"dt(0, 11.2, 3) T(0, )"
+prior_summary(demo_fit)
+#> # A tibble: 7 × 5
+#>   parameter   segment dpar  prior                                         bounds
+#>   <chr>         <int> <chr> <chr>                                         <chr> 
+#> 1 cp_1              2 cp    student_t(df = 1, location = 3.189323, scale… [min(…
+#> 2 cp_2              3 cp    student_t(df = 1, location = 3.189323, scale… [cp_1…
+#> 3 Intercept_1       1 mu    student_t(df = 3, location = 10.4, scale = 1… none  
+#> 4 time_2            2 mu    student_t(df = 3, location = 0, scale = 0.13… none  
+#> 5 Intercept_3       3 mu    student_t(df = 3, location = 10.4, scale = 1… none  
+#> 6 time_3            3 mu    student_t(df = 3, location = 0, scale = 0.13… none  
+#> 7 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 12.8) [0, I…
 
 # Set priors and re-run
 prior = list(
@@ -491,17 +455,9 @@ prior = list(
 )
 
 fit3 = mcp(model, data = data, prior = prior)
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 100
-#>    Unobserved stochastic nodes: 5
-#>    Total graph size: 2138
-#> 
-#> Initializing model
-#> 
-#> Finished sampling in 3.6 seconds
+#> Warning: Some parameters may not have converged well:
+#>   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1 and time_2
+#> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
 
 # Show the JAGS model
 demo_fit$jags_code
@@ -513,11 +469,11 @@ demo_fit$jags_code
 #>   # Priors for population-level effects
 #>   cp_1 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(CONST1_,CONST2_)  # Regularizing t-tail within the observed change-point span
 #>   cp_2 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(cp_1,CONST2_)  # Regularizing t-tail ordered after cp_1 within the observed change-point span
-#>   Intercept_1 ~ dt(9.5, 1/(11.2)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5
-#>   time_2 ~ dt(0, 1/(0.1132855)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change
-#>   Intercept_3 ~ dt(9.5, 1/(11.2)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5
-#>   time_3 ~ dt(0, 1/(0.1132855)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change
-#>   sigma_1 ~ dt(0, 1/(11.2)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale
+#>   Intercept_1 ~ dt(10.4, 1/(12.8)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5
+#>   time_2 ~ dt(0, 1/(0.1350637)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change
+#>   Intercept_3 ~ dt(10.4, 1/(12.8)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5
+#>   time_3 ~ dt(0, 1/(0.1350637)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change
+#>   sigma_1 ~ dt(0, 1/(12.8)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale
 #> 
 #>   # Model and likelihood
 #>   for (i_ in 1:length(time)) {

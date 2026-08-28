@@ -253,23 +253,17 @@ of `x` is, of course, always true).
 We can use the same principle to model change points on slopes. To make
 segments join continuously, we have to “take off” where the previous
 segment ended. In `mcp`, this is achieved by defining a segment-local
-predictor $`X_{k,i}`$ that plateaus at the segment boundary:
+predictor X\_{k,i} that plateaus at the segment boundary:
 
-``` math
-X_{1,i} = \min(x_i, \Delta_1)
-```
-``` math
-X_{2,i} = \min(x_i, \Delta_2) - \Delta_1
-```
+X\_{1,i} = \min(x_i, \Delta_1) X\_{2,i} = \min(x_i, \Delta_2) - \Delta_1
 
-When $`x \le \Delta_1`$, Segment 1 increases at rate $`\beta_{1,1}`$.
-When $`x > \Delta_1`$, Segment 1 plateaus at the constant value
-$`\beta_{1,0} + \beta_{1,1} \Delta_1`$, handing over a flat baseline to
-Segment 2. Starting from $`\Delta_1`$, Segment 2 adds
-$`\beta_{2,1} (x - \Delta_1)`$. Because Segment 1 is flat for
-$`x > \Delta_1`$, $`\beta_{2,1}`$ is the **absolute slope** of Segment 2
-(not a difference in slope), and the handover is automatically
-continuous everywhere:
+When x \le \Delta_1, Segment 1 increases at rate \beta\_{1,1}. When x \>
+\Delta_1, Segment 1 plateaus at the constant value \beta\_{1,0} +
+\beta\_{1,1} \Delta_1, handing over a flat baseline to Segment 2.
+Starting from \Delta_1, Segment 2 adds \beta\_{2,1} (x - \Delta_1).
+Because Segment 1 is flat for x \> \Delta_1, \beta\_{2,1} is the
+**absolute slope** of Segment 2 (not a difference in slope), and the
+handover is automatically continuous everywhere:
 
 ``` r
 

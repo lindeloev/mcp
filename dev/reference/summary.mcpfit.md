@@ -149,19 +149,17 @@ summary(demo_fit)
 #>   3: response ~ 1 ~ 1 + time
 #> 
 #> Change point parameters:
-#>         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match
-#>  cp_1        24.01 5.016 14.36 33.47    1       92      177 30.0    OK
-#>  cp_2        69.91 0.341 69.35 70.48    1     1231     1409 70.0    OK
+#>         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+#>  cp_1        30.45 3.606 23.28 37.885 1.01      135      249 30.0    OK
+#>  cp_2        69.76 0.288 69.29 70.250 1.00     1424     1529 70.0    OK
 #> 
 #> Population-level parameters:
-#>         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match
-#>  Intercept_1  9.07 0.891  7.35 10.81    1      142      255 10.0    OK
-#>  time_2       0.40 0.055  0.31  0.53    1      104      204  0.5    OK
-#>  Intercept_3  2.49 1.247 -0.11  4.76    1      205      341  0.0    OK
-#>  time_3      -0.28 0.068 -0.41 -0.15    1      201      351 -0.2    OK
-#>  sigma_1      3.67 0.272  3.17  4.22    1     1015     1202  4.0    OK
-#> 
-#> Warning: 5 parameters show poor convergence (rhat > 1.01 or ess_bulk < 400 or ess_tail < 400).
+#>         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+#>  Intercept_1 10.30 0.717  8.87 11.670 1.01      389      560 10.0    OK
+#>  time_2       0.53 0.060  0.43  0.666 1.01      148      278  0.5    OK
+#>  Intercept_3  0.62 1.558 -2.38  3.723 1.01      193      347  0.0    OK
+#>  time_3      -0.22 0.092 -0.40 -0.049 1.01      182      388 -0.2    OK
+#>  sigma_1      4.01 0.311  3.45  4.657 1.00      795      854  4.0    OK
 summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 #> Family: gaussian(link = 'identity')
 #> Iterations: 1000 from 2 chains.
@@ -171,19 +169,26 @@ summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 #>   3: response ~ 1 ~ 1 + time
 #> 
 #> Change point parameters:
-#>         name    mean      sd   lower   upper  rhat ess_bulk ess_tail  sim match
-#>  cp_1        24.0124 5.01586 17.6723 30.5623 1.019       92      177 30.0    OK
-#>  cp_2        69.9116 0.34082 69.4413 70.3846 1.002     1231     1409 70.0    OK
+#>         name    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim
+#>  cp_1        30.4479 3.60618 25.9129 34.8948 1.0123      135      249 30.0
+#>  cp_2        69.7583 0.28765 69.3651 70.1560 0.9998     1424     1529 70.0
+#>  match
+#>     OK
+#>     OK
 #> 
 #> Population-level parameters:
-#>         name    mean      sd   lower   upper  rhat ess_bulk ess_tail  sim match
-#>  Intercept_1  9.0716 0.89137  7.9229 10.1885 1.018      142      255 10.0    OK
-#>  time_2       0.4041 0.05485  0.3417  0.4728 1.012      104      204  0.5      
-#>  Intercept_3  2.4904 1.24740  0.8677  4.0253 1.007      205      341  0.0      
-#>  time_3      -0.2843 0.06790 -0.3659 -0.1917 1.008      201      351 -0.2    OK
-#>  sigma_1      3.6675 0.27184  3.3248  4.0329 1.003     1015     1202  4.0    OK
-#> 
-#> Warning: 5 parameters show poor convergence (rhat > 1.01 or ess_bulk < 400 or ess_tail < 400).
+#>         name    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim
+#>  Intercept_1 10.2999 0.71676  9.3981 11.2243 1.0053      389      560 10.0
+#>  time_2       0.5323 0.05991  0.4584  0.6112 1.0105      148      278  0.5
+#>  Intercept_3  0.6178 1.55829 -1.4041  2.6248 1.0087      193      347  0.0
+#>  time_3      -0.2230 0.09218 -0.3389 -0.1041 1.0105      182      388 -0.2
+#>  sigma_1      4.0101 0.31144  3.6464  4.4134 1.0008      795      854  4.0
+#>  match
+#>     OK
+#>     OK
+#>     OK
+#>     OK
+#>     OK
 
 # Get the results as a data frame
 results = summary(demo_fit)
@@ -195,19 +200,17 @@ results = summary(demo_fit)
 #>   3: response ~ 1 ~ 1 + time
 #> 
 #> Change point parameters:
-#>         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match
-#>  cp_1        24.01 5.016 14.36 33.47    1       92      177 30.0    OK
-#>  cp_2        69.91 0.341 69.35 70.48    1     1231     1409 70.0    OK
+#>         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+#>  cp_1        30.45 3.606 23.28 37.885 1.01      135      249 30.0    OK
+#>  cp_2        69.76 0.288 69.29 70.250 1.00     1424     1529 70.0    OK
 #> 
 #> Population-level parameters:
-#>         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match
-#>  Intercept_1  9.07 0.891  7.35 10.81    1      142      255 10.0    OK
-#>  time_2       0.40 0.055  0.31  0.53    1      104      204  0.5    OK
-#>  Intercept_3  2.49 1.247 -0.11  4.76    1      205      341  0.0    OK
-#>  time_3      -0.28 0.068 -0.41 -0.15    1      201      351 -0.2    OK
-#>  sigma_1      3.67 0.272  3.17  4.22    1     1015     1202  4.0    OK
-#> 
-#> Warning: 5 parameters show poor convergence (rhat > 1.01 or ess_bulk < 400 or ess_tail < 400).
+#>         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+#>  Intercept_1 10.30 0.717  8.87 11.670 1.01      389      560 10.0    OK
+#>  time_2       0.53 0.060  0.43  0.666 1.01      148      278  0.5    OK
+#>  Intercept_3  0.62 1.558 -2.38  3.723 1.01      193      347  0.0    OK
+#>  time_3      -0.22 0.092 -0.40 -0.049 1.01      182      388 -0.2    OK
+#>  sigma_1      4.01 0.311  3.45  4.657 1.00      795      854  4.0    OK
 
 # Group-level deviations (random effects)
 # ranef(my_fit)
@@ -223,14 +226,14 @@ summary(demo_fit, prior = TRUE)
 #> 
 #> Change point parameters:
 #>         name     mean    sd  lower upper rhat ess_bulk ess_tail  sim match
-#>  cp_1        36.03396 26.53   1.26  93.3    1     1807     1681 30.0    OK
-#>  cp_2        60.13504 25.49  11.04  97.8    1     1813     1728 70.0    OK
+#>  cp_1        37.70780 25.43   4.37 92.62 1.00     1807     1681 30.0    OK
+#>  cp_2        60.81057 24.43  13.75 96.93 1.00     1813     1728 70.0    OK
 #> 
 #> Population-level parameters:
 #>         name     mean    sd  lower upper rhat ess_bulk ess_tail  sim match
-#>  Intercept_1  9.29112 22.15 -24.46  45.3    1     1822     1887 10.0    OK
-#>  time_2       0.00042  0.52  -0.96   1.0    1     1943     1562  0.5    OK
-#>  Intercept_3  9.69748 19.11 -25.24  45.4    1     1961     1844  0.0    OK
-#>  time_3      -0.02395  0.70  -1.24   1.2    1     2196     1800 -0.2    OK
-#>  sigma_1     12.35746 14.43   0.39  46.5    1     1910     1965  4.0    OK
+#>  Intercept_1 10.16128 25.31 -28.41 51.34 1.00     1822     1887 10.0    OK
+#>  time_2       0.00017  0.21  -0.38  0.41 1.00     1943     1562  0.5      
+#>  Intercept_3 10.62569 21.84 -29.30 51.43 1.00     1961     1844  0.0    OK
+#>  time_3      -0.00952  0.28  -0.49  0.46 1.00     2196     1800 -0.2    OK
+#>  sigma_1     14.12281 16.49   0.45 53.18 1.00     1910     1965  4.0    OK
 ```

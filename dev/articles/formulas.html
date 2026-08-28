@@ -11,7 +11,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="../katex-auto.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -67,8 +68,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other">
-<li><a class="dropdown-item" href="../articles/packages.html">Comparison to other packages</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+<li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -338,27 +338,18 @@ always true).</p>
 <p>We can use the same principle to model change points on slopes. To
 make segments join continuously, we have to “take off” where the
 previous segment ended. In <code>mcp</code>, this is achieved by
-defining a segment-local predictor
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mrow><mi>k</mi><mo>,</mo><mi>i</mi></mrow></msub><annotation encoding="application/x-tex">X_{k,i}</annotation></semantics></math>
-that plateaus at the segment boundary:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mrow><mn>1</mn><mo>,</mo><mi>i</mi></mrow></msub><mo>=</mo><mrow><mi mathvariant="normal">min</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>,</mo><msub><mi mathvariant="normal">Δ</mi><mn>1</mn></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">X_{1,i} = \min(x_i, \Delta_1)</annotation></semantics></math><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mrow><mn>2</mn><mo>,</mo><mi>i</mi></mrow></msub><mo>=</mo><mrow><mi mathvariant="normal">min</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>,</mo><msub><mi mathvariant="normal">Δ</mi><mn>2</mn></msub><mo stretchy="false" form="postfix">)</mo><mo>−</mo><msub><mi mathvariant="normal">Δ</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">X_{2,i} = \min(x_i, \Delta_2) - \Delta_1</annotation></semantics></math></p>
-<p>When
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>≤</mo><msub><mi mathvariant="normal">Δ</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">x \le \Delta_1</annotation></semantics></math>,
-Segment 1 increases at rate
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>β</mi><mrow><mn>1</mn><mo>,</mo><mn>1</mn></mrow></msub><annotation encoding="application/x-tex">\beta_{1,1}</annotation></semantics></math>.
-When
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>&gt;</mo><msub><mi mathvariant="normal">Δ</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">x &gt; \Delta_1</annotation></semantics></math>,
-Segment 1 plateaus at the constant value
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>β</mi><mrow><mn>1</mn><mo>,</mo><mn>0</mn></mrow></msub><mo>+</mo><msub><mi>β</mi><mrow><mn>1</mn><mo>,</mo><mn>1</mn></mrow></msub><msub><mi mathvariant="normal">Δ</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">\beta_{1,0} + \beta_{1,1} \Delta_1</annotation></semantics></math>,
-handing over a flat baseline to Segment 2. Starting from
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi mathvariant="normal">Δ</mi><mn>1</mn></msub><annotation encoding="application/x-tex">\Delta_1</annotation></semantics></math>,
-Segment 2 adds
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>β</mi><mrow><mn>2</mn><mo>,</mo><mn>1</mn></mrow></msub><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>−</mo><msub><mi mathvariant="normal">Δ</mi><mn>1</mn></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\beta_{2,1} (x - \Delta_1)</annotation></semantics></math>.
-Because Segment 1 is flat for
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>&gt;</mo><msub><mi mathvariant="normal">Δ</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">x &gt; \Delta_1</annotation></semantics></math>,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>β</mi><mrow><mn>2</mn><mo>,</mo><mn>1</mn></mrow></msub><annotation encoding="application/x-tex">\beta_{2,1}</annotation></semantics></math>
-is the <strong>absolute slope</strong> of Segment 2 (not a difference in
-slope), and the handover is automatically continuous everywhere:</p>
+defining a segment-local predictor <span class="math inline">X_{k,i}</span> that plateaus at the segment
+boundary:</p>
+<p><span class="math display">X_{1,i} = \min(x_i, \Delta_1)</span> <span class="math display">X_{2,i} = \min(x_i, \Delta_2) - \Delta_1</span></p>
+<p>When <span class="math inline">x \le \Delta_1</span>, Segment 1
+increases at rate <span class="math inline">\beta_{1,1}</span>. When
+<span class="math inline">x &gt; \Delta_1</span>, Segment 1 plateaus at
+the constant value <span class="math inline">\beta_{1,0} + \beta_{1,1}
+\Delta_1</span>, handing over a flat baseline to Segment 2. Starting
+from <span class="math inline">\Delta_1</span>, Segment 2 adds <span class="math inline">\beta_{2,1} (x - \Delta_1)</span>. Because Segment 1
+is flat for <span class="math inline">x &gt; \Delta_1</span>, <span class="math inline">\beta_{2,1}</span> is the <strong>absolute
+slope</strong> of Segment 2 (not a difference in slope), and the
+handover is automatically continuous everywhere:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Model parameters</span></span>
 <span><span class="va">x</span> <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">20</span></span>

@@ -45,7 +45,7 @@ model = list(
 ```
 
 We can simulate data with an abrupt change from a low to a high residual
-standard deviation at $`x = 50`$:
+standard deviation at x = 50:
 
 ``` r
 
@@ -105,13 +105,13 @@ summary(fit)
     ## 
     ## Change point parameters:
     ##         name mean   sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  cp_1        49.8 1.58  46.4  52.3    1     2934     3619 50.0    OK
+    ##  cp_1        49.8 1.58  46.4  52.3 1.00     2934     3619 50.0    OK
     ## 
     ## Population-level parameters:
     ##         name mean   sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  Intercept_1 20.1 0.81  18.6  21.8    1     5284     4788 20.0    OK
-    ##  sigma_1      1.8 0.10   1.6   2.0    1     4839     4896  1.6    OK
-    ##  sigma_2      2.9 0.10   2.7   3.1    1     4898     4539  3.0    OK
+    ##  Intercept_1 20.1 0.81  18.6  21.8 1.00     5284     4788 20.0    OK
+    ##  sigma_1      1.8 0.10   1.6   2.0 1.00     4839     4896  1.6    OK
+    ##  sigma_2      2.9 0.10   2.7   3.1 1.00     4898     4539  3.0    OK
 
 ## Advanced example
 
@@ -237,9 +237,9 @@ summary(fit)
     ## 
     ## Change point parameters:
     ##         name     mean      sd    lower    upper rhat ess_bulk ess_tail      sim
-    ##  cp_1         4.9e+01 4.3e-01  4.8e+01  5.0e+01    1    11182     4626  50.0000
-    ##  cp_2         1.0e+02 1.8e+00  9.9e+01  1.1e+02    1      860     1558 100.0000
-    ##  cp_3         1.4e+02 1.2e+01  1.2e+02  1.8e+02    1      769      832 150.0000
+    ##  cp_1         4.9e+01 4.3e-01  4.8e+01  5.0e+01 1.00    11182     4626  50.0000
+    ##  cp_2         1.0e+02 1.8e+00  9.9e+01  1.1e+02 1.00      860     1558 100.0000
+    ##  cp_3         1.4e+02 1.2e+01  1.2e+02  1.8e+02 1.00      769      832 150.0000
     ##  match
     ##     OK
     ##     OK
@@ -247,15 +247,15 @@ summary(fit)
     ## 
     ## Population-level parameters:
     ##         name     mean      sd    lower    upper rhat ess_bulk ess_tail      sim
-    ##  Intercept_1 -2.0e+01 7.4e-01 -2.2e+01 -1.9e+01    1    10943    15391 -20.0000
-    ##  Intercept_2  1.4e+00 1.3e+00 -1.3e+00  3.8e+00    1     1120     2118   0.0000
-    ##  x_3          1.0e+00 2.0e-02  9.8e-01  1.1e+00    1     1445     3218   1.0000
-    ##  x_4          1.0e+00 2.0e-02  9.8e-01  1.1e+00    1     1445     3218   1.0000
-    ##  sigma_1      1.5e+00 2.1e-01  1.1e+00  1.9e+00    1     2741     5363   1.0986
-    ##  sigma_x_1    5.7e-03 7.1e-03 -8.1e-03  2.0e-02    1     2769     5395   0.0139
-    ##  sigma_2      2.2e+00 8.7e-02  2.0e+00  2.4e+00    1     4325     8234   2.3026
-    ##  sigma_x_3   -2.0e-02 7.1e-03 -3.6e-02 -8.3e-03    1     1169     1932  -0.0300
-    ##  sigma_xE2_3 -1.3e-05 9.5e-05 -2.2e-04  1.7e-04    1     2611     3535   0.0003
+    ##  Intercept_1 -2.0e+01 7.4e-01 -2.2e+01 -1.9e+01 1.00    10943    15391 -20.0000
+    ##  Intercept_2  1.4e+00 1.3e+00 -1.3e+00  3.8e+00 1.00     1120     2118   0.0000
+    ##  x_3          1.0e+00 2.0e-02  9.8e-01  1.1e+00 1.00     1445     3218   1.0000
+    ##  x_4          1.0e+00 2.0e-02  9.8e-01  1.1e+00 1.00     1445     3218   1.0000
+    ##  sigma_1      1.5e+00 2.1e-01  1.1e+00  1.9e+00 1.00     2741     5363   1.0986
+    ##  sigma_x_1    5.7e-03 7.1e-03 -8.1e-03  2.0e-02 1.00     2769     5395   0.0139
+    ##  sigma_2      2.2e+00 8.7e-02  2.0e+00  2.4e+00 1.00     4325     8234   2.3026
+    ##  sigma_x_3   -2.0e-02 7.1e-03 -3.6e-02 -8.3e-03 1.00     1169     1932  -0.0300
+    ##  sigma_xE2_3 -1.3e-05 9.5e-05 -2.2e-04  1.7e-04 1.00     2611     3535   0.0003
     ##  match
     ##     OK
     ##     OK
@@ -507,5 +507,5 @@ specific distributional parameters:
   draws for the specified distributional parameter.
 - **`plot_dpar(fit, dpar = "sigma")` or
   `plot_dpar(fit, dpar = "shape")`**: Plots the trajectory of the
-  distributional parameter over $`x`$, complete with credible intervals
+  distributional parameter over x, complete with credible intervals
   across segments.

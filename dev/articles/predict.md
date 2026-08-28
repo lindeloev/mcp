@@ -22,13 +22,13 @@ data = mcp_example_data("demo")
 head(data)
 ```
 
-    ##     response     time
-    ## 1 -3.0084198 91.48060
-    ## 2 -7.8768640 93.70754
-    ## 3 16.3029101 28.61395
-    ## 4 -0.0373553 83.04476
-    ## 5 27.4463185 64.17455
-    ## 6 22.0610004 51.90959
+    ##    response     time
+    ## 1 32.842651 68.35820
+    ## 2 -1.160003 87.29038
+    ## 3 27.564248 69.01173
+    ## 4 10.062971 11.59361
+    ## 5 14.056859 19.50091
+    ## 6 18.292640 46.12009
 
 … and model it as three segments, i.e., two change points:
 
@@ -44,10 +44,6 @@ model = list(
 # Fit it
 fit = mcp(model, data = data, seed = 42)
 ```
-
-    ## Warning: Some parameters may not have converged well:
-    ##   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1 and time_2
-    ## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
 
 This is what the data and inferred fit look like with a 95% central
 posterior interval for the expected response and an 80% posterior
@@ -90,13 +86,13 @@ To get the fitted values for each data point, simply do `fitted(fit)`:
 head(fitted(fit))
 ```
 
-    ##     response     time    fitted     error      Q2.5      Q97.5
-    ## 1 -3.0084198 91.48060 -3.386119 0.7361934 -4.828339 -1.9431978
-    ## 2 -7.8768640 93.70754 -3.911807 0.8265426 -5.540613 -2.2927652
-    ## 3 16.3029101 28.61395 11.123294 1.0336692  9.164108 13.0789150
-    ## 4 -0.0373553 83.04476 -1.394763 0.6392671 -2.640529 -0.1318978
-    ## 5 27.4463185 64.17455 24.940974 0.8865290 23.196406 26.6955478
-    ## 6 22.0610004 51.90959 20.115305 0.6000163 18.922358 21.2736971
+    ##    response     time    fitted     error      Q2.5     Q97.5
+    ## 1 32.842651 68.35820 30.374492 1.0363972 28.362893 32.453365
+    ## 2 -1.160003 87.29038 -3.333719 0.7695936 -4.836521 -1.822012
+    ## 3 27.564248 69.01173 30.727352 1.0675322 28.660966 32.861266
+    ## 4 10.062971 11.59361 10.316267 0.7101668  8.907415 11.711335
+    ## 5 14.056859 19.50091 10.316619 0.7096133  8.907914 11.711335
+    ## 6 18.292640 46.12009 18.367438 0.9842136 16.134892 20.014110
 
 In general, this output will include:
 
@@ -141,11 +137,11 @@ newdata = data.frame(time = c(data$time[1], 25, -20, 200))
 fitted(fit, newdata = newdata)
 ```
 
-    ##       time     fitted     error       Q2.5      Q97.5
-    ## 1  91.4806  -3.386119 0.7361934  -4.828339  -1.943198
-    ## 2  25.0000  10.088799 0.8741357   8.510840  11.933311
-    ## 3 -20.0000   9.000009 0.9282547   7.061976  10.693242
-    ## 4 200.0000 -29.003089 7.6754809 -43.803552 -14.020253
+    ##       time    fitted      error       Q2.5     Q97.5
+    ## 1  68.3582  30.37449  1.0363972  28.362893  32.45336
+    ## 2  25.0000  10.34583  0.6996371   8.964573  11.72535
+    ## 3 -20.0000  10.31627  0.7101668   8.907415  11.71133
+    ## 4 200.0000 -29.86496 10.4838568 -50.879621 -10.31775
 
 Note that:
 
@@ -200,13 +196,13 @@ set.seed(42)
 head(predict(fit, probs = c(0.1, 0.9)))
 ```
 
-    ##     response     time   predict    error       Q10        Q90
-    ## 1 -3.0084198 91.48060 -3.454973 3.788821 -8.230978  1.3918561
-    ## 2 -7.8768640 93.70754 -3.935824 3.783910 -8.727173  0.9903094
-    ## 3 16.3029101 28.61395 11.173009 3.801864  6.313294 15.9955908
-    ## 4 -0.0373553 83.04476 -1.426371 3.731285 -6.115378  3.3257995
-    ## 5 27.4463185 64.17455 24.835888 3.809313 20.043839 29.7345597
-    ## 6 22.0610004 51.90959 20.125370 3.713511 15.389224 24.9108928
+    ##    response     time   predict    error       Q10       Q90
+    ## 1 32.842651 68.35820 30.294887 4.166189 25.079655 35.667994
+    ## 2 -1.160003 87.29038 -3.357834 4.083957 -8.551314  1.887155
+    ## 3 27.564248 69.01173 30.783699 4.133812 25.422568 36.031083
+    ## 4 10.062971 11.59361 10.279983 4.058576  5.111081 15.521708
+    ## 5 14.056859 19.50091 10.196888 4.079253  5.111559 15.521964
+    ## 6 18.292640 46.12009 18.374913 4.116569 13.086745 23.638134
 
 Note that
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
@@ -252,7 +248,7 @@ this region, so you could’ve just run it without sampling:
 
 ``` r
 
-fit = mcp(model, data = data, sample = FALSE)
+empty = mcp(model, data = data, sample = FALSE)
 ```
 
 ### Step 2: add the unobserved segment(s) and fit
@@ -262,7 +258,7 @@ knowledge:
 
 ``` r
 
-model_forecast = c(fit$model, list(
+model_forecast = c(empty$model, list(
   ~ 1     # intercept (Intercept_4) after cp_3
 ))
 ```
@@ -278,7 +274,7 @@ mcp](https://lindeloev.github.io/mcp/dev/articles/priors.md).
 
 forecast_horizon = 170
 data_forecast = rbind(data, data.frame(time = forecast_horizon, response = NA))
-prior_forecast = c(fit$prior, list(
+prior_forecast = c(empty$prior, list(
   Intercept_4 = "Intercept_1",  # Return to this value
   cp_3 = paste0("dnorm(cp_2 + (cp_2 - cp_1), 20) T(", max(data$time), ", ", forecast_horizon, ")")  # In the future at the same interval
 ))
@@ -288,12 +284,8 @@ Now let’s fit it:
 
 ``` r
 
-fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast, seed = 42)
+fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast, iter = 5000, seed = 42)
 ```
-
-    ## Warning: Some parameters may not have converged well:
-    ##   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1 and time_2
-    ## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
 
 ### Step 3: predict!
 
@@ -305,8 +297,8 @@ We can now compute 50% and 80% posterior predictive intervals at
 predict(fit_forecast, newdata = data.frame(time = 125), probs = c(0.1, 0.25, 0.75, 0.9))
 ```
 
-    ##   time   predict    error       Q10       Q25      Q75      Q90
-    ## 1  125 0.2368836 10.93342 -14.86383 -10.57068 9.578131 12.41427
+    ##   time  predict    error       Q10       Q25      Q75      Q90
+    ## 1  125 3.584003 11.17541 -14.25269 -6.761199 11.82396 14.67585
 
 To really understand what’s going on here, it may be helpful to
 visualize the model. For now, we will have to hack this a bit too,
@@ -321,10 +313,11 @@ predict_forecast = predict(fit_forecast, newdata = newdata, summary = FALSE)
 
 # Plot it
 library(ggplot2)
+library(tidybayes)
 ggplot(predict_forecast, aes(x = time, y = .prediction)) +
   # Posterior predictive intervals and line at x = 125
-  stat_summary(fun.data = median_hilow, fun.args = list(conf.int = 0.8), geom = "ribbon", alpha = 0.2) +
-  stat_summary(fun.data = median_hilow, fun.args = list(conf.int = 0.5), geom = "ribbon", alpha = 0.3) +
+  stat_summary(fun.data = median_qi, fun.args = list(.width = 0.8), geom = "ribbon", alpha = 0.2) +
+  stat_summary(fun.data = median_qi, fun.args = list(.width = 0.5), geom = "ribbon", alpha = 0.3) +
   geom_vline(xintercept = 125, lty = 2, lwd = 1) +
 
   # Lines for fitted draws
@@ -334,14 +327,6 @@ ggplot(predict_forecast, aes(x = time, y = .prediction)) +
   geom_point(aes(x = time, y = response), data = data) +
   labs(title = "Predicting with future change points")
 ```
-
-    ## Warning: Computation failed in `stat_summary()`.
-    ## Caused by error in `fun.data()`:
-    ## ! The package "Hmisc" is required.
-
-    ## Warning: Computation failed in `stat_summary()`.
-    ## Caused by error in `fun.data()`:
-    ## ! The package "Hmisc" is required.
 
 ![](predict_files/figure-html/unnamed-chunk-12-1.png)
 

@@ -11,7 +11,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="../katex-auto.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -67,8 +68,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other">
-<li><a class="dropdown-item" href="../articles/packages.html">Comparison to other packages</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+<li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -144,8 +144,8 @@ plateau mean:</p>
 <span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>  <span class="co"># a new intercept on sigma, but not on the mean</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>We can simulate data with an abrupt change from a low to a high
-residual standard deviation at
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>=</mo><mn>50</mn></mrow><annotation encoding="application/x-tex">x = 50</annotation></semantics></math>:</p>
+residual standard deviation at <span class="math inline">x =
+50</span>:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">100</span>, y <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">empty</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, sample <span class="op">=</span> <span class="cn">FALSE</span>, par_x <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span></span>
@@ -188,13 +188,13 @@ instantiated. There will always be a <code>sigma_1</code>.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
 <span><span class="co">##         name mean   sd lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span><span class="co">##  cp_1        49.8 1.58  46.4  52.3    1     2934     3619 50.0    OK</span></span>
+<span><span class="co">##  cp_1        49.8 1.58  46.4  52.3 1.00     2934     3619 50.0    OK</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
 <span><span class="co">##         name mean   sd lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span><span class="co">##  Intercept_1 20.1 0.81  18.6  21.8    1     5284     4788 20.0    OK</span></span>
-<span><span class="co">##  sigma_1      1.8 0.10   1.6   2.0    1     4839     4896  1.6    OK</span></span>
-<span><span class="co">##  sigma_2      2.9 0.10   2.7   3.1    1     4898     4539  3.0    OK</span></span></code></pre>
+<span><span class="co">##  Intercept_1 20.1 0.81  18.6  21.8 1.00     5284     4788 20.0    OK</span></span>
+<span><span class="co">##  sigma_1      1.8 0.10   1.6   2.0 1.00     4839     4896  1.6    OK</span></span>
+<span><span class="co">##  sigma_2      2.9 0.10   2.7   3.1 1.00     4898     4539  3.0    OK</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="advanced-example">Advanced example<a class="anchor" aria-label="anchor" href="#advanced-example"></a>
@@ -297,9 +297,9 @@ standard-deviation growth.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
 <span><span class="co">##         name     mean      sd    lower    upper rhat ess_bulk ess_tail      sim</span></span>
-<span><span class="co">##  cp_1         4.9e+01 4.3e-01  4.8e+01  5.0e+01    1    11182     4626  50.0000</span></span>
-<span><span class="co">##  cp_2         1.0e+02 1.8e+00  9.9e+01  1.1e+02    1      860     1558 100.0000</span></span>
-<span><span class="co">##  cp_3         1.4e+02 1.2e+01  1.2e+02  1.8e+02    1      769      832 150.0000</span></span>
+<span><span class="co">##  cp_1         4.9e+01 4.3e-01  4.8e+01  5.0e+01 1.00    11182     4626  50.0000</span></span>
+<span><span class="co">##  cp_2         1.0e+02 1.8e+00  9.9e+01  1.1e+02 1.00      860     1558 100.0000</span></span>
+<span><span class="co">##  cp_3         1.4e+02 1.2e+01  1.2e+02  1.8e+02 1.00      769      832 150.0000</span></span>
 <span><span class="co">##  match</span></span>
 <span><span class="co">##     OK</span></span>
 <span><span class="co">##     OK</span></span>
@@ -307,15 +307,15 @@ standard-deviation growth.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
 <span><span class="co">##         name     mean      sd    lower    upper rhat ess_bulk ess_tail      sim</span></span>
-<span><span class="co">##  Intercept_1 -2.0e+01 7.4e-01 -2.2e+01 -1.9e+01    1    10943    15391 -20.0000</span></span>
-<span><span class="co">##  Intercept_2  1.4e+00 1.3e+00 -1.3e+00  3.8e+00    1     1120     2118   0.0000</span></span>
-<span><span class="co">##  x_3          1.0e+00 2.0e-02  9.8e-01  1.1e+00    1     1445     3218   1.0000</span></span>
-<span><span class="co">##  x_4          1.0e+00 2.0e-02  9.8e-01  1.1e+00    1     1445     3218   1.0000</span></span>
-<span><span class="co">##  sigma_1      1.5e+00 2.1e-01  1.1e+00  1.9e+00    1     2741     5363   1.0986</span></span>
-<span><span class="co">##  sigma_x_1    5.7e-03 7.1e-03 -8.1e-03  2.0e-02    1     2769     5395   0.0139</span></span>
-<span><span class="co">##  sigma_2      2.2e+00 8.7e-02  2.0e+00  2.4e+00    1     4325     8234   2.3026</span></span>
-<span><span class="co">##  sigma_x_3   -2.0e-02 7.1e-03 -3.6e-02 -8.3e-03    1     1169     1932  -0.0300</span></span>
-<span><span class="co">##  sigma_xE2_3 -1.3e-05 9.5e-05 -2.2e-04  1.7e-04    1     2611     3535   0.0003</span></span>
+<span><span class="co">##  Intercept_1 -2.0e+01 7.4e-01 -2.2e+01 -1.9e+01 1.00    10943    15391 -20.0000</span></span>
+<span><span class="co">##  Intercept_2  1.4e+00 1.3e+00 -1.3e+00  3.8e+00 1.00     1120     2118   0.0000</span></span>
+<span><span class="co">##  x_3          1.0e+00 2.0e-02  9.8e-01  1.1e+00 1.00     1445     3218   1.0000</span></span>
+<span><span class="co">##  x_4          1.0e+00 2.0e-02  9.8e-01  1.1e+00 1.00     1445     3218   1.0000</span></span>
+<span><span class="co">##  sigma_1      1.5e+00 2.1e-01  1.1e+00  1.9e+00 1.00     2741     5363   1.0986</span></span>
+<span><span class="co">##  sigma_x_1    5.7e-03 7.1e-03 -8.1e-03  2.0e-02 1.00     2769     5395   0.0139</span></span>
+<span><span class="co">##  sigma_2      2.2e+00 8.7e-02  2.0e+00  2.4e+00 1.00     4325     8234   2.3026</span></span>
+<span><span class="co">##  sigma_x_3   -2.0e-02 7.1e-03 -3.6e-02 -8.3e-03 1.00     1169     1932  -0.0300</span></span>
+<span><span class="co">##  sigma_xE2_3 -1.3e-05 9.5e-05 -2.2e-04  1.7e-04 1.00     2611     3535   0.0003</span></span>
 <span><span class="co">##  match</span></span>
 <span><span class="co">##     OK</span></span>
 <span><span class="co">##     OK</span></span>
@@ -537,9 +537,8 @@ parameter.</li>
 <li>
 <strong><code>plot_dpar(fit, dpar = "sigma")</code> or
 <code>plot_dpar(fit, dpar = "shape")</code></strong>: Plots the
-trajectory of the distributional parameter over
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>x</mi><annotation encoding="application/x-tex">x</annotation></semantics></math>,
-complete with credible intervals across segments.</li>
+trajectory of the distributional parameter over <span class="math inline">x</span>, complete with credible intervals across
+segments.</li>
 </ul>
 </div>
 </div>

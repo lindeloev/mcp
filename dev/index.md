@@ -102,7 +102,7 @@ by default) in one line:
 
 ``` r
 
-demo_fit = mcp_example("demo", plot = FALSE)
+demo_fit = mcp_example("demo")
 ```
 
 See `demo_fit$example_code` for how it was generated, and explore more
@@ -120,13 +120,7 @@ model = list(
 )
 
 # Get example data and fit it: mcp(model, data, ...)
-fit = mcp(model, demo_fit$data, iter = 4000, sample = "both", seed = 42)
-```
-
-``` R
-## Warning: Some parameters may not have converged well:
-##   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1 and time_2
-## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
+fit = mcp(model, demo_fit$data, sample = "both", seed = 40)
 ```
 
 ## Plot and summary
@@ -154,26 +148,24 @@ summary(fit)
 
 ``` R
 ## Family: gaussian(link = 'identity')
-## Iterations: 4000 from 3 chains.
+## Iterations: 3000 from 3 chains.
 ## Segments:
 ##   1: response ~ 1
 ##   2: response ~ 1 ~ 0 + time
 ##   3: response ~ 1 ~ 1 + time
 ## 
 ## Change point parameters:
-##         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match
-##  cp_1        22.93 5.282 11.80 32.56    1      332      401 30.0    OK
-##  cp_2        69.91 0.342 69.35 70.48    1     7481    10321 70.0    OK
+##         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+##  cp_1        30.78 3.604 23.69 38.370 1.01      426      603 30.0    OK
+##  cp_2        69.77 0.293 69.30 70.261 1.00     5621     7509 70.0    OK
 ## 
 ## Population-level parameters:
-##         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match
-##  Intercept_1  8.98 0.949  6.96 10.68    1      539      604 10.0    OK
-##  time_2       0.39 0.051  0.30  0.51    1      423      915  0.5    OK
-##  Intercept_3  1.75 1.230 -0.66  4.17    1      990     2262  0.0    OK
-##  time_3      -0.24 0.068 -0.37 -0.11    1     1012     2129 -0.2    OK
-##  sigma_1      3.68 0.273  3.20  4.26    1     5570     5662  4.0    OK
-## 
-## Warning: 2 parameters show poor convergence (rhat > 1.01 or ess_bulk < 400 or ess_tail < 400).
+##         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+##  Intercept_1 10.31 0.705  8.90 11.641 1.00     1436     2136 10.0    OK
+##  time_2       0.54 0.064  0.43  0.682 1.01      463      668  0.5    OK
+##  Intercept_3  0.72 1.566 -2.30  3.873 1.00      591     1134  0.0    OK
+##  time_3      -0.23 0.092 -0.42 -0.055 1.00      606     1109 -0.2    OK
+##  sigma_1      4.01 0.304  3.48  4.691 1.00     4147     3932  4.0    OK
 ```
 
 - `rhat` is the rank-normalized split-Rhat convergence diagnostic.
@@ -231,8 +223,8 @@ hypothesis(fit, "cp_1 > 25")
 ```
 
 ``` R
-##      hypothesis      mean     lower    upper         p        BF
-## 1 cp_1 - 25 > 0 -2.066499 -13.19911 7.559761 0.3494167 0.4010526
+##      hypothesis     mean     lower    upper         p       BF
+## 1 cp_1 - 25 > 0 5.784828 -1.305529 13.36994 0.9443333 11.13248
 ```
 
 For model comparisons, we can fit a null model and compare the
@@ -268,7 +260,7 @@ loo::loo_compare(fit_loo, fit_null_loo)
 ``` R
 ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
 ##  model1       0.0     0.0      NA                    
-##  model2     -97.7     9.1    1.00
+##  model2    -105.6     8.9    1.00
 ```
 
 # Highlights from in-depth guides
@@ -366,7 +358,7 @@ intervals](https://lindeloev.github.io/mcp/dev/articles/predict.md):
 
 [Using priors](https://lindeloev.github.io/mcp/dev/articles/priors.md):
 
-- See priors in `fit$prior` and set priors using
+- See priors in `fit$prior` or `prior_summary(fit)` and set priors using
   `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")`.
 
 - One change point has a uniform default prior. An ideal default prior
@@ -440,12 +432,12 @@ head(fitted(fit, summary = FALSE))  # column .epred
 ## # A tibble: 6 × 14
 ##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
 ##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
-## 1      1          1     1  27.7  70.2        8.86  0.465        1.13 -0.304
-## 2      1          1     1  27.7  70.2        8.86  0.465        1.13 -0.304
-## 3      1          1     1  27.7  70.2        8.86  0.465        1.13 -0.304
-## 4      1          1     1  27.7  70.2        8.86  0.465        1.13 -0.304
-## 5      1          1     1  27.7  70.2        8.86  0.465        1.13 -0.304
-## 6      1          1     1  27.7  70.2        8.86  0.465        1.13 -0.304
+## 1      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
+## 2      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
+## 3      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
+## 4      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
+## 5      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
+## 6      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
 ## # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>,
 ## #   data_row <int>, .epred <dbl>
 ```

@@ -11,7 +11,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="icon" sizes="any" href="favicon.ico">
 <link rel="manifest" href="site.webmanifest">
-<script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="katex-auto.js"></script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -73,8 +74,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other">
-<li><a class="dropdown-item" href="articles/packages.html">Comparison to other packages</a></li>
-    <li><a class="dropdown-item" href="articles/tips.html">Tips, tricks, and debugging</a></li>
+<li><a class="dropdown-item" href="articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Functions</a></li>
@@ -141,7 +141,7 @@ Several plots showing mcp regression fits across different models and change-poi
 </h1>
 <p>The following model infers the two change points between three segments. You can run this complete worked example (which fits the model and plots by default) in one line:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">demo_fit</span> <span class="op">=</span> <span class="fu"><a href="reference/mcp_example.html">mcp_example</a></span><span class="op">(</span><span class="st">"demo"</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">demo_fit</span> <span class="op">=</span> <span class="fu"><a href="reference/mcp_example.html">mcp_example</a></span><span class="op">(</span><span class="st">"demo"</span><span class="op">)</span></span></code></pre></div>
 <p>See <code>demo_fit$example_code</code> for how it was generated, and explore more demos in <code><a href="reference/mcp_example.html">mcp_example()</a></code>. But for now, let’s walk though the example manually:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Define the model</span></span>
@@ -152,42 +152,37 @@ Several plots showing mcp regression fits across different models and change-poi
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Get example data and fit it: mcp(model, data, ...)</span></span>
-<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">demo_fit</span><span class="op">$</span><span class="va">data</span>, iter <span class="op">=</span> <span class="fl">4000</span>, sample <span class="op">=</span> <span class="st">"both"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb6"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="do">## Warning: Some parameters may not have converged well:</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="do">##   * rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400: cp_1 and time_2</span></span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="do">## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.</span></span></code></pre></div>
+<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">demo_fit</span><span class="op">$</span><span class="va">data</span>, sample <span class="op">=</span> <span class="st">"both"</span>, seed <span class="op">=</span> <span class="fl">40</span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="plot-and-summary">Plot and summary<a class="anchor" aria-label="anchor" href="#plot-and-summary"></a>
 </h2>
 <p>The default plot includes data, fitted lines drawn randomly from the posterior, and change point(s) posterior density for each chain. Here we also add fitted interval (<code>q_fit</code>):</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, q_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggtitle</span><span class="op">(</span><span class="st">"Regression with two change points"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-demo-plot-1.png" alt="" width="100%"></p>
 <p>Use <code><a href="reference/summary.mcpfit.html">summary()</a></code> to summarise the posterior distribution as well as sampling diagnostics:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb9"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="do">## Family: gaussian(link = 'identity')</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="do">## Iterations: 4000 from 3 chains.</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="do">## Segments:</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="do">##   1: response ~ 1</span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="do">##   2: response ~ 1 ~ 0 + time</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="do">##   3: response ~ 1 ~ 1 + time</span></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="do">## </span></span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="do">## Change point parameters:</span></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="do">##         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="do">##  cp_1        22.93 5.282 11.80 32.56    1      332      401 30.0    OK</span></span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="do">##  cp_2        69.91 0.342 69.35 70.48    1     7481    10321 70.0    OK</span></span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="do">## </span></span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="do">## Population-level parameters:</span></span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="do">##         name  mean    sd lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a><span class="do">##  Intercept_1  8.98 0.949  6.96 10.68    1      539      604 10.0    OK</span></span>
-<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a><span class="do">##  time_2       0.39 0.051  0.30  0.51    1      423      915  0.5    OK</span></span>
-<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a><span class="do">##  Intercept_3  1.75 1.230 -0.66  4.17    1      990     2262  0.0    OK</span></span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a><span class="do">##  time_3      -0.24 0.068 -0.37 -0.11    1     1012     2129 -0.2    OK</span></span>
-<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="do">##  sigma_1      3.68 0.273  3.20  4.26    1     5570     5662  4.0    OK</span></span>
-<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a><span class="do">## </span></span>
-<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a><span class="do">## Warning: 2 parameters show poor convergence (rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400).</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="do">## Family: gaussian(link = 'identity')</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="do">## Iterations: 3000 from 3 chains.</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="do">## Segments:</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="do">##   1: response ~ 1</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="do">##   2: response ~ 1 ~ 0 + time</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="do">##   3: response ~ 1 ~ 1 + time</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="do">## </span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="do">## Change point parameters:</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="do">##         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="do">##  cp_1        30.78 3.604 23.69 38.370 1.01      426      603 30.0    OK</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="do">##  cp_2        69.77 0.293 69.30 70.261 1.00     5621     7509 70.0    OK</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="do">## </span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="do">## Population-level parameters:</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="do">##         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="do">##  Intercept_1 10.31 0.705  8.90 11.641 1.00     1436     2136 10.0    OK</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="do">##  time_2       0.54 0.064  0.43  0.682 1.01      463      668  0.5    OK</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="do">##  Intercept_3  0.72 1.566 -2.30  3.873 1.00      591     1134  0.0    OK</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="do">##  time_3      -0.23 0.092 -0.42 -0.055 1.00      606     1109 -0.2    OK</span></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="do">##  sigma_1      4.01 0.304  3.48  4.691 1.00     4147     3932  4.0    OK</span></span></code></pre></div>
 <ul>
 <li>
 <code>rhat</code> is the rank-normalized split-Rhat convergence diagnostic.</li>
@@ -196,11 +191,11 @@ Several plots showing mcp regression fits across different models and change-poi
 <li>In this case, we simulated data using <code>mcp</code> (see how in <code>demo_fit$example_code</code>) so the columns <code>sim</code> and <code>match</code> show true value and whether it was recovered.</li>
 </ul>
 <p><code>plot_pars(fit)</code> can be used to inspect the posteriors and convergence of all parameters. See the documentation of <code><a href="reference/plot_pars.html">plot_pars()</a></code> for many other plotting options. Here, we plot just the (population-level) change points. They often have “strange” posterior distributions, highlighting the need for a computational approach:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, regex_pars <span class="op">=</span> <span class="st">"cp_"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggtitle</span><span class="op">(</span><span class="st">"Change point posteriors"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-demo-plot_pars-1.png" alt="" width="100%"></p>
 <p>Do a posterior predictive check to see if the model recovers the empirical distribution in the data:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/pp_check.html">pp_check</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggtitle</span><span class="op">(</span><span class="st">"Posterior Predictive check for change point regression"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-demo-pp_check-1.png" alt="" width="100%"></p>
@@ -210,26 +205,26 @@ Several plots showing mcp regression fits across different models and change-poi
 <h2 id="tests-and-model-comparison">Tests and model comparison<a class="anchor" aria-label="anchor" href="#tests-and-model-comparison"></a>
 </h2>
 <p>We can test (joint) probabilities in the model using <code><a href="reference/hypothesis.html">hypothesis()</a></code> (<a href="articles/comparison.html">see more here</a>). For example, what is the evidence (given priors) that the first change point (<code>cp_1</code>) is later than 25 against it being less than 25?</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"cp_1 &gt; 25"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb13"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="do">##      hypothesis      mean     lower    upper         p        BF</span></span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="do">## 1 cp_1 - 25 &gt; 0 -2.066499 -13.19911 7.559761 0.3494167 0.4010526</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="do">##      hypothesis     mean     lower    upper         p       BF</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="do">## 1 cp_1 - 25 &gt; 0 5.784828 -1.305529 13.36994 0.9443333 11.13248</span></span></code></pre></div>
 <p>For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation (<a href="articles/comparison.html">see more here</a>). Let’s specify a null model null model where the first two segments are reduced to one straight line, i.e., removing the change point:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Define the model</span></span>
 <span><span class="va">model_null</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">response</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">time</span><span class="op">)</span>  <span class="co"># Intercept_1 and time_1</span></span>
 <span></span>
 <span><span class="co"># Fit it</span></span>
 <span><span class="va">fit_null</span> <span class="op">=</span> <span class="fu"><a href="reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model_null</span>, <span class="va">demo_fit</span><span class="op">$</span><span class="va">data</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <p>Leveraging the power of <code><a href="https://mc-stan.org/loo/reference/loo.html" class="external-link">loo::loo()</a></code>, we see that the two-change-points model is preferred (it is on top), but the <code>elpd_diff / se_diff</code> ratio indicates that this preference is not very strong:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_loo</span> <span class="op">=</span> <span class="fu"><a href="reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="va">fit_null_loo</span> <span class="op">=</span> <span class="fu"><a href="reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_null</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">fit_loo</span>, <span class="va">fit_null_loo</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb16"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="do">##   model elpd_diff se_diff p_worse diag_diff diag_elpd</span></span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="do">##  model1       0.0     0.0      NA                    </span></span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="do">##  model2     -97.7     9.1    1.00</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="do">##   model elpd_diff se_diff p_worse diag_diff diag_elpd</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="do">##  model1       0.0     0.0      NA                    </span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="do">##  model2    -105.6     8.9    1.00</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level1">
@@ -274,7 +269,7 @@ Several plots showing mcp regression fits across different models and change-poi
 </ul>
 <p><a href="articles/priors.html">Using priors</a>:</p>
 <ul>
-<li><p>See priors in <code>fit$prior</code> and set priors using <code>mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")</code>.</p></li>
+<li><p>See priors in <code>fit$prior</code> or <code>prior_summary(fit)</code> and set priors using <code>mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")</code>.</p></li>
 <li><p>One change point has a uniform default prior. An ideal default prior for multiple change points is <code>cp_i = "dirichlet(1)"</code> which is a simplex of equidistant beta distributions, but because it samples inefficiently, a mcp defaults to an approximation using truncated Student-t priors centered at the minimum x. Informativeness increases and the number of change points increase.</p></li>
 <li><p>Fix parameters to specific values using <code>cp_1 = 45</code> and share parameters between segments using <code>slope_1 = "slope_2"</code>.</p></li>
 <li><p>Truncate priors using <code>T(lower, upper)</code>, e.g., <code>Intercept_1 = "dnorm(0, 1) T(0, )"</code>. <code>mcp</code> adds ordering bounds to population-level change-point priors. Users can override these.</p></li>
@@ -297,7 +292,7 @@ Several plots showing mcp regression fits across different models and change-poi
 <h1 id="do-more-with-the-mcmc-samples">Do more with the MCMC samples<a class="anchor" aria-label="anchor" href="#do-more-with-the-mcmc-samples"></a>
 </h1>
 <p>Use the <code>posterior</code> package generics to extract draws in any format:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/posterior/" class="external-link">posterior</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mjskay.github.io/tidybayes/" class="external-link">tidybayes</a></span><span class="op">)</span></span>
 <span></span>
@@ -307,32 +302,32 @@ Several plots showing mcp regression fits across different models and change-poi
 <span><span class="fu"><a href="https://mjskay.github.io/tidybayes/reference/spread_draws.html" class="external-link">spread_draws</a></span><span class="op">(</span><span class="fu"><a href="reference/as_draws.mcpfit.html">as_draws_df</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>, <span class="va">cp_1</span>, <span class="va">cp_2</span>, <span class="va">Intercept_1</span><span class="op">)</span>  <span class="co"># tidybayes</span></span></code></pre></div>
 <p>Get draws in a tidybayes-like format with <code>fitted(fit, summary = FALSE)</code> or <code>predict(fit, summary = FALSE)</code>. Same for <code>residuals(fit)</code> and <code>log_lik(fit)</code>.</p>
 <p>For example:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span>  <span class="co"># column .epred</span></span></code></pre></div>
-<div class="sourceCode" id="cb19"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="do">## # A tibble: 6 × 14</span></span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="do">##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3</span></span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="do">##    &lt;int&gt;      &lt;int&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;       &lt;dbl&gt;  &lt;dbl&gt;       &lt;dbl&gt;  &lt;dbl&gt;</span></span>
-<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="do">## 1      1          1     1  27.7  70.2        8.86  0.465        1.13 -0.304</span></span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a><span class="do">## 2      1          1     1  27.7  70.2        8.86  0.465        1.13 -0.304</span></span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a><span class="do">## 3      1          1     1  27.7  70.2        8.86  0.465        1.13 -0.304</span></span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a><span class="do">## 4      1          1     1  27.7  70.2        8.86  0.465        1.13 -0.304</span></span>
-<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a><span class="do">## 5      1          1     1  27.7  70.2        8.86  0.465        1.13 -0.304</span></span>
-<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a><span class="do">## 6      1          1     1  27.7  70.2        8.86  0.465        1.13 -0.304</span></span>
-<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a><span class="do">## # ℹ 5 more variables: sigma_1 &lt;dbl&gt;, response &lt;dbl&gt;, time &lt;dbl&gt;,</span></span>
-<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a><span class="do">## #   data_row &lt;int&gt;, .epred &lt;dbl&gt;</span></span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="do">## # A tibble: 6 × 14</span></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="do">##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3</span></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="do">##    &lt;int&gt;      &lt;int&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;       &lt;dbl&gt;  &lt;dbl&gt;       &lt;dbl&gt;  &lt;dbl&gt;</span></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="do">## 1      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171</span></span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="do">## 2      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171</span></span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="do">## 3      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171</span></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="do">## 4      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171</span></span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="do">## 5      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171</span></span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a><span class="do">## 6      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171</span></span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a><span class="do">## # ℹ 5 more variables: sigma_1 &lt;dbl&gt;, response &lt;dbl&gt;, time &lt;dbl&gt;,</span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a><span class="do">## #   data_row &lt;int&gt;, .epred &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 <div class="section level1">
 <h1 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h1>
 <p><a href="https://osf.io/fzqxv" class="external-link">This preprint</a> formally introduces <code>mcp</code>. Find citation info at the link, call <code>citation("mcp")</code> or copy-paste this into your reference manager:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>  <span class="sc">@</span>Article{,</span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>    title <span class="ot">=</span> {mcp<span class="sc">:</span> An R Package <span class="cf">for</span> Regression With Multiple Change Points},</span>
-<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>    author <span class="ot">=</span> {Jonas Kristoffer Lindeløv},</span>
-<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>    journal <span class="ot">=</span> {OSF Preprints},</span>
-<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a>    year <span class="ot">=</span> {<span class="dv">2020</span>},</span>
-<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a>    doi <span class="ot">=</span> {<span class="fl">10.31219</span><span class="sc">/</span>osf.io<span class="sc">/</span>fzqxv},</span>
-<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a>    encoding <span class="ot">=</span> {UTF<span class="dv">-8</span>},</span>
-<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a>  }</span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>  <span class="sc">@</span>Article{,</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>    title <span class="ot">=</span> {mcp<span class="sc">:</span> An R Package <span class="cf">for</span> Regression With Multiple Change Points},</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>    author <span class="ot">=</span> {Jonas Kristoffer Lindeløv},</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>    journal <span class="ot">=</span> {OSF Preprints},</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>    year <span class="ot">=</span> {<span class="dv">2020</span>},</span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>    doi <span class="ot">=</span> {<span class="fl">10.31219</span><span class="sc">/</span>osf.io<span class="sc">/</span>fzqxv},</span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>    encoding <span class="ot">=</span> {UTF<span class="dv">-8</span>},</span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a>  }</span></code></pre></div>
 </div>
 
   </main><aside class="col-md-3"><div class="links">
@@ -347,7 +342,7 @@ Several plots showing mcp regression fits across different models and change-poi
 <div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
-<li><a href="https://www.r-project.org/Licenses/GPL-2" class="external-link">GPL-2</a></li>
+<li>GPL (&gt;= 2)</li>
 </ul>
 </div>
 
