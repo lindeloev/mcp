@@ -83,8 +83,8 @@ test_that("plot() supports exact q_predict, deprecates samples, and checks dots"
   expect_s3_class(p, "ggplot")
 
   # Without lines and using all draws, plot is completely deterministic across consecutive calls
-  p1 = plot(demo_fit, q_fit = TRUE, q_predict = TRUE, lines = 0)
-  p2 = plot(demo_fit, q_fit = TRUE, q_predict = TRUE, lines = 0)
+  p1 = plot(demo_fit, q_fit = TRUE, q_predict = TRUE, lines = 0, ndraws = NULL)
+  p2 = plot(demo_fit, q_fit = TRUE, q_predict = TRUE, lines = 0, ndraws = NULL)
   expect_equal(p1$layers[[2]]$data, p2$layers[[2]]$data)
   expect_equal(p1$layers[[3]]$data, p2$layers[[3]]$data)
 

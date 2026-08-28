@@ -472,6 +472,9 @@ test_that("quantiles stay separate for rows and categorical curves sharing x", {
 
 
 test_that("color_by controls color without pooling categorical curves", {
+  expect_equal(formals(plot.mcpfit)$ndraws, 1000)
+  expect_equal(formals(plot_dpar)$ndraws, 1000)
+
   plot_colors = c("#0072B2", "#D55E00", "#009E73", "#CC79A7")
   data = expand.grid(
     x = 1:4,

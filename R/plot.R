@@ -75,6 +75,7 @@ get_plot = function(x,
                        prior = FALSE,
                        dpar = "epred",
                        arma = TRUE,
+                       ndraws = 1000,
                        scale = "response",
                        at = NULL,
                        .grouping = "auto") {
@@ -187,6 +188,8 @@ get_plot = function(x,
     stop("Cannot plot an mcpfit without prior or posterior draws.")
 
   available_draws = sum(vapply(mcmclist_draws(fit, prior = prior), nrow, integer(1)))  # Like niterations(fit), but also supporting prior = TRUE
+  if (!is.null(ndraws))
+    ndraws = min(ndraws, available_draws)
   lines = min(lines, available_draws)
 
   # Useful vars
@@ -201,7 +204,7 @@ get_plot = function(x,
   newdata = interpolate_newdata(fit, by = by, at = at)
 
   # Predict
-  local_pp_eval = function(type, newdata, lines = NULL, include_fitted = FALSE) {
+  local_pp_eval = function(type, newdata, ndraws = NULL, include_fitted = FALSE, include_dpars = FALSE) {
     pp_eval(
       object = fit,
       newdata = newdata,
@@ -212,10 +215,11 @@ get_plot = function(x,
       dpar = dpar,
       varying = group_pars,
       arma = arma,
-      ndraws = lines,
+      ndraws = ndraws,
       draws_format = "tidy",
       scale = scale,
-      .include_fitted = include_fitted
+      .include_fitted = include_fitted,
+      .include_dpars = include_dpars
     )
   }
 
@@ -235,7 +239,7 @@ get_plot = function(x,
 
   # Fitted lines need only `lines` draws, selected jointly across all curves.
   eval_lines = if (lines > 0) {
-    prepare_draws(local_pp_eval("fitted", newdata, lines = lines))
+    prepare_draws(local_pp_eval("fitted", newdata, ndraws = lines))
   } else {
     NULL
   }
@@ -250,8 +254,9 @@ get_plot = function(x,
     interval_data = lapply(curve_rows, function(rows) {
       type = if (show_q_predict) "predict" else "fitted"
       draws = local_pp_eval(
-        type, newdata[rows, , drop = FALSE],
-        include_fitted = show_q_fit && type == "predict"
+        type, newdata[rows, , drop = FALSE], ndraws = ndraws,
+        include_fitted = show_q_fit && type == "predict",
+        include_dpars = show_q_predict && type == "predict"
       )
       dpars = attr(draws, "dpars")
       response_data = attr(draws, "response_data")
@@ -455,6 +460,7 @@ plot.mcpfit = function(x,
                     rate = TRUE,
                     prior = FALSE,
                     arma = TRUE,
+                    ndraws = 1000,
                     scale = "response",
                     at = NULL,
                     samples = lifecycle::deprecated(),
@@ -476,7 +482,7 @@ plot.mcpfit = function(x,
     lifecycle::deprecate_soft(
       "0.4.0",
       "plot.mcpfit(nsamples)",
-      details = "Quantiles are now exact across all draws. Use `lines` to specify the number of lines."
+      details = "Use `lines` instead to specify the number of lines. Quantiles are now exact."
     )
     if (missing(lines)) lines = nsamples
   }
@@ -496,6 +502,7 @@ plot.mcpfit = function(x,
       cp_dens = cp_dens,
       prior = prior,
       arma = arma,
+      ndraws = ndraws,
       scale = scale,
       at = at,
       !!!args
@@ -517,6 +524,7 @@ plot.mcpfit = function(x,
     prior = prior,
     dpar = NULL,
     arma = arma,
+    ndraws = ndraws,
     scale = scale,
     .grouping = grouping
   )
@@ -535,6 +543,7 @@ plot_dpar = function(x,
                      cp_dens = TRUE,
                      prior = FALSE,
                      arma = TRUE,
+                     ndraws = 1000,
                      scale = "response",
                      at = NULL,
                      samples = lifecycle::deprecated(),
@@ -556,7 +565,7 @@ plot_dpar = function(x,
     lifecycle::deprecate_soft(
       "0.4.0",
       "plot_dpar(nsamples)",
-      details = "Quantiles are now exact across all draws. Use `lines` to specify the number of lines."
+      details = "Use `lines` instead to specify the number of lines. Quantiles are now exact."
     )
     if (missing(lines)) lines = nsamples
   }
@@ -576,6 +585,7 @@ plot_dpar = function(x,
     prior = prior,
     dpar = dpar,
     arma = arma,
+    ndraws = ndraws,
     scale = scale,
     .grouping = grouping
   )

@@ -1150,6 +1150,7 @@ tidy_samples = function(...) {
 #'     trends are modeled.
 #'     A linear scale is only applicable when `type == "fitted"` and `dpar` is not `NULL`.
 #' @param .include_fitted Internal. Include fitted values with unsummarised predictions.
+#' @param .include_dpars Internal. Include distributional parameters and response data as attributes with unsummarised predictions.
 #' @param .garma_replicate Internal. For GARMA predictions, generate each
 #'   response history recursively instead of conditioning on observed responses.
 #' @return
@@ -1191,6 +1192,7 @@ pp_eval = function(
   draws_format = "tidy",
   scale = 'response',
   .include_fitted = FALSE,
+  .include_dpars = FALSE,
   .garma_replicate = FALSE,
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated()
@@ -1297,8 +1299,11 @@ pp_eval = function(
   checkmate::assert_flag(prior)
   checkmate::assert_flag(arma)
   checkmate::assert_flag(.include_fitted)
+  checkmate::assert_flag(.include_dpars)
   if (.include_fitted && (type != "predict" || summary))
     stop_github("`.include_fitted` requires `type = 'predict'` and `summary = FALSE`.")
+  if (.include_dpars && (type != "predict" || summary))
+    stop_github("`.include_dpars` requires `type = 'predict'` and `summary = FALSE`.")
   if (.garma_replicate && type != "predict")
     stop_github("`.garma_replicate` requires `type = 'predict'`.")
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
@@ -1471,8 +1476,10 @@ pp_eval = function(
       draws = dplyr::rename(draws, .epred = "fitted")
     }
     draws = dplyr::rename(draws, !!value_col := dplyr::all_of(type))
-    if (!is.null(dpars_values)) attr(draws, "dpars") = dpars_values
-    if (!is.null(response_data_values)) attr(draws, "response_data") = response_data_values
+    if (.include_dpars) {
+      if (!is.null(dpars_values)) attr(draws, "dpars") = dpars_values
+      if (!is.null(response_data_values)) attr(draws, "response_data") = response_data_values
+    }
     return(draws)
   } else if (draws_format == "matrix") {
     df_return = tidy_to_matrix(draws, type)

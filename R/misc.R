@@ -347,16 +347,14 @@ find_mixture_quantile = function(cdf_fn, dpars, data, p, rate = FALSE, is_discre
   mix_cdf = function(y) mean(cdf_fn(y, dpars, data, rate = rate))
 
   if (!is_discrete) {
-    # Continuous distributions: 1D root-finding with uniroot
-    mu_mean = mean(dpars$mu)
-    sigma_est = if (!is.null(dpars$sigma)) sqrt(mean(dpars$sigma^2) + stats::var(dpars$mu)) else sqrt(max(1, abs(mu_mean)))
-    if (!is.finite(sigma_est) || sigma_est <= 0) sigma_est = 1
-    lo = max(lower, mu_mean - 6 * sigma_est)
-    hi = min(upper, mu_mean + 6 * sigma_est)
+    # Continuous: bracketed 1D root-finding on [lo, hi]
+    sigma_max = if (!is.null(dpars$sigma)) max(dpars$sigma) else 1
+    lo = max(lower, min(dpars$mu) - 6 * sigma_max)
+    hi = min(upper, max(dpars$mu) + 6 * sigma_max)
 
     # Expand search bracket if bounds are finite or posterior uncertainty is wide
-    while (mix_cdf(lo) > p && is.infinite(lower)) lo = lo - 2 * sigma_est
-    while (mix_cdf(hi) < p && is.infinite(upper)) hi = hi + 2 * sigma_est
+    while (mix_cdf(lo) > p && is.infinite(lower)) lo = lo - 2 * sigma_max
+    while (mix_cdf(hi) < p && is.infinite(upper)) hi = hi + 2 * sigma_max
 
     # Clamp to theoretical boundaries if root lies outside
     if (mix_cdf(lo) > p) return(lower)
@@ -364,23 +362,25 @@ find_mixture_quantile = function(cdf_fn, dpars, data, p, rate = FALSE, is_discre
 
     return(stats::uniroot(function(y) mix_cdf(y) - p, c(lo, hi), tol = 1e-4)$root)
   } else {
-    # Discrete distributions: smallest non-negative integer where CDF >= p
+    # Discrete: exponential bracket expansion --> binary search for integer threshold
     trials = if (!is.null(data$trials)) data$trials[1] else Inf
-    mu_mean = mean(dpars$mu)
-    if (rate && !is.null(data$trials)) mu_mean = mu_mean * trials
+    eval_cdf = function(v) mix_cdf(if (rate && is.finite(trials)) v / trials else v)
 
-    # Start search from the rounded expected mean
-    y = max(0L, as.integer(round(mu_mean)))
-    if (!is.null(data$trials) && is.finite(trials)) y = min(as.integer(trials), y)
+    lo = 0L
+    hi = max(1L, as.integer(round(mean(dpars$mu) * (if (rate && is.finite(trials)) trials else 1))))
+    if (is.finite(trials)) hi = min(as.integer(trials), hi)
 
-    # Step up or down to find the exact integer step
-    while (mix_cdf(if (rate) y / trials else y) < p && y < trials) {
-      y = y + 1L
+    while (eval_cdf(hi) < p && hi < trials) hi = hi * 2L
+
+    while (lo < hi) {
+      mid = (lo + hi) %/% 2L
+      if (eval_cdf(mid) >= p) {
+        hi = mid
+      } else {
+        lo = mid + 1L
+      }
     }
-    while (y > 0L && mix_cdf(if (rate) (y - 1L) / trials else (y - 1L)) >= p) {
-      y = y - 1L
-    }
-    return(if (rate && !is.null(data$trials)) y / trials else y)
+    return(if (rate && is.finite(trials)) lo / trials else lo)
   }
 }
 
