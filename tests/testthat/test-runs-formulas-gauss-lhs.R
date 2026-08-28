@@ -99,3 +99,36 @@ good_weights = list(
 )
 
 test_good(good_weights)
+
+
+test_that("Gaussian JAGS weights implement a likelihood power", {
+  weighted_data = data.frame(x = 1:4, y = c(0, NA, 2, 3), w = c(0.5, 2, 3, 1))
+  fit = mcp(
+    list(y | weights(w) ~ 1), weighted_data,
+    par_x = "x", sample = FALSE
+  )
+  tables = get_fit_model_tables(fit)
+  jags_data = get_jags_data(
+    fit$data, fit$family, tables$segments, tables$predictors,
+    tables$group_effects, fit$jags_code
+  )
+
+  expect_equal(jags_data$response_observed_, c(1, 0, 1, 1))
+  expect_equal(jags_data$likelihood_zero_, numeric(4))
+  expect_equal(jags_data$w, weighted_data$w)
+  expect_match(fit$jags_code, "likelihood_weight_[i_] = 1 + response_observed_[i_] * (w[i_] - 1)", fixed = TRUE)
+  expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dexp(pow(sigma_[i_], 1 - likelihood_weight_[i_]))", fixed = TRUE)
+
+  # The JAGS normal density times its exponential correction is the desired
+  # powered normal density up to a constant that depends only on the weight.
+  grid = expand.grid(mu = c(-1, 0.5), sigma = c(0.4, 2), w = c(0.5, 2, 3))
+  y = 1.2
+  jags_kernel = stats::dnorm(y, grid$mu, grid$sigma / sqrt(grid$w), log = TRUE) +
+    stats::dexp(0, rate = grid$sigma^(1 - grid$w), log = TRUE)
+  power_kernel = grid$w * stats::dnorm(y, grid$mu, grid$sigma, log = TRUE)
+  kernel_difference = jags_kernel - power_kernel
+  expect_equal(
+    kernel_difference,
+    0.5 * log(grid$w) + 0.5 * (grid$w - 1) * log(2 * pi)
+  )
+})
