@@ -534,6 +534,12 @@ test_that("posterior draws accessor preserves the stored chains", {
       expect_equal(dim(rstantools::posterior_predict(demo_fit, newdata, draws = 2)), c(2, 3))
       expect_equal(dim(rstantools::posterior_linpred(demo_fit, newdata = newdata, draws = 2)), c(2, 3))
 
+      predicted_seed_1 = rstantools::posterior_predict(demo_fit, newdata, draws = 5, seed = 1)
+      predicted_seed_1_again = rstantools::posterior_predict(demo_fit, newdata, draws = 5, seed = 1)
+      predicted_seed_2 = rstantools::posterior_predict(demo_fit, newdata, draws = 5, seed = 2)
+      expect_identical(predicted_seed_1, predicted_seed_1_again)
+      expect_false(identical(predicted_seed_1, predicted_seed_2))
+
       epred_draws = tidybayes::add_epred_draws(newdata, demo_fit, ndraws = 2)
       predicted_draws = tidybayes::add_predicted_draws(newdata, demo_fit, ndraws = 2)
       linpred_draws = tidybayes::add_linpred_draws(newdata, demo_fit, ndraws = 2)

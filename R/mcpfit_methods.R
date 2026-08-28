@@ -1673,8 +1673,7 @@ fitted.mcpfit = function(
 #'   `posterior_linpred()`; `NULL` uses the expected response.
 #' @param transform For `posterior_linpred()`, return the inverse-link
 #'   transformed expected response instead of the linear predictor.
-#' @param seed Accepted for `{tidybayes}` compatibility. Randomness is controlled
-#'   by the calling context.
+#' @param seed Optional integer seed for draw selection and posterior prediction.
 #' @param ... Currently ignored.
 #' @return A numeric `N_draws` by `nrow(newdata)` matrix.
 #' @details For GARMA models, `posterior_predict()` generates each replicated
@@ -1799,6 +1798,8 @@ posterior_prediction_matrix = function(
   varying = resolve_re_formula(re.form, re_formula)
   if (is.null(dpar))
     dpar = "epred"
+  if (!is.null(seed))
+    set.seed(seed)
   pp_eval(
     object,
     newdata = newdata,
