@@ -1,5 +1,5 @@
 devtools::load_all()
-empty = mcp_example("demo", sample = FALSE)
+empty = mcp_example("demo", sample = "none")
 set.seed(40)
 demo_fit = mcp(
     empty$model, data = empty$data, 

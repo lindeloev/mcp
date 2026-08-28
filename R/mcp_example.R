@@ -11,8 +11,7 @@
 #'  * `"quadratic"`: A change point to a quadratic segment where there is no data.
 #'  * `"ar"`: One change point in autoregressive residuals (the `ar1` dpar)
 #'  * `"sigma"`: A change in "sigma" dpar, including a slope on sigma.
-#' @param plot Logical. Plot the fitted example? No plot is produced when
-#'   `sample = FALSE`.
+#' @param plot Logical. Plot the fitted example? Requires sample != "none".
 #' @inheritParams mcp
 #' @return An `mcpfit`, enriched with an `$example_code` field. It contains the code to
 #'   reproduce the data and the fit.
@@ -25,7 +24,7 @@
 #' print(fit$example_code) # See how the data was simulated
 #'
 #' # Without sampling
-#' empty = mcp_example("binomial", sample = FALSE, plot = FALSE)
+#' empty = mcp_example("binomial", sample = "none", plot = FALSE)
 #' print(empty)
 #' print(empty$example_code)
 #'
@@ -38,7 +37,7 @@ mcp_example = function(name, sample = "post", plot = TRUE) {
   checkmate::assert_flag(plot)
   data = data.frame() # To make R CMD Check happy.
   fit = NULL # To make R CMD Check happy.
-  plot = plot && !(sample %in% c(FALSE, "none"))
+  plot = plot && !identical(sample, FALSE) && !identical(sample, "none")
 
   examples = list(
     ar = "# Define model
@@ -403,5 +402,5 @@ if (plot) {
 #' @export
 #' @describeIn mcp_example Conveniently get simulated data only.
 mcp_example_data = function(name) {
-  mcp_example(name, sample = FALSE, plot = FALSE)$data
+  mcp_example(name, sample = "none", plot = FALSE)$data
 }

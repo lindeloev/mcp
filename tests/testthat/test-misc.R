@@ -439,20 +439,20 @@ test_that("parameter-name collisions give a useful error", {
 # MCPFIT CLASS-METHODS #
 ########################
 # Test on new fit
-demo_settings = mcp_example("demo", sample = FALSE, plot = FALSE)
+demo_settings = mcp_example("demo", sample = "none", plot = FALSE)
 demo_fit_iter = 50  # only niterations()/nchains() metadata is checked below, not recovery
 expect_warning({
   demo_fit2 = mcp(demo_settings$model, demo_settings$data, warmup = 50, iter = demo_fit_iter, diagnostics = FALSE, quiet = TRUE)
 }, "Adaptation incomplete", fixed = TRUE)
 
 test_that("binomial example can be constructed without sampling", {
-  fit = mcp_example("binomial", sample = FALSE, plot = FALSE)
+  fit = mcp_example("binomial", sample = "none", plot = FALSE)
   expect_s3_class(fit, "mcpfit")
   expect_true(all(fit$data$y <= fit$data$N))
 })
 
 test_that("group_mu example contains independent factor effects", {
-  fit = mcp_example("group_mu", sample = FALSE, plot = FALSE)
+  fit = mcp_example("group_mu", sample = "none", plot = FALSE)
   expect_s3_class(fit, "mcpfit")
   expect_type(fit$call, "language")
   expect_s3_class(fit$example_code, "mcptext")
@@ -839,7 +839,7 @@ test_that("diagnostic settings control fit warnings and summary footers", {
   expect_warning(warn_nonconvergence(raw_post, strict), "rhat > 1.01")
   expect_no_warning(warn_nonconvergence(raw_post, convergence_off))
 
-  ex_fit = mcp_example("intercepts", sample = FALSE)
+  ex_fit = mcp_example("intercepts", sample = "none")
   expect_s3_class(ex_fit, "mcpfit")
 })
 
