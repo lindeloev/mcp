@@ -75,7 +75,7 @@ get_plot = function(x,
                        prior = FALSE,
                        dpar = "epred",
                        arma = TRUE,
-                       ndraws = 1000,
+                       ndraws = 500,
                        scale = "response",
                        at = NULL,
                        .grouping = "auto") {
@@ -244,14 +244,16 @@ get_plot = function(x,
     NULL
   }
 
-  # Keep peak memory bounded for intervals by evaluating and immediately
-  # summarising one curve at a time. Predictions also return their matching
-  # fitted values, so q_fit and q_predict share the model evaluation.
+  # Keep peak memory bounded for intervals by chunking evaluations (max ~5M elements per chunk)
   plot_newdata = add_plot_groups(newdata, curve_by = curve_by, color_by = color_by)
+  MAX_CHUNK_ELEMENTS = 5e6
+  n_eval_draws = if (is.null(ndraws)) available_draws else min(ndraws, available_draws)
+  chunk_rows = max(1L, as.integer(floor(MAX_CHUNK_ELEMENTS / n_eval_draws)))
+  chunk_indices = split(seq_len(nrow(newdata)), ceiling(seq_len(nrow(newdata)) / chunk_rows))
+
   interval_data = list()
   if (show_q_fit || show_q_predict) {
-    curve_rows = split(seq_len(nrow(newdata)), plot_newdata$.group)
-    interval_data = lapply(curve_rows, function(rows) {
+    interval_data = lapply(chunk_indices, function(rows) {
       type = if (show_q_predict) "predict" else "fitted"
       draws = local_pp_eval(
         type, newdata[rows, , drop = FALSE], ndraws = ndraws,
@@ -460,7 +462,7 @@ plot.mcpfit = function(x,
                     rate = TRUE,
                     prior = FALSE,
                     arma = TRUE,
-                    ndraws = 1000,
+                    ndraws = 500,
                     scale = "response",
                     at = NULL,
                     samples = lifecycle::deprecated(),
@@ -543,7 +545,7 @@ plot_dpar = function(x,
                      cp_dens = TRUE,
                      prior = FALSE,
                      arma = TRUE,
-                     ndraws = 1000,
+                     ndraws = 500,
                      scale = "response",
                      at = NULL,
                      samples = lifecycle::deprecated(),
