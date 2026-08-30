@@ -190,3 +190,28 @@ Key features of multiple regression models in `mcp`:
 - **Common change points across categories**: The change points `cp_1` and `cp_2` are estimated as single locations shared across all levels of `group`. (If you instead want category-specific change-point locations that deviate per group, use group-level effects like `1 + (1|group) ~ ...`; see [group-level effects](../articles/group_effects.html)).
 - **Parameter names and carry-over**: In segment 1, `xgroupA_1` through `xgroupD_1` represent separate slopes for each level of `group`. In segment 2, `groupB_2`, `groupC_2`, and `groupD_2` represent intercept offsets relative to the reference level `groupA`. The continuous slope `z_1` on covariate `z` carries over into subsequent segments unless redefined.
 - **Plotting and prediction**: Visualize by group using `plot(fit, color_by = "group")` or `plot(fit, facet_by = "group")`. By default, other unplotted continuous predictors (like `z`) are held at their mean automatically by `interpolate_newdata()`, or can be set explicitly via `plot(fit, color_by = "group", at = list(z = 0))`.
+
+
+
+# Relative changes between segments
+
+Parameters in `mcp` represent the absolute values within each segment (e.g., `time_2` is the slope in segment 2 and `time_3` is the slope in segment 3). To evaluate the *relative change* between segments, you can use `hypothesis()` for quick estimates or use `as_draws_df()` to work with the distribution.
+
+First, using `hypothesis()`:
+
+```{r}
+hypothesis(demo_fit, "time_3 > time_2")
+```
+
+The estimate reflects the difference `time_3 - time_2` (how much steeper or flatter the slope became in segment 3), along with its credibility interval, posterior probability, and directional Bayes factor. [Read more about hypothesis testing in the comparison article](../articles/comparison.html). Here, we see that `time_3` is -0.76 greater (i.e., it is smaller than `time_2`).
+
+If you need the full posterior distribution of the change (e.g., for `quantile()`, `hist()`, or plotting with `ggplot2`), extract draws, e.g., using `as_draws_df()`:
+
+```{r}
+draws = as_draws_df(demo_fit) |> 
+  dplyr::mutate(diff_time = time_3 - time_2)
+
+head(draws)
+```
+
+You can now use `diff_time` directly with base R functions like `quantile(draws$diff_time, c(0.025, 0.975))` and `hist(draws$diff_time)`.

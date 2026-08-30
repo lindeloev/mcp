@@ -155,8 +155,7 @@ hypothesis(fit_info, c(
 
 Comparing the Bayes factors shows which hypothesis received the larger update from prior to posterior.
 
-There are more examples [in the documentation for `hypothesis`](../reference/hypothesis.html), including how to test group-level deviations.
-
+There are more examples [in the documentation for `hypothesis`](../reference/hypothesis.html), including how to test group-level deviations and [relative changes between segments](../articles/formulas.html#relative-changes-and-differences-between-segments).
 `mcp` evaluates the directional hypothesis for both posterior and prior samples. The posterior probability is reported as `p`, and the Bayes factor is the posterior odds divided by the prior odds:
 
 $$BF_{10} = \frac{P(H \mid \text{data}) \,/\, [1 - P(H \mid \text{data})]}{P(H) \,/\, [1 - P(H)]}$$
