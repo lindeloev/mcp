@@ -906,3 +906,19 @@ test_that("find_mixture_quantile handles large count means without integer overf
   res = mcp:::find_mixture_quantile(cdf_fn, dpars, data = NULL, p = 0.975, is_discrete = TRUE)
   expect_true(is.numeric(res) && is.finite(res) && res > 1.5e9)
 })
+
+
+test_that("format.mcpfamily and summary print all family links", {
+  fam = mcpfamily(stats::gaussian())
+  expect_output({ res = print(fam) }, "Family: gaussian\nLinks: mu = identity; sigma = identity", fixed = TRUE)
+  expect_identical(res, fam)
+  expect_error(print(fam, extra = 1), class = "rlang_error")
+
+  data = data.frame(x = 1:10, y = 1:10)
+  fit_gauss = mcp(list(y ~ 1 + x), data, sample = FALSE)
+  expect_output(summary(fit_gauss), "Family: gaussian\nLinks: mu = identity; sigma = identity", fixed = TRUE)
+
+  fit_sigma = mcp(list(y ~ 1 + x + sigma(1 + x)), data, sample = FALSE)
+  expect_output(summary(fit_sigma), "Family: gaussian\nLinks: mu = identity; sigma = log", fixed = TRUE)
+})
+

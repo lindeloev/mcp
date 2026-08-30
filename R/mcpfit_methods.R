@@ -284,7 +284,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
   draws = mcmclist_draws(fit, prior = prior, error = FALSE)
 
   # Model info
-  cat("Family: ", fit$family$family, "(link = '", fit$family$link, "')\n", sep = "")
+  cat(format(fit$family), "\n", sep = "")
   if (!is.null(draws))
     cat("Iterations: ", coda::niter(draws), " from ", coda::nchain(draws), " chains.\n", sep="")
   cat("Segments:\n")

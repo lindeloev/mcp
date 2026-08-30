@@ -769,6 +769,31 @@ get_link_function = function(link, inverse = FALSE) {
 }
 
 
+#' @aliases format.mcpfamily
+#' @describeIn mcpfamily Format an `mcpfamily` object.
+#' @param ... Must be empty. Reserved for future use.
+#' @export
+format.mcpfamily = function(x, ...) {
+  rlang::check_dots_empty()
+  dpar_links = if (!is.null(x$dpar_specs)) {
+    paste0(x$dpar_specs$dpar, " = ", x$dpar_specs$link, collapse = "; ")
+  } else {
+    paste0("mu = ", x$link)
+  }
+  paste0("Family: ", x$family, "\nLinks: ", dpar_links)
+}
+
+
+#' @aliases print.mcpfamily
+#' @describeIn mcpfamily Print an `mcpfamily` object.
+#' @export
+print.mcpfamily = function(x, ...) {
+  rlang::check_dots_empty()
+  cat(format(x), "\n", sep = "")
+  invisible(x)
+}
+
+
 # Check that an object implements the complete mcp family contract.
 #' @aliases is.mcpfamily
 #' @describeIn mcpfamily Checks whether x is an `mcpfamily`.
