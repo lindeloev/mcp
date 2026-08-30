@@ -14,7 +14,7 @@
   - `nsamples` soft-deprecated in favor of `ndraws`; `which_y` deprecated in favor of `dpar`.
   - Added R generics for mcpfits: `formula(fit)`, `family(fit)`, `model.frame(fit)`, `nobs(fit)`, `vcov(fit)`, and `confint(fit)`. Fits now also store a proper matched `$call`. Printed summaries now report posterior `sd` and has a new layout.
 
-- **Negative binomial and GARMA:** You can now do `mcp(..., family = negbinomial())`. Autoregression (`ar()`) has been generalized to GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment.
+- **Negative binomial, offset(), and GARMA:** You can now do `mcp(..., family = negbinomial())`. NB (and Poisson) can now model rates and exposure with because `offset()` is now supported in formulas - also for other families. Autoregression (`ar()`) has been generalized to GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment.
 
 - **Missing response imputation:** Missing responses are now retained as posterior JAGS imputations. `predict(fit) |> filter(is.na(y))` can be used to see imputed values - similarly for `fitted()`. It supports AR/MA too. Missing values in AR/MA are not supported in `log_lik()`, `loo()`, and `waic()` who will throw an informative error. See more details in the new vignette/article on missing data.
 

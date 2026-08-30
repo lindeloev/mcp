@@ -13,7 +13,7 @@
 #' @return A string with JAGS code.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_formula_jags = function(segments, predictors, group_effects, par_x, family) {
+get_formula_jags = function(segments, predictors, group_effects, par_x, family, design_specs = list()) {
   # Explicit segment -> boundary-code lookup instead of relying on row
   # order matching segment numbers.
   boundary_code = stats::setNames(segments$cp_code_form, segments$segment)
@@ -49,23 +49,32 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family) 
     ) %>%
     dplyr::bind_rows(predictor_group_effects)
 
-  formula_jags_dpars = formula_predictors %>%
+  # Extract offset terms from design specifications
+  offset_specs = Filter(function(s) isTRUE(s$has_offset), design_specs)
+  offset_table = if (length(offset_specs) == 0) tibble::tibble(dpar_key = character(), segment = integer(), offset_name = character()) else
+    tibble::tibble(
+      dpar_key = vapply(offset_specs, function(s) paste0(s$dpar, tidyr::replace_na(as.character(s$order), "")), character(1)),
+      segment = vapply(offset_specs, `[[`, integer(1), "segment"),
+      offset_name = vapply(offset_specs, `[[`, character(1), "offset_name")
+    )
+
+  formula_predictors_joined = formula_predictors %>%
     dplyr::left_join(this_cp_lookup, by = "segment") %>%
     dplyr::left_join(next_cp_lookup, by = "next_intercept") %>%
     dplyr::mutate(
-      # One dpar per ar order: (ar, 1) --> ar1
-      dpar = paste0(.data$dpar, tidyr::replace_na(as.character(.data$order), ""))
-    ) %>%
+      dpar_key = paste0(.data$dpar, tidyr::replace_na(as.character(.data$order), ""))
+    )
 
-    # Build formula for each dpar
-    dplyr::group_by(.data$dpar) %>%
-    tidyr::nest() %>%
-    dplyr::rowwise() %>%
-    dplyr::summarise(
-      formula_jags_dpar = get_formula_jags_dpar(.data$data, .data$dpar, par_x, family)
-    ) %>%
-    dplyr::pull(.data$formula_jags_dpar) %>%
-    paste0(collapse = "\n\n")
+  all_dpar_keys = unique(c(formula_predictors_joined$dpar_key, offset_table$dpar_key))
+
+  formula_jags_dpars_list = character()
+  for (key in all_dpar_keys) {
+    dpar_preds = formula_predictors_joined %>% dplyr::filter(.data$dpar_key == key)
+    dpar_offsets = offset_table %>% dplyr::filter(.data$dpar_key == key)
+    dpar_str = get_formula_jags_dpar(dpar_preds, key, par_x, family, segment_offsets = dpar_offsets, segments = segments)
+    formula_jags_dpars_list = c(formula_jags_dpars_list, dpar_str)
+  }
+  formula_jags_dpars = paste0(formula_jags_dpars_list, collapse = "\n\n")
 
   garma_boundary_str = get_garma_boundary_jagscode(segments, predictors, par_x)
 
@@ -74,7 +83,7 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family) 
 
   # Special case when no terms are present for a given dpar (all ~0): insert "dpar = 0".
   for (dpar in family$dpar_specs$dpar) {
-    if (dpar %notin% formula_predictors$dpar)
+    if (dpar %notin% formula_predictors$dpar && dpar %notin% offset_table$dpar_key)
       formula_jags = paste0(formula_jags, "\n\n# All segments are ~ 0 for this par:\nlink_", dpar, "_[i_] = 0")
   }
 
@@ -92,48 +101,51 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family) 
 #' @inheritParams mcp
 #' @param dpar_table Rows of `predictors` for one `(dpar, order)` pair.
 #' @param family An mcpfamily object with distributional-parameter metadata.
+#' @param segment_offsets Rows of offset specifications for this dpar.
+#' @param segments Segment table from `get_segment_tables()`.
 #' @return A string with JAGS code.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-get_formula_jags_dpar = function(dpar_table, dpar, par_x, family) {
-  # Build this! Initiate
-  formula_str = paste0("# Formula for ", dpar)
+get_formula_jags_dpar = function(dpar_table, dpar, par_x, family, segment_offsets = NULL, segments = NULL) {
   is_distributional = dpar %in% family$dpar_specs$dpar
   node_name = ifelse(is_distributional, paste0("link_", dpar), dpar)
-  formula_str = paste0(formula_str, "\n", node_name, "_[i_] =\n")
+  formula_str = paste0("# Formula for ", dpar, "\n", node_name, "_[i_] =\n")
 
+  # Build code for predictor terms
+  pred_code_strs = character()
+  if (!is.null(dpar_table) && nrow(dpar_table) > 0) {
+    df_code_strs = dpar_table %>%
+      dplyr::arrange(.data$segment) %>%
+      dplyr::group_by(.data$segment, .data$x_factor, .data$next_cp) %>%
+      dplyr::summarise(
+        indicator_this = paste0("  (", par_x, "[i_] >= ", dplyr::first(.data$this_cp), ")"),
+        indicator_next = dplyr::if_else(is.na(dplyr::first(.data$next_cp)), "", paste0(" * (", par_x, "[i_] < ", dplyr::first(.data$next_cp), ")")),
+        inprod = paste0(" * inprod(rhs_matrix_[i_, c(", paste0(.data$matrix_col, collapse = ", "), ")], c(", paste0(.data$code_name, collapse = ", "), "))"),
+        x_factor = gsub("x(?!p\\()", paste0("x_local_", dplyr::first(.data$segment), "_[i_]"), dplyr::first(.data$x_factor), perl = TRUE),
+        segment_code = paste0(.data$indicator_this, .data$indicator_next, .data$inprod, " * ", .data$x_factor),
+        form = dplyr::first(.data$form),
+        .groups = "drop"
+      )
+    pred_code_strs = df_code_strs$segment_code
+  }
 
-  df_code_strs = dpar_table %>%
-    # Code dpar_data_segment column indices
-    dplyr::arrange(.data$segment) %>%  # just to make sure
-    dplyr::group_by(.data$segment) %>%
+  # Build code for segment-level offset terms
+  offset_code_strs = character()
+  if (!is.null(segment_offsets) && nrow(segment_offsets) > 0 && !is.null(segments)) {
+    boundary_code = stats::setNames(segments$cp_code_form, segments$segment)
+    offset_code_strs = vapply(seq_len(nrow(segment_offsets)), function(i) {
+      seg = segment_offsets$segment[i]
+      next_cp = if (seg < nrow(segments)) boundary_code[[as.character(seg + 1)]] else NA_character_
+      ind_next = if (is.na(next_cp)) "" else paste0(" * (", par_x, "[i_] < ", next_cp, ")")
+      paste0("  (", par_x, "[i_] >= ", boundary_code[[as.character(seg)]], ")", ind_next, " * ", segment_offsets$offset_name[i], "[i_]")
+    }, character(1))
+  }
 
-    # Summarise
-    dplyr::group_by(.data$segment, .data$x_factor, .data$next_cp) %>%
-    dplyr::summarise(
-      # The parts
-      indicator_this = paste0("  (", par_x, "[i_] >= ", dplyr::first(.data$this_cp), ")"),
-      indicator_next = dplyr::if_else(is.na(dplyr::first(.data$next_cp)) == TRUE, "", paste0(" * (", par_x, "[i_] < ", dplyr::first(.data$next_cp), ")")),
-      inprod = paste0(" * inprod(rhs_matrix_[i_, c(", paste0(.data$matrix_col, collapse = ", "), ")], c(", paste0(.data$code_name, collapse = ", "), "))"),
-      x_factor = gsub("x(?!p\\()", paste0("x_local_", dplyr::first(.data$segment), "_[i_]"), dplyr::first(.data$x_factor), perl = TRUE),  # "x" but not "exp("
+  all_terms = c(pred_code_strs, offset_code_strs)
+  if (length(all_terms) == 0)
+    all_terms = "  0"
 
-      # All together
-      segment_code = paste0(.data$indicator_this, .data$indicator_next, .data$inprod, " * ", .data$x_factor),
-      form = dplyr::first(.data$form)
-    ) %>%
-
-    # Add title-comment
-    dplyr::group_by(.data$segment) %>%
-    dplyr::mutate(
-      title = dplyr::if_else(dplyr::row_number() == 1, paste0("\n  # Segment ", dplyr::first(.data$segment), ": ", dplyr::first(.data$form), "\n"), ""),
-      segment_code = paste0(.data$title, .data$segment_code)
-    )
-
-  # Return
-  all_predictors = paste0(df_code_strs$segment_code, collapse = " + \n")
-  formula_str = paste0(formula_str, all_predictors)
-
-  formula_str
+  paste0(formula_str, paste0(all_terms, collapse = " + \n"))
 }
 
 
@@ -157,6 +169,9 @@ get_formula_r = function(formula_jags, predictors, group_effects, cps, par_x) {
   group_pars = predictor_group_effects$name
   cp_pars = setdiff(sim_pars, c(predictor_pars, group_pars))
 
+  # Extract offset variable names present in formula_jags
+  offset_nodes = unique(stringr::str_extract_all(formula_jags, "offset_[A-Za-z0-9_]+_")[[1]])
+
   # Replacements that turns rowwise JAGS code into vectorized R code
   replace_args = c(
     # Group-level predictor coefficients
@@ -164,6 +179,12 @@ get_formula_r = function(formula_jags, predictors, group_effects, cps, par_x) {
         paste0("args$", group_pars),
         paste0(group_pars, "[", predictor_group_effects$group_col, "]")
       ),
+
+    # Offset nodes
+    if (length(offset_nodes) > 0) stats::setNames(
+      paste0("args$", offset_nodes),
+      offset_nodes
+    ),
 
     # Predictor part
     stats::setNames(paste0(", args$", sim_pars), paste0(", ", sim_pars)),

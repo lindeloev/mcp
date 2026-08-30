@@ -111,10 +111,25 @@ add_rhs_predictors = function(newdata, fit) {
   )
   predictor_matrix = get_predictor_matrix(predictors, group_effects)
 
+  # Evaluate offset terms on newdata using fitted design specifications
+  offset_cols = list()
+  for (spec in design_specs) {
+    if (isTRUE(spec$has_offset)) {
+      design_data = newdata
+      if (!is.null(spec$local_x_name))
+        design_data[[spec$local_x_name]] = 1
+      off_design = get_fitted_design(data = design_data, spec = spec)
+      offset_cols[[spec$offset_name]] = as.numeric(off_design$offset)
+    }
+  }
+
   # All permutations of rows in newdata and parameters
-  as.data.frame(predictor_matrix) %>%
-    magrittr::set_colnames(paste0(".pred_", colnames(predictor_matrix))) %>%
-    dplyr::bind_cols(newdata)
+  pred_df = as.data.frame(predictor_matrix) %>%
+    magrittr::set_colnames(paste0(".pred_", colnames(predictor_matrix)))
+  if (length(offset_cols) > 0)
+    pred_df = dplyr::bind_cols(pred_df, as.data.frame(offset_cols))
+
+  dplyr::bind_cols(pred_df, newdata)
 }
 
 
@@ -268,7 +283,11 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     aux_operations = setdiff(aux_operations, "epred")
   aux_columns = get_family_aux_columns(fit$family, model_tables$segments, aux_operations)
   data_pars = c(data_columns$par_x, data_columns$series, stats::na.omit(unname(aux_columns)))
-  expected_arg_names = c(param_pars, pred_pars, data_pars)
+  offset_pars = unname(unlist(lapply(
+    model_tables$design_specs,
+    function(s) if (isTRUE(s$has_offset)) s$offset_name else NULL
+  )))
+  expected_arg_names = c(param_pars, pred_pars, data_pars, offset_pars)
 
   args = list(...)
   missing_args = dplyr::setdiff(expected_arg_names, names(args))

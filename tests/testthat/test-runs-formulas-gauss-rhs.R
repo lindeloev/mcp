@@ -76,24 +76,52 @@ test_that("formula functions reject multiple terms containing par_x", {
   )
 })
 
-test_that("formula offsets are rejected explicitly", {
-  offset_models = list(
-    list(y ~ 1 + offset(log(ok_x))),
-    list(y ~ 1 + sigma(1 + offset(ok_x))),
-    list(y ~ 1 + ar(1, 1 + offset(ok_x))),
-    list(y ~ 1 + stats::offset(ok_x))
+test_that("formula offsets work in mcp formulas", {
+  d = data.frame(
+    x = 1:20,
+    z = rep(c(2, 5), each = 10),
+    pop = rep(c(10, 100), each = 10),
+    y = 5 + 0.5 * 1:20 + rep(c(2, 5), each = 10)
   )
 
-  for (model in offset_models) {
-    expect_error(
-      mcp(model, data_gauss, par_x = "x", sample = FALSE),
-      "Formula offsets using `offset()` are not implemented yet.",
-      fixed = TRUE
-    )
-  }
+  # Gaussian with offset
+  fit_gauss = mcp(
+    list(y ~ 1 + x + offset(z), ~ 1 + x + offset(z)),
+    d, sample = FALSE
+  )
+  expect_true(grepl("offset_mu_1_\\[i_\\]", fit_gauss$jags_code))
+  expect_true(grepl("offset_mu_2_\\[i_\\]", fit_gauss$jags_code))
+  expect_false("z" %in% mcp_pars(fit_gauss)$name)
+  expect_false("offset_mu_1_" %in% mcp_pars(fit_gauss)$name)
 
-  data = transform(data_gauss, offset = ok_x)
-  expect_no_error(mcp(list(y ~ 1 + offset), data, par_x = "x", sample = FALSE))
+  # Poisson with offset(log(pop))
+  d_pois = data.frame(
+    x = 1:20,
+    pop = rep(c(10, 100), each = 10),
+    y = rpois(20, rep(c(10, 100), each = 10) * exp(0.05 * 1:20))
+  )
+  fit_pois = mcp(
+    list(y ~ 1 + x + offset(log(pop)), ~ 1 + x + offset(log(pop))),
+    d_pois, family = poisson(), sample = FALSE
+  )
+  expect_true(grepl("offset_mu_1_\\[i_\\]", fit_pois$jags_code))
+  expect_true(grepl("offset_mu_2_\\[i_\\]", fit_pois$jags_code))
+
+  # fit$simulate with offset
+  sim_out = fit_gauss$simulate(
+    fit_gauss,
+    data.frame(x = 1:4, z = c(10, 10, 20, 20)),
+    cp_1 = 2.5, Intercept_1 = 5, x_1 = 1, Intercept_2 = 10, x_2 = 2, sigma_1 = 0.001
+  )
+  # Segment 1 (x=1, z=10): mu = 5 + 1*1 + 10 = 16
+  # Segment 1 (x=2, z=10): mu = 5 + 1*2 + 10 = 17
+  # Segment 2 (x=3, z=20): mu = 10 + 2*(3-2.5) + 20 = 31
+  # Segment 2 (x=4, z=20): mu = 10 + 2*(4-2.5) + 20 = 33
+  expect_equal(unname(attr(sim_out, "dpars")$mu), c(16, 17, 31, 33))
+
+  # Offset in sigma
+  fit_sigma = mcp(list(y ~ 1 + x + sigma(1 + offset(z))), d, sample = FALSE)
+  expect_true(grepl("offset_sigma_1_\\[i_\\]", fit_sigma$jags_code))
 })
 
 test_that("transformations use the original par_x while segment bases stay local", {

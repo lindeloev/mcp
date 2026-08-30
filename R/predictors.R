@@ -21,23 +21,26 @@ get_fitted_design = function(form = NULL, data, spec = NULL) {
     frame = stats::model.frame(form, data)
     fitted_terms = attr(frame, "terms")
     matrix = stats::model.matrix(fitted_terms, frame)
+    offset = stats::model.offset(frame)
     factor_cols = vapply(frame, is.factor, logical(1))
     spec = list(
       terms = fitted_terms,
       xlevels = lapply(frame[factor_cols], levels),
       contrasts = attr(matrix, "contrasts"),
-      columns = colnames(matrix)
+      columns = colnames(matrix),
+      has_offset = !is.null(offset)
     )
   } else {
     frame = stats::model.frame(spec$terms, data, xlev = spec$xlevels)
     matrix = stats::model.matrix(
       spec$terms, frame, contrasts.arg = spec$contrasts
     )
+    offset = stats::model.offset(frame)
     if (!identical(colnames(matrix), spec$columns))
       stop("The model matrix for `newdata` does not match the fitted model.")
   }
 
-  list(matrix = matrix, spec = spec)
+  list(matrix = matrix, offset = offset, spec = spec)
 }
 
 
@@ -97,10 +100,15 @@ rewrite_local_x = function(form, par_x) {
     list(label = paste0(factors, collapse = ":"), degree = sum(degrees))
   }
 
-  # Rewrite the expanded term labels, then restore the original intercept setting.
+  # Rewrite the expanded term labels, then restore the original intercept and offset settings.
   terms = stats::terms(form)
   rewritten = lapply(attr(terms, "term.labels"), rewrite_term)
   labels = vapply(rewritten, `[[`, character(1), "label")
+  # terms() omits offset() from term.labels; preserve it when reformulating
+  if (!is.null(attr(terms, "offset"))) {
+    offset_terms = vapply(attr(terms, "offset"), function(i) deparse1(attr(terms, "variables")[[i + 1]]), character(1))
+    labels = c(labels, offset_terms)
+  }
   form = stats::reformulate(
     labels, intercept = attr(terms, "intercept"), env = environment(form)
   )
@@ -152,8 +160,8 @@ get_par_x = function(model, data, par_x = NULL) {
       stop("par_x = '", par_x, "' has to be continuous. Is it binary or categorical?")
   }
 
-  # Check for exactly one continuous
-  rhs_vars = setdiff(get_rhs_vars(model), get_rhs_group_vars(model))
+  # Check for exactly one continuous predictor; exclude grouping and offset variables
+  rhs_vars = setdiff(get_rhs_vars(model), c(get_rhs_group_vars(model), get_rhs_offset_vars(model)))
   data_in_rhs = data %>% dplyr::select(dplyr::all_of(rhs_vars), dplyr::all_of(par_x))
   continuous_cols = lapply(data_in_rhs, is_continuous) %>% unlist()
   par_x_candidates = names(continuous_cols)[continuous_cols]
@@ -247,7 +255,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
     dpar_prefix = paste0(dpar, order, "_")
   }
 
-  # Complex expressions involving par_x do not yet have stable parameter names.
+  # Disallow multiple terms within functions involving par_x
   formula_terms = attr(stats::terms(form_rhs), "term.labels")
   contains_multiple_terms = formula_terms %>%
     stringr::str_extract("(?<=\\().*(?=\\))") %>%
@@ -257,16 +265,30 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   if (any(stats::na.omit(is_bad) == TRUE))
     stop("mcp does not currently support 2+ terms within a formula function when one of them is par_x = '", par_x, "'. Found: ", and_collapse(formula_terms[which(is_bad)]))
 
+  # Build the source design on the original data
   source_design = get_fitted_design(form_rhs, data)
   matrix_name = colnames(source_design$matrix)
 
+  # Rewrite formula with a placeholder for the segment-local change-point axis
   local = rewrite_local_x(form_rhs, par_x)
   if (local$name %in% names(data))
     stop("Data column '", local$name, "' is reserved for mcp's formula compiler.")
+
+  # Compile the fitted design specification with segment and offset metadata
   local_data = data
   local_data[[local$name]] = data[[par_x]]
   design = get_fitted_design(local$form, local_data)
   design$spec$local_x_name = local$name
+  design$spec$dpar = dpar
+  design$spec$segment = segment
+  design$spec$order = ifelse(is.null(order), NA_integer_, as.integer(order))
+  if (!is.null(source_design$offset)) {
+    design$spec$has_offset = TRUE
+    design$spec$offset_name = paste0("offset_", dpar, ifelse(is.null(order) || is.na(order), "", order), "_", segment, "_")
+    design$spec$offset_data = as.numeric(source_design$offset)
+  }
+
+  # Verify that rewriting local_x preserved matrix values and numerical rank
   mat = design$matrix
   if (!identical(dim(mat), dim(source_design$matrix)) ||
       !isTRUE(all.equal(unname(mat), unname(source_design$matrix))))
@@ -339,6 +361,42 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   # exact at zeros and lets model.matrix handle interactions and contrasts.
   local_data[[local$name]] = 1
   mat_without_x = get_fitted_design(data = local_data, spec = design$spec)$matrix
+
+  if (ncol(mat_without_x) == 0) {
+    if (isTRUE(design$spec$has_offset)) {
+      # Offset-only segment with no estimated coefficients (e.g., ~ 0 + offset(z));
+      # return a placeholder row to carry design_spec into model_tables$design_specs
+      return(tibble::tibble(
+        dpar = dpar,
+        segment = segment,
+        matrix_name = character(),
+        display_name = character(),
+        code_name = character(),
+        par_type = "offset",
+        order = ifelse(is.null(order), NA_integer_, as.integer(order)),
+        x_factor = "1",
+        design_id = design_id,
+        design_col = NA_integer_,
+        matrix_data = list(numeric(nrow(data))),
+        design_spec = list(design$spec)
+      ))
+    } else {
+      return(tibble::tibble(
+        dpar = character(),
+        segment = integer(),
+        matrix_name = character(),
+        display_name = character(),
+        code_name = character(),
+        par_type = character(),
+        order = integer(),
+        x_factor = character(),
+        design_id = character(),
+        design_col = integer(),
+        design_spec = list(),
+        matrix_data = list()
+      ))
+    }
+  }
 
   predictors = data.frame(
     dpar = dpar,
@@ -420,6 +478,7 @@ assert_unique_predictor_names = function(predictors) {
 #' @return A logical vector of length `terms`
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 term_contains = function(par_x, terms) {
   vapply(terms, function(term) par_x %in% all.vars(str2lang(term)), logical(1))
 }
@@ -481,6 +540,12 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
     is_dpar_term = is_dpar_term | stringr::str_detect(term_labels, pattern)
   is_arma_term = stringr::str_detect(term_labels, arma_pattern)
   mu_terms = term_labels[!is_dpar_term & !is_arma_term]
+
+  # Top-level offset terms belong to mu
+  if (!is.null(attrs$offset)) {
+    offset_terms = vapply(attrs$offset, function(i) deparse1(attrs$variables[[i + 1]]), character(1))
+    mu_terms = c(mu_terms, offset_terms)
+  }
 
   if (length(mu_terms) > 0) {
     mu_terms[1] = paste0(attrs$intercept, " + ", mu_terms[1])
@@ -674,7 +739,9 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
 
   # Store each fitted component specification once, not on every coefficient.
   design_specs = collect_design_specs(predictors, definitions)
-  predictors = dplyr::select(predictors, -"design_spec")
+  predictors = predictors %>%
+    dplyr::filter(.data$par_type != "offset") %>%
+    dplyr::select(-"design_spec")
   if ("design_spec" %in% names(predictor_group_effects))
     predictor_group_effects = dplyr::select(predictor_group_effects, -"design_spec")
 

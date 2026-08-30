@@ -73,29 +73,6 @@ get_rhs = function(form) {
 }
 
 
-#' Reject formula offsets until they are implemented
-#'
-#' @keywords internal
-#' @noRd
-#' @param model An mcp model.
-#' @return `NULL`, invisibly. Stops if `offset()` occurs anywhere in the model.
-assert_no_offsets = function(model) {
-  contains_offset = function(expr) {
-    if (!is.call(expr))
-      return(FALSE)
-
-    call_name = deparse1(expr[[1]])
-    if (call_name %in% c("offset", "stats::offset"))
-      return(TRUE)
-
-    any(vapply(as.list(expr)[-1], contains_offset, logical(1)))
-  }
-
-  if (any(vapply(model, contains_offset, logical(1))))
-    stop("Formula offsets using `offset()` are not implemented yet.", call. = FALSE)
-
-  invisible(NULL)
-}
 
 
 #' Returns all variables in the predictor parts of an mcpmodel
@@ -141,6 +118,25 @@ get_rhs_group_vars = function(model) {
     lapply(function(form) find_groups(form[[2]])) %>%
     unlist() %>%
     unique()
+}
+
+
+#' Returns variables appearing inside offset() calls
+#'
+#' @keywords internal
+#' @noRd
+#' @inheritParams mcp
+#' @return Character vector of offset variable names.
+get_rhs_offset_vars = function(model) {
+  find_offsets = function(expr) {
+    if (!is.call(expr))
+      return(character())
+    if (deparse1(expr[[1]]) %in% c("offset", "stats::offset"))
+      return(all.vars(expr))
+    unique(unlist(lapply(rlang::call_args(expr), find_offsets)))
+  }
+
+  unique(unlist(lapply(model, function(m) find_offsets(get_rhs(m)[[2]]))))
 }
 
 #' Returns all variables in the predictor parts of an mcpmodel
@@ -190,6 +186,11 @@ remove_terms = function(form, remove) {
   # Remove non-matching types
   if (remove == "varying") {
     term.labels = term.labels[!varying_bool]
+    # base::terms() omits offset() from term.labels; re-attach it for population formulas
+    if (!is.null(attrs$offset)) {
+      offset_terms = vapply(attrs$offset, function(i) deparse1(attrs$variables[[i + 1]]), character(1))
+      term.labels = c(term.labels, offset_terms)
+    }
     term.labels = c(attrs$intercept, term.labels)  # Add intercept indicator
   } else if (remove == "population") {
     term.labels = term.labels[varying_bool]

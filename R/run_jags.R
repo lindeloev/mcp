@@ -174,9 +174,12 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
     )]
 
   # Data helpers are always present; model helpers occur only in generated code.
+  offset_nodes = if (is.null(jags_code)) character() else
+    unique(stringr::str_extract_all(jags_code, "offset_[A-Za-z0-9_]+_")[[1]])
+
   helper_names = unique(c(
     "rhs_matrix_", "series_id_", "cp_order_", "response_observed_",
-    "likelihood_weight_", "likelihood_zero_",
+    "likelihood_weight_", "likelihood_zero_", offset_nodes,
     paste0("n_unique_", group_cols), paste0(group_cols, "_"),
     names(attr(jags_code, "jags_constants")),
     if (generated) c(
@@ -226,8 +229,9 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
 #' @param segments A segment table returned by `get_segment_tables()`.
 #' @param predictors Returned by `get_predictors()`.
 #' @param group_effects Returned by `get_group_effects()`.
+#' @param design_specs Named fitted design specifications.
 get_jags_data = function(data, family, segments, predictors, group_effects, jags_code,
-                          series = NULL, generated = TRUE) {
+                          series = NULL, generated = TRUE, design_specs = list()) {
   group_cols = unique(stats::na.omit(group_effects$group_col))
 
   # Start with "raw" data
@@ -261,6 +265,13 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
 
   # Predictor design matrix. Keep the JAGS data name for custom-code compatibility.
   jags_data$rhs_matrix_ = get_predictor_matrix(predictors, group_effects)
+
+  # Add any offset vectors to JAGS data
+  for (spec in design_specs) {
+    if (isTRUE(spec$has_offset)) {
+      jags_data[[spec$offset_name]] = spec$offset_data
+    }
+  }
 
   # Add named data constants for change point prior bounds (see jagsify_constants())
   jags_constants = attr(jags_code, "jags_constants")

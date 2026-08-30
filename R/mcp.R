@@ -253,7 +253,6 @@ mcp = function(model,
   # Check model
   checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
   assert_rel(model)
-  assert_no_offsets(model)
 
   # Check data and data-model correspondence
   if (missing(data) || is.null(data) || !is.data.frame(data))
@@ -410,7 +409,10 @@ mcp = function(model,
   }
 
   # Make formulas
-  formula_jags = get_formula_jags(segments, predictors, group_effects, par_x, family)
+  formula_jags = get_formula_jags(
+    segments, predictors, group_effects, par_x, family,
+    design_specs = predictor_tables$design_specs
+  )
   formula_r = get_formula_r(formula_jags, predictors, group_effects, cps, par_x)
 
   # Make jags code if it is not provided by the user
@@ -429,7 +431,8 @@ mcp = function(model,
   ##########
   jags_data = get_jags_data(
     data, family, segments, predictors, group_effects, jags_code, series,
-    generated = !custom_jags_code
+    generated = !custom_jags_code,
+    design_specs = predictor_tables$design_specs
   )
 
   # Monitor model parameters and, for generated JAGS code, latent responses

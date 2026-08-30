@@ -18,6 +18,17 @@ models_families_poisson = list(
     warmup = 1000,
     iter = 1000,
     min_ess = 50
+  ),
+  list(
+    y ~ 1 + x + offset(log(pop)),
+    ~ 1 + x + offset(log(pop)),
+    simulated = list(cp_1 = 93, Intercept_1 = log(0.03), x_1 = 0.004, Intercept_2 = log(0.07), x_2 = -0.003),
+    newdata = data.frame(x = seq(1, 200, length.out = 400), pop = rep(c(10, 100), 200)),
+    family = poisson(link = "log"),
+    chains = 2,
+    warmup = 500,
+    iter = 750,
+    min_ess = 50
   )
 )
 
