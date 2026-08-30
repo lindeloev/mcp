@@ -25,6 +25,7 @@ The three formula parts are called **response**, **cp**, and **predictor**. The 
 
 1.  The "cp" part which can be `~ 1` or `~ 1 + (1|group)`. Read more about [group-level (random) change-point deviations](../articles/group_effects.html).
 2.  The predictor part can contain distributional regression as terms, such as `sigma([formula here])` and `shape()` ([read more](../articles/dpar.html)). Similarly for time-series such as `ar()` and `ma()` ([read more](../articles/arma.html)).
+3.  The response part can contain auxiliaries after `|` combined with `+`, such as `y | weights(w)` for observation log-likelihood weights (supported across all families) and `y | trials(N) + weights(w)` for binomial models.
 
 `mcp` is heavily inspired by `brms` which again is inspired by [`lme4::lmer`](https://cran.r-project.org/web/packages/lme4/index.html). [Here is a bit of history](https://twitter.com/jonaslindeloev/status/1117760777249853440) on that.
 

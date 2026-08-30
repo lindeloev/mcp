@@ -19,10 +19,7 @@ bad_binomial = list(
   list(y | trials(N_bad_char) ~ 1),
 
   # Does not work with sigma
-  list(y | trials(N) ~ 1 + sigma(1)),
-
-  # Weights not implemented yet
-  list(y | trials(N) + weights(weights_ok) ~ 1)
+  list(y | trials(N) ~ 1 + sigma(1))
 )
 
 test_bad(bad_binomial,
@@ -39,7 +36,8 @@ good_binomial = list(
        1 + (1|id) ~ 1),
   list(y | trials(N) ~ 1 + ar(1) + ma(1)),
   list(y | trials(N) ~ 1,
-       1 ~ N)  # N can be both trials and slope
+       1 ~ N),  # N can be both trials and slope
+  list(y | trials(N) + weights(weights_ok) ~ 1)  # With weights
 )
 
 test_good(good_binomial,
@@ -100,7 +98,7 @@ bad_bernoulli = list(
   # Does not work with sigma
   list(y_bern ~ 1 + sigma(1)),
 
-  # Weights not implemented yet
+  # Bernoulli does not take trials
   list(y | trials(N) + weights(weights_ok) ~ 1),
 
   # Bernoulli GARMA is not currently supported
@@ -118,7 +116,8 @@ good_bernoulli = list(
        y_bern ~ 1 ~ 1 + x,
        1 ~ 0),
   list(y_bern ~ 1,  # With varying
-       1 + (1|id) ~ 1)
+       1 + (1|id) ~ 1),
+  list(y_bern | weights(weights_ok) ~ 1)  # With weights
 )
 
 test_good(good_bernoulli,

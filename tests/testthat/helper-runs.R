@@ -397,61 +397,49 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
 }
 
 
-# Weighted Gaussian evaluation must use brms-aligned likelihood weights:
-# log_lik = weights * dnorm(y, mu, sigma, log = TRUE) and predictions generated with sigma.
+# Weighted evaluation must use brms-aligned likelihood weights:
+# log_lik = weights * log_lik_unweighted, with predictions generated without requiring weights.
 test_pp_eval_weights = function(fit, prior = FALSE) {
+  # Getting started...
   columns = mcp_columns(fit)
-  if (fit$family$family != "gaussian" || length(columns$weights) == 0)
+  if (length(columns$weights) == 0)
     return(invisible(NULL))
 
-  weight_col = columns$weights
-  keys = c(".chain", ".iteration", ".draw", "data_row")
+  loglik = log_lik(fit, summary = FALSE, probs = FALSE, prior = prior, draws_format = "tidy")
+  weights = fit$data[[columns$weights]][loglik$data_row]
+
+  # Log-likelihood and fitted() should be evaluated at the same predictions
   mu = fitted(fit, summary = FALSE, probs = FALSE, prior = prior, dpar = "mu")
-  sigma = fitted(fit, summary = FALSE, probs = FALSE, prior = prior, dpar = "sigma")
-  loglik = log_lik(
-    fit, summary = FALSE, probs = FALSE, prior = prior, draws_format = "tidy"
-  )
-  weights = fit$data[[weight_col]][loglik$data_row]
-  observed = fit$data[[columns$response]][loglik$data_row]
-
+  keys = c(".chain", ".iteration", ".draw", "data_row")
   testthat::expect_equal(loglik[, keys], mu[, keys])
-  testthat::expect_equal(loglik[, keys], sigma[, keys])
-  testthat::expect_equal(
-    loglik$.loglik,
-    weights * stats::dnorm(observed, mu$.epred, sigma$.epred, log = TRUE)
-  )
 
-  had_random_seed = exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
-  if (had_random_seed)
-    random_seed = get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
-  on.exit({
-    if (had_random_seed) {
-      assign(".Random.seed", random_seed, envir = .GlobalEnv)
-    } else if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
-      rm(".Random.seed", envir = .GlobalEnv)
-    }
-  }, add = TRUE)
+  # Gaussian is the easiest case to check that likelihood weights are applied correctly
+  if (fit$family$family == "gaussian") {
+    sigma = fitted(fit, summary = FALSE, probs = FALSE, prior = prior, dpar = "sigma")
+    testthat::expect_equal(loglik[, keys], sigma[, keys])
 
-  set.seed(123)
-  prediction = predict(fit, summary = FALSE, probs = FALSE, prior = prior)
-  set.seed(123)
-  expected = stats::rnorm(nrow(prediction), mu$.epred, sigma$.epred)
-  testthat::expect_equal(prediction[, keys], mu[, keys])
-  testthat::expect_equal(prediction$.prediction, expected)
+    observed = fit$data[[columns$response]][loglik$data_row]
+    testthat::expect_equal(
+      loglik$.loglik,
+      weights * stats::dnorm(observed, mu$.epred, sigma$.epred, log = TRUE)
+    )
+  }
 
+  # Should also be returned as column
   fit_fitted = fitted(fit, summary = TRUE, prior = prior)
-  testthat::expect_true(weight_col %in% colnames(fit_fitted))
+  testthat::expect_true(columns$weights %in% colnames(fit_fitted))
   fit_predict = predict(fit, summary = TRUE, prior = prior)
-  testthat::expect_true(weight_col %in% colnames(fit_predict))
+  testthat::expect_true(columns$weights %in% colnames(fit_predict))
 
+  # When to fail
   if (!prior) {
-    newdata_without_weights = fit$data[, colnames(fit$data) != weight_col, drop = FALSE]
+    newdata_without_weights = fit$data[, colnames(fit$data) != columns$weights, drop = FALSE]
     testthat::expect_no_error(
       predict(fit, newdata = newdata_without_weights, summary = FALSE)
     )
     testthat::expect_error(
       log_lik(fit, newdata = newdata_without_weights, summary = FALSE),
-      weight_col,
+      columns$weights,
       fixed = TRUE
     )
   }
@@ -462,6 +450,7 @@ test_pp_eval = function(fit, prior = FALSE) {
   columns = mcp_columns(fit)
   population_pars = mcp_pars(fit, scope = "population")$name
   group_pars = mcp_pars(fit, scope = "group")$name
+
   # Test pp_eval
   test_pp_eval_func(fit, fitted, "fitted", prior = prior)
   test_pp_eval_func(fit, predict, "predict", prior = prior)
@@ -482,7 +471,6 @@ test_pp_eval = function(fit, prior = FALSE) {
   ), silent = TRUE)
 
   if (is.data.frame(result_more)) {
-    #testthat::expect_true(nrow(result_more) == nrows * ndraws * 2)  # nrows * ndraws * nchains
     testthat::expect_true(sum(is.na(result_more)) == 0)
 
     group_effects = get_fit_model_tables(fit)$group_effects

@@ -113,7 +113,8 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 #' Additional continuous predictors are held at their observed means, or at values supplied through `at`.
 #' Family-specific response auxiliaries are not interpolated. Supply binomial
 #' trial counts as a scalar in `at` or use `newdata` for a varying design.
-#' Gaussian likelihood weights are needed only when evaluating `log_lik()` and
+#' 
+#' Likelihood weights are needed only when evaluating `log_lik()` and
 #' therefore need not be supplied here.
 #' @return `data.frame` with
 #'  * Cols for par_x

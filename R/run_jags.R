@@ -181,7 +181,7 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
     names(attr(jags_code, "jags_constants")),
     if (generated) c(
       "i_", "garma_boundary_", "garma_y_", "garma_link_y_",
-      "resid_abs_", "resid_ma_", "resid_garma_", "nb_prob_",
+      "resid_abs_", "resid_ma_", "resid_garma_", "nb_prob_", "nb_log_rate_",
       paste0("x_local_", seq_len(nrow(segments)), "_"),
       paste0("link_", dpars, "_"), paste0(dpars, "_"), inverse_names
     )

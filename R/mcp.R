@@ -54,10 +54,11 @@
 #'      - AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
 #'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
 #'
-#'   * *Gaussian weights:* `y | weights(w) ~ ...` multiplies each observation's
-#'     Gaussian log-likelihood contribution by `w`, as in `brms`. Weights affect
+#'   * *Likelihood weights:* `y | weights(w) ~ ...` multiplies each observation's
+#'     log-likelihood contribution by `w`, as in `brms`. Weights affect
 #'     posterior inference and `log_lik()`, but not the response distribution used
 #'     by `predict()` or prior/posterior predictive checks.
+#'     Combine with other auxiliaries using `+`, e.g., `y | trials(total) + weights(w) ~ ...`.
 #'
 #'   * *Binomial:* use `successes | trials(total) ~ ...` with `family = binomial()`.
 #'

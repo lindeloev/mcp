@@ -1,7 +1,6 @@
 bad_negbinomial = list(
   list(y | trials(N) ~ 1),
   list(y ~ 1 + sigma(1)),
-  list(y | weights(weights_ok) ~ 1),
   list(y_bad_numeric ~ 1)
 )
 
@@ -24,7 +23,8 @@ good_negbinomial = list(
     y ~ 1 + x + shape(1),
     ~ 0 + x + shape(1)
   ),
-  list(y ~ 1 + ar(1) + ma(1))
+  list(y ~ 1 + ar(1) + ma(1)),
+  list(y | weights(weights_ok) ~ 1)  # With weights
 )
 
 test_good(

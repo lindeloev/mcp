@@ -97,8 +97,10 @@ mcpfamily = function(x) {
 
 new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
                          default_prior = family$default_prior,
-                         response = family$response, r = family$r,
-                         backends = family$backends, garma = family$garma) {
+                         response = family$response, 
+                         r = family$r,
+                         backends = family$backends, 
+                         garma = family$garma) {
   if (is.null(dpar_specs) || is.null(default_prior) || is.null(response) ||
       is.null(r) || is.null(backends$jags)) {
     stop(
@@ -107,15 +109,48 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
     )
   }
 
+  # Default values and funcs for the dependent variable (the response)
   response_defaults = list(
-    auxiliary = list(),
-    validate = function(y, data, response_columns) invisible(TRUE),
+    auxiliary = list(weights = list(
+      required = FALSE,  # Is this required in the formula? FALSE = can be omitted.
+      operations = "log_lik"  # For which operations is this auxiliary column needed?
+    )),
+    validate = function(y, data, response_columns) invisible(TRUE),  # Default to no validation
     observed = function(y, data, rate) y,
     probability = function(rate) FALSE,
-    point_size = NULL
+    point_size = "weights"
   )
+
+  # Fill in missing top-level response elements
   missing_response = setdiff(names(response_defaults), names(response))
   response[missing_response] = response_defaults[missing_response]
+
+  # Merge missing auxiliary elements (e.g., weights) from response_defaults
+  missing_aux = setdiff(names(response_defaults$auxiliary), names(response$auxiliary))
+  response$auxiliary[missing_aux] = response_defaults$auxiliary[missing_aux]
+
+  if (is.null(response$point_size))
+    response$point_size = response_defaults$point_size
+
+  # Each family will define a validate(); this applies that.
+  family_validate = response$validate
+  response$validate = function(y, data, response_columns) {
+    # Check weights if present
+    if (!is.null(data$weights)) {
+      if (!is.numeric(data$weights) || anyNA(data$weights) || any(data$weights <= 0))
+        stop("All weights must be numeric and greater than zero.")
+    }
+
+    # Apply the family-specific validation
+    family_validate(y, data, response_columns)
+  }
+
+  # R-side log-likelihood. Weights are defined as applying directly here
+  family_log_lik = r$log_lik
+  r$log_lik = function(y, dpars, data) {
+    weights = if (is.null(data$weights)) 1 else data$weights
+    weights * family_log_lik(y, dpars, data)
+  }
 
   family$dpar_specs = dpar_specs
   family$default_prior = normalize_family_default_priors(default_prior)
@@ -188,21 +223,11 @@ mcpfamily_gaussian = function(family) {
       required = FALSE,
       operations = "log_lik"
     )),
-    validate = function(y, data, response_columns) {
-      if (!is.null(data$weights)) {
-        if (!is.numeric(data$weights) || anyNA(data$weights) || any(data$weights <= 0))
-          stop("All weights must be numeric and greater than zero.")
-      }
-      invisible(TRUE)
-    },
     point_size = "weights"
   )
   r = list(
     epred = function(dpars, data, rate = FALSE) dpars$mu,
-    log_lik = function(y, dpars, data) {
-      weights = if (is.null(data$weights)) 1 else data$weights
-      weights * stats::dnorm(y, dpars$mu, dpars$sigma, log = TRUE)
-    },
+    log_lik = function(y, dpars, data) stats::dnorm(y, dpars$mu, dpars$sigma, log = TRUE),
     rng = function(n, dpars, data, rate = FALSE) {
       stats::rnorm(n, dpars$mu, dpars$sigma)
     },
@@ -216,14 +241,14 @@ mcpfamily_gaussian = function(family) {
 
       if (identical(weights, "1")) {
         # No weight
-        return(paste0(context$y, " ~ dnorm(", context$dpar("mu"), ", 1 / ", context$dpar("sigma"), "^2)"))
+        paste0(context$y, " ~ dnorm(", context$dpar("mu"), ", 1 / ", context$dpar("sigma"), "^2)")
       } else {
         # The weighted normal contributes sigma^-1 from its normalizing term.
         # Observing zero from dexp(sigma^(1-w)) contributes sigma^(1-w), so
         # their product is Normal(y | mu, sigma)^w up to a weight-only constant.
         c(
           "# Gaussian likelihood raised to the observation weight",
-          paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)"),
+          paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)  # Ensures weight 1 if missing data"),
           paste0(context$y, " ~ dnorm(", context$dpar("mu"), ", likelihood_weight_[i_] / ", context$dpar("sigma"), "^2)"),
           paste0("likelihood_zero_[i_] ~ dexp(pow(", context$dpar("sigma"), ", 1 - likelihood_weight_[i_]))")
         )
@@ -305,7 +330,22 @@ mcpfamily_binomial = function(family) {
       stats::pbinom(q, data$trials, dpars$mu)
     }
   )
-  jags = list(likelihood = function(context) paste0(context$y, " ~ dbin(", context$dpar("mu"), ", ", context$aux("trials"), ")"))
+  jags = list(
+    likelihood = function(context) {
+      weights = context$aux("weights", "1")
+
+      if (identical(weights, "1")) {
+        paste0(context$y, " ~ dbin(", context$dpar("mu"), ", ", context$aux("trials"), ")")
+      } else {
+        c(
+          "# Binomial likelihood raised to the observation weight",
+          paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)  # Ensures weight 1 if missing data"),
+          paste0(context$y, " ~ dbin(", context$dpar("mu"), ", ", context$aux("trials"), ")"),
+          paste0("likelihood_zero_[i_] ~ dexp(pow(", context$dpar("mu"), ", (likelihood_weight_[i_] - 1) * ", context$y, ") * pow(1 - ", context$dpar("mu"), ", (likelihood_weight_[i_] - 1) * (", context$aux("trials"), " - ", context$y, ")))")
+        )
+      }
+    }
+  )
   garma = if (family$link == "logit") {
     list(
       observed_r = function(y, data, boundary) pmin(pmax(y, boundary), data$trials - boundary) / data$trials,
@@ -363,7 +403,22 @@ mcpfamily_bernoulli = function(family) {
     rng = function(n, dpars, data, rate = FALSE) stats::rbinom(n, 1, dpars$mu),
     cdf = function(q, dpars, data, rate = FALSE) stats::pbinom(q, 1, dpars$mu)
   )
-  jags = list(likelihood = function(context) paste0(context$y, " ~ dbern(", context$dpar("mu"), ")"))
+  jags = list(
+    likelihood = function(context) {
+      weights = context$aux("weights", "1")
+
+      if (identical(weights, "1")) {
+        paste0(context$y, " ~ dbern(", context$dpar("mu"), ")")
+      } else {
+        c(
+          "# Bernoulli likelihood raised to the observation weight",
+          paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)  # Ensures weight 1 if missing data"),
+          paste0(context$y, " ~ dbern(", context$dpar("mu"), ")"),
+          paste0("likelihood_zero_[i_] ~ dexp(pow(", context$dpar("mu"), ", (likelihood_weight_[i_] - 1) * ", context$y, ") * pow(1 - ", context$dpar("mu"), ", (likelihood_weight_[i_] - 1) * (1 - ", context$y, ")))")
+        )
+      }
+    }
+  )
 
   new_mcpfamily(
     family,
@@ -421,7 +476,22 @@ mcpfamily_poisson = function(family) {
       stats::ppois(q, dpars$mu)
     }
   )
-  jags = list(likelihood = function(context) paste0(context$y, " ~ dpois(", context$dpar("mu"), ")"))
+  jags = list(
+    likelihood = function(context) {
+      weights = context$aux("weights", "1")
+
+      if (identical(weights, "1")) {
+        paste0(context$y, " ~ dpois(", context$dpar("mu"), ")")
+      } else {
+        c(
+          "# Poisson likelihood raised to the observation weight",
+          paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)  # Ensures weight 1 if missing data"),
+          paste0(context$y, " ~ dpois(", context$dpar("mu"), ")"),
+          paste0("likelihood_zero_[i_] ~ dexp(pow(", context$dpar("mu"), ", (likelihood_weight_[i_] - 1) * ", context$y, ") * exp((1 - likelihood_weight_[i_]) * ", context$dpar("mu"), "))")
+        )
+      }
+    }
+  )
   garma = if (family$link == "log") {
     list(
       observed_r = function(y, data, boundary) pmax(y, boundary),
@@ -482,10 +552,24 @@ mcpfamily_negbinomial = function(family) {
     mu = context$dpar("mu")
     shape = context$dpar("shape")
     prob = context$local("nb_prob")
-    c(
-      paste0(prob, " = ", shape, " / (", shape, " + ", mu, ")"),
-      paste0(context$y, " ~ dnegbin(", prob, ", ", shape, ")")
-    )
+    weights = context$aux("weights", "1")
+
+    if (identical(weights, "1")) {
+      c(
+        paste0(prob, " = ", shape, " / (", shape, " + ", mu, ")"),
+        paste0(context$y, " ~ dnegbin(", prob, ", ", shape, ")")
+      )
+    } else {
+      log_rate = context$local("nb_log_rate")
+      c(
+        paste0(prob, " = ", shape, " / (", shape, " + ", mu, ")"),
+        paste0(context$y, " ~ dnegbin(", prob, ", ", shape, ")"),
+        "# Negative binomial likelihood raised to the observation weight",
+        paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)  # Ensures weight 1 if missing data"),
+        paste0(log_rate, " = (likelihood_weight_[i_] - 1) * (loggam(", context$y, " + ", shape, ") - loggam(", shape, ") + ", shape, " * log(", shape, " / (", shape, " + ", mu, ")) + ", context$y, " * log(", mu, " / (", shape, " + ", mu, ")))"),
+        paste0("likelihood_zero_[i_] ~ dexp(exp(", log_rate, "))")
+      )
+    }
   })
   garma = list(
     observed_r = function(y, data, boundary) pmax(y, boundary),

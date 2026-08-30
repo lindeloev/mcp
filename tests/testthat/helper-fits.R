@@ -33,6 +33,8 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
       x = seq(1, 200, length.out = 400),  # Needs to be reasonably high to get a correct estimate
       y = 0
     )
+  } else if (!"y" %in% colnames(newdata)) {
+    newdata$y = 0
   }
   empty = mcp(
     model, data = newdata, family = family, sample = FALSE,

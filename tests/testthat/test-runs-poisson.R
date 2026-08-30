@@ -8,10 +8,7 @@ bad_poisson = list(
   list(y_bad_numeric ~ 1),
 
   # Does not work with sigma
-  list(y ~ 1 + sigma(1)),
-
-  # Does not work with weights
-  list(y | weights(weights_ok) ~ 1)
+  list(y ~ 1 + sigma(1))
 )
 
 test_bad(bad_poisson,
@@ -26,7 +23,8 @@ good_poisson = list(
        1 ~ 0),
   list(y ~ 1,  # With varying
        1 + (1|id) ~ 1),
-  list(y ~ 1 + ar(1) + ma(1))
+  list(y ~ 1 + ar(1) + ma(1)),
+  list(y | weights(weights_ok) ~ 1)  # With weights
 )
 
 test_good(good_poisson,
