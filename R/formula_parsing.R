@@ -373,7 +373,7 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
 #' @param form_cp Segment formula as string.
 #' @param i segment number
 #' @return A one-row tibble with columns:
-#'   * `cp_int`: Logical scalar. Whether there is an intercept change in the change point.
+#'   * `cp_intercept`: Logical scalar. Whether there is an intercept change in the change point.
 #'   * `cp_varying`: Logical scalar or NA. Is there a group-level intercept on the change point?
 #'   * `cp_group_col`: char or NA. Which data column defines the grouping factor?
 #' @encoding UTF-8
@@ -381,7 +381,7 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
 unpack_cp = function(form_cp, i, env = parent.frame()) {
   if (is.na(form_cp)) {
     return(tibble::tibble(
-      cp_int = FALSE,
+      cp_intercept = FALSE,
       cp_varying = FALSE,
       cp_group_col = NA
     ))
@@ -416,14 +416,14 @@ unpack_cp = function(form_cp, i, env = parent.frame()) {
   if (!is.null(form_varying)) {
     # If there is a group-level effect
     return(tibble::tibble(
-      cp_int = attrs$intercept == 1,
+      cp_intercept = attrs$intercept == 1,
       cp_varying = ifelse(varying_parts[1] == "1", TRUE, NA),  # placeholder for later
       cp_group_col = varying_parts[2]
     ))
   } else {
     # If there is no group-level effect
     return(tibble::tibble(
-      cp_int = attrs$intercept == 1,
+      cp_intercept = attrs$intercept == 1,
       cp_varying = FALSE,
       cp_group_col = NA
     ))

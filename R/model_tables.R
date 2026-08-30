@@ -50,7 +50,7 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
   ###########################
 
   # Check segment 1: change point not possible here
-  if (any(segments[1, c("cp_int", "cp_varying", "cp_group_col")] != FALSE, na.rm = TRUE))
+  if (any(segments[1, c("cp_intercept", "cp_varying", "cp_group_col")] != FALSE, na.rm = TRUE))
     stop("Change point defined in first segment. This should not be possible. Submit bug report in the GitHub repo.")
 
   # Response variables
