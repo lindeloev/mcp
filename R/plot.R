@@ -425,7 +425,7 @@ get_plot = function(x,
 #' @export
 #' @inheritParams get_plot
 #' @param samples,nsamples Deprecated. Use `lines` instead.
-#' @param ... Currently ignored.
+#' @param ... Must be empty. Reserved for future use.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @seealso plot_pars plot_dpar pp_check

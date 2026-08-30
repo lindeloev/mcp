@@ -23,7 +23,7 @@
 #' * `prior`: A named list of priors.
 #' * `mcmc_post` and `mcmc_prior`: \code{\link[coda]{mcmc.list}} objects with
 #'   posterior and prior draws, respectively. Do not access these directly; 
-#'   use as_draws(fit), posterior_draws(fit), or similar.
+#'   use as_draws(fit) or similar.
 #' * `jags_code`: A string with JAGS code; use `cat(fit$jags_code)` to show it.
 #' * `simulate`: A function to simulate data from supplied parameter values.
 #' * `.internal`: Information used internally by mcp.
@@ -218,7 +218,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #' @param verbose Logical. Include the `segment` and `dpar` columns. Defaults
 #'   to `FALSE` for a compact, v0.3.4-compatible summary.
 #' @inheritParams mcp
-#' @param ... Currently ignored.
+#' @param ... Must be empty. Reserved for future use.
 #'
 #' @return A data frame with parameter estimates and MCMC diagnostics. Rows
 #'   are ordered by change point first, then `mu`, then the other
@@ -395,7 +395,7 @@ ranef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ..
 #' @param object,x,formula An `mcpfit` object.
 #' @param segment `NULL` to return all segment formulas, or a positive integer
 #'   selecting one segment.
-#' @param ... Currently unused.
+#' @param ... Must be empty. Reserved for future use.
 #' @return `formula()` returns the complete list of segment formulas, or one
 #'   formula when `segment` is supplied. `family()` returns an `mcpfamily`.
 #'   `model.frame()` returns the data retained in the fit. `nobs()` returns the
@@ -462,7 +462,7 @@ formula.mcpfit = function(x, segment = NULL, ...) {
 #'   include in the intervals.
 #' @param level Width of the central interval.
 #' @param prior Logical. Use prior draws instead of posterior draws?
-#' @param ... Currently unused.
+#' @param ... Must be empty. Reserved for future use.
 #' @return `vcov()` returns a covariance or correlation matrix. `confint()`
 #'   returns a two-column matrix of central intervals.
 #' @name posterior-uncertainty-mcpfit
@@ -568,7 +568,7 @@ print.mcpfit = function(x, ...) {
 #'
 #' @aliases is.mcpfit
 #' @param x An `R` object.
-#' @return A boolean (`TRUE` if `x` is an `mcpfit` object, `FALSE` otherwise).
+#' @return Logical scalar (`TRUE` if `x` is an `mcpfit` object, `FALSE` otherwise).
 #' @export
 is.mcpfit = function(x) {
   inherits(x, "mcpfit")
@@ -1141,7 +1141,7 @@ tidy_samples = function(...) {
 #'   - `"loglik"`: return the log-likelihood for each draw for each data point. See also `log_lik()`.
 #'     Requires `scale = "response"`.
 #' @param probs Vector of quantiles. Only in effect when `summary == TRUE`.
-#' @param rate Boolean. For binomial models, return counts (`rate = FALSE`) or
+#' @param rate Logical scalar. For binomial models, return counts (`rate = FALSE`) or
 #'   the observed or expected success proportion (`rate = TRUE`). Predictions and
 #'   count-scale fitted values require a trials column in `newdata`.
 #' @param prior Logical. Evaluate prior draws (`TRUE`) instead of posterior draws (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
@@ -1530,7 +1530,7 @@ pp_eval = function(
 #' imputations also supply the history used for later fitted and predicted rows.
 #'
 #' @inheritParams pp_eval
-#' @param ... Currently ignored.
+#' @param ... Must be empty. Reserved for future use.
 #' @inherit pp_eval return
 #' @seealso \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}} \code{\link{log_lik.mcpfit}}
 #' @encoding UTF-8
@@ -1674,7 +1674,7 @@ fitted.mcpfit = function(
 #' @param transform For `posterior_linpred()`, return the inverse-link
 #'   transformed expected response instead of the linear predictor.
 #' @param seed Optional integer seed for draw selection and posterior prediction.
-#' @param ... Currently ignored.
+#' @param ... Must be empty. Reserved for future use.
 #' @return A numeric `N_draws` by `nrow(newdata)` matrix.
 #' @details For GARMA models, `posterior_predict()` generates each replicated
 #'   response series recursively. It does not condition later predictions on

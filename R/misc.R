@@ -468,6 +468,7 @@ print.mcplist = function(x, ...) {
     # Other lists
     utils::str(x, vec.len = Inf, give.head = FALSE, give.attr = FALSE)
   }
+  invisible(x)
 }
 
 
@@ -477,8 +478,7 @@ print.mcplist = function(x, ...) {
 #'
 #' @aliases print.mcptext
 #' @param x Character, often with newlines.
-#' @param ... Currently ignored.
-#' @return NULL
+#' @param ... Must be empty. Reserved for future use.
 #' @return `x`, invisibly.
 #' @export
 #' @encoding UTF-8
@@ -491,4 +491,5 @@ print.mcptext = function(x, ...) {
   checkmate::assert_string(x)
   rlang::check_dots_empty()
   cat(x)
+  invisible(x)
 }

@@ -373,8 +373,8 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
 #' @param form_cp Segment formula as string.
 #' @param i segment number
 #' @return A one-row tibble with columns:
-#'   * `cp_int`: bool. Whether there is an intercept change in the change point.
-#'   * `cp_varying`: bool or NA. Is there a group-level intercept on the change point?
+#'   * `cp_int`: Logical scalar. Whether there is an intercept change in the change point.
+#'   * `cp_varying`: Logical scalar or NA. Is there a group-level intercept on the change point?
 #'   * `cp_group_col`: char or NA. Which data column defines the grouping factor?
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}

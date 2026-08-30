@@ -155,7 +155,7 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
 #' @aliases waic WAIC waic.mcpfit
 #' @describeIn loo.mcpfit Computes WAIC on mcpfit objects
 #' @inheritParams loo.mcpfit
-#' @param ... Currently ignored
+#' @param ... Must be empty. Reserved for future use.
 #' @export waic
 #' @export
 waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, ndraws = NULL,

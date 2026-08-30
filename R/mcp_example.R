@@ -8,6 +8,7 @@
 #'  * `"binomial"`: Binomial with two change points. Much like `"demo"` on a logit scale.
 #'  * `"group_mu"`: Group-level predictor deviations (random intercepts/slopes) across a change point.
 #'  * `"group_cp"`: Group-level change-point deviations (random effects).
+#'  * `"missing"`: Missing data imputation (NAs in response variable y).
 #'  * `"quadratic"`: A change point to a quadratic segment where there is no data.
 #'  * `"ar"`: One change point in autoregressive residuals (the `ar1` dpar)
 #'  * `"sigma"`: A change in "sigma" dpar, including a slope on sigma.

@@ -201,7 +201,7 @@ get_par_x = function(model, data, par_x = NULL) {
 #' @param segment Integer. The segment number
 #' @param dpar A distributional parameter or an `ar`/`ma` component.
 #' @param order Applies to `dpar %in% c("ar", "ma")`.
-#' @param check_rank Boolean. Whether to stop on rank deficiency.
+#' @param check_rank Logical scalar. Whether to stop on rank deficiency.
 #' @return A tibble with one row per model parameter and the columns
 #'   - `dpar`: character.
 #'   - `segment`: the segment number (positive integer).
