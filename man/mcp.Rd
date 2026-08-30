@@ -67,7 +67,11 @@ and \eqn{\eta_t} is the resulting full linear predictor including serial depende
 \item AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
 }
-\item \emph{Weights:} \code{y | weights(w) ~ ...} specifies observation log-likelihood weights.
+\item \emph{Likelihood weights:} \code{y | weights(w) ~ ...} multiplies each observation's
+log-likelihood contribution by \code{w}, as in \code{brms}. Weights affect
+posterior inference and \code{log_lik()}, but not the response distribution used
+by \code{predict()} or prior/posterior predictive checks.
+Combine with other auxiliaries using \code{+}, e.g., \code{y | trials(total) + weights(w) ~ ...}.
 \item \emph{Binomial:} use \code{successes | trials(total) ~ ...} with \code{family = binomial()}.
 }}
 

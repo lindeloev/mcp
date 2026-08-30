@@ -19,6 +19,7 @@ mcp_example_data(name)
 \item \code{"binomial"}: Binomial with two change points. Much like \code{"demo"} on a logit scale.
 \item \code{"group_mu"}: Group-level predictor deviations (random intercepts/slopes) across a change point.
 \item \code{"group_cp"}: Group-level change-point deviations (random effects).
+\item \code{"missing"}: Missing data imputation (NAs in response variable y).
 \item \code{"quadratic"}: A change point to a quadratic segment where there is no data.
 \item \code{"ar"}: One change point in autoregressive residuals (the \code{ar1} dpar)
 \item \code{"sigma"}: A change in "sigma" dpar, including a slope on sigma.
@@ -37,8 +38,7 @@ object without sample. This is useful if you only want to check
 prior strings (\code{fit$prior}), the JAGS model (\code{fit$jags_code}), etc.
 }}
 
-\item{plot}{Logical. Plot the fitted example? No plot is produced when
-\code{sample = FALSE}.}
+\item{plot}{Logical. Plot the fitted example? Requires sample != "none".}
 }
 \value{
 An \code{mcpfit}, enriched with an \verb{$example_code} field. It contains the code to
@@ -58,7 +58,7 @@ fit = mcp_example("multiple")
 print(fit$example_code) # See how the data was simulated
 
 # Without sampling
-empty = mcp_example("binomial", sample = FALSE, plot = FALSE)
+empty = mcp_example("binomial", sample = "none", plot = FALSE)
 print(empty)
 print(empty$example_code)
 

@@ -56,7 +56,7 @@ or FALSE (do not plot).}
 
 \item{cp_dens}{TRUE/FALSE. Plot posterior densities of the change point(s)?}
 
-\item{rate}{Boolean. For binomial models, return counts (\code{rate = FALSE}) or
+\item{rate}{Logical scalar. For binomial models, return counts (\code{rate = FALSE}) or
 the observed or expected success proportion (\code{rate = TRUE}). Predictions and
 count-scale fitted values require a trials column in \code{newdata}.}
 

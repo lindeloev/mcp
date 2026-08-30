@@ -51,7 +51,7 @@ that diagnostic, or use \code{FALSE} to disable all configurable diagnostic
 warnings. In \code{\link[=summary.mcpfit]{summary.mcpfit()}}, \code{NULL} inherits the settings used to fit
 the model, while a list or \code{FALSE} overrides the diagnostic footer.}
 
-\item{...}{Currently ignored.}
+\item{...}{Must be empty. Reserved for future use.}
 
 \item{dpar}{Distributional parameter(s) whose regression coefficients to
 return. For modeled distributional parameters such as \code{sigma()}, these

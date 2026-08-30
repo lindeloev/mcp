@@ -10,7 +10,10 @@
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object.}
 
-\item{...}{Currently ignored.}
+\item{...}{Must be empty. Reserved for future use.}
+}
+\value{
+\code{x}, invisibly.
 }
 \description{
 Shows a list in a more condensed format using \code{str(list)}.

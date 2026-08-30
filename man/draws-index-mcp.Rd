@@ -25,7 +25,10 @@ niterations(x)
 \arguments{
 \item{x}{An \code{mcpfit} object or a posterior draws object.}
 
-\item{...}{Currently ignored.}
+\item{...}{Must be empty. Reserved for future use.}
+}
+\value{
+An integer count of iterations, chains, or draws.
 }
 \description{
 Index variables, iterations, chains, and draws.

@@ -4,37 +4,39 @@
 \alias{posterior-uncertainty-mcpfit}
 \alias{vcov.mcpfit}
 \alias{confint.mcpfit}
-\title{Posterior Covariance and Central Intervals for \code{mcpfit} Objects}
+\title{Prior and Posterior Covariance and Central Intervals for \code{mcpfit} Objects}
 \usage{
-\method{vcov}{mcpfit}(object, correlation = FALSE, pars = NULL, dpar = "mu", ...)
+\method{vcov}{mcpfit}(object, correlation = FALSE, pars = NULL, dpar = "mu", prior = FALSE, ...)
 
-\method{confint}{mcpfit}(object, parm, level = 0.95, ...)
+\method{confint}{mcpfit}(object, parm, level = 0.95, prior = FALSE, ...)
 }
 \arguments{
 \item{object}{An \code{mcpfit} object.}
 
-\item{correlation}{Return the posterior correlation matrix instead of the
-covariance matrix?}
+\item{correlation}{Return the correlation matrix instead of the covariance
+matrix?}
 
 \item{pars}{Optional names of population-level parameters to extract, or
 \code{"all"} for all population-level parameters.}
 
 \item{dpar}{Distributional parameter(s) to select when \code{pars = NULL}.}
 
-\item{...}{Currently unused.}
+\item{prior}{Logical. Use prior draws instead of posterior draws?}
+
+\item{...}{Must be empty. Reserved for future use.}
 
 \item{parm}{Optional names or positions of population-level parameters to
 include in the intervals.}
 
-\item{level}{Width of the central posterior interval.}
+\item{level}{Width of the central interval.}
 }
 \value{
-\code{vcov()} returns a posterior covariance or correlation matrix.
-\code{confint()} returns a two-column matrix of central posterior intervals.
+\code{vcov()} returns a covariance or correlation matrix. \code{confint()}
+returns a two-column matrix of central intervals.
 }
 \description{
-Summarise the joint and marginal posterior uncertainty of population-level
-model parameters.
+Summarise the joint and marginal uncertainty of population-level model
+parameters using posterior or prior draws.
 }
 \examples{
 # Posterior covariance of the primary-response coefficients, matching fixef().
@@ -44,6 +46,7 @@ vcov(demo_fit)
 confint(demo_fit)
 confint(demo_fit, parm = "cp_1")
 confint(demo_fit, parm = c("Intercept_1", "time_2"), level = 0.8)
+confint(demo_fit, prior = TRUE)
 
 # Include change points, residual SDs, group SDs, and AR/MA parameters.
 vcov(demo_fit, pars = "all")

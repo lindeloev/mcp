@@ -28,15 +28,18 @@ for available plot types, omitting the \code{"ppc_"} prefix (e.g., \code{"dens_o
 
 \item{facet_by}{Name of a grouping column used by group-level effects.}
 
-\item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model. Weighted
-Gaussian predictions and log-likelihoods also require the weights column. If \code{NULL}
-(default), the original data is used. GARMA evaluation with \code{fitted()},
-\code{predict()}, \code{residuals()}, or \code{log_lik()} conditions on the response history,
+\item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model.
+\itemize{
+\item If \code{NULL} (default), the original data is used.
+\item For models with \code{ar()} or \code{ma()}: \code{fitted()}, \code{predict()}, \code{residuals()}, or \code{log_lik()}
+conditions on the response history,
 so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
 \code{residuals()}, missing response histories are supported only in the original
 fitted data, using retained posterior imputations. \code{log_lik()} is unavailable
 when a missing response enters a later observed history. Use \code{\link[rstantools:posterior_predict]{posterior_predict()}}
-to generate fresh response series recursively from predictor-only \code{newdata}.}
+to generate fresh response series recursively from predictor-only \code{newdata}.
+\item For models with \code{y | weights()}: Require the weights column except for \code{fitted()} and \code{predict()}.
+}}
 
 \item{prior}{Logical. Evaluate prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)? Useful for \code{mcp(..., sample = "both")}.}
 

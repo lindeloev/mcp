@@ -5,7 +5,13 @@
 \alias{mcmclist_draws.mcpfit}
 \title{Internal function to get draws.}
 \usage{
-mcmclist_draws(fit, prior = FALSE, message = TRUE, error = TRUE)
+mcmclist_draws(
+  fit,
+  prior = FALSE,
+  message = TRUE,
+  error = TRUE,
+  fallback_to_prior = TRUE
+)
 }
 \arguments{
 \item{fit}{An \code{\link{mcpfit}} object}
@@ -15,6 +21,8 @@ mcmclist_draws(fit, prior = FALSE, message = TRUE, error = TRUE)
 \item{message}{TRUE: gives a message if returning prior draws. FALSE = no message}
 
 \item{error}{TRUE: err if there are no draws. FALSE: return NULL}
+
+\item{fallback_to_prior}{TRUE: use prior draws when posterior draws are unavailable}
 }
 \description{
 Returns posterior draws, if available. If not, then prior draws. If not,

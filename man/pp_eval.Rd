@@ -30,15 +30,18 @@ pp_eval(
 \arguments{
 \item{object}{An \code{mcpfit} object.}
 
-\item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model. Weighted
-Gaussian predictions and log-likelihoods also require the weights column. If \code{NULL}
-(default), the original data is used. GARMA evaluation with \code{fitted()},
-\code{predict()}, \code{residuals()}, or \code{log_lik()} conditions on the response history,
+\item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model.
+\itemize{
+\item If \code{NULL} (default), the original data is used.
+\item For models with \code{ar()} or \code{ma()}: \code{fitted()}, \code{predict()}, \code{residuals()}, or \code{log_lik()}
+conditions on the response history,
 so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
 \code{residuals()}, missing response histories are supported only in the original
 fitted data, using retained posterior imputations. \code{log_lik()} is unavailable
 when a missing response enters a later observed history. Use \code{\link[rstantools:posterior_predict]{posterior_predict()}}
-to generate fresh response series recursively from predictor-only \code{newdata}.}
+to generate fresh response series recursively from predictor-only \code{newdata}.
+\item For models with \code{y | weights()}: Require the weights column except for \code{fitted()} and \code{predict()}.
+}}
 
 \item{summary}{Summarise at each x-value}
 
@@ -56,7 +59,7 @@ Requires \code{scale = "response"}.
 
 \item{probs}{Vector of quantiles. Only in effect when \code{summary == TRUE}.}
 
-\item{rate}{Boolean. For binomial models, return counts (\code{rate = FALSE}) or
+\item{rate}{Logical scalar. For binomial models, return counts (\code{rate = FALSE}) or
 the observed or expected success proportion (\code{rate = TRUE}). Predictions and
 count-scale fitted values require a trials column in \code{newdata}.}
 

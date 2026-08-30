@@ -46,9 +46,11 @@ between to speed up the computation.
 
 Categorical variables and requested grouping factors are combined factorially (all level combinations).
 Additional continuous predictors are held at their observed means, or at values supplied through \code{at}.
-Family-specific response auxiliaries, such as binomial trial counts and
-Gaussian weights, are not interpolated. Supply an auxiliary as a scalar in
-\code{at} or use \code{newdata} for a varying design.
+Family-specific response auxiliaries are not interpolated. Supply binomial
+trial counts as a scalar in \code{at} or use \code{newdata} for a varying design.
+
+Likelihood weights are needed only when evaluating \code{log_lik()} and
+therefore need not be supplied here.
 }
 \examples{
 \donttest{

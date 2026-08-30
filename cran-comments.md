@@ -1,3 +1,24 @@
+# mcp 0.4.0
+
+## Notes for the reviewer
+* This is a major update to `mcp`, which has been on CRAN since 2020.
+* This release has breaking changes now, to prepare for release 1.0. Most breaking changes include informative deprecation messages and backwards-compatible soft fallbacks where appropriate.
+* Please see the "Expected NOTEs and ERRORs" section at the bottom of this file regarding external JAGS binaries and DOIs.
+
+## Test environments
+* Local Linux (Ubuntu), R 4.6.1
+* win-builder (devel and release)
+* macOS builder (release)
+* R-hub across platforms (Linux, Windows, macOS; oldrel, release, devel)
+
+## R CMD check results
+There were no ERRORs, WARNINGs, or NOTEs.
+
+## Downstream dependencies
+* All reverse dependencies were checked.
+* There is one reverse imports (glossa) which is unaffected by these changes.
+  There is one reverse suggests (smoothrb), comparing to `mcp` in vignette "brms-comparison". Maintainer was notified on 2026-08-09 and responded affirmatively.
+
 # Resubmission
 This is a resubmission. I have corrected the invalid URLs in the README.
 

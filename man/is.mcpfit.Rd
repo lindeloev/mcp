@@ -9,6 +9,9 @@ is.mcpfit(x)
 \arguments{
 \item{x}{An \code{R} object.}
 }
+\value{
+Logical scalar (\code{TRUE} if \code{x} is an \code{mcpfit} object, \code{FALSE} otherwise).
+}
 \description{
 Checks if the Argument is an \code{mcpfit} Object
 }

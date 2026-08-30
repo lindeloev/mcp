@@ -19,7 +19,7 @@
 \arguments{
 \item{object, x, formula}{An \code{mcpfit} object.}
 
-\item{...}{Currently unused.}
+\item{...}{Must be empty. Reserved for future use.}
 
 \item{segment}{\code{NULL} to return all segment formulas, or a positive integer
 selecting one segment.}

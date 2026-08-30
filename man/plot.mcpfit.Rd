@@ -77,7 +77,7 @@ or FALSE (do not plot).}
 
 \item{cp_dens}{TRUE/FALSE. Plot posterior densities of the change point(s)?}
 
-\item{rate}{Boolean. For binomial models, return counts (\code{rate = FALSE}) or
+\item{rate}{Logical scalar. For binomial models, return counts (\code{rate = FALSE}) or
 the observed or expected success proportion (\code{rate = TRUE}). Predictions and
 count-scale fitted values require a trials column in \code{newdata}.}
 
@@ -111,7 +111,7 @@ can be supplied as explicit scalar design values. Passed to
 
 \item{samples, nsamples}{Deprecated. Use \code{lines} instead.}
 
-\item{...}{Currently ignored.}
+\item{...}{Must be empty. Reserved for future use.}
 
 \item{dpar}{What distributional parameter to evaluate. This is only relevant when \code{type == "fitted"}. E.g.,
 \itemize{
@@ -130,8 +130,9 @@ Plot prior or posterior model draws on top of data.
 }
 \details{
 \code{plot()} uses \code{fit$simulate()} on posterior draws. These represent the
-(joint) posterior distribution. Interval summaries and change-point densities
-always use all available draws.
+(joint) posterior distribution. Interval summaries are based on CDFs
+computed on \code{ndraws} draws, and change-point densities are simple
+densities on all available draws.
 }
 \section{Functions}{
 \itemize{

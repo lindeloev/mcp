@@ -59,10 +59,9 @@ effects and \code{NA} excludes them.}
 \item{dpar}{Distributional parameter for \code{posterior_epred()} and
 \code{posterior_linpred()}; \code{NULL} uses the expected response.}
 
-\item{seed}{Accepted for \code{{tidybayes}} compatibility. Randomness is controlled
-by the calling context.}
+\item{seed}{Optional integer seed for draw selection and posterior prediction.}
 
-\item{...}{Currently ignored.}
+\item{...}{Must be empty. Reserved for future use.}
 
 \item{transform}{For \code{posterior_linpred()}, return the inverse-link
 transformed expected response instead of the linear predictor.}
@@ -79,7 +78,9 @@ These methods and workflows require the suggested package \code{{rstantools}}.
 \details{
 For GARMA models, \code{posterior_predict()} generates each replicated
 response series recursively. It does not condition later predictions on
-the observed response history, unlike \code{fitted()} and \code{predict()}.
+the observed response history, unlike \code{fitted()} and \code{predict()}. These
+methods require posterior draws. For prior prediction, use \code{fitted()} or
+\code{predict()} with \code{prior = TRUE}.
 }
 \seealso{
 \code{\link[=fitted.mcpfit]{fitted.mcpfit()}}, \code{\link[=predict.mcpfit]{predict.mcpfit()}}

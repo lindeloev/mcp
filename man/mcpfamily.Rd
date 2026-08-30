@@ -3,15 +3,23 @@
 \encoding{UTF-8}
 \name{mcpfamily}
 \alias{mcpfamily}
+\alias{format.mcpfamily}
+\alias{print.mcpfamily}
 \alias{is.mcpfamily}
 \title{Create or Test Objects of Class "mcpfamily"}
 \usage{
 mcpfamily(x)
 
+\method{format}{mcpfamily}(x, ...)
+
+\method{print}{mcpfamily}(x, ...)
+
 is.mcpfamily(x)
 }
 \arguments{
 \item{x}{A family object, e.g., \code{binomial(link = "identity")}.}
+
+\item{...}{Must be empty. Reserved for future use.}
 }
 \description{
 \lifecycle{experimental}
@@ -30,6 +38,13 @@ Converts standard R family objects into \code{mcpfamily} objects used internally
 Note: \code{mcpfamily} objects are shipped with mcp - there is not (yet) support for user-supplied
 families.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{format(mcpfamily)}: Format an \code{mcpfamily} object.
+
+\item \code{print(mcpfamily)}: Print an \code{mcpfamily} object.
+
+}}
 \section{Functions}{
 \itemize{
 \item \code{is.mcpfamily()}: Checks whether x is an \code{mcpfamily}.

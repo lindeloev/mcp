@@ -33,7 +33,7 @@
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object.}
 
-\item{...}{Currently ignored}
+\item{...}{Must be empty. Reserved for future use.}
 
 \item{by_row}{\code{TRUE} calls \code{\link[loo]{loo.function}} to compute log-likelihood
 contributions row-by-row (observation-by-observation), which is slower but more

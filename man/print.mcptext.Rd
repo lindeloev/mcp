@@ -10,7 +10,10 @@
 \arguments{
 \item{x}{Character, often with newlines.}
 
-\item{...}{Currently ignored.}
+\item{...}{Must be empty. Reserved for future use.}
+}
+\value{
+\code{x}, invisibly.
 }
 \description{
 Useful for \code{print(fit$jags_code)}, \code{print(mcp_demo$example_code)}, etc.

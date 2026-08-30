@@ -11,6 +11,7 @@ Authors@R:
            email = "jonas@lindeloev.dk",
            comment = c(ORCID = "0000-0003-4565-0595"))
 Description: Flexible and informed regression with Multiple Change Points. 'mcp' can infer change points in means, variances, autocorrelation structure, and any combination of these, as well as the parameters of the segments in between. All parameters are estimated with uncertainty and prediction intervals are supported - also near the change points. 'mcp' supports hypothesis testing via Savage-Dickey density ratio, posterior contrasts, and PSIS-LOO/WAIC model comparison. 'mcp' is described in Lindeløv (submitted) <doi:10.31219/osf.io/fzqxv> and generalizes the approach described in Carlin, Gelfand, & Smith (1992) <doi:10.2307/2347570> and Stephens (1994) <doi:10.2307/2986119>.
+SystemRequirements: JAGS (>= 4.0.0)
 License: GPL (>= 2)
 Encoding: UTF-8
 Language: en-US
