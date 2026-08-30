@@ -97,7 +97,8 @@ where they were instantiated. There will always be a `sigma_1`.
 summary(fit)
 ```
 
-    ## Family: gaussian(link = 'identity')
+    ## Family: gaussian
+    ## Links: mu = identity; sigma = log
     ## Iterations: 3000 from 3 chains.
     ## Segments:
     ##   1: y ~ 1
@@ -158,7 +159,7 @@ In general, the log-SD parameters are named `sigma_[normalname]`, where
 “normalname” is the usual parameter names in mcp (see more
 [here](https://lindeloev.github.io/mcp/dev/articles/formulas.md)). For
 example, the log-SD slope on `x` in segment 3 is `sigma_x_3`. However,
-`sigma_int_i` is just too verbose, so log-SD intercepts are simply
+`sigma_Intercept_i` is just too verbose, so log-SD intercepts are simply
 called `sigma_i`, where i is the segment number.
 
 ### Simulate data
@@ -227,7 +228,8 @@ because its only signal is a stop in standard-deviation growth.
 summary(fit)
 ```
 
-    ## Family: gaussian(link = 'identity')
+    ## Family: gaussian
+    ## Links: mu = identity; sigma = log
     ## Iterations: 10000 from 3 chains.
     ## Segments:
     ##   1: y ~ 1 + sigma(1 + x)
@@ -336,30 +338,16 @@ fit$jags_code
     ##     
     ##     # Formula for mu
     ##     link_mu_[i_] =
-    ##     
-    ##       # Segment 1: y ~ 1 + sigma(1 + x)
     ##       (x[i_] >= cp_0) * (x[i_] < cp_1) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + 
-    ##     
-    ##       # Segment 2: y ~ 1 ~ 1 + sigma(1)
     ##       (x[i_] >= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(Intercept_2)) * 1 + 
-    ##     
-    ##       # Segment 3: y ~ 1 ~ 0 + x + sigma(0 + x + I(x^2))
     ##       (x[i_] >= cp_2) * inprod(rhs_matrix_[i_, c(3)], c(x_3)) * x_local_3_[i_] + 
-    ##     
-    ##       # Segment 4: y ~ 1 ~ 0 + x
     ##       (x[i_] >= cp_3) * inprod(rhs_matrix_[i_, c(4)], c(x_4)) * x_local_4_[i_]
     ##     
     ##     # Formula for sigma
     ##     link_sigma_[i_] =
-    ##     
-    ##       # Segment 1: y ~ 1 + sigma(1 + x)
     ##       (x[i_] >= cp_0) * (x[i_] < cp_1) * inprod(rhs_matrix_[i_, c(5)], c(sigma_1)) * 1 + 
     ##       (x[i_] >= cp_0) * (x[i_] < cp_1) * inprod(rhs_matrix_[i_, c(6)], c(sigma_x_1)) * x_local_1_[i_] + 
-    ##     
-    ##       # Segment 2: y ~ 1 ~ 1 + sigma(1)
     ##       (x[i_] >= cp_1) * inprod(rhs_matrix_[i_, c(7)], c(sigma_2)) * 1 + 
-    ##     
-    ##       # Segment 3: y ~ 1 ~ 0 + x + sigma(0 + x + I(x^2))
     ##       (x[i_] >= cp_2) * inprod(rhs_matrix_[i_, c(8)], c(sigma_x_3)) * x_local_3_[i_] + 
     ##       (x[i_] >= cp_2) * inprod(rhs_matrix_[i_, c(9)], c(sigma_xE2_3)) * x_local_3_[i_]^2
     ## 

@@ -95,6 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Group-level (random) effects in mcp</h1>
             
+            <h4 data-toc-skip class="date">2026-08-30</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/group_effects.Rmd" class="external-link"><code>vignettes/group_effects.Rmd</code></a></small>
       <div class="d-none name"><code>group_effects.Rmd</code></div>
@@ -405,17 +406,11 @@ within each group.</p>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for mu</span></span>
 <span><span class="co">##     link_mu_[i_] =</span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 1: y ~ 1</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_0) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + </span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 2: y ~ 1 + (1 | id) ~ 0 + x</span></span>
 <span><span class="co">##       (x[i_] &gt;= (cp_1 + cp_1_id[id[i_]])) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]</span></span>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for sigma</span></span>
 <span><span class="co">##     link_sigma_[i_] =</span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 1: y ~ 1</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_0) * inprod(rhs_matrix_[i_, c(3)], c(sigma_1)) * 1</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##     # Likelihood and log-density for family = gaussian()</span></span>

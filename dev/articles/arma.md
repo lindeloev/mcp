@@ -153,7 +153,8 @@ We can summarise the inferred coefficients:
 summary(fit)
 ```
 
-    ## Family: gaussian(link = 'identity')
+    ## Family: gaussian
+    ## Links: mu = identity; sigma = identity
     ## Iterations: 3000 from 3 chains.
     ## Segments:
     ##   1: price ~ 1 + ar(2)
@@ -357,7 +358,8 @@ randomness in simulating data):
 summary(fit)
 ```
 
-    ## Family: gaussian(link = 'identity')
+    ## Family: gaussian
+    ## Links: mu = identity; sigma = identity
     ## Iterations: 3000 from 3 chains.
     ## Segments:
     ##   1: response ~ 1 + ar(3)
@@ -440,7 +442,8 @@ also the helpful `sim` and `match` columns):
 summary(fit)
 ```
 
-    ## Family: gaussian(link = 'identity')
+    ## Family: gaussian
+    ## Links: mu = identity; sigma = identity
     ## Iterations: 12000 from 3 chains.
     ## Segments:
     ##   1: y ~ 1 + x + ar(1)
@@ -699,27 +702,17 @@ fit$jags_code
     ##     
     ##     # Formula for ar1
     ##     ar1_[i_] =
-    ##     
-    ##       # Segment 1: y ~ 1 + x + ar(1)
     ##       (x[i_] >= cp_0) * (x[i_] < cp_1) * inprod(rhs_matrix_[i_, c(1)], c(ar1_1)) * 1 + 
-    ##     
-    ##       # Segment 2: y ~ 1 ~ 0 + x + ar(1)
     ##       (x[i_] >= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(ar1_2)) * 1
     ##     
     ##     # Formula for mu
     ##     link_mu_[i_] =
-    ##     
-    ##       # Segment 1: y ~ 1 + x + ar(1)
     ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(3)], c(Intercept_1)) * 1 + 
     ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(4)], c(x_1)) * x_local_1_[i_] + 
-    ##     
-    ##       # Segment 2: y ~ 1 ~ 0 + x + ar(1)
     ##       (x[i_] >= cp_1) * inprod(rhs_matrix_[i_, c(5)], c(x_2)) * x_local_2_[i_]
     ##     
     ##     # Formula for sigma
     ##     link_sigma_[i_] =
-    ##     
-    ##       # Segment 1: y ~ 1 + x + ar(1)
     ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(6)], c(sigma_1)) * 1
     ## 
     ##     # Likelihood and log-density for family = gaussian()

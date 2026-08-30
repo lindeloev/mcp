@@ -133,7 +133,8 @@ print(fit$example_code) # See how the data was simulated
 # Without sampling
 empty = mcp_example("binomial", sample = FALSE, plot = FALSE)
 print(empty)
-#> Family: binomial(link = 'logit')
+#> Family: binomial
+#> Links: mu = logit
 #> Segments:
 #>   1: y | trials(N) ~ 1
 #>   2: y | trials(N) ~ 1 ~ 0 + x

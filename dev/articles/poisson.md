@@ -67,7 +67,8 @@ Let us see the two intercepts (lambda in log-units) and the change point
 result = summary(fit)
 ```
 
-    ## Family: poisson(link = 'log')
+    ## Family: poisson
+    ## Links: mu = log
     ## Iterations: 3000 from 3 chains.
     ## Segments:
     ##   1: n ~ 1
@@ -270,11 +271,7 @@ fit$jags_code
     ##     
     ##     # Formula for mu
     ##     link_mu_[i_] =
-    ##     
-    ##       # Segment 1: n ~ 1
     ##       (date[i_] >= cp_0) * (date[i_] < cp_1) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + 
-    ##     
-    ##       # Segment 2: n ~ 1 ~ 1
     ##       (date[i_] >= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(Intercept_2)) * 1
     ## 
     ##     # Likelihood and log-density for family = poisson()

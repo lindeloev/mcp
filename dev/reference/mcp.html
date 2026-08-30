@@ -306,7 +306,8 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># See parameter estimates</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian(link = 'identity')</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Links: mu = identity; sigma = identity</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 3000 from 3 chains.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>
@@ -375,7 +376,8 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Inspect the prior. Useful for prior predictive checks.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian(link = 'identity')</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Links: mu = identity; sigma = identity</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 3000 from 3 chains.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>
@@ -419,9 +421,6 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">fit3</span> <span class="op">=</span> <span class="fu">mcp</span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span>, prior <span class="op">=</span> <span class="va">prior</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Some parameters may not have converged well:</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span>   * rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400: cp_1 and time_2</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Show the JAGS model</span></span></span>
 <span class="r-in"><span><span class="va">demo_fit</span><span class="op">$</span><span class="va">jags_code</span></span></span>
@@ -448,21 +447,13 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-out co"><span class="r-pr">#&gt;</span>     </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     # Formula for mu</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     link_mu_[i_] =</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       # Segment 1: response ~ 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       (time[i_] &gt;= cp_0) * (time[i_] &lt; cp_2) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       # Segment 2: response ~ 1 ~ 0 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       (time[i_] &gt;= cp_1) * (time[i_] &lt; cp_2) * inprod(rhs_matrix_[i_, c(2)], c(time_2)) * x_local_2_[i_] + </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       # Segment 3: response ~ 1 ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       (time[i_] &gt;= cp_2) * inprod(rhs_matrix_[i_, c(3)], c(Intercept_3)) * 1 + </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       (time[i_] &gt;= cp_2) * inprod(rhs_matrix_[i_, c(4)], c(time_3)) * x_local_3_[i_]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     # Formula for sigma</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     link_sigma_[i_] =</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       # Segment 1: response ~ 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       (time[i_] &gt;= cp_0) * inprod(rhs_matrix_[i_, c(5)], c(sigma_1)) * 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     # Likelihood and log-density for family = gaussian()</span>

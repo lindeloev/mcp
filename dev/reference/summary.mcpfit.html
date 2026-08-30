@@ -182,7 +182,8 @@ interval (<code>lower</code> to <code>upper</code>).</p></li>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Typical usage</span></span></span>
 <span class="r-in"><span><span class="fu">summary</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian(link = 'identity')</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Links: mu = identity; sigma = identity</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 1000 from 2 chains.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>
@@ -202,7 +203,8 @@ interval (<code>lower</code> to <code>upper</code>).</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.22 0.092 -0.40 -0.049 1.01      182      388 -0.2    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      4.01 0.311  3.45  4.657 1.00      795      854  4.0    OK</span>
 <span class="r-in"><span><span class="fu">summary</span><span class="op">(</span><span class="va">demo_fit</span>, width <span class="op">=</span> <span class="fl">0.8</span>, digits <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>  <span class="co"># Set interval width</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian(link = 'identity')</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Links: mu = identity; sigma = identity</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 1000 from 2 chains.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>
@@ -233,7 +235,8 @@ interval (<code>lower</code> to <code>upper</code>).</p></li>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Get the results as a data frame</span></span></span>
 <span class="r-in"><span><span class="va">results</span> <span class="op">=</span> <span class="fu">summary</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian(link = 'identity')</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Links: mu = identity; sigma = identity</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 1000 from 2 chains.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>
@@ -258,7 +261,8 @@ interval (<code>lower</code> to <code>upper</code>).</p></li>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Summarise prior</span></span></span>
 <span class="r-in"><span><span class="fu">summary</span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian(link = 'identity')</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Links: mu = identity; sigma = identity</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 1000 from 2 chains.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>

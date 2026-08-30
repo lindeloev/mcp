@@ -35,6 +35,10 @@ regression:
     Similarly for time-series such as
     [`ar()`](https://rdrr.io/r/stats/ar.html) and `ma()` ([read
     more](https://lindeloev.github.io/mcp/dev/articles/arma.md)).
+3.  The response part can contain auxiliaries after `|` combined with
+    `+`, such as `y | weights(w)` for observation log-likelihood weights
+    (supported across all families) and `y | trials(N) + weights(w)` for
+    binomial models.
 
 `mcp` is heavily inspired by `brms` which again is inspired by
 [`lme4::lmer`](https://cran.r-project.org/web/packages/lme4/index.html).
@@ -76,7 +80,8 @@ fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE)
 summary(fit)
 ```
 
-    ## Family: gaussian(link = 'identity')
+    ## Family: gaussian
+    ## Links: mu = identity; sigma = identity
     ## Segments:
     ##   1: y ~ 1
     ##   2: y ~ 1 ~ 0 + x
@@ -222,17 +227,11 @@ fit$jags_code
     ##     
     ##     # Formula for mu
     ##     link_mu_[i_] =
-    ##     
-    ##       # Segment 1: y ~ 1
     ##       (x[i_] >= cp_0) * (x[i_] < cp_1) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + 
-    ##     
-    ##       # Segment 2: y ~ 1 ~ 1
     ##       (x[i_] >= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(Intercept_2)) * 1
     ##     
     ##     # Formula for sigma
     ##     link_sigma_[i_] =
-    ##     
-    ##       # Segment 1: y ~ 1
     ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(3)], c(sigma_1)) * 1
     ## 
     ##     # Likelihood and log-density for family = gaussian()
@@ -319,17 +318,11 @@ fit$jags_code
     ##     
     ##     # Formula for mu
     ##     link_mu_[i_] =
-    ##     
-    ##       # Segment 1: y ~ 0 + x
     ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(1)], c(x_1)) * x_local_1_[i_] + 
-    ##     
-    ##       # Segment 2: y ~ 1 ~ 0 + x
     ##       (x[i_] >= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]
     ##     
     ##     # Formula for sigma
     ##     link_sigma_[i_] =
-    ##     
-    ##       # Segment 1: y ~ 0 + x
     ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(3)], c(sigma_1)) * 1
     ## 
     ##     # Likelihood and log-density for family = gaussian()
@@ -414,3 +407,61 @@ Key features of multiple regression models in `mcp`:
   [`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md),
   or can be set explicitly via
   `plot(fit, color_by = "group", at = list(z = 0))`.
+
+## Relative changes between segments
+
+Parameters in `mcp` represent the absolute values within each segment
+(e.g., `time_2` is the slope in segment 2 and `time_3` is the slope in
+segment 3). To evaluate the *relative change* between segments, you can
+use
+[`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md)
+for quick estimates or use
+[`as_draws_df()`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md)
+to work with the distribution.
+
+First, using
+[`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md):
+
+``` r
+
+hypothesis(demo_fit, "time_3 > time_2")
+```
+
+    ##            hypothesis       mean      lower      upper p BF
+    ## 1 time_3 - time_2 > 0 -0.7552872 -0.9993173 -0.5497272 0  0
+
+The estimate reflects the difference `time_3 - time_2` (how much steeper
+or flatter the slope became in segment 3), along with its credibility
+interval, posterior probability, and directional Bayes factor. [Read
+more about hypothesis testing in the comparison
+article](https://lindeloev.github.io/mcp/dev/articles/comparison.md).
+Here, we see that `time_3` is -0.76 greater (i.e., it is smaller than
+`time_2`).
+
+If you need the full posterior distribution of the change (e.g., for
+[`quantile()`](https://rdrr.io/r/stats/quantile.html),
+[`hist()`](https://rdrr.io/r/graphics/hist.html), or plotting with
+`ggplot2`), extract draws, e.g., using
+[`as_draws_df()`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md):
+
+``` r
+
+draws = as_draws_df(demo_fit) |> 
+  dplyr::mutate(diff_time = time_3 - time_2)
+
+head(draws)
+```
+
+    ## # A draws_df: 6 iterations, 1 chains, and 8 variables
+    ##   Intercept_1 Intercept_3 cp_1 cp_2 sigma_1 time_2 time_3 diff_time
+    ## 1         8.4       2.111   20   70     4.0   0.39 -0.298     -0.69
+    ## 2         8.9       0.875   20   69     3.7   0.40 -0.205     -0.61
+    ## 3         9.7      -0.905   20   70     3.9   0.40 -0.105     -0.51
+    ## 4         9.6      -1.210   21   69     4.9   0.42 -0.095     -0.52
+    ## 5         9.4      -0.168   22   70     4.5   0.40 -0.199     -0.60
+    ## 6        11.2      -0.015   24   70     4.5   0.40 -0.195     -0.60
+    ## # ... hidden reserved variables {'.chain', '.iteration', '.draw'}
+
+You can now use `diff_time` directly with base R functions like
+`quantile(draws$diff_time, c(0.025, 0.975))` and
+`hist(draws$diff_time)`.

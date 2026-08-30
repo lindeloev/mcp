@@ -95,6 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Variance change points and other distributional parameters</h1>
             
+            <h4 data-toc-skip class="date">2026-08-30</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/dpar.Rmd" class="external-link"><code>vignettes/dpar.Rmd</code></a></small>
       <div class="d-none name"><code>dpar.Rmd</code></div>
@@ -180,7 +181,8 @@ default plot of the expected response:</p>
 instantiated. There will always be a <code>sigma_1</code>.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Family: gaussian(link = 'identity')</span></span>
+<pre><code><span><span class="co">## Family: gaussian</span></span>
+<span><span class="co">## Links: mu = identity; sigma = log</span></span>
 <span><span class="co">## Iterations: 3000 from 3 chains.</span></span>
 <span><span class="co">## Segments:</span></span>
 <span><span class="co">##   1: y ~ 1</span></span>
@@ -237,8 +239,9 @@ the value where it was left.</li>
 <code>sigma_[normalname]</code>, where “normalname” is the usual
 parameter names in mcp (see more <a href="../articles/formulas.html">here</a>). For example, the log-SD
 slope on <code>x</code> in segment 3 is <code>sigma_x_3</code>. However,
-<code>sigma_int_i</code> is just too verbose, so log-SD intercepts are
-simply called <code>sigma_i</code>, where i is the segment number.</p>
+<code>sigma_Intercept_i</code> is just too verbose, so log-SD intercepts
+are simply called <code>sigma_i</code>, where i is the segment
+number.</p>
 <div class="section level3">
 <h3 id="simulate-data">Simulate data<a class="anchor" aria-label="anchor" href="#simulate-data"></a>
 </h3>
@@ -287,7 +290,8 @@ uncertainty than the others because its only signal is a stop in
 standard-deviation growth.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Family: gaussian(link = 'identity')</span></span>
+<pre><code><span><span class="co">## Family: gaussian</span></span>
+<span><span class="co">## Links: mu = identity; sigma = log</span></span>
 <span><span class="co">## Iterations: 10000 from 3 chains.</span></span>
 <span><span class="co">## Segments:</span></span>
 <span><span class="co">##   1: y ~ 1 + sigma(1 + x)</span></span>
@@ -383,30 +387,16 @@ for sigma”).</p>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for mu</span></span>
 <span><span class="co">##     link_mu_[i_] =</span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 1: y ~ 1 + sigma(1 + x)</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + </span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 2: y ~ 1 ~ 1 + sigma(1)</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(Intercept_2)) * 1 + </span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 3: y ~ 1 ~ 0 + x + sigma(0 + x + I(x^2))</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_2) * inprod(rhs_matrix_[i_, c(3)], c(x_3)) * x_local_3_[i_] + </span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 4: y ~ 1 ~ 0 + x</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_3) * inprod(rhs_matrix_[i_, c(4)], c(x_4)) * x_local_4_[i_]</span></span>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for sigma</span></span>
 <span><span class="co">##     link_sigma_[i_] =</span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 1: y ~ 1 + sigma(1 + x)</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * inprod(rhs_matrix_[i_, c(5)], c(sigma_1)) * 1 + </span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * inprod(rhs_matrix_[i_, c(6)], c(sigma_x_1)) * x_local_1_[i_] + </span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 2: y ~ 1 ~ 1 + sigma(1)</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_1) * inprod(rhs_matrix_[i_, c(7)], c(sigma_2)) * 1 + </span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 3: y ~ 1 ~ 0 + x + sigma(0 + x + I(x^2))</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_2) * inprod(rhs_matrix_[i_, c(8)], c(sigma_x_3)) * x_local_3_[i_] + </span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_2) * inprod(rhs_matrix_[i_, c(9)], c(sigma_xE2_3)) * x_local_3_[i_]^2</span></span>
 <span><span class="co">## </span></span>

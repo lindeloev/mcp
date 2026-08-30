@@ -50,14 +50,14 @@ fitting-data rows.
 formula(demo_fit)  # Show all segment formulas
 #> List of 3
 #>  $ response ~ 1
-#> <environment: 0x55ffb5a5c840>
+#> <environment: 0x55ce48ec8868>
 #>  $ response ~ 1 ~ 0 + time
-#> <environment: 0x55ffb5a5c840>
+#> <environment: 0x55ce48ec8868>
 #>  $ response ~ 1 ~ 1 + time
-#> <environment: 0x55ffb5a5c840>
+#> <environment: 0x55ce48ec8868>
 formula(demo_fit, segment = 2)  # Show the formula for segment 2
 #> response ~ 1 ~ 0 + time
-#> <environment: 0x55ffb5a5c840>
+#> <environment: 0x55ce48ec8868>
 family(demo_fit)  # Show the response family and link
 #> 
 #> Family: gaussian 

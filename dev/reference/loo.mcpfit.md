@@ -143,7 +143,7 @@ loo2 = loo(fit2)
 loo::loo_compare(loo1, loo2)
 #>   model elpd_diff se_diff p_worse diag_diff      diag_elpd
 #>  model1       0.0     0.0      NA           3 k_psis > 0.7
-#>  model2      -2.0     3.2    0.73   N < 100               
+#>  model2      -1.7     3.2    0.71   N < 100               
 #> 
 #> Diagnostic flags present.
 #> See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)

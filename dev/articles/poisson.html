@@ -95,6 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Poisson and negative-binomial change point analysis</h1>
             
+            <h4 data-toc-skip class="date">2026-08-30</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/poisson.Rmd" class="external-link"><code>vignettes/poisson.Rmd</code></a></small>
       <div class="d-none name"><code>poisson.Rmd</code></div>
@@ -152,7 +153,8 @@ intercepts. This is very simple to do in <code>mcp</code>:</p>
 point (in years):</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">=</span> <span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Family: poisson(link = 'log')</span></span>
+<pre><code><span><span class="co">## Family: poisson</span></span>
+<span><span class="co">## Links: mu = log</span></span>
 <span><span class="co">## Iterations: 3000 from 3 chains.</span></span>
 <span><span class="co">## Segments:</span></span>
 <span><span class="co">##   1: n ~ 1</span></span>
@@ -314,11 +316,7 @@ above.</p>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for mu</span></span>
 <span><span class="co">##     link_mu_[i_] =</span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 1: n ~ 1</span></span>
 <span><span class="co">##       (date[i_] &gt;= cp_0) * (date[i_] &lt; cp_1) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + </span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 2: n ~ 1 ~ 1</span></span>
 <span><span class="co">##       (date[i_] &gt;= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(Intercept_2)) * 1</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##     # Likelihood and log-density for family = poisson()</span></span>

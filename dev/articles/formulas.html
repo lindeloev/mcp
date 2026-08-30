@@ -95,6 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Understanding mcp formulas</h1>
             
+            <h4 data-toc-skip class="date">2026-08-30</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/formulas.Rmd" class="external-link"><code>vignettes/formulas.Rmd</code></a></small>
       <div class="d-none name"><code>formulas.Rmd</code></div>
@@ -131,6 +132,10 @@ deviations</a>.</li>
 <li>The predictor part can contain distributional regression as terms,
 such as <code>sigma([formula here])</code> and <code>shape()</code> (<a href="../articles/dpar.html">read more</a>). Similarly for time-series
 such as <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> and <code>ma()</code> (<a href="../articles/arma.html">read more</a>).</li>
+<li>The response part can contain auxiliaries after <code>|</code>
+combined with <code>+</code>, such as <code>y | weights(w)</code> for
+observation log-likelihood weights (supported across all families) and
+<code>y | trials(N) + weights(w)</code> for binomial models.</li>
 </ol>
 <p><code>mcp</code> is heavily inspired by <code>brms</code> which again
 is inspired by <a href="https://cran.r-project.org/web/packages/lme4/index.html" class="external-link"><code>lme4::lmer</code></a>.
@@ -165,7 +170,8 @@ segments, i.e., with two change points:</p>
 <span><span class="co"># Interpret, but do not sample.</span></span>
 <span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Family: gaussian(link = 'identity')</span></span>
+<pre><code><span><span class="co">## Family: gaussian</span></span>
+<span><span class="co">## Links: mu = identity; sigma = identity</span></span>
 <span><span class="co">## Segments:</span></span>
 <span><span class="co">##   1: y ~ 1</span></span>
 <span><span class="co">##   2: y ~ 1 ~ 0 + x</span></span>
@@ -306,17 +312,11 @@ uses the indicator formulation of change points:</p>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for mu</span></span>
 <span><span class="co">##     link_mu_[i_] =</span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 1: y ~ 1</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + </span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 2: y ~ 1 ~ 1</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(Intercept_2)) * 1</span></span>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for sigma</span></span>
 <span><span class="co">##     link_sigma_[i_] =</span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 1: y ~ 1</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_0) * inprod(rhs_matrix_[i_, c(3)], c(sigma_1)) * 1</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##     # Likelihood and log-density for family = gaussian()</span></span>
@@ -396,17 +396,11 @@ handover is automatically continuous everywhere:</p>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for mu</span></span>
 <span><span class="co">##     link_mu_[i_] =</span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 1: y ~ 0 + x</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_0) * inprod(rhs_matrix_[i_, c(1)], c(x_1)) * x_local_1_[i_] + </span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 2: y ~ 1 ~ 0 + x</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]</span></span>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for sigma</span></span>
 <span><span class="co">##     link_sigma_[i_] =</span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 1: y ~ 0 + x</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_0) * inprod(rhs_matrix_[i_, c(3)], c(sigma_1)) * 1</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##     # Likelihood and log-density for family = gaussian()</span></span>
@@ -494,6 +488,49 @@ automatically by <code><a href="../reference/interpolate_newdata.html">interpola
 explicitly via
 <code>plot(fit, color_by = "group", at = list(z = 0))</code>.</li>
 </ul>
+</div>
+<div class="section level2">
+<h2 id="relative-changes-between-segments">Relative changes between segments<a class="anchor" aria-label="anchor" href="#relative-changes-between-segments"></a>
+</h2>
+<p>Parameters in <code>mcp</code> represent the absolute values within
+each segment (e.g., <code>time_2</code> is the slope in segment 2 and
+<code>time_3</code> is the slope in segment 3). To evaluate the
+<em>relative change</em> between segments, you can use
+<code><a href="../reference/hypothesis.html">hypothesis()</a></code> for quick estimates or use
+<code><a href="../reference/as_draws.mcpfit.html">as_draws_df()</a></code> to work with the distribution.</p>
+<p>First, using <code><a href="../reference/hypothesis.html">hypothesis()</a></code>:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">demo_fit</span>, <span class="st">"time_3 &gt; time_2"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##            hypothesis       mean      lower      upper p BF</span></span>
+<span><span class="co">## 1 time_3 - time_2 &gt; 0 -0.7552872 -0.9993173 -0.5497272 0  0</span></span></code></pre>
+<p>The estimate reflects the difference <code>time_3 - time_2</code>
+(how much steeper or flatter the slope became in segment 3), along with
+its credibility interval, posterior probability, and directional Bayes
+factor. <a href="../articles/comparison.html">Read more about hypothesis
+testing in the comparison article</a>. Here, we see that
+<code>time_3</code> is -0.76 greater (i.e., it is smaller than
+<code>time_2</code>).</p>
+<p>If you need the full posterior distribution of the change (e.g., for
+<code><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile()</a></code>, <code><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist()</a></code>, or plotting with
+<code>ggplot2</code>), extract draws, e.g., using
+<code><a href="../reference/as_draws.mcpfit.html">as_draws_df()</a></code>:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">draws</span> <span class="op">=</span> <span class="fu"><a href="../reference/as_draws.mcpfit.html">as_draws_df</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>diff_time <span class="op">=</span> <span class="va">time_3</span> <span class="op">-</span> <span class="va">time_2</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">draws</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## # A draws_df: 6 iterations, 1 chains, and 8 variables</span></span>
+<span><span class="co">##   Intercept_1 Intercept_3 cp_1 cp_2 sigma_1 time_2 time_3 diff_time</span></span>
+<span><span class="co">## 1         8.4       2.111   20   70     4.0   0.39 -0.298     -0.69</span></span>
+<span><span class="co">## 2         8.9       0.875   20   69     3.7   0.40 -0.205     -0.61</span></span>
+<span><span class="co">## 3         9.7      -0.905   20   70     3.9   0.40 -0.105     -0.51</span></span>
+<span><span class="co">## 4         9.6      -1.210   21   69     4.9   0.42 -0.095     -0.52</span></span>
+<span><span class="co">## 5         9.4      -0.168   22   70     4.5   0.40 -0.199     -0.60</span></span>
+<span><span class="co">## 6        11.2      -0.015   24   70     4.5   0.40 -0.195     -0.60</span></span>
+<span><span class="co">## # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</span></span></code></pre>
+<p>You can now use <code>diff_time</code> directly with base R functions
+like <code>quantile(draws$diff_time, c(0.025, 0.975))</code> and
+<code>hist(draws$diff_time)</code>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -164,25 +164,26 @@ Several plots showing mcp regression fits across different models and change-poi
 <p>Use <code><a href="reference/summary.mcpfit.html">summary()</a></code> to summarise the posterior distribution as well as sampling diagnostics:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb8"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="do">## Family: gaussian(link = 'identity')</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="do">## Iterations: 3000 from 3 chains.</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="do">## Segments:</span></span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="do">##   1: response ~ 1</span></span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="do">##   2: response ~ 1 ~ 0 + time</span></span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="do">##   3: response ~ 1 ~ 1 + time</span></span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="do">## </span></span>
-<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="do">## Change point parameters:</span></span>
-<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="do">##         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span></span>
-<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="do">##  cp_1        30.78 3.604 23.69 38.370 1.01      426      603 30.0    OK</span></span>
-<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="do">##  cp_2        69.77 0.293 69.30 70.261 1.00     5621     7509 70.0    OK</span></span>
-<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="do">## </span></span>
-<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="do">## Population-level parameters:</span></span>
-<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="do">##         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span></span>
-<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="do">##  Intercept_1 10.31 0.705  8.90 11.641 1.00     1436     2136 10.0    OK</span></span>
-<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="do">##  time_2       0.54 0.064  0.43  0.682 1.01      463      668  0.5    OK</span></span>
-<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="do">##  Intercept_3  0.72 1.566 -2.30  3.873 1.00      591     1134  0.0    OK</span></span>
-<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="do">##  time_3      -0.23 0.092 -0.42 -0.055 1.00      606     1109 -0.2    OK</span></span>
-<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="do">##  sigma_1      4.01 0.304  3.48  4.691 1.00     4147     3932  4.0    OK</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="do">## Family: gaussian</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="do">## Links: mu = identity; sigma = identity</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="do">## Iterations: 3000 from 3 chains.</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="do">## Segments:</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="do">##   1: response ~ 1</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="do">##   2: response ~ 1 ~ 0 + time</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="do">##   3: response ~ 1 ~ 1 + time</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="do">## </span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="do">## Change point parameters:</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="do">##         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="do">##  cp_1        30.78 3.604 23.69 38.370 1.01      426      603 30.0    OK</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="do">##  cp_2        69.77 0.293 69.30 70.261 1.00     5621     7509 70.0    OK</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="do">## </span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="do">## Population-level parameters:</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="do">##         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="do">##  Intercept_1 10.31 0.705  8.90 11.641 1.00     1436     2136 10.0    OK</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="do">##  time_2       0.54 0.064  0.43  0.682 1.01      463      668  0.5    OK</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="do">##  Intercept_3  0.72 1.566 -2.30  3.873 1.00      591     1134  0.0    OK</span></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="do">##  time_3      -0.23 0.092 -0.42 -0.055 1.00      606     1109 -0.2    OK</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="do">##  sigma_1      4.01 0.304  3.48  4.691 1.00     4147     3932  4.0    OK</span></span></code></pre></div>
 <ul>
 <li>
 <code>rhat</code> is the rank-normalized split-Rhat convergence diagnostic.</li>
@@ -260,6 +261,7 @@ Several plots showing mcp regression fits across different models and change-poi
 <ul>
 <li><p><code>~ 0 + sigma(1)</code> models an intercept change in standard deviation. <code>~ 0 + sigma(0 + x)</code> models increasing/decreasing standard deviation. Explicit <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> formulas use a log link, so their coefficients are on the log-SD scale.</p></li>
 <li><p><code>~ ar(N)</code> models Nth order autoregression on residuals. <code>~ar(N, 0 + x)</code> models increasing/decreasing autocorrelation.</p></li>
+<li><p><code>y | weights(w)</code> (and <code>y | trials(N) + weights(w)</code>) specifies observation log-likelihood weights across all families, as in <code>brms</code>.</p></li>
 <li><p>You can provide complete models in distributional parameters (currently <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, <code>shape()</code>, and <code>mu()</code>) and time-series (<code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> and <code>ma()</code>). For example, <code>~ x + sigma(1 + x:condition)</code> models an abrupt change followed by a by-condition slopes in variance.</p></li>
 </ul>
 <p><a href="articles/predict.html">Get fitted and predicted values and intervals</a>:</p>

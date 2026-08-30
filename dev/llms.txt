@@ -147,7 +147,8 @@ summary(fit)
 ```
 
 ``` R
-## Family: gaussian(link = 'identity')
+## Family: gaussian
+## Links: mu = identity; sigma = identity
 ## Iterations: 3000 from 3 chains.
 ## Segments:
 ##   1: response ~ 1
@@ -341,6 +342,9 @@ deviation](https://lindeloev.github.io/mcp/dev/articles/dpar.md):
 
 - `~ ar(N)` models Nth order autoregression on residuals.
   `~ar(N, 0 + x)` models increasing/decreasing autocorrelation.
+
+- `y | weights(w)` (and `y | trials(N) + weights(w)`) specifies
+  observation log-likelihood weights across all families, as in `brms`.
 
 - You can provide complete models in distributional parameters
   (currently [`sigma()`](https://rdrr.io/r/stats/sigma.html), `shape()`,

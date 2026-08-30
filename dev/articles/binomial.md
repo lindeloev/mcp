@@ -116,7 +116,8 @@ good precision. Again, recall that intercepts and slopes are on a
 summary(fit)
 ```
 
-    ## Family: binomial(link = 'logit')
+    ## Family: binomial
+    ## Links: mu = logit
     ## Iterations: 3000 from 3 chains.
     ## Segments:
     ##   1: y | trials(N) ~ 1
@@ -326,14 +327,8 @@ fit$jags_code
     ##     
     ##     # Formula for mu
     ##     link_mu_[i_] =
-    ##     
-    ##       # Segment 1: y | trials(N) ~ 1
     ##       (year[i_] >= cp_0) * (year[i_] < cp_2) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + 
-    ##     
-    ##       # Segment 2: y | trials(N) ~ 1 ~ 0 + year
     ##       (year[i_] >= cp_1) * (year[i_] < cp_2) * inprod(rhs_matrix_[i_, c(2)], c(year_2)) * x_local_2_[i_] + 
-    ##     
-    ##       # Segment 3: y | trials(N) ~ 1 ~ 1 + year
     ##       (year[i_] >= cp_2) * inprod(rhs_matrix_[i_, c(3)], c(Intercept_3)) * 1 + 
     ##       (year[i_] >= cp_2) * inprod(rhs_matrix_[i_, c(4)], c(year_3)) * x_local_3_[i_]
     ## 

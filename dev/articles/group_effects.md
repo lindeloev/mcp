@@ -380,17 +380,11 @@ fit$jags_code
     ##     
     ##     # Formula for mu
     ##     link_mu_[i_] =
-    ##     
-    ##       # Segment 1: y ~ 1
     ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + 
-    ##     
-    ##       # Segment 2: y ~ 1 + (1 | id) ~ 0 + x
     ##       (x[i_] >= (cp_1 + cp_1_id[id[i_]])) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]
     ##     
     ##     # Formula for sigma
     ##     link_sigma_[i_] =
-    ##     
-    ##       # Segment 1: y ~ 1
     ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(3)], c(sigma_1)) * 1
     ## 
     ##     # Likelihood and log-density for family = gaussian()

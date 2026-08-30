@@ -95,6 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Binomial change point analysis</h1>
             
+            <h4 data-toc-skip class="date">2026-08-30</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/binomial.Rmd" class="external-link"><code>vignettes/binomial.Rmd</code></a></small>
       <div class="d-none name"><code>binomial.Rmd</code></div>
@@ -193,7 +194,8 @@ parameters to a pretty good precision. Again, recall that intercepts and
 slopes are on a <code>logit</code> scale.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Family: binomial(link = 'logit')</span></span>
+<pre><code><span><span class="co">## Family: binomial</span></span>
+<span><span class="co">## Links: mu = logit</span></span>
 <span><span class="co">## Iterations: 3000 from 3 chains.</span></span>
 <span><span class="co">## Segments:</span></span>
 <span><span class="co">##   1: y | trials(N) ~ 1</span></span>
@@ -368,14 +370,8 @@ model contains several change points.</p>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for mu</span></span>
 <span><span class="co">##     link_mu_[i_] =</span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 1: y | trials(N) ~ 1</span></span>
 <span><span class="co">##       (year[i_] &gt;= cp_0) * (year[i_] &lt; cp_2) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + </span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 2: y | trials(N) ~ 1 ~ 0 + year</span></span>
 <span><span class="co">##       (year[i_] &gt;= cp_1) * (year[i_] &lt; cp_2) * inprod(rhs_matrix_[i_, c(2)], c(year_2)) * x_local_2_[i_] + </span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 3: y | trials(N) ~ 1 ~ 1 + year</span></span>
 <span><span class="co">##       (year[i_] &gt;= cp_2) * inprod(rhs_matrix_[i_, c(3)], c(Intercept_3)) * 1 + </span></span>
 <span><span class="co">##       (year[i_] &gt;= cp_2) * inprod(rhs_matrix_[i_, c(4)], c(year_3)) * x_local_3_[i_]</span></span>
 <span><span class="co">## </span></span>

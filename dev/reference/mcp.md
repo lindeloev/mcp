@@ -342,7 +342,8 @@ demo_fit = mcp(model, data = data, sample = "both", seed = 42)
 
 # See parameter estimates
 summary(demo_fit)
-#> Family: gaussian(link = 'identity')
+#> Family: gaussian
+#> Links: mu = identity; sigma = identity
 #> Iterations: 3000 from 3 chains.
 #> Segments:
 #>   1: response ~ 1
@@ -411,7 +412,8 @@ loo::loo_compare(demo_loo, null_loo)
 
 # Inspect the prior. Useful for prior predictive checks.
 summary(demo_fit, prior = TRUE)
-#> Family: gaussian(link = 'identity')
+#> Family: gaussian
+#> Links: mu = identity; sigma = identity
 #> Iterations: 3000 from 3 chains.
 #> Segments:
 #>   1: response ~ 1
@@ -455,9 +457,6 @@ prior = list(
 )
 
 fit3 = mcp(model, data = data, prior = prior)
-#> Warning: Some parameters may not have converged well:
-#>   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1 and time_2
-#> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
 
 # Show the JAGS model
 demo_fit$jags_code
@@ -484,21 +483,13 @@ demo_fit$jags_code
 #>     
 #>     # Formula for mu
 #>     link_mu_[i_] =
-#>     
-#>       # Segment 1: response ~ 1
 #>       (time[i_] >= cp_0) * (time[i_] < cp_2) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + 
-#>     
-#>       # Segment 2: response ~ 1 ~ 0 + time
 #>       (time[i_] >= cp_1) * (time[i_] < cp_2) * inprod(rhs_matrix_[i_, c(2)], c(time_2)) * x_local_2_[i_] + 
-#>     
-#>       # Segment 3: response ~ 1 ~ 1 + time
 #>       (time[i_] >= cp_2) * inprod(rhs_matrix_[i_, c(3)], c(Intercept_3)) * 1 + 
 #>       (time[i_] >= cp_2) * inprod(rhs_matrix_[i_, c(4)], c(time_3)) * x_local_3_[i_]
 #>     
 #>     # Formula for sigma
 #>     link_sigma_[i_] =
-#>     
-#>       # Segment 1: response ~ 1
 #>       (time[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(5)], c(sigma_1)) * 1
 #> 
 #>     # Likelihood and log-density for family = gaussian()

@@ -154,14 +154,6 @@ get_plot(
   Internal. Whether grouping arguments were omitted, mapped, or
   explicitly disabled.
 
-- samples, nsamples:
-
-  Deprecated. Use `lines` instead.
-
-- ...:
-
-  Currently ignored.
-
 ## Value
 
 A ggplot2 object.

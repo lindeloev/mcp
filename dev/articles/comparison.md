@@ -236,8 +236,9 @@ update from prior to posterior.
 
 There are more examples [in the documentation for
 `hypothesis`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md),
-including how to test group-level deviations.
-
+including how to test group-level deviations and [relative changes
+between
+segments](https://lindeloev.github.io/mcp/dev/articles/formulas.html#relative-changes-and-differences-between-segments).
 `mcp` evaluates the directional hypothesis for both posterior and prior
 samples. The posterior probability is reported as `p`, and the Bayes
 factor is the posterior odds divided by the prior odds:

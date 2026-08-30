@@ -56,8 +56,11 @@
     Fits now also store a proper matched `$call`. Printed summaries now
     report posterior `sd` and has a new layout.
 
-- **Negative binomial and GARMA:** You can now do
-  `mcp(..., family = negbinomial())`. Autoregression
+- **Negative binomial, offset(), and GARMA:** You can now do
+  `mcp(..., family = negbinomial())`. NB (and Poisson) can now model
+  rates and exposure with because
+  [`offset()`](https://rdrr.io/r/stats/offset.html) is now supported in
+  formulas - also for other families. Autoregression
   ([`ar()`](https://rdrr.io/r/stats/ar.html)) has been generalized to
   GARMA link-scale residuals for Gaussian, binomial, Poisson, and
   negative-binomial models with their default links, using
@@ -144,16 +147,17 @@ been added until we reach 1.0.
   method argument remains unchanged for now.
 
 - `y | weights(w)` now specifies brms-aligned observation log-likelihood
-  weights rather than Gaussian precision weights (which previously
-  scaled the residual SD as `sigma / sqrt(w)`). Predictive draws and
-  expectations now use `sigma` directly while
+  weights across all supported families
+  ([`gaussian()`](https://rdrr.io/r/stats/family.html),
+  [`binomial()`](https://rdrr.io/r/stats/family.html),
+  [`bernoulli()`](https://lindeloev.github.io/mcp/dev/reference/bernoulli.md),
+  [`poisson()`](https://rdrr.io/r/stats/family.html),
+  [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md)),
+  rather than Gaussian-only precision weights (which previously scaled
+  the residual SD as `sigma / sqrt(w)`). Predictive draws and
+  expectations now use the distribution parameters directly while
   [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-  multiplies observation log-densities by `w`. Additionally, the weight
-  column is no longer removed from
-  [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-  and
-  [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-  output so that observation weights remain available in returned data.
+  multiplies observation log-densities by `w`.
 
 - AR and MA intercepts now have zero-centered, regularizing
   `dnorm(0, 0.5) T(-1, 1)` priors, replacing independent uniform priors.
@@ -448,19 +452,14 @@ been added until we reach 1.0.
 
   - `pp_check(..., ndraws = NULL)` errored. Fixed.
 
-- Weighted regression: While JAGS correctly modelled weights, R-side
-  simulation/generation ignored it. This means
-  [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-  PPCs,
-  [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-  WAIC, and LOO were incorrect when using weighted regression. Weighted
-  Gaussian posterior predictions and log-likelihoods now use the
-  observation-level standard deviation `sigma / sqrt(weight)`, matching
-  the JAGS precision `weight / sigma^2`. This makes
-  [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-  posterior predictive checks,
-  [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-  WAIC, and LOO consistent with the fitted model.
+- Weighted regression now uses brms-style likelihood weights throughout:
+  JAGS targets the Gaussian density raised to `weight`,
+  [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+  multiplies each Gaussian log density by `weight`, and predictive draws
+  use the unweighted response distribution with standard deviation
+  `sigma`. In v0.3.4, weights instead acted as Gaussian precision
+  weights and R-side predictions and information criteria were not fully
+  consistent with the fitted model.
 
 - In models going from higher-order to lower-order,
   (`~ ar(2), ~ ar(1)`), the higher-order components were not “turned

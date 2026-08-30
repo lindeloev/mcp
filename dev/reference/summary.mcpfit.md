@@ -141,7 +141,8 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 ``` r
 # Typical usage
 summary(demo_fit)
-#> Family: gaussian(link = 'identity')
+#> Family: gaussian
+#> Links: mu = identity; sigma = identity
 #> Iterations: 1000 from 2 chains.
 #> Segments:
 #>   1: response ~ 1
@@ -161,7 +162,8 @@ summary(demo_fit)
 #>  time_3      -0.22 0.092 -0.40 -0.049 1.01      182      388 -0.2    OK
 #>  sigma_1      4.01 0.311  3.45  4.657 1.00      795      854  4.0    OK
 summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
-#> Family: gaussian(link = 'identity')
+#> Family: gaussian
+#> Links: mu = identity; sigma = identity
 #> Iterations: 1000 from 2 chains.
 #> Segments:
 #>   1: response ~ 1
@@ -192,7 +194,8 @@ summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 
 # Get the results as a data frame
 results = summary(demo_fit)
-#> Family: gaussian(link = 'identity')
+#> Family: gaussian
+#> Links: mu = identity; sigma = identity
 #> Iterations: 1000 from 2 chains.
 #> Segments:
 #>   1: response ~ 1
@@ -217,7 +220,8 @@ results = summary(demo_fit)
 
 # Summarise prior
 summary(demo_fit, prior = TRUE)
-#> Family: gaussian(link = 'identity')
+#> Family: gaussian
+#> Links: mu = identity; sigma = identity
 #> Iterations: 1000 from 2 chains.
 #> Segments:
 #>   1: response ~ 1
