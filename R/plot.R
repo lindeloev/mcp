@@ -431,8 +431,9 @@ get_plot = function(x,
 #' @seealso plot_pars plot_dpar pp_check
 #' @details
 #'   `plot()` uses `fit$simulate()` on posterior draws. These represent the
-#'   (joint) posterior distribution. Interval summaries and change-point densities
-#'   always use all available draws.
+#'   (joint) posterior distribution. Interval summaries are based on CDFs
+#'   computed on `ndraws` draws, and change-point densities are simple
+#'   densities on all available draws.
 #' @return A \pkg{ggplot2} object.
 #' @examples
 #' # Typical usage. demo_fit is an mcpfit object.
