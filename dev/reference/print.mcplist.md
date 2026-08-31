@@ -35,11 +35,11 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 print(demo_fit$model)
 #> List of 3
 #>  $ response ~ 1
-#> <environment: 0x55c8b298f2f0>
+#> <environment: 0x55fd5c0d7c58>
 #>  $ response ~ 1 ~ 0 + time
-#> <environment: 0x55c8b298f2f0>
+#> <environment: 0x55fd5c0d7c58>
 #>  $ response ~ 1 ~ 1 + time
-#> <environment: 0x55c8b298f2f0>
+#> <environment: 0x55fd5c0d7c58>
 print(demo_fit$prior)
 #> List of 7
 #>  $ cp_1       :"dt(3.189323, 47.38506, 1) T(3.189323, 97.95945)"
