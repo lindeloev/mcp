@@ -88,7 +88,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   # regular empty summary instead of asking posterior to summarise no draws.
   if (length(get_cols) == 0) {
     estimates = data.frame(
-      name = character(), mean = numeric(), sd = numeric(), lower = numeric(),
+      variable = character(), mean = numeric(), sd = numeric(), lower = numeric(),
       upper = numeric(), rhat = numeric(), ess_bulk = numeric(), ess_tail = numeric()
     )
     if (verbose) {
@@ -117,7 +117,6 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
     ess_bulk = function(x) suppressWarnings(posterior::ess_bulk(x)),
     ess_tail = function(x) suppressWarnings(posterior::ess_tail(x))
   ) %>%
-    dplyr::rename(name = "variable") %>%
     dplyr::mutate(
       ess_bulk = round(.data$ess_bulk),
       ess_tail = round(.data$ess_tail)
@@ -127,11 +126,11 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   # built in mcp(). Group-level columns (e.g. "cp_1_id[A]") are matched by
   # their base name; ties (i.e., levels of the same group-level effect) are
   # broken alphabetically by the full column name.
-  base_name = sub("\\[.*\\]$", "", estimates$name)
+  base_name = sub("\\[.*\\]$", "", estimates$variable)
   match_idx = match(base_name, pars$name)
   estimates$segment = pars$segment[match_idx]
   estimates$dpar = pars$dpar[match_idx]
-  estimates = estimates[order(match_idx, estimates$name), ]
+  estimates = estimates[order(match_idx, estimates$variable), ]
 
   # Add simulation parameters if the data is simulated
   sim_list = attr(fit$data[, mcp_columns(fit)$response], "simulated")
@@ -168,16 +167,16 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
     # Now unpack the whole bunch to a left_join() friendly data.frame.
     simulated = unlist(simulated)  # as named vector
     simulated = data.frame(
-      name = names(simulated),
+      variable = names(simulated),
       sim = as.numeric(simulated),  # without row names
       stringsAsFactors = FALSE
     )
 
     # Add simulation values for comparison with the fitted parameters.
     estimates = estimates %>%
-      dplyr::left_join(simulated, by = "name", relationship = "one-to-one") %>%
+      dplyr::left_join(simulated, by = "variable", relationship = "one-to-one") %>%
       dplyr::mutate(
-        cp_width = ifelse(stringr::str_detect(.data$name, "^cp_[0-9]+"), .data$upper - .data$lower, 0),
+        cp_width = ifelse(stringr::str_detect(.data$variable, "^cp_[0-9]+"), .data$upper - .data$lower, 0),
         match = ifelse(
           .data$sim >= (.data$lower - 0.05 * .data$cp_width) &
           .data$sim <= (.data$upper + 0.05 * .data$cp_width),
@@ -194,7 +193,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   estimates = dplyr::select(
     estimates,
     dplyr::any_of(c(
-      "name", "mean", "sd", "lower", "upper", "rhat", "ess_bulk", "ess_tail",
+      "variable", "mean", "sd", "lower", "upper", "rhat", "ess_bulk", "ess_tail",
       "segment", "dpar", "sim", "match"
     ))
   )
@@ -231,7 +230,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'   * `segment` is the segment the parameter belongs to.
 #'   * `dpar` is the distributional parameter (`"cp"`, `"mu"`, `"sigma"`,
 #'     `"ar"`, `"ma"`, etc.) the parameter belongs to. For AR/MA terms, the
-#'     lag order is encoded in `name`, e.g. `ar2_1`.
+#'     lag order is encoded in `variable`, e.g. `ar2_1`.
 #'   * `mean` is the posterior mean
 #'   * `sd` is the posterior standard deviation.
 #'   * `lower` and `upper` are the bounds of the central posterior interval
@@ -298,7 +297,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
     result = get_summary(fit, width, scope = "population", prior = prior, verbose = verbose)
     pars = mcp_pars(fit)
     cp_names = pars$name[pars$part == "cp" & pars$scope == "population"]
-    is_cp = result$name %in% cp_names
+    is_cp = result$variable %in% cp_names
 
     # Format before splitting, so both printed tables share column widths.
     display = data.frame(lapply(result, format, digits = digits), check.names = FALSE)
@@ -1175,8 +1174,8 @@ tidy_samples = function(...) {
 #' @param .garma_replicate Internal. For GARMA predictions, generate each
 #'   response history recursively instead of conditioning on observed responses.
 #' @return
-#'   * If `summary = TRUE`: A data frame with the draw mean and SD (`error`) for
-#'     each row in `newdata`. With posterior draws (the default), `error` is the
+#'   * If `summary = TRUE`: A data frame with the draw mean and SD (`sd`) for
+#'     each row in `newdata`. With posterior draws (the default), `sd` is the
 #'     posterior predictive SD for `type = "predict"` and the posterior SD of the
 #'     evaluated quantity otherwise. With `prior = TRUE`, these are the analogous
 #'     prior summaries. If `newdata` is `NULL`, the data in `fit$data` is used.
@@ -1460,14 +1459,14 @@ pp_eval = function(
       # Summarise for each row in newdata
       dplyr::group_by(.data$data_row) %>%
       dplyr::summarise(.groups = "drop",
-                       error = stats::sd(.data[[type]]),
+                       sd = stats::sd(.data[[type]]),
                        !!type := mean(.data[[type]])
       ) %>%
 
       # Apply original order and put newdata as the first columns
       dplyr::arrange(.data$data_row) %>%
       dplyr::left_join(newdata_return, by = "data_row", relationship = "one-to-one") %>%
-      dplyr::select(dplyr::one_of(colnames(newdata_return)), dplyr::all_of(type), "error")
+      dplyr::select(dplyr::one_of(colnames(newdata_return)), dplyr::all_of(type), "sd")
 
 
     # Quantiles

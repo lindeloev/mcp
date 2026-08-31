@@ -26,7 +26,7 @@ test_that("Gaussian inference against lm()", {
   testthat::expect_lt(max(abs(params_mcp - params_lm)), 0.1)
 
   capture.output({ summary_mcp = summary(fit_mcp) })
-  sigma_mcp = summary_mcp$mean[summary_mcp$name == "sigma_1"]
+  sigma_mcp = summary_mcp$mean[summary_mcp$variable == "sigma_1"]
   testthat::expect_lt(abs(sigma_mcp - summary(fit_lm)$sigma), 0.1)
 
   # Log-likelihood
@@ -63,10 +63,10 @@ test_that("Gaussian fixed change-point inference against lm()", {
   mcp_fixef = fixef(fit_mcp_cp)
   capture.output({ mcp_summary = summary(fit_mcp_cp) })
   estimates_mcp = c(
-    mcp_fixef$mean[mcp_fixef$name == "Intercept_1"],
-    mcp_fixef$mean[mcp_fixef$name == "x_1"],
-    mcp_fixef$mean[mcp_fixef$name == "x_2"],
-    mcp_summary$mean[mcp_summary$name == "sigma_1"]
+    mcp_fixef$mean[mcp_fixef$variable == "Intercept_1"],
+    mcp_fixef$mean[mcp_fixef$variable == "x_1"],
+    mcp_fixef$mean[mcp_fixef$variable == "x_2"],
+    mcp_summary$mean[mcp_summary$variable == "sigma_1"]
   )
 
   # lm model parameterization: Intercept, x_1, x_2 (which is x_1 + delta_x), sigma

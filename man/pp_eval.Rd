@@ -38,7 +38,7 @@ conditions on the response history,
 so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
 \code{residuals()}, missing response histories are supported only in the original
 fitted data, using retained posterior imputations. \code{log_lik()} is unavailable
-when a missing response enters a later observed history. Use \code{\link[rstantools:posterior_predict]{posterior_predict()}}
+when a missing response enters a later observed history. Use \code{\link[=posterior_predict]{posterior_predict()}}
 to generate fresh response series recursively from predictor-only \code{newdata}.
 \item For models with \code{y | weights()}: Require the weights column except for \code{fitted()} and \code{predict()}.
 }}
@@ -120,8 +120,8 @@ See more under "value"}
 }
 \value{
 \itemize{
-\item If \code{summary = TRUE}: A data frame with the draw mean and SD (\code{error}) for
-each row in \code{newdata}. With posterior draws (the default), \code{error} is the
+\item If \code{summary = TRUE}: A data frame with the draw mean and SD (\code{sd}) for
+each row in \code{newdata}. With posterior draws (the default), \code{sd} is the
 posterior predictive SD for \code{type = "predict"} and the posterior SD of the
 evaluated quantity otherwise. With \code{prior = TRUE}, these are the analogous
 prior summaries. If \code{newdata} is \code{NULL}, the data in \code{fit$data} is used.

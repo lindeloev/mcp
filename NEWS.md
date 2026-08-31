@@ -22,11 +22,17 @@
 
 mcp v0.4 is a major breaking change with the aim of remaining relatively stable going forward towards version 1.0. Although a lot has been updated, the parameter estimates in v0.4.0 remain practically identical to the previous public release (v0.3.4). Deprecation detections have been added until we reach 1.0.
 
-- Renamed parameters to be more consistent with brms: `int_i` --\> `Intercept_i`; `x_1_E2` --\> `xE2_1`; `x_1_sin` --\> `sinx_1`, etc.
+- Renaming to align with `{brms}` and `{posterior}`:
+
+  - Renamed parameters to be more consistent with brms: `int_i` --\> `Intercept_i`; `x_1_E2` --\> `xE2_1`; `x_1_sin` --\> `sinx_1`, etc.
+
+  - `summary()`, `fixef()`, and `ranef()` now name the parameter identifier column `variable` instead of `name`, directly matching `{posterior}` and `posterior::summarise_draws()`.
+
+  - `fitted()`, `predict()`, `residuals()`, and `pp_eval()` with `summary = TRUE` now return `sd` instead of `error` for posterior standard deviation (and posterior predictive standard deviation), avoiding ambiguity and data column collisions.
+
+  - `Rhat` was renamed to `rhat` in `summary()`, `fixef()`, and `ranef()`, to match `{posterior}` standard.
 
 - `summary()`, `fixef()`, `ranef()`, `prior_summary()`, and everything else now return rows in a canonical order instead of the previous incidental (near-alphabetical) order. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to include `segment` and `dpar` columns.
-
-- `Rhat` was renamed to `rhat` in `summary()`, `fixef()`, and `ranef()`, to match `{posterior}` standard.
 
 - `plot()` is now split into `plot()` for plotting full fits while `plot_dpar()` plots one distributional parameter (`mu`, `sigma`, `shape`, `ar1`, etc.). The argument order was changed too. The new coloring function (`plot(fit, color_by = "column")`) is particularly useful when models include categorical predictors or rhs group-level effects. See `mcp_example("group_mu")` for a worked example.
 

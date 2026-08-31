@@ -192,15 +192,15 @@ test_arma_simulation = function(fit) {
 # Tests if summary(fit) and ranef(fit) work as expected
 test_summary = function(fit, varying_cols, prior = FALSE) {
   columns = mcp_columns(fit)
-  summary_cols = c('name','mean','sd','lower','upper','rhat','ess_bulk','ess_tail')
-  verbose_summary_cols = c('name','mean','sd','lower','upper','rhat','ess_bulk','ess_tail','segment','dpar')
+  summary_cols = c('variable','mean','sd','lower','upper','rhat','ess_bulk','ess_tail')
+  verbose_summary_cols = c('variable','mean','sd','lower','upper','rhat','ess_bulk','ess_tail','segment','dpar')
   if (!is.null(attr(fit$data[, columns$response], "simulated"))) {
     summary_cols = c(summary_cols, "sim", "match")
     verbose_summary_cols = c(verbose_summary_cols, "sim", "match")
   }
   output = capture.output({ result = summary(fit, prior = prior) })
   testthat::expect_named(result, summary_cols)
-  testthat::expect_true(all(result$name %in% mcp_pars(fit, scope = "population")$name))  # All parameters
+  testthat::expect_true(all(result$variable %in% mcp_pars(fit, scope = "population")$name))  # All parameters
   capture.output({ verbose_result = summary(fit, prior = prior, verbose = TRUE) })
   testthat::expect_named(verbose_result, verbose_summary_cols)
   fixed = fixef(fit, prior = prior)
@@ -209,14 +209,14 @@ test_summary = function(fit, varying_cols, prior = FALSE) {
   testthat::expect_named(fixed_verbose, verbose_summary_cols)
   pars = mcp_pars(fit)
   expected_fixed = pars$name[pars$scope == "population" & pars$role == "fixed_effect"]
-  testthat::expect_setequal(fixed$name, expected_fixed)
+  testthat::expect_setequal(fixed$variable, expected_fixed)
 
   # If there are group-level effects
   if (length(varying_cols) > 0) {
     testthat::expect_true(any(grepl("Use `ranef(fit)` to inspect deviations by level.", output, fixed = TRUE)))
     testthat::expect_false(any(grepl("Group-level parameters:", output, fixed = TRUE)))
     varying = ranef(fit, prior = prior)
-    testthat::expect_true(is.character(varying$name))
+    testthat::expect_true(is.character(varying$variable))
     testthat::expect_true(is.numeric(varying$mean))
     testthat::expect_named(ranef(fit, prior = prior, verbose = TRUE), verbose_summary_cols)
 
@@ -329,7 +329,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
     varying_cols,
     columns$response,
     if (length(columns$weights) > 0) columns$weights else NULL,
-    colname, "error", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
+    colname, "sd", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
   )
 
   # `log_lik()` follows the conventional draws-by-observation matrix default.

@@ -56,9 +56,9 @@ test_that("Poisson fixed change-point inference against glm()", {
 
   mcp_fixef = fixef(fit_mcp_cp)
   estimates_mcp = c(
-    mcp_fixef$mean[mcp_fixef$name == "Intercept_1"],
-    mcp_fixef$mean[mcp_fixef$name == "x_1"],
-    mcp_fixef$mean[mcp_fixef$name == "x_2"]
+    mcp_fixef$mean[mcp_fixef$variable == "Intercept_1"],
+    mcp_fixef$mean[mcp_fixef$variable == "x_1"],
+    mcp_fixef$mean[mcp_fixef$variable == "x_2"]
   )
 
   estimates_glm = c(

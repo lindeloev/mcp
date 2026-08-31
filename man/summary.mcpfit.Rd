@@ -72,7 +72,7 @@ With \code{verbose = TRUE}:
 \item \code{segment} is the segment the parameter belongs to.
 \item \code{dpar} is the distributional parameter (\code{"cp"}, \code{"mu"}, \code{"sigma"},
 \code{"ar"}, \code{"ma"}, etc.) the parameter belongs to. For AR/MA terms, the
-lag order is encoded in \code{name}, e.g. \code{ar2_1}.
+lag order is encoded in \code{variable}, e.g. \code{ar2_1}.
 \item \code{mean} is the posterior mean
 \item \code{sd} is the posterior standard deviation.
 \item \code{lower} and \code{upper} are the bounds of the central posterior interval

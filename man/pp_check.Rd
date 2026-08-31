@@ -36,7 +36,7 @@ conditions on the response history,
 so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
 \code{residuals()}, missing response histories are supported only in the original
 fitted data, using retained posterior imputations. \code{log_lik()} is unavailable
-when a missing response enters a later observed history. Use \code{\link[rstantools:posterior_predict]{posterior_predict()}}
+when a missing response enters a later observed history. Use \code{\link[=posterior_predict]{posterior_predict()}}
 to generate fresh response series recursively from predictor-only \code{newdata}.
 \item For models with \code{y | weights()}: Require the weights column except for \code{fitted()} and \code{predict()}.
 }}

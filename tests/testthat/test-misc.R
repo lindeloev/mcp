@@ -106,7 +106,7 @@ test_that("fixef() and vcov() select distributional-parameter coefficients", {
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(values))
   sigma_names = pars$name[pars$dpar == "sigma" & pars$role == "dpar_effect"]
 
-  expect_setequal(fixef(fit, dpar = "sigma")$name, sigma_names)
+  expect_setequal(fixef(fit, dpar = "sigma")$variable, sigma_names)
   expect_equal(vcov(fit, dpar = "sigma"), stats::cov(values[, sigma_names, drop = FALSE]))
 })
 
@@ -215,12 +215,12 @@ test_that("summary, fixef, and ranef select parameter roles consistently", {
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
 
   capture.output({ summary_result = summary(fit) })
-  expect_setequal(summary_result$name, pars$name[pars$scope == "population"])
+  expect_setequal(summary_result$variable, pars$name[pars$scope == "population"])
   expect_setequal(
-    fixef(fit)$name,
+    fixef(fit)$variable,
     pars$name[pars$scope == "population" & pars$role == "fixed_effect"]
   )
-  expect_setequal(ranef(fit)$name, group_draws)
+  expect_setequal(ranef(fit)$variable, group_draws)
 })
 
 
