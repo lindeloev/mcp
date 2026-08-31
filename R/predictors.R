@@ -165,11 +165,11 @@ get_par_x = function(model, data, par_x = NULL) {
   data_in_rhs = data %>% dplyr::select(dplyr::all_of(rhs_vars), dplyr::all_of(par_x))
   continuous_cols = lapply(data_in_rhs, is_continuous) %>% unlist()
   par_x_candidates = names(continuous_cols)[continuous_cols]
-  if (is.character(par_x)) {
+  resolved_par_x = if (is.character(par_x)) {
     if (length(par_x_candidates) == 0) {
-      return(par_x)
+      par_x
     } else if (par_x %in% par_x_candidates) {
-      return(par_x)
+      par_x
     } else {
       stop("Got par_x = '", par_x, "' but it does not seem to be both continuous, present in the data, and in the model. mcp identified '", par_x_candidates, "' as the only viable change point dimension(s) as the data and model is set up now.")
     }
@@ -179,11 +179,25 @@ get_par_x = function(model, data, par_x = NULL) {
     } else if (length(par_x_candidates) > 1) {
       stop("Could not automatically determine the change point dimension (multiple candidates: ", and_collapse(par_x_candidates), "). Set it explictly using mcp(..., par_x = 'my_col').")
     } else if (length(par_x_candidates) == 1) {
-      return(par_x_candidates)
+      par_x_candidates
     }
   } else {
     stop_github("Reached the end of get_par_x() without returning par_x")
   }
+
+  # Warn if par_x is used in offset()
+  offset_vars = get_rhs_offset_vars(model)
+  if (!is.null(resolved_par_x) && resolved_par_x %in% offset_vars) {
+    warning(
+      "The change-point predictor '", resolved_par_x, "' is also used in offset().\n",
+      "If '", resolved_par_x, "' represents cumulative exposure/duration from time 0, note that mcp applies ",
+      "the segment's rate to the entire duration rather than integrating piecewise rates over time. ",
+      "Offsets are valid when rows represent discrete intervals with local exposure.",
+      call. = FALSE
+    )
+  }
+
+  return(resolved_par_x)
 }
 
 

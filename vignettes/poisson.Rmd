@@ -98,6 +98,25 @@ When no `shape()` formula is supplied, the response-scale shape has an inverse-g
 
 An explicit `shape()` formula models log-shape. Its intercept defaults to `dt(0, 2.5, 3)` and coefficients use the usual proper scaling. `brms` uses the same intercept prior but flat coefficients. Shape regression can be weakly identified, so informed priors may be useful.
 
+# Modeling rates using `offset()`
+
+When modeling event counts where exposure (e.g., person-years, area, or population size) varies across observations, you can model rates $\lambda = \text{Count} / \text{exposure}$ on the log link by supplying `offset(log(exposure))`:
+
+```r
+# Example: Event counts over varying observation durations (as here) or population
+model = list(
+  events ~ 1 + year + offset(log(exposure)),  # Segment 1
+  ~ 1 + year                                  # Segment 2
+)
+
+fit = mcp(model, data = df, family = poisson())  # implicit link = "log"
+```
+
+Adding a categorical predictor to the model, you can also model rate ratios.
+
+> **Note on `par_x` vs. cumulative exposure:**  
+> The offset is evaluated per row as local exposure for that observation. If `par_x` represents continuous cumulative time from an origin (e.g., $[0, t_i]$), using `offset(log(par_x))` does **not** integrate piecewise rates across prior segments; instead, the active segment's rate is applied to the total duration. If your data consists of discrete time intervals (bins) of duration $\Delta t_i$, using `offset(log(delta_t))` is valid.
+
 # Model comparison
 
 Despite the popularity of this dataset, a question rarely asked is what the evidence is that there is a change point at all. Let us fit two no-changepoint models and use approximate leave-one-out cross-validation to see how the predictive performance of the two models compare.

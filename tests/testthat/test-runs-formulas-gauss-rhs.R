@@ -122,6 +122,16 @@ test_that("formula offsets work in mcp formulas", {
   # Offset in sigma
   fit_sigma = mcp(list(y ~ 1 + x + sigma(1 + offset(z))), d, sample = FALSE)
   expect_true(grepl("offset_sigma_1_\\[i_\\]", fit_sigma$jags_code))
+
+  # Warning when par_x is in offset()
+  expect_warning(
+    mcp(list(y ~ 1 + offset(log(x)), ~ 1 + x), d_pois, family = poisson(), sample = FALSE),
+    regexp = "The change-point predictor 'x' is also used in offset\\(\\)"
+  )
+  expect_warning(
+    mcp(list(y ~ 1 + offset(x), ~ 1), d, par_x = "x", sample = FALSE),
+    regexp = "The change-point predictor 'x' is also used in offset\\(\\)"
+  )
 })
 
 test_that("transformations use the original par_x while segment bases stay local", {
