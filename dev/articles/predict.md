@@ -86,7 +86,7 @@ To get the fitted values for each data point, simply do `fitted(fit)`:
 head(fitted(fit))
 ```
 
-    ##    response     time    fitted     error      Q2.5     Q97.5
+    ##    response     time    fitted        sd      Q2.5     Q97.5
     ## 1 32.842651 68.35820 30.374492 1.0363972 28.362893 32.453365
     ## 2 -1.160003 87.29038 -3.333719 0.7695936 -4.836521 -1.822012
     ## 3 27.564248 69.01173 30.727352 1.0675322 28.660966 32.861266
@@ -110,11 +110,10 @@ In general, this output will include:
   [`tidybayes::add_epred_draws()`](https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html)
   conventions.
 
-- **error:** The posterior standard deviation of the expected response
+- **sd:** The posterior standard deviation of the expected response
   corresponding to `fitted`. In
   [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-  output, `error` is instead the posterior predictive standard
-  deviation.
+  output, `sd` is instead the posterior predictive standard deviation.
 
 - **Q\[some number\]:** The quantiles of the fitted distribution. You
   can set the quantiles using `fitted(fit, probs = c(0.1, 0.5, 0.9))`.
@@ -137,7 +136,7 @@ newdata = data.frame(time = c(data$time[1], 25, -20, 200))
 fitted(fit, newdata = newdata)
 ```
 
-    ##       time    fitted      error       Q2.5     Q97.5
+    ##       time    fitted         sd       Q2.5     Q97.5
     ## 1  68.3582  30.37449  1.0363972  28.362893  32.45336
     ## 2  25.0000  10.34583  0.6996371   8.964573  11.72535
     ## 3 -20.0000  10.31627  0.7101668   8.907415  11.71133
@@ -196,7 +195,7 @@ set.seed(42)
 head(predict(fit, probs = c(0.1, 0.9)))
 ```
 
-    ##    response     time   predict    error       Q10       Q90
+    ##    response     time   predict       sd       Q10       Q90
     ## 1 32.842651 68.35820 30.294887 4.166189 25.079655 35.667994
     ## 2 -1.160003 87.29038 -3.357834 4.083957 -8.551314  1.887155
     ## 3 27.564248 69.01173 30.783699 4.133812 25.422568 36.031083
@@ -297,7 +296,7 @@ We can now compute 50% and 80% posterior predictive intervals at
 predict(fit_forecast, newdata = data.frame(time = 125), probs = c(0.1, 0.25, 0.75, 0.9))
 ```
 
-    ##   time  predict    error       Q10       Q25      Q75      Q90
+    ##   time  predict       sd       Q10       Q25      Q75      Q90
     ## 1  125 3.584003 11.17541 -14.25269 -6.761199 11.82396 14.67585
 
 To really understand what’s going on here, it may be helpful to

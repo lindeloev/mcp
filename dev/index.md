@@ -156,12 +156,12 @@ summary(fit)
 ##   3: response ~ 1 ~ 1 + time
 ## 
 ## Change point parameters:
-##         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
 ##  cp_1        30.78 3.604 23.69 38.370 1.01      426      603 30.0    OK
 ##  cp_2        69.77 0.293 69.30 70.261 1.00     5621     7509 70.0    OK
 ## 
 ## Population-level parameters:
-##         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
 ##  Intercept_1 10.31 0.705  8.90 11.641 1.00     1436     2136 10.0    OK
 ##  time_2       0.54 0.064  0.43  0.682 1.01      463      668  0.5    OK
 ##  Intercept_3  0.72 1.566 -2.30  3.873 1.00      591     1134  0.0    OK

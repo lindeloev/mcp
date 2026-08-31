@@ -104,7 +104,7 @@ conditions on the response history,
 so <code>newdata</code> must include the response. For <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">predict()</a></code>, and
 <code><a href="execute-mcp-model.html">residuals()</a></code>, missing response histories are supported only in the original
 fitted data, using retained posterior imputations. <code><a href="execute-mcp-model.html">log_lik()</a></code> is unavailable
-when a missing response enters a later observed history. Use <code><a href="https://mc-stan.org/rstantools/reference/posterior_predict.html" class="external-link">posterior_predict()</a></code>
+when a missing response enters a later observed history. Use <code>posterior_predict()</code>
 to generate fresh response series recursively from predictor-only <code>newdata</code>.</p></li>
 <li><p>For models with <code>y | weights()</code>: Require the weights column except for <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>.</p></li>
 </ul></dd>
@@ -210,8 +210,8 @@ See more under "value"</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
 
-<ul><li><p>If <code>summary = TRUE</code>: A data frame with the draw mean and SD (<code>error</code>) for
-each row in <code>newdata</code>. With posterior draws (the default), <code>error</code> is the
+<ul><li><p>If <code>summary = TRUE</code>: A data frame with the draw mean and SD (<code>sd</code>) for
+each row in <code>newdata</code>. With posterior draws (the default), <code>sd</code> is the
 posterior predictive SD for <code>type = "predict"</code> and the posterior SD of the
 evaluated quantity otherwise. With <code>prior = TRUE</code>, these are the analogous
 prior summaries. If <code>newdata</code> is <code>NULL</code>, the data in <code>fit$data</code> is used.</p></li>

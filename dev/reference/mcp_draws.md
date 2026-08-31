@@ -28,11 +28,11 @@ mcp_draws(
 
   - `TRUE` All population-level model parameters.
 
-  - `FALSE` No population-level effects. Same as
-    [`c()`](https://rdrr.io/r/base/c.html).
+    - `FALSE` No population-level effects. Same as
+      [`c()`](https://rdrr.io/r/base/c.html).
 
-  - Character vector: Only include specified population-level
-    parameters.
+    - Character vector: Only include specified population-level
+      parameters.
 
 - varying:
 
@@ -53,10 +53,10 @@ mcp_draws(
   - `TRUE` Returns the absolute location of all group-specific change
     points.
 
-  - `FALSE` Return the group-level deviations.
+    - `FALSE` Return the group-level deviations.
 
-  - Character vector: Apply the absolute transform only to these
-    group-level parameters.
+    - Character vector: Apply the absolute transform only to these
+      group-level parameters.
 
 - prior:
 

@@ -80,7 +80,7 @@ newdata = interpolate_newdata(demo_fit)
 
 # Fit summary
 head(fitted(demo_fit, newdata))
-#>       time   fitted     error     Q2.5    Q97.5
+#>       time   fitted        sd     Q2.5    Q97.5
 #> 1 3.189323 10.29993 0.7167564 8.874782 11.66981
 #> 2 4.146597 10.29993 0.7167564 8.874782 11.66981
 #> 3 5.103871 10.29993 0.7167564 8.874782 11.66981

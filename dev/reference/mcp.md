@@ -357,12 +357,12 @@ summary(demo_fit)
 #>   3: response ~ 1 ~ 1 + time
 #> 
 #> Change point parameters:
-#>         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+#>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
 #>  cp_1        30.85 3.586 24.10 38.315 1.01      407      541 30.0    OK
 #>  cp_2        69.78 0.291 69.30 70.261 1.00     5745     7530 70.0    OK
 #> 
 #> Population-level parameters:
-#>         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+#>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
 #>  Intercept_1 10.32 0.710  8.91 11.711 1.00     1406     2753 10.0    OK
 #>  time_2       0.54 0.065  0.43  0.682 1.01      438      604  0.5    OK
 #>  Intercept_3  0.79 1.531 -2.10  3.856 1.00      749     1389  0.0    OK
@@ -385,7 +385,7 @@ hypothesis(demo_fit, "cp_1 > 10")
 
 # Make predictions
 head(fitted(demo_fit))
-#>    response     time    fitted     error      Q2.5     Q97.5
+#>    response     time    fitted        sd      Q2.5     Q97.5
 #> 1 32.842651 68.35820 30.374492 1.0363972 28.362893 32.453365
 #> 2 -1.160003 87.29038 -3.333719 0.7695936 -4.836521 -1.822012
 #> 3 27.564248 69.01173 30.727352 1.0675322 28.660966 32.861266
@@ -393,7 +393,7 @@ head(fitted(demo_fit))
 #> 5 14.056859 19.50091 10.316619 0.7096133  8.907914 11.711335
 #> 6 18.292640 46.12009 18.367438 0.9842136 16.134892 20.014110
 head(predict(demo_fit))
-#>    response     time   predict    error       Q2.5     Q97.5
+#>    response     time   predict       sd       Q2.5     Q97.5
 #> 1 32.842651 68.35820 30.353477 4.210965  22.226246 38.515625
 #> 2 -1.160003 87.29038 -3.299188 4.064416 -11.355322  4.704244
 #> 3 27.564248 69.01173 30.669097 4.170328  22.564006 38.884471
@@ -401,7 +401,7 @@ head(predict(demo_fit))
 #> 5 14.056859 19.50091 10.346765 4.086618   2.308800 18.326099
 #> 6 18.292640 46.12009 18.332877 4.100923  10.222899 26.465992
 head(predict(demo_fit, newdata = data.frame(time = c(55.545, 80, 132))))
-#>      time    predict    error       Q2.5     Q97.5
+#>      time    predict       sd       Q2.5     Q97.5
 #> 1  55.545  23.465561 4.119947  15.440778 31.460977
 #> 2  80.000  -1.670004 4.092160  -9.679104  6.435948
 #> 3 132.000 -13.894364 5.927965 -25.551752 -2.337486
@@ -414,7 +414,7 @@ null_loo = loo(fit_null)
 loo::loo_compare(demo_loo, null_loo)
 #>   model elpd_diff se_diff p_worse diag_diff diag_elpd
 #>  model1       0.0     0.0      NA                    
-#>  model2    -108.1     8.8    1.00                    
+#>  model2    -108.2     8.8    1.00                    
 
 # Inspect the prior. Useful for prior predictive checks.
 summary(demo_fit, prior = TRUE)
@@ -427,12 +427,12 @@ summary(demo_fit, prior = TRUE)
 #>   3: response ~ 1 ~ 1 + time
 #> 
 #> Change point parameters:
-#>         name     mean    sd  lower upper rhat ess_bulk ess_tail  sim match
+#>     variable     mean    sd  lower upper rhat ess_bulk ess_tail  sim match
 #>  cp_1        37.45617 24.88   4.66 91.79 1.00     8902     9027 30.0    OK
 #>  cp_2        60.99546 24.31  14.53 96.92 1.00     9183     8085 70.0    OK
 #> 
 #> Population-level parameters:
-#>         name     mean    sd  lower upper rhat ess_bulk ess_tail  sim match
+#>     variable     mean    sd  lower upper rhat ess_bulk ess_tail  sim match
 #>  Intercept_1 10.53694 26.30 -29.43 52.10 1.00     9086     8947 10.0    OK
 #>  time_2       0.00334  0.24  -0.41  0.43 1.00     9363     8823  0.5      
 #>  Intercept_3 10.54960 22.17 -30.77 51.53 1.00     8828     8629  0.0    OK

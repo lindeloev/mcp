@@ -254,7 +254,7 @@ effects), use:
 mcp::ranef(fit)
 ```
 
-    ##                 name        mean        sd       lower       upper     rhat
+    ##             variable        mean        sd       lower       upper     rhat
     ## 1   cp_1_id[Batgirl]   3.4359904 0.8359116   1.8387702   5.1155898 1.000170
     ## 2    cp_1_id[Batman]  -1.0441880 0.9203563  -2.8374458   0.7860453 1.000344
     ## 3     cp_1_id[Clark]  17.0539585 0.9404897  15.2304185  18.9432569 1.000462

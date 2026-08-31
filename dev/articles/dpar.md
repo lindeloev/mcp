@@ -105,11 +105,11 @@ summary(fit)
     ##   2: y ~ 1 ~ 0 + sigma(1)
     ## 
     ## Change point parameters:
-    ##         name mean   sd lower upper rhat ess_bulk ess_tail  sim match
+    ##     variable mean   sd lower upper rhat ess_bulk ess_tail  sim match
     ##  cp_1        49.8 1.58  46.4  52.3 1.00     2934     3619 50.0    OK
     ## 
     ## Population-level parameters:
-    ##         name mean   sd lower upper rhat ess_bulk ess_tail  sim match
+    ##     variable mean   sd lower upper rhat ess_bulk ess_tail  sim match
     ##  Intercept_1 20.1 0.81  18.6  21.8 1.00     5284     4788 20.0    OK
     ##  sigma_1      1.8 0.10   1.6   2.0 1.00     4839     4896  1.6    OK
     ##  sigma_2      2.9 0.10   2.7   3.1 1.00     4898     4539  3.0    OK
@@ -238,7 +238,7 @@ summary(fit)
     ##   4: y ~ 1 ~ 0 + x
     ## 
     ## Change point parameters:
-    ##         name     mean      sd    lower    upper rhat ess_bulk ess_tail      sim
+    ##     variable     mean      sd    lower    upper rhat ess_bulk ess_tail      sim
     ##  cp_1         4.9e+01 4.3e-01  4.8e+01  5.0e+01 1.00    11182     4626  50.0000
     ##  cp_2         1.0e+02 1.8e+00  9.9e+01  1.1e+02 1.00      860     1558 100.0000
     ##  cp_3         1.4e+02 1.2e+01  1.2e+02  1.8e+02 1.00      769      832 150.0000
@@ -248,7 +248,7 @@ summary(fit)
     ##     OK
     ## 
     ## Population-level parameters:
-    ##         name     mean      sd    lower    upper rhat ess_bulk ess_tail      sim
+    ##     variable     mean      sd    lower    upper rhat ess_bulk ess_tail      sim
     ##  Intercept_1 -2.0e+01 7.4e-01 -2.2e+01 -1.9e+01 1.00    10943    15391 -20.0000
     ##  Intercept_2  1.4e+00 1.3e+00 -1.3e+00  3.8e+00 1.00     1120     2118   0.0000
     ##  x_3          1.0e+00 2.0e-02  9.8e-01  1.1e+00 1.00     1445     3218   1.0000
@@ -419,7 +419,7 @@ As usual, we can get the individual change points:
 ranef(fit)
 ```
 
-    ##         name       mean       sd      lower       upper     rhat ess_bulk
+    ##     variable       mean       sd      lower       upper     rhat ess_bulk
     ## 1 cp_1_id[1]  12.891966 25.73489 -50.661212  46.9359646 1.008117      395
     ## 2 cp_1_id[2] -49.534762 14.82521 -80.386600 -20.8536498 1.015089      244
     ## 3 cp_1_id[3] -24.411367 14.47693 -55.395103   0.3412921 1.023132      183

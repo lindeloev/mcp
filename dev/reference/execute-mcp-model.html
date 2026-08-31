@@ -159,7 +159,7 @@ conditions on the response history,
 so <code>newdata</code> must include the response. For <code>fitted()</code>, <code>predict()</code>, and
 <code>residuals()</code>, missing response histories are supported only in the original
 fitted data, using retained posterior imputations. <code>log_lik()</code> is unavailable
-when a missing response enters a later observed history. Use <code><a href="https://mc-stan.org/rstantools/reference/posterior_predict.html" class="external-link">posterior_predict()</a></code>
+when a missing response enters a later observed history. Use <code>posterior_predict()</code>
 to generate fresh response series recursively from predictor-only <code>newdata</code>.</p></li>
 <li><p>For models with <code>y | weights()</code>: Require the weights column except for <code>fitted()</code> and <code>predict()</code>.</p></li>
 </ul></dd>
@@ -244,8 +244,8 @@ A linear scale is only applicable when <code>type == "fitted"</code> and <code>d
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
 
-<ul><li><p>If <code>summary = TRUE</code>: A data frame with the draw mean and SD (<code>error</code>) for
-each row in <code>newdata</code>. With posterior draws (the default), <code>error</code> is the
+<ul><li><p>If <code>summary = TRUE</code>: A data frame with the draw mean and SD (<code>sd</code>) for
+each row in <code>newdata</code>. With posterior draws (the default), <code>sd</code> is the
 posterior predictive SD for <code>type = "predict"</code> and the posterior SD of the
 evaluated quantity otherwise. With <code>prior = TRUE</code>, these are the analogous
 prior summaries. If <code>newdata</code> is <code>NULL</code>, the data in <code>fit$data</code> is used.</p></li>
@@ -292,7 +292,7 @@ imputations also supply the history used for later fitted and predicted rows.</p
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">fitted</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Expected response for each row of demo_fit$data</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time    fitted     error      Q2.5    Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time    fitted        sd      Q2.5    Q97.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820 30.298834 1.0124885 28.321430 32.25606</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038 -3.289723 0.7599234 -4.782638 -1.80833</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 30.646721 1.0409779 28.633151 32.68228</span>
@@ -300,7 +300,7 @@ imputations also supply the history used for later fitted and predicted rows.</p
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5 14.056859 19.50091 10.302634 0.7135642  8.942350 11.66981</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6 18.292640 46.12009 18.460976 0.9281008 16.431898 20.12248</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">residuals</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Residuals for each row of demo_fit$data</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time  residuals     error       Q2.5     Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time  residuals        sd       Q2.5     Q97.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820  2.5438170 1.0124885  0.5865913  4.521221</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038  2.1297203 0.7599234  0.6483267  3.622635</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 -3.0824732 1.0409779 -5.1180353 -1.068903</span>
@@ -316,7 +316,7 @@ imputations also supply the history used for later fitted and predicted rows.</p
 <span class="r-in"><span><span class="co"># All of the above take a range of arguments. E.g.,:</span></span></span>
 <span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">predict</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Pointwise posterior predictive</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time   predict    error       Q2.5     Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time   predict       sd       Q2.5     Q97.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820 30.207150 4.124578  22.144905 38.439454</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038 -3.210645 4.151474 -11.321679  4.760017</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 30.518943 4.165452  22.479043 38.801177</span>
@@ -324,7 +324,7 @@ imputations also supply the history used for later fitted and predicted rows.</p
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5 14.056859 19.50091 10.347444 4.292330   2.282246 18.331710</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6 18.292640 46.12009 18.469592 4.078643  10.340106 26.560291</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">predict</span><span class="op">(</span><span class="va">demo_fit</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Median and 80% posterior predictive interval.</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time   predict    error       Q10       Q50       Q90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time   predict       sd       Q10       Q50       Q90</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820 30.292511 4.177484 25.003207 30.301147 35.591733</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038 -3.293718 4.043098 -8.512640 -3.292723  1.936534</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 30.589537 4.167861 25.342076 30.649014 35.948693</span>
@@ -332,7 +332,7 @@ imputations also supply the history used for later fitted and predicted rows.</p
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5 14.056859 19.50091 10.382461 4.005179  5.090210 10.301096 15.517589</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6 18.292640 46.12009 18.539889 4.098412 13.190974 18.464812 23.725677</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">predict</span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Prior predictive</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time   predict    error      Q2.5    Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time   predict       sd      Q2.5    Q97.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820 11.171082 32.66496 -49.74378 70.57951</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038  9.864536 32.13784 -52.55783 71.93426</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 10.111668 30.81516 -49.85891 70.60924</span>
@@ -352,7 +352,7 @@ imputations also supply the history used for later fitted and predicted rows.</p
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 5 more variables: sigma_1 &lt;dbl&gt;, response &lt;dbl&gt;, time &lt;dbl&gt;,</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   data_row &lt;int&gt;, .epred &lt;dbl&gt;</span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">fitted</span><span class="op">(</span><span class="va">demo_fit</span>, dpar <span class="op">=</span> <span class="st">"sigma"</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Another model parameter</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time   fitted    error     Q2.5    Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time   fitted       sd     Q2.5    Q97.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820 4.010101 0.311438 3.448848 4.656798</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038 4.010101 0.311438 3.448848 4.656798</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 4.010101 0.311438 3.448848 4.656798</span>
@@ -363,7 +363,7 @@ imputations also supply the history used for later fitted and predicted rows.</p
 <span class="r-in"><span><span class="co"># Evaluate at novel data</span></span></span>
 <span class="r-in"><span><span class="va">novel_data</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">5</span>, <span class="fl">20</span>, <span class="fl">300</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Only predictors are needed</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">predict</span><span class="op">(</span><span class="va">demo_fit</span>, newdata <span class="op">=</span> <span class="va">novel_data</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.025</span>, <span class="fl">0.5</span>, <span class="fl">0.975</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   time   predict     error       Q2.5       Q50     Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   time   predict        sd       Q2.5       Q50     Q97.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1   -5  10.19913  4.178428   2.277202  10.29880  18.32889</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2   20  10.36892  3.985927   2.284798  10.30251  18.33282</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3  300 -50.84247 20.327313 -90.157846 -50.79259 -12.33334</span>
@@ -372,7 +372,7 @@ imputations also supply the history used for later fitted and predicted rows.</p
 <span class="r-in"><span><span class="va">missing_fit</span> <span class="op">=</span> <span class="fu"><a href="mcp_example.html">mcp_example</a></span><span class="op">(</span><span class="st">"missing"</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> NA values detected in 'y'. JAGS will treat them as latent responses and impute them during sampling.</span>
 <span class="r-in"><span><span class="fu">fitted</span><span class="op">(</span><span class="va">missing_fit</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># Expected responses for missing y</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    y  x condition   fitted     error     Q2.5    Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    y  x condition   fitted        sd     Q2.5    Q97.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 NA  8         B 35.59410 1.0808576 33.50826 37.76016</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 NA 19         A 15.67323 0.8369118 14.05072 17.33612</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 NA 27         A 17.18394 0.7645671 15.69881 18.68233</span>
@@ -392,7 +392,7 @@ imputations also supply the history used for later fitted and predicted rows.</p
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 5 more variables: y &lt;dbl&gt;, x &lt;int&gt;, condition &lt;fct&gt;, data_row &lt;int&gt;,</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   .epred &lt;dbl&gt;</span></span>
 <span class="r-in"><span><span class="fu">predict</span><span class="op">(</span><span class="va">missing_fit</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># Posterior predictive for missing y</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    y  x condition  predict    error      Q2.5    Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    y  x condition  predict       sd      Q2.5    Q97.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 NA  8         B 35.56012 4.428752 26.945587 44.26715</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 NA 19         A 15.72108 4.293560  7.125812 24.23679</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 NA 27         A 17.18509 4.292231  8.656528 25.71505</span>

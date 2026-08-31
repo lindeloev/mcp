@@ -319,12 +319,12 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-out co"><span class="r-pr">#&gt;</span>   3: response ~ 1 ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        30.85 3.586 24.10 38.315 1.01      407      541 30.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        69.78 0.291 69.30 70.261 1.00     5745     7530 70.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1 10.32 0.710  8.91 11.711 1.00     1406     2753 10.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.54 0.065  0.43  0.682 1.01      438      604  0.5    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3  0.79 1.531 -2.10  3.856 1.00      749     1389  0.0    OK</span>
@@ -347,7 +347,7 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Make predictions</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time    fitted     error      Q2.5     Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time    fitted        sd      Q2.5     Q97.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820 30.374492 1.0363972 28.362893 32.453365</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038 -3.333719 0.7695936 -4.836521 -1.822012</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 30.727352 1.0675322 28.660966 32.861266</span>
@@ -355,7 +355,7 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5 14.056859 19.50091 10.316619 0.7096133  8.907914 11.711335</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6 18.292640 46.12009 18.367438 0.9842136 16.134892 20.014110</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time   predict    error       Q2.5     Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time   predict       sd       Q2.5     Q97.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820 30.353477 4.210965  22.226246 38.515625</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038 -3.299188 4.064416 -11.355322  4.704244</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 30.669097 4.170328  22.564006 38.884471</span>
@@ -363,7 +363,7 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5 14.056859 19.50091 10.346765 4.086618   2.308800 18.326099</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6 18.292640 46.12009 18.332877 4.100923  10.222899 26.465992</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">demo_fit</span>, newdata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">55.545</span>, <span class="fl">80</span>, <span class="fl">132</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      time    predict    error       Q2.5     Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      time    predict       sd       Q2.5     Q97.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1  55.545  23.465561 4.119947  15.440778 31.460977</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2  80.000  -1.670004 4.092160  -9.679104  6.435948</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 132.000 -13.894364 5.927965 -25.551752 -2.337486</span>
@@ -376,7 +376,7 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-in"><span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">demo_loo</span>, <span class="va">null_loo</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   model elpd_diff se_diff p_worse diag_diff diag_elpd</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  model1       0.0     0.0      NA                    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  model2    -108.1     8.8    1.00                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  model2    -108.2     8.8    1.00                    </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Inspect the prior. Useful for prior predictive checks.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
@@ -389,12 +389,12 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-out co"><span class="r-pr">#&gt;</span>   3: response ~ 1 ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         name     mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     variable     mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        37.45617 24.88   4.66 91.79 1.00     8902     9027 30.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        60.99546 24.31  14.53 96.92 1.00     9183     8085 70.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         name     mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     variable     mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1 10.53694 26.30 -29.43 52.10 1.00     9086     8947 10.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.00334  0.24  -0.41  0.43 1.00     9363     8823  0.5      </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 10.54960 22.17 -30.77 51.53 1.00     8828     8629  0.0    OK</span>

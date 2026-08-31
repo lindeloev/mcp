@@ -55,10 +55,8 @@ pp_eval(
     data, using retained posterior imputations.
     [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
     is unavailable when a missing response enters a later observed
-    history. Use
-    [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
-    to generate fresh response series recursively from predictor-only
-    `newdata`.
+    history. Use `posterior_predict()` to generate fresh response series
+    recursively from predictor-only `newdata`.
 
   - For models with `y | weights()`: Require the weights column except
     for
@@ -204,12 +202,12 @@ pp_eval(
 
 ## Value
 
-- If `summary = TRUE`: A data frame with the draw mean and SD (`error`)
-  for each row in `newdata`. With posterior draws (the default), `error`
-  is the posterior predictive SD for `type = "predict"` and the
-  posterior SD of the evaluated quantity otherwise. With `prior = TRUE`,
-  these are the analogous prior summaries. If `newdata` is `NULL`, the
-  data in `fit$data` is used.
+- If `summary = TRUE`: A data frame with the draw mean and SD (`sd`) for
+  each row in `newdata`. With posterior draws (the default), `sd` is the
+  posterior predictive SD for `type = "predict"` and the posterior SD of
+  the evaluated quantity otherwise. With `prior = TRUE`, these are the
+  analogous prior summaries. If `newdata` is `NULL`, the data in
+  `fit$data` is used.
 
 - If `summary = FALSE` and `draws_format = "tidy"`: A `tidybayes`
   `tibble` with all the posterior draws (`Nd`) evaluated at each row in

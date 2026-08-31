@@ -161,11 +161,11 @@ summary(fit)
     ##   2: price ~ 1 ~ 0 + time + ar(1)
     ## 
     ## Change point parameters:
-    ##         name  mean    sd  lower   upper rhat ess_bulk ess_tail   sim match
+    ##     variable  mean    sd  lower   upper rhat ess_bulk ess_tail   sim match
     ##  cp_1        74.88 3.404 70.012 80.8900 1.00      568     1328 75.00    OK
     ## 
     ## Population-level parameters:
-    ##         name  mean    sd  lower   upper rhat ess_bulk ess_tail   sim match
+    ##     variable  mean    sd  lower   upper rhat ess_bulk ess_tail   sim match
     ##  Intercept_1 21.00 1.350 18.509 23.8427 1.00      631     1297 20.00    OK
     ##  time_2       0.46 0.046  0.370  0.5524 1.00     1131     1497  0.50    OK
     ##  sigma_1      5.31 0.358  4.662  6.0729 1.00     4652     4517  5.00    OK
@@ -365,7 +365,7 @@ summary(fit)
     ##   1: response ~ 1 + ar(3)
     ## 
     ## Population-level parameters:
-    ##         name  mean    sd  lower upper rhat ess_bulk ess_tail  sim match
+    ##     variable  mean    sd  lower upper rhat ess_bulk ess_tail  sim match
     ##  Intercept_1 19.70 1.157 17.453 22.05 1.00     5283     4578 20.0    OK
     ##  sigma_1      7.89 0.399  7.166  8.72 1.00     5315     4773  8.0    OK
     ##  ar1_1        0.69 0.065  0.561  0.81 1.00     3438     5760  0.7    OK
@@ -450,11 +450,11 @@ summary(fit)
     ##   2: y ~ 1 ~ 0 + x + ar(1)
     ## 
     ## Change point parameters:
-    ##         name   mean    sd lower upper rhat ess_bulk ess_tail  sim match
+    ##     variable   mean    sd lower upper rhat ess_bulk ess_tail  sim match
     ##  cp_1        63.423 5.636 50.68 73.36 1.00     1592     2133 60.0    OK
     ## 
     ## Population-level parameters:
-    ##         name   mean    sd lower upper rhat ess_bulk ess_tail  sim match
+    ##     variable   mean    sd lower upper rhat ess_bulk ess_tail  sim match
     ##  Intercept_1 21.305 2.531 16.41 26.51 1.00      667     1320 20.0    OK
     ##  x_1          0.980 0.031  0.92  1.04 1.00      667     1275  1.0    OK
     ##  x_2          0.980 0.031  0.92  1.04 1.00      667     1275  1.0    OK

@@ -96,7 +96,7 @@ With `verbose = TRUE`:
 
 - `dpar` is the distributional parameter (`"cp"`, `"mu"`, `"sigma"`,
   `"ar"`, `"ma"`, etc.) the parameter belongs to. For AR/MA terms, the
-  lag order is encoded in `name`, e.g. `ar2_1`.
+  lag order is encoded in `variable`, e.g. `ar2_1`.
 
 - `mean` is the posterior mean
 
@@ -150,12 +150,12 @@ summary(demo_fit)
 #>   3: response ~ 1 ~ 1 + time
 #> 
 #> Change point parameters:
-#>         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+#>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
 #>  cp_1        30.45 3.606 23.28 37.885 1.01      135      249 30.0    OK
 #>  cp_2        69.76 0.288 69.29 70.250 1.00     1424     1529 70.0    OK
 #> 
 #> Population-level parameters:
-#>         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+#>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
 #>  Intercept_1 10.30 0.717  8.87 11.670 1.01      389      560 10.0    OK
 #>  time_2       0.53 0.060  0.43  0.666 1.01      148      278  0.5    OK
 #>  Intercept_3  0.62 1.558 -2.38  3.723 1.01      193      347  0.0    OK
@@ -171,7 +171,7 @@ summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 #>   3: response ~ 1 ~ 1 + time
 #> 
 #> Change point parameters:
-#>         name    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim
+#>     variable    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim
 #>  cp_1        30.4479 3.60618 25.9129 34.8948 1.0123      135      249 30.0
 #>  cp_2        69.7583 0.28765 69.3651 70.1560 0.9998     1424     1529 70.0
 #>  match
@@ -179,7 +179,7 @@ summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 #>     OK
 #> 
 #> Population-level parameters:
-#>         name    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim
+#>     variable    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim
 #>  Intercept_1 10.2999 0.71676  9.3981 11.2243 1.0053      389      560 10.0
 #>  time_2       0.5323 0.05991  0.4584  0.6112 1.0105      148      278  0.5
 #>  Intercept_3  0.6178 1.55829 -1.4041  2.6248 1.0087      193      347  0.0
@@ -203,12 +203,12 @@ results = summary(demo_fit)
 #>   3: response ~ 1 ~ 1 + time
 #> 
 #> Change point parameters:
-#>         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+#>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
 #>  cp_1        30.45 3.606 23.28 37.885 1.01      135      249 30.0    OK
 #>  cp_2        69.76 0.288 69.29 70.250 1.00     1424     1529 70.0    OK
 #> 
 #> Population-level parameters:
-#>         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+#>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
 #>  Intercept_1 10.30 0.717  8.87 11.670 1.01      389      560 10.0    OK
 #>  time_2       0.53 0.060  0.43  0.666 1.01      148      278  0.5    OK
 #>  Intercept_3  0.62 1.558 -2.38  3.723 1.01      193      347  0.0    OK
@@ -229,12 +229,12 @@ summary(demo_fit, prior = TRUE)
 #>   3: response ~ 1 ~ 1 + time
 #> 
 #> Change point parameters:
-#>         name     mean    sd  lower upper rhat ess_bulk ess_tail  sim match
+#>     variable     mean    sd  lower upper rhat ess_bulk ess_tail  sim match
 #>  cp_1        37.70780 25.43   4.37 92.62 1.00     1807     1681 30.0    OK
 #>  cp_2        60.81057 24.43  13.75 96.93 1.00     1813     1728 70.0    OK
 #> 
 #> Population-level parameters:
-#>         name     mean    sd  lower upper rhat ess_bulk ess_tail  sim match
+#>     variable     mean    sd  lower upper rhat ess_bulk ess_tail  sim match
 #>  Intercept_1 10.16128 25.31 -28.41 51.34 1.00     1822     1887 10.0    OK
 #>  time_2       0.00017  0.21  -0.38  0.41 1.00     1943     1562  0.5      
 #>  Intercept_3 10.62569 21.84 -29.30 51.43 1.00     1961     1844  0.0    OK

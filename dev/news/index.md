@@ -88,8 +88,36 @@ updated, the parameter estimates in v0.4.0 remain practically identical
 to the previous public release (v0.3.4). Deprecation detections have
 been added until we reach 1.0.
 
-- Renamed parameters to be more consistent with brms: `int_i` –\>
-  `Intercept_i`; `x_1_E2` –\> `xE2_1`; `x_1_sin` –\> `sinx_1`, etc.
+- Renaming to align with [brms](https://github.com/paul-buerkner/brms)
+  and [posterior](https://mc-stan.org/posterior/):
+
+  - Renamed parameters to be more consistent with brms: `int_i` –\>
+    `Intercept_i`; `x_1_E2` –\> `xE2_1`; `x_1_sin` –\> `sinx_1`, etc.
+
+  - [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
+    [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
+    and
+    [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
+    now name the parameter identifier column `variable` instead of
+    `name`, directly matching
+    [posterior](https://mc-stan.org/posterior/) and
+    [`posterior::summarise_draws()`](https://mc-stan.org/posterior/reference/draws_summary.html).
+
+  - [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    [`residuals()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    and
+    [`pp_eval()`](https://lindeloev.github.io/mcp/dev/reference/pp_eval.md)
+    with `summary = TRUE` now return `sd` instead of `error` for
+    posterior standard deviation (and posterior predictive standard
+    deviation), avoiding ambiguity and data column collisions.
+
+  - `Rhat` was renamed to `rhat` in
+    [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
+    [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
+    and
+    [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
+    to match [posterior](https://mc-stan.org/posterior/) standard.
 
 - [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
   [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
@@ -103,13 +131,6 @@ been added until we reach 1.0.
   or
   [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
   to include `segment` and `dpar` columns.
-
-- `Rhat` was renamed to `rhat` in
-  [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
-  [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
-  and
-  [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
-  to match [posterior](https://mc-stan.org/posterior/) standard.
 
 - [`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md)
   is now split into

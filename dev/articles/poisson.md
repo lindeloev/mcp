@@ -75,11 +75,11 @@ result = summary(fit)
     ##   2: n ~ 1 ~ 1
     ## 
     ## Change point parameters:
-    ##         name    mean    sd   lower   upper rhat ess_bulk ess_tail
+    ##     variable    mean    sd   lower   upper rhat ess_bulk ess_tail
     ##  cp_1        1888.21 3.692 1881.71 1897.74 1.00     2069     1530
     ## 
     ## Population-level parameters:
-    ##         name    mean    sd   lower   upper rhat ess_bulk ess_tail
+    ##     variable    mean    sd   lower   upper rhat ess_bulk ess_tail
     ##  Intercept_1    1.17 0.096    0.98    1.36 1.00     4438     4901
     ##  Intercept_2    0.48 0.123    0.23    0.71 1.00     4248     4594
 
@@ -177,6 +177,36 @@ An explicit `shape()` formula models log-shape. Its intercept defaults
 to `dt(0, 2.5, 3)` and coefficients use the usual proper scaling. `brms`
 uses the same intercept prior but flat coefficients. Shape regression
 can be weakly identified, so informed priors may be useful.
+
+## Modeling rates using `offset()`
+
+When modeling event counts where exposure (e.g., person-years, area, or
+population size) varies across observations, you can model rates \lambda
+= \text{Count} / \text{exposure} on the log link by supplying
+`offset(log(exposure))`:
+
+``` r
+
+# Example: Event counts over varying observation durations (as here) or population
+model = list(
+  events ~ 1 + year + offset(log(exposure)),  # Segment 1
+  ~ 1 + year                                  # Segment 2
+)
+
+fit = mcp(model, data = df, family = poisson())  # implicit link = "log"
+```
+
+Adding a categorical predictor to the model, you can also model rate
+ratios.
+
+> **Note on `par_x` vs. cumulative exposure:**  
+> The offset is evaluated per row as local exposure for that
+> observation. If `par_x` represents continuous cumulative time from an
+> origin (e.g., \[0, t_i\]), using `offset(log(par_x))` does **not**
+> integrate piecewise rates across prior segments; instead, the active
+> segment’s rate is applied to the total duration. If your data consists
+> of discrete time intervals (bins) of duration \Delta t_i, using
+> `offset(log(delta_t))` is valid.
 
 ## Model comparison
 

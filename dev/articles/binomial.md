@@ -125,7 +125,7 @@ summary(fit)
     ##   3: y | trials(N) ~ 1 ~ 1 + year
     ## 
     ## Change point parameters:
-    ##         name     mean     sd    lower    upper rhat ess_bulk ess_tail    sim
+    ##     variable     mean     sd    lower    upper rhat ess_bulk ess_tail    sim
     ##  cp_1        1930.084 3.0280 1924.086 1935.437 1.00      440      987 1925.0
     ##  cp_2        1974.516 0.6268 1973.232 1975.856 1.00     1120      476 1975.0
     ##  match
@@ -133,7 +133,7 @@ summary(fit)
     ##     OK
     ## 
     ## Population-level parameters:
-    ##         name     mean     sd    lower    upper rhat ess_bulk ess_tail    sim
+    ##     variable     mean     sd    lower    upper rhat ess_bulk ess_tail    sim
     ##  Intercept_1    1.624 0.1445    1.360    1.921 1.00      805     1736    2.0
     ##  year_2        -0.103 0.0108   -0.126   -0.083 1.01      486     1002   -0.1
     ##  Intercept_3   -1.078 0.2033   -1.468   -0.678 1.01      630     1008   -1.0

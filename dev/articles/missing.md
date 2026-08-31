@@ -66,7 +66,7 @@ predict(fit, probs = c(0.1, 0.5, 0.9)) |>
   filter(is.na(y))
 ```
 
-    ##     y  x condition  predict    error      Q10      Q50      Q90
+    ##     y  x condition  predict       sd      Q10      Q50      Q90
     ## 1  NA  8         B 35.56012 4.428752 29.97012 35.58970 41.22393
     ## 2  NA 19         A 15.72108 4.293560 10.11604 15.67037 21.23415
     ## 3  NA 27         A 17.18509 4.292231 11.64240 17.18326 22.72653
@@ -91,7 +91,7 @@ fitted(fit, probs = c(0.1, 0.5, 0.9)) |>
   filter(is.na(y))
 ```
 
-    ##     y  x condition   fitted     error      Q10      Q50      Q90
+    ##     y  x condition   fitted        sd      Q10      Q50      Q90
     ## 1  NA  8         B 35.59410 1.0808576 34.21259 35.58024 36.97628
     ## 2  NA 19         A 15.67323 0.8369118 14.60212 15.66705 16.74641
     ## 3  NA 27         A 17.18394 0.7645671 16.20420 17.19188 18.16005
@@ -285,6 +285,6 @@ newdata = data.frame(
 predict(fit, newdata = newdata, probs = c(0.1, 0.5, 0.9))
 ```
 
-    ##    x condition  predict    error      Q10      Q50     Q90
+    ##    x condition  predict       sd      Q10      Q50     Q90
     ## 1 20         A 15.85747 4.405314 10.30823 15.85948 21.4193
     ## 2 80         B 36.20859 4.358880 30.65399 36.21750 41.7848

@@ -95,9 +95,8 @@ residuals(
     histories are supported only in the original fitted data, using
     retained posterior imputations. `log_lik()` is unavailable when a
     missing response enters a later observed history. Use
-    [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
-    to generate fresh response series recursively from predictor-only
-    `newdata`.
+    `posterior_predict()` to generate fresh response series recursively
+    from predictor-only `newdata`.
 
   - For models with `y | weights()`: Require the weights column except
     for `fitted()` and `predict()`.
@@ -202,12 +201,12 @@ residuals(
 
 ## Value
 
-- If `summary = TRUE`: A data frame with the draw mean and SD (`error`)
-  for each row in `newdata`. With posterior draws (the default), `error`
-  is the posterior predictive SD for `type = "predict"` and the
-  posterior SD of the evaluated quantity otherwise. With `prior = TRUE`,
-  these are the analogous prior summaries. If `newdata` is `NULL`, the
-  data in `fit$data` is used.
+- If `summary = TRUE`: A data frame with the draw mean and SD (`sd`) for
+  each row in `newdata`. With posterior draws (the default), `sd` is the
+  posterior predictive SD for `type = "predict"` and the posterior SD of
+  the evaluated quantity otherwise. With `prior = TRUE`, these are the
+  analogous prior summaries. If `newdata` is `NULL`, the data in
+  `fit$data` is used.
 
 - If `summary = FALSE` and `draws_format = "tidy"`: A `tidybayes`
   `tibble` with all the posterior draws (`Nd`) evaluated at each row in
@@ -272,7 +271,7 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 
 ``` r
 head(fitted(demo_fit))  # Expected response for each row of demo_fit$data
-#>    response     time    fitted     error      Q2.5    Q97.5
+#>    response     time    fitted        sd      Q2.5    Q97.5
 #> 1 32.842651 68.35820 30.298834 1.0124885 28.321430 32.25606
 #> 2 -1.160003 87.29038 -3.289723 0.7599234 -4.782638 -1.80833
 #> 3 27.564248 69.01173 30.646721 1.0409779 28.633151 32.68228
@@ -280,7 +279,7 @@ head(fitted(demo_fit))  # Expected response for each row of demo_fit$data
 #> 5 14.056859 19.50091 10.302634 0.7135642  8.942350 11.66981
 #> 6 18.292640 46.12009 18.460976 0.9281008 16.431898 20.12248
 head(residuals(demo_fit))  # Residuals for each row of demo_fit$data
-#>    response     time  residuals     error       Q2.5     Q97.5
+#>    response     time  residuals        sd       Q2.5     Q97.5
 #> 1 32.842651 68.35820  2.5438170 1.0124885  0.5865913  4.521221
 #> 2 -1.160003 87.29038  2.1297203 0.7599234  0.6483267  3.622635
 #> 3 27.564248 69.01173 -3.0824732 1.0409779 -5.1180353 -1.068903
@@ -296,7 +295,7 @@ log_lik(demo_fit)[1:3, 1:3]  # Log-likelihood at each demo_fit$data
 # All of the above take a range of arguments. E.g.,:
 # \donttest{
 head(predict(demo_fit))  # Pointwise posterior predictive
-#>    response     time   predict    error       Q2.5     Q97.5
+#>    response     time   predict       sd       Q2.5     Q97.5
 #> 1 32.842651 68.35820 30.207150 4.124578  22.144905 38.439454
 #> 2 -1.160003 87.29038 -3.210645 4.151474 -11.321679  4.760017
 #> 3 27.564248 69.01173 30.518943 4.165452  22.479043 38.801177
@@ -304,7 +303,7 @@ head(predict(demo_fit))  # Pointwise posterior predictive
 #> 5 14.056859 19.50091 10.347444 4.292330   2.282246 18.331710
 #> 6 18.292640 46.12009 18.469592 4.078643  10.340106 26.560291
 head(predict(demo_fit, probs = c(0.1, 0.5, 0.9)))  # Median and 80% posterior predictive interval.
-#>    response     time   predict    error       Q10       Q50       Q90
+#>    response     time   predict       sd       Q10       Q50       Q90
 #> 1 32.842651 68.35820 30.292511 4.177484 25.003207 30.301147 35.591733
 #> 2 -1.160003 87.29038 -3.293718 4.043098 -8.512640 -3.292723  1.936534
 #> 3 27.564248 69.01173 30.589537 4.167861 25.342076 30.649014 35.948693
@@ -312,7 +311,7 @@ head(predict(demo_fit, probs = c(0.1, 0.5, 0.9)))  # Median and 80% posterior pr
 #> 5 14.056859 19.50091 10.382461 4.005179  5.090210 10.301096 15.517589
 #> 6 18.292640 46.12009 18.539889 4.098412 13.190974 18.464812 23.725677
 head(predict(demo_fit, prior = TRUE))  # Prior predictive
-#>    response     time   predict    error      Q2.5    Q97.5
+#>    response     time   predict       sd      Q2.5    Q97.5
 #> 1 32.842651 68.35820 11.171082 32.66496 -49.74378 70.57951
 #> 2 -1.160003 87.29038  9.864536 32.13784 -52.55783 71.93426
 #> 3 27.564248 69.01173 10.111668 30.81516 -49.85891 70.60924
@@ -332,7 +331,7 @@ head(fitted(demo_fit, summary = FALSE))  # Draws. Useful for plotting distributi
 #> # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>,
 #> #   data_row <int>, .epred <dbl>
 head(fitted(demo_fit, dpar = "sigma"))  # Another model parameter
-#>    response     time   fitted    error     Q2.5    Q97.5
+#>    response     time   fitted       sd     Q2.5    Q97.5
 #> 1 32.842651 68.35820 4.010101 0.311438 3.448848 4.656798
 #> 2 -1.160003 87.29038 4.010101 0.311438 3.448848 4.656798
 #> 3 27.564248 69.01173 4.010101 0.311438 3.448848 4.656798
@@ -343,7 +342,7 @@ head(fitted(demo_fit, dpar = "sigma"))  # Another model parameter
 # Evaluate at novel data
 novel_data = data.frame(time = c(-5, 20, 300))  # Only predictors are needed
 head(predict(demo_fit, newdata = novel_data, probs = c(0.025, 0.5, 0.975)))
-#>   time   predict     error       Q2.5       Q50     Q97.5
+#>   time   predict        sd       Q2.5       Q50     Q97.5
 #> 1   -5  10.19913  4.178428   2.277202  10.29880  18.32889
 #> 2   20  10.36892  3.985927   2.284798  10.30251  18.33282
 #> 3  300 -50.84247 20.327313 -90.157846 -50.79259 -12.33334
@@ -352,7 +351,7 @@ head(predict(demo_fit, newdata = novel_data, probs = c(0.025, 0.5, 0.975)))
 missing_fit = mcp_example("missing", plot = FALSE)
 #> NA values detected in 'y'. JAGS will treat them as latent responses and impute them during sampling.
 fitted(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Expected responses for missing y
-#>    y  x condition   fitted     error     Q2.5    Q97.5
+#>    y  x condition   fitted        sd     Q2.5    Q97.5
 #> 1 NA  8         B 35.59410 1.0808576 33.50826 37.76016
 #> 2 NA 19         A 15.67323 0.8369118 14.05072 17.33612
 #> 3 NA 27         A 17.18394 0.7645671 15.69881 18.68233
@@ -372,7 +371,7 @@ fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y)) |> head()  # Sam
 #> # ℹ 5 more variables: y <dbl>, x <int>, condition <fct>, data_row <int>,
 #> #   .epred <dbl>
 predict(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Posterior predictive for missing y
-#>    y  x condition  predict    error      Q2.5    Q97.5
+#>    y  x condition  predict       sd      Q2.5    Q97.5
 #> 1 NA  8         B 35.56012 4.428752 26.945587 44.26715
 #> 2 NA 19         A 15.72108 4.293560  7.125812 24.23679
 #> 3 NA 27         A 17.18509 4.292231  8.656528 25.71505

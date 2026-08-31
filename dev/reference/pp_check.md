@@ -59,10 +59,8 @@ pp_check(
     data, using retained posterior imputations.
     [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
     is unavailable when a missing response enters a later observed
-    history. Use
-    [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
-    to generate fresh response series recursively from predictor-only
-    `newdata`.
+    history. Use `posterior_predict()` to generate fresh response series
+    recursively from predictor-only `newdata`.
 
   - For models with `y | weights()`: Require the weights column except
     for
