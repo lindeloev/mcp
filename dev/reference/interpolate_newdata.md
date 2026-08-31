@@ -59,9 +59,13 @@ resolution in between to speed up the computation.
 Categorical variables and requested grouping factors are combined
 factorially (all level combinations). Additional continuous predictors
 are held at their observed means, or at values supplied through `at`.
-Family-specific response auxiliaries, such as binomial trial counts and
-Gaussian weights, are not interpolated. Supply an auxiliary as a scalar
-in `at` or use `newdata` for a varying design.
+Family-specific response auxiliaries are not interpolated. Supply
+binomial trial counts as a scalar in `at` or use `newdata` for a varying
+design.
+
+Likelihood weights are needed only when evaluating
+[`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+and therefore need not be supplied here.
 
 ## Author
 

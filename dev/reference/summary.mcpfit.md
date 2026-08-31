@@ -67,7 +67,7 @@ print(x, ...)
 
 - ...:
 
-  Currently ignored.
+  Must be empty. Reserved for future use.
 
 - dpar:
 

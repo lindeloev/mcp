@@ -114,9 +114,10 @@ change points where the values can change abruptly, but lower resolution in
 between to speed up the computation.</p>
 <p>Categorical variables and requested grouping factors are combined factorially (all level combinations).
 Additional continuous predictors are held at their observed means, or at values supplied through <code>at</code>.
-Family-specific response auxiliaries, such as binomial trial counts and
-Gaussian weights, are not interpolated. Supply an auxiliary as a scalar in
-<code>at</code> or use <code>newdata</code> for a varying design.</p>
+Family-specific response auxiliaries are not interpolated. Supply binomial
+trial counts as a scalar in <code>at</code> or use <code>newdata</code> for a varying design.</p>
+<p>Likelihood weights are needed only when evaluating <code><a href="execute-mcp-model.html">log_lik()</a></code> and
+therefore need not be supplied here.</p>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>

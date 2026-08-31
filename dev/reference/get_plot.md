@@ -85,9 +85,10 @@ get_plot(
 
 - rate:
 
-  Boolean. For binomial models, return counts (`rate = FALSE`) or the
-  observed or expected success proportion (`rate = TRUE`). Predictions
-  and count-scale fitted values require a trials column in `newdata`.
+  Logical scalar. For binomial models, return counts (`rate = FALSE`) or
+  the observed or expected success proportion (`rate = TRUE`).
+  Predictions and count-scale fitted values require a trials column in
+  `newdata`.
 
 - prior:
 

@@ -17,7 +17,11 @@ print(x, ...)
 
 - ...:
 
-  Currently ignored.
+  Must be empty. Reserved for future use.
+
+## Value
+
+`x`, invisibly.
 
 ## Author
 

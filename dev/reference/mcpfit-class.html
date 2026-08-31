@@ -85,7 +85,7 @@ the fit (prior and/or posterior MCMC draws).</p>
 <li><p><code>prior</code>: A named list of priors.</p></li>
 <li><p><code>mcmc_post</code> and <code>mcmc_prior</code>: <code><a href="https://rdrr.io/pkg/coda/man/mcmc.list.html" class="external-link">mcmc.list</a></code> objects with
 posterior and prior draws, respectively. Do not access these directly;
-use as_draws(fit), posterior_draws(fit), or similar.</p></li>
+use as_draws(fit) or similar.</p></li>
 <li><p><code>jags_code</code>: A string with JAGS code; use <code>cat(fit$jags_code)</code> to show it.</p></li>
 <li><p><code>simulate</code>: A function to simulate data from supplied parameter values.</p></li>
 <li><p><code>.internal</code>: Information used internally by mcp.</p></li>

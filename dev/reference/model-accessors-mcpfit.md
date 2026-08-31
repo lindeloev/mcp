@@ -27,7 +27,7 @@ formula(x, segment = NULL, ...)
 
 - ...:
 
-  Currently unused.
+  Must be empty. Reserved for future use.
 
 - segment:
 
@@ -50,19 +50,17 @@ fitting-data rows.
 formula(demo_fit)  # Show all segment formulas
 #> List of 3
 #>  $ response ~ 1
-#> <environment: 0x55ce48ec8868>
+#> <environment: 0x55c8b298f2f0>
 #>  $ response ~ 1 ~ 0 + time
-#> <environment: 0x55ce48ec8868>
+#> <environment: 0x55c8b298f2f0>
 #>  $ response ~ 1 ~ 1 + time
-#> <environment: 0x55ce48ec8868>
+#> <environment: 0x55c8b298f2f0>
 formula(demo_fit, segment = 2)  # Show the formula for segment 2
 #> response ~ 1 ~ 0 + time
-#> <environment: 0x55ce48ec8868>
+#> <environment: 0x55c8b298f2f0>
 family(demo_fit)  # Show the response family and link
-#> 
-#> Family: gaussian 
-#> Link function: identity 
-#> 
+#> Family: gaussian
+#> Links: mu = identity; sigma = identity
 head(model.frame(demo_fit))  # Show the top rows of fitting data
 #>    response     time
 #> 1 32.842651 68.35820

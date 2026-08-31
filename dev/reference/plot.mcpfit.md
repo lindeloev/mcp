@@ -102,9 +102,10 @@ plot_dpar(
 
 - rate:
 
-  Boolean. For binomial models, return counts (`rate = FALSE`) or the
-  observed or expected success proportion (`rate = TRUE`). Predictions
-  and count-scale fitted values require a trials column in `newdata`.
+  Logical scalar. For binomial models, return counts (`rate = FALSE`) or
+  the observed or expected success proportion (`rate = TRUE`).
+  Predictions and count-scale fitted values require a trials column in
+  `newdata`.
 
 - prior:
 
@@ -156,7 +157,7 @@ plot_dpar(
 
 - ...:
 
-  Currently ignored.
+  Must be empty. Reserved for future use.
 
 - dpar:
 
@@ -181,8 +182,9 @@ A ggplot2 object.
 ## Details
 
 `plot()` uses `fit$simulate()` on posterior draws. These represent the
-(joint) posterior distribution. Interval summaries and change-point
-densities always use all available draws.
+(joint) posterior distribution. Interval summaries are based on CDFs
+computed on `ndraws` draws, and change-point densities are simple
+densities on all available draws.
 
 ## Functions
 

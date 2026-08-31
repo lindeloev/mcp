@@ -83,6 +83,7 @@
 <li><p><code>"binomial"</code>: Binomial with two change points. Much like <code>"demo"</code> on a logit scale.</p></li>
 <li><p><code>"group_mu"</code>: Group-level predictor deviations (random intercepts/slopes) across a change point.</p></li>
 <li><p><code>"group_cp"</code>: Group-level change-point deviations (random effects).</p></li>
+<li><p><code>"missing"</code>: Missing data imputation (NAs in response variable y).</p></li>
 <li><p><code>"quadratic"</code>: A change point to a quadratic segment where there is no data.</p></li>
 <li><p><code>"ar"</code>: One change point in autoregressive residuals (the <code>ar1</code> dpar)</p></li>
 <li><p><code>"sigma"</code>: A change in "sigma" dpar, including a slope on sigma.</p></li>
@@ -103,8 +104,7 @@ prior strings (<code>fit$prior</code>), the JAGS model (<code>fit$jags_code</cod
 
 
 <dt id="arg-plot">plot<a class="anchor" aria-label="anchor" href="#arg-plot"></a></dt>
-<dd><p>Logical. Plot the fitted example? No plot is produced when
-<code>sample = FALSE</code>.</p></dd>
+<dd><p>Logical. Plot the fitted example? Requires sample != "none".</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -176,7 +176,7 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Without sampling</span></span></span>
-<span class="r-in"><span><span class="va">empty</span> <span class="op">=</span> <span class="fu">mcp_example</span><span class="op">(</span><span class="st">"binomial"</span>, sample <span class="op">=</span> <span class="cn">FALSE</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">empty</span> <span class="op">=</span> <span class="fu">mcp_example</span><span class="op">(</span><span class="st">"binomial"</span>, sample <span class="op">=</span> <span class="st">"none"</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="summary.mcpfit.html">print</a></span><span class="op">(</span><span class="va">empty</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: binomial</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Links: mu = logit</span>

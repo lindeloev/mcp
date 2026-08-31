@@ -157,7 +157,7 @@ or FALSE (do not plot).</p></dd>
 
 
 <dt id="arg-rate">rate<a class="anchor" aria-label="anchor" href="#arg-rate"></a></dt>
-<dd><p>Boolean. For binomial models, return counts (<code>rate = FALSE</code>) or
+<dd><p>Logical scalar. For binomial models, return counts (<code>rate = FALSE</code>) or
 the observed or expected success proportion (<code>rate = TRUE</code>). Predictions and
 count-scale fitted values require a trials column in <code>newdata</code>.</p></dd>
 
@@ -201,7 +201,7 @@ can be supplied as explicit scalar design values. Passed to
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Currently ignored.</p></dd>
+<dd><p>Must be empty. Reserved for future use.</p></dd>
 
 
 <dt id="arg-dpar">dpar<a class="anchor" aria-label="anchor" href="#arg-dpar"></a></dt>
@@ -220,8 +220,9 @@ coefficient you want to evaluate.</p></li>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>plot()</code> uses <code>fit$simulate()</code> on posterior draws. These represent the
-(joint) posterior distribution. Interval summaries and change-point densities
-always use all available draws.</p>
+(joint) posterior distribution. Interval summaries are based on CDFs
+computed on <code>ndraws</code> draws, and change-point densities are simple
+densities on all available draws.</p>
     </div>
     <div class="section level2">
     <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>

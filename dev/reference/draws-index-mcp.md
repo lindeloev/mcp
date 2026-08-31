@@ -29,7 +29,11 @@ niterations(x)
 
 - ...:
 
-  Currently ignored.
+  Must be empty. Reserved for future use.
+
+## Value
+
+An integer count of iterations, chains, or draws.
 
 ## Functions
 

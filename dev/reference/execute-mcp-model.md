@@ -85,17 +85,22 @@ residuals(
 - newdata:
 
   A `tibble` or a `data.frame` containing predictors in the model.
-  Weighted Gaussian predictions and log-likelihoods also require the
-  weights column. If `NULL` (default), the original data is used. GARMA
-  evaluation with `fitted()`, `predict()`, `residuals()`, or `log_lik()`
-  conditions on the response history, so `newdata` must include the
-  response. For `fitted()`, `predict()`, and `residuals()`, missing
-  response histories are supported only in the original fitted data,
-  using retained posterior imputations. `log_lik()` is unavailable when
-  a missing response enters a later observed history. Use
-  [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
-  to generate fresh response series recursively from predictor-only
-  `newdata`.
+
+  - If `NULL` (default), the original data is used.
+
+  - For models with [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()`:
+    `fitted()`, `predict()`, `residuals()`, or `log_lik()` conditions on
+    the response history, so `newdata` must include the response. For
+    `fitted()`, `predict()`, and `residuals()`, missing response
+    histories are supported only in the original fitted data, using
+    retained posterior imputations. `log_lik()` is unavailable when a
+    missing response enters a later observed history. Use
+    [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
+    to generate fresh response series recursively from predictor-only
+    `newdata`.
+
+  - For models with `y | weights()`: Require the weights column except
+    for `fitted()` and `predict()`.
 
 - summary:
 
@@ -107,9 +112,10 @@ residuals(
 
 - rate:
 
-  Boolean. For binomial models, return counts (`rate = FALSE`) or the
-  observed or expected success proportion (`rate = TRUE`). Predictions
-  and count-scale fitted values require a trials column in `newdata`.
+  Logical scalar. For binomial models, return counts (`rate = FALSE`) or
+  the observed or expected success proportion (`rate = TRUE`).
+  Predictions and count-scale fitted values require a trials column in
+  `newdata`.
 
 - prior:
 
@@ -165,7 +171,7 @@ residuals(
 
 - ...:
 
-  Currently ignored.
+  Must be empty. Reserved for future use.
 
 - dpar:
 

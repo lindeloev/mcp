@@ -132,7 +132,11 @@ and \(\eta_t\) is the resulting full linear predictor including serial dependenc
 <li><p>AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
 <a href="https://lindeloev.github.io/mcp/articles/arma.html">Read more</a></p></li>
 </ul></li>
-<li><p><em>Weights:</em> <code>y | weights(w) ~ ...</code> specifies observation log-likelihood weights.</p></li>
+<li><p><em>Likelihood weights:</em> <code>y | weights(w) ~ ...</code> multiplies each observation's
+log-likelihood contribution by <code>w</code>, as in <code>brms</code>. Weights affect
+posterior inference and <code><a href="execute-mcp-model.html">log_lik()</a></code>, but not the response distribution used
+by <code><a href="execute-mcp-model.html">predict()</a></code> or prior/posterior predictive checks.
+Combine with other auxiliaries using <code>+</code>, e.g., <code>y | trials(total) + weights(w) ~ ...</code>.</p></li>
 <li><p><em>Binomial:</em> use <code>successes | trials(total) ~ ...</code> with <code>family = binomial()</code>.</p></li>
 </ul></dd>
 

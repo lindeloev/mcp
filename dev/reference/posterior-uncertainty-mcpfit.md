@@ -1,16 +1,16 @@
-# Posterior Covariance and Central Intervals for `mcpfit` Objects
+# Prior and Posterior Covariance and Central Intervals for `mcpfit` Objects
 
-Summarise the joint and marginal posterior uncertainty of
-population-level model parameters.
+Summarise the joint and marginal uncertainty of population-level model
+parameters using posterior or prior draws.
 
 ## Usage
 
 ``` r
 # S3 method for class 'mcpfit'
-vcov(object, correlation = FALSE, pars = NULL, dpar = "mu", ...)
+vcov(object, correlation = FALSE, pars = NULL, dpar = "mu", prior = FALSE, ...)
 
 # S3 method for class 'mcpfit'
-confint(object, parm, level = 0.95, ...)
+confint(object, parm, level = 0.95, prior = FALSE, ...)
 ```
 
 ## Arguments
@@ -21,8 +21,7 @@ confint(object, parm, level = 0.95, ...)
 
 - correlation:
 
-  Return the posterior correlation matrix instead of the covariance
-  matrix?
+  Return the correlation matrix instead of the covariance matrix?
 
 - pars:
 
@@ -33,9 +32,13 @@ confint(object, parm, level = 0.95, ...)
 
   Distributional parameter(s) to select when `pars = NULL`.
 
+- prior:
+
+  Logical. Use prior draws instead of posterior draws?
+
 - ...:
 
-  Currently unused.
+  Must be empty. Reserved for future use.
 
 - parm:
 
@@ -44,14 +47,13 @@ confint(object, parm, level = 0.95, ...)
 
 - level:
 
-  Width of the central posterior interval.
+  Width of the central interval.
 
 ## Value
 
-[`vcov()`](https://rdrr.io/r/stats/vcov.html) returns a posterior
-covariance or correlation matrix.
-[`confint()`](https://rdrr.io/r/stats/confint.html) returns a two-column
-matrix of central posterior intervals.
+[`vcov()`](https://rdrr.io/r/stats/vcov.html) returns a covariance or
+correlation matrix. [`confint()`](https://rdrr.io/r/stats/confint.html)
+returns a two-column matrix of central intervals.
 
 ## Examples
 
@@ -81,6 +83,15 @@ confint(demo_fit, parm = c("Intercept_1", "time_2"), level = 0.8)
 #>                  10 %       90 %
 #> Intercept_1 9.3981254 11.2242586
 #> time_2      0.4584488  0.6111839
+confint(demo_fit, prior = TRUE)
+#>                   2.5 %     97.5 %
+#> cp_1          4.3705695 92.6224634
+#> cp_2         13.7456258 96.9346593
+#> Intercept_1 -28.4108760 51.3365908
+#> time_2       -0.3834314  0.4089906
+#> Intercept_3 -29.3019007 51.4346658
+#> time_3       -0.4917280  0.4622902
+#> sigma_1       0.4471723 53.1848826
 
 # Include change points, residual SDs, group SDs, and AR/MA parameters.
 vcov(demo_fit, pars = "all")

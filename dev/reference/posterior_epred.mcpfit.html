@@ -144,12 +144,11 @@ effects and <code>NA</code> excludes them.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Accepted for <code>{tidybayes}</code> compatibility. Randomness is controlled
-by the calling context.</p></dd>
+<dd><p>Optional integer seed for draw selection and posterior prediction.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Currently ignored.</p></dd>
+<dd><p>Must be empty. Reserved for future use.</p></dd>
 
 
 <dt id="arg-transform">transform<a class="anchor" aria-label="anchor" href="#arg-transform"></a></dt>
@@ -165,7 +164,9 @@ transformed expected response instead of the linear predictor.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>For GARMA models, <code>posterior_predict()</code> generates each replicated
 response series recursively. It does not condition later predictions on
-the observed response history, unlike <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>.</p>
+the observed response history, unlike <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>. These
+methods require posterior draws. For prior prediction, use <code><a href="execute-mcp-model.html">fitted()</a></code> or
+<code><a href="execute-mcp-model.html">predict()</a></code> with <code>prior = TRUE</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

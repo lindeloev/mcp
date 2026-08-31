@@ -103,15 +103,16 @@ for available plot types, omitting the <code>"ppc_"</code> prefix (e.g., <code>"
 
 
 <dt id="arg-newdata">newdata<a class="anchor" aria-label="anchor" href="#arg-newdata"></a></dt>
-<dd><p>A <code>tibble</code> or a <code>data.frame</code> containing predictors in the model. Weighted
-Gaussian predictions and log-likelihoods also require the weights column. If <code>NULL</code>
-(default), the original data is used. GARMA evaluation with <code><a href="execute-mcp-model.html">fitted()</a></code>,
-<code><a href="execute-mcp-model.html">predict()</a></code>, <code><a href="execute-mcp-model.html">residuals()</a></code>, or <code><a href="execute-mcp-model.html">log_lik()</a></code> conditions on the response history,
+<dd><p>A <code>tibble</code> or a <code>data.frame</code> containing predictors in the model.</p><ul><li><p>If <code>NULL</code> (default), the original data is used.</p></li>
+<li><p>For models with <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code>: <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">predict()</a></code>, <code><a href="execute-mcp-model.html">residuals()</a></code>, or <code><a href="execute-mcp-model.html">log_lik()</a></code>
+conditions on the response history,
 so <code>newdata</code> must include the response. For <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">predict()</a></code>, and
 <code><a href="execute-mcp-model.html">residuals()</a></code>, missing response histories are supported only in the original
 fitted data, using retained posterior imputations. <code><a href="execute-mcp-model.html">log_lik()</a></code> is unavailable
 when a missing response enters a later observed history. Use <code><a href="https://mc-stan.org/rstantools/reference/posterior_predict.html" class="external-link">posterior_predict()</a></code>
-to generate fresh response series recursively from predictor-only <code>newdata</code>.</p></dd>
+to generate fresh response series recursively from predictor-only <code>newdata</code>.</p></li>
+<li><p>For models with <code>y | weights()</code>: Require the weights column except for <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>.</p></li>
+</ul></dd>
 
 
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>

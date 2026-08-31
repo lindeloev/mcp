@@ -13,3 +13,7 @@ is.mcpfit(x)
 - x:
 
   An `R` object.
+
+## Value
+
+Logical scalar (`TRUE` if `x` is an `mcpfit` object, `FALSE` otherwise).

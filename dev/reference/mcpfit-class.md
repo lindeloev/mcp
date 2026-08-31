@@ -26,7 +26,7 @@ Components:
 - `mcmc_post` and `mcmc_prior`:
   [`mcmc.list`](https://rdrr.io/pkg/coda/man/mcmc.list.html) objects
   with posterior and prior draws, respectively. Do not access these
-  directly; use as_draws(fit), posterior_draws(fit), or similar.
+  directly; use as_draws(fit) or similar.
 
 - `jags_code`: A string with JAGS code; use `cat(fit$jags_code)` to show
   it.

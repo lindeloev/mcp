@@ -81,12 +81,11 @@ posterior_linpred.mcpfit(
 
 - seed:
 
-  Accepted for `{tidybayes}` compatibility. Randomness is controlled by
-  the calling context.
+  Optional integer seed for draw selection and posterior prediction.
 
 - ...:
 
-  Currently ignored.
+  Must be empty. Reserved for future use.
 
 - transform:
 
@@ -105,6 +104,11 @@ the observed response history, unlike
 [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
 and
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
+These methods require posterior draws. For prior prediction, use
+[`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+or
+[`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+with `prior = TRUE`.
 
 ## See also
 

@@ -153,15 +153,16 @@ parameter with <code>dpar</code>, and choose the response or linear-predictor sc
 
 
 <dt id="arg-newdata">newdata<a class="anchor" aria-label="anchor" href="#arg-newdata"></a></dt>
-<dd><p>A <code>tibble</code> or a <code>data.frame</code> containing predictors in the model. Weighted
-Gaussian predictions and log-likelihoods also require the weights column. If <code>NULL</code>
-(default), the original data is used. GARMA evaluation with <code>fitted()</code>,
-<code>predict()</code>, <code>residuals()</code>, or <code>log_lik()</code> conditions on the response history,
+<dd><p>A <code>tibble</code> or a <code>data.frame</code> containing predictors in the model.</p><ul><li><p>If <code>NULL</code> (default), the original data is used.</p></li>
+<li><p>For models with <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code>: <code>fitted()</code>, <code>predict()</code>, <code>residuals()</code>, or <code>log_lik()</code>
+conditions on the response history,
 so <code>newdata</code> must include the response. For <code>fitted()</code>, <code>predict()</code>, and
 <code>residuals()</code>, missing response histories are supported only in the original
 fitted data, using retained posterior imputations. <code>log_lik()</code> is unavailable
 when a missing response enters a later observed history. Use <code><a href="https://mc-stan.org/rstantools/reference/posterior_predict.html" class="external-link">posterior_predict()</a></code>
-to generate fresh response series recursively from predictor-only <code>newdata</code>.</p></dd>
+to generate fresh response series recursively from predictor-only <code>newdata</code>.</p></li>
+<li><p>For models with <code>y | weights()</code>: Require the weights column except for <code>fitted()</code> and <code>predict()</code>.</p></li>
+</ul></dd>
 
 
 <dt id="arg-summary">summary<a class="anchor" aria-label="anchor" href="#arg-summary"></a></dt>
@@ -173,7 +174,7 @@ to generate fresh response series recursively from predictor-only <code>newdata<
 
 
 <dt id="arg-rate">rate<a class="anchor" aria-label="anchor" href="#arg-rate"></a></dt>
-<dd><p>Boolean. For binomial models, return counts (<code>rate = FALSE</code>) or
+<dd><p>Logical scalar. For binomial models, return counts (<code>rate = FALSE</code>) or
 the observed or expected success proportion (<code>rate = TRUE</code>). Predictions and
 count-scale fitted values require a trials column in <code>newdata</code>.</p></dd>
 
@@ -220,7 +221,7 @@ See more under "value"</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Currently ignored.</p></dd>
+<dd><p>Must be empty. Reserved for future use.</p></dd>
 
 
 <dt id="arg-dpar">dpar<a class="anchor" aria-label="anchor" href="#arg-dpar"></a></dt>

@@ -41,7 +41,7 @@ waic(
 
 - ...:
 
-  Currently ignored
+  Must be empty. Reserved for future use.
 
 - by_row:
 
@@ -131,9 +131,6 @@ data = mcp_example_data("intercepts")  # Get some simulated data.
 model1 = list(y ~ 1 + x, ~ 1)
 model2 = list(y ~ 1 + x)  # Without a change point
 fit1 = mcp(model1, data)
-#> Warning: Some parameters may not have converged well:
-#>   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1
-#> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
 fit2 = mcp(model2, data)
 
 # Compute LOO for each and compare (works for waic(fit) too)
@@ -143,7 +140,7 @@ loo2 = loo(fit2)
 loo::loo_compare(loo1, loo2)
 #>   model elpd_diff se_diff p_worse diag_diff      diag_elpd
 #>  model1       0.0     0.0      NA           3 k_psis > 0.7
-#>  model2      -1.7     3.2    0.71   N < 100               
+#>  model2      -2.2     3.3    0.74   N < 100               
 #> 
 #> Diagnostic flags present.
 #> See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)

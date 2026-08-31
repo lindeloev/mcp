@@ -19,7 +19,11 @@ print(x, ...)
 
 - ...:
 
-  Currently ignored.
+  Must be empty. Reserved for future use.
+
+## Value
+
+`x`, invisibly.
 
 ## Author
 
@@ -31,11 +35,11 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 print(demo_fit$model)
 #> List of 3
 #>  $ response ~ 1
-#> <environment: 0x55ce48ec8868>
+#> <environment: 0x55c8b298f2f0>
 #>  $ response ~ 1 ~ 0 + time
-#> <environment: 0x55ce48ec8868>
+#> <environment: 0x55c8b298f2f0>
 #>  $ response ~ 1 ~ 1 + time
-#> <environment: 0x55ce48ec8868>
+#> <environment: 0x55c8b298f2f0>
 print(demo_fit$prior)
 #> List of 7
 #>  $ cp_1       :"dt(3.189323, 47.38506, 1) T(3.189323, 97.95945)"

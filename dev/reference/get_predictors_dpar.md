@@ -58,7 +58,7 @@ get_predictors(model, data, family, par_x, check_rank = TRUE)
 
 - check_rank:
 
-  Boolean. Whether to stop on rank deficiency.
+  Logical scalar. Whether to stop on rank deficiency.
 
 - model:
 
@@ -126,8 +126,14 @@ get_predictors(model, data, family, par_x, check_rank = TRUE)
       MA coefficients to invertibility. [Read
       more](https://lindeloev.github.io/mcp/articles/arma.html)
 
-  - *Weights:* `y | weights(w) ~ ...` specifies observation
-    log-likelihood weights.
+  - *Likelihood weights:* `y | weights(w) ~ ...` multiplies each
+    observation's log-likelihood contribution by `w`, as in `brms`.
+    Weights affect posterior inference and
+    [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    but not the response distribution used by
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+    or prior/posterior predictive checks. Combine with other auxiliaries
+    using `+`, e.g., `y | trials(total) + weights(w) ~ ...`.
 
   - *Binomial:* use `successes | trials(total) ~ ...` with
     `family = binomial()`.

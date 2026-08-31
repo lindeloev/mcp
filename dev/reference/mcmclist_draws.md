@@ -7,7 +7,13 @@ plotting, that works on both.
 ## Usage
 
 ``` r
-mcmclist_draws(fit, prior = FALSE, message = TRUE, error = TRUE)
+mcmclist_draws(
+  fit,
+  prior = FALSE,
+  message = TRUE,
+  error = TRUE,
+  fallback_to_prior = TRUE
+)
 ```
 
 ## Arguments
@@ -30,3 +36,7 @@ mcmclist_draws(fit, prior = FALSE, message = TRUE, error = TRUE)
 - error:
 
   TRUE: err if there are no draws. FALSE: return NULL
+
+- fallback_to_prior:
+
+  TRUE: use prior draws when posterior draws are unavailable

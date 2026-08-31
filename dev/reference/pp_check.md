@@ -40,28 +40,35 @@ pp_check(
 - newdata:
 
   A `tibble` or a `data.frame` containing predictors in the model.
-  Weighted Gaussian predictions and log-likelihoods also require the
-  weights column. If `NULL` (default), the original data is used. GARMA
-  evaluation with
-  [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-  [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-  [`residuals()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-  or
-  [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-  conditions on the response history, so `newdata` must include the
-  response. For
-  [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-  [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-  and
-  [`residuals()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-  missing response histories are supported only in the original fitted
-  data, using retained posterior imputations.
-  [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-  is unavailable when a missing response enters a later observed
-  history. Use
-  [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
-  to generate fresh response series recursively from predictor-only
-  `newdata`.
+
+  - If `NULL` (default), the original data is used.
+
+  - For models with [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()`:
+    [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    [`residuals()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    or
+    [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+    conditions on the response history, so `newdata` must include the
+    response. For
+    [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    and
+    [`residuals()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    missing response histories are supported only in the original fitted
+    data, using retained posterior imputations.
+    [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+    is unavailable when a missing response enters a later observed
+    history. Use
+    [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
+    to generate fresh response series recursively from predictor-only
+    `newdata`.
+
+  - For models with `y | weights()`: Require the weights column except
+    for
+    [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+    and
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
 
 - prior:
 

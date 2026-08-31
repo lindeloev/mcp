@@ -73,7 +73,8 @@ Summaries that pertain to the whole `mcpfit` or to specific parameters.
   [`confint(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/posterior-uncertainty-mcpfit.md)
   :
 
-  Posterior Covariance and Central Intervals for `mcpfit` Objects
+  Prior and Posterior Covariance and Central Intervals for `mcpfit`
+  Objects
 
 - [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md)
   : Test Hypotheses Concerning Individual Parameters
@@ -126,6 +127,8 @@ Distributional families that are not available in base R.
 - [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md)
   : Negative Binomial for mcp
 - [`mcpfamily()`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md)
+  [`format(`*`<mcpfamily>`*`)`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md)
+  [`print(`*`<mcpfamily>`*`)`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md)
   [`is.mcpfamily()`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md)
   : Create or Test Objects of Class "mcpfamily"
 

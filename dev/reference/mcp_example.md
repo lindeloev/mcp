@@ -32,6 +32,8 @@ mcp_example_data(name)
 
   - `"group_cp"`: Group-level change-point deviations (random effects).
 
+  - `"missing"`: Missing data imputation (NAs in response variable y).
+
   - `"quadratic"`: A change point to a quadratic segment where there is
     no data.
 
@@ -60,8 +62,7 @@ mcp_example_data(name)
 
 - plot:
 
-  Logical. Plot the fitted example? No plot is produced when
-  `sample = FALSE`.
+  Logical. Plot the fitted example? Requires sample != "none".
 
 ## Value
 
@@ -131,7 +132,7 @@ print(fit$example_code) # See how the data was simulated
 #> }
 
 # Without sampling
-empty = mcp_example("binomial", sample = FALSE, plot = FALSE)
+empty = mcp_example("binomial", sample = "none", plot = FALSE)
 print(empty)
 #> Family: binomial
 #> Links: mu = logit
