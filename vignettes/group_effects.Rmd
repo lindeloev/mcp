@@ -20,7 +20,7 @@ This article in brief:
  * How to simulate group-level change-point deviations
  * Get posteriors using `ranef(fit)`
  * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
- * The default priors bound group-specific change points relative to adjacent population-level change points.
+ * How group-specific change points are kept in range and ordered.
  * The article on modeling standard deviation via `sigma()` contains [another group-level change-point example](../articles/dpar.html).
 ```{r}
 library(mcp)
@@ -51,13 +51,16 @@ model = list(
 )
 ```
 
-Here are some properties of group-level change-point deviations:
+For change point $i$ and group $g$, the hierarchy is
 
-**Exactly zero centered:** The group-level deviations sum to zero around the associated population-level change point. Besides making `cp_i` the arithmetic mean of the group-specific change points, this avoids a poorly identified translation between `cp_i` and the average group deviation that would otherwise impede MCMC sampling. Because of this zero-sum constraint, `cp_i_sd` reflects the sample standard deviation ($N - 1$ degrees of freedom) of the group change points.
+$$
+\kappa_{ig} \sim \operatorname{Normal}(cp_i, cp_{i,\mathrm{sd}}), \qquad
+cp_{i,\mathrm{id}[g]} = \kappa_{ig} - cp_i,
+$$
 
-**Hierarchical:** Consider the population-level change point `cp_1` and its associated group-level deviations `cp_1_id`. Their spread is governed by the population-level parameter `cp_1_sd`.
+where $\kappa_{ig}$ is the group-specific location. Thus `cp_i_id[g]` is the reported deviation and `cp_i_sd` is the latent normal scale. The deviations are not forced to sum to zero.
 
-**Constraint:** Realized group-specific change points must remain strictly ordered within each group.
+The hierarchy is subject to $x_{\min} < \kappa_{1g} < \cdots < \kappa_{Kg} < x_{\max}$. Thus, if adjacent change points both vary, their group-specific locations are ordered against each other—not against the adjacent population change point. Internally, JAGS samples $\kappa_{ig}$ directly for efficiency.
 
 Unlike predictor group-level effects, a change-point group effect applies only to the boundary where it is written. There is no carry-over as there is for group-level effects on RHS.
 
@@ -208,7 +211,7 @@ You can see the priors of the model like this:
 prior_summary(fit)
 ```
 
-The prior `cp_1_sd` is the population-level standard deviation governing the `cp_1_id` deviations across levels of `id`. Change-point deviations are exactly zero-centered, while predictor group-level effects use ordinary hierarchical mean-zero deviations. Their realized locations are constrained to remain ordered within each group.
+`cp_1_sd` is the latent normal scale governing the `cp_1_id` deviations. Unlike predictor group-level effects, change-point locations are also constrained to remain in range and ordered within each group.
 
 
 # JAGS code

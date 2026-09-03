@@ -179,7 +179,7 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
   # Data helpers are always present; model helpers occur only in generated code.
   offset_nodes = if (!is.null(jags_code)) unique(stringr::str_extract_all(jags_code, "offset_[A-Za-z0-9_]+_")[[1]])
   helper_names = unique(c(
-    "rhs_matrix_", "series_id_", "cp_order_", "response_observed_",
+    "rhs_matrix_", "series_id_", "response_observed_",
     "likelihood_weight_", "likelihood_zero_", offset_nodes,
     paste0("n_unique_", group_cols), paste0(group_cols, "_"),
     names(attr(jags_code, "jags_constants")),
@@ -255,13 +255,6 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
     # Make grouping columns numeric in order of appearance.
     # They will be recovered using the recover_levels()
     jags_data[[col]] = as.numeric(factor(jags_data[[col]], levels = unique(jags_data[[col]])))
-  }
-
-  cp_group_effects = group_effects[group_effects$part == "cp", , drop = FALSE]
-  if (nrow(cp_group_effects) > 0 && nrow(segments) > 2 &&
-      grepl("cp_order_", jags_code, fixed = TRUE)) {
-    n_group = length(unique(data[[cp_group_effects$group_col[1]]]))
-    jags_data$cp_order_ = matrix(1, nrow = n_group, ncol = nrow(segments) - 2L)
   }
 
   # Predictor design matrix. Keep the JAGS data name for custom-code compatibility.

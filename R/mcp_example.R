@@ -380,7 +380,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, iter = 4500, sample = sample, seed = 42)
+fit = mcp(model, data, sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {

@@ -178,9 +178,9 @@
 #'       `dirichlet()`.
 #'   * *Data-dependent terms:* If `mcp` encounters a data-dependent term like `min(time)`, `max(time)`, `median(response)`, or `mad(response)` in the prior string, they are resolved from the model data so a numerical value is passed to JAGS. The following terms are also allowed: `n_segments()`, and `n_cp()`.
 #'       The older constants `MINX`, `MAXX`, `MEANX`, `SDX`, `MINY`, `MAXY`, `MEANY`, `SDY`, and `N_CP` remain accepted with a deprecation warning.
-#'   * *Group-level change points:* Deviations (`cp_i_id`) are zero-centered around
-#'       their population change point, so `cp_i_sd` estimates their sample standard
-#'       deviation with \eqn{N - 1} degrees of freedom.
+#'   * *Group-level change points:* Group-specific locations follow a hierarchical
+#'       normal distribution around their population change point, truncated so
+#'       that realized locations remain in the observed range and ordered.
 #'   * *Parameterization:* Prior strings use conventional scale parameterizations. `mcp` converts
 #'       these to the parameterization required by JAGS when generating code:
 #'       inverse variance for `dnorm()`, `dt()`, and `dlnorm()`, and inverse

@@ -67,7 +67,7 @@ default_cp_specs = function(cps, context) {
     specs[[group_name]] = tibble::tibble(
       parameter = group_name,
       code = paste0("dnorm(0, ", sd_name, ") T(", lower, ", ", upper, ")"),
-      description = "Zero-mean ordered group-level change-point offsets",
+      description = "Ordered group-level change-point deviations from the population location",
       source = "default"
     )
   }
@@ -287,6 +287,30 @@ overlay_user_prior_specs = function(specs, prior, cps, context) {
       prior[[name]] = truncate_cp_prior(cps, j, original, context)
       if (!identical(prior[[name]], original))
         auto_truncated = c(auto_truncated, name)
+    }
+
+    group_name = cps$group_name[j]
+    if (cps$varying[j] && group_name %in% names(prior)) {
+      original = prior[[group_name]]
+      is_bounded = is.character(original) && stringr::str_detect(
+        original, "^\\s*dunif\\s*\\(|T\\s*\\("
+      )
+      if (is.character(original) && !is_bounded) {
+        previous_cp = if (j == 1) paste0("min(", context$x_display, ")") else cps$code[j - 1]
+        previous_cp = stringr::str_replace(
+          previous_cp, "CP_[0-9]+_INDEX", paste0("[", cps$group_col[j], "_]"))
+        later_population = which(seq_len(nrow(cps)) > j & !cps$varying)
+        next_cp = if (length(later_population) == 0) {
+          paste0("max(", context$x_display, ")")
+        } else {
+          cps$name[later_population[1]]
+        }
+        prior[[group_name]] = paste0(
+          original, " T(", previous_cp, " - ", cps$name[j], ", ",
+          next_cp, " - ", cps$name[j], ")"
+        )
+        auto_truncated = c(auto_truncated, group_name)
+      }
     }
   }
 

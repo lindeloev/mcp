@@ -19,7 +19,7 @@ test_that("group-level change points use one grouping factor", {
 })
 
 
-test_that("group-level change-point priors and JAGS code enforce ordering", {
+test_that("group-level change points use absolute locations and sequential bounds", {
   fit = mcp(
     list(y ~ 1, 1 + (1 | id) ~ 1, 1 + (1 | id) ~ 1),
     cp_group_data,
@@ -28,13 +28,28 @@ test_that("group-level change-point priors and JAGS code enforce ordering", {
   )
 
   expect_match(fit$prior$cp_2_id, "cp_1_id\\[id_\\]")
-  expect_match(fit$jags_code, "cp_1_id = cp_1_id_uncentered - mean")
-  expect_match(fit$jags_code, "Order realized group-level change points")
-  expect_match(fit$jags_code, "cp_order_\\[id_, 1\\] ~ dbern\\(step")
+  expect_match(fit$jags_code, "cp_1_id_location\\[id_\\] ~ dnorm\\(cp_1")
+  expect_match(fit$jags_code, "cp_1_id\\[id_\\] = cp_1_id_location\\[id_\\] - cp_1")
+  expect_match(fit$jags_code, "cp_2_id_location\\[id_\\].*cp_1_id_location\\[id_\\]")
+  expect_false(grepl("_uncentered", fit$jags_code, fixed = TRUE))
+  expect_false(grepl("cp_order_", fit$jags_code, fixed = TRUE))
 })
 
 
-test_that("simulation generates centered change-point deviations from SDs", {
+test_that("custom normal change-point hierarchies retain model bounds", {
+  fit = mcp(
+    list(y ~ 1, 1 + (1 | id) ~ 1),
+    cp_group_data,
+    par_x = "x",
+    prior = list(cp_1_id = "dnorm(0, cp_1_sd)"),
+    sample = FALSE
+  )
+  expect_match(fit$prior$cp_1_id, "T\\(1 - cp_1, 10 - cp_1\\)")
+  expect_match(fit$jags_code, "cp_1_id_location\\[id_\\] ~ dnorm\\(cp_1")
+})
+
+
+test_that("simulation generates bounded hierarchical change-point locations", {
   fit = mcp(
     list(y ~ 1, 1 + (1 | id) ~ 1),
     cp_group_data,
@@ -57,11 +72,30 @@ test_that("simulation generates centered change-point deviations from SDs", {
   )
   deviations = attr(simulated, "simulated")$cp_1_id
   by_group = vapply(split(deviations, cp_group_data$id), unique, numeric(1))
-  expect_equal(mean(by_group), 0)
+  expect_false(isTRUE(all.equal(mean(by_group), 0)))
+  expect_true(all(5 + by_group >= 1 & 5 + by_group <= 10))
+  cp_prior = prior_summary(fit) %>% dplyr::filter(.data$parameter == "cp_1_id")
+  expect_equal(cp_prior$bounds, "[min(x) - cp_1, max(x) - cp_1]")
 })
 
 
-test_that("simulation rejects unordered group-level change points", {
+test_that("prior draws keep a single varying change point in range", {
+  fit = mcp(
+    list(y ~ 1, 1 + (1 | id) ~ 1),
+    cp_group_data,
+    par_x = "x",
+    sample = "prior",
+    chains = 1, warmup = 100, iter = 200,
+    seed = 42, quiet = TRUE
+  )
+  draws = as.matrix(.subset2(fit, "mcmc_prior"))
+  deviations = draws[, grep("^cp_1_id\\[", colnames(draws)), drop = FALSE]
+  locations = sweep(deviations, 1, draws[, "cp_1"], "+")
+  expect_true(all(locations >= 1 & locations <= 10))
+})
+
+
+test_that("simulation samples adjacent varying change points in realized order", {
   fit = mcp(
     list(y ~ 1, 1 + (1 | id) ~ 1, 1 + (1 | id) ~ 1),
     cp_group_data,
@@ -70,22 +104,24 @@ test_that("simulation rejects unordered group-level change points", {
   )
 
   set.seed(1)
-  expect_error(
-    fit$simulate(
-      fit,
-      cp_group_data,
-      cp_1 = 3,
-      cp_2 = 6,
-      cp_1_sd = 10,
-      cp_2_sd = 10,
-      Intercept_1 = 0,
-      Intercept_2 = 0,
-      Intercept_3 = 0,
-      sigma_1 = 1,
-      .type = "fitted"
-    ),
-    "must remain ordered"
+  result = fit$simulate(
+    fit,
+    cp_group_data,
+    cp_1 = 3,
+    cp_2 = 6,
+    cp_1_sd = 10,
+    cp_2_sd = 10,
+    Intercept_1 = 0,
+    Intercept_2 = 0,
+    Intercept_3 = 0,
+    sigma_1 = 1,
+    .type = "fitted"
   )
+  simulation = attr(result, "simulated")
+  cp_1 = 3 + vapply(split(simulation$cp_1_id, cp_group_data$id), unique, numeric(1))
+  cp_2 = 6 + vapply(split(simulation$cp_2_id, cp_group_data$id), unique, numeric(1))
+  expect_true(all(cp_1 < cp_2))
+  expect_true(all(cp_1 >= 1 & cp_2 <= 10))
 })
 
 
@@ -123,5 +159,12 @@ test_that("sampled change points are checked for range and ordering", {
   expect_error(
     assert_ordered_cp_draws(out_of_range, cps, 0:10),
     "population-level.*observed range"
+  )
+
+  out_of_range_group = samples
+  out_of_range_group[[1]][1, "cp_1_id[A]"] = -4
+  expect_error(
+    assert_ordered_cp_draws(out_of_range_group, cps, 0:10),
+    "group-level.*observed range"
   )
 })

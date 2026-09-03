@@ -219,7 +219,7 @@ assert_ordered_cp_draws = function(draws, cps, x) {
     check_locations(population, "population-level", check_range = TRUE)
 
     varying = which(cps$varying)
-    if (length(varying) == 0 || nrow(cps) < 2)
+    if (length(varying) == 0)
       next
 
     first_name = cps$group_name[varying[1]]
@@ -236,7 +236,7 @@ assert_ordered_cp_draws = function(draws, cps, x) {
           stop_github("Sampled output is missing group-level change point `", group_col, "`.")
         realized[, j] = realized[, j] + chain[, group_col]
       }
-      check_locations(realized, "group-level")
+      check_locations(realized, "group-level", check_range = TRUE)
     }
   }
 

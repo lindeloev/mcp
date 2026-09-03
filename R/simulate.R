@@ -194,9 +194,25 @@ assert_ordered_group_cps = function(cps, args) {
     boundaries, rep, numeric(n), length.out = n
   )
   if (any(boundaries[, -1, drop = FALSE] <= boundaries[, -ncol(boundaries), drop = FALSE]))
-    stop("Realized group-level change points must remain ordered, i.e., between population-level change points. Consider using smaller `sd`.")
+    stop("Realized group-level change points must remain strictly ordered within each group.")
 
   invisible(NULL)
+}
+
+
+# Draw independent normal values inside possibly different finite intervals.
+# Used for the default group-level change-point hierarchy in fit$simulate().
+simulate_truncated_normal = function(mean, sd, lower, upper) {
+  if (sd == 0) {
+    if (any(mean <= lower | mean >= upper))
+      stop("A zero change-point SD places a group change point outside its ordered interval.")
+    return(mean)
+  }
+  lower_prob = stats::pnorm(lower, mean, sd)
+  upper_prob = stats::pnorm(upper, mean, sd)
+  if (any(lower_prob >= upper_prob))
+    stop("Could not simulate an ordered group-level change point; its truncated normal interval has negligible probability.")
+  stats::qnorm(stats::runif(length(mean), lower_prob, upper_prob), mean, sd)
 }
 
 
@@ -446,17 +462,59 @@ simulate_atomic = function(fit,
   if (data_columns$response %in% colnames(newdata))
     newdata = dplyr::select(newdata, -dplyr::all_of(data_columns$response))
 
-  # Simulate one deviation per grouping level, then map to rows. Change-point
-  # deviations are exactly centered, matching the fitted parameterization.
   simulated = args
-  for (i in seq_len(nrow(model_group_effects))) {
-    effect = model_group_effects[i, ]
+  cp_effects = model_group_effects[model_group_effects$part == "cp", , drop = FALSE]
+
+  # All varying CPs share one grouping factor. Set up its level mapping once.
+  if (nrow(cp_effects) > 0) {
+    cps = model_tables$cps
+    group = newdata[[cp_effects$group_col[1]]]
+    group_levels = unique(group)
+    group_rows = match(group_levels, group)
+    group_index = match(group, group_levels)
+    cp_values = lapply(args[cps$name], function(value) {
+      rep(value, length.out = nrow(newdata))[group_rows]
+    })
+
+    # Mirror JAGS: sample absolute locations in CP order, using a varying
+    # predecessor as the next lower bound and the next fixed CP as upper anchor.
+    x_range = range(fit$data[[data_columns$par_x]], na.rm = TRUE)
+    cp_locations = list()
+    for (i in seq_len(nrow(cp_effects))) {
+      effect = cp_effects[i, ]
+      j = match(effect$population_name, cps$name)
+      population = cp_values[[effect$population_name]]
+
+      lower = if (j == 1) {
+        x_range[1]
+      } else {
+        previous = cps[j - 1, ]
+        if (previous$varying) cp_locations[[previous$group_name]] else cp_values[[previous$name]]
+      }
+
+      next_fixed = which(seq_len(nrow(cps)) > j & !cps$varying)[1]
+      upper = if (is.na(next_fixed)) {
+        x_range[2]
+      } else {
+        cp_values[[cps$name[next_fixed]]]
+      }
+
+      location = simulate_truncated_normal(population, args[[effect$sd_name]], lower, upper)
+      cp_locations[[effect$name]] = location
+      args[[effect$name]] = (location - population)[group_index]
+      simulated[[effect$name]] = args[[effect$name]]
+      args[[effect$sd_name]] = NULL
+    }
+  }
+
+  # Predictor group effects retain the ordinary independent normal hierarchy.
+  predictor_effects = model_group_effects[model_group_effects$part != "cp", , drop = FALSE]
+  for (i in seq_len(nrow(predictor_effects))) {
+    effect = predictor_effects[i, ]
     assert_data_cols(newdata, effect$group_col)
     group = newdata[[effect$group_col]]
     group_levels = unique(group)
     group_deviations = stats::rnorm(length(group_levels), 0, args[[effect$sd_name]])
-    if (effect$part == "cp")
-      group_deviations = group_deviations - mean(group_deviations)
     args[[effect$name]] = group_deviations[match(group, group_levels)]
     simulated[[effect$name]] = args[[effect$name]]
     args[[effect$sd_name]] = NULL

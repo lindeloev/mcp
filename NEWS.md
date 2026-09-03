@@ -56,9 +56,9 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - Corrected the JAGS translation of prior scales. `ddexp()` and `dlogis()` now convert their conventional scale to inverse scale rather than inverse variance; The exported `sd_to_prec()` helper is soft-deprecated because prior translation is now an internal, sampler-specific step.
 
-- Group-level change points `(1|id)` remain exactly zero-centered to identify population-level change points and support efficient sampling. For models with multiple group-level change points, their realized locations are now constrained to remain ordered. Read more in the vignette on group-level effects.
+- Group-level change points `(1|id)` now use a standard hierarchical normal model sampled efficiently through their absolute locations. This makes `cp_i_sd` the latent normal scale rather than the realized sample SD.
 
-- After sampling, `mcp()` now verifies that population- and group-level change points are strictly ordered in every draw and that population-level change points lie within the observed predictor range. If ordering is broken, wrong segments apply.
+- After sampling, `mcp()` now verifies that population- and group-level change points are strictly ordered in every draw and that all realized change points lie within the observed predictor range. If ordering is broken, wrong segments apply.
 
 - Parallel sampling is now controlled exclusively through the active `{future}` plan. The `cores` argument to `mcp()` is deprecated and ignored, but remains available for backwards compatibility. Use `future::plan(future::multisession, workers = 3)` before calling `mcp()` to sample chains in parallel, and `future::plan(future::sequential)` to shut down those workers. Without a parallel future plan, chains are sampled sequentially.
 
