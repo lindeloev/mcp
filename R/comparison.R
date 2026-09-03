@@ -298,7 +298,8 @@ get_loglik_settings = function(fit, varying, arma, ndraws) {
 #'   * `BF` Bayes Factor in favor  of the hypothesis.
 #'       For "=" it is the Savage-Dickey density ratio.
 #'       For directional hypotheses, it is the posterior odds divided by the
-#'       prior odds. It is `NA` when `prior = TRUE`.
+#'       prior odds. It is `NA` when `prior = TRUE` or when prior draws are
+#'       not available (e.g., `sample = "post"`).
 #'
 #' @export
 #' @examples
@@ -432,12 +433,8 @@ hypothesis = function(fit, hypotheses, width = 0.95, prior = FALSE) {
       res_post = rlang::eval_tidy(expr_parsed, data = draws)
       prob_post_val = mean(res_post == TRUE)
 
-      if (prior) {
-        BF = NA_real_
-      } else {
-        if (!coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) || !coda::is.mcmc.list(.subset2(fit, "mcmc_post")))
-          stop("Directional Bayes factors require both prior and posterior draws. Run mcp(..., sample = 'both').")
-
+      has_both = coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) && coda::is.mcmc.list(.subset2(fit, "mcmc_post"))
+      if (!prior && has_both) {
         draws_prior = posterior_draws(fit, prior = TRUE) %>%
           posterior::as_draws_df()
         res_prior = rlang::eval_tidy(expr_parsed, data = draws_prior)
@@ -447,6 +444,8 @@ hypothesis = function(fit, hypotheses, width = 0.95, prior = FALSE) {
         posterior_odds = prob_post_val / (1 - prob_post_val)
         prior_odds = prob_prior_val / (1 - prob_prior_val)
         BF = posterior_odds / prior_odds
+      } else {
+        BF = NA_real_
       }
     }
 

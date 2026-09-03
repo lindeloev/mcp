@@ -694,9 +694,16 @@ test_that("hypothesis()", {
   threshold_text = format(threshold, digits = 16)
   directional = paste0("cp_1 > ", threshold_text)
 
+  # Directional hypothesis on posterior-only fit returns posterior probability with BF = NA
+  res_post_only = hypothesis(demo_fit2, directional)
+  expect_equal(res_post_only$p, mean(cp_draws > threshold))
+  expect_true(is.na(res_post_only$BF))
+  expect_equal(res_post_only$mean, mean(cp_draws - threshold))
+
+  # Equality hypothesis requires prior draws
   expect_error(
-    hypothesis(demo_fit2, directional),
-    "Directional Bayes factors require both prior and posterior draws",
+    hypothesis(demo_fit2, paste0("cp_1 = ", threshold_text)),
+    "Both prior and posterior draws are needed",
     fixed = TRUE
   )
 

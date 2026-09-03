@@ -1262,7 +1262,6 @@ pp_eval = function(
   # Determine which auxiliary columns are needed for this operation
   operation = switch(type, predict = "rng", loglik = "log_lik", fitted = "epred", residuals = "epred")
   aux_operations = c(operation, if (arma && is_arma(fit)) "garma")
-  if (type == "fitted" && rate && dpar %in% c("epred", "mu"))
   if (type == "fitted" && (rate || dpar != "epred"))
     aux_operations = setdiff(aux_operations, "epred")
   aux_columns = get_family_aux_columns(fit$family, model_tables$segments)
