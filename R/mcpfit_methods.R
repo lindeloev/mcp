@@ -240,6 +240,13 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'     Low effective sample sizes are also obvious as poor mixing in trace plots
 #'     (see `plot_pars(fit)`). Read how to deal with such problems [here](https://lindeloev.github.io/mcp/articles/tips.html)
 #'
+#'  Group-level change-point deviations (`cp_i_id`) are exactly zero-centered so
+#'  that the population-level change point is their arithmetic mean. Consequently,
+#'  the population-level `cp_i_sd` parameter estimates the sample standard
+#'  deviation (with \eqn{N - 1} degrees of freedom) of the group-specific change
+#'  points. Predictor group-level effects (such as `Intercept_1_id`) use standard
+#'  hierarchical zero-mean priors without exact sum-to-zero constraints.
+#'
 #'  For simulated data, the summary contains two additional columns so that it
 #'  is easy to inspect whether the model can recover the parameters. Run
 #'  simulation and summary multiple times to get a sense of the robustness.
@@ -379,6 +386,8 @@ fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, dp
 
 #' @aliases ranef ranef.mcpfit
 #' @describeIn summary.mcpfit Group-level deviations (random effects) of `mcpfit`.
+#'   Change-point deviations are zero-centered around their population change point,
+#'   so their spread matches `cp_i_sd` with \eqn{N - 1} degrees of freedom.
 #' @export
 ranef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {
   rlang::check_dots_empty()
@@ -985,6 +994,7 @@ resolve_draws_format = function(draws_format, samples_format, draws_format_missi
 #'
 #' @aliases mcp_draws
 #' @keywords internal
+#' @noRd
 #' @inheritParams mcmclist_draws
 #' @inheritParams pp_eval
 #' @param population

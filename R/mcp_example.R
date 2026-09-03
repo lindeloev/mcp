@@ -130,8 +130,8 @@ data$response = empty$simulate(empty, data,
   cp_2 = 70,
   Intercept_1 = 10,
   time_2 = 0.5,
-  Intercept_3 = 0,
-  time_3 = -0.2,
+  Intercept_3 = 20,
+  time_3 = -0.3,
   sigma_1 = 4
 )
 

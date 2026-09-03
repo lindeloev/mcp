@@ -25,7 +25,6 @@ Making `loo` or something loo-like support leave-future-out or blocked sampling 
 ## 2026-08-14: R generics purposefully not implemented
 `terms()`, `model.matrix()`, `simulate()`, `update()`. I am not yet ready to commit to a format for these.
 
-## 2026-08-14: R generic functions deviations
 coef() will be implemented later. I have not settled on what set of parameters to include.
 
 ## 2026-08-14: fit$jags_code and fit$simulate()
