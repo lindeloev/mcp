@@ -891,6 +891,20 @@ test_that("posterior_linpred evaluates binomial models on probability scale when
   expect_equal(unname(linpred_link), matrix(c(0, 0, 0), nrow = 1))
   expect_equal(unname(linpred_prob), matrix(c(0.5, 0.5, 0.5), nrow = 1))
   expect_equal(unname(epred_counts), matrix(c(2.5, 2.5, 2.5), nrow = 1))
+
+  # dpar = "mu" always returns the probability parameter regardless of rate
+  expect_equal(fitted(fit, dpar = "mu", rate = FALSE)$fitted, c(0.5, 0.5, 0.5))
+  expect_equal(fitted(fit, dpar = "mu", rate = TRUE)$fitted, c(0.5, 0.5, 0.5))
+  expect_equal(unname(rstantools::posterior_epred(fit, dpar = "mu")), matrix(c(0.5, 0.5, 0.5), nrow = 1))
+
+  # dpar = "epred" returns counts when rate = FALSE and proportions when rate = TRUE
+  expect_equal(fitted(fit, dpar = "epred", rate = FALSE)$fitted, c(2.5, 2.5, 2.5))
+  expect_equal(fitted(fit, dpar = "epred", rate = TRUE)$fitted, c(0.5, 0.5, 0.5))
+  expect_equal(fitted(fit)$fitted, c(0.5, 0.5, 0.5))
+
+  # dpar = "mu" does not require trials column in newdata
+  expect_equal(fitted(fit, newdata = data.frame(x = 1:3), dpar = "mu", rate = FALSE)$fitted, c(0.5, 0.5, 0.5))
+  expect_error(fitted(fit, newdata = data.frame(x = 1:3), dpar = "epred", rate = FALSE), "missing from the data: N")
 })
 
 test_that("loo supports by_row and soft-deprecates pointwise", {

@@ -1131,6 +1131,9 @@ tidy_samples = function(...) {
 #' @param rate Logical scalar. For binomial models, return counts (`rate = FALSE`) or
 #'   the observed or expected success proportion (`rate = TRUE`). Predictions and
 #'   count-scale fitted values require a trials column in `newdata`.
+#'   count-scale fitted values require a trials column in `newdata`. Distributional
+#'   parameters such as `dpar = "mu"` evaluate the parameter itself (e.g., success probability)
+#'   and are unaffected by `rate`.
 #' @param prior Logical. Evaluate prior draws (`TRUE`) instead of posterior draws (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
 #' @param dpar What distributional parameter to evaluate. This is only relevant when `type == "fitted"`. E.g.,
 #'
@@ -1260,6 +1263,7 @@ pp_eval = function(
   operation = switch(type, predict = "rng", loglik = "log_lik", fitted = "epred", residuals = "epred")
   aux_operations = c(operation, if (arma && is_arma(fit)) "garma")
   if (type == "fitted" && rate && dpar %in% c("epred", "mu"))
+  if (type == "fitted" && (rate || dpar != "epred"))
     aux_operations = setdiff(aux_operations, "epred")
   aux_columns = get_family_aux_columns(fit$family, model_tables$segments)
   aux_used = names(get_family_aux_columns(fit$family, model_tables$segments, aux_operations))
@@ -1671,6 +1675,15 @@ fitted.mcpfit = function(
 #'   the observed response history, unlike `fitted()` and `predict()`. These
 #'   methods require posterior draws. For prior prediction, use `fitted()` or
 #'   `predict()` with `prior = TRUE`.
+#'
+#'   For binomial models, `posterior_epred()` and `posterior_predict()` (and
+#'   corresponding `{tidybayes}` workflows such as `add_epred_draws()`) follow
+#'   `{brms}` and `{rstantools}` conventions by returning values on the outcome
+#'   count scale (`rate = FALSE`), i.e., expected counts \(E[Y] = n\mu\) and
+#'   simulated counts in \(\{0, \dots, n\}\). In contrast, `fitted()` and `predict()`
+#'   default to proportions (`rate = TRUE`). To obtain the success probability
+#'   parameter \(\mu\) on the [0, 1] scale regardless of trial counts, pass
+#'   `dpar = "mu"`.
 #' @seealso [fitted.mcpfit()], [predict.mcpfit()]
 posterior_epred.mcpfit = function(
   object,

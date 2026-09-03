@@ -170,6 +170,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - The quantiles from `fitted()` and `predict()` for group-level change-point models ignored the group level and were identical across levels.
 
+- Explicitly setting `dpar = "mu"` now returns the success probability parameter \(\mu\) regardless of `rate`. `rate = FALSE` continues to scale expected response counts when evaluating `"epred"` (e.g., in `posterior_epred()`), while `fitted()` and `predict()` retain their default proportion scale (`rate = TRUE`).
+
 - Now works for 200+ characters formulas too.
 
 - Fixed `cores = "all"` failed. Thanks for reporting, @m-r-munroe!
