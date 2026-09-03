@@ -60,7 +60,7 @@ Behind the scenes, `plot()` merely calls `predict()` and `fitted()` to show thes
 # Extracting `fitted()` values
 To get the fitted values for each data point, simply do `fitted(fit)`:
 
-```{r}
+```{r, R.options = list(width = 9999)}
 head(fitted(fit))
 ```
 
@@ -81,7 +81,7 @@ If you compare these values to the plot, you will see that they correspond. `plo
 
 To predict out-of-sample data, you can simply use the `newdata` argument.
 
-```{r}
+```{r, R.options = list(width = 9999)}
 newdata = data.frame(time = c(data$time[1], 25, -20, 200))
 fitted(fit, newdata = newdata)
 ```
@@ -101,7 +101,7 @@ If you look at the documentation for `predict()`, `fitted()`, and `residuals()`,
 # Predictions
 `predict()` draws from the posterior predictive distribution and takes almost the same arguments as `fitted()`. This supports predictions for in-sample and out-of-sample data. `plot()` uses `predict()` under the hood for posterior predictive intervals. The values below correspond to the dashed green lines in the plot (the 80% posterior predictive interval):
 
-```{r}
+```{r, R.options = list(width = 9999)}
 set.seed(42)
 head(predict(fit, probs = c(0.1, 0.9)))
 ```

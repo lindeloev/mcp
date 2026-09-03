@@ -47,7 +47,7 @@ fit = mcp(model, data = df, family = poisson(), par_x = "date", seed = 42)
 
 Let us see the two intercepts (lambda in log-units) and the change point (in years):
 
-```{r}
+```{r, R.options = list(width = 9999)}
 result = summary(fit)
 ```
 
@@ -77,7 +77,7 @@ The intercept prior is a Student-t distribution centered on the rounded median o
 
 Categorical contrasts use scale 2.5; numeric coefficients are scaled to a representative predictor change. These are proper Student-t priors where `brms` is flat, allowing prior sampling and mild regularization of short segments.
 
-```{r}
+```{r, R.options = list(width = 9999)}
 prior_summary(fit)
 ```
 

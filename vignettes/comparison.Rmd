@@ -99,7 +99,7 @@ plot(fit_default) +
 # Bayes Factors using Savage-Dickey density ratios
 You can compute Bayes Factors for point-null hypotheses using `hypothesis()`. For example, let's compare a model in which the change point in recall is fixed at four items with the fitted continuous model:
 
-```{r, collapse=TRUE}
+```{r, collapse=TRUE, R.options = list(width = 9999)}
 equality = hypothesis(fit_default, "cp_1 = 4")
 equality
 ```
@@ -129,7 +129,7 @@ posterior_model_prob
 
 Because point Bayes factors depend directly on the prior density, they require bespoke, substantively justified priors. For example, testing `cp_1 = 4` on `fit_info` runs without warnings because an explicit prior was provided, yielding a substantially different Bayes factor:
  
-```{r}
+```{r, R.options = list(width = 9999)}
 hypothesis(fit_info, "cp_1 = 4")
 ```
 
@@ -144,7 +144,7 @@ Maybe we just want to test a few directional hypothesis. For example:
  * Is the change point in the interval `cp_1 > 3.5 & cp_1 < 4.5`?
  * The only constraint is your imagination. How about all hypotheses we may have at once? `cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & Intercept_1 > 2.5` against it's inverse `(cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & Intercept_1 < 2.5`
 
-```{r}
+```{r, R.options = list(width = 9999)}
 hypothesis(fit_info, c(
   "cp_1 > 3",
   "cp_1 > 3.5 & cp_1 < 4.5",
@@ -162,7 +162,7 @@ $$BF_{10} = \frac{P(H \mid \text{data}) \,/\, [1 - P(H \mid \text{data})]}{P(H) 
 
 where $H$ is the stated directional hypothesis, $P(H \mid \text{data})$ is its posterior probability, and $P(H)$ is its prior probability.
 
-```{r}
+```{r, R.options = list(width = 9999)}
 hypothesis(fit_info, "cp_1 > 3.5 & cp_1 < 4.5")
 
 # ... is identical to

@@ -80,7 +80,7 @@ plot(fit)
 
 We can summarise the inferred coefficients:
 
-```{r}
+```{r, R.options = list(width = 9999)}
 summary(fit)
 ```
 
@@ -175,7 +175,7 @@ fit = mcp(model, df, par_x = "time", seed = 42)
 
 The Bayesian parameter estimates are in perfect correspondence with `arima()`, even where they deviate a tiny bit from the simulation parameters (due to the inherent randomness in simulating data):
 
-```{r}
+```{r, R.options = list(width = 9999)}
 summary(fit)
 ```
 
@@ -226,7 +226,7 @@ plot(fit) /  # Patchwork syntax to show on separate rows
 
 We recovered the parameters, including the change point (see `mean` but also the helpful `sim` and `match` columns):
 
-```{r}
+```{r, R.options = list(width = 9999)}
 summary(fit)
 ```
 
@@ -239,7 +239,7 @@ plot_pars(fit, regex_pars = "cp_1|ar_*")
 
 As usual, we can test hypotheses ([read more here](../articles/comparison.html)). We can also ask how much more likely it is (relative to the prior) that there the two autocorrelations are equal compared to them differing. Because we sampled both the prior and posterior (`mcp(..., sample = "both")`), we can do a Savage-Dickey density ratio test:
 
-```{r}
+```{r, R.options = list(width = 9999)}
 hypothesis(fit, "ar1_1 = ar1_2")
 ```
 
@@ -247,7 +247,7 @@ In this case, the evidence for equality is very small so it was rarely visited b
 
 Of course, we can also do directional tests. For example, what is the evidence that `ar1_1` is more than 0.3 greater than `ar1_2`? Answer: More than 100 to one.
 
-```{r}
+```{r, R.options = list(width = 9999)}
 hypothesis(fit, "ar1_1 - 0.3 > ar1_2")
 ```
 
@@ -269,7 +269,7 @@ The defaults express no assumption about the sign. For a time series where posit
 
 Here is a complete list of the (default) priors in the model above:
 
-```{r}
+```{r, R.options = list(width = 9999)}
 prior_summary(fit)
 ```
 
@@ -284,7 +284,7 @@ Notice that the plot smoothes the posteriors at sharp cutoffs, slightly misrepre
 
 Let's inspect the priors for a more advanced AR model, since you would often have to inform these:
 
-```{r}
+```{r, R.options = list(width = 9999)}
 model = list(
   y ~ 1 + ar(2, 1 + x),
   ~ 0 + ar(1, 1 + I(x^2))

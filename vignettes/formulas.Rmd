@@ -37,7 +37,7 @@ Transformations such as `sin()` and `poly()` in formulas are evaluated on the or
 
 Enough talk. Let us see this in action for this model where we predict `y` as a function of `x` in three segments, i.e., with two change points:
 
-```{r}
+```{r, R.options = list(width = 9999)}
 library(mcp)
 model = list(
   y ~ 1,  # intercept
@@ -199,7 +199,7 @@ Parameters in `mcp` represent the absolute values within each segment (e.g., `ti
 
 First, using `hypothesis()`:
 
-```{r}
+```{r, R.options = list(width = 9999)}
 hypothesis(demo_fit, "time_3 > time_2")
 ```
 
@@ -207,7 +207,7 @@ The estimate reflects the difference `time_3 - time_2` (how much steeper or flat
 
 If you need the full posterior distribution of the change (e.g., for `quantile()`, `hist()`, or plotting with `ggplot2`), extract draws, e.g., using `as_draws_df()`:
 
-```{r}
+```{r, R.options = list(width = 9999)}
 draws = as_draws_df(demo_fit) |> 
   dplyr::mutate(diff_time = time_3 - time_2)
 

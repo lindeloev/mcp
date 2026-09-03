@@ -167,7 +167,7 @@ It seems that `mcp` recovered the group-specific change points well. There is a 
 
 `summary(fit)` (or `fixef(fit)`) returns posterior summaries for the population-level effects. To get the group-level deviations (random effects), use:
 
-```{r}
+```{r, R.options = list(width = 9999)}
 mcp::ranef(fit)
 ```
 
@@ -204,7 +204,7 @@ pp_check(fit, facet_by = "id")
 # Priors for group-level effects
 You can see the priors of the model like this:
 
-```{r}
+```{r, R.options = list(width = 9999)}
 prior_summary(fit)
 ```
 
