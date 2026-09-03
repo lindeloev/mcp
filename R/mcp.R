@@ -307,8 +307,7 @@ mcp = function(model,
   if (!is.family(family) && !is.mcpfamily(family))
     stop("`family` is not a valid family or mcpfamily. Should be gaussian(), binomial(), mcpfamily(gaussian(link = 'log')), etc.")
 
-  if (is.mcpfamily(family) == FALSE)
-    family = mcpfamily(family)
+  family = mcpfamily(family)
 
   # More checking...
   checkmate::assert(

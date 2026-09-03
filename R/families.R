@@ -79,6 +79,8 @@ negbinomial = function(link = "log", link_shape = "log") {
 #' # The converted object can also be inspected directly
 #' mcpfamily(stats::binomial())$dpars  # Show its distributional parameters
 mcpfamily = function(x) {
+  if (inherits(x, "mcpfamily"))
+    return(x)
   checkmate::assert_true(is.family(x), .var.name = "x")
 
   family = switch(
