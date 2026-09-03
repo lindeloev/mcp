@@ -281,7 +281,6 @@ get_plot = function(x,
   data_columns = mcp_columns(fit)
   ydata = fit$data[, data_columns$response]  # Convenient shortname
   response_data = get_family_response_data(fit$family, model_tables$segments, fit$data)
-  ydata = fit$family$response$observed(ydata, response_data, rate)
 
   # Show data
   if (scale == "linear") {
@@ -291,6 +290,8 @@ get_plot = function(x,
     if (any(is.infinite(ydata)))
       message("Removing points with infinite values on the linear scale. You may get a few warnings.")
     ydata[is.infinite(ydata)] = NA
+  } else {
+    ydata = fit$family$response$observed(ydata, response_data, rate)
   }
 
   # Color info
