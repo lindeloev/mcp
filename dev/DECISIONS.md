@@ -3,8 +3,6 @@ This document contains decisions made about mcp, which are knowingly not perfect
 
 See LEARNINGS.md for similar considerations.
 
-## 2026-08-01: Truncated-t vs dirichlet vs. stick breaking
-The default truncated-t prior yields 3-5 times ESS/second than dirichlet prior. The truncated-t has narrower prior on central segments than dirichlet, especially for 5+ segments. The Dirichlet(1,…,1) has a well-known stick-breaking representation using independent, untruncated Betas, but that did not improve ESS/second noticeably. Therefore truncated t is kept as default until something better shows up.
 
 ## 2026-08-01: Identity links purposefully kept
 Identity links can make impossible predictions for Bernoulli, binomial, Poisson, and NB. I am aware and kept them anyway. It is up to the user to make sensible models.

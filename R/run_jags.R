@@ -65,6 +65,14 @@ run_jags = function(data,
     draws
   }
 
+  # Equispaced default inits for sequential beta change points
+  cp_frac_nodes = unique(stringr::str_extract_all(jags_code, "cp_frac_[0-9]+_")[[1]])
+  if (length(cp_frac_nodes) > 0) {
+    N = length(cp_frac_nodes)
+    defaults = stats::setNames(as.list(1 / (N - seq_len(N) + 2)), cp_frac_nodes)
+    inits = if (is.null(inits)) defaults else c(inits, defaults[setdiff(names(defaults), names(inits))])
+  }
+
   # Use JAGS directly under a sequential future plan. This compiles the model
   # only once for all chains and preserves JAGS's progress output.
   n_workers = future::nbrOfWorkers()
@@ -163,7 +171,7 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
 
   # Public parameters and fixed change-point boundary nodes share one namespace.
   parameter_names = stats::na.omit(c(
-    paste0("cp_", 0:nrow(segments)), "cp_betas",
+    paste0("cp_", 0:nrow(segments)),
     predictors$code_name,
     group_effects$name, group_effects$sd_name
   ))
@@ -185,6 +193,7 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
     if (generated) c(
       "i_", "garma_boundary_", "garma_y_", "garma_link_y_",
       "resid_abs_", "resid_ma_", "resid_garma_", "nb_prob_", "nb_log_rate_",
+      paste0("cp_frac_", seq_len(nrow(segments) - 1L), "_"),
       paste0("x_local_", seq_len(nrow(segments)), "_"),
       paste0("link_", dpars, "_"), paste0(dpars, "_"), inverse_names
     )

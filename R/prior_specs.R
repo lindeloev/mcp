@@ -34,25 +34,10 @@ default_cp_specs = function(cps, context) {
   specs = list()
   for (j in seq_len(nrow(cps))) {
     name = cps$name[j]
-    if (n_cp == 1) {
-      code = "dunif(min(.x), max(.x))"
-    } else {
-      lower = if (j == 1) "min(.x)" else cps$name[j - 1]
-      code = paste0(
-        "dt(min(.x), (max(.x) - min(.x)) / n_cp(), n_cp() - 1) T(",
-        lower, ", max(.x))"
-      )
-    }
     specs[[name]] = tibble::tibble(
       parameter = name,
-      code = code,
-      description = if (n_cp == 1) {
-        "Within the observed change-point span"
-      } else if (j == 1) {
-        "Regularizing t-tail within the observed change-point span"
-      } else {
-        paste0("Regularizing t-tail ordered after ", cps$name[j - 1], " within the observed change-point span")
-      },
+      code = "dirichlet(1)",
+      description = "Uniform order statistics (flat Dirichlet) within the observed change-point span",
       source = "default"
     )
   }
@@ -259,6 +244,39 @@ overlay_user_prior_specs = function(specs, prior, cps, context) {
       "Prior(s) were specified for parameter name(s) that are not part of the model: ",
       and_collapse(names(prior)[!name_matches])
     )
+  }
+
+  user_cp_names = intersect(names(prior), cps$name)
+  if (length(user_cp_names) > 0) {
+    user_cp_is_dirichlet = grepl("^\\s*dirichlet\\s*\\(", as.character(prior[user_cp_names]))
+
+    if (any(!user_cp_is_dirichlet)) {
+      if (any(user_cp_is_dirichlet)) {
+        stop("All or none of the change point priors must be `dirichlet(alpha)`.")
+      }
+      # When user specifies non-dirichlet cp prior(s), any unassigned default
+      # change points fall back to direct priors.
+      unassigned_cps = setdiff(cps$name, user_cp_names)
+      for (u_name in unassigned_cps) {
+        j = match(u_name, cps$name)
+        lower = if (j == 1) "min(.x)" else cps$name[j - 1]
+        i = match(u_name, specs$parameter)
+        specs$code[i] = paste0("dunif(", lower, ", max(.x))")
+        specs$description[i] = if (j == 1) {
+          "Within the observed change-point span"
+        } else {
+          paste0("Ordered after ", cps$name[j - 1], " within the observed change-point span")
+        }
+      }
+    } else if (all(user_cp_is_dirichlet) && length(user_cp_names) < nrow(cps)) {
+      # Propagate user-specified alpha to unassigned change points
+      first_dirichlet = prior[[user_cp_names[1]]]
+      unassigned_cps = setdiff(cps$name, user_cp_names)
+      for (u_name in unassigned_cps) {
+        i = match(u_name, specs$parameter)
+        specs$code[i] = first_dirichlet
+      }
+    }
   }
 
   auto_truncated = character()

@@ -105,7 +105,7 @@ testthat::test_that("Dirichlet change point priors use a common alpha", {
     sample = FALSE,
     quiet = TRUE
   )
-  testthat::expect_match(fit$jags_code, "ddirch(c(0.5, 0.5, 0.5))", fixed = TRUE)
+  testthat::expect_match(fit$jags_code, "dbeta(0.5, 1)", fixed = TRUE)
   fit_10 = mcp(
     prior_model,
     data = data_gauss,
@@ -114,7 +114,7 @@ testthat::test_that("Dirichlet change point priors use a common alpha", {
     sample = FALSE,
     quiet = TRUE
   )
-  testthat::expect_match(fit_10$jags_code, "ddirch(c(10, 10, 10))", fixed = TRUE)
+  testthat::expect_match(fit_10$jags_code, "dbeta(10, 20)", fixed = TRUE)
   testthat::expect_no_error(suppressWarnings(mcp(
     prior_model,
     data = data_gauss,

@@ -225,7 +225,7 @@ Modeling [autoregression](articles/arma.html) and distributional parameters like
 
 - See priors in `fit$prior` or `prior_summary(fit)` and set priors using `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")`.
 
-- One change point has a uniform default prior. An ideal default prior for multiple change points is `cp_i = "dirichlet(1)"` which is a simplex of equidistant beta distributions, but because it samples inefficiently, a mcp defaults to an approximation using truncated Student-t priors centered at the minimum x. Informativeness increases and the number of change points increase.
+- The default prior on change points is `dirichlet(1)` (uniform order statistics). For a single change point, this is the Beta(1, 1) / uniform distribution over `[min(x), max(x)]`. For multiple change points, it corresponds to a flat Dirichlet distribution over segment lengths with equal spacing between change points. Informativeness increases as the number of change points increases.
 
 - Fix parameters to specific values using `cp_1 = 45` and share parameters between segments using `slope_1 = "slope_2"`.
 

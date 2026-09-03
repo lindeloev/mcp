@@ -83,6 +83,8 @@ split_prior_truncation = function(x) {
 
 # Parse a simple prior call into its function name and argument strings.
 parse_prior_call = function(x) {
+  if (is.null(x) || length(x) != 1 || is.na(x) || !is.character(x))
+    return(NULL)
   x = trimws(x)
   if (!grepl("^[A-Za-z.][A-Za-z0-9._]*\\s*\\(", x))
     return(NULL)
@@ -233,7 +235,7 @@ human_prior_call = function(x) {
 
 
 # Summarize the support implied by a prior distribution or truncation.
-prior_bounds = function(x) {
+prior_bounds = function(x, parameter = NULL, all_names = character(), context = list()) {
   parts = split_prior_truncation(x)
   if (!is.null(parts$truncation)) {
     trunc = parse_prior_call(trimws(parts$truncation))
@@ -249,6 +251,18 @@ prior_bounds = function(x) {
     return("none")
   if (call$name == "dunif" && length(call$args) == 2)
     return(paste0("[", call$args[1], ", ", call$args[2], "]"))
+  if (call$name == "dirichlet") {
+    # Display as: cp_1 [min(x), cp_2] ; cp_2 [cp_1, cp_3] ; ... ; cp_n [cp_{n-1}, max(x)]
+    cp_names = all_names[grepl("^cp_[1-9]+$", all_names)]
+    j = match(parameter, cp_names)
+    x_var = if (!is.null(context$x_display) && nzchar(context$x_display)) context$x_display else "x"
+    if (is.na(j) || length(cp_names) <= 1) {
+      return(paste0("[min(", x_var, "), max(", x_var, ")]"))
+    }
+    lower = if (j == 1) paste0("min(", x_var, ")") else cp_names[j - 1]
+    upper = if (j == length(cp_names)) paste0("max(", x_var, ")") else cp_names[j + 1]
+    return(paste0("[", lower, ", ", upper, "]"))
+  }
   if (call$name == "dbeta") return("[0, 1]")
   if (call$name %in% c("dgamma", "dexp", "dlnorm", "dweib")) return("[0, Inf]")
   "none"
@@ -302,7 +316,7 @@ compile_prior_record = function(parameter, code, all_names, context, source,
   tibble::tibble(
     parameter = parameter,
     prior = if (kind == "distribution") human_prior_call(resolved) else resolved,
-    bounds = prior_bounds(display_original),
+    bounds = prior_bounds(display_original, parameter, all_names, context),
     rule = rule,
     description = description,
     source = source,

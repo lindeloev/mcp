@@ -72,23 +72,19 @@
 #'      estimation and prediction, but should be justified before hypothesis testing.
 #'      `mcp` uses conventional distribution scales rather than JAGS precision:
 #'      SD for `dnorm()`, scale for `dt()`, `ddexp()`, and `dlogis()`, and
-#'      log-SD for `dlnorm()`. See
-#'      details. With multiple change points, the default is a regularizing
-#'      Student-t prior centered at `min(x)` and sequentially truncated between
-#'      the preceding change point and `max(x)`. User-specified `dunif()` priors
-#'      and explicit truncations are used as written, so users must supply the
-#'      ordering bounds, e.g., `dunif(cp_1, max(time))` for `cp_2`.
+#'      log-SD for `dlnorm()`. See details.
 #'  * A numerical value (e.g., `Intercept_1 = -2.1`) indicating a fixed value.
 #'  * A model parameter name (e.g., `Intercept_2 = "Intercept_1"`), indicating that this parameter is shared -
 #'      typically between segments. If two group-level deviations are shared this way,
 #'      they will need to have the same grouping variable.
-#'  * A scaled Dirichlet prior is supported for change points if they are all set to
-#'      `cp_i = "dirichlet(alpha)"` with the same positive `alpha` for every
-#'      change point. `alpha = 1` is most often used. This prior is symmetric over segment spacings,
-#'      unlike the regularizing t-tail default for multiple change points, but it
-#'      mixes less efficiently, so you will often need to set `iter` higher.
-#'      It is recommended for hypothesis testing and for the estimation of more
-#'      than 5 change points. [Read more](https://lindeloev.github.io/mcp/articles/priors.html).
+#'  * The default prior on change points is `dirichlet(1)` (uniform order statistics).
+#'      For a single change point, this is the Beta(1, 1) / Uniform distribution over `[min(x), max(x)]`.
+#'      For multiple change points, it corresponds to a flat Dirichlet distribution over segment lengths.
+#'      You can also explicitly set `cp_i = "dirichlet(alpha)"` with the same positive `alpha` for all
+#'      change points to regularize spacing (`alpha > 1` penalizes change points from occurring close together,
+#'      while `alpha < 1` favors clustering). Under the hood, this is parameterized as an exact sequential
+#'      stick-breaking Beta chain for fast and robust sampling.
+#'      [Read more](https://lindeloev.github.io/mcp/articles/priors.html).
 #' @param family A supported family: `gaussian()`, `binomial()`, `bernoulli()`,
 #'   `poisson()`, or `negbinomial()`, with a supported link function; e.g.,
 #'   `gaussian(link = "log")`.

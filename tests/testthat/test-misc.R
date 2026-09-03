@@ -321,7 +321,7 @@ test_that("priors are resolved without changing their parameterization", {
   expect_equal(
     unclass(default_fit$prior),
     list(
-      cp_1 = "dunif(1, 6)",
+      cp_1 = "dirichlet(1)",
       Intercept_1 = "dt(5.5, 3.7, 3)",
       x_1 = "dt(0, 0.74, 3)",
       Intercept_2 = "dt(5.5, 3.7, 3)",

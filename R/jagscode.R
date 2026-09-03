@@ -123,23 +123,23 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   jags_constants$names = list()
   jags_constants$values = list()
   jags_constants$counter = 0L
-  if (!is.null(prior_context_)) {
-    # Pre-register with the *raw* x_min/x_max so later jagsify_constants()
-    # calls on the (lossy, formatted-text) cp priors reuse these exact
-    # values instead of re-parsing a rounded literal (see docs above).
-    register_jags_constant(prior_context_$x_min, jags_constants)
-    register_jags_constant(prior_context_$x_max, jags_constants)
-  }
+  const_min = if (!is.null(prior_context_)) register_jags_constant(prior_context_$x_min, jags_constants) else "0"
+  const_max = if (!is.null(prior_context_)) register_jags_constant(prior_context_$x_max, jags_constants) else "1"
 
   # Begin building JAGS model. `mm` is short for "mcp model".
-  # Add fixed variables.
-  mm = paste0("model {")
+  # Add fixed helper variables.
+  mm = paste0("model {
+  # mcp helper values
+  cp_0 = ", const_min, "
+  cp_", max(segments$segment), " = ", const_max, "
+
+  # Priors for population-level effects\n")
 
   ####################################
   # DIRICHLET PRIOR ON CHANGE POINTS #
   ####################################
   # Get change point priors and check if they are Dirichlet
-  cps = prior[stringr::str_detect(names(prior), "^cp_[1-9]+$")]
+  cps = prior[paste0("cp_", seq_len(nrow(segments) - 1L))]
   dirichlet_calls = lapply(cps, function(x) {
     call = parse_prior_call(x)
     if (!is.null(call) && call$name == "dirichlet") call else NULL
@@ -159,15 +159,22 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
     if (any(alpha != alpha[1]))
       stop("All `dirichlet(alpha)` change point priors must use the same alpha.")
 
-    # Build JAGS code. cp_betas is a simplex. cp_i is scaled to the observed range of x.
-    mm = paste0(mm, "
-  # Scaled Dirichlet prior on change points
-  cp_betas ~ ddirch(c(", paste(rep(format_prior_number(alpha[1]), length(cps) + 1L), collapse = ", "), "))  # Scaled Dirichlet prior on change points")
+    # Sequential Beta chain for ordered Dirichlet(alpha) change points
+    a = alpha[1]
+    K_last = max(segments$segment)
+    n_cps = length(cps)
     for (i in seq_along(cps)) {
-      mm = paste0(mm, "
-  cp_", i, " = ", format_prior_number(prior_context_$x_min),
-                  " + sum(cp_betas[1:", i, "]) * ", format_prior_number(prior_context_$x_span),
-                  "  # Within the observed change-point span")
+      M = n_cps - i + 1L
+      shape1 = format_prior_number(a)
+      shape2 = format_prior_number(M * a)
+      lower_cp = if (i == 1L) "cp_0" else paste0("cp_", i - 1L)
+      upper_cp = paste0("cp_", K_last)
+      desc_comment = if (a == 1) "Uniform order statistics" else paste0("Dirichlet(", format_prior_number(a), ")")
+      mm = paste0(
+        mm,
+        "  cp_frac_", i, "_ ~ dbeta(", shape1, ", ", shape2, ")  # Relative fraction of remaining span (", desc_comment, ")\n",
+        "  cp_", i, " = ", lower_cp, " + cp_frac_", i, "_ * (", upper_cp, " - ", lower_cp, ")  # Ordered change point\n"
+      )
     }
 
     # Clean up. Remove any dirichlet priors from the list of priors
@@ -183,15 +190,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   prior_pop = prior[!names(prior) %in% group_effects$name]
   prior_group = prior[names(prior) %in% group_effects$name]
 
-  # Use get_prior_str() to add population-level priors
-  mm = paste0(mm, "
-  # mcp helper values\n")
-
-  # Helpers for change points:
-  mm = paste0(mm, "  cp_0 = ", jagsify_constants(format_prior_number(prior_context_$x_min), jags_constants), "\n")
-  mm = paste0(mm, "  cp_", max(segments$segment), " = ", jagsify_constants(format_prior_number(prior_context_$x_max), jags_constants), "
-
-  # Priors for population-level effects\n")
+  # Use get_prior_str() to add remaining population-level priors
   is_cp_name = function(name) grepl("^cp_[0-9]+$", name)
   for (i in seq_along(prior_pop)) {
     name = names(prior_pop)[i]

@@ -49,7 +49,7 @@ Other notes:
 
 Let us see the priors after running them through `mcp` and compare to the default priors:
 
-```{r}
+```{r, R.options = list(width = 9999)}
 library(mcp)
 df_dummy = data.frame(x = 1:100, y = 1:100)
 empty_manual = mcp(model, data = df_dummy, prior = prior, sample = FALSE)
@@ -57,7 +57,7 @@ empty_default = mcp(model, data = df_dummy, sample = FALSE)
 
 # Inspect resolved priors and bounds
 prior_summary(empty_manual)  # For more details: add verbose = TRUE
-prior_summary(empty_default)
+prior_summary(empty_default)  # For more details: add verbose = TRUE
 ```
 
 Now, let's simulate some data from `model`. The following priors are "at odds" with the actual data so as to show their effect.
@@ -116,160 +116,120 @@ We see the effects of the priors:
 - The slopes `x_2` and `x_3` were forced to be identical.
 - The change point `cp_2` was a constant, so there is no uncertainty there.
 
+Adding `verbose = TRUE` reveals full details including the rule descriptions, parameter classifications (`kind`), and whether each prior came from the user or data-calibrated defaults:
+
+```{r, R.options = list(width = 9999)}
+prior_summary(fit_manual, verbose = TRUE)
+```
+
 This is a contrived example. Usually setting priors manually aims to sample the "correct" posterior.
 
 # Default priors on change points {#cp_prior}
 
-Change point locations must lie within the observed range `[min(x), max(x)]` and maintain strict order `cp_1 < cp_2 < ... < cp_n`. Without this rule, change point locations would be unidentifiable. If you inspect `fit$jags_code`, you will see that `mcp` inserts boundary markers at `cp_0 = min(x)` and `cp_{n+1} = max(x)` to ensure the ordering constraint.
+Change point locations must lie within the observed range `[min(x), max(x)]` and maintain strict order `cp_1 < cp_2 < ... < cp_n`. Without this rule, change point locations would be unidentifiable and label switching occur.
 
-For any given range, introducing more change points makes the prior for each change point more informative (as shown in the figure below). `mcp` provides two built-in population-level prior families:
+The default prior on all change points in `mcp` is **uniform order statistics** (`dirichlet(1)`), which treats any set of ordered change points as equally likely anywhere in the observed interval `[min(x), max(x)]`. See below for a visualization. Some properties of this prior:
 
-- **One change point:** Both specifications default to `cp_1 = uniform(min(x), max(x))`. Its location is uniform over the observed x-range.
-- **The t-tail prior (default for 2+ change points):** Sequentially truncated Student-t distributions centered at `min(x)`. Specifically, `cp_i = student_t(df = n_cp() - 1, location = min(x), scale = (max(x) - min(x)) / n_cp()) T(cp_{i-1}, max(x))`.
-- **The Dirichlet prior:** A joint prior on segment spacings specified via `prior = list(cp_1 = "dirichlet(1)", cp_2 = "dirichlet(1)", ...)`.
+- **Single change point:** For 1 change point, this reduces to the uniform prior in the observed range: $\text{cp}_1 \sim \text{Beta}(1, 1) \equiv \text{Uniform}(\min(x), \max(x))$.
+- **Multiple change points:** For $N \ge 2$, change points are evenly spaced on average: $$\mathbb{E}[\text{cp}_j] = \min(x) + \frac{j}{N + 1} (\max(x) - \min(x))$$ For example, with 2 change points, prior means are at 33% and 67% of the data range. With 5 change points, they are at 16.7%, 33.3%, 50%, 66.7%, and 83.3%.
+- **Symmetry and flat sum:** The prior is symmetric under reflection (flipping $x$ leaves prior probabilities unchanged), and the sum of prior densities across all change points is uniform across the entire data range.
+- **Increasing informativeness with segment count:** For any given range, introducing more change points makes the prior for each change point more effectively informative because they are "squeezed" more together (as shown in the figure below).
+
+The plot below compares these theoretical Dirichlet distributions with the sampled prior distributions for 2 and 5 change points:
 
 ```{r, echo = FALSE, results=FALSE, warning=FALSE, message=FALSE}
 df_dummy = data.frame(x = c(0, 0.5, 1), y = rnorm(3))
 
 # Sample priors for two default change points
-model_two = list(y ~ x, ~ 1, ~1)
-fit_two = mcp(model_two, data = df_dummy, sample = "prior", chains = 1, iter = 300000, seed = 42)
+model_two = list(y ~ x, ~ 1, ~ 1)
+fit_two = mcp(model_two, data = df_dummy, sample = "prior", chains = 1, iter = 50000, seed = 42)
 
 # Sample priors for five default change points
-model_five = list(y ~ x, ~ 1, ~1, ~1, ~1, ~1)
-fit_five = mcp(model_five, data = df_dummy, sample = "prior", chains = 1, iter = 300000, seed = 42)
+model_five = list(y ~ x, ~ 1, ~ 1, ~ 1, ~ 1, ~ 1)
+fit_five = mcp(model_five, data = df_dummy, sample = "prior", chains = 1, iter = 50000, seed = 42)
 ```
 
-```{r, echo = FALSE, fig.height=6, fig.width=7}
-par(mfrow = c(2,2))
+```{r, echo = FALSE, fig.height=3.5, fig.width=7}
+par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
 MINX = min(df_dummy$x)
 MAXX = max(df_dummy$x)
+col_emp = rgb(1, 0, 0)
 
+# Panel 1: Two change points
+curve(dbeta(x, 1, 2) / 2, from = 0, to = 1, ylim = c(0, 1.15),
+      ylab = "Density", xlab = "x", main = "Two change points",
+      col = "black", lwd = 1.5)
+curve(dbeta(x, 2, 1) / 2, add = TRUE, col = "black", lwd = 2)
+curve(dunif(x, 0, 1), lty = 2, add = TRUE, col = "black", lwd = 2)
 
-###############
-# DIRICH TWO #
-###############
-
-# Initiate for cp_1
-curve(dbeta(x, 1, 2) / 2, 
-      ylab = "density",
-      xlab = NA,
-      main = "Dirichlet two")
-
-text(0.1, 0.7, labels = "cp_1")
-
-# Add others
-curve(dbeta(x, 2, 1) / 2, add = T); text(0.9, 0.7, labels = "cp_2")
-
-# The sum
-curve(dunif(x, 0, 1), lty = 2, add = T); text(0.5, 0.95, labels = "sum")
-
-# Add extra x-axis
-axis(1, at = seq(0, 1, by = 0.2), line=3)
-mtext("Beta", 1, line = 1, at = -0.2)
-mtext("Data", 1, line = 3, at = -0.2)
-
-
-###############
-# DIRICH FIVE #
-###############
-
-# Initiate for cp_1
-curve(dbeta(x, 1, 5) / 5, 
-      ylab = "density",
-      xlab = NA,
-      main = "Dirichlet five")
-
-text(0.1, 0.8, labels = "cp_1")
-
-# Add others
-curve(dbeta(x, 2, 4) / 5, add = T); text(0.25, 0.48, labels = "cp_2")
-curve(dbeta(x, 3, 3) / 5, add = T); text(0.5, 0.43, labels = "cp_3") 
-curve(dbeta(x, 4, 2) / 5, add = T); text(0.75, 0.48, labels = "cp_4") 
-curve(dbeta(x, 5, 1) / 5, add = T); text(0.9, 0.8, labels = "cp_5") 
-
-# The sum
-curve(dunif(x, 0, 1), lty = 2, add = T); text(0.5, 0.95, labels = "sum")
-
-# Add extra x-axis
-axis(1, at = seq(0, 1, by = 0.2), line=3)
-mtext("Beta", 1, line = 1, at = -0.2)
-mtext("Data", 1, line = 3, at = -0.2)
-
-
-###############
-# DEFAULT TWO #
-###############
 draws_two = as_draws_df(fit_two)
 y1 = density(draws_two$cp_1, from = MINX, to = MAXX)
 y2 = density(draws_two$cp_2, from = MINX, to = MAXX)
 ysum = (y1$y + y2$y) / 2
-plot(y1$x, ysum, 
-     type = "l", lty = 2, 
-     xlab = NA, ylab = "Density", main = "t-tail two",
-     ylim = c(0, max(ysum))
-)
 
-lines(y1$x, y1$y / 2)
-lines(y2$x, y2$y / 2)
+lines(y1$x, y1$y / 2, col = col_emp)
+lines(y2$x, y2$y / 2, col = col_emp)
+lines(y1$x, ysum, col = col_emp, lty = 2)
 
-text(0.5, 0.9, labels = "sum")
-text(0.1, 0.7, labels = "cp_1")
-text(0.9, 0.6, labels = "cp_2")
+text(0.12, 0.75, labels = "cp_1")
+text(0.88, 0.75, labels = "cp_2")
+text(0.5, 1.05, labels = "sum")
 
+# Panel 2: Five change points
+curve(dbeta(x, 1, 5) / 5, from = 0, to = 1, ylim = c(0, 1.15),
+      ylab = "Density", xlab = "x", main = "Five change points",
+      col = "black", lwd = 1.5)
+curve(dbeta(x, 2, 4) / 5, add = TRUE, col = "black", lwd = 2)
+curve(dbeta(x, 3, 3) / 5, add = TRUE, col = "black", lwd = 2)
+curve(dbeta(x, 4, 2) / 5, add = TRUE, col = "black", lwd = 2)
+curve(dbeta(x, 5, 1) / 5, add = TRUE, col = "black", lwd = 2)
+curve(dunif(x, 0, 1), lty = 2, add = TRUE, col = "black", lwd = 2)
 
-
-################
-# DEFAULT FIVE #
-################
 draws_five = as_draws_df(fit_five)
-z1 = density(draws_five$cp_1)
-z2 = density(draws_five$cp_2)
-z3 = density(draws_five$cp_3)
-z4 = density(draws_five$cp_4)
-z5 = density(draws_five$cp_5)
-zsum = (z1$y + z2$y + z3$y + z4$y + z5$y) / 4
+z1 = density(draws_five$cp_1, from = MINX, to = MAXX)
+z2 = density(draws_five$cp_2, from = MINX, to = MAXX)
+z3 = density(draws_five$cp_3, from = MINX, to = MAXX)
+z4 = density(draws_five$cp_4, from = MINX, to = MAXX)
+z5 = density(draws_five$cp_5, from = MINX, to = MAXX)
+zsum = (z1$y + z2$y + z3$y + z4$y + z5$y) / 5
 
-plot(z1$x, zsum, 
-     type = "l", lty = 2, 
-     xlab = NA, ylab = "Density", main = "t-tail five",
-     ylim = c(0, max(zsum))); 
-text(0.3, 1.3, labels = "sum")
+lines(z1$x, z1$y / 5, col = col_emp)
+lines(z2$x, z2$y / 5, col = col_emp)
+lines(z3$x, z3$y / 5, col = col_emp)
+lines(z4$x, z4$y / 5, col = col_emp)
+lines(z5$x, z5$y / 5, col = col_emp)
+lines(z1$x, zsum, col = col_emp, lty = 2)
 
-lines(z5$x, z5$y / 5); text(0.9, 0.8, labels = "cp_5")
-lines(z4$x, z4$y / 5); text(0.65, 0.45, labels = "cp_4")
-lines(z3$x, z3$y / 5); text(0.45, 0.5, labels = "cp_3")
-lines(z3$x, z2$y / 5); text(0.25, 0.6, labels = "cp_2")
-lines(z2$x, z1$y / 5); text(0.1, 0.8, labels = "cp_1")
-par(mfrow = c(1,1))
+text(0.1, 0.85, labels = "cp_1")
+text(0.25, 0.53, labels = "cp_2")
+text(0.5, 0.48, labels = "cp_3")
+text(0.75, 0.53, labels = "cp_4")
+text(0.9, 0.85, labels = "cp_5")
+text(0.5, 1.05, labels = "sum")
+
+par(mfrow = c(1, 1))
 ```
 
-## The t-tail prior on 2+ change points (default)
+Note on implementation: Under the hood, `mcp` parameterizes this using a sequential stick-breaking Beta chain ($z_j \sim \text{Beta}(1, N - j + 1)$, $\text{cp}_j = \text{cp}_{j-1} + z_j(\max(x) - \text{cp}_{j-1})$). This allows JAGS to sample the model much more efficiently.
 
-For 2+ change points, the default rule (on all change points) is `cp_i = student_t(df = n_cp() - 1, location = min(x), scale = (max(x) - min(x)) / n_cp())`, bounded below by the preceding change point and above by `max(x)`.
+The [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) places a joint prior on positive segment spacings that sum to the observed x-range. This construction also underlies monotonic effects in `brms` ([Bürkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/)).
 
-- **Degrees of freedom:** It is t-distributed with $N - 1$ degrees of freedom (`n_cp() - 1`). Together with the decreasing scale, this makes the underlying distributions more concentrated as the number of change points increases.
-- **Scale:** The scale is `(max(x) - min(x)) / n_cp()`. This is a calibration choice, not the equal-segment spacing (which would divide by `n_cp() + 1`).
-- **Location and truncation:** The location parameter is always the lowest observed `x`. Thus `cp_1` is a bounded half-t and `cp_2+` use sequentially truncated right tails of the same t (hence "t-tail prior"). Their means are shifted by truncation and are not equal to `min(x)`.
-- **Properties:** The sequential truncation does not produce exact uniform order statistics; the middle segments tend to get narrower than the first/last segments. For non-small datasets, the effect on the posterior is negligible, though point-`hypothesis()` tests via Savage-Dickey density ratios would be strongly impacted. Its main advantage is sampling speed: JAGS samples this formulation much faster than the Dirichlet prior.
+## Regularizing change points: `dirichlet(alpha)`
 
-## Dirichlet-based prior on change points
-
-The [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) places a joint prior on positive segment spacings that sum to the observed x-range. Consequently, the derived population-level change points are naturally ordered and bounded. This construction also underlies monotonic effects in `brms` ([Bürkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/)).
-
-The Dirichlet distribution is a simplex of beta distributions (they always sum to 1), where the individual betas represent inter-changepoint distances. For $N$ change points, the distribution for change point $i$ is $\text{Beta}(i, N + 1 - i)$, so `cp_1 ~ Beta(1, N)` and `cp_N ~ Beta(N, 1)`. Scaling from $[0, 1]$ to the observed data range (`0 --> min(x)`, `1 --> max(x)`) gives the desired bounding.
-
-To use the Dirichlet prior, specify it for all change points:
+To adjust the spacing regularity of change points, specify `dirichlet(alpha)` for all change points:
 
 ```{r, eval=FALSE}
-prior_dirichlet = list(
-  cp_1 = "dirichlet(1)",
-  cp_2 = "dirichlet(1)",
-  cp_3 = "dirichlet(1)"
+prior = list(
+  cp_1 = "dirichlet(2)",
+  cp_2 = "dirichlet(2)"
 )
 ```
 
-The number in parentheses is a common $\alpha$ concentration parameter (all change points must share the same $\alpha$). Values below 1 favor uneven spacings, `dirichlet(1)` treats spacings exchangeably (giving the ordered-uniform distribution), and values above 1 favor more evenly spaced change points.
+The number in parentheses is a common $\alpha$ concentration parameter (all change points must share the same $\alpha$):
+
+- $\alpha = 1$ (default): completely flat uniform order statistics as shown above.
+- $\alpha > 1$ (e.g. 2, 5): penalizes change points from occurring close to each other or the boundaries, favoring more evenly spaced segments.
+- $\alpha < 1$ (e.g. 0.5): favors clustering and permits change points to occur close together.
 
 ## Manual priors on change points
 
