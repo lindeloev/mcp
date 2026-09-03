@@ -175,16 +175,9 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
     predictors$code_name,
     group_effects$name, group_effects$sd_name
   ))
-  inverse_candidates = paste0(c(predictors$code_name, group_effects$name), "_inverse")
-  inverse_names = if (is.null(jags_code)) character() else
-    inverse_candidates[vapply(
-      inverse_candidates, grepl, logical(1), x = jags_code, fixed = TRUE
-    )]
 
   # Data helpers are always present; model helpers occur only in generated code.
-  offset_nodes = if (is.null(jags_code)) character() else
-    unique(stringr::str_extract_all(jags_code, "offset_[A-Za-z0-9_]+_")[[1]])
-
+  offset_nodes = if (!is.null(jags_code)) unique(stringr::str_extract_all(jags_code, "offset_[A-Za-z0-9_]+_")[[1]])
   helper_names = unique(c(
     "rhs_matrix_", "series_id_", "cp_order_", "response_observed_",
     "likelihood_weight_", "likelihood_zero_", offset_nodes,
@@ -195,14 +188,13 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
       "resid_abs_", "resid_ma_", "resid_garma_", "nb_prob_", "nb_log_rate_",
       paste0("cp_frac_", seq_len(nrow(segments) - 1L), "_"),
       paste0("x_local_", seq_len(nrow(segments)), "_"),
-      paste0("link_", dpars, "_"), paste0(dpars, "_"), inverse_names
+      paste0("link_", dpars, "_"), paste0(dpars, "_"),
+      paste0(c(predictors$code_name, group_effects$name), "_inverse")
     )
   ))
 
   # Catch parameter-to-parameter and parameter-to-helper collisions before priors.
-  duplicate_parameters = unique(parameter_names[
-    duplicated(parameter_names) | duplicated(parameter_names, fromLast = TRUE)
-  ])
+  duplicate_parameters = unique(parameter_names[duplicated(parameter_names)])
   parameter_helpers = intersect(parameter_names, helper_names)
   generated_collisions = unique(c(duplicate_parameters, parameter_helpers))
   if (length(generated_collisions) > 0)

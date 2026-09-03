@@ -456,13 +456,10 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
 #' @return `predictors`, invisibly. Stops with an informative error on
 #'   collision.
 assert_unique_predictor_names = function(predictors) {
-  duplicated_name = duplicated(predictors$code_name) |
-    duplicated(predictors$code_name, fromLast = TRUE)
-
-  if (!any(duplicated_name))
+  collision_names = unique(predictors$code_name[duplicated(predictors$code_name)])
+  if (length(collision_names) == 0)
     return(invisible(predictors))
 
-  collision_names = unique(predictors$code_name[duplicated_name])
   collision_lines = vapply(collision_names, function(code_name) {
     rows = predictors[predictors$code_name == code_name, , drop = FALSE]
     sources = paste0(
