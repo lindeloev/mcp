@@ -77,7 +77,7 @@ release_questions = function() {
 }
 
 
-#' Homogonize enumerating strings in mcp
+#' Homogenize enumerating strings in mcp
 #'
 #' Nice for error messages.
 #'

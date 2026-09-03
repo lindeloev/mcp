@@ -177,7 +177,7 @@ get_par_x = function(model, data, par_x = NULL) {
     if (length(par_x_candidates) == 0) {
       stop("No continuous column for change points found in the formulas. Either provide mcp(..., par_x = 'my_col') or update the model.")
     } else if (length(par_x_candidates) > 1) {
-      stop("Could not automatically determine the change point dimension (multiple candidates: ", and_collapse(par_x_candidates), "). Set it explictly using mcp(..., par_x = 'my_col').")
+      stop("Could not automatically determine the change point dimension (multiple candidates: ", and_collapse(par_x_candidates), "). Set it explicitly using mcp(..., par_x = 'my_col').")
     } else if (length(par_x_candidates) == 1) {
       par_x_candidates
     }

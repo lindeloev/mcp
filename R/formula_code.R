@@ -192,7 +192,7 @@ get_formula_r = function(formula_jags, predictors, group_effects, cps, par_x) {
         paste0("args$", predictor_pars, ", "),
         paste0(predictor_pars, ", ")
       ),
-    stats::setNames(paste0("cbind(args$"), "cbind("),
+    stats::setNames("cbind(args$", "cbind("),
     stats::setNames("args$", "args$args$"),  # Fix double-inserting args$ above
 
     # Change points
@@ -200,7 +200,7 @@ get_formula_r = function(formula_jags, predictors, group_effects, cps, par_x) {
     stats::setNames(paste0("args$", par_x, " <"), paste0(par_x, " <")),
 
     # General
-    stats::setNames("pmin(args$", paste0("pmin("))
+    stats::setNames("pmin(args$", "pmin(")
   )
   if (length(cp_pars) > 0) {
     replace_args = c(

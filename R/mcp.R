@@ -530,7 +530,7 @@ mcp = function(model,
   class(prior) = c("mcplist", "list")
   class(jags_code) = c("mcptext", "character")  # for nicer printing
 
-  # Make mrpfit object
+  # Make mcpfit object
   mcpfit = list(
     # By user (same order as mcp argument)
     model = model,

@@ -1085,7 +1085,6 @@ mcp_draws = function(
 
   # Add population-level change points to deviations, then remove helper columns.
   if (length(absolute_cps) > 0) {
-    # draws[, absolute] = draws[, absolute] + draws[, absolute_cps]
     draws[, absolute_cps] = draws[, absolute_cps] + draws[, absolute]
     draws = dplyr::select(draws, -dplyr::all_of(absolute))
   }
@@ -1224,7 +1223,6 @@ pp_eval = function(
   fit = object
   checkmate::assert_class(fit, "mcpfit")
   warn_custom_jags_code(fit)
-  if (!is.mcpfamily(fit$family) || is.null(fit$family$r$cdf))
   if (!is.mcpfamily(fit$family))
     fit$family = mcpfamily(fit$family)
   if (is.null(fit$family$r$cdf))

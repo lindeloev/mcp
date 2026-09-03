@@ -377,7 +377,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, prior = FALSE) {
         BF = NA_real_
       } else {
         if (!coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) || !coda::is.mcmc.list(.subset2(fit, "mcmc_post")))
-          stop("Model contains '='. Both prior and posterior draws are needed to compute Savage-Dickey density ratios. Run mcp(..., sample = 'both'")
+          stop("Model contains '='. Both prior and posterior draws are needed to compute Savage-Dickey density ratios. Run mcp(..., sample = 'both').")
 
         # Warning if testing against default priors
         hypothesis_pars = sub("\\[.*\\]$", "", all.vars(rlang::parse_expr(expression)))
@@ -530,7 +530,7 @@ validate_savage_dickey_expression = function(expression, parameters) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_density = function(x, value) {
-  bandwidth = stats::bw.SJ(x)
+  bandwidth = tryCatch(stats::bw.SJ(x), error = function(e) stats::bw.nrd0(x))
   mean(stats::dnorm(value, mean = x, sd = bandwidth))
 }
 

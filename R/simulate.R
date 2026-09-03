@@ -261,7 +261,6 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   # ASSERTS #
   ###########
   checkmate::assert_class(fit, "mcpfit")
-  if (!is.mcpfamily(fit$family) || is.null(fit$family$r$cdf))
   if (!is.mcpfamily(fit$family))
     fit$family = mcpfamily(fit$family)
   if (is.null(fit$family$r$cdf))

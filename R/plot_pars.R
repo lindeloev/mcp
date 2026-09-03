@@ -95,7 +95,7 @@ plot_pars = function(fit,
     pars[pars == "varying"] = "group"
   }
 
-  if (any(c("population", "group") %in% pars) && length(pars ) > 1)
+  if (any(c("population", "group") %in% pars) && length(pars) > 1)
     stop("`pars` cannot combine 'population' or 'group' with other elements.")
 
   if (any(c("hex", "scatter") %in% type) && (length(pars) != 2 || length(regex_pars) > 0))
