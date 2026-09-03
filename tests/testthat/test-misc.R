@@ -374,6 +374,20 @@ test_that("priors are resolved without changing their parameterization", {
   expect_equal(legacy_fit$prior$cp_1, "dunif(1, 6)")
 })
 
+test_that("partial user-specified Dirichlet priors propagate source and description", {
+  data_dir = data.frame(x = 1:10, y = 1:10)
+  fit_dir = mcp(list(y ~ 1, ~ 1, ~ 1), data = data_dir, par_x = "x", prior = list(cp_1 = "dirichlet(2)"), sample = FALSE)
+  verbose_dir = prior_summary(fit_dir, verbose = TRUE)
+
+  expect_equal(verbose_dir$prior[verbose_dir$parameter == "cp_1"], "dirichlet(alpha = 2)")
+  expect_equal(verbose_dir$source[verbose_dir$parameter == "cp_1"], "user")
+  expect_equal(verbose_dir$description[verbose_dir$parameter == "cp_1"], "User-specified prior")
+
+  expect_equal(verbose_dir$prior[verbose_dir$parameter == "cp_2"], "dirichlet(alpha = 2)")
+  expect_equal(verbose_dir$source[verbose_dir$parameter == "cp_2"], "user")
+  expect_equal(verbose_dir$description[verbose_dir$parameter == "cp_2"], "Inherited from user-specified `cp_1`")
+})
+
 
 test_that("Gaussian defaults use coherent response and link scales", {
   log_data = data.frame(

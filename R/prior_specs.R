@@ -271,10 +271,13 @@ overlay_user_prior_specs = function(specs, prior, cps, context) {
     } else if (all(user_cp_is_dirichlet) && length(user_cp_names) < nrow(cps)) {
       # Propagate user-specified alpha to unassigned change points
       first_dirichlet = prior[[user_cp_names[1]]]
+      source_desc = and_collapse(paste0("`", user_cp_names, "`"))
       unassigned_cps = setdiff(cps$name, user_cp_names)
       for (u_name in unassigned_cps) {
         i = match(u_name, specs$parameter)
         specs$code[i] = first_dirichlet
+        specs$source[i] = "user"
+        specs$description[i] = paste0("Inherited from user-specified ", source_desc)
       }
     }
   }
