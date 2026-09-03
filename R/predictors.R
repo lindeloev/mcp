@@ -44,16 +44,8 @@ get_fitted_design = function(form = NULL, data, spec = NULL) {
 }
 
 
-#' Convert `offset(0)` into a (reusable) zero vector
-#'
-#' This serves as a turn-off syntax. Needed because a scalar offset is rejected by 
-#' `model.frame()`. Works for newdata too
-#'
-#' @keywords internal
-#' @noRd
-#' @param form A one-sided formula.
-#' @inheritParams mcp
-#' @return The rewritten formula.
+# Convert `offset(0)` to `offset(0 * par_x)` as a turn-off syntax.
+# model.frame() rejects scalar offsets; this ensures newdata works cleanly.
 rewrite_zero_offset = function(form, par_x) {
   form_str = deparse1(form)
   rewritten = gsub(
@@ -91,16 +83,9 @@ collect_design_specs = function(...) {
 }
 
 
-#' Find corresponding component in next segment. Determines lifetime.
-#'
-#' A component is active from its segment until the next time this kind of component is defined. 
-#' Applies to both ordinary formula terms, AR/MA components, and predictor group-level blocks.
-#'
-#' @keywords internal
-#' @noRd
-#' @param definitions A data frame with a `segment` column.
-#' @param by Columns identifying one replaceable component.
-#' @return One row per component definition, with an exclusive `next_segment`.
+# Find component in next segment to determine lifetime (exclusive upper boundary)
+# - definitions: A data frame with a `segment` column.
+# - by: Columns identifying one replaceable component (e.g., c("dpar", "order")).
 get_definition_lifetimes = function(definitions, by) {
   if (nrow(definitions) == 0) {
     definitions = definitions[, unique(c(by, "segment")), drop = FALSE]
@@ -117,12 +102,8 @@ get_definition_lifetimes = function(definitions, by) {
 }
 
 
-#' Use the earliest of two possible lifetime boundaries
-#'
-#' @keywords internal
-#' @noRd
-#' @param x,y Integer vectors. `NA` means that no boundary is present.
-#' @return An integer vector.
+# Return the earliest of two segment boundaries (NA means no boundary)
+# - x, y: Integer vectors of segment boundaries (NA indicates no boundary).
 earliest_segment = function(x, y) {
   dplyr::case_when(
     is.na(x) ~ y,
@@ -182,16 +163,7 @@ rewrite_local_x = function(form, par_x) {
 }
 
 
-#' Make a shared R/JAGS-safe coefficient name
-#'
-#' Ordinary mcp parameter names are unchanged. Less common punctuation from
-#' quoted data names or factor levels is replaced and checked for collisions
-#' after all coefficients have been assembled.
-#'
-#' @keywords internal
-#' @noRd
-#' @param x Candidate coefficient names.
-#' @return Syntactic ASCII identifiers accepted by both R and JAGS.
+# Make a shared R/JAGS-safe coefficient name
 make_code_name = function(x) {
   out = gsub("[^A-Za-z0-9_.]", "_", x)
   out = gsub("_+", "_", out)
@@ -552,19 +524,7 @@ assert_unique_predictor_names = function(predictors) {
 }
 
 
-#' Detect terms that contain a particular variable
-#'
-#' Finds it whether it's in an interaction, in an expression, etc. without false positives.
-#'
-#' @aliases term_contains
-#' @keywords internal
-#' @noRd
-#' @param par_x The parameter to search for (character).
-#' @param terms A character vector of terms.
-#' @return A logical vector of length `terms`
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @noRd
+# Detect terms that contain a particular variable
 term_contains = function(par_x, terms) {
   vapply(terms, function(term) par_x %in% all.vars(str2lang(term)), logical(1))
 }

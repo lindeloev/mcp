@@ -30,22 +30,16 @@
 NULL
 
 
-#' Internal function for summary.mcpfit, fixef.mcpfit, and ranef.mcpfit
-#'
-#' @aliases get_summary get_summary.mcpfit
-#' @keywords internal
-#' @noRd
-#' @inheritParams summary.mcpfit
-#' @param fit An \code{\link{mcpfit}}` object.
-#' @param scope Which parameter scope to summarise: population-level parameters
-#'   or group-level deviations.
-#' @param role Optional parameter role to select within `scope`.
-#' @param verbose Logical. Include the `segment` and `dpar` columns.
-#' @return A data.frame with summaries for each model parameter. With
-#'   `verbose = TRUE`, rows are labeled with `segment` and `dpar` columns (see
-#'   `summary.mcpfit`).
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+# Internal function for summary.mcpfit, fixef.mcpfit, and ranef.mcpfit
+#
+# - fit: An \code{\link{mcpfit}}` object.
+# - scope: Which parameter scope to summarise: population-level parameters
+#   or group-level deviations.
+# - role: Optional parameter role to select within `scope`.
+# - verbose: Logical. Include the `segment` and `dpar` columns.
+# Returns: A data.frame with summaries for each model parameter. With
+#   `verbose = TRUE`, rows are labeled with `segment` and `dpar` columns (see
+#   `summary.mcpfit`).
 get_summary = function(fit, width, scope = c("population", "group"), role = NULL,
                        dpar = NULL, prior = FALSE, verbose = FALSE) {
   # Check arguments
@@ -583,19 +577,16 @@ is.mcpfit = function(x) {
 }
 
 
-#' Internal function to get draws.
-#'
-#' Returns posterior draws, if available. If not, then prior draws. If not,
-#' then throw an informative error. This is useful for summary and plotting, that
-#' works on both.
-#'
-#' @aliases mcmclist_draws mcmclist_draws.mcpfit
-#' @keywords internal
-#' @inheritParams summary.mcpfit
-#' @param fit An \code{\link{mcpfit}} object
-#' @param message TRUE: gives a message if returning prior draws. FALSE = no message
-#' @param error TRUE: err if there are no draws. FALSE: return NULL
-#' @param fallback_to_prior TRUE: use prior draws when posterior draws are unavailable
+# Internal function to get draws.
+#
+# Returns posterior draws, if available. If not, then prior draws. If not,
+# then throw an informative error. This is useful for summary and plotting, that
+# works on both.
+#
+# - fit: An \code{\link{mcpfit}} object
+# - message: TRUE: gives a message if returning prior draws. FALSE = no message
+# - error: TRUE: err if there are no draws. FALSE: return NULL
+# - fallback_to_prior: TRUE: use prior draws when posterior draws are unavailable
 mcmclist_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE,
                           fallback_to_prior = TRUE) {
   check_mcpfit_version(fit)
@@ -625,14 +616,10 @@ mcmclist_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE,
 }
 
 
-#' Get draws as a posterior draws array
-#'
-#' This is the single internal conversion from the stored
-#' \code{\link[coda]{mcmc.list}} representation to a posterior draws object.
-#'
-#' @keywords internal
-#' @noRd
-#' @inheritParams mcmclist_draws
+# Get draws as a posterior draws array
+#
+# This is the single internal conversion from the stored
+# \code{\link[coda]{mcmc.list}} representation to a posterior draws object.
 posterior_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE,
                            fallback_to_prior = TRUE) {
   draws = mcmclist_draws(
@@ -850,26 +837,22 @@ nchains = posterior::nchains
 #' @export
 niterations = posterior::niterations
 
-#' Get information about group-level parameters
-#'
-#' Returns parameters, data columns, and effect metadata given parameter
-#' name(s), model part(s), or column(s).
-#'
-#' @aliases unpack_group_effects unpack_group_effects.mcpfit
-#' @keywords internal
-#' @noRd
-#' @param pars `NULL`/`FALSE` for nothing. `TRUE` for all. A character vector
-#'   containing `"cp"`, `"predictor"`, or exact group-level parameter names.
-#' @param cols `NULL`/`FALSE` for nothing. `TRUE` for all. A vector of grouping
-#'   column names for specifics. Usually provided via `facet_by` elsewhere.
-#' @return A list. See details.
-#'
-#' @details
-#' Returns a list with
-#' * `pars`: Character vector of parameter names, or `NULL` if empty.
-#' * `cols`: Character vector of data column names, or `NULL` if empty.
-#' * `indices`: Logical vector indexing the group-effects table.
-#' * `effects`: The selected rows of the group-effects table.
+# Get information about group-level parameters
+#
+# Returns parameters, data columns, and effect metadata given parameter
+# name(s), model part(s), or column(s).
+#
+# - pars: `NULL`/`FALSE` for nothing. `TRUE` for all. A character vector
+#   containing `"cp"`, `"predictor"`, or exact group-level parameter names.
+# - cols: `NULL`/`FALSE` for nothing. `TRUE` for all. A vector of grouping
+#   column names for specifics. Usually provided via `facet_by` elsewhere.
+# Returns: A list. See details.
+#   
+# Returns a list with
+# * `pars`: Character vector of parameter names, or `NULL` if empty.
+# * `cols`: Character vector of data column names, or `NULL` if empty.
+# * `indices`: Logical vector indexing the group-effects table.
+# * `effects`: The selected rows of the group-effects table.
 unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
   checkmate::assert_multi_class(pars, c("logical", "character"), null.ok = TRUE)
   checkmate::assert_multi_class(cols, c("logical", "character"), null.ok = TRUE)
@@ -929,10 +912,7 @@ unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
 
 
 
-#' Resolve the deprecated `nsamples` argument
-#'
-#' @keywords internal
-#' @noRd
+# Resolve the deprecated `nsamples` argument
 resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
                          samples = lifecycle::deprecated(),
                          env = rlang::caller_env(),
@@ -961,10 +941,7 @@ resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
 }
 
 
-#' Resolve the deprecated `samples_format` argument
-#'
-#' @keywords internal
-#' @noRd
+# Resolve the deprecated `samples_format` argument
 resolve_draws_format = function(draws_format, samples_format, draws_format_missing, what,
                                 env = rlang::caller_env(),
                                 user_env = rlang::caller_env(2)) {
@@ -1109,9 +1086,7 @@ mcp_draws = function(
 }
 
 
-#' Deprecated internal helper for MCMC draw extraction
-#' @keywords internal
-#' @noRd
+# Deprecated internal helper for MCMC draw extraction
 tidy_samples = function(...) {
   lifecycle::deprecate_soft(
     when = "0.4.0",
@@ -1126,7 +1101,12 @@ tidy_samples = function(...) {
 #'
 #' @aliases pp_eval pp_eval.mcpfit
 #' @keywords internal
-#' @inheritParams mcp_draws
+#' @param varying Group-level effects. One of:
+#'   * `TRUE` All group-level deviations.
+#'   * `FALSE` No group-level deviations (`c()`).
+#'   * `"cp"` or `"predictor"`: All group-level deviations belonging to that part of
+#'     the model.
+#'   * Character vector: Only include specified group-level parameters.
 #' @param object An `mcpfit` object.
 #' @param newdata A `tibble` or a `data.frame` containing predictors in the model. 
 #' - If `NULL` (default), the original data is used.
@@ -1772,9 +1752,7 @@ posterior_linpred.mcpfit = function(
 }
 
 
-#' Evaluate posterior prediction draws for rstantools-compatible methods
-#' @keywords internal
-#' @noRd
+# Evaluate posterior prediction draws for rstantools-compatible methods
 posterior_prediction_matrix = function(
   object,
   newdata,
@@ -1826,9 +1804,7 @@ posterior_prediction_matrix = function(
 }
 
 
-#' Convert rstantools group-effect syntax to mcp's group-effect selector
-#' @keywords internal
-#' @noRd
+# Convert rstantools group-effect syntax to mcp's group-effect selector
 resolve_re_formula = function(re.form, re_formula) {
   if (!is.null(re_formula) && !is.null(re.form))
     stop("Use only one of `re.form` and `re_formula`.", call. = FALSE)
@@ -1927,18 +1903,13 @@ residuals.mcpfit = function(
 }
 
 
-#' Add loo if not already present
-#'
-#' @aliases with_loo
-#' @keywords internal
-#' @noRd
-#' @param fit An mcpfit object
-#' @param save_psis Logical. See documentation of loo::loo
-#' @param info Optional message if adding loo
-#' @param varying,arma Evaluation settings passed to `loo.mcpfit()`.
-#' @return An mcpfit object with loo.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+# Add loo if not already present
+#
+# - fit: An mcpfit object
+# - save_psis: Logical. See documentation of loo::loo
+# - info: Optional message if adding loo
+# - varying,arma: Evaluation settings passed to `loo.mcpfit()`.
+# Returns: An mcpfit object with loo.
 with_loo = function(fit, save_psis = FALSE, info = NULL,
                     varying = TRUE, arma = TRUE) {
   checkmate::assert_class(fit, "mcpfit")

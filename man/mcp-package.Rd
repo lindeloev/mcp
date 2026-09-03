@@ -15,35 +15,28 @@ ratios, posterior contrasts, and PSIS-LOO/WAIC model comparison.
 \details{
 \strong{The mcp model}
 
-For a continuous predictor \eqn{x}, segment 1 (\eqn{x \le \Delta_1}) is a standard regression
-model with the intercept defined at \eqn{x = 0}:
+An \code{mcp} model divides a continuous predictor \eqn{x} into \eqn{K} segments separated by
+ordered change points \eqn{\Delta_1 < \dots < \Delta_{K-1}}. In each segment \eqn{k \in \{1, \dots, K\}},
+the linear predictor \eqn{\eta_i} is evaluated directly from the segment-local distance \eqn{(x_i - \Delta_{k-1})}:
 
-\deqn{\eta_{1, i} = f_1(x_i, \mathbf{\beta}_1) = \beta_{1,0} + \beta_{1,1} x_i + \dots}
+\deqn{\eta_i = \begin{cases}
+  \beta_{1,0} + \beta_{1,1} x_i, & \text{First segment } (k = 1) \\
+  \beta_{k,0} + \beta_{k,1} (x_i - \Delta_{k-1}), & \text{Disjoined segments } (k \ge 2, \sim \texttt{1 + x}) \\
+  \alpha_k + \beta_{k,1} (x_i - \Delta_{k-1}), & \text{Joined segments } (k \ge 2, \sim \texttt{0 + x})
+\end{cases}}
 
-For subsequent segments \eqn{k \in \{2, \dots, K\}}, each change point \eqn{\Delta_{k-1}} marks the
-onset of a new segment. The model defines a segment-local predictor \eqn{X_{k,i}} measured from the
-segment onset \eqn{\Delta_{k-1}} and capped at the segment end \eqn{\Delta_k}:
+where \eqn{\alpha_k} is the baseline level inherited continuously from the preceding segment:
 
-\deqn{X_{k,i} = \min(x_i, \Delta_k) - \Delta_{k-1}}
+\deqn{\alpha_k = \alpha_{k-1} + \beta_{k-1,1} (\Delta_{k-1} - \Delta_{k-2}) \quad (\text{with } \Delta_0 = 0)}
 
-with \eqn{\Delta_K = \max(\mathbf{x})}. The local predictor \eqn{X_{k,i}} is zero at segment onset
-(\eqn{x_i \le \Delta_{k-1}}) and plateaus at \eqn{\Delta_k - \Delta_{k-1}} for \eqn{x_i \ge \Delta_k}.
+In all segments, slope and intercept parameters are absolute values (not changes relative to the preceding segment).
 
-\strong{Joined (continuous) segments (\code{~ 0 + x})}
+If additional continuous covariates or categorical factors are included (e.g., \code{+ z + group}),
+they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}}); only the
+change-point predictor \eqn{x} is converted to segment-local coordinates.
 
-In joined models, segment \eqn{k \ge 2} has no intercept and specifies a new segment slope \eqn{\beta_{k,1}}:
-
-\deqn{\eta_i = \eta_{1,i}(X_{1,i}) + \sum_{k=2}^K [x_i \ge \Delta_{k-1}] \cdot \beta_{k,1} X_{k,i}}
-
-where \eqn{X_{1,i} = \min(x_i, \Delta_1)}. Because earlier segments plateau at their boundary values,
-the expectation is automatically continuous across change points without requiring parameter constraints.
-In both joined and disjoined segments, slope and intercept parameters are absolute values (not differences
-relative to the previous segment).
-
-\strong{Disjoined (discontinuous) segments (\code{~ 1 + x})}
-
-When segment \eqn{k} contains an explicit intercept (\eqn{\beta_{k,0}}), it introduces a step change at
-\eqn{x_i = \Delta_{k-1}} and previous segments are truncated at \eqn{[x_i < \Delta_{k-1}]}.
+Distributional parameters (\code{sigma()}, \code{shape()}, etc.) and autoregressive terms (\code{ar()}, \code{ma()})
+follow this exact same segmented structure on their respective link scales.
 
 \strong{Extended formulas and model features}
 \itemize{

@@ -67,22 +67,8 @@ model without \code{sigma()} remains on the response scale.
 \href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}
 \item \emph{Time-series residuals:} use \code{ar(p)} and \code{ma(q)} separately or together,
 e.g., \code{~ 1 + ar(1) + ma(1)}. Both accept an optional regression formula
-and observation \code{boundary}. GARMA terms support Gaussian, binomial,
-Poisson, and negative-binomial families with their default links. They
-define a finite conditional recurrence on the link scale. For \code{~ ar(p) + ma(q)}, the model is:
-
-\deqn{\eta_t = b_t + \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right] + \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right]}
-
-where \eqn{b_t} is the linear predictor from the segment formulas,
-\eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
-\eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
-\eqn{g(\cdot)} is the link function, \eqn{y^*_t} is the observation,
-and \eqn{\eta_t} is the resulting full linear predictor including serial dependence. Note some implications:
-\itemize{
-\item For an N-order component, the last N values \emph{before} the segment onset are input to the first \eqn{\eta_t} in the segment.
-\item AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
-\href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
-}
+and observation \code{boundary} (see details).
+\href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}.
 \item \emph{Likelihood weights:} \code{y | weights(w) ~ ...} multiplies each observation's
 log-likelihood contribution by \code{w}, as in \code{brms}. Weights affect
 posterior inference and \code{log_lik()}, but not the response distribution used
@@ -104,6 +90,8 @@ A tibble with one row per model parameter and the columns
 diagnose collisions after parameter names are converted for JAGS.
 \item \code{display_name}: user-facing parameter name used in summary functions.
 \item \code{code_name}: parameter name used in JAGS and internally in mcp.
+\item \code{term_key}: identifier for the formula term which generated the
+coefficient. Multi-column terms share one key.
 \item \code{par_type}: One of "Intercept", "dummy", or "slope". Used for setting priors and for change point indicator func.
 \item \code{order}: positive integer or NA. Only relevant for \code{ar} and \code{ma}.
 \item \code{explicit}: whether the distributional parameter was supplied in the formula.

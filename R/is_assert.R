@@ -1,7 +1,7 @@
 # ABOUT: These functions are used internally for defensive programming.
 # -----------------
 
-#' @keywords internal
+# Check if object is an mcp family
 is.family = function(x) {
   if (inherits(x, "family") == FALSE)
     return(FALSE)
@@ -12,7 +12,7 @@ is.family = function(x) {
   TRUE
 }
 
-#' @keywords internal
+# Check if object is a valid mcp model formula list
 is.mcpmodel = function(x) {
   checkmate::assert_list(x, min.len = 1)
 
@@ -32,7 +32,7 @@ is_continuous = function(x) {
 }
 
 
-#' @keywords internal
+# Stop with an informative error directing users to GitHub issues
 stop_github = function(...) {
   stop("This looks like an internal error in mcp. To fix this for you and other users, please raise an issue on https://github.com/lindeloev/mcp/issues with the minimum data/code that reproduces this error:\n", ...)
 }

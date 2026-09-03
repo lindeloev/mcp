@@ -135,7 +135,8 @@ sampling diagnostics:
 summary(fit)
 ```
 
-    ## Family: gaussian(link = 'identity')
+    ## Family: gaussian
+    ## Links: mu = identity; sigma = identity
     ## Iterations: 3000 from 3 chains.
     ## Segments:
     ##   1: response ~ 1
@@ -143,17 +144,17 @@ summary(fit)
     ##   3: response ~ 1 ~ 1 + time
     ## 
     ## Change point parameters:
-    ##         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-    ##  cp_1        30.78 3.604 23.69 38.370    1      426      603 30.0    OK
-    ##  cp_2        69.77 0.293 69.30 70.261    1     5621     7509 70.0    OK
+    ##     variable   mean    sd lower upper rhat ess_bulk ess_tail  sim match
+    ##  cp_1        31.468 1.896 27.73 35.07 1.00     1101     1691 30.0    OK
+    ##  cp_2        71.122 1.000 69.46 72.77 1.00     6093     7716 70.0    OK
     ## 
     ## Population-level parameters:
-    ##         name  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-    ##  Intercept_1 10.31 0.705  8.90 11.641    1     1436     2136 10.0    OK
-    ##  time_2       0.54 0.064  0.43  0.682    1      463      668  0.5    OK
-    ##  Intercept_3  0.72 1.566 -2.30  3.873    1      591     1134  0.0    OK
-    ##  time_3      -0.23 0.092 -0.42 -0.055    1      606     1109 -0.2    OK
-    ##  sigma_1      4.01 0.304  3.48  4.691    1     4147     3932  4.0    OK
+    ##     variable   mean    sd lower upper rhat ess_bulk ess_tail  sim match
+    ##  Intercept_1  9.968 0.755  8.46 11.43 1.00     2077     2971 10.0    OK
+    ##  time_2       0.534 0.052  0.43  0.64 1.00     1692     2830  0.5    OK
+    ##  Intercept_3 -1.414 1.318 -3.89  1.28 1.00     1276     2119  0.0    OK
+    ##  time_3      -0.059 0.075 -0.21  0.08 1.00     1213     1927 -0.2    OK
+    ##  sigma_1      4.422 0.322  3.85  5.11 1.00     4337     4035  4.0    OK
 
 - `rhat` is the rank-normalized split-Rhat convergence diagnostic.
 - `ess_bulk` and `ess_tail` are the effective sample sizes for the bulk
@@ -202,8 +203,8 @@ than 25 against it being less than 25?
 hypothesis(fit, "cp_1 > 25")
 ```
 
-    ##      hypothesis     mean     lower    upper         p       BF
-    ## 1 cp_1 - 25 > 0 5.784828 -1.305529 13.36994 0.9443333 11.13248
+    ##      hypothesis     mean    lower    upper         p       BF
+    ## 1 cp_1 - 25 > 0 6.468057 2.729073 10.06531 0.9981111 376.4029
 
 For model comparisons, we can fit a null model and compare the
 predictive performance of the two models using (approximate)
@@ -233,7 +234,7 @@ loo::loo_compare(fit_loo, fit_null_loo)
 
     ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
     ##  model1       0.0     0.0      NA                    
-    ##  model2    -105.6     8.9    1.00
+    ##  model2     -80.1     9.8    1.00
 
 # Highlights from in-depth guides
 
@@ -306,6 +307,9 @@ deviation](articles/dpar.html):
 - `~ ar(N)` models Nth order autoregression on residuals.
   `~ar(N, 0 + x)` models increasing/decreasing autocorrelation.
 
+- `y | weights(w)` (and `y | trials(N) + weights(w)`) specifies
+  observation log-likelihood weights across all families, as in `brms`.
+
 - You can provide complete models in distributional parameters
   (currently `sigma()`, `shape()`, and `mu()`) and time-series (`ar()`
   and `ma()`). For example, `~ x + sigma(1 + x:condition)` models an
@@ -323,12 +327,10 @@ deviation](articles/dpar.html):
 - See priors in `fit$prior` or `prior_summary(fit)` and set priors using
   `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")`.
 
-- One change point has a uniform default prior. An ideal default prior
-  for multiple change points is `cp_i = "dirichlet(1)"` which is a
-  simplex of equidistant beta distributions, but because it samples
-  inefficiently, a mcp defaults to an approximation using truncated
-  Student-t priors centered at the minimum x. Informativeness increases
-  and the number of change points increase.
+- The default prior on change points is `dirichlet(1)` (uniform order
+  statistics). For a single change point, this is the Beta(1, 1) /
+  uniform distribution over `[min(x), max(x)]`. Informativeness
+  increases as the number of change points increases.
 
 - Fix parameters to specific values using `cp_1 = 45` and share
   parameters between segments using `slope_1 = "slope_2"`.
@@ -387,14 +389,14 @@ head(fitted(fit, summary = FALSE))  # column .epred
 ```
 
     ## # A tibble: 6 × 14
-    ##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
-    ##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
-    ## 1      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
-    ## 2      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
-    ## 3      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
-    ## 4      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
-    ## 5      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
-    ## 6      1          1     1  33.9  69.3        10.6  0.604      -0.512 -0.171
+    ##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3  time_3
+    ##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>   <dbl>
+    ## 1      1          1     1  32.0  72.0        10.3  0.536       -2.14 -0.0566
+    ## 2      1          1     1  32.0  72.0        10.3  0.536       -2.14 -0.0566
+    ## 3      1          1     1  32.0  72.0        10.3  0.536       -2.14 -0.0566
+    ## 4      1          1     1  32.0  72.0        10.3  0.536       -2.14 -0.0566
+    ## 5      1          1     1  32.0  72.0        10.3  0.536       -2.14 -0.0566
+    ## 6      1          1     1  32.0  72.0        10.3  0.536       -2.14 -0.0566
     ## # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>,
     ## #   data_row <int>, .epred <dbl>
 

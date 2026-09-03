@@ -31,10 +31,7 @@ validate_prior_v1 = function(prior) {
   invisible(prior)
 }
 
-#' Get priors for all parameters in the model
-#'
-#' @keywords internal
-#' @noRd
+# Get priors for all parameters in the model
 get_prior = function(segments, cps, predictors, group_effects, family, prior = list(), data) {
   checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
   context = prior_context(data, segments)

@@ -1,10 +1,6 @@
 # Compatibility and Deprecation Detections for Legacy Code & Fits -------------
 
-#' Check if an mcpfit object was created with mcp < 0.4.0
-#'
-#' @keywords internal
-#' @noRd
-#' @param fit An `mcpfit` object.
+# Check if an mcpfit object was created with mcp < 0.4.0
 is_legacy_mcpfit = function(fit) {
   tables = fit$.internal$model_tables
   !is.mcpfamily(fit$family) || is.null(tables) || is.null(tables$parameters) ||
@@ -12,10 +8,7 @@ is_legacy_mcpfit = function(fit) {
 }
 
 
-#' Message for code that requires substantial migration from mcp v0.3.4
-#'
-#' @keywords internal
-#' @noRd
+# Message for code that requires substantial migration from mcp v0.3.4
 legacy_mcp_message = function(problem) {
   paste0(
     problem, "\n",
@@ -27,10 +20,7 @@ legacy_mcp_message = function(problem) {
 }
 
 
-#' Stop if an mcpfit cannot be used by mcp v0.4
-#'
-#' @keywords internal
-#' @noRd
+# Stop if an mcpfit cannot be used by mcp v0.4
 check_mcpfit_version = function(fit) {
   checkmate::assert_class(fit, "mcpfit")
   if (is_legacy_mcpfit(fit))
@@ -41,10 +31,7 @@ check_mcpfit_version = function(fit) {
 }
 
 
-#' Stop on the most common v0.3.4 parameter names
-#'
-#' @keywords internal
-#' @noRd
+# Stop on the most common v0.3.4 parameter names
 check_legacy_parameter_names = function(x, context) {
   old_names = x[stringr::str_detect(x, "(^|[^[:alnum:]_])int_[0-9]+($|[^[:alnum:]_])")]
   if (length(old_names) > 0)
@@ -54,12 +41,9 @@ check_legacy_parameter_names = function(x, context) {
 }
 
 
-#' Warn on deprecated `which_y` argument
-#'
-#' @keywords internal
-#' @noRd
-#' @param args List of dots arguments passed to a function.
-#' @param func_name Name of the calling function for context.
+# Warn on deprecated which_y argument
+# - args: List of dots arguments passed to a function.
+# - func_name: Name of calling function for warning message context.
 warn_which_y = function(args, func_name) {
   if ("which_y" %in% names(args)) {
     msg = if (func_name == "plot") {

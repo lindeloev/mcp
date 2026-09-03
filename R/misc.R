@@ -77,17 +77,7 @@ release_questions = function() {
 }
 
 
-#' Homogenize enumerating strings in mcp
-#'
-#' Nice for error messages.
-#'
-#' @aliases collapse_quote
-#' @keywords internal
-#' @noRd
-#' @param x A character vector
-#' @return Character
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+# Collapse vector into comma-separated list with 'and' before the last item
 and_collapse = function(x) {
   checkmate::assert_character(x)
   paste0(x, collapse = " and ")
@@ -174,13 +164,9 @@ warn_nonconvergence = function(mcmc_post, diagnostics = list()) {
 }
 
 
-#' Get names of columns in the predictor design matrix
-#'
-#' @keywords internal
-#' @noRd
-#' @param predictors The output of `get_predictors()`.
-#' @param group_effects The output of `get_group_effects()`.
-#' @return Character vector ordered by design-matrix column.
+# Get column names of predictor designs ordered by design-matrix column
+# - predictors: Output of get_predictors()
+# - group_effects: Output of get_group_effects()
 get_predictor_design_names = function(predictors, group_effects = NULL) {
   group_predictors = if (is.null(group_effects) || "matrix_col" %notin% names(group_effects)) {
     tibble::tibble(matrix_col = integer(), name = character())
@@ -338,10 +324,7 @@ get_quantiles = function(draws, quantiles, type, keep = NULL, na.rm = FALSE) {
 }
 
 
-#' Invert a mixture CDF for a single quantile probability
-#'
-#' @keywords internal
-#' @noRd
+# Invert a mixture CDF for a single quantile probability
 find_mixture_quantile = function(cdf_fn, dpars, data, p, rate = FALSE, is_discrete = FALSE, lower = -Inf, upper = Inf) {
   # Empirical mixture CDF across all posterior parameter draws
   mix_cdf = function(y) mean(cdf_fn(y, dpars, data, rate = rate))
@@ -385,14 +368,11 @@ find_mixture_quantile = function(cdf_fn, dpars, data, p, rate = FALSE, is_discre
 }
 
 
-#' Compute exact predictive quantiles via mixture CDF inversion
-#'
-#' Evaluates the exact posterior predictive mixture CDF at each data row
-#' and finds the target quantiles via root-finding (uniroot for continuous,
-#' integer search for discrete count families).
-#'
-#' @keywords internal
-#' @noRd
+# Compute exact predictive quantiles via mixture CDF inversion
+#
+# Evaluates the exact posterior predictive mixture CDF at each data row
+# and finds the target quantiles via root-finding (uniroot for continuous,
+# integer search for discrete count families).
 get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = FALSE, dpars = attr(draws, "dpars"), response_data = attr(draws, "response_data")) {
   keep = unique(keep)
   grid = if (length(keep) > 0) {

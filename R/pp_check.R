@@ -208,10 +208,7 @@ get_ppc_plot = function(fit, type, y, yrep, ndraws,
 }
 
 
-#' Subset a PSIS object by observations
-#'
-#' @keywords internal
-#' @noRd
+# Subset a psis object by index
 subset_psis_object = function(psis_object, observations) {
   psis_object$log_weights = psis_object$log_weights[
     , observations, drop = FALSE

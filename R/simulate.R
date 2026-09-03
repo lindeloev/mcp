@@ -178,10 +178,7 @@ evaluate_model_dpars = function(fit, args, pred_pars) {
 }
 
 
-#' Check ordering of realized group-level change points
-#'
-#' @keywords internal
-#' @noRd
+# Check ordering of realized group-level change points
 assert_ordered_group_cps = function(cps, args) {
   if (nrow(cps) < 2 || !any(cps$varying))
     return(invisible(NULL))
@@ -203,14 +200,11 @@ assert_ordered_group_cps = function(cps, args) {
 }
 
 
-#' Transform link-scale predictors to distribution-scale parameters
-#'
-#' Mirrors the deterministic dpar transformations in generated JAGS code. Both
-#' representations are kept only during R-side evaluation; neither
-#' observation-level vector is monitored in JAGS.
-#'
-#' @keywords internal
-#' @noRd
+# Transform link-scale predictors to distribution-scale parameters
+#
+# Mirrors the deterministic dpar transformations in generated JAGS code. Both
+# representations are kept only during R-side evaluation; neither
+# observation-level vector is monitored in JAGS.
 add_response_dpars = function(dpar_values, family) {
   for (dpar in family$dpar_specs$dpar) {
     spec = get_dpar_spec(family, dpar)
@@ -230,10 +224,7 @@ add_response_dpars = function(dpar_values, family) {
 }
 
 
-#' Transform observations to a finite GARMA link domain
-#'
-#' @keywords internal
-#' @noRd
+# Get observed response vector for GARMA recursion
 get_garma_observed = function(y, family, boundary, data = list()) {
   if (is.null(family$garma))
     stop_github("GARMA observation transformation is unavailable for family = ", family$family, "().")

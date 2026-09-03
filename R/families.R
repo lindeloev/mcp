@@ -591,10 +591,7 @@ mcpfamily_negbinomial = function(family) {
 }
 
 
-#' Describe a distributional parameter
-#'
-#' @keywords internal
-#' @noRd
+# Describe a distributional parameter
 new_dpar_spec = function(dpar, link, implicit = FALSE, lower = NA_real_,
                           link_modeled = link) {
   tibble::tibble(

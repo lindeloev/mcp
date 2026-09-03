@@ -3,24 +3,14 @@
 # group-effect coefficient definitions.
 # ------------------------------------------------------------
 
-#' Is a formula term a group-level term?
-#'
-#' @keywords internal
-#' @noRd
-#' @param term A character representation of one formula term.
-#' @return Logical scalar.
+# Is a formula term a group-level term?
 is_group_term = function(term) {
   expr = str2lang(term)
   is.call(expr) && as.character(expr[[1]])[1] %in% c("|", "||")
 }
 
 
-#' Extract group-level terms from a one-sided formula
-#'
-#' @keywords internal
-#' @noRd
-#' @param form A one-sided formula.
-#' @return Character vector of group-level terms.
+# Extract group-level terms from a one-sided formula
 get_group_terms = function(form) {
   checkmate::assert_formula(form)
   terms = attr(stats::terms(form), "term.labels")

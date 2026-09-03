@@ -147,10 +147,7 @@ get_arma_definitions = function(rhs) {
 }
 
 
-#' Validate an optional independent-series column
-#'
-#' @keywords internal
-#' @noRd
+# Validate an optional independent-series column
 assert_arma_series = function(data, series) {
   checkmate::assert_string(series, null.ok = TRUE)
   if (is.null(series))
@@ -167,22 +164,13 @@ assert_arma_series = function(data, series) {
 }
 
 
-#' Check if this is an AR/MA model
-#'
-#' @aliases is_arma
-#' @keywords internal
-#' @noRd
-#' @inheritParams mcp
-#' @return TRUE or FALSE
+# Check whether this model has any AR/MA terms
 is_arma = function(fit) {
   has_arma_terms(fit)
 }
 
 
-#' Check whether missing responses enter a later observed GARMA history
-#'
-#' @keywords internal
-#' @noRd
+# Check whether missing responses enter a later observed GARMA history
 has_missing_garma_history = function(fit, data = fit$data) {
   # Is not AR/MA
   if (!is_arma(fit))
@@ -209,10 +197,9 @@ has_missing_garma_history = function(fit, data = fit$data) {
 }
 
 
-#' Reject observed-data likelihoods with unresolved GARMA histories
-#'
-#' @keywords internal
-#' @noRd
+# Reject observed-data likelihoods with unresolved GARMA histories
+# - arma: Whether AR/MA effects are being evaluated (logical).
+# - what: String describing the operation, used in the error message.
 assert_loglik_garma_history = function(fit, data = fit$data, arma = TRUE,
                                         what = "Log-likelihood evaluation") {
   if (!arma || !has_missing_garma_history(fit, data))
@@ -229,10 +216,7 @@ assert_loglik_garma_history = function(fit, data = fit$data, arma = TRUE,
 }
 
 
-#' Match retained JAGS imputations to expanded posterior evaluation rows
-#'
-#' @keywords internal
-#' @noRd
+# Match retained JAGS imputations to expanded posterior evaluation rows
 get_imputed_response_draws = function(fit, draws) {
   # Initialize one optional imputation for each expanded evaluation row
   imputed = fit$.internal$imputed_response
@@ -254,18 +238,15 @@ get_imputed_response_draws = function(fit, draws) {
     node = paste0(response, "[", row, "]")
     values[use] = imputed[[node]][draw_index[use]]
   }
+
   values
 }
 
 
-#' Warn about model-checking limitations for AR/MA models
-#'
-#' @keywords internal
-#' @noRd
-#' @param fit An mcpfit object.
-#' @param arma Whether AR and MA effects are included in the evaluation.
-#' @param check Currently only `"information_criterion"`.
-#' @return `NULL`, invisibly. Called for the warning side-effect.
+# Warn about model-checking limitations for AR/MA models
+# - fit: An mcpfit object.
+# - arma: Whether AR and MA effects are included in the evaluation (logical).
+# - check: Currently only "information_criterion".
 warn_arma_check = function(fit, arma, check) {
   if (!arma || !is_arma(fit))
     return(invisible(NULL))
@@ -287,13 +268,9 @@ warn_arma_check = function(fit, arma, check) {
 }
 
 
-#' Check AR stationarity or MA invertibility row by row
-#'
-#' @keywords internal
-#' @noRd
-#' @param values Evaluated model parameters, including `ar1_`, `ma1_`, etc.
-#' @param component Either `"ar"` or `"ma"`.
-#' @return A logical vector.
+# Check AR stationarity or MA invertibility row by row
+# - values: Evaluated model parameters, including ar1_, ma1_, etc.
+# - component: Either "ar" or "ma".
 arma_root_violations = function(values, component) {
   component = rlang::arg_match0(component, c("ar", "ma"))
   pattern = paste0("^", component, "([0-9]+)_$")
@@ -384,12 +361,8 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
 }
 
 
-#' Warn when fresh-series AR/MA coefficients violate root conditions
-#'
-#' @keywords internal
-#' @noRd
-#' @inheritParams arma_root_violations
-#' @return `NULL`, invisibly.
+# Warn when fresh-series AR/MA coefficients violate root conditions
+# - values: Evaluated model parameters, including ar1_, ma1_, etc.
 warn_arma_simulation = function(values) {
   bad = vapply(c("ar", "ma"), function(component) {
     any(arma_root_violations(values, component))
@@ -482,14 +455,11 @@ get_ar_jagscode = function(ar_order, x_name, series = FALSE) {
 }
 
 
-#' Build the observation-boundary formula used by GARMA terms
-#'
-#' A boundary supplied with an AR or MA term remains active until the next such
-#' term. The first supplied boundary also applies to earlier observations so
-#' they can safely be used as lags.
-#'
-#' @keywords internal
-#' @noRd
+# Build the observation-boundary formula used by GARMA terms
+#
+# A boundary supplied with an AR or MA term remains active until the next such
+# term. The first supplied boundary also applies to earlier observations so
+# they can safely be used as lags.
 get_garma_boundary_jagscode = function(segments, predictors, par_x) {
   boundary_table = predictors %>%
     dplyr::filter(.data$dpar %in% c("ar", "ma"), !is.na(.data$boundary)) %>%
@@ -518,10 +488,7 @@ get_garma_boundary_jagscode = function(segments, predictors, par_x) {
 }
 
 
-#' Evaluate or generate a GARMA response series
-#'
-#' @keywords internal
-#' @noRd
+# Evaluate or generate a GARMA response series
 simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
                           dpars, data = list(), y = NULL, series_id = NULL) {
   if (is.null(series_id))

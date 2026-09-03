@@ -3,14 +3,7 @@
 # building any design matrices.
 # ------------------------------------------------------------
 
-#' Takes any formula-like input and returns a formula
-#' @aliases to_formula
-#' @keywords internal
-#' @noRd
-#' @param form Formula or character (with or without initial tilde/"~")
-#' @return A formula
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+# Takes any formula-like input (formula or string) and returns a formula
 to_formula = function(form) {
   checkmate::assert(
     checkmate::check_character(form, min.len = 1, max.len = 3),
@@ -29,18 +22,7 @@ to_formula = function(form) {
 }
 
 
-#' Converts formula to string
-#'
-#' Note: this uses base R and circumvents the length-limitation of `deparse()`
-#' and `format()`.
-#'
-#' @aliases formula_to_char
-#' @keywords internal
-#' @noRd
-#' @param form Any valid formula with any number of tildes.
-#' @return A character.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+# Convert formula to string using base R to circumvent deparse()/format() length limits
 formula_to_char = function(form) {
   checkmate::assert_formula(form)
   form_char = as.character(form)
@@ -54,15 +36,7 @@ formula_to_char = function(form) {
 }
 
 
-#' Returns the right-hand-side of a formula
-#'
-#' @aliases get_rhs
-#' @keywords internal
-#' @noRd
-#' @param form Formula, e.g. `~x`, `y ~ x` or `y ~ z ~ x`
-#' @return A formula
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+# Returns the right-hand-side of a formula
 get_rhs = function(form) {
   checkmate::assert_formula(form)
   if (length(form) == 2) {
@@ -75,15 +49,7 @@ get_rhs = function(form) {
 
 
 
-#' Returns all variables in the predictor parts of an mcpmodel
-#'
-#' @aliases get_rhs_vars
-#' @keywords internal
-#' @noRd
-#' @inheritParams mcp
-#' @return Character vector with unique term names
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+# Returns all variables in the predictor parts of an mcpmodel
 get_rhs_vars = function(model) {
   checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
 
@@ -97,12 +63,7 @@ get_rhs_vars = function(model) {
 }
 
 
-#' Returns grouping-factor variables in predictor group-level terms
-#'
-#' @keywords internal
-#' @noRd
-#' @inheritParams mcp
-#' @return Character vector of grouping-factor column names.
+# Returns grouping-factor variables in predictor group-level terms
 get_rhs_group_vars = function(model) {
   find_groups = function(expr) {
     if (!is.call(expr))
@@ -121,12 +82,7 @@ get_rhs_group_vars = function(model) {
 }
 
 
-#' Returns variables appearing inside offset() calls
-#'
-#' @keywords internal
-#' @noRd
-#' @inheritParams mcp
-#' @return Character vector of offset variable names.
+# Returns variables appearing inside offset() calls
 get_rhs_offset_vars = function(model) {
   find_offsets = function(expr) {
     if (!is.call(expr))
@@ -140,12 +96,7 @@ get_rhs_offset_vars = function(model) {
 }
 
 
-#' Returns variables appearing in RHS outside offset() calls
-#'
-#' @keywords internal
-#' @noRd
-#' @inheritParams mcp
-#' @return Character vector of variable names.
+# Returns variables appearing in RHS outside offset() calls
 get_rhs_non_offset_vars = function(model) {
   checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
 
@@ -168,15 +119,7 @@ get_rhs_non_offset_vars = function(model) {
   unique(c(vars, get_arma_series(model)))
 }
 
-#' Returns all variables in the predictor parts of an mcpmodel
-#'
-#' @aliases get_model_vars
-#' @keywords internal
-#' @noRd
-#' @inheritParams mcp
-#' @return Character vector with unique term names
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+# Returns all variables in the predictor parts of an mcpmodel
 get_model_vars = function(model) {
   checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
 

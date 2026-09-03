@@ -177,10 +177,7 @@ waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, ndraws = NULL,
 }
 
 
-#' Validate the number of draws used for information criteria
-#'
-#' @keywords internal
-#' @noRd
+# Validate ndraws argument for log-likelihood evaluation
 validate_loglik_ndraws = function(fit, ndraws) {
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
   if (is.null(ndraws))
@@ -194,10 +191,7 @@ validate_loglik_ndraws = function(fit, ndraws) {
 }
 
 
-#' Record the settings represented by a log-likelihood or LOO object
-#'
-#' @keywords internal
-#' @noRd
+# Extract and validate evaluation settings for log-likelihood
 get_loglik_settings = function(fit, varying, arma, ndraws) {
   if (!is.null(ndraws))
     ndraws = as.integer(ndraws)

@@ -26,3 +26,5 @@ fix_twittercard.R
 logo.png
 ^\.lintr$
 ^\.vscode$
+^man/figures/README-
+^man/figures/logo_200px\.png$

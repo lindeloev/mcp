@@ -315,10 +315,7 @@ mcp_columns = function(fit) {
 }
 
 
-#' Does this fit include autoregressive or moving-average terms?
-#'
-#' @keywords internal
-#' @noRd
+# Does this fit include autoregressive or moving-average terms?
 has_arma_terms = function(fit) {
   any(get_fit_model_tables(fit)$predictors$dpar %in% c("ar", "ma"))
 }
@@ -372,16 +369,7 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
 }
 
 
-#' Get model metadata tables from a fitted model
-#'
-#' Fits store consistently named tables in `.internal$model_tables`.
-#'
-#' @keywords internal
-#' @noRd
-#' @param fit An `mcpfit` object.
-#' @return A list with fitting-data column metadata in `data_columns`; model tables
-#'   `segments`, `cps`, `predictors`, `group_effects`, and `parameters`; and
-#'   fitted `design_specs`.
+# Get model metadata tables from a fitted model
 get_fit_model_tables = function(fit) {
   check_mcpfit_version(fit)
   fit$.internal$model_tables
