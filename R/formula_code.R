@@ -215,13 +215,19 @@ get_formula_r = function(formula_jags, predictors, group_effects, cps, par_x) {
 
   formula_r = formula_jags %>%
     stringr::str_remove_all("\\[i_\\]") %>%  # Vectorized
-    stringi::stri_replace_all_fixed("[i_,", "[,") %>%  # Vectorized
-    stringi::stri_replace_all_fixed("min(", "pmin(") %>%  # Vectorized
-    stringi::stri_replace_all_fixed("max(", "pmax(") %>%  # Vectorized
-    stringi::stri_replace_all_fixed(")],", "), drop = FALSE],") %>%  # Prevent reducing matrix to vector for one-column indexing
-    stringi::stri_replace_all_fixed("], c(", "], cbind(") %>%  # Vectorized
-    stringr::str_remove_all("CP_[0-9]+_INDEX") %>%  # Only used for JAGS code; not in R.
-    stringi::stri_replace_all_fixed(names(replace_args), replace_args, vectorize_all = FALSE)  # obs: fixed to not interpret $ as regex
+    stringr::str_remove_all("CP_[0-9]+_INDEX")  # Only used for JAGS code; not in R.
+
+  fixed_replace = c(
+    stats::setNames(
+      c("[,", "pmin(", "pmax(", "), drop = FALSE],", "], cbind("),
+      c("[i_,", "min(", "max(", ")],", "], c(")
+    ),
+    replace_args
+  )
+
+  for (pattern in names(fixed_replace)) {
+    formula_r = gsub(pattern, fixed_replace[[pattern]], formula_r, fixed = TRUE)
+  }
 
   class(formula_r) = c("mcptext", "character")  # Nicer printing
   formula_r

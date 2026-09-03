@@ -1,4 +1,3 @@
-# ABOUT: These functions are used internally for for defensive programming.
 # ABOUT: These functions are used internally for defensive programming.
 # -----------------
 
@@ -28,8 +27,8 @@ is.mcpmodel = function(x) {
 
 # Is this a continuous vector?
 is_continuous = function(x) {
-  is.numeric(x) &
-  is.numeric(x) && length(unique(stats::na.omit(x))) > 2
+  is.numeric(x) &&
+    length(unique(stats::na.omit(x))) > 2
 }
 
 
