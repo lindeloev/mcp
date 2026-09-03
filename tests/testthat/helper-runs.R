@@ -128,6 +128,13 @@ test_s3_methods = function(fit) {
     loo_pointwise = suppressMessages(suppressWarnings(loo(fit, by_row = TRUE)))
     rownames(fit_loo$pointwise) = NULL
     testthat::expect_equal(fit_loo$pointwise, loo_pointwise$pointwise)
+
+    # Test log_lik and rstantools registration
+    fit_loglik = log_lik(fit)
+    testthat::expect_true(is.matrix(fit_loglik))
+    if (requireNamespace("rstantools", quietly = TRUE)) {
+      testthat::expect_equal(rstantools::log_lik(fit), fit_loglik)
+    }
   }
 
   for (col in c("mcmc_post", "mcmc_prior")) {
@@ -204,7 +211,9 @@ test_summary = function(fit, varying_cols, prior = FALSE) {
   capture.output({ verbose_result = summary(fit, prior = prior, verbose = TRUE) })
   testthat::expect_named(verbose_result, verbose_summary_cols)
   fixed = fixef(fit, prior = prior)
+  testthat::expect_equal(nlme::fixef(fit, prior = prior), fixed)
   fixed_verbose = fixef(fit, prior = prior, verbose = TRUE)
+  testthat::expect_equal(nlme::fixef(fit, prior = prior, verbose = TRUE), fixed_verbose)
   testthat::expect_named(fixed, summary_cols)
   testthat::expect_named(fixed_verbose, verbose_summary_cols)
   pars = mcp_pars(fit)
@@ -216,9 +225,11 @@ test_summary = function(fit, varying_cols, prior = FALSE) {
     testthat::expect_true(any(grepl("Use `ranef(fit)` to inspect deviations by level.", output, fixed = TRUE)))
     testthat::expect_false(any(grepl("Group-level parameters:", output, fixed = TRUE)))
     varying = ranef(fit, prior = prior)
+    testthat::expect_equal(nlme::ranef(fit, prior = prior), varying)
     testthat::expect_true(is.character(varying$variable))
     testthat::expect_true(is.numeric(varying$mean))
     testthat::expect_named(ranef(fit, prior = prior, verbose = TRUE), verbose_summary_cols)
+    testthat::expect_equal(nlme::ranef(fit, prior = prior, verbose = TRUE), ranef(fit, prior = prior, verbose = TRUE))
 
     effects = get_fit_model_tables(fit)$group_effects
     group_level_counts = lapply(
@@ -286,6 +297,7 @@ test_hypothesis = function(fit, prior) {
 
     result = suppressWarnings(hypothesis(fit, hypotheses, prior = prior))
     testthat::expect_true(is.data.frame(result) & nrow(result) == length(hypotheses))
+    testthat::expect_equal(suppressWarnings(hypothesis.mcpfit(fit, hypotheses, prior = prior)), result)
   }
 
   # Test single pop effect
@@ -546,6 +558,11 @@ test_pp_eval = function(fit, prior = FALSE) {
     }
   } else {
     testthat::expect_s3_class(pp_default, "ggplot")
+    # bayesplot::pp_check dispatches to pp_check.mcpfit
+    if (length(group_pars) == 0) {
+      pp_bayesplot = suppressWarnings(bayesplot::pp_check(fit, ndraws = 2, prior = prior))
+      testthat::expect_s3_class(pp_bayesplot, "ggplot")
+    }
   }
 }
 

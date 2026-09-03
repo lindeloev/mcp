@@ -2,16 +2,19 @@
 
 S3method("$",mcpfit)
 S3method("[[",mcpfit)
+S3method(bayesplot::pp_check,mcpfit)
 S3method(coda::as.mcmc,mcpfit)
 S3method(confint,mcpfit)
 S3method(family,mcpfit)
 S3method(fitted,mcpfit)
-S3method(fixef,mcpfit)
 S3method(format,mcpfamily)
 S3method(formula,mcpfit)
+S3method(hypothesis,mcpfit)
 S3method(log_lik,mcpfit)
 S3method(loo,mcpfit)
 S3method(model.frame,mcpfit)
+S3method(nlme::fixef,mcpfit)
+S3method(nlme::ranef,mcpfit)
 S3method(nobs,mcpfit)
 S3method(plot,mcpfit)
 S3method(posterior::as_draws,mcpfit)
@@ -27,7 +30,6 @@ S3method(print,mcpfamily)
 S3method(print,mcpfit)
 S3method(print,mcplist)
 S3method(print,mcptext)
-S3method(ranef,mcpfit)
 S3method(residuals,mcpfit)
 S3method(summary,mcpfit)
 S3method(tidybayes::tidy_draws,mcpfit)
@@ -64,6 +66,7 @@ export(ranef)
 export(sd_to_prec)
 export(waic)
 import(patchwork)
+importFrom(bayesplot,pp_check)
 importFrom(dplyr,.data)
 importFrom(loo,
   loo,
@@ -71,6 +74,10 @@ importFrom(loo,
   waic
 )
 importFrom(magrittr,"%>%")
+importFrom(nlme,
+  fixef,
+  ranef
+)
 importFrom(rlang,
   "!!",
   ":=",

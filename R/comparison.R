@@ -320,7 +320,14 @@ get_loglik_settings = function(fit, varying, arma, ndraws) {
 #' hypothesis(demo_fit, "cp_1 > 30", prior = TRUE)
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-hypothesis = function(fit, hypotheses, width = 0.95, prior = FALSE) {
+#' @export
+hypothesis = function(fit, ...) UseMethod("hypothesis")
+
+
+#' @rdname hypothesis
+#' @export
+hypothesis.mcpfit = function(fit, hypotheses, width = 0.95, prior = FALSE, ...) {
+  rlang::check_dots_empty()
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_character(hypotheses)
   check_legacy_parameter_names(hypotheses, "hypothesis()")

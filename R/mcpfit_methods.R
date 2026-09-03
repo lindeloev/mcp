@@ -355,19 +355,13 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
 
 
 
-#' @export
-fixef = function(object, ...) UseMethod("fixef")
-
-#' @export
-ranef = function(object, ...) UseMethod("ranef")
-
-
 #' @aliases fixef fixef.mcpfit
 #' @describeIn summary.mcpfit Population-level fixed effects (regression coefficients) of `mcpfit`.
 #' @param dpar Distributional parameter(s) whose regression coefficients to
 #'   return. For modeled distributional parameters such as `sigma()`, these
 #'   coefficients are on the link scale.
-#' @export
+#' @export fixef
+#' @exportS3Method nlme::fixef
 fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, dpar = "mu", ...) {
   rlang::check_dots_empty()
   checkmate::assert_subset(dpar, object$family$dpar_specs$dpar)
@@ -381,7 +375,8 @@ fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, dp
 #' @describeIn summary.mcpfit Group-level deviations (random effects) of `mcpfit`.
 #'   Change-point deviations are relative to their population change point;
 #'   `cp_i_sd` is the scale of their latent normal distribution.
-#' @export
+#' @export ranef
+#' @exportS3Method nlme::ranef
 ranef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {
   rlang::check_dots_empty()
   get_summary(object, width, scope = "group", prior = prior, verbose = verbose)
@@ -735,7 +730,14 @@ tidy_draws.mcpfit = function(model, ...) {
     registerS3method("posterior_epred", "mcpfit", posterior_epred.mcpfit, envir = asNamespace("rstantools"))
     registerS3method("posterior_predict", "mcpfit", posterior_predict.mcpfit, envir = asNamespace("rstantools"))
     registerS3method("posterior_linpred", "mcpfit", posterior_linpred.mcpfit, envir = asNamespace("rstantools"))
+    registerS3method("log_lik", "mcpfit", log_lik.mcpfit, envir = asNamespace("rstantools"))
   }
+  setHook(packageEvent("rstantools", "onLoad"), function(...) {
+    registerS3method("posterior_epred", "mcpfit", posterior_epred.mcpfit, envir = asNamespace("rstantools"))
+    registerS3method("posterior_predict", "mcpfit", posterior_predict.mcpfit, envir = asNamespace("rstantools"))
+    registerS3method("posterior_linpred", "mcpfit", posterior_linpred.mcpfit, envir = asNamespace("rstantools"))
+    registerS3method("log_lik", "mcpfit", log_lik.mcpfit, envir = asNamespace("rstantools"))
+  })
 }
 
 

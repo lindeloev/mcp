@@ -42,7 +42,8 @@ Imports:
 	patchwork (>= 1.0.0),
 	checkmate (>= 2.3.0),
 	stats,
-	rlang (>= 1.0.0)
+	rlang (>= 1.0.0),
+	nlme
 Suggests:
 	rstantools (>= 2.0.0),
 	hexbin,

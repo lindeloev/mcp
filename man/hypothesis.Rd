@@ -6,10 +6,14 @@
 \alias{hypothesis.mcpfit}
 \title{Test Hypotheses Concerning Individual Parameters}
 \usage{
-hypothesis(fit, hypotheses, width = 0.95, prior = FALSE)
+hypothesis(fit, ...)
+
+\method{hypothesis}{mcpfit}(fit, hypotheses, width = 0.95, prior = FALSE, ...)
 }
 \arguments{
 \item{fit}{An \code{\link{mcpfit}} object.}
+
+\item{...}{Must be empty. Reserved for future use.}
 
 \item{hypotheses}{String representation of a logical test involving model parameters.
 Takes R code that evaluates to TRUE or FALSE in a vectorized way.

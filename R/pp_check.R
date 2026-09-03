@@ -4,6 +4,7 @@
 #' Plot posterior (default) or prior (`prior = TRUE`) predictive checks. This is convenience wrapper
 #' around the `bayesplot::ppc_*()` methods.
 #'
+#' @rdname pp_check
 #' @aliases pp_check pp_check.mcpfit
 #' @inheritParams pp_eval
 #' @param type String specifying the type of plot. See \code{\link[bayesplot:PPC-overview]{bayesplot::available_ppc()}}
@@ -20,7 +21,8 @@
 #' @seealso \code{\link{plot.mcpfit}} \code{\link{pp_eval}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @export
+#' @export pp_check
+#' @exportS3Method bayesplot::pp_check
 #' @seealso plot_pars plot_dpar pp_check
 #' @examples
 #' \donttest{
@@ -28,7 +30,7 @@
 #' pp_check(demo_fit, type = "ecdf_overlay")
 #' #pp_check(some_group_fit, type = "loo_intervals", facet_by = "id")
 #' }
-pp_check = function(
+pp_check.mcpfit = function(
   object,
   type = "dens_overlay",
   facet_by = NULL,
