@@ -46,7 +46,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - In general, renamed `"varying"` to `"group"`. The old `"varying"` selector remains as a deprecated alias. The established `varying =` method argument remains unchanged for now.
 
-- `y | weights(w)` now specifies brms-aligned observation log-likelihood weights across all supported families (`gaussian()`, `binomial()`, `bernoulli()`, `poisson()`, `negbinomial()`), rather than Gaussian-only precision weights (which previously scaled the residual SD as `sigma / sqrt(w)`). Predictive draws and expectations now use the distribution parameters directly while `log_lik()` multiplies observation log-densities by `w`.
+- `y | weights(w)` now specifies observation log-likelihood weights across all supported families (`gaussian()`, `binomial()`, `bernoulli()`, `poisson()`, `negbinomial()`), rather than Gaussian-only precision weights (which previously scaled the residual SD as `sigma / sqrt(w)`). Unlike `brms`, weights must be strictly positive due to JAGS requirements. Predictive draws and expectations now use the distribution parameters directly while `log_lik()` multiplies observation log-densities by `w`.
 
 - AR and MA intercepts now have zero-centered, regularizing `dnorm(0, 0.5) T(-1, 1)` priors, replacing independent uniform priors. Their categorical contrasts and numeric slopes now use modest normal priors instead of heavy-tailed Student-t priors. Coefficients remain direct and are not jointly constrained to stationary or invertible regions.
 

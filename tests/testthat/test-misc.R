@@ -974,3 +974,20 @@ test_that("format.mcpfamily and summary print all family links", {
   expect_output(summary(fit_sigma), "Family: gaussian\nLinks: mu = identity; sigma = log", fixed = TRUE)
 })
 
+
+test_that("zero and negative weights are rejected with informative error", {
+  data_zero = data.frame(x = 1:5, y = 1:5, w = c(1, 1, 0, 1, 1))
+  expect_error(
+    mcp(list(y | weights(w) ~ 1 + x), data = data_zero, sample = FALSE),
+    "All weights must be numeric and greater than zero.",
+    fixed = TRUE
+  )
+
+  data_neg = data.frame(x = 1:5, y = 1:5, w = c(1, 1, -0.5, 1, 1))
+  expect_error(
+    mcp(list(y | weights(w) ~ 1 + x), data = data_neg, sample = FALSE),
+    "All weights must be numeric and greater than zero.",
+    fixed = TRUE
+  )
+})
+

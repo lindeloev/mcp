@@ -42,9 +42,11 @@
 #'     and observation `boundary` (see details).
 #'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html).
 #'
-#'   * *Likelihood weights:* `y | weights(w) ~ ...` multiplies each observation's
-#'     log-likelihood contribution by `w`, as in `brms`. Weights affect
-#'     posterior inference and `log_lik()`, but not the response distribution used
+#'   * *Likelihood weights:* `y | weights(w) ~ ...` specifies
+#'     observation log-likelihood weights. Each observation's
+#'     log-likelihood contribution is multiplied by `w`. Weights must be positive. 
+#'     Weights affect posterior
+#'     inference and `log_lik()`, but not the response distribution used
 #'     by `predict()` or prior/posterior predictive checks.
 #'     Combine with other auxiliaries using `+`, e.g., `y | trials(total) + weights(w) ~ ...`.
 #'
