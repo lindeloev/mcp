@@ -98,7 +98,10 @@ to generate fresh response series recursively from predictor-only \code{newdata}
 
 \item{rate}{Logical scalar. For binomial models, return counts (\code{rate = FALSE}) or
 the observed or expected success proportion (\code{rate = TRUE}). Predictions and
-count-scale fitted values require a trials column in \code{newdata}.}
+count-scale fitted values require a trials column in \code{newdata}.
+count-scale fitted values require a trials column in \code{newdata}. Distributional
+parameters such as \code{dpar = "mu"} evaluate the parameter itself (e.g., success probability)
+and are unaffected by \code{rate}.}
 
 \item{prior}{Logical. Evaluate prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)? Useful for \code{mcp(..., sample = "both")}.}
 
@@ -184,7 +187,11 @@ parameter with \code{dpar}, and choose the response or linear-predictor scale wi
 but with fixed arguments for \code{fitted}: \verb{rate = FALSE, dpar = 'epred', draws_format = 'tidy'}.
 
 \code{log_lik()} defaults to an unsummarised draws-by-observation matrix, as used
-by \code{loo} and other posterior workflows.
+by \code{loo} and other posterior workflows. Non-default \code{varying} and \code{arma}
+settings evaluate conditional or counterfactual log-likelihoods (e.g.,
+omitting random effects or serial correlation); they cannot be used in
+\code{loo()} or \code{waic()} because estimating information criteria for reduced
+models requires refitting.
 
 Missing responses in the original data remain missing in the response column.
 \code{fitted()} returns their expected responses, while \code{predict()} uses retained

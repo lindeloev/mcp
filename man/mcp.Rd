@@ -49,13 +49,15 @@ standard-deviation change or \code{~sigma(1 + x + group)} for more advanced
 structures. Explicit \code{sigma()} formulas model log-SD, while the implicit constant \code{sigma_1} in a
 model without \code{sigma()} remains on the response scale.
 \href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}
-\item \emph{Time-series residuals:} use \code{ar(p)} and \code{ma(q)} separately or together,
-e.g., \code{~ 1 + ar(1) + ma(1)}. Both accept an optional regression formula
-and observation \code{boundary} (see details).
+\item \emph{Time-series residuals:} link-scale observation-driven GARMA via \code{ar(p)} and \code{ma(q)},
+e.g., \code{~ 1 + ar(1, series = id) + ma(1)}. Both accept an optional regression formula,
+observation \code{boundary} (default 0.1), and grouping \code{series} column (see details).
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}.
-\item \emph{Likelihood weights:} \code{y | weights(w) ~ ...} multiplies each observation's
-log-likelihood contribution by \code{w}, as in \code{brms}. Weights affect
-posterior inference and \code{log_lik()}, but not the response distribution used
+\item \emph{Likelihood weights:} \code{y | weights(w) ~ ...} specifies
+observation log-likelihood weights. Each observation's
+log-likelihood contribution is multiplied by \code{w}. Weights must be positive.
+Weights affect posterior
+inference and \code{log_lik()}, but not the response distribution used
 by \code{predict()} or prior/posterior predictive checks.
 Combine with other auxiliaries using \code{+}, e.g., \code{y | trials(total) + weights(w) ~ ...}.
 \item \emph{Binomial:} use \code{successes | trials(total) ~ ...} with \code{family = binomial()}.
@@ -127,7 +129,7 @@ use diagnostics to assess convergence.}
 
 \item{adapt}{Deprecated; use \code{warmup} instead.}
 
-\item{inits}{A list if initial values for the parameters. This can be useful
+\item{inits}{A list of initial values for the parameters. This can be useful
 if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
 Defaults to \code{NULL}, i.e., no inits.}
 
@@ -187,13 +189,13 @@ Distributional parameters (\code{sigma()}, \code{shape()}, etc.) and autoregress
 follow this exact same segmented structure on their respective link scales. See more details on the \code{mcp} model in
 \link{mcp-package} and on the \href{https://lindeloev.github.io/mcp/articles/formulas.html}{mcp website}.
 
-\strong{Time-series residuals}
+\strong{Time-series residuals (link-scale observation-driven GARMA)}
 
 Autoregressive (\code{ar(p)}) and moving-average (\code{ma(q)}) terms define a finite conditional recurrence
-on the link scale (generalized autoregressive moving-average, GARMA). They support Gaussian, binomial,
-Poisson, and negative-binomial families with their default links. If \eqn{b_t} is the ordinary
-regression predictor from the segment formulas and \eqn{\eta_t} is the predictor including serial
-dependence, the recurrence decomposes into components:
+on the link scale (generalized autoregressive moving-average, GARMA). They support Gaussian (\code{identity}),
+binomial (\code{logit}), Bernoulli (\code{logit}), Poisson (\code{log}), and negative-binomial (\code{log}) families.
+If \eqn{b_t} is the ordinary regression predictor from the segment formulas and \eqn{\eta_t} is the
+predictor including serial dependence, the recurrence decomposes into components:
 
 \deqn{\begin{aligned}
   \text{AR}_t &= \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right] \\
@@ -203,7 +205,12 @@ dependence, the recurrence decomposes into components:
 
 where \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
 \eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
-\eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the boundary-constrained observation.
+\eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the boundary-constrained observation:
+\itemize{
+\item \strong{Gaussian:} \eqn{y^*_t = y_t}.
+\item \strong{Poisson / Negative Binomial:} \eqn{y^*_t = \max(y_t, b)} to prevent \eqn{\log(0)}.
+\item \strong{Binomial / Bernoulli:} \eqn{y^*_t = \min(\max(y_t, b), n_t - b) / n_t}, where \eqn{b} is a boundary pseudo-count (not a proportion) and \eqn{n_t = 1} for Bernoulli.
+}
 
 Implications:
 \itemize{
@@ -220,9 +227,9 @@ explicit truncation nor an inherently bounded form such as \code{dunif()} or
 \code{dirichlet()}.
 \item \emph{Data-dependent terms:} If \code{mcp} encounters a data-dependent term like \code{min(time)}, \code{max(time)}, \code{median(response)}, or \code{mad(response)} in the prior string, they are resolved from the model data so a numerical value is passed to JAGS. The following terms are also allowed: \code{n_segments()}, and \code{n_cp()}.
 The older constants \code{MINX}, \code{MAXX}, \code{MEANX}, \code{SDX}, \code{MINY}, \code{MAXY}, \code{MEANY}, \code{SDY}, and \code{N_CP} remain accepted with a deprecation warning.
-\item \emph{Group-level change points:} Deviations (\code{cp_i_id}) are zero-centered around
-their population change point, so \code{cp_i_sd} estimates their sample standard
-deviation with \eqn{N - 1} degrees of freedom.
+\item \emph{Group-level change points:} Group-specific locations follow a hierarchical
+normal distribution around their population change point, truncated so
+that realized locations remain in the observed range and ordered.
 \item \emph{Parameterization:} Prior strings use conventional scale parameterizations. \code{mcp} converts
 these to the parameterization required by JAGS when generating code:
 inverse variance for \code{dnorm()}, \code{dt()}, and \code{dlnorm()}, and inverse

@@ -81,9 +81,19 @@ cross-validation, which are not currently implemented in mcp. When a
 missing response enters a later observed GARMA history, \code{log_lik()},
 \code{loo()}, and \code{waic()} are unavailable with \code{arma = TRUE}: the observed-data
 likelihood requires integrating over that missing history, which mcp does
-not currently implement. Setting \code{arma = FALSE} evaluates the model without
-its AR/MA contribution rather than repairing the criterion for the fitted
-serial model.
+not currently implement.
+
+\code{loo()} and \code{waic()} evaluate the likelihood of the fitted model and require
+default \code{varying = TRUE} and \code{arma = TRUE}. Evaluating an information
+criterion with fitted components dropped post-hoc violates the PSIS
+identity because draws come from the full model's posterior; comparing a
+reduced model requires refitting it. Non-default \code{varying} and \code{arma}
+settings remain available in \code{log_lik()} as conditional or counterfactual
+diagnostics.
+
+When \code{ndraws} is supplied to \code{loo()}, draws are thinned evenly across
+chains to preserve MCMC chain identities and chronological order, allowing
+\code{relative_eff()} to be computed directly.
 }
 \section{Functions}{
 \itemize{

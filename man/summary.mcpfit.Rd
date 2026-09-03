@@ -83,12 +83,11 @@ Low effective sample sizes are also obvious as poor mixing in trace plots
 (see \code{plot_pars(fit)}). Read how to deal with such problems \href{https://lindeloev.github.io/mcp/articles/tips.html}{here}
 }
 
-Group-level change-point deviations (\code{cp_i_id}) are exactly zero-centered so
-that the population-level change point is their arithmetic mean. Consequently,
-the population-level \code{cp_i_sd} parameter estimates the sample standard
-deviation (with \eqn{N - 1} degrees of freedom) of the group-specific change
-points. Predictor group-level effects (such as \code{Intercept_1_id}) use standard
-hierarchical zero-mean priors without exact sum-to-zero constraints.
+Group-level change-point deviations (\code{cp_i_id}) follow a standard hierarchical
+normal distribution around the population change point. Their realized
+locations are truncated to remain in range and ordered.
+Predictor group-level effects (such as \code{Intercept_1_id}) also use standard
+hierarchical zero-mean priors, without change-point constraints.
 
 For simulated data, the summary contains two additional columns so that it
 is easy to inspect whether the model can recover the parameters. Run
@@ -107,8 +106,8 @@ Summarise parameter estimates and model diagnostics.
 \item \code{fixef(mcpfit)}: Population-level fixed effects (regression coefficients) of \code{mcpfit}.
 
 \item \code{ranef(mcpfit)}: Group-level deviations (random effects) of \code{mcpfit}.
-Change-point deviations are zero-centered around their population change point,
-so their spread matches \code{cp_i_sd} with \eqn{N - 1} degrees of freedom.
+Change-point deviations are relative to their population change point;
+\code{cp_i_sd} is the scale of their latent normal distribution.
 
 \item \code{print(mcpfit)}: Print the posterior summary of an \code{\link{mcpfit}} object.
 

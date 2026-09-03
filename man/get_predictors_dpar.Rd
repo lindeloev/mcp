@@ -65,13 +65,15 @@ standard-deviation change or \code{~sigma(1 + x + group)} for more advanced
 structures. Explicit \code{sigma()} formulas model log-SD, while the implicit constant \code{sigma_1} in a
 model without \code{sigma()} remains on the response scale.
 \href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}
-\item \emph{Time-series residuals:} use \code{ar(p)} and \code{ma(q)} separately or together,
-e.g., \code{~ 1 + ar(1) + ma(1)}. Both accept an optional regression formula
-and observation \code{boundary} (see details).
+\item \emph{Time-series residuals:} link-scale observation-driven GARMA via \code{ar(p)} and \code{ma(q)},
+e.g., \code{~ 1 + ar(1, series = id) + ma(1)}. Both accept an optional regression formula,
+observation \code{boundary} (default 0.1), and grouping \code{series} column (see details).
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}.
-\item \emph{Likelihood weights:} \code{y | weights(w) ~ ...} multiplies each observation's
-log-likelihood contribution by \code{w}, as in \code{brms}. Weights affect
-posterior inference and \code{log_lik()}, but not the response distribution used
+\item \emph{Likelihood weights:} \code{y | weights(w) ~ ...} specifies
+observation log-likelihood weights. Each observation's
+log-likelihood contribution is multiplied by \code{w}. Weights must be positive.
+Weights affect posterior
+inference and \code{log_lik()}, but not the response distribution used
 by \code{predict()} or prior/posterior predictive checks.
 Combine with other auxiliaries using \code{+}, e.g., \code{y | trials(total) + weights(w) ~ ...}.
 \item \emph{Binomial:} use \code{successes | trials(total) ~ ...} with \code{family = binomial()}.

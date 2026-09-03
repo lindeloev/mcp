@@ -81,6 +81,15 @@ response series recursively. It does not condition later predictions on
 the observed response history, unlike \code{fitted()} and \code{predict()}. These
 methods require posterior draws. For prior prediction, use \code{fitted()} or
 \code{predict()} with \code{prior = TRUE}.
+
+For binomial models, \code{posterior_epred()} and \code{posterior_predict()} (and
+corresponding \code{{tidybayes}} workflows such as \code{add_epred_draws()}) follow
+\code{{brms}} and \code{{rstantools}} conventions by returning values on the outcome
+count scale (\code{rate = FALSE}), i.e., expected counts \eqn{E[Y] = n\mu} and
+simulated counts in \eqn{\{0, \dots, n\}}. In contrast, \code{fitted()} and \code{predict()}
+default to proportions (\code{rate = TRUE}). To obtain the success probability
+parameter \eqn{\mu} on the \eqn{[0, 1]} scale regardless of trial counts, pass
+\code{dpar = "mu"}.
 }
 \seealso{
 \code{\link[=fitted.mcpfit]{fitted.mcpfit()}}, \code{\link[=predict.mcpfit]{predict.mcpfit()}}

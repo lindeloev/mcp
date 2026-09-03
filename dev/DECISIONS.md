@@ -35,3 +35,6 @@ Supplying custom `mcp(..., jags_code)` will make fit$simulate() out of sync. Thi
 
 ## 2026-08-07: GARMA order > data length
 Running ar(4) on length-3 data fails in JAGS with uninformative error. This is such a rare edge case that I will not add ~15 lines to protect against it for each series x group combo.
+
+# 2026-09-03: no novel group predictions
+At least for now, fit$simulate() will not support novel categorical levels.

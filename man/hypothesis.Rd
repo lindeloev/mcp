@@ -28,7 +28,7 @@ than or equal to 3.
 \item \code{"Intercept_1 > -2 & Intercept_1 < 2"}: Intercept_1 is between -2 and 2 (an interval hypothesis). This can be useful as a Region Of Practical Equivalence test (ROPE).
 \item \code{"cp_1^2 < 30 | (log(x_1) + log(x_2)) > 5"}: be creative.
 \item \code{"`cp_1_id[1]` > `cp_1_id[2]`"}: id1 is greater than id2, as estimated
-through the group-level change-point deviation for \code{id} in segment 1.
+through the group-level change-point deviation for \code{id} at change point 1 (starting segment 2).
 Note that \code{``} are required when using \verb{[i]}.
 }
 
@@ -68,14 +68,15 @@ the prior mean when \code{prior = TRUE}.
 \item \code{lower} is the lower bound of the central posterior interval of width \code{width},
 or the corresponding prior interval when \code{prior = TRUE}.
 \item \code{upper} is the upper bound of ditto.
-\item \code{p} is the posterior probability of a directional hypothesis, or the prior
+\item \code{post_prob} is the posterior probability of a directional hypothesis, or the prior
 probability when \code{prior = TRUE}. It is \code{NA}
 for equality hypotheses, which compare models rather than an event
 within the fitted model.
 \item \code{BF} Bayes Factor in favor  of the hypothesis.
 For "=" it is the Savage-Dickey density ratio.
 For directional hypotheses, it is the posterior odds divided by the
-prior odds. It is \code{NA} when \code{prior = TRUE}.
+prior odds. It is \code{NA} when \code{prior = TRUE} or when prior draws are
+not available (e.g., \code{sample = "post"}).
 }
 }
 \description{

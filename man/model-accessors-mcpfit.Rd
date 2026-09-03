@@ -28,7 +28,7 @@ selecting one segment.}
 \code{formula()} returns the complete list of segment formulas, or one
 formula when \code{segment} is supplied. \code{family()} returns an \code{mcpfamily}.
 \code{model.frame()} returns the data retained in the fit. \code{nobs()} returns the
-number of fitting-data rows.
+number of observed response values (excluding missing responses).
 }
 \description{
 Standard R accessors for the model formulas, family, fitting data, and number
