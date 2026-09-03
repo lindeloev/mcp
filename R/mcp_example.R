@@ -55,7 +55,7 @@ data = data.frame(
 )
 empty = mcp(model, data, sample = FALSE)
 data$price = empty$simulate(empty, data,
-  cp_1 = 75,
+  cp_1 = 74.5,
   Intercept_1 = 20,
   time_2 = 0.5,
   sigma_1 = 5,
@@ -93,8 +93,8 @@ data = data.frame(
 )
 empty = mcp(model, data, family = binomial(), sample = FALSE)
 data$y = empty$simulate(empty, data,
-  cp_1 = 30,
-  cp_2 = 70,
+  cp_1 = 29.5,
+  cp_2 = 69.5,
   Intercept_1 = 1.5,
   Intercept_3 = -1,
   x_2 = -0.15,
@@ -102,7 +102,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, family = binomial(), sample = sample, seed = 42)
+fit = mcp(model, data, family = binomial(), iter = 4000, sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {
@@ -224,7 +224,7 @@ data = data.frame(
 )
 empty = mcp(model, data, par_x = 'x', sample = FALSE)
 data$y = empty$simulate(empty, data,
-  cp_1 = 55,
+  cp_1 = 54.5,
   Intercept_1 = 10,
   x_1 = 0.25,
   conditionB_1 = 22,
@@ -263,8 +263,8 @@ data = data.frame(
 )
 empty = mcp(model, data, sample = FALSE, par_x = 'x')
 data$y = empty$simulate(empty, data,
-  cp_1 = 70,
-  cp_2 = 100,
+  cp_1 = 69.5,
+  cp_2 = 99.5,
 
   Intercept_1 = 10,
   z_1 = 0.2,

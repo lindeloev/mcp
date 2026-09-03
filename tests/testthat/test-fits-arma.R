@@ -4,8 +4,8 @@ models_ar = list(
        ~ 0 + x + ar(1, 1 + x),
        ~ 0,
        simulated = list(
-         cp_1 = 80,
-         cp_2 = 140,
+         cp_1 = 79.5,
+         cp_2 = 139.5,
          Intercept_1 = -20,
          sigma_1 = 5,
          ar1_1 = 0.7,
