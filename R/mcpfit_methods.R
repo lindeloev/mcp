@@ -1126,7 +1126,7 @@ tidy_samples = function(...) {
 #'   so `newdata` must include the response. For `fitted()`, `predict()`, and
 #'   `residuals()`, missing response histories are supported only in the original
 #'   fitted data, using retained posterior imputations. `log_lik()` is unavailable
-#'   when a missing response enters a later observed history. Use [posterior_predict()]
+#'   when a missing response enters a later observed history. Use [`posterior_predict()`][rstantools::posterior_predict]
 #'   to generate fresh response series recursively from predictor-only `newdata`.
 #' - For models with `y | weights()`: Require the weights column except for `fitted()` and `predict()`.
 #' @param summary Summarise at each x-value

@@ -20,10 +20,8 @@ mcp_draws(
 
 \item{population}{\itemize{
 \item \code{TRUE} All population-level model parameters.
-\itemize{
 \item \code{FALSE} No population-level effects. Same as \code{c()}.
 \item Character vector: Only include specified population-level parameters.
-}
 }}
 
 \item{varying}{Group-level effects. One of:
@@ -37,10 +35,8 @@ the model.
 
 \item{absolute}{\itemize{
 \item \code{TRUE} Returns the absolute location of all group-specific change points.
-\itemize{
 \item \code{FALSE} Return the group-level deviations.
 \item Character vector: Apply the absolute transform only to these group-level parameters.
-}
 }}
 
 \item{prior}{Logical. Summarise prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)?}
