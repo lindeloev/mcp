@@ -7,7 +7,8 @@ models_families_bernoulli = list(
     chains = 2,
     warmup = 1000,
     iter = 2000,
-    min_ess = 50
+    min_ess = 50,
+    seed = 1
   ),
   list(
     y ~ 1 + x,

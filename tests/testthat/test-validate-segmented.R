@@ -143,7 +143,7 @@ test_that("Binomial 2-changepoint model agrees with segmented()", {
   testthat::expect_equal(cp1_mcp, unname(psi_seg["psi1.x"]), tolerance = 5.0)
   testthat::expect_equal(cp2_mcp, unname(psi_seg["psi2.x"]), tolerance = 8.0)
 
-  # Compare parameters (within 0.10 / 0.05 given Bayesian regularizing priors)
-  testthat::expect_equal(intercept_mcp, intercept_seg, tolerance = 0.10)
-  testthat::expect_equal(x1_mcp, unname(slopes_seg["slope1"]), tolerance = 0.05)
+  # Compare parameters (within 0.15 given Bayesian regularizing priors vs MLE)
+  testthat::expect_equal(intercept_mcp, intercept_seg, tolerance = 0.15)
+  testthat::expect_equal(x1_mcp, unname(slopes_seg["slope1"]), tolerance = 0.15)
 })

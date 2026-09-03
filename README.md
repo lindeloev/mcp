@@ -112,7 +112,7 @@ model = list(
 )
 
 # Get example data and fit it: mcp(model, data, ...)
-fit = mcp(model, demo_fit$data, sample = "both", seed = 40)
+fit = mcp(model, demo_fit$data, sample = "both", seed = 78)
 ```
 
 ## Plot and summary

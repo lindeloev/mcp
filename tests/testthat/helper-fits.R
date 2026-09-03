@@ -19,10 +19,10 @@
 #' @param chains Number of MCMC chains used when fitting.
 #' @param warmup Number of warmup iterations used when fitting.
 #' @param iter Number of post-adaptation iterations used when fitting.
-#' @param min_ess Minimum bulk and tail ESS required for every parameter.
+#' @param seed Random seed for fitting. Defaults to 42.
 test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
                      family = gaussian(), chains, warmup, iter,
-                     min_ess) {
+                     min_ess, seed = 42) {
   if (Sys.getenv("MCP_TEST_LEVEL") != "release") {
     testthat::skip("Time-consuming fit recovery tests are only run when MCP_TEST_LEVEL='release'.")
   }
@@ -55,7 +55,7 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
   # Fit
   fit = mcp(
     model, newdata, family = family, par_x = "x",
-    chains = chains, warmup = warmup, iter = iter, seed = 42,
+    chains = chains, warmup = warmup, iter = iter, seed = seed,
     diagnostics = FALSE, quiet = TRUE
   )  # Ensure convergence
   assign("fit", fit, envir = .GlobalEnv)  # for easier debugging
@@ -83,6 +83,7 @@ apply_test_fit = function(desc, all_models, family = gaussian()) {
     warmup = this[["warmup"]]
     iter = this[["iter"]]
     min_ess = this[["min_ess"]]
+    seed = if (!is.null(this[["seed"]])) this[["seed"]] else 42
     if (is.null(model_family))
       model_family = family
     if (any(vapply(list(chains, warmup, iter, min_ess), is.null, logical(1))))
@@ -93,7 +94,7 @@ apply_test_fit = function(desc, all_models, family = gaussian()) {
     testthat::test_that(desc, {
       test_fit(
         model, simulated, newdata, hyperparameters, model_family,
-        chains, warmup, iter, min_ess
+        chains, warmup, iter, min_ess, seed = seed
       )
     })
   }

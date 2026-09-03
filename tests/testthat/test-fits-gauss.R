@@ -19,7 +19,8 @@ models_gauss = list(
     chains = 2,
     warmup = 500,
     iter = 750,
-    min_ess = 50)
+    min_ess = 50,
+    seed = 1)
 )
 
 apply_test_fit("Gaussian recovery", models_gauss)

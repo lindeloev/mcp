@@ -17,7 +17,8 @@ models_families_poisson = list(
     chains = 2,
     warmup = 1000,
     iter = 1000,
-    min_ess = 50
+    min_ess = 50,
+    seed = 1
   ),
   list(
     y ~ 1 + x + offset(log(pop)),

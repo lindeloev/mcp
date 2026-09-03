@@ -119,7 +119,7 @@ model = list(
 )
 
 # Simulate data
-set.seed(40)
+set.seed(78)
 data = data.frame(
   time = runif(100, 0, 100),
   response = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
@@ -136,11 +136,11 @@ data$response = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, sample = sample, seed = 40)
+fit = mcp(model, data, sample = sample, seed = 78)
 
 # Illustrative plot
 if (plot) {
-  set.seed(40)
+  set.seed(78)
   print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit = TRUE)'))
 }",
 
@@ -314,7 +314,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, warmup = 2000, iter = 10000, sample = sample, diagnostics = FALSE, seed = 4)
+fit = mcp(model, data, warmup = 2000, iter = 10000, sample = sample, diagnostics = FALSE, seed = 6)
 
 # Illustrative plot
 if (plot) {
