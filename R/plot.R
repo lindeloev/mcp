@@ -199,7 +199,8 @@ get_plot = function(x,
   ############################
   # MAKE NEWDATA AND PREDICT #
   ############################
-  newdata = interpolate_newdata(fit, by = by, at = at)
+  needs_arma = arma && has_arma_terms(fit) && dpar %in% c("epred", "mu")
+  newdata = interpolate_newdata(fit, by = by, at = at, arma = needs_arma)
 
   # Predict
   local_pp_eval = function(type, newdata, ndraws = NULL, include_fitted = FALSE, include_dpars = FALSE) {
@@ -212,7 +213,7 @@ get_plot = function(x,
       prior = prior,
       dpar = dpar,
       varying = group_pars,
-      arma = arma,
+      arma = needs_arma,
       ndraws = ndraws,
       draws_format = "tidy",
       scale = scale,

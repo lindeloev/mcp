@@ -113,3 +113,21 @@ test_that("plot() supports exact q_predict, deprecates samples, and checks dots"
   )
 })
 
+
+test_that("GARMA plotting works with categorical predictors", {
+  df = data.frame(
+    time = 1:20,
+    y = rnorm(20),
+    condition = rep(c("A", "B"), each = 10)
+  )
+  fit = mcp(
+    list(y ~ 1 + condition + ar(1), ~ 1),
+    data = df, par_x = "time", chains = 1, iter = 10, warmup = 10
+  )
+
+  expect_s3_class(plot(fit), "ggplot")
+  expect_s3_class(plot_dpar(fit, "ar1"), "ggplot")
+})
+
+
+

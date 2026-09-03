@@ -15,16 +15,19 @@
 #' @param fit An `mcpfit` object.
 #' @param by Character vector of grouping columns to evaluate separately.
 #' @return A vector of x-values to evaluate at.
-get_x_values = function(fit, by = NULL, prior = FALSE) {
+get_x_values = function(fit, by = NULL, prior = FALSE, arma = NULL) {
   N_BASIS = 100
   N_CP = 50
   X_RESOLUTION_GROUPED = 300
 
+  if (is.null(arma))
+    arma = has_arma_terms(fit)
+
   data_columns = mcp_columns(fit)
   xdata = fit$data[, data_columns$par_x] %>% as.numeric()
 
-  # If there are AR/MA terms, evaluate at the data
-  if (has_arma_terms(fit)) {
+  # If there are AR/MA terms and arma == TRUE, evaluate at the data
+  if (isTRUE(arma)) {
     x_values = xdata
   } else if (!is.null(by) || is.null(.subset2(fit, "mcmc_post"))) {
     # Just give up for grouped and prior evaluations (usually very distributed change points)
@@ -143,7 +146,23 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 #'   geom_line(lwd = 2) +
 #'   geom_point(aes(y = response), data = demo_fit$data)
 #' }
-interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by), at = NULL) {
+interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma = NULL) {
+  if (is.null(arma))
+    arma = has_arma_terms(fit)
+
+  # Conditional AR/MA predictions depend sequentially on the observed response
+  # history. Preserve the observed design rather than creating a factorial grid.
+  if (isTRUE(arma) && is.null(x_values)) {
+    newdata = fit$data
+    if (!is.null(at)) {
+      for (col in intersect(names(at), names(newdata)))
+        newdata[[col]] = at[[col]]
+    }
+    return(as.data.frame(newdata))
+  }
+
+  if (is.null(x_values))
+    x_values = get_x_values(fit, by = by, arma = arma)
   # Evaluate the default before `by` is normalised below. Otherwise an absent
   # grouping argument becomes character(0), which selects the denser grouped
   # grid in get_x_values().
@@ -188,9 +207,12 @@ interpolate_newdata = function(fit, by = NULL, x_values = get_x_values(fit, by),
   }
 
   # Add response column for AR/MA models
-  if (has_arma_terms(fit)) {
+  if (isTRUE(arma)) {
     if (nrow(newdata) != nrow(fit$data))
-      stop_github("nrow(newdata) != nrow(fit$data) in interpolate_newdata for an AR/MA model.")
+      stop(
+        "Conditional AR/MA evaluation (`arma = TRUE`) requires an observed response history ",
+        "matching the fitted data. Set `arma = FALSE` to evaluate unconditional trends on new or interpolated data."
+      )
     if (!is.null(series_col))
       newdata[, series_col] = fit$data[, series_col]
     newdata[, data_columns$response] = fit$data[, data_columns$response]
