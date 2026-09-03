@@ -233,8 +233,9 @@ get_imputed_response_draws = function(fit, draws) {
   response = mcp_columns(fit)$response
 
   # Copy each monitored response node to its matching data row and draw
+  row_col = if (".mcp_data_row" %in% names(draws)) ".mcp_data_row" else "data_row"
   for (row in rows) {
-    use = draws$data_row == row
+    use = draws[[row_col]] == row
     node = paste0(response, "[", row, "]")
     values[use] = imputed[[node]][draw_index[use]]
   }
@@ -309,7 +310,7 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
 
   rows = unique(round(seq(1, nrow(fit$data), length.out = min(nrows, nrow(fit$data)))))
   newdata = fit$data[rows, , drop = FALSE]
-  newdata$data_row = seq_len(nrow(newdata))
+  newdata$.mcp_data_row = seq_len(nrow(newdata))
   group_info = unpack_group_effects(fit, pars = TRUE)
   draws = as.matrix(.subset2(fit, "mcmc_post"))
   # Spread the check over all retained post-warmup draws and chains.
@@ -336,7 +337,8 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
   components = intersect(c("ar", "ma"), unique(model_predictors$dpar))
   probabilities = vapply(components, function(component) {
     violations = arma_root_violations(values, component)
-    max(tapply(violations, draws_predictors$data_row, mean))
+    row_col = if (".mcp_data_row" %in% names(draws_predictors)) ".mcp_data_row" else "data_row"
+    max(tapply(violations, draws_predictors[[row_col]], mean))
   }, numeric(1))
   bad = vapply(names(probabilities), function(component) {
     threshold = diagnostics[[component]]

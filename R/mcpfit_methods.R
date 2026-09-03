@@ -1283,12 +1283,15 @@ pp_eval = function(
   }
   assert_data_cols(newdata, required_cols)
 
+  # Validate against reserved output namespace
+  assert_reserved_output_namespace(colnames(newdata), context = "newdata")
+
   # Filter newdata columns and attach unique evaluation row index
   kept_cols = colnames(newdata)[colnames(newdata) %notin% exclude_group_cols]
   if (replicate_garma)
     kept_cols = kept_cols[kept_cols != data_columns$response]
   newdata = data.frame(newdata[, kept_cols, drop = FALSE])
-  newdata$data_row = seq_len(nrow(newdata))  # Evaluation key throughout summaries, matrices, plots, and metrics
+  newdata$.mcp_data_row = seq_len(nrow(newdata))  # Evaluation key throughout summaries, matrices, plots, and metrics
   newdata_return = newdata
   if (!is.null(response_return) && data_columns$response %notin% colnames(newdata_return))
     newdata_return[[data_columns$response]] = response_return[[data_columns$response]]
@@ -1385,7 +1388,7 @@ pp_eval = function(
   # draw's data rows to be contiguous. Evaluate in draw/data order, then
   # restore the public row order below.
   evaluation_order = if (arma && is_arma(fit)) {
-    order(draws$.draw, draws$data_row)
+    order(draws$.draw, draws$.mcp_data_row)
   } else {
     seq_len(nrow(draws))
   }
@@ -1418,7 +1421,7 @@ pp_eval = function(
     draws$fitted = fitted_values
 
   if (!is.null(response_return))
-    draws[[data_columns$response]] = response_return[[data_columns$response]][draws$data_row]
+    draws[[data_columns$response]] = response_return[[data_columns$response]][draws$.mcp_data_row]
 
   draws = draws %>% dplyr::select(-dplyr::starts_with(".pred_"))
 
@@ -1429,10 +1432,10 @@ pp_eval = function(
     observed_rows = which(!is.na(newdata[, data_columns$response]))
     if (length(observed_rows) == 0)
       stop("Log-likelihood evaluation requires at least one observed response.")
-    draws = dplyr::filter(draws, .data$data_row %in% observed_rows)
+    draws = dplyr::filter(draws, .data$.mcp_data_row %in% observed_rows)
     newdata_return = dplyr::filter(
       newdata_return,
-      .data$data_row %in% observed_rows
+      .data$.mcp_data_row %in% observed_rows
     )
   }
 
@@ -1449,15 +1452,15 @@ pp_eval = function(
   if (summary == TRUE) {
     df_return = draws %>%
       # Summarise for each row in newdata
-      dplyr::group_by(.data$data_row) %>%
+      dplyr::group_by(.data$.mcp_data_row) %>%
       dplyr::summarise(.groups = "drop",
                        sd = stats::sd(.data[[type]]),
                        !!type := mean(.data[[type]])
       ) %>%
 
       # Apply original order and put newdata as the first columns
-      dplyr::arrange(.data$data_row) %>%
-      dplyr::left_join(newdata_return, by = "data_row", relationship = "one-to-one") %>%
+      dplyr::arrange(.data$.mcp_data_row) %>%
+      dplyr::left_join(newdata_return, by = ".mcp_data_row", relationship = "one-to-one") %>%
       dplyr::select(dplyr::one_of(colnames(newdata_return)), dplyr::all_of(type), "sd")
 
 
@@ -1473,9 +1476,9 @@ pp_eval = function(
         dplyr::mutate(quantile = 100 * .data$quantile) %>%
         tidyr::pivot_wider(names_from = "quantile", names_prefix = "Q", values_from = dplyr::all_of(val_col))
 
-      df_return = dplyr::left_join(df_return, quantiles, by = "data_row", relationship = "one-to-one")
+      df_return = dplyr::left_join(df_return, quantiles, by = ".mcp_data_row", relationship = "one-to-one")
     }
-    return(data.frame(dplyr::select(df_return, -"data_row")))
+    return(data.frame(dplyr::select(df_return, -".mcp_data_row")))
   } else if (draws_format == "tidy") {
     value_col = switch(type,
       fitted = ".epred",
@@ -1492,6 +1495,8 @@ pp_eval = function(
       if (!is.null(dpars_values)) attr(draws, "dpars") = dpars_values
       if (!is.null(response_data_values)) attr(draws, "response_data") = response_data_values
     }
+    draws$data_row = draws$.mcp_data_row
+    draws$.mcp_data_row = NULL
     return(draws)
   } else if (draws_format == "matrix") {
     df_return = tidy_to_matrix(draws, type)

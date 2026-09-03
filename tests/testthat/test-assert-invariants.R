@@ -52,3 +52,32 @@ test_that("simulation validates required response auxiliaries", {
     "trials"
   )
 })
+
+
+test_that("data columns colliding with reserved output namespace are rejected early", {
+  reserved = c("sd", "fitted", "predict", "residuals", "loglik", ".draw", ".chain", ".iteration", "data_row")
+  for (name in reserved) {
+    bad_data = data.frame(x = 1:4, y = 1:4)
+    bad_data[[name]] = c(1, 2, 1, 2)
+    expect_error(
+      mcp(list(stats::as.formula(paste("y ~ 1 +", name)), ~ 1), data = bad_data, par_x = "x", sample = FALSE),
+      "reserved output namespace"
+    )
+  }
+})
+
+
+test_that("newdata columns colliding with reserved output namespace are rejected early", {
+  data = data.frame(x = 1:4, y = 1:4)
+  fit = mcp(list(y ~ 1, ~ 1), data = data, par_x = "x", sample = FALSE)
+
+  expect_error(
+    fitted(fit, newdata = data.frame(x = 1:2, sd = 1:2)),
+    "reserved output namespace"
+  )
+  expect_error(
+    predict(fit, newdata = data.frame(x = 1:2, data_row = 1:2)),
+    "reserved output namespace"
+  )
+})
+

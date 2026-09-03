@@ -204,6 +204,9 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
       ". Rename the corresponding predictor column."
     )
 
+  # Check for collisions with reserved output column names.
+  assert_reserved_output_namespace(data_names, context = "data")
+
   # Finally, ensure user data cannot overwrite any generated JAGS node.
   collisions = intersect(data_names, c(parameter_names, helper_names))
   reserved_prefix = grep("^\\.?mcp_", data_names, value = TRUE)
@@ -239,7 +242,7 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
   aux_columns = get_family_aux_columns(family, segments)
   cols_data = unique(stats::na.omit(c(segments$y, segments$x, unname(aux_columns))))
   assert_jags_namespace(
-    unique(c(group_cols, cols_data, series)), family, segments, predictors,
+    unique(c(names(data), group_cols, cols_data, series)), family, segments, predictors,
     group_effects, jags_code, generated
   )
   jags_data = as.list(data[, c(group_cols, cols_data)])
