@@ -527,6 +527,15 @@ test_that("posterior draws accessor preserves the stored chains", {
   )
   expect_equal(posterior::variables(draws_array), colnames(raw[[1]]))
 
+  prior_only = demo_fit
+  prior_only$mcmc_post = NULL
+  expect_error(as_draws(prior_only), "Posterior requested but the posterior was not drawn", fixed = TRUE)
+  expect_error(as_draws_df(prior_only), "Posterior requested but the posterior was not drawn", fixed = TRUE)
+  expect_error(as_draws_array(prior_only), "Posterior requested but the posterior was not drawn", fixed = TRUE)
+  expect_error(as_draws_matrix(prior_only), "Posterior requested but the posterior was not drawn", fixed = TRUE)
+  expect_error(as_draws_rvars(prior_only), "Posterior requested but the posterior was not drawn", fixed = TRUE)
+  expect_s3_class(as_draws(prior_only, prior = TRUE), "draws_array")
+
   # Accessing mcmc_post directly should soft-deprecate
   lifecycle::expect_deprecated({
     val = demo_fit$mcmc_post
@@ -534,6 +543,13 @@ test_that("posterior draws accessor preserves the stored chains", {
   expect_s3_class(val, "mcmc.list")
 
   if (requireNamespace("tidybayes", quietly = TRUE)) {
+    expect_error(
+      tidybayes::tidy_draws(prior_only),
+      "Posterior requested but the posterior was not drawn",
+      fixed = TRUE
+    )
+    expect_s3_class(tidybayes::tidy_draws(prior_only, prior = TRUE), "tbl_df")
+
     td = tidybayes::tidy_draws(demo_fit)
     expect_s3_class(td, "tbl_df")
     expect_true("Intercept_1" %in% names(td))

@@ -636,7 +636,8 @@ posterior_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE,
 #'
 #' @aliases as_draws as_draws.mcpfit as_draws_df.mcpfit as_draws_array.mcpfit as_draws_matrix.mcpfit as_draws_rvars.mcpfit as.mcmc.mcpfit tidy_draws.mcpfit
 #' @param x An \code{\link{mcpfit}} object.
-#' @param prior Logical. Extract prior draws (`TRUE`) instead of posterior draws (`FALSE`)?
+#' @param prior Logical. Extract prior draws (`TRUE`) instead of posterior draws
+#'   (`FALSE`)? Errors if the requested draws are unavailable.
 #' @param ... Passed to \pkg{posterior} or \pkg{tidybayes} format conversion functions.
 #' @return A \pkg{posterior} `draws` object or a \pkg{coda} `mcmc.list` object.
 #' @examples
@@ -654,27 +655,27 @@ posterior_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE,
 #' head(tidybayes::tidy_draws(demo_fit))  # Tidybayes-compatible draw data
 #' @exportS3Method posterior::as_draws
 as_draws.mcpfit = function(x, prior = FALSE, ...) {
-  posterior_draws(x, prior = prior)
+  posterior_draws(x, prior = prior, fallback_to_prior = FALSE)
 }
 
 #' @exportS3Method posterior::as_draws_df
 as_draws_df.mcpfit = function(x, prior = FALSE, ...) {
-  posterior::as_draws_df(posterior_draws(x, prior = prior), ...)
+  posterior::as_draws_df(posterior_draws(x, prior = prior, fallback_to_prior = FALSE), ...)
 }
 
 #' @exportS3Method posterior::as_draws_array
 as_draws_array.mcpfit = function(x, prior = FALSE, ...) {
-  posterior::as_draws_array(posterior_draws(x, prior = prior), ...)
+  posterior::as_draws_array(posterior_draws(x, prior = prior, fallback_to_prior = FALSE), ...)
 }
 
 #' @exportS3Method posterior::as_draws_matrix
 as_draws_matrix.mcpfit = function(x, prior = FALSE, ...) {
-  posterior::as_draws_matrix(posterior_draws(x, prior = prior), ...)
+  posterior::as_draws_matrix(posterior_draws(x, prior = prior, fallback_to_prior = FALSE), ...)
 }
 
 #' @exportS3Method posterior::as_draws_rvars
 as_draws_rvars.mcpfit = function(x, prior = FALSE, ...) {
-  posterior::as_draws_rvars(posterior_draws(x, prior = prior), ...)
+  posterior::as_draws_rvars(posterior_draws(x, prior = prior, fallback_to_prior = FALSE), ...)
 }
 
 #' @rdname as_draws.mcpfit
@@ -1133,8 +1134,7 @@ tidy_samples = function(...) {
 #' @param rate Logical scalar. For binomial models, return counts (`rate = FALSE`) or
 #'   the observed or expected success proportion (`rate = TRUE`). Predictions and
 #'   count-scale fitted values require a trials column in `newdata`.
-#'   count-scale fitted values require a trials column in `newdata`. Distributional
-#'   parameters such as `dpar = "mu"` evaluate the parameter itself (e.g., success probability)
+#'   Distributional parameters such as `dpar = "mu"` evaluate the parameter itself (e.g., success probability)
 #'   and are unaffected by `rate`.
 #' @param prior Logical. Evaluate prior draws (`TRUE`) instead of posterior draws (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
 #' @param dpar What distributional parameter to evaluate. This is only relevant when `type == "fitted"`. E.g.,
