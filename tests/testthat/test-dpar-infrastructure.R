@@ -229,6 +229,49 @@ test_that("declared dpar wrappers use the generic formula path", {
   )
 })
 
+test_that("distributional predictor terms carry until redefined", {
+  data = data.frame(
+    x = 1:8,
+    z = c(0, 1, 0, 2, 1, 3, 2, 4),
+    y = c(2, 3, 5, 4, 6, 8, 7, 9)
+  )
+  fit = mcp(
+    list(
+      y ~ 1 + sigma(1 + z),
+      ~ 1,
+      ~ 0 + sigma(0 + z)
+    ),
+    data,
+    par_x = "x",
+    sample = FALSE
+  )
+  expect_lifetimes(fit, c(sigma_z_1 = 3L))
+  expect_match(
+    fit$.internal$formula_jags,
+    "(?s)x\\[i_\\] < cp_2.*c\\(sigma_z_1\\)",
+    perl = TRUE
+  )
+
+  sigma = fit$simulate(
+    fit,
+    data,
+    cp_1 = 3.5, cp_2 = 5.5,
+    Intercept_1 = 0, Intercept_2 = 0,
+    sigma_1 = 0.5, sigma_z_1 = 1, sigma_z_3 = 2,
+    .type = "fitted", .dpar = "sigma", .scale = "linear"
+  )
+  expected = 0.5 + ifelse(data$x < 5.5, data$z, 2 * data$z)
+  expect_equal(as.numeric(sigma), expected)
+
+  shape = get_predictors(
+    list(y ~ 1 + shape(1 + z), ~ 0 + shape(0 + z)),
+    data,
+    mcpfamily(negbinomial()),
+    par_x = "x"
+  )
+  expect_lifetimes(shape, c(shape_z_1 = 2L))
+})
+
 
 test_that("unsupported dpar wrappers give a family-specific error", {
   data = data.frame(x = 1:4, y = c(2, 3, 5, 7))

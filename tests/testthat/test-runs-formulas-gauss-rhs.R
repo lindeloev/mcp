@@ -76,6 +76,73 @@ test_that("formula functions reject multiple terms containing par_x", {
   )
 })
 
+test_that("population terms carry until redefined while local par_x terms accumulate", {
+  data = data.frame(
+    x = 1:8,
+    z = c(0, 1, 0, 2, 1, 3, 2, 4),
+    w = c(1, 1, 2, 1, 3, 2, 4, 3),
+    y = 0
+  )
+  fit = mcp(
+    list(y ~ 1 + x + z + w, ~ 0 + x + z),
+    data,
+    par_x = "x",
+    sample = FALSE
+  )
+  expect_lifetimes(fit, c(z_1 = 2L, w_1 = NA_integer_, x_1 = NA_integer_))
+  expect_match(
+    fit$.internal$formula_jags,
+    "(?s)x\\[i_\\] < cp_1.*c\\(z_1\\)",
+    perl = TRUE
+  )
+
+  fitted = fit$simulate(
+    fit,
+    data,
+    cp_1 = 4.5,
+    Intercept_1 = 1, x_1 = 2, z_1 = 10, w_1 = 3, sigma_1 = 1,
+    x_2 = -1, z_2 = 20,
+    .type = "fitted"
+  )
+  expected = 1 + 2 * pmin(data$x, 4.5) + 3 * data$w +
+    ifelse(data$x < 4.5, 10 * data$z, -(data$x - 4.5) + 20 * data$z)
+  expect_equal(as.numeric(fitted), expected)
+})
+
+test_that("redefinitions replace complete formula terms", {
+  data = data.frame(
+    x = 1:12,
+    z = seq(-1, 1, length.out = 12),
+    group = factor(rep(c("a", "b", "c"), 4)),
+    y = 0
+  )
+  predictors = get_predictors(
+    list(
+      y ~ 1 + group + poly(z, 2),
+      ~ 0 + x + group + poly(z, 2)
+    ),
+    data,
+    mcpfamily(gaussian()),
+    par_x = "x",
+    check_rank = FALSE
+  )
+  first_terms = predictors$segment == 1 & predictors$par_type != "Intercept"
+
+  expect_true(all(predictors$next_segment[first_terms] == 2L))
+  expect_equal(
+    length(unique(predictors$term_key[grepl("poly", predictors$matrix_name)])),
+    1L
+  )
+
+  reset = get_predictors(
+    list(y ~ 1 + z, ~ 1, ~ 0 + z),
+    data,
+    mcpfamily(gaussian()),
+    par_x = "x"
+  )
+  expect_lifetimes(reset, c(z_1 = 2L))
+})
+
 test_that("formula offsets work in mcp formulas", {
   d = data.frame(
     x = 1:20,
@@ -107,6 +174,36 @@ test_that("formula offsets work in mcp formulas", {
   expect_true(grepl("offset_mu_1_\\[i_\\]", fit_pois$jags_code))
   expect_true(grepl("offset_mu_2_\\[i_\\]", fit_pois$jags_code))
 
+  # Offsets carry until explicitly replaced; offset(0) turns one off.
+  offset_lifetime = mcp(
+    list(
+      y ~ 1 + x + offset(log(pop)),
+      ~ 1 + x,
+      ~ 0 + x + offset(log(pop)),
+      ~ 0 + x + offset(0)
+    ),
+    d_pois,
+    family = poisson(),
+    par_x = "x",
+    sample = FALSE
+  )
+  offset_mu = offset_lifetime$simulate(
+    offset_lifetime,
+    d_pois,
+    cp_1 = 7.5, cp_2 = 11.5, cp_3 = 15.5,
+    Intercept_1 = 0, x_1 = 0,
+    Intercept_2 = 0, x_2 = 0,
+    x_3 = 0,
+    x_4 = 0,
+    .type = "fitted"
+  )
+  expect_equal(as.numeric(offset_mu), ifelse(d_pois$x < 15.5, d_pois$pop, 1))
+  expect_match(
+    offset_lifetime$.internal$formula_jags,
+    "(?s)x\\[i_\\] < cp_2.*offset_mu_1_",
+    perl = TRUE
+  )
+
   # fit$simulate with offset
   sim_out = fit_gauss$simulate(
     fit_gauss,
@@ -120,8 +217,29 @@ test_that("formula offsets work in mcp formulas", {
   expect_equal(unname(attr(sim_out, "dpars")$mu), c(16, 17, 31, 33))
 
   # Offset in sigma
-  fit_sigma = mcp(list(y ~ 1 + x + sigma(1 + offset(z))), d, sample = FALSE)
+  fit_sigma = mcp(
+    list(y ~ 1 + x + sigma(1 + offset(z)), ~ 0 + x),
+    d,
+    sample = FALSE
+  )
   expect_true(grepl("offset_sigma_1_\\[i_\\]", fit_sigma$jags_code))
+  sigma_linear = fit_sigma$simulate(
+    fit_sigma,
+    d,
+    cp_1 = 10.5,
+    Intercept_1 = 0, x_1 = 0, sigma_1 = 0,
+    x_2 = 0,
+    .type = "fitted", .dpar = "sigma", .scale = "linear"
+  )
+  expect_equal(as.numeric(sigma_linear), d$z)
+
+  offset_only = mcp(
+    list(y ~ 0 + offset(z)), d, par_x = "x", sample = FALSE
+  )
+  offset_only_mu = offset_only$simulate(
+    offset_only, d, sigma_1 = 1, .type = "fitted"
+  )
+  expect_equal(as.numeric(offset_only_mu), d$z)
 
   # Warning when par_x is in offset()
   expect_warning(

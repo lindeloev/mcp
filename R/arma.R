@@ -132,7 +132,7 @@ get_arma_order = function(predictors, term) {
 # Return the segments that explicitly declare each AR/MA component. This keeps
 # zero formulas (e.g., ar(2, 0)), which otherwise have no predictor rows.
 get_arma_definitions = function(rhs) {
-  dplyr::bind_rows(lapply(seq_along(rhs), function(segment) {
+  definitions = lapply(seq_along(rhs), function(segment) {
     term_labels = attributes(stats::terms(rhs[[segment]]))$term.labels
     dplyr::bind_rows(lapply(c("ar", "ma"), function(component) {
       term = term_labels[stringr::str_detect(term_labels, paste0("^", component, "\\("))]
@@ -140,7 +140,10 @@ get_arma_definitions = function(rhs) {
         return(NULL)
       tibble::tibble(dpar = component, segment = segment)
     }))
-  }))
+  })
+  dplyr::bind_rows(
+    c(list(tibble::tibble(dpar = character(), segment = integer())), definitions)
+  )
 }
 
 

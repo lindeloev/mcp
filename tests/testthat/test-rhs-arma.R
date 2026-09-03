@@ -43,7 +43,7 @@ test_that("a lower-order AR/MA declaration turns off higher lags", {
     list(y ~ ar(2), ~ ar(1)), data, family, par_x = "x"
   )
   expect_equal(
-    predictors$next_intercept[predictors$code_name == "ar2_1"],
+    predictors$next_segment[predictors$code_name == "ar2_1"],
     2L
   )
 
@@ -57,13 +57,13 @@ test_that("a lower-order AR/MA declaration turns off higher lags", {
   zeroed = get_predictors(
     list(y ~ ar(2), ~ ar(2, 0)), data, family, par_x = "x"
   )
-  expect_true(all(zeroed$next_intercept[zeroed$dpar == "ar"] == 2L))
+  expect_true(all(zeroed$next_segment[zeroed$dpar == "ar"] == 2L))
 
   ma_predictors = get_predictors(
     list(y ~ ma(2), ~ ma(1)), data, family, par_x = "x"
   )
   expect_equal(
-    ma_predictors$next_intercept[ma_predictors$code_name == "ma2_1"],
+    ma_predictors$next_segment[ma_predictors$code_name == "ma2_1"],
     2L
   )
 })

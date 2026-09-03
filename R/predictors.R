@@ -44,6 +44,27 @@ get_fitted_design = function(form = NULL, data, spec = NULL) {
 }
 
 
+#' Convert `offset(0)` into a (reusable) zero vector
+#'
+#' This serves as a turn-off syntax. Needed because a scalar offset is rejected by 
+#' `model.frame()`. Works for newdata too
+#'
+#' @keywords internal
+#' @noRd
+#' @param form A one-sided formula.
+#' @inheritParams mcp
+#' @return The rewritten formula.
+rewrite_zero_offset = function(form, par_x) {
+  form_str = deparse1(form)
+  rewritten = gsub(
+    "\\boffset\\(0\\)", paste0("offset(0 * ", par_x, ")"), form_str
+  )
+  if (identical(rewritten, form_str))
+    return(form)
+  stats::as.formula(rewritten, env = environment(form))
+}
+
+
 #' Collect fitted design specifications carried by predictor rows
 #'
 #' Each call to `get_predictors_dpar()` temporarily repeats its fitted design
@@ -67,6 +88,47 @@ collect_design_specs = function(...) {
     dplyr::distinct(.data$design_id, .keep_all = TRUE)
 
   stats::setNames(rows$design_spec, rows$design_id)
+}
+
+
+#' Find corresponding component in next segment. Determines lifetime.
+#'
+#' A component is active from its segment until the next time this kind of component is defined. 
+#' Applies to both ordinary formula terms, AR/MA components, and predictor group-level blocks.
+#'
+#' @keywords internal
+#' @noRd
+#' @param definitions A data frame with a `segment` column.
+#' @param by Columns identifying one replaceable component.
+#' @return One row per component definition, with an exclusive `next_segment`.
+get_definition_lifetimes = function(definitions, by) {
+  if (nrow(definitions) == 0) {
+    definitions = definitions[, unique(c(by, "segment")), drop = FALSE]
+    definitions$next_segment = integer()
+    return(definitions)
+  }
+
+  definitions %>%
+    dplyr::distinct(dplyr::across(dplyr::all_of(c(by, "segment")))) %>%
+    dplyr::arrange(dplyr::across(dplyr::all_of(c(by, "segment")))) %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(by))) %>%
+    dplyr::mutate(next_segment = as.integer(dplyr::lead(.data$segment))) %>%
+    dplyr::ungroup()
+}
+
+
+#' Use the earliest of two possible lifetime boundaries
+#'
+#' @keywords internal
+#' @noRd
+#' @param x,y Integer vectors. `NA` means that no boundary is present.
+#' @return An integer vector.
+earliest_segment = function(x, y) {
+  dplyr::case_when(
+    is.na(x) ~ y,
+    is.na(y) ~ x,
+    TRUE ~ pmin(x, y)
+  )
 }
 
 
@@ -223,6 +285,8 @@ get_par_x = function(model, data, par_x = NULL) {
 #'     diagnose collisions after parameter names are converted for JAGS.
 #'   - `display_name`: user-facing parameter name used in summary functions.
 #'   - `code_name`: parameter name used in JAGS and internally in mcp.
+#'   - `term_key`: identifier for the formula term which generated the
+#'     coefficient. Multi-column terms share one key.
 #'   - `par_type`: One of "Intercept", "dummy", or "slope". Used for setting priors and for change point indicator func.
 #'   - `order`: positive integer or NA. Only relevant for `ar` and `ma`.
 #'   - `explicit`: whether the distributional parameter was supplied in the formula.
@@ -242,6 +306,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
       matrix_name = character(),
       display_name = character(),
       code_name = character(),
+      term_key = character(),
       par_type = character(),
       order = integer(),
       x_factor = character(),
@@ -261,6 +326,8 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   checkmate::assert_integer(order, max.len = 1, null.ok = TRUE)
   if (is.null(order) == FALSE)
     checkmate::assert_integerish(order, lower = 1)
+
+  form_rhs = rewrite_zero_offset(form_rhs, par_x)
 
   # Variable names for non-mu terms are prefixed with the term type.
   if (dpar == "mu") {
@@ -282,6 +349,11 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   # Build the source design on the original data
   source_design = get_fitted_design(form_rhs, data)
   matrix_name = colnames(source_design$matrix)
+
+  # model.matrix() maps every coefficient column to its originating formula
+  # term. Multi-column factors and bases therefore share a lifetime key.
+  term_assign = attr(source_design$matrix, "assign")
+  term_key = c("(Intercept)", formula_terms)[term_assign + 1L]
 
   # Rewrite formula with a placeholder for the segment-local change-point axis
   local = rewrite_local_x(form_rhs, par_x)
@@ -383,9 +455,10 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
       return(tibble::tibble(
         dpar = dpar,
         segment = segment,
-        matrix_name = character(),
-        display_name = character(),
-        code_name = character(),
+        matrix_name = NA_character_,
+        display_name = NA_character_,
+        code_name = NA_character_,
+        term_key = "(offset)",
         par_type = "offset",
         order = ifelse(is.null(order), NA_integer_, as.integer(order)),
         x_factor = "1",
@@ -401,6 +474,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
         matrix_name = character(),
         display_name = character(),
         code_name = character(),
+        term_key = character(),
         par_type = character(),
         order = integer(),
         x_factor = character(),
@@ -418,6 +492,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
     matrix_name = matrix_name,
     display_name,
     code_name = code_name,
+    term_key = term_key,
     par_type = dplyr::case_when(
       is_intercept == TRUE ~ "Intercept",
       is_dummy == TRUE ~ "dummy",
@@ -661,27 +736,27 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
 get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   rhs = lapply(model, get_rhs)
 
-  predictors = lapply(seq_along(rhs), function(segment) get_predictors_segment(rhs[[segment]], segment, family, data, par_x, check_rank)) %>%
+  parsed_predictors = lapply(seq_along(rhs), function(segment) get_predictors_segment(rhs[[segment]], segment, family, data, par_x, check_rank)) %>%
     dplyr::bind_rows() %>%
-    dplyr::arrange(.data$dpar, .data$segment) %>%
+    dplyr::arrange(.data$dpar, .data$segment)
+  predictors = parsed_predictors %>%
+    dplyr::filter(.data$par_type != "offset") %>%
     dplyr::mutate(matrix_col = dplyr::row_number())
   if ("boundary" %notin% names(predictors))
     predictors$boundary = rep(NA_real_, nrow(predictors))
 
   assert_unique_predictor_names(predictors)
 
-  # Code next_intercept: Which segment has the next intercept?
+  # Population intercepts reset the current population predictor. First find
+  # the next intercept for each distributional parameter and AR/MA order.
   # Strategy: (1) select one row for segments with intercepts for each dpar (filter)
   #           (2) save this segment number in the last segment that had an intercept (lag)
   #           (3) left-join this into predictors
   #           (4) fill downwards into intermittent segments without intercepts
   df_next_intercept = predictors %>%
-    dplyr::arrange(.data$dpar, .data$order, .data$segment) %>%
-    dplyr::group_by(.data$dpar, .data$order) %>%
     dplyr::filter(.data$par_type == "Intercept") %>%
-    dplyr::mutate(next_intercept = as.integer(dplyr::lead(.data$segment))) %>%
-    dplyr::ungroup() %>%
-    dplyr::select("dpar", "segment", "order", "next_intercept")
+    get_definition_lifetimes(c("dpar", "order")) %>%
+    dplyr::rename(next_intercept = "next_segment")
 
   # Population predictors: left-join and fill-down. NA means "there is no next
   # intercept segment".
@@ -692,17 +767,41 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     dplyr::ungroup() %>%
     dplyr::mutate(next_intercept = dplyr::if_else(.data$segment >= .data$next_intercept, NA_integer_, .data$next_intercept))
 
+  # Ordinary non-local terms carry over to later segments until a segment where that same term is redefined. Local
+  # par_x terms remain cumulative across joined segments and therefore end only next time an intercept is set.
+  term_lifetimes = predictors %>%
+    dplyr::filter(.data$dpar %notin% c("ar", "ma")) %>%
+    get_definition_lifetimes(c("dpar", "order", "term_key")) %>%
+    dplyr::select("dpar", "order", "term_key", "segment", next_term = "next_segment")
+
+  predictors = predictors %>%
+    dplyr::left_join(
+      term_lifetimes,
+      by = c("dpar", "order", "term_key", "segment")
+    ) %>%
+    dplyr::mutate(
+      next_segment = dplyr::if_else(
+        .data$par_type != "Intercept" & .data$x_factor == "1" &
+          .data$dpar %notin% c("ar", "ma"),
+        earliest_segment(.data$next_intercept, .data$next_term),
+        .data$next_intercept
+      )
+    ) %>%
+    dplyr::select(-"next_intercept", -"next_term")
+
   # AR/MA declarations replace their whole component. This also preserves a
   # zero formula, which otherwise has no predictor rows.
   arma_definitions = get_arma_definitions(rhs)
-  is_arma = predictors$dpar %in% c("ar", "ma")
-  predictors$next_intercept[is_arma] = vapply(which(is_arma), function(i) {
-    next_segment = arma_definitions$segment[
-      arma_definitions$dpar == predictors$dpar[i] &
-        arma_definitions$segment > predictors$segment[i]
-    ]
-    if (length(next_segment) == 0) NA_integer_ else min(next_segment)
-  }, integer(1))
+  arma_lifetimes = get_definition_lifetimes(arma_definitions, "dpar")
+  predictors = predictors %>%
+    dplyr::left_join(
+      dplyr::select(arma_lifetimes, "dpar", "segment", next_arma = "next_segment"),
+      by = c("dpar", "segment")
+    ) %>%
+    dplyr::mutate(
+      next_segment = dplyr::if_else(.data$dpar %in% c("ar", "ma"), .data$next_arma, .data$next_segment)
+    ) %>%
+    dplyr::select(-"next_arma")
 
   # Predictor group-level effects have an independent segment lifetime. A
   # later definition for the same (dpar, grouping factor) replaces the whole
@@ -718,12 +817,9 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
 
   predictor_group_effects = definitions
   if (nrow(definitions) > 0) {
-    lifetimes = definitions %>%
-      dplyr::distinct(.data$dpar, .data$group_col, .data$segment) %>%
-      dplyr::arrange(.data$dpar, .data$group_col, .data$segment) %>%
-      dplyr::group_by(.data$dpar, .data$group_col) %>%
-      dplyr::mutate(next_segment = as.integer(dplyr::lead(.data$segment))) %>%
-      dplyr::ungroup()
+    lifetimes = get_definition_lifetimes(
+      definitions, c("dpar", "group_col")
+    )
 
     predictor_group_effects = definitions %>%
       dplyr::left_join(
@@ -749,9 +845,8 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   }
 
   # Store each fitted component specification once, not on every coefficient.
-  design_specs = collect_design_specs(predictors, definitions)
+  design_specs = collect_design_specs(parsed_predictors, definitions)
   predictors = predictors %>%
-    dplyr::filter(.data$par_type != "offset") %>%
     dplyr::select(-"design_spec")
   if ("design_spec" %in% names(predictor_group_effects))
     predictor_group_effects = dplyr::select(predictor_group_effects, -"design_spec")

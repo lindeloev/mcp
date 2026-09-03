@@ -29,8 +29,9 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family, 
 
   # Build formula for each dpar (note plural "_dpars")
   this_cp_lookup = dplyr::select(segments, "segment", "form", this_cp = "cp_code_form")
-  next_cp_lookup = dplyr::select(segments, next_intercept = "segment", next_cp = "cp_code_form")
+  next_cp_lookup = dplyr::select(segments, next_segment = "segment", next_cp = "cp_code_form")
 
+  # Start by getting group-level effects
   predictor_group_effects = group_effects %>%
     dplyr::filter(.data$part == "predictor") %>%
     dplyr::transmute(
@@ -40,33 +41,44 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family, 
       code_name = paste0(.data$name, "[", .data$group_col, "[i_]]"),
       order = .data$order,
       x_factor = .data$x_factor,
-      next_intercept = .data$next_segment
+      next_segment = .data$next_segment
     )
+
+  # Then add population-level effects
   formula_predictors = predictors %>%
-    dplyr::select(
-      "dpar", "segment", "matrix_col", "code_name", "order", "x_factor",
-      "next_intercept"
-    ) %>%
+    dplyr::select("dpar", "segment", "matrix_col", "code_name", "order", "x_factor", "next_segment") %>%
     dplyr::bind_rows(predictor_group_effects)
 
   # Extract offset terms from design specifications
   offset_specs = Filter(function(s) isTRUE(s$has_offset), design_specs)
-  offset_table = if (length(offset_specs) == 0) tibble::tibble(dpar_key = character(), segment = integer(), offset_name = character()) else
+  offset_table = if (length(offset_specs) == 0) tibble::tibble(dpar_key = character(), segment = integer(), offset_name = character(), next_segment = integer()) else
     tibble::tibble(
       dpar_key = vapply(offset_specs, function(s) paste0(s$dpar, tidyr::replace_na(as.character(s$order), "")), character(1)),
       segment = vapply(offset_specs, `[[`, integer(1), "segment"),
       offset_name = vapply(offset_specs, `[[`, character(1), "offset_name")
     )
 
+  # Finalize predictors
   formula_predictors_joined = formula_predictors %>%
     dplyr::left_join(this_cp_lookup, by = "segment") %>%
-    dplyr::left_join(next_cp_lookup, by = "next_intercept") %>%
+    dplyr::left_join(next_cp_lookup, by = "next_segment") %>%
     dplyr::mutate(
       dpar_key = paste0(.data$dpar, tidyr::replace_na(as.character(.data$order), ""))
     )
 
+  # Apply lifetime to offsets
+  if (nrow(offset_table) > 0) {
+    offset_lifetimes = get_definition_lifetimes(offset_table, "dpar_key")
+    offset_table = dplyr::left_join(
+      offset_table, offset_lifetimes,
+      by = c("dpar_key", "segment")
+    )
+  }
+
+  # All together!
   all_dpar_keys = unique(c(formula_predictors_joined$dpar_key, offset_table$dpar_key))
 
+  # Begin consructing JAGS code
   formula_jags_dpars_list = character()
   for (key in all_dpar_keys) {
     dpar_preds = formula_predictors_joined %>% dplyr::filter(.data$dpar_key == key)
@@ -135,7 +147,8 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x, family, segment_offset
     boundary_code = stats::setNames(segments$cp_code_form, segments$segment)
     offset_code_strs = vapply(seq_len(nrow(segment_offsets)), function(i) {
       seg = segment_offsets$segment[i]
-      next_cp = if (seg < nrow(segments)) boundary_code[[as.character(seg + 1)]] else NA_character_
+      next_segment = segment_offsets$next_segment[i]
+      next_cp = if (is.na(next_segment)) NA_character_ else boundary_code[[as.character(next_segment)]]
       ind_next = if (is.na(next_cp)) "" else paste0(" * (", par_x, "[i_] < ", next_cp, ")")
       paste0("  (", par_x, "[i_] >= ", boundary_code[[as.character(seg)]], ")", ind_next, " * ", segment_offsets$offset_name[i], "[i_]")
     }, character(1))

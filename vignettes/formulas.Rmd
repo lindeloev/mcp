@@ -19,7 +19,7 @@ The formulas are called "segments" because they divide the (observed) x-axis int
 
 # Formula format for segments
 
-The three formula parts are called **response**, **cp**, and **predictor**. The general format is `response ~ cp ~ predictor`, except for the first segment, which has no change point and therefore uses `response ~ predictor`. This is familiar from `lm()`/`glm()`/`brms::brm()`.
+The three formula parts are called **response**, **cp**, and **predictor**. The general format is `response ~ cp ~ predictor`, except for the first segment, which has no change point and therefore uses `response ~ predictor`. In later segments the response is inherited and may be omitted. A one-sided formula such as `~ x` also uses the default change-point formula `~ 1`, so it is shorthand for `y ~ 1 ~ 1 + x`. This is familiar from `lm()`/`glm()`/`brms::brm()`.
 
 `mcp` adds two novelties to the modeling syntax to support segmented regression:
 
@@ -27,36 +27,15 @@ The three formula parts are called **response**, **cp**, and **predictor**. The 
 2.  The predictor part can contain distributional regression as terms, such as `sigma([formula here])` and `shape()` ([read more](../articles/dpar.html)). Similarly for time-series such as `ar()` and `ma()` ([read more](../articles/arma.html)).
 3.  The response part can contain auxiliaries after `|` combined with `+`, such as `y | weights(w)` for observation log-likelihood weights (supported across all families) and `y | trials(N) + weights(w)` for binomial models.
 
-`mcp` is heavily inspired by `brms` which again is inspired by [`lme4::lmer`](https://cran.r-project.org/web/packages/lme4/index.html). [Here is a bit of history](https://twitter.com/jonaslindeloev/status/1117760777249853440) on that.
-
-# On carry-over between segments
-
-As a general rule, everything is carried over, unless there is an abrupt intercept change like `sigma(1)` or `~1` or it is "turned off" like `(0|group)` or `ar(0)`. This is true of the mean `mu`, distributional parameters, and group-level terms.
-
-Transformations such as `sin()` and `poly()` in formulas are evaluated on the original predictor values, as in `lm()` and `glm()`. The change-point predictor is the exception: bare `par_x` and polynomial bases such as `I(par_x^2)` use distance from the segment onset (change point location, i.e., `cp_i` values).
-
-Enough talk. Let us see this in action for this model where we predict `y` as a function of `x` in three segments, i.e., with two change points:
-
-```{r, R.options = list(width = 9999)}
-library(mcp)
-model = list(
-  y ~ 1,  # intercept
-  y ~ 1 ~ 0 + x,  # joined slope
-  ~ x  # disjoined slope. "y ~ 1 ~ 1 + x" is implicit here.
-)
-
-# Interpret, but do not sample.
-fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE)
-summary(fit)
-```
-
-Notice how `mcp` added the response and cp parts to the last segment?
+`mcp` is heavily inspired by `brms` which again is inspired by [`lme4::lmer()`](https://cran.r-project.org/web/packages/lme4/index.html) which extends `lm()` and `glm()`. [Here is a bit of history](https://twitter.com/jonaslindeloev/status/1117760777249853440) on that.
 
 # Parameter names
 
 Use `mcp_pars()` to inspect the parameters, including their roles, distributional parameters, and segments. Use `mcp_columns()` to inspect the resolved data-column roles, including the change-point predictor. Let us specify a somewhat complex model:
 
 ```{r}
+library(mcp)
+
 model = list(
   # Intercept_1
   y ~ 1,
@@ -219,6 +198,75 @@ Key features of multiple regression models in `mcp`:
 - **Parameter names and carry-over**: In segment 1, `xgroupA_1` through `xgroupD_1` represent separate slopes for each level of `group`. In segment 2, `groupB_2`, `groupC_2`, and `groupD_2` represent intercept offsets relative to the reference level `groupA`. The continuous slope `z_1` on covariate `z` carries over into subsequent segments unless redefined.
 - **Plotting and prediction**: Visualize by group using `plot(fit, color_by = "group")` or `plot(fit, facet_by = "group")`. By default, other unplotted continuous predictors (like `z`) are held at their mean automatically by `interpolate_newdata()`, or can be set explicitly via `plot(fit, color_by = "group", at = list(z = 0))`.
 
+# On carry-over between segments
+
+Every model contribution has a lifetime: it starts in the segment where it is declared, carries through later segments where it is omitted, and ends at the boundary where its replacement is declared. In rule form, omission means "carry", not "turn off"; repeating a term replaces its previous definition; and replacement coefficients are absolute rather than changes added to old coefficients.
+
+What counts as "replacement declared" depends on the type of term:
+
+| Type of term | Carries until | Explicit turn-off or reset |
+|:--|:--|:--|
+| Ordinary population term in `mu`, `sigma()`, `shape()`, etc. | The same formula term is declared again, or a new intercept resets that distributional parameter | When an intercept is declared without this term |
+| Segment-local `par_x` term, such as bare `x`, `I(x^2)`, or an interaction such as `x:group` | A new intercept resets that distributional parameter | When an intercept is declared |
+| Offset block | Another `offset()` is declared for the same distributional parameter | `offset(0)` |
+| `ar()` or `ma()` component | `ar()` or `ma` (respectively) is declared again | A zero formula, such as `ar(p, 0)` or `ma(q, 0)` |
+| Group-level predictor block for one distributional parameter and grouping factor | Another group-level term for that grouping factor is declared | `(0 | group)` |
+
+Here is the rule for ordinary population terms together with the intentional exception for segment-local `par_x` terms. Assume that `x` is `par_x`. In joined segments, an earlier local term plateaus at the change point and supplies the continuous baseline while the new local term starts at zero. A new intercept creates a disjoined segment and ends both local and ordinary population terms for that distributional parameter.
+
+## Carry-over examples
+```{r, eval=FALSE, R.options = list(width = 9999)}
+# Model with one covariate z
+list(
+  y ~ 1 + x + z,  # Intercept_1, x_1, z_1
+    ~ 0 + x,      # x_1 plateaus (no intercept); x_2 turns on; carry z_1
+    ~ 0 + x + z,  # x_2 plateaus (no intercept); x_3 turns on; z_3 replaces z_1
+    ~ 1           # Intercept_4 replaces Intercept_1; x_1--x_3 and z_3 turn off
+)
+
+# Model with categorical predictor
+list(
+  y ~ 1 + condition,  # Intercept_1, condition dummies
+    ~ 0,              # Everything from segment 1 carries over
+    ~ 0 + condition,  # Condition dummies are replaced; Intercept_1 carries
+    ~ 1               # Intercept_4 replaces Intercept_1; condition dummies turn off
+)
+
+# Model with distributional regression
+list(
+  y ~ 1 + z + sigma(1 + z),  # mu: Intercept_1, z_1; sigma: sigma_1, sigma_z_1
+    ~ 1,                     # Intercept_2 replaces Intercept_1; z_1 turns off; sigma carries
+    ~ 0 + sigma(1),          # sigma_3 replaces sigma_1; sigma_z_1 turns off; mu carries
+    ~ 0 + z                  # z_4 turns on; Intercept_2 and sigma_3 carry
+)
+
+# Model with AR (or MA) components and group-level effects
+list(
+  y ~ 1 + ar(2) + (1 | id),   # Intercept_1; AR(2); group-level Intercept_1_id
+    ~ 1,                      # Intercept_2 replaces Intercept_1; AR(2) and group effect carry
+    ~ 0 + ar(1) + (1 || id),  # AR(1) replaces AR(2); Intercept_3_id replaces the group block
+    ~ 0 + ar(1, 0) + (0 | id) # AR and group-level effect turn off; Intercept_2 carries
+)
+
+# Model with offset
+list(
+  y ~ 1 + x + offset(log(exposure)),  # Intercept_1, x_1; exposure offset turns on
+    ~ 0 + x,                          # x_1 plateaus; x_2 turns on; offset carries
+    ~ 0 + x + offset(0)               # x_2 plateaus; x_3 turns on; offset turns off
+)
+```
+
+## Transformations are not segment-local
+Transformations such as `sin()` and `poly()` in formulas are evaluated on the original predictor values, as in `lm()` and `glm()`. The change-point predictor is the exception: bare `par_x` and polynomial bases such as `I(par_x^2)` use distance from the segment onset (change point location, i.e., `cp_i` values).
+
+For example, assuming that `x` is `par_x`:
+
+```r
+list(
+  y ~ 1,                        # Intercept_1
+    ~ 1 + sin(x) + x + I(x^2)   # sin(x) uses x; x and I(x^2) use x - cp_1
+)
+```
 
 
 # Relative changes between segments
