@@ -139,6 +139,35 @@ get_rhs_offset_vars = function(model) {
   unique(unlist(lapply(model, function(m) find_offsets(get_rhs(m)[[2]]))))
 }
 
+
+#' Returns variables appearing in RHS outside offset() calls
+#'
+#' @keywords internal
+#' @noRd
+#' @inheritParams mcp
+#' @return Character vector of variable names.
+get_rhs_non_offset_vars = function(model) {
+  checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
+
+  find_non_offset = function(expr) {
+    if (!is.call(expr))
+      return(all.vars(expr))
+    if (deparse1(expr[[1]]) %in% c("offset", "stats::offset"))
+      return(character())
+    if (deparse1(expr[[1]]) %in% c("|", "||"))
+      return(find_non_offset(expr[[2]]))
+    unique(unlist(lapply(rlang::call_args(expr), find_non_offset)))
+  }
+
+  vars = model %>%
+    lapply(get_rhs) %>%
+    lapply(function(form) find_non_offset(form[[2]])) %>%
+    unlist() %>%
+    unique()
+
+  unique(c(vars, get_arma_series(model)))
+}
+
 #' Returns all variables in the predictor parts of an mcpmodel
 #'
 #' @aliases get_model_vars

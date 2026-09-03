@@ -161,7 +161,7 @@ get_par_x = function(model, data, par_x = NULL) {
   }
 
   # Check for exactly one continuous predictor; exclude grouping and offset variables
-  rhs_vars = setdiff(get_rhs_vars(model), c(get_rhs_group_vars(model), get_rhs_offset_vars(model)))
+  rhs_vars = setdiff(get_rhs_non_offset_vars(model), get_rhs_group_vars(model))
   data_in_rhs = data %>% dplyr::select(dplyr::all_of(rhs_vars), dplyr::all_of(par_x))
   continuous_cols = lapply(data_in_rhs, is_continuous) %>% unlist()
   par_x_candidates = names(continuous_cols)[continuous_cols]
