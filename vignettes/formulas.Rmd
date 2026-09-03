@@ -103,17 +103,16 @@ Look at the section under the comment `# Formula for mu` which is the (automatic
 
 Mathematically, an `mcp` model divides the continuous predictor $x$ into $K$ segments separated by ordered change points $\Delta_1 < \dots < \Delta_{K-1}$. In each segment $k \in \{1, \dots, K\}$, the linear predictor $\mu_i$ (or $\eta_i$) is evaluated directly from the segment-local distance $(x_i - \Delta_{k-1})$:
 
-$$\mu_i = \begin{cases} 
-\beta_{1,0} + \beta_{1,1} \, x_i, & \text{First segment } (k = 1) \\ 
-\beta_{k,0} + \beta_{k,1} \, (x_i - \Delta_{k-1}), & \text{Disjoined segments } (k \ge 2, \, \sim \texttt{1 + x}) \\ 
-\alpha_k + \beta_{k,1} \, (x_i - \Delta_{k-1}), & \text{Joined segments } (k \ge 2, \, \sim \texttt{0 + x}) 
+$$\mu_i = \alpha_k + \beta_{k,1} \, (x_i - \Delta_{k-1}) \quad (\text{with } \Delta_0 = 0)$$
+
+where the segment-start level $\alpha_k$ is freely estimated for the first and disjoined segments, as in non-segmented regression, and inherited continuously for joined segments:
+
+$$\alpha_k = \begin{cases}
+\beta_{k,0}, & \text{Disjoined segments } (\sim \texttt{1 + x}, \text{ including } k = 1) \\
+\alpha_{k-1} + \beta_{k-1,1} (\Delta_{k-1} - \Delta_{k-2}), & \text{Joined segments } (k \ge 2, \, \sim \texttt{0 + x})
 \end{cases}$$
 
-where $\alpha_k$ is the baseline level inherited continuously from the preceding segment:
-
-$$\alpha_k = \alpha_{k-1} + \beta_{k-1,1} (\Delta_{k-1} - \Delta_{k-2}) \quad (\text{with } \Delta_0 = 0)$$
-
-In all segments, slope and intercept parameters are absolute values (not changes relative to preceding segments).
+In all segments, estimated slope and intercept parameters are absolute values (not changes relative to preceding segments).
 
 ## How mcp implements this in JAGS using indicators
 
