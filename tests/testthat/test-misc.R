@@ -633,9 +633,24 @@ test_that("PPC and LOO draws stay aligned", {
   loo_result = suppressWarnings(loo(fit, ndraws = 10, save_psis = TRUE))
   expect_equal(dim(loo_result$psis_object), dim(loglik))
   expect_equal(attr(loo_result, "mcp_settings")$ndraws, 10L)
-  loo_changed = suppressWarnings(loo(fit, ndraws = 10, varying = FALSE, arma = FALSE))
-  expect_false(attr(loo_changed, "mcp_settings")$varying)
-  expect_false(attr(loo_changed, "mcp_settings")$arma)
+
+  # Disallow component-selective LOO and WAIC
+  expect_error(loo(fit, varying = FALSE), "`varying` cannot be altered in `loo()`", fixed = TRUE)
+  expect_error(loo(fit, arma = FALSE), "`arma` cannot be FALSE in `loo()`", fixed = TRUE)
+  expect_error(waic(fit, varying = FALSE), "`varying` cannot be altered in `waic()`", fixed = TRUE)
+  expect_error(waic(fit, arma = FALSE), "`arma` cannot be FALSE in `waic()`", fixed = TRUE)
+
+  # log_lik still supports non-default varying and arma as diagnostics
+  ll_varying_false = log_lik(fit, ndraws = 10, varying = FALSE)
+  expect_equal(dim(ll_varying_false), c(10, nrow(fit$data) - 1))
+  ll_arma_false = log_lik(fit, ndraws = 10, arma = FALSE)
+  expect_equal(dim(ll_arma_false), c(10, nrow(fit$data) - 1))
+
+  # loo(ndraws = ...) preserves MCMC chains and recomputes relative_eff
+  loo_sub = suppressWarnings(loo(fit, ndraws = 50, save_psis = TRUE))
+  expect_equal(attr(loo_sub, "mcp_settings")$ndraws, 50L)
+  expect_false(all(attr(loo_sub$psis_object, "r_eff") == 1))
+  expect_true(is.numeric(attr(loo_sub$psis_object, "r_eff")))
 
   expect_s3_class(
     suppressWarnings(suppressMessages(pp_check(

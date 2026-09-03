@@ -26,9 +26,19 @@
 #'   missing response enters a later observed GARMA history, `log_lik()`,
 #'   `loo()`, and `waic()` are unavailable with `arma = TRUE`: the observed-data
 #'   likelihood requires integrating over that missing history, which mcp does
-#'   not currently implement. Setting `arma = FALSE` evaluates the model without
-#'   its AR/MA contribution rather than repairing the criterion for the fitted
-#'   serial model.
+#'   not currently implement.
+#'
+#'   `loo()` and `waic()` evaluate the likelihood of the fitted model and require
+#'   default `varying = TRUE` and `arma = TRUE`. Evaluating an information
+#'   criterion with fitted components dropped post-hoc violates the PSIS
+#'   identity because draws come from the full model's posterior; comparing a
+#'   reduced model requires refitting it. Non-default `varying` and `arma`
+#'   settings remain available in `log_lik()` as conditional or counterfactual
+#'   diagnostics.
+#'
+#'   When `ndraws` is supplied to `loo()`, draws are thinned evenly across
+#'   chains to preserve MCMC chain identities and chronological order, allowing
+#'   `relative_eff()` to be computed directly.
 #' @return a `loo` or `psis_loo` object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -61,46 +71,58 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_multi_class(varying, c("logical", "character"))
   checkmate::assert_flag(arma)
+  if (!isTRUE(varying))
+    stop("`varying` cannot be altered in `loo()`. Evaluating an information criterion without fitted random effects requires refitting the reduced model. Use `log_lik(..., varying = ...)` for conditional/counterfactual log-likelihoods.")
+  if (!isTRUE(arma))
+    stop("`arma` cannot be FALSE in `loo()`. Evaluating an information criterion without fitted AR/MA terms requires refitting the reduced model. Use `log_lik(..., arma = FALSE)` for conditional/counterfactual log-likelihoods.")
   assert_loglik_garma_history(fit, fit$data, arma, "`loo()`")
   warn_arma_check(fit, arma, "information_criterion")
+
+  # Extract posterior draws
   mcmc_post = mcmclist_draws(fit, message = FALSE, fallback_to_prior = FALSE)
   ndraws = validate_loglik_ndraws(fit, ndraws)
-  n_draws = sum(vapply(mcmc_post, nrow, integer(1)))
-  settings = get_loglik_settings(fit, varying, arma, ndraws)
+  n_chains = length(mcmc_post)
+
+  # ndraws: thin chains evenly across iterations because this is required by loo::relative_eff()
+  if (!is.null(ndraws)) {
+    n_iter_min = min(vapply(mcmc_post, nrow, integer(1)))
+    iter_per_chain = max(1L, as.integer(round(ndraws / n_chains)))
+    indices = round(seq(1, n_iter_min, length.out = iter_per_chain))
+
+    # Subset mcmc chains and any retained JAGS response imputations
+    fit$mcmc_post = coda::mcmc.list(lapply(mcmc_post, function(ch) {
+      coda::mcmc(ch[indices, , drop = FALSE])
+    }))
+    if (!is.null(fit$.internal$imputed_response)) {
+      fit$.internal$imputed_response = coda::mcmc.list(lapply(
+        fit$.internal$imputed_response,
+        function(ch) coda::mcmc(ch[indices, , drop = FALSE])
+      ))
+    }
+
+    n_draws = n_chains * iter_per_chain
+    chain_id = rep(seq_len(n_chains), each = iter_per_chain)
+    settings = get_loglik_settings(fit, varying, arma, n_draws)
+  } else {
+    n_draws = sum(vapply(mcmc_post, nrow, integer(1)))
+    chain_id = rep(seq_along(mcmc_post), vapply(mcmc_post, nrow, integer(1)))
+    settings = get_loglik_settings(fit, varying, arma, ndraws)
+  }
+
   if (length(settings$observed_rows) == 0)
     stop("LOO requires at least one observed response.")
-  chain_id_all = rep(
-    seq_along(mcmc_post),
-    vapply(mcmc_post, nrow, integer(1))
-  )
-
 
   # Matrix: Fast but memory-greedy matrix-based computation
   if (by_row == FALSE) {
     loglik = log_lik(
-      fit, summary = FALSE, varying = varying, arma = arma, ndraws = ndraws
+      fit, summary = FALSE, varying = varying, arma = arma
     )
-    r_eff = if (is.null(ndraws)) {
-      loo::relative_eff(exp(loglik), chain_id_all)
-    } else {
-      1
-    }
+    r_eff = loo::relative_eff(exp(loglik), chain_id)
     result = loo::loo(loglik, r_eff = r_eff, ...)
 
   # Pointwise: per-data-row computation
   } else {
-    if (is.null(ndraws)) {
-      n_eval = n_draws
-      chain_id = chain_id_all
-    } else {
-      # Select draws once and reuse them for every observation. Treat the
-      # arbitrary subset as one chain; relative_eff is set to 1 below.
-      draw_indices = sort(sample.int(n_draws, ndraws))
-      selected = as.matrix(.subset2(fit, "mcmc_post"))[draw_indices, , drop = FALSE]
-      fit$mcmc_post = coda::mcmc.list(coda::mcmc(selected))
-      n_eval = ndraws
-      chain_id = rep(1L, ndraws)
-    }
+    n_eval = n_draws
     predictors = get_fit_model_tables(fit)$predictors
     ar_order = get_arma_order(predictors, "ar")
     ma_order = get_arma_order(predictors, "ma")
@@ -133,14 +155,10 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
 
     loo_data = data.frame(.mcp_original_row = settings$observed_rows)
 
-    r_eff = if (is.null(ndraws)) {
-      loo::relative_eff(
-        llfun, data = loo_data, chain_id = chain_id,
-        link_fun = exp, draws = seq_len(n_eval)
-      )
-    } else {
-      1
-    }
+    r_eff = loo::relative_eff(
+      llfun, data = loo_data, chain_id = chain_id,
+      link_fun = exp, draws = seq_len(n_eval)
+    )
     result = loo::loo.function(
       llfun, data = loo_data, r_eff = r_eff,
       draws = seq_len(n_eval), ...
@@ -166,6 +184,10 @@ waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, ndraws = NULL,
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_multi_class(varying, c("logical", "character"))
   checkmate::assert_flag(arma)
+  if (!isTRUE(varying))
+    stop("`varying` cannot be altered in `waic()`. Evaluating an information criterion without fitted random effects requires refitting the reduced model. Use `log_lik(..., varying = ...)` for conditional/counterfactual log-likelihoods.")
+  if (!isTRUE(arma))
+    stop("`arma` cannot be FALSE in `waic()`. Evaluating an information criterion without fitted AR/MA terms requires refitting the reduced model. Use `log_lik(..., arma = FALSE)` for conditional/counterfactual log-likelihoods.")
   assert_loglik_garma_history(fit, fit$data, arma, "`waic()`")
   warn_arma_check(fit, arma, "information_criterion")
   mcmclist_draws(fit, message = FALSE, fallback_to_prior = FALSE)

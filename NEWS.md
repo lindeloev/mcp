@@ -134,6 +134,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - New `mcpfit` objects no longer include empty `$loo` and `$waic` components.
 
+- Disallowed non-default `varying` and `arma = FALSE` in `loo()` and `waic()`. Additionally, `loo(ndraws = ...)` now thins draws evenly across chains to preserve MCMC chain identities and order.
+
 - `draws_format` replaces `samples_format` in `fitted()`, `predict()`, and `log_lik()`. The old argument remains available with a soft deprecation.
 
 ## Bug fixes

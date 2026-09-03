@@ -1509,7 +1509,11 @@ pp_eval = function(
 #' but with fixed arguments for `fitted`: `rate = FALSE, dpar = 'epred', draws_format = 'tidy'`.
 #'
 #' `log_lik()` defaults to an unsummarised draws-by-observation matrix, as used
-#' by `loo` and other posterior workflows.
+#' by `loo` and other posterior workflows. Non-default `varying` and `arma`
+#' settings evaluate conditional or counterfactual log-likelihoods (e.g.,
+#' omitting random effects or serial correlation); they cannot be used in
+#' `loo()` or `waic()` because estimating information criteria for reduced
+#' models requires refitting.
 #'
 #' Missing responses in the original data remain missing in the response column.
 #' `fitted()` returns their expected responses, while `predict()` uses retained
