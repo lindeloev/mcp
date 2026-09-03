@@ -581,7 +581,7 @@ test_that("summaries use central intervals and posterior diagnostics", {
   width = 0.8
   result = fixef(demo_fit, width = width)
   printed = capture.output(summary(demo_fit, width = width))
-  parameter = result$name[[1]]
+  parameter = result$variable[[1]]
   raw = .subset2(demo_fit, "mcmc_post")
   values = unlist(lapply(raw, function(chain) chain[, parameter]))
   parameter_matrix = posterior::extract_variable_matrix(
@@ -599,6 +599,8 @@ test_that("summaries use central intervals and posterior diagnostics", {
   expect_true(any(grepl("\\b[0-9]+\\.[0-9]{2}\\b", printed)))
   expect_true(any(grepl(" 1\\.0[01] ", printed)))
   expect_true("sd" %in% names(result))
+  expect_true("variable" %in% names(result))
+  expect_false("name" %in% names(result))
   expect_true(all(c("rhat", "ess_bulk", "ess_tail") %in% names(result)))
   expect_false("n.eff" %in% names(result))
 })

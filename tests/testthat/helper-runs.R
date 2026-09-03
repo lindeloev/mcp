@@ -389,7 +389,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
       fitted_result = fitted(fit, rate = FALSE, prior = prior)  # residuals are on observed-data scale
       observed = fit$data[[columns$response]]
       testthat::expect_equal(result$residuals, observed - fitted_result$fitted)
-      testthat::expect_equal(result$error, fitted_result$error)
+      testthat::expect_equal(result$sd, fitted_result$sd)
       testthat::expect_equal(result$Q2.5, observed - fitted_result$Q97.5)
       testthat::expect_equal(result$Q97.5, observed - fitted_result$Q2.5)
     }

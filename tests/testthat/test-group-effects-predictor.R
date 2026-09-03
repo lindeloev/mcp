@@ -267,7 +267,7 @@ test_that("factor group coefficients sample and predict by level", {
   expect_equal(nrow(effects), 3 * length(unique(data$id)))
   expect_true(all(
     c("Intercept_1_id[a]", "conditionB_1_id[a]", "conditionC_1_id[a]") %in%
-      effects$name
+      effects$variable
   ))
 
   fitted_values = fitted(
@@ -319,7 +319,7 @@ test_that("predictor group effects use existing prediction selectors", {
 
   effects = ranef(fit)
   expect_equal(nrow(effects), length(unique(data$id)))
-  expect_true(all(grepl("^Intercept_1_id\\[", effects$name)))
+  expect_true(all(grepl("^Intercept_1_id\\[", effects$variable)))
 })
 
 
