@@ -152,7 +152,6 @@ pp_check = function(
 #' @param observations (required for loo-type plots) Original data-row indices.
 #' @param ... Arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
 #' @return A `ggplot2` object returned by `bayesplot::ppc_*(y, yrep, ...)`.
-#' @return A string
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_ppc_plot = function(fit, type, y, yrep, ndraws,

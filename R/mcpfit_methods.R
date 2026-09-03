@@ -400,7 +400,7 @@ ranef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ..
 #' @return `formula()` returns the complete list of segment formulas, or one
 #'   formula when `segment` is supplied. `family()` returns an `mcpfamily`.
 #'   `model.frame()` returns the data retained in the fit. `nobs()` returns the
-#'   number of fitting-data rows.
+#'   number of observed response values (excluding missing responses).
 #' @name model-accessors-mcpfit
 #' @examples
 #' formula(demo_fit)  # Show all segment formulas

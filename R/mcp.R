@@ -101,7 +101,7 @@
 #'   are discarded before sampling. Set higher if needed for sampler adaptation;
 #'   use diagnostics to assess convergence.
 #' @param adapt Deprecated; use `warmup` instead.
-#' @param inits A list if initial values for the parameters. This can be useful
+#' @param inits A list of initial values for the parameters. This can be useful
 #'   if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
 #'   Defaults to `NULL`, i.e., no inits.
 #' @param jags_code String. Pass JAGS code to `mcp` to use directly. This is useful if
