@@ -15,8 +15,9 @@
 #'   memory efficient. `FALSE` (default) computes the full log-likelihood matrix at once.
 #'   Note that both modes calculate pointwise (observation-level) PSIS-LOO cross-validation.
 #' @param pointwise Deprecated alias for `by_row`.
-#' @param ndraws Integer or `NULL`. Number of posterior draws used for the
-#'   log-likelihood or information criterion. `NULL` uses all draws.
+#' @param ndraws Integer or `NULL`. Target number of posterior draws used for
+#'   the log-likelihood or information criterion. Draws are balanced across
+#'   chains, so the actual number may be rounded. `NULL` uses all draws.
 #' @param nsamples Deprecated. Use `ndraws` instead.
 #' @details Observationwise PSIS-LOO and WAIC are problematic for AR/MA models
 #'   because both treat individual conditional likelihood terms as validation
@@ -36,9 +37,10 @@
 #'   settings remain available in `log_lik()` as conditional or counterfactual
 #'   diagnostics.
 #'
-#'   When `ndraws` is supplied to `loo()`, draws are thinned evenly across
-#'   chains to preserve MCMC chain identities and chronological order, allowing
-#'   `relative_eff()` to be computed directly.
+#'   When `ndraws` is supplied to `loo()`, draws are balanced across chains and
+#'   thinned at evenly spaced midpoint iterations. This preserves MCMC chain
+#'   identities and chronological order, allowing `relative_eff()` to be
+#'   computed directly.
 #' @return a `loo` or `psis_loo` object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -83,11 +85,13 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
   ndraws = validate_loglik_ndraws(fit, ndraws)
   n_chains = length(mcmc_post)
 
-  # ndraws: thin chains evenly across iterations because this is required by loo::relative_eff()
+  # Thin chains evenly across iterations because this is required by loo::relative_eff().
   if (!is.null(ndraws)) {
     n_iter_min = min(vapply(mcmc_post, nrow, integer(1)))
     iter_per_chain = max(1L, as.integer(round(ndraws / n_chains)))
-    indices = round(seq(1, n_iter_min, length.out = iter_per_chain))
+    indices = pmax(1L, as.integer(round(
+      (seq_len(iter_per_chain) - 0.5) * n_iter_min / iter_per_chain
+    )))
 
     # Subset mcmc chains and any retained JAGS response imputations
     fit$mcmc_post = coda::mcmc.list(lapply(mcmc_post, function(ch) {

@@ -666,6 +666,11 @@ test_that("PPC and LOO draws stay aligned", {
   expect_false(all(attr(loo_sub$psis_object, "r_eff") == 1))
   expect_true(is.numeric(attr(loo_sub$psis_object, "r_eff")))
 
+  # loo(ndraws = ...) balances draws across chains and records the actual count.
+  loo_odd = suppressWarnings(loo(fit, ndraws = 59, save_psis = TRUE))
+  expect_equal(nrow(loo_odd$psis_object), 60)
+  expect_equal(attr(loo_odd, "mcp_settings")$ndraws, 60L)
+
   expect_s3_class(
     suppressWarnings(suppressMessages(pp_check(
       fit,
@@ -991,4 +996,3 @@ test_that("zero and negative weights are rejected with informative error", {
     fixed = TRUE
   )
 })
-
