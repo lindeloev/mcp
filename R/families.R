@@ -420,6 +420,15 @@ mcpfamily_bernoulli = function(family) {
     }
   )
 
+  garma = if (family$link == "logit") {
+    list(
+      observed_r = function(y, data, boundary) pmin(pmax(y, boundary), 1 - boundary),
+      observed_jags = function(context) paste0(
+        "min(max(", context$y, ", ", context$boundary, "), 1 - ", context$boundary, ")"
+      )
+    )
+  }
+
   new_mcpfamily(
     family,
     dpar_specs = new_dpar_spec("mu", family$link),
@@ -427,7 +436,7 @@ mcpfamily_bernoulli = function(family) {
     response = response,
     r = r,
     backends = list(jags = jags),
-    garma = NULL
+    garma = garma
   )
 }
 

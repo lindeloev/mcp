@@ -14,7 +14,7 @@
   - `nsamples` soft-deprecated in favor of `ndraws`; `which_y` deprecated in favor of `dpar`.
   - Added R generics for mcpfits: `formula(fit)`, `family(fit)`, `model.frame(fit)`, `nobs(fit)`, `vcov(fit)`, and `confint(fit)`. Fits now also store a proper matched `$call`. Printed summaries now report posterior `sd` and has a new layout.
 
-- **Negative binomial, offset(), and GARMA:** You can now do `mcp(..., family = negbinomial())`. NB (and Poisson) can now model rates and exposure with because `offset()` is now supported in formulas - also for other families. Autoregression (`ar()`) has been generalized to GARMA link-scale residuals for Gaussian, binomial, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment.
+- **Negative binomial and offset():** You can now do `mcp(..., family = negbinomial())`. NB (and Poisson) can now model rates and exposure with because `offset()` is now supported in formulas - also for other families. 
 
 - **Dirichlet is now the default prior on change points:** The default change point prior is now the mathematically beautiful and principled `dirichlet(1)` (flat Dirichlet / uniform order statistics). Effectively, the prior remain unchanged for models with 1 change point because Dirichlet reduces to the same uniform prior. For models with 2+ change points, the previous "truncated-$t$" prior has been removed. It only served the purpose of higher ESS/s at the expense of being mathematically unprincipled. While previous `mcp` versions supported a slow implementation of Dirichlet, achieving good ESS/s was made possible by parameterizing the dirichlet as a sequential stick-breaking Beta chain ($z_j \sim \text{Beta}(1, N - j + 1)$). Comparing all `mcp_example()`, estimates remain essentially identical between truncated-t and dirichlet. Any `hypothesis(fit, "cp_1 = 20")` (Savage-Dickey Bayes Factor) on default priors will likely differ, but BF is ill advised on default priors anyway - that is why `hypothesis()` throws a warning if this is attempted. Read more on the [the mcp website](https://lindeloev.github.io/mcp/).
 
@@ -73,6 +73,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 - mcp no longer exports `phi`, `logit`, `ilogit`, or `probit`.
 
 ## Other new features
+
+Autoregression (`ar()`) has been generalized to link-scale observation-driven GARMA residuals for Gaussian, binomial, Bernoulli, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment. Independent time series can be separated using `series = <column>`.
 
 - Added `prior_summary(fit)`. Its compact output shows each parameter's resolved prior and bounds; `prior_summary(fit, verbose = TRUE)` also shows the data-dependent rule, a plain-language description, source, and kind (`distribution`, `alias`, `expression`, or `constant`). Default priors are now resolved before JAGS code is generated, so `fit$prior` and generated code no longer depend on opaque data constants.
 
@@ -170,7 +172,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - The quantiles from `fitted()` and `predict()` for group-level change-point models ignored the group level and were identical across levels.
 
-- Explicitly setting `dpar = "mu"` now returns the success probability parameter \(\mu\) regardless of `rate`. `rate = FALSE` continues to scale expected response counts when evaluating `"epred"` (e.g., in `posterior_epred()`), while `fitted()` and `predict()` retain their default proportion scale (`rate = TRUE`).
+- Explicitly setting `dpar = "mu"` now returns the success probability parameter $\mu$ regardless of `rate`. `rate = FALSE` continues to scale expected response counts when evaluating `"epred"` (e.g., in `posterior_epred()`), while `fitted()` and `predict()` retain their default proportion scale (`rate = TRUE`).
 
 - Now works for 200+ characters formulas too.
 

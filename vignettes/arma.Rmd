@@ -38,13 +38,13 @@ A key feature of this recurrence is that AR/MA memory flows continuously across 
 - AR/MA lags do not reset at segment boundaries; they only reset at the very beginning of the whole dataset, or across independent series when using `series = "column_name"` inside `ar()` or `ma()` (e.g. `ar(1, series = id)`).
 - Because change point locations $\Delta$ are estimated with posterior uncertainty, the observation boundary where AR/MA parameters switch varies conditionally across MCMC draws.
 
-GARMA currently supports only the default links for `gaussian()` (identity), `binomial()` (logit), `poisson()` (log), and `negbinomial()` (log). `bernoulli()` and non-default links are rejected for now.
+GARMA currently supports only the default links for `gaussian()` (identity), `binomial()` (logit), `bernoulli()` (logit), `poisson()` (log), and `negbinomial()` (log). Non-default links are rejected for now.
 
 **Warning:** The AR and MA coefficients are modeled directly and are not jointly constrained to the stationary or invertible regions. With higher-order terms such as `ar(2)`, independently bounded coefficients can violate the usual root conditions. Coefficients that change across predictors or segments, such as `ar(1, 1 + x)` or `model = list(y ~ ar(1), ~ ar(1))`, instead define a time-varying process to which the usual constant-coefficient conditions do not directly apply. The same applies to `ma()`.
 
 ### Observation boundary
 
-The transformed observation $y^*$ keeps log and logit residuals finite when counts lie on a link boundary. The default `boundary = 0.1` replaces zero counts by 0.1 for Poisson and negative-binomial models. For binomial models, counts are constrained to the interval from 0.1 to `trials - 0.1` before conversion to a rate. It has no effect for Gaussian models.
+The transformed observation $y^*$ keeps log and logit residuals finite when counts lie on a link boundary. The default `boundary = 0.1` replaces zero counts by 0.1 for Poisson and negative-binomial models. For binomial models, counts are constrained to the interval from 0.1 to `trials - 0.1` before conversion to a rate ($n_t = 1$ for `bernoulli()`, constraining $y^*$ to $[0.1, 0.9]$). It has no effect for Gaussian models.
 
 The default should usually be left unchanged. If needed, set it on either term, for example `ar(1, boundary = 0.01) + ma(1)`. AR and MA share one boundary within a segment, and the boundary may differ between segments. Supplying different AR and MA boundaries in the same segment is an error.
 

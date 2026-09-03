@@ -37,9 +37,9 @@
 #'     model without `sigma()` remains on the response scale.
 #'     [Read more](https://lindeloev.github.io/mcp/articles/dpar.html)
 #'
-#'   * *Time-series residuals:* use `ar(p)` and `ma(q)` separately or together,
-#'     e.g., `~ 1 + ar(1) + ma(1)`. Both accept an optional regression formula
-#'     and observation `boundary` (see details).
+#'   * *Time-series residuals:* link-scale observation-driven GARMA via `ar(p)` and `ma(q)`,
+#'     e.g., `~ 1 + ar(1, series = id) + ma(1)`. Both accept an optional regression formula,
+#'     observation `boundary` (default 0.1), and grouping `series` column (see details).
 #'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html).
 #'
 #'   * *Likelihood weights:* `y | weights(w) ~ ...` specifies
@@ -149,13 +149,13 @@
 #' follow this exact same segmented structure on their respective link scales. See more details on the `mcp` model in
 #' [mcp-package] and on the [mcp website](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'
-#' **Time-series residuals**
+#' **Time-series residuals (link-scale observation-driven GARMA)**
 #'
 #' Autoregressive (`ar(p)`) and moving-average (`ma(q)`) terms define a finite conditional recurrence
-#' on the link scale (generalized autoregressive moving-average, GARMA). They support Gaussian, binomial,
-#' Poisson, and negative-binomial families with their default links. If \eqn{b_t} is the ordinary
-#' regression predictor from the segment formulas and \eqn{\eta_t} is the predictor including serial
-#' dependence, the recurrence decomposes into components:
+#' on the link scale (generalized autoregressive moving-average, GARMA). They support Gaussian (`identity`),
+#' binomial (`logit`), Bernoulli (`logit`), Poisson (`log`), and negative-binomial (`log`) families.
+#' If \eqn{b_t} is the ordinary regression predictor from the segment formulas and \eqn{\eta_t} is the
+#' predictor including serial dependence, the recurrence decomposes into components:
 #'
 #' \deqn{\begin{aligned}
 #'   \text{AR}_t &= \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right] \\
@@ -165,7 +165,10 @@
 #'
 #' where \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
 #' \eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
-#' \eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the boundary-constrained observation.
+#' \eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the boundary-constrained observation:
+#' * **Gaussian:** \eqn{y^*_t = y_t}.
+#' * **Poisson / Negative Binomial:** \eqn{y^*_t = \max(y_t, b)} to prevent \eqn{\log(0)}.
+#' * **Binomial / Bernoulli:** \eqn{y^*_t = \min(\max(y_t, b), n_t - b) / n_t}, where \eqn{b} is a boundary pseudo-count (not a proportion) and \eqn{n_t = 1} for Bernoulli.
 #'
 #' Implications:
 #' * For an \eqn{N}-order component, the last \eqn{N} values *before* the segment onset are input to the first \eqn{\eta_t} in the segment.

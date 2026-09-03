@@ -99,10 +99,7 @@ bad_bernoulli = list(
   list(y_bern ~ 1 + sigma(1)),
 
   # Bernoulli does not take trials
-  list(y | trials(N) + weights(weights_ok) ~ 1),
-
-  # Bernoulli GARMA is not currently supported
-  list(y_bern ~ 1 + ar(1) + ma(1))
+  list(y | trials(N) + weights(weights_ok) ~ 1)
 )
 
 test_bad(bad_bernoulli,
@@ -117,7 +114,8 @@ good_bernoulli = list(
        1 ~ 0),
   list(y_bern ~ 1,  # With varying
        1 + (1|id) ~ 1),
-  list(y_bern | weights(weights_ok) ~ 1)  # With weights
+  list(y_bern | weights(weights_ok) ~ 1),  # With weights
+  list(y_bern ~ 1 + ar(1) + ma(1))  # With AR and MA
 )
 
 test_good(good_bernoulli,

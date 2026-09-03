@@ -1678,10 +1678,10 @@ fitted.mcpfit = function(
 #'   For binomial models, `posterior_epred()` and `posterior_predict()` (and
 #'   corresponding `{tidybayes}` workflows such as `add_epred_draws()`) follow
 #'   `{brms}` and `{rstantools}` conventions by returning values on the outcome
-#'   count scale (`rate = FALSE`), i.e., expected counts \(E[Y] = n\mu\) and
-#'   simulated counts in \(\{0, \dots, n\}\). In contrast, `fitted()` and `predict()`
+#'   count scale (`rate = FALSE`), i.e., expected counts \eqn{E[Y] = n\mu} and
+#'   simulated counts in \eqn{\{0, \dots, n\}}. In contrast, `fitted()` and `predict()`
 #'   default to proportions (`rate = TRUE`). To obtain the success probability
-#'   parameter \(\mu\) on the [0, 1] scale regardless of trial counts, pass
+#'   parameter \eqn{\mu} on the \eqn{[0, 1]} scale regardless of trial counts, pass
 #'   `dpar = "mu"`.
 #' @seealso [fitted.mcpfit()], [predict.mcpfit()]
 posterior_epred.mcpfit = function(
