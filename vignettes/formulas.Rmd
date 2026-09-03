@@ -122,12 +122,40 @@ Look at the section under the comment `# Formula for mu` which is the (automatic
 
 # Modeling slope change points
 
-We can use the same principle to model change points on slopes. To make segments join continuously, we have to "take off" where the previous segment ended. In `mcp`, this is achieved by defining a segment-local predictor $X_{k,i}$ that plateaus at the segment boundary:
+Mathematically, an `mcp` model divides the continuous predictor $x$ into $K$ segments separated by ordered change points $\Delta_1 < \dots < \Delta_{K-1}$. In each segment $k \in \{1, \dots, K\}$, the linear predictor $\mu_i$ (or $\eta_i$) is evaluated directly from the segment-local distance $(x_i - \Delta_{k-1})$:
+
+$$\mu_i = \begin{cases} 
+\beta_{1,0} + \beta_{1,1} \, x_i, & \text{First segment } (k = 1) \\ 
+\beta_{k,0} + \beta_{k,1} \, (x_i - \Delta_{k-1}), & \text{Disjoined segments } (k \ge 2, \, \sim \texttt{1 + x}) \\ 
+\alpha_k + \beta_{k,1} \, (x_i - \Delta_{k-1}), & \text{Joined segments } (k \ge 2, \, \sim \texttt{0 + x}) 
+\end{cases}$$
+
+where $\alpha_k$ is the baseline level inherited continuously from the preceding segment:
+
+$$\alpha_k = \alpha_{k-1} + \beta_{k-1,1} (\Delta_{k-1} - \Delta_{k-2}) \quad (\text{with } \Delta_0 = 0)$$
+
+In all segments, slope and intercept parameters are absolute values (not changes relative to preceding segments).
+
+## How mcp implements this in JAGS using indicators
+
+Bayesian MCMC samplers like JAGS cannot evaluate dynamic conditional statements (`if/else`) on parameters being sampled. To implement this piecewise model in JAGS, `mcp` uses an **indicator and plateauing formulation** (evaluated via Iverson brackets $[A]$ which equal 1 when true and 0 when false).
+
+First, `mcp` defines a segment-local span $X_{k,i}$ that grows linearly within segment $k$ and "freezes" (plateaus) at the segment boundary:
 
 $$X_{1,i} = \min(x_i, \Delta_1)$$
-$$X_{2,i} = \min(x_i, \Delta_2) - \Delta_1$$
+$$X_{k,i} = \max\bigl(0, \min(x_i, \Delta_k) - \Delta_{k-1}\bigr) \quad (k \ge 2)$$
 
-When $x \le \Delta_1$, Segment 1 increases at rate $\beta_{1,1}$. When $x > \Delta_1$, Segment 1 plateaus at the constant value $\beta_{1,0} + \beta_{1,1} \Delta_1$, handing over a flat baseline to Segment 2. Starting from $\Delta_1$, Segment 2 adds $\beta_{2,1} (x - \Delta_1)$. Because Segment 1 is flat for $x > \Delta_1$, $\beta_{2,1}$ is the **absolute slope** of Segment 2 (not a difference in slope), and the handover is automatically continuous everywhere:
+When $x_i < \Delta_{k-1}$, $X_{k,i} = 0$ (inactive). When $\Delta_{k-1} \le x_i < \Delta_k$, $X_{k,i} = x_i - \Delta_{k-1}$ (linear growth). When $x_i \ge \Delta_k$, $X_{k,i} = \Delta_k - \Delta_{k-1}$ (frozen at the segment width).
+
+For a **purely joined model** (`list(y ~ 0 + x, ~ 0 + x)`), `mcp` writes $\mu_i$ as a cumulative sum of these plateauing coordinates:
+
+$$\mu_i = \sum_{k=1}^K [x_i \ge \Delta_{k-1}] \cdot \beta_{k,1} X_{k,i}$$
+
+Because earlier segments freeze at their boundary levels ($\beta_{k-1,1}(\Delta_{k-1} - \Delta_{k-2})$), continuity is automatic with zero parameter constraints: preceding segments hand over a flat plateau that serves as the baseline for subsequent segments.
+
+When a segment is **disjoined** (`~ 1 + x`), it introduces a new explicit intercept $\beta_{k,0}$ at $\Delta_{k-1}$, and earlier terms are capped with $[x_i < \Delta_{\text{next}}]$ so previous segments stop accumulating.
+
+Let's demonstrate this equivalence in R:
 
 ```{r}
 # Model parameters
@@ -160,7 +188,7 @@ fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE)
 fit$jags_code
 ```
 
-Look at the JAGS code under `# par_x local to each segment` and `# Formula for mu` to see `x_local_1_[i_]` and `x_local_2_[i_]` computed exactly this way.
+Look at the JAGS code under `# par_x local to each segment` and `# Formula for mu` to see this exact indicator formulation in action: `x_local_1_[i_]` and `x_local_2_[i_]` correspond to $X_{1,i}$ and $X_{2,i}$, and each segment's slope is multiplied by its activation indicator (e.g., `(x[i_] >= cp_1)`).
 
 You will find the exact same formula for `y_ = ...` if you do `print(fit$simulate)`, though this function contains a whole lot of other stuff too.
 

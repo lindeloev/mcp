@@ -39,20 +39,8 @@
 #'
 #'   * *Time-series residuals:* use `ar(p)` and `ma(q)` separately or together,
 #'     e.g., `~ 1 + ar(1) + ma(1)`. Both accept an optional regression formula
-#'     and observation `boundary`. GARMA terms support Gaussian, binomial,
-#'     Poisson, and negative-binomial families with their default links. They
-#'     define a finite conditional recurrence on the link scale. For `~ ar(p) + ma(q)`, the model is:
-#'
-#'     \deqn{\eta_t = b_t + \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right] + \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right]}
-#'
-#'     where \eqn{b_t} is the linear predictor from the segment formulas,
-#'     \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
-#'     \eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
-#'     \eqn{g(\cdot)} is the link function, \eqn{y^*_t} is the observation,
-#'     and \eqn{\eta_t} is the resulting full linear predictor including serial dependence. Note some implications:
-#'      - For an N-order component, the last N values *before* the segment onset are input to the first \eqn{\eta_t} in the segment.
-#'      - AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
-#'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
+#'     and observation `boundary` (see details).
+#'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html).
 #'
 #'   * *Likelihood weights:* `y | weights(w) ~ ...` multiplies each observation's
 #'     log-likelihood contribution by `w`, as in `brms`. Weights affect
@@ -133,20 +121,54 @@
 #' @details
 #' **The mcp model**
 #'
-#' For a continuous predictor \eqn{x}, segment 1 (\eqn{x \le \Delta_1}) is a standard
-#' regression model with the intercept at \eqn{x = 0}:
+#' \figure{mcp_demo.png}{options: width="60\%" alt="Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope"}
 #'
-#' \deqn{\eta_{1,i} = f_1(x_i, \mathbf{\beta}_1) = \beta_{1,0} + \beta_{1,1} x_i + \dots}
+#' An `mcp` model divides a continuous predictor \eqn{x} into \eqn{K} segments separated by
+#' ordered change points \eqn{\Delta_1 < \dots < \Delta_{K-1}}. In each segment \eqn{k \in \{1, \dots, K\}},
+#' the linear predictor \eqn{\eta_i} is evaluated directly from the segment-local distance \eqn{(x_i - \Delta_{k-1})}:
 #'
-#' Subsequent segments \eqn{k \in \{2, \dots, K\}} are similar, but replace \eqn{x} with a segment-local predictor \eqn{X_{k,i}} measured from the segment onset \eqn{\Delta_{k-1}} and capped at the segment end \eqn{\Delta_k}:
+#' \deqn{\eta_i = \begin{cases}
+#'   \beta_{1,0} + \beta_{1,1} x_i, & \text{First segment } (k = 1) \\
+#'   \beta_{k,0} + \beta_{k,1} (x_i - \Delta_{k-1}), & \text{Disjoined segments } (k \ge 2, \sim \texttt{1 + x}) \\
+#'   \alpha_k + \beta_{k,1} (x_i - \Delta_{k-1}), & \text{Joined segments } (k \ge 2, \sim \texttt{0 + x})
+#' \end{cases}}
 #'
-#' \deqn{X_{k,i} = \min(x_i, \Delta_k) - \Delta_{k-1}}
+#' where \eqn{\alpha_k} is the baseline level inherited continuously from the preceding segment:
 #'
-#' with \eqn{\Delta_K = \max(\mathbf{x})}.
+#' \deqn{\alpha_k = \alpha_{k-1} + \beta_{k-1,1} (\Delta_{k-1} - \Delta_{k-2}) \quad (\text{with } \Delta_0 = 0)}
 #'
-#' Joined segments (`~ 0 + x`) continue from the plateaued level of earlier segments with a new segment slope \eqn{\beta_{k,1} X_{k,i}}, enforcing continuity without parameter constraints. Disjoined segments (`~ 1 + x`) introduce a new intercept \eqn{\beta_{k,0}} at \eqn{\Delta_{k-1}} and truncate preceding segments. In both cases, slope and intercept parameters are absolute values (not differences relative to the previous segment).
+#' In all segments, slope and intercept parameters are absolute values (not changes relative to the preceding segment).
 #'
-#' Here, the model was presented for the mean (on the link scale). The exact same model apply to distributional parameters (`sigma()`, `shape()`, etc.) and `ar()`/`ma()` too. See more details on the `mcp` model in [mcp-package] and on the [mcp website](https://lindeloev.github.io/mcp/articles/formulas.html).
+#' If additional continuous covariates or categorical factors are included (e.g., `+ z + group`),
+#' they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}}); only the
+#' change-point predictor \eqn{x} is converted to segment-local coordinates.
+#'
+#' Distributional parameters (\code{sigma()}, \code{shape()}, etc.) and autoregressive terms (\code{ar()}, \code{ma()})
+#' follow this exact same segmented structure on their respective link scales. See more details on the `mcp` model in
+#' [mcp-package] and on the [mcp website](https://lindeloev.github.io/mcp/articles/formulas.html).
+#'
+#' **Time-series residuals**
+#'
+#' Autoregressive (`ar(p)`) and moving-average (`ma(q)`) terms define a finite conditional recurrence
+#' on the link scale (generalized autoregressive moving-average, GARMA). They support Gaussian, binomial,
+#' Poisson, and negative-binomial families with their default links. If \eqn{b_t} is the ordinary
+#' regression predictor from the segment formulas and \eqn{\eta_t} is the predictor including serial
+#' dependence, the recurrence decomposes into components:
+#'
+#' \deqn{\begin{aligned}
+#'   \text{AR}_t &= \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right] \\
+#'   \text{MA}_t &= \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right] \\
+#'   \eta_t &= b_t + \text{AR}_t + \text{MA}_t
+#' \end{aligned}}
+#'
+#' where \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
+#' \eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
+#' \eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the boundary-constrained observation.
+#'
+#' Implications:
+#' * For an \eqn{N}-order component, the last \eqn{N} values *before* the segment onset are input to the first \eqn{\eta_t} in the segment.
+#' * AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
+#' * See [the arma vignette](https://lindeloev.github.io/mcp/articles/arma.html) for more details.
 #'
 #' **Notes on priors**
 #'

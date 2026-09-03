@@ -8,10 +8,9 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-library(mcp)
 library(ggplot2)
-old_future_plan = future::plan()
-future::plan(future::sequential)
+pkgload::load_all()
+
 knitr::opts_chunk$set(
   fig.path = "man/figures/README-",
   out.width = "100%",
@@ -112,6 +111,11 @@ The default plot includes data, fitted lines drawn randomly from the posterior, 
 ```{r demo-plot}
 set.seed(42)
 plot(fit, q_fit = TRUE) + ggtitle("Regression with two change points")
+```
+
+```{r include=FALSE}
+# For mcp() documentation
+ggplot2::ggsave("man/figures/mcp_demo.png", ggplot2::last_plot(), width = 6.00, height = 3.75, dpi = 125)
 ```
 
 Use `summary()` to summarise the posterior distribution as well as sampling diagnostics:
@@ -284,8 +288,4 @@ head(fitted(fit, summary = FALSE))  # column .epred
     doi = {10.31219/osf.io/fzqxv},
     encoding = {UTF-8},
   }
-```
-
-```{r teardown, include=FALSE}
-future::plan(old_future_plan)
 ```
