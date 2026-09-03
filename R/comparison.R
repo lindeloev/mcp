@@ -291,7 +291,7 @@ get_loglik_settings = function(fit, varying, arma, ndraws) {
 #'   * `lower` is the lower bound of the central posterior interval of width `width`,
 #'       or the corresponding prior interval when `prior = TRUE`.
 #'   * `upper` is the upper bound of ditto.
-#'   * `p` is the posterior probability of a directional hypothesis, or the prior
+#'   * `post_prob` is the posterior probability of a directional hypothesis, or the prior
 #'       probability when `prior = TRUE`. It is `NA`
 #'       for equality hypotheses, which compare models rather than an event
 #'       within the fitted model.
@@ -455,7 +455,7 @@ hypothesis = function(fit, hypotheses, width = 0.95, prior = FALSE) {
       mean = estimate$effect,
       lower = estimate$.lower,
       upper = estimate$.upper,
-      p = prob_post_val,
+      post_prob = prob_post_val,
       BF = BF,
       stringsAsFactors = FALSE
     )

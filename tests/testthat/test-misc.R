@@ -710,7 +710,8 @@ test_that("hypothesis()", {
 
   # Directional hypothesis on posterior-only fit returns posterior probability with BF = NA
   res_post_only = hypothesis(demo_fit2, directional)
-  expect_equal(res_post_only$p, mean(cp_draws > threshold))
+  expect_true("post_prob" %in% names(res_post_only))
+  expect_equal(res_post_only$post_prob, mean(cp_draws > threshold))
   expect_true(is.na(res_post_only$BF))
   expect_equal(res_post_only$mean, mean(cp_draws - threshold))
 
@@ -744,16 +745,16 @@ test_that("hypothesis()", {
   effect_draws = cp_draws - threshold
   expect_equal(actual_directional$lower, unname(quantile(effect_draws, 0.025)))
   expect_equal(actual_directional$upper, unname(quantile(effect_draws, 0.975)))
-  expect_equal(actual_directional$p, p_post)
+  expect_equal(actual_directional$post_prob, p_post)
   expect_equal(actual_directional$BF, expected_BF)
 
   prior_directional = hypothesis(fit_asymmetric, directional, prior = TRUE)
-  expect_equal(prior_directional$p, p_prior)
+  expect_equal(prior_directional$post_prob, p_prior)
   expect_true(is.na(prior_directional$BF))
 
   fit_prior_only = fit_asymmetric
   fit_prior_only$mcmc_post = NULL
-  expect_equal(hypothesis(fit_prior_only, directional, prior = TRUE)$p, p_prior)
+  expect_equal(hypothesis(fit_prior_only, directional, prior = TRUE)$post_prob, p_prior)
 
   # Identical prior and posterior draws must give BF = 1, also for intervals and Savage-Dickey equality.
   fit_same = demo_fit2

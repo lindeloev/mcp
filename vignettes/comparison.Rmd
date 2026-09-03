@@ -114,7 +114,7 @@ Notice that `mcp` issues a warning when computing Savage-Dickey Bayes factors on
    $$BF_{01} = \frac{p(\theta = \theta_0 \mid \text{data})}{p(\theta = \theta_0)}$$
 
    where $\theta$ is the tested parameter (or contrast), $\theta_0$ is the hypothesized point value, $p(\theta = \theta_0 \mid \text{data})$ is the posterior density, and $p(\theta = \theta_0)$ is the prior density. A $BF > 1$ favors the point-null model, $BF = 1$ favors neither model, and $BF < 1$ favors the continuous alternative.
- * `p`: This is `NA` because equality is not an event with positive probability in the continuous model.
+ * `post_prob`: This is `NA` because equality is not an event with positive probability in the continuous model.
 
 Equality tests are limited to named parameters and affine contrasts such as `Intercept_1 - Intercept_2 = 0`. Ratios, parameter products, exponentials, and other nonlinear expressions are rejected.
 
@@ -156,7 +156,7 @@ hypothesis(fit_info, c(
 Comparing the Bayes factors shows which hypothesis received the larger update from prior to posterior.
 
 There are more examples [in the documentation for `hypothesis`](../reference/hypothesis.html), including how to test group-level deviations and [relative changes between segments](../articles/formulas.html#relative-changes-and-differences-between-segments).
-`mcp` evaluates the directional hypothesis for both posterior and prior samples. The posterior probability is reported as `p`, and the Bayes factor is the posterior odds divided by the prior odds:
+`mcp` evaluates the directional hypothesis for both posterior and prior samples. The posterior probability is reported as `post_prob`, and the Bayes factor is the posterior odds divided by the prior odds:
 
 $$BF_{10} = \frac{P(H \mid \text{data}) \,/\, [1 - P(H \mid \text{data})]}{P(H) \,/\, [1 - P(H)]}$$
 
@@ -171,11 +171,11 @@ prob = function(fit, prior = FALSE) {
   mean(draws$cp_1 > 3.5 & draws$cp_1 < 4.5)
 }
 
-p_post = prob(fit_info, prior = FALSE)
-p_prior = prob(fit_info, prior = TRUE)
-BF = (p_post / (1 - p_post)) / (p_prior / (1 - p_prior))
+post_prob = prob(fit_info, prior = FALSE)
+prior_prob = prob(fit_info, prior = TRUE)
+BF = (post_prob / (1 - post_prob)) / (prior_prob / (1 - prior_prob))
 
-print(c(p = p_post, BF = BF))
+print(c(post_prob = post_prob, BF = BF))
 ```
 
 
