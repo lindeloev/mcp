@@ -445,7 +445,7 @@ null_loo = loo(fit_null)
 loo::loo_compare(demo_loo, null_loo)
 #>   model elpd_diff se_diff p_worse diag_diff diag_elpd
 #>  model1       0.0     0.0      NA                    
-#>  model2     -54.4     7.8    1.00                    
+#>  model2     -54.3     7.8    1.00                    
 
 # Inspect the prior. Useful for prior predictive checks.
 summary(demo_fit, prior = TRUE)
