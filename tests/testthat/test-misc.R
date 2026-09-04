@@ -731,8 +731,8 @@ test_that("hypothesis()", {
 
   # Directional hypothesis on posterior-only fit returns posterior probability with BF = NA
   res_post_only = hypothesis(demo_fit2, directional)
-  expect_true("post_prob" %in% names(res_post_only))
-  expect_equal(res_post_only$post_prob, mean(cp_draws > threshold))
+  expect_true("prob" %in% names(res_post_only))
+  expect_equal(res_post_only$prob, mean(cp_draws > threshold))
   expect_true(is.na(res_post_only$BF))
   expect_equal(res_post_only$mean, mean(cp_draws - threshold))
 
@@ -766,16 +766,16 @@ test_that("hypothesis()", {
   effect_draws = cp_draws - threshold
   expect_equal(actual_directional$lower, unname(quantile(effect_draws, 0.025)))
   expect_equal(actual_directional$upper, unname(quantile(effect_draws, 0.975)))
-  expect_equal(actual_directional$post_prob, p_post)
+  expect_equal(actual_directional$prob, p_post)
   expect_equal(actual_directional$BF, expected_BF)
 
   prior_directional = hypothesis(fit_asymmetric, directional, prior = TRUE)
-  expect_equal(prior_directional$post_prob, p_prior)
+  expect_equal(prior_directional$prob, p_prior)
   expect_true(is.na(prior_directional$BF))
 
   fit_prior_only = fit_asymmetric
   fit_prior_only$mcmc_post = NULL
-  expect_equal(hypothesis(fit_prior_only, directional, prior = TRUE)$post_prob, p_prior)
+  expect_equal(hypothesis(fit_prior_only, directional, prior = TRUE)$prob, p_prior)
 
   # Identical prior and posterior draws must give BF = 1, also for intervals and Savage-Dickey equality.
   fit_same = demo_fit2
@@ -786,7 +786,7 @@ test_that("hypothesis()", {
     " & cp_1 < ", format(bounds[[2]], digits = 16)
   )
   actual_interval = hypothesis(fit_same, interval)
-  expect_equal(actual_interval$p, mean(cp_draws > bounds[[1]] & cp_draws < bounds[[2]]))
+  expect_equal(actual_interval$prob, mean(cp_draws > bounds[[1]] & cp_draws < bounds[[2]]))
   expect_equal(actual_interval$BF, 1)
 
   # Savage-Dickey point equality test (requires prior)
@@ -799,7 +799,7 @@ test_that("hypothesis()", {
   )
   expect_s3_class(actual_equality, "data.frame")
   expect_equal(actual_equality$hypothesis, paste0("cp_1 - ", mid_val, " = 0"))
-  expect_true(is.na(actual_equality$p))
+  expect_true(is.na(actual_equality$prob))
   expect_false(is.na(actual_equality$BF))
   expect_equal(actual_equality$BF, 1, tolerance = 1e-3)
 

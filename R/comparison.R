@@ -295,7 +295,7 @@ get_loglik_settings = function(fit, varying, arma, ndraws) {
 #'   * `lower` is the lower bound of the central posterior interval of width `width`,
 #'       or the corresponding prior interval when `prior = TRUE`.
 #'   * `upper` is the upper bound of ditto.
-#'   * `post_prob` is the posterior probability of a directional hypothesis, or the prior
+#'   * `prob` is the posterior probability of a directional hypothesis, or the prior
 #'       probability when `prior = TRUE`. It is `NA`
 #'       for equality hypotheses, which compare models rather than an event
 #'       within the fitted model.
@@ -435,25 +435,25 @@ hypothesis.mcpfit = function(fit, hypotheses, width = 0.95, prior = FALSE, ...) 
         BF = dens_post / dens_prior
       }
 
-      prob_post_val = NA_real_
+      prob = NA_real_
     }
 
-    # DIRECTIONAL: compute p and BF
+    # DIRECTIONAL: compute probability and BF
     if (n_directional != 0) {
       expr_parsed = rlang::parse_expr(expression)
-      res_post = rlang::eval_tidy(expr_parsed, data = draws)
-      prob_post_val = mean(res_post == TRUE)
+      result = rlang::eval_tidy(expr_parsed, data = draws)
+      prob = mean(result == TRUE)
 
       has_both = coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) && coda::is.mcmc.list(.subset2(fit, "mcmc_post"))
       if (!prior && has_both) {
         draws_prior = posterior_draws(fit, prior = TRUE) %>%
           posterior::as_draws_df()
-        res_prior = rlang::eval_tidy(expr_parsed, data = draws_prior)
-        prob_prior_val = mean(res_prior == TRUE)
+        prior_result = rlang::eval_tidy(expr_parsed, data = draws_prior)
+        prior_prob = mean(prior_result == TRUE)
 
         # A Bayes factor is the update from prior odds to posterior odds.
-        posterior_odds = prob_post_val / (1 - prob_post_val)
-        prior_odds = prob_prior_val / (1 - prob_prior_val)
+        posterior_odds = prob / (1 - prob)
+        prior_odds = prior_prob / (1 - prior_prob)
         BF = posterior_odds / prior_odds
       } else {
         BF = NA_real_
@@ -466,7 +466,7 @@ hypothesis.mcpfit = function(fit, hypotheses, width = 0.95, prior = FALSE, ...) 
       mean = estimate$effect,
       lower = estimate$.lower,
       upper = estimate$.upper,
-      post_prob = prob_post_val,
+      prob = prob,
       BF = BF,
       stringsAsFactors = FALSE
     )

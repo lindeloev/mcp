@@ -203,7 +203,7 @@ than 25 against it being less than 25?
 hypothesis(fit, "cp_1 > 25")
 ```
 
-    ##      hypothesis     mean   lower    upper post_prob       BF
+    ##      hypothesis     mean   lower    upper      prob       BF
     ## 1 cp_1 - 25 > 0 6.490184 2.99265 10.08595 0.9993333 1067.781
 
 For model comparisons, we can fit a null model and compare the
