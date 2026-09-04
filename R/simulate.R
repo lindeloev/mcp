@@ -604,5 +604,5 @@ get_fitsimulate = function(cps, predictors, group_effects) {
   return(result)
 }")
 
-  eval(parse(text = fitsimulate_code))
+  eval(parse(text = fitsimulate_code), envir = asNamespace("mcp"))
 }

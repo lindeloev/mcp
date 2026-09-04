@@ -67,12 +67,10 @@ release_questions = function() {
     "TEST: Have you run all dev/prompt-*.R scripts to get expert review?",
     "TEST: Have you run `revdepcheck::revdep_check()` and notified?",
 
-    "DATA: Have you generated a new `demo_fit` if needed?",
+    "Have you run data-raw/release.R?",
 
-    "DOC: Have you rendered and checked the README? rmarkdown::render('README.Rmd')",
-    "DOC: Have you re-built the site using pkgdown::build_site() AFTER deleting caches of articles in 'vignettes/*_cache/'?",
-    "DOC: Have you pushed to dev-branch and checked all pages in https://lindeloev.github.io/mcp/dev/ render correctly?",
-    "DOC: Have you run the script to insert the correct logo.png in the HTML meta?"
+    "DOC: Have you re-built the site using pkgdown::build_site(lazy=FALSE)?",
+    "DOC: Have you pushed to dev-branch and checked all pages in https://lindeloev.github.io/mcp/dev/ render correctly?"
   )
 }
 

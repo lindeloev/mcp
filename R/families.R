@@ -48,6 +48,11 @@ negbinomial = function(link = "log", link_shape = "log") {
 }
 
 
+# Cache built-in mcpfamily instances by family and link.
+# Ensures mcp() replicability across contexts.
+.mcpfamily_cache = new.env(parent = emptyenv())
+
+
 #' Create or Test Objects of Class "mcpfamily"
 #'
 #' \lifecycle{experimental}
@@ -81,6 +86,12 @@ negbinomial = function(link = "log", link_shape = "log") {
 mcpfamily = function(x) {
   checkmate::assert_true(is.family(x), .var.name = "x")
 
+  # Return cached mcpfamily if already constructed for this family and link combination
+  cache_key = paste(x$family, x$link, x$link_shape, sep = "_")
+  if (exists(cache_key, envir = .mcpfamily_cache, inherits = FALSE)) {
+    return(get(cache_key, envir = .mcpfamily_cache, inherits = FALSE))
+  }
+
   family = switch(
     x$family,
     gaussian = mcpfamily_gaussian(x),
@@ -91,6 +102,7 @@ mcpfamily = function(x) {
     if (inherits(x, "mcpfamily")) x else new_mcpfamily(x)
   )
 
+  .mcpfamily_cache[[cache_key]] = family
   family
 }
 

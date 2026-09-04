@@ -620,7 +620,7 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
     # An implicit dpar receives an intercept in segment 1 and then continues
     # across later segments until the user supplies another dpar intercept.
     if (length(dpar_term) == 0 && spec$implicit && segment == 1) {
-      dpar_form = ~1
+      dpar_form = stats::as.formula("~1", env = form_env)
       dpar_pars[[dpar]] = get_predictors_dpar(
         data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank,
         design_id = paste("population", dpar, segment, sep = ":")
