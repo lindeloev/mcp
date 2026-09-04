@@ -66,6 +66,7 @@ release_questions = function() {
     "TEST: Have you run `dev/ai-check-jagscode.R` to start LLM review?",
     "TEST: Have you run all dev/prompt-*.R scripts to get expert review?",
     "TEST: Have you run `revdepcheck::revdep_check()` and notified?",
+    "TEST: have you run devtools::check_win_devel(); devtools::check_win_release()?",
 
     "Have you run data-raw/release.R?",
 
