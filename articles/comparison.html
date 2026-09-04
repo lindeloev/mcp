@@ -11,7 +11,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="../katex-auto.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -33,7 +34,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mcp</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.4.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,10 +49,11 @@
 <li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="../articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
@@ -65,8 +67,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other">
-<li><a class="dropdown-item" href="../articles/packages.html">Comparison to other packages</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+<li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -93,6 +94,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Change point model comparison</h1>
             
+            <h4 data-toc-skip class="date">2026-09-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/comparison.Rmd" class="external-link"><code>vignettes/comparison.Rmd</code></a></small>
       <div class="d-none name"><code>comparison.Rmd</code></div>
@@ -102,18 +104,18 @@
     
 <p>There are three main ways of doing model comparison in
 <code>mcp</code>:</p>
-<ul>
+<ol style="list-style-type: decimal">
 <li>Compare any N <code>mcp</code> models using leave-One-Out cross
 validation (LOO-CV). Check out <code>loo(fit)</code>,
-<code>loo::loo_compare(fit1$loo, fit2$loo, ...)</code>, and
-<code>loo::loo_model_weights(fit1$loo, fit2$loo, ...)</code>.</li>
+<code>loo::loo_compare(loo1, loo2, ...)</code>, and
+<code>loo::loo_model_weights(loo1, loo2, ...)</code>.</li>
 <li>Flexible directional tests using
 <code>hypothesis(fit, cp_1 &gt; 40)</code> or
 <code>hypothesis(fit, cp_1 &gt; 40 &amp; x_2 &gt; x_1)</code>.</li>
 <li>Point Bayes Factors tests using the Savage-Dickey density ratio,
 e.g., <code>hypothesis(fit, cp_1 = 50)</code> or
 <code>hypothesis(fit, x_2 = x_1)</code>.</li>
-</ul>
+</ol>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lindeloev.github.io/mcp/">mcp</a></span><span class="op">)</span></span>
 <span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="fu">future</span><span class="fu">::</span><span class="va"><a href="https://future.futureverse.org/reference/multisession.html" class="external-link">multisession</a></span>, workers <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
@@ -125,13 +127,10 @@ e.g., <code>hypothesis(fit, cp_1 = 50)</code> or
 average human has almost perfect recall when presented with 1-4 items
 (we remember them all), and then errors begins intruding when presented
 with more items <a href="https://www.ncbi.nlm.nih.gov/pubmed/11515286" class="external-link">(Cowan, 2001)</a>.
-We also know that memory is not infinite, so as
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>→</mo><mi>∞</mi></mrow><annotation encoding="application/x-tex">N \rightarrow \infty</annotation></semantics></math>,
-it has to plateau.</p>
-<p>In other words, on “easy” trials with
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>&lt;</mo><mo>=</mo><mi>c</mi><mi>a</mi><mi>p</mi><mi>a</mi><mi>c</mi><mi>i</mi><mi>t</mi><mi>y</mi></mrow><annotation encoding="application/x-tex">N &lt;= capacity</annotation></semantics></math>
-items to be recalled, we expect a constant high binomial rate. When
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>&gt;</mo><mi>c</mi><mi>a</mi><mi>p</mi><mi>a</mi><mi>c</mi><mi>i</mi><mi>t</mi><mi>y</mi></mrow><annotation encoding="application/x-tex">N &gt; capacity</annotation></semantics></math>,
+We also know that memory is not infinite, so as <span class="math inline">N \rightarrow \infty</span>, it has to plateau.</p>
+<p>In other words, on “easy” trials with <span class="math inline">N
+&lt;= capacity</span> items to be recalled, we expect a constant high
+binomial rate. When <span class="math inline">N &gt; capacity</span>,
 the rate declines. We specify a prior reflecting our a priori
 knowledge.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
@@ -157,6 +156,7 @@ and x-axis. No problem.</p>
 <span><span class="co"># Get just the model - no fit</span></span>
 <span><span class="va">empty</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">df</span><span class="op">$</span><span class="va">recalled</span> <span class="op">=</span> <span class="va">empty</span><span class="op">$</span><span class="fu">simulate</span><span class="op">(</span></span>
 <span>  <span class="va">empty</span>, <span class="va">df</span>,</span>
 <span>  cp_1 <span class="op">=</span> <span class="fl">4</span>,</span>
@@ -178,15 +178,16 @@ effectively. We will also add <code>sample = "both"</code> to sample
 <em>both</em> prior and posterior. We will need both to compute Bayes
 factors using <code><a href="../reference/hypothesis.html">hypothesis()</a></code> later.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, sample <span class="op">=</span> <span class="st">"both"</span>, iter <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span></span>
-<span><span class="va">fit_info</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, prior <span class="op">=</span> <span class="va">prior</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, sample <span class="op">=</span> <span class="st">"both"</span>, iter <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span></span>
-<span><span class="va">fit_simple</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model_simple</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, sample <span class="op">=</span> <span class="st">"both"</span>, iter <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, sample <span class="op">=</span> <span class="st">"both"</span>, iter <span class="op">=</span> <span class="fl">8000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">fit_info</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, prior <span class="op">=</span> <span class="va">prior</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, sample <span class="op">=</span> <span class="st">"both"</span>, iter <span class="op">=</span> <span class="fl">8000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">fit_simple</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model_simple</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, sample <span class="op">=</span> <span class="st">"both"</span>, iter <span class="op">=</span> <span class="fl">8000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <p>We plot them and add a few <code>ggplot2</code> layers. We jitter the
 raw data in the middle plot, just to give a sense of the densities.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_default</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Default"</span><span class="op">)</span> <span class="op">+</span></span>
 <span></span>
@@ -201,56 +202,75 @@ raw data in the middle plot, just to give a sense of the densities.</p>
 <div class="section level2">
 <h2 id="bayes-factors-using-savage-dickey-density-ratios">Bayes Factors using Savage-Dickey density ratios<a class="anchor" aria-label="anchor" href="#bayes-factors-using-savage-dickey-density-ratios"></a>
 </h2>
-<p>You can compute probabilities and Bayes Factors for various
-hypotheses using <code><a href="../reference/hypothesis.html">hypothesis()</a></code>. For example, let’s test the
-idea that the change point in recall occurs at four items:</p>
+<p>You can compute Bayes Factors for point-null hypotheses using
+<code><a href="../reference/hypothesis.html">hypothesis()</a></code>. For example, let’s compare a model in which
+the change point in recall is fixed at four items with the fitted
+continuous model:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit_default</span>, <span class="st">"cp_1 = 4"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##     hypothesis      mean     lower    upper         p       BF</span></span>
-<span><span class="co">## 1 cp_1 - 4 = 0 0.1501339 -1.660273 1.511715 0.7798838 3.543054</span></span></code></pre>
-<p>Let’s unpack:</p>
+<code class="sourceCode R"><span><span class="va">equality</span> <span class="op">=</span> <span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit_default</span>, <span class="st">"cp_1 = 4"</span><span class="op">)</span></span>
+<span><span class="co">## Warning: Savage-Dickey Bayes factor was computed using default prior(s) for `cp_1`. Point Bayes factors are sensitive to the prior distribution; consider specifying informed priors.</span></span>
+<span><span class="va">equality</span></span>
+<span><span class="co">##     hypothesis      mean     lower    upper prob       BF</span></span>
+<span><span class="co">## 1 cp_1 - 4 = 0 0.1515666 -1.641966 1.471894   NA 3.305488</span></span></code></pre></div>
+<p>Notice that <code>mcp</code> issues a warning when computing
+Savage-Dickey Bayes factors on default priors. Because default priors
+are broad, they suppress the prior density denominator and can heavily
+bias point Bayes factors. If you obtained these results with a bespoke,
+substantive prior, you would interpret them as:</p>
 <ul>
-<li>
-<code>hypothesis</code>: For internal convenience,
-<code>hypothesis</code> always re-arranges to test against zero.</li>
-<li>
-<code>mean</code>: When subtracting
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>4</mn><annotation encoding="application/x-tex">4</annotation></semantics></math>,
-the posterior distribution is very close, but somewhat dispersed.</li>
-<li>
-<code>lower</code> and <code>upper</code>: The interval width
+<li><p><code>hypothesis</code>: For internal convenience,
+<code>hypothesis</code> always re-arranges to test against
+zero.</p></li>
+<li><p><code>mean</code>: When subtracting <span class="math inline">4</span>, the posterior distribution is very close,
+but somewhat dispersed.</p></li>
+<li><p><code>lower</code> and <code>upper</code>: The interval width
 defaults to a 95% central posterior interval, but you can change it
-using <code>hypothesis(..., width = 0.8)</code>.</li>
+using <code>hypothesis(..., width = 0.8)</code>.</p></li>
 <li>
-<code>BF</code>: The Savage-Dickey density ratio, which is a Bayes
-Factor. This is the factor by which the density increases from the prior
-to the posterior at <code>cp_1 = 4</code>. A
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mi>F</mi><mo>&gt;</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">BF &gt; 1</annotation></semantics></math>
-means that we now believe <em>more</em> in this value,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mi>F</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">BF = 1</annotation></semantics></math>
-means that our credence to this value is <em>unchanged</em>, and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mi>F</mi><mo>&lt;</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">BF &lt; 1</annotation></semantics></math>
-means that we believe <em>less</em> in it.</li>
-<li>
-<code>p</code>: Because <code>BF</code> is an odds ratio,
-<code>p</code> can just be computed from it and contains no new
-information. For example,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.95</mn></mrow><annotation encoding="application/x-tex">p = 0.95</annotation></semantics></math>
-corresponds to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mi>F</mi><mo>=</mo><mn>19</mn></mrow><annotation encoding="application/x-tex">BF = 19</annotation></semantics></math>.</li>
+<p><code>BF</code>: The Savage-Dickey density ratio in favor of the
+point-null model. It is the posterior density divided by the prior
+density at the tested equality (here <span class="math inline">\theta =
+\text{cp}_1</span> and <span class="math inline">\theta_0 =
+4</span>):</p>
+<p><span class="math display">BF_{01} = \frac{p(\theta = \theta_0 \mid
+\text{data})}{p(\theta = \theta_0)}</span></p>
+<p>where <span class="math inline">\theta</span> is the tested parameter
+(or contrast), <span class="math inline">\theta_0</span> is the
+hypothesized point value, <span class="math inline">p(\theta = \theta_0
+\mid \text{data})</span> is the posterior density, and <span class="math inline">p(\theta = \theta_0)</span> is the prior density. A
+<span class="math inline">BF &gt; 1</span> favors the point-null model,
+<span class="math inline">BF = 1</span> favors neither model, and <span class="math inline">BF &lt; 1</span> favors the continuous
+alternative.</p>
+</li>
+<li><p><code>prob</code>: This is <code>NA</code> because equality is
+not an event with positive probability in the continuous model.</p></li>
 </ul>
-<p>Because <code>BF</code> and <code>p</code> depends directly on the
-prior in Savage-Dickey test, it is as much an expression of the prior as
-the posterior. Computing it for the higher-prior-density-at-cp_1=4
-<code>fit_info</code>, we see a substantially lower BF because we
-already had a substantial prior belief in <code>cp_1 = 4</code>:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<p>Equality tests are limited to named parameters and affine contrasts
+such as <code>Intercept_1 - Intercept_2 = 0</code>. Ratios, parameter
+products, exponentials, and other nonlinear expressions are
+rejected.</p>
+<p>To convert a Bayes Factor to a posterior probability for the
+point-null model, supply your own prior probability for that model. For
+example:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">prior_null_prob</span> <span class="op">=</span> <span class="fl">0.25</span></span>
+<span><span class="va">posterior_model_prob</span> <span class="op">=</span> <span class="va">equality</span><span class="op">$</span><span class="va">BF</span> <span class="op">*</span> <span class="va">prior_null_prob</span> <span class="op">/</span></span>
+<span>  <span class="op">(</span><span class="va">equality</span><span class="op">$</span><span class="va">BF</span> <span class="op">*</span> <span class="va">prior_null_prob</span> <span class="op">+</span> <span class="fl">1</span> <span class="op">-</span> <span class="va">prior_null_prob</span><span class="op">)</span></span>
+<span><span class="va">posterior_model_prob</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] 0.524224</span></span></code></pre>
+<p>Because point Bayes factors depend directly on the prior density,
+they require bespoke, substantively justified priors. For example,
+testing <code>cp_1 = 4</code> on <code>fit_info</code> runs without
+warnings because an explicit prior was provided, yielding a
+substantially different Bayes factor:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit_info</span>, <span class="st">"cp_1 = 4"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##     hypothesis      mean     lower    upper         p       BF</span></span>
-<span><span class="co">## 1 cp_1 - 4 = 0 0.2048259 -1.091245 1.355121 0.5690532 1.320472</span></span></code></pre>
-<p><a href="../articles/priors.html">The Dirichlet prior on change
-points</a> may be better than the default prior when testing point
-hypotheses on change points, but an informed prior beats both.</p>
+<pre><code><span><span class="co">##     hypothesis      mean      lower    upper prob       BF</span></span>
+<span><span class="co">## 1 cp_1 - 4 = 0 0.2441428 -0.9953883 1.327558   NA 1.356304</span></span></code></pre>
+<p>The default <a href="../articles/priors.html">uniform order
+statistics prior on change points</a> has flat symmetric properties
+across the range, but an informed prior should be used for point-null
+hypothesis testing.</p>
 </div>
 <div class="section level2">
 <h2 id="directional-and-combinatoric-tests">Directional and combinatoric tests<a class="anchor" aria-label="anchor" href="#directional-and-combinatoric-tests"></a>
@@ -268,50 +288,52 @@ against it’s inverse
 <code>(cp_1 &lt; 3.5 | cp_1 &gt; 4.5) &amp; items_2 &gt; -0.4 &amp; Intercept_1 &lt; 2.5</code>
 </li>
 </ul>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit_info</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"cp_1 &gt; 3"</span>,</span>
 <span>  <span class="st">"cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5"</span>,</span>
 <span>  <span class="st">"cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5 &amp; items_2 &lt; -0.4 &amp; Intercept_1 &gt; 2.5"</span>,</span>
 <span>  <span class="st">"(cp_1 &lt; 3.5 | cp_1 &gt; 4.5) &amp; items_2 &gt; -0.4 &amp; Intercept_1 &lt; 2.5"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##                                                       hypothesis     mean</span></span>
-<span><span class="co">## 1                                                   cp_1 - 3 &gt; 0 1.204826</span></span>
-<span><span class="co">## 2                                        cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5       NA</span></span>
-<span><span class="co">## 3   cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5 &amp; items_2 &lt; -0.4 &amp; Intercept_1 &gt; 2.5       NA</span></span>
-<span><span class="co">## 4 (cp_1 &lt; 3.5 | cp_1 &gt; 4.5) &amp; items_2 &gt; -0.4 &amp; Intercept_1 &lt; 2.5       NA</span></span>
-<span><span class="co">##         lower    upper          p        BF</span></span>
-<span><span class="co">## 1 -0.09124526 2.355121 0.96556667 5.3518633</span></span>
-<span><span class="co">## 2          NA       NA 0.52523333 1.7930588</span></span>
-<span><span class="co">## 3          NA       NA 0.29166667 3.6732026</span></span>
-<span><span class="co">## 4          NA       NA 0.03353333 0.5628376</span></span></code></pre>
+<pre><code><span><span class="co">##                                                       hypothesis     mean       lower    upper       prob        BF</span></span>
+<span><span class="co">## 1                                                   cp_1 - 3 &gt; 0 1.244143 0.004611652 2.327558 0.97545833 7.3071167</span></span>
+<span><span class="co">## 2                                        cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5       NA          NA       NA 0.52466667 1.7725306</span></span>
+<span><span class="co">## 3   cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5 &amp; items_2 &lt; -0.4 &amp; Intercept_1 &gt; 2.5       NA          NA       NA 0.27433333 3.2789646</span></span>
+<span><span class="co">## 4 (cp_1 &lt; 3.5 | cp_1 &gt; 4.5) &amp; items_2 &gt; -0.4 &amp; Intercept_1 &lt; 2.5       NA          NA       NA 0.03954167 0.6848186</span></span></code></pre>
 <p>Comparing the Bayes factors shows which hypothesis received the
 larger update from prior to posterior.</p>
 <p>There are more examples <a href="../reference/hypothesis.html">in the
 documentation for <code>hypothesis</code></a>, including how to test
-varying effects.</p>
-<p><code>mcp</code> evaluates the directional hypothesis for both
-posterior and prior samples. The posterior probability is reported as
-<code>p</code>, and the Bayes factor is the posterior odds divided by
-the prior odds:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+group-level deviations and <a href="../articles/formulas.html#relative-changes-between-segments">relative
+changes between segments</a>. <code>mcp</code> evaluates the directional
+hypothesis for both posterior and prior samples. The returned
+<code>prob</code> is the posterior probability by default, or the prior
+probability with <code>prior = TRUE</code>; the Bayes factor is the
+posterior odds divided by the prior odds:</p>
+<p><span class="math display">BF_{10} = \frac{P(H \mid \text{data})
+\,/\, [1 - P(H \mid \text{data})]}{P(H) \,/\, [1 - P(H)]}</span></p>
+<p>where <span class="math inline">H</span> is the stated directional
+hypothesis, <span class="math inline">P(H \mid \text{data})</span> is
+its posterior probability, and <span class="math inline">P(H)</span> is
+its prior probability.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit_info</span>, <span class="st">"cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##                hypothesis mean lower upper         p       BF</span></span>
-<span><span class="co">## 1 cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5   NA    NA    NA 0.5252333 1.793059</span></span></code></pre>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<pre><code><span><span class="co">##                hypothesis mean lower upper      prob       BF</span></span>
+<span><span class="co">## 1 cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5   NA    NA    NA 0.5246667 1.772531</span></span></code></pre>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># ... is identical to</span></span>
 <span><span class="va">prob</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">fit</span>, <span class="va">prior</span> <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">draws</span> <span class="op">=</span> <span class="fu">posterior</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_df.html" class="external-link">as_draws_df</a></span><span class="op">(</span><span class="va">fit</span>, prior <span class="op">=</span> <span class="va">prior</span><span class="op">)</span></span>
+<span>  <span class="va">draws</span> <span class="op">=</span> <span class="fu"><a href="../reference/as_draws.mcpfit.html">as_draws_df</a></span><span class="op">(</span><span class="va">fit</span>, prior <span class="op">=</span> <span class="va">prior</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">draws</span><span class="op">$</span><span class="va">cp_1</span> <span class="op">&gt;</span> <span class="fl">3.5</span> <span class="op">&amp;</span> <span class="va">draws</span><span class="op">$</span><span class="va">cp_1</span> <span class="op">&lt;</span> <span class="fl">4.5</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">p_post</span> <span class="op">=</span> <span class="fu">prob</span><span class="op">(</span><span class="va">fit_info</span>, prior <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="va">p_prior</span> <span class="op">=</span> <span class="fu">prob</span><span class="op">(</span><span class="va">fit_info</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">BF</span> <span class="op">=</span> <span class="op">(</span><span class="va">p_post</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">p_post</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">p_prior</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">p_prior</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">post_prob</span> <span class="op">=</span> <span class="fu">prob</span><span class="op">(</span><span class="va">fit_info</span>, prior <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">prior_prob</span> <span class="op">=</span> <span class="fu">prob</span><span class="op">(</span><span class="va">fit_info</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">BF</span> <span class="op">=</span> <span class="op">(</span><span class="va">post_prob</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">post_prob</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">prior_prob</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">prior_prob</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/summary.mcpfit.html">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>p <span class="op">=</span> <span class="va">p_post</span>, BF <span class="op">=</span> <span class="va">BF</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##         p        BF </span></span>
-<span><span class="co">## 0.5252333 1.7930588</span></span></code></pre>
+<span><span class="fu"><a href="../reference/summary.mcpfit.html">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>post_prob <span class="op">=</span> <span class="va">post_prob</span>, BF <span class="op">=</span> <span class="va">BF</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## post_prob        BF </span></span>
+<span><span class="co">## 0.5246667 1.7725306</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="cross-validation">Cross Validation<a class="anchor" aria-label="anchor" href="#cross-validation"></a>
@@ -344,8 +366,7 @@ briefly, it does this:</p>
 (out-of-sample data), i.e., the height of the posterior at that data
 point. For example, if the posterior is a normal distribution, a data
 point near the mean of the posterior has higher density (it is less
-“surprising”) than if it is at
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>z</mi><mo>=</mo><mi>−</mi><mn>3</mn></mrow><annotation encoding="application/x-tex">z = -3</annotation></semantics></math>.
+“surprising”) than if it is at <span class="math inline">z = -3</span>.
 Better predictions means higher densities, i.e., less surprisal.</li>
 <li>Repeats step 2 for all observed data and multiplies these densities
 to get the combined predictive densities at unobserved data. Multiplying
@@ -373,99 +394,82 @@ inferences are relative to (Bayes Factors).</p>
 <h3 id="applied-example">Applied example<a class="anchor" aria-label="anchor" href="#applied-example"></a>
 </h3>
 <p>We can look at the loo for one model:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_info</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">loo_info</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_info</span><span class="op">)</span></span>
+<span><span class="va">loo_info</span></span></code></pre></div>
 <pre><code><span><span class="co">## </span></span>
-<span><span class="co">## Computed from 30000 by 360 log-likelihood matrix.</span></span>
+<span><span class="co">## Computed from 24000 by 360 log-likelihood matrix.</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##          Estimate   SE</span></span>
-<span><span class="co">## elpd_loo   -365.7 16.6</span></span>
-<span><span class="co">## p_loo         2.9  0.3</span></span>
-<span><span class="co">## looic       731.4 33.1</span></span>
+<span><span class="co">## elpd_loo   -365.6 16.5</span></span>
+<span><span class="co">## p_loo         2.7  0.3</span></span>
+<span><span class="co">## looic       731.2 33.0</span></span>
 <span><span class="co">## ------</span></span>
 <span><span class="co">## MCSE of elpd_loo is 0.0.</span></span>
 <span><span class="co">## MCSE and ESS estimates assume MCMC draws (r_eff in [0.0, 1.0]).</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## All Pareto k estimates are good (k &lt; 0.7).</span></span>
 <span><span class="co">## See help('pareto-k-diagnostic') for details.</span></span></code></pre>
-<p>This is not terribly informative in and of itself.
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>l</mi><mi>o</mi><mi>o</mi><mi>i</mi><mi>c</mi><mo>=</mo><mi>−</mi><mn>2</mn><mo>*</mo><mi>e</mi><mi>l</mi><mi>p</mi><msub><mi>d</mi><mrow><mi>l</mi><mi>o</mi><mi>o</mi></mrow></msub></mrow><annotation encoding="application/x-tex">looic = -2 * elpd_{loo}</annotation></semantics></math>
-as is the corresponding SEs, so that is just a matter of scale. What
-ELPD tells you is that the product of the densities of all left-out data
-points is approximately
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>e</mi><mi>x</mi><mi>p</mi><mo stretchy="false" form="prefix">(</mo><mi>−</mi><mn>350</mn><mo stretchy="false" form="postfix">)</mo><mo>∼</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>146</mn></mrow></msup></mrow><annotation encoding="application/x-tex">exp(-350) \sim 10 ^ {-146}</annotation></semantics></math>,
-a vanishingly small number because we multiply many small numbers. This
-is mentally hard to interpret because the density at a given point is
-only meaningful relative to the full distribution. Furthermore, it
-depends on the size of the dataset (the more small densities you
-multiply, the smaller the ELPD).</p>
+<p>This is not terribly informative in and of itself. <span class="math inline">looic = -2 * elpd_{loo}</span> as is the
+corresponding SEs, so that is just a matter of scale. What ELPD tells
+you is that the product of the densities of all left-out data points is
+approximately <span class="math inline">exp(-350) \sim 10 ^
+{-146}</span>, a vanishingly small number because we multiply many small
+numbers. This is mentally hard to interpret because the density at a
+given point is only meaningful relative to the full distribution.
+Furthermore, it depends on the size of the dataset (the more small
+densities you multiply, the smaller the ELPD).</p>
 <p>What is interesting is the <em>relative</em> differences in these
 predicted densities. We can compare the models using
-<code><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo::loo_compare()</a></code>. We save the results in
-<code>fit$loo</code> to keep things together, which will also be useful
-if you want to <code>save(fit)</code> the objects for later use.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_default</span><span class="op">$</span><span class="va">loo</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_default</span><span class="op">)</span></span>
-<span><span class="va">fit_info</span><span class="op">$</span><span class="va">loo</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_info</span><span class="op">)</span></span>
-<span><span class="va">fit_simple</span><span class="op">$</span><span class="va">loo</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_simple</span><span class="op">)</span></span>
+<code><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo::loo_compare()</a></code>. Save the results as separate objects if
+you want to reuse them or save them for later.</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">loo_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_default</span><span class="op">)</span></span>
+<span><span class="va">loo_simple</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_simple</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">fit_default</span><span class="op">$</span><span class="va">loo</span>, <span class="va">fit_info</span><span class="op">$</span><span class="va">loo</span>, <span class="va">fit_simple</span><span class="op">$</span><span class="va">loo</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   model elpd_diff se_diff p_worse       diag_diff diag_elpd</span></span>
+<span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">loo_default</span>, <span class="va">loo_info</span>, <span class="va">loo_simple</span><span class="op">)</span></span>
+<span><span class="co">##   model elpd_diff se_diff p_worse       diag_diff diag_elpd</span></span>
 <span><span class="co">##  model2       0.0     0.0      NA                          </span></span>
-<span><span class="co">##  model1      -0.4     0.2    0.95 |elpd_diff| &lt; 4          </span></span>
-<span><span class="co">##  model3      -4.1     2.8    0.93</span></span></code></pre>
-<pre><code><span><span class="co">## </span></span>
+<span><span class="co">##  model1      -0.5     0.3    0.97 |elpd_diff| &lt; 4          </span></span>
+<span><span class="co">##  model3      -4.1     2.8    0.93</span></span>
+<span><span class="co">## </span></span>
 <span><span class="co">## Diagnostic flags present.</span></span>
 <span><span class="co">## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span></span>
-<span><span class="co">## or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre>
+<span><span class="co">## or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre></div>
 <p>Aha, so the second model (“model2”, i.e., <code>fit_info</code>)
 passed to <code>loo_compare()</code> was preferred as the other models
 had smaller ELPDs. As a first rough conclusion, we’ve learned that
 informed priors and a plateau improved out-of-sample predictions.</p>
-<p>Again, the absolute number (<code>elpd_diff</code>) is hard to relate
-to. More interpretable is the
-<code>z' = elpd_diff</code>/<code>se_diff</code> ratio. This is almost
-like a z-score, i.e., a ratio of 1.96 corresponds to 95% probability
-that one model has superior predictive accuracy. This is not an
-<em>effect size</em> but more a measure of <em>certainty</em> that this
-is not compatible with equal predictive properties. Just like Bayes
-Factors, a nice property over frequentist p-values is that you can
-quantify the relative evidence for and against any pair of models
-without having to assume one of them as null.</p>
-<p>Unfortunately, <a href="https://arxiv.org/abs/2008.10296" class="external-link">Sivula et
-al. (2020)</a> has shown that the estimation of <code>se</code> is
-underestimated (our
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>z</mi><mo>′</mo></msup><annotation encoding="application/x-tex">z'</annotation></semantics></math>-score
-is over-estimated) if (1) the model predictions are very similar, (2)
-the models are misspecified, or (3) for small data. My take-away from
-this paper is that the lesser these issues apply to your models, the
-more
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>z</mi><mo>′</mo></msup><annotation encoding="application/x-tex">z'</annotation></semantics></math>
-is interpretable as a z-score and threshold-inclined people could use,
-e.g.,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>z</mi><mo>′</mo></msup><mo>=</mo><mn>1.96</mn></mrow><annotation encoding="application/x-tex">z'= 1.96</annotation></semantics></math>
-as a decision threshold. To the extent that the issues apply, one may
-need to move the threshold all the way to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>z</mi><mo>′</mo></msup><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">z' = 5</annotation></semantics></math>
-cf. <a href="https://discourse.mc-stan.org/t/interpreting-elpd-diff-loo-package/1628" class="external-link">this
-reply from LOO champion Aki Vehtari (2017)</a>.</p>
+<p>In recent versions of <code>loo</code>, <code>loo_compare()</code>
+reports <code>p_worse</code> (the estimated probability that a model is
+worse than the best model) alongside diagnostic flags
+(<code>diag_diff</code> and <code>diag_elpd</code>) based on <a href="https://doi.org/10.1214/25-BA1569" class="external-link">Sivula et al. (2025)</a>.</p>
+<p>These diagnostics highlight when the normal approximation underlying
+<code>se_diff</code> and <code>p_worse</code> is unreliable. For
+example, <code>|elpd_diff| &lt; 4</code> flags that models have very
+similar predictive performance and should be treated as practically
+indistinguishable (as between <code>model2</code> and
+<code>model1</code> here), while <code>N &lt; 100</code> warns of
+small-sample uncertainty underestimation. See the <a href="https://mc-stan.org/loo/reference/loo-glossary.html" class="external-link">LOO
+glossary</a> or <code>?loo::loo-glossary</code> for details on all
+diagnostic flags.</p>
 <p>You could do the same using <code>waic</code>. This is
 computationally lighter at the cost of robustness to influential data
 points. The results are almost always practically identical.</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_default</span><span class="op">$</span><span class="va">waic</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">waic</a></span><span class="op">(</span><span class="va">fit_default</span><span class="op">)</span></span>
-<span><span class="va">fit_info</span><span class="op">$</span><span class="va">waic</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">waic</a></span><span class="op">(</span><span class="va">fit_info</span><span class="op">)</span></span>
-<span><span class="va">fit_simple</span><span class="op">$</span><span class="va">waic</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">waic</a></span><span class="op">(</span><span class="va">fit_simple</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">waic_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">waic</a></span><span class="op">(</span><span class="va">fit_default</span><span class="op">)</span></span>
+<span><span class="va">waic_info</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">waic</a></span><span class="op">(</span><span class="va">fit_info</span><span class="op">)</span></span>
+<span><span class="va">waic_simple</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">waic</a></span><span class="op">(</span><span class="va">fit_simple</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">fit_default</span><span class="op">$</span><span class="va">waic</span>, <span class="va">fit_info</span><span class="op">$</span><span class="va">waic</span>, <span class="va">fit_simple</span><span class="op">$</span><span class="va">waic</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   model elpd_diff se_diff p_worse       diag_diff diag_elpd</span></span>
+<span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">waic_default</span>, <span class="va">waic_info</span>, <span class="va">waic_simple</span><span class="op">)</span></span>
+<span><span class="co">##   model elpd_diff se_diff p_worse       diag_diff diag_elpd</span></span>
 <span><span class="co">##  model2       0.0     0.0      NA                          </span></span>
-<span><span class="co">##  model1      -0.4     0.2    0.95 |elpd_diff| &lt; 4          </span></span>
-<span><span class="co">##  model3      -4.1     2.8    0.93</span></span></code></pre>
-<pre><code><span><span class="co">## </span></span>
+<span><span class="co">##  model1      -0.5     0.3    0.97 |elpd_diff| &lt; 4          </span></span>
+<span><span class="co">##  model3      -4.1     2.8    0.93</span></span>
+<span><span class="co">## </span></span>
 <span><span class="co">## Diagnostic flags present.</span></span>
 <span><span class="co">## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span></span>
-<span><span class="co">## or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre>
+<span><span class="co">## or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="stacking">Stacking<a class="anchor" aria-label="anchor" href="#stacking"></a>
@@ -474,12 +478,16 @@ points. The results are almost always practically identical.</p>
 For example, if prediction is your goal, it is often optimal to
 <em>combine</em> models rather than letting the “winner-takes-it-all” do
 all the predicting. This is also called <em>stacking</em>:</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_model_weights.html" class="external-link">stacking_weights</a></span><span class="op">(</span><span class="va">fit_default</span><span class="op">$</span><span class="va">loo</span>, <span class="va">fit_info</span><span class="op">$</span><span class="va">loo</span>, <span class="va">fit_simple</span><span class="op">$</span><span class="va">loo</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_model_weights.html" class="external-link">loo_model_weights</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  default <span class="op">=</span> <span class="va">loo_default</span>, </span>
+<span>  info <span class="op">=</span> <span class="va">loo_info</span>, </span>
+<span>  simple <span class="op">=</span> <span class="va">loo_simple</span></span>
+<span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>This means that once model2 (<code>fit_info</code>) has done it’s
 “predicting”, the others add very little over and above that. If you
 want to learn about how well they predict relative to each other, use
-<code>loo::peudobma_weights()</code> which weights proportional to the
+<code><a href="https://mc-stan.org/loo/reference/loo_model_weights.html" class="external-link">loo::pseudobma_weights()</a></code> which weights proportional to the
 ELPD of each model.</p>
 </div>
 </div>

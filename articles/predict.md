@@ -22,13 +22,13 @@ data = mcp_example_data("demo")
 head(data)
 ```
 
-    ##     response     time
-    ## 1 -3.0084198 91.48060
-    ## 2 -7.8768640 93.70754
-    ## 3 16.3029101 28.61395
-    ## 4 -0.0373553 83.04476
-    ## 5 27.4463185 64.17455
-    ## 6 22.0610004 51.90959
+    ##   response     time
+    ## 1 17.23552 76.33986
+    ## 2 11.35171 83.51711
+    ## 3 28.04995 60.18529
+    ## 4 20.68198 74.72964
+    ## 5 21.21364 85.88256
+    ## 6 22.32282 40.05069
 
 … and model it as three segments, i.e., two change points:
 
@@ -42,45 +42,16 @@ model = list(
 )
 
 # Fit it
-fit = mcp(model, data = data)
+fit = mcp(model, data = data, seed = 42)
 ```
 
-    ## Warning: MultisessionFuture ('future_lapply-1') added, removed, or modified
-    ## connections. A future expression must close any opened connections and must not
-    ## close connections it did not open. Details: 1 connection added ([index=6,
-    ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
-    ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
-    ## replaced (<none>). See also help("future.options", package = "future") [future
-    ## 'future_lapply-1' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-1); on
-    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
-
-    ## Warning: MultisessionFuture ('future_lapply-2') added, removed, or modified
-    ## connections. A future expression must close any opened connections and must not
-    ## close connections it did not open. Details: 1 connection added ([index=6,
-    ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
-    ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
-    ## replaced (<none>). See also help("future.options", package = "future") [future
-    ## 'future_lapply-2' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-2); on
-    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
-
-    ## Warning: MultisessionFuture ('future_lapply-3') added, removed, or modified
-    ## connections. A future expression must close any opened connections and must not
-    ## close connections it did not open. Details: 1 connection added ([index=6,
-    ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
-    ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
-    ## replaced (<none>). See also help("future.options", package = "future") [future
-    ## 'future_lapply-3' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-3); on
-    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
-
-    ## Warning: Some parameters may not have converged well:
-    ##   * ess_bulk or ess_tail < 400: cp_1 and time_2
-    ## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`adapt` or simplifying the model before trusting these results.
-
-This is what the data and the inferred fit looks like with 95% credible
-interval and a 80% prediction interval:
+This is what the data and inferred fit look like with a 95% central
+posterior interval for the expected response and an 80% posterior
+predictive interval:
 
 ``` r
 
+set.seed(42)
 plot(fit, q_fit = TRUE, q_predict = c(0.1, 0.9))
 ```
 
@@ -115,20 +86,20 @@ To get the fitted values for each data point, simply do `fitted(fit)`:
 head(fitted(fit))
 ```
 
-    ##       time    fitted     error      Q2.5       Q97.5
-    ## 1 91.48060 -3.590968 0.7388680 -5.044832 -2.12438624
-    ## 2 93.70754 -4.195168 0.8256646 -5.820004 -2.54570655
-    ## 3 28.61395 10.984224 1.0622749  9.001740 12.96695246
-    ## 4 83.04476 -1.302205 0.6528397 -2.564974 -0.01641898
-    ## 5 64.17455 25.069951 0.8849647 23.366532 26.80580830
-    ## 6 51.90959 20.143706 0.6052964 18.951794 21.32189370
+    ##   response     time   fitted        sd     Q2.5    Q97.5
+    ## 1 17.23552 76.33986 16.95304 0.9425042 15.17680 18.84139
+    ## 2 11.35171 83.51711 16.22386 0.7231217 14.82569 17.64630
+    ## 3 28.04995 60.18529 25.26025 0.8946280 23.51420 26.98299
+    ## 4 20.68198 74.72964 17.11663 1.0216233 15.20838 19.19173
+    ## 5 21.21364 85.88256 15.98354 0.7208332 14.60845 17.42739
+    ## 6 22.32282 40.05069 14.54825 0.6297756 13.25108 15.71204
 
 In general, this output will include:
 
 - A column for each predictor column in the data. Here, `time` is the
   only predictor and you see the values in the same order as in `data`
   (which is copied to `fit$data`). Models with [group-level
-  effects](https://lindeloev.github.io/mcp/articles/varying.md)
+  effects](https://lindeloev.github.io/mcp/articles/group_effects.md)
   additionally include the relevant grouping columns,
   [`binomial()`](https://rdrr.io/r/stats/family.html) models include the
   number of trials, etc.
@@ -139,8 +110,10 @@ In general, this output will include:
   [`tidybayes::add_epred_draws()`](https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html)
   conventions.
 
-- **error:**: The standard error corresponding to `fitted`, i.e.,
-  `diff(fitted + c(-1, 1) * error)` is the 68% credible interval.
+- **sd:** The posterior standard deviation of the expected response
+  corresponding to `fitted`. In
+  [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+  output, `sd` is instead the posterior predictive standard deviation.
 
 - **Q\[some number\]:** The quantiles of the fitted distribution. You
   can set the quantiles using `fitted(fit, probs = c(0.1, 0.5, 0.9))`.
@@ -152,7 +125,7 @@ merely calls
 [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
 behind the scenes.
 
-### Expected values for out-of-sample data
+### Expected responses for out-of-sample data
 
 To predict out-of-sample data, you can simply use the `newdata`
 argument.
@@ -163,11 +136,11 @@ newdata = data.frame(time = c(data$time[1], 25, -20, 200))
 fitted(fit, newdata = newdata)
 ```
 
-    ##       time     fitted     error       Q2.5      Q97.5
-    ## 1  91.4806  -3.590968 0.7388680  -5.044832  -2.124386
-    ## 2  25.0000  10.003976 0.8637372   8.439159  11.798917
-    ## 3 -20.0000   8.986798 0.9194766   7.108671  10.667567
-    ## 4 200.0000 -33.033820 7.6010447 -48.073497 -18.580933
+    ##        time    fitted        sd       Q2.5    Q97.5
+    ## 1  76.33986 16.953037 0.9425042  15.176805 18.84139
+    ## 2  25.00000 10.032579 0.6630444   8.729474 11.31624
+    ## 3 -20.00000 10.032168 0.6635059   8.728337 11.31624
+    ## 4 200.00000  4.389672 8.3266709 -13.882775 18.56525
 
 Note that:
 
@@ -196,26 +169,25 @@ and
 you’ll see that they are quite versatile, taking many different
 arguments. To mention a few, you can set `fitted(fit, dpar = "sigma")`
 to get fitted values for `sigma` [more on modeling
-sigma](https://lindeloev.github.io/mcp/articles/variance.md),
-`prior = TRUE` to predict using only the prior, and `arma = FALSE` to
-exclude AR/MA effects. For group-level effects, use `varying = TRUE`
-(all), `FALSE` (none), `"cp"` or `"predictor"` (a formula part), or an
-exact group-level parameter name.
+sigma](https://lindeloev.github.io/mcp/articles/dpar.md), `prior = TRUE`
+to predict using only the prior, and `arma = FALSE` to exclude AR/MA
+effects. For group-level effects, use `varying = TRUE` (all), `FALSE`
+(none), `"cp"` or `"predictor"` (a formula part), or an exact
+group-level parameter name.
 
 ## Predictions
 
 [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
-is the posterior predictive and it takes exactly the same arguments as
+draws from the posterior predictive distribution and takes almost the
+same arguments as
 [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md).
-This means that you can make predictions for in-sample and out-of-sample
-data as well. As with
-[`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+This supports predictions for in-sample and out-of-sample data.
 [`plot()`](https://lindeloev.github.io/mcp/reference/plot.mcpfit.md)
 uses
 [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
-under the hood to plot prediction intervals. You can see that the values
-correspond to dashed green lines in the plot (the 80% prediction
-interval):
+under the hood for posterior predictive intervals. The values below
+correspond to the dashed green lines in the plot (the 80% posterior
+predictive interval):
 
 ``` r
 
@@ -223,13 +195,13 @@ set.seed(42)
 head(predict(fit, probs = c(0.1, 0.9)))
 ```
 
-    ##       time   predict    error       Q10        Q90
-    ## 1 91.48060 -3.662650 3.765566 -8.395376  1.1901654
-    ## 2 93.70754 -4.218413 3.778896 -9.017438  0.6050123
-    ## 3 28.61395 11.036668 3.818941  6.154950 15.8488343
-    ## 4 83.04476 -1.333384 3.730039 -6.023077  3.4001579
-    ## 5 64.17455 24.966597 3.783374 20.109031 29.8503995
-    ## 6 51.90959 20.154743 3.697339 15.410159 24.8859457
+    ##   response     time  predict       sd       Q10      Q90
+    ## 1 17.23552 76.33986 16.87655 4.044288 11.807985 22.09377
+    ## 2 11.35171 83.51711 16.19702 3.979168 11.139668 21.30783
+    ## 3 28.04995 60.18529 25.32072 4.009801 20.130376 30.38637
+    ## 4 20.68198 74.72964 17.07618 4.037014 11.946629 22.28208
+    ## 5 21.21364 85.88256 15.86910 3.992311 10.900805 21.06792
+    ## 6 22.32282 40.05069 14.56188 3.945864  9.484676 19.61205
 
 Note that
 [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
@@ -275,7 +247,7 @@ this region, so you could’ve just run it without sampling:
 
 ``` r
 
-fit = mcp(model, data = data, sample = FALSE)
+empty = mcp(model, data = data, sample = FALSE)
 ```
 
 ### Step 2: add the unobserved segment(s) and fit
@@ -285,20 +257,29 @@ knowledge:
 
 ``` r
 
-model_forecast = c(fit$model, list(
+model_forecast = c(empty$model, list(
   ~ 1     # intercept (Intercept_4) after cp_3
 ))
 ```
 
 And finally, we extend the list of priors with the two new parameters
-(`time_4` and `cp_3`). It may be helpful to review [the article on
-priors in mcp](https://lindeloev.github.io/mcp/articles/priors.md).
+(`time_4` and `cp_3`). The model needs a predictor value at the end of
+the forecasting horizon so that the future change point remains within
+its supported range. Its response is missing, so it contributes no
+observed outcome. It may be helpful to review [the article on priors in
+mcp](https://lindeloev.github.io/mcp/articles/priors.md).
 
 ``` r
 
-prior_forecast = c(fit$prior, list(
+forecast_horizon = 170
+data_forecast = rbind(data, data.frame(time = forecast_horizon, response = NA))
+observed_start = min(data$time)
+observed_end = max(data$time)
+prior_forecast = c(empty$prior[!names(empty$prior) %in% c("cp_1", "cp_2")], list(
+  cp_1 = paste0("dunif(", observed_start, ", ", observed_end, ")"),
+  cp_2 = paste0("dunif(cp_1, ", observed_end, ")"),
   Intercept_4 = "Intercept_1",  # Return to this value
-  cp_3 = "dnorm(cp_2 + (cp_2 - cp_1), 20) T(max(time), )"  # In the future at the same interval
+  cp_3 = paste0("dnorm(cp_2 + (cp_2 - cp_1), 20) T(", observed_end, ", ", forecast_horizon, ")")  # In the future at the same interval
 ))
 ```
 
@@ -306,68 +287,21 @@ Now let’s fit it:
 
 ``` r
 
-fit_forecast = mcp(model_forecast, data = data, prior = prior_forecast)
+fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast, seed = 42)
 ```
-
-    ## Warning: MultisessionFuture ('future_lapply-1') added, removed, or modified
-    ## connections. A future expression must close any opened connections and must not
-    ## close connections it did not open. Details: 1 connection added ([index=7,
-    ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
-    ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
-    ## replaced (<none>). See also help("future.options", package = "future") [future
-    ## 'future_lapply-1' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-4); on
-    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
-
-    ## Warning: MultisessionFuture ('future_lapply-2') added, removed, or modified
-    ## connections. A future expression must close any opened connections and must not
-    ## close connections it did not open. Details: 1 connection added ([index=7,
-    ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
-    ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
-    ## replaced (<none>). See also help("future.options", package = "future") [future
-    ## 'future_lapply-2' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-5); on
-    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
-    ## Warning: MultisessionFuture ('future_lapply-2') added, removed, or modified
-    ## connections. A future expression must close any opened connections and must not
-    ## close connections it did not open. Details: 1 connection added ([index=7,
-    ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
-    ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
-    ## replaced (<none>). See also help("future.options", package = "future") [future
-    ## 'future_lapply-2' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-5); on
-    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
-
-    ## Warning: MultisessionFuture ('future_lapply-3') added, removed, or modified
-    ## connections. A future expression must close any opened connections and must not
-    ## close connections it did not open. Details: 1 connection added ([index=7,
-    ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
-    ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
-    ## replaced (<none>). See also help("future.options", package = "future") [future
-    ## 'future_lapply-3' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-6); on
-    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
-    ## Warning: MultisessionFuture ('future_lapply-3') added, removed, or modified
-    ## connections. A future expression must close any opened connections and must not
-    ## close connections it did not open. Details: 1 connection added ([index=7,
-    ## description=jags_code, class=textConnection, mode=r, text=text, opened=opened,
-    ## can.read=yes, can.write=no]), 0 connection removed (<none>), 0 connection
-    ## replaced (<none>). See also help("future.options", package = "future") [future
-    ## 'future_lapply-3' (c53bd8ca5dc1e6bdfe82a518e9ff3d77-6); on
-    ## c53bd8ca5dc1e6bdfe82a518e9ff3d77@runnervmvrwv9<8560>]
-
-    ## Warning: Some parameters may not have converged well:
-    ##   * ess_bulk or ess_tail < 400: cp_1
-    ## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`adapt` or simplifying the model before trusting these results.
 
 ### Step 3: predict!
 
-We can go right ahead and compute our 50% and 80% prediction intervals
-at `time = 125`:
+We can now compute 50% and 80% posterior predictive intervals at
+`time = 125`:
 
 ``` r
 
 predict(fit_forecast, newdata = data.frame(time = 125), probs = c(0.1, 0.25, 0.75, 0.9))
 ```
 
-    ##   time    predict    error       Q10       Q25      Q75      Q90
-    ## 1  125 0.04553432 11.47093 -15.85141 -11.52191 9.717135 12.58547
+    ##   time predict       sd      Q10      Q25      Q75      Q90
+    ## 1  125 10.7111 4.425336 5.227146 7.797327 13.62834 16.41037
 
 To really understand what’s going on here, it may be helpful to
 visualize the model. For now, we will have to hack this a bit too,
@@ -375,17 +309,18 @@ manually doing our plot:
 
 ``` r
 
-# Get posterior and posterior predictive "predictions"
+# Get expected-response and posterior predictive draws
 newdata = data.frame(time = 1:170)
 fitted_forecast = fitted(fit_forecast, newdata = newdata, summary = FALSE, ndraws = 50)
 predict_forecast = predict(fit_forecast, newdata = newdata, summary = FALSE)
 
 # Plot it
 library(ggplot2)
+library(tidybayes)
 ggplot(predict_forecast, aes(x = time, y = .prediction)) +
-  # Prediction intervals and line at x = 125
-  stat_summary(fun.data = median_hilow, fun.args = list(conf.int = 0.8), geom = "ribbon", alpha = 0.2) +
-  stat_summary(fun.data = median_hilow, fun.args = list(conf.int = 0.5), geom = "ribbon", alpha = 0.3) +
+  # Posterior predictive intervals and line at x = 125
+  stat_summary(fun.data = median_qi, fun.args = list(.width = 0.8), geom = "ribbon", alpha = 0.2) +
+  stat_summary(fun.data = median_qi, fun.args = list(.width = 0.5), geom = "ribbon", alpha = 0.3) +
   geom_vline(xintercept = 125, lty = 2, lwd = 1) +
 
   # Lines for fitted draws
@@ -395,14 +330,6 @@ ggplot(predict_forecast, aes(x = time, y = .prediction)) +
   geom_point(aes(x = time, y = response), data = data) +
   labs(title = "Predicting with future change points")
 ```
-
-    ## Warning: Computation failed in `stat_summary()`.
-    ## Caused by error in `fun.data()`:
-    ## ! The package "Hmisc" is required.
-
-    ## Warning: Computation failed in `stat_summary()`.
-    ## Caused by error in `fun.data()`:
-    ## ! The package "Hmisc" is required.
 
 ![](predict_files/figure-html/unnamed-chunk-12-1.png)
 

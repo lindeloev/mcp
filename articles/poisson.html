@@ -11,7 +11,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="../katex-auto.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -33,7 +34,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mcp</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.4.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,10 +49,11 @@
 <li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="../articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
 <li class="active nav-item dropdown">
@@ -65,8 +67,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other">
-<li><a class="dropdown-item" href="../articles/packages.html">Comparison to other packages</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+<li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -93,6 +94,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Poisson and negative-binomial change point analysis</h1>
             
+            <h4 data-toc-skip class="date">2026-09-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/poisson.Rmd" class="external-link"><code>vignettes/poisson.Rmd</code></a></small>
       <div class="d-none name"><code>poisson.Rmd</code></div>
@@ -145,29 +147,34 @@ intercepts. This is very simple to do in <code>mcp</code>:</p>
 <span>  <span class="op">~</span> <span class="fl">1</span>  <span class="co"># intercept-only</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span>, par_x <span class="op">=</span> <span class="st">"date"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span>, par_x <span class="op">=</span> <span class="st">"date"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <p>Let us see the two intercepts (lambda in log-units) and the change
 point (in years):</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">=</span> <span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Family: poisson(link = 'log')</span></span>
-<span><span class="co">## Iterations: 9000 from 3 chains.</span></span>
+<pre><code><span><span class="co">## Family: poisson</span></span>
+<span><span class="co">## Links: mu = log</span></span>
+<span><span class="co">## Iterations: 3000 from 3 chains.</span></span>
 <span><span class="co">## Segments:</span></span>
 <span><span class="co">##   1: n ~ 1</span></span>
 <span><span class="co">##   2: n ~ 1 ~ 1</span></span>
 <span><span class="co">## </span></span>
+<span><span class="co">## Change point parameters:</span></span>
+<span><span class="co">##     variable    mean    sd   lower   upper rhat ess_bulk ess_tail</span></span>
+<span><span class="co">##  cp_1        1888.36 3.902 1881.67 1898.25 1.00     1584     1440</span></span>
+<span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
-<span><span class="co">##         name    mean   lower   upper Rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##         cp_1 1888.35 1881.80 1898.64    1     1876     1699</span></span>
-<span><span class="co">##  Intercept_1    1.17    0.98    1.35    1     3833     4958</span></span>
-<span><span class="co">##  Intercept_2    0.48    0.24    0.72    1     4192     4700</span></span></code></pre>
+<span><span class="co">##     variable    mean    sd   lower   upper rhat ess_bulk ess_tail</span></span>
+<span><span class="co">##  Intercept_1    1.17 0.096    0.98    1.36 1.00     3679     4107</span></span>
+<span><span class="co">##  Intercept_2    0.48 0.123    0.22    0.71 1.00     3978     4474</span></span></code></pre>
 <p>We can see that the model ran well with good convergence and a large
 number of effective samples. At a first glance, the change point is
 estimated to lie between the years 1880 and 1895 (approximately).</p>
 <p>Let us take a more direct look, using the default <code>mcp</code>
 plot:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="poisson_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="700"></p>
 <p>It seems to fit the data well, but we can see that the change point
 probability “lumps” around particular data points. Years with a very low
@@ -178,7 +185,8 @@ well-described by our toolbox of parameterized distributions.</p>
 <p>We can see this more clearly if plotting the posteriors. We include a
 traceplot too, just to check convergence visually.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="poisson_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
@@ -186,13 +194,10 @@ traceplot too, just to check convergence visually.</p>
 </h2>
 <p><code><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson()</a></code> defaults to <code>link = 'log'</code>, meaning
 that we have to exponentiate the estimates to get the “raw” Poisson
-parameter
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>λ</mi><annotation encoding="application/x-tex">\lambda</annotation></semantics></math>.
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>λ</mi><annotation encoding="application/x-tex">\lambda</annotation></semantics></math>
-has the nice property of being the mean number of events. So we see that
-the mean number of events in segment 1 is
-<code>exp(result$mean[2])</code> (3.2261634) and it is
-<code>exp(result$mean[3])</code> (1.6143426) for segment 2.</p>
+parameter <span class="math inline">\lambda</span>. <span class="math inline">\lambda</span> has the nice property of being the
+mean number of events. So we see that the mean number of events in
+segment 1 is <code>exp(result$mean[2])</code> (3.2229705) and it is
+<code>exp(result$mean[3])</code> (1.6108874) for segment 2.</p>
 <p>The intercept prior is a Student-t distribution centered on the
 rounded median of <code>log(pmax(n, 0.1))</code>, with scale equal to
 the maximum of 2.5 and its rounded MAD. This follows the robust
@@ -203,11 +208,13 @@ to a representative predictor change. These are proper Student-t priors
 where <code>brms</code> is flat, allowing prior sampling and mild
 regularization of short segments.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">prior</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##             [,1]               </span></span>
-<span><span class="co">## cp_1        "dunif(1851, 1962)"</span></span>
-<span><span class="co">## Intercept_1 "dt(0.7, 2.5, 3)"  </span></span>
-<span><span class="co">## Intercept_2 "dt(0.7, 2.5, 3)"</span></span></code></pre>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 3 × 5</span></span></span>
+<span><span class="co">##   parameter   segment dpar  prior                                          bounds                </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)                           [min(date), max(date)]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> Intercept_1       1 mu    student_t(df = 3, location = 0.7, scale = 2.5) none                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_2       2 mu    student_t(df = 3, location = 0.7, scale = 2.5) none</span></span></code></pre>
 <p>As always, the prior on the change point forces it to occur in the
 observed range. The coefficient priors are deliberately broad defaults,
 so update them with more informed priors for your particular case when
@@ -222,9 +229,9 @@ possible, e.g.:</p>
 <h2 id="negative-binomial-extension">Negative-binomial extension<a class="anchor" aria-label="anchor" href="#negative-binomial-extension"></a>
 </h2>
 <p><code><a href="../reference/negbinomial.html">negbinomial()</a></code> uses log links for both its conditional
-mean <code>mu</code> and overdispersion <code>shape</code>, where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">Var</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mi>y</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>μ</mi><mo>+</mo><msup><mi>μ</mi><mn>2</mn></msup><mi>/</mi><mrow><mi>𝑠</mi><mi>ℎ</mi><mi>𝑎</mi><mi>𝑝</mi><mi>𝑒</mi></mrow></mrow><annotation encoding="application/x-tex">\operatorname{Var}(y) = \mu + \mu^2 / \mathit{shape}</annotation></semantics></math>.
-Its mean priors are the same as for <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson()</a></code>.</p>
+mean <code>mu</code> and overdispersion <code>shape</code>, where <span class="math inline">\operatorname{Var}(y) = \mu + \mu^2 /
+\mathit{shape}</span>. Its mean priors are the same as for
+<code><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson()</a></code>.</p>
 <p>When no <code>shape()</code> formula is supplied, the response-scale
 shape has an inverse-gamma(0.4, 0.3) prior, matching <code>brms</code>.
 It covers both strong overdispersion and the large-shape Poisson limit;
@@ -237,6 +244,37 @@ prior but flat coefficients. Shape regression can be weakly identified,
 so informed priors may be useful.</p>
 </div>
 <div class="section level2">
+<h2 id="modeling-rates-using-offset">Modeling rates using <code>offset()</code><a class="anchor" aria-label="anchor" href="#modeling-rates-using-offset"></a>
+</h2>
+<p>When modeling event counts where exposure (e.g., person-years, area,
+or population size) varies across observations, you can model rates
+<span class="math inline">\lambda = \text{Count} /
+\text{exposure}</span> on the log link by supplying
+<code>offset(log(exposure))</code>:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Example: Event counts over varying observation durations (as here) or population</span></span>
+<span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="va">events</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">year</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">exposure</span><span class="op">)</span><span class="op">)</span>,  <span class="co"># Segment 1</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">year</span>                                  <span class="co"># Segment 2</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>  <span class="co"># implicit link = "log"</span></span></code></pre></div>
+<p>Adding a categorical predictor to the model, you can also model rate
+ratios.</p>
+<blockquote>
+<p><strong>Note on <code>par_x</code> vs. cumulative
+exposure:</strong><br>
+The offset is evaluated per row as local exposure for that observation.
+If <code>par_x</code> represents continuous cumulative time from an
+origin (e.g., <span class="math inline">[0, t_i]</span>), using
+<code>offset(log(par_x))</code> does <strong>not</strong> integrate
+piecewise rates across prior segments; instead, the active segment’s
+rate is applied to the total duration. If your data consists of discrete
+time intervals (bins) of duration <span class="math inline">\Delta
+t_i</span>, using <code>offset(log(delta_t))</code> is valid.</p>
+</blockquote>
+</div>
+<div class="section level2">
 <h2 id="model-comparison">Model comparison<a class="anchor" aria-label="anchor" href="#model-comparison"></a>
 </h2>
 <p>Despite the popularity of this dataset, a question rarely asked is
@@ -244,41 +282,42 @@ what the evidence is that there is a change point at all. Let us fit two
 no-changepoint models and use approximate leave-one-out cross-validation
 to see how the predictive performance of the two models compare.</p>
 <p>A flat model and a one-decay model:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Fit an intercept-only model</span></span>
-<span><span class="va">fit_flat</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">n</span> <span class="op">~</span> <span class="fl">1</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">df</span>, family<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span>, par_x <span class="op">=</span> <span class="st">"date"</span><span class="op">)</span></span>
-<span><span class="va">fit_decay</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">n</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">date</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">fit_flat</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">n</span> <span class="op">~</span> <span class="fl">1</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">df</span>, family<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span>, par_x <span class="op">=</span> <span class="st">"date"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">fit_decay</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">n</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">date</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
 <span></span>
 <span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_flat</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_decay</span><span class="op">)</span></span></code></pre></div>
 <p><img src="poisson_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
 <p>Not we compute and compare the LOO ELPDs:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="va">loo</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span><span class="va">fit_flat</span><span class="op">$</span><span class="va">loo</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_flat</span><span class="op">)</span></span>
-<span><span class="va">fit_decay</span><span class="op">$</span><span class="va">loo</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_decay</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">loo</span>, <span class="va">fit_flat</span><span class="op">$</span><span class="va">loo</span>, <span class="va">fit_decay</span><span class="op">$</span><span class="va">loo</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   model elpd_diff se_diff p_worse diag_diff      diag_elpd</span></span>
-<span><span class="co">##  model1       0.0     0.0      NA           3 k_psis &gt; 0.7</span></span>
-<span><span class="co">##  model3      -6.0     2.9    0.98   N &lt; 100               </span></span>
-<span><span class="co">##  model2      -9.3     3.8    0.99   N &lt; 100</span></span></code></pre>
+<code class="sourceCode R"><span><span class="va">fit_loo</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="va">fit_flat_loo</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_flat</span><span class="op">)</span></span>
+<span><span class="va">fit_decay_loo</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_decay</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">fit_loo</span>, <span class="va">fit_flat_loo</span>, <span class="va">fit_decay_loo</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## </span></span>
 <span><span class="co">## Diagnostic flags present.</span></span>
 <span><span class="co">## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span></span>
 <span><span class="co">## or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre>
+<pre><code><span><span class="co">##   model elpd_diff se_diff p_worse diag_diff      diag_elpd</span></span>
+<span><span class="co">##  model1       0.0     0.0      NA           3 k_psis &gt; 0.7</span></span>
+<span><span class="co">##  model3      -5.1     2.7    0.97   N &lt; 100               </span></span>
+<span><span class="co">##  model2      -9.3     3.8    0.99   N &lt; 100</span></span></code></pre>
 <p>The change point model seems to be preferred with a ratio of around
-1.7 over the decay model and 2.5 over the flat model. Another approach
+1.9 over the decay model and 2.5 over the flat model. Another approach
 is to look at the model weights:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">loo_list</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">loo</span>, <span class="va">fit_flat</span><span class="op">$</span><span class="va">loo</span>, <span class="va">fit_decay</span><span class="op">$</span><span class="va">loo</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">loo_list</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">fit_loo</span>, <span class="va">fit_flat_loo</span>, <span class="va">fit_decay_loo</span><span class="op">)</span></span>
 <span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_model_weights.html" class="external-link">loo_model_weights</a></span><span class="op">(</span><span class="va">loo_list</span>, method<span class="op">=</span><span class="st">"pseudobma"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Method: pseudo-BMA+ with Bayesian bootstrap</span></span>
 <span><span class="co">## ------</span></span>
 <span><span class="co">##        weight</span></span>
-<span><span class="co">## model1 0.962 </span></span>
-<span><span class="co">## model2 0.007 </span></span>
-<span><span class="co">## model3 0.032</span></span></code></pre>
+<span><span class="co">## model1 0.936 </span></span>
+<span><span class="co">## model2 0.008 </span></span>
+<span><span class="co">## model3 0.056</span></span></code></pre>
 <p>Again, unsurprisingly, the change point model is preferred and they
 show the same ranking as implied by <code>loo_compare</code>.</p>
 </div>
@@ -287,7 +326,7 @@ show the same ranking as implied by <code>loo_compare</code>.</p>
 </h2>
 <p>Here is the JAGS code for the full Poisson change-point model
 above.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="va">jags_code</span></span></code></pre></div>
 <pre><code><span><span class="co">## model {</span></span>
 <span><span class="co">##   # mcp helper values</span></span>
@@ -295,7 +334,8 @@ above.</p>
 <span><span class="co">##   cp_2 = CONST2_</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   cp_1 ~ dunif(CONST1_, CONST2_)  # Within the observed change-point span</span></span>
+<span><span class="co">##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)</span></span>
+<span><span class="co">##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point</span></span>
 <span><span class="co">##   Intercept_1 ~ dt(0.7, 1/(2.5)^2, 3)   # Robustly centered log-count intercept with a minimum scale of 2.5</span></span>
 <span><span class="co">##   Intercept_2 ~ dt(0.7, 1/(2.5)^2, 3)   # Robustly centered log-count intercept with a minimum scale of 2.5</span></span>
 <span><span class="co">## </span></span>
@@ -307,11 +347,7 @@ above.</p>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for mu</span></span>
 <span><span class="co">##     link_mu_[i_] =</span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 1: n ~ 1</span></span>
 <span><span class="co">##       (date[i_] &gt;= cp_0) * (date[i_] &lt; cp_1) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + </span></span>
-<span><span class="co">##     </span></span>
-<span><span class="co">##       # Segment 2: n ~ 1 ~ 1</span></span>
 <span><span class="co">##       (date[i_] &gt;= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(Intercept_2)) * 1</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##     # Likelihood and log-density for family = poisson()</span></span>

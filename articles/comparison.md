@@ -2,14 +2,13 @@
 
 There are three main ways of doing model comparison in `mcp`:
 
-- Compare any N `mcp` models using leave-One-Out cross validation
-  (LOO-CV). Check out `loo(fit)`,
-  `loo::loo_compare(fit1$loo, fit2$loo, ...)`, and
-  `loo::loo_model_weights(fit1$loo, fit2$loo, ...)`.
-- Flexible directional tests using `hypothesis(fit, cp_1 > 40)` or
-  `hypothesis(fit, cp_1 > 40 & x_2 > x_1)`.
-- Point Bayes Factors tests using the Savage-Dickey density ratio, e.g.,
-  `hypothesis(fit, cp_1 = 50)` or `hypothesis(fit, x_2 = x_1)`.
+1.  Compare any N `mcp` models using leave-One-Out cross validation
+    (LOO-CV). Check out `loo(fit)`, `loo::loo_compare(loo1, loo2, ...)`,
+    and `loo::loo_model_weights(loo1, loo2, ...)`.
+2.  Flexible directional tests using `hypothesis(fit, cp_1 > 40)` or
+    `hypothesis(fit, cp_1 > 40 & x_2 > x_1)`.
+3.  Point Bayes Factors tests using the Savage-Dickey density ratio,
+    e.g., `hypothesis(fit, cp_1 = 50)` or `hypothesis(fit, x_2 = x_1)`.
 
 ``` r
 
@@ -25,13 +24,11 @@ human has almost perfect recall when presented with 1-4 items (we
 remember them all), and then errors begins intruding when presented with
 more items [(Cowan,
 2001)](https://www.ncbi.nlm.nih.gov/pubmed/11515286). We also know that
-memory is not infinite, so as $`N \rightarrow \infty`$, it has to
-plateau.
+memory is not infinite, so as N \rightarrow \infty, it has to plateau.
 
-In other words, on “easy” trials with $`N <= capacity`$ items to be
-recalled, we expect a constant high binomial rate. When
-$`N > capacity`$, the rate declines. We specify a prior reflecting our a
-priori knowledge.
+In other words, on “easy” trials with N \<= capacity items to be
+recalled, we expect a constant high binomial rate. When N \> capacity,
+the rate declines. We specify a prior reflecting our a priori knowledge.
 
 ``` r
 
@@ -61,6 +58,7 @@ df = data.frame(items = rep(1:9, each = 40), recalled = 1)
 # Get just the model - no fit
 empty = mcp(model, data = df, family = binomial(), sample = FALSE)
 
+set.seed(42)
 df$recalled = empty$simulate(
   empty, df,
   cp_1 = 4,
@@ -88,9 +86,9 @@ later.
 
 ``` r
 
-fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 10000)
-fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 10000)
-fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 10000)
+fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 8000, seed = 42)
+fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 8000, seed = 42)
+fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 8000, seed = 42)
 ```
 
 We plot them and add a few `ggplot2` layers. We jitter the raw data in
@@ -101,6 +99,7 @@ the middle plot, just to give a sense of the densities.
 library(patchwork)
 library(ggplot2)
 
+set.seed(42)
 plot(fit_default) +
   ggtitle("Default") +
 
@@ -116,56 +115,86 @@ plot(fit_default) +
 
 ## Bayes Factors using Savage-Dickey density ratios
 
-You can compute probabilities and Bayes Factors for various hypotheses
-using
+You can compute Bayes Factors for point-null hypotheses using
 [`hypothesis()`](https://lindeloev.github.io/mcp/reference/hypothesis.md).
-For example, let’s test the idea that the change point in recall occurs
-at four items:
+For example, let’s compare a model in which the change point in recall
+is fixed at four items with the fitted continuous model:
 
 ``` r
 
-hypothesis(fit_default, "cp_1 = 4")
+equality = hypothesis(fit_default, "cp_1 = 4")
+## Warning: Savage-Dickey Bayes factor was computed using default prior(s) for `cp_1`. Point Bayes factors are sensitive to the prior distribution; consider specifying informed priors.
+equality
+##     hypothesis      mean     lower    upper prob       BF
+## 1 cp_1 - 4 = 0 0.1515666 -1.641966 1.471894   NA 3.305488
 ```
 
-    ##     hypothesis      mean     lower    upper         p       BF
-    ## 1 cp_1 - 4 = 0 0.1501339 -1.660273 1.511715 0.7798838 3.543054
-
-Let’s unpack:
+Notice that `mcp` issues a warning when computing Savage-Dickey Bayes
+factors on default priors. Because default priors are broad, they
+suppress the prior density denominator and can heavily bias point Bayes
+factors. If you obtained these results with a bespoke, substantive
+prior, you would interpret them as:
 
 - `hypothesis`: For internal convenience, `hypothesis` always
   re-arranges to test against zero.
-- `mean`: When subtracting $`4`$, the posterior distribution is very
-  close, but somewhat dispersed.
+
+- `mean`: When subtracting 4, the posterior distribution is very close,
+  but somewhat dispersed.
+
 - `lower` and `upper`: The interval width defaults to a 95% central
   posterior interval, but you can change it using
   `hypothesis(..., width = 0.8)`.
-- `BF`: The Savage-Dickey density ratio, which is a Bayes Factor. This
-  is the factor by which the density increases from the prior to the
-  posterior at `cp_1 = 4`. A $`BF > 1`$ means that we now believe *more*
-  in this value, $`BF = 1`$ means that our credence to this value is
-  *unchanged*, and $`BF < 1`$ means that we believe *less* in it.
-- `p`: Because `BF` is an odds ratio, `p` can just be computed from it
-  and contains no new information. For example, $`p = 0.95`$ corresponds
-  to $`BF = 19`$.
 
-Because `BF` and `p` depends directly on the prior in Savage-Dickey
-test, it is as much an expression of the prior as the posterior.
-Computing it for the higher-prior-density-at-cp_1=4 `fit_info`, we see a
-substantially lower BF because we already had a substantial prior belief
-in `cp_1 = 4`:
+- `BF`: The Savage-Dickey density ratio in favor of the point-null
+  model. It is the posterior density divided by the prior density at the
+  tested equality (here \theta = \text{cp}\_1 and \theta_0 = 4):
+
+  BF\_{01} = \frac{p(\theta = \theta_0 \mid \text{data})}{p(\theta =
+  \theta_0)}
+
+  where \theta is the tested parameter (or contrast), \theta_0 is the
+  hypothesized point value, p(\theta = \theta_0 \mid \text{data}) is the
+  posterior density, and p(\theta = \theta_0) is the prior density. A BF
+  \> 1 favors the point-null model, BF = 1 favors neither model, and BF
+  \< 1 favors the continuous alternative.
+
+- `prob`: This is `NA` because equality is not an event with positive
+  probability in the continuous model.
+
+Equality tests are limited to named parameters and affine contrasts such
+as `Intercept_1 - Intercept_2 = 0`. Ratios, parameter products,
+exponentials, and other nonlinear expressions are rejected.
+
+To convert a Bayes Factor to a posterior probability for the point-null
+model, supply your own prior probability for that model. For example:
+
+``` r
+
+prior_null_prob = 0.25
+posterior_model_prob = equality$BF * prior_null_prob /
+  (equality$BF * prior_null_prob + 1 - prior_null_prob)
+posterior_model_prob
+```
+
+    ## [1] 0.524224
+
+Because point Bayes factors depend directly on the prior density, they
+require bespoke, substantively justified priors. For example, testing
+`cp_1 = 4` on `fit_info` runs without warnings because an explicit prior
+was provided, yielding a substantially different Bayes factor:
 
 ``` r
 
 hypothesis(fit_info, "cp_1 = 4")
 ```
 
-    ##     hypothesis      mean     lower    upper         p       BF
-    ## 1 cp_1 - 4 = 0 0.2048259 -1.091245 1.355121 0.5690532 1.320472
+    ##     hypothesis      mean      lower    upper prob       BF
+    ## 1 cp_1 - 4 = 0 0.2441428 -0.9953883 1.327558   NA 1.356304
 
-[The Dirichlet prior on change
-points](https://lindeloev.github.io/mcp/articles/priors.md) may be
-better than the default prior when testing point hypotheses on change
-points, but an informed prior beats both.
+The default [uniform order statistics prior on change
+points](https://lindeloev.github.io/mcp/articles/priors.md) has flat
+symmetric properties across the range, but an informed prior should be
+used for point-null hypothesis testing.
 
 ## Directional and combinatoric tests
 
@@ -189,53 +218,56 @@ hypothesis(fit_info, c(
 ))
 ```
 
-    ##                                                       hypothesis     mean
-    ## 1                                                   cp_1 - 3 > 0 1.204826
-    ## 2                                        cp_1 > 3.5 & cp_1 < 4.5       NA
-    ## 3   cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & Intercept_1 > 2.5       NA
-    ## 4 (cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & Intercept_1 < 2.5       NA
-    ##         lower    upper          p        BF
-    ## 1 -0.09124526 2.355121 0.96556667 5.3518633
-    ## 2          NA       NA 0.52523333 1.7930588
-    ## 3          NA       NA 0.29166667 3.6732026
-    ## 4          NA       NA 0.03353333 0.5628376
+    ##                                                       hypothesis     mean       lower    upper       prob        BF
+    ## 1                                                   cp_1 - 3 > 0 1.244143 0.004611652 2.327558 0.97545833 7.3071167
+    ## 2                                        cp_1 > 3.5 & cp_1 < 4.5       NA          NA       NA 0.52466667 1.7725306
+    ## 3   cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & Intercept_1 > 2.5       NA          NA       NA 0.27433333 3.2789646
+    ## 4 (cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & Intercept_1 < 2.5       NA          NA       NA 0.03954167 0.6848186
 
 Comparing the Bayes factors shows which hypothesis received the larger
 update from prior to posterior.
 
 There are more examples [in the documentation for
 `hypothesis`](https://lindeloev.github.io/mcp/reference/hypothesis.md),
-including how to test varying effects.
-
+including how to test group-level deviations and [relative changes
+between
+segments](https://lindeloev.github.io/mcp/articles/formulas.html#relative-changes-between-segments).
 `mcp` evaluates the directional hypothesis for both posterior and prior
-samples. The posterior probability is reported as `p`, and the Bayes
-factor is the posterior odds divided by the prior odds:
+samples. The returned `prob` is the posterior probability by default, or
+the prior probability with `prior = TRUE`; the Bayes factor is the
+posterior odds divided by the prior odds:
+
+BF\_{10} = \frac{P(H \mid \text{data}) \\/\\ \[1 - P(H \mid
+\text{data})\]}{P(H) \\/\\ \[1 - P(H)\]}
+
+where H is the stated directional hypothesis, P(H \mid \text{data}) is
+its posterior probability, and P(H) is its prior probability.
 
 ``` r
 
 hypothesis(fit_info, "cp_1 > 3.5 & cp_1 < 4.5")
 ```
 
-    ##                hypothesis mean lower upper         p       BF
-    ## 1 cp_1 > 3.5 & cp_1 < 4.5   NA    NA    NA 0.5252333 1.793059
+    ##                hypothesis mean lower upper      prob       BF
+    ## 1 cp_1 > 3.5 & cp_1 < 4.5   NA    NA    NA 0.5246667 1.772531
 
 ``` r
 
 # ... is identical to
 prob = function(fit, prior = FALSE) {
-  draws = posterior::as_draws_df(fit, prior = prior)
+  draws = as_draws_df(fit, prior = prior)
   mean(draws$cp_1 > 3.5 & draws$cp_1 < 4.5)
 }
 
-p_post = prob(fit_info, prior = FALSE)
-p_prior = prob(fit_info, prior = TRUE)
-BF = (p_post / (1 - p_post)) / (p_prior / (1 - p_prior))
+post_prob = prob(fit_info, prior = FALSE)
+prior_prob = prob(fit_info, prior = TRUE)
+BF = (post_prob / (1 - post_prob)) / (prior_prob / (1 - prior_prob))
 
-print(c(p = p_post, BF = BF))
+print(c(post_prob = post_prob, BF = BF))
 ```
 
-    ##         p        BF 
-    ## 0.5252333 1.7930588
+    ## post_prob        BF 
+    ## 0.5246667 1.7725306
 
 ## Cross Validation
 
@@ -267,8 +299,8 @@ briefly, it does this:
     (out-of-sample data), i.e., the height of the posterior at that data
     point. For example, if the posterior is a normal distribution, a
     data point near the mean of the posterior has higher density (it is
-    less “surprising”) than if it is at $`z = -3`$. Better predictions
-    means higher densities, i.e., less surprisal.
+    less “surprising”) than if it is at z = -3. Better predictions means
+    higher densities, i.e., less surprisal.
 3.  Repeats step 2 for all observed data and multiplies these densities
     to get the combined predictive densities at unobserved data.
     Multiplying is the same as summing in log-space, and the latter has
@@ -298,16 +330,17 @@ We can look at the loo for one model:
 
 ``` r
 
-loo(fit_info)
+loo_info = loo(fit_info)
+loo_info
 ```
 
     ## 
-    ## Computed from 30000 by 360 log-likelihood matrix.
+    ## Computed from 24000 by 360 log-likelihood matrix.
     ## 
     ##          Estimate   SE
-    ## elpd_loo   -365.7 16.6
-    ## p_loo         2.9  0.3
-    ## looic       731.4 33.1
+    ## elpd_loo   -365.6 16.5
+    ## p_loo         2.7  0.3
+    ## looic       731.2 33.0
     ## ------
     ## MCSE of elpd_loo is 0.0.
     ## MCSE and ESS estimates assume MCMC draws (r_eff in [0.0, 1.0]).
@@ -315,67 +348,56 @@ loo(fit_info)
     ## All Pareto k estimates are good (k < 0.7).
     ## See help('pareto-k-diagnostic') for details.
 
-This is not terribly informative in and of itself.
-$`looic = -2 * elpd_{loo}`$ as is the corresponding SEs, so that is just
-a matter of scale. What ELPD tells you is that the product of the
-densities of all left-out data points is approximately
-$`exp(-350) \sim 10 ^ {-146}`$, a vanishingly small number because we
-multiply many small numbers. This is mentally hard to interpret because
-the density at a given point is only meaningful relative to the full
-distribution. Furthermore, it depends on the size of the dataset (the
-more small densities you multiply, the smaller the ELPD).
+This is not terribly informative in and of itself. looic = -2 \*
+elpd\_{loo} as is the corresponding SEs, so that is just a matter of
+scale. What ELPD tells you is that the product of the densities of all
+left-out data points is approximately exp(-350) \sim 10 ^ {-146}, a
+vanishingly small number because we multiply many small numbers. This is
+mentally hard to interpret because the density at a given point is only
+meaningful relative to the full distribution. Furthermore, it depends on
+the size of the dataset (the more small densities you multiply, the
+smaller the ELPD).
 
 What is interesting is the *relative* differences in these predicted
 densities. We can compare the models using
 [`loo::loo_compare()`](https://mc-stan.org/loo/reference/loo_compare.html).
-We save the results in `fit$loo` to keep things together, which will
-also be useful if you want to `save(fit)` the objects for later use.
+Save the results as separate objects if you want to reuse them or save
+them for later.
 
 ``` r
 
-fit_default$loo = loo(fit_default)
-fit_info$loo = loo(fit_info)
-fit_simple$loo = loo(fit_simple)
+loo_default = loo(fit_default)
+loo_simple = loo(fit_simple)
 
-loo::loo_compare(fit_default$loo, fit_info$loo, fit_simple$loo)
+loo::loo_compare(loo_default, loo_info, loo_simple)
+##   model elpd_diff se_diff p_worse       diag_diff diag_elpd
+##  model2       0.0     0.0      NA                          
+##  model1      -0.5     0.3    0.97 |elpd_diff| < 4          
+##  model3      -4.1     2.8    0.93
+## 
+## Diagnostic flags present.
+## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
+## or https://mc-stan.org/loo/reference/loo-glossary.html.
 ```
-
-    ##   model elpd_diff se_diff p_worse       diag_diff diag_elpd
-    ##  model2       0.0     0.0      NA                          
-    ##  model1      -0.4     0.2    0.95 |elpd_diff| < 4          
-    ##  model3      -4.1     2.8    0.93
-
-    ## 
-    ## Diagnostic flags present.
-    ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
-    ## or https://mc-stan.org/loo/reference/loo-glossary.html.
 
 Aha, so the second model (“model2”, i.e., `fit_info`) passed to
 `loo_compare()` was preferred as the other models had smaller ELPDs. As
 a first rough conclusion, we’ve learned that informed priors and a
 plateau improved out-of-sample predictions.
 
-Again, the absolute number (`elpd_diff`) is hard to relate to. More
-interpretable is the `z' = elpd_diff`/`se_diff` ratio. This is almost
-like a z-score, i.e., a ratio of 1.96 corresponds to 95% probability
-that one model has superior predictive accuracy. This is not an *effect
-size* but more a measure of *certainty* that this is not compatible with
-equal predictive properties. Just like Bayes Factors, a nice property
-over frequentist p-values is that you can quantify the relative evidence
-for and against any pair of models without having to assume one of them
-as null.
+In recent versions of `loo`, `loo_compare()` reports `p_worse` (the
+estimated probability that a model is worse than the best model)
+alongside diagnostic flags (`diag_diff` and `diag_elpd`) based on
+[Sivula et al. (2025)](https://doi.org/10.1214/25-BA1569).
 
-Unfortunately, [Sivula et al. (2020)](https://arxiv.org/abs/2008.10296)
-has shown that the estimation of `se` is underestimated (our
-$`z'`$-score is over-estimated) if (1) the model predictions are very
-similar, (2) the models are misspecified, or (3) for small data. My
-take-away from this paper is that the lesser these issues apply to your
-models, the more $`z'`$ is interpretable as a z-score and
-threshold-inclined people could use, e.g., $`z'= 1.96`$ as a decision
-threshold. To the extent that the issues apply, one may need to move the
-threshold all the way to $`z' = 5`$ cf. [this reply from LOO champion
-Aki Vehtari
-(2017)](https://discourse.mc-stan.org/t/interpreting-elpd-diff-loo-package/1628).
+These diagnostics highlight when the normal approximation underlying
+`se_diff` and `p_worse` is unreliable. For example, `|elpd_diff| < 4`
+flags that models have very similar predictive performance and should be
+treated as practically indistinguishable (as between `model2` and
+`model1` here), while `N < 100` warns of small-sample uncertainty
+underestimation. See the [LOO
+glossary](https://mc-stan.org/loo/reference/loo-glossary.html) or
+`?loo::loo-glossary` for details on all diagnostic flags.
 
 You could do the same using `waic`. This is computationally lighter at
 the cost of robustness to influential data points. The results are
@@ -383,22 +405,20 @@ almost always practically identical.
 
 ``` r
 
-fit_default$waic = waic(fit_default)
-fit_info$waic = waic(fit_info)
-fit_simple$waic = waic(fit_simple)
+waic_default = waic(fit_default)
+waic_info = waic(fit_info)
+waic_simple = waic(fit_simple)
 
-loo::loo_compare(fit_default$waic, fit_info$waic, fit_simple$waic)
+loo::loo_compare(waic_default, waic_info, waic_simple)
+##   model elpd_diff se_diff p_worse       diag_diff diag_elpd
+##  model2       0.0     0.0      NA                          
+##  model1      -0.5     0.3    0.97 |elpd_diff| < 4          
+##  model3      -4.1     2.8    0.93
+## 
+## Diagnostic flags present.
+## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
+## or https://mc-stan.org/loo/reference/loo-glossary.html.
 ```
-
-    ##   model elpd_diff se_diff p_worse       diag_diff diag_elpd
-    ##  model2       0.0     0.0      NA                          
-    ##  model1      -0.4     0.2    0.95 |elpd_diff| < 4          
-    ##  model3      -4.1     2.8    0.93
-
-    ## 
-    ## Diagnostic flags present.
-    ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
-    ## or https://mc-stan.org/loo/reference/loo-glossary.html.
 
 ### Stacking
 
@@ -409,11 +429,15 @@ also called *stacking*:
 
 ``` r
 
-loo::stacking_weights(fit_default$loo, fit_info$loo, fit_simple$loo)
+loo::loo_model_weights(list(
+  default = loo_default, 
+  info = loo_info, 
+  simple = loo_simple
+))
 ```
 
 This means that once model2 (`fit_info`) has done it’s “predicting”, the
 others add very little over and above that. If you want to learn about
 how well they predict relative to each other, use
-`loo::peudobma_weights()` which weights proportional to the ELPD of each
-model.
+[`loo::pseudobma_weights()`](https://mc-stan.org/loo/reference/loo_model_weights.html)
+which weights proportional to the ELPD of each model.

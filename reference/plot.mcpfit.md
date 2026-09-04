@@ -18,8 +18,10 @@ plot(
   rate = TRUE,
   prior = FALSE,
   arma = TRUE,
-  ndraws = 1000,
+  ndraws = 500,
+  scale = "response",
   at = NULL,
+  samples = lifecycle::deprecated(),
   nsamples = lifecycle::deprecated(),
   ...
 )
@@ -34,9 +36,10 @@ plot_dpar(
   cp_dens = TRUE,
   prior = FALSE,
   arma = TRUE,
-  ndraws = 1000,
+  ndraws = 500,
   scale = "response",
   at = NULL,
+  samples = lifecycle::deprecated(),
   nsamples = lifecycle::deprecated(),
   ...
 )
@@ -59,13 +62,12 @@ plot_dpar(
 
   - `FALSE` No quantiles
 
-  - A vector of quantiles. For example, `quantiles = 0.5` plots the
-    median and `quantiles = c(0.2, 0.8)` plots the 20% and 80%
-    quantiles.
+  - A vector of quantiles. For example, `q_fit = 0.5` plots the median
+    and `q_fit = c(0.2, 0.8)` plots the 20% and 80% quantiles.
 
 - q_predict:
 
-  Same as `q_fit`, but for the prediction interval.
+  Same as `q_fit`, but for the posterior predictive interval.
 
 - facet_by:
 
@@ -74,8 +76,8 @@ plot_dpar(
 
 - color_by:
 
-  A character vector naming categorical or varying-effect data columns
-  to color by. If both `color_by` and `facet_by` are omitted, a sole
+  A character vector naming categorical predictor or grouping columns to
+  color by. If both `color_by` and `facet_by` are omitted, a sole
   categorical predictor is colored automatically. Set `color_by = NULL`
   explicitly to disable this. Multiple columns are combined as an
   interaction. Curves and quantiles remain separate for grouping columns
@@ -86,8 +88,8 @@ plot_dpar(
   Positive integer or `FALSE`. The number of fitted lines (draws). It is
   the number of joint posterior draws shown for every curve. FALSE or
   `lines = 0` plots no lines. Note that lines always plot fitted
-  values - not predicted. For prediction intervals, see the `q_predict`
-  argument.
+  values - not predicted. For posterior predictive intervals, see the
+  `q_predict` argument.
 
 - geom_data:
 
@@ -96,20 +98,21 @@ plot_dpar(
 
 - cp_dens:
 
-  TRUE/FALSE. Plot posterior densities of the change point(s)? Currently
-  does not respect `facet_by`. This will be added in the future.
+  TRUE/FALSE. Plot posterior densities of the change point(s)?
 
 - rate:
 
-  Boolean. For binomial models, plot on raw data (`rate = FALSE`) or
-  response divided by number of trials (`rate = TRUE`). If FALSE, linear
-  interpolation on trial number is used to infer trials at a particular
-  x.
+  Logical scalar. For binomial models, return counts (`rate = FALSE`) or
+  the observed or expected success proportion (`rate = TRUE`).
+  Predictions and count-scale fitted values require a trials column in
+  `newdata`. Distributional parameters such as `dpar = "mu"` evaluate
+  the parameter itself (e.g., success probability) and are unaffected by
+  `rate`.
 
 - prior:
 
-  TRUE/FALSE. Plot using prior samples? Useful for
-  `mcp(..., sample = "both")`
+  Logical. Evaluate prior draws (`TRUE`) instead of posterior draws
+  (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
 
 - arma:
 
@@ -120,44 +123,16 @@ plot_dpar(
 
   - `FALSE` Disregard AR and MA effects. For `family = gaussian()`,
     [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
-    uses only `sigma` for residuals.
+    uses only `sigma` for residuals. For posterior evaluation of the
+    original data, retained JAGS imputations supply missing GARMA
+    histories. In models with group-level effects, this currently
+    requires including all such effects (`varying = TRUE`).
 
 - ndraws:
 
   Integer or `NULL`. Number of posterior draws to return/summarise. If
-  there are varying effects, this is the number of draws from each
-  varying group. `NULL` means "all". Ignored if both are `FALSE`. More
-  samples trade speed for accuracy.
-
-- at:
-
-  Named list setting additional continuous predictors to fixed values.
-  They default to their observed means. Passed to
-  [`interpolate_newdata()`](https://lindeloev.github.io/mcp/reference/interpolate_newdata.md).
-
-- nsamples:
-
-  Deprecated. Use `ndraws` instead.
-
-- ...:
-
-  Currently ignored.
-
-- dpar:
-
-  What distributional parameter to evaluate. This is only relevant when
-  `type == "fitted"`. E.g.,
-
-  - `"epred"` (default): Expected value of the full model (or `NULL` for
-    compatibility with brms etc.).
-
-  - `"mu"`: The central tendency which is often the mean after applying
-    the link function.
-
-  - `"sigma"`: The standard deviation of the residuals.
-
-  - `"ar1"`, `"ar2"`, `"ma1"`, `"ma2"`, etc. depending on which AR or MA
-    coefficient you want to evaluate.
+  there are group-level effects, this is the number of draws from each
+  group. `NULL` means "all". More draws trade speed for accuracy.
 
 - scale:
 
@@ -166,9 +141,41 @@ plot_dpar(
   - `"response"`: return on the observed scale, i.e., after applying the
     inverse link function.
 
-  - `"linear"`: return on the parameter scale (where the linear trends
-    are modelled). A linear scale is only applicable when
+  - `"linear"`: return on the linear-predictor (link) scale, where the
+    linear trends are modeled. A linear scale is only applicable when
     `type == "fitted"` and `dpar` is not `NULL`.
+
+- at:
+
+  Named list setting additional continuous predictors to fixed values.
+  They default to their observed means. Family-specific response
+  auxiliaries can be supplied as explicit scalar design values. Passed
+  to
+  [`interpolate_newdata()`](https://lindeloev.github.io/mcp/reference/interpolate_newdata.md).
+
+- samples, nsamples:
+
+  Deprecated. Use `lines` instead.
+
+- ...:
+
+  Must be empty. Reserved for future use.
+
+- dpar:
+
+  What distributional parameter to evaluate. This is only relevant when
+  `type == "fitted"`. E.g.,
+
+  - `"epred"` (default): Expected response from the full model (or
+    `NULL` for compatibility with brms etc.).
+
+  - `"mu"`: The conditional mean (or success probability per trial for
+    binomial/bernoulli models), on the link or response scale.
+
+  - `"sigma"`: The standard deviation of the residuals.
+
+  - `"ar1"`, `"ar2"`, `"ma1"`, `"ma2"`, etc. depending on which AR or MA
+    coefficient you want to evaluate.
 
 ## Value
 
@@ -176,10 +183,10 @@ A ggplot2 object.
 
 ## Details
 
-`plot()` uses `fit$simulate()` on posterior samples. These represent the
-(joint) posterior distribution. Interval summaries use at most 1000
-draws by default; use `ndraws = NULL` to use all draws. Change-point
-densities always use all available draws.
+`plot()` uses `fit$simulate()` on posterior draws. These represent the
+(joint) posterior distribution. Interval summaries are based on CDFs
+computed on `ndraws` draws, and change-point densities are simple
+densities on all available draws.
 
 ## Functions
 
@@ -205,12 +212,12 @@ plot(demo_fit, prior = TRUE)  # The prior
 
 plot(demo_fit, lines = 0, q_fit = TRUE)  # 95% central interval without lines
 
-plot(demo_fit, q_predict = c(0.1, 0.9))  # 80% prediction interval
+plot(demo_fit, q_predict = c(0.1, 0.9))  # 80% posterior predictive interval
 
-plot_dpar(demo_fit, dpar = "sigma", lines = 100)  # The variance parameter on y
+plot_dpar(demo_fit, dpar = "sigma", lines = 100)  # Residual standard deviation on y
 
 
-# Show a panel for each varying effect
+# Show a panel for each group-level effect
 # plot(fit, facet_by = "my_column")
 
 # Customize plots using regular ggplot2

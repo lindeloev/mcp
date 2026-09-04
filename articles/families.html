@@ -11,7 +11,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="../katex-auto.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -33,7 +34,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mcp</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.4.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,10 +49,11 @@
 <li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="../articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
 <li class="active nav-item dropdown">
@@ -65,8 +67,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other">
-<li><a class="dropdown-item" href="../articles/packages.html">Comparison to other packages</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+<li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -93,6 +94,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Families and link functions</h1>
             
+            <h4 data-toc-skip class="date">2026-09-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/families.Rmd" class="external-link"><code>vignettes/families.Rmd</code></a></small>
       <div class="d-none name"><code>families.Rmd</code></div>
@@ -100,121 +102,47 @@
 
     
     
-<p><code>mcp 0.3</code> added support for more response families and
-link functions. For example, you can now do</p>
+<p>To do GLM, you specify a family and link function in the conventional
+way:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian</a></span><span class="op">(</span><span class="st">"log"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="st">"identity"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>This is an ongoing effort and more will be added. This table shows
-the current status:</p>
-<p><img src="https://github.com/lindeloev/mcp/raw/docs/vignettes/_figures/mcp_glm_status.png"></p>
+<p>Currently supported families and link functions include:</p>
 <ul>
-<li>
-<strong>Green:</strong> supported and the default priors are
-unlikely to change.</li>
-<li>
-<strong>Yellow:</strong> supported but the default priors may
-change.</li>
-<li>
-<strong>White:</strong> not currently supported. <a href="https://github.com/lindeloev/mcp/issues" class="external-link">Raise a GitHub issue</a>
-if you need it.</li>
-<li>
-<strong>Red:</strong> impossible or will not be supported.</li>
+<li>Default: <code>gaussian(link = "identity")</code>. Alternatives:
+<code>gaussian(link = "log")</code>
+</li>
+<li>Default: <code>binomial(link = "logit")</code>. Alternatives:
+<code>binomial(link = "probit")</code>,
+<code>binomial(link = "identity")</code>
+</li>
+<li>Default: <code>bernoulli(link = "logit")</code>. Alternatives:
+<code>bernoulli(link = "probit")</code>,
+<code>bernoulli(link = "identity")</code>
+</li>
+<li>Default: <code>poisson(link = "log")</code>. Alternatives:
+<code>poisson(link = "identity")</code>
+</li>
+<li>Default:
+<code>negbinomial(link = "log", link_shape = "log")</code>
+</li>
 </ul>
 <p>See the “GLM” menu above for more details on using GLM with
-<code>mcp</code>.</p>
+<code>mcp</code>. The hardest part about adding new families/links is
+specifying default priors. Read more in <a href="../articles/priors.html">the article on mcp priors</a>.</p>
 <div class="section level2">
-<h2 id="general-remarks">General remarks<a class="anchor" aria-label="anchor" href="#general-remarks"></a>
+<h2 id="on-default-link-functions">On-default link functions<a class="anchor" aria-label="anchor" href="#on-default-link-functions"></a>
 </h2>
-<p>Some link functions are <em>default</em> in GLM for good reasons:
-they have proven computationally convenient and interpretable. When
-using a non-default link function, you risk predicting impossible
-values, at which point <code>mcp</code> will error (as it should) -
-hopefully with informative error messages. For example a
-<code>bernoulli("identity")</code> family with model
-<code>prob ~ 1 + x</code> (i.e., a slope directly on the probability of
-success) can easily exceed 1 or 0 and there are, of course, no such
-thing as probabilities below 0% or above 100%. One way to ameliorate
-such problems is by setting informative <a href="../articles/priors.html">priors</a> (e.g., via truncation) to
-prevent the sampler from visiting illegal combinations of such
+<p>Some link functions are <em>default</em> in GLMs for good reasons:
+they are computationally convenient and interpretable. A non-default
+link can imply impossible values, at which point <code>mcp</code>
+errors. For example, a <code>bernoulli("identity")</code> model
+<code>prob ~ 1 + x</code> places a slope directly on
+<code>P(y = TRUE)</code>, which can easily fall below 0 or exceed 1.
+Informative <a href="../articles/priors.html">priors</a>, for example
+through truncation, can prevent the sampler from visiting invalid
 values.</p>
 <p>In short: think carefully and proceed at your own risk.</p>
-</div>
-<div class="section level2">
-<h2 id="an-example">An example<a class="anchor" aria-label="anchor" href="#an-example"></a>
-</h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lindeloev.github.io/mcp/">mcp</a></span><span class="op">)</span></span>
-<span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="fu">future</span><span class="fu">::</span><span class="va"><a href="https://future.futureverse.org/reference/multisession.html" class="external-link">multisession</a></span>, workers <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span>  <span class="co"># Make the script deterministic</span></span></code></pre></div>
-<p>Reviving the example from the article on <a href="../articles/binomial.html">binomial models in mcp</a>…</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="va">y</span> <span class="op">|</span> <span class="fu">trials</span><span class="op">(</span><span class="va">N</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span>,  <span class="co"># Intercept and slope on P(success)</span></span>
-<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span>                 <span class="co"># Disjoined slope on P(success)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p>we can model it using an <code>identity</code> link function:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">data</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp_example.html">mcp_example_data</a></span><span class="op">(</span><span class="st">"binomial"</span><span class="op">)</span></span>
-<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"identity"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Parallel sampling in progress...</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## Error in update.jags(model, n.iter, ...) : Error in node loglik_[63]</span></span>
-<span><span class="co">## Invalid parent values</span></span></code></pre>
-<p>Oops, the sampler visited impossible values! Likely
-<code>P(success) &lt; 0%</code> or <code>P(success) &gt; 100%</code>.
-Let’s help it along with some more informative priors. For this data and
-model, the main problem is that the slope of the second segment has too
-great posterior probability of surpasses 100% with the default
-<code>mcp</code> priors. So let’s set some more informative priors
-render a long (early <code>cp_1</code>) and steep (high
-<code>x_2</code>) slope unlikely:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">prior</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  x_2 <span class="op">=</span> <span class="st">"dnorm(0, 0.002)"</span>,         <span class="co"># Slope is unlikely to be steep</span></span>
-<span>  cp_1 <span class="op">=</span> <span class="st">"dnorm(30, 10) T(20, )"</span>   <span class="co"># Slope starts not-too-early</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"identity"</span><span class="op">)</span>, prior <span class="op">=</span> <span class="va">prior</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<p><img src="families_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="576"></p>
-<p>Sampling succeeded! This is a bad model of this data. But it
-illustrates the necessary considerations and steps to ameliorate
-problems when going beyond default link functions.</p>
-<p>Because of the identity-link, the regression coefficients are
-interpretable as intercepts and slopes on <code>P(success)</code> in
-contrast to the “usual” log-odds fitted when
-<code>family = binomial(link = "logit")</code>. For example,
-<code>Intercept_1</code> is inferred probability of success at
-<code>x = 0</code> and likewise for <code>Intercept_2</code> at
-<code>x = cp_1</code>.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Family: binomial(link = 'identity')</span></span>
-<span><span class="co">## Iterations: 9000 from 3 chains.</span></span>
-<span><span class="co">## Segments:</span></span>
-<span><span class="co">##   1: y | trials(N) ~ 1 + x</span></span>
-<span><span class="co">##   2: y | trials(N) ~ 1 ~ 1 + x</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## Population-level parameters:</span></span>
-<span><span class="co">##         name match   sim    mean   lower   upper Rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##         cp_1       30.00 4.0e+01 39.0193 42.5232    1     1733     1355</span></span>
-<span><span class="co">##  Intercept_1        1.50 7.8e-01  0.6647  0.8810    1      786     1458</span></span>
-<span><span class="co">##          x_1  &lt;NA&gt;    NA 5.8e-04 -0.0042  0.0053    1      751     1284</span></span>
-<span><span class="co">##  Intercept_2  &lt;NA&gt;    NA 1.7e-01  0.1003  0.2526    1     1563     2753</span></span>
-<span><span class="co">##          x_2       -0.15 4.9e-03  0.0028  0.0071    1     1523     2791</span></span></code></pre>
-</div>
-<div class="section level2">
-<h2 id="specific-remarks">Specific remarks<a class="anchor" aria-label="anchor" href="#specific-remarks"></a>
-</h2>
-<ul>
-<li>The mean
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><mrow><mi>i</mi><mi>n</mi><mi>v</mi><mi>e</mi><mi>r</mi><mi>s</mi><mi>e</mi><mi>_</mi><mi>l</mi><mi>i</mi><mi>n</mi><mi>k</mi></mrow><mo stretchy="false" form="prefix">(</mo><mi>λ</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">1 / {inverse\_link}(\lambda)</annotation></semantics></math>)
-is plotted for <code>family = exponential()</code> and output by
-<code>fit$simulate(..., fype = "fitted")</code>. Multiply by
-<code>log(2)</code> to get the median.</li>
-</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

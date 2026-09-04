@@ -6,30 +6,38 @@ Index variables, iterations, chains, and draws.
 
 ``` r
 # S3 method for class 'mcpfit'
-niterations(object, prior = FALSE, ...)
+niterations(x, ...)
 
 # S3 method for class 'mcpfit'
-nchains(object, prior = FALSE, ...)
+nchains(x, ...)
+
+# S3 method for class 'mcpfit'
+ndraws(x, ...)
+
+ndraws(x)
+
+nchains(x)
+
+niterations(x)
 ```
 
 ## Arguments
 
-- object:
+- x:
 
-  An `mcpfit` object.
-
-- prior:
-
-  TRUE/FALSE. Plot using prior samples? Useful for
-  `mcp(..., sample = "both")`
+  An `mcpfit` object or a posterior draws object.
 
 - ...:
 
-  Currently ignored.
+  Must be empty. Reserved for future use.
+
+## Value
+
+An integer count of iterations, chains, or draws.
 
 ## Functions
 
-- `niterations(mcpfit)`: Total number of iterations of an `mcpfit`
+- `niterations(mcpfit)`: Number of iterations per chain of an `mcpfit`
   object.
 
 - `nchains(mcpfit)`: Number of chains of an `mcpfit` object.
@@ -38,7 +46,7 @@ nchains(object, prior = FALSE, ...)
 
 ``` r
 niterations(demo_fit)
-#> [1] 3000
-nchains(demo_fit, prior = TRUE)
-#> [1] 3
+#> [1] 500
+nchains(as_draws(demo_fit, prior = TRUE))
+#> [1] 2
 ```

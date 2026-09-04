@@ -32,17 +32,17 @@ plot_pars(
 
   - Vector of parameter names.
 
-  - `"population"` plots all population parameters.
+  - `"population"` plots all population-level parameters.
 
-  - `"varying"` plots all varying effects. To plot a particular varying
-    effect, use `regex_pars = "^name"`.
+  - `"group"` plots all group-level deviations (random effects). To plot
+    a particular group-level effect, use `regex_pars = "^name"`.
 
 - regex_pars:
 
   Vector of regular expressions. This will typically just be the
   beginning of the parameter name(s), i.e., "^cp\_" plots all change
-  points, "^my_varying" plots all levels of a particular varying effect,
-  and "^cp\_\|^my_varying" plots both.
+  points, "^my_group_effect" plots all levels of a particular
+  group-level effect, and "^cp\_\|^my_group_effect" plots both.
 
 - type:
 
@@ -59,13 +59,14 @@ plot_pars(
 
 - prior:
 
-  TRUE/FALSE. Plot using prior samples? Useful for
-  `mcp(..., sample = "both")`
+  Logical. Plot prior draws (`TRUE`) instead of posterior draws
+  (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
 
 - nvariables:
 
-  Positive integer. Maximum number of parameters plotted per page. The
-  default of 5 follows `brms::plot.brmsfit()`.
+  Positive integer or `NULL` / `Inf`. Maximum number of parameters
+  plotted per page. Set to `NULL` or `Inf` to plot all parameters on a
+  single page. The default of 5 follows `brms::plot.brmsfit()`.
 
 - ask:
 
@@ -80,14 +81,14 @@ multiple pages, an invisible list of ggplot2 objects.
 ## Details
 
 For other `type`, it calls `bayesplot::mcmc_type()`. Use these directly
-on `as.mcmc(fit)` or `as_draws(fit)` if you want finer control of
-plotting, e.g., `bayesplot::mcmc_dens(as.mcmc(fit))`. There are also a
-number of useful plots in the coda package, i.e.,
-`coda::gelman.plot(as.mcmc(fit))` and
-`coda::crosscorr.plot(as.mcmc(fit))`
+on `coda::as.mcmc(fit)` or `as_draws(fit)` if you want finer control of
+plotting, e.g., `bayesplot::mcmc_dens(coda::as.mcmc(fit))`. There are
+also a number of useful plots in the coda package, i.e.,
+`coda::gelman.plot(coda::as.mcmc(fit))` and
+`coda::crosscorr.plot(coda::as.mcmc(fit))`
 
 In any case, if you see a few erratic lines or parameter estimates, this
-is a sign that you may want to increase argument 'adapt' and 'iter' in
+is a sign that you may want to increase argument 'warmup' and 'iter' in
 [`mcp`](https://lindeloev.github.io/mcp/reference/mcp.md).
 
 Up to `nvariables` parameters are shown on each page. Multi-page plots
@@ -110,25 +111,32 @@ plot_pars(demo_fit)
 
 
 
-if (FALSE) { # \dontrun{
+# \donttest{
 # More options
 plot_pars(demo_fit, regex_pars = "^cp_")  # Plot only change points
+
 plot_pars(demo_fit, pars = c("Intercept_3", "time_3"))  # Plot these parameters
-plot_pars(demo_fit, type = c("trace", "violin"))  # Combine plots
+
+plot_pars(demo_fit, type = c("trace", "violin"), regex_pars = "^cp_")  # Combine plots
+
 # Some plots only take pairs. hex is good to assess identifiability
 plot_pars(demo_fit, type = "hex", pars = c("cp_1", "time_2"))
 
-# Visualize the priors:
-plot_pars(demo_fit, prior = TRUE)
 
-# Useful for varying effects:
-# plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all varying effects
-# plot_pars(my_fit, regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying
-# pages = plot_pars(my_fit, pars = "varying", ask = FALSE)
+# Visualize the priors:
+plot_pars(demo_fit, prior = TRUE, regex_pars = "^cp_")
+
+
+# Useful for group-level effects:
+# plot_pars(my_fit, pars = "group", ncol = 3)  # plot all group-level deviations
+# plot_pars(my_fit, regex_pars = "my_group_effect", ncol = 3)  # one group-level effect
+# pages = plot_pars(my_fit, pars = "group", ask = FALSE)
 # pages[[1]]  # Inspect or customize one page
 
 # Customize multi-column ggplots using "*" instead of "+" (patchwork)
 library(ggplot2)
-plot_pars(demo_fit, type = c("trace", "dens_overlay")) * theme_bw(10)
-} # }
+library(patchwork)
+plot_pars(demo_fit, regex_pars = "cp") & theme_gray(15)
+
+# }
 ```

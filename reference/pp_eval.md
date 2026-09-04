@@ -17,10 +17,13 @@ pp_eval(
   varying = TRUE,
   arma = TRUE,
   ndraws = NULL,
-  samples_format = "tidy",
+  draws_format = "tidy",
   scale = "response",
   .include_fitted = FALSE,
-  nsamples = lifecycle::deprecated()
+  .include_dpars = FALSE,
+  .garma_replicate = FALSE,
+  nsamples = lifecycle::deprecated(),
+  samples_format = lifecycle::deprecated()
 )
 ```
 
@@ -33,8 +36,37 @@ pp_eval(
 - newdata:
 
   A `tibble` or a `data.frame` containing predictors in the model.
-  Weighted Gaussian predictions and log-likelihoods also require the
-  weights column. If `NULL` (default), the original data is used.
+
+  - If `NULL` (default), the original data is used.
+
+  - For models with [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()`:
+    [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    [`residuals()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    [`log_lik()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    and posterior
+    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+    condition on the response history, so `newdata` must include the
+    response. For
+    [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    and
+    [`residuals()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    missing response histories are supported only in the original fitted
+    data, using retained posterior imputations. Prior
+    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+    and
+    [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
+    generate fresh response series recursively, so their `newdata` need
+    only contain predictors.
+    [`log_lik()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+    is unavailable when a missing response enters a later observed
+    history.
+
+  - For models with `y | weights()`: Require the weights column except
+    for
+    [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+    and
+    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md).
 
 - summary:
 
@@ -44,9 +76,9 @@ pp_eval(
 
   One of:
 
-  - `"fitted"`: return expected values. When `dpar` is the name of a
-    dpar (e.g., `"mu"` or `"sigma"`), the expected value for just this
-    dpar is returned. See also
+  - `"fitted"`: return the expected response. When `dpar` names a
+    distributional parameter (e.g., `"mu"` or `"sigma"`), that parameter
+    is returned instead. See also
     [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md).
 
   - `"predict"`: return predicted values (e.g.,
@@ -57,7 +89,7 @@ pp_eval(
   - `"residuals"`: observed y-values minus the fitted values. See also
     [`residuals()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md).
 
-  - `"loglik"`: return the log-likelihood for each sample for each data
+  - `"loglik"`: return the log-likelihood for each draw for each data
     point. See also
     [`log_lik()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md).
     Requires `scale = "response"`.
@@ -68,26 +100,28 @@ pp_eval(
 
 - rate:
 
-  Boolean. For binomial models, plot on raw data (`rate = FALSE`) or
-  response divided by number of trials (`rate = TRUE`). If FALSE, linear
-  interpolation on trial number is used to infer trials at a particular
-  x.
+  Logical scalar. For binomial models, return counts (`rate = FALSE`) or
+  the observed or expected success proportion (`rate = TRUE`).
+  Predictions and count-scale fitted values require a trials column in
+  `newdata`. Distributional parameters such as `dpar = "mu"` evaluate
+  the parameter itself (e.g., success probability) and are unaffected by
+  `rate`.
 
 - prior:
 
-  TRUE/FALSE. Plot using prior samples? Useful for
-  `mcp(..., sample = "both")`
+  Logical. Evaluate prior draws (`TRUE`) instead of posterior draws
+  (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
 
 - dpar:
 
   What distributional parameter to evaluate. This is only relevant when
   `type == "fitted"`. E.g.,
 
-  - `"epred"` (default): Expected value of the full model (or `NULL` for
-    compatibility with brms etc.).
+  - `"epred"` (default): Expected response from the full model (or
+    `NULL` for compatibility with brms etc.).
 
-  - `"mu"`: The central tendency which is often the mean after applying
-    the link function.
+  - `"mu"`: The conditional mean (or success probability per trial for
+    binomial/bernoulli models), on the link or response scale.
 
   - `"sigma"`: The standard deviation of the residuals.
 
@@ -96,17 +130,17 @@ pp_eval(
 
 - varying:
 
-  One of:
+  Group-level effects. One of:
 
-  - `TRUE` All varying effects (`fit$pars$varying`).
+  - `TRUE` All group-level deviations.
 
-  - `FALSE` No varying effects ([`c()`](https://rdrr.io/r/base/c.html)).
+  - `FALSE` No group-level deviations
+    ([`c()`](https://rdrr.io/r/base/c.html)).
 
-  - `"cp"` or `"predictor"`: All varying effects belonging to that part
-    of the model.
+  - `"cp"` or `"predictor"`: All group-level deviations belonging to
+    that part of the model.
 
-  - Character vector: Only include specified varying parameters - see
-    `fit$pars$varying`.
+  - Character vector: Only include specified group-level parameters.
 
 - arma:
 
@@ -117,19 +151,27 @@ pp_eval(
 
   - `FALSE` Disregard AR and MA effects. For `family = gaussian()`,
     [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
-    uses only `sigma` for residuals.
+    uses only `sigma` for residuals. For posterior evaluation of the
+    original data, retained JAGS imputations supply missing GARMA
+    histories. In models with group-level effects, this currently
+    requires including all such effects (`varying = TRUE`).
 
 - ndraws:
 
   Integer or `NULL`. Number of posterior draws to return/summarise. If
-  there are varying effects, this is the number of draws from each
-  varying group. `NULL` means "all". Ignored if both are `FALSE`. More
-  samples trade speed for accuracy.
+  there are group-level effects, this is the number of draws from each
+  group. `NULL` means "all". More draws trade speed for accuracy.
 
-- samples_format:
+- draws_format:
 
   One of "tidy" or "matrix". Controls the output format when
-  `summary == FALSE`. See more under "value"
+  `summary == FALSE` (for
+  [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+  [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+  and
+  [`log_lik()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)).
+  [`residuals()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+  always returns tidy output.
 
 - scale:
 
@@ -138,32 +180,50 @@ pp_eval(
   - `"response"`: return on the observed scale, i.e., after applying the
     inverse link function.
 
-  - `"linear"`: return on the parameter scale (where the linear trends
-    are modelled). A linear scale is only applicable when
+  - `"linear"`: return on the linear-predictor (link) scale, where the
+    linear trends are modeled. A linear scale is only applicable when
     `type == "fitted"` and `dpar` is not `NULL`.
 
 - .include_fitted:
 
   Internal. Include fitted values with unsummarised predictions.
 
+- .include_dpars:
+
+  Internal. Include distributional parameters and response data as
+  attributes with unsummarised predictions.
+
+- .garma_replicate:
+
+  Internal. For GARMA predictions, generate each response history
+  recursively instead of conditioning on observed responses.
+
 - nsamples:
 
   Deprecated. Use `ndraws` instead.
 
+- samples_format:
+
+  Deprecated. Use `draws_format` instead. See more under "value"
+
 ## Value
 
-- If `summary = TRUE`: A `tibble` with the posterior mean for each row
-  in `newdata`, If `newdata` is `NULL`, the data in `fit$data` is used.
+- If `summary = TRUE`: A data frame with the draw mean and SD (`sd`) for
+  each row in `newdata`. With posterior draws (the default), `sd` is the
+  posterior predictive SD for `type = "predict"` and the posterior SD of
+  the evaluated quantity otherwise. With `prior = TRUE`, these are the
+  analogous prior summaries. If `newdata` is `NULL`, the data in
+  `fit$data` is used.
 
-- If `summary = FALSE` and `samples_format = "tidy"`: A `tidybayes`
+- If `summary = FALSE` and `draws_format = "tidy"`: A `tidybayes`
   `tibble` with all the posterior draws (`Nd`) evaluated at each row in
-  `newdata` (`Nn`), i.e., with `Nd x Nn` rows. If there are varying
+  `newdata` (`Nn`), i.e., with `Nd x Nn` rows. If there are group-level
   effects, the returned data is expanded with the relevant levels for
   each row.
 
   The return columns are:
 
-  - Predictors from `newdata`.
+  - Predictors from `newdata`, plus its response column when supplied.
 
   - Draw descriptors: ".chain", ".iteration", ".draw" (see the
     `posterior` and `tidybayes` packages), and `data_row`, the row
@@ -174,7 +234,7 @@ pp_eval(
   - The estimate. Either ".epred", ".prediction", ".residual", or
     ".loglik" (matching tidybayes/ggdist conventions).
 
-- If `summary = FALSE` and `samples_format = "matrix"`: An `N_draws` X
+- If `summary = FALSE` and `draws_format = "matrix"`: An `N_draws` X
   `nrows(newdata)` matrix with fitted/predicted values (depending on
   `type`). This format is used by `brms` and it's useful as `yrep` in
   `bayesplot::ppc_*` functions.

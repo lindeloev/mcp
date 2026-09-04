@@ -1,11 +1,11 @@
-# Get example models and data
+# Run example models
 
-Get example models and data
+Run example models
 
 ## Usage
 
 ``` r
-mcp_example(name, sample = "post", warn = FALSE, plot = TRUE)
+mcp_example(name, sample = "post", plot = TRUE)
 
 mcp_example_data(name)
 ```
@@ -19,24 +19,28 @@ mcp_example_data(name)
   - `"demo"`: Two change points between intercepts and joined/disjoined
     slopes.
 
-  - `"ar"`: One change point in autoregressive residuals.
-
-  - `"binomial"`: Binomial with two change points. Much like `"demo"` on
-    a logit scale.
-
-  - `"group"`: Group-level (random) intercepts and factor effects across
-    a change point.
-
   - `"intercepts"`: An intercept-only change point.
 
   - `"multiple"`: Multiple regression with categorical predictors and
     interactions.
 
-  - `"quadratic"`: A change point to a quadratic segment.
+  - `"binomial"`: Binomial with two change points. Much like `"demo"` on
+    a logit scale.
 
-  - `"varying"`: Varying / hierarchical change points.
+  - `"group_mu"`: Group-level predictor deviations (random
+    intercepts/slopes) across a change point.
 
-  - `"variance"`: A change in variance, including a variance slope.
+  - `"group_cp"`: Group-level change-point deviations (random effects).
+
+  - `"missing"`: Missing data imputation (NAs in response variable y).
+
+  - `"quadratic"`: A change point to a quadratic segment where there is
+    no data.
+
+  - `"ar"`: One change point in autoregressive residuals (the `ar1`
+    dpar)
+
+  - `"sigma"`: A change in "sigma" dpar, including a slope on sigma.
 
 - sample:
 
@@ -54,22 +58,16 @@ mcp_example_data(name)
 
   - `"none"` or `FALSE`: Do not sample. Returns an mcpfit object without
     sample. This is useful if you only want to check prior strings
-    (fit\$prior), the JAGS model (fit\$jags_code), etc.
-
-- warn:
-
-  Logical. Warn about non-convergence (`Rhat > 1.01` or `ESS < 400`)
-  after sampling? Defaults to `TRUE`.
+    (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
 
 - plot:
 
-  Logical. Plot the fitted example? No plot is produced when
-  `sample = FALSE`.
+  Logical. Plot the fitted example? Requires sample != "none".
 
 ## Value
 
-An `mcpfit`, enriched with a `$call` field. It contains the code to
-reproduce the data and the fit.
+An `mcpfit`, enriched with an `$example_code` field. It contains the
+code to reproduce the data and the fit.
 
 ## Functions
 
@@ -84,19 +82,8 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 ``` r
 # \donttest{
 fit = mcp_example("multiple")
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 120
-#>    Unobserved stochastic nodes: 15
-#>    Total graph size: 4259
-#> 
-#> Initializing model
-#> 
-#> Finished sampling in 4.7 seconds
 
-print(fit$call) # See how the data was simulated
+print(fit$example_code) # See how the data was simulated
 #> # Define model
 #> model = list(
 #>   y ~ 1 + x:group + z,
@@ -114,8 +101,8 @@ print(fit$call) # See how the data was simulated
 #> )
 #> empty = mcp(model, data, sample = FALSE, par_x = 'x')
 #> data$y = empty$simulate(empty, data,
-#>   cp_1 = 70,
-#>   cp_2 = 100,
+#>   cp_1 = 69.5,
+#>   cp_2 = 99.5,
 #> 
 #>   Intercept_1 = 10,
 #>   z_1 = 0.2,
@@ -136,7 +123,7 @@ print(fit$call) # See how the data was simulated
 #> )
 #> 
 #> # Run sampling
-#> fit = mcp(model, data, par_x = 'x', sample = sample, warn = warn, seed = 42)
+#> fit = mcp(model, data, par_x = 'x', iter = 10000, sample = sample, seed = 42)
 #> 
 #> # Illustrative plot
 #> if (plot) {
@@ -145,34 +132,35 @@ print(fit$call) # See how the data was simulated
 #> }
 
 # Without sampling
-empty = mcp_example("binomial", sample = FALSE, plot = FALSE)
+empty = mcp_example("binomial", sample = "none", plot = FALSE)
 print(empty)
-#> Family: binomial(link = 'logit')
+#> Family: binomial
+#> Links: mu = logit
 #> Segments:
 #>   1: y | trials(N) ~ 1
 #>   2: y | trials(N) ~ 1 ~ 0 + x
 #>   3: y | trials(N) ~ 1 ~ 1 + x
 #> 
-#> No samples. Nothing to summarise.
-print(empty$call)
+#> No draws. Nothing to summarise.
+print(empty$example_code)
 #> # Define model
 #> model = list(
-#>   y | trials(N) ~ 1,  # constant rate
-#>   ~ 0 + x,  # joined changing rate
-#>   ~ 1 + x  # disjoined changing rate
+#>   y | trials(N) ~ 1,  # constant success probability
+#>   ~ 0 + x,  # joined changing success probability
+#>   ~ 1 + x  # disjoined changing success probability
 #> )
 #> 
 #> # Simulate data
 #> set.seed(42)
 #> data = data.frame(
 #>   x = 1:100,
-#>   N = base::sample(10, 100, replace=TRUE),
+#>   N = base::sample(15, 25, replace=TRUE),
 #>   y = 0.  # Numeric placeholder that is valid for every sampled trial count.
 #> )
 #> empty = mcp(model, data, family = binomial(), sample = FALSE)
 #> data$y = empty$simulate(empty, data,
-#>   cp_1 = 30,
-#>   cp_2 = 70,
+#>   cp_1 = 29.5,
+#>   cp_2 = 69.5,
 #>   Intercept_1 = 1.5,
 #>   Intercept_3 = -1,
 #>   x_2 = -0.15,
@@ -180,7 +168,7 @@ print(empty$call)
 #> )
 #> 
 #> # Run sampling
-#> fit = mcp(model, data, family = binomial(), sample = sample, warn = warn, seed = 42)
+#> fit = mcp(model, data, family = binomial(), iter = 4000, sample = sample, seed = 42)
 #> 
 #> # Illustrative plot
 #> if (plot) {
@@ -189,21 +177,7 @@ print(empty$call)
 #> }
 
 # Now sample this model
-fit2 = mcp(empty$model, empty$data, family = empty$family)
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 100
-#>    Unobserved stochastic nodes: 6
-#>    Total graph size: 2229
-#> 
-#> Initializing model
-#> 
-#> Finished sampling in 2.2 seconds
-#> Warning: Some parameters may not have converged well:
-#>   * ess_bulk or ess_tail < 400: cp_2
-#> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`adapt` or simplifying the model before trusting these results.
+fit2 = mcp(empty$model, empty$data, family = empty$family, warmup = 2000, iter = 6000, seed = 42)
 plot(fit2)
 
 # }
