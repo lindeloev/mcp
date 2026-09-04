@@ -127,19 +127,23 @@ inherited and may be omitted. A one-sided formula such as
 <code>~ 1</code>, so it is shorthand for <code>y ~ 1 ~ 1 + x</code>.
 This is familiar from
 <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>/<code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code>/<code>brms::brm()</code>.</p>
-<p><code>mcp</code> adds two novelties to the modeling syntax to support
-segmented regression:</p>
+<p><code>mcp</code> model consist of three parts:</p>
 <ol style="list-style-type: decimal">
-<li>The “cp” part which can be <code>~ 1</code> or
-<code>~ 1 + (1|group)</code>. Read more about <a href="../articles/group_effects.html">group-level (random) change-point
+<li>The response part is defined in segment 1. E.g. <code>y ~ ...</code>
+or <code>y | weights(w) ~ ...</code> or
+<code>y | trials(N) + weights(w) ~ ...</code> for binomial models,
+etc..</li>
+<li>The “cp” part specifies change point modeling. It can be
+<code>1 ~ ...</code> for population-level or
+<code>1 + (1|group) ~ ...</code> for <a href="../articles/group_effects.html">group-level (random) change-point
 deviations</a>.</li>
-<li>The predictor part can contain distributional regression as terms,
-such as <code>sigma([formula here])</code> and <code>shape()</code> (<a href="../articles/dpar.html">read more</a>). Similarly for time-series
-such as <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> and <code>ma()</code> (<a href="../articles/arma.html">read more</a>).</li>
-<li>The response part can contain auxiliaries after <code>|</code>
-combined with <code>+</code>, such as <code>y | weights(w)</code> for
-observation log-likelihood weights (supported across all families) and
-<code>y | trials(N) + weights(w)</code> for binomial models.</li>
+<li>The predictor part is regular <code>~ 1 + x</code> or
+<code>0 + x:condition + z + (1|id)</code>. Such regression models can
+also be applied to distributional parameters using
+<code>+ sigma(1 + x)</code> or <code>shape(0 + condition)</code> (<a href="../articles/dpar.html">read more</a>). The same applies to
+time-series such as <code>ar(1)</code> for intercept on first-order
+autogregression and <code>ma(2, 1 + x)</code> for second-order MA
+regression (<a href="../articles/arma.html">read more</a>).</li>
 </ol>
 <p><code>mcp</code> is heavily inspired by <code>brms</code> which again
 is inspired by <a href="https://cran.r-project.org/web/packages/lme4/index.html" class="external-link"><code>lme4::lmer()</code></a>
@@ -159,18 +163,18 @@ model:</p>
 <span></span>
 <span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="co"># Intercept_1</span></span>
-<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span>,</span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span>,  <span class="co"># Plateau in this segment</span></span>
 <span>  </span>
 <span>  <span class="co"># cp_1, cp_1_sd, cp_1_id, year_2</span></span>
-<span>  <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">year</span>,</span>
+<span>  <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">year</span>,  <span class="co"># Joined (~ 0) group-level change point with slope on year</span></span>
 <span>  </span>
 <span>  <span class="co"># cp_2, cp_2_sd, cp_2_id, Intercept_3, year_3</span></span>
-<span>  <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">year</span></span>
+<span>  <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">year</span>  <span class="co"># Same, but disjoined (~ 1) and with a new slope</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Interpret, but do not sample.</span></span>
 <span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, year <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/mcp_pars.html">mcp_pars</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/mcp_pars.html">mcp_pars</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>  <span class="co"># See model parameters</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 11 × 9</span></span></span>
 <span><span class="co">##    name        part    scope role  segment dpar  order group_col population_name</span></span>
 <span><span class="co">##    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          </span></span>

@@ -298,7 +298,10 @@ head(residuals(demo_fit))  # Residuals for each row of demo_fit$data
 #> 5 21.21364 85.88256  5.2577362 0.7234506  3.8329871  6.594805
 #> 6 22.32282 40.05069  7.7602636 0.6387450  6.5660303  9.032439
 log_lik(demo_fit)[1:3, 1:3]  # Log-likelihood at each demo_fit$data
-#> Error in family_log_lik(y, dpars, data): could not find function "family_log_lik"
+#>              1         2         3
+#> [1,] -2.451191 -3.099468 -2.613516
+#> [2,] -2.246574 -2.937759 -2.546826
+#> [3,] -2.251453 -2.882468 -2.666775
 
 # All of the above take a range of arguments. E.g.,:
 # \donttest{

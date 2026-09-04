@@ -26,22 +26,24 @@ change-point formula `~ 1`, so it is shorthand for `y ~ 1 ~ 1 + x`. This
 is familiar from
 [`lm()`](https://rdrr.io/r/stats/lm.html)/[`glm()`](https://rdrr.io/r/stats/glm.html)/`brms::brm()`.
 
-`mcp` adds two novelties to the modeling syntax to support segmented
-regression:
+`mcp` model consist of three parts:
 
-1.  The “cp” part which can be `~ 1` or `~ 1 + (1|group)`. Read more
-    about [group-level (random) change-point
+1.  The response part is defined in segment 1. E.g. `y ~ ...` or
+    `y | weights(w) ~ ...` or `y | trials(N) + weights(w) ~ ...` for
+    binomial models, etc..
+2.  The “cp” part specifies change point modeling. It can be `1 ~ ...`
+    for population-level or `1 + (1|group) ~ ...` for [group-level
+    (random) change-point
     deviations](https://lindeloev.github.io/mcp/dev/articles/group_effects.md).
-2.  The predictor part can contain distributional regression as terms,
-    such as `sigma([formula here])` and `shape()` ([read
-    more](https://lindeloev.github.io/mcp/dev/articles/dpar.md)).
-    Similarly for time-series such as
-    [`ar()`](https://rdrr.io/r/stats/ar.html) and `ma()` ([read
+3.  The predictor part is regular `~ 1 + x` or
+    `0 + x:condition + z + (1|id)`. Such regression models can also be
+    applied to distributional parameters using `+ sigma(1 + x)` or
+    `shape(0 + condition)` ([read
+    more](https://lindeloev.github.io/mcp/dev/articles/dpar.md)). The
+    same applies to time-series such as `ar(1)` for intercept on
+    first-order autogregression and `ma(2, 1 + x)` for second-order MA
+    regression ([read
     more](https://lindeloev.github.io/mcp/dev/articles/arma.md)).
-3.  The response part can contain auxiliaries after `|` combined with
-    `+`, such as `y | weights(w)` for observation log-likelihood weights
-    (supported across all families) and `y | trials(N) + weights(w)` for
-    binomial models.
 
 `mcp` is heavily inspired by `brms` which again is inspired by
 [`lme4::lmer()`](https://cran.r-project.org/web/packages/lme4/index.html)
@@ -66,18 +68,18 @@ library(mcp)
 
 model = list(
   # Intercept_1
-  y ~ 1,
+  y ~ 1,  # Plateau in this segment
   
   # cp_1, cp_1_sd, cp_1_id, year_2
-  1 + (1|id) ~ 0 + year,
+  1 + (1|id) ~ 0 + year,  # Joined (~ 0) group-level change point with slope on year
   
   # cp_2, cp_2_sd, cp_2_id, Intercept_3, year_3
-  1 + (1|id) ~ 1 + year
+  1 + (1|id) ~ 1 + year  # Same, but disjoined (~ 1) and with a new slope
 )
 
 # Interpret, but do not sample.
 fit = mcp(model, data = data.frame(y = 1:10, year = 1:10, id = 1:10), sample = FALSE)
-mcp_pars(fit)
+mcp_pars(fit)  # See model parameters
 ```
 
     ## # A tibble: 11 × 9
