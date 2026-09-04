@@ -54,27 +54,33 @@ jobs:
           del wjags.exe
         shell: cmd
 
-      # Homebrew on Apple Silicon puts JAGS in /opt/homebrew, but CRAN rjags binaries expect /usr/local/lib
+      # Install JAGS 4.3.2 matching CRAN rjags 4-17, with Homebrew fallback
       - name: Install JAGS (if macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install jags || brew upgrade jags || true
-          brew link --overwrite jags || true
           sudo mkdir -p /usr/local/lib /usr/local/include
-          JAGS_PREFIX="$(brew --prefix jags 2>/dev/null || echo '/opt/homebrew/opt/jags')"
-          if [ -f "$JAGS_PREFIX/lib/libjags.4.dylib" ]; then
-            sudo ln -sf "$JAGS_PREFIX/lib/libjags.4.dylib" /usr/local/lib/libjags.4.dylib
+          # Try official universal installer for JAGS 4.3.2 (arm64 + x86_64) matching CRAN rjags
+          curl -fsSL -A "Mozilla/5.0" -o wjags.pkg "https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Mac%20OS%20X/JAGS-4.3.2.pkg" 2>/dev/null || true
+          if [ -s wjags.pkg ]; then
+            sudo installer -pkg wjags.pkg -target / && rm -f wjags.pkg
           fi
-          if [ -d "$JAGS_PREFIX/lib" ]; then
-            sudo ln -sf "$JAGS_PREFIX"/lib/libjags* /usr/local/lib/ 2>/dev/null || true
-            sudo ln -sf "$JAGS_PREFIX"/lib/libjrmath* /usr/local/lib/ 2>/dev/null || true
-          fi
-          if [ -d "$JAGS_PREFIX/include/JAGS" ]; then
-            sudo ln -sf "$JAGS_PREFIX/include/JAGS" /usr/local/include/
-          fi
-          if [ -d /opt/homebrew/lib ]; then
-            sudo ln -sf /opt/homebrew/lib/libjags* /usr/local/lib/ 2>/dev/null || true
-            sudo ln -sf /opt/homebrew/lib/libjrmath* /usr/local/lib/ 2>/dev/null || true
+          # Fallback to Homebrew if 4.3.2 package was not installed
+          if [ ! -f /usr/local/lib/libjags.4.dylib ]; then
+            brew install jags || brew upgrade jags || true
+            brew link --overwrite jags || true
+            JAGS_PREFIX="$(brew --prefix jags 2>/dev/null || echo '/opt/homebrew/opt/jags')"
+            if [ -f "$JAGS_PREFIX/lib/libjags.4.dylib" ]; then
+              sudo ln -sf "$JAGS_PREFIX/lib/libjags.4.dylib" /usr/local/lib/libjags.4.dylib
+            elif [ -f "$JAGS_PREFIX/lib/libjags.dylib" ]; then
+              sudo ln -sf "$JAGS_PREFIX/lib/libjags.dylib" /usr/local/lib/libjags.4.dylib
+            fi
+            if [ -d "$JAGS_PREFIX/lib" ]; then
+              sudo ln -sf "$JAGS_PREFIX"/lib/libjags* /usr/local/lib/ 2>/dev/null || true
+              sudo ln -sf "$JAGS_PREFIX"/lib/libjrmath* /usr/local/lib/ 2>/dev/null || true
+            fi
+            if [ -d "$JAGS_PREFIX/include/JAGS" ]; then
+              sudo ln -sf "$JAGS_PREFIX/include/JAGS" /usr/local/include/
+            fi
           fi
           ls -la /usr/local/lib/libjags* || true
 
