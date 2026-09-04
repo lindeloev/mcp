@@ -102,13 +102,24 @@ For GARMA models, `posterior_predict()` generates each replicated
 response series recursively. It does not condition later predictions on
 the observed response history, unlike
 [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-and
+and posterior
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
 These methods require posterior draws. For prior prediction, use
-[`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-or
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-with `prior = TRUE`.
+with `prior = TRUE`, which also generates fresh series.
+
+For binomial models, `posterior_epred()` and `posterior_predict()` (and
+corresponding `{tidybayes}` workflows such as
+[`add_epred_draws()`](https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html))
+follow `{brms}` and `{rstantools}` conventions by returning values on
+the outcome count scale (`rate = FALSE`), i.e., expected counts \\E\[Y\]
+= n\mu\\ and simulated counts in \\\\0, \dots, n\\\\. In contrast,
+[`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+and
+[`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+default to proportions (`rate = TRUE`). To obtain the success
+probability parameter \\\mu\\ on the \\\[0, 1\]\\ scale regardless of
+trial counts, pass `dpar = "mu"`.
 
 ## See also
 

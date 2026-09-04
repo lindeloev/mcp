@@ -54,7 +54,7 @@ Plotting of fits, parameters, and diagnostics.
   : Plot full fits
 - [`plot_pars()`](https://lindeloev.github.io/mcp/dev/reference/plot_pars.md)
   : Plot individual parameters
-- [`pp_check()`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md)
+- [`pp_check(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md)
   : Posterior Predictive Checks For Mcpfit Objects
 - [`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md)
   : Returns a data.frame with all combos of predictors

@@ -51,7 +51,7 @@
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Group-level (random) effects in mcp</h1>
             
-            <h4 data-toc-skip class="date">2026-08-31</h4>
+            <h4 data-toc-skip class="date">2026-09-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/group_effects.Rmd" class="external-link"><code>vignettes/group_effects.Rmd</code></a></small>
       <div class="d-none name"><code>group_effects.Rmd</code></div>
@@ -119,8 +119,7 @@ syntax follows <code>lme4</code> and <code>brms</code>:
 </li>
 <li>Plot using <code>plot(fit, facet_by="my_group")</code> and
 <code>plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)</code>.</li>
-<li>The default priors bound group-specific change points relative to
-adjacent population-level change points.</li>
+<li>How group-specific change points are kept in range and ordered.</li>
 <li>The article on modeling standard deviation via <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>
 contains <a href="../articles/dpar.html">another group-level
 change-point example</a>.</li>
@@ -151,18 +150,20 @@ within each group:</p>
 <span>  <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span> <span class="op">~</span> <span class="fl">0</span>,      <span class="co"># cp_2, cp_2_sd, cp_2_id[i]</span></span>
 <span>  <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span>           <span class="co"># cp_3 (implicit), cp_3_sd, cp_3_id[i]</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Here are some properties of group-level change-point deviations:</p>
-<p><strong>Exactly zero centered:</strong> The group-level deviations
-sum to zero around the associated population-level change point. Besides
-making <code>cp_i</code> the arithmetic mean of the group-specific
-change points, this avoids a poorly identified translation between
-<code>cp_i</code> and the average group deviation.</p>
-<p><strong>Hierarchical:</strong> Consider the population-level change
-point <code>cp_1</code> and its associated group-level deviations
-<code>cp_1_id</code>. Their spread is governed by the population-level
-parameter <code>cp_1_sd</code>.</p>
-<p><strong>Constraint:</strong> Realized group-specific change points
-must remain strictly ordered within each group.</p>
+<p>For change point <span class="math inline">i</span> and group <span class="math inline">g</span>, the hierarchy is</p>
+<p><span class="math display">
+\kappa_{ig} \sim \operatorname{Normal}(cp_i, cp_{i,\mathrm{sd}}), \qquad
+cp_{i,\mathrm{id}[g]} = \kappa_{ig} - cp_i,
+</span></p>
+<p>where <span class="math inline">\kappa_{ig}</span> is the
+group-specific location. Thus <code>cp_i_id[g]</code> is the reported
+deviation and <code>cp_i_sd</code> is the latent normal scale. The
+deviations are not forced to sum to zero.</p>
+<p>The hierarchy is subject to <span class="math inline">x_{\min} &lt;
+\kappa_{1g} &lt; \cdots &lt; \kappa_{Kg} &lt; x_{\max}</span>. Thus, if
+adjacent change points both vary, their group-specific locations are
+ordered against each other—not against the adjacent population change
+point. Internally, JAGS samples <span class="math inline">\kappa_{ig}</span> directly for efficiency.</p>
 <p>Unlike predictor group-level effects, a change-point group effect
 applies only to the boundary where it is written. There is no carry-over
 as there is for group-level effects on RHS.</p>
@@ -174,15 +175,17 @@ as there is for group-level effects on RHS.</p>
 from the population-level intercept:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>,</span>
-<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>,</span>
-<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span><span class="op">|</span><span class="va">id</span><span class="op">)</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>,  <span class="co"># Starts group-level intercept</span></span>
+<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>,         <span class="co"># Group-level intercept persists here</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>     <span class="co"># 0 Turns it off</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Here, the group-level intercept introduced in segment 1 also applies
 in segment 2. A later <code>(1|id)</code> would replace it from that
 segment onward, while <code>(0|id)</code> turns it off, as in segment 3
 above. Persistence is tracked separately for each grouping factor and
-distributional parameter.</p>
+distributional parameter. Read more on carry-over rules between segments
+in <a href="../articles/formulas.html#on-carry-over-between-segments">the
+article on formulas</a>.</p>
 <p>Use <code>||</code> for independent group-level slopes and factor
 coefficients:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -263,12 +266,12 @@ deviation per group and centers them exactly on zero.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##          x    id        y</span></span>
-<span><span class="co">## 1 91.48060 Clark 36.10665</span></span>
-<span><span class="co">## 2 93.70754 Clark 34.00776</span></span>
-<span><span class="co">## 3 28.61395 Clark 24.03685</span></span>
-<span><span class="co">## 4 83.04476 Clark 28.74026</span></span>
-<span><span class="co">## 5 64.17455 Clark 22.60974</span></span>
-<span><span class="co">## 6 51.90959 Clark 24.57329</span></span></code></pre>
+<span><span class="co">## 1 91.48060 Clark 31.74661</span></span>
+<span><span class="co">## 2 93.70754 Clark 32.40289</span></span>
+<span><span class="co">## 3 28.61395 Clark 19.78775</span></span>
+<span><span class="co">## 4 83.04476 Clark 29.28600</span></span>
+<span><span class="co">## 5 64.17455 Clark 19.81068</span></span>
+<span><span class="co">## 6 51.90959 Clark 24.03685</span></span></code></pre>
 <p>For models with multiple group-level change points, all deviations
 are drawn once and then checked for ordering. An unordered draw produces
 an error; <code>fit$simulate()</code> does not redraw, sort, or clip the
@@ -301,20 +304,13 @@ posterior summaries for the population-level effects. To get the
 group-level deviations (random effects), use:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">mcp</span><span class="fu">::</span><span class="fu"><a href="../reference/summary.mcpfit.html">ranef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##             variable        mean        sd       lower       upper     rhat</span></span>
-<span><span class="co">## 1   cp_1_id[Batgirl]   3.4359904 0.8359116   1.8387702   5.1155898 1.000170</span></span>
-<span><span class="co">## 2    cp_1_id[Batman]  -1.0441880 0.9203563  -2.8374458   0.7860453 1.000344</span></span>
-<span><span class="co">## 3     cp_1_id[Clark]  17.0539585 0.9404897  15.2304185  18.9432569 1.000462</span></span>
-<span><span class="co">## 4      cp_1_id[Jane]  -6.4355915 0.8460597  -8.0639491  -4.7646496 1.000115</span></span>
-<span><span class="co">## 5     cp_1_id[Louis] -13.8447712 0.7595938 -15.3688120 -12.3909721 1.000583</span></span>
-<span><span class="co">## 6 cp_1_id[Spiderman]   0.8346018 0.8040346  -0.7445893   2.4225902 1.000137</span></span>
-<span><span class="co">##   ess_bulk ess_tail         sim match</span></span>
-<span><span class="co">## 1     5460     5770   4.2419513    OK</span></span>
-<span><span class="co">## 2     5871     6189   0.1959384    OK</span></span>
-<span><span class="co">## 3     5216     5815  15.3133890    OK</span></span>
-<span><span class="co">## 4     5854     6000  -6.8428555    OK</span></span>
-<span><span class="co">## 5     4976     6457 -13.7214603    OK</span></span>
-<span><span class="co">## 6     6226     6974   0.8130371    OK</span></span></code></pre>
+<pre><code><span><span class="co">##             variable       mean       sd     lower    upper     rhat ess_bulk ess_tail       sim match</span></span>
+<span><span class="co">## 1   cp_1_id[Batgirl]   7.748753 23.56258 -31.85555 58.85708 1.001548     4745     5882 14.315858    OK</span></span>
+<span><span class="co">## 2    cp_1_id[Batman] -16.906485 23.54159 -56.42552 34.31066 1.001206     4656     5862 -8.463936    OK</span></span>
+<span><span class="co">## 3     cp_1_id[Clark]  12.532440 23.55908 -27.01466 63.70903 1.001393     4698     5954 20.518845    OK</span></span>
+<span><span class="co">## 4      cp_1_id[Jane]  -6.806863 23.53981 -46.22738 44.38053 1.001252     4698     6116  0.715170    OK</span></span>
+<span><span class="co">## 5     cp_1_id[Louis]  18.201298 23.56281 -21.31165 69.60913 1.001186     4691     6085 22.900143    OK</span></span>
+<span><span class="co">## 6 cp_1_id[Spiderman]  -1.480419 23.54962 -40.98176 49.48032 1.001462     4675     5991  5.438742    OK</span></span></code></pre>
 <p>Inspecting the <code>sim</code> and <code>match</code> columns, we
 see that they recovered the simulation parameters well.</p>
 <p>Prediction methods include all group-level effects by default. Set
@@ -359,20 +355,18 @@ assessment that many will be acquainted with:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                                         bounds</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    uniform(min = 0.02388966, max = 98.88917)     [min(…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_1_sd           2 cp    normal(mean = 0, sd = 197.7306)               [0, I…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> cp_1_id           2 cp    normal(mean = 0, sd = cp_1_sd)                [min(…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> Intercept_1       1 mu    student_t(df = 3, location = 23.4, scale = 7… none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> x_2               2 mu    student_t(df = 3, location = 0, scale = 0.07… none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 7.2)  [0, I…</span></span></code></pre>
-<p>The prior <code>cp_1_sd</code> is the population-level standard
-deviation governing the <code>cp_1_id</code> deviations across levels of
-<code>id</code>. Change-point deviations are exactly zero-centered,
-while predictor group-level effects use ordinary hierarchical mean-zero
-deviations. Their realized locations are constrained to remain ordered
-within each group.</p>
+<span><span class="co">##   parameter   segment dpar  prior                                               bounds                        </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                         </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)                                [min(x), max(x)]              </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_1_sd           2 cp    normal(mean = 0, sd = 197.7306)                     [0, Inf]                      </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> cp_1_id           2 cp    normal(mean = 0, sd = cp_1_sd)                      [min(x) - cp_1, max(x) - cp_1]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> Intercept_1       1 mu    student_t(df = 3, location = 21.7, scale = 4.6)     none                          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> x_2               2 mu    student_t(df = 3, location = 0, scale = 0.04652796) none                          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 4.6)        [0.001, Inf]</span></span></code></pre>
+<p><code>cp_1_sd</code> is the latent normal scale governing the
+<code>cp_1_id</code> deviations. Unlike predictor group-level effects,
+change-point locations are also constrained to remain in range and
+ordered within each group.</p>
 </div>
 <div class="section level2">
 <h2 id="jags-code">JAGS code<a class="anchor" aria-label="anchor" href="#jags-code"></a>
@@ -386,28 +380,29 @@ within each group.</p>
 <span><span class="co">##   cp_2 = CONST2_</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   cp_1 ~ dunif(CONST1_, CONST2_)  # Within the observed change-point span</span></span>
+<span><span class="co">##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)</span></span>
+<span><span class="co">##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point</span></span>
 <span><span class="co">##   cp_1_sd ~ dnorm(0, 1/(197.7306)^2) T(0,)  # Group-level change-point variation</span></span>
-<span><span class="co">##   Intercept_1 ~ dt(23.4, 1/(7.2)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span></span>
-<span><span class="co">##   x_2 ~ dt(0, 1/(0.07282637)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change</span></span>
-<span><span class="co">##   sigma_1 ~ dt(0, 1/(7.2)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale</span></span>
+<span><span class="co">##   Intercept_1 ~ dt(21.7, 1/(4.6)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span></span>
+<span><span class="co">##   x_2 ~ dt(0, 1/(0.04652796)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change</span></span>
+<span><span class="co">##   sigma_1 ~ dt(0, 1/(4.6)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for group-level effects</span></span>
 <span><span class="co">##   for (id_ in 1:n_unique_id) {</span></span>
-<span><span class="co">##     cp_1_id_uncentered[id_] ~ dnorm(CONST3_, 1/(cp_1_sd)^2) T(CONST1_-cp_1,CONST2_-cp_1)  # Zero-mean ordered group-level change-point offsets</span></span>
+<span><span class="co">##     cp_1_id_location[id_] ~ dnorm(cp_1 + CONST3_, 1/(cp_1_sd)^2) T(cp_1 + (CONST1_-cp_1), cp_1 + (CONST2_-cp_1))  # Ordered group-level change-point deviations from the population location</span></span>
+<span><span class="co">##     cp_1_id[id_] = cp_1_id_location[id_] - cp_1  # deviation from population change point</span></span>
 <span><span class="co">##   }</span></span>
-<span><span class="co">##   cp_1_id = cp_1_id_uncentered - mean(cp_1_id_uncentered)  # vectorized zero-centering</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(x)) {</span></span>
 <span><span class="co">##     # par_x local to each segment</span></span>
-<span><span class="co">##     x_local_1_[i_] = min(x[i_], (cp_1 + cp_1_id[id[i_]]))</span></span>
-<span><span class="co">##     x_local_2_[i_] = min(x[i_], cp_2) - (cp_1 + cp_1_id[id[i_]])</span></span>
+<span><span class="co">##     x_local_1_[i_] = min(x[i_], (cp_1_id_location[id[i_]]))</span></span>
+<span><span class="co">##     x_local_2_[i_] = min(x[i_], cp_2) - (cp_1_id_location[id[i_]])</span></span>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for mu</span></span>
 <span><span class="co">##     link_mu_[i_] =</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_0) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + </span></span>
-<span><span class="co">##       (x[i_] &gt;= (cp_1 + cp_1_id[id[i_]])) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]</span></span>
+<span><span class="co">##       (x[i_] &gt;= (cp_1_id_location[id[i_]])) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]</span></span>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for sigma</span></span>
 <span><span class="co">##     link_sigma_[i_] =</span></span>

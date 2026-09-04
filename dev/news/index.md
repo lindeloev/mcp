@@ -56,17 +56,32 @@
     Fits now also store a proper matched `$call`. Printed summaries now
     report posterior `sd` and has a new layout.
 
-- **Negative binomial, offset(), and GARMA:** You can now do
+- **Negative binomial and offset():** You can now do
   `mcp(..., family = negbinomial())`. NB (and Poisson) can now model
   rates and exposure with because
   [`offset()`](https://rdrr.io/r/stats/offset.html) is now supported in
-  formulas - also for other families. Autoregression
-  ([`ar()`](https://rdrr.io/r/stats/ar.html)) has been generalized to
-  GARMA link-scale residuals for Gaussian, binomial, Poisson, and
-  negative-binomial models with their default links, using
-  `ar(..., boundary = 0.1)` by default to keep zero and boundary counts
-  finite. Added moving-average terms with `ma(q)`, which can be used
-  alone or combined with `ar(p)` in each segment.
+  formulas - also for other families.
+
+- **Dirichlet is now the default prior on change points:** The default
+  change point prior is now the mathematically beautiful and principled
+  `dirichlet(1)` (flat Dirichlet / uniform order statistics).
+  Effectively, the prior remain unchanged for models with 1 change point
+  because Dirichlet reduces to the same uniform prior. For models with
+  2+ change points, the previous “truncated-t” prior has been removed.
+  It only served the purpose of higher ESS/s at the expense of being
+  mathematically unprincipled. While previous `mcp` versions supported a
+  slow implementation of Dirichlet, achieving good ESS/s was made
+  possible by parameterizing the dirichlet as a sequential
+  stick-breaking Beta chain (z_j \sim \text{Beta}(1, N - j + 1)).
+  Comparing all
+  [`mcp_example()`](https://lindeloev.github.io/mcp/dev/reference/mcp_example.md),
+  estimates remain essentially identical between truncated-t and
+  dirichlet. Any `hypothesis(fit, "cp_1 = 20")` (Savage-Dickey Bayes
+  Factor) on default priors will likely differ, but BF is ill advised on
+  default priors anyway - that is why
+  [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md)
+  throws a warning if this is attempted. Read more on the [the mcp
+  website](https://lindeloev.github.io/mcp/).
 
 - **Missing response imputation:** Missing responses are now retained as
   posterior JAGS imputations. `predict(fit) |> filter(is.na(y))` can be
@@ -119,6 +134,11 @@ been added until we reach 1.0.
     [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
     to match [posterior](https://mc-stan.org/posterior/) standard.
 
+  - [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md)
+    returns column `prob` instead of `p` for the posterior (or prior)
+    probability of directional hypotheses, preventing confusion with
+    frequentist p-values.
+
 - [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
   [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
   [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
@@ -148,10 +168,10 @@ been added until we reach 1.0.
   clearer guidance on Savage-Dickey Bayes factors. Non-linear
   transformations in hypotheses like `x_1 / x_2 = 1` could previously be
   run, even though Savage-Dickey does not support it. Equality tests now
-  return `p = NA` because their Bayes factor is a model comparison, not
-  a posterior parameter probability. Density estimates are more robust,
-  warn when evaluating Savage-Dickey Bayes factors on default priors,
-  and warn about sparse tails.
+  return `prob = NA` because their Bayes factor is a model comparison,
+  not a posterior parameter probability. Density estimates are more
+  robust, warn when evaluating Savage-Dickey Bayes factors on default
+  priors, and warn about sparse tails.
 
 - [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
   now reports only population-level effects for `mu` (the primary
@@ -167,15 +187,16 @@ been added until we reach 1.0.
   selector remains as a deprecated alias. The established `varying =`
   method argument remains unchanged for now.
 
-- `y | weights(w)` now specifies brms-aligned observation log-likelihood
-  weights across all supported families
+- `y | weights(w)` now specifies observation log-likelihood weights
+  across all supported families
   ([`gaussian()`](https://rdrr.io/r/stats/family.html),
   [`binomial()`](https://rdrr.io/r/stats/family.html),
   [`bernoulli()`](https://lindeloev.github.io/mcp/dev/reference/bernoulli.md),
   [`poisson()`](https://rdrr.io/r/stats/family.html),
   [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md)),
   rather than Gaussian-only precision weights (which previously scaled
-  the residual SD as `sigma / sqrt(w)`). Predictive draws and
+  the residual SD as `sigma / sqrt(w)`). Unlike `brms`, weights must be
+  strictly positive due to JAGS requirements. Predictive draws and
   expectations now use the distribution parameters directly while
   [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   multiplies observation log-densities by `w`.
@@ -210,18 +231,17 @@ been added until we reach 1.0.
   helper is soft-deprecated because prior translation is now an
   internal, sampler-specific step.
 
-- Group-level change points `(1|id)` remain exactly zero-centered to
-  identify population-level change points and support efficient
-  sampling. For models with multiple group-level change points, their
-  realized locations are now constrained to remain ordered. Read more in
-  the vignette on group-level effects.
+- Group-level change points `(1|id)` now use a standard hierarchical
+  normal model sampled efficiently through their absolute locations.
+  This makes `cp_i_sd` the latent normal scale rather than the realized
+  sample SD.
 
 - After sampling,
   [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) now
   verifies that population- and group-level change points are strictly
-  ordered in every draw and that population-level change points lie
-  within the observed predictor range. If ordering is broken, wrong
-  segments apply.
+  ordered in every draw and that all realized change points lie within
+  the observed predictor range. If ordering is broken, wrong segments
+  apply.
 
 - Parallel sampling is now controlled exclusively through the active
   [future](https://future.futureverse.org) plan. The `cores` argument to
@@ -262,6 +282,15 @@ been added until we reach 1.0.
 - mcp no longer exports `phi`, `logit`, `ilogit`, or `probit`.
 
 ### Other new features
+
+Autoregression ([`ar()`](https://rdrr.io/r/stats/ar.html)) has been
+generalized to link-scale observation-driven GARMA residuals for
+Gaussian, binomial, Bernoulli, Poisson, and negative-binomial models
+with their default links, using `ar(..., boundary = 0.1)` by default to
+keep zero and boundary counts finite. Added moving-average terms with
+`ma(q)`, which can be used alone or combined with `ar(p)` in each
+segment. Independent time series can be separated using
+`series = <column>`.
 
 - Added `prior_summary(fit)`. Its compact output shows each parameter’s
   resolved prior and bounds; `prior_summary(fit, verbose = TRUE)` also
@@ -424,6 +453,13 @@ been added until we reach 1.0.
 - New `mcpfit` objects no longer include empty `$loo` and `$waic`
   components.
 
+- Disallowed non-default `varying` and `arma = FALSE` in
+  [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
+  and
+  [`waic()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md).
+  Additionally, `loo(ndraws = ...)` now thins draws evenly across chains
+  to preserve MCMC chain identities and order.
+
 - `draws_format` replaces `samples_format` in
   [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
   [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
@@ -508,6 +544,15 @@ been added until we reach 1.0.
   [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   for group-level change-point models ignored the group level and were
   identical across levels.
+
+- Explicitly setting `dpar = "mu"` now returns the success probability
+  parameter \mu regardless of `rate`. `rate = FALSE` continues to scale
+  expected response counts when evaluating `"epred"` (e.g., in
+  `posterior_epred()`), while
+  [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+  and
+  [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+  retain their default proportion scale (`rate = TRUE`).
 
 - Now works for 200+ characters formulas too.
 

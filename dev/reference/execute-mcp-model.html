@@ -33,7 +33,7 @@ scale where applicable."><meta property="og:image" content="https://github.com/l
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -154,13 +154,14 @@ parameter with <code>dpar</code>, and choose the response or linear-predictor sc
 
 <dt id="arg-newdata">newdata<a class="anchor" aria-label="anchor" href="#arg-newdata"></a></dt>
 <dd><p>A <code>tibble</code> or a <code>data.frame</code> containing predictors in the model.</p><ul><li><p>If <code>NULL</code> (default), the original data is used.</p></li>
-<li><p>For models with <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code>: <code>fitted()</code>, <code>predict()</code>, <code>residuals()</code>, or <code>log_lik()</code>
-conditions on the response history,
+<li><p>For models with <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code>: <code>fitted()</code>, <code>residuals()</code>, <code>log_lik()</code>,
+and posterior <code>predict()</code> condition on the response history,
 so <code>newdata</code> must include the response. For <code>fitted()</code>, <code>predict()</code>, and
 <code>residuals()</code>, missing response histories are supported only in the original
-fitted data, using retained posterior imputations. <code>log_lik()</code> is unavailable
-when a missing response enters a later observed history. Use <code>posterior_predict()</code>
-to generate fresh response series recursively from predictor-only <code>newdata</code>.</p></li>
+fitted data, using retained posterior imputations. Prior <code>predict()</code> and
+<code><a href="https://mc-stan.org/rstantools/reference/posterior_predict.html" class="external-link">posterior_predict()</a></code> generate fresh response
+series recursively, so their <code>newdata</code> need only contain predictors. <code>log_lik()</code>
+is unavailable when a missing response enters a later observed history.</p></li>
 <li><p>For models with <code>y | weights()</code>: Require the weights column except for <code>fitted()</code> and <code>predict()</code>.</p></li>
 </ul></dd>
 
@@ -176,7 +177,9 @@ to generate fresh response series recursively from predictor-only <code>newdata<
 <dt id="arg-rate">rate<a class="anchor" aria-label="anchor" href="#arg-rate"></a></dt>
 <dd><p>Logical scalar. For binomial models, return counts (<code>rate = FALSE</code>) or
 the observed or expected success proportion (<code>rate = TRUE</code>). Predictions and
-count-scale fitted values require a trials column in <code>newdata</code>.</p></dd>
+count-scale fitted values require a trials column in <code>newdata</code>.
+Distributional parameters such as <code>dpar = "mu"</code> evaluate the parameter itself (e.g., success probability)
+and are unaffected by <code>rate</code>.</p></dd>
 
 
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>
@@ -266,7 +269,11 @@ values (depending on <code>type</code>). This format is used by <code>brms</code
     <p><code>residuals(fit)</code> is equivalent to <code>fit$data[[mcp_columns(fit)$response]] - fitted(fit, ...)</code> (or <code>newdata[[mcp_columns(fit)$response]] - fitted(fit, ...)</code>),
 but with fixed arguments for <code>fitted</code>: <code>rate = FALSE, dpar = 'epred', draws_format = 'tidy'</code>.</p>
 <p><code>log_lik()</code> defaults to an unsummarised draws-by-observation matrix, as used
-by <code>loo</code> and other posterior workflows.</p>
+by <code>loo</code> and other posterior workflows. Non-default <code>varying</code> and <code>arma</code>
+settings evaluate conditional or counterfactual log-likelihoods (e.g.,
+omitting random effects or serial correlation); they cannot be used in
+<code><a href="loo.mcpfit.html">loo()</a></code> or <code><a href="loo.mcpfit.html">waic()</a></code> because estimating information criteria for reduced
+models requires refitting.</p>
 <p>Missing responses in the original data remain missing in the response column.
 <code>fitted()</code> returns their expected responses, while <code>predict()</code> uses retained
 JAGS imputations for their posterior response draws. In GARMA models these
@@ -292,113 +299,110 @@ imputations also supply the history used for later fitted and predicted rows.</p
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">fitted</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Expected response for each row of demo_fit$data</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time    fitted        sd      Q2.5    Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820 30.298834 1.0124885 28.321430 32.25606</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038 -3.289723 0.7599234 -4.782638 -1.80833</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 30.646721 1.0409779 28.633151 32.68228</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 10.062971 11.59361 10.299931 0.7167564  8.874782 11.66981</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 14.056859 19.50091 10.302634 0.7135642  8.942350 11.66981</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 18.292640 46.12009 18.460976 0.9281008 16.431898 20.12248</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   response     time   fitted        sd     Q2.5    Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 17.23552 76.33986 16.92982 0.8918820 15.24031 18.66061</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 11.35171 83.51711 16.19732 0.7069182 14.86974 17.60133</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 28.04995 60.18529 25.24068 0.9314782 23.35380 27.15740</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 20.68198 74.72964 17.09416 0.9683574 15.30233 19.00162</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 21.21364 85.88256 15.95591 0.7234506 14.61884 17.38066</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 22.32282 40.05069 14.56256 0.6387450 13.29038 15.75679</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">residuals</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Residuals for each row of demo_fit$data</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time  residuals        sd       Q2.5     Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820  2.5438170 1.0124885  0.5865913  4.521221</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038  2.1297203 0.7599234  0.6483267  3.622635</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 -3.0824732 1.0409779 -5.1180353 -1.068903</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 10.062971 11.59361 -0.2369604 0.7167564 -1.6068402  1.188188</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 14.056859 19.50091  3.7542243 0.7135642  2.3870478  5.114508</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 18.292640 46.12009 -0.1683359 0.9281008 -1.8298407  1.860741</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   response     time  residuals        sd       Q2.5     Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 17.23552 76.33986  0.3056925 0.8918820 -1.4250920  1.995210</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 11.35171 83.51711 -4.8456163 0.7069182 -6.2496242 -3.518034</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 28.04995 60.18529  2.8092689 0.9314782  0.8925555  4.696150</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 20.68198 74.72964  3.5878224 0.9683574  1.6803637  5.379652</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 21.21364 85.88256  5.2577362 0.7234506  3.8329871  6.594805</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 22.32282 40.05069  7.7602636 0.6387450  6.5660303  9.032439</span>
 <span class="r-in"><span><span class="fu">log_lik</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>  <span class="co"># Log-likelihood at each demo_fit$data</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>              1         2         3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1,] -3.167203 -2.408024 -2.306866</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [2,] -2.956388 -2.324250 -2.270318</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3,] -2.747960 -2.362946 -2.384176</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in family_log_lik(y, dpars, data):</span> could not find function "family_log_lik"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># All of the above take a range of arguments. E.g.,:</span></span></span>
 <span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">predict</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Pointwise posterior predictive</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time   predict       sd       Q2.5     Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820 30.207150 4.124578  22.144905 38.439454</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038 -3.210645 4.151474 -11.321679  4.760017</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 30.518943 4.165452  22.479043 38.801177</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 10.062971 11.59361 10.414788 4.078595   2.277202 18.328893</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 14.056859 19.50091 10.347444 4.292330   2.282246 18.331710</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 18.292640 46.12009 18.469592 4.078643  10.340106 26.560291</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   response     time  predict       sd      Q2.5    Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 17.23552 76.33986 16.78289 3.945613  9.057670 24.78217</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 11.35171 83.51711 16.26018 3.904999  8.405115 23.98530</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 28.04995 60.18529 25.12394 4.087744 17.360018 33.12150</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 20.68198 74.72964 17.22145 4.011694  9.187288 24.98071</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 21.21364 85.88256 15.88880 4.203532  8.161476 23.75329</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 22.32282 40.05069 14.64542 4.031344  6.798112 22.33360</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">predict</span><span class="op">(</span><span class="va">demo_fit</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Median and 80% posterior predictive interval.</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time   predict       sd       Q10       Q50       Q90</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820 30.292511 4.177484 25.003207 30.301147 35.591733</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038 -3.293718 4.043098 -8.512640 -3.292723  1.936534</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 30.589537 4.167861 25.342076 30.649014 35.948693</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 10.062971 11.59361 10.285350 4.140679  5.086742 10.298795 15.515312</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 14.056859 19.50091 10.382461 4.005179  5.090210 10.301096 15.517589</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 18.292640 46.12009 18.539889 4.098412 13.190974 18.464812 23.725677</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   response     time  predict       sd       Q10      Q50      Q90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 17.23552 76.33986 16.89906 4.072704 11.812794 16.93335 22.04235</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 11.35171 83.51711 16.26356 4.193334 11.130297 16.19803 21.26364</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 28.04995 60.18529 25.10203 4.039357 20.115521 25.24066 30.36594</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 20.68198 74.72964 17.19236 4.045033 11.954065 17.09782 22.22954</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 21.21364 85.88256 16.11136 4.208352 10.885880 15.95534 21.02687</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 22.32282 40.05069 14.50406 3.786710  9.511571 14.56147 19.61455</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">predict</span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Prior predictive</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time   predict       sd      Q2.5    Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820 11.171082 32.66496 -49.74378 70.57951</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038  9.864536 32.13784 -52.55783 71.93426</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 10.111668 30.81516 -49.85891 70.60924</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 10.062971 11.59361 10.282018 33.31249 -49.26736 68.24167</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 14.056859 19.50091 11.242114 31.90038 -49.54965 68.65070</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 18.292640 46.12009  9.654039 31.85612 -49.21910 70.55472</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   response     time  predict       sd      Q2.5    Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 17.23552 76.33986 13.62495 14.24374 -15.56523 40.81678</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 11.35171 83.51711 13.82178 13.11392 -16.42007 40.76014</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 28.04995 60.18529 14.49667 15.95062 -13.63652 42.57939</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 20.68198 74.72964 14.03760 15.00494 -14.76847 41.25856</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 21.21364 85.88256 13.87618 16.04855 -16.96870 40.83192</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 22.32282 40.05069 14.14016 15.36999 -14.18878 41.58789</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">fitted</span><span class="op">(</span><span class="va">demo_fit</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Draws. Useful for plotting distributions.</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 14</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>      1          1     1  19.8  70.2        8.44  0.395        2.11 -<span style="color: #BB0000;">0.298</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      1          1     1  19.8  70.2        8.44  0.395        2.11 -<span style="color: #BB0000;">0.298</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>      1          1     1  19.8  70.2        8.44  0.395        2.11 -<span style="color: #BB0000;">0.298</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>      1          1     1  19.8  70.2        8.44  0.395        2.11 -<span style="color: #BB0000;">0.298</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>      1          1     1  19.8  70.2        8.44  0.395        2.11 -<span style="color: #BB0000;">0.298</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>      1          1     1  19.8  70.2        8.44  0.395        2.11 -<span style="color: #BB0000;">0.298</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 5 more variables: sigma_1 &lt;dbl&gt;, response &lt;dbl&gt;, time &lt;dbl&gt;,</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   data_row &lt;int&gt;, .epred &lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>      1          1     1  30.8  72.1        10.2  0.513        15.7 0.077<span style="text-decoration: underline;">3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      1          1     1  30.8  72.1        10.2  0.513        15.7 0.077<span style="text-decoration: underline;">3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>      1          1     1  30.8  72.1        10.2  0.513        15.7 0.077<span style="text-decoration: underline;">3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>      1          1     1  30.8  72.1        10.2  0.513        15.7 0.077<span style="text-decoration: underline;">3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>      1          1     1  30.8  72.1        10.2  0.513        15.7 0.077<span style="text-decoration: underline;">3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>      1          1     1  30.8  72.1        10.2  0.513        15.7 0.077<span style="text-decoration: underline;">3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 5 more variables: sigma_1 &lt;dbl&gt;, response &lt;dbl&gt;, time &lt;dbl&gt;, .epred &lt;dbl&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   data_row &lt;int&gt;</span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">fitted</span><span class="op">(</span><span class="va">demo_fit</span>, dpar <span class="op">=</span> <span class="st">"sigma"</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Another model parameter</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time   fitted       sd     Q2.5    Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820 4.010101 0.311438 3.448848 4.656798</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038 4.010101 0.311438 3.448848 4.656798</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 4.010101 0.311438 3.448848 4.656798</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 10.062971 11.59361 4.010101 0.311438 3.448848 4.656798</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 14.056859 19.50091 4.010101 0.311438 3.448848 4.656798</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 18.292640 46.12009 4.010101 0.311438 3.448848 4.656798</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   response     time   fitted        sd     Q2.5    Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 17.23552 76.33986 3.893444 0.2757184 3.381747 4.465763</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 11.35171 83.51711 3.893444 0.2757184 3.381747 4.465763</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 28.04995 60.18529 3.893444 0.2757184 3.381747 4.465763</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 20.68198 74.72964 3.893444 0.2757184 3.381747 4.465763</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 21.21364 85.88256 3.893444 0.2757184 3.381747 4.465763</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 22.32282 40.05069 3.893444 0.2757184 3.381747 4.465763</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Evaluate at novel data</span></span></span>
 <span class="r-in"><span><span class="va">novel_data</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">5</span>, <span class="fl">20</span>, <span class="fl">300</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Only predictors are needed</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">predict</span><span class="op">(</span><span class="va">demo_fit</span>, newdata <span class="op">=</span> <span class="va">novel_data</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.025</span>, <span class="fl">0.5</span>, <span class="fl">0.975</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   time   predict        sd       Q2.5       Q50     Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   -5  10.19913  4.178428   2.277202  10.29880  18.32889</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   20  10.36892  3.985927   2.284798  10.30251  18.33282</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  300 -50.84247 20.327313 -90.157846 -50.79259 -12.33334</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   time   predict        sd       Q2.5      Q50    Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   -5  9.873604  3.948793   2.278611 10.04644 17.81965</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   20 10.209701  3.834257   2.278611 10.04644 17.81965</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  300 -6.074700 16.263353 -40.535047 -3.98945 21.96670</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Work with missing responses</span></span></span>
 <span class="r-in"><span><span class="va">missing_fit</span> <span class="op">=</span> <span class="fu"><a href="mcp_example.html">mcp_example</a></span><span class="op">(</span><span class="st">"missing"</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> NA values detected in 'y'. JAGS will treat them as latent responses and impute them during sampling.</span>
 <span class="r-in"><span><span class="fu">fitted</span><span class="op">(</span><span class="va">missing_fit</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># Expected responses for missing y</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    y  x condition   fitted        sd     Q2.5    Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 NA  8         B 35.59410 1.0808576 33.50826 37.76016</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 NA 19         A 15.67323 0.8369118 14.05072 17.33612</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 NA 27         A 17.18394 0.7645671 15.69881 18.68233</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 NA 28         B 39.37086 0.7545884 37.87833 40.86702</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 NA 29         A 17.56162 0.7634425 16.07303 19.04347</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 NA 30         B 39.74854 0.7546261 38.25985 41.23888</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 NA  8         B 35.60043 1.0803038 33.51261 37.74217</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 NA 19         A 15.68747 0.8392979 14.05176 17.34367</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 NA 27         A 17.20067 0.7620321 15.70353 18.68519</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 NA 28         B 39.38345 0.7593611 37.89912 40.87640</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 NA 29         A 17.57898 0.7589502 16.07714 19.05693</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 NA 30         B 39.76175 0.7585016 38.28224 41.25734</span>
 <span class="r-in"><span><span class="fu">fitted</span><span class="op">(</span><span class="va">missing_fit</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># Same, but draws</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 14</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .chain .iteration .draw  cp_1 Intercept_1   x_1 conditionB_1    x_2 sigma_1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>      1          1     1  60.0        12.6 0.180         22.2 -<span style="color: #BB0000;">0.410</span>    4.54</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      1          1     1  60.0        12.6 0.180         22.2 -<span style="color: #BB0000;">0.410</span>    4.54</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>      1          1     1  60.0        12.6 0.180         22.2 -<span style="color: #BB0000;">0.410</span>    4.54</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>      1          1     1  60.0        12.6 0.180         22.2 -<span style="color: #BB0000;">0.410</span>    4.54</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>      1          1     1  60.0        12.6 0.180         22.2 -<span style="color: #BB0000;">0.410</span>    4.54</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>      1          1     1  60.0        12.6 0.180         22.2 -<span style="color: #BB0000;">0.410</span>    4.54</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 5 more variables: y &lt;dbl&gt;, x &lt;int&gt;, condition &lt;fct&gt;, data_row &lt;int&gt;,</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   .epred &lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>      1          1     1  62.8        14.8 0.135         20.3 -<span style="color: #BB0000;">0.497</span>    4.65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      1          1     1  62.8        14.8 0.135         20.3 -<span style="color: #BB0000;">0.497</span>    4.65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>      1          1     1  62.8        14.8 0.135         20.3 -<span style="color: #BB0000;">0.497</span>    4.65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>      1          1     1  62.8        14.8 0.135         20.3 -<span style="color: #BB0000;">0.497</span>    4.65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>      1          1     1  62.8        14.8 0.135         20.3 -<span style="color: #BB0000;">0.497</span>    4.65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>      1          1     1  62.8        14.8 0.135         20.3 -<span style="color: #BB0000;">0.497</span>    4.65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 5 more variables: y &lt;dbl&gt;, x &lt;int&gt;, condition &lt;fct&gt;, .epred &lt;dbl&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   data_row &lt;int&gt;</span></span>
 <span class="r-in"><span><span class="fu">predict</span><span class="op">(</span><span class="va">missing_fit</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># Posterior predictive for missing y</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    y  x condition  predict       sd      Q2.5    Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 NA  8         B 35.56012 4.428752 26.945587 44.26715</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 NA 19         A 15.72108 4.293560  7.125812 24.23679</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 NA 27         A 17.18509 4.292231  8.656528 25.71505</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 NA 28         B 39.36003 4.364408 30.842388 47.89444</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 NA 29         A 17.53601 4.340269  9.033103 26.09081</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 NA 30         B 39.72210 4.371321 31.218725 48.27069</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 NA  8         B 35.51722 4.408885 26.944898 44.27282</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 NA 19         A 15.70005 4.409613  7.131763 24.25305</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 NA 27         A 17.26378 4.343011  8.668505 25.73409</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 NA 28         B 39.37180 4.354504 30.849440 47.91352</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 NA 29         A 17.55903 4.343115  9.046847 26.11032</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 NA 30         B 39.73816 4.364214 31.227062 48.29058</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

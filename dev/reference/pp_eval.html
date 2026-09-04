@@ -27,7 +27,7 @@
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -99,13 +99,14 @@
 
 <dt id="arg-newdata">newdata<a class="anchor" aria-label="anchor" href="#arg-newdata"></a></dt>
 <dd><p>A <code>tibble</code> or a <code>data.frame</code> containing predictors in the model.</p><ul><li><p>If <code>NULL</code> (default), the original data is used.</p></li>
-<li><p>For models with <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code>: <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">predict()</a></code>, <code><a href="execute-mcp-model.html">residuals()</a></code>, or <code><a href="execute-mcp-model.html">log_lik()</a></code>
-conditions on the response history,
+<li><p>For models with <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code>: <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">residuals()</a></code>, <code><a href="execute-mcp-model.html">log_lik()</a></code>,
+and posterior <code><a href="execute-mcp-model.html">predict()</a></code> condition on the response history,
 so <code>newdata</code> must include the response. For <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">predict()</a></code>, and
 <code><a href="execute-mcp-model.html">residuals()</a></code>, missing response histories are supported only in the original
-fitted data, using retained posterior imputations. <code><a href="execute-mcp-model.html">log_lik()</a></code> is unavailable
-when a missing response enters a later observed history. Use <code>posterior_predict()</code>
-to generate fresh response series recursively from predictor-only <code>newdata</code>.</p></li>
+fitted data, using retained posterior imputations. Prior <code><a href="execute-mcp-model.html">predict()</a></code> and
+<code><a href="https://mc-stan.org/rstantools/reference/posterior_predict.html" class="external-link">posterior_predict()</a></code> generate fresh response
+series recursively, so their <code>newdata</code> need only contain predictors. <code><a href="execute-mcp-model.html">log_lik()</a></code>
+is unavailable when a missing response enters a later observed history.</p></li>
 <li><p>For models with <code>y | weights()</code>: Require the weights column except for <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>.</p></li>
 </ul></dd>
 
@@ -133,7 +134,9 @@ Requires <code>scale = "response"</code>.</p></li>
 <dt id="arg-rate">rate<a class="anchor" aria-label="anchor" href="#arg-rate"></a></dt>
 <dd><p>Logical scalar. For binomial models, return counts (<code>rate = FALSE</code>) or
 the observed or expected success proportion (<code>rate = TRUE</code>). Predictions and
-count-scale fitted values require a trials column in <code>newdata</code>.</p></dd>
+count-scale fitted values require a trials column in <code>newdata</code>.
+Distributional parameters such as <code>dpar = "mu"</code> evaluate the parameter itself (e.g., success probability)
+and are unaffected by <code>rate</code>.</p></dd>
 
 
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>

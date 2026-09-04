@@ -27,7 +27,7 @@
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -159,7 +159,9 @@ or FALSE (do not plot).</p></dd>
 <dt id="arg-rate">rate<a class="anchor" aria-label="anchor" href="#arg-rate"></a></dt>
 <dd><p>Logical scalar. For binomial models, return counts (<code>rate = FALSE</code>) or
 the observed or expected success proportion (<code>rate = TRUE</code>). Predictions and
-count-scale fitted values require a trials column in <code>newdata</code>.</p></dd>
+count-scale fitted values require a trials column in <code>newdata</code>.
+Distributional parameters such as <code>dpar = "mu"</code> evaluate the parameter itself (e.g., success probability)
+and are unaffected by <code>rate</code>.</p></dd>
 
 
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>

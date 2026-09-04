@@ -89,14 +89,15 @@ residuals(
   - If `NULL` (default), the original data is used.
 
   - For models with [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()`:
-    `fitted()`, `predict()`, `residuals()`, or `log_lik()` conditions on
-    the response history, so `newdata` must include the response. For
-    `fitted()`, `predict()`, and `residuals()`, missing response
-    histories are supported only in the original fitted data, using
-    retained posterior imputations. `log_lik()` is unavailable when a
-    missing response enters a later observed history. Use
-    `posterior_predict()` to generate fresh response series recursively
-    from predictor-only `newdata`.
+    `fitted()`, `residuals()`, `log_lik()`, and posterior `predict()`
+    condition on the response history, so `newdata` must include the
+    response. For `fitted()`, `predict()`, and `residuals()`, missing
+    response histories are supported only in the original fitted data,
+    using retained posterior imputations. Prior `predict()` and
+    [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
+    generate fresh response series recursively, so their `newdata` need
+    only contain predictors. `log_lik()` is unavailable when a missing
+    response enters a later observed history.
 
   - For models with `y | weights()`: Require the weights column except
     for `fitted()` and `predict()`.
@@ -114,7 +115,9 @@ residuals(
   Logical scalar. For binomial models, return counts (`rate = FALSE`) or
   the observed or expected success proportion (`rate = TRUE`).
   Predictions and count-scale fitted values require a trials column in
-  `newdata`.
+  `newdata`. Distributional parameters such as `dpar = "mu"` evaluate
+  the parameter itself (e.g., success probability) and are unaffected by
+  `rate`.
 
 - prior:
 
@@ -241,7 +244,15 @@ fixed arguments for `fitted`:
 `rate = FALSE, dpar = 'epred', draws_format = 'tidy'`.
 
 `log_lik()` defaults to an unsummarised draws-by-observation matrix, as
-used by `loo` and other posterior workflows.
+used by `loo` and other posterior workflows. Non-default `varying` and
+`arma` settings evaluate conditional or counterfactual log-likelihoods
+(e.g., omitting random effects or serial correlation); they cannot be
+used in
+[`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
+or
+[`waic()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
+because estimating information criteria for reduced models requires
+refitting.
 
 Missing responses in the original data remain missing in the response
 column. `fitted()` returns their expected responses, while `predict()`
@@ -271,112 +282,109 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 
 ``` r
 head(fitted(demo_fit))  # Expected response for each row of demo_fit$data
-#>    response     time    fitted        sd      Q2.5    Q97.5
-#> 1 32.842651 68.35820 30.298834 1.0124885 28.321430 32.25606
-#> 2 -1.160003 87.29038 -3.289723 0.7599234 -4.782638 -1.80833
-#> 3 27.564248 69.01173 30.646721 1.0409779 28.633151 32.68228
-#> 4 10.062971 11.59361 10.299931 0.7167564  8.874782 11.66981
-#> 5 14.056859 19.50091 10.302634 0.7135642  8.942350 11.66981
-#> 6 18.292640 46.12009 18.460976 0.9281008 16.431898 20.12248
+#>   response     time   fitted        sd     Q2.5    Q97.5
+#> 1 17.23552 76.33986 16.92982 0.8918820 15.24031 18.66061
+#> 2 11.35171 83.51711 16.19732 0.7069182 14.86974 17.60133
+#> 3 28.04995 60.18529 25.24068 0.9314782 23.35380 27.15740
+#> 4 20.68198 74.72964 17.09416 0.9683574 15.30233 19.00162
+#> 5 21.21364 85.88256 15.95591 0.7234506 14.61884 17.38066
+#> 6 22.32282 40.05069 14.56256 0.6387450 13.29038 15.75679
 head(residuals(demo_fit))  # Residuals for each row of demo_fit$data
-#>    response     time  residuals        sd       Q2.5     Q97.5
-#> 1 32.842651 68.35820  2.5438170 1.0124885  0.5865913  4.521221
-#> 2 -1.160003 87.29038  2.1297203 0.7599234  0.6483267  3.622635
-#> 3 27.564248 69.01173 -3.0824732 1.0409779 -5.1180353 -1.068903
-#> 4 10.062971 11.59361 -0.2369604 0.7167564 -1.6068402  1.188188
-#> 5 14.056859 19.50091  3.7542243 0.7135642  2.3870478  5.114508
-#> 6 18.292640 46.12009 -0.1683359 0.9281008 -1.8298407  1.860741
+#>   response     time  residuals        sd       Q2.5     Q97.5
+#> 1 17.23552 76.33986  0.3056925 0.8918820 -1.4250920  1.995210
+#> 2 11.35171 83.51711 -4.8456163 0.7069182 -6.2496242 -3.518034
+#> 3 28.04995 60.18529  2.8092689 0.9314782  0.8925555  4.696150
+#> 4 20.68198 74.72964  3.5878224 0.9683574  1.6803637  5.379652
+#> 5 21.21364 85.88256  5.2577362 0.7234506  3.8329871  6.594805
+#> 6 22.32282 40.05069  7.7602636 0.6387450  6.5660303  9.032439
 log_lik(demo_fit)[1:3, 1:3]  # Log-likelihood at each demo_fit$data
-#>              1         2         3
-#> [1,] -3.167203 -2.408024 -2.306866
-#> [2,] -2.956388 -2.324250 -2.270318
-#> [3,] -2.747960 -2.362946 -2.384176
+#> Error in family_log_lik(y, dpars, data): could not find function "family_log_lik"
 
 # All of the above take a range of arguments. E.g.,:
 # \donttest{
 head(predict(demo_fit))  # Pointwise posterior predictive
-#>    response     time   predict       sd       Q2.5     Q97.5
-#> 1 32.842651 68.35820 30.207150 4.124578  22.144905 38.439454
-#> 2 -1.160003 87.29038 -3.210645 4.151474 -11.321679  4.760017
-#> 3 27.564248 69.01173 30.518943 4.165452  22.479043 38.801177
-#> 4 10.062971 11.59361 10.414788 4.078595   2.277202 18.328893
-#> 5 14.056859 19.50091 10.347444 4.292330   2.282246 18.331710
-#> 6 18.292640 46.12009 18.469592 4.078643  10.340106 26.560291
+#>   response     time  predict       sd      Q2.5    Q97.5
+#> 1 17.23552 76.33986 16.78289 3.945613  9.057670 24.78217
+#> 2 11.35171 83.51711 16.26018 3.904999  8.405115 23.98530
+#> 3 28.04995 60.18529 25.12394 4.087744 17.360018 33.12150
+#> 4 20.68198 74.72964 17.22145 4.011694  9.187288 24.98071
+#> 5 21.21364 85.88256 15.88880 4.203532  8.161476 23.75329
+#> 6 22.32282 40.05069 14.64542 4.031344  6.798112 22.33360
 head(predict(demo_fit, probs = c(0.1, 0.5, 0.9)))  # Median and 80% posterior predictive interval.
-#>    response     time   predict       sd       Q10       Q50       Q90
-#> 1 32.842651 68.35820 30.292511 4.177484 25.003207 30.301147 35.591733
-#> 2 -1.160003 87.29038 -3.293718 4.043098 -8.512640 -3.292723  1.936534
-#> 3 27.564248 69.01173 30.589537 4.167861 25.342076 30.649014 35.948693
-#> 4 10.062971 11.59361 10.285350 4.140679  5.086742 10.298795 15.515312
-#> 5 14.056859 19.50091 10.382461 4.005179  5.090210 10.301096 15.517589
-#> 6 18.292640 46.12009 18.539889 4.098412 13.190974 18.464812 23.725677
+#>   response     time  predict       sd       Q10      Q50      Q90
+#> 1 17.23552 76.33986 16.89906 4.072704 11.812794 16.93335 22.04235
+#> 2 11.35171 83.51711 16.26356 4.193334 11.130297 16.19803 21.26364
+#> 3 28.04995 60.18529 25.10203 4.039357 20.115521 25.24066 30.36594
+#> 4 20.68198 74.72964 17.19236 4.045033 11.954065 17.09782 22.22954
+#> 5 21.21364 85.88256 16.11136 4.208352 10.885880 15.95534 21.02687
+#> 6 22.32282 40.05069 14.50406 3.786710  9.511571 14.56147 19.61455
 head(predict(demo_fit, prior = TRUE))  # Prior predictive
-#>    response     time   predict       sd      Q2.5    Q97.5
-#> 1 32.842651 68.35820 11.171082 32.66496 -49.74378 70.57951
-#> 2 -1.160003 87.29038  9.864536 32.13784 -52.55783 71.93426
-#> 3 27.564248 69.01173 10.111668 30.81516 -49.85891 70.60924
-#> 4 10.062971 11.59361 10.282018 33.31249 -49.26736 68.24167
-#> 5 14.056859 19.50091 11.242114 31.90038 -49.54965 68.65070
-#> 6 18.292640 46.12009  9.654039 31.85612 -49.21910 70.55472
+#>   response     time  predict       sd      Q2.5    Q97.5
+#> 1 17.23552 76.33986 13.62495 14.24374 -15.56523 40.81678
+#> 2 11.35171 83.51711 13.82178 13.11392 -16.42007 40.76014
+#> 3 28.04995 60.18529 14.49667 15.95062 -13.63652 42.57939
+#> 4 20.68198 74.72964 14.03760 15.00494 -14.76847 41.25856
+#> 5 21.21364 85.88256 13.87618 16.04855 -16.96870 40.83192
+#> 6 22.32282 40.05069 14.14016 15.36999 -14.18878 41.58789
 head(fitted(demo_fit, summary = FALSE))  # Draws. Useful for plotting distributions.
 #> # A tibble: 6 × 14
 #>   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
 #>    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
-#> 1      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
-#> 2      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
-#> 3      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
-#> 4      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
-#> 5      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
-#> 6      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
-#> # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>,
-#> #   data_row <int>, .epred <dbl>
+#> 1      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
+#> 2      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
+#> 3      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
+#> 4      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
+#> 5      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
+#> 6      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
+#> # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>, .epred <dbl>,
+#> #   data_row <int>
 head(fitted(demo_fit, dpar = "sigma"))  # Another model parameter
-#>    response     time   fitted       sd     Q2.5    Q97.5
-#> 1 32.842651 68.35820 4.010101 0.311438 3.448848 4.656798
-#> 2 -1.160003 87.29038 4.010101 0.311438 3.448848 4.656798
-#> 3 27.564248 69.01173 4.010101 0.311438 3.448848 4.656798
-#> 4 10.062971 11.59361 4.010101 0.311438 3.448848 4.656798
-#> 5 14.056859 19.50091 4.010101 0.311438 3.448848 4.656798
-#> 6 18.292640 46.12009 4.010101 0.311438 3.448848 4.656798
+#>   response     time   fitted        sd     Q2.5    Q97.5
+#> 1 17.23552 76.33986 3.893444 0.2757184 3.381747 4.465763
+#> 2 11.35171 83.51711 3.893444 0.2757184 3.381747 4.465763
+#> 3 28.04995 60.18529 3.893444 0.2757184 3.381747 4.465763
+#> 4 20.68198 74.72964 3.893444 0.2757184 3.381747 4.465763
+#> 5 21.21364 85.88256 3.893444 0.2757184 3.381747 4.465763
+#> 6 22.32282 40.05069 3.893444 0.2757184 3.381747 4.465763
 
 # Evaluate at novel data
 novel_data = data.frame(time = c(-5, 20, 300))  # Only predictors are needed
 head(predict(demo_fit, newdata = novel_data, probs = c(0.025, 0.5, 0.975)))
-#>   time   predict        sd       Q2.5       Q50     Q97.5
-#> 1   -5  10.19913  4.178428   2.277202  10.29880  18.32889
-#> 2   20  10.36892  3.985927   2.284798  10.30251  18.33282
-#> 3  300 -50.84247 20.327313 -90.157846 -50.79259 -12.33334
+#>   time   predict        sd       Q2.5      Q50    Q97.5
+#> 1   -5  9.873604  3.948793   2.278611 10.04644 17.81965
+#> 2   20 10.209701  3.834257   2.278611 10.04644 17.81965
+#> 3  300 -6.074700 16.263353 -40.535047 -3.98945 21.96670
 
 # Work with missing responses
 missing_fit = mcp_example("missing", plot = FALSE)
 #> NA values detected in 'y'. JAGS will treat them as latent responses and impute them during sampling.
 fitted(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Expected responses for missing y
 #>    y  x condition   fitted        sd     Q2.5    Q97.5
-#> 1 NA  8         B 35.59410 1.0808576 33.50826 37.76016
-#> 2 NA 19         A 15.67323 0.8369118 14.05072 17.33612
-#> 3 NA 27         A 17.18394 0.7645671 15.69881 18.68233
-#> 4 NA 28         B 39.37086 0.7545884 37.87833 40.86702
-#> 5 NA 29         A 17.56162 0.7634425 16.07303 19.04347
-#> 6 NA 30         B 39.74854 0.7546261 38.25985 41.23888
+#> 1 NA  8         B 35.60043 1.0803038 33.51261 37.74217
+#> 2 NA 19         A 15.68747 0.8392979 14.05176 17.34367
+#> 3 NA 27         A 17.20067 0.7620321 15.70353 18.68519
+#> 4 NA 28         B 39.38345 0.7593611 37.89912 40.87640
+#> 5 NA 29         A 17.57898 0.7589502 16.07714 19.05693
+#> 6 NA 30         B 39.76175 0.7585016 38.28224 41.25734
 fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y)) |> head()  # Same, but draws
 #> # A tibble: 6 × 14
 #>   .chain .iteration .draw  cp_1 Intercept_1   x_1 conditionB_1    x_2 sigma_1
 #>    <int>      <int> <int> <dbl>       <dbl> <dbl>        <dbl>  <dbl>   <dbl>
-#> 1      1          1     1  60.0        12.6 0.180         22.2 -0.410    4.54
-#> 2      1          1     1  60.0        12.6 0.180         22.2 -0.410    4.54
-#> 3      1          1     1  60.0        12.6 0.180         22.2 -0.410    4.54
-#> 4      1          1     1  60.0        12.6 0.180         22.2 -0.410    4.54
-#> 5      1          1     1  60.0        12.6 0.180         22.2 -0.410    4.54
-#> 6      1          1     1  60.0        12.6 0.180         22.2 -0.410    4.54
-#> # ℹ 5 more variables: y <dbl>, x <int>, condition <fct>, data_row <int>,
-#> #   .epred <dbl>
+#> 1      1          1     1  62.8        14.8 0.135         20.3 -0.497    4.65
+#> 2      1          1     1  62.8        14.8 0.135         20.3 -0.497    4.65
+#> 3      1          1     1  62.8        14.8 0.135         20.3 -0.497    4.65
+#> 4      1          1     1  62.8        14.8 0.135         20.3 -0.497    4.65
+#> 5      1          1     1  62.8        14.8 0.135         20.3 -0.497    4.65
+#> 6      1          1     1  62.8        14.8 0.135         20.3 -0.497    4.65
+#> # ℹ 5 more variables: y <dbl>, x <int>, condition <fct>, .epred <dbl>,
+#> #   data_row <int>
 predict(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Posterior predictive for missing y
 #>    y  x condition  predict       sd      Q2.5    Q97.5
-#> 1 NA  8         B 35.56012 4.428752 26.945587 44.26715
-#> 2 NA 19         A 15.72108 4.293560  7.125812 24.23679
-#> 3 NA 27         A 17.18509 4.292231  8.656528 25.71505
-#> 4 NA 28         B 39.36003 4.364408 30.842388 47.89444
-#> 5 NA 29         A 17.53601 4.340269  9.033103 26.09081
-#> 6 NA 30         B 39.72210 4.371321 31.218725 48.27069
+#> 1 NA  8         B 35.51722 4.408885 26.944898 44.27282
+#> 2 NA 19         A 15.70005 4.409613  7.131763 24.25305
+#> 3 NA 27         A 17.26378 4.343011  8.668505 25.73409
+#> 4 NA 28         B 39.37180 4.354504 30.849440 47.91352
+#> 5 NA 29         A 17.55903 4.343115  9.046847 26.11032
+#> 6 NA 30         B 39.73816 4.364214 31.227062 48.29058
 # }
 ```

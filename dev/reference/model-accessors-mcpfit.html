@@ -29,7 +29,7 @@ of observations stored in an mcpfit."><meta property="og:image" content="https:/
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -105,7 +105,7 @@ selecting one segment.</p></dd>
     <p><code><a href="https://rdrr.io/r/stats/formula.html" class="external-link">formula()</a></code> returns the complete list of segment formulas, or one
 formula when <code>segment</code> is supplied. <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">family()</a></code> returns an <code>mcpfamily</code>.
 <code><a href="https://rdrr.io/r/stats/model.frame.html" class="external-link">model.frame()</a></code> returns the data retained in the fit. <code><a href="https://rdrr.io/r/stats/nobs.html" class="external-link">nobs()</a></code> returns the
-number of fitting-data rows.</p>
+number of observed response values (excluding missing responses).</p>
     </div>
 
     <div class="section level2">
@@ -113,25 +113,21 @@ number of fitting-data rows.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/formula.html" class="external-link">formula</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span>  <span class="co"># Show all segment formulas</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> List of 3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ response ~ 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x5629ddcea9c8&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ response ~ 1 ~ 0 + time</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x5629ddcea9c8&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ response ~ 1 ~ 1 + time</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x5629ddcea9c8&gt;</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/formula.html" class="external-link">formula</a></span><span class="op">(</span><span class="va">demo_fit</span>, segment <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>  <span class="co"># Show the formula for segment 2</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> response ~ 1 ~ 0 + time</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x5629ddcea9c8&gt;</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">family</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span>  <span class="co"># Show the response family and link</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Links: mu = identity; sigma = identity</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/model.frame.html" class="external-link">model.frame</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Show the top rows of fitting data</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 10.062971 11.59361</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 14.056859 19.50091</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 18.292640 46.12009</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   response     time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 17.23552 76.33986</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 11.35171 83.51711</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 28.04995 60.18529</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 20.68198 74.72964</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 21.21364 85.88256</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 22.32282 40.05069</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/nobs.html" class="external-link">nobs</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span>  <span class="co"># Count observed response rows</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 100</span>
 </code></pre></div>

@@ -46,7 +46,7 @@ An integer count of iterations, chains, or draws.
 
 ``` r
 niterations(demo_fit)
-#> [1] 1000
+#> [1] 500
 nchains(as_draws(demo_fit, prior = TRUE))
 #> [1] 2
 ```

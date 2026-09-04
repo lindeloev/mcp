@@ -87,8 +87,9 @@ waic(
 
 - ndraws:
 
-  Integer or `NULL`. Number of posterior draws used for the
-  log-likelihood or information criterion. `NULL` uses all draws.
+  Integer or `NULL`. Target number of posterior draws used for the
+  log-likelihood or information criterion. Draws are balanced across
+  chains, so the actual number may be rounded. `NULL` uses all draws.
 
 - nsamples:
 
@@ -109,9 +110,21 @@ missing response enters a later observed GARMA history,
 [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
 `loo()`, and `waic()` are unavailable with `arma = TRUE`: the
 observed-data likelihood requires integrating over that missing history,
-which mcp does not currently implement. Setting `arma = FALSE` evaluates
-the model without its AR/MA contribution rather than repairing the
-criterion for the fitted serial model.
+which mcp does not currently implement.
+
+`loo()` and `waic()` evaluate the likelihood of the fitted model and
+require default `varying = TRUE` and `arma = TRUE`. Evaluating an
+information criterion with fitted components dropped post-hoc violates
+the PSIS identity because draws come from the full model's posterior;
+comparing a reduced model requires refitting it. Non-default `varying`
+and `arma` settings remain available in
+[`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+as conditional or counterfactual diagnostics.
+
+When `ndraws` is supplied to `loo()`, draws are balanced across chains
+and thinned at evenly spaced midpoint iterations. This preserves MCMC
+chain identities and chronological order, allowing `relative_eff()` to
+be computed directly.
 
 ## Functions
 
@@ -127,23 +140,20 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 # \donttest{
 # Define two models and sample them
 # future::plan(future::multisession, workers = 3)  # Uncomment for parallel sampling
-data = mcp_example_data("intercepts")  # Get some simulated data.
-model1 = list(y ~ 1 + x, ~ 1)
-model2 = list(y ~ 1 + x)  # Without a change point
-fit1 = mcp(model1, data)
-fit2 = mcp(model2, data)
+set.seed(42)
+data = data.frame(x = seq(-1, 1, length.out = 100))
+data$y = 1 + 2 * data$x + rnorm(100, sd = 0.3)
+model1 = list(y ~ 1 + x)
+model2 = list(y ~ 1)
+fit1 = mcp(model1, data, warmup = 2000, iter = 6000, seed = 42)
+fit2 = mcp(model2, data, par_x = "x", warmup = 2000, iter = 6000, seed = 42)
 
 # Compute LOO for each and compare (works for waic(fit) too)
 loo1 = loo(fit1)
-#> Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
 loo2 = loo(fit2)
 loo::loo_compare(loo1, loo2)
-#>   model elpd_diff se_diff p_worse diag_diff      diag_elpd
-#>  model1       0.0     0.0      NA           4 k_psis > 0.7
-#>  model2      -1.8     3.2    0.71   N < 100               
-#> 
-#> Diagnostic flags present.
-#> See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
-#> or https://mc-stan.org/loo/reference/loo-glossary.html.
+#>   model elpd_diff se_diff p_worse diag_diff diag_elpd
+#>  model1       0.0     0.0      NA                    
+#>  model2    -133.8     8.1    1.00                    
 # }
 ```

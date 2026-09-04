@@ -51,7 +51,7 @@
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Understanding mcp formulas</h1>
             
-            <h4 data-toc-skip class="date">2026-08-31</h4>
+            <h4 data-toc-skip class="date">2026-09-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/formulas.Rmd" class="external-link"><code>vignettes/formulas.Rmd</code></a></small>
       <div class="d-none name"><code>formulas.Rmd</code></div>
@@ -121,7 +121,11 @@ different models and change-point structures.</div>
 <strong>cp</strong>, and <strong>predictor</strong>. The general format
 is <code>response ~ cp ~ predictor</code>, except for the first segment,
 which has no change point and therefore uses
-<code>response ~ predictor</code>. This is familiar from
+<code>response ~ predictor</code>. In later segments the response is
+inherited and may be omitted. A one-sided formula such as
+<code>~ x</code> also uses the default change-point formula
+<code>~ 1</code>, so it is shorthand for <code>y ~ 1 ~ 1 + x</code>.
+This is familiar from
 <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>/<code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code>/<code>brms::brm()</code>.</p>
 <p><code>mcp</code> adds two novelties to the modeling syntax to support
 segmented regression:</p>
@@ -138,48 +142,9 @@ observation log-likelihood weights (supported across all families) and
 <code>y | trials(N) + weights(w)</code> for binomial models.</li>
 </ol>
 <p><code>mcp</code> is heavily inspired by <code>brms</code> which again
-is inspired by <a href="https://cran.r-project.org/web/packages/lme4/index.html" class="external-link"><code>lme4::lmer</code></a>.
-<a href="https://twitter.com/jonaslindeloev/status/1117760777249853440" class="external-link">Here
+is inspired by <a href="https://cran.r-project.org/web/packages/lme4/index.html" class="external-link"><code>lme4::lmer()</code></a>
+which extends <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> and <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code>. <a href="https://twitter.com/jonaslindeloev/status/1117760777249853440" class="external-link">Here
 is a bit of history</a> on that.</p>
-</div>
-<div class="section level2">
-<h2 id="on-carry-over-between-segments">On carry-over between segments<a class="anchor" aria-label="anchor" href="#on-carry-over-between-segments"></a>
-</h2>
-<p>As a general rule, everything is carried over, unless there is an
-abrupt intercept change like <code>sigma(1)</code> or <code>~1</code> or
-it is “turned off” like <code>(0|group)</code> or <code>ar(0)</code>.
-This is true of the mean <code>mu</code>, distributional parameters, and
-group-level terms.</p>
-<p>Transformations such as <code><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin()</a></code> and <code><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly()</a></code> in
-formulas are evaluated on the original predictor values, as in
-<code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> and <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code>. The change-point predictor is
-the exception: bare <code>par_x</code> and polynomial bases such as
-<code>I(par_x^2)</code> use distance from the segment onset (change
-point location, i.e., <code>cp_i</code> values).</p>
-<p>Enough talk. Let us see this in action for this model where we
-predict <code>y</code> as a function of <code>x</code> in three
-segments, i.e., with two change points:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lindeloev.github.io/mcp/">mcp</a></span><span class="op">)</span></span>
-<span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span>,  <span class="co"># intercept</span></span>
-<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>,  <span class="co"># joined slope</span></span>
-<span>  <span class="op">~</span> <span class="va">x</span>  <span class="co"># disjoined slope. "y ~ 1 ~ 1 + x" is implicit here.</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Interpret, but do not sample.</span></span>
-<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Family: gaussian</span></span>
-<span><span class="co">## Links: mu = identity; sigma = identity</span></span>
-<span><span class="co">## Segments:</span></span>
-<span><span class="co">##   1: y ~ 1</span></span>
-<span><span class="co">##   2: y ~ 1 ~ 0 + x</span></span>
-<span><span class="co">##   3: y ~ 1 ~ x</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## No draws. Nothing to summarise.</span></span></code></pre>
-<p>Notice how <code>mcp</code> added the response and cp parts to the
-last segment?</p>
 </div>
 <div class="section level2">
 <h2 id="parameter-names">Parameter names<a class="anchor" aria-label="anchor" href="#parameter-names"></a>
@@ -189,8 +154,10 @@ their roles, distributional parameters, and segments. Use
 <code><a href="../reference/mcp_columns.html">mcp_columns()</a></code> to inspect the resolved data-column roles,
 including the change-point predictor. Let us specify a somewhat complex
 model:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lindeloev.github.io/mcp/">mcp</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="co"># Intercept_1</span></span>
 <span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span>,</span>
 <span>  </span>
@@ -264,7 +231,7 @@ segment.</li>
 </h2>
 <p>A change point is simply like an <code>ifelse</code> statement or
 multiplying with indicators (0s and 1s):</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Model parameters</span></span>
 <span><span class="va">x</span> <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">20</span></span>
 <span><span class="va">cp_1</span> <span class="op">=</span> <span class="fl">12</span></span>
@@ -284,12 +251,12 @@ multiplying with indicators (0s and 1s):</p>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y_ifelse</span>, main <span class="op">=</span> <span class="st">"ifelse(x &lt;= cp_1)"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y_indicator</span>, main <span class="op">=</span> <span class="st">"(x &gt; cp_1) * Intercept_2"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="formulas_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="formulas_files/figure-html/unnamed-chunk-2-1.png" class="r-plt" alt="" width="700"></p>
 <p>The magic of (Bayesian) MCMC sampling is that it can actually infer
 the change point from this simple formulation. We let <code>mcp</code>
 write the JAGS code for this simple two-plateaus model and see how it
 uses the indicator formulation of change points:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">1</span>, <span class="op">~</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span>, sample <span class="op">=</span> <span class="cn">FALSE</span>, par_x <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span></span>
 <span><span class="va">fit</span><span class="op">$</span><span class="va">jags_code</span></span></code></pre></div>
@@ -299,10 +266,11 @@ uses the indicator formulation of change points:</p>
 <span><span class="co">##   cp_2 = CONST2_</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   cp_1 ~ dunif(CONST1_, CONST2_)  # Within the observed change-point span</span></span>
+<span><span class="co">##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)</span></span>
+<span><span class="co">##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point</span></span>
 <span><span class="co">##   Intercept_1 ~ dt(5.5, 1/(3.7)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span></span>
 <span><span class="co">##   Intercept_2 ~ dt(5.5, 1/(3.7)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span></span>
-<span><span class="co">##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale</span></span>
+<span><span class="co">##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(x)) {</span></span>
@@ -335,22 +303,58 @@ always true).</p>
 <div class="section level2">
 <h2 id="modeling-slope-change-points">Modeling slope change points<a class="anchor" aria-label="anchor" href="#modeling-slope-change-points"></a>
 </h2>
-<p>We can use the same principle to model change points on slopes. To
-make segments join continuously, we have to “take off” where the
-previous segment ended. In <code>mcp</code>, this is achieved by
-defining a segment-local predictor <span class="math inline">X_{k,i}</span> that plateaus at the segment
-boundary:</p>
-<p><span class="math display">X_{1,i} = \min(x_i, \Delta_1)</span> <span class="math display">X_{2,i} = \min(x_i, \Delta_2) - \Delta_1</span></p>
-<p>When <span class="math inline">x \le \Delta_1</span>, Segment 1
-increases at rate <span class="math inline">\beta_{1,1}</span>. When
-<span class="math inline">x &gt; \Delta_1</span>, Segment 1 plateaus at
-the constant value <span class="math inline">\beta_{1,0} + \beta_{1,1}
-\Delta_1</span>, handing over a flat baseline to Segment 2. Starting
-from <span class="math inline">\Delta_1</span>, Segment 2 adds <span class="math inline">\beta_{2,1} (x - \Delta_1)</span>. Because Segment 1
-is flat for <span class="math inline">x &gt; \Delta_1</span>, <span class="math inline">\beta_{2,1}</span> is the <strong>absolute
-slope</strong> of Segment 2 (not a difference in slope), and the
-handover is automatically continuous everywhere:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<p>Mathematically, an <code>mcp</code> model divides the continuous
+predictor <span class="math inline">x</span> into <span class="math inline">K</span> segments separated by ordered change points
+<span class="math inline">\Delta_1 &lt; \dots &lt; \Delta_{K-1}</span>.
+In each segment <span class="math inline">k \in \{1, \dots, K\}</span>,
+the linear predictor <span class="math inline">\mu_i</span> (or <span class="math inline">\eta_i</span>) is evaluated directly from the
+segment-local distance <span class="math inline">(x_i -
+\Delta_{k-1})</span>:</p>
+<p><span class="math display">\mu_i = \alpha_k + \beta_{k,1} \, (x_i -
+\Delta_{k-1}) \quad (\text{with } \Delta_0 = 0)</span></p>
+<p>where the segment-start level <span class="math inline">\alpha_k</span> is freely estimated for the first
+and disjoined segments, as in non-segmented regression, and inherited
+continuously for joined segments:</p>
+<p><span class="math display">\alpha_k = \begin{cases}
+\beta_{k,0}, &amp; \text{Disjoined segments } (\sim \texttt{1 + x},
+\text{ including } k = 1) \\
+\alpha_{k-1} + \beta_{k-1,1} (\Delta_{k-1} - \Delta_{k-2}), &amp;
+\text{Joined segments } (k \ge 2, \, \sim \texttt{0 + x})
+\end{cases}</span></p>
+<p>In all segments, estimated slope and intercept parameters are
+absolute values (not changes relative to preceding segments).</p>
+<div class="section level3">
+<h3 id="how-mcp-implements-this-in-jags-using-indicators">How mcp implements this in JAGS using indicators<a class="anchor" aria-label="anchor" href="#how-mcp-implements-this-in-jags-using-indicators"></a>
+</h3>
+<p>Bayesian MCMC samplers like JAGS cannot evaluate dynamic conditional
+statements (<code>if/else</code>) on parameters being sampled. To
+implement this piecewise model in JAGS, <code>mcp</code> uses an
+<strong>indicator and plateauing formulation</strong> (evaluated via
+Iverson brackets <span class="math inline">[A]</span> which equal 1 when
+true and 0 when false).</p>
+<p>First, <code>mcp</code> defines a segment-local span <span class="math inline">X_{k,i}</span> that grows linearly within segment
+<span class="math inline">k</span> and “freezes” (plateaus) at the
+segment boundary:</p>
+<p><span class="math display">X_{1,i} = \min(x_i, \Delta_1)</span> <span class="math display">X_{k,i} = \max\bigl(0, \min(x_i, \Delta_k) -
+\Delta_{k-1}\bigr) \quad (k \ge 2)</span></p>
+<p>When <span class="math inline">x_i &lt; \Delta_{k-1}</span>, <span class="math inline">X_{k,i} = 0</span> (inactive). When <span class="math inline">\Delta_{k-1} \le x_i &lt; \Delta_k</span>, <span class="math inline">X_{k,i} = x_i - \Delta_{k-1}</span> (linear growth).
+When <span class="math inline">x_i \ge \Delta_k</span>, <span class="math inline">X_{k,i} = \Delta_k - \Delta_{k-1}</span> (frozen at
+the segment width).</p>
+<p>For a <strong>purely joined model</strong>
+(<code>list(y ~ 0 + x, ~ 0 + x)</code>), <code>mcp</code> writes <span class="math inline">\mu_i</span> as a cumulative sum of these plateauing
+coordinates:</p>
+<p><span class="math display">\mu_i = \sum_{k=1}^K [x_i \ge
+\Delta_{k-1}] \cdot \beta_{k,1} X_{k,i}</span></p>
+<p>Because earlier segments freeze at their boundary levels (<span class="math inline">\beta_{k-1,1}(\Delta_{k-1} - \Delta_{k-2})</span>),
+continuity is automatic with zero parameter constraints: preceding
+segments hand over a flat plateau that serves as the baseline for
+subsequent segments.</p>
+<p>When a segment is <strong>disjoined</strong> (<code>~ 1 + x</code>),
+it introduces a new explicit intercept <span class="math inline">\beta_{k,0}</span> at <span class="math inline">\Delta_{k-1}</span>, and earlier terms are capped
+with <span class="math inline">[x_i &lt; \Delta_{\text{next}}]</span> so
+previous segments stop accumulating.</p>
+<p>Let’s demonstrate this equivalence in R:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Model parameters</span></span>
 <span><span class="va">x</span> <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">20</span></span>
 <span><span class="va">cp_1</span> <span class="op">=</span> <span class="fl">12</span></span>
@@ -370,9 +374,9 @@ handover is automatically continuous everywhere:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y_ifelse</span>, main <span class="op">=</span> <span class="st">"ifelse() version"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y_local</span>, main <span class="op">=</span> <span class="st">"Local plateauing coordinate"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="formulas_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="formulas_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="700"></p>
 <p>Let us see this in action:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>,</span>
 <span>                <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span></span>
 <span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
@@ -383,10 +387,11 @@ handover is automatically continuous everywhere:</p>
 <span><span class="co">##   cp_2 = CONST2_</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   cp_1 ~ dunif(CONST1_, CONST2_)  # Within the observed change-point span</span></span>
+<span><span class="co">##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)</span></span>
+<span><span class="co">##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point</span></span>
 <span><span class="co">##   x_1 ~ dt(0, 1/(0.4111111)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change</span></span>
 <span><span class="co">##   x_2 ~ dt(0, 1/(0.4111111)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change</span></span>
-<span><span class="co">##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale</span></span>
+<span><span class="co">##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(x)) {</span></span>
@@ -411,11 +416,15 @@ handover is automatically continuous everywhere:</p>
 <span><span class="co">## }</span></span></code></pre>
 <p>Look at the JAGS code under
 <code># par_x local to each segment</code> and
-<code># Formula for mu</code> to see <code>x_local_1_[i_]</code> and
-<code>x_local_2_[i_]</code> computed exactly this way.</p>
+<code># Formula for mu</code> to see this exact indicator formulation in
+action: <code>x_local_1_[i_]</code> and <code>x_local_2_[i_]</code>
+correspond to <span class="math inline">X_{1,i}</span> and <span class="math inline">X_{2,i}</span>, and each segment’s slope is
+multiplied by its activation indicator (e.g.,
+<code>(x[i_] &gt;= cp_1)</code>).</p>
 <p>You will find the exact same formula for <code>y_ = ...</code> if you
 do <code>print(fit$simulate)</code>, though this function contains a
 whole lot of other stuff too.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="multiple-regression-and-categorical-predictors">Multiple regression and categorical predictors<a class="anchor" aria-label="anchor" href="#multiple-regression-and-categorical-predictors"></a>
@@ -427,7 +436,7 @@ continuous covariates, categorical factors, and interaction terms (e.g.,
 <p>Let’s inspect the model in the overview plot in the top of this page
 - except I added one plateau segment (<code>~1</code>) below to
 illustrate a point.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Define model with multiple predictors</span></span>
 <span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">:</span><span class="va">group</span> <span class="op">+</span> <span class="va">z</span>, <span class="co"># Segment 1: by-group slopes on x, covariate z</span></span>
@@ -490,6 +499,137 @@ explicitly via
 </ul>
 </div>
 <div class="section level2">
+<h2 id="on-carry-over-between-segments">On carry-over between segments<a class="anchor" aria-label="anchor" href="#on-carry-over-between-segments"></a>
+</h2>
+<p>Every model contribution has a lifetime: it starts in the segment
+where it is declared, carries through later segments where it is
+omitted, and ends at the boundary where its replacement is declared. In
+rule form, omission means “carry”, not “turn off”; repeating a term
+replaces its previous definition; and replacement coefficients are
+absolute rather than changes added to old coefficients.</p>
+<p>What counts as “replacement declared” depends on the type of
+term:</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Type of term</th>
+<th align="left">Carries until</th>
+<th align="left">Explicit turn-off or reset</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Ordinary population term in <code>mu</code>,
+<code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, <code>shape()</code>, etc.</td>
+<td align="left">The same formula term is declared again, or a new
+intercept resets that distributional parameter</td>
+<td align="left">When an intercept is declared without this term</td>
+</tr>
+<tr class="even">
+<td align="left">Segment-local <code>par_x</code> term, such as bare
+<code>x</code>, <code>I(x^2)</code>, or an interaction such as
+<code>x:group</code>
+</td>
+<td align="left">A new intercept resets that distributional
+parameter</td>
+<td align="left">When an intercept is declared</td>
+</tr>
+<tr class="odd">
+<td align="left">Offset block</td>
+<td align="left">Another <code><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset()</a></code> is declared for the same
+distributional parameter</td>
+<td align="left"><code>offset(0)</code></td>
+</tr>
+<tr class="even">
+<td align="left">
+<code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code> component</td>
+<td align="left">
+<code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma</code> (respectively) is
+declared again</td>
+<td align="left">A zero formula, such as <code>ar(p, 0)</code> or
+<code>ma(q, 0)</code>
+</td>
+</tr>
+<tr class="odd">
+<td align="left">Group-level predictor block for one distributional
+parameter and grouping factor</td>
+<td align="left">Another group-level term for that grouping factor is
+declared</td>
+<td align="left"><code>(0 | group)</code></td>
+</tr>
+</tbody>
+</table>
+<p>Here is the rule for ordinary population terms together with the
+intentional exception for segment-local <code>par_x</code> terms. Assume
+that <code>x</code> is <code>par_x</code>. In joined segments, an
+earlier local term plateaus at the change point and supplies the
+continuous baseline while the new local term starts at zero. A new
+intercept creates a disjoined segment and ends both local and ordinary
+population terms for that distributional parameter.</p>
+<div class="section level3">
+<h3 id="carry-over-examples">Carry-over examples<a class="anchor" aria-label="anchor" href="#carry-over-examples"></a>
+</h3>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Model with one covariate z</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="va">z</span>,  <span class="co"># Intercept_1, x_1, z_1</span></span>
+<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>,      <span class="co"># x_1 plateaus (no intercept); x_2 turns on; carry z_1</span></span>
+<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="va">z</span>,  <span class="co"># x_2 plateaus (no intercept); x_3 turns on; z_3 replaces z_1</span></span>
+<span>    <span class="op">~</span> <span class="fl">1</span>           <span class="co"># Intercept_4 replaces Intercept_1; x_1--x_3 and z_3 turn off</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Model with categorical predictor</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">condition</span>,  <span class="co"># Intercept_1, condition dummies</span></span>
+<span>    <span class="op">~</span> <span class="fl">0</span>,              <span class="co"># Everything from segment 1 carries over</span></span>
+<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">condition</span>,  <span class="co"># Condition dummies are replaced; Intercept_1 carries</span></span>
+<span>    <span class="op">~</span> <span class="fl">1</span>               <span class="co"># Intercept_4 replaces Intercept_1; condition dummies turn off</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Model with distributional regression</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">z</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">z</span><span class="op">)</span>,  <span class="co"># mu: Intercept_1, z_1; sigma: sigma_1, sigma_z_1</span></span>
+<span>    <span class="op">~</span> <span class="fl">1</span>,                     <span class="co"># Intercept_2 replaces Intercept_1; z_1 turns off; sigma carries</span></span>
+<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,          <span class="co"># sigma_3 replaces sigma_1; sigma_z_1 turns off; mu carries</span></span>
+<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">z</span>                  <span class="co"># z_4 turns on; Intercept_2 and sigma_3 carry</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Model with AR (or MA) components and group-level effects</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">id</span><span class="op">)</span>,   <span class="co"># Intercept_1; AR(2); group-level Intercept_1_id</span></span>
+<span>    <span class="op">~</span> <span class="fl">1</span>,                      <span class="co"># Intercept_2 replaces Intercept_1; AR(2) and group effect carry</span></span>
+<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">||</span> <span class="va">id</span><span class="op">)</span>,  <span class="co"># AR(1) replaces AR(2); Intercept_3_id replaces the group block</span></span>
+<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span> <span class="op">|</span> <span class="va">id</span><span class="op">)</span> <span class="co"># AR and group-level effect turn off; Intercept_2 carries</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Model with offset</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">exposure</span><span class="op">)</span><span class="op">)</span>,  <span class="co"># Intercept_1, x_1; exposure offset turns on</span></span>
+<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>,                          <span class="co"># x_1 plateaus; x_2 turns on; offset carries</span></span>
+<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>               <span class="co"># x_2 plateaus; x_3 turns on; offset turns off</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="transformations-are-not-segment-local">Transformations are not segment-local<a class="anchor" aria-label="anchor" href="#transformations-are-not-segment-local"></a>
+</h3>
+<p>Transformations such as <code><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin()</a></code> and <code><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly()</a></code> in
+formulas are evaluated on the original predictor values, as in
+<code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> and <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code>. The change-point predictor is
+the exception: bare <code>par_x</code> and polynomial bases such as
+<code>I(par_x^2)</code> use distance from the segment onset (change
+point location, i.e., <code>cp_i</code> values).</p>
+<p>For example, assuming that <code>x</code> is <code>par_x</code>:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span>,                        <span class="co"># Intercept_1</span></span>
+<span>    <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">x</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>   <span class="co"># sin(x) uses x; x and I(x^2) use x - cp_1</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
 <h2 id="relative-changes-between-segments">Relative changes between segments<a class="anchor" aria-label="anchor" href="#relative-changes-between-segments"></a>
 </h2>
 <p>Parameters in <code>mcp</code> represent the absolute values within
@@ -501,8 +641,8 @@ each segment (e.g., <code>time_2</code> is the slope in segment 2 and
 <p>First, using <code><a href="../reference/hypothesis.html">hypothesis()</a></code>:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">demo_fit</span>, <span class="st">"time_3 &gt; time_2"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##            hypothesis       mean      lower      upper p BF</span></span>
-<span><span class="co">## 1 time_3 - time_2 &gt; 0 -0.7552872 -0.9993173 -0.5497272 0  0</span></span></code></pre>
+<pre><code><span><span class="co">##            hypothesis       mean      lower      upper prob BF</span></span>
+<span><span class="co">## 1 time_3 - time_2 &gt; 0 -0.6323957 -0.8068299 -0.4923073    0  0</span></span></code></pre>
 <p>The estimate reflects the difference <code>time_3 - time_2</code>
 (how much steeper or flatter the slope became in segment 3), along with
 its credibility interval, posterior probability, and directional Bayes
@@ -521,12 +661,12 @@ testing in the comparison article</a>. Here, we see that
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">draws</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## # A draws_df: 6 iterations, 1 chains, and 8 variables</span></span>
 <span><span class="co">##   Intercept_1 Intercept_3 cp_1 cp_2 sigma_1 time_2 time_3 diff_time</span></span>
-<span><span class="co">## 1         8.4       2.111   20   70     4.0   0.39 -0.298     -0.69</span></span>
-<span><span class="co">## 2         8.9       0.875   20   69     3.7   0.40 -0.205     -0.61</span></span>
-<span><span class="co">## 3         9.7      -0.905   20   70     3.9   0.40 -0.105     -0.51</span></span>
-<span><span class="co">## 4         9.6      -1.210   21   69     4.9   0.42 -0.095     -0.52</span></span>
-<span><span class="co">## 5         9.4      -0.168   22   70     4.5   0.40 -0.199     -0.60</span></span>
-<span><span class="co">## 6        11.2      -0.015   24   70     4.5   0.40 -0.195     -0.60</span></span>
+<span><span class="co">## 1        10.2          16   31   72     4.5   0.51  0.077     -0.44</span></span>
+<span><span class="co">## 2         9.9          16   31   70     3.6   0.51 -0.047     -0.56</span></span>
+<span><span class="co">## 3         9.4          17   31   71     3.6   0.51 -0.078     -0.59</span></span>
+<span><span class="co">## 4        10.8          17   32   71     3.4   0.54 -0.075     -0.61</span></span>
+<span><span class="co">## 5         9.3          19   33   73     3.8   0.59 -0.178     -0.77</span></span>
+<span><span class="co">## 6         9.3          17   30   72     4.0   0.54 -0.113     -0.65</span></span>
 <span><span class="co">## # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</span></span></code></pre>
 <p>You can now use <code>diff_time</code> directly with base R functions
 like <code>quantile(draws$diff_time, c(0.025, 0.975))</code> and

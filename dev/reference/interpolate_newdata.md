@@ -5,12 +5,7 @@
 ## Usage
 
 ``` r
-interpolate_newdata(
-  fit,
-  by = NULL,
-  x_values = get_x_values(fit, by),
-  at = NULL
-)
+interpolate_newdata(fit, by = NULL, x_values = NULL, at = NULL, arma = NULL)
 ```
 
 ## Arguments
@@ -34,6 +29,13 @@ interpolate_newdata(
   They default to their observed means. Family response auxiliaries can
   also be supplied as explicit scalar design values; e.g.,
   `at = list(N = 20)`.
+
+- arma:
+
+  Logical. If `TRUE`, preserve the observed response history for
+  conditional AR/MA evaluation. Defaults to `TRUE` when the fit includes
+  [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()` terms. Set to
+  `FALSE` to interpolate unconditional trends.
 
 ## Value
 
@@ -80,13 +82,13 @@ newdata = interpolate_newdata(demo_fit)
 
 # Fit summary
 head(fitted(demo_fit, newdata))
-#>       time   fitted        sd     Q2.5    Q97.5
-#> 1 3.189323 10.29993 0.7167564 8.874782 11.66981
-#> 2 4.146597 10.29993 0.7167564 8.874782 11.66981
-#> 3 5.103871 10.29993 0.7167564 8.874782 11.66981
-#> 4 6.061145 10.29993 0.7167564 8.874782 11.66981
-#> 5 7.018419 10.29993 0.7167564 8.874782 11.66981
-#> 6 7.975693 10.29993 0.7167564 8.874782 11.66981
+#>        time   fitted        sd     Q2.5    Q97.5
+#> 1 0.6186323 10.04702 0.6479304 8.782501 11.32416
+#> 2 1.6198715 10.04702 0.6479304 8.782501 11.32416
+#> 3 2.6211108 10.04702 0.6479304 8.782501 11.32416
+#> 4 3.6223501 10.04702 0.6479304 8.782501 11.32416
+#> 5 4.6235893 10.04702 0.6479304 8.782501 11.32416
+#> 6 5.6248286 10.04702 0.6479304 8.782501 11.32416
 
 # Predictions for each draw
 prediction = predict(demo_fit, newdata, summary = FALSE)
@@ -94,14 +96,14 @@ head(prediction)
 #> # A tibble: 6 × 13
 #>   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
 #>    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
-#> 1      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
-#> 2      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
-#> 3      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
-#> 4      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
-#> 5      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
-#> 6      1          1     1  19.8  70.2        8.44  0.395        2.11 -0.298
-#> # ℹ 4 more variables: sigma_1 <dbl>, time <dbl>, data_row <int>,
-#> #   .prediction <dbl>
+#> 1      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
+#> 2      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
+#> 3      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
+#> 4      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
+#> 5      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
+#> 6      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
+#> # ℹ 4 more variables: sigma_1 <dbl>, time <dbl>, .prediction <dbl>,
+#> #   data_row <int>
 
 # Custom plot
 library(ggplot2)

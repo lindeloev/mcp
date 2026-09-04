@@ -86,9 +86,9 @@ later.
 
 ``` r
 
-fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 10000, seed = 42)
-fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 10000, seed = 42)
-fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 10000, seed = 42)
+fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 8000, seed = 42)
+fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 8000, seed = 42)
+fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 8000, seed = 42)
 ```
 
 We plot them and add a few `ggplot2` layers. We jitter the raw data in
@@ -123,12 +123,10 @@ is fixed at four items with the fitted continuous model:
 ``` r
 
 equality = hypothesis(fit_default, "cp_1 = 4")
-## Warning: Savage-Dickey Bayes factor was computed using default prior(s) for
-## `cp_1`. Point Bayes factors are sensitive to the prior distribution; consider
-## specifying informed priors.
+## Warning: Savage-Dickey Bayes factor was computed using default prior(s) for `cp_1`. Point Bayes factors are sensitive to the prior distribution; consider specifying informed priors.
 equality
-##     hypothesis      mean     lower    upper  p       BF
-## 1 cp_1 - 4 = 0 0.1844021 -1.418307 1.482445 NA 3.371139
+##     hypothesis      mean     lower    upper prob       BF
+## 1 cp_1 - 4 = 0 0.1515666 -1.641966 1.471894   NA 3.305488
 ```
 
 Notice that `mcp` issues a warning when computing Savage-Dickey Bayes
@@ -160,7 +158,7 @@ prior, you would interpret them as:
   \> 1 favors the point-null model, BF = 1 favors neither model, and BF
   \< 1 favors the continuous alternative.
 
-- `p`: This is `NA` because equality is not an event with positive
+- `prob`: This is `NA` because equality is not an event with positive
   probability in the continuous model.
 
 Equality tests are limited to named parameters and affine contrasts such
@@ -178,7 +176,7 @@ posterior_model_prob = equality$BF * prior_null_prob /
 posterior_model_prob
 ```
 
-    ## [1] 0.5291266
+    ## [1] 0.524224
 
 Because point Bayes factors depend directly on the prior density, they
 require bespoke, substantively justified priors. For example, testing
@@ -190,13 +188,13 @@ was provided, yielding a substantially different Bayes factor:
 hypothesis(fit_info, "cp_1 = 4")
 ```
 
-    ##     hypothesis      mean     lower    upper  p       BF
-    ## 1 cp_1 - 4 = 0 0.2464631 -1.004274 1.353279 NA 1.365847
+    ##     hypothesis      mean      lower    upper prob       BF
+    ## 1 cp_1 - 4 = 0 0.2441428 -0.9953883 1.327558   NA 1.356304
 
-[The Dirichlet prior on change
-points](https://lindeloev.github.io/mcp/dev/articles/priors.md) may be
-better than the default prior when testing point hypotheses on change
-points, but an informed prior beats both.
+The default [uniform order statistics prior on change
+points](https://lindeloev.github.io/mcp/dev/articles/priors.md) has flat
+symmetric properties across the range, but an informed prior should be
+used for point-null hypothesis testing.
 
 ## Directional and combinatoric tests
 
@@ -220,16 +218,11 @@ hypothesis(fit_info, c(
 ))
 ```
 
-    ##                                                       hypothesis     mean
-    ## 1                                                   cp_1 - 3 > 0 1.246463
-    ## 2                                        cp_1 > 3.5 & cp_1 < 4.5       NA
-    ## 3   cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & Intercept_1 > 2.5       NA
-    ## 4 (cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & Intercept_1 < 2.5       NA
-    ##          lower    upper          p        BF
-    ## 1 -0.004274233 2.353279 0.97443333 7.0303988
-    ## 2           NA       NA 0.52990000 1.8105230
-    ## 3           NA       NA 0.27370000 3.2676607
-    ## 4           NA       NA 0.04033333 0.7098227
+    ##                                                       hypothesis     mean       lower    upper       prob        BF
+    ## 1                                                   cp_1 - 3 > 0 1.244143 0.004611652 2.327558 0.97545833 7.3071167
+    ## 2                                        cp_1 > 3.5 & cp_1 < 4.5       NA          NA       NA 0.52466667 1.7725306
+    ## 3   cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & Intercept_1 > 2.5       NA          NA       NA 0.27433333 3.2789646
+    ## 4 (cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & Intercept_1 < 2.5       NA          NA       NA 0.03954167 0.6848186
 
 Comparing the Bayes factors shows which hypothesis received the larger
 update from prior to posterior.
@@ -238,10 +231,11 @@ There are more examples [in the documentation for
 `hypothesis`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md),
 including how to test group-level deviations and [relative changes
 between
-segments](https://lindeloev.github.io/mcp/dev/articles/formulas.html#relative-changes-and-differences-between-segments).
+segments](https://lindeloev.github.io/mcp/dev/articles/formulas.html#relative-changes-between-segments).
 `mcp` evaluates the directional hypothesis for both posterior and prior
-samples. The posterior probability is reported as `p`, and the Bayes
-factor is the posterior odds divided by the prior odds:
+samples. The returned `prob` is the posterior probability by default, or
+the prior probability with `prior = TRUE`; the Bayes factor is the
+posterior odds divided by the prior odds:
 
 BF\_{10} = \frac{P(H \mid \text{data}) \\/\\ \[1 - P(H \mid
 \text{data})\]}{P(H) \\/\\ \[1 - P(H)\]}
@@ -254,8 +248,8 @@ its posterior probability, and P(H) is its prior probability.
 hypothesis(fit_info, "cp_1 > 3.5 & cp_1 < 4.5")
 ```
 
-    ##                hypothesis mean lower upper      p       BF
-    ## 1 cp_1 > 3.5 & cp_1 < 4.5   NA    NA    NA 0.5299 1.810523
+    ##                hypothesis mean lower upper      prob       BF
+    ## 1 cp_1 > 3.5 & cp_1 < 4.5   NA    NA    NA 0.5246667 1.772531
 
 ``` r
 
@@ -265,15 +259,15 @@ prob = function(fit, prior = FALSE) {
   mean(draws$cp_1 > 3.5 & draws$cp_1 < 4.5)
 }
 
-p_post = prob(fit_info, prior = FALSE)
-p_prior = prob(fit_info, prior = TRUE)
-BF = (p_post / (1 - p_post)) / (p_prior / (1 - p_prior))
+post_prob = prob(fit_info, prior = FALSE)
+prior_prob = prob(fit_info, prior = TRUE)
+BF = (post_prob / (1 - post_prob)) / (prior_prob / (1 - prior_prob))
 
-print(c(p = p_post, BF = BF))
+print(c(post_prob = post_prob, BF = BF))
 ```
 
-    ##        p       BF 
-    ## 0.529900 1.810523
+    ## post_prob        BF 
+    ## 0.5246667 1.7725306
 
 ## Cross Validation
 
@@ -337,15 +331,16 @@ We can look at the loo for one model:
 
 ``` r
 
-loo(fit_info)
+loo_info = loo(fit_info)
+loo_info
 ```
 
     ## 
-    ## Computed from 30000 by 360 log-likelihood matrix.
+    ## Computed from 24000 by 360 log-likelihood matrix.
     ## 
     ##          Estimate   SE
     ## elpd_loo   -365.6 16.5
-    ## p_loo         2.8  0.3
+    ## p_loo         2.7  0.3
     ## looic       731.2 33.0
     ## ------
     ## MCSE of elpd_loo is 0.0.
@@ -373,13 +368,12 @@ them for later.
 ``` r
 
 loo_default = loo(fit_default)
-loo_info = loo(fit_info)
 loo_simple = loo(fit_simple)
 
 loo::loo_compare(loo_default, loo_info, loo_simple)
 ##   model elpd_diff se_diff p_worse       diag_diff diag_elpd
 ##  model2       0.0     0.0      NA                          
-##  model1      -0.3     0.3    0.91 |elpd_diff| < 4          
+##  model1      -0.5     0.3    0.97 |elpd_diff| < 4          
 ##  model3      -4.1     2.8    0.93
 ## 
 ## Diagnostic flags present.
@@ -419,7 +413,7 @@ waic_simple = waic(fit_simple)
 loo::loo_compare(waic_default, waic_info, waic_simple)
 ##   model elpd_diff se_diff p_worse       diag_diff diag_elpd
 ##  model2       0.0     0.0      NA                          
-##  model1      -0.3     0.3    0.91 |elpd_diff| < 4          
+##  model1      -0.5     0.3    0.97 |elpd_diff| < 4          
 ##  model3      -4.1     2.8    0.93
 ## 
 ## Diagnostic flags present.

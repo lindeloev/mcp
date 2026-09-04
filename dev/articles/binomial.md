@@ -104,7 +104,7 @@ recover the parameters used to simulate the data.
 
 ``` r
 
-fit = mcp(model, data = df, family = binomial(), warmup = 5000, seed = 42)
+fit = mcp(model, data = df, family = binomial(), seed = 42)
 ```
 
 We can use `summary` to see that it recovered the parameters to a pretty
@@ -125,24 +125,18 @@ summary(fit)
     ##   3: y | trials(N) ~ 1 ~ 1 + year
     ## 
     ## Change point parameters:
-    ##     variable     mean     sd    lower    upper rhat ess_bulk ess_tail    sim
-    ##  cp_1        1930.084 3.0280 1924.086 1935.437 1.00      440      987 1925.0
-    ##  cp_2        1974.516 0.6268 1973.232 1975.856 1.00     1120      476 1975.0
-    ##  match
-    ##     OK
-    ##     OK
+    ##     variable   mean     sd    lower    upper rhat ess_bulk ess_tail    sim match
+    ##  cp_1        1929.6 2.9981 1923.904 1935.160 1.03      132      367 1925.0    OK
+    ##  cp_2        1974.5 0.5742 1973.190 1975.757 1.00     1754     1771 1975.0    OK
     ## 
     ## Population-level parameters:
-    ##     variable     mean     sd    lower    upper rhat ess_bulk ess_tail    sim
-    ##  Intercept_1    1.624 0.1445    1.360    1.921 1.00      805     1736    2.0
-    ##  year_2        -0.103 0.0108   -0.126   -0.083 1.01      486     1002   -0.1
-    ##  Intercept_3   -1.078 0.2033   -1.468   -0.678 1.01      630     1008   -1.0
-    ##  year_3         0.099 0.0088    0.082    0.116 1.00      810     1856    0.1
-    ##  match
-    ##       
-    ##     OK
-    ##     OK
-    ##     OK
+    ##     variable   mean     sd    lower    upper rhat ess_bulk ess_tail    sim match
+    ##  Intercept_1    1.6 0.1479    1.376    1.942 1.02      243      690    2.0      
+    ##  year_2        -0.1 0.0098   -0.122   -0.084 1.01      191      584   -0.1    OK
+    ##  Intercept_3   -1.1 0.1996   -1.498   -0.710 1.00      839     1422   -1.0    OK
+    ##  year_3         0.1 0.0088    0.083    0.117 1.01      925     1859    0.1    OK
+    ## 
+    ## Warning: 3 parameters show poor convergence (rhat > 1.01 or ess_bulk < 400 or ess_tail < 400).
 
 `summary` uses 95% central posterior intervals by default, but you can
 change it using `summary(fit, width = 0.80)`. If you have [group-level
@@ -226,22 +220,22 @@ cbind(fit$prior)  # Raw view
 prior_summary(fit)  # Richer view. Try adding verbose = TRUE
 ```
 
-    ##             [,1]                             
-    ## cp_1        "dt(1901, 59.5, 1) T(1901, 2020)"
-    ## cp_2        "dt(1901, 59.5, 1) T(cp_1, 2020)"
-    ## Intercept_1 "dt(0, 1.5, 3)"                  
-    ## year_2      "dt(0, 0.01260504, 3)"           
-    ## Intercept_3 "dt(0, 1.5, 3)"                  
-    ## year_3      "dt(0, 0.01260504, 3)"           
+    ##             [,1]                  
+    ## cp_1        "dirichlet(1)"        
+    ## cp_2        "dirichlet(1)"        
+    ## Intercept_1 "dt(0, 1.5, 3)"       
+    ## year_2      "dt(0, 0.01260504, 3)"
+    ## Intercept_3 "dt(0, 1.5, 3)"       
+    ## year_3      "dt(0, 0.01260504, 3)"
     ## # A tibble: 6 × 5
-    ##   parameter   segment dpar  prior                                         bounds
-    ##   <chr>         <int> <chr> <chr>                                         <chr> 
-    ## 1 cp_1              2 cp    student_t(df = 1, location = 1901, scale = 5… [min(…
-    ## 2 cp_2              3 cp    student_t(df = 1, location = 1901, scale = 5… [cp_1…
-    ## 3 Intercept_1       1 mu    student_t(df = 3, location = 0, scale = 1.5)  none  
-    ## 4 year_2            2 mu    student_t(df = 3, location = 0, scale = 0.01… none  
-    ## 5 Intercept_3       3 mu    student_t(df = 3, location = 0, scale = 1.5)  none  
-    ## 6 year_3            3 mu    student_t(df = 3, location = 0, scale = 0.01… none
+    ##   parameter   segment dpar  prior                                               bounds           
+    ##   <chr>         <int> <chr> <chr>                                               <chr>            
+    ## 1 cp_1              2 cp    dirichlet(alpha = 1)                                [min(year), cp_2]
+    ## 2 cp_2              3 cp    dirichlet(alpha = 1)                                [cp_1, max(year)]
+    ## 3 Intercept_1       1 mu    student_t(df = 3, location = 0, scale = 1.5)        none             
+    ## 4 year_2            2 mu    student_t(df = 3, location = 0, scale = 0.01260504) none             
+    ## 5 Intercept_3       3 mu    student_t(df = 3, location = 0, scale = 1.5)        none             
+    ## 6 year_3            3 mu    student_t(df = 3, location = 0, scale = 0.01260504) none
 
 The priors on change points are discussed extensively in the prior
 vignette. With the default logit link, intercepts and categorical
@@ -311,8 +305,10 @@ fit$jags_code
     ##   cp_3 = CONST2_
     ## 
     ##   # Priors for population-level effects
-    ##   cp_1 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(CONST1_,CONST2_)  # Regularizing t-tail within the observed change-point span
-    ##   cp_2 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(cp_1,CONST2_)  # Regularizing t-tail ordered after cp_1 within the observed change-point span
+    ##   cp_frac_1_ ~ dbeta(1, 2)  # Relative fraction of remaining span (Uniform order statistics)
+    ##   cp_1 = cp_0 + cp_frac_1_ * (cp_3 - cp_0)  # Ordered change point
+    ##   cp_frac_2_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)
+    ##   cp_2 = cp_1 + cp_frac_2_ * (cp_3 - cp_1)  # Ordered change point
     ##   Intercept_1 ~ dt(0, 1/(1.5)^2, 3)   # Weakly regularizing link-scale intercept
     ##   year_2 ~ dt(0, 1/(0.01260504)^2, 3)   # Weakly regularizing link-scale coefficient scaled to a reference predictor change
     ##   Intercept_3 ~ dt(0, 1/(1.5)^2, 3)   # Weakly regularizing link-scale intercept

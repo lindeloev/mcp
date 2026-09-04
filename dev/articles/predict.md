@@ -22,13 +22,13 @@ data = mcp_example_data("demo")
 head(data)
 ```
 
-    ##    response     time
-    ## 1 32.842651 68.35820
-    ## 2 -1.160003 87.29038
-    ## 3 27.564248 69.01173
-    ## 4 10.062971 11.59361
-    ## 5 14.056859 19.50091
-    ## 6 18.292640 46.12009
+    ##   response     time
+    ## 1 17.23552 76.33986
+    ## 2 11.35171 83.51711
+    ## 3 28.04995 60.18529
+    ## 4 20.68198 74.72964
+    ## 5 21.21364 85.88256
+    ## 6 22.32282 40.05069
 
 … and model it as three segments, i.e., two change points:
 
@@ -86,13 +86,13 @@ To get the fitted values for each data point, simply do `fitted(fit)`:
 head(fitted(fit))
 ```
 
-    ##    response     time    fitted        sd      Q2.5     Q97.5
-    ## 1 32.842651 68.35820 30.374492 1.0363972 28.362893 32.453365
-    ## 2 -1.160003 87.29038 -3.333719 0.7695936 -4.836521 -1.822012
-    ## 3 27.564248 69.01173 30.727352 1.0675322 28.660966 32.861266
-    ## 4 10.062971 11.59361 10.316267 0.7101668  8.907415 11.711335
-    ## 5 14.056859 19.50091 10.316619 0.7096133  8.907914 11.711335
-    ## 6 18.292640 46.12009 18.367438 0.9842136 16.134892 20.014110
+    ##   response     time   fitted        sd     Q2.5    Q97.5
+    ## 1 17.23552 76.33986 16.95304 0.9425042 15.17680 18.84139
+    ## 2 11.35171 83.51711 16.22386 0.7231217 14.82569 17.64630
+    ## 3 28.04995 60.18529 25.26025 0.8946280 23.51420 26.98299
+    ## 4 20.68198 74.72964 17.11663 1.0216233 15.20838 19.19173
+    ## 5 21.21364 85.88256 15.98354 0.7208332 14.60845 17.42739
+    ## 6 22.32282 40.05069 14.54825 0.6297756 13.25108 15.71204
 
 In general, this output will include:
 
@@ -136,11 +136,11 @@ newdata = data.frame(time = c(data$time[1], 25, -20, 200))
 fitted(fit, newdata = newdata)
 ```
 
-    ##       time    fitted         sd       Q2.5     Q97.5
-    ## 1  68.3582  30.37449  1.0363972  28.362893  32.45336
-    ## 2  25.0000  10.34583  0.6996371   8.964573  11.72535
-    ## 3 -20.0000  10.31627  0.7101668   8.907415  11.71133
-    ## 4 200.0000 -29.86496 10.4838568 -50.879621 -10.31775
+    ##        time    fitted        sd       Q2.5    Q97.5
+    ## 1  76.33986 16.953037 0.9425042  15.176805 18.84139
+    ## 2  25.00000 10.032579 0.6630444   8.729474 11.31624
+    ## 3 -20.00000 10.032168 0.6635059   8.728337 11.31624
+    ## 4 200.00000  4.389672 8.3266709 -13.882775 18.56525
 
 Note that:
 
@@ -195,13 +195,13 @@ set.seed(42)
 head(predict(fit, probs = c(0.1, 0.9)))
 ```
 
-    ##    response     time   predict       sd       Q10       Q90
-    ## 1 32.842651 68.35820 30.294887 4.166189 25.079655 35.667994
-    ## 2 -1.160003 87.29038 -3.357834 4.083957 -8.551314  1.887155
-    ## 3 27.564248 69.01173 30.783699 4.133812 25.422568 36.031083
-    ## 4 10.062971 11.59361 10.279983 4.058576  5.111081 15.521708
-    ## 5 14.056859 19.50091 10.196888 4.079253  5.111559 15.521964
-    ## 6 18.292640 46.12009 18.374913 4.116569 13.086745 23.638134
+    ##   response     time  predict       sd       Q10      Q90
+    ## 1 17.23552 76.33986 16.87655 4.044288 11.807985 22.09377
+    ## 2 11.35171 83.51711 16.19702 3.979168 11.139668 21.30783
+    ## 3 28.04995 60.18529 25.32072 4.009801 20.130376 30.38637
+    ## 4 20.68198 74.72964 17.07618 4.037014 11.946629 22.28208
+    ## 5 21.21364 85.88256 15.86910 3.992311 10.900805 21.06792
+    ## 6 22.32282 40.05069 14.56188 3.945864  9.484676 19.61205
 
 Note that
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
@@ -273,9 +273,13 @@ mcp](https://lindeloev.github.io/mcp/dev/articles/priors.md).
 
 forecast_horizon = 170
 data_forecast = rbind(data, data.frame(time = forecast_horizon, response = NA))
-prior_forecast = c(empty$prior, list(
+observed_start = min(data$time)
+observed_end = max(data$time)
+prior_forecast = c(empty$prior[!names(empty$prior) %in% c("cp_1", "cp_2")], list(
+  cp_1 = paste0("dunif(", observed_start, ", ", observed_end, ")"),
+  cp_2 = paste0("dunif(cp_1, ", observed_end, ")"),
   Intercept_4 = "Intercept_1",  # Return to this value
-  cp_3 = paste0("dnorm(cp_2 + (cp_2 - cp_1), 20) T(", max(data$time), ", ", forecast_horizon, ")")  # In the future at the same interval
+  cp_3 = paste0("dnorm(cp_2 + (cp_2 - cp_1), 20) T(", observed_end, ", ", forecast_horizon, ")")  # In the future at the same interval
 ))
 ```
 
@@ -283,7 +287,7 @@ Now let’s fit it:
 
 ``` r
 
-fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast, iter = 5000, seed = 42)
+fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast, seed = 42)
 ```
 
 ### Step 3: predict!
@@ -296,8 +300,8 @@ We can now compute 50% and 80% posterior predictive intervals at
 predict(fit_forecast, newdata = data.frame(time = 125), probs = c(0.1, 0.25, 0.75, 0.9))
 ```
 
-    ##   time  predict       sd       Q10       Q25      Q75      Q90
-    ## 1  125 3.584003 11.17541 -14.25269 -6.761199 11.82396 14.67585
+    ##   time predict       sd      Q10      Q25      Q75      Q90
+    ## 1  125 10.7111 4.425336 5.227146 7.797327 13.62834 16.41037
 
 To really understand what’s going on here, it may be helpful to
 visualize the model. For now, we will have to hack this a bit too,

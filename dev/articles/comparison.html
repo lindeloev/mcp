@@ -51,7 +51,7 @@
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Change point model comparison</h1>
             
-            <h4 data-toc-skip class="date">2026-08-31</h4>
+            <h4 data-toc-skip class="date">2026-09-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/comparison.Rmd" class="external-link"><code>vignettes/comparison.Rmd</code></a></small>
       <div class="d-none name"><code>comparison.Rmd</code></div>
@@ -179,9 +179,9 @@ effectively. We will also add <code>sample = "both"</code> to sample
 <em>both</em> prior and posterior. We will need both to compute Bayes
 factors using <code><a href="../reference/hypothesis.html">hypothesis()</a></code> later.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, sample <span class="op">=</span> <span class="st">"both"</span>, iter <span class="op">=</span> <span class="fl">10000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
-<span><span class="va">fit_info</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, prior <span class="op">=</span> <span class="va">prior</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, sample <span class="op">=</span> <span class="st">"both"</span>, iter <span class="op">=</span> <span class="fl">10000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
-<span><span class="va">fit_simple</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model_simple</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, sample <span class="op">=</span> <span class="st">"both"</span>, iter <span class="op">=</span> <span class="fl">10000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, sample <span class="op">=</span> <span class="st">"both"</span>, iter <span class="op">=</span> <span class="fl">8000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">fit_info</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, prior <span class="op">=</span> <span class="va">prior</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, sample <span class="op">=</span> <span class="st">"both"</span>, iter <span class="op">=</span> <span class="fl">8000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">fit_simple</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model_simple</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, sample <span class="op">=</span> <span class="st">"both"</span>, iter <span class="op">=</span> <span class="fl">8000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <p>We plot them and add a few <code>ggplot2</code> layers. We jitter the
 raw data in the middle plot, just to give a sense of the densities.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -209,12 +209,10 @@ the change point in recall is fixed at four items with the fitted
 continuous model:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">equality</span> <span class="op">=</span> <span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit_default</span>, <span class="st">"cp_1 = 4"</span><span class="op">)</span></span>
-<span><span class="co">## Warning: Savage-Dickey Bayes factor was computed using default prior(s) for</span></span>
-<span><span class="co">## `cp_1`. Point Bayes factors are sensitive to the prior distribution; consider</span></span>
-<span><span class="co">## specifying informed priors.</span></span>
+<span><span class="co">## Warning: Savage-Dickey Bayes factor was computed using default prior(s) for `cp_1`. Point Bayes factors are sensitive to the prior distribution; consider specifying informed priors.</span></span>
 <span><span class="va">equality</span></span>
-<span><span class="co">##     hypothesis      mean     lower    upper  p       BF</span></span>
-<span><span class="co">## 1 cp_1 - 4 = 0 0.1844021 -1.418307 1.482445 NA 3.371139</span></span></code></pre></div>
+<span><span class="co">##     hypothesis      mean     lower    upper prob       BF</span></span>
+<span><span class="co">## 1 cp_1 - 4 = 0 0.1515666 -1.641966 1.471894   NA 3.305488</span></span></code></pre></div>
 <p>Notice that <code>mcp</code> issues a warning when computing
 Savage-Dickey Bayes factors on default priors. Because default priors
 are broad, they suppress the prior density denominator and can heavily
@@ -245,8 +243,8 @@ hypothesized point value, <span class="math inline">p(\theta = \theta_0
 <span class="math inline">BF = 1</span> favors neither model, and <span class="math inline">BF &lt; 1</span> favors the continuous
 alternative.</p>
 </li>
-<li><p><code>p</code>: This is <code>NA</code> because equality is not
-an event with positive probability in the continuous model.</p></li>
+<li><p><code>prob</code>: This is <code>NA</code> because equality is
+not an event with positive probability in the continuous model.</p></li>
 </ul>
 <p>Equality tests are limited to named parameters and affine contrasts
 such as <code>Intercept_1 - Intercept_2 = 0</code>. Ratios, parameter
@@ -260,7 +258,7 @@ example:</p>
 <span><span class="va">posterior_model_prob</span> <span class="op">=</span> <span class="va">equality</span><span class="op">$</span><span class="va">BF</span> <span class="op">*</span> <span class="va">prior_null_prob</span> <span class="op">/</span></span>
 <span>  <span class="op">(</span><span class="va">equality</span><span class="op">$</span><span class="va">BF</span> <span class="op">*</span> <span class="va">prior_null_prob</span> <span class="op">+</span> <span class="fl">1</span> <span class="op">-</span> <span class="va">prior_null_prob</span><span class="op">)</span></span>
 <span><span class="va">posterior_model_prob</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 0.5291266</span></span></code></pre>
+<pre><code><span><span class="co">## [1] 0.524224</span></span></code></pre>
 <p>Because point Bayes factors depend directly on the prior density,
 they require bespoke, substantively justified priors. For example,
 testing <code>cp_1 = 4</code> on <code>fit_info</code> runs without
@@ -268,11 +266,12 @@ warnings because an explicit prior was provided, yielding a
 substantially different Bayes factor:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit_info</span>, <span class="st">"cp_1 = 4"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##     hypothesis      mean     lower    upper  p       BF</span></span>
-<span><span class="co">## 1 cp_1 - 4 = 0 0.2464631 -1.004274 1.353279 NA 1.365847</span></span></code></pre>
-<p><a href="../articles/priors.html">The Dirichlet prior on change
-points</a> may be better than the default prior when testing point
-hypotheses on change points, but an informed prior beats both.</p>
+<pre><code><span><span class="co">##     hypothesis      mean      lower    upper prob       BF</span></span>
+<span><span class="co">## 1 cp_1 - 4 = 0 0.2441428 -0.9953883 1.327558   NA 1.356304</span></span></code></pre>
+<p>The default <a href="../articles/priors.html">uniform order
+statistics prior on change points</a> has flat symmetric properties
+across the range, but an informed prior should be used for point-null
+hypothesis testing.</p>
 </div>
 <div class="section level2">
 <h2 id="directional-and-combinatoric-tests">Directional and combinatoric tests<a class="anchor" aria-label="anchor" href="#directional-and-combinatoric-tests"></a>
@@ -297,24 +296,20 @@ against it’s inverse
 <span>  <span class="st">"cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5 &amp; items_2 &lt; -0.4 &amp; Intercept_1 &gt; 2.5"</span>,</span>
 <span>  <span class="st">"(cp_1 &lt; 3.5 | cp_1 &gt; 4.5) &amp; items_2 &gt; -0.4 &amp; Intercept_1 &lt; 2.5"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##                                                       hypothesis     mean</span></span>
-<span><span class="co">## 1                                                   cp_1 - 3 &gt; 0 1.246463</span></span>
-<span><span class="co">## 2                                        cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5       NA</span></span>
-<span><span class="co">## 3   cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5 &amp; items_2 &lt; -0.4 &amp; Intercept_1 &gt; 2.5       NA</span></span>
-<span><span class="co">## 4 (cp_1 &lt; 3.5 | cp_1 &gt; 4.5) &amp; items_2 &gt; -0.4 &amp; Intercept_1 &lt; 2.5       NA</span></span>
-<span><span class="co">##          lower    upper          p        BF</span></span>
-<span><span class="co">## 1 -0.004274233 2.353279 0.97443333 7.0303988</span></span>
-<span><span class="co">## 2           NA       NA 0.52990000 1.8105230</span></span>
-<span><span class="co">## 3           NA       NA 0.27370000 3.2676607</span></span>
-<span><span class="co">## 4           NA       NA 0.04033333 0.7098227</span></span></code></pre>
+<pre><code><span><span class="co">##                                                       hypothesis     mean       lower    upper       prob        BF</span></span>
+<span><span class="co">## 1                                                   cp_1 - 3 &gt; 0 1.244143 0.004611652 2.327558 0.97545833 7.3071167</span></span>
+<span><span class="co">## 2                                        cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5       NA          NA       NA 0.52466667 1.7725306</span></span>
+<span><span class="co">## 3   cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5 &amp; items_2 &lt; -0.4 &amp; Intercept_1 &gt; 2.5       NA          NA       NA 0.27433333 3.2789646</span></span>
+<span><span class="co">## 4 (cp_1 &lt; 3.5 | cp_1 &gt; 4.5) &amp; items_2 &gt; -0.4 &amp; Intercept_1 &lt; 2.5       NA          NA       NA 0.03954167 0.6848186</span></span></code></pre>
 <p>Comparing the Bayes factors shows which hypothesis received the
 larger update from prior to posterior.</p>
 <p>There are more examples <a href="../reference/hypothesis.html">in the
 documentation for <code>hypothesis</code></a>, including how to test
-group-level deviations and <a href="../articles/formulas.html#relative-changes-and-differences-between-segments">relative
+group-level deviations and <a href="../articles/formulas.html#relative-changes-between-segments">relative
 changes between segments</a>. <code>mcp</code> evaluates the directional
-hypothesis for both posterior and prior samples. The posterior
-probability is reported as <code>p</code>, and the Bayes factor is the
+hypothesis for both posterior and prior samples. The returned
+<code>prob</code> is the posterior probability by default, or the prior
+probability with <code>prior = TRUE</code>; the Bayes factor is the
 posterior odds divided by the prior odds:</p>
 <p><span class="math display">BF_{10} = \frac{P(H \mid \text{data})
 \,/\, [1 - P(H \mid \text{data})]}{P(H) \,/\, [1 - P(H)]}</span></p>
@@ -324,8 +319,8 @@ its posterior probability, and <span class="math inline">P(H)</span> is
 its prior probability.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit_info</span>, <span class="st">"cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##                hypothesis mean lower upper      p       BF</span></span>
-<span><span class="co">## 1 cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5   NA    NA    NA 0.5299 1.810523</span></span></code></pre>
+<pre><code><span><span class="co">##                hypothesis mean lower upper      prob       BF</span></span>
+<span><span class="co">## 1 cp_1 &gt; 3.5 &amp; cp_1 &lt; 4.5   NA    NA    NA 0.5246667 1.772531</span></span></code></pre>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># ... is identical to</span></span>
 <span><span class="va">prob</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">fit</span>, <span class="va">prior</span> <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
@@ -333,13 +328,13 @@ its prior probability.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">draws</span><span class="op">$</span><span class="va">cp_1</span> <span class="op">&gt;</span> <span class="fl">3.5</span> <span class="op">&amp;</span> <span class="va">draws</span><span class="op">$</span><span class="va">cp_1</span> <span class="op">&lt;</span> <span class="fl">4.5</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">p_post</span> <span class="op">=</span> <span class="fu">prob</span><span class="op">(</span><span class="va">fit_info</span>, prior <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="va">p_prior</span> <span class="op">=</span> <span class="fu">prob</span><span class="op">(</span><span class="va">fit_info</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">BF</span> <span class="op">=</span> <span class="op">(</span><span class="va">p_post</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">p_post</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">p_prior</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">p_prior</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">post_prob</span> <span class="op">=</span> <span class="fu">prob</span><span class="op">(</span><span class="va">fit_info</span>, prior <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">prior_prob</span> <span class="op">=</span> <span class="fu">prob</span><span class="op">(</span><span class="va">fit_info</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">BF</span> <span class="op">=</span> <span class="op">(</span><span class="va">post_prob</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">post_prob</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">prior_prob</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">prior_prob</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/summary.mcpfit.html">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>p <span class="op">=</span> <span class="va">p_post</span>, BF <span class="op">=</span> <span class="va">BF</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##        p       BF </span></span>
-<span><span class="co">## 0.529900 1.810523</span></span></code></pre>
+<span><span class="fu"><a href="../reference/summary.mcpfit.html">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>post_prob <span class="op">=</span> <span class="va">post_prob</span>, BF <span class="op">=</span> <span class="va">BF</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## post_prob        BF </span></span>
+<span><span class="co">## 0.5246667 1.7725306</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="cross-validation">Cross Validation<a class="anchor" aria-label="anchor" href="#cross-validation"></a>
@@ -401,13 +396,14 @@ inferences are relative to (Bayes Factors).</p>
 </h3>
 <p>We can look at the loo for one model:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_info</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">loo_info</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_info</span><span class="op">)</span></span>
+<span><span class="va">loo_info</span></span></code></pre></div>
 <pre><code><span><span class="co">## </span></span>
-<span><span class="co">## Computed from 30000 by 360 log-likelihood matrix.</span></span>
+<span><span class="co">## Computed from 24000 by 360 log-likelihood matrix.</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##          Estimate   SE</span></span>
 <span><span class="co">## elpd_loo   -365.6 16.5</span></span>
-<span><span class="co">## p_loo         2.8  0.3</span></span>
+<span><span class="co">## p_loo         2.7  0.3</span></span>
 <span><span class="co">## looic       731.2 33.0</span></span>
 <span><span class="co">## ------</span></span>
 <span><span class="co">## MCSE of elpd_loo is 0.0.</span></span>
@@ -430,13 +426,12 @@ predicted densities. We can compare the models using
 you want to reuse them or save them for later.</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">loo_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_default</span><span class="op">)</span></span>
-<span><span class="va">loo_info</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_info</span><span class="op">)</span></span>
 <span><span class="va">loo_simple</span> <span class="op">=</span> <span class="fu"><a href="../reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_simple</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">loo_default</span>, <span class="va">loo_info</span>, <span class="va">loo_simple</span><span class="op">)</span></span>
 <span><span class="co">##   model elpd_diff se_diff p_worse       diag_diff diag_elpd</span></span>
 <span><span class="co">##  model2       0.0     0.0      NA                          </span></span>
-<span><span class="co">##  model1      -0.3     0.3    0.91 |elpd_diff| &lt; 4          </span></span>
+<span><span class="co">##  model1      -0.5     0.3    0.97 |elpd_diff| &lt; 4          </span></span>
 <span><span class="co">##  model3      -4.1     2.8    0.93</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Diagnostic flags present.</span></span>
@@ -470,7 +465,7 @@ points. The results are almost always practically identical.</p>
 <span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">waic_default</span>, <span class="va">waic_info</span>, <span class="va">waic_simple</span><span class="op">)</span></span>
 <span><span class="co">##   model elpd_diff se_diff p_worse       diag_diff diag_elpd</span></span>
 <span><span class="co">##  model2       0.0     0.0      NA                          </span></span>
-<span><span class="co">##  model1      -0.3     0.3    0.91 |elpd_diff| &lt; 4          </span></span>
+<span><span class="co">##  model1      -0.5     0.3    0.97 |elpd_diff| &lt; 4          </span></span>
 <span><span class="co">##  model3      -4.1     2.8    0.93</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Diagnostic flags present.</span></span>

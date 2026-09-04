@@ -105,7 +105,9 @@ plot_dpar(
   Logical scalar. For binomial models, return counts (`rate = FALSE`) or
   the observed or expected success proportion (`rate = TRUE`).
   Predictions and count-scale fitted values require a trials column in
-  `newdata`.
+  `newdata`. Distributional parameters such as `dpar = "mu"` evaluate
+  the parameter itself (e.g., success probability) and are unaffected by
+  `rate`.
 
 - prior:
 

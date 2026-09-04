@@ -121,7 +121,6 @@ plot_pars(demo_fit, type = c("trace", "violin"), regex_pars = "^cp_")  # Combine
 
 # Some plots only take pairs. hex is good to assess identifiability
 plot_pars(demo_fit, type = "hex", pars = c("cp_1", "time_2"))
-#> Warning: The following arguments were unrecognized and ignored: facet_args
 
 
 # Visualize the priors:

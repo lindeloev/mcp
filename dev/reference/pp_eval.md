@@ -41,22 +41,26 @@ pp_eval(
 
   - For models with [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()`:
     [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
     [`residuals()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-    or
-    [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-    conditions on the response history, so `newdata` must include the
+    [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    and posterior
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+    condition on the response history, so `newdata` must include the
     response. For
     [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
     [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
     and
     [`residuals()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
     missing response histories are supported only in the original fitted
-    data, using retained posterior imputations.
+    data, using retained posterior imputations. Prior
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+    and
+    [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
+    generate fresh response series recursively, so their `newdata` need
+    only contain predictors.
     [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
     is unavailable when a missing response enters a later observed
-    history. Use `posterior_predict()` to generate fresh response series
-    recursively from predictor-only `newdata`.
+    history.
 
   - For models with `y | weights()`: Require the weights column except
     for
@@ -99,7 +103,9 @@ pp_eval(
   Logical scalar. For binomial models, return counts (`rate = FALSE`) or
   the observed or expected success proportion (`rate = TRUE`).
   Predictions and count-scale fitted values require a trials column in
-  `newdata`.
+  `newdata`. Distributional parameters such as `dpar = "mu"` evaluate
+  the parameter itself (e.g., success probability) and are unaffected by
+  `rate`.
 
 - prior:
 

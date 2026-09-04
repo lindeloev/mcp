@@ -31,7 +31,7 @@ prior = list(
 
 The values use mcp’s JAGS-string syntax, so JAGS distributions are
 generally allowed. See the [JAGS user
-manual](https://altushost-swe.dl.sourceforge.net/project/mcmc-jags/Manuals/4.x/jags_user_manual.pdf)
+manual](https://sourceforge.net/projects/mcmc-jags/files/Manuals/4.x/jags_user_manual.pdf)
 for more details. Prior strings use R-like conventional distribution
 scales even though JAGS has a different parameterization underneath: SD
 for [`dnorm()`](https://rdrr.io/r/stats/Normal.html), scale for
@@ -87,35 +87,35 @@ prior_summary(empty_manual)  # For more details: add verbose = TRUE
 ```
 
     ## # A tibble: 9 × 5
-    ##   parameter   segment dpar  prior                                         bounds
-    ##   <chr>         <int> <chr> <chr>                                         <chr> 
-    ## 1 cp_1              2 cp    uniform(min = 1, max = cp_2)                  [min(…
-    ## 2 cp_2              3 cp    80                                            none  
-    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 5)                      [-Inf…
-    ## 4 x_1               1 mu    beta(shape1 = 2, shape2 = 5)                  [0, 1]
-    ## 5 Intercept_2       2 mu    student_t(df = 3, location = 50.5, scale = 3… none  
-    ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 1)    [x_1,…
-    ## 7 Intercept_3       3 mu    student_t(df = 3, location = 50.5, scale = 3… none  
-    ## 8 x_3               3 mu    x_2                                           none  
-    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0, I…
+    ##   parameter   segment dpar  prior                                            bounds        
+    ##   <chr>         <int> <chr> <chr>                                            <chr>         
+    ## 1 cp_1              2 cp    uniform(min = 1, max = cp_2)                     [min(x), cp_2]
+    ## 2 cp_2              3 cp    80                                               none          
+    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 5)                         [-Inf, 10]    
+    ## 4 x_1               1 mu    beta(shape1 = 2, shape2 = 5)                     [0, 1]        
+    ## 5 Intercept_2       2 mu    student_t(df = 3, location = 50.5, scale = 37.1) none          
+    ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 1)       [x_1, Inf]    
+    ## 7 Intercept_3       3 mu    student_t(df = 3, location = 50.5, scale = 37.1) none          
+    ## 8 x_3               3 mu    x_2                                              none          
+    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1)    [0.001, Inf]
 
 ``` r
 
-prior_summary(empty_default)
+prior_summary(empty_default)  # For more details: add verbose = TRUE
 ```
 
     ## # A tibble: 9 × 5
-    ##   parameter   segment dpar  prior                                         bounds
-    ##   <chr>         <int> <chr> <chr>                                         <chr> 
-    ## 1 cp_1              2 cp    student_t(df = 1, location = 1, scale = 49.5) [min(…
-    ## 2 cp_2              3 cp    student_t(df = 1, location = 1, scale = 49.5) [cp_1…
-    ## 3 Intercept_1       1 mu    student_t(df = 3, location = 50.5, scale = 3… none  
-    ## 4 x_1               1 mu    student_t(df = 3, location = 0, scale = 0.37… none  
-    ## 5 Intercept_2       2 mu    student_t(df = 3, location = 50.5, scale = 3… none  
-    ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 0.37… none  
-    ## 7 Intercept_3       3 mu    student_t(df = 3, location = 50.5, scale = 3… none  
-    ## 8 x_3               3 mu    student_t(df = 3, location = 0, scale = 0.37… none  
-    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0, I…
+    ##   parameter   segment dpar  prior                                              bounds        
+    ##   <chr>         <int> <chr> <chr>                                              <chr>         
+    ## 1 cp_1              2 cp    dirichlet(alpha = 1)                               [min(x), cp_2]
+    ## 2 cp_2              3 cp    dirichlet(alpha = 1)                               [cp_1, max(x)]
+    ## 3 Intercept_1       1 mu    student_t(df = 3, location = 50.5, scale = 37.1)   none          
+    ## 4 x_1               1 mu    student_t(df = 3, location = 0, scale = 0.3747475) none          
+    ## 5 Intercept_2       2 mu    student_t(df = 3, location = 50.5, scale = 37.1)   none          
+    ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 0.3747475) none          
+    ## 7 Intercept_3       3 mu    student_t(df = 3, location = 50.5, scale = 37.1)   none          
+    ## 8 x_3               3 mu    student_t(df = 3, location = 0, scale = 0.3747475) none          
+    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1)      [0.001, Inf]
 
 Now, let’s simulate some data from `model`. The following priors are “at
 odds” with the actual data so as to show their effect.
@@ -199,6 +199,28 @@ We see the effects of the priors:
 - The change point `cp_2` was a constant, so there is no uncertainty
   there.
 
+Adding `verbose = TRUE` reveals full details including the rule
+descriptions, parameter classifications (`kind`), and whether each prior
+came from the user or data-calibrated defaults:
+
+``` r
+
+prior_summary(fit_manual, verbose = TRUE)
+```
+
+    ## # A tibble: 9 × 9
+    ##   parameter   segment dpar  prior                                          bounds         rule                                                                                  description                                                  source  kind        
+    ##   <chr>         <int> <chr> <chr>                                          <chr>          <chr>                                                                                 <chr>                                                        <chr>   <chr>       
+    ## 1 cp_1              2 cp    uniform(min = 0.4496308, max = cp_2)           [min(x), cp_2] uniform(min = min(x), max = cp_2)                                                     User-specified prior                                         user    distribution
+    ## 2 cp_2              3 cp    80                                             none           80                                                                                    Fixed at 80                                                  user    constant    
+    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 5)                       [-Inf, 10]     normal(mean = 0, sd = 5)                                                              User-specified prior                                         user    distribution
+    ## 4 x_1               1 mu    beta(shape1 = 2, shape2 = 5)                   [0, 1]         beta(shape1 = 2, shape2 = 5)                                                          User-specified prior                                         user    distribution
+    ## 5 Intercept_2       2 mu    student_t(df = 3, location = 26, scale = 10.3) none           student_t(df = 3, location = round(median(y), 1), scale = max(2.5, round(mad(y), 1))) Robustly centered mean intercept with a minimum scale of 2.5 default distribution
+    ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 1)     [x_1, Inf]     student_t(df = 3, location = 0, scale = 1)                                            User-specified prior                                         user    distribution
+    ## 7 Intercept_3       3 mu    student_t(df = 3, location = 26, scale = 10.3) none           student_t(df = 3, location = round(median(y), 1), scale = max(2.5, round(mad(y), 1))) Robustly centered mean intercept with a minimum scale of 2.5 default distribution
+    ## 8 x_3               3 mu    x_2                                            none           x_2                                                                                   Same value as x_2                                            user    alias       
+    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 10.3)  [0.001, Inf]   student_t(df = 3, location = 0, scale = max(2.5, round(mad(y), 1)))                   Positive residual SD calibrated on the response scale        default distribution
+
 This is a contrived example. Usually setting priors manually aims to
 sample the “correct” posterior.
 
@@ -206,91 +228,71 @@ sample the “correct” posterior.
 
 Change point locations must lie within the observed range
 `[min(x), max(x)]` and maintain strict order `cp_1 < cp_2 < ... < cp_n`.
-Without this rule, change point locations would be unidentifiable. If
-you inspect `fit$jags_code`, you will see that `mcp` inserts boundary
-markers at `cp_0 = min(x)` and `cp_{n+1} = max(x)` to ensure the
-ordering constraint.
+Without this rule, change point locations would be unidentifiable and
+label switching occur.
 
-For any given range, introducing more change points makes the prior for
-each change point more informative (as shown in the figure below). `mcp`
-provides two built-in population-level prior families:
+The default prior on all change points in `mcp` is **uniform order
+statistics** (`dirichlet(1)`), which treats any set of ordered change
+points as equally likely anywhere in the observed interval
+`[min(x), max(x)]`. See below for a visualization. Some properties of
+this prior:
 
-- **One change point:** Both specifications default to
-  `cp_1 = uniform(min(x), max(x))`. Its location is uniform over the
-  observed x-range.
-- **The t-tail prior (default for 2+ change points):** Sequentially
-  truncated Student-t distributions centered at `min(x)`. Specifically,
-  `cp_i = student_t(df = n_cp() - 1, location = min(x), scale = (max(x) - min(x)) / n_cp()) T(cp_{i-1}, max(x))`.
-- **The Dirichlet prior:** A joint prior on segment spacings specified
-  via `prior = list(cp_1 = "dirichlet(1)", cp_2 = "dirichlet(1)", ...)`.
+- **Single change point:** For 1 change point, this reduces to the
+  uniform prior in the observed range: \text{cp}\_1 \sim
+  \text{Beta}(1, 1) \equiv \text{Uniform}(\min(x), \max(x)).
+- **Multiple change points:** For N \ge 2, change points are evenly
+  spaced on average: \mathbb{E}\[\text{cp}\_j\] = \min(x) + \frac{j}{N +
+  1} (\max(x) - \min(x)) For example, with 2 change points, prior means
+  are at 33% and 67% of the data range. With 5 change points, they are
+  at 16.7%, 33.3%, 50%, 66.7%, and 83.3%.
+- **Symmetry and flat sum:** The prior is symmetric under reflection
+  (flipping x leaves prior probabilities unchanged), and the sum of
+  prior densities across all change points is uniform across the entire
+  data range.
+- **Increasing informativeness with segment count:** For any given
+  range, introducing more change points makes the prior for each change
+  point more effectively informative because they are “squeezed” more
+  together (as shown in the figure below).
 
-&nbsp;
+The plot below compares these theoretical Dirichlet distributions (black
+lines) with the sampled prior distributions (red lines) for 2 and 5
+change points:
 
-    ## Posterior was not drawn. Using prior draws. Set `prior = TRUE` to mute this message.
-    ## Posterior was not drawn. Using prior draws. Set `prior = TRUE` to mute this message.
+![](priors_files/figure-html/unnamed-chunk-9-1.png)
 
-![](priors_files/figure-html/unnamed-chunk-8-1.png)
-
-### The t-tail prior on 2+ change points (default)
-
-For 2+ change points, the default rule (on all change points) is
-`cp_i = student_t(df = n_cp() - 1, location = min(x), scale = (max(x) - min(x)) / n_cp())`,
-bounded below by the preceding change point and above by `max(x)`.
-
-- **Degrees of freedom:** It is t-distributed with N - 1 degrees of
-  freedom (`n_cp() - 1`). Together with the decreasing scale, this makes
-  the underlying distributions more concentrated as the number of change
-  points increases.
-- **Scale:** The scale is `(max(x) - min(x)) / n_cp()`. This is a
-  calibration choice, not the equal-segment spacing (which would divide
-  by `n_cp() + 1`).
-- **Location and truncation:** The location parameter is always the
-  lowest observed `x`. Thus `cp_1` is a bounded half-t and `cp_2+` use
-  sequentially truncated right tails of the same t (hence “t-tail
-  prior”). Their means are shifted by truncation and are not equal to
-  `min(x)`.
-- **Properties:** The sequential truncation does not produce exact
-  uniform order statistics; the middle segments tend to get narrower
-  than the first/last segments. For non-small datasets, the effect on
-  the posterior is negligible, though
-  point-[`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md)
-  tests via Savage-Dickey density ratios would be strongly impacted. Its
-  main advantage is sampling speed: JAGS samples this formulation much
-  faster than the Dirichlet prior.
-
-### Dirichlet-based prior on change points
+Note on implementation: Under the hood, `mcp` parameterizes this using a
+sequential stick-breaking Beta chain (z_j \sim \text{Beta}(1, N - j +
+1), \text{cp}\_j = \text{cp}\_{j-1} + z_j(\max(x) - \text{cp}\_{j-1})).
+This allows JAGS to sample the model much more efficiently.
 
 The [Dirichlet
 distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution)
 places a joint prior on positive segment spacings that sum to the
-observed x-range. Consequently, the derived population-level change
-points are naturally ordered and bounded. This construction also
-underlies monotonic effects in `brms` ([Bürkner & Charpentier
-(2019)](https://psyarxiv.com/9qkhj/)).
+observed x-range. This construction also underlies monotonic effects in
+`brms` ([Bürkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/)).
 
-The Dirichlet distribution is a simplex of beta distributions (they
-always sum to 1), where the individual betas represent inter-changepoint
-distances. For N change points, the distribution for change point i is
-\text{Beta}(i, N + 1 - i), so `cp_1 ~ Beta(1, N)` and
-`cp_N ~ Beta(N, 1)`. Scaling from \[0, 1\] to the observed data range
-(`0 --> min(x)`, `1 --> max(x)`) gives the desired bounding.
+### Regularizing change points: `dirichlet(alpha)`
 
-To use the Dirichlet prior, specify it for all change points:
+To adjust the spacing regularity of change points, specify
+`dirichlet(alpha)` for all change points:
 
 ``` r
 
-prior_dirichlet = list(
-  cp_1 = "dirichlet(1)",
-  cp_2 = "dirichlet(1)",
-  cp_3 = "dirichlet(1)"
+prior = list(
+  cp_1 = "dirichlet(2)",
+  cp_2 = "dirichlet(2)"
 )
 ```
 
 The number in parentheses is a common \alpha concentration parameter
-(all change points must share the same \alpha). Values below 1 favor
-uneven spacings, `dirichlet(1)` treats spacings exchangeably (giving the
-ordered-uniform distribution), and values above 1 favor more evenly
-spaced change points.
+(all change points must share the same \alpha):
+
+- \alpha = 1 (default): completely flat uniform order statistics as
+  shown above.
+- \alpha \> 1 (e.g. 2, 5): penalizes change points from occurring close
+  to each other or the boundaries, favoring more evenly spaced segments.
+- \alpha \< 1 (e.g. 0.5): favors clustering and permits change points to
+  occur close together.
 
 ### Manual priors on change points
 
@@ -353,15 +355,12 @@ and their SD are on that parameter’s link scale; for example, effects
 inside an explicit [`sigma()`](https://rdrr.io/r/stats/sigma.html)
 formula are on the log-SD scale.
 
-Group-level change-point deviations are exactly zero-centered so that
-each population-level change point is the arithmetic mean of its
-group-specific locations. Their default priors use sequential bounds,
-and the model constrains the resulting locations to remain ordered
-within each group. All group-level change points in one model must use
-the same grouping factor. Predictor-side deviations are hierarchically
-mean-zero but are neither exactly centered nor ordered. See [group-level
-effects with
-mcp](https://lindeloev.github.io/mcp/dev/articles/group_effects.md).
+Change-point effects use the same ordinary normal hierarchy, with
+additional range and within-group ordering constraints. Therefore,
+`cp_i_sd` is the latent normal scale rather than the realized sample SD.
+See [group-level effects with
+mcp](https://lindeloev.github.io/mcp/dev/articles/group_effects.md) for
+the model equation and practical interpretation.
 
 ## Prior predictive checks
 
@@ -384,7 +383,7 @@ plot_pp_default = plot(fit_pp_default, lines = 100) + ylim(c(-400, 400)) + ggtit
 plot_pp_manual +  plot_pp_default  # using patchwork
 ```
 
-![](priors_files/figure-html/unnamed-chunk-10-1.png)
+![](priors_files/figure-html/unnamed-chunk-11-1.png)
 
 You can see how the manual priors are more dense to the left, and the
 “concerted” change at x = 80.
@@ -412,7 +411,7 @@ fit_manual$jags_code
     ##   x_2 ~ dt(0, 1/(1)^2, 3) T(x_1,)  # User-specified prior
     ##   Intercept_3 ~ dt(26, 1/(10.3)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5
     ##   x_3 = x_2  # Same value as x_2
-    ##   sigma_1 ~ dt(0, 1/(10.3)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale
+    ##   sigma_1 ~ dt(0, 1/(10.3)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {

@@ -20,7 +20,10 @@ change-point structures.
 The three formula parts are called **response**, **cp**, and
 **predictor**. The general format is `response ~ cp ~ predictor`, except
 for the first segment, which has no change point and therefore uses
-`response ~ predictor`. This is familiar from
+`response ~ predictor`. In later segments the response is inherited and
+may be omitted. A one-sided formula such as `~ x` also uses the default
+change-point formula `~ 1`, so it is shorthand for `y ~ 1 ~ 1 + x`. This
+is familiar from
 [`lm()`](https://rdrr.io/r/stats/lm.html)/[`glm()`](https://rdrr.io/r/stats/glm.html)/`brms::brm()`.
 
 `mcp` adds two novelties to the modeling syntax to support segmented
@@ -41,55 +44,11 @@ regression:
     binomial models.
 
 `mcp` is heavily inspired by `brms` which again is inspired by
-[`lme4::lmer`](https://cran.r-project.org/web/packages/lme4/index.html).
-[Here is a bit of
+[`lme4::lmer()`](https://cran.r-project.org/web/packages/lme4/index.html)
+which extends [`lm()`](https://rdrr.io/r/stats/lm.html) and
+[`glm()`](https://rdrr.io/r/stats/glm.html). [Here is a bit of
 history](https://twitter.com/jonaslindeloev/status/1117760777249853440)
 on that.
-
-## On carry-over between segments
-
-As a general rule, everything is carried over, unless there is an abrupt
-intercept change like `sigma(1)` or `~1` or it is “turned off” like
-`(0|group)` or `ar(0)`. This is true of the mean `mu`, distributional
-parameters, and group-level terms.
-
-Transformations such as [`sin()`](https://rdrr.io/r/base/Trig.html) and
-[`poly()`](https://rdrr.io/r/stats/poly.html) in formulas are evaluated
-on the original predictor values, as in
-[`lm()`](https://rdrr.io/r/stats/lm.html) and
-[`glm()`](https://rdrr.io/r/stats/glm.html). The change-point predictor
-is the exception: bare `par_x` and polynomial bases such as `I(par_x^2)`
-use distance from the segment onset (change point location, i.e., `cp_i`
-values).
-
-Enough talk. Let us see this in action for this model where we predict
-`y` as a function of `x` in three segments, i.e., with two change
-points:
-
-``` r
-
-library(mcp)
-model = list(
-  y ~ 1,  # intercept
-  y ~ 1 ~ 0 + x,  # joined slope
-  ~ x  # disjoined slope. "y ~ 1 ~ 1 + x" is implicit here.
-)
-
-# Interpret, but do not sample.
-fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE)
-summary(fit)
-```
-
-    ## Family: gaussian
-    ## Links: mu = identity; sigma = identity
-    ## Segments:
-    ##   1: y ~ 1
-    ##   2: y ~ 1 ~ 0 + x
-    ##   3: y ~ 1 ~ x
-    ## 
-    ## No draws. Nothing to summarise.
-
-Notice how `mcp` added the response and cp parts to the last segment?
 
 ## Parameter names
 
@@ -102,6 +61,8 @@ to inspect the resolved data-column roles, including the change-point
 predictor. Let us specify a somewhat complex model:
 
 ``` r
+
+library(mcp)
 
 model = list(
   # Intercept_1
@@ -194,7 +155,7 @@ plot(x, y_ifelse, main = "ifelse(x <= cp_1)")
 plot(x, y_indicator, main = "(x > cp_1) * Intercept_2")
 ```
 
-![](formulas_files/figure-html/unnamed-chunk-3-1.png)
+![](formulas_files/figure-html/unnamed-chunk-2-1.png)
 
 The magic of (Bayesian) MCMC sampling is that it can actually infer the
 change point from this simple formulation. We let `mcp` write the JAGS
@@ -214,10 +175,11 @@ fit$jags_code
     ##   cp_2 = CONST2_
     ## 
     ##   # Priors for population-level effects
-    ##   cp_1 ~ dunif(CONST1_, CONST2_)  # Within the observed change-point span
+    ##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)
+    ##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point
     ##   Intercept_1 ~ dt(5.5, 1/(3.7)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5
     ##   Intercept_2 ~ dt(5.5, 1/(3.7)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5
-    ##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale
+    ##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {
@@ -249,20 +211,63 @@ of `x` is, of course, always true).
 
 ## Modeling slope change points
 
-We can use the same principle to model change points on slopes. To make
-segments join continuously, we have to “take off” where the previous
-segment ended. In `mcp`, this is achieved by defining a segment-local
-predictor X\_{k,i} that plateaus at the segment boundary:
+Mathematically, an `mcp` model divides the continuous predictor x into K
+segments separated by ordered change points \Delta_1 \< \dots \<
+\Delta\_{K-1}. In each segment k \in \\1, \dots, K\\, the linear
+predictor \mu_i (or \eta_i) is evaluated directly from the segment-local
+distance (x_i - \Delta\_{k-1}):
 
-X\_{1,i} = \min(x_i, \Delta_1) X\_{2,i} = \min(x_i, \Delta_2) - \Delta_1
+\mu_i = \alpha_k + \beta\_{k,1} \\ (x_i - \Delta\_{k-1}) \quad
+(\text{with } \Delta_0 = 0)
 
-When x \le \Delta_1, Segment 1 increases at rate \beta\_{1,1}. When x \>
-\Delta_1, Segment 1 plateaus at the constant value \beta\_{1,0} +
-\beta\_{1,1} \Delta_1, handing over a flat baseline to Segment 2.
-Starting from \Delta_1, Segment 2 adds \beta\_{2,1} (x - \Delta_1).
-Because Segment 1 is flat for x \> \Delta_1, \beta\_{2,1} is the
-**absolute slope** of Segment 2 (not a difference in slope), and the
-handover is automatically continuous everywhere:
+where the segment-start level \alpha_k is freely estimated for the first
+and disjoined segments, as in non-segmented regression, and inherited
+continuously for joined segments:
+
+\alpha_k = \begin{cases} \beta\_{k,0}, & \text{Disjoined segments }
+(\sim \texttt{1 + x}, \text{ including } k = 1) \\ \alpha\_{k-1} +
+\beta\_{k-1,1} (\Delta\_{k-1} - \Delta\_{k-2}), & \text{Joined segments
+} (k \ge 2, \\ \sim \texttt{0 + x}) \end{cases}
+
+In all segments, estimated slope and intercept parameters are absolute
+values (not changes relative to preceding segments).
+
+### How mcp implements this in JAGS using indicators
+
+Bayesian MCMC samplers like JAGS cannot evaluate dynamic conditional
+statements (`if/else`) on parameters being sampled. To implement this
+piecewise model in JAGS, `mcp` uses an **indicator and plateauing
+formulation** (evaluated via Iverson brackets \[A\] which equal 1 when
+true and 0 when false).
+
+First, `mcp` defines a segment-local span X\_{k,i} that grows linearly
+within segment k and “freezes” (plateaus) at the segment boundary:
+
+X\_{1,i} = \min(x_i, \Delta_1) X\_{k,i} = \max\bigl(0, \min(x_i,
+\Delta_k) - \Delta\_{k-1}\bigr) \quad (k \ge 2)
+
+When x_i \< \Delta\_{k-1}, X\_{k,i} = 0 (inactive). When \Delta\_{k-1}
+\le x_i \< \Delta_k, X\_{k,i} = x_i - \Delta\_{k-1} (linear growth).
+When x_i \ge \Delta_k, X\_{k,i} = \Delta_k - \Delta\_{k-1} (frozen at
+the segment width).
+
+For a **purely joined model** (`list(y ~ 0 + x, ~ 0 + x)`), `mcp` writes
+\mu_i as a cumulative sum of these plateauing coordinates:
+
+\mu_i = \sum\_{k=1}^K \[x_i \ge \Delta\_{k-1}\] \cdot \beta\_{k,1}
+X\_{k,i}
+
+Because earlier segments freeze at their boundary levels
+(\beta\_{k-1,1}(\Delta\_{k-1} - \Delta\_{k-2})), continuity is automatic
+with zero parameter constraints: preceding segments hand over a flat
+plateau that serves as the baseline for subsequent segments.
+
+When a segment is **disjoined** (`~ 1 + x`), it introduces a new
+explicit intercept \beta\_{k,0} at \Delta\_{k-1}, and earlier terms are
+capped with \[x_i \< \Delta\_{\text{next}}\] so previous segments stop
+accumulating.
+
+Let’s demonstrate this equivalence in R:
 
 ``` r
 
@@ -287,7 +292,7 @@ plot(x, y_ifelse, main = "ifelse() version")
 plot(x, y_local, main = "Local plateauing coordinate")
 ```
 
-![](formulas_files/figure-html/unnamed-chunk-5-1.png)
+![](formulas_files/figure-html/unnamed-chunk-4-1.png)
 
 Let us see this in action:
 
@@ -305,10 +310,11 @@ fit$jags_code
     ##   cp_2 = CONST2_
     ## 
     ##   # Priors for population-level effects
-    ##   cp_1 ~ dunif(CONST1_, CONST2_)  # Within the observed change-point span
+    ##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)
+    ##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point
     ##   x_1 ~ dt(0, 1/(0.4111111)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change
     ##   x_2 ~ dt(0, 1/(0.4111111)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change
-    ##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale
+    ##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {
@@ -333,8 +339,10 @@ fit$jags_code
     ## }
 
 Look at the JAGS code under `# par_x local to each segment` and
-`# Formula for mu` to see `x_local_1_[i_]` and `x_local_2_[i_]` computed
-exactly this way.
+`# Formula for mu` to see this exact indicator formulation in action:
+`x_local_1_[i_]` and `x_local_2_[i_]` correspond to X\_{1,i} and
+X\_{2,i}, and each segment’s slope is multiplied by its activation
+indicator (e.g., `(x[i_] >= cp_1)`).
 
 You will find the exact same formula for `y_ = ...` if you do
 `print(fit$simulate)`, though this function contains a whole lot of
@@ -408,6 +416,98 @@ Key features of multiple regression models in `mcp`:
   or can be set explicitly via
   `plot(fit, color_by = "group", at = list(z = 0))`.
 
+## On carry-over between segments
+
+Every model contribution has a lifetime: it starts in the segment where
+it is declared, carries through later segments where it is omitted, and
+ends at the boundary where its replacement is declared. In rule form,
+omission means “carry”, not “turn off”; repeating a term replaces its
+previous definition; and replacement coefficients are absolute rather
+than changes added to old coefficients.
+
+What counts as “replacement declared” depends on the type of term:
+
+| Type of term | Carries until | Explicit turn-off or reset |
+|:---|:---|:---|
+| Ordinary population term in `mu`, [`sigma()`](https://rdrr.io/r/stats/sigma.html), `shape()`, etc. | The same formula term is declared again, or a new intercept resets that distributional parameter | When an intercept is declared without this term |
+| Segment-local `par_x` term, such as bare `x`, `I(x^2)`, or an interaction such as `x:group` | A new intercept resets that distributional parameter | When an intercept is declared |
+| Offset block | Another [`offset()`](https://rdrr.io/r/stats/offset.html) is declared for the same distributional parameter | `offset(0)` |
+| [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()` component | [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma` (respectively) is declared again | A zero formula, such as `ar(p, 0)` or `ma(q, 0)` |
+| Group-level predictor block for one distributional parameter and grouping factor | Another group-level term for that grouping factor is declared | `(0 | group)` |
+
+Here is the rule for ordinary population terms together with the
+intentional exception for segment-local `par_x` terms. Assume that `x`
+is `par_x`. In joined segments, an earlier local term plateaus at the
+change point and supplies the continuous baseline while the new local
+term starts at zero. A new intercept creates a disjoined segment and
+ends both local and ordinary population terms for that distributional
+parameter.
+
+### Carry-over examples
+
+``` r
+
+# Model with one covariate z
+list(
+  y ~ 1 + x + z,  # Intercept_1, x_1, z_1
+    ~ 0 + x,      # x_1 plateaus (no intercept); x_2 turns on; carry z_1
+    ~ 0 + x + z,  # x_2 plateaus (no intercept); x_3 turns on; z_3 replaces z_1
+    ~ 1           # Intercept_4 replaces Intercept_1; x_1--x_3 and z_3 turn off
+)
+
+# Model with categorical predictor
+list(
+  y ~ 1 + condition,  # Intercept_1, condition dummies
+    ~ 0,              # Everything from segment 1 carries over
+    ~ 0 + condition,  # Condition dummies are replaced; Intercept_1 carries
+    ~ 1               # Intercept_4 replaces Intercept_1; condition dummies turn off
+)
+
+# Model with distributional regression
+list(
+  y ~ 1 + z + sigma(1 + z),  # mu: Intercept_1, z_1; sigma: sigma_1, sigma_z_1
+    ~ 1,                     # Intercept_2 replaces Intercept_1; z_1 turns off; sigma carries
+    ~ 0 + sigma(1),          # sigma_3 replaces sigma_1; sigma_z_1 turns off; mu carries
+    ~ 0 + z                  # z_4 turns on; Intercept_2 and sigma_3 carry
+)
+
+# Model with AR (or MA) components and group-level effects
+list(
+  y ~ 1 + ar(2) + (1 | id),   # Intercept_1; AR(2); group-level Intercept_1_id
+    ~ 1,                      # Intercept_2 replaces Intercept_1; AR(2) and group effect carry
+    ~ 0 + ar(1) + (1 || id),  # AR(1) replaces AR(2); Intercept_3_id replaces the group block
+    ~ 0 + ar(1, 0) + (0 | id) # AR and group-level effect turn off; Intercept_2 carries
+)
+
+# Model with offset
+list(
+  y ~ 1 + x + offset(log(exposure)),  # Intercept_1, x_1; exposure offset turns on
+    ~ 0 + x,                          # x_1 plateaus; x_2 turns on; offset carries
+    ~ 0 + x + offset(0)               # x_2 plateaus; x_3 turns on; offset turns off
+)
+```
+
+### Transformations are not segment-local
+
+Transformations such as [`sin()`](https://rdrr.io/r/base/Trig.html) and
+[`poly()`](https://rdrr.io/r/stats/poly.html) in formulas are evaluated
+on the original predictor values, as in
+[`lm()`](https://rdrr.io/r/stats/lm.html) and
+[`glm()`](https://rdrr.io/r/stats/glm.html). The change-point predictor
+is the exception: bare `par_x` and polynomial bases such as `I(par_x^2)`
+use distance from the segment onset (change point location, i.e., `cp_i`
+values).
+
+For example, assuming that `x` is `par_x`:
+
+``` r
+
+list(
+  y ~ 1,                        # Intercept_1
+    ~ 1 + sin(x) + x + I(x^2)   # sin(x) uses x; x and I(x^2) use x - cp_1
+)
+```
+
 ## Relative changes between segments
 
 Parameters in `mcp` represent the absolute values within each segment
@@ -427,8 +527,8 @@ First, using
 hypothesis(demo_fit, "time_3 > time_2")
 ```
 
-    ##            hypothesis       mean      lower      upper p BF
-    ## 1 time_3 - time_2 > 0 -0.7552872 -0.9993173 -0.5497272 0  0
+    ##            hypothesis       mean      lower      upper prob BF
+    ## 1 time_3 - time_2 > 0 -0.6323957 -0.8068299 -0.4923073    0  0
 
 The estimate reflects the difference `time_3 - time_2` (how much steeper
 or flatter the slope became in segment 3), along with its credibility
@@ -454,12 +554,12 @@ head(draws)
 
     ## # A draws_df: 6 iterations, 1 chains, and 8 variables
     ##   Intercept_1 Intercept_3 cp_1 cp_2 sigma_1 time_2 time_3 diff_time
-    ## 1         8.4       2.111   20   70     4.0   0.39 -0.298     -0.69
-    ## 2         8.9       0.875   20   69     3.7   0.40 -0.205     -0.61
-    ## 3         9.7      -0.905   20   70     3.9   0.40 -0.105     -0.51
-    ## 4         9.6      -1.210   21   69     4.9   0.42 -0.095     -0.52
-    ## 5         9.4      -0.168   22   70     4.5   0.40 -0.199     -0.60
-    ## 6        11.2      -0.015   24   70     4.5   0.40 -0.195     -0.60
+    ## 1        10.2          16   31   72     4.5   0.51  0.077     -0.44
+    ## 2         9.9          16   31   70     3.6   0.51 -0.047     -0.56
+    ## 3         9.4          17   31   71     3.6   0.51 -0.078     -0.59
+    ## 4        10.8          17   32   71     3.4   0.54 -0.075     -0.61
+    ## 5         9.3          19   33   73     3.8   0.59 -0.178     -0.77
+    ## 6         9.3          17   30   72     4.0   0.54 -0.113     -0.65
     ## # ... hidden reserved variables {'.chain', '.iteration', '.draw'}
 
 You can now use `diff_time` directly with base R functions like

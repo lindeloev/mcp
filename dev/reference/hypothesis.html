@@ -47,7 +47,7 @@ When prior = TRUE, the summary is based on prior draws and BF is NA.'><meta prop
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -97,7 +97,10 @@ When <code>prior = TRUE</code>, the summary is based on prior draws and <code>BF
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">fit</span>, <span class="va">hypotheses</span>, width <span class="op">=</span> <span class="fl">0.95</span>, prior <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">fit</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'mcpfit'</span></span>
+<span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">fit</span>, <span class="va">hypotheses</span>, width <span class="op">=</span> <span class="fl">0.95</span>, prior <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -106,6 +109,10 @@ When <code>prior = TRUE</code>, the summary is based on prior draws and <code>BF
 
 <dl><dt id="arg-fit">fit<a class="anchor" aria-label="anchor" href="#arg-fit"></a></dt>
 <dd><p>An <code><a href="mcpfit-class.html">mcpfit</a></code> object.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Must be empty. Reserved for future use.</p></dd>
 
 
 <dt id="arg-hypotheses">hypotheses<a class="anchor" aria-label="anchor" href="#arg-hypotheses"></a></dt>
@@ -123,7 +130,7 @@ than or equal to 3.</p></li>
 <li><p><code>"Intercept_1 &gt; -2 &amp; Intercept_1 &lt; 2"</code>: Intercept_1 is between -2 and 2 (an interval hypothesis). This can be useful as a Region Of Practical Equivalence test (ROPE).</p></li>
 <li><p><code>"cp_1^2 &lt; 30 | (log(x_1) + log(x_2)) &gt; 5"</code>: be creative.</p></li>
 <li><p><code>"`cp_1_id[1]` &gt; `cp_1_id[2]`"</code>: id1 is greater than id2, as estimated
-through the group-level change-point deviation for <code>id</code> in segment 1.
+through the group-level change-point deviation for <code>id</code> at change point 1 (starting segment 2).
 Note that <code>``</code> are required when using <code>[i]</code>.</p></li>
 </ul><p><strong>Equality hypotheses</strong> use the equal sign (=) and a Savage-Dickey density
 ratio: posterior density divided by prior density at the tested point equality</p>
@@ -159,14 +166,15 @@ the prior mean when <code>prior = TRUE</code>.</p></li>
 <li><p><code>lower</code> is the lower bound of the central posterior interval of width <code>width</code>,
 or the corresponding prior interval when <code>prior = TRUE</code>.</p></li>
 <li><p><code>upper</code> is the upper bound of ditto.</p></li>
-<li><p><code>p</code> is the posterior probability of a directional hypothesis, or the prior
+<li><p><code>prob</code> is the posterior probability of a directional hypothesis, or the prior
 probability when <code>prior = TRUE</code>. It is <code>NA</code>
 for equality hypotheses, which compare models rather than an event
 within the fitted model.</p></li>
 <li><p><code>BF</code> Bayes Factor in favor  of the hypothesis.
 For "=" it is the Savage-Dickey density ratio.
 For directional hypotheses, it is the posterior odds divided by the
-prior odds. It is <code>NA</code> when <code>prior = TRUE</code>.</p></li>
+prior odds. It is <code>NA</code> when <code>prior = TRUE</code> or when prior draws are
+not available (e.g., <code>sample = "post"</code>).</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
@@ -178,30 +186,29 @@ prior odds. It is <code>NA</code> when <code>prior = TRUE</code>.</p></li>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># demo_fit contains both posterior and prior draws</span></span></span>
 <span class="r-in"><span><span class="co"># A directional hypothesis returns its posterior probability and Bayes factor</span></span></span>
 <span class="r-in"><span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">demo_fit</span>, <span class="st">"cp_1 &gt; 30"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      hypothesis      mean     lower    upper      p       BF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 - 30 &gt; 0 0.4479046 -6.718137 7.884762 0.5635 1.137931</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      hypothesis     mean     lower    upper  prob       BF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 - 30 &gt; 0 1.459879 -1.938938 4.998374 0.813 4.691063</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Combine directional statements for an interval (a ROPE-style hypothesis)</span></span></span>
 <span class="r-in"><span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">demo_fit</span>, <span class="st">"cp_1 &gt; 20 &amp; cp_1 &lt; 30"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>              hypothesis mean lower upper      p       BF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 &gt; 20 &amp; cp_1 &lt; 30   NA    NA    NA 0.4275 4.165939</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              hypothesis mean lower upper  prob       BF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 &gt; 20 &amp; cp_1 &lt; 30   NA    NA    NA 0.187 1.189817</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Evaluate several directional hypotheses at once</span></span></span>
 <span class="r-in"><span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">demo_fit</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cp_1 &gt; 20"</span>, <span class="st">"cp_2 &gt; 70"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      hypothesis       mean      lower      upper      p         BF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 - 20 &gt; 0 10.4479046  3.2818627 17.8847620 0.9910 50.9878079</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 cp_2 - 70 &gt; 0 -0.2417263 -0.7051304  0.2500245 0.2535  0.4796788</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      hypothesis     mean      lower     upper  prob       BF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 - 20 &gt; 0 11.45988  8.0610620 14.998374 1.000      Inf</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 cp_2 - 70 &gt; 0  1.11715 -0.5594432  2.765253 0.818 4.440893</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Equality hypotheses use the Savage-Dickey density ratio</span></span></span>
-<span class="r-in"><span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">demo_fit</span>, <span class="st">"cp_1 = 25"</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Savage-Dickey Bayes factor was computed using default prior(s) for `cp_1`. Point Bayes factors are sensitive to the prior distribution; consider specifying informed priors.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      hypothesis     mean     lower    upper  p       BF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 - 25 = 0 5.447905 -1.718137 12.88476 NA 2.149812</span>
+<span class="r-in"><span><span class="co"># Directional hypotheses can be used for a focused posterior question</span></span></span>
+<span class="r-in"><span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">demo_fit</span>, <span class="st">"cp_1 &gt; 30"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      hypothesis     mean     lower    upper  prob       BF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 - 30 &gt; 0 1.459879 -1.938938 4.998374 0.813 4.691063</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Inspect the corresponding prior probability without a Bayes factor</span></span></span>
 <span class="r-in"><span><span class="fu">hypothesis</span><span class="op">(</span><span class="va">demo_fit</span>, <span class="st">"cp_1 &gt; 30"</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      hypothesis     mean     lower    upper      p BF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 - 30 &gt; 0 7.707796 -25.62943 62.62246 0.5315 NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      hypothesis     mean     lower    upper  prob BF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 - 30 &gt; 0 3.827508 -27.98519 55.25295 0.481 NA</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

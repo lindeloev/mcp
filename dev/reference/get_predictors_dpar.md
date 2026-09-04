@@ -100,35 +100,16 @@ get_predictors(model, data, family, par_x, check_rank = TRUE)
     response scale. [Read
     more](https://lindeloev.github.io/mcp/articles/dpar.html)
 
-  - *Time-series residuals:* use `ar(p)` and `ma(q)` separately or
-    together, e.g., `~ 1 + ar(1) + ma(1)`. Both accept an optional
-    regression formula and observation `boundary`. GARMA terms support
-    Gaussian, binomial, Poisson, and negative-binomial families with
-    their default links. They define a finite conditional recurrence on
-    the link scale. For `~ ar(p) + ma(q)`, the model is:
+  - *Time-series residuals:* link-scale observation-driven GARMA via
+    `ar(p)` and `ma(q)`, e.g., `~ 1 + ar(1, series = id) + ma(1)`. Both
+    accept an optional regression formula, observation `boundary`
+    (default 0.1), and grouping `series` column (see details). [Read
+    more](https://lindeloev.github.io/mcp/articles/arma.html).
 
-    \$\$\eta_t = b_t + \sum\_{j=1}^{p} \phi\_{j,t}
-    \left\[g(y^\*\_{t-j}) - b\_{t-j}\right\] + \sum\_{k=1}^{q}
-    \theta\_{k,t} \left\[g(y^\*\_{t-k}) - \eta\_{t-k}\right\]\$\$
-
-    where \\b_t\\ is the linear predictor from the segment formulas,
-    \\\phi\_{j,t}\\ is the lag-\\j\\ autoregressive (AR) coefficient at
-    time \\t\\, \\\theta\_{k,t}\\ is the lag-\\k\\ moving-average (MA)
-    coefficient at time \\t\\, \\g(\cdot)\\ is the link function,
-    \\y^\*\_t\\ is the observation, and \\\eta_t\\ is the resulting full
-    linear predictor including serial dependence. Note some
-    implications:
-
-    - For an N-order component, the last N values *before* the segment
-      onset are input to the first \\\eta_t\\ in the segment.
-
-    - AR coefficients are not jointly constrained to stationarity; nor
-      MA coefficients to invertibility. [Read
-      more](https://lindeloev.github.io/mcp/articles/arma.html)
-
-  - *Likelihood weights:* `y | weights(w) ~ ...` multiplies each
-    observation's log-likelihood contribution by `w`, as in `brms`.
-    Weights affect posterior inference and
+  - *Likelihood weights:* `y | weights(w) ~ ...` specifies observation
+    log-likelihood weights. Each observation's log-likelihood
+    contribution is multiplied by `w`. Weights must be positive. Weights
+    affect posterior inference and
     [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
     but not the response distribution used by
     [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
@@ -162,6 +143,9 @@ A tibble with one row per model parameter and the columns
 - `display_name`: user-facing parameter name used in summary functions.
 
 - `code_name`: parameter name used in JAGS and internally in mcp.
+
+- `term_key`: identifier for the formula term which generated the
+  coefficient. Multi-column terms share one key.
 
 - `par_type`: One of "Intercept", "dummy", or "slope". Used for setting
   priors and for change point indicator func.

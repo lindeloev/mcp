@@ -51,7 +51,7 @@
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Binomial change point analysis</h1>
             
-            <h4 data-toc-skip class="date">2026-08-31</h4>
+            <h4 data-toc-skip class="date">2026-09-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/binomial.Rmd" class="external-link"><code>vignettes/binomial.Rmd</code></a></small>
       <div class="d-none name"><code>binomial.Rmd</code></div>
@@ -188,7 +188,7 @@ be important later when we set priors.</p>
 <p>The next sections go into more detail, but let us quickly see if we
 can recover the parameters used to simulate the data.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, warmup <span class="op">=</span> <span class="fl">5000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <p>We can use <code>summary</code> to see that it recovered the
 parameters to a pretty good precision. Again, recall that intercepts and
 slopes are on a <code>logit</code> scale.</p>
@@ -203,24 +203,18 @@ slopes are on a <code>logit</code> scale.</p>
 <span><span class="co">##   3: y | trials(N) ~ 1 ~ 1 + year</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
-<span><span class="co">##     variable     mean     sd    lower    upper rhat ess_bulk ess_tail    sim</span></span>
-<span><span class="co">##  cp_1        1930.084 3.0280 1924.086 1935.437 1.00      440      987 1925.0</span></span>
-<span><span class="co">##  cp_2        1974.516 0.6268 1973.232 1975.856 1.00     1120      476 1975.0</span></span>
-<span><span class="co">##  match</span></span>
-<span><span class="co">##     OK</span></span>
-<span><span class="co">##     OK</span></span>
+<span><span class="co">##     variable   mean     sd    lower    upper rhat ess_bulk ess_tail    sim match</span></span>
+<span><span class="co">##  cp_1        1929.6 2.9981 1923.904 1935.160 1.03      132      367 1925.0    OK</span></span>
+<span><span class="co">##  cp_2        1974.5 0.5742 1973.190 1975.757 1.00     1754     1771 1975.0    OK</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
-<span><span class="co">##     variable     mean     sd    lower    upper rhat ess_bulk ess_tail    sim</span></span>
-<span><span class="co">##  Intercept_1    1.624 0.1445    1.360    1.921 1.00      805     1736    2.0</span></span>
-<span><span class="co">##  year_2        -0.103 0.0108   -0.126   -0.083 1.01      486     1002   -0.1</span></span>
-<span><span class="co">##  Intercept_3   -1.078 0.2033   -1.468   -0.678 1.01      630     1008   -1.0</span></span>
-<span><span class="co">##  year_3         0.099 0.0088    0.082    0.116 1.00      810     1856    0.1</span></span>
-<span><span class="co">##  match</span></span>
-<span><span class="co">##       </span></span>
-<span><span class="co">##     OK</span></span>
-<span><span class="co">##     OK</span></span>
-<span><span class="co">##     OK</span></span></code></pre>
+<span><span class="co">##     variable   mean     sd    lower    upper rhat ess_bulk ess_tail    sim match</span></span>
+<span><span class="co">##  Intercept_1    1.6 0.1479    1.376    1.942 1.02      243      690    2.0      </span></span>
+<span><span class="co">##  year_2        -0.1 0.0098   -0.122   -0.084 1.01      191      584   -0.1    OK</span></span>
+<span><span class="co">##  Intercept_3   -1.1 0.1996   -1.498   -0.710 1.00      839     1422   -1.0    OK</span></span>
+<span><span class="co">##  year_3         0.1 0.0088    0.083    0.117 1.01      925     1859    0.1    OK</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## Warning: 3 parameters show poor convergence (rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400).</span></span></code></pre>
 <p><code>summary</code> uses 95% central posterior intervals by default,
 but you can change it using <code>summary(fit, width = 0.80)</code>. If
 you have <a href="../articles/group_effects.html">group-level
@@ -279,22 +273,22 @@ so it ran with default priors:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">prior</span><span class="op">)</span>  <span class="co"># Raw view</span></span>
 <span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>  <span class="co"># Richer view. Try adding verbose = TRUE</span></span></code></pre></div>
-<pre><code><span><span class="co">##             [,1]                             </span></span>
-<span><span class="co">## cp_1        "dt(1901, 59.5, 1) T(1901, 2020)"</span></span>
-<span><span class="co">## cp_2        "dt(1901, 59.5, 1) T(cp_1, 2020)"</span></span>
-<span><span class="co">## Intercept_1 "dt(0, 1.5, 3)"                  </span></span>
-<span><span class="co">## year_2      "dt(0, 0.01260504, 3)"           </span></span>
-<span><span class="co">## Intercept_3 "dt(0, 1.5, 3)"                  </span></span>
-<span><span class="co">## year_3      "dt(0, 0.01260504, 3)"           </span></span>
+<pre><code><span><span class="co">##             [,1]                  </span></span>
+<span><span class="co">## cp_1        "dirichlet(1)"        </span></span>
+<span><span class="co">## cp_2        "dirichlet(1)"        </span></span>
+<span><span class="co">## Intercept_1 "dt(0, 1.5, 3)"       </span></span>
+<span><span class="co">## year_2      "dt(0, 0.01260504, 3)"</span></span>
+<span><span class="co">## Intercept_3 "dt(0, 1.5, 3)"       </span></span>
+<span><span class="co">## year_3      "dt(0, 0.01260504, 3)"</span></span>
 <span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                                         bounds</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    student_t(df = 1, location = 1901, scale = 5… [min(…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    student_t(df = 1, location = 1901, scale = 5… [cp_1…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    student_t(df = 3, location = 0, scale = 1.5)  none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> year_2            2 mu    student_t(df = 3, location = 0, scale = 0.01… none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    student_t(df = 3, location = 0, scale = 1.5)  none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> year_3            3 mu    student_t(df = 3, location = 0, scale = 0.01… none</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior                                               bounds           </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)                                [min(year), cp_2]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    dirichlet(alpha = 1)                                [cp_1, max(year)]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    student_t(df = 3, location = 0, scale = 1.5)        none             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> year_2            2 mu    student_t(df = 3, location = 0, scale = 0.01260504) none             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    student_t(df = 3, location = 0, scale = 1.5)        none             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> year_3            3 mu    student_t(df = 3, location = 0, scale = 0.01260504) none</span></span></code></pre>
 <p>The priors on change points are discussed extensively in the prior
 vignette. With the default logit link, intercepts and categorical
 contrasts use <code>dt(0, 1.5, 3)</code>. Its central 95% interval is
@@ -354,8 +348,10 @@ model contains several change points.</p>
 <span><span class="co">##   cp_3 = CONST2_</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   cp_1 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(CONST1_,CONST2_)  # Regularizing t-tail within the observed change-point span</span></span>
-<span><span class="co">##   cp_2 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(cp_1,CONST2_)  # Regularizing t-tail ordered after cp_1 within the observed change-point span</span></span>
+<span><span class="co">##   cp_frac_1_ ~ dbeta(1, 2)  # Relative fraction of remaining span (Uniform order statistics)</span></span>
+<span><span class="co">##   cp_1 = cp_0 + cp_frac_1_ * (cp_3 - cp_0)  # Ordered change point</span></span>
+<span><span class="co">##   cp_frac_2_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)</span></span>
+<span><span class="co">##   cp_2 = cp_1 + cp_frac_2_ * (cp_3 - cp_1)  # Ordered change point</span></span>
 <span><span class="co">##   Intercept_1 ~ dt(0, 1/(1.5)^2, 3)   # Weakly regularizing link-scale intercept</span></span>
 <span><span class="co">##   year_2 ~ dt(0, 1/(0.01260504)^2, 3)   # Weakly regularizing link-scale coefficient scaled to a reference predictor change</span></span>
 <span><span class="co">##   Intercept_3 ~ dt(0, 1/(1.5)^2, 3)   # Weakly regularizing link-scale intercept</span></span>

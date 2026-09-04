@@ -51,7 +51,7 @@
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Poisson and negative-binomial change point analysis</h1>
             
-            <h4 data-toc-skip class="date">2026-08-31</h4>
+            <h4 data-toc-skip class="date">2026-09-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/poisson.Rmd" class="external-link"><code>vignettes/poisson.Rmd</code></a></small>
       <div class="d-none name"><code>poisson.Rmd</code></div>
@@ -162,12 +162,12 @@ point (in years):</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
 <span><span class="co">##     variable    mean    sd   lower   upper rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##  cp_1        1888.21 3.692 1881.71 1897.74 1.00     2069     1530</span></span>
+<span><span class="co">##  cp_1        1888.36 3.902 1881.67 1898.25 1.00     1584     1440</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
 <span><span class="co">##     variable    mean    sd   lower   upper rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##  Intercept_1    1.17 0.096    0.98    1.36 1.00     4438     4901</span></span>
-<span><span class="co">##  Intercept_2    0.48 0.123    0.23    0.71 1.00     4248     4594</span></span></code></pre>
+<span><span class="co">##  Intercept_1    1.17 0.096    0.98    1.36 1.00     3679     4107</span></span>
+<span><span class="co">##  Intercept_2    0.48 0.123    0.22    0.71 1.00     3978     4474</span></span></code></pre>
 <p>We can see that the model ran well with good convergence and a large
 number of effective samples. At a first glance, the change point is
 estimated to lie between the years 1880 and 1895 (approximately).</p>
@@ -197,8 +197,8 @@ traceplot too, just to check convergence visually.</p>
 that we have to exponentiate the estimates to get the “raw” Poisson
 parameter <span class="math inline">\lambda</span>. <span class="math inline">\lambda</span> has the nice property of being the
 mean number of events. So we see that the mean number of events in
-segment 1 is <code>exp(result$mean[2])</code> (3.2329953) and it is
-<code>exp(result$mean[3])</code> (1.6137835) for segment 2.</p>
+segment 1 is <code>exp(result$mean[2])</code> (3.2229705) and it is
+<code>exp(result$mean[3])</code> (1.6108874) for segment 2.</p>
 <p>The intercept prior is a Student-t distribution centered on the
 rounded median of <code>log(pmax(n, 0.1))</code>, with scale equal to
 the maximum of 2.5 and its rounded MAD. This follows the robust
@@ -211,11 +211,11 @@ regularization of short segments.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 3 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                                         bounds</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    uniform(min = 1851, max = 1962)               [min(…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> Intercept_1       1 mu    student_t(df = 3, location = 0.7, scale = 2.… none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_2       2 mu    student_t(df = 3, location = 0.7, scale = 2.… none</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior                                          bounds                </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)                           [min(date), max(date)]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> Intercept_1       1 mu    student_t(df = 3, location = 0.7, scale = 2.5) none                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_2       2 mu    student_t(df = 3, location = 0.7, scale = 2.5) none</span></span></code></pre>
 <p>As always, the prior on the change point forces it to occur in the
 observed range. The coefficient priors are deliberately broad defaults,
 so update them with more informed priors for your particular case when
@@ -304,7 +304,7 @@ to see how the predictive performance of the two models compare.</p>
 <span><span class="co">## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span></span>
 <span><span class="co">## or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre>
 <pre><code><span><span class="co">##   model elpd_diff se_diff p_worse diag_diff      diag_elpd</span></span>
-<span><span class="co">##  model1       0.0     0.0      NA           2 k_psis &gt; 0.7</span></span>
+<span><span class="co">##  model1       0.0     0.0      NA           3 k_psis &gt; 0.7</span></span>
 <span><span class="co">##  model3      -5.1     2.7    0.97   N &lt; 100               </span></span>
 <span><span class="co">##  model2      -9.3     3.8    0.99   N &lt; 100</span></span></code></pre>
 <p>The change point model seems to be preferred with a ratio of around
@@ -316,9 +316,9 @@ is to look at the model weights:</p>
 <pre><code><span><span class="co">## Method: pseudo-BMA+ with Bayesian bootstrap</span></span>
 <span><span class="co">## ------</span></span>
 <span><span class="co">##        weight</span></span>
-<span><span class="co">## model1 0.935 </span></span>
+<span><span class="co">## model1 0.936 </span></span>
 <span><span class="co">## model2 0.008 </span></span>
-<span><span class="co">## model3 0.057</span></span></code></pre>
+<span><span class="co">## model3 0.056</span></span></code></pre>
 <p>Again, unsurprisingly, the change point model is preferred and they
 show the same ranking as implied by <code>loo_compare</code>.</p>
 </div>
@@ -335,7 +335,8 @@ above.</p>
 <span><span class="co">##   cp_2 = CONST2_</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   cp_1 ~ dunif(CONST1_, CONST2_)  # Within the observed change-point span</span></span>
+<span><span class="co">##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)</span></span>
+<span><span class="co">##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point</span></span>
 <span><span class="co">##   Intercept_1 ~ dt(0.7, 1/(2.5)^2, 3)   # Robustly centered log-count intercept with a minimum scale of 2.5</span></span>
 <span><span class="co">##   Intercept_2 ~ dt(0.7, 1/(2.5)^2, 3)   # Robustly centered log-count intercept with a minimum scale of 2.5</span></span>
 <span><span class="co">## </span></span>

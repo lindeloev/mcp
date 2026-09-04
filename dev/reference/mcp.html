@@ -31,7 +31,7 @@ between segments. See details or the mcp website."><meta property="og:image" con
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -118,23 +118,15 @@ standard-deviation change or <code>~sigma(1 + x + group)</code> for more advance
 structures. Explicit <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> formulas model log-SD, while the implicit constant <code>sigma_1</code> in a
 model without <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> remains on the response scale.
 <a href="https://lindeloev.github.io/mcp/articles/dpar.html">Read more</a></p></li>
-<li><p><em>Time-series residuals:</em> use <code>ar(p)</code> and <code>ma(q)</code> separately or together,
-e.g., <code>~ 1 + ar(1) + ma(1)</code>. Both accept an optional regression formula
-and observation <code>boundary</code>. GARMA terms support Gaussian, binomial,
-Poisson, and negative-binomial families with their default links. They
-define a finite conditional recurrence on the link scale. For <code>~ ar(p) + ma(q)</code>, the model is:</p>
-<p>$$\eta_t = b_t + \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right] + \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right]$$</p>
-<p>where \(b_t\) is the linear predictor from the segment formulas,
-\(\phi_{j,t}\) is the lag-\(j\) autoregressive (AR) coefficient at time \(t\),
-\(\theta_{k,t}\) is the lag-\(k\) moving-average (MA) coefficient at time \(t\),
-\(g(\cdot)\) is the link function, \(y^*_t\) is the observation,
-and \(\eta_t\) is the resulting full linear predictor including serial dependence. Note some implications:</p><ul><li><p>For an N-order component, the last N values <em>before</em> the segment onset are input to the first \(\eta_t\) in the segment.</p></li>
-<li><p>AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
-<a href="https://lindeloev.github.io/mcp/articles/arma.html">Read more</a></p></li>
-</ul></li>
-<li><p><em>Likelihood weights:</em> <code>y | weights(w) ~ ...</code> multiplies each observation's
-log-likelihood contribution by <code>w</code>, as in <code>brms</code>. Weights affect
-posterior inference and <code><a href="execute-mcp-model.html">log_lik()</a></code>, but not the response distribution used
+<li><p><em>Time-series residuals:</em> link-scale observation-driven GARMA via <code>ar(p)</code> and <code>ma(q)</code>,
+e.g., <code>~ 1 + ar(1, series = id) + ma(1)</code>. Both accept an optional regression formula,
+observation <code>boundary</code> (default 0.1), and grouping <code>series</code> column (see details).
+<a href="https://lindeloev.github.io/mcp/articles/arma.html">Read more</a>.</p></li>
+<li><p><em>Likelihood weights:</em> <code>y | weights(w) ~ ...</code> specifies
+observation log-likelihood weights. Each observation's
+log-likelihood contribution is multiplied by <code>w</code>. Weights must be positive.
+Weights affect posterior
+inference and <code><a href="execute-mcp-model.html">log_lik()</a></code>, but not the response distribution used
 by <code><a href="execute-mcp-model.html">predict()</a></code> or prior/posterior predictive checks.
 Combine with other auxiliaries using <code>+</code>, e.g., <code>y | trials(total) + weights(w) ~ ...</code>.</p></li>
 <li><p><em>Binomial:</em> use <code>successes | trials(total) ~ ...</code> with <code>family = binomial()</code>.</p></li>
@@ -157,23 +149,19 @@ are used where priors are not specified. These are designed for stable
 estimation and prediction, but should be justified before hypothesis testing.
 <code>mcp</code> uses conventional distribution scales rather than JAGS precision:
 SD for <code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm()</a></code>, scale for <code><a href="https://rdrr.io/r/stats/TDist.html" class="external-link">dt()</a></code>, <code>ddexp()</code>, and <code><a href="https://rdrr.io/r/stats/Logistic.html" class="external-link">dlogis()</a></code>, and
-log-SD for <code><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">dlnorm()</a></code>. See
-details. With multiple change points, the default is a regularizing
-Student-t prior centered at <code>min(x)</code> and sequentially truncated between
-the preceding change point and <code>max(x)</code>. User-specified <code><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif()</a></code> priors
-and explicit truncations are used as written, so users must supply the
-ordering bounds, e.g., <code>dunif(cp_1, max(time))</code> for <code>cp_2</code>.</p></li>
+log-SD for <code><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">dlnorm()</a></code>. See details.</p></li>
 <li><p>A numerical value (e.g., <code>Intercept_1 = -2.1</code>) indicating a fixed value.</p></li>
 <li><p>A model parameter name (e.g., <code>Intercept_2 = "Intercept_1"</code>), indicating that this parameter is shared -
 typically between segments. If two group-level deviations are shared this way,
 they will need to have the same grouping variable.</p></li>
-<li><p>A scaled Dirichlet prior is supported for change points if they are all set to
-<code>cp_i = "dirichlet(alpha)"</code> with the same positive <code>alpha</code> for every
-change point. <code>alpha = 1</code> is most often used. This prior is symmetric over segment spacings,
-unlike the regularizing t-tail default for multiple change points, but it
-mixes less efficiently, so you will often need to set <code>iter</code> higher.
-It is recommended for hypothesis testing and for the estimation of more
-than 5 change points. <a href="https://lindeloev.github.io/mcp/articles/priors.html">Read more</a>.</p></li>
+<li><p>The default prior on change points is <code>dirichlet(1)</code> (uniform order statistics).
+For a single change point, this is the Beta(1, 1) / Uniform distribution over <code>[min(x), max(x)]</code>.
+For multiple change points, it corresponds to a flat Dirichlet distribution over segment lengths.
+You can also explicitly set <code>cp_i = "dirichlet(alpha)"</code> with the same positive <code>alpha</code> for all
+change points to regularize spacing (<code>alpha &gt; 1</code> penalizes change points from occurring close together,
+while <code>alpha &lt; 1</code> favors clustering). Under the hood, this is parameterized as an exact sequential
+stick-breaking Beta chain for fast and robust sampling.
+<a href="https://lindeloev.github.io/mcp/articles/priors.html">Read more</a>.</p></li>
 </ul></dd>
 
 
@@ -228,7 +216,7 @@ use diagnostics to assess convergence.</p></dd>
 
 
 <dt id="arg-inits">inits<a class="anchor" aria-label="anchor" href="#arg-inits"></a></dt>
-<dd><p>A list if initial values for the parameters. This can be useful
+<dd><p>A list of initial values for the parameters. This can be useful
 if a model fails to converge. Read more in <code><a href="https://rdrr.io/pkg/rjags/man/jags.model.html" class="external-link">jags.model</a></code>.
 Defaults to <code>NULL</code>, i.e., no inits.</p></dd>
 
@@ -267,20 +255,51 @@ messages? Defaults to <code>FALSE</code>.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><strong>The mcp model</strong></p>
-<p>For a continuous predictor \(x\), segment 1 (\(x \le \Delta_1\)) is a standard
-regression model with the intercept at \(x = 0\):</p>
-<p>$$\eta_{1,i} = f_1(x_i, \mathbf{\beta}_1) = \beta_{1,0} + \beta_{1,1} x_i + \dots$$</p>
-<p>Subsequent segments \(k \in \{2, \dots, K\}\) are similar, but replace \(x\) with a segment-local predictor \(X_{k,i}\) measured from the segment onset \(\Delta_{k-1}\) and capped at the segment end \(\Delta_k\):</p>
-<p>$$X_{k,i} = \min(x_i, \Delta_k) - \Delta_{k-1}$$</p>
-<p>with \(\Delta_K = \max(\mathbf{x})\).</p>
-<p>Joined segments (<code>~ 0 + x</code>) continue from the plateaued level of earlier segments with a new segment slope \(\beta_{k,1} X_{k,i}\), enforcing continuity without parameter constraints. Disjoined segments (<code>~ 1 + x</code>) introduce a new intercept \(\beta_{k,0}\) at \(\Delta_{k-1}\) and truncate preceding segments. In both cases, slope and intercept parameters are absolute values (not differences relative to the previous segment).</p>
-<p>Here, the model was presented for the mean (on the link scale). The exact same model apply to distributional parameters (<code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, <code>shape()</code>, etc.) and <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code>/<code>ma()</code> too. See more details on the <code>mcp</code> model in <a href="mcp-package.html">mcp-package</a> and on the <a href="https://lindeloev.github.io/mcp/articles/formulas.html">mcp website</a>.</p>
-<p><strong>Notes on priors</strong></p><ul><li><p><em>Ordered change point priors:</em> Default population-level <code>cp_i</code> priors are ordered and the ordering is imposed through the priors. For user-defined priors,
+<p><img src="figures/mcp_demo.png" width="500" alt="Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope"></p>
+<p>An <code>mcp</code> model divides a continuous predictor \(x\) into \(K\) segments separated by
+ordered change points \(\Delta_1 &lt; \dots &lt; \Delta_{K-1}\). In each segment \(k \in \{1, \dots, K\}\),
+the linear predictor \(\eta_i\) is evaluated directly from the segment-local distance \((x_i - \Delta_{k-1})\):</p>
+<p>$$\eta_i = \alpha_k + \beta_{k,1} (x_i - \Delta_{k-1}) \quad (\text{with } \Delta_0 = 0)$$</p>
+<p>where the segment-start level \(\alpha_k\) is freely estimated for the first and disjoined segments, as in non-segmented regression, and inherited continuously for joined segments:</p>
+<p>$$\alpha_k = \begin{cases}
+  \beta_{k,0}, &amp; \text{Disjoined segments } (\sim \texttt{1 + x}, \text{ including } k = 1) \\
+  \alpha_{k-1} + \beta_{k-1,1} (\Delta_{k-1} - \Delta_{k-2}), &amp; \text{Joined segments } (k \ge 2, \sim \texttt{0 + x})
+\end{cases}$$</p>
+<p>In all segments, estimated slope and intercept parameters are absolute values (not changes relative to the preceding segment).</p>
+<p>If additional continuous covariates or categorical factors are included (e.g., <code>+ z + group</code>),
+they enter additively on their original scale (\(\dots + \sum \gamma_{k,j} z_{j,i}\)); only the
+change-point predictor \(x\) is converted to segment-local coordinates.</p>
+<p>Distributional parameters (<code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, <code>shape()</code>, etc.) and autoregressive terms (<code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code>, <code>ma()</code>)
+follow this exact same segmented structure on their respective link scales. See more details on the <code>mcp</code> model in
+<a href="mcp-package.html">mcp-package</a> and on the <a href="https://lindeloev.github.io/mcp/articles/formulas.html">mcp website</a>.</p>
+<p><strong>Time-series residuals (link-scale observation-driven GARMA)</strong></p>
+<p>Autoregressive (<code>ar(p)</code>) and moving-average (<code>ma(q)</code>) terms define a finite conditional recurrence
+on the link scale (generalized autoregressive moving-average, GARMA). They support Gaussian (<code>identity</code>),
+binomial (<code>logit</code>), Bernoulli (<code>logit</code>), Poisson (<code>log</code>), and negative-binomial (<code>log</code>) families.
+If \(b_t\) is the ordinary regression predictor from the segment formulas and \(\eta_t\) is the
+predictor including serial dependence, the recurrence decomposes into components:</p>
+<p>$$\begin{aligned}
+  \text{AR}_t &amp;= \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right] \\
+  \text{MA}_t &amp;= \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right] \\
+  \eta_t &amp;= b_t + \text{AR}_t + \text{MA}_t
+\end{aligned}$$</p>
+<p>where \(\phi_{j,t}\) is the lag-\(j\) autoregressive (AR) coefficient at time \(t\),
+\(\theta_{k,t}\) is the lag-\(k\) moving-average (MA) coefficient at time \(t\),
+\(g(\cdot)\) is the link function, and \(y^*_t\) is the boundary-constrained observation:</p><ul><li><p><strong>Gaussian:</strong> \(y^*_t = y_t\).</p></li>
+<li><p><strong>Poisson / Negative Binomial:</strong> \(y^*_t = \max(y_t, b)\) to prevent \(\log(0)\).</p></li>
+<li><p><strong>Binomial / Bernoulli:</strong> \(y^*_t = \min(\max(y_t, b), n_t - b) / n_t\), where \(b\) is a boundary pseudo-count (not a proportion) and \(n_t = 1\) for Bernoulli.</p></li>
+</ul><p>Implications:</p><ul><li><p>For an \(N\)-order component, the last \(N\) values <em>before</em> the segment onset are input to the first \(\eta_t\) in the segment.</p></li>
+<li><p>AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.</p></li>
+<li><p>See <a href="https://lindeloev.github.io/mcp/articles/arma.html">the arma vignette</a> for more details.</p></li>
+</ul><p><strong>Notes on priors</strong></p><ul><li><p><em>Ordered change point priors:</em> Default population-level <code>cp_i</code> priors are ordered and the ordering is imposed through the priors. For user-defined priors,
 <code>mcp</code> adds truncation (e.g., <code>T(cp_1, )</code>) only when the prior has neither
 explicit truncation nor an inherently bounded form such as <code><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif()</a></code> or
 <code>dirichlet()</code>.</p></li>
 <li><p><em>Data-dependent terms:</em> If <code>mcp</code> encounters a data-dependent term like <code>min(time)</code>, <code>max(time)</code>, <code>median(response)</code>, or <code>mad(response)</code> in the prior string, they are resolved from the model data so a numerical value is passed to JAGS. The following terms are also allowed: <code>n_segments()</code>, and <code>n_cp()</code>.
 The older constants <code>MINX</code>, <code>MAXX</code>, <code>MEANX</code>, <code>SDX</code>, <code>MINY</code>, <code>MAXY</code>, <code>MEANY</code>, <code>SDY</code>, and <code>N_CP</code> remain accepted with a deprecation warning.</p></li>
+<li><p><em>Group-level change points:</em> Group-specific locations follow a hierarchical
+normal distribution around their population change point, truncated so
+that realized locations remain in the observed range and ordered.</p></li>
 <li><p><em>Parameterization:</em> Prior strings use conventional scale parameterizations. <code>mcp</code> converts
 these to the parameterization required by JAGS when generating code:
 inverse variance for <code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm()</a></code>, <code><a href="https://rdrr.io/r/stats/TDist.html" class="external-link">dt()</a></code>, and <code><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">dlnorm()</a></code>, and inverse
@@ -319,17 +338,17 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-out co"><span class="r-pr">#&gt;</span>   3: response ~ 1 ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        30.85 3.586 24.10 38.315 1.01      407      541 30.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        69.78 0.291 69.30 70.261 1.00     5745     7530 70.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     variable  mean    sd lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        31.48 1.744 28.11 34.86 1.01      832     1686 30.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        71.13 1.014 69.46 72.78 1.00     5341     7285 70.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1 10.32 0.710  8.91 11.711 1.00     1406     2753 10.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.54 0.065  0.43  0.682 1.01      438      604  0.5    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3  0.79 1.531 -2.10  3.856 1.00      749     1389  0.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.24 0.091 -0.42 -0.067 1.00      736     1300 -0.2    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      4.00 0.299  3.49  4.677 1.00     3844     3900  4.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     variable  mean    sd lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1 10.03 0.664  8.73 11.32 1.00     1704     2937 10.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.53 0.047  0.44  0.63 1.00     1481     2737  0.5    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 17.48 1.224 15.25 20.00 1.00     1196     1403 20.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.10 0.072 -0.26  0.02 1.00     1255     1492 -0.3      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      3.91 0.290  3.39  4.53 1.00     4427     3954  3.5    OK</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Visual inspection of the results</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span>  <span class="co"># Visualization of model fit/predictions</span></span></span>
@@ -342,31 +361,31 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Test a hypothesis</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">demo_fit</span>, <span class="st">"cp_1 &gt; 10"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      hypothesis     mean    lower    upper p  BF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 - 10 &gt; 0 20.84596 14.09683 28.31539 1 Inf</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      hypothesis     mean    lower    upper prob  BF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 - 10 &gt; 0 21.47938 18.10775 24.86071    1 Inf</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Make predictions</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time    fitted        sd      Q2.5     Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820 30.374492 1.0363972 28.362893 32.453365</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038 -3.333719 0.7695936 -4.836521 -1.822012</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 30.727352 1.0675322 28.660966 32.861266</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 10.062971 11.59361 10.316267 0.7101668  8.907415 11.711335</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 14.056859 19.50091 10.316619 0.7096133  8.907914 11.711335</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 18.292640 46.12009 18.367438 0.9842136 16.134892 20.014110</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   response     time   fitted        sd     Q2.5    Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 17.23552 76.33986 16.95304 0.9425042 15.17680 18.84139</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 11.35171 83.51711 16.22386 0.7231217 14.82569 17.64630</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 28.04995 60.18529 25.26025 0.8946280 23.51420 26.98299</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 20.68198 74.72964 17.11663 1.0216233 15.20838 19.19173</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 21.21364 85.88256 15.98354 0.7208332 14.60845 17.42739</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 22.32282 40.05069 14.54825 0.6297756 13.25108 15.71204</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time   predict       sd       Q2.5     Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 32.842651 68.35820 30.353477 4.210965  22.226246 38.515625</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 -1.160003 87.29038 -3.299188 4.064416 -11.355322  4.704244</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 27.564248 69.01173 30.669097 4.170328  22.564006 38.884471</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 10.062971 11.59361 10.352696 4.047950   2.308171 18.325861</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 14.056859 19.50091 10.346765 4.086618   2.308800 18.326099</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 18.292640 46.12009 18.332877 4.100923  10.222899 26.465992</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   response     time  predict       sd      Q2.5    Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 17.23552 76.33986 16.95592 4.001623  9.031754 24.85364</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 11.35171 83.51711 16.24130 3.989762  8.401454 24.04522</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 28.04995 60.18529 25.22341 4.010209 17.360815 33.14115</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 20.68198 74.72964 17.16957 3.993998  9.157086 25.05408</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 21.21364 85.88256 15.97045 4.000445  8.166262 23.80838</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 22.32282 40.05069 14.57599 4.029706  6.757755 22.33908</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">demo_fit</span>, newdata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">55.545</span>, <span class="fl">80</span>, <span class="fl">132</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      time    predict       sd       Q2.5     Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  55.545  23.465561 4.119947  15.440778 31.460977</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  80.000  -1.670004 4.092160  -9.679104  6.435948</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 132.000 -13.894364 5.927965 -25.551752 -2.337486</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      time  predict       sd       Q2.5    Q97.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  55.545 22.85129 3.965658 14.9562088 30.61321</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  80.000 16.61806 3.999897  8.7254549 24.42420</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 132.000 11.24520 5.215439  0.7408375 21.30547</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Compare to a one-intercept-only model (no change points) with default prior</span></span></span>
 <span class="r-in"><span><span class="va">model_null</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">response</span> <span class="op">~</span> <span class="fl">1</span><span class="op">)</span></span></span>
@@ -376,7 +395,7 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-in"><span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">demo_loo</span>, <span class="va">null_loo</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   model elpd_diff se_diff p_worse diag_diff diag_elpd</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  model1       0.0     0.0      NA                    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  model2    -108.2     8.8    1.00                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  model2     -54.3     7.8    1.00                    </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Inspect the prior. Useful for prior predictive checks.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
@@ -389,17 +408,17 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-out co"><span class="r-pr">#&gt;</span>   3: response ~ 1 ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable     mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        37.45617 24.88   4.66 91.79 1.00     8902     9027 30.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        60.99546 24.31  14.53 96.92 1.00     9183     8085 70.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     variable     mean    sd lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        33.26717 22.92  2.01 83.05 1.00     8739     8782 30.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        65.58075 23.61 15.35 98.41 1.00     8892     8149 70.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable     mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1 10.53694 26.30 -29.43 52.10 1.00     9086     8947 10.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.00334  0.24  -0.41  0.43 1.00     9363     8823  0.5      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 10.54960 22.17 -30.77 51.53 1.00     8828     8629  0.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.00047  0.22  -0.41  0.43 1.00     9183     8660 -0.2    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1     14.04936 16.94   0.45 53.68 1.00     8637     8735  4.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     variable     mean    sd lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1 14.39840 11.82 -3.47 33.57 1.00     9092     8866 10.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2      -0.00142  0.12 -0.19  0.19 1.00     8721     8667  0.5      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 14.16118 10.50 -4.81 32.93 1.00     9348     8556 20.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.00018  0.11 -0.20  0.19 1.00     8175     8743 -0.3      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      6.63362  7.23  0.19 24.88 1.00     8799     8859  3.5    OK</span>
 <span class="r-in"><span><span class="fu"><a href="plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="mcp-5.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
@@ -408,23 +427,23 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 7 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   parameter   segment dpar  prior                                         bounds</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> cp_1              2 cp    student_t(df = 1, location = 3.189323, scale… [min(…</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> cp_2              3 cp    student_t(df = 1, location = 3.189323, scale… [cp_1…</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    student_t(df = 3, location = 10.4, scale = 1… none  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> time_2            2 mu    student_t(df = 3, location = 0, scale = 0.13… none  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    student_t(df = 3, location = 10.4, scale = 1… none  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> time_3            3 mu    student_t(df = 3, location = 0, scale = 0.13… none  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 12.8) [0, I…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)                          [min(…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> cp_2              3 cp    dirichlet(alpha = 1)                          [cp_1…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    student_t(df = 3, location = 14.2, scale = 6) none  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> time_2            2 mu    student_t(df = 3, location = 0, scale = 0.06… none  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    student_t(df = 3, location = 14.2, scale = 6) none  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> time_3            3 mu    student_t(df = 3, location = 0, scale = 0.06… none  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 6)    [0.00…</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Set priors and re-run</span></span></span>
 <span class="r-in"><span><span class="va">prior</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  Intercept_1 <span class="op">=</span> <span class="fl">15</span>,</span></span>
 <span class="r-in"><span>  time_2 <span class="op">=</span> <span class="st">"dt(0, 2, 1) T(0, )"</span>,  <span class="co"># t-dist slope. Truncated to positive.</span></span></span>
-<span class="r-in"><span>  cp_2 <span class="op">=</span> <span class="st">"dunif(cp_1, 80)"</span>,    <span class="co"># change point to segment 2 &gt; cp_1 and &lt; 80.</span></span></span>
-<span class="r-in"><span>  Intercept_3 <span class="op">=</span> <span class="st">"Intercept_1"</span>           <span class="co"># Shared intercept between segment 1 and 3</span></span></span>
+<span class="r-in"><span>  cp_2 <span class="op">=</span> <span class="st">"dunif(cp_1, 80)"</span>,       <span class="co"># change point to segment 2 &gt; cp_1 and &lt; 80.</span></span></span>
+<span class="r-in"><span>  Intercept_3 <span class="op">=</span> <span class="st">"Intercept_1"</span>     <span class="co"># Shared intercept between segment 1 and 3</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">fit3</span> <span class="op">=</span> <span class="fu">mcp</span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span>, prior <span class="op">=</span> <span class="va">prior</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fit3</span> <span class="op">=</span> <span class="fu">mcp</span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span>, prior <span class="op">=</span> <span class="va">prior</span>, warmup <span class="op">=</span> <span class="fl">2000</span>, iter <span class="op">=</span> <span class="fl">6000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Show the JAGS model</span></span></span>
 <span class="r-in"><span><span class="va">demo_fit</span><span class="op">$</span><span class="va">jags_code</span></span></span>
@@ -434,13 +453,15 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-out co"><span class="r-pr">#&gt;</span>   cp_3 = CONST2_</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   # Priors for population-level effects</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_1 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(CONST1_,CONST2_)  # Regularizing t-tail within the observed change-point span</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_2 ~ dt(CONST1_, 1/(CONST3_)^2, CONST4_) T(cp_1,CONST2_)  # Regularizing t-tail ordered after cp_1 within the observed change-point span</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_1 ~ dt(10.4, 1/(12.8)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   time_2 ~ dt(0, 1/(0.1350637)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_3 ~ dt(10.4, 1/(12.8)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   time_3 ~ dt(0, 1/(0.1350637)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   sigma_1 ~ dt(0, 1/(12.8)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_frac_1_ ~ dbeta(1, 2)  # Relative fraction of remaining span (Uniform order statistics)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_1 = cp_0 + cp_frac_1_ * (cp_3 - cp_0)  # Ordered change point</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_frac_2_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_2 = cp_1 + cp_frac_2_ * (cp_3 - cp_1)  # Ordered change point</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_1 ~ dt(14.2, 1/(6)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   time_2 ~ dt(0, 1/(0.06053105)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_3 ~ dt(14.2, 1/(6)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   time_3 ~ dt(0, 1/(0.06053105)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sigma_1 ~ dt(0, 1/(6)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   # Model and likelihood</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   for (i_ in 1:length(time)) {</span>

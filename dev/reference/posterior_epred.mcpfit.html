@@ -33,7 +33,7 @@ These methods and workflows require the suggested package {rstantools}."><meta p
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -164,9 +164,17 @@ transformed expected response instead of the linear predictor.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>For GARMA models, <code>posterior_predict()</code> generates each replicated
 response series recursively. It does not condition later predictions on
-the observed response history, unlike <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>. These
-methods require posterior draws. For prior prediction, use <code><a href="execute-mcp-model.html">fitted()</a></code> or
-<code><a href="execute-mcp-model.html">predict()</a></code> with <code>prior = TRUE</code>.</p>
+the observed response history, unlike <code><a href="execute-mcp-model.html">fitted()</a></code> and posterior <code><a href="execute-mcp-model.html">predict()</a></code>.
+These methods require posterior draws. For prior prediction, use
+<code><a href="execute-mcp-model.html">predict()</a></code> with <code>prior = TRUE</code>, which also generates fresh series.</p>
+<p>For binomial models, <code>posterior_epred()</code> and <code>posterior_predict()</code> (and
+corresponding <code>{tidybayes}</code> workflows such as <code><a href="https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html" class="external-link">add_epred_draws()</a></code>) follow
+<code>{brms}</code> and <code>{rstantools}</code> conventions by returning values on the outcome
+count scale (<code>rate = FALSE</code>), i.e., expected counts \(E[Y] = n\mu\) and
+simulated counts in \(\{0, \dots, n\}\). In contrast, <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>
+default to proportions (<code>rate = TRUE</code>). To obtain the success probability
+parameter \(\mu\) on the \([0, 1]\) scale regardless of trial counts, pass
+<code>dpar = "mu"</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

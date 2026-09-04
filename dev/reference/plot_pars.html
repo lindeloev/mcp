@@ -29,7 +29,7 @@ cases."><meta property="og:image" content="https://github.com/lindeloev/mcp/raw/
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -175,7 +175,6 @@ printed in sequence; in interactive use, <code>ask = TRUE</code> pauses between 
 <span class="r-plt img"><img src="plot_pars-5.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># Some plots only take pairs. hex is good to assess identifiability</span></span></span>
 <span class="r-in"><span><span class="fu">plot_pars</span><span class="op">(</span><span class="va">demo_fit</span>, type <span class="op">=</span> <span class="st">"hex"</span>, pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cp_1"</span>, <span class="st">"time_2"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>The following arguments were unrecognized and ignored: facet_args</span>
 <span class="r-plt img"><img src="plot_pars-6.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Visualize the priors:</span></span></span>

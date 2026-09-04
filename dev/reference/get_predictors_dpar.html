@@ -31,7 +31,7 @@ par_x will be relative to the segment onset, so it will be multiplied in in the 
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -146,23 +146,15 @@ standard-deviation change or <code>~sigma(1 + x + group)</code> for more advance
 structures. Explicit <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> formulas model log-SD, while the implicit constant <code>sigma_1</code> in a
 model without <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> remains on the response scale.
 <a href="https://lindeloev.github.io/mcp/articles/dpar.html">Read more</a></p></li>
-<li><p><em>Time-series residuals:</em> use <code>ar(p)</code> and <code>ma(q)</code> separately or together,
-e.g., <code>~ 1 + ar(1) + ma(1)</code>. Both accept an optional regression formula
-and observation <code>boundary</code>. GARMA terms support Gaussian, binomial,
-Poisson, and negative-binomial families with their default links. They
-define a finite conditional recurrence on the link scale. For <code>~ ar(p) + ma(q)</code>, the model is:</p>
-<p>$$\eta_t = b_t + \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right] + \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right]$$</p>
-<p>where \(b_t\) is the linear predictor from the segment formulas,
-\(\phi_{j,t}\) is the lag-\(j\) autoregressive (AR) coefficient at time \(t\),
-\(\theta_{k,t}\) is the lag-\(k\) moving-average (MA) coefficient at time \(t\),
-\(g(\cdot)\) is the link function, \(y^*_t\) is the observation,
-and \(\eta_t\) is the resulting full linear predictor including serial dependence. Note some implications:</p><ul><li><p>For an N-order component, the last N values <em>before</em> the segment onset are input to the first \(\eta_t\) in the segment.</p></li>
-<li><p>AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
-<a href="https://lindeloev.github.io/mcp/articles/arma.html">Read more</a></p></li>
-</ul></li>
-<li><p><em>Likelihood weights:</em> <code>y | weights(w) ~ ...</code> multiplies each observation's
-log-likelihood contribution by <code>w</code>, as in <code>brms</code>. Weights affect
-posterior inference and <code><a href="execute-mcp-model.html">log_lik()</a></code>, but not the response distribution used
+<li><p><em>Time-series residuals:</em> link-scale observation-driven GARMA via <code>ar(p)</code> and <code>ma(q)</code>,
+e.g., <code>~ 1 + ar(1, series = id) + ma(1)</code>. Both accept an optional regression formula,
+observation <code>boundary</code> (default 0.1), and grouping <code>series</code> column (see details).
+<a href="https://lindeloev.github.io/mcp/articles/arma.html">Read more</a>.</p></li>
+<li><p><em>Likelihood weights:</em> <code>y | weights(w) ~ ...</code> specifies
+observation log-likelihood weights. Each observation's
+log-likelihood contribution is multiplied by <code>w</code>. Weights must be positive.
+Weights affect posterior
+inference and <code><a href="execute-mcp-model.html">log_lik()</a></code>, but not the response distribution used
 by <code><a href="execute-mcp-model.html">predict()</a></code> or prior/posterior predictive checks.
 Combine with other auxiliaries using <code>+</code>, e.g., <code>y | trials(total) + weights(w) ~ ...</code>.</p></li>
 <li><p><em>Binomial:</em> use <code>successes | trials(total) ~ ...</code> with <code>family = binomial()</code>.</p></li>
@@ -183,6 +175,8 @@ Combine with other auxiliaries using <code>+</code>, e.g., <code>y | trials(tota
 diagnose collisions after parameter names are converted for JAGS.</p></li>
 <li><p><code>display_name</code>: user-facing parameter name used in summary functions.</p></li>
 <li><p><code>code_name</code>: parameter name used in JAGS and internally in mcp.</p></li>
+<li><p><code>term_key</code>: identifier for the formula term which generated the
+coefficient. Multi-column terms share one key.</p></li>
 <li><p><code>par_type</code>: One of "Intercept", "dummy", or "slope". Used for setting priors and for change point indicator func.</p></li>
 <li><p><code>order</code>: positive integer or NA. Only relevant for <code>ar</code> and <code>ma</code>.</p></li>
 <li><p><code>explicit</code>: whether the distributional parameter was supplied in the formula.</p></li>

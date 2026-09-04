@@ -42,7 +42,7 @@ list of segment formulas, or one formula when `segment` is supplied.
 `mcpfamily`. [`model.frame()`](https://rdrr.io/r/stats/model.frame.html)
 returns the data retained in the fit.
 [`nobs()`](https://rdrr.io/r/stats/nobs.html) returns the number of
-fitting-data rows.
+observed response values (excluding missing responses).
 
 ## Examples
 
@@ -50,25 +50,21 @@ fitting-data rows.
 formula(demo_fit)  # Show all segment formulas
 #> List of 3
 #>  $ response ~ 1
-#> <environment: 0x5629ddcea9c8>
 #>  $ response ~ 1 ~ 0 + time
-#> <environment: 0x5629ddcea9c8>
 #>  $ response ~ 1 ~ 1 + time
-#> <environment: 0x5629ddcea9c8>
 formula(demo_fit, segment = 2)  # Show the formula for segment 2
 #> response ~ 1 ~ 0 + time
-#> <environment: 0x5629ddcea9c8>
 family(demo_fit)  # Show the response family and link
 #> Family: gaussian
 #> Links: mu = identity; sigma = identity
 head(model.frame(demo_fit))  # Show the top rows of fitting data
-#>    response     time
-#> 1 32.842651 68.35820
-#> 2 -1.160003 87.29038
-#> 3 27.564248 69.01173
-#> 4 10.062971 11.59361
-#> 5 14.056859 19.50091
-#> 6 18.292640 46.12009
+#>   response     time
+#> 1 17.23552 76.33986
+#> 2 11.35171 83.51711
+#> 3 28.04995 60.18529
+#> 4 20.68198 74.72964
+#> 5 21.21364 85.88256
+#> 6 22.32282 40.05069
 nobs(demo_fit)  # Count observed response rows
 #> [1] 100
 ```

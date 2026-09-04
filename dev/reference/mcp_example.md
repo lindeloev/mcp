@@ -101,8 +101,8 @@ print(fit$example_code) # See how the data was simulated
 #> )
 #> empty = mcp(model, data, sample = FALSE, par_x = 'x')
 #> data$y = empty$simulate(empty, data,
-#>   cp_1 = 70,
-#>   cp_2 = 100,
+#>   cp_1 = 69.5,
+#>   cp_2 = 99.5,
 #> 
 #>   Intercept_1 = 10,
 #>   z_1 = 0.2,
@@ -159,8 +159,8 @@ print(empty$example_code)
 #> )
 #> empty = mcp(model, data, family = binomial(), sample = FALSE)
 #> data$y = empty$simulate(empty, data,
-#>   cp_1 = 30,
-#>   cp_2 = 70,
+#>   cp_1 = 29.5,
+#>   cp_2 = 69.5,
 #>   Intercept_1 = 1.5,
 #>   Intercept_3 = -1,
 #>   x_2 = -0.15,
@@ -168,7 +168,7 @@ print(empty$example_code)
 #> )
 #> 
 #> # Run sampling
-#> fit = mcp(model, data, family = binomial(), sample = sample, seed = 42)
+#> fit = mcp(model, data, family = binomial(), iter = 4000, sample = sample, seed = 42)
 #> 
 #> # Illustrative plot
 #> if (plot) {
@@ -177,7 +177,7 @@ print(empty$example_code)
 #> }
 
 # Now sample this model
-fit2 = mcp(empty$model, empty$data, family = empty$family)
+fit2 = mcp(empty$model, empty$data, family = empty$family, warmup = 2000, iter = 6000, seed = 42)
 plot(fit2)
 
 # }

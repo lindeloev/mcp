@@ -51,7 +51,7 @@
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Time series change points</h1>
             
-            <h4 data-toc-skip class="date">2026-08-31</h4>
+            <h4 data-toc-skip class="date">2026-09-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/arma.Rmd" class="external-link"><code>vignettes/arma.Rmd</code></a></small>
       <div class="d-none name"><code>arma.Rmd</code></div>
@@ -160,8 +160,9 @@ varies conditionally across MCMC draws.</li>
 </ul>
 <p>GARMA currently supports only the default links for
 <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian()</a></code> (identity), <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code> (logit),
-<code><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson()</a></code> (log), and <code><a href="../reference/negbinomial.html">negbinomial()</a></code> (log).
-<code><a href="../reference/bernoulli.html">bernoulli()</a></code> and non-default links are rejected for now.</p>
+<code><a href="../reference/bernoulli.html">bernoulli()</a></code> (logit), <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson()</a></code> (log), and
+<code><a href="../reference/negbinomial.html">negbinomial()</a></code> (log). Non-default links are rejected for
+now.</p>
 <p><strong>Warning:</strong> The AR and MA coefficients are modeled
 directly and are not jointly constrained to the stationary or invertible
 regions. With higher-order terms such as <code>ar(2)</code>,
@@ -179,7 +180,9 @@ keeps log and logit residuals finite when counts lie on a link boundary.
 The default <code>boundary = 0.1</code> replaces zero counts by 0.1 for
 Poisson and negative-binomial models. For binomial models, counts are
 constrained to the interval from 0.1 to <code>trials - 0.1</code> before
-conversion to a rate. It has no effect for Gaussian models.</p>
+conversion to a rate (<span class="math inline">n_t = 1</span> for
+<code><a href="../reference/bernoulli.html">bernoulli()</a></code>, constraining <span class="math inline">y^*</span> to <span class="math inline">[0.1,
+0.9]</span>). It has no effect for Gaussian models.</p>
 <p>The default should usually be left unchanged. If needed, set it on
 either term, for example <code>ar(1, boundary = 0.01) + ma(1)</code>. AR
 and MA share one boundary within a segment, and the boundary may differ
@@ -236,17 +239,17 @@ weaker-but-negative in the second:</p>
 <span><span class="co">##   2: price ~ 1 ~ 0 + time + ar(1)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
-<span><span class="co">##     variable  mean    sd  lower   upper rhat ess_bulk ess_tail   sim match</span></span>
-<span><span class="co">##  cp_1        74.88 3.404 70.012 80.8900 1.00      568     1328 75.00    OK</span></span>
+<span><span class="co">##     variable  mean    sd  lower  upper rhat ess_bulk ess_tail   sim match</span></span>
+<span><span class="co">##  cp_1        74.53 3.312 69.872 80.784 1.00      507     1109 74.50    OK</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
-<span><span class="co">##     variable  mean    sd  lower   upper rhat ess_bulk ess_tail   sim match</span></span>
-<span><span class="co">##  Intercept_1 21.00 1.350 18.509 23.8427 1.00      631     1297 20.00    OK</span></span>
-<span><span class="co">##  time_2       0.46 0.046  0.370  0.5524 1.00     1131     1497  0.50    OK</span></span>
-<span><span class="co">##  sigma_1      5.31 0.358  4.662  6.0729 1.00     4652     4517  5.00    OK</span></span>
-<span><span class="co">##  ar1_1        0.43 0.110  0.215  0.6518 1.00     4627     6150  0.40    OK</span></span>
-<span><span class="co">##  ar1_2       -0.32 0.156 -0.620 -0.0065 1.00     6025     5124 -0.30    OK</span></span>
-<span><span class="co">##  ar2_1        0.18 0.109 -0.037  0.3914 1.00     4975     7028  0.15    OK</span></span></code></pre>
+<span><span class="co">##     variable  mean    sd  lower  upper rhat ess_bulk ess_tail   sim match</span></span>
+<span><span class="co">##  Intercept_1 21.05 1.345 18.706 23.976 1.00      609     1095 20.00    OK</span></span>
+<span><span class="co">##  time_2       0.46 0.044  0.375  0.547 1.00     1117     1169  0.50    OK</span></span>
+<span><span class="co">##  sigma_1      5.31 0.350  4.678  6.036 1.00     4813     4484  5.00    OK</span></span>
+<span><span class="co">##  ar1_1        0.43 0.110  0.215  0.646 1.00     4351     6249  0.40    OK</span></span>
+<span><span class="co">##  ar1_2       -0.32 0.153 -0.620 -0.013 1.00     6270     4991 -0.30    OK</span></span>
+<span><span class="co">##  ar2_1        0.18 0.109 -0.036  0.395 1.00     4704     6946  0.15    OK</span></span></code></pre>
 <p>The naming syntax is <code>[component][order]_[segment]</code> for
 intercepts. For example, <code>ar1_2</code> is the first-order
 autoregressive coefficient and <code>ma1_2</code> the first-order
@@ -262,8 +265,8 @@ fit.</p>
 <p>For Gaussian GARMA models, <code>sigma</code> describes the
 <em>innovations</em>, i.e., the part of the residuals not explained by
 AR and MA coefficients. <code>sd(fit$data$price)</code> is therefore
-generally higher. In this case, the SD of raw data in the plateau is
-8.93. As always, it is good to assess posteriors and convergence more
+generally higher. In this case, the SD of raw data in the plateau is 9.
+As always, it is good to assess posteriors and convergence more
 directly:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
@@ -407,11 +410,11 @@ data):</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
 <span><span class="co">##     variable  mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span><span class="co">##  Intercept_1 19.70 1.157 17.453 22.05 1.00     5283     4578 20.0    OK</span></span>
-<span><span class="co">##  sigma_1      7.89 0.399  7.166  8.72 1.00     5315     4773  8.0    OK</span></span>
-<span><span class="co">##  ar1_1        0.69 0.065  0.561  0.81 1.00     3438     5760  0.7    OK</span></span>
-<span><span class="co">##  ar2_1        0.23 0.079  0.076  0.39 1.00     2344     4186  0.2    OK</span></span>
-<span><span class="co">##  ar3_1       -0.40 0.066 -0.528 -0.27 1.00     3393     5241 -0.4    OK</span></span></code></pre>
+<span><span class="co">##  Intercept_1 19.68 1.181 17.401 22.04 1.00     5214     4632 20.0    OK</span></span>
+<span><span class="co">##  sigma_1      7.89 0.391  7.159  8.71 1.00     5669     4937  8.0    OK</span></span>
+<span><span class="co">##  ar1_1        0.69 0.065  0.563  0.82 1.00     3341     5035  0.7    OK</span></span>
+<span><span class="co">##  ar2_1        0.23 0.080  0.074  0.39 1.00     2289     4392  0.2    OK</span></span>
+<span><span class="co">##  ar3_1       -0.40 0.066 -0.529 -0.27 1.00     3485     5620 -0.4    OK</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="inferring-an-autocorrelation-only-change">Inferring an autocorrelation-only change<a class="anchor" aria-label="anchor" href="#inferring-an-autocorrelation-only-change"></a>
@@ -447,7 +450,7 @@ parameters. We use <code>sample = "both"</code> because we will do a
 Savage-Dickey test later.</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">prior</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>x_2 <span class="op">=</span> <span class="st">"x_1"</span><span class="op">)</span>  <span class="co"># Set the two slopes equal</span></span>
-<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, prior <span class="op">=</span> <span class="va">prior</span>, iter <span class="op">=</span> <span class="fl">12000</span>, sample <span class="op">=</span> <span class="st">"both"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, prior <span class="op">=</span> <span class="va">prior</span>, iter <span class="op">=</span> <span class="fl">8000</span>, sample <span class="op">=</span> <span class="st">"both"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <p>Let’s plot the full model prediction using <code>plot(fit)</code>.
 You could use <code>plot(fit, geom_data = "line")</code> for a more
 classical line plot of the time series data. Set
@@ -467,23 +470,23 @@ using <code>plot_dpar(fit)</code>:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Family: gaussian</span></span>
 <span><span class="co">## Links: mu = identity; sigma = identity</span></span>
-<span><span class="co">## Iterations: 12000 from 3 chains.</span></span>
+<span><span class="co">## Iterations: 8000 from 3 chains.</span></span>
 <span><span class="co">## Segments:</span></span>
 <span><span class="co">##   1: y ~ 1 + x + ar(1)</span></span>
 <span><span class="co">##   2: y ~ 1 ~ 0 + x + ar(1)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
 <span><span class="co">##     variable   mean    sd lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span><span class="co">##  cp_1        63.423 5.636 50.68 73.36 1.00     1592     2133 60.0    OK</span></span>
+<span><span class="co">##  cp_1        63.655 5.469 51.15 73.39 1.00     1418     2602 60.0    OK</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
 <span><span class="co">##     variable   mean    sd lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span><span class="co">##  Intercept_1 21.305 2.531 16.41 26.51 1.00      667     1320 20.0    OK</span></span>
-<span><span class="co">##  x_1          0.980 0.031  0.92  1.04 1.00      667     1275  1.0    OK</span></span>
-<span><span class="co">##  x_2          0.980 0.031  0.92  1.04 1.00      667     1275  1.0    OK</span></span>
-<span><span class="co">##  sigma_1      4.883 0.248  4.43  5.40 1.00    18009    18088  5.0    OK</span></span>
-<span><span class="co">##  ar1_1        0.781 0.056  0.67  0.89 1.00     8512    17873  0.8    OK</span></span>
-<span><span class="co">##  ar1_2        0.098 0.150 -0.20  0.39 1.00     4728     4594  0.2    OK</span></span></code></pre>
+<span><span class="co">##  Intercept_1 21.172 2.488 16.29 26.02 1.00      473      914 20.0    OK</span></span>
+<span><span class="co">##  x_1          0.982 0.031  0.92  1.04 1.00      489     1000  1.0    OK</span></span>
+<span><span class="co">##  x_2          0.982 0.031  0.92  1.04 1.00      489     1000  1.0    OK</span></span>
+<span><span class="co">##  sigma_1      4.880 0.251  4.42  5.40 1.00    11538    12974  5.0    OK</span></span>
+<span><span class="co">##  ar1_1        0.780 0.055  0.67  0.89 1.00     7442    15510  0.8    OK</span></span>
+<span><span class="co">##  ar1_2        0.094 0.149 -0.20  0.39 1.00     4744     6453  0.2    OK</span></span></code></pre>
 <p>We can also plot some of the parameters. As usual, we see that the
 change point is not well defined by any known distribution. The fact
 that the posterior mean is around 60 does not (necessarily) mean that
@@ -503,13 +506,10 @@ sampled both the prior and posterior
 density ratio test:</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"ar1_1 = ar1_2"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Warning: Savage-Dickey Bayes factor was computed using default prior(s) for</span></span>
-<span><span class="co">## `ar1_1` and `ar1_2`. Point Bayes factors are sensitive to the prior</span></span>
-<span><span class="co">## distribution; consider specifying informed priors.</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: The tested value is in a sparse tail of the prior or posterior draws;</span></span>
-<span><span class="co">## the Savage-Dickey estimate may be unreliable.</span></span></code></pre>
-<pre><code><span><span class="co">##          hypothesis      mean     lower     upper  p           BF</span></span>
-<span><span class="co">## 1 ar1_1 - ar1_2 = 0 0.6830148 0.3761376 0.9848118 NA 7.191393e-06</span></span></code></pre>
+<pre><code><span><span class="co">## Warning: Savage-Dickey Bayes factor was computed using default prior(s) for `ar1_1` and `ar1_2`. Point Bayes factors are sensitive to the prior distribution; consider specifying informed priors.</span></span></code></pre>
+<pre><code><span><span class="co">## Warning: The tested value is in a sparse tail of the prior or posterior draws; the Savage-Dickey estimate may be unreliable.</span></span></code></pre>
+<pre><code><span><span class="co">##          hypothesis      mean     lower     upper prob           BF</span></span>
+<span><span class="co">## 1 ar1_1 - ar1_2 = 0 0.6857727 0.3770224 0.9878358   NA 3.441065e-05</span></span></code></pre>
 <p>In this case, the evidence for equality is very small so it was
 rarely visited by the sampler and hence the precision is low .</p>
 <p>Of course, we can also do directional tests. For example, what is the
@@ -517,8 +517,8 @@ evidence that <code>ar1_1</code> is more than 0.3 greater than
 <code>ar1_2</code>? Answer: More than 100 to one.</p>
 <div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"ar1_1 - 0.3 &gt; ar1_2"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##                hypothesis      mean      lower     upper         p       BF</span></span>
-<span><span class="co">## 1 ar1_1 - 0.3 - ar1_2 &gt; 0 0.3830148 0.07613755 0.6848118 0.9927222 289.8967</span></span></code></pre>
+<pre><code><span><span class="co">##                hypothesis      mean      lower     upper     prob       BF</span></span>
+<span><span class="co">## 1 ar1_1 - 0.3 - ar1_2 &gt; 0 0.3857727 0.07702242 0.6878358 0.993125 306.7896</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="ar_prior">Priors on AR and MA coefficients<a class="anchor" aria-label="anchor" href="#ar_prior"></a>
@@ -549,15 +549,15 @@ above:</p>
 <div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 7 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                                         bounds</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    uniform(min = 0, max = 100)                   [min(…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> Intercept_1       1 mu    student_t(df = 3, location = 72.4, scale = 3… none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> x_1               1 mu    student_t(df = 3, location = 0, scale = 0.35… none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> x_2               2 mu    x_1                                           none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 35.2) [0, I…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> ar1_1             1 ar    normal(mean = 0, sd = 0.5)                    [-1, …</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">7</span> ar1_2             2 ar    normal(mean = 0, sd = 0.5)                    [-1, …</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior                                            bounds          </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)                             [min(x), max(x)]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> Intercept_1       1 mu    student_t(df = 3, location = 72.4, scale = 35.2) none            </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> x_1               1 mu    student_t(df = 3, location = 0, scale = 0.352)   none            </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> x_2               2 mu    x_1                                              none            </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 35.2)    [0.001, Inf]    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> ar1_1             1 ar    normal(mean = 0, sd = 0.5)                       [-1, 1]         </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">7</span> ar1_2             2 ar    normal(mean = 0, sd = 0.5)                       [-1, 1]</span></span></code></pre>
 <p>We can also visualize the priors because we sampled the prior.
 <code>prior = TRUE</code> works in most <code>mcp</code> functions,
 including <code><a href="../reference/plot.mcpfit.html">plot()</a></code> and <code><a href="../reference/summary.mcpfit.html">summary()</a></code>.</p>
@@ -577,17 +577,17 @@ would often have to inform these:</p>
 <span><span class="va">empty</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">empty</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 9 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                                         bounds</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    uniform(min = 1, max = 10)                    [min(…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> Intercept_1       1 mu    student_t(df = 3, location = 5.5, scale = 3.… none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 3.7)  [0, I…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> ar1_1             1 ar    normal(mean = 0, sd = 0.5)                    [-1, …</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> ar1_x_1           1 ar    normal(mean = 0, sd = 0.02777778)             none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> ar1_2             2 ar    normal(mean = 0, sd = 0.5)                    [-1, …</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">7</span> ar1_xE2_2         2 ar    normal(mean = 0, sd = 0.00308642)             none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">8</span> ar2_1             1 ar    normal(mean = 0, sd = 0.5)                    [-1, …</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">9</span> ar2_x_1           1 ar    normal(mean = 0, sd = 0.02777778)             none</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior                                          bounds          </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)                           [min(x), max(x)]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> Intercept_1       1 mu    student_t(df = 3, location = 5.5, scale = 3.7) none            </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 3.7)   [0.001, Inf]    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> ar1_1             1 ar    normal(mean = 0, sd = 0.5)                     [-1, 1]         </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> ar1_x_1           1 ar    normal(mean = 0, sd = 0.02777778)              none            </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> ar1_2             2 ar    normal(mean = 0, sd = 0.5)                     [-1, 1]         </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">7</span> ar1_xE2_2         2 ar    normal(mean = 0, sd = 0.00308642)              none            </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">8</span> ar2_1             1 ar    normal(mean = 0, sd = 0.5)                     [-1, 1]         </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">9</span> ar2_x_1           1 ar    normal(mean = 0, sd = 0.02777778)              none</span></span></code></pre>
 <p>AR and MA coefficient regressions use an identity link, while their
 residual inputs use the supported response-family link described above.
 Careful priors become especially important with higher orders or
@@ -653,13 +653,14 @@ code.</p>
 <span><span class="co">##   cp_2 = CONST2_</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   cp_1 ~ dunif(CONST1_, CONST2_)  # Within the observed change-point span</span></span>
+<span><span class="co">##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)</span></span>
+<span><span class="co">##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point</span></span>
 <span><span class="co">##   ar1_1 ~ dnorm(0, 1/(0.5)^2) T(-1,1)  # Zero-centered regularizing dependence coefficient</span></span>
 <span><span class="co">##   ar1_2 ~ dnorm(0, 1/(0.5)^2) T(-1,1)  # Zero-centered regularizing dependence coefficient</span></span>
 <span><span class="co">##   Intercept_1 ~ dt(72.4, 1/(35.2)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span></span>
 <span><span class="co">##   x_1 ~ dt(0, 1/(0.352)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change</span></span>
 <span><span class="co">##   x_2 = x_1  # Same value as x_1</span></span>
-<span><span class="co">##   sigma_1 ~ dt(0, 1/(35.2)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale</span></span>
+<span><span class="co">##   sigma_1 ~ dt(0, 1/(35.2)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Apply GARMA recursion to link-scale residuals</span></span>
 <span><span class="co">##   resid_garma_[1] = 0</span></span>

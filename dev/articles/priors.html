@@ -51,7 +51,7 @@
     <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
-    <li><a class="dropdown-item" href="../articles/dpar.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Working with priors</h1>
             
-            <h4 data-toc-skip class="date">2026-08-31</h4>
+            <h4 data-toc-skip class="date">2026-09-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/priors.Rmd" class="external-link"><code>vignettes/priors.Rmd</code></a></small>
       <div class="d-none name"><code>priors.Rmd</code></div>
@@ -130,7 +130,7 @@ used:</p>
 <span>  <span class="co"># Intercept_2 and Intercept_3 not specified. Use default.</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The values use mcp’s JAGS-string syntax, so JAGS distributions are
-generally allowed. See the <a href="https://altushost-swe.dl.sourceforge.net/project/mcmc-jags/Manuals/4.x/jags_user_manual.pdf" class="external-link">JAGS
+generally allowed. See the <a href="https://sourceforge.net/projects/mcmc-jags/files/Manuals/4.x/jags_user_manual.pdf" class="external-link">JAGS
 user manual</a> for more details. Prior strings use R-like conventional
 distribution scales even though JAGS has a different parameterization
 underneath: SD for <code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm()</a></code>, scale for <code><a href="https://rdrr.io/r/stats/TDist.html" class="external-link">dt()</a></code>,
@@ -180,31 +180,31 @@ compare to the default priors:</p>
 <span><span class="co"># Inspect resolved priors and bounds</span></span>
 <span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">empty_manual</span><span class="op">)</span>  <span class="co"># For more details: add verbose = TRUE</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 9 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                                         bounds</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    uniform(min = 1, max = cp_2)                  [min(…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    80                                            none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 0, sd = 5)                      [-Inf…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> x_1               1 mu    beta(shape1 = 2, shape2 = 5)                  [0, 1]</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_2       2 mu    student_t(df = 3, location = 50.5, scale = 3… none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> x_2               2 mu    student_t(df = 3, location = 0, scale = 1)    [x_1,…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">7</span> Intercept_3       3 mu    student_t(df = 3, location = 50.5, scale = 3… none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">8</span> x_3               3 mu    x_2                                           none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">9</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0, I…</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior                                            bounds        </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    uniform(min = 1, max = cp_2)                     [min(x), cp_2]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    80                                               none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 0, sd = 5)                         [-Inf, 10]    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> x_1               1 mu    beta(shape1 = 2, shape2 = 5)                     [0, 1]        </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_2       2 mu    student_t(df = 3, location = 50.5, scale = 37.1) none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> x_2               2 mu    student_t(df = 3, location = 0, scale = 1)       [x_1, Inf]    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">7</span> Intercept_3       3 mu    student_t(df = 3, location = 50.5, scale = 37.1) none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">8</span> x_3               3 mu    x_2                                              none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">9</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1)    [0.001, Inf]</span></span></code></pre>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">empty_default</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">empty_default</span><span class="op">)</span>  <span class="co"># For more details: add verbose = TRUE</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 9 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                                         bounds</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    student_t(df = 1, location = 1, scale = 49.5) [min(…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    student_t(df = 1, location = 1, scale = 49.5) [cp_1…</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    student_t(df = 3, location = 50.5, scale = 3… none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> x_1               1 mu    student_t(df = 3, location = 0, scale = 0.37… none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_2       2 mu    student_t(df = 3, location = 50.5, scale = 3… none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> x_2               2 mu    student_t(df = 3, location = 0, scale = 0.37… none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">7</span> Intercept_3       3 mu    student_t(df = 3, location = 50.5, scale = 3… none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">8</span> x_3               3 mu    student_t(df = 3, location = 0, scale = 0.37… none  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">9</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0, I…</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior                                              bounds        </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                              <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)                               [min(x), cp_2]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    dirichlet(alpha = 1)                               [cp_1, max(x)]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    student_t(df = 3, location = 50.5, scale = 37.1)   none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> x_1               1 mu    student_t(df = 3, location = 0, scale = 0.3747475) none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_2       2 mu    student_t(df = 3, location = 50.5, scale = 37.1)   none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> x_2               2 mu    student_t(df = 3, location = 0, scale = 0.3747475) none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">7</span> Intercept_3       3 mu    student_t(df = 3, location = 50.5, scale = 37.1)   none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">8</span> x_3               3 mu    student_t(df = 3, location = 0, scale = 0.3747475) none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">9</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1)      [0.001, Inf]</span></span></code></pre>
 <p>Now, let’s simulate some data from <code>model</code>. The following
 priors are “at odds” with the actual data so as to show their
 effect.</p>
@@ -269,6 +269,23 @@ identical.</li>
 <li>The change point <code>cp_2</code> was a constant, so there is no
 uncertainty there.</li>
 </ul>
+<p>Adding <code>verbose = TRUE</code> reveals full details including the
+rule descriptions, parameter classifications (<code>kind</code>), and
+whether each prior came from the user or data-calibrated defaults:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit_manual</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 9 × 9</span></span></span>
+<span><span class="co">##   parameter   segment dpar  prior                                          bounds         rule                                                                                  description                                                  source  kind        </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                                                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    uniform(min = 0.4496308, max = cp_2)           [min(x), cp_2] uniform(min = min(x), max = cp_2)                                                     User-specified prior                                         user    distribution</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    80                                             none           80                                                                                    Fixed at 80                                                  user    constant    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 0, sd = 5)                       [-Inf, 10]     normal(mean = 0, sd = 5)                                                              User-specified prior                                         user    distribution</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> x_1               1 mu    beta(shape1 = 2, shape2 = 5)                   [0, 1]         beta(shape1 = 2, shape2 = 5)                                                          User-specified prior                                         user    distribution</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_2       2 mu    student_t(df = 3, location = 26, scale = 10.3) none           student_t(df = 3, location = round(median(y), 1), scale = max(2.5, round(mad(y), 1))) Robustly centered mean intercept with a minimum scale of 2.5 default distribution</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> x_2               2 mu    student_t(df = 3, location = 0, scale = 1)     [x_1, Inf]     student_t(df = 3, location = 0, scale = 1)                                            User-specified prior                                         user    distribution</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">7</span> Intercept_3       3 mu    student_t(df = 3, location = 26, scale = 10.3) none           student_t(df = 3, location = round(median(y), 1), scale = max(2.5, round(mad(y), 1))) Robustly centered mean intercept with a minimum scale of 2.5 default distribution</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">8</span> x_3               3 mu    x_2                                            none           x_2                                                                                   Same value as x_2                                            user    alias       </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">9</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 10.3)  [0.001, Inf]   student_t(df = 3, location = 0, scale = max(2.5, round(mad(y), 1)))                   Positive residual SD calibrated on the response scale        default distribution</span></span></code></pre>
 <p>This is a contrived example. Usually setting priors manually aims to
 sample the “correct” posterior.</p>
 </div>
@@ -278,96 +295,72 @@ sample the “correct” posterior.</p>
 <p>Change point locations must lie within the observed range
 <code>[min(x), max(x)]</code> and maintain strict order
 <code>cp_1 &lt; cp_2 &lt; ... &lt; cp_n</code>. Without this rule,
-change point locations would be unidentifiable. If you inspect
-<code>fit$jags_code</code>, you will see that <code>mcp</code> inserts
-boundary markers at <code>cp_0 = min(x)</code> and
-<code>cp_{n+1} = max(x)</code> to ensure the ordering constraint.</p>
-<p>For any given range, introducing more change points makes the prior
-for each change point more informative (as shown in the figure below).
-<code>mcp</code> provides two built-in population-level prior
-families:</p>
+change point locations would be unidentifiable and label switching
+occur.</p>
+<p>The default prior on all change points in <code>mcp</code> is
+<strong>uniform order statistics</strong> (<code>dirichlet(1)</code>),
+which treats any set of ordered change points as equally likely anywhere
+in the observed interval <code>[min(x), max(x)]</code>. See below for a
+visualization. Some properties of this prior:</p>
 <ul>
 <li>
-<strong>One change point:</strong> Both specifications default to
-<code>cp_1 = uniform(min(x), max(x))</code>. Its location is uniform
-over the observed x-range.</li>
+<strong>Single change point:</strong> For 1 change point, this
+reduces to the uniform prior in the observed range: <span class="math inline">\text{cp}_1 \sim \text{Beta}(1, 1) \equiv
+\text{Uniform}(\min(x), \max(x))</span>.</li>
 <li>
-<strong>The t-tail prior (default for 2+ change points):</strong>
-Sequentially truncated Student-t distributions centered at
-<code>min(x)</code>. Specifically,
-<code>cp_i = student_t(df = n_cp() - 1, location = min(x), scale = (max(x) - min(x)) / n_cp()) T(cp_{i-1}, max(x))</code>.</li>
+<strong>Multiple change points:</strong> For <span class="math inline">N \ge 2</span>, change points are evenly spaced on
+average: <span class="math display">\mathbb{E}[\text{cp}_j] = \min(x) +
+\frac{j}{N + 1} (\max(x) - \min(x))</span> For example, with 2 change
+points, prior means are at 33% and 67% of the data range. With 5 change
+points, they are at 16.7%, 33.3%, 50%, 66.7%, and 83.3%.</li>
 <li>
-<strong>The Dirichlet prior:</strong> A joint prior on segment
-spacings specified via
-<code>prior = list(cp_1 = "dirichlet(1)", cp_2 = "dirichlet(1)", ...)</code>.</li>
+<strong>Symmetry and flat sum:</strong> The prior is symmetric under
+reflection (flipping <span class="math inline">x</span> leaves prior
+probabilities unchanged), and the sum of prior densities across all
+change points is uniform across the entire data range.</li>
+<li>
+<strong>Increasing informativeness with segment count:</strong> For
+any given range, introducing more change points makes the prior for each
+change point more effectively informative because they are “squeezed”
+more together (as shown in the figure below).</li>
 </ul>
-<pre><code><span><span class="co">## Posterior was not drawn. Using prior draws. Set `prior = TRUE` to mute this message.</span></span>
-<span><span class="co">## Posterior was not drawn. Using prior draws. Set `prior = TRUE` to mute this message.</span></span></code></pre>
-<p><img src="priors_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="672"></p>
-<div class="section level3">
-<h3 id="the-t-tail-prior-on-2-change-points-default">The t-tail prior on 2+ change points (default)<a class="anchor" aria-label="anchor" href="#the-t-tail-prior-on-2-change-points-default"></a>
-</h3>
-<p>For 2+ change points, the default rule (on all change points) is
-<code>cp_i = student_t(df = n_cp() - 1, location = min(x), scale = (max(x) - min(x)) / n_cp())</code>,
-bounded below by the preceding change point and above by
-<code>max(x)</code>.</p>
-<ul>
-<li>
-<strong>Degrees of freedom:</strong> It is t-distributed with <span class="math inline">N - 1</span> degrees of freedom
-(<code>n_cp() - 1</code>). Together with the decreasing scale, this
-makes the underlying distributions more concentrated as the number of
-change points increases.</li>
-<li>
-<strong>Scale:</strong> The scale is
-<code>(max(x) - min(x)) / n_cp()</code>. This is a calibration choice,
-not the equal-segment spacing (which would divide by
-<code>n_cp() + 1</code>).</li>
-<li>
-<strong>Location and truncation:</strong> The location parameter is
-always the lowest observed <code>x</code>. Thus <code>cp_1</code> is a
-bounded half-t and <code>cp_2+</code> use sequentially truncated right
-tails of the same t (hence “t-tail prior”). Their means are shifted by
-truncation and are not equal to <code>min(x)</code>.</li>
-<li>
-<strong>Properties:</strong> The sequential truncation does not
-produce exact uniform order statistics; the middle segments tend to get
-narrower than the first/last segments. For non-small datasets, the
-effect on the posterior is negligible, though
-point-<code><a href="../reference/hypothesis.html">hypothesis()</a></code> tests via Savage-Dickey density ratios
-would be strongly impacted. Its main advantage is sampling speed: JAGS
-samples this formulation much faster than the Dirichlet prior.</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="dirichlet-based-prior-on-change-points">Dirichlet-based prior on change points<a class="anchor" aria-label="anchor" href="#dirichlet-based-prior-on-change-points"></a>
-</h3>
+<p>The plot below compares these theoretical Dirichlet distributions
+(black lines) with the sampled prior distributions (red lines) for 2 and
+5 change points:</p>
+<p><img src="priors_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="672"></p>
+<p>Note on implementation: Under the hood, <code>mcp</code>
+parameterizes this using a sequential stick-breaking Beta chain (<span class="math inline">z_j \sim \text{Beta}(1, N - j + 1)</span>, <span class="math inline">\text{cp}_j = \text{cp}_{j-1} + z_j(\max(x) -
+\text{cp}_{j-1})</span>). This allows JAGS to sample the model much more
+efficiently.</p>
 <p>The <a href="https://en.wikipedia.org/wiki/Dirichlet_distribution" class="external-link">Dirichlet
 distribution</a> places a joint prior on positive segment spacings that
-sum to the observed x-range. Consequently, the derived population-level
-change points are naturally ordered and bounded. This construction also
-underlies monotonic effects in <code>brms</code> (<a href="https://psyarxiv.com/9qkhj/" class="external-link">Bürkner &amp; Charpentier
+sum to the observed x-range. This construction also underlies monotonic
+effects in <code>brms</code> (<a href="https://psyarxiv.com/9qkhj/" class="external-link">Bürkner &amp; Charpentier
 (2019)</a>).</p>
-<p>The Dirichlet distribution is a simplex of beta distributions (they
-always sum to 1), where the individual betas represent inter-changepoint
-distances. For <span class="math inline">N</span> change points, the
-distribution for change point <span class="math inline">i</span> is
-<span class="math inline">\text{Beta}(i, N + 1 - i)</span>, so
-<code>cp_1 ~ Beta(1, N)</code> and <code>cp_N ~ Beta(N, 1)</code>.
-Scaling from <span class="math inline">[0, 1]</span> to the observed
-data range (<code>0 --&gt; min(x)</code>, <code>1 --&gt; max(x)</code>)
-gives the desired bounding.</p>
-<p>To use the Dirichlet prior, specify it for all change points:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">prior_dirichlet</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  cp_1 <span class="op">=</span> <span class="st">"dirichlet(1)"</span>,</span>
-<span>  cp_2 <span class="op">=</span> <span class="st">"dirichlet(1)"</span>,</span>
-<span>  cp_3 <span class="op">=</span> <span class="st">"dirichlet(1)"</span></span>
+<div class="section level3">
+<h3 id="regularizing-change-points-dirichletalpha">Regularizing change points: <code>dirichlet(alpha)</code><a class="anchor" aria-label="anchor" href="#regularizing-change-points-dirichletalpha"></a>
+</h3>
+<p>To adjust the spacing regularity of change points, specify
+<code>dirichlet(alpha)</code> for all change points:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">prior</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  cp_1 <span class="op">=</span> <span class="st">"dirichlet(2)"</span>,</span>
+<span>  cp_2 <span class="op">=</span> <span class="st">"dirichlet(2)"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The number in parentheses is a common <span class="math inline">\alpha</span> concentration parameter (all change
-points must share the same <span class="math inline">\alpha</span>).
-Values below 1 favor uneven spacings, <code>dirichlet(1)</code> treats
-spacings exchangeably (giving the ordered-uniform distribution), and
-values above 1 favor more evenly spaced change points.</p>
+points must share the same <span class="math inline">\alpha</span>):</p>
+<ul>
+<li>
+<span class="math inline">\alpha = 1</span> (default): completely
+flat uniform order statistics as shown above.</li>
+<li>
+<span class="math inline">\alpha &gt; 1</span> (e.g. 2, 5):
+penalizes change points from occurring close to each other or the
+boundaries, favoring more evenly spaced segments.</li>
+<li>
+<span class="math inline">\alpha &lt; 1</span> (e.g. 0.5): favors
+clustering and permits change points to occur close together.</li>
+</ul>
 </div>
 <div class="section level3">
 <h3 id="manual-priors-on-change-points">Manual priors on change points<a class="anchor" aria-label="anchor" href="#manual-priors-on-change-points"></a>
@@ -442,14 +435,12 @@ from the family and link specification. For distributional parameters,
 the deviations and their SD are on that parameter’s link scale; for
 example, effects inside an explicit <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> formula are on
 the log-SD scale.</p>
-<p>Group-level change-point deviations are exactly zero-centered so that
-each population-level change point is the arithmetic mean of its
-group-specific locations. Their default priors use sequential bounds,
-and the model constrains the resulting locations to remain ordered
-within each group. All group-level change points in one model must use
-the same grouping factor. Predictor-side deviations are hierarchically
-mean-zero but are neither exactly centered nor ordered. See <a href="../articles/group_effects.html">group-level effects with
-mcp</a>.</p>
+<p>Change-point effects use the same ordinary normal hierarchy, with
+additional range and within-group ordering constraints. Therefore,
+<code>cp_i_sd</code> is the latent normal scale rather than the realized
+sample SD. See <a href="../articles/group_effects.html">group-level
+effects with mcp</a> for the model equation and practical
+interpretation.</p>
 </div>
 <div class="section level2">
 <h2 id="prior-predictive-checks">Prior predictive checks<a class="anchor" aria-label="anchor" href="#prior-predictive-checks"></a>
@@ -458,7 +449,7 @@ mcp</a>.</p>
 meaningful. Simply set <code>sample = "prior"</code>. Let us do it for
 the two sets of priors defined previously in this article, to see their
 different prior predictive space.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Sample priors </span></span>
 <span><span class="va">fit_pp_manual</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, prior <span class="op">=</span> <span class="va">prior</span>, sample <span class="op">=</span> <span class="st">"prior"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">fit_pp_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, sample <span class="op">=</span> <span class="st">"prior"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
@@ -469,7 +460,7 @@ different prior predictive space.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">plot_pp_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_pp_default</span>, lines <span class="op">=</span> <span class="fl">100</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">400</span>, <span class="fl">400</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Default prior"</span><span class="op">)</span></span>
 <span><span class="va">plot_pp_manual</span> <span class="op">+</span>  <span class="va">plot_pp_default</span>  <span class="co"># using patchwork</span></span></code></pre></div>
-<p><img src="priors_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="priors_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="700"></p>
 <p>You can see how the manual priors are more dense to the left, and the
 “concerted” change at x = 80.</p>
 </div>
@@ -477,7 +468,7 @@ different prior predictive space.</p>
 <h2 id="jags-code">JAGS code<a class="anchor" aria-label="anchor" href="#jags-code"></a>
 </h2>
 <p>Here is the JAGS code for <code>fit_manual</code>:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_manual</span><span class="op">$</span><span class="va">jags_code</span></span></code></pre></div>
 <pre><code><span><span class="co">## model {</span></span>
 <span><span class="co">##   # mcp helper values</span></span>
@@ -493,7 +484,7 @@ different prior predictive space.</p>
 <span><span class="co">##   x_2 ~ dt(0, 1/(1)^2, 3) T(x_1,)  # User-specified prior</span></span>
 <span><span class="co">##   Intercept_3 ~ dt(26, 1/(10.3)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span></span>
 <span><span class="co">##   x_3 = x_2  # Same value as x_2</span></span>
-<span><span class="co">##   sigma_1 ~ dt(0, 1/(10.3)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale</span></span>
+<span><span class="co">##   sigma_1 ~ dt(0, 1/(10.3)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(x)) {</span></span>

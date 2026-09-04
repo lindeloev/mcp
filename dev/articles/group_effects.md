@@ -17,8 +17,7 @@ This article in brief:
 - Get posteriors using `ranef(fit)`
 - Plot using `plot(fit, facet_by="my_group")` and
   `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
-- The default priors bound group-specific change points relative to
-  adjacent population-level change points.
+- How group-specific change points are kept in range and ordered.
 - The article on modeling standard deviation via
   [`sigma()`](https://rdrr.io/r/stats/sigma.html) contains [another
   group-level change-point
@@ -61,20 +60,20 @@ model = list(
 )
 ```
 
-Here are some properties of group-level change-point deviations:
+For change point i and group g, the hierarchy is
 
-**Exactly zero centered:** The group-level deviations sum to zero around
-the associated population-level change point. Besides making `cp_i` the
-arithmetic mean of the group-specific change points, this avoids a
-poorly identified translation between `cp_i` and the average group
-deviation.
+\kappa\_{ig} \sim \operatorname{Normal}(cp_i, cp\_{i,\mathrm{sd}}),
+\qquad cp\_{i,\mathrm{id}\[g\]} = \kappa\_{ig} - cp_i,
 
-**Hierarchical:** Consider the population-level change point `cp_1` and
-its associated group-level deviations `cp_1_id`. Their spread is
-governed by the population-level parameter `cp_1_sd`.
+where \kappa\_{ig} is the group-specific location. Thus `cp_i_id[g]` is
+the reported deviation and `cp_i_sd` is the latent normal scale. The
+deviations are not forced to sum to zero.
 
-**Constraint:** Realized group-specific change points must remain
-strictly ordered within each group.
+The hierarchy is subject to x\_{\min} \< \kappa\_{1g} \< \cdots \<
+\kappa\_{Kg} \< x\_{\max}. Thus, if adjacent change points both vary,
+their group-specific locations are ordered against each other—not
+against the adjacent population change point. Internally, JAGS samples
+\kappa\_{ig} directly for efficiency.
 
 Unlike predictor group-level effects, a change-point group effect
 applies only to the boundary where it is written. There is no carry-over
@@ -88,9 +87,9 @@ the population-level intercept:
 ``` r
 
 model = list(
-  y ~ 1 + (1|id),
-  ~ 0 + x,
-  ~ 1 + (0|id)
+  y ~ 1 + (1|id),  # Starts group-level intercept
+  ~ 0 + x,         # Group-level intercept persists here
+  ~ 1 + (0|id)     # 0 Turns it off
 )
 ```
 
@@ -98,7 +97,9 @@ Here, the group-level intercept introduced in segment 1 also applies in
 segment 2. A later `(1|id)` would replace it from that segment onward,
 while `(0|id)` turns it off, as in segment 3 above. Persistence is
 tracked separately for each grouping factor and distributional
-parameter.
+parameter. Read more on carry-over rules between segments in [the
+article on
+formulas](https://lindeloev.github.io/mcp/dev/articles/formulas.html#on-carry-over-between-segments).
 
 Use `||` for independent group-level slopes and factor coefficients:
 
@@ -198,12 +199,12 @@ head(df)
 ```
 
     ##          x    id        y
-    ## 1 91.48060 Clark 36.10665
-    ## 2 93.70754 Clark 34.00776
-    ## 3 28.61395 Clark 24.03685
-    ## 4 83.04476 Clark 28.74026
-    ## 5 64.17455 Clark 22.60974
-    ## 6 51.90959 Clark 24.57329
+    ## 1 91.48060 Clark 31.74661
+    ## 2 93.70754 Clark 32.40289
+    ## 3 28.61395 Clark 19.78775
+    ## 4 83.04476 Clark 29.28600
+    ## 5 64.17455 Clark 19.81068
+    ## 6 51.90959 Clark 24.03685
 
 For models with multiple group-level change points, all deviations are
 drawn once and then checked for ordering. An unordered draw produces an
@@ -254,20 +255,13 @@ effects), use:
 mcp::ranef(fit)
 ```
 
-    ##             variable        mean        sd       lower       upper     rhat
-    ## 1   cp_1_id[Batgirl]   3.4359904 0.8359116   1.8387702   5.1155898 1.000170
-    ## 2    cp_1_id[Batman]  -1.0441880 0.9203563  -2.8374458   0.7860453 1.000344
-    ## 3     cp_1_id[Clark]  17.0539585 0.9404897  15.2304185  18.9432569 1.000462
-    ## 4      cp_1_id[Jane]  -6.4355915 0.8460597  -8.0639491  -4.7646496 1.000115
-    ## 5     cp_1_id[Louis] -13.8447712 0.7595938 -15.3688120 -12.3909721 1.000583
-    ## 6 cp_1_id[Spiderman]   0.8346018 0.8040346  -0.7445893   2.4225902 1.000137
-    ##   ess_bulk ess_tail         sim match
-    ## 1     5460     5770   4.2419513    OK
-    ## 2     5871     6189   0.1959384    OK
-    ## 3     5216     5815  15.3133890    OK
-    ## 4     5854     6000  -6.8428555    OK
-    ## 5     4976     6457 -13.7214603    OK
-    ## 6     6226     6974   0.8130371    OK
+    ##             variable       mean       sd     lower    upper     rhat ess_bulk ess_tail       sim match
+    ## 1   cp_1_id[Batgirl]   7.748753 23.56258 -31.85555 58.85708 1.001548     4745     5882 14.315858    OK
+    ## 2    cp_1_id[Batman] -16.906485 23.54159 -56.42552 34.31066 1.001206     4656     5862 -8.463936    OK
+    ## 3     cp_1_id[Clark]  12.532440 23.55908 -27.01466 63.70903 1.001393     4698     5954 20.518845    OK
+    ## 4      cp_1_id[Jane]  -6.806863 23.53981 -46.22738 44.38053 1.001252     4698     6116  0.715170    OK
+    ## 5     cp_1_id[Louis]  18.201298 23.56281 -21.31165 69.60913 1.001186     4691     6085 22.900143    OK
+    ## 6 cp_1_id[Spiderman]  -1.480419 23.54962 -40.98176 49.48032 1.001462     4675     5991  5.438742    OK
 
 Inspecting the `sim` and `match` columns, we see that they recovered the
 simulation parameters well.
@@ -330,20 +324,18 @@ prior_summary(fit)
 ```
 
     ## # A tibble: 6 × 5
-    ##   parameter   segment dpar  prior                                         bounds
-    ##   <chr>         <int> <chr> <chr>                                         <chr> 
-    ## 1 cp_1              2 cp    uniform(min = 0.02388966, max = 98.88917)     [min(…
-    ## 2 cp_1_sd           2 cp    normal(mean = 0, sd = 197.7306)               [0, I…
-    ## 3 cp_1_id           2 cp    normal(mean = 0, sd = cp_1_sd)                [min(…
-    ## 4 Intercept_1       1 mu    student_t(df = 3, location = 23.4, scale = 7… none  
-    ## 5 x_2               2 mu    student_t(df = 3, location = 0, scale = 0.07… none  
-    ## 6 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 7.2)  [0, I…
+    ##   parameter   segment dpar  prior                                               bounds                        
+    ##   <chr>         <int> <chr> <chr>                                               <chr>                         
+    ## 1 cp_1              2 cp    dirichlet(alpha = 1)                                [min(x), max(x)]              
+    ## 2 cp_1_sd           2 cp    normal(mean = 0, sd = 197.7306)                     [0, Inf]                      
+    ## 3 cp_1_id           2 cp    normal(mean = 0, sd = cp_1_sd)                      [min(x) - cp_1, max(x) - cp_1]
+    ## 4 Intercept_1       1 mu    student_t(df = 3, location = 21.7, scale = 4.6)     none                          
+    ## 5 x_2               2 mu    student_t(df = 3, location = 0, scale = 0.04652796) none                          
+    ## 6 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 4.6)        [0.001, Inf]
 
-The prior `cp_1_sd` is the population-level standard deviation governing
-the `cp_1_id` deviations across levels of `id`. Change-point deviations
-are exactly zero-centered, while predictor group-level effects use
-ordinary hierarchical mean-zero deviations. Their realized locations are
-constrained to remain ordered within each group.
+`cp_1_sd` is the latent normal scale governing the `cp_1_id` deviations.
+Unlike predictor group-level effects, change-point locations are also
+constrained to remain in range and ordered within each group.
 
 ## JAGS code
 
@@ -360,28 +352,29 @@ fit$jags_code
     ##   cp_2 = CONST2_
     ## 
     ##   # Priors for population-level effects
-    ##   cp_1 ~ dunif(CONST1_, CONST2_)  # Within the observed change-point span
+    ##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)
+    ##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point
     ##   cp_1_sd ~ dnorm(0, 1/(197.7306)^2) T(0,)  # Group-level change-point variation
-    ##   Intercept_1 ~ dt(23.4, 1/(7.2)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5
-    ##   x_2 ~ dt(0, 1/(0.07282637)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change
-    ##   sigma_1 ~ dt(0, 1/(7.2)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale
+    ##   Intercept_1 ~ dt(21.7, 1/(4.6)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5
+    ##   x_2 ~ dt(0, 1/(0.04652796)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change
+    ##   sigma_1 ~ dt(0, 1/(4.6)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale
     ## 
     ##   # Priors for group-level effects
     ##   for (id_ in 1:n_unique_id) {
-    ##     cp_1_id_uncentered[id_] ~ dnorm(CONST3_, 1/(cp_1_sd)^2) T(CONST1_-cp_1,CONST2_-cp_1)  # Zero-mean ordered group-level change-point offsets
+    ##     cp_1_id_location[id_] ~ dnorm(cp_1 + CONST3_, 1/(cp_1_sd)^2) T(cp_1 + (CONST1_-cp_1), cp_1 + (CONST2_-cp_1))  # Ordered group-level change-point deviations from the population location
+    ##     cp_1_id[id_] = cp_1_id_location[id_] - cp_1  # deviation from population change point
     ##   }
-    ##   cp_1_id = cp_1_id_uncentered - mean(cp_1_id_uncentered)  # vectorized zero-centering
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {
     ##     # par_x local to each segment
-    ##     x_local_1_[i_] = min(x[i_], (cp_1 + cp_1_id[id[i_]]))
-    ##     x_local_2_[i_] = min(x[i_], cp_2) - (cp_1 + cp_1_id[id[i_]])
+    ##     x_local_1_[i_] = min(x[i_], (cp_1_id_location[id[i_]]))
+    ##     x_local_2_[i_] = min(x[i_], cp_2) - (cp_1_id_location[id[i_]])
     ##     
     ##     # Formula for mu
     ##     link_mu_[i_] =
     ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + 
-    ##       (x[i_] >= (cp_1 + cp_1_id[id[i_]])) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]
+    ##       (x[i_] >= (cp_1_id_location[id[i_]])) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]
     ##     
     ##     # Formula for sigma
     ##     link_sigma_[i_] =
