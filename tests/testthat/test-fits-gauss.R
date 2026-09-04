@@ -17,10 +17,10 @@ models_gauss = list(
     ),
     family = gaussian(link = "log"),
     chains = 2,
-    warmup = 500,
-    iter = 750,
+    warmup = 1000,
+    iter = 2000,
     min_ess = 50,
-    seed = 1)
+    seed = 4)
 )
 
 apply_test_fit("Gaussian recovery", models_gauss)

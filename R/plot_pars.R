@@ -156,12 +156,12 @@ plot_pars = function(fit,
     all_plots = stats::setNames(lapply(type, function(this_type) {
       func = utils::getFromNamespace(paste0("mcmc_", this_type), "bayesplot")
       facet_args = if (this_type %in% takes_facet) list(ncol = ncol) else list()
-      func(
+      args = c(list(
         draws,
         pars = this_page_pars,
-        regex_pars = character(0),
-        facet_args = facet_args
-      )
+        regex_pars = character(0)
+      ), if (length(facet_args) > 0) list(facet_args = facet_args))
+      do.call(func, args)
     }), type)
 
     patchwork::wrap_plots(all_plots) &

@@ -318,16 +318,18 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
   }
 
   sigma_parameters = predictors$code_name[predictors$dpar == "sigma"]
-  sigma_spec = get_dpar_spec(family, "sigma")
-  if (length(sigma_parameters) > 0 && !sigma_spec$modeled) {
-    for (name in intersect(names(prior), sigma_parameters)) {
-      original = prior[[name]]
-      parts = if (is.character(original)) split_prior_truncation(original) else NULL
-      is_distribution = !is.null(parts) && !is.null(parse_prior_call(parts$distribution))
-      if (is_distribution && is.null(parts$truncation)) {
-        lower = format_prior_number(sigma_spec$lower)
-        prior[[name]] = paste0(original, " T(", lower, ", )")
-        auto_truncated = c(auto_truncated, name)
+  if (length(sigma_parameters) > 0) {
+    sigma_spec = get_dpar_spec(family, "sigma")
+    if (!sigma_spec$modeled) {
+      for (name in intersect(names(prior), sigma_parameters)) {
+        original = prior[[name]]
+        parts = if (is.character(original)) split_prior_truncation(original) else NULL
+        is_distribution = !is.null(parts) && !is.null(parse_prior_call(parts$distribution))
+        if (is_distribution && is.null(parts$truncation)) {
+          lower = format_prior_number(sigma_spec$lower)
+          prior[[name]] = paste0(original, " T(", lower, ", )")
+          auto_truncated = c(auto_truncated, name)
+        }
       }
     }
   }

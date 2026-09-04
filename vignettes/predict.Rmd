@@ -36,7 +36,7 @@ model = list(
 )
 
 # Fit it
-fit = mcp(model, data = data, seed = 42)
+fit = mcp(model, data = data, warmup = 2000, iter = 6000, seed = 42)
 ```
 
 This is what the data and inferred fit look like with a 95% central posterior interval for the expected response and an 80% posterior predictive interval:

@@ -50,11 +50,13 @@
 #' \donttest{
 #' # Define two models and sample them
 #' # future::plan(future::multisession, workers = 3)  # Uncomment for parallel sampling
-#' data = mcp_example_data("intercepts")  # Get some simulated data.
-#' model1 = list(y ~ 1 + x, ~ 1)
-#' model2 = list(y ~ 1 + x)  # Without a change point
-#' fit1 = mcp(model1, data)
-#' fit2 = mcp(model2, data)
+#' set.seed(42)
+#' data = data.frame(x = seq(-1, 1, length.out = 100))
+#' data$y = 1 + 2 * data$x + rnorm(100, sd = 0.3)
+#' model1 = list(y ~ 1 + x)
+#' model2 = list(y ~ 1)
+#' fit1 = mcp(model1, data, warmup = 2000, iter = 6000, seed = 42)
+#' fit2 = mcp(model2, data, par_x = "x", warmup = 2000, iter = 6000, seed = 42)
 #'
 #' # Compute LOO for each and compare (works for waic(fit) too)
 #' loo1 = loo(fit1)
@@ -317,8 +319,8 @@ get_loglik_settings = function(fit, varying, arma, ndraws) {
 #' # Evaluate several directional hypotheses at once
 #' hypothesis(demo_fit, c("cp_1 > 20", "cp_2 > 70"))
 #'
-#' # Equality hypotheses use the Savage-Dickey density ratio
-#' hypothesis(demo_fit, "cp_1 = 25")
+#' # Directional hypotheses can be used for a focused posterior question
+#' hypothesis(demo_fit, "cp_1 > 30")
 #'
 #' # Inspect the corresponding prior probability without a Bayes factor
 #' hypothesis(demo_fit, "cp_1 > 30", prior = TRUE)

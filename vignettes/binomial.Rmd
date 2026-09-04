@@ -77,7 +77,7 @@ plot(df$year, df$y)
 The next sections go into more detail, but let us quickly see if we can recover the parameters used to simulate the data.
 
 ```{r, cache = TRUE, results=FALSE, message=FALSE, warning=FALSE}
-fit = mcp(model, data = df, family = binomial(), warmup = 5000, seed = 42)
+fit = mcp(model, data = df, family = binomial(), warmup = 5000, iter = 15000, seed = 42)
 ```
 
 

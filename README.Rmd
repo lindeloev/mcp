@@ -213,7 +213,7 @@ Modeling [autoregression](articles/arma.html) and distributional parameters like
 
 - `~ ar(N)` models Nth order autoregression on residuals. `~ar(N, 0 + x)` models increasing/decreasing autocorrelation.
 
-- `y | weights(w)` (and `y | trials(N) + weights(w)`) specifies bservation log-likelihood weights (`w > 0`) across all families.
+- `y | weights(w)` (and `y | trials(N) + weights(w)`) specifies observation log-likelihood weights (`w > 0`) across all families.
 
 - You can provide complete models in distributional parameters (currently `sigma()`, `shape()`, and `mu()`) and time-series (`ar()` and `ma()`). For example, `~ x + sigma(1 + x:condition)` models an abrupt change followed by a by-condition slopes in variance.
 

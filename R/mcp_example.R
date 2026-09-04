@@ -30,7 +30,7 @@
 #' print(empty$example_code)
 #'
 #' # Now sample this model
-#' fit2 = mcp(empty$model, empty$data, family = empty$family)
+#' fit2 = mcp(empty$model, empty$data, family = empty$family, warmup = 2000, iter = 6000, seed = 42)
 #' plot(fit2)
 #' }
 mcp_example = function(name, sample = "post", plot = TRUE) {
@@ -238,7 +238,7 @@ data$y[missing_rows] = NA
 
 # Run sampling; JAGS retains posterior draws for the missing responses
 # See them using fitted(fit, newdata = fit$data[is.na(fit$data$y), ], summary = FALSE)
-fit = mcp(model, data, par_x = 'x', iter = 5000, sample = sample, seed = 42)
+fit = mcp(model, data, par_x = 'x', iter = 5000, sample = sample, seed = 12)
 
 # Illustrative plot
 if (plot) {

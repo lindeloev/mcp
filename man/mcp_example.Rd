@@ -63,7 +63,7 @@ print(empty)
 print(empty$example_code)
 
 # Now sample this model
-fit2 = mcp(empty$model, empty$data, family = empty$family)
+fit2 = mcp(empty$model, empty$data, family = empty$family, warmup = 2000, iter = 6000, seed = 42)
 plot(fit2)
 }
 }

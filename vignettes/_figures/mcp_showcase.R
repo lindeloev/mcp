@@ -5,7 +5,9 @@
 
 library(ggplot2)
 library(patchwork)
-devtools::load_all()
+if (interactive()) {
+  devtools::load_all()
+}
 
 # Insert title and model in faceted plot
 style_gg = function(gg, model, title, left, bottom, right, top) {

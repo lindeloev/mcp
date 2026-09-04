@@ -54,7 +54,7 @@ head(df)
 Now we fit the model to the simulated data.
 
 ```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, data = df, par_x = "x", seed = 42)
+fit = mcp(model, data = df, par_x = "x", warmup = 2000, iter = 6000, seed = 42)
 ```
 
 We plot a posterior predictive interval to show the effect of the changing standard deviation, which is not immediately visible in the default plot of the expected response:
@@ -150,7 +150,7 @@ plot_dpar(fit, dpar = "sigma", q_fit = TRUE)
 `summary(fit)` shows that the parameters are well recovered and a posterior predictive check (`pp_check(fit)`) looks good too. The last change point is estimated with greater uncertainty than the others because its only signal is a stop in standard-deviation growth.
 
 ```{r, R.options = list(width = 9999)}
-summary(fit)
+summary(fit, diagnostics = FALSE)
 pp_check(fit)
 ```
 
@@ -161,7 +161,7 @@ set.seed(42)
 plot_pars(fit, regex_pars = "sigma_")
 ```
 
-This confirms the impression from `rhat`, `ess_bulk`, and `ess_tail`. Setting `mcp(..., iter = 10000)` would be advisable to increase the effective sample size. Read more about [tips, tricks, and debugging](../articles/tips.html).
+This confirms the impression from `rhat`, `ess_bulk`, and `ess_tail`. Increasing `iter` further would improve the effective sample size. Read more about [tips, tricks, and debugging](../articles/tips.html).
 
 # JAGS code for distributional parameters
 

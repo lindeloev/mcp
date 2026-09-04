@@ -56,6 +56,16 @@ test_that("plot_pars() prefers the group selector and supports its deprecated al
   expect_s3_class(varying_plot, "ggplot")
 })
 
+test_that("plot_pars() supports bayesplot hex plots", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off())
+
+  expect_no_warning(
+    hex_plot <- plot_pars(demo_fit, type = "hex", pars = c("cp_1", "time_2"))
+  )
+  expect_s3_class(hex_plot, "ggplot")
+})
+
 test_that("geom_cp_density draws a vertical spike for fixed change points", {
   # Unclass because accessing fit$mcmc_* elicits a deprecation warning
   fit = unclass(demo_fit)
@@ -122,7 +132,7 @@ test_that("GARMA plotting works with categorical predictors", {
   )
   fit = mcp(
     list(y ~ 1 + condition + ar(1), ~ 1),
-    data = df, par_x = "time", chains = 1, iter = 10, warmup = 100
+    data = df, par_x = "time", chains = 1, iter = 10, warmup = 100, quiet = TRUE
   )
 
   expect_s3_class(plot(fit), "ggplot")

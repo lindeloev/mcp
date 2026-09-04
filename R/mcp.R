@@ -243,11 +243,11 @@
 #' prior = list(
 #'   Intercept_1 = 15,
 #'   time_2 = "dt(0, 2, 1) T(0, )",  # t-dist slope. Truncated to positive.
-#'   cp_2 = "dunif(cp_1, 80)",    # change point to segment 2 > cp_1 and < 80.
-#'   Intercept_3 = "Intercept_1"           # Shared intercept between segment 1 and 3
+#'   cp_2 = "dunif(cp_1, 80)",       # change point to segment 2 > cp_1 and < 80.
+#'   Intercept_3 = "Intercept_1"     # Shared intercept between segment 1 and 3
 #' )
 #'
-#' fit3 = mcp(model, data = data, prior = prior)
+#' fit3 = mcp(model, data = data, prior = prior, warmup = 2000, iter = 6000, seed = 42)
 #'
 #' # Show the JAGS model
 #' demo_fit$jags_code

@@ -107,8 +107,8 @@ hypothesis(demo_fit, "cp_1 > 20 & cp_1 < 30")
 # Evaluate several directional hypotheses at once
 hypothesis(demo_fit, c("cp_1 > 20", "cp_2 > 70"))
 
-# Equality hypotheses use the Savage-Dickey density ratio
-hypothesis(demo_fit, "cp_1 = 25")
+# Directional hypotheses can be used for a focused posterior question
+hypothesis(demo_fit, "cp_1 > 30")
 
 # Inspect the corresponding prior probability without a Bayes factor
 hypothesis(demo_fit, "cp_1 > 30", prior = TRUE)
