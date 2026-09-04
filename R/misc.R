@@ -390,8 +390,11 @@ get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = F
 
   # Fallback to empirical quantiles if no cdf method or dpars available
   if (is.null(cdf_fn) || is.null(dpars)) {
-    type_col = if (".predicted" %in% names(draws)) ".predicted" else if (".prediction" %in% names(draws)) ".prediction" else ".epred"
-    return(get_quantiles(draws, quantiles, type_col, keep = keep))
+    type_col = if ("predict" %in% names(draws)) "predict" else ".prediction"
+    return(dplyr::rename(
+      get_quantiles(draws, quantiles, type_col, keep = keep),
+      .predicted = dplyr::all_of(type_col)
+    ))
   }
 
   # Split draws by evaluation row to process one data point across all posterior draws
