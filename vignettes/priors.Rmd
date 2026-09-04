@@ -13,6 +13,8 @@ editor_options:
 
 *NOTE: the JAGS-specific prior interface below is likely to be deprecated in the future, when additional backends are added beyond JAGS.*
 
+For any given segment, `mcp` aims to use `brms`-like priors. `mcp` additionally includes priors for change points, and some `JAGS`-adaptions.
+
 # Setting a prior
 
 `mcp` takes priors in the form of a named list. The names are the parameter names, and the values are JAGS code. Here is a fairly complicated example, to demonstrate the various ways priors can be used:

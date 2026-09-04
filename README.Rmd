@@ -159,7 +159,7 @@ model_null = list(response ~ 1 + time)  # Intercept_1 and time_1
 fit_null = mcp(model_null, demo_fit$data, seed = 42)
 ```
 
-Leveraging the power of `loo::loo()`, we see that the two-change-points model is preferred (it is on top), but the `elpd_diff / se_diff` ratio indicates that this preference is not very strong:
+Leveraging the power of `loo::loo()`, we see that the two-change-points model is preferred (it is on top), and both `p_worse` and the `elpd_diff / se_diff` ratio indicate this preference is strong:
 
 ```{r demo-loo_compare}
 fit_loo = loo(fit)
