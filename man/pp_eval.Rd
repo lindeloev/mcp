@@ -33,13 +33,14 @@ pp_eval(
 \item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model.
 \itemize{
 \item If \code{NULL} (default), the original data is used.
-\item For models with \code{ar()} or \code{ma()}: \code{fitted()}, \code{predict()}, \code{residuals()}, or \code{log_lik()}
-conditions on the response history,
+\item For models with \code{ar()} or \code{ma()}: \code{fitted()}, \code{residuals()}, \code{log_lik()},
+and posterior \code{predict()} condition on the response history,
 so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
 \code{residuals()}, missing response histories are supported only in the original
-fitted data, using retained posterior imputations. \code{log_lik()} is unavailable
-when a missing response enters a later observed history. Use \code{\link[rstantools:posterior_predict]{posterior_predict()}}
-to generate fresh response series recursively from predictor-only \code{newdata}.
+fitted data, using retained posterior imputations. Prior \code{predict()} and
+\code{\link[rstantools:posterior_predict]{posterior_predict()}} generate fresh response
+series recursively, so their \code{newdata} need only contain predictors. \code{log_lik()}
+is unavailable when a missing response enters a later observed history.
 \item For models with \code{y | weights()}: Require the weights column except for \code{fitted()} and \code{predict()}.
 }}
 

@@ -45,7 +45,7 @@ e.g., \code{~ sigma(1 + x)} or \code{~ shape(1)}.
 recurrence that spans continuously across change points.
 \item \emph{Group-level effects:} Add hierarchical (random) intercepts, slopes, and change points, e.g., \code{~ 1 + (1|id)}
 or \code{1 + (1|id) ~ 0 + x}.
-\item \emph{Model comparison and hypothesis testing:} Compare models using LOO-CV (\code{loo()}, \code{waic()}) and test directional
+\item \emph{Model comparison and hypothesis testing:} Compare models using PSIS-LOO (\code{loo()}) or WAIC (\code{waic()}), and test directional
 or point-null hypotheses (\code{hypothesis()}) using Savage-Dickey density ratios.
 }
 

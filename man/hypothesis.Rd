@@ -72,7 +72,7 @@ the prior mean when \code{prior = TRUE}.
 \item \code{lower} is the lower bound of the central posterior interval of width \code{width},
 or the corresponding prior interval when \code{prior = TRUE}.
 \item \code{upper} is the upper bound of ditto.
-\item \code{post_prob} is the posterior probability of a directional hypothesis, or the prior
+\item \code{prob} is the posterior probability of a directional hypothesis, or the prior
 probability when \code{prior = TRUE}. It is \code{NA}
 for equality hypotheses, which compare models rather than an event
 within the fitted model.

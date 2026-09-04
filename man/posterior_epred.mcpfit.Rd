@@ -78,9 +78,9 @@ These methods and workflows require the suggested package \code{{rstantools}}.
 \details{
 For GARMA models, \code{posterior_predict()} generates each replicated
 response series recursively. It does not condition later predictions on
-the observed response history, unlike \code{fitted()} and \code{predict()}. These
-methods require posterior draws. For prior prediction, use \code{fitted()} or
-\code{predict()} with \code{prior = TRUE}.
+the observed response history, unlike \code{fitted()} and posterior \code{predict()}.
+These methods require posterior draws. For prior prediction, use
+\code{predict()} with \code{prior = TRUE}, which also generates fresh series.
 
 For binomial models, \code{posterior_epred()} and \code{posterior_predict()} (and
 corresponding \code{{tidybayes}} workflows such as \code{add_epred_draws()}) follow
