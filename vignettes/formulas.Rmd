@@ -21,11 +21,11 @@ The formulas are called "segments" because they divide the (observed) x-axis int
 
 The three formula parts are called **response**, **cp**, and **predictor**. The general format is `response ~ cp ~ predictor`, except for the first segment, which has no change point and therefore uses `response ~ predictor`. In later segments the response is inherited and may be omitted. A one-sided formula such as `~ x` also uses the default change-point formula `~ 1`, so it is shorthand for `y ~ 1 ~ 1 + x`. This is familiar from `lm()`/`glm()`/`brms::brm()`.
 
-`mcp` adds two novelties to the modeling syntax to support segmented regression:
+`mcp` model consist of three parts:
 
-1.  The "cp" part which can be `~ 1` or `~ 1 + (1|group)`. Read more about [group-level (random) change-point deviations](../articles/group_effects.html).
-2.  The predictor part can contain distributional regression as terms, such as `sigma([formula here])` and `shape()` ([read more](../articles/dpar.html)). Similarly for time-series such as `ar()` and `ma()` ([read more](../articles/arma.html)).
-3.  The response part can contain auxiliaries after `|` combined with `+`, such as `y | weights(w)` for observation log-likelihood weights (supported across all families) and `y | trials(N) + weights(w)` for binomial models.
+1.  The response part is defined in segment 1. E.g. `y ~ ...` or `y | weights(w) ~ ...` or  `y | trials(N) + weights(w) ~ ...` for binomial models, etc..
+2.  The "cp" part specifies change point modeling. It can be `1 ~ ...` for population-level or `1 + (1|group) ~ ...` for [group-level (random) change-point deviations](../articles/group_effects.html).
+3.  The predictor part is regular `~ 1 + x` or `0 + x:condition + z + (1|id)`. Such regression models can also be applied to distributional parameters using ` + sigma(1 + x)` or `shape(0 + condition)` ([read more](../articles/dpar.html)). The same applies to time-series such as `ar(1)` for intercept on first-order autogregression and `ma(2, 1 + x)` for second-order MA regression ([read more](../articles/arma.html)).
 
 `mcp` is heavily inspired by `brms` which again is inspired by [`lme4::lmer()`](https://cran.r-project.org/web/packages/lme4/index.html) which extends `lm()` and `glm()`. [Here is a bit of history](https://twitter.com/jonaslindeloev/status/1117760777249853440) on that.
 
@@ -38,18 +38,18 @@ library(mcp)
 
 model = list(
   # Intercept_1
-  y ~ 1,
+  y ~ 1,  # Plateau in this segment
   
   # cp_1, cp_1_sd, cp_1_id, year_2
-  1 + (1|id) ~ 0 + year,
+  1 + (1|id) ~ 0 + year,  # Joined (~ 0) group-level change point with slope on year
   
   # cp_2, cp_2_sd, cp_2_id, Intercept_3, year_3
-  1 + (1|id) ~ 1 + year
+  1 + (1|id) ~ 1 + year  # Same, but disjoined (~ 1) and with a new slope
 )
 
 # Interpret, but do not sample.
 fit = mcp(model, data = data.frame(y = 1:10, year = 1:10, id = 1:10), sample = FALSE)
-mcp_pars(fit)
+mcp_pars(fit)  # See model parameters
 ```
 
 `mcp` automatically assigns names to the parameters in the format `type_i` where `i` is the segment number. Specifically:
