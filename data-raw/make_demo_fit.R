@@ -28,8 +28,12 @@ make_demo_fit = function() {
     # Normalize closure environments and strip srcrefs for compact, reproducible packaging
     demo_fit = rapply(demo_fit, function(f) {
         f = utils::removeSource(f)
-        if (is.environment(environment(f))) {
-            environment(f) = if (identical(formals(f), formals(stats::gaussian()$variance))) asNamespace("stats") else asNamespace("mcp")
+        env = environment(f)
+        if (is.environment(env)) {
+            needed_vars = setdiff(codetools::findGlobals(f, merge = TRUE), c(ls(asNamespace("mcp")), ls(asNamespace("stats")), ls(baseenv())))
+            if (length(needed_vars) == 0) {
+                environment(f) = if (identical(formals(f), formals(stats::gaussian()$variance))) asNamespace("stats") else asNamespace("mcp")
+            }
         }
         f
     }, classes = "function", how = "replace")
