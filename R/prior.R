@@ -42,7 +42,7 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
     default_predictor_specs(predictors, family),
     default_group_specs(group_effects, family)
   )
-  specs = overlay_user_prior_specs(specs, prior, cps, context)
+  specs = overlay_user_prior_specs(specs, prior, cps, context, predictors, family)
 
   all_names = specs$parameter
   table = compile_prior_specs(specs, all_names, context)

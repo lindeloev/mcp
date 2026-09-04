@@ -237,7 +237,7 @@ truncate_cp_prior = function(cps, j, prior_value, context) {
 }
 
 
-overlay_user_prior_specs = function(specs, prior, cps, context) {
+overlay_user_prior_specs = function(specs, prior, cps, context, predictors, family) {
   name_matches = names(prior) %in% specs$parameter
   if (any(!name_matches)) {
     stop(
@@ -317,12 +317,27 @@ overlay_user_prior_specs = function(specs, prior, cps, context) {
     }
   }
 
+  sigma_parameters = predictors$code_name[predictors$dpar == "sigma"]
+  sigma_spec = get_dpar_spec(family, "sigma")
+  if (length(sigma_parameters) > 0 && !sigma_spec$modeled) {
+    for (name in intersect(names(prior), sigma_parameters)) {
+      original = prior[[name]]
+      parts = if (is.character(original)) split_prior_truncation(original) else NULL
+      is_distribution = !is.null(parts) && !is.null(parse_prior_call(parts$distribution))
+      if (is_distribution && is.null(parts$truncation)) {
+        lower = format_prior_number(sigma_spec$lower)
+        prior[[name]] = paste0(original, " T(", lower, ", )")
+        auto_truncated = c(auto_truncated, name)
+      }
+    }
+  }
+
   for (name in names(prior)) {
     i = match(name, specs$parameter)
     specs$code[i] = prior[[name]]
     specs$source[i] = "user"
     specs$description[i] = if (name %in% auto_truncated) {
-      "User-specified prior with ordered change-point bounds added by mcp"
+      "User-specified prior with required bounds added by mcp"
     } else {
       NA_character_
     }

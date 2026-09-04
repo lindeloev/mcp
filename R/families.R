@@ -212,7 +212,7 @@ mcpfamily_gaussian = function(family) {
     "mu", "Intercept", paste0("dt(", mu_location, ", ", mu_scale, ", 3)"), paste0("dt(0, ", mu_scale, ", 3) T(0, )"), "Robustly centered mean intercept with a minimum scale of 2.5", "always",
     "mu", "dummy", paste0("dt(0, ", mu_scale, ", 3)"), paste0("dt(0, ", mu_scale, ", 3) T(0, )"), "Regularizing mean contrast on the link scale", "always",
     "mu", "slope", paste0("dt(0, ", mu_scale, " / predictor_scale(), 3)"), paste0("dt(0, ", mu_scale, " / predictor_scale(), 3) T(0, )"), "Regularizing mean coefficient scaled to a reference predictor change", "always",
-    "sigma", "Intercept", paste0("dt(0, ", response_scale, ", 3) T(0, )"), paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Positive residual SD calibrated on the response scale", "constant",
+    "sigma", "Intercept", paste0("dt(0, ", response_scale, ", 3) T(0.001, )"), paste0("dt(0, ", response_scale, ", 3) T(0.001, )"), "Positive residual SD calibrated on the response scale", "constant",
     "sigma", "Intercept", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Weakly regularizing modeled log-SD intercept", "modeled",
     "sigma", "dummy", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Regularizing log-SD contrast", "always",
     "sigma", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "dt(0, 2.5 / predictor_scale(), 3) T(0, )", "Regularizing log-SD coefficient scaled to a reference predictor change", "always"

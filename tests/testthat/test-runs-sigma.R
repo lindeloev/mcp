@@ -36,6 +36,18 @@ test_that("fixed residual SDs must be positive", {
 })
 
 
+test_that("distribution priors for fixed residual SDs use the likelihood lower bound", {
+  data = data.frame(x = 1:4, y = 0)
+  fit = mcp(
+    list(y ~ 1), data,
+    par_x = "x", prior = list(sigma_1 = "dnorm(0, 1)"), sample = FALSE
+  )
+
+  expect_equal(fit$prior$sigma_1, "dnorm(0, 1) T(0.001, )")
+  expect_match(fit$jags_code, "sigma_1 ~ dnorm(0, 1/(1)^2) T(0.001,)", fixed = TRUE)
+})
+
+
 good_sigma = list(
   list(y ~ 1 + sigma(1)),
   list(y ~ 1 + sigma(1 + (1 | id))),

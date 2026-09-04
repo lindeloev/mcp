@@ -176,7 +176,7 @@ test_that("generated code separates link and distribution scales", {
   expect_false(constant_fit$family$dpar_specs$modeled[
     constant_fit$family$dpar_specs$dpar == "sigma"
   ])
-  expect_equal(constant_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0, )")
+  expect_equal(constant_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0.001, )")
 
   expect_match(fit$.internal$formula_jags, "link_mu_\\[i_\\] =")
   expect_match(fit$.internal$formula_jags, "link_sigma_\\[i_\\] =")
