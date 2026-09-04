@@ -53,7 +53,7 @@ head(df)
 
 Now we fit the model to the simulated data.
 
-```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
+```{r, results=FALSE, warning=FALSE, message=FALSE}
 fit = mcp(model, data = df, par_x = "x", warmup = 2000, iter = 6000, seed = 42)
 ```
 
@@ -129,7 +129,7 @@ df$y = empty$simulate(
 
 Fit it:
 
-```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}
+```{r, results = FALSE, warning=FALSE, message=FALSE}
 fit = mcp(model, data = df, prior = prior, warmup = 6000, iter = 10000, seed = 42)
 ```
 
@@ -209,7 +209,7 @@ df$y = empty$simulate(
 
 Fit it:
 
-```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
+```{r, results=FALSE, warning=FALSE, message=FALSE}
 fit = mcp(model, data = df, par_x = "x", seed = 42)
 ```
 

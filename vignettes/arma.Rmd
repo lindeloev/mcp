@@ -63,7 +63,7 @@ head(ar_data)
 
 See how this was generated in `fit$example_code`. We model this as a plateau (`1`) with a second-order autoregressive residual (`ar(2)`) followed by a joined slope (`0 + time`) with a negative first-order autoregressive residual (`ar(1)`):
 
-```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}
+```{r, results = FALSE, warning=FALSE, message=FALSE}
 model = list(
   price ~ 1 + ar(2),  # Intercept_1, ar1_1, ar2_1
   ~ 0 + time + ar(1)  # time_2, ar1_2; turns off second-order AR
@@ -169,7 +169,7 @@ arima(df$response, order = c(3, 0, 0))
 
 OK, we can see that the `ar` coefficients and sigma ($sigma = sqrt(sigma^2)$) is simulated correctly, if taking `arima()` as ground truth. Inferring with `mcp` is straightforward:
 
-```{r, cache = TRUE, results = FALSE, warning=FALSE, message=FALSE}
+```{r, results = FALSE, warning=FALSE, message=FALSE}
 fit = mcp(model, df, par_x = "time", seed = 42)
 ```
 
@@ -208,7 +208,7 @@ df$y = empty$simulate(
 
 ... and we use a prior to equate the slopes of each segment (read more about [using priors](../articles/priors.html) to equate parameters and define constants). Now let's see if we can recover these parameters. We use `sample = "both"` because we will do a Savage-Dickey test later.
 
-```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
+```{r, results=FALSE, warning=FALSE, message=FALSE}
 prior = list(x_2 = "x_1")  # Set the two slopes equal
 fit = mcp(model, data = df, prior = prior, iter = 12000, sample = "both", seed = 42)
 ```

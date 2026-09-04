@@ -145,16 +145,16 @@ summary(fit)
     ## 
     ## Change point parameters:
     ##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-    ##  cp_1        31.49 1.801 27.99 35.086 1.00      988     1543 30.0    OK
-    ##  cp_2        71.13 1.003 69.47 72.770 1.00     5043     7229 70.0    OK
+    ##  cp_1        31.54 1.798 28.24 35.241 1.00      946     1271 30.0    OK
+    ##  cp_2        71.12 1.012 69.47 72.762 1.00     5119     7044 70.0    OK
     ## 
     ## Population-level parameters:
     ##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-    ##  Intercept_1 10.02 0.673  8.70 11.348 1.00     1745     3312 10.0    OK
-    ##  time_2       0.53 0.047  0.44  0.629 1.00     1444     2724  0.5    OK
-    ##  Intercept_3 17.44 1.183 15.28 19.912 1.00     1347     2230 20.0      
-    ##  time_3      -0.10 0.070 -0.26  0.017 1.00     1347     2125 -0.3      
-    ##  sigma_1      3.90 0.294  3.38  4.532 1.00     4272     4247  3.5    OK
+    ##  Intercept_1 10.05 0.662  8.74 11.350 1.00     1904     3579 10.0    OK
+    ##  time_2       0.53 0.048  0.44  0.633 1.00     1545     2392  0.5    OK
+    ##  Intercept_3 17.48 1.216 15.28 19.981 1.00      936     1376 20.0      
+    ##  time_3      -0.10 0.072 -0.26  0.019 1.00      946     1387 -0.3      
+    ##  sigma_1      3.90 0.290  3.39  4.519 1.00     4854     4624  3.5    OK
 
 - `rhat` is the rank-normalized split-Rhat convergence diagnostic.
 - `ess_bulk` and `ess_tail` are the effective sample sizes for the bulk
@@ -203,8 +203,8 @@ than 25 against it being less than 25?
 hypothesis(fit, "cp_1 > 25")
 ```
 
-    ##      hypothesis     mean   lower    upper      prob       BF
-    ## 1 cp_1 - 25 > 0 6.490184 2.99265 10.08595 0.9993333 1067.781
+    ##      hypothesis     mean    lower    upper      prob       BF
+    ## 1 cp_1 - 25 > 0 6.544368 3.236057 10.24094 0.9997778 3204.767
 
 For model comparisons, we can fit a null model and compare the
 predictive performance of the two models using (approximate)
@@ -308,7 +308,7 @@ deviation](articles/dpar.html):
   `~ar(N, 0 + x)` models increasing/decreasing autocorrelation.
 
 - `y | weights(w)` (and `y | trials(N) + weights(w)`) specifies
-  bservation log-likelihood weights (`w > 0`) across all families.
+  observation log-likelihood weights (`w > 0`) across all families.
 
 - You can provide complete models in distributional parameters
   (currently `sigma()`, `shape()`, and `mu()`) and time-series (`ar()`
@@ -391,14 +391,14 @@ head(fitted(fit, summary = FALSE))  # column .epred
 ```
 
     ## # A tibble: 6 × 14
-    ##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
-    ##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
-    ## 1      1          1     1  31.4  70.5        8.98  0.594        18.3 -0.112
-    ## 2      1          1     1  31.4  70.5        8.98  0.594        18.3 -0.112
-    ## 3      1          1     1  31.4  70.5        8.98  0.594        18.3 -0.112
-    ## 4      1          1     1  31.4  70.5        8.98  0.594        18.3 -0.112
-    ## 5      1          1     1  31.4  70.5        8.98  0.594        18.3 -0.112
-    ## 6      1          1     1  31.4  70.5        8.98  0.594        18.3 -0.112
+    ##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3  time_3
+    ##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>   <dbl>
+    ## 1      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
+    ## 2      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
+    ## 3      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
+    ## 4      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
+    ## 5      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
+    ## 6      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
     ## # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>, .epred <dbl>,
     ## #   data_row <int>
 

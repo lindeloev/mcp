@@ -7,6 +7,8 @@ library(ggplot2)
 library(patchwork)
 if (interactive()) {
   devtools::load_all()
+} else {
+  library(mcp)
 }
 
 # Insert title and model in faceted plot
@@ -37,7 +39,7 @@ style_gg = function(gg, model, title, left, bottom, right, top) {
 
 
 # Make the base plots
-future::plan(future::multisession, workers = 6)
+future::plan(future::multisession, workers = min(6L, future::availableCores()))
 fit_intercepts = mcp_example("intercepts")
 gg_intercepts_org = force(last_plot())  # force to avoid lazy evaluation issues with patchwork
 intercepts_model = list(y ~ 1, ~ 1)

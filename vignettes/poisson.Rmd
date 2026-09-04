@@ -36,7 +36,7 @@ future::plan(future::multisession, workers = 3)
 set.seed(42)  # Make the script deterministic
 ```
 
-```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
+```{r, results= FALSE, message=FALSE, warning=FALSE}
 model = list(
   n ~ 1,  # intercept-only
   ~ 1  # intercept-only
@@ -83,7 +83,7 @@ prior_summary(fit)
 
 As always, the prior on the change point forces it to occur in the observed range. The coefficient priors are deliberately broad defaults, so update them with more informed priors for your particular case when possible, e.g.:
 
-```{r, cache = TRUE, eval=FALSE}
+```{r, eval=FALSE}
 prior = list(
   cp_1 = "dnorm(1900, 30) T(min(date), 1925)"
 )
@@ -123,7 +123,7 @@ Despite the popularity of this dataset, a question rarely asked is what the evid
 
 A flat model and a one-decay model:
 
-```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
+```{r, results= FALSE, message=FALSE, warning=FALSE}
 # Fit an intercept-only model
 fit_flat = mcp(list(n ~ 1), data = df, family=poisson(), par_x = "date", seed = 42)
 fit_decay = mcp(list(n ~ 1 + date), data = df, family = poisson(), seed = 42)
@@ -135,7 +135,7 @@ plot(fit_flat) + plot(fit_decay)
 
 Not we compute and compare the LOO ELPDs:
 
-```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
+```{r, results=FALSE, warning=FALSE, message=FALSE}
 fit_loo = loo(fit)
 fit_flat_loo = loo(fit_flat)
 fit_decay_loo = loo(fit_decay)

@@ -76,7 +76,7 @@ head(df)
 
 Sample the prior and posterior. We give the manual fit a longer warmup since it is harder to find the right posterior under these weird prior constraints (priors will usually improve sampling efficiency).
 
-```{r, cache = TRUE, message=FALSE, warning=FALSE, results=FALSE}
+```{r, message=FALSE, warning=FALSE, results=FALSE}
 future::plan(future::multisession, workers = 3)
 fit_manual = mcp(model, data = df, sample = "both", warmup = 10000, prior = prior, seed = 42)
 fit_default = mcp(model, data = df, sample = "both", warmup = 10000, seed = 42)
@@ -256,7 +256,7 @@ Change-point effects use the same ordinary normal hierarchy, with additional ran
 
 Prior predictive checks are a great way to ensure that the priors are meaningful. Simply set `sample = "prior"`. Let us do it for the two sets of priors defined previously in this article, to see their different prior predictive space.
 
-```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
+```{r, results= FALSE, message=FALSE, warning=FALSE}
 # Sample priors 
 fit_pp_manual = mcp(model, data = df, prior = prior, sample = "prior", seed = 42)
 fit_pp_default = mcp(model, data = df, sample = "prior", seed = 42)
