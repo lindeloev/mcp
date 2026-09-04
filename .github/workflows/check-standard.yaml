@@ -54,14 +54,29 @@ jobs:
           del wjags.exe
         shell: cmd
 
+      # Homebrew on Apple Silicon puts JAGS in /opt/homebrew, but CRAN rjags binaries expect /usr/local/lib
       - name: Install JAGS (if macOS)
         if: runner.os == 'macOS'
         run: |
-          export HOMEBREW_NO_REQUIRE_TAP_TRUST=1
-          brew untap aws/tap 2>/dev/null || true
-          brew install jags || (curl -o wjags.pkg -L0 -k --url https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Mac%20OS%20X/JAGS-4.3.2.pkg && sudo installer -pkg wjags.pkg -target / && rm wjags.pkg)
-          sudo mkdir -p /usr/local/lib
-          if [ -d /opt/homebrew/lib ]; then sudo ln -sf /opt/homebrew/lib/libjags* /usr/local/lib/ && sudo ln -sf /opt/homebrew/lib/JAGS /usr/local/lib/; fi
+          brew install jags || brew upgrade jags || true
+          brew link --overwrite jags || true
+          sudo mkdir -p /usr/local/lib /usr/local/include
+          JAGS_PREFIX="$(brew --prefix jags 2>/dev/null || echo '/opt/homebrew/opt/jags')"
+          if [ -f "$JAGS_PREFIX/lib/libjags.4.dylib" ]; then
+            sudo ln -sf "$JAGS_PREFIX/lib/libjags.4.dylib" /usr/local/lib/libjags.4.dylib
+          fi
+          if [ -d "$JAGS_PREFIX/lib" ]; then
+            sudo ln -sf "$JAGS_PREFIX"/lib/libjags* /usr/local/lib/ 2>/dev/null || true
+            sudo ln -sf "$JAGS_PREFIX"/lib/libjrmath* /usr/local/lib/ 2>/dev/null || true
+          fi
+          if [ -d "$JAGS_PREFIX/include/JAGS" ]; then
+            sudo ln -sf "$JAGS_PREFIX/include/JAGS" /usr/local/include/
+          fi
+          if [ -d /opt/homebrew/lib ]; then
+            sudo ln -sf /opt/homebrew/lib/libjags* /usr/local/lib/ 2>/dev/null || true
+            sudo ln -sf /opt/homebrew/lib/libjrmath* /usr/local/lib/ 2>/dev/null || true
+          fi
+          ls -la /usr/local/lib/libjags* || true
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
