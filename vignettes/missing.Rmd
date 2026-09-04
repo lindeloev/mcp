@@ -24,7 +24,7 @@ library(ggplot2)
 set.seed(42)
 ```
 
-```{r, cache=TRUE, results=FALSE, warning=FALSE, message=FALSE}
+```{r, results=FALSE, warning=FALSE, message=FALSE}
 fit = mcp_example("missing")
 ```
 
@@ -66,7 +66,7 @@ imputed = predict(fit, probs = c(0.1, 0.5, 0.9)) |>
 
 # Start with mcp plot with prediction interval. Use all draws for less Monte Carlo error.
 set.seed(42)
-plot(fit, color_by = "condition", q_predict = c(0.1, 0.9), ndraws = Inf) +
+plot(fit, color_by = "condition", q_predict = c(0.1, 0.9)) +
 
   # Add posterior predictive interval
   geom_linerange(

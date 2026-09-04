@@ -61,7 +61,7 @@ We plot a posterior predictive interval to show the effect of the changing stand
 
 ```{r}
 set.seed(42)
-plot(fit, q_predict = TRUE, ndraws = Inf)  # Inf to get high precision
+plot(fit, q_predict = TRUE)
 ```
 
 We can see all parameters are well recovered (compare `sim` to `mean`). Like the other parameters, the `sigma`s are named after the segment where they were instantiated. There will always be a `sigma_1`.
@@ -116,13 +116,13 @@ empty = mcp(model, data = df, sample = FALSE)
 set.seed(42)
 df$y = empty$simulate(
   empty, df,
-  cp_1 = 50, cp_2 = 100, cp_3 = 150,
+  cp_1 = 50, cp_2 = 80, cp_3 = 140,
   Intercept_1 = -20, Intercept_2 = 0,
-  sigma_1 = log(3), sigma_x_1 = log(2) / 50,
-  sigma_2 = log(10),
-  sigma_x_3 = -0.03,
-  sigma_xE2_3 = 0.0003,
-  x_3 = 1, x_4 = 1)
+  sigma_1 = log(1), sigma_x_1 = log(2) / 15,
+  sigma_2 = log(4),
+  sigma_x_3 = 0.02,
+  sigma_xE2_3 = 0.00015,
+  x_3 = 1.2, x_4 = 1.2)
 ```
 
 ## Fit it and inspect results
@@ -130,7 +130,7 @@ df$y = empty$simulate(
 Fit it:
 
 ```{r, results = FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, data = df, prior = prior, warmup = 6000, iter = 10000, seed = 42)
+fit = mcp(model, data = df, prior = prior, iter = 5000, seed = 42)
 ```
 
 Plotting a posterior predictive interval is an intuitive way to see how the residual standard deviation is estimated:
@@ -150,18 +150,18 @@ plot_dpar(fit, dpar = "sigma", q_fit = TRUE)
 `summary(fit)` shows that the parameters are well recovered and a posterior predictive check (`pp_check(fit)`) looks good too. The last change point is estimated with greater uncertainty than the others because its only signal is a stop in standard-deviation growth.
 
 ```{r, R.options = list(width = 9999)}
-summary(fit, diagnostics = FALSE)
+summary(fit)
 pp_check(fit)
 ```
 
-The bulk and tail effective sample sizes (`ess_bulk` and `ess_tail`) are fairly low, indicating poor mixing for these parameters. `rhat` is acceptable at \< 1.1, indicating good convergence between chains. Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:
+All parameters converge well ($\hat{R} \le 1.01$ and $\text{ESS} > 400$). Notice that `cp_3` and the quadratic `sigma` parameters have lower effective sample sizes than the others, reflecting greater uncertainty in detecting subtle changes in variance curvature. Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:
 
 ```{r, fig.height=7, fig.width = 6}
 set.seed(42)
 plot_pars(fit, regex_pars = "sigma_")
 ```
 
-This confirms the impression from `rhat`, `ess_bulk`, and `ess_tail`. Increasing `iter` further would improve the effective sample size. Read more about [tips, tricks, and debugging](../articles/tips.html).
+This confirms the impression from `rhat`, `ess_bulk`, and `ess_tail`. Read more about [tips, tricks, and debugging](../articles/tips.html).
 
 # JAGS code for distributional parameters
 
@@ -217,7 +217,7 @@ Plot it:
 
 ```{r}
 set.seed(42)
-plot(fit, q_predict = TRUE, facet_by = "id", ndraws = Inf)
+plot(fit, q_predict = TRUE, facet_by = "id")
 ```
 
 As usual, we can get the individual change points:

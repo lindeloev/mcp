@@ -26,9 +26,7 @@ it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code (see
 `mcp` has [200+ academic
 citations](https://scholar.google.com/scholar?cites=5590697509718421309)
 across ecology, astronomy, neuroscience, epidemiology, and other
-disciplines. See applications in the citing literature. Still, consider
-if `mcp` is the right tool for your problem - see [overview of change
-point packages](articles/packages.html).
+disciplines. See applications in the citing literature.
 
 Change points are also called **switch points**, **break points**,
 **broken line** regression, **broken stick** regression, **bilinear**
@@ -75,19 +73,12 @@ fit = mcp(model, data)
 The change point(s) are the `x` at which data changes from being better
 predicted by one formula to the next. The first formula is just
 `response ~ predictors` and the most common formula for segment 2+ would
-be `~ predictors` (more details [here](articles/formulas.html)).
+be `~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
 You can do change point regression for a large number of models in a
-syntax that aligns with `lm()`/`glm()`/`brms`. Visit [the mcp
-website](https://lindeloev.github.io/mcp/) for worked examples and tips
-for many of them.
+syntax that aligns with `lm()`/`glm()`/`brms`. E.g.:
 
-<figure>
-<img src="https://lindeloev.github.io/mcp/dev/mcp_showcase_small.png"
-alt="Several plots showing mcp regression fits across different models and change-point structures." />
-<figcaption aria-hidden="true">Several plots showing mcp regression fits
-across different models and change-point structures.</figcaption>
-</figure>
+![](https://lindeloev.github.io/mcp/dev/mcp_showcase_small.png)
 
 # Brief worked example
 
@@ -195,7 +186,7 @@ get draws, etc.
 ## Tests and model comparison
 
 We can test (joint) probabilities in the model using `hypothesis()`
-([see more here](articles/comparison.html)). For example, what is the
+([see more here](https://lindeloev.github.io/mcp/articles/comparison.html)). For example, what is the
 evidence (given priors) that the first change point (`cp_1`) is later
 than 25 against it being less than 25?
 
@@ -209,7 +200,7 @@ hypothesis(fit, "cp_1 > 25")
 For model comparisons, we can fit a null model and compare the
 predictive performance of the two models using (approximate)
 leave-one-out cross-validation ([see more
-here](articles/comparison.html)). Let’s specify a null model null model
+here](https://lindeloev.github.io/mcp/articles/comparison.html)). Let’s specify a null model null model
 where the first two segments are reduced to one straight line, i.e.,
 removing the change point:
 
@@ -242,7 +233,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go
 in-depth with the functionality of `mcp`. Here is an executive summary,
 to give you a quick sense of what mcp can do.
 
-[Understanding mcp formulas](articles/formulas.html):
+[Understanding mcp formulas](https://lindeloev.github.io/mcp/articles/formulas.html):
 
 - Parameter names are `Intercept_i` (intercepts), `cp_i` (change
   points), `x_i` (slopes), `ar*`/`ma*` (autocorrelation), and `sigma_*`
@@ -254,7 +245,7 @@ to give you a quick sense of what mcp can do.
 - Generate data for all supported models using `fit$simulate()`. See
   examples in, e.g., `mcp_example("demo")$example_code`.
 
-[Supported families and link functions](articles/families.html):
+[Supported families and link functions](https://lindeloev.github.io/mcp/articles/families.html):
 
 - `mcp` currently supports specific combinations of families
   (`gaussian()`, `binomial()`, `bernoulli()`, `poisson()`, and
@@ -264,18 +255,18 @@ to give you a quick sense of what mcp can do.
 - On using informative priors to incorporate expert knowledge.
 
 - Use `binomial(link = "logit")` for [binomial change points in
-  mcp](articles/binomial.html). Also relevant for
+  mcp](https://lindeloev.github.io/mcp/articles/binomial.html). Also relevant for
   `bernoulli(link = "logit")`.
 
 - Use `negbinomial(link = "log")` or `poisson(link = "log")`. Read more
   on [Poisson and negative binomial change points in
-  mcp](articles/poisson.html).
+  mcp](https://lindeloev.github.io/mcp/articles/poisson.html).
 
 - Get results on the linear-predictor (link) scale rather than the
   response scale using `plot(fit, scale = "linear")` or
   `fitted(fit, scale = "linear")`.
 
-[Model comparison and hypothesis testing](articles/comparison.html):
+[Model comparison and hypothesis testing](https://lindeloev.github.io/mcp/articles/comparison.html):
 
 - Do Leave-One-Out Cross-Validation using `loo(fit)` and
   `loo::loo_compare(loo1, loo2)`.
@@ -283,7 +274,7 @@ to give you a quick sense of what mcp can do.
 - Compute Savage-Dickey density ratios using
   `hypothesis(fit, "cp_1 = 40")`.
 
-[Group-level (random) effects](articles/group_effects.html):
+[Group-level (random) effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
 
 - Model group-level intercepts, slopes, and change points using
   `(1|id)`, `(condition||id)`, or `+(condition|id)`. Get posteriors
@@ -295,9 +286,9 @@ to give you a quick sense of what mcp can do.
 - Default priors bound group-specific change points relative to adjacent
   population-level change points.
 
-Modeling [autoregression](articles/arma.html) and distributional
+Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) and distributional
 parameters like [Gaussian residual standard
-deviation](articles/dpar.html):
+deviation](https://lindeloev.github.io/mcp/articles/dpar.html):
 
 - `~ 0 + sigma(1)` models an intercept change in standard deviation.
   `~ 0 + sigma(0 + x)` models increasing/decreasing standard deviation.
@@ -315,14 +306,14 @@ deviation](articles/dpar.html):
   and `ma()`). For example, `~ x + sigma(1 + x:condition)` models an
   abrupt change followed by a by-condition slopes in variance.
 
-[Get fitted and predicted values and intervals](articles/predict.html):
+[Get fitted and predicted values and intervals](https://lindeloev.github.io/mcp/articles/predict.html):
 
 - `fitted(fit)` and `predict(fit)` take many arguments to predict
   in-sample and out-of-sample values and intervals.
 
 - Forecasting with prior knowledge about future change points.
 
-[Using priors](articles/priors.html):
+[Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
 
 - See priors in `fit$prior` or `prior_summary(fit)` and set priors using
   `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")`.
@@ -344,7 +335,7 @@ deviation](articles/dpar.html):
 - Do prior predictive checks using
   `mcp(model, data, sample = "prior") |> plot()`.
 
-[Missing responses and posterior imputation](articles/missing.html):
+[Missing responses and posterior imputation](https://lindeloev.github.io/mcp/articles/missing.html):
 
 - Missing responses are sampled in JAGS and retained with their matching
   posterior draws.
@@ -355,7 +346,7 @@ deviation](articles/dpar.html):
 - On plotting missing responses, asking probabilistic questions about
   them, etc.
 
-[Tips, tricks, and debugging](articles/tips.html)
+[Tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/tips.html)
 
 - Speed up fitting using
   `future::plan(future::multisession, workers = 3)`, and/or fewer

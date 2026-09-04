@@ -35,7 +35,7 @@ prior = list(
 )
 ```
 
-The values use mcp's JAGS-string syntax, so JAGS distributions are generally allowed. See the [JAGS user manual](https://altushost-swe.dl.sourceforge.net/project/mcmc-jags/Manuals/4.x/jags_user_manual.pdf) for more details. Prior strings use R-like conventional distribution scales even though JAGS has a different parameterization underneath: SD for `dnorm()`, scale for `dt()`, `ddexp()`, and `dlogis()`, and log-SD for `dlnorm()`. When generating JAGS code, `mcp` converts these to inverse variance for `dnorm()`, `dt()`, and `dlnorm()`, and inverse scale for `ddexp()` and `dlogis()`. You can inspect the translation by comparing `fit$prior` with `fit$jags_code`.
+The values use mcp's JAGS-string syntax, so JAGS distributions are generally allowed. See the [JAGS user manual](https://sourceforge.net/projects/mcmc-jags/files/Manuals/4.x/jags_user_manual.pdf) for more details. Prior strings use R-like conventional distribution scales even though JAGS has a different parameterization underneath: SD for `dnorm()`, scale for `dt()`, `ddexp()`, and `dlogis()`, and log-SD for `dlnorm()`. When generating JAGS code, `mcp` converts these to inverse variance for `dnorm()`, `dt()`, and `dlnorm()`, and inverse scale for `ddexp()` and `dlogis()`. You can inspect the translation by comparing `fit$prior` with `fit$jags_code`.
 
 Other notes:
 
@@ -135,7 +135,7 @@ The default prior on all change points in `mcp` is **uniform order statistics** 
 - **Symmetry and flat sum:** The prior is symmetric under reflection (flipping $x$ leaves prior probabilities unchanged), and the sum of prior densities across all change points is uniform across the entire data range.
 - **Increasing informativeness with segment count:** For any given range, introducing more change points makes the prior for each change point more effectively informative because they are "squeezed" more together (as shown in the figure below).
 
-The plot below compares these theoretical Dirichlet distributions with the sampled prior distributions for 2 and 5 change points:
+The plot below compares these theoretical Dirichlet distributions (black lines) with the sampled prior distributions (red lines) for 2 and 5 change points:
 
 ```{r, echo = FALSE, results=FALSE, warning=FALSE, message=FALSE}
 df_dummy = data.frame(x = c(0, 0.5, 1), y = rnorm(3))

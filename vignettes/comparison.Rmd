@@ -72,9 +72,9 @@ head(df)
 Now fit it with and without the informative prior. We set `iter` fairly high because this model is not sampled effectively. We will also add `sample = "both"` to sample *both* prior and posterior. We will need both to compute Bayes factors using `hypothesis()` later.
 
 ```{r, message = FALSE, warning = FALSE, results=FALSE}
-fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 10000, seed = 42)
-fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 10000, seed = 42)
-fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 10000, seed = 42)
+fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 8000, seed = 42)
+fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 8000, seed = 42)
+fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 8000, seed = 42)
 ```
 
 We plot them and add a few `ggplot2` layers. We jitter the raw data in the middle plot, just to give a sense of the densities.
@@ -155,7 +155,7 @@ hypothesis(fit_info, c(
 
 Comparing the Bayes factors shows which hypothesis received the larger update from prior to posterior.
 
-There are more examples [in the documentation for `hypothesis`](../reference/hypothesis.html), including how to test group-level deviations and [relative changes between segments](../articles/formulas.html#relative-changes-and-differences-between-segments).
+There are more examples [in the documentation for `hypothesis`](../reference/hypothesis.html), including how to test group-level deviations and [relative changes between segments](../articles/formulas.html#relative-changes-between-segments).
 `mcp` evaluates the directional hypothesis for both posterior and prior samples. The returned `prob` is the posterior probability by default, or the prior probability with `prior = TRUE`; the Bayes factor is the posterior odds divided by the prior odds:
 
 $$BF_{10} = \frac{P(H \mid \text{data}) \,/\, [1 - P(H \mid \text{data})]}{P(H) \,/\, [1 - P(H)]}$$
@@ -205,7 +205,8 @@ Also, if the data is reasonably informative (it almost always is), LOO-CV is muc
 ## Applied example
 We can look at the loo for one model:
 ```{r}
-loo(fit_info)
+loo_info = loo(fit_info)
+loo_info
 ```
 
 This is not terribly informative in and of itself. $looic = -2 * elpd_{loo}$ as is the corresponding SEs, so that is just a matter of scale. What ELPD tells you is that the product of the densities of all left-out data points is approximately $exp(-350) \sim 10 ^ {-146}$, a vanishingly small number because we multiply many small numbers. This is mentally hard to interpret because the density at a given point is only meaningful relative to the full distribution. Furthermore, it depends on the size of the dataset (the more small densities you multiply, the smaller the ELPD).
@@ -214,7 +215,6 @@ What is interesting is the *relative* differences in these predicted densities. 
 
 ```{r, collapse=TRUE}
 loo_default = loo(fit_default)
-loo_info = loo(fit_info)
 loo_simple = loo(fit_simple)
 
 loo::loo_compare(loo_default, loo_info, loo_simple)

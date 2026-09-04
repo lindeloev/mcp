@@ -70,13 +70,13 @@ The same syntax in the predictor part gives each group a deviation from the popu
 
 ```{r}
 model = list(
-  y ~ 1 + (1|id),
-  ~ 0 + x,
-  ~ 1 + (0|id)
+  y ~ 1 + (1|id),  # Starts group-level intercept
+  ~ 0 + x,         # Group-level intercept persists here
+  ~ 1 + (0|id)     # 0 Turns it off
 )
 ```
 
-Here, the group-level intercept introduced in segment 1 also applies in segment 2. A later `(1|id)` would replace it from that segment onward, while `(0|id)` turns it off, as in segment 3 above. Persistence is tracked separately for each grouping factor and distributional parameter.
+Here, the group-level intercept introduced in segment 1 also applies in segment 2. A later `(1|id)` would replace it from that segment onward, while `(0|id)` turns it off, as in segment 3 above. Persistence is tracked separately for each grouping factor and distributional parameter. Read more on carry-over rules between segments in [the article on formulas](../articles/formulas.html#on-carry-over-between-segments).
 
 Use `||` for independent group-level slopes and factor coefficients:
 

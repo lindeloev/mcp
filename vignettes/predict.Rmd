@@ -27,7 +27,7 @@ head(data)
 
 ... and model it as three segments, i.e., two change points:
 
-```{r, results=FALSE, message=FALSE, cache=TRUE}
+```{r, results=FALSE, message=FALSE}
 # Define the model
 model = list(
   response ~ 1,  # plateau (Intercept_1)
@@ -36,7 +36,7 @@ model = list(
 )
 
 # Fit it
-fit = mcp(model, data = data, warmup = 2000, iter = 6000, seed = 42)
+fit = mcp(model, data = data, seed = 42)
 ```
 
 This is what the data and inferred fit look like with a 95% central posterior interval for the expected response and an 80% posterior predictive interval:
@@ -141,16 +141,20 @@ And finally, we extend the list of priors with the two new parameters (`time_4` 
 ```{r}
 forecast_horizon = 170
 data_forecast = rbind(data, data.frame(time = forecast_horizon, response = NA))
-prior_forecast = c(empty$prior, list(
+observed_start = min(data$time)
+observed_end = max(data$time)
+prior_forecast = c(empty$prior[!names(empty$prior) %in% c("cp_1", "cp_2")], list(
+  cp_1 = paste0("dunif(", observed_start, ", ", observed_end, ")"),
+  cp_2 = paste0("dunif(cp_1, ", observed_end, ")"),
   Intercept_4 = "Intercept_1",  # Return to this value
-  cp_3 = paste0("dnorm(cp_2 + (cp_2 - cp_1), 20) T(", max(data$time), ", ", forecast_horizon, ")")  # In the future at the same interval
+  cp_3 = paste0("dnorm(cp_2 + (cp_2 - cp_1), 20) T(", observed_end, ", ", forecast_horizon, ")")  # In the future at the same interval
 ))
 ```
 
 Now let's fit it:
 
-```{r, results=FALSE, results='hide', message=FALSE, cache=TRUE}
-fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast, iter = 5000, seed = 42)
+```{r, results=FALSE, results='hide', message=FALSE}
+fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast, seed = 42)
 ```
 
 
@@ -164,7 +168,7 @@ predict(fit_forecast, newdata = data.frame(time = 125), probs = c(0.1, 0.25, 0.7
 
 To really understand what's going on here, it may be helpful to visualize the model. For now, we will have to hack this a bit too, manually doing our plot:
 
-```{r, cache=TRUE}
+```{r}
 # Get expected-response and posterior predictive draws
 newdata = data.frame(time = 1:170)
 fitted_forecast = fitted(fit_forecast, newdata = newdata, summary = FALSE, ndraws = 50)

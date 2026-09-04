@@ -210,7 +210,7 @@ df$y = empty$simulate(
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
 prior = list(x_2 = "x_1")  # Set the two slopes equal
-fit = mcp(model, data = df, prior = prior, iter = 12000, sample = "both", seed = 42)
+fit = mcp(model, data = df, prior = prior, iter = 8000, sample = "both", seed = 42)
 ```
 
 Let's plot the full model prediction using `plot(fit)`. You could use `plot(fit, geom_data = "line")` for a more classical line plot of the time series data. Set `plot(fit, arma = FALSE)` to omit all AR and MA effects.
