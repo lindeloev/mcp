@@ -478,7 +478,7 @@ plot.mcpfit = function(x,
     lifecycle::deprecate_soft(
       "0.4.0",
       "plot.mcpfit(samples)",
-      details = "Use `lines` instead to specify the number of lines. Quantiles are now exact."
+      details = "Use `lines` instead to specify the number of lines. Quantiles are computed from the posterior predictive mixture."
     )
     if (missing(lines)) lines = samples
   }
@@ -487,7 +487,7 @@ plot.mcpfit = function(x,
     lifecycle::deprecate_soft(
       "0.4.0",
       "plot.mcpfit(nsamples)",
-      details = "Use `lines` instead to specify the number of lines. Quantiles are now exact."
+      details = "Use `lines` instead to specify the number of lines. Quantiles are computed from the posterior predictive mixture."
     )
     if (missing(lines)) lines = nsamples
   }
@@ -561,7 +561,7 @@ plot_dpar = function(x,
     lifecycle::deprecate_soft(
       "0.4.0",
       "plot_dpar(samples)",
-      details = "Use `lines` instead to specify the number of lines. Quantiles are now exact."
+      details = "Use `lines` instead to specify the number of lines. Quantiles are computed from the posterior predictive mixture."
     )
     if (missing(lines)) lines = samples
   }
@@ -570,7 +570,7 @@ plot_dpar = function(x,
     lifecycle::deprecate_soft(
       "0.4.0",
       "plot_dpar(nsamples)",
-      details = "Use `lines` instead to specify the number of lines. Quantiles are now exact."
+      details = "Use `lines` instead to specify the number of lines. Quantiles are computed from the posterior predictive mixture."
     )
     if (missing(lines)) lines = nsamples
   }

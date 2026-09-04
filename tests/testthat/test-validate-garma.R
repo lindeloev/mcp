@@ -209,6 +209,36 @@ test_that("posterior_predict generates fresh GARMA series recursively", {
 })
 
 
+test_that("prior predict generates fresh GARMA series recursively", {
+  data = data.frame(x = 1:3, y = c(10, 20, 30))
+  fit = mcp(
+    list(y ~ 1 + ar(1)), data,
+    par_x = "x", sample = FALSE, quiet = TRUE
+  )
+  fixed_draws = matrix(
+    rep(c(0, 0, 0.5), 2),
+    nrow = 2,
+    byrow = TRUE,
+    dimnames = list(NULL, c("Intercept_1", "sigma_1", "ar1_1"))
+  )
+  fit$mcmc_prior = coda::mcmc.list(coda::mcmc(fixed_draws))
+
+  set.seed(42)
+  predicted = predict(fit, prior = TRUE, summary = FALSE, probs = FALSE)
+  set.seed(42)
+  predictor_only = predict(
+    fit,
+    newdata = data.frame(x = data$x),
+    prior = TRUE,
+    summary = FALSE,
+    probs = FALSE
+  )
+
+  expect_equal(predicted$.prediction, rep(0, 6), tolerance = 0.01)
+  expect_equal(predictor_only$.prediction, predicted$.prediction)
+})
+
+
 test_that("generated JAGS uses the same bounded GARMA residuals", {
   count_data = data.frame(x = 1:4, y = c(0, 1, 4, 2))
   binomial_data = transform(count_data, N = 4)
