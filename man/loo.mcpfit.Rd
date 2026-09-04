@@ -60,8 +60,9 @@ supply missing GARMA histories. In models with group-level effects, this
 currently requires including all such effects (\code{varying = TRUE}).
 }}
 
-\item{ndraws}{Integer or \code{NULL}. Number of posterior draws used for the
-log-likelihood or information criterion. \code{NULL} uses all draws.}
+\item{ndraws}{Integer or \code{NULL}. Target number of posterior draws used for
+the log-likelihood or information criterion. Draws are balanced across
+chains, so the actual number may be rounded. \code{NULL} uses all draws.}
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 }
@@ -91,9 +92,10 @@ reduced model requires refitting it. Non-default \code{varying} and \code{arma}
 settings remain available in \code{log_lik()} as conditional or counterfactual
 diagnostics.
 
-When \code{ndraws} is supplied to \code{loo()}, draws are thinned evenly across
-chains to preserve MCMC chain identities and chronological order, allowing
-\code{relative_eff()} to be computed directly.
+When \code{ndraws} is supplied to \code{loo()}, draws are balanced across chains and
+thinned at evenly spaced midpoint iterations. This preserves MCMC chain
+identities and chronological order, allowing \code{relative_eff()} to be
+computed directly.
 }
 \section{Functions}{
 \itemize{

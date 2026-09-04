@@ -109,7 +109,7 @@ navbar:
         href: articles/comparison.html
       - text: Group-level (random) effects
         href: articles/group_effects.html
-      - text: Modeling variance
+      - text: Variance and other distributional parameters
         href: articles/dpar.html
       - text: Time series and autocorrelation
         href: articles/arma.html

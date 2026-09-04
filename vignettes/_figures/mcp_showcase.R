@@ -5,7 +5,7 @@
 
 library(ggplot2)
 library(patchwork)
-library(mcp)
+devtools::load_all()
 
 # Insert title and model in faceted plot
 style_gg = function(gg, model, title, left, bottom, right, top) {

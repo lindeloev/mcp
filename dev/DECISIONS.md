@@ -38,3 +38,9 @@ Running ar(4) on length-3 data fails in JAGS with uninformative error. This is s
 
 # 2026-09-03: no novel group predictions
 At least for now, fit$simulate() will not support novel categorical levels.
+
+# 2026-09-03: no inits for change points
+`mcp` internally assigns good inits for default change points. Adding user-override for these would add more complexity than I like for such an edge case.
+
+# 2026-09-03: keep mcp priors for sigma
+The prior for intercept-sigma and for `sigma(1)` (still Intercept, but on log-scale) are quite different. But since these are brms-defaults, this behavior is kept.

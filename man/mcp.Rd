@@ -169,17 +169,16 @@ An \code{mcp} model divides a continuous predictor \eqn{x} into \eqn{K} segments
 ordered change points \eqn{\Delta_1 < \dots < \Delta_{K-1}}. In each segment \eqn{k \in \{1, \dots, K\}},
 the linear predictor \eqn{\eta_i} is evaluated directly from the segment-local distance \eqn{(x_i - \Delta_{k-1})}:
 
-\deqn{\eta_i = \begin{cases}
-  \beta_{1,0} + \beta_{1,1} x_i, & \text{First segment } (k = 1) \\
-  \beta_{k,0} + \beta_{k,1} (x_i - \Delta_{k-1}), & \text{Disjoined segments } (k \ge 2, \sim \texttt{1 + x}) \\
-  \alpha_k + \beta_{k,1} (x_i - \Delta_{k-1}), & \text{Joined segments } (k \ge 2, \sim \texttt{0 + x})
+\deqn{\eta_i = \alpha_k + \beta_{k,1} (x_i - \Delta_{k-1}) \quad (\text{with } \Delta_0 = 0)}
+
+where the segment-start level \eqn{\alpha_k} is freely estimated for the first and disjoined segments, as in non-segmented regression, and inherited continuously for joined segments:
+
+\deqn{\alpha_k = \begin{cases}
+  \beta_{k,0}, & \text{Disjoined segments } (\sim \texttt{1 + x}, \text{ including } k = 1) \\
+  \alpha_{k-1} + \beta_{k-1,1} (\Delta_{k-1} - \Delta_{k-2}), & \text{Joined segments } (k \ge 2, \sim \texttt{0 + x})
 \end{cases}}
 
-where \eqn{\alpha_k} is the baseline level inherited continuously from the preceding segment:
-
-\deqn{\alpha_k = \alpha_{k-1} + \beta_{k-1,1} (\Delta_{k-1} - \Delta_{k-2}) \quad (\text{with } \Delta_0 = 0)}
-
-In all segments, slope and intercept parameters are absolute values (not changes relative to the preceding segment).
+In all segments, estimated slope and intercept parameters are absolute values (not changes relative to the preceding segment).
 
 If additional continuous covariates or categorical factors are included (e.g., \code{+ z + group}),
 they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}}); only the

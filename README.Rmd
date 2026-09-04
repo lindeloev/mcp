@@ -19,8 +19,6 @@ knitr::opts_chunk$set(
   dpi = 125
 )
 
-set.seed(42)
-
 # Determine active git branch for dynamic badges
 branch = Sys.getenv("GITHUB_REF_NAME", "")
 if (branch == "" || branch == "HEAD") {

@@ -99,8 +99,7 @@ to generate fresh response series recursively from predictor-only \code{newdata}
 \item{rate}{Logical scalar. For binomial models, return counts (\code{rate = FALSE}) or
 the observed or expected success proportion (\code{rate = TRUE}). Predictions and
 count-scale fitted values require a trials column in \code{newdata}.
-count-scale fitted values require a trials column in \code{newdata}. Distributional
-parameters such as \code{dpar = "mu"} evaluate the parameter itself (e.g., success probability)
+Distributional parameters such as \code{dpar = "mu"} evaluate the parameter itself (e.g., success probability)
 and are unaffected by \code{rate}.}
 
 \item{prior}{Logical. Evaluate prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)? Useful for \code{mcp(..., sample = "both")}.}

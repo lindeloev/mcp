@@ -5,12 +5,7 @@
 \alias{interpolate_newdata}
 \title{Returns a data.frame with all combos of predictors}
 \usage{
-interpolate_newdata(
-  fit,
-  by = NULL,
-  x_values = get_x_values(fit, by),
-  at = NULL
-)
+interpolate_newdata(fit, by = NULL, x_values = NULL, at = NULL, arma = NULL)
 }
 \arguments{
 \item{fit}{An \code{mcpfit} object.}
@@ -23,6 +18,10 @@ Categorical model predictors are always included.}
 \item{at}{Named list setting additional continuous predictors to fixed values.
 They default to their observed means. Family response auxiliaries can also
 be supplied as explicit scalar design values; e.g., \code{at = list(N = 20)}.}
+
+\item{arma}{Logical. If \code{TRUE}, preserve the observed response history for
+conditional AR/MA evaluation. Defaults to \code{TRUE} when the fit includes
+\code{ar()} or \code{ma()} terms. Set to \code{FALSE} to interpolate unconditional trends.}
 }
 \value{
 \code{data.frame} with

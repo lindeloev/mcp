@@ -107,6 +107,9 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 #' @param at Named list setting additional continuous predictors to fixed values.
 #'   They default to their observed means. Family response auxiliaries can also
 #'   be supplied as explicit scalar design values; e.g., `at = list(N = 20)`.
+#' @param arma Logical. If `TRUE`, preserve the observed response history for
+#'   conditional AR/MA evaluation. Defaults to `TRUE` when the fit includes
+#'   `ar()` or `ma()` terms. Set to `FALSE` to interpolate unconditional trends.
 #' @details
 #' The `par_x` variable will be interpolated with higher resolution around the
 #' change points where the values can change abruptly, but lower resolution in

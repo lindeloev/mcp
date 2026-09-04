@@ -122,12 +122,11 @@ test_that("GARMA plotting works with categorical predictors", {
   )
   fit = mcp(
     list(y ~ 1 + condition + ar(1), ~ 1),
-    data = df, par_x = "time", chains = 1, iter = 10, warmup = 10
+    data = df, par_x = "time", chains = 1, iter = 10, warmup = 100
   )
 
   expect_s3_class(plot(fit), "ggplot")
   expect_s3_class(plot_dpar(fit, "ar1"), "ggplot")
 })
-
 
 

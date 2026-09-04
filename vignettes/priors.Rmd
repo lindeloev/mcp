@@ -162,7 +162,7 @@ curve(dbeta(x, 1, 2) / 2, from = 0, to = 1, ylim = c(0, 1.15),
 curve(dbeta(x, 2, 1) / 2, add = TRUE, col = "black", lwd = 2)
 curve(dunif(x, 0, 1), lty = 2, add = TRUE, col = "black", lwd = 2)
 
-draws_two = as_draws_df(fit_two)
+draws_two = as_draws_df(fit_two, prior = TRUE)
 y1 = density(draws_two$cp_1, from = MINX, to = MAXX)
 y2 = density(draws_two$cp_2, from = MINX, to = MAXX)
 ysum = (y1$y + y2$y) / 2
@@ -185,7 +185,7 @@ curve(dbeta(x, 4, 2) / 5, add = TRUE, col = "black", lwd = 2)
 curve(dbeta(x, 5, 1) / 5, add = TRUE, col = "black", lwd = 2)
 curve(dunif(x, 0, 1), lty = 2, add = TRUE, col = "black", lwd = 2)
 
-draws_five = as_draws_df(fit_five)
+draws_five = as_draws_df(fit_five, prior = TRUE)
 z1 = density(draws_five$cp_1, from = MINX, to = MAXX)
 z2 = density(draws_five$cp_2, from = MINX, to = MAXX)
 z3 = density(draws_five$cp_3, from = MINX, to = MAXX)

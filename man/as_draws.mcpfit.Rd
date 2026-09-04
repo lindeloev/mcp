@@ -30,7 +30,8 @@ as_draws_rvars(x, ...)
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object.}
 
-\item{prior}{Logical. Extract prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE})?}
+\item{prior}{Logical. Extract prior draws (\code{TRUE}) instead of posterior draws
+(\code{FALSE})? Errors if the requested draws are unavailable.}
 
 \item{...}{Passed to \pkg{posterior} or \pkg{tidybayes} format conversion functions.}
 }

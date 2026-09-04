@@ -144,17 +144,17 @@ summary(fit)
     ##   3: response ~ 1 ~ 1 + time
     ## 
     ## Change point parameters:
-    ##     variable   mean    sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  cp_1        31.468 1.896 27.73 35.07 1.00     1101     1691 30.0    OK
-    ##  cp_2        71.122 1.000 69.46 72.77 1.00     6093     7716 70.0    OK
+    ##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+    ##  cp_1        31.49 1.801 27.99 35.086 1.00      988     1543 30.0    OK
+    ##  cp_2        71.13 1.003 69.47 72.770 1.00     5043     7229 70.0    OK
     ## 
     ## Population-level parameters:
-    ##     variable   mean    sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  Intercept_1  9.968 0.755  8.46 11.43 1.00     2077     2971 10.0    OK
-    ##  time_2       0.534 0.052  0.43  0.64 1.00     1692     2830  0.5    OK
-    ##  Intercept_3 -1.414 1.318 -3.89  1.28 1.00     1276     2119  0.0    OK
-    ##  time_3      -0.059 0.075 -0.21  0.08 1.00     1213     1927 -0.2    OK
-    ##  sigma_1      4.422 0.322  3.85  5.11 1.00     4337     4035  4.0    OK
+    ##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+    ##  Intercept_1 10.02 0.673  8.70 11.348 1.00     1745     3312 10.0    OK
+    ##  time_2       0.53 0.047  0.44  0.629 1.00     1444     2724  0.5    OK
+    ##  Intercept_3 17.44 1.183 15.28 19.912 1.00     1347     2230 20.0      
+    ##  time_3      -0.10 0.070 -0.26  0.017 1.00     1347     2125 -0.3      
+    ##  sigma_1      3.90 0.294  3.38  4.532 1.00     4272     4247  3.5    OK
 
 - `rhat` is the rank-normalized split-Rhat convergence diagnostic.
 - `ess_bulk` and `ess_tail` are the effective sample sizes for the bulk
@@ -203,8 +203,8 @@ than 25 against it being less than 25?
 hypothesis(fit, "cp_1 > 25")
 ```
 
-    ##      hypothesis     mean    lower    upper         p       BF
-    ## 1 cp_1 - 25 > 0 6.468057 2.729073 10.06531 0.9981111 376.4029
+    ##      hypothesis     mean   lower    upper post_prob       BF
+    ## 1 cp_1 - 25 > 0 6.490184 2.99265 10.08595 0.9993333 1067.781
 
 For model comparisons, we can fit a null model and compare the
 predictive performance of the two models using (approximate)
@@ -234,7 +234,7 @@ loo::loo_compare(fit_loo, fit_null_loo)
 
     ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
     ##  model1       0.0     0.0      NA                    
-    ##  model2     -80.1     9.8    1.00
+    ##  model2     -45.7     7.8    1.00
 
 # Highlights from in-depth guides
 
@@ -308,7 +308,7 @@ deviation](articles/dpar.html):
   `~ar(N, 0 + x)` models increasing/decreasing autocorrelation.
 
 - `y | weights(w)` (and `y | trials(N) + weights(w)`) specifies
-  observation log-likelihood weights across all families, as in `brms`.
+  bservation log-likelihood weights (`w > 0`) across all families.
 
 - You can provide complete models in distributional parameters
   (currently `sigma()`, `shape()`, and `mu()`) and time-series (`ar()`
@@ -329,7 +329,9 @@ deviation](articles/dpar.html):
 
 - The default prior on change points is `dirichlet(1)` (uniform order
   statistics). For a single change point, this is the Beta(1, 1) /
-  uniform distribution over `[min(x), max(x)]`. Informativeness
+  uniform distribution over `[min(x), max(x)]`. For multiple change
+  points, it corresponds to a flat Dirichlet distribution over segment
+  lengths with equal spacing between change points. Informativeness
   increases as the number of change points increases.
 
 - Fix parameters to specific values using `cp_1 = 45` and share
@@ -389,16 +391,16 @@ head(fitted(fit, summary = FALSE))  # column .epred
 ```
 
     ## # A tibble: 6 × 14
-    ##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3  time_3
-    ##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>   <dbl>
-    ## 1      1          1     1  32.0  72.0        10.3  0.536       -2.14 -0.0566
-    ## 2      1          1     1  32.0  72.0        10.3  0.536       -2.14 -0.0566
-    ## 3      1          1     1  32.0  72.0        10.3  0.536       -2.14 -0.0566
-    ## 4      1          1     1  32.0  72.0        10.3  0.536       -2.14 -0.0566
-    ## 5      1          1     1  32.0  72.0        10.3  0.536       -2.14 -0.0566
-    ## 6      1          1     1  32.0  72.0        10.3  0.536       -2.14 -0.0566
-    ## # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>,
-    ## #   data_row <int>, .epred <dbl>
+    ##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
+    ##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
+    ## 1      1          1     1  31.4  70.5        8.98  0.594        18.3 -0.112
+    ## 2      1          1     1  31.4  70.5        8.98  0.594        18.3 -0.112
+    ## 3      1          1     1  31.4  70.5        8.98  0.594        18.3 -0.112
+    ## 4      1          1     1  31.4  70.5        8.98  0.594        18.3 -0.112
+    ## 5      1          1     1  31.4  70.5        8.98  0.594        18.3 -0.112
+    ## 6      1          1     1  31.4  70.5        8.98  0.594        18.3 -0.112
+    ## # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>, .epred <dbl>,
+    ## #   data_row <int>
 
 # Citation
 

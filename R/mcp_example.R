@@ -132,7 +132,7 @@ data$response = empty$simulate(empty, data,
   time_2 = 0.5,
   Intercept_3 = 20,
   time_3 = -0.3,
-  sigma_1 = 4
+  sigma_1 = 3.5
 )
 
 # Run sampling

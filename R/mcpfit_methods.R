@@ -1112,13 +1112,14 @@ tidy_samples = function(...) {
 #' @param object An `mcpfit` object.
 #' @param newdata A `tibble` or a `data.frame` containing predictors in the model. 
 #' - If `NULL` (default), the original data is used.
-#' - For models with `ar()` or `ma()`: `fitted()`, `predict()`, `residuals()`, or `log_lik()` 
-#'   conditions on the response history,
+#' - For models with `ar()` or `ma()`: `fitted()`, `residuals()`, `log_lik()`,
+#'   and posterior `predict()` condition on the response history,
 #'   so `newdata` must include the response. For `fitted()`, `predict()`, and
 #'   `residuals()`, missing response histories are supported only in the original
-#'   fitted data, using retained posterior imputations. `log_lik()` is unavailable
-#'   when a missing response enters a later observed history. Use [`posterior_predict()`][rstantools::posterior_predict]
-#'   to generate fresh response series recursively from predictor-only `newdata`.
+#'   fitted data, using retained posterior imputations. Prior `predict()` and
+#'   [`posterior_predict()`][rstantools::posterior_predict] generate fresh response
+#'   series recursively, so their `newdata` need only contain predictors. `log_lik()`
+#'   is unavailable when a missing response enters a later observed history.
 #' - For models with `y | weights()`: Require the weights column except for `fitted()` and `predict()`.
 #' @param summary Summarise at each x-value
 #' @param type One of:
@@ -1600,7 +1601,8 @@ predict.mcpfit = function(
     varying = varying,
     arma = arma,
     ndraws = ndraws,
-    draws_format = draws_format
+    draws_format = draws_format,
+    .garma_replicate = prior
   )
 }
 
@@ -1678,9 +1680,9 @@ fitted.mcpfit = function(
 #' @return A numeric `N_draws` by `nrow(newdata)` matrix.
 #' @details For GARMA models, `posterior_predict()` generates each replicated
 #'   response series recursively. It does not condition later predictions on
-#'   the observed response history, unlike `fitted()` and `predict()`. These
-#'   methods require posterior draws. For prior prediction, use `fitted()` or
-#'   `predict()` with `prior = TRUE`.
+#'   the observed response history, unlike `fitted()` and posterior `predict()`.
+#'   These methods require posterior draws. For prior prediction, use
+#'   `predict()` with `prior = TRUE`, which also generates fresh series.
 #'
 #'   For binomial models, `posterior_epred()` and `posterior_predict()` (and
 #'   corresponding `{tidybayes}` workflows such as `add_epred_draws()`) follow
