@@ -297,6 +297,19 @@ fit3 = mcp(model, data = data, prior = prior, warmup = 2000, iter = 6000, seed =
 demo_fit$jags_code
 }
 }
+\references{
+\itemize{
+\item Lindeløv, J. K. (2020). mcp: An R Package for Regression With Multiple Change Points.
+\emph{OSF Preprints}. \href{https://doi.org/10.31219/osf.io/fzqxv}{doi:10.31219/osf.io/fzqxv}
+Introduces the \code{mcp} package, formula syntax, default priors, and workflow for regression
+with multiple change points across generalized linear and time-series models. Newer-than-2020 versions of
+the paper may be available at that link. Please cite the newest version.
+\item Carlin, B. P., Gelfand, A. E., & Smith, A. F. (1992). Hierarchical Bayesian Analysis of
+Changepoint Problems. \emph{Applied Statistics}, 41(2), 389–405. \href{https://doi.org/10.2307/2347570}{doi:10.2307/2347570}
+Introduced the Gibbs sampling approach for continuous change points in segmented regression
+and hierarchical models, providing the computational foundation used by BUGS and JAGS.
+}
+}
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}
 }
