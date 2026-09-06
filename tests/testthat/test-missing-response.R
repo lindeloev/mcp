@@ -30,7 +30,28 @@ test_that("missing response draws follow covariates and group-level effects", {
     mean(prediction_draws$.prediction[missing_row]),
     mean(data$y, na.rm = TRUE) + 50
   )
+  prediction_summary = predict(fit)
+  expected_q10 = stats::quantile(prediction_draws$.prediction[missing_row], c(0.025, 0.975), names = FALSE)
+  expect_equal(unname(unlist(prediction_summary[10, c("Q2.5", "Q97.5")])), expected_q10)
   expect_no_warning(ggplot2::ggplot_build(plot(fit, lines = 0, cp_dens = FALSE)))
+})
+
+
+test_that("prediction intervals for missing responses in AR models match returned draws", {
+  data = data.frame(x = 1:5, y = c(NA, 10, 8, 7, 6))
+  expect_message(
+    fit <- suppressWarnings(mcp(
+      list(y ~ 1 + ar(1)), data, par_x = "x",
+      prior = list(Intercept_1 = 0, ar1_1 = 0.9, sigma_1 = 1),
+      chains = 1, iter = 100, warmup = 50, quiet = TRUE, seed = 42
+    )),
+    "NA values detected in 'y'"
+  )
+  pred_sum = predict(fit)
+  pred_draws = predict(fit, summary = FALSE)
+  missing_draws = pred_draws$.prediction[pred_draws$data_row == 1]
+  expected_q1 = stats::quantile(missing_draws, c(0.025, 0.975), names = FALSE)
+  expect_equal(unname(unlist(pred_sum[1, c("Q2.5", "Q97.5")])), expected_q1)
 })
 
 

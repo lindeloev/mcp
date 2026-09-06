@@ -1461,7 +1461,28 @@ pp_eval = function(
     if (!isFALSE(probs)) {
       val_col = if (type == "predict" && !is.null(fit$family$r$cdf)) ".predicted" else type
       quantiles = if (type == "predict" && !is.null(fit$family$r$cdf)) {
-        get_mixture_quantiles(draws, probs, fit$family, keep = NULL, rate = rate, dpars = dpars_values, response_data = response_data_values)
+        imputed_rows = unique(draws$.mcp_data_row[!is.na(imputed_response)])
+
+        # Straightforward for no imputed draws. Determine from CDF.
+        if (length(imputed_rows) == 0) {
+          get_mixture_quantiles(draws, probs, fit$family, keep = NULL, rate = rate, dpars = dpars_values, response_data = response_data_values)
+        } else {
+          # For imputed draws, compute quantiles separately for imputed and unimputed rows.
+          is_imputed = draws$.mcp_data_row %in% imputed_rows
+          quantiles_imputed = get_quantiles(draws[is_imputed, , drop = FALSE], probs, type) %>%
+            dplyr::rename(.predicted = dplyr::all_of(type))
+          if (all(is_imputed)) {
+            quantiles_imputed
+          } else {
+            dpars_unimputed = if (!is.null(dpars_values)) lapply(dpars_values, function(v) v[!is_imputed]) else NULL
+            response_data_unimputed = if (!is.null(response_data_values)) lapply(response_data_values, function(v) v[!is_imputed]) else NULL
+            quantiles_unimputed = get_mixture_quantiles(
+              draws[!is_imputed, , drop = FALSE], probs, fit$family, keep = NULL,
+              rate = rate, dpars = dpars_unimputed, response_data = response_data_unimputed
+            )
+            dplyr::bind_rows(quantiles_unimputed, quantiles_imputed)
+          }
+        }
       } else {
         get_quantiles(draws, probs, type, na.rm = type == "residuals")
       }
