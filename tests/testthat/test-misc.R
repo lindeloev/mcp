@@ -5,6 +5,34 @@ test_that("Link functions", {
   expect_equal(mcp:::phi(1), 0.84134475)
   expect_equal(mcp:::probit(0.7), 0.52440051)
   expect_false(any(c("ilogit", "logit", "phi", "probit") %in% getNamespaceExports("mcp")))
+
+  # Do not clamp extreme values (matching JAGS ilogit, phi, exp)
+  expect_equal(mcp:::ilogit(-40), stats::plogis(-40))
+  expect_equal(mcp:::phi(-10), stats::pnorm(-10))
+  expect_lt(mcp:::ilogit(-40), 1e-17)
+  expect_lt(mcp:::phi(-10), 1e-23)
+
+  fam_b = bernoulli("logit")
+  expect_equal(fam_b$linkinv(-40), stats::plogis(-40))
+  fam_p = bernoulli("probit")
+  expect_equal(fam_p$linkinv(-10), stats::pnorm(-10))
+  fam_pois = mcpfamily(poisson("log"))
+  expect_equal(fam_pois$linkinv(-40), exp(-40))
+  fam_bin = mcpfamily(binomial("logit"))
+  expect_equal(fam_bin$linkinv(-40), stats::plogis(-40))
+})
+
+test_that("log_lik evaluates unclamped mathematical inverse links", {
+  data = data.frame(x = 1:3, y = c(1, 0, 1))
+  fit = suppressWarnings(mcp(
+    list(y ~ 1), data, par_x = "x",
+    family = bernoulli("logit"),
+    prior = list(Intercept_1 = -40),
+    sample = "prior", chains = 1, iter = 10, warmup = 5, quiet = TRUE, seed = 42
+  ))
+  ll = suppressMessages(log_lik(fit))
+  expect_equal(unname(ll[1, 1]), -40)
+  expect_equal(unname(ll[1, 2]), log1p(-stats::plogis(-40)))
 })
 
 test_that("families", {

@@ -287,6 +287,9 @@ mcpfamily_gaussian = function(family) {
     )
   }
 
+  family$linkfun = get_link_function(family$link)
+  family$linkinv = get_link_function(family$link, inverse = TRUE)
+
   new_mcpfamily(
     family,
     dpar_specs = dplyr::bind_rows(
@@ -380,6 +383,9 @@ mcpfamily_binomial = function(family) {
     )
   }
 
+  family$linkfun = get_link_function(family$link)
+  family$linkinv = get_link_function(family$link, inverse = TRUE)
+
   new_mcpfamily(
     family,
     dpar_specs = new_dpar_spec("mu", family$link),
@@ -452,6 +458,9 @@ mcpfamily_bernoulli = function(family) {
       )
     )
   }
+
+  family$linkfun = get_link_function(family$link)
+  family$linkinv = get_link_function(family$link, inverse = TRUE)
 
   new_mcpfamily(
     family,
@@ -531,6 +540,9 @@ mcpfamily_poisson = function(family) {
       observed_jags = function(context) paste0("max(", context$y, ", ", context$boundary, ")")
     )
   }
+
+  family$linkfun = get_link_function(family$link)
+  family$linkinv = get_link_function(family$link, inverse = TRUE)
 
   new_mcpfamily(
     family,
@@ -720,7 +732,7 @@ assert_dpar_specs = function(x) {
   if (any(x$dpar %in% c("epred", "ar", "ma")))
     stop("'epred', 'ar', and 'ma' are reserved and cannot be family distributional parameters.")
 
-  supported_links = c("identity", "log", "logit", "probit")
+  supported_links = names(.mcplinks)
   links = unique(unlist(x[link_cols], use.names = FALSE))
   if (any(links %notin% supported_links))
     stop("Unsupported dpar link(s): ", and_collapse(links[links %notin% supported_links]))
@@ -778,20 +790,51 @@ get_family_response_data = function(family, segments, data) {
 }
 
 
+# Internal specification of a link function and its backend representations
+mcplink = function(name, linkfun, linkinv, jags_link = name, jags_linkinv = "") {
+  structure(
+    list(
+      name = name,
+      linkfun = linkfun,
+      linkinv = linkinv,
+      jags_link = jags_link,
+      jags_linkinv = jags_linkinv
+    ),
+    class = "mcplink"
+  )
+}
+
+.mcplinks = list(
+  identity = mcplink("identity", identity, identity, jags_link = "", jags_linkinv = ""),
+  logit = mcplink("logit", stats::qlogis, stats::plogis, jags_link = "logit", jags_linkinv = "ilogit"),
+  probit = mcplink("probit", stats::qnorm, stats::pnorm, jags_link = "probit", jags_linkinv = "phi"),
+  log = mcplink("log", base::log, base::exp, jags_link = "log", jags_linkinv = "exp")
+)
+
+get_mcplink = function(link) {
+  if (inherits(link, "mcplink"))
+    return(link)
+  checkmate::assert_string(link)
+  if (link %in% names(.mcplinks)) {
+    .mcplinks[[link]]
+  } else {
+    link_obj = stats::make.link(link)
+    mcplink(link, link_obj$linkfun, link_obj$linkinv, jags_link = link, jags_linkinv = link)
+  }
+}
+
+
 # Return the JAGS function name for a link or inverse link.
 get_link_str = function(link, inverse = FALSE) {
-  if (!inverse) {
-    return(ifelse(link == "identity", "", link))
-  } else {
-    switch(link, logit = "ilogit", probit = "phi", log = "exp", identity = "")
-  }
+  obj = get_mcplink(link)
+  if (inverse) obj$jags_linkinv else obj$jags_link
 }
 
 
 # Return the executable R function for a link or inverse link.
 get_link_function = function(link, inverse = FALSE) {
-  link_object = stats::make.link(link)
-  if (inverse) link_object$linkinv else link_object$linkfun
+  obj = get_mcplink(link)
+  if (inverse) obj$linkinv else obj$linkfun
 }
 
 
@@ -877,10 +920,10 @@ is.mcpfamily = function(x) {
 }
 
 
-logit = stats::binomial(link = "logit")$linkfun
+logit = stats::qlogis
 
-ilogit = stats::binomial(link = "logit")$linkinv
+ilogit = stats::plogis
 
-probit = stats::binomial(link = "probit")$linkfun
+probit = stats::qnorm
 
-phi = stats::binomial(link = "probit")$linkinv
+phi = stats::pnorm
