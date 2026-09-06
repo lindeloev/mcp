@@ -104,11 +104,12 @@ resolve_diagnostics = function(diagnostics = list()) {
 #' @return `NULL`, invisibly. Called for the warning side-effect.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-warn_nonconvergence = function(mcmc_post, diagnostics = list()) {
+warn_nonconvergence = function(mcmc_post, diagnostics = list(), fixed_pars = character()) {
   diagnostics = resolve_diagnostics(diagnostics)
-  if (all(vapply(diagnostics[c("rhat", "ess_bulk", "ess_tail")], is.null, logical(1))) ||
-      coda::nchain(mcmc_post) < 2)
-    return(invisible(NULL))  # rhat/ESS need >= 2 chains
+  if (is.null(unlist(diagnostics[c("rhat", "ess_bulk", "ess_tail")])))
+    return(invisible(NULL))
+
+  check_rhat = !is.null(diagnostics$rhat) && coda::nchain(mcmc_post) >= 2
 
   results = posterior::summarise_draws(
     posterior::as_draws_df(mcmc_post),
@@ -117,18 +118,24 @@ warn_nonconvergence = function(mcmc_post, diagnostics = list()) {
     ess_tail = function(x) suppressWarnings(posterior::ess_tail(x))
   )
 
+  # Exclude intentionally fixed parameters from convergence checks
+  results = results[results$variable %notin% fixed_pars, , drop = FALSE]
+  if (nrow(results) == 0)
+    return(invisible(NULL))
+
   bad = rep(FALSE, nrow(results))
-  if (!is.null(diagnostics$rhat))
-    bad = bad | (!is.na(results$rhat) & results$rhat > diagnostics$rhat)
+  if (check_rhat)
+    bad = bad | is.na(results$rhat) | results$rhat > diagnostics$rhat
   if (!is.null(diagnostics$ess_bulk))
-    bad = bad | (!is.na(results$ess_bulk) & results$ess_bulk < diagnostics$ess_bulk)
+    bad = bad | is.na(results$ess_bulk) | results$ess_bulk < diagnostics$ess_bulk
   if (!is.null(diagnostics$ess_tail))
-    bad = bad | (!is.na(results$ess_tail) & results$ess_tail < diagnostics$ess_tail)
+    bad = bad | is.na(results$ess_tail) | results$ess_tail < diagnostics$ess_tail
+
   if (!any(bad))
     return(invisible(NULL))
 
   thresholds = c(
-    if (!is.null(diagnostics$rhat)) paste0("rhat > ", diagnostics$rhat),
+    if (check_rhat) paste0("rhat > ", diagnostics$rhat),
     if (!is.null(diagnostics$ess_bulk)) paste0("ess_bulk < ", diagnostics$ess_bulk),
     if (!is.null(diagnostics$ess_tail)) paste0("ess_tail < ", diagnostics$ess_tail)
   )

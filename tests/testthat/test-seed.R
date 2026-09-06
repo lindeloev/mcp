@@ -108,3 +108,27 @@ test_that("mcp seed reproduces prior and posterior samples", {
   mcmc1 = .subset2(fit_1, "mcmc_post")
   expect_false(identical(mcmc1[[1]], mcmc1[[2]]))
 })
+
+
+test_that("chain-specific inits succeed when sequential change points are present", {
+  data = data.frame(x = 1:20, y = c(rnorm(10, 1), rnorm(10, 5)))
+  inits_chains = list(
+    list(Intercept_1 = 0.5),
+    list(Intercept_1 = 1.5)
+  )
+  expect_no_error(
+    suppressWarnings(
+      mcp(
+        list(y ~ 1, ~ 1),
+        data,
+        par_x = "x",
+        inits = inits_chains,
+        chains = 2,
+        iter = 10,
+        warmup = 10,
+        quiet = TRUE,
+        diagnostics = FALSE
+      )
+    )
+  )
+})

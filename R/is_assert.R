@@ -112,11 +112,21 @@ assert_reserved_output_namespace = function(col_names, context = "data") {
 # Validate response auxiliaries independently of whether responses themselves
 # are observed. This makes the same family-level invariants available to model
 # construction and R-side simulation.
-assert_response_data = function(family, segments, data) {
+assert_response_data = function(family, segments, data, response_required = TRUE, aux_required = NULL) {
   aux_columns = get_family_aux_columns(family, segments)
   response_columns = c(list(y = segments$y[1]), as.list(aux_columns))
   response_data = get_family_response_data(family, segments, data)
-  y = if (segments$y[1] %in% names(data)) data[[segments$y[1]]] else rep(NA_real_, nrow(data))
+
+  # For auxiliaries not required by the operation, supply valid placeholders
+  if (!is.null(aux_required)) {
+    for (aux_name in names(aux_columns)) {
+      if (aux_name %notin% aux_required) {
+        response_data[[aux_name]] = rep(1L, nrow(data))
+      }
+    }
+  }
+
+  y = if (response_required && segments$y[1] %in% names(data)) data[[segments$y[1]]] else rep(NA_real_, nrow(data))
   family$response$validate(y, response_data, response_columns)
 
   invisible(TRUE)
@@ -132,14 +142,27 @@ assert_fixed_sigma = function(prior_table, predictors, family) {
   if (get_dpar_spec(family, "sigma")$modeled)
     return(invisible(TRUE))
 
+  # JAGS has a lower bound of 0.001. Do that in R too.
+  spec = get_dpar_spec(family, "sigma")
+  floor = if (!is.null(spec$lower) && !is.na(spec$lower)) spec$lower else 0
   fixed_sigma = prior_table$parameter %in% sigma_parameters & prior_table$kind == "constant"
   sigma_values = suppressWarnings(as.numeric(prior_table$value[fixed_sigma]))
-  if (any(sigma_values <= 0)) {
-    bad_parameters = prior_table$parameter[fixed_sigma][sigma_values <= 0]
-    stop(
-      "Fixed residual standard deviation parameter(s) must be positive: ",
-      and_collapse(bad_parameters), "."
-    )
+  if (floor > 0) {
+    if (any(sigma_values < floor)) {
+      bad_parameters = prior_table$parameter[fixed_sigma][sigma_values < floor]
+      stop(
+        "Fixed residual standard deviation parameter(s) must be at least ",
+        floor, ": ", and_collapse(bad_parameters), "."
+      )
+    }
+  } else {
+    if (any(sigma_values <= 0)) {
+      bad_parameters = prior_table$parameter[fixed_sigma][sigma_values <= 0]
+      stop(
+        "Fixed residual standard deviation parameter(s) must be positive: ",
+        and_collapse(bad_parameters), "."
+      )
+    }
   }
 
   invisible(TRUE)

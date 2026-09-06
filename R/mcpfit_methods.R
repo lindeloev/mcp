@@ -1267,14 +1267,20 @@ pp_eval = function(
   required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
   required_cols = required_cols[required_cols %notin% unused_aux_columns]
   required_cols = required_cols[required_cols %notin% exclude_group_cols]
-  response_not_required = type %in% c("fitted", "predict") &&
-    (arma == FALSE || is_arma(fit) == FALSE || replicate_garma)
+  response_not_required = type %in% c("fitted", "predict") && !conditional_garma
   if (response_not_required) {
     required_cols = required_cols[required_cols != data_columns$response]
   } else if (data_columns$response %notin% colnames(newdata)) {
     stop("`newdata` must contain a response column named '", data_columns$response, "' for when `arma == TRUE` and/or `type == 'residuals'`")
   }
   assert_data_cols(newdata, required_cols)
+  assert_response_data(
+    fit$family,
+    model_tables$segments,
+    newdata,
+    response_required = !response_not_required,
+    aux_required = aux_used
+  )
 
   # Validate against reserved output namespace
   assert_reserved_output_namespace(colnames(newdata), context = "newdata")

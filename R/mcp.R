@@ -494,6 +494,9 @@ mcp = function(model,
       recover_levels(data, group_effects)
 
     class(mcmc_post) = "mcmc.list"
+    assert_ordered_cp_draws(mcmc_post, cps, data[[par_x]])
+
+    # Handle missing data
     if (length(imputed_response_nodes) > 0) {
       mcmc_imputed = mcmc_post[, imputed_response_nodes, drop = FALSE]
       retained_parameter_nodes = setdiff(colnames(mcmc_post[[1]]), imputed_response_nodes)
@@ -501,8 +504,12 @@ mcp = function(model,
     } else {
       mcmc_imputed = NULL
     }
-    assert_ordered_cp_draws(mcmc_post, cps, data[[par_x]])
-    warn_nonconvergence(mcmc_post, diagnostics)
+    
+
+    # Diagnostics check - also for single-chain fits
+    fixed_pars = if (!is.null(prior_table$parameter) && !is.null(prior_table$kind))
+      prior_table$parameter[prior_table$kind == "constant"] else character()
+    warn_nonconvergence(mcmc_post, diagnostics, fixed_pars = fixed_pars)
   } else {
     mcmc_post = NULL
     mcmc_imputed = NULL

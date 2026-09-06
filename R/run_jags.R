@@ -69,7 +69,11 @@ run_jags = function(jags_code,
   if (length(cp_frac_nodes) > 0) {
     N = length(cp_frac_nodes)
     defaults = stats::setNames(as.list(1 / (N - seq_len(N) + 2)), cp_frac_nodes)
-    inits = if (is.null(inits)) defaults else c(inits, defaults[setdiff(names(defaults), names(inits))])
+    if (is.list(inits) && length(inits) > 0 && is.list(inits[[1]])) {
+      inits = lapply(inits, function(ch) c(ch, defaults[setdiff(names(defaults), names(ch))]))
+    } else {
+      inits = c(inits, defaults[setdiff(names(defaults), names(inits))])
+    }
   }
 
   # Use JAGS directly under a sequential future plan. This compiles the model

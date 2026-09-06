@@ -44,3 +44,6 @@ At least for now, fit$simulate() will not support novel categorical levels.
 
 # 2026-09-03: keep mcp priors for sigma
 The prior for intercept-sigma and for `sigma(1)` (still Intercept, but on log-scale) are quite different. But since these are brms-defaults, this behavior is kept.
+
+# 2026-09-06: JAGS sigma > 0.001
+This committed by a JAGS developer to support the upcoming JAGS 5.0. It is therefore respected. It will be kept until further clarified whether it can be lowered, e.g., to machine precision.

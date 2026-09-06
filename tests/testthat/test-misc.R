@@ -965,6 +965,17 @@ test_that("diagnostic settings control fit warnings and summary footers", {
   expect_warning(warn_nonconvergence(raw_post, strict), "rhat > 1.01")
   expect_no_warning(warn_nonconvergence(raw_post, convergence_off))
 
+  # Single chain ESS diagnostics trigger warnings
+  single_chain_post = coda::as.mcmc.list(coda::mcmc(matrix(rnorm(50), ncol = 1, dimnames = list(NULL, "a"))))
+  expect_warning(warn_nonconvergence(single_chain_post, list(ess_bulk = 100)), "ess_bulk < 100")
+
+  # Stuck parameter triggers warning
+  stuck_post = coda::as.mcmc.list(coda::mcmc(matrix(rep(1, 50), ncol = 1, dimnames = list(NULL, "stuck"))))
+  expect_warning(warn_nonconvergence(stuck_post, list(ess_bulk = 100)), "stuck")
+
+  # Intentionally fixed parameter does not trigger warning
+  expect_no_warning(warn_nonconvergence(stuck_post, list(ess_bulk = 100), fixed_pars = "stuck"))
+
   ex_fit = mcp_example("intercepts", sample = "none")
   expect_s3_class(ex_fit, "mcpfit")
 })
@@ -1014,6 +1025,9 @@ test_that("posterior_linpred evaluates binomial models on probability scale when
   # dpar = "mu" does not require trials column in newdata
   expect_equal(fitted(fit, newdata = data.frame(x = 1:3), dpar = "mu", rate = FALSE)$fitted, c(0.5, 0.5, 0.5))
   expect_error(fitted(fit, newdata = data.frame(x = 1:3), dpar = "epred", rate = FALSE), "missing from the data: N")
+
+  # prediction data family validation fails for invalid trials
+  expect_error(predict(fit, newdata = data.frame(x = 1:3, N = -1)), "Element 1 is not >= 1")
 })
 
 test_that("loo supports by_row and soft-deprecates pointwise", {

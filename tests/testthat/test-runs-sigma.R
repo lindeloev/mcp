@@ -8,7 +8,7 @@ bad_sigma = list(
 test_bad(bad_sigma)
 
 
-test_that("fixed residual SDs must be positive", {
+test_that("fixed residual SDs must meet the family floor", {
   data = data.frame(x = 1:4, y = 0)
 
   expect_error(
@@ -16,7 +16,15 @@ test_that("fixed residual SDs must be positive", {
       list(y ~ 1), data,
       par_x = "x", prior = list(sigma_1 = 0), sample = FALSE
     ),
-    "Fixed residual standard deviation parameter(s) must be positive: sigma_1.",
+    "Fixed residual standard deviation parameter(s) must be at least 0.001: sigma_1.",
+    fixed = TRUE
+  )
+  expect_error(
+    mcp(
+      list(y ~ 1), data,
+      par_x = "x", prior = list(sigma_1 = 0.0001), sample = FALSE
+    ),
+    "Fixed residual standard deviation parameter(s) must be at least 0.001: sigma_1.",
     fixed = TRUE
   )
   expect_error(
@@ -24,8 +32,14 @@ test_that("fixed residual SDs must be positive", {
       list(y ~ 1), data,
       par_x = "x", prior = list(sigma_1 = -1), sample = FALSE
     ),
-    "Fixed residual standard deviation parameter(s) must be positive: sigma_1.",
+    "Fixed residual standard deviation parameter(s) must be at least 0.001: sigma_1.",
     fixed = TRUE
+  )
+  expect_silent(
+    mcp(
+      list(y ~ 1), data,
+      par_x = "x", prior = list(sigma_1 = 0.001), sample = FALSE
+    )
   )
   expect_silent(
     mcp(
