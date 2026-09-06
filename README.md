@@ -79,7 +79,7 @@ be `~ predictors` (more details
 You can do change point regression for a large number of models in a
 syntax that aligns with `lm()`/`glm()`/`brms`. E.g.:
 
-![](%60r%20sprintf(%22https://lindeloev.github.io/mcp/%smcp_showcase_small.png%22,%20ifelse(branch%20==%20%22dev%22,%20%22dev/%22,%20%22%22))%60)
+![](https://lindeloev.github.io/mcp/dev/mcp_showcase_small.png)
 
 # Brief worked example
 

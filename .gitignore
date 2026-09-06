@@ -10,6 +10,7 @@ dev/*
 # Hidden
 .lintr
 .Rproj.user
+.Renviron
 .Rhistory
 .Rprofile
 .vscode
