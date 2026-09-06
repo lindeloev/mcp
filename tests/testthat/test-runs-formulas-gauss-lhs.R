@@ -103,10 +103,12 @@ test_good(good_weights)
 
 test_that("Gaussian JAGS weights implement a likelihood power", {
   weighted_data = data.frame(x = 1:4, y = c(0, NA, 2, 3), w = c(0.5, 2, 3, 1))
-  fit = mcp(
-    list(y | weights(w) ~ 1), weighted_data,
-    par_x = "x", sample = FALSE
-  )
+  expect_message({
+    fit = mcp(
+      list(y | weights(w) ~ 1), weighted_data,
+      par_x = "x", sample = FALSE
+    )
+  }, "NA values detected in 'y'")
   tables = get_fit_model_tables(fit)
   jags_data = get_jags_data(
     fit$data, fit$family, tables$segments, tables$predictors,
