@@ -56,35 +56,55 @@ jobs:
           del wjags.exe
         shell: cmd
 
-      # Install JAGS 4.3.2 matching CRAN rjags 4-17, with Homebrew fallback
+      # Install JAGS 4.3.2 matching CRAN rjags 4-17
       - name: Install JAGS (if macOS)
         if: runner.os == 'macOS'
         run: |
-          sudo mkdir -p /usr/local/lib /usr/local/include
-          # Try official universal installer for JAGS 4.3.2 (arm64 + x86_64) matching CRAN rjags
-          curl -fsSL -A "Mozilla/5.0" -o wjags.pkg "https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Mac%20OS%20X/JAGS-4.3.2.pkg" 2>/dev/null || true
-          if [ -s wjags.pkg ]; then
-            sudo installer -pkg wjags.pkg -target / && rm -f wjags.pkg
+          sudo mkdir -p /usr/local/lib /usr/local/include /usr/local/bin
+          # Ensure any Homebrew JAGS 5 is unlinked
+          brew unlink jags 2>/dev/null || true
+
+          # Official universal installer for JAGS 4.3.2 (arm64 + x86_64) matching CRAN rjags.
+          # SourceForge download URLs require -L to follow redirects and -0 -k to handle mirror handshakes.
+          URLS=(
+            "https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/JAGS-4.3.2.pkg/download"
+            "https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Mac%20OS%20X/JAGS-4.3.2.pkg"
+            "https://netcologne.dl.sourceforge.net/project/mcmc-jags/JAGS/4.x/Mac%20OS%20X/JAGS-4.3.2.pkg"
+            "https://deac-fra.dl.sourceforge.net/project/mcmc-jags/JAGS/4.x/Mac%20OS%20X/JAGS-4.3.2.pkg"
+          )
+          for url in "${URLS[@]}"; do
+            echo "Attempting to download JAGS 4.3.2 from $url ..."
+            if curl -L0 -k --retry 3 --connect-timeout 20 -o wjags.pkg "$url" || \
+               curl -L -k --retry 3 --connect-timeout 20 -o wjags.pkg "$url"; then
+              if [ -f wjags.pkg ] && [ $(wc -c < wjags.pkg) -gt 1000000 ]; then
+                echo "Downloaded $(wc -c < wjags.pkg) bytes successfully."
+                break
+              fi
+            fi
+            rm -f wjags.pkg
+          done
+
+          if [ ! -f wjags.pkg ]; then
+            echo "ERROR: Failed to download JAGS-4.3.2.pkg from all mirrors."
+            exit 1
           fi
-          # Fallback to Homebrew if 4.3.2 package was not installed
+
+          echo "Installing JAGS-4.3.2.pkg..."
+          sudo installer -pkg wjags.pkg -target /
+          rm -f wjags.pkg
+
           if [ ! -f /usr/local/lib/libjags.4.dylib ]; then
-            brew install jags || brew upgrade jags || true
-            brew link --overwrite jags || true
-            JAGS_PREFIX="$(brew --prefix jags 2>/dev/null || echo '/opt/homebrew/opt/jags')"
-            if [ -f "$JAGS_PREFIX/lib/libjags.4.dylib" ]; then
-              sudo ln -sf "$JAGS_PREFIX/lib/libjags.4.dylib" /usr/local/lib/libjags.4.dylib
-            elif [ -f "$JAGS_PREFIX/lib/libjags.dylib" ]; then
-              sudo ln -sf "$JAGS_PREFIX/lib/libjags.dylib" /usr/local/lib/libjags.4.dylib
-            fi
-            if [ -d "$JAGS_PREFIX/lib" ]; then
-              sudo ln -sf "$JAGS_PREFIX"/lib/libjags* /usr/local/lib/ 2>/dev/null || true
-              sudo ln -sf "$JAGS_PREFIX"/lib/libjrmath* /usr/local/lib/ 2>/dev/null || true
-            fi
-            if [ -d "$JAGS_PREFIX/include/JAGS" ]; then
-              sudo ln -sf "$JAGS_PREFIX/include/JAGS" /usr/local/include/
-            fi
+            echo "ERROR: /usr/local/lib/libjags.4.dylib was not found after installation."
+            exit 1
           fi
-          ls -la /usr/local/lib/libjags* || true
+
+          # Link jags executable to /opt/homebrew/bin if on Apple Silicon runner
+          if [ -d /opt/homebrew/bin ]; then
+            sudo ln -sf /usr/local/bin/jags /opt/homebrew/bin/jags
+          fi
+
+          ls -la /usr/local/lib/libjags*
+          echo "exit" | /usr/local/bin/jags || true
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
