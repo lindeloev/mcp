@@ -33,6 +33,8 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+      MCP_TEST_LEVEL: ${{ (github.ref_name == 'main' || github.base_ref == 'main') && 'release' || '' }}
+      TESTTHAT_CPUS: 4
 
     steps:
       - uses: actions/checkout@v7
