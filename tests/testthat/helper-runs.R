@@ -142,13 +142,12 @@ test_s3_methods = function(fit) {
     use_prior = col == "mcmc_prior"
     fit_to_test = fit
 
-    # Test the informative fallback once. All intentional prior tests below
-    # request prior samples explicitly to avoid repeated messages.
+    # Prior draws must be requested explicitly.
     if (use_prior) {
       fit_to_test$mcmc_post = NULL
-      testthat::expect_message(
+      testthat::expect_error(
         mcmclist_draws(fit_to_test),
-        "Posterior was not drawn. Using prior draws"
+        "No posterior draws are available"
       )
     }
 
@@ -479,6 +478,7 @@ test_pp_eval = function(fit, prior = FALSE) {
     newdata = fit$data[sample(nrow(fit$data), 3), ],
     summary = FALSE,
     probs = c(0.1, 0.5, 0.999),
+    rate = FALSE,
     prior = prior,
     varying = "cp",
     ndraws = 2,
@@ -525,6 +525,7 @@ test_pp_eval = function(fit, prior = FALSE) {
     population_result = fitted(
       fit,
       newdata = population_newdata,
+      rate = FALSE,
       summary = FALSE,
       probs = FALSE,
       prior = prior,

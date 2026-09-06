@@ -51,10 +51,9 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   checkmate::assert_flag(prior)
   checkmate::assert_flag(verbose)
 
+  draws = posterior_draws(fit, prior = prior)
   if (scope == "group" && nrow(mcp_pars(fit, scope = "group")) == 0)
     return(NULL)
-
-  draws = posterior_draws(fit, prior = prior)
 
   # Select by the independent scope and role dimensions of the parameter table.
   all_cols = posterior::variables(draws)
@@ -265,6 +264,13 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #' # Summarise prior
 #' summary(demo_fit, prior = TRUE)
 summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbose = FALSE, diagnostics = NULL, ...) {
+  mcmclist_draws(object, prior = prior)
+  summarize_mcpfit(object, width, digits, prior, verbose, diagnostics, ...)
+}
+
+
+# Shared display, including unsampled models when printing.
+summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbose = FALSE, diagnostics = NULL, ...) {
   fit = object  # Standard name in mcp
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_number(width, lower = 0, upper = 1)
@@ -506,7 +512,7 @@ vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, dpar = "mu",
     return(NULL)
 
   draws = posterior::as_draws_matrix(posterior_draws(
-    object, prior = prior, fallback_to_prior = FALSE
+    object, prior = prior
   ))
   if (correlation)
     return(stats::cor(draws[, pars, drop = FALSE]))
@@ -537,7 +543,7 @@ confint.mcpfit = function(object, parm, level = 0.95, prior = FALSE, ...) {
   # Compute credible interval
   probs = c((1 - level) / 2, 1 - (1 - level) / 2)
   draws = posterior::as_draws_matrix(posterior_draws(
-    object, prior = prior, fallback_to_prior = FALSE
+    object, prior = prior
   ))
   intervals = parm |>
     vapply(
@@ -556,7 +562,15 @@ confint.mcpfit = function(object, parm, level = 0.95, prior = FALSE, ...) {
 #' @param x An \code{\link{mcpfit}} object.
 #' @export
 print.mcpfit = function(x, ...) {
-  summary(x, ...)
+  args = list(...)
+  if (isTRUE(args$prior))
+    mcmclist_draws(x, prior = TRUE)
+  if (!isTRUE(args$prior) && !coda::is.mcmc.list(.subset2(x, "mcmc_post")) &&
+      coda::is.mcmc.list(.subset2(x, "mcmc_prior"))) {
+    message("Posterior was not drawn. Using prior draws. Set `prior = TRUE` to mute this message.")
+    args$prior = TRUE
+  }
+  do.call(summarize_mcpfit, c(list(object = x), args))
 }
 
 
@@ -571,61 +585,26 @@ is.mcpfit = function(x) {
 }
 
 
-# Internal function to get draws.
-#
-# Returns posterior draws, if available. If not, then prior draws. If not,
-# then throw an informative error. This is useful for summary and plotting, that
-# works on both.
-#
-# - fit: An \code{\link{mcpfit}} object
-# - message: TRUE: gives a message if returning prior draws. FALSE = no message
-# - error: TRUE: err if there are no draws. FALSE: return NULL
-# - fallback_to_prior: TRUE: use prior draws when posterior draws are unavailable
-mcmclist_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE,
-                          fallback_to_prior = TRUE) {
+# Select posterior or explicitly requested prior draws.
+mcmclist_draws = function(fit, prior = FALSE, error = TRUE) {
   check_mcpfit_version(fit)
-  mcmc_prior = .subset2(fit, "mcmc_prior")
-  mcmc_post = .subset2(fit, "mcmc_post")
-  if (prior == TRUE) {
-    if (coda::is.mcmc.list(mcmc_prior)) {
-      return(mcmc_prior)
-    } else {
-      stop("Prior requested but the prior was not drawn.")
-    }
-  }
-
-  if (coda::is.mcmc.list(mcmc_post)) {
-    return(mcmc_post)
-  } else if (fallback_to_prior && coda::is.mcmc.list(mcmc_prior)) {
-    if (message)
-      message("Posterior was not drawn. Using prior draws. Set `prior = TRUE` to mute this message.")
-    return(mcmc_prior)
-  } else if (error == TRUE) {
-    if (fallback_to_prior)
-      stop("This mcpfit contains no posterior or prior draws.")
-    stop("Posterior requested but the posterior was not drawn.")
-  }
-
+  checkmate::assert_flag(prior)
+  draws = .subset2(fit, if (prior) "mcmc_prior" else "mcmc_post")
+  if (coda::is.mcmc.list(draws))
+    return(draws)
+  if (error)
+    stop(if (prior) "No prior draws are available." else
+      "No posterior draws are available. Select prior draws explicitly where supported, using `prior = TRUE`.",
+      call. = FALSE)
   NULL
 }
 
 
-# Get draws as a posterior draws array
-#
-# This is the single internal conversion from the stored
-# \code{\link[coda]{mcmc.list}} representation to a posterior draws object.
-posterior_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE,
-                           fallback_to_prior = TRUE) {
-  draws = mcmclist_draws(
-    fit,
-    prior = prior,
-    message = message,
-    error = error,
-    fallback_to_prior = fallback_to_prior
-  )
+# Convert the selected draws to a posterior draws array.
+posterior_draws = function(fit, prior = FALSE, error = TRUE) {
+  draws = mcmclist_draws(fit, prior = prior, error = error)
   if (is.null(draws))
     return(NULL)
-
   posterior::as_draws_array(draws)
 }
 
@@ -655,27 +634,27 @@ posterior_draws = function(fit, prior = FALSE, message = TRUE, error = TRUE,
 #' head(tidybayes::tidy_draws(demo_fit))  # Tidybayes-compatible draw data
 #' @exportS3Method posterior::as_draws
 as_draws.mcpfit = function(x, prior = FALSE, ...) {
-  posterior_draws(x, prior = prior, fallback_to_prior = FALSE)
+  posterior_draws(x, prior = prior)
 }
 
 #' @exportS3Method posterior::as_draws_df
 as_draws_df.mcpfit = function(x, prior = FALSE, ...) {
-  posterior::as_draws_df(posterior_draws(x, prior = prior, fallback_to_prior = FALSE), ...)
+  posterior::as_draws_df(posterior_draws(x, prior = prior), ...)
 }
 
 #' @exportS3Method posterior::as_draws_array
 as_draws_array.mcpfit = function(x, prior = FALSE, ...) {
-  posterior::as_draws_array(posterior_draws(x, prior = prior, fallback_to_prior = FALSE), ...)
+  posterior::as_draws_array(posterior_draws(x, prior = prior), ...)
 }
 
 #' @exportS3Method posterior::as_draws_matrix
 as_draws_matrix.mcpfit = function(x, prior = FALSE, ...) {
-  posterior::as_draws_matrix(posterior_draws(x, prior = prior, fallback_to_prior = FALSE), ...)
+  posterior::as_draws_matrix(posterior_draws(x, prior = prior), ...)
 }
 
 #' @exportS3Method posterior::as_draws_rvars
 as_draws_rvars.mcpfit = function(x, prior = FALSE, ...) {
-  posterior::as_draws_rvars(posterior_draws(x, prior = prior, fallback_to_prior = FALSE), ...)
+  posterior::as_draws_rvars(posterior_draws(x, prior = prior), ...)
 }
 
 #' @rdname as_draws.mcpfit
@@ -798,6 +777,8 @@ tidy_draws.mcpfit = function(model, ...) {
 #'
 #' @inheritParams fitted.mcpfit
 #' @param x An `mcpfit` object or a posterior draws object.
+#' @details These methods require posterior draws. To count prior draws, use
+#'   e.g. `ndraws(as_draws(fit, prior = TRUE))`.
 #' @return An integer count of iterations, chains, or draws.
 #' @name draws-index-mcp
 #' @examples
@@ -1130,7 +1111,8 @@ tidy_samples = function(...) {
 #'   count-scale fitted values require a trials column in `newdata`.
 #'   Distributional parameters such as `dpar = "mu"` evaluate the parameter itself (e.g., success probability)
 #'   and are unaffected by `rate`.
-#' @param prior Logical. Evaluate prior draws (`TRUE`) instead of posterior draws (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
+#' @param prior Logical. Evaluate prior draws (`TRUE`) instead of posterior draws (`FALSE`, default).
+#'   The selected draws must be available; prior-only fits require `prior = TRUE`.
 #' @param dpar What distributional parameter to evaluate. This is only relevant when `type == "fitted"`. E.g.,
 #'
 #'   * `"epred"` (default): Expected response from the full model (or `NULL` for compatibility with brms etc.).

@@ -30,7 +30,7 @@ test_that("log_lik evaluates unclamped mathematical inverse links", {
     prior = list(Intercept_1 = -40),
     sample = "prior", chains = 1, iter = 10, warmup = 5, quiet = TRUE, seed = 42
   ))
-  ll = suppressMessages(log_lik(fit))
+  ll = log_lik(fit, prior = TRUE)
   expect_equal(unname(ll[1, 1]), -40)
   expect_equal(unname(ll[1, 2]), log1p(-stats::plogis(-40)))
 })
@@ -120,8 +120,8 @@ test_that("mcpfit model accessors follow standard R conventions", {
   expect_equal(confint(fit, prior = TRUE), prior_intervals)
 
   fit$mcmc_post = NULL
-  expect_error(vcov(fit), "Posterior requested but the posterior was not drawn", fixed = TRUE)
-  expect_error(confint(fit), "Posterior requested but the posterior was not drawn", fixed = TRUE)
+  expect_error(vcov(fit), "No posterior draws are available", fixed = TRUE)
+  expect_error(confint(fit), "No posterior draws are available", fixed = TRUE)
   expect_equal(vcov(fit, prior = TRUE), stats::cov(prior_values[, fixed, drop = FALSE]))
 })
 
@@ -557,11 +557,11 @@ test_that("posterior draws accessor preserves the stored chains", {
 
   prior_only = demo_fit
   prior_only$mcmc_post = NULL
-  expect_error(as_draws(prior_only), "Posterior requested but the posterior was not drawn", fixed = TRUE)
-  expect_error(as_draws_df(prior_only), "Posterior requested but the posterior was not drawn", fixed = TRUE)
-  expect_error(as_draws_array(prior_only), "Posterior requested but the posterior was not drawn", fixed = TRUE)
-  expect_error(as_draws_matrix(prior_only), "Posterior requested but the posterior was not drawn", fixed = TRUE)
-  expect_error(as_draws_rvars(prior_only), "Posterior requested but the posterior was not drawn", fixed = TRUE)
+  expect_error(as_draws(prior_only), "No posterior draws are available", fixed = TRUE)
+  expect_error(as_draws_df(prior_only), "No posterior draws are available", fixed = TRUE)
+  expect_error(as_draws_array(prior_only), "No posterior draws are available", fixed = TRUE)
+  expect_error(as_draws_matrix(prior_only), "No posterior draws are available", fixed = TRUE)
+  expect_error(as_draws_rvars(prior_only), "No posterior draws are available", fixed = TRUE)
   expect_s3_class(as_draws(prior_only, prior = TRUE), "draws_array")
 
   # Accessing mcmc_post directly should soft-deprecate
@@ -573,7 +573,7 @@ test_that("posterior draws accessor preserves the stored chains", {
   if (requireNamespace("tidybayes", quietly = TRUE)) {
     expect_error(
       tidybayes::tidy_draws(prior_only),
-      "Posterior requested but the posterior was not drawn",
+      "No posterior draws are available",
       fixed = TRUE
     )
     expect_s3_class(tidybayes::tidy_draws(prior_only, prior = TRUE), "tbl_df")
@@ -1070,10 +1070,10 @@ test_that("format.mcpfamily and summary print all family links", {
 
   data = data.frame(x = 1:10, y = 1:10)
   fit_gauss = mcp(list(y ~ 1 + x), data, sample = FALSE)
-  expect_output(summary(fit_gauss), "Family: gaussian\nLinks: mu = identity; sigma = identity", fixed = TRUE)
+  expect_output(print(fit_gauss), "Family: gaussian\nLinks: mu = identity; sigma = identity", fixed = TRUE)
 
   fit_sigma = mcp(list(y ~ 1 + x + sigma(1 + x)), data, sample = FALSE)
-  expect_output(summary(fit_sigma), "Family: gaussian\nLinks: mu = identity; sigma = log", fixed = TRUE)
+  expect_output(print(fit_sigma), "Family: gaussian\nLinks: mu = identity; sigma = log", fixed = TRUE)
 })
 
 
@@ -1091,4 +1091,21 @@ test_that("zero and negative weights are rejected with informative error", {
     "All weights must be numeric and greater than zero.",
     fixed = TRUE
   )
+})
+
+
+test_that("draw-dependent methods require explicit prior selection", {
+  fit = demo_fit
+  fit$mcmc_post = NULL
+  for (method in list(summary, fitted, predict, residuals, fixef, ranef,
+                     as_draws, as_draws_df, coda::as.mcmc, tidybayes::tidy_draws,
+                     niterations, nchains, ndraws, log_lik)) {
+    expect_error(method(fit), "No posterior draws are available", fixed = TRUE)
+  }
+  expect_no_error(capture.output(summary(fit, prior = TRUE)))
+  expect_message(capture.output(print(fit)), "Using prior draws")
+  fit$mcmc_prior = NULL
+  expect_error(summary(fit), "No posterior draws are available")
+  expect_error(as_draws(fit, prior = TRUE), "No prior draws are available")
+  expect_no_error(capture.output(print(fit)))
 })

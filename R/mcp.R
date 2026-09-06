@@ -81,11 +81,10 @@
 #' @param par_x String (default: `NULL` which is auto-detect).
 #' @param sample One of
 #'   * `"post"`: Sample the posterior.
-#'   * `"prior"`: Sample only the prior. Plots, summaries, etc. will
-#'       use the prior. This is useful for prior predictive checks.
+#'   * `"prior"`: Sample only the prior. Use `prior = TRUE` explicitly in
+#'       plots, summaries, and other methods to select prior draws.
 #'   * `"both"`: Sample both prior and posterior. Plots, summaries, etc.
-#'       will default to using the posterior. The prior only has effect when doing
-#'       Savage-Dickey density ratios in \code{\link{hypothesis}}.
+#'       will default to using the posterior. Use `prior = TRUE` to select prior draws.
 #'   * `"none"` or `FALSE`: Do not sample. Returns an mcpfit
 #'       object without sample. This is useful if you only want to check
 #'       prior strings (`fit$prior`), the JAGS model (`fit$jags_code`), etc.

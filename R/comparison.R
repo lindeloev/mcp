@@ -83,7 +83,7 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
   warn_arma_check(fit, arma, "information_criterion")
 
   # Extract posterior draws
-  mcmc_post = mcmclist_draws(fit, message = FALSE, fallback_to_prior = FALSE)
+  mcmc_post = mcmclist_draws(fit)
   ndraws = validate_loglik_ndraws(fit, ndraws)
   n_chains = length(mcmc_post)
 
@@ -196,7 +196,7 @@ waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, ndraws = NULL,
     stop("`arma` cannot be FALSE in `waic()`. Evaluating an information criterion without fitted AR/MA terms requires refitting the reduced model. Use `log_lik(..., arma = FALSE)` for conditional/counterfactual log-likelihoods.")
   assert_loglik_garma_history(fit, fit$data, arma, "`waic()`")
   warn_arma_check(fit, arma, "information_criterion")
-  mcmclist_draws(fit, message = FALSE, fallback_to_prior = FALSE)
+  mcmclist_draws(fit)
   ndraws = validate_loglik_ndraws(fit, ndraws)
   loglik = log_lik(
     fit, summary = FALSE, varying = varying, arma = arma, ndraws = ndraws
