@@ -136,6 +136,7 @@ test_that("GARMA plotting works with categorical predictors", {
   )
 
   expect_s3_class(plot(fit), "ggplot")
+  expect_s3_class(plot(fit, q_fit = TRUE, q_predict = TRUE), "ggplot")
   expect_s3_class(plot_dpar(fit, "ar1"), "ggplot")
 })
 

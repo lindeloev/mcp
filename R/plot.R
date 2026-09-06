@@ -243,37 +243,28 @@ get_plot = function(x,
     NULL
   }
 
-  # Keep peak memory bounded for intervals by chunking evaluations (max ~5M elements per chunk)
   plot_newdata = add_plot_groups(newdata, curve_by = curve_by, color_by = color_by)
-  MAX_CHUNK_ELEMENTS = 5e6
-  n_eval_draws = if (is.null(ndraws)) available_draws else min(ndraws, available_draws)
-  chunk_rows = max(1L, as.integer(floor(MAX_CHUNK_ELEMENTS / n_eval_draws)))
-  chunk_indices = split(seq_len(nrow(newdata)), ceiling(seq_len(nrow(newdata)) / chunk_rows))
-
-  interval_data = list()
+  q_fit_data = NULL
+  q_predict_data = NULL
   if (show_q_fit || show_q_predict) {
-    interval_data = lapply(chunk_indices, function(rows) {
-      type = if (show_q_predict) "predict" else "fitted"
-      draws = local_pp_eval(
-        type, newdata[rows, , drop = FALSE], ndraws = ndraws,
-        include_fitted = show_q_fit && type == "predict",
-        include_dpars = show_q_predict && type == "predict"
-      )
-      dpars = attr(draws, "dpars")
-      response_data = attr(draws, "response_data")
-      if (type == "predict")
-        draws = dplyr::rename(draws, .predicted = ".prediction")
-      draws = prepare_draws(draws)
-      keep = unique(c(as.character(xvar), facet_by, ".group", ".color"))
+    type = if (show_q_predict) "predict" else "fitted"
+    draws = local_pp_eval(
+      type, newdata, ndraws = ndraws,
+      include_fitted = show_q_fit && type == "predict",
+      include_dpars = show_q_predict && type == "predict"
+    )
+    dpars = attr(draws, "dpars")
+    response_data = attr(draws, "response_data")
+    if (type == "predict")
+      draws = dplyr::rename(draws, .predicted = ".prediction")
+    draws = prepare_draws(draws)
+    keep = unique(c(as.character(xvar), facet_by, ".group", ".color"))
 
-      list(
-        fitted = if (show_q_fit) get_quantiles(draws, q_fit, as.character(yvar), keep) else NULL,
-        predicted = if (show_q_predict) get_mixture_quantiles(draws, q_predict, fit$family, keep, rate = rate, dpars = dpars, response_data = response_data) else NULL
-      )
-    })
+    if (show_q_fit)
+      q_fit_data = get_quantiles(draws, q_fit, as.character(yvar), keep)
+    if (show_q_predict)
+      q_predict_data = get_mixture_quantiles(draws, q_predict, fit$family, keep, rate = rate, dpars = dpars, response_data = response_data)
   }
-  q_fit_data = dplyr::bind_rows(lapply(interval_data, `[[`, "fitted"))
-  q_predict_data = dplyr::bind_rows(lapply(interval_data, `[[`, "predicted"))
 
 
   ###############################
