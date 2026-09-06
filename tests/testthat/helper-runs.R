@@ -371,6 +371,8 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
   # Run and test
   result = if (colname == "loglik") {
     try(func(fit, prior = prior, summary = TRUE), silent = TRUE)
+  } else if (colname %in% c("fitted", "predict")) {
+    try(func(fit, prior = prior, rate = FALSE), silent = TRUE)
   } else {
     try(func(fit, prior = prior), silent = TRUE)
   }
@@ -439,16 +441,16 @@ test_pp_eval_weights = function(fit, prior = FALSE) {
   }
 
   # Should also be returned as column
-  fit_fitted = fitted(fit, summary = TRUE, prior = prior)
+  fit_fitted = fitted(fit, summary = TRUE, prior = prior, rate = FALSE)
   testthat::expect_true(columns$weights %in% colnames(fit_fitted))
-  fit_predict = predict(fit, summary = TRUE, prior = prior)
+  fit_predict = predict(fit, summary = TRUE, prior = prior, rate = FALSE)
   testthat::expect_true(columns$weights %in% colnames(fit_predict))
 
   # When to fail
   if (!prior) {
     newdata_without_weights = fit$data[, colnames(fit$data) != columns$weights, drop = FALSE]
     testthat::expect_no_error(
-      predict(fit, newdata = newdata_without_weights, summary = FALSE)
+      predict(fit, newdata = newdata_without_weights, summary = FALSE, rate = FALSE)
     )
     testthat::expect_error(
       log_lik(fit, newdata = newdata_without_weights, summary = FALSE),

@@ -81,6 +81,42 @@ test_that("binomial responses cannot exceed trials", {
 
 
 
+test_that("binomial prediction defaults agree with posterior methods and warn on migration", {
+  withr::local_options(rlib_warning_verbosity = "verbose")
+  data = data.frame(x = 1:3, N = c(4, 10, 6), y = 0)
+  fit = mcp(list(y | trials(N) ~ 1), data, family = binomial(), par_x = "x", sample = FALSE)
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(
+    matrix(0, nrow = 20, ncol = 1, dimnames = list(NULL, "Intercept_1"))
+  ))
+
+  expect_warning((counts = fitted(fit)), "Set `rate = TRUE`")
+  expect_equal(counts$fitted, data$N / 2)
+  expect_warning(predict(fit), "Set `rate = TRUE`")
+  expect_no_warning(fitted(fit, rate = FALSE))
+  expect_no_warning(fitted(fit, rate = TRUE))
+  expect_no_warning(predict(fit, rate = FALSE))
+  expect_no_warning(predict(fit, rate = TRUE))
+  expect_no_warning(fitted(fit, dpar = "mu"))
+  expect_no_warning(fitted(fit, scale = "linear"))
+  expect_no_warning(fitted(fit, newdata = transform(data, N = 1)))
+  expect_no_warning(predict(fit, newdata = transform(data, N = 1)))
+  expect_warning(fitted(fit, dpar = NULL), "Set `rate = TRUE`")
+  expect_equal(residuals(fit)$residuals, data$y - counts$fitted)
+
+  for (rate in c(FALSE, TRUE)) {
+    expected = fitted(fit, rate = rate, summary = FALSE, draws_format = "matrix")
+    expect_no_warning((actual = posterior_epred.mcpfit(fit, rate = rate)))
+    expect_equal(actual, expected)
+    expect_equal(unname(actual[1, ]), if (rate) rep(0.5, 3) else data$N / 2)
+
+    set.seed(42)
+    expected = predict(fit, rate = rate, summary = FALSE, draws_format = "matrix")
+    expect_no_warning((actual = posterior_predict.mcpfit(fit, rate = rate, seed = 42)))
+    expect_equal(actual, expected)
+  }
+})
+
+
 ##################
 # TEST BERNOULLI #
 ##################
@@ -140,5 +176,3 @@ test_that("Binomial JAGS weights implement a likelihood power and sample on ordi
     df_bin$w * stats::dbinom(df_bin$y, size = df_bin$N, prob = 0.5, log = TRUE)
   )
 })
-
-

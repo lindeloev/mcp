@@ -54,3 +54,21 @@ warn_which_y = function(args, func_name) {
     warning(msg, call. = FALSE)
   }
 }
+
+
+# Warn when a binomial prediction relies on the pre-v0.4 proportion default.
+warn_binomial_rate = function(fit, newdata, what) {
+  if (fit$family$family != "binomial")
+    return(invisible(NULL))
+  if (is.null(newdata))
+    newdata = fit$data
+  trials = newdata[[mcp_columns(fit)$trials]]
+  if (any(trials != 1, na.rm = TRUE)) {
+    rlang::warn(
+      paste0("`", what, "()` now returns counts for binomial models by default. ",
+             "Before mcp 0.4 it returned proportions. Set `rate = TRUE` for ",
+             "proportions."),
+      .frequency = "once", .frequency_id = paste0("mcp_", what, "_rate")
+    )
+  }
+}

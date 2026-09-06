@@ -165,7 +165,7 @@ test_that("fit$simulate generates GARMA series recursively", {
 })
 
 
-test_that("posterior_predict generates fresh GARMA series recursively", {
+test_that("prediction interfaces share conditional and replicated GARMA behavior", {
   data = data.frame(x = 1:3, y = c(10, 20, 30))
   fit = mcp(
     list(y ~ 1 + ar(1)), data,
@@ -182,11 +182,17 @@ test_that("posterior_predict generates fresh GARMA series recursively", {
   set.seed(42)
   conditional = predict(fit, summary = FALSE, probs = FALSE)
   set.seed(42)
-  replicated = posterior_predict.mcpfit(fit)
+  conditional_matrix = posterior_predict.mcpfit(fit)
+  expect_equal(conditional_matrix, tidy_to_matrix(conditional, ".prediction"))
+  expect_equal(posterior_epred.mcpfit(fit), fitted(fit, summary = FALSE, draws_format = "matrix"))
+  set.seed(42)
+  replicated = posterior_predict.mcpfit(fit, conditional = FALSE)
+  set.seed(42)
+  expect_equal(predict(fit, conditional = FALSE, summary = FALSE, draws_format = "matrix"), replicated)
   set.seed(42)
   predictor_only = posterior_predict.mcpfit(
     fit,
-    newdata = data.frame(x = data$x)
+    newdata = data.frame(x = data$x), conditional = FALSE
   )
 
   expect_equal(conditional$.prediction, rep(c(0, 5, 10), 2), tolerance = 0.01)
@@ -205,11 +211,11 @@ test_that("posterior_predict generates fresh GARMA series recursively", {
 
   fit$data$y[2] = NA
   set.seed(42)
-  expect_equal(posterior_predict.mcpfit(fit), replicated)
+  expect_equal(posterior_predict.mcpfit(fit, conditional = FALSE), replicated)
 })
 
 
-test_that("prior predict generates fresh GARMA series recursively", {
+test_that("prior predict uses the same explicit replication setting", {
   data = data.frame(x = 1:3, y = c(10, 20, 30))
   fit = mcp(
     list(y ~ 1 + ar(1)), data,
@@ -223,13 +229,16 @@ test_that("prior predict generates fresh GARMA series recursively", {
   )
   fit$mcmc_prior = coda::mcmc.list(coda::mcmc(fixed_draws))
 
+  conditional = predict(fit, prior = TRUE, summary = FALSE)
+  expect_equal(conditional$.prediction, rep(c(0, 5, 10), 2), tolerance = 0.01)
   set.seed(42)
-  predicted = predict(fit, prior = TRUE, summary = FALSE, probs = FALSE)
+  predicted = predict(fit, prior = TRUE, conditional = FALSE, summary = FALSE, probs = FALSE)
   set.seed(42)
   predictor_only = predict(
     fit,
     newdata = data.frame(x = data$x),
     prior = TRUE,
+    conditional = FALSE,
     summary = FALSE,
     probs = FALSE
   )

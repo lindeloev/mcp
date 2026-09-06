@@ -1105,12 +1105,13 @@ tidy_samples = function(...) {
 #' @param newdata A `tibble` or a `data.frame` containing predictors in the model. 
 #' - If `NULL` (default), the original data is used.
 #' - For models with `ar()` or `ma()`: `fitted()`, `residuals()`, `log_lik()`,
-#'   and posterior `predict()` condition on the response history,
+#'   and `predict()` condition on the response history by default,
 #'   so `newdata` must include the response. For `fitted()`, `predict()`, and
 #'   `residuals()`, missing response histories are supported only in the original
-#'   fitted data, using retained posterior imputations. Prior `predict()` and
-#'   [`posterior_predict()`][rstantools::posterior_predict] generate fresh response
-#'   series recursively, so their `newdata` need only contain predictors. `log_lik()`
+#'   fitted data, using retained posterior imputations. With `conditional = FALSE`,
+#'   `predict()` and [`posterior_predict()`][rstantools::posterior_predict] generate
+#'   fresh response series recursively, so their `newdata` need only contain
+#'   predictors and required response auxiliaries. `log_lik()`
 #'   is unavailable when a missing response enters a later observed history.
 #' - For models with `y | weights()`: Require the weights column except for `fitted()` and `predict()`.
 #' @param summary Summarise at each x-value
@@ -1124,7 +1125,7 @@ tidy_samples = function(...) {
 #'   - `"loglik"`: return the log-likelihood for each draw for each data point. See also `log_lik()`.
 #'     Requires `scale = "response"`.
 #' @param probs Vector of quantiles. Only in effect when `summary == TRUE`.
-#' @param rate Logical scalar. For binomial models, return counts (`rate = FALSE`) or
+#' @param rate Logical scalar. For binomial models, return counts (`rate = FALSE`, the default for `fitted()` and `predict()`) or
 #'   the observed or expected success proportion (`rate = TRUE`). Predictions and
 #'   count-scale fitted values require a trials column in `newdata`.
 #'   Distributional parameters such as `dpar = "mu"` evaluate the parameter itself (e.g., success probability)
@@ -1236,7 +1237,7 @@ pp_eval = function(
     stop(
       "Conditional GARMA evaluation with missing responses is supported only for ",
       "the original fitted data, where retained posterior imputations are available. ",
-      "Use `posterior_predict()` to generate fresh replicated response series from ",
+      "Use `posterior_predict(..., conditional = FALSE)` to generate fresh replicated response series from ",
       "predictor-only `newdata`.",
       call. = FALSE
     )
@@ -1534,6 +1535,15 @@ pp_eval = function(
 #' `scale` where applicable.
 #'
 #' @details
+#' `fitted()` and `posterior_epred()` evaluate the same expected responses;
+#' `predict()` and `posterior_predict()` evaluate the same response distributions.
+#' The `posterior_*()` methods return draws-by-observation matrices, while
+#' `fitted()` and `predict()` summarise by default and also offer tidy draws.
+#' For binomial models, the default response scale is counts. Use `rate = TRUE`
+#' for proportions or `fitted(..., dpar = "mu")` for success probabilities.
+#' During migration from v0.3.4, an omitted `rate` warns once per session per
+#' function when counts differ from proportions. Explicit `rate` settings do not warn.
+#'
 #' `residuals(fit)` is equivalent to `fit$data[[mcp_columns(fit)$response]] - fitted(fit, ...)` (or `newdata[[mcp_columns(fit)$response]] - fitted(fit, ...)`),
 #' but with fixed arguments for `fitted`: `rate = FALSE, dpar = 'epred', draws_format = 'tidy'`.
 #'
@@ -1584,13 +1594,17 @@ NULL
 
 #' @aliases predict predict.mcpfit
 #' @describeIn execute-mcp-model Predictive Distribution
+#' @param conditional Logical. For AR/MA models, condition on observed response
+#'   histories (`TRUE`, default) or generate fresh histories recursively (`FALSE`).
+#'   Applies equally to prior and posterior draws. Predictive checks
+#'   with `pp_check()` generate fresh histories.
 #' @export
 predict.mcpfit = function(
   object,
   newdata = NULL,
   summary = TRUE,
   probs = TRUE,
-  rate = TRUE,
+  rate = FALSE,
   prior = FALSE,
   varying = TRUE,
   arma = TRUE,
@@ -1598,6 +1612,7 @@ predict.mcpfit = function(
   draws_format = "tidy",
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated(),
+  conditional = TRUE,
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "predict.mcpfit")
@@ -1607,6 +1622,10 @@ predict.mcpfit = function(
   dots$which_y = NULL
   if (length(dots) > 0)
     stop("Unrecognized argument(s) passed in `...`: ", and_collapse(names(dots)), call. = FALSE)
+
+  checkmate::assert_flag(conditional)
+  if (missing(rate))
+    warn_binomial_rate(object, newdata, "predict")
 
   pp_eval(
     object,
@@ -1621,7 +1640,7 @@ predict.mcpfit = function(
     arma = arma,
     ndraws = ndraws,
     draws_format = draws_format,
-    .garma_replicate = prior
+    .garma_replicate = !conditional
   )
 }
 
@@ -1634,7 +1653,7 @@ fitted.mcpfit = function(
   newdata = NULL,
   summary = TRUE,
   probs = TRUE,
-  rate = TRUE,
+  rate = FALSE,
   prior = FALSE,
   dpar = "epred",
   varying = TRUE,
@@ -1655,6 +1674,9 @@ fitted.mcpfit = function(
   dots$which_y = NULL
   if (length(dots) > 0)
     stop("Unrecognized argument(s) passed in `...`: ", and_collapse(names(dots)), call. = FALSE)
+
+  if (missing(rate) && (is.null(dpar) || identical(dpar, "epred")) && scale == "response")
+    warn_binomial_rate(object, newdata, "fitted")
 
   pp_eval(
     object,
@@ -1682,10 +1704,8 @@ fitted.mcpfit = function(
 #' These methods and workflows require the suggested package `{rstantools}`.
 #'
 #' @param object An `mcpfit` object.
-#' @param newdata Optional data frame at which to evaluate the model. For GARMA
-#'   `posterior_predict()`, only predictors and required response auxiliaries are
-#'   needed: each response series is generated recursively without conditioning
-#'   on an observed response column.
+#' @inheritParams pp_eval
+#' @inheritParams predict.mcpfit
 #' @param draws,ndraws Number of posterior draws to return. `draws` follows the
 #'   `{rstantools}` convention; `ndraws` is the mcp spelling. Supply at most one.
 #' @param re.form,re_formula Group-level effects to include. `NULL` includes all
@@ -1697,18 +1717,18 @@ fitted.mcpfit = function(
 #' @param seed Optional integer seed for draw selection and posterior prediction.
 #' @param ... Must be empty. Reserved for future use.
 #' @return A numeric `N_draws` by `nrow(newdata)` matrix.
-#' @details For GARMA models, `posterior_predict()` generates each replicated
-#'   response series recursively. It does not condition later predictions on
-#'   the observed response history, unlike `fitted()` and posterior `predict()`.
+#' @details For GARMA models, `posterior_predict()` conditions on the observed
+#'   response history, just like `predict()`. Use `conditional = FALSE` in either
+#'   method to generate fresh response histories recursively.
 #'   These methods require posterior draws. For prior prediction, use
-#'   `predict()` with `prior = TRUE`, which also generates fresh series.
+#'   `predict()` with `prior = TRUE`; `conditional` selects the same behavior.
 #'
 #'   For binomial models, `posterior_epred()` and `posterior_predict()` (and
 #'   corresponding `{tidybayes}` workflows such as `add_epred_draws()`) follow
 #'   `{brms}` and `{rstantools}` conventions by returning values on the outcome
 #'   count scale (`rate = FALSE`), i.e., expected counts \eqn{E[Y] = n\mu} and
-#'   simulated counts in \eqn{\{0, \dots, n\}}. In contrast, `fitted()` and `predict()`
-#'   default to proportions (`rate = TRUE`). To obtain the success probability
+#'   simulated counts in \eqn{\{0, \dots, n\}}, matching `fitted()` and `predict()`.
+#'   Use `rate = TRUE` for proportions. To obtain the success probability
 #'   parameter \eqn{\mu} on the \eqn{[0, 1]} scale regardless of trial counts, pass
 #'   `dpar = "mu"`.
 #' @seealso [fitted.mcpfit()], [predict.mcpfit()]
@@ -1721,6 +1741,7 @@ posterior_epred.mcpfit = function(
   re_formula = NULL,
   dpar = NULL,
   seed = NULL,
+  rate = FALSE,
   ...
 ) {
   posterior_prediction_matrix(
@@ -1733,6 +1754,7 @@ posterior_epred.mcpfit = function(
     re_formula = re_formula,
     dpar = dpar,
     scale = "response",
+    rate = rate,
     seed = seed,
     ...
   )
@@ -1748,6 +1770,8 @@ posterior_predict.mcpfit = function(
   re.form = NULL,
   re_formula = NULL,
   seed = NULL,
+  rate = FALSE,
+  conditional = TRUE,
   ...
 ) {
   posterior_prediction_matrix(
@@ -1759,6 +1783,8 @@ posterior_predict.mcpfit = function(
     re.form = re.form,
     re_formula = re_formula,
     seed = seed,
+    rate = rate,
+    conditional = conditional,
     ...
   )
 }
@@ -1808,10 +1834,12 @@ posterior_prediction_matrix = function(
   scale = "response",
   rate = FALSE,
   seed = NULL,
+  conditional = TRUE,
   ...
 ) {
+  checkmate::assert_flag(conditional)
   checkmate::assert_class(object, "mcpfit")
-  mcmclist_draws(object, message = FALSE, fallback_to_prior = FALSE)
+  mcmclist_draws(object)
   dots = list(...)
   if (length(dots) > 0)
     stop("Unrecognized argument(s): ", and_collapse(names(dots)), call. = FALSE)
@@ -1842,7 +1870,7 @@ posterior_prediction_matrix = function(
     ndraws = ndraws,
     draws_format = "matrix",
     scale = scale,
-    .garma_replicate = type == "predict"
+    .garma_replicate = !conditional
   )
 }
 
