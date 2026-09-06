@@ -363,14 +363,19 @@ mcpfamily_binomial = function(family) {
     likelihood = function(context) {
       weights = context$aux("weights", "1")
 
+      # Unweighted likelihood
       if (identical(weights, "1")) {
         paste0(context$y, " ~ dbin(", context$dpar("mu"), ", ", context$aux("trials"), ")")
       } else {
+        # Weighted likelihood requires max() to cap JAGS extreme values/overflow.
+        trials = context$aux("trials")
+        mu = context$dpar("mu")
+        y = context$y
         c(
           "# Binomial likelihood raised to the observation weight",
           paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)  # Ensures weight 1 if missing data"),
-          paste0(context$y, " ~ dbin(", context$dpar("mu"), ", ", context$aux("trials"), ")"),
-          paste0("likelihood_zero_[i_] ~ dexp(pow(", context$dpar("mu"), ", (likelihood_weight_[i_] - 1) * ", context$y, ") * pow(1 - ", context$dpar("mu"), ", (likelihood_weight_[i_] - 1) * (", context$aux("trials"), " - ", context$y, ")))")
+          paste0(y, " ~ dbin(", mu, ", ", trials, ")"),
+          paste0("likelihood_zero_[i_] ~ dexp(exp(max(-700, (likelihood_weight_[i_] - 1) * (loggam(", trials, " + 1) - loggam(", y, " + 1) - loggam(", trials, " - ", y, " + 1) + ", y, " * log(", mu, ") + (", trials, " - ", y, ") * log(1 - ", mu, ")))))")
         )
       }
     }
@@ -524,14 +529,18 @@ mcpfamily_poisson = function(family) {
     likelihood = function(context) {
       weights = context$aux("weights", "1")
 
+      # Unweighted likelihood
       if (identical(weights, "1")) {
         paste0(context$y, " ~ dpois(", context$dpar("mu"), ")")
       } else {
+        # Weighted likelihood requires max() to cap JAGS extreme values/overflow.
+        mu = context$dpar("mu")
+        y = context$y
         c(
           "# Poisson likelihood raised to the observation weight",
           paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)  # Ensures weight 1 if missing data"),
-          paste0(context$y, " ~ dpois(", context$dpar("mu"), ")"),
-          paste0("likelihood_zero_[i_] ~ dexp(pow(", context$dpar("mu"), ", (likelihood_weight_[i_] - 1) * ", context$y, ") * exp((1 - likelihood_weight_[i_]) * ", context$dpar("mu"), "))")
+          paste0(y, " ~ dpois(", mu, ")"),
+          paste0("likelihood_zero_[i_] ~ dexp(exp(max(-700, (likelihood_weight_[i_] - 1) * (", y, " * log(", mu, ") - ", mu, " - loggam(", y, " + 1)))))")
         )
       }
     }
@@ -601,20 +610,21 @@ mcpfamily_negbinomial = function(family) {
     prob = context$local("nb_prob")
     weights = context$aux("weights", "1")
 
+    # Unweighted likelihood
     if (identical(weights, "1")) {
       c(
         paste0(prob, " = ", shape, " / (", shape, " + ", mu, ")"),
         paste0(context$y, " ~ dnegbin(", prob, ", ", shape, ")")
       )
     } else {
-      log_rate = context$local("nb_log_rate")
+      # Weighted likelihood requires max() to cap JAGS extreme values/overflow.
+      y = context$y
       c(
         paste0(prob, " = ", shape, " / (", shape, " + ", mu, ")"),
-        paste0(context$y, " ~ dnegbin(", prob, ", ", shape, ")"),
+        paste0(y, " ~ dnegbin(", prob, ", ", shape, ")"),
         "# Negative binomial likelihood raised to the observation weight",
         paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)  # Ensures weight 1 if missing data"),
-        paste0(log_rate, " = (likelihood_weight_[i_] - 1) * (loggam(", context$y, " + ", shape, ") - loggam(", shape, ") + ", shape, " * log(", shape, " / (", shape, " + ", mu, ")) + ", context$y, " * log(", mu, " / (", shape, " + ", mu, ")))"),
-        paste0("likelihood_zero_[i_] ~ dexp(exp(", log_rate, "))")
+        paste0("likelihood_zero_[i_] ~ dexp(exp(max(-700, (likelihood_weight_[i_] - 1) * (loggam(", y, " + ", shape, ") - loggam(", shape, ") - loggam(", y, " + 1) + ", shape, " * log(", prob, ") + ", y, " * log(1 - ", prob, ")))))")
       )
     }
   })

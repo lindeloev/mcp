@@ -164,7 +164,7 @@ Autoregression (`ar()`) has been generalized to link-scale observation-driven GA
 
   - `pp_check(..., ndraws = NULL)` errored. Fixed.
 
-- Weighted regression now uses brms-style likelihood weights throughout: JAGS targets the Gaussian density raised to `weight`, `log_lik()` multiplies each Gaussian log density by `weight`, and predictive draws use the unweighted response distribution with standard deviation `sigma`. In v0.3.4, weights instead acted as Gaussian precision weights and R-side predictions and information criteria were not fully consistent with the fitted model.
+- Weighted regression now uses brms-style likelihood weights throughout: JAGS targets the likelihood raised to `weight`, `log_lik()` multiplies each log density by `weight`, and predictive draws use the unweighted response distribution. In v0.3.4, weights instead acted as Gaussian precision weights and R-side predictions and information criteria were not fully consistent with the fitted model.
 
 - In models going from higher-order to lower-order, (`~ ar(2), ~ ar(1)`), the higher-order components were not "turned off".
 

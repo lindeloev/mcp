@@ -122,3 +122,23 @@ test_good(good_bernoulli,
           data = data_binomial,
           family = bernoulli())
 
+
+test_that("Binomial JAGS weights implement a likelihood power and sample on ordinary large counts", {
+  # Test reproduction failure case: 1000 successes out of 2000 trials with weight of 2
+  df_bin = data.frame(x = 1:5, y = rep(1000, 5), N = 2000, w = 2)
+  fit = mcp(list(y | trials(N) + weights(w) ~ 1), data = df_bin, family = binomial(), par_x = "x")
+  expect_true(is.list(fit$model))
+  expect_equal(nrow(summary(fit)), 1)
+  expect_true(abs(summary(fit)$mean[1] - 0) < 0.1)
+
+  expect_match(fit$jags_code, "likelihood_weight_[i_] = 1 + response_observed_[i_] * (w[i_] - 1)", fixed = TRUE)
+  expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dexp(exp(max(-700, (likelihood_weight_[i_] - 1) * (loggam(N[i_] + 1) - loggam(y[i_] + 1) - loggam(N[i_] - y[i_] + 1) + y[i_] * log(mu_[i_]) + (N[i_] - y[i_]) * log(1 - mu_[i_])))))", fixed = TRUE)
+
+  # Check that package R-side log_lik applies the weights directly
+  expect_equal(
+    fit$family$r$log_lik(df_bin$y, list(mu = rep(0.5, 5)), list(trials = df_bin$N, weights = df_bin$w)),
+    df_bin$w * stats::dbinom(df_bin$y, size = df_bin$N, prob = 0.5, log = TRUE)
+  )
+})
+
+
