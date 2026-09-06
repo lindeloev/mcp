@@ -89,9 +89,14 @@ jobs:
           extra-packages: any::rcmdcheck, any::covr
           needs: check, coverage
 
+      # Install TinyTeX only on one runner to verify PDF manual
+      - uses: r-lib/actions/setup-tinytex@v2
+        if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
+
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
+          args: ${{ (matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release') && 'c("--as-cran")' || 'c("--no-manual", "--as-cran")' }}
 
       # Run test coverage on the fastest-to-run job
       - name: Test coverage

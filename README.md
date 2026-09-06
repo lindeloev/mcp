@@ -4,7 +4,7 @@
 [![mcp Github Actions
 status](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg?branch=dev)](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml?query=branch%3Adev)
 [![mcp Codecov
-status](https://codecov.io/gh/lindeloev/mcp/branch/dev/graph/badge.svg)](https://codecov.io/gh/lindeloev/mcp/branch/dev)
+status](https://codecov.io/gh/lindeloev/mcp/branch/dev/graph/badge.svg)](https://app.codecov.io/gh/lindeloev/mcp/branch/dev)
 [![mcp CRAN
 status](https://www.r-pkg.org/badges/version/mcp)](https://CRAN.R-project.org/package=mcp)
 [![mcp CRAN

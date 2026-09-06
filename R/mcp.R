@@ -123,7 +123,9 @@
 #' @details
 #' **The mcp model**
 #'
-#' \figure{mcp_demo.png}{options: width="500" alt="Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope"}
+#' \if{html}{\figure{mcp_demo.png}{options: width="500" alt="Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope"}}
+#' \if{latex}{\figure{mcp_demo.png}{options: width=5in}}
+#' \if{text}{\figure{mcp_demo.png}{[Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope]}}
 #'
 #' An `mcp` model divides a continuous predictor \eqn{x} into \eqn{K} segments separated by
 #' ordered change points \eqn{\Delta_1 < \dots < \Delta_{K-1}}. In each segment \eqn{k \in \{1, \dots, K\}},

@@ -29,7 +29,7 @@ if (!branch %in% c("dev", "main")) branch = "main"
 
 # mcp: Regression with Multiple Change Points<img src="man/figures/logo_200px.png" align="right" style="padding: 20px; padding-right: 0px;"/>
 `r sprintf("[![mcp Github Actions status](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg?branch=%s)](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml?query=branch%%3A%s)", branch, branch)` 
-`r sprintf("[![mcp Codecov status](https://codecov.io/gh/lindeloev/mcp/branch/%s/graph/badge.svg)](https://codecov.io/gh/lindeloev/mcp/branch/%s)", branch, branch)` 
+`r sprintf("[![mcp Codecov status](https://codecov.io/gh/lindeloev/mcp/branch/%s/graph/badge.svg)](https://app.codecov.io/gh/lindeloev/mcp/branch/%s)", branch, branch)` 
 [![mcp CRAN status](https://www.r-pkg.org/badges/version/mcp)](https://CRAN.R-project.org/package=mcp) 
 [![mcp CRAN downloads](https://cranlogs.r-pkg.org/badges/mcp)](https://cranlogs.r-pkg.org/badges/mcp)
 
