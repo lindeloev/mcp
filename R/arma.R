@@ -300,7 +300,9 @@ arma_root_violations = function(values, component) {
 #' @return `NULL`, invisibly.
 warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
   diagnostics = resolve_diagnostics(diagnostics)
-  model_predictors = get_fit_model_tables(fit)$predictors
+  model_tables = get_fit_model_tables(fit)
+  model_predictors = model_tables$predictors
+  model_group_effects = model_tables$group_effects
   components = intersect(c("ar", "ma"), unique(model_predictors$dpar))
   enabled = vapply(components, function(component) {
     !is.null(diagnostics[[component]])
@@ -332,7 +334,7 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
 
   values = evaluate_model_dpars(
     fit, as.list(draws_predictors),
-    paste0(".pred_", model_predictors$code_name)
+    paste0(".pred_", get_predictor_design_names(model_predictors, model_group_effects))
   )
   components = intersect(c("ar", "ma"), unique(model_predictors$dpar))
   probabilities = vapply(components, function(component) {
