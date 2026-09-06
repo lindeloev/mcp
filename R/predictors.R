@@ -105,11 +105,7 @@ get_definition_lifetimes = function(definitions, by) {
 # Return the earliest of two segment boundaries (NA means no boundary)
 # - x, y: Integer vectors of segment boundaries (NA indicates no boundary).
 earliest_segment = function(x, y) {
-  dplyr::case_when(
-    is.na(x) ~ y,
-    is.na(y) ~ x,
-    TRUE ~ pmin(x, y)
-  )
+  pmin(x, y, na.rm = TRUE)
 }
 
 
@@ -458,7 +454,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
     }
   }
 
-  predictors = data.frame(
+  predictors = tibble::tibble(
     dpar = dpar,
     segment = segment,
     matrix_name = matrix_name,
@@ -474,17 +470,9 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
     x_factor = x_factor,
     design_id = design_id,
     design_col = seq_len(ncol(mat_without_x)),
-    matrix_col = seq_len(ncol(mat_without_x)),
-    stringsAsFactors = FALSE
-  ) %>%
-    # Add data
-    dplyr::rowwise() %>%
-    dplyr::mutate(
-      design_spec = list(design$spec),
-      matrix_data = list(mat_without_x[, .data$matrix_col])
-    ) %>%
-    dplyr::ungroup() %>%
-    dplyr::select(-"matrix_col")
+    design_spec = rep(list(design$spec), ncol(mat_without_x)),
+    matrix_data = lapply(seq_len(ncol(mat_without_x)), function(i) mat_without_x[, i])
+  )
 
   # Return
   predictors

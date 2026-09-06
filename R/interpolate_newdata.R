@@ -21,7 +21,7 @@ get_x_values = function(fit, by = NULL, prior = FALSE, arma = NULL) {
   X_RESOLUTION_GROUPED = 300
 
   if (is.null(arma))
-    arma = has_arma_terms(fit)
+    arma = is_arma(fit)
 
   data_columns = mcp_columns(fit)
   xdata = fit$data[, data_columns$par_x] %>% as.numeric()
@@ -151,7 +151,7 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 #' }
 interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma = NULL) {
   if (is.null(arma))
-    arma = has_arma_terms(fit)
+    arma = is_arma(fit)
 
   # Conditional AR/MA predictions depend sequentially on the observed response
   # history. Preserve the observed design rather than creating a factorial grid.

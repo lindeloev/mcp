@@ -199,7 +199,7 @@ get_plot = function(x,
   ############################
   # MAKE NEWDATA AND PREDICT #
   ############################
-  needs_arma = arma && has_arma_terms(fit) && dpar %in% c("epred", "mu")
+  needs_arma = arma && is_arma(fit) && dpar %in% c("epred", "mu")
   newdata = interpolate_newdata(fit, by = by, at = at, arma = needs_arma)
 
   # Predict

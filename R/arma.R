@@ -166,7 +166,7 @@ assert_arma_series = function(data, series) {
 
 # Check whether this model has any AR/MA terms
 is_arma = function(fit) {
-  has_arma_terms(fit)
+  any(get_fit_model_tables(fit)$predictors$dpar %in% c("ar", "ma"))
 }
 
 

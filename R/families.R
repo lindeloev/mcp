@@ -675,11 +675,7 @@ resolve_dpar_specs = function(family, predictors, model = NULL) {
     modeled_dpars = union(modeled_dpars, declared_dpars)
   }
 
-  family$dpar_specs$modeled = vapply(
-    family$dpar_specs$dpar,
-    function(dpar) dpar %in% modeled_dpars,
-    logical(1)
-  )
+  family$dpar_specs$modeled = family$dpar_specs$dpar %in% modeled_dpars
   family$dpar_specs$link = ifelse(
     family$dpar_specs$modeled,
     family$dpar_specs$link_modeled,

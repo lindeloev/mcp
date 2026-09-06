@@ -315,12 +315,6 @@ mcp_columns = function(fit) {
 }
 
 
-# Does this fit include autoregressive or moving-average terms?
-has_arma_terms = function(fit) {
-  any(get_fit_model_tables(fit)$predictors$dpar %in% c("ar", "ma"))
-}
-
-
 #' Build the table of group-level effects
 #'
 #' @keywords internal

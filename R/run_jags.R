@@ -14,11 +14,10 @@
 #' @inheritParams rjags::coda.samples
 #' @param jags_code A string. JAGS model, usually returned by `get_jags_code()`.
 #' @param pars Character vector of parameters to save/monitor.
-#' @return `mcmc.list``
+#' @return `mcmc.list`
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-run_jags = function(data,
-                    jags_code,
+run_jags = function(jags_code,
                     jags_data,
                     pars,
                     sample,

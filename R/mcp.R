@@ -480,7 +480,6 @@ mcp = function(model,
   # Sample posterior
   if (sample %in% c("post", "both")) {
     mcmc_post = run_jags(
-      data = data,
       jags_code = jags_code,
       jags_data = jags_data,
       pars = c(all_pars, imputed_response_nodes),
@@ -518,7 +517,6 @@ mcp = function(model,
       jags_data_prior$response_observed_[] = 0L
 
     mcmc_prior = run_jags(
-      data = data,
       jags_code = jags_code,
       jags_data = jags_data_prior,
       pars = all_pars,

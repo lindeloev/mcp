@@ -865,15 +865,7 @@ unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
   group_effects = get_fit_model_tables(fit)$group_effects
   use_group = rep(FALSE, nrow(group_effects))
 
-  # If everything is NULL, just return NULLs
-  if ((is.null(pars) && is.null(cols))) {
-    return(list(
-      pars = NULL,
-      cols = NULL,
-      indices = use_group,
-      effects = group_effects[use_group, , drop = FALSE]
-    ))
-  } else if (!is.null(pars) && !is.null(cols)) {
+  if (!is.null(pars) && !is.null(cols)) {
     stop("One of `pars` and `cols` must be NULL.")
   }
 

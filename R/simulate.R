@@ -102,7 +102,6 @@ add_rhs_predictors = function(newdata, fit) {
   predictors = model_tables$predictors
   group_effects = model_tables$group_effects
   design_specs = model_tables$design_specs
-  data_columns = mcp_columns(fit)
   predictors = evaluate_fitted_designs(
     predictors, design_specs, newdata
   )
@@ -149,20 +148,17 @@ get_sim_pars = function(cps, predictors, group_effects) {
 
 #' Evaluate model and return a list of dpars
 #'
-#' This is currently hard-coded to be run from `simulate_vectorized`.
-#' It serves to scope the evaluation of the model to prevent name conflicts.
+#' Evaluates the model in a separate environment to prevent name conflicts.
 #'
 #' @keywords internal
 #' @noRd
 #' @param fit An `mcpfit` object.
 #' @param args args from `simulate_vectorized`
+#' @param pred_pars Design-column argument names in model-matrix order.
 #' @return `data.frame` with one column per dpar
-#' @noRd
 evaluate_model_dpars = function(fit, args, pred_pars) {
-  # Generate more predictors
-  pred_args = args[names(args) %in% pred_pars]
-  rhs_matrix_ = do.call(cbind, pred_args)
-  rhs_matrix_ = rhs_matrix_[, match(pred_pars, colnames(rhs_matrix_)), drop = FALSE]  # Same order as predictors$code_name no matter order of args
+  # Assemble design columns in model-matrix order, regardless of argument order.
+  rhs_matrix_ = do.call(cbind, args[pred_pars])
 
   cp_0 = -Inf
   assign(paste0("cp_", length(fit$model)), Inf)  # e.g., cp_3 = Inf

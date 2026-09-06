@@ -65,6 +65,7 @@ test_runs = function(model,
         model = model,
         data = data,
         family = family,
+        prior = prior,
         sample = "both",  # prior and posterior to check hypotheses
         par_x = par_x,
         warmup = 6,

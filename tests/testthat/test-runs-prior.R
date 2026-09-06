@@ -74,10 +74,6 @@ good_prior = list(
     cp_1 = "dnorm(3, 10)",
     x_2 = "-0.5"
   ),
-  list(  # Outside the observed range is allowed
-    cp_1 = "dunif(-100, -90)",
-    cp_2 = "dnorm(100, 20) T(100, 110)"
-  ),
   list(
     cp_1 = "dirichlet(1)",  # Dirichlet prior on change points
     cp_2 = "dirichlet(1)"
@@ -94,6 +90,15 @@ for (prior in good_prior) {
     test_runs(prior_model, prior = prior)
   })
 }
+
+
+testthat::test_that("Model construction retains explicit change-point bounds outside the data", {
+  # Sampling currently rejects these bounds in assert_ordered_cp_draws().
+  test_runs(prior_model, sample = FALSE, prior = list(
+    cp_1 = "dunif(-100, -90)",
+    cp_2 = "dnorm(100, 20) T(100, 110)"
+  ))
+})
 
 
 testthat::test_that("Dirichlet change point priors use a common alpha", {

@@ -140,7 +140,7 @@ test_that("mcp builds MA parameters and JAGS code", {
   data = data.frame(x = 1:6, y = 1:6)
   fit = mcp(list(y ~ 1 + ma(1)), data, par_x = "x", sample = FALSE)
 
-  expect_true(has_arma_terms(fit))
+  expect_true(is_arma(fit))
   expect_match(fit$jags_code, "ma1_\\[i_\\] \\* resid_ma_\\[i_ - 1\\]")
 })
 

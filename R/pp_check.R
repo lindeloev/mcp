@@ -53,11 +53,6 @@ pp_check.mcpfit = function(
   checkmate::assert_flag(arma)
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
 
-  # Check and recode inputs
-  if (!is.null(facet_by))
-    if (!is.character(facet_by) || length(facet_by) != 1)
-      stop("`facet_by` must be a single character string.")
-
   if (is.null(newdata)) {
     eval_data = fit$data
   } else {
