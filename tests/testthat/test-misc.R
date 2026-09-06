@@ -845,6 +845,43 @@ test_that("hypothesis()", {
     "tested value is in a sparse tail",
     fixed = TRUE
   )
+
+  # Degenerate hypotheses with constant prior contrasts are rejected
+  expect_error(
+    hypothesis(fit_same, "Intercept_1 = Intercept_1"),
+    "prior contrast is constant",
+    fixed = TRUE
+  )
+
+  fit_fixed = fit_same
+  mcmc_prior = .subset2(fit_fixed, "mcmc_prior")
+  mcmc_post = .subset2(fit_fixed, "mcmc_post")
+  for (chain in seq_along(mcmc_prior)) {
+    mcmc_prior[[chain]][, "sigma_1"] = 1
+    mcmc_post[[chain]][, "sigma_1"] = 1
+  }
+  fit_fixed$mcmc_prior = mcmc_prior
+  fit_fixed$mcmc_post = mcmc_post
+  expect_error(
+    hypothesis(fit_fixed, "sigma_1 = 0.99"),
+    "prior contrast is constant",
+    fixed = TRUE
+  )
+
+  fit_shared = fit_same
+  mcmc_prior = .subset2(fit_shared, "mcmc_prior")
+  mcmc_post = .subset2(fit_shared, "mcmc_post")
+  for (chain in seq_along(mcmc_prior)) {
+    mcmc_prior[[chain]][, "Intercept_3"] = mcmc_prior[[chain]][, "Intercept_1"]
+    mcmc_post[[chain]][, "Intercept_3"] = mcmc_post[[chain]][, "Intercept_1"]
+  }
+  fit_shared$mcmc_prior = mcmc_prior
+  fit_shared$mcmc_post = mcmc_post
+  expect_error(
+    hypothesis(fit_shared, "Intercept_1 = Intercept_3"),
+    "prior contrast is constant",
+    fixed = TRUE
+  )
 })
 
 
@@ -883,6 +920,7 @@ test_that("Savage-Dickey density is evaluated directly", {
   expect_gte(get_density(x, 10), 0)
   expect_false(is_sparse_tail(x, 0))
   expect_true(is_sparse_tail(x, 3))
+  expect_error(get_density(rep(1, 101), 0), "Cannot estimate density for constant values", fixed = TRUE)
 })
 
 

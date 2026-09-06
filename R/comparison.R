@@ -409,6 +409,15 @@ hypothesis.mcpfit = function(fit, hypotheses, width = 0.95, prior = FALSE, ...) 
         if (!coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) || !coda::is.mcmc.list(.subset2(fit, "mcmc_post")))
           stop("Model contains '='. Both prior and posterior draws are needed to compute Savage-Dickey density ratios. Run mcp(..., sample = 'both').")
 
+        # Check that that both prior contrast and posterior contrast are distributed (not constants)
+        # Protects against "x_1 - x_1 = 1" and prior = list(x_1 = 3)
+        prior_values = get_hypothesis_values(posterior_draws(fit, prior = TRUE), LHS)
+        post_values = get_hypothesis_values(posterior_draws(fit), LHS)
+        if (diff(range(prior_values)) == 0)
+          stop("Cannot compute Savage-Dickey density ratio because the prior contrast is constant: ", expression, call. = FALSE)
+        if (diff(range(post_values)) == 0)
+          stop("Cannot compute Savage-Dickey density ratio because the posterior contrast is constant: ", expression, call. = FALSE)
+
         # Warning if testing against default priors
         hypothesis_pars = sub("\\[.*\\]$", "", all.vars(rlang::parse_expr(expression)))
         is_default_pars = fit$.internal$prior_table$parameter %in% hypothesis_pars & fit$.internal$prior_table$source == "default"
@@ -558,6 +567,9 @@ validate_savage_dickey_expression = function(expression, parameters) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_density = function(x, value) {
+  if (diff(range(x)) == 0) {
+    stop("Cannot estimate density for constant values.", call. = FALSE)
+  }
   bandwidth = tryCatch(stats::bw.SJ(x), error = function(e) stats::bw.nrd0(x))
   mean(stats::dnorm(value, mean = x, sd = bandwidth))
 }
