@@ -28,10 +28,8 @@ if (!branch %in% c("dev", "main")) branch = "main"
 ```
 
 # mcp: Regression with Multiple Change Points<img src="man/figures/logo_200px.png" align="right" style="padding: 20px; padding-right: 0px;"/>
-`r sprintf("[![mcp Github Actions status](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg?branch=%s)](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml?query=branch%%3A%s)", branch, branch)` 
-`r sprintf("[![mcp Codecov status](https://codecov.io/gh/lindeloev/mcp/branch/%s/graph/badge.svg)](https://app.codecov.io/gh/lindeloev/mcp/branch/%s)", branch, branch)` 
-[![mcp CRAN status](https://www.r-pkg.org/badges/version/mcp)](https://CRAN.R-project.org/package=mcp) 
-[![mcp CRAN downloads](https://cranlogs.r-pkg.org/badges/mcp)](https://cranlogs.r-pkg.org/badges/mcp)
+
+`r sprintf("[![mcp Github Actions status](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg?branch=%s)](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml?query=branch%%3A%s)", branch, branch)` `r sprintf("[![mcp Codecov status](https://codecov.io/gh/lindeloev/mcp/branch/%s/graph/badge.svg)](https://app.codecov.io/gh/lindeloev/mcp/branch/%s)", branch, branch)` [![mcp CRAN status](https://www.r-pkg.org/badges/version/mcp)](https://CRAN.R-project.org/package=mcp) [![mcp CRAN downloads](https://cranlogs.r-pkg.org/badges/mcp)](https://cranlogs.r-pkg.org/badges/mcp)
 
 `mcp` does `lm`/`glm`/`brms`-like regression with Multiple Change Points (hence "`mcp`") using Bayesian inference. `mcp` is especially useful if you have a priori knowledge about the number of change points and the trend of the segments in between. It supports GLMs with group-level effects (random effects), AR/MA, and regression on distributional parameters (`sigma`, `shape`, etc.).
 
@@ -53,7 +51,7 @@ or install the development version from GitHub:
 
 ``` r
 if (!requireNamespace("remotes")) install.packages("remotes")
-remotes::install_github("lindeloev/mcp")
+remotes::install_github("lindeloev/mcp@dev")
 ```
 
 `mcp` uses JAGS through `rjags`. If installation of `rjags` reports that JAGS headers or libraries are missing, install [JAGS 4.x](https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/) and rerun the `mcp` installation. JAGS 5 is supported when `rjags` 5 is released.
@@ -77,10 +75,9 @@ The change point(s) are the `x` at which data changes from being better predicte
 
 You can do change point regression for a large number of models in a syntax that aligns with `lm()`/`glm()`/`brms`. E.g.:
 
-![](`r sprintf("https://lindeloev.github.io/mcp/%smcp_showcase_small.png", ifelse(branch == "dev", "dev/", ""))`)
+![](%60r%20sprintf(%22https://lindeloev.github.io/mcp/%smcp_showcase_small.png%22,%20ifelse(branch%20==%20%22dev%22,%20%22dev/%22,%20%22%22))%60)
 
 # Brief worked example
-
 
 The following model infers the two change points between three segments. You can run this complete worked example (which fits the model and plots by default) in one line:
 
@@ -197,7 +194,6 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 - Do Leave-One-Out Cross-Validation using `loo(fit)` and `loo::loo_compare(loo1, loo2)`.
 
 - Compute Savage-Dickey density ratios using `hypothesis(fit, "cp_1 = 40")`.
-
 
 [Group-level (random) effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
 

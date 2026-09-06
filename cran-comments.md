@@ -2,21 +2,26 @@
 
 ## Notes for the reviewer
 * This is a major update to `mcp`, which has been on CRAN since 2020.
-* This release has breaking changes now, with limited breaking changes expected towards release 1.0. The breaking changes serve to feel "R-native", including following emerging standards. Most breaking changes include informative deprecation messages and backwards-compatible soft fallbacks where appropriate.
+* This release introduces API changes to align `mcp` with R-native conventions (generics, `{posterior}` and `{tidybayes}` and `{brms}` standards). Parameter estimates and core modeling remain consistent with v0.3.4. Breaking changes include informative deprecation messages and backwards-compatible soft fallbacks where appropriate.
+* Reverse dependencies have been tested and remain completely functional.
 
 ## Test environments
-* Local Linux (Ubuntu), R 4.6.1
-* win-builder (release, devel)
-* macOS builder (release)
-* ubuntu (oldrel, release, devel)
+* Local: Ubuntu Linux, R 4.6.1
+* win-builder: Windows Server (release, devel)
+* GitHub Actions: Ubuntu (oldrel, release, devel), macOS (release), Windows (release, devel)
 
 ## R CMD check results
 There were no ERRORs, WARNINGs, or NOTEs.
 
 ## Downstream dependencies
-* All reverse dependencies were checked.
-* There is one reverse imports (glossa) which is unaffected. Maintainer notified on 2026-08-09 nonetheless.
-  There is one reverse suggests (smoothrb), comparing to `mcp` in vignette "brms-comparison". Maintainer was notified on 2026-08-09 and responded affirmatively.
+All reverse dependencies were checked using `revdepcheck`:
+* Reverse Imports: `glossa` (unaffected; maintainer notified on 2026-08-09).
+* Reverse Suggests: `smoothrb` (used in vignette; maintainer notified on 2026-08-09 and will update vignette).
+
+
+
+
+# ------- previous submissions -------
 
 
 # Resubmission

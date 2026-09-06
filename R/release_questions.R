@@ -13,7 +13,7 @@ release_questions = function() {
     "TEST: Have you run `revdepcheck::revdep_check()` and notified?",
     "TEST: have you run devtools::check_win_devel(); devtools::check_win_release()?",
     "TEST: have you run urlchecker::url_check()?",
-    "TEST: have you run devtools::build_manual(path = tempdir())? Requires tinytex",
+    "TEST: have you run devtools::build_manual(path = 'dev')? Requires tinytex",
 
     "BUILD: Have you run data-raw/release.R?",
 
