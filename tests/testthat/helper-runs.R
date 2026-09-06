@@ -382,10 +382,10 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
   } else {
     testthat::expect_true(is.data.frame(result))
     testthat::expect_equal(nrow(result), nrow(fit$data))  # Returns same number of rows as data
-    if (fit$family$family == "poisson") {
+    if (fit$family$family %in% c("poisson", "negbinomial", "binomial", "bernoulli")) {
       # Extremely diffuse draws from these deliberately tiny test fits can
-      # overflow derived Poisson summaries. Data keys must remain intact and
-      # the estimate itself must not be entirely missing.
+      # overflow derived summaries (e.g. infinite count means or log-likelihoods).
+      # Data keys must remain intact and the estimate itself must not be entirely missing.
       data_cols = intersect(
         c(columns$par_x, columns$response, columns$trials, rhs_cols, varying_cols),
         colnames(result)

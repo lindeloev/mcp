@@ -279,6 +279,7 @@ mcpfamily_gaussian = function(family) {
       }
     }
   )
+
   garma = if (family$link == "identity") {
     list(
       observed_r = function(y, data, boundary) y,
@@ -290,6 +291,7 @@ mcpfamily_gaussian = function(family) {
   family$linkfun = get_link_function(family$link)
   family$linkinv = get_link_function(family$link, inverse = TRUE)
 
+  # Return
   new_mcpfamily(
     family,
     dpar_specs = dplyr::bind_rows(
@@ -919,7 +921,7 @@ is.mcpfamily = function(x) {
   TRUE
 }
 
-
+# This renaming enables fit$simulate() with JAGS-like code
 logit = stats::qlogis
 
 ilogit = stats::plogis
