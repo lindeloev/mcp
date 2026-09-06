@@ -75,14 +75,17 @@ examples and vignettes.
 - Lindeløv, J. K. (2020). mcp: An R Package for Regression With Multiple
   Change Points. *OSF Preprints*.
   [doi:10.31219/osf.io/fzqxv](https://doi.org/10.31219/osf.io/fzqxv)
+  Introduces the `mcp` package, formula syntax, default priors, and
+  workflow for regression with multiple change points across generalized
+  linear and time-series models. Newer-than-2020 versions of the paper
+  may be available at that link. Please cite the newest version.
 
 - Carlin, B. P., Gelfand, A. E., & Smith, A. F. (1992). Hierarchical
   Bayesian Analysis of Changepoint Problems. *Applied Statistics*,
   41(2), 389–405. [doi:10.2307/2347570](https://doi.org/10.2307/2347570)
-
-- Stephens, D. A. (1994). Bayesian retrospective multiple-changepoint
-  identification. *Applied Statistics*, 43(1), 159–178.
-  [doi:10.2307/2986119](https://doi.org/10.2307/2986119)
+  Introduced the Gibbs sampling approach for continuous change points in
+  segmented regression and hierarchical models, providing the
+  computational foundation used by BUGS and JAGS.
 
 ## See also
 
