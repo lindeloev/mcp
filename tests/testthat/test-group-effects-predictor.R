@@ -370,3 +370,16 @@ test_that("unsupported predictor group structures fail explicitly", {
     "plain data-column names"
   )
 })
+
+
+test_that("shared group-level parameters in priors are correctly indexed", {
+  fit = mcp(
+    list(y ~ 1 + (1 | id), ~ 1 + (1 | id)),
+    group_data,
+    prior = list(Intercept_2_id = "Intercept_1_id"),
+    par_x = "x",
+    sample = FALSE
+  )
+  expect_match(fit$jags_code, "Intercept_2_id\\[id_\\] = Intercept_1_id\\[id_\\]")
+})
+
