@@ -493,7 +493,7 @@ mcp = function(model,
       recover_levels(data, group_effects)
 
     class(mcmc_post) = "mcmc.list"
-    assert_ordered_cp_draws(mcmc_post, cps, data[[par_x]])
+    assert_ordered_cp_draws(mcmc_post, cps)
 
     # Handle missing data
     if (length(imputed_response_nodes) > 0) {
@@ -537,7 +537,7 @@ mcp = function(model,
       recover_levels(data, group_effects)
 
     class(mcmc_prior) = "mcmc.list"
-    assert_ordered_cp_draws(mcmc_prior, cps, data[[par_x]])
+    assert_ordered_cp_draws(mcmc_prior, cps)
   } else {
     mcmc_prior = NULL
   }

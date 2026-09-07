@@ -92,9 +92,18 @@ for (prior in good_prior) {
 }
 
 
-testthat::test_that("Model construction retains explicit change-point bounds outside the data", {
-  # Sampling currently rejects these bounds in assert_ordered_cp_draws().
+testthat::test_that("Change-point priors outside the observed range are allowed", {
   test_runs(prior_model, sample = FALSE, prior = list(
+    cp_1 = "dunif(-100, -90)",
+    cp_2 = "dnorm(100, 20) T(100, 110)"
+  ))
+
+  outside_range_model = list(
+    y ~ 1 + x,
+    ~ 1 + x,
+    ~ 0
+  )
+  test_runs(outside_range_model, prior = list(
     cp_1 = "dunif(-100, -90)",
     cp_2 = "dnorm(100, 20) T(100, 110)"
   ))

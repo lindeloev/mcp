@@ -105,6 +105,16 @@ test_runs = function(model,
       }
     }
 
+    # Ensure default change-point priors do not have samples outside the observed range
+    cps = get_fit_model_tables(fit)$cps
+    if (length(intersect(names(prior), cps$name)) == 0 && nrow(cps) > 0) {
+      x_range = range(fit$data[[columns$par_x]], na.rm = TRUE)
+      for (chain in .subset2(fit, "mcmc_post")) {
+        pop = chain[, cps$name, drop = FALSE]
+        testthat::expect_true(all(pop >= x_range[1] & pop <= x_range[2]))
+      }
+    }
+
     # Assign globally so errors can be inspected upon hard fail
 
     if (is_arma(fit))

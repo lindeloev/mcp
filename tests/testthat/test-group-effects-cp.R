@@ -138,33 +138,27 @@ test_that("sampled change points are checked for range and ordering", {
   )
   samples = coda::mcmc.list(coda::mcmc(draws))
 
-  expect_no_error(assert_ordered_cp_draws(samples, cps, 0:10))
+  expect_no_error(assert_ordered_cp_draws(samples, cps))
 
   unordered_population = samples
   unordered_population[[1]][1, "cp_2"] = 2
   expect_error(
-    assert_ordered_cp_draws(unordered_population, cps, 0:10),
+    assert_ordered_cp_draws(unordered_population, cps),
     "population-level.*strictly ordered"
   )
 
   unordered_group = samples
   unordered_group[[1]][1, "cp_1_id[A]"] = 5
   expect_error(
-    assert_ordered_cp_draws(unordered_group, cps, 0:10),
+    assert_ordered_cp_draws(unordered_group, cps),
     "group-level.*strictly ordered"
   )
 
   out_of_range = samples
   out_of_range[[1]][1, "cp_1"] = -1
-  expect_error(
-    assert_ordered_cp_draws(out_of_range, cps, 0:10),
-    "population-level.*observed range"
-  )
+  expect_no_error(assert_ordered_cp_draws(out_of_range, cps))
 
   out_of_range_group = samples
   out_of_range_group[[1]][1, "cp_1_id[A]"] = -4
-  expect_error(
-    assert_ordered_cp_draws(out_of_range_group, cps, 0:10),
-    "group-level.*observed range"
-  )
+  expect_no_error(assert_ordered_cp_draws(out_of_range_group, cps))
 })
