@@ -23,9 +23,7 @@ If the simulated changepoint location is the same as the location of an actual d
 Making `loo` or something loo-like support leave-future-out or blocked sampling would be a large undertaking and it would be slow. One complication is that mcp defaults to data-dependent priors, so changing data changes the priors and hence fit/posterior. It would involve iterations of fitting to before-cutpoint data and doing ELPD on future data. One could ignore and just keep the default priors constant, creating `newdata` that represents leave-future-out and calling `log_lik` on history+newdata. Feasible but slow.
 
 ## 2026-08-14: R generics purposefully not implemented
-`terms()`, `model.matrix()`, `simulate()`, `update()`. I am not yet ready to commit to a format for these.
-
-coef() will be implemented later. I have not settled on what set of parameters to include.
+`terms()`, `model.matrix()`, `simulate()`, `update()`, `coef`. I am not yet ready to commit to a format for these. `fit$simulate()` will probably always replace `simulate()`
 
 ## 2026-08-14: fit$jags_code and fit$simulate()
 Supplying custom `mcp(..., jags_code)` will make fit$simulate() out of sync. This is a known error but requires too much extra tooling to address for now. Options include user-supplied "r_code" to match or a very capable JAGS -> R translator (mcp already does this for it's own models internally).
@@ -50,3 +48,6 @@ This committed by a JAGS developer to support the upcoming JAGS 5.0. It is there
 
 # 2026-09-07: There will be no support for 0-parameter models
 Fitting a model like `y ~ 0` (only one segment) is not what mcp is for, and it would add a lot of code complexity to support it.
+
+# 2026-09-07: Will not check user priors for change points
+Users can specify non-ordered change points (`prior = list(cp_1 = 20, cp_2 = 10)`). mcp should not spend code and complexity checking this and raising informative errors.
