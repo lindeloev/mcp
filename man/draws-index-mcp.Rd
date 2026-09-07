@@ -33,6 +33,10 @@ An integer count of iterations, chains, or draws.
 \description{
 Index variables, iterations, chains, and draws.
 }
+\details{
+These methods require posterior draws. To count prior draws, use
+e.g. \code{ndraws(as_draws(fit, prior = TRUE))}.
+}
 \section{Functions}{
 \itemize{
 \item \code{niterations(mcpfit)}: Number of iterations per chain of an \code{mcpfit} object.

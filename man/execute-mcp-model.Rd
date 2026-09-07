@@ -18,7 +18,7 @@
   newdata = NULL,
   summary = TRUE,
   probs = TRUE,
-  rate = TRUE,
+  rate = FALSE,
   prior = FALSE,
   varying = TRUE,
   arma = TRUE,
@@ -26,6 +26,7 @@
   draws_format = "tidy",
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated(),
+  conditional = TRUE,
   ...
 )
 
@@ -34,7 +35,7 @@
   newdata = NULL,
   summary = TRUE,
   probs = TRUE,
-  rate = TRUE,
+  rate = FALSE,
   prior = FALSE,
   dpar = "epred",
   varying = TRUE,
@@ -83,12 +84,13 @@
 \itemize{
 \item If \code{NULL} (default), the original data is used.
 \item For models with \code{ar()} or \code{ma()}: \code{fitted()}, \code{residuals()}, \code{log_lik()},
-and posterior \code{predict()} condition on the response history,
+and \code{predict()} condition on the response history by default,
 so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
 \code{residuals()}, missing response histories are supported only in the original
-fitted data, using retained posterior imputations. Prior \code{predict()} and
-\code{\link[rstantools:posterior_predict]{posterior_predict()}} generate fresh response
-series recursively, so their \code{newdata} need only contain predictors. \code{log_lik()}
+fitted data, using retained posterior imputations. With \code{conditional = FALSE},
+\code{predict()} and \code{\link[rstantools:posterior_predict]{posterior_predict()}} generate
+fresh response series recursively, so their \code{newdata} need only contain
+predictors and required response auxiliaries. \code{log_lik()}
 is unavailable when a missing response enters a later observed history.
 \item For models with \code{y | weights()}: Require the weights column except for \code{fitted()} and \code{predict()}.
 }}
@@ -97,13 +99,14 @@ is unavailable when a missing response enters a later observed history.
 
 \item{probs}{Vector of quantiles. Only in effect when \code{summary == TRUE}.}
 
-\item{rate}{Logical scalar. For binomial models, return counts (\code{rate = FALSE}) or
+\item{rate}{Logical scalar. For binomial models, return counts (\code{rate = FALSE}, the default for \code{fitted()} and \code{predict()}) or
 the observed or expected success proportion (\code{rate = TRUE}). Predictions and
 count-scale fitted values require a trials column in \code{newdata}.
 Distributional parameters such as \code{dpar = "mu"} evaluate the parameter itself (e.g., success probability)
 and are unaffected by \code{rate}.}
 
-\item{prior}{Logical. Evaluate prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)? Useful for \code{mcp(..., sample = "both")}.}
+\item{prior}{Logical. Evaluate prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default).
+The selected draws must be available; prior-only fits require \code{prior = TRUE}.}
 
 \item{varying}{Group-level effects. One of:
 \itemize{
@@ -133,6 +136,11 @@ If there are group-level effects, this is the number of draws from each group.
 
 \item{samples_format}{Deprecated. Use \code{draws_format} instead.
 See more under "value"}
+
+\item{conditional}{Logical. For AR/MA models, condition on observed response
+histories (\code{TRUE}, default) or generate fresh histories recursively (\code{FALSE}).
+Applies equally to prior and posterior draws. Predictive checks
+with \code{pp_check()} generate fresh histories.}
 
 \item{...}{Must be empty. Reserved for future use.}
 
@@ -183,6 +191,15 @@ parameter with \code{dpar}, and choose the response or linear-predictor scale wi
 \code{scale} where applicable.
 }
 \details{
+\code{fitted()} and \code{posterior_epred()} evaluate the same expected responses;
+\code{predict()} and \code{posterior_predict()} evaluate the same response distributions.
+The \verb{posterior_*()} methods return draws-by-observation matrices, while
+\code{fitted()} and \code{predict()} summarise by default and also offer tidy draws.
+For binomial models, the default response scale is counts. Use \code{rate = TRUE}
+for proportions or \code{fitted(..., dpar = "mu")} for success probabilities.
+During migration from v0.3.4, an omitted \code{rate} warns once per session per
+function when counts differ from proportions. Explicit \code{rate} settings do not warn.
+
 \code{residuals(fit)} is equivalent to \code{fit$data[[mcp_columns(fit)$response]] - fitted(fit, ...)} (or \code{newdata[[mcp_columns(fit)$response]] - fitted(fit, ...)}),
 but with fixed arguments for \code{fitted}: \verb{rate = FALSE, dpar = 'epred', draws_format = 'tidy'}.
 

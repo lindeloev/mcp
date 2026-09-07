@@ -28,11 +28,10 @@ mcp_example_data(name)
 \item{sample}{One of
 \itemize{
 \item \code{"post"}: Sample the posterior.
-\item \code{"prior"}: Sample only the prior. Plots, summaries, etc. will
-use the prior. This is useful for prior predictive checks.
+\item \code{"prior"}: Sample only the prior. Use \code{prior = TRUE} explicitly in
+plots, summaries, and other methods to select prior draws.
 \item \code{"both"}: Sample both prior and posterior. Plots, summaries, etc.
-will default to using the posterior. The prior only has effect when doing
-Savage-Dickey density ratios in \code{\link{hypothesis}}.
+will default to using the posterior. Use \code{prior = TRUE} to select prior draws.
 \item \code{"none"} or \code{FALSE}: Do not sample. Returns an mcpfit
 object without sample. This is useful if you only want to check
 prior strings (\code{fit$prior}), the JAGS model (\code{fit$jags_code}), etc.

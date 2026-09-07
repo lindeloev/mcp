@@ -15,6 +15,7 @@ posterior_epred.mcpfit(
   re_formula = NULL,
   dpar = NULL,
   seed = NULL,
+  rate = FALSE,
   ...
 )
 
@@ -26,6 +27,8 @@ posterior_predict.mcpfit(
   re.form = NULL,
   re_formula = NULL,
   seed = NULL,
+  rate = FALSE,
+  conditional = TRUE,
   ...
 )
 
@@ -45,10 +48,20 @@ posterior_linpred.mcpfit(
 \arguments{
 \item{object}{An \code{mcpfit} object.}
 
-\item{newdata}{Optional data frame at which to evaluate the model. For GARMA
-\code{posterior_predict()}, only predictors and required response auxiliaries are
-needed: each response series is generated recursively without conditioning
-on an observed response column.}
+\item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model.
+\itemize{
+\item If \code{NULL} (default), the original data is used.
+\item For models with \code{ar()} or \code{ma()}: \code{fitted()}, \code{residuals()}, \code{log_lik()},
+and \code{predict()} condition on the response history by default,
+so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
+\code{residuals()}, missing response histories are supported only in the original
+fitted data, using retained posterior imputations. With \code{conditional = FALSE},
+\code{predict()} and \code{\link[rstantools:posterior_predict]{posterior_predict()}} generate
+fresh response series recursively, so their \code{newdata} need only contain
+predictors and required response auxiliaries. \code{log_lik()}
+is unavailable when a missing response enters a later observed history.
+\item For models with \code{y | weights()}: Require the weights column except for \code{fitted()} and \code{predict()}.
+}}
 
 \item{draws, ndraws}{Number of posterior draws to return. \code{draws} follows the
 \code{{rstantools}} convention; \code{ndraws} is the mcp spelling. Supply at most one.}
@@ -61,7 +74,18 @@ effects and \code{NA} excludes them.}
 
 \item{seed}{Optional integer seed for draw selection and posterior prediction.}
 
+\item{rate}{Logical scalar. For binomial models, return counts (\code{rate = FALSE}, the default for \code{fitted()} and \code{predict()}) or
+the observed or expected success proportion (\code{rate = TRUE}). Predictions and
+count-scale fitted values require a trials column in \code{newdata}.
+Distributional parameters such as \code{dpar = "mu"} evaluate the parameter itself (e.g., success probability)
+and are unaffected by \code{rate}.}
+
 \item{...}{Must be empty. Reserved for future use.}
+
+\item{conditional}{Logical. For AR/MA models, condition on observed response
+histories (\code{TRUE}, default) or generate fresh histories recursively (\code{FALSE}).
+Applies equally to prior and posterior draws. Predictive checks
+with \code{pp_check()} generate fresh histories.}
 
 \item{transform}{For \code{posterior_linpred()}, return the inverse-link
 transformed expected response instead of the linear predictor.}
@@ -76,18 +100,18 @@ draws-by-observation matrix and enable \code{{tidybayes}} workflows such as
 These methods and workflows require the suggested package \code{{rstantools}}.
 }
 \details{
-For GARMA models, \code{posterior_predict()} generates each replicated
-response series recursively. It does not condition later predictions on
-the observed response history, unlike \code{fitted()} and posterior \code{predict()}.
+For GARMA models, \code{posterior_predict()} conditions on the observed
+response history, just like \code{predict()}. Use \code{conditional = FALSE} in either
+method to generate fresh response histories recursively.
 These methods require posterior draws. For prior prediction, use
-\code{predict()} with \code{prior = TRUE}, which also generates fresh series.
+\code{predict()} with \code{prior = TRUE}; \code{conditional} selects the same behavior.
 
 For binomial models, \code{posterior_epred()} and \code{posterior_predict()} (and
 corresponding \code{{tidybayes}} workflows such as \code{add_epred_draws()}) follow
 \code{{brms}} and \code{{rstantools}} conventions by returning values on the outcome
 count scale (\code{rate = FALSE}), i.e., expected counts \eqn{E[Y] = n\mu} and
-simulated counts in \eqn{\{0, \dots, n\}}. In contrast, \code{fitted()} and \code{predict()}
-default to proportions (\code{rate = TRUE}). To obtain the success probability
+simulated counts in \eqn{\{0, \dots, n\}}, matching \code{fitted()} and \code{predict()}.
+Use \code{rate = TRUE} for proportions. To obtain the success probability
 parameter \eqn{\mu} on the \eqn{[0, 1]} scale regardless of trial counts, pass
 \code{dpar = "mu"}.
 }

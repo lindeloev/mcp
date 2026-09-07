@@ -32,17 +32,19 @@ for available plot types, omitting the \code{"ppc_"} prefix (e.g., \code{"dens_o
 \itemize{
 \item If \code{NULL} (default), the original data is used.
 \item For models with \code{ar()} or \code{ma()}: \code{fitted()}, \code{residuals()}, \code{log_lik()},
-and posterior \code{predict()} condition on the response history,
+and \code{predict()} condition on the response history by default,
 so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
 \code{residuals()}, missing response histories are supported only in the original
-fitted data, using retained posterior imputations. Prior \code{predict()} and
-\code{\link[rstantools:posterior_predict]{posterior_predict()}} generate fresh response
-series recursively, so their \code{newdata} need only contain predictors. \code{log_lik()}
+fitted data, using retained posterior imputations. With \code{conditional = FALSE},
+\code{predict()} and \code{\link[rstantools:posterior_predict]{posterior_predict()}} generate
+fresh response series recursively, so their \code{newdata} need only contain
+predictors and required response auxiliaries. \code{log_lik()}
 is unavailable when a missing response enters a later observed history.
 \item For models with \code{y | weights()}: Require the weights column except for \code{fitted()} and \code{predict()}.
 }}
 
-\item{prior}{Logical. Evaluate prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)? Useful for \code{mcp(..., sample = "both")}.}
+\item{prior}{Logical. Evaluate prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default).
+The selected draws must be available; prior-only fits require \code{prior = TRUE}.}
 
 \item{varying}{Group-level effects. One of:
 \itemize{
