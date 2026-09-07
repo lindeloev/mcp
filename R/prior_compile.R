@@ -253,7 +253,7 @@ prior_bounds = function(x, parameter = NULL, all_names = character(), context = 
     return(paste0("[", call$args[1], ", ", call$args[2], "]"))
   if (call$name == "dirichlet") {
     # Display as: cp_1 [min(x), cp_2] ; cp_2 [cp_1, cp_3] ; ... ; cp_n [cp_{n-1}, max(x)]
-    cp_names = all_names[grepl("^cp_[1-9]+$", all_names)]
+    cp_names = all_names[grepl("^cp_[1-9][0-9]*$", all_names)]
     j = match(parameter, cp_names)
     x_var = if (!is.null(context$x_display) && nzchar(context$x_display)) context$x_display else "x"
     if (is.na(j) || length(cp_names) <= 1) {
