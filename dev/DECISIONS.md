@@ -47,3 +47,6 @@ The prior for intercept-sigma and for `sigma(1)` (still Intercept, but on log-sc
 
 # 2026-09-06: JAGS sigma > 0.001
 This committed by a JAGS developer to support the upcoming JAGS 5.0. It is therefore respected. It will be kept until further clarified whether it can be lowered, e.g., to machine precision.
+
+# 2026-09-07: There will be no support for 0-parameter models
+Fitting a model like `y ~ 0` (only one segment) is not what mcp is for, and it would add a lot of code complexity to support it.

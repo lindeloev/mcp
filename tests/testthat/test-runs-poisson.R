@@ -8,7 +8,10 @@ bad_poisson = list(
   list(y_bad_numeric ~ 1),
 
   # Does not work with sigma
-  list(y ~ 1 + sigma(1))
+  list(y ~ 1 + sigma(1)),
+
+  # Coefficient-free model
+  list(y ~ 0)
 )
 
 test_bad(bad_poisson,
@@ -48,6 +51,14 @@ test_that("Poisson JAGS weights implement a likelihood power and sample on ordin
   expect_equal(
     fit$family$r$log_lik(df_pois$y, list(mu = rep(200, 5)), list(weights = df_pois$w)),
     df_pois$w * stats::dpois(df_pois$y, lambda = 200, log = TRUE)
+  )
+})
+
+
+test_that("Coefficient-free models error with an informative message", {
+  expect_error(
+    mcp(list(y ~ 0), data.frame(x = 1:6, y = 1:6), family = poisson(), par_x = "x", sample = FALSE),
+    "The model does not contain any parameters to estimate."
   )
 })
 

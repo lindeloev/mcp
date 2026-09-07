@@ -398,6 +398,9 @@ mcp = function(model,
   family = resolve_dpar_specs(family, predictors, model)
   group_effects = get_group_effects(cps, predictor_tables$group_effects)
 
+  if (nrow(cps) == 0 && nrow(predictors) == 0)
+    stop("The model does not contain any parameters to estimate.", call. = FALSE)
+
   # Make prior
   prior = get_prior(segments, cps, predictors, group_effects, family, prior, data)
   prior_table = attr(prior, "prior_table")
