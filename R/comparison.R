@@ -586,3 +586,34 @@ get_hypothesis_values = function(draws, LHS) {
 is_sparse_tail = function(x, value) {
   mean(x <= value) < 0.01 || mean(x >= value) < 0.01
 }
+
+
+# Add loo if not already present
+#
+# - fit: An mcpfit object
+# - save_psis: Logical. See documentation of loo::loo
+# - info: Optional message if adding loo
+# - varying,arma: Evaluation settings passed to `loo.mcpfit()`.
+# Returns: An mcpfit object with loo.
+with_loo = function(fit, save_psis = FALSE, info = NULL,
+                    varying = TRUE, arma = TRUE) {
+  checkmate::assert_class(fit, "mcpfit")
+  settings = get_loglik_settings(fit, varying, arma, ndraws = NULL)
+  settings_match = identical(attr(fit$loo, "mcp_settings"), settings)
+  needs_psis = save_psis == TRUE &&
+    loo::is.loo(fit$loo) && is.null(fit$loo$psis_object)
+
+  # Add loo if absent or needs psis
+  if (is.null(fit$loo) || !settings_match || needs_psis) {
+    if (is.character(info))
+      message(info)
+    fit$loo = loo(
+      fit,
+      save_psis = save_psis,
+      varying = varying,
+      arma = arma
+    )
+  }
+
+  fit
+}

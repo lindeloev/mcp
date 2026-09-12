@@ -176,3 +176,69 @@ get_predictor_group_definitions_segment = function(
   }
   definitions
 }
+
+
+# Get information about group-level parameters
+#
+# Returns parameters, data columns, and effect metadata given parameter
+# name(s), model part(s), or column(s).
+#
+# - pars: `NULL`/`FALSE` for nothing. `TRUE` for all. A character vector
+#   containing `"cp"`, `"predictor"`, or exact group-level parameter names.
+# - cols: `NULL`/`FALSE` for nothing. `TRUE` for all. A vector of grouping
+#   column names for specifics. Usually provided via `facet_by` elsewhere.
+# Returns: A list. See details.
+#   
+# Returns a list with
+# * `pars`: Character vector of parameter names, or `NULL` if empty.
+# * `cols`: Character vector of data column names, or `NULL` if empty.
+# * `indices`: Logical vector indexing the group-effects table.
+# * `effects`: The selected rows of the group-effects table.
+unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
+  checkmate::assert_multi_class(pars, c("logical", "character"), null.ok = TRUE)
+  checkmate::assert_multi_class(cols, c("logical", "character"), null.ok = TRUE)
+  if (is.logical(pars))
+    checkmate::assert_flag(pars)
+  if (is.logical(cols))
+    checkmate::assert_flag(cols)
+  group_effects = get_fit_model_tables(fit)$group_effects
+  use_group = rep(FALSE, nrow(group_effects))
+
+  if (!is.null(pars) && !is.null(cols)) {
+    stop("One of `pars` and `cols` must be NULL.")
+  }
+
+
+  if (!is.null(pars)) {
+    if (all(pars == FALSE)) {
+      # Select no group-level effects
+      use_group[] = FALSE
+    } else if (all(pars == TRUE)) {
+      # Select all group-level effects
+      use_group[] = TRUE
+    } else if (is.character(pars)) {
+      allowed = c("cp", "predictor", group_effects$name)
+      unknown = pars[pars %notin% allowed]
+      if (length(unknown) > 0)
+        stop(
+          "Unknown group-effect selection: ", and_collapse(unknown), ". ",
+          "Use TRUE, FALSE, \"cp\", \"predictor\", or a group-effect name."
+        )
+      use_group = group_effects$part %in% pars | group_effects$name %in% pars
+    }
+  } else if (!is.null(cols)) {
+    if (all(cols == TRUE)) {
+      use_group[] = TRUE
+    } else if (!all(cols == FALSE)) {
+      use_group = group_effects$group_col %in% cols
+    }
+  }
+
+  # Return
+  list(
+    pars = logical0_to_null(group_effects$name[use_group]),
+    cols = logical0_to_null(group_effects$group_col[use_group]),
+    indices = use_group,
+    effects = group_effects[use_group, , drop = FALSE]
+  )
+}
