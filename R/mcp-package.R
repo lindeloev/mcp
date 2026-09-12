@@ -7,33 +7,10 @@
 #' supported - also near the change points. `mcp` supports hypothesis testing via Savage-Dickey density
 #' ratios, posterior contrasts, and PSIS-LOO/WAIC model comparison.
 #'
-#' @details
-#' **The mcp model**
+#' @inheritSection mcp The mcp model
+#' @inheritSection mcp Time-series residuals (link-scale observation-driven GARMA)
 #'
-#' An `mcp` model divides a continuous predictor \eqn{x} into \eqn{K} segments separated by
-#' ordered change points \eqn{\Delta_1 < \dots < \Delta_{K-1}}. In each segment \eqn{k \in \{1, \dots, K\}},
-#' the linear predictor \eqn{\eta_i} is evaluated directly from the segment-local distance \eqn{(x_i - \Delta_{k-1})}:
-#'
-#' \deqn{\eta_i = \alpha_k + \beta_{k,1} (x_i - \Delta_{k-1}) \quad (\text{with } \Delta_0 = 0)}
-#'
-#' where the segment-start level \eqn{\alpha_k} is freely estimated for the first and disjoined segments, as in non-segmented regression, and inherited continuously for joined segments:
-#'
-#' \deqn{\alpha_k = \begin{cases}
-#'   \beta_{k,0}, & \text{Disjoined segments } (\sim \texttt{1 + x}, \text{ including } k = 1) \\
-#'   \alpha_{k-1} + \beta_{k-1,1} (\Delta_{k-1} - \Delta_{k-2}), & \text{Joined segments } (k \ge 2, \sim \texttt{0 + x})
-#' \end{cases}}
-#'
-#' In all segments, estimated slope and intercept parameters are absolute values (not changes relative to the preceding segment).
-#'
-#' If additional continuous covariates or categorical factors are included (e.g., `+ z + group`),
-#' they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}}); only the
-#' change-point predictor \eqn{x} is converted to segment-local coordinates.
-#'
-#' Distributional parameters (\code{sigma()}, \code{shape()}, etc.) and autoregressive terms (\code{ar()}, \code{ma()})
-#' follow this exact same segmented structure on their respective link scales.
-#'
-#' **Extended formulas and model features**
-#'
+#' @section Extended formulas and model features:
 #' * *Distributional regression:* Model residual variance and other distributional parameters across segments,
 #'   e.g., `~ sigma(1 + x)` or `~ shape(1)`.
 #' * *Time-series residuals:* Model serial dependence using `ar(p)` and `ma(q)` terms with a generalized link-scale

@@ -25,42 +25,45 @@ mcp(
 )
 }
 \arguments{
-\item{model}{A list of formulas - one for each segment. The many examples
-on the \href{https://lindeloev.github.io/mcp/}{mcp website}. But briefly:
-
-The first formula has the format \code{response ~ predictors} while the following formulas have
-the format \code{response ~ cp ~ predictors}. Here, \code{cp} names the change-point
-part of the formula rather than a literal variable. The response and
+\item{model}{A list of formulas - one for each segment. The general format is
+\code{response ~ cp ~ predictors} (e.g., \code{y ~ 1 ~ 1 + x}), except the first segment
+has no change point and uses \code{response ~ predictors}. The response and
 change-point parts can be omitted (\code{cp ~ predictor} assumes the same
 response; \code{~ predictor} assumes an intercept-only change point). Terms normally carry
-into later segments until redefined (see details).
+into later segments until redefined (see details). See examples on the
+\href{https://lindeloev.github.io/mcp/}{mcp website}.
 
-The following terms can be modeled:
+\strong{1. Response (segment 1 only):}
 \itemize{
-\item \emph{Regular formulas:} e.g., \code{~ 1 + x}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
-\item \emph{Extended formulas:} e.g., \code{~ x:group + I(x^2) + exp(z)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
-R-side bases such as \code{scale()}, \code{poly()}, and \code{splines::ns()} are evaluated
-before sampling, and their fitted scaling or basis is reused for \code{newdata}.
-\item \emph{Group-level effects (random effects):} e.g., \code{~ 1 + (1 | id)} for a group-level
-intercept, or \code{~ 1 + (factor || id)} for independent intercept and
-factor-contrast deviations. \href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
-\item \emph{Gaussian residual standard deviation:} e.g., \code{~sigma(1)} for a simple
-standard-deviation change or \code{~sigma(1 + x + group)} for more advanced
-structures. Explicit \code{sigma()} formulas model log-SD, while the implicit constant \code{sigma_1} in a
-model without \code{sigma()} remains on the response scale.
-\href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}
-\item \emph{Time-series residuals:} link-scale observation-driven GARMA via \code{ar(p)} and \code{ma(q)},
-e.g., \code{~ 1 + ar(1, series = id) + ma(1)}. Both accept an optional regression formula,
-observation \code{boundary} (default 0.1), and grouping \code{series} column (see details).
+\item \code{y ~ ...}: Standard continuous or count response (Gaussian, Poisson, Bernoulli).
+\item \code{successes | trials(total) ~ ...}: Binomial response (\code{family = binomial()}).
+\item \code{y | weights(w) ~ ...}: Observation log-likelihood weights (multiplies each observation's
+log-likelihood contribution by \code{w > 0}; affects posterior inference and \code{log_lik()}, but
+not predictions).
+\item \code{y | trials(total) + weights(w) ~ ...}: Combine response auxiliaries using \code{+}.
+}
+
+\strong{2. Change-point modeling (\code{cp}, segments 2+):}
+\itemize{
+\item \code{~ 1 ~ ...} (or omitted, e.g., \code{~ x}): Population-level change point (default).
+\item \code{1 + (1 | id) ~ ...}: Group-level change-point deviations around the population change point.
+\href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
+}
+
+\strong{3. Regression formula (all segments):} \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}
+\itemize{
+\item \code{~ 1 + x}: Disjoined slope with a new segment intercept.
+\item \code{~ 0 + x}: Joined slope (no intercept; continuous from previous segment).
+\item \code{~ 1}: Plateau (intercept only, no slope).
+\item \code{~ x:group + I(x^2) + exp(z)}: Extended terms, interactions, and R-side bases
+(\code{scale()}, \code{poly()}, \code{splines::ns()}). Bases are evaluated before sampling and reused for \code{newdata}.
+\item \code{~ 1 + (1 | id)}: Group-level intercepts (or \code{(1 + x || id)} for independent slopes and intercepts).
+\href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
+\item \code{~ sigma(1 + x)}: Distributional parameters on the link scale (e.g., log residual SD).
+\href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}.
+\item \code{~ ar(1) + ma(1)}: Autoregressive and moving-average time-series residuals on the link scale
+(accepts regression formulas, \code{series = id}, and \code{boundary}).
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}.
-\item \emph{Likelihood weights:} \code{y | weights(w) ~ ...} specifies
-observation log-likelihood weights. Each observation's
-log-likelihood contribution is multiplied by \code{w}. Weights must be positive.
-Weights affect posterior
-inference and \code{log_lik()}, but not the response distribution used
-by \code{predict()} or prior/posterior predictive checks.
-Combine with other auxiliaries using \code{+}, e.g., \code{y | trials(total) + weights(w) ~ ...}.
-\item \emph{Binomial:} use \code{successes | trials(total) ~ ...} with \code{family = binomial()}.
 }}
 
 \item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)
@@ -159,57 +162,68 @@ Given a model (a list of segment formulas), \code{mcp} infers the posterior
 distributions of the parameters of each segment as well as the change points
 between segments. See details or \href{https://lindeloev.github.io/mcp/}{the mcp website}.
 }
-\details{
-\strong{The mcp model}
+\section{The mcp model}{
+
+Consider the following model which you can find in \code{demo_fit} and \code{mcp_example("demo")}:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{model = list(
+  response ~ 1,  # Plateau in the first segment (Intercept_1)
+  ~ 0 + time,    # Joined slope (time_2) in segment 2 which starts at cp_1
+  ~ 1 + time     # Disjoined slope (Intercept_3, time_3) at cp_2
+)
+}\if{html}{\out{</div>}}
 
 \if{html}{\figure{mcp_demo.png}{options: width="500" alt="Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope"}}
 \if{latex}{\figure{mcp_demo.png}{options: width=5in}}
 \if{text}{\figure{mcp_demo.png}{[Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope]}}
 
-An \code{mcp} model divides a continuous predictor \eqn{x} into \eqn{K} segments separated by
-ordered change points \eqn{\Delta_1 < \dots < \Delta_{K-1}}. In each segment \eqn{k \in \{1, \dots, K\}},
-the linear predictor \eqn{\eta_i} is evaluated directly from the segment-local distance \eqn{(x_i - \Delta_{k-1})}:
+This model has \eqn{K=3} segments separated by \eqn{K-1=2} change points: \eqn{\tau_1} and \eqn{\tau_2}.
 
-\deqn{\eta_i = \alpha_k + \beta_{k,1} (x_i - \Delta_{k-1}) \quad (\text{with } \Delta_0 = 0)}
+More generally, an \code{mcp} model divides a continuous predictor \eqn{x} into \eqn{K} segments separated by
+ordered change points \eqn{\tau_1 < \dots < \tau_{K-1}}. In each segment \eqn{k \in \{1, \dots, K\}},
+the linear predictor \eqn{\eta_i} is evaluated directly from the segment-local distance \eqn{(x_i - \tau_{k-1})}:
+
+\deqn{\eta_i = \alpha_k + \beta_{k,1} (x_i - \tau_{k-1}) \quad (\text{with } \tau_0 = 0)}
 
 where the segment-start level \eqn{\alpha_k} is freely estimated for the first and disjoined segments, as in non-segmented regression, and inherited continuously for joined segments:
 
 \deqn{\alpha_k = \begin{cases}
   \beta_{k,0}, & \text{Disjoined segments } (\sim \texttt{1 + x}, \text{ including } k = 1) \\
-  \alpha_{k-1} + \beta_{k-1,1} (\Delta_{k-1} - \Delta_{k-2}), & \text{Joined segments } (k \ge 2, \sim \texttt{0 + x})
+  \alpha_{k-1} + \beta_{k-1,1} (\tau_{k-1} - \tau_{k-2}), & \text{Joined segments } (k \ge 2, \sim \texttt{0 + x})
 \end{cases}}
 
-In all segments, estimated slope and intercept parameters are absolute values (not changes relative to the preceding segment).
+Here, \eqn{\beta_{k,0}} is the segment-start intercept, and \eqn{\beta_{k,1}} is the slope on \eqn{x}. In all segments, estimated slope and intercept parameters are absolute values (not changes relative to the preceding segment).
 
 If additional continuous covariates or categorical factors are included (e.g., \code{+ z + group}),
-they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}}); only the
+they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}} for covariate \eqn{j}); only the
 change-point predictor \eqn{x} is converted to segment-local coordinates.
 
 Distributional parameters (\code{sigma()}, \code{shape()}, etc.) and autoregressive terms (\code{ar()}, \code{ma()})
 follow this exact same segmented structure on their respective link scales. See more details on the \code{mcp} model in
 \link{mcp-package} and on the \href{https://lindeloev.github.io/mcp/articles/formulas.html}{mcp website}.
+}
 
-\strong{Time-series residuals (link-scale observation-driven GARMA)}
+\section{Time-series residuals (link-scale observation-driven GARMA)}{
 
 Autoregressive (\code{ar(p)}) and moving-average (\code{ma(q)}) terms define a finite conditional recurrence
 on the link scale (generalized autoregressive moving-average, GARMA). They support Gaussian (\code{identity}),
 binomial (\code{logit}), Bernoulli (\code{logit}), Poisson (\code{log}), and negative-binomial (\code{log}) families.
-If \eqn{b_t} is the ordinary regression predictor from the segment formulas and \eqn{\eta_t} is the
+If \eqn{\eta^{\text{reg}}_t} is the ordinary regression predictor from the segment formulas and \eqn{\eta_t} is the
 predictor including serial dependence, the recurrence decomposes into components:
 
 \deqn{\begin{aligned}
-  \text{AR}_t &= \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right] \\
+  \text{AR}_t &= \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - \eta^{\text{reg}}_{t-j}\right] \\
   \text{MA}_t &= \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right] \\
-  \eta_t &= b_t + \text{AR}_t + \text{MA}_t
+  \eta_t &= \eta^{\text{reg}}_t + \text{AR}_t + \text{MA}_t
 \end{aligned}}
 
 where \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
 \eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
-\eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the boundary-constrained observation:
+\eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the boundary-constrained observation with pseudo-count \eqn{b} (set via argument \code{boundary = 0.1} in \code{ar()} / \code{ma()}) to keep residuals finite on the link scale:
 \itemize{
 \item \strong{Gaussian:} \eqn{y^*_t = y_t}.
-\item \strong{Poisson / Negative Binomial:} \eqn{y^*_t = \max(y_t, b)} to prevent \eqn{\log(0)}.
-\item \strong{Binomial / Bernoulli:} \eqn{y^*_t = \min(\max(y_t, b), n_t - b) / n_t}, where \eqn{b} is a boundary pseudo-count (not a proportion) and \eqn{n_t = 1} for Bernoulli.
+\item \strong{Poisson / Negative Binomial:} \eqn{y^*_t = \max(y_t, b)} to prevent \eqn{\log(0)}. Here \eqn{b} replaces zero counts with a small positive count.
+\item \strong{Binomial / Bernoulli:} \eqn{y^*_t = \min(\max(y_t, b), n_t - b) / n_t}, where \eqn{y_t} is observed successes, \eqn{n_t} is the number of trials (\eqn{n_t = 1} for Bernoulli), and \eqn{b} clamps counts to the interval \eqn{[b, n_t - b]} before converting to a rate, preventing \eqn{\text{logit}(0)} and \eqn{\text{logit}(1)}.
 }
 
 Implications:
@@ -218,8 +232,10 @@ Implications:
 \item AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
 \item See \href{https://lindeloev.github.io/mcp/articles/arma.html}{the arma vignette} for more details.
 }
+}
 
-\strong{Notes on priors}
+\section{Notes on priors}{
+
 \itemize{
 \item \emph{Ordered change point priors:} Default population-level \code{cp_i} priors are ordered and the ordering is imposed through the priors. For user-defined priors,
 \code{mcp} adds truncation (e.g., \code{T(cp_1, )}) only when the prior has neither
@@ -238,12 +254,13 @@ scale for \code{ddexp()} and \code{dlogis()}. Use
 \code{prior_summary(fit, verbose = TRUE)} for their rules and descriptions.
 }
 }
+
 \examples{
 \donttest{
 # Define the segments using formulas. A change point is estimated between each formula.
 model = list(
   response ~ 1,  # Plateau in the first segment (Intercept_1)
-  ~ 0 + time,    # Joined slope (time_2) at cp_1
+  ~ 0 + time,    # Joined slope (time_2) in segment 2 which starts at cp_1
   ~ 1 + time     # Disjoined slope (Intercept_3, time_3) at cp_2
 )
 

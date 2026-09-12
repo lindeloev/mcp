@@ -18,15 +18,15 @@ The most common use case is still `ar(1)`. Like other `mcp` terms, AR and MA coe
 
 ## GARMA definition
 
-`mcp` implements AR and MA as a generalized ARMA (GARMA) recurrence on the response-family link scale. If $b_t$ is the ordinary regression predictor from the segment formulas and $\eta_t$ is the predictor including serial dependence, then
+`mcp` implements AR and MA as a generalized ARMA (GARMA) recurrence on the response-family link scale. If $\eta^{\text{reg}}_t$ is the ordinary regression predictor from the segment formulas and $\eta_t$ is the predictor including serial dependence, then
 
 $$\begin{aligned}
-\text{AR}_t &= \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - b_{t-j}\right] \\
+\text{AR}_t &= \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - \eta^{\text{reg}}_{t-j}\right] \\
 \text{MA}_t &= \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right] \\
-\eta_t &= b_t + \text{AR}_t + \text{MA}_t
+\eta_t &= \eta^{\text{reg}}_t + \text{AR}_t + \text{MA}_t
 \end{aligned}$$
 
-where $\phi_{j,t}$ is the lag-$j$ autoregressive (AR) coefficient at time $t$, $\theta_{k,t}$ is the lag-$k$ moving-average (MA) coefficient at time $t$, $g(\cdot)$ is the link function, and $y^*$ is the boundary-constrained observation. Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations.
+where $\phi_{j,t}$ is the lag-$j$ autoregressive (AR) coefficient at time $t$, $\theta_{k,t}$ is the lag-$k$ moving-average (MA) coefficient at time $t$, $g(\cdot)$ is the link function, and $y^*_t$ is the boundary-constrained observation with pseudo-count $b$ (set via `boundary = 0.1` by default). Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations.
 
 **`mcp` does regression with change points on the coefficients** $\phi_{j,t}$ **and** $\theta_{k,t}$. See below for applied examples.
 
@@ -36,7 +36,7 @@ A key feature of this recurrence is that AR/MA memory flows continuously across 
 
 - For an order-$N$ component in a new segment, the last $N$ observations *before* the change point are input into the first $\eta_t$ in the new segment, weighted by the new segment's AR/MA parameters.
 - AR/MA lags do not reset at segment boundaries; they only reset at the very beginning of the whole dataset, or across independent series when using `series = "column_name"` inside `ar()` or `ma()` (e.g. `ar(1, series = id)`).
-- Because change point locations $\Delta$ are estimated with posterior uncertainty, the observation boundary where AR/MA parameters switch varies conditionally across MCMC draws.
+- Because change point locations $\tau$ are estimated with posterior uncertainty, the observation boundary where AR/MA parameters switch varies conditionally across MCMC draws.
 
 GARMA currently supports only the default links for `gaussian()` (identity), `binomial()` (logit), `bernoulli()` (logit), `poisson()` (log), and `negbinomial()` (log). Non-default links are rejected for now.
 
@@ -44,7 +44,7 @@ GARMA currently supports only the default links for `gaussian()` (identity), `bi
 
 ### Observation boundary
 
-The transformed observation $y^*$ keeps log and logit residuals finite when counts lie on a link boundary. The default `boundary = 0.1` replaces zero counts by 0.1 for Poisson and negative-binomial models. For binomial models, counts are constrained to the interval from 0.1 to `trials - 0.1` before conversion to a rate ($n_t = 1$ for `bernoulli()`, constraining $y^*$ to $[0.1, 0.9]$). It has no effect for Gaussian models.
+The transformed observation $y^*_t$ keeps log and logit residuals finite when counts lie on a link boundary using a pseudo-count $b$ (default `boundary = 0.1`). For Poisson and negative-binomial models, zero counts are replaced by $b$, so $y^*_t = \max(y_t, b)$. For binomial models, observed success counts are constrained to $[b, n_t - b]$ before conversion to a rate ($n_t = 1$ for `bernoulli()`, constraining $y^*_t$ to $[0.1, 0.9]$). It has no effect for Gaussian models.
 
 The default should usually be left unchanged. If needed, set it on either term, for example `ar(1, boundary = 0.01) + ma(1)`. AR and MA share one boundary within a segment, and the boundary may differ between segments. Supplying different AR and MA boundaries in the same segment is an error.
 

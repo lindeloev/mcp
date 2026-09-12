@@ -61,9 +61,9 @@ released.
 
 ``` r
 model = list(
-  response ~ 1,  # plateau (Intercept_1)
-  ~ 0 + time,    # joined slope (time_2) at cp_1
-  ~ 1 + time     # disjoined slope (Intercept_3, time_3) at cp_2
+  response ~ 1,  # Plateau in the first segment (Intercept_1)
+  ~ 0 + time,    # Joined slope (time_2) in segment 2 which starts at cp_1
+  ~ 1 + time     # Disjoined slope (Intercept_3, time_3) at cp_2
 )
 
 data = mcp_example_data("demo")
@@ -98,9 +98,9 @@ manually:
 ``` r
 # Define the model
 model = list(
-  response ~ 1,  # plateau (Intercept_1)
-  ~ 0 + time,    # joined slope (time_2) at cp_1.
-  ~ 1 + time     # disjoined slope (Intercept_3, time_3) at cp_2
+  response ~ 1,  # Plateau in the first segment (Intercept_1)
+  ~ 0 + time,    # Joined slope (time_2) in segment 2 which starts at cp_1
+  ~ 1 + time     # Disjoined slope (Intercept_3, time_3) at cp_2
 )
 
 # Get example data and fit it: mcp(model, data, ...)

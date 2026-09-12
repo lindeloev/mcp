@@ -12,32 +12,8 @@ segments in between. All parameters are estimated with uncertainty, and posterio
 supported - also near the change points. \code{mcp} supports hypothesis testing via Savage-Dickey density
 ratios, posterior contrasts, and PSIS-LOO/WAIC model comparison.
 }
-\details{
-\strong{The mcp model}
+\section{Extended formulas and model features}{
 
-An \code{mcp} model divides a continuous predictor \eqn{x} into \eqn{K} segments separated by
-ordered change points \eqn{\Delta_1 < \dots < \Delta_{K-1}}. In each segment \eqn{k \in \{1, \dots, K\}},
-the linear predictor \eqn{\eta_i} is evaluated directly from the segment-local distance \eqn{(x_i - \Delta_{k-1})}:
-
-\deqn{\eta_i = \alpha_k + \beta_{k,1} (x_i - \Delta_{k-1}) \quad (\text{with } \Delta_0 = 0)}
-
-where the segment-start level \eqn{\alpha_k} is freely estimated for the first and disjoined segments, as in non-segmented regression, and inherited continuously for joined segments:
-
-\deqn{\alpha_k = \begin{cases}
-  \beta_{k,0}, & \text{Disjoined segments } (\sim \texttt{1 + x}, \text{ including } k = 1) \\
-  \alpha_{k-1} + \beta_{k-1,1} (\Delta_{k-1} - \Delta_{k-2}), & \text{Joined segments } (k \ge 2, \sim \texttt{0 + x})
-\end{cases}}
-
-In all segments, estimated slope and intercept parameters are absolute values (not changes relative to the preceding segment).
-
-If additional continuous covariates or categorical factors are included (e.g., \code{+ z + group}),
-they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}}); only the
-change-point predictor \eqn{x} is converted to segment-local coordinates.
-
-Distributional parameters (\code{sigma()}, \code{shape()}, etc.) and autoregressive terms (\code{ar()}, \code{ma()})
-follow this exact same segmented structure on their respective link scales.
-
-\strong{Extended formulas and model features}
 \itemize{
 \item \emph{Distributional regression:} Model residual variance and other distributional parameters across segments,
 e.g., \code{~ sigma(1 + x)} or \code{~ shape(1)}.
@@ -51,6 +27,79 @@ or point-null hypotheses (\code{hypothesis()}) using Savage-Dickey density ratio
 
 See \href{https://lindeloev.github.io/mcp/}{the mcp website} for worked examples and vignettes.
 }
+
+\section{The mcp model}{
+
+Consider the following model which you can find in \code{demo_fit} and \code{mcp_example("demo")}:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{model = list(
+  response ~ 1,  # Plateau in the first segment (Intercept_1)
+  ~ 0 + time,    # Joined slope (time_2) in segment 2 which starts at cp_1
+  ~ 1 + time     # Disjoined slope (Intercept_3, time_3) at cp_2
+)
+}\if{html}{\out{</div>}}
+
+\if{html}{\figure{mcp_demo.png}{options: width="500" alt="Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope"}}
+\if{latex}{\figure{mcp_demo.png}{options: width=5in}}
+\if{text}{\figure{mcp_demo.png}{[Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope]}}
+
+This model has \eqn{K=3} segments separated by \eqn{K-1=2} change points: \eqn{\tau_1} and \eqn{\tau_2}.
+
+More generally, an \code{mcp} model divides a continuous predictor \eqn{x} into \eqn{K} segments separated by
+ordered change points \eqn{\tau_1 < \dots < \tau_{K-1}}. In each segment \eqn{k \in \{1, \dots, K\}},
+the linear predictor \eqn{\eta_i} is evaluated directly from the segment-local distance \eqn{(x_i - \tau_{k-1})}:
+
+\deqn{\eta_i = \alpha_k + \beta_{k,1} (x_i - \tau_{k-1}) \quad (\text{with } \tau_0 = 0)}
+
+where the segment-start level \eqn{\alpha_k} is freely estimated for the first and disjoined segments, as in non-segmented regression, and inherited continuously for joined segments:
+
+\deqn{\alpha_k = \begin{cases}
+  \beta_{k,0}, & \text{Disjoined segments } (\sim \texttt{1 + x}, \text{ including } k = 1) \\
+  \alpha_{k-1} + \beta_{k-1,1} (\tau_{k-1} - \tau_{k-2}), & \text{Joined segments } (k \ge 2, \sim \texttt{0 + x})
+\end{cases}}
+
+Here, \eqn{\beta_{k,0}} is the segment-start intercept, and \eqn{\beta_{k,1}} is the slope on \eqn{x}. In all segments, estimated slope and intercept parameters are absolute values (not changes relative to the preceding segment).
+
+If additional continuous covariates or categorical factors are included (e.g., \code{+ z + group}),
+they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}} for covariate \eqn{j}); only the
+change-point predictor \eqn{x} is converted to segment-local coordinates.
+
+Distributional parameters (\code{sigma()}, \code{shape()}, etc.) and autoregressive terms (\code{ar()}, \code{ma()})
+follow this exact same segmented structure on their respective link scales. See more details on the \code{mcp} model in
+\link{mcp-package} and on the \href{https://lindeloev.github.io/mcp/articles/formulas.html}{mcp website}.
+}
+
+\section{Time-series residuals (link-scale observation-driven GARMA)}{
+
+Autoregressive (\code{ar(p)}) and moving-average (\code{ma(q)}) terms define a finite conditional recurrence
+on the link scale (generalized autoregressive moving-average, GARMA). They support Gaussian (\code{identity}),
+binomial (\code{logit}), Bernoulli (\code{logit}), Poisson (\code{log}), and negative-binomial (\code{log}) families.
+If \eqn{\eta^{\text{reg}}_t} is the ordinary regression predictor from the segment formulas and \eqn{\eta_t} is the
+predictor including serial dependence, the recurrence decomposes into components:
+
+\deqn{\begin{aligned}
+  \text{AR}_t &= \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - \eta^{\text{reg}}_{t-j}\right] \\
+  \text{MA}_t &= \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right] \\
+  \eta_t &= \eta^{\text{reg}}_t + \text{AR}_t + \text{MA}_t
+\end{aligned}}
+
+where \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
+\eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
+\eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the boundary-constrained observation with pseudo-count \eqn{b} (set via argument \code{boundary = 0.1} in \code{ar()} / \code{ma()}) to keep residuals finite on the link scale:
+\itemize{
+\item \strong{Gaussian:} \eqn{y^*_t = y_t}.
+\item \strong{Poisson / Negative Binomial:} \eqn{y^*_t = \max(y_t, b)} to prevent \eqn{\log(0)}. Here \eqn{b} replaces zero counts with a small positive count.
+\item \strong{Binomial / Bernoulli:} \eqn{y^*_t = \min(\max(y_t, b), n_t - b) / n_t}, where \eqn{y_t} is observed successes, \eqn{n_t} is the number of trials (\eqn{n_t = 1} for Bernoulli), and \eqn{b} clamps counts to the interval \eqn{[b, n_t - b]} before converting to a rate, preventing \eqn{\text{logit}(0)} and \eqn{\text{logit}(1)}.
+}
+
+Implications:
+\itemize{
+\item For an \eqn{N}-order component, the last \eqn{N} values \emph{before} the segment onset are input to the first \eqn{\eta_t} in the segment.
+\item AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
+\item See \href{https://lindeloev.github.io/mcp/articles/arma.html}{the arma vignette} for more details.
+}
+}
+
 \references{
 \itemize{
 \item Lindeløv, J. K. (2020). mcp: An R Package for Regression With Multiple Change Points.

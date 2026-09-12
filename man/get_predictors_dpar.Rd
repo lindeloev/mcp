@@ -41,42 +41,45 @@ several distributional terms.}
 
 \item{check_rank}{Logical scalar. Whether to stop on rank deficiency.}
 
-\item{model}{A list of formulas - one for each segment. The many examples
-on the \href{https://lindeloev.github.io/mcp/}{mcp website}. But briefly:
-
-The first formula has the format \code{response ~ predictors} while the following formulas have
-the format \code{response ~ cp ~ predictors}. Here, \code{cp} names the change-point
-part of the formula rather than a literal variable. The response and
+\item{model}{A list of formulas - one for each segment. The general format is
+\code{response ~ cp ~ predictors} (e.g., \code{y ~ 1 ~ 1 + x}), except the first segment
+has no change point and uses \code{response ~ predictors}. The response and
 change-point parts can be omitted (\code{cp ~ predictor} assumes the same
 response; \code{~ predictor} assumes an intercept-only change point). Terms normally carry
-into later segments until redefined (see details).
+into later segments until redefined (see details). See examples on the
+\href{https://lindeloev.github.io/mcp/}{mcp website}.
 
-The following terms can be modeled:
+\strong{1. Response (segment 1 only):}
 \itemize{
-\item \emph{Regular formulas:} e.g., \code{~ 1 + x}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
-\item \emph{Extended formulas:} e.g., \code{~ x:group + I(x^2) + exp(z)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
-R-side bases such as \code{scale()}, \code{poly()}, and \code{splines::ns()} are evaluated
-before sampling, and their fitted scaling or basis is reused for \code{newdata}.
-\item \emph{Group-level effects (random effects):} e.g., \code{~ 1 + (1 | id)} for a group-level
-intercept, or \code{~ 1 + (factor || id)} for independent intercept and
-factor-contrast deviations. \href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
-\item \emph{Gaussian residual standard deviation:} e.g., \code{~sigma(1)} for a simple
-standard-deviation change or \code{~sigma(1 + x + group)} for more advanced
-structures. Explicit \code{sigma()} formulas model log-SD, while the implicit constant \code{sigma_1} in a
-model without \code{sigma()} remains on the response scale.
-\href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}
-\item \emph{Time-series residuals:} link-scale observation-driven GARMA via \code{ar(p)} and \code{ma(q)},
-e.g., \code{~ 1 + ar(1, series = id) + ma(1)}. Both accept an optional regression formula,
-observation \code{boundary} (default 0.1), and grouping \code{series} column (see details).
+\item \code{y ~ ...}: Standard continuous or count response (Gaussian, Poisson, Bernoulli).
+\item \code{successes | trials(total) ~ ...}: Binomial response (\code{family = binomial()}).
+\item \code{y | weights(w) ~ ...}: Observation log-likelihood weights (multiplies each observation's
+log-likelihood contribution by \code{w > 0}; affects posterior inference and \code{log_lik()}, but
+not predictions).
+\item \code{y | trials(total) + weights(w) ~ ...}: Combine response auxiliaries using \code{+}.
+}
+
+\strong{2. Change-point modeling (\code{cp}, segments 2+):}
+\itemize{
+\item \code{~ 1 ~ ...} (or omitted, e.g., \code{~ x}): Population-level change point (default).
+\item \code{1 + (1 | id) ~ ...}: Group-level change-point deviations around the population change point.
+\href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
+}
+
+\strong{3. Regression formula (all segments):} \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}
+\itemize{
+\item \code{~ 1 + x}: Disjoined slope with a new segment intercept.
+\item \code{~ 0 + x}: Joined slope (no intercept; continuous from previous segment).
+\item \code{~ 1}: Plateau (intercept only, no slope).
+\item \code{~ x:group + I(x^2) + exp(z)}: Extended terms, interactions, and R-side bases
+(\code{scale()}, \code{poly()}, \code{splines::ns()}). Bases are evaluated before sampling and reused for \code{newdata}.
+\item \code{~ 1 + (1 | id)}: Group-level intercepts (or \code{(1 + x || id)} for independent slopes and intercepts).
+\href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
+\item \code{~ sigma(1 + x)}: Distributional parameters on the link scale (e.g., log residual SD).
+\href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}.
+\item \code{~ ar(1) + ma(1)}: Autoregressive and moving-average time-series residuals on the link scale
+(accepts regression formulas, \code{series = id}, and \code{boundary}).
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}.
-\item \emph{Likelihood weights:} \code{y | weights(w) ~ ...} specifies
-observation log-likelihood weights. Each observation's
-log-likelihood contribution is multiplied by \code{w}. Weights must be positive.
-Weights affect posterior
-inference and \code{log_lik()}, but not the response distribution used
-by \code{predict()} or prior/posterior predictive checks.
-Combine with other auxiliaries using \code{+}, e.g., \code{y | trials(total) + weights(w) ~ ...}.
-\item \emph{Binomial:} use \code{successes | trials(total) ~ ...} with \code{family = binomial()}.
 }}
 
 \item{family}{A supported family: \code{gaussian()}, \code{binomial()}, \code{bernoulli()},
