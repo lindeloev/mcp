@@ -467,6 +467,39 @@ test_that("formulas preserve local transformation environments", {
 })
 
 
+test_that("each fitted design specification is evaluated once in add_rhs_predictors", {
+  d = data.frame(x = 1:10, y = 1:10, z = 1:10)
+  fit = mcp(list(y ~ 1 + x + offset(z), ~ 1 + x), data = d, family = poisson(), sample = FALSE)
+  specs = get_fit_model_tables(fit)$design_specs
+  expect_equal(length(specs), 2)
+
+  evaluated = evaluate_design_specs(specs, d)
+  expect_named(evaluated, names(specs))
+  expect_true(is.matrix(evaluated[[1]]$matrix))
+  expect_equal(as.numeric(evaluated[[1]]$offset), d$z)
+  expect_null(evaluated[[2]]$offset)
+
+  eval_count = 0
+  trace_env = environment(add_rhs_predictors)
+  orig_get_fitted_design = trace_env$get_fitted_design
+  unlockBinding("get_fitted_design", trace_env)
+  on.exit({
+    trace_env$get_fitted_design = orig_get_fitted_design
+    lockBinding("get_fitted_design", trace_env)
+  }, add = TRUE)
+  trace_env$get_fitted_design = function(...) {
+    eval_count <<- eval_count + 1
+    orig_get_fitted_design(...)
+  }
+
+  res = add_rhs_predictors(d, fit)
+  expect_equal(eval_count, 2)
+  expect_true("offset_mu_1_" %in% names(res))
+  expect_equal(res$offset_mu_1_, d$z)
+  expect_true(all(c(".pred_Intercept_1", ".pred_x_1", ".pred_Intercept_2", ".pred_x_2") %in% names(res)))
+})
+
+
 
 good_slopes = list(
   list(y ~ 0 + x),  # Regular

@@ -55,34 +55,30 @@ relevel_newdata = function(newdata, fit) {
 }
 
 
-#' Evaluate fitted predictor designs on new data
-#'
-#' @keywords internal
-#' @noRd
-#' @param table A fitted population-predictor or group-effects table.
-#' @param design_specs Named fitted specifications from `get_predictor_tables()`.
-#' @inheritParams add_rhs_predictors
-#' @return `table` with `matrix_data` evaluated on `newdata`.
-evaluate_fitted_designs = function(table, design_specs, newdata) {
+# Evaluate fitted design specifications on new data.
+evaluate_design_specs = function(design_specs, newdata) {
+  lapply(design_specs, function(spec) {
+    design_data = newdata
+    if (!is.null(spec$local_x_name))
+      design_data[[spec$local_x_name]] = 1
+    get_fitted_design(data = design_data, spec = spec)
+  })
+}
+
+
+# Populate matrix data columns in a predictor or group-effects table.
+populate_design_columns = function(table, evaluated_designs) {
   if (nrow(table) == 0 || "design_id" %notin% names(table))
     return(table)
 
   design_ids = unique(stats::na.omit(table$design_id))
   for (design_id in design_ids) {
     rows = which(table$design_id == design_id)
-    spec = design_specs[[design_id]]
-    if (is.null(spec))
-      stop_github("Missing fitted design specification '", design_id, "'.")
+    design = evaluated_designs[[design_id]]
+    if (is.null(design))
+      stop_github("Missing evaluated design '", design_id, "'.")
 
-    # Recreate the component matrix relevant here
-    design_data = newdata
-    if (!is.null(spec$local_x_name))
-      design_data[[spec$local_x_name]] = 1
-    component_matrix = get_fitted_design(data = design_data, spec = spec)$matrix
-    component_matrix = component_matrix[
-      , table$design_col[rows], drop = FALSE
-    ]
-
+    component_matrix = design$matrix[, table$design_col[rows], drop = FALSE]
     table$matrix_data[rows] = unname(as.list(as.data.frame(component_matrix)))
   }
 
@@ -109,29 +105,24 @@ add_rhs_predictors = function(newdata, fit) {
     as.data.frame() %>%
     relevel_newdata(fit)
 
-  # Evaluate the fitted design on newdata
+  # Evaluate each fitted design once
   model_tables = get_fit_model_tables(fit)
   predictors = model_tables$predictors
   group_effects = model_tables$group_effects
   design_specs = model_tables$design_specs
-  predictors = evaluate_fitted_designs(
-    predictors, design_specs, newdata
-  )
-  group_effects = evaluate_fitted_designs(
-    group_effects, design_specs, newdata
-  )
+  evaluated_designs = evaluate_design_specs(design_specs, newdata)
+
+  # Populate coefficient columns and build predictor matrix
+  predictors = populate_design_columns(predictors, evaluated_designs)
+  group_effects = populate_design_columns(group_effects, evaluated_designs)
   predictor_matrix = get_predictor_matrix(predictors, group_effects)
 
-  # Evaluate offset terms on newdata using fitted design specifications
+  # Collect offset columns from the evaluated designs
   offset_cols = list()
-  for (spec in design_specs) {
-    if (isTRUE(spec$has_offset)) {
-      design_data = newdata
-      if (!is.null(spec$local_x_name))
-        design_data[[spec$local_x_name]] = 1
-      off_design = get_fitted_design(data = design_data, spec = spec)
-      offset_cols[[spec$offset_name]] = as.numeric(off_design$offset)
-    }
+  for (id in names(design_specs)) {
+    spec = design_specs[[id]]
+    if (isTRUE(spec$has_offset))
+      offset_cols[[spec$offset_name]] = as.numeric(evaluated_designs[[id]]$offset)
   }
 
   # All permutations of rows in newdata and parameters
