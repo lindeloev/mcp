@@ -383,3 +383,65 @@ test_that("shared group-level parameters in priors are correctly indexed", {
   expect_match(fit$jags_code, "Intercept_2_id\\[id_\\] = Intercept_1_id\\[id_\\]")
 })
 
+
+test_that("Various character group IDs work in mcp_draws, fitted, and predict", {
+  # Character IDs with leading zeros and commas (which break tidybayes bracket parsing)
+  opaque_data = data.frame(
+    x = 1:12,
+    y = rnorm(12),
+    id = rep(c("01", "1", "site,a", "a[b]"), 3),
+    site = rep(c("loc,north", "loc,south", "loc,east"), each = 4)
+  )
+
+  fit = mcp(
+    list(y ~ 1 + (1 + x || id) + (1 | site)),
+    opaque_data,
+    par_x = "x",
+    iter = 50,
+    chains = 1,
+    diagnostics = FALSE,
+    quiet = TRUE
+  )
+
+  # Check mcp_draws preserves exact types and values
+  draws = mcp_draws(fit, ndraws = 2)
+  expect_type(draws$id, "character")
+  expect_type(draws$site, "character")
+  expect_setequal(unique(draws$id), c("01", "1", "site,a", "a[b]"))
+  expect_setequal(unique(draws$site), c("loc,north", "loc,south", "loc,east"))
+
+  # Check values against exact draw-column names, independently of the reshape.
+  raw = as_draws_df(fit)
+  effects = unpack_group_effects(fit, pars = TRUE)$effects
+  for (i in seq_len(nrow(effects))) {
+    effect = effects[i, ]
+    nodes = paste0(effect$name, "[", draws[[effect$group_col]], "]")
+    expected = as.matrix(raw)[cbind(match(draws$.draw, raw$.draw), match(nodes, names(raw)))]
+    expect_equal(draws[[effect$name]], as.numeric(expected))
+  }
+  expect_equal(nrow(draws), 2 * 4 * 3)
+  expect_equal(nrow(mcp_draws(fit, varying = FALSE, ndraws = 2)), 2)
+
+  # Check fitted and predict join without type mismatch
+  fit_res = fitted(fit)
+  expect_equal(fit_res$id, opaque_data$id)
+  expect_equal(fit_res$site, opaque_data$site)
+
+  pred_res = predict(fit)
+  expect_equal(pred_res$id, opaque_data$id)
+  expect_equal(residuals(fit)$id, opaque_data$id)
+  expect_equal(ncol(log_lik(fit)), nrow(opaque_data))
+
+  # The same draw names also support ordered factors, including unused levels.
+  factor_fit = fit
+  factor_fit$data$id = ordered(fit$data$id, levels = c("unused", "a[b]", "1", "01", "site,a"))
+  factor_draws = mcp_draws(factor_fit, ndraws = 2)
+  expect_identical(levels(factor_draws$id), levels(factor_fit$data$id))
+  expect_true(is.ordered(factor_draws$id))
+
+  # Check out-of-sample prediction with newdata
+  nd = data.frame(x = 1:2, id = c("01", "a[b]"), site = c("loc,north", "loc,east"))
+  nd_fit = fitted(fit, newdata = nd)
+  expect_equal(nd_fit$id, nd$id)
+  expect_equal(nd_fit$site, nd$site)
+})

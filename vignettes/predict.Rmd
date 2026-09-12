@@ -176,7 +176,7 @@ predict_forecast = predict(fit_forecast, newdata = newdata, summary = FALSE)
 
 # Plot it
 library(ggplot2)
-library(tidybayes)
+library(tidybayes)  # Optional package for summarizing and plotting draws
 ggplot(predict_forecast, aes(x = time, y = .prediction)) +
   # Posterior predictive intervals and line at x = 125
   stat_summary(fun.data = median_qi, fun.args = list(.width = 0.8), geom = "ribbon", alpha = 0.2) +

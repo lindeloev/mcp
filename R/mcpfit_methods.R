@@ -611,7 +611,7 @@ posterior_draws = function(fit, prior = FALSE, error = TRUE) {
 
 #' Extract MCMC Draws from `mcpfit` Objects
 #'
-#' Extract posterior or prior draws using \pkg{posterior}, \pkg{tidybayes}, or \pkg{coda} S3 generics.
+#' Extract posterior or prior draws using \pkg{posterior}, \pkg{coda}, or the optional \pkg{tidybayes} package's S3 generics.
 #'
 #' @aliases as_draws as_draws.mcpfit as_draws_df.mcpfit as_draws_array.mcpfit as_draws_matrix.mcpfit as_draws_rvars.mcpfit as.mcmc.mcpfit tidy_draws.mcpfit
 #' @param x An \code{\link{mcpfit}} object.
@@ -631,7 +631,8 @@ posterior_draws = function(fit, prior = FALSE, error = TRUE) {
 #'
 #' # mcp also supports the coda and tidybayes conventions
 #' head(coda::as.mcmc(demo_fit)[[1]])  # First chain as a coda mcmc object
-#' head(tidybayes::tidy_draws(demo_fit))  # Tidybayes-compatible draw data
+#' if (requireNamespace("tidybayes", quietly = TRUE))
+#'   head(tidybayes::tidy_draws(demo_fit))
 #' @exportS3Method posterior::as_draws
 as_draws.mcpfit = function(x, prior = FALSE, ...) {
   posterior_draws(x, prior = prior)
@@ -682,7 +683,6 @@ as.mcmc.mcpfit = function(x, prior = FALSE, ...) {
   mcmclist_draws(x, prior = prior)
 }
 
-#' @importFrom tidybayes tidy_draws
 #' @exportS3Method tidybayes::tidy_draws
 tidy_draws.mcpfit = function(model, ...) {
   posterior::as_draws_df(model, ...)
@@ -702,9 +702,6 @@ tidy_draws.mcpfit = function(model, ...) {
   }
   if (requireNamespace("coda", quietly = TRUE)) {
     registerS3method("as.mcmc", "mcpfit", as.mcmc.mcpfit, envir = asNamespace("coda"))
-  }
-  if (requireNamespace("tidybayes", quietly = TRUE)) {
-    registerS3method("tidy_draws", "mcpfit", tidy_draws.mcpfit, envir = asNamespace("tidybayes"))
   }
   if (requireNamespace("rstantools", quietly = TRUE)) {
     registerS3method("posterior_epred", "mcpfit", posterior_epred.mcpfit, envir = asNamespace("rstantools"))
@@ -991,10 +988,8 @@ mcp_draws = function(
 
 
   # ----- IDENTIFY PARAMETERS -----
-  # Group-level parameters formatted for tidybayes.
+  # Group-level parameters.
   group_info = unpack_group_effects(fit, pars = varying)
-  group_terms = paste0(group_info$pars, "[", group_info$cols, "]")
-  if (all(group_terms == "[]")) group_terms = ""  # quick fix
 
   # Population-level parameters. Result is `pars_population`.
   if (all(population == FALSE)) {
@@ -1030,20 +1025,27 @@ mcp_draws = function(
   }
 
   # ----- GET THESE PARAMETERS AS TIDY DRAWS -----
-  # Select posterior/prior draws
-  draws = mcmclist_draws(fit, prior = prior)
+  # Select draws before expanding across group levels.
+  draws = tibble::as_tibble(posterior::as_draws_df(fit, prior = prior))
+  if (!is.null(ndraws))
+    draws = dplyr::sample_n(draws, ndraws)
 
-  # Build code for tidybayes::spread_draws() and execute it
-  all_terms = unique(c(pars_population, group_terms, absolute_cps))
-  code = paste0("tidybayes::spread_draws(draws, ", paste0(all_terms, collapse = ", "), ", ndraws = ndraws)")
-  draws = eval(str2lang(code))
+  # Prepare for tidyr::pivot_longer_spec:
+  # Describe the reshape using original factor levels
+  groups = split(group_info$effects$name, group_info$effects$group_col)
+  specs = lapply(names(groups), function(col) {
+    spec = tidyr::expand_grid(.value = groups[[col]], !!col := unique(fit$data[[col]]))
+    spec$.name = paste0(spec$.value, "[", spec[[col]], "]")
+    spec
+  })
+  group_nodes = unlist(lapply(specs, function(spec) spec$.name))
+  draws = dplyr::select(draws, dplyr::all_of(unique(c(
+    ".chain", ".iteration", ".draw", pars_population, absolute_cps, group_nodes
+  ))))
 
-  # Preserve factor grouping columns from fit$data.
-  if (length(group_info$cols) > 0) {
-    is_factor = lapply(fit$data, is.factor)[group_info$cols]
-    cols_to_factorize = group_info$cols[as.logical(is_factor)]
-    draws = dplyr::mutate_at(draws, cols_to_factorize, as.factor)
-  }
+  # Pivot shared group effects together; successive pivots cross grouping columns.
+  for (spec in specs)
+    draws = tidyr::pivot_longer_spec(draws, spec)
 
   # Add population-level change points to deviations, then remove helper columns.
   if (length(absolute_cps) > 0) {

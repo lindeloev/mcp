@@ -22,10 +22,11 @@ relevel_newdata = function(newdata, fit) {
   for (col_name in intersect(c(rhs_vars, group_cols), names(newdata))) {
     org_col = fit$data[, col_name]
     new_col = newdata[, col_name]
-    if (is.character(org_col) || is.factor(org_col)) {
+
+    if (is.factor(org_col)) {
       new_col = factor(
         new_col,
-        levels = levels(factor(org_col)),
+        levels = levels(org_col),
         ordered = is.ordered(org_col)
       )
 
@@ -33,6 +34,17 @@ relevel_newdata = function(newdata, fit) {
       if (any(is.na(new_col))) {
         new_levels = newdata[is.na(new_col), col_name] %>% as.character() %>% unique()
         stop("Got novel values (", and_collapse(new_levels), ") for column ", col_name, ". Only values used during fitting are allowed.")
+      }
+    } else if (is.character(org_col)) {
+      # Keep character type for grouping columns; factorize predictor covariates for model.matrix
+      novel = setdiff(as.character(new_col), unique(org_col))
+      if (length(novel) > 0) {
+        stop("Got novel values (", and_collapse(novel), ") for column ", col_name, ". Only values used during fitting are allowed.")
+      }
+      if (col_name %in% rhs_vars) {
+        new_col = factor(new_col, levels = levels(factor(org_col)))
+      } else {
+        new_col = as.character(new_col)
       }
     }
 

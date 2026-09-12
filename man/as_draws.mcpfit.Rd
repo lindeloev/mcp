@@ -39,7 +39,7 @@ as_draws_rvars(x, ...)
 A \pkg{posterior} \code{draws} object or a \pkg{coda} \code{mcmc.list} object.
 }
 \description{
-Extract posterior or prior draws using \pkg{posterior}, \pkg{tidybayes}, or \pkg{coda} S3 generics.
+Extract posterior or prior draws using \pkg{posterior}, \pkg{coda}, or the optional \pkg{tidybayes} package's S3 generics.
 }
 \examples{
 # Default posterior draws, with one row per iteration and chain
@@ -53,5 +53,6 @@ as_draws_rvars(demo_fit)[c("cp_1", "cp_2")]  # Random-variable representation
 
 # mcp also supports the coda and tidybayes conventions
 head(coda::as.mcmc(demo_fit)[[1]])  # First chain as a coda mcmc object
-head(tidybayes::tidy_draws(demo_fit))  # Tidybayes-compatible draw data
+if (requireNamespace("tidybayes", quietly = TRUE))
+  head(tidybayes::tidy_draws(demo_fit))
 }

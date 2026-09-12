@@ -1098,7 +1098,7 @@ test_that("draw-dependent methods require explicit prior selection", {
   fit = demo_fit
   fit$mcmc_post = NULL
   for (method in list(summary, fitted, predict, residuals, fixef, ranef,
-                     as_draws, as_draws_df, coda::as.mcmc, tidybayes::tidy_draws,
+                     as_draws, as_draws_df, coda::as.mcmc,
                      niterations, nchains, ndraws, log_lik)) {
     expect_error(method(fit), "No posterior draws are available", fixed = TRUE)
   }
