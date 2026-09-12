@@ -1099,10 +1099,12 @@ test_that("draw-dependent methods require explicit prior selection", {
   fit$mcmc_post = NULL
   for (method in list(summary, fitted, predict, residuals, fixef, ranef,
                      as_draws, as_draws_df, coda::as.mcmc,
-                     niterations, nchains, ndraws, log_lik)) {
+                     niterations, nchains, ndraws, log_lik, plot, plot_pars)) {
     expect_error(method(fit), "No posterior draws are available", fixed = TRUE)
   }
   expect_no_error(capture.output(summary(fit, prior = TRUE)))
+  expect_s3_class(plot(fit, prior = TRUE), "ggplot")
+  expect_s3_class(plot_pars(fit, prior = TRUE, nvariables = NULL), "ggplot")
   expect_message(capture.output(print(fit)), "Using prior draws")
   fit$mcmc_prior = NULL
   expect_error(summary(fit), "No posterior draws are available")

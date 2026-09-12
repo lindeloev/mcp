@@ -265,9 +265,9 @@ fit_pp_default = mcp(model, data = df, sample = "prior", seed = 42)
 
 # Plot it
 set.seed(42)
-plot_pp_manual = plot(fit_pp_manual, lines = 100) + ylim(c(-400, 400)) + ggtitle("Manual prior")
+plot_pp_manual = plot(fit_pp_manual, lines = 100, prior = TRUE) + ylim(c(-400, 400)) + ggtitle("Manual prior")
 set.seed(42)
-plot_pp_default = plot(fit_pp_default, lines = 100) + ylim(c(-400, 400)) + ggtitle("Default prior")
+plot_pp_default = plot(fit_pp_default, lines = 100, prior = TRUE) + ylim(c(-400, 400)) + ggtitle("Default prior")
 plot_pp_manual +  plot_pp_default  # using patchwork
 ```
 

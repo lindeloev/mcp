@@ -231,7 +231,7 @@ Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) an
 
 - Truncate priors using `T(lower, upper)`, e.g., `Intercept_1 = "dnorm(0, 1) T(0, )"`. `mcp` adds ordering bounds to population-level change-point priors. Users can override these.
 
-- Do prior predictive checks using `mcp(model, data, sample = "prior") |> plot()`.
+- Do prior predictive checks using `mcp(model, data, sample = "prior") |> plot(prior = TRUE)`.
 
 [Missing responses and posterior imputation](https://lindeloev.github.io/mcp/articles/missing.html):
 
