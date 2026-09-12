@@ -17,8 +17,9 @@ dev/*
 
 # Files
 AGENTS.md
-fix_twittercard.R
+CRAN-SUBMISSION
 dev/TODO.md
+fix_twittercard.R
+revdep/
 vignettes/*_cache/
 vignettes/*_files/
-revdep/
