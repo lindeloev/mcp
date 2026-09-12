@@ -15,7 +15,7 @@ relevel_newdata = function(newdata, fit) {
   group_cols = unique(stats::na.omit(
     get_fit_model_tables(fit)$group_effects$group_col
   ))
-  rhs_vars = setdiff(get_rhs_vars(fit$model), group_cols)
+  rhs_vars = get_predictor_cols(fit)
   assert_data_cols(newdata, cols = rhs_vars, fail_funcs = c(is.na, is.nan, is.infinite))
 
   # Make sure to carry over the exact level-structure of the original model

@@ -165,7 +165,7 @@ pp_eval = function(
   group_info = unpack_group_effects(fit, pars = varying)
   model_tables = get_fit_model_tables(fit)
   group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
-  exclude_group_cols = setdiff(group_cols, c(group_info$cols, data_columns$series))
+  exclude_group_cols = setdiff(group_cols, c(group_info$cols, data_columns$series, get_predictor_cols(fit)))
 
   # Determine which auxiliary columns are needed for this operation
   operation = switch(type, predict = "rng", loglik = "log_lik", fitted = "epred", residuals = "epred")

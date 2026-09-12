@@ -152,7 +152,7 @@ get_plot = function(x,
   data_columns = mcp_columns(fit)
   all_categorical_cols = names(get_categorical_levels(fit$data))
   group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
-  categorical_cols = setdiff(all_categorical_cols, c(group_cols, data_columns$series))
+  categorical_cols = intersect(all_categorical_cols, get_predictor_cols(fit))
   plot_by = unique(c(facet_by, color_by))
   if (.grouping == "auto" && length(categorical_cols) == 1) {
     color_by = categorical_cols

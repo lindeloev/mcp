@@ -175,9 +175,9 @@ interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma 
   data_columns = mcp_columns(fit)
   group_cols = unique(stats::na.omit(get_fit_model_tables(fit)$group_effects$group_col))
   series_col = data_columns$series
-  categorical_cols = setdiff(
+  categorical_cols = intersect(
     names(get_categorical_levels(fit$data)),
-    c(group_cols, series_col)
+    get_predictor_cols(fit)
   )
   by = unique(c(categorical_cols, intersect(setdiff(group_cols, series_col), by)))
   # Numeric group IDs are discrete even when they are not requested

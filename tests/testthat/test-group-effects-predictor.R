@@ -445,3 +445,27 @@ test_that("Various character group IDs work in mcp_draws, fitted, and predict", 
   expect_equal(nd_fit$id, nd$id)
   expect_equal(nd_fit$site, nd$site)
 })
+
+
+test_that("grouping columns that also serve as predictors are retained when varying = FALSE", {
+  data = data.frame(
+    x = 1:10,
+    id = factor(rep(c("a", "b"), 5)),
+    y = 1:10
+  )
+  fit = suppressWarnings(mcp(
+    list(y ~ 1 + id + (1 | id)),
+    data, par_x = "x", sample = "prior", chains = 1, iter = 20, warmup = 10, quiet = TRUE, seed = 42
+  ))
+
+  expect_no_error(fitted(fit, prior = TRUE, varying = FALSE))
+  expect_no_error(predict(fit, prior = TRUE, varying = FALSE))
+  expect_no_error(residuals(fit, prior = TRUE, varying = FALSE))
+  expect_no_error(ggplot2::ggplot_build(plot(fit, prior = TRUE)))
+  expect_no_error(ggplot2::ggplot_build(plot(fit, prior = TRUE, facet_by = "id")))
+
+  # Check that fixed effect differences are preserved when group deviations are excluded
+  f_novary = fitted(fit, prior = TRUE, varying = FALSE)
+  expect_equal(nrow(f_novary), 10)
+  expect_true(all(c("x", "id", "fitted") %in% names(f_novary)))
+})
