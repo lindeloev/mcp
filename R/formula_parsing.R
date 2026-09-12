@@ -22,17 +22,10 @@ to_formula = function(form) {
 }
 
 
-# Convert formula to string using base R to circumvent deparse()/format() length limits
+# Convert formula to string using deparse1() to guarantee a single string.
 formula_to_char = function(form) {
   checkmate::assert_formula(form)
-  form_char = as.character(form)
-  if (length(form_char) == 2 && form_char[1] == "~") {
-    return(paste0(form_char, collapse = " "))
-  } else if (length(form_char) == 3 && form_char[1] == "~") {
-    return(paste0(form_char[c(2, 3)], collapse = " ~ "))
-  } else {
-    stop_github("Could not decode formula ", deparse(form, width.cutoff = 500))
-  }
+  deparse1(form)
 }
 
 

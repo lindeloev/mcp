@@ -1324,10 +1324,7 @@ pp_eval = function(
     # Without group-level effects, use all draws for each row of data.
     mcmc_draws = tibble::as_tibble(mcp_draws(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws))
     predictors = tibble::as_tibble(add_rhs_predictors(newdata, fit))
-    draws = dplyr::bind_cols(
-      mcmc_draws[rep(seq_len(nrow(mcmc_draws)), each = nrow(predictors)), , drop = FALSE],
-      predictors[rep(seq_len(nrow(predictors)), times = nrow(mcmc_draws)), , drop = FALSE]
-    )
+    draws = dplyr::cross_join(mcmc_draws, predictors)
   }
 
   # Use imputed response draws for missing responses.
