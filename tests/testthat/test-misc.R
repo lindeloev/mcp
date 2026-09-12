@@ -1109,3 +1109,21 @@ test_that("draw-dependent methods require explicit prior selection", {
   expect_error(as_draws(fit, prior = TRUE), "No prior draws are available")
   expect_no_error(capture.output(print(fit)))
 })
+
+
+test_that("probs and quantiles must be strictly between 0 and 1", {
+  expect_error(fitted(demo_fit, probs = 0), "strictly between 0 and 1")
+  expect_error(fitted(demo_fit, probs = 1), "strictly between 0 and 1")
+  expect_error(fitted(demo_fit, probs = -0.1), "strictly between 0 and 1")
+  expect_error(fitted(demo_fit, probs = 1.1), "strictly between 0 and 1")
+  expect_error(predict(demo_fit, probs = 0), "strictly between 0 and 1")
+  expect_error(predict(demo_fit, probs = 1), "strictly between 0 and 1")
+  expect_error(residuals(demo_fit, probs = 0), "strictly between 0 and 1")
+  expect_error(residuals(demo_fit, probs = 1), "strictly between 0 and 1")
+
+  expect_error(plot(demo_fit, q_fit = 0), "strictly between 0 and 1")
+  expect_error(plot(demo_fit, q_fit = 1), "strictly between 0 and 1")
+  expect_error(plot(demo_fit, q_predict = 0), "strictly between 0 and 1")
+  expect_error(plot(demo_fit, q_predict = 1), "strictly between 0 and 1")
+})
+

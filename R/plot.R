@@ -37,7 +37,7 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 #'   * `TRUE` Add 2.5% and 97.5% quantiles. Corresponds to
 #'       `q_fit = c(0.025, 0.975)`.
 #'   * `FALSE` No quantiles
-#'   * A vector of quantiles. For example, `q_fit = 0.5`
+#'   * A vector of quantiles (strictly between 0 and 1). For example, `q_fit = 0.5`
 #'       plots the median and `q_fit = c(0.2, 0.8)` plots the 20% and 80%
 #'       quantiles.
 #' @param q_predict Same as `q_fit`, but for the posterior predictive interval.
@@ -125,14 +125,20 @@ get_plot = function(x,
     checkmate::check_numeric(q_predict, any.missing = FALSE),
     .var.name = "q_predict"
   )
-  if (all(q_fit == TRUE))
+  if (is.logical(q_fit) && all(q_fit == TRUE))
     q_fit = c(0.025, 0.975)
-  if (all(q_predict == TRUE))
+  if (is.logical(q_predict) && all(q_predict == TRUE))
     q_predict = c(0.025, 0.975)
-  if (is.numeric(q_fit))
-    checkmate::assert_numeric(q_fit, lower = 0, upper = 1, any.missing = FALSE)
-  if (is.numeric(q_predict))
-    checkmate::assert_numeric(q_predict, lower = 0, upper = 1, any.missing = FALSE)
+  if (is.numeric(q_fit)) {
+    checkmate::assert_numeric(q_fit, min.len = 1, any.missing = FALSE)
+    if (any(q_fit <= 0 | q_fit >= 1))
+      stop("`q_fit` must be strictly between 0 and 1.")
+  }
+  if (is.numeric(q_predict)) {
+    checkmate::assert_numeric(q_predict, min.len = 1, any.missing = FALSE)
+    if (any(q_predict <= 0 | q_predict >= 1))
+      stop("`q_predict` must be strictly between 0 and 1.")
+  }
   show_q_fit = !isFALSE(q_fit)
   show_q_predict = !isFALSE(q_predict)
 

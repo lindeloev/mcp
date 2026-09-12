@@ -1107,7 +1107,7 @@ tidy_samples = function(...) {
 #'   - `"residuals"`: observed y-values minus the fitted values. See also `residuals()`.
 #'   - `"loglik"`: return the log-likelihood for each draw for each data point. See also `log_lik()`.
 #'     Requires `scale = "response"`.
-#' @param probs Vector of quantiles. Only in effect when `summary == TRUE`.
+#' @param probs Vector of quantiles (strictly between 0 and 1). Only in effect when `summary == TRUE`.
 #' @param rate Logical scalar. For binomial models, return counts (`rate = FALSE`, the default for `fitted()` and `predict()`) or
 #'   the observed or expected success proportion (`rate = TRUE`). Predictions and
 #'   count-scale fitted values require a trials column in `newdata`.
@@ -1290,8 +1290,11 @@ pp_eval = function(
     checkmate::check_numeric(probs, any.missing = FALSE),
     .var.name = "probs"
   )
-  if (is.numeric(probs))
-    checkmate::assert_numeric(probs, lower = 0, upper = 1, any.missing = FALSE)
+  if (is.numeric(probs)) {
+    checkmate::assert_numeric(probs, min.len = 1, any.missing = FALSE)
+    if (any(probs <= 0 | probs >= 1))
+      stop("`probs` must be strictly between 0 and 1.")
+  }
   if (is.logical(probs) && all(probs == TRUE))
     probs = c(0.025, 0.975)
   checkmate::assert_flag(rate)
