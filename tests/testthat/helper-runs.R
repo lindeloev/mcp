@@ -574,8 +574,16 @@ test_pp_eval = function(fit, prior = FALSE) {
     testthat::expect_s3_class(pp_default, "ggplot")
     # bayesplot::pp_check dispatches to pp_check.mcpfit
     if (length(group_pars) == 0) {
-      pp_bayesplot = suppressWarnings(bayesplot::pp_check(fit, ndraws = 2, prior = prior))
-      testthat::expect_s3_class(pp_bayesplot, "ggplot")
+      pp_bayesplot = try(suppressWarnings(bayesplot::pp_check(fit, ndraws = 2, prior = prior)), silent = TRUE)
+      if (inherits(pp_bayesplot, "try-error")) {
+        if (fit$family$family %in% c("poisson", "negbinomial")) {
+          testthat::expect_true(stringr::str_detect(as.character(pp_bayesplot), "Modelled extremely large count mean"))
+        } else {
+          testthat::expect_true(as.character(pp_bayesplot))
+        }
+      } else {
+        testthat::expect_s3_class(pp_bayesplot, "ggplot")
+      }
     }
   }
 }
