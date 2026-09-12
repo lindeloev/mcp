@@ -304,9 +304,9 @@ Here are a few ways in which you may want to inform the AR or MA parameters:
 
 JAGS, `fitted()`, `predict()`, and `log_lik()` evaluate a finite, conditional recurrence: the response history supplies earlier residuals, and unavailable residuals before the start of the series are set to zero.
 
-- `fitted()` and `predict()` use posterior imputations for the actual missing response data, so it is conditional on the actual data values/order for the ar/ma modeling.
+- `fitted()` and `predict()` use posterior imputations only to complete missing response histories. `predict()` generates fresh outcomes at all rows, even where the original response was missing.
 - `log_lik()` is unavailable if the data has missingness before some observed data.
-- In contrast, `posterior_predict()` and `pp_check()` generate each series from the model posteriors without regards to the original data. This makes serial summaries of posterior replications, such as their autocorrelation and run lengths, meaningful.
+- `predict(..., conditional = FALSE)`, `posterior_predict(..., conditional = FALSE)`, and `pp_check()` generate each series recursively from the model posteriors without conditioning on the original response history. This makes serial summaries of posterior replications, such as their autocorrelation and run lengths, meaningful.
 
 # JAGS code
 

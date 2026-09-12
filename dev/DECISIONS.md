@@ -51,3 +51,6 @@ Fitting a model like `y ~ 0` (only one segment) is not what mcp is for, and it w
 
 # 2026-09-07: Will not check user priors for change points
 Users can specify non-ordered change points (`prior = list(cp_1 = 20, cp_2 = 10)`). mcp should not spend code and complexity checking this and raising informative errors.
+
+# 2026-09-12: residuals() are relative to fitted values - not predicted values
+`brms` defaults to `resid = y - predicted` whereas mcp will have `resid = y - fitted`, aligning with base R and classical statistics. This is more R-native.

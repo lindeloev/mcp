@@ -37,7 +37,8 @@ pp_eval(
 and \code{predict()} condition on the response history by default,
 so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
 \code{residuals()}, missing response histories are supported only in the original
-fitted data, using retained posterior imputations. With \code{conditional = FALSE},
+fitted data, using retained posterior imputations as histories. Predictions
+are fresh response draws, including at missing rows. With \code{conditional = FALSE},
 \code{predict()} and \code{\link[rstantools:posterior_predict]{posterior_predict()}} generate
 fresh response series recursively, so their \code{newdata} need only contain
 predictors and required response auxiliaries. \code{log_lik()}
@@ -59,7 +60,7 @@ See also \code{predict()}.
 Requires \code{scale = "response"}.
 }}
 
-\item{probs}{Vector of quantiles. Only in effect when \code{summary == TRUE}.}
+\item{probs}{Vector of quantiles (strictly between 0 and 1). Only in effect when \code{summary == TRUE}.}
 
 \item{rate}{Logical scalar. For binomial models, return counts (\code{rate = FALSE}, the default for \code{fitted()} and \code{predict()}) or
 the observed or expected success proportion (\code{rate = TRUE}). Predictions and

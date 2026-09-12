@@ -35,7 +35,8 @@ for available plot types, omitting the \code{"ppc_"} prefix (e.g., \code{"dens_o
 and \code{predict()} condition on the response history by default,
 so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
 \code{residuals()}, missing response histories are supported only in the original
-fitted data, using retained posterior imputations. With \code{conditional = FALSE},
+fitted data, using retained posterior imputations as histories. Predictions
+are fresh response draws, including at missing rows. With \code{conditional = FALSE},
 \code{predict()} and \code{\link[rstantools:posterior_predict]{posterior_predict()}} generate
 fresh response series recursively, so their \code{newdata} need only contain
 predictors and required response auxiliaries. \code{log_lik()}

@@ -1063,6 +1063,32 @@ mcp_draws = function(
 }
 
 
+# Internal helper to extract retained posterior imputations of missing responses.
+# These are draws of the missing responses conditional on the observed data,
+# rather than fresh outcomes from predict(). For AR/MA models, later
+# observations can inform an imputation. Prediction uses these values only
+# to complete the history for subsequent observations.
+imputed_draws = function(object, ndraws = NULL) {
+  mcmclist_draws(object)  # Validate the fit and availability of posterior draws.
+  checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
+  imputed = object$.internal$imputed_response
+  if (is.null(imputed))
+    stop("No retained posterior imputations are available in this fit.", call. = FALSE)
+
+  draws = tibble::as_tibble(posterior::as_draws_df(posterior::as_draws_array(imputed)))
+  if (!is.null(ndraws))
+    draws = dplyr::sample_n(draws, ndraws)
+  rows = object$.internal$imputed_response_rows
+  spec = tibble::tibble(
+    .name = paste0(mcp_columns(object)$response, "[", rows, "]"),
+    .value = ".imputed",
+    data_row = rows
+  )
+  tidyr::pivot_longer_spec(draws, spec) %>%
+    dplyr::relocate(".chain", ".iteration", ".draw")
+}
+
+
 # Deprecated internal helper for MCMC draw extraction
 tidy_samples = function(...) {
   lifecycle::deprecate_soft(
@@ -1091,7 +1117,8 @@ tidy_samples = function(...) {
 #'   and `predict()` condition on the response history by default,
 #'   so `newdata` must include the response. For `fitted()`, `predict()`, and
 #'   `residuals()`, missing response histories are supported only in the original
-#'   fitted data, using retained posterior imputations. With `conditional = FALSE`,
+#'   fitted data, using retained posterior imputations as histories. Predictions
+#'   are fresh response draws, including at missing rows. With `conditional = FALSE`,
 #'   `predict()` and [`posterior_predict()`][rstantools::posterior_predict] generate
 #'   fresh response series recursively, so their `newdata` need only contain
 #'   predictors and required response auxiliaries. `log_lik()`
@@ -1330,26 +1357,18 @@ pp_eval = function(
     draws = dplyr::cross_join(mcmc_draws, predictors)
   }
 
-  # Use imputed response draws for missing responses.
-  # Requires special handling for varying and GARMA.
-  imputed_response = rep(NA_real_, nrow(draws))
-  has_posterior_draws = coda::is.mcmc.list(.subset2(fit, "mcmc_post"))
-  needs_garma_history = arma && is_arma(fit) &&
-    (type %in% c("predict", "residuals") ||
-       (type == "fitted" && dpar %in% c("epred", "mu")))
-  needs_imputed_response = !replicate_garma && (type == "predict" || needs_garma_history)
-  if (needs_imputed_response && using_original_data && !prior && has_posterior_draws &&
-      anyNA(fit$data[[data_columns$response]])) {
-    full_varying = nrow(model_tables$group_effects) == 0 ||
-      (is.logical(varying) && length(varying) == 1 && isTRUE(varying))
-    if (arma && is_arma(fit) && !full_varying)
+  # Complete the conditional history, keeping imputations out of prediction output.
+  if (conditional_garma && anyNA(draws[[data_columns$response]])) {
+    if (prior)
+      stop("Missing GARMA histories require posterior draws. Use `conditional = FALSE` for prior prediction.", call. = FALSE)
+    if (!all(model_tables$group_effects$name %in% group_info$pars))
       stop(
         "This model has group-level effects, and its retained missing-response ",
         "histories are conditional on all of them. GARMA evaluation with missing ",
         "responses therefore currently requires `varying = TRUE`.",
         call. = FALSE
       )
-    if (arma && is_arma(fit) && is.null(fit$.internal$imputed_response))
+    if (is.null(fit$.internal$imputed_response))
       stop(
         "This fit does not retain the missing response draws needed for coherent ",
         "GARMA evaluation. ",
@@ -1360,11 +1379,8 @@ pp_eval = function(
         },
         call. = FALSE
       )
-    if (full_varying && (!is_arma(fit) || arma))
-      imputed_response = get_imputed_response_draws(fit, draws)
-    use_imputed = !is.na(imputed_response)
-    if (arma && is_arma(fit) && any(use_imputed))
-      draws[[data_columns$response]][use_imputed] = imputed_response[use_imputed]
+    missing_rows = is.na(draws[[data_columns$response]])
+    draws[[data_columns$response]][missing_rows] = get_imputed_response_draws(fit, draws)[missing_rows]
   }
 
   # This is the important step!Evaluate the mcp model on newdata and draws.
@@ -1392,11 +1408,6 @@ pp_eval = function(
   if (!is.null(fitted_values)) fitted_values = fitted_values[restore_order]
   if (!is.null(dpars_values)) dpars_values = lapply(dpars_values, function(v) v[restore_order])
   if (!is.null(response_data_values)) response_data_values = lapply(response_data_values, function(v) v[restore_order])
-  if (type == "predict" && any(!is.na(imputed_response))) {
-    response_data = get_family_response_data(fit$family, model_tables$segments, data = as.list(draws))
-    imputed_return = fit$family$response$observed(imputed_response, response_data, rate)
-    evaluated[!is.na(imputed_response)] = imputed_return[!is.na(imputed_response)]
-  }
   draws[[type]] = evaluated
 
   # Plotting can request fitted and predicted values from the same evaluated
@@ -1452,28 +1463,7 @@ pp_eval = function(
     if (!isFALSE(probs)) {
       val_col = if (type == "predict" && !is.null(fit$family$r$cdf)) ".predicted" else type
       quantiles = if (type == "predict" && !is.null(fit$family$r$cdf)) {
-        imputed_rows = unique(draws$.mcp_data_row[!is.na(imputed_response)])
-
-        # Straightforward for no imputed draws. Determine from CDF.
-        if (length(imputed_rows) == 0) {
-          get_mixture_quantiles(draws, probs, fit$family, keep = NULL, rate = rate, dpars = dpars_values, response_data = response_data_values)
-        } else {
-          # For imputed draws, compute quantiles separately for imputed and unimputed rows.
-          is_imputed = draws$.mcp_data_row %in% imputed_rows
-          quantiles_imputed = get_quantiles(draws[is_imputed, , drop = FALSE], probs, type) %>%
-            dplyr::rename(.predicted = dplyr::all_of(type))
-          if (all(is_imputed)) {
-            quantiles_imputed
-          } else {
-            dpars_unimputed = if (!is.null(dpars_values)) lapply(dpars_values, function(v) v[!is_imputed]) else NULL
-            response_data_unimputed = if (!is.null(response_data_values)) lapply(response_data_values, function(v) v[!is_imputed]) else NULL
-            quantiles_unimputed = get_mixture_quantiles(
-              draws[!is_imputed, , drop = FALSE], probs, fit$family, keep = NULL,
-              rate = rate, dpars = dpars_unimputed, response_data = response_data_unimputed
-            )
-            dplyr::bind_rows(quantiles_unimputed, quantiles_imputed)
-          }
-        }
+        get_mixture_quantiles(draws, probs, fit$family, keep = NULL, rate = rate, dpars = dpars_values, response_data = response_data_values)
       } else {
         get_quantiles(draws, probs, type, na.rm = type == "residuals")
       }
@@ -1703,8 +1693,11 @@ fitted.mcpfit = function(
 #' @return A numeric `N_draws` by `nrow(newdata)` matrix.
 #' @details For GARMA models, `posterior_predict()` conditions on the observed
 #'   response history, just like `predict()`. Use `conditional = FALSE` in either
-#'   method to generate fresh response histories recursively.
-#'   These methods require posterior draws. For prior prediction, use
+#'   method to generate fresh response histories recursively. Missing responses
+#'   in the original data are filled with retained imputations only to supply
+#'   histories. Conditional `posterior_predict()` draws from the response
+#'   distributions whose means `posterior_epred()` returns, including at missing
+#'   rows. These methods require posterior draws. For prior prediction, use
 #'   `predict()` with `prior = TRUE`; `conditional` selects the same behavior.
 #'
 #'   For binomial models, `posterior_epred()` and `posterior_predict()` (and

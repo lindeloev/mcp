@@ -53,7 +53,7 @@ plot_dpar(
 \item \code{TRUE} Add 2.5\% and 97.5\% quantiles. Corresponds to
 \code{q_fit = c(0.025, 0.975)}.
 \item \code{FALSE} No quantiles
-\item A vector of quantiles. For example, \code{q_fit = 0.5}
+\item A vector of quantiles (strictly between 0 and 1). For example, \code{q_fit = 0.5}
 plots the median and \code{q_fit = c(0.2, 0.8)} plots the 20\% and 80\%
 quantiles.
 }}

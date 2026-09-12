@@ -55,7 +55,8 @@ posterior_linpred.mcpfit(
 and \code{predict()} condition on the response history by default,
 so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
 \code{residuals()}, missing response histories are supported only in the original
-fitted data, using retained posterior imputations. With \code{conditional = FALSE},
+fitted data, using retained posterior imputations as histories. Predictions
+are fresh response draws, including at missing rows. With \code{conditional = FALSE},
 \code{predict()} and \code{\link[rstantools:posterior_predict]{posterior_predict()}} generate
 fresh response series recursively, so their \code{newdata} need only contain
 predictors and required response auxiliaries. \code{log_lik()}
@@ -102,8 +103,11 @@ These methods and workflows require the suggested package \code{{rstantools}}.
 \details{
 For GARMA models, \code{posterior_predict()} conditions on the observed
 response history, just like \code{predict()}. Use \code{conditional = FALSE} in either
-method to generate fresh response histories recursively.
-These methods require posterior draws. For prior prediction, use
+method to generate fresh response histories recursively. Missing responses
+in the original data are filled with retained imputations only to supply
+histories. Conditional \code{posterior_predict()} draws from the response
+distributions whose means \code{posterior_epred()} returns, including at missing
+rows. These methods require posterior draws. For prior prediction, use
 \code{predict()} with \code{prior = TRUE}; \code{conditional} selects the same behavior.
 
 For binomial models, \code{posterior_epred()} and \code{posterior_predict()} (and

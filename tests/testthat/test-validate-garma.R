@@ -309,15 +309,13 @@ test_that("missing GARMA responses stay paired with posterior draws", {
 
   expect_equal(fitted_draws$.epred, fitted_again$.epred)
   expect_true(all(is.na(fitted_draws$y[fitted_draws$data_row == 2])))
-  expect_equal(
+  expect_false(isTRUE(all.equal(
     prediction_draws$.prediction[prediction_draws$data_row == 2],
     imputed[prediction_draws$data_row == 2]
-  )
+  )))
 
   row3 = fitted_draws$data_row == 3
-  imputed_by_draw = prediction_draws$.prediction[
-    prediction_draws$data_row == 2
-  ][match(
+  imputed_by_draw = imputed[prediction_draws$data_row == 2][match(
     fitted_draws$.draw[row3],
     prediction_draws$.draw[prediction_draws$data_row == 2]
   )]
@@ -335,4 +333,52 @@ test_that("missing GARMA responses stay paired with posterior draws", {
   expect_error(loo(fit), "missing response occurs in the history")
   expect_error(waic(fit), "missing response occurs in the history")
   expect_equal(ncol(log_lik(fit, arma = FALSE)), 4L)
+})
+
+
+test_that("one GARMA recurrence handles generated, supplied, and partial histories", {
+  # Unequal lengths exercise series starts and unavailable higher-order lags.
+  # Row-varying coefficients and boundaries represent segment/group changes.
+  n = 12
+  series = rep(c("01", "1", "site,a", "a[b]"), c(1, 4, 2, 5))
+  base = seq(-0.2, 0.2, length.out = n)
+  ar = list(ar1_ = seq(0.1, 0.4, length.out = n), ar2_ = rep(0.1, n))
+  ma = list(ma1_ = rep(-0.2, n), ma2_ = seq(0, 0.1, length.out = n))
+  boundary = rep(c(0.1, 0.2), each = 6)
+  for (family in list(gaussian(), poisson(), binomial(), negbinomial())) {
+    family = mcpfamily(family)
+    data = if (family$family == "binomial") list(trials = rep(c(3, 7), 6)) else list()
+    args = list(base_link_mu = base, ar_list = ar, ma_list = ma,
+                boundary = boundary, family = family, series_id = series,
+                dpars = list(mu = family$linkinv(base), sigma = rep(1, n), shape = rep(2, n)),
+                data = data)
+    set.seed(21)
+    generated = suppressMessages(do.call(simulate_garma, args))
+    supplied = do.call(simulate_garma, c(args, list(y = generated$y)))
+    expect_equal(supplied, generated)
+
+    # Independent row-by-row reference: coefficients belong to the current
+    # row; history crosses segment changes but never independent series.
+    link_y = family$linkfun(get_garma_observed(generated$y, family, boundary, data))
+    expected = numeric(n)
+    for (rows in split(seq_len(n), series)) {
+      for (position in seq_along(rows)) {
+        row = rows[position]
+        previous = rev(head(rows, position - 1))
+        previous = head(previous, 2)
+        phi = c(ar$ar1_[row], ar$ar2_[row])[seq_along(previous)]
+        theta = c(ma$ma1_[row], ma$ma2_[row])[seq_along(previous)]
+        expected[row] = base[row] + sum(phi * (link_y[previous] - base[previous])) +
+          sum(theta * (link_y[previous] - expected[previous]))
+      }
+    }
+    expect_equal(generated$link_mu, expected)
+
+    partial_y = generated$y
+    partial_y[c(2, 6, 10)] = NA
+    partial = do.call(simulate_garma, c(args, list(y = partial_y)))
+    replayed = do.call(simulate_garma, c(args, list(y = partial$y)))
+    expect_equal(partial, replayed)
+    expect_equal(partial$y[!is.na(partial_y)], partial_y[!is.na(partial_y)])
+  }
 })

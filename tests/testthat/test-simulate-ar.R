@@ -35,7 +35,8 @@ test_that("fit$simulate resets fresh residual histories by series", {
   )
 
   set.seed(42)
-  innovations = stats::rnorm(4)
+  # Generation batches the same time position across independent series.
+  innovations = stats::rnorm(4)[c(1, 3, 2, 4)]
   expected = innovations
   expected[c(2, 4)] = innovations[c(2, 4)] + 0.5 * innovations[c(1, 3)]
 
