@@ -49,26 +49,6 @@ instantiate_prior_template = function(x, context) {
 }
 
 
-# Split a delimited string without splitting inside nested parentheses.
-split_top_level = function(x, separator = ",") {
-  if (!nzchar(trimws(x)))
-    return(character())
-  chars = strsplit(x, "", fixed = TRUE)[[1]]
-  depth = 0L
-  starts = 1L
-  pieces = character()
-  for (i in seq_along(chars)) {
-    if (chars[i] == "(") depth = depth + 1L
-    if (chars[i] == ")") depth = depth - 1L
-    if (chars[i] == separator && depth == 0L) {
-      pieces = c(pieces, substr(x, starts, i - 1L))
-      starts = i + 1L
-    }
-  }
-  c(pieces, substr(x, starts, nchar(x))) %>% stringr::str_trim()
-}
-
-
 # Separate a prior distribution call from its optional truncation clause.
 split_prior_truncation = function(x) {
   match = regexpr("(?<=\\))\\s*T\\s*\\(", x, perl = TRUE)
@@ -85,16 +65,14 @@ split_prior_truncation = function(x) {
 parse_prior_call = function(x) {
   if (is.null(x) || length(x) != 1 || is.na(x) || !is.character(x))
     return(NULL)
-  x = trimws(x)
-  if (!grepl("^[A-Za-z.][A-Za-z0-9._]*\\s*\\(", x))
+  expr = tryCatch(str2lang(trimws(x)), error = function(e) NULL)
+  if (is.null(expr) || !is.call(expr) || !is.symbol(expr[[1]]))
     return(NULL)
-  open = regexpr("\\(", x)[1]
-  if (open < 2 || substr(x, nchar(x), nchar(x)) != ")")
+  name = as.character(expr[[1]])
+  if (!grepl("^[A-Za-z.][A-Za-z0-9._]*$", name))
     return(NULL)
-  list(
-    name = trimws(substr(x, 1, open - 1L)),
-    args = split_top_level(substr(x, open + 1L, nchar(x) - 1L))
-  )
+  args = vapply(as.list(expr)[-1], function(arg) deparse1(arg, backtick = TRUE), character(1), USE.NAMES = FALSE)
+  list(name = name, args = args)
 }
 
 

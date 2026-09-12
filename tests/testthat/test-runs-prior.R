@@ -179,3 +179,36 @@ testthat::test_that("Dirichlet change point prior matches direct R simulation", 
 
   testthat::expect_lt(max(abs(colMeans(jags_draws) - colMeans(r_draws))), 0.025)
 })
+
+
+testthat::test_that("parse_prior_call parses prior calls, arguments, and truncation", {
+  # Ordinary distributions and nested calls
+  testthat::expect_equal(parse_prior_call("dnorm(0, 1)"), list(name = "dnorm", args = c("0", "1")))
+  testthat::expect_equal(parse_prior_call("dt(0, 2.5, 3)"), list(name = "dt", args = c("0", "2.5", "3")))
+  testthat::expect_equal(parse_prior_call("dunif(min(x), max(x))"), list(name = "dunif", args = c("min(x)", "max(x)")))
+  testthat::expect_equal(parse_prior_call("dirichlet(1)"), list(name = "dirichlet", args = "1"))
+  testthat::expect_equal(parse_prior_call("dnorm()"), list(name = "dnorm", args = character()))
+
+  # Truncation syntax and missing bounds
+  testthat::expect_equal(parse_prior_call("T(, 3)"), list(name = "T", args = c("", "3")))
+  testthat::expect_equal(parse_prior_call("T(0, )"), list(name = "T", args = c("0", "")))
+  testthat::expect_equal(parse_prior_call("T(,)"), list(name = "T", args = c("", "")))
+
+  # Expressions with commas or parentheses inside symbols/brackets
+  testthat::expect_equal(parse_prior_call("dnorm(`a,b`, 1)"), list(name = "dnorm", args = c("`a,b`", "1")))
+  testthat::expect_equal(parse_prior_call("dnorm(`a)b`, 1)"), list(name = "dnorm", args = c("`a)b`", "1")))
+  testthat::expect_equal(parse_prior_call("dnorm(a[1, 2], 1)"), list(name = "dnorm", args = c("a[1, 2]", "1")))
+
+  # Non-calls and malformed inputs
+  testthat::expect_null(parse_prior_call(NULL))
+  testthat::expect_null(parse_prior_call(NA_character_))
+  testthat::expect_null(parse_prior_call(""))
+  testthat::expect_null(parse_prior_call("   "))
+  testthat::expect_null(parse_prior_call("5"))
+  testthat::expect_null(parse_prior_call("-0.5"))
+  testthat::expect_null(parse_prior_call("Intercept_1"))
+  testthat::expect_null(parse_prior_call("x_1 + x_2"))
+  testthat::expect_null(parse_prior_call("(dnorm(1, 2))"))
+  testthat::expect_null(parse_prior_call("dnorm(1, "))
+  testthat::expect_null(parse_prior_call("dnorm(1, 2) T(0, )"))
+})
