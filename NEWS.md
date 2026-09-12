@@ -159,6 +159,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 ## Bug fixes
 
+- Convergence diagnostics now share classification between fitting and `summary()`. Intentionally fixed group-level deviations no longer trigger false convergence warnings, and stuck parameters with undefined Rhat/ESS are properly reported in the `summary()` footer.
+
 - `hypothesis(..., prior = TRUE)` now reports `BF = NA` rather than comparing prior draws with themselves and returning a Bayes factor of 1.
 
 - Directional Bayes factors now divide posterior odds by prior odds. Previously, they reported posterior odds alone, which is only a Bayes factor when the prior probability of the hypothesis is 0.5.

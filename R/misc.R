@@ -88,22 +88,66 @@ resolve_diagnostics = function(diagnostics = list()) {
 }
 
 
-#' Warn about poorly mixed posterior chains
-#'
-#' Thresholds (rhat > 1.01, bulk/tail ESS < 400) follow the recommendations in
-#' Vehtari, Gelman, Simpson, Carpenter, & Bürkner (2021). "Rank-normalization,
-#' folding, and localization: An improved Rhat for assessing convergence of
-#' MCMC". Bayesian Analysis, 16(2), 667-718. \doi{10.1214/20-BA1221}. The same
-#' thresholds are used by Stan/`cmdstanr`/`brms`.
-#'
-#' @aliases warn_nonconvergence
-#' @keywords internal
-#' @noRd
-#' @param mcmc_post An `mcmc.list` of posterior draws.
-#' @param diagnostics A resolved diagnostics configuration.
-#' @return `NULL`, invisibly. Called for the warning side-effect.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+# Extract parameter names for constant params (e.g. "x_2" for x_2 = 5)
+get_fixed_pars = function(fit) {
+  table = .subset2(fit, ".internal")[["prior_table"]]
+  if (is.null(table))
+    table = attr(fit$prior, "prior_table")
+  if (!is.null(table$parameter) && !is.null(table$kind)) {
+    table$parameter[table$kind == "constant"]
+  } else {
+    character()
+  }
+}
+
+
+# Check MCMC diagnostic criteria for a summary data.frame.
+# - results: A data.frame with a `variable` column and optionally `rhat`, `ess_bulk`, `ess_tail`.
+# - diagnostics: Resolved or partial diagnostics list.
+# - fixed_pars: Parameter names for constant params (e.g. "x_2" for x_2 = 5)
+# - check_rhat: Logical. Whether Rhat should be evaluated (FALSE if nchain < 2).
+check_convergence = function(results, diagnostics = list(), fixed_pars = character(), check_rhat = TRUE) {
+  diagnostics = resolve_diagnostics(diagnostics)
+  if (nrow(results) == 0)
+    return(list(bad = logical(0), bad_names = character(0), n_bad = 0L, thresholds = ""))
+
+  base_name = sub("\\[.*\\]$", "", results$variable)
+  is_fixed = results$variable %in% fixed_pars | base_name %in% fixed_pars
+
+  check_rhat = check_rhat && !is.null(diagnostics$rhat) && "rhat" %in% names(results)
+  check_bulk = !is.null(diagnostics$ess_bulk) && "ess_bulk" %in% names(results)
+  check_tail = !is.null(diagnostics$ess_tail) && "ess_tail" %in% names(results)
+
+  bad = rep(FALSE, nrow(results))
+  if (check_rhat)
+    bad = bad | is.na(results$rhat) | results$rhat > diagnostics$rhat
+  if (check_bulk)
+    bad = bad | is.na(results$ess_bulk) | results$ess_bulk < diagnostics$ess_bulk
+  if (check_tail)
+    bad = bad | is.na(results$ess_tail) | results$ess_tail < diagnostics$ess_tail
+
+  bad = bad & !is_fixed
+
+  thresholds = c(
+    if (check_rhat) paste0("rhat > ", diagnostics$rhat),
+    if (check_bulk) paste0("ess_bulk < ", diagnostics$ess_bulk),
+    if (check_tail) paste0("ess_tail < ", diagnostics$ess_tail)
+  )
+
+  list(
+    bad = bad,
+    bad_names = results$variable[bad],
+    n_bad = sum(bad),
+    thresholds = paste(thresholds, collapse = " or ")
+  )
+}
+
+
+# Warn about poorly mixed posterior chains.
+# Thresholds (rhat > 1.01, bulk/tail ESS < 400) follow Vehtari et al. (2021).
+# - mcmc_post: An mcmc.list of posterior draws.
+# - diagnostics: A resolved diagnostics configuration.
+# - fixed_pars: Parameter names intentionally fixed to constants.
 warn_nonconvergence = function(mcmc_post, diagnostics = list(), fixed_pars = character()) {
   diagnostics = resolve_diagnostics(diagnostics)
   if (is.null(unlist(diagnostics[c("rhat", "ess_bulk", "ess_tail")])))
@@ -118,31 +162,14 @@ warn_nonconvergence = function(mcmc_post, diagnostics = list(), fixed_pars = cha
     ess_tail = function(x) suppressWarnings(posterior::ess_tail(x))
   )
 
-  # Exclude intentionally fixed parameters from convergence checks
-  results = results[results$variable %notin% fixed_pars, , drop = FALSE]
-  if (nrow(results) == 0)
+  conv = check_convergence(results, diagnostics, fixed_pars = fixed_pars, check_rhat = check_rhat)
+  if (conv$n_bad == 0)
     return(invisible(NULL))
 
-  bad = rep(FALSE, nrow(results))
-  if (check_rhat)
-    bad = bad | is.na(results$rhat) | results$rhat > diagnostics$rhat
-  if (!is.null(diagnostics$ess_bulk))
-    bad = bad | is.na(results$ess_bulk) | results$ess_bulk < diagnostics$ess_bulk
-  if (!is.null(diagnostics$ess_tail))
-    bad = bad | is.na(results$ess_tail) | results$ess_tail < diagnostics$ess_tail
-
-  if (!any(bad))
-    return(invisible(NULL))
-
-  thresholds = c(
-    if (check_rhat) paste0("rhat > ", diagnostics$rhat),
-    if (!is.null(diagnostics$ess_bulk)) paste0("ess_bulk < ", diagnostics$ess_bulk),
-    if (!is.null(diagnostics$ess_tail)) paste0("ess_tail < ", diagnostics$ess_tail)
-  )
   warning(
     "Some parameters may not have converged well:\n",
-    "  * ", paste(thresholds, collapse = " or "), ": ",
-    and_collapse(results$variable[bad]), "\n",
+    "  * ", conv$thresholds, ": ",
+    and_collapse(conv$bad_names), "\n",
     "Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing ",
     "`iter`/`warmup` or simplifying the model before trusting these results.",
     call. = FALSE

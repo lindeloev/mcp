@@ -332,23 +332,11 @@ summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ver
       )
       all_res = dplyr::bind_rows(all_res, ran_res)
     }
-    bad_mask = rep(FALSE, nrow(all_res))
-    if (!is.null(diagnostics$rhat))
-      bad_mask = bad_mask | (!is.na(all_res$rhat) & all_res$rhat > diagnostics$rhat)
-    if (!is.null(diagnostics$ess_bulk))
-      bad_mask = bad_mask | (!is.na(all_res$ess_bulk) & all_res$ess_bulk < diagnostics$ess_bulk)
-    if (!is.null(diagnostics$ess_tail))
-      bad_mask = bad_mask | (!is.na(all_res$ess_tail) & all_res$ess_tail < diagnostics$ess_tail)
-    n_bad = sum(bad_mask)
-    if (n_bad > 0) {
-      param_str = if (n_bad == 1) "1 parameter shows" else paste0(n_bad, " parameters show")
-      thresholds = c(
-        if (!is.null(diagnostics$rhat)) paste0("rhat > ", diagnostics$rhat),
-        if (!is.null(diagnostics$ess_bulk)) paste0("ess_bulk < ", diagnostics$ess_bulk),
-        if (!is.null(diagnostics$ess_tail)) paste0("ess_tail < ", diagnostics$ess_tail)
-      )
-      thresholds = paste(thresholds, collapse = " or ")
-      cat("\nWarning: ", param_str, " poor convergence (", thresholds, ").\n", sep = "")
+    check_rhat = !is.null(diagnostics$rhat) && coda::nchain(draws) >= 2
+    conv = check_convergence(all_res, diagnostics, fixed_pars = get_fixed_pars(fit), check_rhat = check_rhat)
+    if (conv$n_bad > 0) {
+      param_str = if (conv$n_bad == 1) "1 parameter shows" else paste0(conv$n_bad, " parameters show")
+      cat("\nWarning: ", param_str, " poor convergence (", conv$thresholds, ").\n", sep = "")
     }
 
     return(invisible(result))

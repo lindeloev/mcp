@@ -973,8 +973,20 @@ test_that("diagnostic settings control fit warnings and summary footers", {
   stuck_post = coda::as.mcmc.list(coda::mcmc(matrix(rep(1, 50), ncol = 1, dimnames = list(NULL, "stuck"))))
   expect_warning(warn_nonconvergence(stuck_post, list(ess_bulk = 100)), "stuck")
 
-  # Intentionally fixed parameter does not trigger warning
+  # Intentionally fixed parameter does not trigger warning (including indexed group deviations)
   expect_no_warning(warn_nonconvergence(stuck_post, list(ess_bulk = 100), fixed_pars = "stuck"))
+  stuck_group = coda::as.mcmc.list(coda::mcmc(matrix(rep(1, 50), ncol = 1, dimnames = list(NULL, "Intercept_1_id[A]"))))
+  expect_no_warning(warn_nonconvergence(stuck_group, list(ess_bulk = 100), fixed_pars = "Intercept_1_id"))
+  expect_warning(warn_nonconvergence(stuck_group, list(ess_bulk = 100)), "Intercept_1_id\\[A\\]")
+
+  # Stuck parameter (undefined Rhat/ESS) triggers summary footer warning
+  fit_stuck = fit_nowarn
+  post_stuck = .subset2(fit_stuck, "mcmc_post")
+  for (chain in seq_along(post_stuck))
+    post_stuck[[chain]][, "cp_1"] = 5
+  fit_stuck$mcmc_post = post_stuck
+  stuck_summary = capture.output(summary(fit_stuck, diagnostics = list(rhat = 1.01)))
+  expect_true(any(grepl("poor convergence", stuck_summary)))
 
   ex_fit = mcp_example("intercepts", sample = "none")
   expect_s3_class(ex_fit, "mcpfit")
