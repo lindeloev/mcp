@@ -175,7 +175,7 @@
 #' * For an \eqn{N}-order component, the last \eqn{N} values *before* the segment onset are input to the first \eqn{\eta_t} in the segment.
 #' * AR and MA components persist into later segments until replaced or turned off via \code{ar(0)} or \code{ma(0)}.
 #' * AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
-#' * See [the arma vignette](https://lindeloev.github.io/mcp/articles/arma.html) for more details.
+#' * See [the arma article](https://lindeloev.github.io/mcp/articles/arma.html) for more details.
 #'
 #' @section Notes on priors:
 #'

@@ -64,7 +64,7 @@
 #' @param samples_format Deprecated. Use `draws_format` instead.
 #'   See more under "value"
 #' @param scale One of
-#'   * `"response"`: return on the observed scale, i.e., after applying the inverse link function.
+#'   * `"response"`: return on the response scale, i.e., after applying the inverse link function.
 #'   * `"linear"`: return on the linear-predictor (link) scale, where the linear
 #'     trends are modeled.
 #'     A linear scale is only applicable when `type == "fitted"` and `dpar` is not `NULL`.

@@ -249,6 +249,6 @@ You can inspect the parameters in a fitted model or family object using `mcp_par
 
 Many core `mcp` functions take a `dpar` argument to extract or visualize specific distributional parameters:
 
-- **`fitted(fit, dpar = "sigma")` or `fitted(fit, dpar = "shape")`**: Returns fitted values for the target `dpar` evaluated on the natural/response scale.
+- **`fitted(fit, dpar = "sigma")` or `fitted(fit, dpar = "shape")`**: Returns fitted values for the target `dpar` evaluated on the response scale.
 - **`predict(fit, dpar = "sigma")`**: Generates posterior predictive draws for the specified distributional parameter.
 - **`plot_dpar(fit, dpar = "sigma")` or `plot_dpar(fit, dpar = "shape")`**: Plots the trajectory of the distributional parameter over $x$, complete with credible intervals across segments.

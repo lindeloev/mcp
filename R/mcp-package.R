@@ -20,7 +20,7 @@
 #' * *Model comparison and hypothesis testing:* Compare models using PSIS-LOO (`loo()`) or WAIC (`waic()`), and test directional
 #'   or point-null hypotheses (`hypothesis()`) using Savage-Dickey density ratios.
 #'
-#' See [the mcp website](https://lindeloev.github.io/mcp/) for worked examples and vignettes.
+#' See [the mcp website](https://lindeloev.github.io/mcp/) for worked examples.
 #'
 #' @inherit mcp references
 #'
