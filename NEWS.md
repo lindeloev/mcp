@@ -4,7 +4,7 @@
 
 - **Multiple regression:** `mcp` now supports several continuous predictors, categorical predictors, interactions, etc. for all terms on RHS. E.g., `~ 1 + x + x:group + sigma(1 + group) + ar(2, 0 + z)`. Basically, it now aims to "feels" like `lm()` or `glm()` for each distributional parameter in each segment. Explore `ex = mcp_example("multiple")` to see it in action. Default priors generally align with brms, with some adjustments to accommodate the change-point model.
 
-- **Group-level effects on RHS:** Predictor formulas now support group-level effects (random effects) using familiar `lme4` and `brms` syntax. `(1 | group)` specifies a group-level intercept, while `(1 + x || group)` and `(factor || group)` support independent coefficients, including slopes and factors. This also works inside distributional formulas such as `sigma(1 + (factor || id))`. As with `ar()`, an effect carries into later segments until it is redefined or disabled with `(0 | group)`. See `mcp_example("group_mu")` for a worked example. Correlated multi-coefficient terms are not yet supported.
+- **Group-level effects on RHS:** Predictor formulas now support group-level effects (random effects) using familiar `lme4` and `brms` syntax. `(1 | group)` specifies a group-level intercept, while `(1 + x || group)` and `(factor || group)` support independent coefficients, including slopes and factors. This also works inside distributional formulas such as `sigma(1 + (factor || id))`. As with `ar()`, an effect persists into later segments until it is replaced or turned off with `(0 | group)`. See `mcp_example("group_mu")` for a worked example. Correlated multi-coefficient terms are not yet supported.
 
 - **Native feel:** `mcpfit`s now work natively with R generics, `{posterior}` and `{tidybayes}` posterior draw and prediction API. Changes include:
 
@@ -96,6 +96,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 - Generalized AR/MA:
    - Autoregression (`ar()`) has been generalized to link-scale observation-driven GARMA residuals for Gaussian, binomial, Bernoulli, Poisson, and negative-binomial models with their default links, using `ar(..., boundary = 0.1)` by default to keep zero and boundary counts finite. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment. Independent time series can be separated using `series = <column>`.
 
+   - AR and MA components can now be turned off in later segments using `ar(0)` and `ma(0)`.
+
    - Explicit AR/MA prediction history control: predict() and the new posterior_predict() support conditional = TRUE (default) to condition on observed response histories, or conditional = FALSE to generate histories recursively. This applies to both prior and posterior prediction. Previously, AR history handling depended on whether response values were supplied.
 
    - Added AR/MA warnings: (1) for AR/MA models to `loo()`, `predict()`, etc. where the serial dependence is currently ignored. Proper handling requires leave-future-out or blocked cross-validation, which are not currently implemented in `mcp`. (2) when posterior violation probabilities exceed the configurable `ar` or `ma` diagnostic thresholds (10% by default).
@@ -181,7 +183,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - Weighted regression now uses brms-style likelihood weights throughout: JAGS targets the likelihood raised to `weight`, `log_lik()` multiplies each log density by `weight`, and predictive draws use the unweighted response distribution. In v0.3.4, weights instead acted as Gaussian precision weights and R-side predictions and information criteria were not fully consistent with the fitted model.
 
-- In models going from higher-order to lower-order, (`~ ar(2), ~ ar(1)`), the higher-order components were not "turned off".
+- In models going from higher-order to lower-order (`~ ar(2), ~ ar(1)`), the higher-order components were not turned off.
 
 - Bug only noticeable for very small samples: For Gaussian identity-link AR models, R-side calculations could leak residuals between posterior draws and omitted available partial lags for the first observations of AR(2+) models. Each draw is now evaluated as a separate series and uses the same partial-lag recurrence as JAGS.
 

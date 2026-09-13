@@ -46,7 +46,7 @@ good_intercepts = list(
        ~ 1,
        ~ 0,
        ~ 1),
-  list(y ~ 1 + (1 | id),  # Predictor group intercept carries until explicit turn-off
+  list(y ~ 1 + (1 | id),  # Predictor group intercept persists until explicit turn-off
        ~ 1,
        ~ 1 + (0 | id)),
   list(y ~ 1 + (ok_id_factor || id))  # Independent intercept and factor deviations
@@ -76,7 +76,7 @@ test_that("formula functions reject multiple terms containing par_x", {
   )
 })
 
-test_that("population terms carry until redefined while local par_x terms accumulate", {
+test_that("population terms persist until redefined while local par_x terms accumulate", {
   data = data.frame(
     x = 1:8,
     z = c(0, 1, 0, 2, 1, 3, 2, 4),
@@ -174,7 +174,7 @@ test_that("formula offsets work in mcp formulas", {
   expect_true(grepl("offset_mu_1_\\[i_\\]", fit_pois$jags_code))
   expect_true(grepl("offset_mu_2_\\[i_\\]", fit_pois$jags_code))
 
-  # Offsets carry until explicitly replaced; offset(0) turns one off.
+  # Offsets persist until explicitly replaced; offset(0) turns one off.
   offset_lifetime = mcp(
     list(
       y ~ 1 + x + offset(log(pop)),

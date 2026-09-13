@@ -72,7 +72,7 @@ The same syntax in the predictor part gives each group a deviation from the popu
 model = list(
   y ~ 1 + (1|id),  # Starts group-level intercept
   ~ 0 + x,         # Group-level intercept persists here
-  ~ 1 + (0|id)     # 0 Turns it off
+  ~ 1 + (0|id)     # (0|id) turns it off
 )
 ```
 

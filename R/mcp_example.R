@@ -212,7 +212,7 @@ if (plot) {
     missing = "# Define model
 model = list(
   y ~ 1 + x + condition,
-  ~ 0 + x  # condition effect carries into the second segment
+  ~ 0 + x  # condition effect persists into the second segment
 )
 
 # Simulate complete data

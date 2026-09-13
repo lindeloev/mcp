@@ -229,7 +229,7 @@ test_that("declared dpar wrappers use the generic formula path", {
   )
 })
 
-test_that("distributional predictor terms carry until redefined", {
+test_that("distributional predictor terms persist until redefined", {
   data = data.frame(
     x = 1:8,
     z = c(0, 1, 0, 2, 1, 3, 2, 4),

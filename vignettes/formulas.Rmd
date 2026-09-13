@@ -27,7 +27,7 @@ The three formula parts are called **response**, **cp**, and **predictor**. The 
 
 **2. Change-point modeling (`cp`, segments 2+):** \* `~ 1 ~ ...` (or omitted, e.g., `~ x`): Population-level change point (default). \* `1 + (1 | id) ~ ...`: Group-level change-point deviations around the population change point ([read more](../articles/group_effects.html)).
 
-**3. Regression formula (all segments):** \* `~ 1 + x`: Disjoined slope with a new segment intercept. \* `~ 0 + x`: Joined slope (no intercept; continuous from previous segment). \* `~ 1`: Plateau (intercept only, no slope). \* `~ x:condition + z + (1 | id)`: Additional covariates, interactions, and group-level effects ([read more](../articles/group_effects.html)). \* `+ sigma(1 + x)` or `shape(0 + condition)`: Distributional parameters on the link scale ([read more](../articles/dpar.html)). \* `+ ar(1)` or `ma(2, 1 + x)`: Autoregressive and moving-average time-series residuals on the link scale ([read more](../articles/arma.html)).
+**3. Regression formula (all segments):** \* `~ 1 + x`: Disjoined slope with a new segment intercept. \* `~ 0 + x`: Joined slope (no intercept; continuous from previous segment). \* `~ 1`: Plateau (intercept only, no slope). \* `~ x:condition + z + (1 | id)`: Additional covariates, interactions, and group-level effects ([read more](../articles/group_effects.html)). \* `+ sigma(1 + x)` or `shape(0 + condition)`: Distributional parameters on the link scale ([read more](../articles/dpar.html)). \* `+ ar(1)` or `ma(2, 1 + x)`: Autoregressive and moving-average time-series residuals on the link scale (use `ar(0)` or `ma(0)` to turn off in later segments; [read more](../articles/arma.html)).
 
 `mcp` is heavily inspired by `brms` which again is inspired by [`lme4::lmer()`](https://cran.r-project.org/web/packages/lme4/index.html) which extends `lm()` and `glm()`. [Here is a bit of history](https://twitter.com/jonaslindeloev/status/1117760777249853440) on that.
 
@@ -208,7 +208,7 @@ When defining multiple segments in `mcp`, you only need to specify what changes:
 >
 > - Omitted non-$x$ terms **PERSIST** from the previous segment.
 >
-> - Repeated non-$x$ terms **REPLACE** the corresponding term from the previous segment.
+> - Repeated non-$x$ terms **REPLACE** earlier terms (and repeating with zero turns them off).
 >
 > - A new intercept **RESETS** the population formula, removing omitted terms.
 
@@ -247,18 +247,18 @@ list(
   y ~ 1 + x + sigma(1 + x) + ar(1),  # Intercept_1, x_1, sigma_1, sigma_x_1, ar1_1
     ~ 0 + x,                         # Joined: x_2 starts; sigma() and ar() persist into segment 2 unchanged
     ~ 1 + x + ar(2),                 # Disjoined: Intercept_3, x_3; sigma persists; ar1_3 and ar2_3 replace AR(1)
-    ~ 0 + x + ar(1, 0)               # Joined: x_4 starts; ar(1, 0) explicitly turns AR off
+    ~ 0 + x + ar(0)                  # Joined: x_4 starts; ar(0) explicitly turns AR off
 )
 
 # 5. Group-level effects and offsets persist until explicitly turned off
 list(
   y ~ 1 + x + (1 | id) + offset(log(exposure)),  # Intercept_1, x_1, Intercept_1_id, exposure offset
     ~ 0 + x,                                     # Joined: x_2 starts; group effect and offset persist into segment 2
-    ~ 1 + x + (0 | id) + offset(0)               # Disjoined: Intercept_3, x_3; group effect and offset turned off
+    ~ 1 + x + (0 | id) + offset(0)               # Disjoined: Intercept_3, x_3; (0 | id) and offset(0) turn off group effect and offset
 )
 ```
 
-As shown above, terms not affected by the population intercept can be turned off anywhere using zero: `(0 | group)`, `offset(0)`, or `ar(p, 0)` / `ma(q, 0)`.
+As shown above, terms not affected by the population intercept can be turned off anywhere by replacing them with zero: `(0 | group)`, `offset(0)`, or `ar(0)` / `ma(0)`.
 
 ## Transformations are not segment-local
 

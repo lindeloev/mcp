@@ -5,7 +5,7 @@
 # ar(order, [formula]), since the formula runs through the exact same code as
 # sigma and mu.
 bad_arma = list(
-  list(y ~ ar(0)),  # currently not implemented
+  list(y ~ ar(0, 1 + x)),  # cannot have formula with order 0
   list(y ~ ar(-1)),  # must be positive
   list(y ~ ar(1.5)),  # Cannot be decimal
   list(y ~ ar(1) + ar(2)),  # Only one per segment
@@ -16,7 +16,7 @@ bad_arma = list(
   list(y ~ ar(1, series = id1) + ma(1, series = id2)),  # conflicting series in same segment
   list(y ~ ar(1, series = id1),
        ~ ar(1, series = id2)),  # conflicting series across segments
-  list(y ~ ma(0)),
+  list(y ~ ma(0, 1 + x)),  # cannot have formula with order 0
   list(y ~ ma(-1)),
   list(y ~ ma(1.5)),
   list(y ~ ma(1) + ma(2))
@@ -33,6 +33,10 @@ good_arma = list(
   list(y ~ ar(1, 1 + x + I(x^2) + exp(x))),  # complicated regression
   list(y ~ ar(1),
        ~ ar(2, 0 + x)),  # change in ar
+  list(y ~ 1 + x + ar(1),
+       ~ 0 + x + ar(0)),  # turn off ar
+  list(y ~ 1 + x + ma(1),
+       ~ 0 + x + ma(0)),  # turn off ma
   list(y ~ 1,
        ~ 0 + ar(2)),  # onset of AR
   list(y ~ 1,

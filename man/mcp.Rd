@@ -29,8 +29,8 @@ mcp(
 \code{response ~ cp ~ predictors} (e.g., \code{y ~ 1 ~ 1 + x}), except the first segment
 has no change point and uses \code{response ~ predictors}. The response and
 change-point parts can be omitted (\code{cp ~ predictor} assumes the same
-response; \code{~ predictor} assumes an intercept-only change point). Terms normally persist
-into later segments until redefined or reset (see details). See examples on the
+response; \code{~ predictor} assumes an intercept-only change point). Non-$x$ terms persist
+into later segments until replaced or removed by an intercept reset (see details). See examples on the
 \href{https://lindeloev.github.io/mcp/}{mcp website}.
 
 \strong{1. Response (segment 1 only):}
@@ -62,7 +62,7 @@ not predictions).
 \item \code{~ sigma(1 + x)}: Distributional parameters on the link scale (e.g., log residual SD).
 \href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}.
 \item \code{~ ar(1) + ma(1)}: Autoregressive and moving-average time-series residuals on the link scale
-(accepts regression formulas, \code{series = id}, and \code{boundary}).
+(accepts regression formulas, \code{series = id}, and \code{boundary}; use \code{ar(0)} or \code{ma(0)} to turn off in later segments).
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}.
 }}
 
@@ -185,7 +185,7 @@ the linear predictor \eqn{\eta_i} is evaluated directly from the segment-local d
 
 \deqn{\eta_i = \alpha_k + \beta_{k,1} (x_i - \tau_{k-1}) \quad (\text{with } \tau_0 = 0)}
 
-where the segment-start level \eqn{\alpha_k} is freely estimated for the first and disjoined segments, as in non-segmented regression, and inherited continuously for joined segments:
+where the segment-start level \eqn{\alpha_k} is freely estimated for the first and disjoined segments, as in non-segmented regression, and determined by continuity for joined segments:
 
 \deqn{\alpha_k = \begin{cases}
   \beta_{k,0}, & \text{Disjoined segments } (\sim \texttt{1 + x}, \text{ including } k = 1) \\
@@ -229,6 +229,7 @@ where \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at tim
 Implications:
 \itemize{
 \item For an \eqn{N}-order component, the last \eqn{N} values \emph{before} the segment onset are input to the first \eqn{\eta_t} in the segment.
+\item AR and MA components persist into later segments until replaced or turned off via \code{ar(0)} or \code{ma(0)}.
 \item AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
 \item See \href{https://lindeloev.github.io/mcp/articles/arma.html}{the arma vignette} for more details.
 }

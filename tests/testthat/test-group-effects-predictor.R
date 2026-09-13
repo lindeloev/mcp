@@ -14,7 +14,7 @@ coefficient_data = data.frame(
 )
 
 
-test_that("predictor group intercepts carry, replace, and turn off", {
+test_that("predictor group intercepts persist, replace, and turn off", {
   fit = mcp(
     list(
       y ~ 1 + (1 | id),

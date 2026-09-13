@@ -57,11 +57,15 @@ unpack_arma = function(form_str_in) {
 
   # Check the order
   if (is.na(order))
-    stop("Wrong specification of order in '", form_str_in, "'. Must be ", component, "(order) or ", component, "(order, formula) where order is a positive integer.")
-  checkmate::assert_int(order, lower = 1, .var.name = form_str_in)
+    stop("Wrong specification of order in '", form_str_in, "'. Must be ", component, "(order) or ", component, "(order, formula) where order is a non-negative integer.")
+  checkmate::assert_int(order, lower = 0, .var.name = form_str_in)
 
   # GET FORMULA AND BOUNDARY AND SERIES
-  if (length(formula_index) == 1) {
+  if (order == 0) {
+    if (length(formula_index) == 1)
+      stop("Formula cannot be specified when order = 0 in '", form_str_in, "'.")
+    form_str = paste0(component, "(0)")
+  } else if (length(formula_index) == 1) {
     formula_str = paste(deparse(component_args[[formula_index]], width.cutoff = 500), collapse = "")
     form_str = paste0(component, "(", formula_str, ")")
   } else {

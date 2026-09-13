@@ -642,15 +642,23 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
           "() are not currently supported. Found one in segment ", segment, "."
         )
       # Expand one formula into a separate regression parameter for each lag.
-      arma_pars[[component]] = lapply(
-        seq_len(component_stuff$order),
-        function(order) get_predictors_dpar(
-          data, component_form, segment, component, par_x, order, check_rank,
-          design_id = paste("population", component, order, segment, sep = ":")
-        )
-      ) %>%
-        dplyr::bind_rows() %>%
-        dplyr::mutate(boundary = component_stuff$boundary, explicit = TRUE)
+      arma_pars[[component]] = if (component_stuff$order == 0) {
+        get_predictors_dpar(
+          data, component_form, segment, component, par_x, order = 1L, check_rank,
+          design_id = paste("population", component, 0, segment, sep = ":")
+        ) %>%
+          dplyr::mutate(boundary = component_stuff$boundary, explicit = TRUE)
+      } else {
+        lapply(
+          seq_len(component_stuff$order),
+          function(order) get_predictors_dpar(
+            data, component_form, segment, component, par_x, order, check_rank,
+            design_id = paste("population", component, order, segment, sep = ":")
+          )
+        ) %>%
+          dplyr::bind_rows() %>%
+          dplyr::mutate(boundary = component_stuff$boundary, explicit = TRUE)
+      }
     }
   }
 
@@ -715,7 +723,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     dplyr::ungroup() %>%
     dplyr::mutate(next_intercept = dplyr::if_else(.data$segment >= .data$next_intercept, NA_integer_, .data$next_intercept))
 
-  # Ordinary non-local terms carry over to later segments until a segment where that same term is redefined. Local
+  # Ordinary non-local terms persist into later segments until a segment where that same term is redefined or turned off. Local
   # par_x terms remain cumulative across joined segments and therefore end only next time an intercept is set.
   term_lifetimes = predictors %>%
     dplyr::filter(.data$dpar %notin% c("ar", "ma")) %>%

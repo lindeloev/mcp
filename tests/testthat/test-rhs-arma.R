@@ -69,6 +69,32 @@ test_that("a lower-order AR/MA declaration turns off higher lags", {
 })
 
 
+test_that("ar(0) and ma(0) turn off AR/MA components", {
+  data = data.frame(x = 1:6, y = 1:6)
+  family = mcpfamily(gaussian())
+
+  zeroed_ar = get_predictors(
+    list(y ~ 1 + x + ar(2), ~ 0 + x + ar(0)), data, family, par_x = "x"
+  )
+  expect_true(all(zeroed_ar$next_segment[zeroed_ar$dpar == "ar" & zeroed_ar$segment == 1] == 2L))
+  expect_equal(sum(zeroed_ar$dpar == "ar" & zeroed_ar$segment == 2), 0)
+
+  zeroed_ma = get_predictors(
+    list(y ~ 1 + x + ma(2), ~ 0 + x + ma(0)), data, family, par_x = "x"
+  )
+  expect_true(all(zeroed_ma$next_segment[zeroed_ma$dpar == "ma" & zeroed_ma$segment == 1] == 2L))
+  expect_equal(sum(zeroed_ma$dpar == "ma" & zeroed_ma$segment == 2), 0)
+
+  fit_ar = mcp(list(y ~ 1 + x + ar(1), ~ 0 + x + ar(0)), data, par_x = "x", sample = FALSE, quiet = TRUE)
+  expect_match(fit_ar$jags_code, "x\\[i_\\] < cp_1")
+  expect_false(grepl("ar1_2", fit_ar$jags_code))
+
+  fit_ma = mcp(list(y ~ 1 + x + ma(1), ~ 0 + x + ma(0)), data, par_x = "x", sample = FALSE, quiet = TRUE)
+  expect_match(fit_ma$jags_code, "x\\[i_\\] < cp_1")
+  expect_false(grepl("ma1_2", fit_ma$jags_code))
+})
+
+
 test_that("MA order errors describe MA syntax", {
   data = data.frame(x = 1:6, y = 1:6)
 
