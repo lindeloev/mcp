@@ -81,3 +81,25 @@ test_that("newdata columns colliding with reserved output namespace are rejected
   )
 })
 
+
+test_that("data columns colliding with reserved offset namespace are rejected early", {
+  for (name in c("offset", "offset_1", "offset_2")) {
+    bad_data = data.frame(x = 1:4, y = 1:4)
+    bad_data[[name]] = 1:4
+    expect_error(
+      mcp(list(y ~ 1, ~ 1), data = bad_data, par_x = "x", sample = FALSE),
+      "reserved offset namespace"
+    )
+  }
+})
+
+
+test_that("response column named offset is rejected early", {
+  bad_data = data.frame(x = 1:4, offset = 1:4, exposure = 10)
+  expect_error(
+    mcp(list(offset ~ 1 + offset(log(exposure))), data = bad_data, par_x = "x", sample = FALSE),
+    "reserved offset namespace"
+  )
+})
+
+

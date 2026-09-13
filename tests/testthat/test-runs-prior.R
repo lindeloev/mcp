@@ -333,6 +333,35 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
 })
 
 
+testthat::test_that("offsets on other distributional parameters do not overwrite mu intercept priors", {
+  d = data.frame(
+    x = 1:10,
+    y = 10,
+    exposure = 10,
+    exposure2 = 100
+  )
+
+  fit1 = mcp(
+    list(y ~ 1 + offset(log(exposure))),
+    data = d,
+    family = negbinomial(),
+    par_x = "x",
+    sample = FALSE
+  )
+  testthat::expect_equal(fit1$prior$Intercept_1, "dnorm(0, 2.5)")
+
+  fit2 = mcp(
+    list(y ~ 1 + offset(log(exposure)) + shape(1 + offset(log(exposure2)))),
+    data = d,
+    family = negbinomial(),
+    par_x = "x",
+    sample = FALSE
+  )
+  testthat::expect_equal(fit2$prior$Intercept_1, "dnorm(0, 2.5)")
+  testthat::expect_equal(fit2$prior$shape_1, "dnorm(0, 2.5)")
+})
+
+
 testthat::test_that("gaussian(link = 'log') aligns with log-link model default priors", {
   d = data.frame(
     time = 1:20,

@@ -109,6 +109,22 @@ assert_reserved_output_namespace = function(col_names, context = "data") {
 }
 
 
+# Assert that column names do not collide with reserved mcp offset names
+assert_reserved_offset_namespace = function(col_names, context = "data") {
+  collisions = grep("^offset(_[0-9]+)?$", col_names, value = TRUE)
+  if (length(collisions) > 0) {
+    target = if (context == "data") "Data column name(s)" else paste0("`", context, "` column name(s)")
+    action = if (context == "data") "before fitting." else "before evaluation."
+    stop(
+      target, " collide with mcp's reserved offset namespace: ",
+      and_collapse(paste0("'", collisions, "'")),
+      ". Rename them ", action
+    )
+  }
+  invisible(TRUE)
+}
+
+
 # Validate response auxiliaries independently of whether responses themselves
 # are observed. This makes the same family-level invariants available to model
 # construction and R-side simulation.

@@ -28,15 +28,20 @@ prior_context = function(data, segments, design_specs = list()) {
   y_name = segments$y[1]
   x = data[[x_name]]
 
+  calibration_offsets = list()
   for (s in Filter(function(s) isTRUE(s$has_offset), design_specs)) {
     if (!is.null(s$offset_data) && any(s$offset_data != 0)) {
-      data[[paste0("offset_", s$segment)]] = s$offset_data
-      data$offset = s$offset_data
+      calibration_offsets[[paste0("offset_", s$dpar, "_", s$segment)]] = s$offset_data
+      if (identical(s$dpar, "mu")) {
+        data[[paste0("offset_", s$segment)]] = s$offset_data
+        data$offset = s$offset_data
+      }
     }
   }
 
   list(
     data = data,
+    calibration_offsets = calibration_offsets,
     x_name = x_name,
     y_name = y_name,
     x_display = display_data_name(x_name),

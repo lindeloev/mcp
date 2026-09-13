@@ -34,6 +34,7 @@ validate_prior_v1 = function(prior) {
 # Get priors for all parameters in the model
 get_prior = function(segments, cps, predictors, group_effects, family, prior = list(), data, design_specs = list()) {
   checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
+  assert_reserved_offset_namespace(names(data), context = "data")
   context = prior_context(data, segments, design_specs)
   warn_legacy_prior_constants(prior, context)
 
@@ -50,7 +51,7 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
   attr(resolved, "prior_table") = table
   attr(resolved, "prior_context") = context[c(
     "x_name", "y_name", "x_display", "y_display", "x_min", "x_max",
-    "x_span", "n_cp", "n_segments"
+    "x_span", "n_cp", "n_segments", "calibration_offsets"
   )]
   resolved
 }

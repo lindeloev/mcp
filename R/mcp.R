@@ -299,6 +299,8 @@ mcp = function(model,
     stop("`data` is required in mcp() since mcp v0.4.0. Passing data = NULL or omitting data is no longer supported.", call. = FALSE)
 
   checkmate::assert_data_frame(data)
+  assert_reserved_output_namespace(names(data), context = "data")
+  assert_reserved_offset_namespace(names(data), context = "data")
   non_syntactic = names(data)[make.names(names(data)) != names(data)]
   if (length(non_syntactic) > 0)
     stop(

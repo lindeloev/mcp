@@ -196,8 +196,9 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
       ". Rename the corresponding predictor column."
     )
 
-  # Check for collisions with reserved output column names.
+  # Check for collisions with reserved output and offset column names.
   assert_reserved_output_namespace(data_names, context = "data")
+  assert_reserved_offset_namespace(data_names, context = "data")
 
   # Finally, ensure user data cannot overwrite any generated JAGS node.
   collisions = intersect(data_names, c(parameter_names, helper_names))
