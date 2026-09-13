@@ -469,3 +469,46 @@ test_that("grouping columns that also serve as predictors are retained when vary
   expect_equal(nrow(f_novary), 10)
   expect_true(all(c("x", "id", "fitted") %in% names(f_novary)))
 })
+
+
+test_that("group-only and offset-only covariates are represented in prediction metadata and subset predictions", {
+  data = data.frame(
+    x = 1:20,
+    y = 1:20,
+    z = rep(c("a", "b"), each = 10),
+    id = rep(1:4, each = 5),
+    stringsAsFactors = FALSE
+  )
+  fit = suppressWarnings(mcp(
+    list(y ~ 1 + (0 + z || id)),
+    data = data,
+    par_x = "x",
+    sample = "prior",
+    chains = 1,
+    iter = 20,
+    quiet = TRUE
+  ))
+
+  # Predictor discovery includes group-only covariates
+  expect_true("z" %in% mcp:::get_predictor_cols(fit))
+
+  # Single-row subset prediction succeeds for character-valued group covariates
+  sub_data = data[1, , drop = FALSE]
+  expect_equal(nrow(fitted(fit, newdata = sub_data, prior = TRUE)), 1)
+  expect_equal(nrow(predict(fit, newdata = sub_data, prior = TRUE)), 1)
+  expect_equal(nrow(residuals(fit, newdata = sub_data, prior = TRUE)), 1)
+
+  # Plotting works without missing term errors
+  expect_s3_class(plot(fit, prior = TRUE), "ggplot")
+
+  # Offset-only covariates are also discovered
+  data_offset = data.frame(x = 1:10, y = 1:10, offset_val = 11:20)
+  fit_offset = suppressWarnings(mcp(
+    list(y ~ 1, ~ 0 + offset(offset_val)),
+    data = data_offset,
+    par_x = "x",
+    sample = FALSE
+  ))
+  expect_true("offset_val" %in% mcp:::get_predictor_cols(fit_offset))
+})
+

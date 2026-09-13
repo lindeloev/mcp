@@ -320,9 +320,10 @@ mcp_columns = function(fit) {
 # Get column names that serve as predictors in the model
 get_predictor_cols = function(fit) {
   model_tables = get_fit_model_tables(fit)
-  pop_design_ids = unique(stats::na.omit(model_tables$predictors$design_id))
-  pop_vars = unlist(lapply(model_tables$design_specs[pop_design_ids], function(spec) all.vars(spec$terms)))
-  unique(c(mcp_columns(fit)$par_x, setdiff(pop_vars, ".mcp_local_x")))
+  design_vars = unlist(lapply(model_tables$design_specs, function(spec) {
+    if (!is.null(spec$terms)) all.vars(spec$terms) else character()
+  }))
+  unique(c(mcp_columns(fit)$par_x, setdiff(design_vars, ".mcp_local_x")))
 }
 
 

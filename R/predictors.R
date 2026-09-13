@@ -22,10 +22,10 @@ get_fitted_design = function(form = NULL, data, spec = NULL) {
     fitted_terms = attr(frame, "terms")
     matrix = stats::model.matrix(fitted_terms, frame)
     offset = stats::model.offset(frame)
-    factor_cols = vapply(frame, is.factor, logical(1))
+    factor_cols = vapply(frame, function(x) is.factor(x) || is.character(x), logical(1))
     spec = list(
       terms = fitted_terms,
-      xlevels = lapply(frame[factor_cols], levels),
+      xlevels = lapply(frame[factor_cols], function(x) if (is.factor(x)) levels(x) else levels(factor(x))),
       contrasts = attr(matrix, "contrasts"),
       columns = colnames(matrix),
       has_offset = !is.null(offset)
