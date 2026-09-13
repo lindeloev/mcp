@@ -11,6 +11,12 @@ editor_options:
     wrap: none
 ---
 
+```{r, include = FALSE}
+if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp")) {
+  pkgload::load_all(quiet = TRUE)
+}
+```
+
 `mcp` aims to implement Generalized Linear Models in a way that closely mimics that of [brms::brm](https://github.com/paul-buerkner/brms). You can set the family and link functions using the `family` argument.
 
 First, let us specify a toy model with three segments:

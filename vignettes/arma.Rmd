@@ -8,6 +8,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r, include = FALSE}
+if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp")) {
+  pkgload::load_all(quiet = TRUE)
+}
+```
+
 Serial dependence is common in time series. Add autoregressive terms with `ar(p)`, moving-average terms with `ma(q)`, or both in the segment formulas:
 
 ``` r

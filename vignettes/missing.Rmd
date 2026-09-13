@@ -11,6 +11,12 @@ editor_options:
     wrap: none
 ---
 
+```{r, include = FALSE}
+if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp")) {
+  pkgload::load_all(quiet = TRUE)
+}
+```
+
 `mcp` allows missing values in the response. JAGS treats the unknown responses as latent variables and samples them together with the model parameters. `mcp` retains those posterior imputation draws for later use. This article shows how to inspect expected responses, posterior imputations, and their uncertainty.
 
 # An example with missing responses

@@ -11,6 +11,12 @@ editor_options:
     wrap: none
 ---
 
+```{r, include = FALSE}
+if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp")) {
+  pkgload::load_all(quiet = TRUE)
+}
+```
+
 There are three main ways of doing model comparison in `mcp`:
 
  1. Compare any N `mcp` models using leave-One-Out cross validation (LOO-CV). Check out `loo(fit)`, `loo::loo_compare(loo1, loo2, ...)`, and `loo::loo_model_weights(loo1, loo2, ...)`.

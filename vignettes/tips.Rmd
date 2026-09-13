@@ -11,6 +11,11 @@ editor_options:
     wrap: none
 ---
 
+```{r, include = FALSE}
+if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp")) {
+  pkgload::load_all(quiet = TRUE)
+}
+```
 
 # Convergence
 A common problem when using MCMC is lacking convergence between chains. This will show up as large `rhat` values (> 1.1 is a common criterion) and non-converging lines in `plot_pars(fit)`.
