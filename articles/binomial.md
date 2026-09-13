@@ -95,7 +95,7 @@ Visually:
 plot(df$year, df$y)
 ```
 
-![](binomial_files/figure-html/unnamed-chunk-5-1.png)
+![](binomial_files/figure-html/unnamed-chunk-6-1.png)
 
 ## Check parameter recovery
 
@@ -152,7 +152,7 @@ set.seed(42)
 plot(fit)
 ```
 
-![](binomial_files/figure-html/unnamed-chunk-8-1.png)
+![](binomial_files/figure-html/unnamed-chunk-9-1.png)
 
 These lines are just `fit$simulate` applied to a random draw of the
 posterior samples. In other words, they represent the joint distribution
@@ -168,7 +168,7 @@ set.seed(42)
 plot_dpar(fit, scale = "linear")
 ```
 
-![](binomial_files/figure-html/unnamed-chunk-9-1.png)
+![](binomial_files/figure-html/unnamed-chunk-10-1.png)
 
 These plots work with [group-level
 effects](https://lindeloev.github.io/mcp/articles/group_effects.md) as
@@ -186,7 +186,7 @@ set.seed(42)
 plot_pars(fit, nvariables = NULL)
 ```
 
-![](binomial_files/figure-html/unnamed-chunk-10-1.png)
+![](binomial_files/figure-html/unnamed-chunk-11-1.png)
 
 Convergence is perfect here as evidenced by the overlapping trace plots
 that look like fat caterpillars (Bayesians love fat caterpillars).
@@ -200,11 +200,10 @@ can do a lot more than this, so check out their documentation.
 
 ## Priors for binomial models
 
-`mcp` uses priors to achieve a lot of it’s functionality. See [how to
-set priors](https://lindeloev.github.io/mcp/articles/priors.md),
-including how to share parameters between segments and how to fix
-values. Here, I post a few notes about the binomial-specific default
-priors.
+`mcp` uses priors to achieve a lot of its functionality. See [how to set
+priors](https://lindeloev.github.io/mcp/articles/priors.md), including
+how to share parameters between segments and how to fix values. Here, I
+post a few notes about the binomial-specific default priors.
 
 The default priors in `mcp` are set so that they are reasonably broad to
 cover most scenarios, though also specific enough to sample effectively.
@@ -276,7 +275,7 @@ ggplot(data.frame(logits = 0), aes(x = logits)) +
   )
 ```
 
-![](binomial_files/figure-html/unnamed-chunk-12-1.png)
+![](binomial_files/figure-html/unnamed-chunk-13-1.png)
 
 Please keep in mind that when these priors combine through the model,
 the joint probability may be quite different.

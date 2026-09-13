@@ -63,7 +63,7 @@ scale where applicable."><meta property="og:image" content="https://github.com/l
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Fitted and predicted values of <code>mcp</code> models fits</h1>
-      <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/R/mcpfit_methods.R" class="external-link"><code>R/mcpfit_methods.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/R/predict.R" class="external-link"><code>R/predict.R</code></a></small>
       <div class="d-none name"><code>execute-mcp-model.Rd</code></div>
     </div>
 
@@ -82,7 +82,7 @@ parameter with <code>dpar</code>, and choose the response or linear-predictor sc
 <span>  newdata <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  summary <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  probs <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  rate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  rate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  prior <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  varying <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  arma <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -90,6 +90,7 @@ parameter with <code>dpar</code>, and choose the response or linear-predictor sc
 <span>  draws_format <span class="op">=</span> <span class="st">"tidy"</span>,</span>
 <span>  nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  samples_format <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  conditional <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -99,7 +100,7 @@ parameter with <code>dpar</code>, and choose the response or linear-predictor sc
 <span>  newdata <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  summary <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  probs <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  rate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  rate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  prior <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  dpar <span class="op">=</span> <span class="st">"epred"</span>,</span>
 <span>  varying <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -155,12 +156,14 @@ parameter with <code>dpar</code>, and choose the response or linear-predictor sc
 <dt id="arg-newdata">newdata<a class="anchor" aria-label="anchor" href="#arg-newdata"></a></dt>
 <dd><p>A <code>tibble</code> or a <code>data.frame</code> containing predictors in the model.</p><ul><li><p>If <code>NULL</code> (default), the original data is used.</p></li>
 <li><p>For models with <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code>: <code>fitted()</code>, <code>residuals()</code>, <code>log_lik()</code>,
-and posterior <code>predict()</code> condition on the response history,
+and <code>predict()</code> condition on the response history by default,
 so <code>newdata</code> must include the response. For <code>fitted()</code>, <code>predict()</code>, and
 <code>residuals()</code>, missing response histories are supported only in the original
-fitted data, using retained posterior imputations. Prior <code>predict()</code> and
-<code><a href="https://mc-stan.org/rstantools/reference/posterior_predict.html" class="external-link">posterior_predict()</a></code> generate fresh response
-series recursively, so their <code>newdata</code> need only contain predictors. <code>log_lik()</code>
+fitted data, using retained posterior imputations as histories. Predictions
+are fresh response draws, including at missing rows. With <code>conditional = FALSE</code>,
+<code>predict()</code> and <code><a href="https://mc-stan.org/rstantools/reference/posterior_predict.html" class="external-link">posterior_predict()</a></code> generate
+fresh response series recursively, so their <code>newdata</code> need only contain
+predictors and required response auxiliaries. <code>log_lik()</code>
 is unavailable when a missing response enters a later observed history.</p></li>
 <li><p>For models with <code>y | weights()</code>: Require the weights column except for <code>fitted()</code> and <code>predict()</code>.</p></li>
 </ul></dd>
@@ -171,11 +174,11 @@ is unavailable when a missing response enters a later observed history.</p></li>
 
 
 <dt id="arg-probs">probs<a class="anchor" aria-label="anchor" href="#arg-probs"></a></dt>
-<dd><p>Vector of quantiles. Only in effect when <code>summary == TRUE</code>.</p></dd>
+<dd><p>Vector of quantiles (strictly between 0 and 1). Only in effect when <code>summary == TRUE</code>.</p></dd>
 
 
 <dt id="arg-rate">rate<a class="anchor" aria-label="anchor" href="#arg-rate"></a></dt>
-<dd><p>Logical scalar. For binomial models, return counts (<code>rate = FALSE</code>) or
+<dd><p>Logical scalar. For binomial models, return counts (<code>rate = FALSE</code>, the default for <code>fitted()</code> and <code>predict()</code>) or
 the observed or expected success proportion (<code>rate = TRUE</code>). Predictions and
 count-scale fitted values require a trials column in <code>newdata</code>.
 Distributional parameters such as <code>dpar = "mu"</code> evaluate the parameter itself (e.g., success probability)
@@ -183,7 +186,8 @@ and are unaffected by <code>rate</code>.</p></dd>
 
 
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>
-<dd><p>Logical. Evaluate prior draws (<code>TRUE</code>) instead of posterior draws (<code>FALSE</code>, default)? Useful for <code>mcp(..., sample = "both")</code>.</p></dd>
+<dd><p>Logical. Evaluate prior draws (<code>TRUE</code>) instead of posterior draws (<code>FALSE</code>, default).
+The selected draws must be available; prior-only fits require <code>prior = TRUE</code>.</p></dd>
 
 
 <dt id="arg-varying">varying<a class="anchor" aria-label="anchor" href="#arg-varying"></a></dt>
@@ -223,6 +227,13 @@ If there are group-level effects, this is the number of draws from each group.
 See more under "value"</p></dd>
 
 
+<dt id="arg-conditional">conditional<a class="anchor" aria-label="anchor" href="#arg-conditional"></a></dt>
+<dd><p>Logical. For AR/MA models, condition on observed response
+histories (<code>TRUE</code>, default) or generate fresh histories recursively (<code>FALSE</code>).
+Applies equally to prior and posterior draws. Predictive checks
+with <code><a href="pp_check.html">pp_check()</a></code> generate fresh histories.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Must be empty. Reserved for future use.</p></dd>
 
@@ -237,7 +248,7 @@ coefficient you want to evaluate.</p></li>
 
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
-<dd><p>One of</p><ul><li><p><code>"response"</code>: return on the observed scale, i.e., after applying the inverse link function.</p></li>
+<dd><p>One of</p><ul><li><p><code>"response"</code>: return on the response scale, i.e., after applying the inverse link function.</p></li>
 <li><p><code>"linear"</code>: return on the linear-predictor (link) scale, where the linear
 trends are modeled.
 A linear scale is only applicable when <code>type == "fitted"</code> and <code>dpar</code> is not <code>NULL</code>.</p></li>
@@ -266,7 +277,15 @@ values (depending on <code>type</code>). This format is used by <code>brms</code
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code>residuals(fit)</code> is equivalent to <code>fit$data[[mcp_columns(fit)$response]] - fitted(fit, ...)</code> (or <code>newdata[[mcp_columns(fit)$response]] - fitted(fit, ...)</code>),
+    <p><code>fitted()</code> and <code>posterior_epred()</code> evaluate the same expected responses;
+<code>predict()</code> and <code>posterior_predict()</code> evaluate the same response distributions.
+The <code>posterior_*()</code> methods return draws-by-observation matrices, while
+<code>fitted()</code> and <code>predict()</code> summarise by default and also offer tidy draws.
+For binomial models, the default response scale is counts. Use <code>rate = TRUE</code>
+for proportions or <code>fitted(..., dpar = "mu")</code> for success probabilities.
+During migration from v0.3.4, an omitted <code>rate</code> warns once per session per
+function when counts differ from proportions. Explicit <code>rate</code> settings do not warn.</p>
+<p><code>residuals(fit)</code> is equivalent to <code>fit$data[[mcp_columns(fit)$response]] - fitted(fit, ...)</code> (or <code>newdata[[mcp_columns(fit)$response]] - fitted(fit, ...)</code>),
 but with fixed arguments for <code>fitted</code>: <code>rate = FALSE, dpar = 'epred', draws_format = 'tidy'</code>.</p>
 <p><code>log_lik()</code> defaults to an unsummarised draws-by-observation matrix, as used
 by <code>loo</code> and other posterior workflows. Non-default <code>varying</code> and <code>arma</code>
@@ -275,9 +294,9 @@ omitting random effects or serial correlation); they cannot be used in
 <code><a href="loo.mcpfit.html">loo()</a></code> or <code><a href="loo.mcpfit.html">waic()</a></code> because estimating information criteria for reduced
 models requires refitting.</p>
 <p>Missing responses in the original data remain missing in the response column.
-<code>fitted()</code> returns their expected responses, while <code>predict()</code> uses retained
-JAGS imputations for their posterior response draws. In GARMA models these
-imputations also supply the history used for later fitted and predicted rows.</p>
+<code>fitted()</code> returns their expected responses, while <code>predict()</code> generates fresh
+posterior predictive response draws (including at missing rows). In GARMA models,
+retained JAGS imputations supply the history used for later fitted and predicted rows.</p>
     </div>
     <div class="section level2">
     <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>
@@ -400,12 +419,12 @@ imputations also supply the history used for later fitted and predicted rows.</p
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   data_row &lt;int&gt;</span></span>
 <span class="r-in"><span><span class="fu">predict</span><span class="op">(</span><span class="va">missing_fit</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># Posterior predictive for missing y</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    y  x condition  predict       sd      Q2.5    Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 NA  8         B 35.51722 4.408885 26.944898 44.27282</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 NA 19         A 15.70005 4.409613  7.131763 24.25305</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 NA 27         A 17.26378 4.343011  8.668505 25.73409</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 NA 28         B 39.37180 4.354504 30.849440 47.91352</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 NA 29         A 17.55903 4.343115  9.046847 26.11032</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 NA 30         B 39.73816 4.364214 31.227062 48.29058</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 NA  8         B 35.60152 4.415550 26.944898 44.27282</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 NA 19         A 15.68920 4.375556  7.131763 24.25305</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 NA 27         A 17.15676 4.357370  8.668505 25.73409</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 NA 28         B 39.41365 4.324343 30.849440 47.91352</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 NA 29         A 17.58427 4.339324  9.046847 26.11032</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 NA 30         B 39.73979 4.357124 31.227062 48.29058</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

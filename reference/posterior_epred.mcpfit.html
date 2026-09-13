@@ -63,7 +63,7 @@ These methods and workflows require the suggested package {rstantools}."><meta p
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Posterior prediction draws for <code>mcpfit</code> objects</h1>
-      <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/R/mcpfit_methods.R" class="external-link"><code>R/mcpfit_methods.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/R/predict.R" class="external-link"><code>R/predict.R</code></a></small>
       <div class="d-none name"><code>posterior_epred.mcpfit.Rd</code></div>
     </div>
 
@@ -85,6 +85,7 @@ These methods and workflows require the suggested package <code>{rstantools}</co
 <span>  re_formula <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  dpar <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  rate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -96,6 +97,8 @@ These methods and workflows require the suggested package <code>{rstantools}</co
 <span>  re.form <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  re_formula <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  rate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  conditional <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -122,10 +125,19 @@ These methods and workflows require the suggested package <code>{rstantools}</co
 
 
 <dt id="arg-newdata">newdata<a class="anchor" aria-label="anchor" href="#arg-newdata"></a></dt>
-<dd><p>Optional data frame at which to evaluate the model. For GARMA
-<code>posterior_predict()</code>, only predictors and required response auxiliaries are
-needed: each response series is generated recursively without conditioning
-on an observed response column.</p></dd>
+<dd><p>A <code>tibble</code> or a <code>data.frame</code> containing predictors in the model.</p><ul><li><p>If <code>NULL</code> (default), the original data is used.</p></li>
+<li><p>For models with <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code>: <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">residuals()</a></code>, <code><a href="execute-mcp-model.html">log_lik()</a></code>,
+and <code><a href="execute-mcp-model.html">predict()</a></code> condition on the response history by default,
+so <code>newdata</code> must include the response. For <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">predict()</a></code>, and
+<code><a href="execute-mcp-model.html">residuals()</a></code>, missing response histories are supported only in the original
+fitted data, using retained posterior imputations as histories. Predictions
+are fresh response draws, including at missing rows. With <code>conditional = FALSE</code>,
+<code><a href="execute-mcp-model.html">predict()</a></code> and <code><a href="https://mc-stan.org/rstantools/reference/posterior_predict.html" class="external-link">posterior_predict()</a></code> generate
+fresh response series recursively, so their <code>newdata</code> need only contain
+predictors and required response auxiliaries. <code><a href="execute-mcp-model.html">log_lik()</a></code>
+is unavailable when a missing response enters a later observed history.</p></li>
+<li><p>For models with <code>y | weights()</code>: Require the weights column except for <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>.</p></li>
+</ul></dd>
 
 
 <dt id="arg-draws-ndraws">draws, ndraws<a class="anchor" aria-label="anchor" href="#arg-draws-ndraws"></a></dt>
@@ -147,8 +159,23 @@ effects and <code>NA</code> excludes them.</p></dd>
 <dd><p>Optional integer seed for draw selection and posterior prediction.</p></dd>
 
 
+<dt id="arg-rate">rate<a class="anchor" aria-label="anchor" href="#arg-rate"></a></dt>
+<dd><p>Logical scalar. For binomial models, return counts (<code>rate = FALSE</code>, the default for <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>) or
+the observed or expected success proportion (<code>rate = TRUE</code>). Predictions and
+count-scale fitted values require a trials column in <code>newdata</code>.
+Distributional parameters such as <code>dpar = "mu"</code> evaluate the parameter itself (e.g., success probability)
+and are unaffected by <code>rate</code>.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Must be empty. Reserved for future use.</p></dd>
+
+
+<dt id="arg-conditional">conditional<a class="anchor" aria-label="anchor" href="#arg-conditional"></a></dt>
+<dd><p>Logical. For AR/MA models, condition on observed response
+histories (<code>TRUE</code>, default) or generate fresh histories recursively (<code>FALSE</code>).
+Applies equally to prior and posterior draws. Predictive checks
+with <code><a href="pp_check.html">pp_check()</a></code> generate fresh histories.</p></dd>
 
 
 <dt id="arg-transform">transform<a class="anchor" aria-label="anchor" href="#arg-transform"></a></dt>
@@ -162,17 +189,20 @@ transformed expected response instead of the linear predictor.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>For GARMA models, <code>posterior_predict()</code> generates each replicated
-response series recursively. It does not condition later predictions on
-the observed response history, unlike <code><a href="execute-mcp-model.html">fitted()</a></code> and posterior <code><a href="execute-mcp-model.html">predict()</a></code>.
-These methods require posterior draws. For prior prediction, use
-<code><a href="execute-mcp-model.html">predict()</a></code> with <code>prior = TRUE</code>, which also generates fresh series.</p>
+    <p>For GARMA models, <code>posterior_predict()</code> conditions on the observed
+response history, just like <code><a href="execute-mcp-model.html">predict()</a></code>. Use <code>conditional = FALSE</code> in either
+method to generate fresh response histories recursively. Missing responses
+in the original data are filled with retained imputations only to supply
+histories. Conditional <code>posterior_predict()</code> draws from the response
+distributions whose means <code>posterior_epred()</code> returns, including at missing
+rows. These methods require posterior draws. For prior prediction, use
+<code><a href="execute-mcp-model.html">predict()</a></code> with <code>prior = TRUE</code>; <code>conditional</code> selects the same behavior.</p>
 <p>For binomial models, <code>posterior_epred()</code> and <code>posterior_predict()</code> (and
 corresponding <code>{tidybayes}</code> workflows such as <code><a href="https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html" class="external-link">add_epred_draws()</a></code>) follow
 <code>{brms}</code> and <code>{rstantools}</code> conventions by returning values on the outcome
 count scale (<code>rate = FALSE</code>), i.e., expected counts \(E[Y] = n\mu\) and
-simulated counts in \(\{0, \dots, n\}\). In contrast, <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>
-default to proportions (<code>rate = TRUE</code>). To obtain the success probability
+simulated counts in \(\{0, \dots, n\}\), matching <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>.
+Use <code>rate = TRUE</code> for proportions. To obtain the success probability
 parameter \(\mu\) on the \([0, 1]\) scale regardless of trial counts, pass
 <code>dpar = "mu"</code>.</p>
     </div>

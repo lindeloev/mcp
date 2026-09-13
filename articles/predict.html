@@ -94,7 +94,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Fits and predictions</h1>
             
-            <h4 data-toc-skip class="date">2026-09-06</h4>
+            <h4 data-toc-skip class="date">2026-09-13</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/predict.Rmd" class="external-link"><code>vignettes/predict.Rmd</code></a></small>
       <div class="d-none name"><code>predict.Rmd</code></div>
@@ -143,13 +143,13 @@ predictive interval:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, q_fit <span class="op">=</span> <span class="cn">TRUE</span>, q_predict <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="predict_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="predict_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="700"></p>
 <p>To review what we see here:</p>
 <ul>
-<li>The black dots is the data from <code>data</code>.</li>
+<li>The black dots are the data from <code>data</code>.</li>
 <li>The gray lines are 25 samples from the posterior (control using
 <code>plot(fit, lines = 100)</code>).</li>
-<li>The dashed red lines are the 2.5% and 97.% quantiles of the fitted
+<li>The dashed red lines are the 2.5% and 97.5% quantiles of the fitted
 (expected) values.</li>
 <li>The green lines are the 10% and 90% quantiles of the predicted
 values.</li>
@@ -240,8 +240,8 @@ the slope results in very large differences further out.</li>
 <code><a href="../reference/execute-mcp-model.html">fitted()</a></code>, and <code><a href="../reference/execute-mcp-model.html">residuals()</a></code>, you’ll see that
 they are quite versatile, taking many different arguments. To mention a
 few, you can set <code>fitted(fit, dpar = "sigma")</code> to get fitted
-values for <code>sigma</code> <a href="../articles/dpar.html">more on
-modeling sigma</a>, <code>prior = TRUE</code> to predict using only the
+values for <code>sigma</code> (<a href="../articles/dpar.html">more on
+modeling sigma</a>), <code>prior = TRUE</code> to predict using only the
 prior, and <code>arma = FALSE</code> to exclude AR/MA effects. For
 group-level effects, use <code>varying = TRUE</code> (all),
 <code>FALSE</code> (none), <code>"cp"</code> or <code>"predictor"</code>
@@ -273,7 +273,7 @@ so these values will differ slightly from call to call. You can make it
 replicable using <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> as above. In general, the more
 posterior draws, the less the call-to-call variance will be. Conversely,
 fewer draws means more call-to-call variation, e.g., if you do
-<code>predict(fit, ndraws = 10)</code>).</p>
+<code>predict(fit, ndraws = 10)</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="residuals">Residuals<a class="anchor" aria-label="anchor" href="#residuals"></a>
@@ -288,7 +288,7 @@ checking (<code>pp_check(fit)</code>) and visual inspection of
 <h2 id="forecasting-with-future-change-points">Forecasting with future change points<a class="anchor" aria-label="anchor" href="#forecasting-with-future-change-points"></a>
 </h2>
 <p>Bayesian inference is the principled updating of prior knowledge
-using data. Where there is little or now data, the prior speaks louder.
+using data. Where there is little or no data, the prior speaks louder.
 Sometimes, we can learn surprising stuff simply by inspecting the prior
 predictive, e.g., how the priors combine when “put through” the model.
 In <code>mcp</code>, most functions come with a
@@ -311,7 +311,7 @@ issue</a>)</em>.</p>
 </h3>
 <p>We already did that above, resulting in our <code>fit</code>. But we
 only do it to get the default priors that are suitable for inferring
-change point in this region, so you could’ve just run it without
+change points in this region, so you could’ve just run it without
 sampling:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">empty</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
@@ -365,7 +365,7 @@ manually doing our plot:</p>
 <span></span>
 <span><span class="co"># Plot it</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mjskay.github.io/tidybayes/" class="external-link">tidybayes</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mjskay.github.io/tidybayes/" class="external-link">tidybayes</a></span><span class="op">)</span>  <span class="co"># Optional package for summarizing and plotting draws</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">predict_forecast</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">time</span>, y <span class="op">=</span> <span class="va">.prediction</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="co"># Posterior predictive intervals and line at x = 125</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/stat_summary.html" class="external-link">stat_summary</a></span><span class="op">(</span>fun.data <span class="op">=</span> <span class="va">median_qi</span>, fun.args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>.width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span>, geom <span class="op">=</span> <span class="st">"ribbon"</span>, alpha <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span> <span class="op">+</span></span>
@@ -378,7 +378,7 @@ manually doing our plot:</p>
 <span>  <span class="co"># Observed data</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">time</span>, y <span class="op">=</span> <span class="va">response</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">data</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Predicting with future change points"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="predict_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="predict_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="700"></p>
 <p>You can read the predicted values from above at <code>x = 125</code>
 off this graph. We literally just predicted for all values between 1 and
 170, and visualized it using a ribbon. This means that you can also
@@ -387,7 +387,7 @@ predict further into the future, if you’d like.</p>
 segments, even using the posterior from the “unobserved” segment 4 in
 the priors for parameters in future segments. In Bayesian inference, it
 really does not make much of a difference whether credence in some
-parameter values have been updated using data or not - it’s all
+parameter values has been updated using data or not - it’s all
 credence.</p>
 <p>Without doing this formal model of the future change point, one may
 have thought that the change point should occur around

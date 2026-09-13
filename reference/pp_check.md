@@ -48,21 +48,23 @@ pp_check(
     [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
     [`residuals()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
     [`log_lik()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
-    and posterior
+    and
     [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
-    condition on the response history, so `newdata` must include the
-    response. For
+    condition on the response history by default, so `newdata` must
+    include the response. For
     [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
     [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
     and
     [`residuals()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
     missing response histories are supported only in the original fitted
-    data, using retained posterior imputations. Prior
+    data, using retained posterior imputations as histories. Predictions
+    are fresh response draws, including at missing rows. With
+    `conditional = FALSE`,
     [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
     and
     [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
     generate fresh response series recursively, so their `newdata` need
-    only contain predictors.
+    only contain predictors and required response auxiliaries.
     [`log_lik()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
     is unavailable when a missing response enters a later observed
     history.
@@ -76,7 +78,8 @@ pp_check(
 - prior:
 
   Logical. Evaluate prior draws (`TRUE`) instead of posterior draws
-  (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
+  (`FALSE`, default). The selected draws must be available; prior-only
+  fits require `prior = TRUE`.
 
 - varying:
 

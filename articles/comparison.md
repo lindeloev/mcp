@@ -2,7 +2,7 @@
 
 There are three main ways of doing model comparison in `mcp`:
 
-1.  Compare any N `mcp` models using leave-One-Out cross validation
+1.  Compare any N `mcp` models using Leave-One-Out cross-validation
     (LOO-CV). Check out `loo(fit)`, `loo::loo_compare(loo1, loo2, ...)`,
     and `loo::loo_model_weights(loo1, loo2, ...)`.
 2.  Flexible directional tests using `hypothesis(fit, cp_1 > 40)` or
@@ -19,9 +19,9 @@ set.seed(42) # Make the script deterministic
 
 ## Some models to play with
 
-We know quite a bit about human short term memory. Namely, the average
+We know quite a bit about human short-term memory. Namely, the average
 human has almost perfect recall when presented with 1-4 items (we
-remember them all), and then errors begins intruding when presented with
+remember them all), and then errors begin intruding when presented with
 more items [(Cowan,
 2001)](https://www.ncbi.nlm.nih.gov/pubmed/11515286). We also know that
 memory is not infinite, so as N \rightarrow \infty, it has to plateau.
@@ -38,7 +38,7 @@ model = list(
 )
 prior = list(
   Intercept_1 = "dnorm(2, 1)", # high recall for easy trials
-  cp_1 = "dnorm(4, 1)", # performance dicontinuity around 4
+  cp_1 = "dnorm(4, 1)", # performance discontinuity around 4
   items_2 = "dnorm(-0.4, 1) T( , -0.2)" # performance deteriorates considerably
 )
 
@@ -111,7 +111,7 @@ plot(fit_default) +
   ggtitle("Simple")
 ```
 
-![](comparison_files/figure-html/unnamed-chunk-5-1.png)
+![](comparison_files/figure-html/unnamed-chunk-6-1.png)
 
 ## Bayes Factors using Savage-Dickey density ratios
 
@@ -198,14 +198,14 @@ used for point-null hypothesis testing.
 
 ## Directional and combinatoric tests
 
-Maybe we just want to test a few directional hypothesis. For example:
+Maybe we just want to test a few directional hypotheses. For example:
 
 - Does recall begin to deteriorate when `cp_1 > 3`?
 - Is the change point in the interval `cp_1 > 3.5 & cp_1 < 4.5`?
 - The only constraint is your imagination. How about all hypotheses we
   may have at once?
   `cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & Intercept_1 > 2.5` against
-  it’s inverse
+  its inverse
   `(cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & Intercept_1 < 2.5`
 
 ``` r
@@ -278,12 +278,12 @@ Density (ELPD) for each model, and then compare them using
 [`loo::loo_compare()`](https://mc-stan.org/loo/reference/loo_compare.html).
 
 The strength of LOO-CV is that you can compare any N models, as long as
-they are models of same data. In general, LOO-CV is the only inferential
-method for non-nested models in `mcp`. For example:
+they are models of the same data. In general, LOO-CV is the only
+inferential method for non-nested models in `mcp`. For example:
 
 - The existence of one or several change points. The [article on Poisson
   change points](https://lindeloev.github.io/mcp/articles/poisson.md)
-  contain an example of comparing a change-point model to a model
+  contains an example of comparing a change-point model to a model
   without change points.
 - Models that differ by several parameters.
 - Comparing different priors.
@@ -299,7 +299,7 @@ briefly, it does this:
     (out-of-sample data), i.e., the height of the posterior at that data
     point. For example, if the posterior is a normal distribution, a
     data point near the mean of the posterior has higher density (it is
-    less “surprising”) than if it is at z = -3. Better predictions means
+    less “surprising”) than if it is at z = -3. Better predictions mean
     higher densities, i.e., less surprisal.
 3.  Repeats step 2 for all observed data and multiplies these densities
     to get the combined predictive densities at unobserved data.
@@ -349,7 +349,7 @@ loo_info
     ## See help('pareto-k-diagnostic') for details.
 
 This is not terribly informative in and of itself. looic = -2 \*
-elpd\_{loo} as is the corresponding SEs, so that is just a matter of
+elpd\_{loo} as are the corresponding SEs, so that is just a matter of
 scale. What ELPD tells you is that the product of the densities of all
 left-out data points is approximately exp(-350) \sim 10 ^ {-146}, a
 vanishingly small number because we multiply many small numbers. This is
@@ -436,7 +436,7 @@ loo::loo_model_weights(list(
 ))
 ```
 
-This means that once model2 (`fit_info`) has done it’s “predicting”, the
+This means that once model2 (`fit_info`) has done its “predicting”, the
 others add very little over and above that. If you want to learn about
 how well they predict relative to each other, use
 [`loo::pseudobma_weights()`](https://mc-stan.org/loo/reference/loo_model_weights.html)

@@ -6,7 +6,7 @@ JAGS.*
 
 For any given segment, `mcp` aims to use `brms`-like priors. `mcp`
 additionally includes priors for change points, and some
-`JAGS`-adaptions.
+`JAGS`-adaptations.
 
 ## Setting a prior
 
@@ -178,7 +178,7 @@ pp_manual = plot_pars(fit_manual, type = "dens_overlay", prior = TRUE, nvariable
 pp_default + pp_manual
 ```
 
-![](priors_files/figure-html/unnamed-chunk-5-1.png)
+![](priors_files/figure-html/unnamed-chunk-6-1.png)
 
 Here are the resulting posterior fits:
 
@@ -193,7 +193,7 @@ plot_manual = plot(fit_manual) + ggtitle("Manual priors")
 plot_default + plot_manual
 ```
 
-![](priors_files/figure-html/unnamed-chunk-6-1.png)
+![](priors_files/figure-html/unnamed-chunk-7-1.png)
 
 We see the effects of the priors:
 
@@ -262,7 +262,7 @@ The plot below compares these theoretical Dirichlet distributions (black
 lines) with the sampled prior distributions (red lines) for 2 and 5
 change points:
 
-![](priors_files/figure-html/unnamed-chunk-9-1.png)
+![](priors_files/figure-html/unnamed-chunk-10-1.png)
 
 Note on implementation: Under the hood, `mcp` parameterizes this using a
 sequential stick-breaking Beta chain (z_j \sim \text{Beta}(1, N - j +
@@ -320,9 +320,9 @@ the local parameterization of `mcp`. You can inspect all resolved priors
 for a model using `prior_summary(fit, verbose = TRUE)`.
 
 - **Intercepts:** Unlike the improper flat default coefficient priors in
-  `brms`, `mcp` uses proper Student-t priors because JAGS does not
-  support flat priors. With the identity link, the Gaussian intercept
-  prior is centered on `round(median(y), 1)` with scale
+  `brms`, `mcp` uses proper Student-t or normal priors because JAGS does
+  not support flat priors. With the identity link, the Gaussian
+  intercept prior is centered on `round(median(y), 1)` with scale
   `max(2.5, round(mad(y), 1))`. With the log link, location and scale
   are derived from \log(y) (with zeros replaced by 0.1).
 - **Slopes:** Numeric coefficient priors use the corresponding
@@ -346,6 +346,30 @@ for a model using `prior_summary(fit, verbose = TRUE)`.
   as in `brms`. Its intercept prior is `dt(0, 2.5, 3)`, and its contrast
   and numeric-coefficient priors use the same reference-change scaling
   described above.
+
+### Deviations from brms default priors
+
+While `mcp` aligns with `brms` where possible, several defaults
+intentionally deviate:
+
+- **Proper population slopes:** `mcp` uses proper, regularizing
+  Student-t priors scaled to predictor change rather than `brms`’s
+  improper flat priors because JAGS requires proper priors.
+- **Log-link count intercepts
+  ([`poisson()`](https://rdrr.io/r/stats/family.html),
+  [`negbinomial()`](https://lindeloev.github.io/mcp/reference/negbinomial.md)):**
+  `mcp` uses [`dnorm()`](https://rdrr.io/r/stats/Normal.html) on the log
+  scale rather than heavy-tailed `student_t(3, ...)` to ensure finite
+  prior predictive means and prevent explosive count simulations.
+- **Logit and probit links
+  ([`binomial()`](https://rdrr.io/r/stats/family.html),
+  [`bernoulli()`](https://lindeloev.github.io/mcp/reference/bernoulli.md)):**
+  `mcp` uses a narrower scale of 1.5 (`dt(0, 1.5, 3)`) instead of
+  `brms`’s 2.5 to avoid placing excess prior probability mass on extreme
+  probabilities (0 and 1).
+- **Autoregressive and moving-average terms:** `mcp` uses zero-centered
+  regularizing `dnorm(0, 0.5) T(-1, 1)` priors rather than improper flat
+  priors to favor stationary and invertible dynamics.
 
 ## Default priors on group-level effects
 
@@ -381,13 +405,13 @@ fit_pp_default = mcp(model, data = df, sample = "prior", seed = 42)
 
 # Plot it
 set.seed(42)
-plot_pp_manual = plot(fit_pp_manual, lines = 100) + ylim(c(-400, 400)) + ggtitle("Manual prior")
+plot_pp_manual = plot(fit_pp_manual, lines = 100, prior = TRUE) + ylim(c(-400, 400)) + ggtitle("Manual prior")
 set.seed(42)
-plot_pp_default = plot(fit_pp_default, lines = 100) + ylim(c(-400, 400)) + ggtitle("Default prior")
+plot_pp_default = plot(fit_pp_default, lines = 100, prior = TRUE) + ylim(c(-400, 400)) + ggtitle("Default prior")
 plot_pp_manual +  plot_pp_default  # using patchwork
 ```
 
-![](priors_files/figure-html/unnamed-chunk-11-1.png)
+![](priors_files/figure-html/unnamed-chunk-12-1.png)
 
 You can see how the manual priors are more dense to the left, and the
 “concerted” change at x = 80.

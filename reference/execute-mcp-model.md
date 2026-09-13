@@ -14,7 +14,7 @@ predict(
   newdata = NULL,
   summary = TRUE,
   probs = TRUE,
-  rate = TRUE,
+  rate = FALSE,
   prior = FALSE,
   varying = TRUE,
   arma = TRUE,
@@ -22,6 +22,7 @@ predict(
   draws_format = "tidy",
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated(),
+  conditional = TRUE,
   ...
 )
 
@@ -31,7 +32,7 @@ fitted(
   newdata = NULL,
   summary = TRUE,
   probs = TRUE,
-  rate = TRUE,
+  rate = FALSE,
   prior = FALSE,
   dpar = "epred",
   varying = TRUE,
@@ -89,15 +90,18 @@ residuals(
   - If `NULL` (default), the original data is used.
 
   - For models with [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()`:
-    `fitted()`, `residuals()`, `log_lik()`, and posterior `predict()`
-    condition on the response history, so `newdata` must include the
+    `fitted()`, `residuals()`, `log_lik()`, and `predict()` condition on
+    the response history by default, so `newdata` must include the
     response. For `fitted()`, `predict()`, and `residuals()`, missing
     response histories are supported only in the original fitted data,
-    using retained posterior imputations. Prior `predict()` and
+    using retained posterior imputations as histories. Predictions are
+    fresh response draws, including at missing rows. With
+    `conditional = FALSE`, `predict()` and
     [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
     generate fresh response series recursively, so their `newdata` need
-    only contain predictors. `log_lik()` is unavailable when a missing
-    response enters a later observed history.
+    only contain predictors and required response auxiliaries.
+    `log_lik()` is unavailable when a missing response enters a later
+    observed history.
 
   - For models with `y | weights()`: Require the weights column except
     for `fitted()` and `predict()`.
@@ -108,21 +112,23 @@ residuals(
 
 - probs:
 
-  Vector of quantiles. Only in effect when `summary == TRUE`.
+  Vector of quantiles (strictly between 0 and 1). Only in effect when
+  `summary == TRUE`.
 
 - rate:
 
-  Logical scalar. For binomial models, return counts (`rate = FALSE`) or
-  the observed or expected success proportion (`rate = TRUE`).
-  Predictions and count-scale fitted values require a trials column in
-  `newdata`. Distributional parameters such as `dpar = "mu"` evaluate
-  the parameter itself (e.g., success probability) and are unaffected by
-  `rate`.
+  Logical scalar. For binomial models, return counts (`rate = FALSE`,
+  the default for `fitted()` and `predict()`) or the observed or
+  expected success proportion (`rate = TRUE`). Predictions and
+  count-scale fitted values require a trials column in `newdata`.
+  Distributional parameters such as `dpar = "mu"` evaluate the parameter
+  itself (e.g., success probability) and are unaffected by `rate`.
 
 - prior:
 
   Logical. Evaluate prior draws (`TRUE`) instead of posterior draws
-  (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
+  (`FALSE`, default). The selected draws must be available; prior-only
+  fits require `prior = TRUE`.
 
 - varying:
 
@@ -171,6 +177,14 @@ residuals(
 
   Deprecated. Use `draws_format` instead. See more under "value"
 
+- conditional:
+
+  Logical. For AR/MA models, condition on observed response histories
+  (`TRUE`, default) or generate fresh histories recursively (`FALSE`).
+  Applies equally to prior and posterior draws. Predictive checks with
+  [`pp_check()`](https://lindeloev.github.io/mcp/reference/pp_check.md)
+  generate fresh histories.
+
 - ...:
 
   Must be empty. Reserved for future use.
@@ -195,7 +209,7 @@ residuals(
 
   One of
 
-  - `"response"`: return on the observed scale, i.e., after applying the
+  - `"response"`: return on the response scale, i.e., after applying the
     inverse link function.
 
   - `"linear"`: return on the linear-predictor (link) scale, where the
@@ -237,6 +251,16 @@ residuals(
 
 ## Details
 
+`fitted()` and `posterior_epred()` evaluate the same expected responses;
+`predict()` and `posterior_predict()` evaluate the same response
+distributions. The `posterior_*()` methods return draws-by-observation
+matrices, while `fitted()` and `predict()` summarise by default and also
+offer tidy draws. For binomial models, the default response scale is
+counts. Use `rate = TRUE` for proportions or `fitted(..., dpar = "mu")`
+for success probabilities. During migration from v0.3.4, an omitted
+`rate` warns once per session per function when counts differ from
+proportions. Explicit `rate` settings do not warn.
+
 `residuals(fit)` is equivalent to
 `fit$data[[mcp_columns(fit)$response]] - fitted(fit, ...)` (or
 `newdata[[mcp_columns(fit)$response]] - fitted(fit, ...)`), but with
@@ -255,9 +279,9 @@ refitting.
 
 Missing responses in the original data remain missing in the response
 column. `fitted()` returns their expected responses, while `predict()`
-uses retained JAGS imputations for their posterior response draws. In
-GARMA models these imputations also supply the history used for later
-fitted and predicted rows.
+generates fresh posterior predictive response draws (including at
+missing rows). In GARMA models, retained JAGS imputations supply the
+history used for later fitted and predicted rows.
 
 ## Functions
 
@@ -382,11 +406,11 @@ fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y)) |> head()  # Sam
 #> #   data_row <int>
 predict(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Posterior predictive for missing y
 #>    y  x condition  predict       sd      Q2.5    Q97.5
-#> 1 NA  8         B 35.51722 4.408885 26.944898 44.27282
-#> 2 NA 19         A 15.70005 4.409613  7.131763 24.25305
-#> 3 NA 27         A 17.26378 4.343011  8.668505 25.73409
-#> 4 NA 28         B 39.37180 4.354504 30.849440 47.91352
-#> 5 NA 29         A 17.55903 4.343115  9.046847 26.11032
-#> 6 NA 30         B 39.73816 4.364214 31.227062 48.29058
+#> 1 NA  8         B 35.60152 4.415550 26.944898 44.27282
+#> 2 NA 19         A 15.68920 4.375556  7.131763 24.25305
+#> 3 NA 27         A 17.15676 4.357370  8.668505 25.73409
+#> 4 NA 28         B 39.41365 4.324343 30.849440 47.91352
+#> 5 NA 29         A 17.58427 4.339324  9.046847 26.11032
+#> 6 NA 30         B 39.73979 4.357124 31.227062 48.29058
 # }
 ```

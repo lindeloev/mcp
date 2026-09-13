@@ -3,11 +3,13 @@
 `mcp` supports **distributional regression**, where any parameter of a
 response distribution can be regressed on predictors and have change
 points across segments. In standard regression, formulas model only the
-conditional mean `mu()`. Distributional regression extends this by
-allowing formulas for distributional parameters such as residual
+conditional mean `mu()`, where the expected response on the response
+scale relates to the linear predictor via link function g(\mu_i) =
+\eta_i (\mu_i = g^{-1}(\eta_i)). Distributional regression extends this
+by allowing formulas for distributional parameters such as residual
 standard deviation (`sigma`), negative-binomial overdispersion
-(`shape`) - and auxilliary parameters for time-series autocorrelation
-(`ar` / `ma`).
+(`shape`) - and auxiliary parameters for time-series autocorrelation
+(`ar` / `ma`) - on their respective link scales.
 
 Here, we exemplify regression on the standard deviation `sigma`. A
 plateau mean with an increasing standard deviation can be written as
@@ -16,7 +18,7 @@ plateau mean with an increasing standard deviation can be written as
 
 ## Priors for distributional parameters
 
-Aligning with `brms` convention, without an explicit
+Aligning with `brms` convention, without an explicit
 [`sigma()`](https://rdrr.io/r/stats/sigma.html) formula, the default is
 the intercept-only prior `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`
 directly on the residual SD, i.e., an **identity link**. The
@@ -86,7 +88,7 @@ set.seed(42)
 plot(fit, q_predict = TRUE)
 ```
 
-![](dpar_files/figure-html/unnamed-chunk-4-1.png)
+![](dpar_files/figure-html/unnamed-chunk-5-1.png)
 
 We can see all parameters are well recovered (compare `sim` to `mean`).
 Like the other parameters, the `sigma`s are named after the segment
@@ -151,9 +153,10 @@ Notice a few things here:
   about [priors in
   mcp](https://lindeloev.github.io/mcp/articles/priors.md)).
 - Segment 4: Without a new
-  [`sigma()`](https://rdrr.io/r/stats/sigma.html) term, segment 4 and
-  later segments inherit the preceding standard-deviation trajectory at
-  the value where it was left.
+  [`sigma()`](https://rdrr.io/r/stats/sigma.html) term, the
+  standard-deviation model persists from segment 3; because no new slope
+  on x is declared for [`sigma()`](https://rdrr.io/r/stats/sigma.html),
+  it forms a flat plateau continuing from the level reached at `cp_3`.
 
 In general, the log-SD parameters are named `sigma_[normalname]`, where
 “normalname” is the usual parameter names in mcp (see more
@@ -205,7 +208,7 @@ set.seed(42)
 plot(fit, q_predict = TRUE)
 ```
 
-![](dpar_files/figure-html/unnamed-chunk-9-1.png)
+![](dpar_files/figure-html/unnamed-chunk-10-1.png)
 
 We can also plot the `sigma_` parameters directly. Now the y-axis is
 `sigma`:
@@ -216,7 +219,7 @@ set.seed(42)
 plot_dpar(fit, dpar = "sigma", q_fit = TRUE)
 ```
 
-![](dpar_files/figure-html/unnamed-chunk-10-1.png)
+![](dpar_files/figure-html/unnamed-chunk-11-1.png)
 
 `summary(fit)` shows that the parameters are well recovered and a
 posterior predictive check (`pp_check(fit)`) looks good too. The last
@@ -262,7 +265,7 @@ summary(fit)
 pp_check(fit)
 ```
 
-![](dpar_files/figure-html/unnamed-chunk-11-1.png)
+![](dpar_files/figure-html/unnamed-chunk-12-1.png)
 
 All parameters converge well (\hat{R} \le 1.01 and \text{ESS} \> 400).
 Notice that `cp_3` and the quadratic `sigma` parameters have lower
@@ -277,7 +280,7 @@ set.seed(42)
 plot_pars(fit, regex_pars = "sigma_")
 ```
 
-![](dpar_files/figure-html/unnamed-chunk-12-1.png)
+![](dpar_files/figure-html/unnamed-chunk-13-1.png)
 
 This confirms the impression from `rhat`, `ess_bulk`, and `ess_tail`.
 Read more about [tips, tricks, and
@@ -317,7 +320,7 @@ fit$jags_code
     ##   sigma_x_1 ~ dt(0, 1/(0.01256281)^2, 3)   # Regularizing log-SD coefficient scaled to a reference predictor change
     ##   sigma_2 ~ dt(0, 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept
     ##   sigma_x_3 ~ dt(0, 1/(0.01256281)^2, 3)   # Regularizing log-SD coefficient scaled to a reference predictor change
-    ##   sigma_xE2_3 ~ dt(0, 1/(0.00006312972)^2, 3)   # Regularizing log-SD coefficient scaled to a reference predictor change
+    ##   sigma_xE2_3 ~ dt(0, 1/(6.312972e-05)^2, 3)   # Regularizing log-SD coefficient scaled to a reference predictor change
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {
@@ -401,7 +404,7 @@ set.seed(42)
 plot(fit, q_predict = TRUE, facet_by = "id")
 ```
 
-![](dpar_files/figure-html/unnamed-chunk-17-1.png)
+![](dpar_files/figure-html/unnamed-chunk-18-1.png)
 
 As usual, we can get the individual change points:
 
@@ -428,7 +431,7 @@ ranef(fit)
 pp_check(fit, facet_by = "id")
 ```
 
-![](dpar_files/figure-html/unnamed-chunk-19-1.png)
+![](dpar_files/figure-html/unnamed-chunk-20-1.png)
 
 ## Generalizing to other distributional parameters (dpars)
 
@@ -454,7 +457,7 @@ response families:
 - **`shape`**: Overdispersion / shape parameter for
   [`negbinomial()`](https://lindeloev.github.io/mcp/reference/negbinomial.md)
   (modeled on the log-shape scale via `shape(...)`).
-- **[`ar()`](https://rdrr.io/r/stats/ar.html) / `ma()`** Autoregressive
+- **[`ar()`](https://rdrr.io/r/stats/ar.html) / `ma()`**: Autoregressive
   and moving-average serial dependence terms for time-series models
   ([read more here](https://lindeloev.github.io/mcp/articles/arma.md)).
   They are not really distributional parameters, but they are similar in
@@ -469,8 +472,8 @@ Many core `mcp` functions take a `dpar` argument to extract or visualize
 specific distributional parameters:
 
 - **`fitted(fit, dpar = "sigma")` or `fitted(fit, dpar = "shape")`**:
-  Returns fitted values for the target `dpar` evaluated on the
-  natural/response scale.
+  Returns fitted values for the target `dpar` evaluated on the response
+  scale.
 - **`predict(fit, dpar = "sigma")`**: Generates posterior predictive
   draws for the specified distributional parameter.
 - **`plot_dpar(fit, dpar = "sigma")` or

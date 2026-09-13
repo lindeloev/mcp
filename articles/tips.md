@@ -38,11 +38,11 @@ A lot of data and complicated models will slow down fitting.
 
 Most of these problems should stem from inappropriate priors and such
 problems may be exacerbated by fragile link functions (e.g.,
-`binomial(link = "identity")`. The article on [priors in
+`binomial(link = "identity")`). The article on [priors in
 mcp](https://lindeloev.github.io/mcp/articles/priors.md) may be helpful,
 but in particular:
 
-- Errors on “directed cycle” usually stems from using parameters in
+- Errors on “directed cycle” usually stem from using parameters in
   priors. For example, if you set
   `prior = list(Intercept_1 = "dnorm(Intercept_2, 1)", Intercept_2 = "dnorm(Intercept_1, 1)")`
   this is an infinite regress.

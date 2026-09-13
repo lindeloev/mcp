@@ -94,7 +94,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Working with priors</h1>
             
-            <h4 data-toc-skip class="date">2026-09-06</h4>
+            <h4 data-toc-skip class="date">2026-09-13</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/priors.Rmd" class="external-link"><code>vignettes/priors.Rmd</code></a></small>
       <div class="d-none name"><code>priors.Rmd</code></div>
@@ -107,7 +107,7 @@ deprecated in the future, when additional backends are added beyond
 JAGS.</em></p>
 <p>For any given segment, <code>mcp</code> aims to use
 <code>brms</code>-like priors. <code>mcp</code> additionally includes
-priors for change points, and some <code>JAGS</code>-adaptions.</p>
+priors for change points, and some <code>JAGS</code>-adaptations.</p>
 <div class="section level2">
 <h2 id="setting-a-prior">Setting a prior<a class="anchor" aria-label="anchor" href="#setting-a-prior"></a>
 </h2>
@@ -249,7 +249,7 @@ prior constraints (priors will usually improve sampling efficiency).</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Manual priors"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">pp_default</span> <span class="op">+</span> <span class="va">pp_manual</span></span></code></pre></div>
-<p><img src="priors_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="576"></p>
+<p><img src="priors_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="576"></p>
 <p>Here are the resulting posterior fits:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
@@ -259,7 +259,7 @@ prior constraints (priors will usually improve sampling efficiency).</p>
 <span><span class="va">plot_manual</span> <span class="op">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_manual</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Manual priors"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plot_default</span> <span class="op">+</span> <span class="va">plot_manual</span></span></code></pre></div>
-<p><img src="priors_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="priors_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="700"></p>
 <p>We see the effects of the priors:</p>
 <ul>
 <li>The intercept <code>Intercept_1</code> was truncated to be below
@@ -329,7 +329,7 @@ more together (as shown in the figure below).</li>
 <p>The plot below compares these theoretical Dirichlet distributions
 (black lines) with the sampled prior distributions (red lines) for 2 and
 5 change points:</p>
-<p><img src="priors_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="672"></p>
+<p><img src="priors_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="672"></p>
 <p>Note on implementation: Under the hood, <code>mcp</code>
 parameterizes this using a sequential stick-breaking Beta chain (<span class="math inline">z_j \sim \text{Beta}(1, N - j + 1)</span>, <span class="math inline">\text{cp}_j = \text{cp}_{j-1} + z_j(\max(x) -
 \text{cp}_{j-1})</span>). This allows JAGS to sample the model much more
@@ -392,8 +392,8 @@ inspect all resolved priors for a model using
 <li>
 <strong>Intercepts:</strong> Unlike the improper flat default
 coefficient priors in <code>brms</code>, <code>mcp</code> uses proper
-Student-t priors because JAGS does not support flat priors. With the
-identity link, the Gaussian intercept prior is centered on
+Student-t or normal priors because JAGS does not support flat priors.
+With the identity link, the Gaussian intercept prior is centered on
 <code>round(median(y), 1)</code> with scale
 <code>max(2.5, round(mad(y), 1))</code>. With the log link, location and
 scale are derived from <span class="math inline">\log(y)</span> (with
@@ -424,6 +424,36 @@ intercept prior is <code>dt(0, 2.5, 3)</code>, and its contrast and
 numeric-coefficient priors use the same reference-change scaling
 described above.</li>
 </ul>
+<div class="section level3">
+<h3 id="deviations-from-brms-default-priors">Deviations from brms default priors<a class="anchor" aria-label="anchor" href="#deviations-from-brms-default-priors"></a>
+</h3>
+<p>While <code>mcp</code> aligns with <code>brms</code> where possible,
+several defaults intentionally deviate:</p>
+<ul>
+<li>
+<strong>Proper population slopes:</strong> <code>mcp</code> uses
+proper, regularizing Student-t priors scaled to predictor change rather
+than <code>brms</code>’s improper flat priors because JAGS requires
+proper priors.</li>
+<li>
+<strong>Log-link count intercepts (<code><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson()</a></code>,
+<code><a href="../reference/negbinomial.html">negbinomial()</a></code>):</strong> <code>mcp</code> uses
+<code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm()</a></code> on the log scale rather than heavy-tailed
+<code>student_t(3, ...)</code> to ensure finite prior predictive means
+and prevent explosive count simulations.</li>
+<li>
+<strong>Logit and probit links (<code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code>,
+<code><a href="../reference/bernoulli.html">bernoulli()</a></code>):</strong> <code>mcp</code> uses a narrower
+scale of 1.5 (<code>dt(0, 1.5, 3)</code>) instead of <code>brms</code>’s
+2.5 to avoid placing excess prior probability mass on extreme
+probabilities (0 and 1).</li>
+<li>
+<strong>Autoregressive and moving-average terms:</strong>
+<code>mcp</code> uses zero-centered regularizing
+<code>dnorm(0, 0.5) T(-1, 1)</code> priors rather than improper flat
+priors to favor stationary and invertible dynamics.</li>
+</ul>
+</div>
 </div>
 <div class="section level2">
 <h2 id="default-priors-on-group-level-effects">Default priors on group-level effects<a class="anchor" aria-label="anchor" href="#default-priors-on-group-level-effects"></a>
@@ -458,11 +488,11 @@ different prior predictive space.</p>
 <span></span>
 <span><span class="co"># Plot it</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="va">plot_pp_manual</span> <span class="op">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_pp_manual</span>, lines <span class="op">=</span> <span class="fl">100</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">400</span>, <span class="fl">400</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Manual prior"</span><span class="op">)</span></span>
+<span><span class="va">plot_pp_manual</span> <span class="op">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_pp_manual</span>, lines <span class="op">=</span> <span class="fl">100</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">400</span>, <span class="fl">400</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Manual prior"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="va">plot_pp_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_pp_default</span>, lines <span class="op">=</span> <span class="fl">100</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">400</span>, <span class="fl">400</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Default prior"</span><span class="op">)</span></span>
+<span><span class="va">plot_pp_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_pp_default</span>, lines <span class="op">=</span> <span class="fl">100</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">400</span>, <span class="fl">400</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Default prior"</span><span class="op">)</span></span>
 <span><span class="va">plot_pp_manual</span> <span class="op">+</span>  <span class="va">plot_pp_default</span>  <span class="co"># using patchwork</span></span></code></pre></div>
-<p><img src="priors_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="priors_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="700"></p>
 <p>You can see how the manual priors are more dense to the left, and the
 “concerted” change at x = 80.</p>
 </div>

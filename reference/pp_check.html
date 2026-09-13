@@ -106,19 +106,22 @@ for available plot types, omitting the <code>"ppc_"</code> prefix (e.g., <code>"
 <dt id="arg-newdata">newdata<a class="anchor" aria-label="anchor" href="#arg-newdata"></a></dt>
 <dd><p>A <code>tibble</code> or a <code>data.frame</code> containing predictors in the model.</p><ul><li><p>If <code>NULL</code> (default), the original data is used.</p></li>
 <li><p>For models with <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code>: <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">residuals()</a></code>, <code><a href="execute-mcp-model.html">log_lik()</a></code>,
-and posterior <code><a href="execute-mcp-model.html">predict()</a></code> condition on the response history,
+and <code><a href="execute-mcp-model.html">predict()</a></code> condition on the response history by default,
 so <code>newdata</code> must include the response. For <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">predict()</a></code>, and
 <code><a href="execute-mcp-model.html">residuals()</a></code>, missing response histories are supported only in the original
-fitted data, using retained posterior imputations. Prior <code><a href="execute-mcp-model.html">predict()</a></code> and
-<code><a href="https://mc-stan.org/rstantools/reference/posterior_predict.html" class="external-link">posterior_predict()</a></code> generate fresh response
-series recursively, so their <code>newdata</code> need only contain predictors. <code><a href="execute-mcp-model.html">log_lik()</a></code>
+fitted data, using retained posterior imputations as histories. Predictions
+are fresh response draws, including at missing rows. With <code>conditional = FALSE</code>,
+<code><a href="execute-mcp-model.html">predict()</a></code> and <code><a href="https://mc-stan.org/rstantools/reference/posterior_predict.html" class="external-link">posterior_predict()</a></code> generate
+fresh response series recursively, so their <code>newdata</code> need only contain
+predictors and required response auxiliaries. <code><a href="execute-mcp-model.html">log_lik()</a></code>
 is unavailable when a missing response enters a later observed history.</p></li>
 <li><p>For models with <code>y | weights()</code>: Require the weights column except for <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>.</p></li>
 </ul></dd>
 
 
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>
-<dd><p>Logical. Evaluate prior draws (<code>TRUE</code>) instead of posterior draws (<code>FALSE</code>, default)? Useful for <code>mcp(..., sample = "both")</code>.</p></dd>
+<dd><p>Logical. Evaluate prior draws (<code>TRUE</code>) instead of posterior draws (<code>FALSE</code>, default).
+The selected draws must be available; prior-only fits require <code>prior = TRUE</code>.</p></dd>
 
 
 <dt id="arg-varying">varying<a class="anchor" aria-label="anchor" href="#arg-varying"></a></dt>

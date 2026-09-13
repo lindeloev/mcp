@@ -26,7 +26,7 @@ hardest part about adding new families/links is specifying default
 priors. Read more in [the article on mcp
 priors](https://lindeloev.github.io/mcp/articles/priors.md).
 
-## On-default link functions
+## Non-default link functions
 
 Some link functions are *default* in GLMs for good reasons: they are
 computationally convenient and interpretable. A non-default link can

@@ -102,7 +102,7 @@
 <p><code>mcp</code> does <code>lm</code>/<code>glm</code>/<code>brms</code>-like regression with Multiple Change Points (hence “<code>mcp</code>”) using Bayesian inference. <code>mcp</code> is especially useful if you have a priori knowledge about the number of change points and the trend of the segments in between. It supports GLMs with group-level effects (random effects), AR/MA, and regression on distributional parameters (<code>sigma</code>, <code>shape</code>, etc.).</p>
 <p><code>mcp</code> aims to feel “R-native” like <code>lm</code>/<code>glm</code> at its simplest while the more Bayesian aspects are inspired by <code>brms</code> and <code>posterior</code>. Under the hood, <code>mcp</code> takes a formula-representation of linear segments and turns it into <a href="https://sourceforge.net/projects/mcmc-jags/" class="external-link">JAGS</a> code (see <code>fit$jags_code</code>).</p>
 <p><code>mcp</code> has <a href="https://scholar.google.com/scholar?cites=5590697509718421309" class="external-link">200+ academic citations</a> across ecology, astronomy, neuroscience, epidemiology, and other disciplines. See applications in the citing literature.</p>
-<p>Change points are also called <strong>switch points</strong>, <strong>break points</strong>, <strong>broken line</strong> regression, <strong>broken stick</strong> regression, <strong>bilinear</strong> regression, <strong>piecewise linear</strong> regression, <strong>local linear</strong> regression, <strong>segmented</strong> regression, and (performance) <strong>discontinuity</strong> models. <code>mcp</code> aims to be be useful for all of them.</p>
+<p>Change points are also called <strong>switch points</strong>, <strong>break points</strong>, <strong>broken line</strong> regression, <strong>broken stick</strong> regression, <strong>bilinear</strong> regression, <strong>piecewise linear</strong> regression, <strong>local linear</strong> regression, <strong>segmented</strong> regression, and (performance) <strong>discontinuity</strong> models. <code>mcp</code> aims to be useful for all of them.</p>
 </div>
 <div class="section level1">
 <h1 id="install">Install<a class="anchor" aria-label="anchor" href="#install"></a>
@@ -139,7 +139,7 @@
 <p>The following model infers the two change points between three segments. You can run this complete worked example (which fits the model and plots by default) in one line:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">demo_fit</span> <span class="op">=</span> <span class="fu"><a href="reference/mcp_example.html">mcp_example</a></span><span class="op">(</span><span class="st">"demo"</span><span class="op">)</span></span></code></pre></div>
-<p>See <code>demo_fit$example_code</code> for how it was generated, and explore more demos in <code><a href="reference/mcp_example.html">mcp_example()</a></code>. But for now, let’s walk though the example manually:</p>
+<p>See <code>demo_fit$example_code</code> for how it was generated, and explore more demos in <code><a href="reference/mcp_example.html">mcp_example()</a></code>. But for now, let’s walk through the example manually:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Define the model</span></span>
 <span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -207,7 +207,7 @@
 <code class="sourceCode R"><span><span class="fu"><a href="reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"cp_1 &gt; 25"</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb12"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="do">##      hypothesis     mean    lower    upper      prob       BF</span></span>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="do">## 1 cp_1 - 25 &gt; 0 6.544368 3.236057 10.24094 0.9997778 3204.767</span></span></code></pre></div>
-<p>For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation (<a href="https://lindeloev.github.io/mcp/articles/comparison.html">see more here</a>). Let’s specify a null model null model where the first two segments are reduced to one straight line, i.e., removing the change point:</p>
+<p>For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation (<a href="https://lindeloev.github.io/mcp/articles/comparison.html">see more here</a>). Let’s specify a null model where the first two segments are reduced to one straight line, i.e., removing the change point:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Define the model</span></span>
 <span><span class="va">model_null</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">response</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">time</span><span class="op">)</span>  <span class="co"># Intercept_1 and time_1</span></span>
@@ -259,7 +259,7 @@
 <li><p><code>~ 0 + sigma(1)</code> models an intercept change in standard deviation. <code>~ 0 + sigma(0 + x)</code> models increasing/decreasing standard deviation. Explicit <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> formulas use a log link, so their coefficients are on the log-SD scale.</p></li>
 <li><p><code>~ ar(N)</code> models Nth order autoregression on residuals. <code>~ar(N, 0 + x)</code> models increasing/decreasing autocorrelation.</p></li>
 <li><p><code>y | weights(w)</code> (and <code>y | trials(N) + weights(w)</code>) specifies observation log-likelihood weights (<code>w &gt; 0</code>) across all families.</p></li>
-<li><p>You can provide complete models in distributional parameters (currently <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, <code>shape()</code>, and <code>mu()</code>) and time-series (<code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> and <code>ma()</code>). For example, <code>~ x + sigma(1 + x:condition)</code> models an abrupt change followed by a by-condition slopes in variance.</p></li>
+<li><p>You can provide complete models in distributional parameters (currently <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, <code>shape()</code>, and <code>mu()</code>) and time-series (<code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> and <code>ma()</code>). For example, <code>~ x + sigma(1 + x:condition)</code> models an abrupt change followed by by-condition slopes in variance.</p></li>
 </ul>
 <p><a href="https://lindeloev.github.io/mcp/articles/predict.html">Get fitted and predicted values and intervals</a>:</p>
 <ul>
@@ -268,11 +268,11 @@
 </ul>
 <p><a href="https://lindeloev.github.io/mcp/articles/priors.html">Using priors</a>:</p>
 <ul>
-<li><p>See priors in <code>fit$prior</code> or <code>prior_summary(fit)</code> and set priors using <code>mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")</code>.</p></li>
+<li><p>See priors in <code>fit$prior</code> or <code>prior_summary(fit)</code> and set priors using <code>mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)"))</code>.</p></li>
 <li><p>The default prior on change points is <code>dirichlet(1)</code> (uniform order statistics). For a single change point, this is the Beta(1, 1) / uniform distribution over <code>[min(x), max(x)]</code>. For multiple change points, it corresponds to a flat Dirichlet distribution over segment lengths with equal spacing between change points. Informativeness increases as the number of change points increases.</p></li>
 <li><p>Fix parameters to specific values using <code>cp_1 = 45</code> and share parameters between segments using <code>slope_1 = "slope_2"</code>.</p></li>
 <li><p>Truncate priors using <code>T(lower, upper)</code>, e.g., <code>Intercept_1 = "dnorm(0, 1) T(0, )"</code>. <code>mcp</code> adds ordering bounds to population-level change-point priors. Users can override these.</p></li>
-<li><p>Do prior predictive checks using <code>mcp(model, data, sample = "prior") |&gt; plot()</code>.</p></li>
+<li><p>Do prior predictive checks using <code>mcp(model, data, sample = "prior") |&gt; plot(prior = TRUE)</code>.</p></li>
 </ul>
 <p><a href="https://lindeloev.github.io/mcp/articles/missing.html">Missing responses and posterior imputation</a>:</p>
 <ul>

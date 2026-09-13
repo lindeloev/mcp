@@ -94,7 +94,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Time series change points</h1>
             
-            <h4 data-toc-skip class="date">2026-09-06</h4>
+            <h4 data-toc-skip class="date">2026-09-13</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/arma.Rmd" class="external-link"><code>vignettes/arma.Rmd</code></a></small>
       <div class="d-none name"><code>arma.Rmd</code></div>
@@ -108,33 +108,34 @@ or both in the segment formulas:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ma</span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>The most common use case is still <code>ar(1)</code>. Like other
-<code>mcp</code> terms, AR and MA coefficients carry over to later
-segments until another term for the same component changes them. An
-<code>ar(p)</code> or <code>ma(q)</code> declaration replaces that whole
-component: if <code>ar(1)</code> follows <code>ar(2)</code>, the lag-2
-coefficient is zero in the later segment. Both accept a regression
-formula, such as <code>ar(1, 1 + x)</code> or
-<code>ma(1, 0 + x)</code>.</p>
+<code>mcp</code> terms, AR and MA components persist into later segments
+until another term for the same component replaces or turns them off
+(<code>ar(0)</code> or <code>ma(0)</code>). An <code>ar(p)</code> or
+<code>ma(q)</code> declaration replaces that whole component: if
+<code>ar(1)</code> follows <code>ar(2)</code>, the lag-2 coefficient is
+removed in the later segment. Both accept a regression formula, such as
+<code>ar(1, 1 + x)</code> or <code>ma(1, 0 + x)</code>.</p>
 <div class="section level3">
 <h3 id="garma-definition">GARMA definition<a class="anchor" aria-label="anchor" href="#garma-definition"></a>
 </h3>
 <p><code>mcp</code> implements AR and MA as a generalized ARMA (GARMA)
-recurrence on the response-family link scale. If <span class="math inline">b_t</span> is the ordinary regression predictor from
-the segment formulas and <span class="math inline">\eta_t</span> is the
-predictor including serial dependence, then</p>
+recurrence on the response-family link scale. If <span class="math inline">\eta^{\text{reg}}_t</span> is the ordinary
+regression predictor from the segment formulas and <span class="math inline">\eta_t</span> is the predictor including serial
+dependence, then</p>
 <p><span class="math display">\begin{aligned}
 \text{AR}_t &amp;= \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) -
-b_{t-j}\right] \\
+\eta^{\text{reg}}_{t-j}\right] \\
 \text{MA}_t &amp;= \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) -
 \eta_{t-k}\right] \\
-\eta_t &amp;= b_t + \text{AR}_t + \text{MA}_t
+\eta_t &amp;= \eta^{\text{reg}}_t + \text{AR}_t + \text{MA}_t
 \end{aligned}</span></p>
 <p>where <span class="math inline">\phi_{j,t}</span> is the lag-<span class="math inline">j</span> autoregressive (AR) coefficient at time
 <span class="math inline">t</span>, <span class="math inline">\theta_{k,t}</span> is the lag-<span class="math inline">k</span> moving-average (MA) coefficient at time
-<span class="math inline">t</span>, <span class="math inline">g(\cdot)</span> is the link function, and <span class="math inline">y^*</span> is the boundary-constrained observation.
-Thus <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> uses lagged link-scale residuals relative to the
-ordinary regression, while <code>ma()</code> uses lagged one-step
-innovations.</p>
+<span class="math inline">t</span>, <span class="math inline">g(\cdot)</span> is the link function (<span class="math inline">g(\mu_t) = \eta_t</span>, so <span class="math inline">\mu_t = g^{-1}(\eta_t)</span>), and <span class="math inline">y^*_t</span> is the boundary-constrained observation
+with pseudo-count <span class="math inline">b</span> (set via
+<code>boundary = 0.1</code> by default). Thus <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> uses
+lagged link-scale residuals relative to the ordinary regression, while
+<code>ma()</code> uses lagged one-step innovations.</p>
 <p><strong><code>mcp</code> does regression with change points on the
 coefficients</strong> <span class="math inline">\phi_{j,t}</span>
 <strong>and</strong> <span class="math inline">\theta_{k,t}</span>. See
@@ -153,9 +154,9 @@ new segment’s AR/MA parameters.</li>
 the very beginning of the whole dataset, or across independent series
 when using <code>series = "column_name"</code> inside <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code>
 or <code>ma()</code> (e.g. <code>ar(1, series = id)</code>).</li>
-<li>Because change point locations <span class="math inline">\Delta</span> are estimated with posterior
-uncertainty, the observation boundary where AR/MA parameters switch
-varies conditionally across MCMC draws.</li>
+<li>Because change point locations <span class="math inline">\tau</span>
+are estimated with posterior uncertainty, the observation boundary where
+AR/MA parameters switch varies conditionally across MCMC draws.</li>
 </ul>
 <p>GARMA currently supports only the default links for
 <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian()</a></code> (identity), <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code> (logit),
@@ -174,14 +175,15 @@ do not directly apply. The same applies to <code>ma()</code>.</p>
 <div class="section level4">
 <h4 id="observation-boundary">Observation boundary<a class="anchor" aria-label="anchor" href="#observation-boundary"></a>
 </h4>
-<p>The transformed observation <span class="math inline">y^*</span>
-keeps log and logit residuals finite when counts lie on a link boundary.
-The default <code>boundary = 0.1</code> replaces zero counts by 0.1 for
-Poisson and negative-binomial models. For binomial models, counts are
-constrained to the interval from 0.1 to <code>trials - 0.1</code> before
-conversion to a rate (<span class="math inline">n_t = 1</span> for
-<code><a href="../reference/bernoulli.html">bernoulli()</a></code>, constraining <span class="math inline">y^*</span> to <span class="math inline">[0.1,
-0.9]</span>). It has no effect for Gaussian models.</p>
+<p>The transformed observation <span class="math inline">y^*_t</span>
+keeps log and logit residuals finite when counts lie on a link boundary
+using a pseudo-count <span class="math inline">b</span> (default
+<code>boundary = 0.1</code>). For Poisson and negative-binomial models,
+zero counts are replaced by <span class="math inline">b</span>, so <span class="math inline">y^*_t = \max(y_t, b)</span>. For binomial models,
+observed success counts are constrained to <span class="math inline">[b,
+n_t - b]</span> before conversion to a rate (<span class="math inline">n_t = 1</span> for <code><a href="../reference/bernoulli.html">bernoulli()</a></code>,
+constraining <span class="math inline">y^*_t</span> to <span class="math inline">[0.1, 0.9]</span>). It has no effect for Gaussian
+models.</p>
 <p>The default should usually be left unchanged. If needed, set it on
 either term, for example <code>ar(1, boundary = 0.01) + ma(1)</code>. AR
 and MA share one boundary within a segment, and the boundary may differ
@@ -218,7 +220,7 @@ residual (<code>ar(1)</code>):</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="va">price</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>,  <span class="co"># Intercept_1, ar1_1, ar2_1</span></span>
-<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">time</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>  <span class="co"># time_2, ar1_2; turns off second-order AR</span></span>
+<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">time</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>  <span class="co"># time_2, ar1_2; replaces AR(2) with AR(1)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">ar_data</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <p>Let’s plot it and we see that AR was strong in the first segment and
@@ -226,7 +228,7 @@ weaker-but-negative in the second:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<p><img src="arma_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="arma_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="700"></p>
 <p>We can summarise the inferred coefficients:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
@@ -270,7 +272,7 @@ directly:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<p><img src="arma_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="768"><img src="arma_files/figure-html/unnamed-chunk-5-2.png" class="r-plt" alt="" width="768"></p>
+<p><img src="arma_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="768"><img src="arma_files/figure-html/unnamed-chunk-6-2.png" class="r-plt" alt="" width="768"></p>
 <p>Sometimes, the trace plot shows that the change point
 (<code>cp_1</code>) is not well identified with this model and data. As
 discussed in the article on <a href="../articles/tips.html">tips,
@@ -390,7 +392,7 @@ points, and see if it fits:</p>
 <span><span class="co">## s.e.  0.0643  0.0798   0.0650     1.1356</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## sigma^2 estimated as 60.17:  log likelihood = -694.1,  aic = 1398.19</span></span></code></pre>
-<p>OK, we can see that the <code>ar</code> coefficients and sigma (<span class="math inline">sigma = sqrt(sigma^2)</span>) is simulated
+<p>OK, we can see that the <code>ar</code> coefficients and sigma (<span class="math inline">sigma = sqrt(sigma^2)</span>) are simulated
 correctly, if taking <code><a href="https://rdrr.io/r/stats/arima.html" class="external-link">arima()</a></code> as ground truth. Inferring
 with <code>mcp</code> is straightforward:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
@@ -461,7 +463,7 @@ using <code>plot_dpar(fit)</code>:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="op">/</span>  <span class="co"># Patchwork syntax to show on separate rows</span></span>
 <span>  <span class="fu"><a href="../reference/plot.mcpfit.html">plot_dpar</a></span><span class="op">(</span><span class="va">fit</span>, dpar <span class="op">=</span> <span class="st">"ar1"</span>, lines <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></code></pre></div>
-<p><img src="arma_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="arma_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="700"></p>
 <p>We recovered the parameters, including the change point (see
 <code>mean</code> but also the helpful <code>sim</code> and
 <code>match</code> columns):</p>
@@ -496,9 +498,9 @@ applied to data.</p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, regex_pars <span class="op">=</span> <span class="st">"cp_1|ar_*"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="arma_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="arma_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="700"></p>
 <p>As usual, we can test hypotheses (<a href="../articles/comparison.html">read more here</a>). We can also ask
-how much more likely it is (relative to the prior) that there the two
+how much more likely it is (relative to the prior) that the two
 autocorrelations are equal compared to them differing. Because we
 sampled both the prior and posterior
 (<code>mcp(..., sample = "both")</code>), we can do a Savage-Dickey
@@ -510,7 +512,7 @@ density ratio test:</p>
 <pre><code><span><span class="co">##          hypothesis      mean     lower     upper prob           BF</span></span>
 <span><span class="co">## 1 ar1_1 - ar1_2 = 0 0.6857727 0.3770224 0.9878358   NA 3.441065e-05</span></span></code></pre>
 <p>In this case, the evidence for equality is very small so it was
-rarely visited by the sampler and hence the precision is low .</p>
+rarely visited by the sampler and hence the precision is low.</p>
 <p>Of course, we can also do directional tests. For example, what is the
 evidence that <code>ar1_1</code> is more than 0.3 greater than
 <code>ar1_2</code>? Answer: More than 100 to one.</p>
@@ -563,8 +565,8 @@ including <code><a href="../reference/plot.mcpfit.html">plot()</a></code> and <c
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="arma_files/figure-html/unnamed-chunk-19-1.png" class="r-plt" alt="" width="672"><img src="arma_files/figure-html/unnamed-chunk-19-2.png" class="r-plt" alt="" width="672"></p>
-<p>Notice that the plot smoothes the posteriors at sharp cutoffs,
+<p><img src="arma_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="" width="672"><img src="arma_files/figure-html/unnamed-chunk-20-2.png" class="r-plt" alt="" width="672"></p>
+<p>Notice that the plot smooths the posteriors at sharp cutoffs,
 slightly misrepresenting the true distribution.</p>
 <p>Let’s inspect the priors for a more advanced AR model, since you
 would often have to inform these:</p>
@@ -625,16 +627,19 @@ before the start of the series are set to zero.</p>
 <ul>
 <li>
 <code><a href="../reference/execute-mcp-model.html">fitted()</a></code> and <code><a href="../reference/execute-mcp-model.html">predict()</a></code> use posterior
-imputations for the actual missing response data, so it is conditional
-on the actual data values/order for the ar/ma modeling.</li>
+imputations only to complete missing response histories.
+<code><a href="../reference/execute-mcp-model.html">predict()</a></code> generates fresh outcomes at all rows, even where
+the original response was missing.</li>
 <li>
 <code><a href="../reference/execute-mcp-model.html">log_lik()</a></code> is unavailable if the data has missingness
 before some observed data.</li>
-<li>In contrast, <code>posterior_predict()</code> and
-<code><a href="../reference/pp_check.html">pp_check()</a></code> generate each series from the model posteriors
-without regards to the original data. This makes serial summaries of
-posterior replications, such as their autocorrelation and run lengths,
-meaningful.</li>
+<li>
+<code>predict(..., conditional = FALSE)</code>,
+<code>posterior_predict(..., conditional = FALSE)</code>, and
+<code><a href="../reference/pp_check.html">pp_check()</a></code> generate each series recursively from the model
+posteriors without conditioning on the original response history. This
+makes serial summaries of posterior replications, such as their
+autocorrelation and run lengths, meaningful.</li>
 </ul>
 </div>
 <div class="section level2">

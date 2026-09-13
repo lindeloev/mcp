@@ -94,7 +94,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Diagnosing and fixing problems</h1>
             
-            <h4 data-toc-skip class="date">2026-09-06</h4>
+            <h4 data-toc-skip class="date">2026-09-13</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/tips.Rmd" class="external-link"><code>vignettes/tips.Rmd</code></a></small>
       <div class="d-none name"><code>tips.Rmd</code></div>
@@ -146,10 +146,10 @@ used for sampler adaptation and discarded before sampling.</p></li>
 </h2>
 <p>Most of these problems should stem from inappropriate priors and such
 problems may be exacerbated by fragile link functions (e.g.,
-<code>binomial(link = "identity")</code>. The article on <a href="../articles/priors.html">priors in mcp</a> may be helpful, but in
+<code>binomial(link = "identity")</code>). The article on <a href="../articles/priors.html">priors in mcp</a> may be helpful, but in
 particular:</p>
 <ul>
-<li><p>Errors on “directed cycle” usually stems from using parameters in
+<li><p>Errors on “directed cycle” usually stem from using parameters in
 priors. For example, if you set
 <code>prior = list(Intercept_1 = "dnorm(Intercept_2, 1)", Intercept_2 = "dnorm(Intercept_1, 1)")</code>
 this is an infinite regress.</p></li>

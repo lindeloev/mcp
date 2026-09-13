@@ -94,7 +94,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Binomial change point analysis</h1>
             
-            <h4 data-toc-skip class="date">2026-09-06</h4>
+            <h4 data-toc-skip class="date">2026-09-13</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/binomial.Rmd" class="external-link"><code>vignettes/binomial.Rmd</code></a></small>
       <div class="d-none name"><code>binomial.Rmd</code></div>
@@ -179,7 +179,7 @@ be important later when we set priors.</p>
 <p>Visually:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">year</span>, <span class="va">df</span><span class="op">$</span><span class="va">y</span><span class="op">)</span></span></code></pre></div>
-<p><img src="binomial_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="binomial_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="check-parameter-recovery">Check parameter recovery<a class="anchor" aria-label="anchor" href="#check-parameter-recovery"></a>
@@ -223,7 +223,7 @@ discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<p><img src="binomial_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="binomial_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
 <p>These lines are just <code>fit$simulate</code> applied to a random
 draw of the posterior samples. In other words, they represent the joint
 distribution of the parameters. You can change the number of draws
@@ -233,7 +233,7 @@ logit scale, where the linear trends are modeled:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot_dpar</a></span><span class="op">(</span><span class="va">fit</span>, scale <span class="op">=</span> <span class="st">"linear"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="binomial_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="binomial_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
 <p>These plots work with <a href="../articles/group_effects.html">group-level effects</a> as
 well.</p>
 </div>
@@ -246,7 +246,7 @@ look at the posterior distributions and trace plots:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, nvariables <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
-<p><img src="binomial_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="576"></p>
+<p><img src="binomial_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="576"></p>
 <p>Convergence is perfect here as evidenced by the overlapping trace
 plots that look like fat caterpillars (Bayesians love fat caterpillars).
 Notice that the posterior distribution of change points can be quite
@@ -258,7 +258,7 @@ than this, so check out their documentation.</p>
 <div class="section level2">
 <h2 id="priors-for-binomial-models">Priors for binomial models<a class="anchor" aria-label="anchor" href="#priors-for-binomial-models"></a>
 </h2>
-<p><code>mcp</code> uses priors to achieve a lot of it’s functionality.
+<p><code>mcp</code> uses priors to achieve a lot of its functionality.
 See <a href="../articles/priors.html">how to set priors</a>, including
 how to share parameters between segments and how to fix values. Here, I
 post a few notes about the binomial-specific default priors.</p>
@@ -324,7 +324,7 @@ heavy-tailed.</p>
 <span>      breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu">inverse_logit</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">7</span>, <span class="fl">7</span>, by <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span>    <span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="binomial_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="binomial_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="700"></p>
 <p>Please keep in mind that when these priors combine through the model,
 the joint probability may be quite different.</p>
 <p>Numeric coefficient scales are divided by a representative change in

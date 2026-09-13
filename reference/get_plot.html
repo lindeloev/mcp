@@ -99,7 +99,7 @@
 <dd><p>Whether to plot quantiles of the posterior (fitted value).</p><ul><li><p><code>TRUE</code> Add 2.5% and 97.5% quantiles. Corresponds to
 <code>q_fit = c(0.025, 0.975)</code>.</p></li>
 <li><p><code>FALSE</code> No quantiles</p></li>
-<li><p>A vector of quantiles. For example, <code>q_fit = 0.5</code>
+<li><p>A vector of quantiles (strictly between 0 and 1). For example, <code>q_fit = 0.5</code>
 plots the median and <code>q_fit = c(0.2, 0.8)</code> plots the 20% and 80%
 quantiles.</p></li>
 </ul></dd>
@@ -137,7 +137,7 @@ or FALSE (do not plot).</p></dd>
 
 
 <dt id="arg-rate">rate<a class="anchor" aria-label="anchor" href="#arg-rate"></a></dt>
-<dd><p>Logical scalar. For binomial models, return counts (<code>rate = FALSE</code>) or
+<dd><p>Logical scalar. For binomial models, return counts (<code>rate = FALSE</code>, the default for <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>) or
 the observed or expected success proportion (<code>rate = TRUE</code>). Predictions and
 count-scale fitted values require a trials column in <code>newdata</code>.
 Distributional parameters such as <code>dpar = "mu"</code> evaluate the parameter itself (e.g., success probability)
@@ -145,7 +145,8 @@ and are unaffected by <code>rate</code>.</p></dd>
 
 
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>
-<dd><p>Logical. Evaluate prior draws (<code>TRUE</code>) instead of posterior draws (<code>FALSE</code>, default)? Useful for <code>mcp(..., sample = "both")</code>.</p></dd>
+<dd><p>Logical. Evaluate prior draws (<code>TRUE</code>) instead of posterior draws (<code>FALSE</code>, default).
+The selected draws must be available; prior-only fits require <code>prior = TRUE</code>.</p></dd>
 
 
 <dt id="arg-dpar">dpar<a class="anchor" aria-label="anchor" href="#arg-dpar"></a></dt>
@@ -173,7 +174,7 @@ If there are group-level effects, this is the number of draws from each group.
 
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
-<dd><p>One of</p><ul><li><p><code>"response"</code>: return on the observed scale, i.e., after applying the inverse link function.</p></li>
+<dd><p>One of</p><ul><li><p><code>"response"</code>: return on the response scale, i.e., after applying the inverse link function.</p></li>
 <li><p><code>"linear"</code>: return on the linear-predictor (link) scale, where the linear
 trends are modeled.
 A linear scale is only applicable when <code>type == "fitted"</code> and <code>dpar</code> is not <code>NULL</code>.</p></li>

@@ -35,6 +35,11 @@ niterations(x)
 
 An integer count of iterations, chains, or draws.
 
+## Details
+
+These methods require posterior draws. To count prior draws, use e.g.
+`ndraws(as_draws(fit, prior = TRUE))`.
+
 ## Functions
 
 - `niterations(mcpfit)`: Number of iterations per chain of an `mcpfit`

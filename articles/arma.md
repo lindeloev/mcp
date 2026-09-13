@@ -10,31 +10,34 @@ model = list(y ~ 1 + x + ar(1) + ma(1))
 ```
 
 The most common use case is still `ar(1)`. Like other `mcp` terms, AR
-and MA coefficients carry over to later segments until another term for
-the same component changes them. An `ar(p)` or `ma(q)` declaration
-replaces that whole component: if `ar(1)` follows `ar(2)`, the lag-2
-coefficient is zero in the later segment. Both accept a regression
-formula, such as `ar(1, 1 + x)` or `ma(1, 0 + x)`.
+and MA components persist into later segments until another term for the
+same component replaces or turns them off (`ar(0)` or `ma(0)`). An
+`ar(p)` or `ma(q)` declaration replaces that whole component: if `ar(1)`
+follows `ar(2)`, the lag-2 coefficient is removed in the later segment.
+Both accept a regression formula, such as `ar(1, 1 + x)` or
+`ma(1, 0 + x)`.
 
 ### GARMA definition
 
 `mcp` implements AR and MA as a generalized ARMA (GARMA) recurrence on
-the response-family link scale. If b_t is the ordinary regression
-predictor from the segment formulas and \eta_t is the predictor
-including serial dependence, then
+the response-family link scale. If \eta^{\text{reg}}\_t is the ordinary
+regression predictor from the segment formulas and \eta_t is the
+predictor including serial dependence, then
 
 \begin{aligned} \text{AR}\_t &= \sum\_{j=1}^{p} \phi\_{j,t}
-\left\[g(y^\*\_{t-j}) - b\_{t-j}\right\] \\ \text{MA}\_t &=
-\sum\_{k=1}^{q} \theta\_{k,t} \left\[g(y^\*\_{t-k}) -
-\eta\_{t-k}\right\] \\ \eta_t &= b_t + \text{AR}\_t + \text{MA}\_t
-\end{aligned}
+\left\[g(y^\*\_{t-j}) - \eta^{\text{reg}}\_{t-j}\right\] \\ \text{MA}\_t
+&= \sum\_{k=1}^{q} \theta\_{k,t} \left\[g(y^\*\_{t-k}) -
+\eta\_{t-k}\right\] \\ \eta_t &= \eta^{\text{reg}}\_t + \text{AR}\_t +
+\text{MA}\_t \end{aligned}
 
 where \phi\_{j,t} is the lag-j autoregressive (AR) coefficient at time
 t, \theta\_{k,t} is the lag-k moving-average (MA) coefficient at time t,
-g(\cdot) is the link function, and y^\* is the boundary-constrained
-observation. Thus [`ar()`](https://rdrr.io/r/stats/ar.html) uses lagged
-link-scale residuals relative to the ordinary regression, while `ma()`
-uses lagged one-step innovations.
+g(\cdot) is the link function (g(\mu_t) = \eta_t, so \mu_t =
+g^{-1}(\eta_t)), and y^\*\_t is the boundary-constrained observation
+with pseudo-count b (set via `boundary = 0.1` by default). Thus
+[`ar()`](https://rdrr.io/r/stats/ar.html) uses lagged link-scale
+residuals relative to the ordinary regression, while `ma()` uses lagged
+one-step innovations.
 
 **`mcp` does regression with change points on the coefficients**
 \phi\_{j,t} **and** \theta\_{k,t}. See below for applied examples.
@@ -54,7 +57,7 @@ across change points:
   using `series = "column_name"` inside
   [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()`
   (e.g. `ar(1, series = id)`).
-- Because change point locations \Delta are estimated with posterior
+- Because change point locations \tau are estimated with posterior
   uncertainty, the observation boundary where AR/MA parameters switch
   varies conditionally across MCMC draws.
 
@@ -77,13 +80,14 @@ directly apply. The same applies to `ma()`.
 
 #### Observation boundary
 
-The transformed observation y^\* keeps log and logit residuals finite
-when counts lie on a link boundary. The default `boundary = 0.1`
-replaces zero counts by 0.1 for Poisson and negative-binomial models.
-For binomial models, counts are constrained to the interval from 0.1 to
-`trials - 0.1` before conversion to a rate (n_t = 1 for
+The transformed observation y^\*\_t keeps log and logit residuals finite
+when counts lie on a link boundary using a pseudo-count b (default
+`boundary = 0.1`). For Poisson and negative-binomial models, zero counts
+are replaced by b, so y^\*\_t = \max(y_t, b). For binomial models,
+observed success counts are constrained to \[b, n_t - b\] before
+conversion to a rate (n_t = 1 for
 [`bernoulli()`](https://lindeloev.github.io/mcp/reference/bernoulli.md),
-constraining y^\* to \[0.1, 0.9\]). It has no effect for Gaussian
+constraining y^\*\_t to \[0.1, 0.9\]). It has no effect for Gaussian
 models.
 
 The default should usually be left unchanged. If needed, set it on
@@ -131,7 +135,7 @@ autoregressive residual (`ar(1)`):
 
 model = list(
   price ~ 1 + ar(2),  # Intercept_1, ar1_1, ar2_1
-  ~ 0 + time + ar(1)  # time_2, ar1_2; turns off second-order AR
+  ~ 0 + time + ar(1)  # time_2, ar1_2; replaces AR(2) with AR(1)
 )
 fit = mcp(model, ar_data, seed = 42)
 ```
@@ -145,7 +149,7 @@ set.seed(42)
 plot(fit)
 ```
 
-![](arma_files/figure-html/unnamed-chunk-3-1.png)
+![](arma_files/figure-html/unnamed-chunk-4-1.png)
 
 We can summarise the inferred coefficients:
 
@@ -198,7 +202,7 @@ set.seed(42)
 plot_pars(fit)
 ```
 
-![](arma_files/figure-html/unnamed-chunk-5-1.png)![](arma_files/figure-html/unnamed-chunk-5-2.png)
+![](arma_files/figure-html/unnamed-chunk-6-1.png)![](arma_files/figure-html/unnamed-chunk-6-2.png)
 
 Sometimes, the trace plot shows that the change point (`cp_1`) is not
 well identified with this model and data. As discussed in the article on
@@ -339,7 +343,7 @@ arima(df$response, order = c(3, 0, 0))
     ## sigma^2 estimated as 60.17:  log likelihood = -694.1,  aic = 1398.19
 
 OK, we can see that the `ar` coefficients and sigma (sigma =
-sqrt(sigma^2)) is simulated correctly, if taking
+sqrt(sigma^2)) are simulated correctly, if taking
 [`arima()`](https://rdrr.io/r/stats/arima.html) as ground truth.
 Inferring with `mcp` is straightforward:
 
@@ -431,7 +435,7 @@ plot(fit) /  # Patchwork syntax to show on separate rows
   plot_dpar(fit, dpar = "ar1", lines = 100)
 ```
 
-![](arma_files/figure-html/unnamed-chunk-13-1.png)
+![](arma_files/figure-html/unnamed-chunk-14-1.png)
 
 We recovered the parameters, including the change point (see `mean` but
 also the helpful `sim` and `match` columns):
@@ -475,14 +479,14 @@ set.seed(42)
 plot_pars(fit, regex_pars = "cp_1|ar_*")
 ```
 
-![](arma_files/figure-html/unnamed-chunk-15-1.png)
+![](arma_files/figure-html/unnamed-chunk-16-1.png)
 
 As usual, we can test hypotheses ([read more
 here](https://lindeloev.github.io/mcp/articles/comparison.md)). We can
-also ask how much more likely it is (relative to the prior) that there
-the two autocorrelations are equal compared to them differing. Because
-we sampled both the prior and posterior (`mcp(..., sample = "both")`),
-we can do a Savage-Dickey density ratio test:
+also ask how much more likely it is (relative to the prior) that the two
+autocorrelations are equal compared to them differing. Because we
+sampled both the prior and posterior (`mcp(..., sample = "both")`), we
+can do a Savage-Dickey density ratio test:
 
 ``` r
 
@@ -497,7 +501,7 @@ hypothesis(fit, "ar1_1 = ar1_2")
     ## 1 ar1_1 - ar1_2 = 0 0.6857727 0.3770224 0.9878358   NA 3.441065e-05
 
 In this case, the evidence for equality is very small so it was rarely
-visited by the sampler and hence the precision is low .
+visited by the sampler and hence the precision is low.
 
 Of course, we can also do directional tests. For example, what is the
 evidence that `ar1_1` is more than 0.3 greater than `ar1_2`? Answer:
@@ -570,9 +574,9 @@ set.seed(42)
 plot_pars(fit, prior = TRUE)
 ```
 
-![](arma_files/figure-html/unnamed-chunk-19-1.png)![](arma_files/figure-html/unnamed-chunk-19-2.png)
+![](arma_files/figure-html/unnamed-chunk-20-1.png)![](arma_files/figure-html/unnamed-chunk-20-2.png)
 
-Notice that the plot smoothes the posteriors at sharp cutoffs, slightly
+Notice that the plot smooths the posteriors at sharp cutoffs, slightly
 misrepresenting the true distribution.
 
 Let’s inspect the priors for a more advanced AR model, since you would
@@ -643,15 +647,19 @@ series are set to zero.
 - [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
   and
   [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
-  use posterior imputations for the actual missing response data, so it
-  is conditional on the actual data values/order for the ar/ma modeling.
+  use posterior imputations only to complete missing response histories.
+  [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+  generates fresh outcomes at all rows, even where the original response
+  was missing.
 - [`log_lik()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
   is unavailable if the data has missingness before some observed data.
-- In contrast, `posterior_predict()` and
+- `predict(..., conditional = FALSE)`,
+  `posterior_predict(..., conditional = FALSE)`, and
   [`pp_check()`](https://lindeloev.github.io/mcp/reference/pp_check.md)
-  generate each series from the model posteriors without regards to the
-  original data. This makes serial summaries of posterior replications,
-  such as their autocorrelation and run lengths, meaningful.
+  generate each series recursively from the model posteriors without
+  conditioning on the original response history. This makes serial
+  summaries of posterior replications, such as their autocorrelation and
+  run lengths, meaningful.
 
 ## JAGS code
 

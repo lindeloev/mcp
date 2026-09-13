@@ -25,7 +25,7 @@ set.seed(42)
 fit = mcp_example("missing")
 ```
 
-![](missing_files/figure-html/unnamed-chunk-2-1.png)
+![](missing_files/figure-html/unnamed-chunk-3-1.png)
 
 The ordinary plot shows the observed responses and model estimates.
 Missing responses are omitted. See below how they can be visualized.
@@ -49,34 +49,34 @@ fit$data |> filter(is.na(y))
     ## 9  NA 84         B
     ## 10 NA 96         B
 
-## Expected responses and imputations
+## Expected responses and predictions
 
-You can see the imputations fairly directly.
 [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
-describes plausible values of the missing response itself. These are the
-latent response draws sampled jointly with the model parameters. The
-imputation comes from trends in non-missing data and what they imply,
-given the observed covariates (`condition` and `x`), for the missing
-rows.
+evaluates the posterior predictive distribution at the missing rows,
+generating fresh simulated responses that include residual variation.
+The predictions come from trends in non-missing data and what they
+imply, given the observed covariates (`condition` and `x`), for the
+missing rows.
 
 ``` r
 
 # Quantiles of posterior predictive for missing data: 10%, median, 90%
-predict(fit, probs = c(0.1, 0.5, 0.9)) |>
+imputed = predict(fit, probs = c(0.1, 0.5, 0.9)) |>
   filter(is.na(y))
+imputed
 ```
 
     ##     y  x condition  predict       sd      Q10      Q50      Q90
-    ## 1  NA  8         B 35.51722 4.408885 29.97320 35.59747 41.23138
-    ## 2  NA 19         A 15.70005 4.409613 10.12722 15.68574 21.24990
-    ## 3  NA 27         A 17.26378 4.343011 11.65769 17.20047 22.74389
-    ## 4  NA 28         B 39.37180 4.354504 33.84050 39.38414 44.92549
-    ## 5  NA 29         A 17.55903 4.343115 12.03646 17.57914 23.12128
-    ## 6  NA 30         B 39.73816 4.364214 34.21878 39.76277 45.30338
-    ## 7  NA 31         A 17.95321 4.351576 12.41368 17.95779 23.50021
-    ## 8  NA 68         B 40.64902 4.399515 35.00915 40.62840 46.26328
-    ## 9  NA 84         B 34.26827 4.374458 28.70075 34.26938 39.84238
-    ## 10 NA 96         B 29.43116 4.495332 23.81245 29.49694 35.18704
+    ## 1  NA  8         B 35.63377 4.424702 29.97320 35.59747 41.23138
+    ## 2  NA 19         A 15.70366 4.364817 10.12722 15.68574 21.24990
+    ## 3  NA 27         A 17.21247 4.346768 11.65769 17.20047 22.74389
+    ## 4  NA 28         B 39.41195 4.299495 33.84050 39.38414 44.92549
+    ## 5  NA 29         A 17.55478 4.360739 12.03646 17.57914 23.12128
+    ## 6  NA 30         B 39.82040 4.364600 34.21878 39.76277 45.30338
+    ## 7  NA 31         A 17.92833 4.376714 12.41368 17.95779 23.50021
+    ## 8  NA 68         B 40.62562 4.445269 35.00915 40.62840 46.26328
+    ## 9  NA 84         B 34.28420 4.348502 28.70075 34.26938 39.84238
+    ## 10 NA 96         B 29.52044 4.480723 23.81245 29.49694 35.18704
 
 [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
 has the same syntax as
@@ -114,14 +114,11 @@ median and a vertical line shows the central 80% imputation interval:
 
 ``` r
 
-imputed = predict(fit, probs = c(0.1, 0.5, 0.9)) |>
-  filter(is.na(y))
-
 # Start with mcp plot with prediction interval. Use all draws for less Monte Carlo error.
 set.seed(42)
 plot(fit, color_by = "condition", q_predict = c(0.1, 0.9)) +
 
-  # Add posterior predictive interval
+  # Add imputation interval
   geom_linerange(
     data = imputed,
     aes(x = x, ymin = Q10, ymax = Q90),
@@ -139,28 +136,27 @@ plot(fit, color_by = "condition", q_predict = c(0.1, 0.9)) +
   )
 ```
 
-![](missing_files/figure-html/unnamed-chunk-6-1.png)
+![](missing_files/figure-html/unnamed-chunk-7-1.png)
 
 This deliberately distinguishes imputed values from the solid observed
 points. You can change the quantiles, marker, color, or add a subset of
 the missing rows using ordinary `dplyr` and `ggplot2` code.
 
-The plot above reduces each posterior predictive distribution to a
-simple interval. Use `summary = FALSE` when you need the individual
-draws instead. Here we plot the posterior predictive distribution for
-each missing row:
+The plot above reduces each imputation distribution to an interval. Use
+`summary = FALSE` when you need the individual draws instead. Here we
+plot the imputation distribution for each missing row:
 
 ``` r
 
-imputed_draws = predict(fit, summary = FALSE) |>
+missing_draws = predict(fit, summary = FALSE) |>
   filter(is.na(y))
 
-ggplot(imputed_draws, aes(x = .prediction)) +
+ggplot(missing_draws, aes(x = .prediction)) +
   geom_density() + 
   facet_wrap(~x)
 ```
 
-![](missing_files/figure-html/unnamed-chunk-7-1.png)
+![](missing_files/figure-html/unnamed-chunk-8-1.png)
 
 ### Making probabilistic statements about missing responses
 
@@ -168,12 +164,12 @@ Sometimes, the missing response is of direct interest. For example, you
 may want to know the probability that a missing response is above a
 threshold. You can use
 [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
-with `summary = FALSE` to get all posterior draws and then calculate
-probabilities of various statements. For example:
+with `summary = FALSE` to get all posterior predictive draws and then
+calculate probabilities of various statements. For example:
 
 ``` r
 
-imputed_draws |>
+missing_draws |>
   filter(data_row == 19) |>
   summarise(
     p_greater = mean(.prediction > 20),
@@ -185,7 +181,7 @@ imputed_draws |>
     ## # A tibble: 1 × 3
     ##   p_greater p_lower p_between
     ##       <dbl>   <dbl>     <dbl>
-    ## 1     0.163  0.0973     0.739
+    ## 1     0.157  0.0927     0.750
 
 ### Other continuous predictors
 
@@ -257,21 +253,24 @@ missing histories for pointwise likelihood calculations. Consequently,
 [`log_lik()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
 [`loo()`](https://lindeloev.github.io/mcp/reference/loo.mcpfit.md), and
 [`waic()`](https://lindeloev.github.io/mcp/reference/loo.mcpfit.md) are
-unavailable when a missing response preceeds some observed data.
+unavailable when a missing response precedes some observed data.
 
 The [time-series
 article](https://lindeloev.github.io/mcp/articles/arma.md) discusses
-this. Briefly, use `posterior_predict()` to generate fresh replicated
-series from the posteriors (as all other mcp functions do), which do not
-depend on the observed response history.
+this. Use `predict(fit, conditional = FALSE)` or
+`posterior_predict(fit, conditional = FALSE)` to generate fresh
+replicated series recursively. Their histories are generated rather than
+taken from the observed responses. The default predictions condition on
+observed responses and retained imputations as histories, but still
+generate fresh outcomes at every row.
 
 ## Original data versus new data
 
-The retained JAGS draws belong to the missing rows in the original
-fitted data. Calling `predict(fit)` uses them. For the non-AR/MA example
-in this article, predictions for genuinely new data are ordinary
-posterior predictions rather than imputations of the original missing
-responses:
+In AR/MA models, the retained JAGS draws belong to the missing rows in
+the original fitted data and supply their histories. For the non-AR/MA
+example in this article, predictions for genuinely new data are ordinary
+posterior predictions, evaluated just like predictions at the missing
+rows:
 
 ``` r
 

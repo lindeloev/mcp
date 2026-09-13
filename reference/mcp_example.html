@@ -92,11 +92,10 @@
 
 <dt id="arg-sample">sample<a class="anchor" aria-label="anchor" href="#arg-sample"></a></dt>
 <dd><p>One of</p><ul><li><p><code>"post"</code>: Sample the posterior.</p></li>
-<li><p><code>"prior"</code>: Sample only the prior. Plots, summaries, etc. will
-use the prior. This is useful for prior predictive checks.</p></li>
+<li><p><code>"prior"</code>: Sample only the prior. Use <code>prior = TRUE</code> explicitly in
+plots, summaries, and other methods to select prior draws.</p></li>
 <li><p><code>"both"</code>: Sample both prior and posterior. Plots, summaries, etc.
-will default to using the posterior. The prior only has effect when doing
-Savage-Dickey density ratios in <code><a href="hypothesis.html">hypothesis</a></code>.</p></li>
+will default to using the posterior. Use <code>prior = TRUE</code> to select prior draws.</p></li>
 <li><p><code>"none"</code> or <code>FALSE</code>: Do not sample. Returns an mcpfit
 object without sample. This is useful if you only want to check
 prior strings (<code>fit$prior</code>), the JAGS model (<code>fit$jags_code</code>), etc.</p></li>

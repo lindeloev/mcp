@@ -62,8 +62,9 @@ plot_dpar(
 
   - `FALSE` No quantiles
 
-  - A vector of quantiles. For example, `q_fit = 0.5` plots the median
-    and `q_fit = c(0.2, 0.8)` plots the 20% and 80% quantiles.
+  - A vector of quantiles (strictly between 0 and 1). For example,
+    `q_fit = 0.5` plots the median and `q_fit = c(0.2, 0.8)` plots the
+    20% and 80% quantiles.
 
 - q_predict:
 
@@ -102,8 +103,12 @@ plot_dpar(
 
 - rate:
 
-  Logical scalar. For binomial models, return counts (`rate = FALSE`) or
-  the observed or expected success proportion (`rate = TRUE`).
+  Logical scalar. For binomial models, return counts (`rate = FALSE`,
+  the default for
+  [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+  and
+  [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md))
+  or the observed or expected success proportion (`rate = TRUE`).
   Predictions and count-scale fitted values require a trials column in
   `newdata`. Distributional parameters such as `dpar = "mu"` evaluate
   the parameter itself (e.g., success probability) and are unaffected by
@@ -112,7 +117,8 @@ plot_dpar(
 - prior:
 
   Logical. Evaluate prior draws (`TRUE`) instead of posterior draws
-  (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
+  (`FALSE`, default). The selected draws must be available; prior-only
+  fits require `prior = TRUE`.
 
 - arma:
 
@@ -138,7 +144,7 @@ plot_dpar(
 
   One of
 
-  - `"response"`: return on the observed scale, i.e., after applying the
+  - `"response"`: return on the response scale, i.e., after applying the
     inverse link function.
 
   - `"linear"`: return on the linear-predictor (link) scale, where the

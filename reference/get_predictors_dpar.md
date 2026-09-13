@@ -1,8 +1,8 @@
 # Get predictors for one distributional parameter
 
-This function extracts an `par_x`-less design matrix. `par_x` will be
-relative to the segment onset, so it will be multiplied in in the
-formula (`jags_code` and `fit$simulate()`).
+This function extracts a `par_x`-less design matrix. `par_x` will be
+relative to the segment onset, so it will be multiplied in the formula
+(`jags_code` and `fit$simulate()`).
 
 ## Usage
 
@@ -62,62 +62,70 @@ get_predictors(model, data, family, par_x, check_rank = TRUE)
 
 - model:
 
-  A list of formulas - one for each segment. The many examples on the
-  [mcp website](https://lindeloev.github.io/mcp/). But briefly:
+  A list of formulas - one for each segment. The general format is
+  `response ~ cp ~ predictors` (e.g., `y ~ 1 ~ 1 + x`), except the first
+  segment has no change point and uses `response ~ predictors`. The
+  response and change-point parts can be omitted (`cp ~ predictor`
+  assumes the same response; `~ predictor` assumes an intercept-only
+  change point). Non-\$x\$ terms persist into later segments until
+  replaced or removed by an intercept reset (see details). See examples
+  on the [mcp website](https://lindeloev.github.io/mcp/).
 
-  The first formula has the format `response ~ predictors` while the
-  following formulas have the format `response ~ cp ~ predictors`. Here,
-  `cp` names the change-point part of the formula rather than a literal
-  variable. The response and change-point parts can be omitted
-  (`cp ~ predictor` assumes the same response; `~ predictor` assumes an
-  intercept-only change point). Terms normally carry into later segments
-  until redefined (see details).
+  **1. Response (segment 1 only):**
 
-  The following terms can be modeled:
+  - `y ~ ...`: Standard continuous or count response (Gaussian, Poisson,
+    Bernoulli).
 
-  - *Regular formulas:* e.g., `~ 1 + x`. [Read
-    more](https://lindeloev.github.io/mcp/articles/formulas.html).
+  - `successes | trials(total) ~ ...`: Binomial response
+    (`family = binomial()`).
 
-  - *Extended formulas:* e.g., `~ x:group + I(x^2) + exp(z)`. [Read
-    more](https://lindeloev.github.io/mcp/articles/formulas.html).
-    R-side bases such as [`scale()`](https://rdrr.io/r/base/scale.html),
-    [`poly()`](https://rdrr.io/r/stats/poly.html), and
-    [`splines::ns()`](https://rdrr.io/r/splines/ns.html) are evaluated
-    before sampling, and their fitted scaling or basis is reused for
-    `newdata`.
+  - `y | weights(w) ~ ...`: Observation log-likelihood weights
+    (multiplies each observation's log-likelihood contribution by
+    `w > 0`; affects posterior inference and
+    [`log_lik()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    but not predictions).
 
-  - *Group-level effects (random effects):* e.g., `~ 1 + (1 | id)` for a
-    group-level intercept, or `~ 1 + (factor || id)` for independent
-    intercept and factor-contrast deviations. [Read
+  - `y | trials(total) + weights(w) ~ ...`: Combine response auxiliaries
+    using `+`.
+
+  **2. Change-point modeling (`cp`, segments 2+):**
+
+  - `~ 1 ~ ...` (or omitted, e.g., `~ x`): Population-level change point
+    (default).
+
+  - `1 + (1 | id) ~ ...`: Group-level change-point deviations around the
+    population change point. [Read
     more](https://lindeloev.github.io/mcp/articles/group_effects.html).
 
-  - *Gaussian residual standard deviation:* e.g., `~sigma(1)` for a
-    simple standard-deviation change or `~sigma(1 + x + group)` for more
-    advanced structures. Explicit
-    [`sigma()`](https://rdrr.io/r/stats/sigma.html) formulas model
-    log-SD, while the implicit constant `sigma_1` in a model without
-    [`sigma()`](https://rdrr.io/r/stats/sigma.html) remains on the
-    response scale. [Read
-    more](https://lindeloev.github.io/mcp/articles/dpar.html)
+  **3. Regression formula (all segments):** [Read
+  more](https://lindeloev.github.io/mcp/articles/formulas.html)
 
-  - *Time-series residuals:* link-scale observation-driven GARMA via
-    `ar(p)` and `ma(q)`, e.g., `~ 1 + ar(1, series = id) + ma(1)`. Both
-    accept an optional regression formula, observation `boundary`
-    (default 0.1), and grouping `series` column (see details). [Read
+  - `~ 1 + x`: Disjoined slope with a new segment intercept.
+
+  - `~ 0 + x`: Joined slope (no intercept; continuous from previous
+    segment).
+
+  - `~ 1`: Plateau (intercept only, no slope).
+
+  - `~ x:group + I(x^2) + exp(z)`: Extended terms, interactions, and
+    R-side bases ([`scale()`](https://rdrr.io/r/base/scale.html),
+    [`poly()`](https://rdrr.io/r/stats/poly.html),
+    [`splines::ns()`](https://rdrr.io/r/splines/ns.html)). Bases are
+    evaluated before sampling and reused for `newdata`.
+
+  - `~ 1 + (1 | id)`: Group-level intercepts (or `(1 + x || id)` for
+    independent slopes and intercepts). [Read
+    more](https://lindeloev.github.io/mcp/articles/group_effects.html).
+
+  - `~ sigma(1 + x)`: Distributional parameters on the link scale (e.g.,
+    log residual SD). [Read
+    more](https://lindeloev.github.io/mcp/articles/dpar.html).
+
+  - `~ ar(1) + ma(1)`: Autoregressive and moving-average time-series
+    residuals on the link scale (accepts regression formulas,
+    `series = id`, and `boundary`; use `ar(0)` or `ma(0)` to turn off in
+    later segments). [Read
     more](https://lindeloev.github.io/mcp/articles/arma.html).
-
-  - *Likelihood weights:* `y | weights(w) ~ ...` specifies observation
-    log-likelihood weights. Each observation's log-likelihood
-    contribution is multiplied by `w`. Weights must be positive. Weights
-    affect posterior inference and
-    [`log_lik()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
-    but not the response distribution used by
-    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
-    or prior/posterior predictive checks. Combine with other auxiliaries
-    using `+`, e.g., `y | trials(total) + weights(w) ~ ...`.
-
-  - *Binomial:* use `successes | trials(total) ~ ...` with
-    `family = binomial()`.
 
 - family:
 

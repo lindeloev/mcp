@@ -90,8 +90,8 @@ the Poisson variance as <code>shape</code> approaches infinity.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code>shape(1)</code> is added implicitly and is constant across segments unless
-a <code>shape()</code> formula is supplied. For example, <code>y ~ 1 + x + shape(1 + x)</code>
+    <p><code>shape(1)</code> is added implicitly in segment 1 and persists into later segments unless
+replaced by a new <code>shape()</code> formula. For example, <code>y ~ 1 + x + shape(1 + x)</code>
 models both the mean and shape. Regression coefficients for both dpars are
 on their link scales.</p>
     </div>

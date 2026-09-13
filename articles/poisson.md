@@ -76,12 +76,12 @@ result = summary(fit)
     ## 
     ## Change point parameters:
     ##     variable    mean    sd   lower   upper rhat ess_bulk ess_tail
-    ##  cp_1        1888.36 3.902 1881.67 1898.25 1.00     1584     1440
+    ##  cp_1        1888.42 3.925 1881.71 1898.80 1.00     1761     1444
     ## 
     ## Population-level parameters:
     ##     variable    mean    sd   lower   upper rhat ess_bulk ess_tail
-    ##  Intercept_1    1.17 0.096    0.98    1.36 1.00     3679     4107
-    ##  Intercept_2    0.48 0.123    0.22    0.71 1.00     3978     4474
+    ##  Intercept_1    1.17 0.096    0.98    1.36 1.00     3867     4001
+    ##  Intercept_2    0.48 0.123    0.23    0.71 1.00     3819     4709
 
 We can see that the model ran well with good convergence and a large
 number of effective samples. At a first glance, the change point is
@@ -95,7 +95,7 @@ set.seed(42)
 plot(fit)
 ```
 
-![](poisson_files/figure-html/unnamed-chunk-5-1.png)
+![](poisson_files/figure-html/unnamed-chunk-6-1.png)
 
 It seems to fit the data well, but we can see that the change point
 probability “lumps” around particular data points. Years with a very low
@@ -113,7 +113,7 @@ set.seed(42)
 plot_pars(fit)
 ```
 
-![](poisson_files/figure-html/unnamed-chunk-6-1.png)
+![](poisson_files/figure-html/unnamed-chunk-7-1.png)
 
 ## Priors for Poisson models
 
@@ -121,8 +121,8 @@ plot_pars(fit)
 `link = 'log'`, meaning that we have to exponentiate the estimates to
 get the “raw” Poisson parameter \lambda. \lambda has the nice property
 of being the mean number of events. So we see that the mean number of
-events in segment 1 is `exp(result$mean[2])` (3.2229705) and it is
-`exp(result$mean[3])` (1.6108874) for segment 2.
+events in segment 1 is `exp(result$mean[2])` (3.2229724) and it is
+`exp(result$mean[3])` (1.6116949) for segment 2.
 
 The intercept prior is a Student-t distribution centered on the rounded
 median of `log(pmax(n, 0.1))`, with scale equal to the maximum of 2.5
@@ -141,11 +141,11 @@ prior_summary(fit)
 ```
 
     ## # A tibble: 3 × 5
-    ##   parameter   segment dpar  prior                                          bounds                
-    ##   <chr>         <int> <chr> <chr>                                          <chr>                 
-    ## 1 cp_1              2 cp    dirichlet(alpha = 1)                           [min(date), max(date)]
-    ## 2 Intercept_1       1 mu    student_t(df = 3, location = 0.7, scale = 2.5) none                  
-    ## 3 Intercept_2       2 mu    student_t(df = 3, location = 0.7, scale = 2.5) none
+    ##   parameter   segment dpar  prior                        bounds                
+    ##   <chr>         <int> <chr> <chr>                        <chr>                 
+    ## 1 cp_1              2 cp    dirichlet(alpha = 1)         [min(date), max(date)]
+    ## 2 Intercept_1       1 mu    normal(mean = 0.7, sd = 2.5) none                  
+    ## 3 Intercept_2       2 mu    normal(mean = 0.7, sd = 2.5) none
 
 As always, the prior on the change point forces it to occur in the
 observed range. The coefficient priors are deliberately broad defaults,
@@ -228,9 +228,9 @@ set.seed(42)
 plot(fit_flat) + plot(fit_decay)
 ```
 
-![](poisson_files/figure-html/unnamed-chunk-9-1.png)
+![](poisson_files/figure-html/unnamed-chunk-10-1.png)
 
-Not we compute and compare the LOO ELPDs:
+Now we compute and compare the LOO ELPDs:
 
 ``` r
 
@@ -250,8 +250,8 @@ loo::loo_compare(fit_loo, fit_flat_loo, fit_decay_loo)
     ## or https://mc-stan.org/loo/reference/loo-glossary.html.
 
     ##   model elpd_diff se_diff p_worse diag_diff      diag_elpd
-    ##  model1       0.0     0.0      NA           3 k_psis > 0.7
-    ##  model3      -5.1     2.7    0.97   N < 100               
+    ##  model1       0.0     0.0      NA           4 k_psis > 0.7
+    ##  model3      -6.9     3.2    0.99   N < 100               
     ##  model2      -9.3     3.8    0.99   N < 100
 
 The change point model seems to be preferred with a ratio of around 1.9
@@ -267,9 +267,9 @@ loo::loo_model_weights(loo_list, method="pseudobma")
     ## Method: pseudo-BMA+ with Bayesian bootstrap
     ## ------
     ##        weight
-    ## model1 0.936 
-    ## model2 0.008 
-    ## model3 0.056
+    ## model1 0.963 
+    ## model2 0.009 
+    ## model3 0.028
 
 Again, unsurprisingly, the change point model is preferred and they show
 the same ranking as implied by `loo_compare`.
@@ -291,8 +291,8 @@ fit$jags_code
     ##   # Priors for population-level effects
     ##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)
     ##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point
-    ##   Intercept_1 ~ dt(0.7, 1/(2.5)^2, 3)   # Robustly centered log-count intercept with a minimum scale of 2.5
-    ##   Intercept_2 ~ dt(0.7, 1/(2.5)^2, 3)   # Robustly centered log-count intercept with a minimum scale of 2.5
+    ##   Intercept_1 ~ dnorm(0.7, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5
+    ##   Intercept_2 ~ dnorm(0.7, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(date)) {

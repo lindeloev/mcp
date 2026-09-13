@@ -94,7 +94,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Group-level (random) effects in mcp</h1>
             
-            <h4 data-toc-skip class="date">2026-09-06</h4>
+            <h4 data-toc-skip class="date">2026-09-13</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/group_effects.Rmd" class="external-link"><code>vignettes/group_effects.Rmd</code></a></small>
       <div class="d-none name"><code>group_effects.Rmd</code></div>
@@ -164,8 +164,8 @@ adjacent change points both vary, their group-specific locations are
 ordered against each other—not against the adjacent population change
 point. Internally, JAGS samples <span class="math inline">\kappa_{ig}</span> directly for efficiency.</p>
 <p>Unlike predictor group-level effects, a change-point group effect
-applies only to the boundary where it is written. There is no carry-over
-as there is for group-level effects on RHS.</p>
+applies only to the boundary where it is written; it does not persist
+across segments like predictor group-level effects.</p>
 </div>
 <div class="section level2">
 <h2 id="predictor-group-level-effects">Predictor group-level effects<a class="anchor" aria-label="anchor" href="#predictor-group-level-effects"></a>
@@ -176,13 +176,13 @@ from the population-level intercept:</p>
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>,  <span class="co"># Starts group-level intercept</span></span>
 <span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>,         <span class="co"># Group-level intercept persists here</span></span>
-<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>     <span class="co"># 0 Turns it off</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>     <span class="co"># (0|id) turns it off</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Here, the group-level intercept introduced in segment 1 also applies
 in segment 2. A later <code>(1|id)</code> would replace it from that
 segment onward, while <code>(0|id)</code> turns it off, as in segment 3
 above. Persistence is tracked separately for each grouping factor and
-distributional parameter. Read more on carry-over rules between segments
+distributional parameter. Read more on persistence into later segments
 in <a href="../articles/formulas.html#on-carry-over-between-segments">the
 article on formulas</a>.</p>
 <p>Use <code>||</code> for independent group-level slopes and factor
@@ -280,7 +280,7 @@ change points. The result:</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">df</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">x</span>, y<span class="op">=</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">id</span><span class="op">)</span></span></code></pre></div>
-<p><img src="group_effects_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="group_effects_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="summarise-and-plot-group-level-effects">Summarise and plot group-level effects<a class="anchor" aria-label="anchor" href="#summarise-and-plot-group-level-effects"></a>
@@ -293,7 +293,7 @@ plot. We want to facet by <code>id</code>, so:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, facet_by <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="group_effects_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="group_effects_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="700"></p>
 <p>It seems that <code>mcp</code> recovered the group-specific change
 points well. There is a lot of information in these data because the
 population-level intercept and slopes on either side of the change point
@@ -325,7 +325,7 @@ can select the group-level deviations with <code>"group"</code>:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, pars <span class="op">=</span> <span class="st">"group"</span>, type <span class="op">=</span> <span class="st">"trace"</span>, ncol <span class="op">=</span> <span class="fl">3</span>, nvariables <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
-<p><img src="group_effects_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="group_effects_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="700"></p>
 <p>The <code>ncol</code> argument controls the number of columns.
 Group-level effects often have many levels, so this is useful for
 viewing all deviations.</p>
@@ -336,7 +336,7 @@ of a parameter name:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, regex_pars <span class="op">=</span> <span class="st">"^cp_1_id"</span>, type <span class="op">=</span> <span class="st">"dens_overlay"</span>, ncol <span class="op">=</span> <span class="fl">2</span>, nvariables <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
-<p><img src="group_effects_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="group_effects_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="700"></p>
 <p>You can also do posterior predictive checking with facets. I think
 that for the relatively univariate models supported as of
 <code>mcp</code> 0.3, this does not add much new information over and
@@ -345,7 +345,7 @@ assessment that many will be acquainted with:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/pp_check.html">pp_check</a></span><span class="op">(</span><span class="va">fit</span>, facet_by <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="group_effects_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="group_effects_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="priors-for-group-level-effects">Priors for group-level effects<a class="anchor" aria-label="anchor" href="#priors-for-group-level-effects"></a>
@@ -388,7 +388,7 @@ ordered within each group.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for group-level effects</span></span>
 <span><span class="co">##   for (id_ in 1:n_unique_id) {</span></span>
-<span><span class="co">##     cp_1_id_location[id_] ~ dnorm(cp_1 + CONST3_, 1/(cp_1_sd)^2) T(cp_1 + (CONST1_-cp_1), cp_1 + (CONST2_-cp_1))  # Ordered group-level change-point deviations from the population location</span></span>
+<span><span class="co">##     cp_1_id_location[id_] ~ dnorm(cp_1 + CONST3_, 1/(cp_1_sd)^2) T(cp_1 + (CONST1_ - cp_1), cp_1 + (CONST2_ - cp_1))  # Ordered group-level change-point deviations from the population location</span></span>
 <span><span class="co">##     cp_1_id[id_] = cp_1_id_location[id_] - cp_1  # deviation from population change point</span></span>
 <span><span class="co">##   }</span></span>
 <span><span class="co">## </span></span>

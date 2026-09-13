@@ -55,14 +55,14 @@ set.seed(42)
 plot(fit, q_fit = TRUE, q_predict = c(0.1, 0.9))
 ```
 
-![](predict_files/figure-html/unnamed-chunk-3-1.png)
+![](predict_files/figure-html/unnamed-chunk-4-1.png)
 
 To review what we see here:
 
-- The black dots is the data from `data`.
+- The black dots are the data from `data`.
 - The gray lines are 25 samples from the posterior (control using
   `plot(fit, lines = 100)`).
-- The dashed red lines are the 2.5% and 97.% quantiles of the fitted
+- The dashed red lines are the 2.5% and 97.5% quantiles of the fitted
   (expected) values.
 - The green lines are the 10% and 90% quantiles of the predicted values.
 - The blue curves on the x-axis are the posterior distributions of the
@@ -168,12 +168,12 @@ and
 [`residuals()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
 you’ll see that they are quite versatile, taking many different
 arguments. To mention a few, you can set `fitted(fit, dpar = "sigma")`
-to get fitted values for `sigma` [more on modeling
-sigma](https://lindeloev.github.io/mcp/articles/dpar.md), `prior = TRUE`
-to predict using only the prior, and `arma = FALSE` to exclude AR/MA
-effects. For group-level effects, use `varying = TRUE` (all), `FALSE`
-(none), `"cp"` or `"predictor"` (a formula part), or an exact
-group-level parameter name.
+to get fitted values for `sigma` ([more on modeling
+sigma](https://lindeloev.github.io/mcp/articles/dpar.md)),
+`prior = TRUE` to predict using only the prior, and `arma = FALSE` to
+exclude AR/MA effects. For group-level effects, use `varying = TRUE`
+(all), `FALSE` (none), `"cp"` or `"predictor"` (a formula part), or an
+exact group-level parameter name.
 
 ## Predictions
 
@@ -210,7 +210,7 @@ slightly from call to call. You can make it replicable using
 [`set.seed()`](https://rdrr.io/r/base/Random.html) as above. In general,
 the more posterior draws, the less the call-to-call variance will be.
 Conversely, fewer draws means more call-to-call variation, e.g., if you
-do `predict(fit, ndraws = 10)`).
+do `predict(fit, ndraws = 10)`.
 
 ## Residuals
 
@@ -223,7 +223,7 @@ checking (`pp_check(fit)`) and visual inspection of
 ## Forecasting with future change points
 
 Bayesian inference is the principled updating of prior knowledge using
-data. Where there is little or now data, the prior speaks louder.
+data. Where there is little or no data, the prior speaks louder.
 Sometimes, we can learn surprising stuff simply by inspecting the prior
 predictive, e.g., how the priors combine when “put through” the model.
 In `mcp`, most functions come with a `prior = FALSE` default, but you
@@ -242,7 +242,7 @@ issue](https://github.com/lindeloev/mcp/issues/78) and current status in
 ### Step 1: run the model for observed data
 
 We already did that above, resulting in our `fit`. But we only do it to
-get the default priors that are suitable for inferring change point in
+get the default priors that are suitable for inferring change points in
 this region, so you could’ve just run it without sampling:
 
 ``` r
@@ -316,7 +316,7 @@ predict_forecast = predict(fit_forecast, newdata = newdata, summary = FALSE)
 
 # Plot it
 library(ggplot2)
-library(tidybayes)
+library(tidybayes)  # Optional package for summarizing and plotting draws
 ggplot(predict_forecast, aes(x = time, y = .prediction)) +
   # Posterior predictive intervals and line at x = 125
   stat_summary(fun.data = median_qi, fun.args = list(.width = 0.8), geom = "ribbon", alpha = 0.2) +
@@ -331,7 +331,7 @@ ggplot(predict_forecast, aes(x = time, y = .prediction)) +
   labs(title = "Predicting with future change points")
 ```
 
-![](predict_files/figure-html/unnamed-chunk-12-1.png)
+![](predict_files/figure-html/unnamed-chunk-13-1.png)
 
 You can read the predicted values from above at `x = 125` off this
 graph. We literally just predicted for all values between 1 and 170, and
@@ -342,7 +342,7 @@ You can extend this approach to an arbitrary number of future segments,
 even using the posterior from the “unobserved” segment 4 in the priors
 for parameters in future segments. In Bayesian inference, it really does
 not make much of a difference whether credence in some parameter values
-have been updated using data or not - it’s all credence.
+has been updated using data or not - it’s all credence.
 
 Without doing this formal model of the future change point, one may have
 thought that the change point should occur around `time = 110` since

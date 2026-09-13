@@ -76,8 +76,8 @@ against the adjacent population change point. Internally, JAGS samples
 \kappa\_{ig} directly for efficiency.
 
 Unlike predictor group-level effects, a change-point group effect
-applies only to the boundary where it is written. There is no carry-over
-as there is for group-level effects on RHS.
+applies only to the boundary where it is written; it does not persist
+across segments like predictor group-level effects.
 
 ## Predictor group-level effects
 
@@ -89,7 +89,7 @@ the population-level intercept:
 model = list(
   y ~ 1 + (1|id),  # Starts group-level intercept
   ~ 0 + x,         # Group-level intercept persists here
-  ~ 1 + (0|id)     # 0 Turns it off
+  ~ 1 + (0|id)     # (0|id) turns it off
 )
 ```
 
@@ -97,8 +97,8 @@ Here, the group-level intercept introduced in segment 1 also applies in
 segment 2. A later `(1|id)` would replace it from that segment onward,
 while `(0|id)` turns it off, as in segment 3 above. Persistence is
 tracked separately for each grouping factor and distributional
-parameter. Read more on carry-over rules between segments in [the
-article on
+parameter. Read more on persistence into later segments in [the article
+on
 formulas](https://lindeloev.github.io/mcp/articles/formulas.html#on-carry-over-between-segments).
 
 Use `||` for independent group-level slopes and factor coefficients:
@@ -219,7 +219,7 @@ ggplot(df, aes(x=x, y=y)) +
   facet_wrap(~id)
 ```
 
-![](group_effects_files/figure-html/unnamed-chunk-9-1.png)
+![](group_effects_files/figure-html/unnamed-chunk-10-1.png)
 
 ## Summarise and plot group-level effects
 
@@ -239,7 +239,7 @@ set.seed(42)
 plot(fit, facet_by = "id")
 ```
 
-![](group_effects_files/figure-html/unnamed-chunk-11-1.png)
+![](group_effects_files/figure-html/unnamed-chunk-12-1.png)
 
 It seems that `mcp` recovered the group-specific change points well.
 There is a lot of information in these data because the population-level
@@ -283,7 +283,7 @@ set.seed(42)
 plot_pars(fit, pars = "group", type = "trace", ncol = 3, nvariables = NULL)
 ```
 
-![](group_effects_files/figure-html/unnamed-chunk-13-1.png)
+![](group_effects_files/figure-html/unnamed-chunk-14-1.png)
 
 The `ncol` argument controls the number of columns. Group-level effects
 often have many levels, so this is useful for viewing all deviations.
@@ -298,7 +298,7 @@ set.seed(42)
 plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2, nvariables = NULL)
 ```
 
-![](group_effects_files/figure-html/unnamed-chunk-14-1.png)
+![](group_effects_files/figure-html/unnamed-chunk-15-1.png)
 
 You can also do posterior predictive checking with facets. I think that
 for the relatively univariate models supported as of `mcp` 0.3, this
@@ -312,7 +312,7 @@ set.seed(42)
 pp_check(fit, facet_by = "id")
 ```
 
-![](group_effects_files/figure-html/unnamed-chunk-15-1.png)
+![](group_effects_files/figure-html/unnamed-chunk-16-1.png)
 
 ## Priors for group-level effects
 
@@ -361,7 +361,7 @@ fit$jags_code
     ## 
     ##   # Priors for group-level effects
     ##   for (id_ in 1:n_unique_id) {
-    ##     cp_1_id_location[id_] ~ dnorm(cp_1 + CONST3_, 1/(cp_1_sd)^2) T(cp_1 + (CONST1_-cp_1), cp_1 + (CONST2_-cp_1))  # Ordered group-level change-point deviations from the population location
+    ##     cp_1_id_location[id_] ~ dnorm(cp_1 + CONST3_, 1/(cp_1_sd)^2) T(cp_1 + (CONST1_ - cp_1), cp_1 + (CONST2_ - cp_1))  # Ordered group-level change-point deviations from the population location
     ##     cp_1_id[id_] = cp_1_id_location[id_] - cp_1  # deviation from population change point
     ##   }
     ## 

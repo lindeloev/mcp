@@ -1,7 +1,7 @@
 # Extract MCMC Draws from `mcpfit` Objects
 
-Extract posterior or prior draws using posterior, tidybayes, or coda S3
-generics.
+Extract posterior or prior draws using posterior, coda, or the optional
+tidybayes package's S3 generics.
 
 ## Usage
 
@@ -104,7 +104,8 @@ head(coda::as.mcmc(demo_fit)[[1]])  # First chain as a coda mcmc object
 #> [5,]    9.323356    18.69243 33.12817 72.57656 3.843492 0.5946020 -0.17761014
 #> [6,]    9.305478    16.87526 30.01061 72.06966 3.968703 0.5380811 -0.11323448
 #> [7,]   10.021265    15.98717 32.82439 72.41413 4.029903 0.5880111 -0.04399810
-head(tidybayes::tidy_draws(demo_fit))  # Tidybayes-compatible draw data
+if (requireNamespace("tidybayes", quietly = TRUE))
+  head(tidybayes::tidy_draws(demo_fit))
 #> # A draws_df: 6 iterations, 1 chains, and 7 variables
 #>   Intercept_1 Intercept_3 cp_1 cp_2 sigma_1 time_2 time_3
 #> 1        10.2          16   31   72     4.5   0.51  0.077

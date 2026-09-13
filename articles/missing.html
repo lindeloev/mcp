@@ -94,7 +94,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Missing responses and imputation</h1>
             
-            <h4 data-toc-skip class="date">2026-09-06</h4>
+            <h4 data-toc-skip class="date">2026-09-13</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/missing.Rmd" class="external-link"><code>vignettes/missing.Rmd</code></a></small>
       <div class="d-none name"><code>missing.Rmd</code></div>
@@ -120,7 +120,7 @@ missing responses. First, let’s fit the example and visualize it:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp_example.html">mcp_example</a></span><span class="op">(</span><span class="st">"missing"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="missing_files/figure-html/unnamed-chunk-2-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="missing_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="700"></p>
 <p>The ordinary plot shows the observed responses and model estimates.
 Missing responses are omitted. See below how they can be visualized.</p>
 <p>The underlying data contain some missing responses in
@@ -140,29 +140,29 @@ Missing responses are omitted. See below how they can be visualized.</p>
 <span><span class="co">## 10 NA 96         B</span></span></code></pre>
 </div>
 <div class="section level2">
-<h2 id="expected-responses-and-imputations">Expected responses and imputations<a class="anchor" aria-label="anchor" href="#expected-responses-and-imputations"></a>
+<h2 id="expected-responses-and-predictions">Expected responses and predictions<a class="anchor" aria-label="anchor" href="#expected-responses-and-predictions"></a>
 </h2>
-<p>You can see the imputations fairly directly. <code><a href="../reference/execute-mcp-model.html">predict()</a></code>
-describes plausible values of the missing response itself. These are the
-latent response draws sampled jointly with the model parameters. The
-imputation comes from trends in non-missing data and what they imply,
-given the observed covariates (<code>condition</code> and
-<code>x</code>), for the missing rows.</p>
+<p><code><a href="../reference/execute-mcp-model.html">predict()</a></code> evaluates the posterior predictive
+distribution at the missing rows, generating fresh simulated responses
+that include residual variation. The predictions come from trends in
+non-missing data and what they imply, given the observed covariates
+(<code>condition</code> and <code>x</code>), for the missing rows.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Quantiles of posterior predictive for missing data: 10%, median, 90%</span></span>
-<span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">imputed</span> <span class="op">=</span> <span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">imputed</span></span></code></pre></div>
 <pre><code><span><span class="co">##     y  x condition  predict       sd      Q10      Q50      Q90</span></span>
-<span><span class="co">## 1  NA  8         B 35.51722 4.408885 29.97320 35.59747 41.23138</span></span>
-<span><span class="co">## 2  NA 19         A 15.70005 4.409613 10.12722 15.68574 21.24990</span></span>
-<span><span class="co">## 3  NA 27         A 17.26378 4.343011 11.65769 17.20047 22.74389</span></span>
-<span><span class="co">## 4  NA 28         B 39.37180 4.354504 33.84050 39.38414 44.92549</span></span>
-<span><span class="co">## 5  NA 29         A 17.55903 4.343115 12.03646 17.57914 23.12128</span></span>
-<span><span class="co">## 6  NA 30         B 39.73816 4.364214 34.21878 39.76277 45.30338</span></span>
-<span><span class="co">## 7  NA 31         A 17.95321 4.351576 12.41368 17.95779 23.50021</span></span>
-<span><span class="co">## 8  NA 68         B 40.64902 4.399515 35.00915 40.62840 46.26328</span></span>
-<span><span class="co">## 9  NA 84         B 34.26827 4.374458 28.70075 34.26938 39.84238</span></span>
-<span><span class="co">## 10 NA 96         B 29.43116 4.495332 23.81245 29.49694 35.18704</span></span></code></pre>
+<span><span class="co">## 1  NA  8         B 35.63377 4.424702 29.97320 35.59747 41.23138</span></span>
+<span><span class="co">## 2  NA 19         A 15.70366 4.364817 10.12722 15.68574 21.24990</span></span>
+<span><span class="co">## 3  NA 27         A 17.21247 4.346768 11.65769 17.20047 22.74389</span></span>
+<span><span class="co">## 4  NA 28         B 39.41195 4.299495 33.84050 39.38414 44.92549</span></span>
+<span><span class="co">## 5  NA 29         A 17.55478 4.360739 12.03646 17.57914 23.12128</span></span>
+<span><span class="co">## 6  NA 30         B 39.82040 4.364600 34.21878 39.76277 45.30338</span></span>
+<span><span class="co">## 7  NA 31         A 17.92833 4.376714 12.41368 17.95779 23.50021</span></span>
+<span><span class="co">## 8  NA 68         B 40.62562 4.445269 35.00915 40.62840 46.26328</span></span>
+<span><span class="co">## 9  NA 84         B 34.28420 4.348502 28.70075 34.26938 39.84238</span></span>
+<span><span class="co">## 10 NA 96         B 29.52044 4.480723 23.81245 29.49694 35.18704</span></span></code></pre>
 <p><code><a href="../reference/execute-mcp-model.html">fitted()</a></code> has the same syntax as <code><a href="../reference/execute-mcp-model.html">predict()</a></code>
 but returns the posterior <em>expected</em> response. Its intervals are
 narrower because they do not include response variation:</p>
@@ -190,14 +190,11 @@ narrower because they do not include response variation:</p>
 <code>×</code> marks the posterior median and a vertical line shows the
 central 80% imputation interval:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">imputed</span> <span class="op">=</span> <span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Start with mcp plot with prediction interval. Use all draws for less Monte Carlo error.</span></span>
+<code class="sourceCode R"><span><span class="co"># Start with mcp plot with prediction interval. Use all draws for less Monte Carlo error.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, color_by <span class="op">=</span> <span class="st">"condition"</span>, q_predict <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span></span>
-<span>  <span class="co"># Add posterior predictive interval</span></span>
+<span>  <span class="co"># Add imputation interval</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_linerange.html" class="external-link">geom_linerange</a></span><span class="op">(</span></span>
 <span>    data <span class="op">=</span> <span class="va">imputed</span>,</span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, ymin <span class="op">=</span> <span class="va">Q10</span>, ymax <span class="op">=</span> <span class="va">Q90</span><span class="op">)</span>,</span>
@@ -213,33 +210,33 @@ central 80% imputation interval:</p>
 <span>    shape <span class="op">=</span> <span class="fl">4</span>,  <span class="co"># an "x"</span></span>
 <span>    size <span class="op">=</span> <span class="fl">2</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="missing_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="missing_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="700"></p>
 <p>This deliberately distinguishes imputed values from the solid
 observed points. You can change the quantiles, marker, color, or add a
 subset of the missing rows using ordinary <code>dplyr</code> and
 <code>ggplot2</code> code.</p>
-<p>The plot above reduces each posterior predictive distribution to a
-simple interval. Use <code>summary = FALSE</code> when you need the
-individual draws instead. Here we plot the posterior predictive
-distribution for each missing row:</p>
+<p>The plot above reduces each imputation distribution to an interval.
+Use <code>summary = FALSE</code> when you need the individual draws
+instead. Here we plot the imputation distribution for each missing
+row:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">imputed_draws</span> <span class="op">=</span> <span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<code class="sourceCode R"><span><span class="va">missing_draws</span> <span class="op">=</span> <span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">imputed_draws</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">.prediction</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">missing_draws</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">.prediction</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html" class="external-link">geom_density</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
-<p><img src="missing_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="missing_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="700"></p>
 <div class="section level3">
 <h3 id="making-probabilistic-statements-about-missing-responses">Making probabilistic statements about missing responses<a class="anchor" aria-label="anchor" href="#making-probabilistic-statements-about-missing-responses"></a>
 </h3>
 <p>Sometimes, the missing response is of direct interest. For example,
 you may want to know the probability that a missing response is above a
 threshold. You can use <code><a href="../reference/execute-mcp-model.html">predict()</a></code> with
-<code>summary = FALSE</code> to get all posterior draws and then
-calculate probabilities of various statements. For example:</p>
+<code>summary = FALSE</code> to get all posterior predictive draws and
+then calculate probabilities of various statements. For example:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">imputed_draws</span> <span class="op">|&gt;</span></span>
+<code class="sourceCode R"><span><span class="va">missing_draws</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">data_row</span> <span class="op">==</span> <span class="fl">19</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span></span>
 <span>    p_greater <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">.prediction</span> <span class="op">&gt;</span> <span class="fl">20</span><span class="op">)</span>,</span>
@@ -249,7 +246,7 @@ calculate probabilities of various statements. For example:</p>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 1 × 3</span></span></span>
 <span><span class="co">##   p_greater p_lower p_between</span></span>
 <span><span class="co">##       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>     0.163  0.097<span style="text-decoration: underline;">3</span>     0.739</span></span></code></pre>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>     0.157  0.092<span style="text-decoration: underline;">7</span>     0.750</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="other-continuous-predictors">Other continuous predictors<a class="anchor" aria-label="anchor" href="#other-continuous-predictors"></a>
@@ -314,20 +311,23 @@ JAGS draws so <code><a href="../reference/execute-mcp-model.html">fitted()</a></
 reconstruct that history, but it does not currently integrate over
 missing histories for pointwise likelihood calculations. Consequently,
 <code><a href="../reference/execute-mcp-model.html">log_lik()</a></code>, <code><a href="../reference/loo.mcpfit.html">loo()</a></code>, and <code><a href="../reference/loo.mcpfit.html">waic()</a></code> are
-unavailable when a missing response preceeds some observed data.</p>
+unavailable when a missing response precedes some observed data.</p>
 <p>The <a href="../articles/arma.html">time-series article</a> discusses
-this. Briefly, use <code>posterior_predict()</code> to generate fresh
-replicated series from the posteriors (as all other mcp functions do),
-which do not depend on the observed response history.</p>
+this. Use <code>predict(fit, conditional = FALSE)</code> or
+<code>posterior_predict(fit, conditional = FALSE)</code> to generate
+fresh replicated series recursively. Their histories are generated
+rather than taken from the observed responses. The default predictions
+condition on observed responses and retained imputations as histories,
+but still generate fresh outcomes at every row.</p>
 </div>
 <div class="section level2">
 <h2 id="original-data-versus-new-data">Original data versus new data<a class="anchor" aria-label="anchor" href="#original-data-versus-new-data"></a>
 </h2>
-<p>The retained JAGS draws belong to the missing rows in the original
-fitted data. Calling <code>predict(fit)</code> uses them. For the
+<p>In AR/MA models, the retained JAGS draws belong to the missing rows
+in the original fitted data and supply their histories. For the
 non-AR/MA example in this article, predictions for genuinely new data
-are ordinary posterior predictions rather than imputations of the
-original missing responses:</p>
+are ordinary posterior predictions, evaluated just like predictions at
+the missing rows:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">newdata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">80</span><span class="op">)</span>,</span>
