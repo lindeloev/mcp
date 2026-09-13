@@ -130,23 +130,6 @@ resolve_prior_ast = function(expr, context) {
     return(if (fun == "n_cp") context$n_cp else context$n_segments)
   }
 
-  if (fun %in% c("log_response_location", "log_response_scale")) {
-    if (length(args) != 1 || !is.name(args[[1]]) ||
-        as.character(args[[1]]) != context$y_name) {
-      stop("`", fun, "()` takes the response variable.")
-    }
-    is_location = fun == "log_response_location"
-    y = stats::na.omit(context$data[[context$y_name]])
-    y = suppressWarnings(log(ifelse(y == 0, 0.1, y)))
-    summary_fun = if (is_location) median else mad
-    value = round(summary_fun(y), 1)
-    if (!is.finite(value))
-      value = if (is_location) 0 else 2.5
-    if (!is_location)
-      value = max(2.5, value)
-    return(value)
-  }
-
   summaries = c("min", "max", "mean", "median", "sd", "mad")
   if (fun %in% summaries && length(args) == 1 && allowed_data_expression(args[[1]], data_names)) {
     data_env = list2env(as.list(context$data), parent = baseenv())

@@ -219,24 +219,33 @@ mcpfamily_gaussian = function(family) {
 
   response_location = "round(median(.y), 1)"
   response_scale = "max(2.5, round(mad(.y), 1))"
+
   if (family$link == "identity") {
-    mu_location = response_location
-    mu_scale = response_scale
+    mu_prior = tibble::tribble(
+      ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
+      "mu", "Intercept", paste0("dt(", response_location, ", ", response_scale, ", 3)"), paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Robustly centered mean intercept with a minimum scale of 2.5", "always",
+      "mu", "dummy", paste0("dt(0, ", response_scale, ", 3)"), paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Regularizing mean contrast on the link scale", "always",
+      "mu", "slope", paste0("dt(0, ", response_scale, " / predictor_scale(), 3)"), paste0("dt(0, ", response_scale, " / predictor_scale(), 3) T(0, )"), "Regularizing mean coefficient scaled to a reference predictor change", "always"
+    )
   } else {
-    mu_location = "log_response_location(.y)"
-    mu_scale = "log_response_scale(.y)"
+    log_y = "log(pmax(.y, 0.1))"
+    mu_prior = tibble::tribble(
+      ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
+      "mu", "Intercept", paste0("dnorm(round(median(", log_y, "), 1), max(2.5, round(mad(", log_y, "), 1)))"), "dnorm(0, 2.5) T(0, )", "Robustly centered log-mean intercept with a minimum scale of 2.5", "always",
+      "mu", "dummy", "dnorm(0, 2.5)", "dnorm(0, 2.5) T(0, )", "Regularizing categorical contrast on the log scale", "always",
+      "mu", "slope", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5 / predictor_scale()) T(0, )", "Regularizing log-mean coefficient scaled to a reference predictor change", "always"
+    )
   }
 
-  default_prior = tibble::tribble(
+  sigma_prior = tibble::tribble(
     ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-    "mu", "Intercept", paste0("dt(", mu_location, ", ", mu_scale, ", 3)"), paste0("dt(0, ", mu_scale, ", 3) T(0, )"), "Robustly centered mean intercept with a minimum scale of 2.5", "always",
-    "mu", "dummy", paste0("dt(0, ", mu_scale, ", 3)"), paste0("dt(0, ", mu_scale, ", 3) T(0, )"), "Regularizing mean contrast on the link scale", "always",
-    "mu", "slope", paste0("dt(0, ", mu_scale, " / predictor_scale(), 3)"), paste0("dt(0, ", mu_scale, " / predictor_scale(), 3) T(0, )"), "Regularizing mean coefficient scaled to a reference predictor change", "always",
     "sigma", "Intercept", paste0("dt(0, ", response_scale, ", 3) T(0.001, )"), paste0("dt(0, ", response_scale, ", 3) T(0.001, )"), "Positive residual SD calibrated on the response scale", "constant",
     "sigma", "Intercept", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Weakly regularizing modeled log-SD intercept", "modeled",
     "sigma", "dummy", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Regularizing log-SD contrast", "always",
     "sigma", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "dt(0, 2.5 / predictor_scale(), 3) T(0, )", "Regularizing log-SD coefficient scaled to a reference predictor change", "always"
   )
+
+  default_prior = dplyr::bind_rows(mu_prior, sigma_prior)
 
   response = list(
     auxiliary = list(weights = list(

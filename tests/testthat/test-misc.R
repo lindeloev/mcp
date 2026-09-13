@@ -428,8 +428,8 @@ test_that("Gaussian defaults use coherent response and link scales", {
   )
 
   # Non-positive responses are valid: the log link applies to mu, not y.
-  expect_equal(log_fit$prior$Intercept_1, "dt(0, 2.5, 3)")
-  expect_equal(log_fit$prior$x_1, "dt(0, 0.5, 3)")
+  expect_equal(log_fit$prior$Intercept_1, "dnorm(4.6, 2.5)")
+  expect_equal(log_fit$prior$x_1, "dnorm(0, 0.5)")
   expect_equal(log_fit$prior$sigma_1, "dt(0, 22.2, 3) T(0.001, )")
   expect_false(grepl("log\\(y\\)", log_fit$jags_code))
 
@@ -443,8 +443,8 @@ test_that("Gaussian defaults use coherent response and link scales", {
     list(y ~ 1 + x), wide_data,
     family = gaussian(link = "log"), sample = FALSE
   )
-  expect_equal(wide_fit$prior$Intercept_1, "dt(2.5, 11.1, 3)")
-  expect_equal(wide_fit$prior$x_1, "dt(0, 2.22, 3)")
+  expect_equal(wide_fit$prior$Intercept_1, "dnorm(2.5, 7.1)")
+  expect_equal(wide_fit$prior$x_1, "dnorm(0, 0.5)")
   expect_equal(wide_fit$prior$sigma_1, "dt(0, 110.8, 3) T(0.001, )")
 
   zero_data = data.frame(x = 1:6, y = 0:5)
@@ -452,7 +452,7 @@ test_that("Gaussian defaults use coherent response and link scales", {
     list(y ~ 1 + x), zero_data,
     family = gaussian(link = "log"), sample = FALSE
   )
-  expect_equal(zero_fit$prior$Intercept_1, "dt(0.9, 2.5, 3)")
+  expect_equal(zero_fit$prior$Intercept_1, "dnorm(0.9, 2.5)")
 
   small_data = data.frame(x = 1:4, y = c(0.01, 0.02, 0.03, 0.04))
   small_fit = mcp(list(y ~ 1 + x), small_data, sample = FALSE)

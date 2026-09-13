@@ -267,7 +267,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     exposure2 = rep(100, 30)
   )
 
-  for (fam in list(poisson(), negbinomial())) {
+  for (fam in list(poisson(), negbinomial(), gaussian(link = "log"))) {
     # Single offset
     fit = mcp(
       list(y ~ 1 + x + offset(log(exposure))),
@@ -299,7 +299,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     testthat::expect_equal(fit_multi$prior$Intercept_1, paste0("dnorm(", expected_loc, ", ", expected_scale, ")"))
     testthat::expect_equal(fit_multi$prior$Intercept_2, paste0("dnorm(", expected_loc, ", ", expected_scale, ")"))
 
-    # Segment 3 reverted to log-count
+    # Segment 3 reverted to log-count / log-mean
     expected_count = log(pmax(d$y, 0.1))
     expected_count_loc = round(median(expected_count), 1)
     expected_count_scale = max(2.5, round(mad(expected_count), 1))
@@ -308,7 +308,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     ps_multi = prior_summary(fit_multi, verbose = TRUE)
     testthat::expect_equal(ps_multi$description[ps_multi$parameter == "Intercept_1"], "Robustly centered log-rate intercept with a minimum scale of 2.5")
     testthat::expect_equal(ps_multi$description[ps_multi$parameter == "Intercept_2"], "Robustly centered log-rate intercept with a minimum scale of 2.5")
-    testthat::expect_equal(ps_multi$description[ps_multi$parameter == "Intercept_3"], "Robustly centered log-count intercept with a minimum scale of 2.5")
+    testthat::expect_match(ps_multi$description[ps_multi$parameter == "Intercept_3"], "Robustly centered log-(count|mean) intercept with a minimum scale of 2.5")
 
     # Multiple distinct offsets in different segments
     fit_diff = mcp(
@@ -330,6 +330,55 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     testthat::expect_match(ps_diff$rule[ps_diff$parameter == "Intercept_1"], "- offset_1", fixed = TRUE)
     testthat::expect_match(ps_diff$rule[ps_diff$parameter == "Intercept_2"], "- offset_2", fixed = TRUE)
   }
+})
+
+
+testthat::test_that("gaussian(link = 'log') aligns with log-link model default priors", {
+  d = data.frame(
+    time = 1:20,
+    y = exp(seq(1, 4, length.out = 20)),
+    group = rep(c("A", "B"), 10),
+    id = rep(1:5, each = 4)
+  )
+
+  fit = mcp(
+    list(y ~ 1 + time + group + (1 + time || id)),
+    data = d,
+    family = gaussian(link = "log"),
+    sample = FALSE
+  )
+
+  ps = prior_summary(fit, verbose = TRUE)
+  int_row = ps[ps$parameter == "Intercept_1", ]
+  testthat::expect_match(int_row$prior, "^normal\\(mean = [0-9.]+, sd = [0-9.]+\\)$")
+  testthat::expect_match(int_row$rule, "log\\(pmax\\(y, 0.1\\)\\)")
+
+  # Categorical contrast on log link uses dnorm(0, 2.5)
+  group_row = ps[ps$parameter == "groupB_1", ]
+  testthat::expect_equal(group_row$prior, "normal(mean = 0, sd = 2.5)")
+  testthat::expect_equal(group_row$rule, "normal(mean = 0, sd = 2.5)")
+  testthat::expect_equal(fit$prior$groupB_1, "dnorm(0, 2.5)")
+
+  # Slope on log link uses dnorm(0, 2.5 / predictor_scale())
+  time_row = ps[ps$parameter == "time_1", ]
+  time_span = diff(range(d$time))
+  expected_slope_sd = format_prior_number(2.5 / time_span)
+  testthat::expect_equal(time_row$prior, paste0("normal(mean = 0, sd = ", expected_slope_sd, ")"))
+  testthat::expect_equal(fit$prior$time_1, paste0("dnorm(0, ", expected_slope_sd, ")"))
+
+  # Group SDs are half-normals
+  id_int_row = ps[ps$parameter == "Intercept_1_id_sd", ]
+  testthat::expect_equal(id_int_row$prior, "normal(mean = 0, sd = 2.5)")
+  testthat::expect_equal(id_int_row$bounds, "[0, Inf]")
+
+  id_time_row = ps[ps$parameter == "time_1_id_sd", ]
+  testthat::expect_equal(id_time_row$prior, paste0("normal(mean = 0, sd = ", expected_slope_sd, ")"))
+  testthat::expect_equal(id_time_row$bounds, "[0, Inf]")
+
+  # Sigma_1 uses response-scale half-Student-t
+  sig_row = ps[ps$parameter == "sigma_1", ]
+  testthat::expect_match(sig_row$prior, "^student_t\\(df = 3, location = 0, scale = [0-9.]+\\)$")
+  testthat::expect_equal(sig_row$bounds, "[0.001, Inf]")
 })
 
 
