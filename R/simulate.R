@@ -589,7 +589,8 @@ get_fitsimulate = function(cps, predictors, group_effects) {
     alist(.type = "predict", .rate = FALSE, .dpar = "epred", .arma = TRUE, .scale = "response")
   )
 
-  sim_fn = function() {
+  # Initiate with some formals to make R CMD Check happy.
+  sim_fn = function(fit, newdata) {
     if (!inherits(fit, "mcpfit"))
       stop(legacy_mcp_message("`fit$simulate()` now requires the fit as its first argument. Use `fit$simulate(fit, newdata, ...)`."), call. = FALSE)
     if (missing(newdata) || !is.data.frame(newdata))
