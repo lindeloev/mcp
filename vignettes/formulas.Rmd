@@ -194,7 +194,7 @@ For a **purely joined model** (`list(y ~ 0 + x, ~ 0 + x)`), `mcp` writes $\eta_i
 
 $$\eta_i = \sum_{k=1}^K [x_i \ge \tau_{k-1}] \cdot \beta_{k,1} X_{k,i}$$
 
-Because each segment's contribution stays constant beyond its change point ($\beta_{k-1,1}(\tau_{k-1} - \tau_{k-2})$), continuity is automatic with zero parameter constraints: preceding segments provide the continuous starting level for subsequent segments. The expected response on the response scale is $\mu_i = g^{-1}(\eta_i)$, which equals $\eta_i$ for Gaussian models with the default identity link.
+Because each segment's contribution stays constant beyond its change point ($\beta_{k-1,1}(\tau_{k-1} - \tau_{k-2})$), continuity is automatic with zero parameter constraints: preceding segments provide the continuous starting level for subsequent segments. The expected response on the response scale is $\mu_i = g^{-1}(\eta_i)$ via link function $g(\mu_i) = \eta_i$ (identity for Gaussian, so $\mu_i = \eta_i$).
 
 When a segment is **disjoined** (`~ 1 + x`), it introduces a new explicit intercept $\beta_{k,0}$ at $\tau_{k-1}$, and earlier terms are capped with $[x_i < \tau_{\text{next}}]$ so previous segments stop accumulating.
 

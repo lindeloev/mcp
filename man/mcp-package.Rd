@@ -25,7 +25,7 @@ or \code{1 + (1|id) ~ 0 + x}.
 or point-null hypotheses (\code{hypothesis()}) using Savage-Dickey density ratios.
 }
 
-See \href{https://lindeloev.github.io/mcp/}{the mcp website} for worked examples and vignettes.
+See \href{https://lindeloev.github.io/mcp/}{the mcp website} for worked examples.
 }
 
 \section{The mcp model}{
@@ -64,9 +64,10 @@ If additional continuous covariates or categorical factors are included (e.g., \
 they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}} for covariate \eqn{j}); only the
 change-point predictor \eqn{x} is converted to segment-local coordinates.
 
-Distributional parameters (\code{sigma()}, \code{shape()}, etc.) and autoregressive terms (\code{ar()}, \code{ma()})
-follow this exact same segmented structure on their respective link scales. See more details on the \code{mcp} model in
-\link{mcp-package} and on the \href{https://lindeloev.github.io/mcp/articles/formulas.html}{mcp website}.
+The expected response on the response scale is \eqn{\mu_i = g^{-1}(\eta_i)} via link function \eqn{g(\mu_i) = \eta_i}
+(identity for Gaussian, so \eqn{\mu_i = \eta_i}). Distributional parameters (\code{sigma()}, \code{shape()}, etc.)
+and autoregressive terms (\code{ar()}, \code{ma()}) follow this exact same segmented structure on their respective link scales.
+See more details on the \code{mcp} model in \link{mcp-package} and on the \href{https://lindeloev.github.io/mcp/articles/formulas.html}{mcp website}.
 }
 
 \section{Time-series residuals (link-scale observation-driven GARMA)}{
@@ -97,7 +98,7 @@ Implications:
 \item For an \eqn{N}-order component, the last \eqn{N} values \emph{before} the segment onset are input to the first \eqn{\eta_t} in the segment.
 \item AR and MA components persist into later segments until replaced or turned off via \code{ar(0)} or \code{ma(0)}.
 \item AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
-\item See \href{https://lindeloev.github.io/mcp/articles/arma.html}{the arma vignette} for more details.
+\item See \href{https://lindeloev.github.io/mcp/articles/arma.html}{the arma article} for more details.
 }
 }
 

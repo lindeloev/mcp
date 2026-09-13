@@ -89,7 +89,7 @@ If there are group-level effects, this is the number of draws from each group.
 
 \item{scale}{One of
 \itemize{
-\item \code{"response"}: return on the observed scale, i.e., after applying the inverse link function.
+\item \code{"response"}: return on the response scale, i.e., after applying the inverse link function.
 \item \code{"linear"}: return on the linear-predictor (link) scale, where the linear
 trends are modeled.
 A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} is not \code{NULL}.

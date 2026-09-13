@@ -17,7 +17,7 @@ if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp"
 }
 ```
 
-`mcp` supports **distributional regression**, where any parameter of a response distribution can be regressed on predictors and have change points across segments. In standard regression, formulas model only the conditional mean `mu()`. Distributional regression extends this by allowing formulas for distributional parameters such as residual standard deviation (`sigma`), negative-binomial overdispersion (`shape`) - and auxilliary parameters for time-series autocorrelation (`ar` / `ma`).
+`mcp` supports **distributional regression**, where any parameter of a response distribution can be regressed on predictors and have change points across segments. In standard regression, formulas model only the conditional mean `mu()`, where the expected response on the response scale relates to the linear predictor via link function $g(\mu_i) = \eta_i$ ($\mu_i = g^{-1}(\eta_i)$). Distributional regression extends this by allowing formulas for distributional parameters such as residual standard deviation (`sigma`), negative-binomial overdispersion (`shape`) - and auxiliary parameters for time-series autocorrelation (`ar` / `ma`) - on their respective link scales.
 
 Here, we exemplify regression on the standard deviation `sigma`. A plateau mean with an increasing standard deviation can be written as `y ~ 1 + sigma(1 + x)`. Read more about mcp formulas [here](../articles/formulas.html).
 

@@ -32,7 +32,7 @@ $$\begin{aligned}
 \eta_t &= \eta^{\text{reg}}_t + \text{AR}_t + \text{MA}_t
 \end{aligned}$$
 
-where $\phi_{j,t}$ is the lag-$j$ autoregressive (AR) coefficient at time $t$, $\theta_{k,t}$ is the lag-$k$ moving-average (MA) coefficient at time $t$, $g(\cdot)$ is the link function, and $y^*_t$ is the boundary-constrained observation with pseudo-count $b$ (set via `boundary = 0.1` by default). Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations.
+where $\phi_{j,t}$ is the lag-$j$ autoregressive (AR) coefficient at time $t$, $\theta_{k,t}$ is the lag-$k$ moving-average (MA) coefficient at time $t$, $g(\cdot)$ is the link function ($g(\mu_t) = \eta_t$, so $\mu_t = g^{-1}(\eta_t)$), and $y^*_t$ is the boundary-constrained observation with pseudo-count $b$ (set via `boundary = 0.1` by default). Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations.
 
 **`mcp` does regression with change points on the coefficients** $\phi_{j,t}$ **and** $\theta_{k,t}$. See below for applied examples.
 

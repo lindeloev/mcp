@@ -147,9 +147,10 @@
 #' they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}} for covariate \eqn{j}); only the
 #' change-point predictor \eqn{x} is converted to segment-local coordinates.
 #'
-#' Distributional parameters (\code{sigma()}, \code{shape()}, etc.) and autoregressive terms (\code{ar()}, \code{ma()})
-#' follow this exact same segmented structure on their respective link scales. See more details on the `mcp` model in
-#' [mcp-package] and on the [mcp website](https://lindeloev.github.io/mcp/articles/formulas.html).
+#' The expected response on the response scale is \eqn{\mu_i = g^{-1}(\eta_i)} via link function \eqn{g(\mu_i) = \eta_i}
+#' (identity for Gaussian, so \eqn{\mu_i = \eta_i}). Distributional parameters (\code{sigma()}, \code{shape()}, etc.)
+#' and autoregressive terms (\code{ar()}, \code{ma()}) follow this exact same segmented structure on their respective link scales.
+#' See more details on the `mcp` model in [mcp-package] and on the [mcp website](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'
 #' @section Time-series residuals (link-scale observation-driven GARMA):
 #' Autoregressive (`ar(p)`) and moving-average (`ma(q)`) terms define a finite conditional recurrence
