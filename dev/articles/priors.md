@@ -4,6 +4,10 @@
 deprecated in the future, when additional backends are added beyond
 JAGS.*
 
+For any given segment, `mcp` aims to use `brms`-like priors. `mcp`
+additionally includes priors for change points, and some
+`JAGS`-adaptations.
+
 ## Setting a prior
 
 `mcp` takes priors in the form of a named list. The names are the
@@ -174,7 +178,7 @@ pp_manual = plot_pars(fit_manual, type = "dens_overlay", prior = TRUE, nvariable
 pp_default + pp_manual
 ```
 
-![](priors_files/figure-html/unnamed-chunk-5-1.png)
+![](priors_files/figure-html/unnamed-chunk-6-1.png)
 
 Here are the resulting posterior fits:
 
@@ -189,7 +193,7 @@ plot_manual = plot(fit_manual) + ggtitle("Manual priors")
 plot_default + plot_manual
 ```
 
-![](priors_files/figure-html/unnamed-chunk-6-1.png)
+![](priors_files/figure-html/unnamed-chunk-7-1.png)
 
 We see the effects of the priors:
 
@@ -223,6 +227,36 @@ prior_summary(fit_manual, verbose = TRUE)
 
 This is a contrived example. Usually setting priors manually aims to
 sample the “correct” posterior.
+
+## Prior predictive checks
+
+Prior predictive checks are a great way to ensure that the priors are
+meaningful before fitting to data. Simply set `sample = "prior"`. Let us
+do it for the manual and default priors above to compare their prior
+predictive space:
+
+``` r
+
+# Sample priors
+fit_pp_manual = mcp(model, data = df, prior = prior, sample = "prior", seed = 42)
+fit_pp_default = mcp(model, data = df, sample = "prior", seed = 42)
+
+# Plot it
+set.seed(42)
+plot_pp_manual = plot(fit_pp_manual, lines = 100, prior = TRUE) + ylim(c(-400, 400)) + ggtitle("Manual prior")
+set.seed(42)
+plot_pp_default = plot(fit_pp_default, lines = 100, prior = TRUE) + ylim(c(-400, 400)) + ggtitle("Default prior")
+plot_pp_manual + plot_pp_default  # using patchwork
+```
+
+![](priors_files/figure-html/unnamed-chunk-9-1.png)
+
+You can see how the manual priors force strictly positive slopes (x_2 \>
+x_1 \> 0) that compound to span a much wider vertical range than the
+defaults, alongside an abrupt concerted change at the fixed change point
+x = 80. In contrast, the default priors stay compactly centered around
+the observed data, with zero-centered slopes and change points
+distributed smoothly across the x range.
 
 ## Default priors on change points
 
@@ -258,7 +292,7 @@ The plot below compares these theoretical Dirichlet distributions (black
 lines) with the sampled prior distributions (red lines) for 2 and 5
 change points:
 
-![](priors_files/figure-html/unnamed-chunk-9-1.png)
+![](priors_files/figure-html/unnamed-chunk-11-1.png)
 
 Note on implementation: Under the hood, `mcp` parameterizes this using a
 sequential stick-breaking Beta chain (z_j \sim \text{Beta}(1, N - j +
@@ -309,39 +343,79 @@ prior is used as written. Relaxing the order can cause label-switching
 between segments and make sampling difficult, so inspect the resulting
 prior carefully.
 
-## Default priors on linear predictors
+## Default priors on regression parameters
 
-The defaults borrow the robust calibration used by `brms`, adapted to
-the local parameterization of `mcp`. You can inspect all resolved priors
-for a model using `prior_summary(fit, verbose = TRUE)`.
+While users primarily customize change-point priors, `mcp` automatically
+assigns weakly informative default priors to regression terms (`mu`,
+`sigma`, `shape`, `ar`, `ma`) scaled to data and predictor changes.
+While these defaults provide broad regularization, models with extreme
+uncentered covariates or unusual scales may still warrant custom priors
+and prior predictive checks. You can inspect all resolved priors for any
+fitted model using `prior_summary(fit, verbose = TRUE)`.
 
-- **Intercepts:** Unlike the improper flat default coefficient priors in
-  `brms`, `mcp` uses proper Student-t priors because JAGS does not
-  support flat priors. With the identity link, the Gaussian intercept
-  prior is centered on `round(median(y), 1)` with scale
-  `max(2.5, round(mad(y), 1))`. With the log link, location and scale
-  are derived from \log(y) (with zeros replaced by 0.1).
-- **Slopes:** Numeric coefficient priors use the corresponding
-  family-level scale divided by a representative change in the
-  predictor: its observed range `max(x) - min(x)` for `par_x` and binary
-  variables, and two standard deviations (2\\\text{SD}) otherwise. This
-  follows the scaling convention proposed by [Gelman
-  (2008)](https://doi.org/10.1002/sim.3107) and ensures that slope
-  priors remain identical and comparable across models regardless of the
-  number of change points.
-- **Unspecified SD model (`sigma`):** For Gaussian models without an
-  explicit [`sigma()`](https://rdrr.io/r/stats/sigma.html) formula,
-  `sigma_1` defaults to `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`,
-  matching `brms`. This remains true for `gaussian(link = "log")`: that
-  link constrains the conditional mean, not the observations, so
-  non-positive responses are valid and are not passed through
-  [`log()`](https://rdrr.io/r/base/Log.html) merely to construct a sigma
-  prior.
-- **Modeled SD (`sigma(1 + x)`):** An explicit
-  [`sigma()`](https://rdrr.io/r/stats/sigma.html) formula models log-SD,
-  as in `brms`. Its intercept prior is `dt(0, 2.5, 3)`, and its contrast
-  and numeric-coefficient priors use the same reference-change scaling
-  described above.
+The defaults are governed by three core principles:
+
+1.  **Link geometry determines distribution family and base scale (S):**
+    - **Linear links (identity):** Use Student-t (df = 3) with scale S =
+      \max(2.5, \operatorname{mad}(y)), matching `brms`.
+    - **Exponential / log links
+      ([`poisson()`](https://rdrr.io/r/stats/family.html),
+      [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md),
+      `gaussian(link = "log")`, modeled `shape()`):** Use broad Normal
+      priors (`dnorm`) with base scale S = 2.5 for population log-mean
+      coefficients and modeled log-shape, following the precedent of
+      [`rstanarm`](https://mc-stan.org/rstanarm/articles/priors.html).
+      Under exponentiation, Normal priors substantially reduce extreme
+      multiplier tails compared with Student-t priors. Modeled
+      [`sigma()`](https://rdrr.io/r/stats/sigma.html) retains Student-t
+      (df = 3) on the log scale, matching `brms`.
+    - **Probability links (\operatorname{logit},
+      \operatorname{probit}):** Use Student-t (df = 3) with scale S =
+      1.5, which avoids placing excess prior probability mass on extreme
+      probabilities (0 and 1).
+    - **Stationary dynamics ([`ar()`](https://rdrr.io/r/stats/ar.html),
+      `ma()`):** Use zero-centered regularizing Normal priors on (-1, 1)
+      with S = 0.5 (and S/2 = 0.25 for variations) to favor stationary
+      and invertible processes.
+2.  **Predictor-change invariance ([Gelman
+    2008](https://doi.org/10.1002/sim.3107)):**
+    - Categorical contrasts operate at the link’s base scale: \beta \sim
+      \text{Dist}(0, S).
+    - Continuous slopes divide base scale by representative predictor
+      change: \beta \sim \text{Dist}(0, S / \Delta x), where \Delta x =
+      \operatorname{range}(x) (for binary and `par_x`) and
+      2\\\operatorname{sd}(x) (continuous). This ensures that slope
+      priors remain identical and comparable across models regardless of
+      the number of change points.
+    - Group-level slope standard deviations mirror this scaling:
+      \sigma\_\beta \sim \text{Dist}(0, S / \Delta x) T(0, ).
+3.  **Empirical baseline intercept calibration and offset accounting:**
+    - Intercepts calibrate to empirical central tendency:
+      \operatorname{median}(y) for identity link, and observation-wise
+      log-rate \operatorname{median}(\log(\operatorname{pmax}(y, 0.1)) -
+      \text{offset}) for log link, with scale floored at 2.5.
+    - Contrasts and slopes remain scale-free (dimensionless) on link
+      scales.
+
+### Summary reference table
+
+General quantities used in the table below:
+
+- response scale S_y = \max(2.5, \operatorname{mad}(y))
+
+- log-rate y\_{\text{rate}} = \log(\operatorname{pmax}(y, 0.1)) -
+  \text{offset} (with \text{offset} = 0 if absent)
+
+- log-rate scale S\_{\text{rate}} = \max(2.5,
+  \operatorname{mad}(y\_{\text{rate}}))
+
+- predictor change \Delta x = \operatorname{range}(x) (binary / `par_x`)
+  or 2\\\operatorname{sd}(x) (other continuous).
+
+[TABLE]
+
+\* Poisson identity intercepts include positive truncation `T(0, )`.
+Group SD priors for slopes divide the base scale by \Delta x.
 
 ## Default priors on group-level effects
 
@@ -349,11 +423,14 @@ Each group-level effect has a population-level SD parameter.
 Predictor-side deviations use a zero-mean normal distribution governed
 by that SD, as in ordinary multilevel regression. With a
 multi-coefficient `||` term, every independent coefficient has its own
-SD. The SD receives a positive, weakly informative prior from the family
-and link specification. For distributional parameters, the deviations
-and their SD are on that parameter’s link scale; for example, effects
-inside an explicit [`sigma()`](https://rdrr.io/r/stats/sigma.html)
-formula are on the log-SD scale.
+SD. The SD receives a positive, weakly informative prior mirroring the
+family and link specification of the corresponding population parameter
+(e.g. half-Student-t for identity link and modeled
+[`sigma()`](https://rdrr.io/r/stats/sigma.html), half-normal for
+log-mean and modeled log-shape). For distributional parameters,
+deviations and SD are on that parameter’s link scale (for example,
+effects inside [`sigma()`](https://rdrr.io/r/stats/sigma.html) are on
+the log-SD scale).
 
 Change-point effects use the same ordinary normal hierarchy, with
 additional range and within-group ordering constraints. Therefore,
@@ -362,31 +439,46 @@ See [group-level effects with
 mcp](https://lindeloev.github.io/mcp/dev/articles/group_effects.md) for
 the model equation and practical interpretation.
 
-## Prior predictive checks
+### Deviations from brms default priors
 
-Prior predictive checks are a great way to ensure that the priors are
-meaningful. Simply set `sample = "prior"`. Let us do it for the two sets
-of priors defined previously in this article, to see their different
-prior predictive space.
+While `mcp` aligns with `brms` where possible, several defaults
+intentionally deviate:
 
-``` r
-
-# Sample priors 
-fit_pp_manual = mcp(model, data = df, prior = prior, sample = "prior", seed = 42)
-fit_pp_default = mcp(model, data = df, sample = "prior", seed = 42)
-
-# Plot it
-set.seed(42)
-plot_pp_manual = plot(fit_pp_manual, lines = 100) + ylim(c(-400, 400)) + ggtitle("Manual prior")
-set.seed(42)
-plot_pp_default = plot(fit_pp_default, lines = 100) + ylim(c(-400, 400)) + ggtitle("Default prior")
-plot_pp_manual +  plot_pp_default  # using patchwork
-```
-
-![](priors_files/figure-html/unnamed-chunk-11-1.png)
-
-You can see how the manual priors are more dense to the left, and the
-“concerted” change at x = 80.
+- **Proper population slopes:** `mcp` uses proper, regularizing priors
+  (Student-t or normal) scaled to predictor change rather than `brms`’s
+  improper flat priors because JAGS requires proper priors.
+- **Log-link models ([`poisson()`](https://rdrr.io/r/stats/family.html),
+  [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md),
+  `gaussian(link = "log")`):** Rather than `brms`’s heavy-tailed
+  Student-t intercepts and flat coefficients, `mcp` uses broad normal
+  priors for population log-mean coefficients and modeled log-shape,
+  following the precedent of
+  [`rstanarm`](https://mc-stan.org/rstanarm/articles/priors.html). For
+  fixed-scale coefficients at fixed predictor values, normal priors
+  avoid the infinite expected values of exponentiated Student-t tails
+  (\mathbb{E}\[\exp(\eta)\] = \infty). While group-level hierarchies
+  with \tau \sim \operatorname{HalfNormal}(2.5) do not guarantee finite
+  response moments everywhere, half-normal group SDs substantially
+  reduce extreme multiplier tails compared with half-Student-t priors
+  under exponentiation. Practical prior predictive checks
+  (`pp_check(fit, prior = TRUE)`) remain recommended.
+- **Offset-adjusted count intercepts:** While both `brms` and `mcp`
+  adjust count intercepts for exposure offsets, `brms` subtracts
+  `mean(offset)` from `median(log(y))` and computes prior scale on raw
+  counts (`mad(log(y))`). When exposures vary across observations, raw
+  count dispersion can inflate the prior scale. `mcp` computes empirical
+  log-rates observation-wise (\log(\operatorname{pmax}(y, 0.1)) -
+  \text{offset}), calibrating both median location and MAD scale
+  directly to rate variation.
+- **Logit and probit links
+  ([`binomial()`](https://rdrr.io/r/stats/family.html),
+  [`bernoulli()`](https://lindeloev.github.io/mcp/dev/reference/bernoulli.md)):**
+  `mcp` uses a narrower scale of 1.5 (`dt(0, 1.5, 3)`) instead of
+  `brms`’s 2.5 to avoid placing excess prior probability mass on extreme
+  probabilities (0 and 1).
+- **Autoregressive and moving-average terms:** `mcp` uses zero-centered
+  regularizing `dnorm(0, 0.5) T(-1, 1)` priors rather than improper flat
+  priors to favor stationary and invertible dynamics.
 
 ## JAGS code
 

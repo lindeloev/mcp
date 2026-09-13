@@ -112,12 +112,13 @@ With `verbose = TRUE`:
   trace plots (see `plot_pars(fit)`). Read how to deal with such
   problems [here](https://lindeloev.github.io/mcp/articles/tips.html)
 
-Group-level change-point deviations (`cp_i_id`) follow a standard
-hierarchical normal distribution around the population change point.
-Their realized locations are truncated to remain in range and ordered.
-Predictor group-level effects (such as `Intercept_1_id`) also use
-standard hierarchical zero-mean priors, without change-point
-constraints.
+Group-level change-point deviations (`cp_i_id`) follow a hierarchical
+normal distribution around the population change point before
+truncation. Realized locations are truncated to remain in range and
+ordered, so the population change point is generally close to the mean
+of the realized group change points, but not exactly. Predictor
+group-level effects (such as `Intercept_1_id`) use standard hierarchical
+zero-mean priors, without change-point constraints.
 
 For simulated data, the summary contains two additional columns so that
 it is easy to inspect whether the model can recover the parameters. Run

@@ -24,10 +24,10 @@ negbinomial(link = "log", link_shape = "log")
 
 ## Details
 
-`shape(1)` is added implicitly and is constant across segments unless a
-`shape()` formula is supplied. For example, `y ~ 1 + x + shape(1 + x)`
-models both the mean and shape. Regression coefficients for both dpars
-are on their link scales.
+`shape(1)` is added implicitly in segment 1 and persists into later
+segments unless replaced by a new `shape()` formula. For example,
+`y ~ 1 + x + shape(1 + x)` models both the mean and shape. Regression
+coefficients for both dpars are on their link scales.
 
 ## Examples
 
