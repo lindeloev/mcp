@@ -211,4 +211,9 @@ testthat::test_that("parse_prior_call parses prior calls, arguments, and truncat
   testthat::expect_null(parse_prior_call("(dnorm(1, 2))"))
   testthat::expect_null(parse_prior_call("dnorm(1, "))
   testthat::expect_null(parse_prior_call("dnorm(1, 2) T(0, )"))
+
+  # Named arguments are explicitly rejected
+  testthat::expect_error(parse_prior_call("dnorm(sd = 1, mean = 10)"), "Named arguments are not supported")
+  testthat::expect_error(parse_prior_call("T(lower = 0, )"), "Named arguments are not supported")
 })
+

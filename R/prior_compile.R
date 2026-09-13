@@ -71,7 +71,15 @@ parse_prior_call = function(x) {
   name = as.character(expr[[1]])
   if (!grepl("^[A-Za-z.][A-Za-z0-9._]*$", name))
     return(NULL)
-  args = vapply(as.list(expr)[-1], function(arg) deparse1(arg, backtick = TRUE), character(1), USE.NAMES = FALSE)
+
+  # Reject named arguments
+  call_args = as.list(expr)[-1]
+  arg_names = names(call_args)
+  if (!is.null(arg_names) && any(nzchar(arg_names))) {
+    target = if (name == "T") "truncation" else "distributions"
+    stop("Named arguments are not supported in prior ", target, ": '", trimws(x), "'.")
+  }
+  args = vapply(call_args, function(arg) deparse1(arg, backtick = TRUE), character(1), USE.NAMES = FALSE)
   list(name = name, args = args)
 }
 
