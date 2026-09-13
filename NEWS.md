@@ -22,7 +22,7 @@
 
 - **Negative binomial and offset():** You can now do `mcp(..., family = negbinomial())`. NB (and Poisson) can now model rates and exposure with because `offset()` is now supported in formulas - also for other families. 
 
-- **Missing response imputation:** Missing responses are now retained as posterior JAGS imputations and used to complete response histories in AR/MA models. Predictions generate fresh outcomes at every row; `predict(fit) |> filter(is.na(y))` can be used to see predictive intervals and draws at missing points, and similarly for `fitted()`. Missing AR/MA histories remain unsupported in `log_lik()`, `loo()`, and `waic()`.
+- **Missing response imputation:** Missing responses are now retained as posterior JAGS imputations and used to complete response histories in AR/MA models. Predictions generate fresh replicated outcomes at every row; `predict(fit) |> filter(is.na(y))` can be used to see predictive intervals and draws at missing points, and similarly `fitted()` for expected responses. Missing AR/MA histories remain unsupported in `log_lik()`, `loo()`, and `waic()`.
 
 ## Major breaking changes
 

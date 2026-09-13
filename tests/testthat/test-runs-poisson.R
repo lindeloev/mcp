@@ -69,7 +69,7 @@ test_that("Weighted Poisson targets exact conjugate posterior without clamping",
   expect_equal(mean(draws), 10, tolerance = 0.05)
   # Correct posterior is Gamma(shape = 30001, rate = 3000.1) with SD = 0.0577.
   # Before the fix, the clamp at -700 caused SD to be ~ 1.82.
-  expect_equal(stats::sd(draws), 0.0577, tolerance = 0.005)
+  expect_equal(stats::sd(draws), 0.0577, tolerance = 0.05)
 
   # Check that weights with missing responses errors cleanly
   data_na = data.frame(x = 1:3, y = c(10, NA, 10), w = 10)

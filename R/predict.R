@@ -430,9 +430,9 @@ pp_eval = function(
 #' models requires refitting.
 #'
 #' Missing responses in the original data remain missing in the response column.
-#' `fitted()` returns their expected responses, while `predict()` uses retained
-#' JAGS imputations for their posterior response draws. In GARMA models these
-#' imputations also supply the history used for later fitted and predicted rows.
+#' `fitted()` returns their expected responses, while `predict()` generates fresh
+#' posterior predictive response draws (including at missing rows). In GARMA models,
+#' retained JAGS imputations supply the history used for later fitted and predicted rows.
 #'
 #' @inheritParams pp_eval
 #' @param ... Must be empty. Reserved for future use.

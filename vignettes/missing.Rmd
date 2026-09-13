@@ -43,9 +43,9 @@ fit$data |> filter(is.na(y))
 ```
 
 
-# Expected responses and imputations
+# Expected responses and predictions
 
-You can see the imputations fairly directly. `predict()` describes plausible values of the missing response itself. These are the latent response draws sampled jointly with the model parameters. The imputation comes from trends in non-missing data and what they imply, given the observed covariates (`condition` and `x`), for the missing rows.
+`predict()` evaluates the posterior predictive distribution at the missing rows, generating fresh simulated responses that include residual variation. The predictions come from trends in non-missing data and what they imply, given the observed covariates (`condition` and `x`), for the missing rows.
 
 ```{r}
 # Quantiles of posterior predictive for missing data: 10%, median, 90%
@@ -106,7 +106,7 @@ ggplot(missing_draws, aes(x = .prediction)) +
 
 ## Making probabilistic statements about missing responses
 
-Sometimes, the missing response is of direct interest. For example, you may want to know the probability that a missing response is above a threshold. You can use `predict()` with `summary = FALSE` to get all posterior draws and then calculate probabilities of various statements. For example:
+Sometimes, the missing response is of direct interest. For example, you may want to know the probability that a missing response is above a threshold. You can use `predict()` with `summary = FALSE` to get all posterior predictive draws and then calculate probabilities of various statements. For example:
 
 ```{r}
 missing_draws |>
@@ -149,7 +149,7 @@ The [time-series article](../articles/arma.html) discusses this. Use `predict(fi
 
 # Original data versus new data
 
-The retained JAGS draws belong to the missing rows in the original fitted data. Calling `predict(fit)` uses them. For the non-AR/MA example in this article, predictions for genuinely new data are ordinary posterior predictions rather than imputations of the original missing responses:
+In AR/MA models, the retained JAGS draws belong to the missing rows in the original fitted data and supply their histories. For the non-AR/MA example in this article, predictions for genuinely new data are ordinary posterior predictions, evaluated just like predictions at the missing rows:
 
 ```{r}
 newdata = data.frame(

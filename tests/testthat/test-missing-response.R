@@ -21,9 +21,12 @@ test_that("missing response draws follow covariates and group-level effects", {
   expect_equal(fit$.internal$imputed_response_rows, 10L)
   expect_false(isTRUE(all.equal(prediction_draws$.prediction[missing_row], imputed[missing_row])))
   retained = imputed_draws(fit)
+  expect_named(retained, c(".chain", ".iteration", ".draw", "data_row", ".imputed"))
   expect_equal(retained$.imputed, imputed[missing_row])
   expect_equal(unique(retained$data_row), 10L)
   expect_equal(nrow(imputed_draws(fit, ndraws = 2)), 2L)
+  expect_error(imputed_draws(list()), "Must inherit from class 'mcpfit'")
+  expect_error(imputed_draws(fit, ndraws = 0), "Element 1 is not >= 1")
   expect_true(all(is.na(prediction_draws$y[missing_row])))
   expect_true(all(prediction_draws$id[missing_row] == "b"))
   expect_gt(
