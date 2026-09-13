@@ -139,7 +139,7 @@ set.seed(42)
 plot(fit_flat) + plot(fit_decay)
 ```
 
-Not we compute and compare the LOO ELPDs:
+Now we compute and compare the LOO ELPDs:
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
 fit_loo = loo(fit)

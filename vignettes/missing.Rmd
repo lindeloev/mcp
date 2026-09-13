@@ -142,7 +142,7 @@ The predictors required by the model must themselves be observed. `mcp` currentl
 
 Missing rows are not treated as observed contributions to `log_lik()`, `loo()`, or `waic()`. For ordinary non-AR/MA models, the remaining observed rows can still be used for these calculations.
 
-AR/MA models need extra care because a missing response can become part of the history for later observations. `mcp` retains the JAGS draws so `fitted()` and `predict()` can reconstruct that history, but it does not currently integrate over missing histories for pointwise likelihood calculations. Consequently, `log_lik()`, `loo()`, and `waic()` are unavailable when a missing response preceeds some observed data. 
+AR/MA models need extra care because a missing response can become part of the history for later observations. `mcp` retains the JAGS draws so `fitted()` and `predict()` can reconstruct that history, but it does not currently integrate over missing histories for pointwise likelihood calculations. Consequently, `log_lik()`, `loo()`, and `waic()` are unavailable when a missing response precedes some observed data. 
 
 The [time-series article](../articles/arma.html) discusses this. Use `predict(fit, conditional = FALSE)` or `posterior_predict(fit, conditional = FALSE)` to generate fresh replicated series recursively. Their histories are generated rather than taken from the observed responses. The default predictions condition on observed responses and retained imputations as histories, but still generate fresh outcomes at every row.
 

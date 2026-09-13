@@ -173,7 +173,7 @@ df$response = empty$simulate(
 arima(df$response, order = c(3, 0, 0))
 ```
 
-OK, we can see that the `ar` coefficients and sigma ($sigma = sqrt(sigma^2)$) is simulated correctly, if taking `arima()` as ground truth. Inferring with `mcp` is straightforward:
+OK, we can see that the `ar` coefficients and sigma ($sigma = sqrt(sigma^2)$) are simulated correctly, if taking `arima()` as ground truth. Inferring with `mcp` is straightforward:
 
 ```{r, results = FALSE, warning=FALSE, message=FALSE}
 fit = mcp(model, df, par_x = "time", seed = 42)
@@ -243,13 +243,13 @@ set.seed(42)
 plot_pars(fit, regex_pars = "cp_1|ar_*")
 ```
 
-As usual, we can test hypotheses ([read more here](../articles/comparison.html)). We can also ask how much more likely it is (relative to the prior) that there the two autocorrelations are equal compared to them differing. Because we sampled both the prior and posterior (`mcp(..., sample = "both")`), we can do a Savage-Dickey density ratio test:
+As usual, we can test hypotheses ([read more here](../articles/comparison.html)). We can also ask how much more likely it is (relative to the prior) that the two autocorrelations are equal compared to them differing. Because we sampled both the prior and posterior (`mcp(..., sample = "both")`), we can do a Savage-Dickey density ratio test:
 
 ```{r, R.options = list(width = 9999)}
 hypothesis(fit, "ar1_1 = ar1_2")
 ```
 
-In this case, the evidence for equality is very small so it was rarely visited by the sampler and hence the precision is low .
+In this case, the evidence for equality is very small so it was rarely visited by the sampler and hence the precision is low.
 
 Of course, we can also do directional tests. For example, what is the evidence that `ar1_1` is more than 0.3 greater than `ar1_2`? Answer: More than 100 to one.
 
@@ -286,7 +286,7 @@ set.seed(42)
 plot_pars(fit, prior = TRUE)
 ```
 
-Notice that the plot smoothes the posteriors at sharp cutoffs, slightly misrepresenting the true distribution.
+Notice that the plot smooths the posteriors at sharp cutoffs, slightly misrepresenting the true distribution.
 
 Let's inspect the priors for a more advanced AR model, since you would often have to inform these:
 

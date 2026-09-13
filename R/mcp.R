@@ -47,7 +47,7 @@
 #' @param prior Named list. Names are parameter names (`cp_i`, `Intercept_i`, `xvar_i`,
 #'  `sigma_1`, etc.) and the values are either
 #'
-#'  * A distribution in mcp's JAGS-string syntax (e.g.,
+#'  * A distribution in `mcp`'s JAGS-string syntax (e.g.,
 #'      `Intercept_1 = "dnorm(0, 1) T(0,)"`) indicating a
 #'      conventional prior distribution. Data-calibrated, regularizing defaults
 #'      are used where priors are not specified. These are designed for stable
@@ -184,7 +184,7 @@
 #'       `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior has neither
 #'       explicit truncation nor an inherently bounded form such as `dunif()` or
 #'       `dirichlet()`.
-#'   * *Data-dependent terms:* If `mcp` encounters a data-dependent term like `min(time)`, `max(time)`, `median(response)`, or `mad(response)` in the prior string, they are resolved from the model data so a numerical value is passed to JAGS. The following terms are also allowed: `n_segments()`, and `n_cp()`.
+#'   * *Data-dependent terms:* If `mcp` encounters a data-dependent term like `min(time)`, `max(time)`, `median(response)`, or `mad(response)` in the prior string, they are resolved from the model data so a numerical value is passed to JAGS. The following terms are also allowed: `n_segments()` and `n_cp()`.
 #'       The older constants `MINX`, `MAXX`, `MEANX`, `SDX`, `MINY`, `MAXY`, `MEANY`, `SDY`, and `N_CP` remain accepted with a deprecation warning.
 #'   * *Group-level change points:* Group-specific locations follow a hierarchical
 #'       normal distribution around their population change point, truncated so

@@ -32,7 +32,7 @@ Change points are also called **switch points**, **break points**,
 **broken line** regression, **broken stick** regression, **bilinear**
 regression, **piecewise linear** regression, **local linear**
 regression, **segmented** regression, and (performance)
-**discontinuity** models. `mcp` aims to be be useful for all of them.
+**discontinuity** models. `mcp` aims to be useful for all of them.
 
 # Install
 
@@ -92,7 +92,7 @@ demo_fit = mcp_example("demo")
 ```
 
 See `demo_fit$example_code` for how it was generated, and explore more
-demos in `mcp_example()`. But for now, let’s walk though the example
+demos in `mcp_example()`. But for now, let’s walk through the example
 manually:
 
 ``` r
@@ -203,7 +203,7 @@ For model comparisons, we can fit a null model and compare the
 predictive performance of the two models using (approximate)
 leave-one-out cross-validation ([see more
 here](https://lindeloev.github.io/mcp/articles/comparison.html)). Let’s
-specify a null model null model where the first two segments are reduced
+specify a null model where the first two segments are reduced
 to one straight line, i.e., removing the change point:
 
 ``` r
@@ -311,7 +311,7 @@ deviation](https://lindeloev.github.io/mcp/articles/dpar.html):
 - You can provide complete models in distributional parameters
   (currently `sigma()`, `shape()`, and `mu()`) and time-series (`ar()`
   and `ma()`). For example, `~ x + sigma(1 + x:condition)` models an
-  abrupt change followed by a by-condition slopes in variance.
+  abrupt change followed by by-condition slopes in variance.
 
 [Get fitted and predicted values and
 intervals](https://lindeloev.github.io/mcp/articles/predict.html):
@@ -324,7 +324,7 @@ intervals](https://lindeloev.github.io/mcp/articles/predict.html):
 [Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
 
 - See priors in `fit$prior` or `prior_summary(fit)` and set priors using
-  `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)")`.
+  `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)"))`.
 
 - The default prior on change points is `dirichlet(1)` (uniform order
   statistics). For a single change point, this is the Beta(1, 1) /

@@ -233,8 +233,8 @@ get_par_x = function(model, data, par_x = NULL) {
 
 #' Get predictors for one distributional parameter
 #'
-#' This function extracts an `par_x`-less design matrix.
-#' `par_x` will be relative to the segment onset, so it will be multiplied in in the formula
+#' This function extracts a `par_x`-less design matrix.
+#' `par_x` will be relative to the segment onset, so it will be multiplied in the formula
 #' (`jags_code` and `fit$simulate()`).
 #'
 #' @aliases get_predictors_dpar

@@ -400,7 +400,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
 }
 
 
-#' User-friendy interface to simulate_vectorized
+#' User-friendly interface to simulate_vectorized
 #'
 #' Does the following:
 #'  * Converts factors in `newdata` to dummies with correct levels.

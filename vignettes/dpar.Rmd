@@ -23,7 +23,7 @@ Here, we exemplify regression on the standard deviation `sigma`. A plateau mean 
 
 # Priors for distributional parameters
 
-Aligning with `brms` convention, without an explicit `sigma()` formula, the default is the intercept-only prior `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )` directly on the residual SD, i.e., an **identity link**. The response-calibrated scale adapts to the units of `y`, with a minimum of 2.5 to avoid an accidentally narrow prior. This matches `brms`.
+Aligning with `brms` convention, without an explicit `sigma()` formula, the default is the intercept-only prior `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )` directly on the residual SD, i.e., an **identity link**. The response-calibrated scale adapts to the units of `y`, with a minimum of 2.5 to avoid an accidentally narrow prior. This matches `brms`.
 
 With an explicit `sigma()` formula, the intercept instead defaults to `dt(0, 2.5, 3)` on **log-SD**, with scaled Student-t coefficient priors.
 
@@ -247,7 +247,7 @@ Here is an overview of standard distributional parameters across response famili
 - **`mu`**: Conditional mean or location (e.g. mean for `gaussian()`, success probability for `binomial()`, event rate for `poisson()`). Modeled by default without any wrapper.
 - **`sigma`**: Residual standard deviation for `gaussian()` (modeled on the log-SD scale via `sigma(...)`).
 - **`shape`**: Overdispersion / shape parameter for `negbinomial()` (modeled on the log-shape scale via `shape(...)`).
-- **`ar()` / `ma()`** Autoregressive and moving-average serial dependence terms for time-series models ([read more here](../articles/arma.html)). They are not really distributional parameters, but they are similar in terms of the `mcp` model syntax.
+- **`ar()` / `ma()`**: Autoregressive and moving-average serial dependence terms for time-series models ([read more here](../articles/arma.html)). They are not really distributional parameters, but they are similar in terms of the `mcp` model syntax.
 
 ### Inspecting and working with dpars
 

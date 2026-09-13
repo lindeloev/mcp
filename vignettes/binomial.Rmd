@@ -129,7 +129,7 @@ Convergence is perfect here as evidenced by the overlapping trace plots that loo
 
 
 # Priors for binomial models
-`mcp` uses priors to achieve a lot of it's functionality. See [how to set priors](../articles/priors.html), including how to share parameters between segments and how to fix values. Here, I post a few notes about the binomial-specific default priors.
+`mcp` uses priors to achieve a lot of its functionality. See [how to set priors](../articles/priors.html), including how to share parameters between segments and how to fix values. Here, I post a few notes about the binomial-specific default priors.
 
 The default priors in `mcp` are set so that they are reasonably broad to cover most scenarios, though also specific enough to sample effectively. They are not "default" as in "canonical". Rather, they are "default" as in "what happens if you do nothing else". All priors are stored in `fit$prior` (also `empty$prior`). We did not specify `prior` above, so it ran with default priors:
 

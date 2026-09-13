@@ -15,8 +15,8 @@ There were no ERRORs, WARNINGs, or NOTEs.
 
 ## Downstream dependencies
 All reverse dependencies were checked using `revdepcheck`:
-* Reverse Imports: `glossa` (unaffected; maintainer notified on 2026-08-09).
-* Reverse Suggests: `smoothrb` (used in vignette; maintainer notified on 2026-08-09 and will update vignette).
+* Reverse Imports: `glossa` (unaffected; maintainer has responded and confirmed).
+* Reverse Suggests: `smoothrb` (unaffected - used in vignette; maintainer has responded and confirmed).
 
 
 
