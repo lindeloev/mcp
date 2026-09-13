@@ -100,7 +100,7 @@
 #'   framework. R-side simulation and prediction methods continue to use the
 #'   mcp-default formulas (with warning), so they may no longer match custom JAGS code.
 #' @param seed `NULL` or a positive integer. Seed for the JAGS random-number
-#'   generators. When supplied, `inits` must be a single named list shared by all chains.
+#'   generators.
 #' @param diagnostics Named list of diagnostic warning thresholds. Available
 #'   elements are `rhat = 1.01`, `ess_bulk = 400`, `ess_tail = 400`,
 #'   `ar = 0.10`, and `ma = 0.10`. An empty list uses these defaults; a partial

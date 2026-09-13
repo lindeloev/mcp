@@ -80,8 +80,11 @@ run_jags = function(jags_code,
   # only once for all chains and preserves JAGS's progress output.
   n_workers = future::nbrOfWorkers()
   timer = proc.time()
+  if (n_workers > 1 && is.null(seed))
+    seed = sample.int(.Machine$integer.max - 2 * n.chains, 1)
+  inits = get_jags_inits(inits, seed, n.chains, sample)
+
   if (n_workers == 1) {
-    inits = get_jags_inits(inits, seed, n.chains, sample)
     draws = do_sampling(
       inits = inits,
       n.chains = n.chains
@@ -90,9 +93,6 @@ run_jags = function(jags_code,
     # Submit one chain per future. The user's future plan controls the backend.
     if (!quiet)
       message("Parallel sampling in progress...")
-    if (is.null(seed))
-      seed = sample.int(.Machine$integer.max - 2 * n.chains, 1)
-    inits = get_jags_inits(inits, seed, n.chains, sample)
     draws = future.apply::future_lapply(
       inits,
       n.chains = 1,
@@ -127,32 +127,21 @@ get_jags_inits = function(inits, seed, n.chains, sample) {
   if (is.null(seed))
     return(inits)
 
-  if (length(inits) > 0 && all(vapply(inits, is.list, logical(1))))
-    stop(
-      "When `seed` is supplied, `inits` must be a single named list ",
-      "shared by all chains, not a list of chain-specific lists."
-    )
+  if (is.list(inits[[1]])) {
+    if (length(inits) != n.chains)
+      stop("`inits` must have length equal to `chains` (", n.chains, ") when supplying chain-specific initialization lists.")
+  } else {
+    inits = rep(list(inits), n.chains)
+  }
 
-  if (is.null(inits))
-    inits = list()
-  inits[c(".RNG.name", ".RNG.seed", ".RNG.state")] = NULL
+  rng_seed = seq_len(n.chains) + if (sample == "prior") n.chains else 0
+  rng_seed = as.integer(((as.double(seed) - 1 + rng_seed - 1) %% .Machine$integer.max) + 1)
 
-  rng_seed = seq_len(n.chains)
-  if (sample == "prior")
-    rng_seed = rng_seed + n.chains
-  rng_seed = as.integer(
-    ((as.double(seed) - 1 + rng_seed - 1) %% .Machine$integer.max) + 1
-  )
-
-  lapply(
-    rng_seed,
-    function(seed) {
-      c(inits, list(
-        .RNG.name = "base::Wichmann-Hill",
-        .RNG.seed = seed
-      ))
-    }
-  )
+  lapply(seq_len(n.chains), function(i) {
+    ch = inits[[i]]
+    ch[c(".RNG.name", ".RNG.seed", ".RNG.state")] = NULL
+    c(ch, list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = rng_seed[i]))
+  })
 }
 
 

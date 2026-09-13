@@ -21,7 +21,7 @@ test_that("get_jags_inits creates separate reproducible streams", {
 })
 
 
-test_that("get_jags_inits uses shared initial values and replaces RNG values", {
+test_that("get_jags_inits handles shared and chain-specific initial values", {
   inits = list(
     Intercept_1 = -1,
     .RNG.name = "base::Mersenne-Twister",
@@ -35,12 +35,27 @@ test_that("get_jags_inits uses shared initial values and replaces RNG values", {
       "base::Wichmann-Hill"
   ))
   expect_equal(vapply(seeded, `[[`, integer(1), ".RNG.seed"), c(42L, 43L))
+
+  # Chain-specific inits attach RNG settings to each chain
+  chain_inits = list(
+    list(Intercept_1 = -1, .RNG.seed = 100),
+    list(Intercept_1 = 1, .RNG.seed = 200)
+  )
+  chain_seeded = get_jags_inits(chain_inits, 42, 2, "post")
+  expect_equal(vapply(chain_seeded, `[[`, numeric(1), "Intercept_1"), c(-1, 1))
+  expect_true(all(
+    vapply(chain_seeded, `[[`, character(1), ".RNG.name") ==
+      "base::Wichmann-Hill"
+  ))
+  expect_equal(vapply(chain_seeded, `[[`, integer(1), ".RNG.seed"), c(42L, 43L))
+
+  # Mismatched length throws informative error
   expect_error(
     get_jags_inits(
-      list(list(Intercept_1 = -1), list(Intercept_1 = 1)),
+      list(list(Intercept_1 = -1)),
       42, 2, "post"
     ),
-    "`inits` must be a single named list",
+    "`inits` must have length equal to `chains` (2)",
     fixed = TRUE
   )
 })
@@ -116,6 +131,8 @@ test_that("chain-specific inits succeed when sequential change points are presen
     list(Intercept_1 = 0.5),
     list(Intercept_1 = 1.5)
   )
+
+  # Sequential execution
   expect_no_error(
     suppressWarnings(
       mcp(
@@ -124,8 +141,27 @@ test_that("chain-specific inits succeed when sequential change points are presen
         par_x = "x",
         inits = inits_chains,
         chains = 2,
-        iter = 10,
-        warmup = 10,
+        iter = 5,
+        warmup = 5,
+        quiet = TRUE,
+        diagnostics = FALSE
+      )
+    )
+  )
+
+  # Parallel execution (verifies internal seed generation accepts chain-specific inits)
+  old_plan = future::plan(future::multisession, workers = 2)
+  on.exit(future::plan(old_plan), add = TRUE)
+  expect_no_error(
+    suppressWarnings(
+      mcp(
+        list(y ~ 1, ~ 1),
+        data,
+        par_x = "x",
+        inits = inits_chains,
+        chains = 2,
+        iter = 5,
+        warmup = 5,
         quiet = TRUE,
         diagnostics = FALSE
       )
