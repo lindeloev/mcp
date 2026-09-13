@@ -242,6 +242,20 @@ testthat::test_that("default log-count priors use normal population slopes/contr
     testthat::expect_equal(fit$prior$x_1_id_sd, "dnorm(0, 0.2777778) T(0, )")
     testthat::expect_equal(fit$prior$catB_1_id_sd, "dnorm(0, 2.5) T(0, )")
   }
+
+  # Modeled shape in negative-binomial
+  fit_shape = mcp(
+    list(y ~ 1 + x + shape(1 + x + cat + (1 + x + cat || id))),
+    data = d,
+    family = negbinomial(),
+    sample = FALSE
+  )
+  testthat::expect_equal(fit_shape$prior$shape_1, "dnorm(0, 2.5)")
+  testthat::expect_equal(fit_shape$prior$shape_x_1, "dnorm(0, 0.2777778)")
+  testthat::expect_equal(fit_shape$prior$shape_catB_1, "dnorm(0, 2.5)")
+  testthat::expect_equal(fit_shape$prior$shape_1_id_sd, "dnorm(0, 2.5) T(0, )")
+  testthat::expect_equal(fit_shape$prior$shape_x_1_id_sd, "dnorm(0, 0.2777778) T(0, )")
+  testthat::expect_equal(fit_shape$prior$shape_catB_1_id_sd, "dnorm(0, 2.5) T(0, )")
 })
 
 

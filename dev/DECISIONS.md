@@ -58,3 +58,5 @@ Users can specify non-ordered change points (`prior = list(cp_1 = 20, cp_2 = 10)
 # 2026-09-13: a few more deviations from brms priors
  * Normal-priors are used for non-gaussian-identity models, because brms-like t-priors led to impossible values on response scale.
  * mcp use dnorm(0, 2.5)T(0, ) for Group SD Scale. This is very broad. It could have been narrower. E[exp(b)] is only finite when sd < 1 and strictly for sd <= 0.5, but this was not chosen.
+ * Modeled log-shape in negative-binomial (shape(1 + x)): Uses dnorm(0, 2.5) for intercepts/contrasts and dnorm(0, 2.5 / S) for slopes, harmonizing with log-mean coefficients and avoiding heavy tails that pull shape toward extreme overdispersion.
+ * Offset-adjusted count intercepts: when exposure varies across observations, brms method inflates prior scale by exposure variance and mixes median and mean. mcp evaluates log(pmax(y, 0.1)) - offset observation-wise, calibrating both median location and MAD scale directly to empirical log-rates.

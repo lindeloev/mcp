@@ -102,7 +102,7 @@ fit_with_prior = mcp(model, data = df, family = poisson(), prior = prior, par_x 
 
 When no `shape()` formula is supplied, the response-scale shape has an inverse-gamma(0.4, 0.3) prior, matching `brms`. It covers both strong overdispersion and the large-shape Poisson limit; `fit$prior` shows its log-shape representation as `dloginvgamma(0.4, 0.3)`.
 
-An explicit `shape()` formula models log-shape. Its intercept defaults to `dt(0, 2.5, 3)` and coefficients use the usual proper scaling. `brms` uses the same intercept prior but flat coefficients. Shape regression can be weakly identified, so informed priors may be useful.
+An explicit `shape()` formula models log-shape. Harmonizing with log-mean coefficients, its intercept and contrasts default to `dnorm(0, 2.5)` and numeric coefficients to `dnorm(0, 2.5 / S)` scaled to predictor change $S$ (group SDs default to `dnorm(0, ...) T(0, )`). Where `brms` uses flat coefficients and a Student-t intercept, `mcp` uses proper normal priors to avoid heavy tails that pull shape toward extreme overdispersion. Shape regression can be weakly identified, so informed priors may be useful.
 
 # Modeling rates using `offset()`
 
