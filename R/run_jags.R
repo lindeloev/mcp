@@ -183,7 +183,7 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
   offset_nodes = if (!is.null(jags_code)) unique(stringr::str_extract_all(jags_code, "offset_[A-Za-z0-9_]+_")[[1]])
   helper_names = unique(c(
     "rhs_matrix_", "series_id_", "response_observed_",
-    "likelihood_weight_", "likelihood_zero_", offset_nodes,
+    "likelihood_weight_", "likelihood_phi_", "likelihood_zero_", offset_nodes,
     paste0("n_unique_", group_cols), paste0(group_cols, "_"),
     names(attr(jags_code, "jags_constants")),
     if (generated) c(

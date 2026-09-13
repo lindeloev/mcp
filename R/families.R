@@ -363,15 +363,13 @@ mcpfamily_binomial = function(family) {
       if (identical(weights, "1")) {
         paste0(context$y, " ~ dbin(", context$dpar("mu"), ", ", context$aux("trials"), ")")
       } else {
-        # Weighted likelihood requires max() to cap JAGS extreme values/overflow.
         trials = context$aux("trials")
         mu = context$dpar("mu")
         y = context$y
         c(
           "# Binomial likelihood raised to the observation weight",
-          paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)  # Ensures weight 1 if missing data"),
-          paste0(y, " ~ dbin(", mu, ", ", trials, ")"),
-          paste0("likelihood_zero_[i_] ~ dexp(exp(max(-700, (likelihood_weight_[i_] - 1) * (loggam(", trials, " + 1) - loggam(", y, " + 1) - loggam(", trials, " - ", y, " + 1) + ", y, " * log(", mu, ") + (", trials, " - ", y, ") * log(1 - ", mu, ")))))")
+          paste0("likelihood_phi_[i_] = response_observed_[i_] * ", weights, " * max(0, loggam(", y, " + 1) + loggam(", trials, " - ", y, " + 1) - loggam(", trials, " + 1) - ", y, " * log(", mu, ") - (", trials, " - ", y, ") * log(1 - ", mu, "))"),
+          paste0("likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])")
         )
       }
     }
@@ -443,11 +441,12 @@ mcpfamily_bernoulli = function(family) {
       if (identical(weights, "1")) {
         paste0(context$y, " ~ dbern(", context$dpar("mu"), ")")
       } else {
+        mu = context$dpar("mu")
+        y = context$y
         c(
           "# Bernoulli likelihood raised to the observation weight",
-          paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)  # Ensures weight 1 if missing data"),
-          paste0(context$y, " ~ dbern(", context$dpar("mu"), ")"),
-          paste0("likelihood_zero_[i_] ~ dexp(pow(", context$dpar("mu"), ", (likelihood_weight_[i_] - 1) * ", context$y, ") * pow(1 - ", context$dpar("mu"), ", (likelihood_weight_[i_] - 1) * (1 - ", context$y, ")))")
+          paste0("likelihood_phi_[i_] = response_observed_[i_] * ", weights, " * max(0, - ", y, " * log(", mu, ") - (1 - ", y, ") * log(1 - ", mu, "))"),
+          paste0("likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])")
         )
       }
     }
@@ -529,14 +528,12 @@ mcpfamily_poisson = function(family) {
       if (identical(weights, "1")) {
         paste0(context$y, " ~ dpois(", context$dpar("mu"), ")")
       } else {
-        # Weighted likelihood requires max() to cap JAGS extreme values/overflow.
         mu = context$dpar("mu")
         y = context$y
         c(
           "# Poisson likelihood raised to the observation weight",
-          paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)  # Ensures weight 1 if missing data"),
-          paste0(y, " ~ dpois(", mu, ")"),
-          paste0("likelihood_zero_[i_] ~ dexp(exp(max(-700, (likelihood_weight_[i_] - 1) * (", y, " * log(", mu, ") - ", mu, " - loggam(", y, " + 1)))))")
+          paste0("likelihood_phi_[i_] = response_observed_[i_] * ", weights, " * max(0, ", mu, " - ", y, " * log(", mu, ") + loggam(", y, " + 1))"),
+          paste0("likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])")
         )
       }
     }
@@ -613,14 +610,12 @@ mcpfamily_negbinomial = function(family) {
         paste0(context$y, " ~ dnegbin(", prob, ", ", shape, ")")
       )
     } else {
-      # Weighted likelihood requires max() to cap JAGS extreme values/overflow.
       y = context$y
       c(
         paste0(prob, " = ", shape, " / (", shape, " + ", mu, ")"),
-        paste0(y, " ~ dnegbin(", prob, ", ", shape, ")"),
         "# Negative binomial likelihood raised to the observation weight",
-        paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)  # Ensures weight 1 if missing data"),
-        paste0("likelihood_zero_[i_] ~ dexp(exp(max(-700, (likelihood_weight_[i_] - 1) * (loggam(", y, " + ", shape, ") - loggam(", shape, ") - loggam(", y, " + 1) + ", shape, " * log(", prob, ") + ", y, " * log(1 - ", prob, ")))))")
+        paste0("likelihood_phi_[i_] = response_observed_[i_] * ", weights, " * max(0, loggam(", shape, ") + loggam(", y, " + 1) - loggam(", y, " + ", shape, ") - ", shape, " * log(", prob, ") - ", y, " * log(1 - ", prob, "))"),
+        paste0("likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])")
       )
     }
   })

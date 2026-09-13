@@ -168,12 +168,45 @@ test_that("Binomial JAGS weights implement a likelihood power and sample on ordi
   expect_equal(nrow(summary_fit), 1)
   expect_true(abs(summary_fit$mean[1] - 0) < 0.1)
 
-  expect_match(fit$jags_code, "likelihood_weight_[i_] = 1 + response_observed_[i_] * (w[i_] - 1)", fixed = TRUE)
-  expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dexp(exp(max(-700, (likelihood_weight_[i_] - 1) * (loggam(N[i_] + 1) - loggam(y[i_] + 1) - loggam(N[i_] - y[i_] + 1) + y[i_] * log(mu_[i_]) + (N[i_] - y[i_]) * log(1 - mu_[i_])))))", fixed = TRUE)
+  expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * w[i_] * max(0, loggam(y[i_] + 1) + loggam(N[i_] - y[i_] + 1) - loggam(N[i_] + 1) - y[i_] * log(mu_[i_]) - (N[i_] - y[i_]) * log(1 - mu_[i_]))", fixed = TRUE)
+  expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])", fixed = TRUE)
 
   # Check that package R-side log_lik applies the weights directly
   expect_equal(
     fit$family$r$log_lik(df_bin$y, list(mu = rep(0.5, 5)), list(trials = df_bin$N, weights = df_bin$w)),
     df_bin$w * stats::dbinom(df_bin$y, size = df_bin$N, prob = 0.5, log = TRUE)
   )
+})
+
+
+test_that("Weighted Binomial and Bernoulli target exact conjugate posteriors without clamping or underflow", {
+  # Conjugate Beta-Binomial with large weight
+  data_bin = data.frame(x = 1:3, y = 15, N = 20, w = 1000)
+  fit_bin = mcp(
+    list(y | trials(N) + weights(w) ~ 1),
+    data = data_bin,
+    family = binomial("identity"),
+    prior = list(Intercept_1 = "dbeta(1, 1)"),
+    par_x = "x",
+    quiet = TRUE
+  )
+  draws_bin = as.matrix(coda::as.mcmc(fit_bin))[, "Intercept_1"]
+  expect_equal(mean(draws_bin), 0.75, tolerance = 0.005)
+  # Theoretical SD for Beta(45001, 15001) is ~ 0.001768
+  expect_equal(stats::sd(draws_bin), 0.001768, tolerance = 0.05)
+
+  # Weighted Bernoulli with large weight
+  data_bern = data.frame(x = 1:3, y = c(1, 0, 1), w = 1000)
+  fit_bern = mcp(
+    list(y | weights(w) ~ 1),
+    data = data_bern,
+    family = bernoulli("identity"),
+    prior = list(Intercept_1 = "dbeta(1, 1)"),
+    par_x = "x",
+    quiet = TRUE
+  )
+  draws_bern = as.matrix(coda::as.mcmc(fit_bern))[, "Intercept_1"]
+  # Theoretical Beta(2001, 1001) has mean 0.6666, SD 0.0086
+  expect_equal(mean(draws_bern), 2/3, tolerance = 0.02)
+  expect_equal(stats::sd(draws_bern), 0.0086, tolerance = 0.05)
 })

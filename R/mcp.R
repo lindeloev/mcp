@@ -524,7 +524,8 @@ mcp = function(model,
   if (sample %in% c("prior", "both")) {
     # Set response = NA if we only sample prior
     jags_data_prior = jags_data
-    jags_data_prior[[segments$y[1]]] = rep(NA, nrow(data))
+    if (!grepl("likelihood_phi_", jags_code, fixed = TRUE))
+      jags_data_prior[[segments$y[1]]] = rep(NA, nrow(data))
     if (!is.null(jags_data_prior$response_observed_))
       jags_data_prior$response_observed_[] = 0L
 

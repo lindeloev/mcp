@@ -67,10 +67,12 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
     y_col = segments$y[1]
     if (is.logical(data[[y_col]]))
       data[[y_col]] = as.numeric(data[[y_col]])
-    if (!is.numeric(data[[y_col]]))
-      stop("Data column '", y_col, "' has to be numeric.")
-    if (any(is.na(data[[y_col]])))
+    if (any(is.na(data[[y_col]]))) {
+      has_weights = "weights" %in% names(segments) && any(!is.na(segments$weights))
+      if (has_weights && isTRUE(family$response$is_discrete))
+        stop("Weights with missing responses (NA in '", y_col, "') is not supported for family = ", family$family, "().")
       message("NA values detected in '", y_col, "'. JAGS will treat them as latent responses and impute them during sampling.")
+    }
 
     # Check varying
     if (length(derived_varying) > 0) {

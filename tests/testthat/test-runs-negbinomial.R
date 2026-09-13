@@ -49,8 +49,8 @@ test_that("Negative-binomial JAGS weights implement a likelihood power and sampl
   expect_equal(nrow(summary_fit), 2)
   expect_true(abs(summary_fit$mean[summary_fit$variable == "Intercept_1"] - log(200)) < 0.1)
 
-  expect_match(fit$jags_code, "likelihood_weight_[i_] = 1 + response_observed_[i_] * (w[i_] - 1)", fixed = TRUE)
-  expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dexp(exp(max(-700, (likelihood_weight_[i_] - 1) * (loggam(y[i_] + shape_[i_]) - loggam(shape_[i_]) - loggam(y[i_] + 1) + shape_[i_] * log(nb_prob_[i_]) + y[i_] * log(1 - nb_prob_[i_])))))", fixed = TRUE)
+  expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * w[i_] * max(0, loggam(shape_[i_]) + loggam(y[i_] + 1) - loggam(y[i_] + shape_[i_]) - shape_[i_] * log(nb_prob_[i_]) - y[i_] * log(1 - nb_prob_[i_]))", fixed = TRUE)
+  expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])", fixed = TRUE)
 
   # Check that package R-side log_lik applies the weights directly
   expect_equal(
@@ -60,4 +60,17 @@ test_that("Negative-binomial JAGS weights implement a likelihood power and sampl
 })
 
 
-
+test_that("Weighted Negative-Binomial targets exact posterior without clamping", {
+  df_nb_large = data.frame(x = 1:5, y = rep(20, 5), w = 100)
+  fit_nb = mcp(
+    list(y | weights(w) ~ 1),
+    data = df_nb_large,
+    family = negbinomial(),
+    prior = list(Intercept_1 = "dnorm(3, 1)", shape_1 = "dnorm(10, 2)"),
+    par_x = "x",
+    diagnostics = FALSE,
+    quiet = TRUE
+  )
+  draws = as.matrix(coda::as.mcmc(fit_nb))[, "Intercept_1"]
+  expect_equal(mean(draws), log(20), tolerance = 0.05)
+})
