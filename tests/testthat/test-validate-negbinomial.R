@@ -72,7 +72,7 @@ test_that("negative-binomial support does not alter Poisson metadata or priors",
 
   expect_equal(fit$family$dpars, "mu")
   expect_equal(fit$family$links, c(mu = "log"))
-  expect_equal(fit$prior$Intercept_1, "dt(0.7, 2.5, 3)")
+  expect_equal(fit$prior$Intercept_1, "dnorm(0.7, 2.5)")
   expect_equal(fit$prior$x_1, "dt(0, 0.625, 3)")
 
   negbin_fit = mcp(list(y ~ 1 + x), data, family = negbinomial(), sample = FALSE)
