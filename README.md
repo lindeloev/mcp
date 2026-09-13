@@ -61,9 +61,9 @@ released.
 
 ``` r
 model = list(
-  response ~ 1,  # Plateau in the first segment (Intercept_1)
-  ~ 0 + time,    # Joined slope (time_2) in segment 2 which starts at cp_1
-  ~ 1 + time     # Disjoined slope (Intercept_3, time_3) at cp_2
+  response ~ 1,  # plateau (Intercept_1)
+  ~ 0 + time,    # joined slope (time_2) at cp_1
+  ~ 1 + time     # disjoined slope (Intercept_3, time_3) at cp_2
 )
 
 data = mcp_example_data("demo")
@@ -98,9 +98,9 @@ manually:
 ``` r
 # Define the model
 model = list(
-  response ~ 1,  # Plateau in the first segment (Intercept_1)
-  ~ 0 + time,    # Joined slope (time_2) in segment 2 which starts at cp_1
-  ~ 1 + time     # Disjoined slope (Intercept_3, time_3) at cp_2
+  response ~ 1,  # plateau (Intercept_1)
+  ~ 0 + time,    # joined slope (time_2) at cp_1.
+  ~ 1 + time     # disjoined slope (Intercept_3, time_3) at cp_2
 )
 
 # Get example data and fit it: mcp(model, data, ...)
@@ -203,8 +203,8 @@ For model comparisons, we can fit a null model and compare the
 predictive performance of the two models using (approximate)
 leave-one-out cross-validation ([see more
 here](https://lindeloev.github.io/mcp/articles/comparison.html)). Let’s
-specify a null model where the first two segments are reduced
-to one straight line, i.e., removing the change point:
+specify a null model where the first two segments are reduced to one
+straight line, i.e., removing the change point:
 
 ``` r
 # Define the model
@@ -341,7 +341,7 @@ intervals](https://lindeloev.github.io/mcp/articles/predict.html):
   population-level change-point priors. Users can override these.
 
 - Do prior predictive checks using
-  `mcp(model, data, sample = "prior") |> plot()`.
+  `mcp(model, data, sample = "prior") |> plot(prior = TRUE)`.
 
 [Missing responses and posterior
 imputation](https://lindeloev.github.io/mcp/articles/missing.html):

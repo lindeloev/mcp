@@ -106,8 +106,8 @@ coefficient. Multi-column terms share one key.
 }
 }
 \description{
-This function extracts an \code{par_x}-less design matrix.
-\code{par_x} will be relative to the segment onset, so it will be multiplied in in the formula
+This function extracts a \code{par_x}-less design matrix.
+\code{par_x} will be relative to the segment onset, so it will be multiplied in the formula
 (\code{jags_code} and \code{fit$simulate()}).
 }
 \section{Functions}{

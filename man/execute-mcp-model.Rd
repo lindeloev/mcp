@@ -212,9 +212,9 @@ omitting random effects or serial correlation); they cannot be used in
 models requires refitting.
 
 Missing responses in the original data remain missing in the response column.
-\code{fitted()} returns their expected responses, while \code{predict()} uses retained
-JAGS imputations for their posterior response draws. In GARMA models these
-imputations also supply the history used for later fitted and predicted rows.
+\code{fitted()} returns their expected responses, while \code{predict()} generates fresh
+posterior predictive response draws (including at missing rows). In GARMA models,
+retained JAGS imputations supply the history used for later fitted and predicted rows.
 }
 \section{Functions}{
 \itemize{

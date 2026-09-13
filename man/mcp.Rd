@@ -74,7 +74,7 @@ Missing values in the response variable are imputed using the posterior predicti
 \item{prior}{Named list. Names are parameter names (\code{cp_i}, \code{Intercept_i}, \code{xvar_i},
 \code{sigma_1}, etc.) and the values are either
 \itemize{
-\item A distribution in mcp's JAGS-string syntax (e.g.,
+\item A distribution in \code{mcp}'s JAGS-string syntax (e.g.,
 \code{Intercept_1 = "dnorm(0, 1) T(0,)"}) indicating a
 conventional prior distribution. Data-calibrated, regularizing defaults
 are used where priors are not specified. These are designed for stable
@@ -141,7 +141,7 @@ framework. R-side simulation and prediction methods continue to use the
 mcp-default formulas (with warning), so they may no longer match custom JAGS code.}
 
 \item{seed}{\code{NULL} or a positive integer. Seed for the JAGS random-number
-generators. When supplied, \code{inits} must be a single named list shared by all chains.}
+generators.}
 
 \item{diagnostics}{Named list of diagnostic warning thresholds. Available
 elements are \code{rhat = 1.01}, \code{ess_bulk = 400}, \code{ess_tail = 400},
@@ -195,11 +195,12 @@ where the segment-start level \eqn{\alpha_k} is freely estimated for the first a
 Here, \eqn{\beta_{k,0}} is the segment-start intercept, and \eqn{\beta_{k,1}} is the slope on \eqn{x}. In all segments, estimated slope and intercept parameters are absolute values (not changes relative to the preceding segment).
 
 If additional continuous covariates or categorical factors are included (e.g., \code{+ z + group}),
-they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}} for covariate \eqn{j}); only the
-change-point predictor \eqn{x} is converted to segment-local coordinates.
+they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}} for covariate \eqn{j}); only bare
+change-point predictor terms \eqn{x} and \code{I(x^k)} are converted to segment-local coordinates.
 
-The expected response on the response scale is \eqn{\mu_i = g^{-1}(\eta_i)} via link function \eqn{g(\mu_i) = \eta_i}
-(identity for Gaussian, so \eqn{\mu_i = \eta_i}). Distributional parameters (\code{sigma()}, \code{shape()}, etc.)
+The inverse-linked parameter is \eqn{\mu_i = g^{-1}(\eta_i)} via link function \eqn{g(\mu_i) = \eta_i},
+representing the expected response for most families (or the success probability for binomial models,
+where the expected count is \eqn{n_i \mu_i}). Distributional parameters (\code{sigma()}, \code{shape()}, etc.)
 and autoregressive terms (\code{ar()}, \code{ma()}) follow this exact same segmented structure on their respective link scales.
 See more details on the \code{mcp} model in \link{mcp-package} and on the \href{https://lindeloev.github.io/mcp/articles/formulas.html}{mcp website}.
 }
@@ -243,7 +244,7 @@ Implications:
 \code{mcp} adds truncation (e.g., \code{T(cp_1, )}) only when the prior has neither
 explicit truncation nor an inherently bounded form such as \code{dunif()} or
 \code{dirichlet()}.
-\item \emph{Data-dependent terms:} If \code{mcp} encounters a data-dependent term like \code{min(time)}, \code{max(time)}, \code{median(response)}, or \code{mad(response)} in the prior string, they are resolved from the model data so a numerical value is passed to JAGS. The following terms are also allowed: \code{n_segments()}, and \code{n_cp()}.
+\item \emph{Data-dependent terms:} If \code{mcp} encounters a data-dependent term like \code{min(time)}, \code{max(time)}, \code{median(response)}, or \code{mad(response)} in the prior string, they are resolved from the model data so a numerical value is passed to JAGS. The following terms are also allowed: \code{n_segments()} and \code{n_cp()}.
 The older constants \code{MINX}, \code{MAXX}, \code{MEANX}, \code{SDX}, \code{MINY}, \code{MAXY}, \code{MEANY}, \code{SDY}, and \code{N_CP} remain accepted with a deprecation warning.
 \item \emph{Group-level change points:} Group-specific locations follow a hierarchical
 normal distribution around their population change point, truncated so

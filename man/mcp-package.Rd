@@ -21,8 +21,8 @@ e.g., \code{~ sigma(1 + x)} or \code{~ shape(1)}.
 recurrence that spans continuously across change points.
 \item \emph{Group-level effects:} Add hierarchical (random) intercepts, slopes, and change points, e.g., \code{~ 1 + (1|id)}
 or \code{1 + (1|id) ~ 0 + x}.
-\item \emph{Model comparison and hypothesis testing:} Compare models using PSIS-LOO (\code{loo()}) or WAIC (\code{waic()}), and test directional
-or point-null hypotheses (\code{hypothesis()}) using Savage-Dickey density ratios.
+\item \emph{Model comparison and hypothesis testing:} Compare models using PSIS-LOO (\code{loo()}) or WAIC (\code{waic()}), and test hypotheses
+(\code{hypothesis()}) using Savage-Dickey density ratios for point-null tests or posterior-to-prior odds for directional tests.
 }
 
 See \href{https://lindeloev.github.io/mcp/}{the mcp website} for worked examples.
@@ -61,11 +61,12 @@ where the segment-start level \eqn{\alpha_k} is freely estimated for the first a
 Here, \eqn{\beta_{k,0}} is the segment-start intercept, and \eqn{\beta_{k,1}} is the slope on \eqn{x}. In all segments, estimated slope and intercept parameters are absolute values (not changes relative to the preceding segment).
 
 If additional continuous covariates or categorical factors are included (e.g., \code{+ z + group}),
-they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}} for covariate \eqn{j}); only the
-change-point predictor \eqn{x} is converted to segment-local coordinates.
+they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}} for covariate \eqn{j}); only bare
+change-point predictor terms \eqn{x} and \code{I(x^k)} are converted to segment-local coordinates.
 
-The expected response on the response scale is \eqn{\mu_i = g^{-1}(\eta_i)} via link function \eqn{g(\mu_i) = \eta_i}
-(identity for Gaussian, so \eqn{\mu_i = \eta_i}). Distributional parameters (\code{sigma()}, \code{shape()}, etc.)
+The inverse-linked parameter is \eqn{\mu_i = g^{-1}(\eta_i)} via link function \eqn{g(\mu_i) = \eta_i},
+representing the expected response for most families (or the success probability for binomial models,
+where the expected count is \eqn{n_i \mu_i}). Distributional parameters (\code{sigma()}, \code{shape()}, etc.)
 and autoregressive terms (\code{ar()}, \code{ma()}) follow this exact same segmented structure on their respective link scales.
 See more details on the \code{mcp} model in \link{mcp-package} and on the \href{https://lindeloev.github.io/mcp/articles/formulas.html}{mcp website}.
 }

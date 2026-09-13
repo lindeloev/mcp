@@ -83,10 +83,12 @@ Low effective sample sizes are also obvious as poor mixing in trace plots
 (see \code{plot_pars(fit)}). Read how to deal with such problems \href{https://lindeloev.github.io/mcp/articles/tips.html}{here}
 }
 
-Group-level change-point deviations (\code{cp_i_id}) follow a standard hierarchical
-normal distribution around the population change point. Their realized
-locations are truncated to remain in range and ordered.
-Predictor group-level effects (such as \code{Intercept_1_id}) also use standard
+Group-level change-point deviations (\code{cp_i_id}) follow a hierarchical normal
+distribution around the population change point before truncation. Realized
+locations are truncated to remain in range and ordered, so the population change
+point is generally close to the mean of the realized group change points, but not
+exactly.
+Predictor group-level effects (such as \code{Intercept_1_id}) use standard
 hierarchical zero-mean priors, without change-point constraints.
 
 For simulated data, the summary contains two additional columns so that it
