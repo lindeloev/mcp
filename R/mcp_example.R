@@ -148,7 +148,7 @@ if (plot) {
     group_mu = "# Define model
 model = list(
   y ~ 1 + condition + (condition || id),
-  ~ 1 + condition  # group effects carry into this segment
+  ~ 1 + condition  # group effects persist into this segment
 )
 
 # Simulate balanced data with 9 levels of the grouping factor

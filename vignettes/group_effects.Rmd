@@ -62,7 +62,7 @@ where $\kappa_{ig}$ is the group-specific location. Thus `cp_i_id[g]` is the rep
 
 The hierarchy is subject to $x_{\min} < \kappa_{1g} < \cdots < \kappa_{Kg} < x_{\max}$. Thus, if adjacent change points both vary, their group-specific locations are ordered against each other—not against the adjacent population change point. Internally, JAGS samples $\kappa_{ig}$ directly for efficiency.
 
-Unlike predictor group-level effects, a change-point group effect applies only to the boundary where it is written. There is no carry-over as there is for group-level effects on RHS.
+Unlike predictor group-level effects, a change-point group effect applies only to the boundary where it is written; it does not persist across segments like predictor group-level effects.
 
 # Predictor group-level effects
 
@@ -76,7 +76,7 @@ model = list(
 )
 ```
 
-Here, the group-level intercept introduced in segment 1 also applies in segment 2. A later `(1|id)` would replace it from that segment onward, while `(0|id)` turns it off, as in segment 3 above. Persistence is tracked separately for each grouping factor and distributional parameter. Read more on carry-over rules between segments in [the article on formulas](../articles/formulas.html#on-carry-over-between-segments).
+Here, the group-level intercept introduced in segment 1 also applies in segment 2. A later `(1|id)` would replace it from that segment onward, while `(0|id)` turns it off, as in segment 3 above. Persistence is tracked separately for each grouping factor and distributional parameter. Read more on persistence into later segments in [the article on formulas](../articles/formulas.html#on-carry-over-between-segments).
 
 Use `||` for independent group-level slopes and factor coefficients:
 

@@ -13,8 +13,8 @@
 #'   `response ~ cp ~ predictors` (e.g., `y ~ 1 ~ 1 + x`), except the first segment
 #'   has no change point and uses `response ~ predictors`. The response and
 #'   change-point parts can be omitted (`cp ~ predictor` assumes the same
-#'   response; `~ predictor` assumes an intercept-only change point). Terms normally carry
-#'   into later segments until redefined (see details). See examples on the
+#'   response; `~ predictor` assumes an intercept-only change point). Non-$x$ terms persist
+#'   into later segments until replaced or removed by an intercept reset (see details). See examples on the
 #'   [mcp website](https://lindeloev.github.io/mcp/).
 #'
 #'   **1. Response (segment 1 only):**
@@ -134,7 +134,7 @@
 #'
 #' \deqn{\eta_i = \alpha_k + \beta_{k,1} (x_i - \tau_{k-1}) \quad (\text{with } \tau_0 = 0)}
 #'
-#' where the segment-start level \eqn{\alpha_k} is freely estimated for the first and disjoined segments, as in non-segmented regression, and inherited continuously for joined segments:
+#' where the segment-start level \eqn{\alpha_k} is freely estimated for the first and disjoined segments, as in non-segmented regression, and determined by continuity for joined segments:
 #'
 #' \deqn{\alpha_k = \begin{cases}
 #'   \beta_{k,0}, & \text{Disjoined segments } (\sim \texttt{1 + x}, \text{ including } k = 1) \\

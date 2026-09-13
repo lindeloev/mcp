@@ -99,7 +99,7 @@ prior = list(
 Notice a few things here:
 
 - The prior ensures that the mean slope remains constant between segment 3 and 4. So only `sigma` changes there. Sharing the slope through the prior effectively removes the change point in the mean (read more about [priors in mcp](../articles/priors.html)).
-- Segment 4: Without a new `sigma()` term, segment 4 and later segments inherit the preceding standard-deviation trajectory at the value where it was left.
+- Segment 4: Without a new `sigma()` term, the standard-deviation model persists from segment 3; because no new slope on $x$ is declared for `sigma()`, it forms a flat plateau continuing from the level reached at `cp_3`.
 
 In general, the log-SD parameters are named `sigma_[normalname]`, where "normalname" is the usual parameter names in mcp (see more [here](../articles/formulas.html)). For example, the log-SD slope on `x` in segment 3 is `sigma_x_3`. However, `sigma_Intercept_i` is just too verbose, so log-SD intercepts are simply called `sigma_i`, where i is the segment number.
 

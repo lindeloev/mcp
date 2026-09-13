@@ -19,27 +19,15 @@ The formulas are called "segments" because they divide the (observed) x-axis int
 
 # Formula format for segments
 
-The three formula parts are called **response**, **cp**, and **predictor**. The general format is `response ~ cp ~ predictor`, except for the first segment, which has no change point and therefore uses `response ~ predictor`. In later segments the response is inherited and may be omitted. A one-sided formula such as `~ x` also uses the default change-point formula `~ 1`, so it is shorthand for `y ~ 1 ~ 1 + x`. This is familiar from `lm()`/`glm()`/`brms::brm()`.
+The three formula parts are called **response**, **cp**, and **predictor**. The general format is `response ~ cp ~ predictor`, except for the first segment, which has no change point and therefore uses `response ~ predictor`. In later segments the response is assumed identical and may be omitted. A one-sided formula such as `~ x` also uses the default change-point formula `~ 1`, so it is shorthand for `y ~ 1 ~ 1 + x`. This is familiar from `lm()`/`glm()`/`brms::brm()`.
 
 `mcp` models consist of three parts:
 
-**1. Response (segment 1 only):**
-* `y ~ ...`: Standard continuous or count response (Gaussian, Poisson, Bernoulli).
-* `successes | trials(total) ~ ...`: Binomial response (`family = binomial()`).
-* `y | weights(w) ~ ...`: Observation log-likelihood weights (multiplies each observation's log-likelihood contribution by `w > 0`; affects posterior inference and `log_lik()`, but not predictions).
-* `y | trials(total) + weights(w) ~ ...`: Combine response auxiliaries using `+`.
+**1. Response (segment 1 only):** \* `y ~ ...`: Standard continuous or count response (Gaussian, Poisson, Bernoulli). \* `successes | trials(total) ~ ...`: Binomial response (`family = binomial()`). \* `y | weights(w) ~ ...`: Observation log-likelihood weights (multiplies each observation's log-likelihood contribution by `w > 0`; affects posterior inference and `log_lik()`, but not predictions). \* `y | trials(total) + weights(w) ~ ...`: Combine response auxiliaries using `+`.
 
-**2. Change-point modeling (`cp`, segments 2+):**
-* `~ 1 ~ ...` (or omitted, e.g., `~ x`): Population-level change point (default).
-* `1 + (1 | id) ~ ...`: Group-level change-point deviations around the population change point ([read more](../articles/group_effects.html)).
+**2. Change-point modeling (`cp`, segments 2+):** \* `~ 1 ~ ...` (or omitted, e.g., `~ x`): Population-level change point (default). \* `1 + (1 | id) ~ ...`: Group-level change-point deviations around the population change point ([read more](../articles/group_effects.html)).
 
-**3. Regression formula (all segments):**
-* `~ 1 + x`: Disjoined slope with a new segment intercept.
-* `~ 0 + x`: Joined slope (no intercept; continuous from previous segment).
-* `~ 1`: Plateau (intercept only, no slope).
-* `~ x:condition + z + (1 | id)`: Additional covariates, interactions, and group-level effects ([read more](../articles/group_effects.html)).
-* `+ sigma(1 + x)` or `shape(0 + condition)`: Distributional parameters on the link scale ([read more](../articles/dpar.html)).
-* `+ ar(1)` or `ma(2, 1 + x)`: Autoregressive and moving-average time-series residuals on the link scale ([read more](../articles/arma.html)).
+**3. Regression formula (all segments):** \* `~ 1 + x`: Disjoined slope with a new segment intercept. \* `~ 0 + x`: Joined slope (no intercept; continuous from previous segment). \* `~ 1`: Plateau (intercept only, no slope). \* `~ x:condition + z + (1 | id)`: Additional covariates, interactions, and group-level effects ([read more](../articles/group_effects.html)). \* `+ sigma(1 + x)` or `shape(0 + condition)`: Distributional parameters on the link scale ([read more](../articles/dpar.html)). \* `+ ar(1)` or `ma(2, 1 + x)`: Autoregressive and moving-average time-series residuals on the link scale ([read more](../articles/arma.html)).
 
 `mcp` is heavily inspired by `brms` which again is inspired by [`lme4::lmer()`](https://cran.r-project.org/web/packages/lme4/index.html) which extends `lm()` and `glm()`. [Here is a bit of history](https://twitter.com/jonaslindeloev/status/1117760777249853440) on that.
 
@@ -119,7 +107,7 @@ Mathematically, an `mcp` model divides the continuous predictor $x$ into $K$ seg
 
 $$\mu_i = \alpha_k + \beta_{k,1} \, (x_i - \tau_{k-1}) \quad (\text{with } \tau_0 = 0)$$
 
-where the segment-start level $\alpha_k$ is freely estimated for the first and disjoined segments, as in non-segmented regression, and inherited continuously for joined segments:
+where the segment-start level $\alpha_k$ is freely estimated for the first and disjoined segments, as in non-segmented regression, and determined by continuity for joined segments:
 
 $$\alpha_k = \begin{cases}
 \beta_{k,0}, & \text{Disjoined segments } (\sim \texttt{1 + x}, \text{ including } k = 1) \\
@@ -132,18 +120,17 @@ Here, $\beta_{k,0}$ is the segment-start intercept, and $\beta_{k,1}$ is the slo
 
 Bayesian MCMC samplers like JAGS cannot evaluate dynamic conditional statements (`if/else`) on parameters being sampled. To implement this piecewise model in JAGS, `mcp` uses an **indicator and plateauing formulation** (evaluated via Iverson brackets $[A]$ which equal 1 when true and 0 when false).
 
-First, `mcp` defines a segment-local span $X_{k,i}$ that grows linearly within segment $k$ and "freezes" (plateaus) at the segment boundary:
+First, `mcp` defines a segment-local span $X_{k,i}$ that grows linearly within segment $k$ and stays constant beyond it:
 
-$$X_{1,i} = \min(x_i, \tau_1)$$
-$$X_{k,i} = \max\bigl(0, \min(x_i, \tau_k) - \tau_{k-1}\bigr) \quad (k \ge 2)$$
+$$X_{1,i} = \min(x_i, \tau_1)$$ $$X_{k,i} = \max\bigl(0, \min(x_i, \tau_k) - \tau_{k-1}\bigr) \quad (k \ge 2)$$
 
-When $x_i < \tau_{k-1}$, $X_{k,i} = 0$ (inactive). When $\tau_{k-1} \le x_i < \tau_k$, $X_{k,i} = x_i - \tau_{k-1}$ (linear growth). When $x_i \ge \tau_k$, $X_{k,i} = \tau_k - \tau_{k-1}$ (frozen at the segment width).
+When $x_i < \tau_{k-1}$, $X_{k,i} = 0$ (before the segment). When $\tau_{k-1} \le x_i < \tau_k$, $X_{k,i} = x_i - \tau_{k-1}$ (linear growth within the segment). When $x_i \ge \tau_k$, $X_{k,i} = \tau_k - \tau_{k-1}$ (constant segment width).
 
-For a **purely joined model** (`list(y ~ 0 + x, ~ 0 + x)`), `mcp` writes $\mu_i$ as a cumulative sum of these plateauing coordinates:
+For a **purely joined model** (`list(y ~ 0 + x, ~ 0 + x)`), `mcp` writes $\mu_i$ as a cumulative sum of these segment spans:
 
 $$\mu_i = \sum_{k=1}^K [x_i \ge \tau_{k-1}] \cdot \beta_{k,1} X_{k,i}$$
 
-Because earlier segments freeze at their boundary levels ($\beta_{k-1,1}(\tau_{k-1} - \tau_{k-2})$), continuity is automatic with zero parameter constraints: preceding segments hand over a flat plateau that serves as the baseline for subsequent segments.
+Because each segment's contribution stays constant beyond its change point ($\beta_{k-1,1}(\tau_{k-1} - \tau_{k-2})$), continuity is automatic with zero parameter constraints: preceding segments provide the continuous starting level for subsequent segments.
 
 When a segment is **disjoined** (`~ 1 + x`), it introduces a new explicit intercept $\beta_{k,0}$ at $\tau_{k-1}$, and earlier terms are capped with $[x_i < \tau_{\text{next}}]$ so previous segments stop accumulating.
 
@@ -195,7 +182,7 @@ Let's inspect the model in the overview plot in the top of this page - except I 
 model = list(
   y ~ 1 + x:group + z, # Segment 1: by-group slopes on x, covariate z
   ~ 1 + x + group,     # Segment 2: shared slope on x, by-group intercepts
-  ~ 0 + I(x^2),        # Segment 3: "group" intercepts carry over due to "0"
+  ~ 0 + I(x^2),        # Segment 3: "group" intercepts persist due to "0"
   ~ 1                  # Segment 4: collapse to shared intercept, no matter group 
 )
 
@@ -208,79 +195,83 @@ mcp_pars(fit)
 Key features of multiple regression models in `mcp`:
 
 - **Common change points across categories**: The change points `cp_1` and `cp_2` are estimated as single locations shared across all levels of `group`. (If you instead want category-specific change-point locations that deviate per group, use group-level effects like `1 + (1|group) ~ ...`; see [group-level effects](../articles/group_effects.html)).
-- **Parameter names and carry-over**: In segment 1, `xgroupA_1` through `xgroupD_1` represent separate slopes for each level of `group`. In segment 2, `groupB_2`, `groupC_2`, and `groupD_2` represent intercept offsets relative to the reference level `groupA`. The continuous slope `z_1` on covariate `z` carries over into subsequent segments unless redefined.
+- **Parameter names across segments**: In segment 1, `xgroupA_1` through `xgroupD_1` represent separate slopes for each level of `group`. In segment 2, `groupB_2`, `groupC_2`, and `groupD_2` represent intercept offsets relative to the reference level `groupA`. The continuous slope `z_1` on covariate `z` persists into later segments unless replaced or removed by an intercept reset.
 - **Plotting and prediction**: Visualize by group using `plot(fit, color_by = "group")` or `plot(fit, facet_by = "group")`. By default, other unplotted continuous predictors (like `z`) are held at their mean automatically by `interpolate_newdata()`, or can be set explicitly via `plot(fit, color_by = "group", at = list(z = 0))`.
 
-# On carry-over between segments
+# How terms persist into later segments {#on-carry-over-between-segments}
 
-Every model contribution has a lifetime: it starts in the segment where it is declared, carries through later segments where it is omitted, and ends at the boundary where its replacement is declared. In rule form, omission means "carry", not "turn off"; repeating a term replaces its previous definition; and replacement coefficients are absolute rather than changes added to old coefficients.
+When defining multiple segments in `mcp`, you only need to specify what changes:
 
-What counts as "replacement declared" depends on the type of term:
+> **1. Slopes on** $x$ are segment-local: The change-point predictor $x$ is measured from each change point onset ($\tau_{k-1}$). Writing `+ x` defines a slope in that segment; omitting $x$ yields a flat plateau (slope on $x$ is zero). Joined segments (`~ 0 ...`) connect continuously, while disjoined segments (`~ 1 ...`) jump to a new intercept.
+>
+> **2. Non-**$x$ terms persist forward: Terms other than $x$ start in the segment where they are declared and persist into later segments:
+>
+> - Omitted non-$x$ terms **PERSIST** from the previous segment.
+>
+> - Repeated non-$x$ terms **REPLACE** the corresponding term from the previous segment.
+>
+> - A new intercept **RESETS** the population formula, removing omitted terms.
 
-| Type of term | Carries until | Explicit turn-off or reset |
-|:--|:--|:--|
-| Ordinary population term in `mu`, `sigma()`, `shape()`, etc. | The same formula term is declared again, or a new intercept resets that distributional parameter | When an intercept is declared without this term |
-| Segment-local `par_x` term, such as bare `x`, `I(x^2)`, or an interaction such as `x:group` | A new intercept resets that distributional parameter | When an intercept is declared |
-| Offset block | Another `offset()` is declared for the same distributional parameter | `offset(0)` |
-| `ar()` or `ma()` component | `ar()` or `ma` (respectively) is declared again | A zero formula, such as `ar(p, 0)` or `ma(q, 0)` |
-| Group-level predictor block for one distributional parameter and grouping factor | Another group-level term for that grouping factor is declared | `(0 | group)` |
+## Examples: Persistence into later segments and parameter names
 
-Here is the rule for ordinary population terms together with the intentional exception for segment-local `par_x` terms. Assume that `x` is `par_x`. In joined segments, an earlier local term plateaus at the change point and supplies the continuous baseline while the new local term starts at zero. A new intercept creates a disjoined segment and ends both local and ordinary population terms for that distributional parameter.
+Examples of persistence, replacement, and `mcp` parameter names:
 
-## Carry-over examples
 ```{r, eval=FALSE, R.options = list(width = 9999)}
-# Model with one covariate z
+# 1. Slope transitions on x: joined (~ 0) vs. disjoined (~ 1)
+list(
+  y ~ 1 + x,  # Intercept_1, x_1
+    ~ 0 + x,  # Joined slope: connects continuously to segment 1 (new slope x_2)
+    ~ 1 + x,  # Disjoined slope: Intercept_3 jumps; new slope x_3
+    ~ 0,      # Joined plateau: connects continuously to segment 3; slope on x is zero (omitted x)
+    ~ 1       # Disjoined plateau: Intercept_5 jumps; slope on x is zero (omitted x)
+)
+
+# 2. Covariates: persist into later segments until reset
 list(
   y ~ 1 + x + z,  # Intercept_1, x_1, z_1
-    ~ 0 + x,      # x_1 plateaus (no intercept); x_2 turns on; carry z_1
-    ~ 0 + x + z,  # x_2 plateaus (no intercept); x_3 turns on; z_3 replaces z_1
-    ~ 1           # Intercept_4 replaces Intercept_1; x_1--x_3 and z_3 turn off
+    ~ 0 + x,      # Joined: x_2 starts; z_1 persists into segment 2 (evaluated on observation's z_i)
+    ~ 0 + x + z,  # Joined: x_3 starts; z_3 replaces z_1 with an absolute new slope
+    ~ 1 + x       # Disjoined: Intercept_4 and x_4 start; z is removed by intercept reset
 )
 
-# Model with categorical predictor
+# 3. Categorical factors: dummy coefficients persist into later segments
 list(
-  y ~ 1 + condition,  # Intercept_1, condition dummies
-    ~ 0,              # Everything from segment 1 carries over
-    ~ 0 + condition,  # Condition dummies are replaced; Intercept_1 carries
-    ~ 1               # Intercept_4 replaces Intercept_1; condition dummies turn off
+  y ~ 1 + condition,  # Intercept_1, conditionB_1, conditionC_1
+    ~ 0,              # Joined: all dummies persist into segment 2 (flat continuation)
+    ~ 0 + condition,  # Joined: conditionB_3, conditionC_3 replace previous dummies
+    ~ 1               # Disjoined: Intercept_4 starts; condition is removed by intercept reset
 )
 
-# Model with distributional regression
+# 4. Distributional regression and time series persist independently
 list(
-  y ~ 1 + z + sigma(1 + z),  # mu: Intercept_1, z_1; sigma: sigma_1, sigma_z_1
-    ~ 1,                     # Intercept_2 replaces Intercept_1; z_1 turns off; sigma carries
-    ~ 0 + sigma(1),          # sigma_3 replaces sigma_1; sigma_z_1 turns off; mu carries
-    ~ 0 + z                  # z_4 turns on; Intercept_2 and sigma_3 carry
+  y ~ 1 + x + sigma(1 + x) + ar(1),  # Intercept_1, x_1, sigma_1, sigma_x_1, ar1_1
+    ~ 0 + x,                         # Joined: x_2 starts; sigma() and ar() persist into segment 2 unchanged
+    ~ 1 + x + ar(2),                 # Disjoined: Intercept_3, x_3; sigma persists; ar1_3 and ar2_3 replace AR(1)
+    ~ 0 + x + ar(1, 0)               # Joined: x_4 starts; ar(1, 0) explicitly turns AR off
 )
 
-# Model with AR (or MA) components and group-level effects
+# 5. Group-level effects and offsets persist until explicitly turned off
 list(
-  y ~ 1 + ar(2) + (1 | id),   # Intercept_1; AR(2); group-level Intercept_1_id
-    ~ 1,                      # Intercept_2 replaces Intercept_1; AR(2) and group effect carry
-    ~ 0 + ar(1) + (1 || id),  # AR(1) replaces AR(2); Intercept_3_id replaces the group block
-    ~ 0 + ar(1, 0) + (0 | id) # AR and group-level effect turn off; Intercept_2 carries
-)
-
-# Model with offset
-list(
-  y ~ 1 + x + offset(log(exposure)),  # Intercept_1, x_1; exposure offset turns on
-    ~ 0 + x,                          # x_1 plateaus; x_2 turns on; offset carries
-    ~ 0 + x + offset(0)               # x_2 plateaus; x_3 turns on; offset turns off
+  y ~ 1 + x + (1 | id) + offset(log(exposure)),  # Intercept_1, x_1, Intercept_1_id, exposure offset
+    ~ 0 + x,                                     # Joined: x_2 starts; group effect and offset persist into segment 2
+    ~ 1 + x + (0 | id) + offset(0)               # Disjoined: Intercept_3, x_3; group effect and offset turned off
 )
 ```
 
+As shown above, terms not affected by the population intercept can be turned off anywhere using zero: `(0 | group)`, `offset(0)`, or `ar(p, 0)` / `ma(q, 0)`.
+
 ## Transformations are not segment-local
+
 Transformations such as `sin()` and `poly()` in formulas are evaluated on the original predictor values, as in `lm()` and `glm()`. The change-point predictor is the exception: bare `par_x` and polynomial bases such as `I(par_x^2)` use distance from the segment onset (change point location, i.e., `cp_i` values).
 
 For example, assuming that `x` is `par_x`:
 
-```r
+``` r
 list(
   y ~ 1,                        # Intercept_1
     ~ 1 + sin(x) + x + I(x^2)   # sin(x) uses x; x and I(x^2) use x - cp_1
 )
 ```
-
 
 # Relative changes between segments
 

@@ -45,8 +45,8 @@ several distributional terms.}
 \code{response ~ cp ~ predictors} (e.g., \code{y ~ 1 ~ 1 + x}), except the first segment
 has no change point and uses \code{response ~ predictors}. The response and
 change-point parts can be omitted (\code{cp ~ predictor} assumes the same
-response; \code{~ predictor} assumes an intercept-only change point). Terms normally carry
-into later segments until redefined (see details). See examples on the
+response; \code{~ predictor} assumes an intercept-only change point). Terms normally persist
+into later segments until redefined or reset (see details). See examples on the
 \href{https://lindeloev.github.io/mcp/}{mcp website}.
 
 \strong{1. Response (segment 1 only):}

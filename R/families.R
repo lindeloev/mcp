@@ -28,8 +28,8 @@ bernoulli = function(link = "logit") {
 #' @aliases negbinomial
 #' @param link Link function for `mu`.
 #' @param link_shape Link function for `shape`.
-#' @details `shape(1)` is added implicitly and is constant across segments unless
-#'   a `shape()` formula is supplied. For example, `y ~ 1 + x + shape(1 + x)`
+#' @details `shape(1)` is added implicitly in segment 1 and persists into later segments unless
+#'   replaced by a new `shape()` formula. For example, `y ~ 1 + x + shape(1 + x)`
 #'   models both the mean and shape. Regression coefficients for both dpars are
 #'   on their link scales.
 #' @export
