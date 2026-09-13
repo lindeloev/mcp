@@ -87,3 +87,11 @@ test_that("Coefficient-free models error with an informative message", {
   )
 })
 
+
+test_that("Default Poisson prior does not break prior predictive workflow with seed = 42", {
+  df = data.frame(x = 1:10, y = 5)
+  fit = mcp(list(y ~ 1), data = df, family = poisson(), par_x = "x", sample = "both", seed = 42, iter = 1000, chains = 3, quiet = TRUE)
+  expect_s3_class(pp_check(fit, prior = TRUE, ndraws = NULL), "ggplot")
+})
+
+

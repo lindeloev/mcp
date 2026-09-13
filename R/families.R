@@ -490,7 +490,7 @@ mcpfamily_poisson = function(family) {
     count_y = "log(pmax(.y, 0.1))"
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", paste0("dt(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)), 3)"), "dt(0, 2.5, 3) T(0, )", "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
+      "mu", "Intercept", paste0("dnorm(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)))"), "dt(0, 2.5, 3) T(0, )", "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
       "mu", "dummy", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Regularizing categorical contrast on the log scale", "always",
       "mu", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "dt(0, 2.5 / predictor_scale(), 3) T(0, )", "Regularizing log-count coefficient scaled to a reference predictor change", "always"
     )
@@ -567,7 +567,7 @@ mcpfamily_negbinomial = function(family) {
   count_y = "log(pmax(.y, 0.1))"
   default_prior = tibble::tribble(
     ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-    "mu", "Intercept", paste0("dt(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)), 3)"), "dt(0, 2.5, 3) T(0, )", "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
+    "mu", "Intercept", paste0("dnorm(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)))"), "dt(0, 2.5, 3) T(0, )", "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
     "mu", "dummy", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Regularizing categorical count contrast on the log scale", "always",
     "mu", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "dt(0, 2.5 / predictor_scale(), 3) T(0, )", "Regularizing log-count coefficient scaled to a reference predictor change", "always",
     "shape", "Intercept", "dloginvgamma(0.4, 0.3)", NA_character_, "Weakly regularizing positive overdispersion shape", "constant",

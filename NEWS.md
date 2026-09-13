@@ -158,6 +158,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Gaussian models with a log link is now more aligned with `brms`: calibrate priors using data, replacing zeros with 0.1 and using finite location and scale fallbacks.
 
+  - Count models (`poisson()`, `negbinomial()`) with a log link now use `dnorm()` rather than heavy-tailed brms-li `dt(..., 3)` for the intercept prior. This ensures finite prior expected counts and prevents extreme simulated means from breaking prior predictive checks.
+
 - **Interface and data structures:**
 
   - `fit = mcp_example("name")` now returns the fit directly instead of a list with a `$fit` entry. It now defaults to sampling the model (`sample = "post"`) and the `sample` argument is now directly passed to `mcp(..., sample = sample)` so `sample = TRUE` is deprecated.

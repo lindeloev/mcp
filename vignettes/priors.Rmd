@@ -249,10 +249,19 @@ For an otherwise unbounded user prior such as `cp_2 = "dnorm(40, 10)"`, `mcp` au
 
 The defaults borrow the robust calibration used by `brms`, adapted to the local parameterization of `mcp`. You can inspect all resolved priors for a model using `prior_summary(fit, verbose = TRUE)`.
 
-- **Intercepts:** Unlike the improper flat default coefficient priors in `brms`, `mcp` uses proper Student-t priors because JAGS does not support flat priors. With the identity link, the Gaussian intercept prior is centered on `round(median(y), 1)` with scale `max(2.5, round(mad(y), 1))`. With the log link, location and scale are derived from $\log(y)$ (with zeros replaced by 0.1).
+- **Intercepts:** Unlike the improper flat default coefficient priors in `brms`, `mcp` uses proper Student-t or normal priors because JAGS does not support flat priors. With the identity link, the Gaussian intercept prior is centered on `round(median(y), 1)` with scale `max(2.5, round(mad(y), 1))`. With the log link, location and scale are derived from $\log(y)$ (with zeros replaced by 0.1).
 - **Slopes:** Numeric coefficient priors use the corresponding family-level scale divided by a representative change in the predictor: its observed range `max(x) - min(x)` for `par_x` and binary variables, and two standard deviations ($2\,\text{SD}$) otherwise. This follows the scaling convention proposed by [Gelman (2008)](https://doi.org/10.1002/sim.3107) and ensures that slope priors remain identical and comparable across models regardless of the number of change points.
 - **Unspecified SD model (`sigma`):** For Gaussian models without an explicit `sigma()` formula, `sigma_1` defaults to `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`, matching `brms`. This remains true for `gaussian(link = "log")`: that link constrains the conditional mean, not the observations, so non-positive responses are valid and are not passed through `log()` merely to construct a sigma prior.
 - **Modeled SD (`sigma(1 + x)`):** An explicit `sigma()` formula models log-SD, as in `brms`. Its intercept prior is `dt(0, 2.5, 3)`, and its contrast and numeric-coefficient priors use the same reference-change scaling described above.
+
+## Deviations from brms default priors
+
+While `mcp` aligns with `brms` where possible, several defaults intentionally deviate:
+
+- **Proper population slopes:** `mcp` uses proper, regularizing Student-t priors scaled to predictor change rather than `brms`'s improper flat priors because JAGS requires proper priors.
+- **Log-link count intercepts (`poisson()`, `negbinomial()`):** `mcp` uses `dnorm()` on the log scale rather than heavy-tailed `student_t(3, ...)` to ensure finite prior predictive means and prevent explosive count simulations.
+- **Logit and probit links (`binomial()`, `bernoulli()`):** `mcp` uses a narrower scale of 1.5 (`dt(0, 1.5, 3)`) instead of `brms`'s 2.5 to avoid placing excess prior probability mass on extreme probabilities (0 and 1).
+- **Autoregressive and moving-average terms:** `mcp` uses zero-centered regularizing `dnorm(0, 0.5) T(-1, 1)` priors rather than improper flat priors to favor stationary and invertible dynamics.
 
 # Default priors on group-level effects
 
