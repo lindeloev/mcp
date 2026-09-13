@@ -105,7 +105,16 @@ default_predictor_scale = function(matrix_data, x_factor) {
 }
 
 
-default_predictor_specs = function(predictors, family) {
+# Retrieve active offset spec for a specific dpar and segment, if any.
+get_active_offset = function(design_specs, dpar, segment) {
+  specs = Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, dpar) && s$segment <= segment, design_specs)
+  if (length(specs) == 0) return(NULL)
+  latest = specs[[which.max(vapply(specs, `[[`, integer(1), "segment"))]]
+  if (is.null(latest$offset_data) || all(latest$offset_data == 0)) NULL else latest
+}
+
+
+default_predictor_specs = function(predictors, family, design_specs = list()) {
   defaults = dplyr::bind_rows(family$default_prior, default_arma_specs())
 
   modeled_dpars = unique(defaults$dpar[defaults$condition == "modeled"])
@@ -132,6 +141,21 @@ default_predictor_specs = function(predictors, family) {
       and_collapse(joined$code_name[is.na(joined$prior)])
     )
   }
+
+  # Offset adjustments for log-link count intercepts
+  if (family$family %in% c("poisson", "negbinomial") && identical(family$link, "log")) {
+    active_specs = Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, "mu") && any(s$offset_data != 0), design_specs)
+    for (i in which(joined$dpar == "mu")) {
+      spec = get_active_offset(design_specs, "mu", joined$segment[i])
+      if (!is.null(spec)) {
+        sym = if (length(active_specs) <= 1) "offset" else paste0("offset_", spec$segment)
+        if (joined$par_type[i] == "Intercept")
+          joined$prior[i] = gsub("log(pmax(.y, 0.1))", paste0("log(pmax(.y, 0.1)) - ", sym), joined$prior[i], fixed = TRUE)
+        joined$description[i] = gsub("log-count", "log-rate", joined$description[i], fixed = TRUE)
+      }
+    }
+  }
+
   scaled = grepl("predictor_scale()", joined$prior, fixed = TRUE)
   joined$prior[scaled] = vapply(which(scaled), function(i) {
     gsub(

@@ -23,10 +23,18 @@ display_data_name = function(x) {
 
 
 # Collect data and model summaries used to resolve symbolic prior templates.
-prior_context = function(data, segments) {
+prior_context = function(data, segments, design_specs = list()) {
   x_name = segments$x[1]
   y_name = segments$y[1]
   x = data[[x_name]]
+
+  for (s in Filter(function(s) isTRUE(s$has_offset), design_specs)) {
+    if (!is.null(s$offset_data) && any(s$offset_data != 0)) {
+      data[[paste0("offset_", s$segment)]] = s$offset_data
+      data$offset = s$offset_data
+    }
+  }
+
   list(
     data = data,
     x_name = x_name,

@@ -406,7 +406,7 @@ mcp = function(model,
     stop("The model does not contain any parameters to estimate.", call. = FALSE)
 
   # Make prior
-  prior = get_prior(segments, cps, predictors, group_effects, family, prior, data)
+  prior = get_prior(segments, cps, predictors, group_effects, family, prior, data, predictor_tables$design_specs)
   prior_table = attr(prior, "prior_table")
   prior_context = attr(prior, "prior_context")
   attr(prior, "prior_table") = NULL

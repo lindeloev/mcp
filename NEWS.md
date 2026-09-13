@@ -160,7 +160,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Gaussian models with a log link is now more aligned with `brms`: calibrate priors using data, replacing zeros with 0.1 and using finite location and scale fallbacks.
 
-  - Count models (`poisson()`, `negbinomial()`) with a log link now use `dnorm()` rather than heavy-tailed brms-li `dt(..., 3)` for the intercept prior. This ensures finite prior expected counts and prevents extreme simulated means from breaking prior predictive checks.
+  - **Count model priors (`poisson()`, `negbinomial()`):** In v0.3.4, log-link Poisson models used uncalibrated, unscaled `dnorm(0, 10)` for both intercepts and slopes. In v0.4.0, population log-mean intercepts are now robustly data-calibrated to `dnorm(median(log(pmax(y, 0.1))), ...)` with a minimum scale of 2.5, and automatically shift to the observed log-rate ($\log(y) - \text{offset}$) when an `offset()` is present. Slopes are now Gelman-scaled to predictor change (`dnorm(0, 2.5 / predictor_scale())`). For the new multiple regression and RHS group-level features in v0.4.0, categorical contrasts default to `dnorm(0, 2.5)` and group SDs default to `dnorm(0, 2.5) T(0, )` (or scaled half-normals). Broad normal priors were chosen over `brms`-style Student-t priors because Student-t tails produce infinite expected counts ($\mathbb{E}[\exp(\eta)] = \infty$) and explosive prior simulations under exponentiation, following the precedent of `rstanarm`.
 
 - **Interface and data structures:**
 

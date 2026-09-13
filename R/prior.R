@@ -32,14 +32,14 @@ validate_prior_v1 = function(prior) {
 }
 
 # Get priors for all parameters in the model
-get_prior = function(segments, cps, predictors, group_effects, family, prior = list(), data) {
+get_prior = function(segments, cps, predictors, group_effects, family, prior = list(), data, design_specs = list()) {
   checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
-  context = prior_context(data, segments)
+  context = prior_context(data, segments, design_specs)
   warn_legacy_prior_constants(prior, context)
 
   specs = dplyr::bind_rows(
     default_cp_specs(cps, context),
-    default_predictor_specs(predictors, family),
+    default_predictor_specs(predictors, family, design_specs),
     default_group_specs(group_effects, family)
   )
   specs = overlay_user_prior_specs(specs, prior, cps, context, predictors, family)

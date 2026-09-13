@@ -79,9 +79,9 @@ plot_pars(fit)
 
 `poisson()` defaults to `link = 'log'`, meaning that we have to exponentiate the estimates to get the "raw" Poisson parameter $\lambda$. $\lambda$ has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is `exp(result$mean[2])` (`r exp(result$mean[2])`) and it is `exp(result$mean[3])` (`r exp(result$mean[3])`) for segment 2.
 
-The intercept prior is a Student-t distribution centered on the rounded median of `log(pmax(n, 0.1))`, with scale equal to the maximum of 2.5 and its rounded MAD. This follows the robust calibration in `brms`; `pmax()` keeps zeros finite and the minimum scale avoids a narrow prior.
+The intercept prior is a normal distribution centered on the rounded median of `log(pmax(n, 0.1))`, with scale equal to the maximum of 2.5 and its rounded MAD. `pmax()` keeps zeros finite and the minimum scale avoids an accidentally narrow prior.
 
-Categorical contrasts use scale 2.5; numeric coefficients are scaled to a representative predictor change. These are proper Student-t priors where `brms` is flat, allowing prior sampling and mild regularization of short segments.
+Categorical contrasts use `dnorm(0, 2.5)`; numeric coefficients use `dnorm(0, 2.5 / S)` scaled to a representative predictor change $S$. Group standard deviations similarly default to half-normal priors (`dnorm(0, ...) T(0, )`). Following the precedent of `rstanarm`, these normal defaults retain wide regularizing coverage while avoiding the infinite prior expected counts and explosive simulations produced by Student-t tails under exponentiation (used in some packages).
 
 ```{r, R.options = list(width = 9999)}
 prior_summary(fit)
@@ -118,7 +118,7 @@ model = list(
 fit = mcp(model, data = df, family = poisson())  # implicit link = "log"
 ```
 
-Adding a categorical predictor to the model, you can also model rate ratios.
+Adding a categorical predictor to the model, you can also model rate ratios. When an offset is present, `mcp` automatically shifts the default intercept prior from centering on observed log-counts to observed log-rates ($\log(y) - \text{offset}$), keeping the minimum scale at 2.5.
 
 > **Note on `par_x` vs. cumulative exposure:**  
 > The offset is evaluated per row as local exposure for that observation. If `par_x` represents continuous cumulative time from an origin (e.g., $[0, t_i]$), using `offset(log(par_x))` does **not** integrate piecewise rates across prior segments; instead, the active segment's rate is applied to the total duration. If your data consists of discrete time intervals (bins) of duration $\Delta t_i$, using `offset(log(delta_t))` is valid.

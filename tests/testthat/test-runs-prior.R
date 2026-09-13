@@ -217,3 +217,105 @@ testthat::test_that("parse_prior_call parses prior calls, arguments, and truncat
   testthat::expect_error(parse_prior_call("T(lower = 0, )"), "Named arguments are not supported")
 })
 
+
+testthat::test_that("default log-count priors use normal population slopes/contrasts and half-normal group SDs", {
+  d = data.frame(
+    x = 1:10,
+    cat = factor(rep(c("A", "B"), 5)),
+    id = factor(rep(1:5, each = 2)),
+    y = 1:10
+  )
+  for (fam in list(poisson(), negbinomial())) {
+    fit = mcp(
+      list(y ~ 1 + x + cat + (1 + x + cat || id)),
+      data = d,
+      family = fam,
+      sample = FALSE
+    )
+    # Population priors
+    testthat::expect_match(fit$prior$Intercept_1, "^dnorm\\(")
+    testthat::expect_equal(fit$prior$x_1, "dnorm(0, 0.2777778)")
+    testthat::expect_equal(fit$prior$catB_1, "dnorm(0, 2.5)")
+
+    # Group SD priors
+    testthat::expect_equal(fit$prior$Intercept_1_id_sd, "dnorm(0, 2.5) T(0, )")
+    testthat::expect_equal(fit$prior$x_1_id_sd, "dnorm(0, 0.2777778) T(0, )")
+    testthat::expect_equal(fit$prior$catB_1_id_sd, "dnorm(0, 2.5) T(0, )")
+  }
+})
+
+
+testthat::test_that("offset adjusts default intercept priors to log-rate", {
+  d = data.frame(
+    x = 1:30,
+    y = c(rep(5, 10), rep(10, 10), rep(20, 10)),
+    exposure = rep(10, 30),
+    exposure2 = rep(100, 30)
+  )
+
+  for (fam in list(poisson(), negbinomial())) {
+    # Single offset
+    fit = mcp(
+      list(y ~ 1 + x + offset(log(exposure))),
+      data = d,
+      family = fam,
+      sample = FALSE
+    )
+    expected_rate = log(pmax(d$y, 0.1)) - log(d$exposure)
+    expected_loc = round(median(expected_rate), 1)
+    expected_scale = max(2.5, round(mad(expected_rate), 1))
+    testthat::expect_equal(fit$prior$Intercept_1, paste0("dnorm(", expected_loc, ", ", expected_scale, ")"))
+
+    ps = prior_summary(fit, verbose = TRUE)
+    int_row = ps[ps$parameter == "Intercept_1", ]
+    testthat::expect_match(int_row$rule, "- offset", fixed = TRUE)
+    testthat::expect_equal(int_row$description, "Robustly centered log-rate intercept with a minimum scale of 2.5")
+
+    # Multi-segment with offset persistence and offset(0) turn-off
+    fit_multi = mcp(
+      list(
+        y ~ 1 + x + offset(log(exposure)),
+        1 ~ 1 + x,
+        1 ~ 1 + offset(0)
+      ),
+      data = d,
+      family = fam,
+      sample = FALSE
+    )
+    testthat::expect_equal(fit_multi$prior$Intercept_1, paste0("dnorm(", expected_loc, ", ", expected_scale, ")"))
+    testthat::expect_equal(fit_multi$prior$Intercept_2, paste0("dnorm(", expected_loc, ", ", expected_scale, ")"))
+
+    # Segment 3 reverted to log-count
+    expected_count = log(pmax(d$y, 0.1))
+    expected_count_loc = round(median(expected_count), 1)
+    expected_count_scale = max(2.5, round(mad(expected_count), 1))
+    testthat::expect_equal(fit_multi$prior$Intercept_3, paste0("dnorm(", expected_count_loc, ", ", expected_count_scale, ")"))
+
+    ps_multi = prior_summary(fit_multi, verbose = TRUE)
+    testthat::expect_equal(ps_multi$description[ps_multi$parameter == "Intercept_1"], "Robustly centered log-rate intercept with a minimum scale of 2.5")
+    testthat::expect_equal(ps_multi$description[ps_multi$parameter == "Intercept_2"], "Robustly centered log-rate intercept with a minimum scale of 2.5")
+    testthat::expect_equal(ps_multi$description[ps_multi$parameter == "Intercept_3"], "Robustly centered log-count intercept with a minimum scale of 2.5")
+
+    # Multiple distinct offsets in different segments
+    fit_diff = mcp(
+      list(
+        y ~ 1 + x + offset(log(exposure)),
+        1 ~ 1 + x + offset(log(exposure2))
+      ),
+      data = d,
+      family = fam,
+      sample = FALSE
+    )
+    expected_rate2 = log(pmax(d$y, 0.1)) - log(d$exposure2)
+    expected_loc2 = round(median(expected_rate2), 1)
+    expected_scale2 = max(2.5, round(mad(expected_rate2), 1))
+    testthat::expect_equal(fit_diff$prior$Intercept_1, paste0("dnorm(", expected_loc, ", ", expected_scale, ")"))
+    testthat::expect_equal(fit_diff$prior$Intercept_2, paste0("dnorm(", expected_loc2, ", ", expected_scale2, ")"))
+
+    ps_diff = prior_summary(fit_diff, verbose = TRUE)
+    testthat::expect_match(ps_diff$rule[ps_diff$parameter == "Intercept_1"], "- offset_1", fixed = TRUE)
+    testthat::expect_match(ps_diff$rule[ps_diff$parameter == "Intercept_2"], "- offset_2", fixed = TRUE)
+  }
+})
+
+

@@ -500,9 +500,9 @@ mcpfamily_poisson = function(family) {
     count_y = "log(pmax(.y, 0.1))"
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", paste0("dnorm(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)))"), "dt(0, 2.5, 3) T(0, )", "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
-      "mu", "dummy", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Regularizing categorical contrast on the log scale", "always",
-      "mu", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "dt(0, 2.5 / predictor_scale(), 3) T(0, )", "Regularizing log-count coefficient scaled to a reference predictor change", "always"
+      "mu", "Intercept", paste0("dnorm(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)))"), "dnorm(0, 2.5) T(0, )", "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
+      "mu", "dummy", "dnorm(0, 2.5)", "dnorm(0, 2.5) T(0, )", "Regularizing categorical contrast on the log scale", "always",
+      "mu", "slope", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5 / predictor_scale()) T(0, )", "Regularizing log-count coefficient scaled to a reference predictor change", "always"
     )
   } else {
     stop("mcp has no default priors for poisson(link = \"", family$link, "\") so it's likely not supported.")
@@ -577,9 +577,9 @@ mcpfamily_negbinomial = function(family) {
   count_y = "log(pmax(.y, 0.1))"
   default_prior = tibble::tribble(
     ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-    "mu", "Intercept", paste0("dnorm(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)))"), "dt(0, 2.5, 3) T(0, )", "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
-    "mu", "dummy", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Regularizing categorical count contrast on the log scale", "always",
-    "mu", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "dt(0, 2.5 / predictor_scale(), 3) T(0, )", "Regularizing log-count coefficient scaled to a reference predictor change", "always",
+    "mu", "Intercept", paste0("dnorm(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)))"), "dnorm(0, 2.5) T(0, )", "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
+    "mu", "dummy", "dnorm(0, 2.5)", "dnorm(0, 2.5) T(0, )", "Regularizing categorical count contrast on the log scale", "always",
+    "mu", "slope", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5 / predictor_scale()) T(0, )", "Regularizing log-count coefficient scaled to a reference predictor change", "always",
     "shape", "Intercept", "dloginvgamma(0.4, 0.3)", NA_character_, "Weakly regularizing positive overdispersion shape", "constant",
     "shape", "Intercept", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Weakly regularizing modeled log-shape intercept", "modeled",
     "shape", "dummy", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Regularizing shape contrast on the log scale", "always",
