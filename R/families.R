@@ -380,7 +380,13 @@ mcpfamily_binomial = function(family) {
       observed_jags = function(context) paste0(
         "min(max(", context$y, ", ", context$boundary, "), ",
         context$aux("trials"), " - ", context$boundary, ") / ", context$aux("trials")
-      )
+      ),
+      validate_boundary = function(boundary, data = list()) {
+        min_trials = min(data$trials)
+        max_boundary = min_trials / 2
+        if (any(boundary <= 0 | boundary >= max_boundary))
+          stop("`boundary` for family = binomial() must be strictly between 0 and half the smallest trial count (", max_boundary, ").")
+      }
     )
   }
 
@@ -457,7 +463,11 @@ mcpfamily_bernoulli = function(family) {
       observed_r = function(y, data, boundary) pmin(pmax(y, boundary), 1 - boundary),
       observed_jags = function(context) paste0(
         "min(max(", context$y, ", ", context$boundary, "), 1 - ", context$boundary, ")"
-      )
+      ),
+      validate_boundary = function(boundary, data = list()) {
+        if (any(boundary <= 0 | boundary >= 0.5))
+          stop("`boundary` for family = bernoulli() must be strictly between 0 and 0.5.")
+      }
     )
   }
 
@@ -913,6 +923,7 @@ is.mcpfamily = function(x) {
     checkmate::assert_function(x$garma$observed_r)
     checkmate::assert_function(x$garma$observed_jags)
     checkmate::assert_string(x$garma$generate_message, null.ok = TRUE)
+    checkmate::assert_function(x$garma$validate_boundary, null.ok = TRUE)
   }
   checkmate::assert_string(x$linkfun_str)
   checkmate::assert_string(x$linkinv_str)

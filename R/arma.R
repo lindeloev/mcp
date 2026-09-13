@@ -168,6 +168,23 @@ assert_arma_series = function(data, series) {
 }
 
 
+# Validate GARMA observation boundaries against family-appropriate bounds
+assert_arma_boundaries = function(family, boundary, data = list()) {
+  boundary = unique(stats::na.omit(boundary))
+  if (length(boundary) == 0)
+    return(invisible(TRUE))
+
+  if (!is.null(family$garma$validate_boundary)) {
+    family$garma$validate_boundary(boundary, data)
+  } else {
+    if (any(boundary <= 0 | boundary >= 1))
+      stop("`boundary` in ar() / ma() must be strictly between 0 and 1.")
+  }
+
+  invisible(TRUE)
+}
+
+
 # Check whether this model has any AR/MA terms
 is_arma = function(fit) {
   any(get_fit_model_tables(fit)$predictors$dpar %in% c("ar", "ma"))
@@ -499,6 +516,8 @@ get_garma_boundary_jagscode = function(segments, predictors, par_x) {
 # Evaluate or generate a GARMA response series
 simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
                           dpars, data = list(), y = NULL, series_id = NULL) {
+  assert_arma_boundaries(family, boundary, data)
+
   if (is.null(series_id))
     series_id = rep(1, length(base_link_mu))
   if (length(series_id) != length(base_link_mu) || anyNA(series_id))

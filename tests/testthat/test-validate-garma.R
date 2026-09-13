@@ -382,3 +382,67 @@ test_that("one GARMA recurrence handles generated, supplied, and partial histori
     expect_equal(partial$y[!is.na(partial_y)], partial_y[!is.na(partial_y)])
   }
 })
+
+
+test_that("GARMA boundaries enforce family-appropriate limits during model validation", {
+  data_bern = data.frame(x = 1:6, y = c(0, 1, 0, 1, 0, 1))
+
+  # Bernoulli: boundary must be strictly below 0.5
+  expect_error(
+    mcp(list(y ~ 1 + ar(1, boundary = 0.75)), data_bern, family = bernoulli(), par_x = "x", sample = FALSE),
+    "`boundary` for family = bernoulli() must be strictly between 0 and 0.5.",
+    fixed = TRUE
+  )
+  expect_error(
+    mcp(list(y ~ 1 + ar(1, boundary = 0.5)), data_bern, family = bernoulli(), par_x = "x", sample = FALSE),
+    "`boundary` for family = bernoulli() must be strictly between 0 and 0.5.",
+    fixed = TRUE
+  )
+  expect_silent(
+    mcp(list(y ~ 1 + ar(1, boundary = 0.1)), data_bern, family = bernoulli(), par_x = "x", sample = FALSE)
+  )
+  expect_silent(
+    mcp(list(y ~ 1 + ar(1, boundary = 0.49)), data_bern, family = bernoulli(), par_x = "x", sample = FALSE)
+  )
+
+  # Binomial: boundary must be strictly below half the smallest trial count
+  data_binom_single = data.frame(x = 1:6, y = c(0, 1, 0, 1, 0, 1), N = 1)
+  expect_error(
+    mcp(list(y | trials(N) ~ 1 + ar(1, boundary = 0.75)), data_binom_single, family = binomial(), par_x = "x", sample = FALSE),
+    "`boundary` for family = binomial() must be strictly between 0 and half the smallest trial count (0.5).",
+    fixed = TRUE
+  )
+  expect_error(
+    mcp(list(y | trials(N) ~ 1 + ar(1, boundary = 0.5)), data_binom_single, family = binomial(), par_x = "x", sample = FALSE),
+    "`boundary` for family = binomial() must be strictly between 0 and half the smallest trial count (0.5).",
+    fixed = TRUE
+  )
+
+  # Binomial with varying trials: smallest trial count governs the limit
+  data_binom_var = data.frame(x = 1:6, y = c(0, 1, 0, 1, 0, 1), N = c(1, 10, 10, 10, 10, 10))
+  expect_error(
+    mcp(list(y | trials(N) ~ 1 + ar(1, boundary = 0.75)), data_binom_var, family = binomial(), par_x = "x", sample = FALSE),
+    "`boundary` for family = binomial() must be strictly between 0 and half the smallest trial count (0.5).",
+    fixed = TRUE
+  )
+
+  # Binomial with larger trials allows boundary = 0.75 (0.75 < 10 / 2)
+  data_binom_large = data.frame(x = 1:6, y = c(0, 1, 0, 1, 0, 1), N = 10)
+  expect_silent(
+    mcp(list(y | trials(N) ~ 1 + ar(1, boundary = 0.75)), data_binom_large, family = binomial(), par_x = "x", sample = FALSE)
+  )
+
+  # simulate_garma directly enforces boundaries
+  expect_error(
+    simulate_garma(
+      base_link_mu = rep(0, 4),
+      ar_list = list(ar1_ = rep(0.5, 4)),
+      ma_list = list(),
+      boundary = rep(0.75, 4),
+      family = bernoulli(),
+      dpars = list(mu = rep(0.5, 4))
+    ),
+    "`boundary` for family = bernoulli() must be strictly between 0 and 0.5.",
+    fixed = TRUE
+  )
+})
