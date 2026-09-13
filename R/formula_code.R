@@ -9,7 +9,6 @@
 #' @noRd
 #' @inheritParams get_formula_jags_dpar
 #' @inheritParams mcp
-#' @param dpars A character vector of dpars to including in model building
 #' @return A string with JAGS code.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -28,7 +27,7 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family, 
   }
 
   # Build formula for each dpar (note plural "_dpars")
-  this_cp_lookup = dplyr::select(segments, "segment", "form", this_cp = "cp_code_form")
+  this_cp_lookup = dplyr::select(segments, "segment", this_cp = "cp_code_form")
   next_cp_lookup = dplyr::select(segments, next_segment = "segment", next_cp = "cp_code_form")
 
   # Start by getting group-level effects
@@ -78,14 +77,12 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family, 
   # All together!
   all_dpar_keys = unique(c(formula_predictors_joined$dpar_key, offset_table$dpar_key))
 
-  # Begin consructing JAGS code
-  formula_jags_dpars_list = character()
-  for (key in all_dpar_keys) {
+  # Build JAGS code for each distributional or AR/MA parameter.
+  formula_jags_dpars_list = vapply(all_dpar_keys, function(key) {
     dpar_preds = formula_predictors_joined %>% dplyr::filter(.data$dpar_key == key)
     dpar_offsets = offset_table %>% dplyr::filter(.data$dpar_key == key)
-    dpar_str = get_formula_jags_dpar(dpar_preds, key, par_x, family, segment_offsets = dpar_offsets, segments = segments)
-    formula_jags_dpars_list = c(formula_jags_dpars_list, dpar_str)
-  }
+    get_formula_jags_dpar(dpar_preds, key, par_x, family, segment_offsets = dpar_offsets, segments = segments)
+  }, character(1))
   formula_jags_dpars = paste0(formula_jags_dpars_list, collapse = "\n\n")
 
   garma_boundary_str = get_garma_boundary_jagscode(segments, predictors, par_x)
@@ -105,7 +102,7 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family, 
 }
 
 
-#' Build an R formula (as string) for a dpar
+#' Build JAGS predictor code for a distributional or AR/MA parameter
 #'
 #' @aliases get_formula_jags_dpar
 #' @keywords internal
@@ -135,7 +132,6 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x, family, segment_offset
         inprod = paste0(" * inprod(rhs_matrix_[i_, c(", paste0(.data$matrix_col, collapse = ", "), ")], c(", paste0(.data$code_name, collapse = ", "), "))"),
         x_factor = gsub("x(?!p\\()", paste0("x_local_", dplyr::first(.data$segment), "_[i_]"), dplyr::first(.data$x_factor), perl = TRUE),
         segment_code = paste0(.data$indicator_this, .data$indicator_next, .data$inprod, " * ", .data$x_factor),
-        form = dplyr::first(.data$form),
         .groups = "drop"
       )
     pred_code_strs = df_code_strs$segment_code

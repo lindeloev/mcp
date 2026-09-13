@@ -216,25 +216,14 @@ get_predictor_matrix = function(predictors, group_effects = NULL) {
   } else {
     group_effects[group_effects$part == "predictor", , drop = FALSE]
   }
-  design = dplyr::bind_rows(
-    dplyr::transmute(
-      predictors,
-      matrix_col = .data$matrix_col,
-      name = .data$code_name,
-      matrix_data = .data$matrix_data
-    ),
-    dplyr::transmute(
-      group_predictors,
-      matrix_col = .data$matrix_col,
-      name = .data$name,
-      matrix_data = .data$matrix_data
-    )
-  ) %>%
-    dplyr::arrange(.data$matrix_col)
+  # Each coefficient contributes one column; both sources share matrix indices.
+  column_order = order(c(predictors$matrix_col, group_predictors$matrix_col))
+  matrix_data = c(predictors$matrix_data, group_predictors$matrix_data)[column_order]
+  column_names = c(predictors$code_name, group_predictors$name)[column_order]
 
-  suppressMessages(dplyr::bind_cols(design$matrix_data, .name_repair = "unique")) %>% # Suppress message about lacking column names
+  suppressMessages(dplyr::bind_cols(matrix_data, .name_repair = "unique")) %>% # Suppress message about lacking column names
     as.matrix() %>%
-    magrittr::set_colnames(design$name)
+    magrittr::set_colnames(column_names)
 }
 
 
@@ -393,11 +382,7 @@ find_mixture_quantile = function(cdf_fn, dpars, data, p, rate = FALSE, is_discre
 get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = FALSE, dpars = attr(draws, "dpars"), response_data = attr(draws, "response_data")) {
   keep = unique(keep)
   row_col = if (".mcp_data_row" %in% names(draws)) ".mcp_data_row" else "data_row"
-  grid = if (length(keep) > 0) {
-    draws %>% dplyr::select(dplyr::all_of(c(row_col, keep))) %>% dplyr::distinct()
-  } else {
-    draws %>% dplyr::select(dplyr::all_of(row_col)) %>% dplyr::distinct()
-  }
+  grid = draws %>% dplyr::select(dplyr::all_of(c(row_col, keep))) %>% dplyr::distinct()
 
   is_discrete = isTRUE(family$response$is_discrete)
   cdf_fn = family$r$cdf
