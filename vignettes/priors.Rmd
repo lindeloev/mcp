@@ -295,6 +295,27 @@ The defaults are governed by three core principles:
 | **Modeled dispersion** (`sigma()`, `shape()`) | Multiplicative | `dt(0, 2.5, 3)` / `dnorm(0, 2.5)` | `dt` / `dnorm(0, 2.5)` | `dt` / `dnorm(0, 2.5 / Δx)` | `dt` / `dnorm(0, 2.5 / Δx) T(0, )` |
 | **Autocorrelation** (`ar()`, `ma()`) | Stationarity | `dnorm(0, 0.5) T(-1, 1)` | `dnorm(0, 0.25)` | `dnorm(0, 0.25 / Δx)` | — |
 | **Change points** (`cp_i`) | Ordering | `dirichlet(1)` | — | — | `dnorm(0, 2·span/n_cp) T(0, )` |
+General quantities used in the table below:
+
+- response scale $S_y = \max(2.5, \operatorname{mad}(y))$
+
+- log-rate $y_{\text{rate}} = \log(\operatorname{pmax}(y, 0.1)) - \text{offset}$ (with $\text{offset} = 0$ if absent)
+
+- log-rate scale $S_{\text{rate}} = \max(2.5, \operatorname{mad}(y_{\text{rate}}))$
+
+- predictor change $\Delta x = \operatorname{range}(x)$ (binary / `par_x`) or $2\,\operatorname{sd}(x)$ (other continuous).
+
+| Family & Link | Intercept Prior | Contrast Prior | Slope Prior ($\beta$) | Group SD Prior ($\sigma$) |
+|---|---|---|---|---|
+| **Identity link** (`gaussian`, `poisson`) | `dt(median(y), S_y, 3)`\* | `dt(0, S_y, 3)` | `dt(0, S_y / Δx, 3)` | `dt(0, S_y, 3) T(0, )` |
+| **Log link** (`poisson`, `negbinomial`, `gaussian`) | `dnorm(median(y_rate), S_rate)` | `dnorm(0, 2.5)` | `dnorm(0, 2.5 / Δx)` | `dnorm(0, 2.5) T(0, )` |
+| **Logit / Probit link** (`binomial`, `bernoulli`) | `dt(0, 1.5, 3)` | `dt(0, 1.5, 3)` | `dt(0, 1.5 / Δx, 3)` | `dt(0, 1.5, 3) T(0, )` |
+| **Constant dispersion** (implicit `sigma`, `shape`) | `sigma_1 ~ dt(0, S_y, 3) T(0, )`<br>`shape_1 ~ dloginvgamma(0.4, 0.3)` | — | — | — |
+| **Modeled dispersion** (`sigma()`, `shape()`) | `sigma`: `dt(0, 2.5, 3)`<br>`shape`: `dnorm(0, 2.5)` | `sigma`: `dt(0, 2.5, 3)`<br>`shape`: `dnorm(0, 2.5)` | `sigma`: `dt(0, 2.5 / Δx, 3)`<br>`shape`: `dnorm(0, 2.5 / Δx)` | `sigma`: `dt(0, 2.5, 3) T(0, )`<br>`shape`: `dnorm(0, 2.5) T(0, )` |
+| **Autocorrelation** (`ar()`, `ma()`) | `dnorm(0, 0.5) T(-1, 1)` | `dnorm(0, 0.25)` | `dnorm(0, 0.25 / Δx)` | — |
+| **Change points** (`cp_i`) | `dirichlet(1)` | — | — | `dnorm(0, 2·span/n_cp) T(0, )` |
+
+\* Poisson identity intercepts include positive truncation `T(0, )`. Group SD priors for slopes divide the base scale by $\Delta x$.
 
 # Default priors on group-level effects
 
