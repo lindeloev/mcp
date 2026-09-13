@@ -7,7 +7,8 @@ models_families_negbinomial = list(
     chains = 2,
     warmup = 500,
     iter = 750,
-    min_ess = 50
+    min_ess = 50,
+    seed = 1
   )
 )
 
