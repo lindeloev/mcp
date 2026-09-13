@@ -144,11 +144,12 @@
 #' Here, \eqn{\beta_{k,0}} is the segment-start intercept, and \eqn{\beta_{k,1}} is the slope on \eqn{x}. In all segments, estimated slope and intercept parameters are absolute values (not changes relative to the preceding segment).
 #'
 #' If additional continuous covariates or categorical factors are included (e.g., `+ z + group`),
-#' they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}} for covariate \eqn{j}); only the
-#' change-point predictor \eqn{x} is converted to segment-local coordinates.
+#' they enter additively on their original scale (\eqn{\dots + \sum \gamma_{k,j} z_{j,i}} for covariate \eqn{j}); only bare
+#' change-point predictor terms \eqn{x} and \code{I(x^k)} are converted to segment-local coordinates.
 #'
-#' The expected response on the response scale is \eqn{\mu_i = g^{-1}(\eta_i)} via link function \eqn{g(\mu_i) = \eta_i}
-#' (identity for Gaussian, so \eqn{\mu_i = \eta_i}). Distributional parameters (\code{sigma()}, \code{shape()}, etc.)
+#' The inverse-linked parameter is \eqn{\mu_i = g^{-1}(\eta_i)} via link function \eqn{g(\mu_i) = \eta_i},
+#' representing the expected response for most families (or the success probability for binomial models,
+#' where the expected count is \eqn{n_i \mu_i}). Distributional parameters (\code{sigma()}, \code{shape()}, etc.)
 #' and autoregressive terms (\code{ar()}, \code{ma()}) follow this exact same segmented structure on their respective link scales.
 #' See more details on the `mcp` model in [mcp-package] and on the [mcp website](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'

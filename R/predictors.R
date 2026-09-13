@@ -111,6 +111,11 @@ earliest_segment = function(x, y) {
 
 #' Rewrite supported segment-local uses of the change-point axis
 #'
+#' Only bare `x` and polynomial powers expressed as `I(x^k)` are converted to
+#' segment-local coordinates. Other functions, transformations, and basis
+#' expansions (e.g., `poly(x, 2, raw = TRUE)`) remain on the global scale,
+#' altering segment joining rather than simply changing coefficient parameterization.
+#'
 #' @keywords internal
 #' @noRd
 #' @param form A one-sided predictor formula.

@@ -17,8 +17,8 @@
 #'   recurrence that spans continuously across change points.
 #' * *Group-level effects:* Add hierarchical (random) intercepts, slopes, and change points, e.g., `~ 1 + (1|id)`
 #'   or `1 + (1|id) ~ 0 + x`.
-#' * *Model comparison and hypothesis testing:* Compare models using PSIS-LOO (`loo()`) or WAIC (`waic()`), and test directional
-#'   or point-null hypotheses (`hypothesis()`) using Savage-Dickey density ratios.
+#' * *Model comparison and hypothesis testing:* Compare models using PSIS-LOO (`loo()`) or WAIC (`waic()`), and test hypotheses
+#'   (`hypothesis()`) using Savage-Dickey density ratios for point-null tests or posterior-to-prior odds for directional tests.
 #'
 #' See [the mcp website](https://lindeloev.github.io/mcp/) for worked examples.
 #'
