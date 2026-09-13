@@ -579,29 +579,28 @@ get_fitsimulate = function(cps, predictors, group_effects) {
 
   args_required = c(cps$name, predictors$code_name)
   args_default = c(cp_group_effects$sd_name, predictor_group_effects$sd_name)
-  args_all = c(args_required, args_default)
+  args_default = args_default[nzchar(args_default)]
 
-  args_withdefault = paste0(args_default, " = 0")
-  args_withdefault = args_withdefault[args_withdefault != " = 0"]  # remove empty strings
+  # Assemble formal arguments
+  args_formals = c(
+    alist(fit = , newdata = ),
+    stats::setNames(rep(alist(x = )["x"], length(args_required)), args_required),
+    stats::setNames(rep(list(0), length(args_default)), args_default),
+    alist(.type = "predict", .rate = FALSE, .dpar = "epred", .arma = TRUE, .scale = "response")
+  )
 
-  # Build function
-  fitsimulate_code = paste0("function(fit, newdata, ", paste0(c(args_required, args_withdefault), collapse = ", "), ",
-  .type = 'predict',
-  .rate = FALSE,
-  .dpar = 'epred',
-  .arma = TRUE,
-  .scale = 'response') {
+  sim_fn = function() {
+    if (!inherits(fit, "mcpfit"))
+      stop(legacy_mcp_message("`fit$simulate()` now requires the fit as its first argument. Use `fit$simulate(fit, newdata, ...)`."), call. = FALSE)
+    if (missing(newdata) || !is.data.frame(newdata))
+      stop(legacy_mcp_message("`fit$simulate()` now requires a data.frame or tibble as its second argument. Use `fit$simulate(fit, newdata, ...)`."), call. = FALSE)
+    check_mcpfit_version(fit)
+    warn_custom_jags_code(fit)
 
-  if (!inherits(fit, 'mcpfit'))
-    stop(legacy_mcp_message('`fit$simulate()` now requires the fit as its first argument. Use `fit$simulate(fit, newdata, ...)`.'), call. = FALSE)
-  if (missing(newdata) || !is.data.frame(newdata))
-    stop(legacy_mcp_message('`fit$simulate()` now requires a data.frame or tibble as its second argument. Use `fit$simulate(fit, newdata, ...)`.'), call. = FALSE)
-  check_mcpfit_version(fit)
-  warn_custom_jags_code(fit)
+    lapply(args_required, get, envir = environment(), inherits = FALSE)
+    do.call(simulate_atomic, as.list(environment(), all.names = TRUE))
+  }
 
-  result = simulate_atomic(fit, newdata, ", paste0(args_all, " = ", args_all, collapse = ", "), ", .type = .type, .rate = .rate, .dpar = .dpar, .arma = .arma, .scale = .scale)
-  return(result)
-}")
-
-  eval(parse(text = fitsimulate_code), envir = asNamespace("mcp"))
+  formals(sim_fn) = as.pairlist(args_formals)
+  sim_fn
 }
