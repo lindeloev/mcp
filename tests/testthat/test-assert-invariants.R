@@ -117,7 +117,7 @@ test_that("transformed predictors and offsets producing NA or non-finite values 
   )
 
   df_valid = data.frame(x = 1:3, y = 1:3, z = c(4, 9, 16))
-  fit = mcp(list(y ~ 1 + sqrt(z)), data = df_valid, par_x = "x", sample = "prior")
+  fit = mcp(list(y ~ 1 + sqrt(z)), data = df_valid, par_x = "x", sample = "prior", quiet = TRUE)
   newdata = data.frame(x = 1:2, z = c(-1, 4))
   expect_error(
     suppressWarnings(fitted(fit, newdata = newdata, prior = TRUE)),
