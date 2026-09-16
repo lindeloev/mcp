@@ -248,8 +248,8 @@ if (plot) {
 }",
     multiple = "# Define model
 model = list(
-  y ~ 1 + x:group + z,
-  ~ 1 + x + group,
+  y ~ 1 + x:state + z,
+  ~ 1 + x + state,
   ~ 0 + I(x^2)
 )
 
@@ -257,7 +257,7 @@ model = list(
 set.seed(42)
 data = data.frame(
   x = 1:120,
-  group = rep(c('A', 'B', 'C', 'D'), 30),
+  state = rep(c('A', 'B', 'C', 'D'), 30),
   z = rnorm(120, mean = 1:120, sd = 25),
   y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
 )
@@ -268,16 +268,16 @@ data$y = empty$simulate(empty, data,
 
   Intercept_1 = 10,
   z_1 = 0.2,
-  xgroupA_1 = -0.75,
-  xgroupB_1 = -0.25,
-  xgroupC_1 = 0.25,
-  xgroupD_1 = 0.75,
+  xstateA_1 = -0.75,
+  xstateB_1 = -0.25,
+  xstateC_1 = 0.25,
+  xstateD_1 = 0.75,
 
   Intercept_2 = 10,
   x_2 = -1,
-  groupB_2 = 15,
-  groupC_2 = 30,
-  groupD_2 = 45,
+  stateB_2 = 15,
+  stateC_2 = 30,
+  stateD_2 = 45,
 
   xE2_3 = 0.2,
 
@@ -290,7 +290,7 @@ fit = mcp(model, data, par_x = 'x', iter = 10000, sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit, color_by = 'group') + ggplot2::labs(title = 'plot(fit, color_by = \"group\")'))
+  print(plot(fit, color_by = 'state') + ggplot2::labs(title = 'plot(fit, color_by = \"state\")'))
 }",
     quadratic = "# Define model
 model = list(

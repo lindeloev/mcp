@@ -66,7 +66,7 @@ group_mu_model = list(y ~ 1 + condition + (condition || id), ~ 1 + condition)
 
 fit_multiple = mcp_example("multiple")
 gg_multiple_org = force(last_plot())
-multiple_model = list(y ~ 1 + x:group + z, ~ 1 + x + group, ~ 0 + I(x^2))
+multiple_model = list(y ~ 1 + x:state + z, ~ 1 + x + state, ~ 0 + I(x^2))
 
 
 # Style them

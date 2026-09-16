@@ -2,7 +2,7 @@
 
 ## Major new features
 
-- **Multiple regression:** `mcp` now supports several continuous predictors, categorical predictors, interactions, etc. for all terms on RHS. E.g., `~ 1 + x + x:group + sigma(1 + group) + ar(2, 0 + z)`. Basically, it now aims to "feels" like `lm()` or `glm()` for each distributional parameter in each segment. Explore `ex = mcp_example("multiple")` to see it in action. Default priors generally align with brms, with some adjustments to accommodate the change-point model.
+- **Multiple regression:** `mcp` now supports several continuous predictors, categorical predictors, interactions, etc. for all terms on RHS. E.g., `~ 1 + x + x:state + sigma(1 + state) + ar(2, 0 + z)`. Basically, it now aims to "feels" like `lm()` or `glm()` for each distributional parameter in each segment. Explore `ex = mcp_example("multiple")` to see it in action. Default priors generally align with brms, with some adjustments to accommodate the change-point model.
 
 - **Group-level effects on RHS:** Predictor formulas now support group-level effects (random effects) using familiar `lme4` and `brms` syntax. `(1 | group)` specifies a group-level intercept, while `(1 + x || group)` and `(factor || group)` support independent coefficients, including slopes and factors. This also works inside distributional formulas such as `sigma(1 + (factor || id))`. As with `ar()`, an effect persists into later segments until it is replaced or turned off with `(0 | group)`. See `mcp_example("group_mu")` for a worked example. Correlated multi-coefficient terms are not yet supported.
 

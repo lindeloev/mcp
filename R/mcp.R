@@ -34,7 +34,7 @@
 #'   * `~ 1 + x`: Disjoined slope with a new segment intercept.
 #'   * `~ 0 + x`: Joined slope (no intercept; continuous from previous segment).
 #'   * `~ 1`: Plateau (intercept only, no slope).
-#'   * `~ x:group + I(x^2) + exp(z)`: Extended terms, interactions, and R-side bases
+#'   * `~ x:state + I(x^2) + exp(z)`: Extended terms, interactions, and R-side bases
 #'     (`scale()`, `poly()`, `splines::ns()`). Bases are evaluated before sampling and reused for `newdata`.
 #'   * `~ 1 + (1 | id)`: Group-level intercepts (or `(1 + x || id)` for independent slopes and intercepts).
 #'     [Read more](https://lindeloev.github.io/mcp/articles/group_effects.html).

@@ -160,7 +160,7 @@ test_example_plot = function(plot, example) {
   if (example == "group_mu")
     testthat::expect_identical(plot$labels$colour, "condition")
   if (example == "multiple")
-    testthat::expect_identical(plot$labels$colour, "group")
+    testthat::expect_identical(plot$labels$colour, "state")
 }
 
 
