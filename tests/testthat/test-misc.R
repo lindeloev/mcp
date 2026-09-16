@@ -726,6 +726,20 @@ test_that("PPC and LOO draws stay aligned", {
   )
 })
 
+
+test_that("loo relative_eff avoids underflow on large negative log likelihoods", {
+  df = data.frame(x = 1:5, y = rnorm(5, 10, 1), w = rep(1000, 5))
+  fit = suppressWarnings(mcp(list(y | weights(w) ~ 1), data = df, par_x = "x", chains = 1, iter = 50))
+
+  res_mat = suppressWarnings(loo(fit, by_row = FALSE))
+  expect_false(anyNA(res_mat$diagnostics$r_eff))
+  expect_true(all(is.finite(res_mat$diagnostics$r_eff)))
+
+  res_row = suppressWarnings(loo(fit, by_row = TRUE))
+  expect_false(anyNA(res_row$diagnostics$r_eff))
+  expect_true(all(is.finite(res_row$diagnostics$r_eff)))
+})
+
 test_that("legacy mcpfits explain how to reproduce v0.3.4", {
   legacy_fit = demo_fit
   legacy_fit$.internal$model_tables = NULL

@@ -123,7 +123,8 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
     loglik = log_lik(
       fit, summary = FALSE, varying = varying, arma = arma
     )
-    r_eff = loo::relative_eff(exp(loglik), chain_id)
+    col_max = apply(loglik, 2, function(x) { m = max(x); if (is.finite(m)) m else 0 })
+    r_eff = loo::relative_eff(exp(sweep(loglik, 2, col_max, "-")), chain_id)
     result = loo::loo(loglik, r_eff = r_eff, ...)
 
   # Pointwise: per-data-row computation
@@ -163,7 +164,8 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
 
     r_eff = loo::relative_eff(
       llfun, data = loo_data, chain_id = chain_id,
-      link_fun = exp, draws = seq_len(n_eval)
+      link_fun = function(x) { m = max(x); exp(if (is.finite(m)) x - m else x) },
+      draws = seq_len(n_eval)
     )
     result = loo::loo.function(
       llfun, data = loo_data, r_eff = r_eff,
