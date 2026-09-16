@@ -150,7 +150,10 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
 
   expect_named(
     tables,
-    c("data_columns", "segments", "cps", "predictors", "group_effects", "parameters", "design_specs")
+    c(
+      "data_columns", "segments", "cps", "predictors", "group_effects",
+      "predictor_definitions", "group_definitions", "parameters", "design_specs"
+    )
   )
   expect_named(tables$data_columns, c("par_x", "response", "series", "weights"))
   expect_named(
@@ -159,7 +162,8 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
       "population_name", "name", "part", "group_col", "segment", "dpar",
       "sd_name", "par_type", "matrix_name", "display_name", "order",
       "x_factor", "design_id", "design_col", "matrix_col", "matrix_data",
-      "next_segment", "correlated"
+      "next_segment", "correlated", "definition_name", "definition_segment",
+      "occurrence_segment"
     )
   )
   expect_named(
@@ -170,6 +174,11 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
   expect_true(all(tables$parameters$scope %in% c("population", "group")))
   expect_true(all(tables$parameters$role %in% c("change_point", "fixed_effect", "dpar_effect", "arma", "group_sd", "group_deviation")))
   expect_equal(mcp_pars(fit), tables$parameters)
+  expect_equal(tables$predictor_definitions$definition_name, tables$predictor_definitions$code_name)
+  expect_equal(tables$predictors$definition_name, tables$predictors$code_name)
+  expect_equal(tables$predictors$occurrence_segment, tables$predictors$segment)
+  expect_equal(tables$group_definitions$definition_name, tables$group_definitions$name)
+  expect_equal(tables$group_effects$definition_name, tables$group_effects$name)
   group = mcp_pars(fit, scope = "group")$name
 
   expect_equal(unpack_group_effects(fit, pars = "cp")$pars, group)
@@ -501,7 +510,7 @@ test_that("group_mu example contains independent factor effects", {
   expect_equal(get_fit_model_tables(fit)$cps$name, "cp_1")
   expect_equal(
     mcp_pars(fit, scope = "group")$name,
-    c("Intercept_1_id", "stateB_1_id")
+    c("Intercept_1_id", "stateB_1_id", "Intercept_2_id", "stateB_2_id")
   )
   expect_match(fit$example_code, "state || id", fixed = TRUE)
   expect_equal(length(unique(fit$data$id)), 9)
@@ -1154,4 +1163,3 @@ test_that("probs and quantiles must be strictly between 0 and 1", {
   expect_error(plot(demo_fit, q_predict = 0), "strictly between 0 and 1")
   expect_error(plot(demo_fit, q_predict = 1), "strictly between 0 and 1")
 })
-

@@ -400,23 +400,34 @@ mcp = function(model,
   cps = segment_tables$cps
   assert_model_data(data, par_x, group_cols = stats::na.omit(cps$group_col))
   predictor_tables = get_predictor_tables(model, data, family, par_x)
-  predictors = predictor_tables$predictors
-  family = resolve_dpar_specs(family, predictors, model)
-  group_effects = get_group_effects(cps, predictor_tables$group_effects)
+  predictor_definitions = predictor_tables$predictor_definitions
+  predictor_occurrences = predictor_tables$predictors
+  group_definitions = get_group_effects(cps, predictor_tables$group_definitions) %>%
+    dplyr::mutate(
+      definition_name = dplyr::coalesce(.data$definition_name, .data$name),
+      definition_segment = dplyr::coalesce(.data$definition_segment, .data$segment)
+    )
+  group_occurrences = get_group_effects(cps, predictor_tables$group_effects) %>%
+    dplyr::mutate(
+      definition_name = dplyr::coalesce(.data$definition_name, .data$name),
+      definition_segment = dplyr::coalesce(.data$definition_segment, .data$segment),
+      occurrence_segment = dplyr::coalesce(.data$occurrence_segment, .data$segment)
+    )
+  family = resolve_dpar_specs(family, predictor_definitions, model)
 
-  if (nrow(cps) == 0 && nrow(predictors) == 0 && nrow(group_effects) == 0)
+  if (nrow(cps) == 0 && nrow(predictor_definitions) == 0 && nrow(group_definitions) == 0)
     stop("The model does not contain any parameters to estimate.", call. = FALSE)
 
   # Make prior
-  prior = get_prior(segments, cps, predictors, group_effects, family, prior, data, predictor_tables$design_specs)
+  prior = get_prior(segments, cps, predictor_definitions, group_definitions, family, prior, data, predictor_tables$design_specs)
   prior_table = attr(prior, "prior_table")
   prior_context = attr(prior, "prior_context")
   attr(prior, "prior_table") = NULL
   attr(prior, "prior_context") = NULL
-  assert_fixed_sigma(prior_table, predictors, family)
+  assert_fixed_sigma(prior_table, predictor_definitions, family)
 
   # Assemble model metadata used by fitted-model methods
-  parameters = get_pars_table(predictors, cps, group_effects, family)
+  parameters = get_pars_table(predictor_definitions, cps, group_definitions, family)
   data_columns = c(
     list(par_x = par_x, response = unique(segments$y), series = series),
     lapply(get_family_aux_columns(family, segments), function(column) {
@@ -427,14 +438,16 @@ mcp = function(model,
     data_columns = data_columns,
     segments = segments,
     cps = cps,
-    predictors = predictors,
-    group_effects = group_effects,
+    predictors = predictor_occurrences,
+    group_effects = group_occurrences,
+    predictor_definitions = predictor_definitions,
+    group_definitions = group_definitions,
     parameters = parameters,
     design_specs = predictor_tables$design_specs
   )
 
   # Validate AR/MA configuration
-  has_arma = any(predictors$dpar %in% c("ar", "ma"))
+  has_arma = any(predictor_definitions$dpar %in% c("ar", "ma"))
   if (has_arma) {
     if (is.null(family$garma))
       stop(
@@ -443,7 +456,7 @@ mcp = function(model,
       )
 
     response_data = get_family_response_data(family, segments, data)
-    assert_arma_boundaries(family, predictors$boundary[predictors$dpar %in% c("ar", "ma")], response_data)
+    assert_arma_boundaries(family, predictor_definitions$boundary[predictor_definitions$dpar %in% c("ar", "ma")], response_data)
 
     x_by_series = split(data[[par_x]], if (is.null(series)) 1 else data[[series]])
     x_unordered = any(vapply(
@@ -457,17 +470,17 @@ mcp = function(model,
 
   # Make formulas
   formula_jags = get_formula_jags(
-    segments, predictors, group_effects, par_x, family,
+    segments, predictor_occurrences, group_occurrences, par_x, family,
     design_specs = predictor_tables$design_specs
   )
-  formula_r = get_formula_r(formula_jags, predictors, group_effects, cps, par_x)
+  formula_r = get_formula_r(formula_jags, predictor_definitions, group_definitions, cps, par_x)
 
   # Make jags code if it is not provided by the user
   if (is.null(jags_code)) {
-    ar_order = get_arma_order(predictors, "ar")
-    ma_order = get_arma_order(predictors, "ma")
+    ar_order = get_arma_order(predictor_definitions, "ar")
+    ma_order = get_arma_order(predictor_definitions, "ma")
     jags_code = get_jags_code(
-      prior, segments, group_effects, formula_jags, ar_order, ma_order, family, par_x,
+      prior, segments, group_definitions, formula_jags, ar_order, ma_order, family, par_x,
       prior_table, prior_context, series = !is.null(series)
     )
   }
@@ -477,9 +490,11 @@ mcp = function(model,
   # SAMPLE #
   ##########
   jags_data = get_jags_data(
-    data, family, segments, predictors, group_effects, jags_code, series,
+    data, family, segments, predictor_occurrences, group_occurrences, jags_code, series,
     generated = !custom_jags_code,
-    design_specs = predictor_tables$design_specs
+    design_specs = predictor_tables$design_specs,
+    predictor_definitions = predictor_definitions,
+    group_definitions = group_definitions
   )
 
   # Monitor model parameters and, for generated JAGS code, latent responses
@@ -502,7 +517,7 @@ mcp = function(model,
       seed = seed,
       quiet = quiet
     ) %>%
-      recover_levels(data, group_effects)
+      recover_levels(data, group_definitions)
 
     class(mcmc_post) = "mcmc.list"
     assert_ordered_cp_draws(mcmc_post, cps)
@@ -547,7 +562,7 @@ mcp = function(model,
       seed = seed,
       quiet = quiet
     ) %>%
-      recover_levels(data, group_effects)
+      recover_levels(data, group_definitions)
 
     class(mcmc_prior) = "mcmc.list"
     assert_ordered_cp_draws(mcmc_prior, cps)
@@ -580,7 +595,7 @@ mcp = function(model,
 
     # Extracted model
     jags_code = jags_code,
-    simulate = get_fitsimulate(cps, predictors, group_effects),
+    simulate = get_fitsimulate(cps, predictor_definitions, group_definitions),
 
     # Pass info to *.mcpfit() functions.
     # Not meant to be used by the end user.

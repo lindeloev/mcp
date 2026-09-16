@@ -883,10 +883,23 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     dplyr::select(-"design_spec")
   if ("design_spec" %in% names(predictor_group_effects))
     predictor_group_effects = dplyr::select(predictor_group_effects, -"design_spec")
+  if ("name" %notin% names(predictor_group_effects))
+    predictor_group_effects = tibble::tibble(name = character(), segment = integer())
+
+  predictor_definitions = predictors %>%
+    dplyr::mutate(definition_name = .data$code_name, definition_segment = .data$segment)
+  predictors = predictors %>%
+    dplyr::mutate(definition_name = .data$code_name, definition_segment = .data$segment, occurrence_segment = .data$segment)
+  group_definitions = predictor_group_effects %>%
+    dplyr::mutate(definition_name = .data$name, definition_segment = .data$segment)
+  predictor_group_effects = predictor_group_effects %>%
+    dplyr::mutate(definition_name = .data$name, definition_segment = .data$segment, occurrence_segment = .data$segment)
 
   list(
     predictors = predictors,
     group_effects = predictor_group_effects,
+    predictor_definitions = predictor_definitions,
+    group_definitions = group_definitions,
     design_specs = design_specs
   )
 }

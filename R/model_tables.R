@@ -355,7 +355,10 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
       matrix_col = integer(),
       matrix_data = list(),
       next_segment = integer(),
-      correlated = logical()
+      correlated = logical(),
+      definition_name = character(),
+      definition_segment = integer(),
+      occurrence_segment = integer()
     )
   }
 

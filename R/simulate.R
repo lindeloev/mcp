@@ -272,17 +272,19 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   if (is.null(fit$family$r$cdf))
     fit$family$r$cdf = mcpfamily(fit$family)$r$cdf
   model_tables = get_fit_model_tables(fit)
-  predictors = model_tables$predictors
-  group_effects = model_tables$group_effects
+  predictor_definitions = model_tables$predictor_definitions
+  group_definitions = model_tables$group_definitions
+  predictor_occurrences = model_tables$predictors
+  group_occurrences = model_tables$group_effects
   data_columns = mcp_columns(fit)
 
   # Assert that the ellipsis contains the expected argument names
-  param_pars = get_sim_pars(model_tables$cps, predictors, group_effects)
+  param_pars = get_sim_pars(model_tables$cps, predictor_definitions, group_definitions)
   pred_pars = paste0(
-    ".pred_", get_predictor_design_names(predictors, group_effects)
+    ".pred_", get_predictor_design_names(predictor_occurrences, group_occurrences)
   )
   operation = switch(.type, fitted = "epred", loglik = "log_lik", predict = "rng")
-  has_arma_terms = any(predictors$dpar %in% c("ar", "ma"))
+  has_arma_terms = any(predictor_occurrences$dpar %in% c("ar", "ma"))
   aux_operations = c(operation, if (has_arma_terms && .arma) "garma")
   if (.type == "fitted" && (.rate || (!is.null(.dpar) && .dpar != "epred")))
     aux_operations = setdiff(aux_operations, "epred")
@@ -440,6 +442,8 @@ simulate_atomic = function(fit,
     assert_arma_series(newdata, data_columns$series)
   args = list(...)
   model_tables = get_fit_model_tables(fit)
+  model_predictor_definitions = model_tables$predictor_definitions
+  model_group_definitions = model_tables$group_definitions
   model_predictors = model_tables$predictors
   model_group_effects = model_tables$group_effects
   assert_model_data(
@@ -448,8 +452,8 @@ simulate_atomic = function(fit,
   )
   assert_response_data(fit$family, model_tables$segments, newdata)
   expected_args = c(
-    setdiff(get_sim_pars(model_tables$cps, model_predictors, model_group_effects), model_group_effects$name),
-    model_group_effects$sd_name
+    setdiff(get_sim_pars(model_tables$cps, model_predictor_definitions, model_group_definitions), model_group_definitions$name),
+    model_group_definitions$sd_name
   )
   if (is.null(names(args)) || any(names(args) == ""))
     stop("All arguments must be named.")
@@ -461,7 +465,7 @@ simulate_atomic = function(fit,
   lapply(args, checkmate::assert_numeric, any.missing = FALSE)
   lapply(args, function(x) stopifnot(length(x) == 1 | length(x) == nrow(newdata)))
   assert_ordered_population_cps(model_tables$cps, args)
-  for (sd_name in model_group_effects$sd_name)
+  for (sd_name in model_group_definitions$sd_name)
     checkmate::assert_number(args[[sd_name]], lower = 0, .var.name = sd_name)
 
   # Remove response column if present - it is to be simulated
@@ -469,7 +473,7 @@ simulate_atomic = function(fit,
     newdata = dplyr::select(newdata, -dplyr::all_of(data_columns$response))
 
   simulated = args
-  cp_effects = model_group_effects[model_group_effects$part == "cp", , drop = FALSE]
+  cp_effects = model_group_definitions[model_group_definitions$part == "cp", , drop = FALSE]
 
   # All varying CPs share one grouping factor. Set up its level mapping once.
   if (nrow(cp_effects) > 0) {
@@ -514,7 +518,7 @@ simulate_atomic = function(fit,
   }
 
   # Predictor group effects retain the ordinary independent normal hierarchy.
-  predictor_effects = model_group_effects[model_group_effects$part != "cp", , drop = FALSE]
+  predictor_effects = model_group_definitions[model_group_definitions$part != "cp", , drop = FALSE]
   for (i in seq_len(nrow(predictor_effects))) {
     effect = predictor_effects[i, ]
     assert_data_cols(newdata, effect$group_col)
