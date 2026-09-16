@@ -100,3 +100,17 @@ test_that("same() validates sources, competing declarations, and group blocks", 
   )
   expect_error(mcp(list(y ~ 1 + (1 | id), ~ same((1 | id))), data, par_x = "x", sample = FALSE), "group-effect blocks")
 })
+
+
+test_that("explicit mu() syntax produces identical model tables to standard bare syntax", {
+  data = data.frame(x = 1:10, y = 1:10, id = rep(1:2, 5))
+  fit_explicit = mcp(
+    list(y ~ mu(1 + x + (1 | id)) + sigma(1 + x), ~ mu(0 + same(x))),
+    data = data, par_x = "x", sample = FALSE
+  )
+  fit_bare = mcp(
+    list(y ~ 1 + x + (1 | id) + sigma(1 + x), ~ 0 + same(x)),
+    data = data, par_x = "x", sample = FALSE
+  )
+  expect_identical(mcp_pars(fit_explicit), mcp_pars(fit_bare))
+})

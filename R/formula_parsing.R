@@ -207,6 +207,58 @@ get_term_content = function(term, env = parent.frame()) {
 }
 
 
+# Unpack an additive expression into a list of leaf terms
+unpack_additive = function(expr) {
+  if (is.call(expr) && identical(deparse1(expr[[1]]), "+")) {
+    c(unpack_additive(expr[[2]]), unpack_additive(expr[[3]]))
+  } else {
+    list(expr)
+  }
+}
+
+
+# Canonicalize a segment RHS formula so that bare mu terms are wrapped in mu(...)
+# E.g., `~ 1 + x + sigma(1 + x)` --> `~ mu(1 + x) + sigma(1 + x)`.
+# This allows treating mu like any other wrapper, simplifying downstream parsing.
+canonicalize_rhs = function(form_rhs, family) {
+  checkmate::assert_formula(form_rhs)
+  checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
+  env = environment(form_rhs)
+
+  # Unpack top-level additive leaves and their call names
+  leaves = unpack_additive(form_rhs[[2]])
+  leaf_names = vapply(leaves, function(x) if (is.call(x)) deparse1(x[[1]]) else "", character(1))
+
+  # Separate component wrappers, explicit mu() calls, and bare terms
+  other_dpars = family$dpar_specs$dpar[family$dpar_specs$dpar != "mu"]
+  known_wrappers = c(other_dpars, "ar", "ma")
+
+  wrapper_leaves = leaves[leaf_names %in% known_wrappers]
+  explicit_mu = leaves[leaf_names == "mu"]
+  bare_leaves = leaves[leaf_names %notin% c(known_wrappers, "mu")]
+
+  if (length(explicit_mu) > 1)
+    stop("Only one `mu()` allowed in each formula.", call. = FALSE)
+
+  # Merge explicit mu() contents with any bare terms
+  inner_mu = if (length(explicit_mu) == 1 && length(explicit_mu[[1]]) > 1) {
+    unpack_additive(explicit_mu[[1]][[2]])
+  } else {
+    list()
+  }
+  mu_leaves = c(inner_mu, bare_leaves)
+
+  # Helper to chain additive expressions
+  sum_exprs = function(exprs) Reduce(function(a, b) call("+", a, b), exprs)
+
+  # Wrap mu terms into mu(...) (defaulting to mu(1) if empty)
+  mu_expr = if (length(mu_leaves) == 0) call("mu", 1) else call("mu", sum_exprs(mu_leaves))
+
+  # Return canonical one-sided formula
+  stats::as.formula(call("~", sum_exprs(c(list(mu_expr), wrapper_leaves))), env = env)
+}
+
+
 #' Takes a formula and returns a string representation of y, cp, and rhs
 #' @aliases unpack_tildes
 #' @keywords internal

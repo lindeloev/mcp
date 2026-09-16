@@ -679,8 +679,9 @@ new_dpar_spec = function(dpar, link, implicit = FALSE, require_initial_predictor
 }
 
 
+# Distributional parameter wrapper names recognized across families
 known_dpar_wrappers = function() {
-  c("sigma", "shape")
+  c("mu", "sigma", "shape")
 }
 
 

@@ -122,23 +122,13 @@ parse_predictor_group_term = function(
 get_predictor_group_definitions_segment = function(
   form_rhs, segment, family, data, par_x, check_rank = TRUE
 ) {
-  form_rhs = stats::as.formula(form_rhs)
+  form_rhs = canonicalize_rhs(form_rhs, family)
   form_env = environment(form_rhs)
   term_labels = attr(stats::terms(form_rhs), "term.labels")
-  top_level = term_labels[vapply(term_labels, is_group_term, logical(1))]
 
-  definitions = lapply(
-    top_level,
-    parse_predictor_group_term,
-    segment = segment,
-    dpar = "mu",
-    data = data,
-    par_x = par_x,
-    check_rank = check_rank,
-    env = form_env
-  )
-
-  for (dpar in setdiff(family$dpar_specs$dpar, "mu")) {
+  # Parse group-level terms for all distributional parameters (including mu)
+  definitions = list()
+  for (dpar in family$dpar_specs$dpar) {
     dpar_terms = term_labels[stringr::str_detect(term_labels, paste0("^", dpar, "\\("))]
     if (length(dpar_terms) == 0)
       next

@@ -644,23 +644,16 @@ normalize_same_component = function(expr, segment, dpar, order, env) {
 # Strip same() calls from a segment formula and collect their selector specs
 normalize_same_formula = function(form, segment, family) {
   env = environment(form)
-  dpars = family$dpar_specs$dpar[family$dpar_specs$dpar != "mu"]
+  dpars = family$dpar_specs$dpar
   selectors = list()
 
   # Recursive walker to process expressions
   walk = function(expr) {
-    # Recurse through top-level addition
+    # Recurse through top-level addition of component wrappers
     if (is.call(expr) && identical(deparse1(expr[[1]]), "+")) {
       left = walk(expr[[2]])
       right = walk(expr[[3]])
       return(call("+", left, right))
-    }
-
-    # Process top-level mu same() calls
-    if (is_same_call(expr)) {
-      normalized = normalize_same_component(expr, segment, "mu", NA_integer_, env)
-      selectors <<- c(selectors, normalized$selectors)
-      return(normalized$expr)
     }
 
     # Base case for non-call expressions
@@ -669,7 +662,7 @@ normalize_same_formula = function(form, segment, family) {
 
     head = deparse1(expr[[1]])
 
-    # Process distributional parameter wrappers, e.g. sigma(...)
+    # Process distributional parameter wrappers (mu, sigma, shape, etc.)
     if (head %in% dpars) {
       if (length(expr) < 2)
         return(expr)
@@ -821,22 +814,15 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
   checkmate::assert_data_frame(data)
   checkmate::assert_string(par_x)
 
-  # Get general format. Top-level group terms belong to mu; group terms inside
-  # distributional wrappers are removed from those formulas below.
-  form_rhs = stats::as.formula(form_rhs)
+  # Canonicalize formula so bare mu terms are wrapped in mu(...)
+  form_rhs = canonicalize_rhs(form_rhs, family)
   form_env = environment(form_rhs)
   attrs = attributes(stats::terms(form_rhs))
   term_labels = attrs$term.labels
-  top_level_group = vapply(term_labels, is_group_term, logical(1))
-  term_labels = term_labels[!top_level_group]
 
-  # Formula wrappers belonging to distributional parameters are declared by
-  # the family. AR and MA are separate model components because they carry an
-  # order as well as a formula.
-  model_dpars = family$dpar_specs$dpar[family$dpar_specs$dpar != "mu"]
-  dpar_patterns = paste0("^", model_dpars, "\\(")
+  # Formula wrappers belonging to distributional parameters and AR/MA
+  model_dpars = family$dpar_specs$dpar
   arma_components = c("ar", "ma")
-  arma_pattern = paste0("^(", paste0(arma_components, collapse = "|"), ")\\(")
 
   # Give a family-specific error when a recognized dpar wrapper is unavailable.
   used_dpar_wrappers = known_dpar_wrappers()[vapply(
@@ -853,40 +839,6 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
       "See available parameters with `mcpfamily(", family_call, ")$dpars`."
     )
   }
-
-
-
-  ######
-  # MU #
-  ######
-  # Start by building it as a string: "mu(1 + x + ...)" to bring it into a compatible format
-  is_dpar_term = rep(FALSE, length(term_labels))
-  for (pattern in dpar_patterns)
-    is_dpar_term = is_dpar_term | stringr::str_detect(term_labels, pattern)
-  is_arma_term = stringr::str_detect(term_labels, arma_pattern)
-  mu_terms = term_labels[!is_dpar_term & !is_arma_term]
-
-  # Top-level offset terms belong to mu
-  if (!is.null(attrs$offset)) {
-    offset_terms = vapply(attrs$offset, function(i) deparse1(attrs$variables[[i + 1]]), character(1))
-    mu_terms = c(mu_terms, offset_terms)
-  }
-
-  if (length(mu_terms) > 0) {
-    mu_terms[1] = paste0(attrs$intercept, " + ", mu_terms[1])
-    mu_term = paste0(mu_terms, collapse = " + ")  # for use in fit$model and in summary()
-    mu_term = paste0("mu(", mu_term, ")")  # Get it in "standard" format
-  } else {
-    mu_term = paste0("mu(", attrs$intercept, ")")  # Plateau model: "mu(0)" or "mu(1)"
-  }
-  mu_form = get_term_content(mu_term, form_env)
-  mu_pars = get_predictors_dpar(
-    data, mu_form, segment, "mu", par_x, NULL, check_rank,
-    design_id = paste("population", "mu", segment, sep = ":")
-  ) %>%
-    dplyr::mutate(explicit = TRUE)
-
-
 
   #############################
   # DISTRIBUTIONAL PARAMETERS #
@@ -921,7 +873,6 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
         dplyr::mutate(explicit = TRUE)
     }
   }
-
 
   #########
   # AR/MA #
@@ -969,13 +920,10 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
   segment_boundary = if (length(supplied_boundaries) == 1) supplied_boundaries else 0.1
   arma_pars = lapply(arma_pars, dplyr::mutate, boundary = segment_boundary)
 
-
-
   ##########
   # RETURN #
   ##########
   dplyr::bind_rows(
-    mu_pars,
     dplyr::bind_rows(dpar_pars),
     dplyr::bind_rows(arma_pars)
   )
@@ -987,8 +935,11 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
 #' @describeIn get_predictors_dpar Apply `get_predictors_segment`
 #'   to all segments of a model.
 get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
-  # Normalize same() selectors out of segment formulas before parsing
+  # Canonicalize segment formulas to wrap bare mu terms into mu(...)
   rhs = lapply(model, get_rhs)
+  rhs = lapply(rhs, canonicalize_rhs, family = family)
+
+  # Normalize same() selectors out of segment formulas before parsing
   normalized_same = lapply(seq_along(rhs), function(segment) {
     normalize_same_formula(rhs[[segment]], segment, family)
   })
