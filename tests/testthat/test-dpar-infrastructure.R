@@ -12,6 +12,7 @@ test_that("families declare dpars independently of prior rows", {
   expect_equal(gaussian_family$dpar_specs$link_modeled, c("identity", "log"))
   expect_false(any(gaussian_family$dpar_specs$modeled))
   expect_equal(gaussian_family$dpar_specs$implicit, c(FALSE, TRUE))
+  expect_equal(gaussian_family$dpar_specs$require_initial_predictor, c(FALSE, TRUE))
   expect_equal(gaussian_family$dpars, c("mu", "sigma"))
   expect_named(
     gaussian_family$default_prior,
@@ -229,7 +230,7 @@ test_that("declared dpar wrappers use the generic formula path", {
   )
 })
 
-test_that("distributional predictor terms persist until redefined", {
+test_that("distributional population terms are segment-local", {
   data = data.frame(
     x = 1:8,
     z = c(0, 1, 0, 2, 1, 3, 2, 4),
@@ -245,10 +246,10 @@ test_that("distributional predictor terms persist until redefined", {
     par_x = "x",
     sample = FALSE
   )
-  expect_lifetimes(fit, c(sigma_z_1 = 3L))
+  expect_lifetimes(fit, c(sigma_z_1 = 2L))
   expect_match(
     fit$.internal$formula_jags,
-    "(?s)x\\[i_\\] < cp_2.*c\\(sigma_z_1\\)",
+    "(?s)x\\[i_\\] < cp_1.*c\\(sigma_z_1\\)",
     perl = TRUE
   )
 
@@ -260,7 +261,7 @@ test_that("distributional predictor terms persist until redefined", {
     sigma_1 = 0.5, sigma_z_1 = 1, sigma_z_3 = 2,
     .type = "fitted", .dpar = "sigma", .scale = "linear"
   )
-  expected = 0.5 + ifelse(data$x < 5.5, data$z, 2 * data$z)
+  expected = 0.5 + ifelse(data$x < 3.5, data$z, ifelse(data$x < 5.5, 0, 2 * data$z))
   expect_equal(as.numeric(sigma), expected)
 
   shape = get_predictors(
@@ -270,6 +271,30 @@ test_that("distributional predictor terms persist until redefined", {
     par_x = "x"
   )
   expect_lifetimes(shape, c(shape_z_1 = 2L))
+})
+
+
+test_that("required dpars have an initial predictor and implicit defaults retain their provenance", {
+  data = data.frame(x = 1:6, z = 1:6, y = c(1, 2, 1, 3, 2, 4))
+
+  expect_error(
+    mcp(list(y ~ 1 + sigma(0)), data, par_x = "x", sample = FALSE),
+    "`sigma\\(0\\)` cannot be the initial predictor"
+  )
+  expect_error(
+    mcp(list(y ~ 1 + shape(0)), data, family = negbinomial(), par_x = "x", sample = FALSE),
+    "`shape\\(0\\)` cannot be the initial predictor"
+  )
+  expect_silent(mcp(list(y ~ 1 + sigma(0 + x)), data, par_x = "x", sample = FALSE))
+  expect_silent(mcp(list(y ~ 1 + shape(0 + z)), data, family = negbinomial(), par_x = "x", sample = FALSE))
+
+  fit = mcp(list(y ~ 1, ~ 1 + sigma(1), ~ 1), data, par_x = "x", sample = FALSE)
+  expect_false("sigma_3" %in% mcp_pars(fit)$name)
+  expect_true("sigma_2" %in% mcp_pars(fit)$name)
+
+  implicit = mcp(list(y ~ 1, ~ 1), data, par_x = "x", sample = FALSE)
+  expect_equal(implicit$family$links["sigma"], c(sigma = "identity"))
+  expect_equal(mcp_pars(implicit)$name[grepl("^sigma", mcp_pars(implicit)$name)], "sigma_1")
 })
 
 

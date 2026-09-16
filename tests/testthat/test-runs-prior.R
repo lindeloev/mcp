@@ -285,7 +285,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     testthat::expect_match(int_row$rule, "- offset", fixed = TRUE)
     testthat::expect_equal(int_row$description, "Robustly centered log-rate intercept with a minimum scale of 2.5")
 
-    # Multi-segment with offset persistence and offset(0) turn-off
+    # A later segment needs its own offset declaration.
     fit_multi = mcp(
       list(
         y ~ 1 + x + offset(log(exposure)),
@@ -296,18 +296,18 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
       family = fam,
       sample = FALSE
     )
-    testthat::expect_equal(fit_multi$prior$Intercept_1, paste0("dnorm(", expected_loc, ", ", expected_scale, ")"))
-    testthat::expect_equal(fit_multi$prior$Intercept_2, paste0("dnorm(", expected_loc, ", ", expected_scale, ")"))
-
-    # Segment 3 reverted to log-count / log-mean
     expected_count = log(pmax(d$y, 0.1))
     expected_count_loc = round(median(expected_count), 1)
     expected_count_scale = max(2.5, round(mad(expected_count), 1))
+    testthat::expect_equal(fit_multi$prior$Intercept_1, paste0("dnorm(", expected_loc, ", ", expected_scale, ")"))
+    testthat::expect_equal(fit_multi$prior$Intercept_2, paste0("dnorm(", expected_count_loc, ", ", expected_count_scale, ")"))
+
+    # Segment 3 reverted to log-count / log-mean
     testthat::expect_equal(fit_multi$prior$Intercept_3, paste0("dnorm(", expected_count_loc, ", ", expected_count_scale, ")"))
 
     ps_multi = prior_summary(fit_multi, verbose = TRUE)
     testthat::expect_equal(ps_multi$description[ps_multi$parameter == "Intercept_1"], "Robustly centered log-rate intercept with a minimum scale of 2.5")
-    testthat::expect_equal(ps_multi$description[ps_multi$parameter == "Intercept_2"], "Robustly centered log-rate intercept with a minimum scale of 2.5")
+    testthat::expect_match(ps_multi$description[ps_multi$parameter == "Intercept_2"], "Robustly centered log-(count|mean) intercept with a minimum scale of 2.5")
     testthat::expect_match(ps_multi$description[ps_multi$parameter == "Intercept_3"], "Robustly centered log-(count|mean) intercept with a minimum scale of 2.5")
 
     # Multiple distinct offsets in different segments
@@ -409,5 +409,3 @@ testthat::test_that("gaussian(link = 'log') aligns with log-link model default p
   testthat::expect_match(sig_row$prior, "^student_t\\(df = 3, location = 0, scale = [0-9.]+\\)$")
   testthat::expect_equal(sig_row$bounds, "[0.001, Inf]")
 })
-
-

@@ -105,12 +105,12 @@ default_predictor_scale = function(matrix_data, x_factor) {
 }
 
 
-# Retrieve active offset spec for a specific dpar and segment, if any.
+# Retrieve the offset spec declared for a specific dpar and segment, if any.
 get_active_offset = function(design_specs, dpar, segment) {
-  specs = Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, dpar) && s$segment <= segment, design_specs)
+  specs = Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, dpar) && s$segment == segment, design_specs)
   if (length(specs) == 0) return(NULL)
-  latest = specs[[which.max(vapply(specs, `[[`, integer(1), "segment"))]]
-  if (is.null(latest$offset_data) || all(latest$offset_data == 0)) NULL else latest
+  spec = specs[[1]]
+  if (is.null(spec$offset_data) || all(spec$offset_data == 0)) NULL else spec
 }
 
 

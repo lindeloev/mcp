@@ -76,7 +76,14 @@ test_that("formula functions reject multiple terms containing par_x", {
   )
 })
 
-test_that("population terms persist until redefined while local par_x terms accumulate", {
+test_that("same() is rejected until coefficient sharing is implemented", {
+  expect_error(
+    mcp(list(y ~ 1 + x, ~ 0 + same(x)), data_gauss, par_x = "x", sample = FALSE),
+    "`same\\(\\)` is not supported yet"
+  )
+})
+
+test_that("population terms are segment-local while local par_x terms accumulate", {
   data = data.frame(
     x = 1:8,
     z = c(0, 1, 0, 2, 1, 3, 2, 4),
@@ -89,10 +96,10 @@ test_that("population terms persist until redefined while local par_x terms accu
     par_x = "x",
     sample = FALSE
   )
-  expect_lifetimes(fit, c(z_1 = 2L, w_1 = NA_integer_, x_1 = NA_integer_))
+  expect_lifetimes(fit, c(z_1 = 2L, w_1 = 2L, x_1 = NA_integer_))
   expect_match(
     fit$.internal$formula_jags,
-    "(?s)x\\[i_\\] < cp_1.*c\\(z_1\\)",
+    "(?s)x\\[i_\\] < cp_1.*c\\(z_1, w_1\\)",
     perl = TRUE
   )
 
@@ -104,8 +111,8 @@ test_that("population terms persist until redefined while local par_x terms accu
     x_2 = -1, z_2 = 20,
     .type = "fitted"
   )
-  expected = 1 + 2 * pmin(data$x, 4.5) + 3 * data$w +
-    ifelse(data$x < 4.5, 10 * data$z, -(data$x - 4.5) + 20 * data$z)
+  expected = 1 + 2 * pmin(data$x, 4.5) +
+    ifelse(data$x < 4.5, 10 * data$z + 3 * data$w, -(data$x - 4.5) + 20 * data$z)
   expect_equal(as.numeric(fitted), expected)
 })
 
@@ -126,7 +133,7 @@ test_that("redefinitions replace complete formula terms", {
     par_x = "x",
     check_rank = FALSE
   )
-  first_terms = predictors$segment == 1 & predictors$par_type != "Intercept"
+  first_terms = predictors$segment == 1 & predictors$par_type != "Intercept" & predictors$x_factor == "1"
 
   expect_true(all(predictors$next_segment[first_terms] == 2L))
   expect_equal(
@@ -174,7 +181,7 @@ test_that("formula offsets work in mcp formulas", {
   expect_true(grepl("offset_mu_1_\\[i_\\]", fit_pois$jags_code))
   expect_true(grepl("offset_mu_2_\\[i_\\]", fit_pois$jags_code))
 
-  # Offsets persist until explicitly replaced; offset(0) turns one off.
+  # Offsets are active only in the segment where they are declared.
   offset_lifetime = mcp(
     list(
       y ~ 1 + x + offset(log(pop)),
@@ -197,10 +204,13 @@ test_that("formula offsets work in mcp formulas", {
     x_4 = 0,
     .type = "fitted"
   )
-  expect_equal(as.numeric(offset_mu), ifelse(d_pois$x < 15.5, d_pois$pop, 1))
+  expect_equal(
+    as.numeric(offset_mu),
+    ifelse(d_pois$x < 7.5 | (d_pois$x >= 11.5 & d_pois$x < 15.5), d_pois$pop, 1)
+  )
   expect_match(
     offset_lifetime$.internal$formula_jags,
-    "(?s)x\\[i_\\] < cp_2.*offset_mu_1_",
+    "(?s)x\\[i_\\] < cp_1.*offset_mu_1_",
     perl = TRUE
   )
 
@@ -231,7 +241,7 @@ test_that("formula offsets work in mcp formulas", {
     x_2 = 0,
     .type = "fitted", .dpar = "sigma", .scale = "linear"
   )
-  expect_equal(as.numeric(sigma_linear), d$z)
+  expect_equal(as.numeric(sigma_linear), ifelse(d$x < 10.5, d$z, 0))
 
   offset_only = mcp(
     list(y ~ 0 + offset(z)), d, par_x = "x", sample = FALSE

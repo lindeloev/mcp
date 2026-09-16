@@ -28,8 +28,8 @@ bernoulli = function(link = "logit") {
 #' @aliases negbinomial
 #' @param link Link function for `mu`.
 #' @param link_shape Link function for `shape`.
-#' @details `shape(1)` is added implicitly in segment 1 and persists into later segments unless
-#'   replaced by a new `shape()` formula. For example, `y ~ 1 + x + shape(1 + x)`
+#' @details `shape(1)` is added implicitly in segment 1. In later segments its joined
+#'   level remains unless a new `shape()` formula is declared. For example, `y ~ 1 + x + shape(1 + x)`
 #'   models both the mean and shape. Regression coefficients for both dpars are
 #'   on their link scales.
 #' @export
@@ -306,7 +306,7 @@ mcpfamily_gaussian = function(family) {
     family,
     dpar_specs = dplyr::bind_rows(
       new_dpar_spec("mu", family$link),
-      new_dpar_spec("sigma", "identity", implicit = TRUE, link_modeled = "log", lower = 0.001)
+      new_dpar_spec("sigma", "identity", implicit = TRUE, require_initial_predictor = TRUE, link_modeled = "log", lower = 0.001)
     ),
     default_prior = default_prior,
     response = response,
@@ -652,7 +652,7 @@ mcpfamily_negbinomial = function(family) {
     family,
     dpar_specs = dplyr::bind_rows(
       new_dpar_spec("mu", family$link),
-      new_dpar_spec("shape", family$link_shape, implicit = TRUE)
+      new_dpar_spec("shape", family$link_shape, implicit = TRUE, require_initial_predictor = TRUE)
     ),
     default_prior = default_prior,
     response = response,
@@ -664,7 +664,7 @@ mcpfamily_negbinomial = function(family) {
 
 
 # Describe a distributional parameter
-new_dpar_spec = function(dpar, link, implicit = FALSE, lower = NA_real_,
+new_dpar_spec = function(dpar, link, implicit = FALSE, require_initial_predictor = FALSE, lower = NA_real_,
                           link_modeled = link) {
   tibble::tibble(
     dpar = dpar,
@@ -673,6 +673,7 @@ new_dpar_spec = function(dpar, link, implicit = FALSE, lower = NA_real_,
     link_modeled = link_modeled,
     modeled = FALSE,
     implicit = implicit,
+    require_initial_predictor = require_initial_predictor,
     lower = lower
   )
 }
@@ -734,6 +735,8 @@ normalize_dpar_specs = function(x) {
     x$link_modeled = x$link
   if ("modeled" %notin% names(x))
     x$modeled = FALSE
+  if ("require_initial_predictor" %notin% names(x))
+    x$require_initial_predictor = FALSE
   x
 }
 
@@ -743,7 +746,7 @@ assert_dpar_specs = function(x) {
   x = normalize_dpar_specs(x)
   required = c(
     "dpar", "link", "link_constant", "link_modeled", "modeled",
-    "implicit", "lower"
+    "implicit", "require_initial_predictor", "lower"
   )
   assert_data_cols(x, required)
 
@@ -767,6 +770,8 @@ assert_dpar_specs = function(x) {
     stop("`family$dpar_specs$modeled` must be logical without missing values.")
   if (!is.logical(x$implicit) || anyNA(x$implicit))
     stop("`family$dpar_specs$implicit` must be logical without missing values.")
+  if (!is.logical(x$require_initial_predictor) || anyNA(x$require_initial_predictor))
+    stop("`family$dpar_specs$require_initial_predictor` must be logical without missing values.")
   if (!is.numeric(x$lower))
     stop("`family$dpar_specs$lower` must be numeric.")
 

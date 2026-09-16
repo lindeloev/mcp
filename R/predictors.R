@@ -118,13 +118,6 @@ get_definition_lifetimes = function(definitions, by) {
 }
 
 
-# Return the earliest of two segment boundaries (NA means no boundary)
-# - x, y: Integer vectors of segment boundaries (NA indicates no boundary).
-earliest_segment = function(x, y) {
-  pmin(x, y, na.rm = TRUE)
-}
-
-
 #' Rewrite supported segment-local uses of the change-point axis
 #'
 #' Only bare `x` and polynomial powers expressed as `I(x^k)` are converted to
@@ -539,6 +532,35 @@ term_contains = function(par_x, terms) {
 }
 
 
+# Does an explicit dpar formula provide no initial predictor at all? This is
+# deliberately syntactic: a nonzero offset or a group-only formula counts as
+# a declaration even though it has no population coefficient.
+is_empty_initial_predictor = function(form) {
+  attrs = attributes(stats::terms(form))
+  group_terms = attrs$term.labels[vapply(attrs$term.labels, is_group_term, logical(1))]
+  population_terms = setdiff(attrs$term.labels, group_terms)
+  group_is_active = vapply(group_terms, function(term) {
+    coefficient_form = stats::as.formula(call("~", str2lang(term)[[2]]), env = environment(form))
+    coefficient_attrs = attributes(stats::terms(coefficient_form))
+    coefficient_attrs$intercept == 1 || length(coefficient_attrs$term.labels) > 0
+  }, logical(1))
+
+  # Check regular coefficient-terms; if no issue is found return TRUE
+  if (attrs$intercept == 1 || length(population_terms) > 0 || any(group_is_active))
+    return(FALSE)
+  if (is.null(attrs$offset))
+    return(TRUE)
+
+  # Check offset terms
+  offset_terms = vapply(
+    attrs$offset,
+    function(i) deparse1(attrs$variables[[i + 1]]),
+    character(1)
+  )
+  all(offset_terms %in% c("offset(0)", "stats::offset(0)"))
+}
+
+
 #' @aliases get_predictors_segment
 #' @keywords internal
 #' @noRd
@@ -554,6 +576,8 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
   # Get general format. Top-level group terms belong to mu; group terms inside
   # distributional wrappers are removed from those formulas below.
   form_rhs = stats::as.formula(form_rhs)
+  if (grepl("\\bsame\\s*\\(", deparse1(form_rhs)))
+    stop("`same()` is not supported yet. Coefficient sharing will be added in a later mcp v0.4 step.", call. = FALSE)
   form_env = environment(form_rhs)
   attrs = attributes(stats::terms(form_rhs))
   term_labels = attrs$term.labels
@@ -637,6 +661,12 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
         dplyr::mutate(explicit = FALSE)
     } else if (length(dpar_term) > 0) {
       dpar_form = get_term_content(dpar_term, form_env)
+      if (segment == 1 && spec$require_initial_predictor && is_empty_initial_predictor(dpar_form))
+        stop(
+          "`", dpar, "(0)` cannot be the initial predictor for family = ", family$family,
+          "(). Declare an initial predictor, such as `", dpar, "(1)` or `", dpar, "(0 + x)`.",
+          call. = FALSE
+        )
       dpar_form = remove_terms(dpar_form, "varying")
       dpar_pars[[dpar]] = get_predictors_dpar(
         data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank,
@@ -744,27 +774,20 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     dplyr::ungroup() %>%
     dplyr::mutate(next_intercept = dplyr::if_else(.data$segment >= .data$next_intercept, NA_integer_, .data$next_intercept))
 
-  # Ordinary non-local terms persist into later segments until a segment where that same term is redefined or turned off. Local
-  # par_x terms remain cumulative across joined segments and therefore end only next time an intercept is set.
-  term_lifetimes = predictors %>%
-    dplyr::filter(.data$dpar %notin% c("ar", "ma")) %>%
-    get_definition_lifetimes(c("dpar", "order", "term_key")) %>%
-    dplyr::select("dpar", "order", "term_key", "segment", next_term = "next_segment")
-
+  # Population non-local terms are active only in the segment where they are
+  # declared. Local par_x terms retain their endpoint through joined segments
+  # and therefore still end at the next population intercept. Group and AR/MA
+  # lifetimes intentionally retain their existing rules until step 2.
   predictors = predictors %>%
-    dplyr::left_join(
-      term_lifetimes,
-      by = c("dpar", "order", "term_key", "segment")
-    ) %>%
     dplyr::mutate(
       next_segment = dplyr::if_else(
         .data$par_type != "Intercept" & .data$x_factor == "1" &
           .data$dpar %notin% c("ar", "ma"),
-        earliest_segment(.data$next_intercept, .data$next_term),
+        dplyr::if_else(.data$segment < length(rhs), .data$segment + 1L, NA_integer_),
         .data$next_intercept
       )
     ) %>%
-    dplyr::select(-"next_intercept", -"next_term")
+    dplyr::select(-"next_intercept")
 
   # AR/MA declarations replace their whole component. This also preserves a
   # zero formula, which otherwise has no predictor rows.

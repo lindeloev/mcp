@@ -65,14 +65,12 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family, 
       dpar_key = paste0(.data$dpar, tidyr::replace_na(as.character(.data$order), ""))
     )
 
-  # Apply lifetime to offsets
-  if (nrow(offset_table) > 0) {
-    offset_lifetimes = get_definition_lifetimes(offset_table, "dpar_key")
-    offset_table = dplyr::left_join(
-      offset_table, offset_lifetimes,
-      by = c("dpar_key", "segment")
-    )
-  }
+  # Offsets are active only in the segment where they are declared.
+  if (nrow(offset_table) > 0)
+    offset_table = offset_table %>%
+      dplyr::mutate(next_segment = dplyr::if_else(
+        .data$segment < nrow(segments), .data$segment + 1L, NA_integer_
+      ))
 
   # All together!
   all_dpar_keys = unique(c(formula_predictors_joined$dpar_key, offset_table$dpar_key))

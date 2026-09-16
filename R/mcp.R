@@ -13,8 +13,8 @@
 #'   `response ~ cp ~ predictors` (e.g., `y ~ 1 ~ 1 + x`), except the first segment
 #'   has no change point and uses `response ~ predictors`. The response and
 #'   change-point parts can be omitted (`cp ~ predictor` assumes the same
-#'   response; `~ predictor` assumes an intercept-only change point). Non-$x$ terms persist
-#'   into later segments until replaced or removed by an intercept reset (see details). See examples on the
+#'   response; `~ predictor` assumes an intercept-only change point). Population terms other than
+#'   the segment-local change-point predictor are active only where declared (see details). See examples on the
 #'   [mcp website](https://lindeloev.github.io/mcp/).
 #'
 #'   **1. Response (segment 1 only):**
