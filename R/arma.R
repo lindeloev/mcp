@@ -205,7 +205,7 @@ has_missing_garma_history = function(fit, data = fit$data) {
 
   # Missing values in the history of later observed values (per series)
   # (e.g., c(1, NA, 3) --> TRUE; c(1, 3, NA, NA) --> FALSE
-  series = if (is.null(columns$series)) rep(1, length(y)) else data[[columns$series]]
+  series = if (is.null(columns$series) || is.null(data[[columns$series]])) rep(1, length(y)) else data[[columns$series]]
   garma_missing_vec = vapply(split(y, series), function(series_y) {
     missing_rows = which(is.na(series_y))
     observed_rows = which(!is.na(series_y))

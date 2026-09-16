@@ -137,11 +137,13 @@ pp_eval = function(
   data_columns = mcp_columns(fit)
   checkmate::assert_flag(.garma_replicate)
   replicate_garma = .garma_replicate && arma && is_arma(fit)
-  assert_arma_series(newdata, data_columns$series)
+  evaluating_arma = arma && is_arma(fit) && !(type == "fitted" && dpar %notin% c("epred", "mu"))
+  if (evaluating_arma)
+    assert_arma_series(newdata, data_columns$series)
   if (type == "loglik")
     assert_loglik_garma_history(fit, newdata, arma)
 
-  conditional_garma = arma && is_arma(fit) && !replicate_garma &&
+  conditional_garma = evaluating_arma && !replicate_garma &&
     (type %in% c("predict", "residuals") ||
        (type == "fitted" && dpar %in% c("epred", "mu")))
   if (conditional_garma && !using_original_data &&
@@ -165,7 +167,7 @@ pp_eval = function(
   group_info = unpack_group_effects(fit, pars = varying)
   model_tables = get_fit_model_tables(fit)
   group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
-  exclude_group_cols = setdiff(group_cols, c(group_info$cols, data_columns$series, get_predictor_cols(fit)))
+  exclude_group_cols = setdiff(group_cols, c(group_info$cols, if (evaluating_arma) data_columns$series, get_predictor_cols(fit)))
 
   # Determine which auxiliary columns are needed for this operation
   operation = switch(type, predict = "rng", loglik = "log_lik", fitted = "epred", residuals = "epred")
@@ -180,6 +182,13 @@ pp_eval = function(
   required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
   required_cols = required_cols[required_cols %notin% unused_aux_columns]
   required_cols = required_cols[required_cols %notin% exclude_group_cols]
+  series_required = !is.null(data_columns$series) && (
+    evaluating_arma ||
+    data_columns$series %in% get_predictor_cols(fit) ||
+    data_columns$series %in% group_info$cols
+  )
+  if (!series_required && !is.null(data_columns$series))
+    required_cols = required_cols[required_cols != data_columns$series]
   response_not_required = type %in% c("fitted", "predict") && !conditional_garma
   if (response_not_required) {
     required_cols = required_cols[required_cols != data_columns$response]
@@ -288,7 +297,7 @@ pp_eval = function(
   # Group-level joins are row-major, while GARMA recurrences require each
   # draw's data rows to be contiguous. Evaluate in draw/data order, then
   # restore the public row order below.
-  evaluation_order = if (arma && is_arma(fit)) {
+  evaluation_order = if (evaluating_arma) {
     order(draws$.draw, draws$.mcp_data_row)
   } else {
     seq_len(nrow(draws))

@@ -180,3 +180,41 @@ test_that("ar() and ma() require a family GARMA implementation", {
     fixed = TRUE
   )
 })
+
+
+test_that("independent-series models evaluate plots, trends, and dpars without requiring series", {
+  data = data.frame(id = rep(c("a", "b"), each = 5), x = 1:10, y = 1:10)
+  fit = mcp(list(y ~ 1 + ar(1, series = id)), data = data, par_x = "x", sample = FALSE, quiet = TRUE)
+  fixed_draws = matrix(
+    rep(c(0, 1, 0.5), each = 5),
+    nrow = 5,
+    dimnames = list(NULL, c("Intercept_1", "sigma_1", "ar1_1"))
+  )
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(fixed_draws))
+
+  # Plots succeed without series in interpolated newdata
+  expect_s3_class(plot(fit, arma = FALSE), "ggplot")
+  expect_s3_class(plot_dpar(fit, dpar = "sigma"), "ggplot")
+  expect_s3_class(plot_dpar(fit, dpar = "ar1"), "ggplot")
+
+  # Predict/fitted without arma recurrence do not require series
+  nd = data.frame(x = 11:15)
+  fitted_trend = expect_no_error(fitted(fit, newdata = nd, arma = FALSE))
+  expect_equal(nrow(fitted_trend), 5)
+  pred_trend = expect_no_error(predict(fit, newdata = nd, arma = FALSE))
+  expect_equal(nrow(pred_trend), 5)
+  dpar_sigma = expect_no_error(fitted(fit, newdata = nd, dpar = "sigma"))
+  expect_equal(nrow(dpar_sigma), 5)
+
+  # When series is also a predictor, omitting it still errors
+  fit_pred = mcp(list(y ~ 1 + id + ar(1, series = id)), data = data, par_x = "x", sample = FALSE, quiet = TRUE)
+  fit_pred$mcmc_post = coda::mcmc.list(coda::mcmc(matrix(rep(1, 20), nrow = 5, dimnames = list(NULL, c("Intercept_1", "idb_1", "sigma_1", "ar1_1")))))
+  expect_error(fitted(fit_pred, newdata = nd, arma = FALSE), "missing from the data: id")
+
+  # When series is an active grouping effect, omitting it errors unless varying = FALSE
+  fit_grp = mcp(list(y ~ 1 + (1 | id) + ar(1, series = id)), data = data, par_x = "x", sample = FALSE, quiet = TRUE)
+  fit_grp$mcmc_post = coda::mcmc.list(coda::mcmc(matrix(rep(1, 30), nrow = 5, dimnames = list(NULL, c("Intercept_1", "Intercept_1_id[a]", "Intercept_1_id[b]", "Intercept_1_id_sd", "sigma_1", "ar1_1")))))
+  expect_error(fitted(fit_grp, newdata = nd, arma = FALSE), "missing from the data: id")
+  fitted_pop = expect_no_error(fitted(fit_grp, newdata = nd, arma = FALSE, varying = FALSE))
+  expect_equal(nrow(fitted_pop), 5)
+})
