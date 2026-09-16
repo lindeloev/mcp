@@ -418,6 +418,16 @@ mcp = function(model,
   if (nrow(cps) == 0 && nrow(predictor_definitions) == 0 && nrow(group_definitions) == 0)
     stop("The model does not contain any parameters to estimate.", call. = FALSE)
 
+  # Validate that priors are not assigned to shared occurrence terms
+  shared_prior = predictor_occurrences %>%
+    dplyr::filter(.data$occurrence_name != .data$code_name) %>%
+    dplyr::distinct(.data$occurrence_name, .data$code_name)
+  prior_destination = shared_prior[shared_prior$occurrence_name %in% names(prior), , drop = FALSE]
+  if (nrow(prior_destination) > 0) {
+    guidance = paste0("`", prior_destination$occurrence_name, "` (use `", prior_destination$code_name, "`)")
+    stop("Shared terms have no destination parameter. Specify the prior for the source: ", and_collapse(guidance), ".", call. = FALSE)
+  }
+
   # Make prior
   prior = get_prior(segments, cps, predictor_definitions, group_definitions, family, prior, data, predictor_tables$design_specs)
   prior_table = attr(prior, "prior_table")

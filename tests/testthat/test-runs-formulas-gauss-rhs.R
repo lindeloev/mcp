@@ -76,13 +76,6 @@ test_that("formula functions reject multiple terms containing par_x", {
   )
 })
 
-test_that("same() is rejected until coefficient sharing is implemented", {
-  expect_error(
-    mcp(list(y ~ 1 + x, ~ 0 + same(x)), data_gauss, par_x = "x", sample = FALSE),
-    "`same\\(\\)` is not supported yet"
-  )
-})
-
 test_that("population terms are segment-local while local par_x terms accumulate", {
   data = data.frame(
     x = 1:8,

@@ -182,16 +182,28 @@ warn_nonconvergence = function(mcmc_post, diagnostics = list(), fixed_pars = cha
 # - predictors: Output of get_predictors()
 # - group_effects: Output of get_group_effects()
 get_predictor_design_names = function(predictors, group_effects = NULL) {
+  # Extract group-level predictor columns
   group_predictors = if (is.null(group_effects) || "matrix_col" %notin% names(group_effects)) {
-    tibble::tibble(matrix_col = integer(), name = character())
+    tibble::tibble(matrix_col = integer(), name = character(), segment = integer())
   } else {
-    group_effects[group_effects$part == "predictor", c("matrix_col", "name"), drop = FALSE]
+    group_effects[group_effects$part == "predictor", c("matrix_col", "name", "segment"), drop = FALSE]
   }
+
+  # Combine population and group-level predictors
   design = dplyr::bind_rows(
-    tibble::tibble(matrix_col = predictors$matrix_col, name = predictors$code_name),
+    tibble::tibble(
+      matrix_col = predictors$matrix_col,
+      name = predictors$code_name,
+      segment = predictors$segment
+    ),
     group_predictors
   )
-  design$name[order(design$matrix_col)]
+
+  # Disambiguate duplicate names across occurrences and ensure uniqueness
+  design = design[order(design$matrix_col), , drop = FALSE]
+  duplicate = duplicated(design$name) | duplicated(design$name, fromLast = TRUE)
+  design$name[duplicate] = paste0(design$name[duplicate], "_occurrence_", design$segment[duplicate])
+  make.unique(design$name)
 }
 
 
@@ -219,7 +231,7 @@ get_predictor_matrix = function(predictors, group_effects = NULL) {
   # Each coefficient contributes one column; both sources share matrix indices.
   column_order = order(c(predictors$matrix_col, group_predictors$matrix_col))
   matrix_data = c(predictors$matrix_data, group_predictors$matrix_data)[column_order]
-  column_names = c(predictors$code_name, group_predictors$name)[column_order]
+  column_names = get_predictor_design_names(predictors, group_effects)
 
   suppressMessages(dplyr::bind_cols(matrix_data, .name_repair = "unique")) %>% # Suppress message about lacking column names
     as.matrix() %>%
