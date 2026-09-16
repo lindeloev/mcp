@@ -128,10 +128,10 @@ test_that("GARMA plotting works with categorical predictors", {
   df = data.frame(
     time = 1:20,
     y = rnorm(20),
-    condition = rep(c("A", "B"), each = 10)
+    state = rep(c("A", "B"), each = 10)
   )
   fit = mcp(
-    list(y ~ 1 + condition + ar(1), ~ 1),
+    list(y ~ 1 + state + ar(1), ~ 1),
     data = df, par_x = "time", chains = 1, iter = 10, warmup = 100, quiet = TRUE,
     diagnostics = FALSE  # Justified because we are not testing convergence here, just plotting
   )

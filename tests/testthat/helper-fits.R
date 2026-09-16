@@ -157,9 +157,7 @@ test_example_plot = function(plot, example) {
 
   if (example %in% c("group_mu", "group_cp"))
     testthat::expect_s3_class(plot$facet, "FacetWrap")
-  if (example == "group_mu")
-    testthat::expect_identical(plot$labels$colour, "condition")
-  if (example == "multiple")
+  if (example %in% c("group_mu", "multiple"))
     testthat::expect_identical(plot$labels$colour, "state")
 }
 

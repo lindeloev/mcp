@@ -9,7 +9,7 @@ coefficient_data = data.frame(
   x = 1:12,
   y = rep(c(2, 4, 6), 4),
   id = rep(c("a", "b", "c"), 4),
-  condition = factor(rep(c("A", "B", "C"), each = 4)),
+  state = factor(rep(c("A", "B", "C"), each = 4)),
   z = seq(-1, 1, length.out = 12)
 )
 
@@ -123,7 +123,7 @@ test_that("predictor group intercepts work for family dpars and group-only formu
 test_that("double-bar terms expand into independent group coefficients", {
   fit = mcp(
     list(
-      y ~ 1 + (condition || id),
+      y ~ 1 + (state || id),
       ~ 1,
       ~ 1 + (0 | id)
     ),
@@ -136,7 +136,7 @@ test_that("double-bar terms expand into independent group coefficients", {
 
   expect_equal(
     effects$name,
-    c("Intercept_1_id", "conditionB_1_id", "conditionC_1_id")
+    c("Intercept_1_id", "stateB_1_id", "stateC_1_id")
   )
   expect_equal(
     effects$population_name,
@@ -146,8 +146,8 @@ test_that("double-bar terms expand into independent group coefficients", {
   expect_equal(effects$next_segment, rep(2L, 3))
   expect_false(any(effects$correlated))
   expect_true(all(effects$sd_name %in% names(fit$prior)))
-  expect_match(fit$jags_code, "conditionB_1_id\\[id_\\] ~")
-  expect_match(fit$jags_code, "conditionC_1_id\\[id_\\] ~")
+  expect_match(fit$jags_code, "stateB_1_id\\[id_\\] ~")
+  expect_match(fit$jags_code, "stateC_1_id\\[id_\\] ~")
 
   set.seed(42)
   simulated = fit$simulate(
@@ -160,19 +160,19 @@ test_that("double-bar terms expand into independent group coefficients", {
     Intercept_3 = 3,
     sigma_1 = 1,
     Intercept_1_id_sd = 1,
-    conditionB_1_id_sd = 10,
-    conditionC_1_id_sd = 100,
+    stateB_1_id_sd = 10,
+    stateC_1_id_sd = 100,
     .type = "fitted"
   )
   simulation = attr(simulated, "simulated")
   intercept_by_id = simulation$Intercept_1_id
-  condition_b_by_id = simulation$conditionB_1_id
-  condition_c_by_id = simulation$conditionC_1_id
+  state_b_by_id = simulation$stateB_1_id
+  state_c_by_id = simulation$stateC_1_id
   expected = ifelse(
     coefficient_data$x < 4.5,
     1 + intercept_by_id +
-      (coefficient_data$condition == "B") * condition_b_by_id +
-      (coefficient_data$condition == "C") * condition_c_by_id,
+      (coefficient_data$state == "B") * state_b_by_id +
+      (coefficient_data$state == "C") * state_c_by_id,
     ifelse(coefficient_data$x < 8.5, 2, 3)
   )
   expect_equal(as.numeric(simulated), as.numeric(expected))
@@ -181,7 +181,7 @@ test_that("double-bar terms expand into independent group coefficients", {
 
 test_that("double-bar terms support no-intercept factors and numeric slopes", {
   factor_fit = mcp(
-    list(y ~ 0 + (0 + condition || id)),
+    list(y ~ 0 + (0 + state || id)),
     coefficient_data,
     par_x = "x",
     sample = FALSE
@@ -189,7 +189,7 @@ test_that("double-bar terms support no-intercept factors and numeric slopes", {
   factor_effects = get_fit_model_tables(factor_fit)$group_effects
   expect_equal(
     factor_effects$name,
-    c("conditionA_1_id", "conditionB_1_id", "conditionC_1_id")
+    c("stateA_1_id", "stateB_1_id", "stateC_1_id")
   )
   expect_true(all(is.na(factor_effects$population_name)))
   expect_true(all(factor_effects$par_type == "dummy"))
@@ -260,7 +260,7 @@ test_that("local group slopes retain joined endpoints until an intercept or zero
 test_that("double-bar coefficient blocks are replaced together", {
   fit = mcp(
     list(
-      y ~ 1 + (condition || id),
+      y ~ 1 + (state || id),
       ~ 1 + (1 || id)
     ),
     coefficient_data,
@@ -272,7 +272,7 @@ test_that("double-bar coefficient blocks are replaced together", {
   expect_equal(
     effects$name,
     c(
-      "Intercept_1_id", "conditionB_1_id", "conditionC_1_id",
+      "Intercept_1_id", "stateB_1_id", "stateC_1_id",
       "Intercept_2_id"
     )
   )
@@ -284,18 +284,18 @@ test_that("factor group coefficients sample and predict by level", {
   set.seed(43)
   data = expand.grid(
     id = c("a", "b", "c"),
-    condition = factor(c("A", "B", "C")),
+    state = factor(c("A", "B", "C")),
     replicate = 1:2
   )
   data$x = seq_len(nrow(data))
   data$y = 2 +
     c(a = -1, b = 0, c = 1)[data$id] +
-    (data$condition == "B") * c(a = 0.5, b = 1, c = 1.5)[data$id] +
+    (data$state == "B") * c(a = 0.5, b = 1, c = 1.5)[data$id] +
     stats::rnorm(nrow(data), 0, 0.3)
 
   expect_warning({
     fit = mcp(
-      list(y ~ 1 + (condition || id)),
+      list(y ~ 1 + (state || id)),
       data,
       par_x = "x",
       chains = 1,
@@ -309,7 +309,7 @@ test_that("factor group coefficients sample and predict by level", {
   effects = ranef(fit)
   expect_equal(nrow(effects), 3 * length(unique(data$id)))
   expect_true(all(
-    c("Intercept_1_id[a]", "conditionB_1_id[a]", "conditionC_1_id[a]") %in%
+    c("Intercept_1_id[a]", "stateB_1_id[a]", "stateC_1_id[a]") %in%
       effects$variable
   ))
 
@@ -318,8 +318,8 @@ test_that("factor group coefficients sample and predict by level", {
   )
   expect_true(all(
     c(
-      "id", "condition", "Intercept_1_id",
-      "conditionB_1_id", "conditionC_1_id"
+      "id", "state", "Intercept_1_id",
+      "stateB_1_id", "stateC_1_id"
     ) %in% names(fitted_values)
   ))
 })

@@ -199,7 +199,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 [Group-level (random) effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
 
-- Model group-level intercepts, slopes, and change points using `(1|id)`, `(condition||id)`, or `+(condition|id)`. Get posteriors using `ranef(fit)`.
+- Model group-level intercepts, slopes, and change points using `(1|id)`, `(state||id)`, or `+(state|id)`. Get posteriors using `ranef(fit)`.
 
 - Plot using `plot(fit, facet_by = "my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
 
@@ -213,7 +213,7 @@ Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) an
 
 - `y | weights(w)` (and `y | trials(N) + weights(w)`) specifies observation log-likelihood weights (`w > 0`) across all families.
 
-- You can provide complete models in distributional parameters (currently `sigma()`, `shape()`, and `mu()`) and time-series (`ar()` and `ma()`). For example, `~ x + sigma(1 + x:condition)` models an abrupt change followed by by-condition slopes in variance.
+- You can provide complete models in distributional parameters (currently `sigma()`, `shape()`, and `mu()`) and time-series (`ar()` and `ma()`). For example, `~ x + sigma(1 + x:state)` models an abrupt change followed by by-state slopes in variance.
 
 [Get fitted and predicted values and intervals](https://lindeloev.github.io/mcp/articles/predict.html):
 

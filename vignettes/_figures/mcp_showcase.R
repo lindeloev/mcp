@@ -62,7 +62,7 @@ group_cp_model = list(y ~ 1 + x, ~ 1 + (1|id) ~ 0 + x)
 
 fit_group_mu = mcp_example("group_mu")
 gg_group_mu_org = force(last_plot()) + scale_x_continuous(breaks = seq(0, 200, by = 25))# + facet_wrap(~id, nrow = 2)
-group_mu_model = list(y ~ 1 + condition + (condition || id), ~ 1 + condition)
+group_mu_model = list(y ~ 1 + state + (state || id), ~ 1 + state)
 
 fit_multiple = mcp_example("multiple")
 gg_multiple_org = force(last_plot())

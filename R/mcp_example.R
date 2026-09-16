@@ -147,15 +147,15 @@ if (plot) {
 
     group_mu = "# Define model
 model = list(
-  y ~ 1 + condition + (condition || id),
-  ~ 1 + condition + (condition || id)  # repeat active group effects
+  y ~ 1 + state + (state || id),
+  ~ 1 + state + (state || id)  # repeat active group effects
 )
 
 # Simulate balanced data with 9 levels of the grouping factor
 set.seed(200)
 data = tidyr::expand_grid(
   id = sprintf('id_%02d', 1:9),
-  condition = factor(c('A', 'B')),
+  state = factor(c('A', 'B')),
   x = seq(0, 100, length.out = 9)
 )
 data$y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
@@ -164,11 +164,11 @@ empty = mcp(model, data, par_x = 'x', sample = FALSE)
 data$y = empty$simulate(empty, data,
   cp_1 = 50,
   Intercept_1 = 10,
-  conditionB_1 = 4,
+  stateB_1 = 4,
   Intercept_2 = 13,
-  conditionB_2 = -2,
+  stateB_2 = -2,
   Intercept_1_id_sd = 2,
-  conditionB_1_id_sd = 2,
+  stateB_1_id_sd = 2,
   sigma_1 = 1.5
 )
 
@@ -178,8 +178,8 @@ fit = mcp(model, data, par_x = 'x', sample = sample, iter = 15000, seed = 200)
 # Illustrative plot
 if (plot) {
   set.seed(200)
-  print(plot(fit, facet_by = 'id', color_by = 'condition') +
-      ggplot2::labs(title = 'plot(fit, facet_by = \"id\", color_by = \"condition\")'))
+  print(plot(fit, facet_by = 'id', color_by = 'state') +
+      ggplot2::labs(title = 'plot(fit, facet_by = \"id\", color_by = \"state\")'))
 }",
     intercepts = "# Define model
 model = list(
@@ -211,15 +211,15 @@ if (plot) {
 }",
     missing = "# Define model
 model = list(
-  y ~ 1 + x + condition,
-  ~ 0 + x  # condition effect persists into the second segment
+  y ~ 1 + x + state,
+  ~ 0 + x  # state effect persists into the second segment
 )
 
 # Simulate complete data
 set.seed(42)
 data = data.frame(
   x = 1:100,
-  condition = factor(rep(c('A', 'B'), 50)),
+  state = factor(rep(c('A', 'B'), 50)),
   y = 2.  # Numeric placeholder replaced by simulation below.
 )
 empty = mcp(model, data, par_x = 'x', sample = FALSE)
@@ -227,7 +227,7 @@ data$y = empty$simulate(empty, data,
   cp_1 = 54.5,
   Intercept_1 = 10,
   x_1 = 0.25,
-  conditionB_1 = 22,
+  stateB_1 = 22,
   x_2 = -0.4,
   sigma_1 = 4
 )
@@ -243,8 +243,8 @@ fit = mcp(model, data, par_x = 'x', iter = 5000, sample = sample, seed = 12)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit, q_fit = TRUE, color_by = 'condition') +
-      ggplot2::labs(title = 'plot(fit, q_fit = TRUE, color_by = \"condition\")'))
+  print(plot(fit, q_fit = TRUE, color_by = 'state') +
+      ggplot2::labs(title = 'plot(fit, q_fit = TRUE, color_by = \"state\")'))
 }",
     multiple = "# Define model
 model = list(

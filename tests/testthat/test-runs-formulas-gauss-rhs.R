@@ -322,13 +322,13 @@ test_that("x-free interactions are evaluated directly at zero", {
 test_that("factor punctuation produces safe parameter names", {
   data = data.frame(
     x = 1:4,
-    condition = factor(
+    state = factor(
       c("reference", "a/b", "reference", "a/b"),
       levels = c("reference", "a/b")
     ),
     y = 0
   )
-  fit = mcp(list(y ~ condition), data, par_x = "x", sample = FALSE)
+  fit = mcp(list(y ~ state), data, par_x = "x", sample = FALSE)
   predictor = get_fit_model_tables(fit)$predictors
   slash_row = grepl("a/b", predictor$matrix_name, fixed = TRUE)
   safe_name = predictor$code_name[slash_row]
@@ -343,30 +343,30 @@ test_that("prediction reuses fitted factor encodings", {
   data = data.frame(
     x = 1:6,
     y = 1:6,
-    condition = ordered(rep(c("low", "middle", "high"), 2))
+    state = ordered(rep(c("low", "middle", "high"), 2))
   )
-  ordered_fit = mcp(list(y ~ condition), data, par_x = "x", sample = FALSE)
+  ordered_fit = mcp(list(y ~ state), data, par_x = "x", sample = FALSE)
   ordered_matrix = get_predictor_matrix(
     get_fit_model_tables(ordered_fit)$predictors,
     get_fit_model_tables(ordered_fit)$group_effects
   )
   ordered_new = add_rhs_predictors(
-    transform(data, condition = as.character(condition)), ordered_fit
+    transform(data, state = as.character(state)), ordered_fit
   )
   expect_equal(
     unname(as.matrix(ordered_new[, paste0(".pred_", colnames(ordered_matrix))])),
     unname(ordered_matrix)
   )
 
-  custom_data = transform(data, condition = factor(condition))
-  contrasts(custom_data$condition) = stats::contr.sum(3)
-  custom_fit = suppressWarnings(mcp(list(y ~ condition), custom_data, par_x = "x", sample = FALSE))
+  custom_data = transform(data, state = factor(state))
+  contrasts(custom_data$state) = stats::contr.sum(3)
+  custom_fit = suppressWarnings(mcp(list(y ~ state), custom_data, par_x = "x", sample = FALSE))
   custom_matrix = get_predictor_matrix(
     get_fit_model_tables(custom_fit)$predictors,
     get_fit_model_tables(custom_fit)$group_effects
   )
   custom_new = add_rhs_predictors(
-    transform(custom_data, condition = as.character(condition)), custom_fit
+    transform(custom_data, state = as.character(state)), custom_fit
   )
   expect_equal(
     unname(as.matrix(custom_new[, paste0(".pred_", colnames(custom_matrix))])),
@@ -380,9 +380,9 @@ test_that("prediction is independent of later contrast options", {
   data = data.frame(
     x = 1:6,
     y = 1:6,
-    condition = factor(rep(c("a", "b", "c"), 2))
+    state = factor(rep(c("a", "b", "c"), 2))
   )
-  fit = mcp(list(y ~ condition), data, par_x = "x", sample = FALSE)
+  fit = mcp(list(y ~ state), data, par_x = "x", sample = FALSE)
   fitted_matrix = get_predictor_matrix(
     get_fit_model_tables(fit)$predictors,
     get_fit_model_tables(fit)$group_effects

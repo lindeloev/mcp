@@ -547,11 +547,11 @@ test_that("color_by controls color without pooling categorical curves", {
   data = expand.grid(
     x = 1:4,
     group = factor(c("A", "B")),
-    condition = factor(c("control", "treatment"))
+    state = factor(c("control", "treatment"))
   )
   data$y = 0
   fit = mcp(
-    list(y ~ 1 + group + condition),
+    list(y ~ 1 + group + state),
     data,
     par_x = "x",
     sample = FALSE
@@ -565,18 +565,18 @@ test_that("color_by controls color without pooling categorical curves", {
     dimnames = list(NULL, population)
   )
   draws[, "groupB_1"] = seq(9, 11, length.out = 20)
-  draws[, "conditiontreatment_1"] = seq(99, 101, length.out = 20)
+  draws[, "statetreatment_1"] = seq(99, 101, length.out = 20)
   draws[, "sigma_1"] = 1
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
 
   expect_error(
     plot(fit, lines = 0, q_fit = c(0.25, 0.75)),
-    "Unmapped categorical predictors: 'group', 'condition'.",
+    "Unmapped categorical predictors: 'group', 'state'.",
     fixed = TRUE
   )
   expect_error(
     plot(fit, color_by = "group", lines = 0, q_fit = c(0.25, 0.75)),
-    "Unmapped categorical predictors: 'condition'.",
+    "Unmapped categorical predictors: 'state'.",
     fixed = TRUE
   )
 
@@ -597,7 +597,7 @@ test_that("color_by controls color without pooling categorical curves", {
   one_color = plot(
     fit,
     color_by = "group",
-    facet_by = "condition",
+    facet_by = "state",
     lines = 0,
     q_fit = c(0.25, 0.75),
     q_predict = c(0.25, 0.75)
@@ -614,17 +614,17 @@ test_that("color_by controls color without pooling categorical curves", {
 
   interaction_color = plot(
     fit,
-    color_by = c("group", "condition"),
+    color_by = c("group", "state"),
     lines = 0,
     q_fit = c(0.25, 0.75)
   )
   interaction_quantiles = ggplot2::ggplot_build(interaction_color)$data[[2]]
   expect_setequal(unique(interaction_quantiles$colour), plot_colors)
-  expect_equal(interaction_color$labels$colour, "group:condition")
+  expect_equal(interaction_color$labels$colour, "group:state")
 
   faceted = plot(
     fit,
-    facet_by = "condition",
+    facet_by = "state",
     color_by = "group",
     lines = 0,
     q_fit = c(0.25, 0.75)
@@ -635,12 +635,12 @@ test_that("color_by controls color without pooling categorical curves", {
 
   expect_error(
     plot(fit, color_by = "does_not_exist"),
-    "Invalid: 'does_not_exist'. Valid columns are 'group', 'condition'.",
+    "Invalid: 'does_not_exist'. Valid columns are 'group', 'state'.",
     fixed = TRUE
   )
   expect_error(
     plot(fit, color_by = "x"),
-    "Invalid: 'x'. Valid columns are 'group', 'condition'.",
+    "Invalid: 'x'. Valid columns are 'group', 'state'.",
     fixed = TRUE
   )
 
@@ -648,7 +648,7 @@ test_that("color_by controls color without pooling categorical curves", {
     fit,
     dpar = "sigma",
     color_by = "group",
-    facet_by = "condition",
+    facet_by = "state",
     lines = 0,
     q_fit = c(0.25, 0.75)
   )
@@ -691,10 +691,10 @@ test_that("change point density colors adapt to fitted colors", {
 
 
 test_that("integer varying groups can control plot color", {
-  data = expand.grid(x = 1:4, id = 1:2, condition = factor(c("A", "B")))
+  data = expand.grid(x = 1:4, id = 1:2, state = factor(c("A", "B")))
   data$y = 0
   fit = mcp(
-    list(y ~ 1 + condition, 1 + (1 | id) ~ 1),
+    list(y ~ 1 + state, 1 + (1 | id) ~ 1),
     data,
     par_x = "x",
     sample = FALSE
@@ -720,7 +720,7 @@ test_that("integer varying groups can control plot color", {
 
   automatic = plot(fit, lines = 0, q_fit = c(0.25, 0.75), cp_dens = FALSE)
   automatic_quantiles = ggplot2::ggplot_build(automatic)$data[[2]]
-  expect_equal(automatic$labels$colour, "condition")
+  expect_equal(automatic$labels$colour, "state")
   expect_equal(length(unique(automatic_quantiles$colour)), 2)
 
   # Without an explicit facet or color mapping, show the population curve
@@ -749,7 +749,7 @@ test_that("integer varying groups can control plot color", {
 
   grouped = plot(
     fit,
-    color_by = "condition",
+    color_by = "state",
     facet_by = "id",
     lines = 0,
     q_fit = c(0.25, 0.75),
