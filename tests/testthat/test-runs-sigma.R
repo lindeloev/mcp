@@ -59,6 +59,38 @@ test_that("distribution priors for fixed residual SDs use the likelihood lower b
 
   expect_equal(fit$prior$sigma_1, "dnorm(0, 1) T(0.001, )")
   expect_match(fit$jags_code, "sigma_1 ~ dnorm(0, 1/(1)^2) T(0.001,)", fixed = TRUE)
+
+  # Already bounded uniform prior is preserved without T()
+  fit_unif_ok = mcp(
+    list(y ~ 1), data,
+    par_x = "x", prior = list(sigma_1 = "dunif(1, 2)"), sample = FALSE
+  )
+  expect_equal(fit_unif_ok$prior$sigma_1, "dunif(1, 2)")
+  expect_match(fit_unif_ok$jags_code, "sigma_1 ~ dunif(1, 2)", fixed = TRUE)
+  expect_false(grepl("sigma_1 ~ dunif.*T\\(", fit_unif_ok$jags_code))
+
+  # Uniform prior reaching below floor has lower bound adjusted
+  fit_unif_floor = mcp(
+    list(y ~ 1), data,
+    par_x = "x", prior = list(sigma_1 = "dunif(0, 2)"), sample = FALSE
+  )
+  expect_equal(fit_unif_floor$prior$sigma_1, "dunif(0.001, 2)")
+  expect_match(fit_unif_floor$jags_code, "sigma_1 ~ dunif(0.001, 2)", fixed = TRUE)
+
+  # Uniform prior with upper bound not exceeding floor errors
+  expect_error(
+    mcp(list(y ~ 1), data, par_x = "x", prior = list(sigma_1 = "dunif(-2, 0)"), sample = FALSE),
+    "must allow values of at least 0.001"
+  )
+
+  # Deterministic expressions are not treated as distributions
+  fit_expr = mcp(
+    list(y ~ 1), data,
+    par_x = "x", prior = list(sigma_1 = "sqrt(4)"), sample = FALSE
+  )
+  expect_equal(fit_expr$prior$sigma_1, "sqrt(4)")
+  expect_match(fit_expr$jags_code, "sigma_1 = sqrt(4)", fixed = TRUE)
+  expect_false(grepl("sigma_1 = sqrt\\(4\\) T\\(", fit_expr$jags_code))
 })
 
 

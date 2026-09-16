@@ -261,6 +261,35 @@ truncate_cp_prior = function(cps, j, prior_value, context) {
 }
 
 
+truncate_sigma_prior = function(prior_value, lower_floor, name = NULL) {
+  # Leave non-string priors (e.g. numeric constants) unchanged
+  if (!is.character(prior_value))
+    return(prior_value)
+
+  # Parse distribution call and isolate any user-supplied T() clause
+  parts = split_prior_truncation(prior_value)
+  call = parse_prior_call(parts$distribution)
+
+  # Only stochastic distributions without existing truncation need bounding
+  if (is.null(call) || !grepl("^d[A-Za-z]", call$name) || !is.null(parts$truncation))
+    return(prior_value)
+
+  # dunif cannot take T() in JAGS; bound through its lower parameter instead
+  if (call$name == "dunif" && length(call$args) == 2) {
+    lower_val = suppressWarnings(as.numeric(call$args[1]))
+    upper_val = suppressWarnings(as.numeric(call$args[2]))
+    if (!is.na(upper_val) && upper_val <= lower_floor)
+      stop("Prior", if (!is.null(name)) paste0(" for '", name, "'"), " must allow values of at least ", format_prior_number(lower_floor), ".")
+    if (!is.na(lower_val) && lower_val < lower_floor)
+      return(paste0("dunif(", format_prior_number(lower_floor), ", ", call$args[2], ")"))
+    return(prior_value)
+  }
+
+  # Truncate unbounded distributions at the family floor
+  paste0(prior_value, " T(", format_prior_number(lower_floor), ", )")
+}
+
+
 overlay_user_prior_specs = function(specs, prior, cps, context, predictors, family) {
   name_matches = names(prior) %in% specs$parameter
   if (any(!name_matches)) {
@@ -341,20 +370,15 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
     }
   }
 
-  sigma_parameters = predictors$code_name[predictors$dpar == "sigma"]
-  if (length(sigma_parameters) > 0) {
-    sigma_spec = get_dpar_spec(family, "sigma")
-    if (!sigma_spec$modeled) {
-      for (name in intersect(names(prior), sigma_parameters)) {
-        original = prior[[name]]
-        parts = if (is.character(original)) split_prior_truncation(original) else NULL
-        is_distribution = !is.null(parts) && !is.null(parse_prior_call(parts$distribution))
-        if (is_distribution && is.null(parts$truncation)) {
-          lower = format_prior_number(sigma_spec$lower)
-          prior[[name]] = paste0(original, " T(", lower, ", )")
-          auto_truncated = c(auto_truncated, name)
-        }
-      }
+  # Enforce positive floor on unmodeled residual standard deviation priors
+  sigma_pars = predictors$code_name[predictors$dpar == "sigma"]
+  if (length(sigma_pars) > 0 && !get_dpar_spec(family, "sigma")$modeled) {
+    floor = get_dpar_spec(family, "sigma")$lower
+    for (name in intersect(names(prior), sigma_pars)) {
+      original = prior[[name]]
+      prior[[name]] = truncate_sigma_prior(original, floor, name)
+      if (!identical(prior[[name]], original))
+        auto_truncated = c(auto_truncated, name)
     }
   }
 
