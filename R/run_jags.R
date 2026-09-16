@@ -45,6 +45,16 @@ run_jags = function(jags_code,
         quiet = quiet
       )
 
+      # Ensure requested warmup iterations are discarded even if JAGS skips adaptation
+      burnin = n.adapt - jm$iter()
+      if (burnin > 0) {
+        stats::update(
+          object = jm,
+          n.iter = burnin,
+          progress.bar = if (quiet) "none" else getOption("jags.pb")
+        )
+      }
+
       # Sample and return
       rjags::coda.samples(
         model = jm,
