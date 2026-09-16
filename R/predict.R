@@ -596,8 +596,10 @@ fitted.mcpfit = function(
 #'   effects and `NA` excludes them.
 #' @param dpar Distributional parameter for `posterior_epred()` and
 #'   `posterior_linpred()`; `NULL` uses the expected response.
-#' @param transform For `posterior_linpred()`, return the inverse-link
-#'   transformed expected response instead of the linear predictor.
+#' @param transform For `posterior_linpred()`, return the inverse-linked
+#'   parameter on the response scale instead of the linear predictor. For
+#'   binomial models, this returns the success probability rather than expected
+#'   counts.
 #' @param seed Optional integer seed for draw selection and posterior prediction.
 #' @param ... Must be empty. Reserved for future use.
 #' @return A numeric `N_draws` by `nrow(newdata)` matrix.
@@ -617,7 +619,9 @@ fitted.mcpfit = function(
 #'   simulated counts in \eqn{\{0, \dots, n\}}, matching `fitted()` and `predict()`.
 #'   Use `rate = TRUE` for proportions. To obtain the success probability
 #'   parameter \eqn{\mu} on the \eqn{[0, 1]} scale regardless of trial counts, pass
-#'   `dpar = "mu"`.
+#'   `dpar = "mu"`. In contrast, `posterior_linpred(transform = TRUE)` returns the
+#'   inverse-linked parameter directly, evaluating success probabilities \eqn{\mu}
+#'   in \eqn{[0, 1]} rather than counts.
 #' @seealso [fitted.mcpfit()], [predict.mcpfit()]
 posterior_epred.mcpfit = function(
   object,
