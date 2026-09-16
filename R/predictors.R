@@ -17,8 +17,19 @@
 #' @param spec An optional fitted specification returned by this function.
 #' @return A list with `matrix` and `spec`.
 get_fitted_design = function(form = NULL, data, spec = NULL) {
+  # Construct model.frame. na.pass prevents silent row omission so we can throw an informative error below
   if (is.null(spec)) {
-    frame = stats::model.frame(form, data)
+    frame = stats::model.frame(form, data, na.action = stats::na.pass)
+  } else {
+    frame = stats::model.frame(spec$terms, data, xlev = spec$xlevels, na.action = stats::na.pass)
+  }
+
+  # Transformations can introduce bad values on otherwise OK non-transformed data
+  has_na_inf = vapply(frame, function(x) any(if (is.numeric(x)) !is.finite(x) else is.na(x)), logical(1))
+  if (any(has_na_inf))
+    stop("Predictor transformation resulted in NA or non-finite values: ", and_collapse(names(frame)[has_na_inf]), ".")
+
+  if (is.null(spec)) {
     fitted_terms = attr(frame, "terms")
     matrix = stats::model.matrix(fitted_terms, frame)
     offset = stats::model.offset(frame)
@@ -31,7 +42,6 @@ get_fitted_design = function(form = NULL, data, spec = NULL) {
       has_offset = !is.null(offset)
     )
   } else {
-    frame = stats::model.frame(spec$terms, data, xlev = spec$xlevels)
     matrix = stats::model.matrix(
       spec$terms, frame, contrasts.arg = spec$contrasts
     )
@@ -39,6 +49,12 @@ get_fitted_design = function(form = NULL, data, spec = NULL) {
     if (!identical(colnames(matrix), spec$columns))
       stop("The model matrix for `newdata` does not match the fitted model.")
   }
+
+  # Informative error now instead of downstream in JAGS or prediction
+  if (any(!is.finite(matrix)))
+    stop("Evaluated design matrix contains non-finite values.")
+  if (!is.null(offset) && any(!is.finite(offset)))
+    stop("Evaluated offset contains non-finite values.")
 
   list(matrix = matrix, offset = offset, spec = spec)
 }

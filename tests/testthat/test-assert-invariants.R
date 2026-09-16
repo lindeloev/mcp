@@ -103,3 +103,33 @@ test_that("response column named offset is rejected early", {
 })
 
 
+test_that("transformed predictors and offsets producing NA or non-finite values are rejected", {
+  df = data.frame(x = 1:3, y = 1:3, z = c(-1, 4, -1))
+  expect_error(
+    suppressWarnings(mcp(list(y ~ 0 + sqrt(z)), data = df, par_x = "x", sample = FALSE)),
+    "Predictor transformation resulted in NA or non-finite values: sqrt(z)",
+    fixed = TRUE
+  )
+  expect_error(
+    suppressWarnings(mcp(list(y ~ 1 + offset(sqrt(z))), data = df, par_x = "x", sample = FALSE)),
+    "Predictor transformation resulted in NA or non-finite values: offset(sqrt(z))",
+    fixed = TRUE
+  )
+
+  df_valid = data.frame(x = 1:3, y = 1:3, z = c(4, 9, 16))
+  fit = mcp(list(y ~ 1 + sqrt(z)), data = df_valid, par_x = "x", sample = "prior")
+  newdata = data.frame(x = 1:2, z = c(-1, 4))
+  expect_error(
+    suppressWarnings(fitted(fit, newdata = newdata, prior = TRUE)),
+    "Predictor transformation resulted in NA or non-finite values: sqrt(z)",
+    fixed = TRUE
+  )
+  expect_error(
+    suppressWarnings(predict(fit, newdata = newdata, prior = TRUE)),
+    "Predictor transformation resulted in NA or non-finite values: sqrt(z)",
+    fixed = TRUE
+  )
+})
+
+
+
