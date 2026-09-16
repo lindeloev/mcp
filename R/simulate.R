@@ -520,8 +520,15 @@ simulate_atomic = function(fit,
     assert_data_cols(newdata, effect$group_col)
     group = newdata[[effect$group_col]]
     group_levels = unique(group)
-    group_deviations = stats::rnorm(length(group_levels), 0, args[[effect$sd_name]])
-    args[[effect$name]] = group_deviations[match(group, group_levels)]
+
+    # Identify alias group-level effects; otherwise add new.
+    target = fit$prior[[effect$name]]
+    if (!is.null(target) && target %in% names(args)) {
+      args[[effect$name]] = args[[target]]
+    } else {
+      group_deviations = stats::rnorm(length(group_levels), 0, args[[effect$sd_name]])
+      args[[effect$name]] = group_deviations[match(group, group_levels)]
+    }
     simulated[[effect$name]] = args[[effect$name]]
     args[[effect$sd_name]] = NULL
   }

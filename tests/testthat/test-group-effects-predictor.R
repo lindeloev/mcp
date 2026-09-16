@@ -512,3 +512,28 @@ test_that("group-only and offset-only covariates are represented in prediction m
   expect_true("offset_val" %in% mcp:::get_predictor_cols(fit_offset))
 })
 
+
+test_that("fit$simulate() preserves shared group effects", {
+  group_df = data.frame(
+    x = 1:8,
+    y = c(1, 2, 1, 2, 5, 6, 5, 6),
+    id = rep(c("a", "b"), 4)
+  )
+
+  fit_shared = mcp(
+    list(y ~ 1 + (1 | id), ~ 1 + (1 | id)),
+    group_df,
+    par_x = "x",
+    prior = list(Intercept_2_id = "Intercept_1_id"),
+    sample = FALSE
+  )
+
+  sim_shared = fit_shared$simulate(
+    fit_shared, group_df,
+    cp_1 = 4, Intercept_1 = 1, Intercept_2 = 2, sigma_1 = 1,
+    Intercept_1_id_sd = 10
+  )
+  shared_sim = attr(sim_shared, "simulated")
+  expect_equal(shared_sim$Intercept_1_id, shared_sim$Intercept_2_id)
+})
+
