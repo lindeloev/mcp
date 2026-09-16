@@ -47,6 +47,12 @@ test_that("a lower-order AR/MA declaration turns off higher lags", {
     2L
   )
 
+  joined_lower = get_predictors(
+    list(y ~ ar(2), ~ ar(1, 0)), data, family, par_x = "x"
+  )
+  expect_equal(joined_lower$next_segment[joined_lower$code_name == "ar1_1"], NA_integer_)
+  expect_equal(joined_lower$next_segment[joined_lower$code_name == "ar2_1"], 2L)
+
   fit = mcp(list(y ~ ar(2), ~ ar(1)), data, par_x = "x", sample = FALSE, quiet = TRUE)
   expect_match(
     fit$jags_code,
@@ -57,7 +63,7 @@ test_that("a lower-order AR/MA declaration turns off higher lags", {
   zeroed = get_predictors(
     list(y ~ ar(2), ~ ar(2, 0)), data, family, par_x = "x"
   )
-  expect_true(all(zeroed$next_segment[zeroed$dpar == "ar"] == 2L))
+  expect_true(all(is.na(zeroed$next_segment[zeroed$dpar == "ar"])))
 
   ma_predictors = get_predictors(
     list(y ~ ma(2), ~ ma(1)), data, family, par_x = "x"
@@ -92,6 +98,44 @@ test_that("ar(0) and ma(0) turn off AR/MA components", {
   fit_ma = mcp(list(y ~ 1 + x + ma(1), ~ 0 + x + ma(0)), data, par_x = "x", sample = FALSE, quiet = TRUE)
   expect_match(fit_ma$jags_code, "x\\[i_\\] < cp_1")
   expect_false(grepl("ma1_2", fit_ma$jags_code))
+})
+
+
+test_that("positive-order AR/MA zero formulas retain joined intercept and local-x levels", {
+  data = data.frame(x = 1:6, y = 1:6)
+  fit = mcp(
+    list(y ~ ar(1, 1 + x), ~ ar(1, 0)),
+    data, par_x = "x", sample = FALSE, quiet = TRUE
+  )
+  expect_lifetimes(fit, c(ar1_1 = NA_integer_, ar1_x_1 = NA_integer_))
+
+  ar = fit$simulate(
+    fit,
+    data,
+    cp_1 = 3.5,
+    Intercept_1 = 0, Intercept_2 = 0,
+    ar1_1 = 0.2, ar1_x_1 = 0.1,
+    sigma_1 = 1,
+    .type = "fitted", .dpar = "ar1", .scale = "linear"
+  )
+  expect_equal(as.numeric(ar), 0.2 + 0.1 * pmin(data$x, 3.5))
+})
+
+
+test_that("missing AR/MA declarations turn components off until reactivated", {
+  data = data.frame(x = 1:9, y = rep(c(1, 2, 3), 3))
+  predictors = get_predictors(
+    list(y ~ ar(1), ~ 0, ~ ar(1)), data, mcpfamily(gaussian()), par_x = "x"
+  )
+  expect_equal(
+    stats::setNames(predictors$next_segment[predictors$dpar == "ar"], predictors$code_name[predictors$dpar == "ar"]),
+    c(ar1_1 = 2L, ar1_3 = NA_integer_)
+  )
+
+  fit = mcp(list(y ~ ar(1), ~ 0, ~ ar(1)), data, par_x = "x", sample = FALSE, quiet = TRUE)
+  expect_false("ar1_2" %in% mcp_pars(fit)$name)
+  expect_match(fit$.internal$formula_jags, "x\\[i_\\] < cp_1.*ar1_1", perl = TRUE)
+  expect_match(fit$.internal$formula_jags, "x\\[i_\\] >= cp_2.*ar1_3", perl = TRUE)
 })
 
 

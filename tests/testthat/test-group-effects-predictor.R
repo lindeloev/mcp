@@ -14,7 +14,7 @@ coefficient_data = data.frame(
 )
 
 
-test_that("predictor group intercepts persist, replace, and turn off", {
+test_that("predictor group intercepts are segment-local, replace, and turn off", {
   fit = mcp(
     list(
       y ~ 1 + (1 | id),
@@ -30,7 +30,7 @@ test_that("predictor group intercepts persist, replace, and turn off", {
 
   expect_equal(effect$name, "Intercept_1_id")
   expect_equal(effect$population_name, "Intercept_1")
-  expect_equal(effect$next_segment, 3L)
+  expect_equal(effect$next_segment, 2L)
   expect_equal(effect$dpar, "mu")
   expect_equal(effect$matrix_col, nrow(get_fit_model_tables(fit)$predictors) + 1L)
   expect_true(effect$sd_name %in% names(formals(fit$simulate)))
@@ -52,7 +52,7 @@ test_that("predictor group intercepts persist, replace, and turn off", {
   deviation = attr(simulated, "simulated")$Intercept_1_id
   expect_equal(
     as.numeric(simulated),
-    c(deviation[1:2], 100 + deviation[3:5], rep(200, 3))
+    c(deviation[1:2], rep(100, 3), rep(200, 3))
   )
 
   replacement = mcp(
@@ -143,7 +143,7 @@ test_that("double-bar terms expand into independent group coefficients", {
     c("Intercept_1", NA_character_, NA_character_)
   )
   expect_equal(effects$par_type, c("Intercept", "dummy", "dummy"))
-  expect_equal(effects$next_segment, rep(3L, 3))
+  expect_equal(effects$next_segment, rep(2L, 3))
   expect_false(any(effects$correlated))
   expect_true(all(effects$sd_name %in% names(fit$prior)))
   expect_match(fit$jags_code, "conditionB_1_id\\[id_\\] ~")
@@ -173,13 +173,7 @@ test_that("double-bar terms expand into independent group coefficients", {
     1 + intercept_by_id +
       (coefficient_data$condition == "B") * condition_b_by_id +
       (coefficient_data$condition == "C") * condition_c_by_id,
-    ifelse(
-      coefficient_data$x < 8.5,
-      2 + intercept_by_id +
-        (coefficient_data$condition == "B") * condition_b_by_id +
-        (coefficient_data$condition == "C") * condition_c_by_id,
-      3
-    )
+    ifelse(coefficient_data$x < 8.5, 2, 3)
   )
   expect_equal(as.numeric(simulated), as.numeric(expected))
 })
@@ -211,6 +205,55 @@ test_that("double-bar terms support no-intercept factors and numeric slopes", {
   expect_equal(slope_effect$par_type, "slope")
   expect_true(is.na(slope_effect$population_name))
   expect_match(slope_fit$jags_code, "z_1_id\\[id_\\]")
+})
+
+
+test_that("local group slopes retain joined endpoints until an intercept or zero block", {
+  data = data.frame(
+    x = 1:12,
+    y = 0,
+    id = rep(c("a", "b"), 6)
+  )
+  fit = mcp(
+    list(
+      y ~ 0 + (0 + x || id),
+      ~ 0,
+      ~ 0 + (0 + x || id),
+      ~ 0 + (1 || id),
+      ~ 0 + (0 | id)
+    ),
+    data,
+    par_x = "x",
+    sample = FALSE
+  )
+  effects = get_fit_model_tables(fit)$group_effects
+  expect_equal(effects$name, c("x_1_id", "x_3_id", "Intercept_4_id"))
+  expect_equal(effects$next_segment, c(4L, 4L, 5L))
+
+  set.seed(42)
+  simulated = fit$simulate(
+    fit,
+    data,
+    cp_1 = 2.5, cp_2 = 4.5, cp_3 = 7.5, cp_4 = 9.5,
+    sigma_1 = 1,
+    x_1_id_sd = 1, x_3_id_sd = 10, Intercept_4_id_sd = 100,
+    .type = "fitted"
+  )
+  draws = attr(simulated, "simulated")
+  expected = ifelse(
+    data$x < 2.5,
+    draws$x_1_id * data$x,
+    ifelse(
+      data$x < 4.5,
+      draws$x_1_id * 2.5,
+      ifelse(
+        data$x < 7.5,
+        draws$x_1_id * 2.5 + draws$x_3_id * (data$x - 4.5),
+        ifelse(data$x < 9.5, draws$Intercept_4_id, 0)
+      )
+    )
+  )
+  expect_equal(as.numeric(simulated), as.numeric(expected))
 })
 
 
@@ -536,4 +579,3 @@ test_that("fit$simulate() preserves shared group effects", {
   shared_sim = attr(sim_shared, "simulated")
   expect_equal(shared_sim$Intercept_1_id, shared_sim$Intercept_2_id)
 })
-

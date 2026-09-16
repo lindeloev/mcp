@@ -22,7 +22,7 @@ if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp"
 This article in brief:
 
  * Predictor and change-point group-level effects
- * How group-level effects persist across segments
+ * How group-level effects are active across segments
  * How to simulate group-level change-point deviations
  * Get posteriors using `ranef(fit)`
  * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
@@ -68,7 +68,7 @@ where $\kappa_{ig}$ is the group-specific location. Thus `cp_i_id[g]` is the rep
 
 The hierarchy is subject to $x_{\min} < \kappa_{1g} < \cdots < \kappa_{Kg} < x_{\max}$. Thus, if adjacent change points both vary, their group-specific locations are ordered against each other—not against the adjacent population change point. Internally, JAGS samples $\kappa_{ig}$ directly for efficiency.
 
-Unlike predictor group-level effects, a change-point group effect applies only to the boundary where it is written; it does not persist across segments like predictor group-level effects.
+Unlike predictor group-level effects, a change-point group effect applies only to the boundary where it is written.
 
 # Predictor group-level effects
 
@@ -77,12 +77,12 @@ The same syntax in the predictor part gives each group a deviation from the popu
 ```{r}
 model = list(
   y ~ 1 + (1|id),  # Starts group-level intercept
-  ~ 0 + x,         # Group-level intercept persists here
+  ~ 0 + x,         # No active group-level intercept here
   ~ 1 + (0|id)     # (0|id) turns it off
 )
 ```
 
-Here, the group-level intercept introduced in segment 1 also applies in segment 2. A later `(1|id)` would replace it from that segment onward, while `(0|id)` turns it off, as in segment 3 above. Persistence is tracked separately for each grouping factor and distributional parameter. Read more on persistence into later segments in [the article on formulas](../articles/formulas.html#on-carry-over-between-segments).
+Group intercepts and non-local group terms are active only where declared. A local group slope on `x` retains its joined endpoint until a later group intercept or `(0|id)` resets the block. This is tracked separately for each grouping factor and distributional parameter. Read more in [the article on formulas](../articles/formulas.html#on-carry-over-between-segments).
 
 Use `||` for independent group-level slopes and factor coefficients:
 
@@ -107,7 +107,7 @@ model = list(
 
 This model has group-level deviations in both the conditional mean and log-SD. The `||` syntax works inside distributional formulas too, for example `sigma(1 + (condition||id))`.
 
-A later predictor group-level term for the same distributional parameter and grouping factor replaces the entire earlier block. Thus, if `(condition||id)` is followed in a later segment by `(1||id)`, only the new intercept deviation applies from that segment onward. `(0|id)` turns the block off.
+A later group intercept resets the earlier block. Thus, if `(condition||id)` is followed in a later segment by `(1||id)`, only the new intercept deviation applies from that segment onward. A slope-only block joins earlier local-slope endpoints, while `(0|id)` turns the whole block off.
 
 Multi-coefficient terms with `|`, such as `(1 + x|id)`, would imply correlated group coefficients and are not yet supported; use `(1 + x||id)` for independent coefficients. Group-level terms inside `ar()` and `ma()` are also not supported.
 

@@ -41,7 +41,7 @@
 #'   * `~ sigma(1 + x)`: Distributional parameters on the link scale (e.g., log residual SD).
 #'     [Read more](https://lindeloev.github.io/mcp/articles/dpar.html).
 #'   * `~ ar(1) + ma(1)`: Autoregressive and moving-average time-series residuals on the link scale
-#'     (accepts regression formulas, `series = id`, and `boundary`; use `ar(0)` or `ma(0)` to turn off in later segments).
+#'     (accepts regression formulas, `series = id`, and `boundary`; declare them in every segment where they are active).
 #'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html).
 #'
 #' @param prior Named list. Names are parameter names (`cp_i`, `Intercept_i`, `xvar_i`,
@@ -175,7 +175,7 @@
 #'
 #' Implications:
 #' * For an \eqn{N}-order component, the last \eqn{N} values *before* the segment onset are input to the first \eqn{\eta_t} in the segment.
-#' * AR and MA components persist into later segments until replaced or turned off via \code{ar(0)} or \code{ma(0)}.
+#' * AR and MA components are off in segments where they are not declared; \code{ar(0)} and \code{ma(0)} are equivalent explicit turn-off forms.
 #' * AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
 #' * See [the arma article](https://lindeloev.github.io/mcp/articles/arma.html) for more details.
 #'

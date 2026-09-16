@@ -133,21 +133,26 @@ get_arma_order = function(predictors, term) {
 }
 
 
-# Return the segments that explicitly declare each AR/MA component. This keeps
-# zero formulas (e.g., ar(2, 0)), which otherwise have no predictor rows.
-get_arma_definitions = function(rhs) {
-  definitions = lapply(seq_along(rhs), function(segment) {
+# Parse declarations once rather than re-parsing the same wrappers for every
+# AR/MA coefficient below. Positive-order ~ 0 formulas have no coefficient
+# rows but join an earlier intercept/local-x level.
+get_arma_declarations = function(rhs) {
+  declarations = lapply(seq_along(rhs), function(segment) {
     term_labels = attributes(stats::terms(rhs[[segment]]))$term.labels
-    dplyr::bind_rows(lapply(c("ar", "ma"), function(component) {
+    lapply(c("ar", "ma"), function(component) {
       term = term_labels[stringr::str_detect(term_labels, paste0("^", component, "\\("))]
-      if (is.na(unpack_arma(term)$order))
+      parsed = unpack_arma(term)
+      if (is.na(parsed$order))
         return(NULL)
-      tibble::tibble(dpar = component, segment = segment)
-    }))
+      tibble::tibble(
+        dpar = component,
+        segment = segment,
+        order = parsed$order,
+        joined = parsed$order > 0 && identical(parsed$form_str, paste0(component, "(0)"))
+      )
+    }) %>% dplyr::bind_rows()
   })
-  dplyr::bind_rows(
-    c(list(tibble::tibble(dpar = character(), segment = integer())), definitions)
-  )
+  dplyr::bind_rows(declarations)
 }
 
 

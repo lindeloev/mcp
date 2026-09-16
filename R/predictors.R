@@ -789,24 +789,41 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     ) %>%
     dplyr::select(-"next_intercept")
 
-  # AR/MA declarations replace their whole component. This also preserves a
-  # zero formula, which otherwise has no predictor rows.
-  arma_definitions = get_arma_definitions(rhs)
-  arma_lifetimes = get_definition_lifetimes(arma_definitions, "dpar")
-  predictors = predictors %>%
-    dplyr::left_join(
-      dplyr::select(arma_lifetimes, "dpar", "segment", next_arma = "next_segment"),
-      by = c("dpar", "segment")
-    ) %>%
-    dplyr::mutate(
-      next_segment = dplyr::if_else(.data$dpar %in% c("ar", "ma"), .data$next_arma, .data$next_segment)
-    ) %>%
-    dplyr::select(-"next_arma")
+  # AR/MA are active only where declared. A positive-order `ar(p, 0)` or
+  # `ma(q, 0)` is an explicit joined formula: it retains the preceding
+  # intercept/local-x endpoint for matching lags, unlike order zero or an
+  # absent declaration which turns the component off.
+  arma_declarations = get_arma_declarations(rhs)
+  arma_next_segment = vapply(seq_len(nrow(predictors)), function(i) {
+    if (predictors$dpar[i] %notin% c("ar", "ma"))
+      return(NA_integer_)
 
-  # Predictor group-level effects have an independent segment lifetime. A
-  # later definition for the same (dpar, grouping factor) replaces the whole
-  # current coefficient block; `(0 | group)` is represented as an inactive
-  # definition that ends it.
+    next_segment = predictors$segment[i] + 1L
+    joins = predictors$par_type[i] == "Intercept" || predictors$x_factor[i] != "1"
+    while (joins && next_segment <= length(rhs)) {
+      declaration = arma_declarations[
+        arma_declarations$dpar == predictors$dpar[i] &
+          arma_declarations$segment == next_segment,
+        , drop = FALSE
+      ]
+      if (nrow(declaration) != 1 || !declaration$joined || declaration$order < predictors$order[i])
+        break
+      next_segment = next_segment + 1L
+    }
+    if (next_segment > length(rhs)) NA_integer_ else next_segment
+  }, integer(1))
+  predictors = predictors %>%
+    dplyr::mutate(
+      next_segment = dplyr::if_else(
+        .data$dpar %in% c("ar", "ma"),
+        arma_next_segment,
+        .data$next_segment
+      )
+    )
+
+  # Group intercepts and non-local terms are active only where declared.
+  # Local group-x terms retain their endpoint through joined blocks until a
+  # later group intercept or explicit `(0 | group)` resets the block.
   definitions = lapply(
     seq_along(rhs),
     function(segment) get_predictor_group_definitions_segment(
@@ -817,15 +834,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
 
   predictor_group_effects = definitions
   if (nrow(definitions) > 0) {
-    lifetimes = get_definition_lifetimes(
-      definitions, c("dpar", "group_col")
-    )
-
     predictor_group_effects = definitions %>%
-      dplyr::left_join(
-        lifetimes,
-        by = c("dpar", "group_col", "segment")
-      ) %>%
       dplyr::filter(.data$active) %>%
       dplyr::mutate(
         population_name = dplyr::if_else(
@@ -840,8 +849,32 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
         "population_name", "name", "part", "group_col", "segment", "dpar",
         "sd_name", "par_type", "matrix_name", "display_name", "order",
         "x_factor", "design_id", "design_col", "matrix_col", "matrix_data",
-        "next_segment", "correlated", "design_spec"
+        "correlated", "design_spec"
       )
+
+    resets = definitions %>%
+      dplyr::group_by(.data$dpar, .data$group_col, .data$segment) %>%
+      dplyr::summarise(
+        reset = any(!.data$active | .data$par_type == "Intercept"),
+        .groups = "drop"
+      ) %>%
+      dplyr::filter(.data$reset)
+
+    next_reset = vapply(seq_len(nrow(predictor_group_effects)), function(i) {
+      candidates = resets$segment[
+        resets$dpar == predictor_group_effects$dpar[i] &
+          resets$group_col == predictor_group_effects$group_col[i] &
+          resets$segment > predictor_group_effects$segment[i]
+      ]
+      if (length(candidates) == 0) NA_integer_ else min(candidates)
+    }, integer(1))
+
+    predictor_group_effects = predictor_group_effects %>%
+      dplyr::mutate(next_segment = dplyr::if_else(
+        .data$x_factor == "1",
+        dplyr::if_else(.data$segment < length(rhs), .data$segment + 1L, NA_integer_),
+        next_reset
+      ))
   }
 
   # Store each fitted component specification once, not on every coefficient.

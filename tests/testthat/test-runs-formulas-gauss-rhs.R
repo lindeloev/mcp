@@ -46,7 +46,7 @@ good_intercepts = list(
        ~ 1,
        ~ 0,
        ~ 1),
-  list(y ~ 1 + (1 | id),  # Predictor group intercept persists until explicit turn-off
+  list(y ~ 1 + (1 | id),  # Predictor group intercept is active in this segment
        ~ 1,
        ~ 1 + (0 | id)),
   list(y ~ 1 + (ok_id_factor || id))  # Independent intercept and factor deviations
