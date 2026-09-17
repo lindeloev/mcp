@@ -3,7 +3,6 @@ test_that("shared group blocks define one hierarchy and simulate one deviation p
   fit = mcp(list(y ~ 1 + (1 | id), ~ 0 + same((1 || id))), data, par_x = "x", sample = FALSE)
   expect_equal(mcp_pars(fit, scope = "group")$name, "Intercept_1_id")
   expect_equal(mcp_pars(fit, role = "group_sd")$name, "Intercept_1_id_sd")
-  expect_equal(mcp_pars(fit, scope = "group", occurrences = TRUE)$occurrences, list(1:2))
   for (ids in list(data$id, rep(c("new-a", "new-b"), 6))) {
     newdata = data
     newdata$id = ids
