@@ -259,17 +259,13 @@ get_plot = function(x,
       include_fitted = show_q_fit && type == "predict",
       include_dpars = show_q_predict && type == "predict"
     )
-    dpars = attr(draws, "dpars")
-    response_data = attr(draws, "response_data")
-    if (type == "predict")
-      draws = dplyr::rename(draws, .predicted = ".prediction")
     draws = prepare_draws(draws)
     keep = unique(c(as.character(xvar), facet_by, ".group", ".color"))
 
     if (show_q_fit)
       q_fit_data = get_quantiles(draws, q_fit, as.character(yvar), keep)
     if (show_q_predict)
-      q_predict_data = get_mixture_quantiles(draws, q_predict, fit$family, keep, rate = rate, dpars = dpars, response_data = response_data)
+      q_predict_data = get_mixture_quantiles(draws, q_predict, fit$family, keep, rate = rate)
   }
 
 

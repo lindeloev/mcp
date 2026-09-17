@@ -254,22 +254,21 @@ get_predictor_matrix = function(predictors, group_effects = NULL) {
 validate_eval_draws = function(draws, type) {
   checkmate::assert_data_frame(draws)
   checkmate::assert_string(type)
-  row_col = if (".mcp_data_row" %in% names(draws)) ".mcp_data_row" else "data_row"
-  assert_data_cols(draws, c(".draw", row_col, type))
+  assert_data_cols(draws, c(".draw", "data_row", type))
 
-  if (anyNA(draws$.draw) || anyNA(draws[[row_col]]))
-    stop_github("Evaluated draws contain missing `.draw` or `", row_col, "` keys.")
+  if (anyNA(draws$.draw) || anyNA(draws$data_row))
+    stop_github("Evaluated draws contain missing `.draw` or `data_row` keys.")
 
   draw_ids = unique(draws$.draw)
-  data_rows = unique(draws[[row_col]])
+  data_rows = unique(draws$data_row)
   draw_index = match(draws$.draw, draw_ids)
-  row_index = match(draws[[row_col]], data_rows)
+  row_index = match(draws$data_row, data_rows)
   keys = draw_index + length(draw_ids) * (row_index - 1L)
   if (anyDuplicated(keys))
-    stop_github("Evaluated draws must contain one `", type, "` value per `.draw` and `", row_col, "`.")
+    stop_github("Evaluated draws must contain one `", type, "` value per `.draw` and `data_row`.")
 
   if (nrow(draws) != length(draw_ids) * length(data_rows))
-    stop_github("Every `", row_col, "` must contain the same complete set of posterior draws.")
+    stop_github("Every `data_row` must contain the same complete set of posterior draws.")
 
   invisible(draws)
 }
@@ -291,23 +290,22 @@ validate_eval_draws = function(draws, type) {
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 tidy_to_matrix = function(draws, type, data_rows = NULL) {
   checkmate::assert_string(type)
-  row_col = if (".mcp_data_row" %in% names(draws)) ".mcp_data_row" else "data_row"
-  assert_data_cols(draws, c(".draw", row_col, type))
+  assert_data_cols(draws, c(".draw", "data_row", type))
 
   if (is.null(data_rows))
-    data_rows = sort(unique(draws[[row_col]]))
+    data_rows = sort(unique(draws$data_row))
   if (anyDuplicated(data_rows))
     stop_github("Requested `data_row` values must be unique.")
 
-  missing_rows = setdiff(data_rows, unique(draws[[row_col]]))
+  missing_rows = setdiff(data_rows, unique(draws$data_row))
   if (length(missing_rows) > 0)
     stop_github("Requested evaluation rows are absent: ", paste(missing_rows, collapse = ", "), ".")
-  draws = dplyr::filter(draws, .data[[row_col]] %in% data_rows)
+  draws = dplyr::filter(draws, .data$data_row %in% data_rows)
 
   draw_ids = sort(unique(draws$.draw))
   result = matrix(NA_real_, nrow = length(draw_ids), ncol = length(data_rows), dimnames = list(NULL, as.character(data_rows)))
   matrix_rows = match(draws$.draw, draw_ids)
-  matrix_cols = match(draws[[row_col]], data_rows)
+  matrix_cols = match(draws$data_row, data_rows)
   result[cbind(matrix_rows, matrix_cols)] = draws[[type]]
   result
 }
@@ -327,18 +325,17 @@ tidy_to_matrix = function(draws, type, data_rows = NULL) {
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_quantiles = function(draws, quantiles, type, keep = NULL, na.rm = FALSE) {
   keep = unique(keep)
-  row_col = if (".mcp_data_row" %in% names(draws)) ".mcp_data_row" else "data_row"
-  assert_data_cols(draws, c(row_col, type, keep))
-  grid = draws %>% dplyr::select(dplyr::all_of(c(row_col, keep))) %>% dplyr::distinct()
-  if (anyDuplicated(grid[[row_col]]))
-    stop_github("Evaluation-row metadata differs across draws for the same `", row_col, "`.")
+  assert_data_cols(draws, c("data_row", type, keep))
+  grid = draws %>% dplyr::select(dplyr::all_of(c("data_row", keep))) %>% dplyr::distinct()
+  if (anyDuplicated(grid$data_row))
+    stop_github("Evaluation-row metadata differs across draws for the same `data_row`.")
 
   result = draws %>%
-    dplyr::group_by(.data[[row_col]]) %>%
+    dplyr::group_by(.data$data_row) %>%
     dplyr::reframe(quantile = quantiles,
                    !!type := stats::quantile(.data[[type]], probs = quantiles, names = FALSE, na.rm = na.rm))
 
-  dplyr::left_join(result, grid, by = row_col, relationship = "many-to-one")
+  dplyr::left_join(result, grid, by = "data_row", relationship = "many-to-one")
 }
 
 
@@ -393,8 +390,7 @@ find_mixture_quantile = function(cdf_fn, dpars, data, p, rate = FALSE, is_discre
 # integer search for discrete count families).
 get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = FALSE, dpars = attr(draws, "dpars"), response_data = attr(draws, "response_data")) {
   keep = unique(keep)
-  row_col = if (".mcp_data_row" %in% names(draws)) ".mcp_data_row" else "data_row"
-  grid = draws %>% dplyr::select(dplyr::all_of(c(row_col, keep))) %>% dplyr::distinct()
+  grid = draws %>% dplyr::select(dplyr::all_of(c("data_row", keep))) %>% dplyr::distinct()
 
   is_discrete = isTRUE(family$response$is_discrete)
   cdf_fn = family$r$cdf
@@ -409,7 +405,7 @@ get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = F
   }
 
   # Split draws by evaluation row to process one data point across all posterior draws
-  row_indices = split(seq_len(nrow(draws)), draws[[row_col]])
+  row_indices = split(seq_len(nrow(draws)), draws$data_row)
   unique_rows = as.integer(names(row_indices))
 
   res_list = lapply(seq_along(row_indices), function(i) {
@@ -430,13 +426,13 @@ get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = F
       .predicted = q_vals,
       stringsAsFactors = FALSE
     )
-    df_res[[row_col]] = data_row_id
+    df_res$data_row = data_row_id
     df_res
   })
 
   # Combine and re-attach predictor / grouping metadata
   result = dplyr::bind_rows(res_list)
-  dplyr::left_join(result, grid, by = row_col, relationship = "many-to-one")
+  dplyr::left_join(result, grid, by = "data_row", relationship = "many-to-one")
 }
 
 
