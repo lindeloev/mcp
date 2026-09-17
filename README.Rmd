@@ -12,6 +12,7 @@ library(ggplot2)
 pkgload::load_all()
 
 knitr::opts_chunk$set(
+  dev = "ragg_png",
   fig.path = "man/figures/README-",
   out.width = "100%",
   fig.width = 7.5,

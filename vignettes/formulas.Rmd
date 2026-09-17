@@ -130,6 +130,7 @@ The `same()` syntax works for factors, group effects, and inside distributional 
 `mcp_pars` shows you how `mcp` sees each parameter cf. the rules above. You can use it even before sampling:
 
 ```{r}
+library(mcp)
 model = list(
   y ~ 1 + x:state + z,
   ~ 1 + x + state
