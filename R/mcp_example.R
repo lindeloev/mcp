@@ -250,7 +250,7 @@ if (plot) {
 model = list(
   y ~ 1 + x:state + z,
   ~ 1 + x + state,
-  ~ 0 + I(x^2)
+  ~ 0 + I(x^2) + same(state)
 )
 
 # Simulate data

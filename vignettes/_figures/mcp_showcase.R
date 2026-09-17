@@ -37,36 +37,50 @@ style_gg = function(gg, model, title, left, bottom, right, top) {
     )
 }
 
+# From canonical formula to more user-typed (stripping "y ~ 1" in many y ~ 1 ~ rhs)
+format_model_user = function(model) {
+  sapply(seq_along(model), function(i) {
+    if (i == 1) return(deparse1(model[[1]]))
+    cp = model[[i]][[2]][[3]]
+    rhs = model[[i]][[3]]
+    if (identical(cp, 1) || identical(cp, 1L)) {
+      deparse1(call("~", rhs))
+    } else {
+      deparse1(call("~", cp, rhs))
+    }
+  })
+}
+
 
 # Make the base plots
 future::plan(future::multisession, workers = min(6L, future::availableCores()))
 fit_intercepts = mcp_example("intercepts")
 gg_intercepts_org = force(last_plot())  # force to avoid lazy evaluation issues with patchwork
-intercepts_model = list(y ~ 1, ~ 1)
+intercepts_model = format_model_user(fit_intercepts$model)
 
 fit_binomial = mcp_example("binomial")
 gg_binomial_org = force(last_plot())
-binomial_model = list(y | trials(N) ~ 1, ~ 0 + x, ~ 1 + x)
+binomial_model = format_model_user(fit_binomial$model)
 
 fit_sigma = mcp_example("sigma")
 gg_sigma_org = force(last_plot()[[1]])
-sigma_model = list(y ~ 1, ~ 0 + sigma(1 + x), ~ 0 + x)
+sigma_model = format_model_user(fit_sigma$model)
 
 fit_ar = mcp_example("ar")
 gg_ar_org = force(last_plot()[[1]])
-ar_model = list(price ~ 1 + ar(2), ~ 0 + time + ar(1))
+ar_model = format_model_user(fit_ar$model)
 
 fit_group_cp = mcp_example("group_cp")
 gg_group_cp_org = force(last_plot()) + scale_x_continuous(breaks = seq(0, 200, by = 25))# + facet_wrap(~id, nrow = 2) + scle_x_continuous()
-group_cp_model = list(y ~ 1 + x, ~ 1 + (1|id) ~ 0 + x)
+group_cp_model = format_model_user(fit_group_cp$model)
 
 fit_group_mu = mcp_example("group_mu")
 gg_group_mu_org = force(last_plot()) + scale_x_continuous(breaks = seq(0, 200, by = 25))# + facet_wrap(~id, nrow = 2)
-group_mu_model = list(y ~ 1 + state + (state || id), ~ 1 + state)
+group_mu_model = format_model_user(fit_group_mu$model)
 
 fit_multiple = mcp_example("multiple")
 gg_multiple_org = force(last_plot())
-multiple_model = list(y ~ 1 + x:state + z, ~ 1 + x + state, ~ 0 + I(x^2) + same(state))
+multiple_model = format_model_user(fit_multiple$model)
 
 
 # Style them
