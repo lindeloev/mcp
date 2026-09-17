@@ -179,17 +179,17 @@ assert_ordered_group_cps = function(cps, args) {
   if (nrow(cps) < 2 || !any(cps$varying))
     return(invisible(NULL))
 
-  boundaries = lapply(seq_len(nrow(cps)), function(i) {
+  realized_cps = lapply(seq_len(nrow(cps)), function(i) {
     value = args[[cps$name[i]]]
     if (cps$varying[i])
       value = value + args[[cps$group_name[i]]]
     value
   })
-  n = max(lengths(boundaries))
-  boundaries = vapply(
-    boundaries, rep, numeric(n), length.out = n
+  n = max(lengths(realized_cps))
+  realized_cps = vapply(
+    realized_cps, rep, numeric(n), length.out = n
   )
-  if (any(boundaries[, -1, drop = FALSE] <= boundaries[, -ncol(boundaries), drop = FALSE]))
+  if (any(realized_cps[, -1, drop = FALSE] <= realized_cps[, -ncol(realized_cps), drop = FALSE]))
     stop("Realized group-level change points must remain strictly ordered within each group.")
 
   invisible(NULL)
@@ -237,10 +237,10 @@ add_response_dpars = function(dpar_values, family) {
 
 
 # Get observed response vector for GARMA recursion
-get_garma_observed = function(y, family, boundary, data = list()) {
+get_garma_observed = function(y, family, threshold, data = list()) {
   if (is.null(family$garma))
     stop_github("GARMA observation transformation is unavailable for family = ", family$family, "().")
-  family$garma$observed_r(y, data, boundary)
+  family$garma$observed_r(y, data, threshold)
 }
 
 
@@ -349,9 +349,9 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     base_link_mu = if (uses_link_dpars) dpar_values$link_mu_ else fit$family$linkfun(dpar_values$mu_)
     ar_list = dplyr::select(dpar_values, dplyr::matches("^ar[0-9]+_$"))
     ma_list = dplyr::select(dpar_values, dplyr::matches("^ma[0-9]+_$"))
-    boundary = dpar_values$garma_boundary_
-    if (is.null(boundary))
-      boundary = rep(0.1, length(base_link_mu))
+    threshold = dpar_values$garma_threshold_
+    if (is.null(threshold))
+      threshold = rep(0.1, length(base_link_mu))
     if (!has_ydata && .type != "predict")
       stop("The response is required to evaluate GARMA terms.")
 
@@ -363,7 +363,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     }
 
     garma_result = simulate_garma(
-      base_link_mu, ar_list, ma_list, boundary, fit$family,
+      base_link_mu, ar_list, ma_list, threshold, fit$family,
       dpars = dpars, data = response_data,
       y = if (has_ydata) dpar_values$.ydata else NULL,
       series_id = series_id

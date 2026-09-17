@@ -119,7 +119,7 @@ test_that("conditional GARMA evaluation resets vectorized ordered series", {
     base_link_mu = base_link_mu,
     ar_list = list(ar1_ = rep(0.5, length(y))),
     ma_list = list(ma1_ = rep(0.25, length(y))),
-    boundary = rep(0.1, length(y)),
+    threshold = rep(0.1, length(y)),
     family = mcpfamily(gaussian()),
     dpars = list(mu = base_link_mu, sigma = rep(1, length(y))),
     y = y,
@@ -252,7 +252,7 @@ test_that("generated JAGS uses the same bounded GARMA residuals", {
   count_data = data.frame(x = 1:4, y = c(0, 1, 4, 2))
   binomial_data = transform(count_data, N = 4)
   poisson_fit = mcp(
-    list(y ~ 1 + ar(1, boundary = 0.2) + ma(1)),
+    list(y ~ 1 + ar(1, threshold = 0.2) + ma(1)),
     count_data,
     family = poisson(),
     par_x = "x",
@@ -268,7 +268,7 @@ test_that("generated JAGS uses the same bounded GARMA residuals", {
   segmented_fit = mcp(
     list(
       y ~ 1 + ar(1),
-      ~ 1 + ar(1, boundary = 0.2)
+      ~ 1 + ar(1, threshold = 0.2)
     ),
     count_data,
     family = poisson(),
@@ -276,12 +276,12 @@ test_that("generated JAGS uses the same bounded GARMA residuals", {
     sample = FALSE
   )
 
-  expect_match(poisson_fit$jags_code, "garma_y_\\[i_\\] = max\\(y\\[i_\\], garma_boundary_\\[i_\\]\\)")
+  expect_match(poisson_fit$jags_code, "garma_y_\\[i_\\] = max\\(y\\[i_\\], garma_threshold_\\[i_\\]\\)")
   expect_match(poisson_fit$jags_code, "garma_link_y_\\[i_\\] = log\\(garma_y_\\[i_\\]\\)")
   expect_match(poisson_fit$jags_code, "resid_abs_\\[i_\\] = garma_link_y_\\[i_\\] - link_mu_\\[i_\\]")
   expect_match(poisson_fit$jags_code, "resid_ma_\\[i_\\] = garma_link_y_\\[i_\\] - link_mu_\\[i_\\] - resid_garma_\\[i_\\]")
   expect_match(poisson_fit$jags_code, "ma1_\\[i_\\] \\* resid_ma_\\[i_ - 1\\]")
-  expect_match(binomial_fit$jags_code, "garma_y_\\[i_\\] = min\\(max\\(y\\[i_\\], garma_boundary_\\[i_\\]\\), N\\[i_\\] - garma_boundary_\\[i_\\]\\) / N\\[i_\\]")
+  expect_match(binomial_fit$jags_code, "garma_y_\\[i_\\] = min\\(max\\(y\\[i_\\], garma_threshold_\\[i_\\]\\), N\\[i_\\] - garma_threshold_\\[i_\\]\\) / N\\[i_\\]")
   expect_match(binomial_fit$jags_code, "garma_link_y_\\[i_\\] = logit\\(garma_y_\\[i_\\]\\)")
   expect_match(segmented_fit$jags_code, "\\(x\\[i_\\] < cp_1\\) \\* 0\\.1")
   expect_match(segmented_fit$jags_code, "\\(x\\[i_\\] >= cp_1\\) \\* 0\\.2")
@@ -338,18 +338,18 @@ test_that("missing GARMA responses stay paired with posterior draws", {
 
 test_that("one GARMA recurrence handles generated, supplied, and partial histories", {
   # Unequal lengths exercise series starts and unavailable higher-order lags.
-  # Row-varying coefficients and boundaries represent segment/group changes.
+  # Row-varying coefficients and segment transitions represent segment/group changes.
   n = 12
   series = rep(c("01", "1", "site,a", "a[b]"), c(1, 4, 2, 5))
   base = seq(-0.2, 0.2, length.out = n)
   ar = list(ar1_ = seq(0.1, 0.4, length.out = n), ar2_ = rep(0.1, n))
   ma = list(ma1_ = rep(-0.2, n), ma2_ = seq(0, 0.1, length.out = n))
-  boundary = rep(c(0.1, 0.2), each = 6)
+  threshold = rep(c(0.1, 0.2), each = 6)
   for (family in list(gaussian(), poisson(), binomial(), negbinomial())) {
     family = mcpfamily(family)
     data = if (family$family == "binomial") list(trials = rep(c(3, 7), 6)) else list()
     args = list(base_link_mu = base, ar_list = ar, ma_list = ma,
-                boundary = boundary, family = family, series_id = series,
+                threshold = threshold, family = family, series_id = series,
                 dpars = list(mu = family$linkinv(base), sigma = rep(1, n), shape = rep(2, n)),
                 data = data)
     set.seed(21)
@@ -359,7 +359,7 @@ test_that("one GARMA recurrence handles generated, supplied, and partial histori
 
     # Independent row-by-row reference: coefficients belong to the current
     # row; history crosses segment changes but never independent series.
-    link_y = family$linkfun(get_garma_observed(generated$y, family, boundary, data))
+    link_y = family$linkfun(get_garma_observed(generated$y, family, threshold, data))
     expected = numeric(n)
     for (rows in split(seq_len(n), series)) {
       for (position in seq_along(rows)) {
@@ -384,65 +384,65 @@ test_that("one GARMA recurrence handles generated, supplied, and partial histori
 })
 
 
-test_that("GARMA boundaries enforce family-appropriate limits during model validation", {
+test_that("GARMA thresholds enforce family-appropriate limits during model validation", {
   data_bern = data.frame(x = 1:6, y = c(0, 1, 0, 1, 0, 1))
 
-  # Bernoulli: boundary must be strictly below 0.5
+  # Bernoulli: threshold must be strictly below 0.5
   expect_error(
-    mcp(list(y ~ 1 + ar(1, boundary = 0.75)), data_bern, family = bernoulli(), par_x = "x", sample = FALSE),
-    "`boundary` for family = bernoulli() must be strictly between 0 and 0.5.",
+    mcp(list(y ~ 1 + ar(1, threshold = 0.75)), data_bern, family = bernoulli(), par_x = "x", sample = FALSE),
+    "`threshold` for family = bernoulli() must be strictly between 0 and 0.5.",
     fixed = TRUE
   )
   expect_error(
-    mcp(list(y ~ 1 + ar(1, boundary = 0.5)), data_bern, family = bernoulli(), par_x = "x", sample = FALSE),
-    "`boundary` for family = bernoulli() must be strictly between 0 and 0.5.",
+    mcp(list(y ~ 1 + ar(1, threshold = 0.5)), data_bern, family = bernoulli(), par_x = "x", sample = FALSE),
+    "`threshold` for family = bernoulli() must be strictly between 0 and 0.5.",
     fixed = TRUE
   )
   expect_silent(
-    mcp(list(y ~ 1 + ar(1, boundary = 0.1)), data_bern, family = bernoulli(), par_x = "x", sample = FALSE)
+    mcp(list(y ~ 1 + ar(1, threshold = 0.1)), data_bern, family = bernoulli(), par_x = "x", sample = FALSE)
   )
   expect_silent(
-    mcp(list(y ~ 1 + ar(1, boundary = 0.49)), data_bern, family = bernoulli(), par_x = "x", sample = FALSE)
+    mcp(list(y ~ 1 + ar(1, threshold = 0.49)), data_bern, family = bernoulli(), par_x = "x", sample = FALSE)
   )
 
-  # Binomial: boundary must be strictly below half the smallest trial count
+  # Binomial: threshold must be strictly below half the smallest trial count
   data_binom_single = data.frame(x = 1:6, y = c(0, 1, 0, 1, 0, 1), N = 1)
   expect_error(
-    mcp(list(y | trials(N) ~ 1 + ar(1, boundary = 0.75)), data_binom_single, family = binomial(), par_x = "x", sample = FALSE),
-    "`boundary` for family = binomial() must be strictly between 0 and half the smallest trial count (0.5).",
+    mcp(list(y | trials(N) ~ 1 + ar(1, threshold = 0.75)), data_binom_single, family = binomial(), par_x = "x", sample = FALSE),
+    "`threshold` for family = binomial() must be strictly between 0 and half the smallest trial count (0.5).",
     fixed = TRUE
   )
   expect_error(
-    mcp(list(y | trials(N) ~ 1 + ar(1, boundary = 0.5)), data_binom_single, family = binomial(), par_x = "x", sample = FALSE),
-    "`boundary` for family = binomial() must be strictly between 0 and half the smallest trial count (0.5).",
+    mcp(list(y | trials(N) ~ 1 + ar(1, threshold = 0.5)), data_binom_single, family = binomial(), par_x = "x", sample = FALSE),
+    "`threshold` for family = binomial() must be strictly between 0 and half the smallest trial count (0.5).",
     fixed = TRUE
   )
 
   # Binomial with varying trials: smallest trial count governs the limit
   data_binom_var = data.frame(x = 1:6, y = c(0, 1, 0, 1, 0, 1), N = c(1, 10, 10, 10, 10, 10))
   expect_error(
-    mcp(list(y | trials(N) ~ 1 + ar(1, boundary = 0.75)), data_binom_var, family = binomial(), par_x = "x", sample = FALSE),
-    "`boundary` for family = binomial() must be strictly between 0 and half the smallest trial count (0.5).",
+    mcp(list(y | trials(N) ~ 1 + ar(1, threshold = 0.75)), data_binom_var, family = binomial(), par_x = "x", sample = FALSE),
+    "`threshold` for family = binomial() must be strictly between 0 and half the smallest trial count (0.5).",
     fixed = TRUE
   )
 
-  # Binomial with larger trials allows boundary = 0.75 (0.75 < 10 / 2)
+  # Binomial with larger trials allows threshold = 0.75 (0.75 < 10 / 2)
   data_binom_large = data.frame(x = 1:6, y = c(0, 1, 0, 1, 0, 1), N = 10)
   expect_silent(
-    mcp(list(y | trials(N) ~ 1 + ar(1, boundary = 0.75)), data_binom_large, family = binomial(), par_x = "x", sample = FALSE)
+    mcp(list(y | trials(N) ~ 1 + ar(1, threshold = 0.75)), data_binom_large, family = binomial(), par_x = "x", sample = FALSE)
   )
 
-  # simulate_garma directly enforces boundaries
+  # simulate_garma directly enforces thresholds
   expect_error(
     simulate_garma(
       base_link_mu = rep(0, 4),
       ar_list = list(ar1_ = rep(0.5, 4)),
       ma_list = list(),
-      boundary = rep(0.75, 4),
+      threshold = rep(0.75, 4),
       family = bernoulli(),
       dpars = list(mu = rep(0.5, 4))
     ),
-    "`boundary` for family = bernoulli() must be strictly between 0 and 0.5.",
+    "`threshold` for family = bernoulli() must be strictly between 0 and 0.5.",
     fixed = TRUE
   )
 })

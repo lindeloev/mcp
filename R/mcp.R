@@ -47,7 +47,7 @@
 #'   * `~ sigma(1 + x)`: Distributional parameters on the link scale (e.g., log residual SD).
 #'     [Read more](https://lindeloev.github.io/mcp/articles/dpar.html).
 #'   * `~ ar(1) + ma(1)`: Autoregressive and moving-average time-series residuals on the link scale
-#'     (accepts regression formulas, `series = id`, and `boundary`; declare them in every segment where they are active).
+#'     (accepts regression formulas, `series = id`, and `threshold`; declare them in every segment where they are active).
 #'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html).
 #'
 #' @param prior Named list. Names are parameter names (`cp_i`, `Intercept_i`, `xvar_i`,
@@ -177,10 +177,10 @@
 #'
 #' where \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
 #' \eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
-#' \eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the boundary-constrained observation with pseudo-count \eqn{b} (set via argument \code{boundary = 0.1} in \code{ar()} / \code{ma()}) to keep residuals finite on the link scale:
+#' \eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the threshold-constrained observation with threshold constant \eqn{c} (set via argument \code{threshold = 0.1} in \code{ar()} / \code{ma()}) to keep residuals finite on the link scale:
 #' * **Gaussian:** \eqn{y^*_t = y_t}.
-#' * **Poisson / Negative Binomial:** \eqn{y^*_t = \max(y_t, b)} to prevent \eqn{\log(0)}. Here \eqn{b} replaces zero counts with a small positive count.
-#' * **Binomial / Bernoulli:** \eqn{y^*_t = \min(\max(y_t, b), n_t - b) / n_t}, where \eqn{y_t} is observed successes, \eqn{n_t} is the number of trials (\eqn{n_t = 1} for Bernoulli), and \eqn{b} clamps counts to the interval \eqn{[b, n_t - b]} before converting to a rate, preventing \eqn{\text{logit}(0)} and \eqn{\text{logit}(1)}.
+#' * **Poisson / Negative Binomial:** \eqn{y^*_t = \max(y_t, c)} to prevent \eqn{\log(0)}. Here \eqn{c} replaces zero counts with a small positive threshold value.
+#' * **Binomial / Bernoulli:** \eqn{y^*_t = \min(\max(y_t, c), n_t - c) / n_t}, where \eqn{y_t} is observed successes, \eqn{n_t} is the number of trials (\eqn{n_t = 1} for Bernoulli), and \eqn{c} constrains counts to the interval \eqn{[c, n_t - c]} before converting to a rate, preventing \eqn{\text{logit}(0)} and \eqn{\text{logit}(1)}.
 #'
 #' Implications:
 #' * For an \eqn{N}-order component, the last \eqn{N} values *before* the segment onset are input to the first \eqn{\eta_t} in the segment.
@@ -500,7 +500,7 @@ mcp = function(model,
       )
 
     response_data = get_family_response_data(family, segments, data)
-    assert_arma_boundaries(family, predictor_definitions$boundary[predictor_definitions$dpar %in% c("ar", "ma")], response_data)
+    assert_arma_thresholds(family, predictor_definitions$threshold[predictor_definitions$dpar %in% c("ar", "ma")], response_data)
 
     x_by_series = split(data[[par_x]], if (is.null(series)) 1 else data[[series]])
     x_unordered = any(vapply(

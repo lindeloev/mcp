@@ -5,7 +5,8 @@
 get_jags_family_context = function(segments) {
   list(
     y = paste0(segments$y[1], "[i_]"),
-    boundary = "garma_boundary_[i_]",
+    threshold = "garma_threshold_[i_]",
+    boundary = "garma_threshold_[i_]",
     dpar = function(name) paste0(name, "_[i_]"),
     local = function(name) paste0(name, "_[i_]"),
     aux = function(name, default = NULL) {

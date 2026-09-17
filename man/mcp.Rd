@@ -68,7 +68,7 @@ not predictions).
 \item \code{~ sigma(1 + x)}: Distributional parameters on the link scale (e.g., log residual SD).
 \href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}.
 \item \code{~ ar(1) + ma(1)}: Autoregressive and moving-average time-series residuals on the link scale
-(accepts regression formulas, \code{series = id}, and \code{boundary}; declare them in every segment where they are active).
+(accepts regression formulas, \code{series = id}, and \code{threshold}; declare them in every segment where they are active).
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}.
 }}
 
@@ -230,11 +230,11 @@ predictor including serial dependence, the recurrence decomposes into components
 
 where \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
 \eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
-\eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the boundary-constrained observation with pseudo-count \eqn{b} (set via argument \code{boundary = 0.1} in \code{ar()} / \code{ma()}) to keep residuals finite on the link scale:
+\eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the threshold-constrained observation with threshold constant \eqn{c} (set via argument \code{threshold = 0.1} in \code{ar()} / \code{ma()}) to keep residuals finite on the link scale:
 \itemize{
 \item \strong{Gaussian:} \eqn{y^*_t = y_t}.
-\item \strong{Poisson / Negative Binomial:} \eqn{y^*_t = \max(y_t, b)} to prevent \eqn{\log(0)}. Here \eqn{b} replaces zero counts with a small positive count.
-\item \strong{Binomial / Bernoulli:} \eqn{y^*_t = \min(\max(y_t, b), n_t - b) / n_t}, where \eqn{y_t} is observed successes, \eqn{n_t} is the number of trials (\eqn{n_t = 1} for Bernoulli), and \eqn{b} clamps counts to the interval \eqn{[b, n_t - b]} before converting to a rate, preventing \eqn{\text{logit}(0)} and \eqn{\text{logit}(1)}.
+\item \strong{Poisson / Negative Binomial:} \eqn{y^*_t = \max(y_t, c)} to prevent \eqn{\log(0)}. Here \eqn{c} replaces zero counts with a small positive threshold value.
+\item \strong{Binomial / Bernoulli:} \eqn{y^*_t = \min(\max(y_t, c), n_t - c) / n_t}, where \eqn{y_t} is observed successes, \eqn{n_t} is the number of trials (\eqn{n_t = 1} for Bernoulli), and \eqn{c} constrains counts to the interval \eqn{[c, n_t - c]} before converting to a rate, preventing \eqn{\text{logit}(0)} and \eqn{\text{logit}(1)}.
 }
 
 Implications:

@@ -99,7 +99,7 @@ collect_design_specs = function(...) {
 }
 
 
-# Find component in next segment to determine lifetime (exclusive upper boundary)
+# Find component in next segment to determine lifetime (exclusive upper segment limit)
 # - definitions: A data frame with a `segment` column.
 # - by: Columns identifying one replaceable component (e.g., c("dpar", "order")).
 get_definition_lifetimes = function(definitions, by) {
@@ -822,7 +822,7 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
           data, component_form, segment, component, par_x, order = 1L, check_rank,
           design_id = paste("population", component, 0, segment, sep = ":"), previous = previous
         ) %>%
-          dplyr::mutate(boundary = component_stuff$boundary, explicit = TRUE)
+          dplyr::mutate(threshold = component_stuff$threshold, explicit = TRUE)
       } else {
         lapply(
           seq_len(component_stuff$order),
@@ -832,20 +832,20 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
           )
         ) %>%
           dplyr::bind_rows() %>%
-          dplyr::mutate(boundary = component_stuff$boundary, explicit = TRUE)
+          dplyr::mutate(threshold = component_stuff$threshold, explicit = TRUE)
       }
     }
   }
 
-  # AR and MA use the same transformed observation, so their boundary must be
+  # AR and MA use the same transformed observation, so their threshold must be
   # shared within a segment. One explicitly supplied value applies to both.
-  supplied_boundaries = unique(stats::na.omit(unlist(lapply(arma_pars, function(x) x$boundary))))
-  if (length(supplied_boundaries) > 1)
-    stop("ar() and ma() must use the same `boundary` within a segment.")
+  supplied_thresholds = unique(stats::na.omit(unlist(lapply(arma_pars, function(x) x$threshold))))
+  if (length(supplied_thresholds) > 1)
+    stop("ar() and ma() must use the same `threshold` within a segment.")
   
-  # Most users need no boundary argument; resolve the common default here.
-  segment_boundary = if (length(supplied_boundaries) == 1) supplied_boundaries else 0.1
-  arma_pars = lapply(arma_pars, dplyr::mutate, boundary = segment_boundary)
+  # Most users need no threshold argument; resolve the common default here.
+  segment_threshold = if (length(supplied_thresholds) == 1) supplied_thresholds else 0.1
+  arma_pars = lapply(arma_pars, dplyr::mutate, threshold = segment_threshold)
 
   ##########
   # RETURN #
@@ -883,8 +883,8 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     dplyr::filter(.data$segment == .data$definition_segment) %>%
     dplyr::select(-"design_spec")
   assert_unique_predictor_names(predictor_definitions)
-  if ("boundary" %notin% names(predictors))
-    predictors$boundary = rep(NA_real_, nrow(predictors))
+  if ("threshold" %notin% names(predictors))
+    predictors$threshold = rep(NA_real_, nrow(predictors))
 
   # Population intercepts reset the current population predictor. First find
   # the next intercept for each distributional parameter and AR/MA order.

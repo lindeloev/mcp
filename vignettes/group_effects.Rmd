@@ -68,7 +68,7 @@ where $\kappa_{ig}$ is the group-specific location. Thus `cp_i_id[g]` is the rep
 
 The hierarchy is subject to $x_{\min} < \kappa_{1g} < \cdots < \kappa_{Kg} < x_{\max}$. Thus, if adjacent change points both vary, their group-specific locations are ordered against each other—not against the adjacent population change point. Internally, JAGS samples $\kappa_{ig}$ directly for efficiency.
 
-Unlike predictor group-level effects, a change-point group effect applies only to the boundary where it is written.
+Unlike predictor group-level effects, a change-point group effect applies only at the change point where it is written.
 
 # Predictor group-level effects
 

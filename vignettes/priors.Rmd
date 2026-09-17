@@ -257,7 +257,7 @@ prior = list(
 The number in parentheses is a common $\alpha$ concentration parameter (all change points must share the same $\alpha$):
 
 - $\alpha = 1$ (default): completely flat uniform order statistics as shown above.
-- $\alpha > 1$ (e.g. 2, 5): penalizes change points from occurring close to each other or the boundaries, favoring more evenly spaced segments.
+- $\alpha > 1$ (e.g. 2, 5): penalizes change points from occurring close to each other or the limits of the data range, favoring more evenly spaced segments.
 - $\alpha < 1$ (e.g. 0.5): favors clustering and permits change points to occur close together.
 
 ## Manual priors on change points

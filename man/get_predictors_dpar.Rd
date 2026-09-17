@@ -84,7 +84,7 @@ not predictions).
 \item \code{~ sigma(1 + x)}: Distributional parameters on the link scale (e.g., log residual SD).
 \href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}.
 \item \code{~ ar(1) + ma(1)}: Autoregressive and moving-average time-series residuals on the link scale
-(accepts regression formulas, \code{series = id}, and \code{boundary}; declare them in every segment where they are active).
+(accepts regression formulas, \code{series = id}, and \code{threshold}; declare them in every segment where they are active).
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}.
 }}
 

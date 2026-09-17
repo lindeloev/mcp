@@ -142,7 +142,7 @@ mcp_pars(fit)
 
 ## Some clarifications on formula behavior
 
-Factors use ordinary R formula coding: with treatment coding, `1 + state` gives contrasts to a reference level, while `0 + state` gives coefficients for all levels. A predictor group effect such as `(1 | id)` applies where it is written. A change-point group effect applies only to the boundary where it is written; it does not introduce group effects in the predictor.
+Factors use ordinary R formula coding: with treatment coding, `1 + state` gives contrasts to a reference level, while `0 + state` gives coefficients for all levels. A predictor group effect such as `(1 | id)` applies where it is written. A change-point group effect applies only at the change point where it is written; it does not introduce group effects in the predictor.
 
 Bare `x`, supported powers such as `I(x^2)`, and their interactions use segment-local coordinates. Their attained levels remain through joining: after `y ~ 1 + x:z`, a later `~ 0` retains a plateau that can depend on `z`. Other transformations, such as `sin(x)`, use original predictor values and follow the active-term rules without segment-local joining.
 

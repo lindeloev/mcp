@@ -12,7 +12,7 @@
 #' @param form_str_in A character such as `"ar(number)"`, `"ma(number)"`, or
 #'   either component with a second formula argument.
 #' @return A list with `$order`, `$form_str` (e.g., `"ar(formula)"`), and
-#'   `$boundary`. The component formula is 1 if no formula is given.
+#'   `$threshold`. The component formula is 1 if no formula is given.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 unpack_arma = function(form_str_in) {
@@ -20,7 +20,7 @@ unpack_arma = function(form_str_in) {
     return(list(
       order = NA,
       form_str = NA,
-      boundary = NA_real_,
+      threshold = NA_real_,
       series = NA_character_
     ))
   } else if (length(form_str_in) > 1) {
@@ -39,17 +39,17 @@ unpack_arma = function(form_str_in) {
   if (length(component_args) == 0 || component_arg_names[1] %notin% c("", "order"))
     stop("The first argument to ", component, "() must be its order.")
 
-  boundary_index = which(component_arg_names == "boundary")
-  if (length(boundary_index) > 1)
-    stop("Only one `boundary` value is allowed in ", component, "().")
+  threshold_index = which(component_arg_names == "threshold")
+  if (length(threshold_index) > 1)
+    stop("Only one `threshold` value is allowed in ", component, "().")
 
   series_index = which(component_arg_names == "series")
   if (length(series_index) > 1)
     stop("Only one `series` value is allowed in ", component, "().")
 
-  formula_index = setdiff(seq_along(component_args), c(1, boundary_index, series_index))
+  formula_index = setdiff(seq_along(component_args), c(1, threshold_index, series_index))
   if (length(formula_index) > 1 || any(component_arg_names[formula_index] %notin% c("", "formula")))
-    stop(component, "() accepts only `order`, an optional formula, `boundary`, and `series`.")
+    stop(component, "() accepts only `order`, an optional formula, `threshold`, and `series`.")
 
   # GET ORDER
   order_str = paste(deparse(component_args[[1]], width.cutoff = 500), collapse = "")
@@ -60,7 +60,7 @@ unpack_arma = function(form_str_in) {
     stop("Wrong specification of order in '", form_str_in, "'. Must be ", component, "(order) or ", component, "(order, formula) where order is a non-negative integer.")
   checkmate::assert_int(order, lower = 0, .var.name = form_str_in)
 
-  # GET FORMULA AND BOUNDARY AND SERIES
+  # GET FORMULA AND THRESHOLD AND SERIES
   if (order == 0) {
     if (length(formula_index) == 1)
       stop("Formula cannot be specified when order = 0 in '", form_str_in, "'.")
@@ -73,14 +73,14 @@ unpack_arma = function(form_str_in) {
     form_str = paste0(component, "(1)")
   }
 
-  if (length(boundary_index) == 1) {
-    boundary_str = paste(deparse(component_args[[boundary_index]], width.cutoff = 500), collapse = "")
-    boundary = suppressWarnings(as.numeric(boundary_str))
-    if (length(boundary) != 1 || is.na(boundary) || !is.finite(boundary) || boundary <= 0 || boundary >= 1)
-      stop("`boundary` in ", component, "() must be one number between 0 and 1.")
+  if (length(threshold_index) == 1) {
+    threshold_str = paste(deparse(component_args[[threshold_index]], width.cutoff = 500), collapse = "")
+    threshold = suppressWarnings(as.numeric(threshold_str))
+    if (length(threshold) != 1 || is.na(threshold) || !is.finite(threshold) || threshold <= 0 || threshold >= 1)
+      stop("`threshold` in ", component, "() must be one number between 0 and 1.")
   } else {
     # Defer the default until AR and MA have been parsed together for a segment.
-    boundary = NA_real_
+    threshold = NA_real_
   }
 
   if (length(series_index) == 1) {
@@ -100,7 +100,7 @@ unpack_arma = function(form_str_in) {
   list(
     order = order,
     form_str = form_str,
-    boundary = boundary,
+    threshold = threshold,
     series = series
   )
 }
@@ -172,17 +172,17 @@ assert_arma_series = function(data, series) {
 }
 
 
-# Validate GARMA observation boundaries against family-appropriate bounds
-assert_arma_boundaries = function(family, boundary, data = list()) {
-  boundary = unique(stats::na.omit(boundary))
-  if (length(boundary) == 0)
+# Validate GARMA observation thresholds against family-appropriate bounds
+assert_arma_thresholds = function(family, threshold, data = list()) {
+  threshold = unique(stats::na.omit(threshold))
+  if (length(threshold) == 0)
     return(invisible(TRUE))
 
-  if (!is.null(family$garma$validate_boundary)) {
-    family$garma$validate_boundary(boundary, data)
+  if (!is.null(family$garma$validate_threshold)) {
+    family$garma$validate_threshold(threshold, data)
   } else {
-    if (any(boundary <= 0 | boundary >= 1))
-      stop("`boundary` in ar() / ma() must be strictly between 0 and 1.")
+    if (any(threshold <= 0 | threshold >= 1))
+      stop("`threshold` in ar() / ma() must be strictly between 0 and 1.")
   }
 
   invisible(TRUE)
@@ -482,43 +482,43 @@ get_ar_jagscode = function(ar_order, x_name, series = FALSE) {
 }
 
 
-# Build the observation-boundary formula used by GARMA terms
+# Build the observation-threshold formula used by GARMA terms
 #
-# A boundary supplied with an AR or MA term remains active until the next such
-# term. The first supplied boundary also applies to earlier observations so
+# A threshold supplied with an AR or MA term remains active until the next such
+# term. The first supplied threshold also applies to earlier observations so
 # they can safely be used as lags.
-get_garma_boundary_jagscode = function(segments, predictors, par_x) {
-  boundary_table = predictors %>%
-    dplyr::filter(.data$dpar %in% c("ar", "ma"), !is.na(.data$boundary)) %>%
-    dplyr::distinct(.data$segment, .data$boundary) %>%
+get_garma_threshold_jagscode = function(segments, predictors, par_x) {
+  threshold_table = predictors %>%
+    dplyr::filter(.data$dpar %in% c("ar", "ma"), !is.na(.data$threshold)) %>%
+    dplyr::distinct(.data$segment, .data$threshold) %>%
     dplyr::arrange(.data$segment)
 
-  if (nrow(boundary_table) == 0)
+  if (nrow(threshold_table) == 0)
     return("")
-  if (anyDuplicated(boundary_table$segment))
-    stop_github("Found multiple GARMA boundaries in one segment.")
+  if (anyDuplicated(threshold_table$segment))
+    stop_github("Found multiple GARMA thresholds in one segment.")
 
-  boundary_code = stats::setNames(segments$cp_code_form, segments$segment)
-  boundary_parts = character(nrow(boundary_table))
-  for (i in seq_len(nrow(boundary_table))) {
-    lower = if (i == 1) "" else paste0("(", par_x, "[i_] >= ", boundary_code[[as.character(boundary_table$segment[i])]], ") * ")
-    upper = if (i == nrow(boundary_table)) "" else paste0("(", par_x, "[i_] < ", boundary_code[[as.character(boundary_table$segment[i + 1])]], ") * ")
-    boundary_value = sprintf("%.15g", boundary_table$boundary[i])
-    boundary_parts[i] = paste0("  ", lower, upper, boundary_value)
+  threshold_code = stats::setNames(segments$cp_code_form, segments$segment)
+  threshold_parts = character(nrow(threshold_table))
+  for (i in seq_len(nrow(threshold_table))) {
+    lower = if (i == 1) "" else paste0("(", par_x, "[i_] >= ", threshold_code[[as.character(threshold_table$segment[i])]], ") * ")
+    upper = if (i == nrow(threshold_table)) "" else paste0("(", par_x, "[i_] < ", threshold_code[[as.character(threshold_table$segment[i + 1])]], ") * ")
+    threshold_value = sprintf("%.15g", threshold_table$threshold[i])
+    threshold_parts[i] = paste0("  ", lower, upper, threshold_value)
   }
 
   paste0(
-    "\n\n# GARMA observation boundary\n",
-    "garma_boundary_[i_] =\n",
-    paste0(boundary_parts, collapse = " +\n")
+    "\n\n# GARMA observation threshold\n",
+    "garma_threshold_[i_] =\n",
+    paste0(threshold_parts, collapse = " +\n")
   )
 }
 
 
 # Evaluate or generate a GARMA response series
-simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
+simulate_garma = function(base_link_mu, ar_list, ma_list, threshold, family,
                           dpars, data = list(), y = NULL, series_id = NULL) {
-  assert_arma_boundaries(family, boundary, data)
+  assert_arma_thresholds(family, threshold, data)
 
   if (is.null(series_id))
     series_id = rep(1, length(base_link_mu))
@@ -540,7 +540,7 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
   # independent series/draws can be evaluated together, including ragged series.
   if (generate_series)
     y = rep(NA_real_, n)
-  link_y = family$linkfun(get_garma_observed(y, family, boundary, data))
+  link_y = family$linkfun(get_garma_observed(y, family, threshold, data))
   resid_abs = numeric(n)
   resid_ma = numeric(n)
   resid_garma = numeric(n)
@@ -569,7 +569,7 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, boundary, family,
       row_data = lapply(data, function(x) if (length(x) == 1) x else x[missing_rows])
       y[missing_rows] = family$r$rng(length(missing_rows), row_dpars, row_data)
       link_y[missing_rows] = family$linkfun(get_garma_observed(
-        y[missing_rows], family, boundary[missing_rows], row_data
+        y[missing_rows], family, threshold[missing_rows], row_data
       ))
     }
     resid_abs[rows] = link_y[rows] - base_link_mu[rows]

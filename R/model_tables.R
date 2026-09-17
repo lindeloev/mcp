@@ -125,7 +125,7 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
 
   # `segments`: shared segment metadata with change-point info joined back in
   # by `segment`. Segment 1 has no row in `cps` (there is no change point before
-  # it), so it is given the fixed lower boundary `cp_0` explicitly. Kept in
+  # it), so it is given the fixed lower data limit `cp_0` explicitly. Kept in
   # this per-segment shape because most consumers look up the change point
   # *starting* a given segment, not the change point by its own number.
   segments = segment_metadata %>%

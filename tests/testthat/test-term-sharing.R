@@ -16,9 +16,9 @@ test_that("shared slopes retain implicit intercepts and shared intercepts retain
 })
 
 
-test_that("AR sharing resolves every lag and preserves current segment boundaries", {
+test_that("AR sharing resolves every lag and preserves current segment transitions", {
   data = data.frame(x = 1:12, y = sin(1:12))
-  fit = mcp(list(y ~ 1 + ar(2), ~ 1 + ar(2, same(1), boundary = 0.2)),
+  fit = mcp(list(y ~ 1 + ar(2), ~ 1 + ar(2, same(1), threshold = 0.2)),
     data, par_x = "x", sample = FALSE)
   args = c(as.list(add_rhs_predictors(data, fit)),
     lapply(list(cp_1 = 6, Intercept_1 = 1, Intercept_2 = 2, sigma_1 = 1, ar1_1 = 0.3, ar2_1 = -0.1), rep, 12))
@@ -27,7 +27,7 @@ test_that("AR sharing resolves every lag and preserves current segment boundarie
     paste0(".pred_", get_predictor_design_names(tables$predictors, tables$group_effects)))
   expect_equal(values$ar1_, rep(0.3, 12))
   expect_equal(values$ar2_, rep(-0.1, 12))
-  expect_equal(values$garma_boundary_, ifelse(data$x < 6, 0.1, 0.2))
+  expect_equal(values$garma_threshold_, ifelse(data$x < 6, 0.1, 0.2))
   expect_error(mcp(list(y ~ 1 + ar(1), ~ 1 + ar(2, same(1))),
     data, par_x = "x", sample = FALSE), "lag 2")
 

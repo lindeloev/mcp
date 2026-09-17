@@ -171,7 +171,7 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
   group_cols = unique(stats::na.omit(group_effects$group_col))
   dpars = family$dpar_specs$dpar
 
-  # Public parameters and fixed change-point boundary nodes share one namespace.
+  # Public parameters and fixed data range endpoints share one namespace.
   parameter_names = stats::na.omit(c(
     paste0("cp_", 0:nrow(segments)),
     predictors$code_name,
@@ -186,7 +186,7 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
     paste0("n_unique_", group_cols), paste0(group_cols, "_"),
     names(attr(jags_code, "jags_constants")),
     if (generated) c(
-      "i_", "garma_boundary_", "garma_y_", "garma_link_y_",
+      "i_", "garma_threshold_", "garma_y_", "garma_link_y_",
       "resid_abs_", "resid_ma_", "resid_garma_", "nb_prob_", "nb_log_rate_",
       paste0("cp_frac_", seq_len(nrow(segments) - 1L), "_"),
       paste0("x_local_", seq_len(nrow(segments)), "_"),

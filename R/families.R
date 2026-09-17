@@ -292,7 +292,7 @@ mcpfamily_gaussian = function(family) {
 
   garma = if (family$link == "identity") {
     list(
-      observed_r = function(y, data, boundary) y,
+      observed_r = function(y, data, threshold) y,
       observed_jags = function(context) context$y,
       generate_message = "Generating residuals for AR(N) model since the response column/argument was not provided."
     )
@@ -390,16 +390,16 @@ mcpfamily_binomial = function(family) {
   )
   garma = if (family$link == "logit") {
     list(
-      observed_r = function(y, data, boundary) pmin(pmax(y, boundary), data$trials - boundary) / data$trials,
+      observed_r = function(y, data, threshold) pmin(pmax(y, threshold), data$trials - threshold) / data$trials,
       observed_jags = function(context) paste0(
-        "min(max(", context$y, ", ", context$boundary, "), ",
-        context$aux("trials"), " - ", context$boundary, ") / ", context$aux("trials")
+        "min(max(", context$y, ", ", context$threshold, "), ",
+        context$aux("trials"), " - ", context$threshold, ") / ", context$aux("trials")
       ),
-      validate_boundary = function(boundary, data = list()) {
+      validate_threshold = function(threshold, data = list()) {
         min_trials = min(data$trials)
-        max_boundary = min_trials / 2
-        if (any(boundary <= 0 | boundary >= max_boundary))
-          stop("`boundary` for family = binomial() must be strictly between 0 and half the smallest trial count (", max_boundary, ").")
+        max_threshold = min_trials / 2
+        if (any(threshold <= 0 | threshold >= max_threshold))
+          stop("`threshold` for family = binomial() must be strictly between 0 and half the smallest trial count (", max_threshold, ").")
       }
     )
   }
@@ -474,13 +474,13 @@ mcpfamily_bernoulli = function(family) {
 
   garma = if (family$link == "logit") {
     list(
-      observed_r = function(y, data, boundary) pmin(pmax(y, boundary), 1 - boundary),
+      observed_r = function(y, data, threshold) pmin(pmax(y, threshold), 1 - threshold),
       observed_jags = function(context) paste0(
-        "min(max(", context$y, ", ", context$boundary, "), 1 - ", context$boundary, ")"
+        "min(max(", context$y, ", ", context$threshold, "), 1 - ", context$threshold, ")"
       ),
-      validate_boundary = function(boundary, data = list()) {
-        if (any(boundary <= 0 | boundary >= 0.5))
-          stop("`boundary` for family = bernoulli() must be strictly between 0 and 0.5.")
+      validate_threshold = function(threshold, data = list()) {
+        if (any(threshold <= 0 | threshold >= 0.5))
+          stop("`threshold` for family = bernoulli() must be strictly between 0 and 0.5.")
       }
     )
   }
@@ -564,8 +564,8 @@ mcpfamily_poisson = function(family) {
   )
   garma = if (family$link == "log") {
     list(
-      observed_r = function(y, data, boundary) pmax(y, boundary),
-      observed_jags = function(context) paste0("max(", context$y, ", ", context$boundary, ")")
+      observed_r = function(y, data, threshold) pmax(y, threshold),
+      observed_jags = function(context) paste0("max(", context$y, ", ", context$threshold, ")")
     )
   }
 
@@ -644,8 +644,8 @@ mcpfamily_negbinomial = function(family) {
     }
   })
   garma = list(
-    observed_r = function(y, data, boundary) pmax(y, boundary),
-    observed_jags = function(context) paste0("max(", context$y, ", ", context$boundary, ")")
+    observed_r = function(y, data, threshold) pmax(y, threshold),
+    observed_jags = function(context) paste0("max(", context$y, ", ", context$threshold, ")")
   )
 
   new_mcpfamily(
@@ -943,7 +943,7 @@ is.mcpfamily = function(x) {
     checkmate::assert_function(x$garma$observed_r)
     checkmate::assert_function(x$garma$observed_jags)
     checkmate::assert_string(x$garma$generate_message, null.ok = TRUE)
-    checkmate::assert_function(x$garma$validate_boundary, null.ok = TRUE)
+    checkmate::assert_function(x$garma$validate_threshold, null.ok = TRUE)
   }
   checkmate::assert_string(x$linkfun_str)
   checkmate::assert_string(x$linkinv_str)

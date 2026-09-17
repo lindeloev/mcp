@@ -155,52 +155,52 @@ test_that("MA order errors describe MA syntax", {
 })
 
 
-test_that("GARMA boundaries default to 0.1 and can vary by segment", {
+test_that("GARMA thresholds default to 0.1 and can vary by segment", {
   data = data.frame(x = 1:6, y = 1:6)
   predictors = get_predictors(
     list(
       y ~ ar(1),
-      ~ ar(1, 1 + x, boundary = 0.2)
+      ~ ar(1, 1 + x, threshold = 0.2)
     ),
     data,
     mcpfamily(gaussian()),
     par_x = "x"
   )
 
-  boundaries = predictors %>%
+  thresholds = predictors %>%
     dplyr::filter(.data$dpar == "ar") %>%
-    dplyr::distinct(.data$segment, .data$boundary)
-  expect_equal(boundaries$boundary, c(0.1, 0.2))
+    dplyr::distinct(.data$segment, .data$threshold)
+  expect_equal(thresholds$threshold, c(0.1, 0.2))
 
   expect_error(
-    get_predictors(list(y ~ ar(1, boundary = 0)), data, mcpfamily(gaussian()), "x"),
-    "`boundary` in ar() must be one number between 0 and 1.",
+    get_predictors(list(y ~ ar(1, threshold = 0)), data, mcpfamily(gaussian()), "x"),
+    "`threshold` in ar() must be one number between 0 and 1.",
     fixed = TRUE
   )
 })
 
 
-test_that("AR and MA share one boundary within a segment", {
+test_that("AR and MA share one threshold within a segment", {
   data = data.frame(x = 1:6, y = 1:6)
   family = mcpfamily(gaussian())
 
   predictors = get_predictors(
-    list(y ~ ar(1, boundary = 0.2) + ma(1)),
+    list(y ~ ar(1, threshold = 0.2) + ma(1)),
     data,
     family,
     par_x = "x"
   )
-  expect_equal(unique(predictors$boundary[predictors$dpar == "ar"]), 0.2)
-  expect_equal(unique(predictors$boundary[predictors$dpar == "ma"]), 0.2)
+  expect_equal(unique(predictors$threshold[predictors$dpar == "ar"]), 0.2)
+  expect_equal(unique(predictors$threshold[predictors$dpar == "ma"]), 0.2)
 
   expect_error(
     get_predictors(
-      list(y ~ ar(1, boundary = 0.2) + ma(1, boundary = 0.3)),
+      list(y ~ ar(1, threshold = 0.2) + ma(1, threshold = 0.3)),
       data,
       family,
       par_x = "x"
     ),
-    "ar() and ma() must use the same `boundary` within a segment.",
+    "ar() and ma() must use the same `threshold` within a segment.",
     fixed = TRUE
   )
 })

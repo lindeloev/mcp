@@ -70,10 +70,10 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family, 
   }, character(1))
   formula_jags_dpars = paste0(formula_jags_dpars_list, collapse = "\n\n")
 
-  garma_boundary_str = get_garma_boundary_jagscode(segments, predictors, par_x)
+  garma_threshold_str = get_garma_threshold_jagscode(segments, predictors, par_x)
 
   # Concatenate and return
-  formula_jags = paste0(local_x_str, garma_boundary_str, "\n\n", formula_jags_dpars)
+  formula_jags = paste0(local_x_str, garma_threshold_str, "\n\n", formula_jags_dpars)
 
   # Special case when no terms are present for a given dpar (all ~0): insert "dpar = 0".
   for (dpar in family$dpar_specs$dpar) {

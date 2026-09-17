@@ -354,7 +354,7 @@ find_mixture_quantile = function(cdf_fn, dpars, data, p, rate = FALSE, is_discre
     while (mix_cdf(lo) > p && is.infinite(lower)) lo = lo - 2 * sigma_max
     while (mix_cdf(hi) < p && is.infinite(upper)) hi = hi + 2 * sigma_max
 
-    # Clamp to theoretical boundaries if root lies outside
+    # Clamp to theoretical bounds if root lies outside
     if (mix_cdf(lo) > p) return(lower)
     if (mix_cdf(hi) < p) return(upper)
 

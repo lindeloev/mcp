@@ -32,7 +32,7 @@ $$\begin{aligned}
 \eta_t &= \eta^{\text{reg}}_t + \text{AR}_t + \text{MA}_t
 \end{aligned}$$
 
-where $\phi_{j,t}$ is the lag-$j$ autoregressive (AR) coefficient at time $t$, $\theta_{k,t}$ is the lag-$k$ moving-average (MA) coefficient at time $t$, $g(\cdot)$ is the link function ($g(\mu_t) = \eta_t$, so $\mu_t = g^{-1}(\eta_t)$), and $y^*_t$ is the boundary-constrained observation with pseudo-count $b$ (set via `boundary = 0.1` by default). Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations.
+where $\phi_{j,t}$ is the lag-$j$ autoregressive (AR) coefficient at time $t$, $\theta_{k,t}$ is the lag-$k$ moving-average (MA) coefficient at time $t$, $g(\cdot)$ is the link function ($g(\mu_t) = \eta_t$, so $\mu_t = g^{-1}(\eta_t)$), and $y^*_t$ is the threshold-constrained observation with threshold constant $c$ (set via `threshold = 0.1` by default). Thus `ar()` uses lagged link-scale residuals relative to the ordinary regression, while `ma()` uses lagged one-step innovations.
 
 **`mcp` does regression with change points on the coefficients** $\phi_{j,t}$ **and** $\theta_{k,t}$. See below for applied examples.
 
@@ -42,19 +42,19 @@ A key feature of this recurrence is that AR/MA memory flows continuously across 
 
 - For an order-$N$ component in a new segment, the last $N$ observations *before* the change point are input into the first $\eta_t$ in the new segment, weighted by the new segment's AR/MA parameters.
 
-- AR/MA lags do not reset at segment boundaries; memory flows continuously from one segment into the next. Lags only reset at the very beginning of the dataset, or across independent series when using `series = "column_name"` (see [Multiple time series](#multiple-series)).
+- AR/MA lags do not reset between segments; memory flows continuously from one segment into the next. Lags only reset at the very beginning of the dataset, or between independent series when using `series = "column_name"` (see [Multiple time series](#multiple-series)).
 
-- Because change point locations $\tau$ are estimated with posterior uncertainty, the observation boundary where AR/MA parameters switch varies conditionally across MCMC draws.
+- Because change point locations $\tau$ are estimated with posterior uncertainty, the change point where AR/MA parameters switch varies conditionally across MCMC draws.
 
 GARMA currently supports only the default links for `gaussian()` (identity), `binomial()` (logit), `bernoulli()` (logit), `poisson()` (log), and `negbinomial()` (log). Non-default links are rejected for now.
 
 **Warning:** The AR and MA coefficients are modeled directly and are not jointly constrained to the stationary or invertible regions. With higher-order terms such as `ar(2)`, independently bounded coefficients can violate the usual root conditions. Coefficients that change across predictors or segments, such as `ar(1, 1 + x)` or `model = list(y ~ ar(1), ~ ar(1))`, instead define a time-varying process to which the usual constant-coefficient conditions do not directly apply. The same applies to `ma()`.
 
-### Observation boundary
+### Observation threshold
 
-The transformed observation $y^*_t$ keeps log and logit residuals finite when counts lie on a link boundary using a pseudo-count $b$ (default `boundary = 0.1`). For Poisson and negative-binomial models, zero counts are replaced by $b$, so $y^*_t = \max(y_t, b)$. For binomial models, observed success counts are constrained to $[b, n_t - b]$ before conversion to a rate ($n_t = 1$ for `bernoulli()`, constraining $y^*_t$ to $[0.1, 0.9]$). It has no effect for Gaussian models.
+The transformed observation $y^*_t$ keeps log and logit residuals finite when observations lie on the domain boundary of the link function, using a threshold constant $c$ (default `threshold = 0.1`). For Poisson and negative-binomial models, zero counts are replaced by $c$, so $y^*_t = \max(y_t, c)$. For binomial models, observed success counts are constrained to $[c, n_t - c]$ before conversion to a rate ($n_t = 1$ for `bernoulli()`, constraining $y^*_t$ to $[0.1, 0.9]$). It has no effect for Gaussian models.
 
-The default should usually be left unchanged. If needed, set it on either term, for example `ar(1, boundary = 0.01) + ma(1)`. AR and MA share one boundary within a segment, and the boundary may differ between segments. Supplying different AR and MA boundaries in the same segment is an error.
+The default should usually be left unchanged. If needed, set it on either term, for example `ar(1, threshold = 0.01) + ma(1)`. AR and MA share one threshold within a segment, and the threshold may differ between segments. Supplying different AR and MA thresholds in the same segment is an error.
 
 # Simple example
 
@@ -109,7 +109,7 @@ You can do hypothesis testing with GARMA models using `hypothesis()`. [Read more
 
 # Tips, comments, and warnings
 
-AR/MA must be declared in every active segment. Repeating `ar(2)` estimates new lag coefficients; `ar(2, same(1))` shares both lag intercepts from the preceding segment, and errors if either lag lacks an active source. An explicit `as` can select an earlier source across a disabled segment. `ar(2, 0)` joins the preceding level; `ar(2, 0 + same(x))` also shares the local slope for each lag. These declarations retain observation and innovation history across segment boundaries.
+AR/MA must be declared in every active segment. Repeating `ar(2)` estimates new lag coefficients; `ar(2, same(1))` shares both lag intercepts from the preceding segment, and errors if either lag lacks an active source. An explicit `as` can select an earlier source across a disabled segment. `ar(2, 0)` joins the preceding level; `ar(2, 0 + same(x))` also shares the local slope for each lag. These declarations retain observation and innovation history across segment transitions.
 
 The AR and MA terms apply to link-scale *residuals* from the ordinary regression. In time-series jargon, this is a *dynamical* regression model where the ordinary regression parameters make up the *deterministic* structure. See further comments in the section on priors below.
 
@@ -142,7 +142,7 @@ AR and MA lags apply strictly to the *order of rows* in your data frame, without
 
 ### Panel and longitudinal data (`series`)
 
-When data contains repeated measurements from multiple participants, sessions, or locations, you do *not* want residual autocorrelation from the end of one individual to carry over to the beginning of the next. Use the `series` argument inside `ar()` or `ma()` to define independent time series boundaries:
+When data contains repeated measurements from multiple participants, sessions, or locations, you do *not* want residual autocorrelation from the end of one individual to carry over to the beginning of the next. Use the `series` argument inside `ar()` or `ma()` to define where independent series start and end:
 
 ```{r, message=FALSE}
 # 1. Model: declare series = id once
@@ -181,7 +181,7 @@ gg_dpar  = plot_dpar(fit, "ar1", q_fit = TRUE)
 gg_trend / gg_dpar
 ```
 
-Within each series, AR/MA memory flows continuously across change points. Across series boundaries, memory resets to zero so individuals remain completely independent.
+Within each series, AR/MA memory flows continuously across change points. Between series, memory resets to zero so individuals remain completely independent.
 
 # Simulating autocorrelated change point data
 
@@ -299,7 +299,7 @@ The default prior on each AR and MA intercept is a truncated normal distribution
 dnorm(0, 0.5) T(-1, 1)
 ```
 
-It is symmetric around zero and gently shrinks away from the boundaries: its central 95% interval is approximately $[-0.84, 0.84]$. This is a regularizing prior on each direct coefficient, not a joint stationarity or invertibility constraint for orders above one.
+It is symmetric around zero and gently shrinks away from the $[-1, 1]$ bounds: its central 95% interval is approximately $[-0.84, 0.84]$. This is a regularizing prior on each direct coefficient, not a joint stationarity or invertibility constraint for orders above one.
 
 `brms` also models AR and MA coefficients directly within $[-1, 1]$, but uses flat default priors over that range. Thus `mcp` keeps the familiar parameter interpretation while adding mild regularization toward zero; fits should generally be similar when the likelihood is informative.
 
