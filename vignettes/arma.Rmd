@@ -41,7 +41,9 @@ Unavailable lags at the beginning of the series contribute zero. This same recur
 A key feature of this recurrence is that AR/MA memory flows continuously across change points:
 
 - For an order-$N$ component in a new segment, the last $N$ observations *before* the change point are input into the first $\eta_t$ in the new segment, weighted by the new segment's AR/MA parameters.
-- AR/MA lags do not reset at segment boundaries; they only reset at the very beginning of the whole dataset, or across independent series when using `series = "column_name"` inside `ar()` or `ma()` (e.g. `ar(1, series = id)`).
+
+- AR/MA lags do not reset at segment boundaries; memory flows continuously from one segment into the next. Lags only reset at the very beginning of the dataset, or across independent series when using `series = "column_name"` (see [Multiple time series](#multiple-series)).
+
 - Because change point locations $\tau$ are estimated with posterior uncertainty, the observation boundary where AR/MA parameters switch varies conditionally across MCMC draws.
 
 GARMA currently supports only the default links for `gaussian()` (identity), `binomial()` (logit), `bernoulli()` (logit), `poisson()` (log), and `negbinomial()` (log). Non-default links are rejected for now.
@@ -107,6 +109,8 @@ You can do hypothesis testing with GARMA models using `hypothesis()`. [Read more
 
 # Tips, comments, and warnings
 
+AR/MA must be declared in every active segment. Repeating `ar(2)` estimates new lag coefficients; `ar(2, same(1))` shares both lag intercepts from the preceding segment, and errors if either lag lacks an active source. An explicit `as` can select an earlier source across a disabled segment. `ar(2, 0)` joins the preceding level; `ar(2, 0 + same(x))` also shares the local slope for each lag. These declarations retain observation and innovation history across segment boundaries.
+
 The AR and MA terms apply to link-scale *residuals* from the ordinary regression. In time-series jargon, this is a *dynamical* regression model where the ordinary regression parameters make up the *deterministic* structure. See further comments in the section on priors below.
 
 To control the *direction* of a change, put a one-sided prior on the corresponding coefficient, e.g., `ar1_x_1 = "dnorm(0, 1) T(0, )"`. See recommendations in [the section on priors](#ar_prior).
@@ -123,30 +127,61 @@ You can combine `ar()` and `ma()` with any regression model and with [group-leve
 
 ```{r}
 model = list(
-  y ~ 1 + ar(1) + ma(1) + sigma(1),
-  ~ 0 + x + ar(1) + sigma(1),
-  ~ 1
+  y ~ 1 + ar(1) + ma(1) + sigma(1),  # First order ARMA
+  ~ 0 + x + ar(1) + sigma(1),        # New AR coefficient; no MA
+  ~ 1  # No ARMA modelled in this segment
 )
 ```
 
-## Order your data
+## Row ordering and multiple time series (`series`) {#multiple-series}
 
-AR and MA lags apply to the *order* of rows in the data frame without taking into account the distance between values of `x`. This has two important implications:
+AR and MA lags apply strictly to the *order of rows* in your data frame, without taking into account the numerical distance between values of `x`. This has two important implications:
 
-- You probably want to sort your data according to your `x`. Just do `data = data[order(data$x), ]`.
-- Adjacent data points that lie years apart are modeled to be just as (auto)correlated as adjacent points lying seconds apart.
+- **Sort by time:** Adjacent rows are treated as lag-1 neighbors. Always ensure your data is sorted by time before fitting: `data = data[order(data$x), ]`.
+- **Uneven spacing:** Points recorded seconds apart vs. months apart will be modeled with the exact same autocorrelation if they are placed in consecutive rows.
 
-For grouped longitudinal data, identify independent residual histories with `series` inside `ar()` or `ma()` and sort each series by time:
+### Panel and longitudinal data (`series`)
 
-```{r, eval = FALSE}
+When data contains repeated measurements from multiple participants, sessions, or locations, you do *not* want residual autocorrelation from the end of one individual to carry over to the beginning of the next. Use the `series` argument inside `ar()` or `ma()` to define independent time series boundaries:
+
+```{r, message=FALSE}
+# 1. Model: declare series = id once
 model = list(
-  y ~ 1 + ar(1, series = id),
-  ~ 0 + x + ar(1)
+  y ~ 1 + ar(1, series = id),  # Segment 1: AR(1) within series
+    ~ 0 + time + ar(1)          # Segment 2: new AR(1); series = id applies globally
 )
-fit = mcp(model, ar_series_data)
+
+# 2. Simulate panel data for 3 subjects (must be contiguous and sorted by time)
+df_panel = data.frame(
+  id = rep(c("Subject_A", "Subject_B", "Subject_C"), each = 100),
+  time = rep(1:100, times = 3),
+  y = 0
+)
+
+empty = mcp(model, data = df_panel, sample = FALSE)
+set.seed(42)
+df_panel$y = empty$simulate(
+  empty, df_panel,
+  cp_1 = 30,         # Change point location
+  Intercept_1 = 10,  # Intercept in segment 1
+  time_2 = 0.1,      # Slope for the mean in segment two
+  ar1_1 = 0.3,       # First-order AR in segment 1
+  ar1_2 = 0.8,       # First-order AR in segment 2
+  sigma_1 = 1.5      # Residual sigma; sigma(0) is implicit in segment 2 where not declared
+)
+
+# 3. Fit the model
+fit = mcp(model, data = df_panel)
+print(summary(fit))
+
+# Plot fit and ar(1) parameter
+library(patchwork)
+gg_trend = plot(fit, color_by = "id")
+gg_dpar  = plot_dpar(fit, "ar1", q_fit = TRUE)
+gg_trend / gg_dpar
 ```
 
-Rows belonging to each series must be contiguous. AR and MA lags reset at each series boundary. The `series` argument inside `ar()`/`ma()` is separate from group-level effects such as `(1 | id)`: either can be used without the other.
+Within each series, AR/MA memory flows continuously across change points. Across series boundaries, memory resets to zero so individuals remain completely independent.
 
 # Simulating autocorrelated change point data
 
@@ -194,8 +229,8 @@ Let's simulate a change point in autocorrelation and see if we can infer it late
 ```{r, message=FALSE}
 # The model
 model = list(
-  y ~ 1 + x + ar(1),  # Slope
-  ~ 0 + x + ar(1)  # Slope
+  y ~ 1 + x + ar(1),
+  ~ 0 + same(x) + ar(1)  # retain the same slope
 )
 
 # Get predictions
@@ -207,16 +242,15 @@ df$y = empty$simulate(
   df,
   cp_1 = 60,
   Intercept_1 = 20,
-  x_1 = 1, x_2 = 1,  # same slope
+  x_1 = 1,
   ar1_1 = 0.8, ar1_2 = 0.2,
   sigma_1 = 5)
 ```
 
-... and we use a prior to equate the slopes of each segment (read more about [using priors](../articles/priors.html) to equate parameters and define constants). Now let's see if we can recover these parameters. We use `sample = "both"` because we will do a Savage-Dickey test later.
+We use `same(x)` in segment 2 to keep the slope identical across segments, so the change point is strictly in autocorrelation. We use `sample = "both"` because we will do a Savage-Dickey test later.
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
-prior = list(x_2 = "x_1")  # Set the two slopes equal
-fit = mcp(model, data = df, prior = prior, iter = 8000, sample = "both", seed = 42)
+fit = mcp(model, data = df, iter = 8000, sample = "both", seed = 42)
 ```
 
 Let's plot the full model prediction using `plot(fit)`. You could use `plot(fit, geom_data = "line")` for a more classical line plot of the time series data. Set `plot(fit, arma = FALSE)` to omit all AR and MA effects.

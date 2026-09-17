@@ -82,30 +82,24 @@ We can model changes in `sigma` alone or together with changes in the mean. The 
 
 ```{r}
 model = list(
-  # Increasing standard deviation.
-  y ~ 1 + sigma(1 + x),
+  # 1. Increasing standard deviation.
+  y ~ 1 + sigma(1 + x),  # Intercept_1, sigma_1, sigma_x_1
   
-  # Abrupt change in mean and standard deviation.
-  ~ 1 + sigma(1),
+  # 2. Abrupt change in mean and standard deviation.
+  ~ 1 + sigma(1),  # At cp_1: Intercept_2, sigma_2
   
-  # Joined slope on mean; log-SD changes as a second-order polynomial.
-  ~ 0 + x + sigma(0 + x + I(x^2)),
+  # 3. Joined slope on mean; log-SD changes as a second-order polynomial.
+  ~ 0 + x + sigma(0 + x + I(x^2)),  # At cp_2: x_3, sigma_x_3, sigma_xE2_3
   
-  # Continue slope on mean, but plateau standard deviation (no sigma() term).
-  ~ 0 + x
-)
-
-# The slope in segment 4 is just a continuation of 
-# the slope in segment 3, as if there was no change point.
-prior = list(
-  x_4 = "x_3"
+  # 4. Continue slope on mean, but plateau standard deviation (no sigma() term).
+  ~ 0 + same(x)  # At cp_3: reuse x_3 (implicit sigma(0))
 )
 ```
 
 Notice a few things here:
 
-- The prior ensures that the mean slope remains constant between segment 3 and 4. So only `sigma` changes there. Sharing the slope through the prior effectively removes the change point in the mean (read more about [priors in mcp](../articles/priors.html)).
-- Segment 4: Without a new `sigma()` term, the standard-deviation model persists from segment 3; because no new slope on $x$ is declared for `sigma()`, it forms a flat plateau continuing from the level reached at `cp_3`.
+- `same(x)` ensures that the mean slope remains constant between segment 3 and 4. So only `sigma` changes there. Sharing the slope effectively removes the change point in the mean (read more about [formulas in mcp](../articles/formulas.html)).
+- Segment 4: Because `sigma` is a required distributional parameter for the `gaussian()` family, it cannot "turn off" just because it is not declared explicitly. `mcp` implicitly adds a `sigma(0)` term in these segments.
 
 In general, the log-SD parameters are named `sigma_[normalname]`, where "normalname" is the usual parameter names in mcp (see more [here](../articles/formulas.html)). For example, the log-SD slope on `x` in segment 3 is `sigma_x_3`. However, `sigma_Intercept_i` is just too verbose, so log-SD intercepts are simply called `sigma_i`, where i is the segment number.
 
@@ -128,7 +122,8 @@ df$y = empty$simulate(
   sigma_2 = log(4),
   sigma_x_3 = 0.02,
   sigma_xE2_3 = 0.00015,
-  x_3 = 1.2, x_4 = 1.2)
+  x_3 = 1.2
+)
 ```
 
 ## Fit it and inspect results
@@ -136,7 +131,7 @@ df$y = empty$simulate(
 Fit it:
 
 ```{r, results = FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, data = df, prior = prior, iter = 5000, seed = 42)
+fit = mcp(model, data = df, iter = 5000, seed = 42)
 ```
 
 Plotting a posterior predictive interval is an intuitive way to see how the residual standard deviation is estimated:
