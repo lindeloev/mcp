@@ -445,7 +445,7 @@ test_that("data-derived bases reuse their fitted specification", {
 })
 
 
-test_that("formulas preserve local transformation environments", {
+test_that("model formulas use .GlobalEnv while fitted designs preserve local transformations", {
   data = data.frame(
     x = 1:8,
     y = c(1, 2, 1, 2, 5, 6, 5, 6),
@@ -463,7 +463,7 @@ test_that("formulas preserve local transformation environments", {
 
   fits = local_fits(data)
   expect_true(all(vapply(fits, function(fit) {
-    exists("sq_local", environment(fit$model[[1]]), inherits = FALSE)
+    identical(environment(fit$model[[1]]), globalenv())
   }, logical(1))))
   new_matrix = add_rhs_predictors(data.frame(x = 9:10), fits$mu)
   expect_equal(new_matrix$.pred_sq_localx_1, c(81, 100))

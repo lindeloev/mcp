@@ -418,6 +418,7 @@ mcp = function(model,
   cps = segment_tables$cps
   # Pass the same canonical segment formulas to all model-building consumers
   model = Map(stats::as.formula, segments$form, env = segments$form_env)
+  segments$form_env = NULL
   assert_model_data(data, par_x, group_cols = stats::na.omit(cps$group_col))
   predictor_tables = get_predictor_tables(model, data, family, par_x)
   predictor_definitions = predictor_tables$predictor_definitions
@@ -618,7 +619,8 @@ mcp = function(model,
   ##########
   # RETURN #
   ##########
-  # Return canonical formulas without discarding user-defined environments.
+  # Return canonical formulas attached to .GlobalEnv to avoid environment bloat
+  model = lapply(segments$form, stats::as.formula, env = globalenv())
   class(model) = c("mcplist", "list")
   class(prior) = c("mcplist", "list")
   class(jags_code) = c("mcptext", "character")  # for nicer printing
