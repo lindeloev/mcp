@@ -15,6 +15,12 @@
 #'   change-point parts can be omitted (`cp ~ predictor` assumes the same
 #'   response; `~ predictor` assumes an intercept-only change point). Population terms other than
 #'   the segment-local change-point predictor are active only where declared (see details). See examples on the
+#'   response; `~ predictor` assumes an intercept-only change point).
+#'   In each segment, all terms must be explicitly declared to be active; terms not declared
+#'   are inactive (joining via `~ 0 + ...` continues from the level reached by previous
+#'   segment-local x-dependent terms). As an exception, required non-zero distributional parameters like `sigma()`
+#'   are automatically supplied if omitted. To share coefficients across segments without
+#'   estimating new ones, use `same()`. See examples on the
 #'   [mcp website](https://lindeloev.github.io/mcp/).
 #'
 #'   **1. Response (segment 1 only):**
@@ -58,6 +64,9 @@
 #'  * A numerical value (e.g., `Intercept_1 = -2.1`) indicating a fixed value.
 #'  * A model parameter name (e.g., `Intercept_2 = "Intercept_1"`), indicating that this parameter is shared -
 #'      typically between segments. If two group-level deviations are shared this way,
+#'  * A model parameter name (e.g., `Intercept_2 = "Intercept_1"`), equating parameters via JAGS.
+#'      Note that sharing coefficients via `same()` in the segment formulas (e.g., `~ same(1)`)
+#'      is generally preferred. If two group-level deviations are shared via the prior,
 #'      they will need to have the same grouping variable.
 #'  * The default prior on change points is `dirichlet(1)` (uniform order statistics).
 #'      For a single change point, this is the Beta(1, 1) / Uniform distribution over `[min(x), max(x)]`.
@@ -260,9 +269,18 @@
 #'   time_2 = "dt(0, 2, 1) T(0, )",  # t-dist slope. Truncated to positive.
 #'   cp_2 = "dunif(cp_1, 80)",       # change point to segment 2 > cp_1 and < 80.
 #'   Intercept_3 = "Intercept_1"     # Shared intercept between segment 1 and 3
+#'   cp_2 = "dunif(cp_1, 80)"        # change point to segment 3 > cp_1 and < 80.
 #' )
 #'
 #' fit3 = mcp(model, data = data, prior = prior, warmup = 2000, iter = 6000, seed = 42)
+#'
+#' # Share coefficients across segments using same() (e.g., reuse Intercept_1 in segment 3)
+#' model_same = list(
+#'   response ~ 1,
+#'   ~ 0 + time,
+#'   ~ same(1, as = 1) + time  # Reuse Intercept_1 instead of estimating Intercept_3
+#' )
+#' fit_same = mcp(model_same, data = data, sample = FALSE)
 #'
 #' # Show the JAGS model
 #' demo_fit$jags_code

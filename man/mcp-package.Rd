@@ -97,7 +97,7 @@ where \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at tim
 Implications:
 \itemize{
 \item For an \eqn{N}-order component, the last \eqn{N} values \emph{before} the segment onset are input to the first \eqn{\eta_t} in the segment.
-\item AR and MA components persist into later segments until replaced or turned off via \code{ar(0)} or \code{ma(0)}.
+\item AR and MA components are off in segments where they are not declared; \code{ar(0)} and \code{ma(0)} are equivalent explicit turn-off forms.
 \item AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
 \item See \href{https://lindeloev.github.io/mcp/articles/arma.html}{the arma article} for more details.
 }
@@ -106,12 +106,12 @@ Implications:
 \references{
 \itemize{
 \item Lindeløv, J. K. (2020). mcp: An R Package for Regression With Multiple Change Points.
-\emph{OSF Preprints}. \href{https://doi.org/10.31219/osf.io/fzqxv}{doi:10.31219/osf.io/fzqxv}
+\emph{OSF Preprints}. \doi{10.31219/osf.io/fzqxv}
 Introduces the \code{mcp} package, formula syntax, default priors, and workflow for regression
 with multiple change points across generalized linear and time-series models. Newer-than-2020 versions of
 the paper may be available at that link. Please cite the newest version.
 \item Carlin, B. P., Gelfand, A. E., & Smith, A. F. (1992). Hierarchical Bayesian Analysis of
-Changepoint Problems. \emph{Applied Statistics}, 41(2), 389–405. \href{https://doi.org/10.2307/2347570}{doi:10.2307/2347570}
+Changepoint Problems. \emph{Applied Statistics}, 41(2), 389–405. \doi{10.2307/2347570}
 Introduced the Gibbs sampling approach for continuous change points in segmented regression
 and hierarchical models, providing the computational foundation used by BUGS and JAGS.
 }

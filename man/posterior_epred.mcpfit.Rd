@@ -88,8 +88,10 @@ histories (\code{TRUE}, default) or generate fresh histories recursively (\code{
 Applies equally to prior and posterior draws. Predictive checks
 with \code{pp_check()} generate fresh histories.}
 
-\item{transform}{For \code{posterior_linpred()}, return the inverse-link
-transformed expected response instead of the linear predictor.}
+\item{transform}{For \code{posterior_linpred()}, return the inverse-linked
+parameter on the response scale instead of the linear predictor. For
+binomial models, this returns the success probability rather than expected
+counts.}
 }
 \value{
 A numeric \code{N_draws} by \code{nrow(newdata)} matrix.
@@ -117,7 +119,9 @@ count scale (\code{rate = FALSE}), i.e., expected counts \eqn{E[Y] = n\mu} and
 simulated counts in \eqn{\{0, \dots, n\}}, matching \code{fitted()} and \code{predict()}.
 Use \code{rate = TRUE} for proportions. To obtain the success probability
 parameter \eqn{\mu} on the \eqn{[0, 1]} scale regardless of trial counts, pass
-\code{dpar = "mu"}.
+\code{dpar = "mu"}. In contrast, \code{posterior_linpred(transform = TRUE)} returns the
+inverse-linked parameter directly, evaluating success probabilities \eqn{\mu}
+in \eqn{[0, 1]} rather than counts.
 }
 \seealso{
 \code{\link[=fitted.mcpfit]{fitted.mcpfit()}}, \code{\link[=predict.mcpfit]{predict.mcpfit()}}

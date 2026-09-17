@@ -175,6 +175,8 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 - Parameter names are `Intercept_i` (intercepts), `cp_i` (change points), `x_i` (slopes), `ar*`/`ma*` (autocorrelation), and `sigma_*` (Gaussian residual standard deviation).
 
+- All terms must be explicitly declared in each segment where they are active; omitting a term turns it off. Use `same(z)` to share a coefficient with previous segments.
+
 - The change point model is basically an `ifelse` model with order constraints on the change points.
 
 - Generate data for all supported models using `fit$simulate()`. See examples in, e.g., `mcp_example("demo")$example_code`.

@@ -45,8 +45,14 @@ several distributional terms.}
 \code{response ~ cp ~ predictors} (e.g., \code{y ~ 1 ~ 1 + x}), except the first segment
 has no change point and uses \code{response ~ predictors}. The response and
 change-point parts can be omitted (\code{cp ~ predictor} assumes the same
-response; \code{~ predictor} assumes an intercept-only change point). Non-$x$ terms persist
-into later segments until replaced or removed by an intercept reset (see details). See examples on the
+response; \code{~ predictor} assumes an intercept-only change point). Population terms other than
+the segment-local change-point predictor are active only where declared (see details). See examples on the
+response; \code{~ predictor} assumes an intercept-only change point).
+In each segment, all terms must be explicitly declared to be active; terms not declared
+are inactive (joining via \code{~ 0 + ...} continues from the level reached by previous
+segment-local x-dependent terms). As an exception, required non-zero distributional parameters like \code{sigma()}
+are automatically supplied if omitted. To share coefficients across segments without
+estimating new ones, use \code{same()}. See examples on the
 \href{https://lindeloev.github.io/mcp/}{mcp website}.
 
 \strong{1. Response (segment 1 only):}
@@ -71,14 +77,14 @@ not predictions).
 \item \code{~ 1 + x}: Disjoined slope with a new segment intercept.
 \item \code{~ 0 + x}: Joined slope (no intercept; continuous from previous segment).
 \item \code{~ 1}: Plateau (intercept only, no slope).
-\item \code{~ x:group + I(x^2) + exp(z)}: Extended terms, interactions, and R-side bases
+\item \code{~ x:state + I(x^2) + exp(z)}: Extended terms, interactions, and R-side bases
 (\code{scale()}, \code{poly()}, \code{splines::ns()}). Bases are evaluated before sampling and reused for \code{newdata}.
 \item \code{~ 1 + (1 | id)}: Group-level intercepts (or \code{(1 + x || id)} for independent slopes and intercepts).
 \href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
 \item \code{~ sigma(1 + x)}: Distributional parameters on the link scale (e.g., log residual SD).
 \href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}.
 \item \code{~ ar(1) + ma(1)}: Autoregressive and moving-average time-series residuals on the link scale
-(accepts regression formulas, \code{series = id}, and \code{boundary}; use \code{ar(0)} or \code{ma(0)} to turn off in later segments).
+(accepts regression formulas, \code{series = id}, and \code{boundary}; declare them in every segment where they are active).
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}.
 }}
 

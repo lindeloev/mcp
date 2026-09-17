@@ -29,8 +29,14 @@ mcp(
 \code{response ~ cp ~ predictors} (e.g., \code{y ~ 1 ~ 1 + x}), except the first segment
 has no change point and uses \code{response ~ predictors}. The response and
 change-point parts can be omitted (\code{cp ~ predictor} assumes the same
-response; \code{~ predictor} assumes an intercept-only change point). Non-$x$ terms persist
-into later segments until replaced or removed by an intercept reset (see details). See examples on the
+response; \code{~ predictor} assumes an intercept-only change point). Population terms other than
+the segment-local change-point predictor are active only where declared (see details). See examples on the
+response; \code{~ predictor} assumes an intercept-only change point).
+In each segment, all terms must be explicitly declared to be active; terms not declared
+are inactive (joining via \code{~ 0 + ...} continues from the level reached by previous
+segment-local x-dependent terms). As an exception, required non-zero distributional parameters like \code{sigma()}
+are automatically supplied if omitted. To share coefficients across segments without
+estimating new ones, use \code{same()}. See examples on the
 \href{https://lindeloev.github.io/mcp/}{mcp website}.
 
 \strong{1. Response (segment 1 only):}
@@ -55,14 +61,14 @@ not predictions).
 \item \code{~ 1 + x}: Disjoined slope with a new segment intercept.
 \item \code{~ 0 + x}: Joined slope (no intercept; continuous from previous segment).
 \item \code{~ 1}: Plateau (intercept only, no slope).
-\item \code{~ x:group + I(x^2) + exp(z)}: Extended terms, interactions, and R-side bases
+\item \code{~ x:state + I(x^2) + exp(z)}: Extended terms, interactions, and R-side bases
 (\code{scale()}, \code{poly()}, \code{splines::ns()}). Bases are evaluated before sampling and reused for \code{newdata}.
 \item \code{~ 1 + (1 | id)}: Group-level intercepts (or \code{(1 + x || id)} for independent slopes and intercepts).
 \href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
 \item \code{~ sigma(1 + x)}: Distributional parameters on the link scale (e.g., log residual SD).
 \href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}.
 \item \code{~ ar(1) + ma(1)}: Autoregressive and moving-average time-series residuals on the link scale
-(accepts regression formulas, \code{series = id}, and \code{boundary}; use \code{ar(0)} or \code{ma(0)} to turn off in later segments).
+(accepts regression formulas, \code{series = id}, and \code{boundary}; declare them in every segment where they are active).
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}.
 }}
 
@@ -85,6 +91,9 @@ log-SD for \code{dlnorm()}. See details.
 \item A numerical value (e.g., \code{Intercept_1 = -2.1}) indicating a fixed value.
 \item A model parameter name (e.g., \code{Intercept_2 = "Intercept_1"}), indicating that this parameter is shared -
 typically between segments. If two group-level deviations are shared this way,
+\item A model parameter name (e.g., \code{Intercept_2 = "Intercept_1"}), equating parameters via JAGS.
+Note that sharing coefficients via \code{same()} in the segment formulas (e.g., \code{~ same(1)})
+is generally preferred. If two group-level deviations are shared via the prior,
 they will need to have the same grouping variable.
 \item The default prior on change points is \code{dirichlet(1)} (uniform order statistics).
 For a single change point, this is the Beta(1, 1) / Uniform distribution over \verb{[min(x), max(x)]}.
@@ -231,7 +240,7 @@ where \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at tim
 Implications:
 \itemize{
 \item For an \eqn{N}-order component, the last \eqn{N} values \emph{before} the segment onset are input to the first \eqn{\eta_t} in the segment.
-\item AR and MA components persist into later segments until replaced or turned off via \code{ar(0)} or \code{ma(0)}.
+\item AR and MA components are off in segments where they are not declared; \code{ar(0)} and \code{ma(0)} are equivalent explicit turn-off forms.
 \item AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
 \item See \href{https://lindeloev.github.io/mcp/articles/arma.html}{the arma article} for more details.
 }
@@ -308,9 +317,18 @@ prior = list(
   time_2 = "dt(0, 2, 1) T(0, )",  # t-dist slope. Truncated to positive.
   cp_2 = "dunif(cp_1, 80)",       # change point to segment 2 > cp_1 and < 80.
   Intercept_3 = "Intercept_1"     # Shared intercept between segment 1 and 3
+  cp_2 = "dunif(cp_1, 80)"        # change point to segment 3 > cp_1 and < 80.
 )
 
 fit3 = mcp(model, data = data, prior = prior, warmup = 2000, iter = 6000, seed = 42)
+
+# Share coefficients across segments using same() (e.g., reuse Intercept_1 in segment 3)
+model_same = list(
+  response ~ 1,
+  ~ 0 + time,
+  ~ same(1, as = 1) + time  # Reuse Intercept_1 instead of estimating Intercept_3
+)
+fit_same = mcp(model_same, data = data, sample = FALSE)
 
 # Show the JAGS model
 demo_fit$jags_code
@@ -319,12 +337,12 @@ demo_fit$jags_code
 \references{
 \itemize{
 \item Lindeløv, J. K. (2020). mcp: An R Package for Regression With Multiple Change Points.
-\emph{OSF Preprints}. \href{https://doi.org/10.31219/osf.io/fzqxv}{doi:10.31219/osf.io/fzqxv}
+\emph{OSF Preprints}. \doi{10.31219/osf.io/fzqxv}
 Introduces the \code{mcp} package, formula syntax, default priors, and workflow for regression
 with multiple change points across generalized linear and time-series models. Newer-than-2020 versions of
 the paper may be available at that link. Please cite the newest version.
 \item Carlin, B. P., Gelfand, A. E., & Smith, A. F. (1992). Hierarchical Bayesian Analysis of
-Changepoint Problems. \emph{Applied Statistics}, 41(2), 389–405. \href{https://doi.org/10.2307/2347570}{doi:10.2307/2347570}
+Changepoint Problems. \emph{Applied Statistics}, 41(2), 389–405. \doi{10.2307/2347570}
 Introduced the Gibbs sampling approach for continuous change points in segmented regression
 and hierarchical models, providing the computational foundation used by BUGS and JAGS.
 }
