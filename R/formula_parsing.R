@@ -230,8 +230,8 @@ canonicalize_rhs = function(form_rhs, family) {
   leaf_names = vapply(leaves, function(x) if (is.call(x)) deparse1(x[[1]]) else "", character(1))
 
   # Separate component wrappers, explicit mu() calls, and bare terms
-  other_dpars = family$dpar_specs$dpar[family$dpar_specs$dpar != "mu"]
-  known_wrappers = c(other_dpars, "ar", "ma")
+  dpar_wrappers = setdiff(unique(c(known_dpar_wrappers(), family$dpar_specs$dpar)), "mu")
+  known_wrappers = c(dpar_wrappers, "ar", "ma")
 
   wrapper_leaves = leaves[leaf_names %in% known_wrappers]
   explicit_mu = leaves[leaf_names == "mu"]

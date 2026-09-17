@@ -13,22 +13,16 @@
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_formula_jags = function(segments, predictors, group_effects, par_x, family, design_specs = list()) {
-  # Explicit segment -> boundary-code lookup instead of relying on row
-  # order matching segment numbers.
-  boundary_code = stats::setNames(segments$cp_code_form, segments$segment)
-
   # Add X-helpers which code the X relative to the start of each segment.
   local_x_str = "\n# par_x local to each segment"
   for (i in seq_len(nrow(segments))) {
-    segment_start = ifelse(i > 1, yes = paste0(" - ", boundary_code[[as.character(i)]]), no = "")  #
-    segment_end = ifelse(i < nrow(segments), yes = boundary_code[[as.character(i + 1)]], no = paste0("cp_", i))  # infinite if last segment.
-
-    local_x_str = paste0(local_x_str, "\nx_local_", i, "_[i_] = min(", par_x, "[i_], ", segment_end, ")", segment_start)
+    segment_start = ifelse(i > 1, paste0(" - ", segments$cp_start[i]), "")
+    local_x_str = paste0(local_x_str, "\nx_local_", i, "_[i_] = min(", par_x, "[i_], ", segments$cp_end[i], ")", segment_start)
   }
 
   # Build formula for each dpar (note plural "_dpars")
-  this_cp_lookup = dplyr::select(segments, "segment", this_cp = "cp_code_form")
-  next_cp_lookup = dplyr::select(segments, next_segment = "segment", next_cp = "cp_code_form")
+  this_cp_lookup = dplyr::select(segments, "segment", this_cp = "cp_start")
+  next_cp_lookup = dplyr::select(segments, next_segment = "segment", next_cp = "cp_start")
 
   # Start by getting group-level effects
   predictor_group_effects = group_effects %>%
@@ -50,7 +44,7 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family, 
 
   # Extract offset terms from design specifications
   offset_specs = Filter(function(s) isTRUE(s$has_offset), design_specs)
-  offset_table = if (length(offset_specs) == 0) tibble::tibble(dpar_key = character(), segment = integer(), offset_name = character(), next_segment = integer()) else
+  offset_table = if (length(offset_specs) == 0) tibble::tibble(dpar_key = character(), segment = integer(), offset_name = character()) else
     tibble::tibble(
       dpar_key = vapply(offset_specs, function(s) paste0(s$dpar, tidyr::replace_na(as.character(s$order), "")), character(1)),
       segment = vapply(offset_specs, `[[`, integer(1), "segment"),
@@ -64,13 +58,6 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family, 
     dplyr::mutate(
       dpar_key = paste0(.data$dpar, tidyr::replace_na(as.character(.data$order), ""))
     )
-
-  # Offsets are active only in the segment where they are declared.
-  if (nrow(offset_table) > 0)
-    offset_table = offset_table %>%
-      dplyr::mutate(next_segment = dplyr::if_else(
-        .data$segment < nrow(segments), .data$segment + 1L, NA_integer_
-      ))
 
   # All together!
   all_dpar_keys = unique(c(formula_predictors_joined$dpar_key, offset_table$dpar_key))
@@ -138,13 +125,10 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x, family, segment_offset
   # Build code for segment-level offset terms
   offset_code_strs = character()
   if (!is.null(segment_offsets) && nrow(segment_offsets) > 0 && !is.null(segments)) {
-    boundary_code = stats::setNames(segments$cp_code_form, segments$segment)
     offset_code_strs = vapply(seq_len(nrow(segment_offsets)), function(i) {
       seg = segment_offsets$segment[i]
-      next_segment = segment_offsets$next_segment[i]
-      next_cp = if (is.na(next_segment)) NA_character_ else boundary_code[[as.character(next_segment)]]
-      ind_next = if (is.na(next_cp)) "" else paste0(" * (", par_x, "[i_] < ", next_cp, ")")
-      paste0("  (", par_x, "[i_] >= ", boundary_code[[as.character(seg)]], ")", ind_next, " * ", segment_offsets$offset_name[i], "[i_]")
+      ind_next = if (seg < nrow(segments)) paste0(" * (", par_x, "[i_] < ", segments$cp_end[seg], ")") else ""
+      paste0("  (", par_x, "[i_] >= ", segments$cp_start[seg], ")", ind_next, " * ", segment_offsets$offset_name[i], "[i_]")
     }, character(1))
   }
 

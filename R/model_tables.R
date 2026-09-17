@@ -139,7 +139,9 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
     ) %>%
     dplyr::mutate(
       cp_name = dplyr::coalesce(.data$cp_name, "cp_0"),
-      cp_code_form = dplyr::coalesce(.data$cp_code_form, "cp_0")
+      cp_code_form = dplyr::coalesce(.data$cp_code_form, "cp_0"),
+      cp_start = .data$cp_code_form,
+      cp_end = c(.data$cp_code_form[-1], paste0("cp_", dplyr::n()))
     )
 
   list(segments = segments, cps = cps)
