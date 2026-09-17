@@ -175,7 +175,7 @@ plot_pars = function(fit,
     return(pages[[1]])
 
   for (page in seq_along(pages)) {
-    if (page > 1 && ask && interactive())
+    if (page > 1 && ask && interactive() && grDevices::dev.interactive())
       invisible(readline(prompt = "Press <Enter> to continue"))
     print(pages[[page]])
   }

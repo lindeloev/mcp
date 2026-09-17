@@ -12,6 +12,7 @@ vignette: >
 if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp")) {
   pkgload::load_all(quiet = TRUE)
 }
+bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_family = "sans"))
 ```
 
 Serial dependence is common in time series. Add autoregressive terms with `ar(p)`, moving-average terms with `ma(q)`, or both in the segment formulas:

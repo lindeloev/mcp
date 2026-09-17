@@ -11,6 +11,11 @@ editor_options:
 library(ggplot2)
 pkgload::load_all()
 
+# Prevent noto serif from being chosen
+systemfonts::register_variant(name = "sans", family = "Liberation Sans")
+bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_family = "sans"))
+
+# Reproucible plotting across systems
 knitr::opts_chunk$set(
   dev = "ragg_png",
   fig.path = "man/figures/README-",

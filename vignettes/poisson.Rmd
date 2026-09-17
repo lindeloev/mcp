@@ -15,6 +15,7 @@ editor_options:
 if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp")) {
   pkgload::load_all(quiet = TRUE)
 }
+bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_family = "sans"))
 ```
 
 The Poisson and negative-binomial distributions model counts observed within comparable units of time, space, or exposure. The worked example below uses Poisson regression; a later section explains the additional `shape` parameter and priors in `negbinomial()`.
