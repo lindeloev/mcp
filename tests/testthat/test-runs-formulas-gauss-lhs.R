@@ -1,3 +1,34 @@
+#################
+# TEST RESPONSE #
+#################
+bad_y = list(
+  list( ~ 1),  # No y
+  list((1|id) ~ 1),  # y cannot be varying
+  list(1 ~ 1),  # 1 is not y
+  list(y ~ 1,  # Two y
+       a ~ 1 ~ 1),
+  list(y ~ 1,  # Intercept y
+       1 ~ 1 ~ 1),
+  list(bad_y_char ~ 1),  # Character y
+  list(bad_y_factor ~ 1)  # Factor y
+)
+
+test_bad(bad_y)
+
+
+good_y = list(
+  list(y ~ 1),  # Regular
+  list(y ~ 1,  # Explicit and implicit y and cp
+       y ~ 1 ~ 1,
+       1 + (1|id) ~ 1 + x,
+       ~ 1),
+  list(ok_y ~ 1)  # decimal y
+)
+
+test_good(good_y)
+
+
+
 ######################
 # TEST CHANGE POINTS #
 ######################

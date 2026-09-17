@@ -409,3 +409,141 @@ testthat::test_that("gaussian(link = 'log') aligns with log-link model default p
   testthat::expect_match(sig_row$prior, "^student_t\\(df = 3, location = 0, scale = [0-9.]+\\)$")
   testthat::expect_equal(sig_row$bounds, "[0.001, Inf]")
 })
+
+
+test_that("legacy prior scales are translated to JAGS parameters", {
+  expect_equal(prior_to_jags("dnorm(5, 2)"), "dnorm(5, 1/(2)^2) ")
+  expect_equal(prior_to_jags("dt(3, 2, 1)"), "dt(3, 1/(2)^2, 1) ")
+  expect_equal(prior_to_jags("dlnorm(3, 2)"), "dlnorm(3, 1/(2)^2) ")
+  expect_equal(prior_to_jags("ddexp(3, 2)"), "ddexp(3, 1/(2)) ")
+  expect_equal(prior_to_jags("dlogis(3, 2) T(0, )"), "dlogis(3, 1/(2)) T(0,)")
+  expect_error(
+    prior_to_jags("dcauchy(3, 2)"),
+    "use `dt(location, scale, 1)`",
+    fixed = TRUE
+  )
+  expect_warning(
+    sd_to_prec("dnorm(5, 2)"),
+    "deprecated"
+  )
+})
+
+
+test_that("priors are resolved without changing their parameterization", {
+  data = data.frame(x = 1:6, y = c(2, 4, 3, 8, 7, 9))
+  default_fit = mcp(list(y ~ 1 + x, ~ 1 + x), data, sample = FALSE)
+  expect_equal(
+    unclass(default_fit$prior),
+    list(
+      cp_1 = "dirichlet(1)",
+      Intercept_1 = "dt(5.5, 3.7, 3)",
+      x_1 = "dt(0, 0.74, 3)",
+      Intercept_2 = "dt(5.5, 3.7, 3)",
+      x_2 = "dt(0, 0.74, 3)",
+      sigma_1 = "dt(0, 3.7, 3) T(0.001, )"
+    )
+  )
+
+  fit = mcp(
+    list(y ~ 1 + x, ~ 1 + x),
+    data,
+    prior = list(
+      Intercept_1 = "dt(median(y), mad(y), 3)T(, max(y))",
+      x_1 = 5,
+      Intercept_2 = "Intercept_1",
+      x_2 = "x_1 / (max(x) - min(x))"
+    ),
+    sample = FALSE
+  )
+
+  expect_equal(fit$prior$Intercept_1, "dt(5.5, 3.7065, 3) T(, 9)")
+  expect_equal(fit$prior$x_2, "x_1/5")
+  expect_equal(fit$.internal$prior_format, "jags_string_v1")
+  expect_false(grepl("MINX|MAXX|N_CP|LINKY", fit$jags_code))
+  expect_match(fit$jags_code, "# User-specified prior", fixed = TRUE)
+
+  compact = prior_summary(fit)
+  verbose = prior_summary(fit, verbose = TRUE)
+  expect_named(compact, c("parameter", "segment", "dpar", "prior", "bounds"))
+  expect_named(
+    verbose,
+    c("parameter", "segment", "dpar", "prior", "bounds", "rule", "description", "source", "kind")
+  )
+  expect_equal(
+    verbose$kind[match(c("Intercept_1", "x_1", "Intercept_2", "x_2"), verbose$parameter)],
+    c("distribution", "constant", "alias", "expression")
+  )
+  expect_equal(verbose$source[verbose$parameter == "Intercept_1"], "user")
+
+  legacy_fit = NULL
+  expect_warning(
+    {
+      legacy_fit = mcp(
+        list(y ~ 1, ~ 1), data,
+        par_x = "x", prior = list(cp_1 = "dunif(MINX, MAXX)"), sample = FALSE
+      )
+    },
+    "Deprecated prior data constant"
+  )
+  expect_equal(legacy_fit$prior$cp_1, "dunif(1, 6)")
+})
+
+
+test_that("partial user-specified Dirichlet priors propagate source and description", {
+  data_dir = data.frame(x = 1:10, y = 1:10)
+  fit_dir = mcp(list(y ~ 1, ~ 1, ~ 1), data = data_dir, par_x = "x", prior = list(cp_1 = "dirichlet(2)"), sample = FALSE)
+  verbose_dir = prior_summary(fit_dir, verbose = TRUE)
+
+  expect_equal(verbose_dir$prior[verbose_dir$parameter == "cp_1"], "dirichlet(alpha = 2)")
+  expect_equal(verbose_dir$source[verbose_dir$parameter == "cp_1"], "user")
+  expect_equal(verbose_dir$description[verbose_dir$parameter == "cp_1"], "User-specified prior")
+
+  expect_equal(verbose_dir$prior[verbose_dir$parameter == "cp_2"], "dirichlet(alpha = 2)")
+  expect_equal(verbose_dir$source[verbose_dir$parameter == "cp_2"], "user")
+  expect_equal(verbose_dir$description[verbose_dir$parameter == "cp_2"], "Inherited from user-specified `cp_1`")
+})
+
+
+test_that("Gaussian defaults use coherent response and link scales", {
+  log_data = data.frame(
+    x = 1:6,
+    y = c(-10, 80, 90, 100, 110, 120)
+  )
+  log_fit = mcp(
+    list(y ~ 1 + x), log_data,
+    family = gaussian(link = "log"), sample = FALSE
+  )
+
+  # Non-positive responses are valid: the log link applies to mu, not y.
+  expect_equal(log_fit$prior$Intercept_1, "dnorm(4.6, 2.5)")
+  expect_equal(log_fit$prior$x_1, "dnorm(0, 0.5)")
+  expect_equal(log_fit$prior$sigma_1, "dt(0, 22.2, 3) T(0.001, )")
+  expect_false(grepl("log\\(y\\)", log_fit$jags_code))
+
+  rules = prior_summary(log_fit, verbose = TRUE)
+  sigma_rule = rules$rule[rules$parameter == "sigma_1"]
+  expect_match(sigma_rule, "mad(y)", fixed = TRUE)
+  expect_false(grepl("mad(log(y))", sigma_rule, fixed = TRUE))
+
+  wide_data = data.frame(x = 1:6, y = exp(c(-10, -5, 0, 5, 10, 15)))
+  wide_fit = mcp(
+    list(y ~ 1 + x), wide_data,
+    family = gaussian(link = "log"), sample = FALSE
+  )
+  expect_equal(wide_fit$prior$Intercept_1, "dnorm(2.5, 7.1)")
+  expect_equal(wide_fit$prior$x_1, "dnorm(0, 0.5)")
+  expect_equal(wide_fit$prior$sigma_1, "dt(0, 110.8, 3) T(0.001, )")
+
+  zero_data = data.frame(x = 1:6, y = 0:5)
+  zero_fit = mcp(
+    list(y ~ 1 + x), zero_data,
+    family = gaussian(link = "log"), sample = FALSE
+  )
+  expect_equal(zero_fit$prior$Intercept_1, "dnorm(0.9, 2.5)")
+
+  small_data = data.frame(x = 1:4, y = c(0.01, 0.02, 0.03, 0.04))
+  small_fit = mcp(list(y ~ 1 + x), small_data, sample = FALSE)
+  expect_equal(small_fit$prior$Intercept_1, "dt(0, 2.5, 3)")
+  expect_equal(small_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0.001, )")
+})
+

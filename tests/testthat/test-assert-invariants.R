@@ -132,4 +132,88 @@ test_that("transformed predictors and offsets producing NA or non-finite values 
 })
 
 
+test_that("mcp rejects non-syntactic data column names", {
+  data = data.frame(`x value` = 1:3, y = 0, check.names = FALSE)
+
+  expect_error(
+    mcp(list(y ~ 1), data, par_x = "x value", sample = FALSE),
+    "`data` has non-syntactic column name(s): `x value`",
+    fixed = TRUE
+  )
+})
+
+
+test_that("mcp rejects data names that collide with generated JAGS nodes", {
+  data = data.frame(mu_ = 1:5, x = 1:5)
+  expect_error(
+    mcp(list(mu_ ~ 1), data, par_x = "x", sample = FALSE),
+    "Data column name(s) collide with mcp's generated JAGS namespace: 'mu_'",
+    fixed = TRUE
+  )
+})
+
+
+test_that("mcp rejects generated parameter names that collide with change points", {
+  data = data.frame(x = 1:5, cp = c(0, 1, 0, 1, 0), y = 1:5)
+  expect_error(
+    mcp(list(y ~ cp, ~ 1), data, par_x = "x", sample = FALSE),
+    "Generated parameter name(s) collide in the JAGS namespace: 'cp_1'",
+    fixed = TRUE
+  )
+})
+
+
+test_that("parameter-name collisions give a useful error", {
+  data = data.frame(
+    y = 1:6,
+    x = 1:6,
+    a = c(0, 0, 0, 1, 1, 1),
+    b = c(0, 1, 2, 0, 1, 2),
+    ab = c(0, 1, 0, 1, 0, 1)
+  )
+
+  expect_error(
+    mcp(list(y ~ a:b + ab), data, par_x = "x", sample = FALSE),
+    "`ab_1`: `ab` (mu, segment 1) and `a:b` (mu, segment 1)",
+    fixed = TRUE
+  )
+})
+
+
+test_that("zero and negative weights are rejected with informative error", {
+  data_zero = data.frame(x = 1:5, y = 1:5, w = c(1, 1, 0, 1, 1))
+  expect_error(
+    mcp(list(y | weights(w) ~ 1 + x), data = data_zero, sample = FALSE),
+    "All weights must be numeric and greater than zero.",
+    fixed = TRUE
+  )
+
+  data_neg = data.frame(x = 1:5, y = 1:5, w = c(1, 1, -0.5, 1, 1))
+  expect_error(
+    mcp(list(y | weights(w) ~ 1 + x), data = data_neg, sample = FALSE),
+    "All weights must be numeric and greater than zero.",
+    fixed = TRUE
+  )
+})
+
+
+test_that("probs and quantiles must be strictly between 0 and 1", {
+  expect_error(fitted(demo_fit, probs = 0), "strictly between 0 and 1")
+  expect_error(fitted(demo_fit, probs = 1), "strictly between 0 and 1")
+  expect_error(fitted(demo_fit, probs = -0.1), "strictly between 0 and 1")
+  expect_error(fitted(demo_fit, probs = 1.1), "strictly between 0 and 1")
+  expect_error(predict(demo_fit, probs = 0), "strictly between 0 and 1")
+  expect_error(predict(demo_fit, probs = 1), "strictly between 0 and 1")
+  expect_error(residuals(demo_fit, probs = 0), "strictly between 0 and 1")
+  expect_error(residuals(demo_fit, probs = 1), "strictly between 0 and 1")
+
+  expect_error(plot(demo_fit, q_fit = 0), "strictly between 0 and 1")
+  expect_error(plot(demo_fit, q_fit = 1), "strictly between 0 and 1")
+  expect_error(plot(demo_fit, q_predict = 0), "strictly between 0 and 1")
+  expect_error(plot(demo_fit, q_predict = 1), "strictly between 0 and 1")
+})
+
+
+
+
 
