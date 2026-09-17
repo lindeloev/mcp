@@ -259,54 +259,44 @@ canonicalize_rhs = function(form_rhs, family) {
 }
 
 
-#' Takes a formula and returns a string representation of y, cp, and rhs
-#' @aliases unpack_tildes
-#' @keywords internal
-#' @noRd
-#' @param form A formula
-#' @param i The segment number
-#' @return A one-row tibble with columns:
-#'   * `form`: String. The full formula for this segment.
-#'   * `form_y`: String. The expression for y (without tilde)
-#'   * `form_cp`: String. The formula for the change point.
-#'   * `form_rhs`: String. The predictor formula. Only used to build the
-#'     formula representation in `summary.mcpfit()`.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-unpack_tildes = function(form, i) {
-  has_LHS = attributes(stats::terms(form))$response == 1
-  form_str = formula_to_char(form)
-  if (has_LHS == FALSE && i == 1) {
-    stop("No response variable in segment 1.")
-  } else if (has_LHS == FALSE && i > 1) {
-    # If no LHS, add a change point "intercept"
-    form_str = paste("1", form_str)
+# Canonicalize a segment formula into a uniform AST structure
+# Returns a list: response (expr), cp (expr or NULL for segment 1), rhs (expr), and form (canonical formula)
+canonicalize_segment = function(form, i, default_response = NULL) {
+  form = to_formula(form)
+  env = environment(form)
+
+  # Segment 1 must define the response and cannot contain a change point
+  if (i == 1) {
+    if (length(form) == 2)
+      stop("No response variable in segment 1.", call. = FALSE)
+    if (length(form) == 3 && is.call(form[[2]]) && identical(form[[2]][[1]], as.name("~")))
+      stop("The first segment must have exactly one tilde. Got two.", call. = FALSE)
+
+    canonical_form = stats::as.formula(call("~", form[[2]], form[[3]]), env = env)
+    return(list(response = form[[2]], cp = NULL, rhs = form[[3]], form = canonical_form))
   }
 
-  # List of strings for each section
-  chunks = stringr::str_trim(strsplit(form_str, "~")[[1]])
-
-  if (length(chunks) == 2) {
-    # Only one tilde. This is the first segment or y is implicit from earlier segment(s)
-    return(tibble::tibble(
-      form = form_str,
-      form_y = ifelse(i == 1, chunks[1], NA),
-      form_cp = ifelse(i == 1, NA, paste0(" ~ ", chunks[1])),
-      form_rhs = chunks[2]
-    ))
-  } else if (length(chunks) == 3) {
-    if (i == 1)
-      stop("The first segment must have exactly one tilde. Got two.")
-
-    return(tibble::tibble(
-      form = form_str,
-      form_y = chunks[1],
-      form_cp = paste0(" ~ ", chunks[2]),
-      form_rhs = chunks[3]
-    ))
+  # Segment > 1: decompose into response, cp, and rhs
+  if (length(form) == 2) {
+    response = default_response
+    cp = 1
+    rhs = form[[2]]
+  } else if (is.call(form[[3]]) && identical(form[[3]][[1]], as.name("~"))) {
+    stop("Error in segment ", i, " (change point): empty change point term.", call. = FALSE)
+  } else if (is.call(form[[2]]) && identical(form[[2]][[1]], as.name("~"))) {
+    if (is.call(form[[2]][[2]]) && identical(form[[2]][[2]][[1]], as.name("~")))
+      stop("Error in segment ", i, ": Got none or more than two ~ in a segment formula.", call. = FALSE)
+    response = form[[2]][[2]]
+    cp = form[[2]][[3]]
+    rhs = form[[3]]
   } else {
-    stop("Error in segment ", i, ": Got none or more than two ~ in a segment formula.")
+    response = default_response
+    cp = form[[2]]
+    rhs = form[[3]]
   }
+
+  canonical_form = stats::as.formula(call("~", call("~", response, cp), rhs), env = env)
+  list(response = response, cp = cp, rhs = rhs, form = canonical_form)
 }
 
 
@@ -322,6 +312,9 @@ unpack_tildes = function(form, i) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 unpack_y = function(form_y, i, family, env = parent.frame()) {
+  if (is.language(form_y))
+    form_y = deparse1(form_y)
+
   declared = names(family$response$auxiliary)
   aux_names = unique(c("trials", "weights", declared))
   response = stats::setNames(as.list(rep(NA_character_, length(aux_names) + 1)), c("y", aux_names))
@@ -396,14 +389,16 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 unpack_cp = function(form_cp, i, env = parent.frame()) {
-  if (is.na(form_cp)) {
+  # Segment 1 has no change point
+  if (is.null(form_cp)) {
     return(tibble::tibble(
       cp_intercept = FALSE,
       cp_varying = FALSE,
       cp_group_col = NA
     ))
   }
-  form_cp = stats::as.formula(form_cp, env = env)
+
+  form_cp = if (rlang::is_formula(form_cp)) form_cp else stats::as.formula(call("~", form_cp), env = env)
 
   # Group-level effects
   form_varying = remove_terms(form_cp, "population")
@@ -411,7 +406,7 @@ unpack_cp = function(form_cp, i, env = parent.frame()) {
   if (!is.null(form_varying)) {
     varying_terms = attr(stats::terms(form_varying), "term.labels")
     if (length(varying_terms) > 1)
-      stop("Error in segment ", i, " (change point): only one group-level effect is allowed. Found ", form_cp)
+      stop("Error in segment ", i, " (change point): only one group-level effect is allowed. Found ", deparse1(form_cp))
 
     varying_parts = strsplit(gsub(" ", "", varying_terms), "\\|")[[1]]
     if (!varying_parts[1] == "1")

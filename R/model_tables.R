@@ -23,22 +23,23 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
   # BUILD SEGMENTS FROM ISOLATED FORMULAS    #
   ############################################
   segments = tibble::tibble()
+  default_response = NULL
   for (i in seq_along(model)) {
-    # Keep the original environment while segment formulas are normalized to text.
-    row = tibble::tibble(segment = i, form_env = list(environment(model[[i]])))
-    row = dplyr::bind_cols(row, unpack_tildes(model[[i]], i))
-    row = dplyr::bind_cols(row, unpack_y(row$form_y, i, family, row$form_env[[1]]))
-    row = dplyr::bind_cols(row, unpack_cp(row$form_cp, i, row$form_env[[1]]))
+    env = environment(model[[i]])
+    canonical = canonicalize_segment(model[[i]], i, default_response)
+    if (i == 1)
+      default_response = canonical$response
+
+    row = tibble::tibble(
+      segment = i,
+      form = formula_to_char(canonical$form),
+      form_env = list(env)
+    )
+    row = dplyr::bind_cols(row, unpack_y(canonical$response, i, family, env))
+    row = dplyr::bind_cols(row, unpack_cp(canonical$cp, i, env))
 
     segments = dplyr::bind_rows(segments, row)
   }
-
-  # Fill y and trials, where not explicit.
-  # Build "full" formula (with explicit intercepts) and insert instead of the old
-  segments = segments %>%
-    tidyr::fill("y", "form_y", "trials", "weights", .direction = "downup") %>%  # Usually only provided in segment 1
-    dplyr::mutate(form = ifelse(.data$segment == 1, .data$form, paste0(.data$form_y, .data$form_cp, " ~ ", .data$form_rhs))) %>%  # build full formula
-    dplyr::select(-"form_y", -"form_cp", -"form_rhs")  # Not needed anymore
 
   # Every segment shares one change-point dimension, including multiple-regression models.
   segments$x = par_x
