@@ -256,7 +256,7 @@ pp_eval = function(
     # Match group-level draws to each row of data.
     draws = dplyr::left_join(
       add_rhs_predictors(newdata, fit),
-      mcp_draws(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws),
+      mcp_draws(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws, newdata = newdata),
       by = unique(group_info$cols),
       relationship = "many-to-many"
     )

@@ -420,15 +420,28 @@ mcp = function(model,
   if (nrow(cps) == 0 && nrow(predictor_definitions) == 0 && nrow(group_definitions) == 0)
     stop("The model does not contain any parameters to estimate.", call. = FALSE)
 
-  # Validate that priors are not assigned to shared occurrence terms
-  shared_prior = predictor_occurrences %>%
-    dplyr::filter(.data$segment != .data$definition_segment) %>%
-    dplyr::mutate(occurrence_name = stringr::str_replace(.data$code_name, "_[0-9]+$", paste0("_", .data$segment))) %>%
-    dplyr::distinct(.data$occurrence_name, .data$code_name)
-  prior_destination = shared_prior[shared_prior$occurrence_name %in% names(prior), , drop = FALSE]
-  if (nrow(prior_destination) > 0) {
-    guidance = paste0("`", prior_destination$occurrence_name, "` (use `", prior_destination$code_name, "`)")
-    stop("Shared terms have no destination parameter. Specify the prior for the source: ", and_collapse(guidance), ".", call. = FALSE)
+  # Check that priors are set on the original parameter, not ones replaced by same()
+  shared = dplyr::bind_rows(
+    dplyr::transmute(
+      dplyr::filter(predictor_occurrences, .data$segment != .data$definition_segment),
+      replaced = stringr::str_replace(.data$code_name, "_[0-9]+$", paste0("_", .data$segment)),
+      original = .data$code_name
+    ),
+    dplyr::transmute(
+      dplyr::filter(group_occurrences, .data$segment != .data$definition_segment),
+      replaced = stringr::str_replace(.data$sd_name, paste0("_", .data$definition_segment, "_"), paste0("_", .data$segment, "_")),
+      original = .data$sd_name
+    )
+  ) %>% dplyr::distinct()
+  bad_prior = shared[shared$replaced %in% names(prior), , drop = FALSE]
+  if (nrow(bad_prior) > 0) {
+    guidance = if (nrow(bad_prior) == 1) {
+      paste0("`", bad_prior$original, "` instead of `", bad_prior$replaced, "`")
+    } else {
+      paste0("`", bad_prior$original, "` (not `", bad_prior$replaced, "`)")
+    }
+    stop("`same()` reuses earlier parameters instead of creating new ones. Set prior on ",
+      and_collapse(guidance), ".", call. = FALSE)
   }
 
   # Make prior

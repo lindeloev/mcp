@@ -231,6 +231,9 @@ resolve_draws_format = function(draws_format, samples_format, draws_format_missi
 #'   * `TRUE` Returns the absolute location of all group-specific change points.
 #'   * `FALSE` Return the group-level deviations.
 #'   * Character vector: Apply the absolute transform only to these group-level parameters.
+#' @param newdata Optional prediction data selecting group levels. New predictor
+#'   groups receive one draw per source coefficient and posterior draw; new
+#'   group-level change points are not supported here.
 #'
 #' @return `tibble` of posterior draws in `tidybayes` format.
 #' @encoding UTF-8
@@ -242,7 +245,8 @@ mcp_draws = function(
   absolute = FALSE,
   prior = FALSE,
   ndraws = NULL,
-  nsamples = lifecycle::deprecated()
+  nsamples = lifecycle::deprecated(),
+  newdata = NULL
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "mcp_draws")
 
@@ -304,11 +308,27 @@ mcp_draws = function(
   # Prepare for tidyr::pivot_longer_spec:
   # Describe the reshape using original factor levels
   groups = split(group_info$effects$name, group_info$effects$group_col)
+  if (!is.null(newdata))
+    assert_data_cols(newdata, names(groups))
+  
   specs = lapply(names(groups), function(col) {
-    spec = tidyr::expand_grid(.value = groups[[col]], !!col := unique(fit$data[[col]]))
+    levels = if (is.null(newdata)) unique(fit$data[[col]]) else unique(newdata[[col]])
+    novel = setdiff(levels, fit$data[[col]])
+    effects = group_info$effects[group_info$effects$group_col == col, ]
+    if (length(novel) > 0 && any(effects$part == "cp"))
+      stop("New groups with group-level change points are not supported; use existing groups or fit$simulate().", call. = FALSE)
+    spec = tidyr::expand_grid(.value = groups[[col]], !!col := levels)
     spec$.name = paste0(spec$.value, "[", spec[[col]], "]")
     spec
   })
+
+  # Draw each new group's source coefficient once, before expanding observations
+  for (spec in specs) {
+    for (i in which(spec$.name %notin% names(draws))) {
+      effect = group_info$effects[group_info$effects$name == spec$.value[i], ]
+      draws[[spec$.name[i]]] = stats::rnorm(nrow(draws), 0, draws[[effect$sd_name]])
+    }
+  }
   group_nodes = unlist(lapply(specs, function(spec) spec$.name))
   draws = dplyr::select(draws, dplyr::all_of(unique(c(
     ".chain", ".iteration", ".draw", pars_population, absolute_cps, group_nodes

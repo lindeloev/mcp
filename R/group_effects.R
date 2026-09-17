@@ -18,6 +18,16 @@ get_group_terms = function(form) {
 }
 
 
+# Identify a complete group block using ordinary formula expansion and its group
+group_block_key = function(term) {
+  expr = str2lang(term)
+  attrs = attributes(stats::terms(stats::as.formula(call("~", expr[[2]]))))
+  paste(deparse1(expr[[3]]), attrs$intercept,
+    paste(sort(attrs$term.labels), collapse = "+"),
+    if (length(attrs$term.labels)) as.character(expr[[1]]) else "", sep = ":")
+}
+
+
 #' Parse one predictor group-level term
 #'
 #' @keywords internal
@@ -120,7 +130,7 @@ parse_predictor_group_term = function(
 #' @inheritParams get_predictors_segment
 #' @return A tibble containing active definitions and explicit turn-offs.
 get_predictor_group_definitions_segment = function(
-  form_rhs, segment, family, data, par_x, check_rank = TRUE
+  form_rhs, segment, family, data, par_x, check_rank = TRUE, previous = NULL
 ) {
   # Components have already been canonicalized by get_predictor_tables()
   form_env = environment(form_rhs)
@@ -132,39 +142,43 @@ get_predictor_group_definitions_segment = function(
     dpar_terms = term_labels[stringr::str_detect(term_labels, paste0("^", dpar, "\\("))]
     if (length(dpar_terms) == 0)
       next
-    dpar_form = get_term_content(dpar_terms, form_env)
-    definitions = c(
-      definitions,
-      lapply(
-        get_group_terms(dpar_form),
-        parse_predictor_group_term,
-        segment = segment,
-        dpar = dpar,
-        data = data,
-        par_x = par_x,
-        check_rank = check_rank,
-        env = form_env
-      )
-    )
+    normalized = normalize_shared_component(get_term_content(dpar_terms, form_env), segment)
+    selected = normalized$selected
+    selected = selected[vapply(selected$term_key, is_group_term, logical(1)), , drop = FALSE]
+
+    # Canonical block keys unify equivalent formulas before enforcing one block per group
+    terms = get_group_terms(normalized$form)
+    blocks = tibble::tibble(term = terms,
+      key = vapply(terms, group_block_key, character(1)),
+      group = vapply(terms, function(term) deparse1(str2lang(term)[[3]]), character(1)),
+      source = selected$source[match(terms, selected$term_key)]) %>%
+      dplyr::distinct(.data$key, .data$source, .keep_all = TRUE)
+    if (anyDuplicated(blocks$group))
+      stop("Only one predictor group-level term per distributional parameter and grouping factor is allowed in a segment; bare/shared or competing blocks cannot be combined.", call. = FALSE)
+
+    # Group declarations are atomic blocks; source coding and all coefficients travel together
+    for (i in seq_len(nrow(blocks))) {
+      term = blocks$term[i]
+      source_segment = blocks$source[i]
+      if (!is.na(source_segment)) {
+        source = previous[previous$dpar == dpar & previous$segment == source_segment &
+          previous$active & previous$group_key == blocks$key[i], , drop = FALSE]
+        if (is.null(source) || nrow(source) == 0)
+          stop("`same()` requires a complete active group block in segment ", source_segment,
+            " for ", dpar, ": (", term, "). Partial block sharing is not supported.", call. = FALSE)
+        block = source
+        block$segment = segment
+      } else {
+        block = parse_predictor_group_term(term, segment, dpar, data, par_x, check_rank, form_env)
+        block$definition_name = block$name
+        block$definition_segment = segment
+      }
+      block$group_key = blocks$key[i]
+      definitions[[length(definitions) + 1L]] = block
+    }
   }
 
-  definitions = dplyr::bind_rows(definitions)
-  if (nrow(definitions) == 0)
-    return(definitions)
-
-  group_terms = definitions %>%
-    dplyr::distinct(
-      .data$dpar, .data$group_col, .data$segment, .data$group_term
-    )
-  keys = paste(group_terms$dpar, group_terms$group_col, group_terms$segment)
-  if (anyDuplicated(keys)) {
-    duplicated_keys = unique(keys[duplicated(keys) | duplicated(keys, fromLast = TRUE)])
-    stop(
-      "Only one predictor group-level term per distributional parameter and grouping factor is allowed in a segment. Found ",
-      and_collapse(duplicated_keys), " in segment ", segment, "."
-    )
-  }
-  definitions
+  dplyr::bind_rows(definitions)
 }
 
 
@@ -191,7 +205,7 @@ unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
     checkmate::assert_flag(pars)
   if (is.logical(cols))
     checkmate::assert_flag(cols)
-  group_effects = get_fit_model_tables(fit)$group_effects
+  group_effects = get_fit_model_tables(fit)$group_definitions
   use_group = rep(FALSE, nrow(group_effects))
 
   if (!is.null(pars) && !is.null(cols)) {

@@ -270,6 +270,8 @@ get_pars_table = function(predictors, cps, group_effects, family) {
 #' @param scope Optional parameter scope(s): `"population"` or `"group"`.
 #' @param role Optional parameter role(s), such as `"fixed_effect"`,
 #'   `"dpar_effect"`, `"arma"`, `"group_sd"`, or `"group_deviation"`.
+#' @param occurrences Include a list column of segments declaring each parameter,
+#'   including shared uses. Retained endpoints are not active declarations.
 #' @return A data frame with one row per parameter definition. `name` is the
 #'   model parameter name; `dpar` identifies its distributional parameter or
 #'   component (`"cp"`, `"ar"`, or `"ma"`); `order` gives an AR/MA lag;
@@ -281,14 +283,27 @@ get_pars_table = function(predictors, cps, group_effects, family) {
 #'
 #' # Select population-level coefficients
 #' mcp_pars(demo_fit, scope = "population", role = "fixed_effect")
-mcp_pars = function(fit, scope = NULL, role = NULL) {
+mcp_pars = function(fit, scope = NULL, role = NULL, occurrences = FALSE) {
   checkmate::assert_class(fit, "mcpfit")
+  checkmate::assert_flag(occurrences)
   if (!is.null(scope))
     scope = rlang::arg_match(scope, c("population", "group"), multiple = TRUE)
   if (!is.null(role))
     checkmate::assert_character(role, any.missing = FALSE)
 
   parameters = get_fit_model_tables(fit)$parameters
+  if (occurrences) {
+    tables = get_fit_model_tables(fit)
+    uses = dplyr::bind_rows(
+      dplyr::transmute(tables$predictors, name = .data$code_name, segment = .data$segment),
+      dplyr::select(tables$group_effects, "name", "segment"),
+      dplyr::transmute(tables$group_effects, name = .data$sd_name, segment = .data$segment),
+      dplyr::select(parameters, "name", "segment")
+    )
+    parameters$occurrences = lapply(parameters$name, function(name) {
+      sort(unique(uses$segment[!is.na(uses$name) & uses$name == name]))
+    })
+  }
   keep = rep(TRUE, nrow(parameters))
   if (!is.null(scope))
     keep = keep & parameters$scope %in% scope
@@ -384,7 +399,14 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
 # Get model metadata tables from a fitted model
 get_fit_model_tables = function(fit) {
   check_mcpfit_version(fit)
-  fit$.internal$model_tables
+  tables = fit$.internal$model_tables
+
+  # Fits saved before sharing have one definition per occurrence.
+  if (is.null(tables$predictor_definitions))
+    tables$predictor_definitions = tables$predictors
+  if (is.null(tables$group_definitions))
+    tables$group_definitions = tables$group_effects
+  tables
 }
 
 

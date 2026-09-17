@@ -138,7 +138,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
       if (!is.null(simulated[[this_group_effect]])) {
         # Find the needed values and labels
         value = simulated[[this_group_effect]]  # Extract simulation values
-        group_effects = get_fit_model_tables(fit)$group_effects
+        group_effects = get_fit_model_tables(fit)$group_definitions
         label_col = group_effects$group_col[group_effects$name == this_group_effect]
         labs = fit$data[[label_col]]  # Find the labels. Same length as `value`
         if (length(value) != length(labs)) {

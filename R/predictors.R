@@ -568,9 +568,7 @@ same_selector_terms = function(selector, env) {
   attrs = attributes(stats::terms(selector_form))
   terms = attrs$term.labels
 
-  # Validate that group terms and offsets are not included
-  if (any(vapply(terms, is_group_term, logical(1))) || grepl("\\|", deparse1(selector)))
-    stop("Sharing group-effect blocks is not supported yet. It will be added in a later mcp v0.4 step.", call. = FALSE)
+  # Offsets have no coefficient to share
   if (!is.null(attrs$offset))
     stop("`same(offset(...))` is not supported. Repeat `offset(...)` in each active segment.", call. = FALSE)
 
@@ -616,9 +614,8 @@ parse_same_call = function(expr, segment, env) {
 }
 
 
-# Build a component design and replace selected terms with fitted source columns
-get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = NULL,
-                                  check_rank = TRUE, design_id = NULL, previous = NULL) {
+# Normalize selectors once for both population terms and complete group blocks
+normalize_shared_component = function(form_rhs, segment) {
   # Expand additive selectors once, retaining ordinary formula coding context
   leaves = unpack_additive(form_rhs[[2]])
   shared = vapply(leaves, is_same_call, logical(1))
@@ -626,6 +623,8 @@ get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = N
     stop("`same()` must be an additive selector of a complete term, such as `same(x:z)`.", call. = FALSE)
   selected = dplyr::bind_rows(lapply(leaves[shared], parse_same_call,
     segment = segment, env = environment(form_rhs)))
+  if (nrow(selected) == 0)
+    selected = tibble::tibble(term_key = character(), source = integer())
   if (nrow(selected) > 0) {
     selected = dplyr::distinct(selected)
     if (anyDuplicated(selected$term_key))
@@ -648,6 +647,17 @@ get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = N
       expr = call("+", expr, 1)
     form_rhs = stats::as.formula(call("~", expr), env = environment(form_rhs))
   }
+  list(form = form_rhs, selected = selected)
+}
+
+
+# Build a component design and replace selected terms with fitted source columns
+get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = NULL,
+                                  check_rank = TRUE, design_id = NULL, previous = NULL) {
+  normalized = normalize_shared_component(form_rhs, segment)
+  form_rhs = normalized$form
+  selected = normalized$selected
+  selected = selected[!vapply(selected$term_key, is_group_term, logical(1)), , drop = FALSE]
 
   # Construct bare columns in the full unwrapped formula, then borrow source columns
   form_rhs = remove_terms(form_rhs, "varying")
@@ -669,7 +679,7 @@ get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = N
   })
   bare = current[!current$term_key %in% selected$term_key, , drop = FALSE]
 
-  # Keep destination offsets even when all its coefficients are shared
+  # Keep current segment offsets even when all its coefficients are shared
   if (nrow(bare) == 0 && nrow(current) > 0 && isTRUE(current$design_spec[[1]]$has_offset)) {
     bare = current[1, ]
     bare$par_type = "offset"
@@ -945,13 +955,12 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   # Group intercepts and non-local terms are active only where declared.
   # Local group-x terms retain their endpoint through joined blocks until a
   # later group intercept or explicit `(0 | group)` resets the block.
-  definitions = lapply(
-    seq_along(rhs),
-    function(segment) get_predictor_group_definitions_segment(
-      rhs[[segment]], segment, family, data, par_x, check_rank
-    )
-  ) %>%
-    dplyr::bind_rows()
+  definitions = NULL
+  for (segment in seq_along(rhs)) {
+    definitions = dplyr::bind_rows(definitions,
+      get_predictor_group_definitions_segment(rhs[[segment]], segment, family,
+        data, par_x, check_rank, previous = definitions))
+  }
 
   predictor_group_effects = definitions
   if (nrow(definitions) > 0) {
@@ -970,7 +979,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
         "population_name", "name", "part", "group_col", "segment", "dpar",
         "sd_name", "par_type", "matrix_name", "display_name", "order",
         "x_factor", "design_id", "design_col", "matrix_col", "matrix_data",
-        "correlated", "design_spec"
+        "correlated", "design_spec", "definition_name", "definition_segment"
       )
 
     resets = definitions %>%
@@ -1005,15 +1014,16 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   if ("design_spec" %in% names(predictor_group_effects))
     predictor_group_effects = dplyr::select(predictor_group_effects, -"design_spec")
   if ("name" %notin% names(predictor_group_effects))
-    predictor_group_effects = tibble::tibble(name = character(), segment = integer())
+    predictor_group_effects = tibble::tibble(name = character(), segment = integer(),
+      definition_name = character(), definition_segment = integer())
 
   # Attach occurrence segment and definition metadata
   predictors = predictors %>%
     dplyr::mutate(occurrence_segment = .data$segment)
   group_definitions = predictor_group_effects %>%
-    dplyr::mutate(definition_name = .data$name, definition_segment = .data$segment)
+    dplyr::filter(.data$segment == .data$definition_segment)
   predictor_group_effects = predictor_group_effects %>%
-    dplyr::mutate(definition_name = .data$name, definition_segment = .data$segment, occurrence_segment = .data$segment)
+    dplyr::mutate(occurrence_segment = .data$segment)
 
   list(
     predictors = predictors,

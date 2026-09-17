@@ -16,7 +16,7 @@ test_that("shared slopes retain implicit intercepts and shared intercepts retain
 })
 
 
-test_that("AR sharing resolves every lag and preserves destination boundaries", {
+test_that("AR sharing resolves every lag and preserves current segment boundaries", {
   data = data.frame(x = 1:12, y = sin(1:12))
   fit = mcp(list(y ~ 1 + ar(2), ~ 1 + ar(2, same(1), boundary = 0.2)),
     data, par_x = "x", sample = FALSE)
@@ -111,7 +111,7 @@ test_that("sharing chains reuse fitted bases and explicit sources bridge gaps", 
 })
 
 
-test_that("shared designs keep fitted contrasts and destination offsets", {
+test_that("same() keeps fitted contrasts and current segment offsets", {
   data = data.frame(x = 1:12, y = 0, g = factor(rep(c("a", "b", "c"), 4)), z = 1:12 / 10)
   old_options = options(contrasts = c("contr.sum", "contr.poly"))
   on.exit(options(old_options), add = TRUE)
@@ -182,9 +182,9 @@ test_that("same() validates sources, competing declarations, and group blocks", 
   expect_error(mcp(list(y ~ 1 + x, ~ x + same(x)), data, par_x = "x", sample = FALSE), "both bare and shared")
   expect_error(
     mcp(list(y ~ 1 + x, ~ 0 + same(x)), data, par_x = "x", prior = list(x_2 = "dnorm(0, 1)"), sample = FALSE),
-    "use `x_1`"
+    "Set prior on `x_1` instead of `x_2`"
   )
-  expect_error(mcp(list(y ~ 1 + (1 | id), ~ same((1 | id))), data, par_x = "x", sample = FALSE), "group-effect blocks")
+  expect_no_error(mcp(list(y ~ 1 + (1 | id), ~ same((1 | id))), data, par_x = "x", sample = FALSE))
 })
 
 

@@ -510,7 +510,7 @@ test_that("group_mu example contains independent factor effects", {
   expect_equal(get_fit_model_tables(fit)$cps$name, "cp_1")
   expect_equal(
     mcp_pars(fit, scope = "group")$name,
-    c("Intercept_1_id", "stateB_1_id", "Intercept_2_id", "stateB_2_id")
+    c("Intercept_1_id", "stateB_1_id")
   )
   expect_match(fit$example_code, "state || id", fixed = TRUE)
   expect_equal(length(unique(fit$data$id)), 9)

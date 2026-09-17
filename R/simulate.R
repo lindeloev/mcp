@@ -12,14 +12,11 @@
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 relevel_newdata = function(newdata, fit) {
   # Check that the necessary data is available
-  group_cols = unique(stats::na.omit(
-    get_fit_model_tables(fit)$group_effects$group_col
-  ))
   rhs_vars = get_predictor_cols(fit)
   assert_data_cols(newdata, cols = rhs_vars, fail_funcs = c(is.na, is.nan, is.infinite))
 
   # Make sure to carry over the exact level-structure of the original model
-  for (col_name in intersect(c(rhs_vars, group_cols), names(newdata))) {
+  for (col_name in intersect(rhs_vars, names(newdata))) {
     org_col = fit$data[, col_name]
     new_col = newdata[, col_name]
 

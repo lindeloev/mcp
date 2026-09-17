@@ -148,7 +148,7 @@ if (plot) {
     group_mu = "# Define model
 model = list(
   y ~ 1 + state + (state || id),
-  ~ 1 + state + (state || id)  # repeat active group effects
+  ~ 1 + state + same((state || id))  # identical group effects in both segments
 )
 
 # Simulate balanced data with 9 levels of the grouping factor
@@ -212,7 +212,7 @@ if (plot) {
     missing = "# Define model
 model = list(
   y ~ 1 + x + state,
-  ~ 0 + x  # state effect persists into the second segment
+  ~ 0 + x + same(state)  # retain the same state effect
 )
 
 # Simulate complete data
