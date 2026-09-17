@@ -109,7 +109,7 @@ An explicit `shape()` formula models log-shape. Harmonizing with log-mean coeffi
 
 When modeling event counts where exposure (e.g., person-years, area, or population size) varies across observations, you can model rates $\lambda = \text{Count} / \text{exposure}$ on the log link by supplying `offset(log(exposure))`:
 
-```r
+```{r, eval=FALSE}
 # Example: Event counts over varying observation durations (as here) or population
 model = list(
   events ~ 1 + year + offset(log(exposure)),  # Segment 1
@@ -152,7 +152,7 @@ fit_decay_loo = loo(fit_decay)
 loo::loo_compare(fit_loo, fit_flat_loo, fit_decay_loo)
 ```
 
-The change point model seems to be preferred with a ratio of around 1.9 over the decay model and 2.5 over the flat model. Another approach is to look at the model weights:
+The change point model seems to be preferred with a ratio of around 2 over the decay model and 2.5 over the flat model. Another approach is to look at the model weights:
 
 ```{r, results='hold'}
 loo_list = list(fit_loo, fit_flat_loo, fit_decay_loo)

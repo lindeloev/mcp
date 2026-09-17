@@ -61,7 +61,7 @@ head(df)
 Now we fit the model to the simulated data.
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, data = df, par_x = "x", warmup = 2000, iter = 6000, seed = 42)
+fit = mcp(model, data = df, par_x = "x", seed = 42)
 ```
 
 We plot a posterior predictive interval to show the effect of the changing standard deviation, which is not immediately visible in the default plot of the expected response:
@@ -132,7 +132,7 @@ df$y = empty$simulate(
 Fit it:
 
 ```{r, results = FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, data = df, iter = 5000, seed = 42)
+fit = mcp(model, data = df, iter = 6000, seed = 42, diagnostics = FALSE)
 ```
 
 Plotting a posterior predictive interval is an intuitive way to see how the residual standard deviation is estimated:
@@ -156,7 +156,7 @@ summary(fit)
 pp_check(fit)
 ```
 
-All parameters converge well ($\hat{R} \le 1.01$ and $\text{ESS} > 400$). Notice that `cp_3` and the quadratic `sigma` parameters have lower effective sample sizes than the others, reflecting greater uncertainty in detecting subtle changes in variance curvature. Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:
+Parameters almost converge well ($\hat{R} \le 1.01$ and $\text{ESS} > 400$), but I set `diagnostics = FALSE` to quiet warnings since this is just a demonstration. Notice that `cp_3` and the quadratic `sigma` parameters have lower effective sample sizes than the others, reflecting greater uncertainty in detecting subtle changes in variance curvature. Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:
 
 ```{r, fig.height=7, fig.width = 6}
 set.seed(42)
@@ -201,7 +201,7 @@ df = data.frame(
 empty = mcp(model, data = df, par_x = "x", sample = FALSE)
 
 # Simulate data
-set.seed(42)
+set.seed(40)
 df$y = empty$simulate(
   empty, df, 
   cp_1 = 130, cp_1_sd = 40,
@@ -212,13 +212,13 @@ df$y = empty$simulate(
 Fit it:
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, data = df, par_x = "x", seed = 42)
+fit = mcp(model, data = df, par_x = "x", seed = 40)
 ```
 
 Plot it:
 
 ```{r}
-set.seed(42)
+set.seed(40)
 plot(fit, q_predict = TRUE, facet_by = "id")
 ```
 
