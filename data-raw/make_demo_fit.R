@@ -25,7 +25,7 @@ make_demo_fit = function() {
     demo_fit[["mcmc_post"]] = thin_draws(.subset2(demo_fit, "mcmc_post"))
     demo_fit[["mcmc_prior"]] = thin_draws(.subset2(demo_fit, "mcmc_prior"))
 
-    # Normalize closure environments and strip srcrefs for compact, reproducible packaging
+    # Standardize closure environments and strip srcrefs for compact, reproducible packaging
     demo_fit = rapply(demo_fit, function(f) {
         f = utils::removeSource(f)
         env = environment(f)

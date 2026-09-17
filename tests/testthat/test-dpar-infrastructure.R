@@ -30,14 +30,14 @@ test_that("families declare dpars independently of prior rows", {
   expect_equal(poisson_family$dpar_specs$link, "log")
   expect_equal(poisson_family$dpars, "mu")
 
-  # Compact prior tables are normalized at the family boundary.
-  normalized_prior = normalize_family_default_priors(data.frame(
+  # Compact prior tables are standardized in mcpfamily().
+  standardized_prior = standardize_family_default_priors(data.frame(
     dpar = "mu",
     par_type = "Intercept",
     prior = "dnorm(0, 1)"
   ))
-  expect_equal(normalized_prior$condition, "always")
-  expect_true(is.na(normalized_prior$description))
+  expect_equal(standardized_prior$condition, "always")
+  expect_true(is.na(standardized_prior$description))
 
   for (family in mean_only_families) {
     expect_equal(family$dpar_specs$dpar, "mu")

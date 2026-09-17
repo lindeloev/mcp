@@ -618,7 +618,7 @@ mcp = function(model,
   ##########
   # RETURN #
   ##########
-  # Return normalized formulas without discarding user-defined environments.
+  # Return canonical formulas without discarding user-defined environments.
   class(model) = c("mcplist", "list")
   class(prior) = c("mcplist", "list")
   class(jags_code) = c("mcptext", "character")  # for nicer printing

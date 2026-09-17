@@ -96,7 +96,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - **Generalized AR/MA:**
 
-  - Autoregression (`ar()`) has been generalized to link-scale observation-driven GARMA residuals for Gaussian, binomial, Bernoulli, Poisson, and negative-binomial models with their default links, using `ar(..., threshold = 0.1)` by default to keep zero and boundary observations finite on the link scale. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment. Independent time series can be separated using `series = <column>`.
+  - Autoregression (`ar()`) has been generalized to link-scale observation-driven GARMA residuals for Gaussian, binomial, Bernoulli, Poisson, and negative-binomial models with their default links, using `ar(..., threshold = 0.1)` by default to keep observations finite on the link scale. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment. Independent time series can be separated using `series = <column>`.
 
   - GARMA observation thresholds are now validated with family-appropriate bounds: strictly below 0.5 for `family = bernoulli()`, and strictly below half the smallest trial count for `family = binomial()`, preventing thresholds from erasing the binary response history.
 

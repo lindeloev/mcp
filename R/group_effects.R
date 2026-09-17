@@ -142,12 +142,12 @@ get_predictor_group_definitions_segment = function(
     dpar_terms = term_labels[stringr::str_detect(term_labels, paste0("^", dpar, "\\("))]
     if (length(dpar_terms) == 0)
       next
-    normalized = normalize_shared_component(get_term_content(dpar_terms, form_env), segment)
-    selected = normalized$selected
+    standardized = standardize_shared_component(get_term_content(dpar_terms, form_env), segment)
+    selected = standardized$selected
     selected = selected[vapply(selected$term_key, is_group_term, logical(1)), , drop = FALSE]
 
     # Canonical block keys unify equivalent formulas before enforcing one block per group
-    terms = get_group_terms(normalized$form)
+    terms = get_group_terms(standardized$form)
     blocks = tibble::tibble(term = terms,
       key = vapply(terms, group_block_key, character(1)),
       group = vapply(terms, function(term) deparse1(str2lang(term)[[3]]), character(1)),

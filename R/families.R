@@ -147,7 +147,7 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
   r$log_lik = make_weighted_log_lik(r$log_lik)
 
   family$dpar_specs = dpar_specs
-  family$default_prior = normalize_family_default_priors(default_prior)
+  family$default_prior = standardize_family_default_priors(default_prior)
   family$response = response
   family$r = r
   family$backends = backends
@@ -199,7 +199,7 @@ validate_count_mean = function(mu) {
 }
 
 
-normalize_family_default_priors = function(defaults) {
+standardize_family_default_priors = function(defaults) {
   checkmate::assert_data_frame(defaults)
   assert_data_cols(defaults, c("dpar", "par_type", "prior"))
   defaults = tibble::as_tibble(defaults)
@@ -685,9 +685,9 @@ known_dpar_wrappers = function() {
 }
 
 
-# Normalize and expose a family's distributional-parameter metadata.
+# Standardize and expose a family's distributional-parameter metadata.
 add_dpar_specs = function(family) {
-  family$dpar_specs = normalize_dpar_specs(family$dpar_specs)
+  family$dpar_specs = standardize_dpar_specs(family$dpar_specs)
   assert_dpar_specs(family$dpar_specs)
   family$dpars = family$dpar_specs$dpar
   family$links = stats::setNames(family$dpar_specs$link, family$dpar_specs$dpar)
@@ -728,7 +728,7 @@ resolve_dpar_specs = function(family, predictors, model = NULL) {
 
 
 # Add conditional-link fields missing from older dpar specifications.
-normalize_dpar_specs = function(x) {
+standardize_dpar_specs = function(x) {
   checkmate::assert_data_frame(x)
   if ("link_constant" %notin% names(x))
     x$link_constant = x$link
@@ -744,7 +744,7 @@ normalize_dpar_specs = function(x) {
 
 # Validate distributional-parameter metadata and supported links.
 assert_dpar_specs = function(x) {
-  x = normalize_dpar_specs(x)
+  x = standardize_dpar_specs(x)
   required = c(
     "dpar", "link", "link_constant", "link_modeled", "modeled",
     "implicit", "require_initial_predictor", "lower"

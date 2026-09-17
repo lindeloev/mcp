@@ -166,7 +166,7 @@ interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma 
 
   if (is.null(x_values))
     x_values = get_x_values(fit, by = by, arma = arma)
-  # Evaluate the default before `by` is normalised below. Otherwise an absent
+  # Evaluate the default before `by` is standardized below. Otherwise an absent
   # grouping argument becomes character(0), which selects the denser grouped
   # grid in get_x_values().
   x_values = force(x_values)

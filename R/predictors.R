@@ -532,7 +532,7 @@ term_contains = function(par_x, terms) {
 }
 
 
-# Normalize coefficient-sharing selectors before ordinary formula parsing. The
+# Standardize coefficient-sharing selectors before ordinary formula parsing. The
 # parser below only needs to know which expanded source terms a selector names;
 # all downstream code receives resolved definition/occurrence rows.
 
@@ -614,8 +614,8 @@ parse_same_call = function(expr, segment, env) {
 }
 
 
-# Normalize selectors once for both population terms and complete group blocks
-normalize_shared_component = function(form_rhs, segment) {
+# Standardize selectors once for both population terms and complete group blocks
+standardize_shared_component = function(form_rhs, segment) {
   # Expand additive selectors once, retaining ordinary formula coding context
   leaves = unpack_additive(form_rhs[[2]])
   shared = vapply(leaves, is_same_call, logical(1))
@@ -654,9 +654,9 @@ normalize_shared_component = function(form_rhs, segment) {
 # Build a component design and replace selected terms with fitted source columns
 get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = NULL,
                                   check_rank = TRUE, design_id = NULL, previous = NULL) {
-  normalized = normalize_shared_component(form_rhs, segment)
-  form_rhs = normalized$form
-  selected = normalized$selected
+  standardized = standardize_shared_component(form_rhs, segment)
+  form_rhs = standardized$form
+  selected = standardized$selected
   selected = selected[!vapply(selected$term_key, is_group_term, logical(1)), , drop = FALSE]
 
   # Construct bare columns in the full unwrapped formula, then borrow source columns
