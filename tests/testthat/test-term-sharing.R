@@ -1,3 +1,45 @@
+test_that("shared slopes retain implicit intercepts and shared intercepts retain factor coding", {
+  data = data.frame(x = 1:12, y = 0, g = factor(rep(c("a", "b", "c"), 4)))
+  fit = mcp(list(y ~ 1 + x, ~ same(x)), data, par_x = "x", sample = FALSE)
+  expect_equal(as.numeric(fit$simulate(fit, data, cp_1 = 6, Intercept_1 = 1,
+    Intercept_2 = 10, x_1 = 2, sigma_1 = 1, .type = "fitted")),
+    ifelse(data$x < 6, 1 + 2 * data$x, 10 + 2 * (data$x - 6)))
+
+  for (rhs in list(~ same(1) + g, ~ 0 + same(1) + g)) {
+    fit = mcp(list(y ~ 1, rhs), data, par_x = "x", sample = FALSE)
+    expect_false("ga_2" %in% mcp_pars(fit)$name)
+    expect_equal(as.numeric(fit$simulate(fit, data, cp_1 = 6, Intercept_1 = 2,
+      gb_2 = 3, gc_2 = 5, sigma_1 = 1, .type = "fitted")),
+      2 + (data$x >= 6) * c(0, 3, 5)[as.integer(data$g)])
+  }
+  expect_error(mcp(list(y ~ 1, ~ 1 + same(1)), data, par_x = "x", sample = FALSE), "competing")
+})
+
+
+test_that("AR sharing resolves every lag and preserves destination boundaries", {
+  data = data.frame(x = 1:12, y = sin(1:12))
+  fit = mcp(list(y ~ 1 + ar(2), ~ 1 + ar(2, same(1), boundary = 0.2)),
+    data, par_x = "x", sample = FALSE)
+  args = c(as.list(add_rhs_predictors(data, fit)),
+    lapply(list(cp_1 = 6, Intercept_1 = 1, Intercept_2 = 2, sigma_1 = 1, ar1_1 = 0.3, ar2_1 = -0.1), rep, 12))
+  tables = get_fit_model_tables(fit)
+  values = evaluate_model_dpars(fit, args,
+    paste0(".pred_", get_predictor_design_names(tables$predictors, tables$group_effects)))
+  expect_equal(values$ar1_, rep(0.3, 12))
+  expect_equal(values$ar2_, rep(-0.1, 12))
+  expect_equal(values$garma_boundary_, ifelse(data$x < 6, 0.1, 0.2))
+  expect_error(mcp(list(y ~ 1 + ar(1), ~ 1 + ar(2, same(1))),
+    data, par_x = "x", sample = FALSE), "lag 2")
+
+  # A declared no-intercept lag keeps its earlier level and local-x endpoint
+  fit = mcp(list(y ~ 1 + ar(1, 1 + x), ~ 0 + ar(1, 0 + same(x))),
+    data, par_x = "x", sample = FALSE)
+  values = fit$simulate(fit, data, cp_1 = 6, Intercept_1 = 0, sigma_1 = 1,
+    ar1_1 = 0.1, ar1_x_1 = 0.01, .type = "fitted", .dpar = "ar1", .arma = FALSE)
+  expect_equal(as.numeric(values), 0.1 + 0.01 * data$x)
+})
+
+
 test_that("same() reuses population definitions with current local x coordinates", {
   data = data.frame(
     x = 1:8,
@@ -37,6 +79,50 @@ test_that("a fitted shared-coefficient model evaluates its likelihood", {
   likelihood = log_lik(fit, summary = FALSE)
   expect_equal(dim(likelihood), c(40L, nrow(data)))
   expect_true(all(is.finite(likelihood)))
+  draws = as.matrix(coda::as.mcmc(fit))
+  expected = vapply(seq_len(nrow(data)), function(i) {
+    stats::dnorm(data$y[i], draws[, "Intercept_1"] + draws[, "x_1"] * data$x[i] +
+      draws[, "z_1"] * data$z[i], draws[, "sigma_1"], log = TRUE)
+  }, numeric(nrow(draws)))
+  expect_equal(unname(likelihood), expected)
+})
+
+
+test_that("sharing chains reuse fitted bases and explicit sources bridge gaps", {
+  data = data.frame(x = 1:20, z = sin(1:20), y = 0)
+  fit = mcp(list(y ~ 1 + poly(z, 2), ~ 0 + same(poly(z, 2)),
+    ~ 0 + same(poly(z, 2))), data, par_x = "x", sample = FALSE)
+  tables = get_fit_model_tables(fit)
+  source = tables$predictors[tables$predictors$term_key == "poly(z, 2)" & tables$predictors$segment == 1, ]
+  newdata = data.frame(x = c(3, 9, 17), z = c(-0.4, 0.2, 0.7))
+  args = c(list(fit = fit, newdata = newdata, cp_1 = 6, cp_2 = 14,
+    Intercept_1 = 2, sigma_1 = 1, .type = "fitted"),
+    stats::setNames(list(3, -1), source$code_name))
+  basis = predict(poly(data$z, 2), newdata$z)
+  expect_equal(as.numeric(do.call(fit$simulate, args)), as.numeric(2 + basis %*% c(3, -1)))
+
+  expect_error(mcp(list(y ~ 1 + z, ~ 0, ~ 0 + same(z)), data,
+    par_x = "x", sample = FALSE), "cannot find")
+  fit = mcp(list(y ~ 1 + z, ~ 0, ~ 0 + same(z, as = 1)), data,
+    par_x = "x", sample = FALSE)
+  expect_equal(as.numeric(fit$simulate(fit, data, cp_1 = 6, cp_2 = 14,
+    Intercept_1 = 2, z_1 = 3, sigma_1 = 1, .type = "fitted")),
+    2 + 3 * data$z * (data$x < 6 | data$x >= 14))
+})
+
+
+test_that("shared designs keep fitted contrasts and destination offsets", {
+  data = data.frame(x = 1:12, y = 0, g = factor(rep(c("a", "b", "c"), 4)), z = 1:12 / 10)
+  old_options = options(contrasts = c("contr.sum", "contr.poly"))
+  on.exit(options(old_options), add = TRUE)
+  fit = mcp(list(y ~ 1 + g + offset(z), ~ 0 + same(g), ~ same(1, as = 1) + offset(2 * z)),
+    data, par_x = "x", sample = FALSE)
+  options(old_options)
+  values = fit$simulate(fit, data, cp_1 = 4, cp_2 = 8, Intercept_1 = 2,
+    g1_1 = 3, g2_1 = 5, sigma_1 = 1, .type = "fitted")
+  expected = 2 + (data$x < 8) * c(3, 5, -8)[as.integer(data$g)] +
+    ifelse(data$x < 4, data$z, ifelse(data$x >= 8, 2 * data$z, 0))
+  expect_equal(as.numeric(values), expected)
 })
 
 

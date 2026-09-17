@@ -122,7 +122,7 @@ parse_predictor_group_term = function(
 get_predictor_group_definitions_segment = function(
   form_rhs, segment, family, data, par_x, check_rank = TRUE
 ) {
-  form_rhs = canonicalize_rhs(form_rhs, family)
+  # Components have already been canonicalized by get_predictor_tables()
   form_env = environment(form_rhs)
   term_labels = attr(stats::terms(form_rhs), "term.labels")
 

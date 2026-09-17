@@ -584,7 +584,7 @@ same_selector_terms = function(selector, env) {
 
 
 # Parse and validate a same() call into a selector specification
-parse_same_call = function(expr, segment, dpar, order, env) {
+parse_same_call = function(expr, segment, env) {
   # Check argument count and naming
   args = as.list(expr)[-1]
   arg_names = names(args)
@@ -601,175 +601,94 @@ parse_same_call = function(expr, segment, dpar, order, env) {
   if (length(args) == 2) {
     source_value = args[[2]]
     if (!is.numeric(source_value) || length(source_value) != 1 ||
-        !is.finite(source_value) || source_value <= 0 || source_value != as.integer(source_value))
+        !is.finite(source_value) || source_value <= 0 || source_value != floor(source_value))
       stop("`same(..., as = )` must name an earlier positive integer segment.", call. = FALSE)
-    source = as.integer(source_value)
+    source = source_value
   }
   if (source >= segment)
     stop("`same(..., as = )` must name an earlier segment.", call. = FALSE)
 
   # Return parsed selector specification
-  list(
-    segment = segment,
-    dpar = dpar,
-    order = order,
-    source = source,
-    term_key = same_selector_terms(args[[1]], env)
+  tibble::tibble(
+    term_key = same_selector_terms(args[[1]], env),
+    source = as.integer(source)
   )
 }
 
 
-# Normalize same() calls in an additive component expression
-normalize_same_component = function(expr, segment, dpar, order, env) {
-  # Single same() call becomes 0 and yields a selector
-  if (is_same_call(expr))
-    return(list(expr = 0, selectors = list(parse_same_call(expr, segment, dpar, order, env))))
+# Build a component design and replace selected terms with fitted source columns
+get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = NULL,
+                                  check_rank = TRUE, design_id = NULL, previous = NULL) {
+  # Expand additive selectors once, retaining ordinary formula coding context
+  leaves = unpack_additive(form_rhs[[2]])
+  shared = vapply(leaves, is_same_call, logical(1))
+  if (any(vapply(leaves[!shared], contains_same_call, logical(1))))
+    stop("`same()` must be an additive selector of a complete term, such as `same(x:z)`.", call. = FALSE)
+  selected = dplyr::bind_rows(lapply(leaves[shared], parse_same_call,
+    segment = segment, env = environment(form_rhs)))
+  if (nrow(selected) > 0) {
+    selected = dplyr::distinct(selected)
+    if (anyDuplicated(selected$term_key))
+      stop("Overlapping `same()` selections cannot use competing sources.", call. = FALSE)
 
-  # Recurse through additive terms
-  if (is.call(expr) && identical(deparse1(expr[[1]]), "+")) {
-    left = normalize_same_component(expr[[2]], segment, dpar, order, env)
-    right = normalize_same_component(expr[[3]], segment, dpar, order, env)
-    return(list(expr = call("+", left$expr, right$expr), selectors = c(left$selectors, right$selectors)))
+    # Shared intercepts replace implicit intercepts, but conflict with explicit 1
+    bare = leaves[!shared]
+    shared_intercept = "(Intercept)" %in% selected$term_key
+    if (shared_intercept && any(vapply(bare, function(x) identical(x, 1) || identical(x, 1L), logical(1))))
+      stop("An explicit bare `1` and `same(1)` are competing declarations.", call. = FALSE)
+    bare_expr = Reduce(function(a, b) call("+", a, b), c(list(0), bare))
+    bare_terms = attr(stats::terms(stats::as.formula(call("~", bare_expr), env = environment(form_rhs))), "term.labels")
+    if (any(selected$term_key %in% bare_terms))
+      stop("A term cannot be both bare and shared in segment ", segment, ".", call. = FALSE)
+
+    # Unwrap selectors for coding; 0 + same(1) still declares an intercept
+    leaves[shared] = lapply(leaves[shared], function(x) x[[2]])
+    expr = Reduce(function(a, b) call("+", a, b), leaves)
+    if (shared_intercept)
+      expr = call("+", expr, 1)
+    form_rhs = stats::as.formula(call("~", expr), env = environment(form_rhs))
   }
 
-  # Disallow same() inside non-additive expressions
-  if (contains_same_call(expr))
-    stop("`same()` must be an additive selector of a complete term, such as `same(x:z)` or `same(x * z)`.", call. = FALSE)
+  # Construct bare columns in the full unwrapped formula, then borrow source columns
+  form_rhs = remove_terms(form_rhs, "varying")
+  current = get_predictors_dpar(data, form_rhs, segment, dpar, par_x, order,
+    check_rank = check_rank && nrow(selected) == 0, design_id = design_id) %>%
+    dplyr::mutate(definition_name = .data$code_name, definition_segment = .data$segment)
+  if (nrow(selected) == 0)
+    return(current)
 
-  # Return non-same expression with empty selectors
-  list(expr = expr, selectors = list())
-}
+  borrowed = lapply(seq_len(nrow(selected)), function(i) {
+    source = previous[previous$dpar == dpar & previous$segment == selected$source[i] &
+      previous$order %in% (if (is.null(order)) NA_integer_ else order) &
+      previous$term_key == selected$term_key[i], , drop = FALSE]
+    if (is.null(source) || nrow(source) == 0)
+      stop("`same()` cannot find `", selected$term_key[i], "` in segment ",
+        selected$source[i], " for ", dpar, if (!is.null(order)) paste0(" lag ", order), ".", call. = FALSE)
+    source$segment = segment
+    source
+  })
+  bare = current[!current$term_key %in% selected$term_key, , drop = FALSE]
 
-
-# Strip same() calls from a segment formula and collect their selector specs
-normalize_same_formula = function(form, segment, family) {
-  env = environment(form)
-  dpars = family$dpar_specs$dpar
-  selectors = list()
-
-  # Recursive walker to process expressions
-  walk = function(expr) {
-    # Recurse through top-level addition of component wrappers
-    if (is.call(expr) && identical(deparse1(expr[[1]]), "+")) {
-      left = walk(expr[[2]])
-      right = walk(expr[[3]])
-      return(call("+", left, right))
-    }
-
-    # Base case for non-call expressions
-    if (!is.call(expr))
-      return(expr)
-
-    head = deparse1(expr[[1]])
-
-    # Process distributional parameter wrappers (mu, sigma, shape, etc.)
-    if (head %in% dpars) {
-      if (length(expr) < 2)
-        return(expr)
-      normalized = normalize_same_component(expr[[2]], segment, head, NA_integer_, env)
-      selectors <<- c(selectors, normalized$selectors)
-      expr[[2]] = normalized$expr
-      return(expr)
-    }
-
-    # Process AR/MA formulas, e.g. ar(2, ...)
-    if (head %in% c("ar", "ma")) {
-      parsed = unpack_arma(deparse1(expr))
-      args = as.list(expr)[-1]
-      arg_names = names(args)
-      if (is.null(arg_names)) arg_names = rep("", length(args))
-      formula_index = setdiff(seq_along(args), c(1, which(arg_names %in% c("boundary", "series"))))
-      if (length(formula_index) == 1) {
-        index = formula_index + 1L
-        normalized = normalize_same_component(expr[[index]], segment, head, parsed$order, env)
-        selectors <<- c(selectors, normalized$selectors)
-        expr[[index]] = normalized$expr
-      }
-      return(expr)
-    }
-
-    # Disallow same() inside other functions
-    if (contains_same_call(expr))
-      stop("`same()` must be an additive selector of a complete term, such as `same(x:z)` or `same(x * z)`.", call. = FALSE)
-
-    expr
+  # Keep destination offsets even when all its coefficients are shared
+  if (nrow(bare) == 0 && nrow(current) > 0 && isTRUE(current$design_spec[[1]]$has_offset)) {
+    bare = current[1, ]
+    bare$par_type = "offset"
+    bare$code_name = NA_character_
   }
+  result = dplyr::bind_rows(bare, dplyr::bind_rows(borrowed))
 
-  # Build stripped formula and return with collected selectors
-  list(
-    form = stats::as.formula(call("~", walk(form[[2]])), env = env),
-    selectors = selectors
-  )
-}
-
-
-# Resolve same() selectors into concrete occurrence rows in the predictor table
-resolve_same_occurrences = function(predictors, selectors) {
-  # Return unchanged if no same() selectors are present
-  if (length(selectors) == 0)
-    return(predictors)
-
-  resolved = predictors
-
-  # Process selectors segment-by-segment in order
-  for (segment in sort(unique(vapply(selectors, `[[`, integer(1), "segment")))) {
-    segment_selectors = selectors[vapply(selectors, `[[`, integer(1), "segment") == segment]
-
-    # Verify that overlapping selectors in the same segment do not specify competing sources
-    selected_terms = dplyr::bind_rows(lapply(segment_selectors, function(selector) {
-      tibble::tibble(
-        dpar = selector$dpar,
-        order = selector$order,
-        term_key = selector$term_key,
-        source = selector$source
-      )
+  # Rank checking applies to the assembled design, including borrowed contrasts
+  if (check_rank) {
+    coefficients = result[result$par_type != "offset", , drop = FALSE]
+    matrix = do.call(cbind, lapply(seq_len(nrow(coefficients)), function(i) {
+      degree = if (coefficients$x_factor[i] == "1") 0 else
+        if (coefficients$x_factor[i] == "x") 1 else as.numeric(sub("x^", "", coefficients$x_factor[i], fixed = TRUE))
+      coefficients$matrix_data[[i]] * data[[par_x]]^degree
     }))
-    term_id = paste(selected_terms$dpar, selected_terms$order, selected_terms$term_key, sep = "\r")
-    if (any(vapply(split(selected_terms$source, term_id), function(x) length(unique(x)) > 1, logical(1))))
-      stop("Overlapping `same()` selections in segment ", segment, " cannot use competing sources.", call. = FALSE)
-
-    selected = list()
-
-    # Find and copy matching source predictors for each selector
-    for (selector in segment_selectors) {
-      same_component = resolved$dpar == selector$dpar &
-        ((is.na(resolved$order) & is.na(selector$order)) | resolved$order == selector$order)
-
-      # Check that term is not already declared as bare predictor in destination segment
-      destination = resolved[same_component & resolved$segment == segment, , drop = FALSE]
-      overlap = intersect(destination$term_key, selector$term_key)
-      if (length(overlap) > 0)
-        stop("A term cannot be both bare and shared in segment ", segment, ": ", and_collapse(paste0("`", overlap, "`")), ".", call. = FALSE)
-
-      # Check that all requested terms exist in the specified source segment
-      source = resolved[same_component & resolved$segment == selector$source &
-        resolved$term_key %in% selector$term_key, , drop = FALSE]
-      missing = setdiff(selector$term_key, source$term_key)
-      if (length(missing) > 0)
-        stop(
-          "`same()` in segment ", segment, " cannot find ",
-          and_collapse(paste0("`", missing, "`")), " in segment ", selector$source,
-          " for ", selector$dpar, ".", call. = FALSE
-        )
-
-      # Re-tag source rows with current segment and occurrence name
-      source = source %>%
-        dplyr::mutate(
-          segment = .env$segment,
-          occurrence_name = sub("_[0-9]+$", paste0("_", .env$segment), .data$code_name)
-        )
-      selected = c(selected, split(source, seq_len(nrow(source))))
-    }
-
-    # Append deduplicated occurrence rows to resolved predictors
-    if (length(selected) == 0)
-      next
-    selected = dplyr::bind_rows(selected)
-    selected = dplyr::distinct(selected, .data$dpar, .data$order, .data$term_key, .data$code_name, .keep_all = TRUE)
-    resolved = dplyr::bind_rows(resolved, selected)
+    colnames(matrix) = coefficients$matrix_name
+    assert_rank(matrix, segment, dpar)
   }
-
-  resolved
+  result
 }
 
 
@@ -807,15 +726,14 @@ is_empty_initial_predictor = function(form) {
 #' @noRd
 #' @describeIn get_predictors_dpar Apply `get_predictors_dpar` to
 #'   each formula in a segment
-get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_rank = TRUE) {
+get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_rank = TRUE, previous = NULL) {
   checkmate::assert_formula(form_rhs)
   checkmate::assert_int(segment, lower = 1)
   checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
   checkmate::assert_data_frame(data)
   checkmate::assert_string(par_x)
 
-  # Canonicalize formula so bare mu terms are wrapped in mu(...)
-  form_rhs = canonicalize_rhs(form_rhs, family)
+  # Components have already been canonicalized by get_predictor_tables()
   form_env = environment(form_rhs)
   attrs = attributes(stats::terms(form_rhs))
   term_labels = attrs$term.labels
@@ -852,9 +770,9 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
     # across later segments until the user supplies another dpar intercept.
     if (length(dpar_term) == 0 && spec$implicit && segment == 1) {
       dpar_form = stats::as.formula("~1", env = form_env)
-      dpar_pars[[dpar]] = get_predictors_dpar(
+      dpar_pars[[dpar]] = get_shared_predictors(
         data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank,
-        design_id = paste("population", dpar, segment, sep = ":")
+        design_id = paste("population", dpar, segment, sep = ":"), previous = previous
       ) %>%
         dplyr::mutate(explicit = FALSE)
     } else if (length(dpar_term) > 0) {
@@ -865,10 +783,9 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
           "(). Declare an initial predictor, such as `", dpar, "(1)` or `", dpar, "(0 + x)`.",
           call. = FALSE
         )
-      dpar_form = remove_terms(dpar_form, "varying")
-      dpar_pars[[dpar]] = get_predictors_dpar(
+      dpar_pars[[dpar]] = get_shared_predictors(
         data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank,
-        design_id = paste("population", dpar, segment, sep = ":")
+        design_id = paste("population", dpar, segment, sep = ":"), previous = previous
       ) %>%
         dplyr::mutate(explicit = TRUE)
     }
@@ -891,17 +808,17 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
         )
       # Expand one formula into a separate regression parameter for each lag.
       arma_pars[[component]] = if (component_stuff$order == 0) {
-        get_predictors_dpar(
+        get_shared_predictors(
           data, component_form, segment, component, par_x, order = 1L, check_rank,
-          design_id = paste("population", component, 0, segment, sep = ":")
+          design_id = paste("population", component, 0, segment, sep = ":"), previous = previous
         ) %>%
           dplyr::mutate(boundary = component_stuff$boundary, explicit = TRUE)
       } else {
         lapply(
           seq_len(component_stuff$order),
-          function(order) get_predictors_dpar(
+          function(order) get_shared_predictors(
             data, component_form, segment, component, par_x, order, check_rank,
-            design_id = paste("population", component, order, segment, sep = ":")
+            design_id = paste("population", component, order, segment, sep = ":"), previous = previous
           )
         ) %>%
           dplyr::bind_rows() %>%
@@ -939,32 +856,23 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   rhs = lapply(model, get_rhs)
   rhs = lapply(rhs, canonicalize_rhs, family = family)
 
-  # Normalize same() selectors out of segment formulas before parsing
-  normalized_same = lapply(seq_along(rhs), function(segment) {
-    normalize_same_formula(rhs[[segment]], segment, family)
-  })
-  same_selectors = unlist(lapply(normalized_same, `[[`, "selectors"), recursive = FALSE)
-  rhs = lapply(normalized_same, `[[`, "form")
-
-  # Parse predictors segment by segment
-  parsed_predictors = lapply(seq_along(rhs), function(segment) get_predictors_segment(rhs[[segment]], segment, family, data, par_x, check_rank)) %>%
-    dplyr::bind_rows() %>%
-    dplyr::arrange(.data$dpar, .data$segment)
-
-  # Retain non-offset predictor definitions and assert parameter name uniqueness
-  predictor_definitions = parsed_predictors %>%
+  # Resolve each component against earlier active occurrences, including chains
+  parsed_predictors = NULL
+  for (segment in seq_along(rhs)) {
+    parsed_predictors = dplyr::bind_rows(parsed_predictors,
+      get_predictors_segment(rhs[[segment]], segment, family, data, par_x,
+        check_rank, previous = parsed_predictors))
+  }
+  parsed_predictors = dplyr::arrange(parsed_predictors, .data$dpar, .data$segment)
+  predictors = parsed_predictors %>%
     dplyr::filter(.data$par_type != "offset") %>%
-    dplyr::mutate(
-      matrix_col = dplyr::row_number(),
-      definition_name = .data$code_name,
-      definition_segment = .data$segment,
-      occurrence_name = .data$code_name
-    )
-  assert_unique_predictor_names(predictor_definitions)
-
-  # Resolve same() occurrences by attaching shared terms from earlier segments
-  predictors = resolve_same_occurrences(predictor_definitions, same_selectors) %>%
     dplyr::mutate(matrix_col = dplyr::row_number())
+
+  # Only the defining occurrence introduces a parameter and prior
+  predictor_definitions = predictors %>%
+    dplyr::filter(.data$segment == .data$definition_segment) %>%
+    dplyr::select(-"design_spec")
+  assert_unique_predictor_names(predictor_definitions)
   if ("boundary" %notin% names(predictors))
     predictors$boundary = rep(NA_real_, nrow(predictors))
 
@@ -990,8 +898,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
 
   # Population non-local terms are active only in the segment where they are
   # declared. Local par_x terms retain their endpoint through joined segments
-  # and therefore still end at the next population intercept. Group and AR/MA
-  # lifetimes intentionally retain their existing rules until step 2.
+  # and therefore still end at the next population intercept.
   predictors = predictors %>%
     dplyr::mutate(
       next_segment = dplyr::if_else(
@@ -1003,10 +910,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     ) %>%
     dplyr::select(-"next_intercept")
 
-  # AR/MA are active only where declared. A positive-order `ar(p, 0)` or
-  # `ma(q, 0)` is an explicit joined formula: it retains the preceding
-  # intercept/local-x endpoint for matching lags, unlike order zero or an
-  # absent declaration which turns the component off.
+  # AR/MA retain endpoints through declared, joined lags until an intercept reset
   arma_declarations = get_arma_declarations(rhs)
   arma_next_segment = vapply(seq_len(nrow(predictors)), function(i) {
     if (predictors$dpar[i] %notin% c("ar", "ma"))
@@ -1020,7 +924,10 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
           arma_declarations$segment == next_segment,
         , drop = FALSE
       ]
-      if (nrow(declaration) != 1 || !declaration$joined || declaration$order < predictors$order[i])
+      resets = any(predictors$dpar == predictors$dpar[i] &
+        predictors$order %in% predictors$order[i] & predictors$segment == next_segment &
+        predictors$par_type == "Intercept")
+      if (nrow(declaration) != 1 || declaration$order < predictors$order[i] || resets)
         break
       next_segment = next_segment + 1L
     }

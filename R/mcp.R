@@ -398,6 +398,8 @@ mcp = function(model,
   segment_tables = get_segment_tables(model, data, family, par_x)
   segments = segment_tables$segments
   cps = segment_tables$cps
+  # Pass the same canonical segment formulas to all model-building consumers
+  model = Map(stats::as.formula, segments$form, env = segments$form_env)
   assert_model_data(data, par_x, group_cols = stats::na.omit(cps$group_col))
   predictor_tables = get_predictor_tables(model, data, family, par_x)
   predictor_definitions = predictor_tables$predictor_definitions
@@ -420,7 +422,8 @@ mcp = function(model,
 
   # Validate that priors are not assigned to shared occurrence terms
   shared_prior = predictor_occurrences %>%
-    dplyr::filter(.data$occurrence_name != .data$code_name) %>%
+    dplyr::filter(.data$segment != .data$definition_segment) %>%
+    dplyr::mutate(occurrence_name = stringr::str_replace(.data$code_name, "_[0-9]+$", paste0("_", .data$segment))) %>%
     dplyr::distinct(.data$occurrence_name, .data$code_name)
   prior_destination = shared_prior[shared_prior$occurrence_name %in% names(prior), , drop = FALSE]
   if (nrow(prior_destination) > 0) {
@@ -585,7 +588,6 @@ mcp = function(model,
   # RETURN #
   ##########
   # Return normalized formulas without discarding user-defined environments.
-  model = Map(stats::as.formula, segments$form, env = segments$form_env)
   class(model) = c("mcplist", "list")
   class(prior) = c("mcplist", "list")
   class(jags_code) = c("mcptext", "character")  # for nicer printing

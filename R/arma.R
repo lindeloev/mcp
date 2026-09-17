@@ -147,8 +147,7 @@ get_arma_declarations = function(rhs) {
       tibble::tibble(
         dpar = component,
         segment = segment,
-        order = parsed$order,
-        joined = parsed$order > 0 && identical(parsed$form_str, paste0(component, "(0)"))
+        order = parsed$order
       )
     }) %>% dplyr::bind_rows()
   })
