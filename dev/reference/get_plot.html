@@ -137,11 +137,12 @@ or FALSE (do not plot).</p></dd>
 
 
 <dt id="arg-rate">rate<a class="anchor" aria-label="anchor" href="#arg-rate"></a></dt>
-<dd><p>Logical scalar. For binomial models, return counts (<code>rate = FALSE</code>, the default for <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>) or
-the observed or expected success proportion (<code>rate = TRUE</code>). Predictions and
-count-scale fitted values require a trials column in <code>newdata</code>.
-Distributional parameters such as <code>dpar = "mu"</code> evaluate the parameter itself (e.g., success probability)
-and are unaffected by <code>rate</code>.</p></dd>
+<dd><p>Logical scalar. For binomial models, plot the observed or expected
+success proportion (<code>rate = TRUE</code>, the default here) or counts (<code>rate = FALSE</code>).
+This default is the opposite of <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>, which return
+counts by default; plotting proportions keeps curves comparable across
+varying trial counts. Predictions and count-scale fitted values require a
+trials column in <code>newdata</code>/<code>at</code>.</p></dd>
 
 
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>

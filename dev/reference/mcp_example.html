@@ -131,7 +131,7 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> model = list(</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   y ~ 1 + x:state + z,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ~ 1 + x + state,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ~ 0 + I(x^2)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ~ 0 + I(x^2) + same(state)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> )</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # Simulate data</span>

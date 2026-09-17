@@ -37,9 +37,6 @@ mcp(
   segment has no change point and uses `response ~ predictors`. The
   response and change-point parts can be omitted (`cp ~ predictor`
   assumes the same response; `~ predictor` assumes an intercept-only
-  change point). Population terms other than the segment-local
-  change-point predictor are active only where declared (see details).
-  See examples on the response; `~ predictor` assumes an intercept-only
   change point). In each segment, all terms must be explicitly declared
   to be active; terms not declared are inactive (joining via `~ 0 + ...`
   continues from the level reached by previous segment-local x-dependent
@@ -105,6 +102,14 @@ mcp(
     they are active). [Read
     more](https://lindeloev.github.io/mcp/articles/arma.html).
 
+  - `~ 1 + same(x)` or `0 + same(z, as = 1)`: Use `same()` to reuse the
+    coefficients from previous segments (default) or explicitly
+    referenced segment using `as = <segment_number>`. Like all
+    parameters in `mcp`, reused coefficients are estimated jointly
+    across all segments where they appear (pooling data from all
+    segments), rather than fitted sequentially in one segment and copied
+    to another.
+
 - data:
 
   Table-like data in long format (data.frame, tibble, data.table, etc.)
@@ -134,10 +139,6 @@ mcp(
 
   - A numerical value (e.g., `Intercept_1 = -2.1`) indicating a fixed
     value.
-
-  - A model parameter name (e.g., `Intercept_2 = "Intercept_1"`),
-    indicating that this parameter is shared - typically between
-    segments. If two group-level deviations are shared this way,
 
   - A model parameter name (e.g., `Intercept_2 = "Intercept_1"`),
     equating parameters via JAGS. Note that sharing coefficients via

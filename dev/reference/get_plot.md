@@ -86,16 +86,15 @@ get_plot(
 
 - rate:
 
-  Logical scalar. For binomial models, return counts (`rate = FALSE`,
-  the default for
+  Logical scalar. For binomial models, plot the observed or expected
+  success proportion (`rate = TRUE`, the default here) or counts
+  (`rate = FALSE`). This default is the opposite of
   [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   and
-  [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md))
-  or the observed or expected success proportion (`rate = TRUE`).
-  Predictions and count-scale fitted values require a trials column in
-  `newdata`. Distributional parameters such as `dpar = "mu"` evaluate
-  the parameter itself (e.g., success probability) and are unaffected by
-  `rate`.
+  [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+  which return counts by default; plotting proportions keeps curves
+  comparable across varying trial counts. Predictions and count-scale
+  fitted values require a trials column in `newdata`/`at`.
 
 - prior:
 

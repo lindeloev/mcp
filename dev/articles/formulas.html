@@ -277,6 +277,10 @@ slope. Sharing preserves coefficients but uses the current segment’s
 local x. <code>same(..., as=...)</code> selects the corresponding
 coefficient in an earlier segment; without <code>as</code>,
 <code>same()</code> refers to the preceding segment.</p>
+<p>Like all parameters in <code>mcp</code>, shared coefficients are
+estimated jointly across all segments where they appear (pooling data
+from all segments), rather than fitted sequentially in one segment and
+copied to another.</p>
 </div>
 <div class="section level3">
 <h3 id="inspect-coefficients">Inspect coefficients<a class="anchor" aria-label="anchor" href="#inspect-coefficients"></a>

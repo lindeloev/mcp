@@ -463,10 +463,13 @@ intentionally deviate:
   avoid the infinite expected values of exponentiated Student-t tails
   (\mathbb{E}\[\exp(\eta)\] = \infty). While group-level hierarchies
   with \tau \sim \operatorname{HalfNormal}(2.5) do not guarantee finite
-  response moments everywhere, half-normal group SDs substantially
-  reduce extreme multiplier tails compared with half-Student-t priors
-  under exponentiation. Practical prior predictive checks
-  (`pp_check(fit, prior = TRUE)`) remain recommended.
+  response moments everywhere (\mathbb{E}\[\exp(b)\] is only finite for
+  \tau \lesssim 1), half-normal group SDs substantially reduce extreme
+  multiplier tails compared with half-Student-t priors under
+  exponentiation, and this breadth is a deliberate, `rstanarm`-like
+  choice of weak informativeness over tighter regularization. Practical
+  prior predictive checks (`pp_check(fit, prior = TRUE)`) remain
+  recommended.
 - **Offset-adjusted count intercepts:** While both `brms` and `mcp`
   adjust count intercepts for exposure offsets, `brms` subtracts
   `mean(offset)` from `median(log(y))` and computes prior scale on raw
@@ -480,7 +483,11 @@ intentionally deviate:
   [`bernoulli()`](https://lindeloev.github.io/mcp/dev/reference/bernoulli.md)):**
   `mcp` uses a narrower scale of 1.5 (`dt(0, 1.5, 3)`) instead of
   `brms`’s 2.5 to avoid placing excess prior probability mass on extreme
-  probabilities (0 and 1).
+  probabilities (0 and 1). This added conservatism is particularly
+  warranted in change-point models, where several segments each
+  contribute their own intercept and the compounding of segment-wise
+  draws makes extreme probabilities more likely than in an ordinary
+  single-intercept GLM.
 - **Autoregressive and moving-average terms:** `mcp` uses zero-centered
   regularizing `dnorm(0, 0.5) T(-1, 1)` priors rather than improper flat
   priors to favor stationary and invertible dynamics.

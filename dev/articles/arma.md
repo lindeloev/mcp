@@ -581,8 +581,11 @@ hypothesis(fit, "ar1_1 = ar1_2")
     ##          hypothesis      mean     lower     upper prob           BF
     ## 1 ar1_1 - ar1_2 = 0 0.6857727 0.3770224 0.9878358   NA 3.441065e-05
 
-In this case, the evidence for equality is very small so it was rarely
-visited by the sampler and hence the precision is low.
+Notice the warning. We used default priors, so the Savage-Dickey ratio
+is quite meaningless because the prior does not represent our actual
+pre-likelihood beliefs. In any case, if it did, we would conclude that
+evidence for equality is very small so it was rarely visited by the
+sampler and hence the precision is low (as the second warning show).
 
 Of course, we can also do directional tests. For example, what is the
 evidence that `ar1_1` is more than 0.3 greater than `ar1_2`? Answer:

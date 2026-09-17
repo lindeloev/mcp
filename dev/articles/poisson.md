@@ -238,7 +238,7 @@ set.seed(42)
 plot(fit_flat) + plot(fit_decay)
 ```
 
-![](poisson_files/figure-html/unnamed-chunk-10-1.png)
+![](poisson_files/figure-html/unnamed-chunk-11-1.png)
 
 Now we compute and compare the LOO ELPDs:
 
@@ -264,7 +264,7 @@ loo::loo_compare(fit_loo, fit_flat_loo, fit_decay_loo)
     ##  model3      -7.0     3.2    0.99   N < 100               
     ##  model2      -9.3     3.8    0.99   N < 100
 
-The change point model seems to be preferred with a ratio of around 1.9
+The change point model seems to be preferred with a ratio of around 2
 over the decay model and 2.5 over the flat model. Another approach is to
 look at the model weights:
 

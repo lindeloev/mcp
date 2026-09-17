@@ -75,7 +75,7 @@ Now we fit the model to the simulated data.
 
 ``` r
 
-fit = mcp(model, data = df, par_x = "x", warmup = 2000, iter = 6000, seed = 42)
+fit = mcp(model, data = df, par_x = "x", seed = 42)
 ```
 
 We plot a posterior predictive interval to show the effect of the
@@ -101,20 +101,20 @@ summary(fit)
 
     ## Family: gaussian
     ## Links: mu = identity; sigma = log
-    ## Iterations: 6000 from 3 chains.
+    ## Iterations: 3000 from 3 chains.
     ## Segments:
     ##   1: y ~ 1
     ##   2: y ~ 1 ~ 0 + sigma(1)
     ## 
     ## Change point parameters:
-    ##     variable mean   sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  cp_1        49.7 1.61  46.1  52.3 1.00     5880     6235 50.0    OK
+    ##     variable mean    sd lower upper rhat ess_bulk ess_tail  sim match
+    ##  cp_1        49.8 1.599  46.2  52.2 1.00     3281     3344 50.0    OK
     ## 
     ## Population-level parameters:
-    ##     variable mean   sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  Intercept_1 20.1 0.81  18.6  21.7 1.00    10938     9603 20.0    OK
-    ##  sigma_1      1.8 0.10   1.6   2.0 1.00     8981    10013  1.6    OK
-    ##  sigma_2      2.9 0.10   2.7   3.1 1.00    10265     9453  3.0    OK
+    ##     variable mean    sd lower upper rhat ess_bulk ess_tail  sim match
+    ##  Intercept_1 20.1 0.826  18.5  21.7 1.00     4815     5026 20.0    OK
+    ##  sigma_1      1.8 0.105   1.6   2.0 1.00     4141     4573  1.6    OK
+    ##  sigma_2      2.9 0.099   2.7   3.1 1.00     5007     4346  3.0    OK
 
 ## Advanced example
 
@@ -189,7 +189,7 @@ Fit it:
 
 ``` r
 
-fit = mcp(model, data = df, iter = 5000, seed = 42)
+fit = mcp(model, data = df, iter = 6000, seed = 42, diagnostics = FALSE)
 ```
 
 Plotting a posterior predictive interval is an intuitive way to see how
@@ -226,7 +226,7 @@ summary(fit)
 
     ## Family: gaussian
     ## Links: mu = identity; sigma = log
-    ## Iterations: 5000 from 3 chains.
+    ## Iterations: 6000 from 3 chains.
     ## Segments:
     ##   1: y ~ 1 + sigma(1 + x)
     ##   2: y ~ 1 ~ 1 + sigma(1)
@@ -235,22 +235,20 @@ summary(fit)
     ## 
     ## Change point parameters:
     ##     variable     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
-    ##  cp_1         5.0e+01 3.4e-01  4.9e+01  5.0e+01 1.00     5016     3979  5.0e+01    OK
-    ##  cp_2         8.0e+01 1.1e+00  7.8e+01  8.3e+01 1.00     1870     2982  8.0e+01    OK
-    ##  cp_3         1.4e+02 1.3e+01  1.3e+02  1.8e+02 1.00      487      905  1.4e+02    OK
+    ##  cp_1         5.0e+01  0.3372  4.9e+01  5.0e+01 1.00     6206     4879  5.0e+01    OK
+    ##  cp_2         8.0e+01  1.1371  7.8e+01  8.3e+01 1.00     2341     3896  8.0e+01    OK
+    ##  cp_3         1.4e+02 12.7475  1.3e+02  1.8e+02 1.00      584     1128  1.4e+02    OK
     ## 
     ## Population-level parameters:
     ##     variable     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
-    ##  Intercept_1 -2.0e+01 4.5e-01 -2.1e+01 -1.9e+01 1.00     4499     4514 -2.0e+01    OK
-    ##  Intercept_2  6.8e-01 7.0e-01 -6.4e-01  2.1e+00 1.00     3089     5238  0.0e+00    OK
-    ##  x_3          1.2e+00 3.2e-02  1.1e+00  1.2e+00 1.00     2554     4758  1.2e+00    OK
-    ##  sigma_1      4.1e-01 2.6e-01 -6.4e-02  9.3e-01 1.00      870     1500  0.0e+00    OK
-    ##  sigma_x_1    3.7e-02 8.7e-03  2.0e-02  5.4e-02 1.00      877     1463  4.6e-02    OK
-    ##  sigma_2      1.3e+00 1.1e-01  1.1e+00  1.6e+00 1.00      789     2111  1.4e+00    OK
-    ##  sigma_x_3    2.6e-02 6.1e-03  1.3e-02  3.8e-02 1.01      310      329  2.0e-02    OK
-    ##  sigma_xE2_3  2.2e-05 9.8e-05 -1.4e-04  2.6e-04 1.00      318      229  1.5e-04    OK
-    ## 
-    ## Warning: 2 parameters show poor convergence (rhat > 1.01 or ess_bulk < 400 or ess_tail < 400).
+    ##  Intercept_1 -2.0e+01  0.4539 -2.1e+01 -1.9e+01 1.00     5179     5510 -2.0e+01    OK
+    ##  Intercept_2  6.9e-01  0.6958 -6.4e-01  2.1e+00 1.00     3866     6218  0.0e+00    OK
+    ##  x_3          1.2e+00  0.0317  1.1e+00  1.2e+00 1.00     3207     5980  1.2e+00    OK
+    ##  sigma_1      4.1e-01  0.2538 -6.5e-02  9.3e-01 1.00     1038     1840  0.0e+00    OK
+    ##  sigma_x_1    3.7e-02  0.0087  2.0e-02  5.4e-02 1.00     1042     1794  4.6e-02    OK
+    ##  sigma_2      1.3e+00  0.1150  1.1e+00  1.6e+00 1.00      887     2020  1.4e+00    OK
+    ##  sigma_x_3    2.6e-02  0.0064  1.2e-02  3.8e-02 1.01      363      231  2.0e-02    OK
+    ##  sigma_xE2_3  2.4e-05  0.0001 -1.4e-04  2.9e-04 1.01      326      197  1.5e-04    OK
 
 ``` r
 
@@ -259,12 +257,13 @@ pp_check(fit)
 
 ![](dpar_files/figure-html/unnamed-chunk-12-1.png)
 
-All parameters converge well (\hat{R} \le 1.01 and \text{ESS} \> 400).
-Notice that `cp_3` and the quadratic `sigma` parameters have lower
-effective sample sizes than the others, reflecting greater uncertainty
-in detecting subtle changes in variance curvature. Let us verify this by
-taking a look at the posteriors and trace. For now, we just look at the
-sigmas:
+Parameters almost converge well (\hat{R} \le 1.01 and \text{ESS} \>
+400), but I set `diagnostics = FALSE` to quiet warnings since this is
+just a demonstration. Notice that `cp_3` and the quadratic `sigma`
+parameters have lower effective sample sizes than the others, reflecting
+greater uncertainty in detecting subtle changes in variance curvature.
+Let us verify this by taking a look at the posteriors and trace. For
+now, we just look at the sigmas:
 
 ``` r
 
@@ -372,7 +371,7 @@ df = data.frame(
 empty = mcp(model, data = df, par_x = "x", sample = FALSE)
 
 # Simulate data
-set.seed(42)
+set.seed(40)
 df$y = empty$simulate(
   empty, df, 
   cp_1 = 130, cp_1_sd = 40,
@@ -384,14 +383,14 @@ Fit it:
 
 ``` r
 
-fit = mcp(model, data = df, par_x = "x", seed = 42)
+fit = mcp(model, data = df, par_x = "x", seed = 40)
 ```
 
 Plot it:
 
 ``` r
 
-set.seed(42)
+set.seed(40)
 plot(fit, q_predict = TRUE, facet_by = "id")
 ```
 
@@ -404,16 +403,16 @@ As usual, we can get the individual change points:
 ranef(fit)
 ```
 
-    ##     variable       mean       sd      lower     upper     rhat ess_bulk ess_tail        sim match
-    ## 1 cp_1_id[1]  41.033496 68.46045  -83.30206 166.88383 1.010306      699     1967  54.797526    OK
-    ## 2 cp_1_id[2]  48.398801 70.15710  -77.23409 181.20928 1.012305      711     1853  61.169450    OK
-    ## 3 cp_1_id[3] -35.533299 68.89868 -162.68216  92.55450 1.010067      691     1934 -22.542894    OK
-    ## 4 cp_1_id[4]  25.629981 69.53241 -100.04963 153.29130 1.009919      661     1553  38.223749    OK
-    ## 5 cp_1_id[5] -19.308587 69.91664 -151.14512 110.48060 1.009261      684     1716  14.533315    OK
-    ## 6 cp_1_id[6] -89.165509 72.70678 -227.16674  34.03912 1.050404       61      501   1.933674    OK
-    ## 7 cp_1_id[7]  10.318978 69.31644 -116.07292 137.89261 1.010810      672     1853  25.313838    OK
-    ## 8 cp_1_id[8]  -5.613455 70.03285 -139.40259 125.32962 1.009002      652     1466 -44.089298    OK
-    ## 9 cp_1_id[9] -14.466928 77.88226 -184.24259 126.27434 1.032543       86       72  16.177611    OK
+    ##     variable      mean       sd      lower     upper     rhat ess_bulk ess_tail        sim match
+    ## 1 cp_1_id[1]  31.92434 42.29520  -75.41372 132.65332 1.013154     2614      744  19.114088    OK
+    ## 2 cp_1_id[2]  20.29804 46.02956  -87.04081 127.00663 1.012913     1863     1025  45.585394    OK
+    ## 3 cp_1_id[3]  19.86522 41.98096  -89.55753 118.94143 1.015952     2574      884  19.851242    OK
+    ## 4 cp_1_id[4] -28.37698 41.90368 -144.51790  64.53245 1.015833     2751      964 -47.713615    OK
+    ## 5 cp_1_id[5] -27.50314 41.36632 -144.46014  63.58621 1.012760     2373      928 -34.316443    OK
+    ## 6 cp_1_id[6]   3.50697 47.26036 -106.81277 111.69764 1.019962     3041     1053  -3.872974    OK
+    ## 7 cp_1_id[7] -35.20754 41.48965 -151.64791  55.49996 1.013229     2321      917 -33.098207    OK
+    ## 8 cp_1_id[8]  23.89787 42.26932  -87.19581 122.04209 1.014960     2835     1008   9.201584    OK
+    ## 9 cp_1_id[9] -10.65812 44.99204 -131.17651  78.72465 1.015109     2126      889 -12.830472    OK
 
 … and verify via posterior predictive checks:
 

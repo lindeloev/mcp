@@ -173,6 +173,10 @@ coefficients but uses the current segment’s local x. `same(..., as=...)`
 selects the corresponding coefficient in an earlier segment; without
 `as`, `same()` refers to the preceding segment.
 
+Like all parameters in `mcp`, shared coefficients are estimated jointly
+across all segments where they appear (pooling data from all segments),
+rather than fitted sequentially in one segment and copied to another.
+
 ### Inspect coefficients
 
 `mcp_pars` shows you how `mcp` sees each parameter cf. the rules above.

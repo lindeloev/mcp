@@ -509,17 +509,17 @@ continuous).</p></li>
 <col width="20%">
 </colgroup>
 <thead><tr class="header">
-<th>Family &amp; Link</th>
+<th>Parameter &amp; Link</th>
 <th>Intercept Prior</th>
 <th>Contrast Prior</th>
 <th>Slope Prior (<span class="math inline">\beta</span>)</th>
-<th>Group SD Prior (<span class="math inline">\sigma</span>)</th>
+<th>Group SD Prior (<span class="math inline">\sigma_{\text{group}}</span>)</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
 <td>
-<strong>Identity link</strong> (<code>gaussian</code>,
-<code>poisson</code>)</td>
+<strong>Mean (<span class="math inline">\mu</span>): Identity
+link</strong> (<code>gaussian</code>, <code>poisson</code>)</td>
 <td>
 <code>dt(median(y), S_y, 3)</code>*</td>
 <td><code>dt(0, S_y, 3)</code></td>
@@ -528,8 +528,9 @@ continuous).</p></li>
 </tr>
 <tr class="even">
 <td>
-<strong>Log link</strong> (<code>poisson</code>,
-<code>negbinomial</code>, <code>gaussian</code>)</td>
+<strong>Mean (<span class="math inline">\mu</span>): Log
+link</strong> (<code>poisson</code>, <code>negbinomial</code>,
+<code>gaussian</code>)</td>
 <td><code>dnorm(median(y_rate), S_rate)</code></td>
 <td><code>dnorm(0, 2.5)</code></td>
 <td><code>dnorm(0, 2.5 / Δx)</code></td>
@@ -537,8 +538,8 @@ continuous).</p></li>
 </tr>
 <tr class="odd">
 <td>
-<strong>Logit / Probit link</strong> (<code>binomial</code>,
-<code>bernoulli</code>)</td>
+<strong>Mean (<span class="math inline">\mu</span>): Logit / Probit
+link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
 <td><code>dt(0, 1.5, 3)</code></td>
 <td><code>dt(0, 1.5, 3)</code></td>
 <td><code>dt(0, 1.5 / Δx, 3)</code></td>
@@ -648,10 +649,14 @@ avoid the infinite expected values of exponentiated Student-t tails
 (<span class="math inline">\mathbb{E}[\exp(\eta)] = \infty</span>).
 While group-level hierarchies with <span class="math inline">\tau \sim
 \operatorname{HalfNormal}(2.5)</span> do not guarantee finite response
-moments everywhere, half-normal group SDs substantially reduce extreme
-multiplier tails compared with half-Student-t priors under
-exponentiation. Practical prior predictive checks
-(<code>pp_check(fit, prior = TRUE)</code>) remain recommended.</li>
+moments everywhere (<span class="math inline">\mathbb{E}[\exp(b)]</span>
+is only finite for <span class="math inline">\tau \lesssim 1</span>),
+half-normal group SDs substantially reduce extreme multiplier tails
+compared with half-Student-t priors under exponentiation, and this
+breadth is a deliberate, <code>rstanarm</code>-like choice of weak
+informativeness over tighter regularization. Practical prior predictive
+checks (<code>pp_check(fit, prior = TRUE)</code>) remain
+recommended.</li>
 <li>
 <strong>Offset-adjusted count intercepts:</strong> While both
 <code>brms</code> and <code>mcp</code> adjust count intercepts for
@@ -667,7 +672,11 @@ directly to rate variation.</li>
 <code><a href="../reference/bernoulli.html">bernoulli()</a></code>):</strong> <code>mcp</code> uses a narrower
 scale of 1.5 (<code>dt(0, 1.5, 3)</code>) instead of <code>brms</code>’s
 2.5 to avoid placing excess prior probability mass on extreme
-probabilities (0 and 1).</li>
+probabilities (0 and 1). This added conservatism is particularly
+warranted in change-point models, where several segments each contribute
+their own intercept and the compounding of segment-wise draws makes
+extreme probabilities more likely than in an ordinary single-intercept
+GLM.</li>
 <li>
 <strong>Autoregressive and moving-average terms:</strong>
 <code>mcp</code> uses zero-centered regularizing

@@ -167,8 +167,10 @@ been added until we reach 1.0.
     [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
     [`prior_summary()`](https://lindeloev.github.io/mcp/dev/reference/prior_summary.md),
     and everything else now return rows in a canonical order instead of
-    the previous incidental (near-alphabetical) order. Use
-    `verbose = TRUE` with
+    the previous incidental (near-alphabetical) order;
+    [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
+    orders group levels following the grouping factor’s levels in the
+    fitting data. Use `verbose = TRUE` with
     [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
     [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
     or
@@ -330,10 +332,10 @@ been added until we reach 1.0.
     generalized to link-scale observation-driven GARMA residuals for
     Gaussian, binomial, Bernoulli, Poisson, and negative-binomial models
     with their default links, using `ar(..., threshold = 0.1)` by
-    default to keep zero and boundary observations finite on the link
-    scale. Added moving-average terms with `ma(q)`, which can be used
-    alone or combined with `ar(p)` in each segment. Independent time
-    series can be separated using `series = <column>`.
+    default to keep observations finite on the link scale. Added
+    moving-average terms with `ma(q)`, which can be used alone or
+    combined with `ar(p)` in each segment. Independent time series can
+    be separated using `series = <column>`.
 
   - GARMA observation thresholds are now validated with
     family-appropriate bounds: strictly below 0.5 for

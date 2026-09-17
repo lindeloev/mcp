@@ -594,8 +594,11 @@ density ratio test:</p>
 <pre><code><span><span class="co">## Warning: The tested value is in a sparse tail of the prior or posterior draws; the Savage-Dickey estimate may be unreliable.</span></span></code></pre>
 <pre><code><span><span class="co">##          hypothesis      mean     lower     upper prob           BF</span></span>
 <span><span class="co">## 1 ar1_1 - ar1_2 = 0 0.6857727 0.3770224 0.9878358   NA 3.441065e-05</span></span></code></pre>
-<p>In this case, the evidence for equality is very small so it was
-rarely visited by the sampler and hence the precision is low.</p>
+<p>Notice the warning. We used default priors, so the Savage-Dickey
+ratio is quite meaningless because the prior does not represent our
+actual pre-likelihood beliefs. In any case, if it did, we would conclude
+that evidence for equality is very small so it was rarely visited by the
+sampler and hence the precision is low (as the second warning show).</p>
 <p>Of course, we can also do directional tests. For example, what is the
 evidence that <code>ar1_1</code> is more than 0.3 greater than
 <code>ar1_2</code>? Answer: More than 100 to one.</p>

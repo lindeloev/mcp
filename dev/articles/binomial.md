@@ -104,7 +104,7 @@ recover the parameters used to simulate the data.
 
 ``` r
 
-fit = mcp(model, data = df, family = binomial(), seed = 42)
+fit = mcp(model, data = df, family = binomial(), iter = 12000, seed = 42)
 ```
 
 We can use `summary` to see that it recovered the parameters to a pretty
@@ -118,7 +118,7 @@ summary(fit)
 
     ## Family: binomial
     ## Links: mu = logit
-    ## Iterations: 3000 from 3 chains.
+    ## Iterations: 12000 from 3 chains.
     ## Segments:
     ##   1: y | trials(N) ~ 1
     ##   2: y | trials(N) ~ 1 ~ 0 + year
@@ -126,17 +126,15 @@ summary(fit)
     ## 
     ## Change point parameters:
     ##     variable   mean     sd    lower    upper rhat ess_bulk ess_tail    sim match
-    ##  cp_1        1929.6 2.9981 1923.904 1935.160 1.03      132      367 1925.0    OK
-    ##  cp_2        1974.5 0.5742 1973.190 1975.757 1.00     1754     1771 1975.0    OK
+    ##  cp_1        1929.8 3.0534 1923.950 1935.301 1.00      428     1135 1925.0    OK
+    ##  cp_2        1974.5 0.6179 1973.181 1975.821 1.00     4061     2663 1975.0    OK
     ## 
     ## Population-level parameters:
     ##     variable   mean     sd    lower    upper rhat ess_bulk ess_tail    sim match
-    ##  Intercept_1    1.6 0.1479    1.376    1.942 1.02      243      690    2.0      
-    ##  year_2        -0.1 0.0098   -0.122   -0.084 1.01      191      584   -0.1    OK
-    ##  Intercept_3   -1.1 0.1996   -1.498   -0.710 1.00      839     1422   -1.0    OK
-    ##  year_3         0.1 0.0088    0.083    0.117 1.01      925     1859    0.1    OK
-    ## 
-    ## Warning: 3 parameters show poor convergence (rhat > 1.01 or ess_bulk < 400 or ess_tail < 400).
+    ##  Intercept_1    1.6 0.1471    1.366    1.939 1.00      886     3168    2.0      
+    ##  year_2        -0.1 0.0105   -0.125   -0.084 1.00      577     1858   -0.1    OK
+    ##  Intercept_3   -1.1 0.2032   -1.495   -0.695 1.00     2997     4349   -1.0    OK
+    ##  year_3         0.1 0.0088    0.083    0.117 1.00     3688     6630    0.1    OK
 
 `summary` uses 95% central posterior intervals by default, but you can
 change it using `summary(fit, width = 0.80)`. If you have [group-level
