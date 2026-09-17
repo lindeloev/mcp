@@ -579,3 +579,30 @@ test_that("fit$simulate() preserves shared group effects", {
   shared_sim = attr(sim_shared, "simulated")
   expect_equal(shared_sim$Intercept_1_id, shared_sim$Intercept_2_id)
 })
+
+
+test_that("ranef() preserves grouping-factor level ordering", {
+  df = data.frame(
+    x = 1:30,
+    y = rnorm(30),
+    grp = factor(
+      rep(c("treatment", "control", "placebo"), each = 10),
+      levels = c("treatment", "control", "placebo")
+    )
+  )
+
+  fit = mcp(
+    list(y ~ 1 + (1 | grp)),
+    df,
+    par_x = "x",
+    sample = "prior",
+    iter = 50,
+    warmup = 10,
+    chains = 1,
+    diagnostics = FALSE,
+    quiet = TRUE
+  )
+
+  ran = ranef(fit, prior = TRUE)
+  expect_equal(ran$variable, paste0("Intercept_1_grp[", levels(df$grp), "]"))
+})

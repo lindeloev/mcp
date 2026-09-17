@@ -48,7 +48,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - In general, renamed `"varying"` to `"group"`. The old `"varying"` selector remains as a deprecated alias. The established `varying =` method argument remains unchanged for now.
 
-  - `summary()`, `fixef()`, and `ranef()`, `prior_summary()`, and everything else now return rows in a canonical order instead of the previous incidental (near-alphabetical) order. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to include `segment` and `dpar` columns.
+  - `summary()`, `fixef()`, and `ranef()`, `prior_summary()`, and everything else now return rows in a canonical order instead of the previous incidental (near-alphabetical) order; `ranef()` orders group levels following the grouping factor's levels in the fitting data. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to include `segment` and `dpar` columns.
 
   - mcp no longer exports `phi`, `logit`, `ilogit`, or `probit`.
 

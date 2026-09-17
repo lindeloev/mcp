@@ -90,3 +90,78 @@ test_that("Gaussian simulation against lm()", {
 
   testthat::expect_equal(params_lm_sim, c(3, 0.5, -2, 1.5), tolerance = 0.05)
 })
+
+
+test_that("Gaussian modeled sigma against nlme::gls()", {
+  testthat::skip_if_not_installed("nlme")
+
+  set.seed(42)
+  N = 300
+  x = seq(0, 20, length.out = N)
+  seg = factor(ifelse(x < 10, "1", "2"))
+  y = 2 + 0.5 * x + 1.2 * pmax(0, x - 10) + rnorm(N, sd = ifelse(seg == "1", 0.8, 2.0))
+  df_sigma = data.frame(x = x, y = y, seg = seg)
+
+  fit_gls = nlme::gls(y ~ x + I(pmax(0, x - 10)), data = df_sigma, weights = nlme::varIdent(form = ~ 1 | seg))
+  coef_gls = coef(fit_gls)
+  gls_sigma1 = fit_gls$sigma
+  gls_sigma2 = gls_sigma1 * coef(fit_gls$modelStruct$varStruct, unconstrained = FALSE)[["2"]]
+
+  fit_mcp_sigma = mcp(
+    list(y ~ 1 + x, ~ 0 + x + sigma(1)),
+    df_sigma,
+    prior = list(cp_1 = 10),
+    warmup = 500,
+    iter = 2000,
+    seed = 42,
+    diagnostics = FALSE,
+    quiet = TRUE
+  )
+
+  capture.output({ sum_mcp = summary(fit_mcp_sigma) })
+  mcp_sigma1 = exp(sum_mcp$mean[sum_mcp$variable == "sigma_1"])
+  mcp_sigma2 = exp(sum_mcp$mean[sum_mcp$variable == "sigma_2"])
+
+  expect_equal(sum_mcp$mean[sum_mcp$variable == "Intercept_1"], unname(coef_gls[1]), tolerance = 0.1)
+  expect_equal(sum_mcp$mean[sum_mcp$variable == "x_1"], unname(coef_gls[2]), tolerance = 0.05)
+  expect_equal(sum_mcp$mean[sum_mcp$variable == "x_2"], unname(coef_gls[2] + coef_gls[3]), tolerance = 0.05)
+  expect_equal(mcp_sigma1, gls_sigma1, tolerance = 0.05)
+  expect_equal(mcp_sigma2, gls_sigma2, tolerance = 0.05)
+})
+
+
+test_that("Gaussian likelihood weights against lm(weights = w)", {
+  set.seed(42)
+  N = 250
+  x = seq(0, 10, length.out = N)
+  w = runif(N, 0.5, 3.0)
+  y = 1.5 + 0.8 * x + rnorm(N, sd = 1.2 / sqrt(w))
+  df_w = data.frame(x = x, y = y, w = w)
+
+  fit_lm_w = lm(y ~ x, data = df_w, weights = w)
+  coef_lm_w = coef(fit_lm_w)
+  sigma_lm_weighted = summary(fit_lm_w)$sigma * sqrt((N - 2) / sum(w))
+
+  fit_mcp_w = mcp(
+    list(y | weights(w) ~ 1 + x),
+    data = df_w,
+    family = gaussian(),
+    warmup = 500,
+    iter = 2000,
+    seed = 42,
+    diagnostics = FALSE,
+    quiet = TRUE
+  )
+
+  fix_mcp_w = fixef(fit_mcp_w)
+  capture.output({ sum_mcp_w = summary(fit_mcp_w) })
+  sigma_mcp_w = sum_mcp_w$mean[sum_mcp_w$variable == "sigma_1"]
+
+  expect_equal(fix_mcp_w$mean[fix_mcp_w$variable == "Intercept_1"], unname(coef_lm_w[1]), tolerance = 0.05)
+  expect_equal(fix_mcp_w$mean[fix_mcp_w$variable == "x_1"], unname(coef_lm_w[2]), tolerance = 0.02)
+  expect_equal(sigma_mcp_w, sigma_lm_weighted, tolerance = 0.05)
+
+  loglik_expected = sum(w * dnorm(df_w$y, predict(fit_lm_w), sigma_mcp_w, log = TRUE))
+  loglik_mcp = mean(rowSums(log_lik(fit_mcp_w)))
+  expect_equal(loglik_mcp, loglik_expected, tolerance = 0.02)
+})

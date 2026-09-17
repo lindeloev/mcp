@@ -259,11 +259,12 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
   for (col in group_cols) {
     # Add metadata for the grouping-factor levels.
     tmp = paste0("n_unique_", col)
-    jags_data[[tmp]] = length(unique(data[, col]))
+    group_levels = levels(factor(data[[col]]))
+    jags_data[[tmp]] = length(group_levels)
 
-    # Make grouping columns numeric in order of appearance.
-    # They will be recovered using the recover_levels()
-    jags_data[[col]] = as.numeric(factor(jags_data[[col]], levels = unique(jags_data[[col]])))
+    # Make grouping columns numeric in order of factor levels.
+    # They will be recovered using recover_levels()
+    jags_data[[col]] = as.numeric(factor(jags_data[[col]], levels = group_levels))
   }
 
   # Predictor design matrix. Keep the JAGS data name for custom-code compatibility.
@@ -310,9 +311,10 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
 recover_levels = function(draws, data, group_effects) {
   for (i in seq_len(nrow(group_effects))) {
     effect = group_effects[i, ]
+    group_levels = levels(factor(data[[effect$group_col]]))
     # Get vectors of old ("from") and replacement column names in draws
     from = colnames(draws[[1]])[stringr::str_starts(colnames(draws[[1]]), paste0(effect$name, '\\['))]
-    to = sprintf(paste0(effect$name, '[%s]'), unique(data[, effect$group_col]))
+    to = sprintf(paste0(effect$name, '[%s]'), group_levels)
 
     # Recode column names on each list (chain) using lapply
     names(to) = from

@@ -79,3 +79,37 @@ test_that("Poisson simulation against glm()", {
 
   testthat::expect_equal(as.numeric(coef(fit_glm_sim)), c(1, 0.15, -0.5), tolerance = 0.02)
 })
+
+
+test_that("Poisson likelihood weights against glm(weights = w)", {
+  set.seed(42)
+  N = 200
+  x = seq(0, 5, length.out = N)
+  w = runif(N, 0.5, 2.5)
+  log_mu = 1.0 + 0.25 * x
+  y = rpois(N, lambda = exp(log_mu))
+  df_w = data.frame(x = x, y = y, w = w)
+
+  fit_glm_w = glm(y ~ x, data = df_w, family = poisson(), weights = w)
+  coef_glm_w = coef(fit_glm_w)
+
+  fit_mcp_w = mcp(
+    list(y | weights(w) ~ 1 + x),
+    data = df_w,
+    family = poisson(),
+    warmup = 500,
+    iter = 2000,
+    seed = 42,
+    diagnostics = FALSE,
+    quiet = TRUE
+  )
+
+  fix_mcp_w = fixef(fit_mcp_w)
+  expect_equal(fix_mcp_w$mean[fix_mcp_w$variable == "Intercept_1"], unname(coef_glm_w[1]), tolerance = 0.05)
+  expect_equal(fix_mcp_w$mean[fix_mcp_w$variable == "x_1"], unname(coef_glm_w[2]), tolerance = 0.02)
+
+  # Log-likelihood
+  loglik_mcp = mean(rowSums(log_lik(fit_mcp_w)))
+  loglik_glm = as.numeric(logLik(fit_glm_w))
+  expect_equal(loglik_glm - loglik_mcp, 1.0, tolerance = 0.2)
+})

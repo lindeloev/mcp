@@ -117,13 +117,13 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 
   # Order rows and add `segment`/`dpar` using the canonical parameter table
   # built in mcp(). Group-level columns (e.g. "cp_1_id[A]") are matched by
-  # their base name; ties (i.e., levels of the same group-level effect) are
-  # broken alphabetically by the full column name.
+  # their base name; ties (levels of the same group effect) preserve their
+  # incoming factor-level order from draws.
   base_name = sub("\\[.*\\]$", "", estimates$variable)
   match_idx = match(base_name, pars$name)
   estimates$segment = pars$segment[match_idx]
   estimates$dpar = pars$dpar[match_idx]
-  estimates = estimates[order(match_idx, estimates$variable), ]
+  estimates = estimates[order(match_idx), ]
 
   # Add simulation parameters if the data is simulated
   sim_list = attr(fit$data[, mcp_columns(fit)$response], "simulated")
