@@ -12,17 +12,18 @@
   [`glm()`](https://rdrr.io/r/stats/glm.html) for each distributional
   parameter in each segment. Explore `ex = mcp_example("multiple")` to
   see it in action. Default priors generally align with brms, with some
-  adjustments to accommodate the change-point model.
+  adjustments to accommodate the change-point model. With this
+  possibility for more parameters also comes the convenient `same()`
+  which share coefficients across segments - including categorical
+  predictors and group-level effects.
 
 - **Group-level effects on RHS:** Predictor formulas now support
   group-level effects (random effects) using familiar `lme4` and `brms`
   syntax. `(1 | group)` specifies a group-level intercept, while
   `(1 + x || group)` and `(factor || group)` support independent
   coefficients, including slopes and factors. This also works inside
-  distributional formulas such as `sigma(1 + (factor || id))`. As with
-  [`ar()`](https://rdrr.io/r/stats/ar.html), an effect persists into
-  later segments until it is replaced or turned off with `(0 | group)`.
-  See `mcp_example("group_mu")` for a worked example. Correlated
+  distributional formulas such as `sigma(1 + (factor || id))`. See
+  `mcp_example("group_mu")` for a worked example. Correlated
   multi-coefficient terms are not yet supported.
 
 - **Native feel:** `mcpfit`s now work natively with R generics,
@@ -213,6 +214,14 @@ been added until we reach 1.0.
     select counts. An omitted `rate` warns once per session per function
     when the requested counts differ from proportions.
 
+  - **ar(p) no longer persist to later segments:** All terms are now
+    local to the segment in which they are declared. While important for
+    the new multiple-regression functionality, the only backward
+    incompatibility is that in a model like
+    `model = list(y ~ 1 + ar(1), ~ 0)`, the AR would continue into
+    segment 2. The equivalent model in v0.4+ is `~ 0 + same(ar(1))` in
+    segment 2.
+
   - Explicit prior draw selection: Methods requiring draws now require
     posterior draws by default and error if they are unavailable. Use
     `prior = TRUE` to select prior draws; prior-only fits no longer
@@ -320,16 +329,16 @@ been added until we reach 1.0.
   - Autoregression ([`ar()`](https://rdrr.io/r/stats/ar.html)) has been
     generalized to link-scale observation-driven GARMA residuals for
     Gaussian, binomial, Bernoulli, Poisson, and negative-binomial models
-    with their default links, using `ar(..., boundary = 0.1)` by default
-    to keep zero and boundary counts finite. Added moving-average terms
-    with `ma(q)`, which can be used alone or combined with `ar(p)` in
-    each segment. Independent time series can be separated using
-    `series = <column>`.
+    with their default links, using `ar(..., threshold = 0.1)` by
+    default to keep zero and boundary observations finite on the link
+    scale. Added moving-average terms with `ma(q)`, which can be used
+    alone or combined with `ar(p)` in each segment. Independent time
+    series can be separated using `series = <column>`.
 
-  - GARMA observation boundaries are now validated with
+  - GARMA observation thresholds are now validated with
     family-appropriate bounds: strictly below 0.5 for
     `family = bernoulli()`, and strictly below half the smallest trial
-    count for `family = binomial()`, preventing boundaries from erasing
+    count for `family = binomial()`, preventing thresholds from erasing
     the binary response history.
 
   - AR and MA components can now be turned off in later segments using

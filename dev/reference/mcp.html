@@ -102,8 +102,14 @@ between segments. See details or <a href="https://lindeloev.github.io/mcp/">the 
 <code>response ~ cp ~ predictors</code> (e.g., <code>y ~ 1 ~ 1 + x</code>), except the first segment
 has no change point and uses <code>response ~ predictors</code>. The response and
 change-point parts can be omitted (<code>cp ~ predictor</code> assumes the same
-response; <code>~ predictor</code> assumes an intercept-only change point). Non-$x$ terms persist
-into later segments until replaced or removed by an intercept reset (see details). See examples on the
+response; <code>~ predictor</code> assumes an intercept-only change point). Population terms other than
+the segment-local change-point predictor are active only where declared (see details). See examples on the
+response; <code>~ predictor</code> assumes an intercept-only change point).
+In each segment, all terms must be explicitly declared to be active; terms not declared
+are inactive (joining via <code>~ 0 + ...</code> continues from the level reached by previous
+segment-local x-dependent terms). As an exception, required non-zero distributional parameters like <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>
+are automatically supplied if omitted. To share coefficients across segments without
+estimating new ones, use <code>same()</code>. See examples on the
 <a href="https://lindeloev.github.io/mcp/">mcp website</a>.</p>
 <p><strong>1. Response (segment 1 only):</strong></p><ul><li><p><code>y ~ ...</code>: Standard continuous or count response (Gaussian, Poisson, Bernoulli).</p></li>
 <li><p><code>successes | trials(total) ~ ...</code>: Binomial response (<code>family = binomial()</code>).</p></li>
@@ -117,14 +123,14 @@ not predictions).</p></li>
 </ul><p><strong>3. Regression formula (all segments):</strong> <a href="https://lindeloev.github.io/mcp/articles/formulas.html">Read more</a></p><ul><li><p><code>~ 1 + x</code>: Disjoined slope with a new segment intercept.</p></li>
 <li><p><code>~ 0 + x</code>: Joined slope (no intercept; continuous from previous segment).</p></li>
 <li><p><code>~ 1</code>: Plateau (intercept only, no slope).</p></li>
-<li><p><code>~ x:group + I(x^2) + exp(z)</code>: Extended terms, interactions, and R-side bases
+<li><p><code>~ x:state + I(x^2) + exp(z)</code>: Extended terms, interactions, and R-side bases
 (<code><a href="https://rdrr.io/r/base/scale.html" class="external-link">scale()</a></code>, <code><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly()</a></code>, <code><a href="https://rdrr.io/r/splines/ns.html" class="external-link">splines::ns()</a></code>). Bases are evaluated before sampling and reused for <code>newdata</code>.</p></li>
 <li><p><code>~ 1 + (1 | id)</code>: Group-level intercepts (or <code>(1 + x || id)</code> for independent slopes and intercepts).
 <a href="https://lindeloev.github.io/mcp/articles/group_effects.html">Read more</a>.</p></li>
 <li><p><code>~ sigma(1 + x)</code>: Distributional parameters on the link scale (e.g., log residual SD).
 <a href="https://lindeloev.github.io/mcp/articles/dpar.html">Read more</a>.</p></li>
 <li><p><code>~ ar(1) + ma(1)</code>: Autoregressive and moving-average time-series residuals on the link scale
-(accepts regression formulas, <code>series = id</code>, and <code>boundary</code>; use <code>ar(0)</code> or <code>ma(0)</code> to turn off in later segments).
+(accepts regression formulas, <code>series = id</code>, and <code>threshold</code>; declare them in every segment where they are active).
 <a href="https://lindeloev.github.io/mcp/articles/arma.html">Read more</a>.</p></li>
 </ul></dd>
 
@@ -148,7 +154,10 @@ SD for <code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link"
 log-SD for <code><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">dlnorm()</a></code>. See details.</p></li>
 <li><p>A numerical value (e.g., <code>Intercept_1 = -2.1</code>) indicating a fixed value.</p></li>
 <li><p>A model parameter name (e.g., <code>Intercept_2 = "Intercept_1"</code>), indicating that this parameter is shared -
-typically between segments. If two group-level deviations are shared this way,
+typically between segments. If two group-level deviations are shared this way,</p></li>
+<li><p>A model parameter name (e.g., <code>Intercept_2 = "Intercept_1"</code>), equating parameters via JAGS.
+Note that sharing coefficients via <code>same()</code> in the segment formulas (e.g., <code>~ same(1)</code>)
+is generally preferred. If two group-level deviations are shared via the prior,
 they will need to have the same grouping variable.</p></li>
 <li><p>The default prior on change points is <code>dirichlet(1)</code> (uniform order statistics).
 For a single change point, this is the Beta(1, 1) / Uniform distribution over <code>[min(x), max(x)]</code>.
@@ -294,11 +303,11 @@ predictor including serial dependence, the recurrence decomposes into components
 \end{aligned}$$</p>
 <p>where \(\phi_{j,t}\) is the lag-\(j\) autoregressive (AR) coefficient at time \(t\),
 \(\theta_{k,t}\) is the lag-\(k\) moving-average (MA) coefficient at time \(t\),
-\(g(\cdot)\) is the link function, and \(y^*_t\) is the boundary-constrained observation with pseudo-count \(b\) (set via argument <code>boundary = 0.1</code> in <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> / <code>ma()</code>) to keep residuals finite on the link scale:</p><ul><li><p><strong>Gaussian:</strong> \(y^*_t = y_t\).</p></li>
-<li><p><strong>Poisson / Negative Binomial:</strong> \(y^*_t = \max(y_t, b)\) to prevent \(\log(0)\). Here \(b\) replaces zero counts with a small positive count.</p></li>
-<li><p><strong>Binomial / Bernoulli:</strong> \(y^*_t = \min(\max(y_t, b), n_t - b) / n_t\), where \(y_t\) is observed successes, \(n_t\) is the number of trials (\(n_t = 1\) for Bernoulli), and \(b\) clamps counts to the interval \([b, n_t - b]\) before converting to a rate, preventing \(\text{logit}(0)\) and \(\text{logit}(1)\).</p></li>
+\(g(\cdot)\) is the link function, and \(y^*_t\) is the threshold-constrained observation with threshold constant \(c\) (set via argument <code>threshold = 0.1</code> in <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> / <code>ma()</code>) to keep residuals finite on the link scale:</p><ul><li><p><strong>Gaussian:</strong> \(y^*_t = y_t\).</p></li>
+<li><p><strong>Poisson / Negative Binomial:</strong> \(y^*_t = \max(y_t, c)\) to prevent \(\log(0)\). Here \(c\) replaces zero counts with a small positive threshold value.</p></li>
+<li><p><strong>Binomial / Bernoulli:</strong> \(y^*_t = \min(\max(y_t, c), n_t - c) / n_t\), where \(y_t\) is observed successes, \(n_t\) is the number of trials (\(n_t = 1\) for Bernoulli), and \(c\) constrains counts to the interval \([c, n_t - c]\) before converting to a rate, preventing \(\text{logit}(0)\) and \(\text{logit}(1)\).</p></li>
 </ul><p>Implications:</p><ul><li><p>For an \(N\)-order component, the last \(N\) values <em>before</em> the segment onset are input to the first \(\eta_t\) in the segment.</p></li>
-<li><p>AR and MA components persist into later segments until replaced or turned off via <code>ar(0)</code> or <code>ma(0)</code>.</p></li>
+<li><p>AR and MA components are off in segments where they are not declared; <code>ar(0)</code> and <code>ma(0)</code> are equivalent explicit turn-off forms.</p></li>
 <li><p>AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.</p></li>
 <li><p>See <a href="https://lindeloev.github.io/mcp/articles/arma.html">the arma article</a> for more details.</p></li>
 </ul></div>
@@ -327,11 +336,13 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 
 <ul><li><p>Lindeløv, J. K. (2020). mcp: An R Package for Regression With Multiple Change Points.
 <em>OSF Preprints</em>. <a href="https://doi.org/10.31219/osf.io/fzqxv" class="external-link">doi:10.31219/osf.io/fzqxv</a>
+
 Introduces the <code>mcp</code> package, formula syntax, default priors, and workflow for regression
 with multiple change points across generalized linear and time-series models. Newer-than-2020 versions of
 the paper may be available at that link. Please cite the newest version.</p></li>
 <li><p>Carlin, B. P., Gelfand, A. E., &amp; Smith, A. F. (1992). Hierarchical Bayesian Analysis of
 Changepoint Problems. <em>Applied Statistics</em>, 41(2), 389–405. <a href="https://doi.org/10.2307/2347570" class="external-link">doi:10.2307/2347570</a>
+
 Introduced the Gibbs sampling approach for continuous change points in segmented regression
 and hierarchical models, providing the computational foundation used by BUGS and JAGS.</p></li>
 </ul></div>
@@ -468,13 +479,20 @@ and hierarchical models, providing the computational foundation used by BUGS and
 <span class="r-in"><span>  Intercept_1 <span class="op">=</span> <span class="fl">15</span>,</span></span>
 <span class="r-in"><span>  time_2 <span class="op">=</span> <span class="st">"dt(0, 2, 1) T(0, )"</span>,  <span class="co"># t-dist slope. Truncated to positive.</span></span></span>
 <span class="r-in"><span>  cp_2 <span class="op">=</span> <span class="st">"dunif(cp_1, 80)"</span>,       <span class="co"># change point to segment 2 &gt; cp_1 and &lt; 80.</span></span></span>
-<span class="r-in"><span>  Intercept_3 <span class="op">=</span> <span class="st">"Intercept_1"</span>     <span class="co"># Shared intercept between segment 1 and 3</span></span></span>
+<span class="r-in"><span>  Intercept_3 <span class="op">=</span> <span class="st">"Intercept_1"</span>,     <span class="co"># Shared intercept between segment 1 and 3</span></span></span>
+<span class="r-in"><span>  cp_2 <span class="op">=</span> <span class="st">"dunif(cp_1, 80)"</span>        <span class="co"># change point to segment 3 &gt; cp_1 and &lt; 80.</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">fit3</span> <span class="op">=</span> <span class="fu">mcp</span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span>, prior <span class="op">=</span> <span class="va">prior</span>, warmup <span class="op">=</span> <span class="fl">2000</span>, iter <span class="op">=</span> <span class="fl">6000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Some parameters may not have converged well:</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span>   * rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400: Intercept_3</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in validate_prior_v1(prior):</span> `prior` has duplicated entries for the same parameter: cp_2</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Share coefficients across segments using same() (e.g., reuse Intercept_1 in segment 3)</span></span></span>
+<span class="r-in"><span><span class="va">model_same</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">response</span> <span class="op">~</span> <span class="fl">1</span>,</span></span>
+<span class="r-in"><span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">time</span>,</span></span>
+<span class="r-in"><span>  <span class="op">~</span> <span class="fu">same</span><span class="op">(</span><span class="fl">1</span>, as <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="va">time</span>  <span class="co"># Reuse Intercept_1 instead of estimating Intercept_3</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fit_same</span> <span class="op">=</span> <span class="fu">mcp</span><span class="op">(</span><span class="va">model_same</span>, data <span class="op">=</span> <span class="va">data</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Show the JAGS model</span></span></span>
 <span class="r-in"><span><span class="va">demo_fit</span><span class="op">$</span><span class="va">jags_code</span></span></span>

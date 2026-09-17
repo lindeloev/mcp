@@ -165,7 +165,7 @@ adjacent change points both vary, their group-specific locations are
 ordered against each other—not against the adjacent population change
 point. Internally, JAGS samples <span class="math inline">\kappa_{ig}</span> directly for efficiency.</p>
 <p>Unlike predictor group-level effects, a change-point group effect
-applies only to the boundary where it is written.</p>
+applies only at the change point where it is written.</p>
 </div>
 <div class="section level2">
 <h2 id="predictor-group-level-effects">Predictor group-level effects<a class="anchor" aria-label="anchor" href="#predictor-group-level-effects"></a>
@@ -176,14 +176,20 @@ from the population-level intercept:</p>
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>,  <span class="co"># Starts group-level intercept</span></span>
 <span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>,         <span class="co"># No active group-level intercept here</span></span>
-<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>     <span class="co"># (0|id) turns it off</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>,    <span class="co"># (0|id) turns it off</span></span>
+<span>  <span class="op">~</span><span class="fl">0</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>, as <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>  <span class="co"># Share/reuse group-level intercept from segment 1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Group intercepts and non-local group terms are active only where
 declared. A local group slope on <code>x</code> retains its joined
 endpoint until a later group intercept or <code>(0|id)</code> resets the
 block. This is tracked separately for each grouping factor and
 distributional parameter. Read more in <a href="../articles/formulas.html#on-carry-over-between-segments">the
-article on formulas</a>.</p>
+article on formulas</a>. Notice <code>same()</code> above. Sharing
+selects the complete active source block, never a subset of its
+coefficients. It preserves fitted coding and parameter names while local
+slopes use the current segment’s coordinates. The same syntax works
+inside <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> and other family parameters. See
+<code>mcp_example("group_mu")</code>.</p>
 <p>Use <code>||</code> for independent group-level slopes and factor
 coefficients:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">

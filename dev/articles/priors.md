@@ -70,11 +70,15 @@ Other notes:
   numerical value (as `cp_2` above). A constant is a 100% prior belief
   in that value, and it will therefore not be estimated.
 
-- You can also equate one variable with another (`x_3 = "x_2"` above).
-  You would usually do this to share parameters across segments, but you
-  can be creative and do something like `x_3 = "x_2 + 5 - cp_1/10"` if
-  you want. In any case, it will lead to one less parameter being
-  estimated, i.e., one less free parameter.
+- You can also equate one variable with another (`x_3 = "x_2"` above)
+  though a more readable equivalent is declaring `same(x)` in segment 3.
+  That removes the `x_3` as parameter while the prior-method duplicates
+  it. Read more about the versatile `same()` in [Understanding mcp
+  formulas](https://lindeloev.github.io/mcp/dev/articles/formulas.md).
+
+- You can write deterministic expression such as
+  `x_3 = "x_2 + 5 - cp_1/10"`. Since `x_3` is now deterministic given
+  `x_2` and `cp_1`, this leaves one fewer free parameter to estimate.
 
 Let us see the priors after running them through `mcp` and compare to
 the default priors:
@@ -324,7 +328,8 @@ The number in parentheses is a common \alpha concentration parameter
 - \alpha = 1 (default): completely flat uniform order statistics as
   shown above.
 - \alpha \> 1 (e.g. 2, 5): penalizes change points from occurring close
-  to each other or the boundaries, favoring more evenly spaced segments.
+  to each other or the limits of the data range, favoring more evenly
+  spaced segments.
 - \alpha \< 1 (e.g. 0.5): favors clustering and permits change points to
   occur close together.
 

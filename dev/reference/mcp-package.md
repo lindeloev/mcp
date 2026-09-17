@@ -111,21 +111,21 @@ decomposes into components:
 where \\\phi\_{j,t}\\ is the lag-\\j\\ autoregressive (AR) coefficient
 at time \\t\\, \\\theta\_{k,t}\\ is the lag-\\k\\ moving-average (MA)
 coefficient at time \\t\\, \\g(\cdot)\\ is the link function, and
-\\y^\*\_t\\ is the boundary-constrained observation with pseudo-count
-\\b\\ (set via argument `boundary = 0.1` in
+\\y^\*\_t\\ is the threshold-constrained observation with threshold
+constant \\c\\ (set via argument `threshold = 0.1` in
 [`ar()`](https://rdrr.io/r/stats/ar.html) / `ma()`) to keep residuals
 finite on the link scale:
 
 - **Gaussian:** \\y^\*\_t = y_t\\.
 
-- **Poisson / Negative Binomial:** \\y^\*\_t = \max(y_t, b)\\ to prevent
-  \\\log(0)\\. Here \\b\\ replaces zero counts with a small positive
-  count.
+- **Poisson / Negative Binomial:** \\y^\*\_t = \max(y_t, c)\\ to prevent
+  \\\log(0)\\. Here \\c\\ replaces zero counts with a small positive
+  threshold value.
 
-- **Binomial / Bernoulli:** \\y^\*\_t = \min(\max(y_t, b), n_t - b) /
+- **Binomial / Bernoulli:** \\y^\*\_t = \min(\max(y_t, c), n_t - c) /
   n_t\\, where \\y_t\\ is observed successes, \\n_t\\ is the number of
-  trials (\\n_t = 1\\ for Bernoulli), and \\b\\ clamps counts to the
-  interval \\\[b, n_t - b\]\\ before converting to a rate, preventing
+  trials (\\n_t = 1\\ for Bernoulli), and \\c\\ constrains counts to the
+  interval \\\[c, n_t - c\]\\ before converting to a rate, preventing
   \\\text{logit}(0)\\ and \\\text{logit}(1)\\.
 
 Implications:
@@ -133,8 +133,8 @@ Implications:
 - For an \\N\\-order component, the last \\N\\ values *before* the
   segment onset are input to the first \\\eta_t\\ in the segment.
 
-- AR and MA components persist into later segments until replaced or
-  turned off via `ar(0)` or `ma(0)`.
+- AR and MA components are off in segments where they are not declared;
+  `ar(0)` and `ma(0)` are equivalent explicit turn-off forms.
 
 - AR coefficients are not jointly constrained to stationarity; nor MA
   coefficients to invertibility.

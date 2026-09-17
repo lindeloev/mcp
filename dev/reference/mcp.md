@@ -37,9 +37,17 @@ mcp(
   segment has no change point and uses `response ~ predictors`. The
   response and change-point parts can be omitted (`cp ~ predictor`
   assumes the same response; `~ predictor` assumes an intercept-only
-  change point). Non-\$x\$ terms persist into later segments until
-  replaced or removed by an intercept reset (see details). See examples
-  on the [mcp website](https://lindeloev.github.io/mcp/).
+  change point). Population terms other than the segment-local
+  change-point predictor are active only where declared (see details).
+  See examples on the response; `~ predictor` assumes an intercept-only
+  change point). In each segment, all terms must be explicitly declared
+  to be active; terms not declared are inactive (joining via `~ 0 + ...`
+  continues from the level reached by previous segment-local x-dependent
+  terms). As an exception, required non-zero distributional parameters
+  like [`sigma()`](https://rdrr.io/r/stats/sigma.html) are automatically
+  supplied if omitted. To share coefficients across segments without
+  estimating new ones, use `same()`. See examples on the [mcp
+  website](https://lindeloev.github.io/mcp/).
 
   **1. Response (segment 1 only):**
 
@@ -77,7 +85,7 @@ mcp(
 
   - `~ 1`: Plateau (intercept only, no slope).
 
-  - `~ x:group + I(x^2) + exp(z)`: Extended terms, interactions, and
+  - `~ x:state + I(x^2) + exp(z)`: Extended terms, interactions, and
     R-side bases ([`scale()`](https://rdrr.io/r/base/scale.html),
     [`poly()`](https://rdrr.io/r/stats/poly.html),
     [`splines::ns()`](https://rdrr.io/r/splines/ns.html)). Bases are
@@ -93,8 +101,8 @@ mcp(
 
   - `~ ar(1) + ma(1)`: Autoregressive and moving-average time-series
     residuals on the link scale (accepts regression formulas,
-    `series = id`, and `boundary`; use `ar(0)` or `ma(0)` to turn off in
-    later segments). [Read
+    `series = id`, and `threshold`; declare them in every segment where
+    they are active). [Read
     more](https://lindeloev.github.io/mcp/articles/arma.html).
 
 - data:
@@ -129,8 +137,13 @@ mcp(
 
   - A model parameter name (e.g., `Intercept_2 = "Intercept_1"`),
     indicating that this parameter is shared - typically between
-    segments. If two group-level deviations are shared this way, they
-    will need to have the same grouping variable.
+    segments. If two group-level deviations are shared this way,
+
+  - A model parameter name (e.g., `Intercept_2 = "Intercept_1"`),
+    equating parameters via JAGS. Note that sharing coefficients via
+    `same()` in the segment formulas (e.g., `~ same(1)`) is generally
+    preferred. If two group-level deviations are shared via the prior,
+    they will need to have the same grouping variable.
 
   - The default prior on change points is `dirichlet(1)` (uniform order
     statistics). For a single change point, this is the Beta(1, 1) /
@@ -324,21 +337,21 @@ decomposes into components:
 where \\\phi\_{j,t}\\ is the lag-\\j\\ autoregressive (AR) coefficient
 at time \\t\\, \\\theta\_{k,t}\\ is the lag-\\k\\ moving-average (MA)
 coefficient at time \\t\\, \\g(\cdot)\\ is the link function, and
-\\y^\*\_t\\ is the boundary-constrained observation with pseudo-count
-\\b\\ (set via argument `boundary = 0.1` in
+\\y^\*\_t\\ is the threshold-constrained observation with threshold
+constant \\c\\ (set via argument `threshold = 0.1` in
 [`ar()`](https://rdrr.io/r/stats/ar.html) / `ma()`) to keep residuals
 finite on the link scale:
 
 - **Gaussian:** \\y^\*\_t = y_t\\.
 
-- **Poisson / Negative Binomial:** \\y^\*\_t = \max(y_t, b)\\ to prevent
-  \\\log(0)\\. Here \\b\\ replaces zero counts with a small positive
-  count.
+- **Poisson / Negative Binomial:** \\y^\*\_t = \max(y_t, c)\\ to prevent
+  \\\log(0)\\. Here \\c\\ replaces zero counts with a small positive
+  threshold value.
 
-- **Binomial / Bernoulli:** \\y^\*\_t = \min(\max(y_t, b), n_t - b) /
+- **Binomial / Bernoulli:** \\y^\*\_t = \min(\max(y_t, c), n_t - c) /
   n_t\\, where \\y_t\\ is observed successes, \\n_t\\ is the number of
-  trials (\\n_t = 1\\ for Bernoulli), and \\b\\ clamps counts to the
-  interval \\\[b, n_t - b\]\\ before converting to a rate, preventing
+  trials (\\n_t = 1\\ for Bernoulli), and \\c\\ constrains counts to the
+  interval \\\[c, n_t - c\]\\ before converting to a rate, preventing
   \\\text{logit}(0)\\ and \\\text{logit}(1)\\.
 
 Implications:
@@ -346,8 +359,8 @@ Implications:
 - For an \\N\\-order component, the last \\N\\ values *before* the
   segment onset are input to the first \\\eta_t\\ in the segment.
 
-- AR and MA components persist into later segments until replaced or
-  turned off via `ar(0)` or `ma(0)`.
+- AR and MA components are off in segments where they are not declared;
+  `ar(0)` and `ma(0)` are equivalent explicit turn-off forms.
 
 - AR coefficients are not jointly constrained to stationarity; nor MA
   coefficients to invertibility.
@@ -539,13 +552,20 @@ prior = list(
   Intercept_1 = 15,
   time_2 = "dt(0, 2, 1) T(0, )",  # t-dist slope. Truncated to positive.
   cp_2 = "dunif(cp_1, 80)",       # change point to segment 2 > cp_1 and < 80.
-  Intercept_3 = "Intercept_1"     # Shared intercept between segment 1 and 3
+  Intercept_3 = "Intercept_1",     # Shared intercept between segment 1 and 3
+  cp_2 = "dunif(cp_1, 80)"        # change point to segment 3 > cp_1 and < 80.
 )
 
 fit3 = mcp(model, data = data, prior = prior, warmup = 2000, iter = 6000, seed = 42)
-#> Warning: Some parameters may not have converged well:
-#>   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: Intercept_3
-#> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
+#> Error in validate_prior_v1(prior): `prior` has duplicated entries for the same parameter: cp_2
+
+# Share coefficients across segments using same() (e.g., reuse Intercept_1 in segment 3)
+model_same = list(
+  response ~ 1,
+  ~ 0 + time,
+  ~ same(1, as = 1) + time  # Reuse Intercept_1 instead of estimating Intercept_3
+)
+fit_same = mcp(model_same, data = data, sample = FALSE)
 
 # Show the JAGS model
 demo_fit$jags_code

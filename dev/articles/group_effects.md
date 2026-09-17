@@ -76,7 +76,7 @@ against the adjacent population change point. Internally, JAGS samples
 \kappa\_{ig} directly for efficiency.
 
 Unlike predictor group-level effects, a change-point group effect
-applies only to the boundary where it is written.
+applies only at the change point where it is written.
 
 ## Predictor group-level effects
 
@@ -88,7 +88,8 @@ the population-level intercept:
 model = list(
   y ~ 1 + (1|id),  # Starts group-level intercept
   ~ 0 + x,         # No active group-level intercept here
-  ~ 1 + (0|id)     # (0|id) turns it off
+  ~ 1 + (0|id),    # (0|id) turns it off
+  ~0 + same((1|id), as = 1)  # Share/reuse group-level intercept from segment 1
 )
 ```
 
@@ -98,6 +99,12 @@ later group intercept or `(0|id)` resets the block. This is tracked
 separately for each grouping factor and distributional parameter. Read
 more in [the article on
 formulas](https://lindeloev.github.io/mcp/dev/articles/formulas.html#on-carry-over-between-segments).
+Notice `same()` above. Sharing selects the complete active source block,
+never a subset of its coefficients. It preserves fitted coding and
+parameter names while local slopes use the current segment’s
+coordinates. The same syntax works inside
+[`sigma()`](https://rdrr.io/r/stats/sigma.html) and other family
+parameters. See `mcp_example("group_mu")`.
 
 Use `||` for independent group-level slopes and factor coefficients:
 

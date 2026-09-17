@@ -166,11 +166,15 @@ temporarily supported with a deprecation warning.</p></li>
 numerical value (as <code>cp_2</code> above). A constant is a 100% prior
 belief in that value, and it will therefore not be estimated.</p></li>
 <li><p>You can also equate one variable with another
-(<code>x_3 = "x_2"</code> above). You would usually do this to share
-parameters across segments, but you can be creative and do something
-like <code>x_3 = "x_2 + 5 - cp_1/10"</code> if you want. In any case, it
-will lead to one less parameter being estimated, i.e., one less free
-parameter.</p></li>
+(<code>x_3 = "x_2"</code> above) though a more readable equivalent is
+declaring <code>same(x)</code> in segment 3. That removes the
+<code>x_3</code> as parameter while the prior-method duplicates it. Read
+more about the versatile <code>same()</code> in <a href="../articles/formulas.html">Understanding mcp
+formulas</a>.</p></li>
+<li><p>You can write deterministic expression such as
+<code>x_3 = "x_2 + 5 - cp_1/10"</code>. Since <code>x_3</code> is now
+deterministic given <code>x_2</code> and <code>cp_1</code>, this leaves
+one fewer free parameter to estimate.</p></li>
 </ul>
 <p>Let us see the priors after running them through <code>mcp</code> and
 compare to the default priors:</p>
@@ -386,8 +390,8 @@ points must share the same <span class="math inline">\alpha</span>):</p>
 flat uniform order statistics as shown above.</li>
 <li>
 <span class="math inline">\alpha &gt; 1</span> (e.g. 2, 5):
-penalizes change points from occurring close to each other or the
-boundaries, favoring more evenly spaced segments.</li>
+penalizes change points from occurring close to each other or the limits
+of the data range, favoring more evenly spaced segments.</li>
 <li>
 <span class="math inline">\alpha &lt; 1</span> (e.g. 0.5): favors
 clustering and permits change points to occur close together.</li>

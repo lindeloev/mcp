@@ -197,7 +197,7 @@ population size) varies across observations, you can model rates \lambda
 # Example: Event counts over varying observation durations (as here) or population
 model = list(
   events ~ 1 + year + offset(log(exposure)),  # Segment 1
-  ~ 1 + year                                  # Segment 2
+  ~ 1 + year + offset(log(exposure))          # Segment 2
 )
 
 fit = mcp(model, data = df, family = poisson())  # implicit link = "log"

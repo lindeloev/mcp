@@ -125,38 +125,30 @@ flexibility:
 ``` r
 
 model = list(
-  # Increasing standard deviation.
-  y ~ 1 + sigma(1 + x),
+  # 1. Increasing standard deviation.
+  y ~ 1 + sigma(1 + x),  # Intercept_1, sigma_1, sigma_x_1
   
-  # Abrupt change in mean and standard deviation.
-  ~ 1 + sigma(1),
+  # 2. Abrupt change in mean and standard deviation.
+  ~ 1 + sigma(1),  # At cp_1: Intercept_2, sigma_2
   
-  # Joined slope on mean; log-SD changes as a second-order polynomial.
-  ~ 0 + x + sigma(0 + x + I(x^2)),
+  # 3. Joined slope on mean; log-SD changes as a second-order polynomial.
+  ~ 0 + x + sigma(0 + x + I(x^2)),  # At cp_2: x_3, sigma_x_3, sigma_xE2_3
   
-  # Continue slope on mean, but plateau standard deviation (no sigma() term).
-  ~ 0 + x
-)
-
-# The slope in segment 4 is just a continuation of 
-# the slope in segment 3, as if there was no change point.
-prior = list(
-  x_4 = "x_3"
+  # 4. Continue slope on mean, but plateau standard deviation (no sigma() term).
+  ~ 0 + same(x)  # At cp_3: reuse x_3 (implicit sigma(0))
 )
 ```
 
 Notice a few things here:
 
-- The prior ensures that the mean slope remains constant between segment
-  3 and 4. So only `sigma` changes there. Sharing the slope through the
-  prior effectively removes the change point in the mean (read more
-  about [priors in
-  mcp](https://lindeloev.github.io/mcp/dev/articles/priors.md)).
-- Segment 4: Without a new
-  [`sigma()`](https://rdrr.io/r/stats/sigma.html) term, the
-  standard-deviation model persists from segment 3; because no new slope
-  on x is declared for [`sigma()`](https://rdrr.io/r/stats/sigma.html),
-  it forms a flat plateau continuing from the level reached at `cp_3`.
+- `same(x)` ensures that the mean slope remains constant between segment
+  3 and 4. So only `sigma` changes there. Sharing the slope effectively
+  removes the change point in the mean (read more about [formulas in
+  mcp](https://lindeloev.github.io/mcp/dev/articles/formulas.md)).
+- Segment 4: Because `sigma` is a required distributional parameter for
+  the [`gaussian()`](https://rdrr.io/r/stats/family.html) family, it
+  cannot “turn off” just because it is not declared explicitly. `mcp`
+  implicitly adds a `sigma(0)` term in these segments.
 
 In general, the log-SD parameters are named `sigma_[normalname]`, where
 “normalname” is the usual parameter names in mcp (see more
@@ -187,7 +179,8 @@ df$y = empty$simulate(
   sigma_2 = log(4),
   sigma_x_3 = 0.02,
   sigma_xE2_3 = 0.00015,
-  x_3 = 1.2, x_4 = 1.2)
+  x_3 = 1.2
+)
 ```
 
 ### Fit it and inspect results
@@ -196,7 +189,7 @@ Fit it:
 
 ``` r
 
-fit = mcp(model, data = df, prior = prior, iter = 5000, seed = 42)
+fit = mcp(model, data = df, iter = 5000, seed = 42)
 ```
 
 Plotting a posterior predictive interval is an intuitive way to see how
@@ -238,7 +231,7 @@ summary(fit)
     ##   1: y ~ 1 + sigma(1 + x)
     ##   2: y ~ 1 ~ 1 + sigma(1)
     ##   3: y ~ 1 ~ 0 + x + sigma(0 + x + I(x^2))
-    ##   4: y ~ 1 ~ 0 + x
+    ##   4: y ~ 1 ~ 0 + same(x)
     ## 
     ## Change point parameters:
     ##     variable     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
@@ -251,7 +244,6 @@ summary(fit)
     ##  Intercept_1 -2.0e+01 4.5e-01 -2.1e+01 -1.9e+01 1.00     4499     4514 -2.0e+01    OK
     ##  Intercept_2  6.8e-01 7.0e-01 -6.4e-01  2.1e+00 1.00     3089     5238  0.0e+00    OK
     ##  x_3          1.2e+00 3.2e-02  1.1e+00  1.2e+00 1.00     2554     4758  1.2e+00    OK
-    ##  x_4          1.2e+00 3.2e-02  1.1e+00  1.2e+00 1.00     2554     4758  1.2e+00    OK
     ##  sigma_1      4.1e-01 2.6e-01 -6.4e-02  9.3e-01 1.00      870     1500  0.0e+00    OK
     ##  sigma_x_1    3.7e-02 8.7e-03  2.0e-02  5.4e-02 1.00      877     1463  4.6e-02    OK
     ##  sigma_2      1.3e+00 1.1e-01  1.1e+00  1.6e+00 1.00      789     2111  1.4e+00    OK
@@ -315,7 +307,6 @@ fit$jags_code
     ##   Intercept_1 ~ dt(24.8, 1/(62.2)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5
     ##   Intercept_2 ~ dt(24.8, 1/(62.2)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5
     ##   x_3 ~ dt(0, 1/(0.3125628)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change
-    ##   x_4 = x_3  # Same value as x_3
     ##   sigma_1 ~ dt(0, 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept
     ##   sigma_x_1 ~ dt(0, 1/(0.01256281)^2, 3)   # Regularizing log-SD coefficient scaled to a reference predictor change
     ##   sigma_2 ~ dt(0, 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept
@@ -335,7 +326,7 @@ fit$jags_code
     ##       (x[i_] >= cp_0) * (x[i_] < cp_1) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + 
     ##       (x[i_] >= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(Intercept_2)) * 1 + 
     ##       (x[i_] >= cp_2) * inprod(rhs_matrix_[i_, c(3)], c(x_3)) * x_local_3_[i_] + 
-    ##       (x[i_] >= cp_3) * inprod(rhs_matrix_[i_, c(4)], c(x_4)) * x_local_4_[i_]
+    ##       (x[i_] >= cp_3) * inprod(rhs_matrix_[i_, c(4)], c(x_3)) * x_local_4_[i_]
     ##     
     ##     # Formula for sigma
     ##     link_sigma_[i_] =

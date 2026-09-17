@@ -67,9 +67,17 @@ get_predictors(model, data, family, par_x, check_rank = TRUE)
   segment has no change point and uses `response ~ predictors`. The
   response and change-point parts can be omitted (`cp ~ predictor`
   assumes the same response; `~ predictor` assumes an intercept-only
-  change point). Non-\$x\$ terms persist into later segments until
-  replaced or removed by an intercept reset (see details). See examples
-  on the [mcp website](https://lindeloev.github.io/mcp/).
+  change point). Population terms other than the segment-local
+  change-point predictor are active only where declared (see details).
+  See examples on the response; `~ predictor` assumes an intercept-only
+  change point). In each segment, all terms must be explicitly declared
+  to be active; terms not declared are inactive (joining via `~ 0 + ...`
+  continues from the level reached by previous segment-local x-dependent
+  terms). As an exception, required non-zero distributional parameters
+  like [`sigma()`](https://rdrr.io/r/stats/sigma.html) are automatically
+  supplied if omitted. To share coefficients across segments without
+  estimating new ones, use `same()`. See examples on the [mcp
+  website](https://lindeloev.github.io/mcp/).
 
   **1. Response (segment 1 only):**
 
@@ -107,7 +115,7 @@ get_predictors(model, data, family, par_x, check_rank = TRUE)
 
   - `~ 1`: Plateau (intercept only, no slope).
 
-  - `~ x:group + I(x^2) + exp(z)`: Extended terms, interactions, and
+  - `~ x:state + I(x^2) + exp(z)`: Extended terms, interactions, and
     R-side bases ([`scale()`](https://rdrr.io/r/base/scale.html),
     [`poly()`](https://rdrr.io/r/stats/poly.html),
     [`splines::ns()`](https://rdrr.io/r/splines/ns.html)). Bases are
@@ -123,8 +131,8 @@ get_predictors(model, data, family, par_x, check_rank = TRUE)
 
   - `~ ar(1) + ma(1)`: Autoregressive and moving-average time-series
     residuals on the link scale (accepts regression formulas,
-    `series = id`, and `boundary`; use `ar(0)` or `ma(0)` to turn off in
-    later segments). [Read
+    `series = id`, and `threshold`; declare them in every segment where
+    they are active). [Read
     more](https://lindeloev.github.io/mcp/articles/arma.html).
 
 - family:

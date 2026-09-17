@@ -268,6 +268,10 @@ formulas](https://lindeloev.github.io/mcp/articles/formulas.html):
   points), `x_i` (slopes), `ar*`/`ma*` (autocorrelation), and `sigma_*`
   (Gaussian residual standard deviation).
 
+- All terms must be explicitly declared in each segment where they are
+  active; omitting a term turns it off. Use `same(z)` to share a
+  coefficient with previous segments.
+
 - The change point model is basically an `ifelse` model with order
   constraints on the change points.
 

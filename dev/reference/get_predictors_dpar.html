@@ -130,8 +130,14 @@ several distributional terms.</p></dd>
 <code>response ~ cp ~ predictors</code> (e.g., <code>y ~ 1 ~ 1 + x</code>), except the first segment
 has no change point and uses <code>response ~ predictors</code>. The response and
 change-point parts can be omitted (<code>cp ~ predictor</code> assumes the same
-response; <code>~ predictor</code> assumes an intercept-only change point). Non-$x$ terms persist
-into later segments until replaced or removed by an intercept reset (see details). See examples on the
+response; <code>~ predictor</code> assumes an intercept-only change point). Population terms other than
+the segment-local change-point predictor are active only where declared (see details). See examples on the
+response; <code>~ predictor</code> assumes an intercept-only change point).
+In each segment, all terms must be explicitly declared to be active; terms not declared
+are inactive (joining via <code>~ 0 + ...</code> continues from the level reached by previous
+segment-local x-dependent terms). As an exception, required non-zero distributional parameters like <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>
+are automatically supplied if omitted. To share coefficients across segments without
+estimating new ones, use <code>same()</code>. See examples on the
 <a href="https://lindeloev.github.io/mcp/">mcp website</a>.</p>
 <p><strong>1. Response (segment 1 only):</strong></p><ul><li><p><code>y ~ ...</code>: Standard continuous or count response (Gaussian, Poisson, Bernoulli).</p></li>
 <li><p><code>successes | trials(total) ~ ...</code>: Binomial response (<code>family = binomial()</code>).</p></li>
@@ -145,14 +151,14 @@ not predictions).</p></li>
 </ul><p><strong>3. Regression formula (all segments):</strong> <a href="https://lindeloev.github.io/mcp/articles/formulas.html">Read more</a></p><ul><li><p><code>~ 1 + x</code>: Disjoined slope with a new segment intercept.</p></li>
 <li><p><code>~ 0 + x</code>: Joined slope (no intercept; continuous from previous segment).</p></li>
 <li><p><code>~ 1</code>: Plateau (intercept only, no slope).</p></li>
-<li><p><code>~ x:group + I(x^2) + exp(z)</code>: Extended terms, interactions, and R-side bases
+<li><p><code>~ x:state + I(x^2) + exp(z)</code>: Extended terms, interactions, and R-side bases
 (<code><a href="https://rdrr.io/r/base/scale.html" class="external-link">scale()</a></code>, <code><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly()</a></code>, <code><a href="https://rdrr.io/r/splines/ns.html" class="external-link">splines::ns()</a></code>). Bases are evaluated before sampling and reused for <code>newdata</code>.</p></li>
 <li><p><code>~ 1 + (1 | id)</code>: Group-level intercepts (or <code>(1 + x || id)</code> for independent slopes and intercepts).
 <a href="https://lindeloev.github.io/mcp/articles/group_effects.html">Read more</a>.</p></li>
 <li><p><code>~ sigma(1 + x)</code>: Distributional parameters on the link scale (e.g., log residual SD).
 <a href="https://lindeloev.github.io/mcp/articles/dpar.html">Read more</a>.</p></li>
 <li><p><code>~ ar(1) + ma(1)</code>: Autoregressive and moving-average time-series residuals on the link scale
-(accepts regression formulas, <code>series = id</code>, and <code>boundary</code>; use <code>ar(0)</code> or <code>ma(0)</code> to turn off in later segments).
+(accepts regression formulas, <code>series = id</code>, and <code>threshold</code>; declare them in every segment where they are active).
 <a href="https://lindeloev.github.io/mcp/articles/arma.html">Read more</a>.</p></li>
 </ul></dd>
 

@@ -210,36 +210,30 @@ changes in the mean. The following deliberately complex model
 demonstrates that flexibility:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="co"># Increasing standard deviation.</span></span>
-<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span>,</span>
+<span>  <span class="co"># 1. Increasing standard deviation.</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span>,  <span class="co"># Intercept_1, sigma_1, sigma_x_1</span></span>
 <span>  </span>
-<span>  <span class="co"># Abrupt change in mean and standard deviation.</span></span>
-<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,</span>
+<span>  <span class="co"># 2. Abrupt change in mean and standard deviation.</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,  <span class="co"># At cp_1: Intercept_2, sigma_2</span></span>
 <span>  </span>
-<span>  <span class="co"># Joined slope on mean; log-SD changes as a second-order polynomial.</span></span>
-<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">x</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="co"># 3. Joined slope on mean; log-SD changes as a second-order polynomial.</span></span>
+<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">x</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span>,  <span class="co"># At cp_2: x_3, sigma_x_3, sigma_xE2_3</span></span>
 <span>  </span>
-<span>  <span class="co"># Continue slope on mean, but plateau standard deviation (no sigma() term).</span></span>
-<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># The slope in segment 4 is just a continuation of </span></span>
-<span><span class="co"># the slope in segment 3, as if there was no change point.</span></span>
-<span><span class="va">prior</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  x_4 <span class="op">=</span> <span class="st">"x_3"</span></span>
+<span>  <span class="co"># 4. Continue slope on mean, but plateau standard deviation (no sigma() term).</span></span>
+<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="va">x</span><span class="op">)</span>  <span class="co"># At cp_3: reuse x_3 (implicit sigma(0))</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Notice a few things here:</p>
 <ul>
-<li>The prior ensures that the mean slope remains constant between
-segment 3 and 4. So only <code>sigma</code> changes there. Sharing the
-slope through the prior effectively removes the change point in the mean
-(read more about <a href="../articles/priors.html">priors in
+<li>
+<code>same(x)</code> ensures that the mean slope remains constant
+between segment 3 and 4. So only <code>sigma</code> changes there.
+Sharing the slope effectively removes the change point in the mean (read
+more about <a href="../articles/formulas.html">formulas in
 mcp</a>).</li>
-<li>Segment 4: Without a new <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> term, the
-standard-deviation model persists from segment 3; because no new slope
-on <span class="math inline">x</span> is declared for
-<code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, it forms a flat plateau continuing from the level
-reached at <code>cp_3</code>.</li>
+<li>Segment 4: Because <code>sigma</code> is a required distributional
+parameter for the <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian()</a></code> family, it cannot “turn off”
+just because it is not declared explicitly. <code>mcp</code> implicitly
+adds a <code>sigma(0)</code> term in these segments.</li>
 </ul>
 <p>In general, the log-SD parameters are named
 <code>sigma_[normalname]</code>, where “normalname” is the usual
@@ -269,14 +263,15 @@ which is useful for simulation and predictions from this model.</p>
 <span>  sigma_2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">4</span><span class="op">)</span>,</span>
 <span>  sigma_x_3 <span class="op">=</span> <span class="fl">0.02</span>,</span>
 <span>  sigma_xE2_3 <span class="op">=</span> <span class="fl">0.00015</span>,</span>
-<span>  x_3 <span class="op">=</span> <span class="fl">1.2</span>, x_4 <span class="op">=</span> <span class="fl">1.2</span><span class="op">)</span></span></code></pre></div>
+<span>  x_3 <span class="op">=</span> <span class="fl">1.2</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="fit-it-and-inspect-results">Fit it and inspect results<a class="anchor" aria-label="anchor" href="#fit-it-and-inspect-results"></a>
 </h3>
 <p>Fit it:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, prior <span class="op">=</span> <span class="va">prior</span>, iter <span class="op">=</span> <span class="fl">5000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, iter <span class="op">=</span> <span class="fl">5000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <p>Plotting a posterior predictive interval is an intuitive way to see
 how the residual standard deviation is estimated:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
@@ -303,7 +298,7 @@ standard-deviation growth.</p>
 <span><span class="co">##   1: y ~ 1 + sigma(1 + x)</span></span>
 <span><span class="co">##   2: y ~ 1 ~ 1 + sigma(1)</span></span>
 <span><span class="co">##   3: y ~ 1 ~ 0 + x + sigma(0 + x + I(x^2))</span></span>
-<span><span class="co">##   4: y ~ 1 ~ 0 + x</span></span>
+<span><span class="co">##   4: y ~ 1 ~ 0 + same(x)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
 <span><span class="co">##     variable     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match</span></span>
@@ -316,7 +311,6 @@ standard-deviation growth.</p>
 <span><span class="co">##  Intercept_1 -2.0e+01 4.5e-01 -2.1e+01 -1.9e+01 1.00     4499     4514 -2.0e+01    OK</span></span>
 <span><span class="co">##  Intercept_2  6.8e-01 7.0e-01 -6.4e-01  2.1e+00 1.00     3089     5238  0.0e+00    OK</span></span>
 <span><span class="co">##  x_3          1.2e+00 3.2e-02  1.1e+00  1.2e+00 1.00     2554     4758  1.2e+00    OK</span></span>
-<span><span class="co">##  x_4          1.2e+00 3.2e-02  1.1e+00  1.2e+00 1.00     2554     4758  1.2e+00    OK</span></span>
 <span><span class="co">##  sigma_1      4.1e-01 2.6e-01 -6.4e-02  9.3e-01 1.00      870     1500  0.0e+00    OK</span></span>
 <span><span class="co">##  sigma_x_1    3.7e-02 8.7e-03  2.0e-02  5.4e-02 1.00      877     1463  4.6e-02    OK</span></span>
 <span><span class="co">##  sigma_2      1.3e+00 1.1e-01  1.1e+00  1.6e+00 1.00      789     2111  1.4e+00    OK</span></span>
@@ -367,7 +361,6 @@ for sigma”).</p>
 <span><span class="co">##   Intercept_1 ~ dt(24.8, 1/(62.2)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span></span>
 <span><span class="co">##   Intercept_2 ~ dt(24.8, 1/(62.2)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span></span>
 <span><span class="co">##   x_3 ~ dt(0, 1/(0.3125628)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change</span></span>
-<span><span class="co">##   x_4 = x_3  # Same value as x_3</span></span>
 <span><span class="co">##   sigma_1 ~ dt(0, 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept</span></span>
 <span><span class="co">##   sigma_x_1 ~ dt(0, 1/(0.01256281)^2, 3)   # Regularizing log-SD coefficient scaled to a reference predictor change</span></span>
 <span><span class="co">##   sigma_2 ~ dt(0, 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept</span></span>
@@ -387,7 +380,7 @@ for sigma”).</p>
 <span><span class="co">##       (x[i_] &gt;= cp_0) * (x[i_] &lt; cp_1) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + </span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(Intercept_2)) * 1 + </span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_2) * inprod(rhs_matrix_[i_, c(3)], c(x_3)) * x_local_3_[i_] + </span></span>
-<span><span class="co">##       (x[i_] &gt;= cp_3) * inprod(rhs_matrix_[i_, c(4)], c(x_4)) * x_local_4_[i_]</span></span>
+<span><span class="co">##       (x[i_] &gt;= cp_3) * inprod(rhs_matrix_[i_, c(4)], c(x_3)) * x_local_4_[i_]</span></span>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for sigma</span></span>
 <span><span class="co">##     link_sigma_[i_] =</span></span>

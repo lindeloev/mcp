@@ -233,6 +233,7 @@
 <p><a href="https://lindeloev.github.io/mcp/articles/formulas.html">Understanding mcp formulas</a>:</p>
 <ul>
 <li><p>Parameter names are <code>Intercept_i</code> (intercepts), <code>cp_i</code> (change points), <code>x_i</code> (slopes), <code>ar*</code>/<code>ma*</code> (autocorrelation), and <code>sigma_*</code> (Gaussian residual standard deviation).</p></li>
+<li><p>All terms must be explicitly declared in each segment where they are active; omitting a term turns it off. Use <code>same(z)</code> to share a coefficient with previous segments.</p></li>
 <li><p>The change point model is basically an <code>ifelse</code> model with order constraints on the change points.</p></li>
 <li><p>Generate data for all supported models using <code>fit$simulate()</code>. See examples in, e.g., <code>mcp_example("demo")$example_code</code>.</p></li>
 </ul>

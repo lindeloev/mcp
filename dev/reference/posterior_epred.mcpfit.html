@@ -179,8 +179,10 @@ with <code><a href="pp_check.html">pp_check()</a></code> generate fresh historie
 
 
 <dt id="arg-transform">transform<a class="anchor" aria-label="anchor" href="#arg-transform"></a></dt>
-<dd><p>For <code>posterior_linpred()</code>, return the inverse-link
-transformed expected response instead of the linear predictor.</p></dd>
+<dd><p>For <code>posterior_linpred()</code>, return the inverse-linked
+parameter on the response scale instead of the linear predictor. For
+binomial models, this returns the success probability rather than expected
+counts.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -204,7 +206,9 @@ count scale (<code>rate = FALSE</code>), i.e., expected counts \(E[Y] = n\mu\) a
 simulated counts in \(\{0, \dots, n\}\), matching <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>.
 Use <code>rate = TRUE</code> for proportions. To obtain the success probability
 parameter \(\mu\) on the \([0, 1]\) scale regardless of trial counts, pass
-<code>dpar = "mu"</code>.</p>
+<code>dpar = "mu"</code>. In contrast, <code>posterior_linpred(transform = TRUE)</code> returns the
+inverse-linked parameter directly, evaluating success probabilities \(\mu\)
+in \([0, 1]\) rather than counts.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -143,8 +143,9 @@ posterior_linpred.mcpfit(
 
 - transform:
 
-  For `posterior_linpred()`, return the inverse-link transformed
-  expected response instead of the linear predictor.
+  For `posterior_linpred()`, return the inverse-linked parameter on the
+  response scale instead of the linear predictor. For binomial models,
+  this returns the success probability rather than expected counts.
 
 ## Value
 
@@ -175,7 +176,9 @@ and
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
 Use `rate = TRUE` for proportions. To obtain the success probability
 parameter \\\mu\\ on the \\\[0, 1\]\\ scale regardless of trial counts,
-pass `dpar = "mu"`.
+pass `dpar = "mu"`. In contrast, `posterior_linpred(transform = TRUE)`
+returns the inverse-linked parameter directly, evaluating success
+probabilities \\\mu\\ in \\\[0, 1\]\\ rather than counts.
 
 ## See also
 

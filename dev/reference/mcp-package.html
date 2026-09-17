@@ -139,11 +139,11 @@ predictor including serial dependence, the recurrence decomposes into components
 \end{aligned}$$</p>
 <p>where \(\phi_{j,t}\) is the lag-\(j\) autoregressive (AR) coefficient at time \(t\),
 \(\theta_{k,t}\) is the lag-\(k\) moving-average (MA) coefficient at time \(t\),
-\(g(\cdot)\) is the link function, and \(y^*_t\) is the boundary-constrained observation with pseudo-count \(b\) (set via argument <code>boundary = 0.1</code> in <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> / <code>ma()</code>) to keep residuals finite on the link scale:</p><ul><li><p><strong>Gaussian:</strong> \(y^*_t = y_t\).</p></li>
-<li><p><strong>Poisson / Negative Binomial:</strong> \(y^*_t = \max(y_t, b)\) to prevent \(\log(0)\). Here \(b\) replaces zero counts with a small positive count.</p></li>
-<li><p><strong>Binomial / Bernoulli:</strong> \(y^*_t = \min(\max(y_t, b), n_t - b) / n_t\), where \(y_t\) is observed successes, \(n_t\) is the number of trials (\(n_t = 1\) for Bernoulli), and \(b\) clamps counts to the interval \([b, n_t - b]\) before converting to a rate, preventing \(\text{logit}(0)\) and \(\text{logit}(1)\).</p></li>
+\(g(\cdot)\) is the link function, and \(y^*_t\) is the threshold-constrained observation with threshold constant \(c\) (set via argument <code>threshold = 0.1</code> in <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> / <code>ma()</code>) to keep residuals finite on the link scale:</p><ul><li><p><strong>Gaussian:</strong> \(y^*_t = y_t\).</p></li>
+<li><p><strong>Poisson / Negative Binomial:</strong> \(y^*_t = \max(y_t, c)\) to prevent \(\log(0)\). Here \(c\) replaces zero counts with a small positive threshold value.</p></li>
+<li><p><strong>Binomial / Bernoulli:</strong> \(y^*_t = \min(\max(y_t, c), n_t - c) / n_t\), where \(y_t\) is observed successes, \(n_t\) is the number of trials (\(n_t = 1\) for Bernoulli), and \(c\) constrains counts to the interval \([c, n_t - c]\) before converting to a rate, preventing \(\text{logit}(0)\) and \(\text{logit}(1)\).</p></li>
 </ul><p>Implications:</p><ul><li><p>For an \(N\)-order component, the last \(N\) values <em>before</em> the segment onset are input to the first \(\eta_t\) in the segment.</p></li>
-<li><p>AR and MA components persist into later segments until replaced or turned off via <code>ar(0)</code> or <code>ma(0)</code>.</p></li>
+<li><p>AR and MA components are off in segments where they are not declared; <code>ar(0)</code> and <code>ma(0)</code> are equivalent explicit turn-off forms.</p></li>
 <li><p>AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.</p></li>
 <li><p>See <a href="https://lindeloev.github.io/mcp/articles/arma.html">the arma article</a> for more details.</p></li>
 </ul></div>
@@ -152,11 +152,13 @@ predictor including serial dependence, the recurrence decomposes into components
 
 <ul><li><p>Lindeløv, J. K. (2020). mcp: An R Package for Regression With Multiple Change Points.
 <em>OSF Preprints</em>. <a href="https://doi.org/10.31219/osf.io/fzqxv" class="external-link">doi:10.31219/osf.io/fzqxv</a>
+
 Introduces the <code>mcp</code> package, formula syntax, default priors, and workflow for regression
 with multiple change points across generalized linear and time-series models. Newer-than-2020 versions of
 the paper may be available at that link. Please cite the newest version.</p></li>
 <li><p>Carlin, B. P., Gelfand, A. E., &amp; Smith, A. F. (1992). Hierarchical Bayesian Analysis of
 Changepoint Problems. <em>Applied Statistics</em>, 41(2), 389–405. <a href="https://doi.org/10.2307/2347570" class="external-link">doi:10.2307/2347570</a>
+
 Introduced the Gibbs sampling approach for continuous change points in segmented regression
 and hierarchical models, providing the computational foundation used by BUGS and JAGS.</p></li>
 </ul></div>
