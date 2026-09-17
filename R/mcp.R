@@ -13,8 +13,6 @@
 #'   `response ~ cp ~ predictors` (e.g., `y ~ 1 ~ 1 + x`), except the first segment
 #'   has no change point and uses `response ~ predictors`. The response and
 #'   change-point parts can be omitted (`cp ~ predictor` assumes the same
-#'   response; `~ predictor` assumes an intercept-only change point). Population terms other than
-#'   the segment-local change-point predictor are active only where declared (see details). See examples on the
 #'   response; `~ predictor` assumes an intercept-only change point).
 #'   In each segment, all terms must be explicitly declared to be active; terms not declared
 #'   are inactive (joining via `~ 0 + ...` continues from the level reached by previous
@@ -49,6 +47,9 @@
 #'   * `~ ar(1) + ma(1)`: Autoregressive and moving-average time-series residuals on the link scale
 #'     (accepts regression formulas, `series = id`, and `threshold`; declare them in every segment where they are active).
 #'     [Read more](https://lindeloev.github.io/mcp/articles/arma.html).
+#'   * `~ 1 + same(x)` or `0 + same(z, as = 1)`: Use `same()` to reuse the coefficients from previous segments (default) or explicitly referenced segment using `as = <segment_number>`. 
+#'     Like all parameters in `mcp`, reused coefficients are estimated jointly across all segments where they appear 
+#'     (pooling data from all segments), rather than fitted sequentially in one segment and copied to another.
 #'
 #' @param prior Named list. Names are parameter names (`cp_i`, `Intercept_i`, `xvar_i`,
 #'  `sigma_1`, etc.) and the values are either
@@ -62,8 +63,6 @@
 #'      SD for `dnorm()`, scale for `dt()`, `ddexp()`, and `dlogis()`, and
 #'      log-SD for `dlnorm()`. See details.
 #'  * A numerical value (e.g., `Intercept_1 = -2.1`) indicating a fixed value.
-#'  * A model parameter name (e.g., `Intercept_2 = "Intercept_1"`), indicating that this parameter is shared -
-#'      typically between segments. If two group-level deviations are shared this way,
 #'  * A model parameter name (e.g., `Intercept_2 = "Intercept_1"`), equating parameters via JAGS.
 #'      Note that sharing coefficients via `same()` in the segment formulas (e.g., `~ same(1)`)
 #'      is generally preferred. If two group-level deviations are shared via the prior,

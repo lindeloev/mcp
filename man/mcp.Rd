@@ -29,8 +29,6 @@ mcp(
 \code{response ~ cp ~ predictors} (e.g., \code{y ~ 1 ~ 1 + x}), except the first segment
 has no change point and uses \code{response ~ predictors}. The response and
 change-point parts can be omitted (\code{cp ~ predictor} assumes the same
-response; \code{~ predictor} assumes an intercept-only change point). Population terms other than
-the segment-local change-point predictor are active only where declared (see details). See examples on the
 response; \code{~ predictor} assumes an intercept-only change point).
 In each segment, all terms must be explicitly declared to be active; terms not declared
 are inactive (joining via \code{~ 0 + ...} continues from the level reached by previous
@@ -70,6 +68,9 @@ not predictions).
 \item \code{~ ar(1) + ma(1)}: Autoregressive and moving-average time-series residuals on the link scale
 (accepts regression formulas, \code{series = id}, and \code{threshold}; declare them in every segment where they are active).
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}.
+\item \code{~ 1 + same(x)} or \code{0 + same(z, as = 1)}: Use \code{same()} to reuse the coefficients from previous segments (default) or explicitly referenced segment using \verb{as = <segment_number>}.
+Like all parameters in \code{mcp}, reused coefficients are estimated jointly across all segments where they appear
+(pooling data from all segments), rather than fitted sequentially in one segment and copied to another.
 }}
 
 \item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)
@@ -89,8 +90,6 @@ estimation and prediction, but should be justified before hypothesis testing.
 SD for \code{dnorm()}, scale for \code{dt()}, \code{ddexp()}, and \code{dlogis()}, and
 log-SD for \code{dlnorm()}. See details.
 \item A numerical value (e.g., \code{Intercept_1 = -2.1}) indicating a fixed value.
-\item A model parameter name (e.g., \code{Intercept_2 = "Intercept_1"}), indicating that this parameter is shared -
-typically between segments. If two group-level deviations are shared this way,
 \item A model parameter name (e.g., \code{Intercept_2 = "Intercept_1"}), equating parameters via JAGS.
 Note that sharing coefficients via \code{same()} in the segment formulas (e.g., \code{~ same(1)})
 is generally preferred. If two group-level deviations are shared via the prior,

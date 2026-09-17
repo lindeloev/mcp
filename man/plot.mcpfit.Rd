@@ -77,11 +77,12 @@ or FALSE (do not plot).}
 
 \item{cp_dens}{TRUE/FALSE. Plot posterior densities of the change point(s)?}
 
-\item{rate}{Logical scalar. For binomial models, return counts (\code{rate = FALSE}, the default for \code{fitted()} and \code{predict()}) or
-the observed or expected success proportion (\code{rate = TRUE}). Predictions and
-count-scale fitted values require a trials column in \code{newdata}.
-Distributional parameters such as \code{dpar = "mu"} evaluate the parameter itself (e.g., success probability)
-and are unaffected by \code{rate}.}
+\item{rate}{Logical scalar. For binomial models, plot the observed or expected
+success proportion (\code{rate = TRUE}, the default here) or counts (\code{rate = FALSE}).
+This default is the opposite of \code{fitted()} and \code{predict()}, which return
+counts by default; plotting proportions keeps curves comparable across
+varying trial counts. Predictions and count-scale fitted values require a
+trials column in \code{newdata}/\code{at}.}
 
 \item{prior}{Logical. Evaluate prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default).
 The selected draws must be available; prior-only fits require \code{prior = TRUE}.}

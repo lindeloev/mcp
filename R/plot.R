@@ -58,6 +58,12 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 #' @param geom_data String. One of "point", "line" (good for time-series),
 #'   or FALSE (do not plot).
 #' @param cp_dens TRUE/FALSE. Plot posterior densities of the change point(s)?
+#' @param rate Logical scalar. For binomial models, plot the observed or expected
+#'   success proportion (`rate = TRUE`, the default here) or counts (`rate = FALSE`).
+#'   This default is the opposite of `fitted()` and `predict()`, which return
+#'   counts by default; plotting proportions keeps curves comparable across
+#'   varying trial counts. Predictions and count-scale fitted values require a
+#'   trials column in `newdata`/`at`.
 #' @return A \pkg{ggplot2} object.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
