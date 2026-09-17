@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Understanding mcp formulas</h1>
             
-            <h4 data-toc-skip class="date">2026-09-13</h4>
+            <h4 data-toc-skip class="date">2026-09-17</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/formulas.Rmd" class="external-link"><code>vignettes/formulas.Rmd</code></a></small>
       <div class="d-none name"><code>formulas.Rmd</code></div>
@@ -499,7 +499,7 @@ whole lot of other stuff too.</p>
 </h2>
 <p><code>mcp</code> supports standard R formulas with multiple
 continuous covariates, categorical factors, and interaction terms (e.g.,
-<code>x:group</code>, <code>+ group</code>, <code>+ z</code>,
+<code>x:state</code>, <code>+ state</code>, <code>+ z</code>,
 <code>I(x^2)</code>).</p>
 <p>Let’s inspect the model in the overview plot at the top of this page
 - except I added one plateau segment (<code>~1</code>) below to
@@ -507,10 +507,10 @@ illustrate a point.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Define model with multiple predictors</span></span>
 <span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">:</span><span class="va">group</span> <span class="op">+</span> <span class="va">z</span>, <span class="co"># Segment 1: by-group slopes on x, covariate z</span></span>
-<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="va">group</span>,     <span class="co"># Segment 2: shared slope on x, by-group intercepts</span></span>
-<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">x</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>,        <span class="co"># Segment 3: "group" intercepts persist due to "0"</span></span>
-<span>  <span class="op">~</span> <span class="fl">1</span>                  <span class="co"># Segment 4: collapse to shared intercept, no matter group </span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">:</span><span class="va">state</span> <span class="op">+</span> <span class="va">z</span>, <span class="co"># Segment 1: by-state slopes on x, covariate z</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="va">state</span>,     <span class="co"># Segment 2: shared slope on x, by-state intercepts</span></span>
+<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">x</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>,        <span class="co"># Segment 3: "state" intercepts persist due to "0"</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span>                  <span class="co"># Segment 4: collapse to shared intercept, no matter state </span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Load data and inspect parameters without sampling</span></span>
@@ -525,15 +525,15 @@ illustrate a point.</p>
 <span><span class="co">## <span style="color: #BCBCBC;"> 3</span> cp_3        cp      popu… chan…       4 cp       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
 <span><span class="co">## <span style="color: #BCBCBC;"> 4</span> Intercept_1 predic… popu… fixe…       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
 <span><span class="co">## <span style="color: #BCBCBC;"> 5</span> z_1         predic… popu… fixe…       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 6</span> xgroupA_1   predic… popu… fixe…       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 7</span> xgroupB_1   predic… popu… fixe…       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 8</span> xgroupC_1   predic… popu… fixe…       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 9</span> xgroupD_1   predic… popu… fixe…       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 6</span> xstateA_1   predic… popu… fixe…       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 7</span> xstateB_1   predic… popu… fixe…       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 8</span> xstateC_1   predic… popu… fixe…       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 9</span> xstateD_1   predic… popu… fixe…       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">10</span> Intercept_2 predic… popu… fixe…       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">11</span> x_2         predic… popu… fixe…       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">12</span> groupB_2    predic… popu… fixe…       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">13</span> groupC_2    predic… popu… fixe…       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">14</span> groupD_2    predic… popu… fixe…       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">12</span> stateB_2    predic… popu… fixe…       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">13</span> stateC_2    predic… popu… fixe…       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">14</span> stateD_2    predic… popu… fixe…       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">15</span> xE2_3       predic… popu… fixe…       3 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">16</span> Intercept_4 predic… popu… fixe…       4 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">17</span> sigma_1     predic… popu… dpar…       1 sigma    <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span></span></span></code></pre>
@@ -542,28 +542,28 @@ illustrate a point.</p>
 <li>
 <strong>Common change points across categories</strong>: The change
 points <code>cp_1</code> and <code>cp_2</code> are estimated as single
-locations shared across all levels of <code>group</code>. (If you
+locations shared across all levels of <code>state</code>. (If you
 instead want category-specific change-point locations that deviate per
 group, use group-level effects like <code>1 + (1|group) ~ ...</code>;
 see <a href="../articles/group_effects.html">group-level
 effects</a>).</li>
 <li>
 <strong>Parameter names across segments</strong>: In segment 1,
-<code>xgroupA_1</code> through <code>xgroupD_1</code> represent separate
-slopes for each level of <code>group</code>. In segment 2,
-<code>groupB_2</code>, <code>groupC_2</code>, and <code>groupD_2</code>
+<code>xstateA_1</code> through <code>xstateD_1</code> represent separate
+slopes for each level of <code>state</code>. In segment 2,
+<code>stateB_2</code>, <code>stateC_2</code>, and <code>stateD_2</code>
 represent intercept offsets relative to the reference level
-<code>groupA</code>. The continuous slope <code>z_1</code> on covariate
+<code>stateA</code>. The continuous slope <code>z_1</code> on covariate
 <code>z</code> persists into later segments unless replaced or removed
 by an intercept reset.</li>
 <li>
-<strong>Plotting and prediction</strong>: Visualize by group using
-<code>plot(fit, color_by = "group")</code> or
-<code>plot(fit, facet_by = "group")</code>. By default, other unplotted
+<strong>Plotting and prediction</strong>: Visualize by state using
+<code>plot(fit, color_by = "state")</code> or
+<code>plot(fit, facet_by = "state")</code>. By default, other unplotted
 continuous predictors (like <code>z</code>) are held at their mean
 automatically by <code><a href="../reference/interpolate_newdata.html">interpolate_newdata()</a></code>, or can be set
 explicitly via
-<code>plot(fit, color_by = "group", at = list(z = 0))</code>.</li>
+<code>plot(fit, color_by = "state", at = list(z = 0))</code>.</li>
 </ul>
 </div>
 <div class="section level2">

@@ -363,8 +363,8 @@ head(fitted(demo_fit, summary = FALSE))  # Draws. Useful for plotting distributi
 #> 4      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
 #> 5      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
 #> 6      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
-#> # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>, .epred <dbl>,
-#> #   data_row <int>
+#> # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>,
+#> #   data_row <int>, .epred <dbl>
 head(fitted(demo_fit, dpar = "sigma"))  # Another model parameter
 #>   response     time   fitted        sd     Q2.5    Q97.5
 #> 1 17.23552 76.33986 3.893444 0.2757184 3.381747 4.465763
@@ -386,32 +386,31 @@ head(predict(demo_fit, newdata = novel_data, probs = c(0.025, 0.5, 0.975)))
 missing_fit = mcp_example("missing", plot = FALSE)
 #> NA values detected in 'y'. JAGS will treat them as latent responses and impute them during sampling.
 fitted(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Expected responses for missing y
-#>    y  x condition   fitted        sd     Q2.5    Q97.5
-#> 1 NA  8         B 35.60043 1.0803038 33.51261 37.74217
-#> 2 NA 19         A 15.68747 0.8392979 14.05176 17.34367
-#> 3 NA 27         A 17.20067 0.7620321 15.70353 18.68519
-#> 4 NA 28         B 39.38345 0.7593611 37.89912 40.87640
-#> 5 NA 29         A 17.57898 0.7589502 16.07714 19.05693
-#> 6 NA 30         B 39.76175 0.7585016 38.28224 41.25734
+#>    y  x state   fitted        sd     Q2.5    Q97.5
+#> 1 NA  8     B 35.60043 1.0803038 33.51261 37.74217
+#> 2 NA 19     A 15.68747 0.8392979 14.05176 17.34367
+#> 3 NA 27     A 17.20067 0.7620321 15.70353 18.68519
+#> 4 NA 28     B 39.38345 0.7593611 37.89912 40.87640
+#> 5 NA 29     A 17.57898 0.7589502 16.07714 19.05693
+#> 6 NA 30     B 39.76175 0.7585016 38.28224 41.25734
 fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y)) |> head()  # Same, but draws
 #> # A tibble: 6 × 14
-#>   .chain .iteration .draw  cp_1 Intercept_1   x_1 conditionB_1    x_2 sigma_1
-#>    <int>      <int> <int> <dbl>       <dbl> <dbl>        <dbl>  <dbl>   <dbl>
-#> 1      1          1     1  62.8        14.8 0.135         20.3 -0.497    4.65
-#> 2      1          1     1  62.8        14.8 0.135         20.3 -0.497    4.65
-#> 3      1          1     1  62.8        14.8 0.135         20.3 -0.497    4.65
-#> 4      1          1     1  62.8        14.8 0.135         20.3 -0.497    4.65
-#> 5      1          1     1  62.8        14.8 0.135         20.3 -0.497    4.65
-#> 6      1          1     1  62.8        14.8 0.135         20.3 -0.497    4.65
-#> # ℹ 5 more variables: y <dbl>, x <int>, condition <fct>, .epred <dbl>,
-#> #   data_row <int>
+#>   .chain .iteration .draw  cp_1 Intercept_1   x_1 stateB_1    x_2 sigma_1     y
+#>    <int>      <int> <int> <dbl>       <dbl> <dbl>    <dbl>  <dbl>   <dbl> <dbl>
+#> 1      1          1     1  62.8        14.8 0.135     20.3 -0.497    4.65    NA
+#> 2      1          1     1  62.8        14.8 0.135     20.3 -0.497    4.65    NA
+#> 3      1          1     1  62.8        14.8 0.135     20.3 -0.497    4.65    NA
+#> 4      1          1     1  62.8        14.8 0.135     20.3 -0.497    4.65    NA
+#> 5      1          1     1  62.8        14.8 0.135     20.3 -0.497    4.65    NA
+#> 6      1          1     1  62.8        14.8 0.135     20.3 -0.497    4.65    NA
+#> # ℹ 4 more variables: x <int>, state <fct>, data_row <int>, .epred <dbl>
 predict(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Posterior predictive for missing y
-#>    y  x condition  predict       sd      Q2.5    Q97.5
-#> 1 NA  8         B 35.60152 4.415550 26.944898 44.27282
-#> 2 NA 19         A 15.68920 4.375556  7.131763 24.25305
-#> 3 NA 27         A 17.15676 4.357370  8.668505 25.73409
-#> 4 NA 28         B 39.41365 4.324343 30.849440 47.91352
-#> 5 NA 29         A 17.58427 4.339324  9.046847 26.11032
-#> 6 NA 30         B 39.73979 4.357124 31.227062 48.29058
+#>    y  x state  predict       sd      Q2.5    Q97.5
+#> 1 NA  8     B 35.60152 4.415550 26.944898 44.27282
+#> 2 NA 19     A 15.68920 4.375556  7.131763 24.25305
+#> 3 NA 27     A 17.15676 4.357370  8.668505 25.73409
+#> 4 NA 28     B 39.41365 4.324343 30.849440 47.91352
+#> 5 NA 29     A 17.58427 4.339324  9.046847 26.11032
+#> 6 NA 30     B 39.73979 4.357124 31.227062 48.29058
 # }
 ```

@@ -12,7 +12,7 @@ reports group-level deviations.
 This article in brief:
 
 - Predictor and change-point group-level effects
-- How group-level effects persist across segments
+- How group-level effects are active across segments
 - How to simulate group-level change-point deviations
 - Get posteriors using `ranef(fit)`
 - Plot using `plot(fit, facet_by="my_group")` and
@@ -76,8 +76,7 @@ against the adjacent population change point. Internally, JAGS samples
 \kappa\_{ig} directly for efficiency.
 
 Unlike predictor group-level effects, a change-point group effect
-applies only to the boundary where it is written; it does not persist
-across segments like predictor group-level effects.
+applies only to the boundary where it is written.
 
 ## Predictor group-level effects
 
@@ -88,17 +87,16 @@ the population-level intercept:
 
 model = list(
   y ~ 1 + (1|id),  # Starts group-level intercept
-  ~ 0 + x,         # Group-level intercept persists here
+  ~ 0 + x,         # No active group-level intercept here
   ~ 1 + (0|id)     # (0|id) turns it off
 )
 ```
 
-Here, the group-level intercept introduced in segment 1 also applies in
-segment 2. A later `(1|id)` would replace it from that segment onward,
-while `(0|id)` turns it off, as in segment 3 above. Persistence is
-tracked separately for each grouping factor and distributional
-parameter. Read more on persistence into later segments in [the article
-on
+Group intercepts and non-local group terms are active only where
+declared. A local group slope on `x` retains its joined endpoint until a
+later group intercept or `(0|id)` resets the block. This is tracked
+separately for each grouping factor and distributional parameter. Read
+more in [the article on
 formulas](https://lindeloev.github.io/mcp/dev/articles/formulas.html#on-carry-over-between-segments).
 
 Use `||` for independent group-level slopes and factor coefficients:
@@ -106,23 +104,21 @@ Use `||` for independent group-level slopes and factor coefficients:
 ``` r
 
 model = list(
-  y ~ 1 + condition + (condition||id),
+  y ~ 1 + state + (state||id),
   ~ 0 + x
 )
 ```
 
-With the default treatment coding, `(condition||id)` contains a
-group-level intercept and one group-level deviation for each
-non-reference contrast of `condition`. `(0 + condition||id)` instead
-gives each factor level its own group-level coefficient. Similarly,
-`(1 + z||id)` specifies independent group-level intercepts and slopes on
-a numeric predictor `z`. Each coefficient has its own population-level
-SD.
+With the default treatment coding, `(state||id)` contains a group-level
+intercept and one group-level deviation for each non-reference contrast
+of `state`. `(0 + state||id)` instead gives each factor level its own
+group-level coefficient. Similarly, `(1 + z||id)` specifies independent
+group-level intercepts and slopes on a numeric predictor `z`. Each
+coefficient has its own population-level SD.
 
 The population-level and group-level formulas need not contain the same
-coefficients. For example, `y ~ 1 + (0 + condition||id)` has a
-population-level intercept but only group-specific condition
-coefficients.
+coefficients. For example, `y ~ 1 + (0 + state||id)` has a
+population-level intercept but only group-specific state coefficients.
 
 Group-level intercepts also work inside distributional formulas:
 
@@ -135,13 +131,12 @@ model = list(
 
 This model has group-level deviations in both the conditional mean and
 log-SD. The `||` syntax works inside distributional formulas too, for
-example `sigma(1 + (condition||id))`.
+example `sigma(1 + (state||id))`.
 
-A later predictor group-level term for the same distributional parameter
-and grouping factor replaces the entire earlier block. Thus, if
-`(condition||id)` is followed in a later segment by `(1||id)`, only the
-new intercept deviation applies from that segment onward. `(0|id)` turns
-the block off.
+A later group intercept resets the earlier block. Thus, if `(state||id)`
+is followed in a later segment by `(1||id)`, only the new intercept
+deviation applies from that segment onward. A slope-only block joins
+earlier local-slope endpoints, while `(0|id)` turns the whole block off.
 
 Multi-coefficient terms with `|`, such as `(1 + x|id)`, would imply
 correlated group coefficients and are not yet supported; use
@@ -154,8 +149,8 @@ to sum exactly to zero. They have an ordinary mean-zero hierarchical
 normal distribution, matching multilevel regression in `lme4` and
 `brms`. For example, `(1|id)` in segment 1 creates the deviation vector
 `Intercept_1_id` and its population-level SD parameter
-`Intercept_1_id_sd`. `(condition||id)` additionally creates names such
-as `conditionB_1_id` and `conditionB_1_id_sd`; inside
+`Intercept_1_id_sd`. `(state||id)` additionally creates names such as
+`stateB_1_id` and `stateB_1_id_sd`; inside
 [`sigma()`](https://rdrr.io/r/stats/sigma.html), the corresponding names
 start with `sigma`.
 

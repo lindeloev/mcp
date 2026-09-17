@@ -6,7 +6,7 @@
 
 - **Multiple regression:** `mcp` now supports several continuous
   predictors, categorical predictors, interactions, etc. for all terms
-  on RHS. E.g., `~ 1 + x + x:group + sigma(1 + group) + ar(2, 0 + z)`.
+  on RHS. E.g., `~ 1 + x + x:state + sigma(1 + state) + ar(2, 0 + z)`.
   Basically, it now aims to “feels” like
   [`lm()`](https://rdrr.io/r/stats/lm.html) or
   [`glm()`](https://rdrr.io/r/stats/glm.html) for each distributional
@@ -226,7 +226,9 @@ been added until we reach 1.0.
     argument, (2) it requires `data.frame` or `tibble` as the second
     argument instead of just a vector of `par_x`, (3) further arguments
     are prefixed with a “.” to avoid name conflicts internally in mcp.
-    `...` are the model parameters as usual.
+    `...` are the model parameters as usual. `fit$simulate()` now also
+    preserve shared group effects specified in priors (e.g.,
+    `prior = list(Intercept_2_id = "Intercept_1_id")`).
 
   - [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md)
     now restricts equality tests to simple parameter contrasts and gives

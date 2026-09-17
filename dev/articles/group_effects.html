@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Group-level (random) effects in mcp</h1>
             
-            <h4 data-toc-skip class="date">2026-09-13</h4>
+            <h4 data-toc-skip class="date">2026-09-17</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/group_effects.Rmd" class="external-link"><code>vignettes/group_effects.Rmd</code></a></small>
       <div class="d-none name"><code>group_effects.Rmd</code></div>
@@ -113,7 +113,7 @@ syntax follows <code>lme4</code> and <code>brms</code>:
 <p>This article in brief:</p>
 <ul>
 <li>Predictor and change-point group-level effects</li>
-<li>How group-level effects persist across segments</li>
+<li>How group-level effects are active across segments</li>
 <li>How to simulate group-level change-point deviations</li>
 <li>Get posteriors using <code>ranef(fit)</code>
 </li>
@@ -165,8 +165,7 @@ adjacent change points both vary, their group-specific locations are
 ordered against each other—not against the adjacent population change
 point. Internally, JAGS samples <span class="math inline">\kappa_{ig}</span> directly for efficiency.</p>
 <p>Unlike predictor group-level effects, a change-point group effect
-applies only to the boundary where it is written; it does not persist
-across segments like predictor group-level effects.</p>
+applies only to the boundary where it is written.</p>
 </div>
 <div class="section level2">
 <h2 id="predictor-group-level-effects">Predictor group-level effects<a class="anchor" aria-label="anchor" href="#predictor-group-level-effects"></a>
@@ -176,33 +175,32 @@ from the population-level intercept:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>,  <span class="co"># Starts group-level intercept</span></span>
-<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>,         <span class="co"># Group-level intercept persists here</span></span>
+<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>,         <span class="co"># No active group-level intercept here</span></span>
 <span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>     <span class="co"># (0|id) turns it off</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Here, the group-level intercept introduced in segment 1 also applies
-in segment 2. A later <code>(1|id)</code> would replace it from that
-segment onward, while <code>(0|id)</code> turns it off, as in segment 3
-above. Persistence is tracked separately for each grouping factor and
-distributional parameter. Read more on persistence into later segments
-in <a href="../articles/formulas.html#on-carry-over-between-segments">the
+<p>Group intercepts and non-local group terms are active only where
+declared. A local group slope on <code>x</code> retains its joined
+endpoint until a later group intercept or <code>(0|id)</code> resets the
+block. This is tracked separately for each grouping factor and
+distributional parameter. Read more in <a href="../articles/formulas.html#on-carry-over-between-segments">the
 article on formulas</a>.</p>
 <p>Use <code>||</code> for independent group-level slopes and factor
 coefficients:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">condition</span> <span class="op">+</span> <span class="op">(</span><span class="va">condition</span><span class="op">||</span><span class="va">id</span><span class="op">)</span>,</span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="op">(</span><span class="va">state</span><span class="op">||</span><span class="va">id</span><span class="op">)</span>,</span>
 <span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>With the default treatment coding, <code>(condition||id)</code>
-contains a group-level intercept and one group-level deviation for each
-non-reference contrast of <code>condition</code>.
-<code>(0 + condition||id)</code> instead gives each factor level its own
+<p>With the default treatment coding, <code>(state||id)</code> contains
+a group-level intercept and one group-level deviation for each
+non-reference contrast of <code>state</code>.
+<code>(0 + state||id)</code> instead gives each factor level its own
 group-level coefficient. Similarly, <code>(1 + z||id)</code> specifies
 independent group-level intercepts and slopes on a numeric predictor
 <code>z</code>. Each coefficient has its own population-level SD.</p>
 <p>The population-level and group-level formulas need not contain the
-same coefficients. For example, <code>y ~ 1 + (0 + condition||id)</code>
-has a population-level intercept but only group-specific condition
+same coefficients. For example, <code>y ~ 1 + (0 + state||id)</code> has
+a population-level intercept but only group-specific state
 coefficients.</p>
 <p>Group-level intercepts also work inside distributional formulas:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -211,12 +209,12 @@ coefficients.</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p>This model has group-level deviations in both the conditional mean
 and log-SD. The <code>||</code> syntax works inside distributional
-formulas too, for example <code>sigma(1 + (condition||id))</code>.</p>
-<p>A later predictor group-level term for the same distributional
-parameter and grouping factor replaces the entire earlier block. Thus,
-if <code>(condition||id)</code> is followed in a later segment by
+formulas too, for example <code>sigma(1 + (state||id))</code>.</p>
+<p>A later group intercept resets the earlier block. Thus, if
+<code>(state||id)</code> is followed in a later segment by
 <code>(1||id)</code>, only the new intercept deviation applies from that
-segment onward. <code>(0|id)</code> turns the block off.</p>
+segment onward. A slope-only block joins earlier local-slope endpoints,
+while <code>(0|id)</code> turns the whole block off.</p>
 <p>Multi-coefficient terms with <code>|</code>, such as
 <code>(1 + x|id)</code>, would imply correlated group coefficients and
 are not yet supported; use <code>(1 + x||id)</code> for independent
@@ -228,9 +226,9 @@ hierarchical normal distribution, matching multilevel regression in
 <code>lme4</code> and <code>brms</code>. For example,
 <code>(1|id)</code> in segment 1 creates the deviation vector
 <code>Intercept_1_id</code> and its population-level SD parameter
-<code>Intercept_1_id_sd</code>. <code>(condition||id)</code>
-additionally creates names such as <code>conditionB_1_id</code> and
-<code>conditionB_1_id_sd</code>; inside <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, the
+<code>Intercept_1_id_sd</code>. <code>(state||id)</code> additionally
+creates names such as <code>stateB_1_id</code> and
+<code>stateB_1_id_sd</code>; inside <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, the
 corresponding names start with <code>sigma</code>.</p>
 </div>
 <div class="section level2">

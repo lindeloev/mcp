@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Time series change points</h1>
             
-            <h4 data-toc-skip class="date">2026-09-13</h4>
+            <h4 data-toc-skip class="date">2026-09-17</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/arma.Rmd" class="external-link"><code>vignettes/arma.Rmd</code></a></small>
       <div class="d-none name"><code>arma.Rmd</code></div>
@@ -108,14 +108,17 @@ with <code>ar(p)</code>, moving-average terms with <code>ma(q)</code>,
 or both in the segment formulas:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ma</span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>The most common use case is still <code>ar(1)</code>. Like other
-<code>mcp</code> terms, AR and MA components persist into later segments
-until another term for the same component replaces or turns them off
-(<code>ar(0)</code> or <code>ma(0)</code>). An <code>ar(p)</code> or
-<code>ma(q)</code> declaration replaces that whole component: if
-<code>ar(1)</code> follows <code>ar(2)</code>, the lag-2 coefficient is
-removed in the later segment. Both accept a regression formula, such as
-<code>ar(1, 1 + x)</code> or <code>ma(1, 0 + x)</code>.</p>
+<p>The most common use case is still <code>ar(1)</code>. AR and MA
+components are active only where declared, so omitting a component turns
+it off; <code>ar(0)</code> and <code>ma(0)</code> remain accepted
+explicit turn-off forms. In contrast, a positive-order
+<code>ar(p, 0)</code> or <code>ma(q, 0)</code> joins the preceding
+intercept/local-<span class="math inline">x</span> level for matching
+lags. An <code>ar(p)</code> or <code>ma(q)</code> declaration replaces
+that whole component: if <code>ar(1)</code> follows <code>ar(2)</code>,
+the lag-2 coefficient is removed in the later segment. Both accept a
+regression formula, such as <code>ar(1, 1 + x)</code> or
+<code>ma(1, 0 + x)</code>.</p>
 <div class="section level3">
 <h3 id="garma-definition">GARMA definition<a class="anchor" aria-label="anchor" href="#garma-definition"></a>
 </h3>

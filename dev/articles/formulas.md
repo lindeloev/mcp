@@ -410,7 +410,7 @@ other stuff too.
 ## Multiple regression and categorical predictors
 
 `mcp` supports standard R formulas with multiple continuous covariates,
-categorical factors, and interaction terms (e.g., `x:group`, `+ group`,
+categorical factors, and interaction terms (e.g., `x:state`, `+ state`,
 `+ z`, `I(x^2)`).
 
 Let’s inspect the model in the overview plot at the top of this page -
@@ -420,10 +420,10 @@ except I added one plateau segment (`~1`) below to illustrate a point.
 
 # Define model with multiple predictors
 model = list(
-  y ~ 1 + x:group + z, # Segment 1: by-group slopes on x, covariate z
-  ~ 1 + x + group,     # Segment 2: shared slope on x, by-group intercepts
-  ~ 0 + I(x^2),        # Segment 3: "group" intercepts persist due to "0"
-  ~ 1                  # Segment 4: collapse to shared intercept, no matter group 
+  y ~ 1 + x:state + z, # Segment 1: by-state slopes on x, covariate z
+  ~ 1 + x + state,     # Segment 2: shared slope on x, by-state intercepts
+  ~ 0 + I(x^2),        # Segment 3: "state" intercepts persist due to "0"
+  ~ 1                  # Segment 4: collapse to shared intercept, no matter state 
 )
 
 # Load data and inspect parameters without sampling
@@ -440,15 +440,15 @@ mcp_pars(fit)
     ##  3 cp_3        cp      popu… chan…       4 cp       NA NA        NA             
     ##  4 Intercept_1 predic… popu… fixe…       1 mu       NA NA        NA             
     ##  5 z_1         predic… popu… fixe…       1 mu       NA NA        NA             
-    ##  6 xgroupA_1   predic… popu… fixe…       1 mu       NA NA        NA             
-    ##  7 xgroupB_1   predic… popu… fixe…       1 mu       NA NA        NA             
-    ##  8 xgroupC_1   predic… popu… fixe…       1 mu       NA NA        NA             
-    ##  9 xgroupD_1   predic… popu… fixe…       1 mu       NA NA        NA             
+    ##  6 xstateA_1   predic… popu… fixe…       1 mu       NA NA        NA             
+    ##  7 xstateB_1   predic… popu… fixe…       1 mu       NA NA        NA             
+    ##  8 xstateC_1   predic… popu… fixe…       1 mu       NA NA        NA             
+    ##  9 xstateD_1   predic… popu… fixe…       1 mu       NA NA        NA             
     ## 10 Intercept_2 predic… popu… fixe…       2 mu       NA NA        NA             
     ## 11 x_2         predic… popu… fixe…       2 mu       NA NA        NA             
-    ## 12 groupB_2    predic… popu… fixe…       2 mu       NA NA        NA             
-    ## 13 groupC_2    predic… popu… fixe…       2 mu       NA NA        NA             
-    ## 14 groupD_2    predic… popu… fixe…       2 mu       NA NA        NA             
+    ## 12 stateB_2    predic… popu… fixe…       2 mu       NA NA        NA             
+    ## 13 stateC_2    predic… popu… fixe…       2 mu       NA NA        NA             
+    ## 14 stateD_2    predic… popu… fixe…       2 mu       NA NA        NA             
     ## 15 xE2_3       predic… popu… fixe…       3 mu       NA NA        NA             
     ## 16 Intercept_4 predic… popu… fixe…       4 mu       NA NA        NA             
     ## 17 sigma_1     predic… popu… dpar…       1 sigma    NA NA        NA
@@ -457,23 +457,23 @@ Key features of multiple regression models in `mcp`:
 
 - **Common change points across categories**: The change points `cp_1`
   and `cp_2` are estimated as single locations shared across all levels
-  of `group`. (If you instead want category-specific change-point
+  of `state`. (If you instead want category-specific change-point
   locations that deviate per group, use group-level effects like
   `1 + (1|group) ~ ...`; see [group-level
   effects](https://lindeloev.github.io/mcp/dev/articles/group_effects.md)).
-- **Parameter names across segments**: In segment 1, `xgroupA_1` through
-  `xgroupD_1` represent separate slopes for each level of `group`. In
-  segment 2, `groupB_2`, `groupC_2`, and `groupD_2` represent intercept
-  offsets relative to the reference level `groupA`. The continuous slope
+- **Parameter names across segments**: In segment 1, `xstateA_1` through
+  `xstateD_1` represent separate slopes for each level of `state`. In
+  segment 2, `stateB_2`, `stateC_2`, and `stateD_2` represent intercept
+  offsets relative to the reference level `stateA`. The continuous slope
   `z_1` on covariate `z` persists into later segments unless replaced or
   removed by an intercept reset.
-- **Plotting and prediction**: Visualize by group using
-  `plot(fit, color_by = "group")` or `plot(fit, facet_by = "group")`. By
+- **Plotting and prediction**: Visualize by state using
+  `plot(fit, color_by = "state")` or `plot(fit, facet_by = "state")`. By
   default, other unplotted continuous predictors (like `z`) are held at
   their mean automatically by
   [`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md),
   or can be set explicitly via
-  `plot(fit, color_by = "group", at = list(z = 0))`.
+  `plot(fit, color_by = "state", at = list(z = 0))`.
 
 ## Transformations are not segment-local
 

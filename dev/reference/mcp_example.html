@@ -129,8 +129,8 @@ reproduce the data and the fit.</p>
 <span class="r-in"><span><span class="fu"><a href="summary.mcpfit.html">print</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">example_code</span><span class="op">)</span> <span class="co"># See how the data was simulated</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # Define model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> model = list(</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   y ~ 1 + x:group + z,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ~ 1 + x + group,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   y ~ 1 + x:state + z,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ~ 1 + x + state,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ~ 0 + I(x^2)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> )</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -138,7 +138,7 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> set.seed(42)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> data = data.frame(</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   x = 1:120,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   group = rep(c('A', 'B', 'C', 'D'), 30),</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   state = rep(c('A', 'B', 'C', 'D'), 30),</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   z = rnorm(120, mean = 1:120, sd = 25),</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> )</span>
@@ -149,16 +149,16 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_1 = 10,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   z_1 = 0.2,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   xgroupA_1 = -0.75,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   xgroupB_1 = -0.25,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   xgroupC_1 = 0.25,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   xgroupD_1 = 0.75,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   xstateA_1 = -0.75,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   xstateB_1 = -0.25,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   xstateC_1 = 0.25,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   xstateD_1 = 0.75,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_2 = 10,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   x_2 = -1,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   groupB_2 = 15,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   groupC_2 = 30,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   groupD_2 = 45,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   stateB_2 = 15,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   stateC_2 = 30,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   stateD_2 = 45,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   xE2_3 = 0.2,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -171,7 +171,7 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # Illustrative plot</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> if (plot) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   set.seed(42)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   print(plot(fit, color_by = 'group') + ggplot2::labs(title = 'plot(fit, color_by = "group")'))</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   print(plot(fit, color_by = 'state') + ggplot2::labs(title = 'plot(fit, color_by = "state")'))</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Without sampling</span></span></span>

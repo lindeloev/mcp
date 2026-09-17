@@ -312,8 +312,8 @@ testing](https://lindeloev.github.io/mcp/articles/comparison.html):
 effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
 
 - Model group-level intercepts, slopes, and change points using
-  `(1|id)`, `(condition||id)`, or `+(condition|id)`. Get posteriors
-  using `ranef(fit)`.
+  `(1|id)`, `(state||id)`, or `+(state|id)`. Get posteriors using
+  `ranef(fit)`.
 
 - Plot using `plot(fit, facet_by = "my_group")` and
   `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
@@ -340,8 +340,8 @@ deviation](https://lindeloev.github.io/mcp/articles/dpar.html):
 - You can provide complete models in distributional parameters
   (currently [`sigma()`](https://rdrr.io/r/stats/sigma.html), `shape()`,
   and `mu()`) and time-series ([`ar()`](https://rdrr.io/r/stats/ar.html)
-  and `ma()`). For example, `~ x + sigma(1 + x:condition)` models an
-  abrupt change followed by by-condition slopes in variance.
+  and `ma()`). For example, `~ x + sigma(1 + x:state)` models an abrupt
+  change followed by by-state slopes in variance.
 
 [Get fitted and predicted values and
 intervals](https://lindeloev.github.io/mcp/articles/predict.html):
@@ -433,8 +433,8 @@ head(fitted(fit, summary = FALSE))  # column .epred
 ## 4      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
 ## 5      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
 ## 6      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
-## # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>, .epred <dbl>,
-## #   data_row <int>
+## # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>,
+## #   data_row <int>, .epred <dbl>
 ```
 
 # Citation

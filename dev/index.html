@@ -251,7 +251,7 @@
 </ul>
 <p><a href="https://lindeloev.github.io/mcp/articles/group_effects.html">Group-level (random) effects</a>:</p>
 <ul>
-<li><p>Model group-level intercepts, slopes, and change points using <code>(1|id)</code>, <code>(condition||id)</code>, or <code>+(condition|id)</code>. Get posteriors using <code>ranef(fit)</code>.</p></li>
+<li><p>Model group-level intercepts, slopes, and change points using <code>(1|id)</code>, <code>(state||id)</code>, or <code>+(state|id)</code>. Get posteriors using <code>ranef(fit)</code>.</p></li>
 <li><p>Plot using <code>plot(fit, facet_by = "my_group")</code> and <code>plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)</code>.</p></li>
 <li><p>Default priors bound group-specific change points relative to adjacent population-level change points.</p></li>
 </ul>
@@ -260,7 +260,7 @@
 <li><p><code>~ 0 + sigma(1)</code> models an intercept change in standard deviation. <code>~ 0 + sigma(0 + x)</code> models increasing/decreasing standard deviation. Explicit <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> formulas use a log link, so their coefficients are on the log-SD scale.</p></li>
 <li><p><code>~ ar(N)</code> models Nth order autoregression on residuals. <code>~ar(N, 0 + x)</code> models increasing/decreasing autocorrelation.</p></li>
 <li><p><code>y | weights(w)</code> (and <code>y | trials(N) + weights(w)</code>) specifies observation log-likelihood weights (<code>w &gt; 0</code>) across all families.</p></li>
-<li><p>You can provide complete models in distributional parameters (currently <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, <code>shape()</code>, and <code>mu()</code>) and time-series (<code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> and <code>ma()</code>). For example, <code>~ x + sigma(1 + x:condition)</code> models an abrupt change followed by by-condition slopes in variance.</p></li>
+<li><p>You can provide complete models in distributional parameters (currently <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, <code>shape()</code>, and <code>mu()</code>) and time-series (<code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> and <code>ma()</code>). For example, <code>~ x + sigma(1 + x:state)</code> models an abrupt change followed by by-state slopes in variance.</p></li>
 </ul>
 <p><a href="https://lindeloev.github.io/mcp/articles/predict.html">Get fitted and predicted values and intervals</a>:</p>
 <ul>
@@ -313,8 +313,8 @@
 <span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="do">## 4      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733</span></span>
 <span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="do">## 5      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733</span></span>
 <span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a><span class="do">## 6      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733</span></span>
-<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a><span class="do">## # ℹ 5 more variables: sigma_1 &lt;dbl&gt;, response &lt;dbl&gt;, time &lt;dbl&gt;, .epred &lt;dbl&gt;,</span></span>
-<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a><span class="do">## #   data_row &lt;int&gt;</span></span></code></pre></div>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a><span class="do">## # ℹ 5 more variables: sigma_1 &lt;dbl&gt;, response &lt;dbl&gt;, time &lt;dbl&gt;,</span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a><span class="do">## #   data_row &lt;int&gt;, .epred &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 <div class="section level1">
 <h1 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>

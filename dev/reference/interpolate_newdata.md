@@ -102,8 +102,8 @@ head(prediction)
 #> 4      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
 #> 5      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
 #> 6      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
-#> # ℹ 4 more variables: sigma_1 <dbl>, time <dbl>, .prediction <dbl>,
-#> #   data_row <int>
+#> # ℹ 4 more variables: sigma_1 <dbl>, time <dbl>, data_row <int>,
+#> #   .prediction <dbl>
 
 # Custom plot
 library(ggplot2)

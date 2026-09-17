@@ -9,7 +9,7 @@ imputations, and their uncertainty.
 ## An example with missing responses
 
 The built-in example has a change in slope, a strong difference between
-two conditions, scattered missing responses, and a short run of missing
+two states, scattered missing responses, and a short run of missing
 responses. First, let’s fit the example and visualize it:
 
 ``` r
@@ -37,17 +37,17 @@ The underlying data contain some missing responses in `y`:
 fit$data |> filter(is.na(y))
 ```
 
-    ##     y  x condition
-    ## 1  NA  8         B
-    ## 2  NA 19         A
-    ## 3  NA 27         A
-    ## 4  NA 28         B
-    ## 5  NA 29         A
-    ## 6  NA 30         B
-    ## 7  NA 31         A
-    ## 8  NA 68         B
-    ## 9  NA 84         B
-    ## 10 NA 96         B
+    ##     y  x state
+    ## 1  NA  8     B
+    ## 2  NA 19     A
+    ## 3  NA 27     A
+    ## 4  NA 28     B
+    ## 5  NA 29     A
+    ## 6  NA 30     B
+    ## 7  NA 31     A
+    ## 8  NA 68     B
+    ## 9  NA 84     B
+    ## 10 NA 96     B
 
 ## Expected responses and predictions
 
@@ -55,8 +55,8 @@ fit$data |> filter(is.na(y))
 evaluates the posterior predictive distribution at the missing rows,
 generating fresh simulated responses that include residual variation.
 The predictions come from trends in non-missing data and what they
-imply, given the observed covariates (`condition` and `x`), for the
-missing rows.
+imply, given the observed covariates (`state` and `x`), for the missing
+rows.
 
 ``` r
 
@@ -66,17 +66,17 @@ imputed = predict(fit, probs = c(0.1, 0.5, 0.9)) |>
 imputed
 ```
 
-    ##     y  x condition  predict       sd      Q10      Q50      Q90
-    ## 1  NA  8         B 35.63377 4.424702 29.97320 35.59747 41.23138
-    ## 2  NA 19         A 15.70366 4.364817 10.12722 15.68574 21.24990
-    ## 3  NA 27         A 17.21247 4.346768 11.65769 17.20047 22.74389
-    ## 4  NA 28         B 39.41195 4.299495 33.84050 39.38414 44.92549
-    ## 5  NA 29         A 17.55478 4.360739 12.03646 17.57914 23.12128
-    ## 6  NA 30         B 39.82040 4.364600 34.21878 39.76277 45.30338
-    ## 7  NA 31         A 17.92833 4.376714 12.41368 17.95779 23.50021
-    ## 8  NA 68         B 40.62562 4.445269 35.00915 40.62840 46.26328
-    ## 9  NA 84         B 34.28420 4.348502 28.70075 34.26938 39.84238
-    ## 10 NA 96         B 29.52044 4.480723 23.81245 29.49694 35.18704
+    ##     y  x state  predict       sd      Q10      Q50      Q90
+    ## 1  NA  8     B 35.63377 4.424702 29.97320 35.59747 41.23138
+    ## 2  NA 19     A 15.70366 4.364817 10.12722 15.68574 21.24990
+    ## 3  NA 27     A 17.21247 4.346768 11.65769 17.20047 22.74389
+    ## 4  NA 28     B 39.41195 4.299495 33.84050 39.38414 44.92549
+    ## 5  NA 29     A 17.55478 4.360739 12.03646 17.57914 23.12128
+    ## 6  NA 30     B 39.82040 4.364600 34.21878 39.76277 45.30338
+    ## 7  NA 31     A 17.92833 4.376714 12.41368 17.95779 23.50021
+    ## 8  NA 68     B 40.62562 4.445269 35.00915 40.62840 46.26328
+    ## 9  NA 84     B 34.28420 4.348502 28.70075 34.26938 39.84238
+    ## 10 NA 96     B 29.52044 4.480723 23.81245 29.49694 35.18704
 
 [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
 has the same syntax as
@@ -91,17 +91,17 @@ fitted(fit, probs = c(0.1, 0.5, 0.9)) |>
   filter(is.na(y))
 ```
 
-    ##     y  x condition   fitted        sd      Q10      Q50      Q90
-    ## 1  NA  8         B 35.60043 1.0803038 34.22732 35.59874 36.97791
-    ## 2  NA 19         A 15.68747 0.8392979 14.62587 15.68943 16.76656
-    ## 3  NA 27         A 17.20067 0.7620321 16.22350 17.20167 18.16512
-    ## 4  NA 28         B 39.38345 0.7593611 38.41313 39.38536 40.34947
-    ## 5  NA 29         A 17.57898 0.7589502 16.60533 17.58348 18.53966
-    ## 6  NA 30         B 39.76175 0.7585016 38.78779 39.76350 40.72794
-    ## 7  NA 31         A 17.95728 0.7627685 16.98320 17.96328 18.92934
-    ## 8  NA 68         B 40.63312 1.0764083 39.34544 40.55922 42.04241
-    ## 9  NA 84         B 34.27065 0.8778946 33.12572 34.27083 35.39471
-    ## 10 NA 96         B 29.49858 1.2543575 27.88809 29.51210 31.11228
+    ##     y  x state   fitted        sd      Q10      Q50      Q90
+    ## 1  NA  8     B 35.60043 1.0803038 34.22732 35.59874 36.97791
+    ## 2  NA 19     A 15.68747 0.8392979 14.62587 15.68943 16.76656
+    ## 3  NA 27     A 17.20067 0.7620321 16.22350 17.20167 18.16512
+    ## 4  NA 28     B 39.38345 0.7593611 38.41313 39.38536 40.34947
+    ## 5  NA 29     A 17.57898 0.7589502 16.60533 17.58348 18.53966
+    ## 6  NA 30     B 39.76175 0.7585016 38.78779 39.76350 40.72794
+    ## 7  NA 31     A 17.95728 0.7627685 16.98320 17.96328 18.92934
+    ## 8  NA 68     B 40.63312 1.0764083 39.34544 40.55922 42.04241
+    ## 9  NA 84     B 34.27065 0.8778946 33.12572 34.27083 35.39471
+    ## 10 NA 96     B 29.49858 1.2543575 27.88809 29.51210 31.11228
 
 ## Visualize imputations on the model plot
 
@@ -116,7 +116,7 @@ median and a vertical line shows the central 80% imputation interval:
 
 # Start with mcp plot with prediction interval. Use all draws for less Monte Carlo error.
 set.seed(42)
-plot(fit, color_by = "condition", q_predict = c(0.1, 0.9)) +
+plot(fit, color_by = "state", q_predict = c(0.1, 0.9)) +
 
   # Add imputation interval
   geom_linerange(
@@ -278,12 +278,12 @@ rows:
 
 newdata = data.frame(
   x = c(20, 80),
-  condition = factor(c("A", "B"), levels = levels(fit$data$condition))
+  state = factor(c("A", "B"), levels = levels(fit$data$state))
 )
 
 predict(fit, newdata = newdata, probs = c(0.1, 0.5, 0.9))
 ```
 
-    ##    x condition  predict       sd      Q10      Q50      Q90
-    ## 1 20         A 15.90036 4.343471 10.31987 15.87509 21.43529
-    ## 2 80         B 35.84599 4.345775 30.30002 35.86017 41.42434
+    ##    x state  predict       sd      Q10      Q50      Q90
+    ## 1 20     A 15.90036 4.343471 10.31987 15.87509 21.43529
+    ## 2 80     B 35.84599 4.345775 30.30002 35.86017 41.42434
