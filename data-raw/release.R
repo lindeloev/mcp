@@ -17,4 +17,7 @@ build_release_stuff = function() {
   # User-facing docs: README and showcase figure
   rmarkdown::render("README.Rmd", output_format = "github_document")
   source("vignettes/_figures/mcp_showcase.R")
+
+  # Build manual (to test it works)
+  devtools::build_manual(path = 'dev')
 }
