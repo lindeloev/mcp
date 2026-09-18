@@ -508,7 +508,7 @@ null_loo = loo(fit_null)
 loo::loo_compare(demo_loo, null_loo)
 #>   model elpd_diff se_diff p_worse diag_diff diag_elpd
 #>  model1       0.0     0.0      NA                    
-#>  model2     -54.3     7.8    1.00                    
+#>  model2     -54.4     7.8    1.00                    
 
 # Inspect the prior. Useful for prior predictive checks.
 summary(demo_fit, prior = TRUE)
@@ -552,13 +552,14 @@ prior_summary(demo_fit)
 prior = list(
   Intercept_1 = 15,
   time_2 = "dt(0, 2, 1) T(0, )",  # t-dist slope. Truncated to positive.
-  cp_2 = "dunif(cp_1, 80)",       # change point to segment 2 > cp_1 and < 80.
   Intercept_3 = "Intercept_1",     # Shared intercept between segment 1 and 3
   cp_2 = "dunif(cp_1, 80)"        # change point to segment 3 > cp_1 and < 80.
 )
 
 fit3 = mcp(model, data = data, prior = prior, warmup = 2000, iter = 6000, seed = 42)
-#> Error in validate_prior_v1(prior): `prior` has duplicated entries for the same parameter: cp_2
+#> Warning: Some parameters may not have converged well:
+#>   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: Intercept_3
+#> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
 
 # Share coefficients across segments using same() (e.g., reuse Intercept_1 in segment 3)
 model_same = list(
