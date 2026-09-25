@@ -95,3 +95,16 @@ test_that("Default Poisson prior does not break prior predictive workflow with s
 })
 
 
+
+
+test_that("Weighted Poisson prior draws retain responses for the zeros trick", {
+  df = data.frame(x = seq_len(30), y = 10, w = 2)
+  fit = mcp(
+    list(y | weights(w) ~ 1), data = df, family = poisson(), par_x = "x",
+    prior = list(Intercept_1 = "dnorm(0, 1)"),
+    sample = "prior", chains = 1, iter = 1000, warmup = 200,
+    seed = 42, diagnostics = FALSE, quiet = TRUE
+  )
+  prior_mean = mean(as.matrix(.subset2(fit, "mcmc_prior"))[, "Intercept_1"])
+  expect_equal(prior_mean, 0, tolerance = 0.2)
+})

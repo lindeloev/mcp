@@ -777,6 +777,7 @@ resolve_re_formula = function(re.form, re_formula) {
 }
 
 
+#' @rdname execute-mcp-model
 #' @export
 log_lik = function(object, ...) UseMethod("log_lik")
 

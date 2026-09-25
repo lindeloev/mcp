@@ -60,3 +60,6 @@ Users can specify non-ordered change points (`prior = list(cp_1 = 20, cp_2 = 10)
  * mcp use dnorm(0, 2.5)T(0, ) for Group SD Scale. This is very broad. It could have been narrower. E[exp(b)] is only finite when sd < 1 and strictly for sd <= 0.5, but this was not chosen.
  * Modeled log-shape in negative-binomial (shape(1 + x)): Uses dnorm(0, 2.5) for intercepts/contrasts and dnorm(0, 2.5 / S) for slopes, harmonizing with log-mean coefficients and avoiding heavy tails that pull shape toward extreme overdispersion.
  * Offset-adjusted count intercepts: when exposure varies across observations, brms method inflates prior scale by exposure variance and mixes median and mean. mcp evaluates log(pmax(y, 0.1)) - offset observation-wise, calibrating both median location and MAD scale directly to empirical log-rates.
+
+# 2026-09-23: Do not warn on negative support for group-SD
+Users overriding default priors can specify priors that result in negative sigma. E.g. `prior = list(Intercept_1_id_sd = "dnorm(0, 1)")`. Checking this complicates too much compared to the relatively infrequent use case and will fail during sampling. For now, we trust users to be informed. Similarly, users specifying negative SD (`dnorm(0, -1)`) will not get an error because mcp squares SD in conversion to JAGS precision.

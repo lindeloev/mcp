@@ -586,13 +586,19 @@ mcp = function(model,
 
   # Sample prior
   if (sample %in% c("prior", "both")) {
-    # Set response = NA if we only sample prior
+    # Set stochastic response nodes to NA for prior sampling. 
+    # Except for weighted discrete likelihoods which use the response in a zeros trick.
     jags_data_prior = jags_data
-    if (!grepl("likelihood_phi_", jags_code, fixed = TRUE))
+    response_node = paste0(segments$y[1], "[i_] ~")
+    response_is_stochastic = if (custom_jags_code)
+      !grepl("likelihood_phi_", jags_code, fixed = TRUE) else
+      grepl(response_node, jags_code, fixed = TRUE)
+    if (response_is_stochastic)
       jags_data_prior[[segments$y[1]]] = rep(NA, nrow(data))
     if (!is.null(jags_data_prior$response_observed_))
       jags_data_prior$response_observed_[] = 0L
 
+    # Run sampling
     mcmc_prior = run_jags(
       jags_code = jags_code,
       jags_data = jags_data_prior,

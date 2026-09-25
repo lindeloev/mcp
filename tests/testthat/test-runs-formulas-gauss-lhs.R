@@ -187,3 +187,22 @@ test_that("Weighted Gaussian samples on ordinary large weights without numerical
   expect_equal(mean(draws[, "Intercept_1"]), 1.15, tolerance = 0.05)
   expect_equal(mean(draws[, "sigma_1"]), 0.18, tolerance = 0.05)
 })
+
+
+test_that("Weighted Gaussian prior draws ignore observed responses", {
+  df = data.frame(x = seq_len(30), y = 10, w = 2)
+  for (sample in c("prior", "both")) {
+    fit = mcp(
+      list(y | weights(w) ~ 1), data = df, par_x = "x",
+      prior = list(Intercept_1 = "dnorm(0, 1)", sigma_1 = 1),
+      sample = sample, chains = 1, iter = 1000, warmup = 200,
+      seed = 42, diagnostics = FALSE, quiet = TRUE
+    )
+    prior_mean = mean(as.matrix(.subset2(fit, "mcmc_prior"))[, "Intercept_1"])
+    expect_equal(prior_mean, 0, tolerance = 0.2)
+    if (sample == "both") {
+      post_mean = mean(as.matrix(.subset2(fit, "mcmc_post"))[, "Intercept_1"])
+      expect_equal(post_mean, 600 / 61, tolerance = 0.2)
+    }
+  }
+})
