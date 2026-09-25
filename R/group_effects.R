@@ -246,3 +246,16 @@ unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
     effects = group_effects[use_group, , drop = FALSE]
   )
 }
+
+
+# Check the hierarchy before drawing an independent normal group effect.
+assert_generatable_group_prior = function(fit, effect) {
+  prior = fit$prior[[effect$name]]
+  expected = paste0("dnorm(0, ", effect$sd_name, ")")
+  if (!identical(prior, expected))
+    stop(
+      "Cannot generate group effect '", effect$name, "' from prior '", prior,
+      "'. This generator supports only '", expected, "' here.",
+      call. = FALSE
+    )
+}

@@ -606,3 +606,29 @@ test_that("ranef() preserves grouping-factor level ordering", {
   ran = ranef(fit, prior = TRUE)
   expect_equal(ran$variable, paste0("Intercept_1_grp[", levels(df$grp), "]"))
 })
+
+
+test_that("new groups reject hierarchies the R generators cannot reproduce", {
+  model = list(y ~ 1 + (1 | id))
+  prior = list(Intercept_1 = 0, Intercept_1_id = 5, sigma_1 = 1)
+  fit = mcp(model, group_data, par_x = "x", prior = prior,
+            sample = "prior", chains = 1, iter = 20, warmup = 10,
+            seed = 42, diagnostics = FALSE, quiet = TRUE)
+  newdata = data.frame(x = 1, id = "new")
+
+  existing = mcp_draws(fit, newdata = data.frame(x = 1, id = "a"), prior = TRUE)
+  expect_true(all(existing$Intercept_1_id == 5))
+  expect_error(mcp_draws(fit, newdata = newdata, prior = TRUE),
+               "Cannot generate group effect 'Intercept_1_id'")
+  expect_error(fit$simulate(fit, newdata, Intercept_1 = 0, sigma_1 = 1,
+                            Intercept_1_id_sd = 1, .type = "fitted"),
+               "Cannot generate group effect 'Intercept_1_id'")
+
+  default_fit = mcp(model, group_data, par_x = "x", sample = "prior",
+                    chains = 1, iter = 20, warmup = 10,
+                    seed = 42, diagnostics = FALSE, quiet = TRUE)
+  expect_no_error(mcp_draws(default_fit, newdata = newdata, prior = TRUE))
+  expect_no_error(default_fit$simulate(default_fit, newdata,
+                                      Intercept_1 = 0, sigma_1 = 1,
+                                      Intercept_1_id_sd = 1, .type = "fitted"))
+})

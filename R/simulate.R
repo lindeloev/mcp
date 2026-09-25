@@ -527,6 +527,7 @@ simulate_atomic = function(fit,
     if (!is.null(target) && target %in% names(args)) {
       args[[effect$name]] = args[[target]]
     } else {
+      assert_generatable_group_prior(fit, effect)
       group_deviations = stats::rnorm(length(group_levels), 0, args[[effect$sd_name]])
       args[[effect$name]] = group_deviations[match(group, group_levels)]
     }

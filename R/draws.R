@@ -326,6 +326,7 @@ mcp_draws = function(
   for (spec in specs) {
     for (i in which(spec$.name %notin% names(draws))) {
       effect = group_info$effects[group_info$effects$name == spec$.value[i], ]
+      assert_generatable_group_prior(fit, effect)
       draws[[spec$.name[i]]] = stats::rnorm(nrow(draws), 0, draws[[effect$sd_name]])
     }
   }
