@@ -277,13 +277,13 @@ mcpfamily_gaussian = function(family) {
         # to the log-likelihood. Computing dexp(sigma^(1 - w)) directly underflows/overflows
         # for large weights. Instead, we use the Poisson zeros trick on the log scale:
         # P(Z = 0) from dpois(phi) contributes -phi to the log-likelihood.
-        # Setting phi = (w - 1) * log(sigma) + |w - 1| * 20 ensures phi >= 0 for any
-        # reasonable sigma (e^-20 to e^20). The constant offset cancels out in MCMC.
+        # Setting phi = (w - 1) * log(sigma) + |w - 1| * 50 ensures phi >= 0 for any
+        # reasonable sigma (e^-50 to e^50). The constant offset cancels out in MCMC.
         c(
           "# Gaussian likelihood raised to the observation weight",
           paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)  # Ensures weight 1 if missing data"),
           paste0(context$y, " ~ dnorm(", context$dpar("mu"), ", likelihood_weight_[i_] / ", context$dpar("sigma"), "^2)"),
-          paste0("likelihood_phi_[i_] = response_observed_[i_] * max(0, (likelihood_weight_[i_] - 1) * log(", context$dpar("sigma"), ") + abs(likelihood_weight_[i_] - 1) * 20)"),
+          paste0("likelihood_phi_[i_] = response_observed_[i_] * max(0, (likelihood_weight_[i_] - 1) * log(", context$dpar("sigma"), ") + abs(likelihood_weight_[i_] - 1) * 50)"),
           paste0("likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])")
         )
       }

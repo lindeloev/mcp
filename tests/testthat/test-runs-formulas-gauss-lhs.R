@@ -150,21 +150,21 @@ test_that("Gaussian JAGS weights implement a likelihood power", {
   expect_equal(jags_data$likelihood_zero_, numeric(4))
   expect_equal(jags_data$w, weighted_data$w)
   expect_match(fit$jags_code, "likelihood_weight_[i_] = 1 + response_observed_[i_] * (w[i_] - 1)", fixed = TRUE)
-  expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * max(0, (likelihood_weight_[i_] - 1) * log(sigma_[i_]) + abs(likelihood_weight_[i_] - 1) * 20)", fixed = TRUE)
+  expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * max(0, (likelihood_weight_[i_] - 1) * log(sigma_[i_]) + abs(likelihood_weight_[i_] - 1) * 50)", fixed = TRUE)
   expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])", fixed = TRUE)
 
   # The JAGS normal density plus its Poisson zeros correction is the desired
   # powered normal density up to a constant that depends only on the weight.
   grid = expand.grid(mu = c(-1, 0.5), sigma = c(0.4, 2), w = c(0.5, 2, 3))
   y = 1.2
-  phi = (grid$w - 1) * log(grid$sigma) + abs(grid$w - 1) * 20
+  phi = (grid$w - 1) * log(grid$sigma) + abs(grid$w - 1) * 50
   jags_kernel = stats::dnorm(y, grid$mu, grid$sigma / sqrt(grid$w), log = TRUE) +
     stats::dpois(0, lambda = phi, log = TRUE)
   power_kernel = grid$w * stats::dnorm(y, grid$mu, grid$sigma, log = TRUE)
   kernel_difference = jags_kernel - power_kernel
   expect_equal(
     kernel_difference,
-    0.5 * log(grid$w) + 0.5 * (grid$w - 1) * log(2 * pi) - abs(grid$w - 1) * 20
+    0.5 * log(grid$w) + 0.5 * (grid$w - 1) * log(2 * pi) - abs(grid$w - 1) * 50
   )
 })
 
