@@ -348,7 +348,7 @@ test_that("factor group coefficients sample and predict by level", {
   ))
 
   fitted_values = fitted(
-    fit, summary = FALSE, varying = "predictor", ndraws = 2
+    fit, summary = FALSE, group = "predictor", ndraws = 2
   )
   expect_true(all(
     c(
@@ -379,20 +379,27 @@ test_that("predictor group effects use existing prediction selectors", {
     )
   }, "Adaptation incomplete", fixed = TRUE)
 
-  varying = fitted(
-    fit, summary = FALSE, varying = "predictor", ndraws = 2
+  group_effects = fitted(
+    fit, summary = FALSE, group = "predictor", ndraws = 2
   )
-  expect_true(all(c("id", "Intercept_1_id") %in% names(varying)))
+  expect_true(all(c("id", "Intercept_1_id") %in% names(group_effects)))
 
   population = fitted(
     fit,
     newdata = data.frame(x = 1:3),
     summary = FALSE,
-    varying = FALSE,
+    group = FALSE,
     ndraws = 2
   )
   expect_false("id" %in% names(population))
   expect_true(all(population$Intercept_1_id == 0))
+
+  # Deprecated `varying` maps to `group`
+  lifecycle::expect_deprecated({
+    deprecated = fitted(fit, newdata = data.frame(x = 1:3), summary = FALSE, varying = FALSE, ndraws = 2)
+  })
+  expect_false("id" %in% names(deprecated))
+  expect_error(suppressWarnings(fitted(fit, group = FALSE, varying = FALSE)), "Use only one of `group` and deprecated `varying`.", fixed = TRUE)
 
   effects = ranef(fit)
   expect_equal(nrow(effects), length(unique(data$id)))
@@ -497,7 +504,7 @@ test_that("Various character group IDs work in mcp_draws, fitted, and predict", 
     expect_equal(draws[[effect$name]], as.numeric(expected))
   }
   expect_equal(nrow(draws), 2 * 4 * 3)
-  expect_equal(nrow(mcp_draws(fit, varying = FALSE, ndraws = 2)), 2)
+  expect_equal(nrow(mcp_draws(fit, group = FALSE, ndraws = 2)), 2)
 
   # Check fitted and predict join without type mismatch
   fit_res = fitted(fit)
@@ -524,7 +531,7 @@ test_that("Various character group IDs work in mcp_draws, fitted, and predict", 
 })
 
 
-test_that("grouping columns that also serve as predictors are retained when varying = FALSE", {
+test_that("grouping columns that also serve as predictors are retained when group = FALSE", {
   data = data.frame(
     x = 1:10,
     id = factor(rep(c("a", "b"), 5)),
@@ -535,14 +542,14 @@ test_that("grouping columns that also serve as predictors are retained when vary
     data, par_x = "x", sample = "prior", chains = 1, iter = 20, warmup = 10, quiet = TRUE, seed = 42
   ))
 
-  expect_no_error(fitted(fit, prior = TRUE, varying = FALSE))
-  expect_no_error(predict(fit, prior = TRUE, varying = FALSE))
-  expect_no_error(residuals(fit, prior = TRUE, varying = FALSE))
+  expect_no_error(fitted(fit, prior = TRUE, group = FALSE))
+  expect_no_error(predict(fit, prior = TRUE, group = FALSE))
+  expect_no_error(residuals(fit, prior = TRUE, group = FALSE))
   expect_no_error(ggplot2::ggplot_build(plot(fit, prior = TRUE)))
   expect_no_error(ggplot2::ggplot_build(plot(fit, prior = TRUE, facet_by = "id")))
 
   # Check that fixed effect differences are preserved when group deviations are excluded
-  f_novary = fitted(fit, prior = TRUE, varying = FALSE)
+  f_novary = fitted(fit, prior = TRUE, group = FALSE)
   expect_equal(nrow(f_novary), 10)
   expect_true(all(c("x", "id", "fitted") %in% names(f_novary)))
 })

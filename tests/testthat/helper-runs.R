@@ -490,7 +490,7 @@ test_pp_eval = function(fit, prior = FALSE) {
     probs = c(0.1, 0.5, 0.999),
     rate = FALSE,
     prior = prior,
-    varying = "cp",
+    group = "cp",
     ndraws = 2,
     arma = FALSE
   ), silent = TRUE)
@@ -539,7 +539,7 @@ test_pp_eval = function(fit, prior = FALSE) {
       summary = FALSE,
       probs = FALSE,
       prior = prior,
-      varying = FALSE,
+      group = FALSE,
       arma = FALSE,
       ndraws = 2
     )

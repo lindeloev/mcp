@@ -221,7 +221,7 @@ resolve_draws_format = function(draws_format, samples_format, draws_format_missi
 #'   * `TRUE` All population-level model parameters.
 #'   * `FALSE` No population-level effects. Same as `c()`.
 #'   * Character vector: Only include specified population-level parameters.
-#' @param varying Group-level effects. One of:
+#' @param group Group-level effects. One of:
 #'   * `TRUE` All group-level deviations.
 #'   * `FALSE` No group-level deviations (`c()`).
 #'   * `"cp"` or `"predictor"`: All group-level deviations belonging to that part of
@@ -241,7 +241,7 @@ resolve_draws_format = function(draws_format, samples_format, draws_format_missi
 mcp_draws = function(
   fit,
   population = TRUE,
-  varying = TRUE,
+  group = TRUE,
   absolute = FALSE,
   prior = FALSE,
   ndraws = NULL,
@@ -253,18 +253,18 @@ mcp_draws = function(
   # General argument checks
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_multi_class(population, c("logical", "character"))
-  checkmate::assert_multi_class(varying, c("logical", "character"), null.ok = TRUE)
+  checkmate::assert_multi_class(group, c("logical", "character"), null.ok = TRUE)
   checkmate::assert_multi_class(absolute, c("logical", "character"), null.ok = TRUE)
   checkmate::assert_flag(prior)
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
 
-  if (all(population == FALSE) && all(varying == FALSE))
-    stop("At least one TRUE or one parameter must be provided through either the `varying` or the `population` arguments.")
+  if (all(population == FALSE) && all(group == FALSE))
+    stop("At least one TRUE or one parameter must be provided through either the `group` or the `population` arguments.")
 
 
   # ----- IDENTIFY PARAMETERS -----
   # Group-level parameters.
-  group_info = unpack_group_effects(fit, pars = varying)
+  group_info = unpack_group_effects(fit, pars = group)
 
   # Population-level parameters. Result is `pars_population`.
   if (all(population == FALSE)) {
@@ -289,7 +289,7 @@ mcp_draws = function(
     # Check
     is_group_selection = absolute %in% group_info$pars
     if (any(!is_group_selection))
-      stop("The following parameter names in `absolute` are not in `varying`: ", and_collapse(absolute[!is_group_selection]))
+      stop("The following parameter names in `absolute` are not in `group`: ", and_collapse(absolute[!is_group_selection]))
     absolute_effects = group_info$effects[
       group_info$effects$name %in% absolute, , drop = FALSE
     ]

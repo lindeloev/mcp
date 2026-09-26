@@ -11,6 +11,7 @@
 #'   for available plot types, omitting the \code{"ppc_"} prefix (e.g., \code{"dens_overlay"},
 #'   \code{"ribbon"}, \code{"intervals"}).
 #' @param facet_by Name of a grouping column used by group-level effects.
+#' @param varying Deprecated. Use `group` instead.
 #' @param ... Further arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
 #' @details Missing responses are omitted from the observed-data check. For
 #'   GARMA models, each replicated response series is generated recursively
@@ -36,20 +37,22 @@ pp_check.mcpfit = function(
   facet_by = NULL,
   newdata = NULL,
   prior = FALSE,
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = 100,
   nsamples = lifecycle::deprecated(),
+  varying = lifecycle::deprecated(),
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "pp_check")
+  group = resolve_group(group, varying, missing(group), "pp_check")
 
   # Internal mcp naming convention
   fit = object
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_string(facet_by, null.ok = TRUE)
   checkmate::assert_flag(prior)
-  checkmate::assert_multi_class(varying, c("logical", "character"))
+  checkmate::assert_multi_class(group, c("logical", "character"))
   checkmate::assert_flag(arma)
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
 
@@ -68,7 +71,7 @@ pp_check.mcpfit = function(
   observed_rows = which(!is.na(y_all))
   if (length(observed_rows) == 0)
     stop("`pp_check()` requires at least one observed response.")
-  group_data = if (is.null(facet_by)) NULL else eval_data[, facet_by]
+  facet_data = if (is.null(facet_by)) NULL else eval_data[, facet_by]
 
   allowed_types = stringr::str_remove(bayesplot::available_ppc(), "ppc_")
   allowed_types = allowed_types[stringr::str_detect(allowed_types, "_grouped") == FALSE]  # Grouped done mcp-side (see below)
@@ -90,7 +93,7 @@ pp_check.mcpfit = function(
     rate = FALSE,
     prior = prior,
     dpar = NULL,
-    varying = varying,
+    group = group,
     arma = arma,
     # LOO weights are computed for every posterior draw. Keep those draws
     # intact; bayesplot's `samples` argument controls plot sampling where
@@ -106,29 +109,29 @@ pp_check.mcpfit = function(
     plot_return = get_ppc_plot(
       fit, type, y, yrep, ndraws,
       observations = observed_rows,
-      varying = varying,
+      group = group,
       arma = arma,
       ...
     )
     return(plot_return)
   } else {
-    groups = unique(group_data[observed_rows])
+    facet_levels = unique(facet_data[observed_rows])
     all_plots = list()
-    for (group in groups) {
-      # Compute/extract y and yrep for this group
-      observations_this = observed_rows[group_data[observed_rows] == group]
+    for (facet_level in facet_levels) {
+      # Compute/extract y and yrep for this facet level
+      observations_this = observed_rows[facet_data[observed_rows] == facet_level]
       y_this = y_all[observations_this]
       yrep_this = tidy_to_matrix(draws, type = ".prediction", data_rows = observations_this)
 
       # Add plot to list
-      all_plots[[as.character(group)]] = get_ppc_plot(
+      all_plots[[as.character(facet_level)]] = get_ppc_plot(
         fit, type, y_this, yrep_this, ndraws,
         observations = observations_this,
-        varying = varying,
+        group = group,
         arma = arma,
         ...
       ) +
-        ggplot2::ggtitle(group)
+        ggplot2::ggtitle(facet_level)
     }
 
     # Return faceted plot using patchwork
@@ -152,7 +155,7 @@ pp_check.mcpfit = function(
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_ppc_plot = function(fit, type, y, yrep, ndraws,
-                        observations = NULL, varying = TRUE, arma = TRUE, ...) {
+                        observations = NULL, group = TRUE, arma = TRUE, ...) {
   is_loo = stringr::str_detect(type, "loo")
 
   func_name = paste0("ppc_", type)
@@ -171,7 +174,7 @@ get_ppc_plot = function(fit, type, y, yrep, ndraws,
     fit = with_loo(
       fit,
       save_psis = TRUE,
-      varying = varying,
+      group = group,
       arma = arma,
       info = "Computing `fit$loo = loo(fit, save_psis = TRUE)`..."
     )

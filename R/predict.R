@@ -5,7 +5,7 @@
 #'
 #' @aliases pp_eval pp_eval.mcpfit
 #' @keywords internal
-#' @param varying Group-level effects. One of:
+#' @param group Group-level effects. One of:
 #'   * `TRUE` All group-level deviations.
 #'   * `FALSE` No group-level deviations (`c()`).
 #'   * `"cp"` or `"predictor"`: All group-level deviations belonging to that part of
@@ -55,7 +55,7 @@
 #'   * `FALSE` Disregard AR and MA effects. For `family = gaussian()`, `predict()` uses only `sigma` for residuals.
 #'   For posterior evaluation of the original data, retained JAGS imputations
 #'   supply missing GARMA histories. In models with group-level effects, this
-#'   currently requires all such effects (`varying = TRUE`).
+#'   currently requires all such effects (`group = TRUE`).
 #' @param ndraws Integer or `NULL`. Number of posterior draws to return/summarise.
 #'   If there are group-level effects, this is the number of draws from each group.
 #'   `NULL` means "all". More draws trade speed for accuracy.
@@ -105,7 +105,7 @@ pp_eval = function(
   rate = TRUE,
   prior = FALSE,
   dpar = "epred",
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = NULL,
   draws_format = "tidy",
@@ -163,8 +163,8 @@ pp_eval = function(
   ###############
   # FIX NEWDATA #
   ###############
-  # Identify grouping columns to exclude based on the `varying` argument
-  group_info = unpack_group_effects(fit, pars = varying)
+  # Identify grouping columns to exclude based on the `group` argument
+  group_info = unpack_group_effects(fit, pars = group)
   model_tables = get_fit_model_tables(fit)
   group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
   exclude_group_cols = setdiff(group_cols, c(group_info$cols, if (evaluating_arma) data_columns$series, get_predictor_cols(fit)))
@@ -256,13 +256,13 @@ pp_eval = function(
     # Match group-level draws to each row of data.
     draws = dplyr::left_join(
       add_rhs_predictors(newdata, fit),
-      mcp_draws(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws, newdata = newdata),
+      mcp_draws(fit, population = TRUE, group = group, prior = prior, ndraws = ndraws, newdata = newdata),
       by = unique(group_info$cols),
       relationship = "many-to-many"
     )
   } else {
     # Without group-level effects, use all draws for each row of data.
-    mcmc_draws = tibble::as_tibble(mcp_draws(fit, population = TRUE, varying = varying, prior = prior, ndraws = ndraws))
+    mcmc_draws = tibble::as_tibble(mcp_draws(fit, population = TRUE, group = group, prior = prior, ndraws = ndraws))
     predictors = tibble::as_tibble(add_rhs_predictors(newdata, fit))
     draws = dplyr::cross_join(mcmc_draws, predictors)
   }
@@ -275,7 +275,7 @@ pp_eval = function(
       stop(
         "This model has group-level effects, and its retained missing-response ",
         "histories are conditional on all of them. GARMA evaluation with missing ",
-        "responses therefore currently requires `varying = TRUE`.",
+        "responses therefore currently requires `group = TRUE`.",
         call. = FALSE
       )
     if (is.null(fit$.internal$imputed_response))
@@ -430,7 +430,7 @@ pp_eval = function(
 #' but with fixed arguments for `fitted`: `rate = FALSE, dpar = 'epred', draws_format = 'tidy'`.
 #'
 #' `log_lik()` defaults to an unsummarised draws-by-observation matrix, as used
-#' by `loo` and other posterior workflows. Non-default `varying` and `arma`
+#' by `loo` and other posterior workflows. Non-default `group` and `arma`
 #' settings evaluate conditional or counterfactual log-likelihoods (e.g.,
 #' omitting random effects or serial correlation); they cannot be used in
 #' `loo()` or `waic()` because estimating information criteria for reduced
@@ -442,6 +442,7 @@ pp_eval = function(
 #' retained JAGS imputations supply the history used for later fitted and predicted rows.
 #'
 #' @inheritParams pp_eval
+#' @param varying Deprecated. Use `group` instead.
 #' @param ... Must be empty. Reserved for future use.
 #' @inherit pp_eval return
 #' @seealso \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}} \code{\link{log_lik.mcpfit}}
@@ -488,16 +489,18 @@ predict.mcpfit = function(
   probs = TRUE,
   rate = FALSE,
   prior = FALSE,
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = NULL,
   draws_format = "tidy",
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated(),
+  varying = lifecycle::deprecated(),
   conditional = TRUE,
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "predict.mcpfit")
+  group = resolve_group(group, varying, missing(group), "predict.mcpfit")
   draws_format = resolve_draws_format(draws_format, samples_format, missing(draws_format), "predict.mcpfit")
   dots = list(...)
   warn_which_y(dots, "predict")
@@ -518,7 +521,7 @@ predict.mcpfit = function(
     rate = rate,
     prior = prior,
     dpar = NULL,
-    varying = varying,
+    group = group,
     arma = arma,
     ndraws = ndraws,
     draws_format = draws_format,
@@ -538,16 +541,18 @@ fitted.mcpfit = function(
   rate = FALSE,
   prior = FALSE,
   dpar = "epred",
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = NULL,
   draws_format = "tidy",
   scale = "response",
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated(),
+  varying = lifecycle::deprecated(),
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "fitted.mcpfit")
+  group = resolve_group(group, varying, missing(group), "fitted.mcpfit")
   draws_format = resolve_draws_format(draws_format, samples_format, missing(draws_format), "fitted.mcpfit")
   dots = list(...)
   warn_which_y(dots, "fitted")
@@ -569,7 +574,7 @@ fitted.mcpfit = function(
     rate = rate,
     prior = prior,
     dpar = dpar,
-    varying = varying,
+    group = group,
     arma = arma,
     ndraws = ndraws,
     draws_format = draws_format,
@@ -740,7 +745,7 @@ posterior_prediction_matrix = function(
     ndraws = draws
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
 
-  varying = resolve_re_formula(re.form, re_formula)
+  group = resolve_re_formula(re.form, re_formula)
   if (is.null(dpar))
     dpar = "epred"
   if (!is.null(seed))
@@ -754,7 +759,7 @@ posterior_prediction_matrix = function(
     rate = rate,
     prior = FALSE,
     dpar = if (type == "fitted") dpar else NULL,
-    varying = varying,
+    group = group,
     arma = TRUE,
     ndraws = ndraws,
     draws_format = "matrix",
@@ -791,15 +796,17 @@ log_lik.mcpfit = function(
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = NULL,
   draws_format = "matrix",
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated(),
+  varying = lifecycle::deprecated(),
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "log_lik.mcpfit")
+  group = resolve_group(group, varying, missing(group), "log_lik.mcpfit")
   draws_format = resolve_draws_format(draws_format, samples_format, missing(draws_format), "log_lik.mcpfit")
   dots = list(...)
   warn_which_y(dots, "log_lik")
@@ -816,7 +823,7 @@ log_lik.mcpfit = function(
     rate = rate,
     prior = prior,
     dpar = NULL,
-    varying = varying,
+    group = group,
     arma = arma,
     ndraws = ndraws,
     draws_format = draws_format,
@@ -834,13 +841,15 @@ residuals.mcpfit = function(
   summary = TRUE,
   probs = TRUE,
   prior = FALSE,
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = NULL,
   nsamples = lifecycle::deprecated(),
+  varying = lifecycle::deprecated(),
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "residuals.mcpfit")
+  group = resolve_group(group, varying, missing(group), "residuals.mcpfit")
   dots = list(...)
   warn_which_y(dots, "residuals")
   dots$which_y = NULL
@@ -856,7 +865,7 @@ residuals.mcpfit = function(
     rate = FALSE,
     prior = prior,
     dpar = NULL,
-    varying = varying,
+    group = group,
     arma = arma,
     ndraws = ndraws,
     draws_format = "tidy"

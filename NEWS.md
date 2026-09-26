@@ -46,7 +46,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - `fixef()` now reports only population-level effects for `mu` (the primary response parameter), excluding change points, other distributional parameters, AR/MA parameters, and group-effect SDs. Use `summary(fit)` to get all parameters.
 
-  - In general, renamed `"varying"` to `"group"`. The old `"varying"` selector remains as a deprecated alias. The established `varying =` method argument remains unchanged for now.
+  - In general, renamed `"varying"` to `"group"`. Where `varying` was an argument, it is now a deprecated alias with a warning.
 
   - `summary()`, `fixef()`, and `ranef()`, `prior_summary()`, and everything else now return rows in a canonical order instead of the previous incidental (near-alphabetical) order; `ranef()` orders group levels following the grouping factor's levels in the fitting data. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to include `segment` and `dpar` columns.
 
@@ -123,9 +123,9 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Added `log_lik(fit)` which returns a draws-by-observation matrix by default. This is the usual `{brms}` return shape and is accepted directly by `{loo}`. `log_lik()` supports the same arguments as e.g. `fitted()`.
 
-  - Several new arguments to `loo`. `loo(fit, pointwise = TRUE)` uses `loo::loo.function()` for more memory-efficient (but slower) computation of LOO. Other new arguments include the usual from `fitted()` etc.: `loo(fit, ndraws = 1000, arma = FALSE, varying = FALSE)`.
+  - Several new arguments to `loo`. `loo(fit, pointwise = TRUE)` uses `loo::loo.function()` for more memory-efficient (but slower) computation of LOO. Other new arguments include the usual from `fitted()` etc.: `loo(fit, ndraws = 1000)`.
 
-  - Methods like `fitted()` and `predict()` now accept `fitted(fit, varying = "cp")` and `fitted(fit, varying = "predictor")` as fast selectors for group-level effects in the corresponding formula part. Exact group-level parameter names remain supported too, `varying = TRUE` selects all, and `ranef()` continues to return all group-level effects.
+  - Methods like `fitted()` and `predict()` now accept `fitted(fit, group = "cp")` and `fitted(fit, group = "predictor")` as fast selectors for group-level effects in the corresponding formula part. Exact group-level parameter names remain supported too, `group = TRUE` selects all, and `ranef()` continues to return all group-level effects.
 
   - Fits made with custom `jags_code` now warn when calling R-side simulation, prediction, or model-evaluation methods, because those methods continue to evaluate the supplied formulas rather than the custom JAGS code.
 
@@ -175,7 +175,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Removed `which_y` argument from `predict()`.
 
-  - Disallowed non-default `varying` and `arma = FALSE` in `loo()` and `waic()`. Additionally, `loo(ndraws = ...)` now thins draws evenly across chains to preserve MCMC chain identities and order.
+  - Disallowed non-default `group` and `arma = FALSE` in `loo()` and `waic()`. Additionally, `loo(ndraws = ...)` now thins draws evenly across chains to preserve MCMC chain identities and order.
 
   - New `mcpfit` objects no longer include empty `$loo` and `$waic` components.
 

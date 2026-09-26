@@ -56,6 +56,26 @@ warn_which_y = function(args, func_name) {
 }
 
 
+# Resolve the deprecated `varying` argument
+resolve_group = function(group, varying, group_missing, what,
+                         env = rlang::caller_env(),
+                         user_env = rlang::caller_env(2)) {
+  if (lifecycle::is_present(varying)) {
+    lifecycle::deprecate_warn(
+      "0.4.0",
+      paste0(what, "(varying)"),
+      paste0(what, "(group)"),
+      env = env,
+      user_env = user_env
+    )
+    if (!group_missing)
+      stop("Use only one of `group` and deprecated `varying`.")
+    group = varying
+  }
+  group
+}
+
+
 # Warn when a binomial prediction relies on the pre-v0.4 proportion default.
 warn_binomial_rate = function(fit, newdata, what) {
   if (fit$family$family != "binomial")

@@ -15,6 +15,7 @@
 #'   memory efficient. `FALSE` (default) computes the full log-likelihood matrix at once.
 #'   Note that both modes calculate pointwise (observation-level) PSIS-LOO cross-validation.
 #' @param pointwise Deprecated alias for `by_row`.
+#' @param varying Deprecated. Use `group` instead.
 #' @param ndraws Integer or `NULL`. Target number of posterior draws used for
 #'   the log-likelihood or information criterion. Draws are balanced across
 #'   chains, so the actual number may be rounded. `NULL` uses all draws.
@@ -30,10 +31,10 @@
 #'   not currently implement.
 #'
 #'   `loo()` and `waic()` evaluate the likelihood of the fitted model and require
-#'   default `varying = TRUE` and `arma = TRUE`. Evaluating an information
+#'   default `group = TRUE` and `arma = TRUE`. Evaluating an information
 #'   criterion with fitted components dropped post-hoc violates the PSIS
 #'   identity because draws come from the full model's posterior; comparing a
-#'   reduced model requires refitting it. Non-default `varying` and `arma`
+#'   reduced model requires refitting it. Non-default `group` and `arma`
 #'   settings remain available in `log_lik()` as conditional or counterfactual
 #'   diagnostics.
 #'
@@ -64,19 +65,20 @@
 #' loo::loo_compare(loo1, loo2)
 #' }
 loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(),
-                      varying = TRUE, arma = TRUE, ndraws = NULL,
-                      nsamples = lifecycle::deprecated()) {
+                      group = TRUE, arma = TRUE, ndraws = NULL,
+                      nsamples = lifecycle::deprecated(), varying = lifecycle::deprecated()) {
   if (lifecycle::is_present(pointwise)) {
     lifecycle::deprecate_soft("0.4.0", "loo(pointwise)", "loo(by_row)")
     by_row = pointwise
   }
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "loo.mcpfit")
+  group = resolve_group(group, varying, missing(group), "loo.mcpfit")
   fit = x
   checkmate::assert_class(fit, "mcpfit")
-  checkmate::assert_multi_class(varying, c("logical", "character"))
+  checkmate::assert_multi_class(group, c("logical", "character"))
   checkmate::assert_flag(arma)
-  if (!isTRUE(varying))
-    stop("`varying` cannot be altered in `loo()`. Evaluating an information criterion without fitted random effects requires refitting the reduced model. Use `log_lik(..., varying = ...)` for conditional/counterfactual log-likelihoods.")
+  if (!isTRUE(group))
+    stop("`group` cannot be altered in `loo()`. Evaluating an information criterion without fitted group-level effects requires refitting the reduced model. Use `log_lik(..., group = ...)` for conditional/counterfactual log-likelihoods.")
   if (!isTRUE(arma))
     stop("`arma` cannot be FALSE in `loo()`. Evaluating an information criterion without fitted AR/MA terms requires refitting the reduced model. Use `log_lik(..., arma = FALSE)` for conditional/counterfactual log-likelihoods.")
   assert_loglik_garma_history(fit, fit$data, arma, "`loo()`")
@@ -108,11 +110,11 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
 
     n_draws = n_chains * iter_per_chain
     chain_id = rep(seq_len(n_chains), each = iter_per_chain)
-    settings = get_loglik_settings(fit, varying, arma, n_draws)
+    settings = get_loglik_settings(fit, group, arma, n_draws)
   } else {
     n_draws = sum(vapply(mcmc_post, nrow, integer(1)))
     chain_id = rep(seq_along(mcmc_post), vapply(mcmc_post, nrow, integer(1)))
-    settings = get_loglik_settings(fit, varying, arma, ndraws)
+    settings = get_loglik_settings(fit, group, arma, ndraws)
   }
 
   if (length(settings$observed_rows) == 0)
@@ -121,7 +123,7 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
   # Matrix: Fast but memory-greedy matrix-based computation
   if (by_row == FALSE) {
     loglik = log_lik(
-      fit, summary = FALSE, varying = varying, arma = arma
+      fit, summary = FALSE, group = group, arma = arma
     )
     col_max = apply(loglik, 2, function(x) { m = max(x); if (is.finite(m)) m else 0 })
     r_eff = loo::relative_eff(exp(sweep(loglik, 2, col_max, "-")), chain_id)
@@ -141,7 +143,7 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
         loglik_samples = pp_eval(
           fit, newdata = fit$data[original_row, , drop = FALSE],
           summary = FALSE, type = "loglik",
-          varying = varying, arma = arma
+          group = group, arma = arma
         )
       } else {
         # AR needs only its direct response lags. MA innovations recursively
@@ -150,7 +152,7 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
         data_rows = seq(first_row, original_row)
         lldata = fit$data[data_rows, ]
         loglik_samples = fit %>%
-          pp_eval(newdata = lldata, summary = FALSE, type = "loglik", varying = varying, arma = arma) %>%
+          pp_eval(newdata = lldata, summary = FALSE, type = "loglik", group = group, arma = arma) %>%
           dplyr::filter(.data$data_row == max(.data$data_row))  # last observed row
       }
 
@@ -184,16 +186,17 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
 #' @param ... Must be empty. Reserved for future use.
 #' @export waic
 #' @export
-waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, ndraws = NULL,
-                       nsamples = lifecycle::deprecated()) {
+waic.mcpfit = function(x, ..., group = TRUE, arma = TRUE, ndraws = NULL,
+                       nsamples = lifecycle::deprecated(), varying = lifecycle::deprecated()) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "waic.mcpfit")
+  group = resolve_group(group, varying, missing(group), "waic.mcpfit")
   rlang::check_dots_empty()
   fit = x
   checkmate::assert_class(fit, "mcpfit")
-  checkmate::assert_multi_class(varying, c("logical", "character"))
+  checkmate::assert_multi_class(group, c("logical", "character"))
   checkmate::assert_flag(arma)
-  if (!isTRUE(varying))
-    stop("`varying` cannot be altered in `waic()`. Evaluating an information criterion without fitted random effects requires refitting the reduced model. Use `log_lik(..., varying = ...)` for conditional/counterfactual log-likelihoods.")
+  if (!isTRUE(group))
+    stop("`group` cannot be altered in `waic()`. Evaluating an information criterion without fitted group-level effects requires refitting the reduced model. Use `log_lik(..., group = ...)` for conditional/counterfactual log-likelihoods.")
   if (!isTRUE(arma))
     stop("`arma` cannot be FALSE in `waic()`. Evaluating an information criterion without fitted AR/MA terms requires refitting the reduced model. Use `log_lik(..., arma = FALSE)` for conditional/counterfactual log-likelihoods.")
   assert_loglik_garma_history(fit, fit$data, arma, "`waic()`")
@@ -201,7 +204,7 @@ waic.mcpfit = function(x, ..., varying = TRUE, arma = TRUE, ndraws = NULL,
   mcmclist_draws(fit)
   ndraws = validate_loglik_ndraws(fit, ndraws)
   loglik = log_lik(
-    fit, summary = FALSE, varying = varying, arma = arma, ndraws = ndraws
+    fit, summary = FALSE, group = group, arma = arma, ndraws = ndraws
   )
   loo::waic(loglik)
 }
@@ -222,11 +225,11 @@ validate_loglik_ndraws = function(fit, ndraws) {
 
 
 # Extract and validate evaluation settings for log-likelihood
-get_loglik_settings = function(fit, varying, arma, ndraws) {
+get_loglik_settings = function(fit, group, arma, ndraws) {
   if (!is.null(ndraws))
     ndraws = as.integer(ndraws)
   list(
-    varying = varying,
+    group = group,
     arma = arma,
     ndraws = ndraws,
     observed_rows = which(!is.na(fit$data[, mcp_columns(fit)$response]))
@@ -595,12 +598,12 @@ is_sparse_tail = function(x, value) {
 # - fit: An mcpfit object
 # - save_psis: Logical. See documentation of loo::loo
 # - info: Optional message if adding loo
-# - varying,arma: Evaluation settings passed to `loo.mcpfit()`.
+# - group,arma: Evaluation settings passed to `loo.mcpfit()`.
 # Returns: An mcpfit object with loo.
 with_loo = function(fit, save_psis = FALSE, info = NULL,
-                    varying = TRUE, arma = TRUE) {
+                    group = TRUE, arma = TRUE) {
   checkmate::assert_class(fit, "mcpfit")
-  settings = get_loglik_settings(fit, varying, arma, ndraws = NULL)
+  settings = get_loglik_settings(fit, group, arma, ndraws = NULL)
   settings_match = identical(attr(fit$loo, "mcp_settings"), settings)
   needs_psis = save_psis == TRUE &&
     loo::is.loo(fit$loo) && is.null(fit$loo$psis_object)
@@ -612,7 +615,7 @@ with_loo = function(fit, save_psis = FALSE, info = NULL,
     fit$loo = loo(
       fit,
       save_psis = save_psis,
-      varying = varying,
+      group = group,
       arma = arma
     )
   }

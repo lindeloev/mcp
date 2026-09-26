@@ -224,7 +224,7 @@ get_plot = function(x,
       rate = rate,
       prior = prior,
       dpar = dpar,
-      varying = group_pars,
+      group = group_pars,
       arma = needs_arma,
       ndraws = ndraws,
       draws_format = "tidy",
@@ -625,15 +625,15 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
 
   # Get group-level and population-level change-point parameter names.
   if (!is.null(facet_by)) {
-    varying = stats::na.omit(cps$group_name[cp_matches_facet])
+    group = stats::na.omit(cps$group_name[cp_matches_facet])
     population = stats::na.omit(cps$name[cp_not_facet])
   } else {
-    varying = NULL
+    group = NULL
     population = cps$name
   }
 
   # Get draws in long format
-  draws = mcp_draws(fit, population = population, varying = varying, absolute = TRUE, prior = prior) %>%
+  draws = mcp_draws(fit, population = population, group = group, absolute = TRUE, prior = prior) %>%
     tidyr::pivot_longer(cols = tidyselect::matches("^cp_[0-9]+$"), names_to = "cp_name", values_to = "value") %>%
 
     # Compute density per group. Tolerate zero-variance CPs like cp_2 = 80.

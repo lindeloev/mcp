@@ -115,7 +115,7 @@ test_that("completed histories stay paired across draws, groups, series, and seg
   set.seed(42)
   selected = fitted(fit, summary = FALSE, ndraws = 2)
   expect_equal(selected$.epred, unname(expected[cbind(match(selected$.draw, raw$.draw), selected$data_row)]))
-  expect_error(fitted(fit, varying = FALSE), "requires `varying = TRUE`", fixed = TRUE)
+  expect_error(fitted(fit, group = FALSE), "requires `group = TRUE`", fixed = TRUE)
   fit$mcmc_prior = .subset2(fit, "mcmc_post")
   expect_error(predict(fit, prior = TRUE), "Missing GARMA histories require posterior draws", fixed = TRUE)
   expect_no_error(predict(fit, prior = TRUE, conditional = FALSE, summary = FALSE, ndraws = 2))

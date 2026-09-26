@@ -344,7 +344,7 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
   smoke_fit = fit
   smoke_fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws[keep, , drop = FALSE]))
   draws = mcp_draws(
-    smoke_fit, population = TRUE, varying = length(group_info$cols) > 0
+    smoke_fit, population = TRUE, group = length(group_info$cols) > 0
   )
   predictor_data = add_rhs_predictors(newdata, fit)
   if (length(group_info$cols) > 0) {
