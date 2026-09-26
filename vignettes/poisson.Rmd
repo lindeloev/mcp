@@ -122,7 +122,7 @@ fit = mcp(model, data = df, family = poisson())  # implicit link = "log"
 Adding a categorical predictor to the model, you can also model rate ratios. When an offset is present, `mcp` automatically shifts the default intercept prior from centering on observed log-counts to observed log-rates ($\log(y) - \text{offset}$), keeping the minimum scale at 2.5.
 
 > **Note on `par_x` vs. cumulative exposure:**  
-> The offset is evaluated per row as local exposure for that observation. If `par_x` represents continuous cumulative time from an origin (e.g., $[0, t_i]$), using `offset(log(par_x))` does **not** integrate piecewise rates across prior segments; instead, the active segment's rate is applied to the total duration. If your data consists of discrete time intervals (bins) of duration $\Delta t_i$, using `offset(log(delta_t))` is valid.
+> The offset is evaluated per row as local exposure for that observation. If `par_x` represents continuous cumulative time from an origin (e.g., $[0, t_i]$), using `offset(log(par_x))` does **not** integrate piecewise rates across prior segments; instead, the current segment's rate is applied to the total duration. If your data consists of discrete time intervals (bins) of duration $\Delta t_i$, using `offset(log(delta_t))` is valid.
 
 # Model comparison
 

@@ -23,7 +23,7 @@ bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_fam
 This article in brief:
 
  * Predictor and change-point group-level effects
- * How group-level effects are active across segments
+ * How group-level effects apply across segments
  * How to simulate group-level change-point deviations
  * Get posteriors using `ranef(fit)`
  * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
@@ -69,7 +69,7 @@ where $\kappa_{ig}$ is the group-specific location. Thus `cp_i_id[g]` is the rep
 
 The hierarchy is subject to $x_{\min} < \kappa_{1g} < \cdots < \kappa_{Kg} < x_{\max}$. Thus, if adjacent change points both vary, their group-specific locations are ordered against each other—not against the adjacent population change point. Internally, JAGS samples $\kappa_{ig}$ directly for efficiency.
 
-Unlike predictor group-level effects, a change-point group effect applies only at the change point where it is written.
+Unlike predictor group-level effects, a change-point group effect applies only at the change point where it is included.
 
 # Predictor group-level effects
 
@@ -78,14 +78,15 @@ The same syntax in the predictor part gives each group a deviation from the popu
 ```{r}
 model = list(
   y ~ 1 + (1|id),  # Starts group-level intercept
-  ~ 0 + x,         # No active group-level intercept here
+  ~ 0 + x,         # (1|id) not included, so group intercepts end at cp_1
   ~ 1 + (0|id),    # (0|id) turns it off
   ~0 + same((1|id), as = 1)  # Share/reuse group-level intercept from segment 1
 )
 ```
 
-Group intercepts and non-local group terms are active only where declared. A local group slope on `x` retains its joined endpoint until a later group intercept or `(0|id)` resets the block. This is tracked separately for each grouping factor and distributional parameter. Read more in [the article on formulas](../articles/formulas.html#on-carry-over-between-segments).
-Notice `same()` above. Sharing selects the complete active source block, never a subset of its coefficients. It preserves fitted coding and parameter names while local slopes use the current segment's coordinates. The same syntax works inside `sigma()` and other family parameters. See `mcp_example("group_mu")`.
+Group terms follow the [rules for how segments connect](../articles/formulas.html#how-segments-connect), separately for each grouping factor and distributional parameter. Group intercepts apply only in segments that include them. Group slopes on `x`, such as `(0 + x||id)`, are x-terms: they join until a later segment includes a group intercept for the same grouping factor, or `(0|id)`, which ends all group terms for `id`. A population-level intercept (`~ 1 + ...`) does not end group slopes.
+
+Notice `same()` above. It reuses the complete group term from the source segment (deviations and SD), never a subset of it. Reused group slopes count from the current change point. The same syntax works inside `sigma()` and other distributional parameters. See `mcp_example("group_mu")`.
 
 
 Use `||` for independent group-level slopes and factor coefficients:
@@ -111,7 +112,7 @@ model = list(
 
 This model has group-level deviations in both the conditional mean and log-SD. The `||` syntax works inside distributional formulas too, for example `sigma(1 + (state||id))`.
 
-A later group intercept resets the earlier block. Thus, if `(state||id)` is followed in a later segment by `(1||id)`, only the new intercept deviation applies from that segment onward. A slope-only block joins earlier local-slope endpoints, while `(0|id)` turns the whole block off.
+A later group intercept starts the group terms afresh. Thus, if `(state||id)` is followed in a later segment by `(1||id)`, only the new intercept deviations apply from that segment onward. A later group term without an intercept, such as `(0 + x||id)`, joins earlier group slopes, while `(0|id)` ends all group terms for `id`.
 
 Multi-coefficient terms with `|`, such as `(1 + x|id)`, would imply correlated group coefficients and are not yet supported; use `(1 + x||id)` for independent coefficients. Group-level terms inside `ar()` and `ma()` are also not supported.
 

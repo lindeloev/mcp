@@ -291,8 +291,12 @@ $$\eta_i = \alpha_k + \beta_{k,1} \, (x_i - \tau_{k-1}) \quad (\text{with } \tau
 
 where $\alpha_k$ is the value at the start of segment $k$:
 
-- **Disjoined** (`~ 1 + x`, and always segment 1): $\alpha_k = \beta_{k,0}$ is freely estimated as the segment's intercept.
-- **Joined** (`~ 0 + x`): $\alpha_k = \alpha_{k-1} + \beta_{k-1,1} (\tau_{k-1} - \tau_{k-2})$ continues from where segment $k-1$ left off.
+$$\alpha_k = \begin{cases}
+\beta_{k,0}, & \text{disjoined } (\sim \texttt{1 + x}, \text{ or } k = 1) \\
+\alpha_{k-1} + \beta_{k-1,1} (\tau_{k-1} - \tau_{k-2}), & \text{joined } (\sim \texttt{0 + x})
+\end{cases}$$
+
+That is, a disjoined segment starts at its own intercept $\beta_{k,0}$, while a joined segment continues from where segment $k-1$ left off.
 
 Here, $\beta_{k,1}$ is the slope on $x$ in segment $k$. Intercepts and slopes are absolute values (not changes relative to preceding segments). Other variables (e.g., `+ z + state`) add $\sum_j \gamma_{k,j} z_{j,i}$ in the segments where they are included. They use their original values and are not part of $\alpha_k$, which is why they can make a joined segment start with a jump.
 

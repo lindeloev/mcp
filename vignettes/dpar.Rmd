@@ -93,14 +93,14 @@ model = list(
   ~ 0 + x + sigma(0 + x + I(x^2)),  # At cp_2: x_3, sigma_x_3, sigma_xE2_3
   
   # 4. Continue slope on mean, but plateau standard deviation (no sigma() term).
-  ~ 0 + same(x)  # At cp_3: reuse x_3 (implicit sigma(0))
+  ~ 0 + same(x)  # At cp_3: reuse x_3; sigma joined
 )
 ```
 
 Notice a few things here:
 
 - `same(x)` ensures that the mean slope remains constant between segment 3 and 4. So only `sigma` changes there. Sharing the slope effectively removes the change point in the mean (read more about [formulas in mcp](../articles/formulas.html)).
-- Segment 4: Because `sigma` is a required distributional parameter for the `gaussian()` family, it cannot "turn off" just because it is not declared explicitly. `mcp` implicitly adds a `sigma(0)` term in these segments.
+- Segment 4: `sigma` is required by the likelihood, so it cannot be turned off. A segment that does not include `sigma()` is joined, so the log-SD plateaus here.
 
 In general, the log-SD parameters are named `sigma_[normalname]`, where "normalname" is the usual parameter names in mcp (see more [here](../articles/formulas.html)). For example, the log-SD slope on `x` in segment 3 is `sigma_x_3`. However, `sigma_Intercept_i` is just too verbose, so log-SD intercepts are simply called `sigma_i`, where i is the segment number.
 

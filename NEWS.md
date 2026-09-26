@@ -60,7 +60,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - **Binomial predictions now default to counts:** `fitted()` returns expected successes and `predict()` returns predicted successes (`rate = FALSE`), matching `posterior_epred()`, `posterior_predict()`, and brms. In v0.3.4 these methods defaulted to proportions. Update old scripts with explicit `rate = TRUE` to retain proportions, or `rate = FALSE` to select counts. An omitted `rate` warns once per session per function when the requested counts differ from proportions.
 
-  - **ar(p) no longer persist to later segments:** All terms are now local to the segment in which they are declared. While important for the new multiple-regression functionality, the only backward incompatibility is that in a model like `model = list(y ~ 1 + ar(1), ~ 0)`, the AR would continue into segment 2. The equivalent model in v0.4+ is `~ 0 + same(ar(1))` in segment 2.
+  - **ar(p) no longer continues into later segments:** Only terms included in a segment get coefficients there. While important for the new multiple-regression functionality, the only backward incompatibility is that in a model like `model = list(y ~ 1 + ar(1), ~ 0)`, the AR would continue into segment 2. The equivalent model in v0.4+ is `~ 0 + ar(1, 0)` in segment 2.
 
   - Explicit prior draw selection: Methods requiring draws now require posterior draws by default and error if they are unavailable. Use `prior = TRUE` to select prior draws; prior-only fits no longer trigger an automatic fallback. This also applies to draw-count methods.
 
@@ -80,7 +80,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - `y | weights(w)` now specifies observation log-likelihood weights rather than Gaussian-only precision weights (which previously scaled the residual SD as `sigma / sqrt(w)`). Unlike `brms`, weights must be strictly positive due to JAGS requirements (cannot be zero). Predictive draws and expectations now use the distribution parameters directly while `log_lik()` multiplies observation log-densities by `w`.
 
-  - Formula transformations now use the original predictor values, as in `lm()`, `glm()`, and `brms`. Previously, transformations of the change-point predictor such as `sin(x)` and `exp(x)` restarted at each segment onset. Bare `par_x` and polynomial bases such as `I(par_x^2)` remain segment-local to support joined segment shapes.
+  - Formula transformations now use the original predictor values, as in `lm()`, `glm()`, and `brms`. Previously, transformations of the change-point predictor such as `sin(x)` and `exp(x)` restarted at each change point. Bare `par_x` and polynomial bases such as `I(par_x^2)` still count from the change point to support joined segments.
 
 - **Fitting and priors:**
 
@@ -100,7 +100,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - GARMA observation thresholds are now validated with family-appropriate bounds: strictly below 0.5 for `family = bernoulli()`, and strictly below half the smallest trial count for `family = binomial()`, preventing thresholds from erasing the binary response history.
 
-  - AR and MA components can now be turned off in later segments using `ar(0)` and `ma(0)`.
+  - `ar(0)` and `ma(0)` are accepted as explicit ways to turn AR and MA off in later segments.
 
   - Explicit AR/MA prediction history control: predict() and the new posterior_predict() support conditional = TRUE (default) to condition on observed response histories, or conditional = FALSE to generate histories recursively. This applies to both prior and posterior prediction. Previously, AR history handling depended on whether response values were supplied.
 

@@ -181,7 +181,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 - Parameter names are `Intercept_i` (intercepts), `cp_i` (change points), `x_i` (slopes), `ar*`/`ma*` (autocorrelation), and `sigma_*` (Gaussian residual standard deviation).
 
-- All terms must be explicitly declared in each segment where they are active; omitting a term turns it off. Use `same(z)` to share a coefficient with previous segments.
+- Only terms included in a segment get coefficients there. `~ 0 + ...` is joined: it continues from where the earlier intercept and [x-terms](https://lindeloev.github.io/mcp/articles/formulas.html#how-segments-connect) (`x`, `state:x`, `I(x^2)`) left off. `~ 1 + ...` is disjoined and starts afresh. Use `same(z)` to reuse a coefficient from the preceding segment.
 
 - The change point model is basically an `ifelse` model with order constraints on the change points.
 
@@ -207,7 +207,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 [Group-level (random) effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
 
-- Model group-level intercepts, slopes, and change points using `(1|id)`, `(state||id)`, or `+(state|id)`. Get posteriors using `ranef(fit)`.
+- Model group-level intercepts, slopes, and change points using `(1|id)`, `(0 + x||id)`, or `1 + (1|id) ~ ...`. Get posteriors using `ranef(fit)`.
 
 - Plot using `plot(fit, facet_by = "my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
 
