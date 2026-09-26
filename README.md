@@ -242,9 +242,12 @@ formulas](https://lindeloev.github.io/mcp/articles/formulas.html):
   points), `x_i` (slopes), `ar*`/`ma*` (autocorrelation), and `sigma_*`
   (Gaussian residual standard deviation).
 
-- All terms must be explicitly declared in each segment where they are
-  active; omitting a term turns it off. Use `same(z)` to share a
-  coefficient with previous segments.
+- Only terms included in a segment get coefficients there. `~ 0 + ...`
+  is joined: it continues from where the earlier intercept and
+  [x-terms](https://lindeloev.github.io/mcp/articles/formulas.html#how-segments-connect)
+  left off (x-terms are, e.g., `x`, `state:x`, `I(x^2)`). `~ 1 + ...` is disjoined and
+  starts afresh. Use `same(z)` to reuse a coefficient from the preceding
+  segment.
 
 - The change point model is basically an `ifelse` model with order
   constraints on the change points.
@@ -287,7 +290,7 @@ testing](https://lindeloev.github.io/mcp/articles/comparison.html):
 effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
 
 - Model group-level intercepts, slopes, and change points using
-  `(1|id)`, `(state||id)`, or `+(state|id)`. Get posteriors using
+  `(1|id)`, `(0 + x||id)`, or `1 + (1|id) ~ ...`. Get posteriors using
   `ranef(fit)`.
 
 - Plot using `plot(fit, facet_by = "my_group")` and
@@ -337,8 +340,9 @@ intervals](https://lindeloev.github.io/mcp/articles/predict.html):
   lengths with equal spacing between change points. Informativeness
   increases as the number of change points increases.
 
-- Fix parameters to specific values using `cp_1 = 45` and share
-  parameters between segments using `slope_1 = "slope_2"`.
+- Fix parameters to specific values using `cp_1 = 45`. To share a
+  coefficient between segments, use `same()` in the model, e.g.,
+  `~ 0 + same(x)`.
 
 - Truncate priors using `T(lower, upper)`, e.g.,
   `Intercept_1 = "dnorm(0, 1) T(0, )"`. `mcp` adds ordering bounds to

@@ -57,7 +57,7 @@ the model.
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
-currently requires including all such effects (\code{varying = TRUE}).
+currently requires all such effects (\code{varying = TRUE}).
 }}
 
 \item{ndraws}{Integer or \code{NULL}. Target number of posterior draws used for

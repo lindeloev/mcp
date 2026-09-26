@@ -55,7 +55,7 @@
 #'   * `FALSE` Disregard AR and MA effects. For `family = gaussian()`, `predict()` uses only `sigma` for residuals.
 #'   For posterior evaluation of the original data, retained JAGS imputations
 #'   supply missing GARMA histories. In models with group-level effects, this
-#'   currently requires including all such effects (`varying = TRUE`).
+#'   currently requires all such effects (`varying = TRUE`).
 #' @param ndraws Integer or `NULL`. Number of posterior draws to return/summarise.
 #'   If there are group-level effects, this is the number of draws from each group.
 #'   `NULL` means "all". More draws trade speed for accuracy.
@@ -68,8 +68,8 @@
 #'   * `"linear"`: return on the linear-predictor (link) scale, where the linear
 #'     trends are modeled.
 #'     A linear scale is only applicable when `type == "fitted"` and `dpar` is not `NULL`.
-#' @param .include_fitted Internal. Include fitted values with unsummarised predictions.
-#' @param .include_dpars Internal. Include distributional parameters and response data as attributes with unsummarised predictions.
+#' @param .return_fitted Internal. Include fitted values with unsummarised predictions.
+#' @param .return_dpars Internal. Include distributional parameters and response data as attributes with unsummarised predictions.
 #' @param .garma_replicate Internal. For GARMA predictions, generate each
 #'   response history recursively instead of conditioning on observed responses.
 #' @return
@@ -110,8 +110,8 @@ pp_eval = function(
   ndraws = NULL,
   draws_format = "tidy",
   scale = 'response',
-  .include_fitted = FALSE,
-  .include_dpars = FALSE,
+  .return_fitted = FALSE,
+  .return_dpars = FALSE,
   .garma_replicate = FALSE,
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated()
@@ -237,12 +237,12 @@ pp_eval = function(
   checkmate::assert_flag(rate)
   checkmate::assert_flag(prior)
   checkmate::assert_flag(arma)
-  checkmate::assert_flag(.include_fitted)
-  checkmate::assert_flag(.include_dpars)
-  if (.include_fitted && (type != "predict" || summary))
-    stop_github("`.include_fitted` requires `type = 'predict'` and `summary = FALSE`.")
-  if (.include_dpars && (type != "predict" || summary))
-    stop_github("`.include_dpars` requires `type = 'predict'` and `summary = FALSE`.")
+  checkmate::assert_flag(.return_fitted)
+  checkmate::assert_flag(.return_dpars)
+  if (.return_fitted && (type != "predict" || summary))
+    stop_github("`.return_fitted` requires `type = 'predict'` and `summary = FALSE`.")
+  if (.return_dpars && (type != "predict" || summary))
+    stop_github("`.return_dpars` requires `type = 'predict'` and `summary = FALSE`.")
   if (.garma_replicate && type != "predict")
     stop_github("`.garma_replicate` requires `type = 'predict'`.")
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
@@ -303,7 +303,7 @@ pp_eval = function(
     seq_len(nrow(draws))
   }
   evaluation_data = draws[evaluation_order, , drop = FALSE]
-  evaluate = function() rlang::exec(simulate_vectorized, fit, !!!evaluation_data, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale, .include_fitted = .include_fitted)
+  evaluate = function() rlang::exec(simulate_vectorized, fit, !!!evaluation_data, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale, .return_fitted = .return_fitted)
   evaluated = if (replicate_garma) suppressMessages(evaluate()) else evaluate()
 
   fitted_values = attr(evaluated, "fitted")
@@ -322,7 +322,7 @@ pp_eval = function(
 
   # Plotting can request fitted and predicted values from the same evaluated
   # parameter rows and model evaluation.
-  if (.include_fitted)
+  if (.return_fitted)
     draws$fitted = fitted_values
 
   if (!is.null(response_return))
@@ -392,11 +392,11 @@ pp_eval = function(
       loglik = ".loglik",
       type
     )
-    if (.include_fitted && "fitted" %in% colnames(draws)) {
+    if (.return_fitted && "fitted" %in% colnames(draws)) {
       draws = dplyr::rename(draws, .epred = "fitted")
     }
     draws = dplyr::rename(draws, !!value_col := dplyr::all_of(type))
-    if (.include_dpars) {
+    if (.return_dpars) {
       if (!is.null(dpars_values)) attr(draws, "dpars") = dpars_values
       if (!is.null(response_data_values)) attr(draws, "response_data") = response_data_values
     }

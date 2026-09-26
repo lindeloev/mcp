@@ -144,11 +144,11 @@ default_predictor_specs = function(predictors, family, design_specs = list()) {
 
   # Offset adjustments for log-link mu intercepts
   if (identical(family$link, "log")) {
-    active_specs = Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, "mu") && any(s$offset_data != 0), design_specs)
+    offset_specs = Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, "mu") && any(s$offset_data != 0), design_specs)
     for (i in which(joined$dpar == "mu")) {
       spec = get_segment_offset(design_specs, "mu", joined$segment[i])
       if (!is.null(spec)) {
-        sym = if (length(active_specs) <= 1) "offset" else paste0("offset_", spec$segment)
+        sym = if (length(offset_specs) <= 1) "offset" else paste0("offset_", spec$segment)
         if (joined$par_type[i] == "Intercept")
           joined$prior[i] = gsub("log(pmax(.y, 0.1))", paste0("log(pmax(.y, 0.1)) - ", sym), joined$prior[i], fixed = TRUE)
         joined$description[i] = gsub("log-count|log-mean", "log-rate", joined$description[i])

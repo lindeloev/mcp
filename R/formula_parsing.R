@@ -315,8 +315,8 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
   if (is.language(form_y))
     form_y = deparse1(form_y)
 
-  declared = names(family$response$auxiliary)
-  aux_names = unique(c("trials", "weights", declared))
+  family_aux = names(family$response$auxiliary)
+  aux_names = unique(c("trials", "weights", family_aux))
   response = stats::setNames(as.list(rep(NA_character_, length(aux_names) + 1)), c("y", aux_names))
 
   # If NA and not segment 1, just return empty
@@ -344,16 +344,16 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
   if (length(y_split) == 2) {
     rhs = y_split[2]
     term_labels = attr(stats::terms(to_formula(rhs)), "term.labels")
-    ok_terms = if (length(declared) == 0) rep(FALSE, length(term_labels)) else
-      vapply(term_labels, function(term) any(stringr::str_detect(term, paste0("^", declared, "\\("))), logical(1))
+    ok_terms = if (length(family_aux) == 0) rep(FALSE, length(term_labels)) else
+      vapply(term_labels, function(term) any(stringr::str_detect(term, paste0("^", family_aux, "\\("))), logical(1))
     if (!all(ok_terms))
       stop(
-        "Only ", if (length(declared) == 0) "no terms are" else and_collapse(paste0("`", declared, "()`")),
+        "Only ", if (length(family_aux) == 0) "no terms are" else and_collapse(paste0("`", family_aux, "()`")),
         " allowed after the pipe for family = ", family$family, "(). Got '", rhs, "'."
       )
   }
 
-  for (name in declared) {
+  for (name in family_aux) {
     term_index = stringr::str_detect(term_labels, paste0("^", name, "\\("))
     got_term = any(term_index)
     if (family$response$auxiliary[[name]]$required && !got_term)

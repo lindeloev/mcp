@@ -259,7 +259,7 @@ get_garma_observed = function(y, family, threshold, data = list()) {
 #' @return Vector with same length as inputs.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar = "epred", .arma = TRUE, .scale = "response", .include_fitted = FALSE) {
+simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar = "epred", .arma = TRUE, .scale = "response", .return_fitted = FALSE) {
   ###########
   # ASSERTS #
   ###########
@@ -306,9 +306,9 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
 
   .dpar = assert_dpar(.dpar, fit = fit, type = .type)
   checkmate::assert_flag(.arma)
-  checkmate::assert_flag(.include_fitted)
-  if (.include_fitted && .type != "predict")
-    stop_github("`.include_fitted` requires `.type = 'predict'`.")
+  checkmate::assert_flag(.return_fitted)
+  if (.return_fitted && .type != "predict")
+    stop_github("`.return_fitted` requires `.type = 'predict'`.")
 
 
   ##################################################
@@ -391,7 +391,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     return(fit$family$r$log_lik(dpar_values$.ydata, dpars, response_data))
   if (.type == "predict") {
     predicted = fit$family$r$rng(length(dpars$mu), dpars, response_data, rate = .rate)
-    if (.include_fitted)
+    if (.return_fitted)
       attr(predicted, "fitted") = fit$family$r$epred(dpars, response_data, rate = .rate)
     attr(predicted, "dpars") = dpars
     attr(predicted, "response_data") = response_data

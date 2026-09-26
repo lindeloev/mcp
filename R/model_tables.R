@@ -153,7 +153,7 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
 #' Provides the canonical display order used by `summary()`, `fixef()`,
 #' `ranef()`, `prior_summary()`, and `plot_pars(pars = "population")`: change
 #' points first (including their SD/group-level hyperparameters), then `mu`,
-#' then the other distributional parameters in the order declared by the
+#' then the other distributional parameters in the order defined by the
 #' family, then `ar`/`ma` components, each ascending by segment.
 #'
 #' @aliases get_pars_table
@@ -247,7 +247,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
         )
     )
 
-  # Canonical group order: cp, mu, other family dpars (declared order), then
+  # Canonical group order: cp, mu, other family dpars (family order), then
   # ar/ma components (ar before ma) and their lag order.
   dpar_levels = c("cp", "mu", setdiff(family$dpar_specs$dpar, "mu"), "ar", "ma")
 
@@ -305,7 +305,7 @@ mcp_pars = function(fit, scope = NULL, role = NULL) {
 #' Return the resolved data-column roles for an `mcpfit` object. In particular,
 #' `par_x` is the change-point predictor chosen automatically or supplied to
 #' [mcp()]. Family-defined response auxiliaries, such as `trials` and
-#' `weights`, are included when relevant.
+#' `weights`, are listed when relevant.
 #'
 #' @param fit An `mcpfit` object.
 #' @return A named list with `par_x`, `response`, and `series`, plus any

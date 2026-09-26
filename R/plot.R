@@ -215,7 +215,7 @@ get_plot = function(x,
   newdata = interpolate_newdata(fit, by = by, at = at, arma = needs_arma)
 
   # Predict
-  local_pp_eval = function(type, newdata, ndraws = NULL, include_fitted = FALSE, include_dpars = FALSE) {
+  local_pp_eval = function(type, newdata, ndraws = NULL, return_fitted = FALSE, return_dpars = FALSE) {
     pp_eval(
       object = fit,
       newdata = newdata,
@@ -229,8 +229,8 @@ get_plot = function(x,
       ndraws = ndraws,
       draws_format = "tidy",
       scale = scale,
-      .include_fitted = include_fitted,
-      .include_dpars = include_dpars
+      .return_fitted = return_fitted,
+      .return_dpars = return_dpars
     )
   }
 
@@ -240,7 +240,7 @@ get_plot = function(x,
       dplyr::select(-dplyr::any_of(as.character(yvar)))
 
     # ".epred" is only present for `type = "fitted"` (or "predict" with
-    # `.include_fitted = TRUE`). Predict-only draws (no q_fit requested) have
+    # `.return_fitted = TRUE`). Predict-only draws (no q_fit requested) have
     # no fitted values to rename.
     if (".epred" %in% names(draws))
       draws = dplyr::rename(draws, "{data_columns$response}" := ".epred")
@@ -262,8 +262,8 @@ get_plot = function(x,
     type = if (show_q_predict) "predict" else "fitted"
     draws = local_pp_eval(
       type, newdata, ndraws = ndraws,
-      include_fitted = show_q_fit && type == "predict",
-      include_dpars = show_q_predict && type == "predict"
+      return_fitted = show_q_fit && type == "predict",
+      return_dpars = show_q_predict && type == "predict"
     )
     draws = prepare_draws(draws)
     keep = unique(c(as.character(xvar), facet_by, ".group", ".color"))

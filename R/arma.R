@@ -270,7 +270,7 @@ get_imputed_response_draws = function(fit, draws) {
 
 # Warn about model-checking limitations for AR/MA models
 # - fit: An mcpfit object.
-# - arma: Whether AR and MA effects are included in the evaluation (logical).
+# - arma: Whether AR and MA effects are used in the evaluation (logical).
 # - check: Currently only "information_criterion".
 warn_arma_check = function(fit, arma, check) {
   if (!arma || !is_arma(fit))

@@ -20,8 +20,8 @@ pp_eval(
   ndraws = NULL,
   draws_format = "tidy",
   scale = "response",
-  .include_fitted = FALSE,
-  .include_dpars = FALSE,
+  .return_fitted = FALSE,
+  .return_dpars = FALSE,
   .garma_replicate = FALSE,
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated()
@@ -95,7 +95,7 @@ the model.
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
-currently requires including all such effects (\code{varying = TRUE}).
+currently requires all such effects (\code{varying = TRUE}).
 }}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
@@ -112,9 +112,9 @@ trends are modeled.
 A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} is not \code{NULL}.
 }}
 
-\item{.include_fitted}{Internal. Include fitted values with unsummarised predictions.}
+\item{.return_fitted}{Internal. Include fitted values with unsummarised predictions.}
 
-\item{.include_dpars}{Internal. Include distributional parameters and response data as attributes with unsummarised predictions.}
+\item{.return_dpars}{Internal. Include distributional parameters and response data as attributes with unsummarised predictions.}
 
 \item{.garma_replicate}{Internal. For GARMA predictions, generate each
 response history recursively instead of conditioning on observed responses.}

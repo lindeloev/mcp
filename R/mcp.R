@@ -411,7 +411,7 @@ mcp = function(model,
   # jags_code
   if(!is.null(jags_code))
     if (!is.character(jags_code) || !stringr::str_detect(gsub(" ", "", jags_code), "model\\{"))
-      stop("`jags_code` must be NULL or a string with a JAGS model, including 'model {...}'.")
+      stop("`jags_code` must be NULL or a string with a JAGS model, containing 'model {...}'.")
 
 
   ##################

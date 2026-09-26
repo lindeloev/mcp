@@ -53,7 +53,7 @@ negbinomial = function(link = "log", link_shape = "log") {
 #' \lifecycle{experimental}
 #'
 #' Converts standard R family objects into `mcpfamily` objects used internally by
-#' `mcp`. Supported family and link combinations include:
+#' `mcp`. Supported family and link combinations are:
 #' * `gaussian(link = "identity")` or `gaussian(link = "log")`
 #' * `binomial(link = "logit")`, `binomial(link = "probit")`, or `binomial(link = "identity")`
 #' * `bernoulli(link = "logit")`, `bernoulli(link = "probit")`, or `bernoulli(link = "identity")`
@@ -695,7 +695,7 @@ add_dpar_specs = function(family) {
 }
 
 
-# Resolve each active dpar link from whether its formula is explicit.
+# Resolve each dpar link from whether the model includes an explicit formula for it.
 resolve_dpar_specs = function(family, predictors, model = NULL) {
   checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
   checkmate::assert_data_frame(predictors)
@@ -708,12 +708,12 @@ resolve_dpar_specs = function(family, predictors, model = NULL) {
       rhs = get_rhs(segment)
       attr(stats::terms(rhs), "term.labels")
     }))
-    declared_dpars = family$dpar_specs$dpar[vapply(
+    included_dpars = family$dpar_specs$dpar[vapply(
       family$dpar_specs$dpar,
       function(dpar) any(stringr::str_detect(term_labels, paste0("^", dpar, "\\("))),
       logical(1)
     )]
-    modeled_dpars = union(modeled_dpars, declared_dpars)
+    modeled_dpars = union(modeled_dpars, included_dpars)
   }
 
   family$dpar_specs$modeled = family$dpar_specs$dpar %in% modeled_dpars
@@ -813,7 +813,7 @@ get_family_aux_columns = function(family, segments, operations = NULL) {
 }
 
 
-# Extract the response-auxiliary columns declared by a fitted family.
+# Extract the response-auxiliary columns defined by a fitted family.
 get_family_response_data = function(family, segments, data) {
   aux_columns = get_family_aux_columns(family, segments)
   out = lapply(aux_columns, function(column) {

@@ -1,4 +1,4 @@
-test_that("families declare dpars independently of prior rows", {
+test_that("families define dpars independently of prior rows", {
   gaussian_family = mcpfamily(gaussian())
   poisson_family = mcpfamily(poisson())
   mean_only_families = list(
@@ -486,7 +486,7 @@ test_that("distributional parameters use the same evaluation identity", {
     newdata = newdata,
     summary = FALSE,
     type = "predict",
-    .include_fitted = TRUE
+    .return_fitted = TRUE
   )
   expect_equal(predicted$.epred, mu$.epred)
   expect_null(attr(predicted$.prediction, ".epred"))

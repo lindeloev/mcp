@@ -26,7 +26,7 @@ is.mcpfamily(x)
 }
 \details{
 Converts standard R family objects into \code{mcpfamily} objects used internally by
-\code{mcp}. Supported family and link combinations include:
+\code{mcp}. Supported family and link combinations are:
 \itemize{
 \item \code{gaussian(link = "identity")} or \code{gaussian(link = "log")}
 \item \code{binomial(link = "logit")}, \code{binomial(link = "probit")}, or \code{binomial(link = "identity")}

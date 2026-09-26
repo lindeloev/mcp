@@ -102,7 +102,7 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 #' @aliases interpolate_newdata
 #' @param fit An `mcpfit` object.
 #' @param by Character vector of categorical or group-level columns to evaluate separately.
-#'   Categorical model predictors are always included.
+#'   Categorical model predictors are always evaluated separately.
 #' @param x_values Numeric vector of x-values to evaluate at.
 #' @param at Named list setting additional continuous predictors to fixed values.
 #'   They default to their observed means. Family response auxiliaries can also

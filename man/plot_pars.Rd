@@ -33,7 +33,7 @@ points, "^my_group_effect" plots all levels of a particular group-level effect, 
 "^cp_|^my_group_effect" plots both.}
 
 \item{type}{String or vector of strings. Calls \verb{bayesplot::mcmc_>>type<<()}.
-Common calls are "combo", "trace", and "dens_overlay". Current options include
+Common calls are "combo", "trace", and "dens_overlay". Current options are
 'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
 'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
 'trace_highlight', and 'violin".}
