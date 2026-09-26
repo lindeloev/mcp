@@ -84,9 +84,9 @@ model = list(
 )
 ```
 
-Group terms follow the [rules for how segments connect](../articles/formulas.html#how-segments-connect), separately for each grouping factor and distributional parameter. Group intercepts apply only in segments that include them. Group slopes on `x`, such as `(0 + x||id)`, are x-terms: they join until a disjoined segment (`~ 1 + ...`), a later group intercept for the same grouping factor, or `(0|id)`, which ends all group terms for `id`.
+Group terms follow the [rules for how segments connect](../articles/formulas.html#how-segments-connect), separately for each grouping factor and distributional parameter. Group intercepts apply only in segments that include them, so each group can jump at a joined change point; use `same((1|id))` to keep them. Group slopes on `x`, such as `(0 + x||id)`, are x-terms: they join until a disjoined segment (`~ 1 + ...`), a later group intercept for the same grouping factor, or `(0|id)`, which ends all group terms for `id`.
 
-Notice `same()` above. It reuses the complete group term from the source segment (deviations and SD), never a subset of it. Reused group slopes count from the current change point. The same syntax works inside `sigma()` and other distributional parameters. See `mcp_example("group_mu")`.
+Notice `same()` above. It reuses the complete group term from the source segment (deviations and SD), never a subset of it. Reused group slopes are still measured from the current change point. The same syntax works inside `sigma()` and other distributional parameters. See `mcp_example("group_mu")`.
 
 
 Use `||` for independent group-level slopes and factor coefficients:

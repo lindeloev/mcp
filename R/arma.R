@@ -133,11 +133,11 @@ get_arma_order = function(predictors, term) {
 }
 
 
-# Parse declarations once rather than re-parsing the same wrappers for every
-# AR/MA coefficient below. Positive-order ~ 0 formulas have no coefficient
-# rows but join an earlier intercept/local-x level.
-get_arma_declarations = function(rhs) {
-  declarations = lapply(seq_along(rhs), function(segment) {
+# Parse the included ar()/ma() terms once rather than re-parsing the same wrappers
+# for every AR/MA coefficient below. Positive-order ~ 0 formulas have no
+# coefficient rows but are joined to the earlier intercept and x-terms.
+get_included_arma = function(rhs) {
+  included = lapply(seq_along(rhs), function(segment) {
     term_labels = attributes(stats::terms(rhs[[segment]]))$term.labels
     lapply(c("ar", "ma"), function(component) {
       term = term_labels[stringr::str_detect(term_labels, paste0("^", component, "\\("))]
@@ -151,7 +151,7 @@ get_arma_declarations = function(rhs) {
       )
     }) %>% dplyr::bind_rows()
   })
-  dplyr::bind_rows(declarations)
+  dplyr::bind_rows(included)
 }
 
 
@@ -484,7 +484,7 @@ get_ar_jagscode = function(ar_order, x_name, series = FALSE) {
 
 # Build the observation-threshold formula used by GARMA terms
 #
-# A threshold supplied with an AR or MA term remains active until the next such
+# A threshold supplied with an AR or MA term applies until the next such
 # term. The first supplied threshold also applies to earlier observations so
 # they can safely be used as lags.
 get_garma_threshold_jagscode = function(segments, predictors, par_x) {

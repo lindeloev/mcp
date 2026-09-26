@@ -15,7 +15,7 @@ good_intercepts = list(
        ~ 1,
        ~ 0,
        ~ 1),
-  list(y ~ 1 + (1 | id),  # Predictor group intercept is active in this segment
+  list(y ~ 1 + (1 | id),  # Predictor group intercept is included in this segment
        ~ 1,
        ~ 1 + (0 | id)),
   list(y ~ 1 + (ok_id_factor || id))  # Independent intercept and factor deviations
@@ -45,7 +45,7 @@ test_that("formula functions reject multiple terms containing par_x", {
   )
 })
 
-test_that("population terms are segment-local while local par_x terms accumulate", {
+test_that("population terms apply only where included while x-terms join", {
   data = data.frame(
     x = 1:8,
     z = c(0, 1, 0, 2, 1, 3, 2, 4),
@@ -143,7 +143,7 @@ test_that("formula offsets work in mcp formulas", {
   expect_true(grepl("offset_mu_1_\\[i_\\]", fit_pois$jags_code))
   expect_true(grepl("offset_mu_2_\\[i_\\]", fit_pois$jags_code))
 
-  # Offsets are active only in the segment where they are declared.
+  # Offsets apply only in segments that include them.
   offset_lifetime = mcp(
     list(
       y ~ 1 + x + offset(log(pop)),

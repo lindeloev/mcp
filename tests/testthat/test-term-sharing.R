@@ -31,7 +31,7 @@ test_that("AR sharing resolves every lag and preserves current segment transitio
   expect_error(mcp(list(y ~ 1 + ar(1), ~ 1 + ar(2, same(1))),
     data, par_x = "x", sample = FALSE), "lag 2")
 
-  # A declared no-intercept lag keeps its earlier level and local-x endpoint
+  # An included no-intercept lag is joined to its earlier intercept and x-terms
   fit = mcp(list(y ~ 1 + ar(1, 1 + x), ~ 0 + ar(1, 0 + same(x))),
     data, par_x = "x", sample = FALSE)
   values = fit$simulate(fit, data, cp_1 = 6, Intercept_1 = 0, sigma_1 = 1,
@@ -40,7 +40,7 @@ test_that("AR sharing resolves every lag and preserves current segment transitio
 })
 
 
-test_that("same() reuses population definitions with current local x coordinates", {
+test_that("same() reuses population coefficients with x measured from the current change point", {
   data = data.frame(
     x = 1:8,
     z = c(0, 1, 0, 1, 0, 1, 0, 1),
@@ -174,7 +174,7 @@ test_that("same() supports distributional and AR/MA coefficient formulas", {
 })
 
 
-test_that("same() validates sources, competing declarations, and group blocks", {
+test_that("same() validates sources, competing terms, and group blocks", {
   data = data.frame(x = 1:8, y = 0, id = rep(1:2, each = 4))
 
   expect_error(mcp(list(y ~ same(1)), data, par_x = "x", sample = FALSE), "segment 1")
@@ -231,9 +231,9 @@ test_that("whole group slopes reuse local coordinates, endpoints, and explicit s
   b = attr(values, "simulated")$x_1_id
   expect_equal(as.numeric(values), 1 + b * pmin(data$x, 8))
   expect_error(mcp(list(y ~ 1 + (1 + x || id), ~ 0 + same((0 + x || id))),
-    data, par_x = "x", sample = FALSE), "complete active group block")
+    data, par_x = "x", sample = FALSE), "complete group term with coefficients")
   expect_error(mcp(list(y ~ 1 + (1 | id), ~ 0, ~ same((1 | id))),
-    data, par_x = "x", sample = FALSE), "complete active group block")
+    data, par_x = "x", sample = FALSE), "complete group term with coefficients")
   expect_no_error(mcp(list(y ~ 1 + (1 | id), ~ 0, ~ same((1 | id), as = 1)),
     data, par_x = "x", sample = FALSE))
   expect_error(mcp(list(y ~ 1 + (1 | id), ~ (0 + x || id) + same((1 | id))),

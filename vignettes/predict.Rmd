@@ -139,11 +139,11 @@ Now we extend the model with the future segment of which we have prior knowledge
 
 ```{r}
 model_forecast = c(empty$model, list(
-  ~ 1     # intercept (Intercept_4) after cp_3
+  ~ same(1, as = 1)  # Return to Intercept_1 after cp_3
 ))
 ```
 
-And finally, we extend the list of priors with the two new parameters (`time_4` and `cp_3`). The model needs a predictor value at the end of the forecasting horizon so that the future change point remains within its supported range. Its response is missing, so it contributes no observed outcome. It may be helpful to review [the article on priors in mcp](../articles/priors.html).
+And finally, we extend the list of priors with the new change point `cp_3`. The model needs a predictor value at the end of the forecasting horizon so that the future change point remains within its supported range. Its response is missing, so it contributes no observed outcome. It may be helpful to review [the article on priors in mcp](../articles/priors.html).
 
 ```{r}
 forecast_horizon = 170
@@ -153,7 +153,6 @@ observed_end = max(data$time)
 prior_forecast = c(empty$prior[!names(empty$prior) %in% c("cp_1", "cp_2")], list(
   cp_1 = paste0("dunif(", observed_start, ", ", observed_end, ")"),
   cp_2 = paste0("dunif(cp_1, ", observed_end, ")"),
-  Intercept_4 = "Intercept_1",  # Return to this value
   cp_3 = paste0("dnorm(cp_2 + (cp_2 - cp_1), 20) T(", observed_end, ", ", forecast_horizon, ")")  # In the future at the same interval
 ))
 ```

@@ -80,7 +80,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - `y | weights(w)` now specifies observation log-likelihood weights rather than Gaussian-only precision weights (which previously scaled the residual SD as `sigma / sqrt(w)`). Unlike `brms`, weights must be strictly positive due to JAGS requirements (cannot be zero). Predictive draws and expectations now use the distribution parameters directly while `log_lik()` multiplies observation log-densities by `w`.
 
-  - Formula transformations now use the original predictor values, as in `lm()`, `glm()`, and `brms`. Previously, transformations of the change-point predictor such as `sin(x)` and `exp(x)` restarted at each change point. Bare `par_x` and polynomial bases such as `I(par_x^2)` still count from the change point to support joined segments.
+  - Formula transformations now use the original predictor values, as in `lm()`, `glm()`, and `brms`. Previously, transformations of the change-point predictor such as `sin(x)` and `exp(x)` restarted at each change point. Bare `par_x` and polynomial bases such as `I(par_x^2)` are still measured from the change point to support joined segments.
 
 - **Fitting and priors:**
 
@@ -100,7 +100,6 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - GARMA observation thresholds are now validated with family-appropriate bounds: strictly below 0.5 for `family = bernoulli()`, and strictly below half the smallest trial count for `family = binomial()`, preventing thresholds from erasing the binary response history.
 
-  - `ar(0)` and `ma(0)` are accepted as explicit ways to turn AR and MA off in later segments.
 
   - Explicit AR/MA prediction history control: predict() and the new posterior_predict() support conditional = TRUE (default) to condition on observed response histories, or conditional = FALSE to generate histories recursively. This applies to both prior and posterior prediction. Previously, AR history handling depended on whether response values were supplied.
 

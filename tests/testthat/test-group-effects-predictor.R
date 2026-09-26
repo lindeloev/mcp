@@ -14,7 +14,7 @@ coefficient_data = data.frame(
 )
 
 
-test_that("predictor group intercepts are segment-local, replace, and turn off", {
+test_that("predictor group intercepts apply only where included, replace, and turn off", {
   fit = mcp(
     list(
       y ~ 1 + (1 | id),

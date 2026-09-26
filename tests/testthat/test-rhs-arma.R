@@ -35,7 +35,7 @@ test_that("AR and MA each allow one term per segment", {
 })
 
 
-test_that("a lower-order AR/MA declaration turns off higher lags", {
+test_that("including a lower-order AR/MA turns off higher lags", {
   data = data.frame(x = 1:6, y = 1:6)
   family = mcpfamily(gaussian())
 
@@ -101,7 +101,7 @@ test_that("ar(0) and ma(0) turn off AR/MA components", {
 })
 
 
-test_that("positive-order AR/MA zero formulas retain joined intercept and local-x levels", {
+test_that("positive-order AR/MA zero formulas are joined to the earlier intercept and x-terms", {
   data = data.frame(x = 1:6, y = 1:6)
   fit = mcp(
     list(y ~ ar(1, 1 + x), ~ ar(1, 0)),
@@ -122,7 +122,7 @@ test_that("positive-order AR/MA zero formulas retain joined intercept and local-
 })
 
 
-test_that("missing AR/MA declarations turn components off until reactivated", {
+test_that("AR/MA components are off until included again", {
   data = data.frame(x = 1:9, y = rep(c(1, 2, 3), 3))
   predictors = get_predictors(
     list(y ~ ar(1), ~ 0, ~ ar(1)), data, mcpfamily(gaussian()), par_x = "x"

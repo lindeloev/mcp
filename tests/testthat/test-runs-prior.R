@@ -285,7 +285,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     testthat::expect_match(int_row$rule, "- offset", fixed = TRUE)
     testthat::expect_equal(int_row$description, "Robustly centered log-rate intercept with a minimum scale of 2.5")
 
-    # A later segment needs its own offset declaration.
+    # A later segment must include its own offset.
     fit_multi = mcp(
       list(
         y ~ 1 + x + offset(log(exposure)),

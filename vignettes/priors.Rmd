@@ -39,7 +39,7 @@ prior = list(
   cp_1 = "dunif(min(x), cp_2)",  # change point between smallest x and cp_2
   x_2 = "dt(0, 1, 3) T(x_1, )",  # slope 2 > slope 1 and t-distributed
   cp_2 = 80,  # A constant (set; not estimated)
-  x_3 = "x_2"  # continue same slope
+  x_3 = "x_2"  # same slope as x_2 (use same() instead; see below)
   # Intercept_2 and Intercept_3 not specified. Use default.
 )
 ```
@@ -54,7 +54,7 @@ Other notes:
 
 - You can fix any parameter to a specific value. Simply set it to a numerical value (as `cp_2` above). A constant is a 100% prior belief in that value, and it will therefore not be estimated.
 
-- You can also equate one variable with another (`x_3 = "x_2"` above) though a more readable equivalent is including `same(x)` in segment 3. That removes the `x_3` as parameter while the prior-method duplicates it. Read more about the versatile `same()` in [Understanding mcp formulas](../articles/formulas.html).
+- To share a coefficient between segments, prefer `same()` in the model, e.g., `~ 1 + same(x)` in segment 3. This reuses `x_2` instead of estimating `x_3`. Equating parameters in the prior (`x_3 = "x_2"` above) gives the same fit but keeps `x_3` as a duplicate. Read more about `same()` in [Understanding mcp formulas](../articles/formulas.html#sharing-coefficients-between-segments).
 
 - You can write deterministic expression such as `x_3 = "x_2 + 5 - cp_1/10"`. Since `x_3` is now deterministic given `x_2` and `cp_1`, this leaves one fewer free parameter to estimate.
 

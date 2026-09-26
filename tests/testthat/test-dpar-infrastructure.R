@@ -207,7 +207,7 @@ test_that("generated code separates link and distribution scales", {
 })
 
 
-test_that("declared dpar wrappers use the generic formula path", {
+test_that("included dpar wrappers use the generic formula path", {
   data = data.frame(x = 1:4, y = c(2, 3, 5, 7))
   family = mcpfamily(gaussian())
   family$dpar_specs = dplyr::bind_rows(
@@ -230,7 +230,7 @@ test_that("declared dpar wrappers use the generic formula path", {
   )
 })
 
-test_that("distributional population terms are segment-local", {
+test_that("distributional population terms apply only where included", {
   data = data.frame(
     x = 1:8,
     z = c(0, 1, 0, 2, 1, 3, 2, 4),

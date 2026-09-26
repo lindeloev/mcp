@@ -212,7 +212,7 @@ if (plot) {
     missing = "# Define model
 model = list(
   y ~ 1 + x + state,
-  ~ 0 + x + same(state)  # retain the same state effect
+  ~ 0 + x + same(state)  # reuse the state coefficients
 )
 
 # Simulate complete data

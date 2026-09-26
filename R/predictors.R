@@ -118,12 +118,12 @@ get_definition_lifetimes = function(definitions, by) {
 }
 
 
-#' Rewrite supported segment-local uses of the change-point axis
+#' Rewrite x-terms to be measured from the change point
 #'
-#' Only bare `x` and polynomial powers expressed as `I(x^k)` are converted to
-#' segment-local coordinates. Other functions, transformations, and basis
-#' expansions (e.g., `poly(x, 2, raw = TRUE)`) remain on the global scale,
-#' altering segment joining rather than simply changing coefficient parameterization.
+#' Only bare `x` and polynomial powers expressed as `I(x^k)` are x-terms, which
+#' are measured from the change point. Other functions, transformations, and basis
+#' expansions (e.g., `poly(x, 2, raw = TRUE)`) use the original values of `x`
+#' and do not join.
 #'
 #' @keywords internal
 #' @noRd
@@ -248,7 +248,7 @@ get_par_x = function(model, data, par_x = NULL) {
 #' Get predictors for one distributional parameter
 #'
 #' This function extracts a `par_x`-less design matrix.
-#' `par_x` will be relative to the segment onset, so it will be multiplied in the formula
+#' x-terms are measured from the change point, so `par_x` is multiplied in the formula
 #' (`jags_code` and `fit$simulate()`).
 #'
 #' @aliases get_predictors_dpar
@@ -337,7 +337,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   term_assign = attr(source_design$matrix, "assign")
   term_key = c("(Intercept)", formula_terms)[term_assign + 1L]
 
-  # Rewrite formula with a placeholder for the segment-local change-point axis
+  # Rewrite formula with a placeholder for x measured from the change point
   local = rewrite_local_x(form_rhs, par_x)
   if (local$name %in% names(data))
     stop("Data column '", local$name, "' is reserved for mcp's formula compiler.")
@@ -360,7 +360,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   mat = design$matrix
   if (!identical(dim(mat), dim(source_design$matrix)) ||
       !isTRUE(all.equal(unname(mat), unname(source_design$matrix))))
-    stop_github("Rewriting the segment-local change-point axis changed the model matrix.")
+    stop_github("Rewriting x-terms to be measured from the change point changed the model matrix.")
   if (check_rank == TRUE)
     assert_rank(source_design$matrix, segment, dpar)
 
@@ -410,7 +410,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   # GET X_FACTOR #
   ################
 
-  # Bare par_x and supported powers are relative to the segment onset. The
+  # x-terms (bare par_x and supported powers) are measured from the change point. The
   # model-matrix assign vector maps expanded factor columns back to terms.
   local_degree = c(0L, local$degree)[attr(mat, "assign") + 1L]
   checkmate::assert_integerish(local_degree, lower = 0, .var.name = "exponents in formula")
@@ -557,7 +557,7 @@ contains_same_call = function(expr) {
 same_selector_terms = function(selector, env) {
   # Disallow unsupported calls inside same()
   if (is.call(selector) && deparse1(selector[[1]]) %in% c("offset", "stats::offset"))
-    stop("`same(offset(...))` is not supported. Repeat `offset(...)` in each active segment.", call. = FALSE)
+    stop("`same(offset(...))` is not supported. Repeat `offset(...)` in each segment where it applies.", call. = FALSE)
   if (is.call(selector) && deparse1(selector[[1]]) %in% c("ar", "ma", known_dpar_wrappers()))
     stop("Select terms inside their component, e.g. `sigma(same(1))`, rather than wrapping a component in `same(sigma(1))`.", call. = FALSE)
   if (contains_same_call(selector))
@@ -570,7 +570,7 @@ same_selector_terms = function(selector, env) {
 
   # Offsets have no coefficient to share
   if (!is.null(attrs$offset))
-    stop("`same(offset(...))` is not supported. Repeat `offset(...)` in each active segment.", call. = FALSE)
+    stop("`same(offset(...))` is not supported. Repeat `offset(...)` in each segment where it applies.", call. = FALSE)
 
   # Include intercept if present and ensure at least one term was selected
   terms = c(if (attrs$intercept == 1) "(Intercept)", terms)
@@ -634,13 +634,13 @@ standardize_shared_component = function(form_rhs, segment) {
     bare = leaves[!shared]
     shared_intercept = "(Intercept)" %in% selected$term_key
     if (shared_intercept && any(vapply(bare, function(x) identical(x, 1) || identical(x, 1L), logical(1))))
-      stop("An explicit bare `1` and `same(1)` are competing declarations.", call. = FALSE)
+      stop("An explicit bare `1` and `same(1)` are competing intercepts; include only one.", call. = FALSE)
     bare_expr = Reduce(function(a, b) call("+", a, b), c(list(0), bare))
     bare_terms = attr(stats::terms(stats::as.formula(call("~", bare_expr), env = environment(form_rhs))), "term.labels")
     if (any(selected$term_key %in% bare_terms))
       stop("A term cannot be both bare and shared in segment ", segment, ".", call. = FALSE)
 
-    # Unwrap selectors for coding; 0 + same(1) still declares an intercept
+    # Unwrap selectors for coding; 0 + same(1) still includes an intercept
     leaves[shared] = lapply(leaves[shared], function(x) x[[2]])
     expr = Reduce(function(a, b) call("+", a, b), leaves)
     if (shared_intercept)
@@ -704,19 +704,19 @@ get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = N
 
 # Does an explicit dpar formula provide no initial predictor at all? This is
 # deliberately syntactic: a nonzero offset or a group-only formula counts as
-# a declaration even though it has no population coefficient.
+# an initial predictor even though it has no population coefficient.
 is_empty_initial_predictor = function(form) {
   attrs = attributes(stats::terms(form))
   group_terms = attrs$term.labels[vapply(attrs$term.labels, is_group_term, logical(1))]
   population_terms = setdiff(attrs$term.labels, group_terms)
-  group_is_active = vapply(group_terms, function(term) {
+  group_has_coefficients = vapply(group_terms, function(term) {
     coefficient_form = stats::as.formula(call("~", str2lang(term)[[2]]), env = environment(form))
     coefficient_attrs = attributes(stats::terms(coefficient_form))
     coefficient_attrs$intercept == 1 || length(coefficient_attrs$term.labels) > 0
   }, logical(1))
 
   # Check regular coefficient-terms; if no issue is found return TRUE
-  if (attrs$intercept == 1 || length(population_terms) > 0 || any(group_is_active))
+  if (attrs$intercept == 1 || length(population_terms) > 0 || any(group_has_coefficients))
     return(FALSE)
   if (is.null(attrs$offset))
     return(TRUE)
@@ -776,8 +776,8 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
     spec = get_dpar_spec(family, dpar)
     dpar_term = term_labels[stringr::str_detect(term_labels, paste0("^", dpar, "\\("))]
 
-    # An implicit dpar receives an intercept in segment 1 and then continues
-    # across later segments until the user supplies another dpar intercept.
+    # An implicit dpar includes an intercept in segment 1 and is joined in
+    # later segments until the user includes another dpar intercept.
     if (length(dpar_term) == 0 && spec$implicit && segment == 1) {
       dpar_form = stats::as.formula("~1", env = form_env)
       dpar_pars[[dpar]] = get_shared_predictors(
@@ -790,7 +790,7 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
       if (segment == 1 && spec$require_initial_predictor && is_empty_initial_predictor(dpar_form))
         stop(
           "`", dpar, "(0)` cannot be the initial predictor for family = ", family$family,
-          "(). Declare an initial predictor, such as `", dpar, "(1)` or `", dpar, "(0 + x)`.",
+          "(). Include an initial predictor, such as `", dpar, "(1)` or `", dpar, "(0 + x)`.",
           call. = FALSE
         )
       dpar_pars[[dpar]] = get_shared_predictors(
@@ -866,7 +866,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   rhs = lapply(model, get_rhs)
   rhs = lapply(rhs, canonicalize_rhs, family = family)
 
-  # Resolve each component against earlier active occurrences, including chains
+  # Resolve each component against earlier occurrences, including chains
   parsed_predictors = NULL
   for (segment in seq_along(rhs)) {
     parsed_predictors = dplyr::bind_rows(parsed_predictors,
@@ -886,7 +886,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   if ("threshold" %notin% names(predictors))
     predictors$threshold = rep(NA_real_, nrow(predictors))
 
-  # Population intercepts reset the current population predictor. First find
+  # Population intercepts start a disjoined segment. First find
   # the next intercept for each distributional parameter and AR/MA order.
   # Strategy: (1) select one row for segments with intercepts for each dpar (filter)
   #           (2) save this segment number in the last segment that had an intercept (lag)
@@ -906,9 +906,9 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     dplyr::ungroup() %>%
     dplyr::mutate(next_intercept = dplyr::if_else(.data$segment >= .data$next_intercept, NA_integer_, .data$next_intercept))
 
-  # Population non-local terms are active only in the segment where they are
-  # declared. Local par_x terms retain their endpoint through joined segments
-  # and therefore still end at the next population intercept.
+  # Population terms that are not x-terms apply only in the segment that
+  # includes them. x-terms keep their value through joined segments and end at
+  # the next population intercept.
   predictors = predictors %>%
     dplyr::mutate(
       next_segment = dplyr::if_else(
@@ -920,8 +920,9 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     ) %>%
     dplyr::select(-"next_intercept")
 
-  # AR/MA retain endpoints through declared, joined lags until an intercept reset
-  arma_declarations = get_arma_declarations(rhs)
+  # AR/MA x-terms and intercepts keep their value through joined segments that
+  # include the same lag, until the next AR/MA intercept
+  included_arma = get_included_arma(rhs)
   arma_next_segment = vapply(seq_len(nrow(predictors)), function(i) {
     if (predictors$dpar[i] %notin% c("ar", "ma"))
       return(NA_integer_)
@@ -929,15 +930,15 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     next_segment = predictors$segment[i] + 1L
     joins = predictors$par_type[i] == "Intercept" || predictors$x_factor[i] != "1"
     while (joins && next_segment <= length(rhs)) {
-      declaration = arma_declarations[
-        arma_declarations$dpar == predictors$dpar[i] &
-          arma_declarations$segment == next_segment,
+      included = included_arma[
+        included_arma$dpar == predictors$dpar[i] &
+          included_arma$segment == next_segment,
         , drop = FALSE
       ]
       resets = any(predictors$dpar == predictors$dpar[i] &
         predictors$order %in% predictors$order[i] & predictors$segment == next_segment &
         predictors$par_type == "Intercept")
-      if (nrow(declaration) != 1 || declaration$order < predictors$order[i] || resets)
+      if (nrow(included) != 1 || included$order < predictors$order[i] || resets)
         break
       next_segment = next_segment + 1L
     }
@@ -952,9 +953,9 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
       )
     )
 
-  # Group intercepts and non-local terms are active only where declared.
-  # Local group-x terms retain their endpoint through joined blocks until a
-  # later population intercept, group intercept, or explicit `(0 | group)`.
+  # Group intercepts and other terms that are not x-terms apply only in segments
+  # that include them. Group x-terms keep their value through joined segments
+  # until a later population intercept, group intercept, or `(0 | group)`.
   # Parse group blocks segment by segment so `same()` can find its source
   definitions = NULL
   for (segment in seq_along(rhs)) {
@@ -965,10 +966,10 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
 
   predictor_group_effects = definitions
   if (nrow(definitions) > 0) {
-    # Inactive rows are `(0 | group)` turn-offs, which only mark resets below.
+    # Rows without coefficients are `(0 | group)` turn-offs, which only mark resets below.
     # Link each coefficient to its population counterpart, if there is one.
     predictor_group_effects = definitions %>%
-      dplyr::filter(.data$active) %>%
+      dplyr::filter(.data$has_coefficients) %>%
       dplyr::mutate(
         population_name = dplyr::if_else(
           .data$population_name %in% predictors$code_name,
@@ -989,7 +990,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     resets = definitions %>%
       dplyr::group_by(.data$dpar, .data$group_col, .data$segment) %>%
       dplyr::summarise(
-        reset = any(!.data$active | .data$par_type == "Intercept"),
+        reset = any(!.data$has_coefficients | .data$par_type == "Intercept"),
         .groups = "drop"
       ) %>%
       dplyr::filter(.data$reset)

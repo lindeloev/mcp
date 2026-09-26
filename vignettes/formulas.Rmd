@@ -71,7 +71,7 @@ Segment 2 continues from where the plateau left off, while segment 3 starts afre
 
 1. **Only included terms get coefficients.**\
    A segment includes the terms in its formula, plus an intercept unless removed with `0 +`. Each included term gets a new coefficient (`x_2`, `stateB_2`) or reuses an existing one with [`same()`](#sharing-coefficients-between-segments).
-2. **x-terms count from the change point.**\
+2. **x-terms are measured from the change point.**\
    `x`, `x:z`, `state:x`, and `I(x^2)` start at zero at the segment's change point and stop growing at the next change point (they plateau). See the [math below](#modeling-slope-change-points).
 3. **Joined or disjoined.**\
    Without an intercept (`0 + ...`), a segment is *joined*: it continues from where the earlier intercept and x-terms left off. With an intercept, it is *disjoined* and starts afresh.
@@ -161,7 +161,7 @@ model = list(
 )
 ```
 
-`same()` refers to the preceding segment by default; use `as` to pick an earlier segment. It works for factors (`same(state)`), group effects (`same((1 | id))` reuses deviations and SD), and inside distributional parameters (`sigma(0 + same(x))`). Reused x-terms still count from the current change point.
+`same()` refers to the preceding segment by default; use `as` to pick an earlier segment. It works for factors (`same(state)`), group effects (`same((1 | id))` reuses deviations and SD), and inside distributional parameters (`sigma(0 + same(x))`). Reused x-terms are still measured from the current change point.
 
 Reused coefficients are estimated jointly from all segments where they are included, not fitted in one segment and copied to another.
 
@@ -191,7 +191,7 @@ Only bare `x`, powers such as `I(x^2)`, and their interactions are x-terms. Othe
 ```r
 list(
   y ~ 1,                        # Intercept_1
-    ~ 1 + sin(x) + x + I(x^2)   # sin(x) uses x; x and I(x^2) count from cp_1
+    ~ 1 + sin(x) + x + I(x^2)   # sin(x) uses x; x and I(x^2) are measured from cp_1
 )
 ```
 
@@ -285,7 +285,7 @@ Look at the section under the comment `# Formula for mu` which is the (automatic
 
 # Modeling slope change points
 
-Mathematically, an `mcp` model divides the change-point variable $x$ into $K$ segments separated by ordered change points $\tau_1 < \dots < \tau_{K-1}$. In each segment $k \in \{1, \dots, K\}$, the linear predictor $\eta_i$ on the link scale counts $x$ from the change point $\tau_{k-1}$:
+Mathematically, an `mcp` model divides the change-point variable $x$ into $K$ segments separated by ordered change points $\tau_1 < \dots < \tau_{K-1}$. In each segment $k \in \{1, \dots, K\}$, the linear predictor $\eta_i$ on the link scale measures $x$ from the change point $\tau_{k-1}$:
 
 $$\eta_i = \alpha_k + \beta_{k,1} \, (x_i - \tau_{k-1}) \quad (\text{with } \tau_0 = 0)$$
 
@@ -304,7 +304,7 @@ Here, $\beta_{k,1}$ is the slope on $x$ in segment $k$. Intercepts and slopes ar
 
 Bayesian MCMC samplers like JAGS cannot evaluate dynamic conditional statements (`if/else`) on parameters being sampled. To implement this piecewise model in JAGS, `mcp` uses an **indicator and plateauing formulation** (evaluated via Iverson brackets $[A]$ which equal 1 when true and 0 when false).
 
-First, `mcp` defines a span $X_{k,i}$ that counts $x$ from the change point within segment $k$ and stays constant beyond it:
+First, `mcp` defines a span $X_{k,i}$ that measures $x$ from the change point within segment $k$ and stays constant beyond it:
 
 $$X_{1,i} = \min(x_i, \tau_1)$$ $$X_{k,i} = \max\bigl(0, \min(x_i, \tau_k) - \tau_{k-1}\bigr) \quad (k \ge 2)$$
 

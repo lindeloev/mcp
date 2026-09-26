@@ -235,7 +235,7 @@ Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) an
 
 - The default prior on change points is `dirichlet(1)` (uniform order statistics). For a single change point, this is the Beta(1, 1) / uniform distribution over `[min(x), max(x)]`. For multiple change points, it corresponds to a flat Dirichlet distribution over segment lengths with equal spacing between change points. Informativeness increases as the number of change points increases.
 
-- Fix parameters to specific values using `cp_1 = 45` and share parameters between segments using `slope_1 = "slope_2"`.
+- Fix parameters to specific values using `cp_1 = 45`. To share a coefficient between segments, use `same()` in the model, e.g., `~ 0 + same(x)`.
 
 - Truncate priors using `T(lower, upper)`, e.g., `Intercept_1 = "dnorm(0, 1) T(0, )"`. `mcp` adds ordering bounds to population-level change-point priors. Users can override these.
 

@@ -105,8 +105,8 @@ default_predictor_scale = function(matrix_data, x_factor) {
 }
 
 
-# Retrieve the offset spec declared for a specific dpar and segment, if any.
-get_active_offset = function(design_specs, dpar, segment) {
+# Retrieve the offset spec included for a specific dpar and segment, if any.
+get_segment_offset = function(design_specs, dpar, segment) {
   specs = Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, dpar) && s$segment == segment, design_specs)
   if (length(specs) == 0) return(NULL)
   spec = specs[[1]]
@@ -146,7 +146,7 @@ default_predictor_specs = function(predictors, family, design_specs = list()) {
   if (identical(family$link, "log")) {
     active_specs = Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, "mu") && any(s$offset_data != 0), design_specs)
     for (i in which(joined$dpar == "mu")) {
-      spec = get_active_offset(design_specs, "mu", joined$segment[i])
+      spec = get_segment_offset(design_specs, "mu", joined$segment[i])
       if (!is.null(spec)) {
         sym = if (length(active_specs) <= 1) "offset" else paste0("offset_", spec$segment)
         if (joined$par_type[i] == "Intercept")

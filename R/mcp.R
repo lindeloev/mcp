@@ -100,7 +100,7 @@
 #' 1. **Only included terms get coefficients.** A segment includes the terms in its formula,
 #'    plus an intercept unless removed with `0 +`. Each included term gets a new coefficient
 #'    (`x_2`, `stateB_2`) or reuses an existing one with `same()`.
-#' 2. **x-terms count from the change point.** `x`, `x:z`, `state:x`, and `I(x^2)` start at zero
+#' 2. **x-terms are measured from the change point.** `x`, `x:z`, `state:x`, and `I(x^2)` start at zero
 #'    at the segment's change point and stop growing at the next change point.
 #' 3. **Joined or disjoined.** Without an intercept (`0 + ...`), a segment is *joined*: it continues
 #'    from where the earlier intercept and x-terms left off. With an intercept, it is *disjoined*
@@ -146,7 +146,7 @@
 #' @section The mcp model:
 #' An `mcp` model divides the change-point variable \eqn{x} into \eqn{K} segments separated by
 #' ordered change points \eqn{\tau_1 < \dots < \tau_{K-1}}. In each segment \eqn{k \in \{1, \dots, K\}},
-#' the linear predictor \eqn{\eta_i} counts \eqn{x} from the change point \eqn{\tau_{k-1}}:
+#' the linear predictor \eqn{\eta_i} measures \eqn{x} from the change point \eqn{\tau_{k-1}}:
 #'
 #' \deqn{\eta_i = \alpha_k + \beta_{k,1} (x_i - \tau_{k-1}) \quad (\text{with } \tau_0 = 0)}
 #'
@@ -191,7 +191,7 @@
 #'
 #' Implications:
 #' * For an \eqn{N}-order component, the last \eqn{N} values *before* the segment's change point are input to the first \eqn{\eta_t} in the segment.
-#' * AR and MA components apply only in segments where they are included; \code{ar(0)} and \code{ma(0)} are equivalent explicit turn-off forms.
+#' * AR and MA components apply only in segments where they are included.
 #' * AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
 #' * See [the arma article](https://lindeloev.github.io/mcp/articles/arma.html) for more details.
 #'
@@ -274,7 +274,6 @@
 #' prior = list(
 #'   Intercept_1 = 15,
 #'   time_2 = "dt(0, 2, 1) T(0, )",  # t-dist slope. Truncated to positive.
-#'   Intercept_3 = "Intercept_1",     # Shared intercept between segment 1 and 3
 #'   cp_2 = "dunif(cp_1, 80)"        # change point to segment 3 > cp_1 and < 80.
 #' )
 #'

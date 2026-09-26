@@ -34,8 +34,8 @@ group_block_key = function(term) {
 #' @noRd
 #' @param term A term such as `"1 | id"`, `"factor || id"`, or `"0 | id"`.
 #' @inheritParams get_predictors_dpar
-#' @return A tibble with one row per group-level coefficient, or one inactive
-#'   row for an explicit turn-off.
+#' @return A tibble with one row per group-level coefficient, or one row with
+#'   `has_coefficients = FALSE` for an explicit turn-off.
 parse_predictor_group_term = function(
   term, segment, dpar, data, par_x, check_rank = TRUE, env = parent.frame()
 ) {
@@ -74,15 +74,15 @@ parse_predictor_group_term = function(
     design_id = paste("group", dpar, group_col, segment, sep = ":")
   )
   assert_unique_predictor_names(coefficient)
-  active = nrow(coefficient) > 0
+  has_coefficients = nrow(coefficient) > 0
 
-  if (!active) {
+  if (!has_coefficients) {
     return(tibble::tibble(
       dpar = dpar,
       segment = segment,
       group_col = group_col,
       group_term = term,
-      active = FALSE,
+      has_coefficients = FALSE,
       correlated = operator == "|",
       population_name = NA_character_,
       name = NA_character_,
@@ -105,7 +105,7 @@ parse_predictor_group_term = function(
       segment = .data$segment,
       group_col = .env$group_col,
       group_term = .env$term,
-      active = TRUE,
+      has_coefficients = TRUE,
       correlated = .env$operator == "|",
       population_name = .data$code_name,
       name = paste0(.data$code_name, "_", .env$group_col),
@@ -128,7 +128,7 @@ parse_predictor_group_term = function(
 #' @keywords internal
 #' @noRd
 #' @inheritParams get_predictors_segment
-#' @return A tibble containing active definitions and explicit turn-offs.
+#' @return A tibble containing group coefficients and explicit turn-offs.
 get_predictor_group_definitions_segment = function(
   form_rhs, segment, family, data, par_x, check_rank = TRUE, previous = NULL
 ) {
@@ -156,15 +156,15 @@ get_predictor_group_definitions_segment = function(
     if (anyDuplicated(blocks$group))
       stop("Only one predictor group-level term per distributional parameter and grouping factor is allowed in a segment; bare/shared or competing blocks cannot be combined.", call. = FALSE)
 
-    # Group declarations are atomic blocks; source coding and all coefficients travel together
+    # Group terms are atomic blocks; source coding and all coefficients are reused together
     for (i in seq_len(nrow(blocks))) {
       term = blocks$term[i]
       source_segment = blocks$source[i]
       if (!is.na(source_segment)) {
         source = previous[previous$dpar == dpar & previous$segment == source_segment &
-          previous$active & previous$group_key == blocks$key[i], , drop = FALSE]
+          previous$has_coefficients & previous$group_key == blocks$key[i], , drop = FALSE]
         if (is.null(source) || nrow(source) == 0)
-          stop("`same()` requires a complete active group block in segment ", source_segment,
+          stop("`same()` requires a complete group term with coefficients in segment ", source_segment,
             " for ", dpar, ": (", term, "). Partial block sharing is not supported.", call. = FALSE)
         block = source
         block$segment = segment
