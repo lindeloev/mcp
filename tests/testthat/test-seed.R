@@ -125,6 +125,18 @@ test_that("mcp seed reproduces prior and posterior samples", {
 })
 
 
+test_that("set.seed() reproduces sequential sampling without `seed`", {
+  old_plan = future::plan(future::sequential)
+  on.exit(future::plan(old_plan), add = TRUE)
+
+  fit_set_seed = function() {
+    set.seed(123)
+    suppressWarnings(mcp(seed_model, seed_data, par_x = "x", chains = 2, warmup = 20, iter = 30, diagnostics = FALSE, quiet = TRUE))
+  }
+  expect_identical(.subset2(fit_set_seed(), "mcmc_post"), .subset2(fit_set_seed(), "mcmc_post"))
+})
+
+
 test_that("chain-specific inits succeed when sequential change points are present", {
   data = data.frame(x = 1:20, y = c(rnorm(10, 1), rnorm(10, 5)))
   inits_chains = list(

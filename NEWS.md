@@ -109,7 +109,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Added warnings when various thresholds are exceeded. `mcp(..., diagnostics = list(rhat = 1.01, ess_bulk = 400, ess_tail = 400, ar = 0.10, ma = 0.10))` controls fit diagnostics with configurable thresholds. Partial lists override these defaults, individual diagnostics can be disabled with `NULL`, and `diagnostics = FALSE` disables diagnostic warnings. `summary(fit)` inherits these settings and accepts its own override for the diagnostic footer.
 
-  - Use `mcp(..., seed = 42)` for reproducible JAGS sampling. See `mcp_example("demo")$example_code` how to ensure reproducibility across simulation, fit, and plotting.
+  - Use `mcp(..., seed = 42)` or `set.seed(42)` before `mcp()` for reproducible JAGS sampling, whether chains run sequentially or in parallel. See `mcp_example("demo")$example_code` how to ensure reproducibility across simulation, fit, and plotting.
 
   - `mcp(..., quiet = TRUE)` suppresses routine JAGS output and mcp sampling-status messages while preserving warnings and errors.
 

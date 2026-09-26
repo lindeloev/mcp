@@ -90,7 +90,7 @@ run_jags = function(jags_code,
   # only once for all chains and preserves JAGS's progress output.
   n_workers = future::nbrOfWorkers()
   timer = proc.time()
-  if (n_workers > 1 && is.null(seed))
+  if (is.null(seed))
     seed = sample.int(.Machine$integer.max - 2 * n.chains, 1)
   inits = get_jags_inits(inits, seed, n.chains, sample)
 
@@ -129,14 +129,11 @@ run_jags = function(jags_code,
 #' @keywords internal
 #' @noRd
 #' @param inits Initial values passed to `mcp()`.
-#' @param seed A positive integer or `NULL`.
+#' @param seed A positive integer.
 #' @param n.chains Number of chains.
 #' @param sample One of `"post"` or `"prior"`.
-#' @return Initial values in list-of-lists form when `seed` is supplied.
+#' @return Initial values in list-of-lists form.
 get_jags_inits = function(inits, seed, n.chains, sample) {
-  if (is.null(seed))
-    return(inits)
-
   if (is.list(inits[[1]])) {
     if (length(inits) != n.chains)
       stop("`inits` must have length equal to `chains` (", n.chains, ") when supplying chain-specific initialization lists.")
