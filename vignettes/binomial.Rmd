@@ -60,7 +60,7 @@ mcp_pars(empty)
  * It takes two slopes (`year_*`), for segment 2 and 3.
  * It takes two change points (`cp_*`) - one between each segment. 
 
-`empty$simulate` is now a function that can predict data given these parameters (signature: `empty$simulate(fit, newdata, ...)`). If you are in a reasonable R editor, type `empty$simulate(` and press TAB to see the required arguments. I came up with some values below, including change points at $year = 25$ and $year = 65$. Because `binomial()` defaults to `link = "logit"`, the intercept and slopes are on the [logit scale](https://en.wikipedia.org/wiki/Logit), which maps success probabilities between 0 and 1 to the real line. This will be important later when we set priors.
+`empty$simulate` is now a function that can predict data given these parameters (signature: `empty$simulate(fit, newdata, ...)`). If you are in a reasonable R editor, type `empty$simulate(` and press TAB to see the required arguments. I came up with some values below, including change points at $year = 1925$ and $year = 1975$. Because `binomial()` defaults to `link = "logit"`, the intercept and slopes are on the [logit scale](https://en.wikipedia.org/wiki/Logit), which maps success probabilities between 0 and 1 to the real line. This will be important later when we set priors.
 
 ```{r}
 set.seed(42)
@@ -88,7 +88,7 @@ fit = mcp(model, data = df, family = binomial(), iter = 12000, seed = 42)
 ```
 
 
-We can use `summary` to see that it recovered the parameters to a pretty good precision. Again, recall that intercepts and slopes are on a `logit` scale.
+We can use `summary` to see that it recovered most parameters to a pretty good precision. `Intercept_1` is a bit low and `cp_1` a bit late in this simulated dataset. They trade off against each other: a later change point makes the plateau cover the start of the decline. Again, recall that intercepts and slopes are on a `logit` scale.
 
 ```{r, R.options = list(width = 9999)}
 summary(fit)
@@ -170,7 +170,7 @@ ggplot(data.frame(logits = 0), aes(x = logits)) +
 
 Please keep in mind that when these priors combine through the model, the joint probability may be quite different.
 
-Numeric coefficient scales are divided by a representative change in their model-matrix column: its range when it has two values, and two standard deviations otherwise. For [x-terms](../articles/formulas.html#how-segments-connect) such as `x`, `state:x`, and `I(x^2)` (with `x` as the change-point variable), the scale additionally uses the expected segment width, `(max(x) - min(x)) / n_segments()`. The implied change across a typical segment therefore has the same 1.5-logit scale, even when the model contains several change points.
+Numeric coefficient scales are divided by a representative change in their model-matrix column: its range when it has two values, and two standard deviations otherwise. For [x-terms](../articles/formulas.html#how-segments-connect) such as `x`, `state:x`, and `I(x^2)` (with `x` as the change-point variable), the representative change is instead the observed x-span, `max(x) - min(x)` (squared for `I(x^2)`). The implied change across the observed x-span therefore has the same 1.5-logit scale, regardless of the number of change points.
 
 
 # JAGS code

@@ -58,7 +58,7 @@ Let us see the two intercepts (lambda in log-units) and the change point (in yea
 result = summary(fit)
 ```
 
-We can see that the model ran well with good convergence and a large number of effective samples. At a first glance, the change point is estimated to lie between the years 1880 and 1895 (approximately).
+We can see that the model ran well with good convergence and a large number of effective samples. At a first glance, the change point is estimated to lie between the years `r round(result$lower[result$variable == "cp_1"])` and `r round(result$upper[result$variable == "cp_1"])` (95% interval).
 
 Let us take a more direct look, using the default `mcp` plot:
 
@@ -128,12 +128,12 @@ Adding a categorical predictor to the model, you can also model rate ratios. Whe
 
 Despite the popularity of this dataset, a question rarely asked is what the evidence is that there is a change point at all. Let us fit two no-changepoint models and use approximate leave-one-out cross-validation to see how the predictive performance of the two models compare.
 
-A flat model and a one-decay model:
+A flat model and a one-decay model. The intercept in `mcp` is at `date = 0`, far from the data, so we measure the decay from the first year (`I(date - 1851)`) to reduce the posterior correlation between intercept and slope. This helps sampling:
 
 ```{r, results= FALSE, message=FALSE, warning=FALSE}
 # Fit an intercept-only model
 fit_flat = mcp(list(n ~ 1), data = df, family=poisson(), par_x = "date", seed = 42)
-fit_decay = mcp(list(n ~ 1 + date), data = df, family = poisson(), seed = 42)
+fit_decay = mcp(list(n ~ 1 + I(date - 1851)), data = df, family = poisson(), par_x = "date", seed = 42)
 
 
 set.seed(42)
@@ -152,14 +152,14 @@ fit_decay_loo = loo(fit_decay)
 loo::loo_compare(fit_loo, fit_flat_loo, fit_decay_loo)
 ```
 
-The change point model seems to be preferred with a ratio of around 2 over the decay model and 2.5 over the flat model. Another approach is to look at the model weights:
+The change point model is preferred, but `elpd_diff / se_diff` is only around 1.5 relative to the decay model and 2.5 relative to the flat model. The `diag_elpd` column also flags four observations with high Pareto $k$ values in the change point model, so its PSIS-LOO estimate is less reliable. Taken together, this is weak to moderate evidence for a change point over a gradual decay. Another approach is to look at the model weights:
 
 ```{r, results='hold'}
 loo_list = list(fit_loo, fit_flat_loo, fit_decay_loo)
 loo::loo_model_weights(loo_list, method="pseudobma")
 ```
 
-Again, unsurprisingly, the change point model is preferred and they show the same ranking as implied by `loo_compare`.
+Again, the change point model is preferred and the weights show the same ranking as implied by `loo_compare`.
 
 # JAGS code for the Poisson example
 

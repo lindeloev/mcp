@@ -59,7 +59,7 @@ The default should usually be left unchanged. If needed, set it on either term, 
 
 # Simple example
 
-Let's simulate some data using the `mcp_example()` function with the "ar" settings:
+Let's simulate some data using the `mcp_example_data()` function with the "ar" settings:
 
 ```{r}
 library(mcp)
@@ -70,7 +70,7 @@ ar_data = mcp_example_data("ar")
 head(ar_data)
 ```
 
-See how this was generated in `fit$example_code`. We model this as a plateau (`1`) with a second-order autoregressive residual (`ar(2)`) followed by a joined slope (`0 + time`) with a negative first-order autoregressive residual (`ar(1)`):
+See how this was generated in `mcp_example("ar")$example_code`. We model this as a plateau (`1`) with a second-order autoregressive residual (`ar(2)`) followed by a joined slope (`0 + time`) with a negative first-order autoregressive residual (`ar(1)`):
 
 ```{r, results = FALSE, warning=FALSE, message=FALSE}
 model = list(
@@ -97,7 +97,7 @@ The naming syntax is `[component][order]_[segment]` for intercepts. For example,
 
 Comparing the columns `mean` and `sim` we see that the AR coefficients are reasonably recovered. In fact, the posterior mean is almost always exactly the same as `arima(data, order = c(N, 0, 0))` (see below), so the non-perfect fits are due to randomness in the simulation - not in the fit.
 
-For Gaussian GARMA models, `sigma` describes the *innovations*, i.e., the part of the residuals not explained by AR and MA coefficients. `sd(fit$data$price)` is therefore generally higher. In this case, the SD of raw data in the plateau is `r round(sd(fit$data$price[1:120]), 2)`. As always, it is good to assess posteriors and convergence more directly:
+For Gaussian GARMA models, `sigma` describes the *innovations*, i.e., the part of the residuals not explained by AR and MA coefficients. `sd(fit$data$price)` is therefore generally higher. In this case, the SD of raw data in the plateau (`time < 74.5`) is `r round(sd(fit$data$price[fit$data$time < 74.5]), 1)`. As always, it is good to assess posteriors and convergence more directly:
 
 ```{r, fig.height=9, fig.width=8}
 set.seed(42)
@@ -172,8 +172,8 @@ df_panel$y = empty$simulate(
 )
 
 # 3. Fit the model
-fit = mcp(model, data = df_panel)
-print(summary(fit))
+fit = mcp(model, data = df_panel, seed = 42)
+summary(fit)
 
 # Plot fit and ar(1) parameter
 library(patchwork)
@@ -271,7 +271,7 @@ We recovered the parameters, including the change point (see `mean` but also the
 summary(fit)
 ```
 
-We can also plot some of the parameters. As usual, we see that the change point is not well defined by any known distribution. The fact that the posterior mean is around 60 does not (necessarily) mean that there is a high credence in this value. Usually, I find that any bi- or N-modality on the posterior matches well with what you would guess from looking at the raw data. As they say: Bayesian inference is common sense applied to data.
+We can also plot some of the parameters. As usual, we see that the change point is not well defined by any known distribution. The fact that the posterior mean is around `r round(mean(as_draws_df(fit)$cp_1))` does not (necessarily) mean that there is a high credence in this value. Usually, I find that any bi- or N-modality on the posterior matches well with what you would guess from looking at the raw data. As they say: Bayesian inference is common sense applied to data.
 
 ```{r}
 set.seed(42)
@@ -351,7 +351,7 @@ JAGS, `fitted()`, `predict()`, and `log_lik()` evaluate a finite, conditional re
 
 # JAGS code
 
-Here is the JAGS code for the second simulation example, i.e., the one with a single slope going from AR(2) to AR(1). You can print `fit$simulate` and see that it runs much of the same code.
+Here is the JAGS code for the autocorrelation-only change above, i.e., the one with a shared slope going from one AR(1) coefficient to another. You can print `fit$simulate` and see that it runs much of the same code.
 
 ```{r}
 fit$jags_code

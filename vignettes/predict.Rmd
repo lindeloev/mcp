@@ -97,8 +97,8 @@ Note that:
 
  * We get one row per value of `time`.
  * The first value for `time` is in the dataset. The values correspond to the same row in `fitted(fit)` because that's merely a shortcut to do `fitted(fit, newdata = fit$data)`. 
- * The second value (`time = 20`) is within the observed region, but not in the dataset.
- * The third value (`time = - 20`) is outside the observed region, but `mcp` merely extends the first segment backwards in time. Because it's a plateau, we see approximately the same values as for `time = 20`. 
+ * The second value (`time = 25`) is within the observed region, but not in the dataset.
+ * The third value (`time = - 20`) is outside the observed region, but `mcp` merely extends the first segment backwards in time. Because it's a plateau, we see approximately the same values as for `time = 25`. 
  * The fourth value (`time = 200`) is way outside the observed region. Because it is the extrapolation of the slope in the third segment of which we've only observed the first tiny bit, the posterior distribution is very wide because even a small uncertainty in the slope results in very large differences further out.
 
 ## Arguments
@@ -201,7 +201,7 @@ You can read the predicted values from above at `x = 125` off this graph. We lit
 
 You can extend this approach to an arbitrary number of future segments, even using the posterior from the "unobserved" segment 4 in the priors for parameters in future segments. In Bayesian inference, it really does not make much of a difference whether credence in some parameter values has been updated using data or not - it's all credence.
 
-Without doing this formal model of the future change point, one may have thought that the change point should occur around `time = 110` since that's the expected value of `cp_2 + (cp_2 - cp_1)`. However, we truncated the prior for the future change point (`cp_3`) so that it occurs *after* the last data point (`max(time)`), i.e., at `time > 100`. This is knowledge that the third change point had not yet been observed at `time = 100`, and this pushes the distribution further into the future (actually around 118; see `summary(fit_forecast)`).
+Without doing this formal model of the future change point, one may have thought that the change point should occur around `time = 110` since that's the expected value of `cp_2 + (cp_2 - cp_1)`. However, we truncated the prior for the future change point (`cp_3`) so that it occurs *after* the last data point (`max(time)`), i.e., at `time > 100`. This is knowledge that the third change point had not yet been observed at `time = 100`, and this pushes the distribution further into the future (actually around `r round(mean(as_draws_df(fit_forecast)$cp_3))`; see `summary(fit_forecast)`).
 
 ```{r cleanup, include=FALSE}
 future::plan(future::sequential)

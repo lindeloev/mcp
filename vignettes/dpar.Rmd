@@ -212,7 +212,7 @@ df$y = empty$simulate(
 Fit it:
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, data = df, par_x = "x", seed = 40)
+fit = mcp(model, data = df, par_x = "x", iter = 15000, seed = 40)
 ```
 
 Plot it:

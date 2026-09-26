@@ -74,8 +74,8 @@ prior_summary(empty_default)  # For more details: add verbose = TRUE
 Now, let's simulate some data from `model`. The following priors are "at odds" with the actual data so as to show their effect.
 
 ```{r}
-df = data.frame(x = runif(200, 0, 100), y = 1)  # 200 datapoints between 0 and 100
 set.seed(42)
+df = data.frame(x = runif(200, 0, 100), y = 1)  # 200 datapoints between 0 and 100
 df$y = empty_default$simulate(empty_default, df, 
     Intercept_1 = 20, Intercept_2 = 22, Intercept_3 = 30,  # intercepts
     x_1 = -0.5, x_2 = 0.5, x_3 = 0,  # slopes

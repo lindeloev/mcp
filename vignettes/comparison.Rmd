@@ -215,7 +215,7 @@ loo_info = loo(fit_info)
 loo_info
 ```
 
-This is not terribly informative in and of itself. $looic = -2 * elpd_{loo}$ as are the corresponding SEs, so that is just a matter of scale. What ELPD tells you is that the product of the densities of all left-out data points is approximately $exp(-350) \sim 10 ^ {-146}$, a vanishingly small number because we multiply many small numbers. This is mentally hard to interpret because the density at a given point is only meaningful relative to the full distribution. Furthermore, it depends on the size of the dataset (the more small densities you multiply, the smaller the ELPD).
+This is not terribly informative in and of itself. $looic = -2 * elpd_{loo}$ as are the corresponding SEs, so that is just a matter of scale. What ELPD tells you is that the product of the densities of all left-out data points is approximately $exp(`r round(loo_info$estimates["elpd_loo", "Estimate"])`) \sim 10 ^ {`r round(loo_info$estimates["elpd_loo", "Estimate"] / log(10))`}$, a vanishingly small number because we multiply many small numbers. This is mentally hard to interpret because the density at a given point is only meaningful relative to the full distribution. Furthermore, it depends on the size of the dataset (the more small densities you multiply, the smaller the ELPD).
 
 What is interesting is the *relative* differences in these predicted densities. We can compare the models using `loo::loo_compare()`. Save the results as separate objects if you want to reuse them or save them for later.
 
@@ -245,7 +245,7 @@ loo::loo_compare(waic_default, waic_info, waic_simple)
 ## Stacking
 The `loo` package contains many other useful functions. For example, if prediction is your goal, it is often optimal to *combine* models rather than letting the "winner-takes-it-all" do all the predicting. This is also called *stacking*:
 
-```{r, eval = FALSE}
+```{r}
 loo::loo_model_weights(list(
   default = loo_default, 
   info = loo_info, 
@@ -253,7 +253,7 @@ loo::loo_model_weights(list(
 ))
 ```
 
-This means that once model2 (`fit_info`) has done its "predicting", the others add very little over and above that. If you want to learn about how well they predict relative to each other, use `loo::pseudobma_weights()` which weights proportional to the ELPD of each model.
+This means that once `info` (`fit_info`) has done its "predicting", the others add very little over and above that. If you want to learn about how well they predict relative to each other, use `loo::pseudobma_weights()` which weights proportional to the ELPD of each model.
 
 ```{r cleanup, include=FALSE}
 future::plan(future::sequential)
