@@ -7,8 +7,7 @@
 #' supported - also near the change points. `mcp` supports hypothesis testing via Savage-Dickey density
 #' ratios, posterior contrasts, and PSIS-LOO/WAIC model comparison.
 #'
-#' @inheritSection mcp The mcp model
-#' @inheritSection mcp Time-series residuals (link-scale observation-driven GARMA)
+#' See [mcp()] to fit models, [mcp-formula] for the model and formula syntax, and [mcp-priors] for priors.
 #'
 #' @section Extended formulas and model features:
 #' * *Distributional regression:* Model residual variance and other distributional parameters across segments,

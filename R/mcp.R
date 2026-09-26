@@ -10,32 +10,14 @@
 #'   Missing values in the response variable are imputed using the posterior predictive.
 #'   \code{\link{fitted.mcpfit}} or \code{\link{predict.mcpfit}} details how to see the imputed values.
 #' @param model A list of formulas, one for each segment, in the format
-#'   `response ~ cp ~ predictors`. See 'Details' for an example, how segments connect,
-#'   and the formula syntax.
-#' @param prior Named list. Names are parameter names (`cp_i`, `Intercept_i`, `xvar_i`,
-#'  `sigma_1`, etc.) and the values are either
-#'
-#'  * A distribution in `mcp`'s JAGS-string syntax (e.g.,
-#'      `Intercept_1 = "dnorm(0, 1) T(0,)"`) indicating a
-#'      conventional prior distribution. Data-calibrated, regularizing defaults
-#'      are used where priors are not specified. These are designed for stable
-#'      estimation and prediction, but should be justified before hypothesis testing.
-#'      `mcp` uses conventional distribution scales rather than JAGS precision:
-#'      SD for `dnorm()`, scale for `dt()`, `ddexp()`, and `dlogis()`, and
-#'      log-SD for `dlnorm()`. See details.
-#'  * A numerical value (e.g., `Intercept_1 = -2.1`) indicating a fixed value.
-#'  * A model parameter name (e.g., `Intercept_2 = "Intercept_1"`), equating parameters via JAGS.
-#'      Note that sharing coefficients via `same()` in the segment formulas (e.g., `~ same(1)`)
-#'      is generally preferred. If two group-level deviations are shared via the prior,
-#'      they will need to have the same grouping variable.
-#'  * The default prior on change points is `dirichlet(1)` (uniform order statistics).
-#'      For a single change point, this is the Beta(1, 1) / Uniform distribution over `[min(x), max(x)]`.
-#'      For multiple change points, it corresponds to a flat Dirichlet distribution over segment lengths.
-#'      You can also explicitly set `cp_i = "dirichlet(alpha)"` with the same positive `alpha` for all
-#'      change points to regularize spacing (`alpha > 1` penalizes change points from occurring close together,
-#'      while `alpha < 1` favors clustering). Under the hood, this is parameterized as an exact sequential
-#'      stick-breaking Beta chain for fast and robust sampling.
-#'      [Read more](https://lindeloev.github.io/mcp/articles/priors.html).
+#'   `model = list(response ~ predictors, cp ~ predictors)`. See [mcp-formula] for how segments connect
+#'   and the full formula syntax.
+#' @param prior Named list, e.g., `prior = list(cp_1 = "dunif(0, 100)", Intercept_1 = "dnorm(0, 1)")`. 
+#'   List names are parameter names (`cp_1`, `Intercept_1`, `x_2`,
+#'   `sigma_1`, etc.) and values are a distribution string (e.g., `"dnorm(0, 1) T(0, )"`),
+#'   a fixed value (e.g., `-2.1`), or the name of another parameter to share its value.
+#'   Data-calibrated, regularizing defaults are used where priors are not specified;
+#'   see them with [prior_summary()]. See [mcp-priors] for the full syntax.
 #' @param family A supported family: `gaussian()`, `binomial()`, `bernoulli()`,
 #'   `poisson()`, or `negbinomial()`, with a supported link function; e.g.,
 #'   `gaussian(link = "log")`.
@@ -97,122 +79,9 @@
 #' \if{text}{\figure{mcp_demo.png}{[Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope]}}
 #'
 #' Segment 2 continues from where the plateau left off, while segment 3 starts afresh with a new intercept.
-#' Three rules govern this (with `x` as the change-point variable, i.e., `time` above):
-#' 1. **Only included terms get coefficients.** A segment includes the terms in its formula,
-#'    plus an intercept unless removed with `0 +`. Each included term gets a new coefficient
-#'    (`x_2`, `stateB_2`) or reuses an existing one with `same()`.
-#' 2. **x-terms are measured from the change point.** `x`, `x:z`, `state:x`, and `I(x^2)` start at zero
-#'    at the segment's change point and stop growing at the next change point.
-#' 3. **Joined or disjoined.** Without an intercept (`0 + ...`), a segment is *joined*: it continues
-#'    from where the earlier intercept and x-terms left off. With an intercept, it is *disjoined*
-#'    and starts afresh.
+#' See [mcp-formula] for the rules of how segments connect, the full formula syntax, and the
+#' underlying model. See [mcp-priors] for how to specify priors.
 #'
-#' `sigma` and `shape` are required by the likelihood, so they include an intercept in segment 1.
-#'
-#' **Formula syntax.** The general format of a segment formula is `response ~ cp ~ predictors` (e.g., `y ~ 1 ~ 1 + x`),
-#' except the first segment has no change point and uses `response ~ predictors`. The response and
-#' change-point parts can be omitted (`cp ~ predictor` assumes the same response; `~ predictor`
-#' assumes an intercept-only change point).
-#'
-#' **1. Response (segment 1 only):**
-#' * `y ~ ...`: Standard continuous or count response (Gaussian, Poisson, Bernoulli).
-#' * `successes | trials(total) ~ ...`: Binomial response (`family = binomial()`).
-#' * `y | weights(w) ~ ...`: Observation log-likelihood weights (multiplies each observation's
-#'   log-likelihood contribution by `w > 0`; affects posterior inference and `log_lik()`, but
-#'   not predictions).
-#' * `y | trials(total) + weights(w) ~ ...`: Combine response auxiliaries using `+`.
-#'
-#' **2. Change-point modeling (`cp`, segments 2+):**
-#' * `1 ~ ...` (or omitted, e.g., `~ x`): Population-level change point (default).
-#' * `1 + (1 | id) ~ ...`: Group-level change-point deviations around the population change point.
-#'   [Read more](https://lindeloev.github.io/mcp/articles/group_effects.html).
-#'
-#' **3. Regression formula (all segments):** [Read more](https://lindeloev.github.io/mcp/articles/formulas.html)
-#' * `~ 1 + x`: Disjoined slope with a new segment intercept.
-#' * `~ 0 + x`: Joined slope (no new intercept).
-#' * `~ 1`: Plateau (intercept only, no slope).
-#' * `~ x:state + I(x^2) + exp(z)`: Extended terms, interactions, and R-side bases
-#'   (`scale()`, `poly()`, `splines::ns()`). Bases are evaluated before sampling and reused for `newdata`.
-#' * `~ 1 + (1 | id)`: Group-level intercepts (or `(1 + x || id)` for independent slopes and intercepts).
-#'   [Read more](https://lindeloev.github.io/mcp/articles/group_effects.html).
-#' * `~ sigma(1 + x)`: Distributional parameters on the link scale (e.g., log residual SD).
-#'   [Read more](https://lindeloev.github.io/mcp/articles/dpar.html).
-#' * `~ ar(1) + ma(1)`: Autoregressive and moving-average time-series residuals on the link scale
-#'   (accepts regression formulas, `series = id`, and `threshold`; include them in every segment where they apply).
-#'   [Read more](https://lindeloev.github.io/mcp/articles/arma.html).
-#' * `~ 1 + same(x)` or `0 + same(z, as = 1)`: Reuse a coefficient from the preceding segment (default)
-#'   or from segment `as`. Reused coefficients are estimated jointly from all segments where they are
-#'   included, not fitted in one segment and copied to another.
-#'
-#' @section The mcp model:
-#' An `mcp` model divides the change-point variable \eqn{x} into \eqn{K} segments separated by
-#' ordered change points \eqn{\tau_1 < \dots < \tau_{K-1}}. In each segment \eqn{k \in \{1, \dots, K\}},
-#' the linear predictor \eqn{\eta_i} measures \eqn{x} from the change point \eqn{\tau_{k-1}}:
-#'
-#' \deqn{\eta_i = \alpha_k + \beta_{k,1} (x_i - \tau_{k-1}) \quad (\text{with } \tau_0 = 0)}
-#'
-#' where \eqn{\alpha_k} is the value at the start of segment \eqn{k}:
-#'
-#' \deqn{\alpha_k = \begin{cases}
-#'   \beta_{k,0}, & \text{disjoined } (\sim \texttt{1 + x}, \text{ or } k = 1) \\
-#'   \alpha_{k-1} + \beta_{k-1,1} (\tau_{k-1} - \tau_{k-2}), & \text{joined } (\sim \texttt{0 + x})
-#' \end{cases}}
-#'
-#' That is, a disjoined segment starts at its own intercept \eqn{\beta_{k,0}}, while a joined segment continues from where segment \eqn{k-1} left off.
-#'
-#' Here, \eqn{\beta_{k,1}} is the slope on \eqn{x} in segment \eqn{k}. Intercepts and slopes are absolute values (not changes relative to preceding segments).
-#' Other variables (e.g., `+ z + state`) add \eqn{\sum_j \gamma_{k,j} z_{j,i}} in the segments where they are included.
-#' They use their original values and are not part of \eqn{\alpha_k}, which is why they can make a joined segment start with a jump.
-#'
-#' The inverse-linked parameter is \eqn{\mu_i = g^{-1}(\eta_i)} via link function \eqn{g(\mu_i) = \eta_i},
-#' representing the expected response for most families (or the success probability for binomial models,
-#' where the expected count is \eqn{n_i \mu_i}). Distributional parameters (\code{sigma()}, \code{shape()}, etc.)
-#' and autoregressive terms (\code{ar()}, \code{ma()}) follow this exact same segmented structure on their respective link scales.
-#' See more details on the `mcp` model in [mcp-package] and on the [mcp website](https://lindeloev.github.io/mcp/articles/formulas.html).
-#'
-#' @section Time-series residuals (link-scale observation-driven GARMA):
-#' Autoregressive (`ar(p)`) and moving-average (`ma(q)`) terms define a finite conditional recurrence
-#' on the link scale (generalized autoregressive moving-average, GARMA). They support Gaussian (`identity`),
-#' binomial (`logit`), Bernoulli (`logit`), Poisson (`log`), and negative-binomial (`log`) families.
-#' If \eqn{\eta^{\text{reg}}_t} is the ordinary regression predictor from the segment formulas and \eqn{\eta_t} is the
-#' predictor including serial dependence, the recurrence decomposes into components:
-#'
-#' \deqn{\begin{aligned}
-#'   \text{AR}_t &= \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - \eta^{\text{reg}}_{t-j}\right] \\
-#'   \text{MA}_t &= \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right] \\
-#'   \eta_t &= \eta^{\text{reg}}_t + \text{AR}_t + \text{MA}_t
-#' \end{aligned}}
-#'
-#' where \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
-#' \eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
-#' \eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the threshold-constrained observation with threshold constant \eqn{c} (set via argument \code{threshold = 0.1} in \code{ar()} / \code{ma()}) to keep residuals finite on the link scale:
-#' * **Gaussian:** \eqn{y^*_t = y_t}.
-#' * **Poisson / Negative Binomial:** \eqn{y^*_t = \max(y_t, c)} to prevent \eqn{\log(0)}. Here \eqn{c} replaces zero counts with a small positive threshold value.
-#' * **Binomial / Bernoulli:** \eqn{y^*_t = \min(\max(y_t, c), n_t - c) / n_t}, where \eqn{y_t} is observed successes, \eqn{n_t} is the number of trials (\eqn{n_t = 1} for Bernoulli), and \eqn{c} constrains counts to the interval \eqn{[c, n_t - c]} before converting to a rate, preventing \eqn{\text{logit}(0)} and \eqn{\text{logit}(1)}.
-#'
-#' Implications:
-#' * For an \eqn{N}-order component, the last \eqn{N} values *before* the segment's change point are input to the first \eqn{\eta_t} in the segment.
-#' * AR and MA components apply only in segments where they are included.
-#' * AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
-#' * See [the arma article](https://lindeloev.github.io/mcp/articles/arma.html) for more details.
-#'
-#' @section Notes on priors:
-#'
-#'   * *Ordered change point priors:* Default population-level `cp_i` priors are ordered and the ordering is imposed through the priors. For user-defined priors,
-#'       `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior has neither
-#'       explicit truncation nor an inherently bounded form such as `dunif()` or
-#'       `dirichlet()`.
-#'   * *Data-dependent terms:* If `mcp` encounters a data-dependent term like `min(time)`, `max(time)`, `median(response)`, or `mad(response)` in the prior string, they are resolved from the model data so a numerical value is passed to JAGS. The following terms are also allowed: `n_segments()` and `n_cp()`.
-#'       The older constants `MINX`, `MAXX`, `MEANX`, `SDX`, `MINY`, `MAXY`, `MEANY`, `SDY`, and `N_CP` remain accepted with a deprecation warning.
-#'   * *Group-level change points:* Group-specific locations follow a hierarchical
-#'       normal distribution around their population change point, truncated so
-#'       that realized locations remain in the observed range and ordered.
-#'   * *Parameterization:* Prior strings use conventional scale parameterizations. `mcp` converts
-#'       these to the parameterization required by JAGS when generating code:
-#'       inverse variance for `dnorm()`, `dt()`, and `dlnorm()`, and inverse
-#'       scale for `ddexp()` and `dlogis()`. Use
-#'       `prior_summary(fit)` for resolved priors and
-#'       `prior_summary(fit, verbose = TRUE)` for their rules and descriptions.
 #' @references
 #' * Lindeløv, J. K. (2020). mcp: An R Package for Regression With Multiple Change Points.
 #'   *OSF Preprints*. \doi{10.31219/osf.io/fzqxv}

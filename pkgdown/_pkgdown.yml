@@ -33,7 +33,6 @@ reference:
     desc: mcp() returns and `mcpfit`. These functions illuminate what this fit contains structurally.
     contents:
       - mcp
-      - mcp-package
       - mcp_pars
       - mcp_columns
       - prior_summary
@@ -41,6 +40,13 @@ reference:
       - print.mcptext
       - is.mcpfit
       - model-accessors-mcpfit
+
+  - title: Documentation on mcp()
+    desc: Detailing the model, priors, and R objects
+    contents:
+      - mcp-package
+      - mcp-formula
+      - mcp-priors
       - mcpfit-class
 
   - title: Visual summaries

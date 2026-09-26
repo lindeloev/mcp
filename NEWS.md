@@ -149,6 +149,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - `mcp_example(...)` now shows an illustrative plot of the fitted example by default. Disable using `plot = FALSE`.
 
+  - New help topics `?mcp-formula` (model formulas and the underlying model) and `?mcp-priors` (prior syntax), split out from `?mcp`.
+
 ## Minor breaking changes
 
 - **Priors and distributions:**
