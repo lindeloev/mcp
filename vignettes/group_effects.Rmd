@@ -84,7 +84,7 @@ model = list(
 )
 ```
 
-Group terms follow the [rules for how segments connect](../articles/formulas.html#how-segments-connect), separately for each grouping factor and distributional parameter. Group intercepts apply only in segments that include them. Group slopes on `x`, such as `(0 + x||id)`, are x-terms: they join until a later segment includes a group intercept for the same grouping factor, or `(0|id)`, which ends all group terms for `id`. A population-level intercept (`~ 1 + ...`) does not end group slopes.
+Group terms follow the [rules for how segments connect](../articles/formulas.html#how-segments-connect), separately for each grouping factor and distributional parameter. Group intercepts apply only in segments that include them. Group slopes on `x`, such as `(0 + x||id)`, are x-terms: they join until a disjoined segment (`~ 1 + ...`), a later group intercept for the same grouping factor, or `(0|id)`, which ends all group terms for `id`.
 
 Notice `same()` above. It reuses the complete group term from the source segment (deviations and SD), never a subset of it. Reused group slopes count from the current change point. The same syntax works inside `sigma()` and other distributional parameters. See `mcp_example("group_mu")`.
 
@@ -112,7 +112,7 @@ model = list(
 
 This model has group-level deviations in both the conditional mean and log-SD. The `||` syntax works inside distributional formulas too, for example `sigma(1 + (state||id))`.
 
-A later group intercept starts the group terms afresh. Thus, if `(state||id)` is followed in a later segment by `(1||id)`, only the new intercept deviations apply from that segment onward. A later group term without an intercept, such as `(0 + x||id)`, joins earlier group slopes, while `(0|id)` ends all group terms for `id`.
+A later group intercept starts the group terms afresh. Thus, if `(state||id)` is followed in a later segment by `(1||id)`, only the new intercept deviations apply from that segment onward. In a joined segment, a group term without an intercept, such as `(0 + x||id)`, joins earlier group slopes, while `(0|id)` ends all group terms for `id`.
 
 Multi-coefficient terms with `|`, such as `(1 + x|id)`, would imply correlated group coefficients and are not yet supported; use `(1 + x||id)` for independent coefficients. Group-level terms inside `ar()` and `ma()` are also not supported.
 

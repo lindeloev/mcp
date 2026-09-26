@@ -954,7 +954,8 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
 
   # Group intercepts and non-local terms are active only where declared.
   # Local group-x terms retain their endpoint through joined blocks until a
-  # later group intercept or explicit `(0 | group)` resets the block.
+  # later population intercept, group intercept, or explicit `(0 | group)`.
+  # Parse group blocks segment by segment so `same()` can find its source
   definitions = NULL
   for (segment in seq_along(rhs)) {
     definitions = dplyr::bind_rows(definitions,
@@ -964,6 +965,8 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
 
   predictor_group_effects = definitions
   if (nrow(definitions) > 0) {
+    # Inactive rows are `(0 | group)` turn-offs, which only mark resets below.
+    # Link each coefficient to its population counterpart, if there is one.
     predictor_group_effects = definitions %>%
       dplyr::filter(.data$active) %>%
       dplyr::mutate(
@@ -982,6 +985,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
         "correlated", "design_spec", "definition_name", "definition_segment"
       )
 
+    # Segments that restart a group block: a group intercept or `(0 | group)`
     resets = definitions %>%
       dplyr::group_by(.data$dpar, .data$group_col, .data$segment) %>%
       dplyr::summarise(
@@ -989,16 +993,26 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
         .groups = "drop"
       ) %>%
       dplyr::filter(.data$reset)
+    # Disjoined segments (population intercepts) restart all group blocks too
+    population_resets = predictors %>%
+      dplyr::filter(.data$par_type == "Intercept") %>%
+      dplyr::distinct(.data$dpar, .data$segment)
 
+    # First restart after each coefficient's segment (NA = never)
     next_reset = vapply(seq_len(nrow(predictor_group_effects)), function(i) {
       candidates = resets$segment[
         resets$dpar == predictor_group_effects$dpar[i] &
           resets$group_col == predictor_group_effects$group_col[i] &
           resets$segment > predictor_group_effects$segment[i]
       ]
+      candidates = c(candidates, population_resets$segment[
+        population_resets$dpar == predictor_group_effects$dpar[i] &
+          population_resets$segment > predictor_group_effects$segment[i]
+      ])
       if (length(candidates) == 0) NA_integer_ else min(candidates)
     }, integer(1))
 
+    # Non-x terms end at the next segment; x-terms end at the next restart
     predictor_group_effects = predictor_group_effects %>%
       dplyr::mutate(next_segment = dplyr::if_else(
         .data$x_factor == "1",

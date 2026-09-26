@@ -256,6 +256,40 @@ test_that("local group slopes retain joined endpoints until an intercept or zero
   expect_equal(as.numeric(simulated), as.numeric(expected))
 })
 
+test_that("population intercepts end local group slopes of the same dpar", {
+  data = data.frame(
+    x = 1:12,
+    y = 0,
+    id = rep(c("a", "b"), 6)
+  )
+  fit = mcp(
+    list(
+      y ~ 0 + (0 + x || id),
+      ~ 0 + sigma(1),  # A sigma intercept does not end mu group slopes
+      ~ 1
+    ),
+    data,
+    par_x = "x",
+    sample = FALSE
+  )
+  effects = get_fit_model_tables(fit)$group_effects
+  expect_equal(effects$name, "x_1_id")
+  expect_equal(effects$next_segment, 3L)
+
+  set.seed(42)
+  simulated = fit$simulate(
+    fit,
+    data,
+    cp_1 = 2.5, cp_2 = 7.5,
+    sigma_1 = 1, sigma_2 = 1, Intercept_3 = 0,
+    x_1_id_sd = 1,
+    .type = "fitted"
+  )
+  draws = attr(simulated, "simulated")
+  expected = ifelse(data$x < 2.5, draws$x_1_id * data$x, ifelse(data$x < 7.5, draws$x_1_id * 2.5, 0))
+  expect_equal(as.numeric(simulated), as.numeric(expected))
+})
+
 
 test_that("double-bar coefficient blocks are replaced together", {
   fit = mcp(
