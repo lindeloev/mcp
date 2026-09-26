@@ -17,8 +17,8 @@ as \code{size} in \code{rnbinom()}). Thus \code{Var(y) = mu + mu^2 / shape}, whi
 the Poisson variance as \code{shape} approaches infinity.
 }
 \details{
-\code{shape(1)} is added implicitly in segment 1. In later segments its joined
-level remains unless a new \code{shape()} formula is declared. For example, \code{y ~ 1 + x + shape(1 + x)}
+\code{shape} is required by the likelihood, so it includes an intercept in segment 1.
+Later segments that do not include \code{shape()} are joined. For example, \code{y ~ 1 + x + shape(1 + x)}
 models both the mean and shape. Regression coefficients for both dpars are
 on their link scales.
 }

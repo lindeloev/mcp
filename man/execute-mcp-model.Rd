@@ -7,8 +7,8 @@
 \alias{predict}
 \alias{fitted.mcpfit}
 \alias{fitted}
-\alias{log_lik.mcpfit}
 \alias{log_lik}
+\alias{log_lik.mcpfit}
 \alias{residuals.mcpfit}
 \alias{residuals}
 \title{Fitted and predicted values of \code{mcp} models fits}
@@ -47,6 +47,8 @@
   samples_format = lifecycle::deprecated(),
   ...
 )
+
+log_lik(object, ...)
 
 \method{log_lik}{mcpfit}(
   object,
