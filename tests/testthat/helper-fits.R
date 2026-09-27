@@ -23,10 +23,6 @@
 test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
                      family = gaussian(), chains, warmup, iter,
                      min_ess, seed = 42) {
-  if (Sys.getenv("MCP_TEST_LEVEL") != "release") {
-    testthat::skip("Time-consuming fit recovery tests are only run when MCP_TEST_LEVEL='release'.")
-  }
-
   # Simulate
   if (is.null(newdata)) {
     newdata = data.frame(
@@ -51,6 +47,14 @@ test_fit = function(model, simulated, newdata = NULL, hyperparameters = NULL,
     attr(simulated_y, "simulated") = simulation_values
   }
   newdata[[mcp_columns(empty)$response]] = simulated_y
+
+  # Default priors should not be far from the simulated values. Cheap, so run at all test levels.
+  empty = mcp(model, data = newdata, family = family, sample = FALSE, par_x = "x")
+  expect_prior_distance(empty, attr(simulated_y, "simulated"), label = paste(format(model), collapse = " "))
+
+  if (Sys.getenv("MCP_TEST_LEVEL") != "release") {
+    testthat::skip("Time-consuming fit recovery tests are only run when MCP_TEST_LEVEL='release'.")
+  }
 
   # Fit
   fit = mcp(
