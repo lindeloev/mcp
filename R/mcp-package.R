@@ -1,10 +1,13 @@
-#' mcp: Multiple Change Point Regression in R
+#' mcp: Regression with Multiple Change Points
 #'
 #' @description
-#' Flexible and informed regression with Multiple Change Points. `mcp` can infer change points in models on means,
-#' variances (and other distributional parameters), autocorrelation structure, and any combination of these, as well as the parameters of the
-#' segments in between. All parameters are estimated with uncertainty, and posterior predictive intervals are
-#' supported - also near the change points. `mcp` supports hypothesis testing via Savage-Dickey density
+#' `mcp` is regression with multiple change points. At its simplest, it feels like `lm()`, but with one formula per
+#' segment. At its most flexible, it aims to be **[`brms`](https://paulbuerkner.com/brms/) for change points**: GLM
+#' families (Gaussian, binomial, Bernoulli, Poisson, negative binomial), group-level effects (random effects), AR/MA,
+#' and regression on distributional parameters (e.g., `sigma`, `shape`), all inferred with full Bayesian uncertainty,
+#' including the change points themselves.
+#'
+#' Posterior predictive intervals are supported - also near the change points. `mcp` supports hypothesis testing via Savage-Dickey density
 #' ratios, posterior contrasts, and PSIS-LOO/WAIC model comparison.
 #'
 #' See [mcp()] to fit models, [mcp-formula] for the model and formula syntax, and [mcp-priors] for priors.
