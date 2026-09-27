@@ -386,3 +386,34 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
   }
   specs
 }
+
+
+# Place default segment-1 intercept priors on the level at the segment start,
+# min(x), like brms and rstanarm place them on centered predictors. The reported
+# intercept remains at x = 0 (as in lm()). `reference` is the value of the
+# segment's x-terms at min(x), e.g., "x_1 * 101 + xE2_1 * 10201". Other
+# predictors are at 0. Returns `table` with a `reference` column.
+add_intercept_references = function(table, predictors, context) {
+  table$reference = NA_character_
+  if (context$x_min == 0)
+    return(table)
+
+  intercepts = predictors[predictors$segment == 1 & predictors$par_type == "Intercept" & predictors$dpar %notin% c("ar", "ma"), ]
+  for (i in seq_len(nrow(intercepts))) {
+    row = match(intercepts$code_name[i], table$parameter)
+    if (is.na(row) || table$source[row] != "default" || table$kind[row] != "distribution")
+      next
+
+    # x-terms of the same dpar without other variables (a model-matrix column of ones)
+    terms = predictors[predictors$segment == 1 & predictors$dpar == intercepts$dpar[i] & predictors$x_factor != "1", ]
+    is_pure = vapply(terms$matrix_data, function(values) all(values == 1, na.rm = TRUE), logical(1))
+    terms = terms[is_pure, ]
+    if (nrow(terms) == 0)
+      next
+
+    degree = as.numeric(ifelse(terms$x_factor == "x", "1", sub("x^", "", terms$x_factor, fixed = TRUE)))
+    table$reference[row] = paste0(terms$code_name, " * ", sprintf("%.15g", context$x_min^degree), collapse = " + ")
+    table$description[row] = paste0(table$description[row], "; on the level at min(", context$x_display, ")")
+  }
+  table
+}

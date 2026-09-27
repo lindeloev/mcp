@@ -47,6 +47,7 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
 
   all_names = specs$parameter
   table = compile_prior_specs(specs, all_names, context)
+  table = add_intercept_references(table, predictors, context)
   resolved = stats::setNames(as.list(table$value), table$parameter)
   attr(resolved, "prior_table") = table
   attr(resolved, "prior_context") = context[c(

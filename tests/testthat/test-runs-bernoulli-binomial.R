@@ -52,7 +52,7 @@ test_that("binomial and Bernoulli links share weakly regularizing defaults", {
     bernoulli("probit")
   )
   expected = c(
-    "dt(0, 1.5, 3)",
+    "dnorm(0, 1.5)",
     "dnorm(0, 1.5 / predictor_scale())",
     "dnorm(0, 1.5 / predictor_scale())"
   )

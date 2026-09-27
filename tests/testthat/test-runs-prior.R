@@ -286,7 +286,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     ps = prior_summary(fit, verbose = TRUE)
     int_row = ps[ps$parameter == "Intercept_1", ]
     testthat::expect_match(int_row$rule, "- offset", fixed = TRUE)
-    testthat::expect_equal(int_row$description, "Robustly centered log-rate intercept with a minimum scale of 2.5")
+    testthat::expect_equal(int_row$description, "Robustly centered log-rate intercept with a minimum scale of 2.5; on the level at min(x)")
 
     # A later segment must include its own offset.
     fit_multi = mcp(
@@ -309,7 +309,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     testthat::expect_equal(fit_multi$prior$Intercept_3, paste0("dnorm(", expected_count_loc, ", ", expected_count_scale, ")"))
 
     ps_multi = prior_summary(fit_multi, verbose = TRUE)
-    testthat::expect_equal(ps_multi$description[ps_multi$parameter == "Intercept_1"], "Robustly centered log-rate intercept with a minimum scale of 2.5")
+    testthat::expect_equal(ps_multi$description[ps_multi$parameter == "Intercept_1"], "Robustly centered log-rate intercept with a minimum scale of 2.5; on the level at min(x)")
     testthat::expect_match(ps_multi$description[ps_multi$parameter == "Intercept_2"], "Robustly centered log-(count|mean) intercept with a minimum scale of 2.5")
     testthat::expect_match(ps_multi$description[ps_multi$parameter == "Intercept_3"], "Robustly centered log-(count|mean) intercept with a minimum scale of 2.5")
 
@@ -435,13 +435,14 @@ test_that("priors are resolved without changing their parameterization", {
   data = data.frame(x = 1:6, y = c(2, 4, 3, 8, 7, 9))
   default_fit = mcp(list(y ~ 1 + x, ~ 1 + x), data, sample = FALSE)
   slope = paste0("dnorm(0, ", format_prior_number(2.5 * stats::sd(data$y) / stats::sd(data$x)), ")")
+  intercept = paste0("dnorm(", format_prior_number(mean(data$y)), ", ", format_prior_number(2.5 * stats::sd(data$y)), ")")
   expect_equal(
     unclass(default_fit$prior),
     list(
       cp_1 = "dirichlet(1)",
-      Intercept_1 = "dt(5.5, 3.7, 3)",
+      Intercept_1 = intercept,
       x_1 = slope,
-      Intercept_2 = "dt(5.5, 3.7, 3)",
+      Intercept_2 = intercept,
       x_2 = slope,
       sigma_1 = "dt(0, 3.7, 3) T(0.001, )"
     )
@@ -546,7 +547,7 @@ test_that("Gaussian defaults use coherent response and link scales", {
 
   small_data = data.frame(x = 1:4, y = c(0.01, 0.02, 0.03, 0.04))
   small_fit = mcp(list(y ~ 1 + x), small_data, sample = FALSE)
-  expect_equal(small_fit$prior$Intercept_1, "dt(0, 2.5, 3)")
+  expect_equal(small_fit$prior$Intercept_1, paste0("dnorm(", format_prior_number(mean(small_data$y)), ", ", format_prior_number(2.5 * stats::sd(small_data$y)), ")"))
   expect_equal(small_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0.001, )")
 })
 
@@ -558,4 +559,43 @@ test_that("x-term powers are autoscaled by the sd of the power measured from min
   expect_equal(fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(base / stats::sd(data$x)), ")"))
   expect_equal(fit$prior$xE2_1, paste0("dnorm(0, ", format_prior_number(base / stats::sd((data$x - 1)^2)), ")"))
   expect_equal(fit$prior$xE3_1, paste0("dnorm(0, ", format_prior_number(base / stats::sd((data$x - 1)^3)), ")"))
+})
+
+
+test_that("default segment-1 intercept priors are placed at min(x)", {
+  data = data.frame(x = 101:130, y = 1:30 + 0.5 * (1:30 > 15))
+  fit = mcp(list(y ~ 1 + x + I(x^2), ~ 0 + x), data, par_x = "x", sample = FALSE)
+  expect_match(fit$jags_code, "Intercept_1_start_ ~ dnorm(", fixed = TRUE)
+  expect_match(fit$jags_code, "Intercept_1 = Intercept_1_start_ - (x_1 * 101 + xE2_1 * 10201)", fixed = TRUE)
+  expect_match(prior_summary(fit, verbose = TRUE)$description[1:3], "on the level at min(x)", fixed = TRUE, all = FALSE)
+
+  # User-specified intercept priors stay on the intercept at x = 0
+  user_fit = mcp(list(y ~ 1 + x), data, prior = list(Intercept_1 = "dnorm(0, 10)"), sample = FALSE)
+  expect_match(user_fit$jags_code, "Intercept_1 ~ dnorm(", fixed = TRUE)
+  expect_false(grepl("_start_", user_fit$jags_code))
+
+  # Nothing to move when x starts at zero or segment 1 has no x-terms
+  expect_false(grepl("_start_", mcp(list(y ~ 1 + x), transform(data, x = x - 101), sample = FALSE)$jags_code))
+  expect_false(grepl("_start_", mcp(list(y ~ 1, ~ 0 + x), data, par_x = "x", sample = FALSE)$jags_code))
+})
+
+
+test_that("the prior on the level at min(x) matches the default intercept prior", {
+  data = data.frame(x = 101:130, y = 1:30)
+  fit = suppressWarnings(mcp(
+    list(y ~ 1 + x), data, sample = "prior",
+    chains = 1, iter = 4000, warmup = 100, seed = 1, quiet = TRUE
+  ))
+  draws = as_draws_df(fit, prior = TRUE)
+  level = draws$Intercept_1 + draws$x_1 * 101
+  expect_equal(mean(level), mean(data$y), tolerance = 0.1)
+  expect_equal(stats::sd(level), 2.5 * stats::sd(data$y), tolerance = 0.1)
+})
+
+
+test_that("a constant response uses unit scale for sd(y)-based default priors", {
+  data = data.frame(x = 1:10, y = 2)
+  fit = mcp(list(y ~ 1 + x), data, sample = FALSE)
+  expect_equal(fit$prior$Intercept_1, "dnorm(2, 2.5)")
+  expect_equal(fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(data$x)), ")"))
 })

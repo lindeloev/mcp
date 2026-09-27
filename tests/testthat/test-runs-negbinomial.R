@@ -161,7 +161,7 @@ test_that("negative-binomial support does not alter Poisson metadata or priors",
     list(y ~ 1 + x), data,
     family = poisson(link = "identity"), sample = FALSE
   )
-  expect_equal(identity_fit$prior$Intercept_1, "dt(2, 3, 3) T(0, )")
+  expect_equal(identity_fit$prior$Intercept_1, paste0("dnorm(", format_prior_number(mean(data$y)), ", ", format_prior_number(2.5 * stats::sd(data$y)), ") T(0, )"))
   expect_equal(identity_fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 * stats::sd(data$y) / stats::sd(data$x)), ")"))
 })
 

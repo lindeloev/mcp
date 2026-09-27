@@ -49,6 +49,7 @@ prior_context = function(data, segments, design_specs = list()) {
     x_min = min(x, na.rm = TRUE),
     x_max = max(x, na.rm = TRUE),
     x_span = diff(range(x, na.rm = TRUE)),
+    y_sd = suppressWarnings(stats::sd(as.numeric(data[[y_name]]), na.rm = TRUE)),
     n_cp = nrow(segments) - 1,
     n_segments = nrow(segments)
   )
@@ -314,8 +315,13 @@ compile_prior_specs = function(specs, all_names, context) {
   assert_data_cols(specs, required)
   records = lapply(seq_len(nrow(specs)), function(i) {
     code = specs$code[[i]]
-    if (specs$source[i] == "default")
+    if (specs$source[i] == "default") {
+      # A constant response (e.g., a placeholder before simulating data) has no
+      # scale. Use 1 instead, as rstanarm does for non-Gaussian families.
+      if (!isTRUE(context$y_sd > 0))
+        code = gsub("sd(.y)", "1", code, fixed = TRUE)
       code = instantiate_prior_template(code, context)
+    }
     compile_prior_record(
       specs$parameter[i], code, all_names, context, specs$source[i],
       specs$description[i]

@@ -26,8 +26,15 @@
 #' for identity links and `normal(0, 2.5 / sd(x))` for log links, where `sd(x)` is the standard deviation of
 #' the predictor's model-matrix column (including dummy variables for factors). Logit and probit links use
 #' a narrower base scale, `normal(0, 1.5 / sd(x))`. For the change-point variable, `sd(x)` is taken over all
-#' data, and powers such as `I(x^2)` use `sd((x - min(x))^2)`. Intercepts and `sigma` follow `brms`,
-#' e.g., `student_t(3, median(y), max(2.5, mad(y)))` for Gaussian intercepts. Notice that the autoscaling
+#' data, and powers such as `I(x^2)` use `sd((x - min(x))^2)`. Intercepts also follow `rstanarm`, e.g.,
+#' `normal(mean(y), 2.5 * sd(y))` for Gaussian models (`normal(0, 1.5)` for logit and probit), while `sigma`
+#' and group-level SDs follow `brms`, e.g., `student_t(3, 0, max(2.5, mad(y)))`. These are scale parameters, for
+#' which a half-Student-t is the standard weakly informative choice (Gelman, 2006).
+#'
+#' Like `rstanarm` and `brms`, which place intercept priors on centered predictors, the default prior on
+#' the segment-1 intercept applies to the level at the start of the segment, `min(x)`. The reported
+#' `Intercept_1` is still at `x = 0`, as in [lm()]. Later segments' intercepts are at their change point. 
+#' User-specified intercept priors apply to `Intercept_1` as written. Notice that the autoscaling
 #' does not factor in the number of segments or their expected x-range. Consider scaling by expected segment
 #' length on a case-by-case basis if you have such a priori expectations.
 #'

@@ -114,6 +114,10 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   } else {
     stats::setNames(prior_table$kind, prior_table$parameter)
   }
+  # For default segment-1 intercept priors placed at min(x): the value of that segment's
+  # x-terms at min(x), e.g., "x_1 * 101". NA for all other parameters.
+  prior_reference = if (is.null(prior_table$reference)) list() else
+    as.list(stats::setNames(prior_table$reference, prior_table$parameter))
   prior_context_ = prior_context
 
   # Change point priors are bounded/truncated, which is where a literal-number
@@ -199,7 +203,8 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
     mm = paste0(mm, get_prior_str(
       prior_pop, i,
       description = prior_description[[name]],
-      kind = if (is.null(prior_kind_)) NULL else prior_kind_[[name]]
+      kind = if (is.null(prior_kind_)) NULL else prior_kind_[[name]],
+      reference = prior_reference[[name]]
     ))
   }
 
@@ -337,11 +342,14 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
 #'   population change point. `NULL` for ordinary group effects.
 #' @param description Short comment to include in generated JAGS code.
 #' @param kind One of distribution, alias, expression, or constant.
+#' @param reference `NULL` or a string with the value of segment-1 x-terms at
+#'   min(x). If given, the prior is placed on this level (in JAGS) and the
+#'   intercept at x = 0 is derived from it (user-facing). See `add_intercept_references()`.
 #' @return A string
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @encoding UTF-8
 get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
-                          description = "Prior", kind = NULL) {
+                          description = "Prior", kind = NULL, reference = NULL) {
   # Helpers
   value = prior[[i]]
   name = names(prior[i])
@@ -371,7 +379,13 @@ get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
     value = prior_to_jags(value)
 
     # ... and this is a population-level effect
-    if (is.null(group_col)) {
+    if (is.null(group_col) && !is.null(reference) && !is.na(reference)) {
+      start_name = paste0(name, "_start_")
+      return(paste0(
+        "  ", start_name, " ~ ", value, "  # ", description, "\n",
+        "  ", name, " = ", start_name, " - (", reference, ")  # Intercept at x = 0\n"
+      ))
+    } else if (is.null(group_col)) {
       return(paste0("  ", name, " ~ ", value, "  # ", description, "\n"))
     } else if (is.null(population_name)) {
       return(paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {

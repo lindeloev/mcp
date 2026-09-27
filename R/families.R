@@ -217,13 +217,12 @@ mcpfamily_gaussian = function(family) {
   if (family$link %notin% c("identity", "log"))
     stop("mcp has no default priors for gaussian(link = \"", family$link, "\") so it's likely not supported.")
 
-  response_location = "round(median(.y), 1)"
   response_scale = "max(2.5, round(mad(.y), 1))"
 
   if (family$link == "identity") {
     mu_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", paste0("dt(", response_location, ", ", response_scale, ", 3)"), paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Robustly centered mean intercept with a minimum scale of 2.5", "always",
+      "mu", "Intercept", "dnorm(mean(.y), 2.5 * sd(.y))", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Mean intercept (rstanarm default)", "always",
       "mu", "dummy", "dnorm(0, 2.5 * sd(.y) / predictor_scale())", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Autoscaled mean contrast (rstanarm default)", "always",
       "mu", "slope", "dnorm(0, 2.5 * sd(.y) / predictor_scale())", paste0("dt(0, ", response_scale, " / predictor_scale(), 3) T(0, )"), "Autoscaled mean coefficient (rstanarm default)", "always"
     )
@@ -328,7 +327,7 @@ mcpfamily_binomial = function(family) {
   } else if (family$link %in% c("logit", "probit")) {
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", "dt(0, 1.5, 3)", "dt(0, 1.5, 3) T(0, )", "Weakly regularizing link-scale intercept", "always",
+      "mu", "Intercept", "dnorm(0, 1.5)", "dt(0, 1.5, 3) T(0, )", "Link-scale intercept (rstanarm scaling with base 1.5)", "always",
       "mu", "dummy", "dnorm(0, 1.5 / predictor_scale())", "dt(0, 1.5, 3) T(0, )", "Autoscaled link-scale contrast (rstanarm scaling with base 1.5)", "always",
       "mu", "slope", "dnorm(0, 1.5 / predictor_scale())", "dt(0, 1.5 / predictor_scale(), 3) T(0, )", "Autoscaled link-scale coefficient (rstanarm scaling with base 1.5)", "always"
     )
@@ -430,7 +429,7 @@ mcpfamily_bernoulli = function(family) {
   } else if (family$link %in% c("logit", "probit")) {
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", "dt(0, 1.5, 3)", "dt(0, 1.5, 3) T(0, )", "Weakly regularizing link-scale intercept", "always",
+      "mu", "Intercept", "dnorm(0, 1.5)", "dt(0, 1.5, 3) T(0, )", "Link-scale intercept (rstanarm scaling with base 1.5)", "always",
       "mu", "dummy", "dnorm(0, 1.5 / predictor_scale())", "dt(0, 1.5, 3) T(0, )", "Autoscaled link-scale contrast (rstanarm scaling with base 1.5)", "always",
       "mu", "slope", "dnorm(0, 1.5 / predictor_scale())", "dt(0, 1.5 / predictor_scale(), 3) T(0, )", "Autoscaled link-scale coefficient (rstanarm scaling with base 1.5)", "always"
     )
@@ -501,12 +500,11 @@ mcpfamily_bernoulli = function(family) {
 
 
 mcpfamily_poisson = function(family) {
-  response_location = "round(median(.y), 1)"
   response_scale = "max(2.5, round(mad(.y), 1))"
   if (family$link == "identity") {
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", paste0("dt(", response_location, ", ", response_scale, ", 3) T(0, )"), paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Positive count intercept calibrated on the response scale", "always",
+      "mu", "Intercept", "dnorm(mean(.y), 2.5 * sd(.y)) T(0, )", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Positive count intercept on the response scale", "always",
       "mu", "dummy", "dnorm(0, 2.5 * sd(.y) / predictor_scale())", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Autoscaled count contrast on the response scale", "always",
       "mu", "slope", "dnorm(0, 2.5 * sd(.y) / predictor_scale())", paste0("dt(0, ", response_scale, " / predictor_scale(), 3) T(0, )"), "Autoscaled count coefficient on the response scale", "always"
     )
