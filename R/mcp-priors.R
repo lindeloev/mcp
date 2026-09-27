@@ -22,6 +22,15 @@
 #'      is generally preferred. If two group-level deviations are shared via the prior,
 #'      they will need to have the same grouping variable.
 #'
+#' Default coefficient priors follow the autoscaled defaults of `rstanarm`: `normal(0, 2.5 * sd(y) / sd(x))`
+#' for identity links and `normal(0, 2.5 / sd(x))` for log links, where `sd(x)` is the standard deviation of
+#' the predictor's model-matrix column (including dummy variables for factors). Logit and probit links use
+#' a narrower base scale, `normal(0, 1.5 / sd(x))`. For the change-point variable, `sd(x)` is taken over all
+#' data, and powers such as `I(x^2)` use `sd((x - min(x))^2)`. Intercepts and `sigma` follow `brms`,
+#' e.g., `student_t(3, median(y), max(2.5, mad(y)))` for Gaussian intercepts. Notice that the autoscaling
+#' does not factor in the number of segments or their expected x-range. Consider scaling by expected segment
+#' length on a case-by-case basis if you have such a priori expectations.
+#'
 #' The default prior on change points is `dirichlet(1)` (uniform order statistics).
 #' For a single change point, this is the Beta(1, 1) / Uniform distribution over `[min(x), max(x)]`.
 #' For multiple change points, it corresponds to a flat Dirichlet distribution over segment lengths.
@@ -37,7 +46,7 @@
 #'       `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior has neither
 #'       explicit truncation nor an inherently bounded form such as `dunif()` or
 #'       `dirichlet()`.
-#'   * *Data-dependent terms:* If `mcp` encounters a data-dependent term like `min(time)`, `max(time)`, `median(response)`, or `mad(response)` in the prior string, they are resolved from the model data so a numerical value is passed to JAGS. The following terms are also allowed: `n_segments()` and `n_cp()`.
+#'   * *Data-dependent terms:* If `mcp` encounters a data-dependent term like `min(time)`, `max(time)`, `mean(response)`, `median(response)`, `sd(response)`, or `mad(response)` in the prior string, they are resolved from the model data so a numerical value is passed to JAGS. The following terms are also allowed: `n_segments()` and `n_cp()`.
 #'       The older constants `MINX`, `MAXX`, `MEANX`, `SDX`, `MINY`, `MAXY`, `MEANY`, `SDY`, and `N_CP` remain accepted with a deprecation warning.
 #'   * *Group-level change points:* Group-specific locations follow a hierarchical
 #'       normal distribution around their population change point, truncated so

@@ -18,10 +18,10 @@ default_arma_specs = function() {
     ~dpar, ~par_type, ~prior, ~description, ~condition,
     "ar", "Intercept", "dnorm(0, 0.5) T(-1, 1)", "Zero-centered regularizing dependence coefficient", "always",
     "ar", "dummy", "dnorm(0, 0.25)", "Modest categorical change in a dependence coefficient", "always",
-    "ar", "slope", "dnorm(0, 0.25 / predictor_scale())", "Modest dependence-coefficient change over a representative predictor change", "always",
+    "ar", "slope", "dnorm(0, 0.25 / predictor_scale())", "Modest dependence-coefficient change per predictor SD", "always",
     "ma", "Intercept", "dnorm(0, 0.5) T(-1, 1)", "Zero-centered regularizing dependence coefficient", "always",
     "ma", "dummy", "dnorm(0, 0.25)", "Modest categorical change in a dependence coefficient", "always",
-    "ma", "slope", "dnorm(0, 0.25 / predictor_scale())", "Modest dependence-coefficient change over a representative predictor change", "always"
+    "ma", "slope", "dnorm(0, 0.25 / predictor_scale())", "Modest dependence-coefficient change per predictor SD", "always"
   )
 }
 
@@ -76,26 +76,18 @@ default_cp_specs = function(cps, context) {
 }
 
 
-# Express a reference change in one model-matrix column for prior scaling.
+# Standard deviation of one model-matrix column for autoscaled priors (rstanarm).
+# x-terms use the change-point variable: sd(x) and sd((x - min(x))^p) for powers.
 default_predictor_scale = function(matrix_data, x_factor) {
   values = stats::na.omit(as.numeric(matrix_data))
-  unique_values = unique(values)
-  data_scale = if (length(unique_values) <= 1) {
-    1
-  } else if (length(unique_values) == 2) {
-    diff(range(unique_values))
-  } else {
-    2 * stats::sd(values)
-  }
-  if (!is.finite(data_scale) || data_scale <= 0)
-    stop_github("Could not derive a positive scale from a model-matrix column.")
+  n_unique = length(unique(values))
+  # For x-terms, a factor dummy (as in x:state) only selects rows, so the column sd is close to sd(x).
+  data_scale = if (n_unique <= 1 || (n_unique == 2 && x_factor != "1")) 1 else stats::sd(values)
 
   parts = character()
   if (x_factor != "1") {
-    x_expr = if (grepl("\\^", x_factor)) "(max(.x) - min(.x))" else "max(.x) - min(.x)"
-    parts = gsub("x", x_expr, x_factor, fixed = TRUE)
-    if (data_scale != 1 && !grepl("^\\(", parts))
-      parts = paste0("(", parts, ")")
+    degree = if (x_factor == "x") 1 else as.numeric(sub("x^", "", x_factor, fixed = TRUE))
+    parts = if (degree == 1) "sd(.x)" else paste0("sd((.x - min(.x))^", degree, ")")
   }
   if (data_scale != 1)
     parts = c(parts, format_prior_number(data_scale))

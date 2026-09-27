@@ -225,6 +225,9 @@ testthat::test_that("default log-count priors use normal population slopes/contr
     id = factor(rep(1:5, each = 2)),
     y = 1:10
   )
+  rounded = function(x) as.numeric(format_prior_number(x))
+  x_scale = format_prior_number(2.5 / stats::sd(d$x))
+  cat_scale = format_prior_number(2.5 / rounded(stats::sd(d$cat == "B")))
   for (fam in list(poisson(), negbinomial())) {
     fit = mcp(
       list(y ~ 1 + x + cat + (1 + x + cat || id)),
@@ -234,12 +237,12 @@ testthat::test_that("default log-count priors use normal population slopes/contr
     )
     # Population priors
     testthat::expect_match(fit$prior$Intercept_1, "^dnorm\\(")
-    testthat::expect_equal(fit$prior$x_1, "dnorm(0, 0.2777778)")
-    testthat::expect_equal(fit$prior$catB_1, "dnorm(0, 2.5)")
+    testthat::expect_equal(fit$prior$x_1, paste0("dnorm(0, ", x_scale, ")"))
+    testthat::expect_equal(fit$prior$catB_1, paste0("dnorm(0, ", cat_scale, ")"))
 
     # Group SD priors
     testthat::expect_equal(fit$prior$Intercept_1_id_sd, "dnorm(0, 2.5) T(0, )")
-    testthat::expect_equal(fit$prior$x_1_id_sd, "dnorm(0, 0.2777778) T(0, )")
+    testthat::expect_equal(fit$prior$x_1_id_sd, paste0("dnorm(0, ", x_scale, ") T(0, )"))
     testthat::expect_equal(fit$prior$catB_1_id_sd, "dnorm(0, 2.5) T(0, )")
   }
 
@@ -251,10 +254,10 @@ testthat::test_that("default log-count priors use normal population slopes/contr
     sample = FALSE
   )
   testthat::expect_equal(fit_shape$prior$shape_1, "dnorm(0, 2.5)")
-  testthat::expect_equal(fit_shape$prior$shape_x_1, "dnorm(0, 0.2777778)")
+  testthat::expect_equal(fit_shape$prior$shape_x_1, paste0("dnorm(0, ", x_scale, ")"))
   testthat::expect_equal(fit_shape$prior$shape_catB_1, "dnorm(0, 2.5)")
   testthat::expect_equal(fit_shape$prior$shape_1_id_sd, "dnorm(0, 2.5) T(0, )")
-  testthat::expect_equal(fit_shape$prior$shape_x_1_id_sd, "dnorm(0, 0.2777778) T(0, )")
+  testthat::expect_equal(fit_shape$prior$shape_x_1_id_sd, paste0("dnorm(0, ", x_scale, ") T(0, )"))
   testthat::expect_equal(fit_shape$prior$shape_catB_1_id_sd, "dnorm(0, 2.5) T(0, )")
 })
 
@@ -382,16 +385,15 @@ testthat::test_that("gaussian(link = 'log') aligns with log-link model default p
   testthat::expect_match(int_row$prior, "^normal\\(mean = [0-9.]+, sd = [0-9.]+\\)$")
   testthat::expect_match(int_row$rule, "log\\(pmax\\(y, 0.1\\)\\)")
 
-  # Categorical contrast on log link uses dnorm(0, 2.5)
+  # Categorical contrast on log link uses dnorm(0, 2.5 / sd(dummy))
   group_row = ps[ps$parameter == "groupB_1", ]
-  testthat::expect_equal(group_row$prior, "normal(mean = 0, sd = 2.5)")
-  testthat::expect_equal(group_row$rule, "normal(mean = 0, sd = 2.5)")
-  testthat::expect_equal(fit$prior$groupB_1, "dnorm(0, 2.5)")
+  expected_group_sd = format_prior_number(2.5 / as.numeric(format_prior_number(stats::sd(d$group == "B"))))
+  testthat::expect_equal(group_row$prior, paste0("normal(mean = 0, sd = ", expected_group_sd, ")"))
+  testthat::expect_equal(fit$prior$groupB_1, paste0("dnorm(0, ", expected_group_sd, ")"))
 
-  # Slope on log link uses dnorm(0, 2.5 / predictor_scale())
+  # Slope on log link uses dnorm(0, 2.5 / sd(x))
   time_row = ps[ps$parameter == "time_1", ]
-  time_span = diff(range(d$time))
-  expected_slope_sd = format_prior_number(2.5 / time_span)
+  expected_slope_sd = format_prior_number(2.5 / stats::sd(d$time))
   testthat::expect_equal(time_row$prior, paste0("normal(mean = 0, sd = ", expected_slope_sd, ")"))
   testthat::expect_equal(fit$prior$time_1, paste0("dnorm(0, ", expected_slope_sd, ")"))
 
@@ -432,14 +434,15 @@ test_that("legacy prior scales are translated to JAGS parameters", {
 test_that("priors are resolved without changing their parameterization", {
   data = data.frame(x = 1:6, y = c(2, 4, 3, 8, 7, 9))
   default_fit = mcp(list(y ~ 1 + x, ~ 1 + x), data, sample = FALSE)
+  slope = paste0("dnorm(0, ", format_prior_number(2.5 * stats::sd(data$y) / stats::sd(data$x)), ")")
   expect_equal(
     unclass(default_fit$prior),
     list(
       cp_1 = "dirichlet(1)",
       Intercept_1 = "dt(5.5, 3.7, 3)",
-      x_1 = "dt(0, 0.74, 3)",
+      x_1 = slope,
       Intercept_2 = "dt(5.5, 3.7, 3)",
-      x_2 = "dt(0, 0.74, 3)",
+      x_2 = slope,
       sigma_1 = "dt(0, 3.7, 3) T(0.001, )"
     )
   )
@@ -516,7 +519,7 @@ test_that("Gaussian defaults use coherent response and link scales", {
 
   # Non-positive responses are valid: the log link applies to mu, not y.
   expect_equal(log_fit$prior$Intercept_1, "dnorm(4.6, 2.5)")
-  expect_equal(log_fit$prior$x_1, "dnorm(0, 0.5)")
+  expect_equal(log_fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(log_data$x)), ")"))
   expect_equal(log_fit$prior$sigma_1, "dt(0, 22.2, 3) T(0.001, )")
   expect_false(grepl("log\\(y\\)", log_fit$jags_code))
 
@@ -531,7 +534,7 @@ test_that("Gaussian defaults use coherent response and link scales", {
     family = gaussian(link = "log"), sample = FALSE
   )
   expect_equal(wide_fit$prior$Intercept_1, "dnorm(2.5, 7.1)")
-  expect_equal(wide_fit$prior$x_1, "dnorm(0, 0.5)")
+  expect_equal(wide_fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(wide_data$x)), ")"))
   expect_equal(wide_fit$prior$sigma_1, "dt(0, 110.8, 3) T(0.001, )")
 
   zero_data = data.frame(x = 1:6, y = 0:5)
@@ -547,3 +550,12 @@ test_that("Gaussian defaults use coherent response and link scales", {
   expect_equal(small_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0.001, )")
 })
 
+
+test_that("x-term powers are autoscaled by the sd of the power measured from min(x)", {
+  data = data.frame(x = 1:10, y = 1:10)
+  fit = mcp(list(y ~ 1 + x + I(x^2) + I(x^3), ~ 1), data, sample = FALSE)
+  base = 2.5 * stats::sd(data$y)
+  expect_equal(fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(base / stats::sd(data$x)), ")"))
+  expect_equal(fit$prior$xE2_1, paste0("dnorm(0, ", format_prior_number(base / stats::sd((data$x - 1)^2)), ")"))
+  expect_equal(fit$prior$xE3_1, paste0("dnorm(0, ", format_prior_number(base / stats::sd((data$x - 1)^3)), ")"))
+})

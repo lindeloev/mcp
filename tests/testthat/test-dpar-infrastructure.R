@@ -23,7 +23,7 @@ test_that("families define dpars independently of prior rows", {
       gaussian_family$default_prior$dpar == "mu" &
         gaussian_family$default_prior$par_type == "slope"
     ],
-    "dt(0, max(2.5, round(mad(.y), 1)) / predictor_scale(), 3)"
+    "dnorm(0, 2.5 * sd(.y) / predictor_scale())"
   )
 
   expect_equal(poisson_family$dpar_specs$dpar, "mu")
@@ -53,7 +53,7 @@ test_that("families define dpars independently of prior rows", {
 })
 
 
-test_that("default coefficient priors scale representative predictor changes", {
+test_that("default coefficient priors are autoscaled by predictor SDs (rstanarm)", {
   x = 1:30
   data = data.frame(
     x = x,
@@ -75,36 +75,24 @@ test_that("default coefficient priors scale representative predictor changes", {
   )
 
   rounded = function(x) as.numeric(format_prior_number(x))
-  scaled_t = function(base, reference_change) {
-    paste0(
-      "dt(0, ",
-      format_prior_number(base / rounded(reference_change)),
-      ", 3)"
-    )
+  scaled = function(dist, base, predictor_sd) {
+    tail = if (dist == "dt") ", 3)" else ")"
+    paste0(dist, "(0, ", format_prior_number(base / predictor_sd), tail)
   }
-  mu_scale = max(2.5, round(stats::mad(data$y), 1))
-  x_span = diff(range(data$x))
-  z_scale = rounded(2 * stats::sd(data$z))
+  mu_base = 2.5 * stats::sd(data$y)
+  x_sd = stats::sd(data$x)
+  z_sd = rounded(stats::sd(data$z))
 
-  expect_equal(fit$prior$x_1, scaled_t(mu_scale, x_span))
-  expect_equal(fit$prior$xE2_1, scaled_t(mu_scale, x_span^2))
-  expect_equal(fit$prior$z_1, scaled_t(mu_scale, z_scale))
-  expect_equal(
-    fit$prior$logw_1,
-    scaled_t(mu_scale, 2 * stats::sd(log(data$w)))
-  )
-  expect_equal(fit$prior$b_1, scaled_t(mu_scale, 10))
-  expect_equal(fit$prior$gb_1, "dt(0, 2.5, 3)")
-  expect_equal(fit$prior$xz_1, scaled_t(mu_scale, x_span * z_scale))
-  expect_equal(
-    fit$prior$zgb_1,
-    scaled_t(mu_scale, 2 * stats::sd(data$z * (data$g == "b")))
-  )
-  expect_equal(fit$prior$sigma_z_1, scaled_t(2.5, z_scale))
-  expect_equal(
-    fit$prior$sigma_zx_1,
-    scaled_t(2.5, x_span * z_scale)
-  )
+  expect_equal(fit$prior$x_1, scaled("dnorm", mu_base, x_sd))
+  expect_equal(fit$prior$xE2_1, scaled("dnorm", mu_base, stats::sd((data$x - min(data$x))^2)))
+  expect_equal(fit$prior$z_1, scaled("dnorm", mu_base, z_sd))
+  expect_equal(fit$prior$logw_1, scaled("dnorm", mu_base, rounded(stats::sd(log(data$w)))))
+  expect_equal(fit$prior$b_1, scaled("dnorm", mu_base, rounded(stats::sd(data$b))))
+  expect_equal(fit$prior$gb_1, scaled("dnorm", mu_base, rounded(stats::sd(data$g == "b"))))
+  expect_equal(fit$prior$xz_1, scaled("dnorm", mu_base, x_sd * z_sd))
+  expect_equal(fit$prior$zgb_1, scaled("dnorm", mu_base, rounded(stats::sd(data$z * (data$g == "b")))))
+  expect_equal(fit$prior$sigma_z_1, scaled("dt", 2.5, z_sd))
+  expect_equal(fit$prior$sigma_zx_1, scaled("dt", 2.5, x_sd * z_sd))
 })
 
 
@@ -186,7 +174,7 @@ test_that("generated code separates link and distribution scales", {
   expect_equal(fit$family$links[c("mu", "sigma")], c(mu = "log", sigma = "log"))
   expect_true(fit$family$dpar_specs$modeled[fit$family$dpar_specs$dpar == "sigma"])
   expect_equal(fit$prior$sigma_1, "dt(0, 2.5, 3)")
-  expect_equal(fit$prior$sigma_x_1, "dt(0, 0.8333333, 3)")
+  expect_equal(fit$prior$sigma_x_1, paste0("dt(0, ", format_prior_number(2.5 / stats::sd(data$x)), ", 3)"))
   expect_false(grepl("max\\(1e-09, link_sigma_", fit$jags_code))
 
   expect_equal(change_fit$family$links["sigma"], c(sigma = "log"))

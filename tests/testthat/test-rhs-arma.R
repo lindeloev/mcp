@@ -252,7 +252,7 @@ test_that("AR and MA defaults regularize direct coefficients", {
   expect_equal(fit$prior$ar1_1, "dnorm(0, 0.5) T(-1, 1)")
   expect_equal(fit$prior$ar2_1, "dnorm(0, 0.5) T(-1, 1)")
   expect_equal(fit$prior$ma1_1, "dnorm(0, 0.5) T(-1, 1)")
-  expect_equal(fit$prior$ar1_x_1, "dnorm(0, 0.02272727)")
+  expect_equal(fit$prior$ar1_x_1, paste0("dnorm(0, ", format_prior_number(0.25 / stats::sd(data$x)), ")"))
   expect_equal(fit$prior$ma1_groupb_1, "dnorm(0, 0.25)")
 
   ar_prior = prior_summary(fit)
