@@ -23,11 +23,11 @@ models_families_bernoulli = list(
   list(
     y ~ 1 + x,
     ~ 1 + x,
-    simulated = list(cp_1 = 93, Intercept_1 = 0.4, x_1 = 0.001, Intercept_2 = 0.8, x_2 = -0.001),
+    simulated = list(cp_1 = 93, Intercept_1 = 0.2, x_1 = 0.001, Intercept_2 = 0.8, x_2 = -0.001),
     family = bernoulli(link = "identity"),
     chains = 2,
     warmup = 500,
-    iter = 1000,
+    iter = 2000,
     min_ess = 50
   )
 )

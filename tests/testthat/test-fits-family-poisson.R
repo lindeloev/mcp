@@ -12,7 +12,7 @@ models_families_poisson = list(
   list(
     y ~ 1 + x,
     ~ 1 + x,
-    simulated = list(cp_1 = 93, Intercept_1 = 3, x_1 = 0.01, Intercept_2 = 6, x_2 = -0.01),
+    simulated = list(cp_1 = 93, Intercept_1 = 2, x_1 = 0.01, Intercept_2 = 7, x_2 = -0.01),
     family = poisson(link = "identity"),
     chains = 2,
     warmup = 1000,

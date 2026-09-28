@@ -233,9 +233,9 @@ get_predictor_matrix = function(predictors, group_effects = NULL) {
   matrix_data = c(predictors$matrix_data, group_predictors$matrix_data)[column_order]
   column_names = get_predictor_design_names(predictors, group_effects)
 
-  suppressMessages(dplyr::bind_cols(matrix_data, .name_repair = "unique")) %>% # Suppress message about lacking column names
-    as.matrix() %>%
-    magrittr::set_colnames(column_names)
+  predictor_matrix = do.call(cbind, matrix_data)
+  colnames(predictor_matrix) = column_names
+  predictor_matrix
 }
 
 

@@ -452,7 +452,7 @@ add_segment_anchors = function(table, predictors, cps) {
     if (any(cps$varying[cps$name %in% paste0("cp_", c(k - 1, k))]))
       next
 
-    # Disjoined segments: sample the default intercept as the level at the segment end
+    # Joined segments (no intercept): sample each default slope as its rise over the segment
     terms = slopes[slopes$segment == k, ]
     intercept = predictors$code_name[predictors$segment == k & predictors$dpar == "mu" & predictors$par_type == "Intercept"]
     if (length(intercept) == 0) {
@@ -462,7 +462,7 @@ add_segment_anchors = function(table, predictors, cps) {
           table$rise_width[row] = width(k, terms$x_factor[i])
       }
     
-    # Joined segments (no intercept): sample each default slope as its rise over the segment
+    # Disjoined segments: sample the default intercept as the level at the segment end
     } else if (k > 1) {
       row = match(intercept, table$parameter)
       if (is_default_normal(row))

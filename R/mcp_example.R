@@ -200,7 +200,7 @@ data$y = empty$simulate(empty, data,
   cp_1 = 50,
   Intercept_1 = 10,
   Intercept_2 = 20,
-  sigma_1 = 8
+  sigma_1 = 7
 )
 
 # Run sampling
@@ -365,7 +365,7 @@ if (plot) {
     void = "# demo_fit, with data removed near change points
 data = demo_fit$data
 data$response[data$time > 25 & data$time < 45] = NA
-data$response[data$time > 70 & data$time < 80] = NA
+data$response[data$time > 70 & data$time < 78] = NA
 
 # Run sampling
 fit = mcp(demo_fit$model, data, sample = sample, seed = 42)
