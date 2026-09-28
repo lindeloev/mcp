@@ -2,16 +2,16 @@
 #'
 #' @aliases mcp_example
 #' @param name Name of the example. One of:
-#'  * `"demo"`: Two change points between intercepts and joined/disjoined slopes.
-#'  * `"intercepts"`: An intercept-only change point.
-#'  * `"multiple"`: Multiple regression with categorical predictors and interactions.
+#'  * `"ar"`: One change point in autoregressive residuals (the `ar1` dpar)
 #'  * `"binomial"`: Binomial with two change points. Much like `"demo"` on a logit scale.
+#'  * `"demo"`: Two change points between intercepts and joined/disjoined slopes.
 #'  * `"group_mu"`: Group-level predictor deviations (random intercepts/slopes) across a change point.
 #'  * `"group_cp"`: Group-level change-point deviations (random effects).
+#'  * `"intercepts"`: An intercept-only change point.
 #'  * `"missing"`: Missing data imputation (NAs in response variable y).
-#'  * `"quadratic"`: A change point to a quadratic segment where there is no data.
-#'  * `"ar"`: One change point in autoregressive residuals (the `ar1` dpar)
+#'  * `"multiple"`: Multiple regression with categorical predictors and interactions.
 #'  * `"sigma"`: A change in "sigma" dpar, including a slope on sigma.
+#'  * `"void"`: Missing data around change points.
 #' @param plot Logical. Plot the fitted example? Requires sample != "none".
 #' @inheritParams mcp
 #' @return An `mcpfit`, enriched with an `$example_code` field. It contains the code to
@@ -102,7 +102,7 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, family = binomial(), iter = 4000, sample = sample, seed = 42)
+fit = mcp(model, data, family = binomial(), sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {
@@ -136,7 +136,7 @@ data$response = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, sample = sample, seed = 78)
+fit = mcp(model, data, sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {
@@ -152,7 +152,7 @@ model = list(
 )
 
 # Simulate balanced data with 9 levels of the grouping factor
-set.seed(200)
+set.seed(42)
 data = tidyr::expand_grid(
   id = sprintf('id_%02d', 1:9),
   state = factor(c('A', 'B')),
@@ -173,11 +173,11 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, par_x = 'x', sample = sample, iter = 12000, seed = 200)
+fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {
-  set.seed(200)
+  set.seed(42)
   print(plot(fit, facet_by = 'id', color_by = 'state') +
       ggplot2::labs(title = 'plot(fit, facet_by = \"id\", color_by = \"state\")'))
 }",
@@ -238,7 +238,7 @@ data$y[missing_rows] = NA
 
 # Run sampling; JAGS retains posterior draws for the missing responses
 # See them using fitted(fit, newdata = fit$data[is.na(fit$data$y), ], summary = FALSE)
-fit = mcp(model, data, par_x = 'x', iter = 5000, sample = sample, seed = 12)
+fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {
@@ -256,9 +256,9 @@ model = list(
 # Simulate data
 set.seed(42)
 data = data.frame(
-  x = 1:120,
-  state = rep(c('A', 'B', 'C', 'D'), 30),
-  z = rnorm(120, mean = 1:120, sd = 25),
+  x = 1:132,
+  state = rep(c('A', 'B', 'C', 'D'), 33),
+  z = rnorm(132, mean = 1:132, sd = 25),
   y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
 )
 empty = mcp(model, data, sample = FALSE, par_x = 'x')
@@ -268,58 +268,29 @@ data$y = empty$simulate(empty, data,
 
   Intercept_1 = 10,
   z_1 = 0.2,
-  xstateA_1 = -0.75,
-  xstateB_1 = -0.25,
+  xstateA_1 = -0.30,
+  xstateB_1 = -0.10,
   xstateC_1 = 0.25,
-  xstateD_1 = 0.75,
+  xstateD_1 = 0.50,
 
-  Intercept_2 = 10,
-  x_2 = -1,
-  stateB_2 = 15,
-  stateC_2 = 30,
-  stateD_2 = 45,
+  Intercept_2 = 15,
+  x_2 = -0.8,
+  stateB_2 = 10,
+  stateC_2 = 20,
+  stateD_2 = 30,
 
-  xE2_3 = 0.2,
+  xE2_3 = 0.02,
 
   sigma_1 = 5
 )
 
 # Run sampling
-fit = mcp(model, data, par_x = 'x', iter = 10000, sample = sample, seed = 42)
+fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {
   set.seed(42)
   print(plot(fit, color_by = 'state') + ggplot2::labs(title = 'plot(fit, color_by = \"state\")'))
-}",
-    quadratic = "# Define model
-model = list(
-  y ~ 1,
-  ~ 0 + x + I(x^2)
-)
-
-# Simulate data
-set.seed(40)
-data = data.frame(
-  x = c(seq(0, 10, by = 0.3), seq(20, 40, by = 0.3)),
-  y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
-)
-empty = mcp::mcp(model, data, sample = FALSE)
-data$y = empty$simulate(empty, data,
-  cp_1 = 15,
-  Intercept_1 = 10,
-  x_2 = -30,
-  xE2_2 = 1.5,
-  sigma_1 = 20
-)
-
-# Run sampling
-fit = mcp(model, data, iter = 10000, sample = sample, diagnostics = FALSE, seed = 6)
-
-# Illustrative plot
-if (plot) {
-  set.seed(42)
-  print(plot(fit, q_fit  = TRUE, q_predict = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit  = TRUE, q_predict = TRUE)'))
 }",
     sigma = "# Define model
 model = list(
@@ -328,9 +299,8 @@ model = list(
   ~ 0 + x
 )
 
-
 # Simulate data
-set.seed(40)
+set.seed(42)
 data = data.frame(
   x = 1:100,
   y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
@@ -339,21 +309,21 @@ empty = mcp::mcp(model, data, sample = FALSE)
 data$y = empty$simulate(empty, data,
     cp_1 = 24.5,
     cp_2 = 75,
-    Intercept_1 = 20,
+    Intercept_1 = 25,
     x_3 = 1,
-    sigma_1 = log(7),
+    sigma_1 = log(4),
     sigma_2 = log(25),
     sigma_x_2 = log(2.5 / 25) / (75 - 24.5)
   )
 
 # Run sampling
-fit = mcp(model, data, iter = 3000, sample = sample, seed = 40)
+fit = mcp(model, data, sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {
-  set.seed(40)
+  set.seed(42)
   gg1 = plot(fit, q_predict = TRUE) + ggplot2::labs(title = 'plot(fit, q_predict = TRUE)')
-  set.seed(41)
+  set.seed(43)
   gg2 = plot_dpar(fit, 'sigma') + ggplot2::labs(title = 'plot_dpar(fit, \"sigma\")')
   print(gg1 / gg2)
 }",
@@ -380,14 +350,32 @@ data$y = empty$simulate(empty, data,
 )
 
 # Run sampling
-fit = mcp(model, data, iter = 4000, sample = sample, seed = 42)
+fit = mcp(model, data, sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {
   set.seed(42)
   print(plot(fit, facet_by = 'id') + ggplot2::labs(title = 'plot(fit, facet_by = \"id\")'))
+}",
+
+    void = "# demo_fit, with data removed near change points
+data = demo_fit$data
+data$response[data$time > 25 & data$time < 45] = NA
+data$response[data$time > 70 & data$time < 80] = NA
+
+# Run sampling
+fit = mcp(demo_fit$model, data, seed = 42)
+
+# Illustrative plot
+if (plot) {
+  library(patchwork)
+  set.seed(42)
+  gg1 = plot(demo_fit, q_fit = TRUE) + ggplot2::labs(title = 'Original demo_fit (full data)')
+  set.seed(43)
+  gg2 = plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'Data voids near change points')
+  print(gg1 / gg2)
 }"
-  )
+)
 
   # Run the code
   name = rlang::arg_match0(name, names(examples))

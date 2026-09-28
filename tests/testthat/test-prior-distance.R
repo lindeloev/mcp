@@ -1,13 +1,10 @@
 test_that("mcp examples simulate values near their default priors", {
-  examples = c("ar", "binomial", "demo", "group_cp", "group_mu", "intercepts", "missing", "multiple", "quadratic", "sigma")
-  # Quadratics confined to a short segment are far from priors scaled to sd((x - min(x))^2).
-  # Pending decision in "dev/plan - priors and sampling.md".
-  ignore = list(multiple = "xE2_3", quadratic = "xE2_2")
+  examples = c("ar", "binomial", "demo", "group_cp", "group_mu", "intercepts", "missing", "multiple", "void", "sigma")
   for (name in examples) {
     fit = suppressMessages(mcp_example(name, sample = FALSE, plot = FALSE))
     simulated = attr(fit$data[[mcp_columns(fit)$response]], "simulated")
     expect_false(is.null(simulated), label = name)
-    expect_prior_distance(fit, simulated, label = paste0("mcp_example(\"", name, "\")"), ignore = if (is.null(ignore[[name]])) character() else ignore[[name]])
+    expect_prior_distance(fit, simulated, label = paste0("mcp_example(\"", name, "\")"))
   }
 })
 
