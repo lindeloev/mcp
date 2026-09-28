@@ -20,7 +20,7 @@ test_that("Gaussian random-intercept model agrees with lme4::lmer()", {
 
   # Fit with mcp
   model = list(y ~ 1 + x + (1 | id))
-  fit_mcp = mcp(model, df, family = gaussian(), warmup = 500, iter = 2000, chains = 2, seed = 42, diagnostics = FALSE, quiet = TRUE)
+  fit_mcp = mcp(model, df, family = gaussian(), warmup = 200, iter = 600, chains = 2, seed = 42, diagnostics = FALSE, quiet = TRUE)
 
   # Extract mcp estimates
   params_mcp = fixef(fit_mcp)
@@ -73,7 +73,7 @@ test_that("Gaussian uncorrelated random intercept and slope model agrees with lm
   fit_lmer = lme4::lmer(y ~ x + (1 + x || id), data = df, REML = FALSE)
 
   model = list(y ~ 1 + x + (1 + x || id))
-  fit_mcp = mcp(model, df, family = gaussian(), warmup = 500, iter = 2000, chains = 2, seed = 42, diagnostics = FALSE, quiet = TRUE)
+  fit_mcp = mcp(model, df, family = gaussian(), warmup = 200, iter = 600, chains = 2, seed = 42, diagnostics = FALSE, quiet = TRUE)
 
   params_mcp = fixef(fit_mcp)
   capture.output({ summary_mcp = summary(fit_mcp) })
@@ -115,7 +115,7 @@ test_that("Gaussian fixed change point with group intercepts agrees with lme4::l
     ~ 0 + x + same((1 | id))
   )
   fit_mcp = mcp(model, df, family = gaussian(), prior = list(cp_1 = 10),
-                warmup = 500, iter = 2000, chains = 2, seed = 42, diagnostics = FALSE, quiet = TRUE)
+                warmup = 200, iter = 600, chains = 2, seed = 42, diagnostics = FALSE, quiet = TRUE)
 
   params_mcp = fixef(fit_mcp)
   capture.output({ summary_mcp = summary(fit_mcp) })

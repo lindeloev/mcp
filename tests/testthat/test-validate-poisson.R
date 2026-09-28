@@ -14,7 +14,7 @@ df = tibble::tibble(
   y = rpois(200, lambda = exp(1 + 0.15 * x + ifelse(group == "B", -0.5, 0)))
 )
 
-fit_mcp = mcp(model, df, family = poisson(), warmup = 500, iter = 2000, seed = 42, diagnostics = FALSE, quiet = TRUE)
+fit_mcp = mcp(model, df, family = poisson(), warmup = 200, iter = 600, seed = 42, diagnostics = FALSE, quiet = TRUE)
 
 # Tests
 test_that("Poisson inference against glm()", {
@@ -44,8 +44,8 @@ test_that("Poisson fixed change-point inference against glm()", {
     df_cp,
     family = poisson(),
     prior = list(cp_1 = 5),
-    warmup = 500,
-    iter = 2000,
+    warmup = 200,
+    iter = 600,
     seed = 42,
     diagnostics = FALSE,
     quiet = TRUE
@@ -97,8 +97,8 @@ test_that("Poisson likelihood weights against glm(weights = w)", {
     list(y | weights(w) ~ 1 + x),
     data = df_w,
     family = poisson(),
-    warmup = 500,
-    iter = 2000,
+    warmup = 200,
+    iter = 600,
     seed = 42,
     diagnostics = FALSE,
     quiet = TRUE

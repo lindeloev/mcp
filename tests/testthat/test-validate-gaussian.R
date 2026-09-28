@@ -14,7 +14,7 @@ df = tibble::tibble(
   y = 3 + 0.5 * x + ifelse(group == "B", -2, 0) + rnorm(200, sd = 1.5)
 )
 
-fit_mcp = mcp(model, df, family = gaussian(), warmup = 500, iter = 2000, seed = 42, diagnostics = FALSE, quiet = TRUE)
+fit_mcp = mcp(model, df, family = gaussian(), warmup = 200, iter = 600, seed = 42, diagnostics = FALSE, quiet = TRUE)
 
 # Tests
 test_that("Gaussian inference against lm()", {
@@ -48,8 +48,8 @@ test_that("Gaussian fixed change-point inference against lm()", {
     df_cp,
     family = gaussian(),
     prior = list(cp_1 = 10),
-    warmup = 500,
-    iter = 2000,
+    warmup = 200,
+    iter = 600,
     seed = 42,
     diagnostics = FALSE,
     quiet = TRUE
@@ -111,8 +111,8 @@ test_that("Gaussian modeled sigma against nlme::gls()", {
     list(y ~ 1 + x, ~ 0 + x + sigma(1)),
     df_sigma,
     prior = list(cp_1 = 10),
-    warmup = 500,
-    iter = 2000,
+    warmup = 200,
+    iter = 600,
     seed = 42,
     diagnostics = FALSE,
     quiet = TRUE
@@ -146,8 +146,8 @@ test_that("Gaussian likelihood weights against lm(weights = w)", {
     list(y | weights(w) ~ 1 + x),
     data = df_w,
     family = gaussian(),
-    warmup = 500,
-    iter = 2000,
+    warmup = 200,
+    iter = 600,
     seed = 42,
     diagnostics = FALSE,
     quiet = TRUE

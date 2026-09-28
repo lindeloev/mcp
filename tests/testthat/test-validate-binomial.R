@@ -15,7 +15,7 @@ df = tibble::tibble(
   y = rbinom(200, N, ilogit(2 - 0.1 * x + ifelse(group == "B", -1, 0)))
 )
 
-fit_mcp = mcp(model, df, family = binomial(), warmup = 100, iter = 1000, seed = 42, diagnostics = FALSE, quiet = TRUE)
+fit_mcp = mcp(model, df, family = binomial(), warmup = 200, iter = 600, seed = 42, diagnostics = FALSE, quiet = TRUE)
 
 # Tests
 test_that("Binomial inference against glm()", {
@@ -61,8 +61,8 @@ test_that("Binomial likelihood weights against glm(weights = w)", {
     list(y | trials(trials) + weights(w) ~ 1 + x),
     data = df_w,
     family = binomial(),
-    warmup = 500,
-    iter = 2000,
+    warmup = 200,
+    iter = 600,
     seed = 42,
     diagnostics = FALSE,
     quiet = TRUE

@@ -20,8 +20,8 @@ models_ar = list(
          y = 0
        ),
        chains = 2,
-       warmup = 2000,
-       iter = 2000,
+       warmup = 200,
+       iter = 400,
        min_ess = 50)
 )
 

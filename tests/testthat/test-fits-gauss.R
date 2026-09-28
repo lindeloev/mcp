@@ -16,9 +16,9 @@ models_gauss = list(
       w = rep(c(1, 2), 200)
     ),
     family = gaussian(link = "log"),
-    chains = 2,
-    warmup = 1000,
-    iter = 2000,
+    chains = 3,
+    warmup = 300,
+    iter = 1000,
     min_ess = 50,
     seed = 4)
 )

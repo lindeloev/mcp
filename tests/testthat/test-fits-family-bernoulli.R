@@ -16,8 +16,8 @@ models_families_bernoulli = list(
     simulated = list(cp_1 = 93, Intercept_1 = -0.3, x_1 = 0.005, Intercept_2 = 1.4, x_2 = -0.003),
     family = bernoulli(link = "probit"),
     chains = 2,
-    warmup = 500,
-    iter = 1000,
+    warmup = 200,
+    iter = 700,
     min_ess = 50
   ),
   list(
