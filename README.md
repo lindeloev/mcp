@@ -10,18 +10,25 @@ status](https://www.r-pkg.org/badges/version/mcp)](https://CRAN.R-project.org/pa
 [![mcp CRAN
 downloads](https://cranlogs.r-pkg.org/badges/mcp)](https://cranlogs.r-pkg.org/badges/mcp)
 
-`mcp` does `lm`/`glm`/`brms`-like regression with Multiple Change Points
-(hence “`mcp`”) using Bayesian inference. `mcp` is especially useful if
-you have a priori knowledge about the number of change points and the
-trend of the segments in between. It supports GLMs with group-level
-effects (random effects), AR/MA, and regression on distributional
-parameters (`sigma`, `shape`, etc.).
+`mcp` is regression with multiple change points. At its simplest, it
+feels like `lm()`, but with one formula per segment. At its most
+flexible, it aims to be **[`brms`](https://paulbuerkner.com/brms/) for
+change points**: GLM families (Gaussian, binomial, Bernoulli, Poisson,
+negative binomial), group-level effects (random effects), AR/MA, and
+regression on distributional parameters (e.g., `sigma`, `shape`), all
+inferred with full Bayesian uncertainty, including the change points
+themselves.
 
-`mcp` aims to feel “R-native” like `lm`/`glm` at its simplest while the
-more Bayesian aspects are inspired by `brms` and `posterior`. Under the
-hood, `mcp` takes a formula-representation of linear segments and turns
-it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code (see
-`fit$jags_code`).
+You specify the number of change points and the form of each segment,
+making it easy to express expert knowledge or hypotheses. Compare
+alternatives with `loo()`. Methods like `plot_pars()`, `summary()`,
+`pp_check()`, `hypothesis()`, and `as_draws_df()` follow the conventions
+of [`brms`](https://paulbuerkner.com/brms/),
+[`rstanarm`](https://mc-stan.org/rstanarm/), and
+[`posterior`](https://mc-stan.org/posterior/articles/posterior.html),
+adapted to change point regression. Under the hood, `mcp` turns the
+formulas into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code
+(see `fit$jags_code`).
 
 `mcp` has [200+ academic
 citations](https://scholar.google.com/scholar?cites=5590697509718421309)
@@ -137,16 +144,16 @@ summary(fit)
     ## 
     ## Change point parameters:
     ##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-    ##  cp_1        31.54 1.798 28.24 35.241 1.00      946     1271 30.0    OK
-    ##  cp_2        71.12 1.012 69.47 72.762 1.00     5119     7044 70.0    OK
+    ##  cp_1        31.65 1.743 28.34 35.109 1.00     1274     1903 30.0    OK
+    ##  cp_2        71.14 1.019 69.46 72.782 1.00     3509     6806 70.0    OK
     ## 
     ## Population-level parameters:
     ##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-    ##  Intercept_1 10.05 0.662  8.74 11.350 1.00     1904     3579 10.0    OK
-    ##  time_2       0.53 0.048  0.44  0.633 1.00     1545     2392  0.5    OK
-    ##  Intercept_3 17.48 1.216 15.28 19.981 1.00      936     1376 20.0      
-    ##  time_3      -0.10 0.072 -0.26  0.019 1.00      946     1387 -0.3      
-    ##  sigma_1      3.90 0.290  3.39  4.519 1.00     4854     4624  3.5    OK
+    ##  Intercept_1  9.94 0.653  8.66 11.189 1.00     3356     6012 10.0    OK
+    ##  time_2       0.54 0.047  0.46  0.640 1.00     3184     5290  0.5    OK
+    ##  Intercept_3 18.94 1.336 16.34 21.660 1.00     2802     4459 20.0    OK
+    ##  time_3      -0.20 0.080 -0.36 -0.046 1.00     1331     2519 -0.3    OK
+    ##  sigma_1      3.86 0.281  3.35  4.458 1.00     5093     4609  3.5    OK
 
 - `rhat` is the rank-normalized split-Rhat convergence diagnostic.
 - `ess_bulk` and `ess_tail` are the effective sample sizes for the bulk
@@ -196,8 +203,8 @@ example, what is the evidence (given priors) that the first change point
 hypothesis(fit, "cp_1 > 25")
 ```
 
-    ##      hypothesis     mean    lower    upper      prob       BF
-    ## 1 cp_1 - 25 > 0 6.544368 3.236057 10.24094 0.9997778 3204.767
+    ##      hypothesis     mean    lower   upper      prob       BF
+    ## 1 cp_1 - 25 > 0 6.654192 3.337938 10.1086 0.9995556 1645.747
 
 For model comparisons, we can fit a null model and compare the
 predictive performance of the two models using (approximate)
@@ -220,14 +227,24 @@ model is preferred (it is on top), and both `p_worse` and the
 
 ``` r
 fit_loo = loo(fit)
+```
+
+    ## Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
+
+``` r
 fit_null_loo = loo(fit_null)
 
 loo::loo_compare(fit_loo, fit_null_loo)
 ```
 
-    ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
-    ##  model1       0.0     0.0      NA                    
-    ##  model2     -45.7     7.8    1.00
+    ##   model elpd_diff se_diff p_worse diag_diff      diag_elpd
+    ##  model1       0.0     0.0      NA           1 k_psis > 0.7
+    ##  model2     -46.4     7.9    1.00
+
+    ## 
+    ## Diagnostic flags present.
+    ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
+    ## or https://mc-stan.org/loo/reference/loo-glossary.html.
 
 # Highlights from in-depth guides
 
@@ -245,7 +262,7 @@ formulas](https://lindeloev.github.io/mcp/articles/formulas.html):
 - Only terms included in a segment get coefficients there. `~ 0 + ...`
   is joined: it continues from where the earlier intercept and
   [x-terms](https://lindeloev.github.io/mcp/articles/formulas.html#how-segments-connect)
-  left off (x-terms are, e.g., `x`, `state:x`, `I(x^2)`). `~ 1 + ...` is disjoined and
+  (`x`, `state:x`, `I(x^2)`) left off. `~ 1 + ...` is disjoined and
   starts afresh. Use `same(z)` to reuse a coefficient from the preceding
   segment.
 
@@ -400,14 +417,14 @@ head(fitted(fit, summary = FALSE))  # column .epred
 ```
 
     ## # A tibble: 6 × 14
-    ##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3  time_3
-    ##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>   <dbl>
-    ## 1      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
-    ## 2      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
-    ## 3      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
-    ## 4      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
-    ## 5      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
-    ## 6      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
+    ##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
+    ##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
+    ## 1      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
+    ## 2      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
+    ## 3      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
+    ## 4      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
+    ## 5      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
+    ## 6      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
     ## # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>,
     ## #   data_row <int>, .epred <dbl>
 

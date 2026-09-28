@@ -42,8 +42,8 @@ several distributional terms.}
 \item{check_rank}{Logical scalar. Whether to stop on rank deficiency.}
 
 \item{model}{A list of formulas, one for each segment, in the format
-\code{response ~ cp ~ predictors}. See 'Details' for an example, how segments connect,
-and the formula syntax.}
+\code{model = list(response ~ predictors, cp ~ predictors)}. See \link{mcp-formula} for how segments connect
+and the full formula syntax.}
 
 \item{family}{A supported family: \code{gaussian()}, \code{binomial()}, \code{bernoulli()},
 \code{poisson()}, or \code{negbinomial()}, with a supported link function; e.g.,

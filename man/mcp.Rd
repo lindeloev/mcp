@@ -15,7 +15,7 @@ mcp(
   cores = NULL,
   chains = 3,
   iter = 3000,
-  warmup = 1500,
+  warmup = 1000,
   adapt = lifecycle::deprecated(),
   inits = NULL,
   jags_code = NULL,
@@ -26,39 +26,20 @@ mcp(
 }
 \arguments{
 \item{model}{A list of formulas, one for each segment, in the format
-\code{response ~ cp ~ predictors}. See 'Details' for an example, how segments connect,
-and the formula syntax.}
+\code{model = list(response ~ predictors, cp ~ predictors)}. See \link{mcp-formula} for how segments connect
+and the full formula syntax.}
 
 \item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)
 with syntactic column names.
 Missing values in the response variable are imputed using the posterior predictive.
 \code{\link{fitted.mcpfit}} or \code{\link{predict.mcpfit}} details how to see the imputed values.}
 
-\item{prior}{Named list. Names are parameter names (\code{cp_i}, \code{Intercept_i}, \code{xvar_i},
-\code{sigma_1}, etc.) and the values are either
-\itemize{
-\item A distribution in \code{mcp}'s JAGS-string syntax (e.g.,
-\code{Intercept_1 = "dnorm(0, 1) T(0,)"}) indicating a
-conventional prior distribution. Data-calibrated, regularizing defaults
-are used where priors are not specified. These are designed for stable
-estimation and prediction, but should be justified before hypothesis testing.
-\code{mcp} uses conventional distribution scales rather than JAGS precision:
-SD for \code{dnorm()}, scale for \code{dt()}, \code{ddexp()}, and \code{dlogis()}, and
-log-SD for \code{dlnorm()}. See details.
-\item A numerical value (e.g., \code{Intercept_1 = -2.1}) indicating a fixed value.
-\item A model parameter name (e.g., \code{Intercept_2 = "Intercept_1"}), equating parameters via JAGS.
-Note that sharing coefficients via \code{same()} in the segment formulas (e.g., \code{~ same(1)})
-is generally preferred. If two group-level deviations are shared via the prior,
-they will need to have the same grouping variable.
-\item The default prior on change points is \code{dirichlet(1)} (uniform order statistics).
-For a single change point, this is the Beta(1, 1) / Uniform distribution over \verb{[min(x), max(x)]}.
-For multiple change points, it corresponds to a flat Dirichlet distribution over segment lengths.
-You can also explicitly set \code{cp_i = "dirichlet(alpha)"} with the same positive \code{alpha} for all
-change points to regularize spacing (\code{alpha > 1} penalizes change points from occurring close together,
-while \code{alpha < 1} favors clustering). Under the hood, this is parameterized as an exact sequential
-stick-breaking Beta chain for fast and robust sampling.
-\href{https://lindeloev.github.io/mcp/articles/priors.html}{Read more}.
-}}
+\item{prior}{Named list, e.g., \code{prior = list(cp_1 = "dunif(0, 100)", Intercept_1 = "dnorm(0, 1)")}.
+List names are parameter names (\code{cp_1}, \code{Intercept_1}, \code{x_2},
+\code{sigma_1}, etc.) and values are a distribution string (e.g., \code{"dnorm(0, 1) T(0, )"}),
+a fixed value (e.g., \code{-2.1}), or the name of another parameter to share its value.
+Data-calibrated, regularizing defaults are used where priors are not specified;
+see them with \code{\link[=prior_summary]{prior_summary()}}. See \link{mcp-priors} for the full syntax.}
 
 \item{family}{A supported family: \code{gaussian()}, \code{binomial()}, \code{bernoulli()},
 \code{poisson()}, or \code{negbinomial()}, with a supported link function; e.g.,
@@ -105,7 +86,8 @@ framework. R-side simulation and prediction methods continue to use the
 mcp-default formulas (with warning), so they may no longer match custom JAGS code.}
 
 \item{seed}{\code{NULL} or a positive integer. Seed for the JAGS random-number
-generators.}
+generators. If \code{NULL} (default), the seed is drawn from R's random-number generator,
+so \code{set.seed()} before \code{mcp()} also makes sampling reproducible.}
 
 \item{diagnostics}{Named list of diagnostic warning thresholds. Available
 elements are \code{rhat = 1.01}, \code{ess_bulk = 400}, \code{ess_tail = 400},
@@ -141,142 +123,9 @@ Here is the demo model, which ships already fitted as \code{demo_fit} (see also 
 \if{text}{\figure{mcp_demo.png}{[Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope]}}
 
 Segment 2 continues from where the plateau left off, while segment 3 starts afresh with a new intercept.
-Three rules govern this (with \code{x} as the change-point variable, i.e., \code{time} above):
-\enumerate{
-\item \strong{Only included terms get coefficients.} A segment includes the terms in its formula,
-plus an intercept unless removed with \verb{0 +}. Each included term gets a new coefficient
-(\code{x_2}, \code{stateB_2}) or reuses an existing one with \code{same()}.
-\item \strong{x-terms are measured from the change point.} \code{x}, \code{x:z}, \code{state:x}, and \code{I(x^2)} start at zero
-at the segment's change point and stop growing at the next change point.
-\item \strong{Joined or disjoined.} Without an intercept (\code{0 + ...}), a segment is \emph{joined}: it continues
-from where the earlier intercept and x-terms left off. With an intercept, it is \emph{disjoined}
-and starts afresh.
+See \link{mcp-formula} for the rules of how segments connect, the full formula syntax, and the
+underlying model. See \link{mcp-priors} for how to specify priors.
 }
-
-\code{sigma} and \code{shape} are required by the likelihood, so they include an intercept in segment 1.
-
-\strong{Formula syntax.} The general format of a segment formula is \code{response ~ cp ~ predictors} (e.g., \code{y ~ 1 ~ 1 + x}),
-except the first segment has no change point and uses \code{response ~ predictors}. The response and
-change-point parts can be omitted (\code{cp ~ predictor} assumes the same response; \code{~ predictor}
-assumes an intercept-only change point).
-
-\strong{1. Response (segment 1 only):}
-\itemize{
-\item \code{y ~ ...}: Standard continuous or count response (Gaussian, Poisson, Bernoulli).
-\item \code{successes | trials(total) ~ ...}: Binomial response (\code{family = binomial()}).
-\item \code{y | weights(w) ~ ...}: Observation log-likelihood weights (multiplies each observation's
-log-likelihood contribution by \code{w > 0}; affects posterior inference and \code{log_lik()}, but
-not predictions).
-\item \code{y | trials(total) + weights(w) ~ ...}: Combine response auxiliaries using \code{+}.
-}
-
-\strong{2. Change-point modeling (\code{cp}, segments 2+):}
-\itemize{
-\item \code{1 ~ ...} (or omitted, e.g., \code{~ x}): Population-level change point (default).
-\item \code{1 + (1 | id) ~ ...}: Group-level change-point deviations around the population change point.
-\href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
-}
-
-\strong{3. Regression formula (all segments):} \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}
-\itemize{
-\item \code{~ 1 + x}: Disjoined slope with a new segment intercept.
-\item \code{~ 0 + x}: Joined slope (no new intercept).
-\item \code{~ 1}: Plateau (intercept only, no slope).
-\item \code{~ x:state + I(x^2) + exp(z)}: Extended terms, interactions, and R-side bases
-(\code{scale()}, \code{poly()}, \code{splines::ns()}). Bases are evaluated before sampling and reused for \code{newdata}.
-\item \code{~ 1 + (1 | id)}: Group-level intercepts (or \code{(1 + x || id)} for independent slopes and intercepts).
-\href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
-\item \code{~ sigma(1 + x)}: Distributional parameters on the link scale (e.g., log residual SD).
-\href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}.
-\item \code{~ ar(1) + ma(1)}: Autoregressive and moving-average time-series residuals on the link scale
-(accepts regression formulas, \code{series = id}, and \code{threshold}; include them in every segment where they apply).
-\href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}.
-\item \code{~ 1 + same(x)} or \code{0 + same(z, as = 1)}: Reuse a coefficient from the preceding segment (default)
-or from segment \code{as}. Reused coefficients are estimated jointly from all segments where they are
-included, not fitted in one segment and copied to another.
-}
-}
-\section{The mcp model}{
-
-An \code{mcp} model divides the change-point variable \eqn{x} into \eqn{K} segments separated by
-ordered change points \eqn{\tau_1 < \dots < \tau_{K-1}}. In each segment \eqn{k \in \{1, \dots, K\}},
-the linear predictor \eqn{\eta_i} measures \eqn{x} from the change point \eqn{\tau_{k-1}}:
-
-\deqn{\eta_i = \alpha_k + \beta_{k,1} (x_i - \tau_{k-1}) \quad (\text{with } \tau_0 = 0)}
-
-where \eqn{\alpha_k} is the value at the start of segment \eqn{k}:
-
-\deqn{\alpha_k = \begin{cases}
-  \beta_{k,0}, & \text{disjoined } (\sim \texttt{1 + x}, \text{ or } k = 1) \\
-  \alpha_{k-1} + \beta_{k-1,1} (\tau_{k-1} - \tau_{k-2}), & \text{joined } (\sim \texttt{0 + x})
-\end{cases}}
-
-That is, a disjoined segment starts at its own intercept \eqn{\beta_{k,0}}, while a joined segment continues from where segment \eqn{k-1} left off.
-
-Here, \eqn{\beta_{k,1}} is the slope on \eqn{x} in segment \eqn{k}. Intercepts and slopes are absolute values (not changes relative to preceding segments).
-Other variables (e.g., \code{+ z + state}) add \eqn{\sum_j \gamma_{k,j} z_{j,i}} in the segments where they are included.
-They use their original values and are not part of \eqn{\alpha_k}, which is why they can make a joined segment start with a jump.
-
-The inverse-linked parameter is \eqn{\mu_i = g^{-1}(\eta_i)} via link function \eqn{g(\mu_i) = \eta_i},
-representing the expected response for most families (or the success probability for binomial models,
-where the expected count is \eqn{n_i \mu_i}). Distributional parameters (\code{sigma()}, \code{shape()}, etc.)
-and autoregressive terms (\code{ar()}, \code{ma()}) follow this exact same segmented structure on their respective link scales.
-See more details on the \code{mcp} model in \link{mcp-package} and on the \href{https://lindeloev.github.io/mcp/articles/formulas.html}{mcp website}.
-}
-
-\section{Time-series residuals (link-scale observation-driven GARMA)}{
-
-Autoregressive (\code{ar(p)}) and moving-average (\code{ma(q)}) terms define a finite conditional recurrence
-on the link scale (generalized autoregressive moving-average, GARMA). They support Gaussian (\code{identity}),
-binomial (\code{logit}), Bernoulli (\code{logit}), Poisson (\code{log}), and negative-binomial (\code{log}) families.
-If \eqn{\eta^{\text{reg}}_t} is the ordinary regression predictor from the segment formulas and \eqn{\eta_t} is the
-predictor including serial dependence, the recurrence decomposes into components:
-
-\deqn{\begin{aligned}
-  \text{AR}_t &= \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - \eta^{\text{reg}}_{t-j}\right] \\
-  \text{MA}_t &= \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right] \\
-  \eta_t &= \eta^{\text{reg}}_t + \text{AR}_t + \text{MA}_t
-\end{aligned}}
-
-where \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
-\eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
-\eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the threshold-constrained observation with threshold constant \eqn{c} (set via argument \code{threshold = 0.1} in \code{ar()} / \code{ma()}) to keep residuals finite on the link scale:
-\itemize{
-\item \strong{Gaussian:} \eqn{y^*_t = y_t}.
-\item \strong{Poisson / Negative Binomial:} \eqn{y^*_t = \max(y_t, c)} to prevent \eqn{\log(0)}. Here \eqn{c} replaces zero counts with a small positive threshold value.
-\item \strong{Binomial / Bernoulli:} \eqn{y^*_t = \min(\max(y_t, c), n_t - c) / n_t}, where \eqn{y_t} is observed successes, \eqn{n_t} is the number of trials (\eqn{n_t = 1} for Bernoulli), and \eqn{c} constrains counts to the interval \eqn{[c, n_t - c]} before converting to a rate, preventing \eqn{\text{logit}(0)} and \eqn{\text{logit}(1)}.
-}
-
-Implications:
-\itemize{
-\item For an \eqn{N}-order component, the last \eqn{N} values \emph{before} the segment's change point are input to the first \eqn{\eta_t} in the segment.
-\item AR and MA components apply only in segments where they are included.
-\item AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
-\item See \href{https://lindeloev.github.io/mcp/articles/arma.html}{the arma article} for more details.
-}
-}
-
-\section{Notes on priors}{
-
-\itemize{
-\item \emph{Ordered change point priors:} Default population-level \code{cp_i} priors are ordered and the ordering is imposed through the priors. For user-defined priors,
-\code{mcp} adds truncation (e.g., \code{T(cp_1, )}) only when the prior has neither
-explicit truncation nor an inherently bounded form such as \code{dunif()} or
-\code{dirichlet()}.
-\item \emph{Data-dependent terms:} If \code{mcp} encounters a data-dependent term like \code{min(time)}, \code{max(time)}, \code{median(response)}, or \code{mad(response)} in the prior string, they are resolved from the model data so a numerical value is passed to JAGS. The following terms are also allowed: \code{n_segments()} and \code{n_cp()}.
-The older constants \code{MINX}, \code{MAXX}, \code{MEANX}, \code{SDX}, \code{MINY}, \code{MAXY}, \code{MEANY}, \code{SDY}, and \code{N_CP} remain accepted with a deprecation warning.
-\item \emph{Group-level change points:} Group-specific locations follow a hierarchical
-normal distribution around their population change point, truncated so
-that realized locations remain in the observed range and ordered.
-\item \emph{Parameterization:} Prior strings use conventional scale parameterizations. \code{mcp} converts
-these to the parameterization required by JAGS when generating code:
-inverse variance for \code{dnorm()}, \code{dt()}, and \code{dlnorm()}, and inverse
-scale for \code{ddexp()} and \code{dlogis()}. Use
-\code{prior_summary(fit)} for resolved priors and
-\code{prior_summary(fit, verbose = TRUE)} for their rules and descriptions.
-}
-}
-
 \examples{
 \donttest{
 # Define the segments using formulas. A change point is estimated between each formula.

@@ -15,19 +15,21 @@
   ...,
   by_row = FALSE,
   pointwise = lifecycle::deprecated(),
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = NULL,
-  nsamples = lifecycle::deprecated()
+  nsamples = lifecycle::deprecated(),
+  varying = lifecycle::deprecated()
 )
 
 \method{waic}{mcpfit}(
   x,
   ...,
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = NULL,
-  nsamples = lifecycle::deprecated()
+  nsamples = lifecycle::deprecated(),
+  varying = lifecycle::deprecated()
 )
 }
 \arguments{
@@ -42,7 +44,7 @@ Note that both modes calculate pointwise (observation-level) PSIS-LOO cross-vali
 
 \item{pointwise}{Deprecated alias for \code{by_row}.}
 
-\item{varying}{Group-level effects. One of:
+\item{group}{Group-level effects. One of:
 \itemize{
 \item \code{TRUE} All group-level deviations.
 \item \code{FALSE} No group-level deviations (\code{c()}).
@@ -57,7 +59,7 @@ the model.
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
-currently requires all such effects (\code{varying = TRUE}).
+currently requires all such effects (\code{group = TRUE}).
 }}
 
 \item{ndraws}{Integer or \code{NULL}. Target number of posterior draws used for
@@ -65,6 +67,8 @@ the log-likelihood or information criterion. Draws are balanced across
 chains, so the actual number may be rounded. \code{NULL} uses all draws.}
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
+
+\item{varying}{Deprecated. Use \code{group} instead.}
 }
 \value{
 a \code{loo} or \code{psis_loo} object.
@@ -85,10 +89,10 @@ likelihood requires integrating over that missing history, which mcp does
 not currently implement.
 
 \code{loo()} and \code{waic()} evaluate the likelihood of the fitted model and require
-default \code{varying = TRUE} and \code{arma = TRUE}. Evaluating an information
+default \code{group = TRUE} and \code{arma = TRUE}. Evaluating an information
 criterion with fitted components dropped post-hoc violates the PSIS
 identity because draws come from the full model's posterior; comparing a
-reduced model requires refitting it. Non-default \code{varying} and \code{arma}
+reduced model requires refitting it. Non-default \code{group} and \code{arma}
 settings remain available in \code{log_lik()} as conditional or counterfactual
 diagnostics.
 

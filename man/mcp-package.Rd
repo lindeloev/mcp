@@ -4,13 +4,18 @@
 \encoding{UTF-8}
 \name{mcp-package}
 \alias{mcp-package}
-\title{mcp: Multiple Change Point Regression in R}
+\title{mcp: Regression with Multiple Change Points}
 \description{
-Flexible and informed regression with Multiple Change Points. \code{mcp} can infer change points in models on means,
-variances (and other distributional parameters), autocorrelation structure, and any combination of these, as well as the parameters of the
-segments in between. All parameters are estimated with uncertainty, and posterior predictive intervals are
-supported - also near the change points. \code{mcp} supports hypothesis testing via Savage-Dickey density
+\code{mcp} is regression with multiple change points. At its simplest, it feels like \code{lm()}, but with one formula per
+segment. At its most flexible, it aims to be \strong{\href{https://paulbuerkner.com/brms/}{\code{brms}} for change points}: GLM
+families (Gaussian, binomial, Bernoulli, Poisson, negative binomial), group-level effects (random effects), AR/MA,
+and regression on distributional parameters (e.g., \code{sigma}, \code{shape}), all inferred with full Bayesian uncertainty,
+including the change points themselves.
+
+Posterior predictive intervals are supported - also near the change points. \code{mcp} supports hypothesis testing via Savage-Dickey density
 ratios, posterior contrasts, and PSIS-LOO/WAIC model comparison.
+
+See \code{\link[=mcp]{mcp()}} to fit models, \link{mcp-formula} for the model and formula syntax, and \link{mcp-priors} for priors.
 }
 \section{Extended formulas and model features}{
 
@@ -26,66 +31,6 @@ or \code{1 + (1|id) ~ 0 + x}.
 }
 
 See \href{https://lindeloev.github.io/mcp/}{the mcp website} for worked examples.
-}
-
-\section{The mcp model}{
-
-An \code{mcp} model divides the change-point variable \eqn{x} into \eqn{K} segments separated by
-ordered change points \eqn{\tau_1 < \dots < \tau_{K-1}}. In each segment \eqn{k \in \{1, \dots, K\}},
-the linear predictor \eqn{\eta_i} measures \eqn{x} from the change point \eqn{\tau_{k-1}}:
-
-\deqn{\eta_i = \alpha_k + \beta_{k,1} (x_i - \tau_{k-1}) \quad (\text{with } \tau_0 = 0)}
-
-where \eqn{\alpha_k} is the value at the start of segment \eqn{k}:
-
-\deqn{\alpha_k = \begin{cases}
-  \beta_{k,0}, & \text{disjoined } (\sim \texttt{1 + x}, \text{ or } k = 1) \\
-  \alpha_{k-1} + \beta_{k-1,1} (\tau_{k-1} - \tau_{k-2}), & \text{joined } (\sim \texttt{0 + x})
-\end{cases}}
-
-That is, a disjoined segment starts at its own intercept \eqn{\beta_{k,0}}, while a joined segment continues from where segment \eqn{k-1} left off.
-
-Here, \eqn{\beta_{k,1}} is the slope on \eqn{x} in segment \eqn{k}. Intercepts and slopes are absolute values (not changes relative to preceding segments).
-Other variables (e.g., \code{+ z + state}) add \eqn{\sum_j \gamma_{k,j} z_{j,i}} in the segments where they are included.
-They use their original values and are not part of \eqn{\alpha_k}, which is why they can make a joined segment start with a jump.
-
-The inverse-linked parameter is \eqn{\mu_i = g^{-1}(\eta_i)} via link function \eqn{g(\mu_i) = \eta_i},
-representing the expected response for most families (or the success probability for binomial models,
-where the expected count is \eqn{n_i \mu_i}). Distributional parameters (\code{sigma()}, \code{shape()}, etc.)
-and autoregressive terms (\code{ar()}, \code{ma()}) follow this exact same segmented structure on their respective link scales.
-See more details on the \code{mcp} model in \link{mcp-package} and on the \href{https://lindeloev.github.io/mcp/articles/formulas.html}{mcp website}.
-}
-
-\section{Time-series residuals (link-scale observation-driven GARMA)}{
-
-Autoregressive (\code{ar(p)}) and moving-average (\code{ma(q)}) terms define a finite conditional recurrence
-on the link scale (generalized autoregressive moving-average, GARMA). They support Gaussian (\code{identity}),
-binomial (\code{logit}), Bernoulli (\code{logit}), Poisson (\code{log}), and negative-binomial (\code{log}) families.
-If \eqn{\eta^{\text{reg}}_t} is the ordinary regression predictor from the segment formulas and \eqn{\eta_t} is the
-predictor including serial dependence, the recurrence decomposes into components:
-
-\deqn{\begin{aligned}
-  \text{AR}_t &= \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - \eta^{\text{reg}}_{t-j}\right] \\
-  \text{MA}_t &= \sum_{k=1}^{q} \theta_{k,t} \left[g(y^*_{t-k}) - \eta_{t-k}\right] \\
-  \eta_t &= \eta^{\text{reg}}_t + \text{AR}_t + \text{MA}_t
-\end{aligned}}
-
-where \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
-\eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
-\eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the threshold-constrained observation with threshold constant \eqn{c} (set via argument \code{threshold = 0.1} in \code{ar()} / \code{ma()}) to keep residuals finite on the link scale:
-\itemize{
-\item \strong{Gaussian:} \eqn{y^*_t = y_t}.
-\item \strong{Poisson / Negative Binomial:} \eqn{y^*_t = \max(y_t, c)} to prevent \eqn{\log(0)}. Here \eqn{c} replaces zero counts with a small positive threshold value.
-\item \strong{Binomial / Bernoulli:} \eqn{y^*_t = \min(\max(y_t, c), n_t - c) / n_t}, where \eqn{y_t} is observed successes, \eqn{n_t} is the number of trials (\eqn{n_t = 1} for Bernoulli), and \eqn{c} constrains counts to the interval \eqn{[c, n_t - c]} before converting to a rate, preventing \eqn{\text{logit}(0)} and \eqn{\text{logit}(1)}.
-}
-
-Implications:
-\itemize{
-\item For an \eqn{N}-order component, the last \eqn{N} values \emph{before} the segment's change point are input to the first \eqn{\eta_t} in the segment.
-\item AR and MA components apply only in segments where they are included.
-\item AR coefficients are not jointly constrained to stationarity; nor MA coefficients to invertibility.
-\item See \href{https://lindeloev.github.io/mcp/articles/arma.html}{the arma article} for more details.
-}
 }
 
 \references{

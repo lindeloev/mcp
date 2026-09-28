@@ -30,3 +30,6 @@ while \code{verbose = TRUE} displays the underlying rule, description, source, a
 prior_summary(demo_fit)  # Show the effective priors and bounds
 prior_summary(demo_fit, verbose = TRUE)  # Include their rules and sources
 }
+\seealso{
+\link{mcp-priors} for how to specify priors.
+}

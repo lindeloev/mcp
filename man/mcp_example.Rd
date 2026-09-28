@@ -13,16 +13,16 @@ mcp_example_data(name)
 \arguments{
 \item{name}{Name of the example. One of:
 \itemize{
-\item \code{"demo"}: Two change points between intercepts and joined/disjoined slopes.
-\item \code{"intercepts"}: An intercept-only change point.
-\item \code{"multiple"}: Multiple regression with categorical predictors and interactions.
+\item \code{"ar"}: One change point in autoregressive residuals (the \code{ar1} dpar)
 \item \code{"binomial"}: Binomial with two change points. Much like \code{"demo"} on a logit scale.
+\item \code{"demo"}: Two change points between intercepts and joined/disjoined slopes.
 \item \code{"group_mu"}: Group-level predictor deviations (random intercepts/slopes) across a change point.
 \item \code{"group_cp"}: Group-level change-point deviations (random effects).
+\item \code{"intercepts"}: An intercept-only change point.
 \item \code{"missing"}: Missing data imputation (NAs in response variable y).
-\item \code{"quadratic"}: A change point to a quadratic segment where there is no data.
-\item \code{"ar"}: One change point in autoregressive residuals (the \code{ar1} dpar)
+\item \code{"multiple"}: Multiple regression with categorical predictors and interactions.
 \item \code{"sigma"}: A change in "sigma" dpar, including a slope on sigma.
+\item \code{"void"}: Missing data around change points.
 }}
 
 \item{sample}{One of

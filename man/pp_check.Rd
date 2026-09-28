@@ -12,10 +12,11 @@
   facet_by = NULL,
   newdata = NULL,
   prior = FALSE,
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = 100,
   nsamples = lifecycle::deprecated(),
+  varying = lifecycle::deprecated(),
   ...
 )
 }
@@ -47,7 +48,7 @@ is unavailable when a missing response enters a later observed history.
 \item{prior}{Logical. Evaluate prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default).
 The selected draws must be available; prior-only fits require \code{prior = TRUE}.}
 
-\item{varying}{Group-level effects. One of:
+\item{group}{Group-level effects. One of:
 \itemize{
 \item \code{TRUE} All group-level deviations.
 \item \code{FALSE} No group-level deviations (\code{c()}).
@@ -62,7 +63,7 @@ the model.
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
-currently requires all such effects (\code{varying = TRUE}).
+currently requires all such effects (\code{group = TRUE}).
 }}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
@@ -70,6 +71,8 @@ If there are group-level effects, this is the number of draws from each group.
 \code{NULL} means "all". More draws trade speed for accuracy.}
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
+
+\item{varying}{Deprecated. Use \code{group} instead.}
 
 \item{...}{Further arguments passed to \code{bayesplot::ppc_type(y, yrep, ...)}}
 }
