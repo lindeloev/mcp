@@ -13,10 +13,11 @@ pp_check(
   facet_by = NULL,
   newdata = NULL,
   prior = FALSE,
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = 100,
   nsamples = lifecycle::deprecated(),
+  varying = lifecycle::deprecated(),
   ...
 )
 ```
@@ -81,7 +82,7 @@ pp_check(
   (`FALSE`, default). The selected draws must be available; prior-only
   fits require `prior = TRUE`.
 
-- varying:
+- group:
 
   Group-level effects. One of:
 
@@ -107,7 +108,7 @@ pp_check(
     uses only `sigma` for residuals. For posterior evaluation of the
     original data, retained JAGS imputations supply missing GARMA
     histories. In models with group-level effects, this currently
-    requires including all such effects (`varying = TRUE`).
+    requires all such effects (`group = TRUE`).
 
 - ndraws:
 
@@ -118,6 +119,10 @@ pp_check(
 - nsamples:
 
   Deprecated. Use `ndraws` instead.
+
+- varying:
+
+  Deprecated. Use `group` instead.
 
 - ...:
 

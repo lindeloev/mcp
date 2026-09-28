@@ -76,20 +76,22 @@ more in <code><a href="https://mc-stan.org/loo/reference/loo.html" class="extern
 <span>  <span class="va">...</span>,</span>
 <span>  by_row <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  pointwise <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  varying <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  group <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  arma <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  ndraws <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  varying <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'mcpfit'</span></span>
 <span><span class="fu">waic</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  <span class="va">...</span>,</span>
-<span>  varying <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  group <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  arma <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  ndraws <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  varying <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -116,7 +118,7 @@ Note that both modes calculate pointwise (observation-level) PSIS-LOO cross-vali
 <dd><p>Deprecated alias for <code>by_row</code>.</p></dd>
 
 
-<dt id="arg-varying">varying<a class="anchor" aria-label="anchor" href="#arg-varying"></a></dt>
+<dt id="arg-group">group<a class="anchor" aria-label="anchor" href="#arg-group"></a></dt>
 <dd><p>Group-level effects. One of:</p><ul><li><p><code>TRUE</code> All group-level deviations.</p></li>
 <li><p><code>FALSE</code> No group-level deviations (<code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code>).</p></li>
 <li><p><code>"cp"</code> or <code>"predictor"</code>: All group-level deviations belonging to that part of
@@ -130,7 +132,7 @@ the model.</p></li>
 <li><p><code>FALSE</code> Disregard AR and MA effects. For <code>family = gaussian()</code>, <code><a href="execute-mcp-model.html">predict()</a></code> uses only <code>sigma</code> for residuals.
 For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
-currently requires including all such effects (<code>varying = TRUE</code>).</p></li>
+currently requires all such effects (<code>group = TRUE</code>).</p></li>
 </ul></dd>
 
 
@@ -142,6 +144,10 @@ chains, so the actual number may be rounded. <code>NULL</code> uses all draws.</
 
 <dt id="arg-nsamples">nsamples<a class="anchor" aria-label="anchor" href="#arg-nsamples"></a></dt>
 <dd><p>Deprecated. Use <code>ndraws</code> instead.</p></dd>
+
+
+<dt id="arg-varying">varying<a class="anchor" aria-label="anchor" href="#arg-varying"></a></dt>
+<dd><p>Deprecated. Use <code>group</code> instead.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -160,10 +166,10 @@ missing response enters a later observed GARMA history, <code><a href="execute-m
 likelihood requires integrating over that missing history, which mcp does
 not currently implement.</p>
 <p><code>loo()</code> and <code>waic()</code> evaluate the likelihood of the fitted model and require
-default <code>varying = TRUE</code> and <code>arma = TRUE</code>. Evaluating an information
+default <code>group = TRUE</code> and <code>arma = TRUE</code>. Evaluating an information
 criterion with fitted components dropped post-hoc violates the PSIS
 identity because draws come from the full model's posterior; comparing a
-reduced model requires refitting it. Non-default <code>varying</code> and <code>arma</code>
+reduced model requires refitting it. Non-default <code>group</code> and <code>arma</code>
 settings remain available in <code><a href="execute-mcp-model.html">log_lik()</a></code> as conditional or counterfactual
 diagnostics.</p>
 <p>When <code>ndraws</code> is supplied to <code>loo()</code>, draws are balanced across chains and
@@ -200,7 +206,7 @@ computed directly.</p>
 <span class="r-in"><span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">loo1</span>, <span class="va">loo2</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   model elpd_diff se_diff p_worse diag_diff diag_elpd</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  model1       0.0     0.0      NA                    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  model2    -133.8     8.1    1.00                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  model2    -133.7     8.1    1.00                    </span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

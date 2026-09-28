@@ -14,13 +14,13 @@ pp_eval(
   rate = TRUE,
   prior = FALSE,
   dpar = "epred",
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = NULL,
   draws_format = "tidy",
   scale = "response",
-  .include_fitted = FALSE,
-  .include_dpars = FALSE,
+  .return_fitted = FALSE,
+  .return_dpars = FALSE,
   .garma_replicate = FALSE,
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated()
@@ -136,7 +136,7 @@ pp_eval(
   - `"ar1"`, `"ar2"`, `"ma1"`, `"ma2"`, etc. depending on which AR or MA
     coefficient you want to evaluate.
 
-- varying:
+- group:
 
   Group-level effects. One of:
 
@@ -162,7 +162,7 @@ pp_eval(
     uses only `sigma` for residuals. For posterior evaluation of the
     original data, retained JAGS imputations supply missing GARMA
     histories. In models with group-level effects, this currently
-    requires including all such effects (`varying = TRUE`).
+    requires all such effects (`group = TRUE`).
 
 - ndraws:
 
@@ -192,11 +192,11 @@ pp_eval(
     linear trends are modeled. A linear scale is only applicable when
     `type == "fitted"` and `dpar` is not `NULL`.
 
-- .include_fitted:
+- .return_fitted:
 
   Internal. Include fitted values with unsummarised predictions.
 
-- .include_dpars:
+- .return_dpars:
 
   Internal. Include distributional parameters and response data as
   attributes with unsummarised predictions.

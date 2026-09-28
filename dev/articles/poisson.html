@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Poisson and negative-binomial change point analysis</h1>
             
-            <h4 data-toc-skip class="date">2026-09-17</h4>
+            <h4 data-toc-skip class="date">2026-09-28</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/poisson.Rmd" class="external-link"><code>vignettes/poisson.Rmd</code></a></small>
       <div class="d-none name"><code>poisson.Rmd</code></div>
@@ -114,41 +114,36 @@ below uses Poisson regression; a later section explains the additional
 <p>A dataset on coal mining disasters has grown very popular in the
 change point literature (available in <code><a href="https://rdrr.io/pkg/boot/man/coal.html" class="external-link">boot::coal</a></code>). It
 contains a timestamp of each coal mining disaster from 1851 to 1962. By
-binning the number of events within each year (fixed time frame), we
-have something very Poisson-friendly:</p>
+counting the number of events within each year (fixed time frame), we
+have something very Poisson-friendly. Note that years without disasters
+must be included as zeros:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Number of disasters by year</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span>, warn.conflicts <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="va">df</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu">boot</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/boot/man/coal.html" class="external-link">coal</a></span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">date</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># Number of disasters by year, including years with zero disasters (no data rows)</span></span>
+<span><span class="va">year</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="fu">boot</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/boot/man/coal.html" class="external-link">coal</a></span><span class="op">$</span><span class="va">date</span><span class="op">)</span>, levels <span class="op">=</span> <span class="fl">1851</span><span class="op">:</span><span class="fl">1962</span><span class="op">)</span></span>
+<span><span class="va">df</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>date <span class="op">=</span> <span class="fl">1851</span><span class="op">:</span><span class="fl">1962</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">as.vector</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># See it</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 2</span></span></span>
-<span><span class="co">## <span style="color: #949494;"># Groups:   date [6]</span></span></span>
-<span><span class="co">##    date     n</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>  <span style="text-decoration: underline;">1</span>851     1</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span>  <span style="text-decoration: underline;">1</span>852     7</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span>  <span style="text-decoration: underline;">1</span>853     5</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span>  <span style="text-decoration: underline;">1</span>854     1</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span>  <span style="text-decoration: underline;">1</span>856     1</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span>  <span style="text-decoration: underline;">1</span>857     5</span></span></code></pre>
+<pre><code><span><span class="co">##   date n</span></span>
+<span><span class="co">## 1 1851 4</span></span>
+<span><span class="co">## 2 1852 5</span></span>
+<span><span class="co">## 3 1853 4</span></span>
+<span><span class="co">## 4 1854 1</span></span>
+<span><span class="co">## 5 1855 0</span></span>
+<span><span class="co">## 6 1856 4</span></span></code></pre>
 <p>The number of events (<code>n</code>) as a function of year
 (<code>date</code>) is typically modeled as a change between two
 intercepts. This is very simple to do in <code>mcp</code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lindeloev.github.io/mcp/">mcp</a></span><span class="op">)</span></span>
-<span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="fu">future</span><span class="fu">::</span><span class="va"><a href="https://future.futureverse.org/reference/multisession.html" class="external-link">multisession</a></span>, workers <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span>  <span class="co"># Make the script deterministic</span></span></code></pre></div>
+<span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="fu">future</span><span class="fu">::</span><span class="va"><a href="https://future.futureverse.org/reference/multisession.html" class="external-link">multisession</a></span>, workers <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="va">n</span> <span class="op">~</span> <span class="fl">1</span>,  <span class="co"># intercept-only</span></span>
 <span>  <span class="op">~</span> <span class="fl">1</span>  <span class="co"># intercept-only</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span>, par_x <span class="op">=</span> <span class="st">"date"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span>, par_x <span class="op">=</span> <span class="st">"date"</span><span class="op">)</span></span></code></pre></div>
 <p>Let us see the two intercepts (lambda in log-units) and the change
 point (in years):</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -161,21 +156,20 @@ point (in years):</p>
 <span><span class="co">##   2: n ~ 1 ~ 1</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
-<span><span class="co">##     variable    mean    sd   lower   upper rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##  cp_1        1888.42 3.925 1881.71 1898.80 1.00     1761     1444</span></span>
+<span><span class="co">##     variable     mean    sd   lower   upper rhat ess_bulk ess_tail</span></span>
+<span><span class="co">##  cp_1        1890.483 2.428 1886.14 1896.42 1.00     2222     1279</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
-<span><span class="co">##     variable    mean    sd   lower   upper rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##  Intercept_1    1.17 0.096    0.98    1.36 1.00     3867     4001</span></span>
-<span><span class="co">##  Intercept_2    0.48 0.123    0.23    0.71 1.00     3819     4709</span></span></code></pre>
+<span><span class="co">##     variable     mean    sd   lower   upper rhat ess_bulk ess_tail</span></span>
+<span><span class="co">##  Intercept_1    1.132 0.094    0.94    1.32 1.00     4526     4095</span></span>
+<span><span class="co">##  Intercept_2   -0.088 0.129   -0.35    0.15 1.00     4355     5151</span></span></code></pre>
 <p>We can see that the model ran well with good convergence and a large
 number of effective samples. At a first glance, the change point is
-estimated to lie between the years 1880 and 1895 (approximately).</p>
+estimated to lie between the years 1886 and 1896 (95% interval).</p>
 <p>Let us take a more direct look, using the default <code>mcp</code>
 plot:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="poisson_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
 <p>It seems to fit the data well, but we can see that the change point
 probability “lumps” around particular data points. Years with a very low
@@ -186,8 +180,7 @@ well-described by our toolbox of parameterized distributions.</p>
 <p>We can see this more clearly if plotting the posteriors. We include a
 traceplot too, just to check convergence visually.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="poisson_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
@@ -197,8 +190,8 @@ traceplot too, just to check convergence visually.</p>
 that we have to exponentiate the estimates to get the “raw” Poisson
 parameter <span class="math inline">\lambda</span>. <span class="math inline">\lambda</span> has the nice property of being the
 mean number of events. So we see that the mean number of events in
-segment 1 is <code>exp(result$mean[2])</code> (3.2229724) and it is
-<code>exp(result$mean[3])</code> (1.6116949) for segment 2.</p>
+segment 1 is <code>exp(result$mean[2])</code> (3.1029864) and it is
+<code>exp(result$mean[3])</code> (0.9154709) for segment 2.</p>
 <p>The intercept prior is a normal distribution centered on the rounded
 median of <code>log(pmax(n, 0.1))</code>, with scale equal to the
 maximum of 2.5 and its rounded MAD. <code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax()</a></code> keeps zeros
@@ -215,11 +208,11 @@ some packages).</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 3 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                        bounds                </span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)         [min(date), max(date)]</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> Intercept_1       1 mu    normal(mean = 0.7, sd = 2.5) none                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_2       2 mu    normal(mean = 0.7, sd = 2.5) none</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior                      bounds                </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)       [min(date), max(date)]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> Intercept_1       1 mu    normal(mean = 0, sd = 2.5) none                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_2       2 mu    normal(mean = 0, sd = 2.5) none</span></span></code></pre>
 <p>As always, the prior on the change point forces it to occur in the
 observed range. The coefficient priors are deliberately broad defaults,
 so update them with more informed priors for your particular case when
@@ -280,7 +273,7 @@ The offset is evaluated per row as local exposure for that observation.
 If <code>par_x</code> represents continuous cumulative time from an
 origin (e.g., <span class="math inline">[0, t_i]</span>), using
 <code>offset(log(par_x))</code> does <strong>not</strong> integrate
-piecewise rates across prior segments; instead, the active segment’s
+piecewise rates across prior segments; instead, the current segment’s
 rate is applied to the total duration. If your data consists of discrete
 time intervals (bins) of duration <span class="math inline">\Delta
 t_i</span>, using <code>offset(log(delta_t))</code> is valid.</p>
@@ -293,14 +286,17 @@ t_i</span>, using <code>offset(log(delta_t))</code> is valid.</p>
 what the evidence is that there is a change point at all. Let us fit two
 no-changepoint models and use approximate leave-one-out cross-validation
 to see how the predictive performance of the two models compare.</p>
-<p>A flat model and a one-decay model:</p>
+<p>A flat model and a one-decay model. The intercept in <code>mcp</code>
+is at <code>date = 0</code>, far from the data, so we measure the decay
+from the first year (<code>I(date - 1851)</code>) to reduce the
+posterior correlation between intercept and slope. This helps
+sampling:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Fit an intercept-only model</span></span>
-<span><span class="va">fit_flat</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">n</span> <span class="op">~</span> <span class="fl">1</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">df</span>, family<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span>, par_x <span class="op">=</span> <span class="st">"date"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
-<span><span class="va">fit_decay</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">n</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">date</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">fit_flat</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">n</span> <span class="op">~</span> <span class="fl">1</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">df</span>, family<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span>, par_x <span class="op">=</span> <span class="st">"date"</span><span class="op">)</span></span>
+<span><span class="va">fit_decay</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">n</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">date</span> <span class="op">-</span> <span class="fl">1851</span><span class="op">)</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span>, par_x <span class="op">=</span> <span class="st">"date"</span><span class="op">)</span></span>
 <span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_flat</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_decay</span><span class="op">)</span></span></code></pre></div>
 <p><img src="poisson_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="700"></p>
 <p>Now we compute and compare the LOO ELPDs:</p>
@@ -314,24 +310,31 @@ to see how the predictive performance of the two models compare.</p>
 <span><span class="co">## Diagnostic flags present.</span></span>
 <span><span class="co">## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span></span>
 <span><span class="co">## or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre>
-<pre><code><span><span class="co">##   model elpd_diff se_diff p_worse diag_diff      diag_elpd</span></span>
-<span><span class="co">##  model1       0.0     0.0      NA           4 k_psis &gt; 0.7</span></span>
-<span><span class="co">##  model3      -7.0     3.2    0.99   N &lt; 100               </span></span>
-<span><span class="co">##  model2      -9.3     3.8    0.99   N &lt; 100</span></span></code></pre>
-<p>The change point model seems to be preferred with a ratio of around 2
-over the decay model and 2.5 over the flat model. Another approach is to
-look at the model weights:</p>
+<pre><code><span><span class="co">##   model elpd_diff se_diff p_worse       diag_diff      diag_elpd</span></span>
+<span><span class="co">##  model1       0.0     0.0      NA                 4 k_psis &gt; 0.7</span></span>
+<span><span class="co">##  model3      -3.3     3.6    0.82 |elpd_diff| &lt; 4               </span></span>
+<span><span class="co">##  model2     -32.9     8.3    1.00</span></span></code></pre>
+<p>The flat model is clearly worse, with
+<code>elpd_diff / se_diff</code> around 4, so the disaster rate did
+decrease. The change point model is preferred over the decay model, but
+the difference is smaller than its standard error. The
+<code>diag_elpd</code> column also flags a few observations with high
+Pareto <span class="math inline">k</span> values in the change point
+model, so its PSIS-LOO estimate is less reliable. Taken together, the
+data cannot clearly distinguish an abrupt change from a gradual decay.
+Another approach is to look at the model weights:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">loo_list</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">fit_loo</span>, <span class="va">fit_flat_loo</span>, <span class="va">fit_decay_loo</span><span class="op">)</span></span>
 <span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_model_weights.html" class="external-link">loo_model_weights</a></span><span class="op">(</span><span class="va">loo_list</span>, method<span class="op">=</span><span class="st">"pseudobma"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Method: pseudo-BMA+ with Bayesian bootstrap</span></span>
 <span><span class="co">## ------</span></span>
 <span><span class="co">##        weight</span></span>
-<span><span class="co">## model1 0.963 </span></span>
-<span><span class="co">## model2 0.009 </span></span>
-<span><span class="co">## model3 0.028</span></span></code></pre>
-<p>Again, unsurprisingly, the change point model is preferred and they
-show the same ranking as implied by <code>loo_compare</code>.</p>
+<span><span class="co">## model1 0.800 </span></span>
+<span><span class="co">## model2 0.000 </span></span>
+<span><span class="co">## model3 0.200</span></span></code></pre>
+<p>Again, the change point model is preferred and the weights show the
+same ranking as implied by <code>loo_compare</code>, but the decay model
+retains a non-negligible weight.</p>
 </div>
 <div class="section level2">
 <h2 id="jags-code-for-the-poisson-example">JAGS code for the Poisson example<a class="anchor" aria-label="anchor" href="#jags-code-for-the-poisson-example"></a>
@@ -348,8 +351,8 @@ above.</p>
 <span><span class="co">##   # Priors for population-level effects</span></span>
 <span><span class="co">##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)</span></span>
 <span><span class="co">##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point</span></span>
-<span><span class="co">##   Intercept_1 ~ dnorm(0.7, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5</span></span>
-<span><span class="co">##   Intercept_2 ~ dnorm(0.7, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5</span></span>
+<span><span class="co">##   Intercept_1 ~ dnorm(0, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5</span></span>
+<span><span class="co">##   Intercept_2 ~ dnorm(0, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(date)) {</span></span>

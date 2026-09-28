@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Variance change points and other distributional parameters</h1>
             
-            <h4 data-toc-skip class="date">2026-09-17</h4>
+            <h4 data-toc-skip class="date">2026-09-28</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/dpar.Rmd" class="external-link"><code>vignettes/dpar.Rmd</code></a></small>
       <div class="d-none name"><code>dpar.Rmd</code></div>
@@ -142,7 +142,6 @@ plateau mean:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lindeloev.github.io/mcp/">mcp</a></span><span class="op">)</span></span>
 <span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="fu">future</span><span class="fu">::</span><span class="va"><a href="https://future.futureverse.org/reference/multisession.html" class="external-link">multisession</a></span>, workers <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span>  <span class="co"># Make the script deterministic</span></span>
 <span></span>
 <span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span>,  <span class="co"># sigma(1) is implicit in the first segment</span></span>
@@ -155,7 +154,6 @@ residual standard deviation at <span class="math inline">x =
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">100</span>, y <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">empty</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, sample <span class="op">=</span> <span class="cn">FALSE</span>, par_x <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">df</span><span class="op">$</span><span class="va">y</span> <span class="op">=</span> <span class="va">empty</span><span class="op">$</span><span class="fu">simulate</span><span class="op">(</span></span>
 <span>  <span class="va">empty</span>, <span class="va">df</span>, </span>
 <span>  cp_1 <span class="op">=</span> <span class="fl">50</span>, Intercept_1 <span class="op">=</span> <span class="fl">20</span>, </span>
@@ -171,13 +169,12 @@ residual standard deviation at <span class="math inline">x =
 <span><span class="co">## 6 6 19.46938</span></span></code></pre>
 <p>Now we fit the model to the simulated data.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, par_x <span class="op">=</span> <span class="st">"x"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, par_x <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span></span></code></pre></div>
 <p>We plot a posterior predictive interval to show the effect of the
 changing standard deviation, which is not immediately visible in the
 default plot of the expected response:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, q_predict <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, q_predict <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="dpar_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="700"></p>
 <p>We can see all parameters are well recovered (compare
 <code>sim</code> to <code>mean</code>). Like the other parameters, the
@@ -193,14 +190,14 @@ instantiated. There will always be a <code>sigma_1</code>.</p>
 <span><span class="co">##   2: y ~ 1 ~ 0 + sigma(1)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
-<span><span class="co">##     variable mean    sd lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span><span class="co">##  cp_1        49.8 1.599  46.2  52.2 1.00     3281     3344 50.0    OK</span></span>
+<span><span class="co">##     variable mean   sd lower upper rhat ess_bulk ess_tail  sim match</span></span>
+<span><span class="co">##  cp_1        49.7 1.64  46.1  52.2 1.00     3277     3827 50.0    OK</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
-<span><span class="co">##     variable mean    sd lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span><span class="co">##  Intercept_1 20.1 0.826  18.5  21.7 1.00     4815     5026 20.0    OK</span></span>
-<span><span class="co">##  sigma_1      1.8 0.105   1.6   2.0 1.00     4141     4573  1.6    OK</span></span>
-<span><span class="co">##  sigma_2      2.9 0.099   2.7   3.1 1.00     5007     4346  3.0    OK</span></span></code></pre>
+<span><span class="co">##     variable mean   sd lower upper rhat ess_bulk ess_tail  sim match</span></span>
+<span><span class="co">##  Intercept_1 20.1 0.82  18.5  21.7 1.00     7972     8574 20.0    OK</span></span>
+<span><span class="co">##  sigma_1      1.8 0.11   1.6   2.0 1.00     4639     4599  1.6    OK</span></span>
+<span><span class="co">##  sigma_2      2.9 0.10   2.7   3.1 1.00     5458     5230  3.0    OK</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="advanced-example">Advanced example<a class="anchor" aria-label="anchor" href="#advanced-example"></a>
@@ -220,7 +217,7 @@ demonstrates that flexibility:</p>
 <span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">x</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span>,  <span class="co"># At cp_2: x_3, sigma_x_3, sigma_xE2_3</span></span>
 <span>  </span>
 <span>  <span class="co"># 4. Continue slope on mean, but plateau standard deviation (no sigma() term).</span></span>
-<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="va">x</span><span class="op">)</span>  <span class="co"># At cp_3: reuse x_3 (implicit sigma(0))</span></span>
+<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="va">x</span><span class="op">)</span>  <span class="co"># At cp_3: reuse x_3; sigma joined</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Notice a few things here:</p>
 <ul>
@@ -230,10 +227,9 @@ between segment 3 and 4. So only <code>sigma</code> changes there.
 Sharing the slope effectively removes the change point in the mean (read
 more about <a href="../articles/formulas.html">formulas in
 mcp</a>).</li>
-<li>Segment 4: Because <code>sigma</code> is a required distributional
-parameter for the <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian()</a></code> family, it cannot “turn off”
-just because it is not declared explicitly. <code>mcp</code> implicitly
-adds a <code>sigma(0)</code> term in these segments.</li>
+<li>Segment 4: <code>sigma</code> is required by the likelihood, so it
+cannot be turned off. A segment that does not include
+<code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> is joined, so the log-SD plateaus here.</li>
 </ul>
 <p>In general, the log-SD parameters are named
 <code>sigma_[normalname]</code>, where “normalname” is the usual
@@ -254,7 +250,6 @@ which is useful for simulation and predictions from this model.</p>
 <span><span class="va">empty</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Simulate data</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">df</span><span class="op">$</span><span class="va">y</span> <span class="op">=</span> <span class="va">empty</span><span class="op">$</span><span class="fu">simulate</span><span class="op">(</span></span>
 <span>  <span class="va">empty</span>, <span class="va">df</span>,</span>
 <span>  cp_1 <span class="op">=</span> <span class="fl">50</span>, cp_2 <span class="op">=</span> <span class="fl">80</span>, cp_3 <span class="op">=</span> <span class="fl">140</span>,</span>
@@ -271,18 +266,16 @@ which is useful for simulation and predictions from this model.</p>
 </h3>
 <p>Fit it:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, iter <span class="op">=</span> <span class="fl">6000</span>, seed <span class="op">=</span> <span class="fl">42</span>, diagnostics <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, iter <span class="op">=</span> <span class="fl">10000</span>, diagnostics <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p>Plotting a posterior predictive interval is an intuitive way to see
 how the residual standard deviation is estimated:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, q_predict <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, q_predict <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="dpar_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
 <p>We can also plot the <code>sigma_</code> parameters directly. Now the
 y-axis is <code>sigma</code>:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot.mcpfit.html">plot_dpar</a></span><span class="op">(</span><span class="va">fit</span>, dpar <span class="op">=</span> <span class="st">"sigma"</span>, q_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot_dpar</a></span><span class="op">(</span><span class="va">fit</span>, dpar <span class="op">=</span> <span class="st">"sigma"</span>, q_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="dpar_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="700"></p>
 <p><code>summary(fit)</code> shows that the parameters are well
 recovered and a posterior predictive check (<code>pp_check(fit)</code>)
@@ -293,7 +286,7 @@ standard-deviation growth.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Family: gaussian</span></span>
 <span><span class="co">## Links: mu = identity; sigma = log</span></span>
-<span><span class="co">## Iterations: 6000 from 3 chains.</span></span>
+<span><span class="co">## Iterations: 10000 from 3 chains.</span></span>
 <span><span class="co">## Segments:</span></span>
 <span><span class="co">##   1: y ~ 1 + sigma(1 + x)</span></span>
 <span><span class="co">##   2: y ~ 1 ~ 1 + sigma(1)</span></span>
@@ -302,20 +295,20 @@ standard-deviation growth.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
 <span><span class="co">##     variable     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match</span></span>
-<span><span class="co">##  cp_1         5.0e+01  0.3372  4.9e+01  5.0e+01 1.00     6206     4879  5.0e+01    OK</span></span>
-<span><span class="co">##  cp_2         8.0e+01  1.1371  7.8e+01  8.3e+01 1.00     2341     3896  8.0e+01    OK</span></span>
-<span><span class="co">##  cp_3         1.4e+02 12.7475  1.3e+02  1.8e+02 1.00      584     1128  1.4e+02    OK</span></span>
+<span><span class="co">##  cp_1         4.9e+01  0.6603  4.9e+01  5.0e+01 1.00     8220     4651  5.0e+01    OK</span></span>
+<span><span class="co">##  cp_2         8.1e+01  1.8309  7.9e+01  8.4e+01 1.01      256      140  8.0e+01    OK</span></span>
+<span><span class="co">##  cp_3         1.4e+02 18.2840  9.3e+01  1.8e+02 1.18       12       11  1.4e+02    OK</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
 <span><span class="co">##     variable     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match</span></span>
-<span><span class="co">##  Intercept_1 -2.0e+01  0.4539 -2.1e+01 -1.9e+01 1.00     5179     5510 -2.0e+01    OK</span></span>
-<span><span class="co">##  Intercept_2  6.9e-01  0.6958 -6.4e-01  2.1e+00 1.00     3866     6218  0.0e+00    OK</span></span>
-<span><span class="co">##  x_3          1.2e+00  0.0317  1.1e+00  1.2e+00 1.00     3207     5980  1.2e+00    OK</span></span>
-<span><span class="co">##  sigma_1      4.1e-01  0.2538 -6.5e-02  9.3e-01 1.00     1038     1840  0.0e+00    OK</span></span>
-<span><span class="co">##  sigma_x_1    3.7e-02  0.0087  2.0e-02  5.4e-02 1.00     1042     1794  4.6e-02    OK</span></span>
-<span><span class="co">##  sigma_2      1.3e+00  0.1150  1.1e+00  1.6e+00 1.00      887     2020  1.4e+00    OK</span></span>
-<span><span class="co">##  sigma_x_3    2.6e-02  0.0064  1.2e-02  3.8e-02 1.01      363      231  2.0e-02    OK</span></span>
-<span><span class="co">##  sigma_xE2_3  2.4e-05  0.0001 -1.4e-04  2.9e-04 1.01      326      197  1.5e-04    OK</span></span></code></pre>
+<span><span class="co">##  Intercept_1 -2.0e+01  0.3432 -2.1e+01 -1.9e+01 1.00    21424    18774 -2.0e+01    OK</span></span>
+<span><span class="co">##  Intercept_2  5.9e-01  1.0207 -7.7e-01  1.9e+00 1.00     8038     7658  0.0e+00    OK</span></span>
+<span><span class="co">##  x_3          1.2e+00  0.0401  1.1e+00  1.3e+00 1.01      313      525  1.2e+00    OK</span></span>
+<span><span class="co">##  sigma_1      1.0e-01  0.2330 -3.3e-01  5.8e-01 1.00     2042     3804  0.0e+00    OK</span></span>
+<span><span class="co">##  sigma_x_1    4.2e-02  0.0082  2.7e-02  5.9e-02 1.00     2077     3933  4.6e-02    OK</span></span>
+<span><span class="co">##  sigma_2      1.3e+00  0.1159  1.1e+00  1.6e+00 1.00      781     2247  1.4e+00    OK</span></span>
+<span><span class="co">##  sigma_x_3    3.5e-02  0.0335  7.0e-03  1.5e-01 1.07       28       11  2.0e-02    OK</span></span>
+<span><span class="co">##  sigma_xE2_3  5.1e-05  0.0002 -2.7e-04  4.8e-04 1.06       76      306  1.5e-04    OK</span></span></code></pre>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pp_check.html">pp_check</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="dpar_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="700"></p>
@@ -329,8 +322,7 @@ uncertainty in detecting subtle changes in variance curvature. Let us
 verify this by taking a look at the posteriors and trace. For now, we
 just look at the sigmas:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, regex_pars <span class="op">=</span> <span class="st">"sigma_"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, regex_pars <span class="op">=</span> <span class="st">"sigma_"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="dpar_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="576"></p>
 <p>This confirms the impression from <code>rhat</code>,
 <code>ess_bulk</code>, and <code>ess_tail</code>. Read more about <a href="../articles/tips.html">tips, tricks, and debugging</a>.</p>
@@ -358,14 +350,16 @@ for sigma”).</p>
 <span><span class="co">##   cp_2 = cp_1 + cp_frac_2_ * (cp_4 - cp_1)  # Ordered change point</span></span>
 <span><span class="co">##   cp_frac_3_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)</span></span>
 <span><span class="co">##   cp_3 = cp_2 + cp_frac_3_ * (cp_4 - cp_2)  # Ordered change point</span></span>
-<span><span class="co">##   Intercept_1 ~ dt(24.8, 1/(62.2)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span></span>
-<span><span class="co">##   Intercept_2 ~ dt(24.8, 1/(62.2)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span></span>
-<span><span class="co">##   x_3 ~ dt(0, 1/(0.3125628)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change</span></span>
-<span><span class="co">##   sigma_1 ~ dt(0, 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept</span></span>
-<span><span class="co">##   sigma_x_1 ~ dt(0, 1/(0.01256281)^2, 3)   # Regularizing log-SD coefficient scaled to a reference predictor change</span></span>
+<span><span class="co">##   Intercept_1 ~ dnorm(39.06538, 1/(139.559)^2)   # Mean intercept (rstanarm default)</span></span>
+<span><span class="co">##   Intercept_2 ~ dnorm(39.06538, 1/(139.559)^2)   # Mean intercept (rstanarm default)</span></span>
+<span><span class="co">##   x_3_rise_ ~ dnorm(0, 1/(2.411212*(cp_3-cp_2))^2)   # Autoscaled mean coefficient (rstanarm default); sampled as the rise over the segment</span></span>
+<span><span class="co">##   x_3 = x_3_rise_ / (cp_3 - cp_2)</span></span>
+<span><span class="co">##   sigma_1_start_ ~ dt(0, 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept; on the level at min(x)</span></span>
+<span><span class="co">##   sigma_1 = sigma_1_start_ - (sigma_x_1 * 1)  # Intercept at x = 0</span></span>
+<span><span class="co">##   sigma_x_1 ~ dt(0, 1/(0.04319342)^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD</span></span>
 <span><span class="co">##   sigma_2 ~ dt(0, 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept</span></span>
-<span><span class="co">##   sigma_x_3 ~ dt(0, 1/(0.01256281)^2, 3)   # Regularizing log-SD coefficient scaled to a reference predictor change</span></span>
-<span><span class="co">##   sigma_xE2_3 ~ dt(0, 1/(6.312972e-05)^2, 3)   # Regularizing log-SD coefficient scaled to a reference predictor change</span></span>
+<span><span class="co">##   sigma_x_3 ~ dt(0, 1/(0.04319342)^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD</span></span>
+<span><span class="co">##   sigma_xE2_3 ~ dt(0, 1/(0.0002100946)^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(x)) {</span></span>
@@ -422,7 +416,6 @@ change-point deviations. Here we model a by-person change in
 <span><span class="va">empty</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, par_x <span class="op">=</span> <span class="st">"x"</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Simulate data</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">40</span><span class="op">)</span></span>
 <span><span class="va">df</span><span class="op">$</span><span class="va">y</span> <span class="op">=</span> <span class="va">empty</span><span class="op">$</span><span class="fu">simulate</span><span class="op">(</span></span>
 <span>  <span class="va">empty</span>, <span class="va">df</span>, </span>
 <span>  cp_1 <span class="op">=</span> <span class="fl">130</span>, cp_1_sd <span class="op">=</span> <span class="fl">40</span>,</span>
@@ -430,25 +423,24 @@ change-point deviations. Here we model a by-person change in
 <span>  sigma_1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span>, sigma_2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">25</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Fit it:</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, par_x <span class="op">=</span> <span class="st">"x"</span>, seed <span class="op">=</span> <span class="fl">40</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, par_x <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span></span></code></pre></div>
 <p>Plot it:</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">40</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, q_predict <span class="op">=</span> <span class="cn">TRUE</span>, facet_by <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, q_predict <span class="op">=</span> <span class="cn">TRUE</span>, facet_by <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="dpar_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="" width="700"></p>
 <p>As usual, we can get the individual change points:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/summary.mcpfit.html">ranef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##     variable      mean       sd      lower     upper     rhat ess_bulk ess_tail        sim match</span></span>
-<span><span class="co">## 1 cp_1_id[1]  31.92434 42.29520  -75.41372 132.65332 1.013154     2614      744  19.114088    OK</span></span>
-<span><span class="co">## 2 cp_1_id[2]  20.29804 46.02956  -87.04081 127.00663 1.012913     1863     1025  45.585394    OK</span></span>
-<span><span class="co">## 3 cp_1_id[3]  19.86522 41.98096  -89.55753 118.94143 1.015952     2574      884  19.851242    OK</span></span>
-<span><span class="co">## 4 cp_1_id[4] -28.37698 41.90368 -144.51790  64.53245 1.015833     2751      964 -47.713615    OK</span></span>
-<span><span class="co">## 5 cp_1_id[5] -27.50314 41.36632 -144.46014  63.58621 1.012760     2373      928 -34.316443    OK</span></span>
-<span><span class="co">## 6 cp_1_id[6]   3.50697 47.26036 -106.81277 111.69764 1.019962     3041     1053  -3.872974    OK</span></span>
-<span><span class="co">## 7 cp_1_id[7] -35.20754 41.48965 -151.64791  55.49996 1.013229     2321      917 -33.098207    OK</span></span>
-<span><span class="co">## 8 cp_1_id[8]  23.89787 42.26932  -87.19581 122.04209 1.014960     2835     1008   9.201584    OK</span></span>
-<span><span class="co">## 9 cp_1_id[9] -10.65812 44.99204 -131.17651  78.72465 1.015109     2126      889 -12.830472    OK</span></span></code></pre>
+<pre><code><span><span class="co">##     variable       mean       sd      lower     upper     rhat ess_bulk ess_tail        sim match</span></span>
+<span><span class="co">## 1 cp_1_id[1]   3.208518 53.97599 -123.80777 116.95871 1.042916      715      476  -2.902793    OK</span></span>
+<span><span class="co">## 2 cp_1_id[2] -49.238207 54.67359 -184.64457  55.62917 1.044136      727      536 -44.692962    OK</span></span>
+<span><span class="co">## 3 cp_1_id[3]   2.233039 53.67133 -123.81857 115.78047 1.041385      790      534  -1.644795    OK</span></span>
+<span><span class="co">## 4 cp_1_id[4]  47.920881 62.26592  -71.63198 195.63129 1.032080      504      458  41.216150    OK</span></span>
+<span><span class="co">## 5 cp_1_id[5]   4.372002 54.86719 -120.49809 120.64593 1.033373      758      412  -5.617847    OK</span></span>
+<span><span class="co">## 6 cp_1_id[6]   7.832260 53.76407 -116.91775 121.99790 1.037196      742      559 -47.784897    OK</span></span>
+<span><span class="co">## 7 cp_1_id[7] -34.804901 61.10313 -189.13540  77.68395 1.044932      382      238  -8.872215    OK</span></span>
+<span><span class="co">## 8 cp_1_id[8]  20.808166 54.00987 -100.44776 138.65007 1.034425      655      489  39.499206    OK</span></span>
+<span><span class="co">## 9 cp_1_id[9] -30.476202 60.90628 -187.32072  81.24282 1.037093      363      258 -42.698803    OK</span></span></code></pre>
 <p>… and verify via posterior predictive checks:</p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pp_check.html">pp_check</a></span><span class="op">(</span><span class="va">fit</span>, facet_by <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span></span></code></pre></div>

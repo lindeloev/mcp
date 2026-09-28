@@ -1,7 +1,7 @@
 # Get predictors for one distributional parameter
 
-This function extracts a `par_x`-less design matrix. `par_x` will be
-relative to the segment onset, so it will be multiplied in the formula
+This function extracts a `par_x`-less design matrix. x-terms are
+measured from the change point, so `par_x` is multiplied in the formula
 (`jags_code` and `fit$simulate()`).
 
 ## Usage
@@ -62,83 +62,10 @@ get_predictors(model, data, family, par_x, check_rank = TRUE)
 
 - model:
 
-  A list of formulas - one for each segment. The general format is
-  `response ~ cp ~ predictors` (e.g., `y ~ 1 ~ 1 + x`), except the first
-  segment has no change point and uses `response ~ predictors`. The
-  response and change-point parts can be omitted (`cp ~ predictor`
-  assumes the same response; `~ predictor` assumes an intercept-only
-  change point). In each segment, all terms must be explicitly declared
-  to be active; terms not declared are inactive (joining via `~ 0 + ...`
-  continues from the level reached by previous segment-local x-dependent
-  terms). As an exception, required non-zero distributional parameters
-  like [`sigma()`](https://rdrr.io/r/stats/sigma.html) are automatically
-  supplied if omitted. To share coefficients across segments without
-  estimating new ones, use `same()`. See examples on the [mcp
-  website](https://lindeloev.github.io/mcp/).
-
-  **1. Response (segment 1 only):**
-
-  - `y ~ ...`: Standard continuous or count response (Gaussian, Poisson,
-    Bernoulli).
-
-  - `successes | trials(total) ~ ...`: Binomial response
-    (`family = binomial()`).
-
-  - `y | weights(w) ~ ...`: Observation log-likelihood weights
-    (multiplies each observation's log-likelihood contribution by
-    `w > 0`; affects posterior inference and
-    [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-    but not predictions).
-
-  - `y | trials(total) + weights(w) ~ ...`: Combine response auxiliaries
-    using `+`.
-
-  **2. Change-point modeling (`cp`, segments 2+):**
-
-  - `~ 1 ~ ...` (or omitted, e.g., `~ x`): Population-level change point
-    (default).
-
-  - `1 + (1 | id) ~ ...`: Group-level change-point deviations around the
-    population change point. [Read
-    more](https://lindeloev.github.io/mcp/articles/group_effects.html).
-
-  **3. Regression formula (all segments):** [Read
-  more](https://lindeloev.github.io/mcp/articles/formulas.html)
-
-  - `~ 1 + x`: Disjoined slope with a new segment intercept.
-
-  - `~ 0 + x`: Joined slope (no intercept; continuous from previous
-    segment).
-
-  - `~ 1`: Plateau (intercept only, no slope).
-
-  - `~ x:state + I(x^2) + exp(z)`: Extended terms, interactions, and
-    R-side bases ([`scale()`](https://rdrr.io/r/base/scale.html),
-    [`poly()`](https://rdrr.io/r/stats/poly.html),
-    [`splines::ns()`](https://rdrr.io/r/splines/ns.html)). Bases are
-    evaluated before sampling and reused for `newdata`.
-
-  - `~ 1 + (1 | id)`: Group-level intercepts (or `(1 + x || id)` for
-    independent slopes and intercepts). [Read
-    more](https://lindeloev.github.io/mcp/articles/group_effects.html).
-
-  - `~ sigma(1 + x)`: Distributional parameters on the link scale (e.g.,
-    log residual SD). [Read
-    more](https://lindeloev.github.io/mcp/articles/dpar.html).
-
-  - `~ ar(1) + ma(1)`: Autoregressive and moving-average time-series
-    residuals on the link scale (accepts regression formulas,
-    `series = id`, and `threshold`; declare them in every segment where
-    they are active). [Read
-    more](https://lindeloev.github.io/mcp/articles/arma.html).
-
-  - `~ 1 + same(x)` or `0 + same(z, as = 1)`: Use `same()` to reuse the
-    coefficients from previous segments (default) or explicitly
-    referenced segment using `as = <segment_number>`. Like all
-    parameters in `mcp`, reused coefficients are estimated jointly
-    across all segments where they appear (pooling data from all
-    segments), rather than fitted sequentially in one segment and copied
-    to another.
+  A list of formulas, one for each segment, in the format
+  `model = list(response ~ predictors, cp ~ predictors)`. See
+  [mcp-formula](https://lindeloev.github.io/mcp/dev/reference/mcp-formula.md)
+  for how segments connect and the full formula syntax.
 
 - family:
 

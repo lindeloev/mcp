@@ -24,8 +24,8 @@ negbinomial(link = "log", link_shape = "log")
 
 ## Details
 
-`shape(1)` is added implicitly in segment 1. In later segments its
-joined level remains unless a new `shape()` formula is declared. For
+`shape` is required by the likelihood, so it includes an intercept in
+segment 1. Later segments that do not include `shape()` are joined. For
 example, `y ~ 1 + x + shape(1 + x)` models both the mean and shape.
 Regression coefficients for both dpars are on their link scales.
 

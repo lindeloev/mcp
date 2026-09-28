@@ -29,7 +29,7 @@ is.mcpfamily(x)
 ## Details
 
 Converts standard R family objects into `mcpfamily` objects used
-internally by `mcp`. Supported family and link combinations include:
+internally by `mcp`. Supported family and link combinations are:
 
 - `gaussian(link = "identity")` or `gaussian(link = "log")`
 

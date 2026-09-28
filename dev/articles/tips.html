@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Diagnosing and fixing problems</h1>
             
-            <h4 data-toc-skip class="date">2026-09-17</h4>
+            <h4 data-toc-skip class="date">2026-09-28</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/tips.Rmd" class="external-link"><code>vignettes/tips.Rmd</code></a></small>
       <div class="d-none name"><code>tips.Rmd</code></div>
@@ -107,13 +107,15 @@
 <h2 id="convergence">Convergence<a class="anchor" aria-label="anchor" href="#convergence"></a>
 </h2>
 <p>A common problem when using MCMC is lacking convergence between
-chains. This will show up as large <code>rhat</code> values (&gt; 1.1 is
-a common criterion) and non-converging lines in
-<code>plot_pars(fit)</code>.</p>
+chains. This will show up as large <code>rhat</code> values, low
+<code>ess_bulk</code> or <code>ess_tail</code>, and non-converging lines
+in <code>plot_pars(fit)</code>. By default, <code><a href="../reference/mcp.html">mcp()</a></code> and
+<code><a href="../reference/summary.mcpfit.html">summary()</a></code> warn when <code>rhat &gt; 1.01</code> or ESS &lt;
+400.</p>
 <ul>
 <li><p>The first thing to try is always to make the model warm up longer
 to see if it reaches convergence later:
-<code>mcp(fit, data, warmup = 10000)</code>.</p></li>
+<code>mcp(model, data, warmup = 10000)</code>.</p></li>
 <li><p>It can be a sign of a deeper non-identifiability in the model.
 This will show up as strong correlations in the joint distribution of
 any pair of implicated parameters:

@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Families and link functions</h1>
             
-            <h4 data-toc-skip class="date">2026-09-17</h4>
+            <h4 data-toc-skip class="date">2026-09-28</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/families.Rmd" class="external-link"><code>vignettes/families.Rmd</code></a></small>
       <div class="d-none name"><code>families.Rmd</code></div>
@@ -108,7 +108,7 @@ way:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian</a></span><span class="op">(</span><span class="st">"log"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="st">"identity"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Currently supported families and link functions include:</p>
+<p>Currently supported families and link functions are:</p>
 <ul>
 <li>Default: <code>gaussian(link = "identity")</code>. Alternatives:
 <code>gaussian(link = "log")</code>

@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Working with priors</h1>
             
-            <h4 data-toc-skip class="date">2026-09-17</h4>
+            <h4 data-toc-skip class="date">2026-09-28</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/priors.Rmd" class="external-link"><code>vignettes/priors.Rmd</code></a></small>
       <div class="d-none name"><code>priors.Rmd</code></div>
@@ -129,7 +129,7 @@ used:</p>
 <span>  cp_1 <span class="op">=</span> <span class="st">"dunif(min(x), cp_2)"</span>,  <span class="co"># change point between smallest x and cp_2</span></span>
 <span>  x_2 <span class="op">=</span> <span class="st">"dt(0, 1, 3) T(x_1, )"</span>,  <span class="co"># slope 2 &gt; slope 1 and t-distributed</span></span>
 <span>  cp_2 <span class="op">=</span> <span class="fl">80</span>,  <span class="co"># A constant (set; not estimated)</span></span>
-<span>  x_3 <span class="op">=</span> <span class="st">"x_2"</span>  <span class="co"># continue same slope</span></span>
+<span>  x_3 <span class="op">=</span> <span class="st">"x_2"</span>  <span class="co"># same slope as x_2 (use same() instead; see below)</span></span>
 <span>  <span class="co"># Intercept_2 and Intercept_3 not specified. Use default.</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The values use mcp’s JAGS-string syntax, so JAGS distributions are
@@ -165,12 +165,14 @@ temporarily supported with a deprecation warning.</p></li>
 <li><p>You can fix any parameter to a specific value. Simply set it to a
 numerical value (as <code>cp_2</code> above). A constant is a 100% prior
 belief in that value, and it will therefore not be estimated.</p></li>
-<li><p>You can also equate one variable with another
-(<code>x_3 = "x_2"</code> above) though a more readable equivalent is
-declaring <code>same(x)</code> in segment 3. That removes the
-<code>x_3</code> as parameter while the prior-method duplicates it. Read
-more about the versatile <code>same()</code> in <a href="../articles/formulas.html">Understanding mcp
-formulas</a>.</p></li>
+<li><p>To share a coefficient between segments, prefer
+<code>same()</code> in the model, e.g., <code>~ 1 + same(x)</code> in
+segment 3. This reuses <code>x_2</code> instead of estimating
+<code>x_3</code>. Equating parameters in the prior
+(<code>x_3 = "x_2"</code> above) gives the same fit but keeps
+<code>x_3</code> as a duplicate. Read more about <code>same()</code> in
+<a href="../articles/formulas.html#sharing-coefficients-between-segments">Understanding
+mcp formulas</a>.</p></li>
 <li><p>You can write deterministic expression such as
 <code>x_3 = "x_2 + 5 - cp_1/10"</code>. Since <code>x_3</code> is now
 deterministic given <code>x_2</code> and <code>cp_1</code>, this leaves
@@ -187,37 +189,36 @@ compare to the default priors:</p>
 <span><span class="co"># Inspect resolved priors and bounds</span></span>
 <span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">empty_manual</span><span class="op">)</span>  <span class="co"># For more details: add verbose = TRUE</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 9 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                                            bounds        </span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    uniform(min = 1, max = cp_2)                     [min(x), cp_2]</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    80                                               none          </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 0, sd = 5)                         [-Inf, 10]    </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> x_1               1 mu    beta(shape1 = 2, shape2 = 5)                     [0, 1]        </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_2       2 mu    student_t(df = 3, location = 50.5, scale = 37.1) none          </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> x_2               2 mu    student_t(df = 3, location = 0, scale = 1)       [x_1, Inf]    </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">7</span> Intercept_3       3 mu    student_t(df = 3, location = 50.5, scale = 37.1) none          </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">8</span> x_3               3 mu    x_2                                              none          </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">9</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1)    [0.001, Inf]</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior                                         bounds        </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    uniform(min = 1, max = cp_2)                  [min(x), cp_2]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    80                                            none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 0, sd = 5)                      [-Inf, 10]    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> x_1               1 mu    beta(shape1 = 2, shape2 = 5)                  [0, 1]        </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_2       2 mu    normal(mean = 50.5, sd = 72.52873)            none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> x_2               2 mu    student_t(df = 3, location = 0, scale = 1)    [x_1, Inf]    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">7</span> Intercept_3       3 mu    normal(mean = 50.5, sd = 72.52873)            none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">8</span> x_3               3 mu    x_2                                           none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">9</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0.001, Inf]</span></span></code></pre>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">empty_default</span><span class="op">)</span>  <span class="co"># For more details: add verbose = TRUE</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 9 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                                              bounds        </span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                              <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)                               [min(x), cp_2]</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    dirichlet(alpha = 1)                               [cp_1, max(x)]</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    student_t(df = 3, location = 50.5, scale = 37.1)   none          </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> x_1               1 mu    student_t(df = 3, location = 0, scale = 0.3747475) none          </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_2       2 mu    student_t(df = 3, location = 50.5, scale = 37.1)   none          </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> x_2               2 mu    student_t(df = 3, location = 0, scale = 0.3747475) none          </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">7</span> Intercept_3       3 mu    student_t(df = 3, location = 50.5, scale = 37.1)   none          </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">8</span> x_3               3 mu    student_t(df = 3, location = 0, scale = 0.3747475) none          </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">9</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1)      [0.001, Inf]</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior                                         bounds        </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)                          [min(x), cp_2]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    dirichlet(alpha = 1)                          [cp_1, max(x)]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 50.5, sd = 72.52873)            none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> x_1               1 mu    normal(mean = 0, sd = 2.5)                    none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_2       2 mu    normal(mean = 50.5, sd = 72.52873)            none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> x_2               2 mu    normal(mean = 0, sd = 2.5)                    none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">7</span> Intercept_3       3 mu    normal(mean = 50.5, sd = 72.52873)            none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">8</span> x_3               3 mu    normal(mean = 0, sd = 2.5)                    none          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">9</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0.001, Inf]</span></span></code></pre>
 <p>Now, let’s simulate some data from <code>model</code>. The following
 priors are “at odds” with the actual data so as to show their
 effect.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">0</span>, <span class="fl">100</span><span class="op">)</span>, y <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>  <span class="co"># 200 datapoints between 0 and 100</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">df</span><span class="op">$</span><span class="va">y</span> <span class="op">=</span> <span class="va">empty_default</span><span class="op">$</span><span class="fu">simulate</span><span class="op">(</span><span class="va">empty_default</span>, <span class="va">df</span>, </span>
 <span>    Intercept_1 <span class="op">=</span> <span class="fl">20</span>, Intercept_2 <span class="op">=</span> <span class="fl">22</span>, Intercept_3 <span class="op">=</span> <span class="fl">30</span>,  <span class="co"># intercepts</span></span>
 <span>    x_1 <span class="op">=</span> <span class="op">-</span><span class="fl">0.5</span>, x_2 <span class="op">=</span> <span class="fl">0.5</span>, x_3 <span class="op">=</span> <span class="fl">0</span>,  <span class="co"># slopes</span></span>
@@ -225,31 +226,29 @@ effect.</p>
 <span>    sigma <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##            x        y</span></span>
-<span><span class="co">## 1  8.0750138 22.81729</span></span>
-<span><span class="co">## 2 83.4333037 27.17651</span></span>
-<span><span class="co">## 3 60.0760886 36.35369</span></span>
-<span><span class="co">## 4 15.7208442 15.30389</span></span>
-<span><span class="co">## 5  0.7399441 21.65137</span></span>
-<span><span class="co">## 6 46.6393497 27.28905</span></span></code></pre>
+<pre><code><span><span class="co">##          x        y</span></span>
+<span><span class="co">## 1 91.48060 36.00483</span></span>
+<span><span class="co">## 2 93.70754 35.22376</span></span>
+<span><span class="co">## 3 28.61395  0.67698</span></span>
+<span><span class="co">## 4 83.04476 39.24241</span></span>
+<span><span class="co">## 5 64.17455 33.25341</span></span>
+<span><span class="co">## 6 51.90959 30.98237</span></span></code></pre>
 <p>Sample the prior and posterior. We give the manual fit a longer
 warmup since it is harder to find the right posterior under these weird
 prior constraints (priors will usually improve sampling efficiency).</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="fu">future</span><span class="fu">::</span><span class="va"><a href="https://future.futureverse.org/reference/multisession.html" class="external-link">multisession</a></span>, workers <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="va">fit_manual</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, sample <span class="op">=</span> <span class="st">"both"</span>, warmup <span class="op">=</span> <span class="fl">10000</span>, prior <span class="op">=</span> <span class="va">prior</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
-<span><span class="va">fit_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, sample <span class="op">=</span> <span class="st">"both"</span>, warmup <span class="op">=</span> <span class="fl">10000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">fit_manual</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, sample <span class="op">=</span> <span class="st">"both"</span>, warmup <span class="op">=</span> <span class="fl">3000</span>, prior <span class="op">=</span> <span class="va">prior</span><span class="op">)</span></span>
+<span><span class="va">fit_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, sample <span class="op">=</span> <span class="st">"both"</span>, warmup <span class="op">=</span> <span class="fl">3000</span><span class="op">)</span></span></code></pre></div>
 <p>First, let’s look at the priors side by side. Notice the use of
 <code>prior = TRUE</code> to show prior samples. This works in
 <code><a href="../reference/plot.mcpfit.html">plot()</a></code>, <code><a href="../reference/plot_pars.html">plot_pars()</a></code>, and
 <code><a href="../reference/summary.mcpfit.html">summary()</a></code> among others.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">pp_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit_default</span>, type <span class="op">=</span> <span class="st">"dens_overlay"</span>, prior <span class="op">=</span> <span class="cn">TRUE</span>, nvariables <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Default priors"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">pp_manual</span> <span class="op">=</span> <span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit_manual</span>, type <span class="op">=</span> <span class="st">"dens_overlay"</span>, prior <span class="op">=</span> <span class="cn">TRUE</span>, nvariables <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Manual priors"</span><span class="op">)</span></span>
 <span></span>
@@ -257,10 +256,8 @@ prior constraints (priors will usually improve sampling efficiency).</p>
 <p><img src="priors_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="576"></p>
 <p>Here are the resulting posterior fits:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="va">plot_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_default</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Default priors"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">plot_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_default</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Default priors"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">plot_manual</span> <span class="op">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_manual</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Manual priors"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plot_default</span> <span class="op">+</span> <span class="va">plot_manual</span></span></code></pre></div>
@@ -282,17 +279,17 @@ whether each prior came from the user or data-calibrated defaults:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit_manual</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 9 × 9</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                                          bounds         rule                                                                                  description                                                  source  kind        </span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                                                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    uniform(min = 0.4496308, max = cp_2)           [min(x), cp_2] uniform(min = min(x), max = cp_2)                                                     User-specified prior                                         user    distribution</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    80                                             none           80                                                                                    Fixed at 80                                                  user    constant    </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 0, sd = 5)                       [-Inf, 10]     normal(mean = 0, sd = 5)                                                              User-specified prior                                         user    distribution</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> x_1               1 mu    beta(shape1 = 2, shape2 = 5)                   [0, 1]         beta(shape1 = 2, shape2 = 5)                                                          User-specified prior                                         user    distribution</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_2       2 mu    student_t(df = 3, location = 26, scale = 10.3) none           student_t(df = 3, location = round(median(y), 1), scale = max(2.5, round(mad(y), 1))) Robustly centered mean intercept with a minimum scale of 2.5 default distribution</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> x_2               2 mu    student_t(df = 3, location = 0, scale = 1)     [x_1, Inf]     student_t(df = 3, location = 0, scale = 1)                                            User-specified prior                                         user    distribution</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">7</span> Intercept_3       3 mu    student_t(df = 3, location = 26, scale = 10.3) none           student_t(df = 3, location = round(median(y), 1), scale = max(2.5, round(mad(y), 1))) Robustly centered mean intercept with a minimum scale of 2.5 default distribution</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">8</span> x_3               3 mu    x_2                                            none           x_2                                                                                   Same value as x_2                                            user    alias       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">9</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 10.3)  [0.001, Inf]   student_t(df = 3, location = 0, scale = max(2.5, round(mad(y), 1)))                   Positive residual SD calibrated on the response scale        default distribution</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior                                        bounds         rule                                                                description                                           source  kind        </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    uniform(min = 0.02388966, max = cp_2)        [min(x), cp_2] uniform(min = min(x), max = cp_2)                                   User-specified prior                                  user    distribution</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    80                                           none           80                                                                  Fixed at 80                                           user    constant    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 0, sd = 5)                     [-Inf, 10]     normal(mean = 0, sd = 5)                                            User-specified prior                                  user    distribution</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> x_1               1 mu    beta(shape1 = 2, shape2 = 5)                 [0, 1]         beta(shape1 = 2, shape2 = 5)                                        User-specified prior                                  user    distribution</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_2       2 mu    normal(mean = 24.32185, sd = 26.85637)       none           normal(mean = mean(y), sd = 2.5 * sd(y))                            Mean intercept (rstanarm default)                     default distribution</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> x_2               2 mu    student_t(df = 3, location = 0, scale = 1)   [x_1, Inf]     student_t(df = 3, location = 0, scale = 1)                          User-specified prior                                  user    distribution</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">7</span> Intercept_3       3 mu    normal(mean = 24.32185, sd = 26.85637)       none           normal(mean = mean(y), sd = 2.5 * sd(y))                            Mean intercept (rstanarm default)                     default distribution</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">8</span> x_3               3 mu    x_2                                          none           x_2                                                                 Same value as x_2                                     user    alias       </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">9</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 9.9) [0.001, Inf]   student_t(df = 3, location = 0, scale = max(2.5, round(mad(y), 1))) Positive residual SD calibrated on the response scale default distribution</span></span></code></pre>
 <p>This is a contrived example. Usually setting priors manually aims to
 sample the “correct” posterior.</p>
 </div>
@@ -305,13 +302,11 @@ meaningful before fitting to data. Simply set
 priors above to compare their prior predictive space:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Sample priors</span></span>
-<span><span class="va">fit_pp_manual</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, prior <span class="op">=</span> <span class="va">prior</span>, sample <span class="op">=</span> <span class="st">"prior"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
-<span><span class="va">fit_pp_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, sample <span class="op">=</span> <span class="st">"prior"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">fit_pp_manual</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, prior <span class="op">=</span> <span class="va">prior</span>, sample <span class="op">=</span> <span class="st">"prior"</span><span class="op">)</span></span>
+<span><span class="va">fit_pp_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, sample <span class="op">=</span> <span class="st">"prior"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Plot it</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">plot_pp_manual</span> <span class="op">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_pp_manual</span>, lines <span class="op">=</span> <span class="fl">100</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">400</span>, <span class="fl">400</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Manual prior"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">plot_pp_default</span> <span class="op">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit_pp_default</span>, lines <span class="op">=</span> <span class="fl">100</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">400</span>, <span class="fl">400</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Default prior"</span><span class="op">)</span></span>
 <span><span class="va">plot_pp_manual</span> <span class="op">+</span> <span class="va">plot_pp_default</span>  <span class="co"># using patchwork</span></span></code></pre></div>
 <p><img src="priors_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
@@ -467,7 +462,11 @@ x)</span>, where <span class="math inline">\Delta x =
 \operatorname{range}(x)</span> (for binary and <code>par_x</code>) and
 <span class="math inline">2\,\operatorname{sd}(x)</span> (continuous).
 This ensures that slope priors remain identical and comparable across
-models regardless of the number of change points.</li>
+models regardless of the number of change points. Powers of
+<code>par_x</code> such as <code>I(x^2)</code> grow within a segment, so
+they use <span class="math inline">\Delta x = \operatorname{range}(x)
+\cdot w^{p-1}</span> with the typical segment width <span class="math inline">w = \operatorname{range}(x) / K</span> for <span class="math inline">K</span> segments. They thus imply the same change
+within a typical segment as a linear slope.</li>
 <li>Group-level slope standard deviations mirror this scaling: <span class="math inline">\sigma_\beta \sim \text{Dist}(0, S / \Delta x) T(0,
 )</span>.</li>
 </ul>
@@ -497,7 +496,9 @@ scales.</li>
 <li><p>log-rate scale <span class="math inline">S_{\text{rate}} =
 \max(2.5, \operatorname{mad}(y_{\text{rate}}))</span></p></li>
 <li><p>predictor change <span class="math inline">\Delta x =
-\operatorname{range}(x)</span> (binary / <code>par_x</code>) or <span class="math inline">2\,\operatorname{sd}(x)</span> (other
+\operatorname{range}(x)</span> (binary / <code>par_x</code>), <span class="math inline">\operatorname{range}(x) \cdot w^{p-1}</span> for
+<code>par_x</code> powers (with <span class="math inline">w =
+\operatorname{range}(x) / K</span>), or <span class="math inline">2\,\operatorname{sd}(x)</span> (other
 continuous).</p></li>
 </ul>
 <table class="table">
@@ -701,11 +702,13 @@ priors to favor stationary and invertible dynamics.</li>
 <span><span class="co">##   cp_2 = CONST3_  # Fixed at 80</span></span>
 <span><span class="co">##   Intercept_1 ~ dnorm(0, 1/(5)^2) T(,10)  # User-specified prior</span></span>
 <span><span class="co">##   x_1 ~ dbeta(2, 5)  # User-specified prior</span></span>
-<span><span class="co">##   Intercept_2 ~ dt(26, 1/(10.3)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span></span>
+<span><span class="co">##   Intercept_2_end_ ~ dnorm(24.32185 + x_2 * (cp_2 - cp_1), 1/(26.85637)^2)   # Mean intercept (rstanarm default); sampled as the level at the segment end</span></span>
+<span><span class="co">##   Intercept_2 = Intercept_2_end_ - (x_2 * (cp_2 - cp_1))</span></span>
 <span><span class="co">##   x_2 ~ dt(0, 1/(1)^2, 3) T(x_1,)  # User-specified prior</span></span>
-<span><span class="co">##   Intercept_3 ~ dt(26, 1/(10.3)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span></span>
+<span><span class="co">##   Intercept_3_end_ ~ dnorm(24.32185 + x_3 * (cp_3 - cp_2), 1/(26.85637)^2)   # Mean intercept (rstanarm default); sampled as the level at the segment end</span></span>
+<span><span class="co">##   Intercept_3 = Intercept_3_end_ - (x_3 * (cp_3 - cp_2))</span></span>
 <span><span class="co">##   x_3 = x_2  # Same value as x_2</span></span>
-<span><span class="co">##   sigma_1 ~ dt(0, 1/(10.3)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale</span></span>
+<span><span class="co">##   sigma_1 ~ dt(0, 1/(9.9)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(x)) {</span></span>

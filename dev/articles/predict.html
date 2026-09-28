@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Fits and predictions</h1>
             
-            <h4 data-toc-skip class="date">2026-09-17</h4>
+            <h4 data-toc-skip class="date">2026-09-28</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/predict.Rmd" class="external-link"><code>vignettes/predict.Rmd</code></a></small>
       <div class="d-none name"><code>predict.Rmd</code></div>
@@ -116,7 +116,6 @@ dataset:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lindeloev.github.io/mcp/">mcp</a></span><span class="op">)</span></span>
 <span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="fu">future</span><span class="fu">::</span><span class="va"><a href="https://future.futureverse.org/reference/multisession.html" class="external-link">multisession</a></span>, workers <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span>  <span class="co"># Make the script deterministic</span></span>
 <span></span>
 <span><span class="va">data</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp_example.html">mcp_example_data</a></span><span class="op">(</span><span class="st">"demo"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span></code></pre></div>
@@ -137,13 +136,12 @@ dataset:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Fit it</span></span>
-<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span><span class="op">)</span></span></code></pre></div>
 <p>This is what the data and inferred fit look like with a 95% central
 posterior interval for the expected response and an 80% posterior
 predictive interval:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, q_fit <span class="op">=</span> <span class="cn">TRUE</span>, q_predict <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, q_fit <span class="op">=</span> <span class="cn">TRUE</span>, q_predict <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="predict_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="700"></p>
 <p>To review what we see here:</p>
 <ul>
@@ -170,21 +168,20 @@ inferences.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   response     time   fitted        sd     Q2.5    Q97.5</span></span>
-<span><span class="co">## 1 17.23552 76.33986 16.95304 0.9425042 15.17680 18.84139</span></span>
-<span><span class="co">## 2 11.35171 83.51711 16.22386 0.7231217 14.82569 17.64630</span></span>
-<span><span class="co">## 3 28.04995 60.18529 25.26025 0.8946280 23.51420 26.98299</span></span>
-<span><span class="co">## 4 20.68198 74.72964 17.11663 1.0216233 15.20838 19.19173</span></span>
-<span><span class="co">## 5 21.21364 85.88256 15.98354 0.7208332 14.60845 17.42739</span></span>
-<span><span class="co">## 6 22.32282 40.05069 14.54825 0.6297756 13.25108 15.71204</span></span></code></pre>
-<p>In general, this output will include:</p>
+<span><span class="co">## 1 17.23552 76.33986 17.84217 0.9990016 15.84515 19.79815</span></span>
+<span><span class="co">## 2 11.35171 83.51711 16.41701 0.7249251 14.96533 17.85840</span></span>
+<span><span class="co">## 3 28.04995 60.18529 25.44790 0.8844492 23.70304 27.14645</span></span>
+<span><span class="co">## 4 20.68198 74.72964 18.16191 1.0936603 15.99893 20.29138</span></span>
+<span><span class="co">## 5 21.21364 85.88256 15.94730 0.7188174 14.54413 17.36917</span></span>
+<span><span class="co">## 6 22.32282 40.05069 14.47462 0.6410212 13.15862 15.68560</span></span></code></pre>
+<p>In general, this output contains:</p>
 <ul>
 <li><p>A column for each predictor column in the data. Here,
 <code>time</code> is the only predictor and you see the values in the
 same order as in <code>data</code> (which is copied to
 <code>fit$data</code>). Models with <a href="../articles/group_effects.html">group-level effects</a>
-additionally include the relevant grouping columns,
-<code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code> models include the number of trials,
-etc.</p></li>
+additionally have the relevant grouping columns, <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code>
+models have the number of trials, etc.</p></li>
 <li><p><strong>fitted:</strong> The fitted value (posterior mean). When
 <code>summary = TRUE</code> (default), the column is called
 <code>fitted</code>. When <code>summary = FALSE</code>, the column is
@@ -210,10 +207,10 @@ behind the scenes.</p>
 <code class="sourceCode R"><span><span class="va">newdata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">time</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="fl">25</span>, <span class="op">-</span><span class="fl">20</span>, <span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit</span>, newdata <span class="op">=</span> <span class="va">newdata</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##        time    fitted        sd       Q2.5    Q97.5</span></span>
-<span><span class="co">## 1  76.33986 16.953037 0.9425042  15.176805 18.84139</span></span>
-<span><span class="co">## 2  25.00000 10.032579 0.6630444   8.729474 11.31624</span></span>
-<span><span class="co">## 3 -20.00000 10.032168 0.6635059   8.728337 11.31624</span></span>
-<span><span class="co">## 4 200.00000  4.389672 8.3266709 -13.882775 18.56525</span></span></code></pre>
+<span><span class="co">## 1  76.33986 17.842172 0.9990016  15.845155 19.79815</span></span>
+<span><span class="co">## 2  25.00000  9.935817 0.6604596   8.609782 11.23334</span></span>
+<span><span class="co">## 3 -20.00000  9.935788 0.6605319   8.609782 11.23334</span></span>
+<span><span class="co">## 4 200.00000 -6.712685 9.3058981 -25.149202 11.43209</span></span></code></pre>
 <p>Note that:</p>
 <ul>
 <li>We get one row per value of <code>time</code>.</li>
@@ -221,12 +218,12 @@ behind the scenes.</p>
 correspond to the same row in <code>fitted(fit)</code> because that’s
 merely a shortcut to do
 <code>fitted(fit, newdata = fit$data)</code>.</li>
-<li>The second value (<code>time = 20</code>) is within the observed
+<li>The second value (<code>time = 25</code>) is within the observed
 region, but not in the dataset.</li>
 <li>The third value (<code>time = - 20</code>) is outside the observed
 region, but <code>mcp</code> merely extends the first segment backwards
 in time. Because it’s a plateau, we see approximately the same values as
-for <code>time = 20</code>.</li>
+for <code>time = 25</code>.</li>
 <li>The fourth value (<code>time = 200</code>) is way outside the
 observed region. Because it is the extrapolation of the slope in the
 third segment of which we’ve only observed the first tiny bit, the
@@ -244,7 +241,7 @@ few, you can set <code>fitted(fit, dpar = "sigma")</code> to get fitted
 values for <code>sigma</code> (<a href="../articles/dpar.html">more on
 modeling sigma</a>), <code>prior = TRUE</code> to predict using only the
 prior, and <code>arma = FALSE</code> to exclude AR/MA effects. For
-group-level effects, use <code>varying = TRUE</code> (all),
+group-level effects, use <code>group = TRUE</code> (all),
 <code>FALSE</code> (none), <code>"cp"</code> or <code>"predictor"</code>
 (a formula part), or an exact group-level parameter name.</p>
 </div>
@@ -263,12 +260,12 @@ predictive interval):</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   response     time  predict       sd       Q10      Q90</span></span>
-<span><span class="co">## 1 17.23552 76.33986 16.87655 4.044288 11.807985 22.09377</span></span>
-<span><span class="co">## 2 11.35171 83.51711 16.19702 3.979168 11.139668 21.30783</span></span>
-<span><span class="co">## 3 28.04995 60.18529 25.32072 4.009801 20.130376 30.38637</span></span>
-<span><span class="co">## 4 20.68198 74.72964 17.07618 4.037014 11.946629 22.28208</span></span>
-<span><span class="co">## 5 21.21364 85.88256 15.86910 3.992311 10.900805 21.06792</span></span>
-<span><span class="co">## 6 22.32282 40.05069 14.56188 3.945864  9.484676 19.61205</span></span></code></pre>
+<span><span class="co">## 1 17.23552 76.33986 17.76087 4.025946 12.729675 22.95364</span></span>
+<span><span class="co">## 2 11.35171 83.51711 16.39834 3.945877 11.381113 21.45299</span></span>
+<span><span class="co">## 3 28.04995 60.18529 25.50435 3.974106 20.369367 30.52404</span></span>
+<span><span class="co">## 4 20.68198 74.72964 18.12685 4.009017 13.017773 23.30484</span></span>
+<span><span class="co">## 5 21.21364 85.88256 15.83290 3.944597 10.913034 20.98206</span></span>
+<span><span class="co">## 6 22.32282 40.05069 14.48612 3.932286  9.456287 19.49107</span></span></code></pre>
 <p>Note that <code><a href="../reference/execute-mcp-model.html">predict()</a></code> uses random sampling under the hood,
 so these values will differ slightly from call to call. You can make it
 replicable using <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> as above. In general, the more
@@ -324,13 +321,13 @@ sampling:</p>
 prior knowledge:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model_forecast</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">empty</span><span class="op">$</span><span class="va">model</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="op">~</span> <span class="fl">1</span>     <span class="co"># intercept (Intercept_4) after cp_3</span></span>
+<span>  <span class="op">~</span> <span class="fu">same</span><span class="op">(</span><span class="fl">1</span>, as <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>  <span class="co"># Return to Intercept_1 after cp_3</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>And finally, we extend the list of priors with the two new parameters
-(<code>time_4</code> and <code>cp_3</code>). The model needs a predictor
-value at the end of the forecasting horizon so that the future change
-point remains within its supported range. Its response is missing, so it
-contributes no observed outcome. It may be helpful to review <a href="../articles/priors.html">the article on priors in mcp</a>.</p>
+<p>And finally, we extend the list of priors with the new change point
+<code>cp_3</code>. The model needs a predictor value at the end of the
+forecasting horizon so that the future change point remains within its
+supported range. Its response is missing, so it contributes no observed
+outcome. It may be helpful to review <a href="../articles/priors.html">the article on priors in mcp</a>.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">forecast_horizon</span> <span class="op">=</span> <span class="fl">170</span></span>
 <span><span class="va">data_forecast</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">data</span>, <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="va">forecast_horizon</span>, response <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span><span class="op">)</span></span>
@@ -339,12 +336,11 @@ contributes no observed outcome. It may be helpful to review <a href="../article
 <span><span class="va">prior_forecast</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">empty</span><span class="op">$</span><span class="va">prior</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">empty</span><span class="op">$</span><span class="va">prior</span><span class="op">)</span> <span class="op"><a href="https://mc-stan.org/posterior/reference/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cp_1"</span>, <span class="st">"cp_2"</span><span class="op">)</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  cp_1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"dunif("</span>, <span class="va">observed_start</span>, <span class="st">", "</span>, <span class="va">observed_end</span>, <span class="st">")"</span><span class="op">)</span>,</span>
 <span>  cp_2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"dunif(cp_1, "</span>, <span class="va">observed_end</span>, <span class="st">")"</span><span class="op">)</span>,</span>
-<span>  Intercept_4 <span class="op">=</span> <span class="st">"Intercept_1"</span>,  <span class="co"># Return to this value</span></span>
 <span>  cp_3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"dnorm(cp_2 + (cp_2 - cp_1), 20) T("</span>, <span class="va">observed_end</span>, <span class="st">", "</span>, <span class="va">forecast_horizon</span>, <span class="st">")"</span><span class="op">)</span>  <span class="co"># In the future at the same interval</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Now let’s fit it:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_forecast</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model_forecast</span>, data <span class="op">=</span> <span class="va">data_forecast</span>, prior <span class="op">=</span> <span class="va">prior_forecast</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit_forecast</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model_forecast</span>, data <span class="op">=</span> <span class="va">data_forecast</span>, prior <span class="op">=</span> <span class="va">prior_forecast</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="step-3-predict">Step 3: predict!<a class="anchor" aria-label="anchor" href="#step-3-predict"></a>
@@ -353,8 +349,8 @@ contributes no observed outcome. It may be helpful to review <a href="../article
 <code>time = 125</code>:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit_forecast</span>, newdata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">125</span><span class="op">)</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.25</span>, <span class="fl">0.75</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   time predict       sd      Q10      Q25      Q75      Q90</span></span>
-<span><span class="co">## 1  125 10.7111 4.425336 5.227146 7.797327 13.62834 16.41037</span></span></code></pre>
+<pre><code><span><span class="co">##   time  predict       sd      Q10      Q25      Q75     Q90</span></span>
+<span><span class="co">## 1  125 9.244078 4.499987 3.553236 6.425221 12.29614 14.8795</span></span></code></pre>
 <p>To really understand what’s going on here, it may be helpful to
 visualize the model. For now, we will have to hack this a bit too,
 manually doing our plot:</p>
@@ -398,7 +394,7 @@ the future change point (<code>cp_3</code>) so that it occurs
 <em>after</em> the last data point (<code>max(time)</code>), i.e., at
 <code>time &gt; 100</code>. This is knowledge that the third change
 point had not yet been observed at <code>time = 100</code>, and this
-pushes the distribution further into the future (actually around 118;
+pushes the distribution further into the future (actually around 120;
 see <code>summary(fit_forecast)</code>).</p>
 </div>
 </div>

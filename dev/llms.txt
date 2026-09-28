@@ -9,18 +9,32 @@ status](https://www.r-pkg.org/badges/version/mcp)](https://CRAN.R-project.org/pa
 [![mcp CRAN
 downloads](https://cranlogs.r-pkg.org/badges/mcp)](https://cranlogs.r-pkg.org/badges/mcp)
 
-`mcp` does `lm`/`glm`/`brms`-like regression with Multiple Change Points
-(hence “`mcp`”) using Bayesian inference. `mcp` is especially useful if
-you have a priori knowledge about the number of change points and the
-trend of the segments in between. It supports GLMs with group-level
-effects (random effects), AR/MA, and regression on distributional
-parameters (`sigma`, `shape`, etc.).
+`mcp` is regression with multiple change points. At its simplest, it
+feels like [`lm()`](https://rdrr.io/r/stats/lm.html), but with one
+formula per segment. At its most flexible, it aims to be
+**[`brms`](https://paulbuerkner.com/brms/) for change points**: GLM
+families (Gaussian, binomial, Bernoulli, Poisson, negative binomial),
+group-level effects (random effects), AR/MA, and regression on
+distributional parameters (e.g., `sigma`, `shape`), all inferred with
+full Bayesian uncertainty, including the change points themselves.
 
-`mcp` aims to feel “R-native” like `lm`/`glm` at its simplest while the
-more Bayesian aspects are inspired by `brms` and `posterior`. Under the
-hood, `mcp` takes a formula-representation of linear segments and turns
-it into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code (see
-`fit$jags_code`).
+You specify the number of change points and the form of each segment,
+making it easy to express expert knowledge or hypotheses. Compare
+alternatives with
+[`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md).
+Methods like
+[`plot_pars()`](https://lindeloev.github.io/mcp/dev/reference/plot_pars.md),
+[`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
+[`pp_check()`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md),
+[`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md),
+and
+[`as_draws_df()`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md)
+follow the conventions of [`brms`](https://paulbuerkner.com/brms/),
+[`rstanarm`](https://mc-stan.org/rstanarm/), and
+[`posterior`](https://mc-stan.org/posterior/articles/posterior.html),
+adapted to change point regression. Under the hood, `mcp` turns the
+formulas into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code
+(see `fit$jags_code`).
 
 `mcp` has [200+ academic
 citations](https://scholar.google.com/scholar?cites=5590697509718421309)
@@ -148,16 +162,16 @@ summary(fit)
 ## 
 ## Change point parameters:
 ##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-##  cp_1        31.54 1.798 28.24 35.241 1.00      946     1271 30.0    OK
-##  cp_2        71.12 1.012 69.47 72.762 1.00     5119     7044 70.0    OK
+##  cp_1        31.65 1.743 28.34 35.109 1.00     1274     1903 30.0    OK
+##  cp_2        71.14 1.019 69.46 72.782 1.00     3509     6806 70.0    OK
 ## 
 ## Population-level parameters:
 ##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-##  Intercept_1 10.05 0.662  8.74 11.350 1.00     1904     3579 10.0    OK
-##  time_2       0.53 0.048  0.44  0.633 1.00     1545     2392  0.5    OK
-##  Intercept_3 17.48 1.216 15.28 19.981 1.00      936     1376 20.0      
-##  time_3      -0.10 0.072 -0.26  0.019 1.00      946     1387 -0.3      
-##  sigma_1      3.90 0.290  3.39  4.519 1.00     4854     4624  3.5    OK
+##  Intercept_1  9.94 0.653  8.66 11.189 1.00     3356     6012 10.0    OK
+##  time_2       0.54 0.047  0.46  0.640 1.00     3184     5290  0.5    OK
+##  Intercept_3 18.94 1.336 16.34 21.660 1.00     2802     4459 20.0    OK
+##  time_3      -0.20 0.080 -0.36 -0.046 1.00     1331     2519 -0.3    OK
+##  sigma_1      3.86 0.281  3.35  4.458 1.00     5093     4609  3.5    OK
 ```
 
 - `rhat` is the rank-normalized split-Rhat convergence diagnostic.
@@ -215,8 +229,8 @@ hypothesis(fit, "cp_1 > 25")
 ```
 
 ``` R
-##      hypothesis     mean    lower    upper      prob       BF
-## 1 cp_1 - 25 > 0 6.544368 3.236057 10.24094 0.9997778 3204.767
+##      hypothesis     mean    lower   upper      prob       BF
+## 1 cp_1 - 25 > 0 6.654192 3.337938 10.1086 0.9995556 1645.747
 ```
 
 For model comparisons, we can fit a null model and compare the
@@ -244,15 +258,28 @@ is strong:
 ``` r
 
 fit_loo = loo(fit)
+```
+
+``` R
+## Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
+```
+
+``` r
+
 fit_null_loo = loo(fit_null)
 
 loo::loo_compare(fit_loo, fit_null_loo)
 ```
 
 ``` R
-##   model elpd_diff se_diff p_worse diag_diff diag_elpd
-##  model1       0.0     0.0      NA                    
-##  model2     -45.7     7.8    1.00
+##   model elpd_diff se_diff p_worse diag_diff      diag_elpd
+##  model1       0.0     0.0      NA           1 k_psis > 0.7
+##  model2     -46.4     7.9    1.00
+
+## 
+## Diagnostic flags present.
+## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
+## or https://mc-stan.org/loo/reference/loo-glossary.html.
 ```
 
 # Highlights from in-depth guides
@@ -268,9 +295,12 @@ formulas](https://lindeloev.github.io/mcp/articles/formulas.html):
   points), `x_i` (slopes), `ar*`/`ma*` (autocorrelation), and `sigma_*`
   (Gaussian residual standard deviation).
 
-- All terms must be explicitly declared in each segment where they are
-  active; omitting a term turns it off. Use `same(z)` to share a
-  coefficient with previous segments.
+- Only terms included in a segment get coefficients there. `~ 0 + ...`
+  is joined: it continues from where the earlier intercept and
+  [x-terms](https://lindeloev.github.io/mcp/articles/formulas.html#how-segments-connect)
+  (`x`, `state:x`, `I(x^2)`) left off. `~ 1 + ...` is disjoined and
+  starts afresh. Use `same(z)` to reuse a coefficient from the preceding
+  segment.
 
 - The change point model is basically an `ifelse` model with order
   constraints on the change points.
@@ -316,7 +346,7 @@ testing](https://lindeloev.github.io/mcp/articles/comparison.html):
 effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
 
 - Model group-level intercepts, slopes, and change points using
-  `(1|id)`, `(state||id)`, or `+(state|id)`. Get posteriors using
+  `(1|id)`, `(0 + x||id)`, or `1 + (1|id) ~ ...`. Get posteriors using
   `ranef(fit)`.
 
 - Plot using `plot(fit, facet_by = "my_group")` and
@@ -367,8 +397,9 @@ intervals](https://lindeloev.github.io/mcp/articles/predict.html):
   lengths with equal spacing between change points. Informativeness
   increases as the number of change points increases.
 
-- Fix parameters to specific values using `cp_1 = 45` and share
-  parameters between segments using `slope_1 = "slope_2"`.
+- Fix parameters to specific values using `cp_1 = 45`. To share a
+  coefficient between segments, use `same()` in the model, e.g.,
+  `~ 0 + same(x)`.
 
 - Truncate priors using `T(lower, upper)`, e.g.,
   `Intercept_1 = "dnorm(0, 1) T(0, )"`. `mcp` adds ordering bounds to
@@ -429,14 +460,14 @@ head(fitted(fit, summary = FALSE))  # column .epred
 
 ``` R
 ## # A tibble: 6 × 14
-##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3  time_3
-##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>   <dbl>
-## 1      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
-## 2      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
-## 3      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
-## 4      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
-## 5      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
-## 6      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733
+##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
+##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
+## 1      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
+## 2      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
+## 3      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
+## 4      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
+## 5      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
+## 6      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
 ## # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>,
 ## #   data_row <int>, .epred <dbl>
 ```
@@ -468,9 +499,6 @@ contains structurally.
 - [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) : Fit
   Multiple Linear Segments And Their Change Points
 
-- [`mcp-package`](https://lindeloev.github.io/mcp/dev/reference/mcp-package.md)
-  : mcp: Multiple Change Point Regression in R
-
 - [`mcp_pars()`](https://lindeloev.github.io/mcp/dev/reference/mcp_pars.md)
   : Model parameters
 
@@ -498,6 +526,21 @@ contains structurally.
   :
 
   Extract Model Information from an `mcpfit`
+
+## Documentation on mcp()
+
+Detailing the model, priors, and R objects
+
+- [`mcp-package`](https://lindeloev.github.io/mcp/dev/reference/mcp-package.md)
+  : mcp: Regression with Multiple Change Points
+
+- [`mcp-formula`](https://lindeloev.github.io/mcp/dev/reference/mcp-formula.md)
+  [`mcp_formula`](https://lindeloev.github.io/mcp/dev/reference/mcp-formula.md)
+  : Model formulas in mcp
+
+- [`mcp-priors`](https://lindeloev.github.io/mcp/dev/reference/mcp-priors.md)
+  [`mcp_priors`](https://lindeloev.github.io/mcp/dev/reference/mcp-priors.md)
+  : Priors in mcp
 
 - [`mcpfit-class`](https://lindeloev.github.io/mcp/dev/reference/mcpfit-class.md)
   [`mcpfit`](https://lindeloev.github.io/mcp/dev/reference/mcpfit-class.md)
@@ -549,7 +592,7 @@ Per-observation summaries or draws
 
 - [`predict(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   [`fitted(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-  [`log_lik(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+  [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   [`residuals(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   :
 

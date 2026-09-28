@@ -131,7 +131,7 @@ plot_dpar(
     uses only `sigma` for residuals. For posterior evaluation of the
     original data, retained JAGS imputations supply missing GARMA
     histories. In models with group-level effects, this currently
-    requires including all such effects (`varying = TRUE`).
+    requires all such effects (`group = TRUE`).
 
 - ndraws:
 

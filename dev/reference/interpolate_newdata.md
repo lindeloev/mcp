@@ -17,7 +17,8 @@ interpolate_newdata(fit, by = NULL, x_values = NULL, at = NULL, arma = NULL)
 - by:
 
   Character vector of categorical or group-level columns to evaluate
-  separately. Categorical model predictors are always included.
+  separately. Categorical model predictors are always evaluated
+  separately.
 
 - x_values:
 

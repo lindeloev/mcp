@@ -1,13 +1,24 @@
-# mcp: Multiple Change Point Regression in R
+# mcp: Regression with Multiple Change Points
 
-Flexible and informed regression with Multiple Change Points. `mcp` can
-infer change points in models on means, variances (and other
-distributional parameters), autocorrelation structure, and any
-combination of these, as well as the parameters of the segments in
-between. All parameters are estimated with uncertainty, and posterior
-predictive intervals are supported - also near the change points. `mcp`
-supports hypothesis testing via Savage-Dickey density ratios, posterior
-contrasts, and PSIS-LOO/WAIC model comparison.
+`mcp` is regression with multiple change points. At its simplest, it
+feels like [`lm()`](https://rdrr.io/r/stats/lm.html), but with one
+formula per segment. At its most flexible, it aims to be
+**[`brms`](https://paulbuerkner.com/brms/) for change points**: GLM
+families (Gaussian, binomial, Bernoulli, Poisson, negative binomial),
+group-level effects (random effects), AR/MA, and regression on
+distributional parameters (e.g., `sigma`, `shape`), all inferred with
+full Bayesian uncertainty, including the change points themselves.
+
+Posterior predictive intervals are supported - also near the change
+points. `mcp` supports hypothesis testing via Savage-Dickey density
+ratios, posterior contrasts, and PSIS-LOO/WAIC model comparison.
+
+See [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) to
+fit models,
+[mcp-formula](https://lindeloev.github.io/mcp/dev/reference/mcp-formula.md)
+for the model and formula syntax, and
+[mcp-priors](https://lindeloev.github.io/mcp/dev/reference/mcp-priors.md)
+for priors.
 
 ## Extended formulas and model features
 
@@ -34,114 +45,6 @@ contrasts, and PSIS-LOO/WAIC model comparison.
 
 See [the mcp website](https://lindeloev.github.io/mcp/) for worked
 examples.
-
-## The mcp model
-
-Consider the following model which you can find in `demo_fit` and
-`mcp_example("demo")`:
-
-    model = list(
-      response ~ 1,  # Plateau in the first segment (Intercept_1)
-      ~ 0 + time,    # Joined slope (time_2) in segment 2 which starts at cp_1
-      ~ 1 + time     # Disjoined slope (Intercept_3, time_3) at cp_2
-    )
-
-![Fitted 3-segment mcp model with a plateau, joined slope, and disjoined
-slope](figures/mcp_demo.png)
-
-This model has \\K=3\\ segments separated by \\K-1=2\\ change points:
-\\\tau_1\\ and \\\tau_2\\.
-
-More generally, an `mcp` model divides a continuous predictor \\x\\ into
-\\K\\ segments separated by ordered change points \\\tau_1 \< \dots \<
-\tau\_{K-1}\\. In each segment \\k \in \\1, \dots, K\\\\, the linear
-predictor \\\eta_i\\ is evaluated directly from the segment-local
-distance \\(x_i - \tau\_{k-1})\\:
-
-\$\$\eta_i = \alpha_k + \beta\_{k,1} (x_i - \tau\_{k-1}) \quad
-(\text{with } \tau_0 = 0)\$\$
-
-where the segment-start level \\\alpha_k\\ is freely estimated for the
-first and disjoined segments, as in non-segmented regression, and
-determined by continuity for joined segments:
-
-\$\$\alpha_k = \begin{cases} \beta\_{k,0}, & \text{Disjoined segments }
-(\sim \texttt{1 + x}, \text{ including } k = 1) \\ \alpha\_{k-1} +
-\beta\_{k-1,1} (\tau\_{k-1} - \tau\_{k-2}), & \text{Joined segments } (k
-\ge 2, \sim \texttt{0 + x}) \end{cases}\$\$
-
-Here, \\\beta\_{k,0}\\ is the segment-start intercept, and
-\\\beta\_{k,1}\\ is the slope on \\x\\. In all segments, estimated slope
-and intercept parameters are absolute values (not changes relative to
-the preceding segment).
-
-If additional continuous covariates or categorical factors are included
-(e.g., `+ z + group`), they enter additively on their original scale
-(\\\dots + \sum \gamma\_{k,j} z\_{j,i}\\ for covariate \\j\\); only bare
-change-point predictor terms \\x\\ and `I(x^k)` are converted to
-segment-local coordinates.
-
-The inverse-linked parameter is \\\mu_i = g^{-1}(\eta_i)\\ via link
-function \\g(\mu_i) = \eta_i\\, representing the expected response for
-most families (or the success probability for binomial models, where the
-expected count is \\n_i \mu_i\\). Distributional parameters
-([`sigma()`](https://rdrr.io/r/stats/sigma.html), `shape()`, etc.) and
-autoregressive terms ([`ar()`](https://rdrr.io/r/stats/ar.html), `ma()`)
-follow this exact same segmented structure on their respective link
-scales. See more details on the `mcp` model in mcp-package and on the
-[mcp website](https://lindeloev.github.io/mcp/articles/formulas.html).
-
-## Time-series residuals (link-scale observation-driven GARMA)
-
-Autoregressive (`ar(p)`) and moving-average (`ma(q)`) terms define a
-finite conditional recurrence on the link scale (generalized
-autoregressive moving-average, GARMA). They support Gaussian
-(`identity`), binomial (`logit`), Bernoulli (`logit`), Poisson (`log`),
-and negative-binomial (`log`) families. If \\\eta^{\text{reg}}\_t\\ is
-the ordinary regression predictor from the segment formulas and
-\\\eta_t\\ is the predictor including serial dependence, the recurrence
-decomposes into components:
-
-\$\$\begin{aligned} \text{AR}\_t &= \sum\_{j=1}^{p} \phi\_{j,t}
-\left\[g(y^\*\_{t-j}) - \eta^{\text{reg}}\_{t-j}\right\] \\ \text{MA}\_t
-&= \sum\_{k=1}^{q} \theta\_{k,t} \left\[g(y^\*\_{t-k}) -
-\eta\_{t-k}\right\] \\ \eta_t &= \eta^{\text{reg}}\_t + \text{AR}\_t +
-\text{MA}\_t \end{aligned}\$\$
-
-where \\\phi\_{j,t}\\ is the lag-\\j\\ autoregressive (AR) coefficient
-at time \\t\\, \\\theta\_{k,t}\\ is the lag-\\k\\ moving-average (MA)
-coefficient at time \\t\\, \\g(\cdot)\\ is the link function, and
-\\y^\*\_t\\ is the threshold-constrained observation with threshold
-constant \\c\\ (set via argument `threshold = 0.1` in
-[`ar()`](https://rdrr.io/r/stats/ar.html) / `ma()`) to keep residuals
-finite on the link scale:
-
-- **Gaussian:** \\y^\*\_t = y_t\\.
-
-- **Poisson / Negative Binomial:** \\y^\*\_t = \max(y_t, c)\\ to prevent
-  \\\log(0)\\. Here \\c\\ replaces zero counts with a small positive
-  threshold value.
-
-- **Binomial / Bernoulli:** \\y^\*\_t = \min(\max(y_t, c), n_t - c) /
-  n_t\\, where \\y_t\\ is observed successes, \\n_t\\ is the number of
-  trials (\\n_t = 1\\ for Bernoulli), and \\c\\ constrains counts to the
-  interval \\\[c, n_t - c\]\\ before converting to a rate, preventing
-  \\\text{logit}(0)\\ and \\\text{logit}(1)\\.
-
-Implications:
-
-- For an \\N\\-order component, the last \\N\\ values *before* the
-  segment onset are input to the first \\\eta_t\\ in the segment.
-
-- AR and MA components are off in segments where they are not declared;
-  `ar(0)` and `ma(0)` are equivalent explicit turn-off forms.
-
-- AR coefficients are not jointly constrained to stationarity; nor MA
-  coefficients to invertibility.
-
-- See [the arma
-  article](https://lindeloev.github.io/mcp/articles/arma.html) for more
-  details.
 
 ## References
 

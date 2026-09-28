@@ -16,12 +16,13 @@ predict(
   probs = TRUE,
   rate = FALSE,
   prior = FALSE,
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = NULL,
   draws_format = "tidy",
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated(),
+  varying = lifecycle::deprecated(),
   conditional = TRUE,
   ...
 )
@@ -35,15 +36,18 @@ fitted(
   rate = FALSE,
   prior = FALSE,
   dpar = "epred",
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = NULL,
   draws_format = "tidy",
   scale = "response",
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated(),
+  varying = lifecycle::deprecated(),
   ...
 )
+
+log_lik(object, ...)
 
 # S3 method for class 'mcpfit'
 log_lik(
@@ -53,12 +57,13 @@ log_lik(
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = NULL,
   draws_format = "matrix",
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated(),
+  varying = lifecycle::deprecated(),
   ...
 )
 
@@ -69,10 +74,11 @@ residuals(
   summary = TRUE,
   probs = TRUE,
   prior = FALSE,
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = NULL,
   nsamples = lifecycle::deprecated(),
+  varying = lifecycle::deprecated(),
   ...
 )
 ```
@@ -130,7 +136,7 @@ residuals(
   (`FALSE`, default). The selected draws must be available; prior-only
   fits require `prior = TRUE`.
 
-- varying:
+- group:
 
   Group-level effects. One of:
 
@@ -155,7 +161,7 @@ residuals(
     `predict()` uses only `sigma` for residuals. For posterior
     evaluation of the original data, retained JAGS imputations supply
     missing GARMA histories. In models with group-level effects, this
-    currently requires including all such effects (`varying = TRUE`).
+    currently requires all such effects (`group = TRUE`).
 
 - ndraws:
 
@@ -176,6 +182,10 @@ residuals(
 - samples_format:
 
   Deprecated. Use `draws_format` instead. See more under "value"
+
+- varying:
+
+  Deprecated. Use `group` instead.
 
 - conditional:
 
@@ -268,7 +278,7 @@ fixed arguments for `fitted`:
 `rate = FALSE, dpar = 'epred', draws_format = 'tidy'`.
 
 `log_lik()` defaults to an unsummarised draws-by-observation matrix, as
-used by `loo` and other posterior workflows. Non-default `varying` and
+used by `loo` and other posterior workflows. Non-default `group` and
 `arma` settings evaluate conditional or counterfactual log-likelihoods
 (e.g., omitting random effects or serial correlation); they cannot be
 used in
@@ -387,30 +397,30 @@ missing_fit = mcp_example("missing", plot = FALSE)
 #> NA values detected in 'y'. JAGS will treat them as latent responses and impute them during sampling.
 fitted(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Expected responses for missing y
 #>    y  x state   fitted        sd     Q2.5    Q97.5
-#> 1 NA  8     B 35.60043 1.0803038 33.51261 37.74217
-#> 2 NA 19     A 15.68747 0.8392979 14.05176 17.34367
-#> 3 NA 27     A 17.20067 0.7620321 15.70353 18.68519
-#> 4 NA 28     B 39.38345 0.7593611 37.89912 40.87640
-#> 5 NA 29     A 17.57898 0.7589502 16.07714 19.05693
-#> 6 NA 30     B 39.76175 0.7585016 38.28224 41.25734
+#> 1 NA  8     B 35.39478 1.0927946 33.30087 37.58317
+#> 2 NA 19     A 15.50674 0.8459778 13.85304 17.14750
+#> 3 NA 27     A 17.09444 0.7751878 15.57812 18.59652
+#> 4 NA 28     B 39.36404 0.7655497 37.86660 40.89542
+#> 5 NA 29     A 17.49136 0.7747784 15.97729 18.98954
+#> 6 NA 30     B 39.76096 0.7661437 38.26464 41.30071
 fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y)) |> head()  # Same, but draws
 #> # A tibble: 6 × 14
 #>   .chain .iteration .draw  cp_1 Intercept_1   x_1 stateB_1    x_2 sigma_1     y
 #>    <int>      <int> <int> <dbl>       <dbl> <dbl>    <dbl>  <dbl>   <dbl> <dbl>
-#> 1      1          1     1  62.8        14.8 0.135     20.3 -0.497    4.65    NA
-#> 2      1          1     1  62.8        14.8 0.135     20.3 -0.497    4.65    NA
-#> 3      1          1     1  62.8        14.8 0.135     20.3 -0.497    4.65    NA
-#> 4      1          1     1  62.8        14.8 0.135     20.3 -0.497    4.65    NA
-#> 5      1          1     1  62.8        14.8 0.135     20.3 -0.497    4.65    NA
-#> 6      1          1     1  62.8        14.8 0.135     20.3 -0.497    4.65    NA
+#> 1      1          1     1  59.8        12.1 0.189     21.5 -0.416    4.36    NA
+#> 2      1          1     1  59.8        12.1 0.189     21.5 -0.416    4.36    NA
+#> 3      1          1     1  59.8        12.1 0.189     21.5 -0.416    4.36    NA
+#> 4      1          1     1  59.8        12.1 0.189     21.5 -0.416    4.36    NA
+#> 5      1          1     1  59.8        12.1 0.189     21.5 -0.416    4.36    NA
+#> 6      1          1     1  59.8        12.1 0.189     21.5 -0.416    4.36    NA
 #> # ℹ 4 more variables: x <int>, state <fct>, data_row <int>, .epred <dbl>
 predict(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Posterior predictive for missing y
 #>    y  x state  predict       sd      Q2.5    Q97.5
-#> 1 NA  8     B 35.60152 4.415550 26.944898 44.27282
-#> 2 NA 19     A 15.68920 4.375556  7.131763 24.25305
-#> 3 NA 27     A 17.15676 4.357370  8.668505 25.73409
-#> 4 NA 28     B 39.41365 4.324343 30.849440 47.91352
-#> 5 NA 29     A 17.58427 4.339324  9.046847 26.11032
-#> 6 NA 30     B 39.73979 4.357124 31.227062 48.29058
+#> 1 NA  8     B 35.41014 4.412756 26.745900 44.06132
+#> 2 NA 19     A 15.53057 4.372454  6.959857 24.05974
+#> 3 NA 27     A 17.02735 4.372192  8.570913 25.61888
+#> 4 NA 28     B 39.39124 4.297813 30.844286 47.88610
+#> 5 NA 29     A 17.46702 4.316559  8.967339 26.01502
+#> 6 NA 30     B 39.72046 4.360684 31.240371 48.28261
 # }
 ```

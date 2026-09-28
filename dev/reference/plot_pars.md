@@ -48,7 +48,7 @@ plot_pars(
 
   String or vector of strings. Calls `bayesplot::mcmc_>>type<<()`.
   Common calls are "combo", "trace", and "dens_overlay". Current options
-  include 'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens',
+  are 'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens',
   'dens_chains', 'dens_overlay', 'hist', 'intervals', 'rank_hist',
   'rank_overlay', 'trace', 'trace_highlight', and 'violin".
 

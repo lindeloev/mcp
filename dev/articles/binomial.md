@@ -25,7 +25,6 @@ We run `mcp` with `sample = FALSE` to get what we need to simulate data.
 
 library(mcp)
 future::plan(future::multisession, workers = 3)
-set.seed(42)  # Make the script deterministic
 
 df = data.frame(
   year = 1901:2020,  # evaluate for each of these
@@ -61,7 +60,7 @@ mcp_pars(empty)
 parameters (signature: `empty$simulate(fit, newdata, ...)`). If you are
 in a reasonable R editor, type `empty$simulate(` and press TAB to see
 the required arguments. I came up with some values below, including
-change points at year = 25 and year = 65. Because
+change points at year = 1925 and year = 1975. Because
 [`binomial()`](https://rdrr.io/r/stats/family.html) defaults to
 `link = "logit"`, the intercept and slopes are on the [logit
 scale](https://en.wikipedia.org/wiki/Logit), which maps success
@@ -70,7 +69,6 @@ later when we set priors.
 
 ``` r
 
-set.seed(42)
 df$y = empty$simulate(
   empty, df, 
   cp_1 = 1925, cp_2 = 1975, 
@@ -81,12 +79,12 @@ head(df)
 ```
 
     ##   year  N  y
-    ## 1 1901 10  7
-    ## 2 1902 14 10
-    ## 3 1903 10  9
+    ## 1 1901 10  8
+    ## 2 1902 14 13
+    ## 3 1903 10  8
     ## 4 1904 18 15
-    ## 5 1905 19 16
-    ## 6 1906 13 12
+    ## 5 1905 19 18
+    ## 6 1906 13 13
 
 Visually:
 
@@ -104,7 +102,7 @@ recover the parameters used to simulate the data.
 
 ``` r
 
-fit = mcp(model, data = df, family = binomial(), iter = 12000, seed = 42)
+fit = mcp(model, data = df, family = binomial(), iter = 6000)
 ```
 
 We can use `summary` to see that it recovered the parameters to a pretty
@@ -118,23 +116,25 @@ summary(fit)
 
     ## Family: binomial
     ## Links: mu = logit
-    ## Iterations: 12000 from 3 chains.
+    ## Iterations: 6000 from 3 chains.
     ## Segments:
     ##   1: y | trials(N) ~ 1
     ##   2: y | trials(N) ~ 1 ~ 0 + year
     ##   3: y | trials(N) ~ 1 ~ 1 + year
     ## 
     ## Change point parameters:
-    ##     variable   mean     sd    lower    upper rhat ess_bulk ess_tail    sim match
-    ##  cp_1        1929.8 3.0534 1923.950 1935.301 1.00      428     1135 1925.0    OK
-    ##  cp_2        1974.5 0.6179 1973.181 1975.821 1.00     4061     2663 1975.0    OK
+    ##     variable     mean     sd    lower    upper rhat ess_bulk ess_tail    sim match
+    ##  cp_1        1921.437 2.8959 1915.489 1926.899 1.01      806     1603 1925.0    OK
+    ##  cp_2        1973.509 3.2467 1961.906 1977.852 1.01      701      351 1975.0    OK
     ## 
     ## Population-level parameters:
-    ##     variable   mean     sd    lower    upper rhat ess_bulk ess_tail    sim match
-    ##  Intercept_1    1.6 0.1471    1.366    1.939 1.00      886     3168    2.0      
-    ##  year_2        -0.1 0.0105   -0.125   -0.084 1.00      577     1858   -0.1    OK
-    ##  Intercept_3   -1.1 0.2032   -1.495   -0.695 1.00     2997     4349   -1.0    OK
-    ##  year_3         0.1 0.0088    0.083    0.117 1.00     3688     6630    0.1    OK
+    ##     variable     mean     sd    lower    upper rhat ess_bulk ess_tail    sim match
+    ##  Intercept_1    2.176 0.1869    1.826    2.552 1.01      882     2110    2.0    OK
+    ##  year_2        -0.092 0.0072   -0.106   -0.078 1.00     1673     2743   -0.1    OK
+    ##  Intercept_3   -1.296 0.4847   -2.675   -0.499 1.01      560      398   -1.0    OK
+    ##  year_3         0.108 0.0101    0.088    0.128 1.00      545      888    0.1    OK
+    ## 
+    ## Warning: 2 parameters show poor convergence (rhat > 1.01 or ess_bulk < 400 or ess_tail < 400).
 
 `summary` uses 95% central posterior intervals by default, but you can
 change it using `summary(fit, width = 0.80)`. If you have [group-level
@@ -146,7 +146,6 @@ discontinuities at the two change points:
 
 ``` r
 
-set.seed(42)
 plot(fit)
 ```
 
@@ -162,7 +161,6 @@ logit scale, where the linear trends are modeled:
 
 ``` r
 
-set.seed(42)
 plot_dpar(fit, scale = "linear")
 ```
 
@@ -180,7 +178,6 @@ posterior distributions and trace plots:
 
 ``` r
 
-set.seed(42)
 plot_pars(fit, nvariables = NULL)
 ```
 
@@ -201,9 +198,8 @@ can do a lot more than this, so check out their documentation.
 
 `mcp` uses priors to achieve a lot of its functionality. See [how to set
 priors](https://lindeloev.github.io/mcp/dev/articles/priors.md),
-including how to share parameters between segments and how to fix
-values. Here, I post a few notes about the binomial-specific default
-priors.
+including how to fix values. Here, I post a few notes about the
+binomial-specific default priors.
 
 The default priors in `mcp` are set so that they are reasonably broad to
 cover most scenarios, though also specific enough to sample effectively.
@@ -221,19 +217,19 @@ prior_summary(fit)  # Richer view. Try adding verbose = TRUE
     ##             [,1]                  
     ## cp_1        "dirichlet(1)"        
     ## cp_2        "dirichlet(1)"        
-    ## Intercept_1 "dt(0, 1.5, 3)"       
-    ## year_2      "dt(0, 0.01260504, 3)"
-    ## Intercept_3 "dt(0, 1.5, 3)"       
-    ## year_3      "dt(0, 0.01260504, 3)"
+    ## Intercept_1 "dnorm(0, 1.5)"       
+    ## year_2      "dnorm(0, 0.04312197)"
+    ## Intercept_3 "dnorm(0, 1.5)"       
+    ## year_3      "dnorm(0, 0.04312197)"
     ## # A tibble: 6 × 5
-    ##   parameter   segment dpar  prior                                               bounds           
-    ##   <chr>         <int> <chr> <chr>                                               <chr>            
-    ## 1 cp_1              2 cp    dirichlet(alpha = 1)                                [min(year), cp_2]
-    ## 2 cp_2              3 cp    dirichlet(alpha = 1)                                [cp_1, max(year)]
-    ## 3 Intercept_1       1 mu    student_t(df = 3, location = 0, scale = 1.5)        none             
-    ## 4 year_2            2 mu    student_t(df = 3, location = 0, scale = 0.01260504) none             
-    ## 5 Intercept_3       3 mu    student_t(df = 3, location = 0, scale = 1.5)        none             
-    ## 6 year_3            3 mu    student_t(df = 3, location = 0, scale = 0.01260504) none
+    ##   parameter   segment dpar  prior                             bounds           
+    ##   <chr>         <int> <chr> <chr>                             <chr>            
+    ## 1 cp_1              2 cp    dirichlet(alpha = 1)              [min(year), cp_2]
+    ## 2 cp_2              3 cp    dirichlet(alpha = 1)              [cp_1, max(year)]
+    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 1.5)        none             
+    ## 4 year_2            2 mu    normal(mean = 0, sd = 0.04312197) none             
+    ## 5 Intercept_3       3 mu    normal(mean = 0, sd = 1.5)        none             
+    ## 6 year_3            3 mu    normal(mean = 0, sd = 0.04312197) none
 
 The priors on change points are discussed extensively in the prior
 vignette. With the default logit link, intercepts and categorical
@@ -282,11 +278,16 @@ the joint probability may be quite different.
 
 Numeric coefficient scales are divided by a representative change in
 their model-matrix column: its range when it has two values, and two
-standard deviations otherwise. Terms involving local `par_x`
-additionally use the expected segment width,
-`(max(x) - min(x)) / n_segments()`. The implied change across a typical
-segment therefore has the same 1.5-logit scale, even when the model
-contains several change points.
+standard deviations otherwise. For
+[x-terms](https://lindeloev.github.io/mcp/dev/articles/formulas.html#how-segments-connect)
+such as `x`, `state:x`, and `I(x^2)` (with `x` as the change-point
+variable), the representative change is instead the observed x-span,
+`max(x) - min(x)`. The implied change across the observed x-span
+therefore has the same 1.5-logit scale, regardless of the number of
+change points. Powers such as `I(x^2)` grow within a segment, so they
+additionally use the typical segment width,
+`(max(x) - min(x)) / n_segments()`, and imply the same change within a
+typical segment as a linear slope.
 
 ## JAGS code
 
@@ -307,10 +308,12 @@ fit$jags_code
     ##   cp_1 = cp_0 + cp_frac_1_ * (cp_3 - cp_0)  # Ordered change point
     ##   cp_frac_2_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)
     ##   cp_2 = cp_1 + cp_frac_2_ * (cp_3 - cp_1)  # Ordered change point
-    ##   Intercept_1 ~ dt(0, 1/(1.5)^2, 3)   # Weakly regularizing link-scale intercept
-    ##   year_2 ~ dt(0, 1/(0.01260504)^2, 3)   # Weakly regularizing link-scale coefficient scaled to a reference predictor change
-    ##   Intercept_3 ~ dt(0, 1/(1.5)^2, 3)   # Weakly regularizing link-scale intercept
-    ##   year_3 ~ dt(0, 1/(0.01260504)^2, 3)   # Weakly regularizing link-scale coefficient scaled to a reference predictor change
+    ##   Intercept_1 ~ dnorm(0, 1/(1.5)^2)   # Link-scale intercept (rstanarm scaling with base 1.5)
+    ##   year_2_rise_ ~ dnorm(0, 1/(0.04312197*(cp_2-cp_1))^2)   # Autoscaled link-scale coefficient (rstanarm scaling with base 1.5); sampled as the rise over the segment
+    ##   year_2 = year_2_rise_ / (cp_2 - cp_1)
+    ##   Intercept_3_end_ ~ dnorm(0 + year_3 * (cp_3 - cp_2), 1/(1.5)^2)   # Link-scale intercept (rstanarm scaling with base 1.5); sampled as the level at the segment end
+    ##   Intercept_3 = Intercept_3_end_ - (year_3 * (cp_3 - cp_2))
+    ##   year_3 ~ dnorm(0, 1/(0.04312197)^2)   # Autoscaled link-scale coefficient (rstanarm scaling with base 1.5)
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(year)) {

@@ -35,6 +35,11 @@ expressions in bounds (e.g. `min(x)` or `max(x)`) may be retained in
 symbolic form in compact output, while `verbose = TRUE` displays the
 underlying rule, description, source, and kind.
 
+## See also
+
+[mcp-priors](https://lindeloev.github.io/mcp/dev/reference/mcp-priors.md)
+for how to specify priors.
+
 ## Examples
 
 ``` r

@@ -100,8 +100,8 @@
 </h1>
 </div>
 <p><a href="https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml?query=branch%3Adev" class="external-link"><img src="https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg?branch=dev" alt="mcp Github Actions status"></a> <a href="https://app.codecov.io/gh/lindeloev/mcp/branch/dev" class="external-link"><img src="https://codecov.io/gh/lindeloev/mcp/branch/dev/graph/badge.svg" alt="mcp Codecov status"></a> <a href="https://CRAN.R-project.org/package=mcp" class="external-link"><img src="https://www.r-pkg.org/badges/version/mcp" alt="mcp CRAN status"></a> <a href="https://cranlogs.r-pkg.org/badges/mcp" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/mcp" alt="mcp CRAN downloads"></a></p>
-<p><code>mcp</code> does <code>lm</code>/<code>glm</code>/<code>brms</code>-like regression with Multiple Change Points (hence “<code>mcp</code>”) using Bayesian inference. <code>mcp</code> is especially useful if you have a priori knowledge about the number of change points and the trend of the segments in between. It supports GLMs with group-level effects (random effects), AR/MA, and regression on distributional parameters (<code>sigma</code>, <code>shape</code>, etc.).</p>
-<p><code>mcp</code> aims to feel “R-native” like <code>lm</code>/<code>glm</code> at its simplest while the more Bayesian aspects are inspired by <code>brms</code> and <code>posterior</code>. Under the hood, <code>mcp</code> takes a formula-representation of linear segments and turns it into <a href="https://sourceforge.net/projects/mcmc-jags/" class="external-link">JAGS</a> code (see <code>fit$jags_code</code>).</p>
+<p><code>mcp</code> is regression with multiple change points. At its simplest, it feels like <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>, but with one formula per segment. At its most flexible, it aims to be <strong><a href="https://paulbuerkner.com/brms/" class="external-link"><code>brms</code></a> for change points</strong>: GLM families (Gaussian, binomial, Bernoulli, Poisson, negative binomial), group-level effects (random effects), AR/MA, and regression on distributional parameters (e.g., <code>sigma</code>, <code>shape</code>), all inferred with full Bayesian uncertainty, including the change points themselves.</p>
+<p>You specify the number of change points and the form of each segment, making it easy to express expert knowledge or hypotheses. Compare alternatives with <code><a href="reference/loo.mcpfit.html">loo()</a></code>. Methods like <code><a href="reference/plot_pars.html">plot_pars()</a></code>, <code><a href="reference/summary.mcpfit.html">summary()</a></code>, <code><a href="reference/pp_check.html">pp_check()</a></code>, <code><a href="reference/hypothesis.html">hypothesis()</a></code>, and <code><a href="reference/as_draws.mcpfit.html">as_draws_df()</a></code> follow the conventions of <a href="https://paulbuerkner.com/brms/" class="external-link"><code>brms</code></a>, <a href="https://mc-stan.org/rstanarm/" class="external-link"><code>rstanarm</code></a>, and <a href="https://mc-stan.org/posterior/articles/posterior.html" class="external-link"><code>posterior</code></a>, adapted to change point regression. Under the hood, <code>mcp</code> turns the formulas into <a href="https://sourceforge.net/projects/mcmc-jags/" class="external-link">JAGS</a> code (see <code>fit$jags_code</code>).</p>
 <p><code>mcp</code> has <a href="https://scholar.google.com/scholar?cites=5590697509718421309" class="external-link">200+ academic citations</a> across ecology, astronomy, neuroscience, epidemiology, and other disciplines. See applications in the citing literature.</p>
 <p>Change points are also called <strong>switch points</strong>, <strong>break points</strong>, <strong>broken line</strong> regression, <strong>broken stick</strong> regression, <strong>bilinear</strong> regression, <strong>piecewise linear</strong> regression, <strong>local linear</strong> regression, <strong>segmented</strong> regression, and (performance) <strong>discontinuity</strong> models. <code>mcp</code> aims to be useful for all of them.</p>
 </div>
@@ -172,16 +172,16 @@
 <span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="do">## </span></span>
 <span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="do">## Change point parameters:</span></span>
 <span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="do">##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span></span>
-<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="do">##  cp_1        31.54 1.798 28.24 35.241 1.00      946     1271 30.0    OK</span></span>
-<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="do">##  cp_2        71.12 1.012 69.47 72.762 1.00     5119     7044 70.0    OK</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="do">##  cp_1        31.65 1.743 28.34 35.109 1.00     1274     1903 30.0    OK</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="do">##  cp_2        71.14 1.019 69.46 72.782 1.00     3509     6806 70.0    OK</span></span>
 <span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="do">## </span></span>
 <span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="do">## Population-level parameters:</span></span>
 <span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="do">##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span></span>
-<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="do">##  Intercept_1 10.05 0.662  8.74 11.350 1.00     1904     3579 10.0    OK</span></span>
-<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="do">##  time_2       0.53 0.048  0.44  0.633 1.00     1545     2392  0.5    OK</span></span>
-<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="do">##  Intercept_3 17.48 1.216 15.28 19.981 1.00      936     1376 20.0      </span></span>
-<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="do">##  time_3      -0.10 0.072 -0.26  0.019 1.00      946     1387 -0.3      </span></span>
-<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="do">##  sigma_1      3.90 0.290  3.39  4.519 1.00     4854     4624  3.5    OK</span></span></code></pre></div>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="do">##  Intercept_1  9.94 0.653  8.66 11.189 1.00     3356     6012 10.0    OK</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="do">##  time_2       0.54 0.047  0.46  0.640 1.00     3184     5290  0.5    OK</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="do">##  Intercept_3 18.94 1.336 16.34 21.660 1.00     2802     4459 20.0    OK</span></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="do">##  time_3      -0.20 0.080 -0.36 -0.046 1.00     1331     2519 -0.3    OK</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="do">##  sigma_1      3.86 0.281  3.35  4.458 1.00     5093     4609  3.5    OK</span></span></code></pre></div>
 <ul>
 <li>
 <code>rhat</code> is the rank-normalized split-Rhat convergence diagnostic.</li>
@@ -206,8 +206,8 @@
 <p>We can test (joint) probabilities in the model using <code><a href="reference/hypothesis.html">hypothesis()</a></code> (<a href="https://lindeloev.github.io/mcp/articles/comparison.html">see more here</a>). For example, what is the evidence (given priors) that the first change point (<code>cp_1</code>) is later than 25 against it being less than 25?</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"cp_1 &gt; 25"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb12"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="do">##      hypothesis     mean    lower    upper      prob       BF</span></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="do">## 1 cp_1 - 25 &gt; 0 6.544368 3.236057 10.24094 0.9997778 3204.767</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="do">##      hypothesis     mean    lower   upper      prob       BF</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="do">## 1 cp_1 - 25 &gt; 0 6.654192 3.337938 10.1086 0.9995556 1645.747</span></span></code></pre></div>
 <p>For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation (<a href="https://lindeloev.github.io/mcp/articles/comparison.html">see more here</a>). Let’s specify a null model where the first two segments are reduced to one straight line, i.e., removing the change point:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Define the model</span></span>
@@ -217,13 +217,20 @@
 <span><span class="va">fit_null</span> <span class="op">=</span> <span class="fu"><a href="reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model_null</span>, <span class="va">demo_fit</span><span class="op">$</span><span class="va">data</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
 <p>Leveraging the power of <code><a href="https://mc-stan.org/loo/reference/loo.html" class="external-link">loo::loo()</a></code>, we see that the two-change-points model is preferred (it is on top), and both <code>p_worse</code> and the <code>elpd_diff / se_diff</code> ratio indicate this preference is strong:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_loo</span> <span class="op">=</span> <span class="fu"><a href="reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span><span class="va">fit_null_loo</span> <span class="op">=</span> <span class="fu"><a href="reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_null</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">fit_loo</span> <span class="op">=</span> <span class="fu"><a href="reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="do">## Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.</span></span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit_null_loo</span> <span class="op">=</span> <span class="fu"><a href="reference/loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_null</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">fit_loo</span>, <span class="va">fit_null_loo</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb15"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="do">##   model elpd_diff se_diff p_worse diag_diff diag_elpd</span></span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="do">##  model1       0.0     0.0      NA                    </span></span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="do">##  model2     -45.7     7.8    1.00</span></span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="do">##   model elpd_diff se_diff p_worse diag_diff      diag_elpd</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="do">##  model1       0.0     0.0      NA           1 k_psis &gt; 0.7</span></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a><span class="do">##  model2     -46.4     7.9    1.00</span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="do">## </span></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a><span class="do">## Diagnostic flags present.</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="do">## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a><span class="do">## or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level1">
@@ -233,7 +240,7 @@
 <p><a href="https://lindeloev.github.io/mcp/articles/formulas.html">Understanding mcp formulas</a>:</p>
 <ul>
 <li><p>Parameter names are <code>Intercept_i</code> (intercepts), <code>cp_i</code> (change points), <code>x_i</code> (slopes), <code>ar*</code>/<code>ma*</code> (autocorrelation), and <code>sigma_*</code> (Gaussian residual standard deviation).</p></li>
-<li><p>All terms must be explicitly declared in each segment where they are active; omitting a term turns it off. Use <code>same(z)</code> to share a coefficient with previous segments.</p></li>
+<li><p>Only terms included in a segment get coefficients there. <code>~ 0 + ...</code> is joined: it continues from where the earlier intercept and <a href="https://lindeloev.github.io/mcp/articles/formulas.html#how-segments-connect">x-terms</a> (<code>x</code>, <code>state:x</code>, <code>I(x^2)</code>) left off. <code>~ 1 + ...</code> is disjoined and starts afresh. Use <code>same(z)</code> to reuse a coefficient from the preceding segment.</p></li>
 <li><p>The change point model is basically an <code>ifelse</code> model with order constraints on the change points.</p></li>
 <li><p>Generate data for all supported models using <code>fit$simulate()</code>. See examples in, e.g., <code>mcp_example("demo")$example_code</code>.</p></li>
 </ul>
@@ -252,7 +259,7 @@
 </ul>
 <p><a href="https://lindeloev.github.io/mcp/articles/group_effects.html">Group-level (random) effects</a>:</p>
 <ul>
-<li><p>Model group-level intercepts, slopes, and change points using <code>(1|id)</code>, <code>(state||id)</code>, or <code>+(state|id)</code>. Get posteriors using <code>ranef(fit)</code>.</p></li>
+<li><p>Model group-level intercepts, slopes, and change points using <code>(1|id)</code>, <code>(0 + x||id)</code>, or <code>1 + (1|id) ~ ...</code>. Get posteriors using <code>ranef(fit)</code>.</p></li>
 <li><p>Plot using <code>plot(fit, facet_by = "my_group")</code> and <code>plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)</code>.</p></li>
 <li><p>Default priors bound group-specific change points relative to adjacent population-level change points.</p></li>
 </ul>
@@ -272,7 +279,7 @@
 <ul>
 <li><p>See priors in <code>fit$prior</code> or <code>prior_summary(fit)</code> and set priors using <code>mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)"))</code>.</p></li>
 <li><p>The default prior on change points is <code>dirichlet(1)</code> (uniform order statistics). For a single change point, this is the Beta(1, 1) / uniform distribution over <code>[min(x), max(x)]</code>. For multiple change points, it corresponds to a flat Dirichlet distribution over segment lengths with equal spacing between change points. Informativeness increases as the number of change points increases.</p></li>
-<li><p>Fix parameters to specific values using <code>cp_1 = 45</code> and share parameters between segments using <code>slope_1 = "slope_2"</code>.</p></li>
+<li><p>Fix parameters to specific values using <code>cp_1 = 45</code>. To share a coefficient between segments, use <code>same()</code> in the model, e.g., <code>~ 0 + same(x)</code>.</p></li>
 <li><p>Truncate priors using <code>T(lower, upper)</code>, e.g., <code>Intercept_1 = "dnorm(0, 1) T(0, )"</code>. <code>mcp</code> adds ordering bounds to population-level change-point priors. Users can override these.</p></li>
 <li><p>Do prior predictive checks using <code>mcp(model, data, sample = "prior") |&gt; plot(prior = TRUE)</code>.</p></li>
 </ul>
@@ -293,7 +300,7 @@
 <h1 id="do-more-with-the-mcmc-samples">Do more with the MCMC samples<a class="anchor" aria-label="anchor" href="#do-more-with-the-mcmc-samples"></a>
 </h1>
 <p>Use the <code>posterior</code> package generics to extract draws in any format:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/posterior/" class="external-link">posterior</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mjskay.github.io/tidybayes/" class="external-link">tidybayes</a></span><span class="op">)</span></span>
 <span></span>
@@ -303,32 +310,32 @@
 <span><span class="fu"><a href="https://mjskay.github.io/tidybayes/reference/spread_draws.html" class="external-link">spread_draws</a></span><span class="op">(</span><span class="fu"><a href="reference/as_draws.mcpfit.html">as_draws_df</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>, <span class="va">cp_1</span>, <span class="va">cp_2</span>, <span class="va">Intercept_1</span><span class="op">)</span>  <span class="co"># tidybayes</span></span></code></pre></div>
 <p>Get draws in a tidybayes-like format with <code>fitted(fit, summary = FALSE)</code> or <code>predict(fit, summary = FALSE)</code>. Same for <code>residuals(fit)</code> and <code>log_lik(fit)</code>.</p>
 <p>For example:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span>  <span class="co"># column .epred</span></span></code></pre></div>
-<div class="sourceCode" id="cb18"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="do">## # A tibble: 6 × 14</span></span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="do">##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3  time_3</span></span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="do">##    &lt;int&gt;      &lt;int&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;       &lt;dbl&gt;  &lt;dbl&gt;       &lt;dbl&gt;   &lt;dbl&gt;</span></span>
-<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="do">## 1      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733</span></span>
-<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="do">## 2      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733</span></span>
-<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="do">## 3      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733</span></span>
-<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="do">## 4      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733</span></span>
-<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="do">## 5      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733</span></span>
-<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a><span class="do">## 6      1          1     1  32.9  71.9        10.0  0.546        16.4 -0.0733</span></span>
-<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a><span class="do">## # ℹ 5 more variables: sigma_1 &lt;dbl&gt;, response &lt;dbl&gt;, time &lt;dbl&gt;,</span></span>
-<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a><span class="do">## #   data_row &lt;int&gt;, .epred &lt;dbl&gt;</span></span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="do">## # A tibble: 6 × 14</span></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a><span class="do">##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3</span></span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a><span class="do">##    &lt;int&gt;      &lt;int&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;       &lt;dbl&gt;  &lt;dbl&gt;       &lt;dbl&gt;  &lt;dbl&gt;</span></span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a><span class="do">## 1      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145</span></span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a><span class="do">## 2      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145</span></span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a><span class="do">## 3      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145</span></span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a><span class="do">## 4      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145</span></span>
+<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a><span class="do">## 5      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145</span></span>
+<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a><span class="do">## 6      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145</span></span>
+<span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a><span class="do">## # ℹ 5 more variables: sigma_1 &lt;dbl&gt;, response &lt;dbl&gt;, time &lt;dbl&gt;,</span></span>
+<span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a><span class="do">## #   data_row &lt;int&gt;, .epred &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 <div class="section level1">
 <h1 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h1>
 <p><a href="https://osf.io/fzqxv" class="external-link">This preprint</a> formally introduces <code>mcp</code>. Find citation info at the link, call <code>citation("mcp")</code> or copy-paste this into your reference manager:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>  <span class="sc">@</span>Article{,</span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>    title <span class="ot">=</span> {mcp<span class="sc">:</span> An R Package <span class="cf">for</span> Regression With Multiple Change Points},</span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>    author <span class="ot">=</span> {Jonas Kristoffer Lindeløv},</span>
-<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>    journal <span class="ot">=</span> {OSF Preprints},</span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>    year <span class="ot">=</span> {<span class="dv">2020</span>},</span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>    doi <span class="ot">=</span> {<span class="fl">10.31219</span><span class="sc">/</span>osf.io<span class="sc">/</span>fzqxv},</span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>    encoding <span class="ot">=</span> {UTF<span class="dv">-8</span>},</span>
-<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a>  }</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>  <span class="sc">@</span>Article{,</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>    title <span class="ot">=</span> {mcp<span class="sc">:</span> An R Package <span class="cf">for</span> Regression With Multiple Change Points},</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>    author <span class="ot">=</span> {Jonas Kristoffer Lindeløv},</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>    journal <span class="ot">=</span> {OSF Preprints},</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>    year <span class="ot">=</span> {<span class="dv">2020</span>},</span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a>    doi <span class="ot">=</span> {<span class="fl">10.31219</span><span class="sc">/</span>osf.io<span class="sc">/</span>fzqxv},</span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a>    encoding <span class="ot">=</span> {UTF<span class="dv">-8</span>},</span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a>  }</span></code></pre></div>
 </div>
 
   </main><aside class="col-md-3"><div class="links">

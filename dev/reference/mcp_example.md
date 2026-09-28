@@ -16,31 +16,30 @@ mcp_example_data(name)
 
   Name of the example. One of:
 
-  - `"demo"`: Two change points between intercepts and joined/disjoined
-    slopes.
-
-  - `"intercepts"`: An intercept-only change point.
-
-  - `"multiple"`: Multiple regression with categorical predictors and
-    interactions.
+  - `"ar"`: One change point in autoregressive residuals (the `ar1`
+    dpar)
 
   - `"binomial"`: Binomial with two change points. Much like `"demo"` on
     a logit scale.
+
+  - `"demo"`: Two change points between intercepts and joined/disjoined
+    slopes.
 
   - `"group_mu"`: Group-level predictor deviations (random
     intercepts/slopes) across a change point.
 
   - `"group_cp"`: Group-level change-point deviations (random effects).
 
+  - `"intercepts"`: An intercept-only change point.
+
   - `"missing"`: Missing data imputation (NAs in response variable y).
 
-  - `"quadratic"`: A change point to a quadratic segment where there is
-    no data.
-
-  - `"ar"`: One change point in autoregressive residuals (the `ar1`
-    dpar)
+  - `"multiple"`: Multiple regression with categorical predictors and
+    interactions.
 
   - `"sigma"`: A change in "sigma" dpar, including a slope on sigma.
+
+  - `"void"`: Missing data around change points.
 
 - sample:
 
@@ -93,9 +92,9 @@ print(fit$example_code) # See how the data was simulated
 #> # Simulate data
 #> set.seed(42)
 #> data = data.frame(
-#>   x = 1:120,
-#>   state = rep(c('A', 'B', 'C', 'D'), 30),
-#>   z = rnorm(120, mean = 1:120, sd = 25),
+#>   x = 1:132,
+#>   state = rep(c('A', 'B', 'C', 'D'), 33),
+#>   z = rnorm(132, mean = 1:132, sd = 25),
 #>   y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
 #> )
 #> empty = mcp(model, data, sample = FALSE, par_x = 'x')
@@ -105,24 +104,24 @@ print(fit$example_code) # See how the data was simulated
 #> 
 #>   Intercept_1 = 10,
 #>   z_1 = 0.2,
-#>   xstateA_1 = -0.75,
-#>   xstateB_1 = -0.25,
+#>   xstateA_1 = -0.30,
+#>   xstateB_1 = -0.10,
 #>   xstateC_1 = 0.25,
-#>   xstateD_1 = 0.75,
+#>   xstateD_1 = 0.50,
 #> 
-#>   Intercept_2 = 10,
-#>   x_2 = -1,
-#>   stateB_2 = 15,
-#>   stateC_2 = 30,
-#>   stateD_2 = 45,
+#>   Intercept_2 = 15,
+#>   x_2 = -0.8,
+#>   stateB_2 = 10,
+#>   stateC_2 = 20,
+#>   stateD_2 = 30,
 #> 
-#>   xE2_3 = 0.2,
+#>   xE2_3 = 0.02,
 #> 
 #>   sigma_1 = 5
 #> )
 #> 
 #> # Run sampling
-#> fit = mcp(model, data, par_x = 'x', iter = 10000, sample = sample, seed = 42)
+#> fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 #> 
 #> # Illustrative plot
 #> if (plot) {
@@ -167,7 +166,7 @@ print(empty$example_code)
 #> )
 #> 
 #> # Run sampling
-#> fit = mcp(model, data, family = binomial(), iter = 4000, sample = sample, seed = 42)
+#> fit = mcp(model, data, family = binomial(), sample = sample, seed = 42)
 #> 
 #> # Illustrative plot
 #> if (plot) {

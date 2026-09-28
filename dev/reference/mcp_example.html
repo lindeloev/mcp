@@ -77,16 +77,16 @@
 
 
 <dl><dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
-<dd><p>Name of the example. One of:</p><ul><li><p><code>"demo"</code>: Two change points between intercepts and joined/disjoined slopes.</p></li>
-<li><p><code>"intercepts"</code>: An intercept-only change point.</p></li>
-<li><p><code>"multiple"</code>: Multiple regression with categorical predictors and interactions.</p></li>
+<dd><p>Name of the example. One of:</p><ul><li><p><code>"ar"</code>: One change point in autoregressive residuals (the <code>ar1</code> dpar)</p></li>
 <li><p><code>"binomial"</code>: Binomial with two change points. Much like <code>"demo"</code> on a logit scale.</p></li>
+<li><p><code>"demo"</code>: Two change points between intercepts and joined/disjoined slopes.</p></li>
 <li><p><code>"group_mu"</code>: Group-level predictor deviations (random intercepts/slopes) across a change point.</p></li>
 <li><p><code>"group_cp"</code>: Group-level change-point deviations (random effects).</p></li>
+<li><p><code>"intercepts"</code>: An intercept-only change point.</p></li>
 <li><p><code>"missing"</code>: Missing data imputation (NAs in response variable y).</p></li>
-<li><p><code>"quadratic"</code>: A change point to a quadratic segment where there is no data.</p></li>
-<li><p><code>"ar"</code>: One change point in autoregressive residuals (the <code>ar1</code> dpar)</p></li>
+<li><p><code>"multiple"</code>: Multiple regression with categorical predictors and interactions.</p></li>
 <li><p><code>"sigma"</code>: A change in "sigma" dpar, including a slope on sigma.</p></li>
+<li><p><code>"void"</code>: Missing data around change points.</p></li>
 </ul></dd>
 
 
@@ -137,9 +137,9 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # Simulate data</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> set.seed(42)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> data = data.frame(</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   x = 1:120,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   state = rep(c('A', 'B', 'C', 'D'), 30),</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   z = rnorm(120, mean = 1:120, sd = 25),</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   x = 1:132,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   state = rep(c('A', 'B', 'C', 'D'), 33),</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   z = rnorm(132, mean = 1:132, sd = 25),</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> )</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> empty = mcp(model, data, sample = FALSE, par_x = 'x')</span>
@@ -149,24 +149,24 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_1 = 10,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   z_1 = 0.2,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   xstateA_1 = -0.75,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   xstateB_1 = -0.25,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   xstateA_1 = -0.30,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   xstateB_1 = -0.10,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   xstateC_1 = 0.25,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   xstateD_1 = 0.75,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   xstateD_1 = 0.50,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_2 = 10,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   x_2 = -1,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   stateB_2 = 15,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   stateC_2 = 30,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   stateD_2 = 45,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_2 = 15,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   x_2 = -0.8,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   stateB_2 = 10,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   stateC_2 = 20,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   stateD_2 = 30,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   xE2_3 = 0.2,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   xE2_3 = 0.02,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   sigma_1 = 5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> )</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # Run sampling</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fit = mcp(model, data, par_x = 'x', iter = 10000, sample = sample, seed = 42)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # Illustrative plot</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> if (plot) {</span>
@@ -211,7 +211,7 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> )</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # Run sampling</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fit = mcp(model, data, family = binomial(), iter = 4000, sample = sample, seed = 42)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fit = mcp(model, data, family = binomial(), sample = sample, seed = 42)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # Illustrative plot</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> if (plot) {</span>

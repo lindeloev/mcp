@@ -3,11 +3,15 @@
 ## Convergence
 
 A common problem when using MCMC is lacking convergence between chains.
-This will show up as large `rhat` values (\> 1.1 is a common criterion)
-and non-converging lines in `plot_pars(fit)`.
+This will show up as large `rhat` values, low `ess_bulk` or `ess_tail`,
+and non-converging lines in `plot_pars(fit)`. By default,
+[`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) and
+[`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
+warn when `rhat > 1.01` or ESS \< 400.
 
 - The first thing to try is always to make the model warm up longer to
-  see if it reaches convergence later: `mcp(fit, data, warmup = 10000)`.
+  see if it reaches convergence later:
+  `mcp(model, data, warmup = 10000)`.
 
 - It can be a sign of a deeper non-identifiability in the model. This
   will show up as strong correlations in the joint distribution of any

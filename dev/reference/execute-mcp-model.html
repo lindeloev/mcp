@@ -84,12 +84,13 @@ parameter with <code>dpar</code>, and choose the response or linear-predictor sc
 <span>  probs <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  rate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  prior <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  varying <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  group <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  arma <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  ndraws <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  draws_format <span class="op">=</span> <span class="st">"tidy"</span>,</span>
 <span>  nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  samples_format <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  varying <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  conditional <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
@@ -103,15 +104,18 @@ parameter with <code>dpar</code>, and choose the response or linear-predictor sc
 <span>  rate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  prior <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  dpar <span class="op">=</span> <span class="st">"epred"</span>,</span>
-<span>  varying <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  group <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  arma <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  ndraws <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  draws_format <span class="op">=</span> <span class="st">"tidy"</span>,</span>
 <span>  scale <span class="op">=</span> <span class="st">"response"</span>,</span>
 <span>  nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  samples_format <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  varying <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">log_lik</span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'mcpfit'</span></span>
 <span><span class="fu">log_lik</span><span class="op">(</span></span>
@@ -121,12 +125,13 @@ parameter with <code>dpar</code>, and choose the response or linear-predictor sc
 <span>  probs <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  rate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  prior <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  varying <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  group <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  arma <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  ndraws <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  draws_format <span class="op">=</span> <span class="st">"matrix"</span>,</span>
 <span>  nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  samples_format <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  varying <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -137,10 +142,11 @@ parameter with <code>dpar</code>, and choose the response or linear-predictor sc
 <span>  summary <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  probs <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  prior <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  varying <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  group <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  arma <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  ndraws <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  varying <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -190,7 +196,7 @@ and are unaffected by <code>rate</code>.</p></dd>
 The selected draws must be available; prior-only fits require <code>prior = TRUE</code>.</p></dd>
 
 
-<dt id="arg-varying">varying<a class="anchor" aria-label="anchor" href="#arg-varying"></a></dt>
+<dt id="arg-group">group<a class="anchor" aria-label="anchor" href="#arg-group"></a></dt>
 <dd><p>Group-level effects. One of:</p><ul><li><p><code>TRUE</code> All group-level deviations.</p></li>
 <li><p><code>FALSE</code> No group-level deviations (<code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code>).</p></li>
 <li><p><code>"cp"</code> or <code>"predictor"</code>: All group-level deviations belonging to that part of
@@ -204,7 +210,7 @@ the model.</p></li>
 <li><p><code>FALSE</code> Disregard AR and MA effects. For <code>family = gaussian()</code>, <code>predict()</code> uses only <code>sigma</code> for residuals.
 For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
-currently requires including all such effects (<code>varying = TRUE</code>).</p></li>
+currently requires all such effects (<code>group = TRUE</code>).</p></li>
 </ul></dd>
 
 
@@ -225,6 +231,10 @@ If there are group-level effects, this is the number of draws from each group.
 <dt id="arg-samples-format">samples_format<a class="anchor" aria-label="anchor" href="#arg-samples-format"></a></dt>
 <dd><p>Deprecated. Use <code>draws_format</code> instead.
 See more under "value"</p></dd>
+
+
+<dt id="arg-varying">varying<a class="anchor" aria-label="anchor" href="#arg-varying"></a></dt>
+<dd><p>Deprecated. Use <code>group</code> instead.</p></dd>
 
 
 <dt id="arg-conditional">conditional<a class="anchor" aria-label="anchor" href="#arg-conditional"></a></dt>
@@ -288,7 +298,7 @@ function when counts differ from proportions. Explicit <code>rate</code> setting
 <p><code>residuals(fit)</code> is equivalent to <code>fit$data[[mcp_columns(fit)$response]] - fitted(fit, ...)</code> (or <code>newdata[[mcp_columns(fit)$response]] - fitted(fit, ...)</code>),
 but with fixed arguments for <code>fitted</code>: <code>rate = FALSE, dpar = 'epred', draws_format = 'tidy'</code>.</p>
 <p><code>log_lik()</code> defaults to an unsummarised draws-by-observation matrix, as used
-by <code>loo</code> and other posterior workflows. Non-default <code>varying</code> and <code>arma</code>
+by <code>loo</code> and other posterior workflows. Non-default <code>group</code> and <code>arma</code>
 settings evaluate conditional or counterfactual log-likelihoods (e.g.,
 omitting random effects or serial correlation); they cannot be used in
 <code><a href="loo.mcpfit.html">loo()</a></code> or <code><a href="loo.mcpfit.html">waic()</a></code> because estimating information criteria for reduced
@@ -399,31 +409,31 @@ retained JAGS imputations supply the history used for later fitted and predicted
 <span class="r-msg co"><span class="r-pr">#&gt;</span> NA values detected in 'y'. JAGS will treat them as latent responses and impute them during sampling.</span>
 <span class="r-in"><span><span class="fu">fitted</span><span class="op">(</span><span class="va">missing_fit</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># Expected responses for missing y</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    y  x state   fitted        sd     Q2.5    Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 NA  8     B 35.60043 1.0803038 33.51261 37.74217</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 NA 19     A 15.68747 0.8392979 14.05176 17.34367</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 NA 27     A 17.20067 0.7620321 15.70353 18.68519</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 NA 28     B 39.38345 0.7593611 37.89912 40.87640</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 NA 29     A 17.57898 0.7589502 16.07714 19.05693</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 NA 30     B 39.76175 0.7585016 38.28224 41.25734</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 NA  8     B 35.39478 1.0927946 33.30087 37.58317</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 NA 19     A 15.50674 0.8459778 13.85304 17.14750</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 NA 27     A 17.09444 0.7751878 15.57812 18.59652</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 NA 28     B 39.36404 0.7655497 37.86660 40.89542</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 NA 29     A 17.49136 0.7747784 15.97729 18.98954</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 NA 30     B 39.76096 0.7661437 38.26464 41.30071</span>
 <span class="r-in"><span><span class="fu">fitted</span><span class="op">(</span><span class="va">missing_fit</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># Same, but draws</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 14</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .chain .iteration .draw  cp_1 Intercept_1   x_1 stateB_1    x_2 sigma_1     y</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>      1          1     1  62.8        14.8 0.135     20.3 -<span style="color: #BB0000;">0.497</span>    4.65    <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      1          1     1  62.8        14.8 0.135     20.3 -<span style="color: #BB0000;">0.497</span>    4.65    <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>      1          1     1  62.8        14.8 0.135     20.3 -<span style="color: #BB0000;">0.497</span>    4.65    <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>      1          1     1  62.8        14.8 0.135     20.3 -<span style="color: #BB0000;">0.497</span>    4.65    <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>      1          1     1  62.8        14.8 0.135     20.3 -<span style="color: #BB0000;">0.497</span>    4.65    <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>      1          1     1  62.8        14.8 0.135     20.3 -<span style="color: #BB0000;">0.497</span>    4.65    <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>      1          1     1  59.8        12.1 0.189     21.5 -<span style="color: #BB0000;">0.416</span>    4.36    <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      1          1     1  59.8        12.1 0.189     21.5 -<span style="color: #BB0000;">0.416</span>    4.36    <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>      1          1     1  59.8        12.1 0.189     21.5 -<span style="color: #BB0000;">0.416</span>    4.36    <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>      1          1     1  59.8        12.1 0.189     21.5 -<span style="color: #BB0000;">0.416</span>    4.36    <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>      1          1     1  59.8        12.1 0.189     21.5 -<span style="color: #BB0000;">0.416</span>    4.36    <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>      1          1     1  59.8        12.1 0.189     21.5 -<span style="color: #BB0000;">0.416</span>    4.36    <span style="color: #BB0000;">NA</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 4 more variables: x &lt;int&gt;, state &lt;fct&gt;, data_row &lt;int&gt;, .epred &lt;dbl&gt;</span></span>
 <span class="r-in"><span><span class="fu">predict</span><span class="op">(</span><span class="va">missing_fit</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># Posterior predictive for missing y</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    y  x state  predict       sd      Q2.5    Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 NA  8     B 35.60152 4.415550 26.944898 44.27282</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 NA 19     A 15.68920 4.375556  7.131763 24.25305</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 NA 27     A 17.15676 4.357370  8.668505 25.73409</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 NA 28     B 39.41365 4.324343 30.849440 47.91352</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 NA 29     A 17.58427 4.339324  9.046847 26.11032</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 NA 30     B 39.73979 4.357124 31.227062 48.29058</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 NA  8     B 35.41014 4.412756 26.745900 44.06132</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 NA 19     A 15.53057 4.372454  6.959857 24.05974</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 NA 27     A 17.02735 4.372192  8.570913 25.61888</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 NA 28     B 39.39124 4.297813 30.844286 47.88610</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 NA 29     A 17.46702 4.316559  8.967339 26.01502</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 NA 30     B 39.72046 4.360684 31.240371 48.28261</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

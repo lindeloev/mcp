@@ -9,7 +9,7 @@ fit = mcp(model, data = df, family = gaussian("log"))
 fit = mcp(model, data = df, family = binomial("identity"))
 ```
 
-Currently supported families and link functions include:
+Currently supported families and link functions are:
 
 - Default: `gaussian(link = "identity")`. Alternatives:
   `gaussian(link = "log")`

@@ -100,6 +100,12 @@
   and
   [`waic()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md).
 
+- **Improved speed and robustness:** ESS/s has improved more than
+  10-fold and convergence is more likely. This due to a
+  reparameterization that keep intercepts and slopes relatively
+  independent of change points during sampling and due to (selectively)
+  using the JAGS glm module.
+
 ### Major breaking changes
 
 mcp v0.4 is a major breaking change with the aim of remaining relatively
@@ -157,9 +163,8 @@ been added until we reach 1.0.
     parameters, AR/MA parameters, and group-effect SDs. Use
     `summary(fit)` to get all parameters.
 
-  - In general, renamed `"varying"` to `"group"`. The old `"varying"`
-    selector remains as a deprecated alias. The established `varying =`
-    method argument remains unchanged for now.
+  - In general, renamed `"varying"` to `"group"`. Where `varying` was an
+    argument, it is now a deprecated alias with a warning.
 
   - [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
     [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
@@ -216,12 +221,12 @@ been added until we reach 1.0.
     select counts. An omitted `rate` warns once per session per function
     when the requested counts differ from proportions.
 
-  - **ar(p) no longer persist to later segments:** All terms are now
-    local to the segment in which they are declared. While important for
+  - **ar(p) no longer continues into later segments:** Only terms
+    included in a segment get coefficients there. While important for
     the new multiple-regression functionality, the only backward
     incompatibility is that in a model like
     `model = list(y ~ 1 + ar(1), ~ 0)`, the AR would continue into
-    segment 2. The equivalent model in v0.4+ is `~ 0 + same(ar(1))` in
+    segment 2. The equivalent model in v0.4+ is `~ 0 + ar(1, 0)` in
     segment 2.
 
   - Explicit prior draw selection: Methods requiring draws now require
@@ -291,9 +296,9 @@ been added until we reach 1.0.
     [`lm()`](https://rdrr.io/r/stats/lm.html),
     [`glm()`](https://rdrr.io/r/stats/glm.html), and `brms`. Previously,
     transformations of the change-point predictor such as `sin(x)` and
-    `exp(x)` restarted at each segment onset. Bare `par_x` and
-    polynomial bases such as `I(par_x^2)` remain segment-local to
-    support joined segment shapes.
+    `exp(x)` restarted at each change point. Bare `par_x` and polynomial
+    bases such as `I(par_x^2)` are still measured from the change point
+    to support joined segments.
 
 - **Fitting and priors:**
 
@@ -343,9 +348,6 @@ been added until we reach 1.0.
     count for `family = binomial()`, preventing thresholds from erasing
     the binary response history.
 
-  - AR and MA components can now be turned off in later segments using
-    `ar(0)` and `ma(0)`.
-
   - Explicit AR/MA prediction history control: predict() and the new
     posterior_predict() support conditional = TRUE (default) to
     condition on observed response histories, or conditional = FALSE to
@@ -373,9 +375,11 @@ been added until we reach 1.0.
     `summary(fit)` inherits these settings and accepts its own override
     for the diagnostic footer.
 
-  - Use `mcp(..., seed = 42)` for reproducible JAGS sampling. See
-    `mcp_example("demo")$example_code` how to ensure reproducibility
-    across simulation, fit, and plotting.
+  - Use `mcp(..., seed = 42)` or `set.seed(42)` before
+    [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) for
+    reproducible JAGS sampling, whether chains run sequentially or in
+    parallel. See `mcp_example("demo")$example_code` how to ensure
+    reproducibility across simulation, fit, and plotting.
 
   - `mcp(..., quiet = TRUE)` suppresses routine JAGS output and mcp
     sampling-status messages while preserving warnings and errors.
@@ -386,9 +390,6 @@ been added until we reach 1.0.
   - Memory improvement: The `mcpfit` is now \< 10% of the size as before
     because the log-likelihood is not stored. Use `log_lik(fit)` to
     compute it, or call `loo(fit)` or `waic(fit)` directly.
-
-  - Sampling is now 1-10% faster due to a new formalization of the
-    underlying JAGS code.
 
 - **Model evaluation and prediction:**
 
@@ -405,17 +406,17 @@ been added until we reach 1.0.
     for more memory-efficient (but slower) computation of LOO. Other new
     arguments include the usual from
     [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-    etc.: `loo(fit, ndraws = 1000, arma = FALSE, varying = FALSE)`.
+    etc.: `loo(fit, ndraws = 1000)`.
 
   - Methods like
     [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
     and
     [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-    now accept `fitted(fit, varying = "cp")` and
-    `fitted(fit, varying = "predictor")` as fast selectors for
-    group-level effects in the corresponding formula part. Exact
-    group-level parameter names remain supported too, `varying = TRUE`
-    selects all, and
+    now accept `fitted(fit, group = "cp")` and
+    `fitted(fit, group = "predictor")` as fast selectors for group-level
+    effects in the corresponding formula part. Exact group-level
+    parameter names remain supported too, `group = TRUE` selects all,
+    and
     [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
     continues to return all group-level effects.
 
@@ -477,25 +478,38 @@ been added until we reach 1.0.
   - `mcp_example(...)` now shows an illustrative plot of the fitted
     example by default. Disable using `plot = FALSE`.
 
+  - New help topics `?mcp-formula` (model formulas and the underlying
+    model) and `?mcp-priors` (prior syntax), split out from
+    [`?mcp`](https://lindeloev.github.io/mcp/dev/reference/mcp.md).
+
 ### Minor breaking changes
 
 - **Priors and distributions:**
 
-  - Default coefficient priors are now more consistent with `brms`
-    defaults while retaining proper priors for the `mcp`
-    parameterization. For single-segment models, coefficient priors are
-    adapted from Gelman (2008) predictor-change scaling and `rstanarm` /
-    `brms` conventions, using `max(x) - min(x)` (or `2 * sd(z)`) as the
-    reference predictor change across all segments. This ensures that
-    slope priors remain identical and comparable across models
-    regardless of the number of change points. For non-small datasets,
-    this should have minimal influence since priors remain minimally
-    informative. See priors using `prior_summary(fit, verbose = TRUE)`.
-    The implicit Gaussian `sigma_1` prior is now the same
-    response-calibrated half-Student-t used by `brms`,
-    `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`. Version 0.3.4 instead
-    used a response-SD-calibrated half-normal prior. Both are weakly
-    informative so will have negligible impact on fits.
+  - Default coefficient priors now follow the autoscaled defaults of
+    `rstanarm`: `normal(0, 2.5 * sd(y) / sd(x))` for identity links and
+    `normal(0, 2.5 / sd(x))` for log links, where `sd(x)` is the
+    standard deviation of the predictor’s model-matrix column, including
+    dummy variables for factors. For the change-point variable, `sd(x)`
+    is taken over all data (so slope priors do not depend on the number
+    of change points), and powers such as `I(x^2)` use
+    `sd((x - min(x))^2)`. Version 0.3.4 used
+    `dt(0, sd(y) / (max(x) - min(x)), 3)` for Gaussian slopes, which is
+    about 9 times narrower for evenly spread `x` and noticeably shrank
+    steep slopes in short segments. Intercepts also follow `rstanarm`
+    (`normal(mean(y), 2.5 * sd(y))` for Gaussian models), and the
+    default prior on the segment-1 intercept applies to the level at
+    `min(x)`, just as `rstanarm` and `brms` place intercept priors on
+    centered predictors. `Intercept_1` is still reported at `x = 0`, as
+    in [`lm()`](https://rdrr.io/r/stats/lm.html). This greatly improves
+    sampling when `x` is far from zero, e.g., calendar years. `sigma`
+    and group-level SDs follow `brms`. See priors using
+    `prior_summary(fit, verbose = TRUE)`. The implicit Gaussian
+    `sigma_1` prior is now the same response-calibrated half-Student-t
+    used by `brms`, `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`.
+    Version 0.3.4 instead used a response-SD-calibrated half-normal
+    prior. Both are weakly informative so will have negligible impact on
+    fits.
 
   - Uppercase data-dependent constants for priors (`MINX`, `MAXX`, etc.)
     remain temporarily supported with a deprecation warning. They are
@@ -504,17 +518,18 @@ been added until we reach 1.0.
     `n_cp()`.
 
   - Binomial and Bernoulli models with logit or probit links now use a
-    narrower, weakly regularizing `dt(0, 1.5, 3)` rather than
-    `dt(0, 2.5, 3)` for intercepts and categorical contrasts.
+    narrower, weakly regularizing base scale of 1.5 rather than 2.5:
+    `normal(0, 1.5)` for intercepts and `normal(0, 1.5 / sd(x))` for
+    coefficients and categorical contrasts.
 
   - **Gaussian models with log link (`gaussian(link = "log")`):** Now
     aligned with `mcp`’s general log-link model standards (`dnorm`
     rather than Student-t to reduce extreme multiplicative tails under
     exponentiation). Population intercepts are robustly calibrated to
     empirical log-data (with non-positive values replaced by 0.1) and
-    shift with [`offset()`](https://rdrr.io/r/stats/offset.html),
-    categorical contrasts default to `dnorm(0, 2.5)`, and slopes are
-    Gelman-scaled (`dnorm(0, 2.5 / predictor_scale())`).
+    shift with [`offset()`](https://rdrr.io/r/stats/offset.html), and
+    coefficients and categorical contrasts use `rstanarm`’s
+    `dnorm(0, 2.5 / sd(x))`.
 
   - **Count model priors
     ([`poisson()`](https://rdrr.io/r/stats/family.html),
@@ -527,17 +542,15 @@ been added until we reach 1.0.
     \text{offset}) when an
     [`offset()`](https://rdrr.io/r/stats/offset.html) is present
     (calibrating location and scale directly to rates, unlike `brms`
-    which subtracts `mean(offset)` from raw counts). Slopes are now
-    Gelman-scaled to predictor change
-    (`dnorm(0, 2.5 / predictor_scale())`). For the new multiple
-    regression and RHS group-level features in v0.4.0, categorical
-    contrasts default to `dnorm(0, 2.5)` and group SDs default to
+    which subtracts `mean(offset)` from raw counts). Coefficients and
+    categorical contrasts now use `rstanarm`’s `dnorm(0, 2.5 / sd(x))`.
+    For the new RHS group-level features in v0.4.0, group SDs default to
     `dnorm(0, 2.5) T(0, )` (or scaled half-normals). Broad normal priors
     follow the precedent of `rstanarm`, substantially reducing extreme
     multiplicative effects and explosive prior simulations compared with
     Student-t priors under exponentiation. Similarly, modeled log-shape
     in negative-binomial (`shape(...)`) uses `dnorm(0, 2.5)` and
-    `dnorm(0, 2.5 / predictor_scale())` rather than Student-t priors.
+    `dnorm(0, 2.5 / sd(x))` rather than Student-t priors.
 
 - **Interface and data structures:**
 
@@ -563,7 +576,7 @@ been added until we reach 1.0.
   - Removed `which_y` argument from
     [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
 
-  - Disallowed non-default `varying` and `arma = FALSE` in
+  - Disallowed non-default `group` and `arma = FALSE` in
     [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
     and
     [`waic()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md).

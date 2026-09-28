@@ -28,7 +28,7 @@ prior = list(
   cp_1 = "dunif(min(x), cp_2)",  # change point between smallest x and cp_2
   x_2 = "dt(0, 1, 3) T(x_1, )",  # slope 2 > slope 1 and t-distributed
   cp_2 = 80,  # A constant (set; not estimated)
-  x_3 = "x_2"  # continue same slope
+  x_3 = "x_2"  # same slope as x_2 (use same() instead; see below)
   # Intercept_2 and Intercept_3 not specified. Use default.
 )
 ```
@@ -70,11 +70,12 @@ Other notes:
   numerical value (as `cp_2` above). A constant is a 100% prior belief
   in that value, and it will therefore not be estimated.
 
-- You can also equate one variable with another (`x_3 = "x_2"` above)
-  though a more readable equivalent is declaring `same(x)` in segment 3.
-  That removes the `x_3` as parameter while the prior-method duplicates
-  it. Read more about the versatile `same()` in [Understanding mcp
-  formulas](https://lindeloev.github.io/mcp/dev/articles/formulas.md).
+- To share a coefficient between segments, prefer `same()` in the model,
+  e.g., `~ 1 + same(x)` in segment 3. This reuses `x_2` instead of
+  estimating `x_3`. Equating parameters in the prior (`x_3 = "x_2"`
+  above) gives the same fit but keeps `x_3` as a duplicate. Read more
+  about `same()` in [Understanding mcp
+  formulas](https://lindeloev.github.io/mcp/dev/articles/formulas.html#sharing-coefficients-between-segments).
 
 - You can write deterministic expression such as
   `x_3 = "x_2 + 5 - cp_1/10"`. Since `x_3` is now deterministic given
@@ -95,17 +96,17 @@ prior_summary(empty_manual)  # For more details: add verbose = TRUE
 ```
 
     ## # A tibble: 9 × 5
-    ##   parameter   segment dpar  prior                                            bounds        
-    ##   <chr>         <int> <chr> <chr>                                            <chr>         
-    ## 1 cp_1              2 cp    uniform(min = 1, max = cp_2)                     [min(x), cp_2]
-    ## 2 cp_2              3 cp    80                                               none          
-    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 5)                         [-Inf, 10]    
-    ## 4 x_1               1 mu    beta(shape1 = 2, shape2 = 5)                     [0, 1]        
-    ## 5 Intercept_2       2 mu    student_t(df = 3, location = 50.5, scale = 37.1) none          
-    ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 1)       [x_1, Inf]    
-    ## 7 Intercept_3       3 mu    student_t(df = 3, location = 50.5, scale = 37.1) none          
-    ## 8 x_3               3 mu    x_2                                              none          
-    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1)    [0.001, Inf]
+    ##   parameter   segment dpar  prior                                         bounds        
+    ##   <chr>         <int> <chr> <chr>                                         <chr>         
+    ## 1 cp_1              2 cp    uniform(min = 1, max = cp_2)                  [min(x), cp_2]
+    ## 2 cp_2              3 cp    80                                            none          
+    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 5)                      [-Inf, 10]    
+    ## 4 x_1               1 mu    beta(shape1 = 2, shape2 = 5)                  [0, 1]        
+    ## 5 Intercept_2       2 mu    normal(mean = 50.5, sd = 72.52873)            none          
+    ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 1)    [x_1, Inf]    
+    ## 7 Intercept_3       3 mu    normal(mean = 50.5, sd = 72.52873)            none          
+    ## 8 x_3               3 mu    x_2                                           none          
+    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0.001, Inf]
 
 ``` r
 
@@ -113,17 +114,17 @@ prior_summary(empty_default)  # For more details: add verbose = TRUE
 ```
 
     ## # A tibble: 9 × 5
-    ##   parameter   segment dpar  prior                                              bounds        
-    ##   <chr>         <int> <chr> <chr>                                              <chr>         
-    ## 1 cp_1              2 cp    dirichlet(alpha = 1)                               [min(x), cp_2]
-    ## 2 cp_2              3 cp    dirichlet(alpha = 1)                               [cp_1, max(x)]
-    ## 3 Intercept_1       1 mu    student_t(df = 3, location = 50.5, scale = 37.1)   none          
-    ## 4 x_1               1 mu    student_t(df = 3, location = 0, scale = 0.3747475) none          
-    ## 5 Intercept_2       2 mu    student_t(df = 3, location = 50.5, scale = 37.1)   none          
-    ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 0.3747475) none          
-    ## 7 Intercept_3       3 mu    student_t(df = 3, location = 50.5, scale = 37.1)   none          
-    ## 8 x_3               3 mu    student_t(df = 3, location = 0, scale = 0.3747475) none          
-    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1)      [0.001, Inf]
+    ##   parameter   segment dpar  prior                                         bounds        
+    ##   <chr>         <int> <chr> <chr>                                         <chr>         
+    ## 1 cp_1              2 cp    dirichlet(alpha = 1)                          [min(x), cp_2]
+    ## 2 cp_2              3 cp    dirichlet(alpha = 1)                          [cp_1, max(x)]
+    ## 3 Intercept_1       1 mu    normal(mean = 50.5, sd = 72.52873)            none          
+    ## 4 x_1               1 mu    normal(mean = 0, sd = 2.5)                    none          
+    ## 5 Intercept_2       2 mu    normal(mean = 50.5, sd = 72.52873)            none          
+    ## 6 x_2               2 mu    normal(mean = 0, sd = 2.5)                    none          
+    ## 7 Intercept_3       3 mu    normal(mean = 50.5, sd = 72.52873)            none          
+    ## 8 x_3               3 mu    normal(mean = 0, sd = 2.5)                    none          
+    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0.001, Inf]
 
 Now, let’s simulate some data from `model`. The following priors are “at
 odds” with the actual data so as to show their effect.
@@ -131,7 +132,6 @@ odds” with the actual data so as to show their effect.
 ``` r
 
 df = data.frame(x = runif(200, 0, 100), y = 1)  # 200 datapoints between 0 and 100
-set.seed(42)
 df$y = empty_default$simulate(empty_default, df, 
     Intercept_1 = 20, Intercept_2 = 22, Intercept_3 = 30,  # intercepts
     x_1 = -0.5, x_2 = 0.5, x_3 = 0,  # slopes
@@ -141,13 +141,13 @@ df$y = empty_default$simulate(empty_default, df,
 head(df)
 ```
 
-    ##            x        y
-    ## 1  8.0750138 22.81729
-    ## 2 83.4333037 27.17651
-    ## 3 60.0760886 36.35369
-    ## 4 15.7208442 15.30389
-    ## 5  0.7399441 21.65137
-    ## 6 46.6393497 27.28905
+    ##          x        y
+    ## 1 91.48060 36.00483
+    ## 2 93.70754 35.22376
+    ## 3 28.61395  0.67698
+    ## 4 83.04476 39.24241
+    ## 5 64.17455 33.25341
+    ## 6 51.90959 30.98237
 
 Sample the prior and posterior. We give the manual fit a longer warmup
 since it is harder to find the right posterior under these weird prior
@@ -156,8 +156,8 @@ constraints (priors will usually improve sampling efficiency).
 ``` r
 
 future::plan(future::multisession, workers = 3)
-fit_manual = mcp(model, data = df, sample = "both", warmup = 10000, prior = prior, seed = 42)
-fit_default = mcp(model, data = df, sample = "both", warmup = 10000, seed = 42)
+fit_manual = mcp(model, data = df, sample = "both", warmup = 3000, prior = prior)
+fit_default = mcp(model, data = df, sample = "both", warmup = 3000)
 ```
 
 First, let’s look at the priors side by side. Notice the use of
@@ -171,11 +171,9 @@ among others.
 ``` r
 
 library(ggplot2)
-set.seed(42)
 pp_default = plot_pars(fit_default, type = "dens_overlay", prior = TRUE, nvariables = NULL) + 
   ggtitle("Default priors")
 
-set.seed(42)
 pp_manual = plot_pars(fit_manual, type = "dens_overlay", prior = TRUE, nvariables = NULL) +
   ggtitle("Manual priors")
 
@@ -188,10 +186,8 @@ Here are the resulting posterior fits:
 
 ``` r
 
-set.seed(42)
 plot_default = plot(fit_default) + ggtitle("Default priors")
 
-set.seed(42)
 plot_manual = plot(fit_manual) + ggtitle("Manual priors")
 
 plot_default + plot_manual
@@ -217,17 +213,17 @@ prior_summary(fit_manual, verbose = TRUE)
 ```
 
     ## # A tibble: 9 × 9
-    ##   parameter   segment dpar  prior                                          bounds         rule                                                                                  description                                                  source  kind        
-    ##   <chr>         <int> <chr> <chr>                                          <chr>          <chr>                                                                                 <chr>                                                        <chr>   <chr>       
-    ## 1 cp_1              2 cp    uniform(min = 0.4496308, max = cp_2)           [min(x), cp_2] uniform(min = min(x), max = cp_2)                                                     User-specified prior                                         user    distribution
-    ## 2 cp_2              3 cp    80                                             none           80                                                                                    Fixed at 80                                                  user    constant    
-    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 5)                       [-Inf, 10]     normal(mean = 0, sd = 5)                                                              User-specified prior                                         user    distribution
-    ## 4 x_1               1 mu    beta(shape1 = 2, shape2 = 5)                   [0, 1]         beta(shape1 = 2, shape2 = 5)                                                          User-specified prior                                         user    distribution
-    ## 5 Intercept_2       2 mu    student_t(df = 3, location = 26, scale = 10.3) none           student_t(df = 3, location = round(median(y), 1), scale = max(2.5, round(mad(y), 1))) Robustly centered mean intercept with a minimum scale of 2.5 default distribution
-    ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 1)     [x_1, Inf]     student_t(df = 3, location = 0, scale = 1)                                            User-specified prior                                         user    distribution
-    ## 7 Intercept_3       3 mu    student_t(df = 3, location = 26, scale = 10.3) none           student_t(df = 3, location = round(median(y), 1), scale = max(2.5, round(mad(y), 1))) Robustly centered mean intercept with a minimum scale of 2.5 default distribution
-    ## 8 x_3               3 mu    x_2                                            none           x_2                                                                                   Same value as x_2                                            user    alias       
-    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 10.3)  [0.001, Inf]   student_t(df = 3, location = 0, scale = max(2.5, round(mad(y), 1)))                   Positive residual SD calibrated on the response scale        default distribution
+    ##   parameter   segment dpar  prior                                        bounds         rule                                                                description                                           source  kind        
+    ##   <chr>         <int> <chr> <chr>                                        <chr>          <chr>                                                               <chr>                                                 <chr>   <chr>       
+    ## 1 cp_1              2 cp    uniform(min = 0.02388966, max = cp_2)        [min(x), cp_2] uniform(min = min(x), max = cp_2)                                   User-specified prior                                  user    distribution
+    ## 2 cp_2              3 cp    80                                           none           80                                                                  Fixed at 80                                           user    constant    
+    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 5)                     [-Inf, 10]     normal(mean = 0, sd = 5)                                            User-specified prior                                  user    distribution
+    ## 4 x_1               1 mu    beta(shape1 = 2, shape2 = 5)                 [0, 1]         beta(shape1 = 2, shape2 = 5)                                        User-specified prior                                  user    distribution
+    ## 5 Intercept_2       2 mu    normal(mean = 24.32185, sd = 26.85637)       none           normal(mean = mean(y), sd = 2.5 * sd(y))                            Mean intercept (rstanarm default)                     default distribution
+    ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 1)   [x_1, Inf]     student_t(df = 3, location = 0, scale = 1)                          User-specified prior                                  user    distribution
+    ## 7 Intercept_3       3 mu    normal(mean = 24.32185, sd = 26.85637)       none           normal(mean = mean(y), sd = 2.5 * sd(y))                            Mean intercept (rstanarm default)                     default distribution
+    ## 8 x_3               3 mu    x_2                                          none           x_2                                                                 Same value as x_2                                     user    alias       
+    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 9.9) [0.001, Inf]   student_t(df = 3, location = 0, scale = max(2.5, round(mad(y), 1))) Positive residual SD calibrated on the response scale default distribution
 
 This is a contrived example. Usually setting priors manually aims to
 sample the “correct” posterior.
@@ -242,13 +238,11 @@ predictive space:
 ``` r
 
 # Sample priors
-fit_pp_manual = mcp(model, data = df, prior = prior, sample = "prior", seed = 42)
-fit_pp_default = mcp(model, data = df, sample = "prior", seed = 42)
+fit_pp_manual = mcp(model, data = df, prior = prior, sample = "prior")
+fit_pp_default = mcp(model, data = df, sample = "prior")
 
 # Plot it
-set.seed(42)
 plot_pp_manual = plot(fit_pp_manual, lines = 100, prior = TRUE) + ylim(c(-400, 400)) + ggtitle("Manual prior")
-set.seed(42)
 plot_pp_default = plot(fit_pp_default, lines = 100, prior = TRUE) + ylim(c(-400, 400)) + ggtitle("Default prior")
 plot_pp_manual + plot_pp_default  # using patchwork
 ```
@@ -391,7 +385,11 @@ The defaults are governed by three core principles:
       \operatorname{range}(x) (for binary and `par_x`) and
       2\\\operatorname{sd}(x) (continuous). This ensures that slope
       priors remain identical and comparable across models regardless of
-      the number of change points.
+      the number of change points. Powers of `par_x` such as `I(x^2)`
+      grow within a segment, so they use \Delta x =
+      \operatorname{range}(x) \cdot w^{p-1} with the typical segment
+      width w = \operatorname{range}(x) / K for K segments. They thus
+      imply the same change within a typical segment as a linear slope.
     - Group-level slope standard deviations mirror this scaling:
       \sigma\_\beta \sim \text{Dist}(0, S / \Delta x) T(0, ).
 3.  **Empirical baseline intercept calibration and offset accounting:**
@@ -414,8 +412,10 @@ General quantities used in the table below:
 - log-rate scale S\_{\text{rate}} = \max(2.5,
   \operatorname{mad}(y\_{\text{rate}}))
 
-- predictor change \Delta x = \operatorname{range}(x) (binary / `par_x`)
-  or 2\\\operatorname{sd}(x) (other continuous).
+- predictor change \Delta x = \operatorname{range}(x) (binary /
+  `par_x`), \operatorname{range}(x) \cdot w^{p-1} for `par_x` powers
+  (with w = \operatorname{range}(x) / K), or 2\\\operatorname{sd}(x)
+  (other continuous).
 
 [TABLE]
 
@@ -511,11 +511,13 @@ fit_manual$jags_code
     ##   cp_2 = CONST3_  # Fixed at 80
     ##   Intercept_1 ~ dnorm(0, 1/(5)^2) T(,10)  # User-specified prior
     ##   x_1 ~ dbeta(2, 5)  # User-specified prior
-    ##   Intercept_2 ~ dt(26, 1/(10.3)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5
+    ##   Intercept_2_end_ ~ dnorm(24.32185 + x_2 * (cp_2 - cp_1), 1/(26.85637)^2)   # Mean intercept (rstanarm default); sampled as the level at the segment end
+    ##   Intercept_2 = Intercept_2_end_ - (x_2 * (cp_2 - cp_1))
     ##   x_2 ~ dt(0, 1/(1)^2, 3) T(x_1,)  # User-specified prior
-    ##   Intercept_3 ~ dt(26, 1/(10.3)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5
+    ##   Intercept_3_end_ ~ dnorm(24.32185 + x_3 * (cp_3 - cp_2), 1/(26.85637)^2)   # Mean intercept (rstanarm default); sampled as the level at the segment end
+    ##   Intercept_3 = Intercept_3_end_ - (x_3 * (cp_3 - cp_2))
     ##   x_3 = x_2  # Same value as x_2
-    ##   sigma_1 ~ dt(0, 1/(10.3)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale
+    ##   sigma_1 ~ dt(0, 1/(9.9)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {

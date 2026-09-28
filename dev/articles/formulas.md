@@ -20,13 +20,10 @@ change-point structures.
 The three formula parts are called **response**, **cp**, and
 **predictor**. The general format is `response ~ cp ~ predictor`, except
 for the first segment, which has no change point and therefore uses
-`response ~ predictor`. In later segments the response is assumed
-identical and may be omitted. A one-sided formula such as `~ x` also
-uses the default change-point formula `~ 1`, so it is shorthand for
-`y ~ 1 ~ 1 + x`. This is familiar from
+`response ~ predictor`. In later segments the response may be omitted,
+and the change point defaults to `1`, so `~ x` is shorthand for
+`y ~ 1 ~ 1 + x`. The predictor part works like in
 [`lm()`](https://rdrr.io/r/stats/lm.html)/[`glm()`](https://rdrr.io/r/stats/glm.html)/`brms::brm()`.
-
-`mcp` models consist of three parts:
 
 **1. Response (segment 1 only):**
 
@@ -44,7 +41,7 @@ uses the default change-point formula `~ 1`, so it is shorthand for
 
 **2. Change-point modeling (`cp`, segments 2+):**
 
-- `~ 1 ~ ...` (or omitted, e.g., `~ x`): Population-level change point
+- `1 ~ ...` (or omitted, e.g., `~ x`): Population-level change point
   (default).
 - `1 + (1 | id) ~ ...`: Group-level change-point deviations around the
   population change point ([read
@@ -53,18 +50,17 @@ uses the default change-point formula `~ 1`, so it is shorthand for
 **3. Regression formula (all segments):**
 
 - `~ 1 + x`: Disjoined slope with a new segment intercept.
-- `~ 0 + x`: Joined slope (no intercept; continuous from previous
-  segment).
+- `~ 0 + x`: Joined slope (no new intercept).
 - `~ 1`: Plateau (intercept only, no slope).
-- `~ x:state + z + (1 | id)`: Additional covariates, interactions, and
+- `~ x:state + z + (1 | id)`: Other variables, interactions, and
   group-level effects ([read
   more](https://lindeloev.github.io/mcp/dev/articles/group_effects.md)).
 - `+ sigma(1 + x)` or `shape(0 + state)`: Distributional parameters on
   the link scale ([read
   more](https://lindeloev.github.io/mcp/dev/articles/dpar.md)).
 - `+ ar(1)` or `ma(2, 1 + x)`: Autoregressive and moving-average
-  time-series residuals on the link scale; declare them in every active
-  segment ([read
+  time-series residuals on the link scale; include them in every segment
+  where they apply ([read
   more](https://lindeloev.github.io/mcp/dev/articles/arma.md)).
 
 `mcp` is heavily inspired by `brms` which again is inspired by
@@ -74,82 +70,135 @@ which extends [`lm()`](https://rdrr.io/r/stats/lm.html) and
 history](https://twitter.com/jonaslindeloev/status/1117760777249853440)
 on that.
 
-## How terms apply in later segments
+## How segments connect
 
-Each segment specifies its active terms:
+Here is the demo model from the
+[README](https://lindeloev.github.io/mcp/dev/index.md), which ships
+already fitted as
+[`demo_fit`](https://lindeloev.github.io/mcp/dev/reference/demo_fit.md):
 
-> **1. Declare active terms:** Writing a term estimates new
-> segment-specific coefficients. Terms not declared are inactive but
-> joining can retain their previously reached level (rule 2).
->
-> **2. Join or disjoin x-dependent terms:** `~ 0 + ...` continues from
-> the level reached by the preceding segment-local x-dependent terms,
-> such as `x`, `x:state`, and `I(x^2)`. A new start intercept is
-> estimated with `~ 1 + ...`. Other terms (e.g., a covariate `z`,
-> `state`) can make the full prediction discontinuous even when the
-> x-dependent terms are joined.
->
-> **3. These rules apply to other parameter formulas:**
-> [`sigma()`](https://rdrr.io/r/stats/sigma.html), `shape()`,
-> [`ar()`](https://rdrr.io/r/stats/ar.html), and `ma()` use the same
-> term rules. AR/MA are off wherever not declared. When distributional
-> parameters must be non-zero, `mcp` automatically declares defaults:
-> when `sigma` is not declared, `mcp` supplies an initial intercept in
-> segment 1 (like `sigma(1)`) and a joined plateau in later segments
-> (like `sigma(0)`). The same applies to shape in
-> [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md).
+``` r
 
-### Examples: Active terms and parameter names
+library(mcp)
+model = list(
+  response ~ 1,  # Plateau (Intercept_1)
+  ~ 0 + time,    # Joined slope (time_2)
+  ~ 1 + time     # Disjoined slope (Intercept_3, time_3)
+)
+plot(demo_fit)
+```
+
+![Fitted mcp model with a plateau, a joined slope, and a disjoined
+slope.](formulas_files/figure-html/unnamed-chunk-2-1.png)
+
+Segment 2 continues from where the plateau left off, while segment 3
+starts afresh with a new intercept. Three rules govern this (with `x` as
+the change-point variable, i.e., `time` above):
+
+1.  **Only included terms get coefficients.**  
+    A segment includes the terms in its formula, plus an intercept
+    unless removed with `0 +`. Each included term gets a new coefficient
+    (`x_2`, `stateB_2`) or reuses an existing one with
+    [`same()`](#sharing-coefficients-between-segments).
+2.  **x-terms are measured from the change point.**  
+    `x`, `x:z`, `state:x`, and `I(x^2)` start at zero at the segment’s
+    change point and stop growing at the next change point (they
+    plateau). See the [math below](#modeling-slope-change-points).
+3.  **Joined or disjoined.**  
+    Without an intercept (`0 + ...`), a segment is *joined*: it
+    continues from where the earlier intercept and x-terms left off.
+    With an intercept, it is *disjoined* and starts afresh.
+
+The same rules apply separately to
+[`sigma()`](https://rdrr.io/r/stats/sigma.html), `shape()`,
+[`ar()`](https://rdrr.io/r/stats/ar.html), and `ma()`.
+
+`sigma` and `shape` are required by the likelihood, so they include an
+intercept in segment 1. Per rule 3, they are joined in later segments
+that do not include them.
+
+### Joining applies to the intercept and x-terms
+
+Other terms, such as `z`, `state`, and `(1 | id)`, end at the change
+point unless included again. So a joined segment can still start with a
+jump, as it does for the two values of `z` below. We use
+`fit$simulate()` to compute predictions for chosen parameter values:
+
+``` r
+
+model = list(
+  y ~ 1 + x + z,  # Intercept_1, x_1, z_1
+    ~ 0 + x       # Joined x_2; z is not included
+)
+df = expand.grid(x = seq(0, 40, by = 0.5), z = c(-1, 1), y = 0)
+fit = mcp(model, data = df, par_x = "x", sample = FALSE)
+
+df$y = fit$simulate(fit, df, cp_1 = 20, Intercept_1 = 0, x_1 = 1, z_1 = 5, x_2 = -1, sigma_1 = 1, .type = "fitted")
+plot(y ~ x, data = df, col = factor(z))  # Red: z = 1. Black: z = -1
+```
+
+![Two parallel lines, one per value of z, which jump onto a single
+shared line at the change point x =
+20.](formulas_files/figure-html/unnamed-chunk-3-1.png)
+
+To keep `z` in segment 2, include it again: `~ 0 + x + same(z)` reuses
+`z_1` whereas `~ 0 + x + z` estimates a new `z_2`.
+
+Conversely, a joined segment can depend on a variable it does not
+include: in `list(y ~ 1 + x:z, ~ 0)`, the slope in segment 1 differs by
+`z`, so the plateau in segment 2 does too.
+
+### Examples: Included terms and parameter names
 
 New coefficients are named after their segment: `x_1`, `x_2`, etc.
 Change points are `cp_1`, `cp_2`, etc.; `cp_1` separates segments 1 and
-2. In these examples, the change-point predictor is `x`; set
+2. In these examples, the change-point variable is `x`; set
 `mcp(..., par_x = "x")` if mcp does not automatically select the correct
-change-point axis.
+change-point variable.
 
 ``` r
 
 # 1. Slopes: joined or disjoined
 model = list(
-  y ~ 1 + x,  # mu (Intercept_1, slope x_1)
-    ~ 0 + x,  # At cp_1: Joined mu (x_2 at cp_1)
-    ~ 1 + x,  # At cp_2: Disjoined mu (Intercept_3, x_3)
-    ~ 0       # At cp_3: plateau mu (no new terms)
+  y ~ 1 + x,  # Intercept_1, x_1
+    ~ 0 + x,  # At cp_1: Joined slope (x_2)
+    ~ 1 + x,  # At cp_2: Disjoined slope (Intercept_3, x_3)
+    ~ 0       # At cp_3: Joined plateau (no new coefficients)
 )
 
-# 2. Factors, covariates, and interactions
+# 2. Factors, other variables, and interactions
 model = list(
-  y ~ 1 + x:state + z, # mu (Intercept_1; By-state x_1 slopes; a z_1 coefficient)
-    ~ 1 + x + state,  # At cp_1: Disjoined mu (Intercept_2, x_2; state contrasts; no z term)
-    ~ 0 + x               # At cp_2: Joined x-slope (x_3); no state term
+  y ~ 1 + x:state + z,  # Intercept_1, by-state slopes (xstateA_1, ...), z_1
+    ~ 1 + x + state,    # At cp_1: Disjoined (Intercept_2, x_2, stateB_2, ...); z not included
+    ~ 0 + x             # At cp_2: Joined slope (x_3); state not included
 )
 
 # 3. Group-level effects in the predictor
 model = list(
-  y ~ 1 + x + (1 | id),  # mu (Intercept_1; x_1; Group-level intercept deviations)
-    ~ 0 + x + (1 | id),  # At cp_1: Joined x slope (x_2); new group deviations and SD
-    ~ 0 + x              # At cp_2: Joined x slope (x_3); no group intercept term
+  y ~ 1 + x + (1 | id),  # Intercept_1, x_1, group intercept deviations
+    ~ 0 + x + (1 | id),  # At cp_1: Joined slope (x_2); new group deviations and SD
+    ~ 0 + x              # At cp_2: Joined slope (x_3); (1 | id) not included
 )
 
 # 4. Group-level change points: effects before the last tilde
 model = list(
-  y ~ 1 + x,             # mu (Intercept_1, x_1)
-  1 + (1 | id) ~ 0 + x,  # At varying-by-id cp_1 (cp_1_id): Joined mu (x_2)
-    ~ 1                  # At population-level cp_2: Disjoined mu (Intercept_3)
+  y ~ 1 + x,             # Intercept_1, x_1
+  1 + (1 | id) ~ 0 + x,  # At cp_1, varying by id (cp_1_id): Joined slope (x_2)
+    ~ 1                  # At cp_2: Disjoined plateau (Intercept_3)
 )
 
 # 5. Distributional parameters and AR/MA
 model = list(
-  y ~ 1 + x + sigma(1 + x) + ar(1), # mu (Intercept_1; x_1); Log-SD slope sigma (sigma_1, sigma_x_1); AR(1) plateau (ar1_1)
-    ~ 0 + x + ar(1, 1 + x),  # At cp_1: Joined mu (x_2); new AR intercept and slope; log-SD plateaus
-    ~ 0 + sigma(1),          # At cp_2: Joined mean plateau; new sigma_3; AR off
-    ~ 0 + ma(2)              # At cp_3: Joined mean plateau; retain sigma_3; MA(2) coefficients ma1_4 and ma2_4
+  y ~ 1 + x + sigma(1 + x) + ar(1), # Intercept_1, x_1; log-SD slope (sigma_1, sigma_x_1); AR(1) (ar1_1)
+    ~ 0 + x + ar(1, 1 + x),  # At cp_1: Joined slope (x_2); sigma joined plateau; new AR(1) (ar1_2, ar1_x_2)
+    ~ 0 + sigma(1),          # At cp_2: Joined mu plateau; new sigma_3; AR not included
+    ~ 0 + ma(2)              # At cp_3: Joined mu plateau; sigma joined; MA(2) (ma1_4, ma2_4)
 )
 ```
 
 ### Sharing coefficients between segments
 
-To retain a coefficient instead of estimating a new one, write
+To reuse a coefficient instead of estimating a new one, include
 `same(term)`. The coefficient keeps its source name:
 
 ``` r
@@ -165,316 +214,92 @@ model = list(
 )
 ```
 
-The `same()` syntax works for factors, group effects, and inside
-distributional formulas: `same(state)` retains the source coding,
-`same((1 | id))` retains both deviations and their SD, and
-`sigma(0 + same(x))` continues a linear log-SD slope. Sharing preserves
-coefficients but uses the current segment’s local x. `same(..., as=...)`
-selects the corresponding coefficient in an earlier segment; without
-`as`, `same()` refers to the preceding segment.
+`same()` refers to the preceding segment by default; use `as` to pick an
+earlier segment. It works for factors (`same(state)`), group effects
+(`same((1 | id))` reuses deviations and SD), and inside distributional
+parameters (`sigma(0 + same(x))`). Reused x-terms are still measured
+from the current change point.
 
-Like all parameters in `mcp`, shared coefficients are estimated jointly
-across all segments where they appear (pooling data from all segments),
-rather than fitted sequentially in one segment and copied to another.
+Reused coefficients are estimated jointly from all segments where they
+are included, not fitted in one segment and copied to another.
 
 ### Inspect coefficients
 
-`mcp_pars` shows you how `mcp` sees each parameter cf. the rules above.
-You can use it even before sampling:
+[`mcp_pars()`](https://lindeloev.github.io/mcp/dev/reference/mcp_pars.md)
+lists the parameters that follow from the rules above. You can use it
+before sampling:
 
 ``` r
 
-library(mcp)
 model = list(
-  y ~ 1 + x:state + z,
-  ~ 1 + x + state
+  y ~ 1 + x:state + z,         # Intercept_1, by-state slopes, z_1
+    ~ 1 + x + state + same(z), # Intercept_2, x_2, state contrasts; reuse z_1
+    ~ 0 + same(x)              # Joined; reuse x_2
 )
 fit = mcp(model, data = mcp_example_data("multiple"), par_x = "x", sample = FALSE)
 mcp_pars(fit)
 ```
 
-    ## # A tibble: 13 × 9
+    ## # A tibble: 14 × 9
     ##    name        part    scope role  segment dpar  order group_col population_name
     ##    <chr>       <chr>   <chr> <chr>   <int> <chr> <int> <chr>     <chr>          
     ##  1 cp_1        cp      popu… chan…       2 cp       NA NA        NA             
-    ##  2 Intercept_1 predic… popu… fixe…       1 mu       NA NA        NA             
-    ##  3 z_1         predic… popu… fixe…       1 mu       NA NA        NA             
-    ##  4 xstateA_1   predic… popu… fixe…       1 mu       NA NA        NA             
-    ##  5 xstateB_1   predic… popu… fixe…       1 mu       NA NA        NA             
-    ##  6 xstateC_1   predic… popu… fixe…       1 mu       NA NA        NA             
-    ##  7 xstateD_1   predic… popu… fixe…       1 mu       NA NA        NA             
-    ##  8 Intercept_2 predic… popu… fixe…       2 mu       NA NA        NA             
-    ##  9 x_2         predic… popu… fixe…       2 mu       NA NA        NA             
-    ## 10 stateB_2    predic… popu… fixe…       2 mu       NA NA        NA             
-    ## 11 stateC_2    predic… popu… fixe…       2 mu       NA NA        NA             
-    ## 12 stateD_2    predic… popu… fixe…       2 mu       NA NA        NA             
-    ## 13 sigma_1     predic… popu… dpar…       1 sigma    NA NA        NA
+    ##  2 cp_2        cp      popu… chan…       3 cp       NA NA        NA             
+    ##  3 Intercept_1 predic… popu… fixe…       1 mu       NA NA        NA             
+    ##  4 z_1         predic… popu… fixe…       1 mu       NA NA        NA             
+    ##  5 xstateA_1   predic… popu… fixe…       1 mu       NA NA        NA             
+    ##  6 xstateB_1   predic… popu… fixe…       1 mu       NA NA        NA             
+    ##  7 xstateC_1   predic… popu… fixe…       1 mu       NA NA        NA             
+    ##  8 xstateD_1   predic… popu… fixe…       1 mu       NA NA        NA             
+    ##  9 Intercept_2 predic… popu… fixe…       2 mu       NA NA        NA             
+    ## 10 x_2         predic… popu… fixe…       2 mu       NA NA        NA             
+    ## 11 stateB_2    predic… popu… fixe…       2 mu       NA NA        NA             
+    ## 12 stateC_2    predic… popu… fixe…       2 mu       NA NA        NA             
+    ## 13 stateD_2    predic… popu… fixe…       2 mu       NA NA        NA             
+    ## 14 sigma_1     predic… popu… dpar…       1 sigma    NA NA        NA
+
+Thanks to `same()`, there is no `z_2` or `x_3`.
 
 ### Some clarifications on formula behavior
 
 Factors use ordinary R formula coding: with treatment coding,
 `1 + state` gives contrasts to a reference level, while `0 + state`
 gives coefficients for all levels. A predictor group effect such as
-`(1 | id)` applies where it is written. A change-point group effect
-applies only at the change point where it is written; it does not
+`(1 | id)` applies where it is included. A change-point group effect
+applies only at the change point where it is included; it does not
 introduce group effects in the predictor.
 
-Bare `x`, supported powers such as `I(x^2)`, and their interactions use
-segment-local coordinates. Their attained levels remain through joining:
-after `y ~ 1 + x:z`, a later `~ 0` retains a plateau that can depend on
-`z`. Other transformations, such as `sin(x)`, use original predictor
-values and follow the active-term rules without segment-local joining.
+Only bare `x`, powers such as `I(x^2)`, and their interactions are
+x-terms. Other transformations, such as `sin(x)` and `poly(x, 2)`, use
+the original values of `x`, as in
+[`lm()`](https://rdrr.io/r/stats/lm.html), and do not join:
 
-Offsets have fixed coefficients: declare `offset(log(exposure))`
+``` r
+
+list(
+  y ~ 1,                        # Intercept_1
+    ~ 1 + sin(x) + x + I(x^2)   # sin(x) uses x; x and I(x^2) are measured from cp_1
+)
+```
+
+Offsets have fixed coefficients: include `offset(log(exposure))`
 wherever it applies. Read more about offsets in [Poisson and Negative
 Binomial
 models](https://lindeloev.github.io/mcp/dev/articles/poisson.md).
 
-## Modeling intercept change points
-
-A change point is simply like an `ifelse` statement or multiplying with
-indicators (0s and 1s):
-
-``` r
-
-# Model parameters
-x = 1:20
-cp_1 = 12
-Intercept_1 = 5
-Intercept_2 = 10
-
-# Ifelse version
-y_ifelse = ifelse(x <= cp_1, yes = Intercept_1, no = Intercept_2)
-
-# Indicator equivalent using dummy helpers
-cp_0 = -Inf
-cp_2 = Inf
-y_indicator = (x > cp_0) * (x <= cp_1) * Intercept_1 +  # Between cp_0 and cp_1
-              (x > cp_1) * (x <= cp_2) * Intercept_2  # Between cp_1 and cp_2
-
-# Show it
-par(mfrow = c(1,2))
-plot(x, y_ifelse, main = "ifelse(x <= cp_1)")
-plot(x, y_indicator, main = "(x > cp_1) * Intercept_2")
-```
-
-![](formulas_files/figure-html/unnamed-chunk-5-1.png)
-
-The magic of (Bayesian) MCMC sampling is that it can actually infer the
-change point from this simple formulation. We let `mcp` write the JAGS
-code for this simple two-plateaus model and see how it uses the
-indicator formulation of change points:
-
-``` r
-
-model = list(y ~ 1, ~ 1)
-fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE, par_x = "x")
-fit$jags_code
-```
-
-    ## model {
-    ##   # mcp helper values
-    ##   cp_0 = CONST1_
-    ##   cp_2 = CONST2_
-    ## 
-    ##   # Priors for population-level effects
-    ##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)
-    ##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point
-    ##   Intercept_1 ~ dt(5.5, 1/(3.7)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5
-    ##   Intercept_2 ~ dt(5.5, 1/(3.7)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5
-    ##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale
-    ## 
-    ##   # Model and likelihood
-    ##   for (i_ in 1:length(x)) {
-    ##     # par_x local to each segment
-    ##     x_local_1_[i_] = min(x[i_], cp_1)
-    ##     x_local_2_[i_] = min(x[i_], cp_2) - cp_1
-    ##     
-    ##     # Formula for mu
-    ##     link_mu_[i_] =
-    ##       (x[i_] >= cp_0) * (x[i_] < cp_1) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + 
-    ##       (x[i_] >= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(Intercept_2)) * 1
-    ##     
-    ##     # Formula for sigma
-    ##     link_sigma_[i_] =
-    ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(3)], c(sigma_1)) * 1
-    ## 
-    ##     # Likelihood and log-density for family = gaussian()
-    ##     mu_[i_] = link_mu_[i_]
-    ##     sigma_[i_] = max(1e-03, link_sigma_[i_])
-    ##     y[i_] ~ dnorm(mu_[i_], 1 / sigma_[i_]^2)
-    ##   }
-    ## }
-
-Look at the section under the comment `# Formula for mu` which is the
-(automatically generated) model that was discussed above. Some
-unnecessary stuff is added to segment 1 just because it makes the code
-easier to generate. (`x[i_] >= cp_0` when `cp_0` is the smallest value
-of `x` is, of course, always true).
-
-## Modeling slope change points
-
-Mathematically, an `mcp` model divides the continuous predictor x into K
-segments separated by ordered change points \tau_1 \< \dots \<
-\tau\_{K-1}. In each segment k \in \\1, \dots, K\\, the linear predictor
-\eta_i on the link scale is evaluated directly from the segment-local
-distance (x_i - \tau\_{k-1}):
-
-\eta_i = \alpha_k + \beta\_{k,1} \\ (x_i - \tau\_{k-1}) \quad
-(\text{with } \tau_0 = 0)
-
-where the segment-start level \alpha_k is freely estimated for the first
-and disjoined segments, as in non-segmented regression, and determined
-by continuity for joined segments:
-
-\alpha_k = \begin{cases} \beta\_{k,0}, & \text{Disjoined segments }
-(\sim \texttt{1 + x}, \text{ including } k = 1) \\ \alpha\_{k-1} +
-\beta\_{k-1,1} (\tau\_{k-1} - \tau\_{k-2}), & \text{Joined segments } (k
-\ge 2, \\ \sim \texttt{0 + x}) \end{cases}
-
-Here, \beta\_{k,0} is the segment-start intercept, and \beta\_{k,1} is
-the slope on x. In all segments, estimated slope and intercept
-parameters are absolute values (not changes relative to preceding
-segments). If additional continuous covariates or categorical factors
-are included (e.g., `+ z + group`), they enter additively on their
-original scale (+ \sum \gamma\_{k,j} z\_{j,i} for covariate j); only the
-change-point predictor x is converted to segment-local coordinates.
-
-### How mcp implements this in JAGS using indicators
-
-Bayesian MCMC samplers like JAGS cannot evaluate dynamic conditional
-statements (`if/else`) on parameters being sampled. To implement this
-piecewise model in JAGS, `mcp` uses an **indicator and plateauing
-formulation** (evaluated via Iverson brackets \[A\] which equal 1 when
-true and 0 when false).
-
-First, `mcp` defines a segment-local span X\_{k,i} that grows linearly
-within segment k and stays constant beyond it:
-
-X\_{1,i} = \min(x_i, \tau_1) X\_{k,i} = \max\bigl(0, \min(x_i, \tau_k) -
-\tau\_{k-1}\bigr) \quad (k \ge 2)
-
-When x_i \< \tau\_{k-1}, X\_{k,i} = 0 (before the segment). When
-\tau\_{k-1} \le x_i \< \tau_k, X\_{k,i} = x_i - \tau\_{k-1} (linear
-growth within the segment). When x_i \ge \tau_k, X\_{k,i} = \tau_k -
-\tau\_{k-1} (constant segment width).
-
-For a **purely joined model** (`list(y ~ 0 + x, ~ 0 + x)`), `mcp` writes
-\eta_i as a cumulative sum of these segment spans:
-
-\eta_i = \sum\_{k=1}^K \[x_i \ge \tau\_{k-1}\] \cdot \beta\_{k,1}
-X\_{k,i}
-
-Because each segment’s contribution stays constant beyond its change
-point (\beta\_{k-1,1}(\tau\_{k-1} - \tau\_{k-2})), continuity is
-automatic with zero parameter constraints: preceding segments provide
-the continuous starting level for subsequent segments. The expected
-response on the response scale is \mu_i = g^{-1}(\eta_i) via link
-function g(\mu_i) = \eta_i (identity for Gaussian, so \mu_i = \eta_i).
-
-When a segment is **disjoined** (`~ 1 + x`), it introduces a new
-explicit intercept \beta\_{k,0} at \tau\_{k-1}, and earlier terms are
-capped with \[x_i \< \tau\_{\text{next}}\] so previous segments stop
-accumulating.
-
-Let’s demonstrate this equivalence in R:
-
-``` r
-
-# Model parameters
-x = 1:20
-cp_1 = 12
-slope_1 = 2
-slope_2 = -1
-
-# Ifelse version
-y_ifelse = ifelse(x <= cp_1, 
-            yes = slope_1 * x,
-            no = cp_1 * slope_1 + slope_2 * (x - cp_1))
-
-# Indicator version with local plateauing coordinates (pmin is vectorized min)
-y_local = slope_1 * pmin(x, cp_1) + 
-          (x > cp_1) * slope_2 * (x - cp_1)
-
-# Show that both formulations are identical
-par(mfrow = c(1,2))
-plot(x, y_ifelse, main = "ifelse() version")
-plot(x, y_local, main = "Local plateauing coordinate")
-```
-
-![](formulas_files/figure-html/unnamed-chunk-7-1.png)
-
-Let us see this in action:
-
-``` r
-
-model = list(y ~ 0 + x,
-                ~ 0 + x)
-fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE)
-fit$jags_code
-```
-
-    ## model {
-    ##   # mcp helper values
-    ##   cp_0 = CONST1_
-    ##   cp_2 = CONST2_
-    ## 
-    ##   # Priors for population-level effects
-    ##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)
-    ##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point
-    ##   x_1 ~ dt(0, 1/(0.4111111)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change
-    ##   x_2 ~ dt(0, 1/(0.4111111)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change
-    ##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale
-    ## 
-    ##   # Model and likelihood
-    ##   for (i_ in 1:length(x)) {
-    ##     # par_x local to each segment
-    ##     x_local_1_[i_] = min(x[i_], cp_1)
-    ##     x_local_2_[i_] = min(x[i_], cp_2) - cp_1
-    ##     
-    ##     # Formula for mu
-    ##     link_mu_[i_] =
-    ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(1)], c(x_1)) * x_local_1_[i_] + 
-    ##       (x[i_] >= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]
-    ##     
-    ##     # Formula for sigma
-    ##     link_sigma_[i_] =
-    ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(3)], c(sigma_1)) * 1
-    ## 
-    ##     # Likelihood and log-density for family = gaussian()
-    ##     mu_[i_] = link_mu_[i_]
-    ##     sigma_[i_] = max(1e-03, link_sigma_[i_])
-    ##     y[i_] ~ dnorm(mu_[i_], 1 / sigma_[i_]^2)
-    ##   }
-    ## }
-
-Look at the JAGS code under `# par_x local to each segment` and
-`# Formula for mu` to see this exact indicator formulation in action:
-`x_local_1_[i_]` and `x_local_2_[i_]` correspond to X\_{1,i} and
-X\_{2,i}, and each segment’s slope is multiplied by its activation
-indicator (e.g., `(x[i_] >= cp_1)`).
-
-You will find the exact same formula for `y_ = ...` if you do
-`print(fit$simulate)`, though this function contains a whole lot of
-other stuff too.
-
 ## Multiple regression and categorical predictors
 
-`mcp` supports standard R formulas with multiple continuous covariates,
-categorical factors, and interaction terms (e.g., `x:state`, `+ state`,
-`+ z`, `I(x^2)`).
-
-Let’s inspect the model in the overview plot at the top of this page -
-except I added one plateau segment (`~1`) below to illustrate a point.
+Here is the model from the overview plot at the top of this page, with
+an extra plateau segment:
 
 ``` r
 
 # Define model with multiple predictors
 model = list(
-  y ~ 1 + x:state + z, # Segment 1: by-state slopes on x, covariate z
+  y ~ 1 + x:state + z, # Segment 1: by-state slopes on x, and z
   ~ 1 + x + state,     # Segment 2: shared slope on x, by-state intercepts
-  ~ 0 + I(x^2),        # Segment 3: joined quadratic; no active state effect
-  ~ 1                  # Segment 4: collapse to shared intercept, no matter state 
+  ~ 0 + I(x^2),        # Segment 3: joined quadratic; state not included
+  ~ 1                  # Segment 4: shared intercept for all states
 )
 
 # Load data and inspect parameters without sampling
@@ -515,37 +340,15 @@ Key features of multiple regression models in `mcp`:
 - **Parameter names across segments**: In segment 1, `xstateA_1` through
   `xstateD_1` represent separate slopes for each level of `state`. In
   segment 2, `stateB_2`, `stateC_2`, and `stateD_2` represent intercept
-  offsets relative to the reference level `stateA`. A continuous
-  covariate such as `z` needs a declaration in each segment where it is
-  active.
+  offsets relative to the reference level `stateA`. A variable such as
+  `z` must be included in each segment where it applies.
 - **Plotting and prediction**: Visualize by state using
   `plot(fit, color_by = "state")` or `plot(fit, facet_by = "state")`. By
-  default, other unplotted continuous predictors (like `z`) are held at
-  their mean automatically by
+  default, other numeric variables (like `z`) are held at their mean
+  automatically by
   [`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md),
   or can be set explicitly via
   `plot(fit, color_by = "state", at = list(z = 0))`.
-
-## Transformations are not segment-local
-
-Transformations such as [`sin()`](https://rdrr.io/r/base/Trig.html) and
-[`poly()`](https://rdrr.io/r/stats/poly.html) in formulas are evaluated
-on the original predictor values, as in
-[`lm()`](https://rdrr.io/r/stats/lm.html) and
-[`glm()`](https://rdrr.io/r/stats/glm.html). The change-point predictor
-is the exception: bare `par_x` and polynomial bases such as `I(par_x^2)`
-use distance from the segment onset (change-point location, i.e., `cp_i`
-values).
-
-For example, assuming that `x` is `par_x`:
-
-``` r
-
-list(
-  y ~ 1,                        # Intercept_1
-    ~ 1 + sin(x) + x + I(x^2)   # sin(x) uses x; x and I(x^2) use x - cp_1
-)
-```
 
 ## Relative changes between segments
 
@@ -574,8 +377,8 @@ or flatter the slope became in segment 3), along with its credibility
 interval, posterior probability, and directional Bayes factor. [Read
 more about hypothesis testing in the comparison
 article](https://lindeloev.github.io/mcp/dev/articles/comparison.md).
-Here, we see that `time_3` is -0.76 greater (i.e., it is smaller than
-`time_2`).
+Here, the estimate is negative, so the slope is smaller in segment 3
+than in segment 2.
 
 If you need the full posterior distribution of the change (e.g., for
 [`quantile()`](https://rdrr.io/r/stats/quantile.html),
@@ -604,3 +407,287 @@ head(draws)
 You can now use `diff_time` directly with base R functions like
 `quantile(draws$diff_time, c(0.025, 0.975))` and
 `hist(draws$diff_time)`.
+
+## Modeling intercept change points
+
+A change point is simply like an `ifelse` statement or multiplying with
+indicators (0s and 1s):
+
+``` r
+
+# Model parameters
+x = 1:20
+cp_1 = 12
+Intercept_1 = 5
+Intercept_2 = 10
+
+# Ifelse version
+y_ifelse = ifelse(x <= cp_1, yes = Intercept_1, no = Intercept_2)
+
+# Indicator equivalent using dummy helpers
+cp_0 = -Inf
+cp_2 = Inf
+y_indicator = (x > cp_0) * (x <= cp_1) * Intercept_1 +  # Between cp_0 and cp_1
+              (x > cp_1) * (x <= cp_2) * Intercept_2  # Between cp_1 and cp_2
+
+# Show it
+par(mfrow = c(1,2))
+plot(x, y_ifelse, main = "ifelse(x <= cp_1)")
+plot(x, y_indicator, main = "(x > cp_1) * Intercept_2")
+```
+
+![](formulas_files/figure-html/unnamed-chunk-10-1.png)
+
+The magic of (Bayesian) MCMC sampling is that it can actually infer the
+change point from this simple formulation. We let `mcp` write the JAGS
+code for this simple two-plateaus model and see how it uses the
+indicator formulation of change points:
+
+``` r
+
+model = list(y ~ 1, ~ 1)
+fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE, par_x = "x")
+fit$jags_code
+```
+
+    ## model {
+    ##   # mcp helper values
+    ##   cp_0 = CONST1_
+    ##   cp_2 = CONST2_
+    ## 
+    ##   # Priors for population-level effects
+    ##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)
+    ##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point
+    ##   Intercept_1 ~ dnorm(5.5, 1/(7.569126)^2)   # Mean intercept (rstanarm default)
+    ##   Intercept_2 ~ dnorm(5.5, 1/(7.569126)^2)   # Mean intercept (rstanarm default)
+    ##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale
+    ## 
+    ##   # Model and likelihood
+    ##   for (i_ in 1:length(x)) {
+    ##     # par_x local to each segment
+    ##     x_local_1_[i_] = min(x[i_], cp_1)
+    ##     x_local_2_[i_] = min(x[i_], cp_2) - cp_1
+    ##     
+    ##     # Formula for mu
+    ##     link_mu_[i_] =
+    ##       (x[i_] >= cp_0) * (x[i_] < cp_1) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + 
+    ##       (x[i_] >= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(Intercept_2)) * 1
+    ##     
+    ##     # Formula for sigma
+    ##     link_sigma_[i_] =
+    ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(3)], c(sigma_1)) * 1
+    ## 
+    ##     # Likelihood and log-density for family = gaussian()
+    ##     mu_[i_] = link_mu_[i_]
+    ##     sigma_[i_] = max(1e-03, link_sigma_[i_])
+    ##     y[i_] ~ dnorm(mu_[i_], 1 / sigma_[i_]^2)
+    ##   }
+    ## }
+
+Look at the section under the comment `# Formula for mu` which is the
+(automatically generated) model that was discussed above. Some
+unnecessary stuff is added to segment 1 just because it makes the code
+easier to generate. (`x[i_] >= cp_0` when `cp_0` is the smallest value
+of `x` is, of course, always true).
+
+## Modeling slope change points
+
+Mathematically, an `mcp` model divides the change-point variable x into
+K segments separated by ordered change points \tau_1 \< \dots \<
+\tau\_{K-1}. In each segment k \in \\1, \dots, K\\, the linear predictor
+\eta_i on the link scale measures x from the change point \tau\_{k-1}:
+
+\eta_i = \alpha_k + \beta\_{k,1} \\ (x_i - \tau\_{k-1}) \quad
+(\text{with } \tau_0 = 0)
+
+where \alpha_k is the value at the start of segment k:
+
+\alpha_k = \begin{cases} \beta\_{k,0}, & \text{disjoined } (\sim
+\texttt{1 + x}, \text{ or } k = 1) \\ \alpha\_{k-1} + \beta\_{k-1,1}
+(\tau\_{k-1} - \tau\_{k-2}), & \text{joined } (\sim \texttt{0 + x})
+\end{cases}
+
+That is, a disjoined segment starts at its own intercept \beta\_{k,0},
+while a joined segment continues from where segment k-1 left off.
+
+Here, \beta\_{k,1} is the slope on x in segment k. Intercepts and slopes
+are absolute values (not changes relative to preceding segments). Other
+variables (e.g., `+ z + state`) add \sum_j \gamma\_{k,j} z\_{j,i} in the
+segments where they are included. They use their original values and are
+not part of \alpha_k, which is why they can make a joined segment start
+with a jump.
+
+### How mcp implements this in JAGS using indicators
+
+Bayesian MCMC samplers like JAGS cannot evaluate dynamic conditional
+statements (`if/else`) on parameters being sampled. To implement this
+piecewise model in JAGS, `mcp` uses an **indicator and plateauing
+formulation** (evaluated via Iverson brackets \[A\] which equal 1 when
+true and 0 when false).
+
+First, `mcp` defines a span X\_{k,i} that measures x from the change
+point within segment k and stays constant beyond it:
+
+X\_{1,i} = \min(x_i, \tau_1) X\_{k,i} = \max\bigl(0, \min(x_i, \tau_k) -
+\tau\_{k-1}\bigr) \quad (k \ge 2)
+
+When x_i \< \tau\_{k-1}, X\_{k,i} = 0 (before the segment). When
+\tau\_{k-1} \le x_i \< \tau_k, X\_{k,i} = x_i - \tau\_{k-1} (linear
+growth within the segment). When x_i \ge \tau_k, X\_{k,i} = \tau_k -
+\tau\_{k-1} (constant segment width).
+
+For a **purely joined model** (`list(y ~ 0 + x, ~ 0 + x)`), `mcp` writes
+\eta_i as a cumulative sum of these segment spans:
+
+\eta_i = \sum\_{k=1}^K \[x_i \ge \tau\_{k-1}\] \cdot \beta\_{k,1}
+X\_{k,i}
+
+Because each segment’s contribution stays constant beyond its change
+point (\beta\_{k-1,1}(\tau\_{k-1} - \tau\_{k-2})), joining needs no
+parameter constraints: earlier segments provide the starting value for
+later segments. The expected response on the response scale is \mu_i =
+g^{-1}(\eta_i) via link function g(\mu_i) = \eta_i (identity for
+Gaussian, so \mu_i = \eta_i).
+
+When a segment is **disjoined** (`~ 1 + x`), it introduces a new
+intercept \beta\_{k,0} at \tau\_{k-1}, and all earlier terms get the
+indicator \[x_i \< \tau\_{k-1}\] so they end where the disjoined segment
+starts. Terms that are not x-terms get the same indicator at the next
+change point, which is why they end there.
+
+Let’s demonstrate this equivalence in R:
+
+``` r
+
+# Model parameters
+x = 1:20
+cp_1 = 12
+slope_1 = 2
+slope_2 = -1
+
+# Ifelse version
+y_ifelse = ifelse(x <= cp_1, 
+            yes = slope_1 * x,
+            no = cp_1 * slope_1 + slope_2 * (x - cp_1))
+
+# Indicator version with local plateauing coordinates (pmin is vectorized min)
+y_local = slope_1 * pmin(x, cp_1) + 
+          (x > cp_1) * slope_2 * (x - cp_1)
+
+# Show that both formulations are identical
+par(mfrow = c(1,2))
+plot(x, y_ifelse, main = "ifelse() version")
+plot(x, y_local, main = "Local plateauing coordinate")
+```
+
+![](formulas_files/figure-html/unnamed-chunk-12-1.png)
+
+Let us see this in action:
+
+``` r
+
+model = list(y ~ 0 + x, ~ 0 + x)
+fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE)
+fit$jags_code
+```
+
+    ## model {
+    ##   # mcp helper values
+    ##   cp_0 = CONST1_
+    ##   cp_2 = CONST2_
+    ## 
+    ##   # Priors for population-level effects
+    ##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)
+    ##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point
+    ##   x_1_rise_ ~ dnorm(0, 1/(2.5*(cp_1-cp_0))^2)   # Autoscaled mean coefficient (rstanarm default); sampled as the rise over the segment
+    ##   x_1 = x_1_rise_ / (cp_1 - cp_0)
+    ##   x_2_rise_ ~ dnorm(0, 1/(2.5*(cp_2-cp_1))^2)   # Autoscaled mean coefficient (rstanarm default); sampled as the rise over the segment
+    ##   x_2 = x_2_rise_ / (cp_2 - cp_1)
+    ##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale
+    ## 
+    ##   # Model and likelihood
+    ##   for (i_ in 1:length(x)) {
+    ##     # par_x local to each segment
+    ##     x_local_1_[i_] = min(x[i_], cp_1)
+    ##     x_local_2_[i_] = min(x[i_], cp_2) - cp_1
+    ##     
+    ##     # Formula for mu
+    ##     link_mu_[i_] =
+    ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(1)], c(x_1)) * x_local_1_[i_] + 
+    ##       (x[i_] >= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]
+    ##     
+    ##     # Formula for sigma
+    ##     link_sigma_[i_] =
+    ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(3)], c(sigma_1)) * 1
+    ## 
+    ##     # Likelihood and log-density for family = gaussian()
+    ##     mu_[i_] = link_mu_[i_]
+    ##     sigma_[i_] = max(1e-03, link_sigma_[i_])
+    ##     y[i_] ~ dnorm(mu_[i_], 1 / sigma_[i_]^2)
+    ##   }
+    ## }
+
+Look at the JAGS code under `# par_x local to each segment` and
+`# Formula for mu` to see this exact indicator formulation in action:
+`x_local_1_[i_]` and `x_local_2_[i_]` correspond to X\_{1,i} and
+X\_{2,i}, and each segment’s slope is multiplied by its activation
+indicator (e.g., `(x[i_] >= cp_1)`).
+
+You will find the exact same formula for `y_ = ...` if you do
+`print(fit$simulate)`, though this function contains a whole lot of
+other stuff too.
+
+### Implementation: Improve sampling efficiency by keeping segment ends in place when change points move
+
+In `fit$jags_code`, you may see unintuitive formulations like the
+following:
+
+``` r
+
+# Joined segments: slope sampled as the rise over the segment
+x_2_rise_ ~ dnorm(0, 1/(0.2*(cp_2-cp_1))^2)
+x_2 = x_2_rise_ / (cp_2 - cp_1)
+
+# Disjoined segments: intercept sampled as the level at the segment end
+Intercept_3_end_ ~ dnorm(0.6 + x_3 * (cp_3 - cp_2), 1/(3.5)^2)
+Intercept_3 = Intercept_3_end_ - (x_3 * (cp_3 - cp_2))
+```
+
+Like most Gibbs samplers, JAGS updates one parameter at a time while
+holding the others fixed. If it holds a slope \beta\_{k,1} fixed while
+it updates a change point \tau_k, the level at the end of segment k
+moves by \beta\_{k,1} \Delta\tau, and so do all later joined segments.
+Such moves fit the data badly and are mostly rejected, so the change
+point and the slope must creep along together, which mixes slowly.
+
+`mcp` solves this by reparameterizing the model, sampling the above
+quantities whenever a prior is an mcp-default normal prior. With this,
+moving a change point leaves the levels at the ends of each segment in
+place.
+
+This is a reparameterization, not a new model: the priors, and hence the
+posteriors, are exactly those of the naive formulation. If the default
+prior is \beta\_{k,1} \sim \text{Normal}(0, s), the rise r_k =
+\beta\_{k,1} w_k over the segment width w_k = \tau_k - \tau\_{k-1} has
+standard deviation s w_k. So `mcp` gives the rise the prior r_k \sim
+\text{Normal}(0, s w_k), which keeps the implied slope r_k / w_k at
+\text{Normal}(0, s). Likewise, the level at the segment end, e_k =
+\beta\_{k,0} + \beta\_{k,1} w_k \sim \text{Normal}(m + \beta\_{k,1} w_k,
+s), is just the intercept’s default \text{Normal}(m, s) prior shifted by
+\beta\_{k,1} w_k. We can verify this for widths spanning two orders of
+magnitude:
+
+``` r
+
+s = 0.5  # Prior SD of the slope
+width = runif(100000, 0.5, 50)  # Any segment widths
+rise = rnorm(100000, mean = 0, sd = s * width)  # Prior on the rise
+slope = rise / width  # Derived slope
+
+c(mean = mean(slope), sd = sd(slope))  # Normal(0, 0.5), as for the naive slope
+```
+
+    ##         mean           sd 
+    ## -0.002053742  0.499749822
+
+User-specified priors are sampled as written.

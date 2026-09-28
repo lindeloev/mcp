@@ -14,7 +14,6 @@ There are three main ways of doing model comparison in `mcp`:
 
 library(mcp)
 future::plan(future::multisession, workers = 3)
-set.seed(42) # Make the script deterministic
 ```
 
 ## Some models to play with
@@ -58,7 +57,6 @@ df = data.frame(items = rep(1:9, each = 40), recalled = 1)
 # Get just the model - no fit
 empty = mcp(model, data = df, family = binomial(), sample = FALSE)
 
-set.seed(42)
 df$recalled = empty$simulate(
   empty, df,
   cp_1 = 4,
@@ -86,9 +84,9 @@ later.
 
 ``` r
 
-fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 8000, seed = 42)
-fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 8000, seed = 42)
-fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 8000, seed = 42)
+fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 8000)
+fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 8000)
+fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 8000)
 ```
 
 We plot them and add a few `ggplot2` layers. We jitter the raw data in
@@ -99,7 +97,6 @@ the middle plot, just to give a sense of the densities.
 library(patchwork)
 library(ggplot2)
 
-set.seed(42)
 plot(fit_default) +
   ggtitle("Default") +
 
@@ -126,7 +123,7 @@ equality = hypothesis(fit_default, "cp_1 = 4")
 ## Warning: Savage-Dickey Bayes factor was computed using default prior(s) for `cp_1`. Point Bayes factors are sensitive to the prior distribution; consider specifying informed priors.
 equality
 ##     hypothesis      mean     lower    upper prob       BF
-## 1 cp_1 - 4 = 0 0.1515666 -1.641966 1.471894   NA 3.305488
+## 1 cp_1 - 4 = 0 0.3312236 -1.349374 1.576932   NA 3.198055
 ```
 
 Notice that `mcp` issues a warning when computing Savage-Dickey Bayes
@@ -176,7 +173,7 @@ posterior_model_prob = equality$BF * prior_null_prob /
 posterior_model_prob
 ```
 
-    ## [1] 0.524224
+    ## [1] 0.5159772
 
 Because point Bayes factors depend directly on the prior density, they
 require bespoke, substantively justified priors. For example, testing
@@ -188,8 +185,8 @@ was provided, yielding a substantially different Bayes factor:
 hypothesis(fit_info, "cp_1 = 4")
 ```
 
-    ##     hypothesis      mean      lower    upper prob       BF
-    ## 1 cp_1 - 4 = 0 0.2441428 -0.9953883 1.327558   NA 1.356304
+    ##     hypothesis      mean     lower    upper prob       BF
+    ## 1 cp_1 - 4 = 0 0.2060595 -1.130254 1.328908   NA 1.318547
 
 The default [uniform order statistics prior on change
 points](https://lindeloev.github.io/mcp/dev/articles/priors.md) has flat
@@ -218,11 +215,11 @@ hypothesis(fit_info, c(
 ))
 ```
 
-    ##                                                       hypothesis     mean       lower    upper       prob        BF
-    ## 1                                                   cp_1 - 3 > 0 1.244143 0.004611652 2.327558 0.97545833 7.3071167
-    ## 2                                        cp_1 > 3.5 & cp_1 < 4.5       NA          NA       NA 0.52466667 1.7725306
-    ## 3   cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & Intercept_1 > 2.5       NA          NA       NA 0.27433333 3.2789646
-    ## 4 (cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & Intercept_1 < 2.5       NA          NA       NA 0.03954167 0.6848186
+    ##                                                       hypothesis     mean      lower    upper       prob       BF
+    ## 1                                                   cp_1 - 3 > 0 1.206059 -0.1302536 2.328908 0.96129167 4.769978
+    ## 2                                        cp_1 > 3.5 & cp_1 < 4.5       NA         NA       NA 0.51591667 1.734266
+    ## 3   cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & Intercept_1 > 2.5       NA         NA       NA 0.28200000 3.539735
+    ## 4 (cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & Intercept_1 < 2.5       NA         NA       NA 0.03704167 0.623798
 
 Comparing the Bayes factors shows which hypothesis received the larger
 update from prior to posterior.
@@ -249,7 +246,7 @@ hypothesis(fit_info, "cp_1 > 3.5 & cp_1 < 4.5")
 ```
 
     ##                hypothesis mean lower upper      prob       BF
-    ## 1 cp_1 > 3.5 & cp_1 < 4.5   NA    NA    NA 0.5246667 1.772531
+    ## 1 cp_1 > 3.5 & cp_1 < 4.5   NA    NA    NA 0.5159167 1.734266
 
 ``` r
 
@@ -267,7 +264,7 @@ print(c(post_prob = post_prob, BF = BF))
 ```
 
     ## post_prob        BF 
-    ## 0.5246667 1.7725306
+    ## 0.5159167 1.7342663
 
 ## Cross Validation
 
@@ -339,9 +336,9 @@ loo_info
     ## Computed from 24000 by 360 log-likelihood matrix.
     ## 
     ##          Estimate   SE
-    ## elpd_loo   -365.6 16.5
-    ## p_loo         2.7  0.3
-    ## looic       731.2 33.0
+    ## elpd_loo   -365.7 16.5
+    ## p_loo         2.9  0.3
+    ## looic       731.4 33.1
     ## ------
     ## MCSE of elpd_loo is 0.0.
     ## MCSE and ESS estimates assume MCMC draws (r_eff in [0.0, 1.0]).
@@ -352,7 +349,7 @@ loo_info
 This is not terribly informative in and of itself. looic = -2 \*
 elpd\_{loo} as are the corresponding SEs, so that is just a matter of
 scale. What ELPD tells you is that the product of the densities of all
-left-out data points is approximately exp(-350) \sim 10 ^ {-146}, a
+left-out data points is approximately exp(-366) \sim 10 ^ {-159}, a
 vanishingly small number because we multiply many small numbers. This is
 mentally hard to interpret because the density at a given point is only
 meaningful relative to the full distribution. Furthermore, it depends on
@@ -373,8 +370,8 @@ loo_simple = loo(fit_simple)
 loo::loo_compare(loo_default, loo_info, loo_simple)
 ##   model elpd_diff se_diff p_worse       diag_diff diag_elpd
 ##  model2       0.0     0.0      NA                          
-##  model1      -0.5     0.3    0.97 |elpd_diff| < 4          
-##  model3      -4.1     2.8    0.93
+##  model1      -0.3     0.2    0.92 |elpd_diff| < 4          
+##  model3      -4.0     2.8    0.93
 ## 
 ## Diagnostic flags present.
 ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
@@ -413,8 +410,8 @@ waic_simple = waic(fit_simple)
 loo::loo_compare(waic_default, waic_info, waic_simple)
 ##   model elpd_diff se_diff p_worse       diag_diff diag_elpd
 ##  model2       0.0     0.0      NA                          
-##  model1      -0.5     0.3    0.97 |elpd_diff| < 4          
-##  model3      -4.1     2.8    0.93
+##  model1      -0.3     0.2    0.92 |elpd_diff| < 4          
+##  model3      -4.0     2.8    0.93
 ## 
 ## Diagnostic flags present.
 ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
@@ -437,7 +434,14 @@ loo::loo_model_weights(list(
 ))
 ```
 
-This means that once model2 (`fit_info`) has done its “predicting”, the
+    ## Method: stacking
+    ## ------
+    ##         weight
+    ## default 0.000 
+    ## info    1.000 
+    ## simple  0.000
+
+This means that once `info` (`fit_info`) has done its “predicting”, the
 others add very little over and above that. If you want to learn about
 how well they predict relative to each other, use
 [`loo::pseudobma_weights()`](https://mc-stan.org/loo/reference/loo_model_weights.html)

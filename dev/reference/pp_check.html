@@ -77,10 +77,11 @@ around the <code>bayesplot::ppc_*()</code> methods.</p>
 <span>  facet_by <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  newdata <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  prior <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  varying <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  group <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  arma <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  ndraws <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  varying <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -124,7 +125,7 @@ is unavailable when a missing response enters a later observed history.</p></li>
 The selected draws must be available; prior-only fits require <code>prior = TRUE</code>.</p></dd>
 
 
-<dt id="arg-varying">varying<a class="anchor" aria-label="anchor" href="#arg-varying"></a></dt>
+<dt id="arg-group">group<a class="anchor" aria-label="anchor" href="#arg-group"></a></dt>
 <dd><p>Group-level effects. One of:</p><ul><li><p><code>TRUE</code> All group-level deviations.</p></li>
 <li><p><code>FALSE</code> No group-level deviations (<code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code>).</p></li>
 <li><p><code>"cp"</code> or <code>"predictor"</code>: All group-level deviations belonging to that part of
@@ -138,7 +139,7 @@ the model.</p></li>
 <li><p><code>FALSE</code> Disregard AR and MA effects. For <code>family = gaussian()</code>, <code><a href="execute-mcp-model.html">predict()</a></code> uses only <code>sigma</code> for residuals.
 For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
-currently requires including all such effects (<code>varying = TRUE</code>).</p></li>
+currently requires all such effects (<code>group = TRUE</code>).</p></li>
 </ul></dd>
 
 
@@ -150,6 +151,10 @@ If there are group-level effects, this is the number of draws from each group.
 
 <dt id="arg-nsamples">nsamples<a class="anchor" aria-label="anchor" href="#arg-nsamples"></a></dt>
 <dd><p>Deprecated. Use <code>ndraws</code> instead.</p></dd>
+
+
+<dt id="arg-varying">varying<a class="anchor" aria-label="anchor" href="#arg-varying"></a></dt>
+<dd><p>Deprecated. Use <code>group</code> instead.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

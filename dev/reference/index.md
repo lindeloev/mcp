@@ -8,9 +8,6 @@ contains structurally.
 - [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) : Fit
   Multiple Linear Segments And Their Change Points
 
-- [`mcp-package`](https://lindeloev.github.io/mcp/dev/reference/mcp-package.md)
-  : mcp: Multiple Change Point Regression in R
-
 - [`mcp_pars()`](https://lindeloev.github.io/mcp/dev/reference/mcp_pars.md)
   : Model parameters
 
@@ -38,6 +35,21 @@ contains structurally.
   :
 
   Extract Model Information from an `mcpfit`
+
+## Documentation on mcp()
+
+Detailing the model, priors, and R objects
+
+- [`mcp-package`](https://lindeloev.github.io/mcp/dev/reference/mcp-package.md)
+  : mcp: Regression with Multiple Change Points
+
+- [`mcp-formula`](https://lindeloev.github.io/mcp/dev/reference/mcp-formula.md)
+  [`mcp_formula`](https://lindeloev.github.io/mcp/dev/reference/mcp-formula.md)
+  : Model formulas in mcp
+
+- [`mcp-priors`](https://lindeloev.github.io/mcp/dev/reference/mcp-priors.md)
+  [`mcp_priors`](https://lindeloev.github.io/mcp/dev/reference/mcp-priors.md)
+  : Priors in mcp
 
 - [`mcpfit-class`](https://lindeloev.github.io/mcp/dev/reference/mcpfit-class.md)
   [`mcpfit`](https://lindeloev.github.io/mcp/dev/reference/mcpfit-class.md)
@@ -89,7 +101,7 @@ Per-observation summaries or draws
 
 - [`predict(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   [`fitted(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-  [`log_lik(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+  [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   [`residuals(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   :
 

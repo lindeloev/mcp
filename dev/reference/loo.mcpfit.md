@@ -14,20 +14,22 @@ loo(
   ...,
   by_row = FALSE,
   pointwise = lifecycle::deprecated(),
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = NULL,
-  nsamples = lifecycle::deprecated()
+  nsamples = lifecycle::deprecated(),
+  varying = lifecycle::deprecated()
 )
 
 # S3 method for class 'mcpfit'
 waic(
   x,
   ...,
-  varying = TRUE,
+  group = TRUE,
   arma = TRUE,
   ndraws = NULL,
-  nsamples = lifecycle::deprecated()
+  nsamples = lifecycle::deprecated(),
+  varying = lifecycle::deprecated()
 )
 ```
 
@@ -57,7 +59,7 @@ waic(
 
   Deprecated alias for `by_row`.
 
-- varying:
+- group:
 
   Group-level effects. One of:
 
@@ -83,7 +85,7 @@ waic(
     uses only `sigma` for residuals. For posterior evaluation of the
     original data, retained JAGS imputations supply missing GARMA
     histories. In models with group-level effects, this currently
-    requires including all such effects (`varying = TRUE`).
+    requires all such effects (`group = TRUE`).
 
 - ndraws:
 
@@ -94,6 +96,10 @@ waic(
 - nsamples:
 
   Deprecated. Use `ndraws` instead.
+
+- varying:
+
+  Deprecated. Use `group` instead.
 
 ## Value
 
@@ -113,11 +119,11 @@ observed-data likelihood requires integrating over that missing history,
 which mcp does not currently implement.
 
 `loo()` and `waic()` evaluate the likelihood of the fitted model and
-require default `varying = TRUE` and `arma = TRUE`. Evaluating an
+require default `group = TRUE` and `arma = TRUE`. Evaluating an
 information criterion with fitted components dropped post-hoc violates
 the PSIS identity because draws come from the full model's posterior;
-comparing a reduced model requires refitting it. Non-default `varying`
-and `arma` settings remain available in
+comparing a reduced model requires refitting it. Non-default `group` and
+`arma` settings remain available in
 [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
 as conditional or counterfactual diagnostics.
 
@@ -154,6 +160,6 @@ loo2 = loo(fit2)
 loo::loo_compare(loo1, loo2)
 #>   model elpd_diff se_diff p_worse diag_diff diag_elpd
 #>  model1       0.0     0.0      NA                    
-#>  model2    -133.8     8.1    1.00                    
+#>  model2    -133.7     8.1    1.00                    
 # }
 ```

@@ -11,32 +11,28 @@ below uses Poisson regression; a later section explains the additional
 A dataset on coal mining disasters has grown very popular in the change
 point literature (available in
 [`boot::coal`](https://rdrr.io/pkg/boot/man/coal.html)). It contains a
-timestamp of each coal mining disaster from 1851 to 1962. By binning the
-number of events within each year (fixed time frame), we have something
-very Poisson-friendly:
+timestamp of each coal mining disaster from 1851 to 1962. By counting
+the number of events within each year (fixed time frame), we have
+something very Poisson-friendly. Note that years without disasters must
+be included as zeros:
 
 ``` r
 
-# Number of disasters by year
-library(dplyr, warn.conflicts = FALSE)
-df = round(boot::coal) %>% 
-  group_by(date) %>% 
-  count()
+# Number of disasters by year, including years with zero disasters (no data rows)
+year = factor(floor(boot::coal$date), levels = 1851:1962)
+df = data.frame(date = 1851:1962, n = as.vector(table(year)))
 
 # See it
 head(df)
 ```
 
-    ## # A tibble: 6 × 2
-    ## # Groups:   date [6]
-    ##    date     n
-    ##   <dbl> <int>
-    ## 1  1851     1
-    ## 2  1852     7
-    ## 3  1853     5
-    ## 4  1854     1
-    ## 5  1856     1
-    ## 6  1857     5
+    ##   date n
+    ## 1 1851 4
+    ## 2 1852 5
+    ## 3 1853 4
+    ## 4 1854 1
+    ## 5 1855 0
+    ## 6 1856 4
 
 The number of events (`n`) as a function of year (`date`) is typically
 modeled as a change between two intercepts. This is very simple to do in
@@ -46,7 +42,6 @@ modeled as a change between two intercepts. This is very simple to do in
 
 library(mcp)
 future::plan(future::multisession, workers = 3)
-set.seed(42)  # Make the script deterministic
 ```
 
 ``` r
@@ -56,7 +51,7 @@ model = list(
   ~ 1  # intercept-only
 )
 
-fit = mcp(model, data = df, family = poisson(), par_x = "date", seed = 42)
+fit = mcp(model, data = df, family = poisson(), par_x = "date")
 ```
 
 Let us see the two intercepts (lambda in log-units) and the change point
@@ -75,23 +70,22 @@ result = summary(fit)
     ##   2: n ~ 1 ~ 1
     ## 
     ## Change point parameters:
-    ##     variable    mean    sd   lower   upper rhat ess_bulk ess_tail
-    ##  cp_1        1888.42 3.925 1881.71 1898.80 1.00     1761     1444
+    ##     variable     mean    sd   lower   upper rhat ess_bulk ess_tail
+    ##  cp_1        1890.483 2.428 1886.14 1896.42 1.00     2222     1279
     ## 
     ## Population-level parameters:
-    ##     variable    mean    sd   lower   upper rhat ess_bulk ess_tail
-    ##  Intercept_1    1.17 0.096    0.98    1.36 1.00     3867     4001
-    ##  Intercept_2    0.48 0.123    0.23    0.71 1.00     3819     4709
+    ##     variable     mean    sd   lower   upper rhat ess_bulk ess_tail
+    ##  Intercept_1    1.132 0.094    0.94    1.32 1.00     4526     4095
+    ##  Intercept_2   -0.088 0.129   -0.35    0.15 1.00     4355     5151
 
 We can see that the model ran well with good convergence and a large
 number of effective samples. At a first glance, the change point is
-estimated to lie between the years 1880 and 1895 (approximately).
+estimated to lie between the years 1886 and 1896 (95% interval).
 
 Let us take a more direct look, using the default `mcp` plot:
 
 ``` r
 
-set.seed(42)
 plot(fit)
 ```
 
@@ -109,7 +103,6 @@ traceplot too, just to check convergence visually.
 
 ``` r
 
-set.seed(42)
 plot_pars(fit)
 ```
 
@@ -121,8 +114,8 @@ plot_pars(fit)
 `link = 'log'`, meaning that we have to exponentiate the estimates to
 get the “raw” Poisson parameter \lambda. \lambda has the nice property
 of being the mean number of events. So we see that the mean number of
-events in segment 1 is `exp(result$mean[2])` (3.2229724) and it is
-`exp(result$mean[3])` (1.6116949) for segment 2.
+events in segment 1 is `exp(result$mean[2])` (3.1029864) and it is
+`exp(result$mean[3])` (0.9154709) for segment 2.
 
 The intercept prior is a normal distribution centered on the rounded
 median of `log(pmax(n, 0.1))`, with scale equal to the maximum of 2.5
@@ -144,11 +137,11 @@ prior_summary(fit)
 ```
 
     ## # A tibble: 3 × 5
-    ##   parameter   segment dpar  prior                        bounds                
-    ##   <chr>         <int> <chr> <chr>                        <chr>                 
-    ## 1 cp_1              2 cp    dirichlet(alpha = 1)         [min(date), max(date)]
-    ## 2 Intercept_1       1 mu    normal(mean = 0.7, sd = 2.5) none                  
-    ## 3 Intercept_2       2 mu    normal(mean = 0.7, sd = 2.5) none
+    ##   parameter   segment dpar  prior                      bounds                
+    ##   <chr>         <int> <chr> <chr>                      <chr>                 
+    ## 1 cp_1              2 cp    dirichlet(alpha = 1)       [min(date), max(date)]
+    ## 2 Intercept_1       1 mu    normal(mean = 0, sd = 2.5) none                  
+    ## 3 Intercept_2       2 mu    normal(mean = 0, sd = 2.5) none
 
 As always, the prior on the change point forces it to occur in the
 observed range. The coefficient priors are deliberately broad defaults,
@@ -213,7 +206,7 @@ at 2.5.
 > The offset is evaluated per row as local exposure for that
 > observation. If `par_x` represents continuous cumulative time from an
 > origin (e.g., \[0, t_i\]), using `offset(log(par_x))` does **not**
-> integrate piecewise rates across prior segments; instead, the active
+> integrate piecewise rates across prior segments; instead, the current
 > segment’s rate is applied to the total duration. If your data consists
 > of discrete time intervals (bins) of duration \Delta t_i, using
 > `offset(log(delta_t))` is valid.
@@ -225,16 +218,18 @@ the evidence is that there is a change point at all. Let us fit two
 no-changepoint models and use approximate leave-one-out cross-validation
 to see how the predictive performance of the two models compare.
 
-A flat model and a one-decay model:
+A flat model and a one-decay model. The intercept in `mcp` is at
+`date = 0`, far from the data, so we measure the decay from the first
+year (`I(date - 1851)`) to reduce the posterior correlation between
+intercept and slope. This helps sampling:
 
 ``` r
 
 # Fit an intercept-only model
-fit_flat = mcp(list(n ~ 1), data = df, family=poisson(), par_x = "date", seed = 42)
-fit_decay = mcp(list(n ~ 1 + date), data = df, family = poisson(), seed = 42)
+fit_flat = mcp(list(n ~ 1), data = df, family=poisson(), par_x = "date")
+fit_decay = mcp(list(n ~ 1 + I(date - 1851)), data = df, family = poisson(), par_x = "date")
 
 
-set.seed(42)
 plot(fit_flat) + plot(fit_decay)
 ```
 
@@ -259,14 +254,19 @@ loo::loo_compare(fit_loo, fit_flat_loo, fit_decay_loo)
     ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
     ## or https://mc-stan.org/loo/reference/loo-glossary.html.
 
-    ##   model elpd_diff se_diff p_worse diag_diff      diag_elpd
-    ##  model1       0.0     0.0      NA           4 k_psis > 0.7
-    ##  model3      -7.0     3.2    0.99   N < 100               
-    ##  model2      -9.3     3.8    0.99   N < 100
+    ##   model elpd_diff se_diff p_worse       diag_diff      diag_elpd
+    ##  model1       0.0     0.0      NA                 4 k_psis > 0.7
+    ##  model3      -3.3     3.6    0.82 |elpd_diff| < 4               
+    ##  model2     -32.9     8.3    1.00
 
-The change point model seems to be preferred with a ratio of around 2
-over the decay model and 2.5 over the flat model. Another approach is to
-look at the model weights:
+The flat model is clearly worse, with `elpd_diff / se_diff` around 4, so
+the disaster rate did decrease. The change point model is preferred over
+the decay model, but the difference is smaller than its standard error.
+The `diag_elpd` column also flags a few observations with high Pareto k
+values in the change point model, so its PSIS-LOO estimate is less
+reliable. Taken together, the data cannot clearly distinguish an abrupt
+change from a gradual decay. Another approach is to look at the model
+weights:
 
 ``` r
 
@@ -277,12 +277,13 @@ loo::loo_model_weights(loo_list, method="pseudobma")
     ## Method: pseudo-BMA+ with Bayesian bootstrap
     ## ------
     ##        weight
-    ## model1 0.963 
-    ## model2 0.009 
-    ## model3 0.028
+    ## model1 0.800 
+    ## model2 0.000 
+    ## model3 0.200
 
-Again, unsurprisingly, the change point model is preferred and they show
-the same ranking as implied by `loo_compare`.
+Again, the change point model is preferred and the weights show the same
+ranking as implied by `loo_compare`, but the decay model retains a
+non-negligible weight.
 
 ## JAGS code for the Poisson example
 
@@ -301,8 +302,8 @@ fit$jags_code
     ##   # Priors for population-level effects
     ##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)
     ##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point
-    ##   Intercept_1 ~ dnorm(0.7, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5
-    ##   Intercept_2 ~ dnorm(0.7, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5
+    ##   Intercept_1 ~ dnorm(0, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5
+    ##   Intercept_2 ~ dnorm(0, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(date)) {

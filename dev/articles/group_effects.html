@@ -95,7 +95,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Group-level (random) effects in mcp</h1>
             
-            <h4 data-toc-skip class="date">2026-09-17</h4>
+            <h4 data-toc-skip class="date">2026-09-28</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/group_effects.Rmd" class="external-link"><code>vignettes/group_effects.Rmd</code></a></small>
       <div class="d-none name"><code>group_effects.Rmd</code></div>
@@ -113,7 +113,7 @@ syntax follows <code>lme4</code> and <code>brms</code>:
 <p>This article in brief:</p>
 <ul>
 <li>Predictor and change-point group-level effects</li>
-<li>How group-level effects are active across segments</li>
+<li>How group-level effects apply across segments</li>
 <li>How to simulate group-level change-point deviations</li>
 <li>Get posteriors using <code>ranef(fit)</code>
 </li>
@@ -126,8 +126,7 @@ change-point example</a>.</li>
 </ul>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lindeloev.github.io/mcp/">mcp</a></span><span class="op">)</span></span>
-<span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="fu">future</span><span class="fu">::</span><span class="va"><a href="https://future.futureverse.org/reference/multisession.html" class="external-link">multisession</a></span>, workers <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span>  <span class="co"># Make the script deterministic</span></span></code></pre></div>
+<span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="fu">future</span><span class="fu">::</span><span class="va"><a href="https://future.futureverse.org/reference/multisession.html" class="external-link">multisession</a></span>, workers <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="specifying-group-level-change-points">Specifying group-level change points<a class="anchor" aria-label="anchor" href="#specifying-group-level-change-points"></a>
 </h2>
@@ -165,7 +164,7 @@ adjacent change points both vary, their group-specific locations are
 ordered against each other—not against the adjacent population change
 point. Internally, JAGS samples <span class="math inline">\kappa_{ig}</span> directly for efficiency.</p>
 <p>Unlike predictor group-level effects, a change-point group effect
-applies only at the change point where it is written.</p>
+applies only at the change point where it is included.</p>
 </div>
 <div class="section level2">
 <h2 id="predictor-group-level-effects">Predictor group-level effects<a class="anchor" aria-label="anchor" href="#predictor-group-level-effects"></a>
@@ -175,21 +174,24 @@ from the population-level intercept:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>,  <span class="co"># Starts group-level intercept</span></span>
-<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>,         <span class="co"># No active group-level intercept here</span></span>
+<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>,         <span class="co"># (1|id) not included, so group intercepts end at cp_1</span></span>
 <span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>,    <span class="co"># (0|id) turns it off</span></span>
 <span>  <span class="op">~</span><span class="fl">0</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>, as <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>  <span class="co"># Share/reuse group-level intercept from segment 1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Group intercepts and non-local group terms are active only where
-declared. A local group slope on <code>x</code> retains its joined
-endpoint until a later group intercept or <code>(0|id)</code> resets the
-block. This is tracked separately for each grouping factor and
-distributional parameter. Read more in <a href="../articles/formulas.html#on-carry-over-between-segments">the
-article on formulas</a>. Notice <code>same()</code> above. Sharing
-selects the complete active source block, never a subset of its
-coefficients. It preserves fitted coding and parameter names while local
-slopes use the current segment’s coordinates. The same syntax works
-inside <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> and other family parameters. See
-<code>mcp_example("group_mu")</code>.</p>
+<p>Group terms follow the <a href="../articles/formulas.html#how-segments-connect">rules for how
+segments connect</a>, separately for each grouping factor and
+distributional parameter. Group intercepts apply only in segments that
+include them, so each group can jump at a joined change point; use
+<code>same((1|id))</code> to keep them. Group slopes on <code>x</code>,
+such as <code>(0 + x||id)</code>, are x-terms: they join until a
+disjoined segment (<code>~ 1 + ...</code>), a later group intercept for
+the same grouping factor, or <code>(0|id)</code>, which ends all group
+terms for <code>id</code>.</p>
+<p>Notice <code>same()</code> above. It reuses the complete group term
+from the source segment (deviations and SD), never a subset of it.
+Reused group slopes are still measured from the current change point.
+The same syntax works inside <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> and other
+distributional parameters. See <code>mcp_example("group_mu")</code>.</p>
 <p>Use <code>||</code> for independent group-level slopes and factor
 coefficients:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -216,26 +218,27 @@ coefficients.</p>
 <p>This model has group-level deviations in both the conditional mean
 and log-SD. The <code>||</code> syntax works inside distributional
 formulas too, for example <code>sigma(1 + (state||id))</code>.</p>
-<p>A later group intercept resets the earlier block. Thus, if
+<p>A later group intercept starts the group terms afresh. Thus, if
 <code>(state||id)</code> is followed in a later segment by
-<code>(1||id)</code>, only the new intercept deviation applies from that
-segment onward. A slope-only block joins earlier local-slope endpoints,
-while <code>(0|id)</code> turns the whole block off.</p>
+<code>(1||id)</code>, only the new intercept deviations apply from that
+segment onward. In a joined segment, a group term without an intercept,
+such as <code>(0 + x||id)</code>, joins earlier group slopes, while
+<code>(0|id)</code> ends all group terms for <code>id</code>.</p>
 <p>Multi-coefficient terms with <code>|</code>, such as
 <code>(1 + x|id)</code>, would imply correlated group coefficients and
 are not yet supported; use <code>(1 + x||id)</code> for independent
 coefficients. Group-level terms inside <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> and
 <code>ma()</code> are also not supported.</p>
-<p>Unlike change-point deviations, predictor deviations are not
-constrained to sum exactly to zero. They have an ordinary mean-zero
-hierarchical normal distribution, matching multilevel regression in
-<code>lme4</code> and <code>brms</code>. For example,
-<code>(1|id)</code> in segment 1 creates the deviation vector
-<code>Intercept_1_id</code> and its population-level SD parameter
-<code>Intercept_1_id_sd</code>. <code>(state||id)</code> additionally
-creates names such as <code>stateB_1_id</code> and
-<code>stateB_1_id_sd</code>; inside <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, the
-corresponding names start with <code>sigma</code>.</p>
+<p>Like change-point deviations, predictor deviations are not
+constrained to sum to zero. They have an ordinary mean-zero hierarchical
+normal distribution, matching multilevel regression in <code>lme4</code>
+and <code>brms</code>. For example, <code>(1|id)</code> in segment 1
+creates the deviation vector <code>Intercept_1_id</code> and its
+population-level SD parameter <code>Intercept_1_id_sd</code>.
+<code>(state||id)</code> additionally creates names such as
+<code>stateB_1_id</code> and <code>stateB_1_id_sd</code>; inside
+<code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, the corresponding names start with
+<code>sigma</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="simulating-group-level-change-points">Simulating group-level change points<a class="anchor" aria-label="anchor" href="#simulating-group-level-change-points"></a>
@@ -249,7 +252,9 @@ a plateau and a slope:</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p>This follows the same interface as predictor group-level effects:
 supply the population-level SD and <code>fit$simulate()</code> draws one
-deviation per group and centers them exactly on zero.</p>
+deviation per group from the same truncated normal hierarchy as the JAGS
+model (see above), keeping each group’s change point in range. The
+deviations are therefore not centered exactly on zero.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span>, warn.conflicts <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">group_levels</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Clark"</span>, <span class="st">"Louis"</span>, <span class="st">"Batman"</span>, <span class="st">"Batgirl"</span>, <span class="st">"Spiderman"</span>, <span class="st">"Jane"</span><span class="op">)</span></span>
@@ -260,26 +265,25 @@ deviation per group and centers them exactly on zero.</p>
 <span><span class="op">)</span></span>
 <span><span class="va">empty</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">df</span><span class="op">$</span><span class="va">y</span> <span class="op">=</span> <span class="va">empty</span><span class="op">$</span><span class="fu">simulate</span><span class="op">(</span><span class="va">empty</span>, <span class="va">df</span>,</span>
 <span>  <span class="co"># Population-level:</span></span>
 <span>  Intercept_1 <span class="op">=</span> <span class="fl">20</span>, x_2 <span class="op">=</span> <span class="fl">0.5</span>, cp_1 <span class="op">=</span> <span class="fl">50</span>, sigma <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  </span>
-<span>  <span class="co"># Generate exactly centered group-level deviations with this SD</span></span>
+<span>  <span class="co"># Draw group-level deviations with this SD</span></span>
 <span>  cp_1_sd <span class="op">=</span> <span class="fl">15</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##          x    id        y</span></span>
-<span><span class="co">## 1 91.48060 Clark 31.74661</span></span>
-<span><span class="co">## 2 93.70754 Clark 32.40289</span></span>
-<span><span class="co">## 3 28.61395 Clark 19.78775</span></span>
-<span><span class="co">## 4 83.04476 Clark 29.28600</span></span>
-<span><span class="co">## 5 64.17455 Clark 19.81068</span></span>
-<span><span class="co">## 6 51.90959 Clark 24.03685</span></span></code></pre>
-<p>For models with multiple group-level change points, all deviations
-are drawn once and then checked for ordering. An unordered draw produces
-an error; <code>fit$simulate()</code> does not redraw, sort, or clip the
-change points. The result:</p>
+<span><span class="co">## 1 91.48060 Clark 33.10525</span></span>
+<span><span class="co">## 2 93.70754 Clark 29.21492</span></span>
+<span><span class="co">## 3 28.61395 Clark 18.27841</span></span>
+<span><span class="co">## 4 83.04476 Clark 23.84163</span></span>
+<span><span class="co">## 5 64.17455 Clark 17.08157</span></span>
+<span><span class="co">## 6 51.90959 Clark 20.15997</span></span></code></pre>
+<p>For models with multiple group-level change points,
+<code>fit$simulate()</code> draws the deviations in change-point order,
+truncated so each group’s change point lies after its preceding one,
+just like the JAGS model. The result:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">df</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">x</span>, y<span class="op">=</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
@@ -292,12 +296,11 @@ change points. The result:</p>
 </h2>
 <p>Fitting the model is simple:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span></span></code></pre></div>
 <p>If we just use <code>plot(fit)</code>, we would see all points in one
 plot. We want to facet by <code>id</code>, so:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, facet_by <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, facet_by <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="group_effects_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="700"></p>
 <p>It seems that <code>mcp</code> recovered the group-specific change
 points well. There is a lot of information in these data because the
@@ -309,27 +312,30 @@ group-level deviations (random effects), use:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">mcp</span><span class="fu">::</span><span class="fu"><a href="../reference/summary.mcpfit.html">ranef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##             variable       mean       sd     lower    upper     rhat ess_bulk ess_tail       sim match</span></span>
-<span><span class="co">## 1   cp_1_id[Batgirl]   7.155937 23.01898 -31.73245 58.58291 1.000547     4456     4924 14.315858    OK</span></span>
-<span><span class="co">## 2    cp_1_id[Batman] -17.510166 23.01498 -56.50173 33.62430 1.000390     4397     5250 -8.463936    OK</span></span>
-<span><span class="co">## 3     cp_1_id[Clark]  11.918669 23.01645 -27.12213 63.20814 1.000259     4491     4871 20.518845    OK</span></span>
-<span><span class="co">## 4      cp_1_id[Jane]  -7.427058 22.99572 -46.29637 43.64146 1.000327     4477     5107  0.715170    OK</span></span>
-<span><span class="co">## 5     cp_1_id[Louis]  17.605143 23.02251 -21.45428 69.05634 1.000340     4584     5368 22.900143    OK</span></span>
-<span><span class="co">## 6 cp_1_id[Spiderman]  -2.085838 22.99643 -41.02589 48.95286 1.000306     4453     5042  5.438742    OK</span></span></code></pre>
+<span><span class="co">## 1   cp_1_id[Batgirl] -14.828901 23.42185 -55.26252 35.32083 1.000926     4171     4598 -9.676304    OK</span></span>
+<span><span class="co">## 2    cp_1_id[Batman] -11.582779 23.42783 -52.08382 38.49255 1.001012     4099     4462 -7.137652    OK</span></span>
+<span><span class="co">## 3     cp_1_id[Clark]  16.576719 23.44898 -23.96506 66.70914 1.001117     4162     4432 20.834550    OK</span></span>
+<span><span class="co">## 4      cp_1_id[Jane]   4.413525 23.43513 -35.98966 54.66779 1.000838     4105     4586  9.978659    OK</span></span>
+<span><span class="co">## 5     cp_1_id[Louis]  12.891476 23.42891 -27.43964 63.12414 1.001123     4128     4664 16.354350    OK</span></span>
+<span><span class="co">## 6 cp_1_id[Spiderman]   4.201495 23.42361 -36.33909 54.50696 1.001008     4132     4561  9.741142    OK</span></span></code></pre>
 <p>Inspecting the <code>sim</code> and <code>match</code> columns, we
-see that they recovered the simulation parameters well.</p>
+see that the simulated deviations lie within the intervals. However, the
+intervals are wide because the deviations trade off against the
+population-level <code>cp_1</code>, which is informed by only six
+groups. The group-specific locations (<code>cp_1 + cp_1_id[g]</code>)
+are much more precise, as seen in the plot above.</p>
 <p>Prediction methods include all group-level effects by default. Set
-<code>varying = FALSE</code> for population-only predictions,
-<code>varying = "cp"</code> for all group-level effects in the cp part,
-<code>varying = "predictor"</code> for predictor-side group-level
-effects, or supply an exact name such as
-<code>varying = "cp_1_id"</code>. <code>ranef(fit)</code> deliberately
-remains simple and returns all group-level effects.</p>
+<code>group = FALSE</code> for population-only predictions,
+<code>group = "cp"</code> for all group-level effects in the cp part,
+<code>group = "predictor"</code> for predictor-side group-level effects,
+or supply an exact name such as <code>group = "cp_1_id"</code>.
+<code>ranef(fit)</code> deliberately remains simple and returns all
+group-level effects.</p>
 <p>Good convergence is not always as obvious as in this example. While
 <code>plot_pars(fit)</code> shows population-level parameters only, you
 can select the group-level deviations with <code>"group"</code>:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, pars <span class="op">=</span> <span class="st">"group"</span>, type <span class="op">=</span> <span class="st">"trace"</span>, ncol <span class="op">=</span> <span class="fl">3</span>, nvariables <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, pars <span class="op">=</span> <span class="st">"group"</span>, type <span class="op">=</span> <span class="st">"trace"</span>, ncol <span class="op">=</span> <span class="fl">3</span>, nvariables <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
 <p><img src="group_effects_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="700"></p>
 <p>The <code>ncol</code> argument controls the number of columns.
 Group-level effects often have many levels, so this is useful for
@@ -339,8 +345,7 @@ To select one group-level effect, use a regular expression in
 <code>regex_pars</code>; for example, <code>^</code> anchors the start
 of a parameter name:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, regex_pars <span class="op">=</span> <span class="st">"^cp_1_id"</span>, type <span class="op">=</span> <span class="st">"dens_overlay"</span>, ncol <span class="op">=</span> <span class="fl">2</span>, nvariables <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, regex_pars <span class="op">=</span> <span class="st">"^cp_1_id"</span>, type <span class="op">=</span> <span class="st">"dens_overlay"</span>, ncol <span class="op">=</span> <span class="fl">2</span>, nvariables <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
 <p><img src="group_effects_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="700"></p>
 <p>You can also do posterior predictive checking with facets. I think
 that for the relatively univariate models supported as of
@@ -348,8 +353,7 @@ that for the relatively univariate models supported as of
 above <code>plot(fit, facet_by = "id")</code>, but it’s a standard
 assessment that many will be acquainted with:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/pp_check.html">pp_check</a></span><span class="op">(</span><span class="va">fit</span>, facet_by <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/pp_check.html">pp_check</a></span><span class="op">(</span><span class="va">fit</span>, facet_by <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="group_effects_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
@@ -359,14 +363,14 @@ assessment that many will be acquainted with:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                                               bounds                        </span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                         </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)                                [min(x), max(x)]              </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_1_sd           2 cp    normal(mean = 0, sd = 197.7306)                     [0, Inf]                      </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> cp_1_id           2 cp    normal(mean = 0, sd = cp_1_sd)                      [min(x) - cp_1, max(x) - cp_1]</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> Intercept_1       1 mu    student_t(df = 3, location = 21.7, scale = 4.6)     none                          </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> x_2               2 mu    student_t(df = 3, location = 0, scale = 0.04652796) none                          </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 4.6)        [0.001, Inf]</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior                                        bounds                        </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                         </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)                         [min(x), max(x)]              </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_1_sd           2 cp    normal(mean = 0, sd = 197.7306)              [0, Inf]                      </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> cp_1_id           2 cp    normal(mean = 0, sd = cp_1_sd)               [min(x) - cp_1, max(x) - cp_1]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> Intercept_1       1 mu    normal(mean = 25.18647, sd = 18.62054)       none                          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> x_2               2 mu    normal(mean = 0, sd = 0.6458842)             none                          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 5.3) [0.001, Inf]</span></span></code></pre>
 <p><code>cp_1_sd</code> is the latent normal scale governing the
 <code>cp_1_id</code> deviations. Unlike predictor group-level effects,
 change-point locations are also constrained to remain in range and
@@ -387,9 +391,9 @@ ordered within each group.</p>
 <span><span class="co">##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)</span></span>
 <span><span class="co">##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point</span></span>
 <span><span class="co">##   cp_1_sd ~ dnorm(0, 1/(197.7306)^2) T(0,)  # Group-level change-point variation</span></span>
-<span><span class="co">##   Intercept_1 ~ dt(21.7, 1/(4.6)^2, 3)   # Robustly centered mean intercept with a minimum scale of 2.5</span></span>
-<span><span class="co">##   x_2 ~ dt(0, 1/(0.04652796)^2, 3)   # Regularizing mean coefficient scaled to a reference predictor change</span></span>
-<span><span class="co">##   sigma_1 ~ dt(0, 1/(4.6)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale</span></span>
+<span><span class="co">##   Intercept_1 ~ dnorm(25.18647, 1/(18.62054)^2)   # Mean intercept (rstanarm default)</span></span>
+<span><span class="co">##   x_2 ~ dnorm(0, 1/(0.6458842)^2)   # Autoscaled mean coefficient (rstanarm default)</span></span>
+<span><span class="co">##   sigma_1 ~ dt(0, 1/(5.3)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for group-level effects</span></span>
 <span><span class="co">##   for (id_ in 1:n_unique_id) {</span></span>

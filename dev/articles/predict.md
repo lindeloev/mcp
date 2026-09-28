@@ -16,7 +16,6 @@ We need an `mcpfit` to get started. We take the “demo” dataset:
 
 library(mcp)
 future::plan(future::multisession, workers = 3)
-set.seed(42)  # Make the script deterministic
 
 data = mcp_example_data("demo")
 head(data)
@@ -42,7 +41,7 @@ model = list(
 )
 
 # Fit it
-fit = mcp(model, data = data, seed = 42)
+fit = mcp(model, data = data)
 ```
 
 This is what the data and inferred fit look like with a 95% central
@@ -51,7 +50,6 @@ predictive interval:
 
 ``` r
 
-set.seed(42)
 plot(fit, q_fit = TRUE, q_predict = c(0.1, 0.9))
 ```
 
@@ -87,21 +85,21 @@ head(fitted(fit))
 ```
 
     ##   response     time   fitted        sd     Q2.5    Q97.5
-    ## 1 17.23552 76.33986 16.95304 0.9425042 15.17680 18.84139
-    ## 2 11.35171 83.51711 16.22386 0.7231217 14.82569 17.64630
-    ## 3 28.04995 60.18529 25.26025 0.8946280 23.51420 26.98299
-    ## 4 20.68198 74.72964 17.11663 1.0216233 15.20838 19.19173
-    ## 5 21.21364 85.88256 15.98354 0.7208332 14.60845 17.42739
-    ## 6 22.32282 40.05069 14.54825 0.6297756 13.25108 15.71204
+    ## 1 17.23552 76.33986 17.84217 0.9990016 15.84515 19.79815
+    ## 2 11.35171 83.51711 16.41701 0.7249251 14.96533 17.85840
+    ## 3 28.04995 60.18529 25.44790 0.8844492 23.70304 27.14645
+    ## 4 20.68198 74.72964 18.16191 1.0936603 15.99893 20.29138
+    ## 5 21.21364 85.88256 15.94730 0.7188174 14.54413 17.36917
+    ## 6 22.32282 40.05069 14.47462 0.6410212 13.15862 15.68560
 
-In general, this output will include:
+In general, this output contains:
 
 - A column for each predictor column in the data. Here, `time` is the
   only predictor and you see the values in the same order as in `data`
   (which is copied to `fit$data`). Models with [group-level
   effects](https://lindeloev.github.io/mcp/dev/articles/group_effects.md)
-  additionally include the relevant grouping columns,
-  [`binomial()`](https://rdrr.io/r/stats/family.html) models include the
+  additionally have the relevant grouping columns,
+  [`binomial()`](https://rdrr.io/r/stats/family.html) models have the
   number of trials, etc.
 
 - **fitted:** The fitted value (posterior mean). When `summary = TRUE`
@@ -137,10 +135,10 @@ fitted(fit, newdata = newdata)
 ```
 
     ##        time    fitted        sd       Q2.5    Q97.5
-    ## 1  76.33986 16.953037 0.9425042  15.176805 18.84139
-    ## 2  25.00000 10.032579 0.6630444   8.729474 11.31624
-    ## 3 -20.00000 10.032168 0.6635059   8.728337 11.31624
-    ## 4 200.00000  4.389672 8.3266709 -13.882775 18.56525
+    ## 1  76.33986 17.842172 0.9990016  15.845155 19.79815
+    ## 2  25.00000  9.935817 0.6604596   8.609782 11.23334
+    ## 3 -20.00000  9.935788 0.6605319   8.609782 11.23334
+    ## 4 200.00000 -6.712685 9.3058981 -25.149202 11.43209
 
 Note that:
 
@@ -148,11 +146,11 @@ Note that:
 - The first value for `time` is in the dataset. The values correspond to
   the same row in `fitted(fit)` because that’s merely a shortcut to do
   `fitted(fit, newdata = fit$data)`.
-- The second value (`time = 20`) is within the observed region, but not
+- The second value (`time = 25`) is within the observed region, but not
   in the dataset.
 - The third value (`time = - 20`) is outside the observed region, but
   `mcp` merely extends the first segment backwards in time. Because it’s
-  a plateau, we see approximately the same values as for `time = 20`.
+  a plateau, we see approximately the same values as for `time = 25`.
 - The fourth value (`time = 200`) is way outside the observed region.
   Because it is the extrapolation of the slope in the third segment of
   which we’ve only observed the first tiny bit, the posterior
@@ -171,7 +169,7 @@ arguments. To mention a few, you can set `fitted(fit, dpar = "sigma")`
 to get fitted values for `sigma` ([more on modeling
 sigma](https://lindeloev.github.io/mcp/dev/articles/dpar.md)),
 `prior = TRUE` to predict using only the prior, and `arma = FALSE` to
-exclude AR/MA effects. For group-level effects, use `varying = TRUE`
+exclude AR/MA effects. For group-level effects, use `group = TRUE`
 (all), `FALSE` (none), `"cp"` or `"predictor"` (a formula part), or an
 exact group-level parameter name.
 
@@ -196,12 +194,12 @@ head(predict(fit, probs = c(0.1, 0.9)))
 ```
 
     ##   response     time  predict       sd       Q10      Q90
-    ## 1 17.23552 76.33986 16.87655 4.044288 11.807985 22.09377
-    ## 2 11.35171 83.51711 16.19702 3.979168 11.139668 21.30783
-    ## 3 28.04995 60.18529 25.32072 4.009801 20.130376 30.38637
-    ## 4 20.68198 74.72964 17.07618 4.037014 11.946629 22.28208
-    ## 5 21.21364 85.88256 15.86910 3.992311 10.900805 21.06792
-    ## 6 22.32282 40.05069 14.56188 3.945864  9.484676 19.61205
+    ## 1 17.23552 76.33986 17.76087 4.025946 12.729675 22.95364
+    ## 2 11.35171 83.51711 16.39834 3.945877 11.381113 21.45299
+    ## 3 28.04995 60.18529 25.50435 3.974106 20.369367 30.52404
+    ## 4 20.68198 74.72964 18.12685 4.009017 13.017773 23.30484
+    ## 5 21.21364 85.88256 15.83290 3.944597 10.913034 20.98206
+    ## 6 22.32282 40.05069 14.48612 3.932286  9.456287 19.49107
 
 Note that
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
@@ -258,15 +256,15 @@ knowledge:
 ``` r
 
 model_forecast = c(empty$model, list(
-  ~ 1     # intercept (Intercept_4) after cp_3
+  ~ same(1, as = 1)  # Return to Intercept_1 after cp_3
 ))
 ```
 
-And finally, we extend the list of priors with the two new parameters
-(`time_4` and `cp_3`). The model needs a predictor value at the end of
-the forecasting horizon so that the future change point remains within
-its supported range. Its response is missing, so it contributes no
-observed outcome. It may be helpful to review [the article on priors in
+And finally, we extend the list of priors with the new change point
+`cp_3`. The model needs a predictor value at the end of the forecasting
+horizon so that the future change point remains within its supported
+range. Its response is missing, so it contributes no observed outcome.
+It may be helpful to review [the article on priors in
 mcp](https://lindeloev.github.io/mcp/dev/articles/priors.md).
 
 ``` r
@@ -278,7 +276,6 @@ observed_end = max(data$time)
 prior_forecast = c(empty$prior[!names(empty$prior) %in% c("cp_1", "cp_2")], list(
   cp_1 = paste0("dunif(", observed_start, ", ", observed_end, ")"),
   cp_2 = paste0("dunif(cp_1, ", observed_end, ")"),
-  Intercept_4 = "Intercept_1",  # Return to this value
   cp_3 = paste0("dnorm(cp_2 + (cp_2 - cp_1), 20) T(", observed_end, ", ", forecast_horizon, ")")  # In the future at the same interval
 ))
 ```
@@ -287,7 +284,7 @@ Now let’s fit it:
 
 ``` r
 
-fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast, seed = 42)
+fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast)
 ```
 
 ### Step 3: predict!
@@ -300,8 +297,8 @@ We can now compute 50% and 80% posterior predictive intervals at
 predict(fit_forecast, newdata = data.frame(time = 125), probs = c(0.1, 0.25, 0.75, 0.9))
 ```
 
-    ##   time predict       sd      Q10      Q25      Q75      Q90
-    ## 1  125 10.7111 4.425336 5.227146 7.797327 13.62834 16.41037
+    ##   time  predict       sd      Q10      Q25      Q75     Q90
+    ## 1  125 9.244078 4.499987 3.553236 6.425221 12.29614 14.8795
 
 To really understand what’s going on here, it may be helpful to
 visualize the model. For now, we will have to hack this a bit too,
@@ -351,4 +348,4 @@ truncated the prior for the future change point (`cp_3`) so that it
 occurs *after* the last data point (`max(time)`), i.e., at `time > 100`.
 This is knowledge that the third change point had not yet been observed
 at `time = 100`, and this pushes the distribution further into the
-future (actually around 118; see `summary(fit_forecast)`).
+future (actually around 120; see `summary(fit_forecast)`).
