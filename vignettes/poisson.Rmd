@@ -22,14 +22,13 @@ The Poisson and negative-binomial distributions model counts observed within com
 
 # Coal mining disasters
 
-A dataset on coal mining disasters has grown very popular in the change point literature (available in `boot::coal`). It contains a timestamp of each coal mining disaster from 1851 to 1962. By binning the number of events within each year (fixed time frame), we have something very Poisson-friendly:
+A dataset on coal mining disasters has grown very popular in the change point literature (available in `boot::coal`). It contains a timestamp of each coal mining disaster from 1851 to 1962. By counting the number of events within each year (fixed time frame), we have something very Poisson-friendly. Note that years without disasters must be included as zeros:
 
-```{r, message=FALSE, warning=FALSE}
-# Number of disasters by year
-library(dplyr, warn.conflicts = FALSE)
-df = round(boot::coal) %>% 
-  group_by(date) %>% 
-  count()
+```{r}
+# Number of disasters by year, including years with zero disasters
+year = floor(boot::coal$date)
+df = data.frame(date = 1851:1962)
+df$n = sapply(df$date, function(d) sum(year == d))
 
 # See it
 head(df)
@@ -152,14 +151,14 @@ fit_decay_loo = loo(fit_decay)
 loo::loo_compare(fit_loo, fit_flat_loo, fit_decay_loo)
 ```
 
-The change point model is preferred, but `elpd_diff / se_diff` is only around 1.5 relative to the decay model and 2.5 relative to the flat model. The `diag_elpd` column also flags four observations with high Pareto $k$ values in the change point model, so its PSIS-LOO estimate is less reliable. Taken together, this is weak to moderate evidence for a change point over a gradual decay. Another approach is to look at the model weights:
+The flat model is clearly worse, with `elpd_diff / se_diff` around 4, so the disaster rate did decrease. The change point model is preferred over the decay model, but the difference is smaller than its standard error. The `diag_elpd` column also flags a few observations with high Pareto $k$ values in the change point model, so its PSIS-LOO estimate is less reliable. Taken together, the data cannot clearly distinguish an abrupt change from a gradual decay. Another approach is to look at the model weights:
 
 ```{r, results='hold'}
 loo_list = list(fit_loo, fit_flat_loo, fit_decay_loo)
 loo::loo_model_weights(loo_list, method="pseudobma")
 ```
 
-Again, the change point model is preferred and the weights show the same ranking as implied by `loo_compare`.
+Again, the change point model is preferred and the weights show the same ranking as implied by `loo_compare`, but the decay model retains a non-negligible weight.
 
 # JAGS code for the Poisson example
 
