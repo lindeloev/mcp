@@ -423,6 +423,11 @@ mcp = function(model,
   imputed_response_nodes = if (custom_jags_code || length(missing_response_rows) == 0) character() else
     paste0(segments$y[1], "[", missing_response_rows, "]")
 
+  # The JAGS glm module helps some families always and others only with group-level predictor effects.
+  glm_module = family$backends$jags$glm_module
+  use_glm = identical(glm_module, "always") ||
+    (identical(glm_module, "group_effects") && any(group_definitions$part != "cp"))
+
   # Sample posterior
   if (sample %in% c("post", "both")) {
     mcmc_post = run_jags(
@@ -435,7 +440,8 @@ mcp = function(model,
       n.adapt = warmup,
       inits = inits,
       seed = seed,
-      quiet = quiet
+      quiet = quiet,
+      use_glm = use_glm
     ) %>%
       recover_levels(data, group_definitions)
 
@@ -486,7 +492,8 @@ mcp = function(model,
       n.adapt = warmup,
       inits = inits,
       seed = seed,
-      quiet = quiet
+      quiet = quiet,
+      use_glm = use_glm
     ) %>%
       recover_levels(data, group_definitions)
 

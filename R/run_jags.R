@@ -14,6 +14,8 @@
 #' @inheritParams rjags::coda.samples
 #' @param jags_code A string. JAGS model, usually returned by `get_jags_code()`.
 #' @param pars Character vector of parameters to save/monitor.
+#' @param use_glm Logical. Load the JAGS glm module, which block-samples
+#'   coefficients that enter the linear predictor jointly.
 #' @return `mcmc.list`
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -26,13 +28,21 @@ run_jags = function(jags_code,
                     n.adapt,
                     inits,
                     seed,
-                    quiet
+                    quiet,
+                    use_glm = FALSE
 ) {
 
   # Define the sampling function in this environment.
   # Can be used sequentially or in parallel.
   do_sampling = function(inits, n.chains) {
     sample_jags = function() {
+      # Samplers are assigned at compile time, so load the glm module here to reach
+      # parallel workers too, and unload it again to leave the user's session unchanged.
+      if (use_glm && !("glm" %in% rjags::list.modules())) {
+        rjags::load.module("glm", quiet = TRUE)
+        on.exit(rjags::unload.module("glm", quiet = TRUE), add = TRUE)
+      }
+
       # Compile model
       jags_connection = textConnection(jags_code)
       on.exit(close(jags_connection), add = TRUE)

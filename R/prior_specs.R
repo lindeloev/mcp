@@ -417,3 +417,57 @@ add_intercept_references = function(table, predictors, context) {
   }
   table
 }
+
+
+# Improve efficiency of Gibbs-like sampling by keeping each segment's line relatively
+# independent/constant when a change point moves. This is a reparameterization - not
+# a change in model. Otherwise, the sampler must change slopes and intercepts jointly 
+# with change points, which mixes slowly. Two strategies are used:
+# 
+# - Joined segments (no intercept): sample each default slope as its rise over the
+#   segment, rise ~ normal(0, s * width^p), and derive slope = rise / width^p.
+# 
+# - Disjoined segments k >= 2: sample the default intercept as the level at the segment
+#   end, end ~ normal(m + change, s), and derive Intercept_k = end - change, where
+#   change is the segment's x-terms over its width.
+# 
+# Both imply exactly the default standard priors; only the sampling geometry changes.
+# width = cp_k - cp_(k-1). Skipped for segments bounded by group-varying change points,
+# where the data use group-specific widths. Returns `table` with columns `rise_width`
+# and `end_change` (NA where not applicable).
+add_segment_anchors = function(table, predictors, cps) {
+  table$rise_width = NA_character_
+  table$end_change = NA_character_
+  is_pure = vapply(predictors$matrix_data, function(values) all(values == 1, na.rm = TRUE), logical(1))
+  slopes = predictors[predictors$dpar == "mu" & predictors$x_factor != "1" & is_pure & predictors$segment == predictors$definition_segment, ]
+  is_default_normal = function(row) {
+    call = parse_prior_call(table$value[row])
+    !is.na(row) && table$source[row] == "default" && !is.null(call) && call$name == "dnorm" && !grepl("T(", table$value[row], fixed = TRUE)
+  }
+  width = function(k, x_factor) paste0("(cp_", k, " - cp_", k - 1, ")", ifelse(x_factor == "x", "", sub("x", "", x_factor, fixed = TRUE)))
+
+  # Apply to each segment
+  for (k in unique(slopes$segment)) {
+    # Don't change anything for segments bounded by group-varying change points
+    if (any(cps$varying[cps$name %in% paste0("cp_", c(k - 1, k))]))
+      next
+
+    # Disjoined segments: sample the default intercept as the level at the segment end
+    terms = slopes[slopes$segment == k, ]
+    intercept = predictors$code_name[predictors$segment == k & predictors$dpar == "mu" & predictors$par_type == "Intercept"]
+    if (length(intercept) == 0) {
+      for (i in seq_len(nrow(terms))) {
+        row = match(terms$code_name[i], table$parameter)
+        if (is_default_normal(row))
+          table$rise_width[row] = width(k, terms$x_factor[i])
+      }
+    
+    # Joined segments (no intercept): sample each default slope as its rise over the segment
+    } else if (k > 1) {
+      row = match(intercept, table$parameter)
+      if (is_default_normal(row))
+        table$end_change[row] = paste0(terms$code_name, " * ", width(k, terms$x_factor), collapse = " + ")
+    }
+  }
+  table
+}

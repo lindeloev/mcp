@@ -264,6 +264,7 @@ mcpfamily_gaussian = function(family) {
     }
   )
   jags = list(
+    glm_module = "always",  # JAGS glm module: see run_jags()
     likelihood = function(context) {
       weights = context$aux("weights", "1")
 
@@ -369,6 +370,7 @@ mcpfamily_binomial = function(family) {
     }
   )
   jags = list(
+    glm_module = "group_effects",  # JAGS glm module: see run_jags()
     likelihood = function(context) {
       weights = context$aux("weights", "1")
 
@@ -454,6 +456,7 @@ mcpfamily_bernoulli = function(family) {
     cdf = function(q, dpars, data, rate = FALSE) stats::pbinom(q, 1, dpars$mu)
   )
   jags = list(
+    glm_module = "group_effects",  # JAGS glm module: see run_jags()
     likelihood = function(context) {
       weights = context$aux("weights", "1")
 
@@ -543,6 +546,7 @@ mcpfamily_poisson = function(family) {
     }
   )
   jags = list(
+    glm_module = "group_effects",  # JAGS glm module: see run_jags()
     likelihood = function(context) {
       weights = context$aux("weights", "1")
 
@@ -619,7 +623,9 @@ mcpfamily_negbinomial = function(family) {
       stats::pnbinom(q, mu = dpars$mu, size = dpars$shape)
     }
   )
-  jags = list(likelihood = function(context) {
+  jags = list(
+    glm_module = "never",  # JAGS glm module: see run_jags()
+    likelihood = function(context) {
     mu = context$dpar("mu")
     shape = context$dpar("shape")
     prob = context$local("nb_prob")

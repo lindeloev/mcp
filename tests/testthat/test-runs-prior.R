@@ -599,3 +599,38 @@ test_that("a constant response uses unit scale for sd(y)-based default priors", 
   expect_equal(fit$prior$Intercept_1, "dnorm(2, 2.5)")
   expect_equal(fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(data$x)), ")"))
 })
+
+
+test_that("default priors keep segment lines in place when change points move", {
+  data = data.frame(x = 1:100, y = rnorm(100))
+  fit = mcp(list(y ~ 1 + x, ~ 1 + x, ~ 0 + x + I(x^2)), data, par_x = "x", sample = FALSE)
+  # Disjoined segment: intercept sampled as the level at the segment end
+  expect_match(fit$jags_code, "Intercept_2 = Intercept_2_end_ - (x_2 * (cp_2 - cp_1))", fixed = TRUE)
+  # Joined segment: slopes sampled as the rise over the segment
+  expect_match(fit$jags_code, "x_3 = x_3_rise_ / (cp_3 - cp_2)", fixed = TRUE)
+  expect_match(fit$jags_code, "xE2_3 = xE2_3_rise_ / (cp_3 - cp_2)^2", fixed = TRUE)
+  # Segment 1 is unchanged
+  expect_match(fit$jags_code, "\n  x_1 ~ dnorm")
+
+  # Not for user-specified priors or segments bounded by group-varying change points
+  user_fit = mcp(list(y ~ 1, ~ 0 + x), data, par_x = "x", prior = list(x_2 = "dnorm(0, 1)"), sample = FALSE)
+  expect_false(grepl("_rise_", user_fit$jags_code))
+  data$id = rep(1:5, 20)
+  varying_fit = mcp(list(y ~ 1, 1 + (1 | id) ~ 0 + x), data, par_x = "x", sample = FALSE)
+  expect_false(grepl("_rise_", varying_fit$jags_code))
+})
+
+
+test_that("segment anchors imply the default priors", {
+  data = data.frame(x = 1:100, y = rnorm(100))
+  fit = suppressWarnings(mcp(
+    list(y ~ 1, ~ 0 + x, ~ 1 + x), data, par_x = "x", sample = "prior",
+    chains = 1, iter = 4000, warmup = 100, seed = 1, quiet = TRUE
+  ))
+  draws = as_draws_df(fit, prior = TRUE)
+  for (name in c("x_2", "Intercept_3")) {
+    prior = as.numeric(parse_prior_call(fit$prior[[name]])$args)
+    expect_equal(mean(draws[[name]]), prior[1], tolerance = 0.1 * prior[2], label = name)
+    expect_equal(stats::sd(draws[[name]]), prior[2], tolerance = 0.1, label = name)
+  }
+})

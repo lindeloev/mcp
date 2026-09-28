@@ -118,6 +118,13 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   # x-terms at min(x), e.g., "x_1 * 101". NA for all other parameters.
   prior_reference = if (is.null(prior_table$reference)) list() else
     as.list(stats::setNames(prior_table$reference, prior_table$parameter))
+  # Segment anchors (see add_segment_anchors()): for slopes sampled as the rise over their
+  # segment, the segment width, e.g., "(cp_2 - cp_1)"; for intercepts sampled as the level
+  # at the segment end, the change over the segment, e.g., "x_2 * (cp_2 - cp_1)". NA otherwise.
+  prior_rise_width = if (is.null(prior_table$rise_width)) list() else
+    as.list(stats::setNames(prior_table$rise_width, prior_table$parameter))
+  prior_end_change = if (is.null(prior_table$end_change)) list() else
+    as.list(stats::setNames(prior_table$end_change, prior_table$parameter))
   prior_context_ = prior_context
 
   # Change point priors are bounded/truncated, which is where a literal-number
@@ -204,7 +211,9 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
       prior_pop, i,
       description = prior_description[[name]],
       kind = if (is.null(prior_kind_)) NULL else prior_kind_[[name]],
-      reference = prior_reference[[name]]
+      reference = prior_reference[[name]],
+      rise_width = prior_rise_width[[name]],
+      end_change = prior_end_change[[name]]
     ))
   }
 
@@ -345,11 +354,16 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
 #' @param reference `NULL` or a string with the value of segment-1 x-terms at
 #'   min(x). If given, the prior is placed on this level (in JAGS) and the
 #'   intercept at x = 0 is derived from it (user-facing). See `add_intercept_references()`.
+#' @param rise_width `NULL` or a string with the segment width, e.g., `"(cp_2 - cp_1)"`.
+#'   If given, the slope is sampled as the rise over the segment. See `add_segment_anchors()`.
+#' @param end_change `NULL` or a string with the change over the segment, e.g.,
+#'   `"x_2 * (cp_2 - cp_1)"`. If given, the intercept is sampled as the level at the
+#'   segment end. See `add_segment_anchors()`.
 #' @return A string
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @encoding UTF-8
 get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
-                          description = "Prior", kind = NULL, reference = NULL) {
+                          description = "Prior", kind = NULL, reference = NULL, rise_width = NULL, end_change = NULL) {
   # Helpers
   value = prior[[i]]
   name = names(prior[i])
@@ -372,6 +386,26 @@ get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
     return(paste0(
       "  ", inverse_name, " ~ dgamma(", call$args[1], ", ", call$args[2], ")  # ", description, "\n",
       "  ", name, " = -log(", inverse_name, ")  # Log of inverse-gamma parameter\n"
+    ))
+  }
+
+  if (kind == "distribution" && is.null(group_col) && !is.null(end_change) && !is.na(end_change)) {
+    call = parse_prior_call(value)
+    end_name = paste0(name, "_end_")
+    end_prior = prior_to_jags(paste0("dnorm(", call$args[1], " + ", end_change, ", ", call$args[2], ")"))
+    return(paste0(
+      "  ", end_name, " ~ ", end_prior, "  # ", description, "; sampled as the level at the segment end\n",
+      "  ", name, " = ", end_name, " - (", end_change, ")\n"
+    ))
+  }
+
+  if (kind == "distribution" && is.null(group_col) && !is.null(rise_width) && !is.na(rise_width)) {
+    call = parse_prior_call(value)
+    rise_name = paste0(name, "_rise_")
+    rise_prior = prior_to_jags(paste0("dnorm(", call$args[1], ", ", call$args[2], " * ", rise_width, ")"))
+    return(paste0(
+      "  ", rise_name, " ~ ", rise_prior, "  # ", description, "; sampled as the rise over the segment\n",
+      "  ", name, " = ", rise_name, " / ", rise_width, "\n"
     ))
   }
 

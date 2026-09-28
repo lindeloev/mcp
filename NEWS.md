@@ -24,6 +24,8 @@
 
 - **Missing response imputation:** Missing responses are now retained as posterior JAGS imputations and used to complete response histories in AR/MA models. Predictions generate fresh replicated outcomes at every row; `predict(fit) |> filter(is.na(y))` can be used to see predictive intervals and draws at missing points, and similarly `fitted()` for expected responses. Missing AR/MA histories remain unsupported in `log_lik()`, `loo()`, and `waic()`.
 
+- **Improved speed and robustness:** ESS/s has improved more than 10-fold and convergence is more likely. This due to a reparameterization that keep intercepts and slopes relatively independent of change points during sampling and due to (selectively) using the JAGS glm module.
+
 ## Major breaking changes
 
 mcp v0.4 is a major breaking change with the aim of remaining relatively stable going forward towards version 1.0. Although a lot has been updated, the parameter estimates in v0.4.0 remain practically identical to the previous public release (v0.3.4). Deprecation detections have been added until we reach 1.0.
@@ -116,8 +118,6 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
   - Added `mcp(..., series = "data_column")` to identify independent series in models with AR/MA terms.
 
   - Memory improvement: The `mcpfit` is now \< 10% of the size as before because the log-likelihood is not stored. Use `log_lik(fit)` to compute it, or call `loo(fit)` or `waic(fit)` directly.
-
-  - Sampling is now 1-10% faster due to a new formalization of the underlying JAGS code.
 
 - **Model evaluation and prediction:**
 
