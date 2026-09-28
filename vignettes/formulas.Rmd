@@ -353,3 +353,34 @@ fit$jags_code
 Look at the JAGS code under `# par_x local to each segment` and `# Formula for mu` to see this exact indicator formulation in action: `x_local_1_[i_]` and `x_local_2_[i_]` correspond to $X_{1,i}$ and $X_{2,i}$, and each segment's slope is multiplied by its activation indicator (e.g., `(x[i_] >= cp_1)`).
 
 You will find the exact same formula for `y_ = ...` if you do `print(fit$simulate)`, though this function contains a whole lot of other stuff too.
+
+## Implementation: Improve sampling efficiency by keeping segment ends in place when change points move
+
+In `fit$jags_code`, you may see unintuitive formulations like the following:
+
+```{r, eval = FALSE}
+# Joined segments: slope sampled as the rise over the segment
+x_2_rise_ ~ dnorm(0, 1/(0.2*(cp_2-cp_1))^2)
+x_2 = x_2_rise_ / (cp_2 - cp_1)
+
+# Disjoined segments: intercept sampled as the level at the segment end
+Intercept_3_end_ ~ dnorm(0.6 + x_3 * (cp_3 - cp_2), 1/(3.5)^2)
+Intercept_3 = Intercept_3_end_ - (x_3 * (cp_3 - cp_2))
+```
+
+Like most Gibbs samplers, JAGS updates one parameter at a time while holding the others fixed. If it holds a slope $\beta_{k,1}$ fixed while it updates a change point $\tau_k$, the level at the end of segment $k$ moves by $\beta_{k,1} \Delta\tau$, and so do all later joined segments. Such moves fit the data badly and are mostly rejected, so the change point and the slope must creep along together, which mixes slowly.
+
+`mcp` solves this by reparameterizing the model, sampling the above quantities whenever a prior is an mcp-default normal prior. With this, moving a change point leaves the levels at the ends of each segment in place.
+
+This is a reparameterization, not a new model: the priors, and hence the posteriors, are exactly those of the naive formulation. If the default prior is $\beta_{k,1} \sim \text{Normal}(0, s)$, the rise $r_k = \beta_{k,1} w_k$ over the segment width $w_k = \tau_k - \tau_{k-1}$ has standard deviation $s w_k$. So `mcp` gives the rise the prior $r_k \sim \text{Normal}(0, s w_k)$, which keeps the implied slope $r_k / w_k$ at $\text{Normal}(0, s)$. Likewise, the level at the segment end, $e_k = \beta_{k,0} + \beta_{k,1} w_k \sim \text{Normal}(m + \beta_{k,1} w_k, s)$, is just the intercept's default $\text{Normal}(m, s)$ prior shifted by $\beta_{k,1} w_k$. We can verify this for widths spanning two orders of magnitude:
+
+```{r}
+s = 0.5  # Prior SD of the slope
+width = runif(100000, 0.5, 50)  # Any segment widths
+rise = rnorm(100000, mean = 0, sd = s * width)  # Prior on the rise
+slope = rise / width  # Derived slope
+
+c(mean = mean(slope), sd = sd(slope))  # Normal(0, 0.5), as for the naive slope
+```
+
+User-specified priors are sampled as written.
