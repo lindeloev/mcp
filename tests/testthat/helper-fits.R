@@ -153,7 +153,7 @@ test_matches_simulated = function(fit, min_ess) {
 #' @param plot The plot produced by `mcp_example()`.
 #' @param example The name passed to `mcp_example()`.
 test_example_plot = function(plot, example) {
-  patchwork_examples = c("ar", "sigma")
+  patchwork_examples = c("ar", "sigma", "void")
 
   testthat::expect_s3_class(plot, "ggplot")
   testthat::expect_identical(inherits(plot, "patchwork"), example %in% patchwork_examples)

@@ -73,6 +73,8 @@ if (plot) {
   gg1 = plot(fit) + ggplot2::labs(title = \"plot(fit)\")
   set.seed(43)
   gg2 = plot_dpar(fit, \"ar1\") + ggplot2::labs(title = 'plot_dpar(fit, \"ar1\")')
+
+  # Using patchwork: library(patchwork)
   print(gg1 / gg2)
 }",
 
@@ -325,6 +327,8 @@ if (plot) {
   gg1 = plot(fit, q_predict = TRUE) + ggplot2::labs(title = 'plot(fit, q_predict = TRUE)')
   set.seed(43)
   gg2 = plot_dpar(fit, 'sigma') + ggplot2::labs(title = 'plot_dpar(fit, \"sigma\")')
+
+  # Using patchwork: library(patchwork)
   print(gg1 / gg2)
 }",
     group_cp = "# Define model
@@ -364,15 +368,16 @@ data$response[data$time > 25 & data$time < 45] = NA
 data$response[data$time > 70 & data$time < 80] = NA
 
 # Run sampling
-fit = mcp(demo_fit$model, data, seed = 42)
+fit = mcp(demo_fit$model, data, sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {
-  library(patchwork)
   set.seed(42)
   gg1 = plot(demo_fit, q_fit = TRUE) + ggplot2::labs(title = 'Original demo_fit (full data)')
   set.seed(43)
   gg2 = plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'Data voids near change points')
+
+  # Using patchwork: library(patchwork)
   print(gg1 / gg2)
 }"
 )
