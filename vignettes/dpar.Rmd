@@ -16,6 +16,7 @@ if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp"
   pkgload::load_all(quiet = TRUE)
 }
 bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_family = "sans"))
+set.seed(42)
 ```
 
 `mcp` supports **distributional regression**, where any parameter of a response distribution can be regressed on predictors and have change points across segments. In standard regression, formulas model only the conditional mean `mu()`, where the expected response on the response scale relates to the linear predictor via link function $g(\mu_i) = \eta_i$ ($\mu_i = g^{-1}(\eta_i)$). Distributional regression extends this by allowing formulas for distributional parameters such as residual standard deviation (`sigma`), negative-binomial overdispersion (`shape`) - and auxiliary parameters for time-series autocorrelation (`ar` / `ma`) - on their respective link scales.
@@ -35,7 +36,6 @@ Let us model a simple change in residual standard deviation with a plateau mean:
 ```{r}
 library(mcp)
 future::plan(future::multisession, workers = 3)
-set.seed(42)  # Make the script deterministic
 
 model = list(
   y ~ 1,  # sigma(1) is implicit in the first segment
@@ -49,7 +49,6 @@ We can simulate data with an abrupt change from a low to a high residual standar
 df = data.frame(x = 1:100, y = 1)
 empty = mcp(model, data = df, sample = FALSE, par_x = "x")
 
-set.seed(42)
 df$y = empty$simulate(
   empty, df, 
   cp_1 = 50, Intercept_1 = 20, 
@@ -61,13 +60,12 @@ head(df)
 Now we fit the model to the simulated data.
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, data = df, par_x = "x", seed = 42)
+fit = mcp(model, data = df, par_x = "x")
 ```
 
 We plot a posterior predictive interval to show the effect of the changing standard deviation, which is not immediately visible in the default plot of the expected response:
 
 ```{r}
-set.seed(42)
 plot(fit, q_predict = TRUE)
 ```
 
@@ -114,7 +112,6 @@ df = data.frame(x = 1:200, y = 1)
 empty = mcp(model, data = df, sample = FALSE)
 
 # Simulate data
-set.seed(42)
 df$y = empty$simulate(
   empty, df,
   cp_1 = 50, cp_2 = 80, cp_3 = 140,
@@ -132,20 +129,18 @@ df$y = empty$simulate(
 Fit it:
 
 ```{r, results = FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, data = df, iter = 6000, seed = 42, diagnostics = FALSE)
+fit = mcp(model, data = df, iter = 10000, diagnostics = FALSE)
 ```
 
 Plotting a posterior predictive interval is an intuitive way to see how the residual standard deviation is estimated:
 
 ```{r}
-set.seed(42)
 plot(fit, q_predict = TRUE)
 ```
 
 We can also plot the `sigma_` parameters directly. Now the y-axis is `sigma`:
 
 ```{r}
-set.seed(42)
 plot_dpar(fit, dpar = "sigma", q_fit = TRUE)
 ```
 
@@ -159,7 +154,6 @@ pp_check(fit)
 Parameters almost converge well ($\hat{R} \le 1.01$ and $\text{ESS} > 400$), but I set `diagnostics = FALSE` to quiet warnings since this is just a demonstration. Notice that `cp_3` and the quadratic `sigma` parameters have lower effective sample sizes than the others, reflecting greater uncertainty in detecting subtle changes in variance curvature. Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:
 
 ```{r, fig.height=7, fig.width = 6}
-set.seed(42)
 plot_pars(fit, regex_pars = "sigma_")
 ```
 
@@ -201,7 +195,6 @@ df = data.frame(
 empty = mcp(model, data = df, par_x = "x", sample = FALSE)
 
 # Simulate data
-set.seed(40)
 df$y = empty$simulate(
   empty, df, 
   cp_1 = 130, cp_1_sd = 40,
@@ -212,13 +205,12 @@ df$y = empty$simulate(
 Fit it:
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, data = df, par_x = "x", iter = 15000, seed = 40)
+fit = mcp(model, data = df, par_x = "x")
 ```
 
 Plot it:
 
 ```{r}
-set.seed(40)
 plot(fit, q_predict = TRUE, facet_by = "id")
 ```
 

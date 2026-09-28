@@ -13,6 +13,7 @@ if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp"
   pkgload::load_all(quiet = TRUE)
 }
 bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_family = "sans"))
+set.seed(42)
 ```
 
 Serial dependence is common in time series. Add autoregressive terms with `ar(p)`, moving-average terms with `ma(q)`, or both in the segment formulas:
@@ -64,7 +65,6 @@ Let's simulate some data using the `mcp_example_data()` function with the "ar" s
 ```{r}
 library(mcp)
 future::plan(future::multisession, workers = 3)
-set.seed(42)  # Make the script deterministic
 
 ar_data = mcp_example_data("ar")
 head(ar_data)
@@ -77,13 +77,12 @@ model = list(
   price ~ 1 + ar(2),  # Intercept_1, ar1_1, ar2_1
   ~ 0 + time + ar(1)  # time_2, ar1_2; replaces AR(2) with AR(1)
 )
-fit = mcp(model, ar_data, seed = 42)
+fit = mcp(model, ar_data)
 ```
 
 Let's plot it and we see that AR was strong in the first segment and weaker-but-negative in the second:
 
 ```{r}
-set.seed(42)
 plot(fit)
 ```
 
@@ -100,7 +99,6 @@ Comparing the columns `mean` and `sim` we see that the AR coefficients are reaso
 For Gaussian GARMA models, `sigma` describes the *innovations*, i.e., the part of the residuals not explained by AR and MA coefficients. `sd(fit$data$price)` is therefore generally higher. In this case, the SD of raw data in the plateau (`time < 74.5`) is `r round(sd(fit$data$price[fit$data$time < 74.5]), 1)`. As always, it is good to assess posteriors and convergence more directly:
 
 ```{r, fig.height=9, fig.width=8}
-set.seed(42)
 plot_pars(fit, nvariables = NULL)
 ```
 
@@ -160,7 +158,6 @@ df_panel = data.frame(
 )
 
 empty = mcp(model, data = df_panel, sample = FALSE)
-set.seed(42)
 df_panel$y = empty$simulate(
   empty, df_panel,
   cp_1 = 30,         # Change point location
@@ -172,7 +169,7 @@ df_panel$y = empty$simulate(
 )
 
 # 3. Fit the model
-fit = mcp(model, data = df_panel, seed = 42)
+fit = mcp(model, data = df_panel)
 summary(fit)
 
 # Plot fit and ar(1) parameter
@@ -195,7 +192,6 @@ model = list(response ~ 1 + ar(3))
 # Simulate data
 df = data.frame(time = 1:200, response = 0)
 empty = mcp(model, df, sample = FALSE, par_x = "time")
-set.seed(42)  # For consistent "random" results
 df$response = empty$simulate(
     empty,
     df,
@@ -212,10 +208,10 @@ arima(df$response, order = c(3, 0, 0))
 OK, we can see that the `ar` coefficients and sigma ($sigma = sqrt(sigma^2)$) are simulated correctly, if taking `arima()` as ground truth. Inferring with `mcp` is straightforward:
 
 ```{r, results = FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, df, par_x = "time", seed = 42)
+fit = mcp(model, df, par_x = "time")
 ```
 
-The Bayesian parameter estimates are in perfect correspondence with `arima()`, even where they deviate a tiny bit from the simulation parameters (due to the inherent randomness in simulating data):
+The Bayesian parameter estimates are in perfect correspondence with `arima()`, even where they deviate from the simulation parameters (due to the inherent randomness in simulating data):
 
 ```{r, R.options = list(width = 9999)}
 summary(fit)
@@ -237,7 +233,6 @@ model = list(
 # Get predictions
 df = data.frame(x = seq(0, 100, length.out = 200), y = 0)
 empty = mcp(model, df, sample = FALSE)
-set.seed(42)
 df$y = empty$simulate(
   empty,
   df,
@@ -251,7 +246,7 @@ df$y = empty$simulate(
 We use `same(x)` in segment 2 to keep the slope identical across segments, so the change point is strictly in autocorrelation. We use `sample = "both"` because we will do a Savage-Dickey test later.
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, data = df, iter = 8000, sample = "both", seed = 42)
+fit = mcp(model, data = df, iter = 10000, sample = "both")
 ```
 
 Let's plot the full model prediction using `plot(fit)`. You could use `plot(fit, geom_data = "line")` for a more classical line plot of the time series data. Set `plot(fit, arma = FALSE)` to omit all AR and MA effects.
@@ -260,7 +255,6 @@ We plot it together with the change in the `ar1` parameter using `plot_dpar(fit)
 
 ```{r}
 library(patchwork)
-set.seed(42)
 plot(fit) /  # Patchwork syntax to show on separate rows
   plot_dpar(fit, dpar = "ar1", lines = 100)
 ```
@@ -271,10 +265,9 @@ We recovered the parameters, including the change point (see `mean` but also the
 summary(fit)
 ```
 
-We can also plot some of the parameters. As usual, we see that the change point is not well defined by any known distribution. The fact that the posterior mean is around `r round(mean(as_draws_df(fit)$cp_1))` does not (necessarily) mean that there is a high credence in this value. Usually, I find that any bi- or N-modality on the posterior matches well with what you would guess from looking at the raw data. As they say: Bayesian inference is common sense applied to data.
+We can also plot some of the parameters. As usual, we see that the change point is not well defined by any known distribution. The chains occasionally visit a small mode around $x = 25$-$30$, which explains the low `ess_tail` warning for `cp_1` above: the lower tail is estimated less precisely. The fact that the posterior mean is around `r round(mean(as_draws_df(fit)$cp_1))` does not (necessarily) mean that there is a high credence in this value. Usually, I find that any bi- or N-modality on the posterior matches well with what you would guess from looking at the raw data. As they say: Bayesian inference is common sense applied to data.
 
 ```{r}
-set.seed(42)
 plot_pars(fit, regex_pars = "cp_1|ar_*")
 ```
 
@@ -317,7 +310,6 @@ prior_summary(fit)
 We can also visualize the priors because we sampled the prior. `prior = TRUE` works in most `mcp` functions, including `plot()` and `summary()`.
 
 ```{r, fig.height=10, fig.width=7}
-set.seed(42)
 plot_pars(fit, prior = TRUE, nvariables = NULL)
 ```
 

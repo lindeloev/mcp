@@ -16,6 +16,7 @@ if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp"
   pkgload::load_all(quiet = TRUE)
 }
 bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_family = "sans"))
+set.seed(42)
 ```
 
 `mcp` aims to implement Generalized Linear Models in a way that closely mimics that of [brms::brm](https://github.com/paul-buerkner/brms). You can set the family and link functions using the `family` argument.
@@ -39,7 +40,6 @@ We run `mcp` with `sample = FALSE` to get what we need to simulate data.
 ```{r}
 library(mcp)
 future::plan(future::multisession, workers = 3)
-set.seed(42)  # Make the script deterministic
 
 df = data.frame(
   year = 1901:2020,  # evaluate for each of these
@@ -63,7 +63,6 @@ mcp_pars(empty)
 `empty$simulate` is now a function that can predict data given these parameters (signature: `empty$simulate(fit, newdata, ...)`). If you are in a reasonable R editor, type `empty$simulate(` and press TAB to see the required arguments. I came up with some values below, including change points at $year = 1925$ and $year = 1975$. Because `binomial()` defaults to `link = "logit"`, the intercept and slopes are on the [logit scale](https://en.wikipedia.org/wiki/Logit), which maps success probabilities between 0 and 1 to the real line. This will be important later when we set priors.
 
 ```{r}
-set.seed(42)
 df$y = empty$simulate(
   empty, df, 
   cp_1 = 1925, cp_2 = 1975, 
@@ -84,11 +83,11 @@ plot(df$year, df$y)
 The next sections go into more detail, but let us quickly see if we can recover the parameters used to simulate the data.
 
 ```{r, results=FALSE, message=FALSE, warning=FALSE}
-fit = mcp(model, data = df, family = binomial(), iter = 12000, seed = 42)
+fit = mcp(model, data = df, family = binomial(), iter = 6000)
 ```
 
 
-We can use `summary` to see that it recovered most parameters to a pretty good precision. `Intercept_1` is a bit low and `cp_1` a bit late in this simulated dataset. They trade off against each other: a later change point makes the plateau cover the start of the decline. Again, recall that intercepts and slopes are on a `logit` scale.
+We can use `summary` to see that it recovered the parameters to a pretty good precision. Again, recall that intercepts and slopes are on a `logit` scale.
 
 ```{r, R.options = list(width = 9999)}
 summary(fit)
@@ -99,7 +98,6 @@ summary(fit)
 Plotting the fit confirms good fit to the data, and we see the discontinuities at the two change points:
 
 ```{r}
-set.seed(42)
 plot(fit)
 ```
 
@@ -108,7 +106,6 @@ These lines are just `fit$simulate` applied to a random draw of the posterior sa
 Speaking of alternative visualizations, you can also plot this on the logit scale, where the linear trends are modeled:
 
 ```{r, warning=FALSE, message=FALSE}
-set.seed(42)
 plot_dpar(fit, scale = "linear")
 ```
 
@@ -120,7 +117,6 @@ These plots work with [group-level effects](../articles/group_effects.html) as w
 Already in the default `plot` as used above, it will be obvious if there was poor convergence. A more direct assessment is to look at the posterior distributions and trace plots:
 
 ```{r, fig.height = 10, fig.width = 6}
-set.seed(42)
 plot_pars(fit, nvariables = NULL)
 ```
 
@@ -170,7 +166,7 @@ ggplot(data.frame(logits = 0), aes(x = logits)) +
 
 Please keep in mind that when these priors combine through the model, the joint probability may be quite different.
 
-Numeric coefficient scales are divided by a representative change in their model-matrix column: its range when it has two values, and two standard deviations otherwise. For [x-terms](../articles/formulas.html#how-segments-connect) such as `x`, `state:x`, and `I(x^2)` (with `x` as the change-point variable), the representative change is instead the observed x-span, `max(x) - min(x)` (squared for `I(x^2)`). The implied change across the observed x-span therefore has the same 1.5-logit scale, regardless of the number of change points.
+Numeric coefficient scales are divided by a representative change in their model-matrix column: its range when it has two values, and two standard deviations otherwise. For [x-terms](../articles/formulas.html#how-segments-connect) such as `x`, `state:x`, and `I(x^2)` (with `x` as the change-point variable), the representative change is instead the observed x-span, `max(x) - min(x)`. The implied change across the observed x-span therefore has the same 1.5-logit scale, regardless of the number of change points. Powers such as `I(x^2)` grow within a segment, so they additionally use the typical segment width, `(max(x) - min(x)) / n_segments()`, and imply the same change within a typical segment as a linear slope.
 
 
 # JAGS code

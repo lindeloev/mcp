@@ -15,6 +15,7 @@ editor_options:
 if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp")) {
   pkgload::load_all(quiet = TRUE)
 }
+set.seed(42)
 ```
 
 There are three main ways of doing model comparison in `mcp`:
@@ -27,7 +28,6 @@ There are three main ways of doing model comparison in `mcp`:
 ```{r}
 library(mcp)
 future::plan(future::multisession, workers = 3)
-set.seed(42) # Make the script deterministic
 ```
 
 
@@ -63,7 +63,6 @@ df = data.frame(items = rep(1:9, each = 40), recalled = 1)
 # Get just the model - no fit
 empty = mcp(model, data = df, family = binomial(), sample = FALSE)
 
-set.seed(42)
 df$recalled = empty$simulate(
   empty, df,
   cp_1 = 4,
@@ -78,9 +77,9 @@ head(df)
 Now fit it with and without the informative prior. We set `iter` fairly high because this model is not sampled effectively. We will also add `sample = "both"` to sample *both* prior and posterior. We will need both to compute Bayes factors using `hypothesis()` later.
 
 ```{r, message = FALSE, warning = FALSE, results=FALSE}
-fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 8000, seed = 42)
-fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 8000, seed = 42)
-fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 8000, seed = 42)
+fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 8000)
+fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 8000)
+fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 8000)
 ```
 
 We plot them and add a few `ggplot2` layers. We jitter the raw data in the middle plot, just to give a sense of the densities.
@@ -89,7 +88,6 @@ We plot them and add a few `ggplot2` layers. We jitter the raw data in the middl
 library(patchwork)
 library(ggplot2)
 
-set.seed(42)
 plot(fit_default) +
   ggtitle("Default") +
 

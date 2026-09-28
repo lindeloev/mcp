@@ -16,6 +16,7 @@ if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp"
   pkgload::load_all(quiet = TRUE)
 }
 bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_family = "sans"))
+set.seed(42)
 ```
 
 The Poisson and negative-binomial distributions model counts observed within comparable units of time, space, or exposure. The worked example below uses Poisson regression; a later section explains the additional `shape` parameter and priors in `negbinomial()`.
@@ -25,10 +26,9 @@ The Poisson and negative-binomial distributions model counts observed within com
 A dataset on coal mining disasters has grown very popular in the change point literature (available in `boot::coal`). It contains a timestamp of each coal mining disaster from 1851 to 1962. By counting the number of events within each year (fixed time frame), we have something very Poisson-friendly. Note that years without disasters must be included as zeros:
 
 ```{r}
-# Number of disasters by year, including years with zero disasters
-year = floor(boot::coal$date)
-df = data.frame(date = 1851:1962)
-df$n = sapply(df$date, function(d) sum(year == d))
+# Number of disasters by year, including years with zero disasters (no data rows)
+year = factor(floor(boot::coal$date), levels = 1851:1962)
+df = data.frame(date = 1851:1962, n = as.vector(table(year)))
 
 # See it
 head(df)
@@ -39,7 +39,6 @@ The number of events (`n`) as a function of year (`date`) is typically modeled a
 ```{r}
 library(mcp)
 future::plan(future::multisession, workers = 3)
-set.seed(42)  # Make the script deterministic
 ```
 
 ```{r, results= FALSE, message=FALSE, warning=FALSE}
@@ -48,7 +47,7 @@ model = list(
   ~ 1  # intercept-only
 )
 
-fit = mcp(model, data = df, family = poisson(), par_x = "date", seed = 42)
+fit = mcp(model, data = df, family = poisson(), par_x = "date")
 ```
 
 Let us see the two intercepts (lambda in log-units) and the change point (in years):
@@ -62,7 +61,6 @@ We can see that the model ran well with good convergence and a large number of e
 Let us take a more direct look, using the default `mcp` plot:
 
 ```{r}
-set.seed(42)
 plot(fit)
 ```
 
@@ -71,7 +69,6 @@ It seems to fit the data well, but we can see that the change point probability 
 We can see this more clearly if plotting the posteriors. We include a traceplot too, just to check convergence visually.
 
 ```{r}
-set.seed(42)
 plot_pars(fit)
 ```
 
@@ -131,11 +128,10 @@ A flat model and a one-decay model. The intercept in `mcp` is at `date = 0`, far
 
 ```{r, results= FALSE, message=FALSE, warning=FALSE}
 # Fit an intercept-only model
-fit_flat = mcp(list(n ~ 1), data = df, family=poisson(), par_x = "date", seed = 42)
-fit_decay = mcp(list(n ~ 1 + I(date - 1851)), data = df, family = poisson(), par_x = "date", seed = 42)
+fit_flat = mcp(list(n ~ 1), data = df, family=poisson(), par_x = "date")
+fit_decay = mcp(list(n ~ 1 + I(date - 1851)), data = df, family = poisson(), par_x = "date")
 
 
-set.seed(42)
 plot(fit_flat) + plot(fit_decay)
 ```
 

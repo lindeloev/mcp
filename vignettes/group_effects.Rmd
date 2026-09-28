@@ -16,6 +16,7 @@ if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp"
   pkgload::load_all(quiet = TRUE)
 }
 bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_family = "sans"))
+set.seed(42)
 ```
 
 `mcp` supports group-level effects (also called random effects) in both the predictor and change-point parts of a formula. The syntax follows `lme4` and `brms`: `(1|group)` specifies a group-level intercept, `(factor||group)` specifies independent group coefficients, `fixef()` reports population-level effects, and `ranef()` reports group-level deviations.
@@ -32,7 +33,6 @@ This article in brief:
 ```{r}
 library(mcp)
 future::plan(future::multisession, workers = 3)
-set.seed(42)  # Make the script deterministic
 ```
 
 
@@ -142,7 +142,6 @@ df = data.frame(
 )
 empty = mcp(model, data = df, sample = FALSE)
 
-set.seed(42)
 df$y = empty$simulate(empty, df,
   # Population-level:
   Intercept_1 = 20, x_2 = 0.5, cp_1 = 50, sigma = 2,
@@ -167,13 +166,12 @@ ggplot(df, aes(x=x, y=y)) +
 Fitting the model is simple:
 
 ```{r, message = FALSE, warning=FALSE, results=FALSE}
-fit = mcp(model, data = df, seed = 42)
+fit = mcp(model, data = df)
 ```
 
 If we just use `plot(fit)`, we would see all points in one plot. We want to facet by `id`, so:
 
 ```{r}
-set.seed(42)
 plot(fit, facet_by = "id")
 ```
 
@@ -187,12 +185,11 @@ mcp::ranef(fit)
 
 Inspecting the `sim` and `match` columns, we see that the simulated deviations lie within the intervals. However, the intervals are wide because the deviations trade off against the population-level `cp_1`, which is informed by only six groups. The group-specific locations (`cp_1 + cp_1_id[g]`) are much more precise, as seen in the plot above.
 
-Prediction methods include all group-level effects by default. Set `varying = FALSE` for population-only predictions, `varying = "cp"` for all group-level effects in the cp part, `varying = "predictor"` for predictor-side group-level effects, or supply an exact name such as `varying = "cp_1_id"`. `ranef(fit)` deliberately remains simple and returns all group-level effects.
+Prediction methods include all group-level effects by default. Set `group = FALSE` for population-only predictions, `group = "cp"` for all group-level effects in the cp part, `group = "predictor"` for predictor-side group-level effects, or supply an exact name such as `group = "cp_1_id"`. `ranef(fit)` deliberately remains simple and returns all group-level effects.
 
 Good convergence is not always as obvious as in this example. While `plot_pars(fit)` shows population-level parameters only, you can select the group-level deviations with `"group"`:
 
 ```{r}
-set.seed(42)
 plot_pars(fit, pars = "group", type = "trace", ncol = 3, nvariables = NULL)
 ```
 
@@ -201,14 +198,12 @@ The `ncol` argument controls the number of columns. Group-level effects often ha
 Using `pars = "group"` plots all group-level deviations. To select one group-level effect, use a regular expression in `regex_pars`; for example, `^` anchors the start of a parameter name:
 
 ```{r}
-set.seed(42)
 plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2, nvariables = NULL)
 ```
 
 You can also do posterior predictive checking with facets. I think that for the relatively univariate models supported as of `mcp` 0.3, this does not add much new information over and above `plot(fit, facet_by = "id")`, but it's a standard assessment that many will be acquainted with:
 
 ```{r}
-set.seed(42)
 pp_check(fit, facet_by = "id")
 ```
 

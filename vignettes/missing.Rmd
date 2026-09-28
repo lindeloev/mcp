@@ -15,6 +15,7 @@ editor_options:
 if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp")) {
   pkgload::load_all(quiet = TRUE)
 }
+set.seed(42)
 ```
 
 `mcp` allows missing values in the response. JAGS treats the unknown responses as latent variables and samples them together with the model parameters. `mcp` retains those posterior imputation draws for later use. This article shows how to inspect expected responses, posterior imputations, and their uncertainty.
@@ -27,7 +28,6 @@ The built-in example has a change in slope, a strong difference between two stat
 library(mcp)
 library(dplyr)
 library(ggplot2)
-set.seed(42)
 ```
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
@@ -69,7 +69,6 @@ Imputations are not added to `plot()` automatically. Since `plot()` returns a gg
 
 ```{r, warning=FALSE}
 # Start with mcp plot with prediction interval. Use all draws for less Monte Carlo error.
-set.seed(42)
 plot(fit, color_by = "state", q_predict = c(0.1, 0.9)) +
 
   # Add imputation interval

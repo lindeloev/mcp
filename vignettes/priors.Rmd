@@ -16,6 +16,7 @@ if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("mcp"
   pkgload::load_all(quiet = TRUE)
 }
 bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_family = "sans"))
+set.seed(42)
 ```
 
 *NOTE: the JAGS-specific prior interface below is likely to be deprecated in the future, when additional backends are added beyond JAGS.*
@@ -74,7 +75,6 @@ prior_summary(empty_default)  # For more details: add verbose = TRUE
 Now, let's simulate some data from `model`. The following priors are "at odds" with the actual data so as to show their effect.
 
 ```{r}
-set.seed(42)
 df = data.frame(x = runif(200, 0, 100), y = 1)  # 200 datapoints between 0 and 100
 df$y = empty_default$simulate(empty_default, df, 
     Intercept_1 = 20, Intercept_2 = 22, Intercept_3 = 30,  # intercepts
@@ -89,19 +89,17 @@ Sample the prior and posterior. We give the manual fit a longer warmup since it 
 
 ```{r, message=FALSE, warning=FALSE, results=FALSE}
 future::plan(future::multisession, workers = 3)
-fit_manual = mcp(model, data = df, sample = "both", warmup = 10000, prior = prior, seed = 42)
-fit_default = mcp(model, data = df, sample = "both", warmup = 10000, seed = 42)
+fit_manual = mcp(model, data = df, sample = "both", warmup = 3000, prior = prior)
+fit_default = mcp(model, data = df, sample = "both", warmup = 3000)
 ```
 
 First, let's look at the priors side by side. Notice the use of `prior = TRUE` to show prior samples. This works in `plot()`, `plot_pars()`, and `summary()` among others.
 
 ```{r, fig.height=12, fig.width=6}
 library(ggplot2)
-set.seed(42)
 pp_default = plot_pars(fit_default, type = "dens_overlay", prior = TRUE, nvariables = NULL) + 
   ggtitle("Default priors")
 
-set.seed(42)
 pp_manual = plot_pars(fit_manual, type = "dens_overlay", prior = TRUE, nvariables = NULL) +
   ggtitle("Manual priors")
 
@@ -111,10 +109,8 @@ pp_default + pp_manual
 Here are the resulting posterior fits:
 
 ```{r}
-set.seed(42)
 plot_default = plot(fit_default) + ggtitle("Default priors")
 
-set.seed(42)
 plot_manual = plot(fit_manual) + ggtitle("Manual priors")
 
 plot_default + plot_manual
@@ -141,13 +137,11 @@ Prior predictive checks are a great way to ensure that the priors are meaningful
 
 ```{r, results= FALSE, message=FALSE, warning=FALSE}
 # Sample priors
-fit_pp_manual = mcp(model, data = df, prior = prior, sample = "prior", seed = 42)
-fit_pp_default = mcp(model, data = df, sample = "prior", seed = 42)
+fit_pp_manual = mcp(model, data = df, prior = prior, sample = "prior")
+fit_pp_default = mcp(model, data = df, sample = "prior")
 
 # Plot it
-set.seed(42)
 plot_pp_manual = plot(fit_pp_manual, lines = 100, prior = TRUE) + ylim(c(-400, 400)) + ggtitle("Manual prior")
-set.seed(42)
 plot_pp_default = plot(fit_pp_default, lines = 100, prior = TRUE) + ylim(c(-400, 400)) + ggtitle("Default prior")
 plot_pp_manual + plot_pp_default  # using patchwork
 ```
@@ -281,7 +275,7 @@ The defaults are governed by three core principles:
 
 2. **Predictor-change invariance ([Gelman 2008](https://doi.org/10.1002/sim.3107)):**
    - Categorical contrasts operate at the link's base scale: $\beta \sim \text{Dist}(0, S)$.
-   - Continuous slopes divide base scale by representative predictor change: $\beta \sim \text{Dist}(0, S / \Delta x)$, where $\Delta x = \operatorname{range}(x)$ (for binary and `par_x`) and $2\,\operatorname{sd}(x)$ (continuous). This ensures that slope priors remain identical and comparable across models regardless of the number of change points.
+   - Continuous slopes divide base scale by representative predictor change: $\beta \sim \text{Dist}(0, S / \Delta x)$, where $\Delta x = \operatorname{range}(x)$ (for binary and `par_x`) and $2\,\operatorname{sd}(x)$ (continuous). This ensures that slope priors remain identical and comparable across models regardless of the number of change points. Powers of `par_x` such as `I(x^2)` grow within a segment, so they use $\Delta x = \operatorname{range}(x) \cdot w^{p-1}$ with the typical segment width $w = \operatorname{range}(x) / K$ for $K$ segments. They thus imply the same change within a typical segment as a linear slope.
    - Group-level slope standard deviations mirror this scaling: $\sigma_\beta \sim \text{Dist}(0, S / \Delta x) T(0, )$.
 
 3. **Empirical baseline intercept calibration and offset accounting:**
@@ -298,7 +292,7 @@ General quantities used in the table below:
 
 - log-rate scale $S_{\text{rate}} = \max(2.5, \operatorname{mad}(y_{\text{rate}}))$
 
-- predictor change $\Delta x = \operatorname{range}(x)$ (binary / `par_x`) or $2\,\operatorname{sd}(x)$ (other continuous).
+- predictor change $\Delta x = \operatorname{range}(x)$ (binary / `par_x`), $\operatorname{range}(x) \cdot w^{p-1}$ for `par_x` powers (with $w = \operatorname{range}(x) / K$), or $2\,\operatorname{sd}(x)$ (other continuous).
 
 | Parameter & Link | Intercept Prior | Contrast Prior | Slope Prior ($\beta$) | Group SD Prior ($\sigma_{\text{group}}$) |
 |---|---|---|---|---|
