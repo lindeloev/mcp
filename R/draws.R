@@ -223,7 +223,7 @@ resolve_draws_format = function(draws_format, samples_format, draws_format_missi
 #'   * `FALSE` No group-level deviations (`c()`).
 #'   * `"cp"` or `"predictor"`: All group-level deviations belonging to that part of
 #'     the model.
-#'   * Character vector: Only include specified group-level parameters.
+#'   * Character vector: Only include specified group-level parameters (`*` is a wildcard).
 #' @param absolute
 #'   * `TRUE` Returns the absolute location of all group-specific change points.
 #'   * `FALSE` Return the group-level deviations.

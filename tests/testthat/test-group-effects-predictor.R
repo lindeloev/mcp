@@ -179,6 +179,23 @@ test_that("double-bar terms expand into independent group coefficients", {
 })
 
 
+test_that("group_effects selects by part, name, and wildcard", {
+  fit = mcp(
+    list(y ~ 1 + (state || id) + sigma(1 + (1 | id)), ~ cp((1 | id)) + 1),
+    coefficient_data,
+    par_x = "x",
+    sample = FALSE
+  )
+  select = function(pars) unpack_group_effects(fit, pars = pars)$pars
+
+  expect_equal(select("state*_1_id"), c("stateB_1_id", "stateC_1_id"))
+  expect_equal(select("cp_*"), select("cp"))
+  expect_equal(select(c("cp", "sigma_*")), c("cp_1_id", "sigma_1_id"))
+  expect_equal(select(c("Intercept_1_id", "*_1_id")), mcp_pars(fit, scope = "group")$name)
+  expect_error(select(c("x_*", "foo")), "Unknown group-effect selection: x_* and foo.", fixed = TRUE)
+})
+
+
 test_that("double-bar terms support no-intercept factors and numeric slopes", {
   factor_fit = mcp(
     list(y ~ 0 + (0 + state || id)),
@@ -348,7 +365,7 @@ test_that("factor group coefficients sample and predict by level", {
   ))
 
   fitted_values = fitted(
-    fit, summary = FALSE, group = "predictor", ndraws = 2
+    fit, summary = FALSE, group_effects = "predictor", ndraws = 2
   )
   expect_true(all(
     c(
@@ -380,7 +397,7 @@ test_that("predictor group effects use existing prediction selectors", {
   }, "Adaptation incomplete", fixed = TRUE)
 
   group_effects = fitted(
-    fit, summary = FALSE, group = "predictor", ndraws = 2
+    fit, summary = FALSE, group_effects = "predictor", ndraws = 2
   )
   expect_true(all(c("id", "Intercept_1_id") %in% names(group_effects)))
 
@@ -388,18 +405,23 @@ test_that("predictor group effects use existing prediction selectors", {
     fit,
     newdata = data.frame(x = 1:3),
     summary = FALSE,
-    group = FALSE,
+    group_effects = FALSE,
     ndraws = 2
   )
   expect_false("id" %in% names(population))
   expect_true(all(population$Intercept_1_id == 0))
 
-  # Deprecated `varying` maps to `group`
+  # brms/lme4-style NA means none. NULL is ambiguous.
+  population_na = fitted(fit, newdata = data.frame(x = 1:3), summary = FALSE, group_effects = NA, ndraws = 2)
+  expect_false("id" %in% names(population_na))
+  expect_error(fitted(fit, group_effects = NULL), "`group_effects` cannot be NULL", fixed = TRUE)
+
+  # Deprecated `varying` maps to `group_effects`
   lifecycle::expect_deprecated({
     deprecated = fitted(fit, newdata = data.frame(x = 1:3), summary = FALSE, varying = FALSE, ndraws = 2)
   })
   expect_false("id" %in% names(deprecated))
-  expect_error(suppressWarnings(fitted(fit, group = FALSE, varying = FALSE)), "Use only one of `group` and deprecated `varying`.", fixed = TRUE)
+  expect_error(suppressWarnings(fitted(fit, group_effects = FALSE, varying = FALSE)), "Use only one of `group_effects` and deprecated `varying`.", fixed = TRUE)
 
   effects = ranef(fit)
   expect_equal(nrow(effects), length(unique(data$id)))
@@ -531,7 +553,7 @@ test_that("Various character group IDs work in mcp_draws, fitted, and predict", 
 })
 
 
-test_that("grouping columns that also serve as predictors are retained when group = FALSE", {
+test_that("grouping columns that also serve as predictors are retained when group_effects = FALSE", {
   data = data.frame(
     x = 1:10,
     id = factor(rep(c("a", "b"), 5)),
@@ -542,14 +564,14 @@ test_that("grouping columns that also serve as predictors are retained when grou
     data, par_x = "x", sample = "prior", chains = 1, iter = 20, warmup = 10, quiet = TRUE, seed = 42
   ))
 
-  expect_no_error(fitted(fit, prior = TRUE, group = FALSE))
-  expect_no_error(predict(fit, prior = TRUE, group = FALSE))
-  expect_no_error(residuals(fit, prior = TRUE, group = FALSE))
+  expect_no_error(fitted(fit, prior = TRUE, group_effects = FALSE))
+  expect_no_error(predict(fit, prior = TRUE, group_effects = FALSE))
+  expect_no_error(residuals(fit, prior = TRUE, group_effects = FALSE))
   expect_no_error(ggplot2::ggplot_build(plot(fit, prior = TRUE)))
   expect_no_error(ggplot2::ggplot_build(plot(fit, prior = TRUE, facet_by = "id")))
 
   # Check that fixed effect differences are preserved when group deviations are excluded
-  f_novary = fitted(fit, prior = TRUE, group = FALSE)
+  f_novary = fitted(fit, prior = TRUE, group_effects = FALSE)
   expect_equal(nrow(f_novary), 10)
   expect_true(all(c("x", "id", "fitted") %in% names(f_novary)))
 })

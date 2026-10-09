@@ -11,7 +11,7 @@
 #'   for available plot types, omitting the \code{"ppc_"} prefix (e.g., \code{"dens_overlay"},
 #'   \code{"ribbon"}, \code{"intervals"}).
 #' @param facet_by Name of a grouping column used by group-level effects.
-#' @param varying Deprecated. Use `group` instead.
+#' @param varying Deprecated. Use `group_effects` instead.
 #' @param ... Further arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
 #' @details Missing responses are omitted from the observed-data check. For
 #'   GARMA models, each replicated response series is generated recursively
@@ -37,7 +37,7 @@ pp_check.mcpfit = function(
   facet_by = NULL,
   newdata = NULL,
   prior = FALSE,
-  group = TRUE,
+  group_effects = TRUE,
   arma = TRUE,
   ndraws = 100,
   nsamples = lifecycle::deprecated(),
@@ -45,14 +45,14 @@ pp_check.mcpfit = function(
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "pp_check")
-  group = resolve_group(group, varying, missing(group), "pp_check")
+  group_effects = resolve_group_effects(group_effects, varying, missing(group_effects), "pp_check")
 
   # Internal mcp naming convention
   fit = object
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_string(facet_by, null.ok = TRUE)
   checkmate::assert_flag(prior)
-  checkmate::assert_multi_class(group, c("logical", "character"))
+  checkmate::assert_multi_class(group_effects, c("logical", "character"))
   checkmate::assert_flag(arma)
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
 
@@ -93,7 +93,7 @@ pp_check.mcpfit = function(
     rate = FALSE,
     prior = prior,
     dpar = NULL,
-    group = group,
+    group_effects = group_effects,
     arma = arma,
     # LOO weights are computed for every posterior draw. Keep those draws
     # intact; bayesplot's `samples` argument controls plot sampling where
@@ -109,7 +109,7 @@ pp_check.mcpfit = function(
     plot_return = get_ppc_plot(
       fit, type, y, yrep, ndraws,
       observations = observed_rows,
-      group = group,
+      group_effects = group_effects,
       arma = arma,
       ...
     )
@@ -127,7 +127,7 @@ pp_check.mcpfit = function(
       all_plots[[as.character(facet_level)]] = get_ppc_plot(
         fit, type, y_this, yrep_this, ndraws,
         observations = observations_this,
-        group = group,
+        group_effects = group_effects,
         arma = arma,
         ...
       ) +
@@ -151,7 +151,7 @@ pp_check.mcpfit = function(
 #' @return A `ggplot2` object returned by `bayesplot::ppc_*(y, yrep, ...)`.
 #' @noRd
 get_ppc_plot = function(fit, type, y, yrep, ndraws,
-                        observations = NULL, group = TRUE, arma = TRUE, ...) {
+                        observations = NULL, group_effects = TRUE, arma = TRUE, ...) {
   is_loo = stringr::str_detect(type, "loo")
 
   func_name = paste0("ppc_", type)
@@ -170,7 +170,7 @@ get_ppc_plot = function(fit, type, y, yrep, ndraws,
     fit = with_loo(
       fit,
       save_psis = TRUE,
-      group = group,
+      group_effects = group_effects,
       arma = arma,
       info = "Computing `fit$loo = loo(fit, save_psis = TRUE)`..."
     )

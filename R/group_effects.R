@@ -186,7 +186,8 @@ get_predictor_group_definitions_segment = function(
 # name(s), model part(s), or column(s).
 #
 # - pars: `NULL`/`FALSE` for nothing. `TRUE` for all. A character vector
-#   containing `"cp"`, `"predictor"`, or exact group-level parameter names.
+#   containing `"cp"`, `"predictor"`, exact group-level parameter names, or
+#   `*` wildcards matching parameter names.
 # - cols: `NULL`/`FALSE` for nothing. `TRUE` for all. A vector of grouping
 #   column names for specifics. Usually provided via `facet_by` elsewhere.
 # Returns: A list. See details.
@@ -219,14 +220,20 @@ unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
       # Select all group-level effects
       use_group[] = TRUE
     } else if (is.character(pars)) {
-      allowed = c("cp", "predictor", group_effects$name)
-      unknown = pars[pars %notin% allowed]
+      # `*` is a wildcard, e.g., "cp_*" or "state*_1_id"
+      is_glob = grepl("*", pars, fixed = TRUE)
+      glob_matches = lapply(pars[is_glob], function(glob) grepl(utils::glob2rx(glob), group_effects$name))
+      known = pars %in% c("cp", "predictor", group_effects$name)
+      known[is_glob] = vapply(glob_matches, any, logical(1))
+      unknown = pars[!known]
       if (length(unknown) > 0)
         stop(
           "Unknown group-effect selection: ", and_collapse(unknown), ". ",
-          "Use TRUE, FALSE, \"cp\", \"predictor\", or a group-effect name."
+          "Use TRUE, FALSE, \"cp\", \"predictor\", group-level parameter names, or `*` wildcards. ",
+          "Available group-level parameters: ", paste0(group_effects$name, collapse = ", "), "."
         )
       use_group = group_effects$part %in% pars | group_effects$name %in% pars
+      use_group = Reduce(`|`, glob_matches, init = use_group)
     }
   } else if (!is.null(cols)) {
     if (all(cols == TRUE)) {

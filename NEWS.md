@@ -50,7 +50,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - `fixef()` now reports only population-level effects for `mu` (the primary response parameter), excluding change points, other distributional parameters, AR/MA parameters, and group-effect SDs. Use `summary(fit)` to get all parameters.
 
-  - In general, renamed `"varying"` to `"group"`. Where `varying` was an argument, it is now a deprecated alias with a warning.
+  - In general, renamed `"varying"` to `"group"`, e.g., it is now `plot_pars(fit, pars = "group")` and `fitted(fit, group_effects = "x_2_id")`. `varying` is a deprecated alias with a warning.
 
   - `summary()`, `fixef()`, and `ranef()`, `prior_summary()`, and everything else now return rows in a canonical order instead of the previous incidental (near-alphabetical) order; `ranef()` orders group levels following the grouping factor's levels in the fitting data. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to include `segment` and `dpar` columns.
 
@@ -127,7 +127,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Several new arguments to `loo`. `loo(fit, pointwise = TRUE)` uses `loo::loo.function()` for more memory-efficient (but slower) computation of LOO. Other new arguments include the usual from `fitted()` etc.: `loo(fit, ndraws = 1000)`.
 
-  - Methods like `fitted()` and `predict()` now accept `fitted(fit, group = "cp")` and `fitted(fit, group = "predictor")` as fast selectors for group-level effects in the corresponding formula part. Exact group-level parameter names remain supported too, `group = TRUE` selects all, and `ranef()` continues to return all group-level effects.
+  - Methods like `fitted()` and `predict()` now select group-level effects using `group_effects` (previously `varying`). `group_effects = FALSE` or `NA` gives population-level predictions, `"cp"` and `"predictor"` select all group-level effects in that formula part, and parameter names accept `*` wildcards, e.g., `fitted(fit, group_effects = c("cp_*", "state*_1_id"))`. `ranef()` continues to return all group-level effects.
 
   - Fits made with custom `jags_code` now warn when calling R-side simulation, prediction, or model-evaluation methods, because those methods continue to evaluate the supplied formulas rather than the custom JAGS code.
 
@@ -179,7 +179,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Removed `which_y` argument from `predict()`.
 
-  - Disallowed non-default `group` and `arma = FALSE` in `loo()` and `waic()`. Additionally, `loo(ndraws = ...)` now thins draws evenly across chains to preserve MCMC chain identities and order.
+  - Disallowed non-default `group_effects` and `arma = FALSE` in `loo()` and `waic()`. Additionally, `loo(ndraws = ...)` now thins draws evenly across chains to preserve MCMC chain identities and order.
 
   - New `mcpfit` objects no longer include empty `$loo` and `$waic` components.
 

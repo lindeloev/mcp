@@ -134,7 +134,7 @@ model = list(
 # 4. Group-level change points in cp()
 model = list(
   y ~ 1 + x,                 # Intercept_1, x_1
-    ~ cp((1 | id)) + 0 + x,  # At cp_1, varying by id (cp_1_id): Joined slope (x_2)
+    ~ cp((1 | id)) + 0 + x,  # At cp_1, group-level by id (cp_1_id): Joined slope (x_2)
     ~ 1                      # At cp_2: Disjoined plateau (Intercept_3)
 )
 

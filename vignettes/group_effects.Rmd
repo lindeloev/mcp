@@ -185,7 +185,7 @@ mcp::ranef(fit)
 
 Inspecting the `sim` and `match` columns, we see that the simulated deviations lie within the intervals. However, the intervals are wide because the deviations trade off against the population-level `cp_1`, which is informed by only six groups. The group-specific locations (`cp_1 + cp_1_id[g]`) are much more precise, as seen in the plot above.
 
-Prediction methods include all group-level effects by default. Set `group = FALSE` for population-only predictions, `group = "cp"` for all group-level effects in the cp part, `group = "predictor"` for predictor-side group-level effects, or supply an exact name such as `group = "cp_1_id"`. `ranef(fit)` deliberately remains simple and returns all group-level effects.
+Prediction methods include all group-level effects by default. Set `group_effects = FALSE` (or `NA`, as in `brms`) for population-level predictions, `group_effects = "cp"` for the change-point group-level effects, `group_effects = "predictor"` for the other group-level effects, or supply parameter names such as `group_effects = "cp_1_id"`. Use `*` as a wildcard, e.g., `"cp_*"` or `"*_id"`. `ranef(fit)` deliberately remains simple and returns all group-level effects.
 
 Good convergence is not always as obvious as in this example. While `plot_pars(fit)` shows population-level parameters only, you can select the group-level deviations with `"group"`:
 

@@ -204,6 +204,8 @@ get_plot = function(x,
   yvar = rlang::sym(data_columns$response)
   by = plot_by
   group_pars = unpack_group_effects(fit, cols = by)$pars
+  if (is.null(group_pars))
+    group_pars = FALSE
 
   ############################
   # MAKE NEWDATA AND PREDICT #
@@ -221,7 +223,7 @@ get_plot = function(x,
       rate = rate,
       prior = prior,
       dpar = dpar,
-      group = group_pars,
+      group_effects = group_pars,
       arma = needs_arma,
       ndraws = ndraws,
       draws_format = "tidy",

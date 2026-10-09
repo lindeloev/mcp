@@ -77,7 +77,7 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
         data_varying = data[, varying_col]
         if (!is.character(data_varying) && !is.factor(data_varying))
           if (!all(data_varying == floor(data_varying)))
-            stop("Varying group '", varying_col, "' has to be integer, character, or factor.")
+            stop("Grouping factor '", varying_col, "' must be integer, character, or factor.")
       }
     }
 
