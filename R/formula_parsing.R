@@ -128,14 +128,10 @@ get_model_vars = function(model) {
 #'
 #' WARNING: removes response side from the formula
 #'
-#' @aliases remove_terms
-#' @keywords internal
-#' @noRd
 #' @param form A formula
 #' @param remove Either "varying" or "population". These are removed.
 #' @return A formula
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 remove_terms = function(form, remove) {
   checkmate::assert_formula(form)
   remove = rlang::arg_match0(remove, c("varying", "population"))
@@ -175,14 +171,10 @@ remove_terms = function(form, remove) {
 
 #' Get formula inside a wrapper
 #'
-#' @aliases get_term_content
-#' @keywords internal
-#' @noRd
 #' @param term E.g., "mu(1 + x)", "sigma(0 + I(x^2))", etc.
 #' @param env Environment in which the term was originally defined.
 #' @return char formula with the content inside the brackets.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 get_term_content = function(term, env = parent.frame()) {
   # Handle cases of no input or several inputs
   if (length(term) == 0) {
@@ -302,15 +294,11 @@ canonicalize_segment = function(form, i, default_response = NULL) {
 
 #' Unpacks y variable name
 #'
-#' @aliases unpack_y
-#' @keywords internal
-#' @noRd
 #' @inheritParams mcp
 #' @param form_y Character representation of formula
 #' @param i Segment number
 #' @return A one-row tibble with the response and auxiliary-data columns.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 unpack_y = function(form_y, i, family, env = parent.frame()) {
   if (is.language(form_y))
     form_y = deparse1(form_y)
@@ -377,17 +365,13 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
 
 #' Takes a cp formula (as a string) and returns its properties
 #'
-#' @aliases unpack_cp
-#' @keywords internal
-#' @noRd
 #' @param form_cp Segment formula as string.
 #' @param i segment number
 #' @return A one-row tibble with columns:
 #'   * `cp_intercept`: Logical scalar. Whether there is an intercept change in the change point.
 #'   * `cp_varying`: Logical scalar or NA. Is there a group-level intercept on the change point?
 #'   * `cp_group_col`: char or NA. Which data column defines the grouping factor?
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 unpack_cp = function(form_cp, i, env = parent.frame()) {
   # Segment 1 has no change point
   if (is.null(form_cp)) {

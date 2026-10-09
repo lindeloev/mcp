@@ -563,14 +563,10 @@ validate_savage_dickey_expression = function(expression, parameters) {
 #'
 #' Used in \link{hypothesis}
 #'
-#' @aliases get_density
-#' @keywords internal
-#' @noRd
 #' @param x Numeric draws.
 #' @param value What value to evaluate the density at
 #' @return A float
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 get_density = function(x, value) {
   if (diff(range(x)) == 0) {
     stop("Cannot estimate density for constant values.", call. = FALSE)

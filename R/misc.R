@@ -2,13 +2,10 @@
 #' Like an inner product, just vectorized for many y.
 #' This ensures R <--> JAGS code compatibility
 #'
-#' @aliases inprod
-#' @keywords internal
 #' @param x A matrix
 #' @param y A matrix
 #' @return A vector
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 inprod = function(x, y) {
   checkmate::assert_matrix(x)
   checkmate::assert_matrix(y)
@@ -210,15 +207,12 @@ get_predictor_design_names = function(predictors, group_effects = NULL) {
 #' Create a model matrix from the predictor metadata tables
 #'
 #' Combines population and group-level predictor design columns.
-#' @aliases get_predictor_matrix
-#' @keywords internal
-#' @noRd
+#'
 #' @param predictors The output of `get_predictors()`.
 #' @param group_effects The output of `get_group_effects()`.
 #' @return A matrix with one column for each population or group-level
 #'   predictor coefficient.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 get_predictor_matrix = function(predictors, group_effects = NULL) {
   checkmate::assert_data_frame(predictors)
   group_predictors = if (is.null(group_effects) || "matrix_col" %notin% names(group_effects)) {
@@ -246,11 +240,10 @@ get_predictor_matrix = function(predictors, group_effects = NULL) {
 #' Plotting groups, predictor values, and group-level columns are metadata for
 #' that row and never determine which draws may be summarised together.
 #'
-#' @keywords internal
-#' @noRd
 #' @param draws Evaluated draws in tidy format.
 #' @param type Name of the evaluated-value column, matching `pp_eval(type)`.
 #' @return `draws`, invisibly.
+#' @noRd
 validate_eval_draws = function(draws, type) {
   checkmate::assert_data_frame(draws)
   checkmate::assert_string(type)
@@ -280,14 +273,10 @@ validate_eval_draws = function(draws, type) {
 #' by `N_evaluation_rows` matrix. Explicit keys prevent duplicate or incomplete
 #' draw/row combinations from being silently reshaped.
 #'
-#' @aliases tidy_to_matrix
-#' @keywords internal
-#' @noRd
 #' @inheritParams validate_eval_draws
 #' @param data_rows Optional `data_row` values to use as matrix columns.
 #' @return A numeric matrix.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 tidy_to_matrix = function(draws, type, data_rows = NULL) {
   checkmate::assert_string(type)
   assert_data_cols(draws, c(".draw", "data_row", type))
@@ -313,16 +302,12 @@ tidy_to_matrix = function(draws, type, data_rows = NULL) {
 
 #' Compute evaluated-draw quantiles without pooling evaluation rows
 #'
-#' @aliases get_quantiles
-#' @keywords internal
-#' @noRd
 #' @inheritParams validate_eval_draws
 #' @param quantiles Vector of quantiles between zero and one.
 #' @param na.rm Whether to remove missing values before computing quantiles.
 #' @param keep Evaluation-row metadata to rejoin after summarising.
 #' @return A tibble with `data_row`, `quantile`, the `type` column, and requested metadata.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 get_quantiles = function(draws, quantiles, type, keep = NULL, na.rm = FALSE) {
   keep = unique(keep)
   assert_data_cols(draws, c("data_row", type, keep))

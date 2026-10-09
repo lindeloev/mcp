@@ -29,7 +29,6 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 
 #' Underlies `plot()` and `plot_dpar()`
 #'
-#' @aliases get_plot
 #' @keywords internal
 #' @inheritParams pp_eval
 #' @param x An \code{\link{mcpfit}} object
@@ -65,8 +64,6 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 #'   varying trial counts. Predictions and count-scale fitted values require a
 #'   trials column in `newdata`/`at`.
 #' @return A \pkg{ggplot2} object.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 get_plot = function(x,
                        q_fit = FALSE,
                        q_predict = FALSE,
@@ -601,13 +598,11 @@ plot_dpar = function(x,
 #' Note that `geom_density(fill = ...)` always fill area to y = 0 but we want to fill
 #' to the bottom of the plot. So we use `geom_polygon(fill = ...)` instead.
 #'
-#' @aliases geom_cp_density
-#' @keywords internal
-#' @noRd
 #' @inheritParams plot.mcpfit
 #' @param limits_y A vector of length 2 with c(lower, upper) limits on the plot.
 #'   Used for scaling the densities to a proportion of the plot height.
 #' @return A `ggplot2::geom_polygon()` representing the change point densities.
+#' @noRd
 geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
   dens_scale = 0.2  # Proportion of plot height
   dens_cut = 0.05  # How much to move density down. 5% is ggplot default. Move a bit further.
@@ -682,15 +677,11 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
 #'
 #' Called by `plot.mcpfit`.
 #'
-#' @aliases geom_quantiles
-#' @keywords internal
-#' @noRd
 #' @inheritParams plot.mcpfit
 #' @param color Fixed line color when `use_color = FALSE`.
 #' @param ... Arguments passed to geom_line
 #' @return A `ggplot2::geom_line` object.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 geom_quantiles = function(data_quantiles, xvar, yvar, use_color = TRUE, color = NULL, ...) {
   quantile_mapping = if (use_color) {
     ggplot2::aes(y = .data[[as.character(yvar)]], group = interaction(.data$quantile, .data$.group), color = .data$.color)

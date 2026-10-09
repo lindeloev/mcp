@@ -10,12 +10,11 @@
 #' and spline knots. Reusing them makes design matrices independent of
 #' `newdata` and later changes to contrast options.
 #'
-#' @keywords internal
-#' @noRd
 #' @param form A one-sided predictor formula.
 #' @param data A data frame used to fit the design.
 #' @param spec An optional fitted specification returned by this function.
 #' @return A list with `matrix` and `spec`.
+#' @noRd
 get_fitted_design = function(form = NULL, data, spec = NULL) {
   # Construct model.frame. na.pass prevents silent row omission so we can throw an informative error below
   if (is.null(spec)) {
@@ -80,10 +79,9 @@ rewrite_zero_offset = function(form, par_x) {
 #' can carry it through the parser. This helper deduplicates those temporary
 #' columns into the named list stored once on the fitted model.
 #'
-#' @keywords internal
-#' @noRd
 #' @param ... Predictor tables that may contain `design_id` and `design_spec`.
 #' @return A named list of fitted design specifications.
+#' @noRd
 collect_design_specs = function(...) {
   tables = list(...)
   tables = lapply(tables, function(table) {
@@ -125,11 +123,10 @@ get_definition_lifetimes = function(definitions, by) {
 #' expansions (e.g., `poly(x, 2, raw = TRUE)`) use the original values of `x`
 #' and do not join.
 #'
-#' @keywords internal
-#' @noRd
 #' @param form A one-sided predictor formula.
 #' @param par_x Name of the change-point axis.
 #' @return The rewritten formula and the local degree of each formula term.
+#' @noRd
 rewrite_local_x = function(form, par_x) {
   local_name = ".mcp_local_x"
 
@@ -184,13 +181,9 @@ make_code_name = function(x) {
 
 #' Detects par_x and verifies model-data fit
 #'
-#' @aliases get_par_x
-#' @keywords internal
-#' @noRd
 #' @inheritParams mcp
 #' @return The column name of par_x.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 get_par_x = function(model, data, par_x = NULL) {
   checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
   checkmate::assert_data_frame(data)
@@ -251,8 +244,6 @@ get_par_x = function(model, data, par_x = NULL) {
 #' x-terms are measured from the change point, so `par_x` is multiplied in the formula
 #' (`jags_code` and `fit$simulate()`).
 #'
-#' @aliases get_predictors_dpar
-#' @keywords internal
 #' @inheritParams mcp
 #' @param form_rhs The full predictor formula of a segment, including one or
 #'   several distributional terms.
@@ -275,9 +266,7 @@ get_par_x = function(model, data, par_x = NULL) {
 #'   - `design_id`: key of the fitted component formula that produced the row.
 #'   - `design_col`: column occupied by the row in that component's model matrix.
 #'   - `matrix_data`: column of the design matrix less the `par_x` term.
-#'
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL,
                                check_rank = TRUE, design_id = NULL) {
   # EMpty segments return no rows
@@ -499,11 +488,10 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
 #' resulting parameter names must be valid in JAGS. Distinct terms can
 #' therefore occasionally produce the same name, for example `a:b` and `ab`.
 #'
-#' @keywords internal
-#' @noRd
 #' @param predictors A data frame returned by `get_predictors_dpar()`.
 #' @return `predictors`, invisibly. Stops with an informative error on
 #'   collision.
+#' @noRd
 assert_unique_predictor_names = function(predictors) {
   collision_names = unique(predictors$code_name[duplicated(predictors$code_name)])
   if (length(collision_names) == 0)
@@ -731,11 +719,9 @@ is_empty_initial_predictor = function(form) {
 }
 
 
-#' @aliases get_predictors_segment
-#' @keywords internal
+#' Apply `get_predictors_dpar` to each formula in a segment
+#'
 #' @noRd
-#' @describeIn get_predictors_dpar Apply `get_predictors_dpar` to
-#'   each formula in a segment
 get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_rank = TRUE, previous = NULL) {
   checkmate::assert_formula(form_rhs)
   checkmate::assert_int(segment, lower = 1)
@@ -857,10 +843,9 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
 }
 
 
-#' @aliases get_predictor_tables
-#' @keywords internal
-#' @describeIn get_predictors_dpar Apply `get_predictors_segment`
-#'   to all segments of a model.
+#' Apply `get_predictors_segment` to all segments of a model.
+#'
+#' @noRd
 get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   # Canonicalize segment formulas to wrap bare mu terms into mu(...)
   rhs = lapply(model, get_rhs)
@@ -1050,9 +1035,9 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
 }
 
 
-#' @aliases get_predictors
-#' @keywords internal
-#' @describeIn get_predictors_dpar Return only the population predictor table.
+#' Return only the population predictor table.
+#'
+#' @noRd
 get_predictors = function(model, data, family, par_x, check_rank = TRUE) {
   get_predictor_tables(model, data, family, par_x, check_rank)$predictors
 }

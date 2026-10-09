@@ -4,14 +4,10 @@
 
 #' Call `get_formula_jags_dpar` for multiple dpars and paste strings
 #'
-#' @aliases get_formula_jags
-#' @keywords internal
-#' @noRd
 #' @inheritParams get_formula_jags_dpar
 #' @inheritParams mcp
 #' @return A string with JAGS code.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 get_formula_jags = function(segments, predictors, group_effects, par_x, family, design_specs = list()) {
   # Add X-helpers which code the X relative to the start of each segment.
   local_x_str = "\n# par_x local to each segment"
@@ -89,17 +85,13 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family, 
 
 #' Build JAGS predictor code for a distributional or AR/MA parameter
 #'
-#' @aliases get_formula_jags_dpar
-#' @keywords internal
-#' @noRd
 #' @inheritParams mcp
 #' @param dpar_table Rows of `predictors` for one `(dpar, order)` pair.
 #' @param family An mcpfamily object with distributional-parameter metadata.
 #' @param segment_offsets Rows of offset specifications for this dpar.
 #' @param segments Segment table from `get_segment_tables()`.
 #' @return A string with JAGS code.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 get_formula_jags_dpar = function(dpar_table, dpar, par_x, family, segment_offsets = NULL, segments = NULL) {
   is_distributional = dpar %in% family$dpar_specs$dpar
   node_name = ifelse(is_distributional, paste0("link_", dpar), dpar)
@@ -142,17 +134,13 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x, family, segment_offset
 
 #' Convert for-looped JAGS code to vectorized R code
 #'
-#' @aliases get_formula_r
-#' @keywords internal
-#' @noRd
 #' @param formula_jags Character, often residing in `fit$.internal$formula_jags`.
 #' @param predictors Output of `get_predictors()`.
 #' @param group_effects Output of `get_group_effects()`.
 #' @param cps Output of `get_segment_tables()`.
 #' @param par_x Name of the change-point predictor.
 #' @return Character
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 get_formula_r = function(formula_jags, predictors, group_effects, cps, par_x) {
   sim_pars = get_sim_pars(cps, predictors, group_effects)
   predictor_pars = predictors$code_name

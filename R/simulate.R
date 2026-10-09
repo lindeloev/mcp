@@ -3,13 +3,10 @@
 # ------------------------------------------------------------
 
 #' Make the levels of categorical predictors match the original data
-#' @aliases relevel_newdata
-#' @keywords internal
-#' @noRd
+#'
 #' @inheritParams add_rhs_predictors
 #' @return `newdata` with all categorical columns as factors that have identical levels to the original data.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 relevel_newdata = function(newdata, fit) {
   # Check that the necessary data is available
   rhs_vars = get_predictor_cols(fit)
@@ -84,15 +81,12 @@ populate_design_columns = function(table, evaluated_designs) {
 
 
 #' Add predictors to `newdata`
-#' @aliases add_rhs_predictors
-#' @keywords internal
-#' @noRd
+#'
 #' @param newdata A data.frame that contains the predictor columns from
 #'   `fit$data` and `fit$model`.
 #' @param fit An `mcpfit` object.
 #' @return `newdata` with additional (dummy-coded) columns that make up the design matrix required for the model.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 add_rhs_predictors = function(newdata, fit) {
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_data_frame(newdata)
@@ -133,9 +127,9 @@ add_rhs_predictors = function(newdata, fit) {
 
 
 #' Returns parameters needed for simulation
-#' @aliases get_sim_pars
-#' @keywords internal
+#'
 #' @return Character vector
+#' @noRd
 get_sim_pars = function(cps, predictors, group_effects) {
   c(
     cps$name,
@@ -150,12 +144,11 @@ get_sim_pars = function(cps, predictors, group_effects) {
 #'
 #' Evaluates the model in a separate environment to prevent name conflicts.
 #'
-#' @keywords internal
-#' @noRd
 #' @param fit An `mcpfit` object.
 #' @param args args from `simulate_vectorized`
 #' @param pred_pars Design-column argument names in model-matrix order.
 #' @return `data.frame` with one column per dpar
+#' @noRd
 evaluate_model_dpars = function(fit, args, pred_pars) {
   # Assemble design columns in model-matrix order, regardless of argument order.
   rhs_matrix_ = do.call(cbind, args[pred_pars])
@@ -249,16 +242,12 @@ get_garma_observed = function(y, family, threshold, data = list()) {
 #' Used internally in mcp.
 #' Parameters not documented here are documented in `pp_eval` (without dot prefix).
 #'
-#' @aliases simulate_vectorized
-#' @keywords internal
-#' @noRd
 #' @inheritParams mcp
 #' @param ... Parameter names (e.g., `cp_1 = c(4.3, 4.5, 6.2), Intercept_1 = c(11.2, 12.1, 10.9)`, etc.)
 #'   and columns from `predictors$matrix_data` prefixed with ".pred_" (e.g.,
 #'   `.pred_Intercept_1 = c(1, 1, 1)`).
 #' @return Vector with same length as inputs.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar = "epred", .arma = TRUE, .scale = "response", .return_fitted = FALSE) {
   ###########
   # ASSERTS #
@@ -410,15 +399,11 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
 #'
 #' Parameters not documented here are documented in `pp_eval` (without dot prefix).
 #'
-#' @aliases simulate_atomic
-#' @keywords internal
-#' @noRd
 #' @inheritParams mcp
 #' @param newdata A data.frame or tibble that should contain the same columns as `fit$data`
 #' @param ... Parameter values of length 1, e.g., `cp_1 = 80, Intercept_1 = -22.5` etc.
 #' @return Numeric vector with attribute "simulated".
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 simulate_atomic = function(fit,
                         newdata,
                         ...,
@@ -576,15 +561,11 @@ simulate_atomic = function(fit,
 #' Auto-completion of named arguments  makes it easier to call from, e.g., RStudio.
 #' This is typically stored as `fit$simulate()`.
 #'
-#' @aliases get_fitsimulate
-#' @keywords internal
-#' @noRd
 #' @param cps Output of `get_segment_tables()`.
 #' @param predictors Output of `get_predictors()`.
 #' @param group_effects The output of `get_group_effects()`.
 #' @return An R function.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 get_fitsimulate = function(cps, predictors, group_effects) {
   # List of argument names
   predictor_group_effects = group_effects[group_effects$part == "predictor", , drop = FALSE]

@@ -2,6 +2,9 @@
 # resulting in a full JAGS model
 # -----------------
 
+# JAGS names for the per-observation nodes used by the family's likelihood code,
+# e.g., the response `response[i_]`, distributional parameters `sigma_[i_]`,
+# and auxiliary response columns such as `trials(N)` as `N[i_]`.
 get_jags_family_context = function(segments) {
   list(
     y = paste0(segments$y[1], "[i_]"),
@@ -22,9 +25,6 @@ get_jags_family_context = function(segments) {
 
 #' Make JAGS code for Multiple Change Point model
 #'
-#' @aliases get_jags_code
-#' @keywords internal
-#' @noRd
 #' @inheritParams mcp
 #' @param formula_jags String. The formula string returned by `get_formula_jags()`.
 #' @param segments Segment table returned by `get_segment_tables()`.
@@ -32,8 +32,7 @@ get_jags_family_context = function(segments) {
 #' @param ar_order,ma_order NA or positive integer. The GARMA component orders.
 #' @param prior_table Resolved prior metadata from `get_prior()`.
 #' @return String. A JAGS model.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order, ma_order, family, par_x,
                           prior_table = NULL, series = FALSE) {
   prior_description = if (is.null(prior_table)) {
@@ -258,31 +257,14 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
 }
 
 
-#' Get JAGS code for a prior
-#'
-#' @aliases get_prior_str
-#' @keywords internal
-#' @noRd
-#' @inheritParams mcp
-#' @param i The index in `prior` to get code for
-#' @param group_col String or NULL. `NULL` indicates a population-level prior.
-#'   A string indicates a group-level prior (one value for each group
-#'   level).
-#' @param population_name For a change-point group effect, the associated
-#'   population change point. `NULL` for ordinary group effects.
-#' @param description Short comment to include in generated JAGS code.
-#' @param kind One of distribution, alias, expression, or constant.
-#' @param reference `NULL` or a string with the value of segment-1 x-terms at
-#'   min(x). If given, the prior is placed on this level (in JAGS) and the
-#'   intercept at x = 0 is derived from it (user-facing). See `add_intercept_references()`.
-#' @param rise_width `NULL` or a string with the segment width, e.g., `"(cp_2 - cp_1)"`.
-#'   If given, the slope is sampled as the rise over the segment. See `add_segment_anchors()`.
-#' @param end_change `NULL` or a string with the change over the segment, e.g.,
-#'   `"x_2 * (cp_2 - cp_1)"`. If given, the intercept is sampled as the level at the
-#'   segment end. See `add_segment_anchors()`.
-#' @return A string
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @encoding UTF-8
+# Get the JAGS code (one or more lines) for the prior on `prior[[i]]`.
+# - group_col: NULL for population-level priors. Otherwise the grouping column, and
+#   the prior is written in a loop over its levels.
+# - population_name: for group-level change points, the population change point, e.g., "cp_1".
+# - description: comment to add in the JAGS code. kind: see prior_kind().
+# - reference, rise_width, end_change: NULL/NA, or a string used to sample the
+#   parameter on a better-mixing scale (see add_intercept_references() and
+#   add_segment_anchors()), e.g., "x_1 * 101", "(cp_2 - cp_1)", or "x_2 * (cp_2 - cp_1)".
 get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
                           description = "Prior", kind = NULL, reference = NULL, rise_width = NULL, end_change = NULL) {
   # Helpers

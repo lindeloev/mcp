@@ -7,14 +7,10 @@
 #'
 #' Used internally for most mcp functions.
 #'
-#' @aliases get_segment_tables
-#' @keywords internal
 #' @inheritParams mcp
 #' @return A list with `segments` (one row per segment, including change-point
 #'   code for the change point starting that segment) and `cps` (one row per
 #'   estimated change point, naturally indexed by `cp = 1, 2, ...`).
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @noRd
 get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
   checkmate::assert_string(par_x)
@@ -156,9 +152,6 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
 #' then the other distributional parameters in the order defined by the
 #' family, then `ar`/`ma` components, each ascending by segment.
 #'
-#' @aliases get_pars_table
-#' @keywords internal
-#' @noRd
 #' @param predictors A table from `get_predictors()`.
 #' @param cps A table of change points from `get_segment_tables()`.
 #' @param group_effects A table from `get_group_effects()`.
@@ -166,8 +159,7 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
 #' @return A tibble with one row per model parameter (population and group),
 #'   with columns `name`, `part`, `scope`, `role`, `segment`, `dpar`, `order`,
 #'   `group_col`, and `population_name`.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 get_pars_table = function(predictors, cps, group_effects, family) {
   cp_pars = tibble::tibble(
     name = character(), part = character(), scope = character(), role = character(),
@@ -332,12 +324,11 @@ get_predictor_cols = function(fit) {
 
 #' Build the table of group-level effects
 #'
-#' @keywords internal
-#' @noRd
 #' @param cps A table from `get_segment_tables()`.
 #' @param predictor_group_effects Predictor-side rows returned by
 #'   `get_predictor_tables()`.
 #' @return A tibble with one row per group-level effect.
+#' @noRd
 get_group_effects = function(cps, predictor_group_effects = NULL) {
   if (is.null(predictor_group_effects) || nrow(predictor_group_effects) == 0) {
     predictor_group_effects = tibble::tibble(
@@ -403,14 +394,10 @@ get_fit_model_tables = function(fit) {
 #' (2) Change to "(a + b)" if there is a "+"
 #' (3) Return itself otherwise, e.g., "a" --> "a".
 #'
-#' @aliases format_code
-#' @keywords internal
-#' @noRd
 #' @param col A column
 #' @param na_col If this column is NA, return NA
 #' @return string
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 format_code = function(col, na_col) {
   # Replace with NA
   col = ifelse(is.na(na_col), NA, col)

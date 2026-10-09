@@ -250,10 +250,9 @@ assert_dpar = function(dpar, fit, type) {
 
 #' Check sampled population- and group-level change-point locations
 #'
-#' @keywords internal
-#' @noRd
 #' @param draws An `mcmc.list` after group levels have been recovered.
 #' @param cps The change-point table from `get_segment_tables()`.
+#' @noRd
 assert_ordered_cp_draws = function(draws, cps) {
   if (is.null(draws) || nrow(cps) == 0)
     return(invisible(NULL))

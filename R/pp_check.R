@@ -143,17 +143,13 @@ pp_check.mcpfit = function(
 
 #' pp_check for loo statistics
 #'
-#' @aliases get_loo_plot_call
-#' @keywords internal
-#' @noRd
 #' @inheritParams pp_check
 #' @param y Response vector
 #' @param yrep S X N matrix of predicted responses
 #' @param observations (required for loo-type plots) Original data-row indices.
 #' @param ... Arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
 #' @return A `ggplot2` object returned by `bayesplot::ppc_*(y, yrep, ...)`.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 get_ppc_plot = function(fit, type, y, yrep, ndraws,
                         observations = NULL, group = TRUE, arma = TRUE, ...) {
   is_loo = stringr::str_detect(type, "loo")

@@ -6,15 +6,11 @@
 
 #' Unpack arma order and formula
 #'
-#' @aliases unpack_arma
-#' @keywords internal
-#' @noRd
 #' @param form_str_in A character such as `"ar(number)"`, `"ma(number)"`, or
 #'   either component with a second formula argument.
 #' @return A list with `$order`, `$form_str` (e.g., `"ar(formula)"`), and
 #'   `$threshold`. The component formula is 1 if no formula is given.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 unpack_arma = function(form_str_in) {
   if (length(form_str_in) == 0) {
     return(list(
@@ -316,12 +312,11 @@ arma_root_violations = function(values, component) {
 
 #' Warn when a posterior AR/MA root smoke test finds violations
 #'
-#' @keywords internal
-#' @noRd
 #' @param fit An `mcpfit` object with posterior draws.
 #' @param ndraws,nrows Maximum numbers of draws and observed rows to check.
 #' @param diagnostics A resolved diagnostics configuration.
 #' @return `NULL`, invisibly.
+#' @noRd
 warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
   diagnostics = resolve_diagnostics(diagnostics)
   model_tables = get_fit_model_tables(fit)
@@ -413,15 +408,11 @@ warn_arma_simulation = function(values) {
 
 #' Get JAGS code for GARMA residual recursion
 #'
-#' @aliases get_garma_jagscode get_ar_jagscode
-#' @keywords internal
-#' @noRd
 #' @param ar_order,ma_order Positive integer or `NA` when absent.
 #' @param x_name Character. Name of some vector that has the length of the dataset.
 #' @param series Whether generated lags must remain within `series_id_`.
 #' @return Character JAGS code
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 get_garma_jagscode = function(ar_order, ma_order, x_name, series = FALSE) {
   ar_order = ifelse(is.na(ar_order), 0, ar_order)
   ma_order = ifelse(is.na(ma_order), 0, ma_order)
@@ -590,9 +581,7 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, threshold, family,
 #' Simulate/evaluate autoregressive residuals
 #'
 #' Developer note: some of the eval(parse(text = ...)) here could probably be replaced with inner products (%*%).
-#' @aliases simulate_ar
-#' @keywords internal
-#' @noRd
+#'
 #' @param sigma_ Numeric vector of innovations
 #' @param ar_list List with numerical vectors, list(ar1_ = c(...), ar2_ = c(...))
 #' @param resid_abs NULL or numerical vector of observed minus fitted residuals
@@ -605,8 +594,7 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, threshold, family,
 #'
 #'   Note that `resid_abs = resid_ar + resid_sigma`.
 #' @seealso get_ar_jagscode
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 simulate_ar = function(sigma_, ar_list, resid_abs = NULL, series_id = NULL) {
   # Check inputs
   checkmate::assert_numeric(sigma_, any.missing = FALSE)

@@ -3,7 +3,6 @@
 
 #' Fits and Predictions given Draws and data
 #'
-#' @aliases pp_eval pp_eval.mcpfit
 #' @keywords internal
 #' @param group Group-level effects. One of:
 #'   * `TRUE` All group-level deviations.
@@ -94,8 +93,6 @@
 #'       values (depending on `type`). This format is used by `brms` and it's useful as `yrep` in
 #'      `bayesplot::ppc_*` functions.
 #' @seealso \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}}
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 pp_eval = function(
   object,
   newdata = NULL,

@@ -212,9 +212,6 @@ resolve_draws_format = function(draws_format, samples_format, draws_format_missi
 #' and group-level deviations in long format (the number of rows is multiplied
 #' by the number of selected group levels).
 #'
-#' @aliases mcp_draws
-#' @keywords internal
-#' @noRd
 #' @inheritParams mcmclist_draws
 #' @inheritParams pp_eval
 #' @param population
@@ -234,10 +231,8 @@ resolve_draws_format = function(draws_format, samples_format, draws_format_missi
 #' @param newdata Optional prediction data selecting group levels. New predictor
 #'   groups receive one draw per source coefficient and posterior draw; new
 #'   group-level change points are not supported here.
-#'
 #' @return `tibble` of posterior draws in `tidybayes` format.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 mcp_draws = function(
   fit,
   population = TRUE,

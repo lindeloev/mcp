@@ -8,13 +8,11 @@
 #' This function makes a vector of x-values with large spacing in general,
 #' but finer resolution at change points.
 #'
-#' @aliases get_x_values
-#' @keywords internal
-#' @noRd
 #' @inheritParams plot.mcpfit
 #' @param fit An `mcpfit` object.
 #' @param by Character vector of grouping columns to evaluate separately.
 #' @return A vector of x-values to evaluate at.
+#' @noRd
 get_x_values = function(fit, by = NULL, prior = FALSE, arma = NULL) {
   N_BASIS = 100
   N_CP = 50
@@ -53,9 +51,6 @@ get_x_values = function(fit, by = NULL, prior = FALSE, arma = NULL) {
 
 #' Get fixed values for continuous predictors
 #'
-#' @aliases get_continuous_at
-#' @keywords internal
-#' @noRd
 #' @param data fit$data
 #' @param data_columns Fitting-data column metadata.
 #' @param at Named list overriding the default means.
@@ -63,8 +58,7 @@ get_x_values = function(fit, by = NULL, prior = FALSE, arma = NULL) {
 #'   predictors.
 #' @return `data.frame` with one column for each continuous predictor.
 #'   `NULL` if there are no continuous predictors.
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @noRd
 get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
   checkmate::assert_data_frame(data)
   checkmate::assert_list(data_columns)

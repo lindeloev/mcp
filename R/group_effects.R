@@ -30,12 +30,11 @@ group_block_key = function(term) {
 
 #' Parse one predictor group-level term
 #'
-#' @keywords internal
-#' @noRd
 #' @param term A term such as `"1 | id"`, `"factor || id"`, or `"0 | id"`.
 #' @inheritParams get_predictors_dpar
 #' @return A tibble with one row per group-level coefficient, or one row with
 #'   `has_coefficients = FALSE` for an explicit turn-off.
+#' @noRd
 parse_predictor_group_term = function(
   term, segment, dpar, data, par_x, check_rank = TRUE, env = parent.frame()
 ) {
@@ -125,10 +124,9 @@ parse_predictor_group_term = function(
 
 #' Get predictor group-level definitions for one segment
 #'
-#' @keywords internal
-#' @noRd
 #' @inheritParams get_predictors_segment
 #' @return A tibble containing group coefficients and explicit turn-offs.
+#' @noRd
 get_predictor_group_definitions_segment = function(
   form_rhs, segment, family, data, par_x, check_rank = TRUE, previous = NULL
 ) {
