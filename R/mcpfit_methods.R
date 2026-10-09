@@ -293,7 +293,7 @@ summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ver
   # Model info
   cat(format(fit$family), "\n", sep = "")
   if (!is.null(draws))
-    cat("Iterations: ", coda::niter(draws), " from ", coda::nchain(draws), " chains.\n", sep="")
+    cat("Draws: ", coda::niter(draws) * coda::nchain(draws), " (", coda::nchain(draws), " chains with iter = ", coda::niter(draws), ")\n", sep = "")
   cat("Segments:\n")
   for (i in seq_along(fit$model)) {
     cat("  ", i, ": ", formula_to_char(fit$model[[i]]), "\n", sep = "")
