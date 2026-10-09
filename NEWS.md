@@ -191,8 +191,6 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - Named arguments in prior distributions or truncations (e.g. `dnorm(sd = 1, mean = 10)`) are now rejected explicitly with an informative error rather than being silently re-interpreted positionally.
 
-- Convergence diagnostics now share classification between fitting and `summary()`. Intentionally fixed group-level deviations no longer trigger false convergence warnings, and stuck parameters with undefined Rhat/ESS are properly reported in the `summary()` footer.
-
 - `hypothesis(..., prior = TRUE)` now reports `BF = NA` rather than comparing prior draws with themselves and returning a Bayes factor of 1.
 
 - Directional Bayes factors now divide posterior odds by prior odds. Previously, they reported posterior odds alone, which is only a Bayes factor when the prior probability of the hypothesis is 0.5.
@@ -214,6 +212,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 - Weighted regression now uses brms-style likelihood weights throughout: JAGS targets the likelihood raised to `weight`, `log_lik()` multiplies each log density by `weight`, and predictive draws use the unweighted response distribution. In v0.3.4, weights instead acted as Gaussian precision weights and R-side predictions and information criteria were not fully consistent with the fitted model.
 
 - In models going from higher-order to lower-order (`~ ar(2), ~ ar(1)`), the higher-order components were not turned off.
+
+- Change points without a population-level intercept (e.g., `0 + (1 | id) ~ 1`) now raise an error. Previously, `0 +` was silently ignored. Group-level change points now also accept `(1 || id)`, which is identical to `(1 | id)` for intercepts.
 
 - Bug only noticeable for very small samples: For Gaussian identity-link AR models, R-side calculations could leak residuals between posterior draws and omitted available partial lags for the first observations of AR(2+) models. Each draw is now evaluated as a separate series and uses the same partial-lag recurrence as JAGS.
 

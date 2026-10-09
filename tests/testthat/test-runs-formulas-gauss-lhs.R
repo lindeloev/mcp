@@ -35,6 +35,8 @@ test_good(good_y)
 bad_cps = list(
   list(y ~ x,
        0 ~ 1),  # Needs changepoint stuff
+  list(y ~ 1,
+       0 + (1|id) ~ 1),  # Population-level intercept is required
   list(y ~ x,
        q ~ 1),  # Slope not allowed for changepoint
   list(y ~ 1,
@@ -71,6 +73,8 @@ good_cps = list(
        ~ x),
   list(y ~ 1,
        (1|id) ~ 0),  # Intercept is implicit. I don't like it, but OK.
+  list(y ~ 1,
+       1 + (1||id) ~ 1),  # || is | for intercepts
   list(y ~ 1,
        1 + (1|id) ~ 1,
        1 + (1|id) ~ 1,

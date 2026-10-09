@@ -368,15 +368,13 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
 #' @param form_cp Segment formula as string.
 #' @param i segment number
 #' @return A one-row tibble with columns:
-#'   * `cp_intercept`: Logical scalar. Whether there is an intercept change in the change point.
-#'   * `cp_varying`: Logical scalar or NA. Is there a group-level intercept on the change point?
+#'   * `cp_varying`: Logical scalar. Is there a group-level intercept on the change point?
 #'   * `cp_group_col`: char or NA. Which data column defines the grouping factor?
 #' @noRd
 unpack_cp = function(form_cp, i, env = parent.frame()) {
   # Segment 1 has no change point
   if (is.null(form_cp)) {
     return(tibble::tibble(
-      cp_intercept = FALSE,
       cp_varying = FALSE,
       cp_group_col = NA
     ))
@@ -392,7 +390,7 @@ unpack_cp = function(form_cp, i, env = parent.frame()) {
     if (length(varying_terms) > 1)
       stop("Error in segment ", i, " (change point): only one group-level effect is allowed. Found ", deparse1(form_cp))
 
-    varying_parts = strsplit(gsub(" ", "", varying_terms), "\\|")[[1]]
+    varying_parts = strsplit(gsub(" ", "", varying_terms), "\\|\\|?")[[1]]  # (1 || id) is (1 | id) for intercepts
     if (!varying_parts[1] == "1")
       stop("Error in segment ", i, " (change point): Only plain intercepts are allowed in group-level effects, e.g., (1|id).")
 
@@ -405,23 +403,11 @@ unpack_cp = function(form_cp, i, env = parent.frame()) {
   if (length(attrs$term.labels) > 0)
     stop("Error in segment ", i, " (change point): Only intercepts (1) are allowed in population-level effects.")
 
-  if (is.null(form_varying) && attrs$intercept == 0)
-    stop("Error in segment ", i, " (change point): no population-level intercept or group-level effect. You can do e.g., ~ 1 or ~ (1 |id).")
+  if (attrs$intercept == 0)
+    stop("Error in segment ", i, " (change point): change points always include a population-level intercept. Remove `0 +`, e.g., `1 ~ ...` or `1 + (1 | id) ~ ...`.")
 
-  # Return as list.
-  if (!is.null(form_varying)) {
-    # If there is a group-level effect
-    return(tibble::tibble(
-      cp_intercept = attrs$intercept == 1,
-      cp_varying = ifelse(varying_parts[1] == "1", TRUE, NA),  # placeholder for later
-      cp_group_col = varying_parts[2]
-    ))
-  } else {
-    # If there is no group-level effect
-    return(tibble::tibble(
-      cp_intercept = attrs$intercept == 1,
-      cp_varying = FALSE,
-      cp_group_col = NA
-    ))
-  }
+  tibble::tibble(
+    cp_varying = !is.null(form_varying),
+    cp_group_col = if (is.null(form_varying)) NA else varying_parts[2]
+  )
 }
