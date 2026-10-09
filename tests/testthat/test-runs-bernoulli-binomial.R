@@ -45,20 +45,15 @@ test_good(good_binomial,
           family = binomial())
 
 test_that("binomial and Bernoulli links share weakly regularizing defaults", {
-  families = list(
-    mcpfamily(binomial("logit")),
-    mcpfamily(binomial("probit")),
-    bernoulli("logit"),
-    bernoulli("probit")
-  )
-  expected = c(
-    "dnorm(0, 1.5)",
-    "dnorm(0, 1.5 / predictor_scale())",
-    "dnorm(0, 1.5 / predictor_scale())"
-  )
-
-  for (family in families)
-    expect_equal(family$default_prior$prior, expected)
+  # Scale 1.5 for logit and 1 for probit: (approximately) uniform intercepts on the probability scale
+  for (family in list(mcpfamily(binomial("logit")), bernoulli("logit"))) {
+    expect_equal(family$default_prior$prior, c("dnorm(0, 1.5)", "dnorm(0, 1.5 / predictor_scale())", "dnorm(0, 1.5 / predictor_scale())"))
+    expect_equal(family$default_prior$group_sd_prior[1], "dt(0, 1.5, 3) T(0, )")
+  }
+  for (family in list(mcpfamily(binomial("probit")), bernoulli("probit"))) {
+    expect_equal(family$default_prior$prior, c("dnorm(0, 1)", "dnorm(0, 1 / predictor_scale())", "dnorm(0, 1 / predictor_scale())"))
+    expect_equal(family$default_prior$group_sd_prior[1], "dt(0, 1, 3) T(0, )")
+  }
 })
 
 test_that("binomial responses cannot exceed trials", {

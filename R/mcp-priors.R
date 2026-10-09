@@ -25,9 +25,9 @@
 #' Default coefficient priors follow the autoscaled defaults of `rstanarm`: `normal(0, 2.5 * sd(y) / sd(x))`
 #' for identity links and `normal(0, 2.5 / sd(x))` for log links, where `sd(x)` is the standard deviation of
 #' the predictor's model-matrix column (including dummy variables for factors). Logit and probit links use
-#' a narrower base scale, `normal(0, 1.5 / sd(x))`. For the change-point variable, `sd(x)` is taken over all
+#' narrower scales, `normal(0, 1.5 / sd(x))` and `normal(0, 1 / sd(x))`. For the change-point variable, `sd(x)` is taken over all
 #' data, and powers such as `I(x^2)` use `sd((x - min(x))^2)`. Intercepts also follow `rstanarm`, e.g.,
-#' `normal(mean(y), 2.5 * sd(y))` for Gaussian models (`normal(0, 1.5)` for logit and probit), while `sigma`
+#' `normal(mean(y), 2.5 * sd(y))` for Gaussian models (`normal(0, 1.5)` for logit and `normal(0, 1)` for probit), while `sigma`
 #' and group-level SDs follow `brms`, e.g., `student_t(3, 0, max(2.5, mad(y)))`. These are scale parameters, for
 #' which a half-Student-t is the standard weakly informative choice (Gelman, 2006).
 #'

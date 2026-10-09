@@ -159,7 +159,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Uppercase data-dependent constants for priors (`MINX`, `MAXX`, etc.) remain temporarily supported with a deprecation warning. They are now replaced with readable expressions such as `min(time)`, `max(time) - min(time)`, `mad(response)`, `n_segments()`, and `n_cp()`.
 
-  - Binomial and Bernoulli models with logit or probit links now use a narrower, weakly regularizing base scale of 1.5 rather than 2.5: `normal(0, 1.5)` for intercepts and `normal(0, 1.5 / sd(x))` for coefficients and categorical contrasts.
+  - Binomial and Bernoulli models with logit or probit links now use narrower, weakly regularizing scales than `rstanarm`'s 2.5: `normal(0, 1.5)` (logit) and `normal(0, 1)` (probit) for intercepts, which are approximately and exactly uniform on the probability scale, respectively. Coefficients and categorical contrasts use `normal(0, 1.5 / sd(x))` and `normal(0, 1 / sd(x))`.
 
   - **Gaussian models with log link (`gaussian(link = "log")`):** Now aligned with `mcp`'s general log-link model standards (`dnorm` rather than Student-t to reduce extreme multiplicative tails under exponentiation). Population intercepts are robustly calibrated to empirical log-data (with non-positive values replaced by 0.1) and shift with `offset()`, and coefficients and categorical contrasts use `rstanarm`'s `dnorm(0, 2.5 / sd(x))`.
 

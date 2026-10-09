@@ -326,11 +326,14 @@ mcpfamily_binomial = function(family) {
       "mu", "slope", "dnorm(0, 1 / predictor_scale())", "dt(0, 1 / predictor_scale(), 3) T(0, )", "Autoscaled success-probability coefficient", "always"
     )
   } else if (family$link %in% c("logit", "probit")) {
+    # Intercept prior is approximately (logit) or exactly (probit) uniform on the probability scale
+    scale = if (family$link == "logit") "1.5" else "1"
+    uniform = if (family$link == "logit") "approximately uniform" else "uniform"
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", "dnorm(0, 1.5)", "dt(0, 1.5, 3) T(0, )", "Link-scale intercept (rstanarm scaling with base 1.5)", "always",
-      "mu", "dummy", "dnorm(0, 1.5 / predictor_scale())", "dt(0, 1.5, 3) T(0, )", "Autoscaled link-scale contrast (rstanarm scaling with base 1.5)", "always",
-      "mu", "slope", "dnorm(0, 1.5 / predictor_scale())", "dt(0, 1.5 / predictor_scale(), 3) T(0, )", "Autoscaled link-scale coefficient (rstanarm scaling with base 1.5)", "always"
+      "mu", "Intercept", paste0("dnorm(0, ", scale, ")"), paste0("dt(0, ", scale, ", 3) T(0, )"), paste0("Link-scale intercept, ", uniform, " on the probability scale"), "always",
+      "mu", "dummy", paste0("dnorm(0, ", scale, " / predictor_scale())"), paste0("dt(0, ", scale, ", 3) T(0, )"), "Autoscaled link-scale contrast (rstanarm autoscaling)", "always",
+      "mu", "slope", paste0("dnorm(0, ", scale, " / predictor_scale())"), paste0("dt(0, ", scale, " / predictor_scale(), 3) T(0, )"), "Autoscaled link-scale coefficient (rstanarm autoscaling)", "always"
     )
   } else {
     stop("mcp has no default priors for binomial(link = \"", family$link, "\") so it's likely not supported.")
@@ -429,11 +432,14 @@ mcpfamily_bernoulli = function(family) {
       "mu", "slope", "dnorm(0, 1 / predictor_scale())", "dt(0, 1 / predictor_scale(), 3) T(0, )", "Autoscaled P(y = TRUE) coefficient", "always"
     )
   } else if (family$link %in% c("logit", "probit")) {
+    # Intercept prior is approximately (logit) or exactly (probit) uniform on the probability scale
+    scale = if (family$link == "logit") "1.5" else "1"
+    uniform = if (family$link == "logit") "approximately uniform" else "uniform"
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", "dnorm(0, 1.5)", "dt(0, 1.5, 3) T(0, )", "Link-scale intercept (rstanarm scaling with base 1.5)", "always",
-      "mu", "dummy", "dnorm(0, 1.5 / predictor_scale())", "dt(0, 1.5, 3) T(0, )", "Autoscaled link-scale contrast (rstanarm scaling with base 1.5)", "always",
-      "mu", "slope", "dnorm(0, 1.5 / predictor_scale())", "dt(0, 1.5 / predictor_scale(), 3) T(0, )", "Autoscaled link-scale coefficient (rstanarm scaling with base 1.5)", "always"
+      "mu", "Intercept", paste0("dnorm(0, ", scale, ")"), paste0("dt(0, ", scale, ", 3) T(0, )"), paste0("Link-scale intercept, ", uniform, " on the probability scale"), "always",
+      "mu", "dummy", paste0("dnorm(0, ", scale, " / predictor_scale())"), paste0("dt(0, ", scale, ", 3) T(0, )"), "Autoscaled link-scale contrast (rstanarm autoscaling)", "always",
+      "mu", "slope", paste0("dnorm(0, ", scale, " / predictor_scale())"), paste0("dt(0, ", scale, " / predictor_scale(), 3) T(0, )"), "Autoscaled link-scale coefficient (rstanarm autoscaling)", "always"
     )
   } else {
     stop("mcp has no default priors for bernoulli(link = \"", family$link, "\") so it's likely not supported.")
