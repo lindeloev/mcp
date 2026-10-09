@@ -696,7 +696,7 @@ test_that("integer varying groups can control plot color", {
     dimnames = list(NULL, sample_names)
   )
   draws[, "cp_1"] = 2.5
-  draws[, "cp_1_sd"] = 1
+  draws[, "cp_1_id_sd"] = 1
   draws[, "cp_1_id[1]"] = -0.5
   draws[, "cp_1_id[2]"] = 0.5
   draws[, "sigma_1"] = 1
@@ -784,7 +784,7 @@ test_that("fitted() intervals differ across varying levels and contain the fitte
     dimnames = list(NULL, sample_names)
   )
   draws[, "cp_1"] = 2.5
-  draws[, "cp_1_sd"] = 1
+  draws[, "cp_1_id_sd"] = 1
   draws[, "cp_1_id[1]"] = seq(-1, 1, length.out = n_draws)
   draws[, "cp_1_id[2]"] = seq(-0.9, -0.6, length.out = n_draws)
   draws[, "Intercept_1"] = 0

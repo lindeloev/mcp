@@ -43,7 +43,7 @@ You specify group-level effects using the familiar [`lmer`](https://www.rdocumen
 ```{r}
 model = list(
   y ~ 1,  # Intercept_1
-  1 + (1|id) ~ 0 + x  # cp_1, cp_1_sd, cp_1_id[i]
+  1 + (1|id) ~ 0 + x  # cp_1, cp_1_id_sd, cp_1_id[i]
 )
 ```
 
@@ -52,9 +52,9 @@ You can have multiple group-level change points, but they must use the same grou
 ```{r}
 model = list(
   y ~ 1,  # Intercept_1
-  1 + (1|id) ~ 0 + x,  # cp_1, cp_1_sd, cp_1_id[i]
-  1 + (1|id) ~ 0,      # cp_2, cp_2_sd, cp_2_id[i]
-  (1|id) ~ 1           # cp_3 (implicit), cp_3_sd, cp_3_id[i]
+  1 + (1|id) ~ 0 + x,  # cp_1, cp_1_id_sd, cp_1_id[i]
+  1 + (1|id) ~ 0,      # cp_2, cp_2_id_sd, cp_2_id[i]
+  (1|id) ~ 1           # cp_3 (implicit), cp_3_id_sd, cp_3_id[i]
 )
 ```
 
@@ -126,7 +126,7 @@ Let us simulate group-specific deviations in the change point between a plateau 
 ```{r}
 model = list(
   y ~ 1,  # Intercept_1
-  1 + (1|id) ~ 0 + x  # cp_1, cp_1_sd, cp_1_id[i]
+  1 + (1|id) ~ 0 + x  # cp_1, cp_1_id_sd, cp_1_id[i]
 )
 ```
 
@@ -147,7 +147,7 @@ df$y = empty$simulate(empty, df,
   Intercept_1 = 20, x_2 = 0.5, cp_1 = 50, sigma = 2,
   
   # Draw group-level deviations with this SD
-  cp_1_sd = 15)
+  cp_1_id_sd = 15)
 
 head(df)
 ```
@@ -217,7 +217,7 @@ You can see the priors of the model like this:
 prior_summary(fit)
 ```
 
-`cp_1_sd` is the latent normal scale governing the `cp_1_id` deviations. Unlike predictor group-level effects, change-point locations are also constrained to remain in range and ordered within each group.
+`cp_1_id_sd` is the latent normal scale governing the `cp_1_id` deviations. Unlike predictor group-level effects, change-point locations are also constrained to remain in range and ordered within each group.
 
 For predictor group-level effects (e.g., `(state || id)`), the SDs default to the `brms` half-Student-t prior on the response scale, `dt(0, max(2.5, mad(y)), 3) T(0, )`, with slope SDs divided by `sd(column)`. Log, logit, and probit links and distributional parameters use other scales; see [default priors on group-level effects](../articles/priors.html#default-priors-on-group-level-effects).
 

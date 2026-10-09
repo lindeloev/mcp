@@ -294,6 +294,12 @@ test_that("helpful deprecation detections work for old code idioms", {
     "install_github",
     fixed = TRUE
   )
+  data_id = cbind(data, id = rep(c("a", "b"), each = 3))
+  expect_error(
+    mcp(list(y ~ 1, 1 + (1 | id) ~ 1), data_id, prior = list(cp_1_sd = "dnorm(0, 1) T(0, )"), par_x = "x", sample = FALSE),
+    "use `cp_i_<group>_sd`",
+    fixed = TRUE
+  )
 
   # ex$fit warning
   expect_warning(

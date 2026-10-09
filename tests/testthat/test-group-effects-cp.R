@@ -41,7 +41,7 @@ test_that("custom normal change-point hierarchies retain model bounds", {
     list(y ~ 1, 1 + (1 | id) ~ 1),
     cp_group_data,
     par_x = "x",
-    prior = list(cp_1_id = "dnorm(0, cp_1_sd)"),
+    prior = list(cp_1_id = "dnorm(0, cp_1_id_sd)"),
     sample = FALSE
   )
   expect_match(fit$prior$cp_1_id, "T\\(cp_0 - cp_1, cp_2 - cp_1\\)")
@@ -57,14 +57,14 @@ test_that("simulation generates bounded hierarchical change-point locations", {
     sample = FALSE
   )
 
-  expect_true("cp_1_sd" %in% names(formals(fit$simulate)))
+  expect_true("cp_1_id_sd" %in% names(formals(fit$simulate)))
   expect_false("cp_1_id" %in% names(formals(fit$simulate)))
   set.seed(42)
   simulated = fit$simulate(
     fit,
     cp_group_data,
     cp_1 = 5,
-    cp_1_sd = 1,
+    cp_1_id_sd = 1,
     Intercept_1 = 0,
     Intercept_2 = 0,
     sigma_1 = 1,
@@ -109,8 +109,8 @@ test_that("simulation samples adjacent varying change points in realized order",
     cp_group_data,
     cp_1 = 3,
     cp_2 = 6,
-    cp_1_sd = 10,
-    cp_2_sd = 10,
+    cp_1_id_sd = 10,
+    cp_2_id_sd = 10,
     Intercept_1 = 0,
     Intercept_2 = 0,
     Intercept_3 = 0,

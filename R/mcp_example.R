@@ -346,7 +346,7 @@ data$y = 2.# or whatever signals 'numeric'. Will be replaced by simulation below
 empty = mcp(model, data, sample = FALSE)
 data$y = empty$simulate(empty, data,
   cp_1 = 40,
-  cp_1_sd = 20,
+  cp_1_id_sd = 20,
   Intercept_1 = 15,
   x_1 = 3,
   x_2 = -2,

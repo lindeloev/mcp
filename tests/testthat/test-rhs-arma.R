@@ -223,7 +223,7 @@ test_that("GARMA evaluation keeps group-level draws as separate series", {
   )
   draws = cbind(
     cp_1 = c(0.5, 0.6),
-    cp_1_sd = c(0.1, 0.2),
+    cp_1_id_sd = c(0.1, 0.2),
     Intercept_1 = c(0, 0.1),
     Intercept_2 = c(1, 1.1),
     sigma_1 = c(1, 1),

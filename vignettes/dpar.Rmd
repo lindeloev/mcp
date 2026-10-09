@@ -197,7 +197,7 @@ empty = mcp(model, data = df, par_x = "x", sample = FALSE)
 # Simulate data
 df$y = empty$simulate(
   empty, df, 
-  cp_1 = 130, cp_1_sd = 40,
+  cp_1 = 130, cp_1_id_sd = 40,
   Intercept_1 = 20,
   sigma_1 = log(10), sigma_2 = log(25))
 ```

@@ -103,7 +103,7 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
       name = paste0("cp_", .data$cp),
       varying = .data$cp_varying,
       group_col = .data$cp_group_col,
-      sd_name = ifelse(.data$varying, paste0(.data$name, "_sd"), NA),
+      sd_name = ifelse(.data$varying, paste0(.data$name, "_", .data$group_col, "_sd"), NA),
       group_name = ifelse(.data$varying, paste0(.data$name, "_", .data$group_col), NA)
     ) %>%
     dplyr::mutate(

@@ -32,7 +32,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - **Renamed parameters and column names** to align with `{brms}` and `{posterior}`:
 
-  - Renamed parameters to be more consistent with brms: `int_i` --\> `Intercept_i`; `x_1_E2` --\> `xE2_1`; `x_1_sin` --\> `sinx_1`, etc.
+  - Renamed parameters to be more consistent with brms: `int_i` --\> `Intercept_i`; `x_1_E2` --\> `xE2_1`; `x_1_sin` --\> `sinx_1`, `cp_1_sd` --\> `cp_1_id_sd` (for `(1 | id)`), etc.
 
   - `summary()`, `fixef()`, and `ranef()` now name the parameter identifier column `variable` instead of `name`, directly matching `{posterior}` and `posterior::summarise_draws()`.
 

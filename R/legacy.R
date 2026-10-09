@@ -38,6 +38,13 @@ check_legacy_parameter_names = function(x, context) {
     stop(legacy_mcp_message(paste0(
       "`", context, "` uses the v0.3.4 parameter name `int_i`; use `Intercept_i` in v0.4, which also changed syntax for some other variable names."
     )), call. = FALSE)
+
+  old_names = x[stringr::str_detect(x, "(^|[^[:alnum:]_])cp_[0-9]+_sd($|[^[:alnum:]_])")]
+  if (length(old_names) > 0)
+    stop(
+      "`", context, "` uses the v0.3.4 parameter name `cp_i_sd`; use `cp_i_<group>_sd` in v0.4, e.g., `cp_1_id_sd` for `(1 | id)`.",
+      call. = FALSE
+    )
 }
 
 
