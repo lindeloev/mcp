@@ -98,8 +98,8 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   for (i in seq_along(cps)) {
     name = names(cps)[i]
     if (any(is_dirichlet)) {
-    # Sequential Beta chain for ordered Dirichlet(alpha) change points
-    a = alpha[1]
+      # Sequential Beta chain for ordered Dirichlet(alpha) change points
+      a = alpha[1]
       M = length(cps) - i + 1L
       lower_cp = paste0("cp_", i - 1L)
       desc_comment = if (a == 1) "Uniform order statistics" else paste0("Dirichlet(", format_prior_number(a), ")")
@@ -310,6 +310,8 @@ get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
     ))
   }
 
+  # Disjoined segment intercept, sampled as the level at the segment end to improve mixing (see add_segment_anchors()).
+
   if (kind == "distribution" && is.null(group_col) && !is.null(end_change) && !is.na(end_change)) {
     call = parse_prior_call(value)
     end_name = paste0(name, "_end_")
@@ -320,6 +322,7 @@ get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
     ))
   }
 
+  # Joined segment slope, sampled as the rise over the segment to improve mixing (see add_segment_anchors()).
   if (kind == "distribution" && is.null(group_col) && !is.null(rise_width) && !is.na(rise_width)) {
     call = parse_prior_call(value)
     rise_name = paste0(name, "_rise_")
@@ -330,22 +333,31 @@ get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
     ))
   }
 
+  # Other distributions: convert SD/scale to JAGS precision and write a stochastic node
   if (kind == "distribution") {
     value = prior_to_jags(value)
 
-    # ... and this is a population-level effect
+    # Segment-1 intercept with the prior on the level at min(x) (see add_intercept_references()).
+    # The user-facing Intercept_1 at x = 0 is derived by subtracting the x-terms at min(x).
     if (is.null(group_col) && !is.null(reference) && !is.na(reference)) {
       start_name = paste0(name, "_start_")
       return(paste0(
         "  ", start_name, " ~ ", value, "  # ", description, "\n",
         "  ", name, " = ", start_name, " - (", reference, ")  # Intercept at x = 0\n"
       ))
+
+    # Plain population-level parameter
     } else if (is.null(group_col)) {
       return(paste0("  ", name, " ~ ", value, "  # ", description, "\n"))
+
+    # Ordinary group-level effect: one draw per group level
     } else if (is.null(population_name)) {
       return(paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {
     ", name, "[", group_col, "_] ~ ", value, "  # ", description, "
   }\n"))
+
+    # Group-level change point. For dnorm() priors, sample each group's absolute change point
+    # location, cp_1_id_location ~ dnorm(cp_1 + mean, sd).
     } else {
       parts = split_prior_truncation(value)
       call = parse_prior_call(parts$distribution)
@@ -372,6 +384,8 @@ get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
     ", name, "[", group_col, "_] = ", location_name, "[", group_col, "_] - ", population_name, "  # deviation from population change point
   }\n"))
       }
+
+      # Group-level for other distributions: sample the deviation directly
       return(paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {
     ", name, "[", group_col, "_] ~ ", value, "  # ", description, "
   }\n"))
@@ -380,6 +394,8 @@ get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
 
   # Fixed constants/expressions for group-level effects must be vectors over group
   # levels so they can be indexed as name[group_col[i_]] in the likelihood.
+  # References to other group-level effects are indexed too, e.g.,
+  # "x_1_id * 2" becomes "x_1_id[id_] * 2".
   if (!is.null(group_col)) {
     value = gsub(paste0("([A-Za-z0-9_]+_", group_col, ")(?!\\[)"), paste0("\\1[", group_col, "_]"), value, perl = TRUE)
     return(paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {
@@ -387,6 +403,7 @@ get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
   }\n"))
   }
 
+  # Merge it nicely and return
   paste0("  ", name, " = ", value, "  # ", description, "\n")
 }
 
