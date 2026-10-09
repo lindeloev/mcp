@@ -493,6 +493,19 @@ test_that("priors are resolved without changing their parameterization", {
 })
 
 
+test_that("change point priors refer to the exact data limits cp_0 and cp_K", {
+  data = data.frame(x = c(0.618632254190743, 2:9, 9.87654321), y = 1:10)
+  fit = mcp(
+    list(y ~ 1, ~ 1, ~ 1), data, par_x = "x", sample = FALSE,
+    prior = list(cp_1 = "dunif(min(x), 5)", cp_2 = "dnorm(7, 1)", Intercept_1 = "dnorm(min(x), 1)")
+  )
+  expect_equal(fit$prior$cp_1, "dunif(cp_0, 5)")
+  expect_equal(fit$prior$cp_2, "dnorm(7, 1) T(cp_1, cp_3)")
+  expect_equal(fit$prior$Intercept_1, "dnorm(0.6186323, 1)")
+  expect_match(fit$jags_code, "cp_0 = min(x)\n  cp_1 ~ dunif(cp_0, 5)  # User-specified prior\n  cp_2 ~ dnorm(7, 1/(1)^2) T(cp_1,cp_3)  # User-specified prior with required bounds added by mcp\n  cp_3 = max(x)\n", fixed = TRUE)
+})
+
+
 test_that("partial user-specified Dirichlet priors propagate source and description", {
   data_dir = data.frame(x = 1:10, y = 1:10)
   fit_dir = mcp(list(y ~ 1, ~ 1, ~ 1), data = data_dir, par_x = "x", prior = list(cp_1 = "dirichlet(2)"), sample = FALSE)

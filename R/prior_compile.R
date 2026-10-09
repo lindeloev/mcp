@@ -136,6 +136,10 @@ resolve_prior_ast = function(expr, context) {
     return(if (fun == "n_cp") context$n_cp else context$n_segments)
   }
 
+  # Return names cp_0 and cp_K for which is the data range within which all change points are located.
+  if (isTRUE(context$cp_limits) && fun %in% c("min", "max") && identical(args, list(as.name(context$x_name))))
+    return(as.name(paste0("cp_", if (fun == "min") 0 else context$n_segments)))
+
   summaries = c("min", "max", "mean", "median", "sd", "mad")
   if (fun %in% summaries && length(args) == 1 && allowed_data_expression(args[[1]], data_names)) {
     data_env = list2env(as.list(context$data), parent = baseenv())
@@ -272,6 +276,7 @@ compile_prior_record = function(parameter, code, all_names, context, source,
   kind = prior_kind(code, all_names)
   original = if (is.numeric(code)) format_prior_number(code) else code
   display_original = translate_legacy_prior(original, context)
+  context$cp_limits = kind == "distribution" && parameter %in% context$cp_pars
   resolved = resolve_prior_value(code, context)
 
   if (kind == "expression") {

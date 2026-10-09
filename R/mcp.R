@@ -401,7 +401,7 @@ mcp = function(model,
     ma_order = get_arma_order(predictor_definitions, "ma")
     jags_code = get_jags_code(
       prior, segments, group_definitions, formula_jags, ar_order, ma_order, family, par_x,
-      prior_table, prior_context, series = !is.null(series)
+      prior_table, series = !is.null(series)
     )
   }
 

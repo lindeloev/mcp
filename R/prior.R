@@ -36,6 +36,7 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
   checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
   assert_reserved_offset_namespace(names(data), context = "data")
   context = prior_context(data, segments, design_specs)
+  context$cp_pars = stats::na.omit(c(cps$name, cps$group_name))
   warn_legacy_prior_constants(prior, context)
 
   specs = dplyr::bind_rows(
