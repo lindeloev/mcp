@@ -18,9 +18,9 @@ test_bad(bad_y)
 
 good_y = list(
   list(y ~ 1),  # Regular
-  list(y ~ 1,  # Explicit and implicit y and cp
-       y ~ 1 ~ 1,
-       1 + (1|id) ~ 1 + x,
+  list(y ~ 1,  # Implicit and explicit cp
+       ~ 1,
+       ~ cp(1 + (1|id)) + 1 + x,
        ~ 1),
   list(ok_y ~ 1)  # decimal y
 )
@@ -34,23 +34,32 @@ test_good(good_y)
 ######################
 bad_cps = list(
   list(y ~ x,
-       0 ~ 1),  # Needs changepoint stuff
+       ~ cp(0) + 1),  # Needs changepoint stuff
   list(y ~ 1,
-       0 + (1|id) ~ 1),  # Population-level intercept is required
+       ~ cp(0 + (1|id)) + 1),  # Population-level intercept is required
+  list(y ~ cp(1) + 1),  # No change point in segment 1
+  list(y ~ 1,
+       ~ 1 + sigma(1 + cp(1))),  # cp() must be a separate term
+  list(y ~ 1,
+       ~ cp(1) + cp((1|id)) + 1),  # Only one cp()
+  list(y ~ 1,
+       1 ~ cp(1) + 1),  # Change point both on LHS and in cp()
+  list(y ~ 1,
+       y ~ 1),  # Response is only in segment 1
   list(y ~ x,
-       q ~ 1),  # Slope not allowed for changepoint
+       ~ cp(q) + 1),  # Slope not allowed for changepoint
   list(y ~ 1,
-       (goat|id) ~ 1),  # No varying slope allowed
+       ~ cp((goat|id)) + 1),  # No varying slope allowed
   list(y ~ 1,
        y ~ ~ 1),  # Needs to be explicit if y is defined
   list(y ~ 1,
-       1 + (1|bad_id) ~ 1),  # decimal group
+       ~ cp(1 + (1|bad_id)) + 1),  # decimal group
   list(y ~ 1,
-       1 + (1|id) ~ 1,
-       1 + (1|ok_id_integer) ~ 1),  # CP grouping factors must agree
+       ~ cp(1 + (1|id)) + 1,
+       ~ cp(1 + (1|ok_id_integer)) + 1),  # CP grouping factors must agree
   list(y ~ 1,
-       1 + (1|id) ~ 1,
-       1 + (1|ok_id_factor) ~ 1)  # CP grouping factors must agree
+       ~ cp(1 + (1|id)) + 1,
+       ~ cp(1 + (1|ok_id_factor)) + 1)  # CP grouping factors must agree
 )
 
 test_bad(bad_cps)
@@ -60,25 +69,25 @@ test_bad(bad_cps)
 
 good_cps = list(
   list(y ~ 0 + x,  # Regular cp
-       1 ~ 1),
+       ~ 1),
   list(y ~ 1,  # Implicit cp
        ~ 1,
        ~ 0),
   list(y ~ 0,  # Varying
-       1 + (1|id) ~ 1),
+       ~ cp(1 + (1|id)) + 1),
   list(y ~ 0,  # Chained varying cps
-       y ~ 1 ~ 1,
-       1 + (1|id) ~ 0,
-       1 + (1|id) ~ 0,
+       ~ 1,
+       ~ cp(1 + (1|id)) + 0,
+       ~ cp(1 + (1|id)) + 0,
        ~ x),
   list(y ~ 1,
-       (1|id) ~ 0),  # Intercept is implicit. I don't like it, but OK.
+       ~ cp((1|id)) + 0),  # Intercept is implicit. I don't like it, but OK.
   list(y ~ 1,
-       1 + (1||id) ~ 1),  # || is | for intercepts
+       ~ cp(1 + (1||id)) + 1),  # || is | for intercepts
   list(y ~ 1,
-       1 + (1|id) ~ 1,
-       1 + (1|id) ~ 1,
-       1 + (1|id) ~ 1)
+       ~ cp(1 + (1|id)) + 1,
+       ~ cp(1 + (1|id)) + 1,
+       ~ cp(1 + (1|id)) + 1)
 )
 
 test_good(good_cps)
@@ -130,7 +139,7 @@ good_weights = list(
   list(y | weights(weights_ok) ~ 1),  # Regular
   list(y | weights(weights_ok) ~ 1,
        ~ 1 + x + I(x^2),
-       1 + (1|id) ~ 1)  # With multiple segments and functions and varying
+       ~ cp(1 + (1|id)) + 1)  # With multiple segments and functions and varying
 )
 
 test_good(good_weights)

@@ -9,7 +9,7 @@ cp_group_data = data.frame(
 test_that("group-level change points use one grouping factor", {
   expect_error(
     mcp(
-      list(y ~ 1, 1 + (1 | id) ~ 1, 1 + (1 | site) ~ 1),
+      list(y ~ 1, ~ cp(1 + (1 | id)) + 1, ~ cp(1 + (1 | site)) + 1),
       cp_group_data,
       par_x = "x",
       sample = FALSE
@@ -21,7 +21,7 @@ test_that("group-level change points use one grouping factor", {
 
 test_that("group-level change points use absolute locations and sequential bounds", {
   fit = mcp(
-    list(y ~ 1, 1 + (1 | id) ~ 1, 1 + (1 | id) ~ 1),
+    list(y ~ 1, ~ cp(1 + (1 | id)) + 1, ~ cp(1 + (1 | id)) + 1),
     cp_group_data,
     par_x = "x",
     sample = FALSE
@@ -38,7 +38,7 @@ test_that("group-level change points use absolute locations and sequential bound
 
 test_that("custom normal change-point hierarchies retain model bounds", {
   fit = mcp(
-    list(y ~ 1, 1 + (1 | id) ~ 1),
+    list(y ~ 1, ~ cp(1 + (1 | id)) + 1),
     cp_group_data,
     par_x = "x",
     prior = list(cp_1_id = "dnorm(0, cp_1_id_sd)"),
@@ -51,7 +51,7 @@ test_that("custom normal change-point hierarchies retain model bounds", {
 
 test_that("simulation generates bounded hierarchical change-point locations", {
   fit = mcp(
-    list(y ~ 1, 1 + (1 | id) ~ 1),
+    list(y ~ 1, ~ cp(1 + (1 | id)) + 1),
     cp_group_data,
     par_x = "x",
     sample = FALSE
@@ -81,7 +81,7 @@ test_that("simulation generates bounded hierarchical change-point locations", {
 
 test_that("prior draws keep a single varying change point in range", {
   fit = mcp(
-    list(y ~ 1, 1 + (1 | id) ~ 1),
+    list(y ~ 1, ~ cp(1 + (1 | id)) + 1),
     cp_group_data,
     par_x = "x",
     sample = "prior",
@@ -97,7 +97,7 @@ test_that("prior draws keep a single varying change point in range", {
 
 test_that("simulation samples adjacent varying change points in realized order", {
   fit = mcp(
-    list(y ~ 1, 1 + (1 | id) ~ 1, 1 + (1 | id) ~ 1),
+    list(y ~ 1, ~ cp(1 + (1 | id)) + 1, ~ cp(1 + (1 | id)) + 1),
     cp_group_data,
     par_x = "x",
     sample = FALSE

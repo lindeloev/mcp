@@ -3,7 +3,7 @@
 ###############
 prior_model = list(
   y ~ 1 + x,
-  1 + (1|id) ~ 1 + x,
+  ~ cp(1 + (1|id)) + 1 + x,
   ~ 0
 )
 
@@ -292,8 +292,8 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     fit_multi = mcp(
       list(
         y ~ 1 + x + offset(log(exposure)),
-        1 ~ 1 + x,
-        1 ~ 1 + offset(0)
+        ~ 1 + x,
+        ~ 1 + offset(0)
       ),
       data = d,
       family = fam,
@@ -317,7 +317,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     fit_diff = mcp(
       list(
         y ~ 1 + x + offset(log(exposure)),
-        1 ~ 1 + x + offset(log(exposure2))
+        ~ 1 + x + offset(log(exposure2))
       ),
       data = d,
       family = fam,
@@ -629,7 +629,7 @@ test_that("default priors keep segment lines in place when change points move", 
   user_fit = mcp(list(y ~ 1, ~ 0 + x), data, par_x = "x", prior = list(x_2 = "dnorm(0, 1)"), sample = FALSE)
   expect_false(grepl("_rise_", user_fit$jags_code))
   data$id = rep(1:5, 20)
-  varying_fit = mcp(list(y ~ 1, 1 + (1 | id) ~ 0 + x), data, par_x = "x", sample = FALSE)
+  varying_fit = mcp(list(y ~ 1, ~ cp(1 + (1 | id)) + 0 + x), data, par_x = "x", sample = FALSE)
   expect_false(grepl("_rise_", varying_fit$jags_code))
 })
 

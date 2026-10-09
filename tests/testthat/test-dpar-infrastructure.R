@@ -682,7 +682,7 @@ test_that("integer varying groups can control plot color", {
   data = expand.grid(x = 1:4, id = 1:2, state = factor(c("A", "B")))
   data$y = 0
   fit = mcp(
-    list(y ~ 1 + state, 1 + (1 | id) ~ 1),
+    list(y ~ 1 + state, ~ cp(1 + (1 | id)) + 1),
     data,
     par_x = "x",
     sample = FALSE
@@ -765,7 +765,7 @@ test_that("fitted() intervals differ across varying levels and contain the fitte
     y = 0
   )
   fit = mcp(
-    list(y ~ 1, 1 + (1 | id) ~ 1),
+    list(y ~ 1, ~ cp(1 + (1 | id)) + 1),
     data,
     par_x = "x",
     sample = FALSE

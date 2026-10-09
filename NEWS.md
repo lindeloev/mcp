@@ -42,6 +42,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - `hypothesis()` returns column `prob` instead of `p` for the posterior (or prior) probability of directional hypotheses, preventing confusion with frequentist p-values.
 
+- **Change points are modeled using `cp()`:** Segments 2+ are now one-sided formulas, and change points are modeled using `cp()`, e.g., `list(y ~ 1, ~ cp((1 | id)) + 0 + x)` instead of `list(y ~ 1, 1 + (1 | id) ~ 0 + x)`. This avoids confusing the left-hand side with the response variable. The old syntax is deprecated and works with a warning that shows the new formula. `formula(fit)` and `summary(fit)` show the new syntax.
+
 - **Parameters and outputs:**
 
   - `fit$pars` was removed. Use `mcp_pars(fit)` for a canonical table of model parameters and `mcp_columns(fit)` for resolved data-column roles, including the automatically chosen `par_x`.

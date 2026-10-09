@@ -333,8 +333,8 @@ if (plot) {
 }",
     group_cp = "# Define model
 model = list(
-  y ~ 1 + x,  # intercept + slope
-  1 + (1|id) ~ 0 + x  # joined slope
+  y ~ 1 + x,              # intercept + slope
+    ~ cp((1|id)) + 0 + x  # joined slope with group-level change points
 )
 
 # Simulate data

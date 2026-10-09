@@ -32,11 +32,12 @@
 #'    and starts afresh.
 #'
 #' `sigma` and `shape` are required by the likelihood, so they include an intercept in segment 1.
+#' Each segment after the first starts at a change point, so it always includes a change-point
+#' intercept (`cp_1`, `cp_2`, ...). Use `cp()` to add terms to it, e.g., `cp((1 | id))`.
 #'
-#' **Formula syntax.** The general format of a segment formula is `response ~ cp ~ predictors` (e.g., `y ~ 1 ~ 1 + x`),
-#' except the first segment has no change point and uses `response ~ predictors`. The response and
-#' change-point parts can be omitted (`cp ~ predictor` assumes the same response; `~ predictor`
-#' assumes an intercept-only change point).
+#' **Formula syntax.** The first segment has the format `response ~ predictors`. Later segments use
+#' the same response, so they are one-sided, `~ predictors`, and each starts at a change point that
+#' can be modeled using `cp()`, e.g., `~ cp((1 | id)) + 0 + x`.
 #'
 #' **1. Response (segment 1 only):**
 #' * `y ~ ...`: Standard continuous or count response (Gaussian, Poisson, Bernoulli).
@@ -46,9 +47,9 @@
 #'   not predictions).
 #' * `y | trials(total) + weights(w) ~ ...`: Combine response auxiliaries using `+`.
 #'
-#' **2. Change-point modeling (`cp`, segments 2+):**
-#' * `1 ~ ...` (or omitted, e.g., `~ x`): Population-level change point (default).
-#' * `1 + (1 | id) ~ ...`: Group-level change-point deviations around the population change point.
+#' **2. Change-point modeling (`cp()`, segments 2+):**
+#' * `~ x` (i.e., `cp()` omitted): Population-level change point (default). Same as `~ cp(1) + x`.
+#' * `~ cp((1 | id)) + x`: Group-level change-point deviations around the population change point.
 #'   [Read more](https://lindeloev.github.io/mcp/articles/group_effects.html).
 #'
 #' **3. Regression formula (all segments):** [Read more](https://lindeloev.github.io/mcp/articles/formulas.html)

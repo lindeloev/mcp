@@ -179,7 +179,7 @@ model = list(
   y ~ 1,
   
   # Changed standard deviation, with a group-level change point.
-  1 + (1|id) ~ 0 + sigma(1)
+  ~ cp((1|id)) + 0 + sigma(1)
 )
 ```
 

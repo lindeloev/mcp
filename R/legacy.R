@@ -48,6 +48,37 @@ check_legacy_parameter_names = function(x, context) {
 }
 
 
+# Translate deprecated left-hand sides in segment 2+ formulas to cp() syntax, with a warning
+# E.g., `1 + (1 | id) ~ 0 + x` and `y ~ 1 + (1 | id) ~ 0 + x` --> `~ cp(1 + (1 | id)) + 0 + x`.
+translate_cp_lhs = function(form, i, response) {
+  lhs = form[[2]]
+  rhs = form[[3]]
+  if (is_tilde_call(rhs))
+    stop("Error in segment ", i, " (change point): empty change point term.", call. = FALSE)
+
+  # `response ~ cp ~ rhs`
+  if (is_tilde_call(lhs)) {
+    if (is_tilde_call(lhs[[2]]))
+      stop("Error in segment ", i, ": Got none or more than two ~ in a segment formula.", call. = FALSE)
+    if (!identical(lhs[[2]], response))
+      stop("Error in segment ", i, ": the response must be the same as in segment 1. Got `", deparse1(lhs[[2]]), "`.", call. = FALSE)
+    lhs = lhs[[3]]
+  }
+  if (!is.null(split_cp(rhs)$cp))
+    stop("Error in segment ", i, ": the change point is defined both in `cp()` and on the left-hand side. Use only `cp()`.", call. = FALSE)
+
+  # If using the old lhs-cp, transform to rhs-cp during soft deprecation.
+  new_rhs = if (identical(lhs, 1)) rhs else Reduce(function(a, b) call("+", a, b), c(call("cp", lhs), unpack_additive(rhs)))
+  new_form = stats::as.formula(call("~", new_rhs), env = environment(form))
+  warning(
+    "Left-hand sides in segment 2+ formulas were deprecated in mcp v0.4.0. Use `cp()` for change points: ",
+    "replace `", formula_to_char(form), "` with `", formula_to_char(new_form), "` in segment ", i, ".",
+    call. = FALSE
+  )
+  new_form
+}
+
+
 # Warn on deprecated which_y argument
 # - args: List of dots arguments passed to a function.
 # - func_name: Name of calling function for warning message context.

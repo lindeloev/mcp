@@ -23,20 +23,63 @@ to_formula = function(form) {
 
 
 # Convert formula to string using deparse1() to guarantee a single string.
+# One-sided formulas get a space after the tilde ("~ 0 + x"), like two-sided ones.
 formula_to_char = function(form) {
   checkmate::assert_formula(form)
-  deparse1(form)
+  sub("^~", "~ ", deparse1(form))
 }
 
 
-# Returns the right-hand-side of a formula
+# Returns the right-hand-side of a formula, excluding the change point in cp()
 get_rhs = function(form) {
   checkmate::assert_formula(form)
-  if (length(form) == 2) {
-    return(form)
-  } else if (length(form) == 3) {
-    return(form[-2])
-  }
+  rhs = split_cp(form[[length(form)]])$rhs
+  stats::as.formula(call("~", rhs), env = environment(form))
+}
+
+
+# Check whether an expression is a formula call, e.g., `y ~ x`
+is_tilde_call = function(expr) {
+  is.call(expr) && identical(expr[[1]], as.name("~"))
+}
+
+
+# Check whether an expression is a call to cp()
+is_cp_call = function(expr) {
+  is.call(expr) && identical(deparse1(expr[[1]]), "cp")
+}
+
+
+# Recursively check whether an expression contains any call to cp()
+contains_cp_call = function(expr) {
+  if (is_cp_call(expr))
+    return(TRUE)
+  if (!is.call(expr))
+    return(FALSE)
+
+  any(vapply(as.list(expr)[-1], contains_cp_call, logical(1)))
+}
+
+
+# Split a segment RHS expression into the cp() content (NULL if absent) and the remaining terms
+# E.g., `cp(1 + (1 | id)) + 0 + x` --> list(cp = `1 + (1 | id)`, rhs = `0 + x`).
+split_cp = function(rhs) {
+  leaves = unpack_additive(rhs)
+  is_cp = vapply(leaves, is_cp_call, logical(1))
+  if (!any(is_cp))
+    return(list(cp = NULL, rhs = rhs))
+  if (sum(is_cp) > 1)
+    stop("Only one `cp()` allowed in each segment formula. Got `", deparse1(rhs), "`.", call. = FALSE)
+
+  cp = leaves[is_cp][[1]]
+  if (length(cp) != 2)
+    stop("`cp()` takes exactly one formula, e.g., `cp(1 + (1 | id))`. Got `", deparse1(cp), "`.", call. = FALSE)
+
+  rest = leaves[!is_cp]
+  list(
+    cp = cp[[2]],
+    rhs = if (length(rest) == 0) 1 else Reduce(function(a, b) call("+", a, b), rest)
+  )
 }
 
 
@@ -253,42 +296,34 @@ canonicalize_rhs = function(form_rhs, family) {
 
 # Canonicalize a segment formula into a uniform AST structure
 # Returns a list: response (expr), cp (expr or NULL for segment 1), rhs (expr), and form (canonical formula)
+# E.g., `~ cp((1 | id)) + 0 + x` gives cp = `(1 | id)` and rhs = `0 + x`.
 canonicalize_segment = function(form, i, default_response = NULL) {
   form = to_formula(form)
-  env = environment(form)
+  if (i > 1 && length(form) == 3) {
+    if (identical(form[[2]], default_response))
+      stop("Error in segment ", i, ": segments 2+ use the response from segment 1. Remove `", deparse1(form[[2]]), " ~`, e.g., `~ 0 + x`.", call. = FALSE)
+    form = translate_cp_lhs(form, i, default_response)
+  }
+
+  split = split_cp(form[[length(form)]])
+  if (contains_cp_call(split$rhs))
+    stop("Error in segment ", i, ": `cp()` must be a separate term in the formula, e.g., `~ cp((1 | id)) + 0 + x`. Got `", deparse1(form), "`.", call. = FALSE)
 
   # Segment 1 must define the response and cannot contain a change point
   if (i == 1) {
     if (length(form) == 2)
       stop("No response variable in segment 1.", call. = FALSE)
-    if (length(form) == 3 && is.call(form[[2]]) && identical(form[[2]][[1]], as.name("~")))
+    if (is_tilde_call(form[[2]]))
       stop("The first segment must have exactly one tilde. Got two.", call. = FALSE)
+    if (!is.null(split$cp))
+      stop("Segment 1 has no change point, so `cp()` is only allowed in segments 2+.", call. = FALSE)
 
-    canonical_form = stats::as.formula(call("~", form[[2]], form[[3]]), env = env)
-    return(list(response = form[[2]], cp = NULL, rhs = form[[3]], form = canonical_form))
+    return(list(response = form[[2]], cp = NULL, rhs = split$rhs, form = form))
   }
 
-  # Segment > 1: decompose into response, cp, and rhs
-  if (length(form) == 2) {
-    response = default_response
-    cp = 1
-    rhs = form[[2]]
-  } else if (is.call(form[[3]]) && identical(form[[3]][[1]], as.name("~"))) {
-    stop("Error in segment ", i, " (change point): empty change point term.", call. = FALSE)
-  } else if (is.call(form[[2]]) && identical(form[[2]][[1]], as.name("~"))) {
-    if (is.call(form[[2]][[2]]) && identical(form[[2]][[2]][[1]], as.name("~")))
-      stop("Error in segment ", i, ": Got none or more than two ~ in a segment formula.", call. = FALSE)
-    response = form[[2]][[2]]
-    cp = form[[2]][[3]]
-    rhs = form[[3]]
-  } else {
-    response = default_response
-    cp = form[[2]]
-    rhs = form[[3]]
-  }
-
-  canonical_form = stats::as.formula(call("~", call("~", response, cp), rhs), env = env)
-  list(response = response, cp = cp, rhs = rhs, form = canonical_form)
+  # Segment > 1: the response is inherited from segment 1 and the change point is in cp(), defaulting to cp(1)
+  cp = if (is.null(split$cp)) 1 else split$cp
+  list(response = default_response, cp = cp, rhs = split$rhs, form = form)
 }
 
 
@@ -392,7 +427,7 @@ unpack_cp = function(form_cp, i, env = parent.frame()) {
 
     varying_parts = strsplit(gsub(" ", "", varying_terms), "\\|\\|?")[[1]]  # (1 || id) is (1 | id) for intercepts
     if (!varying_parts[1] == "1")
-      stop("Error in segment ", i, " (change point): Only plain intercepts are allowed in group-level effects, e.g., (1|id).")
+      stop("Error in segment ", i, " (change point): Only plain intercepts are allowed in group-level effects, e.g., `cp((1 | id))`.")
 
     if (!grepl("^[A-Za-z._0-9]+$", varying_parts[2]))
       stop("Error in segment ", i, " (change point): invalid grouping-variable format in group-level effect. Got: ", varying_parts[2])
@@ -401,10 +436,10 @@ unpack_cp = function(form_cp, i, env = parent.frame()) {
   # Population-level effects
   attrs = attributes(stats::terms(remove_terms(form_cp, "varying")))
   if (length(attrs$term.labels) > 0)
-    stop("Error in segment ", i, " (change point): Only intercepts (1) are allowed in population-level effects.")
+    stop("Error in segment ", i, " (change point): Only intercepts are allowed in population-level effects, e.g., `cp(1 + (1 | id))`.")
 
   if (attrs$intercept == 0)
-    stop("Error in segment ", i, " (change point): change points always include a population-level intercept. Remove `0 +`, e.g., `1 ~ ...` or `1 + (1 | id) ~ ...`.")
+    stop("Error in segment ", i, " (change point): change points always include a population-level intercept. Remove `0 +`, e.g., `cp((1 | id))`.")
 
   tibble::tibble(
     cp_varying = !is.null(form_varying),

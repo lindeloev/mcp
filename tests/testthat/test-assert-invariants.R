@@ -7,7 +7,7 @@ test_that("model-defining data cannot be missing", {
 
   group_data = data.frame(x = 1:4, y = 0, id = c("a", NA, "b", "b"))
   expect_error(
-    mcp(list(y ~ 1, 1 + (1 | id) ~ 1), group_data, par_x = "x", sample = FALSE),
+    mcp(list(y ~ 1, ~ cp(1 + (1 | id)) + 1), group_data, par_x = "x", sample = FALSE),
     "id"
   )
 
@@ -22,7 +22,7 @@ test_that("model-defining data cannot be missing", {
 test_that("simulation requires ordered population change points", {
   data = data.frame(x = 1:5, y = 0)
   fit = mcp(
-    list(y ~ 1, 1 ~ 1, 1 ~ 1), data,
+    list(y ~ 1, ~ 1, ~ 1), data,
     par_x = "x", sample = FALSE
   )
 

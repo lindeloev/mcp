@@ -27,7 +27,7 @@ The formulas are called "segments" because they divide the (observed) x-axis int
 
 # Formula format for segments
 
-The three formula parts are called **response**, **cp**, and **predictor**. The general format is `response ~ cp ~ predictor`, except for the first segment, which has no change point and therefore uses `response ~ predictor`. In later segments the response may be omitted, and the change point defaults to `1`, so `~ x` is shorthand for `y ~ 1 ~ 1 + x`. The predictor part works like in `lm()`/`glm()`/`brms::brm()`.
+The first segment has the format `response ~ predictor`. Later segments use the same response, so they are one-sided, `~ predictor`, and each starts at a change point that can be modeled using `cp()`, e.g., `~ cp((1 | id)) + 0 + x`. The predictor part works like in `lm()`/`glm()`/`brms::brm()`.
 
 **1. Response (segment 1 only):**
 
@@ -36,10 +36,10 @@ The three formula parts are called **response**, **cp**, and **predictor**. The 
 - `y | weights(w) ~ ...`: Observation log-likelihood weights (multiplies each observation's log-likelihood contribution by `w > 0`; affects posterior inference and `log_lik()`, but not predictions).
 - `y | trials(total) + weights(w) ~ ...`: Combine response auxiliaries using `+`.
 
-**2. Change-point modeling (`cp`, segments 2+):**
+**2. Change-point modeling (`cp()`, segments 2+):**
 
-- `1 ~ ...` (or omitted, e.g., `~ x`): Population-level change point (default).
-- `1 + (1 | id) ~ ...`: Group-level change-point deviations around the population change point ([read more](../articles/group_effects.html)).
+- `~ x` (i.e., `cp()` omitted): Population-level change point (default). Same as `~ cp(1) + x`.
+- `~ cp((1 | id)) + x`: Group-level change-point deviations around the population change point ([read more](../articles/group_effects.html)). The intercept is implicit, so this is the same as `cp(1 + (1 | id))`.
 
 **3. Regression formula (all segments):**
 
@@ -79,6 +79,8 @@ Segment 2 continues from where the plateau left off, while segment 3 starts afre
 The same rules apply separately to `sigma()`, `shape()`, `ar()`, and `ma()`. 
 
 `sigma` and `shape` are required by the likelihood, so they include an intercept in segment 1. Per rule 3, they are joined in later segments that do not include them.
+
+Segment 2+ starts at a change point, so it always includes a change-point intercept (`cp_1`, `cp_2`, ...), which cannot be removed. Use `cp()` to add terms to it, e.g., `cp((1 | id))` for [group-level change points](../articles/group_effects.html).
 
 
 ## Joining applies to the intercept and x-terms
@@ -129,11 +131,11 @@ model = list(
     ~ 0 + x              # At cp_2: Joined slope (x_3); (1 | id) not included
 )
 
-# 4. Group-level change points: effects before the last tilde
+# 4. Group-level change points in cp()
 model = list(
-  y ~ 1 + x,             # Intercept_1, x_1
-  1 + (1 | id) ~ 0 + x,  # At cp_1, varying by id (cp_1_id): Joined slope (x_2)
-    ~ 1                  # At cp_2: Disjoined plateau (Intercept_3)
+  y ~ 1 + x,                 # Intercept_1, x_1
+    ~ cp((1 | id)) + 0 + x,  # At cp_1, varying by id (cp_1_id): Joined slope (x_2)
+    ~ 1                      # At cp_2: Disjoined plateau (Intercept_3)
 )
 
 # 5. Distributional parameters and AR/MA
@@ -219,7 +221,7 @@ mcp_pars(fit)
 
 Key features of multiple regression models in `mcp`:
 
-- **Common change points across categories**: The change points `cp_1` and `cp_2` are estimated as single locations shared across all levels of `state`. (If you instead want category-specific change-point locations that deviate per group, use group-level effects like `1 + (1|group) ~ ...`; see [group-level effects](../articles/group_effects.html)).
+- **Common change points across categories**: The change points `cp_1` and `cp_2` are estimated as single locations shared across all levels of `state`. (If you instead want category-specific change-point locations that deviate per group, use group-level effects like `cp((1|group))`; see [group-level effects](../articles/group_effects.html)).
 - **Parameter names across segments**: In segment 1, `xstateA_1` through `xstateD_1` represent separate slopes for each level of `state`. In segment 2, `stateB_2`, `stateC_2`, and `stateD_2` represent intercept offsets relative to the reference level `stateA`. A variable such as `z` must be included in each segment where it applies.
 - **Plotting and prediction**: Visualize by state using `plot(fit, color_by = "state")` or `plot(fit, facet_by = "state")`. By default, other numeric variables (like `z`) are held at their mean automatically by `interpolate_newdata()`, or can be set explicitly via `plot(fit, color_by = "state", at = list(z = 0))`.
 

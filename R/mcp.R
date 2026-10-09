@@ -10,7 +10,7 @@
 #'   Missing values in the response variable are imputed using the posterior predictive.
 #'   \code{\link{fitted.mcpfit}} or \code{\link{predict.mcpfit}} details how to see the imputed values.
 #' @param model A list of formulas, one for each segment, in the format
-#'   `model = list(response ~ predictors, cp ~ predictors)`. See [mcp-formula] for how segments connect
+#'   `model = list(response ~ predictors, ~ cp(...) + predictors)`, where `cp()` is optional. See [mcp-formula] for how segments connect
 #'   and the full formula syntax.
 #' @param prior Named list, e.g., `prior = list(cp_1 = "dunif(0, 100)", Intercept_1 = "dnorm(0, 1)")`. 
 #'   List names are parameter names (`cp_1`, `Intercept_1`, `x_2`,

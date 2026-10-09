@@ -116,7 +116,7 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
     y = c(2, 4, 3, 8, 7, 9),
     id = rep(c("a", "b"), each = 3)
   )
-  fit = mcp(list(y ~ 1, (1 | id) ~ 1), data, par_x = "x", sample = FALSE)
+  fit = mcp(list(y ~ 1, ~ cp((1 | id)) + 1), data, par_x = "x", sample = FALSE)
   tables = get_fit_model_tables(fit)
 
   expect_named(
@@ -207,7 +207,7 @@ test_that("summary, fixef, and ranef select parameter roles consistently", {
     id = rep(c("a", "b"), each = 4)
   )
   fit = mcp(
-    list(y ~ 1 + ar(1) + (1 | id), (1 | id) ~ 1),
+    list(y ~ 1 + ar(1) + (1 | id), ~ cp((1 | id)) + 1),
     data, par_x = "x", sample = FALSE
   )
   pars = mcp_pars(fit)
@@ -238,7 +238,7 @@ test_that("legacy fit detection blocks pre-0.4.0 mcpfit objects", {
     y = c(2, 4, 3, 8, 7, 9),
     id = rep(c("a", "b"), each = 3)
   )
-  fit = mcp(list(y ~ 1, (1 | id) ~ 1), data, par_x = "x", sample = FALSE)
+  fit = mcp(list(y ~ 1, ~ cp((1 | id)) + 1), data, par_x = "x", sample = FALSE)
   legacy = fit
   legacy$family = gaussian()
 
@@ -255,6 +255,24 @@ test_that("legacy fit detection blocks pre-0.4.0 mcpfit objects", {
     "install_github",
     fixed = TRUE
   )
+})
+
+
+test_that("deprecated change points on the left-hand side warn and equal cp()", {
+  data = data.frame(x = 1:12, y = c(2, 4, 3, 8, 7, 9, 5, 6, 4, 8, 9, 7), id = rep(c("a", "b"), 6))
+  fit_new = mcp(list(y ~ 1 + x, ~ cp(1 + (1 | id)) + 0 + x, ~ 1), data, par_x = "x", sample = FALSE)
+  expect_warning(
+    expect_warning(
+      fit_old <- mcp(list(y ~ 1 + x, 1 + (1 | id) ~ 0 + x, y ~ 1 ~ 1), data, par_x = "x", sample = FALSE),
+      "replace `1 + (1 | id) ~ 0 + x` with `~ cp(1 + (1 | id)) + 0 + x` in segment 2",
+      fixed = TRUE
+    ),
+    "replace `y ~ 1 ~ 1` with `~ 1` in segment 3",
+    fixed = TRUE
+  )
+  expect_identical(fit_old$jags_code, fit_new$jags_code)
+  expect_identical(mcp_pars(fit_old), mcp_pars(fit_new))
+  expect_identical(formula(fit_old), formula(fit_new))
 })
 
 
@@ -296,7 +314,7 @@ test_that("helpful deprecation detections work for old code idioms", {
   )
   data_id = cbind(data, id = rep(c("a", "b"), each = 3))
   expect_error(
-    mcp(list(y ~ 1, 1 + (1 | id) ~ 1), data_id, prior = list(cp_1_sd = "dnorm(0, 1) T(0, )"), par_x = "x", sample = FALSE),
+    mcp(list(y ~ 1, ~ cp(1 + (1 | id)) + 1), data_id, prior = list(cp_1_sd = "dnorm(0, 1) T(0, )"), par_x = "x", sample = FALSE),
     "use `cp_i_<group>_sd`",
     fixed = TRUE
   )

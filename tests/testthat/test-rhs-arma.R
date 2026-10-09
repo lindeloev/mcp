@@ -218,7 +218,7 @@ test_that("mcp builds MA parameters and JAGS code", {
 test_that("GARMA evaluation keeps group-level draws as separate series", {
   data = data.frame(y = 1:5, x = -1:3, id = letters[1:5])
   fit = mcp(
-    list(y ~ 1, 1 + (1 | id) ~ 1 + ar(1)),
+    list(y ~ 1, ~ cp(1 + (1 | id)) + 1 + ar(1)),
     data, par_x = "x", sample = FALSE, quiet = TRUE
   )
   draws = cbind(

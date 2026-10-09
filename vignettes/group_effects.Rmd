@@ -38,12 +38,12 @@ future::plan(future::multisession, workers = 3)
 
 # Specifying group-level change points
 
-You specify group-level effects using the familiar [`lmer`](https://www.rdocumentation.org/packages/lme4/versions/1.1-21/topics/lmer) and `brms` syntax `(1|group)`. In the cp part, this models a group-specific deviation from the population-level change point. For example:
+You specify group-level effects using the familiar [`lmer`](https://www.rdocumentation.org/packages/lme4/versions/1.1-21/topics/lmer) and `brms` syntax `(1|group)`. Inside `cp()`, this models a group-specific deviation from the population-level change point. For example:
 
 ```{r}
 model = list(
-  y ~ 1,  # Intercept_1
-  1 + (1|id) ~ 0 + x  # cp_1, cp_1_id_sd, cp_1_id[i]
+  y ~ 1,                  # Intercept_1
+    ~ cp((1|id)) + 0 + x  # cp_1, cp_1_id_sd, cp_1_id[i]
 )
 ```
 
@@ -51,10 +51,10 @@ You can have multiple group-level change points, but they must use the same grou
 
 ```{r}
 model = list(
-  y ~ 1,  # Intercept_1
-  1 + (1|id) ~ 0 + x,  # cp_1, cp_1_id_sd, cp_1_id[i]
-  1 + (1|id) ~ 0,      # cp_2, cp_2_id_sd, cp_2_id[i]
-  (1|id) ~ 1           # cp_3 (implicit), cp_3_id_sd, cp_3_id[i]
+  y ~ 1,                   # Intercept_1
+    ~ cp((1|id)) + 0 + x,  # cp_1, cp_1_id_sd, cp_1_id[i]
+    ~ cp((1|id)) + 0,      # cp_2, cp_2_id_sd, cp_2_id[i]
+    ~ cp((1|id)) + 1       # cp_3, cp_3_id_sd, cp_3_id[i]
 )
 ```
 
@@ -125,8 +125,8 @@ Let us simulate group-specific deviations in the change point between a plateau 
 
 ```{r}
 model = list(
-  y ~ 1,  # Intercept_1
-  1 + (1|id) ~ 0 + x  # cp_1, cp_1_id_sd, cp_1_id[i]
+  y ~ 1,                  # Intercept_1
+    ~ cp((1|id)) + 0 + x  # cp_1, cp_1_id_sd, cp_1_id[i]
 )
 ```
 
