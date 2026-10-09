@@ -233,6 +233,8 @@ Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) an
 
 - See priors in `fit$prior` or `prior_summary(fit)` and set priors using `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)"))`.
 
+- Default priors are weakly informative and follow `rstanarm` for intercepts and coefficients and `brms` for scale parameters, with a few documented deviations.
+
 - The default prior on change points is `dirichlet(1)` (uniform order statistics). For a single change point, this is the Beta(1, 1) / uniform distribution over `[min(x), max(x)]`. For multiple change points, it corresponds to a flat Dirichlet distribution over segment lengths with equal spacing between change points. Informativeness increases as the number of change points increases.
 
 - Fix parameters to specific values using `cp_1 = 45`. To share a coefficient between segments, use `same()` in the model, e.g., `~ 0 + same(x)`.

@@ -219,6 +219,8 @@ prior_summary(fit)
 
 `cp_1_sd` is the latent normal scale governing the `cp_1_id` deviations. Unlike predictor group-level effects, change-point locations are also constrained to remain in range and ordered within each group.
 
+For predictor group-level effects (e.g., `(state || id)`), the SDs default to the `brms` half-Student-t prior on the response scale, `dt(0, max(2.5, mad(y)), 3) T(0, )`, with slope SDs divided by `sd(column)`. Log, logit, and probit links and distributional parameters use other scales; see [default priors on group-level effects](../articles/priors.html#default-priors-on-group-level-effects).
+
 
 # JAGS code
 Here is the JAGS code for the model used in this article:

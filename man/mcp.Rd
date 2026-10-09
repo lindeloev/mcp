@@ -38,7 +38,7 @@ Missing values in the response variable are imputed using the posterior predicti
 List names are parameter names (\code{cp_1}, \code{Intercept_1}, \code{x_2},
 \code{sigma_1}, etc.) and values are a distribution string (e.g., \code{"dnorm(0, 1) T(0, )"}),
 a fixed value (e.g., \code{-2.1}), or the name of another parameter to share its value.
-Data-calibrated, regularizing defaults are used where priors are not specified;
+Weakly informative defaults are used where priors are not specified;
 see them with \code{\link[=prior_summary]{prior_summary()}}. See \link{mcp-priors} for the full syntax.}
 
 \item{family}{A supported family: \code{gaussian()}, \code{binomial()}, \code{bernoulli()},

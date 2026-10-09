@@ -297,7 +297,7 @@ It is symmetric around zero and gently shrinks away from the $[-1, 1]$ bounds: i
 
 `brms` also models AR and MA coefficients directly within $[-1, 1]$, but uses flat default priors over that range. Thus `mcp` keeps the familiar parameter interpretation while adding mild regularization toward zero; fits should generally be similar when the likelihood is informative.
 
-Categorical contrasts default to `dnorm(0, 0.25)`. Numeric slopes are also normal and scaled so that one representative predictor change has prior SD 0.25. Thus approximately 95% of the prior change lies within $\pm 0.5$.
+Categorical contrasts default to `dnorm(0, 0.25)`. Slopes are also normal and scaled by the predictor's SD, `dnorm(0, 0.25 / sd(column))`. Thus approximately 95% of the prior change per SD of the predictor lies within $\pm 0.5$.
 
 The defaults express no assumption about the sign. For a time series where positive first-order autocorrelation is expected, alternatives include `ar1_1 = "dunif(0, 1)"` or `ar1_1 = "dnorm(0.5, 0.5) T(0, 1)"`. [Read more about specifying and checking priors](../articles/priors.html).
 

@@ -135,22 +135,18 @@ cbind(fit$prior)  # Raw view
 prior_summary(fit)  # Richer view. Try adding verbose = TRUE
 ```
 
-The priors on change points are discussed extensively in the prior vignette. With the default logit link, intercepts and categorical contrasts use `dt(0, 1.5, 3)`. Its central 95% interval is approximately -4.8 to 4.8 logits, corresponding to probabilities from 0.008 to 0.992, while its heavy tails retain support for more extreme values. The figure compares Student-t priors with scales 1 (red), 1.5 (black, the `mcp` default), and 2.5 (blue), together with their correspondence to probabilities. The probit link currently uses the same numerical default for simplicity.
-
-Compared with the `dt(0, 2.5, 3)` intercept and flat coefficient defaults in `brms`, these proper priors mildly reduce extreme predictions in short segments while remaining broad and heavy-tailed.
+The priors on change points are discussed extensively in the [prior article](../articles/priors.html). With the default logit link, intercepts use `dnorm(0, 1.5)`, which is approximately uniform on the probability scale: its central 95% interval is approximately -2.9 to 2.9 logits, corresponding to probabilities from 0.05 to 0.95. The probit link uses `dnorm(0, 1)`, which is exactly uniform on the probability scale. The figure compares normal priors with SD 1.5 (black, the `mcp` default) and 2.5 (blue, the `rstanarm` default), together with their correspondence to probabilities.
 
 ```{r}
 inverse_logit = function(x) exp(x) / (1 + exp(x))
-scaled_t = function(x, scale) dt(x / scale, df = 3) / scale
 
 # Start the plot
 library(ggplot2)
 ggplot(data.frame(logits = 0), aes(x = logits)) + 
   
-  # Plot Student-t priors. Set scale in "args"
-  stat_function(fun=scaled_t, args = list(scale = 1), lwd=2, col="red") +
-  stat_function(fun=scaled_t, args = list(scale = 1.5), lwd=2, col="black") +
-  stat_function(fun=scaled_t, args = list(scale = 2.5), lwd=2, col="blue") +
+  # Plot normal priors. Set SD in "args"
+  stat_function(fun = dnorm, args = list(sd = 1.5), lwd = 2, col = "black") +
+  stat_function(fun = dnorm, args = list(sd = 2.5), lwd = 2, col = "blue") +
   
   # Set the secondary axis
   scale_x_continuous(
@@ -166,7 +162,7 @@ ggplot(data.frame(logits = 0), aes(x = logits)) +
 
 Please keep in mind that when these priors combine through the model, the joint probability may be quite different.
 
-Numeric coefficient scales are divided by a representative change in their model-matrix column: its range when it has two values, and two standard deviations otherwise. For [x-terms](../articles/formulas.html#how-segments-connect) such as `x`, `state:x`, and `I(x^2)` (with `x` as the change-point variable), the representative change is instead the observed x-span, `max(x) - min(x)`. The implied change across the observed x-span therefore has the same 1.5-logit scale, regardless of the number of change points. Powers such as `I(x^2)` grow within a segment, so they additionally use the typical segment width, `(max(x) - min(x)) / n_segments()`, and imply the same change within a typical segment as a linear slope.
+Coefficients and categorical contrasts are autoscaled as in `rstanarm`: `dnorm(0, 1.5 / sd(column))` for logit links and `dnorm(0, 1 / sd(column))` for probit links, where `sd(column)` is the SD of the coefficient's model-matrix column, including the 0/1 dummies of factors. For [x-terms](../articles/formulas.html#how-segments-connect) such as `x` and `state:x` (with `x` as the change-point variable), this is `sd(x)` over all data, so slope priors do not depend on the number of change points. Powers such as `I(x^2)` use `sd((x - min(x))^2)`.
 
 
 # JAGS code

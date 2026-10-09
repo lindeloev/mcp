@@ -10,7 +10,7 @@
 #'
 #'  * A distribution in `mcp`'s JAGS-string syntax (e.g.,
 #'      `Intercept_1 = "dnorm(0, 1) T(0,)"`) indicating a
-#'      conventional prior distribution. Data-calibrated, regularizing defaults
+#'      conventional prior distribution. Weakly informative defaults
 #'      are used where priors are not specified. These are designed for stable
 #'      estimation and prediction, but should be justified before hypothesis testing.
 #'      `mcp` uses conventional distribution scales rather than JAGS precision:
@@ -22,21 +22,29 @@
 #'      is generally preferred. If two group-level deviations are shared via the prior,
 #'      they will need to have the same grouping variable.
 #'
-#' Default coefficient priors follow the autoscaled defaults of `rstanarm`: `normal(0, 2.5 * sd(y) / sd(x))`
-#' for identity links and `normal(0, 2.5 / sd(x))` for log links, where `sd(x)` is the standard deviation of
-#' the predictor's model-matrix column (including dummy variables for factors). Logit and probit links use
-#' narrower scales, `normal(0, 1.5 / sd(x))` and `normal(0, 1 / sd(x))`. For the change-point variable, `sd(x)` is taken over all
-#' data, and powers such as `I(x^2)` use `sd((x - min(x))^2)`. Intercepts also follow `rstanarm`, e.g.,
-#' `normal(mean(y), 2.5 * sd(y))` for Gaussian models (`normal(0, 1.5)` for logit and `normal(0, 1)` for probit), while `sigma`
-#' and group-level SDs follow `brms`, e.g., `student_t(3, 0, max(2.5, mad(y)))`. These are scale parameters, for
-#' which a half-Student-t is the standard weakly informative choice (Gelman, 2006).
+#' Default priors follow `rstanarm` for intercepts and coefficients and `brms` for scale parameters, with
+#' a few documented deviations:
+#'
+#'  * *Coefficients* are autoscaled as in `rstanarm`. For the mean (`mu`),
+#'      \deqn{\beta \sim \mathrm{Normal}\left(0, \frac{2.5 \cdot s_y}{\mathrm{sd}(\mathrm{column})}\right)}{beta ~ Normal(0, 2.5 * s_y / sd(column))}
+#'      where \eqn{s_y = \mathrm{sd}(y)}{s_y = sd(y)} for identity links and \eqn{s_y = 1}{s_y = 1} for other links.
+#'      \eqn{\mathrm{sd}(\mathrm{column})}{sd(column)} is the SD of the coefficient's model-matrix column, including
+#'      the 0/1 dummies of factors. This makes the prior largely invariant to the units of `x` and `y`. Logit and
+#'      probit links use 1.5 and 1 instead of 2.5. For x-terms, `sd(x)` is taken over all data, and powers such
+#'      as `I(x^2)` use `sd((x - min(x))^2)`.
+#'  * *Intercepts* are `normal(mean(y), 2.5 * sd(y))` for identity links, `normal(0, 1.5)` for logit, and
+#'      `normal(0, 1)` for probit. The latter two are (approximately) uniform on the probability scale.
+#'  * *`sigma` and group-level SDs* follow `brms`, e.g., `student_t(3, 0, max(2.5, mad(y)))`, since
+#'      half-Student-t priors are a standard weakly informative choice for scale parameters (Gelman, 2006).
 #'
 #' Like `rstanarm` and `brms`, which place intercept priors on centered predictors, the default prior on
 #' the segment-1 intercept applies to the level at the start of the segment, `min(x)`. The reported
 #' `Intercept_1` is still at `x = 0`, as in [lm()]. Later segments' intercepts are at their change point. 
-#' User-specified intercept priors apply to `Intercept_1` as written. Notice that the autoscaling
-#' does not factor in the number of segments or their expected x-range. Consider scaling by expected segment
-#' length on a case-by-case basis if you have such a priori expectations.
+#' Unlike in `rstanarm` and `brms`, other predictors are not centered, so the prior applies where they are zero.
+#' If such a predictor is far from zero, center it before fitting or set a prior on `Intercept_1`.
+#' User-specified intercept priors apply to `Intercept_1` as written. The autoscaling does not account for
+#' segment length. If you expect steep slopes or strong curvature within short segments, consider setting a
+#' wider prior.
 #'
 #' The default prior on change points is `dirichlet(1)` (uniform order statistics).
 #' For a single change point, this is the Beta(1, 1) / Uniform distribution over `[min(x), max(x)]`.
