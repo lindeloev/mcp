@@ -14,6 +14,7 @@ pkgload::load_all()
 # Prevent noto serif from being chosen
 systemfonts::register_variant(name = "sans", family = "Liberation Sans")
 bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_family = "sans"))
+set.seed(42)
 
 # Reproucible plotting across systems
 knitr::opts_chunk$set(
@@ -104,7 +105,7 @@ model = list(
 )
 
 # Get example data and fit it: mcp(model, data, ...)
-fit = mcp(model, demo_fit$data, sample = "both", seed = 78)
+fit = mcp(model, demo_fit$data, sample = "both")
 ```
 
 ## Plot and summary
@@ -112,7 +113,6 @@ fit = mcp(model, demo_fit$data, sample = "both", seed = 78)
 The default plot includes data, fitted lines drawn randomly from the posterior, and change point(s) posterior density for each chain. Here we also add fitted interval (`q_fit`):
 
 ```{r demo-plot}
-set.seed(42)
 plot(fit, q_fit = TRUE) + ggtitle("Regression with two change points")
 ```
 
@@ -140,7 +140,6 @@ plot_pars(fit, regex_pars = "cp_") + ggtitle("Change point posteriors")
 Do a posterior predictive check to see if the model recovers the empirical distribution in the data:
 
 ```{r demo-pp_check}
-set.seed(42)
 pp_check(fit) + ggtitle("Posterior Predictive check for change point regression")
 ```
 
@@ -161,7 +160,7 @@ For model comparisons, we can fit a null model and compare the predictive perfor
 model_null = list(response ~ 1 + time)  # Intercept_1 and time_1
 
 # Fit it
-fit_null = mcp(model_null, demo_fit$data, seed = 42)
+fit_null = mcp(model_null, demo_fit$data)
 ```
 
 Leveraging the power of `loo::loo()`, we see that the two-change-points model is preferred (it is on top), and both `p_worse` and the `elpd_diff / se_diff` ratio indicate this preference is strong:
