@@ -25,7 +25,7 @@ e.g., \code{~ sigma(1 + x)} or \code{~ shape(1)}.
 \item \emph{Time-series residuals:} Model serial dependence using \code{ar(p)} and \code{ma(q)} terms with a generalized link-scale
 recurrence that spans continuously across change points.
 \item \emph{Group-level effects:} Add hierarchical (random) intercepts, slopes, and change points, e.g., \code{~ 1 + (1|id)}
-or \code{1 + (1|id) ~ 0 + x}.
+or \code{~ cp((1|id)) + 0 + x}.
 \item \emph{Model comparison and hypothesis testing:} Compare models using PSIS-LOO (\code{loo()}) or WAIC (\code{waic()}), and test hypotheses
 (\code{hypothesis()}) using Savage-Dickey density ratios for point-null tests or posterior-to-prior odds for directional tests.
 }

@@ -37,11 +37,12 @@ and starts afresh.
 }
 
 \code{sigma} and \code{shape} are required by the likelihood, so they include an intercept in segment 1.
+Each segment after the first starts at a change point, so it always includes a change-point
+intercept (\code{cp_1}, \code{cp_2}, ...). Use \code{cp()} to add terms to it, e.g., \code{cp((1 | id))}.
 
-\strong{Formula syntax.} The general format of a segment formula is \code{response ~ cp ~ predictors} (e.g., \code{y ~ 1 ~ 1 + x}),
-except the first segment has no change point and uses \code{response ~ predictors}. The response and
-change-point parts can be omitted (\code{cp ~ predictor} assumes the same response; \code{~ predictor}
-assumes an intercept-only change point).
+\strong{Formula syntax.} The first segment has the format \code{response ~ predictors}. Later segments use
+the same response, so they are one-sided, \code{~ predictors}, and each starts at a change point that
+can be modeled using \code{cp()}, e.g., \code{~ cp((1 | id)) + 0 + x}.
 
 \strong{1. Response (segment 1 only):}
 \itemize{
@@ -53,10 +54,10 @@ not predictions).
 \item \code{y | trials(total) + weights(w) ~ ...}: Combine response auxiliaries using \code{+}.
 }
 
-\strong{2. Change-point modeling (\code{cp}, segments 2+):}
+\strong{2. Change-point modeling (\code{cp()}, segments 2+):}
 \itemize{
-\item \code{1 ~ ...} (or omitted, e.g., \code{~ x}): Population-level change point (default).
-\item \code{1 + (1 | id) ~ ...}: Group-level change-point deviations around the population change point.
+\item \code{~ x} (i.e., \code{cp()} omitted): Population-level change point (default). Same as \code{~ cp(1) + x}.
+\item \code{~ cp((1 | id)) + x}: Group-level change-point deviations around the population change point.
 \href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
 }
 

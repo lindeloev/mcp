@@ -26,7 +26,7 @@ mcp(
 }
 \arguments{
 \item{model}{A list of formulas, one for each segment, in the format
-\code{model = list(response ~ predictors, cp ~ predictors)}. See \link{mcp-formula} for how segments connect
+\code{model = list(response ~ predictors, ~ cp(...) + predictors)}, where \code{cp()} is optional. See \link{mcp-formula} for how segments connect
 and the full formula syntax.}
 
 \item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)

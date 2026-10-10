@@ -12,7 +12,7 @@
   facet_by = NULL,
   newdata = NULL,
   prior = FALSE,
-  group = TRUE,
+  group_effects = TRUE,
   arma = TRUE,
   ndraws = 100,
   nsamples = lifecycle::deprecated(),
@@ -48,13 +48,17 @@ is unavailable when a missing response enters a later observed history.
 \item{prior}{Logical. Evaluate prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default).
 The selected draws must be available; prior-only fits require \code{prior = TRUE}.}
 
-\item{group}{Group-level effects. One of:
+\item{group_effects}{Group-level effects to include. One of:
 \itemize{
 \item \code{TRUE} All group-level deviations.
-\item \code{FALSE} No group-level deviations (\code{c()}).
+\item \code{FALSE} or \code{NA} No group-level deviations, i.e., population-level
+predictions. Like \code{re_formula = NA} in \code{{brms}}.
 \item \code{"cp"} or \code{"predictor"}: All group-level deviations belonging to that part of
 the model.
-\item Character vector: Only include specified group-level parameters.
+\item Character vector of group-level parameter names, e.g., \code{c("cp_1_id", "x_2_id")}.
+\code{*} is a wildcard, e.g., \code{"state*_1_id"} selects all levels of a factor
+and \code{"*_id"} selects all effects by \code{id}. See names using \code{ranef(fit)}.
+Can be combined, e.g., \code{c("cp", "sigma_*")}.
 }}
 
 \item{arma}{Whether to include AR and MA effects.
@@ -63,7 +67,7 @@ the model.
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
-currently requires all such effects (\code{group = TRUE}).
+currently requires all such effects (\code{group_effects = TRUE}).
 }}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
@@ -72,7 +76,7 @@ If there are group-level effects, this is the number of draws from each group.
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 
-\item{varying}{Deprecated. Use \code{group} instead.}
+\item{varying}{Deprecated. Use \code{group_effects} instead.}
 
 \item{...}{Further arguments passed to \code{bayesplot::ppc_type(y, yrep, ...)}}
 }

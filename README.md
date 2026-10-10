@@ -136,11 +136,11 @@ summary(fit)
 
     ## Family: gaussian
     ## Links: mu = identity; sigma = identity
-    ## Iterations: 3000 from 3 chains.
+    ## Draws: 9000 (3 chains with iter = 3000)
     ## Segments:
     ##   1: response ~ 1
-    ##   2: response ~ 1 ~ 0 + time
-    ##   3: response ~ 1 ~ 1 + time
+    ##   2: ~ 0 + time
+    ##   3: ~ 1 + time
     ## 
     ## Change point parameters:
     ##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
@@ -307,7 +307,7 @@ testing](https://lindeloev.github.io/mcp/articles/comparison.html):
 effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
 
 - Model group-level intercepts, slopes, and change points using
-  `(1|id)`, `(0 + x||id)`, or `1 + (1|id) ~ ...`. Get posteriors using
+  `(1|id)`, `(0 + x||id)`, or `cp((1|id))`. Get posteriors using
   `ranef(fit)`.
 
 - Plot using `plot(fit, facet_by = "my_group")` and
@@ -349,6 +349,10 @@ intervals](https://lindeloev.github.io/mcp/articles/predict.html):
 
 - See priors in `fit$prior` or `prior_summary(fit)` and set priors using
   `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)"))`.
+
+- Default priors are weakly informative and follow `rstanarm` for
+  intercepts and coefficients and `brms` for scale parameters, with a
+  few documented deviations.
 
 - The default prior on change points is `dirichlet(1)` (uniform order
   statistics). For a single change point, this is the Beta(1, 1) /

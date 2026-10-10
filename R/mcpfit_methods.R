@@ -295,10 +295,7 @@ summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ver
   if (!is.null(draws))
     cat("Draws: ", coda::niter(draws) * coda::nchain(draws), " (", coda::nchain(draws), " chains with iter = ", coda::niter(draws), ")\n", sep = "")
   
-  # Align tildes across segments, e.g., "y ~ 1" and "  ~ 0 + x"
   forms = vapply(fit$model, formula_to_char, character(1))
-  tilde = regexpr("~", forms, fixed = TRUE)
-  forms = paste0(strrep(" ", max(tilde) - tilde), forms)
   cat("Segments:\n")
   cat(paste0("  ", format(seq_along(forms)), ": ", forms, "\n"), sep = "")
 

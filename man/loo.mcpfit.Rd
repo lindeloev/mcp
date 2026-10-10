@@ -15,22 +15,11 @@
   ...,
   by_row = FALSE,
   pointwise = lifecycle::deprecated(),
-  group = TRUE,
-  arma = TRUE,
   ndraws = NULL,
-  nsamples = lifecycle::deprecated(),
-  varying = lifecycle::deprecated()
+  nsamples = lifecycle::deprecated()
 )
 
-\method{waic}{mcpfit}(
-  x,
-  ...,
-  group = TRUE,
-  arma = TRUE,
-  ndraws = NULL,
-  nsamples = lifecycle::deprecated(),
-  varying = lifecycle::deprecated()
-)
+\method{waic}{mcpfit}(x, ..., ndraws = NULL, nsamples = lifecycle::deprecated())
 }
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object.}
@@ -44,31 +33,11 @@ Note that both modes calculate pointwise (observation-level) PSIS-LOO cross-vali
 
 \item{pointwise}{Deprecated alias for \code{by_row}.}
 
-\item{group}{Group-level effects. One of:
-\itemize{
-\item \code{TRUE} All group-level deviations.
-\item \code{FALSE} No group-level deviations (\code{c()}).
-\item \code{"cp"} or \code{"predictor"}: All group-level deviations belonging to that part of
-the model.
-\item Character vector: Only include specified group-level parameters.
-}}
-
-\item{arma}{Whether to include AR and MA effects.
-\itemize{
-\item \code{TRUE} Compute the GARMA residual recurrence. Requires the response variable in \code{newdata}.
-\item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
-For posterior evaluation of the original data, retained JAGS imputations
-supply missing GARMA histories. In models with group-level effects, this
-currently requires all such effects (\code{group = TRUE}).
-}}
-
 \item{ndraws}{Integer or \code{NULL}. Target number of posterior draws used for
 the log-likelihood or information criterion. Draws are balanced across
 chains, so the actual number may be rounded. \code{NULL} uses all draws.}
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
-
-\item{varying}{Deprecated. Use \code{group} instead.}
 }
 \value{
 a \code{loo} or \code{psis_loo} object.
@@ -83,18 +52,18 @@ because both treat individual conditional likelihood terms as validation
 units. In PSIS-LOO, a held-out response also remains in the conditioning
 history of later terms. Prefer leave-future-out or blocked
 cross-validation, which are not currently implemented in mcp. When a
-missing response enters a later observed GARMA history, \code{log_lik()},
-\code{loo()}, and \code{waic()} are unavailable with \code{arma = TRUE}: the observed-data
+missing response enters a later observed GARMA history, \code{loo()}, \code{waic()},
+and \code{log_lik()} with \code{arma = TRUE} are unavailable: the observed-data
 likelihood requires integrating over that missing history, which mcp does
 not currently implement.
 
-\code{loo()} and \code{waic()} evaluate the likelihood of the fitted model and require
-default \code{group = TRUE} and \code{arma = TRUE}. Evaluating an information
+\code{loo()} and \code{waic()} evaluate the likelihood of the fitted model, including
+all group-level effects and AR/MA terms. Evaluating an information
 criterion with fitted components dropped post-hoc violates the PSIS
 identity because draws come from the full model's posterior; comparing a
-reduced model requires refitting it. Non-default \code{group} and \code{arma}
-settings remain available in \code{log_lik()} as conditional or counterfactual
-diagnostics.
+reduced model requires refitting it. \code{log_lik(fit, group_effects = FALSE)}
+and \code{log_lik(fit, arma = FALSE)} remain available as conditional or
+counterfactual diagnostics.
 
 When \code{ndraws} is supplied to \code{loo()}, draws are balanced across chains and
 thinned at evenly spaced midpoint iterations. This preserves MCMC chain

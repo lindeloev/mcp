@@ -46,6 +46,8 @@ half-Student-t priors are a standard weakly informative choice for scale paramet
 Like \code{rstanarm} and \code{brms}, which place intercept priors on centered predictors, the default prior on
 the segment-1 intercept applies to the level at the start of the segment, \code{min(x)}. The reported
 \code{Intercept_1} is still at \code{x = 0}, as in \code{\link[=lm]{lm()}}. Later segments' intercepts are at their change point.
+Unlike in \code{rstanarm} and \code{brms}, other predictors are not centered, so the prior applies where they are zero.
+If such a predictor is far from zero, center it before fitting or set a prior on \code{Intercept_1}.
 User-specified intercept priors apply to \code{Intercept_1} as written. The autoscaling does not account for
 segment length. If you expect steep slopes or strong curvature within short segments, consider setting a
 wider prior.

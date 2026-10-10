@@ -20,7 +20,7 @@
   probs = TRUE,
   rate = FALSE,
   prior = FALSE,
-  group = TRUE,
+  group_effects = TRUE,
   arma = TRUE,
   ndraws = NULL,
   draws_format = "tidy",
@@ -39,7 +39,7 @@
   rate = FALSE,
   prior = FALSE,
   dpar = "epred",
-  group = TRUE,
+  group_effects = TRUE,
   arma = TRUE,
   ndraws = NULL,
   draws_format = "tidy",
@@ -59,7 +59,7 @@ log_lik(object, ...)
   probs = TRUE,
   rate = TRUE,
   prior = FALSE,
-  group = TRUE,
+  group_effects = TRUE,
   arma = TRUE,
   ndraws = NULL,
   draws_format = "matrix",
@@ -75,7 +75,7 @@ log_lik(object, ...)
   summary = TRUE,
   probs = TRUE,
   prior = FALSE,
-  group = TRUE,
+  group_effects = TRUE,
   arma = TRUE,
   ndraws = NULL,
   nsamples = lifecycle::deprecated(),
@@ -115,13 +115,17 @@ and are unaffected by \code{rate}.}
 \item{prior}{Logical. Evaluate prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default).
 The selected draws must be available; prior-only fits require \code{prior = TRUE}.}
 
-\item{group}{Group-level effects. One of:
+\item{group_effects}{Group-level effects to include. One of:
 \itemize{
 \item \code{TRUE} All group-level deviations.
-\item \code{FALSE} No group-level deviations (\code{c()}).
+\item \code{FALSE} or \code{NA} No group-level deviations, i.e., population-level
+predictions. Like \code{re_formula = NA} in \code{{brms}}.
 \item \code{"cp"} or \code{"predictor"}: All group-level deviations belonging to that part of
 the model.
-\item Character vector: Only include specified group-level parameters.
+\item Character vector of group-level parameter names, e.g., \code{c("cp_1_id", "x_2_id")}.
+\code{*} is a wildcard, e.g., \code{"state*_1_id"} selects all levels of a factor
+and \code{"*_id"} selects all effects by \code{id}. See names using \code{ranef(fit)}.
+Can be combined, e.g., \code{c("cp", "sigma_*")}.
 }}
 
 \item{arma}{Whether to include AR and MA effects.
@@ -130,7 +134,7 @@ the model.
 \item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
 For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
-currently requires all such effects (\code{group = TRUE}).
+currently requires all such effects (\code{group_effects = TRUE}).
 }}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
@@ -144,7 +148,7 @@ If there are group-level effects, this is the number of draws from each group.
 \item{samples_format}{Deprecated. Use \code{draws_format} instead.
 See more under "value"}
 
-\item{varying}{Deprecated. Use \code{group} instead.}
+\item{varying}{Deprecated. Use \code{group_effects} instead.}
 
 \item{conditional}{Logical. For AR/MA models, condition on observed response
 histories (\code{TRUE}, default) or generate fresh histories recursively (\code{FALSE}).
@@ -213,7 +217,7 @@ function when counts differ from proportions. Explicit \code{rate} settings do n
 but with fixed arguments for \code{fitted}: \verb{rate = FALSE, dpar = 'epred', draws_format = 'tidy'}.
 
 \code{log_lik()} defaults to an unsummarised draws-by-observation matrix, as used
-by \code{loo} and other posterior workflows. Non-default \code{group} and \code{arma}
+by \code{loo} and other posterior workflows. Non-default \code{group_effects} and \code{arma}
 settings evaluate conditional or counterfactual log-likelihoods (e.g.,
 omitting random effects or serial correlation); they cannot be used in
 \code{loo()} or \code{waic()} because estimating information criteria for reduced
