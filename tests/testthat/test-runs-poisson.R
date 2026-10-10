@@ -24,7 +24,7 @@ good_poisson = list(
   list(y ~ 1 + x,  # response from segment 1
        ~ 1 + x,
        ~ 0),
-  list(y ~ 1,  # With varying
+  list(y ~ 1,  # With group-level change point
        ~ cp(1 + (1|id)) + 1),
   list(y ~ 1 + ar(1) + ma(1)),
   list(y | weights(weights_ok) ~ 1)  # With weights

@@ -535,10 +535,11 @@ test_that("PPC and LOO draws stay aligned", {
   expect_equal(attr(loo_result, "mcp_settings")$ndraws, 10L)
 
   # Disallow component-selective LOO and WAIC
-  expect_error(loo(fit, group_effects = FALSE), "`group_effects` cannot be altered in `loo()`", fixed = TRUE)
-  expect_error(loo(fit, arma = FALSE), "`arma` cannot be FALSE in `loo()`", fixed = TRUE)
-  expect_error(waic(fit, group_effects = FALSE), "`group_effects` cannot be altered in `waic()`", fixed = TRUE)
-  expect_error(waic(fit, arma = FALSE), "`arma` cannot be FALSE in `waic()`", fixed = TRUE)
+  expect_error(suppressWarnings(loo(fit, ndraws = 10, group_effects = FALSE)), "must be used", fixed = TRUE)
+  expect_error(suppressWarnings(loo(fit, ndraws = 10, arma = FALSE)), "must be used", fixed = TRUE)
+  expect_error(waic(fit, group_effects = FALSE), "must be empty", fixed = TRUE)
+  expect_error(waic(fit, arma = FALSE), "must be empty", fixed = TRUE)
+  expect_error(pp_check(fit, type = "loo_intervals", arma = FALSE), "LOO predictive checks evaluate the fitted model", fixed = TRUE)
 
   # log_lik still supports non-default group_effects and arma as diagnostics
   ll_group_false = log_lik(fit, ndraws = 10, group_effects = FALSE)

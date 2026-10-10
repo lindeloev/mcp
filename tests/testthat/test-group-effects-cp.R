@@ -79,7 +79,7 @@ test_that("simulation generates bounded hierarchical change-point locations", {
 })
 
 
-test_that("prior draws keep a single varying change point in range", {
+test_that("prior draws keep a single group-level change point in range", {
   fit = mcp(
     list(y ~ 1, ~ cp(1 + (1 | id)) + 1),
     cp_group_data,
@@ -95,7 +95,7 @@ test_that("prior draws keep a single varying change point in range", {
 })
 
 
-test_that("simulation samples adjacent varying change points in realized order", {
+test_that("simulation samples adjacent group-level change points in realized order", {
   fit = mcp(
     list(y ~ 1, ~ cp(1 + (1 | id)) + 1, ~ cp(1 + (1 | id)) + 1),
     cp_group_data,
@@ -128,7 +128,7 @@ test_that("simulation samples adjacent varying change points in realized order",
 test_that("sampled change points are checked for range and ordering", {
   cps = tibble::tibble(
     name = c("cp_1", "cp_2"),
-    varying = c(TRUE, TRUE),
+    group_col = c("id", "id"),
     group_name = c("cp_1_id", "cp_2_id")
   )
   draws = cbind(

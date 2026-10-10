@@ -3,7 +3,7 @@
 #################
 bad_y = list(
   list( ~ 1),  # No y
-  list((1|id) ~ 1),  # y cannot be varying
+  list((1|id) ~ 1),  # y cannot have group-level effects
   list(1 ~ 1),  # 1 is not y
   list(y ~ 1,  # Two y
        a ~ 1 ~ 1),
@@ -49,7 +49,7 @@ bad_cps = list(
   list(y ~ x,
        ~ cp(q) + 1),  # Slope not allowed for changepoint
   list(y ~ 1,
-       ~ cp((goat|id)) + 1),  # No varying slope allowed
+       ~ cp((goat|id)) + 1),  # No group-level slope allowed
   list(y ~ 1,
        y ~ ~ 1),  # Needs to be explicit if y is defined
   list(y ~ 1,
@@ -73,9 +73,9 @@ good_cps = list(
   list(y ~ 1,  # Implicit cp
        ~ 1,
        ~ 0),
-  list(y ~ 0,  # Varying
+  list(y ~ 0,  # Group-level change point
        ~ cp(1 + (1|id)) + 1),
-  list(y ~ 0,  # Chained varying cps
+  list(y ~ 0,  # Chained group-level cps
        ~ 1,
        ~ cp(1 + (1|id)) + 0,
        ~ cp(1 + (1|id)) + 0,
@@ -139,7 +139,7 @@ good_weights = list(
   list(y | weights(weights_ok) ~ 1),  # Regular
   list(y | weights(weights_ok) ~ 1,
        ~ 1 + x + I(x^2),
-       ~ cp(1 + (1|id)) + 1)  # With multiple segments and functions and varying
+       ~ cp(1 + (1|id)) + 1)  # With multiple segments and functions and group-level change point
 )
 
 test_good(good_weights)

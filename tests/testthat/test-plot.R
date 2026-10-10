@@ -81,7 +81,7 @@ test_that("geom_cp_density draws a vertical spike for fixed change points", {
   cp_1_data = cp_data[cp_data$group %in% c(1, 2), ]
   expect_true(all(cp_1_data$x == 50))
 
-  # Peak height should match varying change points (e.g. cp_2)
+  # Peak height should match group-level change points (e.g. cp_2)
   cp_2_data = cp_data[!cp_data$group %in% c(1, 2), ]
   expect_equal(max(cp_1_data$y), max(cp_2_data$y))
 })

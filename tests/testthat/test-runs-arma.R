@@ -40,7 +40,7 @@ good_arma = list(
   list(y ~ 1,
        ~ 0 + ar(2)),  # onset of AR
   list(y ~ 1,
-       ~ cp(1 + (1|id)) + 1 + I(x^2) + ar(2, 1 + x)),  # varying change point
+       ~ cp(1 + (1|id)) + 1 + I(x^2) + ar(2, 1 + x)),  # group-level change point
   list(y ~ ar(1) + sigma(1 + x),
        ~ ar(2, 1 + I(x^2)) + sigma(1)),  # With sigma
   list(y ~ ar(1),

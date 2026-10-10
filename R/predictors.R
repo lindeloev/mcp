@@ -648,7 +648,7 @@ get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = N
   selected = selected[!vapply(selected$term_key, is_group_term, logical(1)), , drop = FALSE]
 
   # Construct bare columns in the full unwrapped formula, then borrow source columns
-  form_rhs = remove_terms(form_rhs, "varying")
+  form_rhs = remove_terms(form_rhs, "group")
   current = get_predictors_dpar(data, form_rhs, segment, dpar, par_x, order,
     check_rank = check_rank && nrow(selected) == 0, design_id = design_id) %>%
     dplyr::mutate(definition_name = .data$code_name, definition_segment = .data$segment)

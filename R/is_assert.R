@@ -272,11 +272,11 @@ assert_ordered_cp_draws = function(draws, cps) {
     population = chain[, cps$name, drop = FALSE]
     check_locations(population, "population-level")
 
-    varying = which(cps$varying)
-    if (length(varying) == 0)
+    group_cps = which(!is.na(cps$group_col))
+    if (length(group_cps) == 0)
       next
 
-    first_name = cps$group_name[varying[1]]
+    first_name = cps$group_name[group_cps[1]]
     first_prefix = paste0(first_name, "[")
     group_cols = colnames(chain)[startsWith(colnames(chain), first_prefix)]
     if (length(group_cols) == 0)
@@ -284,7 +284,7 @@ assert_ordered_cp_draws = function(draws, cps) {
     group_levels = substring(group_cols, nchar(first_prefix) + 1L, nchar(group_cols) - 1L)
     for (group_level in group_levels) {
       realized = population
-      for (j in varying) {
+      for (j in group_cps) {
         group_col = paste0(cps$group_name[j], "[", group_level, "]")
         if (!group_col %in% colnames(chain))
           stop_github("Sampled output is missing group-level change point `", group_col, "`.")

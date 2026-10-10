@@ -47,7 +47,7 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
   ###########################
 
   # Check segment 1: change point not possible here
-  if (any(segments[1, c("cp_varying", "cp_group_col")] != FALSE, na.rm = TRUE))
+  if (!is.na(segments$cp_group_col[1]))
     stop("Change point defined in first segment. This should not be possible. Submit bug report in the GitHub repo.")
 
   # Response variables
@@ -56,7 +56,7 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
     stop("There should be exactly one response variable. Found ", and_collapse(derived_y), " across segments.")
 
   # Group-level effects
-  derived_varying = unique(stats::na.omit(segments$cp_group_col))
+  cp_group_cols = unique(stats::na.omit(segments$cp_group_col))
 
   # Check data types
   if (!is.null(data)) {
@@ -71,13 +71,13 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
       message("NA values detected in '", y_col, "'. JAGS will treat them as latent responses and impute them during sampling.")
     }
 
-    # Check varying
-    if (length(derived_varying) > 0) {
-      for (varying_col in derived_varying) {
-        data_varying = data[, varying_col]
-        if (!is.character(data_varying) && !is.factor(data_varying))
-          if (!all(data_varying == floor(data_varying)))
-            stop("Grouping factor '", varying_col, "' must be integer, character, or factor.")
+    # Check grouping factors
+    if (length(cp_group_cols) > 0) {
+      for (group_col in cp_group_cols) {
+        group_data = data[, group_col]
+        if (!is.character(group_data) && !is.factor(group_data))
+          if (!all(group_data == floor(group_data)))
+            stop("Grouping factor '", group_col, "' must be integer, character, or factor.")
       }
     }
 
@@ -101,17 +101,15 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
       cp = .data$segment - 1,
       segment = .data$segment,
       name = paste0("cp_", .data$cp),
-      varying = .data$cp_varying,
       group_col = .data$cp_group_col,
-      sd_name = ifelse(.data$varying, paste0(.data$name, "_", .data$group_col, "_sd"), NA),
-      group_name = ifelse(.data$varying, paste0(.data$name, "_", .data$group_col), NA)
+      sd_name = ifelse(!is.na(.data$group_col), paste0(.data$name, "_", .data$group_col, "_sd"), NA),
+      group_name = ifelse(!is.na(.data$group_col), paste0(.data$name, "_", .data$group_col), NA)
     ) %>%
     dplyr::mutate(
       code = ifelse(!is.na(.data$group_name), yes = paste0(.data$name, " + ", .data$group_name, "CP_", .data$segment, "_INDEX"), no = .data$name),
       code = format_code(.data$code, na_col = .data$name)
     )
 
-  cp_group_cols = unique(stats::na.omit(cps$group_col))
   if (length(cp_group_cols) > 1) {
     stop(
       "All group-level change points must use the same grouping factor. Found ",
@@ -172,19 +170,19 @@ get_pars_table = function(predictors, cps, group_effects, family) {
       segment = cps$segment, dpar = "cp", order = NA_integer_,
       group_col = NA_character_, population_name = NA_character_, .tie = 0L
     )
-    varying_cp = cps[cps$varying, , drop = FALSE]
-    if (nrow(varying_cp) > 0) {
+    group_cps = cps[!is.na(cps$group_col), , drop = FALSE]
+    if (nrow(group_cps) > 0) {
       cp_pars = dplyr::bind_rows(
         cp_pars,
         tibble::tibble(
-          name = varying_cp$sd_name, part = "cp", scope = "population", role = "group_sd",
-          segment = varying_cp$segment, dpar = "cp", order = NA_integer_,
-          group_col = varying_cp$group_col, population_name = varying_cp$name, .tie = 1L
+          name = group_cps$sd_name, part = "cp", scope = "population", role = "group_sd",
+          segment = group_cps$segment, dpar = "cp", order = NA_integer_,
+          group_col = group_cps$group_col, population_name = group_cps$name, .tie = 1L
         ),
         tibble::tibble(
-          name = varying_cp$group_name, part = "cp", scope = "group", role = "group_deviation",
-          segment = varying_cp$segment, dpar = "cp", order = NA_integer_,
-          group_col = varying_cp$group_col, population_name = varying_cp$name, .tie = 2L
+          name = group_cps$group_name, part = "cp", scope = "group", role = "group_deviation",
+          segment = group_cps$segment, dpar = "cp", order = NA_integer_,
+          group_col = group_cps$group_col, population_name = group_cps$name, .tie = 2L
         )
       )
     }
@@ -357,7 +355,7 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
   }
 
   cp_group_effects = cps %>%
-    dplyr::filter(.data$varying) %>%
+    dplyr::filter(!is.na(.data$group_col)) %>%
     dplyr::transmute(
       population_name = as.character(.data$name),
       name = as.character(.data$group_name),

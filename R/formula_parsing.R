@@ -167,29 +167,29 @@ get_model_vars = function(model) {
   unique(c(vars, get_arma_series(model)))
 }
 
-#' Remove varying or population terms from a formula
+#' Remove group-level or population-level terms from a formula
 #'
 #' WARNING: removes response side from the formula
 #'
 #' @param form A formula
-#' @param remove Either "varying" or "population". These are removed.
+#' @param remove Either "group" or "population". These are removed.
 #' @return A formula
 #' @noRd
 remove_terms = function(form, remove) {
   checkmate::assert_formula(form)
-  remove = rlang::arg_match0(remove, c("varying", "population"))
+  remove = rlang::arg_match0(remove, c("group", "population"))
 
   # Find terms with "|"
   attrs = attributes(stats::terms(form))
   term.labels = attrs$term.labels
-  varying_bool = stringr::str_detect(term.labels, "\\|")
+  is_group = stringr::str_detect(term.labels, "\\|")
 
   # Add parenthesis back to them
-  term.labels[varying_bool] = paste0("(", term.labels[varying_bool], ")")
+  term.labels[is_group] = paste0("(", term.labels[is_group], ")")
 
   # Remove non-matching types
-  if (remove == "varying") {
-    term.labels = term.labels[!varying_bool]
+  if (remove == "group") {
+    term.labels = term.labels[!is_group]
     # base::terms() omits offset() from term.labels; re-attach it for population formulas
     if (!is.null(attrs$offset)) {
       offset_terms = vapply(attrs$offset, function(i) deparse1(attrs$variables[[i + 1]]), character(1))
@@ -197,7 +197,7 @@ remove_terms = function(form, remove) {
     }
     term.labels = c(attrs$intercept, term.labels)  # Add intercept indicator
   } else if (remove == "population") {
-    term.labels = term.labels[varying_bool]
+    term.labels = term.labels[is_group]
   }
 
   # Build formula from terms and return
@@ -403,14 +403,12 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
 #' @param form_cp Segment formula as string.
 #' @param i segment number
 #' @return A one-row tibble with columns:
-#'   * `cp_varying`: Logical scalar. Is there a group-level intercept on the change point?
 #'   * `cp_group_col`: char or NA. Which data column defines the grouping factor?
 #' @noRd
 unpack_cp = function(form_cp, i, env = parent.frame()) {
   # Segment 1 has no change point
   if (is.null(form_cp)) {
     return(tibble::tibble(
-      cp_varying = FALSE,
       cp_group_col = NA
     ))
   }
@@ -418,23 +416,23 @@ unpack_cp = function(form_cp, i, env = parent.frame()) {
   form_cp = if (rlang::is_formula(form_cp)) form_cp else stats::as.formula(call("~", form_cp), env = env)
 
   # Group-level effects
-  form_varying = remove_terms(form_cp, "population")
+  form_group = remove_terms(form_cp, "population")
 
-  if (!is.null(form_varying)) {
-    varying_terms = attr(stats::terms(form_varying), "term.labels")
-    if (length(varying_terms) > 1)
+  if (!is.null(form_group)) {
+    group_terms = attr(stats::terms(form_group), "term.labels")
+    if (length(group_terms) > 1)
       stop("Error in segment ", i, " (change point): only one group-level effect is allowed. Found ", deparse1(form_cp))
 
-    varying_parts = strsplit(gsub(" ", "", varying_terms), "\\|\\|?")[[1]]  # (1 || id) is (1 | id) for intercepts
-    if (!varying_parts[1] == "1")
+    group_parts = strsplit(gsub(" ", "", group_terms), "\\|\\|?")[[1]]  # (1 || id) is (1 | id) for intercepts
+    if (!group_parts[1] == "1")
       stop("Error in segment ", i, " (change point): Only plain intercepts are allowed in group-level effects, e.g., `cp((1 | id))`.")
 
-    if (!grepl("^[A-Za-z._0-9]+$", varying_parts[2]))
-      stop("Error in segment ", i, " (change point): invalid grouping-variable format in group-level effect. Got: ", varying_parts[2])
+    if (!grepl("^[A-Za-z._0-9]+$", group_parts[2]))
+      stop("Error in segment ", i, " (change point): invalid grouping-variable format in group-level effect. Got: ", group_parts[2])
   }
 
   # Population-level effects
-  attrs = attributes(stats::terms(remove_terms(form_cp, "varying")))
+  attrs = attributes(stats::terms(remove_terms(form_cp, "group")))
   if (length(attrs$term.labels) > 0)
     stop("Error in segment ", i, " (change point): Only intercepts are allowed in population-level effects, e.g., `cp(1 + (1 | id))`.")
 
@@ -442,7 +440,6 @@ unpack_cp = function(form_cp, i, env = parent.frame()) {
     stop("Error in segment ", i, " (change point): change points always include a population-level intercept. Remove `0 +`, e.g., `cp((1 | id))`.")
 
   tibble::tibble(
-    cp_varying = !is.null(form_varying),
-    cp_group_col = if (is.null(form_varying)) NA else varying_parts[2]
+    cp_group_col = if (is.null(form_group)) NA else group_parts[2]
   )
 }

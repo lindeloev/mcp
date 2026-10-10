@@ -678,7 +678,7 @@ test_that("change point density colors adapt to fitted colors", {
 })
 
 
-test_that("integer varying groups can control plot color", {
+test_that("integer grouping factors can control plot color", {
   data = expand.grid(x = 1:4, id = 1:2, state = factor(c("A", "B")))
   data$y = 0
   fit = mcp(
@@ -758,7 +758,7 @@ test_that("interpolate_newdata uses the ungrouped adaptive grid by default", {
 })
 
 
-test_that("fitted() intervals differ across varying levels and contain the fitted value", {
+test_that("fitted() intervals differ across group levels and contain the fitted value", {
   data = data.frame(
     x = rep(1:4, 2),
     id = rep(1:2, each = 4),
@@ -771,7 +771,7 @@ test_that("fitted() intervals differ across varying levels and contain the fitte
     sample = FALSE
   )
 
-  # cp_1_id[1] spans the query point x = 2.5, so the varying change point for
+  # cp_1_id[1] spans the query point x = 2.5, so the group-level change point for
   # id 1 is sometimes before and sometimes after it (mixed segment
   # membership across draws). cp_1_id[2] stays below x = 2.5 for every draw,
   # so id 2 is deterministically in segment 2.
@@ -795,7 +795,7 @@ test_that("fitted() intervals differ across varying levels and contain the fitte
   newdata = data.frame(x = c(2.5, 2.5), id = c(1, 2))
   result = fitted(fit, newdata = newdata, probs = c(0.025, 0.975))
 
-  # The interval must reflect each row's own varying level rather than being
+  # The interval must reflect each row's own group level rather than being
   # identical (or pooled) across levels.
   expect_false(isTRUE(all.equal(result$Q2.5[1], result$Q2.5[2])))
   expect_false(isTRUE(all.equal(result$Q97.5[1], result$Q97.5[2])))

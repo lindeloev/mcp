@@ -302,12 +302,12 @@ test_that("AR/MA root warnings are conditional", {
     "locally non-stationary AR"
   )
 
-  varying_fit = mcp(
+  group_fit = mcp(
     list(y ~ 1 + ar(1, 1 + x)), data, par_x = "x", sample = FALSE
   )
   expect_warning(
-    suppressMessages(varying_fit$simulate(
-      varying_fit, data,
+    suppressMessages(group_fit$simulate(
+      group_fit, data,
       Intercept_1 = 0, sigma_1 = 1, ar1_1 = 0, ar1_x_1 = 0.3
     )),
     "locally non-stationary AR"

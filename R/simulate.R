@@ -169,12 +169,12 @@ evaluate_model_dpars = function(fit, args, pred_pars) {
 
 # Check ordering of realized group-level change points
 assert_ordered_group_cps = function(cps, args) {
-  if (nrow(cps) < 2 || !any(cps$varying))
+  if (nrow(cps) < 2 || all(is.na(cps$group_col)))
     return(invisible(NULL))
 
   realized_cps = lapply(seq_len(nrow(cps)), function(i) {
     value = args[[cps$name[i]]]
-    if (cps$varying[i])
+    if (!is.na(cps$group_col[i]))
       value = value + args[[cps$group_name[i]]]
     value
   })
@@ -457,7 +457,7 @@ simulate_atomic = function(fit,
   simulated = args
   cp_effects = model_group_definitions[model_group_definitions$part == "cp", , drop = FALSE]
 
-  # All varying CPs share one grouping factor. Set up its level mapping once.
+  # All group-level CPs share one grouping factor. Set up its level mapping once.
   if (nrow(cp_effects) > 0) {
     cps = model_tables$cps
     group = newdata[[cp_effects$group_col[1]]]
@@ -468,7 +468,7 @@ simulate_atomic = function(fit,
       rep(value, length.out = nrow(newdata))[group_rows]
     })
 
-    # Mirror JAGS: sample absolute locations in CP order, using a varying
+    # Mirror JAGS: sample absolute locations in CP order, using a group-level
     # predecessor as the next lower bound and the next fixed CP as upper anchor.
     x_range = range(fit$data[[data_columns$par_x]], na.rm = TRUE)
     cp_locations = list()
@@ -481,10 +481,10 @@ simulate_atomic = function(fit,
         x_range[1]
       } else {
         previous = cps[j - 1, ]
-        if (previous$varying) cp_locations[[previous$group_name]] else cp_values[[previous$name]]
+        if (!is.na(previous$group_col)) cp_locations[[previous$group_name]] else cp_values[[previous$name]]
       }
 
-      next_fixed = which(seq_len(nrow(cps)) > j & !cps$varying)[1]
+      next_fixed = which(seq_len(nrow(cps)) > j & is.na(cps$group_col))[1]
       upper = if (is.na(next_fixed)) {
         x_range[2]
       } else {

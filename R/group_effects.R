@@ -1,4 +1,4 @@
-# ABOUT: Group-level ("varying"/"random") predictor effects: detecting
+# ABOUT: Group-level ("random") predictor effects: detecting
 # `(... | group)` terms in a predictor formula and parsing them into
 # group-effect coefficient definitions.
 # ------------------------------------------------------------

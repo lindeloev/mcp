@@ -43,7 +43,7 @@ default_cp_specs = function(cps, context) {
   }
 
   for (j in seq_len(nrow(cps))) {
-    if (!cps$varying[j])
+    if (is.na(cps$group_col[j]))
       next
 
     sd_name = cps$sd_name[j]
@@ -59,7 +59,7 @@ default_cp_specs = function(cps, context) {
     previous_cp = stringr::str_replace(
       previous_cp, "CP_[0-9]+_INDEX", paste0("[", cps$group_col[j], "_]")
     )
-    later_population = which(seq_len(nrow(cps)) > j & !cps$varying)
+    later_population = which(seq_len(nrow(cps)) > j & is.na(cps$group_col))
     next_cp = if (length(later_population) == 0) "max(.x)" else
       cps$name[later_population[1]]
     lower = paste0(previous_cp, " - ", cps$name[j])
@@ -338,7 +338,7 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
     }
 
     group_name = cps$group_name[j]
-    if (cps$varying[j] && group_name %in% names(prior)) {
+    if (!is.na(cps$group_col[j]) && group_name %in% names(prior)) {
       original = prior[[group_name]]
       is_bounded = is.character(original) && stringr::str_detect(
         original, "^\\s*dunif\\s*\\(|T\\s*\\("
@@ -347,7 +347,7 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
         previous_cp = if (j == 1) paste0("min(", context$x_display, ")") else cps$code[j - 1]
         previous_cp = stringr::str_replace(
           previous_cp, "CP_[0-9]+_INDEX", paste0("[", cps$group_col[j], "_]"))
-        later_population = which(seq_len(nrow(cps)) > j & !cps$varying)
+        later_population = which(seq_len(nrow(cps)) > j & is.na(cps$group_col))
         next_cp = if (length(later_population) == 0) {
           paste0("max(", context$x_display, ")")
         } else {
@@ -432,7 +432,7 @@ add_intercept_references = function(table, predictors, context) {
 #   change is the segment's x-terms over its width.
 # 
 # Both imply exactly the default standard priors; only the sampling geometry changes.
-# width = cp_k - cp_(k-1). Skipped for segments bounded by group-varying change points,
+# width = cp_k - cp_(k-1). Skipped for segments bounded by group-level change points,
 # where the data use group-specific widths. Returns `table` with columns `rise_width`
 # and `end_change` (NA where not applicable).
 add_segment_anchors = function(table, predictors, cps) {
@@ -448,8 +448,8 @@ add_segment_anchors = function(table, predictors, cps) {
 
   # Apply to each segment
   for (k in unique(slopes$segment)) {
-    # Don't change anything for segments bounded by group-varying change points
-    if (any(cps$varying[cps$name %in% paste0("cp_", c(k - 1, k))]))
+    # Don't change anything for segments bounded by group-level change points
+    if (any(!is.na(cps$group_col[cps$name %in% paste0("cp_", c(k - 1, k))])))
       next
 
     # Joined segments (no intercept): sample each default slope as its rise over the segment

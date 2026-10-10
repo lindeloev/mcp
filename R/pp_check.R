@@ -82,6 +82,8 @@ pp_check.mcpfit = function(
     stop("LOO predictive checks require posterior draws; `prior = TRUE` is not supported.")
   if (is_loo && !is.null(newdata))
     stop("LOO predictive checks require the original fitted data; `newdata` is not supported.")
+  if (is_loo && (!isTRUE(group_effects) || !arma))
+    stop("LOO predictive checks evaluate the fitted model; `group_effects = TRUE` and `arma = TRUE` are required.")
 
   # Get tidy draws to preserve group and draw identifiers
   draws = pp_eval(
@@ -109,8 +111,6 @@ pp_check.mcpfit = function(
     plot_return = get_ppc_plot(
       fit, type, y, yrep, ndraws,
       observations = observed_rows,
-      group_effects = group_effects,
-      arma = arma,
       ...
     )
     return(plot_return)
@@ -127,8 +127,6 @@ pp_check.mcpfit = function(
       all_plots[[as.character(facet_level)]] = get_ppc_plot(
         fit, type, y_this, yrep_this, ndraws,
         observations = observations_this,
-        group_effects = group_effects,
-        arma = arma,
         ...
       ) +
         ggplot2::ggtitle(facet_level)
@@ -150,8 +148,7 @@ pp_check.mcpfit = function(
 #' @param ... Arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
 #' @return A `ggplot2` object returned by `bayesplot::ppc_*(y, yrep, ...)`.
 #' @noRd
-get_ppc_plot = function(fit, type, y, yrep, ndraws,
-                        observations = NULL, group_effects = TRUE, arma = TRUE, ...) {
+get_ppc_plot = function(fit, type, y, yrep, ndraws, observations = NULL, ...) {
   is_loo = stringr::str_detect(type, "loo")
 
   func_name = paste0("ppc_", type)
@@ -170,8 +167,6 @@ get_ppc_plot = function(fit, type, y, yrep, ndraws,
     fit = with_loo(
       fit,
       save_psis = TRUE,
-      group_effects = group_effects,
-      arma = arma,
       info = "Computing `fit$loo = loo(fit, save_psis = TRUE)`..."
     )
 

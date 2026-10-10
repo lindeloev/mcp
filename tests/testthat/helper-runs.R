@@ -168,8 +168,8 @@ test_s3_methods = function(fit) {
     testthat::expect_true(all(mcp_pars(fit_to_test, scope = "population")$name %in% colnames(samples_col[[1]])))
 
     # Test mcpfit functions
-    varying_cols = na.omit(get_fit_model_tables(fit_to_test)$group_effects$group_col)
-    test_summary(fit_to_test, varying_cols, prior = use_prior)
+    group_cols = na.omit(get_fit_model_tables(fit_to_test)$group_effects$group_col)
+    test_summary(fit_to_test, group_cols, prior = use_prior)
     test_plot_pars(fit_to_test, prior = use_prior)
     test_pp_eval(fit_to_test, prior = use_prior)
     test_hypothesis(fit, prior = use_prior)
@@ -207,7 +207,7 @@ test_arma_simulation = function(fit) {
 
 
 # Tests if summary(fit) and ranef(fit) work as expected
-test_summary = function(fit, varying_cols, prior = FALSE) {
+test_summary = function(fit, group_cols, prior = FALSE) {
   columns = mcp_columns(fit)
   summary_cols = c('variable','mean','sd','lower','upper','rhat','ess_bulk','ess_tail')
   verbose_summary_cols = c('variable','mean','sd','lower','upper','rhat','ess_bulk','ess_tail','segment','dpar')
@@ -231,13 +231,13 @@ test_summary = function(fit, varying_cols, prior = FALSE) {
   testthat::expect_setequal(fixed$variable, expected_fixed)
 
   # If there are group-level effects
-  if (length(varying_cols) > 0) {
+  if (length(group_cols) > 0) {
     testthat::expect_true(any(grepl("Use `ranef(fit)` to inspect deviations by level.", output, fixed = TRUE)))
     testthat::expect_false(any(grepl("Group-level parameters:", output, fixed = TRUE)))
-    varying = ranef(fit, prior = prior)
-    testthat::expect_equal(nlme::ranef(fit, prior = prior), varying)
-    testthat::expect_true(is.character(varying$variable))
-    testthat::expect_true(is.numeric(varying$mean))
+    group_effects = ranef(fit, prior = prior)
+    testthat::expect_equal(nlme::ranef(fit, prior = prior), group_effects)
+    testthat::expect_true(is.character(group_effects$variable))
+    testthat::expect_true(is.numeric(group_effects$mean))
     testthat::expect_named(ranef(fit, prior = prior, verbose = TRUE), verbose_summary_cols)
     testthat::expect_equal(nlme::ranef(fit, prior = prior, verbose = TRUE), ranef(fit, prior = prior, verbose = TRUE))
 
@@ -246,19 +246,19 @@ test_summary = function(fit, varying_cols, prior = FALSE) {
       effects$group_col,
       function(col) length(unique(fit$data[[col]]))
     )
-    n_varying_levels = sum(unlist(group_level_counts))
-    testthat::expect_equal(nrow(varying), n_varying_levels)
+    n_group_levels = sum(unlist(group_level_counts))
+    testthat::expect_equal(nrow(group_effects), n_group_levels)
   }
 }
 
 
 # Test the regular plot, including faceting
-test_plot = function(fit, varying_cols) {
+test_plot = function(fit, group_cols) {
   q_fit = rbinom(1, 1, 0.5) == 1  # add quantiles sometimes
   q_predict = rbinom(1, 1, 0.5) == 1  # add quantiles sometimes
   # To facet or not to facet
-  if (length(varying_cols) > 0) {
-    gg = try(plot(fit, facet_by = varying_cols[1], color_by = NULL, q_fit = q_fit, q_predict = q_predict, lines = 3, ndraws = NULL), silent = TRUE)  # just take the first
+  if (length(group_cols) > 0) {
+    gg = try(plot(fit, facet_by = group_cols[1], color_by = NULL, q_fit = q_fit, q_predict = q_predict, lines = 3, ndraws = NULL), silent = TRUE)  # just take the first
   } else {
     gg = try(plot(fit, color_by = NULL, q_fit = q_fit, q_predict = q_predict, lines = 3, ndraws = NULL), silent = TRUE)
   }
@@ -317,19 +317,19 @@ test_hypothesis = function(fit, prior) {
   if (length(population) > 1)
     run_test_hypothesis(fit, paste0(population[1] , " + ", population[2]), prior = prior)
 
-  # Varying
+  # Group-level effects
   if (length(group) > 0) {
     mcmc_vars = colnames(mcmclist_draws(fit)[[1]])
-    varying_starts = paste0("^", group[1], "\\[")
-    varying_col_ids = stringr::str_detect(mcmc_vars, varying_starts)
-    varying_cols = paste0("`", mcmc_vars[varying_col_ids], "`")  # Add these for varying
+    group_starts = paste0("^", group[1], "\\[")
+    group_var_ids = stringr::str_detect(mcmc_vars, group_starts)
+    group_vars = paste0("`", mcmc_vars[group_var_ids], "`")  # Add these for group-level effects
 
     # Test one group-level deviation
-    run_test_hypothesis(fit, varying_cols[1], prior = prior)
+    run_test_hypothesis(fit, group_vars[1], prior = prior)
 
     # Test multiple group-level deviations
-    if (length(varying_cols) > 1)
-      run_test_hypothesis(fit, paste0(varying_cols[1], " + ", varying_cols[2]), prior = prior)
+    if (length(group_vars) > 1)
+      run_test_hypothesis(fit, paste0(group_vars[1], " + ", group_vars[2]), prior = prior)
   }
 }
 
@@ -337,18 +337,18 @@ test_hypothesis = function(fit, prior) {
 test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
   # Settings
   columns = mcp_columns(fit)
-  varying_cols = na.omit(unique(
+  group_cols = na.omit(unique(
     get_fit_model_tables(fit)$group_effects$group_col
   ))
   rhs_cols = intersect(
-    setdiff(get_rhs_vars(fit$model), varying_cols),
+    setdiff(get_rhs_vars(fit$model), group_cols),
     colnames(fit$data)
   )
   expected_colnames = c(
     columns$par_x,
     columns$trials,
     rhs_cols,
-    varying_cols,
+    group_cols,
     columns$response,
     if (length(columns$weights) > 0) columns$weights else NULL,
     colname, "sd", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
@@ -398,7 +398,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
       # overflow derived summaries (e.g. infinite count means or log-likelihoods).
       # Data keys must remain intact and the estimate itself must not be entirely missing.
       data_cols = intersect(
-        c(columns$par_x, columns$response, columns$trials, rhs_cols, varying_cols),
+        c(columns$par_x, columns$response, columns$trials, rhs_cols, group_cols),
         colnames(result)
       )
       testthat::expect_false(anyNA(result[, data_cols, drop = FALSE]))
@@ -529,9 +529,9 @@ test_pp_eval = function(fit, prior = FALSE) {
 
   # Population-only evaluation should not require any grouping columns.
   if (length(group_pars) > 0) {
-    varying_cols = stats::na.omit(unique(get_fit_model_tables(fit)$group_effects$group_col))
+    group_cols = stats::na.omit(unique(get_fit_model_tables(fit)$group_effects$group_col))
     population_newdata = fit$data[, colnames(fit$data) %notin%
-      c(columns$response, varying_cols), drop = FALSE]
+      c(columns$response, group_cols), drop = FALSE]
     population_result = fitted(
       fit,
       newdata = population_newdata,
@@ -548,13 +548,13 @@ test_pp_eval = function(fit, prior = FALSE) {
       sort(unique(population_result$data_row)),
       seq_len(nrow(population_newdata))
     )
-    testthat::expect_false(any(varying_cols %in% colnames(population_result)))
+    testthat::expect_false(any(group_cols %in% colnames(population_result)))
   }
 
   # Test pp_check
   if (length(group_pars) > 0) {
-    varying_col = na.omit(get_fit_model_tables(fit)$group_effects$group_col)[1]  # Just use the first column
-    pp_default = try(suppressWarnings(pp_check(fit, facet_by = varying_col, ndraws = 2, prior = prior)), silent = TRUE)
+    group_col = na.omit(get_fit_model_tables(fit)$group_effects$group_col)[1]  # Just use the first column
+    pp_default = try(suppressWarnings(pp_check(fit, facet_by = group_col, ndraws = 2, prior = prior)), silent = TRUE)
   } else {
     pp_default = try(suppressWarnings(pp_check(fit, ndraws = 2, prior = prior)), silent = TRUE)
   }

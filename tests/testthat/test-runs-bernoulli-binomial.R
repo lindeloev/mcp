@@ -32,7 +32,7 @@ good_binomial = list(
   list(y | trials(N) ~ 1 + x,  # response from segment 1
        ~ 1 + x,
        ~ 0),
-  list(y | trials(N) ~ 1,  # With varying
+  list(y | trials(N) ~ 1,  # With group-level change point
        ~ cp(1 + (1|id)) + 1),
   list(y | trials(N) ~ 1 + ar(1) + ma(1)),
   list(y | trials(N) ~ 1,
@@ -143,7 +143,7 @@ good_bernoulli = list(
   list(y_bern ~ 1 + x,  # response from segment 1
        ~ 1 + x,
        ~ 0),
-  list(y_bern ~ 1,  # With varying
+  list(y_bern ~ 1,  # With group-level change point
        ~ cp(1 + (1|id)) + 1),
   list(y_bern | weights(weights_ok) ~ 1),  # With weights
   list(y_bern ~ 1 + ar(1) + ma(1))  # With AR and MA

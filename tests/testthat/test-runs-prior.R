@@ -625,12 +625,12 @@ test_that("default priors keep segment lines in place when change points move", 
   # Segment 1 is unchanged
   expect_match(fit$jags_code, "\n  x_1 ~ dnorm")
 
-  # Not for user-specified priors or segments bounded by group-varying change points
+  # Not for user-specified priors or segments bounded by group-level change points
   user_fit = mcp(list(y ~ 1, ~ 0 + x), data, par_x = "x", prior = list(x_2 = "dnorm(0, 1)"), sample = FALSE)
   expect_false(grepl("_rise_", user_fit$jags_code))
   data$id = rep(1:5, 20)
-  varying_fit = mcp(list(y ~ 1, ~ cp(1 + (1 | id)) + 0 + x), data, par_x = "x", sample = FALSE)
-  expect_false(grepl("_rise_", varying_fit$jags_code))
+  group_fit = mcp(list(y ~ 1, ~ cp(1 + (1 | id)) + 0 + x), data, par_x = "x", sample = FALSE)
+  expect_false(grepl("_rise_", group_fit$jags_code))
 })
 
 
