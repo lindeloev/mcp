@@ -138,7 +138,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
       if (!is.null(simulated[[this_group_effect]])) {
         # Find the needed values and labels
         value = simulated[[this_group_effect]]  # Extract simulation values
-        group_effects = get_fit_model_tables(fit)$group_definitions
+        group_effects = definition_rows(get_fit_model_tables(fit)$group_effects)
         label_col = group_effects$group_col[group_effects$name == this_group_effect]
         labs = fit$data[[label_col]]  # Find the labels. Same length as `value`
         if (length(value) != length(labs)) {
@@ -332,7 +332,8 @@ summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ver
       all_res = dplyr::bind_rows(all_res, ran_res)
     }
     check_rhat = !is.null(diagnostics$rhat) && coda::nchain(draws) >= 2
-    fixed_pars = fit$.internal$prior_table$parameter[prior_table$kind == "constant"]
+    prior_table = fit$.internal$prior_table
+    fixed_pars = prior_table$parameter[prior_table$kind == "constant"]
     conv = check_convergence(all_res, diagnostics, fixed_pars = fixed_pars, check_rhat = check_rhat)
     if (conv$n_bad > 0) {
       param_str = if (conv$n_bad == 1) "1 parameter shows" else paste0(conv$n_bad, " parameters show")

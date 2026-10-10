@@ -254,14 +254,12 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   ###########
   checkmate::assert_class(fit, "mcpfit")
   model_tables = get_fit_model_tables(fit)
-  predictor_definitions = model_tables$predictor_definitions
-  group_definitions = model_tables$group_definitions
   predictor_occurrences = model_tables$predictors
   group_occurrences = model_tables$group_effects
   data_columns = mcp_columns(fit)
 
   # Assert that the ellipsis contains the expected argument names
-  param_pars = get_sim_pars(model_tables$cps, predictor_definitions, group_definitions)
+  param_pars = get_sim_pars(model_tables$cps, definition_rows(predictor_occurrences), definition_rows(group_occurrences))
   pred_pars = paste0(
     ".pred_", get_predictor_design_names(predictor_occurrences, group_occurrences)
   )
@@ -412,8 +410,8 @@ simulate_atomic = function(fit,
     assert_arma_series(newdata, data_columns$series)
   args = list(...)
   model_tables = get_fit_model_tables(fit)
-  model_predictor_definitions = model_tables$predictor_definitions
-  model_group_definitions = model_tables$group_definitions
+  model_predictor_definitions = definition_rows(model_tables$predictors)
+  model_group_definitions = definition_rows(model_tables$group_effects)
   model_predictors = model_tables$predictors
   model_group_effects = model_tables$group_effects
   assert_model_data(

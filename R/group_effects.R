@@ -202,7 +202,7 @@ unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
     checkmate::assert_flag(pars)
   if (is.logical(cols))
     checkmate::assert_flag(cols)
-  group_effects = get_fit_model_tables(fit)$group_definitions
+  group_effects = definition_rows(get_fit_model_tables(fit)$group_effects)
   use_group = rep(FALSE, nrow(group_effects))
 
   if (!is.null(pars) && !is.null(cols)) {

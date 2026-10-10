@@ -363,6 +363,13 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
 }
 
 
+# Rows that define parameters (and priors). Coefficients shared via same() also
+# occur in later segments, where `segment != definition_segment`.
+definition_rows = function(table) {
+  table[which(table$segment == table$definition_segment), , drop = FALSE]
+}
+
+
 # Get model metadata tables from a fitted model
 get_fit_model_tables = function(fit) {
   check_mcpfit_version(fit)

@@ -123,7 +123,7 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
     tables,
     c(
       "data_columns", "segments", "cps", "predictors", "group_effects",
-      "predictor_definitions", "group_definitions", "parameters", "design_specs"
+      "parameters", "design_specs"
     )
   )
   expect_named(tables$data_columns, c("par_x", "response", "series", "weights"))
@@ -144,9 +144,7 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
   expect_true(all(tables$parameters$scope %in% c("population", "group")))
   expect_true(all(tables$parameters$role %in% c("change_point", "fixed_effect", "dpar_effect", "arma", "group_sd", "group_deviation")))
   expect_equal(mcp_pars(fit), tables$parameters)
-  expect_equal(tables$predictor_definitions$definition_name, tables$predictor_definitions$code_name)
   expect_equal(tables$predictors$definition_name, tables$predictors$code_name)
-  expect_equal(tables$group_definitions$definition_name, tables$group_definitions$name)
   expect_equal(tables$group_effects$definition_name, tables$group_effects$name)
   group = mcp_pars(fit, scope = "group")$name
 

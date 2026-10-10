@@ -297,10 +297,10 @@ mcp = function(model,
   segments$form_env = NULL
   assert_model_data(data, par_x, group_cols = stats::na.omit(cps$group_col))
   predictor_tables = get_predictor_tables(model, data, family, par_x)
-  predictor_definitions = predictor_tables$predictor_definitions
   predictor_occurrences = predictor_tables$predictors
-  group_definitions = get_group_effects(cps, predictor_tables$group_definitions)
   group_occurrences = get_group_effects(cps, predictor_tables$group_effects)
+  predictor_definitions = definition_rows(predictor_occurrences)
+  group_definitions = definition_rows(group_occurrences)
   family = resolve_dpar_specs(family, predictor_definitions, model)
 
   if (nrow(cps) == 0 && nrow(predictor_definitions) == 0 && nrow(group_definitions) == 0)
@@ -352,8 +352,6 @@ mcp = function(model,
     cps = cps,
     predictors = predictor_occurrences,
     group_effects = group_occurrences,
-    predictor_definitions = predictor_definitions,
-    group_definitions = group_definitions,
     parameters = parameters,
     design_specs = predictor_tables$design_specs
   )
@@ -404,9 +402,7 @@ mcp = function(model,
   jags_data = get_jags_data(
     data, family, segments, predictor_occurrences, group_occurrences, jags_code, series,
     generated = !custom_jags_code,
-    design_specs = predictor_tables$design_specs,
-    predictor_definitions = predictor_definitions,
-    group_definitions = group_definitions
+    design_specs = predictor_tables$design_specs
   )
 
   # Monitor model parameters and, for generated JAGS code, latent responses

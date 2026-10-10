@@ -268,13 +268,10 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
 #' @param segments A segment table returned by `get_segment_tables()`.
 #' @param predictors Returned by `get_predictors()`.
 #' @param group_effects Returned by `get_group_effects()`.
-#' @param predictor_definitions Predictor rows that define parameters.
-#' @param group_definitions Group-effect rows that define parameters.
 #' @param design_specs Named fitted design specifications.
 #' @noRd
 get_jags_data = function(data, family, segments, predictors, group_effects, jags_code,
-                          series = NULL, generated = TRUE, design_specs = list(),
-                          predictor_definitions = predictors, group_definitions = group_effects) {
+                          series = NULL, generated = TRUE, design_specs = list()) {
   group_cols = unique(stats::na.omit(group_effects$group_col))
 
   # Start with "raw" data
@@ -282,7 +279,7 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
   cols_data = unique(stats::na.omit(c(segments$y, segments$x, unname(aux_columns))))
   assert_jags_namespace(
     unique(c(names(data), group_cols, cols_data, series)), family, segments,
-    predictor_definitions, group_definitions, jags_code, generated
+    definition_rows(predictors), definition_rows(group_effects), jags_code, generated
   )
   jags_data = as.list(data[, c(group_cols, cols_data)])
 
